@@ -1,36 +1,34 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useStore } from 'zustand';
-import type { StoreApi } from 'zustand/vanilla';
+import { useStoreSelector } from './state/createStore';
+import type { Store } from './state/createStore';
 import type { AppState } from './state/appStore';
 import './app.css';
 
 /** Root layout (architecture §11): header, map, investigator bar, encounter panel – all placeholders for now. */
-export function App({ store }: { store?: StoreApi<AppState> }) {
-  if (!store) return <h1>Arkham Companion</h1>;
+export function App({ store }: { store?: Store<AppState> }) {
+  if (!store) return <p>Arkham Companion</p>;
   return <Shell store={store} />;
 }
 
-function Shell({ store }: { store: StoreApi<AppState> }) {
+function Shell({ store }: { store: Store<AppState> }) {
   const { t } = useTranslation();
-  const games = useStore(store, (s) => s.games);
-  const current = useStore(store, (s) => s.current);
+  const games = useStoreSelector(store, (s) => s.games);
+  const current = useStoreSelector(store, (s) => s.current);
 
   useEffect(() => {
     void store.getState().refresh();
   }, [store]);
 
   return (
-    <div className="shell">
-      <header className="region header">
-        <strong>{t('app.title')}</strong>
-        <span>
-          {current ? `${t('header.round')} ${current.state.meta.round}` : t('header.noGame')}
-        </span>
+    <div id="shell">
+      <header>
+        <h1>{t('app.title')}</h1>
+        <p>{current ? `${t('header.round')} ${current.state.meta.round}` : t('header.noGame')}</p>
         <button disabled>{t('header.undo')}</button>
         <button onClick={() => void store.getState().newGame()}>{t('games.new')}</button>
       </header>
-      <aside className="region games" aria-label={t('games.title')}>
+      <aside id="games" aria-label={t('games.title')}>
         <h2>{t('games.title')}</h2>
         {games.length === 0 ? (
           <p>{t('games.empty')}</p>
@@ -46,9 +44,9 @@ function Shell({ store }: { store: StoreApi<AppState> }) {
           </ul>
         )}
       </aside>
-      <main className="region map">{t('map.placeholder')}</main>
-      <section className="region investigators">{t('investigators.placeholder')}</section>
-      <section className="region encounter">{t('encounter.placeholder')}</section>
+      <main id="map">{t('map.placeholder')}</main>
+      <section id="investigators">{t('investigators.placeholder')}</section>
+      <section id="encounter">{t('encounter.placeholder')}</section>
     </div>
   );
 }

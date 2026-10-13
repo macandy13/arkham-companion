@@ -74,10 +74,10 @@ Done: `packages/engine/src/store.ts` defines `GameStore` (+ `StoredEvent`, `Snap
 Ref: architecture §11.
 
 - [x] Layout regions: header, map, investigator bar, encounter panel (placeholders)
-- [x] Zustand store wrapping engine + `GameStore`; a "New game" button creates a game and survives refresh
+- [x] Observable app store wrapping engine + `GameStore`; a "New game" button creates a game and survives refresh
 - [x] PWA manifest + vite-plugin-pwa
 - [x] i18next set up with `en` and `de` UI strings
 
 Done when: open app → New game → refresh → game still listed.
 
-Done: `apps/web/src/App.tsx` renders the placeholder layout (header, games list, map, investigator bar, encounter panel; CSS grid in `app.css`). `state/appStore.ts` is a Zustand store factory around any `GameStore` (`refresh`, `newGame`, `openGame`); `main.tsx` wires it to `IndexedDbStore`. `vite-plugin-pwa` is configured with a manifest and an SVG icon (`public/icon.svg`; PNG icons for installability on some browsers are a follow-up). `i18n/index.ts` sets up i18next with `en`/`de` UI strings (browser language, `en` fallback) and a test that both have identical keys. A store test covers create → "refresh" → still listed. Follow-ups: language switcher (M4), real components per region, no component/E2E test of the button yet (Playwright, §12).
+Done: `apps/web/src/App.tsx` renders the placeholder layout (header, games list, map, investigator bar, encounter panel; CSS grid in `app.css`). `state/appStore.ts` is an in-house observable store factory (`state/createStore.ts`; no German-named library, see CLAUDE.md) around any `GameStore` (`refresh`, `newGame`, `openGame`); `main.tsx` wires it to `IndexedDbStore`. `vite-plugin-pwa` is configured with a manifest and an SVG icon (`public/icon.svg`; PNG icons for installability on some browsers are a follow-up). `i18n/index.ts` sets up i18next with `en`/`de` UI strings (browser language, `en` fallback) and a test that both have identical keys. A store test covers create → "refresh" → still listed. Follow-ups: language switcher (M4), real components per region, no component/E2E test of the button yet (Playwright, §12).

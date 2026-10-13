@@ -1,4 +1,4 @@
-import { createStore, type StoreApi } from 'zustand/vanilla';
+import { createStore, type Store } from './createStore';
 import type { GameId, GameState, GameStore, GameSummary } from '@arkham/engine';
 import { emptyState } from '@arkham/engine';
 
@@ -20,7 +20,7 @@ export interface AppState {
  * directly (CLAUDE.md ground rules). Engine commands will be dispatched from
  * here via `execute` + `appendEvents` once scenarios exist.
  */
-export function createAppStore(gameStore: GameStore): StoreApi<AppState> {
+export function createAppStore(gameStore: GameStore): Store<AppState> {
   return createStore<AppState>((set, get) => ({
     games: [],
     async refresh() {
