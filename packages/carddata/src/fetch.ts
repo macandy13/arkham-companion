@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseArgs } from 'node:util';
 import { normalisePack } from './schema';
 
 export type Lang = 'en' | 'de';
@@ -30,20 +31,16 @@ export async function fetchPack(lang: Lang, pack: string, outDir = CACHE_DIR): P
 
 /** Usage: pnpm carddata:fetch [--lang en,de] [pack ...] */
 async function main(): Promise<void> {
-  const args = process.argv.slice(2);
-  let langs: Lang[] = ['en'];
-  const packs: string[] = [];
-  for (let i = 0; i < args.length; i++) {
-    const a = args[i]!;
-    if (a === '--lang') {
-      langs = (args[++i] ?? '').split(',').map((l) => {
-        if (l !== 'en' && l !== 'de') throw new Error(`Unsupported language: ${l}`);
-        return l;
-      });
-    } else packs.push(a);
-  }
+  const { values, positionals } = parseArgs({
+    options: { lang: { type: 'string', default: 'en' } },
+    allowPositionals: true,
+  });
+  const langs = values.lang.split(',').map((l) => {
+    if (l !== 'en' && l !== 'de') throw new Error(`Unsupported language: ${l}`);
+    return l;
+  });
   for (const lang of langs) {
-    for (const pack of packs.length ? packs : DEFAULT_PACKS) {
+    for (const pack of positionals.length ? positionals : DEFAULT_PACKS) {
       console.log(`wrote ${await fetchPack(lang, pack)}`);
     }
   }
