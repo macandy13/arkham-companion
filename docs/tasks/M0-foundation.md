@@ -10,14 +10,16 @@ To start a task from the phone: Code tab â†’ repo `macandy13/arkham-companion` â
 
 ## M0.1 Monorepo skeleton (S)
 
-- [ ] pnpm workspaces: `packages/engine`, `packages/carddata`, `packages/scenarios`, `apps/web`
-- [ ] Shared `tsconfig.base.json` (strict), ESLint + Prettier
-- [ ] Vitest configured at the root; one trivial test per package
-- [ ] Root scripts: `test`, `typecheck`, `lint`, `dev`
-- [ ] `apps/web`: Vite + React 19 + TypeScript, renders "Arkham Companion"
-- [ ] `.gitignore` incl. `packages/carddata/.cache/`
+- [x] pnpm workspaces: `packages/engine`, `packages/carddata`, `packages/scenarios`, `apps/web`
+- [x] Shared `tsconfig.base.json` (strict), ESLint + Prettier
+- [x] Vitest configured at the root; one trivial test per package
+- [x] Root scripts: `test`, `typecheck`, `lint`, `dev`
+- [x] `apps/web`: Vite + React 19 + TypeScript, renders "Arkham Companion"
+- [x] `.gitignore` incl. `packages/carddata/.cache/`
 
 Done when: `pnpm install && pnpm typecheck && pnpm test && pnpm lint` pass.
+
+Done: pnpm workspace with `@arkham/{engine,carddata,scenarios,web}`, strict `tsconfig.base.json`, flat ESLint config + Prettier, root Vitest config (one test per package), Vite + React 19 app. Packages are consumed from source (`main: src/index.ts`), no build step. Follow-up: M0.2 may set `VITE_BASE=/arkham-companion/` for the Pages build.
 
 ## M0.2 CI (S)
 
