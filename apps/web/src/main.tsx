@@ -1,12 +1,19 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { initI18n } from './i18n';
+import { IndexedDbStore } from './storage/IndexedDbStore';
+import { createAppStore } from './state/appStore';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing #root element');
 
-createRoot(root).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+const store = createAppStore(new IndexedDbStore());
+
+void initI18n().then(() => {
+  createRoot(root).render(
+    <StrictMode>
+      <App store={store} />
+    </StrictMode>,
+  );
+});
