@@ -153,10 +153,19 @@ Per-investigator values (clues on locations, enemy health, act thresholds) are c
 
 **Map model**
 
-- **Connections are an explicit graph**, not derived from positions. ArkhamDB does not expose connection symbols in structured form, so the scenario definition declares them per location; the engine builds edges from the revealed/unrevealed state. Card effects can add or remove edges at runtime (`addConnection`, `removeConnection`), including one-way edges.
+- **Connections are an explicit graph**, not derived from positions. ArkhamDB does not expose connection symbols in structured form, so they come from the scenario data pipeline below; the engine builds edges from the revealed/unrevealed state. Card effects can add or remove edges at runtime (`addConnection`, `removeConnection`), including one-way edges.
 - **Multiple maps:** a scenario can define several maps (parallel areas, a second board added mid-scenario). The UI shows them as tabs or side by side.
 - **Layout:** the scenario book layout is stored as slots (often a grid, sometimes free positions). Optionally, auto-layout arranges the graph with elkjs. Players can always drag locations manually.
 - **Randomised locations:** the setup DSL has `randomLocations(pool, slots)` using the seeded RNG, so it stays reproducible.
+
+**Where scenario data comes from**
+
+Per field, the first source that has it wins; every value can be overridden by hand.
+
+1. **ArkhamDB:** card stats and text, encounter sets and quantities, agenda/act order (`stage`), doom and clue values, victory points, investigators. ArkhamDB has no connection symbols and no layout.
+2. **ArkhamCards campaign data** ([zzorba/arkham-cards-data](https://github.com/zzorba/arkham-cards-data)): scenario setup steps including `location_setup` grids (the book layout as rows of location codes, with arrows and annotations), chaos bags per difficulty, campaign log entries and resolutions. Imported at build time like the ArkhamDB data and not committed, since that repo carries no licence.
+3. **Card images:** connection symbols (a location's own symbol and the symbols it connects to) are only printed on the cards. A dev-time extraction step – a Claude Code task that reads the location images, or a script calling a vision model – writes them as JSON to `packages/scenarios/data/connections/<pack>.json`. It holds only card codes and symbol names, no card text, so it can be committed. Each extraction is reviewed once against a generated contact sheet before merging.
+4. **Manual:** the board's edit mode lets you add or remove connections, fix symbols and move slots. Edits are saved as a scenario override file, which can be exported and committed to the repo.
 
 ## 6. Engine: commands, events, decisions
 
@@ -247,28 +256,50 @@ IndexedDB tables: `campaigns`, `games`, `events`, `snapshots` (every ~50 events)
 
 Tablet landscape first. Header (round, phase, agenda/act, undo), map centre (pan/zoom, map tabs), investigator bar (steppers), encounter panel, decision dialog, card zoom, event log, campaign screen.
 
+**Game management**
+
+- **Home screen:** saved games and campaigns, newest first, each with scenario, investigators, round/phase and last played. Actions: resume, rename, duplicate, delete, export.
+- **New game wizard:** 1) campaign or standalone scenario, 2) scenario and difficulty, 3) investigators (1–4) in player order, 4) summary. Confirming runs the setup and opens the board.
+- **Resume** restores the exact state (snapshot + replay). **Load** imports a JSON export as a new saved game.
+- **Auto-save** on every command; there is no manual save.
+
+**Investigator picker** (inspired by the Mansions of Madness app)
+
+- Catalog of all investigators from ArkhamDB (`type_code = investigator`, all packs), deduplicated across reprints (`duplicate_of_code`), parallel versions grouped with the original.
+- Grid of portraits; filter by class, cycle/pack and "my collection" (owned packs, set once in settings); search by name.
+- Tap shows front and back with health, sanity, skills and ability; select assigns the next seat, drag reorders seats, remove frees one.
+- In campaign play investigators come from the campaign log; the picker only opens to replace killed or insane ones.
+- The catalog is fetched with the card data and cached in IndexedDB, so it works offline.
+
 ## 12. Quality assurance
 
 Engine unit tests, setup tests per scenario, property tests (no negative tokens, one zone per card, replay determinism), golden replays, Playwright E2E for refresh, GitHub Actions CI.
 
 ## 13. Repository and publishing
 
-Private GitHub repo, possibly public later. Before going public: no card text/images committed, a licence, an unofficial-fan-project notice. Hosting via GitHub Pages or Cloudflare Pages.
+Private GitHub repo, possibly public later. Before going public: no card text/images committed, MIT licence (`LICENSE`), an unofficial-fan-project notice. Hosting via GitHub Pages or Cloudflare Pages.
 
 ## 14. Roadmap
 
+Each milestone has a task plan under `docs/tasks/`, one task per Claude Code session.
+
 | Milestone | Content |
 | --- | --- |
-| M0 Foundation | Repo + CI, monorepo, card import `core_2026`, data model, `GameStore` on IndexedDB, empty UI |
-| M1 Generic engine | Agenda/act/doom, encounter deck, map graph, enemies, investigator tracking, threat area, undo; sandbox scenario |
-| M2 First scenario | *Spreading Flames* complete |
-| M3 Core campaign | Scenarios 2 and 3, campaign log, chaos bag carry-over, resolutions |
-| M4 Comfort | Chaos bag module, EN/DE switch, auto-layout, offline preload, export/import |
-| M5 Expansion | More Chapter Two products; more automated card effects |
-| M6 Cloud and sync | Login, cloud games, multi-device sync |
+| M0 Foundation | Monorepo, CI, card import, domain model, `GameStore`, app shell |
+| M1 Generic engine | Agenda/act/doom, encounter deck, map graph, enemies, investigators, threat area, undo, phase assistant; sandbox scenario; no UI |
+| M2 Game management UI | Investigator catalog, home screen with saved games, new-game wizard with investigator picker, resume, export/import |
+| M3 Play screen UI | Header, map with pan/zoom, investigator bar, encounter panel, decision dialog, card zoom, event log; sandbox scenario playable on a tablet |
+| M4 Scenario data + first scenario | ArkhamCards layout import, connection symbol extraction, manual connection editor; *Spreading Flames* complete |
+| M5 Core campaign | Scenarios 2 and 3, campaign log, chaos bag carry-over, resolutions, campaign screen |
+| M6 Comfort | Chaos bag module, EN/DE switch, auto-layout, offline preload, polish |
+| M7 Expansion | More Chapter Two products; more automated card effects |
+| M8 Cloud and sync | Login, games in the cloud, sync across devices at the table |
 
-## 15. Open questions
+## 15. Decisions and open questions
 
-1. Connection data: hand-declared per scenario, or extracted from card text/images?
-2. Licence for the public repo?
-3. Investigators: pick from ArkhamDB, or enter name and stats?
+**Decided:** one device in v1, sync in M8; investigator tracking (health, horror, clues, resources); encounter automation starts with display + keywords; card language configurable; campaign mode in v1; React; GitHub, possibly public; connection data from ArkhamDB → ArkhamCards layouts + image extraction → manual editor; MIT licence; game management (M2) and play screen (M3) before the first real scenario.
+
+**Open**
+
+1. Network for cloud sessions: allow `arkhamdb.com`, `de.arkhamdb.com` and `raw.githubusercontent.com` in the Claude Code environment so sessions can fetch card data and images (needed from M2 on).
+2. Import investigators from an ArkhamDB deck link in the new-game wizard?
