@@ -7,5 +7,8 @@
   "types": "src/index.ts",
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "fast-check": "^4.10.2"
   }
 }

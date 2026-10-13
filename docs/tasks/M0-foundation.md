@@ -48,13 +48,15 @@ Done: `packages/carddata` has the `CardDef` zod schema (`schema.ts`, fields mapp
 
 Ref: architecture §5, §6.
 
-- [ ] Types: `InstanceId`, `Zone`, `CardInstance`, `Investigator`, `Board`, `GameState`, `Decision`, `CampaignLog` (stub)
-- [ ] `Command` and `Event` as discriminated unions (start with a minimal set: `StartScenario`, `ManualAdjust`, `CardMoved`, `TokensChanged`)
-- [ ] `apply(state, event)` reducer and `handle(state, command) -> Event[]`
-- [ ] Seeded PRNG (xoshiro128**) stored in state; `shuffle` helper
-- [ ] Property tests: replaying events yields identical state; every card is in exactly one zone
+- [x] Types: `InstanceId`, `Zone`, `CardInstance`, `Investigator`, `Board`, `GameState`, `Decision`, `CampaignLog` (stub)
+- [x] `Command` and `Event` as discriminated unions (start with a minimal set: `StartScenario`, `ManualAdjust`, `CardMoved`, `TokensChanged`)
+- [x] `apply(state, event)` reducer and `handle(state, command) -> Event[]`
+- [x] Seeded PRNG (xoshiro128**) stored in state; `shuffle` helper
+- [x] Property tests: replaying events yields identical state; every card is in exactly one zone
 
 Done when: the engine package has no runtime deps besides zod and tests pass.
+
+Done: `packages/engine/src` has branded IDs (`ids.ts`), `Zone` + `zoneKey` (`zone.ts`), the §5 state types (`state.ts`), `Command`/`Event` unions (`commands.ts`, `events.ts`), `apply`/`replay` (`reducer.ts`), `handle` with `CommandRejected` validation (`handle.ts`), xoshiro128** + `shuffle` (`rng.ts`) and `checkInvariants`. Events are self-contained facts (IDs and shuffle results/RNG state are computed in `handle`), so the reducer never validates or draws randomness. Added a `DeckShuffled` event (StartScenario shuffles the encounter deck). `GameState.order` holds every non-empty zone, top first. The engine has no runtime deps (zod not needed yet); fast-check is a dev dep. Follow-ups: moving a host card does not yet move/discard its attachments or enemies at it; `Investigator.locationId` is not validated on card moves.
 
 ## M0.5 GameStore on IndexedDB (S)
 
