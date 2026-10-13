@@ -12,7 +12,7 @@ Work is tracked in `docs/tasks/`. Each task file is self-contained.
 - **Never commit ArkhamDB card JSON or card images.** Fetched data goes to `packages/carddata/.cache/` (gitignored).
 - **Generic before specific:** if two scenarios need it, make it an engine primitive.
 - **Markup is structure only.** JSX/HTML is a plain document tree of semantic elements (no `<strong>`, `<b>`, `<br>`, inline `style`, layout/styling class names); all presentation lives in CSS.
-- **No German words in code** (identifiers, library names included); German only in UI translation strings.
+- **No German words in code** (identifiers); German only in UI translation strings.
 - TypeScript strict, no `any` without a comment explaining why.
 - Every exported interface, type, class and non-trivial function gets a doc comment explaining its purpose and, where it isn't obvious, how it relates to other types (e.g. which reducer produces it, which ID it refers to). Also explain non-obvious design choices (why, not what).
 - Tests with every change: Vitest unit tests for engine logic; add a fast-check property test when touching invariants.

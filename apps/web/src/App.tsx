@@ -1,20 +1,20 @@
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useStoreSelector } from './state/createStore';
-import type { Store } from './state/createStore';
+import { useStore } from 'zustand';
+import type { StoreApi } from 'zustand/vanilla';
 import type { AppState } from './state/appStore';
 import './app.css';
 
 /** Root layout (architecture §11): header, map, investigator bar, encounter panel – all placeholders for now. */
-export function App({ store }: { store?: Store<AppState> }) {
+export function App({ store }: { store?: StoreApi<AppState> }) {
   if (!store) return <p>Arkham Companion</p>;
   return <Shell store={store} />;
 }
 
-function Shell({ store }: { store: Store<AppState> }) {
+function Shell({ store }: { store: StoreApi<AppState> }) {
   const { t } = useTranslation();
-  const games = useStoreSelector(store, (s) => s.games);
-  const current = useStoreSelector(store, (s) => s.current);
+  const games = useStore(store, (s) => s.games);
+  const current = useStore(store, (s) => s.current);
 
   useEffect(() => {
     void store.getState().refresh();

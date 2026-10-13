@@ -69,7 +69,7 @@ The ArkhamDB public API sends `Access-Control-Allow-Origin: *`, so it can be que
 | Language | TypeScript (strict) | Complex domain model, discriminated unions for events/commands |
 | Build | Vite + pnpm workspaces | Fast, monorepo-ready |
 | UI | React 19 | Existing experience, largest ecosystem |
-| UI state | Small in-house observable store (`useSyncExternalStore`; thin wrapper around the engine) | Engine stays framework-free |
+| UI state | Zustand (thin wrapper around the engine) | Engine stays framework-free |
 | Map rendering | SVG + react-zoom-pan-pinch | Crisp at any zoom, easy hit-testing |
 | Auto-layout | elkjs (optional) | Graph layout for locations without a book layout |
 | Drag and drop | dnd-kit | Touch-friendly for tablet |
