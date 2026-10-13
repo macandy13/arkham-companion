@@ -3,3 +3,8 @@ dist/
 .cache/
 *.log
 .DS_Store
+
+# Local
+.env*
+*.tsbuildinfo
+packages/carddata/.cache/
