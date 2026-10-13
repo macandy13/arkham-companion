@@ -62,10 +62,12 @@ Done: `packages/engine/src` has branded IDs (`ids.ts`), `Zone` + `zoneKey` (`zon
 
 Ref: architecture §10.
 
-- [ ] `GameStore` interface in `packages/engine` (types only): `createGame`, `appendEvents`, `loadGame` (snapshot + replay), `listGames`, `saveSnapshot`
-- [ ] `IndexedDbStore` in `apps/web` with Dexie: tables `campaigns`, `games`, `events`, `snapshots`, `cards`
-- [ ] `gameId` = UUID, events carry sequence number + timestamp
-- [ ] Tests with `fake-indexeddb`
+- [x] `GameStore` interface in `packages/engine` (types only): `createGame`, `appendEvents`, `loadGame` (snapshot + replay), `listGames`, `saveSnapshot`
+- [x] `IndexedDbStore` in `apps/web` with Dexie: tables `campaigns`, `games`, `events`, `snapshots`, `cards`
+- [x] `gameId` = UUID, events carry sequence number + timestamp
+- [x] Tests with `fake-indexeddb`
+
+Done: `packages/engine/src/store.ts` defines `GameStore` (+ `StoredEvent`, `Snapshot`, `GameSummary`, `STATE_VERSION`); `appendEvents` takes an optional `expectedSeq` for optimistic concurrency. `apps/web/src/storage/IndexedDbStore.ts` implements it with Dexie (tables `campaigns`, `games`, `events` keyed `[gameId+seq]`, `snapshots`, `cards`), stamps `seq`/`timestamp`, auto-snapshots on load when ≥50 events lie past the last snapshot, and ignores snapshots with another `stateVersion`. Extras on the class: `loadEvents`, `putCards`/`getCards`. Follow-ups: state migrations, JSON export/import, `BroadcastChannel` (§10); nothing writes to `campaigns` yet.
 
 ## M0.6 Empty app shell (S)
 
