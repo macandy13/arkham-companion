@@ -23,10 +23,12 @@ Done: pnpm workspace with `@arkham/{engine,carddata,scenarios,web}`, strict `tsc
 
 ## M0.2 CI (S)
 
-- [ ] GitHub Actions workflow on push/PR: install (pnpm cache), typecheck, lint, test
-- [ ] Deploy `apps/web` to GitHub Pages on push to `main` (base path `/arkham-companion/`)
+- [x] GitHub Actions workflow on push/PR: install (pnpm cache), typecheck, lint, test
+- [x] Deploy `apps/web` to GitHub Pages on push to `main` (base path `/arkham-companion/`)
 
 Done when: workflow is green on the PR.
+
+**Done:** `.github/workflows/ci.yml` and `deploy.yml`. Follow-up: enable Pages (source: GitHub Actions) in repo settings.
 
 ## M0.3 Card data import (S)
 
