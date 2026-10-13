@@ -34,13 +34,15 @@ Done when: workflow is green on the PR.
 
 Ref: architecture §9.
 
-- [ ] `packages/carddata`: fetch `core_2026` from `https://arkhamdb.com/api/public/cards/core_2026.json?encounter=1` (also support `de.arkhamdb.com`)
-- [ ] Normalise into a `CardDef` type (zod schema) with the fields listed in §9
-- [ ] Write to `.cache/<lang>/<pack>.json`; script `pnpm carddata:fetch`
-- [ ] Unit tests use a small hand-written fixture (3–5 fake cards), never real card text
-- [ ] Helper: list cards by `encounter_code`, expand by `quantity`
+- [x] `packages/carddata`: fetch `core_2026` from `https://arkhamdb.com/api/public/cards/core_2026.json?encounter=1` (also support `de.arkhamdb.com`)
+- [x] Normalise into a `CardDef` type (zod schema) with the fields listed in §9
+- [x] Write to `.cache/<lang>/<pack>.json`; script `pnpm carddata:fetch`
+- [x] Unit tests use a small hand-written fixture (3–5 fake cards), never real card text
+- [x] Helper: list cards by `encounter_code`, expand by `quantity`
 
 Done when: the script runs and tests pass without network.
+
+Done: `packages/carddata` has the `CardDef` zod schema (`schema.ts`, fields mapped from ArkhamDB since §9 lists none explicitly), `fetch.ts` (`pnpm carddata:fetch [--lang en,de] [pack…]`, default `core_2026`, writes `.cache/<lang>/<pack>.json`), and helpers `cardsByEncounterCode` / `expandByQuantity`. Tests use a fake-card fixture and run offline. Follow-up: per-card EN fallback for `de` (M4).
 
 ## M0.4 Core domain types + RNG (O)
 

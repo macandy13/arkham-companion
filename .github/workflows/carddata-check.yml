@@ -1,0 +1,35 @@
+name: Carddata check
+
+on:
+  pull_request:
+    paths:
+      - 'packages/carddata/**'
+      - '.github/workflows/carddata-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm carddata:fetch --lang en,de
+      - name: Summarise fetched data
+        run: |
+          {
+            echo '### Fetched card data'
+            echo '| file | cards | with encounter code |'
+            echo '| --- | --- | --- |'
+            for f in packages/carddata/.cache/*/*.json; do
+              total=$(jq 'length' "$f")
+              enc=$(jq '[.[] | select(.encounterCode)] | length' "$f")
+              echo "| ${f#packages/carddata/.cache/} | $total | $enc |"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"

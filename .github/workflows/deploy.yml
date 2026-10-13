@@ -16,6 +16,9 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # Bump to force a fresh card data download (e.g. after upstream corrections).
+      CARDDATA_EPOCH: 2026-10
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -24,6 +27,13 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - uses: actions/cache@v4
+        id: carddata
+        with:
+          path: packages/carddata/.cache
+          key: carddata-${{ hashFiles('packages/carddata/src/schema.ts', 'packages/carddata/src/fetch.ts') }}-${{ env.CARDDATA_EPOCH }}
+      - if: steps.carddata.outputs.cache-hit != 'true'
+        run: pnpm carddata:fetch --lang en,de
       - run: pnpm --filter @arkham/web build
         env:
           VITE_BASE: /arkham-companion/
