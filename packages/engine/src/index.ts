@@ -11,3 +11,4 @@ export { handle } from './handle';
 export { CommandRejected, type Rejection, type RejectionCode } from './rejection';
 export { execute, type ExecuteResult } from './execute';
 export { checkInvariants } from './invariants';
+export * from './store';

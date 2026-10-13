@@ -1,0 +1,81 @@
+import type { Event } from './events';
+import type { GameState } from './state';
+
+/** UUID (v4) identifying one game; never device-bound so it stays valid for later cloud sync (architecture §10). */
+export type GameId = string;
+
+/** Version of the persisted `GameState` shape; bump together with a migration when `GameState` changes. */
+export const STATE_VERSION = 1;
+
+/** Optional metadata given to `GameStore.createGame`. */
+export interface NewGame {
+  /** Human-readable name shown in the game list. */
+  title?: string;
+  /** Campaign this game belongs to; absent in standalone play. */
+  campaignId?: string;
+}
+
+/** Row of `GameStore.listGames`: enough to render a game list without loading events. */
+export interface GameSummary {
+  gameId: GameId;
+  title: string;
+  campaignId?: string;
+  /** Epoch ms of creation, set by the store. */
+  createdAt: number;
+  /** Epoch ms of the last appended event (or creation). */
+  updatedAt: number;
+  /** Sequence number of the last event, 0 if the log is empty. */
+  lastSeq: number;
+}
+
+/**
+ * An `Event` as persisted in the append-only log. `seq` is 1-based and gapless
+ * per game; `timestamp` is assigned by the store (the engine itself never reads clocks).
+ */
+export interface StoredEvent {
+  gameId: GameId;
+  seq: number;
+  /** Epoch ms. */
+  timestamp: number;
+  event: Event;
+}
+
+/** Cached `GameState` after applying all events up to and including `seq`. */
+export interface Snapshot {
+  gameId: GameId;
+  seq: number;
+  stateVersion: number;
+  state: GameState;
+}
+
+/** Result of `GameStore.loadGame`: the state after replaying the whole log. */
+export interface LoadedGame {
+  summary: GameSummary;
+  state: GameState;
+}
+
+/**
+ * Persistence boundary (architecture §10). The app only talks to this
+ * interface; `IndexedDbStore` implements it now, a cloud store may later.
+ * The event log is the source of truth, snapshots are only a speed-up.
+ */
+export interface GameStore {
+  /** Creates an empty game (no events) and returns its new UUID. */
+  createGame(init?: NewGame): Promise<GameId>;
+  /**
+   * Appends events to the log and returns them with assigned `seq`/`timestamp`.
+   * If `expectedSeq` is given and differs from the current last seq, rejects
+   * (optimistic concurrency for multiple tabs/devices) and writes nothing.
+   */
+  appendEvents(
+    gameId: GameId,
+    events: readonly Event[],
+    expectedSeq?: number,
+  ): Promise<StoredEvent[]>;
+  /** Latest snapshot + replay of the events after it; `undefined` if the game doesn't exist. */
+  loadGame(gameId: GameId): Promise<LoadedGame | undefined>;
+  /** All games, most recently updated first. */
+  listGames(): Promise<GameSummary[]>;
+  /** Stores a snapshot, replacing older ones of the same game. */
+  saveSnapshot(gameId: GameId, seq: number, state: GameState): Promise<void>;
+}
