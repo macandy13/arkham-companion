@@ -13,7 +13,13 @@ export type Zone =
   | { kind: 'location'; mapId: MapId }
   /** Unengaged enemy (or other card) at a location. */
   | { kind: 'atLocation'; locationId: InstanceId }
+  /**
+   * Enemy engaged with an investigator. By the rules this is part of their
+   * threat area; it is a separate zone so the engine knows about engagement
+   * without looking up card types (state only stores card codes).
+   */
   | { kind: 'engaged'; investigatorId: InvestigatorId }
+  /** Non-enemy cards in an investigator's threat area (treacheries, …). */
   | { kind: 'threatArea'; investigatorId: InvestigatorId }
   /** Attachment to a location, enemy, agenda, … */
   | { kind: 'attachedTo'; hostId: InstanceId };
