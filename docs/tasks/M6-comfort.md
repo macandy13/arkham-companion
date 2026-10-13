@@ -10,6 +10,7 @@ Start from the phone: Code tab → repo → `Do task M6.x from docs/tasks/M6-com
 ## M6.1 Chaos bag module (S)
 
 Ref: §12.
+
 - [ ] Optional module (off by default): draw, seal, return; symbol effects with current values (e.g. act number)
 - [ ] Bag from campaign log or scenario default
 

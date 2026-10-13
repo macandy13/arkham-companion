@@ -1,6 +1,6 @@
 # M4 – Scenario data pipeline + first scenario
 
-Goal: a repeatable way to turn a real scenario into data (architecture §5 "Where scenario data comes from"), then *Spreading Flames* fully playable.
+Goal: a repeatable way to turn a real scenario into data (architecture §5 "Where scenario data comes from"), then _Spreading Flames_ fully playable.
 
 Model hint: **S** = Sonnet, **O** = Opus. Each task = one session = one PR.
 Start from the phone: Code tab → repo → `Do task M4.x from docs/tasks/M4-scenario-data-first-scenario.md`.
@@ -40,7 +40,7 @@ Ref: §7 example.
 ## M4.5 Spreading Flames: special mechanics (O)
 
 - [ ] Skull token value depends on the act number
-- [ ] `drawTopmostFromDiscard('Fire!')` uses; agenda 2 adds set-aside *Fire!* copies to the discard
+- [ ] `drawTopmostFromDiscard('Fire!')` uses; agenda 2 adds set-aside _Fire!_ copies to the discard
 - [ ] Parley action on agendas to discard a bystander enemy at a location (`ScenarioAction`)
 - [ ] Agenda 3 forced effect via `afterDoomPlaced`
 - [ ] Reverse-side hooks and resolutions (record only; campaign log comes in M5)
@@ -52,8 +52,8 @@ Ref: §7 example.
 
 ## M4.7 Playtest checklist (S)
 
-- [ ] Golden replay of a scripted *Spreading Flames* game
+- [ ] Golden replay of a scripted _Spreading Flames_ game
 - [ ] Write `docs/playtests/spreading-flames.md`: what to check at the table, known gaps
 - [ ] Note follow-ups in this file
 
-Done when: *Spreading Flames* can be played at the table from setup to resolution.
+Done when: _Spreading Flames_ can be played at the table from setup to resolution.
