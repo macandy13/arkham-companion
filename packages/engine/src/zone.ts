@@ -18,11 +18,13 @@ export type Zone =
   /** Attachment to a location, enemy, agenda, … */
   | { kind: 'attachedTo'; hostId: InstanceId };
 
+/** Discriminator of `Zone`. */
 export type ZoneKind = Zone['kind'];
 
 /** Stable string key of a zone, used to index `GameState.order`. */
 export type ZoneKey = string & { readonly __brand: 'ZoneKey' };
 
+/** Maps a zone to its key; zones with the same kind and reference share a key. */
 export function zoneKey(zone: Zone): ZoneKey {
   switch (zone.kind) {
     case 'location':
@@ -39,6 +41,7 @@ export function zoneKey(zone: Zone): ZoneKey {
   }
 }
 
+/** True if both zones are the same place (same `zoneKey`). */
 export function sameZone(a: Zone, b: Zone): boolean {
   return zoneKey(a) === zoneKey(b);
 }

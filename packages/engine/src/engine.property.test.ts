@@ -5,13 +5,14 @@ import {
   TOKEN_KINDS,
   checkInvariants,
   emptyState,
-  handle,
+  execute,
   instanceId,
   investigatorId,
   mapId,
   replay,
   type Adjustment,
   type Event,
+  type ExecuteResult,
   type GameState,
   type StartScenario,
   type Zone,
@@ -95,15 +96,15 @@ function play(start: StartScenario, adjustments: Adjustment[]) {
   let state: GameState = emptyState();
   const events: Event[] = [];
   const states: GameState[] = [];
-  const step = (evs: Event[]) => {
-    state = replay(evs, state);
-    events.push(...evs);
+  const step = (result: ExecuteResult) => {
+    state = result.state;
+    events.push(...result.events);
     states.push(state);
   };
-  step(handle(state, start));
+  step(execute(state, start));
   for (const adjustment of adjustments) {
     try {
-      step(handle(state, { type: 'ManualAdjust', adjustment }));
+      step(execute(state, { type: 'ManualAdjust', adjustment }));
     } catch (e) {
       if (!(e instanceof CommandRejected)) throw e;
     }

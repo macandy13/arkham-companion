@@ -16,6 +16,7 @@ import type { Zone } from './zone';
  */
 export type Event = ScenarioStarted | DeckShuffled | CardMoved | TokensChanged;
 
+/** A scenario was set up; replaces the whole state. Produced by `StartScenario`. */
 export interface ScenarioStarted {
   type: 'ScenarioStarted';
   scenarioId: string;
@@ -29,6 +30,7 @@ export interface ScenarioStarted {
   campaign?: CampaignLog;
 }
 
+/** A zone (usually the encounter deck) was shuffled using the state's RNG. */
 export interface DeckShuffled {
   type: 'DeckShuffled';
   zone: Zone;
@@ -38,6 +40,7 @@ export interface DeckShuffled {
   rngState: RngState;
 }
 
+/** A card instance changed zone or position within its zone. */
 export interface CardMoved {
   type: 'CardMoved';
   cardId: InstanceId;
@@ -47,6 +50,7 @@ export interface CardMoved {
   index?: number;
 }
 
+/** Tokens of one kind were added to (`delta` > 0) or removed from a card. */
 export interface TokensChanged {
   type: 'TokensChanged';
   cardId: InstanceId;
@@ -54,4 +58,5 @@ export interface TokensChanged {
   delta: number;
 }
 
+/** String literal of every event type. */
 export type EventType = Event['type'];

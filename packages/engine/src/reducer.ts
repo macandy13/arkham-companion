@@ -66,14 +66,8 @@ function applyCardMoved(state: GameState, e: CardMoved): GameState {
   // Remove from the card's actual zone; `e.from` is informational.
   const fromKey = zoneKey(card.zone);
   const toKey = zoneKey(e.to);
-  let order = withZoneOrder(
-    state.order,
-    fromKey,
-    (state.order[fromKey] ?? []).filter((id) => id !== e.cardId),
-  );
-  const dest = (order[toKey] ?? []).slice();
-  dest.splice(e.index ?? dest.length, 0, e.cardId);
-  order = withZoneOrder(order, toKey, dest);
+  let order = withZoneOrder(state.order, fromKey, without(state.order[fromKey] ?? [], e.cardId));
+  order = withZoneOrder(order, toKey, insertedAt(order[toKey] ?? [], e.cardId, e.index));
   return {
     ...state,
     cards: { ...state.cards, [e.cardId]: { ...card, zone: e.to } },
@@ -100,5 +94,17 @@ function withZoneOrder(
   const next = { ...order };
   if (ids.length === 0) delete next[key];
   else next[key] = ids;
+  return next;
+}
+
+/** Copy of `ids` without `id`. */
+function without(ids: readonly InstanceId[], id: InstanceId): InstanceId[] {
+  return ids.filter((other) => other !== id);
+}
+
+/** Copy of `ids` with `id` inserted at `index` (0 = top); appended when `index` is omitted. */
+function insertedAt(ids: readonly InstanceId[], id: InstanceId, index?: number): InstanceId[] {
+  const next = ids.slice();
+  next.splice(index ?? next.length, 0, id);
   return next;
 }

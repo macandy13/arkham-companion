@@ -2,10 +2,16 @@ import type { DecisionId, InstanceId, InvestigatorId, MapId, SlotId } from './id
 import type { RngState } from './rng';
 import type { Zone, ZoneKey } from './zone';
 
+/** Kinds of tokens that can be placed on a card instance. */
 export type TokenKind = 'doom' | 'clue' | 'damage' | 'horror' | 'resource';
+/** All token kinds, e.g. for iterating in the UI or in tests. */
 export const TOKEN_KINDS: readonly TokenKind[] = ['doom', 'clue', 'damage', 'horror', 'resource'];
 
-/** One physical card on the table (architecture §5). */
+/**
+ * One physical card on the table (architecture §5). Multiple copies of the same
+ * card are separate instances sharing a `code`; the card's static data
+ * (name, text, stats) is looked up by `code` in `@arkham/carddata`.
+ */
 export interface CardInstance {
   id: InstanceId;
   /** ArkhamDB card code, e.g. '12106'. */
@@ -19,8 +25,16 @@ export interface CardInstance {
   flags: Record<string, unknown>;
 }
 
+/**
+ * Whether an investigator is still in the scenario. `resigned` and `defeated`
+ * are permanent for the rest of the scenario.
+ */
 export type InvestigatorStatus = 'active' | 'resigned' | 'defeated';
 
+/**
+ * A player's investigator. The investigator card itself is not a `CardInstance`;
+ * cards in their threat area or engaged with them refer to `id` via their `Zone`.
+ */
 export interface Investigator {
   id: InvestigatorId;
   /** ArkhamDB card code of the investigator card. */
@@ -35,6 +49,7 @@ export interface Investigator {
   status: InvestigatorStatus;
 }
 
+/** A connection between two location instances on the map graph (architecture §5 "Map model"). */
 export interface Edge {
   from: InstanceId;
   to: InstanceId;
@@ -42,6 +57,11 @@ export interface Edge {
   oneWay: boolean;
 }
 
+/**
+ * Map layout and connection graph. Which cards are locations on which map is
+ * given by their `Zone` (`{ kind: 'location', mapId }`); the board adds where
+ * they are drawn (`placement` into `slots`) and how they connect.
+ */
 export interface Board {
   maps: Record<MapId, { name: string; visible: boolean }>;
   slots: Record<SlotId, { mapId: MapId; x: number; y: number }>;
@@ -50,9 +70,12 @@ export interface Board {
   layoutMode: 'book' | 'auto';
 }
 
+/** Scenario difficulty; selects the chaos bag and some setup variants. */
 export type Difficulty = 'easy' | 'standard' | 'hard' | 'expert';
+/** Current game phase; `setup` before the first mythos phase. */
 export type Phase = 'setup' | 'mythos' | 'investigation' | 'enemy' | 'upkeep';
 
+/** Tokens in the chaos bag. */
 export type ChaosToken =
   | '+1'
   | '0'
@@ -87,6 +110,7 @@ export interface Decision {
   options: DecisionOption[];
 }
 
+/** One answer the players can pick for a `Decision`. */
 export interface DecisionOption {
   id: string;
   label: string;
@@ -103,6 +127,7 @@ export interface CampaignLog {
   records: Record<string, number | boolean | string>;
 }
 
+/** Scenario-wide bookkeeping: identity, randomness and turn structure. */
 export interface GameMeta {
   scenarioId: string;
   difficulty: Difficulty;
@@ -114,6 +139,10 @@ export interface GameMeta {
   leadInvestigator?: InvestigatorId;
 }
 
+/**
+ * Complete state of one scenario in play. Only ever produced by the reducer
+ * (`apply`/`replay`) from events; never mutated directly.
+ */
 export interface GameState {
   meta: GameMeta;
   /** Absent in standalone play. */

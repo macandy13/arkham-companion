@@ -7,5 +7,7 @@ export * from './state';
 export * from './commands';
 export * from './events';
 export { apply, replay } from './reducer';
-export { handle, CommandRejected } from './handle';
+export { handle } from './handle';
+export { CommandRejected, type Rejection, type RejectionCode } from './rejection';
+export { execute, type ExecuteResult } from './execute';
 export { checkInvariants } from './invariants';

@@ -1,18 +1,11 @@
 import type { Adjustment, Command, StartScenario } from './commands';
 import type { CardMoved, Event, ScenarioStarted, TokensChanged } from './events';
-import { instanceId, type InstanceId, type InvestigatorId, type MapId } from './ids';
+import { instanceId, type InstanceId, type MapId } from './ids';
 import { apply } from './reducer';
+import { CommandRejected } from './rejection';
 import { shuffle } from './rng';
 import type { CardInstance, GameState } from './state';
 import { sameZone, zoneKey, type Zone } from './zone';
-
-/** Thrown by `handle` when a command is not valid in the current state. */
-export class CommandRejected extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'CommandRejected';
-  }
-}
 
 /**
  * Validates a command against the current state and returns the resulting events.
@@ -28,10 +21,12 @@ export function handle(state: GameState, command: Command): Event[] {
 }
 
 function handleStartScenario(state: GameState, cmd: StartScenario): Event[] {
-  if (!Number.isInteger(cmd.seed)) throw new CommandRejected('seed must be an integer');
+  if (!Number.isInteger(cmd.seed))
+    throw new CommandRejected({ code: 'invalidSeed', seed: cmd.seed });
   const investigatorIds = new Set<string>();
   for (const inv of cmd.investigators) {
-    if (investigatorIds.has(inv.id)) throw new CommandRejected(`duplicate investigator ${inv.id}`);
+    if (investigatorIds.has(inv.id))
+      throw new CommandRejected({ code: 'duplicateInvestigator', investigatorId: inv.id });
     investigatorIds.add(inv.id);
   }
 
@@ -51,7 +46,7 @@ function handleStartScenario(state: GameState, cmd: StartScenario): Event[] {
   }));
   const byId: Record<InstanceId, CardInstance> = {};
   for (const card of cards) {
-    if (byId[card.id]) throw new CommandRejected(`duplicate card id ${card.id}`);
+    if (byId[card.id]) throw new CommandRejected({ code: 'duplicateCard', cardId: card.id });
     byId[card.id] = card;
   }
   const refs: ZoneRefs = {
@@ -88,7 +83,7 @@ function handleStartScenario(state: GameState, cmd: StartScenario): Event[] {
 
 function handleAdjustment(state: GameState, adj: Adjustment): CardMoved | TokensChanged {
   const card = state.cards[adj.cardId];
-  if (!card) throw new CommandRejected(`unknown card ${adj.cardId}`);
+  if (!card) throw new CommandRejected({ code: 'unknownCard', cardId: adj.cardId });
 
   switch (adj.kind) {
     case 'moveCard': {
@@ -108,7 +103,7 @@ function handleAdjustment(state: GameState, adj: Adjustment): CardMoved | Tokens
         adj.index !== undefined &&
         (!Number.isInteger(adj.index) || adj.index < 0 || adj.index > maxIndex)
       ) {
-        throw new CommandRejected(`index ${adj.index} out of range 0..${maxIndex}`);
+        throw new CommandRejected({ code: 'indexOutOfRange', index: adj.index, max: maxIndex });
       }
       return {
         type: 'CardMoved',
@@ -120,32 +115,43 @@ function handleAdjustment(state: GameState, adj: Adjustment): CardMoved | Tokens
     }
     case 'tokens': {
       if (!Number.isInteger(adj.delta) || adj.delta === 0) {
-        throw new CommandRejected('token delta must be a non-zero integer');
+        throw new CommandRejected({ code: 'invalidTokenDelta', delta: adj.delta });
       }
       if ((card.tokens[adj.token] ?? 0) + adj.delta < 0) {
-        throw new CommandRejected(`${adj.token} on ${card.id} would become negative`);
+        throw new CommandRejected({
+          code: 'negativeTokens',
+          cardId: card.id,
+          token: adj.token,
+          current: card.tokens[adj.token] ?? 0,
+          delta: adj.delta,
+        });
       }
       return { type: 'TokensChanged', cardId: card.id, token: adj.token, delta: adj.delta };
     }
   }
 }
 
+/** The IDs a zone may refer to, used to validate card placements. */
 interface ZoneRefs {
   cards: Record<InstanceId, CardInstance>;
-  investigators: ReadonlySet<InvestigatorId | string>;
-  maps: ReadonlySet<MapId | string>;
+  investigators: ReadonlySet<string>;
+  maps: ReadonlySet<string>;
 }
 
 /** Checks that every ID a zone refers to exists and that hosting creates no cycle. */
 function validateZone(refs: ZoneRefs, cardId: InstanceId, zone: Zone): void {
   switch (zone.kind) {
     case 'location':
-      if (!refs.maps.has(zone.mapId)) throw new CommandRejected(`unknown map ${zone.mapId}`);
+      if (!refs.maps.has(zone.mapId))
+        throw new CommandRejected({ code: 'unknownMap', mapId: zone.mapId });
       return;
     case 'engaged':
     case 'threatArea':
       if (!refs.investigators.has(zone.investigatorId)) {
-        throw new CommandRejected(`unknown investigator ${zone.investigatorId}`);
+        throw new CommandRejected({
+          code: 'unknownInvestigator',
+          investigatorId: zone.investigatorId,
+        });
       }
       return;
     case 'atLocation':
@@ -155,11 +161,11 @@ function validateZone(refs: ZoneRefs, cardId: InstanceId, zone: Zone): void {
       const seen = new Set<InstanceId>();
       let current: InstanceId | undefined = hostId;
       while (current !== undefined) {
-        if (current === cardId) throw new CommandRejected(`${cardId} cannot be placed on itself`);
+        if (current === cardId) throw new CommandRejected({ code: 'hostingCycle', cardId, hostId });
         if (seen.has(current)) break;
         seen.add(current);
         const host: CardInstance | undefined = refs.cards[current];
-        if (!host) throw new CommandRejected(`unknown host card ${current}`);
+        if (!host) throw new CommandRejected({ code: 'unknownCard', cardId: current });
         current = hostOf(host.zone);
       }
       return;
@@ -169,6 +175,7 @@ function validateZone(refs: ZoneRefs, cardId: InstanceId, zone: Zone): void {
   }
 }
 
+/** The card hosting a card in `zone`, if any (enemy at a location, attachment). */
 function hostOf(zone: Zone): InstanceId | undefined {
   if (zone.kind === 'atLocation') return zone.locationId;
   if (zone.kind === 'attachedTo') return zone.hostId;

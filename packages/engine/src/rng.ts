@@ -1,10 +1,21 @@
 /**
  * Seeded PRNG: xoshiro128** (Blackman & Vigna), seeded via splitmix32.
- * The state is a plain tuple so it can live in `GameState` and be serialised.
- * All functions are pure: they return the value together with the next state.
+ *
+ * Why not `Math.random()` or `crypto.getRandomValues()`? Neither can be seeded
+ * nor have their internal state saved and restored. The engine is event-sourced
+ * (architecture §2, §6): undo, refresh recovery and bug reproduction all rebuild
+ * the game by replaying, and "same state + same command = same events" must hold
+ * for every shuffle and random draw. So the generator state has to live inside
+ * `GameState` as plain serialisable data. xoshiro128** is small, fast, uses only
+ * 32-bit integer maths (exact in JS) and has good statistical quality for games.
+ *
+ * The state is a plain tuple; all functions are pure and return the value
+ * together with the next state.
  */
+/** The four 32-bit words of xoshiro128** state; stored in `GameMeta.rngState`. */
 export type RngState = readonly [number, number, number, number];
 
+/** Expands a single seed into well-mixed words (recommended way to seed xoshiro). */
 function splitmix32(seed: number): () => number {
   let s = seed >>> 0;
   return () => {
@@ -16,6 +27,7 @@ function splitmix32(seed: number): () => number {
   };
 }
 
+/** Initial RNG state for a game seed. */
 export function seedRng(seed: number): RngState {
   const next = splitmix32(seed);
   const state: [number, number, number, number] = [next(), next(), next(), next()];
