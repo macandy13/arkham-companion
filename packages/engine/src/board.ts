@@ -52,7 +52,7 @@ export function shortestPaths(state: GameState, from: InstanceId, to: InstanceId
  * Whether the card is a location currently on a map. Named for locations
  * because "in play" is a broader game-rule notion (any card in a play area).
  */
-function isLocationInPlay(state: GameState, id: InstanceId): boolean {
+export function isLocationInPlay(state: GameState, id: InstanceId): boolean {
   return state.cards[id]?.zone.kind === 'location';
 }
 

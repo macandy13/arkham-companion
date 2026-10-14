@@ -1,12 +1,11 @@
 import { cardStats, type CardStats, type EngineContext } from './cards';
 import type { DrawEncounter, DrawTopmostFromDiscard, FromSetAside, ShuffleInto } from './commands';
 import type { CardFlipped, CardMoved, DeckShuffled, EncounterCardDrawn, Event } from './events';
-import { spawnEvents } from './handle-enemy';
 import { activeInvestigator } from './handle-investigator';
 import type { InstanceId } from './ids';
 import { hasKeyword } from './keywords';
 import { cardMoved } from './placement';
-import { spawnZone } from './spawn';
+import { spawnEvents } from './spawn';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
 import { shuffle } from './rng';

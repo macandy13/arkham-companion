@@ -7,6 +7,7 @@ import {
   type Investigator,
   type MapSpec,
   type StartScenario,
+  type Zone,
 } from '../../src/index';
 import { investigators } from './investigators';
 import { run } from './scenario';
@@ -26,6 +27,8 @@ export interface BoardOptions {
   maps: Readonly<Record<string, BoardMapOptions>>;
   /** Cards that start set aside: instance ID to card code. */
   setAside?: Readonly<Record<string, string>>;
+  /** Other cards that start in a given zone (enemies at locations, discard piles …): instance ID to code and zone. */
+  cards?: Readonly<Record<string, { code: string; zone: Zone }>>;
   /** Number of standard investigators (default 1); ignored when `investigators` is given. */
   playerCount?: number;
   /** Investigators to start with instead of the standard ones. */
@@ -39,7 +42,7 @@ export interface BoardOptions {
  */
 export function startBoard(
   ctx: EngineContext,
-  { maps, setAside = {}, playerCount = 1, investigators: custom }: BoardOptions,
+  { maps, setAside = {}, cards: placed = {}, playerCount = 1, investigators: custom }: BoardOptions,
 ): GameState {
   const specs: Record<string, MapSpec> = {};
   const cards: StartScenario['cards'] = [];
@@ -54,6 +57,8 @@ export function startBoard(
   }
   for (const [id, code] of Object.entries(setAside))
     cards.push({ id: instanceId(id), code, zone: { kind: 'setAside' } });
+  for (const [id, { code, zone }] of Object.entries(placed))
+    cards.push({ id: instanceId(id), code, zone });
   const start: StartScenario = {
     type: 'StartScenario',
     scenarioId: 'test',

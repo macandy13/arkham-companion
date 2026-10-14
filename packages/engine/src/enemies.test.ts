@@ -1,197 +1,168 @@
 import { describe, expect, it } from 'vitest';
-import { engageEvents } from './engagement';
-import { replay } from './reducer';
 import {
-  CommandRejected,
-  cardDbFrom,
   checkInvariants,
-  emptyState,
   enemyAttackList,
   execute,
   instanceId,
   investigatorId,
-  mapId,
   zoneKey,
-  type CardStats,
   type Command,
-  type EngineContext,
   type GameState,
   type InstanceId,
   type Investigator,
-  type Rejection,
-  type StartingCard,
   type Zone,
 } from './index';
+import { engageEvents } from './engagement';
+import { replay } from './reducer';
+import {
+  contextWith,
+  edge,
+  makeCard,
+  makeInvestigator,
+  perInvestigator,
+  rejectionOf,
+  startBoard,
+} from '../test/utils';
 
-const main = mapId('main');
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
 const hall = instanceId('hall');
 const cellar = instanceId('cellar');
 const attic = instanceId('attic');
 
-const defs: CardStats[] = [
-  { code: 'HAL', name: 'Fake Hall', typeCode: 'location', traits: [] },
-  { code: 'CEL', name: 'Fake Cellar', typeCode: 'location', traits: [] },
-  { code: 'ATT', name: 'Fake Attic', typeCode: 'location', traits: [] },
-  {
+/** Hall - Cellar - Attic in a line; the enemies below differ only in the keyword a test needs. */
+const ctx = contextWith(
+  makeCard({ code: 'HAL', name: 'Hall', typeCode: 'location' }),
+  makeCard({ code: 'CEL', name: 'Cellar', typeCode: 'location' }),
+  makeCard({ code: 'ATT', name: 'Attic', typeCode: 'location' }),
+  makeCard({
     code: 'FOE',
-    name: 'Fake Foe',
     typeCode: 'enemy',
-    traits: [],
-    health: { fixed: 0, perInvestigator: 2 },
+    health: perInvestigator(2),
     damage: 1,
     horror: 2,
-  },
-  { code: 'VIC', name: 'Fake Trophy', typeCode: 'enemy', traits: [], victory: 1 },
-  { code: 'ALO', name: 'Fake Aloof', typeCode: 'enemy', traits: [], keywords: [{ name: 'aloof' }] },
-  {
-    code: 'MAS',
-    name: 'Fake Massive',
-    typeCode: 'enemy',
-    traits: [],
-    damage: 2,
-    keywords: [{ name: 'massive' }],
-  },
-  {
+  }),
+  makeCard({ code: 'VIC', typeCode: 'enemy', victory: 1 }),
+  makeCard({ code: 'ALO', typeCode: 'enemy', keywords: [{ name: 'aloof' }] }),
+  makeCard({ code: 'MAS', typeCode: 'enemy', damage: 2, keywords: [{ name: 'massive' }] }),
+  makeCard({
     code: 'PRY',
-    name: 'Fake Predator',
     typeCode: 'enemy',
-    traits: [],
-    keywords: [{ name: 'prey', detail: 'Most clues.' }],
-  },
-  {
+    keywords: [{ name: 'prey', detail: 'Most clues' }],
+  }),
+  makeCard({
     code: 'SPW',
-    name: 'Fake Spawner',
     typeCode: 'enemy',
-    traits: [],
-    keywords: [{ name: 'spawn', detail: 'Fake Cellar' }],
-  },
-  {
+    keywords: [{ name: 'spawn', detail: 'Cellar' }],
+  }),
+  makeCard({
     code: 'ODD',
-    name: 'Fake Oddity',
     typeCode: 'enemy',
-    traits: [],
     keywords: [{ name: 'spawn', detail: 'the location with the most clues' }],
-  },
-  { code: 'REL', name: 'Fake Relic', typeCode: 'asset', traits: [] },
-];
-const ctx: EngineContext = { cards: cardDbFrom(defs) };
+  }),
+  makeCard({ code: 'REL', typeCode: 'asset' }),
+);
 
-function investigator(id: typeof alice, seat: number, extra: Partial<Investigator>): Investigator {
-  return {
-    id,
-    code: 'inv',
-    name: id,
-    seat,
-    health: { max: 8, damage: 0 },
-    sanity: { max: 8, horror: 0 },
-    clues: 0,
-    resources: 0,
-    doomOnPlayerCards: 0,
-    status: 'active',
-    ...extra,
-  };
-}
-
-interface World {
-  /** Default: alice at the hall. */
-  investigators?: Investigator[];
-  /** Cards besides the three locations. */
-  cards?: StartingCard[];
-}
-
-/** Hall - cellar - attic in a line, plus the cards of `world`. */
-function started(world: World): GameState {
-  return execute(ctx, emptyState(), {
-    type: 'StartScenario',
-    scenarioId: 'enemies',
-    difficulty: 'standard',
-    seed: 1,
-    shuffleEncounterDeck: false,
-    investigators: world.investigators ?? [investigator(alice, 1, { locationId: hall })],
-    maps: { [main]: { name: 'Main' } },
-    cards: [
-      { id: hall, code: 'HAL', zone: { kind: 'location', mapId: main }, faceUp: true },
-      { id: cellar, code: 'CEL', zone: { kind: 'location', mapId: main }, faceUp: true },
-      { id: attic, code: 'ATT', zone: { kind: 'location', mapId: main }, faceUp: true },
-      ...(world.cards ?? []),
-    ],
-    connections: [
-      { from: hall, to: cellar, oneWay: false },
-      { from: cellar, to: attic, oneWay: false },
-    ],
-  }).state;
-}
-
-const card = (id: string, code: string, zone: Zone): StartingCard => ({
-  id: instanceId(id),
-  code,
-  zone,
-  faceUp: true,
-});
 const at = (locationId: InstanceId): Zone => ({ kind: 'atLocation', locationId });
 const engagedWith = (id: typeof alice): Zone => ({ kind: 'engaged', investigatorId: id });
 const setAside: Zone = { kind: 'setAside' };
+const discard: Zone = { kind: 'encounterDiscard' };
 
-function zoneOf(state: GameState, id: string): Zone | undefined {
-  return state.cards[instanceId(id)]?.zone;
+interface BoardWorld {
+  /** Default: alice in the hall. */
+  investigators?: Investigator[];
+  /** Cards besides the three locations: instance ID to code and zone. */
+  cards?: Record<string, { code: string; zone: Zone }>;
+  /** Further locations on the map: instance ID to code. */
+  locations?: Record<string, string>;
 }
 
-function rejectionOf(state: GameState, command: Command): Rejection {
-  try {
-    execute(ctx, state, command);
-  } catch (error) {
-    if (error instanceof CommandRejected) return error.rejection;
-    throw error;
-  }
-  throw new Error('command was not rejected');
+function started({
+  investigators = [makeInvestigator({ id: 'alice', locationId: hall })],
+  cards = {},
+  locations = {},
+}: BoardWorld = {}): GameState {
+  return startBoard(ctx, {
+    maps: {
+      main: {
+        locations: { hall: 'HAL', cellar: 'CEL', attic: 'ATT', ...locations },
+        connections: [edge('hall', 'cellar'), edge('cellar', 'attic')],
+      },
+    },
+    investigators,
+    cards,
+  });
 }
 
+/** Two investigators with the given clues, alice first, both at `where`. */
+function pair(where: InstanceId, aliceClues: number, bobClues: number): Investigator[] {
+  return [
+    makeInvestigator({ id: 'alice', seat: 0, locationId: where, clues: aliceClues }),
+    makeInvestigator({ id: 'bob', seat: 1, locationId: where, clues: bobClues }),
+  ];
+}
+
+const zoneOf = (state: GameState, id: string): Zone | undefined =>
+  state.cards[instanceId(id)]?.zone;
+const enemyAt = (code: string, zone: Zone) => ({ e: { code, zone } });
 const spawn = (enemyId: string, target: { at?: InstanceId; by?: typeof alice } = {}): Command => ({
   type: 'SpawnEnemy',
   enemyId: instanceId(enemyId),
   ...(target.at ? { at: target.at } : {}),
   ...(target.by ? { investigatorId: target.by } : {}),
 });
-
 const enemyCommand = (type: 'ExhaustEnemy' | 'ReadyEnemy' | 'DefeatEnemy' | 'DisengageEnemy') =>
   ({ type, enemyId: instanceId('e') }) as Command;
+const attempt = (state: GameState, command: Command) =>
+  rejectionOf(() => execute(ctx, state, command));
 
 describe('SpawnEnemy', () => {
-  it('spawns at the drawing investigator`s location and engages them', () => {
-    const state = started({ cards: [card('e', 'FOE', setAside)] });
+  it.each([
+    {
+      name: 'engages the drawer at the drawer`s location',
+      code: 'FOE',
+      target: { by: alice },
+      zone: engagedWith(alice),
+    },
+    {
+      name: 'stays unengaged when nobody is at the spawn location',
+      code: 'FOE',
+      target: { at: attic },
+      zone: at(attic),
+    },
+    { name: 'follows the spawn keyword', code: 'SPW', target: { by: alice }, zone: at(cellar) },
+    {
+      name: 'lets an explicit location override the spawn keyword',
+      code: 'SPW',
+      target: { at: attic },
+      zone: at(attic),
+    },
+    { name: 'does not engage an aloof enemy', code: 'ALO', target: { by: alice }, zone: at(hall) },
+    {
+      name: 'keeps a massive enemy at the location',
+      code: 'MAS',
+      target: { by: alice },
+      zone: at(hall),
+    },
+  ])('$name', ({ code, target, zone }) => {
+    const state = started({ cards: enemyAt(code, setAside) });
 
-    const { state: after, events } = execute(ctx, state, spawn('e', { by: alice }));
+    const { state: after } = execute(ctx, state, spawn('e', target));
 
-    expect(zoneOf(after, 'e')).toEqual(engagedWith(alice));
-    expect(events.map((e) => e.type)).toEqual(['CardMoved', 'EnemyEngaged']);
+    expect(zoneOf(after, 'e')).toEqual(zone);
     expect(checkInvariants(after)).toEqual([]);
   });
 
-  it('spawns unengaged when nobody is at the spawn location', () => {
-    const state = started({ cards: [card('e', 'FOE', setAside)] });
+  it('produces a move and an engagement', () => {
+    const state = started({ cards: enemyAt('FOE', setAside) });
 
-    const { state: after } = execute(ctx, state, spawn('e', { at: attic }));
+    const { events } = execute(ctx, state, spawn('e', { by: alice }));
 
-    expect(zoneOf(after, 'e')).toEqual(at(attic));
-  });
-
-  it('spawns at the location named by the spawn keyword', () => {
-    const state = started({ cards: [card('e', 'SPW', setAside)] });
-
-    const { state: after } = execute(ctx, state, spawn('e', { by: alice }));
-
-    expect(zoneOf(after, 'e')).toEqual(at(cellar));
+    expect(events.map((e) => e.type)).toEqual(['CardMoved', 'EnemyEngaged']);
   });
 
   it('asks the players when the spawn keyword matches several locations', () => {
-    const state = started({
-      cards: [
-        card('e', 'SPW', setAside),
-        card('cellar2', 'CEL', { kind: 'location', mapId: main }),
-      ],
-    });
+    const state = started({ cards: enemyAt('SPW', setAside), locations: { cellar2: 'CEL' } });
 
     const { state: after } = execute(ctx, state, spawn('e', { by: alice }));
 
@@ -206,7 +177,7 @@ describe('SpawnEnemy', () => {
   });
 
   it('asks the players, among all locations in play, when the spawn text is unreadable', () => {
-    const state = started({ cards: [card('e', 'ODD', setAside)] });
+    const state = started({ cards: enemyAt('ODD', setAside) });
 
     const { state: after } = execute(ctx, state, spawn('e', { by: alice }));
 
@@ -220,7 +191,7 @@ describe('SpawnEnemy', () => {
   });
 
   it('discards the enemy when the named location is not in play', () => {
-    const state = started({ cards: [card('e', 'SPW', setAside)] });
+    const state = started({ cards: enemyAt('SPW', setAside) });
     const withoutCellar = execute(ctx, state, {
       type: 'ManualAdjust',
       adjustment: { kind: 'moveCard', cardId: cellar, to: setAside },
@@ -228,30 +199,15 @@ describe('SpawnEnemy', () => {
 
     const { state: after } = execute(ctx, withoutCellar, spawn('e', { by: alice }));
 
-    expect(zoneOf(after, 'e')).toEqual({ kind: 'encounterDiscard' });
+    expect(zoneOf(after, 'e')).toEqual(discard);
     expect(after.pending).toEqual([]);
   });
 
-  it('lets an explicit location override the spawn keyword', () => {
-    const state = started({ cards: [card('e', 'SPW', setAside)] });
-
-    const { state: after } = execute(ctx, state, spawn('e', { at: attic }));
-
-    expect(zoneOf(after, 'e')).toEqual(at(attic));
-  });
-
   it('never engages an exhausted enemy', () => {
-    const state = started({ cards: [card('e', 'FOE', at(attic))] });
+    const state = started({ cards: enemyAt('FOE', at(attic)) });
     const exhausted = execute(ctx, state, enemyCommand('ExhaustEnemy')).state;
     const arrived = replay(
-      [
-        {
-          type: 'CardMoved',
-          cardId: instanceId('e'),
-          from: at(attic),
-          to: at(hall),
-        },
-      ],
+      [{ type: 'CardMoved', cardId: instanceId('e'), from: at(attic), to: at(hall) }],
       exhausted,
     );
 
@@ -259,62 +215,46 @@ describe('SpawnEnemy', () => {
     expect(engageEvents(ctx, arrived, instanceId('e'), alice)).toEqual([]);
   });
 
-  it('does not engage an aloof enemy', () => {
-    const state = started({ cards: [card('e', 'ALO', setAside)] });
-
-    const { state: after } = execute(ctx, state, spawn('e', { by: alice }));
-
-    expect(zoneOf(after, 'e')).toEqual(at(hall));
-  });
-
-  it('keeps a massive enemy at the location, where it counts as engaged with everyone', () => {
-    const state = started({ cards: [card('e', 'MAS', setAside)] });
-
-    const { state: after } = execute(ctx, state, spawn('e', { by: alice }));
-
-    expect(zoneOf(after, 'e')).toEqual(at(hall));
-  });
-
   describe('with two investigators at the location', () => {
-    const clues = (aliceClues: number, bobClues: number) => [
-      investigator(alice, 1, { locationId: hall, clues: aliceClues }),
-      investigator(bob, 2, { locationId: hall, clues: bobClues }),
-    ];
+    it.each([
+      {
+        name: 'the investigator its prey picks, when spawned by an effect',
+        clues: [1, 3],
+        target: { at: hall },
+        zone: engagedWith(bob),
+      },
+      {
+        name: 'the drawer whatever the prey, without a spawn instruction',
+        clues: [1, 3],
+        target: { by: alice },
+        zone: engagedWith(alice),
+      },
+    ])('engages $name', ({ clues, target, zone }) => {
+      const [aliceClues = 0, bobClues = 0] = clues;
+      const state = started({
+        investigators: pair(hall, aliceClues, bobClues),
+        cards: enemyAt('PRY', setAside),
+      });
 
-    it('engages the investigator its prey picks when spawned by an effect', () => {
-      const state = started({ investigators: clues(1, 3), cards: [card('e', 'PRY', setAside)] });
+      const { state: after } = execute(ctx, state, spawn('e', target));
 
-      const { state: after } = execute(ctx, state, spawn('e', { at: hall }));
-
-      expect(zoneOf(after, 'e')).toEqual(engagedWith(bob));
-    });
-
-    it('engages the drawer whatever the prey when there is no spawn instruction', () => {
-      const state = started({ investigators: clues(1, 3), cards: [card('e', 'PRY', setAside)] });
-
-      const { state: after } = execute(ctx, state, spawn('e', { by: alice }));
-
-      expect(zoneOf(after, 'e')).toEqual(engagedWith(alice));
+      expect(zoneOf(after, 'e')).toEqual(zone);
       expect(after.pending).toEqual([]);
     });
 
     it('asks the players when there is no prey and no drawer', () => {
-      const state = started({ investigators: clues(1, 3), cards: [card('e', 'FOE', setAside)] });
+      const state = started({ investigators: pair(hall, 1, 3), cards: enemyAt('FOE', setAside) });
 
       const { state: after } = execute(ctx, state, spawn('e', { at: hall }));
 
       expect(zoneOf(after, 'e')).toEqual(at(hall));
       expect(after.pending).toMatchObject([
-        {
-          kind: 'chooseInvestigator',
-          subject: 'e',
-          options: [{ target: alice }, { target: bob }],
-        },
+        { kind: 'chooseInvestigator', subject: 'e', options: [{ target: alice }, { target: bob }] },
       ]);
     });
 
     it('asks the players when prey is tied, and engaging answers the question', () => {
-      const state = started({ investigators: clues(2, 2), cards: [card('e', 'PRY', setAside)] });
+      const state = started({ investigators: pair(hall, 2, 2), cards: enemyAt('PRY', setAside) });
       const asked = execute(ctx, state, spawn('e', { at: hall })).state;
 
       const { state: after } = execute(ctx, asked, {
@@ -329,34 +269,40 @@ describe('SpawnEnemy', () => {
     });
   });
 
-  it('rejects an enemy that is already in play', () => {
-    const state = started({ cards: [card('e', 'FOE', at(hall))] });
+  it.each([
+    {
+      name: 'an enemy that is already in play',
+      code: 'FOE',
+      zone: at(hall),
+      rejection: { code: 'enemyAlreadyInPlay', cardId: 'e' },
+      target: { at: hall },
+    },
+    {
+      name: 'a card that is not an enemy',
+      code: 'REL',
+      zone: setAside,
+      rejection: { code: 'notAnEnemy', cardId: 'e' },
+      target: { at: hall },
+    },
+    {
+      name: 'a spawn without any location',
+      code: 'FOE',
+      zone: setAside,
+      rejection: { code: 'noSpawnLocation', cardId: 'e' },
+      target: {},
+    },
+  ])('rejects $name', ({ code, zone, rejection, target }) => {
+    const state = started({ cards: enemyAt(code, zone) });
 
-    expect(rejectionOf(state, spawn('e', { at: hall }))).toEqual({
-      code: 'enemyAlreadyInPlay',
-      cardId: 'e',
-    });
-  });
-
-  it('rejects a card that is not an enemy', () => {
-    const state = started({ cards: [card('r', 'REL', setAside)] });
-
-    expect(rejectionOf(state, spawn('r', { at: hall }))).toEqual({
-      code: 'notAnEnemy',
-      cardId: 'r',
-    });
-  });
-
-  it('rejects a spawn without any location', () => {
-    const state = started({ cards: [card('e', 'FOE', setAside)] });
-
-    expect(rejectionOf(state, spawn('e'))).toEqual({ code: 'noSpawnLocation', cardId: 'e' });
+    expect(attempt(state, spawn('e', target))).toEqual(rejection);
   });
 
   it('rejects an explicit location that is not on a map', () => {
-    const state = started({ cards: [card('e', 'FOE', setAside), card('x', 'REL', setAside)] });
+    const state = started({
+      cards: { ...enemyAt('FOE', setAside), x: { code: 'REL', zone: setAside } },
+    });
 
-    expect(rejectionOf(state, spawn('e', { at: instanceId('x') }))).toEqual({
+    expect(attempt(state, spawn('e', { at: instanceId('x') }))).toEqual({
       code: 'notALocation',
       cardId: 'x',
     });
@@ -364,50 +310,54 @@ describe('SpawnEnemy', () => {
 });
 
 describe('setup', () => {
-  it('engages an enemy that starts at the investigators` location', () => {
-    const state = started({ cards: [card('e', 'FOE', at(hall))] });
+  it.each([
+    {
+      name: 'engages an enemy that starts at the investigators` location',
+      where: hall,
+      zone: engagedWith(alice),
+    },
+    { name: 'leaves an enemy elsewhere unengaged', where: attic, zone: at(attic) },
+  ])('$name', ({ where, zone }) => {
+    const state = started({ cards: enemyAt('FOE', at(where)) });
 
-    expect(zoneOf(state, 'e')).toEqual(engagedWith(alice));
-  });
-
-  it('leaves an enemy elsewhere unengaged', () => {
-    const state = started({ cards: [card('e', 'FOE', at(attic))] });
-
-    expect(zoneOf(state, 'e')).toEqual(at(attic));
+    expect(zoneOf(state, 'e')).toEqual(zone);
   });
 });
 
 describe('engagement commands', () => {
-  it('engages an enemy at the investigator`s location', () => {
-    const state = started({ cards: [card('e', 'ALO', at(hall))] });
+  const engage = (investigatorId: typeof alice): Command => ({
+    type: 'EngageEnemy',
+    enemyId: instanceId('e'),
+    investigatorId,
+  });
 
-    const { state: after } = execute(ctx, state, {
-      type: 'EngageEnemy',
-      enemyId: instanceId('e'),
-      investigatorId: alice,
-    });
+  it('engages an enemy at the investigator`s location', () => {
+    const state = started({ cards: enemyAt('ALO', at(hall)) });
+
+    const { state: after } = execute(ctx, state, engage(alice));
 
     expect(zoneOf(after, 'e')).toEqual(engagedWith(alice));
   });
 
-  it('rejects engaging an enemy at another location', () => {
-    const state = started({ cards: [card('e', 'FOE', at(attic))] });
+  it.each([
+    {
+      name: 'an enemy at another location',
+      zone: at(attic),
+      rejection: { code: 'investigatorNotAtLocation', investigatorId: alice, locationId: attic },
+    },
+    {
+      name: 'the investigator it is already engaged with',
+      zone: engagedWith(alice),
+      rejection: { code: 'alreadyEngaged', cardId: 'e', investigatorId: alice },
+    },
+  ])('rejects engaging $name', ({ zone, rejection }) => {
+    const state = started({ cards: enemyAt('FOE', zone) });
 
-    expect(
-      rejectionOf(state, { type: 'EngageEnemy', enemyId: instanceId('e'), investigatorId: alice }),
-    ).toEqual({ code: 'investigatorNotAtLocation', investigatorId: alice, locationId: attic });
-  });
-
-  it('rejects engaging the investigator it is already engaged with', () => {
-    const state = started({ cards: [card('e', 'FOE', engagedWith(alice))] });
-
-    expect(
-      rejectionOf(state, { type: 'EngageEnemy', enemyId: instanceId('e'), investigatorId: alice }),
-    ).toEqual({ code: 'alreadyEngaged', cardId: 'e', investigatorId: alice });
+    expect(attempt(state, engage(alice))).toEqual(rejection);
   });
 
   it('disengages an enemy, leaving it at the investigator`s location', () => {
-    const state = started({ cards: [card('e', 'FOE', engagedWith(alice))] });
+    const state = started({ cards: enemyAt('FOE', engagedWith(alice)) });
 
     const { state: after } = execute(ctx, state, enemyCommand('DisengageEnemy'));
 
@@ -415,9 +365,9 @@ describe('engagement commands', () => {
   });
 
   it('rejects disengaging an unengaged enemy', () => {
-    const state = started({ cards: [card('e', 'ALO', at(hall))] });
+    const state = started({ cards: enemyAt('ALO', at(hall)) });
 
-    expect(rejectionOf(state, enemyCommand('DisengageEnemy'))).toEqual({
+    expect(attempt(state, enemyCommand('DisengageEnemy'))).toEqual({
       code: 'notEngaged',
       cardId: 'e',
     });
@@ -432,7 +382,7 @@ describe('damage and defeat', () => {
   });
 
   it('puts damage on an enemy without defeating it below its health', () => {
-    const state = started({ cards: [card('e', 'FOE', engagedWith(alice))] });
+    const state = started({ cards: enemyAt('FOE', engagedWith(alice)) });
 
     const { state: after } = execute(ctx, state, damage(1));
 
@@ -443,10 +393,10 @@ describe('damage and defeat', () => {
   it('defeats an enemy whose damage reaches its health, scaled by the starting player count', () => {
     const state = started({
       investigators: [
-        investigator(alice, 1, { locationId: hall }),
-        investigator(bob, 2, { locationId: attic }),
+        makeInvestigator({ id: 'alice', seat: 0, locationId: hall }),
+        makeInvestigator({ id: 'bob', seat: 1, locationId: attic }),
       ],
-      cards: [card('e', 'FOE', engagedWith(alice))],
+      cards: enemyAt('FOE', engagedWith(alice)),
     });
 
     const afterThree = execute(ctx, state, damage(3)).state;
@@ -454,12 +404,12 @@ describe('damage and defeat', () => {
 
     expect(zoneOf(afterThree, 'e')).toEqual(engagedWith(alice));
     expect(afterFour.events.map((e) => e.type)).toEqual(['TokensChanged', 'EnemyDefeated']);
-    expect(zoneOf(afterFour.state, 'e')).toEqual({ kind: 'encounterDiscard' });
+    expect(zoneOf(afterFour.state, 'e')).toEqual(discard);
     expect(afterFour.state.cards[instanceId('e')]?.tokens).toEqual({});
   });
 
   it('sends a defeated enemy with victory to the victory display', () => {
-    const state = started({ cards: [card('e', 'VIC', engagedWith(alice))] });
+    const state = started({ cards: enemyAt('VIC', engagedWith(alice)) });
 
     const { state: after } = execute(ctx, state, enemyCommand('DefeatEnemy'));
 
@@ -469,27 +419,18 @@ describe('damage and defeat', () => {
 
   it('puts a defeated enemy on top of the encounter discard and readies it', () => {
     const state = started({
-      cards: [
-        card('old', 'REL', { kind: 'encounterDiscard' }),
-        card('e', 'FOE', engagedWith(alice)),
-      ],
+      cards: { old: { code: 'REL', zone: discard }, ...enemyAt('FOE', engagedWith(alice)) },
     });
     const exhausted = execute(ctx, state, enemyCommand('ExhaustEnemy')).state;
 
     const { state: after } = execute(ctx, exhausted, enemyCommand('DefeatEnemy'));
 
-    expect(after.order[zoneKey({ kind: 'encounterDiscard' })]).toEqual(['e', 'old']);
+    expect(after.order[zoneKey(discard)]).toEqual(['e', 'old']);
     expect(after.cards[instanceId('e')]?.exhausted).toBe(false);
   });
 
   it('drops an open engagement question when the enemy is defeated', () => {
-    const state = started({
-      investigators: [
-        investigator(alice, 1, { locationId: hall }),
-        investigator(bob, 2, { locationId: hall }),
-      ],
-      cards: [card('e', 'FOE', setAside)],
-    });
+    const state = started({ investigators: pair(hall, 0, 0), cards: enemyAt('FOE', setAside) });
     const asked = execute(ctx, state, spawn('e', { at: hall })).state;
 
     const { state: after } = execute(ctx, asked, enemyCommand('DefeatEnemy'));
@@ -498,22 +439,29 @@ describe('damage and defeat', () => {
     expect(after.pending).toEqual([]);
   });
 
-  it('rejects damage that is not a positive integer', () => {
-    const state = started({ cards: [card('e', 'FOE', engagedWith(alice))] });
+  it.each([
+    {
+      name: 'damage that is not a positive integer',
+      zone: engagedWith(alice),
+      amount: 0,
+      rejection: { code: 'invalidTokenDelta', delta: 0 },
+    },
+    {
+      name: 'damage on an enemy that is not in play',
+      zone: setAside,
+      amount: 1,
+      rejection: { code: 'enemyNotInPlay', cardId: 'e' },
+    },
+  ])('rejects $name', ({ zone, amount, rejection }) => {
+    const state = started({ cards: enemyAt('FOE', zone) });
 
-    expect(rejectionOf(state, damage(0))).toEqual({ code: 'invalidTokenDelta', delta: 0 });
-  });
-
-  it('rejects damage on an enemy that is not in play', () => {
-    const state = started({ cards: [card('e', 'FOE', setAside)] });
-
-    expect(rejectionOf(state, damage(1))).toEqual({ code: 'enemyNotInPlay', cardId: 'e' });
+    expect(attempt(state, damage(amount))).toEqual(rejection);
   });
 });
 
 describe('exhaust and ready', () => {
   it('exhausts and readies an enemy', () => {
-    const state = started({ cards: [card('e', 'FOE', engagedWith(alice))] });
+    const state = started({ cards: enemyAt('FOE', engagedWith(alice)) });
 
     const exhausted = execute(ctx, state, enemyCommand('ExhaustEnemy')).state;
     const readied = execute(ctx, exhausted, enemyCommand('ReadyEnemy')).state;
@@ -523,9 +471,9 @@ describe('exhaust and ready', () => {
   });
 
   it('rejects readying a ready enemy', () => {
-    const state = started({ cards: [card('e', 'FOE', engagedWith(alice))] });
+    const state = started({ cards: enemyAt('FOE', engagedWith(alice)) });
 
-    expect(rejectionOf(state, enemyCommand('ReadyEnemy'))).toEqual({
+    expect(attempt(state, enemyCommand('ReadyEnemy'))).toEqual({
       code: 'exhaustUnchanged',
       cardId: 'e',
       exhausted: false,
@@ -533,7 +481,7 @@ describe('exhaust and ready', () => {
   });
 
   it('engages when a readied unengaged enemy shares a location with an investigator', () => {
-    const state = started({ cards: [card('e', 'FOE', at(attic))] });
+    const state = started({ cards: enemyAt('FOE', at(attic)) });
     const exhausted = execute(ctx, state, enemyCommand('ExhaustEnemy')).state;
     const arrived = execute(ctx, exhausted, {
       type: 'MoveInvestigator',
@@ -553,14 +501,14 @@ describe('enemyAttackList', () => {
   it('lists ready engaged enemies per investigator in seat order, with their damage and horror', () => {
     const state = started({
       investigators: [
-        investigator(alice, 1, { locationId: hall }),
-        investigator(bob, 2, { locationId: cellar }),
+        makeInvestigator({ id: 'alice', seat: 0, locationId: hall }),
+        makeInvestigator({ id: 'bob', seat: 1, locationId: cellar }),
       ],
-      cards: [
-        card('forBob', 'FOE', engagedWith(bob)),
-        card('forAlice', 'FOE', engagedWith(alice)),
-        card('tired', 'FOE', engagedWith(alice)),
-      ],
+      cards: {
+        forBob: { code: 'FOE', zone: engagedWith(bob) },
+        forAlice: { code: 'FOE', zone: engagedWith(alice) },
+        tired: { code: 'FOE', zone: engagedWith(alice) },
+      },
     });
     const tired = execute(ctx, state, {
       type: 'ExhaustEnemy',
@@ -575,11 +523,8 @@ describe('enemyAttackList', () => {
 
   it('includes a ready massive enemy for every investigator at its location', () => {
     const state = started({
-      investigators: [
-        investigator(alice, 1, { locationId: hall }),
-        investigator(bob, 2, { locationId: hall }),
-      ],
-      cards: [card('big', 'MAS', at(hall)), card('loner', 'ALO', at(hall))],
+      investigators: pair(hall, 0, 0),
+      cards: { big: { code: 'MAS', zone: at(hall) }, loner: { code: 'ALO', zone: at(hall) } },
     });
 
     expect(enemyAttackList(ctx, state)).toEqual([
@@ -590,8 +535,11 @@ describe('enemyAttackList', () => {
 
   it('ignores defeated investigators and unengaged enemies', () => {
     const state = started({
-      investigators: [investigator(alice, 1, { locationId: hall, status: 'defeated' })],
-      cards: [card('e', 'FOE', engagedWith(alice)), card('far', 'FOE', at(attic))],
+      investigators: [makeInvestigator({ id: 'alice', locationId: hall, status: 'defeated' })],
+      cards: {
+        e: { code: 'FOE', zone: engagedWith(alice) },
+        far: { code: 'FOE', zone: at(attic) },
+      },
     });
 
     expect(enemyAttackList(ctx, state)).toEqual([]);

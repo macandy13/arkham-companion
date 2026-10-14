@@ -24,9 +24,9 @@ import {
   handleEngageEnemy,
   handleExhaustEnemy,
   handleReadyEnemy,
-  handleSpawnEnemy,
 } from './handle-enemy';
 import { startingEngagements } from './engagement';
+import { handleSpawnEnemy } from './spawn';
 import { handleMoveHunters } from './hunters';
 import { withAgendaCheck } from './doom';
 import {
