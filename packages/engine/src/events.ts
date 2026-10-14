@@ -30,6 +30,7 @@ export type Event =
   | DecisionRequested
   | AgendaAdvanced
   | ActAdvanced
+  | CurrentCardChanged
   | ScenarioEnded;
 
 /** A scenario was set up; replaces the whole state. Produced by `StartScenario`. */
@@ -139,28 +140,39 @@ export interface DecisionRequested {
 }
 
 /**
- * The agenda `cardId` was advanced and `nextId` is now the current agenda
- * (absent after the last one). Follows the `CardFlipped`/`CardMoved` that take
- * the old agenda out of play; also drops decisions about the old agenda.
- * Produced by `AdvanceAgenda`.
+ * The current agenda `cardId` advanced and its reverse side resolves now: it
+ * fires the `onAgendaAdvance` hook while the agenda is still current. Follows
+ * the `CardFlipped` that turns it over; drops decisions about the agenda.
+ * Produced by `AdvanceAgenda`, which follows it with `CurrentCardChanged` once
+ * the reverse side has resolved.
  */
 export interface AgendaAdvanced {
   type: 'AgendaAdvanced';
   cardId: InstanceId;
-  nextId?: InstanceId;
 }
 
-/** Like `AgendaAdvanced`, for the act deck. Produced by `AdvanceAct`. */
+/** Like `AgendaAdvanced`, for the act deck (`onActAdvance`). Produced by `AdvanceAct`. */
 export interface ActAdvanced {
   type: 'ActAdvanced';
   cardId: InstanceId;
-  nextId?: InstanceId;
+}
+
+/**
+ * `cardId` is now the current card of `deck` (absent once the deck is used
+ * up). Produced by `AdvanceAgenda`/`AdvanceAct` after the reverse side of the
+ * old card has resolved and a `CardMoved` has taken it out of the game.
+ */
+export interface CurrentCardChanged {
+  type: 'CurrentCardChanged';
+  deck: 'agenda' | 'act';
+  cardId?: InstanceId;
 }
 
 /**
  * The scenario is over with the given resolution (`GameMeta.resolution`), which
- * the campaign records. Produced by `AdvanceAgenda`/`AdvanceAct` when the last
- * card of a deck advances.
+ * the campaign records. Produced by `EndScenario` (typically returned by a
+ * reverse-side hook) and by `AdvanceAgenda`/`AdvanceAct` when the last card of
+ * a deck advances without its reverse side ending the scenario.
  */
 export interface ScenarioEnded {
   type: 'ScenarioEnded';

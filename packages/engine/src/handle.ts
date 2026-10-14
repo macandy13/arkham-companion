@@ -11,7 +11,13 @@ import {
   handleMoveInvestigator,
 } from './handle-investigator';
 import { withAgendaCheck } from './doom';
-import { handleAdvanceAct, handleAdvanceAgenda, handlePlaceDoom } from './handle-scenario';
+import {
+  completeAdvance,
+  handleAdvanceAct,
+  handleAdvanceAgenda,
+  handleEndScenario,
+  handlePlaceDoom,
+} from './handle-scenario';
 import type { Adjustment, Command, StartScenario, StartingCard } from './commands';
 import type { CardMoved, DeckShuffled, Event, ScenarioStarted, TokensChanged } from './events';
 import { instanceId, type InstanceId, type MapId } from './ids';
@@ -32,7 +38,10 @@ import { sameZone, zoneKey, type Zone } from './zone';
  * triggered (`ctx.hooks`, `ctx.effects`): the follow-up commands are handled
  * like player commands after the events of the command that triggered them
  * (depth first, so a follow-up's own chain resolves before the next sibling),
- * and their events are appended to the originating command's list. One player command
+ * and their events are appended to the originating command's list. A command
+ * whose rules continue after those effects (advancing agenda/act, see
+ * `completeCommand`) appends its remaining events and their chains, under the
+ * same loop guard. One player command
  * therefore yields one list of events, which undo (M1.11) removes as a unit.
  * A rejected follow-up or a chain longer than `MAX_TRIGGERED_COMMANDS`
  * rejects the originating command, so a bad hook can neither hang the app nor
@@ -54,7 +63,21 @@ function handleWithTriggers(
   command: Command,
   budget: TriggerBudget,
 ): Event[] {
-  const events = handleCommand(ctx, state, command);
+  const events = withForcedEffects(ctx, state, handleCommand(ctx, state, command), command, budget);
+  const after = replay(events, state);
+  const completion = completeCommand(state, after, command);
+  if (completion.length === 0) return events;
+  return [...events, ...withForcedEffects(ctx, after, completion, command, budget)];
+}
+
+/** `events` (produced from `state`) followed by the chains of forced effects they trigger. */
+function withForcedEffects(
+  ctx: EngineContext,
+  state: GameState,
+  events: Event[],
+  command: Command,
+  budget: TriggerBudget,
+): Event[] {
   if (!firesTriggers(command)) return events;
   const followUps = triggeredCommands(ctx, state, events);
   let current = replay(events, state);
@@ -68,6 +91,24 @@ function handleWithTriggers(
     chain.push(...followUpEvents);
   }
   return chain;
+}
+
+/**
+ * The rest of a command whose rules continue only after the forced effects
+ * of its first events have resolved; empty for most commands. Advancing
+ * agenda/act is the case: the reverse side resolves before the next card
+ * becomes current (`completeAdvance`). `before` is the state the command
+ * started from, `after` the state after its first events and their effects.
+ */
+function completeCommand(before: GameState, after: GameState, command: Command): Event[] {
+  switch (command.type) {
+    case 'AdvanceAgenda':
+      return completeAdvance(before, after, 'agenda', command.resolution);
+    case 'AdvanceAct':
+      return completeAdvance(before, after, 'act', command.resolution);
+    default:
+      return [];
+  }
 }
 
 /**
@@ -130,6 +171,8 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
       return handleAdvanceAgenda(state, command);
     case 'AdvanceAct':
       return handleAdvanceAct(ctx, state, command);
+    case 'EndScenario':
+      return handleEndScenario(command);
   }
 }
 

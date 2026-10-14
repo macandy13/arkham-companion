@@ -34,7 +34,11 @@ export type TriggerHook<E extends Event> = (
 export interface ScenarioHooks {
   /** After doom is placed on any card in play (a positive doom `TokensChanged`). */
   afterDoomPlaced: TriggerHook<TokensChanged>;
-  /** The reverse side of an agenda, keyed by the code of the agenda that advanced. */
+  /**
+   * The reverse side of an agenda, keyed by the code of the agenda that
+   * advanced. Runs while that agenda is still current (the next one becomes
+   * current afterwards); returning `EndScenario` names the resolution.
+   */
   onAgendaAdvance: Readonly<Record<string, TriggerHook<AgendaAdvanced>>>;
   /** The reverse side of an act, keyed by the code of the act that advanced. */
   onActAdvance: Readonly<Record<string, TriggerHook<ActAdvanced>>>;

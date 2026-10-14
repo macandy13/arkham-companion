@@ -408,6 +408,13 @@ describe('AdvanceAgenda', () => {
       deck: 'agenda',
     });
   });
+
+  it('rejects a resolution while another agenda follows', () => {
+    expect(rejectionOf(state, { type: 'AdvanceAgenda', resolution: 'R1' })).toEqual({
+      code: 'unexpectedResolution',
+      deck: 'agenda',
+    });
+  });
 });
 
 describe('AdvanceAct', () => {
@@ -559,6 +566,19 @@ describe('AdvanceAct', () => {
     expect(
       rejectionOf(lastAct, { type: 'AdvanceAct', spend: [{ investigatorId: bob, amount: 6 }] }),
     ).toEqual({ code: 'resolutionRequired', deck: 'act' });
+  });
+
+  it('rejects a resolution while another act follows', () => {
+    expect(
+      rejectionOf(state, {
+        type: 'AdvanceAct',
+        spend: [
+          { investigatorId: alice, amount: 3 },
+          { investigatorId: bob, amount: 1 },
+        ],
+        resolution: 'R2',
+      }),
+    ).toEqual({ code: 'unexpectedResolution', deck: 'act' });
   });
 
   it('rejects advancing once the act deck is used up', () => {

@@ -1,7 +1,5 @@
 import { sameEdge } from './board';
 import type {
-  ActAdvanced,
-  AgendaAdvanced,
   CardFlipped,
   CardMoved,
   ConnectionChanged,
@@ -46,9 +44,10 @@ export function apply(state: GameState, event: Event): GameState {
     case 'DecisionRequested':
       return applyDecisionRequested(state, event);
     case 'AgendaAdvanced':
-      return applyAgendaAdvanced(state, event);
     case 'ActAdvanced':
-      return applyActAdvanced(state, event);
+      return withoutDecisionsAbout(state, event.cardId);
+    case 'CurrentCardChanged':
+      return { ...state, [event.deck]: { current: event.cardId } };
     case 'ScenarioEnded':
       return applyScenarioEnded(state, event);
   }
@@ -151,19 +150,11 @@ function applyDecisionRequested(state: GameState, e: DecisionRequested): GameSta
   return { ...state, pending: [...state.pending, e.decision] };
 }
 
-function applyAgendaAdvanced(state: GameState, e: AgendaAdvanced): GameState {
-  return { ...withoutDecisionsAbout(state, e.cardId), agenda: { current: e.nextId } };
-}
-
-function applyActAdvanced(state: GameState, e: ActAdvanced): GameState {
-  return { ...withoutDecisionsAbout(state, e.cardId), act: { current: e.nextId } };
-}
-
 function applyScenarioEnded(state: GameState, e: ScenarioEnded): GameState {
   return { ...state, meta: { ...state.meta, resolution: e.resolution } };
 }
 
-/** Drops pending decisions about a card that has left play, so none outlives its subject. */
+/** Drops pending decisions about a card that has advanced or left play, so none outlives its subject. */
 function withoutDecisionsAbout(state: GameState, cardId: InstanceId): GameState {
   return { ...state, pending: state.pending.filter((d) => d.subject !== cardId) };
 }

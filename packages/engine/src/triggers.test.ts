@@ -126,35 +126,88 @@ describe('trigger bus', () => {
     expect(events.map((event) => event.type)).toEqual(['TokensChanged']);
   });
 
-  it('runs the reverse side of the agenda that advanced, seeing the next agenda as current', () => {
-    const currentAgendas: unknown[] = [];
+  it('runs the reverse side of the advancing agenda while it is still current', () => {
+    const seen: unknown[] = [];
     const ctx = withHooks({
       onAgendaAdvance: {
         A1: (_ctx, state) => {
-          currentAgendas.push(state.agenda.current);
+          seen.push({ current: state.agenda.current, faceUp: state.cards[agenda1]?.faceUp });
           return [{ type: 'RevealLocation', locationId: cellar }];
         },
         A2: () => [{ type: 'PlaceDoom', cardId: ghoul, amount: 1 }],
       },
     });
 
-    const { events } = execute(ctx, startedState(), { type: 'AdvanceAgenda' });
+    const { events, state } = execute(ctx, startedState(), { type: 'AdvanceAgenda' });
 
-    expect(currentAgendas).toEqual([agenda2]);
-    expect(events.slice(-3).map((event) => event.type)).toEqual([
+    expect(seen).toEqual([{ current: agenda1, faceUp: false }]);
+    expect(events.map((event) => event.type)).toEqual([
+      'CardFlipped',
       'AgendaAdvanced',
       'CardFlipped',
       'TokensChanged',
+      'CardMoved',
+      'CurrentCardChanged',
     ]);
+    expect(state.agenda.current).toBe(agenda2);
+    expect(state.cards[cellar]?.faceUp).toBe(true);
   });
 
-  it('runs the reverse side of the act that advanced', () => {
+  it('applies a reverse-side effect on the current agenda to the advancing agenda', () => {
+    const ctx = withHooks({ onAgendaAdvance: { A1: () => [{ type: 'PlaceDoom', amount: 1 }] } });
+
+    const { state } = execute(ctx, startedState(), { type: 'AdvanceAgenda' });
+
+    expect(state.cards[agenda1]?.tokens.doom).toBe(1);
+    expect(state.cards[agenda2]?.tokens.doom).toBeUndefined();
+  });
+
+  it('lets the reverse side of the last agenda end the scenario with its resolution', () => {
     const ctx = withHooks({
-      onActAdvance: { C1: () => [{ type: 'RevealLocation', locationId: cellar }] },
+      onAgendaAdvance: { A2: () => [{ type: 'EndScenario', resolution: 'R2' }] },
+    });
+    const lastAgenda = execute(ctx, startedState(), { type: 'AdvanceAgenda' }).state;
+
+    const { events, state } = execute(ctx, lastAgenda, { type: 'AdvanceAgenda' });
+
+    expect(events.map((event) => event.type).slice(-3)).toEqual([
+      'ScenarioEnded',
+      'CardMoved',
+      'CurrentCardChanged',
+    ]);
+    expect(state.meta.resolution).toBe('R2');
+    expect(state.agenda.current).toBeUndefined();
+  });
+
+  it('prefers the resolution of the reverse side over the fallback resolution', () => {
+    const ctx = withHooks({
+      onAgendaAdvance: { A2: () => [{ type: 'EndScenario', resolution: 'R2' }] },
+    });
+    const lastAgenda = execute(ctx, startedState(), { type: 'AdvanceAgenda' }).state;
+
+    const { events, state } = execute(ctx, lastAgenda, { type: 'AdvanceAgenda', resolution: 'R1' });
+
+    expect(events.filter((event) => event.type === 'ScenarioEnded')).toEqual([
+      { type: 'ScenarioEnded', resolution: 'R2' },
+    ]);
+    expect(state.meta.resolution).toBe('R2');
+  });
+
+  it('runs the reverse side of the advancing act while it is still current', () => {
+    const currentActs: unknown[] = [];
+    const ctx = withHooks({
+      onActAdvance: {
+        C1: (_ctx, state) => {
+          currentActs.push(state.act.current);
+          return [{ type: 'RevealLocation', locationId: cellar }];
+        },
+      },
     });
 
     const { state } = execute(ctx, startedState(), advanceAct);
 
+    expect(currentActs).toEqual([act1]);
+    expect(state.act.current).toBe(act2);
     expect(state.cards[cellar]?.faceUp).toBe(true);
   });
 

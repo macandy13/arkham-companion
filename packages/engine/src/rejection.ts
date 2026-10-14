@@ -60,8 +60,10 @@ export type Rejection =
   | { code: 'cardNotInPlay'; cardId: InstanceId }
   /** `AdvanceAgenda`/`AdvanceAct` while that deck has no current card. */
   | { code: 'noCurrentCard'; deck: 'agenda' | 'act' }
-  /** The last card of a deck advances but the command names no resolution. */
+  /** The last card of a deck advances, but neither its reverse side nor the command names a resolution. */
   | { code: 'resolutionRequired'; deck: 'agenda' | 'act' }
+  /** `AdvanceAgenda`/`AdvanceAct` names a fallback resolution although further cards follow. */
+  | { code: 'unexpectedResolution'; deck: 'agenda' | 'act' }
   /** The clues paid for an act do not add up to its requirement. */
   | { code: 'wrongClueTotal'; required: number; spent: number }
   /**
@@ -151,6 +153,8 @@ function describe(r: Rejection): string {
       return `there is no current ${r.deck}`;
     case 'resolutionRequired':
       return `the last ${r.deck} needs a resolution`;
+    case 'unexpectedResolution':
+      return `a resolution is only allowed for the last ${r.deck}`;
     case 'wrongClueTotal':
       return `${r.required} clues are required, ${r.spent} spent`;
     case 'triggerLoop':
