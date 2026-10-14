@@ -24,20 +24,30 @@ Code style and conventions (functions, comments, tests, markup, CSS, helpers) ar
 ## Commands
 
 - `pnpm install`
-- `pnpm test` – all unit tests
+- `pnpm test` – all unit tests; `pnpm test:coverage` – with the coverage floors CI enforces (`vitest.config.ts`)
 - `pnpm typecheck`
-- `pnpm lint`
-- `pnpm dev` – web app (apps/web)
+- `pnpm lint` (`pnpm format` fixes formatting)
+- `pnpm e2e` – Playwright against the production build (`apps/web/e2e/`)
+- `pnpm dev` – web app (apps/web); `pnpm build` – production build
 - `pnpm carddata:fetch` – fetch and normalise ArkhamDB packs into the local cache
 
-Before finishing a task: `pnpm typecheck && pnpm test` must pass.
+Before finishing a task: `pnpm typecheck && pnpm lint && pnpm test` must pass. A Stop hook (`.claude/hooks/verify-before-stop.sh`) runs these automatically when code changed and sends failures back to you – fix them, don't work around the hook.
 
 ## Workflow for tasks
 
 1. Read the task file in `docs/tasks/` and only the architecture sections it references.
 2. Keep the change small and focused on that task; note follow-ups in the task file instead of doing them.
 3. Tick the task's checklist and add a short "Done" note when finished.
-4. Commit with a clear message; open a PR against `main`.
+4. Open a PR against `main`. **The PR title is a Conventional Commit** – it becomes the squash commit and the changelog entry (Release Please):
+   `feat(engine): add hunter movement (M1.8)`, `fix(web): …`, `docs: …`, `test: …`, `refactor: …`, `chore: …`, `ci: …`. Scope = package (`engine`, `carddata`, `scenarios`, `web`, `util`) when it fits.
+5. CI must be green: typecheck, lint, coverage floors, E2E, CodeQL. Check the PR preview link and the bundle-size comment for UI changes.
+
+## Subagents
+
+- `rules-checker` – after implementing or changing game rules, ask it to check the change against the official rules.
+- `test-writer` – to add missing unit/property tests, e.g. when coverage drops below the floor.
+
+More on the automation: `docs/automation.md`.
 
 ## Language
 

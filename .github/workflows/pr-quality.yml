@@ -1,0 +1,49 @@
+name: PR quality
+
+on:
+  pull_request:
+
+concurrency:
+  group: pr-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Comments the gzip size of every JS/CSS/HTML file compared to the base branch.
+  bundle-size:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: preactjs/compressed-size-action@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          install-script: pnpm install --frozen-lockfile
+          build-script: build
+          pattern: './apps/web/dist/**/*.{js,css,html}'
+          # Vite appends an 8-character content hash; strip it so files match across builds.
+          strip-hash: "-([\\w-]{8})\\."
+          minimum-change-threshold: 100
+
+  # Lighthouse on the production build: performance, accessibility, best practices, SEO.
+  # Starts as warnings only (except accessibility); tighten in lighthouserc.json once the UI settles.
+  lighthouse:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: npx --yes @lhci/cli@0.15.1 autorun
