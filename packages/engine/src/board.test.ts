@@ -187,6 +187,76 @@ describe('connections at start', () => {
   });
 });
 
+describe('AddMap', () => {
+  const wing = mapId('wing');
+
+  it('puts set-aside locations onto a new map with its connections', () => {
+    const next = run(board(), {
+      type: 'AddMap',
+      mapId: wing,
+      map: { name: 'Wing', connections: [edge('attic', 'hall')] },
+      locations: [attic],
+    });
+
+    expect(next.board.maps[wing]).toEqual({
+      name: 'Wing',
+      visible: true,
+      connections: [edge('attic', 'hall')],
+    });
+    expect(next.cards[attic]).toMatchObject({ zone: { kind: 'location', mapId: wing } });
+    expect(neighbours(next, hall)).toEqual([attic]);
+    expect(checkInvariants(next)).toEqual([]);
+  });
+
+  it('keeps the invariants and replays to the same state', () => {
+    const initial = board();
+
+    const { state, events } = runFrom(testContext, initial, [
+      { type: 'AddMap', mapId: wing, map: { name: 'Wing' }, locations: [attic] },
+    ]);
+
+    expect(events.map((event) => event.type)).toEqual(['MapAdded', 'CardMoved']);
+    expect(replay(events, initial)).toEqual(state);
+  });
+
+  it.each<{ name: string; command: Command; rejection: object }>([
+    {
+      name: 'a map that is already on the board',
+      command: { type: 'AddMap', mapId: main, map: { name: 'Main' }, locations: [] },
+      rejection: { code: 'duplicateMap', mapId: main },
+    },
+    {
+      name: 'a location that is already in play',
+      command: { type: 'AddMap', mapId: wing, map: { name: 'Wing' }, locations: [study] },
+      rejection: { code: 'cardAlreadyInPlay', cardId: study },
+    },
+    {
+      name: 'a card that is not a location',
+      command: { type: 'AddMap', mapId: wing, map: { name: 'Wing' }, locations: [ghoul] },
+      rejection: { code: 'notALocation', cardId: ghoul },
+    },
+    {
+      name: 'a location named twice',
+      command: { type: 'AddMap', mapId: wing, map: { name: 'Wing' }, locations: [attic, attic] },
+      rejection: { code: 'duplicateCard', cardId: attic },
+    },
+    {
+      name: 'a connection that another map already has',
+      command: {
+        type: 'AddMap',
+        mapId: wing,
+        map: { name: 'Wing', connections: [edge('hall', 'study')] },
+        locations: [],
+      },
+      rejection: { code: 'duplicateConnection', from: hall, to: study },
+    },
+  ])('rejects $name', ({ command, rejection }) => {
+    const state = board([edge('study', 'hall')]);
+
+    expect(rejectionOf(() => execute(testContext, state, command))).toEqual(rejection);
+  });
+});
+
 describe('connection events', () => {
   it('keep the invariants and replay to the same state', () => {
     const commands: Command[] = [

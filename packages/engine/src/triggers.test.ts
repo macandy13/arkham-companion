@@ -329,6 +329,44 @@ describe('trigger bus failures', () => {
 });
 
 describe('onCardEnters', () => {
+  it('fires for a card a MoveCard puts into play, but not for the same ManualAdjust move', () => {
+    const entered: unknown[] = [];
+    const ctx = withHooks({
+      onCardEnters: (_ctx, _state, event) => {
+        entered.push(event.cardId);
+        return [];
+      },
+    });
+    const to = { kind: 'atLocation' as const, locationId: hall };
+
+    execute(ctx, startedState(), { type: 'MoveCard', cardId: deckGhoul, to });
+    execute(ctx, startedState(), {
+      type: 'ManualAdjust',
+      adjustment: { kind: 'moveCard', cardId: deckGhoul, to },
+    });
+
+    expect(entered).toEqual([deckGhoul]);
+  });
+
+  it('fires for each location an AddMap puts into play', () => {
+    const entered: unknown[] = [];
+    const ctx = withHooks({
+      onCardEnters: (_ctx, _state, event) => {
+        entered.push(event.cardId);
+        return [];
+      },
+    });
+
+    execute(ctx, startedState(), {
+      type: 'AddMap',
+      mapId: mapId('vault'),
+      map: { name: 'Vault' },
+      locations: [crypt],
+    });
+
+    expect(entered).toEqual([crypt]);
+  });
+
   it('fires when a card moves from outside play onto the board', () => {
     const ctx = withHooks({ onCardEnters: () => [{ type: 'RevealLocation', locationId: cellar }] });
 

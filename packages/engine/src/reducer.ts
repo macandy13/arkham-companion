@@ -9,6 +9,7 @@ import type {
   InvestigatorChanged,
   InvestigatorDefeated,
   InvestigatorMoved,
+  MapAdded,
   ScenarioEnded,
   ScenarioStarted,
   TokensChanged,
@@ -35,6 +36,8 @@ export function apply(state: GameState, event: Event): GameState {
       return applyCardFlipped(state, event);
     case 'ConnectionChanged':
       return applyConnectionChanged(state, event);
+    case 'MapAdded':
+      return applyMapAdded(state, event);
     case 'InvestigatorMoved':
       return applyInvestigator(state, event, (inv) => ({ ...inv, locationId: event.to }));
     case 'InvestigatorChanged':
@@ -148,6 +151,10 @@ function applyConnectionChanged(state: GameState, e: ConnectionChanged): GameSta
 
 function applyDecisionRequested(state: GameState, e: DecisionRequested): GameState {
   return { ...state, pending: [...state.pending, e.decision] };
+}
+
+function applyMapAdded(state: GameState, e: MapAdded): GameState {
+  return { ...state, board: { ...state.board, maps: { ...state.board.maps, [e.mapId]: e.map } } };
 }
 
 function applyScenarioEnded(state: GameState, e: ScenarioEnded): GameState {

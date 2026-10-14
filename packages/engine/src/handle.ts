@@ -1,6 +1,7 @@
 import { cardStats, type EngineContext } from './cards';
 import {
   handleAddConnection,
+  handleAddMap,
   handleRemoveConnection,
   handleRevealLocation,
   validateConnections,
@@ -18,7 +19,7 @@ import {
   handleEndScenario,
   handlePlaceDoom,
 } from './handle-scenario';
-import type { Adjustment, Command, StartScenario, StartingCard } from './commands';
+import type { Adjustment, Command, MoveCard, StartScenario, StartingCard } from './commands';
 import type { CardMoved, DeckShuffled, Event, ScenarioStarted, TokensChanged } from './events';
 import { instanceId, type InstanceId, type MapId } from './ids';
 import { createMap, type GameMap, type MapSpec } from './map';
@@ -151,6 +152,10 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
       return handleStartScenario(ctx, state, command);
     case 'ManualAdjust':
       return [handleAdjustment(state, command.adjustment)];
+    case 'MoveCard':
+      return [handleMoveCard(state, command)];
+    case 'AddMap':
+      return handleAddMap(ctx, state, command);
     case 'AddConnection':
       return handleAddConnection(ctx, state, command);
     case 'RemoveConnection':
@@ -276,38 +281,46 @@ function encounterDeckShuffle(state: GameState): DeckShuffled[] {
   return [{ type: 'DeckShuffled', zone, order, rngState }];
 }
 
+/** `MoveCard`: the same move a `ManualAdjust` makes, as a game event. */
+function handleMoveCard(state: GameState, cmd: MoveCard): CardMoved {
+  const card = state.cards[cmd.cardId];
+  if (!card) throw new CommandRejected({ code: 'unknownCard', cardId: cmd.cardId });
+  return cardMoved(state, card, cmd.to);
+}
+
+/** The `CardMoved` for moving `card` to `to` (at `index`, default the end), after validating both. */
+function cardMoved(state: GameState, card: CardInstance, to: Zone, index?: number): CardMoved {
+  validateZone(
+    {
+      cards: state.cards,
+      investigators: new Set(state.investigators.map((i) => i.id)),
+      maps: new Set(Object.keys(state.board.maps)),
+    },
+    card.id,
+    to,
+  );
+  const destSize = (state.order[zoneKey(to)] ?? []).length;
+  // When reordering within a zone the card itself is removed first.
+  const maxIndex = sameZone(card.zone, to) ? destSize - 1 : destSize;
+  if (index !== undefined && (!Number.isInteger(index) || index < 0 || index > maxIndex)) {
+    throw new CommandRejected({ code: 'indexOutOfRange', index, max: maxIndex });
+  }
+  return {
+    type: 'CardMoved',
+    cardId: card.id,
+    from: card.zone,
+    to,
+    ...(index !== undefined ? { index } : {}),
+  };
+}
+
 function handleAdjustment(state: GameState, adj: Adjustment): CardMoved | TokensChanged {
   const card = state.cards[adj.cardId];
   if (!card) throw new CommandRejected({ code: 'unknownCard', cardId: adj.cardId });
 
   switch (adj.kind) {
-    case 'moveCard': {
-      validateZone(
-        {
-          cards: state.cards,
-          investigators: new Set(state.investigators.map((i) => i.id)),
-          maps: new Set(Object.keys(state.board.maps)),
-        },
-        card.id,
-        adj.to,
-      );
-      const destSize = (state.order[zoneKey(adj.to)] ?? []).length;
-      // When reordering within a zone the card itself is removed first.
-      const maxIndex = sameZone(card.zone, adj.to) ? destSize - 1 : destSize;
-      if (
-        adj.index !== undefined &&
-        (!Number.isInteger(adj.index) || adj.index < 0 || adj.index > maxIndex)
-      ) {
-        throw new CommandRejected({ code: 'indexOutOfRange', index: adj.index, max: maxIndex });
-      }
-      return {
-        type: 'CardMoved',
-        cardId: card.id,
-        from: card.zone,
-        to: adj.to,
-        ...(adj.index !== undefined ? { index: adj.index } : {}),
-      };
-    }
+    case 'moveCard':
+      return cardMoved(state, card, adj.to, adj.index);
     case 'tokens': {
       if (!Number.isInteger(adj.delta) || adj.delta === 0) {
         throw new CommandRejected({ code: 'invalidTokenDelta', delta: adj.delta });

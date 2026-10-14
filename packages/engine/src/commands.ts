@@ -14,6 +14,8 @@ import type { Zone } from './zone';
 export type Command =
   | StartScenario
   | ManualAdjust
+  | MoveCard
+  | AddMap
   | AddConnection
   | RemoveConnection
   | RevealLocation
@@ -62,6 +64,34 @@ export interface StartScenario {
 export interface ManualAdjust {
   type: 'ManualAdjust';
   adjustment: Adjustment;
+}
+
+/**
+ * A card effect or reverse side moves a card to another zone ("remove the
+ * Study from the game", "discard each enemy there"). Validated like a
+ * `ManualAdjust` move, but it is a game event, so forced effects fire (a card
+ * entering play triggers `onCardEnters`). Produces `CardMoved`.
+ */
+export interface MoveCard {
+  type: 'MoveCard';
+  cardId: InstanceId;
+  to: Zone;
+}
+
+/**
+ * Puts a new map into play mid-scenario (architecture §5 "a second board
+ * added mid-scenario"), declared as one unit like setup's `addMap` step:
+ * `compileMapStep` builds it from such a step. The `locations` are cards
+ * outside play (typically set aside) that move onto the map in the given
+ * order, as they are (set-aside locations stay unrevealed). The map's
+ * connections may also end on other maps. Produces `MapAdded`, then one
+ * `CardMoved` per location.
+ */
+export interface AddMap {
+  type: 'AddMap';
+  mapId: MapId;
+  map: MapSpec;
+  locations: readonly InstanceId[];
 }
 
 /** The concrete corrections a `ManualAdjust` can make. */

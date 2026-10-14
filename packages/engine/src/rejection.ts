@@ -16,6 +16,10 @@ export type Rejection =
   | { code: 'unknownCardCode'; cardCode: string }
   | { code: 'unknownInvestigator'; investigatorId: InvestigatorId }
   | { code: 'unknownMap'; mapId: MapId }
+  /** `AddMap` names a map that is already on the board. */
+  | { code: 'duplicateMap'; mapId: MapId }
+  /** `AddMap` names a location that is already in play. */
+  | { code: 'cardAlreadyInPlay'; cardId: InstanceId }
   /** Placing `cardId` on `hostId` would make the card (indirectly) host itself. */
   | { code: 'hostingCycle'; cardId: InstanceId; hostId: InstanceId }
   | { code: 'indexOutOfRange'; index: number; max: number }
@@ -111,6 +115,10 @@ function describe(r: Rejection): string {
       return `unknown investigator ${r.investigatorId}`;
     case 'unknownMap':
       return `unknown map ${r.mapId}`;
+    case 'duplicateMap':
+      return `map ${r.mapId} is already on the board`;
+    case 'cardAlreadyInPlay':
+      return `${r.cardId} is already in play`;
     case 'hostingCycle':
       return `${r.cardId} cannot be placed on ${r.hostId}: it would host itself`;
     case 'indexOutOfRange':
@@ -122,7 +130,7 @@ function describe(r: Rejection): string {
     case 'notALocation':
       return `${r.cardId} is not a location on a map`;
     case 'setupTargetNotFound':
-      return `setup refers to ${r.cardCode}, which no earlier step created`;
+      return `setup refers to ${r.cardCode}, but no such card is available`;
     case 'setupTargetAmbiguous':
       return `setup refers to ${r.cardCode}, which exists more than once`;
     case 'unknownEncounterSet':

@@ -24,6 +24,7 @@ export type Event =
   | TokensChanged
   | CardFlipped
   | ConnectionChanged
+  | MapAdded
   | InvestigatorMoved
   | InvestigatorChanged
   | InvestigatorDefeated
@@ -85,6 +86,16 @@ export interface CardFlipped {
   cardId: InstanceId;
   /** The side that is showing afterwards. */
   faceUp: boolean;
+}
+
+/**
+ * A new map with its connections joined the board (`Board.maps`); its
+ * locations follow as `CardMoved` events. Produced by `AddMap`.
+ */
+export interface MapAdded {
+  type: 'MapAdded';
+  mapId: MapId;
+  map: GameMap;
 }
 
 /**
