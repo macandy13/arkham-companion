@@ -1,4 +1,10 @@
 import { cardStats, type EngineContext } from './cards';
+import {
+  handleAddConnection,
+  handleRemoveConnection,
+  handleRevealLocation,
+  validateConnections,
+} from './handle-board';
 import type { Adjustment, Command, StartScenario, StartingCard } from './commands';
 import type { CardMoved, DeckShuffled, Event, ScenarioStarted, TokensChanged } from './events';
 import { instanceId, type InstanceId, type MapId } from './ids';
@@ -21,6 +27,12 @@ export function handle(ctx: EngineContext, state: GameState, command: Command): 
       return handleStartScenario(ctx, state, command);
     case 'ManualAdjust':
       return [handleAdjustment(state, command.adjustment)];
+    case 'AddConnection':
+      return handleAddConnection(ctx, state, command);
+    case 'RemoveConnection':
+      return handleRemoveConnection(ctx, state, command);
+    case 'RevealLocation':
+      return handleRevealLocation(ctx, state, command);
   }
 }
 
@@ -39,9 +51,7 @@ function handleStartScenario(ctx: EngineContext, state: GameState, cmd: StartSce
     maps: new Set(Object.keys(maps)),
   };
   for (const card of cards) validateZone(refs, card.id, card.zone);
-  for (const [mapId, map] of Object.entries(maps) as [MapId, GameMap][]) {
-    validateConnections(byId, mapId, map);
-  }
+  validateConnections(ctx, byId, maps);
   for (const inv of cmd.investigators) {
     if (inv.locationId !== undefined) validateLocation(byId, inv.locationId);
   }
@@ -110,28 +120,11 @@ function startingMaps(specs: Readonly<Record<MapId, MapSpec>>): Record<MapId, Ga
   return maps;
 }
 
-/** Rejects a connection of `map` whose ends are not both locations on that map. */
-function validateConnections(
-  cards: Record<InstanceId, CardInstance>,
-  mapId: MapId,
-  map: GameMap,
-): void {
-  for (const cardId of map.connections.flatMap((edge) => [edge.from, edge.to])) {
-    const zone = validateLocation(cards, cardId);
-    if (zone.mapId !== mapId)
-      throw new CommandRejected({ code: 'locationOnOtherMap', cardId, mapId });
-  }
-}
-
-/** Rejects `cardId` unless it is a known card on a map; returns its location zone. */
-function validateLocation(
-  cards: Record<InstanceId, CardInstance>,
-  cardId: InstanceId,
-): Extract<Zone, { kind: 'location' }> {
+/** Rejects `cardId` unless it is a known card on a map. */
+function validateLocation(cards: Record<InstanceId, CardInstance>, cardId: InstanceId): void {
   const card = cards[cardId];
   if (!card) throw new CommandRejected({ code: 'unknownCard', cardId });
   if (card.zone.kind !== 'location') throw new CommandRejected({ code: 'notALocation', cardId });
-  return card.zone;
 }
 
 /** A `DeckShuffled` for the encounter deck, or nothing if there is nothing to shuffle. */

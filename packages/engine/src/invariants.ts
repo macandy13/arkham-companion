@@ -1,3 +1,4 @@
+import { allConnections, sameEdge } from './board';
 import type { InstanceId } from './ids';
 import type { GameState } from './state';
 import { zoneKey } from './zone';
@@ -6,7 +7,7 @@ import { zoneKey } from './zone';
  * Returns a list of invariant violations (empty = state is consistent):
  * every card is in exactly one zone and listed exactly once in that zone's
  * order, no order list is empty or names an unknown card, no token count is
- * negative.
+ * negative, and every connection (of any map) joins two known cards and appears only once.
  */
 export function checkInvariants(state: GameState): string[] {
   const errors: string[] = [];
@@ -30,5 +31,21 @@ export function checkInvariants(state: GameState): string[] {
       if (n !== undefined && n < 0) errors.push(`card ${card.id} has ${n} ${token}`);
     }
   }
+  errors.push(...connectionErrors(state));
+  return errors;
+}
+
+/** Violations of the connection graph: edges to unknown cards and duplicate edges. */
+function connectionErrors(state: GameState): string[] {
+  const errors: string[] = [];
+  const edges = allConnections(state).map(({ edge }) => edge);
+  edges.forEach((edge, i) => {
+    for (const end of [edge.from, edge.to]) {
+      if (!state.cards[end])
+        errors.push(`connection ${edge.from} - ${edge.to} names unknown card ${end}`);
+    }
+    if (edges.slice(0, i).some((earlier) => sameEdge(earlier, edge)))
+      errors.push(`connection ${edge.from} - ${edge.to} appears more than once`);
+  });
   return errors;
 }

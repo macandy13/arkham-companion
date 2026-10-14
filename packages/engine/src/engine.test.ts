@@ -164,7 +164,7 @@ describe('StartScenario', () => {
       maps: { [main]: { name: 'Main', connections: [{ from: loc, to: aside, oneWay: false }] } },
       cards: [
         { id: loc, code: 'L1', zone: { kind: 'location', mapId: main } },
-        { id: aside, code: 'L2', zone: { kind: 'setAside' } },
+        { id: aside, code: 'E1', zone: { kind: 'setAside' } },
       ],
     };
 
@@ -173,7 +173,7 @@ describe('StartScenario', () => {
     expect(rejection).toEqual({ code: 'notALocation', cardId: 'aside' });
   });
 
-  it('rejects a connection to a location on another map', () => {
+  it('accepts a connection to a location on another map and stores it on the declaring map', () => {
     const dream = mapId('dream');
     const far = instanceId('far');
     const command: StartScenario = {
@@ -188,9 +188,10 @@ describe('StartScenario', () => {
       ],
     };
 
-    const rejection = rejectionOf(() => handle(testContext, emptyState(), command));
+    const { state } = run([command]);
 
-    expect(rejection).toEqual({ code: 'locationOnOtherMap', cardId: 'far', mapId: 'main' });
+    expect(state.board.maps[main]?.connections).toEqual([{ from: loc, to: far, oneWay: false }]);
+    expect(state.board.maps[dream]?.connections).toEqual([]);
   });
 
   it('rejects an investigator placed at an unknown card', () => {

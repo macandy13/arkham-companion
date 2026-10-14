@@ -61,11 +61,14 @@ Follow-ups: `spawn` at setup does not engage investigators at that location (M1.
 
 Ref: §5 Map model.
 
-- [ ] `Edge` type (undirected and one-way), `ConnectionChanged` event, `AddConnection`/`RemoveConnection` commands
-- [ ] Connections from scenario data (`connections` spec by symbol or code), only active when both locations are in play
-- [ ] Reveal location (`CardFlipped`) places clues per investigator
-- [ ] Helpers: `neighbours(locationId)`, `shortestPaths(from, to)` (BFS, returns all shortest paths)
-- [ ] Multiple maps: locations carry `mapId`; cross-map edges allowed
+- [x] `Edge` type (undirected and one-way), `ConnectionChanged` event, `AddConnection`/`RemoveConnection` commands
+- [x] Connections from scenario data (`connections` spec by symbol or code), only active when both locations are in play
+- [x] Reveal location (`CardFlipped`) places clues per investigator
+- [x] Helpers: `neighbours(locationId)`, `shortestPaths(from, to)` (BFS, returns all shortest paths)
+- [x] Multiple maps: locations carry `mapId`; cross-map edges allowed
+
+Done: `Edge` already existed (M1.2). New: events `ConnectionChanged` (`added`/`removed`, carries the stored edge) and `CardFlipped`; commands `AddConnection`, `RemoveConnection` (undirected edges match either direction, one-way edges exactly; duplicates, self-loops and unknown edges are rejected) and `RevealLocation` (`CardFlipped` + a `TokensChanged` for the clues). Both ends of a connection must be location cards by type, wherever they currently are; `StartScenario.connections` is validated the same way (the old zone-based `notALocation` check was relaxed so set-aside locations can be connected). `packages/engine/src/board.ts`: `neighbours(state, id)` and `shortestPaths(state, from, to)` (BFS, all shortest paths, `[[from]]` for the same location, `[]` if unreachable) only follow edges whose ends are both in a `location` zone; edges may cross maps (`mapId` lives in the `location` zone). `checkInvariants` also checks that edges name known cards and are unique. Clues on reveal are the printed `clues` resolved with `resolveValue` (`cards.ts`), both in `RevealLocation` mid-scenario and in `compileSetup` for locations that start revealed (setup still folds them into the starting tokens, because `ScenarioStarted` is one event). Tests: `board.test.ts`, property tests in `board.property.test.ts`.
+Follow-ups: `MoveInvestigator` (M1.4) should reveal an unrevealed destination via `RevealLocation`; `moveInvestigators` at setup could emit `RevealLocation` instead of flipping at compile time once setup can produce follow-up commands; the `connections` spec by symbol is still `addConnection` by code (symbol data comes with the M2 pipeline); removing or replacing a location card does not yet drop its edges (decide with the `replaceLocation`/`removeLocation` setup steps).
 
 ## M1.4 Investigators (S)
 

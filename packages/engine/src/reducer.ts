@@ -1,5 +1,15 @@
-import type { CardMoved, DeckShuffled, Event, ScenarioStarted, TokensChanged } from './events';
+import { sameEdge } from './board';
+import type {
+  CardFlipped,
+  CardMoved,
+  ConnectionChanged,
+  DeckShuffled,
+  Event,
+  ScenarioStarted,
+  TokensChanged,
+} from './events';
 import type { InstanceId } from './ids';
+import type { Edge } from './map';
 import { seedRng } from './rng';
 import { emptyState, type CardInstance, type GameState } from './state';
 import { zoneKey, type ZoneKey } from './zone';
@@ -15,6 +25,10 @@ export function apply(state: GameState, event: Event): GameState {
       return applyCardMoved(state, event);
     case 'TokensChanged':
       return applyTokensChanged(state, event);
+    case 'CardFlipped':
+      return applyCardFlipped(state, event);
+    case 'ConnectionChanged':
+      return applyConnectionChanged(state, event);
   }
 }
 
@@ -83,6 +97,25 @@ function applyTokensChanged(state: GameState, e: TokensChanged): GameState {
   if (value === 0) delete tokens[e.token];
   else tokens[e.token] = value;
   return { ...state, cards: { ...state.cards, [e.cardId]: { ...card, tokens } } };
+}
+
+function applyCardFlipped(state: GameState, e: CardFlipped): GameState {
+  const card = state.cards[e.cardId];
+  if (!card) return state;
+  return { ...state, cards: { ...state.cards, [e.cardId]: { ...card, faceUp: e.faceUp } } };
+}
+
+function applyConnectionChanged(state: GameState, e: ConnectionChanged): GameState {
+  const map = state.board.maps[e.mapId];
+  if (!map) return state;
+  const connections =
+    e.change === 'added'
+      ? [...map.connections, e.edge]
+      : map.connections.filter((edge) => !sameEdge(edge, e.edge));
+  return {
+    ...state,
+    board: { ...state.board, maps: { ...state.board.maps, [e.mapId]: { ...map, connections } } },
+  };
 }
 
 /** Sets a zone's order; empty zones are removed so the state has one canonical form. */
