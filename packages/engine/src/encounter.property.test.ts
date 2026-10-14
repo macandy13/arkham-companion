@@ -9,6 +9,7 @@ import {
   instanceId,
   investigatorId,
   mapId,
+  zoneKey,
   type CardStats,
   type Command,
   type EngineContext,
@@ -127,6 +128,21 @@ describe('encounter deck properties', () => {
           }
         },
       ),
+    );
+  });
+
+  it('leaves no card in the discard while the deck is empty after a draw', () => {
+    fc.assert(
+      fc.property(fc.integer(), codesArb, codesArb, (seed, deck, discard) => {
+        fc.pre(deck.length + discard.length > 0);
+        const state = started(seed, deck, discard, []);
+
+        const after = execute(ctx, state, commandOf({ draw: true })).state;
+
+        const deckSize = after.order[zoneKey({ kind: 'encounterDeck' })]?.length ?? 0;
+        const discardSize = after.order[zoneKey({ kind: 'encounterDiscard' })]?.length ?? 0;
+        expect(deckSize === 0 && discardSize > 0).toBe(false);
+      }),
     );
   });
 

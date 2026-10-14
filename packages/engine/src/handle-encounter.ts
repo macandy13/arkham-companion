@@ -23,10 +23,11 @@ interface Draw {
 
 /**
  * `DrawEncounter`: draws until a card without surge has been drawn. Each card
- * is resolved (moved to its place) before the next is drawn, so a surge card
- * that is discarded is part of the discard when the deck runs out. The
- * players resolve the revelation effects themselves; the app does not wait for
- * that between surge draws.
+ * is resolved (moved to its place) before the next is drawn, and the deck is
+ * refilled as soon as its last card has been placed, so a discarded surge card
+ * is shuffled back in before the surge draw. The players resolve the
+ * revelation effects themselves; the app does not wait for that between surge
+ * draws.
  */
 export function handleDrawEncounter(
   ctx: EngineContext,
@@ -84,18 +85,18 @@ function encounterCardCount(state: GameState): number {
 }
 
 /**
- * Draws the top card of the encounter deck, refilling it from the discard
- * first if it is empty. `undefined` when there is no card left to draw.
+ * Draws the top card of the encounter deck and places it; if that emptied the
+ * deck, the discard is shuffled back in right away. `undefined` when there is
+ * no card left to draw.
  */
 function drawOne(
   ctx: EngineContext,
   state: GameState,
   investigator: Investigator,
 ): Draw | undefined {
-  const refill =
-    cardsIn(state, ENCOUNTER_DECK).length === 0
-      ? shuffleInto(state, cardsIn(state, ENCOUNTER_DISCARD), ENCOUNTER_DECK)
-      : [];
+  // Draws keep the deck refilled themselves; an empty deck with a discard can
+  // still come from a manual correction or a setup, and the rule applies then too.
+  const refill = refillIfEmpty(state);
   const [cardId] = cardsIn(replay(refill, state), ENCOUNTER_DECK);
   if (cardId === undefined) return undefined;
 
@@ -118,7 +119,18 @@ function drawOne(
     // Index 0 is the top, and the discard's top is what "topmost" effects look for.
     ...(to.kind === 'encounterDiscard' ? { index: 0 } : {}),
   };
-  return { events: [...refill, drawn, revealed, placed], surge };
+  const events: Event[] = [...refill, drawn, revealed, placed];
+  return { events: [...events, ...refillIfEmpty(replay(events, state))], surge };
+}
+
+/**
+ * Rules Reference: "If the encounter deck is empty, shuffle the encounter
+ * discard pile back into the encounter deck." Nothing while the deck has cards
+ * or the discard is empty.
+ */
+function refillIfEmpty(state: GameState): Event[] {
+  if (cardsIn(state, ENCOUNTER_DECK).length > 0) return [];
+  return shuffleInto(state, cardsIn(state, ENCOUNTER_DISCARD), ENCOUNTER_DECK);
 }
 
 /**

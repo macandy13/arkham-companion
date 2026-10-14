@@ -259,10 +259,11 @@ export interface EndScenario {
  * the investigator's location (engagement, aloof and spawn instructions are
  * `SpawnEnemy`, M1.8); a treachery goes to the investigator's threat area if
  * its card says so (`CardStats.entersThreatArea`), otherwise to the encounter
- * discard; anything else goes to the discard. An empty deck is refilled by
- * shuffling the discard; a card with surge makes the investigator draw again.
- * Produces, per card drawn, `EncounterCardDrawn`, `CardFlipped` and `CardMoved`,
- * preceded by `CardMoved`s and a `DeckShuffled` when the discard was reshuffled.
+ * discard; anything else goes to the discard. As soon as the deck is empty
+ * the discard is shuffled back into it; a card with surge makes the
+ * investigator draw again. Produces, per card drawn, `EncounterCardDrawn`,
+ * `CardFlipped` and `CardMoved`, followed by `CardMoved`s and a `DeckShuffled`
+ * when that card emptied the deck and the discard was shuffled back.
  */
 export interface DrawEncounter {
   type: 'DrawEncounter';

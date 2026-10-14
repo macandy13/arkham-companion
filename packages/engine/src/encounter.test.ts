@@ -41,6 +41,13 @@ const cards: CardStats[] = [
     keywords: [{ name: 'surge' }],
   },
   {
+    code: 'SUF',
+    name: 'Fake Surging Foe',
+    typeCode: 'enemy',
+    traits: [],
+    keywords: [{ name: 'surge' }],
+  },
+  {
     code: 'PER',
     name: 'Fake Peril',
     typeCode: 'treachery',
@@ -155,7 +162,7 @@ describe('DrawEncounter', () => {
   });
 
   it('discards a card that is neither enemy nor treachery', () => {
-    const state = started({ deck: ['REL'] });
+    const state = started({ deck: ['REL', 'DUL'] });
 
     const { state: after } = execute(ctx, state, draw);
 
@@ -194,14 +201,48 @@ describe('DrawEncounter', () => {
   });
 
   it('stops a surge when no card is left to draw', () => {
-    const state = started({ deck: ['SUR'] });
+    const state = started({ deck: ['SUF'] });
 
     const { events } = execute(ctx, state, draw);
 
     expect(events.filter((e) => e.type === 'EncounterCardDrawn')).toHaveLength(1);
   });
 
-  it('reshuffles the discard into an empty deck before drawing', () => {
+  it('reshuffles the discard as soon as the last card has left the deck', () => {
+    const state = started({ deck: ['DUL'], discard: ['FOE'] });
+
+    const { state: after, events } = execute(ctx, state, draw);
+
+    expect(events.map((e) => e.type)).toEqual([
+      'EncounterCardDrawn',
+      'CardFlipped',
+      'CardMoved',
+      'CardMoved',
+      'CardMoved',
+      'DeckShuffled',
+    ]);
+    expect([...order(after, { kind: 'encounterDeck' })].sort()).toEqual(['d0', 'x0']);
+    expect(order(after, { kind: 'encounterDiscard' })).toEqual([]);
+  });
+
+  it('reshuffles the discard when the last card of the deck is an enemy that stays in play', () => {
+    const state = started({ deck: ['FOE'], discard: ['DUL'] });
+
+    const { state: after } = execute(ctx, state, draw);
+
+    expect(order(after, { kind: 'encounterDeck' })).toEqual(['x0']);
+    expect(order(after, { kind: 'encounterDiscard' })).toEqual([]);
+  });
+
+  it('does not shuffle when the deck runs out with an empty discard', () => {
+    const state = started({ deck: ['FOE'] });
+
+    const { events } = execute(ctx, state, draw);
+
+    expect(events.filter((e) => e.type === 'DeckShuffled')).toEqual([]);
+  });
+
+  it('reshuffles the discard into a deck that was already empty before drawing', () => {
     const state = started({ discard: ['DUL', 'DUL', 'DUL'] });
 
     const { state: after, events } = execute(ctx, state, draw);
@@ -226,15 +267,16 @@ describe('DrawEncounter', () => {
     );
   });
 
-  it('reshuffles a surge card that was just discarded when the deck runs out', () => {
+  it('reshuffles a surge card that was just discarded before the surge draw', () => {
     const state = started({ deck: ['SUR'], discard: ['DUL'] });
 
-    const { state: after } = execute(ctx, state, draw);
+    const { state: after, events } = execute(ctx, state, draw);
 
-    expect(
-      order(after, { kind: 'encounterDeck' }).length +
-        order(after, { kind: 'encounterDiscard' }).length,
-    ).toBe(2);
+    const types = events.map((e) => e.type);
+    const shuffled = events.find((e) => e.type === 'DeckShuffled');
+    expect(types.indexOf('DeckShuffled')).toBeLessThan(types.lastIndexOf('EncounterCardDrawn'));
+    expect(shuffled?.type === 'DeckShuffled' && [...shuffled.order].sort()).toEqual(['d0', 'x0']);
+    expect(events.filter((e) => e.type === 'EncounterCardDrawn')).toHaveLength(2);
     expect(checkInvariants(after)).toEqual([]);
   });
 

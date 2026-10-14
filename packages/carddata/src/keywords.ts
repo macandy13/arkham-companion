@@ -16,14 +16,15 @@ export const KEYWORD_NAMES = [
   'patrol',
   'prey',
   'spawn',
-  'victory',
 ] as const;
 
-/** One keyword of a card, e.g. `{ name: 'victory', value: 1 }` or `{ name: 'prey', detail: 'Highest [agility]' }`. */
+/**
+ * One keyword of a card, e.g. `{ name: 'hunter' }` or `{ name: 'prey', detail: 'Highest [agility]' }`.
+ * Victory points are not a keyword here: ArkhamDB has a `victory` field for
+ * them (`CardDef.victory`).
+ */
 export const KeywordSchema = z.object({
   name: z.enum(KEYWORD_NAMES),
-  /** The number of `victory X`. */
-  value: z.number().int().optional(),
   /** The free text after `patrol`, `prey` and `spawn`; interpreted by the rule that uses it. */
   detail: z.string().optional(),
 });
@@ -38,7 +39,7 @@ const PLAIN_KEYWORDS: ReadonlySet<string> = new Set([
   'retaliate',
   'alert',
 ]);
-const VALUE_KEYWORD = /^victory\s+(\d+)$/i;
+const VICTORY_SENTENCE = /^victory\s+\d+$/i;
 const DETAIL_KEYWORD = /^(patrol|prey|spawn)(?:\s*[-–—]\s*(.+)|\s*\((.+)\))$/i;
 const THREAT_AREA = /\b(?:put|place)s?\b[^.]*\bin your threat area\b/i;
 
@@ -83,10 +84,12 @@ function plainLines(text: string): string[] {
 
 /** The keywords of a line, or none if any of its sentences is not a keyword. */
 function keywordsOfLine(line: string): Keyword[] {
+  // Victory comes from ArkhamDB's own `victory` field; a printed "Victory X."
+  // is skipped so that it neither becomes a keyword nor hides the others on its line.
   const sentences = line
     .split(/(?<=\.)\s+/)
     .map((sentence) => sentence.replace(/\.$/, '').trim())
-    .filter(Boolean);
+    .filter((sentence) => sentence !== '' && !VICTORY_SENTENCE.test(sentence));
   const keywords = sentences.map(parseSentence);
   return keywords.every((k) => k !== undefined) ? keywords : [];
 }
@@ -94,8 +97,6 @@ function keywordsOfLine(line: string): Keyword[] {
 function parseSentence(sentence: string): Keyword | undefined {
   const lower = sentence.toLowerCase();
   if (PLAIN_KEYWORDS.has(lower)) return { name: lower as Keyword['name'] };
-  const victory = VALUE_KEYWORD.exec(sentence);
-  if (victory) return { name: 'victory', value: Number(victory[1]) };
   const detailed = DETAIL_KEYWORD.exec(sentence);
   if (!detailed) return undefined;
   return {

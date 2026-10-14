@@ -18,8 +18,12 @@ describe('parseKeywords', () => {
     ]);
   });
 
-  it('reads the number of victory', () => {
-    expect(parseKeywords('Victory 2.', [])).toEqual([{ name: 'victory', value: 2 }]);
+  it('does not read victory from the text', () => {
+    expect(parseKeywords('Victory 2.', [])).toEqual([]);
+  });
+
+  it('keeps the other keywords on a line that also prints victory', () => {
+    expect(parseKeywords('Hunter. Victory 1.', [])).toEqual([{ name: 'hunter' }]);
   });
 
   it('reads spawn and prey with their text, with and without bold', () => {
@@ -96,15 +100,18 @@ describe('normaliseCard keywords', () => {
     const card = normaliseCard({
       ...base,
       traits: 'Monster. Elite.',
-      text: 'Hunter.\nVictory 1.\nRevelation - Put Fake into play in your threat area.',
+      text: 'Hunter.\nRevelation - Put Fake into play in your threat area.',
     });
 
-    expect(card.keywords).toEqual([
-      { name: 'hunter' },
-      { name: 'victory', value: 1 },
-      { name: 'elite' },
-    ]);
+    expect(card.keywords).toEqual([{ name: 'hunter' }, { name: 'elite' }]);
     expect(card.entersThreatArea).toBe(true);
+  });
+
+  it('takes victory from the ArkhamDB victory field, not from the text', () => {
+    const card = normaliseCard({ ...base, text: 'Hunter.\nVictory 1.', victory: 2 });
+
+    expect(card.victory).toBe(2);
+    expect(card.keywords).toEqual([{ name: 'hunter' }]);
   });
 
   it('defaults to no keywords without text', () => {

@@ -16,14 +16,11 @@ export type KeywordName =
   | 'alert'
   | 'patrol'
   | 'prey'
-  | 'spawn'
-  | 'victory';
+  | 'spawn';
 
-/** One keyword of a card, as parsed by `carddata`. */
+/** One keyword of a card, as parsed by `carddata`. Victory points are `CardStats.victory`. */
 export interface Keyword {
   name: KeywordName;
-  /** The number of `victory X`. */
-  value?: number;
   /** The text after `patrol`, `prey` and `spawn`, e.g. "Highest [agility]". */
   detail?: string;
 }
