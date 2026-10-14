@@ -89,6 +89,28 @@ describe('parseKeywords with malformed markup', () => {
   it('removes stray angle brackets', () => {
     expect(parseKeywords('Surge.>', [])).toEqual([{ name: 'surge' }]);
   });
+
+  it.each([
+    ['nested unclosed reminder text', '<i>a<i>b</i>\nHunter.', [{ name: 'hunter' }]],
+    ['unterminated reminder text', '<i>Surge.', [{ name: 'surge' }]],
+    ['upper-case reminder tags', '<I>Surge.</I>Hunter.', [{ name: 'hunter' }]],
+    ['unterminated tag', 'Surge.\n<b', [{ name: 'surge' }]],
+    ['reminder text closed after other tags', '<i>x<b>y</b></i>Peril.', [{ name: 'peril' }]],
+  ])('handles %s', (_name, text, expected) => {
+    expect(parseKeywords(text, [])).toEqual(expected);
+  });
+
+  it.each([
+    ['unmatched <i>', '<i>'],
+    ['unmatched <', '<'],
+    ['unmatched </i>', '</i>'],
+    ['closing >', '>'],
+  ])('finishes quickly on many repetitions of %s', (_name, unit) => {
+    const started = performance.now();
+    const keywords = parseKeywords(`${unit.repeat(50_000)}Surge.`, []);
+    expect(performance.now() - started).toBeLessThan(1000);
+    expect(keywords).toEqual([{ name: 'surge' }]);
+  });
 });
 
 describe('entersThreatArea', () => {

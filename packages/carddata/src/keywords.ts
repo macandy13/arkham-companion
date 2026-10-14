@@ -74,30 +74,72 @@ export function entersThreatArea(text: string | undefined): boolean {
 /**
  * Text without ArkhamDB markup (reminder text, bold, `[[Trait]]`), as trimmed non-empty lines.
  *
- * Tag stripping repeats until the text is stable and then drops stray angle
- * brackets: a single pass can splice a new tag together from the remains of
- * nested or malformed markup (e.g. `<<b>b>`). The text is only matched against
- * keywords and never rendered as HTML, so this is not a security boundary, but
- * the loop keeps the result free of tag fragments (and CodeQL-clean).
+ * Tags are removed by {@link stripMarkup}, a single linear scan, rather than by
+ * regexes: lazy or repeated patterns over card text backtrack polynomially on
+ * inputs with many unmatched `<`, and re-running them until stable to catch
+ * tags spliced together by nested markup is no better.
  */
 function plainLines(text: string): string[] {
-  return stripUntilStable(text, [/<i>.*?<\/i>/gis, /<[^>]+>/g])
-    .replace(/[<>]/g, '')
+  return stripMarkup(text)
     .replace(/\[\[([^\]]+)\]\]/g, '$1')
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean);
 }
 
-/** Removes every match of the patterns, repeatedly, until a full round changes nothing. */
-function stripUntilStable(text: string, patterns: readonly RegExp[]): string {
-  let current = text;
-  let previous: string;
-  do {
-    previous = current;
-    for (const pattern of patterns) current = current.replace(pattern, '');
-  } while (current !== previous);
-  return current;
+/**
+ * Drops `<i>…</i>` reminder text (case-insensitive) and every other `<…>` tag,
+ * and any stray `<` or `>`, so the result never contains angle brackets.
+ *
+ * A `<i>` inside another tag still starts reminder text (as if reminder text
+ * were removed first), so `<<i>x</i>` loses only the lone `<`. Once a search
+ * for `</i>` or `>` has reached the end of the text (`hasClose`, `hasGt`) it
+ * is not repeated, which keeps inputs such as thousands of unmatched `<i>` or
+ * `<` linear. The text after an unterminated tag is kept.
+ */
+function stripMarkup(text: string): string {
+  let out = '';
+  let hasClose = true;
+  let hasGt = true;
+  let i = 0;
+  while (i < text.length) {
+    const ch = text[i] as string;
+    if (ch === '>') {
+      i += 1;
+    } else if (ch !== '<') {
+      out += ch;
+      i += 1;
+    } else if (hasClose && startsWithIgnoreCase(text, i, '<i>')) {
+      const close = indexOfIgnoreCase(text, '</i>', i + 3);
+      hasClose = close !== -1;
+      i = hasClose ? close + 4 : i + 3;
+    } else {
+      let end = i + 1;
+      while (
+        hasGt &&
+        end < text.length &&
+        text[end] !== '>' &&
+        !(text[end] === '<' && startsWithIgnoreCase(text, end, '<i>'))
+      ) {
+        end++;
+      }
+      hasGt = hasGt && end < text.length;
+      i = hasGt && text[end] === '>' ? end + 1 : i + 1;
+    }
+  }
+  return out;
+}
+
+function startsWithIgnoreCase(text: string, at: number, needle: string): boolean {
+  return text.slice(at, at + needle.length).toLowerCase() === needle;
+}
+
+/** Index of the lower-case `needle` in `text` from `from`, ignoring case, or -1. */
+function indexOfIgnoreCase(text: string, needle: string, from: number): number {
+  for (let i = from; i + needle.length <= text.length; i++) {
+    if (startsWithIgnoreCase(text, i, needle)) return i;
+  }
+  return -1;
 }
 
 /** The keywords of a line, or none if any of its sentences is not a keyword. */
