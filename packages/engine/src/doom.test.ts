@@ -291,13 +291,19 @@ describe('threshold check', () => {
   });
 
   it('stays silent below the threshold', () => {
-    const next = apply(state, { type: 'PlaceDoom', amount: 2 });
+    const next = apply(state, { type: 'PlaceDoom', amount: 2 }, { type: 'CheckDoomThreshold' });
 
     expect(next.pending).toEqual([]);
   });
 
-  it('asks whether to advance the agenda when doom reaches the threshold', () => {
+  it('does not ask when doom reaches the threshold outside a check', () => {
     const next = apply(state, { type: 'PlaceDoom', amount: 3 });
+
+    expect(next.pending).toEqual([]);
+  });
+
+  it('asks whether to advance the agenda when a check finds the threshold reached', () => {
+    const next = apply(state, { type: 'PlaceDoom', amount: 3 }, { type: 'CheckDoomThreshold' });
 
     expect(next.pending).toEqual([
       {
@@ -325,25 +331,28 @@ describe('threshold check', () => {
       state,
       { type: 'PlaceDoom', cardId: ghoul, amount: 2 },
       { type: 'AdjustInvestigator', investigatorId: alice, stat: 'doomOnPlayerCards', delta: 1 },
+      { type: 'CheckDoomThreshold' },
     );
 
     expect(next.pending.map((d) => d.kind)).toEqual(['confirm']);
   });
 
-  it('asks again when more doom is placed after the question was declined', () => {
+  it('asks again at the next check after the question was declined', () => {
     const declined = apply(
       state,
       { type: 'PlaceDoom', amount: 3 },
+      { type: 'CheckDoomThreshold' },
       { type: 'ResolveDecision', decisionId: decisionId('advanceAgenda:agenda1'), optionId: 'no' },
     );
 
-    const next = apply(declined, { type: 'PlaceDoom', amount: 1 });
+    const next = apply(declined, { type: 'CheckDoomThreshold' });
 
+    expect(declined.pending).toEqual([]);
     expect(next.pending.map((d) => d.id)).toEqual(['advanceAgenda:agenda1']);
   });
 
   it('advances the agenda when the question is answered yes', () => {
-    const asked = apply(state, { type: 'PlaceDoom', amount: 3 });
+    const asked = apply(state, { type: 'PlaceDoom', amount: 3 }, { type: 'CheckDoomThreshold' });
 
     const next = apply(asked, {
       type: 'ResolveDecision',
@@ -356,7 +365,7 @@ describe('threshold check', () => {
   });
 
   it('leaves the agenda alone when the question is answered no', () => {
-    const asked = apply(state, { type: 'PlaceDoom', amount: 3 });
+    const asked = apply(state, { type: 'PlaceDoom', amount: 3 }, { type: 'CheckDoomThreshold' });
 
     const next = apply(asked, {
       type: 'ResolveDecision',
@@ -405,10 +414,7 @@ describe('AdvanceAgenda', () => {
       startedWith([makeInvestigator({ id: alice })]),
       { type: 'PlaceDoom', amount: 2 },
       { type: 'PlaceDoom', cardId: ghoul, amount: 1 },
-      // The threshold question is open now; declining it keeps later commands unblocked.
-      { type: 'ResolveDecision', decisionId: decisionId('advanceAgenda:agenda1'), optionId: 'no' },
       { type: 'AdjustInvestigator', investigatorId: alice, stat: 'doomOnPlayerCards', delta: 1 },
-      { type: 'ResolveDecision', decisionId: decisionId('advanceAgenda:agenda1'), optionId: 'no' },
     );
   });
 
@@ -430,7 +436,7 @@ describe('AdvanceAgenda', () => {
   });
 
   it('drops the pending question about the old agenda', () => {
-    const asked = apply(state, { type: 'PlaceDoom', amount: 1 });
+    const asked = apply(state, { type: 'CheckDoomThreshold' });
 
     const next = applyEvent(asked, { type: 'AgendaAdvanced', cardId: agenda1 });
 

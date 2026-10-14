@@ -1,6 +1,6 @@
 import type { CommandType } from './commands';
 import type { DecisionId, InstanceId, InvestigatorId, MapId } from './ids';
-import type { InvestigatorStat, TokenKind } from './state';
+import type { InvestigatorStat, Phase, TokenKind } from './state';
 
 /**
  * Structured reason why `handle` refused a command. The UI can switch on
@@ -110,6 +110,16 @@ export type Rejection =
   | { code: 'unknownDecision'; decisionId: DecisionId }
   /** `ResolveDecision` with an option the decision does not have. */
   | { code: 'unknownOption'; decisionId: DecisionId; optionId: string }
+  /** `NextPhase` while an enemy attack of the enemy phase still has to be resolved. */
+  | { code: 'enemyAttackPending'; enemyId: InstanceId; investigatorId: InvestigatorId }
+  /** `ResolveEnemyAttack` for an attack that is not an outstanding, due step. */
+  | { code: 'attackNotDue'; enemyId: InstanceId; investigatorId: InvestigatorId }
+  /** `ResolveEnemyAttack` with damage or horror that is not a non-negative integer. */
+  | { code: 'invalidAttackAmount'; amount: number }
+  /** A command that belongs to another phase (e.g. `EndTurn` outside investigation). */
+  | { code: 'wrongPhase'; expected: Phase; actual: Phase }
+  /** `EndTurn` for an investigator who has already taken their turn this round. */
+  | { code: 'turnAlreadyTaken'; investigatorId: InvestigatorId }
   | { code: 'triggerLoop'; limit: number }
   /** A command returned by a hook or card effect was rejected for `reason`. */
   | { code: 'triggeredCommandRejected'; command: CommandType; reason: Rejection }
@@ -237,6 +247,16 @@ function describe(r: Rejection): string {
       return `no pending decision ${r.decisionId}`;
     case 'unknownOption':
       return `decision ${r.decisionId} has no option ${r.optionId}`;
+    case 'enemyAttackPending':
+      return `the attack of ${r.enemyId} on ${r.investigatorId} must be resolved first`;
+    case 'attackNotDue':
+      return `${r.enemyId} has no attack on ${r.investigatorId} to resolve`;
+    case 'invalidAttackAmount':
+      return `attack damage and horror must be non-negative integers, got ${r.amount}`;
+    case 'wrongPhase':
+      return `only allowed in the ${r.expected} phase, not in ${r.actual}`;
+    case 'turnAlreadyTaken':
+      return `investigator ${r.investigatorId} has already taken their turn this round`;
     case 'triggerLoop':
       return `forced effects triggered more than ${r.limit} follow-up commands`;
     case 'triggeredCommandRejected':

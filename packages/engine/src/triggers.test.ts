@@ -270,8 +270,12 @@ describe('trigger bus', () => {
     expect(state.cards[cellar]?.faceUp).toBe(true);
   });
 
-  it('runs follow-ups through the full command handling, including the agenda check', () => {
-    const ctx = withHooks({ onActAdvance: { C1: () => [{ type: 'PlaceDoom', amount: 3 }] } });
+  it('runs follow-ups through the full command handling, including a doom threshold check', () => {
+    const ctx = withHooks({
+      onActAdvance: {
+        C1: () => [{ type: 'PlaceDoom', amount: 3 }, { type: 'CheckDoomThreshold' }],
+      },
+    });
 
     const { state } = execute(ctx, startedState(), advanceAct);
 

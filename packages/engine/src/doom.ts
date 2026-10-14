@@ -1,8 +1,7 @@
 import { cardStats, resolveValue, type EngineContext } from './cards';
-import type { DecisionRequested, Event } from './events';
+import type { DecisionRequested } from './events';
 import { confirmOptions } from './decisions';
 import { decisionId } from './ids';
-import { replay } from './reducer';
 import type { CardInstance, GameState } from './state';
 
 /**
@@ -54,10 +53,13 @@ export function doomInPlay(state: GameState): number {
 }
 
 /**
- * Asks whether to advance the agenda when the doom total has reached its
- * threshold. A single pending question per agenda is enough, so nothing is
- * emitted while one is open. The check runs after doom is placed; the phase
- * assistant (M1.10) decides when the rules actually allow advancing.
+ * `CheckDoomThreshold`: asks to confirm advancing the agenda when the doom
+ * total has reached its threshold. Rules Reference, "Agenda Deck": the agenda
+ * then must advance, and this check (mythos phase, or a card that says so)
+ * is the only time it can. The question is still a `confirm`, because the
+ * app is an assistant: "no" stands for "not yet, our count is off" at the
+ * table and is asked again at the next check. A single pending question per
+ * agenda is enough, so nothing is emitted while one is open.
  */
 export function agendaThresholdDecision(ctx: EngineContext, state: GameState): DecisionRequested[] {
   const agenda = state.agenda.current === undefined ? undefined : state.cards[state.agenda.current];
@@ -83,9 +85,4 @@ export function agendaThresholdDecision(ctx: EngineContext, state: GameState): D
       },
     },
   ];
-}
-
-/** `events` followed by the agenda question if they brought the doom total to the threshold. */
-export function withAgendaCheck(ctx: EngineContext, state: GameState, events: Event[]): Event[] {
-  return [...events, ...agendaThresholdDecision(ctx, replay(events, state))];
 }

@@ -71,6 +71,20 @@ export function apply(state: GameState, event: Event): GameState {
       return applyEnemyDefeated(state, event);
     case 'ExhaustChanged':
       return updateCard(state, event.cardId, (card) => ({ ...card, exhausted: event.exhausted }));
+    case 'PhaseChanged':
+      return {
+        ...state,
+        meta: { ...state.meta, phase: event.phase, round: event.round, steps: event.steps },
+      };
+    case 'PhaseStepsChanged':
+      return { ...state, meta: { ...state.meta, steps: event.steps } };
+    case 'RoundEnded':
+      return { ...state, meta: { ...state.meta, turnsTaken: [] } };
+    case 'TurnEnded':
+      return {
+        ...state,
+        meta: { ...state.meta, turnsTaken: [...state.meta.turnsTaken, event.investigatorId] },
+      };
   }
 }
 

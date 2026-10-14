@@ -9,7 +9,8 @@ import { zoneKey } from './zone';
  * every card is in exactly one zone and listed exactly once in that zone's
  * order, no order list is empty or names an unknown card, no token count is
  * negative, every connection (of any map) joins two known cards and appears only once,
- * every investigator is consistent (see `investigatorErrors`) and pending decisions are well-formed.
+ * every investigator is consistent (see `investigatorErrors`), pending decisions are
+ * well-formed and every investigator has taken at most one turn this round.
  */
 export function checkInvariants(state: GameState): string[] {
   const errors: string[] = [];
@@ -37,7 +38,19 @@ export function checkInvariants(state: GameState): string[] {
   errors.push(...connectionErrors(state));
   errors.push(...investigatorErrors(state));
   errors.push(...decisionErrors(state));
+  errors.push(...turnErrors(state));
   return errors;
+}
+
+/** Violations of the per-round turn flags: each names a known investigator, at most once. */
+function turnErrors(state: GameState): string[] {
+  const { turnsTaken } = state.meta;
+  return turnsTaken.flatMap((id, i) => [
+    ...(state.investigators.some((inv) => inv.id === id)
+      ? []
+      : [`turn taken by unknown investigator ${id}`]),
+    ...(turnsTaken.indexOf(id) < i ? [`turn of ${id} taken more than once`] : []),
+  ]);
 }
 
 /** Violations for the current agenda and act: they must name known cards. */

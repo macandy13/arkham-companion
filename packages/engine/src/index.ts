@@ -22,6 +22,7 @@ export { enemyAttackList, type EnemyAttack } from './enemies';
 export { confirmOptions, skillTestDecision, type SkillTestOutcomes } from './decisions';
 export { doomInPlay, isInPlay } from './doom';
 export { checkInvariants } from './invariants';
+export { playerOrder } from './phases';
 export {
   MAX_TRIGGERED_COMMANDS,
   type CardEffect,

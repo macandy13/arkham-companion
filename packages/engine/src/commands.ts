@@ -41,7 +41,14 @@ export type Command =
   | MoveHunters
   | MoveHunter
   | RequestDecision
-  | ResolveDecision;
+  | ResolveDecision
+  | CheckDoomThreshold
+  | NextPhase
+  | EndTurn
+  | ResolveEnemyAttack
+  | Investigate
+  | Fight
+  | Evade;
 
 /** A card instance to create when the scenario starts. */
 export interface StartingCard {
@@ -199,8 +206,8 @@ export interface DiscoverClues {
 
 /**
  * Puts `amount` (positive) doom on a card in play, by default on the current
- * agenda. Produces `TokensChanged`, followed by `DecisionRequested` if the
- * doom total now reaches the agenda's threshold. Removing doom is a
+ * agenda. Produces `TokensChanged`. The threshold is not checked here: the agenda
+ * only advances at a `CheckDoomThreshold` (mythos phase). Removing doom is a
  * `ManualAdjust` for now.
  */
 export interface PlaceDoom {
@@ -438,6 +445,99 @@ export interface ResolveDecision {
   type: 'ResolveDecision';
   decisionId: DecisionId;
   optionId: string;
+}
+
+/**
+ * Checks the doom threshold: if the doom in play has reached the current
+ * agenda's threshold, the players are asked to confirm advancing it
+ * (`DecisionRequested` of kind `confirm`, "no" overrides the count at the
+ * table and is asked again at the next check). The mythos phase runs it
+ * after placing its doom; card effects that say "check the doom threshold"
+ * return it. Doom placed at other times never advances the agenda by itself
+ * (Rules Reference, "Agenda Deck"). Produces nothing below the threshold.
+ */
+export interface CheckDoomThreshold {
+  type: 'CheckDoomThreshold';
+}
+
+/**
+ * The phase assistant's "Next": runs the outstanding steps of the current
+ * phase (`GameMeta.steps`), or, when none are left, moves on to the next
+ * phase (setup → investigation of round 1, skipping its mythos phase;
+ * investigation → enemy → upkeep → mythos of the next round) and runs its
+ * steps. Steps run until one leaves a decision pending or an enemy attack
+ * needs resolving (`ResolveEnemyAttack`); the next `NextPhase` after the
+ * answer resumes there. Rejected while an enemy attack of the current step
+ * list is still due. Produces `PhaseChanged`, then per step
+ * `PhaseStepsChanged` and the events of the step (`PlaceDoom`,
+ * `CheckDoomThreshold`, `DrawEncounter`, `MoveHunters`, `ReadyEnemy`,
+ * `AdjustInvestigator`, `RoundEnded`).
+ */
+export interface NextPhase {
+  type: 'NextPhase';
+}
+
+/**
+ * An investigator ends their turn in the investigation phase; sets the
+ * per-round "turn taken" flag (`GameMeta.turnsTaken`). Produces `TurnEnded`.
+ */
+export interface EndTurn {
+  type: 'EndTurn';
+  investigatorId: InvestigatorId;
+}
+
+/**
+ * The players resolved one enemy attack of the enemy phase (an `enemyAttack`
+ * step). `damage`/`horror` default to the enemy's printed values; the players
+ * pass less when assets soak part of it. The enemy exhausts after its last
+ * due attack (a massive enemy attacks everyone at its location first).
+ * Produces `PhaseStepsChanged`, `InvestigatorChanged` (damage, horror; with
+ * `InvestigatorDefeated` as usual, horror is skipped for an investigator the
+ * damage defeated) and `ExhaustChanged`.
+ */
+export interface ResolveEnemyAttack {
+  type: 'ResolveEnemyAttack';
+  enemyId: InstanceId;
+  investigatorId: InvestigatorId;
+  damage?: number;
+  horror?: number;
+}
+
+/**
+ * Quick action: the investigator investigates their location. The players
+ * resolve the intellect test against its shroud at the table; the engine
+ * raises a `skillTestResult` decision whose pass discovers 1 clue (if the
+ * location has one). Skipping the test and using `DiscoverClues` directly is
+ * equally valid. Produces `DecisionRequested`.
+ */
+export interface Investigate {
+  type: 'Investigate';
+  investigatorId: InvestigatorId;
+}
+
+/**
+ * Quick action: the investigator attacks an enemy at their location
+ * (combat test against its fight value). A pass deals `damage` (default 1;
+ * weapons deal more) via `DamageEnemy`. Produces `DecisionRequested`.
+ */
+export interface Fight {
+  type: 'Fight';
+  investigatorId: InvestigatorId;
+  enemyId: InstanceId;
+  /** Damage on a pass; default 1. */
+  damage?: number;
+}
+
+/**
+ * Quick action: the investigator evades an enemy engaged with them (agility
+ * test against its evade value). A pass exhausts the enemy (if ready) and
+ * disengages it (a massive enemy is not in the `engaged` zone and stays).
+ * Produces `DecisionRequested`.
+ */
+export interface Evade {
+  type: 'Evade';
+  investigatorId: InvestigatorId;
+  enemyId: InstanceId;
 }
 
 /** String literal of every command type. */

@@ -9,6 +9,8 @@ import type {
   Difficulty,
   Investigator,
   InvestigatorStat,
+  Phase,
+  PhaseStep,
   TokenKind,
 } from './state';
 import type { Zone } from './zone';
@@ -38,7 +40,11 @@ export type Event =
   | EnemyEngaged
   | EnemyDisengaged
   | EnemyDefeated
-  | ExhaustChanged;
+  | ExhaustChanged
+  | PhaseChanged
+  | PhaseStepsChanged
+  | RoundEnded
+  | TurnEnded;
 
 /** A scenario was set up; replaces the whole state. Produced by `StartScenario`. */
 export interface ScenarioStarted {
@@ -262,4 +268,40 @@ export interface ExhaustChanged {
   type: 'ExhaustChanged';
   cardId: InstanceId;
   exhausted: boolean;
+}
+
+/**
+ * The game is now in `phase` of `round` with `steps` outstanding (`GameMeta`).
+ * Produced by `NextPhase` when the previous phase has no steps left.
+ */
+export interface PhaseChanged {
+  type: 'PhaseChanged';
+  phase: Phase;
+  round: number;
+  steps: PhaseStep[];
+}
+
+/**
+ * The outstanding steps of the current phase are now `steps`. Produced by
+ * `NextPhase` before it runs a step (so a decision raised by the step resumes
+ * after it) or expands the enemy attacks, and by `ResolveEnemyAttack`.
+ */
+export interface PhaseStepsChanged {
+  type: 'PhaseStepsChanged';
+  steps: PhaseStep[];
+}
+
+/**
+ * Round `round` is over (the last step of upkeep): fires `onRoundEnd` and
+ * clears the per-round flags (`GameMeta.turnsTaken`). Produced by `NextPhase`.
+ */
+export interface RoundEnded {
+  type: 'RoundEnded';
+  round: number;
+}
+
+/** The investigator has taken their turn this round (`GameMeta.turnsTaken`). Produced by `EndTurn`. */
+export interface TurnEnded {
+  type: 'TurnEnded';
+  investigatorId: InvestigatorId;
 }

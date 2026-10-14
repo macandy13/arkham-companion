@@ -134,7 +134,7 @@ function inPlayEnemyOf(ctx: EngineContext, state: GameState, enemyId: InstanceId
 }
 
 /** The location an enemy in play is at; an engaged enemy is where its investigator is. */
-function locationOf(state: GameState, enemy: CardInstance): InstanceId {
+export function locationOf(state: GameState, enemy: CardInstance): InstanceId {
   if (enemy.zone.kind === 'atLocation') return enemy.zone.locationId;
   if (enemy.zone.kind === 'engaged') {
     const { investigatorId } = enemy.zone;

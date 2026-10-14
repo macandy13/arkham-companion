@@ -85,6 +85,37 @@ export type Difficulty = 'easy' | 'standard' | 'hard' | 'expert';
 /** Current game phase; `setup` before the first mythos phase. */
 export type Phase = 'setup' | 'mythos' | 'investigation' | 'enemy' | 'upkeep';
 
+/**
+ * One outstanding step of the current phase (the phase assistant's cursor,
+ * `GameMeta.steps`). Entering a phase lists its steps; `NextPhase` runs them
+ * in order and stops when one leaves a decision pending, so the next
+ * `NextPhase` resumes with the step after it. Steps are data in the state
+ * rather than a position in code so a mythos phase interrupted by a decision
+ * survives undo, replay and a reload.
+ */
+export type PhaseStep =
+  /** Mythos: 1 doom on the current agenda. */
+  | { kind: 'placeDoom' }
+  /** Mythos: the doom threshold check, the only regular moment the agenda advances. */
+  | { kind: 'checkDoomThreshold' }
+  /** Mythos: one investigator draws an encounter card (one step each, in player order). */
+  | { kind: 'drawEncounter'; investigatorId: InvestigatorId }
+  /** Enemy: hunters move. */
+  | { kind: 'moveHunters' }
+  /**
+   * Enemy: replaced by one `enemyAttack` step per due attack once reached, so
+   * the list reflects hunters that just moved and engaged.
+   */
+  | { kind: 'enemyAttacks' }
+  /** Enemy: one attack the players resolve with `ResolveEnemyAttack`. */
+  | { kind: 'enemyAttack'; enemyId: InstanceId; investigatorId: InvestigatorId }
+  /** Upkeep: every exhausted enemy in play readies. */
+  | { kind: 'readyEnemies' }
+  /** Upkeep: each active investigator gains 1 resource. */
+  | { kind: 'gainResources' }
+  /** Upkeep: the round ends (`RoundEnded`, `onRoundEnd` hooks, per-round flags reset). */
+  | { kind: 'endRound' };
+
 /** Tokens in the chaos bag. */
 export type ChaosToken =
   | '+1'
@@ -204,8 +235,17 @@ export interface GameMeta {
   resolution?: string;
   seed: number;
   rngState: RngState;
+  /** Number of the current round; 0 during setup, 1 from the first investigation phase. */
   round: number;
   phase: Phase;
+  /** Outstanding steps of the current phase, next first (see `PhaseStep`). */
+  steps: PhaseStep[];
+  /**
+   * Investigators who have ended their turn this round (`EndTurn`). A
+   * per-round flag kept apart from `InvestigatorStatus`, which is permanent
+   * for the scenario; cleared when the round ends.
+   */
+  turnsTaken: InvestigatorId[];
   leadInvestigator?: InvestigatorId;
 }
 
@@ -244,6 +284,8 @@ export function emptyState(): GameState {
       rngState: [0, 0, 0, 1],
       round: 0,
       phase: 'setup',
+      steps: [],
+      turnsTaken: [],
     },
     investigators: [],
     cards: {},
