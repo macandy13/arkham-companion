@@ -71,15 +71,33 @@ export function entersThreatArea(text: string | undefined): boolean {
   return THREAT_AREA.test(plainLines(text ?? '').join(' '));
 }
 
-/** Text without ArkhamDB markup (reminder text, bold, `[[Trait]]`), as trimmed non-empty lines. */
+/**
+ * Text without ArkhamDB markup (reminder text, bold, `[[Trait]]`), as trimmed non-empty lines.
+ *
+ * Tag stripping repeats until the text is stable and then drops stray angle
+ * brackets: a single pass can splice a new tag together from the remains of
+ * nested or malformed markup (e.g. `<<b>b>`). The text is only matched against
+ * keywords and never rendered as HTML, so this is not a security boundary, but
+ * the loop keeps the result free of tag fragments (and CodeQL-clean).
+ */
 function plainLines(text: string): string[] {
-  return text
-    .replace(/<i>.*?<\/i>/gis, '')
-    .replace(/<[^>]+>/g, '')
+  return stripUntilStable(text, [/<i>.*?<\/i>/gis, /<[^>]+>/g])
+    .replace(/[<>]/g, '')
     .replace(/\[\[([^\]]+)\]\]/g, '$1')
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean);
+}
+
+/** Removes every match of the patterns, repeatedly, until a full round changes nothing. */
+function stripUntilStable(text: string, patterns: readonly RegExp[]): string {
+  let current = text;
+  let previous: string;
+  do {
+    previous = current;
+    for (const pattern of patterns) current = current.replace(pattern, '');
+  } while (current !== previous);
+  return current;
 }
 
 /** The keywords of a line, or none if any of its sentences is not a keyword. */

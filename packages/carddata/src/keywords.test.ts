@@ -79,6 +79,18 @@ describe('parseKeywords', () => {
   });
 });
 
+describe('parseKeywords with malformed markup', () => {
+  it('leaves no tag fragments from nested or malformed tags', () => {
+    expect(parseKeywords('<b<b>>Surge.</b>', [])).toEqual([{ name: 'surge' }]);
+    expect(parseKeywords('<<b>b>Surge.</b>', [])).toEqual([]);
+    expect(parseKeywords('<<i>i>Fake reminder.</i></i>Hunter.', [])).toEqual([{ name: 'hunter' }]);
+  });
+
+  it('removes stray angle brackets', () => {
+    expect(parseKeywords('Surge.>', [])).toEqual([{ name: 'surge' }]);
+  });
+});
+
 describe('entersThreatArea', () => {
   it('is true when the text puts the card into the threat area', () => {
     expect(entersThreatArea('Revelation - Put Fake into play in your threat area.')).toBe(true);
