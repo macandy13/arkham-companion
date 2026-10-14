@@ -24,14 +24,14 @@ Ref: §8.
 - [ ] Optional module (off by default): draw, seal, return; symbol effects with current values (e.g. act number)
 - [ ] Bag from campaign log or scenario default
 
-## M6.2 Language switch EN/DE (S)
+## M6.2 Card and UI languages (S)
 
-**Why:** German-speaking groups play with German cards, so the text on screen should match the cards on the table. Switching mid-game helps mixed-language groups.
+**Why:** Groups play with cards in their own language, so the text on screen should match the cards on the table. ArkhamDB offers several languages besides English and German (e.g. French, Spanish, Italian), so the language list should not be hard-coded. Switching mid-game helps mixed-language groups.
 
-**Benefit:** Full German experience, with English as a safe fallback for untranslated cards.
+**Benefit:** The app is usable for groups in any language ArkhamDB covers, with English as a safe fallback for untranslated cards.
 
-- [ ] German card data from `de.arkhamdb.com` with per-card English fallback
-- [ ] Complete German UI strings; switch mid-game without reload
+- [ ] Card data for every language ArkhamDB offers (`<lang>.arkhamdb.com`), list of languages in one config; per-card English fallback
+- [ ] Complete German UI strings; UI translations as separate files so more languages can be contributed; switch mid-game without reload
 
 ## M6.3 Auto-layout (O)
 

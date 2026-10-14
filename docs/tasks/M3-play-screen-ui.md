@@ -27,7 +27,7 @@ All UI actions dispatch engine commands through the Zustand store; no component 
 
 ## M3.2 Header (S)
 
-**Why:** Round, phase, doom and clues are what players look at most often.
+**Why:** Round, phase, agenda doom and act clues are the scenario's always-on status. They are one important piece among others (map, investigators, encounter cards), so the header keeps them compact and leaves the space to the map.
 
 **Benefit:** The game clock at a glance and one-tap phase progression.
 
@@ -64,7 +64,7 @@ Ref: §5 Map model.
 
 **Benefit:** Everyone's status is visible; each change is one tap.
 
-- [ ] One panel per investigator: portrait, health/horror, clues, resources with +/− steppers
+- [ ] One panel per investigator: portrait, health/horror, clues, resources and doom on player cards with +/− steppers
 - [ ] Threat area and engaged enemies as chips; tap → card zoom
 - [ ] Turn-taken marker, defeated/resigned state
 
@@ -83,7 +83,7 @@ Ref: §5 Map model.
 
 **Benefit:** Choices never get lost; any card can be read full size.
 
-- [ ] Modal for pending `Decision`s with the engine's options
+- [ ] Modal for pending `Decision`s with the engine's options, one layout per decision kind (M1.9); the skill test prompt shows skill, difficulty and pass/fail buttons plus "skip, adjust manually"
 - [ ] Card zoom: front/back image, text fallback from card data
 
 ## M3.8 Event log (S)

@@ -28,13 +28,13 @@ Prerequisite: the cloud environment can reach `arkhamdb.com` (see architecture �
 
 ## M2.2 Investigator catalog data (S)
 
-**Why:** The picker needs every investigator across all products, without reprint duplicates, and it must work offline.
+**Why:** The picker needs every investigator across all products, without reprint duplicates, and it must work offline. Some investigators exist in two versions – the original Chapter One card and a revised Chapter Two card with different stats or abilities. These are different investigators for play and must both be listed, clearly marked.
 
 **Benefit:** Players choose from the real investigator list; after the first load it works without network.
 
 - [ ] `carddata`: fetch all player cards (`/api/public/cards/`), keep `type_code = investigator`
-- [ ] Normalise to `InvestigatorDef` (code, name, subname, faction, health, sanity, skills, pack, cycle, images, `duplicate_of_code`, parallel flag)
-- [ ] Deduplicate reprints, group parallel versions with the original
+- [ ] Normalise to `InvestigatorDef` (code, name, subname, faction, health, sanity, skills, pack, cycle, images, `duplicate_of_code`, parallel flag, `chapter: 1 | 2` derived from the pack/cycle)
+- [ ] Deduplicate only true reprints (same card, same chapter); keep Chapter One and Chapter Two versions as separate entries, linked to each other; group parallel versions with the original
 - [ ] App loads the catalog once, caches it in IndexedDB (`cards` table) and refreshes with `If-Modified-Since`
 - [ ] Packs list (`/api/public/packs/`) for cycle/pack filters
 
@@ -45,7 +45,8 @@ Prerequisite: the cloud environment can reach `arkhamdb.com` (see architecture �
 **Benefit:** Fast, visual team setup, similar to the Mansions of Madness app.
 
 - [ ] Portrait grid (image with text fallback), lazy-loaded images
-- [ ] Filters: class chips, cycle/pack, "my collection"; search by name
+- [ ] Filters: class chips, cycle/pack, chapter (1/2), "my collection"; search by name
+- [ ] Chapter badge ("Ch. 1" / "Ch. 2") on every portrait and in the detail sheet; the detail sheet links to the other chapter's version
 - [ ] Detail sheet: front/back, health, sanity, skills
 - [ ] Seats: select assigns next seat (max 4), drag to reorder, remove; lead investigator marker
 - [ ] Component tests with a fixture catalog
@@ -56,16 +57,18 @@ Prerequisite: the cloud environment can reach `arkhamdb.com` (see architecture �
 
 **Benefit:** A picker tailored to the group's collection, and a language choice that persists.
 
-- [ ] Settings screen: owned packs (checkbox list by cycle), card/UI language EN/DE, theme
+- [ ] Settings screen: owned packs (checkbox list by cycle), card language (any language ArkhamDB offers), UI language (EN/DE first), theme
 - [ ] Stored in localStorage via a small `settings` module (try/catch, defaults)
 
 ## M2.5 New game wizard (S)
 
-**Why:** One guided path from "nothing" to "board is set up" replaces most of the physical setup work.
+**Why:** A guided path from "nothing" to "board is set up" replaces most of the physical setup work. Starting a campaign and playing a single scenario are different intents, so they are two separate entry points rather than a mode step.
 
 **Benefit:** A game is set up in about a minute, and an accidental refresh does not lose the wizard's choices.
 
-- [ ] Steps: mode (campaign/standalone) → scenario + difficulty → investigators (picker) → summary
+- [ ] Two entry points on the home screen:
+  - **New campaign:** campaign + difficulty → investigators (picker) → summary; starts the campaign's first scenario (campaign log itself arrives in M5)
+  - **Quick game:** any single scenario + difficulty → investigators → summary; standalone chaos bag, no campaign log
 - [ ] Scenario list from `packages/scenarios` (sandbox only until M4)
 - [ ] Confirm: `compileSetup` → `StartScenario` → `GameStore.createGame` → navigate to `/game/:id`
 - [ ] Back/forward keeps choices; wizard state survives refresh (sessionStorage)
@@ -78,7 +81,7 @@ Prerequisite: the cloud environment can reach `arkhamdb.com` (see architecture �
 
 - [ ] List saved games via `GameStore.listGames`: scenario, investigators (portraits), round/phase, last played
 - [ ] Actions: resume, rename, duplicate, delete (with confirm)
-- [ ] Empty state with "New game"
+- [ ] Empty state with "New campaign" and "Quick game"
 
 ## M2.7 Resume, export and import (S)
 

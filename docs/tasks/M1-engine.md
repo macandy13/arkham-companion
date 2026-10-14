@@ -71,11 +71,12 @@ Ref: §5 `Investigator`.
 
 ## M1.5 Agenda, act and doom (S)
 
-**Why:** Doom and the agenda/act decks are the clock of every scenario and the thing most often mis-counted. The engine asks before advancing instead of advancing silently ("assistant, not referee", §2).
+**Why:** Doom and the agenda/act decks are the clock of every scenario. Summing doom by hand is easy to get wrong once doom sits on several cards (agenda, enemies, locations, player cards), so the app keeps the running total. Doom on player cards matters too, but the app does not model player cards – so each investigator gets a plain doom counter that counts toward the total. The engine asks before advancing instead of advancing silently ("assistant, not referee", §2).
 
 **Benefit:** The app tells players when the agenda or act should advance and what happens next; a scenario ends with a resolution the campaign can record.
 
-- [ ] `PlaceDoom` (on agenda or any card), doom total = agenda + cards in play
+- [ ] `PlaceDoom` (on agenda or any card), doom total = agenda + cards in play + each investigator's player-card doom counter
+- [ ] Per-investigator doom counter for doom on player cards the app does not track (`Investigator.doomOnPlayerCards`, adjusted via `AdjustInvestigator`)
 - [ ] Threshold check emits a `DecisionRequested` "advance agenda?" instead of advancing silently
 - [ ] `AdvanceAgenda` / `AdvanceAct`: flip, run reverse-side hook, next card; clue threshold per investigator for act
 - [ ] Scenario end hooks when the last agenda/act advances (`ScenarioEnded` with resolution id)
@@ -89,7 +90,7 @@ Ref: §5 `Investigator`.
 Ref: §6 Triggers, §7 hooks.
 
 - [ ] Trigger bus: after events are produced, hooks (`afterDoomPlaced`, `onAgendaAdvance[code]`, `onActAdvance[code]`, `onRoundEnd`, `onCardEnters`) may append more events
-- [ ] Hooks are pure functions `(state, ctx) -> Command[] | Event[]`; loop guard against infinite chains
+- [ ] Hooks are pure functions `(state, ctx) -> Command[]`; the bus runs each returned command through `handle` like a player command, so hook effects are validated and can use card data and the RNG the same way (returning raw events would bypass both). Loop guard against infinite chains
 - [ ] Effects registry keyed by card code (empty except a sandbox card that adds a connection)
 
 ## M1.7 Encounter deck and mythos draw (S)
@@ -105,9 +106,9 @@ Ref: §6 Triggers, §7 hooks.
 
 ## M1.8 Enemies (S)
 
-**Why:** Enemy movement and engagement are the most rules-heavy part of a round (hunter pathing, aloof, prey) and easy to get wrong.
+**Why:** The enemy rules are not hard, but tracking every enemy's location, engagement, exhaustion and damage, and moving each hunter every round, is tedious bookkeeping. This is a quality-of-life feature: the app does the routine part so players only confirm it.
 
-**Benefit:** The app computes where hunters move and which enemies attack whom; real ties are handed to the players as decisions.
+**Benefit:** The app shows where hunters move and which enemies attack whom; real ties are handed to the players as decisions.
 
 - [ ] `SpawnEnemy` (spawn instruction or drawing investigator's location), engagement unless aloof
 - [ ] `EngageEnemy`, `DisengageEnemy`, `DefeatEnemy` (to discard or victory display), damage tokens, exhaust/ready
@@ -120,13 +121,21 @@ Ref: §6 Triggers, §7 hooks.
 
 **Benefit:** Predictable flow, and a single reusable decision dialog in M3.
 
-- [ ] `Decision` model (id, prompt key, options, who decides), `ResolveDecision` command
+- [ ] `Decision` model (id, prompt key, kind, options, who decides: lead investigator, a specific investigator, or the group), `ResolveDecision` command
+- [ ] Decision kinds (one UI component each in M3.7):
+  - `confirm` – yes/no before the engine does something it could do automatically (advance agenda/act, apply a forced effect)
+  - `chooseInvestigator` – "an investigator of your choice", prey ties, who an enemy engages
+  - `chooseLocation` – spawn location or hunter destination ties, "a location of your choice"
+  - `chooseCard` – which enemy/card an effect targets, which copy to take
+  - `chooseOption` – card text with alternatives ("choose one: take 2 damage or discard 2 cards")
+  - `skillTestResult` – the outcome of a skill test the players resolve at the table (see below)
+- [ ] Rule of thumb: a **decision** is any choice the engine needs answered before it can continue (including choices the rules give to players). Things players do on their own initiative (move, investigate, fight, adjust tokens) are **commands**, not decisions.
 - [ ] While decisions are pending, other commands are rejected except `ManualAdjust`/`ResolveDecision`
-- [ ] Tests for hunter tie, spawn choice, agenda advance confirmation
+- [ ] Tests for hunter tie, spawn choice, agenda advance confirmation, skill test pass/fail
 
 ## M1.10 Phase assistant (O)
 
-**Why:** Players think in rounds and phases, not in individual rules. The phase assistant ties all modules into that structure.
+**Why:** Players think in rounds and phases, not in individual rules. The phase assistant ties all modules into that structure. Skill tests stay with the players (§1), but many game steps depend on their outcome, so the engine needs a small, explicit hand-off: it states the test (skill, difficulty incl. shroud or enemy value), the players resolve it with their cards and chaos bag, and they enter pass/fail; the engine then applies the consequence.
 
 **Benefit:** One "Next" button drives the whole round; the mythos phase runs automatically.
 
@@ -136,6 +145,7 @@ Ref: §6 Phase assistant.
 - [ ] Mythos: place doom, threshold check, encounter draw per investigator in player order (skipped in round 1)
 - [ ] Enemy: hunters move, list attacks; Upkeep: ready all, +1 resource, reset per-round flags
 - [ ] Per-round "turn taken" flag per investigator (not an `InvestigatorStatus`, see M0.4 note)
+- [ ] Skill test hand-off: investigation-phase quick actions `Investigate`, `Fight`, `Evade` and card-driven tests ("test Willpower (3); if you fail…") raise a `skillTestResult` decision with skill and difficulty; the answer (pass/fail, optionally "failed by N") triggers the consequence (discover clue, damage the enemy, exhaust and disengage it, or the card's fail effect). Players can skip the test and adjust manually instead.
 
 ## M1.11 Undo and replay (S)
 

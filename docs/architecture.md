@@ -25,7 +25,7 @@ The app takes over the **scenario side** of Arkham Horror LCG: setup, agenda/act
 - Campaign mode: campaign log across the three intro scenarios, chaos bag carried forward
 - Mid-scenario setup changes (replace locations, set-aside cards into play, cards into discard)
 - Scenario-specific mechanics via scripts
-- Card language configurable (English/German)
+- Card language configurable (English, German and the other languages ArkhamDB offers)
 - Local persistence, refresh-proof, undo
 
 **Not in scope v1:** player card logic, skill test resolution, deck building, multi-device sync and cloud storage (both planned, see sections 10 and 15).
@@ -141,6 +141,7 @@ interface Investigator {
   health: { max: number; damage: number };
   sanity: { max: number; horror: number };
   clues: number; resources: number;
+  doomOnPlayerCards: number;   // doom on player cards the app does not model
   status: 'active' | 'resigned' | 'defeated';
 }
 
@@ -196,7 +197,8 @@ Per field, the first source that has it wins; every value can be overridden by h
 
 - **Commands** (intent): `StartScenario`, `NextPhase`, `PlaceDoom`, `AdvanceAgenda`, `AdvanceAct`, `DrawEncounter(investigator)`, `SpawnEnemy`, `MoveEnemy`, `EngageEnemy`, `DefeatEnemy`, `MoveInvestigator`, `DiscoverClues`, `AdjustInvestigator`, `Attach`, `Discard`, `Shuffle`, `AddToVictory`, `ResolveDecision`, `ManualAdjust`.
 - **Events** (facts): fine-grained, e.g. `CardMoved`, `TokensChanged`, `CardFlipped`, `ConnectionChanged`, `InvestigatorChanged`, `DeckShuffled(seedStep)`, `PhaseChanged`, `DecisionRequested`.
-- **Decisions:** where the rules leave a choice (hunter tie, spawn location, effect target), the engine creates a `Decision` instead of guessing; the answer returns as `ResolveDecision`.
+- **Decisions:** where the engine cannot continue without an answer from the players – a rules choice (hunter tie, spawn location, effect target, "an investigator of your choice"), a confirmation (advance agenda?) or the result of a skill test – it creates a `Decision` instead of guessing; the answer returns as `ResolveDecision`. Kinds: `confirm`, `chooseInvestigator`, `chooseLocation`, `chooseCard`, `chooseOption`, `skillTestResult`. What players do on their own initiative (move, investigate, adjust tokens) are commands, not decisions.
+- **Skill tests** are resolved by the players with their own cards and chaos bag (§1). The engine states the test (skill and difficulty, e.g. the location's shroud) and asks for pass/fail via a `skillTestResult` decision, then applies the consequence (clue discovered, enemy damaged or evaded, a card's fail effect).
 - **Undo:** discard the last command and its events, replay from the last snapshot.
 - **Randomness:** seeded PRNG (e.g. xoshiro128) in the state; every shuffle is reproducible.
 
@@ -204,7 +206,7 @@ Per field, the first source that has it wins; every value can be overridden by h
 
 | Module | Responsibility |
 | --- | --- |
-| Doom | Sum doom (agenda + cards in play) against threshold, suggest advancing |
+| Doom | Sum doom (agenda + cards in play + each investigator's player-card doom counter) against threshold, suggest advancing |
 | Act | Per-investigator clue thresholds, trigger reverse side |
 | Mythos | Place doom, draw in player order, surge, peril, reshuffle empty deck |
 | Enemy | Spawn, hunter path (shortest path over the graph, tie → decision), aloof, massive, retaliate/alert reminders, exhaust/ready |
@@ -214,7 +216,7 @@ Per field, the first source that has it wins; every value can be overridden by h
 | Triggers | Event bus for forced effects: `afterDoomPlaced`, `onRoundEnd`, `onAgendaAdvance` |
 | Effects | Registry of card scripts keyed by card code; in v1 only board-changing cards |
 
-**Phase assistant:** guides through mythos → investigation → enemy → upkeep, automating the mythos phase, offering quick actions in investigation, computing hunter movement and due attacks in the enemy phase.
+**Phase assistant:** guides through mythos → investigation → enemy → upkeep, automating the mythos phase, offering quick actions in investigation (investigate, fight, evade – each a skill test hand-off), computing hunter movement and due attacks in the enemy phase.
 
 ## 7. Scenario plugins and setup changes
 
@@ -251,6 +253,8 @@ interface ScenarioDefinition {
 
 **Spreading Flames primitives:** skull token depends on act number (chaos module reads state); `drawTopmostFromDiscard(name)` for *Fire!*; parley `ScenarioAction` on agendas; `fromSetAside` when advancing to agenda 2; `afterDoomPlaced` trigger on agenda 3.
 
+**Hooks** return commands, which run through the normal `handle` path (validated, with access to card data and the RNG), never raw events.
+
 **Card effects – start simple:** encounter cards are displayed, keywords and spawn evaluated; board-changing cards get a script in the effects registry. More cards can be automated one by one later.
 
 ## 8. Campaign mode
@@ -269,7 +273,7 @@ interface ScenarioDefinition {
 - `GET /api/public/packs/`, `GET /api/public/cards/{pack_code}.json?encounter=1`, `GET /api/public/card/{code}`; images: `https://arkhamdb.com` + `imagesrc`/`backimagesrc`.
 - A script in `packages/carddata` fetches and normalises into `CardDef`. **Fetched JSON is generated in CI/build, not committed** (repo may become public).
 - Runtime refresh via `If-Modified-Since`, stored in IndexedDB. Images loaded at runtime, cached by the service worker; text-card fallback.
-- **Language configurable:** EN/DE via `de.arkhamdb.com/api/`, per-card fallback to English.
+- **Language configurable:** any language ArkhamDB offers via `<lang>.arkhamdb.com/api/` (e.g. `de`), per-card fallback to English. UI strings start with EN/DE; more can be added as translation files.
 - Card texts/images © Fantasy Flight Games.
 
 ## 10. Persistence and recovery
@@ -292,13 +296,13 @@ Tablet landscape first. Header (round, phase, agenda/act, undo), map centre (pan
 **Game management**
 
 - **Home screen:** saved games and campaigns, newest first, each with scenario, investigators, round/phase and last played. Actions: resume, rename, duplicate, delete, export.
-- **New game wizard:** 1) campaign or standalone scenario, 2) scenario and difficulty, 3) investigators (1–4) in player order, 4) summary. Confirming runs the setup and opens the board.
+- **Two ways to start:** *New campaign* (campaign and difficulty → investigators → summary; plays the scenarios in order with a campaign log) and *Quick game* (any single scenario and difficulty → investigators → summary; standalone chaos bag, no log). Investigators are 1–4 in player order. Confirming runs the setup and opens the board.
 - **Resume** restores the exact state (snapshot + replay). **Load** imports a JSON export as a new saved game.
 - **Auto-save** on every command; there is no manual save.
 
 **Investigator picker** (inspired by the Mansions of Madness app)
 
-- Catalog of all investigators from ArkhamDB (`type_code = investigator`, all packs), deduplicated across reprints (`duplicate_of_code`), parallel versions grouped with the original.
+- Catalog of all investigators from ArkhamDB (`type_code = investigator`, all packs), deduplicated across true reprints (`duplicate_of_code`), parallel versions grouped with the original. Investigators revised for Chapter Two are **not** merged with their Chapter One version: both are listed, each with a chapter badge, and can be filtered by chapter.
 - Grid of portraits; filter by class, cycle/pack and "my collection" (owned packs, set once in settings); search by name.
 - Tap shows front and back with health, sanity, skills and ability; select assigns the next seat, drag reorders seats, remove frees one.
 - In campaign play investigators come from the campaign log; the picker only opens to replace killed or insane ones.
@@ -336,7 +340,7 @@ flowchart LR
 | M3 Play screen UI | Header, map with pan/zoom, investigator bar, encounter panel, decision dialog, card zoom, event log; sandbox scenario playable on a tablet | Built on the proven engine with fake data, so only UI issues remain | A full game loop on a tablet (with the sandbox scenario) |
 | M4 Scenario data + first scenario | ArkhamCards layout import, connection symbol extraction, manual connection editor; *Spreading Flames* complete | Engine and UI are proven; now only data and scenario rules can break | The first real scenario, playable at the table; a recipe for every later one |
 | M5 Core campaign | Scenarios 2 and 3, campaign log, chaos bag carry-over, resolutions, campaign screen | Reuses the M4 recipe | The complete Core Set campaign, no paper log needed |
-| M6 Comfort | Chaos bag module, EN/DE switch, auto-layout, offline preload, polish | Nice to have, nothing blocks play | German cards, reliable offline play, tidier maps, smoother app |
+| M6 Comfort | Chaos bag module, card and UI languages, auto-layout, offline preload, polish | Nice to have, nothing blocks play | Cards in the group's language, reliable offline play, tidier maps, smoother app |
 | M7 Expansion | More Chapter Two products; more automated card effects | Driven by new releases and playtest findings | New content soon after release, less manual work per round |
 | M8 Cloud and sync | Login, games in the cloud, sync across devices at the table | Adds cost and operations; one tablet covers the core use case | Games backed up online, several devices showing the same live game |
 
@@ -347,7 +351,7 @@ flowchart LR
 - One device in v1, sync in M8 – a backend adds cost and accounts; one shared tablet covers the main use case.
 - Investigator tracking (health, horror, clues, resources) – removes most physical tokens, and enemy rules (prey) need these values.
 - Encounter automation starts with display + keywords – keywords are generic and cover most rules; individual card scripts are added where playtests show they pay off.
-- Card language configurable – German-speaking groups want screen text that matches their cards; ArkhamDB offers both.
+- Card language configurable – groups want screen text that matches their cards; ArkhamDB offers several languages.
 - Campaign mode in v1 – the Core Set is a campaign; standalone-only would miss its point.
 - React – existing experience and the largest ecosystem.
 - GitHub, possibly public – free CI and hosting; nothing copyrighted is committed, so going public stays possible.
