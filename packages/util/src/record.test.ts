@@ -17,7 +17,7 @@ describe('withEntry', () => {
     expect('a' in result).toBe(false);
   });
 
-  it('does not modify the input', () => {
+  it('does not modify the input when removing a key', () => {
     const record = { a: 1 };
 
     withEntry(record, 'a', undefined);
