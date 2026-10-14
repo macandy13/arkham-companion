@@ -60,7 +60,7 @@ The DOM is a clearly structured document tree – good structure _is_ accessibil
 
 Common, generic operations go into small, tested helpers instead of being re-implemented inline.
 
-- **`@arkham/util`** (`packages/util`) holds pure, dependency-free helpers usable from every package, grouped by topic (`string.ts`, later e.g. `array.ts`, `record.ts`). Example: `stripSuffix(name, '.json')` instead of `name.endsWith('.json') ? name.slice(0, -5) : name`.
+- **`@arkham/util`** (`packages/util`) holds pure, dependency-free helpers usable from every package, grouped by topic (`array.ts`, `record.ts`, `string.ts`, …). Example: `splitTrimmed(traits, '.')` instead of `traits.split('.').map((t) => t.trim()).filter(Boolean)`.
 - Before writing a one-off string/array/object manipulation, check `@arkham/util` and the standard library. If it's not there and it's generic, add it there (with tests) rather than inline.
 - Domain helpers stay in their package (e.g. card helpers in `packages/carddata/src/helpers.ts`, zone helpers in the engine).
 - Helpers are pure, small, total (defined for every input, including empty strings/arrays) and named after what they return.

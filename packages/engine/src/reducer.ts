@@ -1,3 +1,4 @@
+import { insertedAt, withEntry, without } from '@arkham/util';
 import type { CardMoved, DeckShuffled, Event, ScenarioStarted, TokensChanged } from './events';
 import type { InstanceId } from './ids';
 import { seedRng } from './rng';
@@ -78,10 +79,8 @@ function applyCardMoved(state: GameState, e: CardMoved): GameState {
 function applyTokensChanged(state: GameState, e: TokensChanged): GameState {
   const card = state.cards[e.cardId];
   if (!card) return state;
-  const tokens = { ...card.tokens };
-  const value = (tokens[e.token] ?? 0) + e.delta;
-  if (value === 0) delete tokens[e.token];
-  else tokens[e.token] = value;
+  const value = (card.tokens[e.token] ?? 0) + e.delta;
+  const tokens = withEntry(card.tokens, e.token, value === 0 ? undefined : value);
   return { ...state, cards: { ...state.cards, [e.cardId]: { ...card, tokens } } };
 }
 
@@ -91,20 +90,5 @@ function withZoneOrder(
   key: ZoneKey,
   ids: InstanceId[],
 ): Record<ZoneKey, InstanceId[]> {
-  const next = { ...order };
-  if (ids.length === 0) delete next[key];
-  else next[key] = ids;
-  return next;
-}
-
-/** Copy of `ids` without `id`. */
-function without(ids: readonly InstanceId[], id: InstanceId): InstanceId[] {
-  return ids.filter((other) => other !== id);
-}
-
-/** Copy of `ids` with `id` inserted at `index` (0 = top); appended when `index` is omitted. */
-function insertedAt(ids: readonly InstanceId[], id: InstanceId, index?: number): InstanceId[] {
-  const next = ids.slice();
-  next.splice(index ?? next.length, 0, id);
-  return next;
+  return withEntry(order, key, ids.length === 0 ? undefined : ids);
 }

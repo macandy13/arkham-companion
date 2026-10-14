@@ -1,42 +1,56 @@
+@import './styles/tokens.css';
+
 body {
   margin: 0;
-  font-family: system-ui, sans-serif;
+  font-family: var(--font-family);
+  color: var(--color-text);
+  background: var(--color-background);
 }
+
 #shell {
   display: grid;
   height: 100vh;
   grid-template:
     'header header header' auto
     'games map encounter' 1fr
-    'investigators investigators investigators' 8rem / 14rem 1fr 16rem;
+    'investigators investigators investigators' var(--investigator-bar-height)
+    / var(--sidebar-width) 1fr var(--panel-width);
 }
+
 #shell > * {
-  border: 1px solid #8884;
-  padding: 0.5rem;
+  border: var(--border);
+  padding: var(--space-2);
   overflow: auto;
 }
+
 #shell > header {
   grid-area: header;
   display: flex;
-  gap: 1rem;
+  gap: var(--space-3);
   align-items: center;
 }
+
 header h1,
 header p {
   margin: 0;
 }
+
 header h1 {
-  font-size: 1rem;
+  font-size: var(--font-size-base);
 }
+
 #games {
   grid-area: games;
 }
+
 #map {
   grid-area: map;
 }
+
 #encounter {
   grid-area: encounter;
 }
+
 #investigators {
   grid-area: investigators;
 }

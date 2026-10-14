@@ -99,6 +99,9 @@ importers:
 
   packages/carddata:
     dependencies:
+      '@arkham/util':
+        specifier: workspace:*
+        version: link:../util
       zod:
         specifier: ^4.6.7
         version: 4.6.7
@@ -111,12 +114,18 @@ importers:
         version: 4.23.15
 
   packages/engine:
+    dependencies:
+      '@arkham/util':
+        specifier: workspace:*
+        version: link:../util
     devDependencies:
       fast-check:
         specifier: ^4.10.2
         version: 4.10.2
 
   packages/scenarios: {}
+
+  packages/util: {}
 
 packages:
 

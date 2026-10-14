@@ -5,8 +5,6 @@
  */
 export default {
   extends: ['stylelint-config-standard'],
-  // Predates the token system; migrated to tokens.css in the next change, then removed here.
-  ignoreFiles: ['apps/web/src/app.css'],
   plugins: ['stylelint-declaration-strict-value'],
   rules: {
     // Plain string imports are what Vite resolves and what our files use.

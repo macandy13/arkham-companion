@@ -10,6 +10,7 @@
     "fetch-cards": "tsx src/fetch.ts"
   },
   "dependencies": {
+    "@arkham/util": "workspace:*",
     "zod": "^4.6.7"
   },
   "devDependencies": {
