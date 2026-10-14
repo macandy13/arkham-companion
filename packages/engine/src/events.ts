@@ -1,4 +1,4 @@
-import type { InstanceId, MapId } from './ids';
+import type { InstanceId, InvestigatorId, MapId } from './ids';
 import type { Edge, GameMap } from './map';
 import type { RngState } from './rng';
 import type {
@@ -7,6 +7,7 @@ import type {
   ChaosToken,
   Difficulty,
   Investigator,
+  InvestigatorStat,
   TokenKind,
 } from './state';
 import type { Zone } from './zone';
@@ -16,7 +17,15 @@ import type { Zone } from './zone';
  * reducer never needs to validate, generate IDs or draw random numbers.
  */
 export type Event =
-  ScenarioStarted | DeckShuffled | CardMoved | TokensChanged | CardFlipped | ConnectionChanged;
+  | ScenarioStarted
+  | DeckShuffled
+  | CardMoved
+  | TokensChanged
+  | CardFlipped
+  | ConnectionChanged
+  | InvestigatorMoved
+  | InvestigatorChanged
+  | InvestigatorDefeated;
 
 /** A scenario was set up; replaces the whole state. Produced by `StartScenario`. */
 export interface ScenarioStarted {
@@ -83,6 +92,35 @@ export interface ConnectionChanged {
   /** The map that owns the edge. */
   mapId: MapId;
   edge: Edge;
+}
+
+/** An investigator is now at location `to`. Produced by `MoveInvestigator`. */
+export interface InvestigatorMoved {
+  type: 'InvestigatorMoved';
+  investigatorId: InvestigatorId;
+  to: InstanceId;
+}
+
+/**
+ * One of an investigator's counters changed by `delta`. Produced by
+ * `AdjustInvestigator` and `DiscoverClues`; the reducer adds `delta` as is.
+ */
+export interface InvestigatorChanged {
+  type: 'InvestigatorChanged';
+  investigatorId: InvestigatorId;
+  stat: InvestigatorStat;
+  delta: number;
+}
+
+/**
+ * An investigator ran out of health (`damage`) or sanity (`horror`); their status
+ * becomes `defeated`. Produced by `AdjustInvestigator` right after the
+ * `InvestigatorChanged` that caused it.
+ */
+export interface InvestigatorDefeated {
+  type: 'InvestigatorDefeated';
+  investigatorId: InvestigatorId;
+  cause: 'damage' | 'horror';
 }
 
 /** String literal of every event type. */

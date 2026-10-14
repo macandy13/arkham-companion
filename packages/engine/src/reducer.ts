@@ -5,13 +5,17 @@ import type {
   ConnectionChanged,
   DeckShuffled,
   Event,
+  InvestigatorChanged,
+  InvestigatorDefeated,
+  InvestigatorMoved,
   ScenarioStarted,
   TokensChanged,
 } from './events';
 import type { InstanceId } from './ids';
 import type { Edge } from './map';
 import { seedRng } from './rng';
-import { emptyState, type CardInstance, type GameState } from './state';
+import { withStatDelta } from './investigators';
+import { emptyState, type CardInstance, type GameState, type Investigator } from './state';
 import { zoneKey, type ZoneKey } from './zone';
 
 /** Pure reducer: applies one event and returns the next state. Never mutates `state`. */
@@ -29,6 +33,12 @@ export function apply(state: GameState, event: Event): GameState {
       return applyCardFlipped(state, event);
     case 'ConnectionChanged':
       return applyConnectionChanged(state, event);
+    case 'InvestigatorMoved':
+      return applyInvestigator(state, event, (inv) => ({ ...inv, locationId: event.to }));
+    case 'InvestigatorChanged':
+      return applyInvestigator(state, event, (inv) => withStatDelta(inv, event.stat, event.delta));
+    case 'InvestigatorDefeated':
+      return applyInvestigator(state, event, (inv) => ({ ...inv, status: 'defeated' }));
   }
 }
 
@@ -120,6 +130,20 @@ function applyConnectionChanged(state: GameState, e: ConnectionChanged): GameSta
   return {
     ...state,
     board: { ...state.board, maps: { ...state.board.maps, [e.mapId]: { ...map, connections } } },
+  };
+}
+
+/** Replaces the event's investigator with `update(investigator)`; unknown IDs leave the state as is. */
+function applyInvestigator(
+  state: GameState,
+  event: InvestigatorMoved | InvestigatorChanged | InvestigatorDefeated,
+  update: (investigator: Investigator) => Investigator,
+): GameState {
+  return {
+    ...state,
+    investigators: state.investigators.map((inv) =>
+      inv.id === event.investigatorId ? update(inv) : inv,
+    ),
   };
 }
 

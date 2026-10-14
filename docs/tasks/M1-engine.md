@@ -78,9 +78,12 @@ Follow-ups: `MoveInvestigator` (M1.4) should reveal an unrevealed destination vi
 
 Ref: §5 `Investigator`.
 
-- [ ] `MoveInvestigator`, `AdjustInvestigator` (damage, horror, clues, resources), `DiscoverClues` (location → investigator)
-- [ ] Defeat check when damage ≥ health or horror ≥ sanity → `InvestigatorDefeated`, status `defeated`
-- [ ] Prey helpers: lowest remaining health/sanity, most clues, etc.
+- [x] `MoveInvestigator`, `AdjustInvestigator` (damage, horror, clues, resources), `DiscoverClues` (location → investigator)
+- [x] Defeat check when damage ≥ health or horror ≥ sanity → `InvestigatorDefeated`, status `defeated`
+- [x] Prey helpers: lowest remaining health/sanity, most clues, etc.
+
+Done: Investigators already carry `health.max`/`sanity.max` in state (from the definition at `StartScenario`), so no new fields. Commands `MoveInvestigator`, `AdjustInvestigator`, `DiscoverClues`; events `InvestigatorMoved`, `InvestigatorChanged` (`stat` + `delta`), `InvestigatorDefeated` (`cause`). Movement needs a `neighbours` connection; `ignoreConnections` (for "move to any location" card effects) skips only that check, the destination must still be a location in play. An investigator without a location can be placed anywhere. An unrevealed destination is revealed by reusing `handleRevealLocation` (`CardFlipped` + the printed clues resolved with `resolveValue`). `AdjustInvestigator` emits `InvestigatorDefeated` in the same step when damage ≥ health or horror ≥ sanity; non-active investigators reject all three commands (`investigatorNotActive`), counters cannot go below zero. `DiscoverClues` requires the investigator to be at the location. `checkInvariants` checks non-negative counters, known location and "active implies health and sanity left". Prey helpers in `investigators.ts` (`lowestRemainingHealth`, `lowestRemainingSanity`, `mostClues`, `mostResources`) return all tied active investigators. `GameMeta.playerCount` is documented as the starting count, never decremented on defeat/resign. Tests: `investigators.test.ts`, `investigators.property.test.ts`.
+Follow-ups: on defeat the rules also discard the investigator's cards, put their clues on their location and replace a defeated lead investigator – not done yet (needs decks/threat area, M1.5+ and a lead-change command); `resigned` status has no command yet; highest-skill prey needs the investigator's `CardStats` (skills) – add with the hunter/prey decision in M1.8/M1.9; the generic min/max tie helper could move to `@arkham/util` once that package exists.
 
 ## M1.5 Agenda, act and doom (S)
 

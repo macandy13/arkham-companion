@@ -1,11 +1,25 @@
-import type { InstanceId, MapId } from './ids';
-import type { MapSpec } from './map';
-import type { CampaignLog, ChaosToken, Difficulty, Investigator, TokenKind } from './state';
+import type { InstanceId, InvestigatorId, MapId } from './ids';
+import type { Edge, MapSpec } from './map';
+import type {
+  CampaignLog,
+  ChaosToken,
+  Difficulty,
+  Investigator,
+  InvestigatorStat,
+  TokenKind,
+} from './state';
 import type { Zone } from './zone';
 
 /** Commands are intents from the UI; `handle` validates them and produces events. */
 export type Command =
-  StartScenario | ManualAdjust | AddConnection | RemoveConnection | RevealLocation;
+  | StartScenario
+  | ManualAdjust
+  | AddConnection
+  | RemoveConnection
+  | RevealLocation
+  | MoveInvestigator
+  | AdjustInvestigator
+  | DiscoverClues;
 
 /** A card instance to create when the scenario starts. */
 export interface StartingCard {
@@ -91,6 +105,46 @@ export interface RemoveConnection {
 export interface RevealLocation {
   type: 'RevealLocation';
   locationId: InstanceId;
+}
+
+/**
+ * Moves an active investigator to a location on a map. Normally the destination
+ * must be a `neighbours` of the current location. Card effects that move an
+ * investigator "to any location" set `ignoreConnections`; the destination must
+ * still be in play. An unrevealed destination is revealed through the same path
+ * as `RevealLocation`. Produces `InvestigatorMoved`, then `CardFlipped` and
+ * `TokensChanged` if the destination was unrevealed.
+ */
+export interface MoveInvestigator {
+  type: 'MoveInvestigator';
+  investigatorId: InvestigatorId;
+  to: InstanceId;
+  /** Skip the connection check (card effects). Default false. */
+  ignoreConnections?: boolean;
+}
+
+/**
+ * Changes one of an active investigator's counters by `delta` (non-zero; a
+ * negative delta heals or spends). Produces `InvestigatorChanged`, followed by
+ * `InvestigatorDefeated` if damage reached health or horror reached sanity.
+ */
+export interface AdjustInvestigator {
+  type: 'AdjustInvestigator';
+  investigatorId: InvestigatorId;
+  stat: InvestigatorStat;
+  delta: number;
+}
+
+/**
+ * An active investigator takes `amount` clues from the location they are at.
+ * Produces `TokensChanged` (clues leave the location) and `InvestigatorChanged`
+ * (clues arrive).
+ */
+export interface DiscoverClues {
+  type: 'DiscoverClues';
+  investigatorId: InvestigatorId;
+  locationId: InstanceId;
+  amount: number;
 }
 
 /** String literal of every command type. */
