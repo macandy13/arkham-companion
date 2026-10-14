@@ -1,20 +1,22 @@
 name: Deploy
 
+# Publishes main to the root of the gh-pages branch. PR previews live under
+# gh-pages/pr-preview/ (see preview.yml) and are left untouched here.
+# Repo setting: Pages → Source: "Deploy from a branch" → gh-pages / (root).
+
 on:
   push:
     branches: [main]
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     env:
       # Bump to force a fresh card data download (e.g. after upstream corrections).
@@ -34,19 +36,12 @@ jobs:
           key: carddata-${{ hashFiles('packages/carddata/src/schema.ts', 'packages/carddata/src/fetch.ts') }}-${{ env.CARDDATA_EPOCH }}
       - if: steps.carddata.outputs.cache-hit != 'true'
         run: pnpm carddata:fetch --lang en,de
-      - run: pnpm --filter @arkham/web build
+      - run: pnpm build
         env:
           VITE_BASE: /arkham-companion/
-      - uses: actions/upload-pages-artifact@v3
+      - uses: JamesIves/github-pages-deploy-action@v4
         with:
-          path: apps/web/dist
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          branch: gh-pages
+          folder: apps/web/dist
+          clean-exclude: pr-preview/
+          force: false

@@ -1,0 +1,32 @@
+version: 2
+updates:
+  # npm dependencies of the whole pnpm workspace, grouped into at most two weekly PRs.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+      major:
+        update-types: [major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Berlin
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns: ['*']

@@ -2,6 +2,7 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 concurrency:
@@ -21,4 +22,39 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm lint
-      - run: pnpm test
+      # Fails when coverage drops below the floors in vitest.config.ts.
+      - run: pnpm test:coverage
+      - name: Coverage summary
+        if: always()
+        run: |
+          f=coverage/coverage-summary.json
+          [ -f "$f" ] || exit 0
+          {
+            echo '### Coverage'
+            echo '| | % |'
+            echo '| --- | --- |'
+            for k in lines statements functions branches; do
+              echo "| $k | $(jq ".total.$k.pct" "$f") |"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @arkham/web exec playwright install --with-deps chromium
+      - run: pnpm e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            apps/web/playwright-report
+            apps/web/test-results
+          retention-days: 7

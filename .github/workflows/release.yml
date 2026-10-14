@@ -1,0 +1,23 @@
+name: Release
+
+# Release Please reads the Conventional Commit titles merged into main, keeps
+# CHANGELOG.md up to date and maintains a "chore(main): release x.y.z" PR.
+# Merging that PR creates the git tag and the GitHub release.
+# Repo setting needed: Actions → General → "Allow GitHub Actions to create and approve pull requests".
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
