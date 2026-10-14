@@ -1,3 +1,4 @@
+import type { EngineContext } from './cards';
 import type { Command } from './commands';
 import type { Event } from './events';
 import { handle } from './handle';
@@ -15,7 +16,7 @@ export interface ExecuteResult {
  * which are then applied to the state. This is what the app store calls;
  * it persists `events` and keeps `state`. Throws `CommandRejected` like `handle`.
  */
-export function execute(state: GameState, command: Command): ExecuteResult {
-  const events = handle(state, command);
+export function execute(state: GameState, command: Command, ctx: EngineContext): ExecuteResult {
+  const events = handle(state, command, ctx);
   return { state: replay(events, state), events };
 }

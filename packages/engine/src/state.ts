@@ -10,7 +10,7 @@ export const TOKEN_KINDS: readonly TokenKind[] = ['doom', 'clue', 'damage', 'hor
 /**
  * One physical card on the table (architecture §5). Multiple copies of the same
  * card are separate instances sharing a `code`; the card's static data
- * (name, text, stats) is looked up by `code` in `@arkham/carddata`.
+ * (name, text, stats) is looked up by `code` in the `CardDb` of the `EngineContext`.
  */
 export interface CardInstance {
   id: InstanceId;

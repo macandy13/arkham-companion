@@ -17,6 +17,7 @@ import {
   type StartScenario,
   type Zone,
 } from './index';
+import { sandboxCodes, sandboxContext } from '../test/fixtures/sandbox-cards';
 
 const investigators = [investigatorId('a'), investigatorId('b')];
 const maps = [mapId('m1'), mapId('m2')];
@@ -88,7 +89,7 @@ const startArb: fc.Arbitrary<StartScenario> = fc
       status: 'active' as const,
     })),
     maps: Object.fromEntries(maps.map((m) => [m, { name: m }])),
-    cards: zones.map((zone, i) => ({ code: `X${i % 4}`, zone })),
+    cards: zones.map((zone, i) => ({ code: sandboxCodes[i % sandboxCodes.length]!, zone })),
   }));
 
 /** Plays a start command plus adjustments; rejected adjustments are skipped. */
@@ -101,10 +102,10 @@ function play(start: StartScenario, adjustments: Adjustment[]) {
     events.push(...result.events);
     states.push(state);
   };
-  step(execute(state, start));
+  step(execute(state, start, sandboxContext));
   for (const adjustment of adjustments) {
     try {
-      step(execute(state, { type: 'ManualAdjust', adjustment }));
+      step(execute(state, { type: 'ManualAdjust', adjustment }, sandboxContext));
     } catch (e) {
       if (!(e instanceof CommandRejected)) throw e;
     }

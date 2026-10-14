@@ -24,11 +24,14 @@ Every task: new commands/events go through `handle` → `apply`, invariants keep
 
 Ref: §5, §9. The engine must read card stats (doom threshold, clues, shroud, health, keywords) without depending on `carddata` at runtime.
 
-- [ ] `CardDb` interface passed into `handle(state, command, ctx)` (`ctx.cards.get(code)`); reducer stays card-agnostic
-- [ ] Per-investigator value helper (`perInvestigator(n)`, `health_per_investigator`)
-- [ ] Fake `CardDb` fixture shared by all engine tests (`test/fixtures/sandbox-cards.ts`)
+- [x] `CardDb` interface passed into `handle(state, command, ctx)` (`ctx.cards.get(code)`); reducer stays card-agnostic
+- [x] Per-investigator value helper (`perInvestigator(n)`, `health_per_investigator`)
+- [x] Fake `CardDb` fixture shared by all engine tests (`test/fixtures/sandbox-cards.ts`)
 
 Done when: existing tests pass with the new signature; one test reads a threshold through `CardDb`.
+
+Done: `packages/engine/src/cards.ts` adds `CardStats` (the engine's own structural subset of carddata's `CardDef`, so the engine has no runtime dependency on `carddata`), `CardDb`, `EngineContext`, `cardDbFrom`, `cardStats` (throws `unknownCardCode`), `perInvestigator(value, playerCount)`, `clueValue` (honours `cluesFixed`) and `enemyHealth` (honours `healthPerInvestigator`). `handle` and `execute` take `ctx`; `StartScenario` rejects card codes missing from `ctx.cards`. Shared fixture: `packages/engine/test/fixtures/sandbox-cards.ts` (`sandboxContext`, `sandboxCodes`).
+Follow-ups: the web app needs a `CardDb` backed by the cached carddata once it starts calling `execute` (M2); `keywords` gets added to `CardStats` with the keyword parser (M1.7).
 
 ## M1.2 Setup DSL + sandbox scenario (O)
 
