@@ -25,7 +25,11 @@ export type Command =
   | PlaceDoom
   | AdvanceAgenda
   | AdvanceAct
-  | EndScenario;
+  | EndScenario
+  | DrawEncounter
+  | DrawTopmostFromDiscard
+  | FromSetAside
+  | ShuffleInto;
 
 /** A card instance to create when the scenario starts. */
 export interface StartingCard {
@@ -247,6 +251,56 @@ export interface AdvanceAct {
 export interface EndScenario {
   type: 'EndScenario';
   resolution: string;
+}
+
+/**
+ * An investigator draws the top card of the encounter deck (mythos phase or a
+ * card effect). The card is revealed and then: an enemy is placed unengaged at
+ * the investigator's location (engagement, aloof and spawn instructions are
+ * `SpawnEnemy`, M1.8); a treachery goes to the investigator's threat area if
+ * its card says so (`CardStats.entersThreatArea`), otherwise to the encounter
+ * discard; anything else goes to the discard. An empty deck is refilled by
+ * shuffling the discard; a card with surge makes the investigator draw again.
+ * Produces, per card drawn, `EncounterCardDrawn`, `CardFlipped` and `CardMoved`,
+ * preceded by `CardMoved`s and a `DeckShuffled` when the discard was reshuffled.
+ */
+export interface DrawEncounter {
+  type: 'DrawEncounter';
+  investigatorId: InvestigatorId;
+}
+
+/**
+ * Moves the topmost card of the encounter discard whose name is `name` to
+ * `to` (e.g. "draw the topmost X from the encounter discard"). The top of the
+ * discard is its first entry. Produces `CardMoved`.
+ */
+export interface DrawTopmostFromDiscard {
+  type: 'DrawTopmostFromDiscard';
+  /** Card name as in the `CardDb`, compared exactly. */
+  name: string;
+  to: Zone;
+}
+
+/**
+ * Takes one set-aside copy of each code (a code listed twice takes two copies)
+ * and moves it to `to`. A move into play makes the bus fire `onCardEnters`.
+ * Produces `CardMoved` per card.
+ */
+export interface FromSetAside {
+  type: 'FromSetAside';
+  codes: readonly string[];
+  to: Zone;
+}
+
+/**
+ * Takes one set-aside copy of each code, adds it to `zone` and shuffles the
+ * whole zone (usually the encounter deck). Produces `CardMoved` per card,
+ * then `DeckShuffled`.
+ */
+export interface ShuffleInto {
+  type: 'ShuffleInto';
+  codes: readonly string[];
+  zone: Zone;
 }
 
 /** String literal of every command type. */

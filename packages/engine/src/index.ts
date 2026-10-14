@@ -8,6 +8,7 @@ export * from './map';
 export * from './spawn';
 export * from './scenario';
 export * from './cards';
+export * from './keywords';
 export * from './commands';
 export * from './events';
 export { apply, replay } from './reducer';

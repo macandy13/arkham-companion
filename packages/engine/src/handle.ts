@@ -11,6 +11,12 @@ import {
   handleDiscoverClues,
   handleMoveInvestigator,
 } from './handle-investigator';
+import {
+  handleDrawEncounter,
+  handleDrawTopmostFromDiscard,
+  handleFromSetAside,
+  handleShuffleInto,
+} from './handle-encounter';
 import { withAgendaCheck } from './doom';
 import {
   completeAdvance,
@@ -27,6 +33,7 @@ import { apply, replay } from './reducer';
 import { CommandRejected, type Rejection } from './rejection';
 import { shuffle } from './rng';
 import type { CardInstance, GameState, Investigator, TokenKind } from './state';
+import { stateZoneRefs, validateZone, type ZoneRefs } from './placement';
 import { MAX_TRIGGERED_COMMANDS, triggeredCommands } from './triggers';
 import { sameZone, zoneKey, type Zone } from './zone';
 
@@ -178,6 +185,14 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
       return handleAdvanceAct(ctx, state, command);
     case 'EndScenario':
       return handleEndScenario(command);
+    case 'DrawEncounter':
+      return handleDrawEncounter(ctx, state, command);
+    case 'DrawTopmostFromDiscard':
+      return handleDrawTopmostFromDiscard(ctx, state, command);
+    case 'FromSetAside':
+      return handleFromSetAside(state, command);
+    case 'ShuffleInto':
+      return handleShuffleInto(state, command);
   }
 }
 
@@ -290,15 +305,7 @@ function handleMoveCard(state: GameState, cmd: MoveCard): CardMoved {
 
 /** The `CardMoved` for moving `card` to `to` (at `index`, default the end), after validating both. */
 function cardMoved(state: GameState, card: CardInstance, to: Zone, index?: number): CardMoved {
-  validateZone(
-    {
-      cards: state.cards,
-      investigators: new Set(state.investigators.map((i) => i.id)),
-      maps: new Set(Object.keys(state.board.maps)),
-    },
-    card.id,
-    to,
-  );
+  validateZone(stateZoneRefs(state), card.id, to);
   const destSize = (state.order[zoneKey(to)] ?? []).length;
   // When reordering within a zone the card itself is removed first.
   const maxIndex = sameZone(card.zone, to) ? destSize - 1 : destSize;
@@ -337,55 +344,4 @@ function handleAdjustment(state: GameState, adj: Adjustment): CardMoved | Tokens
       return { type: 'TokensChanged', cardId: card.id, token: adj.token, delta: adj.delta };
     }
   }
-}
-
-/** The IDs a zone may refer to, used to validate card placements. */
-interface ZoneRefs {
-  cards: Record<InstanceId, CardInstance>;
-  investigators: ReadonlySet<string>;
-  maps: ReadonlySet<string>;
-}
-
-/** Checks that every ID a zone refers to exists and that hosting creates no cycle. */
-function validateZone(refs: ZoneRefs, cardId: InstanceId, zone: Zone): void {
-  switch (zone.kind) {
-    case 'location':
-      if (!refs.maps.has(zone.mapId))
-        throw new CommandRejected({ code: 'unknownMap', mapId: zone.mapId });
-      return;
-    case 'engaged':
-    case 'threatArea':
-      if (!refs.investigators.has(zone.investigatorId)) {
-        throw new CommandRejected({
-          code: 'unknownInvestigator',
-          investigatorId: zone.investigatorId,
-        });
-      }
-      return;
-    case 'atLocation':
-    case 'attachedTo': {
-      const hostId = zone.kind === 'atLocation' ? zone.locationId : zone.hostId;
-      // Follow the host chain; reaching the moved card again would be a cycle.
-      const seen = new Set<InstanceId>();
-      let current: InstanceId | undefined = hostId;
-      while (current !== undefined) {
-        if (current === cardId) throw new CommandRejected({ code: 'hostingCycle', cardId, hostId });
-        if (seen.has(current)) break;
-        seen.add(current);
-        const host: CardInstance | undefined = refs.cards[current];
-        if (!host) throw new CommandRejected({ code: 'unknownCard', cardId: current });
-        current = hostOf(host.zone);
-      }
-      return;
-    }
-    default:
-      return;
-  }
-}
-
-/** The card hosting a card in `zone`, if any (enemy at a location, attachment). */
-function hostOf(zone: Zone): InstanceId | undefined {
-  if (zone.kind === 'atLocation') return zone.locationId;
-  if (zone.kind === 'attachedTo') return zone.hostId;
-  return undefined;
 }

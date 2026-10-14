@@ -74,6 +74,12 @@ export type Rejection =
    * The forced effects a command triggered kept triggering each other beyond
    * `MAX_TRIGGERED_COMMANDS` follow-up commands; usually a hook that re-triggers itself.
    */
+  /** `DrawEncounter` with the encounter deck and its discard both empty. */
+  | { code: 'encounterDeckEmpty' }
+  /** `DrawEncounter` brought an enemy for an investigator who is not at a location. */
+  | { code: 'investigatorHasNoLocation'; investigatorId: InvestigatorId }
+  /** No card matching `match` (a name or code) is in the `zone` the command takes it from. */
+  | { code: 'cardNotInZone'; zone: 'encounterDiscard' | 'setAside'; match: string }
   | { code: 'triggerLoop'; limit: number }
   /** A command returned by a hook or card effect was rejected for `reason`. */
   | { code: 'triggeredCommandRejected'; command: CommandType; reason: Rejection }
@@ -165,6 +171,12 @@ function describe(r: Rejection): string {
       return `a resolution is only allowed for the last ${r.deck}`;
     case 'wrongClueTotal':
       return `${r.required} clues are required, ${r.spent} spent`;
+    case 'encounterDeckEmpty':
+      return 'the encounter deck and its discard are empty';
+    case 'investigatorHasNoLocation':
+      return `investigator ${r.investigatorId} is not at a location`;
+    case 'cardNotInZone':
+      return `no ${r.match} in ${r.zone}`;
     case 'triggerLoop':
       return `forced effects triggered more than ${r.limit} follow-up commands`;
     case 'triggeredCommandRejected':
