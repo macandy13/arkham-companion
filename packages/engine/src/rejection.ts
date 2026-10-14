@@ -11,6 +11,8 @@ export type Rejection =
   | { code: 'duplicateInvestigator'; investigatorId: InvestigatorId }
   | { code: 'duplicateCard'; cardId: InstanceId }
   | { code: 'unknownCard'; cardId: InstanceId }
+  /** `cardCode` has no definition in the `CardDb` passed to `handle`. */
+  | { code: 'unknownCardCode'; cardCode: string }
   | { code: 'unknownInvestigator'; investigatorId: InvestigatorId }
   | { code: 'unknownMap'; mapId: MapId }
   /** Placing `cardId` on `hostId` would make the card (indirectly) host itself. */
@@ -49,6 +51,8 @@ function describe(r: Rejection): string {
       return `duplicate card id ${r.cardId}`;
     case 'unknownCard':
       return `unknown card ${r.cardId}`;
+    case 'unknownCardCode':
+      return `no card definition for code ${r.cardCode}`;
     case 'unknownInvestigator':
       return `unknown investigator ${r.investigatorId}`;
     case 'unknownMap':
