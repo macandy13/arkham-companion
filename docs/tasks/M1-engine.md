@@ -89,7 +89,7 @@ Ref: §5 `Investigator`.
 
 Ref: §6 Triggers, §7 hooks.
 
-- [ ] Trigger bus: after events are produced, hooks (`afterDoomPlaced`, `onAgendaAdvance[code]`, `onActAdvance[code]`, `onRoundEnd`, `onCardEnters`) may append more events
+- [ ] Trigger bus: after events are produced, hooks (`afterDoomPlaced`, `onAgendaAdvance[code]`, `onActAdvance[code]`, `onRoundEnd`, `onCardEnters`) may return follow-up commands
 - [ ] Hooks are pure functions `(state, ctx) -> Command[]`; the bus runs each returned command through `handle` like a player command, so hook effects are validated and can use card data and the RNG the same way (returning raw events would bypass both). Loop guard against infinite chains
 - [ ] Effects registry keyed by card code (empty except a sandbox card that adds a connection)
 
