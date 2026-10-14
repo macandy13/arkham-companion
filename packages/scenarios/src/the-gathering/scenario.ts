@@ -1,42 +1,95 @@
-import { mapId, type ScenarioDefinition } from '@arkham/engine';
-import { SANDBOX_HAZARDS_SET, SANDBOX_SET } from './cards';
+import { mapId, type AddMapStep, type ScenarioDefinition } from '@arkham/engine';
+import { GATHERING_CODES, GATHERING_SETS } from './cards';
 
-const house = mapId('house');
+const codes = GATHERING_CODES;
+const sets = GATHERING_SETS;
+
+/** Translation key prefix for The Gathering's reference card effects. */
+const reference = 'scenario.theGathering.reference';
 
 /**
- * A small invented scenario that exercises every generic rule with fake cards
- * (`sandboxCardDefs`): five locations in play and a hidden one set aside,
- * a spawned enemy carrying doom, a set-aside elite, a one-way connection and
- * an encounter deck built from two sets. Engine tests play it end to end, and
- * the web app can start it before any real scenario exists.
+ * The house as act 1 ("Trapped") reveals it: the Study is removed and the
+ * Hallway connects to the Attic, the Cellar and the Parlor, with the
+ * investigators moving to the Hallway. Not part of `theGathering.setup`,
+ * because applying setup steps mid-scenario (taking these locations from the
+ * set-aside zone) arrives with act advancement (M1.5); until then tests
+ * compile it on its own to check the layout.
  */
-export const sandboxScenario: ScenarioDefinition = {
-  id: 'sandbox',
+export const theGatheringHouse: AddMapStep = {
+  kind: 'addMap',
+  mapId: mapId('house'),
+  name: 'House',
+  locations: [
+    { code: codes.hallway },
+    { code: codes.attic },
+    { code: codes.cellar },
+    { code: codes.parlor },
+  ],
+  connections: [
+    { from: codes.hallway, to: codes.attic },
+    { from: codes.hallway, to: codes.cellar },
+    { from: codes.hallway, to: codes.parlor },
+  ],
+};
+
+/**
+ * The Gathering (Core Set, 2016, scenario I of Night of the Zealot), set up as
+ * the campaign guide describes: the Study is the only location in play, the
+ * other locations, the Ghoul Priest and Lita Chantler are set aside, and the
+ * rest of the six encounter sets is shuffled into the encounter deck. Card
+ * data is hand-entered (`theGatheringCardDefs`); it is the shared test
+ * scenario for the generic rules until real scenario data arrives (M4).
+ */
+export const theGathering: ScenarioDefinition = {
+  id: 'the-gathering',
+  // Number tokens, then symbol tokens: easier to check against the guide than one token per line.
+  // prettier-ignore
   chaosBag: {
-    easy: ['+1', '+1', '0', '0', '-1', '-1', '-2', 'skull', 'cultist', 'autoFail', 'elderSign'],
-    standard: ['+1', '0', '0', '-1', '-1', '-2', '-3', 'skull', 'cultist', 'autoFail', 'elderSign'],
-    hard: ['0', '-1', '-1', '-2', '-3', '-4', '-5', 'skull', 'cultist', 'autoFail', 'elderSign'],
-    expert: ['0', '-1', '-2', '-3', '-4', '-5', '-6', 'skull', 'cultist', 'autoFail', 'elderSign'],
+    easy: [
+      '+1', '+1', '0', '0', '0', '-1', '-1', '-1', '-2', '-2',
+      'skull', 'skull', 'cultist', 'tablet', 'autoFail', 'elderSign',
+    ],
+    standard: [
+      '+1', '0', '0', '-1', '-1', '-1', '-2', '-2', '-3', '-4',
+      'skull', 'skull', 'cultist', 'tablet', 'autoFail', 'elderSign',
+    ],
+    hard: [
+      '0', '0', '0', '-1', '-1', '-2', '-2', '-3', '-3', '-4', '-5',
+      'skull', 'skull', 'cultist', 'tablet', 'autoFail', 'elderSign',
+    ],
+    expert: [
+      '0', '-1', '-1', '-2', '-2', '-3', '-3', '-4', '-4', '-5', '-6', '-8',
+      'skull', 'skull', 'cultist', 'tablet', 'autoFail', 'elderSign',
+    ],
   },
-  agendaDeck: ['SB-A1', 'SB-A2'],
-  actDeck: ['SB-C1', 'SB-C2'],
+  reference: {
+    easyStandard: {
+      skull: { effectKey: `${reference}.easyStandard.skull` },
+      cultist: { modifier: -1, effectKey: `${reference}.easyStandard.cultist` },
+      tablet: { modifier: -2, effectKey: `${reference}.easyStandard.tablet` },
+    },
+    hardExpert: {
+      skull: { modifier: -2, effectKey: `${reference}.hardExpert.skull` },
+      cultist: { effectKey: `${reference}.hardExpert.cultist` },
+      tablet: { modifier: -4, effectKey: `${reference}.hardExpert.tablet` },
+    },
+  },
+  agendaDeck: [codes.whatsGoingOn, codes.riseOfTheGhouls, codes.theyreGettingOut],
+  actDeck: [codes.trapped, codes.theBarrier, codes.whatHaveYouDone],
   setup: [
-    { kind: 'addMap', mapId: house, name: 'House' },
-    { kind: 'putIntoPlay', code: 'SB-L1', mapId: house },
-    { kind: 'putIntoPlay', code: 'SB-L2', mapId: house },
-    { kind: 'putIntoPlay', code: 'SB-L3', mapId: house },
-    { kind: 'putIntoPlay', code: 'SB-L4', mapId: house },
-    { kind: 'putIntoPlay', code: 'SB-L5', mapId: house },
-    { kind: 'addConnection', from: 'SB-L1', to: 'SB-L2' },
-    { kind: 'addConnection', from: 'SB-L1', to: 'SB-L3' },
-    { kind: 'addConnection', from: 'SB-L1', to: 'SB-L5' },
-    { kind: 'addConnection', from: 'SB-L2', to: 'SB-L4' },
-    { kind: 'addConnection', from: 'SB-L3', to: 'SB-L5' },
-    { kind: 'addConnection', from: 'SB-L4', to: 'SB-L3', oneWay: true },
-    { kind: 'setAside', codes: ['SB-L6', 'SB-E4'] },
-    { kind: 'spawn', code: 'SB-E3', at: 'SB-L3' },
-    { kind: 'placeTokens', target: 'SB-E3', token: 'doom', amount: 1 },
-    { kind: 'moveInvestigators', to: 'SB-L1' },
-    { kind: 'buildEncounterDeck', sets: [SANDBOX_SET, SANDBOX_HAZARDS_SET] },
+    { kind: 'addMap', mapId: mapId('study'), name: 'Study', locations: [{ code: codes.study }] },
+    {
+      kind: 'setAside',
+      codes: [
+        codes.hallway,
+        codes.attic,
+        codes.cellar,
+        codes.parlor,
+        codes.ghoulPriest,
+        codes.litaChantler,
+      ],
+    },
+    { kind: 'moveInvestigators', to: codes.study },
+    { kind: 'buildEncounterDeck', sets: Object.values(sets) },
   ],
 };
