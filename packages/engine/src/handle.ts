@@ -16,19 +16,95 @@ import type { Adjustment, Command, StartScenario, StartingCard } from './command
 import type { CardMoved, DeckShuffled, Event, ScenarioStarted, TokensChanged } from './events';
 import { instanceId, type InstanceId, type MapId } from './ids';
 import { createMap, type GameMap, type MapSpec } from './map';
-import { apply } from './reducer';
-import { CommandRejected } from './rejection';
+import { apply, replay } from './reducer';
+import { CommandRejected, type Rejection } from './rejection';
 import { shuffle } from './rng';
 import type { CardInstance, GameState, Investigator, TokenKind } from './state';
+import { MAX_TRIGGERED_COMMANDS, triggeredCommands } from './triggers';
 import { sameZone, zoneKey, type Zone } from './zone';
 
 /**
  * Validates a command against the current state and returns the resulting events.
  * Card data comes from `ctx.cards`; whatever a rule reads from it ends up in the
  * events, so `apply` never needs the `CardDb`.
- * Pure: the same state, command and card data always yield the same events.
+ *
+ * The returned events include the whole chain of forced effects the command
+ * triggered (`ctx.hooks`, `ctx.effects`): the follow-up commands are handled
+ * like player commands after the events of the command that triggered them
+ * (depth first, so a follow-up's own chain resolves before the next sibling),
+ * and their events are appended to the originating command's list. One player command
+ * therefore yields one list of events, which undo (M1.11) removes as a unit.
+ * A rejected follow-up or a chain longer than `MAX_TRIGGERED_COMMANDS`
+ * rejects the originating command, so a bad hook can neither hang the app nor
+ * leave half its effect behind.
+ * Pure: the same state, command and context always yield the same events.
  */
 export function handle(ctx: EngineContext, state: GameState, command: Command): Event[] {
+  return handleWithTriggers(ctx, state, command, { remaining: MAX_TRIGGERED_COMMANDS });
+}
+
+/** How many follow-up commands the current chain may still run; shared by the whole chain. */
+interface TriggerBudget {
+  remaining: number;
+}
+
+function handleWithTriggers(
+  ctx: EngineContext,
+  state: GameState,
+  command: Command,
+  budget: TriggerBudget,
+): Event[] {
+  const events = handleCommand(ctx, state, command);
+  if (!firesTriggers(command)) return events;
+  const followUps = triggeredCommands(ctx, state, events);
+  let current = replay(events, state);
+  const chain = [...events];
+  for (const followUp of followUps) {
+    if (budget.remaining === 0)
+      throw new CommandRejected({ code: 'triggerLoop', limit: MAX_TRIGGERED_COMMANDS });
+    budget.remaining -= 1;
+    const followUpEvents = handleFollowUp(ctx, current, followUp, budget);
+    current = replay(followUpEvents, current);
+    chain.push(...followUpEvents);
+  }
+  return chain;
+}
+
+/**
+ * Corrections and setup are not game events: fixing a misplaced token must not
+ * re-fire "after doom is placed", and cards put out during setup do not
+ * "enter play".
+ */
+function firesTriggers(command: Command): boolean {
+  return command.type !== 'ManualAdjust' && command.type !== 'StartScenario';
+}
+
+/** Handles a hook's command, naming the command when it is rejected. */
+function handleFollowUp(
+  ctx: EngineContext,
+  state: GameState,
+  command: Command,
+  budget: TriggerBudget,
+): Event[] {
+  try {
+    return handleWithTriggers(ctx, state, command, budget);
+  } catch (error) {
+    // Rethrow nested wrappers and loop reports as they are: the innermost reason is the useful one.
+    if (!(error instanceof CommandRejected) || isChainRejection(error.rejection)) throw error;
+    throw new CommandRejected({
+      code: 'triggeredCommandRejected',
+      command: command.type,
+      reason: error.rejection,
+    });
+  }
+}
+
+function isChainRejection(rejection: Rejection): boolean {
+  return rejection.code === 'triggerLoop' || rejection.code === 'triggeredCommandRejected';
+}
+
+/** The events of `command` alone, without the forced effects it triggers. */
+function handleCommand(ctx: EngineContext, state: GameState, command: Command): Event[] {
   switch (command.type) {
     case 'StartScenario':
       return handleStartScenario(ctx, state, command);

@@ -19,4 +19,11 @@ export * from './setup';
 export * from './investigators';
 export { doomInPlay, isInPlay } from './doom';
 export { checkInvariants } from './invariants';
+export {
+  MAX_TRIGGERED_COMMANDS,
+  type CardEffect,
+  type EffectsRegistry,
+  type ScenarioHooks,
+  type TriggerHook,
+} from './triggers';
 export * from './store';

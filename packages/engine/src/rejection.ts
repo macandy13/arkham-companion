@@ -1,3 +1,4 @@
+import type { CommandType } from './commands';
 import type { InstanceId, InvestigatorId, MapId } from './ids';
 import type { InvestigatorStat, TokenKind } from './state';
 
@@ -63,6 +64,13 @@ export type Rejection =
   | { code: 'resolutionRequired'; deck: 'agenda' | 'act' }
   /** The clues paid for an act do not add up to its requirement. */
   | { code: 'wrongClueTotal'; required: number; spent: number }
+  /**
+   * The forced effects a command triggered kept triggering each other beyond
+   * `MAX_TRIGGERED_COMMANDS` follow-up commands; usually a hook that re-triggers itself.
+   */
+  | { code: 'triggerLoop'; limit: number }
+  /** A command returned by a hook or card effect was rejected for `reason`. */
+  | { code: 'triggeredCommandRejected'; command: CommandType; reason: Rejection }
   | {
       code: 'negativeTokens';
       cardId: InstanceId;
@@ -145,6 +153,10 @@ function describe(r: Rejection): string {
       return `the last ${r.deck} needs a resolution`;
     case 'wrongClueTotal':
       return `${r.required} clues are required, ${r.spent} spent`;
+    case 'triggerLoop':
+      return `forced effects triggered more than ${r.limit} follow-up commands`;
+    case 'triggeredCommandRejected':
+      return `forced effect ${r.command} rejected: ${describe(r.reason)}`;
     case 'negativeTokens':
       return `${r.token} on ${r.cardId} would become ${r.current + r.delta}`;
   }
