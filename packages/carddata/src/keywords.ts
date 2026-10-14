@@ -40,8 +40,12 @@ const PLAIN_KEYWORDS: ReadonlySet<string> = new Set([
   'alert',
 ]);
 const VICTORY_SENTENCE = /^victory\s+\d+$/i;
-const DETAIL_KEYWORD = /^(patrol|prey|spawn)(?:\s*[-–—]\s*(.+)|\s*\((.+)\))$/i;
-const THREAT_AREA = /\b(?:put|place)s?\b[^.]*\bin your threat area\b/i;
+const DETAIL_KEYWORD_NAME = /^(patrol|prey|spawn)/i;
+const DASHES = '-–—';
+const PUT_WORD = /\b(?:put|place)s?\b/i;
+// Global so that `lastIndex` makes the search start after the put/place word
+// while `\b` still sees the characters before it.
+const THREAT_AREA_PHRASE = /\bin your threat area\b/gi;
 
 /**
  * The keywords of a card, read from the ArkhamDB rules text. ArkhamDB prints
@@ -68,7 +72,23 @@ export function parseKeywords(text: string | undefined, traits: readonly string[
  * wrong guess is fixed by moving the card by hand.
  */
 export function entersThreatArea(text: string | undefined): boolean {
-  return THREAT_AREA.test(plainLines(text ?? '').join(' '));
+  return plainLines(text ?? '')
+    .join(' ')
+    .split('.')
+    .some(putsIntoThreatArea);
+}
+
+/**
+ * Whether one sentence has "in your threat area" after a put/place word.
+ * Sentence-wise and by two plain searches instead of one regex with a gap
+ * (`put … [^.]* … in your threat area`), which backtracks quadratically on
+ * text with many put/place words.
+ */
+function putsIntoThreatArea(sentence: string): boolean {
+  const put = PUT_WORD.exec(sentence);
+  if (!put) return false;
+  THREAT_AREA_PHRASE.lastIndex = put.index + put[0].length;
+  return THREAT_AREA_PHRASE.test(sentence);
 }
 
 /**
@@ -190,10 +210,25 @@ function keywordsOfLine(line: string): Keyword[] {
 function parseSentence(sentence: string): Keyword | undefined {
   const lower = sentence.toLowerCase();
   if (PLAIN_KEYWORDS.has(lower)) return { name: lower as Keyword['name'] };
-  const detailed = DETAIL_KEYWORD.exec(sentence);
-  if (!detailed) return undefined;
-  return {
-    name: (detailed[1] as string).toLowerCase() as Keyword['name'],
-    detail: (detailed[2] ?? detailed[3]) as string,
-  };
+  const named = DETAIL_KEYWORD_NAME.exec(sentence);
+  if (!named) return undefined;
+  const detail = detailOf(sentence.slice(named[0].length).trimStart());
+  if (detail === undefined) return undefined;
+  return { name: named[0].toLowerCase() as Keyword['name'], detail };
+}
+
+/**
+ * The detail after a keyword name: `- Text` (any dash) or `(Text)`; undefined
+ * if there is none or it is empty. Parsed by hand because a regex whose
+ * whitespace and `.+` parts overlap backtracks quadratically on long runs of spaces.
+ */
+function detailOf(rest: string): string | undefined {
+  const first = rest[0] ?? '';
+  const detail =
+    DASHES.includes(first) && first !== ''
+      ? rest.slice(1).trim()
+      : first === '(' && rest.endsWith(')')
+        ? rest.slice(1, -1)
+        : '';
+  return detail === '' ? undefined : detail;
 }

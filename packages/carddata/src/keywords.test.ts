@@ -116,6 +116,35 @@ describe('parseKeywords with malformed markup', () => {
   });
 
   it.each([
+    ['prey- and many spaces', `prey-${' '.repeat(50_000)}x`, [{ name: 'prey', detail: 'x' }]],
+    ['spawn, many spaces and (', `spawn${' '.repeat(50_000)}(`, []],
+    ['many put words', 'put '.repeat(50_000), []],
+  ])('finishes quickly on %s', (_name, text, expected) => {
+    const started = performance.now();
+    const keywords = parseKeywords(text, []);
+    expect(entersThreatArea(text)).toBe(false);
+    expect(performance.now() - started).toBeLessThan(1000);
+    expect(keywords).toEqual(expected);
+  });
+
+  it.each([
+    [
+      'an en dash',
+      'Prey \u2013 Lowest [willpower].',
+      [{ name: 'prey', detail: 'Lowest [willpower]' }],
+    ],
+    ['an em dash', 'Spawn\u2014Fake Room.', [{ name: 'spawn', detail: 'Fake Room' }]],
+    ['parentheses', 'Patrol (Fake Hall).', [{ name: 'patrol', detail: 'Fake Hall' }]],
+    ['no detail', 'Prey.', []],
+    ['an empty dash detail', 'Prey - .', []],
+    ['empty parentheses', 'Spawn ().', []],
+    ['an unclosed parenthesis', 'Spawn (Fake Room.', []],
+    ['a name run into other letters', 'Preyx - Fake.', []],
+  ])('parses details with %s', (_name, text, expected) => {
+    expect(parseKeywords(text, [])).toEqual(expected);
+  });
+
+  it.each([
     ['unmatched <i>', '<i>'],
     ['unmatched <', '<'],
     ['unmatched </i>', '</i>'],
