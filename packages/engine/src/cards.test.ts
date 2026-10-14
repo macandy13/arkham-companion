@@ -3,9 +3,8 @@ import {
   CommandRejected,
   cardDbFrom,
   cardStats,
-  clueValue,
-  enemyHealth,
-  perInvestigator,
+  resolveValue,
+  trait,
   type CardStats,
 } from './index';
 
@@ -16,12 +15,12 @@ function makeCard(overrides: Partial<CardStats> & { code: string }): CardStats {
 
 describe('cardDbFrom', () => {
   it('looks up a definition by code', () => {
-    const agenda = makeCard({ code: 'agenda', typeCode: 'agenda', doom: 4 });
-    const cards = cardDbFrom([agenda]);
+    const location = makeCard({ code: 'loc', typeCode: 'location', shroud: 4 });
+    const cards = cardDbFrom([location]);
 
-    const stats = cards.get('agenda');
+    const stats = cards.get('loc');
 
-    expect(stats?.doom).toBe(4);
+    expect(stats?.shroud).toBe(4);
   });
 
   it('returns undefined for an unknown code', () => {
@@ -38,13 +37,33 @@ describe('cardDbFrom', () => {
 
     expect(cards.get('loc')?.shroud).toBe(3);
   });
+
+  it('keeps alternative cards of the same stage apart by variant', () => {
+    const cards = cardDbFrom([
+      makeCard({ code: 'act2a', typeCode: 'act', stage: { number: 2 } }),
+      makeCard({ code: 'act2c', typeCode: 'act', stage: { number: 2, variant: 'c' } }),
+    ]);
+
+    expect(cards.get('act2a')?.stage).toEqual({ number: 2 });
+    expect(cards.get('act2c')?.stage).toEqual({ number: 2, variant: 'c' });
+  });
+
+  it('keeps traits as given', () => {
+    const cards = cardDbFrom([makeCard({ code: 'ghoul', traits: [trait('Monster')] })]);
+
+    expect(cards.get('ghoul')?.traits).toEqual(['Monster']);
+  });
 });
 
 describe('cardStats', () => {
   it('reads an agenda doom threshold through the card db', () => {
-    const cards = cardDbFrom([makeCard({ code: 'agenda', typeCode: 'agenda', doom: 6 })]);
+    const cards = cardDbFrom([
+      makeCard({ code: 'agenda', typeCode: 'agenda', doom: { fixed: 6, perInvestigator: 0 } }),
+    ]);
 
-    expect(cardStats(cards, 'agenda').doom).toBe(6);
+    const doom = cardStats(cards, 'agenda').doom;
+
+    expect(doom).toEqual({ fixed: 6, perInvestigator: 0 });
   });
 
   it('rejects an unknown code', () => {
@@ -57,49 +76,16 @@ describe('cardStats', () => {
   });
 });
 
-describe('perInvestigator', () => {
-  it('multiplies the printed value by the player count', () => {
-    expect(perInvestigator(2, 3)).toBe(6);
-  });
-});
-
-describe('clueValue', () => {
-  it('scales clues with the player count', () => {
-    const act = makeCard({ code: 'act', typeCode: 'act', clues: 2 });
-
-    expect(clueValue(act, 3)).toBe(6);
+describe('resolveValue', () => {
+  it('keeps a fixed value regardless of player count', () => {
+    expect(resolveValue({ fixed: 3, perInvestigator: 0 }, 4)).toBe(3);
   });
 
-  it('keeps fixed clues regardless of player count', () => {
-    const location = makeCard({ code: 'loc', typeCode: 'location', clues: 2, cluesFixed: true });
-
-    expect(clueValue(location, 3)).toBe(2);
+  it('scales a per-investigator value with the player count', () => {
+    expect(resolveValue({ fixed: 0, perInvestigator: 2 }, 3)).toBe(6);
   });
 
-  it('is undefined for a card without clues', () => {
-    expect(clueValue(makeCard({ code: 'none' }), 3)).toBeUndefined();
-  });
-});
-
-describe('enemyHealth', () => {
-  it('keeps printed health when it is not per investigator', () => {
-    const enemy = makeCard({ code: 'enemy', typeCode: 'enemy', health: 3 });
-
-    expect(enemyHealth(enemy, 4)).toBe(3);
-  });
-
-  it('scales health per investigator', () => {
-    const enemy = makeCard({
-      code: 'enemy',
-      typeCode: 'enemy',
-      health: 2,
-      healthPerInvestigator: true,
-    });
-
-    expect(enemyHealth(enemy, 4)).toBe(8);
-  });
-
-  it('is undefined for a card without health', () => {
-    expect(enemyHealth(makeCard({ code: 'none' }), 4)).toBeUndefined();
+  it('adds the fixed part to the scaled part', () => {
+    expect(resolveValue({ fixed: 3, perInvestigator: 2 }, 4)).toBe(11);
   });
 });

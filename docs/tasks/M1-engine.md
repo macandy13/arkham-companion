@@ -24,14 +24,14 @@ Every task: new commands/events go through `handle` → `apply`, invariants keep
 
 Ref: §5, §9. The engine must read card stats (doom threshold, clues, shroud, health, keywords) without depending on `carddata` at runtime.
 
-- [x] `CardDb` interface passed into `handle(state, command, ctx)` (`ctx.cards.get(code)`); reducer stays card-agnostic
-- [x] Per-investigator value helper (`perInvestigator(n)`, `health_per_investigator`)
+- [x] `CardDb` interface passed into `handle(ctx, state, command)` (`ctx.cards.get(code)`); reducer stays card-agnostic
+- [x] Per-investigator value helper (`ScaledValue` + `resolveValue`, covers `health_per_investigator`/`clues_fixed`)
 - [x] Fake `CardDb` fixture shared by all engine tests (`test/fixtures/sandbox-cards.ts`)
 
 Done when: existing tests pass with the new signature; one test reads a threshold through `CardDb`.
 
-Done: `packages/engine/src/cards.ts` adds `CardStats` (the engine's own structural subset of carddata's `CardDef`, so the engine has no runtime dependency on `carddata`), `CardDb`, `EngineContext`, `cardDbFrom`, `cardStats` (throws `unknownCardCode`), `perInvestigator(value, playerCount)`, `clueValue` (honours `cluesFixed`) and `enemyHealth` (honours `healthPerInvestigator`). `handle` and `execute` take `ctx`; `StartScenario` rejects card codes missing from `ctx.cards`. Shared fixture: `packages/engine/test/fixtures/sandbox-cards.ts` (`sandboxContext`, `sandboxCodes`).
-Follow-ups: the web app needs a `CardDb` backed by the cached carddata once it starts calling `execute` (M2); `keywords` gets added to `CardStats` with the keyword parser (M1.7).
+Done: `packages/engine/src/cards.ts` adds `CardStats` (the engine's own card type, so it has no runtime dependency on `carddata`), `CardDb`, `EngineContext`, `cardDbFrom` and `cardStats` (throws `unknownCardCode`). `CardStats` is typed: `typeCode: CardType` (union of ArkhamDB type codes, `CARD_TYPES`), `traits: Trait[]` (branded, built with `trait`), `stage: CardStage` (`{ number, variant? }`, so alternative cards like 2a/b vs 2c/d share a number and differ by variant), and `clues`/`health`/`doom` are `ScaledValue`s (`{ fixed, perInvestigator }`) resolved with `resolveValue(value, playerCount)`. Game-state terms like "+1 per act" are left to the rules that read them. `handle(ctx, state, command)` and `execute(ctx, state, command)` take the context first; `StartScenario` rejects card codes missing from `ctx.cards`. Shared fixture: `packages/engine/test/fixtures/sandbox-cards.ts` (`sandboxContext`, `sandboxCodes`).
+Follow-ups: map carddata's `CardDef` to `CardStats` (`health`/`health_per_investigator`, `clues`/`clues_fixed` → `ScaledValue`, `stage` → `CardStage`, `type_code` → `CardType`) when the web app gets a `CardDb` backed by the cached carddata (M2); the stage variant letter is not in ArkhamDB and has to come from scenario data; `keywords` gets added to `CardStats` with the keyword parser (M1.7).
 
 ## M1.2 Setup DSL + sandbox scenario (O)
 

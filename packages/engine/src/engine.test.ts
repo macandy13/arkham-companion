@@ -56,7 +56,7 @@ function run(commands: Command[]): { state: GameState; events: Event[] } {
   let state = emptyState();
   const events: Event[] = [];
   for (const cmd of commands) {
-    const result = execute(state, cmd, sandboxContext);
+    const result = execute(sandboxContext, state, cmd);
     state = result.state;
     events.push(...result.events);
   }
@@ -97,41 +97,29 @@ describe('StartScenario', () => {
   it('rejects unknown references and duplicate ids', () => {
     expect(
       rejectionOf(() =>
-        handle(
-          emptyState(),
-          {
-            ...start,
-            cards: [{ code: 'E3', zone: { kind: 'atLocation', locationId: instanceId('nope') } }],
-          },
-          sandboxContext,
-        ),
+        handle(sandboxContext, emptyState(), {
+          ...start,
+          cards: [{ code: 'E3', zone: { kind: 'atLocation', locationId: instanceId('nope') } }],
+        }),
       ),
     ).toMatchObject({ code: 'unknownCard', cardId: 'nope' });
     expect(
       rejectionOf(() =>
-        handle(
-          emptyState(),
-          {
-            ...start,
-            cards: [{ code: 'E3', zone: { kind: 'location', mapId: mapId('nope') } }],
-          },
-          sandboxContext,
-        ),
+        handle(sandboxContext, emptyState(), {
+          ...start,
+          cards: [{ code: 'E3', zone: { kind: 'location', mapId: mapId('nope') } }],
+        }),
       ),
     ).toMatchObject({ code: 'unknownMap', mapId: 'nope' });
     expect(
       rejectionOf(() =>
-        handle(
-          emptyState(),
-          {
-            ...start,
-            cards: [
-              { id: loc, code: 'E3', zone: { kind: 'setAside' } },
-              { id: loc, code: 'E4', zone: { kind: 'setAside' } },
-            ],
-          },
-          sandboxContext,
-        ),
+        handle(sandboxContext, emptyState(), {
+          ...start,
+          cards: [
+            { id: loc, code: 'E3', zone: { kind: 'setAside' } },
+            { id: loc, code: 'E4', zone: { kind: 'setAside' } },
+          ],
+        }),
       ),
     ).toMatchObject({ code: 'duplicateCard', cardId: 'loc' });
   });
@@ -142,7 +130,7 @@ describe('StartScenario', () => {
       cards: [{ code: 'missing', zone: { kind: 'setAside' } }],
     };
 
-    const rejection = rejectionOf(() => handle(emptyState(), command, sandboxContext));
+    const rejection = rejectionOf(() => handle(sandboxContext, emptyState(), command));
 
     expect(rejection).toEqual({ code: 'unknownCardCode', cardCode: 'missing' });
   });
@@ -200,30 +188,22 @@ describe('ManualAdjust', () => {
     ]);
     expect(
       rejectionOf(() =>
-        handle(
-          state,
-          {
-            type: 'ManualAdjust',
-            adjustment: { kind: 'moveCard', cardId: loc, to: { kind: 'attachedTo', hostId: loc } },
-          },
-          sandboxContext,
-        ),
+        handle(sandboxContext, state, {
+          type: 'ManualAdjust',
+          adjustment: { kind: 'moveCard', cardId: loc, to: { kind: 'attachedTo', hostId: loc } },
+        }),
       ),
     ).toMatchObject({ code: 'hostingCycle', cardId: 'loc', hostId: 'loc' });
     expect(
       rejectionOf(() =>
-        handle(
-          state,
-          {
-            type: 'ManualAdjust',
-            adjustment: {
-              kind: 'moveCard',
-              cardId: loc,
-              to: { kind: 'attachedTo', hostId: instanceId('c1') },
-            },
+        handle(sandboxContext, state, {
+          type: 'ManualAdjust',
+          adjustment: {
+            kind: 'moveCard',
+            cardId: loc,
+            to: { kind: 'attachedTo', hostId: instanceId('c1') },
           },
-          sandboxContext,
-        ),
+        }),
       ),
     ).toMatchObject({ code: 'hostingCycle', cardId: 'loc', hostId: 'c1' });
   });
@@ -232,19 +212,15 @@ describe('ManualAdjust', () => {
     const { state } = run([start]);
     expect(
       rejectionOf(() =>
-        handle(
-          state,
-          {
-            type: 'ManualAdjust',
-            adjustment: {
-              kind: 'moveCard',
-              cardId: instanceId('c1'),
-              to: { kind: 'encounterDeck' },
-              index: 4,
-            },
+        handle(sandboxContext, state, {
+          type: 'ManualAdjust',
+          adjustment: {
+            kind: 'moveCard',
+            cardId: instanceId('c1'),
+            to: { kind: 'encounterDeck' },
+            index: 4,
           },
-          sandboxContext,
-        ),
+        }),
       ),
     ).toMatchObject({ code: 'indexOutOfRange', index: 4, max: 3 });
   });
@@ -258,14 +234,10 @@ describe('ManualAdjust', () => {
     expect(state.cards[loc]?.tokens.clue).toBe(2);
     expect(
       rejectionOf(() =>
-        handle(
-          state,
-          {
-            type: 'ManualAdjust',
-            adjustment: { kind: 'tokens', cardId: loc, token: 'clue', delta: -3 },
-          },
-          sandboxContext,
-        ),
+        handle(sandboxContext, state, {
+          type: 'ManualAdjust',
+          adjustment: { kind: 'tokens', cardId: loc, token: 'clue', delta: -3 },
+        }),
       ),
     ).toMatchObject({ code: 'negativeTokens', current: 2, delta: -3 });
     const back = run([
@@ -282,14 +254,10 @@ describe('ManualAdjust', () => {
   it('rejects unknown cards', () => {
     expect(
       rejectionOf(() =>
-        handle(
-          run([start]).state,
-          {
-            type: 'ManualAdjust',
-            adjustment: { kind: 'tokens', cardId: instanceId('nope'), token: 'doom', delta: 1 },
-          },
-          sandboxContext,
-        ),
+        handle(sandboxContext, run([start]).state, {
+          type: 'ManualAdjust',
+          adjustment: { kind: 'tokens', cardId: instanceId('nope'), token: 'doom', delta: 1 },
+        }),
       ),
     ).toMatchObject({ code: 'unknownCard', cardId: 'nope' });
   });

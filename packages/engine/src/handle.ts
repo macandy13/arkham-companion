@@ -14,16 +14,16 @@ import { sameZone, zoneKey, type Zone } from './zone';
  * events, so `apply` never needs the `CardDb`.
  * Pure: the same state, command and card data always yield the same events.
  */
-export function handle(state: GameState, command: Command, ctx: EngineContext): Event[] {
+export function handle(ctx: EngineContext, state: GameState, command: Command): Event[] {
   switch (command.type) {
     case 'StartScenario':
-      return handleStartScenario(state, command, ctx);
+      return handleStartScenario(ctx, state, command);
     case 'ManualAdjust':
       return [handleAdjustment(state, command.adjustment)];
   }
 }
 
-function handleStartScenario(state: GameState, cmd: StartScenario, ctx: EngineContext): Event[] {
+function handleStartScenario(ctx: EngineContext, state: GameState, cmd: StartScenario): Event[] {
   if (!Number.isInteger(cmd.seed))
     throw new CommandRejected({ code: 'invalidSeed', seed: cmd.seed });
   // Catch typos in scenario data at setup instead of when a rule first needs the card.

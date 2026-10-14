@@ -102,10 +102,10 @@ function play(start: StartScenario, adjustments: Adjustment[]) {
     events.push(...result.events);
     states.push(state);
   };
-  step(execute(state, start, sandboxContext));
+  step(execute(sandboxContext, state, start));
   for (const adjustment of adjustments) {
     try {
-      step(execute(state, { type: 'ManualAdjust', adjustment }, sandboxContext));
+      step(execute(sandboxContext, state, { type: 'ManualAdjust', adjustment }));
     } catch (e) {
       if (!(e instanceof CommandRejected)) throw e;
     }

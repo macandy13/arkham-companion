@@ -16,7 +16,7 @@ export interface ExecuteResult {
  * which are then applied to the state. This is what the app store calls;
  * it persists `events` and keeps `state`. Throws `CommandRejected` like `handle`.
  */
-export function execute(state: GameState, command: Command, ctx: EngineContext): ExecuteResult {
-  const events = handle(state, command, ctx);
+export function execute(ctx: EngineContext, state: GameState, command: Command): ExecuteResult {
+  const events = handle(ctx, state, command);
   return { state: replay(events, state), events };
 }
