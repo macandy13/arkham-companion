@@ -3,6 +3,12 @@
 Goal: the full three-scenario introductory campaign of `core_2026`, with campaign log and chaos bag carried between scenarios.
 Ref: architecture §8.
 
+**Why this milestone**
+
+- **Problem:** The Core Set is a three-scenario campaign: choices and outcomes in one scenario change the setup of the next, and the chaos bag evolves. Today this is tracked on paper and often gets lost or mis-recorded.
+- **What the app gains:** The complete Core Set experience, and campaign infrastructure (log, resolutions, chaos bag carry-over) reused by every future campaign.
+- **Why at this point:** The scenario pipeline and one real scenario (M4) are proven, so the remaining two scenarios should mostly be data.
+
 Model hint: **S** = Sonnet, **O** = Opus. Each task = one session = one PR.
 Start from the phone: Code tab → repo → `Do task M5.x from docs/tasks/M5-core-campaign.md`.
 
@@ -10,11 +16,19 @@ Start from the phone: Code tab → repo → `Do task M5.x from docs/tasks/M5-cor
 
 ## M5.1 Campaign model (O)
 
+**Why:** A campaign spans several games and must outlive each of them. Event-sourcing it gives the same undo, recovery and export benefits as a game; declarative resolution steps keep scenarios data-driven.
+
+**Benefit:** Campaign state is never lost or mis-recorded, and later scenarios can read earlier outcomes.
+
 - [ ] `CampaignLog` (investigators, trauma, XP, killed/insane, story records, chaos bag) as its own event-sourced aggregate stored in the `campaigns` table
 - [ ] Resolution steps: `record`, `addChaosToken`, `removeChaosToken`, `awardXp`, `addTrauma`
 - [ ] `campaignSetup(log)` support in `compileSetup`
 
 ## M5.2 Campaign UI (S)
+
+**Why:** Between scenarios players need to see and confirm what happened; confirming resolutions keeps the app an assistant rather than a referee.
+
+**Benefit:** Replaces the paper campaign log.
 
 - [ ] New campaign flow in the wizard (investigators chosen once)
 - [ ] Campaign screen: log, chaos bag, XP/trauma per investigator, next scenario button
@@ -23,14 +37,26 @@ Start from the phone: Code tab → repo → `Do task M5.x from docs/tasks/M5-cor
 
 ## M5.3 Scenario 2 (O)
 
+**Why:** The second scenario validates the M4 recipe and campaign-dependent setup.
+
+**Benefit:** More playable content; anything it shares with _Spreading Flames_ gets promoted to an engine primitive.
+
 - [ ] Data via the M4 pipeline (layout, connections), definition, special mechanics, setup test
 - [ ] Reads earlier log entries in `campaignSetup`
 
 ## M5.4 Scenario 3 (O)
 
+**Why:** Completes the campaign, including how it ends.
+
+**Benefit:** The whole Core Set campaign is playable in the app.
+
 - [ ] Same as M5.3 for the final scenario, including campaign end
 
 ## M5.5 Campaign export/import and replay test (S)
+
+**Why:** A campaign takes several evenings, so backups matter, and a cross-scenario replay is the strongest regression test we can have.
+
+**Benefit:** Safe campaign backups, and one test that proves the whole campaign still works.
 
 - [ ] Export/import a whole campaign (log + games)
 - [ ] Golden replay across all three scenarios
