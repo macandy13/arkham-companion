@@ -1,0 +1,44 @@
+/* Play screen board layout (architecture §11); replaces the page's usual content column. */
+#app > main:has(#board) {
+  max-width: none;
+  padding: 0;
+}
+
+#board {
+  display: grid;
+  min-height: 100%;
+  grid-template:
+    'header header' auto
+    'map encounter' 1fr
+    'investigators investigators' var(--layout-board-bar-height) /
+    1fr var(--layout-board-panel-width);
+}
+
+#board > * {
+  border: var(--border-width) solid var(--color-border);
+  padding: var(--space-2);
+  overflow: auto;
+}
+
+#board > header {
+  grid-area: header;
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+#board > header p {
+  margin: 0;
+}
+
+#map {
+  grid-area: map;
+}
+
+#encounter {
+  grid-area: encounter;
+}
+
+#investigators {
+  grid-area: investigators;
+}
