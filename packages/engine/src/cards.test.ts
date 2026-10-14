@@ -1,0 +1,91 @@
+import { describe, expect, it } from 'vitest';
+import {
+  CommandRejected,
+  cardDbFrom,
+  cardStats,
+  resolveValue,
+  trait,
+  type CardStats,
+} from './index';
+
+/** A card definition with boring defaults; tests pass only the fields they assert on. */
+function makeCard(overrides: Partial<CardStats> & { code: string }): CardStats {
+  return { name: overrides.code, typeCode: 'treachery', traits: [], ...overrides };
+}
+
+describe('cardDbFrom', () => {
+  it('looks up a definition by code', () => {
+    const location = makeCard({ code: 'loc', typeCode: 'location', shroud: 4 });
+    const cards = cardDbFrom([location]);
+
+    const stats = cards.get('loc');
+
+    expect(stats?.shroud).toBe(4);
+  });
+
+  it('returns undefined for an unknown code', () => {
+    const cards = cardDbFrom([makeCard({ code: 'known' })]);
+
+    expect(cards.get('unknown')).toBeUndefined();
+  });
+
+  it('lets a later definition replace an earlier one with the same code', () => {
+    const cards = cardDbFrom([
+      makeCard({ code: 'loc', shroud: 1 }),
+      makeCard({ code: 'loc', shroud: 3 }),
+    ]);
+
+    expect(cards.get('loc')?.shroud).toBe(3);
+  });
+
+  it('keeps alternative cards of the same stage apart by variant', () => {
+    const cards = cardDbFrom([
+      makeCard({ code: 'act2a', typeCode: 'act', stage: { number: 2 } }),
+      makeCard({ code: 'act2c', typeCode: 'act', stage: { number: 2, variant: 'c' } }),
+    ]);
+
+    expect(cards.get('act2a')?.stage).toEqual({ number: 2 });
+    expect(cards.get('act2c')?.stage).toEqual({ number: 2, variant: 'c' });
+  });
+
+  it('keeps traits as given', () => {
+    const cards = cardDbFrom([makeCard({ code: 'ghoul', traits: [trait('Monster')] })]);
+
+    expect(cards.get('ghoul')?.traits).toEqual(['Monster']);
+  });
+});
+
+describe('cardStats', () => {
+  it('reads an agenda doom threshold through the card db', () => {
+    const cards = cardDbFrom([
+      makeCard({ code: 'agenda', typeCode: 'agenda', doom: { fixed: 6, perInvestigator: 0 } }),
+    ]);
+
+    const doom = cardStats(cards, 'agenda').doom;
+
+    expect(doom).toEqual({ fixed: 6, perInvestigator: 0 });
+  });
+
+  it('rejects an unknown code', () => {
+    const cards = cardDbFrom([]);
+
+    const lookup = () => cardStats(cards, 'nope');
+
+    expect(lookup).toThrow(CommandRejected);
+    expect(lookup).toThrow('no card definition for code nope');
+  });
+});
+
+describe('resolveValue', () => {
+  it('keeps a fixed value regardless of player count', () => {
+    expect(resolveValue({ fixed: 3, perInvestigator: 0 }, 4)).toBe(3);
+  });
+
+  it('scales a per-investigator value with the player count', () => {
+    expect(resolveValue({ fixed: 0, perInvestigator: 2 }, 3)).toBe(6);
+  });
+
+  it('adds the fixed part to the scaled part', () => {
+    expect(resolveValue({ fixed: 3, perInvestigator: 2 }, 4)).toBe(11);
+  });
+});

@@ -1,3 +1,4 @@
+import { cardStats, type EngineContext } from './cards';
 import type { Adjustment, Command, StartScenario } from './commands';
 import type { CardMoved, Event, ScenarioStarted, TokensChanged } from './events';
 import { instanceId, type InstanceId, type MapId } from './ids';
@@ -9,20 +10,24 @@ import { sameZone, zoneKey, type Zone } from './zone';
 
 /**
  * Validates a command against the current state and returns the resulting events.
- * Pure: the same state and command always yield the same events.
+ * Card data comes from `ctx.cards`; whatever a rule reads from it ends up in the
+ * events, so `apply` never needs the `CardDb`.
+ * Pure: the same state, command and card data always yield the same events.
  */
-export function handle(state: GameState, command: Command): Event[] {
+export function handle(ctx: EngineContext, state: GameState, command: Command): Event[] {
   switch (command.type) {
     case 'StartScenario':
-      return handleStartScenario(state, command);
+      return handleStartScenario(ctx, state, command);
     case 'ManualAdjust':
       return [handleAdjustment(state, command.adjustment)];
   }
 }
 
-function handleStartScenario(state: GameState, cmd: StartScenario): Event[] {
+function handleStartScenario(ctx: EngineContext, state: GameState, cmd: StartScenario): Event[] {
   if (!Number.isInteger(cmd.seed))
     throw new CommandRejected({ code: 'invalidSeed', seed: cmd.seed });
+  // Catch typos in scenario data at setup instead of when a rule first needs the card.
+  for (const card of cmd.cards) cardStats(ctx.cards, card.code);
   const investigatorIds = new Set<string>();
   for (const inv of cmd.investigators) {
     if (investigatorIds.has(inv.id))
