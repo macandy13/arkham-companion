@@ -188,8 +188,11 @@ Follow-ups: UI (M3) offers `AdvanceAct` during investigation when the investigat
 
 **Benefit:** Any action can be undone safely, and because the RNG state is restored too, undo cannot be used to re-roll a shuffle.
 
-- [ ] Event log grouped by command (`commandId`), `Undo` removes the last group and replays from the latest snapshot
-- [ ] Property test: random command sequences → undo all → initial state
+- [x] Event log grouped by command (`commandId`), `Undo` removes the last group and replays from the latest snapshot
+- [x] Property test: random command sequences → undo all → initial state
+
+Done: `StoredEvent.commandId` is shared by all events of one `appendEvents` call (= one `execute` result, i.e. one player command with its trigger chain); the store generates it (`crypto.randomUUID()`) unless the caller passes the new 4th parameter `commandId`, so the engine stays ID-free. `GameStore.undoLast(gameId, expectedSeq?)` deletes the last group, lowers `lastSeq`, deletes a snapshot beyond the new end (the single stored snapshot is by construction the latest one at or before it, otherwise replay starts from scratch) and returns the replayed `LoadedGame` (unchanged on an empty log, `undefined` for an unknown game). The pure part is `undoLastGroup(log)` in `packages/engine/src/undo.ts` (`{ kept, removed }`, generic over entries with a `commandId`). The RNG state lives in `GameState`, so undo restores it: `undo.test.ts` proves undo + redo of a `ShuffleInto` yields identical events and state; `undo.property.test.ts` runs random draw/move/token commands, undoes group by group and checks every intermediate state and finally the empty state. Store tests in `IndexedDbStore.test.ts` (fake-indexeddb). Additive on `GameStore`/`IndexedDbStore` to ease the merge with M2.6/M2.7.
+Follow-ups: no redo stack (redo = executing the command again, which is deterministic); events stored before this change have no `commandId` (the schema is unreleased, no migration); `undoLast` loads the whole log to find the last group (fine for table-sized games, could read the tail only); the UI (M3) must call `appendEvents` once per `execute` result and not split it; undoing is allowed past `ScenarioEnded`.
 
 ## M1.12 Sandbox playthrough (S)
 
