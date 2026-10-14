@@ -123,7 +123,7 @@ export function handleDiscoverClues(
 }
 
 /** The investigator, rejecting unknown IDs and those who are no longer in the scenario. */
-function activeInvestigator(state: GameState, id: InvestigatorId): Investigator {
+export function activeInvestigator(state: GameState, id: InvestigatorId): Investigator {
   const investigator = state.investigators.find((inv) => inv.id === id);
   if (!investigator) throw new CommandRejected({ code: 'unknownInvestigator', investigatorId: id });
   if (investigator.status !== 'active')

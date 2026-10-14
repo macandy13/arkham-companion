@@ -17,5 +17,6 @@ export { CommandRejected, type Rejection, type RejectionCode } from './rejection
 export { execute, type ExecuteResult } from './execute';
 export * from './setup';
 export * from './investigators';
+export { doomInPlay, isInPlay } from './doom';
 export { checkInvariants } from './invariants';
 export * from './store';

@@ -10,6 +10,8 @@ import {
   handleDiscoverClues,
   handleMoveInvestigator,
 } from './handle-investigator';
+import { withAgendaCheck } from './doom';
+import { handleAdvanceAct, handleAdvanceAgenda, handlePlaceDoom } from './handle-scenario';
 import type { Adjustment, Command, StartScenario, StartingCard } from './commands';
 import type { CardMoved, DeckShuffled, Event, ScenarioStarted, TokensChanged } from './events';
 import { instanceId, type InstanceId, type MapId } from './ids';
@@ -41,9 +43,17 @@ export function handle(ctx: EngineContext, state: GameState, command: Command): 
     case 'MoveInvestigator':
       return handleMoveInvestigator(ctx, state, command);
     case 'AdjustInvestigator':
-      return handleAdjustInvestigator(state, command);
+      return command.stat === 'doomOnPlayerCards'
+        ? withAgendaCheck(state, handleAdjustInvestigator(state, command), ctx)
+        : handleAdjustInvestigator(state, command);
     case 'DiscoverClues':
       return handleDiscoverClues(state, command);
+    case 'PlaceDoom':
+      return withAgendaCheck(state, handlePlaceDoom(state, command), ctx);
+    case 'AdvanceAgenda':
+      return handleAdvanceAgenda(state, command);
+    case 'AdvanceAct':
+      return handleAdvanceAct(state, command, ctx);
   }
 }
 

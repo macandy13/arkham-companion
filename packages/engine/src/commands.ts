@@ -19,7 +19,10 @@ export type Command =
   | RevealLocation
   | MoveInvestigator
   | AdjustInvestigator
-  | DiscoverClues;
+  | DiscoverClues
+  | PlaceDoom
+  | AdvanceAgenda
+  | AdvanceAct;
 
 /** A card instance to create when the scenario starts. */
 export interface StartingCard {
@@ -145,6 +148,53 @@ export interface DiscoverClues {
   investigatorId: InvestigatorId;
   locationId: InstanceId;
   amount: number;
+}
+
+/**
+ * Puts `amount` (positive) doom on a card in play, by default on the current
+ * agenda. Produces `TokensChanged`, followed by `DecisionRequested` if the
+ * doom total now reaches the agenda's threshold. Removing doom is a
+ * `ManualAdjust` for now.
+ */
+export interface PlaceDoom {
+  type: 'PlaceDoom';
+  /** Defaults to the current agenda. */
+  cardId?: InstanceId;
+  amount: number;
+}
+
+/**
+ * Advances the current agenda: all doom in play is removed, the agenda is
+ * flipped and leaves the game, and the next agenda becomes current. Used both
+ * for the players' answer to the threshold question (until `ResolveDecision`
+ * exists, M1.9) and for card effects that advance the agenda.
+ * Produces `TokensChanged`/`InvestigatorChanged` (doom removal), `CardFlipped`,
+ * `CardMoved`, `AgendaAdvanced` and, for the last agenda, `ScenarioEnded`.
+ */
+export interface AdvanceAgenda {
+  type: 'AdvanceAgenda';
+  /** Resolution the scenario ends with; required for (and only read on) the last agenda. */
+  resolution?: string;
+}
+
+/** Clues one investigator pays towards advancing the act. */
+export interface ClueSpend {
+  investigatorId: InvestigatorId;
+  amount: number;
+}
+
+/**
+ * Advances the current act. The investigators choose who pays, so `spend`
+ * lists their payments; the total must equal the act's clue requirement
+ * (`clueValue` for the starting player count), and it is empty for an act
+ * without one. Produces `InvestigatorChanged` per payment, `CardFlipped`,
+ * `CardMoved`, `ActAdvanced` and, for the last act, `ScenarioEnded`.
+ */
+export interface AdvanceAct {
+  type: 'AdvanceAct';
+  spend: ClueSpend[];
+  /** Resolution the scenario ends with; required for (and only read on) the last act. */
+  resolution?: string;
 }
 
 /** String literal of every command type. */

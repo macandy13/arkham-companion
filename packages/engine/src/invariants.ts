@@ -33,8 +33,22 @@ export function checkInvariants(state: GameState): string[] {
       if (n !== undefined && n < 0) errors.push(`card ${card.id} has ${n} ${token}`);
     }
   }
+  errors.push(...currentCardErrors(state));
   errors.push(...connectionErrors(state));
   errors.push(...investigatorErrors(state));
+  return errors;
+}
+
+/** Violations for the current agenda and act: they must name known cards. */
+function currentCardErrors(state: GameState): string[] {
+  const errors: string[] = [];
+  for (const [deck, current] of [
+    ['agenda', state.agenda.current],
+    ['act', state.act.current],
+  ] as const) {
+    if (current !== undefined && !state.cards[current])
+      errors.push(`current ${deck} is unknown card ${current}`);
+  }
   return errors;
 }
 

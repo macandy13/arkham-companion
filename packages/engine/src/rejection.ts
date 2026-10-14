@@ -55,6 +55,14 @@ export type Rejection =
       current: number;
       delta: number;
     }
+  /** `PlaceDoom` on a card that is not in play (deck, discard, set aside, …). */
+  | { code: 'cardNotInPlay'; cardId: InstanceId }
+  /** `AdvanceAgenda`/`AdvanceAct` while that deck has no current card. */
+  | { code: 'noCurrentCard'; deck: 'agenda' | 'act' }
+  /** The last card of a deck advances but the command names no resolution. */
+  | { code: 'resolutionRequired'; deck: 'agenda' | 'act' }
+  /** The clues paid for an act do not add up to its requirement. */
+  | { code: 'wrongClueTotal'; required: number; spent: number }
   | {
       code: 'negativeTokens';
       cardId: InstanceId;
@@ -129,6 +137,14 @@ function describe(r: Rejection): string {
       return `${r.cardId} has ${r.available} clues, ${r.requested} requested`;
     case 'negativeInvestigatorStat':
       return `${r.stat} of ${r.investigatorId} would become ${r.current + r.delta}`;
+    case 'cardNotInPlay':
+      return `${r.cardId} is not in play`;
+    case 'noCurrentCard':
+      return `there is no current ${r.deck}`;
+    case 'resolutionRequired':
+      return `the last ${r.deck} needs a resolution`;
+    case 'wrongClueTotal':
+      return `${r.required} clues are required, ${r.spent} spent`;
     case 'negativeTokens':
       return `${r.token} on ${r.cardId} would become ${r.current + r.delta}`;
   }

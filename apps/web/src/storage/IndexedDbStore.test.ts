@@ -39,6 +39,7 @@ const started: ScenarioStarted = {
       sanity: { max: 6, horror: 0 },
       clues: 0,
       resources: 5,
+      doomOnPlayerCards: 0,
       status: 'active',
     },
   ],
