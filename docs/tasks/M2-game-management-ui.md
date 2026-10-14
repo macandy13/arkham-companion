@@ -35,11 +35,14 @@ Follow-ups: the manifest colours in `vite.config.ts` are still raw values (could
 
 **Benefit:** Players choose from the real investigator list; after the first load it works without network.
 
-- [ ] `carddata`: fetch all player cards (`/api/public/cards/`), keep `type_code = investigator`
-- [ ] Normalise to `InvestigatorDef` (code, name, subname, faction, health, sanity, skills, pack, cycle, images, `duplicate_of_code`, parallel flag, `chapter: 1 | 2` derived from the pack/cycle)
-- [ ] Deduplicate only true reprints (same card, same chapter); keep Chapter One and Chapter Two versions as separate entries, linked to each other; group parallel versions with the original
-- [ ] App loads the catalog once, caches it in IndexedDB (`cards` table) and refreshes with `If-Modified-Since`
-- [ ] Packs list (`/api/public/packs/`) for cycle/pack filters
+- [x] `carddata`: fetch all player cards (`/api/public/cards/`), keep `type_code = investigator`
+- [x] Normalise to `InvestigatorDef` (code, name, subname, faction, health, sanity, skills, pack, cycle, images, `duplicate_of_code`, parallel flag, `chapter: 1 | 2` derived from the pack/cycle)
+- [x] Deduplicate only true reprints (same card, same chapter); keep Chapter One and Chapter Two versions as separate entries, linked to each other; group parallel versions with the original
+- [x] App loads the catalog once, caches it in IndexedDB (`cards` table) and refreshes with `If-Modified-Since`
+- [x] Packs list (`/api/public/packs/`) for cycle/pack filters
+
+**Done:** `packages/carddata` gets `packs.ts` (`PackDef`, `normalisePacks`, chapter from `CHAPTER_TWO_PACK_CODES`), `investigators.ts` (`InvestigatorDef`, `buildInvestigatorCatalog`: drops reprints only within the same chapter, links Chapter One/Two versions via `otherChapterCode` by name+subname, parallels stay separate with `parallelOfCode`) and `catalog.ts` (`fetchCatalog` with injectable fetch, `If-Modified-Since`). The app side is `apps/web/src/catalog/loadCatalog.ts`, caching in a new Dexie `catalog` table (schema v2) via `IndexedDbStore.putCatalog/getCatalog`; offline falls back to the cache.
+Follow-ups: `CHAPTER_TWO_PACK_CODES` only lists `core_2026` – verify against real ArkhamDB pack codes once more Chapter Two packs exist; the cycle filter uses `cyclePosition` (no cycle names in the packs API); image URLs stay relative (prefix the ArkhamDB host in the picker, M2.3); the catalog is stored in its own table rather than `cards` because it is one derived document with its own `Last-Modified`; wire `loadCatalog` into the app when M2.3 needs it; the German catalog uses `de.arkhamdb.com` without per-card English fallback yet.
 
 ## M2.3 Investigator picker component (S)
 

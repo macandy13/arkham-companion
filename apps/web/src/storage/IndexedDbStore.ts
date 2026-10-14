@@ -12,7 +12,7 @@ import {
   type Snapshot,
   type StoredEvent,
 } from '@arkham/engine';
-import type { CardDef } from '@arkham/carddata';
+import type { CardCatalog, CardDef } from '@arkham/carddata';
 
 /** Row of the `games` table: a `GameSummary` is derived from it. */
 interface GameRow {
@@ -40,6 +40,12 @@ interface CardRow {
   card: CardDef;
 }
 
+/** Row of the `catalog` table: the investigator catalog of one language, cached as a unit. */
+interface CatalogRow {
+  lang: string;
+  catalog: CardCatalog;
+}
+
 /** Thrown by `appendEvents` when `expectedSeq` doesn't match the stored log. */
 export class SeqConflictError extends Error {
   constructor(
@@ -61,6 +67,8 @@ class ArkhamDb extends Dexie {
   /** At most one snapshot per game. */
   snapshots!: EntityTable<Snapshot, 'gameId'>;
   cards!: EntityTable<CardRow, 'key'>;
+  /** Separate from `cards`: the catalog is one derived document with its own `Last-Modified`. */
+  catalog!: EntityTable<CatalogRow, 'lang'>;
 
   constructor(name: string) {
     super(name);
@@ -71,6 +79,7 @@ class ArkhamDb extends Dexie {
       snapshots: 'gameId',
       cards: 'key, [lang+packCode]',
     });
+    this.version(2).stores({ catalog: 'lang' });
   }
 }
 
@@ -180,6 +189,16 @@ export class IndexedDbStore implements GameStore {
   async getCards(lang: string, packCode: string): Promise<CardDef[]> {
     const rows = await this.db.cards.where('[lang+packCode]').equals([lang, packCode]).toArray();
     return rows.map((r) => r.card);
+  }
+
+  /** Replaces the cached investigator catalog of one language. */
+  async putCatalog(lang: string, catalog: CardCatalog): Promise<void> {
+    await this.db.catalog.put({ lang, catalog });
+  }
+
+  /** Cached investigator catalog of one language; `undefined` if never stored. */
+  async getCatalog(lang: string): Promise<CardCatalog | undefined> {
+    return (await this.db.catalog.get(lang))?.catalog;
   }
 
   /** Closes the database connection (used by tests). */
