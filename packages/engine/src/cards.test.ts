@@ -53,6 +53,24 @@ describe('cardDbFrom', () => {
 
     expect(cards.get('ghoul')?.traits).toEqual(['Monster']);
   });
+
+  it('lists the definitions of an encounter set', () => {
+    const cards = cardDbFrom([
+      makeCard({ code: 'a', encounterCode: 'cult' }),
+      makeCard({ code: 'b', encounterCode: 'rats' }),
+      makeCard({ code: 'c', encounterCode: 'cult' }),
+    ]);
+
+    const codes = cards.encounterSet('cult').map((def) => def.code);
+
+    expect(codes).toEqual(['a', 'c']);
+  });
+
+  it('lists nothing for an unknown encounter set', () => {
+    const cards = cardDbFrom([makeCard({ code: 'a', encounterCode: 'cult' })]);
+
+    expect(cards.encounterSet('unknown')).toEqual([]);
+  });
 });
 
 describe('cardStats', () => {

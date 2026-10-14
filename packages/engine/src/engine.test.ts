@@ -134,6 +134,80 @@ describe('StartScenario', () => {
 
     expect(rejection).toEqual({ code: 'unknownCardCode', cardCode: 'missing' });
   });
+
+  it('starts cards with their given tokens', () => {
+    const command: StartScenario = {
+      ...start,
+      cards: [
+        { id: loc, code: 'L1', zone: { kind: 'location', mapId: main }, tokens: { clue: 2 } },
+      ],
+    };
+
+    const { state } = run([command]);
+
+    expect(state.cards[loc]?.tokens).toEqual({ clue: 2 });
+  });
+
+  it('rejects negative or fractional starting tokens', () => {
+    const command: StartScenario = {
+      ...start,
+      cards: [{ id: loc, code: 'L1', zone: { kind: 'setAside' }, tokens: { doom: -1 } }],
+    };
+
+    const rejection = rejectionOf(() => handle(sandboxContext, emptyState(), command));
+
+    expect(rejection).toEqual({
+      code: 'invalidStartingTokens',
+      cardId: 'loc',
+      token: 'doom',
+      amount: -1,
+    });
+  });
+
+  it('puts connections on the board and investigators at their location', () => {
+    const other = instanceId('other');
+    const command: StartScenario = {
+      ...start,
+      investigators: [{ ...investigator, locationId: loc }],
+      cards: [
+        { id: loc, code: 'L1', zone: { kind: 'location', mapId: main } },
+        { id: other, code: 'L2', zone: { kind: 'location', mapId: main } },
+      ],
+      connections: [{ from: loc, to: other, oneWay: true }],
+    };
+
+    const { state } = run([command]);
+
+    expect(state.board.connections).toEqual([{ from: loc, to: other, oneWay: true }]);
+    expect(state.investigators[0]?.locationId).toBe(loc);
+  });
+
+  it('rejects a connection to a card that is not a location', () => {
+    const aside = instanceId('aside');
+    const command: StartScenario = {
+      ...start,
+      cards: [
+        { id: loc, code: 'L1', zone: { kind: 'location', mapId: main } },
+        { id: aside, code: 'L2', zone: { kind: 'setAside' } },
+      ],
+      connections: [{ from: loc, to: aside, oneWay: false }],
+    };
+
+    const rejection = rejectionOf(() => handle(sandboxContext, emptyState(), command));
+
+    expect(rejection).toEqual({ code: 'notALocation', cardId: 'aside' });
+  });
+
+  it('rejects an investigator placed at an unknown card', () => {
+    const command: StartScenario = {
+      ...start,
+      investigators: [{ ...investigator, locationId: instanceId('nowhere') }],
+    };
+
+    const rejection = rejectionOf(() => handle(sandboxContext, emptyState(), command));
+
+    expect(rejection).toEqual({ code: 'unknownCard', cardId: 'nowhere' });
+  });
 });
 
 describe('ManualAdjust', () => {

@@ -11,5 +11,6 @@ export { apply, replay } from './reducer';
 export { handle } from './handle';
 export { CommandRejected, type Rejection, type RejectionCode } from './rejection';
 export { execute, type ExecuteResult } from './execute';
+export * from './setup';
 export { checkInvariants } from './invariants';
 export * from './store';

@@ -19,6 +19,16 @@ export type Rejection =
   | { code: 'hostingCycle'; cardId: InstanceId; hostId: InstanceId }
   | { code: 'indexOutOfRange'; index: number; max: number }
   | { code: 'invalidTokenDelta'; delta: number }
+  /** A starting card's token count is not a non-negative integer. */
+  | { code: 'invalidStartingTokens'; cardId: InstanceId; token: TokenKind; amount: number }
+  /** `cardId` is used as a location (investigator position, connection) but is not on a map. */
+  | { code: 'notALocation'; cardId: InstanceId }
+  /** A setup step refers to `cardCode`, but no earlier step created an instance of it. */
+  | { code: 'setupTargetNotFound'; cardCode: string }
+  /** A setup step refers to `cardCode`, but several instances of it exist. */
+  | { code: 'setupTargetAmbiguous'; cardCode: string }
+  /** No card in the `CardDb` belongs to `encounterCode` (usually a typo in scenario data). */
+  | { code: 'unknownEncounterSet'; encounterCode: string }
   | {
       code: 'negativeTokens';
       cardId: InstanceId;
@@ -63,6 +73,16 @@ function describe(r: Rejection): string {
       return `index ${r.index} out of range 0..${r.max}`;
     case 'invalidTokenDelta':
       return `token delta must be a non-zero integer, got ${r.delta}`;
+    case 'invalidStartingTokens':
+      return `${r.token} on ${r.cardId} must be a non-negative integer, got ${r.amount}`;
+    case 'notALocation':
+      return `${r.cardId} is not a location on a map`;
+    case 'setupTargetNotFound':
+      return `setup refers to ${r.cardCode}, which no earlier step created`;
+    case 'setupTargetAmbiguous':
+      return `setup refers to ${r.cardCode}, which exists more than once`;
+    case 'unknownEncounterSet':
+      return `no cards in encounter set ${r.encounterCode}`;
     case 'negativeTokens':
       return `${r.token} on ${r.cardId} would become ${r.current + r.delta}`;
   }
