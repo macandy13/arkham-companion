@@ -22,14 +22,14 @@ jobs:
       # Bump to force a fresh card data download (e.g. after upstream corrections).
       CARDDATA_EPOCH: 2026-10
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         id: carddata
         with:
           path: packages/carddata/.cache
