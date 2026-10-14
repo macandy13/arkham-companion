@@ -13,7 +13,7 @@ import {
  * scenario's own set plus the generic sets its setup gathers.
  */
 export const GATHERING_SETS = {
-  theGathering: 'the_gathering',
+  theGathering: 'torch',
   rats: 'rats',
   ghouls: 'ghouls',
   strikingFear: 'striking_fear',
@@ -72,12 +72,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     damage: 2,
     horror: 2,
     victory: 2,
-    keywords: [
-      { name: 'elite' },
-      { name: 'hunter' },
-      prey('Highest [combat]'),
-      { name: 'retaliate' },
-    ],
+    keywords: [{ name: 'hunter' }, prey('Highest [combat]'), { name: 'retaliate' }],
   }),
   {
     code: codes.litaChantler,
@@ -137,7 +132,6 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     damage: 1,
     horror: 1,
     quantity: 3,
-    keywords: [{ name: 'aloof' }],
   }),
   enemy({
     code: '01161',
