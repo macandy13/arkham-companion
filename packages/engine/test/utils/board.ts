@@ -4,6 +4,7 @@ import {
   type Edge,
   type EngineContext,
   type GameState,
+  type Investigator,
   type MapSpec,
   type StartScenario,
 } from '../../src/index';
@@ -25,7 +26,10 @@ export interface BoardOptions {
   maps: Readonly<Record<string, BoardMapOptions>>;
   /** Cards that start set aside: instance ID to card code. */
   setAside?: Readonly<Record<string, string>>;
+  /** Number of standard investigators (default 1); ignored when `investigators` is given. */
   playerCount?: number;
+  /** Investigators to start with instead of the standard ones. */
+  investigators?: readonly Investigator[];
 }
 
 /**
@@ -35,7 +39,7 @@ export interface BoardOptions {
  */
 export function startBoard(
   ctx: EngineContext,
-  { maps, setAside = {}, playerCount = 1 }: BoardOptions,
+  { maps, setAside = {}, playerCount = 1, investigators: custom }: BoardOptions,
 ): GameState {
   const specs: Record<string, MapSpec> = {};
   const cards: StartScenario['cards'] = [];
@@ -55,7 +59,7 @@ export function startBoard(
     scenarioId: 'test',
     difficulty: 'standard',
     seed: 1,
-    investigators: investigators(playerCount),
+    investigators: [...(custom ?? investigators(playerCount))],
     maps: specs,
     cards,
   };

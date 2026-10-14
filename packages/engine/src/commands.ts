@@ -1,5 +1,5 @@
 import type { InstanceId, InvestigatorId, MapId } from './ids';
-import type { Edge, MapSpec } from './map';
+import type { MapSpec } from './map';
 import type {
   CampaignLog,
   ChaosToken,

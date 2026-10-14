@@ -1,4 +1,9 @@
-import { investigatorId, type Investigator } from '../../src/index';
+import {
+  investigatorId,
+  type GameState,
+  type Investigator,
+  type InvestigatorId,
+} from '../../src/index';
 
 /**
  * An investigator with boring defaults (8 health, 6 sanity, 5 resources, no
@@ -62,4 +67,11 @@ export function investigators(count: number): Investigator[] {
   if (count < 1 || count > standardInvestigators.length)
     throw new RangeError(`expected 1–4 investigators, got ${count}`);
   return standardInvestigators.slice(0, count);
+}
+
+/** The investigator with `id` in `state` (fails the test if there is none). */
+export function investigatorOf(state: GameState, id: InvestigatorId | string): Investigator {
+  const found = state.investigators.find((inv) => inv.id === id);
+  if (!found) throw new Error(`no investigator ${id}`);
+  return found;
 }
