@@ -1,5 +1,6 @@
 import { cardStats, resolveValue, type EngineContext } from './cards';
 import type { DecisionRequested, Event } from './events';
+import { confirmOptions } from './decisions';
 import { decisionId } from './ids';
 import { replay } from './reducer';
 import type { CardInstance, GameState } from './state';
@@ -74,13 +75,11 @@ export function agendaThresholdDecision(ctx: EngineContext, state: GameState): D
       type: 'DecisionRequested',
       decision: {
         id,
-        kind: 'advanceAgenda',
+        kind: 'confirm',
         subject: agenda.id,
         prompt: 'decision.advanceAgenda',
-        options: [
-          { id: 'yes', label: 'decision.yes', target: agenda.id },
-          { id: 'no', label: 'decision.no' },
-        ],
+        decider: { kind: 'group' },
+        options: confirmOptions([{ type: 'AdvanceAgenda' }], agenda.id),
       },
     },
   ];

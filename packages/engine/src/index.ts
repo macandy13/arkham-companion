@@ -19,6 +19,7 @@ export { execute, type ExecuteResult } from './execute';
 export * from './setup';
 export * from './investigators';
 export { enemyAttackList, type EnemyAttack } from './enemies';
+export { confirmOptions, skillTestDecision, type SkillTestOutcomes } from './decisions';
 export { doomInPlay, isInPlay } from './doom';
 export { checkInvariants } from './invariants';
 export {

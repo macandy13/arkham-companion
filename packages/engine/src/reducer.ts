@@ -49,6 +49,8 @@ export function apply(state: GameState, event: Event): GameState {
       return applyInvestigator(state, event, (inv) => ({ ...inv, status: 'defeated' }));
     case 'DecisionRequested':
       return applyDecisionRequested(state, event);
+    case 'DecisionResolved':
+      return { ...state, pending: state.pending.filter((d) => d.id !== event.decisionId) };
     case 'AgendaAdvanced':
     case 'ActAdvanced':
       return withoutDecisionsAbout(state, event.cardId);

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  apply,
   checkInvariants,
+  decisionId,
   enemyAttackList,
   execute,
   instanceId,
@@ -258,9 +260,9 @@ describe('SpawnEnemy', () => {
       const asked = execute(ctx, state, spawn('e', { at: hall })).state;
 
       const { state: after } = execute(ctx, asked, {
-        type: 'EngageEnemy',
-        enemyId: instanceId('e'),
-        investigatorId: bob,
+        type: 'ResolveDecision',
+        decisionId: decisionId('engage:e'),
+        optionId: bob,
       });
 
       expect(asked.pending).toHaveLength(1);
@@ -433,7 +435,11 @@ describe('damage and defeat', () => {
     const state = started({ investigators: pair(hall, 0, 0), cards: enemyAt('FOE', setAside) });
     const asked = execute(ctx, state, spawn('e', { at: hall })).state;
 
-    const { state: after } = execute(ctx, asked, enemyCommand('DefeatEnemy'));
+    const after = apply(asked, {
+      type: 'EnemyDefeated',
+      enemyId: instanceId('e'),
+      to: { kind: 'encounterDiscard' },
+    });
 
     expect(asked.pending).toHaveLength(1);
     expect(after.pending).toEqual([]);
