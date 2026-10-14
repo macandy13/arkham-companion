@@ -27,10 +27,10 @@ export function allConnections(state: GameState): { mapId: MapId; edge: Edge }[]
  * Edges may cross maps: every map's edges count, wherever their ends are.
  */
 export function neighbours(state: GameState, locationId: InstanceId): InstanceId[] {
-  if (!isInPlay(state, locationId)) return [];
+  if (!isLocationInPlay(state, locationId)) return [];
   const result = new Set<InstanceId>();
   for (const { edge } of allConnections(state)) {
-    if (!isInPlay(state, edge.from) || !isInPlay(state, edge.to)) continue;
+    if (!isLocationInPlay(state, edge.from) || !isLocationInPlay(state, edge.to)) continue;
     if (edge.from === locationId) result.add(edge.to);
     else if (!edge.oneWay && edge.to === locationId) result.add(edge.from);
   }
@@ -44,7 +44,7 @@ export function neighbours(state: GameState, locationId: InstanceId): InstanceId
  * resolved by the players, never guessed by the engine.
  */
 export function shortestPaths(state: GameState, from: InstanceId, to: InstanceId): InstanceId[][] {
-  if (!isInPlay(state, from) || !isInPlay(state, to)) return [];
+  if (!isLocationInPlay(state, from) || !isLocationInPlay(state, to)) return [];
   return pathsBack(shortestPathPredecessors(state, from, to), from, to);
 }
 
@@ -52,7 +52,7 @@ export function shortestPaths(state: GameState, from: InstanceId, to: InstanceId
  * Whether the card is a location currently on a map. Named for locations
  * because "in play" is a broader game-rule notion (any card in a play area).
  */
-function isInPlay(state: GameState, id: InstanceId): boolean {
+function isLocationInPlay(state: GameState, id: InstanceId): boolean {
   return state.cards[id]?.zone.kind === 'location';
 }
 

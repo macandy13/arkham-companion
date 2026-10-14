@@ -1,283 +1,302 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  CommandRejected,
   checkInvariants,
-  emptyState,
   execute,
   instanceId,
-  investigatorId,
   mapId,
   neighbours,
   replay,
   shortestPaths,
   type Command,
-  type Event,
+  type Edge,
   type GameState,
-  type Rejection,
-  type StartScenario,
+  type InstanceId,
 } from './index';
-import { sandboxContext } from '../test/fixtures/sandbox-cards';
+import {
+  edge,
+  rejectionOf,
+  runFrom,
+  startBoard,
+  testContext,
+  type BoardOptions,
+} from '../test/utils';
 
 const main = mapId('main');
 const annex = mapId('annex');
-const a = instanceId('a');
-const b = instanceId('b');
-const c = instanceId('c');
-const d = instanceId('d');
+const study = instanceId('study');
+const hall = instanceId('hall');
+const cellar = instanceId('cellar');
+const attic = instanceId('attic');
 const ghoul = instanceId('ghoul');
 
-/**
- * Two investigators; locations a (L1, 1 clue each) and b (L2, 2 each) on main,
- * c (L3, 1 fixed clue) on annex, d (L1) set aside; and an enemy.
- */
-function startWith(connections: StartScenario['connections'] = []): StartScenario {
-  return {
-    type: 'StartScenario',
-    scenarioId: 'test',
-    difficulty: 'standard',
-    seed: 1,
-    investigators: [1, 2].map((seat) => ({
-      id: investigatorId(`inv${seat}`),
-      code: '00001',
-      name: 'Test Investigator',
-      seat,
-      health: { max: 8, damage: 0 },
-      sanity: { max: 6, horror: 0 },
-      clues: 0,
-      resources: 5,
-      status: 'active' as const,
-    })),
-    maps: { [main]: { name: 'Main' }, [annex]: { name: 'Annex' } },
-    cards: [
-      { id: a, code: 'L1', zone: { kind: 'location', mapId: main } },
-      { id: b, code: 'L2', zone: { kind: 'location', mapId: main } },
-      { id: c, code: 'L3', zone: { kind: 'location', mapId: annex } },
-      { id: d, code: 'L1', zone: { kind: 'setAside' } },
-      { id: ghoul, code: 'E1', zone: { kind: 'setAside' } },
-    ],
-    connections,
-  };
+/** Two maps: study (L1) and hall (L2) on main, cellar (L3) on annex; attic (L1) and a ghoul set aside. */
+function board(connections: Edge[] = [], overrides: Partial<BoardOptions> = {}): GameState {
+  return startBoard(testContext, {
+    maps: {
+      main: { locations: { study: 'L1', hall: 'L2' }, connections },
+      annex: { locations: { cellar: 'L3' } },
+    },
+    setAside: { attic: 'L1', ghoul: 'E1' },
+    playerCount: 2,
+    ...overrides,
+  });
 }
 
 function run(state: GameState, ...commands: Command[]): GameState {
-  return commands.reduce((acc, cmd) => execute(sandboxContext, acc, cmd).state, state);
+  return runFrom(testContext, state, commands).state;
 }
 
-function rejectionOf(fn: () => unknown): Rejection {
-  try {
-    fn();
-  } catch (e) {
-    if (e instanceof CommandRejected) return e.rejection;
-    throw e;
-  }
-  throw new Error('expected CommandRejected');
-}
-
-describe('connections', () => {
-  let state: GameState;
-  beforeEach(() => {
-    state = run(emptyState(), startWith());
-  });
-
+describe('AddConnection', () => {
   it('adds an undirected edge that works in both directions', () => {
-    const next = run(state, { type: 'AddConnection', from: a, to: b });
+    const next = run(board(), { type: 'AddConnection', mapId: main, from: study, to: hall });
 
-    expect(neighbours(next, a)).toEqual([b]);
-    expect(neighbours(next, b)).toEqual([a]);
+    expect(neighbours(next, study)).toEqual([hall]);
+    expect(neighbours(next, hall)).toEqual([study]);
   });
 
   it('adds a one-way edge that only works from its source', () => {
-    const next = run(state, { type: 'AddConnection', from: a, to: b, oneWay: true });
+    const next = run(board(), {
+      type: 'AddConnection',
+      mapId: main,
+      from: study,
+      to: hall,
+      oneWay: true,
+    });
 
-    expect(neighbours(next, a)).toEqual([b]);
-    expect(neighbours(next, b)).toEqual([]);
+    expect(neighbours(next, study)).toEqual([hall]);
+    expect(neighbours(next, hall)).toEqual([]);
   });
 
-  it('removes an undirected edge given in the opposite direction', () => {
-    const connected = run(state, { type: 'AddConnection', from: a, to: b });
+  it('stores the edge on the map named by the command, even when it ends on another map', () => {
+    const next = run(board(), { type: 'AddConnection', mapId: annex, from: hall, to: cellar });
 
-    const next = run(connected, { type: 'RemoveConnection', from: b, to: a });
-
-    expect(next.board.connections).toEqual([]);
+    expect(next.board.maps[annex]?.connections).toEqual([edge('hall', 'cellar')]);
+    expect(next.board.maps[main]?.connections).toEqual([]);
   });
 
-  it('does not remove a one-way edge with an undirected command', () => {
-    const connected = run(state, { type: 'AddConnection', from: a, to: b, oneWay: true });
+  it.each([
+    ['an edge that already exists', { from: study, to: hall }],
+    ['the same edge reversed', { from: hall, to: study }],
+    ['the same edge on another map', { from: study, to: hall, mapId: annex }],
+  ] as const)('rejects %s', (_name, command) => {
+    const state = board([edge('study', 'hall')]);
 
     const rejection = rejectionOf(() =>
-      execute(sandboxContext, connected, { type: 'RemoveConnection', from: a, to: b }),
+      execute(testContext, state, { type: 'AddConnection', mapId: main, ...command }),
     );
 
-    expect(rejection).toEqual({ code: 'connectionNotFound', from: a, to: b });
+    expect(rejection).toEqual({
+      code: 'duplicateConnection',
+      from: command.from,
+      to: command.to,
+    });
   });
 
-  it('rejects an edge that already exists, even reversed', () => {
-    const connected = run(state, { type: 'AddConnection', from: a, to: b });
-
+  it.each([
+    ['a location to itself', { from: study, to: study }, { code: 'selfConnection', cardId: study }],
+    [
+      'a card that is not a location',
+      { from: study, to: ghoul },
+      { code: 'notALocation', cardId: ghoul },
+    ],
+    [
+      'an unknown card',
+      { from: study, to: instanceId('nowhere') },
+      { code: 'unknownCard', cardId: 'nowhere' },
+    ],
+  ] as const)('rejects connecting %s', (_name, ends, expected) => {
     const rejection = rejectionOf(() =>
-      execute(sandboxContext, connected, { type: 'AddConnection', from: b, to: a }),
+      execute(testContext, board(), { type: 'AddConnection', mapId: main, ...ends }),
     );
 
-    expect(rejection).toEqual({ code: 'duplicateConnection', from: b, to: a });
+    expect(rejection).toEqual(expected);
   });
 
-  it('rejects a connection from a location to itself', () => {
+  it('rejects an edge for an unknown map', () => {
     const rejection = rejectionOf(() =>
-      execute(sandboxContext, state, { type: 'AddConnection', from: a, to: a }),
+      execute(testContext, board(), {
+        type: 'AddConnection',
+        mapId: mapId('nowhere'),
+        from: study,
+        to: hall,
+      }),
     );
 
-    expect(rejection).toEqual({ code: 'selfConnection', cardId: a });
-  });
-
-  it('rejects connecting a card that is not a location', () => {
-    const rejection = rejectionOf(() =>
-      execute(sandboxContext, state, { type: 'AddConnection', from: a, to: ghoul }),
-    );
-
-    expect(rejection).toEqual({ code: 'notALocation', cardId: ghoul });
-  });
-
-  it('rejects connecting an unknown card', () => {
-    const rejection = rejectionOf(() =>
-      execute(sandboxContext, state, { type: 'AddConnection', from: a, to: instanceId('nowhere') }),
-    );
-
-    expect(rejection).toEqual({ code: 'unknownCard', cardId: 'nowhere' });
-  });
-
-  it('rejects starting connections that repeat an edge', () => {
-    const start = startWith([
-      { from: a, to: b, oneWay: false },
-      { from: b, to: a, oneWay: false },
-    ]);
-
-    const rejection = rejectionOf(() => execute(sandboxContext, emptyState(), start));
-
-    expect(rejection).toEqual({ code: 'duplicateConnection', from: b, to: a });
+    expect(rejection).toEqual({ code: 'unknownMap', mapId: 'nowhere' });
   });
 
   it('keeps an edge to a set-aside location inactive until it enters play', () => {
-    const connected = run(state, { type: 'AddConnection', from: a, to: d });
+    const connected = run(board(), { type: 'AddConnection', mapId: main, from: study, to: attic });
 
     const inPlay = run(connected, {
       type: 'ManualAdjust',
-      adjustment: { kind: 'moveCard', cardId: d, to: { kind: 'location', mapId: annex } },
+      adjustment: { kind: 'moveCard', cardId: attic, to: { kind: 'location', mapId: annex } },
     });
 
-    expect(neighbours(connected, a)).toEqual([]);
-    expect(neighbours(inPlay, a)).toEqual([d]);
+    expect(neighbours(connected, study)).toEqual([]);
+    expect(neighbours(inPlay, study)).toEqual([attic]);
+  });
+});
+
+describe('RemoveConnection', () => {
+  it('removes an undirected edge given in the opposite direction', () => {
+    const state = board([edge('study', 'hall')]);
+
+    const next = run(state, { type: 'RemoveConnection', from: hall, to: study });
+
+    expect(next.board.maps[main]?.connections).toEqual([]);
   });
 
-  it('keeps the invariants and replays from events', () => {
-    const commands: Command[] = [
-      { type: 'AddConnection', from: a, to: b },
-      { type: 'RemoveConnection', from: a, to: b },
-      { type: 'AddConnection', from: b, to: c, oneWay: true },
-    ];
-    const events: Event[] = [];
-    let after = state;
-    for (const command of commands) {
-      const result = execute(sandboxContext, after, command);
-      after = result.state;
-      events.push(...result.events);
-    }
+  it('removes a cross-map edge from the map that owns it', () => {
+    const state = board([edge('hall', 'cellar')]);
 
-    expect(checkInvariants(after)).toEqual([]);
-    expect(replay(events, state)).toEqual(after);
+    const next = run(state, { type: 'RemoveConnection', from: cellar, to: hall });
+
+    expect(next.board.maps[main]?.connections).toEqual([]);
+  });
+
+  it('does not remove a one-way edge with an undirected command', () => {
+    const state = board([edge('study', 'hall', { oneWay: true })]);
+
+    const rejection = rejectionOf(() =>
+      execute(testContext, state, { type: 'RemoveConnection', from: study, to: hall }),
+    );
+
+    expect(rejection).toEqual({ code: 'connectionNotFound', from: study, to: hall });
+  });
+});
+
+describe('connections at start', () => {
+  it('rejects starting connections that repeat an edge, even across maps', () => {
+    const rejection = rejectionOf(() =>
+      startBoard(testContext, {
+        maps: {
+          main: { locations: { study: 'L1', hall: 'L2' }, connections: [edge('study', 'hall')] },
+          annex: { locations: {}, connections: [edge('hall', 'study')] },
+        },
+      }),
+    );
+
+    expect(rejection).toEqual({ code: 'duplicateConnection', from: hall, to: study });
+  });
+
+  it('allows a starting connection to a location on another map', () => {
+    const state = board([edge('hall', 'cellar')]);
+
+    expect(neighbours(state, hall)).toEqual([cellar]);
+  });
+});
+
+describe('connection events', () => {
+  it('keep the invariants and replay to the same state', () => {
+    const commands: Command[] = [
+      { type: 'AddConnection', mapId: main, from: study, to: hall },
+      { type: 'RemoveConnection', from: study, to: hall },
+      { type: 'AddConnection', mapId: annex, from: hall, to: cellar, oneWay: true },
+    ];
+    const initial = board();
+
+    const { state, events } = runFrom(testContext, initial, commands);
+
+    expect(checkInvariants(state)).toEqual([]);
+    expect(replay(events, initial)).toEqual(state);
+  });
+});
+
+describe('neighbours', () => {
+  const edges = [edge('study', 'hall'), edge('hall', 'cellar', { oneWay: true })];
+
+  it.each([
+    ['study', ['hall']],
+    ['hall', ['study', 'cellar']],
+    ['cellar', []],
+  ])('lists the locations reachable from %s', (from, expected) => {
+    expect(neighbours(board(edges), instanceId(from))).toEqual(expected);
+  });
+
+  it.each([
+    ['a set-aside location', 'attic'],
+    ['a card that is not a location', 'ghoul'],
+    ['an unknown card', 'nowhere'],
+  ])('is empty for %s', (_name, from) => {
+    const state = board([...edges, edge('study', 'attic')]);
+
+    expect(neighbours(state, instanceId(from))).toEqual([]);
   });
 });
 
 describe('shortestPaths', () => {
-  it('returns the location itself when from equals to', () => {
-    const state = run(emptyState(), startWith());
+  const ring: Edge[] = [
+    edge('study', 'hall'),
+    edge('hall', 'cellar'),
+    edge('study', 'den'),
+    edge('den', 'cellar'),
+    edge('study', 'cellar', { oneWay: true }),
+  ];
+  const ringBoard = startBoard(testContext, {
+    maps: {
+      main: { locations: { study: 'L1', hall: 'L2', den: 'L2' }, connections: ring },
+      annex: { locations: { cellar: 'L3' } },
+    },
+    setAside: { attic: 'L1' },
+  });
+  const path = (...keys: string[]): InstanceId[] => keys.map(instanceId);
 
-    expect(shortestPaths(state, a, a)).toEqual([[a]]);
+  it.each([
+    ['the location itself when from equals to', 'study', 'study', [path('study')]],
+    ['a direct one-way edge, ignoring longer routes', 'study', 'cellar', [path('study', 'cellar')]],
+    [
+      'every equally short path against the one-way edge',
+      'cellar',
+      'study',
+      [path('cellar', 'hall', 'study'), path('cellar', 'den', 'study')],
+    ],
+    ['nothing for a location that is not on a map', 'study', 'attic', []],
+    ['nothing for an unknown location', 'nowhere', 'study', []],
+  ])('returns %s', (_name, from, to, expected) => {
+    expect(shortestPaths(ringBoard, instanceId(from), instanceId(to))).toEqual(expected);
   });
 
   it('returns no path when the target cannot be reached', () => {
-    const state = run(emptyState(), startWith([{ from: a, to: b, oneWay: false }]));
-
-    expect(shortestPaths(state, a, c)).toEqual([]);
-  });
-
-  it('returns no path to a location that is not in play', () => {
-    const state = run(emptyState(), startWith([{ from: a, to: d, oneWay: false }]));
-
-    expect(shortestPaths(state, a, d)).toEqual([]);
-  });
-
-  it('returns all equally short paths and ignores longer ones', () => {
-    const e = instanceId('e');
-    const start = startWith([
-      { from: a, to: b, oneWay: false },
-      { from: b, to: c, oneWay: false },
-      { from: a, to: e, oneWay: false },
-      { from: e, to: c, oneWay: false },
-      { from: a, to: c, oneWay: true },
-    ]);
-    const state = run(emptyState(), {
-      ...start,
-      cards: [...start.cards, { id: e, code: 'L2', zone: { kind: 'location', mapId: main } }],
-    });
-
-    expect(shortestPaths(state, a, c)).toEqual([[a, c]]);
-    expect(shortestPaths(state, c, a)).toEqual([
-      [c, b, a],
-      [c, e, a],
-    ]);
+    expect(shortestPaths(board([edge('study', 'hall')]), study, cellar)).toEqual([]);
   });
 
   it('crosses from one map to another', () => {
-    const state = run(emptyState(), startWith([{ from: b, to: c, oneWay: false }]));
-    const linked = run(state, { type: 'AddConnection', from: a, to: b });
+    const state = board([edge('hall', 'cellar')]);
 
-    expect(shortestPaths(state, a, c)).toEqual([]);
-    expect(shortestPaths(linked, a, c)).toEqual([[a, b, c]]);
+    expect(shortestPaths(state, hall, cellar)).toEqual([[hall, cellar]]);
   });
 });
 
 describe('RevealLocation', () => {
-  let state: GameState;
-  beforeEach(() => {
-    state = run(emptyState(), startWith());
-  });
+  it.each([
+    ['per investigator', hall, 4],
+    ['as a fixed amount regardless of investigators', cellar, 1],
+  ])('flips the location and places clues %s', (_name, locationId, clues) => {
+    const next = run(board(), { type: 'RevealLocation', locationId });
 
-  it('flips the location and places clues per investigator', () => {
-    const next = run(state, { type: 'RevealLocation', locationId: b });
-
-    expect(next.cards[b]?.faceUp).toBe(true);
-    expect(next.cards[b]?.tokens.clue).toBe(4);
-  });
-
-  it('places a fixed clue count regardless of investigators', () => {
-    const next = run(state, { type: 'RevealLocation', locationId: c });
-
-    expect(next.cards[c]?.tokens.clue).toBe(1);
+    expect(next.cards[locationId]?.faceUp).toBe(true);
+    expect(next.cards[locationId]?.tokens.clue).toBe(clues);
   });
 
   it('rejects revealing a location twice', () => {
-    const revealed = run(state, { type: 'RevealLocation', locationId: a });
+    const revealed = run(board(), { type: 'RevealLocation', locationId: study });
 
     const rejection = rejectionOf(() =>
-      execute(sandboxContext, revealed, { type: 'RevealLocation', locationId: a }),
+      execute(testContext, revealed, { type: 'RevealLocation', locationId: study }),
     );
 
-    expect(rejection).toEqual({ code: 'alreadyRevealed', cardId: a });
+    expect(rejection).toEqual({ code: 'alreadyRevealed', cardId: study });
   });
 
-  it('rejects revealing a card that is not on a map', () => {
+  it.each([
+    ['a card that is not on a map', attic, { code: 'notALocation', cardId: attic }],
+    ['an unknown card', instanceId('nowhere'), { code: 'unknownCard', cardId: 'nowhere' }],
+  ])('rejects revealing %s', (_name, locationId, expected) => {
     const rejection = rejectionOf(() =>
-      execute(sandboxContext, state, { type: 'RevealLocation', locationId: d }),
+      execute(testContext, board(), { type: 'RevealLocation', locationId }),
     );
 
-    expect(rejection).toEqual({ code: 'notALocation', cardId: d });
-  });
-
-  it('rejects revealing an unknown card', () => {
-    const rejection = rejectionOf(() =>
-      execute(sandboxContext, state, { type: 'RevealLocation', locationId: instanceId('nowhere') }),
-    );
-
-    expect(rejection).toEqual({ code: 'unknownCard', cardId: 'nowhere' });
+    expect(rejection).toEqual(expected);
   });
 });

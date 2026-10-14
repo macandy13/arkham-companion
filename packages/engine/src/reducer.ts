@@ -108,10 +108,15 @@ function applyCardFlipped(state: GameState, e: CardFlipped): GameState {
 function applyConnectionChanged(state: GameState, e: ConnectionChanged): GameState {
   const map = state.board.maps[e.mapId];
   if (!map) return state;
-  const connections =
-    e.change === 'added'
-      ? [...map.connections, e.edge]
-      : map.connections.filter((edge) => !sameEdge(edge, e.edge));
+  let connections: Edge[];
+  switch (e.change) {
+    case 'added':
+      connections = [...map.connections, e.edge];
+      break;
+    case 'removed':
+      connections = map.connections.filter((edge) => !sameEdge(edge, e.edge));
+      break;
+  }
   return {
     ...state,
     board: { ...state.board, maps: { ...state.board.maps, [e.mapId]: { ...map, connections } } },
