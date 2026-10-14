@@ -26,7 +26,7 @@ Code style and conventions (functions, comments, tests, markup, CSS, helpers) ar
 - `pnpm install`
 - `pnpm test` – all unit tests
 - `pnpm typecheck`
-- `pnpm lint`
+- `pnpm lint` – ESLint, Stylelint, Prettier
 - `pnpm dev` – web app (apps/web)
 - `pnpm carddata:fetch` – fetch and normalise ArkhamDB packs into the local cache
 
