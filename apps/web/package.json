@@ -13,6 +13,7 @@
   "dependencies": {
     "@arkham/carddata": "workspace:*",
     "@arkham/engine": "workspace:*",
+    "@arkham/scenarios": "workspace:*",
     "dexie": "^4.4.6",
     "i18next": "^26.4.4",
     "react": "^19.0.0",

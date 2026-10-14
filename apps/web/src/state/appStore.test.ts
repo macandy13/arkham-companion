@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
-import { instanceId, replay, type Event } from '@arkham/engine';
+import { instanceId, investigatorId, replay, type Event, type Investigator } from '@arkham/engine';
+import { sandboxCards, sandboxScenario } from '@arkham/scenarios';
 import { GameImportError } from '../storage/gameExport';
 import { IndexedDbStore } from '../storage/IndexedDbStore';
 import { createAppStore } from './appStore';
@@ -12,6 +13,7 @@ const started: Event = {
   seed: 7,
   investigators: [],
   maps: {},
+  connections: [],
   cards: [
     {
       id: instanceId('c1'),
@@ -92,5 +94,49 @@ describe('appStore', () => {
     const store = createAppStore(new IndexedDbStore('appstore-badimport-test'));
     await expect(store.getState().importGame('{}')).rejects.toBeInstanceOf(GameImportError);
     expect(store.getState().games).toEqual([]);
+  });
+
+  describe('startScenario', () => {
+    const investigator: Investigator = {
+      id: investigatorId('inv'),
+      code: 'inv',
+      name: 'Alder',
+      seat: 0,
+      health: { max: 6, damage: 0 },
+      sanity: { max: 8, horror: 0 },
+      clues: 0,
+      resources: 5,
+      status: 'active',
+    };
+    const start = {
+      title: 'Sandbox',
+      ctx: { cards: sandboxCards },
+      definition: sandboxScenario,
+      difficulty: 'easy' as const,
+      seed: 3,
+      investigators: [investigator],
+    };
+
+    it('stores the setup events as a new game and opens it', async () => {
+      const db = new IndexedDbStore('appstore-start-test');
+      const store = createAppStore(db);
+
+      const id = await store.getState().startScenario(start);
+
+      expect(store.getState().current?.state.meta).toMatchObject({
+        scenarioId: 'sandbox',
+        difficulty: 'easy',
+      });
+      expect((await db.loadGame(id))?.state).toEqual(store.getState().current?.state);
+      expect(store.getState().games.map((g) => g.title)).toEqual(['Sandbox']);
+    });
+
+    it('stores nothing when the setup is invalid', async () => {
+      const store = createAppStore(new IndexedDbStore('appstore-start-invalid-test'));
+      const broken = { ...start, definition: { ...sandboxScenario, actDeck: ['missing'] } };
+
+      await expect(store.getState().startScenario(broken)).rejects.toThrow();
+      expect(store.getState().games).toEqual([]);
+    });
   });
 });

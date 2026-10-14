@@ -78,12 +78,15 @@ Follow-ups: `SettingsScreen` gets no `packs` yet (shows a hint) because `loadCat
 
 **Benefit:** A game is set up in about a minute, and an accidental refresh does not lose the wizard's choices.
 
-- [ ] Two entry points on the home screen:
+- [x] Two entry points on the home screen:
   - **New campaign:** campaign + difficulty → investigators (picker) → summary; starts the campaign's first scenario (campaign log itself arrives in M5)
   - **Quick game:** any single scenario + difficulty → investigators → summary; standalone chaos bag, no campaign log
-- [ ] Scenario list from `packages/scenarios` (sandbox only until M4)
-- [ ] Confirm: `compileSetup` → `StartScenario` → `GameStore.createGame` → navigate to `/game/:id`
-- [ ] Back/forward keeps choices; wizard state survives refresh (sessionStorage)
+- [x] Scenario list from `packages/scenarios` (sandbox only until M4)
+- [x] Confirm: `compileSetup` → `StartScenario` → `GameStore.createGame` → navigate to `/game/:id`
+- [x] Back/forward keeps choices; wizard state survives refresh (sessionStorage)
+
+**Done:** `/new` without `mode` offers both entry points; `?mode=campaign|quick&step=setup|investigators|summary` runs the wizard (`screens/NewGameScreen.tsx`, steps in `wizard/`). The step lives in the URL so browser back/forward walks the steps, the choices (`wizard/wizardState.ts`) in sessionStorage (try/catch, per mode, cleared after starting). Scenarios and campaigns come from `scenarios/scenarioCatalog.ts` (sandbox only; swapping the scenario is a change in that one file). The investigator step mounts `InvestigatorPicker` with `settings.ownedPacks`; `loadCatalog` is wired in `main.tsx` and passed to the wizard and, for the pack list, to the settings screen via `useCatalog`. Confirm calls the new `appStore.startScenario` (`compileSetup` -> `execute` -> `createGame` + one `appendEvents`), then navigates to `/game/:id`; the temporary "create empty game" button is gone. Tests: wizard state, seating, `startScenario`, wizard component tests with a fixture catalog, E2E with ArkhamDB requests stubbed by Playwright routes. `ScenarioStarted` now requires `connections`, so two older test fixtures got `connections: []`.
+Follow-ups: a campaign only starts its first scenario and stores no `campaignId` (campaign log, M5); the catalog is requested on every wizard/settings visit (packs always refetched, cards via `If-Modified-Since`) - share one load in the app if that is too chatty; the summary shows names and health/sanity only (no portraits); a failed catalog load has no retry button; `newGame` (empty game) is unused by the UI now and can go once tests no longer need it.
 
 ## M2.6 Home screen (S)
 

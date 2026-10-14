@@ -1,7 +1,29 @@
 import { createStore, type StoreApi } from 'zustand/vanilla';
-import type { GameId, GameState, GameStore, GameSummary } from '@arkham/engine';
-import { emptyState } from '@arkham/engine';
+import type {
+  Difficulty,
+  EngineContext,
+  GameId,
+  GameState,
+  GameStore,
+  GameSummary,
+  Investigator,
+  ScenarioDefinition,
+} from '@arkham/engine';
+import { compileSetup, emptyState, execute } from '@arkham/engine';
 import { parseGameExport, serialiseGameExport } from '../storage/gameExport';
+
+/** Everything the new game wizard has decided; input to `AppState.startScenario`. */
+export interface ScenarioStart {
+  /** Name shown in the game list. */
+  title: string;
+  ctx: EngineContext;
+  definition: ScenarioDefinition;
+  difficulty: Difficulty;
+  /** Seeds the game's RNG; chosen by the caller because the engine never reads randomness itself. */
+  seed: number;
+  /** In seat order; the first one is the lead investigator. */
+  investigators: readonly Investigator[];
+}
 
 /** UI-facing state: the persisted game list plus the currently open game. */
 export interface AppState {
@@ -12,6 +34,11 @@ export interface AppState {
   refresh(): Promise<void>;
   /** Creates an empty game, reloads the list and opens it. */
   newGame(): Promise<GameId>;
+  /**
+   * Sets a scenario up (`compileSetup` + `StartScenario`), stores the resulting events as a new
+   * game and opens it. Rejects with `CommandRejected` for invalid scenario data before anything is stored.
+   */
+  startScenario(start: ScenarioStart): Promise<GameId>;
   openGame(gameId: GameId): Promise<void>;
   /** Renames a saved game and reloads the list. */
   renameGame(gameId: GameId, title: string): Promise<void>;
@@ -42,6 +69,15 @@ export function createAppStore(gameStore: GameStore): StoreApi<AppState> {
     },
     async newGame() {
       const gameId = await gameStore.createGame({});
+      await get().refresh();
+      await get().openGame(gameId);
+      return gameId;
+    },
+    async startScenario({ title, ctx, definition, difficulty, seed, investigators }) {
+      const command = compileSetup(ctx, definition, { difficulty, seed, investigators });
+      const { events } = execute(ctx, emptyState(), command);
+      const gameId = await gameStore.createGame({ title });
+      await gameStore.appendEvents(gameId, events);
       await get().refresh();
       await get().openGame(gameId);
       return gameId;

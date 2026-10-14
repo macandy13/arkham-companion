@@ -10,6 +10,7 @@ const started: Event = {
   seed: 7,
   investigators: [],
   maps: {},
+  connections: [],
   cards: [
     {
       id: instanceId('c1'),
