@@ -4,7 +4,8 @@ import type { CardFlipped, CardMoved, DeckShuffled, EncounterCardDrawn, Event } 
 import { activeInvestigator } from './handle-investigator';
 import type { InstanceId } from './ids';
 import { hasKeyword } from './keywords';
-import { stateZoneRefs, validateZone } from './placement';
+import { cardMoved } from './placement';
+import { spawnZone } from './spawn';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
 import { shuffle } from './rng';
@@ -60,22 +61,19 @@ export function handleDrawTopmostFromDiscard(
   );
   if (cardId === undefined)
     throw new CommandRejected({ code: 'cardNotInZone', zone: 'encounterDiscard', match: cmd.name });
-  validateZone(stateZoneRefs(state), cardId, cmd.to);
-  return [moved(state, cardId, cmd.to)];
+  return [cardMoved(state, cardOf(state, cardId), cmd.to)];
 }
 
 /** `FromSetAside`: moves one set-aside copy of each code to `to`. */
 export function handleFromSetAside(state: GameState, cmd: FromSetAside): CardMoved[] {
-  return takeFromSetAside(state, cmd.codes).map((cardId) => {
-    validateZone(stateZoneRefs(state), cardId, cmd.to);
-    return moved(state, cardId, cmd.to);
-  });
+  return takeFromSetAside(state, cmd.codes).map((cardId) =>
+    cardMoved(state, cardOf(state, cardId), cmd.to),
+  );
 }
 
 /** `ShuffleInto`: adds one set-aside copy of each code to the zone and shuffles it. */
 export function handleShuffleInto(state: GameState, cmd: ShuffleInto): Event[] {
   const cardIds = takeFromSetAside(state, cmd.codes);
-  for (const cardId of cardIds) validateZone(stateZoneRefs(state), cardId, cmd.zone);
   return shuffleInto(state, cardIds, cmd.zone);
 }
 
@@ -111,14 +109,13 @@ function drawOne(
     surge,
   };
   const revealed: CardFlipped = { type: 'CardFlipped', cardId, faceUp: true };
-  const placed: CardMoved = {
-    type: 'CardMoved',
-    cardId,
-    from: ENCOUNTER_DECK,
+  // Index 0 is the top, and the discard's top is what "topmost" effects look for.
+  const placed = cardMoved(
+    state,
+    cardOf(state, cardId),
     to,
-    // Index 0 is the top, and the discard's top is what "topmost" effects look for.
-    ...(to.kind === 'encounterDiscard' ? { index: 0 } : {}),
-  };
+    to.kind === 'encounterDiscard' ? 0 : undefined,
+  );
   const events: Event[] = [...refill, drawn, revealed, placed];
   return { events: [...events, ...refillIfEmpty(replay(events, state))], surge };
 }
@@ -134,8 +131,9 @@ function refillIfEmpty(state: GameState): Event[] {
 }
 
 /**
- * Where a drawn card goes. Enemies stay unengaged at the drawer's location:
- * engagement, aloof and spawn instructions belong to `SpawnEnemy` (M1.8).
+ * Where a drawn card goes. Enemies enter through `spawnZone`, which today
+ * leaves them unengaged at the drawer's location; engagement, aloof and spawn
+ * instructions arrive with `SpawnEnemy` (M1.8) by extending that function.
  */
 function destinationOf(stats: CardStats, investigator: Investigator): Zone {
   if (stats.typeCode === 'enemy') {
@@ -144,7 +142,7 @@ function destinationOf(stats: CardStats, investigator: Investigator): Zone {
         code: 'investigatorHasNoLocation',
         investigatorId: investigator.id,
       });
-    return { kind: 'atLocation', locationId: investigator.locationId };
+    return spawnZone(investigator.locationId);
   }
   if (stats.typeCode === 'treachery' && stats.entersThreatArea)
     return { kind: 'threatArea', investigatorId: investigator.id };
@@ -158,7 +156,7 @@ function destinationOf(stats: CardStats, investigator: Investigator): Zone {
  */
 function shuffleInto(state: GameState, cardIds: readonly InstanceId[], zone: Zone): Event[] {
   if (cardIds.length === 0) return [];
-  const moves = cardIds.map((cardId) => moved(state, cardId, zone));
+  const moves = cardIds.map((cardId) => cardMoved(state, cardOf(state, cardId), zone));
   const remaining = cardsIn(state, zone).filter((id) => !cardIds.includes(id));
   const [order, rngState] = shuffle([...remaining, ...cardIds], state.meta.rngState);
   const shuffled: DeckShuffled = { type: 'DeckShuffled', zone, order, rngState };
@@ -180,10 +178,6 @@ function takeFromSetAside(state: GameState, codes: readonly string[]): InstanceI
     { taken: [] as InstanceId[], available: cardsIn(state, SET_ASIDE) },
   );
   return taken;
-}
-
-function moved(state: GameState, cardId: InstanceId, to: Zone): CardMoved {
-  return { type: 'CardMoved', cardId, from: cardOf(state, cardId).zone, to };
 }
 
 /** The cards of a zone, top first. */

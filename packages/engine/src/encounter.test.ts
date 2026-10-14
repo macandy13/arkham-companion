@@ -1,69 +1,39 @@
 import { describe, expect, it } from 'vitest';
 import {
-  CommandRejected,
-  cardDbFrom,
   checkInvariants,
-  emptyState,
   execute,
   instanceId,
   investigatorId,
   mapId,
   zoneKey,
-  type CardStats,
   type Command,
   type EngineContext,
   type GameState,
   type InstanceId,
-  type Rejection,
   type StartingCard,
   type Zone,
 } from './index';
+import { contextWith, makeCard, makeInvestigator, rejectionOf, run } from '../test/utils';
 
 const main = mapId('main');
 const hall = instanceId('hall');
 const alice = investigatorId('alice');
 
-const cards: CardStats[] = [
-  {
-    code: 'LOC',
-    name: 'Fake Hall',
-    typeCode: 'location',
-    traits: [],
-    clues: { fixed: 0, perInvestigator: 1 },
-  },
-  { code: 'FOE', name: 'Fake Foe', typeCode: 'enemy', traits: [] },
-  { code: 'DUL', name: 'Fake Dull', typeCode: 'treachery', traits: [] },
-  {
-    code: 'SUR',
-    name: 'Fake Surge',
-    typeCode: 'treachery',
-    traits: [],
-    keywords: [{ name: 'surge' }],
-  },
-  {
+const ctx = contextWith(
+  makeCard({ code: 'LOC', name: 'Fake Hall', typeCode: 'location' }),
+  makeCard({ code: 'FOE', name: 'Fake Foe', typeCode: 'enemy' }),
+  makeCard({ code: 'DUL', name: 'Fake Dull', typeCode: 'treachery' }),
+  makeCard({ code: 'SUR', name: 'Fake Surge', keywords: [{ name: 'surge' }] }),
+  makeCard({
     code: 'SUF',
     name: 'Fake Surging Foe',
     typeCode: 'enemy',
-    traits: [],
     keywords: [{ name: 'surge' }],
-  },
-  {
-    code: 'PER',
-    name: 'Fake Peril',
-    typeCode: 'treachery',
-    traits: [],
-    keywords: [{ name: 'peril' }],
-  },
-  {
-    code: 'LNG',
-    name: 'Fake Lingering',
-    typeCode: 'treachery',
-    traits: [],
-    entersThreatArea: true,
-  },
-  { code: 'REL', name: 'Fake Relic', typeCode: 'asset', traits: [] },
-];
-const ctx: EngineContext = { cards: cardDbFrom(cards) };
+  }),
+  makeCard({ code: 'PER', name: 'Fake Peril', keywords: [{ name: 'peril' }] }),
+  makeCard({ code: 'LNG', name: 'Fake Lingering', entersThreatArea: true }),
+  makeCard({ code: 'REL', name: 'Fake Relic', typeCode: 'asset' }),
+);
 
 interface Layout {
   /** Codes in the encounter deck, top first; instance IDs are `d0`, `d1`, … */
@@ -80,35 +50,29 @@ interface Layout {
 function started(layout: Layout, seed = 1): GameState {
   const inZone = (prefix: string, codes: string[] | undefined, zone: Zone): StartingCard[] =>
     (codes ?? []).map((code, i) => ({ id: instanceId(`${prefix}${i}`), code, zone }));
-  return execute(ctx, emptyState(), {
-    type: 'StartScenario',
-    scenarioId: 'encounter',
-    difficulty: 'standard',
-    seed,
-    shuffleEncounterDeck: false,
-    investigators: [
-      {
-        id: alice,
-        code: 'inv',
-        name: 'Alice',
-        seat: 1,
-        ...(layout.placed === false ? {} : { locationId: hall }),
-        health: { max: 8, damage: 0 },
-        sanity: { max: 8, horror: 0 },
-        clues: 0,
-        resources: 0,
-        doomOnPlayerCards: 0,
-        status: 'active',
-      },
-    ],
-    maps: { [main]: { name: 'Main' } },
-    cards: [
-      { id: hall, code: 'LOC', zone: { kind: 'location', mapId: main }, faceUp: true },
-      ...inZone('d', layout.deck, { kind: 'encounterDeck' }),
-      ...inZone('x', layout.discard, { kind: 'encounterDiscard' }),
-      ...inZone('s', layout.setAside, { kind: 'setAside' }),
-    ],
-  }).state;
+  return run(ctx, [
+    {
+      type: 'StartScenario',
+      scenarioId: 'encounter',
+      difficulty: 'standard',
+      seed,
+      shuffleEncounterDeck: false,
+      investigators: [
+        makeInvestigator({
+          id: 'alice',
+          seat: 1,
+          ...(layout.placed === false ? {} : { locationId: hall }),
+        }),
+      ],
+      maps: { [main]: { name: 'Main' } },
+      cards: [
+        { id: hall, code: 'LOC', zone: { kind: 'location', mapId: main }, faceUp: true },
+        ...inZone('d', layout.deck, { kind: 'encounterDeck' }),
+        ...inZone('x', layout.discard, { kind: 'encounterDiscard' }),
+        ...inZone('s', layout.setAside, { kind: 'setAside' }),
+      ],
+    },
+  ]).state;
 }
 
 const draw: Command = { type: 'DrawEncounter', investigatorId: alice };
@@ -117,14 +81,9 @@ function order(state: GameState, zone: Zone): InstanceId[] {
   return state.order[zoneKey(zone)] ?? [];
 }
 
-function rejectionOf(state: GameState, command: Command, context = ctx): Rejection {
-  try {
-    execute(context, state, command);
-  } catch (error) {
-    if (error instanceof CommandRejected) return error.rejection;
-    throw error;
-  }
-  throw new Error('command was not rejected');
+/** The rejection `command` causes in `state`. */
+function rejection(state: GameState, command: Command) {
+  return rejectionOf(() => execute(ctx, state, command));
 }
 
 describe('DrawEncounter', () => {
@@ -281,13 +240,13 @@ describe('DrawEncounter', () => {
   });
 
   it('rejects a draw when the deck and the discard are empty', () => {
-    expect(rejectionOf(started({}), draw)).toEqual({ code: 'encounterDeckEmpty' });
+    expect(rejection(started({}), draw)).toEqual({ code: 'encounterDeckEmpty' });
   });
 
   it('rejects an enemy draw for an investigator without a location', () => {
     const state = started({ deck: ['FOE'], placed: false });
 
-    expect(rejectionOf(state, draw)).toEqual({
+    expect(rejection(state, draw)).toEqual({
       code: 'investigatorHasNoLocation',
       investigatorId: alice,
     });
@@ -296,7 +255,7 @@ describe('DrawEncounter', () => {
   it('rejects a draw for an unknown investigator', () => {
     const command: Command = { type: 'DrawEncounter', investigatorId: investigatorId('nobody') };
 
-    expect(rejectionOf(started({ deck: ['DUL'] }), command).code).toBe('unknownInvestigator');
+    expect(rejection(started({ deck: ['DUL'] }), command).code).toBe('unknownInvestigator');
   });
 
   it('feeds onCardEnters when an enemy enters play, but not for a discarded treachery', () => {
@@ -329,7 +288,7 @@ describe('DrawTopmostFromDiscard', () => {
   it('rejects when no card in the discard has that name', () => {
     const state = started({ discard: ['DUL'], deck: ['FOE'] });
 
-    expect(rejectionOf(state, command({ kind: 'setAside' }))).toEqual({
+    expect(rejection(state, command({ kind: 'setAside' }))).toEqual({
       code: 'cardNotInZone',
       zone: 'encounterDiscard',
       match: 'Fake Foe',
@@ -339,7 +298,7 @@ describe('DrawTopmostFromDiscard', () => {
   it('rejects a destination that names an unknown map', () => {
     const state = started({ discard: ['FOE'] });
 
-    expect(rejectionOf(state, command({ kind: 'location', mapId: mapId('nowhere') })).code).toBe(
+    expect(rejection(state, command({ kind: 'location', mapId: mapId('nowhere') })).code).toBe(
       'unknownMap',
     );
   });
@@ -363,7 +322,7 @@ describe('FromSetAside', () => {
     const state = started({ setAside: ['FOE'] });
 
     expect(
-      rejectionOf(state, {
+      rejection(state, {
         type: 'FromSetAside',
         codes: ['FOE', 'FOE'],
         to: { kind: 'outOfGame' },
@@ -414,8 +373,74 @@ describe('ShuffleInto', () => {
     const state = started({ deck: ['FOE'] });
 
     expect(
-      rejectionOf(state, { type: 'ShuffleInto', codes: ['FOE'], zone: { kind: 'encounterDeck' } })
+      rejection(state, { type: 'ShuffleInto', codes: ['FOE'], zone: { kind: 'encounterDeck' } })
         .code,
     ).toBe('cardNotInZone');
+  });
+});
+
+describe('encounter deck invariants', () => {
+  const shuffleIn = (code: string): Command => ({
+    type: 'ShuffleInto',
+    codes: [code],
+    zone: { kind: 'encounterDeck' },
+  });
+
+  it.each([
+    { name: 'plain draws', layout: { deck: ['DUL', 'FOE', 'LNG'] }, steps: [draw, draw, draw] },
+    {
+      name: 'draws through a reshuffle',
+      layout: { deck: ['DUL'], discard: ['FOE', 'REL', 'PER'] },
+      steps: [draw, draw, draw, draw, draw],
+    },
+    {
+      name: 'a surge chain',
+      layout: { deck: ['SUR', 'SUF', 'DUL'], discard: ['FOE'] },
+      steps: [draw, draw],
+    },
+    {
+      name: 'only surge cards',
+      layout: { deck: ['SUR', 'SUR'], discard: ['SUF'] },
+      steps: [draw, draw],
+    },
+    {
+      name: 'cards shuffled in between draws',
+      layout: { deck: ['DUL'], setAside: ['FOE', 'LNG'] },
+      steps: [draw, shuffleIn('FOE'), draw, shuffleIn('LNG'), draw, draw],
+    },
+    { name: 'a draw from nothing', layout: {}, steps: [draw] },
+  ])('keeps every card in exactly one zone and the card count constant: $name', (testCase) => {
+    let state = started(testCase.layout);
+    const cardCount = Object.keys(state.cards).length;
+
+    for (const step of testCase.steps) {
+      try {
+        state = execute(ctx, state, step).state;
+      } catch {
+        // A rejected step leaves the state unchanged, which the checks below still cover.
+      }
+
+      const placed = Object.values(state.order).reduce((sum, ids) => sum + ids.length, 0);
+      expect(checkInvariants(state)).toEqual([]);
+      expect(Object.keys(state.cards)).toHaveLength(cardCount);
+      expect(placed).toBe(cardCount);
+    }
+  });
+
+  it.each([
+    { deck: ['DUL'], discard: ['FOE'] },
+    { deck: ['FOE'], discard: ['DUL', 'DUL'] },
+    { deck: ['LNG'], discard: ['REL'] },
+    { deck: [], discard: ['DUL', 'FOE', 'REL'] },
+    { deck: ['SUR'], discard: ['PER'] },
+    { deck: ['DUL', 'DUL'], discard: [] },
+  ])('never leaves the deck empty while the discard has cards: $deck / $discard', (layout) => {
+    for (const seed of [1, 2, 3]) {
+      const after = execute(ctx, started(layout, seed), draw).state;
+
+      const deckSize = order(after, { kind: 'encounterDeck' }).length;
+      const discardSize = order(after, { kind: 'encounterDiscard' }).length;
+      expect(deckSize === 0 && discardSize > 0).toBe(false);
+    }
   });
 });

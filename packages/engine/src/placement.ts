@@ -1,7 +1,8 @@
+import type { CardMoved } from './events';
 import { CommandRejected } from './rejection';
 import type { InstanceId } from './ids';
 import type { CardInstance, GameState } from './state';
-import type { Zone } from './zone';
+import { sameZone, zoneKey, type Zone } from './zone';
 
 /** The IDs a zone may refer to, used to validate card placements. */
 export interface ZoneRefs {
@@ -60,5 +61,28 @@ export function stateZoneRefs(state: GameState): ZoneRefs {
     cards: state.cards,
     investigators: new Set(state.investigators.map((i) => i.id)),
     maps: new Set(Object.keys(state.board.maps)),
+  };
+}
+
+/** The `CardMoved` for moving `card` to `to` (at `index`, default the end), after validating both. */
+export function cardMoved(
+  state: GameState,
+  card: CardInstance,
+  to: Zone,
+  index?: number,
+): CardMoved {
+  validateZone(stateZoneRefs(state), card.id, to);
+  const destSize = (state.order[zoneKey(to)] ?? []).length;
+  // When reordering within a zone the card itself is removed first.
+  const maxIndex = sameZone(card.zone, to) ? destSize - 1 : destSize;
+  if (index !== undefined && (!Number.isInteger(index) || index < 0 || index > maxIndex)) {
+    throw new CommandRejected({ code: 'indexOutOfRange', index, max: maxIndex });
+  }
+  return {
+    type: 'CardMoved',
+    cardId: card.id,
+    from: card.zone,
+    to,
+    ...(index !== undefined ? { index } : {}),
   };
 }

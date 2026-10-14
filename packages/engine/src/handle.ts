@@ -33,9 +33,9 @@ import { apply, replay } from './reducer';
 import { CommandRejected, type Rejection } from './rejection';
 import { shuffle } from './rng';
 import type { CardInstance, GameState, Investigator, TokenKind } from './state';
-import { stateZoneRefs, validateZone, type ZoneRefs } from './placement';
+import { cardMoved, validateZone, type ZoneRefs } from './placement';
 import { MAX_TRIGGERED_COMMANDS, triggeredCommands } from './triggers';
-import { sameZone, zoneKey, type Zone } from './zone';
+import { zoneKey, type Zone } from './zone';
 
 /**
  * Validates a command against the current state and returns the resulting events.
@@ -301,24 +301,6 @@ function handleMoveCard(state: GameState, cmd: MoveCard): CardMoved {
   const card = state.cards[cmd.cardId];
   if (!card) throw new CommandRejected({ code: 'unknownCard', cardId: cmd.cardId });
   return cardMoved(state, card, cmd.to);
-}
-
-/** The `CardMoved` for moving `card` to `to` (at `index`, default the end), after validating both. */
-function cardMoved(state: GameState, card: CardInstance, to: Zone, index?: number): CardMoved {
-  validateZone(stateZoneRefs(state), card.id, to);
-  const destSize = (state.order[zoneKey(to)] ?? []).length;
-  // When reordering within a zone the card itself is removed first.
-  const maxIndex = sameZone(card.zone, to) ? destSize - 1 : destSize;
-  if (index !== undefined && (!Number.isInteger(index) || index < 0 || index > maxIndex)) {
-    throw new CommandRejected({ code: 'indexOutOfRange', index, max: maxIndex });
-  }
-  return {
-    type: 'CardMoved',
-    cardId: card.id,
-    from: card.zone,
-    to,
-    ...(index !== undefined ? { index } : {}),
-  };
 }
 
 function handleAdjustment(state: GameState, adj: Adjustment): CardMoved | TokensChanged {
