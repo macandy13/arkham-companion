@@ -10,7 +10,7 @@ Code style and conventions (functions, comments, tests, markup, CSS, helpers) ar
 - **Engine is pure.** `packages/engine` has no React, DOM, IndexedDB, fetch or `Date.now()`/`Math.random()`. Randomness only via the seeded RNG in state.
 - **Every state change is Command → Events → reducer.** Never mutate state outside the reducer.
 - **Storage only via `GameStore`.** The app never talks to Dexie/IndexedDB directly.
-- **Never commit ArkhamDB card JSON or card images.** Fetched data goes to `packages/carddata/.cache/` (gitignored).
+- **Never commit ArkhamDB card JSON or card images.** Fetched data goes to `packages/carddata/.cache/` (gitignored). Tests use invented cards or the hand-written test scenario (`packages/scenarios/src/the-gathering/`): real card codes and names are fine there, but stats are entered by hand and there is no card text, JSON or image.
 - **Generic before specific:** if two scenarios need it, make it an engine primitive.
 - **Markup is structure only.** JSX/HTML is a plain document tree of semantic elements (no `<strong>`, `<b>`, `<br>`, inline `style`, layout/styling class names); all presentation lives in CSS.
 - **No German words in code** (identifiers); German only in UI translation strings.
@@ -19,7 +19,7 @@ Code style and conventions (functions, comments, tests, markup, CSS, helpers) ar
 - **In-code comments explain why, not what.** Inside function bodies, comment only to give a motivation the code can't express (game rule, workaround, trade-off) – never to narrate steps.
 - **Styles use tokens.** Colours, spacing, sizes come from `apps/web/src/styles/tokens.css`; no raw values or copy-pasted declarations elsewhere.
 - **Reuse helpers.** Generic string/array/object operations live in `@arkham/util` (`packages/util`); add missing ones there with tests instead of inlining them.
-- Tests with every change: Vitest unit tests for engine logic; add a fast-check property test when touching invariants. Keep tests local: the values an assertion depends on are visible in the test or its `describe` setup.
+- Tests with every change: Vitest unit tests for engine logic; cover invariants with example-based table tests (`it.each`), no property-based testing. Keep tests local: the values an assertion depends on are visible in the test or its `describe` setup.
 
 ## Commands
 

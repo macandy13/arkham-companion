@@ -92,7 +92,7 @@ The ArkhamDB public API sends `Access-Control-Allow-Origin: *`, so it can be que
 | Persistence | IndexedDB via Dexie behind a `GameStore` interface | localStorage is limited to ~5 MB and synchronous; cloud storage comes later as a second adapter |
 | Validation | zod | Check scenario definitions and imported saves |
 | Offline | vite-plugin-pwa (Workbox) | Cache-first for card images |
-| Tests | Vitest, fast-check, Playwright | Engine unit tests, property tests, E2E |
+| Tests | Vitest, Playwright | Engine unit and table tests, E2E |
 | Repo / CI | GitHub + GitHub Actions | Tests on every push, deploy to Pages |
 
 **Repository structure**
@@ -146,11 +146,15 @@ interface Investigator {
 }
 
 interface Board {
-  maps: Record<MapId, { name: string; visible: boolean }>;   // e.g. two parallel maps
+  maps: Record<MapId, GameMap>;  // e.g. two parallel maps
   slots: Record<SlotId, { mapId: MapId; x: number; y: number }>;
   placement: Record<InstanceId, SlotId | { x: number; y: number }>;
-  connections: Edge[];          // explicit graph, incl. one-way edges
   layoutMode: 'book' | 'auto';
+}
+
+interface GameMap {             // one map = its locations + their connections (map.ts)
+  name: string; visible: boolean;
+  connections: Edge[];          // explicit graph, incl. one-way edges
 }
 
 interface GameState {
@@ -245,7 +249,7 @@ interface ScenarioDefinition {
 **Setup DSL** – same steps for initial setup and mid-scenario changes:
 
 - `putIntoPlay(location, slot?, faceUp?)`, `replaceLocation(old, new)`, `removeLocation`, `randomLocations(pool, slots)`
-- `addMap(mapId)`, `addConnection(a, b, oneWay?)`, `removeConnection(a, b)`
+- `addMap(mapId, locations, connections)` (a map is declared as one unit), `addConnection(a, b, oneWay?)`/`removeConnection(a, b)` for mid-scenario changes
 - `setAside(codes)`, `fromSetAside(codes, to: Zone)`
 - `buildEncounterDeck(sets, exclude)`, `shuffleInto(codes, 'encounterDeck')`
 - `placeTokens(target, type, n | perInvestigator(n))`
