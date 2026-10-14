@@ -12,6 +12,12 @@ export interface AppState {
   /** Creates an empty game, reloads the list and opens it. */
   newGame(): Promise<GameId>;
   openGame(gameId: GameId): Promise<void>;
+  /** Renames a saved game and reloads the list. */
+  renameGame(gameId: GameId, title: string): Promise<void>;
+  /** Copies a saved game under `title` and reloads the list; returns the copy's id. */
+  duplicateGame(gameId: GameId, title: string): Promise<GameId>;
+  /** Deletes a saved game and reloads the list; closes it if it is the open one. */
+  deleteGame(gameId: GameId): Promise<void>;
 }
 
 /**
@@ -35,6 +41,20 @@ export function createAppStore(gameStore: GameStore): StoreApi<AppState> {
     async openGame(gameId) {
       const loaded = await gameStore.loadGame(gameId);
       set({ current: { gameId, state: loaded?.state ?? emptyState() } });
+    },
+    async renameGame(gameId, title) {
+      await gameStore.renameGame(gameId, title);
+      await get().refresh();
+    },
+    async duplicateGame(gameId, title) {
+      const copyId = await gameStore.duplicateGame(gameId, title);
+      await get().refresh();
+      return copyId;
+    },
+    async deleteGame(gameId) {
+      await gameStore.deleteGame(gameId);
+      if (get().current?.gameId === gameId) set({ current: undefined });
+      await get().refresh();
     },
   }));
 }

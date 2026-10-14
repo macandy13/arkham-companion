@@ -91,9 +91,11 @@ Follow-ups: `SettingsScreen` gets no `packs` yet (shows a hint) because `loadCat
 
 **Benefit:** Pick up exactly where you left off; keep the list tidy.
 
-- [ ] List saved games via `GameStore.listGames`: scenario, investigators (portraits), round/phase, last played
-- [ ] Actions: resume, rename, duplicate, delete (with confirm)
-- [ ] Empty state with "New campaign" and "Quick game"
+- [x] List saved games via `GameStore.listGames`: scenario, investigators (portraits), round/phase, last played
+- [x] Actions: resume, rename, duplicate, delete (with confirm)
+- [x] Empty state with "New campaign" and "Quick game"
+
+**Done:** `GameSummary` now also carries `scenarioId`, `round`, `phase` and `investigators` (derived by `IndexedDbStore.listGames` from the replayed state, using snapshots); `GameStore` gains `renameGame` (keeps `updatedAt`), `duplicateGame` (copies log and snapshot under a new UUID) and `deleteGame`, mirrored in `appStore`. The home screen (`screens/HomeScreen.tsx`, `GameListItem.tsx`, `home.css`) shows each game with resume/rename/duplicate/delete; delete asks via an accessible native-`<dialog>` `ConfirmDialog`. The empty state links to `/new?mode=campaign` and `/new?mode=quick`. Follow-ups: M2.5 must read the `mode` query parameter; investigators are shown by name – portraits need the catalog wired into the home screen (M2.7); the scenario shows its raw `scenarioId` until scenario names exist; `listGames` replays every game, so cache the summary in the row if the list gets slow.
 
 ## M2.7 Resume, export and import (S)
 

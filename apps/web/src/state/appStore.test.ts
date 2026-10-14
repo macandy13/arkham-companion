@@ -14,4 +14,22 @@ describe('appStore', () => {
     await second.getState().refresh();
     expect(second.getState().games.map((g) => g.gameId)).toEqual([id]);
   });
+
+  it('renames, duplicates and deletes games and keeps the list in sync', async () => {
+    const store = createAppStore(new IndexedDbStore('appstore-manage-test'));
+    const id = await store.getState().newGame();
+
+    await store.getState().renameGame(id, 'Renamed');
+    const copyId = await store.getState().duplicateGame(id, 'Renamed copy');
+    expect(
+      store
+        .getState()
+        .games.map((g) => g.title)
+        .sort(),
+    ).toEqual(['Renamed', 'Renamed copy']);
+
+    await store.getState().deleteGame(id);
+    expect(store.getState().games.map((g) => g.gameId)).toEqual([copyId]);
+    expect(store.getState().current).toBeUndefined();
+  });
 });
