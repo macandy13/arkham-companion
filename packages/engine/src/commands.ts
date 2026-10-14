@@ -1,5 +1,6 @@
 import type { InstanceId, MapId } from './ids';
-import type { CampaignLog, ChaosToken, Difficulty, Edge, Investigator, TokenKind } from './state';
+import type { MapSpec } from './map';
+import type { CampaignLog, ChaosToken, Difficulty, Investigator, TokenKind } from './state';
 import type { Zone } from './zone';
 
 /** Commands are intents from the UI; `handle` validates them and produces events. */
@@ -29,10 +30,9 @@ export interface StartScenario {
   difficulty: Difficulty;
   seed: number;
   investigators: Investigator[];
-  maps?: Record<MapId, { name: string; visible?: boolean }>;
+  /** Maps with their connections; each edge must join two starting locations of that map. */
+  maps?: Record<MapId, MapSpec>;
   cards: StartingCard[];
-  /** Connections between starting location cards (by instance ID). */
-  connections?: Edge[];
   chaosBag?: ChaosToken[];
   campaign?: CampaignLog;
   /** Shuffle the encounter deck after setup (default true). */

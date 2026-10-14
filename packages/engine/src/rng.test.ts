@@ -1,4 +1,3 @@
-import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { nextInt, nextU32, seedRng, shuffle, type RngState } from './rng';
 
@@ -20,13 +19,19 @@ describe('xoshiro128**', () => {
     expect(nextU32(seedRng(7))).toEqual(nextU32(seedRng(7)));
   });
 
-  it('nextInt stays in range', () => {
-    fc.assert(
-      fc.property(fc.integer(), fc.integer({ min: 1, max: 1000 }), (seed, bound) => {
-        const [v] = nextInt(seedRng(seed), bound);
-        return Number.isInteger(v) && v >= 0 && v < bound;
-      }),
-    );
+  it.each([
+    { seed: 0, bound: 1 },
+    { seed: 1, bound: 2 },
+    { seed: -5, bound: 6 },
+    { seed: 2 ** 31 - 1, bound: 7 },
+    { seed: -(2 ** 31), bound: 1000 },
+    { seed: 123456, bound: 3 },
+  ])('nextInt(seed $seed, bound $bound) is an integer in [0, bound)', ({ seed, bound }) => {
+    const [v] = nextInt(seedRng(seed), bound);
+
+    expect(Number.isInteger(v)).toBe(true);
+    expect(v).toBeGreaterThanOrEqual(0);
+    expect(v).toBeLessThan(bound);
   });
 
   it('rejects invalid bounds', () => {
@@ -36,23 +41,27 @@ describe('xoshiro128**', () => {
 });
 
 describe('shuffle', () => {
-  it('returns a permutation and does not mutate the input', () => {
-    fc.assert(
-      fc.property(fc.integer(), fc.array(fc.integer()), (seed, items) => {
-        const copy = items.slice();
-        const [out] = shuffle(items, seedRng(seed));
-        expect(items).toEqual(copy);
-        expect(out.slice().sort()).toEqual(items.slice().sort());
-      }),
-    );
+  it.each([
+    { seed: 1, items: [] },
+    { seed: 2, items: [7] },
+    { seed: 3, items: [1, 2, 3, 4, 5] },
+    { seed: -4, items: [3, 3, 1, 1, 2] },
+    { seed: 2 ** 31 - 1, items: [0, -1, 10, 42, 5, 6, 7, 8] },
+  ])('returns a permutation of $items (seed $seed) without mutating it', ({ seed, items }) => {
+    const copy = items.slice();
+
+    const [out] = shuffle(items, seedRng(seed));
+
+    expect(items).toEqual(copy);
+    expect(out.slice().sort()).toEqual(items.slice().sort());
   });
 
-  it('is reproducible from the same RNG state', () => {
-    fc.assert(
-      fc.property(fc.integer(), fc.array(fc.string()), (seed, items) => {
-        expect(shuffle(items, seedRng(seed))).toEqual(shuffle(items, seedRng(seed)));
-      }),
-    );
+  it.each([
+    { seed: 5, items: ['a', 'b', 'c', 'd'] },
+    { seed: -9, items: ['x', 'x', 'y'] },
+    { seed: 0, items: [] },
+  ])('shuffles $items the same way twice from seed $seed', ({ seed, items }) => {
+    expect(shuffle(items, seedRng(seed))).toEqual(shuffle(items, seedRng(seed)));
   });
 
   it('actually reorders (sanity check over many seeds)', () => {

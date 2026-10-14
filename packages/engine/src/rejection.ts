@@ -23,6 +23,8 @@ export type Rejection =
   | { code: 'invalidStartingTokens'; cardId: InstanceId; token: TokenKind; amount: number }
   /** `cardId` is used as a location (investigator position, connection) but is not on a map. */
   | { code: 'notALocation'; cardId: InstanceId }
+  /** A connection of map `mapId` ends at `cardId`, a location on a different map. */
+  | { code: 'locationOnOtherMap'; cardId: InstanceId; mapId: MapId }
   /** A setup step refers to `cardCode`, but no earlier step created an instance of it. */
   | { code: 'setupTargetNotFound'; cardCode: string }
   /** A setup step refers to `cardCode`, but several instances of it exist. */
@@ -77,6 +79,8 @@ function describe(r: Rejection): string {
       return `${r.token} on ${r.cardId} must be a non-negative integer, got ${r.amount}`;
     case 'notALocation':
       return `${r.cardId} is not a location on a map`;
+    case 'locationOnOtherMap':
+      return `a connection of map ${r.mapId} ends at ${r.cardId}, which is on another map`;
     case 'setupTargetNotFound':
       return `setup refers to ${r.cardCode}, which no earlier step created`;
     case 'setupTargetAmbiguous':
