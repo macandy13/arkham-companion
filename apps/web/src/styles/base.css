@@ -1,0 +1,49 @@
+/* Element defaults shared by every screen. */
+body {
+  margin: 0;
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);
+}
+
+h1 {
+  margin: 0;
+  font-size: var(--font-size-title);
+}
+
+h2 {
+  margin: 0;
+  font-size: var(--font-size-subtitle);
+}
+
+a {
+  color: var(--color-accent);
+}
+
+a,
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--touch-target);
+  min-width: var(--touch-target);
+  padding: 0 var(--space-3);
+  box-sizing: border-box;
+}
+
+button {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}
+
+button:disabled {
+  color: var(--color-text-muted);
+}
+
+[aria-current='page'] {
+  font-weight: bold;
+}

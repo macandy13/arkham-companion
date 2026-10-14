@@ -1,0 +1,32 @@
+/* Design tokens: the only place for raw values (docs/coding-guidelines.md §5). Dark is the default theme. */
+:root {
+  color-scheme: dark;
+
+  --color-background: #1b1b1f;
+  --color-surface: #26262c;
+  --color-border: #44444c;
+  --color-text: #e8e6e3;
+  --color-text-muted: #a3a1a8;
+  --color-accent: #6fb7a6;
+  --color-accent-text: #10201c;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 2.5rem;
+
+  --font-family: system-ui, sans-serif;
+  --font-size-body: 1rem;
+  --font-size-title: 1.5rem;
+  --font-size-subtitle: 1.125rem;
+
+  --radius: 0.5rem;
+  --border-width: 1px;
+  /* Minimum size of anything tappable, for use on a shared tablet. */
+  --touch-target: 2.75rem;
+
+  --layout-content-width: 60rem;
+  --layout-board-panel-width: 16rem;
+  --layout-board-bar-height: 8rem;
+}

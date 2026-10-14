@@ -7,9 +7,16 @@ export const resources = {
     translation: {
       app: { title: 'Arkham Companion' },
       header: { round: 'Round', phase: 'Phase', undo: 'Undo', noGame: 'No game open' },
-      map: { placeholder: 'Map' },
-      investigators: { placeholder: 'Investigators' },
-      encounter: { placeholder: 'Encounter' },
+      nav: { label: 'Main' },
+      map: { title: 'Map' },
+      investigators: { title: 'Investigators' },
+      encounter: { title: 'Encounter' },
+      settings: { title: 'Settings', placeholder: 'Settings will appear here.' },
+      wizard: {
+        title: 'New game',
+        placeholder: 'The game setup wizard will appear here.',
+        createEmpty: 'Create empty game',
+      },
       games: {
         title: 'Games',
         new: 'New game',
@@ -23,9 +30,16 @@ export const resources = {
     translation: {
       app: { title: 'Arkham Companion' },
       header: { round: 'Runde', phase: 'Phase', undo: 'Rückgängig', noGame: 'Kein Spiel geöffnet' },
-      map: { placeholder: 'Karte' },
-      investigators: { placeholder: 'Ermittler' },
-      encounter: { placeholder: 'Begegnung' },
+      nav: { label: 'Hauptnavigation' },
+      map: { title: 'Karte' },
+      investigators: { title: 'Ermittler' },
+      encounter: { title: 'Begegnung' },
+      settings: { title: 'Einstellungen', placeholder: 'Hier erscheinen die Einstellungen.' },
+      wizard: {
+        title: 'Neues Spiel',
+        placeholder: 'Hier erscheint der Assistent zum Einrichten eines Spiels.',
+        createEmpty: 'Leeres Spiel erstellen',
+      },
       games: {
         title: 'Spiele',
         new: 'Neues Spiel',

@@ -22,9 +22,12 @@ Prerequisite: the cloud environment can reach `arkhamdb.com` (see architecture �
 
 **Benefit:** Browser back and deep links work; every screen shares one look and tablet-friendly touch sizes.
 
-- [ ] React Router (hash routing for GitHub Pages): `/` home, `/new` wizard, `/game/:id` play (placeholder), `/settings`
-- [ ] Shared layout, tablet-first breakpoints, touch targets ≥ 44 px
-- [ ] Basic design tokens (colours, spacing, type) in one CSS file; dark theme by default
+- [x] React Router (hash routing for GitHub Pages): `/` home, `/new` wizard, `/game/:id` play (placeholder), `/settings`
+- [x] Shared layout, tablet-first breakpoints, touch targets ≥ 44 px
+- [x] Basic design tokens (colours, spacing, type) in one CSS file; dark theme by default
+
+**Done:** `react-router` `HashRouter` with routes `/`, `/new`, `/game/:id`, `/settings` in `apps/web/src/App.tsx` (`AppRoutes` is testable with a `MemoryRouter`); screens live in `apps/web/src/screens/`. Shared layout has a header with navigation; design tokens (dark, spacing scale, `--touch-target` 2.75rem) in `styles/tokens.css`, element defaults in `styles/base.css`. `/new` is a placeholder that can only create an empty game (replaced by the wizard in M2.7); the old `games` sidebar moved to the home screen. E2E smoke test updated for the new routes.
+Follow-ups: the manifest colours in `vite.config.ts` are still raw values (could move to tokens); breakpoints below tablet width are not designed yet (the board grid is tablet landscape only).
 
 ## M2.2 Investigator catalog data (S)
 
