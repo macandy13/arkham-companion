@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  CommandRejected,
   MAX_TRIGGERED_COMMANDS,
-  emptyState,
+  checkInvariants,
   execute,
   instanceId,
   investigatorId,
@@ -13,11 +12,18 @@ import {
   type Rejection,
 } from './index';
 import { triggeredCommands } from './triggers';
-import { sandboxContext } from '../test/fixtures/sandbox-cards';
+import {
+  edge,
+  makeInvestigator,
+  rejectionOf as rejectionFrom,
+  run,
+  testContext,
+} from '../test/utils';
 
 const main = mapId('main');
 const hall = instanceId('hall');
 const cellar = instanceId('cellar');
+const crypt = instanceId('crypt');
 const ghoul = instanceId('ghoul');
 const deckGhoul = instanceId('deckGhoul');
 const agenda1 = instanceId('agenda1');
@@ -27,58 +33,44 @@ const act2 = instanceId('act2');
 const alice = investigatorId('alice');
 
 /**
- * One investigator in the revealed hall, an unrevealed cellar (L2) next to it,
- * a ghoul at the hall and one in the encounter deck; agendas A1 (threshold 3)
- * and A2, acts C1 (2 clues per investigator) and C2.
+ * Alice with 2 clues in the revealed hall (L1), an unrevealed cellar (L2)
+ * next to it and a set-aside crypt (L3); a ghoul (E1) at the hall and one in
+ * the encounter deck; agendas A1 (threshold 3) and A2, acts C1 (2 clues per
+ * investigator) and C2.
  */
 function startedState(): GameState {
-  return execute(sandboxContext, emptyState(), {
-    type: 'StartScenario',
-    scenarioId: 'triggers',
-    difficulty: 'standard',
-    seed: 1,
-    investigators: [
-      {
-        id: alice,
-        code: '00001',
-        name: 'Alice',
-        seat: 1,
-        locationId: hall,
-        health: { max: 8, damage: 0 },
-        sanity: { max: 6, horror: 0 },
-        clues: 2,
-        resources: 5,
-        doomOnPlayerCards: 0,
-        status: 'active',
-      },
-    ],
-    maps: { [main]: { name: 'Main' } },
-    cards: [
-      { id: agenda1, code: 'A1', zone: { kind: 'agendaDeck' }, faceUp: true },
-      { id: agenda2, code: 'A2', zone: { kind: 'agendaDeck' }, faceUp: true },
-      { id: act1, code: 'C1', zone: { kind: 'actDeck' }, faceUp: true },
-      { id: act2, code: 'C2', zone: { kind: 'actDeck' }, faceUp: true },
-      { id: hall, code: 'L1', zone: { kind: 'location', mapId: main }, faceUp: true },
-      { id: cellar, code: 'L2', zone: { kind: 'location', mapId: main } },
-      { id: ghoul, code: 'E1', zone: { kind: 'atLocation', locationId: hall }, faceUp: true },
-      { id: deckGhoul, code: 'E1', zone: { kind: 'encounterDeck' } },
-    ],
-    connections: [{ from: hall, to: cellar, oneWay: false }],
-  }).state;
+  return run(testContext, [
+    {
+      type: 'StartScenario',
+      scenarioId: 'triggers',
+      difficulty: 'standard',
+      seed: 1,
+      investigators: [makeInvestigator({ id: 'alice', locationId: hall, clues: 2 })],
+      maps: { [main]: { name: 'Main', connections: [edge('hall', 'cellar')] } },
+      cards: [
+        { id: agenda1, code: 'A1', zone: { kind: 'agendaDeck' }, faceUp: true },
+        { id: agenda2, code: 'A2', zone: { kind: 'agendaDeck' }, faceUp: true },
+        { id: act1, code: 'C1', zone: { kind: 'actDeck' }, faceUp: true },
+        { id: act2, code: 'C2', zone: { kind: 'actDeck' }, faceUp: true },
+        { id: hall, code: 'L1', zone: { kind: 'location', mapId: main }, faceUp: true },
+        { id: cellar, code: 'L2', zone: { kind: 'location', mapId: main } },
+        { id: crypt, code: 'L3', zone: { kind: 'setAside' } },
+        { id: ghoul, code: 'E1', zone: { kind: 'atLocation', locationId: hall }, faceUp: true },
+        { id: deckGhoul, code: 'E1', zone: { kind: 'encounterDeck' } },
+      ],
+    },
+  ]).state;
 }
 
-function withHooks(hooks: EngineContext['hooks'], effects?: EngineContext['effects']) {
-  return { ...sandboxContext, hooks, ...(effects ? { effects } : {}) };
+function withHooks(
+  hooks: EngineContext['hooks'],
+  effects?: EngineContext['effects'],
+): EngineContext {
+  return { ...testContext, hooks, ...(effects ? { effects } : {}) };
 }
 
 function rejectionOf(ctx: EngineContext, state: GameState, command: Command): Rejection {
-  try {
-    execute(ctx, state, command);
-  } catch (error) {
-    if (error instanceof CommandRejected) return error.rejection;
-    throw error;
-  }
-  throw new Error('command was not rejected');
+  return rejectionFrom(() => execute(ctx, state, command));
 }
 
 const placeDoomOnGhoul: Command = { type: 'PlaceDoom', cardId: ghoul, amount: 1 };
@@ -228,6 +220,33 @@ describe('trigger bus', () => {
     expect(state.cards[cellar]?.tokens.doom).toBe(1);
   });
 
+  it('lets a card effect connect a revealed location to a set-aside one', () => {
+    const ctx = withHooks(
+      {},
+      {
+        L2: {
+          onReveal: (_ctx, _state, event) => [
+            { type: 'AddConnection', mapId: main, from: event.cardId, to: crypt },
+          ],
+        },
+      },
+    );
+
+    const { events, state } = execute(ctx, startedState(), {
+      type: 'MoveInvestigator',
+      investigatorId: alice,
+      to: cellar,
+    });
+
+    expect(events.at(-1)).toEqual({
+      type: 'ConnectionChanged',
+      change: 'added',
+      mapId: main,
+      edge: { from: cellar, to: crypt, oneWay: false },
+    });
+    expect(checkInvariants(state)).toEqual([]);
+  });
+
   it('does not run onReveal when a card is turned face down', () => {
     const ctx = withHooks(
       {},
@@ -338,5 +357,76 @@ describe('onCardEnters', () => {
     ]);
 
     expect(commands).toEqual([]);
+  });
+});
+
+/**
+ * A hook program for the loop-guard tables: until the ghoul carries
+ * `chainLength` doom, every doom placement triggers `fanOut` more; when the
+ * ghoul carries `invalidAt` doom, the hook asks for an impossible command
+ * (revealing the already revealed hall) instead.
+ */
+interface Program {
+  chainLength: number;
+  fanOut: number;
+  invalidAt?: number;
+}
+
+function programContext({ chainLength, fanOut, invalidAt }: Program): EngineContext {
+  return withHooks({
+    afterDoomPlaced: (_ctx, state) => {
+      const doom = state.cards[ghoul]?.tokens.doom ?? 0;
+      if (doom === invalidAt) return [{ type: 'RevealLocation', locationId: hall }];
+      return doom < chainLength ? Array.from({ length: fanOut }, () => placeDoomOnGhoul) : [];
+    },
+  });
+}
+
+describe('trigger bus loop guard', () => {
+  it.each<{ name: string; program: Program; doom: number }>([
+    { name: 'no follow-ups', program: { chainLength: 0, fanOut: 1 }, doom: 1 },
+    { name: 'a short single-file chain', program: { chainLength: 5, fanOut: 1 }, doom: 5 },
+    {
+      name: 'a single-file chain of exactly the limit',
+      program: { chainLength: MAX_TRIGGERED_COMMANDS + 1, fanOut: 1 },
+      doom: MAX_TRIGGERED_COMMANDS + 1,
+    },
+    { name: 'a short chain fanning out', program: { chainLength: 4, fanOut: 2 }, doom: 7 },
+    {
+      name: 'an invalid step the chain never reaches',
+      program: { chainLength: 3, fanOut: 1, invalidAt: 10 },
+      doom: 3,
+    },
+  ])('finishes $name within the guard', ({ program, doom }) => {
+    const { state } = execute(programContext(program), startedState(), placeDoomOnGhoul);
+
+    expect(state.cards[ghoul]?.tokens.doom).toBe(doom);
+    expect(checkInvariants(state)).toEqual([]);
+  });
+
+  it.each<{ name: string; program: Program; code: Rejection['code'] }>([
+    {
+      name: 'a single-file chain one past the limit',
+      program: { chainLength: MAX_TRIGGERED_COMMANDS + 2, fanOut: 1 },
+      code: 'triggerLoop',
+    },
+    {
+      name: 'a chain fanning out beyond the limit',
+      program: { chainLength: 2 * MAX_TRIGGERED_COMMANDS, fanOut: 3 },
+      code: 'triggerLoop',
+    },
+    {
+      name: 'a chain with an invalid step halfway',
+      program: { chainLength: 10, fanOut: 1, invalidAt: 5 },
+      code: 'triggeredCommandRejected',
+    },
+  ])('rejects $name and leaves the state unchanged', ({ program, code }) => {
+    const state = startedState();
+    const snapshot = structuredClone(state);
+
+    const rejection = rejectionOf(programContext(program), state, placeDoomOnGhoul);
+
+    expect(rejection.code).toBe(code);
+    expect(state).toEqual(snapshot);
   });
 });
