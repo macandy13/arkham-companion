@@ -16,6 +16,10 @@ export const resources = {
         title: 'New game',
         placeholder: 'The game setup wizard will appear here.',
         createEmpty: 'Create empty game',
+        loading: 'Loading investigators…',
+        loadFailed: 'Card data could not be loaded – check your connection.',
+        retry: 'Try again',
+        noInvestigators: 'No investigators are available.',
       },
       picker: {
         title: 'Choose investigators',
@@ -85,6 +89,10 @@ export const resources = {
         title: 'Neues Spiel',
         placeholder: 'Hier erscheint der Assistent zum Einrichten eines Spiels.',
         createEmpty: 'Leeres Spiel erstellen',
+        loading: 'Ermittler werden geladen…',
+        loadFailed: 'Kartendaten konnten nicht geladen werden – prüfe deine Verbindung.',
+        retry: 'Erneut versuchen',
+        noInvestigators: 'Keine Ermittler verfügbar.',
       },
       picker: {
         title: 'Ermittler wählen',

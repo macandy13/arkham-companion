@@ -8,8 +8,10 @@ import { initI18n } from './i18n';
 import { IndexedDbStore } from './storage/IndexedDbStore';
 import { createAppStore } from './state/appStore';
 
+const neverLoads = () => new Promise<never>(() => {});
+
 function renderAt(path: string) {
-  const store = createAppStore(new IndexedDbStore('app-routes-test'));
+  const store = createAppStore(new IndexedDbStore('app-routes-test'), neverLoads);
   render(
     <MemoryRouter initialEntries={[path]}>
       <AppRoutes store={store} />
