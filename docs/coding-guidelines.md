@@ -54,6 +54,7 @@ The DOM is a clearly structured document tree – good structure _is_ accessibil
 - **Selectors follow structure.** Style by element and landmark/role within a component scope (`#shell > header`, `[aria-current]`, `button:disabled`) rather than inventing presentational classes. Keep specificity low and nesting shallow.
 - **Structure files by concern:** `tokens.css` (values), `base.css` (element defaults) when it grows, then one stylesheet per component/screen next to its component.
 - State lives in attributes the markup already needs (`disabled`, `aria-expanded`, `aria-current`), not in extra classes.
+- **Enforced by Stylelint** (`stylelint.config.js`, part of `pnpm lint`): outside `tokens.css`, colours, spacing, font, border and shadow properties must use `var(--…)` or a keyword (`0`, `auto`, `none`, …); hex colours, colour functions and `!important` are rejected; nesting and selector depth are capped. Don't silence a rule with a disable comment – add a token instead.
 
 ## 6. Helper library
 
