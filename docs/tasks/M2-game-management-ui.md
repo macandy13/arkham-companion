@@ -122,7 +122,9 @@ Follow-ups: events are only validated as objects with a `type` and then replayed
 
 **Benefit:** CI protects the core game lifecycle against regressions.
 
-- [ ] Playwright: new game with 2 investigators → reload → resume → delete
-- [ ] Runs in CI with a fixture catalog (no network)
+- [x] Playwright: new game with 2 investigators → reload → resume → delete
+- [x] Runs in CI with a fixture catalog (no network)
 
 Done when: on a tablet you can pick investigators, start the sandbox scenario, close the tab and resume it.
+
+**Done:** `apps/web/e2e/fixtures.ts` extends Playwright's `test` with an auto-used network guard: the ArkhamDB packs/cards requests are answered from fake fixtures, any other non-local request is aborted and recorded, and the test fails if one occurred. `lifecycle.spec.ts` covers quick game with Alder and Birch -> reload -> resume from home -> delete with confirm (and cancel keeps the game); the export -> import, wizard-persistence and smoke tests in `smoke.spec.ts` share the fixtures. All run in the tablet-landscape project with role/label selectors and no sleeps. No app bugs found. M2 is complete.

@@ -1,52 +1,7 @@
-import { expect, test, type Page } from '@playwright/test';
-
-const fixturePacks = [{ code: 'pack1', name: 'First Pack', position: 1, cycle_position: 1 }];
-
-function fixtureInvestigator(code: string, name: string) {
-  return {
-    code,
-    name,
-    type_code: 'investigator',
-    faction_code: 'seeker',
-    health: 7,
-    sanity: 7,
-    skill_willpower: 3,
-    skill_intellect: 3,
-    skill_combat: 3,
-    skill_agility: 3,
-    pack_code: 'pack1',
-  };
-}
-
-const fixtureCards = [fixtureInvestigator('a1', 'Alder'), fixtureInvestigator('b1', 'Birch')];
-
-// The catalog comes from ArkhamDB; tests answer those requests with a fixture instead of using the network.
-test.beforeEach(async ({ page }) => {
-  for (const [path, body] of [
-    ['packs', fixturePacks],
-    ['cards', fixtureCards],
-  ] as const) {
-    await page.route(`https://arkhamdb.com/api/public/${path}/`, (route) =>
-      route.fulfill({ json: body, headers: { 'Access-Control-Allow-Origin': '*' } }),
-    );
-  }
-});
-
-/** Runs the quick-game wizard with Alder and Birch on the sandbox scenario and lands on the game route. */
-async function startQuickGame(page: Page) {
-  await page.getByRole('link', { name: 'Quick game' }).first().click();
-  await page.getByRole('button', { name: 'Next' }).click();
-  for (const name of ['Alder', 'Birch']) {
-    await page.getByRole('list', { name: 'Investigators' }).getByRole('button', { name }).click();
-    await page.getByRole('button', { name: 'Select' }).click();
-  }
-  await page.getByRole('button', { name: 'Next' }).click();
-  await page.getByRole('button', { name: 'Start game' }).click();
-  await expect(page).toHaveURL(/#\/game\/.+/);
-}
+import { expect, startQuickGame, test } from './fixtures';
 
 // Smoke test: the production build boots, hash routes resolve, and a new game survives a reload.
-// Fuller flows arrive with M2.8 and M3.9.
+// The full game lifecycle is in lifecycle.spec.ts.
 test('app boots and a new game survives reload', async ({ page }) => {
   await page.goto('/');
   await expect(page).toHaveTitle('Arkham Companion');
