@@ -1,3 +1,4 @@
+import { splitTrimmed } from '@arkham/util';
 import { z } from 'zod';
 
 /** Normalised card definition (subset of the ArkhamDB fields the app needs). */
@@ -82,10 +83,7 @@ const RawCardSchema = z.object({
 /** Convert one raw ArkhamDB card into a `CardDef`. Throws a ZodError on malformed input. */
 export function normaliseCard(raw: unknown): CardDef {
   const r = RawCardSchema.parse(raw);
-  const traits = (r.traits ?? '')
-    .split('.')
-    .map((t) => t.trim())
-    .filter(Boolean);
+  const traits = splitTrimmed(r.traits ?? '', '.');
   return CardDefSchema.parse({
     code: r.code,
     name: r.name,

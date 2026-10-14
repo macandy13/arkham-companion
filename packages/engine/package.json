@@ -10,5 +10,8 @@
   },
   "devDependencies": {
     "fast-check": "^4.10.2"
+  },
+  "dependencies": {
+    "@arkham/util": "workspace:*"
   }
 }

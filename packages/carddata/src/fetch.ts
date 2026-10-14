@@ -2,6 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
+import { splitTrimmed } from '@arkham/util';
 import { normalisePack } from './schema';
 
 export type Lang = 'en' | 'de';
@@ -35,7 +36,7 @@ async function main(): Promise<void> {
     options: { lang: { type: 'string', default: 'en' } },
     allowPositionals: true,
   });
-  const langs = values.lang.split(',').map((l) => {
+  const langs = splitTrimmed(values.lang, ',').map((l) => {
     if (l !== 'en' && l !== 'de') throw new Error(`Unsupported language: ${l}`);
     return l;
   });
