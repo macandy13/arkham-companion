@@ -71,7 +71,7 @@ function withHooks(hooks: EngineContext['hooks'], effects?: EngineContext['effec
   return { ...sandboxContext, hooks, ...(effects ? { effects } : {}) };
 }
 
-function rejectionOf(state: GameState, command: Command, ctx: EngineContext): Rejection {
+function rejectionOf(ctx: EngineContext, state: GameState, command: Command): Rejection {
   try {
     execute(ctx, state, command);
   } catch (error) {
@@ -264,7 +264,7 @@ describe('trigger bus failures', () => {
   it('rejects a chain that keeps re-triggering itself', () => {
     const ctx = withHooks({ afterDoomPlaced: () => [placeDoomOnGhoul] });
 
-    const rejection = rejectionOf(startedState(), placeDoomOnGhoul, ctx);
+    const rejection = rejectionOf(ctx, startedState(), placeDoomOnGhoul);
 
     expect(rejection).toEqual({ code: 'triggerLoop', limit: MAX_TRIGGERED_COMMANDS });
   });
@@ -285,7 +285,7 @@ describe('trigger bus failures', () => {
       afterDoomPlaced: () => [{ type: 'RevealLocation', locationId: hall }],
     });
 
-    const rejection = rejectionOf(startedState(), placeDoomOnGhoul, ctx);
+    const rejection = rejectionOf(ctx, startedState(), placeDoomOnGhoul);
 
     expect(rejection).toEqual({
       code: 'triggeredCommandRejected',
@@ -300,7 +300,7 @@ describe('trigger bus failures', () => {
       afterDoomPlaced: () => [{ type: 'RevealLocation', locationId: hall }],
     });
 
-    const rejection = rejectionOf(startedState(), advanceAct, ctx);
+    const rejection = rejectionOf(ctx, startedState(), advanceAct);
 
     expect(rejection).toMatchObject({
       code: 'triggeredCommandRejected',
