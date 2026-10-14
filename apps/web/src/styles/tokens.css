@@ -1,0 +1,34 @@
+/*
+ * Design tokens: the only place raw colours, sizes and spacing values live.
+ * Everything else references these custom properties, so a theme change or a
+ * spacing tweak is a one-line edit. See docs/coding-guidelines.md § CSS.
+ */
+:root {
+  /* Spacing scale – use these for margin, padding and gap. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+  --space-5: 2rem;
+
+  /* Typography */
+  --font-family: system-ui, sans-serif;
+  --font-size-small: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-large: 1.25rem;
+
+  /* Colours – named by role, not by hue. */
+  --color-text: #1b1b1b;
+  --color-background: #fff;
+  --color-border: #8884;
+
+  /* Borders */
+  --border-width: 1px;
+  --border: var(--border-width) solid var(--color-border);
+  --radius: 0.25rem;
+
+  /* Layout */
+  --sidebar-width: 14rem;
+  --panel-width: 16rem;
+  --investigator-bar-height: 8rem;
+}
