@@ -101,12 +101,12 @@ describe('DrawEncounter', () => {
     expect(order(after, { kind: 'encounterDeck' })).toEqual(['d1']);
   });
 
-  it('places an enemy unengaged at the drawing investigator`s location', () => {
+  it('spawns an enemy at the drawing investigator`s location and engages them', () => {
     const state = started({ deck: ['FOE'] });
 
     const { state: after } = execute(ctx, state, draw);
 
-    expect(after.cards[instanceId('d0')]?.zone).toEqual({ kind: 'atLocation', locationId: hall });
+    expect(after.cards[instanceId('d0')]?.zone).toEqual({ kind: 'engaged', investigatorId: alice });
   });
 
   it('puts a treachery that stays in play into the threat area', () => {

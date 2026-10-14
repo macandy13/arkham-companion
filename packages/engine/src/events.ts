@@ -33,7 +33,11 @@ export type Event =
   | ActAdvanced
   | CurrentCardChanged
   | ScenarioEnded
-  | EncounterCardDrawn;
+  | EncounterCardDrawn
+  | EnemyEngaged
+  | EnemyDisengaged
+  | EnemyDefeated
+  | ExhaustChanged;
 
 /** A scenario was set up; replaces the whole state. Produced by `StartScenario`. */
 export interface ScenarioStarted {
@@ -208,4 +212,42 @@ export interface EncounterCardDrawn {
   cardId: InstanceId;
   peril: boolean;
   surge: boolean;
+}
+
+/**
+ * Enemy `enemyId` is now engaged with the investigator (zone `engaged`),
+ * from an unengaged position or another investigator. Drops decisions about
+ * the enemy (the pending engagement question is answered). Produced by
+ * `SpawnEnemy`, `DrawEncounter`, `EngageEnemy`, `ReadyEnemy`, `MoveHunters`
+ * and `StartScenario` (enemies starting at a location with investigators).
+ */
+export interface EnemyEngaged {
+  type: 'EnemyEngaged';
+  enemyId: InstanceId;
+  investigatorId: InvestigatorId;
+}
+
+/** The enemy is no longer engaged and stays at `locationId`. Produced by `DisengageEnemy`. */
+export interface EnemyDisengaged {
+  type: 'EnemyDisengaged';
+  enemyId: InstanceId;
+  locationId: InstanceId;
+}
+
+/**
+ * The enemy was defeated and moves to `to` (victory display or encounter
+ * discard). The reducer also removes its tokens and exhaustion and drops
+ * decisions about it. Produced by `DefeatEnemy` and `DamageEnemy`.
+ */
+export interface EnemyDefeated {
+  type: 'EnemyDefeated';
+  enemyId: InstanceId;
+  to: Zone;
+}
+
+/** A card was exhausted or readied. Produced by `ExhaustEnemy` and `ReadyEnemy`. */
+export interface ExhaustChanged {
+  type: 'ExhaustChanged';
+  cardId: InstanceId;
+  exhausted: boolean;
 }

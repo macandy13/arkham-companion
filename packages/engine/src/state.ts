@@ -115,7 +115,7 @@ export type ChaosToken =
 export interface Decision {
   /** Unique among pending decisions; derived from kind and subject so a repeated check does not ask twice. */
   id: DecisionId;
-  /** Machine-readable kind, e.g. 'hunterTie' or 'advanceAgenda'. Interpreted by the rule module that created it. */
+  /** Machine-readable kind, e.g. 'advanceAgenda', 'chooseInvestigator' (prey tie, who an enemy engages) or 'chooseLocation' (hunter destination tie). Interpreted by the rule module that created it. */
   kind: string;
   /** The card the decision is about, if any; the decision is dropped when this card advances. */
   subject?: InstanceId;
