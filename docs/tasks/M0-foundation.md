@@ -3,12 +3,22 @@
 Goal: an empty but working monorepo with CI, card import, the core data model and storage. No game logic yet.
 Do the tasks in order. Each task = one Claude Code session = one PR.
 
+**Why this milestone**
+
+- **Problem:** Every later milestone needs a home for the code, an automatic safety net, real card data and the core data model. None of that is visible to players, but these are the decisions that are most expensive to change later (event log shape, IDs, storage interface).
+- **What the app gains:** A deployed, installable app that can create a game and keep it across a refresh; every PR is typechecked, linted and tested automatically; card data and the engine's state model exist and are tested.
+- **Why at this point:** It comes first because everything else builds on it; doing it later would mean rewriting code written without these guardrails.
+
 Model hint: **S** = Sonnet is enough, **O** = use Opus (design-heavy).
 To start a task from the phone: Code tab → repo `macandy13/arkham-companion` → prompt: `Do task M0.x from docs/tasks/M0-foundation.md`.
 
 ---
 
 ## M0.1 Monorepo skeleton (S)
+
+**Why:** Splitting the code into packages (engine, card data, scenarios, web app) makes the boundaries from architecture §2 enforced by the dependency graph instead of by discipline – the engine simply cannot import React.
+
+**Benefit:** Shared commands (`test`, `typecheck`, `lint`) give every later task the same fast feedback loop and a known-good starting point.
 
 - [x] pnpm workspaces: `packages/engine`, `packages/carddata`, `packages/scenarios`, `apps/web`
 - [x] Shared `tsconfig.base.json` (strict), ESLint + Prettier
@@ -23,6 +33,10 @@ Done: pnpm workspace with `@arkham/{engine,carddata,scenarios,web}`, strict `tsc
 
 ## M0.2 CI (S)
 
+**Why:** Tasks are done in Claude Code sessions, often started from a phone; CI is the only reviewer that actually runs the code before a merge.
+
+**Benefit:** Broken PRs show up red before they reach `main`, and every merge is automatically playable at a public URL on the tablet.
+
 - [x] GitHub Actions workflow on push/PR: install (pnpm cache), typecheck, lint, test
 - [x] Deploy `apps/web` to GitHub Pages on push to `main` (base path `/arkham-companion/`)
 
@@ -31,6 +45,10 @@ Done when: workflow is green on the PR.
 **Done:** `.github/workflows/ci.yml` and `deploy.yml`. Follow-up: enable Pages (source: GitHub Actions) in repo settings.
 
 ## M0.3 Card data import (S)
+
+**Why:** Card stats (doom, clues, health, keywords) come from ArkhamDB instead of being typed by hand. Normalising them once into our own `CardDef` shields the rest of the app from ArkhamDB's format quirks.
+
+**Benefit:** One typed card model everywhere, no copyrighted card text in git, and tests that run offline.
 
 Ref: architecture §9.
 
@@ -46,6 +64,10 @@ Done: `packages/carddata` has the `CardDef` zod schema (`schema.ts`, fields mapp
 
 ## M0.4 Core domain types + RNG (O)
 
+**Why:** This is the heart of the architecture (§2 principles 2–3): if state only changes through events and all randomness comes from a seeded RNG, then undo, refresh recovery, export, reproducible bug reports and later multi-device sync all fall out of the same mechanism.
+
+**Benefit:** A small, deterministic, property-tested core that every M1 rule module extends instead of reinventing.
+
 Ref: architecture §5, §6.
 
 - [x] Types: `InstanceId`, `Zone`, `CardInstance`, `Investigator`, `Board`, `GameState`, `Decision`, `CampaignLog` (stub)
@@ -60,6 +82,10 @@ Done: `packages/engine/src` has branded IDs (`ids.ts`), `Zone` + `zoneKey` (`zon
 
 ## M0.5 GameStore on IndexedDB (S)
 
+**Why:** A game at the table must survive a refresh, a sleeping tablet or a crashed tab. localStorage is too small and synchronous; IndexedDB is not. Hiding it behind the `GameStore` interface keeps the cloud backend (M8) a drop-in second implementation.
+
+**Benefit:** Auto-save with no save button, fast restore via snapshot + replay, and no storage code leaking into the UI.
+
 Ref: architecture §10.
 
 - [x] `GameStore` interface in `packages/engine` (types only): `createGame`, `appendEvents`, `loadGame` (snapshot + replay), `listGames`, `saveSnapshot`
@@ -70,6 +96,10 @@ Ref: architecture §10.
 Done: `packages/engine/src/store.ts` defines `GameStore` (+ `StoredEvent`, `Snapshot`, `GameSummary`, `STATE_VERSION`); `appendEvents` takes an optional `expectedSeq` for optimistic concurrency. `apps/web/src/storage/IndexedDbStore.ts` implements it with Dexie (tables `campaigns`, `games`, `events` keyed `[gameId+seq]`, `snapshots`, `cards`), stamps `seq`/`timestamp`, auto-snapshots on load when ≥50 events lie past the last snapshot, and ignores snapshots with another `stateVersion`. Extras on the class: `loadEvents`, `putCards`/`getCards`. Follow-ups: state migrations, JSON export/import, `BroadcastChannel` (§10); nothing writes to `campaigns` yet.
 
 ## M0.6 Empty app shell (S)
+
+**Why:** Prove the whole chain UI → store → engine → IndexedDB works end to end before building real screens. PWA installability and translatable strings are cheap to set up now and painful to retrofit.
+
+**Benefit:** The app can be installed on the tablet's home screen, games persist across reloads, and every UI string is translatable from day one.
 
 Ref: architecture §11.
 

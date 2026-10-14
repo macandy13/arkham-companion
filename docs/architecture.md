@@ -1,8 +1,17 @@
 # Arkham Companion – System and Application Architecture
 
-Draft v0.2 · 2026-10-13 · Living version: https://claude.ai/code/artifact/12ad5370-637f-4943-a562-74dbc1768fec
+Draft v0.3 · 2026-10-14 · Living version: https://claude.ai/code/artifact/12ad5370-637f-4943-a562-74dbc1768fec
+
+## At a glance
+
+- **The problem:** in Arkham Horror LCG the players also run the "game master" side: building and shuffling the encounter deck, counting doom, laying out and connecting locations, moving hunter enemies, remembering forced effects and keeping the campaign log. This bookkeeping is slow and error-prone, and mistakes change the outcome of a scenario.
+- **The app:** a tablet companion that takes over exactly this scenario side, while players keep their own decks, skill tests and (optionally) the chaos bag in hand – the tactile, fun part stays physical.
+- **Key bets:** a pure, event-sourced rules engine (gives undo, refresh safety, export and later sync from one mechanism); scenarios as data with small code hooks (new content is cheap); card data from ArkhamDB instead of hand-typed (accurate, bilingual, nothing copyrighted in git); offline-first PWA with no backend (free hosting, works at any table).
+- **How it gets built:** in milestones M0–M8 (§14), each a sequence of small tasks done in one Claude Code session per task. Every section below starts with a short *Why* so a reviewer can judge a decision without reading the details.
 
 ## 1. Goal and scope
+
+*Why:* a tight scope keeps v1 shippable. The scenario side is where the bookkeeping pain is; player cards would mean modelling thousands of individual card effects for little gain at the table.
 
 The app takes over the **scenario side** of Arkham Horror LCG: setup, agenda/act/doom, encounter deck, map with locations and enemies, threat areas and special mechanics. Players keep their own decks, skill tests and (optionally) the chaos bag in hand.
 
@@ -25,15 +34,19 @@ The app takes over the **scenario side** of Arkham Horror LCG: setup, agenda/act
 
 ## 2. Guiding principles
 
-1. **Assistant, not referee.** The app suggests the next step; players confirm. Every state can be corrected manually.
-2. **Pure, deterministic engine.** Game logic is a pure reducer with no UI or I/O dependency. Randomness only via a seeded RNG in the state.
-3. **Event sourcing.** Every change is an event in the log. This gives undo, refresh recovery, export, reproducible bugs – and later, sync.
-4. **Data separate from rules.** Card data comes from ArkhamDB; rules and scenario flow come from our own scenario definitions.
-5. **Offline-first.** After the first load everything runs without network – important at the table.
-6. **Generic before specific.** What several scenarios need (e.g. taking the topmost copy of X from the discard pile) becomes an engine primitive; only true one-offs become scenario code.
-7. **Start simple, design for growth.** v1 automates little, but every extension point (card effects, sync, auto-layout) has a seam from day one.
+*Why:* these rules decide most design questions up front, so individual tasks don't re-argue them. Each one names the benefit it buys.
+
+1. **Assistant, not referee.** The app suggests the next step; players confirm. Every state can be corrected manually. *Benefit:* a rules bug or a house rule never blocks a game night.
+2. **Pure, deterministic engine.** Game logic is a pure reducer with no UI or I/O dependency. Randomness only via a seeded RNG in the state. *Benefit:* rules are fast to test exhaustively, and the same inputs always give the same game.
+3. **Event sourcing.** Every change is an event in the log. This gives undo, refresh recovery, export, reproducible bugs – and later, sync. *Benefit:* five features from one mechanism instead of five separate implementations.
+4. **Data separate from rules.** Card data comes from ArkhamDB; rules and scenario flow come from our own scenario definitions. *Benefit:* card errata and translations arrive without code changes; nothing copyrighted is committed.
+5. **Offline-first.** After the first load everything runs without network – important at the table. *Benefit:* bad Wi-Fi never interrupts a game.
+6. **Generic before specific.** What several scenarios need (e.g. taking the topmost copy of X from the discard pile) becomes an engine primitive; only true one-offs become scenario code. *Benefit:* each new scenario gets cheaper to add.
+7. **Start simple, design for growth.** v1 automates little, but every extension point (card effects, sync, auto-layout) has a seam from day one. *Benefit:* something playable early, without rewrites later.
 
 ## 3. System context
+
+*Why no backend in v1:* a static site is free to host, needs no accounts and works offline. The one thing a backend adds – sharing a game across devices – is planned for M8 behind an interface that already exists.
 
 There is **no backend of our own in v1**. The app is a static single-page app (PWA) that runs in the browser.
 
@@ -63,6 +76,8 @@ flowchart LR
 The ArkhamDB public API sends `Access-Control-Allow-Origin: *`, so it can be queried directly from the browser. ArkhamDB asks clients to respect HTTP caching (max-age, last-modified), which fits our offline approach.
 
 ## 4. Technology stack
+
+*Why these choices:* mainstream, well-documented tools (good for both the human maintainer and Claude Code sessions), all running in the browser with no server. The rationale per choice is in the table.
 
 | Area | Choice | Rationale |
 | --- | --- | --- |
@@ -96,6 +111,8 @@ arkham-companion/
 ```
 
 ## 5. Domain model
+
+*Why:* modelling every physical card as one instance with exactly one zone means "where is this card?" always has a single answer. Every rule, every UI panel and every invariant test relies on that; moving a card anywhere is the same operation.
 
 Core idea: **every physical card on the table is a `CardInstance`** with a unique ID, card code and current zone. Multiple copies (e.g. 4× *Fire!*) are separate instances.
 
@@ -153,12 +170,16 @@ Per-investigator values (clues on locations, enemy health, act thresholds) are c
 
 **Map model**
 
+*Why an explicit graph:* movement and hunter pathing depend on connections, which change during play and can be one-way or span several maps – none of that can be derived from where tiles sit on screen.
+
 - **Connections are an explicit graph**, not derived from positions. ArkhamDB does not expose connection symbols in structured form, so they come from the scenario data pipeline below; the engine builds edges from the revealed/unrevealed state. Card effects can add or remove edges at runtime (`addConnection`, `removeConnection`), including one-way edges.
 - **Multiple maps:** a scenario can define several maps (parallel areas, a second board added mid-scenario). The UI shows them as tabs or side by side.
 - **Layout:** the scenario book layout is stored as slots (often a grid, sometimes free positions). Optionally, auto-layout arranges the graph with elkjs. Players can always drag locations manually.
 - **Randomised locations:** the setup DSL has `randomLocations(pool, slots)` using the seeded RNG, so it stays reproducible.
 
 **Where scenario data comes from**
+
+*Why a layered pipeline:* no single source has everything. Taking each field from the best available source, with a manual override on top, avoids typing data by hand while still allowing every mistake to be fixed.
 
 Per field, the first source that has it wins; every value can be overridden by hand.
 
@@ -168,6 +189,8 @@ Per field, the first source that has it wins; every value can be overridden by h
 4. **Manual:** the board's edit mode lets you add or remove connections, fix symbols and move slots. Edits are saved as a scenario override file, which can be exported and committed to the repo.
 
 ## 6. Engine: commands, events, decisions
+
+*Why commands and events are separate:* a command is a request that may be rejected and may need card data or randomness; an event is a plain fact that is always applied the same way. Keeping all logic in command handling makes replay deterministic and cheap. *Why decisions:* where the rules give players a choice, the engine asks instead of guessing (principle 1), through one mechanism the UI shows as one dialog.
 
 **Flow:** the UI sends a `Command` → the engine validates it against the current state → produces a list of `Event`s → events are applied and persisted.
 
@@ -194,6 +217,8 @@ Per field, the first source that has it wins; every value can be overridden by h
 **Phase assistant:** guides through mythos → investigation → enemy → upkeep, automating the mythos phase, offering quick actions in investigation, computing hunter movement and due attacks in the enemy phase.
 
 ## 7. Scenario plugins and setup changes
+
+*Why mostly declarative:* most of a scenario is setup data (which cards, where, how many). Data is easy to validate, review and generate from imports; code is reserved for the few truly special rules. *Benefit:* new scenarios are cheap, and the same setup steps handle mid-scenario changes.
 
 A scenario is **mostly declarative** (data) with **TypeScript hooks** for special mechanics.
 
@@ -230,12 +255,16 @@ interface ScenarioDefinition {
 
 ## 8. Campaign mode
 
+*Why:* the Core Set is a campaign – outcomes of one scenario change the next one's setup and the chaos bag. The paper campaign log is easy to lose or fill in wrongly; the app keeps it and applies it automatically.
+
 - **Campaign log:** investigators, trauma, XP, killed/insane, story records, chaos bag.
 - **Chaos bag:** standalone = scenario default per difficulty; campaign = from the log, modified by resolutions. Scenarios building on earlier ones read the log in `campaignSetup`.
 - **Resolutions:** declarative steps (`record`, `addChaosToken`, `removeChaosToken`, `awardXp`, `addTrauma`), confirmed by players.
 - Deck upgrades stay with the players.
 
 ## 9. Card data from ArkhamDB
+
+*Why ArkhamDB:* it is the community's reference database, has a free public API with CORS, includes encounter cards and has a German edition. Fetching at build/run time instead of committing keeps copyrighted text and images out of the repository.
 
 - `GET /api/public/packs/`, `GET /api/public/cards/{pack_code}.json?encounter=1`, `GET /api/public/card/{code}`; images: `https://arkhamdb.com` + `imagesrc`/`backimagesrc`.
 - A script in `packages/carddata` fetches and normalises into `CardDef`. **Fetched JSON is generated in CI/build, not committed** (repo may become public).
@@ -245,6 +274,8 @@ interface ScenarioDefinition {
 
 ## 10. Persistence and recovery
 
+*Why:* a tablet at the table gets refreshed, goes to sleep and runs out of battery. Writing every command before the screen updates means nothing is ever lost; the event log doubles as backup format and as the basis for later sync.
+
 IndexedDB tables: `campaigns`, `games`, `events`, `snapshots` (every ~50 events), `cards`.
 
 - Refresh = last snapshot + replay. Every command written before the UI updates.
@@ -253,6 +284,8 @@ IndexedDB tables: `campaigns`, `games`, `events`, `snapshots` (every ~50 events)
 **Later: cloud and multi-device sync** – `GameStore` interface from day one (`IndexedDbStore` now, `CloudStore` later); sync via the append-only event log with optimistic concurrency; login; backend TBD (Supabase / Firebase / Cloudflare). v1 prep: UUID `gameId`, timestamped events, no device-bound IDs.
 
 ## 11. UI concept
+
+*Why tablet landscape first:* the typical setup is one shared device in the middle of the table, replacing the physical scenario area. Large touch targets and drag-and-drop matter more than dense information.
 
 Tablet landscape first. Header (round, phase, agenda/act, undo), map centre (pan/zoom, map tabs), investigator bar (steppers), encounter panel, decision dialog, card zoom, event log, campaign screen.
 
@@ -273,6 +306,8 @@ Tablet landscape first. Header (round, phase, agenda/act, undo), map centre (pan
 
 ## 12. Quality assurance
 
+*Why this mix:* a rules bug discovered at the table costs a game night. The deterministic engine makes property tests and golden replays (full recorded games) cheap, and they catch whole classes of bugs that example tests miss.
+
 Engine unit tests, setup tests per scenario, property tests (no negative tokens, one zone per card, replay determinism), golden replays, Playwright E2E for refresh, GitHub Actions CI.
 
 ## 13. Repository and publishing
@@ -281,23 +316,44 @@ Private GitHub repo, possibly public later. Before going public: no card text/im
 
 ## 14. Roadmap
 
-Each milestone has a task plan under `docs/tasks/`, one task per Claude Code session.
+Each milestone has a task plan under `docs/tasks/`, one task per Claude Code session. Every milestone file opens with *Why this milestone* (problem, gain, timing) and every task has a *Why* and a *Benefit* line.
 
-| Milestone | Content |
-| --- | --- |
-| M0 Foundation | Monorepo, CI, card import, domain model, `GameStore`, app shell |
-| M1 Generic engine | Agenda/act/doom, encounter deck, map graph, enemies, investigators, threat area, undo, phase assistant; sandbox scenario; no UI |
-| M2 Game management UI | Investigator catalog, home screen with saved games, new-game wizard with investigator picker, resume, export/import |
-| M3 Play screen UI | Header, map with pan/zoom, investigator bar, encounter panel, decision dialog, card zoom, event log; sandbox scenario playable on a tablet |
-| M4 Scenario data + first scenario | ArkhamCards layout import, connection symbol extraction, manual connection editor; *Spreading Flames* complete |
-| M5 Core campaign | Scenarios 2 and 3, campaign log, chaos bag carry-over, resolutions, campaign screen |
-| M6 Comfort | Chaos bag module, EN/DE switch, auto-layout, offline preload, polish |
-| M7 Expansion | More Chapter Two products; more automated card effects |
-| M8 Cloud and sync | Login, games in the cloud, sync across devices at the table |
+**Ordering logic:** foundations → rules → screens → real content → polish → cloud. Rules come before screens because the screens only display engine state and send commands. Screens are built against a fake sandbox scenario so UI problems and real-data problems never have to be debugged at the same time. Comfort features and the cloud come last because none of them blocks playing.
+
+```mermaid
+flowchart LR
+  M0[M0 Foundation] --> M1[M1 Engine] --> M2[M2 Game management] --> M3[M3 Play screen] --> M4[M4 First scenario] --> M5[M5 Core campaign]
+  M5 --> M6[M6 Comfort]
+  M5 --> M7[M7 Expansion]
+  M5 --> M8[M8 Cloud and sync]
+```
+
+| Milestone | Content | Why at this point | What players get at the end |
+| --- | --- | --- | --- |
+| M0 Foundation | Monorepo, CI, card import, domain model, `GameStore`, app shell | Everything builds on it; these are the expensive decisions to change later | An installable app that keeps a (still empty) game across refreshes |
+| M1 Generic engine | Agenda/act/doom, encounter deck, map graph, enemies, investigators, threat area, undo, phase assistant; sandbox scenario; no UI | The UI is defined by the engine's commands and state | Nothing visible yet – a rules core that plays a whole fake scenario in tests |
+| M2 Game management UI | Investigator catalog, home screen with saved games, new-game wizard with investigator picker, resume, export/import | Needs only engine setup, and gives M3 real saved games to work with | Pick investigators, start, leave and resume games on a tablet; back them up |
+| M3 Play screen UI | Header, map with pan/zoom, investigator bar, encounter panel, decision dialog, card zoom, event log; sandbox scenario playable on a tablet | Built on the proven engine with fake data, so only UI issues remain | A full game loop on a tablet (with the sandbox scenario) |
+| M4 Scenario data + first scenario | ArkhamCards layout import, connection symbol extraction, manual connection editor; *Spreading Flames* complete | Engine and UI are proven; now only data and scenario rules can break | The first real scenario, playable at the table; a recipe for every later one |
+| M5 Core campaign | Scenarios 2 and 3, campaign log, chaos bag carry-over, resolutions, campaign screen | Reuses the M4 recipe | The complete Core Set campaign, no paper log needed |
+| M6 Comfort | Chaos bag module, EN/DE switch, auto-layout, offline preload, polish | Nice to have, nothing blocks play | German cards, reliable offline play, tidier maps, smoother app |
+| M7 Expansion | More Chapter Two products; more automated card effects | Driven by new releases and playtest findings | New content soon after release, less manual work per round |
+| M8 Cloud and sync | Login, games in the cloud, sync across devices at the table | Adds cost and operations; one tablet covers the core use case | Games backed up online, several devices showing the same live game |
 
 ## 15. Decisions and open questions
 
-**Decided:** one device in v1, sync in M8; investigator tracking (health, horror, clues, resources); encounter automation starts with display + keywords; card language configurable; campaign mode in v1; React; GitHub, possibly public; connection data from ArkhamDB → ArkhamCards layouts + image extraction → manual editor; MIT licence; game management (M2) and play screen (M3) before the first real scenario.
+**Decided** (with the main reason)
+
+- One device in v1, sync in M8 – a backend adds cost and accounts; one shared tablet covers the main use case.
+- Investigator tracking (health, horror, clues, resources) – removes most physical tokens, and enemy rules (prey) need these values.
+- Encounter automation starts with display + keywords – keywords are generic and cover most rules; individual card scripts are added where playtests show they pay off.
+- Card language configurable – German-speaking groups want screen text that matches their cards; ArkhamDB offers both.
+- Campaign mode in v1 – the Core Set is a campaign; standalone-only would miss its point.
+- React – existing experience and the largest ecosystem.
+- GitHub, possibly public – free CI and hosting; nothing copyrighted is committed, so going public stays possible.
+- Connection data from ArkhamDB → ArkhamCards layouts + image extraction → manual editor – no single source has connections, and hand-typing does not scale.
+- MIT licence – simple and permissive for a fan project.
+- Game management (M2) and play screen (M3) before the first real scenario – UI problems and real-data problems are then never debugged at the same time.
 
 **Open**
 
