@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { engageEvents } from './engagement';
+import { replay } from './reducer';
 import {
   CommandRejected,
   cardDbFrom,
@@ -64,6 +66,13 @@ const defs: CardStats[] = [
     typeCode: 'enemy',
     traits: [],
     keywords: [{ name: 'spawn', detail: 'Fake Cellar' }],
+  },
+  {
+    code: 'ODD',
+    name: 'Fake Oddity',
+    typeCode: 'enemy',
+    traits: [],
+    keywords: [{ name: 'spawn', detail: 'the location with the most clues' }],
   },
   { code: 'REL', name: 'Fake Relic', typeCode: 'asset', traits: [] },
 ];
@@ -176,7 +185,7 @@ describe('SpawnEnemy', () => {
     expect(zoneOf(after, 'e')).toEqual(at(cellar));
   });
 
-  it('falls back to the drawer when the spawn keyword matches several locations', () => {
+  it('asks the players when the spawn keyword matches several locations', () => {
     const state = started({
       cards: [
         card('e', 'SPW', setAside),
@@ -186,7 +195,41 @@ describe('SpawnEnemy', () => {
 
     const { state: after } = execute(ctx, state, spawn('e', { by: alice }));
 
-    expect(zoneOf(after, 'e')).toEqual(engagedWith(alice));
+    expect(zoneOf(after, 'e')).toEqual(setAside);
+    expect(after.pending).toMatchObject([
+      {
+        kind: 'chooseLocation',
+        subject: 'e',
+        options: [{ target: cellar }, { target: 'cellar2' }],
+      },
+    ]);
+  });
+
+  it('asks the players, among all locations in play, when the spawn text is unreadable', () => {
+    const state = started({ cards: [card('e', 'ODD', setAside)] });
+
+    const { state: after } = execute(ctx, state, spawn('e', { by: alice }));
+
+    expect(zoneOf(after, 'e')).toEqual(setAside);
+    expect(after.pending).toMatchObject([
+      {
+        kind: 'chooseLocation',
+        options: [{ target: hall }, { target: cellar }, { target: attic }],
+      },
+    ]);
+  });
+
+  it('discards the enemy when the named location is not in play', () => {
+    const state = started({ cards: [card('e', 'SPW', setAside)] });
+    const withoutCellar = execute(ctx, state, {
+      type: 'ManualAdjust',
+      adjustment: { kind: 'moveCard', cardId: cellar, to: setAside },
+    }).state;
+
+    const { state: after } = execute(ctx, withoutCellar, spawn('e', { by: alice }));
+
+    expect(zoneOf(after, 'e')).toEqual({ kind: 'encounterDiscard' });
+    expect(after.pending).toEqual([]);
   });
 
   it('lets an explicit location override the spawn keyword', () => {
@@ -195,6 +238,25 @@ describe('SpawnEnemy', () => {
     const { state: after } = execute(ctx, state, spawn('e', { at: attic }));
 
     expect(zoneOf(after, 'e')).toEqual(at(attic));
+  });
+
+  it('never engages an exhausted enemy', () => {
+    const state = started({ cards: [card('e', 'FOE', at(attic))] });
+    const exhausted = execute(ctx, state, enemyCommand('ExhaustEnemy')).state;
+    const arrived = replay(
+      [
+        {
+          type: 'CardMoved',
+          cardId: instanceId('e'),
+          from: at(attic),
+          to: at(hall),
+        },
+      ],
+      exhausted,
+    );
+
+    expect(engageEvents(ctx, arrived, instanceId('e'))).toEqual([]);
+    expect(engageEvents(ctx, arrived, instanceId('e'), alice)).toEqual([]);
   });
 
   it('does not engage an aloof enemy', () => {
@@ -219,18 +281,27 @@ describe('SpawnEnemy', () => {
       investigator(bob, 2, { locationId: hall, clues: bobClues }),
     ];
 
-    it('engages the investigator its prey picks', () => {
+    it('engages the investigator its prey picks when spawned by an effect', () => {
       const state = started({ investigators: clues(1, 3), cards: [card('e', 'PRY', setAside)] });
 
-      const { state: after } = execute(ctx, state, spawn('e', { by: alice }));
+      const { state: after } = execute(ctx, state, spawn('e', { at: hall }));
 
       expect(zoneOf(after, 'e')).toEqual(engagedWith(bob));
     });
 
-    it('asks the players when there is no prey', () => {
-      const state = started({ investigators: clues(1, 3), cards: [card('e', 'FOE', setAside)] });
+    it('engages the drawer whatever the prey when there is no spawn instruction', () => {
+      const state = started({ investigators: clues(1, 3), cards: [card('e', 'PRY', setAside)] });
 
       const { state: after } = execute(ctx, state, spawn('e', { by: alice }));
+
+      expect(zoneOf(after, 'e')).toEqual(engagedWith(alice));
+      expect(after.pending).toEqual([]);
+    });
+
+    it('asks the players when there is no prey and no drawer', () => {
+      const state = started({ investigators: clues(1, 3), cards: [card('e', 'FOE', setAside)] });
+
+      const { state: after } = execute(ctx, state, spawn('e', { at: hall }));
 
       expect(zoneOf(after, 'e')).toEqual(at(hall));
       expect(after.pending).toMatchObject([
@@ -244,7 +315,7 @@ describe('SpawnEnemy', () => {
 
     it('asks the players when prey is tied, and engaging answers the question', () => {
       const state = started({ investigators: clues(2, 2), cards: [card('e', 'PRY', setAside)] });
-      const asked = execute(ctx, state, spawn('e', { by: alice })).state;
+      const asked = execute(ctx, state, spawn('e', { at: hall })).state;
 
       const { state: after } = execute(ctx, asked, {
         type: 'EngageEnemy',
@@ -419,7 +490,7 @@ describe('damage and defeat', () => {
       ],
       cards: [card('e', 'FOE', setAside)],
     });
-    const asked = execute(ctx, state, spawn('e', { by: alice })).state;
+    const asked = execute(ctx, state, spawn('e', { at: hall })).state;
 
     const { state: after } = execute(ctx, asked, enemyCommand('DefeatEnemy'));
 

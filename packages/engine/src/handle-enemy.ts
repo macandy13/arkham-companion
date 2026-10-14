@@ -8,7 +8,7 @@ import type {
   ReadyEnemy,
   SpawnEnemy,
 } from './commands';
-import { engageEvents } from './engagement';
+import { chooseLocation, engageEvents } from './engagement';
 import type { CardMoved, EnemyDefeated, EnemyEngaged, Event, ExhaustChanged } from './events';
 import { activeInvestigator } from './handle-investigator';
 import type { InstanceId, InvestigatorId } from './ids';
@@ -34,11 +34,16 @@ export function handleSpawnEnemy(ctx: EngineContext, state: GameState, cmd: Spaw
 /**
  * Puts the enemy into play at its spawn location and lets it engage. Shared by
  * `SpawnEnemy` and `DrawEncounter`, so a drawn enemy follows exactly the same
- * rules as one spawned by a card effect. The spawn location is `target.at`,
- * else the one location in play named by the enemy's `spawn` keyword, else the
- * drawing investigator's location. A keyword the engine cannot read (several
- * or no location of that name, or text that is not a location name) falls back
- * to the drawer's location; the players can correct that with `ManualAdjust`.
+ * rules as one spawned by a card effect. See `spawnPlan` for where it appears.
+ *
+ * Rules Reference, "Spawn": with several qualifying locations the investigator
+ * chooses, with none the enemy is discarded. A choice (several matches, or
+ * spawn text the engine cannot read) raises a `chooseLocation` decision (id
+ * `spawn:<enemy>`) and leaves the enemy where it is; answering it needs
+ * `ResolveDecision` (M1.9), until then the players move it with `ManualAdjust`.
+ * A drawn enemy without a spawn instruction engages the drawer, whatever its
+ * prey ("Spawn" in the Rules Reference); prey only picks among investigators
+ * for an enemy that spawns elsewhere.
  */
 export function spawnEvents(
   ctx: EngineContext,
@@ -48,14 +53,27 @@ export function spawnEvents(
 ): Event[] {
   const { enemy, stats } = enemyOf(ctx, state, enemyId);
   if (isInPlay(enemy)) throw new CommandRejected({ code: 'enemyAlreadyInPlay', cardId: enemyId });
-  const locationId = spawnLocation(ctx, state, enemy, stats, target);
+  const plan = spawnPlan(ctx, state, enemy, stats, target);
+  if (plan.kind === 'choose')
+    return chooseLocation(
+      ctx,
+      state,
+      enemyId,
+      `spawn:${enemyId}`,
+      'decision.chooseSpawnLocation',
+      plan.candidates,
+    );
+  if (plan.kind === 'discard')
+    return [
+      { type: 'CardMoved', cardId: enemyId, from: enemy.zone, to: ENCOUNTER_DISCARD, index: 0 },
+    ];
   const placed: CardMoved = {
     type: 'CardMoved',
     cardId: enemyId,
     from: enemy.zone,
-    to: { kind: 'atLocation', locationId },
+    to: { kind: 'atLocation', locationId: plan.locationId },
   };
-  return [placed, ...engageEvents(ctx, replay([placed], state), enemyId)];
+  return [placed, ...engageEvents(ctx, replay([placed], state), enemyId, plan.drawerId)];
 }
 
 /** `EngageEnemy`: the enemy engages the investigator, who must be at its location. */
@@ -195,16 +213,25 @@ function exhaustChange(enemy: CardInstance, exhausted: boolean): ExhaustChanged 
   return { type: 'ExhaustChanged', cardId: enemy.id, exhausted };
 }
 
-function spawnLocation(
+/**
+ * Where the enemy spawns: `target.at`; else its `spawn` instruction; else the
+ * drawer's location, where the drawer (`drawerId`) is engaged regardless of prey.
+ */
+type SpawnPlan =
+  | { kind: 'at'; locationId: InstanceId; drawerId?: InvestigatorId }
+  | { kind: 'choose'; candidates: InstanceId[] }
+  | { kind: 'discard' };
+
+function spawnPlan(
   ctx: EngineContext,
   state: GameState,
   enemy: CardInstance,
   stats: CardStats,
   target: SpawnTarget,
-): InstanceId {
-  if (target.at !== undefined) return locationInPlay(state, target.at);
-  const named = namedSpawnLocation(ctx, state, stats);
-  if (named !== undefined) return named;
+): SpawnPlan {
+  if (target.at !== undefined) return { kind: 'at', locationId: locationInPlay(state, target.at) };
+  const detail = stats.keywords?.find((keyword) => keyword.name === 'spawn')?.detail;
+  if (detail !== undefined) return instructedSpawn(ctx, state, detail);
   if (target.investigatorId === undefined)
     throw new CommandRejected({ code: 'noSpawnLocation', cardId: enemy.id });
   const drawer = activeInvestigator(state, target.investigatorId);
@@ -213,23 +240,36 @@ function spawnLocation(
       code: 'investigatorHasNoLocation',
       investigatorId: drawer.id,
     });
-  return drawer.locationId;
+  return { kind: 'at', locationId: drawer.locationId, drawerId: drawer.id };
 }
 
-/** The one location in play whose name is the enemy's `spawn` detail, e.g. "Spawn - Hallway". */
-function namedSpawnLocation(
-  ctx: EngineContext,
-  state: GameState,
-  stats: CardStats,
-): InstanceId | undefined {
-  const detail = stats.keywords?.find((keyword) => keyword.name === 'spawn')?.detail;
-  if (detail === undefined) return undefined;
+/**
+ * Reads a spawn instruction that names a location, e.g. "Spawn - Hallway".
+ * Text that matches no location card at all (e.g. "the location with the most
+ * clues") cannot be interpreted, so the players choose among all locations in
+ * play instead of the engine guessing. A name that no location in play has
+ * (the location is set aside or gone) discards the enemy.
+ */
+function instructedSpawn(ctx: EngineContext, state: GameState, detail: string): SpawnPlan {
   const wanted = detail.trim().replace(/\.$/, '').toLowerCase();
-  const matches = Object.values(state.cards).filter(
-    (card) =>
-      card.zone.kind === 'location' && ctx.cards.get(card.code)?.name.toLowerCase() === wanted,
+  const locations = Object.values(state.cards).filter(
+    (card) => ctx.cards.get(card.code)?.typeCode === 'location',
   );
-  return matches.length === 1 ? matches[0]?.id : undefined;
+  const matches = locations.filter(
+    (card) => card.zone.kind === 'location' && nameOf(ctx, card) === wanted,
+  );
+  const [only] = matches;
+  if (only !== undefined && matches.length === 1) return { kind: 'at', locationId: only.id };
+  if (matches.length > 1) return { kind: 'choose', candidates: matches.map((card) => card.id) };
+  if (locations.some((card) => nameOf(ctx, card) === wanted)) return { kind: 'discard' };
+  return {
+    kind: 'choose',
+    candidates: locations.filter((card) => card.zone.kind === 'location').map((card) => card.id),
+  };
+}
+
+function nameOf(ctx: EngineContext, card: CardInstance): string | undefined {
+  return ctx.cards.get(card.code)?.name.toLowerCase();
 }
 
 function locationInPlay(state: GameState, locationId: InstanceId): InstanceId {

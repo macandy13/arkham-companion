@@ -315,10 +315,11 @@ export interface ShuffleInto {
 /**
  * Puts an enemy that is not in play (encounter deck, set aside, …) into play.
  * Where it appears, in this order: `at`; the location named by its `spawn`
- * keyword, if exactly one location in play has that name; the location of
- * `investigatorId` (the investigator who drew it). It then engages an investigator
- * at that location (see `engageEvents`). Produces `CardMoved`, then
- * `EnemyEngaged` or `DecisionRequested` (prey tie). `DrawEncounter` resolves
+ * keyword (several matches or unreadable text: `DecisionRequested` of kind
+ * `chooseLocation`, enemy stays put; no such location in play: discarded);
+ * the location of `investigatorId` (the investigator who drew it), whom it
+ * engages whatever its prey. Elsewhere it engages per `engageEvents`. Produces
+ * `CardMoved`, then `EnemyEngaged` or `DecisionRequested` (prey tie). `DrawEncounter` resolves
  * a drawn enemy the same way.
  */
 export interface SpawnEnemy {

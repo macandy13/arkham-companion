@@ -1,6 +1,6 @@
 import { cardStats, type CardStats, type EngineContext } from './cards';
 import type { DecisionRequested, EnemyEngaged, Event } from './events';
-import { decisionId, type InstanceId } from './ids';
+import { decisionId, type InstanceId, type InvestigatorId } from './ids';
 import {
   lowestRemainingHealth,
   lowestRemainingSanity,
@@ -47,14 +47,23 @@ export function preferredByPrey(
  * investigators (it just spawned or arrived, or was readied): it engages the
  * only investigator there, or the one its prey picks. If several remain the
  * players choose (`chooseInvestigator` decision, to be answered by
- * `EngageEnemy`). Nothing for aloof enemies and when nobody is there.
+ * `EngageEnemy`). `drawerId` is the investigator who drew an enemy without a
+ * spawn instruction: that one is engaged whatever the prey (Rules Reference,
+ * "Spawn"). Nothing for aloof or exhausted enemies and when nobody is there.
  * Massive enemies never use the engaged zone (see `enemyAttackList`).
  */
-export function engageEvents(ctx: EngineContext, state: GameState, enemyId: InstanceId): Event[] {
+export function engageEvents(
+  ctx: EngineContext,
+  state: GameState,
+  enemyId: InstanceId,
+  drawerId?: InvestigatorId,
+): Event[] {
   const enemy = state.cards[enemyId];
-  if (enemy?.zone.kind !== 'atLocation') return [];
+  if (enemy?.zone.kind !== 'atLocation' || enemy.exhausted) return [];
   const stats = cardStats(ctx.cards, enemy.code);
   if (hasKeyword(stats, 'aloof') || hasKeyword(stats, 'massive')) return [];
+  const drawer = investigatorsAt(state, enemy.zone.locationId).find((inv) => inv.id === drawerId);
+  if (drawer) return [engaged(enemyId, drawer)];
   const preferred = preferredByPrey(stats, investigatorsAt(state, enemy.zone.locationId));
   const [only] = preferred;
   if (only === undefined) return [];
