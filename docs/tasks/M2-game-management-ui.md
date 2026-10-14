@@ -50,12 +50,15 @@ Follow-ups: `CHAPTER_TWO_PACK_CODES` only lists `core_2026` – verify against r
 
 **Benefit:** Fast, visual team setup, similar to the Mansions of Madness app.
 
-- [ ] Portrait grid (image with text fallback), lazy-loaded images
-- [ ] Filters: class chips, cycle/pack, chapter (1/2), "my collection"; search by name
-- [ ] Chapter badge ("Ch. 1" / "Ch. 2") on every portrait and in the detail sheet; the detail sheet links to the other chapter's version
-- [ ] Detail sheet: front/back, health, sanity, skills
-- [ ] Seats: select assigns next seat (max 4), drag to reorder, remove; lead investigator marker
-- [ ] Component tests with a fixture catalog
+- [x] Portrait grid (image with text fallback), lazy-loaded images
+- [x] Filters: class chips, cycle/pack, chapter (1/2), "my collection"; search by name
+- [x] Chapter badge ("Ch. 1" / "Ch. 2") on every portrait and in the detail sheet; the detail sheet links to the other chapter's version
+- [x] Detail sheet: front/back, health, sanity, skills
+- [x] Seats: select assigns next seat (max 4), drag to reorder, remove; lead investigator marker
+- [x] Component tests with a fixture catalog
+
+Done: `apps/web/src/picker/` holds the controlled `InvestigatorPicker` (props: `catalog`, `seats` as investigator codes, `onSeatsChange`, optional `ownedPacks`, `maxSeats`, `imageHost`), its filter bar, detail sheet and seat list, the pure filter/reorder helpers in `pickerLogic.ts`, `picker.css` and tests with a hand-written fixture catalog. Seats can be reordered by drag and drop and by move up/down buttons; the first seat is marked as lead investigator.
+Follow-ups: the picker is not mounted anywhere yet and `loadCatalog` is still unwired (M2.7 wizard); pass the owned packs from settings as `ownedPacks` (M2.4) – without them the "my collection" checkbox is hidden; the detail sheet shows no ability text (it is not in `InvestigatorDef`); drag and drop is mouse-only (HTML5 drag events do not fire on touch), so touch users rely on the move buttons until a pointer-based drag is added; the image host is a prop defaulting to `https://arkhamdb.com`; the cycle filter shows "Cycle N" because the packs API has no cycle names.
 
 ## M2.4 Settings: collection and language (S)
 
