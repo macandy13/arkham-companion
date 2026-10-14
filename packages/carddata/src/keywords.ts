@@ -80,8 +80,7 @@ export function entersThreatArea(text: string | undefined): boolean {
  * tags spliced together by nested markup is no better.
  */
 function plainLines(text: string): string[] {
-  return stripMarkup(text)
-    .replace(/\[\[([^\]]+)\]\]/g, '$1')
+  return unwrapTraits(stripMarkup(text))
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean);
@@ -124,8 +123,42 @@ function stripMarkup(text: string): string {
         end++;
       }
       hasGt = hasGt && end < text.length;
-      i = hasGt && text[end] === '>' ? end + 1 : i + 1;
+      if (hasGt && text[end] === '>') {
+        i = end + 1;
+      } else {
+        // The scan stopped at a `<i>` or the end: the chars before it hold no
+        // `>`, so each `<` among them would stop at the same place. Skipping
+        // them at once avoids rescanning them from every `<`.
+        out += text.slice(i + 1, end).replaceAll('<', '');
+        i = end;
+      }
     }
+  }
+  return out;
+}
+
+/**
+ * Replaces `[[Trait]]` with `Trait`; an unmatched `[[` stays as literal text.
+ *
+ * The position of the next `]` is cached because many `[[` can share one far
+ * away `]`, and a search that found none is not repeated: both keep the scan
+ * linear where a regex would backtrack.
+ */
+function unwrapTraits(text: string): string {
+  let out = '';
+  let close = 0;
+  let i = 0;
+  while (i < text.length) {
+    if (text.startsWith('[[', i)) {
+      if (close !== -1 && close < i + 2) close = text.indexOf(']', i + 2);
+      if (close > i + 2 && text[close + 1] === ']') {
+        out += text.slice(i + 2, close);
+        i = close + 2;
+        continue;
+      }
+    }
+    out += text[i];
+    i += 1;
   }
   return out;
 }

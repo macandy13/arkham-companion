@@ -100,14 +100,31 @@ describe('parseKeywords with malformed markup', () => {
     expect(parseKeywords(text, [])).toEqual(expected);
   });
 
+  it('finishes quickly on many < followed by a reminder tag', () => {
+    const started = performance.now();
+    parseKeywords(`${'<'.repeat(50_000)}<i>Surge.`, []);
+    expect(performance.now() - started).toBeLessThan(1000);
+  });
+
+  it.each([
+    ['trait markup', '[[Surge]].', [{ name: 'surge' }]],
+    ['an unmatched [[', '[[Hunter.', []],
+    ['an empty [[]]', '[[]]Hunter.', []],
+    ['a ] inside [[ ]]', '[[a]b]]Hunter.', []],
+  ])('handles %s', (_name, text, expected) => {
+    expect(parseKeywords(text, [])).toEqual(expected);
+  });
+
   it.each([
     ['unmatched <i>', '<i>'],
     ['unmatched <', '<'],
     ['unmatched </i>', '</i>'],
     ['closing >', '>'],
+    ['unmatched [[', '[['],
+    ['[[ followed by a backslash', '[[\\'],
   ])('finishes quickly on many repetitions of %s', (_name, unit) => {
     const started = performance.now();
-    const keywords = parseKeywords(`${unit.repeat(50_000)}Surge.`, []);
+    const keywords = parseKeywords(`${unit.repeat(50_000)}\nSurge.`, []);
     expect(performance.now() - started).toBeLessThan(1000);
     expect(keywords).toEqual([{ name: 'surge' }]);
   });
