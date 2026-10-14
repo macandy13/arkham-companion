@@ -1,0 +1,79 @@
+/** UI languages that have translation strings (`i18n/index.ts`). */
+export const UI_LANGUAGES = ['en', 'de'] as const;
+export type UiLanguage = (typeof UI_LANGUAGES)[number];
+
+/** Languages ArkhamDB serves card text in; each one has its own subdomain (`de.arkhamdb.com`). */
+export const CARD_LANGUAGES = [
+  'en',
+  'de',
+  'es',
+  'fr',
+  'it',
+  'ko',
+  'pl',
+  'pt',
+  'ru',
+  'uk',
+  'zh',
+] as const;
+export type CardLanguage = (typeof CARD_LANGUAGES)[number];
+
+export const THEMES = ['dark', 'light'] as const;
+export type Theme = (typeof THEMES)[number];
+
+/** Per-device preferences; they live in localStorage, not with the games (architecture §10). */
+export interface Settings {
+  /** Pack codes the player owns; drives the picker's "my collection" filter. */
+  readonly ownedPacks: readonly string[];
+  readonly cardLanguage: CardLanguage;
+  /** Unset means "follow the browser language" until the player picks one. */
+  readonly uiLanguage?: UiLanguage;
+  readonly theme: Theme;
+}
+
+/** Defaults for a fresh device; dark because the app is used at a dim table. */
+export const DEFAULT_SETTINGS: Settings = { ownedPacks: [], cardLanguage: 'en', theme: 'dark' };
+
+const STORAGE_KEY = 'arkham-companion.settings';
+
+function oneOf<T extends string>(options: readonly T[], value: unknown): T | undefined {
+  return options.find((option) => option === value);
+}
+
+function parseSettings(value: unknown): Settings {
+  if (typeof value !== 'object' || value === null) return DEFAULT_SETTINGS;
+  const raw = value as Record<string, unknown>;
+  const uiLanguage = oneOf(UI_LANGUAGES, raw.uiLanguage);
+  return {
+    ownedPacks:
+      Array.isArray(raw.ownedPacks) && raw.ownedPacks.every((code) => typeof code === 'string')
+        ? raw.ownedPacks
+        : DEFAULT_SETTINGS.ownedPacks,
+    cardLanguage: oneOf(CARD_LANGUAGES, raw.cardLanguage) ?? DEFAULT_SETTINGS.cardLanguage,
+    ...(uiLanguage && { uiLanguage }),
+    theme: oneOf(THEMES, raw.theme) ?? DEFAULT_SETTINGS.theme,
+  };
+}
+
+/**
+ * Reads the settings, field by field falling back to defaults. Storage can be missing or
+ * throw (private mode, blocked cookies) and hold corrupt data after manual edits or old
+ * versions, none of which may stop the app from starting.
+ */
+export function loadSettings(): Settings {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored === null ? DEFAULT_SETTINGS : parseSettings(JSON.parse(stored));
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
+}
+
+/** Persists the settings; failures are swallowed because losing a preference beats crashing. */
+export function saveSettings(settings: Settings): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  } catch {
+    // Quota exceeded or storage unavailable: the in-memory settings still apply this session.
+  }
+}
