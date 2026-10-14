@@ -187,3 +187,26 @@ describe('IndexedDbStore', () => {
     expect(await store.getCards('de', 'core_2026')).toHaveLength(1);
   });
 });
+
+describe('IndexedDbStore.importGame', () => {
+  it('creates a new game from exported events, keeping their timestamps', async () => {
+    const source = await store.createGame({ title: 'Night' });
+    const id = await store.importGame({
+      title: 'Imported',
+      events: [
+        { timestamp: 1000, event: started },
+        { timestamp: 2000, event: tokens(1) },
+      ],
+    });
+
+    expect(id).not.toBe(source);
+    expect((await store.loadEvents(id)).map((e) => [e.seq, e.timestamp])).toEqual([
+      [1, 1000],
+      [2, 2000],
+    ]);
+    const loaded = await store.loadGame(id);
+    expect(loaded?.state).toEqual(replay([started, tokens(1)]));
+    expect(loaded?.summary).toMatchObject({ title: 'Imported', lastSeq: 2, updatedAt: 2000 });
+    expect((await store.appendEvents(id, [tokens(1)]))[0]?.seq).toBe(3);
+  });
+});

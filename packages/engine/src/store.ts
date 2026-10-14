@@ -61,6 +61,13 @@ export interface LoadedGame {
   state: GameState;
 }
 
+/** A game to be restored by `GameStore.importGame`: an event log without ids, as found in an export file. */
+export interface ImportedGame {
+  title: string;
+  /** Original timestamps are kept so an imported game still shows when it was last played. */
+  events: readonly { timestamp: number; event: Event }[];
+}
+
 /**
  * Persistence boundary (architecture §10). The app only talks to this
  * interface; `IndexedDbStore` implements it now, a cloud store may later.
@@ -92,6 +99,13 @@ export interface GameStore {
   duplicateGame(gameId: GameId, title?: string): Promise<GameId>;
   /** Permanently removes a game with its events and snapshot; unknown games are ignored. */
   deleteGame(gameId: GameId): Promise<void>;
+  /** Stored events of a game with `seq` greater than `afterSeq`, oldest first (for export and sync). */
+  loadEvents(gameId: GameId, afterSeq?: number): Promise<StoredEvent[]>;
+  /**
+   * Creates a game under a new UUID from an exported log. Keeps the events' timestamps and
+   * links no campaign (the original campaign does not exist on this device).
+   */
+  importGame(game: ImportedGame): Promise<GameId>;
   /** Stores a snapshot, replacing older ones of the same game. */
   saveSnapshot(gameId: GameId, seq: number, state: GameState): Promise<void>;
 }

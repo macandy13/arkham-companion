@@ -116,6 +116,11 @@ export const resources = {
         duplicate: 'Duplicate',
         copyTitle: '{{title}} (copy)',
         delete: 'Delete',
+        export: 'Export',
+        import: 'Import game',
+        importInvalid: 'This file is not a valid Arkham Companion game export.',
+        importNewerVersion:
+          'This game was exported by a newer version of the app. Update the app and try again.',
         deleteTitle: 'Delete "{{title}}"?',
         deleteWarning:
           'The game and its history are removed from this device. This cannot be undone.',
@@ -235,6 +240,11 @@ export const resources = {
         duplicate: 'Duplizieren',
         copyTitle: '{{title}} (Kopie)',
         delete: 'Löschen',
+        export: 'Exportieren',
+        import: 'Spiel importieren',
+        importInvalid: 'Diese Datei ist kein gültiger Arkham-Companion-Spielexport.',
+        importNewerVersion:
+          'Dieses Spiel wurde mit einer neueren Version der App exportiert. Aktualisiere die App und versuche es erneut.',
         deleteTitle: '„{{title}}“ löschen?',
         deleteWarning:
           'Das Spiel und sein Verlauf werden von diesem Gerät entfernt. Das kann nicht rückgängig gemacht werden.',

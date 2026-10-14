@@ -23,6 +23,29 @@ test('app boots and a new game survives reload', async ({ page }) => {
   );
 });
 
+test('an exported game can be imported as a new game', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('link', { name: /new game/i }).click();
+  await page.getByRole('button', { name: /create empty game/i }).click();
+  await page.getByRole('link', { name: 'Arkham Companion' }).click();
+
+  const games = page.getByRole('list', { name: 'Games' }).getByRole('listitem');
+  const before = await games.count();
+  const download = page.waitForEvent('download');
+  await games.first().getByRole('button', { name: 'Export' }).click();
+  const chunks: Buffer[] = [];
+  for await (const chunk of await (await download).createReadStream()) {
+    chunks.push(chunk as Buffer);
+  }
+
+  await page.getByLabel('Import game').setInputFiles({
+    name: 'game.arkham.json',
+    mimeType: 'application/json',
+    buffer: Buffer.concat(chunks),
+  });
+  await expect(games).toHaveCount(before + 1);
+});
+
 test('deep links to settings work', async ({ page }) => {
   await page.goto('/#/settings');
   await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
