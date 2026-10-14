@@ -1,5 +1,5 @@
 import type { InstanceId, MapId } from './ids';
-import type { CampaignLog, ChaosToken, Difficulty, Investigator, TokenKind } from './state';
+import type { CampaignLog, ChaosToken, Difficulty, Edge, Investigator, TokenKind } from './state';
 import type { Zone } from './zone';
 
 /** Commands are intents from the UI; `handle` validates them and produces events. */
@@ -12,13 +12,16 @@ export interface StartingCard {
   code: string;
   zone: Zone;
   faceUp?: boolean;
+  /** Tokens the card starts with (doom placed by setup, clues on a revealed location, …). */
+  tokens?: Partial<Record<TokenKind, number>>;
 }
 
 /**
  * Sets up a scenario from scratch: investigators, maps and every card instance
  * in its initial zone. Produces `ScenarioStarted` and, unless disabled, a
- * `DeckShuffled` for the encounter deck. Later the scenario setup DSL (M1+)
- * will build this command from a `ScenarioDefinition`.
+ * `DeckShuffled` for the encounter deck. `compileSetup` builds this command
+ * from a `ScenarioDefinition`. An investigator's `locationId` must name a
+ * starting card in a `location` zone.
  */
 export interface StartScenario {
   type: 'StartScenario';
@@ -28,6 +31,8 @@ export interface StartScenario {
   investigators: Investigator[];
   maps?: Record<MapId, { name: string; visible?: boolean }>;
   cards: StartingCard[];
+  /** Connections between starting location cards (by instance ID). */
+  connections?: Edge[];
   chaosBag?: ChaosToken[];
   campaign?: CampaignLog;
   /** Shuffle the encounter deck after setup (default true). */

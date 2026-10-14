@@ -24,11 +24,14 @@ Every task: new commands/events go through `handle` → `apply`, invariants keep
 
 Ref: §5, §9. The engine must read card stats (doom threshold, clues, shroud, health, keywords) without depending on `carddata` at runtime.
 
-- [ ] `CardDb` interface passed into `handle(state, command, ctx)` (`ctx.cards.get(code)`); reducer stays card-agnostic
-- [ ] Per-investigator value helper (`perInvestigator(n)`, `health_per_investigator`)
-- [ ] Fake `CardDb` fixture shared by all engine tests (`test/fixtures/sandbox-cards.ts`)
+- [x] `CardDb` interface passed into `handle(ctx, state, command)` (`ctx.cards.get(code)`); reducer stays card-agnostic
+- [x] Per-investigator value helper (`ScaledValue` + `resolveValue`, covers `health_per_investigator`/`clues_fixed`)
+- [x] Fake `CardDb` fixture shared by all engine tests (`test/fixtures/sandbox-cards.ts`)
 
 Done when: existing tests pass with the new signature; one test reads a threshold through `CardDb`.
+
+Done: `packages/engine/src/cards.ts` adds `CardStats` (the engine's own card type, so it has no runtime dependency on `carddata`), `CardDb`, `EngineContext`, `cardDbFrom` and `cardStats` (throws `unknownCardCode`). `CardStats` is typed: `typeCode: CardType` (union of ArkhamDB type codes, `CARD_TYPES`), `traits: Trait[]` (branded, built with `trait`), `stage: CardStage` (`{ number, variant? }`, so alternative cards like 2a/b vs 2c/d share a number and differ by variant), and `clues`/`health`/`doom` are `ScaledValue`s (`{ fixed, perInvestigator }`) resolved with `resolveValue(value, playerCount)`. Game-state terms like "+1 per act" are left to the rules that read them. `handle(ctx, state, command)` and `execute(ctx, state, command)` take the context first; `StartScenario` rejects card codes missing from `ctx.cards`. Shared fixture: `packages/engine/test/fixtures/sandbox-cards.ts` (`sandboxContext`, `sandboxCodes`).
+Follow-ups: map carddata's `CardDef` to `CardStats` (`health`/`health_per_investigator`, `clues`/`clues_fixed` → `ScaledValue`, `stage` → `CardStage`, `type_code` → `CardType`) when the web app gets a `CardDb` backed by the cached carddata (M2); the stage variant letter is not in ArkhamDB and has to come from scenario data; `keywords` gets added to `CardStats` with the keyword parser (M1.7).
 
 ## M1.2 Setup DSL + sandbox scenario (O)
 
@@ -38,10 +41,13 @@ Done when: existing tests pass with the new signature; one test reads a threshol
 
 Ref: §7.
 
-- [ ] `ScenarioDefinition` type and `SetupStep` union (`putIntoPlay`, `setAside`, `buildEncounterDeck`, `placeTokens`, `spawn`, `moveInvestigators`, `addMap`, `addConnection`)
-- [ ] `compileSetup(def, options) -> StartScenario` (setup steps become starting cards + follow-up commands)
-- [ ] Sandbox scenario in `packages/scenarios/src/sandbox/` using only fake codes
-- [ ] Test: sandbox setup produces the expected zones and counts
+- [x] `ScenarioDefinition` type and `SetupStep` union (`putIntoPlay`, `setAside`, `buildEncounterDeck`, `placeTokens`, `spawn`, `moveInvestigators`, `addMap`, `addConnection`)
+- [x] `compileSetup(ctx, def, options) -> StartScenario` (setup steps become starting cards + follow-up commands)
+- [x] Sandbox scenario in `packages/scenarios/src/sandbox/` using only fake codes
+- [x] Test: sandbox setup produces the expected zones and counts
+
+Done: `packages/engine/src/setup.ts` adds `ScenarioDefinition`, `SetupStep`, `TokenAmount`, `SetupOptions` and `compileSetup(ctx, def, options)`, which runs the steps in order and returns one `StartScenario` (no follow-up commands are needed yet: tokens, connections and investigator locations are now part of `StartScenario` – `StartingCard.tokens`, `StartScenario.connections`, carried by `ScenarioStarted.connections` into `board.connections`, validated by `handle`). Steps refer to cards by code; instance IDs are `<code>#<copy>`. `buildEncounterDeck` takes "the remainder" of its sets: every enemy/treachery copy not used by another step (counted over all steps), minus `exclude`. Locations that start revealed (including the one `moveInvestigators` reveals) get their clues. `CardStats` gained `encounterCode`/`quantity`, `CardDb` gained `encounterSet(code)`. Sandbox: `packages/scenarios/src/sandbox/` (`sandboxScenario`, `sandboxCards`, `sandboxCardDefs`; codes `SB-*`), exported from `@arkham/scenarios`. Web usage: `execute(ctx, emptyState(), compileSetup(ctx, sandboxScenario, options))` with `ctx = { cards: sandboxCards }`. `TokenAmount` is a plain number or a `ScaledValue`.
+Follow-ups: `spawn` at setup does not engage investigators at that location (M1.8 – then compile it to a follow-up `SpawnEnemy`); mid-scenario use of the same steps (compile against a running state into `AddConnection`/`SpawnEnemy`/… commands) once those commands exist (M1.3, M1.7, M1.8); `agenda.current`/`act.current` are not set from the decks yet (M1.5); reveal-clue placement should share one helper with `CardFlipped` (M1.3); remaining §7 steps (`replaceLocation`, `removeLocation`, `randomLocations`, `removeConnection`, `fromSetAside`, `shuffleInto`, `removeFromGame`) and layout slots for `putIntoPlay` (M3) when a scenario needs them.
 
 ## M1.3 Board: connection graph (S)
 
