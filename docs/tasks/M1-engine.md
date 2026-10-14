@@ -41,10 +41,13 @@ Follow-ups: map carddata's `CardDef` to `CardStats` (`health`/`health_per_invest
 
 Ref: §7.
 
-- [ ] `ScenarioDefinition` type and `SetupStep` union (`putIntoPlay`, `setAside`, `buildEncounterDeck`, `placeTokens`, `spawn`, `moveInvestigators`, `addMap`, `addConnection`)
-- [ ] `compileSetup(def, options) -> StartScenario` (setup steps become starting cards + follow-up commands)
-- [ ] Sandbox scenario in `packages/scenarios/src/sandbox/` using only fake codes
-- [ ] Test: sandbox setup produces the expected zones and counts
+- [x] `ScenarioDefinition` type and `SetupStep` union (`putIntoPlay`, `setAside`, `buildEncounterDeck`, `placeTokens`, `spawn`, `moveInvestigators`, `addMap`, `addConnection`)
+- [x] `compileSetup(ctx, def, options) -> StartScenario` (setup steps become starting cards + follow-up commands)
+- [x] Sandbox scenario in `packages/scenarios/src/sandbox/` using only fake codes
+- [x] Test: sandbox setup produces the expected zones and counts
+
+Done: `packages/engine/src/setup.ts` adds `ScenarioDefinition`, `SetupStep`, `TokenAmount`, `SetupOptions` and `compileSetup(ctx, def, options)`, which runs the steps in order and returns one `StartScenario` (no follow-up commands are needed yet: tokens, connections and investigator locations are now part of `StartScenario` – `StartingCard.tokens`, `StartScenario.connections`, carried by `ScenarioStarted.connections` into `board.connections`, validated by `handle`). Steps refer to cards by code; instance IDs are `<code>#<copy>`. `buildEncounterDeck` takes "the remainder" of its sets: every enemy/treachery copy not used by another step (counted over all steps), minus `exclude`. Locations that start revealed (including the one `moveInvestigators` reveals) get their clues. `CardStats` gained `encounterCode`/`quantity`, `CardDb` gained `encounterSet(code)`. Sandbox: `packages/scenarios/src/sandbox/` (`sandboxScenario`, `sandboxCards`, `sandboxCardDefs`; codes `SB-*`), exported from `@arkham/scenarios`. Web usage: `execute(ctx, emptyState(), compileSetup(ctx, sandboxScenario, options))` with `ctx = { cards: sandboxCards }`. `TokenAmount` is a plain number or a `ScaledValue`.
+Follow-ups: `spawn` at setup does not engage investigators at that location (M1.8 – then compile it to a follow-up `SpawnEnemy`); mid-scenario use of the same steps (compile against a running state into `AddConnection`/`SpawnEnemy`/… commands) once those commands exist (M1.3, M1.7, M1.8); `agenda.current`/`act.current` are not set from the decks yet (M1.5); reveal-clue placement should share one helper with `CardFlipped` (M1.3); remaining §7 steps (`replaceLocation`, `removeLocation`, `randomLocations`, `removeConnection`, `fromSetAside`, `shuffleInto`, `removeFromGame`) and layout slots for `putIntoPlay` (M3) when a scenario needs them.
 
 ## M1.3 Board: connection graph (S)
 

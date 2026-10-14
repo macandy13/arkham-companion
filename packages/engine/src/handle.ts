@@ -1,11 +1,11 @@
 import { cardStats, type EngineContext } from './cards';
-import type { Adjustment, Command, StartScenario } from './commands';
-import type { CardMoved, Event, ScenarioStarted, TokensChanged } from './events';
+import type { Adjustment, Command, StartScenario, StartingCard } from './commands';
+import type { CardMoved, DeckShuffled, Event, ScenarioStarted, TokensChanged } from './events';
 import { instanceId, type InstanceId, type MapId } from './ids';
 import { apply } from './reducer';
 import { CommandRejected } from './rejection';
 import { shuffle } from './rng';
-import type { CardInstance, GameState } from './state';
+import type { CardInstance, GameState, Investigator, TokenKind } from './state';
 import { sameZone, zoneKey, type Zone } from './zone';
 
 /**
@@ -28,38 +28,27 @@ function handleStartScenario(ctx: EngineContext, state: GameState, cmd: StartSce
     throw new CommandRejected({ code: 'invalidSeed', seed: cmd.seed });
   // Catch typos in scenario data at setup instead of when a rule first needs the card.
   for (const card of cmd.cards) cardStats(ctx.cards, card.code);
-  const investigatorIds = new Set<string>();
-  for (const inv of cmd.investigators) {
-    if (investigatorIds.has(inv.id))
-      throw new CommandRejected({ code: 'duplicateInvestigator', investigatorId: inv.id });
-    investigatorIds.add(inv.id);
-  }
-
+  const investigatorIds = uniqueInvestigatorIds(cmd.investigators);
   const maps: ScenarioStarted['maps'] = {};
   for (const [id, m] of Object.entries(cmd.maps ?? {})) {
     maps[id as MapId] = { name: m.name, visible: m.visible ?? true };
   }
-
-  const cards: CardInstance[] = cmd.cards.map((c, i) => ({
-    id: c.id ?? instanceId(`c${i}`),
-    code: c.code,
-    zone: c.zone,
-    faceUp: c.faceUp ?? false,
-    exhausted: false,
-    tokens: {},
-    flags: {},
-  }));
-  const byId: Record<InstanceId, CardInstance> = {};
-  for (const card of cards) {
-    if (byId[card.id]) throw new CommandRejected({ code: 'duplicateCard', cardId: card.id });
-    byId[card.id] = card;
-  }
+  const cards = startingInstances(cmd.cards);
+  const byId = cardsById(cards);
   const refs: ZoneRefs = {
     cards: byId,
     investigators: investigatorIds,
     maps: new Set(Object.keys(maps)),
   };
   for (const card of cards) validateZone(refs, card.id, card.zone);
+  const connections = cmd.connections ?? [];
+  for (const edge of connections) {
+    validateLocation(byId, edge.from);
+    validateLocation(byId, edge.to);
+  }
+  for (const inv of cmd.investigators) {
+    if (inv.locationId !== undefined) validateLocation(byId, inv.locationId);
+  }
 
   const started: ScenarioStarted = {
     type: 'ScenarioStarted',
@@ -69,21 +58,70 @@ function handleStartScenario(ctx: EngineContext, state: GameState, cmd: StartSce
     investigators: cmd.investigators,
     maps,
     cards,
+    connections,
     chaosBag: cmd.chaosBag ?? [],
     ...(cmd.campaign ? { campaign: cmd.campaign } : {}),
   };
-  const events: Event[] = [started];
+  if (!(cmd.shuffleEncounterDeck ?? true)) return [started];
+  return [started, ...encounterDeckShuffle(apply(state, started))];
+}
 
-  if (cmd.shuffleEncounterDeck ?? true) {
-    const afterStart = apply(state, started);
-    const zone: Zone = { kind: 'encounterDeck' };
-    const deck = afterStart.order[zoneKey(zone)] ?? [];
-    if (deck.length > 1) {
-      const [order, rngState] = shuffle(deck, afterStart.meta.rngState);
-      events.push({ type: 'DeckShuffled', zone, order, rngState });
-    }
+/** The investigators' IDs; rejects a duplicate. */
+function uniqueInvestigatorIds(investigators: readonly Investigator[]): Set<string> {
+  const ids = new Set<string>();
+  for (const inv of investigators) {
+    if (ids.has(inv.id))
+      throw new CommandRejected({ code: 'duplicateInvestigator', investigatorId: inv.id });
+    ids.add(inv.id);
   }
-  return events;
+  return ids;
+}
+
+/** Card instances for the starting cards; rejects invalid token counts. */
+function startingInstances(starting: readonly StartingCard[]): CardInstance[] {
+  return starting.map((c, i) => {
+    const id = c.id ?? instanceId(`c${i}`);
+    const tokens = c.tokens ?? {};
+    for (const [token, amount] of Object.entries(tokens) as [TokenKind, number][]) {
+      if (!Number.isInteger(amount) || amount < 0)
+        throw new CommandRejected({ code: 'invalidStartingTokens', cardId: id, token, amount });
+    }
+    return {
+      id,
+      code: c.code,
+      zone: c.zone,
+      faceUp: c.faceUp ?? false,
+      exhausted: false,
+      tokens,
+      flags: {},
+    };
+  });
+}
+
+/** Indexes cards by ID; rejects a duplicate ID. */
+function cardsById(cards: readonly CardInstance[]): Record<InstanceId, CardInstance> {
+  const byId: Record<InstanceId, CardInstance> = {};
+  for (const card of cards) {
+    if (byId[card.id]) throw new CommandRejected({ code: 'duplicateCard', cardId: card.id });
+    byId[card.id] = card;
+  }
+  return byId;
+}
+
+/** Rejects `cardId` unless it is a known card on a map. */
+function validateLocation(cards: Record<InstanceId, CardInstance>, cardId: InstanceId): void {
+  const card = cards[cardId];
+  if (!card) throw new CommandRejected({ code: 'unknownCard', cardId });
+  if (card.zone.kind !== 'location') throw new CommandRejected({ code: 'notALocation', cardId });
+}
+
+/** A `DeckShuffled` for the encounter deck, or nothing if there is nothing to shuffle. */
+function encounterDeckShuffle(state: GameState): DeckShuffled[] {
+  const zone: Zone = { kind: 'encounterDeck' };
+  const deck = state.order[zoneKey(zone)] ?? [];
+  if (deck.length < 2) return [];
+  const [order, rngState] = shuffle(deck, state.meta.rngState);
+  return [{ type: 'DeckShuffled', zone, order, rngState }];
 }
 
 function handleAdjustment(state: GameState, adj: Adjustment): CardMoved | TokensChanged {

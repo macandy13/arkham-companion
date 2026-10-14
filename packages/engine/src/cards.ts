@@ -110,6 +110,10 @@ export interface CardStats {
   victory?: number;
   /** Doom threshold of an agenda. */
   doom?: ScaledValue;
+  /** ArkhamDB encounter set the card belongs to; absent for player cards. */
+  encounterCode?: string;
+  /** Number of physical copies in the product; treated as 1 when absent. */
+  quantity?: number;
 }
 
 /**
@@ -120,6 +124,12 @@ export interface CardStats {
 export interface CardDb {
   /** The definition for `code`, or `undefined` if the code is not known. */
   get(code: string): CardStats | undefined;
+  /**
+   * Every definition whose `encounterCode` is `encounterCode`, one entry per
+   * code (not per copy). Empty for an unknown set. Used to build the
+   * encounter deck from a scenario's encounter sets.
+   */
+  encounterSet(encounterCode: string): readonly CardStats[];
 }
 
 /**
@@ -136,7 +146,11 @@ export interface EngineContext {
 export function cardDbFrom(defs: Iterable<CardStats>): CardDb {
   const byCode = new Map<string, CardStats>();
   for (const def of defs) byCode.set(def.code, def);
-  return { get: (code) => byCode.get(code) };
+  return {
+    get: (code) => byCode.get(code),
+    encounterSet: (encounterCode) =>
+      [...byCode.values()].filter((def) => def.encounterCode === encounterCode),
+  };
 }
 
 /** The definition for `code`; throws `CommandRejected` (`unknownCardCode`) if the db lacks it. */

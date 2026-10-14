@@ -5,6 +5,7 @@ import type {
   CardInstance,
   ChaosToken,
   Difficulty,
+  Edge,
   Investigator,
   TokenKind,
 } from './state';
@@ -26,6 +27,7 @@ export interface ScenarioStarted {
   maps: Record<MapId, { name: string; visible: boolean }>;
   /** All card instances in their initial zones; list order = order within each zone. */
   cards: CardInstance[];
+  connections: Edge[];
   chaosBag: ChaosToken[];
   campaign?: CampaignLog;
 }
