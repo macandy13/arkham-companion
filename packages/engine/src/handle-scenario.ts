@@ -42,9 +42,9 @@ export function handleAdvanceAgenda(state: GameState, cmd: AdvanceAgenda): Event
  * `AdvanceAct`: the investigators pay the act's clue requirement, then the
  * act advances. Payments are validated up front so a rejected command pays nothing.
  */
-export function handleAdvanceAct(state: GameState, cmd: AdvanceAct, ctx: EngineContext): Event[] {
+export function handleAdvanceAct(ctx: EngineContext, state: GameState, cmd: AdvanceAct): Event[] {
   const act = currentCard(state, 'act');
-  const payments = cluePayments(state, cmd.spend, clueRequirement(state, act, ctx));
+  const payments = cluePayments(state, cmd.spend, clueRequirement(ctx, state, act));
   const advance = advanceDeck(state, 'act', cmd.resolution);
   return [...payments, ...advance.events, ...reverseSideEvents(), ...advance.ended];
 }
@@ -111,9 +111,9 @@ function doomRemoval(state: GameState): (TokensChanged | InvestigatorChanged)[] 
 }
 
 /** Clues the act costs for the starting player count; 0 for an act without a clue value. */
-function clueRequirement(state: GameState, act: CardInstance, ctx: EngineContext): number {
-  const printed = cardStats(ctx.cards, act.code).clues;
-  return printed === undefined ? 0 : resolveValue(printed, state.meta.playerCount);
+function clueRequirement(ctx: EngineContext, state: GameState, act: CardInstance): number {
+  const threshold = cardStats(ctx.cards, act.code).clues;
+  return threshold ? resolveValue(threshold, state.meta.playerCount) : 0;
 }
 
 /** One `InvestigatorChanged` per payment; rejects payments that do not add up to `required`. */

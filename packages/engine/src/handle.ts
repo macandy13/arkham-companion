@@ -44,16 +44,16 @@ export function handle(ctx: EngineContext, state: GameState, command: Command): 
       return handleMoveInvestigator(ctx, state, command);
     case 'AdjustInvestigator':
       return command.stat === 'doomOnPlayerCards'
-        ? withAgendaCheck(state, handleAdjustInvestigator(state, command), ctx)
+        ? withAgendaCheck(ctx, state, handleAdjustInvestigator(state, command))
         : handleAdjustInvestigator(state, command);
     case 'DiscoverClues':
       return handleDiscoverClues(state, command);
     case 'PlaceDoom':
-      return withAgendaCheck(state, handlePlaceDoom(state, command), ctx);
+      return withAgendaCheck(ctx, state, handlePlaceDoom(state, command));
     case 'AdvanceAgenda':
       return handleAdvanceAgenda(state, command);
     case 'AdvanceAct':
-      return handleAdvanceAct(state, command, ctx);
+      return handleAdvanceAct(ctx, state, command);
   }
 }
 

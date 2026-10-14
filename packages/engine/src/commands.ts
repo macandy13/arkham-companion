@@ -186,7 +186,7 @@ export interface ClueSpend {
 /**
  * Advances the current act. The investigators choose who pays, so `spend`
  * lists their payments; the total must equal the act's clue requirement
- * (`clueValue` for the starting player count), and it is empty for an act
+ * (its `clues`, resolved for the starting player count), and it is empty for an act
  * without one. Produces `InvestigatorChanged` per payment, `CardFlipped`,
  * `CardMoved`, `ActAdvanced` and, for the last act, `ScenarioEnded`.
  */

@@ -58,11 +58,14 @@ export function doomInPlay(state: GameState): number {
  * emitted while one is open. The check runs after doom is placed; the phase
  * assistant (M1.10) decides when the rules actually allow advancing.
  */
-export function agendaThresholdDecision(state: GameState, ctx: EngineContext): DecisionRequested[] {
+export function agendaThresholdDecision(ctx: EngineContext, state: GameState): DecisionRequested[] {
   const agenda = state.agenda.current === undefined ? undefined : state.cards[state.agenda.current];
   if (!agenda) return [];
-  const printed = cardStats(ctx.cards, agenda.code).doom;
-  if (printed === undefined || doomInPlay(state) < resolveValue(printed, state.meta.playerCount))
+  const threshold = cardStats(ctx.cards, agenda.code).doom;
+  if (
+    threshold === undefined ||
+    doomInPlay(state) < resolveValue(threshold, state.meta.playerCount)
+  )
     return [];
   const id = decisionId(`advanceAgenda:${agenda.id}`);
   if (state.pending.some((decision) => decision.id === id)) return [];
@@ -84,6 +87,6 @@ export function agendaThresholdDecision(state: GameState, ctx: EngineContext): D
 }
 
 /** `events` followed by the agenda question if they brought the doom total to the threshold. */
-export function withAgendaCheck(state: GameState, events: Event[], ctx: EngineContext): Event[] {
-  return [...events, ...agendaThresholdDecision(replay(events, state), ctx)];
+export function withAgendaCheck(ctx: EngineContext, state: GameState, events: Event[]): Event[] {
+  return [...events, ...agendaThresholdDecision(ctx, replay(events, state))];
 }
