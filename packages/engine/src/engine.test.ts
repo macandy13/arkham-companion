@@ -10,7 +10,13 @@ import {
   type Command,
   type StartScenario,
 } from './index';
-import { makeInvestigator, rejectionOf, run as runWith, testContext } from '../test/utils';
+import {
+  makeInvestigator,
+  rejectionFrom,
+  rejectionOf,
+  run as runWith,
+  testContext,
+} from '../test/utils';
 
 const main = mapId('main');
 const loc = instanceId('loc');
@@ -354,13 +360,11 @@ describe('MoveCard', () => {
     const { state } = run([start]);
     const elsewhere = mapId('elsewhere');
 
-    const rejection = rejectionOf(() =>
-      handle(testContext, state, {
-        type: 'MoveCard',
-        cardId: loc,
-        to: { kind: 'location', mapId: elsewhere },
-      }),
-    );
+    const rejection = rejectionFrom(testContext, state, {
+      type: 'MoveCard',
+      cardId: loc,
+      to: { kind: 'location', mapId: elsewhere },
+    });
 
     expect(rejection).toEqual({ code: 'unknownMap', mapId: elsewhere });
   });
@@ -369,9 +373,11 @@ describe('MoveCard', () => {
     const { state } = run([start]);
     const missing = instanceId('missing');
 
-    const rejection = rejectionOf(() =>
-      handle(testContext, state, { type: 'MoveCard', cardId: missing, to: { kind: 'outOfGame' } }),
-    );
+    const rejection = rejectionFrom(testContext, state, {
+      type: 'MoveCard',
+      cardId: missing,
+      to: { kind: 'outOfGame' },
+    });
 
     expect(rejection).toEqual({ code: 'unknownCard', cardId: missing });
   });

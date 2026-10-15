@@ -10,16 +10,18 @@ Code style and conventions (functions, comments, tests, markup, CSS, helpers) ar
 - **Engine is pure.** `packages/engine` has no React, DOM, IndexedDB, fetch or `Date.now()`/`Math.random()`. Randomness only via the seeded RNG in state.
 - **Every state change is Command → Events → reducer.** Never mutate state outside the reducer.
 - **Storage only via `GameStore`.** The app never talks to Dexie/IndexedDB directly.
-- **Never commit ArkhamDB card JSON or card images.** Fetched data goes to `packages/carddata/.cache/` (gitignored). Tests use invented cards or the hand-written test scenario (`packages/scenarios/src/the-gathering/`): real card codes and names are fine there, but stats are entered by hand and there is no card text, JSON or image.
+- **Never commit ArkhamDB card JSON or card images.** Fetched data goes to `packages/carddata/.cache/` (gitignored). Tests use invented cards or the hand-written test scenario (`packages/scenarios/src/the_gathering/`): real card codes and names are fine there, but stats are entered by hand and there is no card text, JSON or image.
 - **Generic before specific:** if two scenarios need it, make it an engine primitive.
 - **Markup is structure only.** JSX/HTML is a plain document tree of semantic elements (no `<strong>`, `<b>`, `<br>`, inline `style`, layout/styling class names); all presentation lives in CSS.
+- **Underscores, never dashes, in source file and directory names** under `packages/` and `apps/` (`handle_board.ts`, `the_gathering/`). Tool-mandated names keep theirs (`pnpm-workspace.yaml`, `release-please-config.json`, `.claude/` agent and hook files, `docs/*.md`).
 - **No German words in code** (identifiers); German only in UI translation strings.
 - TypeScript strict, no `any` without a comment explaining why.
 - Every exported interface, type, class and non-trivial function gets a doc comment explaining its purpose and, where it isn't obvious, how it relates to other types (e.g. which reducer produces it, which ID it refers to). Also explain non-obvious design choices (why, not what).
 - **In-code comments explain why, not what.** Inside function bodies, comment only to give a motivation the code can't express (game rule, workaround, trade-off) – never to narrate steps.
 - **Styles use tokens.** Colours, spacing, sizes come from `apps/web/src/styles/tokens.css`; no raw values or copy-pasted declarations elsewhere.
-- **Reuse helpers.** Generic string/array/object operations live in `@arkham/util` (`packages/util`); add missing ones there with tests instead of inlining them.
-- Tests with every change: Vitest unit tests for engine logic; cover invariants with example-based table tests (`it.each`), no property-based testing. Keep tests local: the values an assertion depends on are visible in the test or its `describe` setup.
+- **Reuse helpers.** Generic string/array/object operations live in `@arkham/util` (`packages/util`); add missing ones there with tests instead of inlining them. **Shared functions live next to the entity they handle** (card lookups with the cards, location queries with the board); only generic string, array and object helpers go to `@arkham/util`.
+- Tests with every change: Vitest unit tests for engine logic; cover invariants with example-based table tests (`it.each`), no property-based testing.
+- **Tests are readable and local.** A reader must understand each test from its body plus the `describe` setup right above it, without scrolling or decoding. Every card, ID, zone and value an assertion checks is written there with a readable name (`plain_treachery`, `instanceId('top_card')`). No generated or positional IDs (`d0`, `L1`), no cryptic codes, no shared fixtures whose contents matter but sit far away, no hidden defaults that affect the result. Helpers may build state, but their call site must name what they build.
 
 ## Commands
 
@@ -42,6 +44,7 @@ Before finishing a task: `pnpm typecheck && pnpm lint && pnpm test` must pass. A
    `feat(engine): add hunter movement (M1.8)`, `fix(web): …`, `docs: …`, `test: …`, `refactor: …`, `chore: …`, `ci: …`. Scope = package (`engine`, `carddata`, `scenarios`, `web`, `util`) when it fits.
    **The PR description starts with the motivation** – why the PR exists and what it is trying to accomplish – before any list of changes. Follow `.github/pull_request_template.md`.
 5. CI must be green: typecheck, lint, coverage floors, E2E, CodeQL. Check the PR preview link and the bundle-size comment for UI changes.
+   **UI changes extend or add an `@flow` E2E spec** (rules in `docs/coding-guidelines.md` §3); the preview workflow records it and puts the screencast into the PR description.
 
 ## Subagents
 

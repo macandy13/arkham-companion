@@ -5,18 +5,13 @@ import {
   handleRemoveConnection,
   handleRevealLocation,
   validateConnections,
-} from './handle-board';
+} from './handle_board';
 import {
   handleAdjustInvestigator,
   handleDiscoverClues,
   handleMoveInvestigator,
-} from './handle-investigator';
-import {
-  handleDrawEncounter,
-  handleDrawTopmostFromDiscard,
-  handleFromSetAside,
-  handleShuffleInto,
-} from './handle-encounter';
+} from './handle_investigator';
+import { handleDrawEncounter, handleFromSetAside, handleShuffleInto } from './handle_encounter';
 import {
   handleDamageEnemy,
   handleDefeatEnemy,
@@ -24,7 +19,7 @@ import {
   handleEngageEnemy,
   handleExhaustEnemy,
   handleReadyEnemy,
-} from './handle-enemy';
+} from './handle_enemy';
 import { startingEngagements } from './engagement';
 import { handleSpawnEnemy } from './spawn';
 import {
@@ -41,10 +36,11 @@ import {
   handleAdvanceAgenda,
   handleEndScenario,
   handlePlaceDoom,
-} from './handle-scenario';
+} from './handle_scenario';
 import type { Adjustment, Command, MoveCard, StartScenario, StartingCard } from './commands';
 import type { CardMoved, DeckShuffled, Event, ScenarioStarted, TokensChanged } from './events';
 import { instanceId, type InstanceId, type MapId } from './ids';
+import { requireCard } from './lookup';
 import { createMap, type GameMap, type MapSpec } from './map';
 import { apply, replay } from './reducer';
 import { CommandRejected, type Rejection } from './rejection';
@@ -208,8 +204,6 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
       return handleEndScenario(command);
     case 'DrawEncounter':
       return handleDrawEncounter(ctx, state, command);
-    case 'DrawTopmostFromDiscard':
-      return handleDrawTopmostFromDiscard(ctx, state, command);
     case 'FromSetAside':
       return handleFromSetAside(state, command);
     case 'ShuffleInto':
@@ -229,7 +223,7 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
     case 'ReadyEnemy':
       return handleReadyEnemy(ctx, state, command);
     case 'MoveHunters':
-      return handleMoveHunters(ctx, state);
+      return handleMoveHunters(ctx, state, command);
     case 'MoveHunter':
       return handleMoveHunter(ctx, state, command);
     case 'RequestDecision':
@@ -328,8 +322,7 @@ function startingMaps(specs: Readonly<Record<MapId, MapSpec>>): Record<MapId, Ga
 
 /** Rejects `cardId` unless it is a known card on a map. */
 function validateLocation(cards: Record<InstanceId, CardInstance>, cardId: InstanceId): void {
-  const card = cards[cardId];
-  if (!card) throw new CommandRejected({ code: 'unknownCard', cardId });
+  const card = requireCard(cards, cardId);
   if (card.zone.kind !== 'location') throw new CommandRejected({ code: 'notALocation', cardId });
 }
 
@@ -344,14 +337,11 @@ function encounterDeckShuffle(state: GameState): DeckShuffled[] {
 
 /** `MoveCard`: the same move a `ManualAdjust` makes, as a game event. */
 function handleMoveCard(state: GameState, cmd: MoveCard): CardMoved {
-  const card = state.cards[cmd.cardId];
-  if (!card) throw new CommandRejected({ code: 'unknownCard', cardId: cmd.cardId });
-  return cardMoved(state, card, cmd.to);
+  return cardMoved(state, requireCard(state.cards, cmd.cardId), cmd.to);
 }
 
 function handleAdjustment(state: GameState, adj: Adjustment): CardMoved | TokensChanged {
-  const card = state.cards[adj.cardId];
-  if (!card) throw new CommandRejected({ code: 'unknownCard', cardId: adj.cardId });
+  const card = requireCard(state.cards, adj.cardId);
 
   switch (adj.kind) {
     case 'moveCard':

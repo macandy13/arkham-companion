@@ -19,6 +19,17 @@ export function assertNoPendingDecision(state: GameState, command: Command): voi
   throw new CommandRejected({ code: 'decisionPending', decisionId: pending.id });
 }
 
+/**
+ * A `DecisionRequested` for `decision`, unless one with this id is already open.
+ * For rule modules that re-check a condition after every change (agenda
+ * threshold, engagement, hunter ties) and must not ask twice; the
+ * `RequestDecision` command is stricter and rejects a duplicate.
+ */
+export function requestDecision(state: GameState, decision: Decision): DecisionRequested[] {
+  if (state.pending.some((pending) => pending.id === decision.id)) return [];
+  return [{ type: 'DecisionRequested', decision }];
+}
+
 /** `RequestDecision`: raises a scenario- or card-defined decision. */
 export function handleRequestDecision(
   state: GameState,

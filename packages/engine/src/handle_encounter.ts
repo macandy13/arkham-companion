@@ -1,9 +1,16 @@
 import { cardStats, type CardStats, type EngineContext } from './cards';
-import type { DrawEncounter, DrawTopmostFromDiscard, FromSetAside, ShuffleInto } from './commands';
+import type {
+  DrawEncounter,
+  EncounterMatch,
+  EncounterSource,
+  FromSetAside,
+  ShuffleInto,
+} from './commands';
 import type { CardFlipped, CardMoved, DeckShuffled, EncounterCardDrawn, Event } from './events';
-import { activeInvestigator } from './handle-investigator';
+import { activeInvestigator } from './handle_investigator';
 import type { InstanceId } from './ids';
 import { hasKeyword } from './keywords';
+import { requireCard } from './lookup';
 import { cardMoved } from './placement';
 import { spawnEvents } from './spawn';
 import { replay } from './reducer';
@@ -23,12 +30,15 @@ interface Draw {
 }
 
 /**
- * `DrawEncounter`: draws until a card without surge has been drawn. Each card
- * is resolved (moved to its place) before the next is drawn, and the deck is
- * refilled as soon as its last card has been placed, so a discarded surge card
- * is shuffled back in before the surge draw. The players resolve the
- * revelation effects themselves; the app does not wait for that between surge
- * draws.
+ * `DrawEncounter`: draws until a card without surge has been drawn. The first
+ * card is the top of the deck or, with `match`, the first matching card; both
+ * go through the same `drawOne`, so a card taken from the discard is revealed,
+ * placed and checked for surge exactly like one from the deck, and surge draws
+ * continue from the top. Each card is resolved (moved to its place) before the
+ * next is drawn, and the deck is refilled as soon as its last card has been
+ * placed, so a discarded surge card is shuffled back in before the surge draw.
+ * The players resolve the revelation effects themselves; the app does not wait
+ * for that between surge draws.
  */
 export function handleDrawEncounter(
   ctx: EngineContext,
@@ -38,9 +48,21 @@ export function handleDrawEncounter(
   const investigator = activeInvestigator(state, cmd.investigatorId);
   const events: Event[] = [];
   let current = state;
+  let target: InstanceId | undefined;
+  if (cmd.match) {
+    const from = cmd.from ?? 'deck';
+    target = findMatch(ctx, state, from, cmd.match);
+    // Only a deck match has cards above it to discard; a discard match has none.
+    const skipped = cmd.discardSkipped ? cardsAbove(state, target) : [];
+    events.push(
+      ...skipped.map((id) => cardMoved(state, requireCard(state.cards, id), ENCOUNTER_DISCARD, 0)),
+    );
+    current = replay(events, state);
+  }
   // A deck made only of surge cards would otherwise reshuffle and draw forever.
   for (let budget = encounterCardCount(state); budget > 0; budget--) {
-    const draw = drawOne(ctx, current, investigator);
+    const draw = drawOne(ctx, current, investigator, target);
+    target = undefined;
     if (!draw) break;
     events.push(...draw.events);
     current = replay(draw.events, current);
@@ -50,24 +72,47 @@ export function handleDrawEncounter(
   return events;
 }
 
-/** `DrawTopmostFromDiscard`: moves the first card of the encounter discard with that name. */
-export function handleDrawTopmostFromDiscard(
+/**
+ * The first card of `from` that fulfils every field of `match`: deck top-down,
+ * then discard top-down. Rejects when there is none, before anything changes.
+ */
+function findMatch(
   ctx: EngineContext,
   state: GameState,
-  cmd: DrawTopmostFromDiscard,
-): CardMoved[] {
-  const cardId = cardsIn(state, ENCOUNTER_DISCARD).find(
-    (id) => ctx.cards.get(cardOf(state, id).code)?.name === cmd.name,
+  from: EncounterSource,
+  match: EncounterMatch,
+): InstanceId {
+  const zones =
+    from === 'deckOrDiscard'
+      ? [ENCOUNTER_DECK, ENCOUNTER_DISCARD]
+      : [from === 'deck' ? ENCOUNTER_DECK : ENCOUNTER_DISCARD];
+  const found = zones
+    .flatMap((zone) => cardsIn(state, zone))
+    .find((id) => matches(cardStats(ctx.cards, requireCard(state.cards, id).code), match));
+  if (found === undefined) throw new CommandRejected({ code: 'noMatchingCard', from, match });
+  return found;
+}
+
+/** Whether the card fulfils every field `match` sets. */
+function matches(stats: CardStats, match: EncounterMatch): boolean {
+  return (
+    (match.name === undefined || stats.name === match.name) &&
+    (match.trait === undefined || stats.traits.includes(match.trait)) &&
+    (match.typeCode === undefined || stats.typeCode === match.typeCode)
   );
-  if (cardId === undefined)
-    throw new CommandRejected({ code: 'cardNotInZone', zone: 'encounterDiscard', match: cmd.name });
-  return [cardMoved(state, cardOf(state, cardId), cmd.to)];
+}
+
+/** The deck cards above `cardId`, top first; none when it is not in the deck. */
+function cardsAbove(state: GameState, cardId: InstanceId): readonly InstanceId[] {
+  const deck = cardsIn(state, ENCOUNTER_DECK);
+  const index = deck.indexOf(cardId);
+  return index < 0 ? [] : deck.slice(0, index);
 }
 
 /** `FromSetAside`: moves one set-aside copy of each code to `to`. */
 export function handleFromSetAside(state: GameState, cmd: FromSetAside): CardMoved[] {
   return takeFromSetAside(state, cmd.codes).map((cardId) =>
-    cardMoved(state, cardOf(state, cardId), cmd.to),
+    cardMoved(state, requireCard(state.cards, cardId), cmd.to),
   );
 }
 
@@ -83,22 +128,23 @@ function encounterCardCount(state: GameState): number {
 }
 
 /**
- * Draws the top card of the encounter deck and places it; if that emptied the
- * deck, the discard is shuffled back in right away. `undefined` when there is
- * no card left to draw.
+ * Draws `target` (default: the top card of the encounter deck) and places it;
+ * if that emptied the deck, the discard is shuffled back in right away.
+ * `undefined` when there is no card left to draw.
  */
 function drawOne(
   ctx: EngineContext,
   state: GameState,
   investigator: Investigator,
+  target?: InstanceId,
 ): Draw | undefined {
   // Draws keep the deck refilled themselves; an empty deck with a discard can
   // still come from a manual correction or a setup, and the rule applies then too.
   const refill = refillIfEmpty(state);
-  const [cardId] = cardsIn(replay(refill, state), ENCOUNTER_DECK);
+  const cardId = target ?? cardsIn(replay(refill, state), ENCOUNTER_DECK)[0];
   if (cardId === undefined) return undefined;
 
-  const stats = cardStats(ctx.cards, cardOf(state, cardId).code);
+  const stats = cardStats(ctx.cards, requireCard(state.cards, cardId).code);
   const surge = hasKeyword(stats, 'surge');
   const drawn: EncounterCardDrawn = {
     type: 'EncounterCardDrawn',
@@ -129,7 +175,9 @@ function refillIfEmpty(state: GameState): Event[] {
 
 /**
  * The events that place a drawn card. An enemy spawns (spawn instruction,
- * engagement) like `SpawnEnemy`, with the drawer as fallback location.
+ * engagement) like `SpawnEnemy`, with the drawer as fallback location; every
+ * other card goes to the threat area or the top of the discard. The card may
+ * come from the discard (`match`), so the origin is read from the state.
  */
 function placement(
   ctx: EngineContext,
@@ -144,15 +192,14 @@ function placement(
     stats.typeCode === 'treachery' && stats.entersThreatArea
       ? { kind: 'threatArea', investigatorId: investigator.id }
       : ENCOUNTER_DISCARD;
+  // Index 0 is the top, and the discard's top is what "topmost" effects look for.
   return [
-    {
-      type: 'CardMoved',
-      cardId,
-      from: ENCOUNTER_DECK,
+    cardMoved(
+      state,
+      requireCard(state.cards, cardId),
       to,
-      // Index 0 is the top, and the discard's top is what "topmost" effects look for.
-      ...(to.kind === 'encounterDiscard' ? { index: 0 } : {}),
-    },
+      to.kind === 'encounterDiscard' ? 0 : undefined,
+    ),
   ];
 }
 
@@ -163,7 +210,7 @@ function placement(
  */
 function shuffleInto(state: GameState, cardIds: readonly InstanceId[], zone: Zone): Event[] {
   if (cardIds.length === 0) return [];
-  const moves = cardIds.map((cardId) => cardMoved(state, cardOf(state, cardId), zone));
+  const moves = cardIds.map((cardId) => cardMoved(state, requireCard(state.cards, cardId), zone));
   const remaining = cardsIn(state, zone).filter((id) => !cardIds.includes(id));
   const [order, rngState] = shuffle([...remaining, ...cardIds], state.meta.rngState);
   const shuffled: DeckShuffled = { type: 'DeckShuffled', zone, order, rngState };
@@ -174,7 +221,7 @@ function shuffleInto(state: GameState, cardIds: readonly InstanceId[], zone: Zon
 function takeFromSetAside(state: GameState, codes: readonly string[]): InstanceId[] {
   const { taken } = codes.reduce(
     (acc, code) => {
-      const cardId = acc.available.find((id) => cardOf(state, id).code === code);
+      const cardId = acc.available.find((id) => requireCard(state.cards, id).code === code);
       if (cardId === undefined)
         throw new CommandRejected({ code: 'cardNotInZone', zone: 'setAside', match: code });
       return {
@@ -190,10 +237,4 @@ function takeFromSetAside(state: GameState, codes: readonly string[]): InstanceI
 /** The cards of a zone, top first. */
 function cardsIn(state: GameState, zone: Zone): readonly InstanceId[] {
   return state.order[zoneKey(zone)] ?? [];
-}
-
-function cardOf(state: GameState, cardId: InstanceId) {
-  const card = state.cards[cardId];
-  if (!card) throw new CommandRejected({ code: 'unknownCard', cardId });
-  return card;
 }

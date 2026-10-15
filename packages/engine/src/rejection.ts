@@ -1,4 +1,4 @@
-import type { CommandType } from './commands';
+import type { CommandType, EncounterMatch, EncounterSource } from './commands';
 import type { DecisionId, InstanceId, InvestigatorId, MapId } from './ids';
 import type { InvestigatorStat, TokenKind } from './state';
 
@@ -68,6 +68,8 @@ export type Rejection =
   | { code: 'resolutionRequired'; deck: 'agenda' | 'act' }
   /** `AdvanceAgenda`/`AdvanceAct` names a fallback resolution although further cards follow. */
   | { code: 'unexpectedResolution'; deck: 'agenda' | 'act' }
+  /** `AdvanceAct` pays clues for an act whose card data has no clue threshold. */
+  | { code: 'noClueThreshold'; cardId: InstanceId }
   /** The clues paid for an act do not add up to its requirement. */
   | { code: 'wrongClueTotal'; required: number; spent: number }
   /**
@@ -78,8 +80,10 @@ export type Rejection =
   | { code: 'encounterDeckEmpty' }
   /** `DrawEncounter` brought an enemy for an investigator who is not at a location. */
   | { code: 'investigatorHasNoLocation'; investigatorId: InvestigatorId }
-  /** No card matching `match` (a name or code) is in the `zone` the command takes it from. */
-  | { code: 'cardNotInZone'; zone: 'encounterDiscard' | 'setAside'; match: string }
+  /** `DrawEncounter` with a `match` that no card of the searched `from` encounter cards fulfils. */
+  | { code: 'noMatchingCard'; from: EncounterSource; match: EncounterMatch }
+  /** No card with code `match` is set aside. */
+  | { code: 'cardNotInZone'; zone: 'setAside'; match: string }
   /** An enemy command names a card whose type is not `enemy`. */
   | { code: 'notAnEnemy'; cardId: InstanceId }
   /** `SpawnEnemy` for an enemy that is already in play. */
@@ -199,12 +203,16 @@ function describe(r: Rejection): string {
       return `the last ${r.deck} needs a resolution`;
     case 'unexpectedResolution':
       return `a resolution is only allowed for the last ${r.deck}`;
+    case 'noClueThreshold':
+      return `${r.cardId} has no clue threshold to pay`;
     case 'wrongClueTotal':
       return `${r.required} clues are required, ${r.spent} spent`;
     case 'encounterDeckEmpty':
       return 'the encounter deck and its discard are empty';
     case 'investigatorHasNoLocation':
       return `investigator ${r.investigatorId} is not at a location`;
+    case 'noMatchingCard':
+      return `no card matching ${JSON.stringify(r.match)} in ${r.from}`;
     case 'cardNotInZone':
       return `no ${r.match} in ${r.zone}`;
     case 'notAnEnemy':

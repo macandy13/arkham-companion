@@ -16,6 +16,7 @@ import {
   makeSetupOptions,
   runFrom,
   startScenario,
+  stateAfter,
 } from '@arkham/engine/test/utils';
 import {
   GATHERING_CODES as codes,
@@ -170,7 +171,7 @@ describe('The Gathering act 1 reverse side', () => {
   }
 
   it('puts the house into play with the Hallway connected to the other three rooms', () => {
-    const { state } = runFrom(playing, startTwoPlayer(), advanceTrapped);
+    const state = stateAfter(playing, startTwoPlayer(), ...advanceTrapped);
 
     expect(codesIn(state, { kind: 'location', mapId: mapId('house') })).toEqual([
       codes.hallway,
@@ -183,7 +184,7 @@ describe('The Gathering act 1 reverse side', () => {
   });
 
   it('moves every investigator to the revealed Hallway and removes the Study', () => {
-    const { state } = runFrom(playing, startTwoPlayer(), advanceTrapped);
+    const state = stateAfter(playing, startTwoPlayer(), ...advanceTrapped);
 
     expect(state.investigators.map((inv) => inv.locationId)).toEqual([hallway, hallway]);
     expect(state.cards[hallway]?.faceUp).toBe(true);
@@ -194,7 +195,9 @@ describe('The Gathering act 1 reverse side', () => {
   it('discards the enemies in the Study, engaged ones included', () => {
     const fleshEater = instanceId('01118#1');
     const icyGhoul = instanceId('01119#1');
-    const withEnemies = runFrom(playing, startTwoPlayer(), [
+    const withEnemies = stateAfter(
+      playing,
+      startTwoPlayer(),
       {
         type: 'ManualAdjust',
         adjustment: {
@@ -211,9 +214,9 @@ describe('The Gathering act 1 reverse side', () => {
           to: { kind: 'engaged', investigatorId: seeker },
         },
       },
-    ]).state;
+    );
 
-    const { state } = runFrom(playing, withEnemies, advanceTrapped);
+    const state = stateAfter(playing, withEnemies, ...advanceTrapped);
 
     expect(codesIn(state, { kind: 'encounterDiscard' })).toEqual(['01118', '01119']);
   });
@@ -234,12 +237,13 @@ describe('The Gathering enemies', () => {
   const fleshEater = instanceId('01118#1');
   const priest = instanceId('01116#1');
   const attic = instanceId('01113#1');
+  const hallway = instanceId('01112#1');
   const tank = investigatorId('tank');
   const seeker = investigatorId('seeker');
-  const study = instanceId('01111#1');
+  const studyCard = instanceId('01111#1');
   const advanceTrapped: Command[] = [
-    { type: 'DiscoverClues', investigatorId: tank, locationId: study, amount: 2 },
-    { type: 'DiscoverClues', investigatorId: seeker, locationId: study, amount: 2 },
+    { type: 'DiscoverClues', investigatorId: tank, locationId: studyCard, amount: 2 },
+    { type: 'DiscoverClues', investigatorId: seeker, locationId: studyCard, amount: 2 },
     {
       type: 'AdvanceAct',
       spend: [
@@ -275,10 +279,7 @@ describe('The Gathering enemies', () => {
     ]);
 
     // Prey "Highest [combat]" needs investigator card data, so the players choose.
-    expect(state.cards[priest]?.zone).toEqual({
-      kind: 'atLocation',
-      locationId: instanceId('01112#1'),
-    });
+    expect(state.cards[priest]?.zone).toEqual({ kind: 'atLocation', locationId: hallway });
     expect(state.pending).toMatchObject([{ kind: 'chooseInvestigator', subject: priest }]);
     expect(checkInvariants(state)).toEqual([]);
   });

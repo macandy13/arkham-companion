@@ -111,3 +111,18 @@ Ref: architecture §11.
 Done when: open app → New game → refresh → game still listed.
 
 Done: `apps/web/src/App.tsx` renders the placeholder layout (header, games list, map, investigator bar, encounter panel; CSS grid in `app.css`). `state/appStore.ts` is a Zustand store factory around any `GameStore` (`refresh`, `newGame`, `openGame`); `main.tsx` wires it to `IndexedDbStore`. `vite-plugin-pwa` is configured with a manifest and an SVG icon (`public/icon.svg`; PNG icons for installability on some browsers are a follow-up). `i18n/index.ts` sets up i18next with `en`/`de` UI strings (browser language, `en` fallback) and a test that both have identical keys. A store test covers create → "refresh" → still listed. Follow-ups: language switcher (M4), real components per region, no component/E2E test of the button yet (Playwright, §12).
+
+## M0.7 PR screencasts (S)
+
+**Why:** Reviewing a UI change from a diff means imagining the screen; on a phone, opening the preview and clicking through is slow. A recording of the changed flow in the PR description makes the visual check a glance.
+
+**Benefit:** Every PR that touches `apps/web` shows GIFs of the user journeys, recorded from the same E2E specs that guard them, so the screencasts can't drift from what is tested.
+
+Ref: `docs/automation.md` (Screencasts), `docs/coding-guidelines.md` §3.
+
+- [x] Playwright project `screencast`: only `@flow` specs, video on with pointer, click highlights and step captions, `slowMo` 250 ms (`pnpm e2e:screencast`)
+- [x] `apps/web/scripts/screencast/`: pick passing videos from the JSON report, convert to GIF at 4 fps, render and splice the PR description section (unit tested)
+- [x] `preview.yml`: record when `apps/web` changes, publish next to the preview, update the description after deploy
+- [x] PR template markers, rules for flow specs, first `@flow` spec (the smoke flow)
+
+Done: `screencasts.ts` holds the pure parts (`flowVideos`, `gifArgs`, `renderSection`, `replaceSection`), `cli.ts` the ffmpeg/file side. GIFs are 4 fps (one frame per `slowMo` step), 800 px wide, the last frame held 2 s; the smoke flow is ~100 KB. Image URLs carry `?v=<sha>` because GitHub's image proxy caches by URL. Fix: the PWA service worker answered every navigation in its scope with the app shell, so the "Full-quality video" links (and, from the root deployment, the PR previews) opened the app; `src/pwa/appShellNavigation.ts` now limits the fallback to the base path, which is all hash routing needs. Follow-ups: a way to start a flow from a seeded game once the wizard exists (M2.5/M2.8); typecheck `apps/web/e2e/` (not covered by any tsconfig yet).

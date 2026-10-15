@@ -1,3 +1,4 @@
+import { stripTrailingDot } from '@arkham/util';
 import type { Brand } from './ids';
 import type { Keyword } from './keywords';
 import { CommandRejected } from './rejection';
@@ -165,6 +166,16 @@ export function cardDbFrom(defs: Iterable<CardStats>): CardDb {
     encounterSet: (encounterCode) =>
       [...byCode.values()].filter((def) => def.encounterCode === encounterCode),
   };
+}
+
+/**
+ * The form in which card names and keyword details (a `spawn` location, a
+ * `prey` criterion) are compared: case-insensitive, ignoring surrounding
+ * whitespace and the full stop that ends a printed instruction ("Spawn -
+ * Attic."). One function so that every lookup by printed text agrees.
+ */
+export function comparableName(text: string): string {
+  return stripTrailingDot(text.trim()).toLowerCase();
 }
 
 /** The definition for `code`; throws `CommandRejected` (`unknownCardCode`) if the db lacks it. */

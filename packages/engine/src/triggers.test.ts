@@ -7,18 +7,12 @@ import {
   investigatorId,
   mapId,
   type Command,
+  type Rejection,
   type EngineContext,
   type GameState,
-  type Rejection,
 } from './index';
 import { triggeredCommands } from './triggers';
-import {
-  edge,
-  makeInvestigator,
-  rejectionOf as rejectionFrom,
-  run,
-  testContext,
-} from '../test/utils';
+import { edge, makeInvestigator, rejectionFrom, run, stateAfter, testContext } from '../test/utils';
 
 const main = mapId('main');
 const hall = instanceId('hall');
@@ -67,10 +61,6 @@ function withHooks(
   effects?: EngineContext['effects'],
 ): EngineContext {
   return { ...testContext, hooks, ...(effects ? { effects } : {}) };
-}
-
-function rejectionOf(ctx: EngineContext, state: GameState, command: Command): Rejection {
-  return rejectionFrom(() => execute(ctx, state, command));
 }
 
 const placeDoomOnGhoul: Command = { type: 'PlaceDoom', cardId: ghoul, amount: 1 };
@@ -158,7 +148,7 @@ describe('trigger bus', () => {
     const ctx = withHooks({
       onAgendaAdvance: { A2: () => [{ type: 'EndScenario', resolution: 'R2' }] },
     });
-    const lastAgenda = execute(ctx, startedState(), { type: 'AdvanceAgenda' }).state;
+    const lastAgenda = stateAfter(ctx, startedState(), { type: 'AdvanceAgenda' });
 
     const { events, state } = execute(ctx, lastAgenda, { type: 'AdvanceAgenda' });
 
@@ -175,7 +165,7 @@ describe('trigger bus', () => {
     const ctx = withHooks({
       onAgendaAdvance: { A2: () => [{ type: 'EndScenario', resolution: 'R2' }] },
     });
-    const lastAgenda = execute(ctx, startedState(), { type: 'AdvanceAgenda' }).state;
+    const lastAgenda = stateAfter(ctx, startedState(), { type: 'AdvanceAgenda' });
 
     const { events, state } = execute(ctx, lastAgenda, { type: 'AdvanceAgenda', resolution: 'R1' });
 
@@ -283,7 +273,7 @@ describe('trigger bus failures', () => {
   it('rejects a chain that keeps re-triggering itself', () => {
     const ctx = withHooks({ afterDoomPlaced: () => [placeDoomOnGhoul] });
 
-    const rejection = rejectionOf(ctx, startedState(), placeDoomOnGhoul);
+    const rejection = rejectionFrom(ctx, startedState(), placeDoomOnGhoul);
 
     expect(rejection).toEqual({ code: 'triggerLoop', limit: MAX_TRIGGERED_COMMANDS });
   });
@@ -304,7 +294,7 @@ describe('trigger bus failures', () => {
       afterDoomPlaced: () => [{ type: 'RevealLocation', locationId: hall }],
     });
 
-    const rejection = rejectionOf(ctx, startedState(), placeDoomOnGhoul);
+    const rejection = rejectionFrom(ctx, startedState(), placeDoomOnGhoul);
 
     expect(rejection).toEqual({
       code: 'triggeredCommandRejected',
@@ -319,7 +309,7 @@ describe('trigger bus failures', () => {
       afterDoomPlaced: () => [{ type: 'RevealLocation', locationId: hall }],
     });
 
-    const rejection = rejectionOf(ctx, startedState(), advanceAct);
+    const rejection = rejectionFrom(ctx, startedState(), advanceAct);
 
     expect(rejection).toMatchObject({
       code: 'triggeredCommandRejected',
@@ -462,7 +452,7 @@ describe('trigger bus loop guard', () => {
     const state = startedState();
     const snapshot = structuredClone(state);
 
-    const rejection = rejectionOf(programContext(program), state, placeDoomOnGhoul);
+    const rejection = rejectionFrom(programContext(program), state, placeDoomOnGhoul);
 
     expect(rejection.code).toBe(code);
     expect(state).toEqual(snapshot);
