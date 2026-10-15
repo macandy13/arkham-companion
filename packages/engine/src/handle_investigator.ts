@@ -8,7 +8,7 @@ import type {
   InvestigatorMoved,
   TokensChanged,
 } from './events';
-import { handleRevealLocation } from './handle-board';
+import { handleRevealLocation } from './handle_board';
 import type { InvestigatorId } from './ids';
 import { defeatCause, statValue, withStatDelta } from './investigators';
 import { CommandRejected } from './rejection';

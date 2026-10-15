@@ -1,5 +1,6 @@
 import {
   investigatorId,
+  withStatDelta,
   type GameState,
   type Investigator,
   type InvestigatorId,
@@ -24,6 +25,15 @@ export function makeInvestigator(
     ...overrides,
     id: investigatorId(overrides.id),
   };
+}
+
+/**
+ * An investigator with `max` health who has already taken `damage`; the
+ * remaining health is what prey rules compare. Built on the engine's
+ * `withStatDelta`, so tests apply damage the way the reducer does.
+ */
+export function withHealth(id: string, max: number, damage: number): Investigator {
+  return withStatDelta(makeInvestigator({ id, health: { max, damage: 0 } }), 'damage', damage);
 }
 
 /**

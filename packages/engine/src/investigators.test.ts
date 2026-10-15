@@ -11,16 +11,18 @@ import {
   type Command,
   type GameState,
   type Investigator,
-  type Rejection,
 } from './index';
 import {
   edge,
   investigatorOf,
+  contextWith,
+  makeCard,
   makeInvestigator,
-  rejectionOf,
-  runFrom,
+  perInvestigator,
+  rejectionFrom,
+  stateAfter,
   startBoard,
-  testContext,
+  withHealth,
 } from '../test/utils';
 
 const hall = instanceId('hall');
@@ -29,16 +31,22 @@ const attic = instanceId('attic');
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
 
+const context = contextWith(
+  makeCard({ code: 'hall', typeCode: 'location', shroud: 2, clues: perInvestigator(1) }),
+  makeCard({ code: 'cellar', typeCode: 'location', shroud: 3, clues: perInvestigator(2) }),
+  makeCard({ code: 'attic', typeCode: 'location', shroud: 1, clues: perInvestigator(1) }),
+);
+
 /**
- * Hall (L1, 1 clue per investigator) - Cellar (L2, 2 per investigator), both
- * unrevealed; Attic (L3) is unconnected. Alice is placed at the hall, which
+ * Hall (1 clue per investigator) - Cellar (2 per investigator), both
+ * unrevealed; Attic is unconnected. Alice is placed at the hall, which
  * reveals it (2 clues with two investigators); Bob has no location.
  */
 function startWith(investigators: Investigator[]): GameState {
-  const board = startBoard(testContext, {
+  const board = startBoard(context, {
     maps: {
       main: {
-        locations: { hall: 'L1', cellar: 'L2', attic: 'L3' },
+        locations: { hall: 'hall', cellar: 'cellar', attic: 'attic' },
         connections: [edge('hall', 'cellar')],
       },
     },
@@ -47,13 +55,8 @@ function startWith(investigators: Investigator[]): GameState {
   return run(board, { type: 'MoveInvestigator', investigatorId: alice, to: hall });
 }
 
-function run(state: GameState, ...commands: Command[]): GameState {
-  return runFrom(testContext, state, commands).state;
-}
-
-function reject(state: GameState, command: Command): Rejection {
-  return rejectionOf(() => execute(testContext, state, command));
-}
+const run = (state: GameState, ...commands: Command[]) => stateAfter(context, state, ...commands);
+const reject = (state: GameState, command: Command) => rejectionFrom(context, state, command);
 
 describe('MoveInvestigator', () => {
   let state: GameState;
@@ -62,7 +65,7 @@ describe('MoveInvestigator', () => {
   });
 
   it('moves along a connection and reveals the destination with its clues', () => {
-    const result = execute(testContext, state, {
+    const result = execute(context, state, {
       type: 'MoveInvestigator',
       investigatorId: alice,
       to: cellar,
@@ -81,7 +84,7 @@ describe('MoveInvestigator', () => {
   it('does not reveal a destination that is already revealed', () => {
     const atCellar = run(state, { type: 'MoveInvestigator', investigatorId: alice, to: cellar });
 
-    const result = execute(testContext, atCellar, {
+    const result = execute(context, atCellar, {
       type: 'MoveInvestigator',
       investigatorId: alice,
       to: hall,
@@ -193,7 +196,7 @@ describe('AdjustInvestigator', () => {
   });
 
   it('defeats the investigator when damage reaches health', () => {
-    const result = execute(testContext, state, {
+    const result = execute(context, state, {
       type: 'AdjustInvestigator',
       investigatorId: alice,
       stat: 'damage',
@@ -420,9 +423,6 @@ describe('investigator state over a sequence of adjustments', () => {
 });
 
 describe('lowestRemainingHealth with ties', () => {
-  const withHealth = (id: string, max: number, damage: number): Investigator =>
-    makeInvestigator({ id, health: { max, damage } });
-
   it.each([
     ['a single investigator', [withHealth('a', 5, 4)], ['a']],
     ['a clear minimum', [withHealth('a', 9, 0), withHealth('b', 6, 1)], ['b']],
