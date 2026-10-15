@@ -3,11 +3,11 @@ import { theGatheringCards } from './cards';
 
 describe('The Gathering card data', () => {
   it.each([
-    { code: '01116', name: 'Ghoul Priest', keywords: ['elite', 'hunter', 'prey', 'retaliate'] },
+    { code: '01116', name: 'Ghoul Priest', keywords: ['hunter', 'prey', 'retaliate'] },
     { code: '01118', name: 'Flesh-Eater', keywords: ['spawn'] },
     { code: '01119', name: 'Icy Ghoul', keywords: ['spawn'] },
     { code: '01159', name: 'Swarm of Rats', keywords: ['hunter'] },
-    { code: '01160', name: 'Ghoul Minion', keywords: ['aloof'] },
+    { code: '01160', name: 'Ghoul Minion', keywords: [] },
     { code: '01161', name: 'Ravenous Ghoul', keywords: ['prey'] },
     { code: '01162', name: 'Grasping Hands', keywords: [] },
   ])('lists the keywords of $name', ({ code, keywords }) => {

@@ -84,6 +84,20 @@ export type Rejection =
   | { code: 'noMatchingCard'; from: EncounterSource; match: EncounterMatch }
   /** No card with code `match` is set aside. */
   | { code: 'cardNotInZone'; zone: 'setAside'; match: string }
+  /** An enemy command names a card whose type is not `enemy`. */
+  | { code: 'notAnEnemy'; cardId: InstanceId }
+  /** `SpawnEnemy` for an enemy that is already in play. */
+  | { code: 'enemyAlreadyInPlay'; cardId: InstanceId }
+  /** An enemy command (engage, damage, exhaust, …) for an enemy that is not in play. */
+  | { code: 'enemyNotInPlay'; cardId: InstanceId }
+  /** `SpawnEnemy` without `at`, a unique `spawn` location or a drawing investigator. */
+  | { code: 'noSpawnLocation'; cardId: InstanceId }
+  /** `EngageEnemy` for the investigator the enemy is already engaged with. */
+  | { code: 'alreadyEngaged'; cardId: InstanceId; investigatorId: InvestigatorId }
+  /** `DisengageEnemy` for an enemy that is not engaged. */
+  | { code: 'notEngaged'; cardId: InstanceId }
+  /** Exhausting an exhausted card or readying a ready one. */
+  | { code: 'exhaustUnchanged'; cardId: InstanceId; exhausted: boolean }
   | { code: 'triggerLoop'; limit: number }
   /** A command returned by a hook or card effect was rejected for `reason`. */
   | { code: 'triggeredCommandRejected'; command: CommandType; reason: Rejection }
@@ -185,6 +199,20 @@ function describe(r: Rejection): string {
       return `no card matching ${JSON.stringify(r.match)} in ${r.from}`;
     case 'cardNotInZone':
       return `no ${r.match} in ${r.zone}`;
+    case 'notAnEnemy':
+      return `${r.cardId} is not an enemy`;
+    case 'enemyAlreadyInPlay':
+      return `${r.cardId} is already in play`;
+    case 'enemyNotInPlay':
+      return `${r.cardId} is not in play`;
+    case 'noSpawnLocation':
+      return `no spawn location for ${r.cardId}`;
+    case 'alreadyEngaged':
+      return `${r.cardId} is already engaged with ${r.investigatorId}`;
+    case 'notEngaged':
+      return `${r.cardId} is not engaged`;
+    case 'exhaustUnchanged':
+      return `${r.cardId} is already ${r.exhausted ? 'exhausted' : 'ready'}`;
     case 'triggerLoop':
       return `forced effects triggered more than ${r.limit} follow-up commands`;
     case 'triggeredCommandRejected':

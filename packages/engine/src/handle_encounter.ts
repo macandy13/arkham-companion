@@ -12,7 +12,7 @@ import type { InstanceId } from './ids';
 import { hasKeyword } from './keywords';
 import { requireCard } from './lookup';
 import { cardMoved } from './placement';
-import { spawnZone } from './spawn';
+import { spawnEvents } from './spawn';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
 import { shuffle } from './rng';
@@ -145,7 +145,6 @@ function drawOne(
   if (cardId === undefined) return undefined;
 
   const stats = cardStats(ctx.cards, requireCard(state.cards, cardId).code);
-  const to = destinationOf(stats, investigator);
   const surge = hasKeyword(stats, 'surge');
   const drawn: EncounterCardDrawn = {
     type: 'EncounterCardDrawn',
@@ -155,14 +154,12 @@ function drawOne(
     surge,
   };
   const revealed: CardFlipped = { type: 'CardFlipped', cardId, faceUp: true };
-  // Index 0 is the top, and the discard's top is what "topmost" effects look for.
-  const placed = cardMoved(
-    state,
-    requireCard(state.cards, cardId),
-    to,
-    to.kind === 'encounterDiscard' ? 0 : undefined,
-  );
-  const events: Event[] = [...refill, drawn, revealed, placed];
+  const events: Event[] = [
+    ...refill,
+    drawn,
+    revealed,
+    ...placement(ctx, state, stats, cardId, investigator),
+  ];
   return { events: [...events, ...refillIfEmpty(replay(events, state))], surge };
 }
 
@@ -177,22 +174,33 @@ function refillIfEmpty(state: GameState): Event[] {
 }
 
 /**
- * Where a drawn card goes. Enemies enter through `spawnZone`, which today
- * leaves them unengaged at the drawer's location; engagement, aloof and spawn
- * instructions arrive with `SpawnEnemy` (M1.8) by extending that function.
+ * The events that place a drawn card. An enemy spawns (spawn instruction,
+ * engagement) like `SpawnEnemy`, with the drawer as fallback location; every
+ * other card goes to the threat area or the top of the discard. The card may
+ * come from the discard (`match`), so the origin is read from the state.
  */
-function destinationOf(stats: CardStats, investigator: Investigator): Zone {
-  if (stats.typeCode === 'enemy') {
-    if (investigator.locationId === undefined)
-      throw new CommandRejected({
-        code: 'investigatorHasNoLocation',
-        investigatorId: investigator.id,
-      });
-    return spawnZone(investigator.locationId);
-  }
-  if (stats.typeCode === 'treachery' && stats.entersThreatArea)
-    return { kind: 'threatArea', investigatorId: investigator.id };
-  return ENCOUNTER_DISCARD;
+function placement(
+  ctx: EngineContext,
+  state: GameState,
+  stats: CardStats,
+  cardId: InstanceId,
+  investigator: Investigator,
+): Event[] {
+  if (stats.typeCode === 'enemy')
+    return spawnEvents(ctx, state, cardId, { investigatorId: investigator.id });
+  const to: Zone =
+    stats.typeCode === 'treachery' && stats.entersThreatArea
+      ? { kind: 'threatArea', investigatorId: investigator.id }
+      : ENCOUNTER_DISCARD;
+  // Index 0 is the top, and the discard's top is what "topmost" effects look for.
+  return [
+    cardMoved(
+      state,
+      requireCard(state.cards, cardId),
+      to,
+      to.kind === 'encounterDiscard' ? 0 : undefined,
+    ),
+  ];
 }
 
 /**

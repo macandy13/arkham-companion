@@ -26,7 +26,7 @@ const hall = instanceId('hall');
 const alice = investigatorId('alice');
 const encounterDeck: Zone = { kind: 'encounterDeck' };
 const encounterDiscard: Zone = { kind: 'encounterDiscard' };
-const atHall: Zone = { kind: 'atLocation', locationId: hall };
+const engagedWithAlice: Zone = { kind: 'engaged', investigatorId: alice };
 
 /**
  * The encounter cards of these tests. A code says what the card is; every
@@ -111,12 +111,15 @@ describe('DrawEncounter', () => {
     expect(idsIn(after, encounterDeck)).toEqual(['second_card']);
   });
 
-  it('places an enemy unengaged at the drawing investigator`s location', () => {
+  it('spawns an enemy at the drawing investigator`s location and engages them', () => {
     const state = startedWith({ deck: [card('foe', 'drawn_foe')] }, { aliceAt: hall });
 
     const after = stateAfter(ctx, state, draw);
 
-    expect(after.cards[instanceId('drawn_foe')]?.zone).toEqual(atHall);
+    expect(after.cards[instanceId('drawn_foe')]?.zone).toEqual({
+      kind: 'engaged',
+      investigatorId: alice,
+    });
   });
 
   it('puts a treachery that stays in play into the threat area', () => {
@@ -396,7 +399,10 @@ describe('DrawEncounter with a match', () => {
 
     const after = stateAfter(matchCtx, state, drawGhoulEnemy);
 
-    expect(after.cards[instanceId('first_ghoul')]).toMatchObject({ faceUp: true, zone: atHall });
+    expect(after.cards[instanceId('first_ghoul')]).toMatchObject({
+      faceUp: true,
+      zone: engagedWithAlice,
+    });
     expect(idsIn(after, encounterDeck)).toEqual(['top_card', 'second_ghoul']);
   });
 
@@ -423,7 +429,7 @@ describe('DrawEncounter with a match', () => {
       'old_discard',
     ]);
     expect(idsIn(after, encounterDeck)).toEqual(['below_ghoul']);
-    expect(after.cards[instanceId('drawn_ghoul')]?.zone).toEqual(atHall);
+    expect(after.cards[instanceId('drawn_ghoul')]?.zone).toEqual(engagedWithAlice);
   });
 
   it('takes the topmost matching card from the discard when drawing from the discard', () => {
@@ -442,7 +448,7 @@ describe('DrawEncounter with a match', () => {
 
     const after = stateAfter(matchCtx, state, { ...drawGhoulEnemy, from: 'discard' });
 
-    expect(after.cards[instanceId('upper_discarded_ghoul')]?.zone).toEqual(atHall);
+    expect(after.cards[instanceId('upper_discarded_ghoul')]?.zone).toEqual(engagedWithAlice);
     expect(idsIn(after, encounterDiscard)).toEqual([
       'discarded_treachery',
       'lower_discarded_ghoul',
@@ -462,7 +468,7 @@ describe('DrawEncounter with a match', () => {
 
     const after = stateAfter(matchCtx, state, { ...drawGhoulEnemy, from: 'deckOrDiscard' });
 
-    expect(after.cards[instanceId('ghoul_in_deck')]?.zone).toEqual(atHall);
+    expect(after.cards[instanceId('ghoul_in_deck')]?.zone).toEqual(engagedWithAlice);
     expect(after.cards[instanceId('ghoul_in_discard')]?.zone).toEqual(encounterDiscard);
   });
 
@@ -478,7 +484,7 @@ describe('DrawEncounter with a match', () => {
 
     const after = stateAfter(matchCtx, state, { ...drawGhoulEnemy, from: 'deckOrDiscard' });
 
-    expect(after.cards[instanceId('ghoul_in_discard')]?.zone).toEqual(atHall);
+    expect(after.cards[instanceId('ghoul_in_discard')]?.zone).toEqual(engagedWithAlice);
   });
 
   it('matches by name', () => {
@@ -494,7 +500,7 @@ describe('DrawEncounter with a match', () => {
       match: { name: 'Other Foe' },
     });
 
-    expect(after.cards[instanceId('other_foe_card')]?.zone).toEqual(atHall);
+    expect(after.cards[instanceId('other_foe_card')]?.zone).toEqual(engagedWithAlice);
     expect(idsIn(after, encounterDeck)).toEqual(['ghoul_minion']);
   });
 
@@ -549,7 +555,7 @@ describe('DrawEncounter with a match', () => {
 
     const drawn = events.filter((e) => e.type === 'EncounterCardDrawn');
     expect(drawn.map((e) => e.cardId)).toEqual(['surging_ghoul', 'top_card']);
-    expect(after.cards[instanceId('surging_ghoul')]?.zone).toEqual(atHall);
+    expect(after.cards[instanceId('surging_ghoul')]?.zone).toEqual(engagedWithAlice);
   });
 
   it('reshuffles the discard when the matched card was the last one in the deck', () => {
@@ -632,7 +638,7 @@ describe('FromSetAside', () => {
     const after = stateAfter({ ...ctx, hooks }, state, {
       type: 'FromSetAside',
       codes: ['foe'],
-      to: atHall,
+      to: { kind: 'atLocation', locationId: hall },
     });
 
     expect(after.cards[instanceId('set_aside_foe')]?.tokens.doom).toBe(2);

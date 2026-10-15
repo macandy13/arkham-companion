@@ -29,7 +29,15 @@ export type Command =
   | EndScenario
   | DrawEncounter
   | FromSetAside
-  | ShuffleInto;
+  | ShuffleInto
+  | SpawnEnemy
+  | EngageEnemy
+  | DisengageEnemy
+  | DamageEnemy
+  | DefeatEnemy
+  | ExhaustEnemy
+  | ReadyEnemy
+  | MoveHunters;
 
 /** A card instance to create when the scenario starts. */
 export interface StartingCard {
@@ -327,6 +335,103 @@ export interface ShuffleInto {
   type: 'ShuffleInto';
   codes: readonly string[];
   zone: Zone;
+}
+
+/**
+ * Puts an enemy that is not in play (encounter deck, set aside, …) into play.
+ * Where it appears, in this order: `at`; the location named by its `spawn`
+ * keyword (several matches or unreadable text: `DecisionRequested` of kind
+ * `chooseLocation`, enemy stays put; no such location in play: discarded);
+ * the location of `investigatorId` (the investigator who drew it), whom it
+ * engages whatever its prey. Elsewhere it engages per `engageEvents`. Produces
+ * `CardMoved`, then `EnemyEngaged` or `DecisionRequested` (prey tie). `DrawEncounter` resolves
+ * a drawn enemy the same way.
+ */
+export interface SpawnEnemy {
+  type: 'SpawnEnemy';
+  enemyId: InstanceId;
+  /** The drawing investigator; the fallback spawn location. */
+  investigatorId?: InvestigatorId;
+  /** Explicit spawn location (a card effect or scenario step); overrides the keyword. */
+  at?: InstanceId;
+}
+
+/**
+ * Engages an enemy in play with an active investigator at its location (an
+ * unengaged enemy must be at the investigator's location; an engaged one
+ * switches investigator). Produces `EnemyEngaged`.
+ */
+export interface EngageEnemy {
+  type: 'EngageEnemy';
+  enemyId: InstanceId;
+  investigatorId: InvestigatorId;
+}
+
+/**
+ * Breaks an enemy's engagement; it stays at the location of the investigator
+ * it was engaged with. Produces `EnemyDisengaged`.
+ */
+export interface DisengageEnemy {
+  type: 'DisengageEnemy';
+  enemyId: InstanceId;
+}
+
+/**
+ * Puts `amount` (positive) damage on an enemy in play. An enemy with damage
+ * equal to or above its health (per `resolveValue`) is defeated in the same
+ * step. Produces `TokensChanged`, then `EnemyDefeated`.
+ */
+export interface DamageEnemy {
+  type: 'DamageEnemy';
+  enemyId: InstanceId;
+  amount: number;
+}
+
+/**
+ * Defeats an enemy in play: it goes to the victory display if the card has
+ * victory, otherwise to the top of the encounter discard, and loses its
+ * tokens. Produces `EnemyDefeated`.
+ */
+export interface DefeatEnemy {
+  type: 'DefeatEnemy';
+  enemyId: InstanceId;
+}
+
+/** Exhausts a ready enemy in play (after it attacked, or by a card effect). Produces `ExhaustChanged`. */
+export interface ExhaustEnemy {
+  type: 'ExhaustEnemy';
+  enemyId: InstanceId;
+}
+
+/**
+ * Readies an exhausted enemy in play (upkeep, or a card effect). A readied,
+ * unengaged enemy with an investigator at its location engages, as the rules
+ * demand. Produces `ExhaustChanged`, then `EnemyEngaged` or `DecisionRequested`.
+ */
+export interface ReadyEnemy {
+  type: 'ReadyEnemy';
+  enemyId: InstanceId;
+}
+
+/**
+ * Moves the ready, unengaged hunter enemies one step towards the nearest
+ * investigator (enemy phase; the phase assistant of M1.10 issues it). Hunters
+ * with an investigator at their location, without a route or with a pending
+ * decision stay. Equally near investigators and equally short routes are
+ * settled by prey and then handed to the players. When two or more hunters
+ * would move, the lead investigator chooses the order (`hunterOrder`
+ * decision, see `handleMoveHunters`) and nothing moves yet. Produces
+ * `CardMoved` per moving hunter, then `EnemyEngaged` or `DecisionRequested`,
+ * or only the `hunterOrder` `DecisionRequested`.
+ */
+export interface MoveHunters {
+  type: 'MoveHunters';
+  /**
+   * Only these hunters are considered (default: every hunter in play). The
+   * answer to the `hunterOrder` decision passes the hunters that have not
+   * moved yet, so a hunter that already moved is not moved again.
+   */
+  hunters?: InstanceId[];
 }
 
 /** String literal of every command type. */

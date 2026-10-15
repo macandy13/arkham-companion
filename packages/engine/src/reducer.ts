@@ -5,6 +5,9 @@ import type {
   ConnectionChanged,
   DeckShuffled,
   DecisionRequested,
+  EnemyDefeated,
+  EnemyDisengaged,
+  EnemyEngaged,
   Event,
   InvestigatorChanged,
   InvestigatorDefeated,
@@ -19,7 +22,7 @@ import type { Edge } from './map';
 import { seedRng } from './rng';
 import { withStatDelta } from './investigators';
 import { emptyState, type CardInstance, type GameState, type Investigator } from './state';
-import { zoneKey, type ZoneKey } from './zone';
+import { zoneKey, type Zone, type ZoneKey } from './zone';
 
 /** Pure reducer: applies one event and returns the next state. Never mutates `state`. */
 export function apply(state: GameState, event: Event): GameState {
@@ -55,6 +58,17 @@ export function apply(state: GameState, event: Event): GameState {
       return applyScenarioEnded(state, event);
     case 'EncounterCardDrawn':
       return state;
+    case 'EnemyEngaged':
+      return applyEnemyMoved(state, event, {
+        kind: 'engaged',
+        investigatorId: event.investigatorId,
+      });
+    case 'EnemyDisengaged':
+      return applyEnemyMoved(state, event, { kind: 'atLocation', locationId: event.locationId });
+    case 'EnemyDefeated':
+      return applyEnemyDefeated(state, event);
+    case 'ExhaustChanged':
+      return updateCard(state, event.cardId, (card) => ({ ...card, exhausted: event.exhausted }));
   }
 }
 
@@ -103,18 +117,50 @@ function applyDeckShuffled(state: GameState, e: DeckShuffled): GameState {
 }
 
 function applyCardMoved(state: GameState, e: CardMoved): GameState {
-  const card = state.cards[e.cardId];
+  return moveCard(state, e.cardId, e.to, e.index);
+}
+
+/** Moves a card to `to` (position `index`, default the end); unknown cards leave the state as is. */
+function moveCard(state: GameState, cardId: InstanceId, to: Zone, index?: number): GameState {
+  const card = state.cards[cardId];
   if (!card) return state;
-  // Remove from the card's actual zone; `e.from` is informational.
+  // Remove from the card's actual zone; the event's `from` is informational.
   const fromKey = zoneKey(card.zone);
-  const toKey = zoneKey(e.to);
-  let order = withZoneOrder(state.order, fromKey, without(state.order[fromKey] ?? [], e.cardId));
-  order = withZoneOrder(order, toKey, insertedAt(order[toKey] ?? [], e.cardId, e.index));
+  const toKey = zoneKey(to);
+  let order = withZoneOrder(state.order, fromKey, without(state.order[fromKey] ?? [], cardId));
+  order = withZoneOrder(order, toKey, insertedAt(order[toKey] ?? [], cardId, index));
   return {
     ...state,
-    cards: { ...state.cards, [e.cardId]: { ...card, zone: e.to } },
+    cards: { ...state.cards, [cardId]: { ...card, zone: to } },
     order,
   };
+}
+
+/** Engagement changes: the enemy moves and any open question about it is answered. */
+function applyEnemyMoved(state: GameState, e: EnemyEngaged | EnemyDisengaged, to: Zone): GameState {
+  return withoutDecisionsAbout(moveCard(state, e.enemyId, to), e.enemyId);
+}
+
+function applyEnemyDefeated(state: GameState, e: EnemyDefeated): GameState {
+  // The top of the discard is where "topmost" effects look; a defeated enemy keeps nothing it carried.
+  const moved = moveCard(state, e.enemyId, e.to, e.to.kind === 'encounterDiscard' ? 0 : undefined);
+  const cleared = updateCard(moved, e.enemyId, (card) => ({
+    ...card,
+    exhausted: false,
+    tokens: {},
+  }));
+  return withoutDecisionsAbout(cleared, e.enemyId);
+}
+
+/** Replaces one card with `update(card)`; unknown cards leave the state as is. */
+function updateCard(
+  state: GameState,
+  cardId: InstanceId,
+  update: (card: CardInstance) => CardInstance,
+): GameState {
+  const card = state.cards[cardId];
+  if (!card) return state;
+  return { ...state, cards: { ...state.cards, [cardId]: update(card) } };
 }
 
 function applyTokensChanged(state: GameState, e: TokensChanged): GameState {

@@ -231,3 +231,56 @@ describe('The Gathering act 1 reverse side', () => {
     ]);
   });
 });
+
+describe('The Gathering enemies', () => {
+  const playing: EngineContext = { cards: theGatheringCards, hooks: theGathering.hooks };
+  const fleshEater = instanceId('01118#1');
+  const priest = instanceId('01116#1');
+  const attic = instanceId('01113#1');
+  const hallway = instanceId('01112#1');
+  const tank = investigatorId('tank');
+  const seeker = investigatorId('seeker');
+  const studyCard = instanceId('01111#1');
+  const advanceTrapped: Command[] = [
+    { type: 'DiscoverClues', investigatorId: tank, locationId: studyCard, amount: 2 },
+    { type: 'DiscoverClues', investigatorId: seeker, locationId: studyCard, amount: 2 },
+    {
+      type: 'AdvanceAct',
+      spend: [
+        { investigatorId: tank, amount: 2 },
+        { investigatorId: seeker, amount: 2 },
+      ],
+    },
+  ];
+  const start = () => startScenario(playing, theGathering, { playerCount: 2 });
+
+  it('discards the Flesh-Eater while the Attic is not in play', () => {
+    const { state } = runFrom(playing, start(), [
+      { type: 'SpawnEnemy', enemyId: fleshEater, investigatorId: tank },
+    ]);
+
+    expect(state.cards[fleshEater]?.zone).toEqual({ kind: 'encounterDiscard' });
+  });
+
+  it('spawns the Flesh-Eater at the Attic once the house is in play', () => {
+    const { state } = runFrom(playing, start(), [
+      ...advanceTrapped,
+      { type: 'SpawnEnemy', enemyId: fleshEater, investigatorId: tank },
+    ]);
+
+    expect(state.cards[fleshEater]?.zone).toEqual({ kind: 'atLocation', locationId: attic });
+  });
+
+  it('lets the hunting Ghoul Priest walk to the Hallway and ask whom to engage', () => {
+    const { state } = runFrom(playing, start(), [
+      ...advanceTrapped,
+      { type: 'SpawnEnemy', enemyId: priest, at: attic },
+      { type: 'MoveHunters' },
+    ]);
+
+    // Prey "Highest [combat]" needs investigator card data, so the players choose.
+    expect(state.cards[priest]?.zone).toEqual({ kind: 'atLocation', locationId: hallway });
+    expect(state.pending).toMatchObject([{ kind: 'chooseInvestigator', subject: priest }]);
+    expect(checkInvariants(state)).toEqual([]);
+  });
+});

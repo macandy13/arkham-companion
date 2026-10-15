@@ -107,6 +107,14 @@ export type ChaosToken =
   | 'frost';
 
 /**
+ * Who answers a decision: the lead investigator (a choice between several valid
+ * options that the rules leave to the lead) or the group. A hint for the UI
+ * only; the engine accepts an answer from anyone, because it does not know who
+ * sits at the table.
+ */
+export type Decider = { kind: 'lead' } | { kind: 'group' };
+
+/**
  * An open choice for the players (hunter tie, spawn location, effect target …).
  * The engine never guesses; the answer comes back as a `ResolveDecision` command.
  * Created by a `DecisionRequested` event and kept in `GameState.pending` until
@@ -115,12 +123,14 @@ export type ChaosToken =
 export interface Decision {
   /** Unique among pending decisions; derived from kind and subject so a repeated check does not ask twice. */
   id: DecisionId;
-  /** Machine-readable kind, e.g. 'hunterTie' or 'advanceAgenda'. Interpreted by the rule module that created it. */
+  /** Machine-readable kind, e.g. 'advanceAgenda', 'chooseInvestigator' (prey tie, who an enemy engages) or 'chooseLocation' (hunter destination tie). Interpreted by the rule module that created it. */
   kind: string;
   /** The card the decision is about, if any; the decision is dropped when this card advances. */
   subject?: InstanceId;
   /** i18n key or plain text describing the choice. */
   prompt: string;
+  /** Who answers; unset for decisions that do not say yet (M1.9 makes it required). */
+  decider?: Decider;
   options: DecisionOption[];
 }
 

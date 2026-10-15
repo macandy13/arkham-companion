@@ -12,6 +12,17 @@ import {
   handleMoveInvestigator,
 } from './handle_investigator';
 import { handleDrawEncounter, handleFromSetAside, handleShuffleInto } from './handle_encounter';
+import {
+  handleDamageEnemy,
+  handleDefeatEnemy,
+  handleDisengageEnemy,
+  handleEngageEnemy,
+  handleExhaustEnemy,
+  handleReadyEnemy,
+} from './handle_enemy';
+import { startingEngagements } from './engagement';
+import { handleSpawnEnemy } from './spawn';
+import { handleMoveHunters } from './hunters';
 import { withAgendaCheck } from './doom';
 import {
   completeAdvance,
@@ -187,6 +198,22 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
       return handleFromSetAside(state, command);
     case 'ShuffleInto':
       return handleShuffleInto(state, command);
+    case 'SpawnEnemy':
+      return handleSpawnEnemy(ctx, state, command);
+    case 'EngageEnemy':
+      return handleEngageEnemy(ctx, state, command);
+    case 'DisengageEnemy':
+      return handleDisengageEnemy(ctx, state, command);
+    case 'DamageEnemy':
+      return handleDamageEnemy(ctx, state, command);
+    case 'DefeatEnemy':
+      return handleDefeatEnemy(ctx, state, command);
+    case 'ExhaustEnemy':
+      return handleExhaustEnemy(ctx, state, command);
+    case 'ReadyEnemy':
+      return handleReadyEnemy(ctx, state, command);
+    case 'MoveHunters':
+      return handleMoveHunters(ctx, state, command);
   }
 }
 
@@ -221,8 +248,11 @@ function handleStartScenario(ctx: EngineContext, state: GameState, cmd: StartSce
     chaosBag: cmd.chaosBag ?? [],
     ...(cmd.campaign ? { campaign: cmd.campaign } : {}),
   };
-  if (!(cmd.shuffleEncounterDeck ?? true)) return [started];
-  return [started, ...encounterDeckShuffle(apply(state, started))];
+  const shuffled =
+    (cmd.shuffleEncounterDeck ?? true)
+      ? [started, ...encounterDeckShuffle(apply(state, started))]
+      : [started];
+  return [...shuffled, ...startingEngagements(ctx, replay(shuffled, state))];
 }
 
 /** The investigators' IDs; rejects a duplicate. */
