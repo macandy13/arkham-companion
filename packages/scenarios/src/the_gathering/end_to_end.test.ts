@@ -81,13 +81,15 @@ describe('The Gathering end to end: tank, seeker and rogue, seed 24', () => {
   };
 
   /**
-   * The players advance the agenda. Its reverse side lets the lead investigator
-   * choose; until M1.9 answers that, the tank simply takes the 2 horror. Draws:
+   * The players answer "yes" to advancing the agenda. Its reverse side lets the
+   * lead investigator choose, but no card data models that choice as a decision
+   * yet (the agenda has no reverse-side hook), so the tank simply takes the 2
+   * horror by hand. Draws:
    * Swarm of Rats (tank, alone in the Attic), Ghoul Minion (seeker), Ancient
    * Evils (rogue: 1 doom on the new agenda).
    */
   const round3Mythos: Script = (table) => {
-    table.advanceAgenda();
+    table.answer("What's Going On?!", 'yes');
     table.takeHorror(tank, 2);
     table.drawEncounterCards();
     table.placeDoom(1);
@@ -135,8 +137,7 @@ describe('The Gathering end to end: tank, seeker and rogue, seed 24', () => {
   /**
    * Draws: Rotting Remains (tank passes), Ravenous Ghoul (seeker), Frozen in
    * Fear (rogue). The rats reach the Cellar; three investigators are there and
-   * the rats have no prey, so the engine asks whom they engage. Until M1.9
-   * answers decisions, the players' choice (the tank) is an `EngageEnemy`.
+   * the rats have no prey, so the engine asks whom they engage.
    */
   const round5: Script = (table) => {
     table.placeMythosDoom();
@@ -147,7 +148,7 @@ describe('The Gathering end to end: tank, seeker and rogue, seed 24', () => {
   };
 
   const round5Attacks: Script = (table) => {
-    table.engage(tank, 'Swarm of Rats');
+    table.answer('Swarm of Rats', 'tank');
     table.resolveEnemyAttacks();
     table.upkeep();
   };
@@ -238,21 +239,57 @@ describe('The Gathering end to end: tank, seeker and rogue, seed 24', () => {
     expect(table.wounds(rogue)).toEqual({ damage: 2, horror: 1 });
   });
 
-  it('round 3 doom: the third doom reaches the threshold of What’s Going On?! and the engine asks to advance', () => {
+  it('round 3 doom: the third doom reaches the threshold of What’s Going On?! and the engine asks whether to advance', () => {
     const table = playThrough(round1, round2, round3Doom);
 
     expect(table.agenda()).toEqual({ name: "What's Going On?!", doom: 3 });
-    expect(table.pendingDecisions()).toEqual([
-      "advanceAgenda about What's Going On?!: decision.yes, decision.no",
-    ]);
+    expect(table.pendingDecisions()).toEqual(["confirm about What's Going On?!: yes, no"]);
+    expect(table.board()).toMatchInlineSnapshot(`
+      "Round 0, setup phase
+      Agenda: What's Going On?! – doom 3/3
+      Act: The Barrier – needs 9 clues
+      Map Study:
+        no locations
+      Map House:
+        Hallway [01112#1] – revealed, 0 clues
+          connects to: Attic, Cellar, Parlor
+        Attic [01113#1] – revealed, 4 clues
+          investigators: tank
+          connects to: Hallway
+        Cellar [01114#1] – revealed, 5 clues
+          investigators: seeker, rogue
+          Icy Ghoul [01119#1] – engaged with rogue
+          connects to: Hallway
+        Parlor [01115#1] – unrevealed
+          connects to: Hallway
+      Investigators:
+        tank – Attic; damage 0/9, horror 0/5, 2 clues, 7 resources; threat area: none
+        seeker – Cellar; damage 2/6, horror 0/9, 1 clues, 7 resources; threat area: none
+        rogue – Cellar; damage 2/7, horror 1/7, 0 clues, 7 resources; threat area: none
+      Encounter deck: 23 cards; discard: 2 cards, top: Ancient Evils
+      Set aside: 2 cards
+      Victory display: none
+      Pending decisions:
+        advanceAgenda:01105#1 (confirm): yes (What's Going On?!), no"
+    `);
   });
 
-  it('round 3 mythos: the third doom advances to Rise of the Ghouls, and a Swarm of Rats engages the tank alone in the Attic', () => {
+  it('while the agenda question is open, moving is rejected with decisionPending', () => {
+    const table = playThrough(round1, round2, round3Doom);
+
+    expect(() => table.moveTo(tank, 'Hallway')).toThrow(
+      expect.objectContaining({ rejection: expect.objectContaining({ code: 'decisionPending' }) }),
+    );
+    expect(table.investigatorLocations().tank).toBe('Attic');
+  });
+
+  it('round 3 mythos: answering yes advances to Rise of the Ghouls and clears the question, and a Swarm of Rats engages the tank alone in the Attic', () => {
     const table = playThrough(round1, round2, round3Doom, round3Mythos);
 
     expect(table.agenda()).toEqual({ name: 'Rise of the Ghouls', doom: 1 });
     expect(table.namesIn({ kind: 'outOfGame' })).toContain("What's Going On?!");
     expect(table.pendingDecisions()).toEqual([]);
+    expect(table.events.map((event) => event.type)).toContain('DecisionResolved');
     expect(table.wounds(tank)).toEqual({ damage: 0, horror: 2 });
     expect(table.enemyLines()).toEqual([
       'Icy Ghoul: Cellar, engaged with rogue',
@@ -309,6 +346,7 @@ describe('The Gathering end to end: tank, seeker and rogue, seed 24', () => {
     expect(table.pendingDecisions()).toEqual([
       'chooseInvestigator about Swarm of Rats: tank, seeker, rogue',
     ]);
+    expect(table.board()).toContain('(chooseInvestigator): tank, seeker, rogue');
     expect(table.enemyLines()).toEqual([
       'Flesh-Eater: Attic, unengaged',
       'Swarm of Rats: Cellar, unengaged',
@@ -316,7 +354,7 @@ describe('The Gathering end to end: tank, seeker and rogue, seed 24', () => {
     ]);
   });
 
-  it('round 5 attacks: the rats engage the tank, and both engaged enemies attack', () => {
+  it('round 5 attacks: answering tank makes the rats engage the tank and clears the question, and both engaged enemies attack', () => {
     const table = playThrough(
       round1,
       round2,
@@ -329,6 +367,7 @@ describe('The Gathering end to end: tank, seeker and rogue, seed 24', () => {
     );
 
     expect(table.pendingDecisions()).toEqual([]);
+    expect(table.enemyLines()).toContain('Swarm of Rats: Cellar, engaged with tank');
     expect(table.wounds(tank)).toEqual({ damage: 4, horror: 3 });
     expect(table.wounds(seeker)).toEqual({ damage: 3, horror: 1 });
     expect(table.investigatorResources()).toEqual({ tank: 10, seeker: 10, rogue: 10 });

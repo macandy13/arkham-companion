@@ -95,9 +95,20 @@ export class TestTable {
     this.play({ type: 'PlaceDoom', amount });
   }
 
-  /** The players answer the agenda's doom threshold by advancing it. */
-  advanceAgenda(): void {
-    this.play({ type: 'AdvanceAgenda' });
+  /**
+   * Answers the open decision about the card named `subjectName` by picking
+   * the option `optionId` (e.g. `answer('Swarm of Rats', 'tank')`). Fails with
+   * the board attached if no such decision is open, so a script that answers
+   * the wrong question breaks where it happens.
+   */
+  answer(subjectName: string, optionId: string): void {
+    const decision = this.current.pending.find(
+      (pending) =>
+        pending.subject !== undefined &&
+        this.nameOf(this.cardWithId(pending.subject)) === subjectName,
+    );
+    if (!decision) throw new Error(`no open decision about ${subjectName}\n${this.board()}`);
+    this.play({ type: 'ResolveDecision', decisionId: decision.id, optionId });
   }
 
   /** Mythos step 1.4: each active investigator draws an encounter card, in player order. */
@@ -265,7 +276,7 @@ export class TestTable {
         decision.subject === undefined
           ? ''
           : ` about ${this.nameOf(this.cardWithId(decision.subject))}`;
-      return `${decision.kind}${about}: ${decision.options.map((option) => option.label).join(', ')}`;
+      return `${decision.kind}${about}: ${decision.options.map((option) => option.id).join(', ')}`;
     });
   }
 
