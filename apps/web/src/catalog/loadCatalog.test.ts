@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CardCatalog, FetchFn } from '@arkham/carddata';
 import { IndexedDbStore } from '../storage/IndexedDbStore';
 import { loadCatalog } from './loadCatalog';
@@ -36,6 +36,10 @@ beforeEach(() => {
   store = new IndexedDbStore(`catalog-test-${n++}`);
 });
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe('loadCatalog', () => {
   it('fetches on first load and caches the result', async () => {
     const catalog = await loadCatalog(store, 'en', respondingWith(okCards('v1')));
@@ -70,11 +74,15 @@ describe('loadCatalog', () => {
   it('falls back to the cache when offline', async () => {
     const first = await loadCatalog(store, 'en', respondingWith(okCards('v1')));
 
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const failure = new TypeError('network down');
+
     const offline = await loadCatalog(store, 'en', async () => {
-      throw new TypeError('network down');
+      throw failure;
     });
 
     expect(offline).toEqual(first);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('cached copy'), failure);
   });
 
   it('throws when offline on the first load', async () => {
