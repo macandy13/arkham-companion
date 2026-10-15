@@ -12,7 +12,7 @@ import type {
 } from './events';
 import { isInPlay } from './handle-enemy';
 import { activeInvestigator } from './handle-investigator';
-import { defeatCause, withStatDelta } from './investigators';
+import { defeatCause, playerOrder, withStatDelta } from './investigators';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
 import type { GameState, Investigator, Phase, PhaseStep } from './state';
@@ -29,7 +29,15 @@ const NEXT_PHASE: Readonly<Record<Phase, Phase>> = {
 
 type AttackStep = Extract<PhaseStep, { kind: 'enemyAttack' }>;
 
-/** What running one phase step produces: its own events, then commands handled as follow-ups. */
+/**
+ * What running one phase step produces: its own events, then commands handled
+ * as follow-ups. The step loop stops after a step that raised a decision, but
+ * not inside it: a step's later commands still run after an earlier one raised
+ * a decision (e.g. one `ReadyEnemy` asking whom to engage, then the next
+ * `ReadyEnemy`). Step authors must keep that invariant: the commands of one
+ * step must not depend on the answer to a decision raised by an earlier one;
+ * split them into separate steps if they do.
+ */
 export interface StepPlan {
   events: Event[];
   commands: Command[];
@@ -144,19 +152,6 @@ export function handleResolveEnemyAttack(
     ? []
     : [{ type: 'ExhaustChanged', cardId: cmd.enemyId, exhausted: true }];
   return [...events, ...exhausted];
-}
-
-/**
- * The active investigators in player order: by seat, starting with the lead
- * investigator (Rules Reference, "Player Order").
- */
-export function playerOrder(state: GameState): Investigator[] {
-  const seated = [...state.investigators].sort((a, b) => a.seat - b.seat);
-  const lead = Math.max(
-    0,
-    seated.findIndex((inv) => inv.id === state.meta.leadInvestigator),
-  );
-  return [...seated.slice(lead), ...seated.slice(0, lead)].filter((inv) => inv.status === 'active');
 }
 
 function stepsOf(state: GameState, phase: Phase): PhaseStep[] {

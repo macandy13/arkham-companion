@@ -56,9 +56,10 @@ export function doomInPlay(state: GameState): number {
  * `CheckDoomThreshold`: asks to confirm advancing the agenda when the doom
  * total has reached its threshold. Rules Reference, "Agenda Deck": the agenda
  * then must advance, and this check (mythos phase, or a card that says so)
- * is the only time it can. The question is still a `confirm`, because the
- * app is an assistant: "no" stands for "not yet, our count is off" at the
- * table and is asked again at the next check. A single pending question per
+ * is the only time it can. Declining is not a rules option; the question is a
+ * `confirm` only because the app tracks doom on the players' behalf: "no"
+ * means "the app's doom count is wrong", to be corrected with `ManualAdjust`,
+ * and the question comes back at the next check. A single pending question per
  * agenda is enough, so nothing is emitted while one is open.
  */
 export function agendaThresholdDecision(ctx: EngineContext, state: GameState): DecisionRequested[] {
@@ -79,7 +80,7 @@ export function agendaThresholdDecision(ctx: EngineContext, state: GameState): D
         id,
         kind: 'confirm',
         subject: agenda.id,
-        prompt: 'decision.advanceAgenda',
+        prompt: 'decision.doomThresholdReached',
         decider: { kind: 'group' },
         options: confirmOptions([{ type: 'AdvanceAgenda' }], agenda.id),
       },

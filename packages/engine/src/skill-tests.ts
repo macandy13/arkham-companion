@@ -45,6 +45,8 @@ export function handleInvestigate(
 /**
  * `Fight`: a combat test against the fight value of an enemy at the
  * investigator's location; a pass deals the attack's damage (`DamageEnemy`).
+ * A fail deals that damage to the other investigator the enemy is engaged
+ * with, if any (see `failedFightCommands`).
  */
 export function handleFight(ctx: EngineContext, state: GameState, cmd: Fight): DecisionRequested[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
@@ -65,8 +67,34 @@ export function handleFight(ctx: EngineContext, state: GameState, cmd: Fight): D
     `fight:${investigator.id}:${enemy.id}`,
     enemy.id,
     { skill: 'combat', difficulty: stats.fight ?? 0 },
-    { onPass: [{ type: 'DamageEnemy', enemyId: enemy.id, amount: damage }], onFail: [] },
+    {
+      onPass: [{ type: 'DamageEnemy', enemyId: enemy.id, amount: damage }],
+      onFail: failedFightCommands(state, investigator, enemy, damage),
+    },
   );
+}
+
+/**
+ * Rules Reference, "Fight": failing against an enemy engaged with another
+ * single investigator deals the attack's damage to that investigator, through
+ * `AdjustInvestigator` so the usual defeat check applies. A massive enemy is
+ * never in the `engaged` zone (it is engaged with several investigators), so it
+ * is not redirected, nor is an enemy that is unengaged or engaged with the
+ * fighter.
+ */
+function failedFightCommands(
+  state: GameState,
+  fighter: Investigator,
+  enemy: CardInstance,
+  damage: number,
+): Command[] {
+  if (enemy.zone.kind !== 'engaged' || enemy.zone.investigatorId === fighter.id) return [];
+  const engagedId = enemy.zone.investigatorId;
+  const engaged = state.investigators.find((inv) => inv.id === engagedId);
+  if (engaged?.status !== 'active') return [];
+  return [
+    { type: 'AdjustInvestigator', investigatorId: engaged.id, stat: 'damage', delta: damage },
+  ];
 }
 
 /**

@@ -310,7 +310,7 @@ describe('threshold check', () => {
         id: 'advanceAgenda:agenda1',
         kind: 'confirm',
         subject: agenda1,
-        prompt: 'decision.advanceAgenda',
+        prompt: 'decision.doomThresholdReached',
         decider: { kind: 'group' },
         options: [
           {

@@ -1,5 +1,6 @@
 import { cardStats, type EngineContext } from './cards';
 import type { InstanceId, InvestigatorId } from './ids';
+import { playerOrder } from './investigators';
 import { hasKeyword } from './keywords';
 import type { GameState } from './state';
 import { zoneKey } from './zone';
@@ -14,28 +15,28 @@ export interface EnemyAttack {
 
 /**
  * The attacks of the enemy phase, in the order the rules resolve them:
- * investigators in seat order (the order of `state.investigators`), and for
- * each the ready enemies engaged with them, then ready massive enemies at their
- * location. A massive enemy is not in the `engaged` zone (it is engaged with
- * everyone at its location at once, which one zone cannot express), which is
- * why it is added here. Exhausted enemies and defeated or resigned
- * investigators produce no attacks. The players still order simultaneous
- * attacks of one investigator; the list only gives a stable default.
+ * investigators in player order (`playerOrder`: by seat, starting with the
+ * lead investigator; Rules Reference, "Enemy Phase"), and for each the ready
+ * enemies engaged with them, then ready massive enemies at their location. A
+ * massive enemy is not in the `engaged` zone (it is engaged with everyone at
+ * its location at once, which one zone cannot express), which is why it is
+ * added here. Exhausted enemies and defeated or resigned investigators produce
+ * no attacks. Within one investigator the order is only a suggestion: the
+ * attacked player chooses the order of their attacks, so `ResolveEnemyAttack`
+ * accepts any due attack, not just the first of the list.
  */
 export function enemyAttackList(ctx: EngineContext, state: GameState): EnemyAttack[] {
-  return state.investigators
-    .filter((investigator) => investigator.status === 'active')
-    .flatMap((investigator) =>
-      readyAttackers(ctx, state, investigator.id, investigator.locationId).map((enemyId) => {
-        const stats = cardStats(ctx.cards, state.cards[enemyId]?.code ?? '');
-        return {
-          enemyId,
-          investigatorId: investigator.id,
-          damage: stats.damage ?? 0,
-          horror: stats.horror ?? 0,
-        };
-      }),
-    );
+  return playerOrder(state).flatMap((investigator) =>
+    readyAttackers(ctx, state, investigator.id, investigator.locationId).map((enemyId) => {
+      const stats = cardStats(ctx.cards, state.cards[enemyId]?.code ?? '');
+      return {
+        enemyId,
+        investigatorId: investigator.id,
+        damage: stats.damage ?? 0,
+        horror: stats.horror ?? 0,
+      };
+    }),
+  );
 }
 
 function readyAttackers(

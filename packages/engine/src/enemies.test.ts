@@ -527,6 +527,29 @@ describe('enemyAttackList', () => {
     ]);
   });
 
+  it('starts with the lead investigator, then follows the seats clockwise', () => {
+    const carol = investigatorId('carol');
+    const state = started({
+      investigators: [
+        makeInvestigator({ id: 'bob', seat: 1, locationId: hall }),
+        makeInvestigator({ id: 'alice', seat: 0, locationId: cellar }),
+        makeInvestigator({ id: 'carol', seat: 2, locationId: attic }),
+      ],
+      cards: {
+        forAlice: { code: 'FOE', zone: engagedWith(alice) },
+        forBob: { code: 'FOE', zone: engagedWith(bob) },
+        forCarol: { code: 'FOE', zone: engagedWith(carol) },
+      },
+    });
+
+    expect(state.meta.leadInvestigator).toBe(bob);
+    expect(enemyAttackList(ctx, state).map((attack) => attack.investigatorId)).toEqual([
+      bob,
+      carol,
+      alice,
+    ]);
+  });
+
   it('includes a ready massive enemy for every investigator at its location', () => {
     const state = started({
       investigators: pair(hall, 0, 0),

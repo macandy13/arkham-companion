@@ -1,4 +1,4 @@
-import type { Investigator, InvestigatorStat } from './state';
+import type { GameState, Investigator, InvestigatorStat } from './state';
 
 /** Health the investigator has left; 0 or less means they are defeated. */
 export function remainingHealth(investigator: Investigator): number {
@@ -98,4 +98,17 @@ function tiedFor(
   const values = active.map(value);
   const best = extreme === 'lowest' ? Math.min(...values) : Math.max(...values);
   return active.filter((inv) => value(inv) === best);
+}
+
+/**
+ * The active investigators in player order: by seat, starting with the lead
+ * investigator (Rules Reference, "Player Order").
+ */
+export function playerOrder(state: GameState): Investigator[] {
+  const seated = [...state.investigators].sort((a, b) => a.seat - b.seat);
+  const lead = Math.max(
+    0,
+    seated.findIndex((inv) => inv.id === state.meta.leadInvestigator),
+  );
+  return [...seated.slice(lead), ...seated.slice(0, lead)].filter((inv) => inv.status === 'active');
 }

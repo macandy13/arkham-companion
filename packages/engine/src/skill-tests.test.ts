@@ -205,6 +205,60 @@ describe('Fight', () => {
   });
 });
 
+describe('failed Fight', () => {
+  const bob = investigatorId('bob');
+
+  /**
+   * Alice and bob (2 health left) both at `a`; after `setup`, alice fights
+   * `foe` for 2 damage and fails.
+   */
+  function failedFight(enemy: { code: string; zone: Zone }, ...setup: Command[]): GameState {
+    const board = startBoard(ctx, {
+      maps: { main: { locations: { a: 'LOC', b: 'BARE' }, connections: [edge('a', 'b')] } },
+      investigators: [
+        makeInvestigator({ id: 'alice', seat: 0, locationId: id('a') }),
+        makeInvestigator({
+          id: 'bob',
+          seat: 1,
+          locationId: id('a'),
+          health: { max: 3, damage: 1 },
+        }),
+      ],
+      cards: { foe: enemy },
+    });
+    const asked = run(board, ...setup, {
+      type: 'Fight',
+      investigatorId: alice,
+      enemyId: id('foe'),
+      damage: 2,
+    });
+    return answer(asked, 'fight:alice:foe', 'fail');
+  }
+
+  it('deals the attack`s damage to the other investigator engaged with the enemy, which can defeat them', () => {
+    const failed = failedFight({ code: 'FOE', zone: { kind: 'engaged', investigatorId: bob } });
+
+    expect(failed.investigators.find((inv) => inv.id === bob)).toMatchObject({
+      health: { max: 3, damage: 3 },
+      status: 'defeated',
+    });
+  });
+
+  it.each([
+    { name: 'engaged with the fighter', enemy: { code: 'FOE', zone: engaged }, setup: [] },
+    {
+      name: 'unengaged',
+      enemy: { code: 'FOE', zone: engaged },
+      setup: [{ type: 'DisengageEnemy', enemyId: id('foe') } as const],
+    },
+    { name: 'massive', enemy: { code: 'BIG', zone: at('a') }, setup: [] },
+  ])('deals no damage for an enemy that is $name', ({ enemy, setup }) => {
+    const failed = failedFight(enemy, ...setup);
+
+    expect(failed.investigators.map((inv) => inv.health.damage)).toEqual([0, 1]);
+  });
+});
+
 describe('Evade', () => {
   it('asks for an agility test against the evade value of the enemy', () => {
     const asked = run(started({ foe: { code: 'FOE', zone: engaged } }), {
