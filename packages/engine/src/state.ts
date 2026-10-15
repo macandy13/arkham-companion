@@ -1,4 +1,5 @@
 import type { DecisionId, InstanceId, InvestigatorId, MapId, SlotId } from './ids';
+import type { GameMap } from './map';
 import type { RngState } from './rng';
 import type { Zone, ZoneKey } from './zone';
 
@@ -31,6 +32,16 @@ export interface CardInstance {
  */
 export type InvestigatorStatus = 'active' | 'resigned' | 'defeated';
 
+/** The investigator counters that commands and events can change. */
+export type InvestigatorStat = 'damage' | 'horror' | 'clues' | 'resources';
+/** All investigator stats, e.g. for iterating in tests. */
+export const INVESTIGATOR_STATS: readonly InvestigatorStat[] = [
+  'damage',
+  'horror',
+  'clues',
+  'resources',
+];
+
 /**
  * A player's investigator. The investigator card itself is not a `CardInstance`;
  * cards in their threat area or engaged with them refer to `id` via their `Zone`.
@@ -49,24 +60,15 @@ export interface Investigator {
   status: InvestigatorStatus;
 }
 
-/** A connection between two location instances on the map graph (architecture §5 "Map model"). */
-export interface Edge {
-  from: InstanceId;
-  to: InstanceId;
-  /** One-way edges only allow movement from `from` to `to`. */
-  oneWay: boolean;
-}
-
 /**
- * Map layout and connection graph. Which cards are locations on which map is
- * given by their `Zone` (`{ kind: 'location', mapId }`); the board adds where
- * they are drawn (`placement` into `slots`) and how they connect.
+ * Maps and their layout. Each `GameMap` owns its locations and connections
+ * (see `map.ts`); the board adds where locations are drawn (`placement` into
+ * `slots`).
  */
 export interface Board {
-  maps: Record<MapId, { name: string; visible: boolean }>;
+  maps: Record<MapId, GameMap>;
   slots: Record<SlotId, { mapId: MapId; x: number; y: number }>;
   placement: Record<InstanceId, SlotId | { x: number; y: number }>;
-  connections: Edge[];
   layoutMode: 'book' | 'auto';
 }
 
@@ -131,6 +133,12 @@ export interface CampaignLog {
 export interface GameMeta {
   scenarioId: string;
   difficulty: Difficulty;
+  /**
+   * Number of investigators who started the scenario. Never decremented when an
+   * investigator is defeated or resigns: "per investigator" values (clues, enemy
+   * health, act thresholds) keep using the starting count, per the Rules
+   * Reference and FAQ. Set by `ScenarioStarted`.
+   */
   playerCount: number;
   seed: number;
   rngState: RngState;
@@ -178,7 +186,7 @@ export function emptyState(): GameState {
     investigators: [],
     cards: {},
     order: {},
-    board: { maps: {}, slots: {}, placement: {}, connections: [], layoutMode: 'book' },
+    board: { maps: {}, slots: {}, placement: {}, layoutMode: 'book' },
     chaosBag: [],
     agenda: {},
     act: {},

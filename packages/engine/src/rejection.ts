@@ -1,5 +1,5 @@
 import type { InstanceId, InvestigatorId, MapId } from './ids';
-import type { TokenKind } from './state';
+import type { InvestigatorStat, TokenKind } from './state';
 
 /**
  * Structured reason why `handle` refused a command. The UI can switch on
@@ -21,7 +21,7 @@ export type Rejection =
   | { code: 'invalidTokenDelta'; delta: number }
   /** A starting card's token count is not a non-negative integer. */
   | { code: 'invalidStartingTokens'; cardId: InstanceId; token: TokenKind; amount: number }
-  /** `cardId` is used as a location (investigator position, connection) but is not on a map. */
+  /** `cardId` is used as a location but is not one: not on a map (investigator position, reveal) or not a location card (connection). */
   | { code: 'notALocation'; cardId: InstanceId }
   /** A setup step refers to `cardCode`, but no earlier step created an instance of it. */
   | { code: 'setupTargetNotFound'; cardCode: string }
@@ -29,6 +29,32 @@ export type Rejection =
   | { code: 'setupTargetAmbiguous'; cardCode: string }
   /** No card in the `CardDb` belongs to `encounterCode` (usually a typo in scenario data). */
   | { code: 'unknownEncounterSet'; encounterCode: string }
+  /** `AddConnection` for an edge that already exists. */
+  | { code: 'duplicateConnection'; from: InstanceId; to: InstanceId }
+  /** `RemoveConnection` for an edge that does not exist. */
+  | { code: 'connectionNotFound'; from: InstanceId; to: InstanceId }
+  /** A connection from a location to itself. */
+  | { code: 'selfConnection'; cardId: InstanceId }
+  /** `RevealLocation` for a location that is already face up. */
+  | { code: 'alreadyRevealed'; cardId: InstanceId }
+  /** The investigator has resigned or been defeated and can no longer act. */
+  | { code: 'investigatorNotActive'; investigatorId: InvestigatorId }
+  /** `MoveInvestigator` to a location that is not a neighbour of the current one. */
+  | { code: 'notConnected'; from: InstanceId; to: InstanceId }
+  /** `MoveInvestigator` to the location the investigator is already at. */
+  | { code: 'alreadyAtLocation'; investigatorId: InvestigatorId; locationId: InstanceId }
+  /** The investigator is not at the location they would take clues from. */
+  | { code: 'investigatorNotAtLocation'; investigatorId: InvestigatorId; locationId: InstanceId }
+  /** `DiscoverClues` for more clues than the location has. */
+  | { code: 'notEnoughClues'; cardId: InstanceId; available: number; requested: number }
+  /** An investigator counter would drop below zero. */
+  | {
+      code: 'negativeInvestigatorStat';
+      investigatorId: InvestigatorId;
+      stat: InvestigatorStat;
+      current: number;
+      delta: number;
+    }
   | {
       code: 'negativeTokens';
       cardId: InstanceId;
@@ -83,6 +109,26 @@ function describe(r: Rejection): string {
       return `setup refers to ${r.cardCode}, which exists more than once`;
     case 'unknownEncounterSet':
       return `no cards in encounter set ${r.encounterCode}`;
+    case 'duplicateConnection':
+      return `${r.from} and ${r.to} are already connected`;
+    case 'connectionNotFound':
+      return `no connection between ${r.from} and ${r.to}`;
+    case 'selfConnection':
+      return `${r.cardId} cannot connect to itself`;
+    case 'alreadyRevealed':
+      return `${r.cardId} is already revealed`;
+    case 'investigatorNotActive':
+      return `investigator ${r.investigatorId} is no longer in the scenario`;
+    case 'notConnected':
+      return `${r.from} is not connected to ${r.to}`;
+    case 'alreadyAtLocation':
+      return `investigator ${r.investigatorId} is already at ${r.locationId}`;
+    case 'investigatorNotAtLocation':
+      return `investigator ${r.investigatorId} is not at ${r.locationId}`;
+    case 'notEnoughClues':
+      return `${r.cardId} has ${r.available} clues, ${r.requested} requested`;
+    case 'negativeInvestigatorStat':
+      return `${r.stat} of ${r.investigatorId} would become ${r.current + r.delta}`;
     case 'negativeTokens':
       return `${r.token} on ${r.cardId} would become ${r.current + r.delta}`;
   }

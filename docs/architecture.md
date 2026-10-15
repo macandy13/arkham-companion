@@ -92,7 +92,7 @@ The ArkhamDB public API sends `Access-Control-Allow-Origin: *`, so it can be que
 | Persistence | IndexedDB via Dexie behind a `GameStore` interface | localStorage is limited to ~5 MB and synchronous; cloud storage comes later as a second adapter |
 | Validation | zod | Check scenario definitions and imported saves |
 | Offline | vite-plugin-pwa (Workbox) | Cache-first for card images |
-| Tests | Vitest, fast-check, Playwright | Engine unit tests, property tests, E2E |
+| Tests | Vitest, Playwright | Engine unit and table tests, E2E |
 | Repo / CI | GitHub + GitHub Actions | Tests on every push, deploy to Pages |
 
 **Repository structure**
@@ -146,11 +146,15 @@ interface Investigator {
 }
 
 interface Board {
-  maps: Record<MapId, { name: string; visible: boolean }>;   // e.g. two parallel maps
+  maps: Record<MapId, GameMap>;  // e.g. two parallel maps
   slots: Record<SlotId, { mapId: MapId; x: number; y: number }>;
   placement: Record<InstanceId, SlotId | { x: number; y: number }>;
-  connections: Edge[];          // explicit graph, incl. one-way edges
   layoutMode: 'book' | 'auto';
+}
+
+interface GameMap {             // one map = its locations + their connections (map.ts)
+  name: string; visible: boolean;
+  connections: Edge[];          // explicit graph, incl. one-way edges
 }
 
 interface GameState {
@@ -173,7 +177,7 @@ Per-investigator values (clues on locations, enemy health, act thresholds) are c
 
 *Why an explicit graph:* movement and hunter pathing depend on connections, which change during play and can be one-way or span several maps – none of that can be derived from where tiles sit on screen.
 
-- **Connections are an explicit graph**, not derived from positions. ArkhamDB does not expose connection symbols in structured form, so they come from the scenario data pipeline below; the engine builds edges from the revealed/unrevealed state. Card effects can add or remove edges at runtime (`addConnection`, `removeConnection`), including one-way edges.
+- **Connections are an explicit graph**, not derived from positions. ArkhamDB does not expose connection symbols in structured form, so they come from the scenario data pipeline below; the engine builds edges from the revealed/unrevealed state. Card effects can add or remove edges at runtime (`AddConnection`, `RemoveConnection`), including one-way edges. An edge is stored on exactly one map (the one named when it is added); its ends may be on other maps, and movement ignores which map owns it.
 - **Multiple maps:** a scenario can define several maps (parallel areas, a second board added mid-scenario). The UI shows them as tabs or side by side.
 - **Layout:** the scenario book layout is stored as slots (often a grid, sometimes free positions). Optionally, auto-layout arranges the graph with elkjs. Players can always drag locations manually.
 - **Randomised locations:** the setup DSL has `randomLocations(pool, slots)` using the seeded RNG, so it stays reproducible.
@@ -245,7 +249,7 @@ interface ScenarioDefinition {
 **Setup DSL** – same steps for initial setup and mid-scenario changes:
 
 - `putIntoPlay(location, slot?, faceUp?)`, `replaceLocation(old, new)`, `removeLocation`, `randomLocations(pool, slots)`
-- `addMap(mapId)`, `addConnection(a, b, oneWay?)`, `removeConnection(a, b)`
+- `addMap(mapId, locations, connections)` (a map is declared as one unit), `addConnection(a, b, oneWay?)`/`removeConnection(a, b)` for mid-scenario changes
 - `setAside(codes)`, `fromSetAside(codes, to: Zone)`
 - `buildEncounterDeck(sets, exclude)`, `shuffleInto(codes, 'encounterDeck')`
 - `placeTokens(target, type, n | perInvestigator(n))`

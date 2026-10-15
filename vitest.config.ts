@@ -2,15 +2,21 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    include: ['packages/*/src/**/*.test.ts', 'apps/*/src/**/*.test.{ts,tsx}'],
+    include: [
+      'packages/*/src/**/*.test.ts',
+      'apps/*/src/**/*.test.{ts,tsx}',
+      'apps/*/scripts/**/*.test.ts',
+    ],
     coverage: {
       provider: 'v8',
-      include: ['packages/*/src/**', 'apps/web/src/**'],
+      include: ['packages/*/src/**', 'apps/web/src/**', 'apps/web/scripts/**'],
       exclude: [
         '**/*.test.{ts,tsx}',
         // Entry points and network scripts are covered by E2E / the carddata check workflow.
         'apps/web/src/main.tsx',
         'packages/carddata/src/fetch.ts',
+        'apps/web/scripts/screencast/cli.ts',
+        'apps/web/scripts/tsconfig.json',
       ],
       reporter: ['text-summary', 'json-summary', 'html'],
       // Floors, not targets: CI fails if coverage drops below them. Raise them as coverage grows.
