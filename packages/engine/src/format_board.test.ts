@@ -19,6 +19,7 @@ import {
 } from '../test/utils';
 
 const alice = investigatorId('alice');
+const bob = investigatorId('bob');
 const manor = mapId('manor');
 const hall = instanceId('hall');
 const attic = instanceId('attic');
@@ -117,6 +118,48 @@ describe('formatBoard', () => {
       [
         "Pending decisions:",
         "  Advance agenda The Plan yes / no [confirm]",
+      ]
+    `);
+  });
+
+  it('shows the turn in progress with its actions and the turns taken', () => {
+    const state = stateAfter(
+      ctx,
+      startedBoard(),
+      { type: 'NextPhase' },
+      { type: 'StartTurn', investigatorId: bob },
+      { type: 'EndTurn', investigatorId: bob },
+      { type: 'StartTurn', investigatorId: alice },
+      { type: 'TakeAction', investigatorId: alice, action: 'draw' },
+    );
+
+    expect(formatBoard(ctx, state).split('\n').slice(0, 3)).toMatchInlineSnapshot(`
+      [
+        "Round 1, investigation phase",
+        "Turn: Alice, actions 1/3",
+        "Turns taken: Bob",
+      ]
+    `);
+  });
+
+  it('shows the phase steps left while a decision holds up the mythos phase', () => {
+    const state = stateAfter(
+      ctx,
+      startedBoard(),
+      { type: 'NextPhase' },
+      { type: 'StartTurn', investigatorId: alice },
+      { type: 'EndTurn', investigatorId: alice },
+      { type: 'StartTurn', investigatorId: bob },
+      { type: 'EndTurn', investigatorId: bob },
+      { type: 'NextPhase' },
+      { type: 'NextPhase' },
+      { type: 'NextPhase' },
+    );
+
+    expect(formatBoard(ctx, state).split('\n').slice(0, 2)).toMatchInlineSnapshot(`
+      [
+        "Round 2, mythos phase",
+        "Steps left: 1.4 (Alice), 1.4 (Bob)",
       ]
     `);
   });

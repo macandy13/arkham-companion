@@ -4,12 +4,15 @@ import { describeDecision } from './describe_decision';
 import { doomInPlay } from './doom';
 import type { InstanceId, MapId } from './ids';
 import { mapLocations } from './map';
-import type { CardInstance, GameState, Investigator } from './state';
+import { PHASE_STEP_TITLES } from './phases';
+import type { CardInstance, GameState, Investigator, PhaseStep } from './state';
+import { actionAllowance } from './turns';
 import { zoneKey, type Zone } from './zone';
 
 /**
  * The board as plain text, for debugging and test failure messages: round and
- * phase, current agenda and act, every map with its locations (clues,
+ * phase, the outstanding phase steps, the turn in progress with its actions
+ * and the turns taken, current agenda and act, every map with its locations (clues,
  * investigators, enemies, connections), every investigator, the encounter
  * piles, set-aside cards, victory display and pending decisions. Cards are
  * named by their `CardDb` name; instance IDs appear only in brackets where
@@ -20,6 +23,8 @@ import { zoneKey, type Zone } from './zone';
 export function formatBoard(ctx: EngineContext, state: GameState): string {
   return [
     `Round ${state.meta.round}, ${state.meta.phase} phase`,
+    ...stepLines(state),
+    ...turnLines(state),
     agendaLine(ctx, state),
     actLine(ctx, state),
     ...Object.keys(state.board.maps).flatMap((id) => mapLines(ctx, state, id as MapId)),
@@ -30,6 +35,35 @@ export function formatBoard(ctx: EngineContext, state: GameState): string {
     `Victory display: ${listOrNone(namesIn(ctx, state, { kind: 'victoryDisplay' }))}`,
     ...decisionLines(ctx, state),
   ].join('\n');
+}
+
+/** The phase steps still to run, by Rules Reference number; nothing when none are left. */
+function stepLines(state: GameState): string[] {
+  const { steps } = state.meta;
+  if (steps.length === 0) return [];
+  return [`Steps left: ${steps.map((step) => stepLabel(state, step)).join(', ')}`];
+}
+
+function stepLabel(state: GameState, step: PhaseStep): string {
+  if (step.id === '1.4') return `1.4 (${investigatorName(state, step.investigatorId)})`;
+  if (step.id === '3.3' && step.attacks) return `3.3 (${step.attacks.length} attacks to resolve)`;
+  return `${step.id} (${PHASE_STEP_TITLES[step.id]})`;
+}
+
+/** The turn in progress (`actions 1/3`) and the turns already taken this round, if any. */
+function turnLines(state: GameState): string[] {
+  const { turn, turnsTaken } = state.meta;
+  return [
+    ...(turn
+      ? [
+          `Turn: ${investigatorName(state, turn.investigatorId)}, ` +
+            `actions ${turn.actionsTaken}/${actionAllowance(state, turn)}`,
+        ]
+      : []),
+    ...(turnsTaken.length > 0
+      ? [`Turns taken: ${turnsTaken.map((id) => investigatorName(state, id)).join(', ')}`]
+      : []),
+  ];
 }
 
 function agendaLine(ctx: EngineContext, state: GameState): string {

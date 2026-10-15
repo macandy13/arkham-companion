@@ -24,6 +24,14 @@ export { describeDecision, optionName, optionNamed } from './describe_decision';
 export { confirmOptions, skillTestDecision, type SkillTestOutcomes } from './decisions';
 export { doomInPlay, isInPlay } from './doom';
 export { checkInvariants } from './invariants';
+export { PHASE_STEP_TITLES } from './phases';
+export {
+  actionAllowance,
+  actionOf,
+  BASE_ACTIONS_PER_TURN,
+  type ActionKind,
+  type CommandAction,
+} from './turns';
 export { formatBoard } from './format_board';
 export {
   MAX_TRIGGERED_COMMANDS,

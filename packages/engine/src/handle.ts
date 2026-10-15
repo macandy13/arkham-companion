@@ -30,8 +30,16 @@ import {
 } from './decisions';
 import { handleMoveHunter, handleMoveHunters } from './hunters';
 import { agendaThresholdDecision } from './doom';
-import { handleEndTurn, handleNextPhase, handleResolveEnemyAttack, nextStepPlan } from './phases';
-import { handleEvade, handleFight, handleInvestigate } from './skill-tests';
+import { handleNextPhase, handleResolveEnemyAttack, nextStepPlan } from './phases';
+import { handleEvade, handleFight, handleInvestigate } from './skill_tests';
+import {
+  actionEvents,
+  actionsAdjusted,
+  handleAdjustActions,
+  handleEndTurn,
+  handleStartTurn,
+  handleTakeAction,
+} from './turns';
 import {
   completeAdvance,
   handleAdvanceAct,
@@ -40,7 +48,14 @@ import {
   handlePlaceDoom,
 } from './handle_scenario';
 import type { Adjustment, Command, MoveCard, StartScenario, StartingCard } from './commands';
-import type { CardMoved, DeckShuffled, Event, ScenarioStarted, TokensChanged } from './events';
+import type {
+  ActionsAdjusted,
+  CardMoved,
+  DeckShuffled,
+  Event,
+  ScenarioStarted,
+  TokensChanged,
+} from './events';
 import { instanceId, type InstanceId, type MapId } from './ids';
 import { requireCard } from './lookup';
 import { createMap, type GameMap, type MapSpec } from './map';
@@ -74,11 +89,16 @@ import { zoneKey, type Zone } from './zone';
  * chain, like a hook's follow-ups, before the forced effects of its events.
  * `NextPhase` continues with the outstanding phase steps (`phaseStepEvents`),
  * so one "Next" yields the whole automated part of a phase.
+ * An action the players take in the investigation phase is counted first
+ * (`ActionTaken`, see `actionEvents`); only commands from outside count, so a
+ * hook's or an answer's `MoveInvestigator` or `EngageEnemy` is never an action.
  * Pure: the same state, command and context always yield the same events.
  */
 export function handle(ctx: EngineContext, state: GameState, command: Command): Event[] {
   assertNoPendingDecision(state, command);
-  return handleWithTriggers(ctx, state, command, { remaining: MAX_TRIGGERED_COMMANDS });
+  const action = actionEvents(state, command);
+  const budget = { remaining: MAX_TRIGGERED_COMMANDS };
+  return [...action, ...handleWithTriggers(ctx, replay(action, state), command, budget)];
 }
 
 /** How many follow-up commands the current chain may still run; shared by the whole chain. */
@@ -272,8 +292,14 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
       return agendaThresholdDecision(ctx, state);
     case 'NextPhase':
       return handleNextPhase(ctx, state);
+    case 'StartTurn':
+      return handleStartTurn(state, command);
     case 'EndTurn':
       return handleEndTurn(state, command);
+    case 'AdjustActions':
+      return handleAdjustActions(state, command);
+    case 'TakeAction':
+      return handleTakeAction(state, command);
     case 'ResolveEnemyAttack':
       return handleResolveEnemyAttack(ctx, state, command);
     case 'Investigate':
@@ -392,7 +418,11 @@ function handleMoveCard(state: GameState, cmd: MoveCard): CardMoved {
   return cardMoved(state, requireCard(state.cards, cmd.cardId), cmd.to);
 }
 
-function handleAdjustment(state: GameState, adj: Adjustment): CardMoved | TokensChanged {
+function handleAdjustment(
+  state: GameState,
+  adj: Adjustment,
+): CardMoved | TokensChanged | ActionsAdjusted {
+  if (adj.kind === 'actions') return actionsAdjusted(state, adj.investigatorId, adj.delta);
   const card = requireCard(state.cards, adj.cardId);
 
   switch (adj.kind) {

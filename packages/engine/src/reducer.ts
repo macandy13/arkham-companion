@@ -1,3 +1,4 @@
+import { withoutKey } from '@arkham/util';
 import { sameEdge } from './board';
 import type {
   CardFlipped,
@@ -21,8 +22,37 @@ import type { InstanceId } from './ids';
 import type { Edge } from './map';
 import { seedRng } from './rng';
 import { withStatDelta } from './investigators';
-import { emptyState, type CardInstance, type GameState, type Investigator } from './state';
+import {
+  emptyState,
+  type CardInstance,
+  type GameState,
+  type Investigator,
+  type Turn,
+} from './state';
 import { zoneKey, type Zone, type ZoneKey } from './zone';
+
+/**
+ * A defeated investigator is out of the scenario; if it happens during their
+ * turn, the turn ends with them (it counts as taken), so the group can go on
+ * with the next investigator.
+ */
+function applyInvestigatorDefeated(state: GameState, event: InvestigatorDefeated): GameState {
+  const defeated = applyInvestigator(state, event, (inv) => ({ ...inv, status: 'defeated' }));
+  return state.meta.turn?.investigatorId === event.investigatorId
+    ? endTurn(defeated, event.investigatorId)
+    : defeated;
+}
+
+function endTurn(state: GameState, investigatorId: Investigator['id']): GameState {
+  const meta = withoutKey(state.meta, 'turn');
+  return { ...state, meta: { ...meta, turnsTaken: [...meta.turnsTaken, investigatorId] } };
+}
+
+/** `state` with the turn in progress changed; unchanged when no turn is in progress. */
+function updateTurn(state: GameState, update: (turn: Turn) => Turn): GameState {
+  const { turn } = state.meta;
+  return turn ? { ...state, meta: { ...state.meta, turn: update(turn) } } : state;
+}
 
 /** Pure reducer: applies one event and returns the next state. Never mutates `state`. */
 export function apply(state: GameState, event: Event): GameState {
@@ -46,7 +76,7 @@ export function apply(state: GameState, event: Event): GameState {
     case 'InvestigatorChanged':
       return applyInvestigator(state, event, (inv) => withStatDelta(inv, event.stat, event.delta));
     case 'InvestigatorDefeated':
-      return applyInvestigator(state, event, (inv) => ({ ...inv, status: 'defeated' }));
+      return applyInvestigatorDefeated(state, event);
     case 'DecisionRequested':
       return applyDecisionRequested(state, event);
     case 'DecisionResolved':
@@ -80,11 +110,23 @@ export function apply(state: GameState, event: Event): GameState {
       return { ...state, meta: { ...state.meta, steps: event.steps } };
     case 'RoundEnded':
       return { ...state, meta: { ...state.meta, turnsTaken: [] } };
-    case 'TurnEnded':
+    case 'TurnStarted':
       return {
         ...state,
-        meta: { ...state.meta, turnsTaken: [...state.meta.turnsTaken, event.investigatorId] },
+        meta: {
+          ...state.meta,
+          turn: { investigatorId: event.investigatorId, actionsTaken: 0, actionAdjustment: 0 },
+        },
       };
+    case 'ActionTaken':
+      return updateTurn(state, (turn) => ({ ...turn, actionsTaken: turn.actionsTaken + 1 }));
+    case 'ActionsAdjusted':
+      return updateTurn(state, (turn) => ({
+        ...turn,
+        actionAdjustment: turn.actionAdjustment + event.delta,
+      }));
+    case 'TurnEnded':
+      return endTurn(state, event.investigatorId);
   }
 }
 

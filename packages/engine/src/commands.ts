@@ -44,7 +44,10 @@ export type Command =
   | ResolveDecision
   | CheckDoomThreshold
   | NextPhase
+  | StartTurn
   | EndTurn
+  | AdjustActions
+  | TakeAction
   | ResolveEnemyAttack
   | Investigate
   | Fight
@@ -117,10 +120,14 @@ export interface AddMap {
   locations: readonly InstanceId[];
 }
 
-/** The concrete corrections a `ManualAdjust` can make. */
+/**
+ * The concrete corrections a `ManualAdjust` can make. `actions` changes the
+ * action allowance of the turn in progress, like `AdjustActions`.
+ */
 export type Adjustment =
   | { kind: 'moveCard'; cardId: InstanceId; to: Zone; index?: number }
-  | { kind: 'tokens'; cardId: InstanceId; token: TokenKind; delta: number };
+  | { kind: 'tokens'; cardId: InstanceId; token: TokenKind; delta: number }
+  | { kind: 'actions'; investigatorId: InvestigatorId; delta: number };
 
 /**
  * Connects two location cards (a card effect or scenario step). The cards may
@@ -178,6 +185,12 @@ export interface MoveInvestigator {
   to: InstanceId;
   /** Skip the connection check (card effects). Default false. */
   ignoreConnections?: boolean;
+  /**
+   * Not an action: a card effect or rule performs it (a fast ability, an
+   * enemy engaging on arrival). Not counted against the turn's allowance and
+   * allowed outside the investigator's turn. Default false.
+   */
+  free?: boolean;
 }
 
 /**
@@ -376,6 +389,12 @@ export interface EngageEnemy {
   type: 'EngageEnemy';
   enemyId: InstanceId;
   investigatorId: InvestigatorId;
+  /**
+   * Not an action: a card effect or rule performs it (a fast ability, an
+   * enemy engaging on arrival). Not counted against the turn's allowance and
+   * allowed outside the investigator's turn. Default false.
+   */
+  free?: boolean;
 }
 
 /**
@@ -519,12 +538,59 @@ export interface NextPhase {
 }
 
 /**
- * An investigator ends their turn in the investigation phase; sets the
- * per-round "turn taken" flag (`GameMeta.turnsTaken`). Produces `TurnEnded`.
+ * Rules Reference 2.2: the group picks the investigator whose turn begins,
+ * any active investigator who has not taken a turn this round, in any order.
+ * Only in the investigation phase and while no other turn is in progress.
+ * Produces `TurnStarted`.
+ */
+export interface StartTurn {
+  type: 'StartTurn';
+  investigatorId: InvestigatorId;
+}
+
+/**
+ * Rules Reference 2.2.2: the investigator whose turn is in progress ends it,
+ * whether or not they used all their actions; sets the per-round "turn
+ * taken" flag (`GameMeta.turnsTaken`). Produces `TurnEnded`.
  */
 export interface EndTurn {
   type: 'EndTurn';
   investigatorId: InvestigatorId;
+}
+
+/**
+ * Changes the action allowance of the turn in progress by `delta` (a
+ * non-zero integer), for this turn only: a card that grants "take an
+ * additional action this turn", or one that costs an action. The allowance
+ * may not drop below zero. Effects that grant an action for the rest of the
+ * scenario change `Investigator.extraActions` (`AdjustInvestigator`)
+ * instead. Not an action itself. Produces `ActionsAdjusted`.
+ */
+export interface AdjustActions {
+  type: 'AdjustActions';
+  investigatorId: InvestigatorId;
+  delta: number;
+}
+
+/**
+ * The actions the app tracks only as a count, since player cards are not
+ * modelled: draw a card, gain a resource, play a card, activate an ability
+ * (an activated ability that fights or investigates is a `Fight` or
+ * `Investigate` instead).
+ */
+export type TableAction = 'draw' | 'resource' | 'play' | 'activate';
+
+/**
+ * An action the players resolve at the table (`TableAction`), counted
+ * against the turn's allowance like the actions the engine resolves. Only in
+ * the investigation phase. The `resource` action also gives the investigator
+ * 1 resource. Produces `ActionTaken`, then `InvestigatorChanged` for
+ * `resource`.
+ */
+export interface TakeAction {
+  type: 'TakeAction';
+  investigatorId: InvestigatorId;
+  action: TableAction;
 }
 
 /**
@@ -545,32 +611,48 @@ export interface ResolveEnemyAttack {
 }
 
 /**
- * Quick action: the investigator investigates their location. The players
- * resolve the intellect test against its shroud at the table; the engine
- * raises a `skillTestResult` decision whose pass discovers 1 clue (if the
- * location has one). Skipping the test and using `DiscoverClues` directly is
- * equally valid. Produces `DecisionRequested`.
+ * Investigate action: the investigator investigates their location. The
+ * players resolve the intellect test against its shroud at the table; the
+ * engine raises a `skillTestResult` decision whose pass discovers clues: 1
+ * by default, or the count the players confirm in `ResolveDecision.amount`
+ * (cards that discover more, up to the clues on the location). A location
+ * without clues makes the pass do nothing. Skipping the test and using
+ * `DiscoverClues` directly is equally valid. Produces `DecisionRequested`.
  */
 export interface Investigate {
   type: 'Investigate';
   investigatorId: InvestigatorId;
+  /**
+   * Not an action: a card effect or rule performs it (a fast ability, an
+   * enemy engaging on arrival). Not counted against the turn's allowance and
+   * allowed outside the investigator's turn. Default false.
+   */
+  free?: boolean;
 }
 
 /**
- * Quick action: the investigator attacks an enemy at their location
- * (combat test against its fight value). A pass deals `damage` (default 1;
- * weapons deal more) via `DamageEnemy`. Produces `DecisionRequested`.
+ * Fight action: the investigator attacks an enemy at their location
+ * (combat test against its fight value). A pass deals `damage` via
+ * `DamageEnemy`, or the damage the players confirm in
+ * `ResolveDecision.amount` (effects that add damage on a good result).
+ * Produces `DecisionRequested`.
  */
 export interface Fight {
   type: 'Fight';
   investigatorId: InvestigatorId;
   enemyId: InstanceId;
-  /** Damage on a pass; default 1. */
+  /** Damage of the attack, the pass option's default; 1 (the basic attack) unless a weapon deals more. */
   damage?: number;
+  /**
+   * Not an action: a card effect or rule performs it (a fast ability, an
+   * enemy engaging on arrival). Not counted against the turn's allowance and
+   * allowed outside the investigator's turn. Default false.
+   */
+  free?: boolean;
 }
 
 /**
- * Quick action: the investigator evades an enemy engaged with them (agility
+ * Evade action: the investigator evades an enemy engaged with them (agility
  * test against its evade value). A pass exhausts the enemy (if ready) and
  * disengages it (a massive enemy is not in the `engaged` zone and stays).
  * Produces `DecisionRequested`.
@@ -579,6 +661,12 @@ export interface Evade {
   type: 'Evade';
   investigatorId: InvestigatorId;
   enemyId: InstanceId;
+  /**
+   * Not an action: a card effect or rule performs it (a fast ability, an
+   * enemy engaging on arrival). Not counted against the turn's allowance and
+   * allowed outside the investigator's turn. Default false.
+   */
+  free?: boolean;
 }
 
 /** String literal of every command type. */

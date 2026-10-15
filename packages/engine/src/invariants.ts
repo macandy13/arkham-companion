@@ -10,7 +10,9 @@ import { zoneKey } from './zone';
  * order, no order list is empty or names an unknown card, no token count is
  * negative, every connection (of any map) joins two known cards and appears only once,
  * every investigator is consistent (see `investigatorErrors`), pending decisions are
- * well-formed and every investigator has taken at most one turn this round.
+ * well-formed, every investigator has taken at most one turn this round and
+ * the turn in progress (investigation phase only) belongs to an active
+ * investigator who has not had theirs yet.
  */
 export function checkInvariants(state: GameState): string[] {
   const errors: string[] = [];
@@ -42,15 +44,34 @@ export function checkInvariants(state: GameState): string[] {
   return errors;
 }
 
-/** Violations of the per-round turn flags: each names a known investigator, at most once. */
+/** Violations of the per-round turn flags and of the turn in progress. */
 function turnErrors(state: GameState): string[] {
   const { turnsTaken } = state.meta;
-  return turnsTaken.flatMap((id, i) => [
+  const taken = turnsTaken.flatMap((id, i) => [
     ...(state.investigators.some((inv) => inv.id === id)
       ? []
       : [`turn taken by unknown investigator ${id}`]),
     ...(turnsTaken.indexOf(id) < i ? [`turn of ${id} taken more than once`] : []),
   ]);
+  return [...taken, ...currentTurnErrors(state)];
+}
+
+function currentTurnErrors(state: GameState): string[] {
+  const { turn, phase, turnsTaken } = state.meta;
+  if (!turn) return [];
+  const investigator = state.investigators.find((inv) => inv.id === turn.investigatorId);
+  return [
+    ...(phase === 'investigation' ? [] : [`turn in progress in the ${phase} phase`]),
+    ...(investigator?.status === 'active'
+      ? []
+      : [`turn of ${turn.investigatorId}, who is not an active investigator`]),
+    ...(turnsTaken.includes(turn.investigatorId)
+      ? [`turn of ${turn.investigatorId} in progress after it was taken`]
+      : []),
+    ...(Number.isInteger(turn.actionsTaken) && turn.actionsTaken >= 0
+      ? []
+      : [`turn of ${turn.investigatorId} has ${turn.actionsTaken} actions taken`]),
+  ];
 }
 
 /** Violations for the current agenda and act: they must name known cards. */

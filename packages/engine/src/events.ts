@@ -1,6 +1,7 @@
 import type { DecisionId, InstanceId, InvestigatorId, MapId } from './ids';
 import type { Edge, GameMap } from './map';
 import type { RngState } from './rng';
+import type { ActionKind } from './turns';
 import type {
   CampaignLog,
   CardInstance,
@@ -44,6 +45,9 @@ export type Event =
   | PhaseChanged
   | PhaseStepsChanged
   | RoundEnded
+  | TurnStarted
+  | ActionTaken
+  | ActionsAdjusted
   | TurnEnded;
 
 /** A scenario was set up; replaces the whole state. Produced by `StartScenario`. */
@@ -298,6 +302,35 @@ export interface PhaseStepsChanged {
 export interface RoundEnded {
   type: 'RoundEnded';
   round: number;
+}
+
+/** The investigator's turn begins (`GameMeta.turn`, no actions taken yet). Produced by `StartTurn`. */
+export interface TurnStarted {
+  type: 'TurnStarted';
+  investigatorId: InvestigatorId;
+}
+
+/**
+ * The investigator whose turn is in progress spent one action
+ * (`Turn.actionsTaken`). Produced by `handle` ahead of the events of an
+ * action command the players issue during the investigation phase (see
+ * `actionOf`); follow-up commands of hooks and answers are never actions.
+ */
+export interface ActionTaken {
+  type: 'ActionTaken';
+  investigatorId: InvestigatorId;
+  action: ActionKind;
+}
+
+/**
+ * The action allowance of the turn in progress changed by `delta`
+ * (`Turn.actionAdjustment`). Produced by `AdjustActions` and by a
+ * `ManualAdjust` of kind `actions`.
+ */
+export interface ActionsAdjusted {
+  type: 'ActionsAdjusted';
+  investigatorId: InvestigatorId;
+  delta: number;
 }
 
 /** The investigator has taken their turn this round (`GameMeta.turnsTaken`). Produced by `EndTurn`. */

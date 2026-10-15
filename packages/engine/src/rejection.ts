@@ -124,6 +124,35 @@ export type Rejection =
   | { code: 'wrongPhase'; expected: Phase; actual: Phase }
   /** `EndTurn` for an investigator who has already taken their turn this round. */
   | { code: 'turnAlreadyTaken'; investigatorId: InvestigatorId }
+  /** `StartTurn` while another turn is in progress, or `NextPhase` before it ended. */
+  | { code: 'turnInProgress'; investigatorId: InvestigatorId }
+  /**
+   * An action, `EndTurn` or `AdjustActions` in the investigation phase for an
+   * investigator whose turn is not in progress (`activeInvestigatorId`: whose is, if any).
+   */
+  | { code: 'notTheirTurn'; investigatorId: InvestigatorId; activeInvestigatorId?: InvestigatorId }
+  /** An action beyond the turn's allowance (`actionAllowance`). */
+  | { code: 'noActionsLeft'; investigatorId: InvestigatorId; allowance: number }
+  /** `AdjustActions` with a delta that is zero, fractional or takes the allowance below zero. */
+  | {
+      code: 'invalidActionAdjustment';
+      investigatorId: InvestigatorId;
+      delta: number;
+      allowance: number;
+    }
+  /** `NextPhase` out of investigation while these active investigators have not taken their turn. */
+  | { code: 'turnsNotTaken'; investigatorIds: InvestigatorId[] }
+  /** `ResolveDecision` with an `amount` for an option that has no adjustable count. */
+  | { code: 'amountNotAdjustable'; decisionId: DecisionId; optionId: string }
+  /** `ResolveDecision` with an `amount` outside the option's range. */
+  | {
+      code: 'amountOutOfRange';
+      decisionId: DecisionId;
+      optionId: string;
+      amount: number;
+      min: number;
+      max?: number;
+    }
   | { code: 'triggerLoop'; limit: number }
   /** A command returned by a hook or card effect was rejected for `reason`. */
   | { code: 'triggeredCommandRejected'; command: CommandType; reason: Rejection }
@@ -265,6 +294,22 @@ function describe(r: Rejection): string {
       return `only allowed in the ${r.expected} phase, not in ${r.actual}`;
     case 'turnAlreadyTaken':
       return `investigator ${r.investigatorId} has already taken their turn this round`;
+    case 'turnInProgress':
+      return `the turn of ${r.investigatorId} is still in progress`;
+    case 'notTheirTurn':
+      return r.activeInvestigatorId === undefined
+        ? `no turn is in progress, so ${r.investigatorId} cannot act`
+        : `it is the turn of ${r.activeInvestigatorId}, not ${r.investigatorId}`;
+    case 'noActionsLeft':
+      return `${r.investigatorId} has already taken all ${r.allowance} actions of this turn`;
+    case 'invalidActionAdjustment':
+      return `cannot change the allowance of ${r.allowance} actions of ${r.investigatorId} by ${r.delta}`;
+    case 'turnsNotTaken':
+      return `the investigation phase ends after each turn; still to go: ${r.investigatorIds.join(', ')}`;
+    case 'amountNotAdjustable':
+      return `option ${r.optionId} of decision ${r.decisionId} has no adjustable amount`;
+    case 'amountOutOfRange':
+      return `option ${r.optionId} of decision ${r.decisionId} takes ${r.min}${r.max === undefined ? ' or more' : `–${r.max}`}, got ${r.amount}`;
     case 'triggerLoop':
       return `forced effects triggered more than ${r.limit} follow-up commands`;
     case 'triggeredCommandRejected':

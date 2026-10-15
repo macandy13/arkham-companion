@@ -34,7 +34,8 @@ export interface CardInstance {
 export type InvestigatorStatus = 'active' | 'resigned' | 'defeated';
 
 /** The investigator counters that commands and events can change. */
-export type InvestigatorStat = 'damage' | 'horror' | 'clues' | 'resources' | 'doomOnPlayerCards';
+export type InvestigatorStat =
+  'damage' | 'horror' | 'clues' | 'resources' | 'doomOnPlayerCards' | 'extraActions';
 /** All investigator stats, e.g. for iterating in tests. */
 export const INVESTIGATOR_STATS: readonly InvestigatorStat[] = [
   'damage',
@@ -42,6 +43,7 @@ export const INVESTIGATOR_STATS: readonly InvestigatorStat[] = [
   'clues',
   'resources',
   'doomOnPlayerCards',
+  'extraActions',
 ];
 
 /**
@@ -65,6 +67,13 @@ export interface Investigator {
    * the doom total like doom on any card in play (`doomInPlay`).
    */
   doomOnPlayerCards: number;
+  /**
+   * Actions per turn beyond the standard 3, granted for the rest of the
+   * scenario by the investigator's cards ("you may take an additional action
+   * during your turn"). Changed with `AdjustInvestigator`; a one-turn bonus is
+   * `AdjustActions` instead (`Turn.actionAdjustment`).
+   */
+  extraActions: number;
   status: InvestigatorStatus;
 }
 
@@ -283,11 +292,13 @@ export interface GameMeta {
   /** Outstanding steps of the current phase, next first (see `PhaseStep`). */
   steps: PhaseStep[];
   /**
-   * Investigators who have ended their turn this round (`EndTurn`). A
-   * per-round flag kept apart from `InvestigatorStatus`, which is permanent
-   * for the scenario; cleared when the round ends.
+   * Investigators who have taken their turn this round (`EndTurn`, or defeat
+   * during their turn). A per-round flag kept apart from `InvestigatorStatus`,
+   * which is permanent for the scenario; cleared when the round ends.
    */
   turnsTaken: InvestigatorId[];
+  /** The turn in progress during the investigation phase; absent between turns. */
+  turn?: Turn;
   leadInvestigator?: InvestigatorId;
 }
 
