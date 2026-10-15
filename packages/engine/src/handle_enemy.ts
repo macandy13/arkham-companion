@@ -11,6 +11,7 @@ import { engageEvents } from './engagement';
 import type { EnemyDefeated, EnemyEngaged, Event, ExhaustChanged } from './events';
 import { activeInvestigator } from './handle_investigator';
 import type { InstanceId } from './ids';
+import { requireCard } from './lookup';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
@@ -113,8 +114,7 @@ export function enemyOf(
   state: GameState,
   enemyId: InstanceId,
 ): { enemy: CardInstance; stats: CardStats } {
-  const enemy = state.cards[enemyId];
-  if (!enemy) throw new CommandRejected({ code: 'unknownCard', cardId: enemyId });
+  const enemy = requireCard(state.cards, enemyId);
   const stats = cardStats(ctx.cards, enemy.code);
   if (stats.typeCode !== 'enemy')
     throw new CommandRejected({ code: 'notAnEnemy', cardId: enemyId });

@@ -4,30 +4,53 @@ import {
   execute,
   instanceId,
   investigatorId,
-  shortestPaths,
   type Command,
   type Edge,
   type GameState,
   type InstanceId,
   type Investigator,
+  type StartingCard,
   type Zone,
 } from './index';
-import { contextWith, edge, makeCard, makeInvestigator, startBoard } from '../test/utils';
+import {
+  contextWith,
+  edge,
+  makeCard,
+  makeInvestigator,
+  startBoard,
+  stateAfter,
+} from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
 
+const hunter = instanceId('hunter');
+
+/**
+ * The cards of these tests: locations (named by letter in the map diagrams of
+ * each test), a plain hunter, a hunter whose prey is "Most clues", an aloof
+ * hunter and a ghoul without the hunter keyword.
+ */
 const ctx = contextWith(
-  makeCard({ code: 'LOC', typeCode: 'location' }),
-  makeCard({ code: 'HNT', typeCode: 'enemy', keywords: [{ name: 'hunter' }] }),
+  makeCard({ code: 'location', typeCode: 'location' }),
+  makeCard({ code: 'hunter_ghoul', typeCode: 'enemy', keywords: [{ name: 'hunter' }] }),
   makeCard({
-    code: 'HPY',
+    code: 'most_clues_prey_hunter',
     typeCode: 'enemy',
     keywords: [{ name: 'hunter' }, { name: 'prey', detail: 'Most clues' }],
   }),
-  makeCard({ code: 'HAL', typeCode: 'enemy', keywords: [{ name: 'hunter' }, { name: 'aloof' }] }),
-  makeCard({ code: 'FOE', typeCode: 'enemy' }),
+  makeCard({
+    code: 'aloof_hunter',
+    typeCode: 'enemy',
+    keywords: [{ name: 'hunter' }, { name: 'aloof' }],
+  }),
+  makeCard({ code: 'plain_ghoul', typeCode: 'enemy' }),
 );
+
+/** A card to create: `id` is how the test refers to it, `code` says what it is. */
+function enemy(id: InstanceId, code: string, zone: Zone): StartingCard {
+  return { id, code, zone };
+}
 
 const at = (place: string): Zone => ({ kind: 'atLocation', locationId: instanceId(place) });
 const engagedWith = (id: typeof alice): Zone => ({ kind: 'engaged', investigatorId: id });
@@ -48,15 +71,14 @@ interface Layout {
   places: string[];
   edges: Edge[];
   investigators: Investigator[];
-  /** Enemy instance ID to code and zone. */
-  enemies: Record<string, { code: string; zone: Zone }>;
+  enemies: StartingCard[];
 }
 
 function started({ places, edges, investigators, enemies }: Layout): GameState {
   return startBoard(ctx, {
     maps: {
       main: {
-        locations: Object.fromEntries(places.map((place) => [place, 'LOC'])),
+        locations: Object.fromEntries(places.map((place) => [place, 'location'])),
         connections: edges,
       },
     },
@@ -65,8 +87,8 @@ function started({ places, edges, investigators, enemies }: Layout): GameState {
   });
 }
 
-const zoneOf = (state: GameState, enemy: string): Zone | undefined =>
-  state.cards[instanceId(enemy)]?.zone;
+const zoneOf = (state: GameState, cardId: InstanceId): Zone | undefined =>
+  state.cards[cardId]?.zone;
 
 /** Undirected edges joining consecutive places. */
 const line = (...places: string[]): Edge[] =>
@@ -84,29 +106,33 @@ describe('MoveHunters', () => {
       places: ['a', 'b', 'c'],
       edges: line('a', 'b', 'c'),
       investigators: [investigator('alice', 'c')],
-      enemies: { h: { code: 'HNT', zone: at('a') } },
+      enemies: [enemy(hunter, 'hunter_ghoul', at('a'))],
     });
 
     const { state: after, events } = execute(ctx, state, moveHunters);
 
-    expect(zoneOf(after, 'h')).toEqual(at('b'));
+    expect(zoneOf(after, hunter)).toEqual(at('b'));
     expect(events.map((e) => e.type)).toEqual(['CardMoved']);
   });
 
   it.each([
-    { name: 'engages the investigator when it arrives', code: 'HNT', zone: engagedWith(alice) },
-    { name: 'does not engage an aloof hunter on arrival', code: 'HAL', zone: at('b') },
+    {
+      name: 'engages the investigator when it arrives',
+      code: 'hunter_ghoul',
+      zone: engagedWith(alice),
+    },
+    { name: 'does not engage an aloof hunter on arrival', code: 'aloof_hunter', zone: at('b') },
   ])('$name', ({ code, zone }) => {
     const state = started({
       places: ['a', 'b'],
       edges: line('a', 'b'),
       investigators: [investigator('alice', 'b')],
-      enemies: { h: { code, zone: at('a') } },
+      enemies: [enemy(hunter, code, at('a'))],
     });
 
     const { state: after } = execute(ctx, state, moveHunters);
 
-    expect(zoneOf(after, 'h')).toEqual(zone);
+    expect(zoneOf(after, hunter)).toEqual(zone);
   });
 
   it.each([
@@ -126,7 +152,7 @@ describe('MoveHunters', () => {
       places: ['a', 'b'],
       edges,
       investigators,
-      enemies: { h: { code: 'HNT', zone: at('a') } },
+      enemies: [enemy(hunter, 'hunter_ghoul', at('a'))],
     });
 
     expect(execute(ctx, state, moveHunters).events).toEqual([]);
@@ -137,16 +163,16 @@ describe('MoveHunters', () => {
       places: ['a', 'b', 'c'],
       edges: line('a', 'b', 'c'),
       investigators: [investigator('alice', 'c')],
-      enemies: {
-        tired: { code: 'HNT', zone: at('a') },
-        held: { code: 'HNT', zone: engagedWith(alice) },
-        plain: { code: 'FOE', zone: at('a') },
-      },
+      enemies: [
+        enemy(instanceId('tired_hunter'), 'hunter_ghoul', at('a')),
+        enemy(instanceId('engaged_hunter'), 'hunter_ghoul', engagedWith(alice)),
+        enemy(instanceId('plain_ghoul'), 'plain_ghoul', at('a')),
+      ],
     });
-    const exhausted = execute(ctx, state, {
+    const exhausted = stateAfter(ctx, state, {
       type: 'ExhaustEnemy',
-      enemyId: instanceId('tired'),
-    }).state;
+      enemyId: instanceId('tired_hunter'),
+    });
 
     expect(execute(ctx, exhausted, moveHunters).events).toEqual([]);
   });
@@ -156,12 +182,12 @@ describe('MoveHunters', () => {
       places: ['x', 'far', 'a', 'near'],
       edges: line('x', 'far', 'a', 'near'),
       investigators: [investigator('alice', 'x'), investigator('bob', 'near')],
-      enemies: { h: { code: 'HNT', zone: at('a') } },
+      enemies: [enemy(hunter, 'hunter_ghoul', at('a'))],
     });
 
     const { state: after } = execute(ctx, state, moveHunters);
 
-    expect(zoneOf(after, 'h')).toEqual(engagedWith(bob));
+    expect(zoneOf(after, hunter)).toEqual(engagedWith(bob));
   });
 
   it('moves the same way when equally near investigators share the first step', () => {
@@ -169,12 +195,12 @@ describe('MoveHunters', () => {
       places: ['a', 'b', 'c', 'd'],
       edges: [edge('a', 'b'), edge('b', 'c'), edge('b', 'd')],
       investigators: [investigator('alice', 'c'), investigator('bob', 'd')],
-      enemies: { h: { code: 'HNT', zone: at('a') } },
+      enemies: [enemy(hunter, 'hunter_ghoul', at('a'))],
     });
 
     const { state: after, events } = execute(ctx, state, moveHunters);
 
-    expect(zoneOf(after, 'h')).toEqual(at('b'));
+    expect(zoneOf(after, hunter)).toEqual(at('b'));
     expect(events.map((e) => e.type)).toEqual(['CardMoved']);
   });
 
@@ -183,14 +209,14 @@ describe('MoveHunters', () => {
       const state = started({
         ...fork,
         investigators: [investigator('alice', 'd')],
-        enemies: { h: { code: 'HNT', zone: at('a') } },
+        enemies: [enemy(hunter, 'hunter_ghoul', at('a'))],
       });
 
       const { state: after } = execute(ctx, state, moveHunters);
 
-      expect(zoneOf(after, 'h')).toEqual(at('a'));
+      expect(zoneOf(after, hunter)).toEqual(at('a'));
       expect(after.pending).toMatchObject([
-        { kind: 'chooseLocation', subject: 'h', options: [{ target: 'b' }, { target: 'c' }] },
+        { kind: 'chooseLocation', subject: hunter, options: [{ target: 'b' }, { target: 'c' }] },
       ]);
     });
 
@@ -198,7 +224,7 @@ describe('MoveHunters', () => {
       const state = started({
         ...fork,
         investigators: [investigator('alice', 'd')],
-        enemies: { h: { code: 'HNT', zone: at('a') } },
+        enemies: [enemy(hunter, 'hunter_ghoul', at('a'))],
       });
       const asked = execute(ctx, state, moveHunters).state;
 
@@ -210,13 +236,17 @@ describe('MoveHunters', () => {
         places: ['a', 'b', 'c'],
         edges: [edge('a', 'b'), edge('a', 'c')],
         investigators: [investigator('alice', 'b'), investigator('bob', 'c')],
-        enemies: { h: { code: 'HNT', zone: at('a') } },
+        enemies: [enemy(hunter, 'hunter_ghoul', at('a'))],
       });
 
       const { state: after } = execute(ctx, state, moveHunters);
 
       expect(after.pending).toMatchObject([
-        { kind: 'chooseInvestigator', subject: 'h', options: [{ target: alice }, { target: bob }] },
+        {
+          kind: 'chooseInvestigator',
+          subject: hunter,
+          options: [{ target: alice }, { target: bob }],
+        },
       ]);
     });
 
@@ -225,97 +255,69 @@ describe('MoveHunters', () => {
         places: ['a', 'b', 'c'],
         edges: [edge('a', 'b'), edge('a', 'c')],
         investigators: [investigator('alice', 'b', 1), investigator('bob', 'c', 2)],
-        enemies: { h: { code: 'HPY', zone: at('a') } },
+        enemies: [enemy(hunter, 'most_clues_prey_hunter', at('a'))],
       });
 
       const { state: after } = execute(ctx, state, moveHunters);
 
-      expect(zoneOf(after, 'h')).toEqual(engagedWith(bob));
+      expect(zoneOf(after, hunter)).toEqual(engagedWith(bob));
     });
 
     it('asks for the destination after prey picked one investigator with two routes', () => {
       const state = started({
         ...fork,
         investigators: [investigator('alice', 'd', 1), investigator('bob', 'd', 1)],
-        enemies: { h: { code: 'HPY', zone: at('a') } },
+        enemies: [enemy(hunter, 'most_clues_prey_hunter', at('a'))],
       });
 
       const { state: after } = execute(ctx, state, moveHunters);
 
-      expect(after.pending).toMatchObject([{ kind: 'chooseLocation', subject: 'h' }]);
+      expect(after.pending).toMatchObject([{ kind: 'chooseLocation', subject: hunter }]);
     });
   });
 });
 
-/** Steps from `from` to the nearest investigator; infinite if none can be reached. */
-function distanceToNearestInvestigator(state: GameState, from: InstanceId): number {
-  const distances = state.investigators.flatMap(({ locationId }) => {
-    const [path] = locationId === undefined ? [] : shortestPaths(state, from, locationId);
-    return path ? [path.length - 1] : [];
-  });
-  return Math.min(...distances);
-}
-
-describe('MoveHunters invariants', () => {
-  const layouts: (Omit<Layout, 'enemies'> & { name: string })[] = [
+describe('MoveHunters routes', () => {
+  it.each([
     {
       name: 'a line',
       places: ['a', 'b', 'c', 'd'],
       edges: line('a', 'b', 'c', 'd'),
       investigators: [investigator('alice', 'd')],
+      zone: at('b'),
     },
     {
-      name: 'a cycle with two investigators',
+      name: 'a cycle where alice is one step away and bob two',
       places: ['a', 'b', 'c', 'd'],
       edges: [...line('a', 'b', 'c', 'd'), edge('d', 'a')],
       investigators: [investigator('alice', 'b'), investigator('bob', 'c')],
+      zone: engagedWith(alice),
     },
     {
-      name: 'a one-way shortcut',
+      name: 'a one-way shortcut from the hunter to alice',
       places: ['a', 'b', 'c', 'd'],
       edges: [...line('a', 'b', 'c', 'd'), edge('a', 'd', { oneWay: true })],
       investigators: [investigator('alice', 'd')],
+      zone: engagedWith(alice),
     },
     {
-      name: 'a fork with an unreachable investigator',
-      places: ['a', 'b', 'c', 'd', 'e'],
-      edges: [edge('a', 'b'), edge('a', 'c'), edge('b', 'd'), edge('c', 'd')],
-      investigators: [investigator('alice', 'd'), investigator('bob', 'e')],
+      name: 'a map where bob cannot be reached',
+      places: ['a', 'b', 'e'],
+      edges: line('a', 'b'),
+      investigators: [investigator('alice', 'b'), investigator('bob', 'e')],
+      zone: engagedWith(alice),
     },
-  ];
+  ])('on $name the hunter ends at $zone', ({ places, edges, investigators, zone }) => {
+    const before = started({
+      places,
+      edges,
+      investigators,
+      enemies: [enemy(hunter, 'hunter_ghoul', at('a'))],
+    });
 
-  it.each(layouts)(
-    'on $name: moved hunters get strictly closer, engaged and exhausted ones stay',
-    ({ places, edges, investigators }) => {
-      const before = started({
-        places,
-        edges,
-        investigators,
-        enemies: {
-          ready: { code: 'HNT', zone: at('a') },
-          tired: { code: 'HNT', zone: at('a') },
-          held: { code: 'HNT', zone: engagedWith(alice) },
-          middle: { code: 'HNT', zone: at('b') },
-        },
-      });
-      const exhausted = execute(ctx, before, {
-        type: 'ExhaustEnemy',
-        enemyId: instanceId('tired'),
-      }).state;
+    const after = stateAfter(ctx, before, moveHunters);
 
-      const { state: after } = execute(ctx, exhausted, moveHunters);
-
-      expect(checkInvariants(after)).toEqual([]);
-      for (const id of ['tired', 'held']) expect(zoneOf(after, id)).toEqual(zoneOf(exhausted, id));
-      for (const id of ['ready', 'middle']) {
-        const was = zoneOf(exhausted, id);
-        const now = zoneOf(after, id);
-        if (was?.kind !== 'atLocation' || now?.kind !== 'atLocation') continue;
-        if (now.locationId !== was.locationId)
-          expect(distanceToNearestInvestigator(after, now.locationId)).toBeLessThan(
-            distanceToNearestInvestigator(exhausted, was.locationId),
-          );
-      }
-    },
-  );
+    expect(zoneOf(after, hunter)).toEqual(zone);
+    expect(checkInvariants(after)).toEqual([]);
+  });
 });

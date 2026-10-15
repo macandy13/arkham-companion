@@ -237,12 +237,13 @@ describe('The Gathering enemies', () => {
   const fleshEater = instanceId('01118#1');
   const priest = instanceId('01116#1');
   const attic = instanceId('01113#1');
+  const hallway = instanceId('01112#1');
   const tank = investigatorId('tank');
   const seeker = investigatorId('seeker');
-  const study = instanceId('01111#1');
+  const studyCard = instanceId('01111#1');
   const advanceTrapped: Command[] = [
-    { type: 'DiscoverClues', investigatorId: tank, locationId: study, amount: 2 },
-    { type: 'DiscoverClues', investigatorId: seeker, locationId: study, amount: 2 },
+    { type: 'DiscoverClues', investigatorId: tank, locationId: studyCard, amount: 2 },
+    { type: 'DiscoverClues', investigatorId: seeker, locationId: studyCard, amount: 2 },
     {
       type: 'AdvanceAct',
       spend: [
@@ -278,10 +279,7 @@ describe('The Gathering enemies', () => {
     ]);
 
     // Prey "Highest [combat]" needs investigator card data, so the players choose.
-    expect(state.cards[priest]?.zone).toEqual({
-      kind: 'atLocation',
-      locationId: instanceId('01112#1'),
-    });
+    expect(state.cards[priest]?.zone).toEqual({ kind: 'atLocation', locationId: hallway });
     expect(state.pending).toMatchObject([{ kind: 'chooseInvestigator', subject: priest }]);
     expect(checkInvariants(state)).toEqual([]);
   });
