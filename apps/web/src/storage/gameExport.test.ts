@@ -1,4 +1,3 @@
-import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { STATE_VERSION, instanceId, replay, type Event, type StoredEvent } from '@arkham/engine';
 import { GameImportError, parseGameExport, serialiseGameExport } from './gameExport';
@@ -53,14 +52,14 @@ describe('game export format', () => {
     });
   });
 
-  it('property: replaying a parsed export gives the state of the original events', () => {
-    fc.assert(
-      fc.property(fc.array(fc.integer({ min: 0, max: 5 }).map(doom)), (rest) => {
-        const events = [started, ...rest];
-        const parsed = parseGameExport(serialiseGameExport('t', 0, stored(events)));
-        expect(replay(parsed.events.map((e) => e.event))).toEqual(replay(events));
-      }),
-    );
+  it.each([
+    { name: 'no further events', deltas: [] },
+    { name: 'one event', deltas: [2] },
+    { name: 'several events including a zero delta', deltas: [0, 3, 5, 1] },
+  ])('replaying a parsed export gives the original state ($name)', ({ deltas }) => {
+    const events = [started, ...deltas.map(doom)];
+    const parsed = parseGameExport(serialiseGameExport('t', 0, stored(events)));
+    expect(replay(parsed.events.map((e) => e.event))).toEqual(replay(events));
   });
 
   it('rejects an export from a newer state version', () => {

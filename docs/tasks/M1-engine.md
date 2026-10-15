@@ -1,7 +1,7 @@
 # M1 – Generic engine
 
 Goal: all generic rules from architecture §6 in `packages/engine`, driven only by commands and tested without any UI.
-At the end a hand-written **sandbox scenario** (fake card codes, 5–6 locations, a few enemies and treacheries) can be played through a whole game in tests.
+At the end a hand-written **test scenario** – The Gathering from the original Core Set, with real card codes but hand-entered stats and no card text – can be played through a whole game in tests (it replaced the earlier invented sandbox scenario in M1.2).
 
 **Why this milestone**
 
@@ -12,7 +12,7 @@ At the end a hand-written **sandbox scenario** (fake card codes, 5–6 locations
 Model hint: **S** = Sonnet is enough, **O** = use Opus (design-heavy). Do tasks in order; each task = one session = one PR.
 Start from the phone: Code tab → repo → `Do task M1.x from docs/tasks/M1-engine.md`.
 
-Every task: new commands/events go through `handle` → `apply`, invariants keep passing, tests use fake cards only.
+Every task: new commands/events go through `handle` → `apply`, invariants keep passing, tests use invented cards or the hand-written Gathering scenario (hand-entered stats, no card text/JSON/images).
 
 ---
 
@@ -24,13 +24,16 @@ Every task: new commands/events go through `handle` → `apply`, invariants keep
 
 Ref: §5, §9. The engine must read card stats (doom threshold, clues, shroud, health, keywords) without depending on `carddata` at runtime.
 
-- [ ] `CardDb` interface passed into `handle(state, command, ctx)` (`ctx.cards.get(code)`); reducer stays card-agnostic
-- [ ] Per-investigator value helper (`perInvestigator(n)`, `health_per_investigator`)
-- [ ] Fake `CardDb` fixture shared by all engine tests (`test/fixtures/sandbox-cards.ts`)
+- [x] `CardDb` interface passed into `handle(ctx, state, command)` (`ctx.cards.get(code)`); reducer stays card-agnostic
+- [x] Per-investigator value helper (`ScaledValue` + `resolveValue`, covers `health_per_investigator`/`clues_fixed`)
+- [x] Fake `CardDb` fixture shared by all engine tests (now `test/utils/cards.ts`)
 
 Done when: existing tests pass with the new signature; one test reads a threshold through `CardDb`.
 
-## M1.2 Setup DSL + sandbox scenario (O)
+Done: `packages/engine/src/cards.ts` adds `CardStats` (the engine's own card type, so it has no runtime dependency on `carddata`), `CardDb`, `EngineContext`, `cardDbFrom` and `cardStats` (throws `unknownCardCode`). `CardStats` is typed: `typeCode: CardType` (union of ArkhamDB type codes, `CARD_TYPES`), `traits: Trait[]` (branded, built with `trait`), `stage: CardStage` (`{ number, variant? }`, so alternative cards like 2a/b vs 2c/d share a number and differ by variant), and `clues`/`health`/`doom` are `ScaledValue`s (`{ fixed, perInvestigator }`) resolved with `resolveValue(value, playerCount)`. Game-state terms like "+1 per act" are left to the rules that read them. `handle(ctx, state, command)` and `execute(ctx, state, command)` take the context first; `StartScenario` rejects card codes missing from `ctx.cards`. Shared fixture: moved in M1.2 to `packages/engine/test/utils/cards.ts` (`testContext`, `testCardDefs`).
+Follow-ups: map carddata's `CardDef` to `CardStats` (`health`/`health_per_investigator`, `clues`/`clues_fixed` → `ScaledValue`, `stage` → `CardStage`, `type_code` → `CardType`) when the web app gets a `CardDb` backed by the cached carddata (M2); the stage variant letter is not in ArkhamDB and has to come from scenario data; `keywords` gets added to `CardStats` with the keyword parser (M1.7).
+
+## M1.2 Setup DSL + test scenario (O)
 
 **Why:** Setup is where scenarios differ most. A declarative setup language makes a scenario mostly data instead of code, and the same steps also cover mid-scenario changes (§7). The sandbox gives us a scenario we fully control for all later M1 tests.
 
@@ -38,10 +41,17 @@ Done when: existing tests pass with the new signature; one test reads a threshol
 
 Ref: §7.
 
-- [ ] `ScenarioDefinition` type and `SetupStep` union (`putIntoPlay`, `setAside`, `buildEncounterDeck`, `placeTokens`, `spawn`, `moveInvestigators`, `addMap`, `addConnection`)
-- [ ] `compileSetup(def, options) -> StartScenario` (setup steps become starting cards + follow-up commands)
-- [ ] Sandbox scenario in `packages/scenarios/src/sandbox/` using only fake codes
-- [ ] Test: sandbox setup produces the expected zones and counts
+- [x] `ScenarioDefinition` type and `SetupStep` union (`addMap` with its locations and connections, `setAside`, `buildEncounterDeck`, `placeTokens`, `spawn`, `moveInvestigators`)
+- [x] `compileSetup(ctx, def, options) -> StartScenario` (setup steps become starting cards + follow-up commands)
+- [x] Test scenario in `packages/scenarios/src/the_gathering/` (The Gathering, hand-entered stats; replaced the invented sandbox after review)
+- [x] Test: its setup produces the expected zones and counts
+
+Done: `packages/engine/src/setup.ts` adds `SetupStep` (a union of one named type per step: `AddMapStep`, `SetAsideStep`, `BuildEncounterDeckStep`, `PlaceTokensStep`, `SpawnStep`, `MoveInvestigatorsStep`), `TokenAmount`, `SetupOptions` and `compileSetup(ctx, def, options)`, which runs the steps in order and returns one `StartScenario` (no follow-up commands are needed yet). `packages/engine/src/scenario.ts` holds `ScenarioDefinition` with its scenario reference card: `reference: Record<'easyStandard' | 'hardExpert', Partial<Record<SymbolToken, { modifier?, effectKey }>>>` (data only, `referenceSide(difficulty)` picks the side; resolving tokens comes later) next to the per-difficulty `chaosBag`.
+Map model (review on PR #18): `packages/engine/src/map.ts` adds `GameMap` (`{ name, visible, connections: Edge[] }`, plain data with pure functions – `createMap`, `mapLocations` – instead of a class, so the event-sourced state stays JSON) and moves `Edge` there. A map owns its connections; its locations are the cards in zone `{ kind: 'location', mapId }`. `Board.connections` is gone: `StartScenario.maps` takes `MapSpec`s with their connections, `ScenarioStarted.maps` carries `GameMap`s, and the reducer writes `board.maps` as one unit. `handle` rejects an edge whose end is not a location (`notALocation`) or on another map (`locationOnOtherMap`). The `addMap` step declares the map's locations (`{ code, faceUp? }`) and connections (by code, resolved among its own locations) together; `putIntoPlay` and `addConnection` are gone. Spawning goes through `spawnZone(locationId)` (`spawn.ts`), the seed of M1.8's spawn rules.
+Steps refer to cards by code; instance IDs are `<code>#<copy>`. `buildEncounterDeck` takes "the remainder" of its sets: every enemy/treachery copy not used by another step (counted over all steps), minus `exclude`. Locations that start revealed (including the one `moveInvestigators` reveals) get their clues. `CardStats` gained `encounterCode`/`quantity`, `CardDb` gained `encounterSet(code)`.
+Test scenario: `packages/scenarios/src/the_gathering/` (`theGathering`, `theGatheringCards`, `theGatheringCardDefs`, `GATHERING_CODES`, `GATHERING_SETS`, and `theGatheringHouse` – the map act 1 reveals), exported from `@arkham/scenarios`; real core-set codes (`011xx`), hand-entered stats, no card text. Card builders take options objects. Web usage: `execute(ctx, emptyState(), compileSetup(ctx, theGathering, options))` with `ctx = { cards: theGatheringCards }`.
+Tests: shared helpers in `packages/engine/test/utils/` (`standardInvestigators`/`investigators(n)`, `makeInvestigator`, `makeCard`, `contextWith`, `testContext`, `makeDefinition`, `makeSetupOptions`, `startScenario`, `run`, `codesIn`, `rejectionOf`; `@arkham/engine/test/utils` from other packages). fast-check is gone: property tests became `it.each` tables (`replay.test.ts`, `rng.test.ts`, the Gathering setup per player count).
+Follow-ups: `spawn` at setup does not engage investigators at that location (M1.8 – extend `spawnZone`, then compile it to a follow-up `SpawnEnemy`); mid-scenario use of the same steps (compile against a running state into `AddConnection`/`SpawnEnemy`/… commands, and apply `theGatheringHouse` when act 1 advances, taking its locations from the set-aside zone) once those commands exist (M1.3, M1.5, M1.7, M1.8); `agenda.current`/`act.current` are not set from the decks yet (M1.5); `Investigator` has no skill values, so the standard test investigators have none yet; `keywords` (Hunter, Retaliate, Spawn …) for the Gathering cards once `CardStats` has them (M1.7); remaining §7 steps (`putIntoPlay` for single locations, `replaceLocation`, `removeLocation`, `randomLocations`, `removeConnection`, `fromSetAside`, `shuffleInto`, `removeFromGame`) and layout slots (M3) when a scenario needs them; the later tasks below still say "sandbox" and mean the Gathering test scenario.
 
 ## M1.3 Board: connection graph (S)
 
@@ -51,11 +61,14 @@ Ref: §7.
 
 Ref: §5 Map model.
 
-- [ ] `Edge` type (undirected and one-way), `ConnectionChanged` event, `AddConnection`/`RemoveConnection` commands
-- [ ] Connections from scenario data (`connections` spec by symbol or code), only active when both locations are in play
-- [ ] Reveal location (`CardFlipped`) places clues per investigator
-- [ ] Helpers: `neighbours(locationId)`, `shortestPaths(from, to)` (BFS, returns all shortest paths)
-- [ ] Multiple maps: locations carry `mapId`; cross-map edges allowed
+- [x] `Edge` type (undirected and one-way), `ConnectionChanged` event, `AddConnection`/`RemoveConnection` commands
+- [x] Connections from scenario data (`connections` spec by symbol or code), only active when both locations are in play
+- [x] Reveal location (`CardFlipped`) places clues per investigator
+- [x] Helpers: `neighbours(locationId)`, `shortestPaths(from, to)` (BFS, returns all shortest paths)
+- [x] Multiple maps: locations carry `mapId`; cross-map edges allowed
+
+Done: events `ConnectionChanged` (`added`/`removed`, with the owning `mapId` and the stored edge) and `CardFlipped`; commands `AddConnection` (names the owning `mapId`), `RemoveConnection` (finds the owner itself) and `RevealLocation` (`CardFlipped` + a `TokensChanged` for the clues, resolved with `resolveValue` like setup does). Edges live on `GameMap.connections`; the reducer updates the owning map. Cross-map edges are allowed and stored on exactly one map, the one named by the command (setup: the map whose `addMap` step declares it); ends may be on any map and movement ignores the owner, so `locationOnOtherMap` is gone. Undirected edges match either direction, one-way edges exactly; duplicates (also across maps), self-loops and unknown edges are rejected. Ends only have to be location cards by type, wherever they currently are, so set-aside locations can be connected. `board.ts`: `neighbours`, `shortestPaths` (BFS, all shortest paths) and `allConnections`; they only follow edges whose ends are both in a `location` zone (`isLocationInPlay`). `checkInvariants` checks edges name known cards and are unique. Tests: `board.test.ts` (`it.each` tables) with `startBoard`/`edge`/`runFrom` in `test/utils/board.ts`.
+Follow-ups: `MoveInvestigator` (M1.4) should reveal an unrevealed destination via `RevealLocation`; `moveInvestigators` at setup could emit `RevealLocation` instead of flipping at compile time once setup can produce follow-up commands; the `connections` spec by symbol is still by code (symbol data comes with the M2 pipeline); removing or replacing a location card does not yet drop its edges (decide with the `replaceLocation`/`removeLocation` setup steps).
 
 ## M1.4 Investigators (S)
 
@@ -65,9 +78,13 @@ Ref: §5 Map model.
 
 Ref: §5 `Investigator`.
 
-- [ ] `MoveInvestigator`, `AdjustInvestigator` (damage, horror, clues, resources), `DiscoverClues` (location → investigator)
-- [ ] Defeat check when damage ≥ health or horror ≥ sanity → `InvestigatorDefeated`, status `defeated`
-- [ ] Prey helpers: lowest remaining health/sanity, most clues, etc.
+- [x] `MoveInvestigator`, `AdjustInvestigator` (damage, horror, clues, resources), `DiscoverClues` (location → investigator)
+- [x] Defeat check when damage ≥ health or horror ≥ sanity → `InvestigatorDefeated`, status `defeated`
+- [x] Prey helpers: lowest remaining health/sanity, most clues, etc.
+
+Done: Investigators already carry `health.max`/`sanity.max` in state (from the definition at `StartScenario`), so no new fields. Commands `MoveInvestigator`, `AdjustInvestigator`, `DiscoverClues`; events `InvestigatorMoved`, `InvestigatorChanged` (`stat` + `delta`), `InvestigatorDefeated` (`cause`). Movement needs a `neighbours` connection; `ignoreConnections` (for "move to any location" card effects) skips only that check, the destination must still be a location in play. An investigator without a location can be placed anywhere. An unrevealed destination is revealed by reusing `handleRevealLocation` (`CardFlipped` + the printed clues resolved with `resolveValue`). `AdjustInvestigator` emits `InvestigatorDefeated` in the same step when damage ≥ health or horror ≥ sanity; non-active investigators reject all three commands (`investigatorNotActive`), counters cannot go below zero. `DiscoverClues` requires the investigator to be at the location. `checkInvariants` checks non-negative counters, known location and "active implies health and sanity left". Prey helpers in `investigators.ts` (`lowestRemainingHealth`, `lowestRemainingSanity`, `mostClues`, `mostResources`) return all tied active investigators. `GameMeta.playerCount` is documented as the starting count, never decremented on defeat/resign. Tests: `investigators.test.ts` (example and `it.each` table tests; built on `startBoard`, `makeInvestigator`, `investigatorOf` from `test/utils`, and `startBoard` takes an `investigators` option for custom ones).
+Review follow-up: test helpers `stateAfter`, `rejectionFrom` and `withHealth` (later replaced by the engine's `withStats`) moved to `packages/engine/test/utils`; source files now use underscores (`handle_board.ts`, `handle_investigator.ts`, `scenarios/src/the_gathering/`), see the ground rule in `CLAUDE.md`. Later stacked PRs must rename their own new dashed files when they are brought up to main.
+Follow-ups: on defeat the rules also discard the investigator's cards, put their clues on their location and replace a defeated lead investigator – not done yet (needs decks/threat area, M1.5+ and a lead-change command); `resigned` status has no command yet; highest-skill prey needs the investigator's `CardStats` (skills) – add with the hunter/prey decision in M1.8/M1.9; the generic min/max tie helper could move to `@arkham/util` once that package exists.
 
 ## M1.5 Agenda, act and doom (S)
 

@@ -9,11 +9,13 @@ import { createAppStore } from '../state/appStore';
 import { IndexedDbStore } from '../storage/IndexedDbStore';
 import { HomeScreen } from './HomeScreen';
 
+const neverLoads = () => new Promise<never>(() => {});
+
 let n = 0;
 async function renderHome(titles: string[]) {
   const gameStore = new IndexedDbStore(`home-test-${n++}`);
   for (const title of titles) await gameStore.createGame({ title });
-  const store = createAppStore(gameStore);
+  const store = createAppStore(gameStore, neverLoads);
   render(
     <MemoryRouter>
       <HomeScreen store={store} />

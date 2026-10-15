@@ -27,20 +27,22 @@ const started: Event = {
 };
 const doom: Event = { type: 'TokensChanged', cardId: instanceId('c1'), token: 'doom', delta: 2 };
 
+const neverLoads = () => new Promise<never>(() => {});
+
 describe('appStore', () => {
   it('creates a game that survives a "refresh" (new store, same database)', async () => {
     const db = 'appstore-test';
-    const first = createAppStore(new IndexedDbStore(db));
+    const first = createAppStore(new IndexedDbStore(db), neverLoads);
     const id = await first.getState().newGame();
     expect(first.getState().current?.gameId).toBe(id);
 
-    const second = createAppStore(new IndexedDbStore(db));
+    const second = createAppStore(new IndexedDbStore(db), neverLoads);
     await second.getState().refresh();
     expect(second.getState().games.map((g) => g.gameId)).toEqual([id]);
   });
 
   it('renames, duplicates and deletes games and keeps the list in sync', async () => {
-    const store = createAppStore(new IndexedDbStore('appstore-manage-test'));
+    const store = createAppStore(new IndexedDbStore('appstore-manage-test'), neverLoads);
     const id = await store.getState().newGame();
 
     await store.getState().renameGame(id, 'Renamed');
@@ -63,7 +65,7 @@ describe('appStore', () => {
     const id = await gameStore.createGame({ title: 'Night' });
     await gameStore.appendEvents(id, [started, doom]);
 
-    const reopened = createAppStore(new IndexedDbStore(db));
+    const reopened = createAppStore(new IndexedDbStore(db), neverLoads);
     await reopened.getState().openGame(id);
 
     expect(reopened.getState().current).toEqual({ gameId: id, state: replay([started, doom]) });
@@ -71,7 +73,7 @@ describe('appStore', () => {
 
   it('exports a game and imports it as a new game with an identical state', async () => {
     const gameStore = new IndexedDbStore('appstore-roundtrip-test');
-    const store = createAppStore(gameStore);
+    const store = createAppStore(gameStore, neverLoads);
     const id = await gameStore.createGame({ title: 'Night' });
     await gameStore.appendEvents(id, [started, doom]);
 
@@ -89,7 +91,7 @@ describe('appStore', () => {
   });
 
   it('refuses to import text that is not an export', async () => {
-    const store = createAppStore(new IndexedDbStore('appstore-badimport-test'));
+    const store = createAppStore(new IndexedDbStore('appstore-badimport-test'), neverLoads);
     await expect(store.getState().importGame('{}')).rejects.toBeInstanceOf(GameImportError);
     expect(store.getState().games).toEqual([]);
   });

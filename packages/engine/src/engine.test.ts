@@ -1,37 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import {
-  CommandRejected,
   checkInvariants,
-  emptyState,
-  execute,
   handle,
   instanceId,
-  investigatorId,
   mapId,
+  mapLocations,
+  emptyState,
   zoneKey,
   type Command,
-  type Event,
-  type GameState,
-  type Investigator,
-  type Rejection,
   type StartScenario,
 } from './index';
+import { makeInvestigator, rejectionOf, run as runWith, testContext } from '../test/utils';
 
-const inv1 = investigatorId('inv1');
 const main = mapId('main');
 const loc = instanceId('loc');
-
-const investigator: Investigator = {
-  id: inv1,
-  code: '00001',
-  name: 'Test Investigator',
-  seat: 0,
-  health: { max: 8, damage: 0 },
-  sanity: { max: 6, horror: 0 },
-  clues: 0,
-  resources: 5,
-  status: 'active',
-};
+const investigator = makeInvestigator({ id: 'inv1' });
 
 const start: StartScenario = {
   type: 'StartScenario',
@@ -50,27 +33,9 @@ const start: StartScenario = {
   ],
 };
 
-/** Executes commands from an empty state, returning the final state and all events. */
-function run(commands: Command[]): { state: GameState; events: Event[] } {
-  let state = emptyState();
-  const events: Event[] = [];
-  for (const cmd of commands) {
-    const result = execute(state, cmd);
-    state = result.state;
-    events.push(...result.events);
-  }
-  return { state, events };
-}
-
-/** The structured rejection `fn` throws (fails the test if it does not throw one). */
-function rejectionOf(fn: () => unknown): Rejection {
-  try {
-    fn();
-  } catch (e) {
-    if (e instanceof CommandRejected) return e.rejection;
-    throw e;
-  }
-  throw new Error('expected CommandRejected');
+/** Executes commands against the test cards from an empty state. */
+function run(commands: Command[]) {
+  return runWith(testContext, commands);
 }
 
 describe('StartScenario', () => {
@@ -80,7 +45,7 @@ describe('StartScenario', () => {
     expect(Object.keys(state.cards)).toHaveLength(6);
     expect(state.cards[loc]?.faceUp).toBe(true);
     expect(state.meta.playerCount).toBe(1);
-    expect(state.meta.leadInvestigator).toBe(inv1);
+    expect(state.meta.leadInvestigator).toBe(investigator.id);
     const deck = state.order[zoneKey({ kind: 'encounterDeck' })];
     expect(deck?.slice().sort()).toEqual(['c1', 'c2', 'c3', 'c4']);
     expect(run([start]).state).toEqual(state);
@@ -96,31 +61,148 @@ describe('StartScenario', () => {
   it('rejects unknown references and duplicate ids', () => {
     expect(
       rejectionOf(() =>
-        handle(emptyState(), {
+        handle(testContext, emptyState(), {
           ...start,
-          cards: [{ code: 'X', zone: { kind: 'atLocation', locationId: instanceId('nope') } }],
+          cards: [{ code: 'E3', zone: { kind: 'atLocation', locationId: instanceId('nope') } }],
         }),
       ),
     ).toMatchObject({ code: 'unknownCard', cardId: 'nope' });
     expect(
       rejectionOf(() =>
-        handle(emptyState(), {
+        handle(testContext, emptyState(), {
           ...start,
-          cards: [{ code: 'X', zone: { kind: 'location', mapId: mapId('nope') } }],
+          cards: [{ code: 'E3', zone: { kind: 'location', mapId: mapId('nope') } }],
         }),
       ),
     ).toMatchObject({ code: 'unknownMap', mapId: 'nope' });
     expect(
       rejectionOf(() =>
-        handle(emptyState(), {
+        handle(testContext, emptyState(), {
           ...start,
           cards: [
-            { id: loc, code: 'X', zone: { kind: 'setAside' } },
-            { id: loc, code: 'Y', zone: { kind: 'setAside' } },
+            { id: loc, code: 'E3', zone: { kind: 'setAside' } },
+            { id: loc, code: 'E4', zone: { kind: 'setAside' } },
           ],
         }),
       ),
     ).toMatchObject({ code: 'duplicateCard', cardId: 'loc' });
+  });
+
+  it('rejects card codes the card db does not know', () => {
+    const command: StartScenario = {
+      ...start,
+      cards: [{ code: 'missing', zone: { kind: 'setAside' } }],
+    };
+
+    const rejection = rejectionOf(() => handle(testContext, emptyState(), command));
+
+    expect(rejection).toEqual({ code: 'unknownCardCode', cardCode: 'missing' });
+  });
+
+  it('starts cards with their given tokens', () => {
+    const command: StartScenario = {
+      ...start,
+      cards: [
+        { id: loc, code: 'L1', zone: { kind: 'location', mapId: main }, tokens: { clue: 2 } },
+      ],
+    };
+
+    const { state } = run([command]);
+
+    expect(state.cards[loc]?.tokens).toEqual({ clue: 2 });
+  });
+
+  it('rejects negative or fractional starting tokens', () => {
+    const command: StartScenario = {
+      ...start,
+      cards: [{ id: loc, code: 'L1', zone: { kind: 'setAside' }, tokens: { doom: -1 } }],
+    };
+
+    const rejection = rejectionOf(() => handle(testContext, emptyState(), command));
+
+    expect(rejection).toEqual({
+      code: 'invalidStartingTokens',
+      cardId: 'loc',
+      token: 'doom',
+      amount: -1,
+    });
+  });
+
+  it('puts each map with its connections on the board and investigators at their location', () => {
+    const other = instanceId('other');
+    const command: StartScenario = {
+      ...start,
+      investigators: [{ ...investigator, locationId: loc }],
+      maps: { [main]: { name: 'Main', connections: [{ from: loc, to: other, oneWay: true }] } },
+      cards: [
+        { id: loc, code: 'L1', zone: { kind: 'location', mapId: main } },
+        { id: other, code: 'L2', zone: { kind: 'location', mapId: main } },
+      ],
+    };
+
+    const { state } = run([command]);
+
+    expect(state.board.maps[main]).toEqual({
+      name: 'Main',
+      visible: true,
+      connections: [{ from: loc, to: other, oneWay: true }],
+    });
+    expect(mapLocations(state, main)).toEqual([loc, other]);
+    expect(state.investigators[0]?.locationId).toBe(loc);
+  });
+
+  it('lists no locations for an unknown map', () => {
+    const { state } = run([start]);
+
+    expect(mapLocations(state, mapId('elsewhere'))).toEqual([]);
+  });
+
+  it('rejects a connection to a card that is not a location', () => {
+    const aside = instanceId('aside');
+    const command: StartScenario = {
+      ...start,
+      maps: { [main]: { name: 'Main', connections: [{ from: loc, to: aside, oneWay: false }] } },
+      cards: [
+        { id: loc, code: 'L1', zone: { kind: 'location', mapId: main } },
+        { id: aside, code: 'E1', zone: { kind: 'setAside' } },
+      ],
+    };
+
+    const rejection = rejectionOf(() => handle(testContext, emptyState(), command));
+
+    expect(rejection).toEqual({ code: 'notALocation', cardId: 'aside' });
+  });
+
+  it('accepts a connection to a location on another map and stores it on the declaring map', () => {
+    const dream = mapId('dream');
+    const far = instanceId('far');
+    const command: StartScenario = {
+      ...start,
+      maps: {
+        [main]: { name: 'Main', connections: [{ from: loc, to: far, oneWay: false }] },
+        [dream]: { name: 'Dream' },
+      },
+      cards: [
+        { id: loc, code: 'L1', zone: { kind: 'location', mapId: main } },
+        { id: far, code: 'L2', zone: { kind: 'location', mapId: dream } },
+      ],
+    };
+
+    const { state } = run([command]);
+
+    expect(state.board.maps[main]?.connections).toEqual([{ from: loc, to: far, oneWay: false }]);
+    expect(state.board.maps[dream]?.connections).toEqual([]);
+  });
+
+  it('rejects an investigator placed at an unknown card', () => {
+    const command: StartScenario = {
+      ...start,
+      investigators: [{ ...investigator, locationId: instanceId('nowhere') }],
+    };
+
+    const rejection = rejectionOf(() => handle(testContext, emptyState(), command));
+
+    expect(rejection).toEqual({ code: 'unknownCard', cardId: 'nowhere' });
   });
 });
 
@@ -176,7 +258,7 @@ describe('ManualAdjust', () => {
     ]);
     expect(
       rejectionOf(() =>
-        handle(state, {
+        handle(testContext, state, {
           type: 'ManualAdjust',
           adjustment: { kind: 'moveCard', cardId: loc, to: { kind: 'attachedTo', hostId: loc } },
         }),
@@ -184,7 +266,7 @@ describe('ManualAdjust', () => {
     ).toMatchObject({ code: 'hostingCycle', cardId: 'loc', hostId: 'loc' });
     expect(
       rejectionOf(() =>
-        handle(state, {
+        handle(testContext, state, {
           type: 'ManualAdjust',
           adjustment: {
             kind: 'moveCard',
@@ -200,7 +282,7 @@ describe('ManualAdjust', () => {
     const { state } = run([start]);
     expect(
       rejectionOf(() =>
-        handle(state, {
+        handle(testContext, state, {
           type: 'ManualAdjust',
           adjustment: {
             kind: 'moveCard',
@@ -222,7 +304,7 @@ describe('ManualAdjust', () => {
     expect(state.cards[loc]?.tokens.clue).toBe(2);
     expect(
       rejectionOf(() =>
-        handle(state, {
+        handle(testContext, state, {
           type: 'ManualAdjust',
           adjustment: { kind: 'tokens', cardId: loc, token: 'clue', delta: -3 },
         }),
@@ -242,7 +324,7 @@ describe('ManualAdjust', () => {
   it('rejects unknown cards', () => {
     expect(
       rejectionOf(() =>
-        handle(run([start]).state, {
+        handle(testContext, run([start]).state, {
           type: 'ManualAdjust',
           adjustment: { kind: 'tokens', cardId: instanceId('nope'), token: 'doom', delta: 1 },
         }),
