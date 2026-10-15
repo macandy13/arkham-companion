@@ -1,7 +1,19 @@
 import { cardStats, type EngineContext } from './cards';
+import {
+  handleAddConnection,
+  handleRemoveConnection,
+  handleRevealLocation,
+  validateConnections,
+} from './handle_board';
+import {
+  handleAdjustInvestigator,
+  handleDiscoverClues,
+  handleMoveInvestigator,
+} from './handle_investigator';
 import type { Adjustment, Command, StartScenario, StartingCard } from './commands';
 import type { CardMoved, DeckShuffled, Event, ScenarioStarted, TokensChanged } from './events';
 import { instanceId, type InstanceId, type MapId } from './ids';
+import { createMap, type GameMap, type MapSpec } from './map';
 import { apply } from './reducer';
 import { CommandRejected } from './rejection';
 import { shuffle } from './rng';
@@ -20,6 +32,18 @@ export function handle(ctx: EngineContext, state: GameState, command: Command): 
       return handleStartScenario(ctx, state, command);
     case 'ManualAdjust':
       return [handleAdjustment(state, command.adjustment)];
+    case 'AddConnection':
+      return handleAddConnection(ctx, state, command);
+    case 'RemoveConnection':
+      return handleRemoveConnection(ctx, state, command);
+    case 'RevealLocation':
+      return handleRevealLocation(ctx, state, command);
+    case 'MoveInvestigator':
+      return handleMoveInvestigator(ctx, state, command);
+    case 'AdjustInvestigator':
+      return handleAdjustInvestigator(state, command);
+    case 'DiscoverClues':
+      return handleDiscoverClues(state, command);
   }
 }
 
@@ -29,10 +53,7 @@ function handleStartScenario(ctx: EngineContext, state: GameState, cmd: StartSce
   // Catch typos in scenario data at setup instead of when a rule first needs the card.
   for (const card of cmd.cards) cardStats(ctx.cards, card.code);
   const investigatorIds = uniqueInvestigatorIds(cmd.investigators);
-  const maps: ScenarioStarted['maps'] = {};
-  for (const [id, m] of Object.entries(cmd.maps ?? {})) {
-    maps[id as MapId] = { name: m.name, visible: m.visible ?? true };
-  }
+  const maps = startingMaps(cmd.maps ?? {});
   const cards = startingInstances(cmd.cards);
   const byId = cardsById(cards);
   const refs: ZoneRefs = {
@@ -41,11 +62,7 @@ function handleStartScenario(ctx: EngineContext, state: GameState, cmd: StartSce
     maps: new Set(Object.keys(maps)),
   };
   for (const card of cards) validateZone(refs, card.id, card.zone);
-  const connections = cmd.connections ?? [];
-  for (const edge of connections) {
-    validateLocation(byId, edge.from);
-    validateLocation(byId, edge.to);
-  }
+  validateConnections(ctx, byId, maps);
   for (const inv of cmd.investigators) {
     if (inv.locationId !== undefined) validateLocation(byId, inv.locationId);
   }
@@ -58,7 +75,6 @@ function handleStartScenario(ctx: EngineContext, state: GameState, cmd: StartSce
     investigators: cmd.investigators,
     maps,
     cards,
-    connections,
     chaosBag: cmd.chaosBag ?? [],
     ...(cmd.campaign ? { campaign: cmd.campaign } : {}),
   };
@@ -106,6 +122,13 @@ function cardsById(cards: readonly CardInstance[]): Record<InstanceId, CardInsta
     byId[card.id] = card;
   }
   return byId;
+}
+
+/** The game maps for the command's map specs. */
+function startingMaps(specs: Readonly<Record<MapId, MapSpec>>): Record<MapId, GameMap> {
+  const maps: Record<MapId, GameMap> = {};
+  for (const [id, spec] of Object.entries(specs) as [MapId, MapSpec][]) maps[id] = createMap(spec);
+  return maps;
 }
 
 /** Rejects `cardId` unless it is a known card on a map. */

@@ -1,87 +1,42 @@
 import { describe, expect, it } from 'vitest';
 import {
-  CommandRejected,
-  cardDbFrom,
   compileSetup,
-  investigatorId,
+  instanceId,
   mapId,
-  type CardStats,
-  type EngineContext,
-  type Investigator,
-  type Rejection,
-  type ScenarioDefinition,
-  type SetupOptions,
+  referenceSide,
+  spawnZone,
+  type AddMapStep,
   type SetupStep,
 } from './index';
+import {
+  contextWith,
+  investigators,
+  makeCard,
+  makeDefinition,
+  makeSetupOptions,
+  perInvestigator,
+  rejectionOf,
+} from '../test/utils';
 
 const main = mapId('main');
 
-/** A card definition with boring defaults; tests pass only the fields they assert on. */
-function makeCard(overrides: Partial<CardStats> & { code: string }): CardStats {
-  return { name: overrides.code, typeCode: 'treachery', traits: [], ...overrides };
+/** A map step for `main` with the given locations (unrevealed) and no connections. */
+function mainMap(...codes: string[]): AddMapStep {
+  return { kind: 'addMap', mapId: main, name: 'Main', locations: codes.map((code) => ({ code })) };
 }
-
-function makeInvestigator(id: string): Investigator {
-  return {
-    id: investigatorId(id),
-    code: id,
-    name: id,
-    seat: 0,
-    health: { max: 8, damage: 0 },
-    sanity: { max: 6, horror: 0 },
-    clues: 0,
-    resources: 5,
-    status: 'active',
-  };
-}
-
-/** A definition with no agendas, acts or chaos tokens, so only `setup` matters. */
-function makeDefinition(setup: SetupStep[], overrides: Partial<ScenarioDefinition> = {}) {
-  const def: ScenarioDefinition = {
-    id: 'test',
-    chaosBag: { easy: [], standard: [], hard: [], expert: [] },
-    agendaDeck: [],
-    actDeck: [],
-    setup,
-    ...overrides,
-  };
-  return def;
-}
-
-function makeOptions(overrides: Partial<SetupOptions> = {}): SetupOptions {
-  return {
-    difficulty: 'standard',
-    seed: 1,
-    investigators: [makeInvestigator('inv1')],
-    ...overrides,
-  };
-}
-
-function contextWith(...cards: CardStats[]): EngineContext {
-  return { cards: cardDbFrom(cards) };
-}
-
-/** The structured rejection `fn` throws (fails the test if it does not throw one). */
-function rejectionOf(fn: () => unknown): Rejection {
-  try {
-    fn();
-  } catch (e) {
-    if (e instanceof CommandRejected) return e.rejection;
-    throw e;
-  }
-  throw new Error('expected CommandRejected');
-}
-
-const addMain: SetupStep = { kind: 'addMap', mapId: main, name: 'Main' };
 
 describe('compileSetup', () => {
   it('copies identity, difficulty, seed and the chaos bag for the difficulty', () => {
-    const def = makeDefinition([], {
+    const def = makeDefinition({
       id: 'demo',
       chaosBag: { easy: ['+1'], standard: [], hard: ['-4', 'skull'], expert: [] },
     });
 
-    const command = compileSetup(contextWith(), def, makeOptions({ difficulty: 'hard', seed: 42 }));
+    const command = compileSetup(
+      contextWith(),
+      def,
+      makeSetupOptions({ difficulty: 'hard', seed: 42 }),
+    );
 
     expect(command).toMatchObject({
       type: 'StartScenario',
@@ -93,9 +48,9 @@ describe('compileSetup', () => {
   });
 
   it('puts agendas and acts into their decks in order, side a up', () => {
-    const def = makeDefinition([], { agendaDeck: ['ag1', 'ag2'], actDeck: ['act1'] });
+    const def = makeDefinition({ agendaDeck: ['ag1', 'ag2'], actDeck: ['act1'] });
 
-    const command = compileSetup(contextWith(), def, makeOptions());
+    const command = compileSetup(contextWith(), def, makeSetupOptions());
 
     expect(command.cards).toEqual([
       { id: 'ag1#1', code: 'ag1', zone: { kind: 'agendaDeck' }, faceUp: true },
@@ -104,66 +59,10 @@ describe('compileSetup', () => {
     ]);
   });
 
-  it('adds maps', () => {
-    const def = makeDefinition([
-      addMain,
-      { kind: 'addMap', mapId: mapId('dream'), name: 'Dream', visible: false },
-    ]);
-
-    const command = compileSetup(contextWith(), def, makeOptions());
-
-    expect(command.maps).toEqual({
-      main: { name: 'Main', visible: true },
-      dream: { name: 'Dream', visible: false },
-    });
-  });
-
-  it('puts locations into play unrevealed by default', () => {
-    const ctx = contextWith(
-      makeCard({ code: 'loc', typeCode: 'location', clues: { fixed: 0, perInvestigator: 2 } }),
-    );
-    const def = makeDefinition([addMain, { kind: 'putIntoPlay', code: 'loc', mapId: main }]);
-
-    const command = compileSetup(ctx, def, makeOptions());
-
-    expect(command.cards).toEqual([
-      { id: 'loc#1', code: 'loc', zone: { kind: 'location', mapId: main }, faceUp: false },
-    ]);
-  });
-
-  it('places clues per investigator on a location put into play revealed', () => {
-    const ctx = contextWith(
-      makeCard({ code: 'loc', typeCode: 'location', clues: { fixed: 0, perInvestigator: 2 } }),
-    );
-    const def = makeDefinition([
-      addMain,
-      { kind: 'putIntoPlay', code: 'loc', mapId: main, faceUp: true },
-    ]);
-    const investigators = [makeInvestigator('a'), makeInvestigator('b')];
-
-    const command = compileSetup(ctx, def, makeOptions({ investigators }));
-
-    expect(command.cards[0]?.tokens).toEqual({ clue: 4 });
-  });
-
-  it('places no clue tokens on a revealed location without clues', () => {
-    const ctx = contextWith(
-      makeCard({ code: 'loc', typeCode: 'location', clues: { fixed: 0, perInvestigator: 0 } }),
-    );
-    const def = makeDefinition([
-      addMain,
-      { kind: 'putIntoPlay', code: 'loc', mapId: main, faceUp: true },
-    ]);
-
-    const command = compileSetup(ctx, def, makeOptions());
-
-    expect(command.cards[0]?.tokens).toBeUndefined();
-  });
-
   it('sets cards aside and numbers copies of the same code', () => {
-    const def = makeDefinition([{ kind: 'setAside', codes: ['x', 'x', 'y'] }]);
+    const def = makeDefinition({ setup: [{ kind: 'setAside', codes: ['x', 'x', 'y'] }] });
 
-    const command = compileSetup(contextWith(), def, makeOptions());
+    const command = compileSetup(contextWith(), def, makeSetupOptions());
 
     expect(command.cards.map((c) => [c.id, c.zone.kind])).toEqual([
       ['x#1', 'setAside'],
@@ -173,108 +72,195 @@ describe('compileSetup', () => {
   });
 
   it('spawns an enemy at a location', () => {
-    const def = makeDefinition([
-      addMain,
-      { kind: 'putIntoPlay', code: 'loc', mapId: main },
-      { kind: 'spawn', code: 'enemy', at: 'loc' },
-    ]);
+    const def = makeDefinition({
+      setup: [mainMap('loc'), { kind: 'spawn', code: 'enemy', at: 'loc' }],
+    });
 
-    const command = compileSetup(contextWith(), def, makeOptions());
+    const command = compileSetup(contextWith(), def, makeSetupOptions());
 
     expect(command.cards[1]).toEqual({
       id: 'enemy#1',
       code: 'enemy',
-      zone: { kind: 'atLocation', locationId: 'loc#1' },
+      zone: spawnZone(instanceId('loc#1')),
       faceUp: true,
     });
   });
 
   it('places investigators at a location and reveals it with its clues', () => {
     const ctx = contextWith(
-      makeCard({ code: 'start', typeCode: 'location', clues: { fixed: 0, perInvestigator: 1 } }),
+      makeCard({ code: 'start', typeCode: 'location', clues: perInvestigator(1) }),
     );
-    const def = makeDefinition([
-      addMain,
-      { kind: 'putIntoPlay', code: 'start', mapId: main },
-      { kind: 'moveInvestigators', to: 'start' },
-    ]);
-    const investigators = [makeInvestigator('a'), makeInvestigator('b')];
+    const def = makeDefinition({
+      setup: [mainMap('start'), { kind: 'moveInvestigators', to: 'start' }],
+    });
 
-    const command = compileSetup(ctx, def, makeOptions({ investigators }));
+    const command = compileSetup(ctx, def, makeSetupOptions({ investigators: investigators(2) }));
 
     expect(command.investigators.map((inv) => inv.locationId)).toEqual(['start#1', 'start#1']);
     expect(command.cards[0]).toMatchObject({ faceUp: true, tokens: { clue: 2 } });
   });
 
   it('leaves investigators unplaced without a moveInvestigators step', () => {
-    const command = compileSetup(contextWith(), makeDefinition([]), makeOptions());
+    const command = compileSetup(contextWith(), makeDefinition(), makeSetupOptions());
 
     expect(command.investigators[0]?.locationId).toBeUndefined();
   });
 
-  it('adds two-way and one-way connections between locations', () => {
-    const def = makeDefinition([
-      addMain,
-      { kind: 'putIntoPlay', code: 'a', mapId: main },
-      { kind: 'putIntoPlay', code: 'b', mapId: main },
-      { kind: 'addConnection', from: 'a', to: 'b' },
-      { kind: 'addConnection', from: 'b', to: 'a', oneWay: true },
-    ]);
-
-    const command = compileSetup(contextWith(), def, makeOptions());
-
-    expect(command.connections).toEqual([
-      { from: 'a#1', to: 'b#1', oneWay: false },
-      { from: 'b#1', to: 'a#1', oneWay: true },
-    ]);
-  });
-
   it('places a fixed number of tokens and adds to tokens already there', () => {
-    const def = makeDefinition([
-      { kind: 'setAside', codes: ['target'] },
-      { kind: 'placeTokens', target: 'target', token: 'doom', amount: 1 },
-      { kind: 'placeTokens', target: 'target', token: 'doom', amount: 2 },
-    ]);
+    const def = makeDefinition({
+      setup: [
+        { kind: 'setAside', codes: ['target'] },
+        { kind: 'placeTokens', target: 'target', token: 'doom', amount: 1 },
+        { kind: 'placeTokens', target: 'target', token: 'doom', amount: 2 },
+      ],
+    });
 
-    const command = compileSetup(contextWith(), def, makeOptions());
+    const command = compileSetup(contextWith(), def, makeSetupOptions());
 
     expect(command.cards[0]?.tokens).toEqual({ doom: 3 });
   });
 
   it('places tokens per investigator', () => {
-    const def = makeDefinition([
-      { kind: 'setAside', codes: ['target'] },
-      {
-        kind: 'placeTokens',
-        target: 'target',
-        token: 'clue',
-        amount: { fixed: 0, perInvestigator: 2 },
-      },
-    ]);
-    const investigators = [makeInvestigator('a'), makeInvestigator('b'), makeInvestigator('c')];
+    const def = makeDefinition({
+      setup: [
+        { kind: 'setAside', codes: ['target'] },
+        { kind: 'placeTokens', target: 'target', token: 'clue', amount: perInvestigator(2) },
+      ],
+    });
 
-    const command = compileSetup(contextWith(), def, makeOptions({ investigators }));
+    const command = compileSetup(
+      contextWith(),
+      def,
+      makeSetupOptions({ investigators: investigators(3) }),
+    );
 
     expect(command.cards[0]?.tokens).toEqual({ clue: 6 });
   });
 
   it('rejects a step that targets a card no earlier step created', () => {
-    const def = makeDefinition([{ kind: 'moveInvestigators', to: 'missing' }]);
+    const def = makeDefinition({ setup: [{ kind: 'moveInvestigators', to: 'missing' }] });
 
-    const rejection = rejectionOf(() => compileSetup(contextWith(), def, makeOptions()));
+    const rejection = rejectionOf(() => compileSetup(contextWith(), def, makeSetupOptions()));
 
     expect(rejection).toEqual({ code: 'setupTargetNotFound', cardCode: 'missing' });
   });
 
   it('rejects a step that targets a code with several instances', () => {
-    const def = makeDefinition([
-      { kind: 'setAside', codes: ['twin', 'twin'] },
-      { kind: 'placeTokens', target: 'twin', token: 'doom', amount: 1 },
-    ]);
+    const def = makeDefinition({
+      setup: [
+        { kind: 'setAside', codes: ['twin', 'twin'] },
+        { kind: 'placeTokens', target: 'twin', token: 'doom', amount: 1 },
+      ],
+    });
 
-    const rejection = rejectionOf(() => compileSetup(contextWith(), def, makeOptions()));
+    const rejection = rejectionOf(() => compileSetup(contextWith(), def, makeSetupOptions()));
 
     expect(rejection).toEqual({ code: 'setupTargetAmbiguous', cardCode: 'twin' });
+  });
+});
+
+describe('compileSetup addMap', () => {
+  it('adds several maps, visible unless stated otherwise', () => {
+    const def = makeDefinition({
+      setup: [
+        mainMap(),
+        { kind: 'addMap', mapId: mapId('dream'), name: 'Dream', visible: false, locations: [] },
+      ],
+    });
+
+    const command = compileSetup(contextWith(), def, makeSetupOptions());
+
+    expect(command.maps).toEqual({
+      main: { name: 'Main', visible: true, connections: [] },
+      dream: { name: 'Dream', visible: false, connections: [] },
+    });
+  });
+
+  it('puts its locations onto the map unrevealed unless face up', () => {
+    const ctx = contextWith(makeCard({ code: 'b', typeCode: 'location' }));
+    const def = makeDefinition({
+      setup: [{ ...mainMap(), locations: [{ code: 'a' }, { code: 'b', faceUp: true }] }],
+    });
+
+    const command = compileSetup(ctx, def, makeSetupOptions());
+
+    expect(command.cards).toEqual([
+      { id: 'a#1', code: 'a', zone: { kind: 'location', mapId: main }, faceUp: false },
+      { id: 'b#1', code: 'b', zone: { kind: 'location', mapId: main }, faceUp: true },
+    ]);
+  });
+
+  it('places clues per investigator on a location put into play revealed', () => {
+    const ctx = contextWith(
+      makeCard({ code: 'loc', typeCode: 'location', clues: perInvestigator(2) }),
+    );
+    const def = makeDefinition({
+      setup: [{ ...mainMap(), locations: [{ code: 'loc', faceUp: true }] }],
+    });
+
+    const command = compileSetup(ctx, def, makeSetupOptions({ investigators: investigators(2) }));
+
+    expect(command.cards[0]?.tokens).toEqual({ clue: 4 });
+  });
+
+  it('places no clue tokens on a revealed location without clues', () => {
+    const ctx = contextWith(
+      makeCard({ code: 'loc', typeCode: 'location', clues: perInvestigator(0) }),
+    );
+    const def = makeDefinition({
+      setup: [{ ...mainMap(), locations: [{ code: 'loc', faceUp: true }] }],
+    });
+
+    const command = compileSetup(ctx, def, makeSetupOptions());
+
+    expect(command.cards[0]?.tokens).toBeUndefined();
+  });
+
+  it('connects its locations two-way by default and one-way on request', () => {
+    const def = makeDefinition({
+      setup: [
+        {
+          ...mainMap('a', 'b'),
+          connections: [
+            { from: 'a', to: 'b' },
+            { from: 'b', to: 'a', oneWay: true },
+          ],
+        },
+      ],
+    });
+
+    const command = compileSetup(contextWith(), def, makeSetupOptions());
+
+    expect(command.maps?.[main]?.connections).toEqual([
+      { from: 'a#1', to: 'b#1', oneWay: false },
+      { from: 'b#1', to: 'a#1', oneWay: true },
+    ]);
+  });
+
+  it('resolves connection codes among its own locations only', () => {
+    const def = makeDefinition({
+      setup: [
+        { kind: 'setAside', codes: ['a'] },
+        { ...mainMap('a', 'b'), connections: [{ from: 'a', to: 'b' }] },
+      ],
+    });
+
+    const command = compileSetup(contextWith(), def, makeSetupOptions());
+
+    expect(command.maps?.[main]?.connections).toEqual([{ from: 'a#2', to: 'b#1', oneWay: false }]);
+  });
+
+  it('rejects a connection to a location that is not on the map', () => {
+    const def = makeDefinition({
+      setup: [
+        { kind: 'setAside', codes: ['b'] },
+        { ...mainMap('a'), connections: [{ from: 'a', to: 'b' }] },
+      ],
+    });
+
+    const rejection = rejectionOf(() => compileSetup(contextWith(), def, makeSetupOptions()));
+
+    expect(rejection).toEqual({ code: 'setupTargetNotFound', cardCode: 'b' });
   });
 });
 
@@ -286,8 +272,8 @@ describe('compileSetup buildEncounterDeck', () => {
   const plan = makeCard({ code: 'plan', typeCode: 'agenda', encounterCode: 'set1' });
   const ctx = contextWith(ghoul, curse, rat, room, plan);
 
-  function deckCodes(steps: SetupStep[]): string[] {
-    const command = compileSetup(ctx, makeDefinition(steps), makeOptions());
+  function deckCodes(setup: SetupStep[]): string[] {
+    const command = compileSetup(ctx, makeDefinition({ setup }), makeSetupOptions());
     return command.cards
       .filter((card) => card.zone.kind === 'encounterDeck')
       .map((card) => card.code);
@@ -322,9 +308,9 @@ describe('compileSetup buildEncounterDeck', () => {
   });
 
   it('rejects an encounter set without cards', () => {
-    const def = makeDefinition([{ kind: 'buildEncounterDeck', sets: ['typo'] }]);
+    const def = makeDefinition({ setup: [{ kind: 'buildEncounterDeck', sets: ['typo'] }] });
 
-    const rejection = rejectionOf(() => compileSetup(ctx, def, makeOptions()));
+    const rejection = rejectionOf(() => compileSetup(ctx, def, makeSetupOptions()));
 
     expect(rejection).toEqual({ code: 'unknownEncounterSet', encounterCode: 'typo' });
   });
@@ -334,8 +320,19 @@ describe('compileSetup campaign', () => {
   it('passes the campaign log through', () => {
     const campaign = { campaignId: 'c', entries: [], records: {} };
 
-    const command = compileSetup(contextWith(), makeDefinition([]), makeOptions({ campaign }));
+    const command = compileSetup(contextWith(), makeDefinition(), makeSetupOptions({ campaign }));
 
     expect(command.campaign).toBe(campaign);
+  });
+});
+
+describe('referenceSide', () => {
+  it.each([
+    ['easy', 'easyStandard'],
+    ['standard', 'easyStandard'],
+    ['hard', 'hardExpert'],
+    ['expert', 'hardExpert'],
+  ] as const)('reads the %s difficulty from the %s side', (difficulty, side) => {
+    expect(referenceSide(difficulty)).toBe(side);
   });
 });

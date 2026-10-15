@@ -3,6 +3,10 @@ name: PR preview
 # Builds every PR and publishes it to
 # https://macandy13.github.io/arkham-companion/pr-preview/pr-<number>/
 # The action comments the link on the PR and removes the preview when the PR closes.
+# When apps/web changes, the `@flow` E2E specs are recorded and published next to the
+# preview (pr-<number>/screencasts/), and the PR description's screencast section is
+# rewritten to show them (see docs/automation.md). Living inside the preview directory
+# means they are removed with it.
 # PRs from forks are skipped (no write token).
 
 on:
@@ -32,12 +36,47 @@ jobs:
           cache: pnpm
       - if: github.event.action != 'closed'
         run: pnpm install --frozen-lockfile
+      - id: changes
+        if: github.event.action != 'closed'
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            web:
+              - 'apps/web/**'
+      # Recorded before the preview build: Playwright builds with the root base path,
+      # and the preview build below empties dist/ anyway.
+      - if: steps.changes.outputs.web == 'true'
+        # A failing flow must not block the preview; the E2E check reports it.
+        continue-on-error: true
+        run: |
+          pnpm --filter @arkham/web exec playwright install --with-deps chromium
+          command -v ffmpeg || sudo apt-get install -y --no-install-recommends ffmpeg
+          pnpm --filter @arkham/web e2e:screencast
+      - if: steps.changes.outputs.web == 'true' && hashFiles('apps/web/screencasts/report.json') != ''
+        working-directory: apps/web
+        run: >-
+          node scripts/screencast/cli.ts render screencasts/report.json screencasts/out
+          "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-preview/pr-${{ github.event.number }}/screencasts/"
+          "${HEAD_SHA::7}"
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
       - if: github.event.action != 'closed'
         run: pnpm build
         env:
           VITE_BASE: /arkham-companion/pr-preview/pr-${{ github.event.number }}/
+      - if: hashFiles('apps/web/screencasts/out/section.md') != ''
+        run: cp -r apps/web/screencasts/out apps/web/dist/screencasts
       - uses: rossjrw/pr-preview-action@v1
         with:
           source-dir: apps/web/dist
           preview-branch: gh-pages
           umbrella-dir: pr-preview
+      # After the deploy, so the description never links files that aren't published yet.
+      - if: hashFiles('apps/web/screencasts/out/section.md') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.number }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/pulls/$PR" --jq '.body // ""' > "$RUNNER_TEMP/body.md"
+          node apps/web/scripts/screencast/cli.ts splice "$RUNNER_TEMP/body.md" apps/web/screencasts/out/section.md > "$RUNNER_TEMP/new-body.md"
+          gh api --method PATCH "repos/$GITHUB_REPOSITORY/pulls/$PR" -F "body=@$RUNNER_TEMP/new-body.md" --silent
