@@ -41,6 +41,7 @@ How code in this repo should look, so every task lands in the same style.
 - **One spec per user journey, not per feature.** A UI change extends the flow it belongs to before it adds a new one. Cap: 8 flow specs; past that, merge flows.
 - **They check wiring, not rules.** Game rules are tested in engine unit tests; a flow only asserts that the screen reacts and the journey completes.
 - **Locate by role and accessible name** (`getByRole('button', { name: … })`), never by CSS class or DOM shape – the markup rules make this always possible.
+- **Narrate with steps.** Group the flow into `test.step('Create an empty game', …)` blocks named as what the user does; the names are shown as captions in the screencast.
 - **Deterministic.** Start from a fixed state (seeded game) so every recording of the same code looks the same.
 
 ## 4. Markup (JSX/HTML)
