@@ -1,7 +1,21 @@
-import type { CardMoved, DeckShuffled, Event, ScenarioStarted, TokensChanged } from './events';
+import { sameEdge } from './board';
+import type {
+  CardFlipped,
+  CardMoved,
+  ConnectionChanged,
+  DeckShuffled,
+  Event,
+  InvestigatorChanged,
+  InvestigatorDefeated,
+  InvestigatorMoved,
+  ScenarioStarted,
+  TokensChanged,
+} from './events';
 import type { InstanceId } from './ids';
+import type { Edge } from './map';
 import { seedRng } from './rng';
-import { emptyState, type CardInstance, type GameState } from './state';
+import { withStatDelta } from './investigators';
+import { emptyState, type CardInstance, type GameState, type Investigator } from './state';
 import { zoneKey, type ZoneKey } from './zone';
 
 /** Pure reducer: applies one event and returns the next state. Never mutates `state`. */
@@ -15,6 +29,16 @@ export function apply(state: GameState, event: Event): GameState {
       return applyCardMoved(state, event);
     case 'TokensChanged':
       return applyTokensChanged(state, event);
+    case 'CardFlipped':
+      return applyCardFlipped(state, event);
+    case 'ConnectionChanged':
+      return applyConnectionChanged(state, event);
+    case 'InvestigatorMoved':
+      return applyInvestigator(state, event, (inv) => ({ ...inv, locationId: event.to }));
+    case 'InvestigatorChanged':
+      return applyInvestigator(state, event, (inv) => withStatDelta(inv, event.stat, event.delta));
+    case 'InvestigatorDefeated':
+      return applyInvestigator(state, event, (inv) => ({ ...inv, status: 'defeated' }));
   }
 }
 
@@ -83,6 +107,44 @@ function applyTokensChanged(state: GameState, e: TokensChanged): GameState {
   if (value === 0) delete tokens[e.token];
   else tokens[e.token] = value;
   return { ...state, cards: { ...state.cards, [e.cardId]: { ...card, tokens } } };
+}
+
+function applyCardFlipped(state: GameState, e: CardFlipped): GameState {
+  const card = state.cards[e.cardId];
+  if (!card) return state;
+  return { ...state, cards: { ...state.cards, [e.cardId]: { ...card, faceUp: e.faceUp } } };
+}
+
+function applyConnectionChanged(state: GameState, e: ConnectionChanged): GameState {
+  const map = state.board.maps[e.mapId];
+  if (!map) return state;
+  let connections: Edge[];
+  switch (e.change) {
+    case 'added':
+      connections = [...map.connections, e.edge];
+      break;
+    case 'removed':
+      connections = map.connections.filter((edge) => !sameEdge(edge, e.edge));
+      break;
+  }
+  return {
+    ...state,
+    board: { ...state.board, maps: { ...state.board.maps, [e.mapId]: { ...map, connections } } },
+  };
+}
+
+/** Replaces the event's investigator with `update(investigator)`; unknown IDs leave the state as is. */
+function applyInvestigator(
+  state: GameState,
+  event: InvestigatorMoved | InvestigatorChanged | InvestigatorDefeated,
+  update: (investigator: Investigator) => Investigator,
+): GameState {
+  return {
+    ...state,
+    investigators: state.investigators.map((inv) =>
+      inv.id === event.investigatorId ? update(inv) : inv,
+    ),
+  };
 }
 
 /** Sets a zone's order; empty zones are removed so the state has one canonical form. */
