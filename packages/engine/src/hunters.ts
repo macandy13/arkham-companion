@@ -1,9 +1,17 @@
 import { shortestPaths } from './board';
+import type { MoveHunters } from './commands';
 import { cardStats, type EngineContext } from './cards';
-import { chooseInvestigator, chooseLocation, engageEvents, preferredByPrey } from './engagement';
+import {
+  chooseInvestigator,
+  chooseLocation,
+  engageEvents,
+  preferredByPrey,
+  requestDecision,
+} from './engagement';
 import type { CardMoved, Event } from './events';
-import type { InstanceId } from './ids';
+import { decisionId, type InstanceId } from './ids';
 import { hasKeyword } from './keywords';
+import { cardsOfType } from './lookup';
 import { replay } from './reducer';
 import type { CardInstance, GameState, Investigator } from './state';
 
@@ -16,31 +24,66 @@ interface Route {
 }
 
 /**
- * `MoveHunters`: every ready, unengaged hunter in play that has no investigator
- * at its location moves one step towards the nearest one (Rules Reference,
- * "Hunter"). Hunters are independent of each other because investigators do
- * not move during the step, so the order does not matter; each hunter is
- * decided against the state its predecessors left behind only so that a
- * decision or engagement of one is visible to the next.
+ * `MoveHunters`: the ready, unengaged hunters in play without an investigator
+ * at their location each move one step towards the nearest one (Rules
+ * Reference, "Hunter"). Hunters that move at the same time are resolved in an
+ * order the lead investigator chooses (Rules Reference, "Lead Investigator":
+ * the lead settles a choice between several valid options), one at a time, so
+ * a hunter's engagement on arrival is settled before the next hunter is
+ * considered. Hence:
+ *
+ * - no hunter would move: no events;
+ * - exactly one would move: it moves (or raises its own tie decision, see
+ *   `hunterEvents`);
+ * - two or more would move: a `chooseCard` decision `hunterOrder` for the lead
+ *   investigator, one option per such hunter (option id and target: the
+ *   hunter's instance ID), and nothing moves yet.
+ *
+ * Answering `hunterOrder` is `ResolveDecision` (M1.9). The chosen option must
+ * run `MoveHunter { enemyId }` for the chosen hunter, then `MoveHunters
+ * { hunters: <the other options> }`, which asks again if two or more of the rest
+ * would still move. The `hunters` list is what keeps a hunter that has already
+ * moved this phase (and did not engage) from moving a second time; omit it to
+ * consider every hunter in play. A hunter with an open decision about itself
+ * is skipped until that is answered.
  */
-export function handleMoveHunters(ctx: EngineContext, state: GameState): Event[] {
-  let current = state;
-  const events: Event[] = [];
-  for (const hunter of hunters(ctx, state)) {
-    const next = hunterEvents(ctx, current, hunter);
-    events.push(...next);
-    current = replay(next, current);
-  }
-  return events;
+export function handleMoveHunters(
+  ctx: EngineContext,
+  state: GameState,
+  command: MoveHunters,
+): Event[] {
+  const movers = hunters(ctx, state, command.hunters)
+    .map((hunter) => ({ hunter, events: hunterEvents(ctx, state, hunter) }))
+    .filter(({ events }) => events.length > 0);
+  const [only] = movers;
+  if (only === undefined) return [];
+  if (movers.length === 1) return only.events;
+  return requestDecision(state, {
+    id: decisionId('hunterOrder'),
+    kind: 'chooseCard',
+    decider: { kind: 'lead' },
+    prompt: 'decision.chooseHunterOrder',
+    options: movers.map(({ hunter }) => ({
+      id: hunter.id,
+      label: cardStats(ctx.cards, hunter.code).name,
+      target: hunter.id,
+    })),
+  });
 }
 
-/** Ready, unengaged hunters at a location, in card order. */
-function hunters(ctx: EngineContext, state: GameState): CardInstance[] {
-  return Object.values(state.cards).filter((card) => {
-    if (card.zone.kind !== 'atLocation' || card.exhausted) return false;
-    const stats = ctx.cards.get(card.code);
-    return stats?.typeCode === 'enemy' && hasKeyword(stats, 'hunter');
-  });
+/** Ready, unengaged hunters at a location, in card order; only those in `only` when it is given. */
+function hunters(
+  ctx: EngineContext,
+  state: GameState,
+  only?: readonly InstanceId[],
+): CardInstance[] {
+  return cardsOfType(ctx, state, 'enemy').filter(
+    (card) =>
+      (only === undefined || only.includes(card.id)) &&
+      card.zone.kind === 'atLocation' &&
+      !card.exhausted &&
+      hasKeyword(cardStats(ctx.cards, card.code), 'hunter'),
+  );
 }
 
 /**

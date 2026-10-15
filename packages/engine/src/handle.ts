@@ -213,7 +213,7 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
     case 'ReadyEnemy':
       return handleReadyEnemy(ctx, state, command);
     case 'MoveHunters':
-      return handleMoveHunters(ctx, state);
+      return handleMoveHunters(ctx, state, command);
   }
 }
 

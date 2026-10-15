@@ -414,15 +414,24 @@ export interface ReadyEnemy {
 }
 
 /**
- * Moves every ready, unengaged hunter enemy one step towards the nearest
+ * Moves the ready, unengaged hunter enemies one step towards the nearest
  * investigator (enemy phase; the phase assistant of M1.10 issues it). Hunters
  * with an investigator at their location, without a route or with a pending
  * decision stay. Equally near investigators and equally short routes are
- * settled by prey and then handed to the players. Produces `CardMoved` per
- * moving hunter, then `EnemyEngaged` or `DecisionRequested`.
+ * settled by prey and then handed to the players. When two or more hunters
+ * would move, the lead investigator chooses the order (`hunterOrder`
+ * decision, see `handleMoveHunters`) and nothing moves yet. Produces
+ * `CardMoved` per moving hunter, then `EnemyEngaged` or `DecisionRequested`,
+ * or only the `hunterOrder` `DecisionRequested`.
  */
 export interface MoveHunters {
   type: 'MoveHunters';
+  /**
+   * Only these hunters are considered (default: every hunter in play). The
+   * answer to the `hunterOrder` decision passes the hunters that have not
+   * moved yet, so a hunter that already moved is not moved again.
+   */
+  hunters?: InstanceId[];
 }
 
 /** String literal of every command type. */

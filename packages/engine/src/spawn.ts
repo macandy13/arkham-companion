@@ -1,4 +1,4 @@
-import { isLocationInPlay } from './board';
+import { isLocationInPlay, locationsInPlay, locationsNamed } from './board';
 import type { CardStats, EngineContext } from './cards';
 import type { SpawnEnemy } from './commands';
 import { chooseLocation, engageEvents } from './engagement';
@@ -6,6 +6,7 @@ import type { Event } from './events';
 import { enemyOf, isInPlay } from './handle_enemy';
 import { activeInvestigator } from './handle_investigator';
 import type { InstanceId, InvestigatorId } from './ids';
+import { requireCard } from './lookup';
 import { cardMoved } from './placement';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
@@ -113,26 +114,16 @@ function spawnPlan(
  * (the location is set aside or gone) discards the enemy.
  */
 function instructedSpawn(ctx: EngineContext, state: GameState, detail: string): SpawnPlan {
-  const wanted = detail.trim().replace(/\.$/, '').toLowerCase();
-  const locations = Object.values(state.cards).filter(
-    (card) => ctx.cards.get(card.code)?.typeCode === 'location',
-  );
-  const inPlay = locations.filter((card) => isLocationInPlay(state, card.id));
-  const matches = inPlay.filter((card) => nameOf(ctx, card) === wanted);
-  const [only] = matches;
-  if (only !== undefined && matches.length === 1) return { kind: 'at', locationId: only.id };
-  if (matches.length > 1) return { kind: 'choose', candidates: matches.map((card) => card.id) };
-  if (locations.some((card) => nameOf(ctx, card) === wanted)) return { kind: 'discard' };
-  return { kind: 'choose', candidates: inPlay.map((card) => card.id) };
-}
-
-function nameOf(ctx: EngineContext, card: CardInstance): string | undefined {
-  return ctx.cards.get(card.code)?.name.toLowerCase();
+  const inPlay = locationsNamed(ctx, state, detail, { inPlay: true });
+  const [only] = inPlay;
+  if (only !== undefined && inPlay.length === 1) return { kind: 'at', locationId: only.id };
+  if (inPlay.length > 1) return { kind: 'choose', candidates: inPlay.map((card) => card.id) };
+  if (locationsNamed(ctx, state, detail).length > 0) return { kind: 'discard' };
+  return { kind: 'choose', candidates: locationsInPlay(ctx, state).map((card) => card.id) };
 }
 
 function locationInPlay(state: GameState, locationId: InstanceId): InstanceId {
-  if (!state.cards[locationId])
-    throw new CommandRejected({ code: 'unknownCard', cardId: locationId });
+  requireCard(state.cards, locationId);
   if (!isLocationInPlay(state, locationId))
     throw new CommandRejected({ code: 'notALocation', cardId: locationId });
   return locationId;

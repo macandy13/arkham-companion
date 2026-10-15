@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { instanceId } from './index';
-import { requireCard } from './lookup';
+import { locationsInPlay, locationsNamed } from './board';
+import { cardsNamed, cardsOfType, requireCard } from './lookup';
 import type { CardInstance } from './state';
-import { rejectionOf } from '../test/utils';
+import { contextWith, makeCard, rejectionOf, startBoard } from '../test/utils';
 
 describe('requireCard', () => {
   const known = instanceId('known');
@@ -27,5 +28,62 @@ describe('requireCard', () => {
       code: 'unknownCard',
       cardId: missing,
     });
+  });
+});
+
+describe('card queries', () => {
+  const ctx = contextWith(
+    makeCard({ code: 'attic_location', name: 'Attic', typeCode: 'location' }),
+    makeCard({ code: 'cellar_location', name: 'Cellar', typeCode: 'location' }),
+    makeCard({ code: 'attic_ghoul', name: 'Attic', typeCode: 'enemy' }),
+    makeCard({ code: 'relic', name: 'Relic', typeCode: 'asset' }),
+  );
+  const mainAttic = instanceId('main_attic');
+  const mainCellar = instanceId('main_cellar');
+  const setAsideAttic = instanceId('set_aside_attic');
+  const atticGhoul = instanceId('attic_ghoul_card');
+  const state = startBoard(ctx, {
+    maps: { main: { locations: { main_attic: 'attic_location', main_cellar: 'cellar_location' } } },
+    setAside: {
+      set_aside_attic: 'attic_location',
+      attic_ghoul_card: 'attic_ghoul',
+      relic_card: 'relic',
+    },
+  });
+
+  it('finds all cards of a type, wherever they are', () => {
+    const ids = cardsOfType(ctx, state, 'location').map((card) => card.id);
+
+    expect(ids).toEqual([mainAttic, mainCellar, setAsideAttic]);
+  });
+
+  it.each([
+    { name: 'ignoring case', text: 'aTTic', expected: [mainAttic, setAsideAttic, atticGhoul] },
+    {
+      name: 'ignoring a trailing dot',
+      text: 'Attic.',
+      expected: [mainAttic, setAsideAttic, atticGhoul],
+    },
+    { name: 'ignoring surrounding spaces', text: ' Cellar ', expected: [mainCellar] },
+    { name: 'finding nothing for an unknown name', text: 'Parlor', expected: [] },
+  ])('finds cards by name, $name', ({ text, expected }) => {
+    expect(cardsNamed(ctx, state, text).map((card) => card.id)).toEqual(expected);
+  });
+
+  it('narrows a name search to one card type', () => {
+    const ids = cardsNamed(ctx, state, 'Attic', { typeCode: 'enemy' }).map((card) => card.id);
+
+    expect(ids).toEqual([atticGhoul]);
+  });
+
+  it('finds locations in play, and by name with or without the ones that are not in play', () => {
+    expect(locationsInPlay(ctx, state).map((card) => card.id)).toEqual([mainAttic, mainCellar]);
+    expect(locationsNamed(ctx, state, 'Attic').map((card) => card.id)).toEqual([
+      mainAttic,
+      setAsideAttic,
+    ]);
+    expect(locationsNamed(ctx, state, 'Attic', { inPlay: true }).map((card) => card.id)).toEqual([
+      mainAttic,
+    ]);
   });
 });

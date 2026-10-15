@@ -277,6 +277,95 @@ describe('MoveHunters', () => {
   });
 });
 
+describe('MoveHunters order', () => {
+  const first = instanceId('first_hunter');
+  const second = instanceId('second_hunter');
+  /** a - b - c with alice at c: a hunter at a and one at b both have a step to take. */
+  const twoHunters = () =>
+    started({
+      places: ['a', 'b', 'c'],
+      edges: line('a', 'b', 'c'),
+      investigators: [investigator('alice', 'c')],
+      enemies: [enemy(first, 'hunter_ghoul', at('a')), enemy(second, 'hunter_ghoul', at('b'))],
+    });
+
+  it('asks the lead investigator for the order when two hunters would move, and moves none', () => {
+    const state = twoHunters();
+
+    const { state: after, events } = execute(ctx, state, moveHunters);
+
+    expect(events.map((e) => e.type)).toEqual(['DecisionRequested']);
+    expect(after.pending).toMatchObject([
+      {
+        id: 'hunterOrder',
+        kind: 'chooseCard',
+        decider: { kind: 'lead' },
+        options: [
+          { id: first, target: first },
+          { id: second, target: second },
+        ],
+      },
+    ]);
+    expect(zoneOf(after, first)).toEqual(at('a'));
+    expect(zoneOf(after, second)).toEqual(at('b'));
+  });
+
+  it('does not ask again while the order question is open', () => {
+    const asked = stateAfter(ctx, twoHunters(), moveHunters);
+
+    expect(execute(ctx, asked, moveHunters).events).toEqual([]);
+  });
+
+  it('moves a single hunter directly when no other hunter would move', () => {
+    const state = started({
+      places: ['a', 'b', 'c'],
+      edges: line('a', 'b', 'c'),
+      investigators: [investigator('alice', 'c')],
+      enemies: [
+        enemy(first, 'hunter_ghoul', at('a')),
+        enemy(second, 'hunter_ghoul', engagedWith(alice)),
+      ],
+    });
+
+    const after = stateAfter(ctx, state, moveHunters);
+
+    expect(zoneOf(after, first)).toEqual(at('b'));
+    expect(after.pending).toEqual([]);
+  });
+
+  it('skips a hunter that has an open decision about itself', () => {
+    const forked = instanceId('forked_hunter');
+    const lone = instanceId('lone_hunter');
+    const state = started({
+      ...fork,
+      investigators: [investigator('alice', 'd')],
+      enemies: [enemy(forked, 'hunter_ghoul', at('a')), enemy(lone, 'hunter_ghoul', at('b'))],
+    });
+    const loneExhausted = stateAfter(ctx, state, { type: 'ExhaustEnemy', enemyId: lone });
+    const forkedAsked = stateAfter(ctx, loneExhausted, moveHunters);
+    const loneReady = stateAfter(ctx, forkedAsked, { type: 'ReadyEnemy', enemyId: lone });
+
+    const after = stateAfter(ctx, loneReady, moveHunters);
+
+    expect(forkedAsked.pending).toMatchObject([{ kind: 'chooseLocation', subject: forked }]);
+    expect(zoneOf(after, lone)).toEqual(engagedWith(alice));
+    expect(zoneOf(after, forked)).toEqual(at('a'));
+    expect(after.pending).toHaveLength(1);
+  });
+
+  it('considers only the listed hunters, as the answer to the order question does', () => {
+    const state = twoHunters();
+
+    const afterFirst = stateAfter(ctx, state, { type: 'MoveHunters', hunters: [first] });
+    const afterBoth = stateAfter(ctx, afterFirst, { type: 'MoveHunters', hunters: [second] });
+
+    expect(zoneOf(afterFirst, first)).toEqual(at('b'));
+    expect(zoneOf(afterFirst, second)).toEqual(at('b'));
+    expect(zoneOf(afterBoth, first)).toEqual(at('b'));
+    expect(zoneOf(afterBoth, second)).toEqual(engagedWith(alice));
+  });
+});
+
 describe('MoveHunters routes', () => {
   it.each([
     {

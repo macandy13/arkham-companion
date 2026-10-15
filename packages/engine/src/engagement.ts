@@ -1,4 +1,4 @@
-import { cardStats, type CardStats, type EngineContext } from './cards';
+import { cardStats, comparableName, type CardStats, type EngineContext } from './cards';
 import type { DecisionRequested, EnemyEngaged, Event } from './events';
 import { decisionId, type InstanceId, type InvestigatorId } from './ids';
 import {
@@ -8,6 +8,7 @@ import {
   mostResources,
 } from './investigators';
 import { hasKeyword } from './keywords';
+import { cardsOfType } from './lookup';
 import { replay } from './reducer';
 import type { Decision, GameState, Investigator } from './state';
 
@@ -38,7 +39,7 @@ export function preferredByPrey(
 ): Investigator[] {
   const active = candidates.filter((inv) => inv.status === 'active');
   const detail = stats.keywords?.find((keyword) => keyword.name === 'prey')?.detail;
-  const criterion = detail === undefined ? undefined : PREY_CRITERIA[normalised(detail)];
+  const criterion = detail === undefined ? undefined : PREY_CRITERIA[comparableName(detail)];
   return criterion ? criterion(active) : active;
 }
 
@@ -83,8 +84,8 @@ export function engageEvents(
  * `state` is the state right after `ScenarioStarted`.
  */
 export function startingEngagements(ctx: EngineContext, state: GameState): Event[] {
-  const enemies = Object.values(state.cards).filter(
-    (card) => card.zone.kind === 'atLocation' && ctx.cards.get(card.code)?.typeCode === 'enemy',
+  const enemies = cardsOfType(ctx, state, 'enemy').filter(
+    (card) => card.zone.kind === 'atLocation',
   );
   let current = state;
   const events: Event[] = [];
@@ -104,7 +105,7 @@ export function chooseInvestigator(
   prompt: string,
   options: readonly Investigator[],
 ): DecisionRequested[] {
-  return requested(state, {
+  return requestDecision(state, {
     id: decisionId(id),
     kind: 'chooseInvestigator',
     subject,
@@ -122,7 +123,7 @@ export function chooseLocation(
   prompt: string,
   locations: readonly InstanceId[],
 ): DecisionRequested[] {
-  return requested(state, {
+  return requestDecision(state, {
     id: decisionId(id),
     kind: 'chooseLocation',
     subject,
@@ -135,15 +136,12 @@ export function chooseLocation(
   });
 }
 
-function requested(state: GameState, decision: Decision): DecisionRequested[] {
+/** A `DecisionRequested` for `decision`, unless one with this id is already open. */
+export function requestDecision(state: GameState, decision: Decision): DecisionRequested[] {
   if (state.pending.some((pending) => pending.id === decision.id)) return [];
   return [{ type: 'DecisionRequested', decision }];
 }
 
 function engaged(enemyId: InstanceId, investigator: Investigator): EnemyEngaged {
   return { type: 'EnemyEngaged', enemyId, investigatorId: investigator.id };
-}
-
-function normalised(detail: string): string {
-  return detail.trim().replace(/\.$/, '').toLowerCase();
 }
