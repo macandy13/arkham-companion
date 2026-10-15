@@ -35,7 +35,7 @@ export interface TableOptions {
 
 /**
  * A scenario being played in a test, driven in game language
- * (`moveTo(seeker, 'Attic')`, `drawEncounterCards()`) so a scripted session
+ * (`moveTo(daisy, 'Attic')`, `drawEncounterCard(roland)`) so a scripted session
  * reads like a session report. Every step is an engine command run through
  * `execute`; the table keeps the live state and the full event log, and checks
  * `checkInvariants` after each command so a broken step fails where it
@@ -111,10 +111,13 @@ export class TestTable {
     this.play({ type: 'ResolveDecision', decisionId: decision.id, optionId });
   }
 
-  /** Mythos step 1.4: each active investigator draws an encounter card, in player order. */
-  drawEncounterCards(): void {
-    for (const investigator of this.activeInvestigators())
-      this.play({ type: 'DrawEncounter', investigatorId: investigator.id });
+  /**
+   * Mythos step 1.4 for one investigator: they draw the top encounter card and
+   * resolve it. One call per investigator, in player order, so the script can
+   * check (and later answer) what each draw brings before the next one.
+   */
+  drawEncounterCard(investigator: InvestigatorId): void {
+    this.play({ type: 'DrawEncounter', investigatorId: investigator });
   }
 
   /** Moves an investigator along a connection to the location named `locationName`. */
@@ -126,11 +129,11 @@ export class TestTable {
     });
   }
 
-  /** A successful investigation: `amount` clues from the investigator's location. */
-  discoverClues(investigator: InvestigatorId, amount: number): void {
+  /** A successful investigate action: one clue from the investigator's location. */
+  investigate(investigator: InvestigatorId): void {
     const locationId = this.investigator(investigator).locationId;
     if (locationId === undefined) throw new Error(`${investigator} is at no location`);
-    this.play({ type: 'DiscoverClues', investigatorId: investigator, locationId, amount });
+    this.play({ type: 'DiscoverClues', investigatorId: investigator, locationId, amount: 1 });
   }
 
   /** The investigators pay the act's clue requirement, `spend` clues each, and advance it. */
@@ -153,16 +156,23 @@ export class TestTable {
     });
   }
 
-  /** A successful evade: the enemy is disengaged and exhausted, and stays where it is. */
-  evade(enemyName: string): void {
-    const enemyId = this.enemyNamed(enemyName).id;
-    this.play({ type: 'DisengageEnemy', enemyId });
-    this.play({ type: 'ExhaustEnemy', enemyId });
+  /**
+   * A successful evade action by `investigator` against the enemy engaged with
+   * them: it is disengaged and exhausted, and stays where it is.
+   */
+  evade(investigator: InvestigatorId, enemyName: string): void {
+    const enemy = this.enemyEngagedWith(investigator, enemyName);
+    this.play({ type: 'DisengageEnemy', enemyId: enemy.id });
+    this.play({ type: 'ExhaustEnemy', enemyId: enemy.id });
   }
 
-  /** A successful attack for `damage` on the enemy named `enemyName`. */
-  fight(enemyName: string, damage: number): void {
-    this.play({ type: 'DamageEnemy', enemyId: this.enemyNamed(enemyName).id, amount: damage });
+  /**
+   * A successful fight action by `investigator` against the enemy engaged with
+   * them. It deals the basic attack's 1 damage; the script fights again for more.
+   */
+  fight(investigator: InvestigatorId, enemyName: string): void {
+    const enemy = this.enemyEngagedWith(investigator, enemyName);
+    this.play({ type: 'DamageEnemy', enemyId: enemy.id, amount: 1 });
   }
 
   /** Damage from a failed treachery test or an attack. */
@@ -197,16 +207,16 @@ export class TestTable {
       this.adjust(investigator.id, 'resources', 1);
   }
 
-  /** Where each investigator is, by location name. */
+  /** Where each investigator is, by investigator id and location name. */
   investigatorLocations(): Record<string, string> {
     return Object.fromEntries(
-      this.current.investigators.map((inv) => [inv.name, this.locationName(inv.locationId)]),
+      this.current.investigators.map((inv) => [inv.id, this.locationName(inv.locationId)]),
     );
   }
 
-  /** Clues held by each investigator. */
+  /** Clues held by each investigator, by investigator id. */
   investigatorClues(): Record<string, number> {
-    return Object.fromEntries(this.current.investigators.map((inv) => [inv.name, inv.clues]));
+    return Object.fromEntries(this.current.investigators.map((inv) => [inv.id, inv.clues]));
   }
 
   /** Damage and horror on one investigator. */
@@ -215,14 +225,14 @@ export class TestTable {
     return { damage: health.damage, horror: sanity.horror };
   }
 
-  /** Resources of each investigator. */
+  /** Resources of each investigator, by investigator id. */
   investigatorResources(): Record<string, number> {
-    return Object.fromEntries(this.current.investigators.map((inv) => [inv.name, inv.resources]));
+    return Object.fromEntries(this.current.investigators.map((inv) => [inv.id, inv.resources]));
   }
 
   /**
    * One line per enemy in play, in card order: name, location, engagement,
-   * then damage and exhaustion if any, e.g. "Icy Ghoul: Cellar, engaged with rogue, 2 damage".
+   * then damage and exhaustion if any, e.g. "Icy Ghoul: Cellar, engaged with wendy, 2 damage".
    */
   enemyLines(): string[] {
     return this.enemiesInPlay().map((enemy) => {
@@ -268,7 +278,7 @@ export class TestTable {
 
   /**
    * One line per open decision: its kind, the card it is about and the option
-   * labels, e.g. "chooseInvestigator about Swarm of Rats: tank, seeker, rogue".
+   * labels, e.g. "chooseInvestigator about Swarm of Rats: Roland Banks, Daisy Walker, Wendy Adams".
    */
   pendingDecisions(): string[] {
     return this.current.pending.map((decision) => {
@@ -307,6 +317,14 @@ export class TestTable {
       isInPlay(this.current, card),
     );
     return this.onlyOne(inPlay, `enemy ${name} in play`);
+  }
+
+  /** The enemy named `name`, which must be engaged with `investigator` for their action to target it. */
+  private enemyEngagedWith(investigator: InvestigatorId, name: string): CardInstance {
+    const enemy = this.enemyNamed(name);
+    if (enemy.zone.kind !== 'engaged' || enemy.zone.investigatorId !== investigator)
+      throw new Error(`${name} is not engaged with ${investigator}\n${this.board()}`);
+    return enemy;
   }
 
   private locationNamed(name: string): CardInstance {
