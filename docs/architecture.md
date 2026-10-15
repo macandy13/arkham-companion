@@ -318,6 +318,8 @@ Tablet landscape first. Header (round, phase, agenda/act, undo), map centre (pan
 
 Engine unit tests, setup tests per scenario, property tests (no negative tokens, one zone per card, replay determinism), golden replays, Playwright E2E for refresh, GitHub Actions CI.
 
+A scenario end-to-end test (`packages/scenarios/src/the_gathering/end_to_end.test.ts`) plays The Gathering for a few rounds through a game-language test driver (`TestTable`), checking invariants after every command and replaying the event log at the end; each engine feature extends it, so reviewers see the feature in context. For debugging, `formatBoard(ctx, state)` (engine, `format_board.ts`) renders the board as stable plain text – agenda/act, maps and locations with investigators, enemies and connections, investigators, encounter piles, victory display and pending decisions, by card name. It is pure (returns a string, never prints), so tests use it in inline snapshots and failure messages.
+
 ## 13. Repository and publishing
 
 Private GitHub repo, possibly public later. Before going public: no card text/images committed, MIT licence (`LICENSE`), an unofficial-fan-project notice. Hosting via GitHub Pages or Cloudflare Pages.
