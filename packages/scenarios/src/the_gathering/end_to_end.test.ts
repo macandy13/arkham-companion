@@ -177,17 +177,51 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.placeMythosDoom();
 
     expect(table.agenda()).toEqual({ name: "What's Going On?!", doom: 3 });
-    expect(table.pendingDecisions()).toEqual([
-      "advanceAgenda about What's Going On?!: decision.yes, decision.no",
-    ]);
+    expect(table.pendingDecisions()).toEqual(["confirm about What's Going On?!: yes, no"]);
+    expect(table.board()).toMatchInlineSnapshot(`
+      "Round 0, setup phase
+      Agenda: What's Going On?! – doom 3/3
+      Act: The Barrier – needs 9 clues
+      Map Study:
+        no locations
+      Map House:
+        Hallway [01112#1] – revealed, 0 clues
+          connects to: Attic, Cellar, Parlor
+        Attic [01113#1] – revealed, 4 clues
+          investigators: Roland Banks
+          connects to: Hallway
+        Cellar [01114#1] – revealed, 5 clues
+          investigators: Daisy Walker, Wendy Adams
+          Icy Ghoul [01119#1] – engaged with Wendy Adams
+          connects to: Hallway
+        Parlor [01115#1] – unrevealed
+          connects to: Hallway
+      Investigators:
+        Roland Banks – Attic; damage 0/9, horror 0/5, 2 clues, 7 resources; threat area: none
+        Daisy Walker – Cellar; damage 2/5, horror 0/9, 1 clues, 7 resources; threat area: none
+        Wendy Adams – Cellar; damage 2/7, horror 1/7, 0 clues, 7 resources; threat area: none
+      Encounter deck: 23 cards; discard: 2 cards, top: Ancient Evils
+      Set aside: 2 cards
+      Victory display: none
+      Pending decisions:
+        advanceAgenda:01105#1 (confirm): yes (What's Going On?!), no"
+    `);
 
-    // The players advance the agenda. Its reverse side lets the lead investigator
-    // choose; until M1.9 answers that, Roland simply takes the 2 horror.
-    table.advanceAgenda();
+    // Nothing else can happen while the question is open.
+    expect(() => table.moveTo(roland, 'Hallway')).toThrow(
+      expect.objectContaining({ rejection: expect.objectContaining({ code: 'decisionPending' }) }),
+    );
+    expect(table.investigatorLocations().roland).toBe('Attic');
+
+    // The players answer yes. The reverse side lets the lead investigator choose,
+    // but the agenda has no reverse-side hook yet, so Roland simply takes the 2
+    // horror by hand.
+    table.answer("What's Going On?!", 'yes');
     table.takeHorror(roland, 2);
 
     expect(table.agenda()).toEqual({ name: 'Rise of the Ghouls', doom: 0 });
     expect(table.pendingDecisions()).toEqual([]);
+    expect(table.events.map((event) => event.type)).toContain('DecisionResolved');
 
     table.drawEncounterCard(roland);
 
@@ -306,7 +340,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.moveHunters();
 
     expect(table.pendingDecisions()).toEqual([
-      'chooseInvestigator about Swarm of Rats: Roland Banks, Daisy Walker, Wendy Adams',
+      'chooseInvestigator about Swarm of Rats: roland, daisy, wendy',
     ]);
     expect(table.enemyLines()).toEqual([
       'Flesh-Eater: Attic, unengaged',
@@ -314,11 +348,14 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       'Ravenous Ghoul: Cellar, engaged with daisy',
     ]);
 
-    // Until M1.9 answers decisions, the players' choice (Roland) is an `EngageEnemy`.
-    table.engage(roland, swarmOfRats);
-    table.resolveEnemyAttacks();
+    // The players choose Roland.
+    table.answer(swarmOfRats, roland);
 
     expect(table.pendingDecisions()).toEqual([]);
+    expect(table.enemyLines()).toContain('Swarm of Rats: Cellar, engaged with roland');
+
+    table.resolveEnemyAttacks();
+
     expect(table.wounds(roland)).toEqual({ damage: 2, horror: 2 });
     expect(table.wounds(daisy)).toEqual({ damage: 3, horror: 1 });
 
