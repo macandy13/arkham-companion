@@ -1,94 +1,53 @@
 import { describe, expect, it } from 'vitest';
 import {
-  CommandRejected,
-  cardDbFrom,
   decisionId,
-  emptyState,
   execute,
   instanceId,
   investigatorId,
-  mapId,
   skillTestDecision,
-  type CardStats,
   type Command,
-  type EngineContext,
   type GameState,
-  type Investigator,
-  type Rejection,
-  type StartingCard,
   type Zone,
 } from './index';
+import {
+  contextWith,
+  edge,
+  fixed,
+  makeCard,
+  makeInvestigator,
+  rejectionOf as rejectionFrom,
+  runFrom,
+  startBoard,
+} from '../test/utils';
 
-const main = mapId('main');
 const alice = investigatorId('alice');
 const id = instanceId;
 
-const defs: CardStats[] = [
-  { code: 'LOC', name: 'Fake Place', typeCode: 'location', traits: [], shroud: 3 },
-  {
-    code: 'FOE',
-    name: 'Fake Foe',
-    typeCode: 'enemy',
-    traits: [],
-    fight: 4,
-    evade: 2,
-    health: { fixed: 3, perInvestigator: 0 },
-  },
-  {
-    code: 'BIG',
-    name: 'Fake Giant',
-    typeCode: 'enemy',
-    traits: [],
-    evade: 5,
-    keywords: [{ name: 'massive' }],
-  },
-];
-const ctx: EngineContext = { cards: cardDbFrom(defs) };
+const ctx = contextWith(
+  makeCard({ code: 'LOC', typeCode: 'location', shroud: 3, clues: fixed(2) }),
+  makeCard({ code: 'BARE', typeCode: 'location', shroud: 1 }),
+  makeCard({ code: 'FOE', typeCode: 'enemy', fight: 4, evade: 2, health: fixed(3) }),
+  makeCard({ code: 'BIG', typeCode: 'enemy', evade: 5, keywords: [{ name: 'massive' }] }),
+);
 
-/** Alice at `a` (2 clues); `b` (no clues) is connected; `enemies` as `[id, code, zone]`. */
-function started(enemies: [string, string, Zone][] = []): GameState {
-  const aliceCard: Investigator = {
-    id: alice,
-    code: 'inv',
-    name: 'alice',
-    seat: 1,
-    locationId: id('a'),
-    health: { max: 8, damage: 0 },
-    sanity: { max: 8, horror: 0 },
-    clues: 0,
-    resources: 0,
-    doomOnPlayerCards: 0,
-    status: 'active',
-  };
-  const cards: StartingCard[] = [
-    {
-      id: id('a'),
-      code: 'LOC',
-      zone: { kind: 'location', mapId: main },
-      faceUp: true,
-      tokens: { clue: 2 },
-    },
-    { id: id('b'), code: 'LOC', zone: { kind: 'location', mapId: main }, faceUp: true },
-    ...enemies.map(([enemyId, code, zone]) => ({ id: id(enemyId), code, zone, faceUp: true })),
-  ];
-  return execute(ctx, emptyState(), {
-    type: 'StartScenario',
-    scenarioId: 'skill-tests',
-    difficulty: 'standard',
-    seed: 1,
-    shuffleEncounterDeck: false,
-    investigators: [aliceCard],
-    maps: { [main]: { name: 'Main' } },
-    cards,
-    connections: [{ from: id('a'), to: id('b'), oneWay: false }],
-  }).state;
+/**
+ * Alice at the revealed `a` (shroud 3, 2 clues); `b` (no clues) is connected;
+ * `enemies` by instance ID.
+ */
+function started(enemies: Record<string, { code: string; zone: Zone }> = {}): GameState {
+  const board = startBoard(ctx, {
+    maps: { main: { locations: { a: 'LOC', b: 'BARE' }, connections: [edge('a', 'b')] } },
+    investigators: [makeInvestigator({ id: 'alice', locationId: id('a') })],
+    cards: enemies,
+  });
+  return run(board, { type: 'RevealLocation', locationId: id('a') });
 }
 
 const engaged: Zone = { kind: 'engaged', investigatorId: alice };
 const at = (place: string): Zone => ({ kind: 'atLocation', locationId: id(place) });
 
 function run(state: GameState, ...commands: Command[]): GameState {
-  return commands.reduce((acc, command) => execute(ctx, acc, command).state, state);
+  return runFrom(ctx, state, commands).state;
 }
 
 function answer(state: GameState, decision: string, option: string): GameState {
@@ -99,14 +58,8 @@ function answer(state: GameState, decision: string, option: string): GameState {
   });
 }
 
-function rejectionOf(state: GameState, command: Command): Rejection {
-  try {
-    execute(ctx, state, command);
-  } catch (e) {
-    if (e instanceof CommandRejected) return e.rejection;
-    throw e;
-  }
-  throw new Error('expected CommandRejected');
+function rejectionOf(state: GameState, command: Command) {
+  return rejectionFrom(() => execute(ctx, state, command));
 }
 
 describe('Investigate', () => {
@@ -167,7 +120,7 @@ describe('Investigate', () => {
 
 describe('Fight', () => {
   it('asks for a combat test against the fight value of the enemy', () => {
-    const asked = run(started([['foe', 'FOE', engaged]]), {
+    const asked = run(started({ foe: { code: 'FOE', zone: engaged } }), {
       type: 'Fight',
       investigatorId: alice,
       enemyId: id('foe'),
@@ -181,7 +134,7 @@ describe('Fight', () => {
   });
 
   it('deals 1 damage on a pass', () => {
-    const asked = run(started([['foe', 'FOE', engaged]]), {
+    const asked = run(started({ foe: { code: 'FOE', zone: engaged } }), {
       type: 'Fight',
       investigatorId: alice,
       enemyId: id('foe'),
@@ -193,7 +146,7 @@ describe('Fight', () => {
   });
 
   it('deals the damage of the weapon used, which can defeat the enemy', () => {
-    const asked = run(started([['foe', 'FOE', engaged]]), {
+    const asked = run(started({ foe: { code: 'FOE', zone: engaged } }), {
       type: 'Fight',
       investigatorId: alice,
       enemyId: id('foe'),
@@ -206,7 +159,7 @@ describe('Fight', () => {
   });
 
   it('can attack an unengaged enemy at the location', () => {
-    const unengaged = run(started([['foe', 'FOE', engaged]]), {
+    const unengaged = run(started({ foe: { code: 'FOE', zone: engaged } }), {
       type: 'DisengageEnemy',
       enemyId: id('foe'),
     });
@@ -222,7 +175,7 @@ describe('Fight', () => {
 
   it('rejects an enemy at another location', () => {
     expect(
-      rejectionOf(started([['foe', 'FOE', at('b')]]), {
+      rejectionOf(started({ foe: { code: 'FOE', zone: at('b') } }), {
         type: 'Fight',
         investigatorId: alice,
         enemyId: id('foe'),
@@ -232,7 +185,7 @@ describe('Fight', () => {
 
   it('rejects an enemy that is not in play', () => {
     expect(
-      rejectionOf(started([['foe', 'FOE', { kind: 'encounterDeck' }]]), {
+      rejectionOf(started({ foe: { code: 'FOE', zone: { kind: 'encounterDeck' } } }), {
         type: 'Fight',
         investigatorId: alice,
         enemyId: id('foe'),
@@ -242,7 +195,7 @@ describe('Fight', () => {
 
   it('rejects a damage amount that is not positive', () => {
     expect(
-      rejectionOf(started([['foe', 'FOE', engaged]]), {
+      rejectionOf(started({ foe: { code: 'FOE', zone: engaged } }), {
         type: 'Fight',
         investigatorId: alice,
         enemyId: id('foe'),
@@ -254,7 +207,7 @@ describe('Fight', () => {
 
 describe('Evade', () => {
   it('asks for an agility test against the evade value of the enemy', () => {
-    const asked = run(started([['foe', 'FOE', engaged]]), {
+    const asked = run(started({ foe: { code: 'FOE', zone: engaged } }), {
       type: 'Evade',
       investigatorId: alice,
       enemyId: id('foe'),
@@ -267,7 +220,7 @@ describe('Evade', () => {
   });
 
   it('exhausts and disengages the enemy on a pass', () => {
-    const asked = run(started([['foe', 'FOE', engaged]]), {
+    const asked = run(started({ foe: { code: 'FOE', zone: engaged } }), {
       type: 'Evade',
       investigatorId: alice,
       enemyId: id('foe'),
@@ -279,7 +232,7 @@ describe('Evade', () => {
   });
 
   it('only disengages an enemy that is already exhausted', () => {
-    const exhausted = run(started([['foe', 'FOE', engaged]]), {
+    const exhausted = run(started({ foe: { code: 'FOE', zone: engaged } }), {
       type: 'ExhaustEnemy',
       enemyId: id('foe'),
     });
@@ -291,7 +244,7 @@ describe('Evade', () => {
   });
 
   it('only exhausts a massive enemy, which stays engaged with everyone at its location', () => {
-    const asked = run(started([['giant', 'BIG', at('a')]]), {
+    const asked = run(started({ giant: { code: 'BIG', zone: at('a') } }), {
       type: 'Evade',
       investigatorId: alice,
       enemyId: id('giant'),
@@ -303,7 +256,7 @@ describe('Evade', () => {
   });
 
   it('leaves the enemy engaged on a fail', () => {
-    const asked = run(started([['foe', 'FOE', engaged]]), {
+    const asked = run(started({ foe: { code: 'FOE', zone: engaged } }), {
       type: 'Evade',
       investigatorId: alice,
       enemyId: id('foe'),
@@ -316,7 +269,7 @@ describe('Evade', () => {
 
   it('rejects an enemy that is not engaged with the investigator', () => {
     expect(
-      rejectionOf(started([['foe', 'FOE', at('b')]]), {
+      rejectionOf(started({ foe: { code: 'FOE', zone: at('b') } }), {
         type: 'Evade',
         investigatorId: alice,
         enemyId: id('foe'),

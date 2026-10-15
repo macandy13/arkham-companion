@@ -33,6 +33,8 @@ export interface BoardOptions {
   playerCount?: number;
   /** Investigators to start with instead of the standard ones. */
   investigators?: readonly Investigator[];
+  /** Whether to shuffle the encounter deck (default true); false keeps the `cards` order, top first. */
+  shuffleEncounterDeck?: boolean;
 }
 
 /**
@@ -42,7 +44,14 @@ export interface BoardOptions {
  */
 export function startBoard(
   ctx: EngineContext,
-  { maps, setAside = {}, cards: placed = {}, playerCount = 1, investigators: custom }: BoardOptions,
+  {
+    maps,
+    setAside = {},
+    cards: placed = {},
+    playerCount = 1,
+    investigators: custom,
+    shuffleEncounterDeck = true,
+  }: BoardOptions,
 ): GameState {
   const specs: Record<string, MapSpec> = {};
   const cards: StartScenario['cards'] = [];
@@ -64,6 +73,7 @@ export function startBoard(
     scenarioId: 'test',
     difficulty: 'standard',
     seed: 1,
+    shuffleEncounterDeck,
     investigators: [...(custom ?? investigators(playerCount))],
     maps: specs,
     cards,

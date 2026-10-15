@@ -1,156 +1,122 @@
 import { describe, expect, it } from 'vitest';
 import {
   CommandRejected,
-  cardDbFrom,
   checkInvariants,
   decisionId,
-  emptyState,
   execute,
   instanceId,
   investigatorId,
-  mapId,
   playerOrder,
-  type CardStats,
   type Command,
   type EngineContext,
   type GameState,
   type Investigator,
-  type Rejection,
-  type StartingCard,
   type Zone,
 } from './index';
+import {
+  contextWith,
+  edge,
+  fixed,
+  makeCard,
+  makeInvestigator,
+  rejectionOf as rejectionFrom,
+  runFrom,
+  startBoard,
+} from '../test/utils';
 
-const main = mapId('main');
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
 const id = instanceId;
 
-const defs: CardStats[] = [
-  {
-    code: 'AG1',
-    name: 'Fake Agenda',
-    typeCode: 'agenda',
-    traits: [],
-    doom: { fixed: 2, perInvestigator: 0 },
-  },
-  {
-    code: 'AG2',
-    name: 'Fake Agenda 2',
-    typeCode: 'agenda',
-    traits: [],
-    doom: { fixed: 9, perInvestigator: 0 },
-  },
-  {
-    code: 'ACT',
-    name: 'Fake Act',
-    typeCode: 'act',
-    traits: [],
-    clues: { fixed: 1, perInvestigator: 0 },
-  },
-  { code: 'ACT2', name: 'Fake Act 2', typeCode: 'act', traits: [] },
-  { code: 'LOC', name: 'Fake Place', typeCode: 'location', traits: [], shroud: 2 },
-  {
+const ctx = contextWith(
+  makeCard({ code: 'AG1', typeCode: 'agenda', stage: { number: 1 }, doom: fixed(2) }),
+  makeCard({ code: 'AG2', typeCode: 'agenda', stage: { number: 2 }, doom: fixed(9) }),
+  makeCard({ code: 'ACT', typeCode: 'act', stage: { number: 1 }, clues: fixed(1) }),
+  makeCard({ code: 'ACT2', typeCode: 'act', stage: { number: 2 } }),
+  makeCard({ code: 'LOC', typeCode: 'location', shroud: 2 }),
+  makeCard({
     code: 'HNT',
-    name: 'Fake Hunter',
     typeCode: 'enemy',
-    traits: [],
     damage: 1,
     horror: 2,
     keywords: [{ name: 'hunter' }],
-  },
-  { code: 'FOE', name: 'Fake Foe', typeCode: 'enemy', traits: [], damage: 2, horror: 1 },
-  {
+  }),
+  makeCard({ code: 'FOE', typeCode: 'enemy', damage: 2, horror: 1 }),
+  makeCard({
     code: 'BIG',
-    name: 'Fake Giant',
     typeCode: 'enemy',
-    traits: [],
     damage: 1,
     horror: 0,
     keywords: [{ name: 'massive' }],
-  },
-  {
-    code: 'SPN',
-    name: 'Fake Spawner',
-    typeCode: 'enemy',
-    traits: [],
-    keywords: [{ name: 'spawn', detail: 'Fake Place' }],
-  },
-  { code: 'TRE', name: 'Fake Mishap', typeCode: 'treachery', traits: [] },
-];
-const ctx: EngineContext = { cards: cardDbFrom(defs) };
+  }),
+  makeCard({ code: 'SPN', typeCode: 'enemy', keywords: [{ name: 'spawn', detail: 'LOC' }] }),
+  makeCard({ code: 'SRG', keywords: [{ name: 'surge' }] }),
+  makeCard({ code: 'TRE' }),
+);
 
-function investigator(who: typeof alice, location: string, seat: number): Investigator {
-  return {
-    id: who,
-    code: 'inv',
-    name: who,
-    seat,
-    locationId: id(location),
-    health: { max: 3, damage: 0 },
-    sanity: { max: 3, horror: 0 },
-    clues: 0,
-    resources: 0,
-    doomOnPlayerCards: 0,
-    status: 'active',
-  };
+/** An investigator standing at `location`; seats give the player order. */
+function investigator(
+  who: 'alice' | 'bob' | 'carol',
+  location: string,
+  overrides: Partial<Omit<Investigator, 'id'>> = {},
+): Investigator {
+  const seats = { alice: 0, bob: 1, carol: 2 };
+  return makeInvestigator({ id: who, seat: seats[who], locationId: id(location), ...overrides });
 }
 
 /**
- * Locations `a` - `b` - `c` in a line, agendas AG1 (2 doom) and AG2, acts ACT
- * (1 clue) and ACT2; `extra` cards as `[id, code, zone]`; nothing in the
- * encounter deck unless `extra` puts it there (no shuffle, so order = list order).
+ * Locations `a` - `b` - `c` in a line, agendas AG1 (2 doom) and AG2 (9 doom),
+ * acts ACT (1 clue) and ACT2; `cards` by instance ID. The encounter deck is
+ * not shuffled, so the draw order is the order of `cards`.
  */
-function started(investigators: Investigator[], extra: [string, string, Zone][] = []): GameState {
-  const cards: StartingCard[] = [
-    { id: id('ag1'), code: 'AG1', zone: { kind: 'agendaDeck' }, faceUp: true },
-    { id: id('ag2'), code: 'AG2', zone: { kind: 'agendaDeck' }, faceUp: true },
-    { id: id('act'), code: 'ACT', zone: { kind: 'actDeck' }, faceUp: true },
-    { id: id('act2'), code: 'ACT2', zone: { kind: 'actDeck' }, faceUp: true },
-    ...['a', 'b', 'c'].map((place) => ({
-      id: id(place),
-      code: 'LOC',
-      zone: { kind: 'location', mapId: main } as Zone,
-      faceUp: true,
-    })),
-    ...extra.map(([cardId, code, zone]) => ({ id: id(cardId), code, zone, faceUp: true })),
-  ];
-  return execute(ctx, emptyState(), {
-    type: 'StartScenario',
-    scenarioId: 'phases',
-    difficulty: 'standard',
-    seed: 1,
-    shuffleEncounterDeck: false,
+function started(
+  investigators: Investigator[],
+  cards: Record<string, { code: string; zone: Zone }> = {},
+): GameState {
+  return startBoard(ctx, {
+    maps: {
+      main: {
+        locations: { a: 'LOC', b: 'LOC', c: 'LOC' },
+        connections: [edge('a', 'b'), edge('b', 'c')],
+      },
+    },
     investigators,
-    maps: { [main]: { name: 'Main' } },
-    cards,
-    connections: [
-      { from: id('a'), to: id('b'), oneWay: false },
-      { from: id('b'), to: id('c'), oneWay: false },
-    ],
-  }).state;
+    shuffleEncounterDeck: false,
+    cards: {
+      ag1: { code: 'AG1', zone: { kind: 'agendaDeck' } },
+      ag2: { code: 'AG2', zone: { kind: 'agendaDeck' } },
+      act: { code: 'ACT', zone: { kind: 'actDeck' } },
+      act2: { code: 'ACT2', zone: { kind: 'actDeck' } },
+      ...cards,
+    },
+  });
 }
 
 const at = (place: string): Zone => ({ kind: 'atLocation', locationId: id(place) });
+const engagedWith = (who: typeof alice): Zone => ({ kind: 'engaged', investigatorId: who });
 const deck: Zone = { kind: 'encounterDeck' };
 const next: Command = { type: 'NextPhase' };
 
-function run(context: EngineContext, state: GameState, ...commands: Command[]): GameState {
-  return commands.reduce((acc, command) => execute(context, acc, command).state, state);
+function run(state: GameState, ...commands: Command[]): GameState {
+  return runFrom(ctx, state, commands).state;
 }
 
 /** `count` times `NextPhase`. */
-function nextPhases(state: GameState, count: number, context = ctx): GameState {
-  return run(context, state, ...Array.from({ length: count }, () => next));
+function nextPhases(state: GameState, count: number, context: EngineContext = ctx): GameState {
+  const commands = Array.from({ length: count }, () => next);
+  return runFrom(context, state, commands).state;
 }
 
-function rejectionOf(state: GameState, command: Command): Rejection {
-  try {
-    execute(ctx, state, command);
-  } catch (e) {
-    if (e instanceof CommandRejected) return e.rejection;
-    throw e;
-  }
-  throw new Error('expected CommandRejected');
+function rejectionOf(state: GameState, command: Command) {
+  return rejectionFrom(() => execute(ctx, state, command));
+}
+
+function answer(state: GameState, decision: string, option: string): GameState {
+  return run(state, {
+    type: 'ResolveDecision',
+    decisionId: decisionId(decision),
+    optionId: option,
+  });
 }
 
 function codesDrawn(before: GameState, command: Command): string[] {
@@ -161,7 +127,7 @@ function codesDrawn(before: GameState, command: Command): string[] {
 
 describe('NextPhase', () => {
   it('starts round 1 with the investigation phase, skipping its mythos phase', () => {
-    const state = started([investigator(alice, 'a', 1)], [['t1', 'TRE', deck]]);
+    const state = started([investigator('alice', 'a')], { t1: { code: 'TRE', zone: deck } });
 
     const after = nextPhases(state, 1);
 
@@ -171,7 +137,7 @@ describe('NextPhase', () => {
   });
 
   it('walks investigation, enemy and upkeep within a round, then starts the next with mythos', () => {
-    const state = started([investigator(alice, 'a', 1)]);
+    const state = started([investigator('alice', 'a')]);
 
     const phases = [1, 2, 3, 4].map((count) => nextPhases(state, count).meta);
 
@@ -184,7 +150,7 @@ describe('NextPhase', () => {
   });
 
   it('is rejected while a decision is pending', () => {
-    const state = run(ctx, started([investigator(alice, 'a', 1)]), {
+    const state = run(started([investigator('alice', 'a')]), {
       type: 'Investigate',
       investigatorId: alice,
     });
@@ -195,13 +161,10 @@ describe('NextPhase', () => {
 
 describe('mythos phase', () => {
   it('places 1 doom on the agenda and lets each investigator draw in player order', () => {
-    const state = started(
-      [investigator(alice, 'a', 1), investigator(bob, 'a', 2)],
-      [
-        ['t1', 'TRE', deck],
-        ['t2', 'TRE', deck],
-      ],
-    );
+    const state = started([investigator('alice', 'a'), investigator('bob', 'a')], {
+      t1: { code: 'TRE', zone: deck },
+      t2: { code: 'TRE', zone: deck },
+    });
     const upkeep = nextPhases(state, 3);
 
     const draws = codesDrawn(upkeep, next);
@@ -214,23 +177,23 @@ describe('mythos phase', () => {
 
   it('starts the draws with the lead investigator, then follows the seats', () => {
     const state = started([
-      investigator(bob, 'a', 2),
-      investigator(alice, 'a', 1),
-      investigator(investigatorId('carol'), 'a', 3),
+      investigator('bob', 'a'),
+      investigator('alice', 'a'),
+      investigator('carol', 'a'),
     ]);
 
     expect(playerOrder(state).map((inv) => inv.id)).toEqual(['bob', 'carol', 'alice']);
   });
 
   it('asks to advance the agenda at the threshold check and draws only after the answer', () => {
-    const state = run(ctx, started([investigator(alice, 'a', 1)], [['t1', 'TRE', deck]]), {
+    const state = run(started([investigator('alice', 'a')], { t1: { code: 'TRE', zone: deck } }), {
       type: 'PlaceDoom',
       amount: 1,
     });
     const upkeep = nextPhases(state, 3);
 
     const asked = nextPhases(upkeep, 1);
-    const answered = run(ctx, asked, {
+    const answered = run(asked, {
       type: 'ResolveDecision',
       decisionId: decisionId('advanceAgenda:ag1'),
       optionId: 'yes',
@@ -246,11 +209,11 @@ describe('mythos phase', () => {
   });
 
   it('does not ask when doom reached the threshold before the check only to be removed', () => {
-    const state = run(ctx, started([investigator(alice, 'a', 1)]), {
+    const state = run(started([investigator('alice', 'a')]), {
       type: 'PlaceDoom',
       amount: 3,
     });
-    const removed = run(ctx, state, {
+    const removed = run(state, {
       type: 'ManualAdjust',
       adjustment: { kind: 'tokens', cardId: id('ag1'), token: 'doom', delta: -3 },
     });
@@ -262,17 +225,14 @@ describe('mythos phase', () => {
   });
 
   it('keeps the later draws when a draw raises a decision', () => {
-    const state = started(
-      [investigator(alice, 'a', 1), investigator(bob, 'c', 2)],
-      [
-        ['spawner', 'SPN', deck],
-        ['t1', 'TRE', deck],
-      ],
-    );
+    const state = started([investigator('alice', 'a'), investigator('bob', 'c')], {
+      spawner: { code: 'SPN', zone: deck },
+      t1: { code: 'TRE', zone: deck },
+    });
     const upkeep = nextPhases(state, 3);
 
     const asked = nextPhases(upkeep, 1);
-    const answered = run(ctx, asked, {
+    const answered = run(asked, {
       type: 'ResolveDecision',
       decisionId: decisionId('spawn:spawner'),
       optionId: 'b',
@@ -284,7 +244,7 @@ describe('mythos phase', () => {
   });
 
   it('skips the draws when there is no encounter card left', () => {
-    const upkeep = nextPhases(started([investigator(alice, 'a', 1)]), 3);
+    const upkeep = nextPhases(started([investigator('alice', 'a')]), 3);
 
     const mythos = nextPhases(upkeep, 1);
 
@@ -293,10 +253,10 @@ describe('mythos phase', () => {
 
   it('skips the draw of an investigator defeated before their turn to draw', () => {
     const state = started(
-      [investigator(alice, 'a', 1), investigator(bob, 'a', 2)],
-      [['t1', 'TRE', deck]],
+      [investigator('alice', 'a', { health: { max: 3, damage: 0 } }), investigator('bob', 'a')],
+      { t1: { code: 'TRE', zone: deck } },
     );
-    const upkeep = run(ctx, nextPhases(state, 3), {
+    const upkeep = run(nextPhases(state, 3), {
       type: 'AdjustInvestigator',
       investigatorId: alice,
       stat: 'damage',
@@ -309,22 +269,36 @@ describe('mythos phase', () => {
 
 describe('enemy phase', () => {
   it('moves hunters and lists the attacks of ready engaged enemies', () => {
-    const state = started([investigator(alice, 'a', 1)], [['hunter', 'HNT', at('b')]]);
+    const state = started([investigator('alice', 'a')], { hunter: { code: 'HNT', zone: at('b') } });
 
     const enemy = nextPhases(state, 2);
 
-    expect(enemy.cards[id('hunter')]?.zone).toEqual({ kind: 'engaged', investigatorId: alice });
+    expect(enemy.cards[id('hunter')]?.zone).toEqual(engagedWith(alice));
     expect(enemy.meta.steps).toEqual([
       { kind: 'enemyAttack', enemyId: 'hunter', investigatorId: alice },
     ]);
   });
 
+  it('stops at a hunter decision and lists the attacks once it is answered', () => {
+    const state = started([investigator('alice', 'a'), investigator('bob', 'c')], {
+      hunter: { code: 'HNT', zone: at('b') },
+    });
+
+    const asked = nextPhases(state, 2);
+    const answered = answer(asked, 'hunter:hunter:investigator', 'bob');
+    const resumed = nextPhases(answered, 1);
+
+    expect(asked.pending.map((d) => d.id)).toEqual(['hunter:hunter:investigator']);
+    expect(rejectionOf(asked, next).code).toBe('decisionPending');
+    expect(answered.cards[id('hunter')]?.zone).toEqual(engagedWith(bob));
+    expect(resumed.meta.steps).toEqual([
+      { kind: 'enemyAttack', enemyId: 'hunter', investigatorId: bob },
+    ]);
+  });
+
   it('rejects moving on while an attack is due', () => {
     const enemy = nextPhases(
-      started(
-        [investigator(alice, 'a', 1)],
-        [['foe', 'FOE', { kind: 'engaged', investigatorId: alice }]],
-      ),
+      started([investigator('alice', 'a')], { foe: { code: 'FOE', zone: engagedWith(alice) } }),
       2,
     );
 
@@ -337,14 +311,11 @@ describe('enemy phase', () => {
 
   it('deals the printed damage and horror of an attack and exhausts the enemy', () => {
     const enemy = nextPhases(
-      started(
-        [investigator(alice, 'a', 1)],
-        [['foe', 'FOE', { kind: 'engaged', investigatorId: alice }]],
-      ),
+      started([investigator('alice', 'a')], { foe: { code: 'FOE', zone: engagedWith(alice) } }),
       2,
     );
 
-    const after = run(ctx, enemy, {
+    const after = run(enemy, {
       type: 'ResolveEnemyAttack',
       enemyId: id('foe'),
       investigatorId: alice,
@@ -360,14 +331,11 @@ describe('enemy phase', () => {
 
   it('deals the reduced amounts the players enter when assets soak part of an attack', () => {
     const enemy = nextPhases(
-      started(
-        [investigator(alice, 'a', 1)],
-        [['foe', 'FOE', { kind: 'engaged', investigatorId: alice }]],
-      ),
+      started([investigator('alice', 'a')], { foe: { code: 'FOE', zone: engagedWith(alice) } }),
       2,
     );
 
-    const after = run(ctx, enemy, {
+    const after = run(enemy, {
       type: 'ResolveEnemyAttack',
       enemyId: id('foe'),
       investigatorId: alice,
@@ -383,13 +351,12 @@ describe('enemy phase', () => {
     const enemy = nextPhases(
       started(
         [
-          {
-            ...investigator(alice, 'a', 1),
+          investigator('alice', 'a', {
             health: { max: 3, damage: 2 },
             sanity: { max: 3, horror: 2 },
-          },
+          }),
         ],
-        [['foe', 'FOE', { kind: 'engaged', investigatorId: alice }]],
+        { foe: { code: 'FOE', zone: engagedWith(alice) } },
       ),
       2,
     );
@@ -410,7 +377,10 @@ describe('enemy phase', () => {
   });
 
   it('rejects an attack that is not due', () => {
-    const enemy = nextPhases(started([investigator(alice, 'a', 1)], [['foe', 'FOE', at('c')]]), 2);
+    const enemy = nextPhases(
+      started([investigator('alice', 'a')], { foe: { code: 'FOE', zone: at('c') } }),
+      2,
+    );
 
     expect(
       rejectionOf(enemy, { type: 'ResolveEnemyAttack', enemyId: id('foe'), investigatorId: alice })
@@ -420,10 +390,7 @@ describe('enemy phase', () => {
 
   it('rejects a negative amount', () => {
     const enemy = nextPhases(
-      started(
-        [investigator(alice, 'a', 1)],
-        [['foe', 'FOE', { kind: 'engaged', investigatorId: alice }]],
-      ),
+      started([investigator('alice', 'a')], { foe: { code: 'FOE', zone: engagedWith(alice) } }),
       2,
     );
 
@@ -439,19 +406,18 @@ describe('enemy phase', () => {
 
   it('exhausts a massive enemy only after it attacked everyone at its location', () => {
     const enemy = nextPhases(
-      started(
-        [investigator(alice, 'a', 1), investigator(bob, 'a', 2)],
-        [['giant', 'BIG', at('a')]],
-      ),
+      started([investigator('alice', 'a'), investigator('bob', 'a')], {
+        giant: { code: 'BIG', zone: at('a') },
+      }),
       2,
     );
 
-    const first = run(ctx, enemy, {
+    const first = run(enemy, {
       type: 'ResolveEnemyAttack',
       enemyId: id('giant'),
       investigatorId: alice,
     });
-    const second = run(ctx, first, {
+    const second = run(first, {
       type: 'ResolveEnemyAttack',
       enemyId: id('giant'),
       investigatorId: bob,
@@ -463,13 +429,10 @@ describe('enemy phase', () => {
 
   it('drops an attack whose enemy was evaded or defeated meanwhile', () => {
     const enemy = nextPhases(
-      started(
-        [investigator(alice, 'a', 1)],
-        [['foe', 'FOE', { kind: 'engaged', investigatorId: alice }]],
-      ),
+      started([investigator('alice', 'a')], { foe: { code: 'FOE', zone: engagedWith(alice) } }),
       2,
     );
-    const evaded = run(ctx, enemy, {
+    const evaded = run(enemy, {
       type: 'ManualAdjust',
       adjustment: { kind: 'moveCard', cardId: id('foe'), to: { kind: 'encounterDiscard' } },
     });
@@ -483,8 +446,7 @@ describe('enemy phase', () => {
 describe('upkeep phase', () => {
   it('readies exhausted enemies, which engage investigators at their location', () => {
     const state = run(
-      ctx,
-      started([investigator(alice, 'a', 1)], [['foe', 'FOE', at('a')]]),
+      started([investigator('alice', 'a')], { foe: { code: 'FOE', zone: at('a') } }),
       { type: 'DisengageEnemy', enemyId: id('foe') },
       { type: 'ExhaustEnemy', enemyId: id('foe') },
     );
@@ -493,17 +455,23 @@ describe('upkeep phase', () => {
 
     expect(upkeep.cards[id('foe')]).toMatchObject({
       exhausted: false,
-      zone: { kind: 'engaged', investigatorId: alice },
+      zone: engagedWith(alice),
     });
   });
 
   it('gives each active investigator 1 resource', () => {
-    const state = run(ctx, started([investigator(alice, 'a', 1), investigator(bob, 'a', 2)]), {
-      type: 'AdjustInvestigator',
-      investigatorId: bob,
-      stat: 'horror',
-      delta: 3,
-    });
+    const state = run(
+      started([
+        investigator('alice', 'a', { resources: 0 }),
+        investigator('bob', 'a', { resources: 0, sanity: { max: 3, horror: 0 } }),
+      ]),
+      {
+        type: 'AdjustInvestigator',
+        investigatorId: bob,
+        stat: 'horror',
+        delta: 3,
+      },
+    );
 
     const upkeep = nextPhases(state, 3);
 
@@ -519,8 +487,10 @@ describe('upkeep phase', () => {
         ],
       },
     };
-    const investigation = nextPhases(started([investigator(alice, 'a', 1)]), 1, hooked);
-    const turnTaken = run(hooked, investigation, { type: 'EndTurn', investigatorId: alice });
+    const investigation = nextPhases(started([investigator('alice', 'a')]), 1, hooked);
+    const turnTaken = runFrom(hooked, investigation, [
+      { type: 'EndTurn', investigatorId: alice },
+    ]).state;
 
     const upkeep = nextPhases(turnTaken, 2, hooked);
 
@@ -533,8 +503,8 @@ describe('upkeep phase', () => {
 
 describe('EndTurn', () => {
   it('rejects a second turn in the same round', () => {
-    const investigation = nextPhases(started([investigator(alice, 'a', 1)]), 1);
-    const turnTaken = run(ctx, investigation, { type: 'EndTurn', investigatorId: alice });
+    const investigation = nextPhases(started([investigator('alice', 'a')]), 1);
+    const turnTaken = run(investigation, { type: 'EndTurn', investigatorId: alice });
 
     expect(rejectionOf(turnTaken, { type: 'EndTurn', investigatorId: alice })).toEqual({
       code: 'turnAlreadyTaken',
@@ -543,7 +513,7 @@ describe('EndTurn', () => {
   });
 
   it('rejects ending a turn outside the investigation phase', () => {
-    const enemy = nextPhases(started([investigator(alice, 'a', 1)]), 2);
+    const enemy = nextPhases(started([investigator('alice', 'a')]), 2);
 
     expect(rejectionOf(enemy, { type: 'EndTurn', investigatorId: alice })).toEqual({
       code: 'wrongPhase',
@@ -555,14 +525,14 @@ describe('EndTurn', () => {
 
 describe('investigation phase', () => {
   it('lets the investigators advance the act during a turn', () => {
-    const investigation = run(ctx, nextPhases(started([investigator(alice, 'a', 1)]), 1), {
+    const investigation = run(nextPhases(started([investigator('alice', 'a')]), 1), {
       type: 'AdjustInvestigator',
       investigatorId: alice,
       stat: 'clues',
       delta: 1,
     });
 
-    const after = run(ctx, investigation, {
+    const after = run(investigation, {
       type: 'AdvanceAct',
       spend: [{ investigatorId: alice, amount: 1 }],
     });
@@ -570,5 +540,107 @@ describe('investigation phase', () => {
     expect(after.act.current).toBe('act2');
     expect(after.meta.phase).toBe('investigation');
     expect(checkInvariants(after)).toEqual([]);
+  });
+});
+
+/** The commands that could move the game on from `state`, in the order a pick rotates through. */
+function candidates(state: GameState): Command[] {
+  const [decision] = state.pending;
+  if (decision)
+    return decision.options.map((option) => ({
+      type: 'ResolveDecision',
+      decisionId: decision.id,
+      optionId: option.id,
+    }));
+  const attacks: Command[] = state.meta.steps.flatMap((step) =>
+    step.kind === 'enemyAttack'
+      ? [{ type: 'ResolveEnemyAttack', enemyId: step.enemyId, investigatorId: step.investigatorId }]
+      : [],
+  );
+  return [next, ...attacks];
+}
+
+/** The state after the first accepted candidate, starting at `pick`; `undefined` if all are rejected. */
+function firstAccepted(state: GameState, pick: number): GameState | undefined {
+  const commands = candidates(state);
+  for (let i = 0; i < commands.length; i++) {
+    const command = commands[(pick + i) % commands.length];
+    if (!command) continue;
+    try {
+      return execute(ctx, state, command).state;
+    } catch (e) {
+      if (!(e instanceof CommandRejected)) throw e;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Plays `picks` (one accepted command each, see `candidates`) from `state`;
+ * returns every state visited, and whether play got stuck with nothing accepted.
+ */
+function playThrough(state: GameState, picks: readonly number[]) {
+  const states = [state];
+  for (const pick of picks) {
+    const current = states[states.length - 1] ?? state;
+    if (current.meta.resolution !== undefined) break;
+    const following = firstAccepted(current, pick);
+    if (!following) return { states, stuck: true };
+    states.push(following);
+  }
+  return { states, stuck: false };
+}
+
+describe('phase assistant over several rounds', () => {
+  const fragile = { health: { max: 4, damage: 0 }, sanity: { max: 4, horror: 0 } };
+  const inDeck = (...codes: string[]) =>
+    Object.fromEntries(codes.map((code, i) => [`e${i}`, { code, zone: deck }]));
+
+  it.each([
+    {
+      name: 'a solo investigator always taking the first option',
+      investigators: [investigator('alice', 'a', fragile)],
+      cards: inDeck('HNT', 'SRG', 'TRE', 'FOE'),
+      picks: Array.from({ length: 30 }, () => 0),
+    },
+    {
+      name: 'two investigators facing a massive enemy and a spawner',
+      investigators: [investigator('alice', 'a', fragile), investigator('bob', 'c', fragile)],
+      cards: inDeck('BIG', 'SPN', 'FOE', 'TRE'),
+      picks: [1, 2, 0, 1, 1, 2, 0, 0, 1, 2, 2, 1, 0, 1, 2, 0, 1, 1, 0, 2, 1, 0, 2, 1, 0],
+    },
+    {
+      name: 'three investigators with an empty encounter deck',
+      investigators: [
+        investigator('alice', 'a', fragile),
+        investigator('bob', 'b', fragile),
+        investigator('carol', 'c', fragile),
+      ],
+      cards: {},
+      picks: Array.from({ length: 20 }, (_, i) => i % 3),
+    },
+    {
+      name: 'three investigators drawing hunters, surges and spawners',
+      investigators: [
+        investigator('alice', 'a', fragile),
+        investigator('bob', 'b', fragile),
+        investigator('carol', 'c', fragile),
+      ],
+      cards: inDeck('SPN', 'SRG', 'HNT', 'SRG', 'FOE', 'SPN', 'HNT'),
+      picks: [2, 0, 1, 3, 2, 0, 4, 1, 1, 0, 2, 3, 0, 1, 2, 4, 0, 3, 1, 2, 0, 1, 2, 3, 4, 0],
+    },
+    {
+      name: 'two investigators with hunters already on the board',
+      investigators: [investigator('alice', 'a', fragile), investigator('bob', 'a', fragile)],
+      cards: { h1: { code: 'HNT', zone: at('c') }, h2: { code: 'HNT', zone: at('b') } },
+      picks: [0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3, 0, 1, 2, 3],
+    },
+  ])('$name keeps the invariants, never lowers the round and never gets stuck', (setup) => {
+    const { states, stuck } = playThrough(started(setup.investigators, setup.cards), setup.picks);
+    const rounds = states.map((state) => state.meta.round);
+
+    expect(stuck).toBe(false);
+    expect(states.flatMap((state) => checkInvariants(state))).toEqual([]);
+    expect(rounds).toEqual([...rounds].sort((a, b) => a - b));
   });
 });
