@@ -16,6 +16,7 @@ import {
   makeSetupOptions,
   runFrom,
   startScenario,
+  stateAfter,
 } from '@arkham/engine/test/utils';
 import {
   GATHERING_CODES as codes,
@@ -170,7 +171,7 @@ describe('The Gathering act 1 reverse side', () => {
   }
 
   it('puts the house into play with the Hallway connected to the other three rooms', () => {
-    const { state } = runFrom(playing, startTwoPlayer(), advanceTrapped);
+    const state = stateAfter(playing, startTwoPlayer(), ...advanceTrapped);
 
     expect(codesIn(state, { kind: 'location', mapId: mapId('house') })).toEqual([
       codes.hallway,
@@ -183,7 +184,7 @@ describe('The Gathering act 1 reverse side', () => {
   });
 
   it('moves every investigator to the revealed Hallway and removes the Study', () => {
-    const { state } = runFrom(playing, startTwoPlayer(), advanceTrapped);
+    const state = stateAfter(playing, startTwoPlayer(), ...advanceTrapped);
 
     expect(state.investigators.map((inv) => inv.locationId)).toEqual([hallway, hallway]);
     expect(state.cards[hallway]?.faceUp).toBe(true);
@@ -194,7 +195,9 @@ describe('The Gathering act 1 reverse side', () => {
   it('discards the enemies in the Study, engaged ones included', () => {
     const fleshEater = instanceId('01118#1');
     const icyGhoul = instanceId('01119#1');
-    const withEnemies = runFrom(playing, startTwoPlayer(), [
+    const withEnemies = stateAfter(
+      playing,
+      startTwoPlayer(),
       {
         type: 'ManualAdjust',
         adjustment: {
@@ -211,9 +214,9 @@ describe('The Gathering act 1 reverse side', () => {
           to: { kind: 'engaged', investigatorId: seeker },
         },
       },
-    ]).state;
+    );
 
-    const { state } = runFrom(playing, withEnemies, advanceTrapped);
+    const state = stateAfter(playing, withEnemies, ...advanceTrapped);
 
     expect(codesIn(state, { kind: 'encounterDiscard' })).toEqual(['01118', '01119']);
   });

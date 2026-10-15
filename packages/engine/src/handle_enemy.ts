@@ -9,7 +9,7 @@ import type {
 } from './commands';
 import { engageEvents } from './engagement';
 import type { EnemyDefeated, EnemyEngaged, Event, ExhaustChanged } from './events';
-import { activeInvestigator } from './handle-investigator';
+import { activeInvestigator } from './handle_investigator';
 import type { InstanceId } from './ids';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';

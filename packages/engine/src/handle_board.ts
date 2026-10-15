@@ -4,6 +4,7 @@ import type { AddConnection, AddMap, RemoveConnection, RevealLocation } from './
 import { isInPlay } from './doom';
 import type { CardFlipped, CardMoved, ConnectionChanged, MapAdded, TokensChanged } from './events';
 import type { InstanceId, MapId } from './ids';
+import { requireCard } from './lookup';
 import { createMap, type Edge, type GameMap } from './map';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
@@ -17,8 +18,7 @@ export function validateLocationCard(
   cards: Readonly<Record<InstanceId, CardInstance>>,
   cardId: InstanceId,
 ): void {
-  const card = cards[cardId];
-  if (!card) throw new CommandRejected({ code: 'unknownCard', cardId });
+  const card = requireCard(cards, cardId);
   if (cardStats(ctx.cards, card.code).typeCode !== 'location')
     throw new CommandRejected({ code: 'notALocation', cardId });
 }
@@ -72,8 +72,7 @@ export function handleAddMap(
     if (cmd.locations.indexOf(cardId) !== i)
       throw new CommandRejected({ code: 'duplicateCard', cardId });
     validateLocationCard(ctx, state.cards, cardId);
-    const card = state.cards[cardId];
-    if (!card) throw new CommandRejected({ code: 'unknownCard', cardId });
+    const card = requireCard(state.cards, cardId);
     if (isInPlay(state, card)) throw new CommandRejected({ code: 'cardAlreadyInPlay', cardId });
     return {
       type: 'CardMoved',
@@ -132,8 +131,7 @@ export function handleRevealLocation(
   state: GameState,
   cmd: RevealLocation,
 ): (CardFlipped | TokensChanged)[] {
-  const card = state.cards[cmd.locationId];
-  if (!card) throw new CommandRejected({ code: 'unknownCard', cardId: cmd.locationId });
+  const card = requireCard(state.cards, cmd.locationId);
   if (card.zone.kind !== 'location')
     throw new CommandRejected({ code: 'notALocation', cardId: card.id });
   if (card.faceUp) throw new CommandRejected({ code: 'alreadyRevealed', cardId: card.id });

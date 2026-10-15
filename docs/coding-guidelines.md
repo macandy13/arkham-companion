@@ -8,6 +8,7 @@ How code in this repo should look, so every task lands in the same style.
 - **Readable and concise.** Write for the next reader. Prefer the obvious solution over the clever one, but don't pad.
 - **Small functions.** A function does one thing at one level of abstraction. If it needs section comments, scrolling, or more than a few levels of nesting, split it into named helpers. Roughly: past ~30 lines, look for a split.
 - **Descriptive names.** Names say what a value _is_ (`encounterDeck`, `defeatedInvestigators`), functions say what they _do_ (`drawEncounterCard`). Single letters only for tiny lambdas and indices (`cards.map((c) => c.code)`). No abbreviations beyond common ones (`id`, `rng`, `i`).
+- **File names use underscores, never dashes.** Source files and directories under `packages/` and `apps/` are `snake_case` (`handle_board.ts`, `the_gathering/`), so a name reads like an identifier and imports stay consistent. Names a tool dictates are exempt (`pnpm-workspace.yaml`, `release-please-config.json`, `.claude/` agent and hook files, `docs/*.md`).
 - **Pure functions by default.** Compute and return new values instead of mutating arguments or touching globals. Push side effects (storage, network, DOM, time) to the edges and keep them thin, so the logic in between is trivially testable.
 - **Immutable data.** Use `readonly` in types and spread/`map`/`filter` over in-place mutation.
 - **Early returns over nested `if`/`else`.** Handle edge cases and errors first, then the main path.
@@ -27,7 +28,23 @@ How code in this repo should look, so every task lands in the same style.
 
 ## 3. Tests
 
-- **Keep it local.** A reader should understand a test without scrolling. The values that matter for an assertion are visible in the test itself, or at least in the `beforeEach`/setup of the same `describe` block – never in a distant shared fixture.
+- **Keep it local and readable.** A reader must understand each test from its body plus the `describe` setup right above it, without scrolling or decoding. Every card, ID, zone and value an assertion checks is written there with a readable name. No generated or positional IDs (`d0`, `L1`), no cryptic codes (`'SUR'`), no shared fixtures whose contents matter but sit far away, no hidden defaults that affect the result. Helpers may build state, but their call site names what they build:
+
+  ```ts
+  // Bad: what is `d0`, what does `SUR` do, where is it?
+  const state = started({ deck: ['SUR', 'DUL'] });
+  expect(order(after, deck)).toEqual(['d0']);
+
+  // Good: the cards, IDs and zones are in the test.
+  const state = startedWith(
+    {
+      deck: [card('surge_treachery', 'surge_card'), card('plain_treachery', 'after_surge')],
+    },
+    { aliceAt: hall },
+  );
+  expect(idsIn(after, encounterDeck)).toEqual(['after_surge']);
+  ```
+
 - **Sane defaults via builders.** Use small factory helpers with defaults and overrides (`makeInvestigator({ id: 'a', clues: 2 })`) so tests only spell out what is relevant to them. Defaults should be boring; anything a test depends on is passed explicitly.
 - **Shared test helpers** live in `packages/engine/test/utils/` (standard investigators, card and definition builders, `startScenario`, `run`, `codesIn`, `rejectionOf`); import them from `../test/utils` in the engine and `@arkham/engine/test/utils` elsewhere. Add a helper there once a second test file needs it.
 - **One behaviour per test**, named as a sentence about behaviour: `it('rejects moving a card into its own zone')`.
@@ -35,6 +52,14 @@ How code in this repo should look, so every task lands in the same style.
 - **Test through the public API** of the module (commands in, events/state out for the engine), not internals.
 - **Invariants are covered by example-based table tests** (`it.each` over a few named, readable cases), not property-based testing. Unit tests for concrete rules and edge cases.
 - Never use real card text, ArkhamDB JSON or images in fixtures; the hand-written test scenario uses real codes and names with hand-entered stats only (see `CLAUDE.md`).
+
+**E2E flow specs** (`apps/web/e2e/`, tagged `@flow`) are recorded as screencasts for every PR that changes the UI (`docs/automation.md`). Keep them few and stable:
+
+- **One spec per user journey, not per feature.** A UI change extends the flow it belongs to before it adds a new one. Cap: 8 flow specs; past that, merge flows.
+- **They check wiring, not rules.** Game rules are tested in engine unit tests; a flow only asserts that the screen reacts and the journey completes.
+- **Locate by role and accessible name** (`getByRole('button', { name: … })`), never by CSS class or DOM shape – the markup rules make this always possible.
+- **Narrate with steps.** Group the flow into `test.step('Create an empty game', …)` blocks named as what the user does; the names are shown as captions in the screencast.
+- **Deterministic.** Start from a fixed state (seeded game) so every recording of the same code looks the same.
 
 ## 4. Markup (JSX/HTML)
 

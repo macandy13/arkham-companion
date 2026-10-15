@@ -9,7 +9,7 @@ You write tests for this repository. You do not change production code; if a tes
 
 ## Rules
 
-- Follow `CLAUDE.md`. Tests use invented cards (`packages/engine/test/utils`) or the hand-written Gathering scenario (`packages/scenarios/src/the-gathering/`), never real ArkhamDB card text, JSON or images. Reuse the shared helpers in `packages/engine/test/utils/`.
+- Follow `CLAUDE.md`. Tests use invented cards (`packages/engine/test/utils`) or the hand-written Gathering scenario (`packages/scenarios/src/the_gathering/`), never real ArkhamDB card text, JSON or images. Reuse the shared helpers in `packages/engine/test/utils/`.
 - Unit tests next to the code as `*.test.ts`. Describe behaviour, not implementation: "advancing the agenda places set-aside cards", not "calls fromSetAside".
 - Engine tests go through the public path: `handle(state, command)` → events → `apply`. Do not construct internal state by hand when a command can produce it.
 - When the change touches an invariant (`checkInvariants`: every card in exactly one zone, no negative tokens, replay determinism, undo returns to the earlier state), cover it with an example-based `it.each` table of a few named cases. No property-based testing.
