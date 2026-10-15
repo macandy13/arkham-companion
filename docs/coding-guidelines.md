@@ -28,7 +28,23 @@ How code in this repo should look, so every task lands in the same style.
 
 ## 3. Tests
 
-- **Keep it local.** A reader should understand a test without scrolling. The values that matter for an assertion are visible in the test itself, or at least in the `beforeEach`/setup of the same `describe` block – never in a distant shared fixture.
+- **Keep it local and readable.** A reader must understand each test from its body plus the `describe` setup right above it, without scrolling or decoding. Every card, ID, zone and value an assertion checks is written there with a readable name. No generated or positional IDs (`d0`, `L1`), no cryptic codes (`'SUR'`), no shared fixtures whose contents matter but sit far away, no hidden defaults that affect the result. Helpers may build state, but their call site names what they build:
+
+  ```ts
+  // Bad: what is `d0`, what does `SUR` do, where is it?
+  const state = started({ deck: ['SUR', 'DUL'] });
+  expect(order(after, deck)).toEqual(['d0']);
+
+  // Good: the cards, IDs and zones are in the test.
+  const state = startedWith(
+    {
+      deck: [card('surge_treachery', 'surge_card'), card('plain_treachery', 'after_surge')],
+    },
+    { aliceAt: hall },
+  );
+  expect(idsIn(after, encounterDeck)).toEqual(['after_surge']);
+  ```
+
 - **Sane defaults via builders.** Use small factory helpers with defaults and overrides (`makeInvestigator({ id: 'a', clues: 2 })`) so tests only spell out what is relevant to them. Defaults should be boring; anything a test depends on is passed explicitly.
 - **Shared test helpers** live in `packages/engine/test/utils/` (standard investigators, card and definition builders, `startScenario`, `run`, `codesIn`, `rejectionOf`); import them from `../test/utils` in the engine and `@arkham/engine/test/utils` elsewhere. Add a helper there once a second test file needs it.
 - **One behaviour per test**, named as a sentence about behaviour: `it('rejects moving a card into its own zone')`.
