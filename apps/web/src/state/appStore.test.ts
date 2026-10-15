@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
 import { instanceId, investigatorId, replay, type Event, type Investigator } from '@arkham/engine';
-import { sandboxCards, sandboxScenario } from '@arkham/scenarios';
+import { theGathering, theGatheringCards } from '@arkham/scenarios';
 import { GameImportError } from '../storage/gameExport';
 import { IndexedDbStore } from '../storage/IndexedDbStore';
 import { createAppStore } from './appStore';
@@ -13,7 +13,6 @@ const started: Event = {
   seed: 7,
   investigators: [],
   maps: {},
-  connections: [],
   cards: [
     {
       id: instanceId('c1'),
@@ -109,9 +108,9 @@ describe('appStore', () => {
       status: 'active',
     };
     const start = {
-      title: 'Sandbox',
-      ctx: { cards: sandboxCards },
-      definition: sandboxScenario,
+      title: 'The Gathering',
+      ctx: { cards: theGatheringCards },
+      definition: theGathering,
       difficulty: 'easy' as const,
       seed: 3,
       investigators: [investigator],
@@ -124,16 +123,16 @@ describe('appStore', () => {
       const id = await store.getState().startScenario(start);
 
       expect(store.getState().current?.state.meta).toMatchObject({
-        scenarioId: 'sandbox',
+        scenarioId: 'the-gathering',
         difficulty: 'easy',
       });
       expect((await db.loadGame(id))?.state).toEqual(store.getState().current?.state);
-      expect(store.getState().games.map((g) => g.title)).toEqual(['Sandbox']);
+      expect(store.getState().games.map((g) => g.title)).toEqual(['The Gathering']);
     });
 
     it('stores nothing when the setup is invalid', async () => {
       const store = createAppStore(new IndexedDbStore('appstore-start-invalid-test'));
-      const broken = { ...start, definition: { ...sandboxScenario, actDeck: ['missing'] } };
+      const broken = { ...start, definition: { ...theGathering, actDeck: ['missing'] } };
 
       await expect(store.getState().startScenario(broken)).rejects.toThrow();
       expect(store.getState().games).toEqual([]);

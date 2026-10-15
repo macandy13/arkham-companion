@@ -32,15 +32,15 @@ describe('parseMode and parseStep', () => {
 
 describe('chosenScenario', () => {
   it('starts the chosen scenario in a quick game', () => {
-    const choices = { ...defaultChoices('quick'), targetId: 'sandbox' };
+    const choices = { ...defaultChoices('quick'), targetId: 'the-gathering' };
 
-    expect(chosenScenario(choices)?.id).toBe('sandbox');
+    expect(chosenScenario(choices)?.id).toBe('the-gathering');
   });
 
   it("starts a campaign's first scenario", () => {
-    const choices = { ...defaultChoices('campaign'), targetId: 'sandbox' };
+    const choices = { ...defaultChoices('campaign'), targetId: 'night-of-the-zealot' };
 
-    expect(chosenScenario(choices)?.id).toBe('sandbox');
+    expect(chosenScenario(choices)?.id).toBe('the-gathering');
   });
 
   it('is undefined for unknown ids', () => {

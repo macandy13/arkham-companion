@@ -34,8 +34,8 @@ export const resources = {
           zh: '中文',
         },
       },
-      scenarios: { sandbox: 'Sandbox' },
-      campaigns: { sandbox: 'Sandbox campaign' },
+      scenarios: { theGathering: 'The Gathering' },
+      campaigns: { nightOfTheZealot: 'Night of the Zealot' },
       wizard: {
         campaign: 'Campaign',
         scenario: 'Scenario',
@@ -174,8 +174,8 @@ export const resources = {
           zh: '中文',
         },
       },
-      scenarios: { sandbox: 'Sandkasten' },
-      campaigns: { sandbox: 'Sandkasten-Kampagne' },
+      scenarios: { theGathering: 'Das Treffen' },
+      campaigns: { nightOfTheZealot: 'Die Nacht des Zeloten' },
       wizard: {
         campaign: 'Kampagne',
         scenario: 'Szenario',

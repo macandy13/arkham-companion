@@ -7,8 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -p tsconfig.json",
-    "e2e": "playwright test"
+    "typecheck": "tsc -p tsconfig.json && tsc -p scripts",
+    "e2e": "playwright test --project=tablet-landscape",
+    "e2e:screencast": "PLAYWRIGHT_JSON_OUTPUT_FILE=screencasts/report.json playwright test --project=screencast --reporter=list,json"
   },
   "dependencies": {
     "@arkham/carddata": "workspace:*",
@@ -31,7 +32,6 @@
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.0",
     "fake-indexeddb": "^6.2.5",
-    "fast-check": "^4.10.2",
     "jsdom": "^30.1.2",
     "vite": "^6.0.0",
     "vite-plugin-pwa": "^2.0.0"

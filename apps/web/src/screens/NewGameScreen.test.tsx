@@ -99,8 +99,8 @@ describe('NewGameScreen', () => {
     await screen.findByText('Game page');
     const [game] = await gameStore.listGames();
     expect(game).toMatchObject({
-      scenarioId: 'sandbox',
-      title: 'Sandbox – Birch – Alder',
+      scenarioId: 'the-gathering',
+      title: 'The Gathering – Birch – Alder',
       investigators: [
         { code: 'b1', name: 'Birch' },
         { code: 'a1', name: 'Alder' },
@@ -112,7 +112,7 @@ describe('NewGameScreen', () => {
   it("starts a campaign's first scenario", async () => {
     const { gameStore } = renderWizard('/new?mode=campaign');
 
-    expect(screen.getByRole('radio', { name: 'Sandbox campaign' })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'Night of the Zealot' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
     await screen.findByRole('list', { name: 'Investigators' });
     selectInvestigator('Alder');
@@ -120,7 +120,7 @@ describe('NewGameScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
 
     await screen.findByText('Game page');
-    expect((await gameStore.listGames())[0]?.scenarioId).toBe('sandbox');
+    expect((await gameStore.listGames())[0]?.scenarioId).toBe('the-gathering');
   });
 
   it('needs at least one investigator to continue', async () => {

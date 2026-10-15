@@ -8,8 +8,11 @@ import {
 } from './cards';
 import type { StartScenario, StartingCard } from './commands';
 import { instanceId, type InstanceId, type MapId } from './ids';
+import type { Edge, MapSpec } from './map';
 import { CommandRejected } from './rejection';
-import type { CampaignLog, ChaosToken, Difficulty, Edge, Investigator, TokenKind } from './state';
+import type { ScenarioDefinition } from './scenario';
+import { spawnZone } from './spawn';
+import type { CampaignLog, Difficulty, Investigator, TokenKind } from './state';
 import type { Zone } from './zone';
 
 /**
@@ -19,55 +22,87 @@ import type { Zone } from './zone';
  */
 export type TokenAmount = number | ScaledValue;
 
+/** A location an `AddMapStep` puts into play, unrevealed unless `faceUp`. */
+export interface MapLocation {
+  code: string;
+  faceUp?: boolean;
+}
+
+/**
+ * A connection an `AddMapStep` declares between two of its own locations, by
+ * card code. One-way connections only allow movement from `from` to `to`.
+ */
+export interface MapConnection {
+  from: string;
+  to: string;
+  oneWay?: boolean;
+}
+
+/**
+ * Adds a map to the board with its locations and their connections, so a map
+ * is always declared as one unit (it becomes one `GameMap`).
+ */
+export interface AddMapStep {
+  kind: 'addMap';
+  mapId: MapId;
+  name: string;
+  /** Default true. */
+  visible?: boolean;
+  locations: readonly MapLocation[];
+  connections?: readonly MapConnection[];
+}
+
+/** Puts one copy of each code into the set-aside zone. */
+export interface SetAsideStep {
+  kind: 'setAside';
+  codes: readonly string[];
+}
+
+/**
+ * Shuffles the remainder of the given encounter sets into the encounter deck:
+ * every enemy and treachery copy that no other step uses, minus all copies of
+ * the `exclude` codes.
+ */
+export interface BuildEncounterDeckStep {
+  kind: 'buildEncounterDeck';
+  sets: readonly string[];
+  exclude?: readonly string[];
+}
+
+/** Places tokens on the one instance of the card with code `target`. */
+export interface PlaceTokensStep {
+  kind: 'placeTokens';
+  target: string;
+  token: TokenKind;
+  amount: TokenAmount;
+}
+
+/** Spawns an enemy at the location with code `at` (see `spawnZone`). */
+export interface SpawnStep {
+  kind: 'spawn';
+  code: string;
+  at: string;
+}
+
+/** Places every investigator at the location with code `to`, revealing it. */
+export interface MoveInvestigatorsStep {
+  kind: 'moveInvestigators';
+  to: string;
+}
+
 /**
  * One declarative setup instruction (architecture §7 "Setup DSL"). Cards are
- * referred to by card code; a step that targets an existing card (`placeTokens`,
- * `spawn.at`, `moveInvestigators`, `addConnection`) needs exactly one instance
+ * referred to by card code; a step that targets an existing card
+ * (`placeTokens`, `spawn.at`, `moveInvestigators`) needs exactly one instance
  * of that code created by an earlier step.
  */
 export type SetupStep =
-  /** Adds a map to the board; locations are put onto it by `putIntoPlay`. */
-  | { kind: 'addMap'; mapId: MapId; name: string; visible?: boolean }
-  /** Puts a location onto a map, unrevealed unless `faceUp`. */
-  | { kind: 'putIntoPlay'; code: string; mapId: MapId; faceUp?: boolean }
-  /** Puts one copy of each code into the set-aside zone. */
-  | { kind: 'setAside'; codes: readonly string[] }
-  /**
-   * Shuffles the remainder of the given encounter sets into the encounter deck:
-   * every enemy and treachery copy that no other step uses, minus all copies
-   * of the `exclude` codes.
-   */
-  | { kind: 'buildEncounterDeck'; sets: readonly string[]; exclude?: readonly string[] }
-  /** Places tokens on the one instance of `target`. */
-  | { kind: 'placeTokens'; target: string; token: TokenKind; amount: TokenAmount }
-  /**
-   * Puts an enemy into play, unengaged, at the location with code `at`. It does
-   * not engage investigators there yet (that needs the spawn rules, M1.8), so
-   * setups spawn enemies away from the starting location for now.
-   */
-  | { kind: 'spawn'; code: string; at: string }
-  /** Places every investigator at the location with code `to`, revealing it. */
-  | { kind: 'moveInvestigators'; to: string }
-  /** Connects two locations by code; one-way edges only allow `from` → `to`. */
-  | { kind: 'addConnection'; from: string; to: string; oneWay?: boolean };
-
-/**
- * A scenario as data (architecture §7): which agendas and acts it uses, its
- * chaos bag and the setup steps. `compileSetup` turns it into a `StartScenario`.
- * Hooks, resolutions and campaign variants join this type with the tasks that
- * need them.
- */
-export interface ScenarioDefinition {
-  /** Stored as `GameMeta.scenarioId`. */
-  id: string;
-  /** Standalone chaos bag per difficulty. */
-  chaosBag: Record<Difficulty, readonly ChaosToken[]>;
-  /** Agenda codes, first agenda first. */
-  agendaDeck: readonly string[];
-  /** Act codes, first act first. */
-  actDeck: readonly string[];
-  setup: readonly SetupStep[];
-}
+  | AddMapStep
+  | SetAsideStep
+  | BuildEncounterDeckStep
+  | PlaceTokensStep
+  | SpawnStep
+  | MoveInvestigatorsStep;
 
 /** What the players choose when starting a scenario; input to `compileSetup`. */
 export interface SetupOptions {
@@ -78,11 +113,13 @@ export interface SetupOptions {
   campaign?: CampaignLog;
 }
 
-/** Cards and board built so far while compiling the setup steps in order. */
+/** A starting card with the ID setup gave it, so later steps can refer to it. */
+type DraftCard = StartingCard & { id: InstanceId };
+
+/** Cards and maps built so far while compiling the setup steps in order. */
 interface SetupDraft {
-  readonly maps: Readonly<Record<MapId, { name: string; visible?: boolean }>>;
-  readonly cards: readonly (StartingCard & { id: InstanceId })[];
-  readonly connections: readonly Edge[];
+  readonly maps: Readonly<Record<MapId, MapSpec>>;
+  readonly cards: readonly DraftCard[];
   readonly investigatorLocation?: InstanceId;
 }
 
@@ -124,9 +161,8 @@ export function compileSetup(
       ...deckCards(def.agendaDeck, { kind: 'agendaDeck' }),
       ...deckCards(def.actDeck, { kind: 'actDeck' }),
     ],
-    connections: [],
   };
-  const draft = def.setup.reduce((acc, step) => applyStep(acc, step, env), initial);
+  const draft = def.setup.reduce((state, step) => applyStep(state, step, env), initial);
   const location = draft.investigatorLocation;
   return {
     type: 'StartScenario',
@@ -138,14 +174,13 @@ export function compileSetup(
     ),
     maps: draft.maps,
     cards: draft.cards.map((card) => withRevealClues(card, env)),
-    connections: [...draft.connections],
     chaosBag: [...def.chaosBag[options.difficulty]],
     ...(options.campaign ? { campaign: options.campaign } : {}),
   };
 }
 
 /** Starting cards for an agenda or act deck, in deck order. */
-function deckCards(codes: readonly string[], zone: Zone): SetupDraft['cards'] {
+function deckCards(codes: readonly string[], zone: Zone): DraftCard[] {
   // Agendas and acts are double-sided; face up means side "a" is showing.
   return codes.map((code, i) => ({ id: newId(code, codes.slice(0, i)), code, zone, faceUp: true }));
 }
@@ -154,36 +189,46 @@ function deckCards(codes: readonly string[], zone: Zone): SetupDraft['cards'] {
 function applyStep(draft: SetupDraft, step: SetupStep, env: SetupEnv): SetupDraft {
   switch (step.kind) {
     case 'addMap':
-      return {
-        ...draft,
-        maps: { ...draft.maps, [step.mapId]: { name: step.name, visible: step.visible ?? true } },
-      };
-    case 'putIntoPlay':
-      return withCard(draft, step.code, { kind: 'location', mapId: step.mapId }, step.faceUp);
+      return withMap(draft, step);
     case 'setAside':
-      return step.codes.reduce((acc, code) => withCard(acc, code, { kind: 'setAside' }), draft);
+      return step.codes.reduce((state, code) => withCard(state, code, { kind: 'setAside' }), draft);
     case 'buildEncounterDeck':
       return encounterDeckCards(step.sets, step.exclude ?? [], env).reduce(
-        (acc, code) => withCard(acc, code, { kind: 'encounterDeck' }),
+        (state, code) => withCard(state, code, { kind: 'encounterDeck' }),
         draft,
       );
     case 'placeTokens':
       return withTokens(draft, step, env.playerCount);
-    case 'spawn': {
-      const locationId = targetId(draft, step.at);
-      return withCard(draft, step.code, { kind: 'atLocation', locationId }, true);
-    }
+    case 'spawn':
+      return withCard(draft, step.code, spawnZone(targetId(draft.cards, step.at)), true);
     case 'moveInvestigators':
-      return moveInvestigators(draft, targetId(draft, step.to));
-    case 'addConnection': {
-      const edge: Edge = {
-        from: targetId(draft, step.from),
-        to: targetId(draft, step.to),
-        oneWay: step.oneWay ?? false,
-      };
-      return { ...draft, connections: [...draft.connections, edge] };
-    }
+      return moveInvestigators(draft, targetId(draft.cards, step.to));
   }
+}
+
+/** The draft with the step's map, its locations and its connections. */
+function withMap(draft: SetupDraft, step: AddMapStep): SetupDraft {
+  const zone: Zone = { kind: 'location', mapId: step.mapId };
+  const withLocations = step.locations.reduce(
+    (state, location) => withCard(state, location.code, zone, location.faceUp),
+    draft,
+  );
+  const locations = withLocations.cards.slice(draft.cards.length);
+  const map: MapSpec = {
+    name: step.name,
+    visible: step.visible ?? true,
+    connections: (step.connections ?? []).map((connection) => edge(locations, connection)),
+  };
+  return { ...withLocations, maps: { ...draft.maps, [step.mapId]: map } };
+}
+
+/** The edge for a connection, resolved among the map's own location cards. */
+function edge(locations: readonly DraftCard[], connection: MapConnection): Edge {
+  return {
+    from: targetId(locations, connection.from),
+    to: targetId(locations, connection.to),
+    oneWay: connection.oneWay ?? false,
+  };
 }
 
 /** The draft with one new instance of `code` appended in `zone`. */
@@ -204,9 +249,9 @@ function newId(code: string, existingCodes: readonly string[]): InstanceId {
   return instanceId(`${code}#${copy}`);
 }
 
-/** The ID of the single instance of `code` in the draft. */
-function targetId(draft: SetupDraft, code: string): InstanceId {
-  const matches = draft.cards.filter((card) => card.code === code);
+/** The ID of the single card with `code` among `cards`. */
+function targetId(cards: readonly DraftCard[], code: string): InstanceId {
+  const matches = cards.filter((card) => card.code === code);
   const [match] = matches;
   if (!match) throw new CommandRejected({ code: 'setupTargetNotFound', cardCode: code });
   if (matches.length > 1)
@@ -215,12 +260,8 @@ function targetId(draft: SetupDraft, code: string): InstanceId {
 }
 
 /** The draft with the step's tokens added to its target card. */
-function withTokens(
-  draft: SetupDraft,
-  step: Extract<SetupStep, { kind: 'placeTokens' }>,
-  playerCount: number,
-): SetupDraft {
-  const id = targetId(draft, step.target);
+function withTokens(draft: SetupDraft, step: PlaceTokensStep, playerCount: number): SetupDraft {
+  const id = targetId(draft.cards, step.target);
   const amount =
     typeof step.amount === 'number' ? step.amount : resolveValue(step.amount, playerCount);
   return {
@@ -251,7 +292,7 @@ function moveInvestigators(draft: SetupDraft, locationId: InstanceId): SetupDraf
 }
 
 /** The card with the clues a revealed location gets added to its tokens. */
-function withRevealClues(card: StartingCard, env: SetupEnv): StartingCard {
+function withRevealClues(card: DraftCard, env: SetupEnv): DraftCard {
   if (card.zone.kind !== 'location' || !card.faceUp) return card;
   const printed = cardStats(env.ctx.cards, card.code).clues;
   const clues = printed ? resolveValue(printed, env.playerCount) : 0;
@@ -297,7 +338,8 @@ function usedCopies(def: ScenarioDefinition): Map<string, number> {
 /** Codes of the cards a step creates (other than encounter deck cards). */
 function stepCodes(step: SetupStep): readonly string[] {
   switch (step.kind) {
-    case 'putIntoPlay':
+    case 'addMap':
+      return step.locations.map((location) => location.code);
     case 'spawn':
       return [step.code];
     case 'setAside':

@@ -1,0 +1,29 @@
+[
+  {
+    "code": "90001",
+    "name": "Fake Seeker",
+    "subname": "The Tester",
+    "type_code": "investigator",
+    "faction_code": "seeker",
+    "pack_code": "fake_core",
+    "health": 6,
+    "sanity": 8,
+    "skill_willpower": 3,
+    "skill_intellect": 4,
+    "skill_combat": 2,
+    "skill_agility": 3
+  },
+  {
+    "code": "90002",
+    "name": "Fake Guardian",
+    "type_code": "investigator",
+    "faction_code": "guardian",
+    "pack_code": "fake_core",
+    "health": 9,
+    "sanity": 5,
+    "skill_willpower": 3,
+    "skill_intellect": 2,
+    "skill_combat": 4,
+    "skill_agility": 3
+  }
+]

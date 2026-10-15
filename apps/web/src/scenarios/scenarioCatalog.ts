@@ -1,4 +1,4 @@
-import { sandboxCards, sandboxScenario } from '@arkham/scenarios';
+import { theGathering, theGatheringCards } from '@arkham/scenarios';
 import type { CardDb, ScenarioDefinition } from '@arkham/engine';
 
 /** A scenario the wizard can start: its definition plus the card data the engine needs to run it. */
@@ -18,21 +18,25 @@ export interface CampaignEntry {
 }
 
 /**
- * Every playable scenario. The wizard only reads this list, so replacing the sandbox with
- * real scenarios later means editing it here and nowhere else.
+ * Every playable scenario. The wizard only reads this list, so replacing The Gathering test
+ * scenario with real scenarios later means editing it here and nowhere else.
  */
 export const scenarioCatalog: readonly ScenarioEntry[] = [
   {
-    id: sandboxScenario.id,
-    nameKey: 'scenarios.sandbox',
-    definition: sandboxScenario,
-    cards: sandboxCards,
+    id: theGathering.id,
+    nameKey: 'scenarios.theGathering',
+    definition: theGathering,
+    cards: theGatheringCards,
   },
 ];
 
 /** Every playable campaign; there is no campaign log yet, so a campaign just starts its first scenario. */
 export const campaignCatalog: readonly CampaignEntry[] = [
-  { id: 'sandbox', nameKey: 'campaigns.sandbox', firstScenarioId: sandboxScenario.id },
+  {
+    id: 'night-of-the-zealot',
+    nameKey: 'campaigns.nightOfTheZealot',
+    firstScenarioId: theGathering.id,
+  },
 ];
 
 /** The scenario with `id`, if the catalog has it. */
