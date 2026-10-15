@@ -1,9 +1,10 @@
 import { neighbours } from './board';
 import { resolveValue, type EngineContext } from './cards';
+import { describeDecision } from './describe_decision';
 import { doomInPlay } from './doom';
 import type { InstanceId, MapId } from './ids';
 import { mapLocations } from './map';
-import type { CardInstance, Decision, GameState, Investigator } from './state';
+import type { CardInstance, GameState, Investigator } from './state';
 import { zoneKey, type Zone } from './zone';
 
 /**
@@ -132,23 +133,8 @@ function decisionLines(ctx: EngineContext, state: GameState): string[] {
   if (state.pending.length === 0) return ['Pending decisions: none'];
   return [
     'Pending decisions:',
-    ...state.pending.map((decision) => `  ${decisionLine(ctx, state, decision)}`),
+    ...state.pending.map((decision) => `  ${describeDecision(ctx, state, decision)}`),
   ];
-}
-
-function decisionLine(ctx: EngineContext, state: GameState, decision: Decision): string {
-  const options = decision.options.map((option) => {
-    const target = option.target === undefined ? undefined : targetName(ctx, state, option.target);
-    return target === undefined || target === option.id ? option.id : `${option.id} (${target})`;
-  });
-  return `${decision.id} (${decision.kind}): ${options.join(', ')}`;
-}
-
-/** The name of a decision option's target: a card or an investigator. */
-function targetName(ctx: EngineContext, state: GameState, id: string): string | undefined {
-  const card = state.cards[id as InstanceId];
-  if (card) return nameOf(ctx, card);
-  return state.investigators.find((investigator) => investigator.id === id)?.name;
 }
 
 function currentCard(state: GameState, id: InstanceId | undefined): CardInstance | undefined {

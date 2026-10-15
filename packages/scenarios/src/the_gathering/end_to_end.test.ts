@@ -177,7 +177,9 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.placeMythosDoom();
 
     expect(table.agenda()).toEqual({ name: "What's Going On?!", doom: 3 });
-    expect(table.pendingDecisions()).toEqual(["confirm about What's Going On?!: yes, no"]);
+    expect(table.pendingDecisions()).toEqual([
+      "Advance agenda What's Going On?! yes / no [confirm]",
+    ]);
     expect(table.board()).toMatchInlineSnapshot(`
       "Round 0, setup phase
       Agenda: What's Going On?! – doom 3/3
@@ -204,7 +206,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       Set aside: 2 cards
       Victory display: none
       Pending decisions:
-        advanceAgenda:01105#1 (confirm): yes (What's Going On?!), no"
+        Advance agenda What's Going On?! yes / no [confirm]"
     `);
 
     // Nothing else can happen while the question is open.
@@ -340,7 +342,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.moveHunters();
 
     expect(table.pendingDecisions()).toEqual([
-      'chooseInvestigator about Swarm of Rats: roland, daisy, wendy',
+      'Whom does Swarm of Rats engage? Roland Banks / Daisy Walker / Wendy Adams [chooseInvestigator]',
     ]);
     expect(table.enemyLines()).toEqual([
       'Flesh-Eater: Attic, unengaged',
@@ -349,7 +351,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     ]);
 
     // The players choose Roland.
-    table.answer(swarmOfRats, roland);
+    table.answer(swarmOfRats, 'Roland Banks');
 
     expect(table.pendingDecisions()).toEqual([]);
     expect(table.enemyLines()).toContain('Swarm of Rats: Cellar, engaged with roland');

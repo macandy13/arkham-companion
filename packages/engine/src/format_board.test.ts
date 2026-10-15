@@ -111,7 +111,7 @@ describe('formatBoard', () => {
     expect(formatBoard(ctx, state).split('\n').slice(-2)).toMatchInlineSnapshot(`
       [
         "Pending decisions:",
-        "  advanceAgenda:plan (confirm): yes (The Plan), no",
+        "  Advance agenda The Plan yes / no [confirm]",
       ]
     `);
   });

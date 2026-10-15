@@ -20,6 +20,7 @@ export { execute, type ExecuteResult } from './execute';
 export * from './setup';
 export * from './investigators';
 export { enemyAttackList, type EnemyAttack } from './enemies';
+export { describeDecision, optionName, optionNamed } from './describe_decision';
 export { confirmOptions, skillTestDecision, type SkillTestOutcomes } from './decisions';
 export { doomInPlay, isInPlay } from './doom';
 export { checkInvariants } from './invariants';
