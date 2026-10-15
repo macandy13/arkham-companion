@@ -53,6 +53,8 @@ export function apply(state: GameState, event: Event): GameState {
       return { ...state, [event.deck]: { current: event.cardId } };
     case 'ScenarioEnded':
       return applyScenarioEnded(state, event);
+    case 'EncounterCardDrawn':
+      return state;
   }
 }
 

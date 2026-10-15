@@ -1,4 +1,5 @@
 import type { Brand } from './ids';
+import type { Keyword } from './keywords';
 import { CommandRejected } from './rejection';
 import type { EffectsRegistry, ScenarioHooks } from './triggers';
 
@@ -115,6 +116,13 @@ export interface CardStats {
   encounterCode?: string;
   /** Number of physical copies in the product; treated as 1 when absent. */
   quantity?: number;
+  /** Keywords parsed from the card text at load time; none when absent. */
+  keywords?: readonly Keyword[];
+  /**
+   * A treachery with this stays in the drawing investigator's threat area
+   * instead of being discarded (derived from the card text by `carddata`).
+   */
+  entersThreatArea?: boolean;
 }
 
 /**

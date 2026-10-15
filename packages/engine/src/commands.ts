@@ -1,3 +1,4 @@
+import type { CardType, Trait } from './cards';
 import type { InstanceId, InvestigatorId, MapId } from './ids';
 import type { MapSpec } from './map';
 import type {
@@ -25,7 +26,10 @@ export type Command =
   | PlaceDoom
   | AdvanceAgenda
   | AdvanceAct
-  | EndScenario;
+  | EndScenario
+  | DrawEncounter
+  | FromSetAside
+  | ShuffleInto;
 
 /** A card instance to create when the scenario starts. */
 export interface StartingCard {
@@ -250,6 +254,79 @@ export interface AdvanceAct {
 export interface EndScenario {
   type: 'EndScenario';
   resolution: string;
+}
+
+/**
+ * An investigator draws the top card of the encounter deck (mythos phase or a
+ * card effect), or with `match` the first card that matches (see below). The
+ * card is revealed and then: an enemy is placed unengaged at
+ * the investigator's location (engagement, aloof and spawn instructions are
+ * `SpawnEnemy`, M1.8); a treachery goes to the investigator's threat area if
+ * its card says so (`CardStats.entersThreatArea`), otherwise to the encounter
+ * discard; anything else goes to the discard. As soon as the deck is empty
+ * the discard is shuffled back into it; a card with surge makes the
+ * investigator draw again. Produces, per card drawn, `EncounterCardDrawn`,
+ * `CardFlipped` and `CardMoved`, followed by `CardMoved`s and a `DeckShuffled`
+ * when that card emptied the deck and the discard was shuffled back.
+ */
+export interface DrawEncounter {
+  type: 'DrawEncounter';
+  investigatorId: InvestigatorId;
+  /**
+   * Where a `match` is looked for (default `'deck'`); without `match` the
+   * draw always takes the top of the deck and `from` is ignored.
+   */
+  from?: EncounterSource;
+  /**
+   * Draws the first card that matches instead of the top card: deck top-down,
+   * then discard top-down (the discard's top is its first entry). Every given
+   * field has to match; the card is then revealed and placed exactly like a
+   * top-of-deck draw, so surge and the empty-deck reshuffle apply as well.
+   * Rejected with `noMatchingCard` when nothing matches.
+   */
+  match?: EncounterMatch;
+  /**
+   * With `match` in the deck: first discards every card above the match
+   * ("discard cards from the top of the encounter deck until a Ghoul enemy is
+   * discarded. The lead investigator draws that enemy"). Without it the
+   * matching card is taken out of the deck and the rest stays where it is.
+   */
+  discardSkipped?: boolean;
+}
+
+/** The part of the encounter cards a `DrawEncounter` with `match` looks through. */
+export type EncounterSource = 'deck' | 'discard' | 'deckOrDiscard';
+
+/** What a card has to be to be drawn by a matched `DrawEncounter`; at least one field. */
+export interface EncounterMatch {
+  /** Card name as in the `CardDb`, compared exactly. */
+  name?: string;
+  /** A trait the card has, e.g. the `Ghoul` of "draw a Ghoul enemy". */
+  trait?: Trait;
+  /** Card type, e.g. `enemy` for "a Ghoul enemy". */
+  typeCode?: CardType;
+}
+
+/**
+ * Takes one set-aside copy of each code (a code listed twice takes two copies)
+ * and moves it to `to`. A move into play makes the bus fire `onCardEnters`.
+ * Produces `CardMoved` per card.
+ */
+export interface FromSetAside {
+  type: 'FromSetAside';
+  codes: readonly string[];
+  to: Zone;
+}
+
+/**
+ * Takes one set-aside copy of each code, adds it to `zone` and shuffles the
+ * whole zone (usually the encounter deck). Produces `CardMoved` per card,
+ * then `DeckShuffled`.
+ */
+export interface ShuffleInto {
+  type: 'ShuffleInto';
+  codes: readonly string[];
+  zone: Zone;
 }
 
 /** String literal of every command type. */

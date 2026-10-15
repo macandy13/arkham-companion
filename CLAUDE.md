@@ -20,7 +20,8 @@ Code style and conventions (functions, comments, tests, markup, CSS, helpers) ar
 - **In-code comments explain why, not what.** Inside function bodies, comment only to give a motivation the code can't express (game rule, workaround, trade-off) – never to narrate steps.
 - **Styles use tokens.** Colours, spacing, sizes come from `apps/web/src/styles/tokens.css`; no raw values or copy-pasted declarations elsewhere.
 - **Reuse helpers.** Generic string/array/object operations live in `@arkham/util` (`packages/util`); add missing ones there with tests instead of inlining them.
-- Tests with every change: Vitest unit tests for engine logic; cover invariants with example-based table tests (`it.each`), no property-based testing. Keep tests local: the values an assertion depends on are visible in the test or its `describe` setup.
+- Tests with every change: Vitest unit tests for engine logic; cover invariants with example-based table tests (`it.each`), no property-based testing.
+- **Tests are readable and local.** A reader must understand each test from its body plus the `describe` setup right above it, without scrolling or decoding. Every card, ID, zone and value an assertion checks is written there with a readable name (`plain_treachery`, `instanceId('top_card')`). No generated or positional IDs (`d0`, `L1`), no cryptic codes, no shared fixtures whose contents matter but sit far away, no hidden defaults that affect the result. Helpers may build state, but their call site must name what they build.
 
 ## Commands
 

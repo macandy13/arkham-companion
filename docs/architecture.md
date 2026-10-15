@@ -255,7 +255,7 @@ interface ScenarioDefinition {
 - `placeTokens(target, type, n | perInvestigator(n))`
 - `spawn(enemy, at)`, `moveInvestigators(to)`, `removeFromGame(codes)`
 
-**Spreading Flames primitives:** skull token depends on act number (chaos module reads state); `drawTopmostFromDiscard(name)` for *Fire!*; parley `ScenarioAction` on agendas; `fromSetAside` when advancing to agenda 2; `afterDoomPlaced` trigger on agenda 3.
+**Spreading Flames primitives:** skull token depends on act number (chaos module reads state); `DrawEncounter` with `from: 'discard'` and a `name` match for *Fire!*; parley `ScenarioAction` on agendas; `fromSetAside` when advancing to agenda 2; `afterDoomPlaced` trigger on agenda 3.
 
 **Hooks** return commands, which run through the normal `handle` path (validated, with access to card data and the RNG), never raw events. Game commands such as `MoveCard` and `AddMap` exist for them: unlike a `ManualAdjust` correction they are game events, so they fire further triggers (e.g. `onCardEnters`).
 

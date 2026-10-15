@@ -32,7 +32,8 @@ export type Event =
   | AgendaAdvanced
   | ActAdvanced
   | CurrentCardChanged
-  | ScenarioEnded;
+  | ScenarioEnded
+  | EncounterCardDrawn;
 
 /** A scenario was set up; replaces the whole state. Produced by `StartScenario`. */
 export interface ScenarioStarted {
@@ -192,3 +193,19 @@ export interface ScenarioEnded {
 
 /** String literal of every event type. */
 export type EventType = Event['type'];
+
+/**
+ * An investigator revealed `cardId` from the encounter deck. Only a record for
+ * the log and the UI: the card's moves are the `CardFlipped` and `CardMoved`
+ * that follow, and the reducer ignores this event. `peril` is carried here
+ * because the app cannot hide information; the UI uses it to warn the players
+ * not to discuss the card. `surge` tells that another draw follows. Produced
+ * by `DrawEncounter`.
+ */
+export interface EncounterCardDrawn {
+  type: 'EncounterCardDrawn';
+  investigatorId: InvestigatorId;
+  cardId: InstanceId;
+  peril: boolean;
+  surge: boolean;
+}
