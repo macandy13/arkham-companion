@@ -8,19 +8,22 @@ import {
   lowestRemainingSanity,
   mostClues,
   mostResources,
+  withStatDelta,
+  withStats,
   type Command,
   type GameState,
   type Investigator,
-  type Rejection,
 } from './index';
 import {
   edge,
   investigatorOf,
+  contextWith,
+  makeCard,
   makeInvestigator,
-  rejectionOf,
-  runFrom,
+  perInvestigator,
+  rejectionFrom,
+  stateAfter,
   startBoard,
-  testContext,
 } from '../test/utils';
 
 const hall = instanceId('hall');
@@ -29,16 +32,22 @@ const attic = instanceId('attic');
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
 
+const context = contextWith(
+  makeCard({ code: 'hall', typeCode: 'location', shroud: 2, clues: perInvestigator(1) }),
+  makeCard({ code: 'cellar', typeCode: 'location', shroud: 3, clues: perInvestigator(2) }),
+  makeCard({ code: 'attic', typeCode: 'location', shroud: 1, clues: perInvestigator(1) }),
+);
+
 /**
- * Hall (L1, 1 clue per investigator) - Cellar (L2, 2 per investigator), both
- * unrevealed; Attic (L3) is unconnected. Alice is placed at the hall, which
+ * Hall (1 clue per investigator) - Cellar (2 per investigator), both
+ * unrevealed; Attic is unconnected. Alice is placed at the hall, which
  * reveals it (2 clues with two investigators); Bob has no location.
  */
 function startWith(investigators: Investigator[]): GameState {
-  const board = startBoard(testContext, {
+  const board = startBoard(context, {
     maps: {
       main: {
-        locations: { hall: 'L1', cellar: 'L2', attic: 'L3' },
+        locations: { hall: 'hall', cellar: 'cellar', attic: 'attic' },
         connections: [edge('hall', 'cellar')],
       },
     },
@@ -47,13 +56,8 @@ function startWith(investigators: Investigator[]): GameState {
   return run(board, { type: 'MoveInvestigator', investigatorId: alice, to: hall });
 }
 
-function run(state: GameState, ...commands: Command[]): GameState {
-  return runFrom(testContext, state, commands).state;
-}
-
-function reject(state: GameState, command: Command): Rejection {
-  return rejectionOf(() => execute(testContext, state, command));
-}
+const run = (state: GameState, ...commands: Command[]) => stateAfter(context, state, ...commands);
+const reject = (state: GameState, command: Command) => rejectionFrom(context, state, command);
 
 describe('MoveInvestigator', () => {
   let state: GameState;
@@ -62,7 +66,7 @@ describe('MoveInvestigator', () => {
   });
 
   it('moves along a connection and reveals the destination with its clues', () => {
-    const result = execute(testContext, state, {
+    const result = execute(context, state, {
       type: 'MoveInvestigator',
       investigatorId: alice,
       to: cellar,
@@ -81,7 +85,7 @@ describe('MoveInvestigator', () => {
   it('does not reveal a destination that is already revealed', () => {
     const atCellar = run(state, { type: 'MoveInvestigator', investigatorId: alice, to: cellar });
 
-    const result = execute(testContext, atCellar, {
+    const result = execute(context, atCellar, {
       type: 'MoveInvestigator',
       investigatorId: alice,
       to: hall,
@@ -193,7 +197,7 @@ describe('AdjustInvestigator', () => {
   });
 
   it('defeats the investigator when damage reaches health', () => {
-    const result = execute(testContext, state, {
+    const result = execute(context, state, {
       type: 'AdjustInvestigator',
       investigatorId: alice,
       stat: 'damage',
@@ -420,18 +424,65 @@ describe('investigator state over a sequence of adjustments', () => {
 });
 
 describe('lowestRemainingHealth with ties', () => {
-  const withHealth = (id: string, max: number, damage: number): Investigator =>
-    makeInvestigator({ id, health: { max, damage } });
+  const hurt = (id: string, maxHealth: number, damage: number) =>
+    withStats(makeInvestigator({ id, health: { max: maxHealth, damage: 0 } }), { damage });
 
   it.each([
-    ['a single investigator', [withHealth('a', 5, 4)], ['a']],
-    ['a clear minimum', [withHealth('a', 9, 0), withHealth('b', 6, 1)], ['b']],
+    ['a single investigator', [hurt('a', 5, 4)], ['a']],
+    ['a clear minimum', [hurt('a', 9, 0), hurt('b', 6, 1)], ['b']],
     [
       'investigators tied on remaining health',
-      [withHealth('a', 9, 4), withHealth('b', 6, 1), withHealth('c', 8, 0)],
+      [hurt('a', 9, 4), hurt('b', 6, 1), hurt('c', 8, 0)],
       ['a', 'b'],
     ],
   ])('returns the lowest for %s', (_, candidates, expectedIds) => {
     expect(lowestRemainingHealth(candidates).map((inv) => inv.id)).toEqual(expectedIds);
+  });
+});
+
+describe('withStats', () => {
+  const base = makeInvestigator({
+    id: 'a',
+    health: { max: 8, damage: 3 },
+    sanity: { max: 6, horror: 2 },
+    clues: 1,
+    resources: 5,
+  });
+
+  it('sets each given stat to the absolute value', () => {
+    const result = withStats(base, { damage: 1, horror: 4, clues: 0, resources: 9 });
+
+    expect(result.health.damage).toBe(1);
+    expect(result.sanity.horror).toBe(4);
+    expect(result.clues).toBe(0);
+    expect(result.resources).toBe(9);
+  });
+
+  it('leaves stats that are not given alone', () => {
+    const result = withStats(base, { damage: 2 });
+
+    expect(result).toEqual({ ...base, health: { max: 8, damage: 2 } });
+  });
+
+  it('leaves the maximum health and sanity unchanged', () => {
+    const result = withStats(base, { damage: 7, horror: 5 });
+
+    expect(result.health.max).toBe(8);
+    expect(result.sanity.max).toBe(6);
+  });
+
+  it('returns an equal investigator for no stats and does not mutate the input', () => {
+    const result = withStats(base, {});
+
+    expect(result).toEqual(base);
+    expect(withStats(base, { clues: 4 })).not.toBe(base);
+    expect(base.clues).toBe(1);
+  });
+
+  it('applies values like withStatDelta, without clamping negatives', () => {
+    const result = withStats(base, { resources: -2 });
+
+    expect(result).toEqual(withStatDelta(base, 'resources', -7));
+    expect(result.resources).toBe(-2);
   });
 });
