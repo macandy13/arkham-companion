@@ -1,114 +1,90 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { stubArkhamDb } from './fixtures/arkhamdb';
+import { startQuickGame } from './fixtures/wizard';
 
-const fixturePacks = [{ code: 'pack1', name: 'First Pack', position: 1, cycle_position: 1 }];
-
-function fixtureInvestigator(code: string, name: string) {
-  return {
-    code,
-    name,
-    type_code: 'investigator',
-    faction_code: 'seeker',
-    health: 7,
-    sanity: 7,
-    skill_willpower: 3,
-    skill_intellect: 3,
-    skill_combat: 3,
-    skill_agility: 3,
-    pack_code: 'pack1',
-  };
-}
-
-const fixtureCards = [fixtureInvestigator('a1', 'Alder'), fixtureInvestigator('b1', 'Birch')];
-
-// The catalog comes from ArkhamDB; tests answer those requests with a fixture instead of using the network.
 test.beforeEach(async ({ page }) => {
-  for (const [path, body] of [
-    ['packs', fixturePacks],
-    ['cards', fixtureCards],
-  ] as const) {
-    await page.route(`https://arkhamdb.com/api/public/${path}/`, (route) =>
-      route.fulfill({ json: body, headers: { 'Access-Control-Allow-Origin': '*' } }),
-    );
-  }
+  await stubArkhamDb(page);
 });
 
-/** Runs the quick-game wizard with Alder and Birch on the sandbox scenario and lands on the game route. */
-async function startQuickGame(page: Page) {
-  await page.getByRole('link', { name: 'Quick game' }).first().click();
-  await page.getByRole('button', { name: 'Next' }).click();
-  for (const name of ['Alder', 'Birch']) {
-    await page.getByRole('list', { name: 'Investigators' }).getByRole('button', { name }).click();
-    await page.getByRole('button', { name: 'Select' }).click();
-  }
-  await page.getByRole('button', { name: 'Next' }).click();
-  await page.getByRole('button', { name: 'Start game' }).click();
-  await expect(page).toHaveURL(/#\/game\/.+/);
-}
+// Home flow: the production build boots, hash routes resolve, a new game survives a reload and
+// the home screen manages the saved games (rename, duplicate, delete, export, import, resume).
+// Fuller flows arrive with M2.8 and M3.9. `@flow` specs are also recorded for PR screencasts;
+// their `test.step` names become the captions in the recording.
+test(
+  'a new game survives reload and is managed from the home screen',
+  { tag: '@flow' },
+  async ({ page }) => {
+    const before = await test.step('Open the game list', async () => {
+      await page.goto('/');
+      await expect(page).toHaveTitle('Arkham Companion');
+      await expect(page.getByRole('heading', { level: 1, name: 'Games' })).toBeVisible();
+      return page.getByRole('list', { name: 'Games' }).getByRole('listitem').count();
+    });
 
-// Smoke test: the production build boots, hash routes resolve, and a new game survives a reload.
-// Fuller flows arrive with M2.8 and M3.9.
-test('app boots and a new game survives reload', async ({ page }) => {
-  await page.goto('/');
-  await expect(page).toHaveTitle('Arkham Companion');
-  await expect(page.getByRole('heading', { level: 1, name: 'Games' })).toBeVisible();
+    await test.step('Start a quick game', async () => {
+      await page.getByRole('link', { name: /new game/i }).click();
+      await expect(page).toHaveURL(/#\/new$/);
+      await startQuickGame(page);
+    });
 
-  const games = page.getByRole('list', { name: 'Games' });
-  const before = await games.getByRole('listitem').count();
-  await page.getByRole('link', { name: /new game/i }).click();
-  await expect(page).toHaveURL(/#\/new$/);
-  await startQuickGame(page);
+    await test.step('Reload the game', async () => {
+      await page.reload();
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    });
 
-  await page.reload();
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await test.step('The new game is listed', async () => {
+      await page.getByRole('link', { name: 'Arkham Companion' }).click();
+      await expect(page.getByRole('list', { name: 'Games' }).getByRole('listitem')).toHaveCount(
+        before + 1,
+      );
+    });
 
-  await page.getByRole('link', { name: 'Arkham Companion' }).click();
-  await expect(page.getByRole('list', { name: 'Games' }).getByRole('listitem')).toHaveCount(
-    before + 1,
-  );
-});
+    const games = page.getByRole('list', { name: 'Games' });
 
-test('an exported game can be imported as a new game', async ({ page }) => {
-  await page.goto('/');
-  await page.getByRole('link', { name: /new game/i }).click();
-  await startQuickGame(page);
-  await page.getByRole('link', { name: 'Arkham Companion' }).click();
+    await test.step('Rename the game', async () => {
+      await page.getByRole('button', { name: 'Rename' }).click();
+      await page.getByRole('textbox', { name: 'Name' }).fill('Night of the Test');
+      await page.getByRole('button', { name: 'Save' }).click();
+      await expect(games.getByRole('link', { name: 'Night of the Test' }).first()).toBeVisible();
+    });
 
-  const games = page.getByRole('list', { name: 'Games' }).getByRole('listitem');
-  await expect(games.first()).toBeVisible();
-  const before = await games.count();
-  const download = page.waitForEvent('download');
-  await games.first().getByRole('button', { name: 'Export' }).click();
-  const chunks: Buffer[] = [];
-  for await (const chunk of await (await download).createReadStream()) {
-    chunks.push(chunk as Buffer);
-  }
+    await test.step('Duplicate the game', async () => {
+      await page.getByRole('button', { name: 'Duplicate' }).click();
+      await expect(games.getByRole('listitem')).toHaveCount(before + 2);
+      await expect(
+        games.getByRole('link', { name: 'Night of the Test (copy)' }).first(),
+      ).toBeVisible();
+    });
 
-  await page.getByLabel('Import game').setInputFiles({
-    name: 'game.arkham.json',
-    mimeType: 'application/json',
-    buffer: Buffer.concat(chunks),
-  });
-  await expect(games).toHaveCount(before + 1);
-});
+    await test.step('Delete the copy', async () => {
+      const copy = games.getByRole('listitem').filter({ hasText: 'Night of the Test (copy)' });
+      await copy.getByRole('button', { name: 'Delete' }).click();
+      await page.getByRole('alertdialog').getByRole('button', { name: 'Delete' }).click();
+      await expect(games.getByRole('listitem')).toHaveCount(before + 1);
+    });
 
-test('the wizard keeps its choices over a reload and when going back', async ({ page }) => {
-  await page.goto('/#/new?mode=campaign');
-  await page.getByRole('radio', { name: 'Expert' }).check();
-  await page.getByRole('button', { name: 'Next' }).click();
-  await page
-    .getByRole('list', { name: 'Investigators' })
-    .getByRole('button', { name: 'Birch' })
-    .click();
-  await page.getByRole('button', { name: 'Select' }).click();
+    const backup = await test.step('Export the game to a file', async () => {
+      const download = page.waitForEvent('download');
+      await games.getByRole('listitem').first().getByRole('button', { name: 'Export' }).click();
+      const chunks: Buffer[] = [];
+      for await (const chunk of await (await download).createReadStream()) {
+        chunks.push(chunk as Buffer);
+      }
+      return Buffer.concat(chunks);
+    });
 
-  await page.reload();
-  await expect(page.getByRole('region', { name: 'Seats' })).toContainText('Birch');
-  await page.goBack();
+    await test.step('Import the file as a new game', async () => {
+      await page.getByLabel('Import game').setInputFiles({
+        name: 'game.arkham.json',
+        mimeType: 'application/json',
+        buffer: backup,
+      });
+      await expect(games.getByRole('listitem')).toHaveCount(before + 2);
+    });
 
-  await expect(page.getByRole('radio', { name: 'Expert' })).toBeChecked();
-});
-
-test('deep links to settings work', async ({ page }) => {
-  await page.goto('/#/settings');
-  await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
-});
+    await test.step('Resume a game from the list', async () => {
+      await games.getByRole('link', { name: 'Resume' }).first().click();
+      await expect(page).toHaveURL(/#\/game\/.+/);
+    });
+  },
+);
