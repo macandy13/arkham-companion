@@ -4,6 +4,7 @@ import {
   execute,
   instanceId,
   investigatorId,
+  trait,
   zoneKey,
   type Command,
   type EngineContext,
@@ -350,48 +351,238 @@ describe('DrawEncounter', () => {
   });
 });
 
-describe('DrawTopmostFromDiscard', () => {
-  const drawFoe = (to: Zone): Command => ({ type: 'DrawTopmostFromDiscard', name: 'Foe Name', to });
-  const namedCtx = contextWith(
+describe('DrawEncounter with a match', () => {
+  const matchCtx = contextWith(
     makeCard({ code: 'hall_location', typeCode: 'location' }),
-    makeCard({ code: 'foe', name: 'Foe Name', typeCode: 'enemy' }),
+    makeCard({
+      code: 'ghoul_foe',
+      name: 'Ghoul Minion',
+      typeCode: 'enemy',
+      traits: [trait('Ghoul')],
+    }),
+    makeCard({
+      code: 'other_foe',
+      name: 'Other Foe',
+      typeCode: 'enemy',
+      traits: [trait('Monster')],
+    }),
+    makeCard({ code: 'ghoul_treachery', typeCode: 'treachery', traits: [trait('Ghoul')] }),
+    makeCard({
+      code: 'surge_ghoul_foe',
+      typeCode: 'enemy',
+      traits: [trait('Ghoul')],
+      keywords: [{ name: 'surge' }],
+    }),
     makeCard({ code: 'plain_treachery', typeCode: 'treachery' }),
   );
+  const drawGhoulEnemy: Command = {
+    type: 'DrawEncounter',
+    investigatorId: alice,
+    match: { trait: trait('Ghoul'), typeCode: 'enemy' },
+  };
 
-  it('moves the topmost card with that name', () => {
+  it('takes the first matching card of the deck and leaves the cards above it', () => {
     const state = startedWith(
       {
-        discard: [
-          card('plain_treachery', 'discarded_treachery'),
-          card('foe', 'upper_foe'),
-          card('foe', 'lower_foe'),
+        deck: [
+          card('plain_treachery', 'top_card'),
+          card('ghoul_foe', 'first_ghoul'),
+          card('ghoul_foe', 'second_ghoul'),
         ],
       },
       { aliceAt: hall },
-      namedCtx,
+      matchCtx,
     );
 
-    const after = stateAfter(namedCtx, state, drawFoe(atHall));
+    const after = stateAfter(matchCtx, state, drawGhoulEnemy);
 
-    expect(after.cards[instanceId('upper_foe')]?.zone).toEqual(atHall);
-    expect(after.cards[instanceId('lower_foe')]?.zone).toEqual(encounterDiscard);
+    expect(after.cards[instanceId('first_ghoul')]).toMatchObject({ faceUp: true, zone: atHall });
+    expect(idsIn(after, encounterDeck)).toEqual(['top_card', 'second_ghoul']);
   });
 
-  it('rejects when no card in the discard has that name', () => {
+  it('discards the cards above the match first when asked to', () => {
     const state = startedWith(
       {
-        discard: [card('plain_treachery', 'discarded_treachery')],
-        deck: [card('foe', 'foe_in_deck')],
+        deck: [
+          card('plain_treachery', 'skipped_treachery'),
+          card('other_foe', 'skipped_foe'),
+          card('ghoul_foe', 'drawn_ghoul'),
+          card('plain_treachery', 'below_ghoul'),
+        ],
+        discard: [card('plain_treachery', 'old_discard')],
       },
       { aliceAt: hall },
-      namedCtx,
+      matchCtx,
     );
 
-    expect(rejectionFrom(namedCtx, state, drawFoe({ kind: 'setAside' }))).toEqual({
-      code: 'cardNotInZone',
-      zone: 'encounterDiscard',
-      match: 'Foe Name',
+    const after = stateAfter(matchCtx, state, { ...drawGhoulEnemy, discardSkipped: true });
+
+    expect(idsIn(after, encounterDiscard)).toEqual([
+      'skipped_foe',
+      'skipped_treachery',
+      'old_discard',
+    ]);
+    expect(idsIn(after, encounterDeck)).toEqual(['below_ghoul']);
+    expect(after.cards[instanceId('drawn_ghoul')]?.zone).toEqual(atHall);
+  });
+
+  it('takes the topmost matching card from the discard when drawing from the discard', () => {
+    const state = startedWith(
+      {
+        deck: [card('ghoul_foe', 'ghoul_in_deck'), card('plain_treachery', 'deck_filler')],
+        discard: [
+          card('plain_treachery', 'discarded_treachery'),
+          card('ghoul_foe', 'upper_discarded_ghoul'),
+          card('ghoul_foe', 'lower_discarded_ghoul'),
+        ],
+      },
+      { aliceAt: hall },
+      matchCtx,
+    );
+
+    const after = stateAfter(matchCtx, state, { ...drawGhoulEnemy, from: 'discard' });
+
+    expect(after.cards[instanceId('upper_discarded_ghoul')]?.zone).toEqual(atHall);
+    expect(idsIn(after, encounterDiscard)).toEqual([
+      'discarded_treachery',
+      'lower_discarded_ghoul',
+    ]);
+    expect(idsIn(after, encounterDeck)).toEqual(['ghoul_in_deck', 'deck_filler']);
+  });
+
+  it('searches the deck before the discard when drawing from either', () => {
+    const state = startedWith(
+      {
+        deck: [card('ghoul_foe', 'ghoul_in_deck'), card('plain_treachery', 'deck_filler')],
+        discard: [card('ghoul_foe', 'ghoul_in_discard')],
+      },
+      { aliceAt: hall },
+      matchCtx,
+    );
+
+    const after = stateAfter(matchCtx, state, { ...drawGhoulEnemy, from: 'deckOrDiscard' });
+
+    expect(after.cards[instanceId('ghoul_in_deck')]?.zone).toEqual(atHall);
+    expect(after.cards[instanceId('ghoul_in_discard')]?.zone).toEqual(encounterDiscard);
+  });
+
+  it('finds a card that is only in the discard when drawing from either', () => {
+    const state = startedWith(
+      {
+        deck: [card('plain_treachery', 'deck_filler'), card('plain_treachery', 'second_filler')],
+        discard: [card('ghoul_foe', 'ghoul_in_discard')],
+      },
+      { aliceAt: hall },
+      matchCtx,
+    );
+
+    const after = stateAfter(matchCtx, state, { ...drawGhoulEnemy, from: 'deckOrDiscard' });
+
+    expect(after.cards[instanceId('ghoul_in_discard')]?.zone).toEqual(atHall);
+  });
+
+  it('matches by name', () => {
+    const state = startedWith(
+      { deck: [card('ghoul_foe', 'ghoul_minion'), card('other_foe', 'other_foe_card')] },
+      { aliceAt: hall },
+      matchCtx,
+    );
+
+    const after = stateAfter(matchCtx, state, {
+      type: 'DrawEncounter',
+      investigatorId: alice,
+      match: { name: 'Other Foe' },
     });
+
+    expect(after.cards[instanceId('other_foe_card')]?.zone).toEqual(atHall);
+    expect(idsIn(after, encounterDeck)).toEqual(['ghoul_minion']);
+  });
+
+  it('requires every given field to match', () => {
+    const state = startedWith(
+      { deck: [card('ghoul_treachery', 'ghoul_treachery_card')] },
+      { aliceAt: hall },
+      matchCtx,
+    );
+
+    expect(rejectionFrom(matchCtx, state, drawGhoulEnemy)).toEqual({
+      code: 'noMatchingCard',
+      from: 'deck',
+      match: drawGhoulEnemy.match,
+    });
+  });
+
+  it('does not look in the discard unless told to', () => {
+    const state = startedWith(
+      { discard: [card('ghoul_foe', 'ghoul_in_discard')] },
+      { aliceAt: hall },
+      matchCtx,
+    );
+
+    expect(rejectionFrom(matchCtx, state, drawGhoulEnemy).code).toBe('noMatchingCard');
+  });
+
+  it('changes nothing when it rejects, even when asked to discard the cards above', () => {
+    const state = startedWith(
+      { deck: [card('plain_treachery', 'top_card')] },
+      { aliceAt: hall },
+      matchCtx,
+    );
+
+    const rejection = rejectionFrom(matchCtx, state, { ...drawGhoulEnemy, discardSkipped: true });
+
+    expect(rejection.code).toBe('noMatchingCard');
+    expect(idsIn(state, encounterDeck)).toEqual(['top_card']);
+  });
+
+  it('draws again from the top after a matched card with surge', () => {
+    const state = startedWith(
+      {
+        deck: [card('plain_treachery', 'top_card'), card('surge_ghoul_foe', 'surging_ghoul')],
+        discard: [card('plain_treachery', 'old_discard')],
+      },
+      { aliceAt: hall },
+      matchCtx,
+    );
+
+    const { state: after, events } = execute(matchCtx, state, drawGhoulEnemy);
+
+    const drawn = events.filter((e) => e.type === 'EncounterCardDrawn');
+    expect(drawn.map((e) => e.cardId)).toEqual(['surging_ghoul', 'top_card']);
+    expect(after.cards[instanceId('surging_ghoul')]?.zone).toEqual(atHall);
+  });
+
+  it('reshuffles the discard when the matched card was the last one in the deck', () => {
+    const state = startedWith(
+      {
+        deck: [card('ghoul_foe', 'last_deck_ghoul')],
+        discard: [card('plain_treachery', 'discarded_treachery')],
+      },
+      { aliceAt: hall },
+      matchCtx,
+    );
+
+    const after = stateAfter(matchCtx, state, drawGhoulEnemy);
+
+    expect(idsIn(after, encounterDeck)).toEqual(['discarded_treachery']);
+    expect(idsIn(after, encounterDiscard)).toEqual([]);
+  });
+
+  it('feeds onCardEnters for an enemy drawn from the discard', () => {
+    const hooks: EngineContext['hooks'] = {
+      onCardEnters: (_ctx, _state, event) => [
+        { type: 'PlaceDoom', cardId: event.cardId, amount: 1 },
+      ],
+    };
+    const state = startedWith(
+      { discard: [card('ghoul_foe', 'discarded_ghoul')] },
+      { aliceAt: hall },
+      matchCtx,
+    );
+
+    const after = stateAfter({ ...matchCtx, hooks }, state, { ...drawGhoulEnemy, from: 'discard' });
+
+    expect(after.cards[instanceId('discarded_ghoul')]?.tokens.doom).toBe(1);
   });
 });
 

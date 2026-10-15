@@ -1,4 +1,4 @@
-import type { CommandType } from './commands';
+import type { CommandType, EncounterMatch, EncounterSource } from './commands';
 import type { InstanceId, InvestigatorId, MapId } from './ids';
 import type { InvestigatorStat, TokenKind } from './state';
 
@@ -80,8 +80,10 @@ export type Rejection =
   | { code: 'encounterDeckEmpty' }
   /** `DrawEncounter` brought an enemy for an investigator who is not at a location. */
   | { code: 'investigatorHasNoLocation'; investigatorId: InvestigatorId }
-  /** No card matching `match` (a name or code) is in the `zone` the command takes it from. */
-  | { code: 'cardNotInZone'; zone: 'encounterDiscard' | 'setAside'; match: string }
+  /** `DrawEncounter` with a `match` that no card of the searched `from` encounter cards fulfils. */
+  | { code: 'noMatchingCard'; from: EncounterSource; match: EncounterMatch }
+  /** No card with code `match` is set aside. */
+  | { code: 'cardNotInZone'; zone: 'setAside'; match: string }
   | { code: 'triggerLoop'; limit: number }
   /** A command returned by a hook or card effect was rejected for `reason`. */
   | { code: 'triggeredCommandRejected'; command: CommandType; reason: Rejection }
@@ -179,6 +181,8 @@ function describe(r: Rejection): string {
       return 'the encounter deck and its discard are empty';
     case 'investigatorHasNoLocation':
       return `investigator ${r.investigatorId} is not at a location`;
+    case 'noMatchingCard':
+      return `no card matching ${JSON.stringify(r.match)} in ${r.from}`;
     case 'cardNotInZone':
       return `no ${r.match} in ${r.zone}`;
     case 'triggerLoop':

@@ -11,12 +11,7 @@ import {
   handleDiscoverClues,
   handleMoveInvestigator,
 } from './handle_investigator';
-import {
-  handleDrawEncounter,
-  handleDrawTopmostFromDiscard,
-  handleFromSetAside,
-  handleShuffleInto,
-} from './handle_encounter';
+import { handleDrawEncounter, handleFromSetAside, handleShuffleInto } from './handle_encounter';
 import { withAgendaCheck } from './doom';
 import {
   completeAdvance,
@@ -188,8 +183,6 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
       return handleEndScenario(command);
     case 'DrawEncounter':
       return handleDrawEncounter(ctx, state, command);
-    case 'DrawTopmostFromDiscard':
-      return handleDrawTopmostFromDiscard(ctx, state, command);
     case 'FromSetAside':
       return handleFromSetAside(state, command);
     case 'ShuffleInto':

@@ -1,3 +1,4 @@
+import type { CardType, Trait } from './cards';
 import type { InstanceId, InvestigatorId, MapId } from './ids';
 import type { MapSpec } from './map';
 import type {
@@ -27,7 +28,6 @@ export type Command =
   | AdvanceAct
   | EndScenario
   | DrawEncounter
-  | DrawTopmostFromDiscard
   | FromSetAside
   | ShuffleInto;
 
@@ -258,7 +258,8 @@ export interface EndScenario {
 
 /**
  * An investigator draws the top card of the encounter deck (mythos phase or a
- * card effect). The card is revealed and then: an enemy is placed unengaged at
+ * card effect), or with `match` the first card that matches (see below). The
+ * card is revealed and then: an enemy is placed unengaged at
  * the investigator's location (engagement, aloof and spawn instructions are
  * `SpawnEnemy`, M1.8); a treachery goes to the investigator's threat area if
  * its card says so (`CardStats.entersThreatArea`), otherwise to the encounter
@@ -271,18 +272,39 @@ export interface EndScenario {
 export interface DrawEncounter {
   type: 'DrawEncounter';
   investigatorId: InvestigatorId;
+  /**
+   * Where a `match` is looked for (default `'deck'`); without `match` the
+   * draw always takes the top of the deck and `from` is ignored.
+   */
+  from?: EncounterSource;
+  /**
+   * Draws the first card that matches instead of the top card: deck top-down,
+   * then discard top-down (the discard's top is its first entry). Every given
+   * field has to match; the card is then revealed and placed exactly like a
+   * top-of-deck draw, so surge and the empty-deck reshuffle apply as well.
+   * Rejected with `noMatchingCard` when nothing matches.
+   */
+  match?: EncounterMatch;
+  /**
+   * With `match` in the deck: first discards every card above the match
+   * ("discard cards from the top of the encounter deck until a Ghoul enemy is
+   * discarded. The lead investigator draws that enemy"). Without it the
+   * matching card is taken out of the deck and the rest stays where it is.
+   */
+  discardSkipped?: boolean;
 }
 
-/**
- * Moves the topmost card of the encounter discard whose name is `name` to
- * `to` (e.g. "draw the topmost X from the encounter discard"). The top of the
- * discard is its first entry. Produces `CardMoved`.
- */
-export interface DrawTopmostFromDiscard {
-  type: 'DrawTopmostFromDiscard';
+/** The part of the encounter cards a `DrawEncounter` with `match` looks through. */
+export type EncounterSource = 'deck' | 'discard' | 'deckOrDiscard';
+
+/** What a card has to be to be drawn by a matched `DrawEncounter`; at least one field. */
+export interface EncounterMatch {
   /** Card name as in the `CardDb`, compared exactly. */
-  name: string;
-  to: Zone;
+  name?: string;
+  /** A trait the card has, e.g. the `Ghoul` of "draw a Ghoul enemy". */
+  trait?: Trait;
+  /** Card type, e.g. `enemy` for "a Ghoul enemy". */
+  typeCode?: CardType;
 }
 
 /**
