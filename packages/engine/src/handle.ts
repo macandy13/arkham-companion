@@ -4,14 +4,14 @@ import {
   handleRemoveConnection,
   handleRevealLocation,
   validateConnections,
-} from './handle-board';
+} from './handle_board';
 import {
   handleAdjustInvestigator,
   handleDiscoverClues,
   handleMoveInvestigator,
-} from './handle-investigator';
+} from './handle_investigator';
 import { withAgendaCheck } from './doom';
-import { handleAdvanceAct, handleAdvanceAgenda, handlePlaceDoom } from './handle-scenario';
+import { handleAdvanceAct, handleAdvanceAgenda, handlePlaceDoom } from './handle_scenario';
 import type { Adjustment, Command, StartScenario, StartingCard } from './commands';
 import type { CardMoved, DeckShuffled, Event, ScenarioStarted, TokensChanged } from './events';
 import { instanceId, type InstanceId, type MapId } from './ids';

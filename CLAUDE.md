@@ -10,9 +10,10 @@ Code style and conventions (functions, comments, tests, markup, CSS, helpers) ar
 - **Engine is pure.** `packages/engine` has no React, DOM, IndexedDB, fetch or `Date.now()`/`Math.random()`. Randomness only via the seeded RNG in state.
 - **Every state change is Command → Events → reducer.** Never mutate state outside the reducer.
 - **Storage only via `GameStore`.** The app never talks to Dexie/IndexedDB directly.
-- **Never commit ArkhamDB card JSON or card images.** Fetched data goes to `packages/carddata/.cache/` (gitignored). Tests use invented cards or the hand-written test scenario (`packages/scenarios/src/the-gathering/`): real card codes and names are fine there, but stats are entered by hand and there is no card text, JSON or image.
+- **Never commit ArkhamDB card JSON or card images.** Fetched data goes to `packages/carddata/.cache/` (gitignored). Tests use invented cards or the hand-written test scenario (`packages/scenarios/src/the_gathering/`): real card codes and names are fine there, but stats are entered by hand and there is no card text, JSON or image.
 - **Generic before specific:** if two scenarios need it, make it an engine primitive.
 - **Markup is structure only.** JSX/HTML is a plain document tree of semantic elements (no `<strong>`, `<b>`, `<br>`, inline `style`, layout/styling class names); all presentation lives in CSS.
+- **Underscores, never dashes, in source file and directory names** under `packages/` and `apps/` (`handle_board.ts`, `the_gathering/`). Tool-mandated names keep theirs (`pnpm-workspace.yaml`, `release-please-config.json`, `.claude/` agent and hook files, `docs/*.md`).
 - **No German words in code** (identifiers); German only in UI translation strings.
 - TypeScript strict, no `any` without a comment explaining why.
 - Every exported interface, type, class and non-trivial function gets a doc comment explaining its purpose and, where it isn't obvious, how it relates to other types (e.g. which reducer produces it, which ID it refers to). Also explain non-obvious design choices (why, not what).
