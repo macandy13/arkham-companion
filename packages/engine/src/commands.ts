@@ -1,3 +1,4 @@
+import type { CardType, Trait } from './cards';
 import type { DecisionId, InstanceId, InvestigatorId, MapId } from './ids';
 import type { MapSpec } from './map';
 import type {
@@ -28,7 +29,6 @@ export type Command =
   | AdvanceAct
   | EndScenario
   | DrawEncounter
-  | DrawTopmostFromDiscard
   | FromSetAside
   | ShuffleInto
   | SpawnEnemy
@@ -44,7 +44,10 @@ export type Command =
   | ResolveDecision
   | CheckDoomThreshold
   | NextPhase
+  | StartTurn
   | EndTurn
+  | AdjustActions
+  | TakeAction
   | ResolveEnemyAttack
   | Investigate
   | Fight
@@ -99,6 +102,8 @@ export interface MoveCard {
   type: 'MoveCard';
   cardId: InstanceId;
   to: Zone;
+  /** Position in the destination, 0 = top (e.g. the top of the encounter discard); default the bottom. */
+  index?: number;
 }
 
 /**
@@ -117,10 +122,14 @@ export interface AddMap {
   locations: readonly InstanceId[];
 }
 
-/** The concrete corrections a `ManualAdjust` can make. */
+/**
+ * The concrete corrections a `ManualAdjust` can make. `actions` changes the
+ * action allowance of the turn in progress, like `AdjustActions`.
+ */
 export type Adjustment =
   | { kind: 'moveCard'; cardId: InstanceId; to: Zone; index?: number }
-  | { kind: 'tokens'; cardId: InstanceId; token: TokenKind; delta: number };
+  | { kind: 'tokens'; cardId: InstanceId; token: TokenKind; delta: number }
+  | { kind: 'actions'; investigatorId: InvestigatorId; delta: number };
 
 /**
  * Connects two location cards (a card effect or scenario step). The cards may
@@ -178,6 +187,12 @@ export interface MoveInvestigator {
   to: InstanceId;
   /** Skip the connection check (card effects). Default false. */
   ignoreConnections?: boolean;
+  /**
+   * Not an action: a card effect or rule performs it (a fast ability, an
+   * enemy engaging on arrival). Not counted against the turn's allowance and
+   * allowed outside the investigator's turn. Default false.
+   */
+  free?: boolean;
 }
 
 /**
@@ -243,18 +258,21 @@ export interface ClueSpend {
 }
 
 /**
- * Advances the current act. The investigators choose who pays, so `spend`
- * lists their payments; the total must equal the act's clue requirement
- * (its `clues`, resolved for the starting player count), and it is empty for an act
- * without one. Like `AdvanceAgenda`, the reverse side (`onActAdvance` hook)
- * resolves before the next act becomes current. Produces `InvestigatorChanged`
- * per payment, `CardFlipped`, `ActAdvanced`, the reverse side's events,
- * `CardMoved`, `CurrentCardChanged` and, for the last act, `ScenarioEnded`
- * unless the reverse side ended the scenario.
+ * Advances the current act. Paying clues is only one way to advance: other
+ * acts need an objective, an action or an event (an enemy defeated or out of
+ * play, …), which players or scenario hooks decide, so those advance with no
+ * `spend`. With `spend` the investigators choose who pays; the total must
+ * equal the act's clue requirement (its `clues`, resolved for the starting
+ * player count) and the act must have one. Like `AdvanceAgenda`, the reverse
+ * side (`onActAdvance` hook) resolves before the next act becomes current.
+ * Produces `InvestigatorChanged` per payment, `CardFlipped`, `ActAdvanced`,
+ * the reverse side's events, `CardMoved`, `CurrentCardChanged` and, for the
+ * last act, `ScenarioEnded` unless the reverse side ended the scenario.
  */
 export interface AdvanceAct {
   type: 'AdvanceAct';
-  spend: ClueSpend[];
+  /** Clue payments; omit to advance without paying (any act can advance that way). */
+  spend?: ClueSpend[];
   /**
    * Fallback resolution for the last act when its reverse side does not end
    * the scenario itself; rejected while further acts follow.
@@ -274,7 +292,8 @@ export interface EndScenario {
 
 /**
  * An investigator draws the top card of the encounter deck (mythos phase or a
- * card effect). The card is revealed and then: an enemy is placed unengaged at
+ * card effect), or with `match` the first card that matches (see below). The
+ * card is revealed and then: an enemy is placed unengaged at
  * the investigator's location (engagement, aloof and spawn instructions are
  * `SpawnEnemy`, M1.8); a treachery goes to the investigator's threat area if
  * its card says so (`CardStats.entersThreatArea`), otherwise to the encounter
@@ -287,18 +306,39 @@ export interface EndScenario {
 export interface DrawEncounter {
   type: 'DrawEncounter';
   investigatorId: InvestigatorId;
+  /**
+   * Where a `match` is looked for (default `'deck'`); without `match` the
+   * draw always takes the top of the deck and `from` is ignored.
+   */
+  from?: EncounterSource;
+  /**
+   * Draws the first card that matches instead of the top card: deck top-down,
+   * then discard top-down (the discard's top is its first entry). Every given
+   * field has to match; the card is then revealed and placed exactly like a
+   * top-of-deck draw, so surge and the empty-deck reshuffle apply as well.
+   * Rejected with `noMatchingCard` when nothing matches.
+   */
+  match?: EncounterMatch;
+  /**
+   * With `match` in the deck: first discards every card above the match
+   * ("discard cards from the top of the encounter deck until a Ghoul enemy is
+   * discarded. The lead investigator draws that enemy"). Without it the
+   * matching card is taken out of the deck and the rest stays where it is.
+   */
+  discardSkipped?: boolean;
 }
 
-/**
- * Moves the topmost card of the encounter discard whose name is `name` to
- * `to` (e.g. "draw the topmost X from the encounter discard"). The top of the
- * discard is its first entry. Produces `CardMoved`.
- */
-export interface DrawTopmostFromDiscard {
-  type: 'DrawTopmostFromDiscard';
+/** The part of the encounter cards a `DrawEncounter` with `match` looks through. */
+export type EncounterSource = 'deck' | 'discard' | 'deckOrDiscard';
+
+/** What a card has to be to be drawn by a matched `DrawEncounter`; at least one field. */
+export interface EncounterMatch {
   /** Card name as in the `CardDb`, compared exactly. */
-  name: string;
-  to: Zone;
+  name?: string;
+  /** A trait the card has, e.g. the `Ghoul` of "draw a Ghoul enemy". */
+  trait?: Trait;
+  /** Card type, e.g. `enemy` for "a Ghoul enemy". */
+  typeCode?: CardType;
 }
 
 /**
@@ -351,6 +391,12 @@ export interface EngageEnemy {
   type: 'EngageEnemy';
   enemyId: InstanceId;
   investigatorId: InvestigatorId;
+  /**
+   * Not an action: a card effect or rule performs it (a fast ability, an
+   * enemy engaging on arrival). Not counted against the turn's allowance and
+   * allowed outside the investigator's turn. Default false.
+   */
+  free?: boolean;
 }
 
 /**
@@ -400,15 +446,24 @@ export interface ReadyEnemy {
 }
 
 /**
- * Moves every ready, unengaged hunter enemy one step towards the nearest
+ * Moves the ready, unengaged hunter enemies one step towards the nearest
  * investigator (enemy phase; the phase assistant of M1.10 issues it). Hunters
  * with an investigator at their location, without a route or with a pending
  * decision stay. Equally near investigators and equally short routes are
- * settled by prey and then handed to the players. Produces `CardMoved` per
- * moving hunter, then `EnemyEngaged` or `DecisionRequested`.
+ * settled by prey and then handed to the players. When two or more hunters
+ * would move, the lead investigator chooses the order (`hunterOrder`
+ * decision, see `handleMoveHunters`) and nothing moves yet. Produces
+ * `CardMoved` per moving hunter, then `EnemyEngaged` or `DecisionRequested`,
+ * or only the `hunterOrder` `DecisionRequested`.
  */
 export interface MoveHunters {
   type: 'MoveHunters';
+  /**
+   * Only these hunters are considered (default: every hunter in play). The
+   * answer to the `hunterOrder` decision passes the hunters that have not
+   * moved yet, so a hunter that already moved is not moved again.
+   */
+  hunters?: InstanceId[];
 }
 
 /**
@@ -416,13 +471,18 @@ export interface MoveHunters {
  * the neighbouring location `to`, or towards `towards` along that
  * investigator's shortest routes (a remaining tie between routes becomes a
  * `chooseLocation` decision). The hunter must be an unengaged enemy at a location;
- * `to` must be connected to it. Produces `CardMoved`, then `EnemyEngaged` or
+ * `to` must be connected to it. With neither `to` nor `towards` the hunter moves
+ * along its own rule, as `MoveHunters` would move it alone. Produces `CardMoved`, then `EnemyEngaged` or
  * `DecisionRequested`.
  */
 export type MoveHunter = {
   type: 'MoveHunter';
   enemyId: InstanceId;
-} & ({ to: InstanceId; towards?: never } | { towards: InvestigatorId; to?: never });
+} & (
+  | { to: InstanceId; towards?: never }
+  | { towards: InvestigatorId; to?: never }
+  | { to?: never; towards?: never }
+);
 
 /**
  * Raises a decision, for scenario hooks and card effects ("choose one: …").
@@ -445,6 +505,13 @@ export interface ResolveDecision {
   type: 'ResolveDecision';
   decisionId: DecisionId;
   optionId: string;
+  /**
+   * The count the players confirmed for an option with an `amount` range
+   * (clues discovered, damage dealt); replaces the `amount` of the option's
+   * commands. Omit to accept the option's default. Rejected for an option
+   * without a range or outside it.
+   */
+  amount?: number;
 }
 
 /**
@@ -462,28 +529,77 @@ export interface CheckDoomThreshold {
 
 /**
  * The phase assistant's "Next": runs the outstanding steps of the current
- * phase (`GameMeta.steps`), or, when none are left, moves on to the next
- * phase (setup → investigation of round 1, skipping its mythos phase;
- * investigation → enemy → upkeep → mythos of the next round) and runs its
- * steps. Steps run until one leaves a decision pending or an enemy attack
- * needs resolving (`ResolveEnemyAttack`); the next `NextPhase` after the
- * answer resumes there. Rejected while an enemy attack of the current step
- * list is still due. Produces `PhaseChanged`, then per step
- * `PhaseStepsChanged` and the events of the step (`PlaceDoom`,
- * `CheckDoomThreshold`, `DrawEncounter`, `MoveHunters`, `ReadyEnemy`,
- * `AdjustInvestigator`, `RoundEnded`).
+ * phase (`GameMeta.steps`, numbered as in the Rules Reference, `PhaseStepId`),
+ * or, when none are left, moves on to the next phase (setup → investigation
+ * of round 1, skipping its mythos phase; investigation → enemy → upkeep →
+ * mythos of the next round) and runs its steps. Steps run until one leaves a
+ * decision pending or an enemy attack needs resolving (`ResolveEnemyAttack`);
+ * the next `NextPhase` after the answer resumes there. Rejected while an
+ * enemy attack of step 3.3 is still due, and in the investigation phase
+ * while a turn is in progress or an active investigator has not taken their
+ * turn (the group ends every turn first, even one without actions). Produces
+ * `PhaseChanged`, then per step `PhaseStepsChanged` and the events of the
+ * step (`PlaceDoom`, `CheckDoomThreshold`, `DrawEncounter`, `MoveHunters`,
+ * `ReadyEnemy`, `AdjustInvestigator`, `RoundEnded`).
  */
 export interface NextPhase {
   type: 'NextPhase';
 }
 
 /**
- * An investigator ends their turn in the investigation phase; sets the
- * per-round "turn taken" flag (`GameMeta.turnsTaken`). Produces `TurnEnded`.
+ * Rules Reference 2.2: the group picks the investigator whose turn begins,
+ * any active investigator who has not taken a turn this round, in any order.
+ * Only in the investigation phase and while no other turn is in progress.
+ * Produces `TurnStarted`.
+ */
+export interface StartTurn {
+  type: 'StartTurn';
+  investigatorId: InvestigatorId;
+}
+
+/**
+ * Rules Reference 2.2.2: the investigator whose turn is in progress ends it,
+ * whether or not they used all their actions; sets the per-round "turn
+ * taken" flag (`GameMeta.turnsTaken`). Produces `TurnEnded`.
  */
 export interface EndTurn {
   type: 'EndTurn';
   investigatorId: InvestigatorId;
+}
+
+/**
+ * Changes the action allowance of the turn in progress by `delta` (a
+ * non-zero integer), for this turn only: a card that grants "take an
+ * additional action this turn", or one that costs an action. The allowance
+ * may not drop below zero. Effects that grant an action for the rest of the
+ * scenario change `Investigator.extraActions` (`AdjustInvestigator`)
+ * instead. Not an action itself. Produces `ActionsAdjusted`.
+ */
+export interface AdjustActions {
+  type: 'AdjustActions';
+  investigatorId: InvestigatorId;
+  delta: number;
+}
+
+/**
+ * The actions the app tracks only as a count, since player cards are not
+ * modelled: draw a card, gain a resource, play a card, activate an ability
+ * (an activated ability that fights or investigates is a `Fight` or
+ * `Investigate` instead).
+ */
+export type TableAction = 'draw' | 'resource' | 'play' | 'activate';
+
+/**
+ * An action the players resolve at the table (`TableAction`), counted
+ * against the turn's allowance like the actions the engine resolves. Only in
+ * the investigation phase. The `resource` action also gives the investigator
+ * 1 resource. Produces `ActionTaken`, then `InvestigatorChanged` for
+ * `resource`.
+ */
+export interface TakeAction {
+  type: 'TakeAction';
+  investigatorId: InvestigatorId;
+  action: TableAction;
 }
 
 /**
@@ -504,32 +620,48 @@ export interface ResolveEnemyAttack {
 }
 
 /**
- * Quick action: the investigator investigates their location. The players
- * resolve the intellect test against its shroud at the table; the engine
- * raises a `skillTestResult` decision whose pass discovers 1 clue (if the
- * location has one). Skipping the test and using `DiscoverClues` directly is
- * equally valid. Produces `DecisionRequested`.
+ * Investigate action: the investigator investigates their location. The
+ * players resolve the intellect test against its shroud at the table; the
+ * engine raises a `skillTestResult` decision whose pass discovers clues: 1
+ * by default, or the count the players confirm in `ResolveDecision.amount`
+ * (cards that discover more, up to the clues on the location). A location
+ * without clues makes the pass do nothing. Skipping the test and using
+ * `DiscoverClues` directly is equally valid. Produces `DecisionRequested`.
  */
 export interface Investigate {
   type: 'Investigate';
   investigatorId: InvestigatorId;
+  /**
+   * Not an action: a card effect or rule performs it (a fast ability, an
+   * enemy engaging on arrival). Not counted against the turn's allowance and
+   * allowed outside the investigator's turn. Default false.
+   */
+  free?: boolean;
 }
 
 /**
- * Quick action: the investigator attacks an enemy at their location
- * (combat test against its fight value). A pass deals `damage` (default 1;
- * weapons deal more) via `DamageEnemy`. Produces `DecisionRequested`.
+ * Fight action: the investigator attacks an enemy at their location
+ * (combat test against its fight value). A pass deals `damage` via
+ * `DamageEnemy`, or the damage the players confirm in
+ * `ResolveDecision.amount` (effects that add damage on a good result).
+ * Produces `DecisionRequested`.
  */
 export interface Fight {
   type: 'Fight';
   investigatorId: InvestigatorId;
   enemyId: InstanceId;
-  /** Damage on a pass; default 1. */
+  /** Damage of the attack, the pass option's default; 1 (the basic attack) unless a weapon deals more. */
   damage?: number;
+  /**
+   * Not an action: a card effect or rule performs it (a fast ability, an
+   * enemy engaging on arrival). Not counted against the turn's allowance and
+   * allowed outside the investigator's turn. Default false.
+   */
+  free?: boolean;
 }
 
 /**
- * Quick action: the investigator evades an enemy engaged with them (agility
+ * Evade action: the investigator evades an enemy engaged with them (agility
  * test against its evade value). A pass exhausts the enemy (if ready) and
  * disengages it (a massive enemy is not in the `engaged` zone and stays).
  * Produces `DecisionRequested`.
@@ -538,6 +670,12 @@ export interface Evade {
   type: 'Evade';
   investigatorId: InvestigatorId;
   enemyId: InstanceId;
+  /**
+   * Not an action: a card effect or rule performs it (a fast ability, an
+   * enemy engaging on arrival). Not counted against the turn's allowance and
+   * allowed outside the investigator's turn. Default false.
+   */
+  free?: boolean;
 }
 
 /** String literal of every command type. */

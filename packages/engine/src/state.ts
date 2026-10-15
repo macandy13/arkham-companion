@@ -34,7 +34,8 @@ export interface CardInstance {
 export type InvestigatorStatus = 'active' | 'resigned' | 'defeated';
 
 /** The investigator counters that commands and events can change. */
-export type InvestigatorStat = 'damage' | 'horror' | 'clues' | 'resources' | 'doomOnPlayerCards';
+export type InvestigatorStat =
+  'damage' | 'horror' | 'clues' | 'resources' | 'doomOnPlayerCards' | 'extraActions';
 /** All investigator stats, e.g. for iterating in tests. */
 export const INVESTIGATOR_STATS: readonly InvestigatorStat[] = [
   'damage',
@@ -42,6 +43,7 @@ export const INVESTIGATOR_STATS: readonly InvestigatorStat[] = [
   'clues',
   'resources',
   'doomOnPlayerCards',
+  'extraActions',
 ];
 
 /**
@@ -65,6 +67,13 @@ export interface Investigator {
    * the doom total like doom on any card in play (`doomInPlay`).
    */
   doomOnPlayerCards: number;
+  /**
+   * Actions per turn beyond the standard 3, granted for the rest of the
+   * scenario by the investigator's cards ("you may take an additional action
+   * during your turn"). Changed with `AdjustInvestigator`; a one-turn bonus is
+   * `AdjustActions` instead (`Turn.actionAdjustment`).
+   */
+  extraActions: number;
   status: InvestigatorStatus;
 }
 
@@ -86,35 +95,81 @@ export type Difficulty = 'easy' | 'standard' | 'hard' | 'expert';
 export type Phase = 'setup' | 'mythos' | 'investigation' | 'enemy' | 'upkeep';
 
 /**
+ * The steps of the round the phase assistant runs itself, numbered as in the
+ * Rules Reference, Appendix I ("Framework"): 1.x mythos, 2.x investigation,
+ * 3.x enemy, 4.x upkeep. The "phase begins"/"phase ends" steps (1.1, 1.5,
+ * 2.1, 2.3, 3.1, 3.4, 4.1) are the `PhaseChanged` of `NextPhase`, and the
+ * investigation phase's turns (2.2 "next investigator's turn begins", 2.2.1
+ * actions, 2.2.2 "turn ends") are the players' `StartTurn`/`EndTurn`, so they
+ * are not steps here. 4.2 "reset actions" needs no step: actions are counted
+ * per turn (`Turn`). Player cards are not modelled, so the players handle
+ * their part themselves: readying their cards (4.3), drawing 1 card (4.4)
+ * and checking hand size (4.5).
+ */
+export type PhaseStepId =
+  /** Mythos: place 1 doom on the current agenda. */
+  | '1.2'
+  /** Mythos: check the doom threshold (the only regular moment the agenda advances). */
+  | '1.3'
+  /** Mythos: each investigator draws 1 encounter card (one step each, in player order). */
+  | '1.4'
+  /** Enemy: hunter enemies move. */
+  | '3.2'
+  /** Enemy: each investigator, in player order, resolves the attacks of engaged enemies. */
+  | '3.3'
+  /**
+   * Upkeep: ready each exhausted card. Only enemies are modelled; the players
+   * ready their own cards at the table.
+   */
+  | '4.3'
+  /** Upkeep: each investigator gains 1 resource; drawing 1 card is left to the players. */
+  | '4.4'
+  /** Upkeep: the upkeep phase and the round end (`RoundEnded`, `onRoundEnd`). */
+  | '4.6';
+
+/** One enemy attack that step 3.3 still has to resolve (`ResolveEnemyAttack`). */
+export interface DueAttack {
+  enemyId: InstanceId;
+  investigatorId: InvestigatorId;
+}
+
+/**
  * One outstanding step of the current phase (the phase assistant's cursor,
- * `GameMeta.steps`). Entering a phase lists its steps; `NextPhase` runs them
- * in order and stops when one leaves a decision pending, so the next
- * `NextPhase` resumes with the step after it. Steps are data in the state
- * rather than a position in code so a mythos phase interrupted by a decision
- * survives undo, replay and a reload.
+ * `GameMeta.steps`), identified by its Rules Reference number (`PhaseStepId`).
+ * Entering a phase lists its steps; `NextPhase` runs them in order and stops
+ * when one leaves a decision pending, so the next `NextPhase` resumes with the
+ * step after it. Steps are data in the state rather than a position in code so
+ * a mythos phase interrupted by a decision survives undo, replay and a reload.
  */
 export type PhaseStep =
-  /** Mythos: 1 doom on the current agenda. */
-  | { kind: 'placeDoom' }
-  /** Mythos: the doom threshold check, the only regular moment the agenda advances. */
-  | { kind: 'checkDoomThreshold' }
-  /** Mythos: one investigator draws an encounter card (one step each, in player order). */
-  | { kind: 'drawEncounter'; investigatorId: InvestigatorId }
-  /** Enemy: hunters move. */
-  | { kind: 'moveHunters' }
+  | { id: '1.2' }
+  | { id: '1.3' }
+  | { id: '1.4'; investigatorId: InvestigatorId }
+  | { id: '3.2' }
   /**
-   * Enemy: replaced by one `enemyAttack` step per due attack once reached, so
-   * the list reflects hunters that just moved and engaged.
+   * `attacks` is absent until the step is reached; then it lists the due
+   * attacks, so the list reflects hunters that just moved and engaged. The
+   * step stays current until the players resolved each of them.
    */
-  | { kind: 'enemyAttacks' }
-  /** Enemy: one attack the players resolve with `ResolveEnemyAttack`. */
-  | { kind: 'enemyAttack'; enemyId: InstanceId; investigatorId: InvestigatorId }
-  /** Upkeep: every exhausted enemy in play readies. */
-  | { kind: 'readyEnemies' }
-  /** Upkeep: each active investigator gains 1 resource. */
-  | { kind: 'gainResources' }
-  /** Upkeep: the round ends (`RoundEnded`, `onRoundEnd` hooks, per-round flags reset). */
-  | { kind: 'endRound' };
+  | { id: '3.3'; attacks?: DueAttack[] }
+  | { id: '4.3' }
+  | { id: '4.4' }
+  | { id: '4.6' };
+
+/**
+ * The investigator turn in progress (Rules Reference 2.2: "next
+ * investigator's turn begins"), between `StartTurn` and `EndTurn`. Actions
+ * are counted per turn against the allowance (`actionAllowance`: the base 3,
+ * the investigator's persistent `extraActions` and this turn's
+ * `actionAdjustment`), so the upkeep's "reset actions" needs no bookkeeping.
+ */
+export interface Turn {
+  investigatorId: InvestigatorId;
+  /** Actions taken so far in this turn (`ActionTaken`). */
+  actionsTaken: number;
+  /** Change to the allowance for this turn only (`AdjustActions`, `ManualAdjust`). */
+  actionAdjustment: number;
+}
 
 /** Tokens in the chaos bag. */
 export type ChaosToken =
@@ -209,6 +264,20 @@ export interface DecisionOption {
    * state of that later moment.
    */
   commands: Command[];
+  /**
+   * Set when the option's consequence is a count the players confirm or
+   * adjust (clues discovered, damage dealt): `commands` are written for
+   * `default`, and a `ResolveDecision.amount` in the range replaces the
+   * `amount` of each of them.
+   */
+  amount?: AmountRange;
+}
+
+/** The counts an option with an adjustable amount accepts; no `max` means no upper bound. */
+export interface AmountRange {
+  default: number;
+  min: number;
+  max?: number;
 }
 
 /** Campaign log – stub until campaign mode (architecture §8). */
@@ -241,11 +310,13 @@ export interface GameMeta {
   /** Outstanding steps of the current phase, next first (see `PhaseStep`). */
   steps: PhaseStep[];
   /**
-   * Investigators who have ended their turn this round (`EndTurn`). A
-   * per-round flag kept apart from `InvestigatorStatus`, which is permanent
-   * for the scenario; cleared when the round ends.
+   * Investigators who have taken their turn this round (`EndTurn`, or defeat
+   * during their turn). A per-round flag kept apart from `InvestigatorStatus`,
+   * which is permanent for the scenario; cleared when the round ends.
    */
   turnsTaken: InvestigatorId[];
+  /** The turn in progress during the investigation phase; absent between turns. */
+  turn?: Turn;
   leadInvestigator?: InvestigatorId;
 }
 
