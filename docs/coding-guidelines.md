@@ -12,6 +12,7 @@ How code in this repo should look, so every task lands in the same style.
 - **Immutable data.** Use `readonly` in types and spread/`map`/`filter` over in-place mutation.
 - **Early returns over nested `if`/`else`.** Handle edge cases and errors first, then the main path.
 - **Make illegal states unrepresentable.** Discriminated unions and branded IDs over loose strings and optional flags.
+- **Options objects for unclear arguments.** A function with more than one non-obvious parameter (several numbers, booleans or strings in a row) takes an options object, so call sites read `location({ code, shroud: 2, cluesPerInvestigator: 1 })` instead of `location(code, 2, 1)`.
 - **No dead code, no speculative abstractions.** Delete unused code; generalise once the second caller appears (see "Generic before specific").
 
 ## 2. Comments
@@ -27,12 +28,13 @@ How code in this repo should look, so every task lands in the same style.
 ## 3. Tests
 
 - **Keep it local.** A reader should understand a test without scrolling. The values that matter for an assertion are visible in the test itself, or at least in the `beforeEach`/setup of the same `describe` block – never in a distant shared fixture.
-- **Sane defaults via builders.** Use small factory helpers with defaults and overrides (`makeInvestigator({ clues: 2 })`) so tests only spell out what is relevant to them. Defaults should be boring; anything a test depends on is passed explicitly.
+- **Sane defaults via builders.** Use small factory helpers with defaults and overrides (`makeInvestigator({ id: 'a', clues: 2 })`) so tests only spell out what is relevant to them. Defaults should be boring; anything a test depends on is passed explicitly.
+- **Shared test helpers** live in `packages/engine/test/utils/` (standard investigators, card and definition builders, `startScenario`, `run`, `codesIn`, `rejectionOf`); import them from `../test/utils` in the engine and `@arkham/engine/test/utils` elsewhere. Add a helper there once a second test file needs it.
 - **One behaviour per test**, named as a sentence about behaviour: `it('rejects moving a card into its own zone')`.
 - **Arrange – act – assert**, separated by blank lines; no logic (loops, conditionals) in assertions.
 - **Test through the public API** of the module (commands in, events/state out for the engine), not internals.
-- **Property tests** (fast-check) for invariants; unit tests for concrete rules and edge cases.
-- Never use real card text in fixtures (see `CLAUDE.md`).
+- **Invariants are covered by example-based table tests** (`it.each` over a few named, readable cases), not property-based testing. Unit tests for concrete rules and edge cases.
+- Never use real card text, ArkhamDB JSON or images in fixtures; the hand-written test scenario uses real codes and names with hand-entered stats only (see `CLAUDE.md`).
 
 ## 4. Markup (JSX/HTML)
 

@@ -47,7 +47,7 @@ function applyScenarioStarted(e: ScenarioStarted): GameState {
     investigators: e.investigators,
     cards,
     order,
-    board: { ...base.board, maps: e.maps, connections: e.connections },
+    board: { ...base.board, maps: e.maps },
     chaosBag: e.chaosBag,
   };
 }

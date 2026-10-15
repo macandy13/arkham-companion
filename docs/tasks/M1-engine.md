@@ -1,7 +1,7 @@
 # M1 – Generic engine
 
 Goal: all generic rules from architecture §6 in `packages/engine`, driven only by commands and tested without any UI.
-At the end a hand-written **sandbox scenario** (fake card codes, 5–6 locations, a few enemies and treacheries) can be played through a whole game in tests.
+At the end a hand-written **test scenario** – The Gathering from the original Core Set, with real card codes but hand-entered stats and no card text – can be played through a whole game in tests (it replaced the earlier invented sandbox scenario in M1.2).
 
 **Why this milestone**
 
@@ -12,7 +12,7 @@ At the end a hand-written **sandbox scenario** (fake card codes, 5–6 locations
 Model hint: **S** = Sonnet is enough, **O** = use Opus (design-heavy). Do tasks in order; each task = one session = one PR.
 Start from the phone: Code tab → repo → `Do task M1.x from docs/tasks/M1-engine.md`.
 
-Every task: new commands/events go through `handle` → `apply`, invariants keep passing, tests use fake cards only.
+Every task: new commands/events go through `handle` → `apply`, invariants keep passing, tests use invented cards or the hand-written Gathering scenario (hand-entered stats, no card text/JSON/images).
 
 ---
 
@@ -26,14 +26,14 @@ Ref: §5, §9. The engine must read card stats (doom threshold, clues, shroud, h
 
 - [x] `CardDb` interface passed into `handle(ctx, state, command)` (`ctx.cards.get(code)`); reducer stays card-agnostic
 - [x] Per-investigator value helper (`ScaledValue` + `resolveValue`, covers `health_per_investigator`/`clues_fixed`)
-- [x] Fake `CardDb` fixture shared by all engine tests (`test/fixtures/sandbox-cards.ts`)
+- [x] Fake `CardDb` fixture shared by all engine tests (now `test/utils/cards.ts`)
 
 Done when: existing tests pass with the new signature; one test reads a threshold through `CardDb`.
 
-Done: `packages/engine/src/cards.ts` adds `CardStats` (the engine's own card type, so it has no runtime dependency on `carddata`), `CardDb`, `EngineContext`, `cardDbFrom` and `cardStats` (throws `unknownCardCode`). `CardStats` is typed: `typeCode: CardType` (union of ArkhamDB type codes, `CARD_TYPES`), `traits: Trait[]` (branded, built with `trait`), `stage: CardStage` (`{ number, variant? }`, so alternative cards like 2a/b vs 2c/d share a number and differ by variant), and `clues`/`health`/`doom` are `ScaledValue`s (`{ fixed, perInvestigator }`) resolved with `resolveValue(value, playerCount)`. Game-state terms like "+1 per act" are left to the rules that read them. `handle(ctx, state, command)` and `execute(ctx, state, command)` take the context first; `StartScenario` rejects card codes missing from `ctx.cards`. Shared fixture: `packages/engine/test/fixtures/sandbox-cards.ts` (`sandboxContext`, `sandboxCodes`).
+Done: `packages/engine/src/cards.ts` adds `CardStats` (the engine's own card type, so it has no runtime dependency on `carddata`), `CardDb`, `EngineContext`, `cardDbFrom` and `cardStats` (throws `unknownCardCode`). `CardStats` is typed: `typeCode: CardType` (union of ArkhamDB type codes, `CARD_TYPES`), `traits: Trait[]` (branded, built with `trait`), `stage: CardStage` (`{ number, variant? }`, so alternative cards like 2a/b vs 2c/d share a number and differ by variant), and `clues`/`health`/`doom` are `ScaledValue`s (`{ fixed, perInvestigator }`) resolved with `resolveValue(value, playerCount)`. Game-state terms like "+1 per act" are left to the rules that read them. `handle(ctx, state, command)` and `execute(ctx, state, command)` take the context first; `StartScenario` rejects card codes missing from `ctx.cards`. Shared fixture: moved in M1.2 to `packages/engine/test/utils/cards.ts` (`testContext`, `testCardDefs`).
 Follow-ups: map carddata's `CardDef` to `CardStats` (`health`/`health_per_investigator`, `clues`/`clues_fixed` → `ScaledValue`, `stage` → `CardStage`, `type_code` → `CardType`) when the web app gets a `CardDb` backed by the cached carddata (M2); the stage variant letter is not in ArkhamDB and has to come from scenario data; `keywords` gets added to `CardStats` with the keyword parser (M1.7).
 
-## M1.2 Setup DSL + sandbox scenario (O)
+## M1.2 Setup DSL + test scenario (O)
 
 **Why:** Setup is where scenarios differ most. A declarative setup language makes a scenario mostly data instead of code, and the same steps also cover mid-scenario changes (§7). The sandbox gives us a scenario we fully control for all later M1 tests.
 
@@ -41,13 +41,17 @@ Follow-ups: map carddata's `CardDef` to `CardStats` (`health`/`health_per_invest
 
 Ref: §7.
 
-- [x] `ScenarioDefinition` type and `SetupStep` union (`putIntoPlay`, `setAside`, `buildEncounterDeck`, `placeTokens`, `spawn`, `moveInvestigators`, `addMap`, `addConnection`)
+- [x] `ScenarioDefinition` type and `SetupStep` union (`addMap` with its locations and connections, `setAside`, `buildEncounterDeck`, `placeTokens`, `spawn`, `moveInvestigators`)
 - [x] `compileSetup(ctx, def, options) -> StartScenario` (setup steps become starting cards + follow-up commands)
-- [x] Sandbox scenario in `packages/scenarios/src/sandbox/` using only fake codes
-- [x] Test: sandbox setup produces the expected zones and counts
+- [x] Test scenario in `packages/scenarios/src/the-gathering/` (The Gathering, hand-entered stats; replaced the invented sandbox after review)
+- [x] Test: its setup produces the expected zones and counts
 
-Done: `packages/engine/src/setup.ts` adds `ScenarioDefinition`, `SetupStep`, `TokenAmount`, `SetupOptions` and `compileSetup(ctx, def, options)`, which runs the steps in order and returns one `StartScenario` (no follow-up commands are needed yet: tokens, connections and investigator locations are now part of `StartScenario` – `StartingCard.tokens`, `StartScenario.connections`, carried by `ScenarioStarted.connections` into `board.connections`, validated by `handle`). Steps refer to cards by code; instance IDs are `<code>#<copy>`. `buildEncounterDeck` takes "the remainder" of its sets: every enemy/treachery copy not used by another step (counted over all steps), minus `exclude`. Locations that start revealed (including the one `moveInvestigators` reveals) get their clues. `CardStats` gained `encounterCode`/`quantity`, `CardDb` gained `encounterSet(code)`. Sandbox: `packages/scenarios/src/sandbox/` (`sandboxScenario`, `sandboxCards`, `sandboxCardDefs`; codes `SB-*`), exported from `@arkham/scenarios`. Web usage: `execute(ctx, emptyState(), compileSetup(ctx, sandboxScenario, options))` with `ctx = { cards: sandboxCards }`. `TokenAmount` is a plain number or a `ScaledValue`.
-Follow-ups: `spawn` at setup does not engage investigators at that location (M1.8 – then compile it to a follow-up `SpawnEnemy`); mid-scenario use of the same steps (compile against a running state into `AddConnection`/`SpawnEnemy`/… commands) once those commands exist (M1.3, M1.7, M1.8); `agenda.current`/`act.current` are not set from the decks yet (M1.5); reveal-clue placement should share one helper with `CardFlipped` (M1.3); remaining §7 steps (`replaceLocation`, `removeLocation`, `randomLocations`, `removeConnection`, `fromSetAside`, `shuffleInto`, `removeFromGame`) and layout slots for `putIntoPlay` (M3) when a scenario needs them.
+Done: `packages/engine/src/setup.ts` adds `SetupStep` (a union of one named type per step: `AddMapStep`, `SetAsideStep`, `BuildEncounterDeckStep`, `PlaceTokensStep`, `SpawnStep`, `MoveInvestigatorsStep`), `TokenAmount`, `SetupOptions` and `compileSetup(ctx, def, options)`, which runs the steps in order and returns one `StartScenario` (no follow-up commands are needed yet). `packages/engine/src/scenario.ts` holds `ScenarioDefinition` with its scenario reference card: `reference: Record<'easyStandard' | 'hardExpert', Partial<Record<SymbolToken, { modifier?, effectKey }>>>` (data only, `referenceSide(difficulty)` picks the side; resolving tokens comes later) next to the per-difficulty `chaosBag`.
+Map model (review on PR #18): `packages/engine/src/map.ts` adds `GameMap` (`{ name, visible, connections: Edge[] }`, plain data with pure functions – `createMap`, `mapLocations` – instead of a class, so the event-sourced state stays JSON) and moves `Edge` there. A map owns its connections; its locations are the cards in zone `{ kind: 'location', mapId }`. `Board.connections` is gone: `StartScenario.maps` takes `MapSpec`s with their connections, `ScenarioStarted.maps` carries `GameMap`s, and the reducer writes `board.maps` as one unit. `handle` rejects an edge whose end is not a location (`notALocation`) or on another map (`locationOnOtherMap`). The `addMap` step declares the map's locations (`{ code, faceUp? }`) and connections (by code, resolved among its own locations) together; `putIntoPlay` and `addConnection` are gone. Spawning goes through `spawnZone(locationId)` (`spawn.ts`), the seed of M1.8's spawn rules.
+Steps refer to cards by code; instance IDs are `<code>#<copy>`. `buildEncounterDeck` takes "the remainder" of its sets: every enemy/treachery copy not used by another step (counted over all steps), minus `exclude`. Locations that start revealed (including the one `moveInvestigators` reveals) get their clues. `CardStats` gained `encounterCode`/`quantity`, `CardDb` gained `encounterSet(code)`.
+Test scenario: `packages/scenarios/src/the-gathering/` (`theGathering`, `theGatheringCards`, `theGatheringCardDefs`, `GATHERING_CODES`, `GATHERING_SETS`, and `theGatheringHouse` – the map act 1 reveals), exported from `@arkham/scenarios`; real core-set codes (`011xx`), hand-entered stats, no card text. Card builders take options objects. Web usage: `execute(ctx, emptyState(), compileSetup(ctx, theGathering, options))` with `ctx = { cards: theGatheringCards }`.
+Tests: shared helpers in `packages/engine/test/utils/` (`standardInvestigators`/`investigators(n)`, `makeInvestigator`, `makeCard`, `contextWith`, `testContext`, `makeDefinition`, `makeSetupOptions`, `startScenario`, `run`, `codesIn`, `rejectionOf`; `@arkham/engine/test/utils` from other packages). fast-check is gone: property tests became `it.each` tables (`replay.test.ts`, `rng.test.ts`, the Gathering setup per player count).
+Follow-ups: `spawn` at setup does not engage investigators at that location (M1.8 – extend `spawnZone`, then compile it to a follow-up `SpawnEnemy`); mid-scenario use of the same steps (compile against a running state into `AddConnection`/`SpawnEnemy`/… commands, and apply `theGatheringHouse` when act 1 advances, taking its locations from the set-aside zone) once those commands exist (M1.3, M1.5, M1.7, M1.8); cross-map edges (M1.3, currently rejected); `agenda.current`/`act.current` are not set from the decks yet (M1.5); reveal-clue placement should share one helper with `CardFlipped` (M1.3); `Investigator` has no skill values, so the standard test investigators have none yet; `keywords` (Hunter, Retaliate, Spawn …) for the Gathering cards once `CardStats` has them (M1.7); remaining §7 steps (`putIntoPlay` for single locations, `replaceLocation`, `removeLocation`, `randomLocations`, `removeConnection`, `fromSetAside`, `shuffleInto`, `removeFromGame`) and layout slots (M3) when a scenario needs them; the later tasks below still say "sandbox" and mean the Gathering test scenario.
 
 ## M1.3 Board: connection graph (S)
 

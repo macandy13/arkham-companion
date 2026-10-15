@@ -1,11 +1,11 @@
 import type { InstanceId, MapId } from './ids';
+import type { GameMap } from './map';
 import type { RngState } from './rng';
 import type {
   CampaignLog,
   CardInstance,
   ChaosToken,
   Difficulty,
-  Edge,
   Investigator,
   TokenKind,
 } from './state';
@@ -24,10 +24,10 @@ export interface ScenarioStarted {
   difficulty: Difficulty;
   seed: number;
   investigators: Investigator[];
-  maps: Record<MapId, { name: string; visible: boolean }>;
+  /** Every map with its connections, written to `board.maps` as one unit. */
+  maps: Record<MapId, GameMap>;
   /** All card instances in their initial zones; list order = order within each zone. */
   cards: CardInstance[];
-  connections: Edge[];
   chaosBag: ChaosToken[];
   campaign?: CampaignLog;
 }
