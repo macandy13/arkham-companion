@@ -1,6 +1,6 @@
 import { cardStats, resolveValue, type EngineContext } from './cards';
 import type { DecisionRequested } from './events';
-import { confirmOptions } from './decisions';
+import { confirmOptions, requestDecision } from './decisions';
 import { decisionId } from './ids';
 import type { CardInstance, GameState } from './state';
 
@@ -71,19 +71,12 @@ export function agendaThresholdDecision(ctx: EngineContext, state: GameState): D
     doomInPlay(state) < resolveValue(threshold, state.meta.playerCount)
   )
     return [];
-  const id = decisionId(`advanceAgenda:${agenda.id}`);
-  if (state.pending.some((decision) => decision.id === id)) return [];
-  return [
-    {
-      type: 'DecisionRequested',
-      decision: {
-        id,
-        kind: 'confirm',
-        subject: agenda.id,
-        prompt: 'decision.doomThresholdReached',
-        decider: { kind: 'group' },
-        options: confirmOptions([{ type: 'AdvanceAgenda' }], agenda.id),
-      },
-    },
-  ];
+  return requestDecision(state, {
+    id: decisionId(`advanceAgenda:${agenda.id}`),
+    kind: 'confirm',
+    subject: agenda.id,
+    prompt: 'decision.advanceAgenda',
+    decider: { kind: 'group' },
+    options: confirmOptions([{ type: 'AdvanceAgenda' }], agenda.id),
+  });
 }

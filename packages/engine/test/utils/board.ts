@@ -7,7 +7,7 @@ import {
   type Investigator,
   type MapSpec,
   type StartScenario,
-  type Zone,
+  type StartingCard,
 } from '../../src/index';
 import { investigators } from './investigators';
 import { run } from './scenario';
@@ -27,19 +27,21 @@ export interface BoardOptions {
   maps: Readonly<Record<string, BoardMapOptions>>;
   /** Cards that start set aside: instance ID to card code. */
   setAside?: Readonly<Record<string, string>>;
-  /** Other cards that start in a given zone (enemies at locations, discard piles …): instance ID to code and zone. */
-  cards?: Readonly<Record<string, { code: string; zone: Zone }>>;
+  /** Further cards to create, with explicit IDs and zones (encounter deck, discard, in play, …). */
+  cards?: readonly StartingCard[];
+  /** RNG seed (default 1). */
+  seed?: number;
+  /** Whether setup shuffles the encounter deck; pass `false` to keep the order of `cards`. */
+  shuffleEncounterDeck?: boolean;
   /** Number of standard investigators (default 1); ignored when `investigators` is given. */
   playerCount?: number;
   /** Investigators to start with instead of the standard ones. */
   investigators?: readonly Investigator[];
-  /** Whether to shuffle the encounter deck (default true); false keeps the `cards` order, top first. */
-  shuffleEncounterDeck?: boolean;
 }
 
 /**
  * The state after starting a scenario that consists only of the given maps,
- * their locations (unrevealed) and set-aside cards. For tests about the
+ * their locations (unrevealed), set-aside cards and any further `cards`. For tests about the
  * connection graph and locations; instance IDs are exactly the keys given.
  */
 export function startBoard(
@@ -47,10 +49,11 @@ export function startBoard(
   {
     maps,
     setAside = {},
-    cards: placed = {},
+    cards: extraCards = [],
+    seed = 1,
+    shuffleEncounterDeck,
     playerCount = 1,
     investigators: custom,
-    shuffleEncounterDeck = true,
   }: BoardOptions,
 ): GameState {
   const specs: Record<string, MapSpec> = {};
@@ -66,17 +69,15 @@ export function startBoard(
   }
   for (const [id, code] of Object.entries(setAside))
     cards.push({ id: instanceId(id), code, zone: { kind: 'setAside' } });
-  for (const [id, { code, zone }] of Object.entries(placed))
-    cards.push({ id: instanceId(id), code, zone });
   const start: StartScenario = {
     type: 'StartScenario',
     scenarioId: 'test',
     difficulty: 'standard',
-    seed: 1,
-    shuffleEncounterDeck,
+    seed,
+    ...(shuffleEncounterDeck === undefined ? {} : { shuffleEncounterDeck }),
     investigators: [...(custom ?? investigators(playerCount))],
     maps: specs,
-    cards,
+    cards: [...cards, ...extraCards],
   };
   return run(ctx, [start]).state;
 }

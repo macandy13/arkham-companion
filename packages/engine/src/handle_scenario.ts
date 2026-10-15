@@ -12,8 +12,9 @@ import type {
   ScenarioEnded,
   TokensChanged,
 } from './events';
+import { activeInvestigator } from './handle_investigator';
 import type { InstanceId } from './ids';
-import { activeInvestigator } from './handle-investigator';
+import { requireCard } from './lookup';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
 import { zoneKey } from './zone';
@@ -25,7 +26,7 @@ export function handlePlaceDoom(state: GameState, cmd: PlaceDoom): TokensChanged
   if (!Number.isInteger(cmd.amount) || cmd.amount <= 0)
     throw new CommandRejected({ code: 'invalidTokenDelta', delta: cmd.amount });
   const card =
-    cmd.cardId === undefined ? currentCard(state, 'agenda') : knownCard(state, cmd.cardId);
+    cmd.cardId === undefined ? currentCard(state, 'agenda') : requireCard(state.cards, cmd.cardId);
   if (!isInPlay(state, card)) throw new CommandRejected({ code: 'cardNotInPlay', cardId: card.id });
   return [{ type: 'TokensChanged', cardId: card.id, token: 'doom', delta: cmd.amount }];
 }
@@ -42,13 +43,19 @@ export function handleAdvanceAgenda(state: GameState, cmd: AdvanceAgenda): Event
 
 /**
  * `AdvanceAct`, first step: the investigators pay the act's clue requirement
- * and the act turns to its reverse side; `completeAdvance` replaces it.
+ * when the command carries `spend` (paying clues is only one way to advance an
+ * act; others are an objective met, an action taken or an enemy defeated, and
+ * those advance with no `spend`), and the act turns to its reverse side;
+ * `completeAdvance` replaces it.
  * Payments are validated up front so a rejected command pays nothing.
  */
 export function handleAdvanceAct(ctx: EngineContext, state: GameState, cmd: AdvanceAct): Event[] {
   const act = currentCard(state, 'act');
   const flip = reverseSide(state, 'act', cmd.resolution);
-  const payments = cluePayments(state, cmd.spend, clueRequirement(ctx, state, act));
+  const payments =
+    cmd.spend === undefined
+      ? []
+      : cluePayments(state, act, cmd.spend, clueRequirement(ctx, state, act));
   return [...payments, ...flip];
 }
 
@@ -138,18 +145,32 @@ function doomRemoval(state: GameState): (TokensChanged | InvestigatorChanged)[] 
   return [...fromCards, ...fromPlayerCards];
 }
 
-/** Clues the act costs for the starting player count; 0 for an act without a clue value. */
-function clueRequirement(ctx: EngineContext, state: GameState, act: CardInstance): number {
+/**
+ * Clues the act costs for the starting player count; `undefined` for an act
+ * without a clue value, which cannot be paid for (not "free": a 0 would let
+ * an empty payment pass as if the card asked for it).
+ */
+function clueRequirement(
+  ctx: EngineContext,
+  state: GameState,
+  act: CardInstance,
+): number | undefined {
   const threshold = cardStats(ctx.cards, act.code).clues;
-  return threshold ? resolveValue(threshold, state.meta.playerCount) : 0;
+  return threshold === undefined ? undefined : resolveValue(threshold, state.meta.playerCount);
 }
 
-/** One `InvestigatorChanged` per payment; rejects payments that do not add up to `required`. */
+/**
+ * One `InvestigatorChanged` per payment; rejects payments that do not add up
+ * to `required`, and any payment for an act without a clue threshold.
+ */
 function cluePayments(
   state: GameState,
+  act: CardInstance,
   spend: readonly ClueSpend[],
-  required: number,
+  required: number | undefined,
 ): InvestigatorChanged[] {
+  if (required === undefined)
+    throw new CommandRejected({ code: 'noClueThreshold', cardId: act.id });
   const payers = new Set<string>();
   const payments = spend.map((payment): InvestigatorChanged => {
     if (!Number.isInteger(payment.amount) || payment.amount <= 0)
@@ -184,13 +205,6 @@ function cluePayments(
 /** The current agenda or act; rejects if the deck is exhausted. */
 function currentCard(state: GameState, deck: Deck): CardInstance {
   const id = state[deck].current;
-  const card = id === undefined ? undefined : state.cards[id];
-  if (!card) throw new CommandRejected({ code: 'noCurrentCard', deck });
-  return card;
-}
-
-function knownCard(state: GameState, cardId: InstanceId): CardInstance {
-  const card = state.cards[cardId];
-  if (!card) throw new CommandRejected({ code: 'unknownCard', cardId });
-  return card;
+  if (id === undefined) throw new CommandRejected({ code: 'noCurrentCard', deck });
+  return requireCard(state.cards, id);
 }

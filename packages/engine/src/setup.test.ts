@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   compileMapStep,
   compileSetup,
-  emptyState,
-  execute,
   instanceId,
   mapId,
   referenceSide,
@@ -19,6 +17,7 @@ import {
   makeSetupOptions,
   perInvestigator,
   rejectionOf,
+  startScenario,
 } from '../test/utils';
 
 const main = mapId('main');
@@ -350,7 +349,7 @@ describe('compileMapStep', () => {
   /** A started scenario with location `a` on main and one set-aside copy per entry of `setAside`. */
   function startedWith(setAside: string[]) {
     const def = makeDefinition({ setup: [mainMap('a'), { kind: 'setAside', codes: setAside }] });
-    return execute(ctx, emptyState(), compileSetup(ctx, def, makeSetupOptions())).state;
+    return startScenario(ctx, def);
   }
 
   /** A step for the wing with the given locations and no connections. */

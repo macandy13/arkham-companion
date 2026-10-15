@@ -7,7 +7,7 @@ import {
 
 /**
  * An investigator with boring defaults (8 health, 6 sanity, 5 resources, no
- * clues, seat 0, not placed); tests pass only what they depend on.
+ * clues, no extra actions, seat 0, not placed); tests pass only what they depend on.
  */
 export function makeInvestigator(
   overrides: Partial<Omit<Investigator, 'id'>> & { id: string },
@@ -21,6 +21,7 @@ export function makeInvestigator(
     clues: 0,
     resources: 5,
     doomOnPlayerCards: 0,
+    extraActions: 0,
     status: 'active',
     ...overrides,
     id: investigatorId(overrides.id),

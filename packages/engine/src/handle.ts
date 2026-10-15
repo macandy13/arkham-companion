@@ -5,18 +5,13 @@ import {
   handleRemoveConnection,
   handleRevealLocation,
   validateConnections,
-} from './handle-board';
+} from './handle_board';
 import {
   handleAdjustInvestigator,
   handleDiscoverClues,
   handleMoveInvestigator,
-} from './handle-investigator';
-import {
-  handleDrawEncounter,
-  handleDrawTopmostFromDiscard,
-  handleFromSetAside,
-  handleShuffleInto,
-} from './handle-encounter';
+} from './handle_investigator';
+import { handleDrawEncounter, handleFromSetAside, handleShuffleInto } from './handle_encounter';
 import {
   handleDamageEnemy,
   handleDefeatEnemy,
@@ -24,7 +19,7 @@ import {
   handleEngageEnemy,
   handleExhaustEnemy,
   handleReadyEnemy,
-} from './handle-enemy';
+} from './handle_enemy';
 import { startingEngagements } from './engagement';
 import { handleSpawnEnemy } from './spawn';
 import {
@@ -35,18 +30,34 @@ import {
 } from './decisions';
 import { handleMoveHunter, handleMoveHunters } from './hunters';
 import { agendaThresholdDecision } from './doom';
-import { handleEndTurn, handleNextPhase, handleResolveEnemyAttack, nextStepPlan } from './phases';
-import { handleEvade, handleFight, handleInvestigate } from './skill-tests';
+import { handleNextPhase, handleResolveEnemyAttack, nextStepPlan } from './phases';
+import { handleEvade, handleFight, handleInvestigate } from './skill_tests';
+import {
+  actionEvents,
+  actionsAdjusted,
+  handleAdjustActions,
+  handleEndTurn,
+  handleStartTurn,
+  handleTakeAction,
+} from './turns';
 import {
   completeAdvance,
   handleAdvanceAct,
   handleAdvanceAgenda,
   handleEndScenario,
   handlePlaceDoom,
-} from './handle-scenario';
+} from './handle_scenario';
 import type { Adjustment, Command, MoveCard, StartScenario, StartingCard } from './commands';
-import type { CardMoved, DeckShuffled, Event, ScenarioStarted, TokensChanged } from './events';
+import type {
+  ActionsAdjusted,
+  CardMoved,
+  DeckShuffled,
+  Event,
+  ScenarioStarted,
+  TokensChanged,
+} from './events';
 import { instanceId, type InstanceId, type MapId } from './ids';
+import { requireCard } from './lookup';
 import { createMap, type GameMap, type MapSpec } from './map';
 import { apply, replay } from './reducer';
 import { CommandRejected, type Rejection } from './rejection';
@@ -78,11 +89,16 @@ import { zoneKey, type Zone } from './zone';
  * chain, like a hook's follow-ups, before the forced effects of its events.
  * `NextPhase` continues with the outstanding phase steps (`phaseStepEvents`),
  * so one "Next" yields the whole automated part of a phase.
+ * An action the players take in the investigation phase is counted first
+ * (`ActionTaken`, see `actionEvents`); only commands from outside count, so a
+ * hook's or an answer's `MoveInvestigator` or `EngageEnemy` is never an action.
  * Pure: the same state, command and context always yield the same events.
  */
 export function handle(ctx: EngineContext, state: GameState, command: Command): Event[] {
   assertNoPendingDecision(state, command);
-  return handleWithTriggers(ctx, state, command, { remaining: MAX_TRIGGERED_COMMANDS });
+  const action = actionEvents(state, command);
+  const budget = { remaining: MAX_TRIGGERED_COMMANDS };
+  return [...action, ...handleWithTriggers(ctx, replay(action, state), command, budget)];
 }
 
 /** How many follow-up commands the current chain may still run; shared by the whole chain. */
@@ -246,8 +262,6 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
       return handleEndScenario(command);
     case 'DrawEncounter':
       return handleDrawEncounter(ctx, state, command);
-    case 'DrawTopmostFromDiscard':
-      return handleDrawTopmostFromDiscard(ctx, state, command);
     case 'FromSetAside':
       return handleFromSetAside(state, command);
     case 'ShuffleInto':
@@ -267,7 +281,7 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
     case 'ReadyEnemy':
       return handleReadyEnemy(ctx, state, command);
     case 'MoveHunters':
-      return handleMoveHunters(ctx, state);
+      return handleMoveHunters(ctx, state, command);
     case 'MoveHunter':
       return handleMoveHunter(ctx, state, command);
     case 'RequestDecision':
@@ -278,8 +292,14 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
       return agendaThresholdDecision(ctx, state);
     case 'NextPhase':
       return handleNextPhase(ctx, state);
+    case 'StartTurn':
+      return handleStartTurn(state, command);
     case 'EndTurn':
       return handleEndTurn(state, command);
+    case 'AdjustActions':
+      return handleAdjustActions(state, command);
+    case 'TakeAction':
+      return handleTakeAction(state, command);
     case 'ResolveEnemyAttack':
       return handleResolveEnemyAttack(ctx, state, command);
     case 'Investigate':
@@ -380,8 +400,7 @@ function startingMaps(specs: Readonly<Record<MapId, MapSpec>>): Record<MapId, Ga
 
 /** Rejects `cardId` unless it is a known card on a map. */
 function validateLocation(cards: Record<InstanceId, CardInstance>, cardId: InstanceId): void {
-  const card = cards[cardId];
-  if (!card) throw new CommandRejected({ code: 'unknownCard', cardId });
+  const card = requireCard(cards, cardId);
   if (card.zone.kind !== 'location') throw new CommandRejected({ code: 'notALocation', cardId });
 }
 
@@ -396,14 +415,15 @@ function encounterDeckShuffle(state: GameState): DeckShuffled[] {
 
 /** `MoveCard`: the same move a `ManualAdjust` makes, as a game event. */
 function handleMoveCard(state: GameState, cmd: MoveCard): CardMoved {
-  const card = state.cards[cmd.cardId];
-  if (!card) throw new CommandRejected({ code: 'unknownCard', cardId: cmd.cardId });
-  return cardMoved(state, card, cmd.to);
+  return cardMoved(state, requireCard(state.cards, cmd.cardId), cmd.to, cmd.index);
 }
 
-function handleAdjustment(state: GameState, adj: Adjustment): CardMoved | TokensChanged {
-  const card = state.cards[adj.cardId];
-  if (!card) throw new CommandRejected({ code: 'unknownCard', cardId: adj.cardId });
+function handleAdjustment(
+  state: GameState,
+  adj: Adjustment,
+): CardMoved | TokensChanged | ActionsAdjusted {
+  if (adj.kind === 'actions') return actionsAdjusted(state, adj.investigatorId, adj.delta);
+  const card = requireCard(state.cards, adj.cardId);
 
   switch (adj.kind) {
     case 'moveCard':

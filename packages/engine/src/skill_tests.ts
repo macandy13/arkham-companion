@@ -1,9 +1,9 @@
 import { cardStats, type EngineContext } from './cards';
 import type { Command, Evade, Fight, Investigate } from './commands';
-import { skillTestDecision, type SkillTestOutcomes } from './decisions';
+import { requestDecision, skillTestDecision, type SkillTestOutcomes } from './decisions';
 import type { DecisionRequested } from './events';
-import { enemyOf, isInPlay, locationOf } from './handle-enemy';
-import { activeInvestigator } from './handle-investigator';
+import { enemyOf, isInPlay, locationOf } from './handle_enemy';
+import { activeInvestigator } from './handle_investigator';
 import { decisionId, type InstanceId } from './ids';
 import { hasKeyword } from './keywords';
 import { CommandRejected } from './rejection';
@@ -11,8 +11,10 @@ import type { CardInstance, GameState, Investigator, SkillTest } from './state';
 
 /**
  * `Investigate`: an intellect test against the shroud of the investigator's
- * location; a pass discovers 1 clue. A location without clues left makes the
- * pass do nothing rather than fail the answer.
+ * location. A pass discovers 1 clue unless the players confirm another count
+ * (cards that discover more, or more on a good result), up to the clues on
+ * the location. A location without clues left makes the pass do nothing
+ * rather than fail the answer.
  */
 export function handleInvestigate(
   ctx: EngineContext,
@@ -21,32 +23,38 @@ export function handleInvestigate(
 ): DecisionRequested[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
   const location = investigatorLocation(state, investigator);
-  const onPass: Command[] =
-    (location.tokens.clue ?? 0) > 0
-      ? [
-          {
-            type: 'DiscoverClues',
-            investigatorId: investigator.id,
-            locationId: location.id,
-            amount: 1,
-          },
-        ]
-      : [];
+  const clues = location.tokens.clue ?? 0;
+  const pass: Pick<SkillTestOutcomes, 'onPass' | 'passAmount'> =
+    clues > 0
+      ? {
+          onPass: [
+            {
+              type: 'DiscoverClues',
+              investigatorId: investigator.id,
+              locationId: location.id,
+              amount: 1,
+            },
+          ],
+          passAmount: { default: 1, min: 1, max: clues },
+        }
+      : { onPass: [] };
   const shroud = cardStats(ctx.cards, location.code).shroud ?? 0;
-  return skillTest(
+  return skillTest(state, {
     investigator,
-    `investigate:${investigator.id}`,
-    location.id,
-    { skill: 'intellect', difficulty: shroud },
-    { onPass, onFail: [] },
-  );
+    id: `investigate:${investigator.id}`,
+    prompt: 'decision.investigate',
+    subject: location.id,
+    test: { skill: 'intellect', difficulty: shroud },
+    outcomes: { ...pass, onFail: [] },
+  });
 }
 
 /**
  * `Fight`: a combat test against the fight value of an enemy at the
- * investigator's location; a pass deals the attack's damage (`DamageEnemy`).
- * A fail deals that damage to the other investigator the enemy is engaged
- * with, if any (see `failedFightCommands`).
+ * investigator's location. A pass deals the attack's damage (`DamageEnemy`):
+ * `damage` (1 for the basic attack) unless the players confirm another
+ * amount. A fail deals that damage to the other investigator the enemy is
+ * engaged with, if any (see `failedFightCommands`).
  */
 export function handleFight(ctx: EngineContext, state: GameState, cmd: Fight): DecisionRequested[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
@@ -62,16 +70,18 @@ export function handleFight(ctx: EngineContext, state: GameState, cmd: Fight): D
   const damage = cmd.damage ?? 1;
   if (!Number.isInteger(damage) || damage <= 0)
     throw new CommandRejected({ code: 'invalidTokenDelta', delta: damage });
-  return skillTest(
+  return skillTest(state, {
     investigator,
-    `fight:${investigator.id}:${enemy.id}`,
-    enemy.id,
-    { skill: 'combat', difficulty: stats.fight ?? 0 },
-    {
+    id: `fight:${investigator.id}:${enemy.id}`,
+    prompt: 'decision.fight',
+    subject: enemy.id,
+    test: { skill: 'combat', difficulty: stats.fight ?? 0 },
+    outcomes: {
       onPass: [{ type: 'DamageEnemy', enemyId: enemy.id, amount: damage }],
+      passAmount: { default: damage, min: 1 },
       onFail: failedFightCommands(state, investigator, enemy, damage),
     },
-  );
+  });
 }
 
 /**
@@ -116,34 +126,72 @@ export function handleEvade(ctx: EngineContext, state: GameState, cmd: Evade): D
     ...(enemy.exhausted ? [] : [{ type: 'ExhaustEnemy', enemyId: enemy.id } as const]),
     ...(engaged ? [{ type: 'DisengageEnemy', enemyId: enemy.id } as const] : []),
   ];
-  return skillTest(
+  return skillTest(state, {
     investigator,
-    `evade:${investigator.id}:${enemy.id}`,
-    enemy.id,
-    { skill: 'agility', difficulty: stats.evade ?? 0 },
-    { onPass, onFail: [] },
-  );
+    id: `evade:${investigator.id}:${enemy.id}`,
+    prompt: 'decision.evade',
+    subject: enemy.id,
+    test: { skill: 'agility', difficulty: stats.evade ?? 0 },
+    outcomes: { onPass, onFail: [] },
+  });
 }
 
-/** The `skillTestResult` decision of a quick action, answered by the acting investigator. */
-function skillTest(
+/**
+ * The revelation test of a treachery the investigator just drew, if its card
+ * data has one (`CardStats.revelationTest`): a `skillTestResult` decision
+ * (`revelation:<card>`) for the drawer. Both outcomes run only `afterwards`
+ * (discarding the resolved card) on purpose: what a failure costs (horror,
+ * damage, "for each point you fail by") is card text, which the engine does
+ * not read, so the players apply it with the usual commands, or a scenario
+ * hook does.
+ */
+export function revelationTestDecision(
+  ctx: EngineContext,
+  state: GameState,
+  cardId: InstanceId,
   investigator: Investigator,
-  id: string,
-  subject: InstanceId,
-  test: SkillTest,
-  outcomes: SkillTestOutcomes,
+  afterwards: Command[] = [],
+): DecisionRequested[] {
+  const card = state.cards[cardId];
+  const test = card === undefined ? undefined : cardStats(ctx.cards, card.code).revelationTest;
+  if (!test) return [];
+  return skillTest(state, {
+    investigator,
+    id: `revelation:${cardId}`,
+    prompt: 'decision.revelationTest',
+    subject: cardId,
+    test,
+    outcomes: { onPass: afterwards, onFail: afterwards },
+  });
+}
+
+/** What `skillTest` turns into a decision. */
+interface SkillTestRequest {
+  /** Who takes the test and answers it. */
+  investigator: Investigator;
+  id: string;
+  prompt: string;
+  subject: InstanceId;
+  test: SkillTest;
+  outcomes: SkillTestOutcomes;
+}
+
+/** The `skillTestResult` decision of a test, answered by the investigator taking it. */
+function skillTest(
+  state: GameState,
+  { investigator, id, prompt, subject, test, outcomes }: SkillTestRequest,
 ): DecisionRequested[] {
   const decision = skillTestDecision(
     {
       id: decisionId(id),
-      prompt: `decision.skillTest.${test.skill}`,
+      prompt,
       subject,
       decider: { kind: 'investigator', investigatorId: investigator.id },
       test,
     },
     outcomes,
   );
-  return [{ type: 'DecisionRequested', decision }];
+  return requestDecision(state, decision);
 }
 
 function investigatorLocation(state: GameState, investigator: Investigator): CardInstance {

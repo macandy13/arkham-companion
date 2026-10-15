@@ -1,4 +1,4 @@
-import type { CommandType } from './commands';
+import type { CommandType, EncounterMatch, EncounterSource } from './commands';
 import type { DecisionId, InstanceId, InvestigatorId, MapId } from './ids';
 import type { InvestigatorStat, Phase, TokenKind } from './state';
 
@@ -68,6 +68,8 @@ export type Rejection =
   | { code: 'resolutionRequired'; deck: 'agenda' | 'act' }
   /** `AdvanceAgenda`/`AdvanceAct` names a fallback resolution although further cards follow. */
   | { code: 'unexpectedResolution'; deck: 'agenda' | 'act' }
+  /** `AdvanceAct` pays clues for an act whose card data has no clue threshold. */
+  | { code: 'noClueThreshold'; cardId: InstanceId }
   /** The clues paid for an act do not add up to its requirement. */
   | { code: 'wrongClueTotal'; required: number; spent: number }
   /**
@@ -78,8 +80,10 @@ export type Rejection =
   | { code: 'encounterDeckEmpty' }
   /** `DrawEncounter` brought an enemy for an investigator who is not at a location. */
   | { code: 'investigatorHasNoLocation'; investigatorId: InvestigatorId }
-  /** No card matching `match` (a name or code) is in the `zone` the command takes it from. */
-  | { code: 'cardNotInZone'; zone: 'encounterDiscard' | 'setAside'; match: string }
+  /** `DrawEncounter` with a `match` that no card of the searched `from` encounter cards fulfils. */
+  | { code: 'noMatchingCard'; from: EncounterSource; match: EncounterMatch }
+  /** No card with code `match` is set aside. */
+  | { code: 'cardNotInZone'; zone: 'setAside'; match: string }
   /** An enemy command names a card whose type is not `enemy`. */
   | { code: 'notAnEnemy'; cardId: InstanceId }
   /** `SpawnEnemy` for an enemy that is already in play. */
@@ -120,6 +124,35 @@ export type Rejection =
   | { code: 'wrongPhase'; expected: Phase; actual: Phase }
   /** `EndTurn` for an investigator who has already taken their turn this round. */
   | { code: 'turnAlreadyTaken'; investigatorId: InvestigatorId }
+  /** `StartTurn` while another turn is in progress, or `NextPhase` before it ended. */
+  | { code: 'turnInProgress'; investigatorId: InvestigatorId }
+  /**
+   * An action, `EndTurn` or `AdjustActions` in the investigation phase for an
+   * investigator whose turn is not in progress (`activeInvestigatorId`: whose is, if any).
+   */
+  | { code: 'notTheirTurn'; investigatorId: InvestigatorId; activeInvestigatorId?: InvestigatorId }
+  /** An action beyond the turn's allowance (`actionAllowance`). */
+  | { code: 'noActionsLeft'; investigatorId: InvestigatorId; allowance: number }
+  /** `AdjustActions` with a delta that is zero, fractional or takes the allowance below zero. */
+  | {
+      code: 'invalidActionAdjustment';
+      investigatorId: InvestigatorId;
+      delta: number;
+      allowance: number;
+    }
+  /** `NextPhase` out of investigation while these active investigators have not taken their turn. */
+  | { code: 'turnsNotTaken'; investigatorIds: InvestigatorId[] }
+  /** `ResolveDecision` with an `amount` for an option that has no adjustable count. */
+  | { code: 'amountNotAdjustable'; decisionId: DecisionId; optionId: string }
+  /** `ResolveDecision` with an `amount` outside the option's range. */
+  | {
+      code: 'amountOutOfRange';
+      decisionId: DecisionId;
+      optionId: string;
+      amount: number;
+      min: number;
+      max?: number;
+    }
   | { code: 'triggerLoop'; limit: number }
   /** A command returned by a hook or card effect was rejected for `reason`. */
   | { code: 'triggeredCommandRejected'; command: CommandType; reason: Rejection }
@@ -209,12 +242,16 @@ function describe(r: Rejection): string {
       return `the last ${r.deck} needs a resolution`;
     case 'unexpectedResolution':
       return `a resolution is only allowed for the last ${r.deck}`;
+    case 'noClueThreshold':
+      return `${r.cardId} has no clue threshold to pay`;
     case 'wrongClueTotal':
       return `${r.required} clues are required, ${r.spent} spent`;
     case 'encounterDeckEmpty':
       return 'the encounter deck and its discard are empty';
     case 'investigatorHasNoLocation':
       return `investigator ${r.investigatorId} is not at a location`;
+    case 'noMatchingCard':
+      return `no card matching ${JSON.stringify(r.match)} in ${r.from}`;
     case 'cardNotInZone':
       return `no ${r.match} in ${r.zone}`;
     case 'notAnEnemy':
@@ -257,6 +294,22 @@ function describe(r: Rejection): string {
       return `only allowed in the ${r.expected} phase, not in ${r.actual}`;
     case 'turnAlreadyTaken':
       return `investigator ${r.investigatorId} has already taken their turn this round`;
+    case 'turnInProgress':
+      return `the turn of ${r.investigatorId} is still in progress`;
+    case 'notTheirTurn':
+      return r.activeInvestigatorId === undefined
+        ? `no turn is in progress, so ${r.investigatorId} cannot act`
+        : `it is the turn of ${r.activeInvestigatorId}, not ${r.investigatorId}`;
+    case 'noActionsLeft':
+      return `${r.investigatorId} has already taken all ${r.allowance} actions of this turn`;
+    case 'invalidActionAdjustment':
+      return `cannot change the allowance of ${r.allowance} actions of ${r.investigatorId} by ${r.delta}`;
+    case 'turnsNotTaken':
+      return `the investigation phase ends after each turn; still to go: ${r.investigatorIds.join(', ')}`;
+    case 'amountNotAdjustable':
+      return `option ${r.optionId} of decision ${r.decisionId} has no adjustable amount`;
+    case 'amountOutOfRange':
+      return `option ${r.optionId} of decision ${r.decisionId} takes ${r.min}${r.max === undefined ? ' or more' : `–${r.max}`}, got ${r.amount}`;
     case 'triggerLoop':
       return `forced effects triggered more than ${r.limit} follow-up commands`;
     case 'triggeredCommandRejected':

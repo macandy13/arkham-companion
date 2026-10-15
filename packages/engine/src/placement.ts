@@ -1,4 +1,5 @@
 import type { CardMoved } from './events';
+import { requireCard } from './lookup';
 import { CommandRejected } from './rejection';
 import type { InstanceId } from './ids';
 import type { CardInstance, GameState } from './state';
@@ -37,8 +38,7 @@ export function validateZone(refs: ZoneRefs, cardId: InstanceId, zone: Zone): vo
         if (current === cardId) throw new CommandRejected({ code: 'hostingCycle', cardId, hostId });
         if (seen.has(current)) break;
         seen.add(current);
-        const host: CardInstance | undefined = refs.cards[current];
-        if (!host) throw new CommandRejected({ code: 'unknownCard', cardId: current });
+        const host = requireCard(refs.cards, current);
         current = hostOf(host.zone);
       }
       return;

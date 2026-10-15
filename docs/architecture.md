@@ -259,7 +259,7 @@ interface ScenarioDefinition {
 - `placeTokens(target, type, n | perInvestigator(n))`
 - `spawn(enemy, at)`, `moveInvestigators(to)`, `removeFromGame(codes)`
 
-**Spreading Flames primitives:** skull token depends on act number (chaos module reads state); `drawTopmostFromDiscard(name)` for *Fire!*; parley `ScenarioAction` on agendas; `fromSetAside` when advancing to agenda 2; `afterDoomPlaced` trigger on agenda 3.
+**Spreading Flames primitives:** skull token depends on act number (chaos module reads state); `DrawEncounter` with `from: 'discard'` and a `name` match for *Fire!*; parley `ScenarioAction` on agendas; `fromSetAside` when advancing to agenda 2; `afterDoomPlaced` trigger on agenda 3.
 
 **Hooks** return commands, which run through the normal `handle` path (validated, with access to card data and the RNG), never raw events. Game commands such as `MoveCard` and `AddMap` exist for them: unlike a `ManualAdjust` correction they are game events, so they fire further triggers (e.g. `onCardEnters`).
 
@@ -321,6 +321,8 @@ Tablet landscape first. Header (round, phase, agenda/act, undo), map centre (pan
 *Why this mix:* a rules bug discovered at the table costs a game night. The deterministic engine makes property tests and golden replays (full recorded games) cheap, and they catch whole classes of bugs that example tests miss.
 
 Engine unit tests, setup tests per scenario, property tests (no negative tokens, one zone per card, replay determinism), golden replays, Playwright E2E for refresh, GitHub Actions CI.
+
+A scenario end-to-end test (`packages/scenarios/src/the_gathering/end_to_end.test.ts`) plays The Gathering for a few rounds through a game-language test driver (`TestTable`), checking invariants after every command and replaying the event log at the end; each engine feature extends it, so reviewers see the feature in context. For debugging, `formatBoard(ctx, state)` (engine, `format_board.ts`) renders the board as stable plain text – agenda/act, maps and locations with investigators, enemies and connections, investigators, encounter piles, victory display and pending decisions, by card name. It is pure (returns a string, never prints), so tests use it in inline snapshots and failure messages.
 
 ## 13. Repository and publishing
 

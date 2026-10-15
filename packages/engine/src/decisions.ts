@@ -2,7 +2,7 @@ import type { Command, RequestDecision, ResolveDecision } from './commands';
 import type { DecisionRequested, DecisionResolved } from './events';
 import type { InstanceId } from './ids';
 import { CommandRejected } from './rejection';
-import type { Decider, Decision, DecisionOption, GameState, SkillTest } from './state';
+import type { AmountRange, Decider, Decision, DecisionOption, GameState, SkillTest } from './state';
 
 /** Commands that stay allowed while a decision is pending: corrections, and the answer itself. */
 const ALLOWED_WHILE_PENDING: readonly Command['type'][] = ['ManualAdjust', 'ResolveDecision'];
@@ -17,6 +17,17 @@ export function assertNoPendingDecision(state: GameState, command: Command): voi
   const [pending] = state.pending;
   if (pending === undefined || ALLOWED_WHILE_PENDING.includes(command.type)) return;
   throw new CommandRejected({ code: 'decisionPending', decisionId: pending.id });
+}
+
+/**
+ * A `DecisionRequested` for `decision`, unless one with this id is already open.
+ * For rule modules that re-check a condition after every change (agenda
+ * threshold, engagement, hunter ties) and must not ask twice; the
+ * `RequestDecision` command is stricter and rejects a duplicate.
+ */
+export function requestDecision(state: GameState, decision: Decision): DecisionRequested[] {
+  if (state.pending.some((pending) => pending.id === decision.id)) return [];
+  return [{ type: 'DecisionRequested', decision }];
 }
 
 /** `RequestDecision`: raises a scenario- or card-defined decision. */
@@ -38,7 +49,7 @@ export function handleResolveDecision(
   state: GameState,
   command: ResolveDecision,
 ): DecisionResolved[] {
-  chosenOption(state, command);
+  optionCommands(state, command);
   return [{ type: 'DecisionResolved', decisionId: command.decisionId, optionId: command.optionId }];
 }
 
@@ -49,7 +60,38 @@ export function handleResolveDecision(
  */
 export function answerCommands(state: GameState, command: Command): readonly Command[] {
   if (command.type !== 'ResolveDecision') return [];
-  return chosenOption(state, command).commands;
+  return optionCommands(state, command);
+}
+
+/** The chosen option's commands, with the confirmed amount if the answer gives one. */
+function optionCommands(state: GameState, command: ResolveDecision): readonly Command[] {
+  const option = chosenOption(state, command);
+  if (command.amount === undefined) return option.commands;
+  if (!option.amount)
+    throw new CommandRejected({
+      code: 'amountNotAdjustable',
+      decisionId: command.decisionId,
+      optionId: option.id,
+    });
+  if (!inRange(command.amount, option.amount))
+    throw new CommandRejected({
+      code: 'amountOutOfRange',
+      decisionId: command.decisionId,
+      optionId: option.id,
+      amount: command.amount,
+      min: option.amount.min,
+      ...(option.amount.max === undefined ? {} : { max: option.amount.max }),
+    });
+  const amount = command.amount;
+  return option.commands.map((cmd) => ('amount' in cmd ? { ...cmd, amount } : cmd));
+}
+
+function inRange(amount: number, range: AmountRange): boolean {
+  return (
+    Number.isInteger(amount) &&
+    amount >= range.min &&
+    (range.max === undefined || amount <= range.max)
+  );
 }
 
 function chosenOption(state: GameState, command: ResolveDecision): DecisionOption {
@@ -77,6 +119,11 @@ export function confirmOptions(onYes: Command[], target?: InstanceId): DecisionO
 /** What follows each outcome of a skill test. */
 export interface SkillTestOutcomes {
   onPass: Command[];
+  /**
+   * Makes the pass a count the players confirm (clues discovered, damage
+   * dealt): `onPass` is written for its default (see `DecisionOption.amount`).
+   */
+  passAmount?: AmountRange;
   onFail: Command[];
   /**
    * Consequences that depend on how much the test failed by (`failedBy[2]`
@@ -89,8 +136,8 @@ export interface SkillTestOutcomes {
 /**
  * A `skillTestResult` decision: the players resolve `test` at the table and
  * answer with `pass`, `fail` or `failedBy:<n>`; the matching commands are the
- * consequence. For use by the phase assistant (M1.10) and by scenario hooks
- * returning `RequestDecision`.
+ * consequence. Used by the investigate, fight and evade actions, by
+ * revelation tests and by scenario hooks returning `RequestDecision`.
  */
 export function skillTestDecision(
   decision: Pick<Decision, 'id' | 'prompt' | 'subject'> & { decider: Decider; test: SkillTest },
@@ -107,7 +154,12 @@ export function skillTestDecision(
     kind: 'skillTestResult',
     skillTest: test,
     options: [
-      { id: 'pass', label: 'decision.pass', commands: outcomes.onPass },
+      {
+        id: 'pass',
+        label: 'decision.pass',
+        commands: outcomes.onPass,
+        ...(outcomes.passAmount ? { amount: outcomes.passAmount } : {}),
+      },
       { id: 'fail', label: 'decision.fail', commands: outcomes.onFail },
       ...margins,
     ],
