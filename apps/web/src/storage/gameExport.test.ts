@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { STATE_VERSION, instanceId, replay, type Event, type StoredEvent } from '@arkham/engine';
 import { GameImportError, parseGameExport, serialiseGameExport } from './gameExport';
 
@@ -44,6 +44,10 @@ function failureOf(text: string) {
 }
 
 describe('game export format', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('parses what it serialises, keeping title and timestamps', () => {
     const text = serialiseGameExport('Night', 5, stored([started]));
     expect(parseGameExport(text)).toEqual({
@@ -71,6 +75,7 @@ describe('game export format', () => {
   });
 
   it('rejects text that is not JSON, other JSON and unknown events', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     expect(failureOf('not json')).toBe('invalid');
     expect(failureOf('{"format":"other","stateVersion":1}')).toBe('invalid');
     const unknownEvent = serialiseGameExport(
@@ -79,5 +84,10 @@ describe('game export format', () => {
       stored([{ type: 'Nope' } as unknown as Event]),
     );
     expect(failureOf(unknownEvent)).toBe('invalid');
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('not valid JSON'), expect.any(Error));
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('does not replay'),
+      expect.any(Error),
+    );
   });
 });

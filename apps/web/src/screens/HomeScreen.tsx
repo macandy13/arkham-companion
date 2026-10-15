@@ -24,6 +24,7 @@ export function HomeScreen({ store }: { store: StoreApi<AppState> }) {
       await store.getState().importGame(await file.text());
       setImportError(undefined);
     } catch (error) {
+      console.warn('Could not import the game file.', error);
       setImportError(
         t(
           error instanceof GameImportError && error.reason === 'newerVersion'
