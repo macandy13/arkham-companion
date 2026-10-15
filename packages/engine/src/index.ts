@@ -13,15 +13,18 @@ export * from './commands';
 export * from './events';
 export { apply, replay } from './reducer';
 export { handle } from './handle';
-export { neighbours, sameEdge, shortestPaths } from './board';
+export { locationsNamed, neighbours, sameEdge, shortestPaths } from './board';
+export { cardsNamed } from './lookup';
 export { CommandRejected, type Rejection, type RejectionCode } from './rejection';
 export { execute, type ExecuteResult } from './execute';
 export * from './setup';
 export * from './investigators';
 export { enemyAttackList, type EnemyAttack } from './enemies';
+export { describeDecision, optionName, optionNamed } from './describe_decision';
 export { confirmOptions, skillTestDecision, type SkillTestOutcomes } from './decisions';
 export { doomInPlay, isInPlay } from './doom';
 export { checkInvariants } from './invariants';
+export { formatBoard } from './format_board';
 export {
   MAX_TRIGGERED_COMMANDS,
   type CardEffect,

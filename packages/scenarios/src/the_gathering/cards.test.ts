@@ -17,9 +17,9 @@ describe('The Gathering card data', () => {
   });
 
   it.each([
-    { code: '01118', detail: 'Attic' },
-    { code: '01119', detail: 'Cellar' },
-  ])('names the spawn location of $code', ({ code, detail }) => {
+    { code: '01118', name: 'Flesh-Eater', detail: 'Attic' },
+    { code: '01119', name: 'Icy Ghoul', detail: 'Cellar' },
+  ])('names the spawn location of $name', ({ code, detail }) => {
     const spawn = theGatheringCards.get(code)?.keywords?.find((k) => k.name === 'spawn');
 
     expect(spawn?.detail).toBe(detail);
