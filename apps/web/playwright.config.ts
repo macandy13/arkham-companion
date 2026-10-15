@@ -46,8 +46,9 @@ export default defineConfig({
             // Pointer and highlight on every interaction, so a viewer sees what was clicked.
             // Two steps long, so the 4 fps GIF always catches it in at least two frames.
             actions: { cursor: 'pointer', duration: 2 * SCREENCAST_STEP_MS },
-            // The current `test.step` name as a caption, so the GIF narrates the flow.
-            test: { level: 'step', position: 'top-right' },
+            // The current `test.step` name as a caption, so the GIF narrates the flow. Bottom
+            // right keeps it off the header, and the font stays readable once scaled to the GIF width.
+            test: { level: 'step', position: 'bottom-right', fontSize: 18 },
           },
         },
         launchOptions: { executablePath, slowMo: SCREENCAST_STEP_MS },
