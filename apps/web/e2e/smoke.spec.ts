@@ -6,7 +6,8 @@ test.beforeEach(async ({ page }) => {
 });
 
 // Home flow: the production build boots, hash routes resolve, a new game survives a reload and
-// the home screen manages the saved games. Fuller flows arrive with M2.8 and M3.9. `@flow` specs are also recorded for PR screencasts;
+// the home screen manages the saved games (rename, duplicate, delete, export, import, resume).
+// Fuller flows arrive with M2.8 and M3.9. `@flow` specs are also recorded for PR screencasts;
 // their `test.step` names become the captions in the recording.
 test(
   'a new game survives reload and is managed from the home screen',
@@ -62,8 +63,27 @@ test(
       await expect(games.getByRole('listitem')).toHaveCount(before + 1);
     });
 
-    await test.step('Resume the game from the list', async () => {
-      await games.getByRole('link', { name: 'Resume' }).click();
+    const backup = await test.step('Export the game to a file', async () => {
+      const download = page.waitForEvent('download');
+      await games.getByRole('listitem').first().getByRole('button', { name: 'Export' }).click();
+      const chunks: Buffer[] = [];
+      for await (const chunk of await (await download).createReadStream()) {
+        chunks.push(chunk as Buffer);
+      }
+      return Buffer.concat(chunks);
+    });
+
+    await test.step('Import the file as a new game', async () => {
+      await page.getByLabel('Import game').setInputFiles({
+        name: 'game.arkham.json',
+        mimeType: 'application/json',
+        buffer: backup,
+      });
+      await expect(games.getByRole('listitem')).toHaveCount(before + 2);
+    });
+
+    await test.step('Resume a game from the list', async () => {
+      await games.getByRole('link', { name: 'Resume' }).first().click();
       await expect(page).toHaveURL(/#\/game\/.+/);
     });
   },
