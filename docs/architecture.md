@@ -249,7 +249,7 @@ interface ScenarioDefinition {
 **Setup DSL** – same steps for initial setup and mid-scenario changes:
 
 - `putIntoPlay(location, slot?, faceUp?)`, `replaceLocation(old, new)`, `removeLocation`, `randomLocations(pool, slots)`
-- `addMap(mapId, locations, connections)` (a map is declared as one unit), `addConnection(a, b, oneWay?)`/`removeConnection(a, b)` for mid-scenario changes
+- `addMap(mapId, locations, connections)` (a map is declared as one unit; mid-scenario, `compileMapStep` turns it into an `AddMap` command that takes the locations from outside play), `addConnection(a, b, oneWay?)`/`removeConnection(a, b)` for mid-scenario changes
 - `setAside(codes)`, `fromSetAside(codes, to: Zone)`
 - `buildEncounterDeck(sets, exclude)`, `shuffleInto(codes, 'encounterDeck')`
 - `placeTokens(target, type, n | perInvestigator(n))`
@@ -257,7 +257,7 @@ interface ScenarioDefinition {
 
 **Spreading Flames primitives:** skull token depends on act number (chaos module reads state); `drawTopmostFromDiscard(name)` for *Fire!*; parley `ScenarioAction` on agendas; `fromSetAside` when advancing to agenda 2; `afterDoomPlaced` trigger on agenda 3.
 
-**Hooks** return commands, which run through the normal `handle` path (validated, with access to card data and the RNG), never raw events.
+**Hooks** return commands, which run through the normal `handle` path (validated, with access to card data and the RNG), never raw events. Game commands such as `MoveCard` and `AddMap` exist for them: unlike a `ManualAdjust` correction they are game events, so they fire further triggers (e.g. `onCardEnters`).
 
 **Card effects – start simple:** encounter cards are displayed, keywords and spawn evaluated; board-changing cards get a script in the effects registry. More cards can be automated one by one later.
 

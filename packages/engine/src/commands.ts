@@ -14,6 +14,8 @@ import type { Zone } from './zone';
 export type Command =
   | StartScenario
   | ManualAdjust
+  | MoveCard
+  | AddMap
   | AddConnection
   | RemoveConnection
   | RevealLocation
@@ -22,7 +24,8 @@ export type Command =
   | DiscoverClues
   | PlaceDoom
   | AdvanceAgenda
-  | AdvanceAct;
+  | AdvanceAct
+  | EndScenario;
 
 /** A card instance to create when the scenario starts. */
 export interface StartingCard {
@@ -61,6 +64,34 @@ export interface StartScenario {
 export interface ManualAdjust {
   type: 'ManualAdjust';
   adjustment: Adjustment;
+}
+
+/**
+ * A card effect or reverse side moves a card to another zone ("remove the
+ * Study from the game", "discard each enemy there"). Validated like a
+ * `ManualAdjust` move, but it is a game event, so forced effects fire (a card
+ * entering play triggers `onCardEnters`). Produces `CardMoved`.
+ */
+export interface MoveCard {
+  type: 'MoveCard';
+  cardId: InstanceId;
+  to: Zone;
+}
+
+/**
+ * Puts a new map into play mid-scenario (architecture §5 "a second board
+ * added mid-scenario"), declared as one unit like setup's `addMap` step:
+ * `compileMapStep` builds it from such a step. The `locations` are cards
+ * outside play (typically set aside) that move onto the map in the given
+ * order, as they are (set-aside locations stay unrevealed). The map's
+ * connections may also end on other maps. Produces `MapAdded`, then one
+ * `CardMoved` per location.
+ */
+export interface AddMap {
+  type: 'AddMap';
+  mapId: MapId;
+  map: MapSpec;
+  locations: readonly InstanceId[];
 }
 
 /** The concrete corrections a `ManualAdjust` can make. */
@@ -165,15 +196,20 @@ export interface PlaceDoom {
 
 /**
  * Advances the current agenda: all doom in play is removed, the agenda is
- * flipped and leaves the game, and the next agenda becomes current. Used both
- * for the players' answer to the threshold question (until `ResolveDecision`
- * exists, M1.9) and for card effects that advance the agenda.
+ * flipped and its reverse side (`onAgendaAdvance` hook) resolves while it is
+ * still current; then it leaves the game and the next agenda becomes current.
+ * Used both for the players' answer to the threshold question (until
+ * `ResolveDecision` exists, M1.9) and for card effects that advance the agenda.
  * Produces `TokensChanged`/`InvestigatorChanged` (doom removal), `CardFlipped`,
- * `CardMoved`, `AgendaAdvanced` and, for the last agenda, `ScenarioEnded`.
+ * `AgendaAdvanced`, the reverse side's events, `CardMoved`, `CurrentCardChanged`
+ * and, for the last agenda, `ScenarioEnded` unless the reverse side ended the scenario.
  */
 export interface AdvanceAgenda {
   type: 'AdvanceAgenda';
-  /** Resolution the scenario ends with; required for (and only read on) the last agenda. */
+  /**
+   * Fallback resolution for the last agenda when its reverse side does not end
+   * the scenario itself; rejected while further agendas follow.
+   */
   resolution?: string;
 }
 
@@ -186,19 +222,34 @@ export interface ClueSpend {
 /**
  * Advances the current act. Paying clues is only one way to advance: other
  * acts need an objective, an action or an event (an enemy defeated or out of
- * play, …), which players or scenario hooks (M1.6) decide, so those advance
- * with no `spend`. With `spend` the investigators choose who pays; the total
- * must equal the act's clue requirement (its `clues`, resolved for the
- * starting player count) and the act must have one. Produces
- * `InvestigatorChanged` per payment, `CardFlipped`, `CardMoved`,
- * `ActAdvanced` and, for the last act, `ScenarioEnded`.
+ * play, …), which players or scenario hooks decide, so those advance with no
+ * `spend`. With `spend` the investigators choose who pays; the total must
+ * equal the act's clue requirement (its `clues`, resolved for the starting
+ * player count) and the act must have one. Like `AdvanceAgenda`, the reverse
+ * side (`onActAdvance` hook) resolves before the next act becomes current.
+ * Produces `InvestigatorChanged` per payment, `CardFlipped`, `ActAdvanced`,
+ * the reverse side's events, `CardMoved`, `CurrentCardChanged` and, for the
+ * last act, `ScenarioEnded` unless the reverse side ended the scenario.
  */
 export interface AdvanceAct {
   type: 'AdvanceAct';
   /** Clue payments; omit to advance without paying (any act can advance that way). */
   spend?: ClueSpend[];
-  /** Resolution the scenario ends with; required for (and only read on) the last act. */
+  /**
+   * Fallback resolution for the last act when its reverse side does not end
+   * the scenario itself; rejected while further acts follow.
+   */
   resolution?: string;
+}
+
+/**
+ * Ends the scenario with `resolution` (a resolution id of the scenario).
+ * Mostly returned by a reverse-side hook ("(→R1)"), which is how the last
+ * agenda/act names its resolution. Produces `ScenarioEnded`.
+ */
+export interface EndScenario {
+  type: 'EndScenario';
+  resolution: string;
 }
 
 /** String literal of every command type. */

@@ -417,6 +417,13 @@ describe('AdvanceAgenda', () => {
       deck: 'agenda',
     });
   });
+
+  it('rejects a resolution while another agenda follows', () => {
+    expect(rejectionFrom(testContext, state, { type: 'AdvanceAgenda', resolution: 'R1' })).toEqual({
+      code: 'unexpectedResolution',
+      deck: 'agenda',
+    });
+  });
 });
 
 describe('AdvanceAct', () => {
@@ -585,6 +592,19 @@ describe('AdvanceAct', () => {
     ).toEqual({ code: 'resolutionRequired', deck: 'act' });
   });
 
+  it('rejects a resolution while another act follows', () => {
+    expect(
+      rejectionFrom(testContext, state, {
+        type: 'AdvanceAct',
+        spend: [
+          { investigatorId: alice, amount: 3 },
+          { investigatorId: bob, amount: 1 },
+        ],
+        resolution: 'R2',
+      }),
+    ).toEqual({ code: 'unexpectedResolution', deck: 'act' });
+  });
+
   it('rejects advancing once the act deck is used up', () => {
     const ended = stateAfter(
       testContext,
@@ -622,8 +642,9 @@ describe('advancing an act without paying clues', () => {
 
     expect(eventsOf(state, { type: 'AdvanceAct' }).map((event) => event.type)).toEqual([
       'CardFlipped',
-      'CardMoved',
       'ActAdvanced',
+      'CardMoved',
+      'CurrentCardChanged',
     ]);
   });
 });

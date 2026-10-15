@@ -1,4 +1,15 @@
-import { mapId, type AddMapStep, type ScenarioDefinition } from '@arkham/engine';
+import {
+  CommandRejected,
+  cardStats,
+  compileMapStep,
+  mapId,
+  type AddMapStep,
+  type CardInstance,
+  type Command,
+  type EngineContext,
+  type GameState,
+  type ScenarioDefinition,
+} from '@arkham/engine';
 import { GATHERING_CODES, GATHERING_SETS } from './cards';
 
 const codes = GATHERING_CODES;
@@ -8,13 +19,10 @@ const sets = GATHERING_SETS;
 const reference = 'scenario.theGathering.reference';
 
 /**
- * The house as act 1 ("Trapped") reveals it: the Study is removed and the
- * Hallway connects to the Attic, the Cellar and the Parlor, with the
- * investigators moving to the Hallway. Not part of `theGathering.setup`,
- * because applying setup steps mid-scenario (taking these locations from the
- * set-aside zone) needs the reverse-side hooks of M1.6, which `AdvanceAct`
- * calls (`reverseSideEvents`); until then tests compile it on its own to
- * check the layout.
+ * The house as act 1 ("Trapped") reveals it: the Hallway connects to the
+ * Attic, the Cellar and the Parlor. Not part of `theGathering.setup`: these
+ * locations start set aside, and act 1's reverse side (`trappedReverseSide`)
+ * puts them into play with `compileMapStep`.
  */
 export const theGatheringHouse: AddMapStep = {
   kind: 'addMap',
@@ -34,12 +42,64 @@ export const theGatheringHouse: AddMapStep = {
 };
 
 /**
+ * Act 1 ("Trapped"), reverse side: the house map (`theGatheringHouse`) is put
+ * into play from the set-aside locations, the enemies in the Study are
+ * discarded, every investigator moves to the Hallway (ignoring connections,
+ * which reveals it), and the Study is removed from the game. Runs while act 1
+ * is still current (`onActAdvance`). The commands are computed from one
+ * snapshot but handled in order, so the Hallway is in play by the time the
+ * investigators move.
+ */
+function trappedReverseSide(ctx: EngineContext, state: GameState): Command[] {
+  const study = onlyCard(state, codes.study);
+  const hallway = onlyCard(state, codes.hallway);
+  const atStudy = state.investigators.filter(
+    (inv) => inv.status === 'active' && inv.locationId === study.id,
+  );
+  // Engaged enemies are at their investigator's location, so they are in the Study too.
+  const enemies = Object.values(state.cards).filter((card) => {
+    const zone = card.zone;
+    if (zone.kind === 'engaged') return atStudy.some((inv) => inv.id === zone.investigatorId);
+    return (
+      zone.kind === 'atLocation' &&
+      zone.locationId === study.id &&
+      cardStats(ctx.cards, card.code).typeCode === 'enemy'
+    );
+  });
+  return [
+    ...compileMapStep(state, theGatheringHouse),
+    ...enemies.map((enemy): Command => ({
+      type: 'MoveCard',
+      cardId: enemy.id,
+      to: { kind: 'encounterDiscard' },
+    })),
+    ...state.investigators
+      .filter((inv) => inv.status === 'active')
+      .map((inv): Command => ({
+        type: 'MoveInvestigator',
+        investigatorId: inv.id,
+        to: hallway.id,
+        ignoreConnections: true,
+      })),
+    { type: 'MoveCard', cardId: study.id, to: { kind: 'outOfGame' } },
+  ];
+}
+
+/** The one instance of `code` (the Gathering has a single copy of each location). */
+function onlyCard(state: GameState, code: string): CardInstance {
+  const card = Object.values(state.cards).find((candidate) => candidate.code === code);
+  if (!card) throw new CommandRejected({ code: 'setupTargetNotFound', cardCode: code });
+  return card;
+}
+
+/**
  * The Gathering (Core Set, 2016, scenario I of Night of the Zealot), set up as
  * the campaign guide describes: the Study is the only location in play, the
  * other locations, the Ghoul Priest and Lita Chantler are set aside, and the
  * rest of the six encounter sets is shuffled into the encounter deck. Card
  * data is hand-entered (`theGatheringCardDefs`); it is the shared test
- * scenario for the generic rules until real scenario data arrives (M4).
+ * scenario for the generic rules until real scenario data arrives (M4). Its
+ * `hooks` hold act 1's reverse side; pass them as `EngineContext.hooks`.
  */
 export const theGathering: ScenarioDefinition = {
   id: 'the-gathering',
@@ -93,4 +153,7 @@ export const theGathering: ScenarioDefinition = {
     { kind: 'moveInvestigators', to: codes.study },
     { kind: 'buildEncounterDeck', sets: Object.values(sets) },
   ],
+  hooks: {
+    onActAdvance: { [codes.trapped]: trappedReverseSide },
+  },
 };

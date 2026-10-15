@@ -1,17 +1,19 @@
 import { cardStats, resolveValue, type EngineContext } from './cards';
-import type { AdvanceAct, AdvanceAgenda, ClueSpend, PlaceDoom } from './commands';
+import type { AdvanceAct, AdvanceAgenda, ClueSpend, EndScenario, PlaceDoom } from './commands';
 import { cardsWithDoom, isInPlay } from './doom';
 import type {
   ActAdvanced,
   AgendaAdvanced,
   CardFlipped,
   CardMoved,
+  CurrentCardChanged,
   Event,
   InvestigatorChanged,
   ScenarioEnded,
   TokensChanged,
 } from './events';
 import { activeInvestigator } from './handle_investigator';
+import type { InstanceId } from './ids';
 import { requireCard } from './lookup';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
@@ -30,70 +32,98 @@ export function handlePlaceDoom(state: GameState, cmd: PlaceDoom): TokensChanged
 }
 
 /**
- * `AdvanceAgenda`. Doom is cleared first because the rules remove all doom in
- * play when an agenda advances.
+ * `AdvanceAgenda`, first step: doom is cleared (the rules remove all doom in
+ * play when an agenda advances) and the agenda turns to its reverse side,
+ * staying current while that resolves; `completeAdvance` replaces it.
  */
 export function handleAdvanceAgenda(state: GameState, cmd: AdvanceAgenda): Event[] {
-  const advance = advanceDeck(state, 'agenda', cmd.resolution);
-  return [...doomRemoval(state), ...advance.events, ...reverseSideEvents(), ...advance.ended];
+  const flip = reverseSide(state, 'agenda', cmd.resolution);
+  return [...doomRemoval(state), ...flip];
 }
 
 /**
- * `AdvanceAct`. Paying clues is only one way to advance an act (others are an
- * objective met, an action taken or an enemy defeated), so the engine pays
- * only when the command carries `spend`; otherwise the act advances as is.
+ * `AdvanceAct`, first step: the investigators pay the act's clue requirement
+ * when the command carries `spend` (paying clues is only one way to advance an
+ * act; others are an objective met, an action taken or an enemy defeated, and
+ * those advance with no `spend`), and the act turns to its reverse side;
+ * `completeAdvance` replaces it.
  * Payments are validated up front so a rejected command pays nothing.
  */
 export function handleAdvanceAct(ctx: EngineContext, state: GameState, cmd: AdvanceAct): Event[] {
   const act = currentCard(state, 'act');
+  const flip = reverseSide(state, 'act', cmd.resolution);
   const payments =
     cmd.spend === undefined
       ? []
       : cluePayments(state, act, cmd.spend, clueRequirement(ctx, state, act));
-  const advance = advanceDeck(state, 'act', cmd.resolution);
-  return [...payments, ...advance.events, ...reverseSideEvents(), ...advance.ended];
+  return [...payments, ...flip];
 }
 
 /**
- * Extension point for the reverse side of an advancing agenda or act. The
- * trigger bus (M1.6) will run the card's hook here and return the events it
- * produces (it will then take the state, the card and the context); until
- * then advancing has no card-specific effect.
+ * `AdvanceAgenda`/`AdvanceAct`, second step, which `handle` runs after the
+ * forced effects of the first step: the advanced card leaves the game and the
+ * next card becomes current. When that was the last card, the scenario ends
+ * with the command's `resolution` unless the reverse side already ended it.
+ *
+ * Why two steps: the rules resolve the reverse side before the next card
+ * becomes current, so an effect on "the current agenda/act" must still hit
+ * the advancing card, and on the last card it is the reverse side that names
+ * the resolution. The reverse side is the `onAgendaAdvance`/`onActAdvance`
+ * hook on the first step's `AgendaAdvanced`/`ActAdvanced`, so running the
+ * trigger bus between the steps gives that order while every event stays in
+ * the originating command's list (one undo group) and under its loop guard.
+ * `before` is the state the command started from (it tells which card
+ * advanced), `after` the state after the first step and its forced effects.
  */
-function reverseSideEvents(): Event[] {
-  return [];
+export function completeAdvance(
+  before: GameState,
+  after: GameState,
+  deck: Deck,
+  resolution: string | undefined,
+): (CardMoved | CurrentCardChanged | ScenarioEnded)[] {
+  const advanced = currentCard(before, deck);
+  const card = after.cards[advanced.id] ?? advanced;
+  const nextId = nextCardId(after, deck, card.id);
+  const ended = after.meta.resolution !== undefined;
+  if (nextId === undefined && !ended && resolution === undefined)
+    throw new CommandRejected({ code: 'resolutionRequired', deck });
+  return [
+    { type: 'CardMoved', cardId: card.id, from: card.zone, to: { kind: 'outOfGame' } },
+    { type: 'CurrentCardChanged', deck, ...(nextId === undefined ? {} : { cardId: nextId }) },
+    ...(nextId === undefined && !ended && resolution !== undefined
+      ? [{ type: 'ScenarioEnded' as const, resolution }]
+      : []),
+  ];
+}
+
+/** `EndScenario`: the scenario is over with the command's resolution. */
+export function handleEndScenario(cmd: EndScenario): ScenarioEnded[] {
+  return [{ type: 'ScenarioEnded', resolution: cmd.resolution }];
 }
 
 /**
- * The events that take the current card of a deck out of play and make the
- * next one current, plus `ScenarioEnded` (kept apart so it comes after the
- * reverse-side events) when that was the last card.
+ * Turns the current card of a deck to its reverse side. A fallback
+ * `resolution` is rejected while further cards follow: only running out of
+ * cards ends the scenario without a reverse side saying so.
  */
-function advanceDeck(
+function reverseSide(
   state: GameState,
   deck: Deck,
   resolution: string | undefined,
-): { events: (CardFlipped | CardMoved | AgendaAdvanced | ActAdvanced)[]; ended: ScenarioEnded[] } {
+): (CardFlipped | AgendaAdvanced | ActAdvanced)[] {
   const card = currentCard(state, deck);
+  if (resolution !== undefined && nextCardId(state, deck, card.id) !== undefined)
+    throw new CommandRejected({ code: 'unexpectedResolution', deck });
+  return [
+    { type: 'CardFlipped', cardId: card.id, faceUp: false },
+    { type: deck === 'agenda' ? 'AgendaAdvanced' : 'ActAdvanced', cardId: card.id },
+  ];
+}
+
+/** The card that follows `cardId` in a deck, if any. */
+function nextCardId(state: GameState, deck: Deck, cardId: InstanceId): InstanceId | undefined {
   const zone = deck === 'agenda' ? 'agendaDeck' : 'actDeck';
-  const nextId = (state.order[zoneKey({ kind: zone })] ?? []).find((id) => id !== card.id);
-  if (nextId === undefined && resolution === undefined)
-    throw new CommandRejected({ code: 'resolutionRequired', deck });
-  return {
-    events: [
-      { type: 'CardFlipped', cardId: card.id, faceUp: false },
-      { type: 'CardMoved', cardId: card.id, from: card.zone, to: { kind: 'outOfGame' } },
-      {
-        type: deck === 'agenda' ? 'AgendaAdvanced' : 'ActAdvanced',
-        cardId: card.id,
-        ...(nextId === undefined ? {} : { nextId }),
-      },
-    ],
-    ended:
-      nextId === undefined && resolution !== undefined
-        ? [{ type: 'ScenarioEnded', resolution }]
-        : [],
-  };
+  return (state.order[zoneKey({ kind: zone })] ?? []).find((id) => id !== cardId);
 }
 
 /** Removes all doom in play: from cards and from the investigators' counters. */

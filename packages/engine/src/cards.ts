@@ -1,5 +1,6 @@
 import type { Brand } from './ids';
 import { CommandRejected } from './rejection';
+import type { EffectsRegistry, ScenarioHooks } from './triggers';
 
 /**
  * ArkhamDB `type_code` values, covering encounter and player cards.
@@ -136,10 +137,15 @@ export interface CardDb {
  * Everything `handle` needs besides the state and the command. Passed in
  * rather than stored in `GameState` so the state stays small and serialisable,
  * and so the reducer cannot depend on card data – events already carry the
- * values a rule computed from it.
+ * values a rule computed from it. Hooks and effects are code, which is
+ * another reason they live here and not in the serialisable state.
  */
 export interface EngineContext {
   cards: CardDb;
+  /** The running scenario's forced effects (`ScenarioDefinition.hooks`); none when absent. */
+  hooks?: Partial<ScenarioHooks>;
+  /** Card scripts by card code; none when absent. */
+  effects?: EffectsRegistry;
 }
 
 /** Builds a `CardDb` from a list of definitions; a later duplicate code replaces an earlier one. */
