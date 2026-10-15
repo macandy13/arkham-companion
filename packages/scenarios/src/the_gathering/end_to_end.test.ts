@@ -2,20 +2,25 @@
  * The Gathering, played end to end: Roland Banks, Daisy Walker and Wendy
  * Adams, a fixed seed, five rounds. An integration narrative rather than a
  * rules test – it shows the engine features working together in a real
- * scenario (setup, movement, clues, the act 1 hook, doom and the agenda,
- * encounter draws, spawn instructions, engagement, hunters, attacks, defeat
- * and upkeep) as one session report: game-language steps on a `TestTable`,
- * phase by phase and turn by turn, with the facts a player would check at
- * the table asserted where they happen.
+ * scenario (setup, the phase assistant, turns and actions, skill tests,
+ * clues, the act 1 hook, doom and the agenda, encounter draws and revelation
+ * tests, spawn instructions, engagement, hunters, attacks and upkeep) as one
+ * session report: game-language steps on a `TestTable`, phase by phase and
+ * turn by turn, with the facts a player would check at the table asserted
+ * where they happen.
  *
  * Each later engine PR extends this story with its feature (see M1.E in
- * docs/tasks/M1-engine.md): decisions are answered instead of stepped
- * around, the phase and turn commands replace the comment headers, a step is
- * undone. Rules rest in the unit tests; this test keeps them honest together.
+ * docs/tasks/M1-engine.md). Rules rest in the unit tests; this test keeps
+ * them honest together.
  *
- * Every investigation turn takes at most 3 actions. Skill tests are resolved
- * at the table (the engine gets their hand-off in M1.10), so a test's outcome
- * is stated in a comment and its consequence applied by hand.
+ * The phase assistant (`nextPhase`) runs the steps of each phase, numbered as
+ * in the Rules Reference (1.2 doom, 1.3 threshold check, 1.4 encounter draws,
+ * 3.2 hunters, 3.3 attacks, 4.3 ready, 4.4 resources, 4.6 round end), and
+ * stops wherever the players have to answer. Each investigation turn is
+ * started and ended explicitly, in the order the group chooses, and counts
+ * its actions. Skill tests are resolved at the table: the engine asks for the
+ * result (`skillTestResult`), and the comments say why it is a pass or fail.
+ * What a failed revelation costs is card text, so the script applies it by hand.
  */
 import { describe, expect, it } from 'vitest';
 import { replay, type EngineContext } from '@arkham/engine';
@@ -71,26 +76,40 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       ...['Rotting Remains', 'Ravenous Ghoul', 'Frozen in Fear'],
     ]);
 
-    // Round 1 – no mythos phase in the first round
+    // Round 1 – the first round has no mythos phase
+    table.nextPhase();
 
-    // Round 1 – investigation: Roland's turn
+    expect(table.phase()).toEqual({ round: 1, phase: 'investigation' });
+
+    // Round 1 – investigation: Roland's turn (intellect 3 against the Study's shroud 2)
+    table.startTurn(roland);
     table.investigate(roland);
     table.investigate(roland);
 
-    // Round 1 – investigation: Daisy's turn
-    table.investigate(daisy);
-    table.investigate(daisy);
+    expect(table.turn()).toBe('Roland Banks, actions 2/3');
+
+    table.endTurn(roland);
+
+    // Round 1 – investigation: Daisy's turn. She commits Deduction to her
+    // investigation (intellect 5), which discovers 1 additional clue on a success.
+    table.startTurn(daisy);
+    table.investigate(daisy, { clues: 2 });
+    table.endTurn(daisy);
+
+    expect(table.investigatorClues()).toEqual({ roland: 2, daisy: 2, wendy: 0 });
 
     // Round 1 – investigation: Wendy's turn
+    table.startTurn(wendy);
     table.investigate(wendy);
     table.investigate(wendy);
-
-    // The Study's 6 clues pay act 1 (2 per investigator); its hook opens the house.
+    // Still in her turn, the Study's 6 clues pay act 1 (2 per investigator) –
+    // advancing the act is no action. Its hook opens the house.
     table.spendCluesToAdvanceAct({ roland: 2, daisy: 2, wendy: 2 });
 
-    // Round and phase stay at 0 / setup until the phase assistant (M1.10) advances them.
     expect(table.board()).toMatchInlineSnapshot(`
-      "Round 0, setup phase
+      "Round 1, investigation phase
+      Turn: Wendy Adams, actions 2/3
+      Turns taken: Roland Banks, Daisy Walker
       Agenda: What's Going On?! – doom 0/3
       Act: The Barrier – needs 9 clues
       Map Study:
@@ -117,44 +136,66 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.act()).toBe('The Barrier');
     expect(table.locationsOn('house')).toEqual(['Hallway', 'Attic', 'Cellar', 'Parlor']);
     expect(table.namesIn({ kind: 'outOfGame' })).toEqual(['Study', 'Trapped']);
-    expect(table.investigatorClues()).toEqual({ roland: 0, daisy: 0, wendy: 0 });
 
-    // Round 1 – upkeep
-    table.upkeep();
+    table.endTurn(wendy);
 
+    // Round 1 – enemy phase: no enemy is in play yet
+    table.nextPhase();
+
+    expect(table.phase()).toEqual({ round: 1, phase: 'enemy' });
+    expect(table.attacksDue()).toEqual([]);
+
+    // Round 1 – upkeep: 4.4 each investigator gains a resource, 4.6 the round ends
+    table.nextPhase();
+
+    expect(table.phase()).toEqual({ round: 1, phase: 'upkeep' });
     expect(table.investigatorResources()).toEqual({ roland: 6, daisy: 6, wendy: 6 });
 
-    // Round 2 – mythos phase
-    table.placeMythosDoom();
-    table.drawEncounterCard(roland);
+    // Round 2 – mythos: 1.2 doom, 1.3 below the threshold, 1.4 Roland draws the
+    // Icy Ghoul, which spawns in the Cellar, and Daisy draws Crypt Chill: its
+    // revelation test stops the phase until the players enter the result.
+    table.nextPhase();
 
+    expect(table.phase()).toEqual({ round: 2, phase: 'mythos' });
     expect(table.enemyLines()).toEqual(['Icy Ghoul: Cellar, unengaged']);
+    expect(table.pendingDecisions()).toEqual([
+      'Revelation of Crypt Chill: willpower (4) pass / fail [skillTestResult]',
+    ]);
 
-    // Daisy draws Crypt Chill and takes a willpower (4) test: with willpower 3
-    // she fails and, having no asset to discard, takes 2 damage.
-    table.drawEncounterCard(daisy);
+    // With willpower 3 Daisy fails and, having no asset to discard, takes 2 damage.
+    table.answer('Crypt Chill', 'fail');
     table.takeDamage(daisy, 2);
-    // Wendy draws Ancient Evils: 1 doom on the agenda.
-    table.drawEncounterCard(wendy);
+    // 1.4 continues: Wendy draws Ancient Evils, 1 doom on the agenda.
+    table.nextPhase();
     table.placeDoom(1);
 
     expect(table.agenda()).toEqual({ name: "What's Going On?!", doom: 2 });
     expect(table.namesIn({ kind: 'encounterDiscard' })).toEqual(['Ancient Evils', 'Crypt Chill']);
 
-    // Round 2 – investigation: Roland's turn
+    // Round 2 – investigation: Roland's turn (the Attic's shroud is 1)
+    table.nextPhase();
+    table.startTurn(roland);
     table.moveTo(roland, 'Attic');
     table.investigate(roland);
     table.investigate(roland);
+    table.endTurn(roland);
 
     // Round 2 – investigation: Wendy's turn (the group lets her go before Daisy)
+    table.startTurn(wendy);
     table.moveTo(wendy, 'Cellar');
-    // Entering a location with a ready enemy engages it; `MoveInvestigator` does
-    // not do that yet (M1.8 follow-up), so the script engages explicitly.
-    table.engage(wendy, icyGhoul);
+    // Entering a location with a ready enemy engages it, which is no action;
+    // `MoveInvestigator` does not do that yet (M1.8 follow-up), so the script engages for free.
+    table.engage(wendy, icyGhoul, { free: true });
 
-    // Round 2 – investigation: Daisy's turn
+    expect(table.turn()).toBe('Wendy Adams, actions 1/3');
+
+    table.endTurn(wendy);
+
+    // Round 2 – investigation: Daisy's turn (intellect 5 against the Cellar's shroud 4)
+    table.startTurn(daisy);
     table.moveTo(daisy, 'Cellar');
     table.investigate(daisy);
+    table.endTurn(daisy);
 
     expect(table.investigatorLocations()).toEqual({
       roland: 'Attic',
@@ -164,24 +205,30 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.cluesOn('Attic')).toBe(4);
     expect(table.cluesOn('Cellar')).toBe(5);
 
-    // Round 2 – enemy phase
-    table.moveHunters();
+    // Round 2 – enemy phase: 3.2 no hunter, 3.3 the Icy Ghoul attacks Wendy
+    table.nextPhase();
+
+    expect(table.attacksDue()).toEqual(['Icy Ghoul attacks wendy']);
+
     table.resolveEnemyAttacks();
 
     expect(table.wounds(wendy)).toEqual({ damage: 2, horror: 1 });
 
     // Round 2 – upkeep
-    table.upkeep();
+    table.nextPhase();
 
-    // Round 3 – mythos phase
-    table.placeMythosDoom();
+    // Round 3 – mythos: 1.2 brings the doom to the threshold, and the agenda
+    // question comes at 1.3, the only regular moment the agenda can advance.
+    table.nextPhase();
 
+    expect(table.phase()).toEqual({ round: 3, phase: 'mythos' });
     expect(table.agenda()).toEqual({ name: "What's Going On?!", doom: 3 });
     expect(table.pendingDecisions()).toEqual([
       "Advance agenda What's Going On?! yes / no [confirm]",
     ]);
     expect(table.board()).toMatchInlineSnapshot(`
-      "Round 0, setup phase
+      "Round 3, mythos phase
+      Steps left: 1.4 (Roland Banks), 1.4 (Daisy Walker), 1.4 (Wendy Adams)
       Agenda: What's Going On?! – doom 3/3
       Act: The Barrier – needs 9 clues
       Map Study:
@@ -210,10 +257,9 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     `);
 
     // Nothing else can happen while the question is open.
-    expect(() => table.moveTo(roland, 'Hallway')).toThrow(
+    expect(() => table.nextPhase()).toThrow(
       expect.objectContaining({ rejection: expect.objectContaining({ code: 'decisionPending' }) }),
     );
-    expect(table.investigatorLocations().roland).toBe('Attic');
 
     // The players answer yes. The reverse side lets the lead investigator choose,
     // but the agenda has no reverse-side hook yet, so Roland simply takes the 2
@@ -223,18 +269,9 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     expect(table.agenda()).toEqual({ name: 'Rise of the Ghouls', doom: 0 });
     expect(table.pendingDecisions()).toEqual([]);
-    expect(table.events.map((event) => event.type)).toContain('DecisionResolved');
 
-    table.drawEncounterCard(roland);
-
-    expect(table.enemyLines()).toEqual([
-      'Icy Ghoul: Cellar, engaged with wendy',
-      'Swarm of Rats: Attic, engaged with roland',
-    ]);
-
-    table.drawEncounterCard(daisy);
-    // Wendy draws Ancient Evils: 1 doom on the new agenda.
-    table.drawEncounterCard(wendy);
+    // 1.4: Roland draws the Swarm of Rats, Daisy a Ghoul Minion, Wendy Ancient Evils.
+    table.nextPhase();
     table.placeDoom(1);
 
     expect(table.enemyLines()).toEqual([
@@ -243,44 +280,59 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       'Ghoul Minion: Cellar, engaged with daisy',
     ]);
 
-    // Round 3 – investigation: Roland's turn
+    // Round 3 – investigation: Roland's turn (agility 2 plus a good chaos token against the rats' evade 3)
+    table.nextPhase();
+    table.startTurn(roland);
     table.evade(roland, swarmOfRats);
     table.moveTo(roland, 'Hallway');
     table.moveTo(roland, 'Cellar');
 
-    // Round 3 – investigation: Daisy's turn
+    // A fourth action is beyond Roland's three.
+    expect(() => table.moveTo(roland, 'Hallway')).toThrow(
+      expect.objectContaining({ rejection: expect.objectContaining({ code: 'noActionsLeft' }) }),
+    );
+    expect(table.investigatorLocations().roland).toBe('Cellar');
+
+    table.endTurn(roland);
+
+    // Round 3 – investigation: Daisy's turn (the minion's fight is 2)
+    table.startTurn(daisy);
     table.fight(daisy, ghoulMinion);
     table.fight(daisy, ghoulMinion);
+    table.endTurn(daisy);
 
     expect(table.namesIn({ kind: 'encounterDiscard' })[0]).toBe('Ghoul Minion');
 
     // Round 3 – investigation: Wendy's turn
+    table.startTurn(wendy);
     table.fight(wendy, icyGhoul);
     table.fight(wendy, icyGhoul);
+    table.endTurn(wendy);
 
-    // Round 3 – enemy phase
-    table.moveHunters();
+    // Round 3 – enemy phase: the evaded rats are exhausted and stay; the Icy Ghoul attacks again
+    table.nextPhase();
     table.resolveEnemyAttacks();
 
     expect(table.wounds(wendy)).toEqual({ damage: 4, horror: 2 });
 
-    // Round 3 – upkeep
-    table.upkeep();
+    // Round 3 – upkeep: 4.3 readies the rats; nobody is in the Attic, so they stay unengaged.
+    table.nextPhase();
 
-    // Upkeep readied the rats; nobody is in the Attic, so they stay unengaged.
     expect(table.enemyLines()).toEqual([
       'Icy Ghoul: Cellar, engaged with wendy, 2 damage',
       'Swarm of Rats: Attic, unengaged',
     ]);
 
-    // Round 4 – mythos phase
-    table.placeMythosDoom();
-    // Roland draws Grasping Hands and takes an agility (3) test: with agility 2
-    // he fails by 1 and takes 1 damage.
-    table.drawEncounterCard(roland);
+    // Round 4 – mythos: Roland draws Grasping Hands, an agility (3) test
+    table.nextPhase();
+
+    expect(table.phase()).toEqual({ round: 4, phase: 'mythos' });
+
+    // With agility 2 he fails by 1 and takes 1 damage.
+    table.answer('Grasping Hands', 'fail');
     table.takeDamage(roland, 1);
-    table.drawEncounterCard(daisy);
-    table.drawEncounterCard(wendy);
+    // 1.4 continues: Daisy draws a Ghoul Minion, Wendy the Flesh-Eater.
+    table.nextPhase();
 
     expect(table.enemyLines()).toEqual([
       'Flesh-Eater: Attic, unengaged',
@@ -289,27 +341,42 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       'Ghoul Minion: Cellar, engaged with daisy',
     ]);
 
-    // Round 4 – investigation: Roland's turn
+    // Round 4 – investigation: Roland's turn. He takes the Icy Ghoul over and
+    // commits Vicious Blow to his attack: the players confirm 2 damage.
+    table.nextPhase();
+    table.startTurn(roland);
     table.engage(roland, icyGhoul);
-    table.fight(roland, icyGhoul);
-    table.fight(roland, icyGhoul);
+    table.fight(roland, icyGhoul, { damage: 2 });
 
     expect(table.namesIn({ kind: 'victoryDisplay' })).toEqual(['Icy Ghoul']);
 
-    // Round 4 – investigation: Daisy's turn
+    table.takeAction(roland, 'resource');
+    table.endTurn(roland);
+
+    // Round 4 – investigation: Daisy's turn. Her ability grants an additional
+    // action for Tome abilities: she reads her Old Book of Lore with it.
+    table.startTurn(daisy);
+    table.adjustActions(daisy, 1);
+    table.takeAction(daisy, 'activate');
     table.fight(daisy, ghoulMinion);
     table.fight(daisy, ghoulMinion);
 
+    expect(table.turn()).toBe('Daisy Walker, actions 3/4');
+
+    table.endTurn(daisy);
+
     // Round 4 – investigation: Wendy's turn
+    table.startTurn(wendy);
     table.investigate(wendy);
     table.investigate(wendy);
+    table.endTurn(wendy);
 
     expect(table.cluesOn('Cellar')).toBe(3);
 
-    // Round 4 – enemy phase: with everyone in the Cellar the rats hunt them.
-    table.moveHunters();
-    table.resolveEnemyAttacks();
+    // Round 4 – enemy phase: with everyone in the Cellar the rats hunt them; nobody is attacked.
+    table.nextPhase();
 
+    expect(table.attacksDue()).toEqual([]);
     expect(table.agenda()).toEqual({ name: 'Rise of the Ghouls', doom: 2 });
     expect(table.enemyLines()).toEqual([
       'Flesh-Eater: Attic, unengaged',
@@ -317,15 +384,15 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     ]);
 
     // Round 4 – upkeep
-    table.upkeep();
+    table.nextPhase();
 
-    // Round 5 – mythos phase
-    table.placeMythosDoom();
-    // Roland draws Rotting Remains and takes a willpower (3) test: with
-    // willpower 3 he passes and takes no horror.
-    table.drawEncounterCard(roland);
-    table.drawEncounterCard(daisy);
-    table.drawEncounterCard(wendy);
+    // Round 5 – mythos: Roland draws Rotting Remains, a willpower (3) test
+    table.nextPhase();
+
+    // With willpower 3 he passes and takes no horror.
+    table.answer('Rotting Remains', 'pass');
+    // 1.4 continues: Daisy draws the Ravenous Ghoul, Wendy Frozen in Fear.
+    table.nextPhase();
 
     expect(table.agenda()).toEqual({ name: 'Rise of the Ghouls', doom: 3 });
     expect(table.namesIn({ kind: 'threatArea', investigatorId: wendy })).toEqual([
@@ -333,13 +400,25 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     ]);
 
     // Round 5 – investigation: Roland's and Daisy's turns pass without actions
+    table.nextPhase();
+    table.startTurn(roland);
+    table.endTurn(roland);
+    table.startTurn(daisy);
+    table.endTurn(daisy);
+
+    // The phase cannot end before Wendy has had her turn.
+    expect(() => table.nextPhase()).toThrow(
+      expect.objectContaining({ rejection: expect.objectContaining({ code: 'turnsNotTaken' }) }),
+    );
 
     // Round 5 – investigation: Wendy's turn
+    table.startTurn(wendy);
     table.investigate(wendy);
+    table.endTurn(wendy);
 
-    // Round 5 – enemy phase: the rats reach the Cellar, where three investigators
+    // Round 5 – enemy phase: 3.2 the rats reach the Cellar, where three investigators
     // are and none is their prey, so the engine asks whom they engage.
-    table.moveHunters();
+    table.nextPhase();
 
     expect(table.pendingDecisions()).toEqual([
       'Whom does Swarm of Rats engage? Roland Banks / Daisy Walker / Wendy Adams [chooseInvestigator]',
@@ -350,11 +429,14 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       'Ravenous Ghoul: Cellar, engaged with daisy',
     ]);
 
-    // The players choose Roland.
+    // The players choose Roland; 3.3 then lists both attacks in player order.
     table.answer(swarmOfRats, 'Roland Banks');
+    table.nextPhase();
 
-    expect(table.pendingDecisions()).toEqual([]);
-    expect(table.enemyLines()).toContain('Swarm of Rats: Cellar, engaged with roland');
+    expect(table.attacksDue()).toEqual([
+      'Swarm of Rats attacks roland',
+      'Ravenous Ghoul attacks daisy',
+    ]);
 
     table.resolveEnemyAttacks();
 
@@ -362,9 +444,10 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.wounds(daisy)).toEqual({ damage: 3, horror: 1 });
 
     // Round 5 – upkeep
-    table.upkeep();
+    table.nextPhase();
 
-    expect(table.investigatorResources()).toEqual({ roland: 10, daisy: 10, wendy: 10 });
+    expect(table.phase()).toEqual({ round: 5, phase: 'upkeep' });
+    expect(table.investigatorResources()).toEqual({ roland: 11, daisy: 10, wendy: 10 });
 
     // The whole event log, setup included, replays to the live state.
     expect(replay(table.events)).toEqual(table.state);
