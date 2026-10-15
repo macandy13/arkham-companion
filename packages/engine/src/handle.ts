@@ -10,11 +10,14 @@ import {
   handleDiscoverClues,
   handleMoveInvestigator,
 } from './handle_investigator';
+import { withAgendaCheck } from './doom';
+import { handleAdvanceAct, handleAdvanceAgenda, handlePlaceDoom } from './handle_scenario';
 import type { Adjustment, Command, StartScenario, StartingCard } from './commands';
 import type { CardMoved, DeckShuffled, Event, ScenarioStarted, TokensChanged } from './events';
 import { instanceId, type InstanceId, type MapId } from './ids';
 import { createMap, type GameMap, type MapSpec } from './map';
 import { apply } from './reducer';
+import { requireCard } from './lookup';
 import { CommandRejected } from './rejection';
 import { shuffle } from './rng';
 import type { CardInstance, GameState, Investigator, TokenKind } from './state';
@@ -41,9 +44,17 @@ export function handle(ctx: EngineContext, state: GameState, command: Command): 
     case 'MoveInvestigator':
       return handleMoveInvestigator(ctx, state, command);
     case 'AdjustInvestigator':
-      return handleAdjustInvestigator(state, command);
+      return command.stat === 'doomOnPlayerCards'
+        ? withAgendaCheck(ctx, state, handleAdjustInvestigator(state, command))
+        : handleAdjustInvestigator(state, command);
     case 'DiscoverClues':
       return handleDiscoverClues(state, command);
+    case 'PlaceDoom':
+      return withAgendaCheck(ctx, state, handlePlaceDoom(state, command));
+    case 'AdvanceAgenda':
+      return handleAdvanceAgenda(state, command);
+    case 'AdvanceAct':
+      return handleAdvanceAct(ctx, state, command);
   }
 }
 
@@ -133,8 +144,7 @@ function startingMaps(specs: Readonly<Record<MapId, MapSpec>>): Record<MapId, Ga
 
 /** Rejects `cardId` unless it is a known card on a map. */
 function validateLocation(cards: Record<InstanceId, CardInstance>, cardId: InstanceId): void {
-  const card = cards[cardId];
-  if (!card) throw new CommandRejected({ code: 'unknownCard', cardId });
+  const card = requireCard(cards, cardId);
   if (card.zone.kind !== 'location') throw new CommandRejected({ code: 'notALocation', cardId });
 }
 
@@ -148,8 +158,7 @@ function encounterDeckShuffle(state: GameState): DeckShuffled[] {
 }
 
 function handleAdjustment(state: GameState, adj: Adjustment): CardMoved | TokensChanged {
-  const card = state.cards[adj.cardId];
-  if (!card) throw new CommandRejected({ code: 'unknownCard', cardId: adj.cardId });
+  const card = requireCard(state.cards, adj.cardId);
 
   switch (adj.kind) {
     case 'moveCard': {
@@ -230,8 +239,7 @@ function validateZone(refs: ZoneRefs, cardId: InstanceId, zone: Zone): void {
         if (current === cardId) throw new CommandRejected({ code: 'hostingCycle', cardId, hostId });
         if (seen.has(current)) break;
         seen.add(current);
-        const host: CardInstance | undefined = refs.cards[current];
-        if (!host) throw new CommandRejected({ code: 'unknownCard', cardId: current });
+        const host = requireCard(refs.cards, current);
         current = hostOf(host.zone);
       }
       return;

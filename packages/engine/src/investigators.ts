@@ -28,6 +28,8 @@ export function statValue(investigator: Investigator, stat: InvestigatorStat): n
       return investigator.clues;
     case 'resources':
       return investigator.resources;
+    case 'doomOnPlayerCards':
+      return investigator.doomOnPlayerCards;
   }
 }
 
@@ -56,6 +58,8 @@ export function withStatDelta(
       return { ...investigator, clues: investigator.clues + delta };
     case 'resources':
       return { ...investigator, resources: investigator.resources + delta };
+    case 'doomOnPlayerCards':
+      return { ...investigator, doomOnPlayerCards: investigator.doomOnPlayerCards + delta };
   }
 }
 

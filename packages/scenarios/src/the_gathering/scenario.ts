@@ -12,8 +12,9 @@ const reference = 'scenario.theGathering.reference';
  * Hallway connects to the Attic, the Cellar and the Parlor, with the
  * investigators moving to the Hallway. Not part of `theGathering.setup`,
  * because applying setup steps mid-scenario (taking these locations from the
- * set-aside zone) arrives with act advancement (M1.5); until then tests
- * compile it on its own to check the layout.
+ * set-aside zone) needs the reverse-side hooks of M1.6, which `AdvanceAct`
+ * calls (`reverseSideEvents`); until then tests compile it on its own to
+ * check the layout.
  */
 export const theGatheringHouse: AddMapStep = {
   kind: 'addMap',

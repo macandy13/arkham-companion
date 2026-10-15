@@ -5,6 +5,7 @@ import type {
   CampaignLog,
   CardInstance,
   ChaosToken,
+  Decision,
   Difficulty,
   Investigator,
   InvestigatorStat,
@@ -25,7 +26,11 @@ export type Event =
   | ConnectionChanged
   | InvestigatorMoved
   | InvestigatorChanged
-  | InvestigatorDefeated;
+  | InvestigatorDefeated
+  | DecisionRequested
+  | AgendaAdvanced
+  | ActAdvanced
+  | ScenarioEnded;
 
 /** A scenario was set up; replaces the whole state. Produced by `StartScenario`. */
 export interface ScenarioStarted {
@@ -121,6 +126,45 @@ export interface InvestigatorDefeated {
   type: 'InvestigatorDefeated';
   investigatorId: InvestigatorId;
   cause: 'damage' | 'horror';
+}
+
+/**
+ * The players have to answer `decision`; it is added to `GameState.pending`.
+ * Produced by `PlaceDoom` and `AdjustInvestigator` when the doom threshold is
+ * reached ('advanceAgenda'); M1.9 generalises this for all decisions.
+ */
+export interface DecisionRequested {
+  type: 'DecisionRequested';
+  decision: Decision;
+}
+
+/**
+ * The agenda `cardId` was advanced and `nextId` is now the current agenda
+ * (absent after the last one). Follows the `CardFlipped`/`CardMoved` that take
+ * the old agenda out of play; also drops decisions about the old agenda.
+ * Produced by `AdvanceAgenda`.
+ */
+export interface AgendaAdvanced {
+  type: 'AgendaAdvanced';
+  cardId: InstanceId;
+  nextId?: InstanceId;
+}
+
+/** Like `AgendaAdvanced`, for the act deck. Produced by `AdvanceAct`. */
+export interface ActAdvanced {
+  type: 'ActAdvanced';
+  cardId: InstanceId;
+  nextId?: InstanceId;
+}
+
+/**
+ * The scenario is over with the given resolution (`GameMeta.resolution`), which
+ * the campaign records. Produced by `AdvanceAgenda`/`AdvanceAct` when the last
+ * card of a deck advances.
+ */
+export interface ScenarioEnded {
+  type: 'ScenarioEnded';
+  resolution: string;
 }
 
 /** String literal of every event type. */

@@ -1,13 +1,17 @@
 import { sameEdge } from './board';
 import type {
+  ActAdvanced,
+  AgendaAdvanced,
   CardFlipped,
   CardMoved,
   ConnectionChanged,
   DeckShuffled,
+  DecisionRequested,
   Event,
   InvestigatorChanged,
   InvestigatorDefeated,
   InvestigatorMoved,
+  ScenarioEnded,
   ScenarioStarted,
   TokensChanged,
 } from './events';
@@ -39,6 +43,14 @@ export function apply(state: GameState, event: Event): GameState {
       return applyInvestigator(state, event, (inv) => withStatDelta(inv, event.stat, event.delta));
     case 'InvestigatorDefeated':
       return applyInvestigator(state, event, (inv) => ({ ...inv, status: 'defeated' }));
+    case 'DecisionRequested':
+      return applyDecisionRequested(state, event);
+    case 'AgendaAdvanced':
+      return applyAgendaAdvanced(state, event);
+    case 'ActAdvanced':
+      return applyActAdvanced(state, event);
+    case 'ScenarioEnded':
+      return applyScenarioEnded(state, event);
   }
 }
 
@@ -71,6 +83,8 @@ function applyScenarioStarted(e: ScenarioStarted): GameState {
     investigators: e.investigators,
     cards,
     order,
+    agenda: { current: order[zoneKey({ kind: 'agendaDeck' })]?.[0] },
+    act: { current: order[zoneKey({ kind: 'actDeck' })]?.[0] },
     board: { ...base.board, maps: e.maps },
     chaosBag: e.chaosBag,
   };
@@ -131,6 +145,27 @@ function applyConnectionChanged(state: GameState, e: ConnectionChanged): GameSta
     ...state,
     board: { ...state.board, maps: { ...state.board.maps, [e.mapId]: { ...map, connections } } },
   };
+}
+
+function applyDecisionRequested(state: GameState, e: DecisionRequested): GameState {
+  return { ...state, pending: [...state.pending, e.decision] };
+}
+
+function applyAgendaAdvanced(state: GameState, e: AgendaAdvanced): GameState {
+  return { ...withoutDecisionsAbout(state, e.cardId), agenda: { current: e.nextId } };
+}
+
+function applyActAdvanced(state: GameState, e: ActAdvanced): GameState {
+  return { ...withoutDecisionsAbout(state, e.cardId), act: { current: e.nextId } };
+}
+
+function applyScenarioEnded(state: GameState, e: ScenarioEnded): GameState {
+  return { ...state, meta: { ...state.meta, resolution: e.resolution } };
+}
+
+/** Drops pending decisions about a card that has left play, so none outlives its subject. */
+function withoutDecisionsAbout(state: GameState, cardId: InstanceId): GameState {
+  return { ...state, pending: state.pending.filter((d) => d.subject !== cardId) };
 }
 
 /** Replaces the event's investigator with `update(investigator)`; unknown IDs leave the state as is. */

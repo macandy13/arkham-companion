@@ -33,13 +33,14 @@ export interface CardInstance {
 export type InvestigatorStatus = 'active' | 'resigned' | 'defeated';
 
 /** The investigator counters that commands and events can change. */
-export type InvestigatorStat = 'damage' | 'horror' | 'clues' | 'resources';
+export type InvestigatorStat = 'damage' | 'horror' | 'clues' | 'resources' | 'doomOnPlayerCards';
 /** All investigator stats, e.g. for iterating in tests. */
 export const INVESTIGATOR_STATS: readonly InvestigatorStat[] = [
   'damage',
   'horror',
   'clues',
   'resources',
+  'doomOnPlayerCards',
 ];
 
 /**
@@ -57,6 +58,12 @@ export interface Investigator {
   sanity: { max: number; horror: number };
   clues: number;
   resources: number;
+  /**
+   * Doom on the investigator's player cards. The app does not model player
+   * cards, so the players keep this plain counter instead; it counts towards
+   * the doom total like doom on any card in play (`doomInPlay`).
+   */
+  doomOnPlayerCards: number;
   status: InvestigatorStatus;
 }
 
@@ -102,11 +109,16 @@ export type ChaosToken =
 /**
  * An open choice for the players (hunter tie, spawn location, effect target …).
  * The engine never guesses; the answer comes back as a `ResolveDecision` command.
+ * Created by a `DecisionRequested` event and kept in `GameState.pending` until
+ * the card it is about advances or (M1.9) the players resolve it.
  */
 export interface Decision {
+  /** Unique among pending decisions; derived from kind and subject so a repeated check does not ask twice. */
   id: DecisionId;
-  /** Machine-readable kind, e.g. 'hunterTie'. Interpreted by the rule module that created it. */
+  /** Machine-readable kind, e.g. 'hunterTie' or 'advanceAgenda'. Interpreted by the rule module that created it. */
   kind: string;
+  /** The card the decision is about, if any; the decision is dropped when this card advances. */
+  subject?: InstanceId;
   /** i18n key or plain text describing the choice. */
   prompt: string;
   options: DecisionOption[];
@@ -115,6 +127,7 @@ export interface Decision {
 /** One answer the players can pick for a `Decision`. */
 export interface DecisionOption {
   id: string;
+  /** i18n key or plain text. */
   label: string;
   /** Optional reference to a card or investigator the option is about. */
   target?: InstanceId | InvestigatorId;
@@ -140,6 +153,8 @@ export interface GameMeta {
    * Reference and FAQ. Set by `ScenarioStarted`.
    */
   playerCount: number;
+  /** Resolution id the scenario ended with (`ScenarioEnded`); absent while it is still running. */
+  resolution?: string;
   seed: number;
   rngState: RngState;
   round: number;
