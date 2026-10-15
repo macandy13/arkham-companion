@@ -74,6 +74,20 @@ export function runFrom(
   return { state: current, events };
 }
 
+/** The state after executing commands from `state`; for tests that need only the outcome, not the events. */
+export function stateAfter(
+  ctx: EngineContext,
+  state: GameState,
+  ...commands: Command[]
+): GameState {
+  return runFrom(ctx, state, commands).state;
+}
+
+/** The structured rejection `command` causes in `state` (fails the test if it is accepted). */
+export function rejectionFrom(ctx: EngineContext, state: GameState, command: Command): Rejection {
+  return rejectionOf(() => execute(ctx, state, command));
+}
+
 /** Executes commands from an empty state, returning the final state and all events. */
 export function run(
   ctx: EngineContext,

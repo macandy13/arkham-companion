@@ -5,12 +5,12 @@ import {
   handleRemoveConnection,
   handleRevealLocation,
   validateConnections,
-} from './handle-board';
+} from './handle_board';
 import {
   handleAdjustInvestigator,
   handleDiscoverClues,
   handleMoveInvestigator,
-} from './handle-investigator';
+} from './handle_investigator';
 import { withAgendaCheck } from './doom';
 import {
   completeAdvance,
@@ -18,10 +18,11 @@ import {
   handleAdvanceAgenda,
   handleEndScenario,
   handlePlaceDoom,
-} from './handle-scenario';
+} from './handle_scenario';
 import type { Adjustment, Command, MoveCard, StartScenario, StartingCard } from './commands';
 import type { CardMoved, DeckShuffled, Event, ScenarioStarted, TokensChanged } from './events';
 import { instanceId, type InstanceId, type MapId } from './ids';
+import { requireCard } from './lookup';
 import { createMap, type GameMap, type MapSpec } from './map';
 import { apply, replay } from './reducer';
 import { CommandRejected, type Rejection } from './rejection';
@@ -267,8 +268,7 @@ function startingMaps(specs: Readonly<Record<MapId, MapSpec>>): Record<MapId, Ga
 
 /** Rejects `cardId` unless it is a known card on a map. */
 function validateLocation(cards: Record<InstanceId, CardInstance>, cardId: InstanceId): void {
-  const card = cards[cardId];
-  if (!card) throw new CommandRejected({ code: 'unknownCard', cardId });
+  const card = requireCard(cards, cardId);
   if (card.zone.kind !== 'location') throw new CommandRejected({ code: 'notALocation', cardId });
 }
 
@@ -283,9 +283,7 @@ function encounterDeckShuffle(state: GameState): DeckShuffled[] {
 
 /** `MoveCard`: the same move a `ManualAdjust` makes, as a game event. */
 function handleMoveCard(state: GameState, cmd: MoveCard): CardMoved {
-  const card = state.cards[cmd.cardId];
-  if (!card) throw new CommandRejected({ code: 'unknownCard', cardId: cmd.cardId });
-  return cardMoved(state, card, cmd.to);
+  return cardMoved(state, requireCard(state.cards, cmd.cardId), cmd.to);
 }
 
 /** The `CardMoved` for moving `card` to `to` (at `index`, default the end), after validating both. */
@@ -315,8 +313,7 @@ function cardMoved(state: GameState, card: CardInstance, to: Zone, index?: numbe
 }
 
 function handleAdjustment(state: GameState, adj: Adjustment): CardMoved | TokensChanged {
-  const card = state.cards[adj.cardId];
-  if (!card) throw new CommandRejected({ code: 'unknownCard', cardId: adj.cardId });
+  const card = requireCard(state.cards, adj.cardId);
 
   switch (adj.kind) {
     case 'moveCard':
@@ -372,8 +369,7 @@ function validateZone(refs: ZoneRefs, cardId: InstanceId, zone: Zone): void {
         if (current === cardId) throw new CommandRejected({ code: 'hostingCycle', cardId, hostId });
         if (seen.has(current)) break;
         seen.add(current);
-        const host: CardInstance | undefined = refs.cards[current];
-        if (!host) throw new CommandRejected({ code: 'unknownCard', cardId: current });
+        const host = requireCard(refs.cards, current);
         current = hostOf(host.zone);
       }
       return;

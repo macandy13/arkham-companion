@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   checkInvariants,
-  execute,
   instanceId,
   mapId,
   neighbours,
@@ -14,8 +13,10 @@ import {
 } from './index';
 import {
   edge,
+  rejectionFrom,
   rejectionOf,
   runFrom,
+  stateAfter,
   startBoard,
   testContext,
   type BoardOptions,
@@ -42,20 +43,21 @@ function board(connections: Edge[] = [], overrides: Partial<BoardOptions> = {}):
   });
 }
 
-function run(state: GameState, ...commands: Command[]): GameState {
-  return runFrom(testContext, state, commands).state;
-}
-
 describe('AddConnection', () => {
   it('adds an undirected edge that works in both directions', () => {
-    const next = run(board(), { type: 'AddConnection', mapId: main, from: study, to: hall });
+    const next = stateAfter(testContext, board(), {
+      type: 'AddConnection',
+      mapId: main,
+      from: study,
+      to: hall,
+    });
 
     expect(neighbours(next, study)).toEqual([hall]);
     expect(neighbours(next, hall)).toEqual([study]);
   });
 
   it('adds a one-way edge that only works from its source', () => {
-    const next = run(board(), {
+    const next = stateAfter(testContext, board(), {
       type: 'AddConnection',
       mapId: main,
       from: study,
@@ -68,7 +70,12 @@ describe('AddConnection', () => {
   });
 
   it('stores the edge on the map named by the command, even when it ends on another map', () => {
-    const next = run(board(), { type: 'AddConnection', mapId: annex, from: hall, to: cellar });
+    const next = stateAfter(testContext, board(), {
+      type: 'AddConnection',
+      mapId: annex,
+      from: hall,
+      to: cellar,
+    });
 
     expect(next.board.maps[annex]?.connections).toEqual([edge('hall', 'cellar')]);
     expect(next.board.maps[main]?.connections).toEqual([]);
@@ -81,9 +88,11 @@ describe('AddConnection', () => {
   ] as const)('rejects %s', (_name, command) => {
     const state = board([edge('study', 'hall')]);
 
-    const rejection = rejectionOf(() =>
-      execute(testContext, state, { type: 'AddConnection', mapId: main, ...command }),
-    );
+    const rejection = rejectionFrom(testContext, state, {
+      type: 'AddConnection',
+      mapId: main,
+      ...command,
+    });
 
     expect(rejection).toEqual({
       code: 'duplicateConnection',
@@ -105,30 +114,35 @@ describe('AddConnection', () => {
       { code: 'unknownCard', cardId: 'nowhere' },
     ],
   ] as const)('rejects connecting %s', (_name, ends, expected) => {
-    const rejection = rejectionOf(() =>
-      execute(testContext, board(), { type: 'AddConnection', mapId: main, ...ends }),
-    );
+    const rejection = rejectionFrom(testContext, board(), {
+      type: 'AddConnection',
+      mapId: main,
+      ...ends,
+    });
 
     expect(rejection).toEqual(expected);
   });
 
   it('rejects an edge for an unknown map', () => {
-    const rejection = rejectionOf(() =>
-      execute(testContext, board(), {
-        type: 'AddConnection',
-        mapId: mapId('nowhere'),
-        from: study,
-        to: hall,
-      }),
-    );
+    const rejection = rejectionFrom(testContext, board(), {
+      type: 'AddConnection',
+      mapId: mapId('nowhere'),
+      from: study,
+      to: hall,
+    });
 
     expect(rejection).toEqual({ code: 'unknownMap', mapId: 'nowhere' });
   });
 
   it('keeps an edge to a set-aside location inactive until it enters play', () => {
-    const connected = run(board(), { type: 'AddConnection', mapId: main, from: study, to: attic });
+    const connected = stateAfter(testContext, board(), {
+      type: 'AddConnection',
+      mapId: main,
+      from: study,
+      to: attic,
+    });
 
-    const inPlay = run(connected, {
+    const inPlay = stateAfter(testContext, connected, {
       type: 'ManualAdjust',
       adjustment: { kind: 'moveCard', cardId: attic, to: { kind: 'location', mapId: annex } },
     });
@@ -142,7 +156,11 @@ describe('RemoveConnection', () => {
   it('removes an undirected edge given in the opposite direction', () => {
     const state = board([edge('study', 'hall')]);
 
-    const next = run(state, { type: 'RemoveConnection', from: hall, to: study });
+    const next = stateAfter(testContext, state, {
+      type: 'RemoveConnection',
+      from: hall,
+      to: study,
+    });
 
     expect(next.board.maps[main]?.connections).toEqual([]);
   });
@@ -150,7 +168,11 @@ describe('RemoveConnection', () => {
   it('removes a cross-map edge from the map that owns it', () => {
     const state = board([edge('hall', 'cellar')]);
 
-    const next = run(state, { type: 'RemoveConnection', from: cellar, to: hall });
+    const next = stateAfter(testContext, state, {
+      type: 'RemoveConnection',
+      from: cellar,
+      to: hall,
+    });
 
     expect(next.board.maps[main]?.connections).toEqual([]);
   });
@@ -158,9 +180,11 @@ describe('RemoveConnection', () => {
   it('does not remove a one-way edge with an undirected command', () => {
     const state = board([edge('study', 'hall', { oneWay: true })]);
 
-    const rejection = rejectionOf(() =>
-      execute(testContext, state, { type: 'RemoveConnection', from: study, to: hall }),
-    );
+    const rejection = rejectionFrom(testContext, state, {
+      type: 'RemoveConnection',
+      from: study,
+      to: hall,
+    });
 
     expect(rejection).toEqual({ code: 'connectionNotFound', from: study, to: hall });
   });
@@ -191,7 +215,7 @@ describe('AddMap', () => {
   const wing = mapId('wing');
 
   it('puts set-aside locations onto a new map with its connections', () => {
-    const next = run(board(), {
+    const next = stateAfter(testContext, board(), {
       type: 'AddMap',
       mapId: wing,
       map: { name: 'Wing', connections: [edge('attic', 'hall')] },
@@ -253,7 +277,7 @@ describe('AddMap', () => {
   ])('rejects $name', ({ command, rejection }) => {
     const state = board([edge('study', 'hall')]);
 
-    expect(rejectionOf(() => execute(testContext, state, command))).toEqual(rejection);
+    expect(rejectionFrom(testContext, state, command)).toEqual(rejection);
   });
 });
 
@@ -343,18 +367,22 @@ describe('RevealLocation', () => {
     ['per investigator', hall, 4],
     ['as a fixed amount regardless of investigators', cellar, 1],
   ])('flips the location and places clues %s', (_name, locationId, clues) => {
-    const next = run(board(), { type: 'RevealLocation', locationId });
+    const next = stateAfter(testContext, board(), { type: 'RevealLocation', locationId });
 
     expect(next.cards[locationId]?.faceUp).toBe(true);
     expect(next.cards[locationId]?.tokens.clue).toBe(clues);
   });
 
   it('rejects revealing a location twice', () => {
-    const revealed = run(board(), { type: 'RevealLocation', locationId: study });
+    const revealed = stateAfter(testContext, board(), {
+      type: 'RevealLocation',
+      locationId: study,
+    });
 
-    const rejection = rejectionOf(() =>
-      execute(testContext, revealed, { type: 'RevealLocation', locationId: study }),
-    );
+    const rejection = rejectionFrom(testContext, revealed, {
+      type: 'RevealLocation',
+      locationId: study,
+    });
 
     expect(rejection).toEqual({ code: 'alreadyRevealed', cardId: study });
   });
@@ -363,9 +391,7 @@ describe('RevealLocation', () => {
     ['a card that is not on a map', attic, { code: 'notALocation', cardId: attic }],
     ['an unknown card', instanceId('nowhere'), { code: 'unknownCard', cardId: 'nowhere' }],
   ])('rejects revealing %s', (_name, locationId, expected) => {
-    const rejection = rejectionOf(() =>
-      execute(testContext, board(), { type: 'RevealLocation', locationId }),
-    );
+    const rejection = rejectionFrom(testContext, board(), { type: 'RevealLocation', locationId });
 
     expect(rejection).toEqual(expected);
   });

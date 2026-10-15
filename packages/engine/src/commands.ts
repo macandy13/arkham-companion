@@ -220,18 +220,21 @@ export interface ClueSpend {
 }
 
 /**
- * Advances the current act. The investigators choose who pays, so `spend`
- * lists their payments; the total must equal the act's clue requirement
- * (its `clues`, resolved for the starting player count), and it is empty for an act
- * without one. Like `AdvanceAgenda`, the reverse side (`onActAdvance` hook)
- * resolves before the next act becomes current. Produces `InvestigatorChanged`
- * per payment, `CardFlipped`, `ActAdvanced`, the reverse side's events,
- * `CardMoved`, `CurrentCardChanged` and, for the last act, `ScenarioEnded`
- * unless the reverse side ended the scenario.
+ * Advances the current act. Paying clues is only one way to advance: other
+ * acts need an objective, an action or an event (an enemy defeated or out of
+ * play, …), which players or scenario hooks decide, so those advance with no
+ * `spend`. With `spend` the investigators choose who pays; the total must
+ * equal the act's clue requirement (its `clues`, resolved for the starting
+ * player count) and the act must have one. Like `AdvanceAgenda`, the reverse
+ * side (`onActAdvance` hook) resolves before the next act becomes current.
+ * Produces `InvestigatorChanged` per payment, `CardFlipped`, `ActAdvanced`,
+ * the reverse side's events, `CardMoved`, `CurrentCardChanged` and, for the
+ * last act, `ScenarioEnded` unless the reverse side ended the scenario.
  */
 export interface AdvanceAct {
   type: 'AdvanceAct';
-  spend: ClueSpend[];
+  /** Clue payments; omit to advance without paying (any act can advance that way). */
+  spend?: ClueSpend[];
   /**
    * Fallback resolution for the last act when its reverse side does not end
    * the scenario itself; rejected while further acts follow.
