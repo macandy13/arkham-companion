@@ -501,16 +501,18 @@ export interface CheckDoomThreshold {
 
 /**
  * The phase assistant's "Next": runs the outstanding steps of the current
- * phase (`GameMeta.steps`), or, when none are left, moves on to the next
- * phase (setup → investigation of round 1, skipping its mythos phase;
- * investigation → enemy → upkeep → mythos of the next round) and runs its
- * steps. Steps run until one leaves a decision pending or an enemy attack
- * needs resolving (`ResolveEnemyAttack`); the next `NextPhase` after the
- * answer resumes there. Rejected while an enemy attack of the current step
- * list is still due. Produces `PhaseChanged`, then per step
- * `PhaseStepsChanged` and the events of the step (`PlaceDoom`,
- * `CheckDoomThreshold`, `DrawEncounter`, `MoveHunters`, `ReadyEnemy`,
- * `AdjustInvestigator`, `RoundEnded`).
+ * phase (`GameMeta.steps`, numbered as in the Rules Reference, `PhaseStepId`),
+ * or, when none are left, moves on to the next phase (setup → investigation
+ * of round 1, skipping its mythos phase; investigation → enemy → upkeep →
+ * mythos of the next round) and runs its steps. Steps run until one leaves a
+ * decision pending or an enemy attack needs resolving (`ResolveEnemyAttack`);
+ * the next `NextPhase` after the answer resumes there. Rejected while an
+ * enemy attack of step 3.3 is still due, and in the investigation phase
+ * while a turn is in progress or an active investigator has not taken their
+ * turn (the group ends every turn first, even one without actions). Produces
+ * `PhaseChanged`, then per step `PhaseStepsChanged` and the events of the
+ * step (`PlaceDoom`, `CheckDoomThreshold`, `DrawEncounter`, `MoveHunters`,
+ * `ReadyEnemy`, `AdjustInvestigator`, `RoundEnded`).
  */
 export interface NextPhase {
   type: 'NextPhase';

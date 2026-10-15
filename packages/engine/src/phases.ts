@@ -1,5 +1,5 @@
 import type { EngineContext } from './cards';
-import type { Command, EndTurn, ResolveEnemyAttack } from './commands';
+import type { Command, ResolveEnemyAttack } from './commands';
 import { enemyAttackList } from './enemies';
 import type {
   Event,
@@ -8,14 +8,15 @@ import type {
   InvestigatorDefeated,
   PhaseChanged,
   PhaseStepsChanged,
-  TurnEnded,
 } from './events';
-import { isInPlay } from './handle-enemy';
-import { activeInvestigator } from './handle-investigator';
+import { isInPlay } from './handle_enemy';
+import { activeInvestigator } from './handle_investigator';
 import { defeatCause, playerOrder, withStatDelta } from './investigators';
+import { cardsOfType } from './lookup';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
-import type { GameState, Investigator, Phase, PhaseStep } from './state';
+import type { DueAttack, GameState, Investigator, Phase, PhaseStep, PhaseStepId } from './state';
+import { assertTurnsTaken } from './turns';
 import { zoneKey } from './zone';
 
 /** The phase that follows each phase; the first round starts with investigation (no mythos). */
@@ -27,7 +28,19 @@ const NEXT_PHASE: Readonly<Record<Phase, Phase>> = {
   upkeep: 'mythos',
 };
 
-type AttackStep = Extract<PhaseStep, { kind: 'enemyAttack' }>;
+/** The Rules Reference title of each step the phase assistant runs, for debugging output. */
+export const PHASE_STEP_TITLES: Readonly<Record<PhaseStepId, string>> = {
+  '1.2': 'place 1 doom on the current agenda',
+  '1.3': 'check doom threshold',
+  '1.4': 'each investigator draws 1 encounter card',
+  '3.2': 'hunter enemies move',
+  '3.3': 'resolve engaged enemy attacks',
+  '4.3': 'ready each exhausted card',
+  '4.4': 'each investigator gains 1 resource',
+  '4.6': 'round ends',
+};
+
+type AttackStep = Extract<PhaseStep, { id: '3.3' }>;
 
 /**
  * What running one phase step produces: its own events, then commands handled
@@ -47,20 +60,20 @@ export interface StepPlan {
  * `NextPhase`, own part: nothing while steps of the current phase remain
  * (`handle` then resumes them), otherwise the change to the next phase with
  * its steps. A new round begins with the mythos phase, or with investigation
- * in round 1, whose mythos phase the rules skip.
+ * in round 1, whose mythos phase the rules skip. The investigation phase ends
+ * only once every active investigator has taken their turn.
  */
 export function handleNextPhase(ctx: EngineContext, state: GameState): PhaseChanged[] {
-  const due = state.meta.steps.find(
-    (step): step is AttackStep => step.kind === 'enemyAttack' && isAttackDue(ctx, state, step),
-  );
-  if (due)
+  const due = dueAttacksOf(ctx, state, state.meta.steps[0]);
+  if (due[0])
     throw new CommandRejected({
       code: 'enemyAttackPending',
-      enemyId: due.enemyId,
-      investigatorId: due.investigatorId,
+      enemyId: due[0].enemyId,
+      investigatorId: due[0].investigatorId,
     });
   if (state.meta.steps.length > 0) return [];
   const { phase: current, round } = state.meta;
+  if (current === 'investigation') assertTurnsTaken(state);
   const phase = NEXT_PHASE[current];
   const newRound = phase === 'mythos' || current === 'setup';
   return [
@@ -75,100 +88,91 @@ export function handleNextPhase(ctx: EngineContext, state: GameState): PhaseChan
 
 /**
  * The next phase step that can run on its own, or `undefined` when none is
- * left or the next one is an enemy attack the players have to resolve. Each
- * plan starts with the `PhaseStepsChanged` that removes the step, so a
- * decision the step raises leaves the cursor after it.
+ * left or step 3.3 waits for the players to resolve an attack. Each plan
+ * starts with the `PhaseStepsChanged` that removes the step, so a decision the
+ * step raises leaves the cursor after it.
  */
 export function nextStepPlan(ctx: EngineContext, state: GameState): StepPlan | undefined {
   const [step, ...rest] = state.meta.steps;
   if (step === undefined) return undefined;
   const done: PhaseStepsChanged = { type: 'PhaseStepsChanged', steps: rest };
-  switch (step.kind) {
-    case 'enemyAttack':
-      // An attack whose enemy was defeated, evaded or exhausted meanwhile is simply gone.
-      return isAttackDue(ctx, state, step) ? undefined : { events: [done], commands: [] };
-    case 'enemyAttacks':
-      return {
-        events: [{ type: 'PhaseStepsChanged', steps: [...attackSteps(ctx, state), ...rest] }],
-        commands: [],
-      };
-    case 'endRound':
+  switch (step.id) {
+    case '3.3':
+      return attackStepPlan(ctx, state, step, rest);
+    case '4.6':
       return { events: [done, { type: 'RoundEnded', round: state.meta.round }], commands: [] };
     default:
       return { events: [done], commands: stepCommands(ctx, state, step) };
   }
 }
 
-/** `EndTurn`: marks the investigator's turn of this round as taken. */
-export function handleEndTurn(state: GameState, cmd: EndTurn): TurnEnded[] {
-  const investigator = activeInvestigator(state, cmd.investigatorId);
-  if (state.meta.phase !== 'investigation')
-    throw new CommandRejected({
-      code: 'wrongPhase',
-      expected: 'investigation',
-      actual: state.meta.phase,
-    });
-  if (state.meta.turnsTaken.includes(investigator.id))
-    throw new CommandRejected({ code: 'turnAlreadyTaken', investigatorId: investigator.id });
-  return [{ type: 'TurnEnded', investigatorId: investigator.id }];
+/**
+ * Step 3.3 when reached: lists the due attacks (in player order, see
+ * `enemyAttackList`) and waits; once none of them is due any more (resolved,
+ * or the enemy was defeated, evaded or exhausted meanwhile) the step is done.
+ */
+function attackStepPlan(
+  ctx: EngineContext,
+  state: GameState,
+  step: AttackStep,
+  rest: PhaseStep[],
+): StepPlan | undefined {
+  if (step.attacks === undefined) {
+    const listed: AttackStep = { id: '3.3', attacks: attacksDue(ctx, state) };
+    return { events: [{ type: 'PhaseStepsChanged', steps: [listed, ...rest] }], commands: [] };
+  }
+  if (dueAttacksOf(ctx, state, step).length > 0) return undefined;
+  return { events: [{ type: 'PhaseStepsChanged', steps: rest }], commands: [] };
 }
 
 /**
- * `ResolveEnemyAttack`: removes the attack step, deals its damage and horror
- * at once (one defeat check, as the rules deal them simultaneously) and
- * exhausts the enemy once it has no other due attack.
+ * `ResolveEnemyAttack`: removes the attack from step 3.3, deals its damage and
+ * horror at once (one defeat check, as the rules deal them simultaneously) and
+ * exhausts the enemy once it has no other due attack. The step ends with its
+ * last due attack.
  */
 export function handleResolveEnemyAttack(
   ctx: EngineContext,
   state: GameState,
   cmd: ResolveEnemyAttack,
 ): Event[] {
-  const isThisAttack = (step: PhaseStep) =>
-    step.kind === 'enemyAttack' &&
-    step.enemyId === cmd.enemyId &&
-    step.investigatorId === cmd.investigatorId;
-  const attack = enemyAttackList(ctx, state).find(
-    (a) => a.enemyId === cmd.enemyId && a.investigatorId === cmd.investigatorId,
-  );
-  if (!state.meta.steps.some(isThisAttack) || !attack)
+  const [step, ...rest] = state.meta.steps;
+  const isThisAttack = (attack: DueAttack) =>
+    attack.enemyId === cmd.enemyId && attack.investigatorId === cmd.investigatorId;
+  const attack = enemyAttackList(ctx, state).find(isThisAttack);
+  if (!dueAttacksOf(ctx, state, step).some(isThisAttack) || !attack)
     throw new CommandRejected({
       code: 'attackNotDue',
       enemyId: cmd.enemyId,
       investigatorId: cmd.investigatorId,
     });
-  const steps = state.meta.steps.filter((step) => !isThisAttack(step));
   const dealt = attackEvents(
     activeInvestigator(state, cmd.investigatorId),
     attackAmount(cmd.damage ?? attack.damage),
     attackAmount(cmd.horror ?? attack.horror),
   );
-  const events: Event[] = [{ type: 'PhaseStepsChanged', steps }, ...dealt];
-  const after = replay(events, state);
-  const attacksLeft = steps.some(
-    (step) =>
-      step.kind === 'enemyAttack' && step.enemyId === cmd.enemyId && isAttackDue(ctx, after, step),
-  );
-  const exhausted: ExhaustChanged[] = attacksLeft
+  const after = replay(dealt, state);
+  const remaining = dueAttacksOf(ctx, after, step).filter((due) => !isThisAttack(due));
+  const steps: PhaseStep[] =
+    remaining.length > 0 ? [{ id: '3.3', attacks: remaining }, ...rest] : rest;
+  const exhausted: ExhaustChanged[] = remaining.some((due) => due.enemyId === cmd.enemyId)
     ? []
     : [{ type: 'ExhaustChanged', cardId: cmd.enemyId, exhausted: true }];
-  return [...events, ...exhausted];
+  return [{ type: 'PhaseStepsChanged', steps }, ...dealt, ...exhausted];
 }
 
 function stepsOf(state: GameState, phase: Phase): PhaseStep[] {
   switch (phase) {
     case 'mythos':
       return [
-        { kind: 'placeDoom' },
-        { kind: 'checkDoomThreshold' },
-        ...playerOrder(state).map((inv): PhaseStep => ({
-          kind: 'drawEncounter',
-          investigatorId: inv.id,
-        })),
+        { id: '1.2' },
+        { id: '1.3' },
+        ...playerOrder(state).map((inv): PhaseStep => ({ id: '1.4', investigatorId: inv.id })),
       ];
     case 'enemy':
-      return [{ kind: 'moveHunters' }, { kind: 'enemyAttacks' }];
+      return [{ id: '3.2' }, { id: '3.3' }];
     case 'upkeep':
-      return [{ kind: 'readyEnemies' }, { kind: 'gainResources' }, { kind: 'endRound' }];
+      return [{ id: '4.3' }, { id: '4.4' }, { id: '4.6' }];
     case 'setup':
     case 'investigation':
       return [];
@@ -183,35 +187,30 @@ function stepsOf(state: GameState, phase: Phase): PhaseStep[] {
 function stepCommands(
   ctx: EngineContext,
   state: GameState,
-  step: Exclude<PhaseStep, { kind: 'enemyAttack' | 'enemyAttacks' | 'endRound' }>,
+  step: Exclude<PhaseStep, { id: '3.3' | '4.6' }>,
 ): Command[] {
-  switch (step.kind) {
-    case 'placeDoom':
+  switch (step.id) {
+    case '1.2':
       return state.agenda.current === undefined ? [] : [{ type: 'PlaceDoom', amount: 1 }];
-    case 'checkDoomThreshold':
+    case '1.3':
       return [{ type: 'CheckDoomThreshold' }];
-    case 'drawEncounter':
+    case '1.4':
       return canDraw(state, step.investigatorId)
         ? [{ type: 'DrawEncounter', investigatorId: step.investigatorId }]
         : [];
-    case 'moveHunters':
+    case '3.2':
       return [{ type: 'MoveHunters' }];
-    case 'readyEnemies':
-      return Object.values(state.cards)
-        .filter(
-          (card) =>
-            card.exhausted && isInPlay(card) && ctx.cards.get(card.code)?.typeCode === 'enemy',
-        )
+    case '4.3':
+      return cardsOfType(ctx, state, 'enemy')
+        .filter((card) => card.exhausted && isInPlay(card))
         .map((card) => ({ type: 'ReadyEnemy', enemyId: card.id }));
-    case 'gainResources':
-      return state.investigators
-        .filter((inv) => inv.status === 'active')
-        .map((inv) => ({
-          type: 'AdjustInvestigator',
-          investigatorId: inv.id,
-          stat: 'resources',
-          delta: 1,
-        }));
+    case '4.4':
+      return playerOrder(state).map((inv) => ({
+        type: 'AdjustInvestigator',
+        investigatorId: inv.id,
+        stat: 'resources',
+        delta: 1,
+      }));
   }
 }
 
@@ -225,18 +224,28 @@ function canDraw(state: GameState, investigatorId: Investigator['id']): boolean 
   return active && cards > 0;
 }
 
-function isAttackDue(ctx: EngineContext, state: GameState, step: AttackStep): boolean {
-  return enemyAttackList(ctx, state).some(
-    (attack) => attack.enemyId === step.enemyId && attack.investigatorId === step.investigatorId,
-  );
+/** The attacks of `enemyAttackList` as step 3.3 lists them. */
+function attacksDue(ctx: EngineContext, state: GameState): DueAttack[] {
+  return enemyAttackList(ctx, state).map(({ enemyId, investigatorId }) => ({
+    enemyId,
+    investigatorId,
+  }));
 }
 
-function attackSteps(ctx: EngineContext, state: GameState): AttackStep[] {
-  return enemyAttackList(ctx, state).map((attack) => ({
-    kind: 'enemyAttack',
-    enemyId: attack.enemyId,
-    investigatorId: attack.investigatorId,
-  }));
+/** The attacks a listed step 3.3 still has to resolve; none for any other step. */
+function dueAttacksOf(
+  ctx: EngineContext,
+  state: GameState,
+  step: PhaseStep | undefined,
+): DueAttack[] {
+  if (step?.id !== '3.3' || step.attacks === undefined) return [];
+  const due = enemyAttackList(ctx, state);
+  return step.attacks.filter((listed) =>
+    due.some(
+      (attack) =>
+        attack.enemyId === listed.enemyId && attack.investigatorId === listed.investigatorId,
+    ),
+  );
 }
 
 function attackAmount(amount: number): number {
