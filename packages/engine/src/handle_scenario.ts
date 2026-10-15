@@ -12,7 +12,7 @@ import type {
   TokensChanged,
 } from './events';
 import type { InstanceId } from './ids';
-import { activeInvestigator } from './handle-investigator';
+import { activeInvestigator } from './handle_investigator';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
 import { zoneKey } from './zone';
