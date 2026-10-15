@@ -39,7 +39,13 @@ export default defineConfig({
       outputDir: 'test-results/screencast',
       use: {
         ...tablet,
-        video: { mode: 'on', size: tablet.viewport },
+        video: {
+          mode: 'on',
+          size: tablet.viewport,
+          // Pointer and highlight on every interaction, so a viewer sees what was clicked.
+          // Two steps long, so the 4 fps GIF always catches it in at least two frames.
+          show: { actions: { cursor: 'pointer', duration: 2 * SCREENCAST_STEP_MS } },
+        },
         launchOptions: { executablePath, slowMo: SCREENCAST_STEP_MS },
       },
     },

@@ -120,7 +120,7 @@ Done: `apps/web/src/App.tsx` renders the placeholder layout (header, games list,
 
 Ref: `docs/automation.md` (Screencasts), `docs/coding-guidelines.md` §3.
 
-- [x] Playwright project `screencast`: only `@flow` specs, video on, `slowMo` 250 ms (`pnpm e2e:screencast`)
+- [x] Playwright project `screencast`: only `@flow` specs, video on with pointer and click highlights, `slowMo` 250 ms (`pnpm e2e:screencast`)
 - [x] `apps/web/scripts/screencast/`: pick passing videos from the JSON report, convert to GIF at 4 fps, render and splice the PR description section (unit tested)
 - [x] `preview.yml`: record when `apps/web` changes, publish next to the preview, update the description after deploy
 - [x] PR template markers, rules for flow specs, first `@flow` spec (the smoke flow)
