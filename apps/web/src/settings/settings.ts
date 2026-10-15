@@ -64,16 +64,18 @@ export function loadSettings(): Settings {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     return stored === null ? DEFAULT_SETTINGS : parseSettings(JSON.parse(stored));
-  } catch {
+  } catch (error) {
+    console.warn('Could not load settings; using the defaults.', error);
     return DEFAULT_SETTINGS;
   }
 }
 
-/** Persists the settings; failures are swallowed because losing a preference beats crashing. */
+/** Persists the settings; failures are logged but not thrown because losing a preference beats crashing. */
 export function saveSettings(settings: Settings): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-  } catch {
+  } catch (error) {
     // Quota exceeded or storage unavailable: the in-memory settings still apply this session.
+    console.warn('Could not save settings; they apply for this session only.', error);
   }
 }

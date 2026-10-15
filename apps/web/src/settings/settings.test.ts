@@ -27,10 +27,15 @@ describe('settings storage', () => {
     expect(loadSettings()).toEqual(settings);
   });
 
-  it('falls back to the defaults for corrupt JSON', () => {
+  it('falls back to the defaults and warns for corrupt JSON', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     localStorage.setItem(KEY, '{not json');
 
     expect(loadSettings()).toEqual(DEFAULT_SETTINGS);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('using the defaults'),
+      expect.any(SyntaxError),
+    );
   });
 
   it('falls back to the defaults for stored values that are not an object', () => {
@@ -48,19 +53,25 @@ describe('settings storage', () => {
     expect(loadSettings()).toEqual({ ...DEFAULT_SETTINGS, theme: 'light' });
   });
 
-  it('returns the defaults when reading throws', () => {
+  it('returns the defaults and warns when reading throws', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const failure = new Error('blocked');
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
-      throw new Error('blocked');
+      throw failure;
     });
 
     expect(loadSettings()).toEqual(DEFAULT_SETTINGS);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('using the defaults'), failure);
   });
 
-  it('does not throw when writing fails', () => {
+  it('warns instead of throwing when writing fails', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const failure = new DOMException('quota', 'QuotaExceededError');
     vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-      throw new Error('quota');
+      throw failure;
     });
 
     expect(() => saveSettings(DEFAULT_SETTINGS)).not.toThrow();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('this session only'), failure);
   });
 });
