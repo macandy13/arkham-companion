@@ -2,8 +2,11 @@
  * Branded ID types. They are plain strings at runtime; the brand only stops
  * mixing up e.g. a card instance ID with an investigator ID at compile time.
  */
-/** Adds a compile-time-only tag `B` to `T`. */
-type Brand<T, B extends string> = T & { readonly __brand: B };
+/**
+ * Adds a compile-time-only tag `B` to `T`. Also used outside IDs for open-ended
+ * string sets such as `Trait`.
+ */
+export type Brand<T, B extends string> = T & { readonly __brand: B };
 
 /** Unique ID of one physical card on the table (see architecture §5). */
 export type InstanceId = Brand<string, 'InstanceId'>;
