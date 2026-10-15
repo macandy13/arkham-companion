@@ -31,6 +31,7 @@ export async function loadCatalog(
     }
   } catch (error) {
     if (!cached) throw error;
+    console.warn('Could not refresh the card catalog; using the cached copy.', error);
   }
   // A 304 is only possible when we sent `If-Modified-Since`, i.e. when `cached` exists.
   return cached as CardCatalog;

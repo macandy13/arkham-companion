@@ -65,7 +65,8 @@ export function parseGameExport(text: string): ImportedGame {
   let json: unknown;
   try {
     json = JSON.parse(text);
-  } catch {
+  } catch (error) {
+    console.warn('Import rejected: the file is not valid JSON.', error);
     throw new GameImportError('invalid');
   }
   const version = z.looseObject({ stateVersion: z.number() }).safeParse(json);
@@ -79,7 +80,8 @@ export function parseGameExport(text: string): ImportedGame {
   const events = parsed.data.events as unknown as { timestamp: number; event: Event }[];
   try {
     if (!replay(events.map((e) => e.event))) throw new Error('unknown event');
-  } catch {
+  } catch (error) {
+    console.warn('Import rejected: the event log does not replay.', error);
     throw new GameImportError('invalid');
   }
   return { title: parsed.data.game.title, events };

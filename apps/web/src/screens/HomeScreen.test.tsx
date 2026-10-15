@@ -26,7 +26,10 @@ describe('HomeScreen', () => {
   beforeAll(async () => {
     await initI18n('en');
   });
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
 
   it('offers new campaign and quick game when there are no games', async () => {
     await renderHome([]);
@@ -110,11 +113,13 @@ describe('HomeScreen', () => {
   });
 
   it('explains why a file from a newer version cannot be imported', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     await renderHome([]);
     const file = new File([JSON.stringify({ stateVersion: STATE_VERSION + 1 })], 'game.json');
 
     fireEvent.change(await screen.findByLabelText('Import game'), { target: { files: [file] } });
 
     expect((await screen.findByRole('alert')).textContent).toMatch(/newer version/);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('import'), expect.any(Error));
   });
 });
