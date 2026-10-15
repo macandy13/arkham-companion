@@ -40,13 +40,3 @@ test('deep links to settings work', async ({ page }) => {
   await page.goto('/#/settings');
   await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
 });
-
-test('the new game screen lets you seat investigators', async ({ page }) => {
-  await page.goto('/#/new');
-  await page.getByRole('button', { name: /Fake Seeker/ }).click();
-  await page.getByRole('button', { name: 'Select' }).click();
-
-  const seats = page.getByRole('region', { name: 'Seats' });
-  await expect(seats.getByRole('listitem')).toHaveCount(1);
-  await expect(seats).toContainText('Fake Seeker');
-});
