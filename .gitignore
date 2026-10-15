@@ -13,4 +13,5 @@ packages/carddata/.cache/
 coverage/
 test-results/
 playwright-report/
+apps/web/screencasts/
 .lighthouseci/

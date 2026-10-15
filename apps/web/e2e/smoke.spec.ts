@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
 
 // Smoke test: the production build boots, hash routes resolve, and a new game survives a reload.
-// Fuller flows arrive with M2.8 and M3.9.
-test('app boots and a new game survives reload', async ({ page }) => {
+// Fuller flows arrive with M2.8 and M3.9. `@flow` specs are also recorded for PR screencasts.
+test('app boots and a new game survives reload', { tag: '@flow' }, async ({ page }) => {
   await page.goto('/');
   await expect(page).toHaveTitle('Arkham Companion');
   await expect(page.getByRole('heading', { level: 1, name: 'Games' })).toBeVisible();
