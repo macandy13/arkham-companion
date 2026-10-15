@@ -1,9 +1,10 @@
 import { cardStats, type CardStats, type EngineContext } from './cards';
 import type { DrawEncounter, DrawTopmostFromDiscard, FromSetAside, ShuffleInto } from './commands';
 import type { CardFlipped, CardMoved, DeckShuffled, EncounterCardDrawn, Event } from './events';
-import { activeInvestigator } from './handle-investigator';
+import { activeInvestigator } from './handle_investigator';
 import type { InstanceId } from './ids';
 import { hasKeyword } from './keywords';
+import { requireCard } from './lookup';
 import { cardMoved } from './placement';
 import { spawnZone } from './spawn';
 import { replay } from './reducer';
@@ -57,17 +58,17 @@ export function handleDrawTopmostFromDiscard(
   cmd: DrawTopmostFromDiscard,
 ): CardMoved[] {
   const cardId = cardsIn(state, ENCOUNTER_DISCARD).find(
-    (id) => ctx.cards.get(cardOf(state, id).code)?.name === cmd.name,
+    (id) => ctx.cards.get(requireCard(state.cards, id).code)?.name === cmd.name,
   );
   if (cardId === undefined)
     throw new CommandRejected({ code: 'cardNotInZone', zone: 'encounterDiscard', match: cmd.name });
-  return [cardMoved(state, cardOf(state, cardId), cmd.to)];
+  return [cardMoved(state, requireCard(state.cards, cardId), cmd.to)];
 }
 
 /** `FromSetAside`: moves one set-aside copy of each code to `to`. */
 export function handleFromSetAside(state: GameState, cmd: FromSetAside): CardMoved[] {
   return takeFromSetAside(state, cmd.codes).map((cardId) =>
-    cardMoved(state, cardOf(state, cardId), cmd.to),
+    cardMoved(state, requireCard(state.cards, cardId), cmd.to),
   );
 }
 
@@ -98,7 +99,7 @@ function drawOne(
   const [cardId] = cardsIn(replay(refill, state), ENCOUNTER_DECK);
   if (cardId === undefined) return undefined;
 
-  const stats = cardStats(ctx.cards, cardOf(state, cardId).code);
+  const stats = cardStats(ctx.cards, requireCard(state.cards, cardId).code);
   const to = destinationOf(stats, investigator);
   const surge = hasKeyword(stats, 'surge');
   const drawn: EncounterCardDrawn = {
@@ -112,7 +113,7 @@ function drawOne(
   // Index 0 is the top, and the discard's top is what "topmost" effects look for.
   const placed = cardMoved(
     state,
-    cardOf(state, cardId),
+    requireCard(state.cards, cardId),
     to,
     to.kind === 'encounterDiscard' ? 0 : undefined,
   );
@@ -156,7 +157,7 @@ function destinationOf(stats: CardStats, investigator: Investigator): Zone {
  */
 function shuffleInto(state: GameState, cardIds: readonly InstanceId[], zone: Zone): Event[] {
   if (cardIds.length === 0) return [];
-  const moves = cardIds.map((cardId) => cardMoved(state, cardOf(state, cardId), zone));
+  const moves = cardIds.map((cardId) => cardMoved(state, requireCard(state.cards, cardId), zone));
   const remaining = cardsIn(state, zone).filter((id) => !cardIds.includes(id));
   const [order, rngState] = shuffle([...remaining, ...cardIds], state.meta.rngState);
   const shuffled: DeckShuffled = { type: 'DeckShuffled', zone, order, rngState };
@@ -167,7 +168,7 @@ function shuffleInto(state: GameState, cardIds: readonly InstanceId[], zone: Zon
 function takeFromSetAside(state: GameState, codes: readonly string[]): InstanceId[] {
   const { taken } = codes.reduce(
     (acc, code) => {
-      const cardId = acc.available.find((id) => cardOf(state, id).code === code);
+      const cardId = acc.available.find((id) => requireCard(state.cards, id).code === code);
       if (cardId === undefined)
         throw new CommandRejected({ code: 'cardNotInZone', zone: 'setAside', match: code });
       return {
@@ -183,10 +184,4 @@ function takeFromSetAside(state: GameState, codes: readonly string[]): InstanceI
 /** The cards of a zone, top first. */
 function cardsIn(state: GameState, zone: Zone): readonly InstanceId[] {
   return state.order[zoneKey(zone)] ?? [];
-}
-
-function cardOf(state: GameState, cardId: InstanceId) {
-  const card = state.cards[cardId];
-  if (!card) throw new CommandRejected({ code: 'unknownCard', cardId });
-  return card;
 }

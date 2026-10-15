@@ -13,7 +13,14 @@ import {
   type StartingCard,
   type Zone,
 } from './index';
-import { contextWith, makeCard, makeInvestigator, rejectionOf, run } from '../test/utils';
+import {
+  contextWith,
+  makeCard,
+  makeInvestigator,
+  rejectionFrom,
+  run,
+  stateAfter,
+} from '../test/utils';
 
 const main = mapId('main');
 const hall = instanceId('hall');
@@ -81,11 +88,6 @@ function order(state: GameState, zone: Zone): InstanceId[] {
   return state.order[zoneKey(zone)] ?? [];
 }
 
-/** The rejection `command` causes in `state`. */
-function rejection(state: GameState, command: Command) {
-  return rejectionOf(() => execute(ctx, state, command));
-}
-
 describe('DrawEncounter', () => {
   it('reveals the top card and discards a plain treachery on top of the discard', () => {
     const state = started({ deck: ['DUL', 'FOE'], discard: ['REL'] });
@@ -104,7 +106,7 @@ describe('DrawEncounter', () => {
   it('places an enemy unengaged at the drawing investigator`s location', () => {
     const state = started({ deck: ['FOE'] });
 
-    const { state: after } = execute(ctx, state, draw);
+    const after = stateAfter(ctx, state, draw);
 
     expect(after.cards[instanceId('d0')]?.zone).toEqual({ kind: 'atLocation', locationId: hall });
   });
@@ -112,7 +114,7 @@ describe('DrawEncounter', () => {
   it('puts a treachery that stays in play into the threat area', () => {
     const state = started({ deck: ['LNG'] });
 
-    const { state: after } = execute(ctx, state, draw);
+    const after = stateAfter(ctx, state, draw);
 
     expect(after.cards[instanceId('d0')]?.zone).toEqual({
       kind: 'threatArea',
@@ -123,7 +125,7 @@ describe('DrawEncounter', () => {
   it('discards a card that is neither enemy nor treachery', () => {
     const state = started({ deck: ['REL', 'DUL'] });
 
-    const { state: after } = execute(ctx, state, draw);
+    const after = stateAfter(ctx, state, draw);
 
     expect(after.cards[instanceId('d0')]?.zone).toEqual({ kind: 'encounterDiscard' });
   });
@@ -187,7 +189,7 @@ describe('DrawEncounter', () => {
   it('reshuffles the discard when the last card of the deck is an enemy that stays in play', () => {
     const state = started({ deck: ['FOE'], discard: ['DUL'] });
 
-    const { state: after } = execute(ctx, state, draw);
+    const after = stateAfter(ctx, state, draw);
 
     expect(order(after, { kind: 'encounterDeck' })).toEqual(['x0']);
     expect(order(after, { kind: 'encounterDiscard' })).toEqual([]);
@@ -214,9 +216,9 @@ describe('DrawEncounter', () => {
   it('reshuffles the same way for the same seed and differently across seeds', () => {
     const discard = ['DUL', 'FOE', 'REL', 'PER', 'LNG', 'DUL', 'FOE', 'REL'];
 
-    const first = execute(ctx, started({ discard }, 7), draw).state;
-    const again = execute(ctx, started({ discard }, 7), draw).state;
-    const other = execute(ctx, started({ discard }, 8), draw).state;
+    const first = stateAfter(ctx, started({ discard }, 7), draw);
+    const again = stateAfter(ctx, started({ discard }, 7), draw);
+    const other = stateAfter(ctx, started({ discard }, 8), draw);
 
     expect(order(again, { kind: 'encounterDeck' })).toEqual(
       order(first, { kind: 'encounterDeck' }),
@@ -240,13 +242,13 @@ describe('DrawEncounter', () => {
   });
 
   it('rejects a draw when the deck and the discard are empty', () => {
-    expect(rejection(started({}), draw)).toEqual({ code: 'encounterDeckEmpty' });
+    expect(rejectionFrom(ctx, started({}), draw)).toEqual({ code: 'encounterDeckEmpty' });
   });
 
   it('rejects an enemy draw for an investigator without a location', () => {
     const state = started({ deck: ['FOE'], placed: false });
 
-    expect(rejection(state, draw)).toEqual({
+    expect(rejectionFrom(ctx, state, draw)).toEqual({
       code: 'investigatorHasNoLocation',
       investigatorId: alice,
     });
@@ -255,7 +257,9 @@ describe('DrawEncounter', () => {
   it('rejects a draw for an unknown investigator', () => {
     const command: Command = { type: 'DrawEncounter', investigatorId: investigatorId('nobody') };
 
-    expect(rejection(started({ deck: ['DUL'] }), command).code).toBe('unknownInvestigator');
+    expect(rejectionFrom(ctx, started({ deck: ['DUL'] }), command).code).toBe(
+      'unknownInvestigator',
+    );
   });
 
   it('feeds onCardEnters when an enemy enters play, but not for a discarded treachery', () => {
@@ -265,8 +269,8 @@ describe('DrawEncounter', () => {
       ],
     };
 
-    const enemy = execute({ ...ctx, hooks }, started({ deck: ['FOE'] }), draw).state;
-    const treachery = execute({ ...ctx, hooks }, started({ deck: ['DUL'] }), draw).state;
+    const enemy = stateAfter({ ...ctx, hooks }, started({ deck: ['FOE'] }), draw);
+    const treachery = stateAfter({ ...ctx, hooks }, started({ deck: ['DUL'] }), draw);
 
     expect(enemy.cards[instanceId('d0')]?.tokens.doom).toBe(1);
     expect(treachery.cards[instanceId('d0')]?.tokens.doom).toBeUndefined();
@@ -279,7 +283,7 @@ describe('DrawTopmostFromDiscard', () => {
   it('moves the topmost card with that name', () => {
     const state = started({ discard: ['DUL', 'FOE', 'FOE'] });
 
-    const { state: after } = execute(ctx, state, command({ kind: 'atLocation', locationId: hall }));
+    const after = stateAfter(ctx, state, command({ kind: 'atLocation', locationId: hall }));
 
     expect(after.cards[instanceId('x1')]?.zone).toEqual({ kind: 'atLocation', locationId: hall });
     expect(after.cards[instanceId('x2')]?.zone).toEqual({ kind: 'encounterDiscard' });
@@ -288,7 +292,7 @@ describe('DrawTopmostFromDiscard', () => {
   it('rejects when no card in the discard has that name', () => {
     const state = started({ discard: ['DUL'], deck: ['FOE'] });
 
-    expect(rejection(state, command({ kind: 'setAside' }))).toEqual({
+    expect(rejectionFrom(ctx, state, command({ kind: 'setAside' }))).toEqual({
       code: 'cardNotInZone',
       zone: 'encounterDiscard',
       match: 'Fake Foe',
@@ -298,9 +302,9 @@ describe('DrawTopmostFromDiscard', () => {
   it('rejects a destination that names an unknown map', () => {
     const state = started({ discard: ['FOE'] });
 
-    expect(rejection(state, command({ kind: 'location', mapId: mapId('nowhere') })).code).toBe(
-      'unknownMap',
-    );
+    expect(
+      rejectionFrom(ctx, state, command({ kind: 'location', mapId: mapId('nowhere') })).code,
+    ).toBe('unknownMap');
   });
 });
 
@@ -308,7 +312,7 @@ describe('FromSetAside', () => {
   it('moves one copy per listed code, taking two copies for a code listed twice', () => {
     const state = started({ setAside: ['FOE', 'DUL', 'FOE'] });
 
-    const { state: after } = execute(ctx, state, {
+    const after = stateAfter(ctx, state, {
       type: 'FromSetAside',
       codes: ['FOE', 'FOE'],
       to: { kind: 'victoryDisplay' },
@@ -322,7 +326,7 @@ describe('FromSetAside', () => {
     const state = started({ setAside: ['FOE'] });
 
     expect(
-      rejection(state, {
+      rejectionFrom(ctx, state, {
         type: 'FromSetAside',
         codes: ['FOE', 'FOE'],
         to: { kind: 'outOfGame' },
@@ -338,7 +342,7 @@ describe('FromSetAside', () => {
     };
     const state = started({ setAside: ['FOE'] });
 
-    const { state: after } = execute({ ...ctx, hooks }, state, {
+    const after = stateAfter({ ...ctx, hooks }, state, {
       type: 'FromSetAside',
       codes: ['FOE'],
       to: { kind: 'atLocation', locationId: hall },
@@ -373,8 +377,11 @@ describe('ShuffleInto', () => {
     const state = started({ deck: ['FOE'] });
 
     expect(
-      rejection(state, { type: 'ShuffleInto', codes: ['FOE'], zone: { kind: 'encounterDeck' } })
-        .code,
+      rejectionFrom(ctx, state, {
+        type: 'ShuffleInto',
+        codes: ['FOE'],
+        zone: { kind: 'encounterDeck' },
+      }).code,
     ).toBe('cardNotInZone');
   });
 });
@@ -415,7 +422,7 @@ describe('encounter deck invariants', () => {
 
     for (const step of testCase.steps) {
       try {
-        state = execute(ctx, state, step).state;
+        state = stateAfter(ctx, state, step);
       } catch {
         // A rejected step leaves the state unchanged, which the checks below still cover.
       }
@@ -436,7 +443,7 @@ describe('encounter deck invariants', () => {
     { deck: ['DUL', 'DUL'], discard: [] },
   ])('never leaves the deck empty while the discard has cards: $deck / $discard', (layout) => {
     for (const seed of [1, 2, 3]) {
-      const after = execute(ctx, started(layout, seed), draw).state;
+      const after = stateAfter(ctx, started(layout, seed), draw);
 
       const deckSize = order(after, { kind: 'encounterDeck' }).length;
       const discardSize = order(after, { kind: 'encounterDiscard' }).length;
