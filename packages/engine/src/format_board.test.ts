@@ -164,6 +164,16 @@ describe('formatBoard', () => {
     `);
   });
 
+  it('shows an encounter card whose revelation is still being resolved', () => {
+    const state = stateAfter(ctx, startedBoard(), {
+      type: 'MoveCard',
+      cardId: instanceId('dread2'),
+      to: { kind: 'resolving' },
+    });
+
+    expect(formatBoard(ctx, state)).toContain('discard: 0 cards\nResolving: Dread\n');
+  });
+
   it('marks a hidden map, an empty map and a missing agenda and act', () => {
     const { state } = run(ctx, [
       {

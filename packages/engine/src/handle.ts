@@ -415,7 +415,7 @@ function encounterDeckShuffle(state: GameState): DeckShuffled[] {
 
 /** `MoveCard`: the same move a `ManualAdjust` makes, as a game event. */
 function handleMoveCard(state: GameState, cmd: MoveCard): CardMoved {
-  return cardMoved(state, requireCard(state.cards, cmd.cardId), cmd.to);
+  return cardMoved(state, requireCard(state.cards, cmd.cardId), cmd.to, cmd.index);
 }
 
 function handleAdjustment(

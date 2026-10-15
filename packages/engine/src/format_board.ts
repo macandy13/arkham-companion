@@ -14,7 +14,7 @@ import { zoneKey, type Zone } from './zone';
  * phase, the outstanding phase steps, the turn in progress with its actions
  * and the turns taken, current agenda and act, every map with its locations (clues,
  * investigators, enemies, connections), every investigator, the encounter
- * piles, set-aside cards, victory display and pending decisions. Cards are
+ * piles and a card whose revelation is being resolved, set-aside cards, victory display and pending decisions. Cards are
  * named by their `CardDb` name; instance IDs appear only in brackets where
  * copies need telling apart (locations and enemies). The order is fixed (map,
  * zone and seat order), so the output is stable enough for inline snapshots.
@@ -31,6 +31,7 @@ export function formatBoard(ctx: EngineContext, state: GameState): string {
     'Investigators:',
     ...state.investigators.map((investigator) => investigatorLine(ctx, state, investigator)),
     encounterLine(ctx, state),
+    ...resolvingLines(ctx, state),
     `Set aside: ${countIn(state, { kind: 'setAside' })} cards`,
     `Victory display: ${listOrNone(namesIn(ctx, state, { kind: 'victoryDisplay' }))}`,
     ...decisionLines(ctx, state),
@@ -161,6 +162,12 @@ function encounterLine(ctx: EngineContext, state: GameState): string {
     `Encounter deck: ${countIn(state, { kind: 'encounterDeck' })} cards; ` +
     `discard: ${countIn(state, { kind: 'encounterDiscard' })} cards${discardTop}`
   );
+}
+
+/** The encounter cards whose revelation is still being resolved, if any. */
+function resolvingLines(ctx: EngineContext, state: GameState): string[] {
+  const resolving = namesIn(ctx, state, { kind: 'resolving' });
+  return resolving.length > 0 ? [`Resolving: ${resolving.join(', ')}`] : [];
 }
 
 function decisionLines(ctx: EngineContext, state: GameState): string[] {

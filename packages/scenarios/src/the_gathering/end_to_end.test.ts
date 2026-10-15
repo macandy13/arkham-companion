@@ -161,10 +161,17 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.pendingDecisions()).toEqual([
       'Revelation of Crypt Chill: willpower (4) pass / fail [skillTestResult]',
     ]);
+    // Crypt Chill is discarded only once its revelation has resolved.
+    expect(table.namesIn({ kind: 'resolving' })).toEqual(['Crypt Chill']);
+    expect(table.namesIn({ kind: 'encounterDiscard' })).toEqual([]);
 
     // With willpower 3 Daisy fails and, having no asset to discard, takes 2 damage.
     table.answer('Crypt Chill', 'fail');
     table.takeDamage(daisy, 2);
+
+    expect(table.namesIn({ kind: 'resolving' })).toEqual([]);
+    expect(table.namesIn({ kind: 'encounterDiscard' })).toEqual(['Crypt Chill']);
+
     // 1.4 continues: Wendy draws Ancient Evils, 1 doom on the agenda.
     table.nextPhase();
     table.placeDoom(1);

@@ -153,8 +153,8 @@ export function handleTakeAction(state: GameState, cmd: TakeAction): Investigato
 }
 
 /**
- * Rejects leaving the investigation phase (Rules Reference 2.2.2: the phase
- * ends once each investigator has taken a turn) while a turn is in progress
+ * Rejects leaving the investigation phase (Rules Reference 2.2/2.3: turns
+ * follow each other until each investigator has taken one, then the phase ends) while a turn is in progress
  * or an active investigator has not had theirs. Rejecting is simpler than a
  * confirmation and costs the group little: a turn without actions is just
  * `StartTurn` and `EndTurn`.

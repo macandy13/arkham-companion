@@ -4,6 +4,7 @@ import {
   instanceId,
   investigatorId,
   skillTestDecision,
+  zoneKey,
   type Command,
   type GameState,
   type StartingCard,
@@ -28,7 +29,9 @@ const ghoul = instanceId('ghoul');
 
 /**
  * The study (shroud 3, 2 clues) next to the bare hallway (shroud 1, no
- * clues); a ghoul (fight 4, evade 2, 3 health) and a massive ghoul (evade 5).
+ * clues); a ghoul (fight 4, evade 2, 3 health) and a massive ghoul (evade 5);
+ * treacheries with a revelation test that is discarded (willpower 4) or stays
+ * in the threat area (agility 2), and one without a test.
  */
 const ctx = contextWith(
   makeCard({ code: 'study', name: 'Study', typeCode: 'location', shroud: 3, clues: fixed(2) }),
@@ -36,6 +39,11 @@ const ctx = contextWith(
   makeCard({ code: 'ghoul', typeCode: 'enemy', fight: 4, evade: 2, health: fixed(3) }),
   makeCard({ code: 'massive_ghoul', typeCode: 'enemy', evade: 5, keywords: [{ name: 'massive' }] }),
   makeCard({ code: 'chilling_treachery', revelationTest: { skill: 'willpower', difficulty: 4 } }),
+  makeCard({
+    code: 'clinging_treachery',
+    entersThreatArea: true,
+    revelationTest: { skill: 'agility', difficulty: 2 },
+  }),
   makeCard({ code: 'plain_treachery' }),
 );
 
@@ -430,9 +438,15 @@ describe('Evade', () => {
 describe('revelation test', () => {
   const chill = instanceId('chill');
   const draw: Command = { type: 'DrawEncounter', investigatorId: alice };
-
-  it('asks the drawer for the test of a treachery that has one', () => {
-    const drawn = stateAfter(
+  const discardChill: Command = {
+    type: 'MoveCard',
+    cardId: chill,
+    to: { kind: 'encounterDiscard' },
+    index: 0,
+  };
+  /** Alice draws the chilling treachery (willpower 4) from the top; a plain one lies below it. */
+  const drawnChill = (): GameState =>
+    stateAfter(
       ctx,
       aliceInStudyWith([
         { id: chill, code: 'chilling_treachery', zone: { kind: 'encounterDeck' } },
@@ -441,7 +455,8 @@ describe('revelation test', () => {
       draw,
     );
 
-    expect(drawn.pending).toEqual([
+  it('asks the drawer for the test of a treachery that has one', () => {
+    expect(drawnChill().pending).toEqual([
       {
         id: 'revelation:chill',
         kind: 'skillTestResult',
@@ -450,27 +465,43 @@ describe('revelation test', () => {
         decider: { kind: 'investigator', investigatorId: alice },
         skillTest: { skill: 'willpower', difficulty: 4 },
         options: [
-          { id: 'pass', label: 'decision.pass', commands: [] },
-          { id: 'fail', label: 'decision.fail', commands: [] },
+          { id: 'pass', label: 'decision.pass', commands: [discardChill] },
+          { id: 'fail', label: 'decision.fail', commands: [discardChill] },
         ],
       },
     ]);
-    expect(drawn.cards[chill]!.zone).toEqual({ kind: 'encounterDiscard' });
+  });
+
+  it('keeps the card out of the discard while its revelation is resolved', () => {
+    expect(drawnChill().cards[chill]!.zone).toEqual({ kind: 'resolving' });
+  });
+
+  it.each(['pass', 'fail'])('discards the card on top of the discard on a %s', (optionId) => {
+    const resolved = answered(drawnChill(), 'revelation:chill', optionId);
+
+    expect(resolved.order[zoneKey({ kind: 'encounterDiscard' })]).toEqual([chill]);
   });
 
   it('leaves what failing costs to the players', () => {
+    const failed = answered(drawnChill(), 'revelation:chill', 'fail');
+
+    expect(failed.pending).toEqual([]);
+    expect(failed.investigators[0]).toMatchObject({ health: { damage: 0 }, sanity: { horror: 0 } });
+  });
+
+  it('puts a treachery that stays in play into the threat area right away', () => {
+    const clinging = instanceId('clinging');
+
     const drawn = stateAfter(
       ctx,
       aliceInStudyWith([
-        { id: chill, code: 'chilling_treachery', zone: { kind: 'encounterDeck' } },
+        { id: clinging, code: 'clinging_treachery', zone: { kind: 'encounterDeck' } },
       ]),
       draw,
     );
 
-    const failed = answered(drawn, 'revelation:chill', 'fail');
-
-    expect(failed.pending).toEqual([]);
-    expect(failed.investigators[0]).toMatchObject({ health: { damage: 0 }, sanity: { horror: 0 } });
+    expect(drawn.cards[clinging]!.zone).toEqual({ kind: 'threatArea', investigatorId: alice });
+    expect(drawn.pending[0]!.options.map((option) => option.commands)).toEqual([[], []]);
   });
 
   it('asks nothing for a treachery without a test', () => {

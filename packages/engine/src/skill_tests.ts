@@ -139,16 +139,18 @@ export function handleEvade(ctx: EngineContext, state: GameState, cmd: Evade): D
 /**
  * The revelation test of a treachery the investigator just drew, if its card
  * data has one (`CardStats.revelationTest`): a `skillTestResult` decision
- * (`revelation:<card>`) for the drawer. Both outcomes are empty on purpose:
- * what a failure costs (horror, damage, "for each point you fail by") is
- * card text, which the engine does not read, so the players apply it with
- * the usual commands, or a scenario hook does.
+ * (`revelation:<card>`) for the drawer. Both outcomes run only `afterwards`
+ * (discarding the resolved card) on purpose: what a failure costs (horror,
+ * damage, "for each point you fail by") is card text, which the engine does
+ * not read, so the players apply it with the usual commands, or a scenario
+ * hook does.
  */
 export function revelationTestDecision(
   ctx: EngineContext,
   state: GameState,
   cardId: InstanceId,
   investigator: Investigator,
+  afterwards: Command[] = [],
 ): DecisionRequested[] {
   const card = state.cards[cardId];
   const test = card === undefined ? undefined : cardStats(ctx.cards, card.code).revelationTest;
@@ -159,7 +161,7 @@ export function revelationTestDecision(
     prompt: 'decision.revelationTest',
     subject: cardId,
     test,
-    outcomes: { onPass: [], onFail: [] },
+    outcomes: { onPass: afterwards, onFail: afterwards },
   });
 }
 

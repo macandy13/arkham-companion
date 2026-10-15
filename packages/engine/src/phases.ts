@@ -35,8 +35,8 @@ export const PHASE_STEP_TITLES: Readonly<Record<PhaseStepId, string>> = {
   '1.4': 'each investigator draws 1 encounter card',
   '3.2': 'hunter enemies move',
   '3.3': 'resolve engaged enemy attacks',
-  '4.3': 'ready each exhausted card',
-  '4.4': 'each investigator gains 1 resource',
+  '4.3': 'ready each exhausted enemy (players ready their own cards)',
+  '4.4': 'each investigator gains 1 resource (and draws 1 card at the table)',
   '4.6': 'round ends',
 };
 

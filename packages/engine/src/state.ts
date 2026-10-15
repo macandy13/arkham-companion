@@ -102,8 +102,9 @@ export type Phase = 'setup' | 'mythos' | 'investigation' | 'enemy' | 'upkeep';
  * investigation phase's turns (2.2 "next investigator's turn begins", 2.2.1
  * actions, 2.2.2 "turn ends") are the players' `StartTurn`/`EndTurn`, so they
  * are not steps here. 4.2 "reset actions" needs no step: actions are counted
- * per turn (`Turn`). 4.4's card draw and 4.5's hand size are left to the
- * players (player cards are not modelled).
+ * per turn (`Turn`). Player cards are not modelled, so the players handle
+ * their part themselves: readying their cards (4.3), drawing 1 card (4.4)
+ * and checking hand size (4.5).
  */
 export type PhaseStepId =
   /** Mythos: place 1 doom on the current agenda. */
@@ -116,9 +117,12 @@ export type PhaseStepId =
   | '3.2'
   /** Enemy: each investigator, in player order, resolves the attacks of engaged enemies. */
   | '3.3'
-  /** Upkeep: ready each exhausted card (only enemies are modelled). */
+  /**
+   * Upkeep: ready each exhausted card. Only enemies are modelled; the players
+   * ready their own cards at the table.
+   */
   | '4.3'
-  /** Upkeep: each investigator gains 1 resource (and draws 1 card at the table). */
+  /** Upkeep: each investigator gains 1 resource; drawing 1 card is left to the players. */
   | '4.4'
   /** Upkeep: the upkeep phase and the round end (`RoundEnded`, `onRoundEnd`). */
   | '4.6';

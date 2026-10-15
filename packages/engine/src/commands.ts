@@ -102,6 +102,8 @@ export interface MoveCard {
   type: 'MoveCard';
   cardId: InstanceId;
   to: Zone;
+  /** Position in the destination, 0 = top (e.g. the top of the encounter discard); default the bottom. */
+  index?: number;
 }
 
 /**
