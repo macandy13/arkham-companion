@@ -1,5 +1,5 @@
 import type { InstanceId, MapId } from './ids';
-import type { GameMap } from './map';
+import type { Edge, GameMap } from './map';
 import type { RngState } from './rng';
 import type {
   CampaignLog,
@@ -15,7 +15,8 @@ import type { Zone } from './zone';
  * Events are facts: they carry everything needed to apply them, so the
  * reducer never needs to validate, generate IDs or draw random numbers.
  */
-export type Event = ScenarioStarted | DeckShuffled | CardMoved | TokensChanged;
+export type Event =
+  ScenarioStarted | DeckShuffled | CardMoved | TokensChanged | CardFlipped | ConnectionChanged;
 
 /** A scenario was set up; replaces the whole state. Produced by `StartScenario`. */
 export interface ScenarioStarted {
@@ -58,6 +59,30 @@ export interface TokensChanged {
   cardId: InstanceId;
   token: TokenKind;
   delta: number;
+}
+
+/**
+ * A card was turned over (location revealed, later agenda/act advanced).
+ * Produced by `RevealLocation`, which follows it with a `TokensChanged` for the clues.
+ */
+export interface CardFlipped {
+  type: 'CardFlipped';
+  cardId: InstanceId;
+  /** The side that is showing afterwards. */
+  faceUp: boolean;
+}
+
+/**
+ * An edge was added to or removed from `GameMap.connections` of map `mapId`.
+ * Produced by `AddConnection`/`RemoveConnection`; `edge` is the stored edge,
+ * so removal matches exactly what was added.
+ */
+export interface ConnectionChanged {
+  type: 'ConnectionChanged';
+  change: 'added' | 'removed';
+  /** The map that owns the edge. */
+  mapId: MapId;
+  edge: Edge;
 }
 
 /** String literal of every event type. */

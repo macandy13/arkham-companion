@@ -21,16 +21,22 @@ export type Rejection =
   | { code: 'invalidTokenDelta'; delta: number }
   /** A starting card's token count is not a non-negative integer. */
   | { code: 'invalidStartingTokens'; cardId: InstanceId; token: TokenKind; amount: number }
-  /** `cardId` is used as a location (investigator position, connection) but is not on a map. */
+  /** `cardId` is used as a location but is not one: not on a map (investigator position, reveal) or not a location card (connection). */
   | { code: 'notALocation'; cardId: InstanceId }
-  /** A connection of map `mapId` ends at `cardId`, a location on a different map. */
-  | { code: 'locationOnOtherMap'; cardId: InstanceId; mapId: MapId }
   /** A setup step refers to `cardCode`, but no earlier step created an instance of it. */
   | { code: 'setupTargetNotFound'; cardCode: string }
   /** A setup step refers to `cardCode`, but several instances of it exist. */
   | { code: 'setupTargetAmbiguous'; cardCode: string }
   /** No card in the `CardDb` belongs to `encounterCode` (usually a typo in scenario data). */
   | { code: 'unknownEncounterSet'; encounterCode: string }
+  /** `AddConnection` for an edge that already exists. */
+  | { code: 'duplicateConnection'; from: InstanceId; to: InstanceId }
+  /** `RemoveConnection` for an edge that does not exist. */
+  | { code: 'connectionNotFound'; from: InstanceId; to: InstanceId }
+  /** A connection from a location to itself. */
+  | { code: 'selfConnection'; cardId: InstanceId }
+  /** `RevealLocation` for a location that is already face up. */
+  | { code: 'alreadyRevealed'; cardId: InstanceId }
   | {
       code: 'negativeTokens';
       cardId: InstanceId;
@@ -79,14 +85,20 @@ function describe(r: Rejection): string {
       return `${r.token} on ${r.cardId} must be a non-negative integer, got ${r.amount}`;
     case 'notALocation':
       return `${r.cardId} is not a location on a map`;
-    case 'locationOnOtherMap':
-      return `a connection of map ${r.mapId} ends at ${r.cardId}, which is on another map`;
     case 'setupTargetNotFound':
       return `setup refers to ${r.cardCode}, which no earlier step created`;
     case 'setupTargetAmbiguous':
       return `setup refers to ${r.cardCode}, which exists more than once`;
     case 'unknownEncounterSet':
       return `no cards in encounter set ${r.encounterCode}`;
+    case 'duplicateConnection':
+      return `${r.from} and ${r.to} are already connected`;
+    case 'connectionNotFound':
+      return `no connection between ${r.from} and ${r.to}`;
+    case 'selfConnection':
+      return `${r.cardId} cannot connect to itself`;
+    case 'alreadyRevealed':
+      return `${r.cardId} is already revealed`;
     case 'negativeTokens':
       return `${r.token} on ${r.cardId} would become ${r.current + r.delta}`;
   }

@@ -12,6 +12,7 @@ export * from './commands';
 export * from './events';
 export { apply, replay } from './reducer';
 export { handle } from './handle';
+export { neighbours, sameEdge, shortestPaths } from './board';
 export { CommandRejected, type Rejection, type RejectionCode } from './rejection';
 export { execute, type ExecuteResult } from './execute';
 export * from './setup';

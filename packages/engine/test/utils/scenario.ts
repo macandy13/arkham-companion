@@ -58,19 +58,28 @@ export function startScenario(
   return execute(ctx, emptyState(), compileSetup(ctx, def, options)).state;
 }
 
+/** Executes commands from `state`, returning the final state and all events. */
+export function runFrom(
+  ctx: EngineContext,
+  state: GameState,
+  commands: readonly Command[],
+): { state: GameState; events: Event[] } {
+  let current = state;
+  const events: Event[] = [];
+  for (const command of commands) {
+    const result = execute(ctx, current, command);
+    current = result.state;
+    events.push(...result.events);
+  }
+  return { state: current, events };
+}
+
 /** Executes commands from an empty state, returning the final state and all events. */
 export function run(
   ctx: EngineContext,
   commands: readonly Command[],
 ): { state: GameState; events: Event[] } {
-  let state = emptyState();
-  const events: Event[] = [];
-  for (const command of commands) {
-    const result = execute(ctx, state, command);
-    state = result.state;
-    events.push(...result.events);
-  }
-  return { state, events };
+  return runFrom(ctx, emptyState(), commands);
 }
 
 /** Card codes in a zone, top first. */

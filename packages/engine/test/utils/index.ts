@@ -5,6 +5,7 @@
  * in other packages. Builders have boring defaults; anything an assertion
  * depends on is passed explicitly in the test.
  */
+export * from './board';
 export * from './cards';
 export * from './investigators';
 export * from './scenario';
