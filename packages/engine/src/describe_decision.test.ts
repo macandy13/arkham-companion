@@ -61,6 +61,43 @@ describe('describeDecision', () => {
     );
   });
 
+  it('names the test of a skill test and the adjustable count of an option', () => {
+    const fight: Decision = {
+      ...engage,
+      kind: 'skillTestResult',
+      prompt: 'decision.fight',
+      skillTest: { skill: 'combat', difficulty: 1 },
+      options: [
+        { id: 'pass', label: 'decision.pass', amount: { default: 1, min: 1 }, commands: [] },
+        { id: 'fail', label: 'decision.fail', commands: [] },
+      ],
+    };
+
+    expect(describeDecision(ctx, state, fight)).toEqual(
+      'Fight Swarm of Rats: combat (1) pass ×1 (1+) / fail [skillTestResult]',
+    );
+  });
+
+  it('names the upper bound of an adjustable count', () => {
+    const investigate: Decision = {
+      ...engage,
+      kind: 'skillTestResult',
+      prompt: 'decision.investigate',
+      options: [
+        {
+          id: 'pass',
+          label: 'decision.pass',
+          amount: { default: 1, min: 1, max: 3 },
+          commands: [],
+        },
+      ],
+    };
+
+    expect(describeDecision(ctx, state, investigate)).toEqual(
+      'Investigate Swarm of Rats: pass ×1 (1–3) [skillTestResult]',
+    );
+  });
+
   it('shows the key of a prompt without a sentence', () => {
     const custom: Decision = { ...engage, subject: undefined, prompt: 'decision.chooseCellar' };
 

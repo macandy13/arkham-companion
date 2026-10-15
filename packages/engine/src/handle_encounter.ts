@@ -12,6 +12,7 @@ import type { InstanceId } from './ids';
 import { hasKeyword } from './keywords';
 import { requireCard } from './lookup';
 import { cardMoved } from './placement';
+import { revelationTestDecision } from './skill_tests';
 import { spawnEvents } from './spawn';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
@@ -176,7 +177,8 @@ function refillIfEmpty(state: GameState): Event[] {
 /**
  * The events that place a drawn card. An enemy spawns (spawn instruction,
  * engagement) like `SpawnEnemy`, with the drawer as fallback location; every
- * other card goes to the threat area or the top of the discard. The card may
+ * other card goes to the threat area or the top of the discard; a treachery
+ * with a revelation test then asks the drawer for its result. The card may
  * come from the discard (`match`), so the origin is read from the state.
  */
 function placement(
@@ -193,14 +195,17 @@ function placement(
       ? { kind: 'threatArea', investigatorId: investigator.id }
       : ENCOUNTER_DISCARD;
   // Index 0 is the top, and the discard's top is what "topmost" effects look for.
-  return [
-    cardMoved(
-      state,
-      requireCard(state.cards, cardId),
-      to,
-      to.kind === 'encounterDiscard' ? 0 : undefined,
-    ),
-  ];
+  const moved = cardMoved(
+    state,
+    requireCard(state.cards, cardId),
+    to,
+    to.kind === 'encounterDiscard' ? 0 : undefined,
+  );
+  const test =
+    stats.typeCode === 'treachery'
+      ? revelationTestDecision(ctx, replay([moved], state), cardId, investigator)
+      : [];
+  return [moved, ...test];
 }
 
 /**

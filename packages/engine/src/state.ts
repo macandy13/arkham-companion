@@ -260,6 +260,20 @@ export interface DecisionOption {
    * state of that later moment.
    */
   commands: Command[];
+  /**
+   * Set when the option's consequence is a count the players confirm or
+   * adjust (clues discovered, damage dealt): `commands` are written for
+   * `default`, and a `ResolveDecision.amount` in the range replaces the
+   * `amount` of each of them.
+   */
+  amount?: AmountRange;
+}
+
+/** The counts an option with an adjustable amount accepts; no `max` means no upper bound. */
+export interface AmountRange {
+  default: number;
+  min: number;
+  max?: number;
 }
 
 /** Campaign log – stub until campaign mode (architecture §8). */

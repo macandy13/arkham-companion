@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   decisionId,
-  execute,
   instanceId,
   investigatorId,
   skillTestDecision,
   type Command,
   type GameState,
+  type StartingCard,
   type Zone,
 } from './index';
 import {
@@ -15,103 +15,189 @@ import {
   fixed,
   makeCard,
   makeInvestigator,
-  rejectionOf as rejectionFrom,
-  runFrom,
+  rejectionFrom,
   startBoard,
+  stateAfter,
 } from '../test/utils';
 
 const alice = investigatorId('alice');
-const id = instanceId;
-
-const ctx = contextWith(
-  makeCard({ code: 'LOC', typeCode: 'location', shroud: 3, clues: fixed(2) }),
-  makeCard({ code: 'BARE', typeCode: 'location', shroud: 1 }),
-  makeCard({ code: 'FOE', typeCode: 'enemy', fight: 4, evade: 2, health: fixed(3) }),
-  makeCard({ code: 'BIG', typeCode: 'enemy', evade: 5, keywords: [{ name: 'massive' }] }),
-);
+const bob = investigatorId('bob');
+const study = instanceId('study');
+const hallway = instanceId('hallway');
+const ghoul = instanceId('ghoul');
 
 /**
- * Alice at the revealed `a` (shroud 3, 2 clues); `b` (no clues) is connected;
- * `enemies` by instance ID.
+ * The study (shroud 3, 2 clues) next to the bare hallway (shroud 1, no
+ * clues); a ghoul (fight 4, evade 2, 3 health) and a massive ghoul (evade 5).
  */
-function started(enemies: Record<string, { code: string; zone: Zone }> = {}): GameState {
+const ctx = contextWith(
+  makeCard({ code: 'study', name: 'Study', typeCode: 'location', shroud: 3, clues: fixed(2) }),
+  makeCard({ code: 'hallway', name: 'Hallway', typeCode: 'location', shroud: 1 }),
+  makeCard({ code: 'ghoul', typeCode: 'enemy', fight: 4, evade: 2, health: fixed(3) }),
+  makeCard({ code: 'massive_ghoul', typeCode: 'enemy', evade: 5, keywords: [{ name: 'massive' }] }),
+  makeCard({ code: 'chilling_treachery', revelationTest: { skill: 'willpower', difficulty: 4 } }),
+  makeCard({ code: 'plain_treachery' }),
+);
+
+const engagedWith = (investigator: typeof alice): Zone => ({
+  kind: 'engaged',
+  investigatorId: investigator,
+});
+const at = (locationId: typeof study): Zone => ({ kind: 'atLocation', locationId });
+
+/** Alice in the revealed study (2 clues), with `cards` besides; still in setup, so no turn is needed. */
+function aliceInStudyWith(cards: StartingCard[] = []): GameState {
   const board = startBoard(ctx, {
-    maps: { main: { locations: { a: 'LOC', b: 'BARE' }, connections: [edge('a', 'b')] } },
-    investigators: [makeInvestigator({ id: 'alice', locationId: id('a') })],
-    cards: enemies,
+    maps: {
+      main: {
+        locations: { study: 'study', hallway: 'hallway' },
+        connections: [edge('study', 'hallway')],
+      },
+    },
+    investigators: [makeInvestigator({ id: 'alice', locationId: study })],
+    cards,
+    shuffleEncounterDeck: false,
   });
-  return run(board, { type: 'RevealLocation', locationId: id('a') });
+  return stateAfter(ctx, board, { type: 'RevealLocation', locationId: study });
 }
 
-const engaged: Zone = { kind: 'engaged', investigatorId: alice };
-const at = (place: string): Zone => ({ kind: 'atLocation', locationId: id(place) });
-
-function run(state: GameState, ...commands: Command[]): GameState {
-  return runFrom(ctx, state, commands).state;
-}
-
-function answer(state: GameState, decision: string, option: string): GameState {
-  return run(state, {
+function answered(
+  state: GameState,
+  decision: string,
+  optionId: string,
+  amount?: number,
+): GameState {
+  return stateAfter(ctx, state, {
     type: 'ResolveDecision',
     decisionId: decisionId(decision),
-    optionId: option,
+    optionId,
+    ...(amount === undefined ? {} : { amount }),
   });
-}
-
-function rejectionOf(state: GameState, command: Command) {
-  return rejectionFrom(() => execute(ctx, state, command));
 }
 
 describe('Investigate', () => {
-  it('asks for an intellect test against the shroud of the location', () => {
-    const asked = run(started(), { type: 'Investigate', investigatorId: alice });
+  const investigate: Command = { type: 'Investigate', investigatorId: alice };
+
+  it('asks alice for an intellect test against the shroud, passing for 1 to 2 clues', () => {
+    const asked = stateAfter(ctx, aliceInStudyWith(), investigate);
 
     expect(asked.pending).toEqual([
-      expect.objectContaining({
+      {
         id: 'investigate:alice',
         kind: 'skillTestResult',
-        subject: 'a',
+        prompt: 'decision.investigate',
+        subject: study,
         decider: { kind: 'investigator', investigatorId: alice },
         skillTest: { skill: 'intellect', difficulty: 3 },
-      }),
+        options: [
+          {
+            id: 'pass',
+            label: 'decision.pass',
+            amount: { default: 1, min: 1, max: 2 },
+            commands: [
+              { type: 'DiscoverClues', investigatorId: alice, locationId: study, amount: 1 },
+            ],
+          },
+          { id: 'fail', label: 'decision.fail', commands: [] },
+        ],
+      },
     ]);
   });
 
-  it('discovers 1 clue on a pass', () => {
-    const asked = run(started(), { type: 'Investigate', investigatorId: alice });
+  it('discovers 1 clue on a pass by default', () => {
+    const passed = answered(
+      stateAfter(ctx, aliceInStudyWith(), investigate),
+      'investigate:alice',
+      'pass',
+    );
 
-    const passed = answer(asked, 'investigate:alice', 'pass');
+    expect(passed.investigators[0]!.clues).toBe(1);
+    expect(passed.cards[study]!.tokens.clue).toBe(1);
+  });
 
-    expect(passed.investigators[0]?.clues).toBe(1);
-    expect(passed.cards[id('a')]?.tokens.clue).toBe(1);
+  it('discovers the number of clues the players confirm', () => {
+    const passed = answered(
+      stateAfter(ctx, aliceInStudyWith(), investigate),
+      'investigate:alice',
+      'pass',
+      2,
+    );
+
+    expect(passed.investigators[0]!.clues).toBe(2);
+    expect(passed.cards[study]!.tokens.clue ?? 0).toBe(0);
+  });
+
+  it.each([
+    { name: 'more clues than the location has', amount: 3 },
+    { name: 'no clue', amount: 0 },
+  ])('rejects confirming $name', ({ amount }) => {
+    const asked = stateAfter(ctx, aliceInStudyWith(), investigate);
+
+    expect(
+      rejectionFrom(ctx, asked, {
+        type: 'ResolveDecision',
+        decisionId: decisionId('investigate:alice'),
+        optionId: 'pass',
+        amount,
+      }),
+    ).toEqual({
+      code: 'amountOutOfRange',
+      decisionId: decisionId('investigate:alice'),
+      optionId: 'pass',
+      amount,
+      min: 1,
+      max: 2,
+    });
+  });
+
+  it('rejects a count for the fail option', () => {
+    const asked = stateAfter(ctx, aliceInStudyWith(), investigate);
+
+    expect(
+      rejectionFrom(ctx, asked, {
+        type: 'ResolveDecision',
+        decisionId: decisionId('investigate:alice'),
+        optionId: 'fail',
+        amount: 1,
+      }),
+    ).toEqual({
+      code: 'amountNotAdjustable',
+      decisionId: decisionId('investigate:alice'),
+      optionId: 'fail',
+    });
   });
 
   it('changes nothing on a fail', () => {
-    const asked = run(started(), { type: 'Investigate', investigatorId: alice });
+    const failed = answered(
+      stateAfter(ctx, aliceInStudyWith(), investigate),
+      'investigate:alice',
+      'fail',
+    );
 
-    const failed = answer(asked, 'investigate:alice', 'fail');
-
-    expect(failed.investigators[0]?.clues).toBe(0);
-    expect(failed.pending).toEqual([]);
+    expect(failed.investigators[0]!.clues).toBe(0);
+    expect(failed.cards[study]!.tokens.clue).toBe(2);
   });
 
-  it('accepts a pass at a location without clues', () => {
-    const atB = run(started(), { type: 'MoveInvestigator', investigatorId: alice, to: id('b') });
-    const asked = run(atB, { type: 'Investigate', investigatorId: alice });
+  it('accepts a pass at a location without clues, which discovers nothing', () => {
+    const inHallway = stateAfter(ctx, aliceInStudyWith(), {
+      type: 'MoveInvestigator',
+      investigatorId: alice,
+      to: hallway,
+    });
 
-    const passed = answer(asked, 'investigate:alice', 'pass');
+    const passed = answered(stateAfter(ctx, inHallway, investigate), 'investigate:alice', 'pass');
 
-    expect(passed.investigators[0]?.clues).toBe(0);
+    expect(passed.investigators[0]!.clues).toBe(0);
+    expect(passed.pending).toEqual([]);
   });
 
   it('rejects an investigator who is not at a location', () => {
-    const state = started();
-    const nowhere = {
-      ...state,
-      investigators: state.investigators.map((inv) => ({ ...inv, locationId: undefined })),
-    };
+    const nowhere = startBoard(ctx, {
+      maps: { main: { locations: { study: 'study' } } },
+      investigators: [makeInvestigator({ id: 'alice' })],
+    });
 
-    expect(rejectionOf(nowhere, { type: 'Investigate', investigatorId: alice })).toEqual({
+    expect(rejectionFrom(ctx, nowhere, investigate)).toEqual({
       code: 'investigatorHasNoLocation',
       investigatorId: alice,
     });
@@ -119,216 +205,284 @@ describe('Investigate', () => {
 });
 
 describe('Fight', () => {
-  it('asks for a combat test against the fight value of the enemy', () => {
-    const asked = run(started({ foe: { code: 'FOE', zone: engaged } }), {
-      type: 'Fight',
-      investigatorId: alice,
-      enemyId: id('foe'),
-    });
+  const fight: Command = { type: 'Fight', investigatorId: alice, enemyId: ghoul };
+
+  it('asks alice for a combat test against the fight value, passing for the basic 1 damage or more', () => {
+    const asked = stateAfter(
+      ctx,
+      aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: engagedWith(alice) }]),
+      fight,
+    );
 
     expect(asked.pending[0]).toMatchObject({
-      id: 'fight:alice:foe',
-      subject: 'foe',
+      id: 'fight:alice:ghoul',
+      prompt: 'decision.fight',
+      subject: ghoul,
       skillTest: { skill: 'combat', difficulty: 4 },
+      options: [
+        {
+          id: 'pass',
+          amount: { default: 1, min: 1 },
+          commands: [{ type: 'DamageEnemy', enemyId: ghoul, amount: 1 }],
+        },
+        { id: 'fail', commands: [] },
+      ],
     });
   });
 
-  it('deals 1 damage on a pass', () => {
-    const asked = run(started({ foe: { code: 'FOE', zone: engaged } }), {
-      type: 'Fight',
-      investigatorId: alice,
-      enemyId: id('foe'),
-    });
+  it('deals 1 damage on a pass by default', () => {
+    const asked = stateAfter(
+      ctx,
+      aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: engagedWith(alice) }]),
+      fight,
+    );
 
-    const passed = answer(asked, 'fight:alice:foe', 'pass');
+    const passed = answered(asked, 'fight:alice:ghoul', 'pass');
 
-    expect(passed.cards[id('foe')]?.tokens.damage).toBe(1);
+    expect(passed.cards[ghoul]!.tokens.damage).toBe(1);
   });
 
-  it('deals the damage of the weapon used, which can defeat the enemy', () => {
-    const asked = run(started({ foe: { code: 'FOE', zone: engaged } }), {
-      type: 'Fight',
-      investigatorId: alice,
-      enemyId: id('foe'),
-      damage: 3,
-    });
+  it('deals the damage of the weapon used by default', () => {
+    const asked = stateAfter(
+      ctx,
+      aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: engagedWith(alice) }]),
+      {
+        ...fight,
+        damage: 2,
+      },
+    );
 
-    const passed = answer(asked, 'fight:alice:foe', 'pass');
+    const passed = answered(asked, 'fight:alice:ghoul', 'pass');
 
-    expect(passed.cards[id('foe')]?.zone).toEqual({ kind: 'encounterDiscard' });
+    expect(passed.cards[ghoul]!.tokens.damage).toBe(2);
+  });
+
+  it('deals the damage the players confirm, which can defeat the enemy', () => {
+    const asked = stateAfter(
+      ctx,
+      aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: engagedWith(alice) }]),
+      fight,
+    );
+
+    const passed = answered(asked, 'fight:alice:ghoul', 'pass', 3);
+
+    expect(passed.cards[ghoul]!.zone).toEqual({ kind: 'encounterDiscard' });
   });
 
   it('can attack an unengaged enemy at the location', () => {
-    const unengaged = run(started({ foe: { code: 'FOE', zone: engaged } }), {
-      type: 'DisengageEnemy',
-      enemyId: id('foe'),
-    });
+    const asked = stateAfter(
+      ctx,
+      aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: engagedWith(alice) }]),
+      { type: 'DisengageEnemy', enemyId: ghoul },
+      fight,
+    );
 
-    const asked = run(unengaged, {
-      type: 'Fight',
-      investigatorId: alice,
-      enemyId: id('foe'),
-    });
-
-    expect(asked.pending.map((d) => d.id)).toEqual(['fight:alice:foe']);
+    expect(asked.pending.map((decision) => decision.id)).toEqual(['fight:alice:ghoul']);
   });
 
   it('rejects an enemy at another location', () => {
-    expect(
-      rejectionOf(started({ foe: { code: 'FOE', zone: at('b') } }), {
-        type: 'Fight',
-        investigatorId: alice,
-        enemyId: id('foe'),
-      }),
-    ).toEqual({ code: 'investigatorNotAtLocation', investigatorId: alice, locationId: 'b' });
+    const state = aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: at(hallway) }]);
+
+    expect(rejectionFrom(ctx, state, fight)).toEqual({
+      code: 'investigatorNotAtLocation',
+      investigatorId: alice,
+      locationId: hallway,
+    });
   });
 
   it('rejects an enemy that is not in play', () => {
-    expect(
-      rejectionOf(started({ foe: { code: 'FOE', zone: { kind: 'encounterDeck' } } }), {
-        type: 'Fight',
-        investigatorId: alice,
-        enemyId: id('foe'),
-      }).code,
-    ).toBe('enemyNotInPlay');
+    const state = aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: { kind: 'encounterDeck' } }]);
+
+    expect(rejectionFrom(ctx, state, fight)).toEqual({ code: 'enemyNotInPlay', cardId: ghoul });
   });
 
   it('rejects a damage amount that is not positive', () => {
-    expect(
-      rejectionOf(started({ foe: { code: 'FOE', zone: engaged } }), {
-        type: 'Fight',
-        investigatorId: alice,
-        enemyId: id('foe'),
-        damage: 0,
-      }),
-    ).toEqual({ code: 'invalidTokenDelta', delta: 0 });
+    const state = aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: engagedWith(alice) }]);
+
+    expect(rejectionFrom(ctx, state, { ...fight, damage: 0 })).toEqual({
+      code: 'invalidTokenDelta',
+      delta: 0,
+    });
   });
 });
 
 describe('failed Fight', () => {
-  const bob = investigatorId('bob');
-
-  /**
-   * Alice and bob (2 health left) both at `a`; after `setup`, alice fights
-   * `foe` for 2 damage and fails.
-   */
-  function failedFight(enemy: { code: string; zone: Zone }, ...setup: Command[]): GameState {
+  /** Alice and bob (2 health left) in the study; alice fights the ghoul in `zone` for 2 damage and fails. */
+  function failedFight(code: string, zone: Zone, ...before: Command[]): GameState {
     const board = startBoard(ctx, {
-      maps: { main: { locations: { a: 'LOC', b: 'BARE' }, connections: [edge('a', 'b')] } },
+      maps: { main: { locations: { study: 'study' } } },
       investigators: [
-        makeInvestigator({ id: 'alice', seat: 0, locationId: id('a') }),
-        makeInvestigator({
-          id: 'bob',
-          seat: 1,
-          locationId: id('a'),
-          health: { max: 3, damage: 1 },
-        }),
+        makeInvestigator({ id: 'alice', seat: 0, locationId: study }),
+        makeInvestigator({ id: 'bob', seat: 1, locationId: study, health: { max: 3, damage: 1 } }),
       ],
-      cards: { foe: enemy },
+      cards: [{ id: ghoul, code, zone }],
     });
-    const asked = run(board, ...setup, {
+    const asked = stateAfter(ctx, board, ...before, {
       type: 'Fight',
       investigatorId: alice,
-      enemyId: id('foe'),
+      enemyId: ghoul,
       damage: 2,
     });
-    return answer(asked, 'fight:alice:foe', 'fail');
+    return answered(asked, 'fight:alice:ghoul', 'fail');
   }
 
   it('deals the attack`s damage to the other investigator engaged with the enemy, which can defeat them', () => {
-    const failed = failedFight({ code: 'FOE', zone: { kind: 'engaged', investigatorId: bob } });
+    const failed = failedFight('ghoul', engagedWith(bob));
 
-    expect(failed.investigators.find((inv) => inv.id === bob)).toMatchObject({
+    expect(failed.investigators[1]).toMatchObject({
       health: { max: 3, damage: 3 },
       status: 'defeated',
     });
   });
 
-  it.each([
-    { name: 'engaged with the fighter', enemy: { code: 'FOE', zone: engaged }, setup: [] },
+  it.each<{ name: string; code: string; zone: Zone; before: Command[] }>([
+    { name: 'engaged with the fighter', code: 'ghoul', zone: engagedWith(alice), before: [] },
     {
       name: 'unengaged',
-      enemy: { code: 'FOE', zone: engaged },
-      setup: [{ type: 'DisengageEnemy', enemyId: id('foe') } as const],
+      code: 'ghoul',
+      zone: engagedWith(alice),
+      before: [{ type: 'DisengageEnemy', enemyId: ghoul }],
     },
-    { name: 'massive', enemy: { code: 'BIG', zone: at('a') }, setup: [] },
-  ])('deals no damage for an enemy that is $name', ({ enemy, setup }) => {
-    const failed = failedFight(enemy, ...setup);
+    { name: 'massive', code: 'massive_ghoul', zone: at(study), before: [] },
+  ])('deals no damage for an enemy that is $name', ({ code, zone, before }) => {
+    const failed = failedFight(code, zone, ...before);
 
-    expect(failed.investigators.map((inv) => inv.health.damage)).toEqual([0, 1]);
+    expect(failed.investigators.map((inv) => [inv.id, inv.health.damage])).toEqual([
+      ['alice', 0],
+      ['bob', 1],
+    ]);
   });
 });
 
 describe('Evade', () => {
-  it('asks for an agility test against the evade value of the enemy', () => {
-    const asked = run(started({ foe: { code: 'FOE', zone: engaged } }), {
-      type: 'Evade',
-      investigatorId: alice,
-      enemyId: id('foe'),
-    });
+  const evade: Command = { type: 'Evade', investigatorId: alice, enemyId: ghoul };
+
+  it('asks alice for an agility test against the evade value', () => {
+    const asked = stateAfter(
+      ctx,
+      aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: engagedWith(alice) }]),
+      evade,
+    );
 
     expect(asked.pending[0]).toMatchObject({
-      id: 'evade:alice:foe',
+      id: 'evade:alice:ghoul',
+      prompt: 'decision.evade',
       skillTest: { skill: 'agility', difficulty: 2 },
     });
   });
 
   it('exhausts and disengages the enemy on a pass', () => {
-    const asked = run(started({ foe: { code: 'FOE', zone: engaged } }), {
-      type: 'Evade',
-      investigatorId: alice,
-      enemyId: id('foe'),
-    });
+    const asked = stateAfter(
+      ctx,
+      aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: engagedWith(alice) }]),
+      evade,
+    );
 
-    const passed = answer(asked, 'evade:alice:foe', 'pass');
+    const passed = answered(asked, 'evade:alice:ghoul', 'pass');
 
-    expect(passed.cards[id('foe')]).toMatchObject({ exhausted: true, zone: at('a') });
+    expect(passed.cards[ghoul]).toMatchObject({ exhausted: true, zone: at(study) });
   });
 
   it('only disengages an enemy that is already exhausted', () => {
-    const exhausted = run(started({ foe: { code: 'FOE', zone: engaged } }), {
-      type: 'ExhaustEnemy',
-      enemyId: id('foe'),
-    });
-    const asked = run(exhausted, { type: 'Evade', investigatorId: alice, enemyId: id('foe') });
+    const asked = stateAfter(
+      ctx,
+      aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: engagedWith(alice) }]),
+      { type: 'ExhaustEnemy', enemyId: ghoul },
+      evade,
+    );
 
-    const passed = answer(asked, 'evade:alice:foe', 'pass');
-
-    expect(passed.cards[id('foe')]).toMatchObject({ exhausted: true, zone: at('a') });
+    expect(asked.pending[0]!.options[0]!.commands).toEqual([
+      { type: 'DisengageEnemy', enemyId: ghoul },
+    ]);
   });
 
   it('only exhausts a massive enemy, which stays engaged with everyone at its location', () => {
-    const asked = run(started({ giant: { code: 'BIG', zone: at('a') } }), {
-      type: 'Evade',
-      investigatorId: alice,
-      enemyId: id('giant'),
-    });
+    const asked = stateAfter(
+      ctx,
+      aliceInStudyWith([{ id: ghoul, code: 'massive_ghoul', zone: at(study) }]),
+      evade,
+    );
 
-    const passed = answer(asked, 'evade:alice:giant', 'pass');
+    const passed = answered(asked, 'evade:alice:ghoul', 'pass');
 
-    expect(passed.cards[id('giant')]).toMatchObject({ exhausted: true, zone: at('a') });
+    expect(passed.cards[ghoul]).toMatchObject({ exhausted: true, zone: at(study) });
   });
 
   it('leaves the enemy engaged on a fail', () => {
-    const asked = run(started({ foe: { code: 'FOE', zone: engaged } }), {
-      type: 'Evade',
-      investigatorId: alice,
-      enemyId: id('foe'),
-    });
+    const asked = stateAfter(
+      ctx,
+      aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: engagedWith(alice) }]),
+      evade,
+    );
 
-    const failed = answer(asked, 'evade:alice:foe', 'fail');
+    const failed = answered(asked, 'evade:alice:ghoul', 'fail');
 
-    expect(failed.cards[id('foe')]).toMatchObject({ exhausted: false, zone: engaged });
+    expect(failed.cards[ghoul]).toMatchObject({ exhausted: false, zone: engagedWith(alice) });
   });
 
   it('rejects an enemy that is not engaged with the investigator', () => {
-    expect(
-      rejectionOf(started({ foe: { code: 'FOE', zone: at('b') } }), {
-        type: 'Evade',
-        investigatorId: alice,
-        enemyId: id('foe'),
-      }),
-    ).toEqual({ code: 'notEngaged', cardId: 'foe' });
+    const state = aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: at(hallway) }]);
+
+    expect(rejectionFrom(ctx, state, evade)).toEqual({ code: 'notEngaged', cardId: ghoul });
+  });
+});
+
+describe('revelation test', () => {
+  const chill = instanceId('chill');
+  const draw: Command = { type: 'DrawEncounter', investigatorId: alice };
+
+  it('asks the drawer for the test of a treachery that has one', () => {
+    const drawn = stateAfter(
+      ctx,
+      aliceInStudyWith([
+        { id: chill, code: 'chilling_treachery', zone: { kind: 'encounterDeck' } },
+        { id: instanceId('next_card'), code: 'plain_treachery', zone: { kind: 'encounterDeck' } },
+      ]),
+      draw,
+    );
+
+    expect(drawn.pending).toEqual([
+      {
+        id: 'revelation:chill',
+        kind: 'skillTestResult',
+        prompt: 'decision.revelationTest',
+        subject: chill,
+        decider: { kind: 'investigator', investigatorId: alice },
+        skillTest: { skill: 'willpower', difficulty: 4 },
+        options: [
+          { id: 'pass', label: 'decision.pass', commands: [] },
+          { id: 'fail', label: 'decision.fail', commands: [] },
+        ],
+      },
+    ]);
+    expect(drawn.cards[chill]!.zone).toEqual({ kind: 'encounterDiscard' });
+  });
+
+  it('leaves what failing costs to the players', () => {
+    const drawn = stateAfter(
+      ctx,
+      aliceInStudyWith([
+        { id: chill, code: 'chilling_treachery', zone: { kind: 'encounterDeck' } },
+      ]),
+      draw,
+    );
+
+    const failed = answered(drawn, 'revelation:chill', 'fail');
+
+    expect(failed.pending).toEqual([]);
+    expect(failed.investigators[0]).toMatchObject({ health: { damage: 0 }, sanity: { horror: 0 } });
+  });
+
+  it('asks nothing for a treachery without a test', () => {
+    const drawn = stateAfter(
+      ctx,
+      aliceInStudyWith([
+        { id: instanceId('plain'), code: 'plain_treachery', zone: { kind: 'encounterDeck' } },
+      ]),
+      draw,
+    );
+
+    expect(drawn.pending).toEqual([]);
   });
 });
 
@@ -349,10 +503,9 @@ describe('card-driven skill test', () => {
         },
       ),
     };
-    const asked = run(started(), request);
 
-    const failed = answer(asked, 'mishap', 'fail');
+    const failed = answered(stateAfter(ctx, aliceInStudyWith(), request), 'mishap', 'fail');
 
-    expect(failed.investigators[0]?.sanity.horror).toBe(2);
+    expect(failed.investigators[0]!.sanity.horror).toBe(2);
   });
 });

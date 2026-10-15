@@ -503,6 +503,13 @@ export interface ResolveDecision {
   type: 'ResolveDecision';
   decisionId: DecisionId;
   optionId: string;
+  /**
+   * The count the players confirmed for an option with an `amount` range
+   * (clues discovered, damage dealt); replaces the `amount` of the option's
+   * commands. Omit to accept the option's default. Rejected for an option
+   * without a range or outside it.
+   */
+  amount?: number;
 }
 
 /**

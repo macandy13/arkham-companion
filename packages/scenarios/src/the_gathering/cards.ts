@@ -5,6 +5,7 @@ import {
   type CardStats,
   type Keyword,
   type ScaledValue,
+  type SkillTest,
   type Trait,
 } from '@arkham/engine';
 
@@ -45,7 +46,8 @@ const ghoulTraits = ['Humanoid', 'Monster', 'Ghoul'];
 /**
  * Hand-entered card data for The Gathering, keyed by the real ArkhamDB codes
  * so it lines up with the cached card data later. Only names, codes, numbers,
- * traits, keywords and the threat-area flag – no card text, no ArkhamDB JSON,
+ * traits, keywords, the threat-area flag and revelation tests (skill and
+ * difficulty, checked against ArkhamDB's `core_encounter.json`) – no card text, no ArkhamDB JSON,
  * no images – so it may be committed (see CLAUDE.md). It is the test scenario for the generic rules
  * until real scenario data arrives (M4).
  */
@@ -151,6 +153,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     set: sets.ghouls,
     traits: ['Hazard'],
     quantity: 3,
+    revelationTest: { skill: 'agility', difficulty: 3 },
   }),
   treachery({
     code: '01163',
@@ -158,6 +161,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     set: sets.strikingFear,
     traits: ['Terror'],
     quantity: 3,
+    revelationTest: { skill: 'willpower', difficulty: 3 },
   }),
   treachery({
     code: '01164',
@@ -188,6 +192,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     set: sets.chillingCold,
     traits: ['Hazard'],
     quantity: 2,
+    revelationTest: { skill: 'willpower', difficulty: 4 },
   }),
   treachery({
     code: '01168',
@@ -296,6 +301,11 @@ interface TreacheryOptions {
   quantity: number;
   /** Set for a treachery that stays in the drawer's threat area. */
   entersThreatArea?: boolean;
+  /**
+   * The skill test of the card's revelation, if it has one. Frozen in Fear's
+   * willpower test is not one: it comes at the end of each turn, not when drawn.
+   */
+  revelationTest?: SkillTest;
 }
 
 function treachery({
@@ -305,6 +315,7 @@ function treachery({
   traits,
   quantity,
   entersThreatArea,
+  revelationTest,
 }: TreacheryOptions): CardStats {
   return {
     code,
@@ -314,6 +325,7 @@ function treachery({
     encounterCode: set,
     quantity,
     ...(entersThreatArea ? { entersThreatArea } : {}),
+    ...(revelationTest ? { revelationTest } : {}),
   };
 }
 
