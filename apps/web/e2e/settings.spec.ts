@@ -1,9 +1,4 @@
-import { expect, test } from '@playwright/test';
-import { stubArkhamDb } from './fixtures/arkhamdb';
-
-test.beforeEach(async ({ page }) => {
-  await stubArkhamDb(page);
-});
+import { expect, test } from './fixtures/test';
 
 // Journey: change the preferences and see the app react. Pack ownership joins in once the
 // settings screen receives the catalog packs (M2.7).
