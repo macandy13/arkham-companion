@@ -60,6 +60,32 @@ export function withStatDelta(
 }
 
 /**
+ * A copy of the investigator with each given counter set to an absolute value,
+ * e.g. `withStats(investigator, { damage: 2, horror: 1 })`; counters left out
+ * keep their value. Expressed as `withStatDelta` steps, so it changes state the
+ * same way the reducer does and does no clamping or validation of its own: like
+ * the reducer, it can produce a negative counter, and rejecting those is the
+ * command handler's job. Mainly for building states in tests and scenario setup.
+ *
+ * `health.max` and `sanity.max` are not tracked stats (no event adjusts them)
+ * and are not covered; set them when constructing the investigator.
+ */
+export function withStats(
+  investigator: Investigator,
+  values: Readonly<Partial<Record<InvestigatorStat, number>>>,
+): Investigator {
+  // Object.entries widens the keys to string; the Partial<Record<…>> type guarantees they are stats.
+  const entries = Object.entries(values) as [InvestigatorStat, number | undefined][];
+  return entries.reduce(
+    (current, [stat, value]) =>
+      value === undefined
+        ? current
+        : withStatDelta(current, stat, value - statValue(current, stat)),
+    investigator,
+  );
+}
+
+/**
  * Prey criterion "lowest remaining health" (architecture §5). The prey helpers
  * return every active investigator tied for the extreme, in the order given,
  * because the players, not the engine, break ties (M1.8/M1.9). Defeated and

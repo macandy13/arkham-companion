@@ -8,6 +8,8 @@ import {
   lowestRemainingSanity,
   mostClues,
   mostResources,
+  withStatDelta,
+  withStats,
   type Command,
   type GameState,
   type Investigator,
@@ -22,7 +24,6 @@ import {
   rejectionFrom,
   stateAfter,
   startBoard,
-  withHealth,
 } from '../test/utils';
 
 const hall = instanceId('hall');
@@ -423,15 +424,65 @@ describe('investigator state over a sequence of adjustments', () => {
 });
 
 describe('lowestRemainingHealth with ties', () => {
+  const hurt = (id: string, maxHealth: number, damage: number) =>
+    withStats(makeInvestigator({ id, health: { max: maxHealth, damage: 0 } }), { damage });
+
   it.each([
-    ['a single investigator', [withHealth('a', 5, 4)], ['a']],
-    ['a clear minimum', [withHealth('a', 9, 0), withHealth('b', 6, 1)], ['b']],
+    ['a single investigator', [hurt('a', 5, 4)], ['a']],
+    ['a clear minimum', [hurt('a', 9, 0), hurt('b', 6, 1)], ['b']],
     [
       'investigators tied on remaining health',
-      [withHealth('a', 9, 4), withHealth('b', 6, 1), withHealth('c', 8, 0)],
+      [hurt('a', 9, 4), hurt('b', 6, 1), hurt('c', 8, 0)],
       ['a', 'b'],
     ],
   ])('returns the lowest for %s', (_, candidates, expectedIds) => {
     expect(lowestRemainingHealth(candidates).map((inv) => inv.id)).toEqual(expectedIds);
+  });
+});
+
+describe('withStats', () => {
+  const base = makeInvestigator({
+    id: 'a',
+    health: { max: 8, damage: 3 },
+    sanity: { max: 6, horror: 2 },
+    clues: 1,
+    resources: 5,
+  });
+
+  it('sets each given stat to the absolute value', () => {
+    const result = withStats(base, { damage: 1, horror: 4, clues: 0, resources: 9 });
+
+    expect(result.health.damage).toBe(1);
+    expect(result.sanity.horror).toBe(4);
+    expect(result.clues).toBe(0);
+    expect(result.resources).toBe(9);
+  });
+
+  it('leaves stats that are not given alone', () => {
+    const result = withStats(base, { damage: 2 });
+
+    expect(result).toEqual({ ...base, health: { max: 8, damage: 2 } });
+  });
+
+  it('leaves the maximum health and sanity unchanged', () => {
+    const result = withStats(base, { damage: 7, horror: 5 });
+
+    expect(result.health.max).toBe(8);
+    expect(result.sanity.max).toBe(6);
+  });
+
+  it('returns an equal investigator for no stats and does not mutate the input', () => {
+    const result = withStats(base, {});
+
+    expect(result).toEqual(base);
+    expect(withStats(base, { clues: 4 })).not.toBe(base);
+    expect(base.clues).toBe(1);
+  });
+
+  it('applies values like withStatDelta, without clamping negatives', () => {
+    const result = withStats(base, { resources: -2 });
+
+    expect(result).toEqual(withStatDelta(base, 'resources', -7));
+    expect(result.resources).toBe(-2);
   });
 });
