@@ -17,6 +17,8 @@ import {
   run,
   stateAfter,
   testContext,
+  contextWith,
+  makeCard,
 } from '../test/utils';
 
 const main = mapId('main');
@@ -601,6 +603,86 @@ describe('AdvanceAct', () => {
     expect(rejectionFrom(testContext, ended, { type: 'AdvanceAct', spend: [] })).toEqual({
       code: 'noCurrentCard',
       deck: 'act',
+    });
+  });
+});
+
+describe('advancing an act without paying clues', () => {
+  it('advances an act that has a clue threshold when no clues are paid', () => {
+    const state = startedWith([makeInvestigator({ id: alice, clues: 3 })]);
+
+    const next = stateAfter(testContext, state, { type: 'AdvanceAct' });
+
+    expect(next.act.current).toBe(act2);
+    expect(next.investigators[0]!.clues).toBe(3);
+  });
+
+  it('emits no payment events when no clues are paid', () => {
+    const state = startedWith([makeInvestigator({ id: alice, clues: 3 })]);
+
+    expect(eventsOf(state, { type: 'AdvanceAct' }).map((event) => event.type)).toEqual([
+      'CardFlipped',
+      'CardMoved',
+      'ActAdvanced',
+    ]);
+  });
+});
+
+describe('cards without a threshold', () => {
+  const plainAgenda = instanceId('plainAgenda');
+  const plainAct = instanceId('plainAct');
+  const nextAct = instanceId('nextAct');
+  const ctx = contextWith(
+    makeCard({ code: 'PA', typeCode: 'agenda', stage: { number: 1 } }),
+    makeCard({ code: 'PC', typeCode: 'act', stage: { number: 1 } }),
+    makeCard({ code: 'PD', typeCode: 'act', stage: { number: 2 } }),
+    makeCard({ code: 'PL', typeCode: 'location' }),
+  );
+  let state: GameState;
+  beforeEach(() => {
+    state = run(ctx, [
+      {
+        type: 'StartScenario',
+        scenarioId: 'test',
+        difficulty: 'standard',
+        seed: 1,
+        investigators: [makeInvestigator({ id: alice, clues: 3 })],
+        maps: { [main]: { name: 'Main' } },
+        cards: [
+          { id: plainAgenda, code: 'PA', zone: { kind: 'agendaDeck' }, faceUp: true },
+          { id: plainAct, code: 'PC', zone: { kind: 'actDeck' }, faceUp: true },
+          { id: nextAct, code: 'PD', zone: { kind: 'actDeck' }, faceUp: true },
+          { id: hall, code: 'PL', zone: { kind: 'location', mapId: main }, faceUp: true },
+        ],
+      },
+    ]).state;
+  });
+
+  it('never asks to advance an agenda that has no doom threshold', () => {
+    const next = stateAfter(ctx, state, { type: 'PlaceDoom', amount: 50 });
+
+    expect(next.pending).toEqual([]);
+  });
+
+  it('advances an act without a clue threshold when no clues are paid', () => {
+    const next = stateAfter(ctx, state, { type: 'AdvanceAct' });
+
+    expect(next.act.current).toBe(nextAct);
+  });
+
+  it('rejects paying clues for an act without a clue threshold', () => {
+    expect(
+      rejectionFrom(ctx, state, {
+        type: 'AdvanceAct',
+        spend: [{ investigatorId: alice, amount: 1 }],
+      }),
+    ).toEqual({ code: 'noClueThreshold', cardId: plainAct });
+  });
+
+  it('rejects an empty payment for an act without a clue threshold', () => {
+    expect(rejectionFrom(ctx, state, { type: 'AdvanceAct', spend: [] })).toEqual({
+      code: 'noClueThreshold',
+      cardId: plainAct,
     });
   });
 });

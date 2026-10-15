@@ -184,15 +184,19 @@ export interface ClueSpend {
 }
 
 /**
- * Advances the current act. The investigators choose who pays, so `spend`
- * lists their payments; the total must equal the act's clue requirement
- * (its `clues`, resolved for the starting player count), and it is empty for an act
- * without one. Produces `InvestigatorChanged` per payment, `CardFlipped`,
- * `CardMoved`, `ActAdvanced` and, for the last act, `ScenarioEnded`.
+ * Advances the current act. Paying clues is only one way to advance: other
+ * acts need an objective, an action or an event (an enemy defeated or out of
+ * play, …), which players or scenario hooks (M1.6) decide, so those advance
+ * with no `spend`. With `spend` the investigators choose who pays; the total
+ * must equal the act's clue requirement (its `clues`, resolved for the
+ * starting player count) and the act must have one. Produces
+ * `InvestigatorChanged` per payment, `CardFlipped`, `CardMoved`,
+ * `ActAdvanced` and, for the last act, `ScenarioEnded`.
  */
 export interface AdvanceAct {
   type: 'AdvanceAct';
-  spend: ClueSpend[];
+  /** Clue payments; omit to advance without paying (any act can advance that way). */
+  spend?: ClueSpend[];
   /** Resolution the scenario ends with; required for (and only read on) the last act. */
   resolution?: string;
 }

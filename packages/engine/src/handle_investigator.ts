@@ -11,6 +11,7 @@ import type {
 import { handleRevealLocation } from './handle_board';
 import type { InvestigatorId } from './ids';
 import { defeatCause, statValue, withStatDelta } from './investigators';
+import { requireCard } from './lookup';
 import { CommandRejected } from './rejection';
 import type { GameState, Investigator } from './state';
 
@@ -25,8 +26,7 @@ export function handleMoveInvestigator(
   cmd: MoveInvestigator,
 ): (InvestigatorMoved | CardFlipped | TokensChanged)[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
-  const destination = state.cards[cmd.to];
-  if (!destination) throw new CommandRejected({ code: 'unknownCard', cardId: cmd.to });
+  const destination = requireCard(state.cards, cmd.to);
   if (destination.zone.kind !== 'location')
     throw new CommandRejected({ code: 'notALocation', cardId: cmd.to });
   if (investigator.locationId === cmd.to)
@@ -94,8 +94,7 @@ export function handleDiscoverClues(
   const investigator = activeInvestigator(state, cmd.investigatorId);
   if (!Number.isInteger(cmd.amount) || cmd.amount <= 0)
     throw new CommandRejected({ code: 'invalidTokenDelta', delta: cmd.amount });
-  const location = state.cards[cmd.locationId];
-  if (!location) throw new CommandRejected({ code: 'unknownCard', cardId: cmd.locationId });
+  const location = requireCard(state.cards, cmd.locationId);
   if (investigator.locationId !== cmd.locationId)
     throw new CommandRejected({
       code: 'investigatorNotAtLocation',

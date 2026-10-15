@@ -62,6 +62,8 @@ export type Rejection =
   /** The last card of a deck advances but the command names no resolution. */
   | { code: 'resolutionRequired'; deck: 'agenda' | 'act' }
   /** The clues paid for an act do not add up to its requirement. */
+  /** `AdvanceAct` pays clues for an act whose card data has no clue threshold. */
+  | { code: 'noClueThreshold'; cardId: InstanceId }
   | { code: 'wrongClueTotal'; required: number; spent: number }
   | {
       code: 'negativeTokens';
@@ -143,6 +145,8 @@ function describe(r: Rejection): string {
       return `there is no current ${r.deck}`;
     case 'resolutionRequired':
       return `the last ${r.deck} needs a resolution`;
+    case 'noClueThreshold':
+      return `${r.cardId} has no clue threshold to pay`;
     case 'wrongClueTotal':
       return `${r.required} clues are required, ${r.spent} spent`;
     case 'negativeTokens':
