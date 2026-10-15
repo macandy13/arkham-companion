@@ -18,6 +18,7 @@ Code style and conventions (functions, comments, tests, markup, CSS, helpers) ar
 - TypeScript strict, no `any` without a comment explaining why.
 - Every exported interface, type, class and non-trivial function gets a doc comment explaining its purpose and, where it isn't obvious, how it relates to other types (e.g. which reducer produces it, which ID it refers to). Also explain non-obvious design choices (why, not what).
 - **In-code comments explain why, not what.** Inside function bodies, comment only to give a motivation the code can't express (game rule, workaround, trade-off) – never to narrate steps.
+- **Never swallow a caught error silently.** A `catch` at least `console.warn`s with context (and may still fall back), or rethrows. The engine has no console: it turns errors into rejections instead.
 - **Styles use tokens.** Colours, spacing, sizes come from `apps/web/src/styles/tokens.css`; no raw values or copy-pasted declarations elsewhere.
 - **Reuse helpers.** Generic string/array/object operations live in `@arkham/util` (`packages/util`); add missing ones there with tests instead of inlining them.
 - Tests with every change: Vitest unit tests for engine logic; cover invariants with example-based table tests (`it.each`), no property-based testing. Keep tests local: the values an assertion depends on are visible in the test or its `describe` setup.
