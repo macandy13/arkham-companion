@@ -66,6 +66,7 @@ describe('NewGameScreen', () => {
   afterEach(() => {
     cleanup();
     sessionStorage.clear();
+    vi.restoreAllMocks();
   });
 
   it('offers both entry points without a mode', () => {
@@ -163,7 +164,9 @@ describe('NewGameScreen', () => {
     await screen.findByRole('list', { name: 'Investigators' });
     selectInvestigator('Alder');
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
-    vi.spyOn(store.getState(), 'startScenario').mockRejectedValue(new Error('rejected'));
+    const failure = new Error('rejected');
+    vi.spyOn(store.getState(), 'startScenario').mockRejectedValue(failure);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
 
@@ -171,5 +174,6 @@ describe('NewGameScreen', () => {
       expect(screen.getByRole('alert').textContent).toContain('could not be started'),
     );
     expect(screen.getByRole('button', { name: 'Start game' })).toBeTruthy();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('start the game'), failure);
   });
 });

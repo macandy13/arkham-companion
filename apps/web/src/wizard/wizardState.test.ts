@@ -81,7 +81,8 @@ describe('saved choices', () => {
     expect(loadChoices('quick')).toEqual(defaultChoices('quick'));
   });
 
-  it('works without usable storage', () => {
+  it('works without usable storage, warning for each failed access', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     for (const method of ['getItem', 'setItem', 'removeItem'] as const) {
       vi.spyOn(Storage.prototype, method).mockImplementation(() => {
         throw new Error('blocked');
@@ -92,5 +93,9 @@ describe('saved choices', () => {
     clearChoices();
 
     expect(loadChoices('quick')).toEqual(defaultChoices('quick'));
+    expect(warn).toHaveBeenCalledTimes(3);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('save'), expect.any(Error));
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('clear'), expect.any(Error));
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('restore'), expect.any(Error));
   });
 });

@@ -104,7 +104,8 @@ function Wizard({ store, catalogSource, mode, step }: WizardProps) {
       });
       clearChoices();
       await navigate(`/game/${gameId}`);
-    } catch {
+    } catch (error) {
+      console.warn('Could not start the game.', error);
       setStartFailed(true);
     }
   }

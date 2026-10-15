@@ -73,18 +73,20 @@ export function loadChoices(mode: WizardMode): WizardChoices {
   try {
     const stored: unknown = JSON.parse(sessionStorage.getItem(STORAGE_KEY) ?? 'null');
     if (isChoices(stored) && stored.mode === mode) return stored;
-  } catch {
+  } catch (error) {
     // Unusable storage only costs the remembered choices.
+    console.warn('Could not restore the wizard choices; starting fresh.', error);
   }
   return defaultChoices(mode);
 }
 
-/** Saves the choices for this tab; silently skipped if storage is unavailable. */
+/** Saves the choices for this tab; skipped (with a warning) if storage is unavailable. */
 export function saveChoices(choices: WizardChoices): void {
   try {
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(choices));
-  } catch {
+  } catch (error) {
     // The wizard works without persistence.
+    console.warn('Could not save the wizard choices; they are lost on refresh.', error);
   }
 }
 
@@ -92,7 +94,8 @@ export function saveChoices(choices: WizardChoices): void {
 export function clearChoices(): void {
   try {
     sessionStorage.removeItem(STORAGE_KEY);
-  } catch {
+  } catch (error) {
     // Nothing to clean up if storage is unavailable.
+    console.warn('Could not clear the wizard choices.', error);
   }
 }
