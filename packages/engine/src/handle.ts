@@ -4,7 +4,12 @@ import {
   handleRemoveConnection,
   handleRevealLocation,
   validateConnections,
-} from './handle-board';
+} from './handle_board';
+import {
+  handleAdjustInvestigator,
+  handleDiscoverClues,
+  handleMoveInvestigator,
+} from './handle_investigator';
 import type { Adjustment, Command, StartScenario, StartingCard } from './commands';
 import type { CardMoved, DeckShuffled, Event, ScenarioStarted, TokensChanged } from './events';
 import { instanceId, type InstanceId, type MapId } from './ids';
@@ -33,6 +38,12 @@ export function handle(ctx: EngineContext, state: GameState, command: Command): 
       return handleRemoveConnection(ctx, state, command);
     case 'RevealLocation':
       return handleRevealLocation(ctx, state, command);
+    case 'MoveInvestigator':
+      return handleMoveInvestigator(ctx, state, command);
+    case 'AdjustInvestigator':
+      return handleAdjustInvestigator(state, command);
+    case 'DiscoverClues':
+      return handleDiscoverClues(state, command);
   }
 }
 

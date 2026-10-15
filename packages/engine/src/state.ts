@@ -32,6 +32,16 @@ export interface CardInstance {
  */
 export type InvestigatorStatus = 'active' | 'resigned' | 'defeated';
 
+/** The investigator counters that commands and events can change. */
+export type InvestigatorStat = 'damage' | 'horror' | 'clues' | 'resources';
+/** All investigator stats, e.g. for iterating in tests. */
+export const INVESTIGATOR_STATS: readonly InvestigatorStat[] = [
+  'damage',
+  'horror',
+  'clues',
+  'resources',
+];
+
 /**
  * A player's investigator. The investigator card itself is not a `CardInstance`;
  * cards in their threat area or engaged with them refer to `id` via their `Zone`.
@@ -123,6 +133,12 @@ export interface CampaignLog {
 export interface GameMeta {
   scenarioId: string;
   difficulty: Difficulty;
+  /**
+   * Number of investigators who started the scenario. Never decremented when an
+   * investigator is defeated or resigns: "per investigator" values (clues, enemy
+   * health, act thresholds) keep using the starting count, per the Rules
+   * Reference and FAQ. Set by `ScenarioStarted`.
+   */
   playerCount: number;
   seed: number;
   rngState: RngState;

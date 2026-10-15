@@ -16,5 +16,6 @@ export { neighbours, sameEdge, shortestPaths } from './board';
 export { CommandRejected, type Rejection, type RejectionCode } from './rejection';
 export { execute, type ExecuteResult } from './execute';
 export * from './setup';
+export * from './investigators';
 export { checkInvariants } from './invariants';
 export * from './store';

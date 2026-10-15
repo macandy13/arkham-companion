@@ -1,13 +1,15 @@
 import { allConnections, sameEdge } from './board';
 import type { InstanceId } from './ids';
-import type { GameState } from './state';
+import { defeatCause, statValue } from './investigators';
+import { INVESTIGATOR_STATS, type GameState } from './state';
 import { zoneKey } from './zone';
 
 /**
  * Returns a list of invariant violations (empty = state is consistent):
  * every card is in exactly one zone and listed exactly once in that zone's
  * order, no order list is empty or names an unknown card, no token count is
- * negative, and every connection (of any map) joins two known cards and appears only once.
+ * negative, every connection (of any map) joins two known cards and appears only once,
+ * and every investigator is consistent (see `investigatorErrors`).
  */
 export function checkInvariants(state: GameState): string[] {
   const errors: string[] = [];
@@ -32,6 +34,7 @@ export function checkInvariants(state: GameState): string[] {
     }
   }
   errors.push(...connectionErrors(state));
+  errors.push(...investigatorErrors(state));
   return errors;
 }
 
@@ -47,5 +50,25 @@ function connectionErrors(state: GameState): string[] {
     if (edges.slice(0, i).some((earlier) => sameEdge(earlier, edge)))
       errors.push(`connection ${edge.from} - ${edge.to} appears more than once`);
   });
+  return errors;
+}
+
+/**
+ * Violations for investigators: negative counters, an unknown location, and
+ * the defeat rule - an active investigator always has health and sanity left,
+ * and a defeated one is what `AdjustInvestigator` leaves behind, so no check
+ * applies to them.
+ */
+function investigatorErrors(state: GameState): string[] {
+  const errors: string[] = [];
+  for (const inv of state.investigators) {
+    for (const stat of INVESTIGATOR_STATS) {
+      if (statValue(inv, stat) < 0) errors.push(`investigator ${inv.id} has negative ${stat}`);
+    }
+    if (inv.locationId !== undefined && !state.cards[inv.locationId])
+      errors.push(`investigator ${inv.id} is at unknown card ${inv.locationId}`);
+    if (inv.status === 'active' && defeatCause(inv) !== undefined)
+      errors.push(`investigator ${inv.id} is active but has no health or sanity left`);
+  }
   return errors;
 }

@@ -1,5 +1,5 @@
 import type { InstanceId, InvestigatorId, MapId } from './ids';
-import type { TokenKind } from './state';
+import type { InvestigatorStat, TokenKind } from './state';
 
 /**
  * Structured reason why `handle` refused a command. The UI can switch on
@@ -37,6 +37,24 @@ export type Rejection =
   | { code: 'selfConnection'; cardId: InstanceId }
   /** `RevealLocation` for a location that is already face up. */
   | { code: 'alreadyRevealed'; cardId: InstanceId }
+  /** The investigator has resigned or been defeated and can no longer act. */
+  | { code: 'investigatorNotActive'; investigatorId: InvestigatorId }
+  /** `MoveInvestigator` to a location that is not a neighbour of the current one. */
+  | { code: 'notConnected'; from: InstanceId; to: InstanceId }
+  /** `MoveInvestigator` to the location the investigator is already at. */
+  | { code: 'alreadyAtLocation'; investigatorId: InvestigatorId; locationId: InstanceId }
+  /** The investigator is not at the location they would take clues from. */
+  | { code: 'investigatorNotAtLocation'; investigatorId: InvestigatorId; locationId: InstanceId }
+  /** `DiscoverClues` for more clues than the location has. */
+  | { code: 'notEnoughClues'; cardId: InstanceId; available: number; requested: number }
+  /** An investigator counter would drop below zero. */
+  | {
+      code: 'negativeInvestigatorStat';
+      investigatorId: InvestigatorId;
+      stat: InvestigatorStat;
+      current: number;
+      delta: number;
+    }
   | {
       code: 'negativeTokens';
       cardId: InstanceId;
@@ -99,6 +117,18 @@ function describe(r: Rejection): string {
       return `${r.cardId} cannot connect to itself`;
     case 'alreadyRevealed':
       return `${r.cardId} is already revealed`;
+    case 'investigatorNotActive':
+      return `investigator ${r.investigatorId} is no longer in the scenario`;
+    case 'notConnected':
+      return `${r.from} is not connected to ${r.to}`;
+    case 'alreadyAtLocation':
+      return `investigator ${r.investigatorId} is already at ${r.locationId}`;
+    case 'investigatorNotAtLocation':
+      return `investigator ${r.investigatorId} is not at ${r.locationId}`;
+    case 'notEnoughClues':
+      return `${r.cardId} has ${r.available} clues, ${r.requested} requested`;
+    case 'negativeInvestigatorStat':
+      return `${r.stat} of ${r.investigatorId} would become ${r.current + r.delta}`;
     case 'negativeTokens':
       return `${r.token} on ${r.cardId} would become ${r.current + r.delta}`;
   }
