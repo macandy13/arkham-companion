@@ -37,6 +37,13 @@ How code in this repo should look, so every task lands in the same style.
 - **Invariants are covered by example-based table tests** (`it.each` over a few named, readable cases), not property-based testing. Unit tests for concrete rules and edge cases.
 - Never use real card text, ArkhamDB JSON or images in fixtures; the hand-written test scenario uses real codes and names with hand-entered stats only (see `CLAUDE.md`).
 
+**E2E flow specs** (`apps/web/e2e/`, tagged `@flow`) are recorded as screencasts for every PR that changes the UI (`docs/automation.md`). Keep them few and stable:
+
+- **One spec per user journey, not per feature.** A UI change extends the flow it belongs to before it adds a new one. Cap: 8 flow specs; past that, merge flows.
+- **They check wiring, not rules.** Game rules are tested in engine unit tests; a flow only asserts that the screen reacts and the journey completes.
+- **Locate by role and accessible name** (`getByRole('button', { name: … })`), never by CSS class or DOM shape – the markup rules make this always possible.
+- **Deterministic.** Start from a fixed state (seeded game) so every recording of the same code looks the same.
+
 ## 4. Markup (JSX/HTML)
 
 The DOM is a clearly structured document tree – good structure _is_ accessibility.
