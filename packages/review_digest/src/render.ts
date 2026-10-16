@@ -39,7 +39,7 @@ function sizeSection(size: PrSize): string[] {
       (overBudget
         ? '**over budget**, split it or explain why not (`docs/coding-guidelines.md` §7).'
         : 'within budget.'),
-    `Tests ${size.test}, docs ${size.docs}; not counted: ${size.excluded} (lockfile, changelog, task files).`,
+    `Tests ${size.test}, docs ${size.docs}; not counted: ${size.excluded} (lockfile, changelog, task files, API reports).`,
   ];
 }
 

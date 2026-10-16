@@ -22,6 +22,14 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm lint
+      # The committed API reports must match the exports, so an API change is visible in the diff.
+      - name: API reports are up to date
+        run: |
+          pnpm api:report
+          git diff --exit-code -- 'packages/*/api.md' || {
+            echo '::error::packages/*/api.md is out of date. Run pnpm api:report and commit the result.'
+            exit 1
+          }
       # Fails when coverage drops below the floors in vitest.config.ts.
       - run: pnpm test:coverage
       - name: Coverage summary

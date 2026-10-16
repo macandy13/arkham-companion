@@ -14,6 +14,7 @@ describe('sizeCategory', () => {
     ['docs/tasks/M1-engine.md', 'excluded'],
     ['pnpm-lock.yaml', 'excluded'],
     ['CHANGELOG.md', 'excluded'],
+    ['packages/engine/api.md', 'excluded'],
   ])('%s → %s', (file, expected) => {
     expect(sizeCategory(file)).toBe(expected);
   });

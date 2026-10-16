@@ -19,6 +19,7 @@ export default defineConfig({
         'packages/carddata/src/fetch.ts',
         'apps/web/scripts/screencast/cli.ts',
         'packages/review_digest/src/cli.ts',
+        'packages/review_digest/src/api_report_cli.ts',
         'apps/web/scripts/tsconfig.json',
       ],
       reporter: ['text-summary', 'json-summary', 'html'],

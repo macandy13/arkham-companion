@@ -9,7 +9,7 @@ export interface FileStat {
  * Where a changed file's lines count against the PR size budget
  * (`docs/coding-guidelines.md` §7): `production` and `test` both count toward the total,
  * only `production` toward the production budget; `docs` counts toward the total;
- * `excluded` (lockfile, changelog, task checklists) counts nowhere.
+ * `excluded` (lockfile, changelog, task checklists, API reports) counts nowhere.
  */
 export type SizeCategory = 'production' | 'test' | 'docs' | 'excluded';
 
@@ -31,6 +31,8 @@ const EXCLUDED = [
   /^CHANGELOG\.md$/,
   /^\.release-please-manifest\.json$/,
   /^docs\/tasks\//,
+  // Generated mirror of the exports: the production change it reflects is already counted.
+  /^packages\/[^/]+\/api\.md$/,
 ];
 const TESTS = [/\.test\.tsx?$/, /\.spec\.ts$/, /(^|\/)test\//, /(^|\/)e2e\//];
 

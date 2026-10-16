@@ -33,9 +33,10 @@ Code style and conventions (functions, comments, tests, markup, CSS, helpers) ar
 - `pnpm lint` (`pnpm format` fixes formatting)
 - `pnpm e2e` – Playwright against the production build (`apps/web/e2e/`)
 - `pnpm dev` – web app (apps/web); `pnpm build` – production build
+- `pnpm api:report` – regenerate the committed public API reports (`packages/*/api.md`); run it after changing exports, CI fails when they are out of date
 - `pnpm carddata:fetch` – fetch and normalise ArkhamDB packs into the local cache
 
-Before finishing a task: `pnpm typecheck && pnpm lint && pnpm test` must pass. A Stop hook (`.claude/hooks/verify-before-stop.ts`) runs these automatically when code changed and sends failures back to you – fix them, don't work around the hook.
+Before finishing a task: `pnpm typecheck && pnpm lint && pnpm test` must pass, and `pnpm api:report` must leave no change. A Stop hook (`.claude/hooks/verify-before-stop.ts`) runs these automatically when code changed and sends failures back to you – fix them, don't work around the hook.
 
 ## Workflow for tasks
 
