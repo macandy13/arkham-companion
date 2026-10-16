@@ -2,7 +2,7 @@
 
 Goal: more Chapter Two products as soon as ArkhamDB lists them, and more automated encounter cards.
 
-Model hint: **S** = Sonnet, **O** = Opus. Each task = one session = one PR.
+Model hint: **S** = Sonnet, **O** = Opus. Each task = one session, delivered as one or more small PRs (`docs/coding-guidelines.md` §7).
 
 **Why this milestone**
 

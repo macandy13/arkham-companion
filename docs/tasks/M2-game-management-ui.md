@@ -9,7 +9,7 @@ Ref: architecture §11 "Game management" and "Investigator picker". Builds on th
 - **What the app gains:** The full lifecycle around a game works on a tablet: pick investigators, start, leave, resume, back up and restore.
 - **Why at this point:** It only needs the M1 setup (`compileSetup`), not the full play screen. Doing it before M3 means real persisted games exist to build and test the play screen against.
 
-Model hint: **S** = Sonnet, **O** = Opus. Each task = one session = one PR.
+Model hint: **S** = Sonnet, **O** = Opus. Each task = one session, delivered as one or more small PRs (`docs/coding-guidelines.md` §7).
 Start from the phone: Code tab → repo → `Do task M2.x from docs/tasks/M2-game-management-ui.md`.
 
 Prerequisite: the cloud environment can reach `arkhamdb.com` (see architecture §15, open question 1). Tests never hit the network.

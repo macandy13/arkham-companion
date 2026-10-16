@@ -8,7 +8,7 @@ Goal: the in-game screen from architecture §11, wired to the M1 engine, so the 
 - **What the app gains:** A complete, playable game loop on a tablet: phases, map, investigators, encounter deck, decisions, undo.
 - **Why at this point:** It is built against the sandbox scenario so UI problems are separated from real-scenario data problems. M4 then only adds data and scenario-specific rules on top of a proven screen.
 
-Model hint: **S** = Sonnet, **O** = Opus. Each task = one session = one PR.
+Model hint: **S** = Sonnet, **O** = Opus. Each task = one session, delivered as one or more small PRs (`docs/coding-guidelines.md` §7).
 Start from the phone: Code tab → repo → `Do task M3.x from docs/tasks/M3-play-screen-ui.md`.
 
 All UI actions dispatch engine commands through the Zustand store; no component mutates state.
