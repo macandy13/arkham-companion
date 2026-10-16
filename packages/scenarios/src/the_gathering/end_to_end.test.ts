@@ -563,7 +563,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         kind: 'skillTestResult',
         about: 'Attic',
         for: roland,
-        test: { action: 'investigate', skill: 'intellect', difficulty: 1 },
+        test: { skill: 'intellect', difficulty: 1 },
         options: ['pass', 'fail'],
         defaults: { pass: { amount: 1 } },
       },

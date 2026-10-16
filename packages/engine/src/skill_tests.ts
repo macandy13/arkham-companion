@@ -45,7 +45,7 @@ export function handleInvestigate(
     id: `investigate:${investigator.id}`,
     prompt: 'decision.investigate',
     subject: location.id,
-    test: { skill: 'intellect', difficulty: shroud, action: 'investigate' },
+    test: { skill: 'intellect', difficulty: shroud },
     outcomes: { ...pass, onFail: [] },
   });
 }
@@ -78,7 +78,7 @@ export function handleFight(ctx: EngineContext, state: GameState, cmd: Fight): D
     id: `fight:${investigator.id}:${enemy.id}`,
     prompt: 'decision.fight',
     subject: enemy.id,
-    test: { skill: 'combat', difficulty: stats.fight ?? 0, action: 'fight' },
+    test: { skill: 'combat', difficulty: stats.fight ?? 0 },
     outcomes: {
       onPass: [{ type: 'DamageEnemy', enemyId: enemy.id, amount: damage }],
       passAmount: { default: damage, min: 1 },
@@ -146,7 +146,7 @@ export function handleEvade(ctx: EngineContext, state: GameState, cmd: Evade): D
     id: `evade:${investigator.id}:${enemy.id}`,
     prompt: 'decision.evade',
     subject: enemy.id,
-    test: { skill: 'agility', difficulty: stats.evade ?? 0, action: 'evade' },
+    test: { skill: 'agility', difficulty: stats.evade ?? 0 },
     outcomes: { onPass, onFail: [] },
   });
 }

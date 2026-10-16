@@ -18,8 +18,6 @@ export type MapId = Brand<string, 'MapId'>;
 export type SlotId = Brand<string, 'SlotId'>;
 /** ID of a pending `Decision`. */
 export type DecisionId = Brand<string, 'DecisionId'>;
-/** ID of a `LastingEffect` in `GameState.lastingEffects`, chosen by whoever adds it. */
-export type LastingEffectId = Brand<string, 'LastingEffectId'>;
 
 /** Constructors that tag a plain string with the matching ID brand. */
 export const instanceId = (id: string) => id as InstanceId;
@@ -27,4 +25,3 @@ export const investigatorId = (id: string) => id as InvestigatorId;
 export const mapId = (id: string) => id as MapId;
 export const slotId = (id: string) => id as SlotId;
 export const decisionId = (id: string) => id as DecisionId;
-export const lastingEffectId = (id: string) => id as LastingEffectId;

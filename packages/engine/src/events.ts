@@ -1,4 +1,4 @@
-import type { DecisionId, InstanceId, InvestigatorId, LastingEffectId, MapId } from './ids';
+import type { DecisionId, InstanceId, InvestigatorId, MapId } from './ids';
 import type { Edge, GameMap } from './map';
 import type { Rejection } from './rejection';
 import type { RngState } from './rng';
@@ -11,7 +11,6 @@ import type {
   Difficulty,
   Investigator,
   InvestigatorStat,
-  LastingEffect,
   Phase,
   PhaseStep,
   TokenKind,
@@ -51,8 +50,6 @@ export type Event =
   | ActionsAdjusted
   | ActionsReset
   | TurnEnded
-  | LastingEffectAdded
-  | LastingEffectEnded
   | ActionHeld
   | ActionResumed
   | ActionDropped;
@@ -344,21 +341,6 @@ export interface ActionsReset {
 export interface TurnEnded {
   type: 'TurnEnded';
   investigatorId: InvestigatorId;
-}
-
-/** A lasting skill test modifier is now in effect (`GameState.lastingEffects`). Produced by `AddLastingEffect`. */
-export interface LastingEffectAdded {
-  type: 'LastingEffectAdded';
-  effect: LastingEffect;
-}
-
-/**
- * A lasting effect is over and leaves `GameState.lastingEffects`. Produced by
- * `EndLastingEffect` and, for every `endOfRound` effect, by upkeep step 4.6.
- */
-export interface LastingEffectEnded {
-  type: 'LastingEffectEnded';
-  effectId: LastingEffectId;
 }
 
 /**

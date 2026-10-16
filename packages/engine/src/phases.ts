@@ -10,7 +10,6 @@ import { replay } from './reducer';
 import { CommandRejected } from './rejection';
 import type { DueAttack, GameState, Investigator, Phase, PhaseStep, PhaseStepId } from './state';
 import { actionsResetEvents, assertTurnsTaken } from './turns';
-import { roundEndExpiry } from './lasting_effects';
 import { zoneKey } from './zone';
 
 /** The phase that follows each phase; the first round starts with investigation (no mythos). */
@@ -97,11 +96,7 @@ export function nextStepPlan(ctx: EngineContext, state: GameState): StepPlan | u
     case 'resetActions':
       return { events: [done, ...actionsResetEvents(state)], commands: [] };
     case 'endRound':
-      // Lasting effects expire before RoundEnded, so the "at the end of the round" hooks it fires already see them gone.
-      return {
-        events: [done, ...roundEndExpiry(state), { type: 'RoundEnded', round: state.meta.round }],
-        commands: [],
-      };
+      return { events: [done, { type: 'RoundEnded', round: state.meta.round }], commands: [] };
     default:
       return { events: [done], commands: stepCommands(ctx, state, step) };
   }

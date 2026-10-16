@@ -13,7 +13,7 @@ import { zoneKey, type Zone } from './zone';
  * phase, the outstanding phase steps, the turn in progress and the turns
  * taken, current agenda and act, every map with its locations (clues,
  * investigators, enemies, connections), every investigator, the encounter
- * piles and a card whose revelation is being resolved, set-aside cards, victory display, lasting effects (if any) and
+ * piles and a card whose revelation is being resolved, set-aside cards, victory display and
  * pending decisions, each skill test with its suggested values. Cards are
  * named by their `CardDb` name; instance IDs appear only in brackets where
  * copies need telling apart (locations and enemies). The order is fixed (map,
@@ -34,7 +34,6 @@ export function formatBoard(ctx: EngineContext, state: GameState): string {
     ...resolvingLines(ctx, state),
     `Set aside: ${countIn(state, { kind: 'setAside' })} cards`,
     `Victory display: ${listOrNone(namesIn(ctx, state, { kind: 'victoryDisplay' }))}`,
-    ...lastingEffectLines(state),
     ...decisionLines(ctx, state),
   ].join('\n');
 }
@@ -189,20 +188,6 @@ function suggestionLines({ suggestion }: Decision): string[] {
   return [
     `    suggested: skill ${suggestion.skill} vs difficulty ${suggestion.difficulty} (${suggestion.outcome})`,
   ];
-}
-
-/** The lasting effects in play, if any, e.g. `Lasting effects: Flashlight (difficulty -2, end of round)`. */
-function lastingEffectLines(state: GameState): string[] {
-  if (state.lastingEffects.length === 0) return [];
-  const effects = state.lastingEffects.map(
-    ({ label, modifier }) =>
-      `${label} (${modifier.target} ${signed(modifier.amount)}, end of round)`,
-  );
-  return [`Lasting effects: ${effects.join(', ')}`];
-}
-
-function signed(amount: number): string {
-  return amount > 0 ? `+${amount}` : `${amount}`;
 }
 
 function currentCard(state: GameState, id: InstanceId | undefined): CardInstance | undefined {

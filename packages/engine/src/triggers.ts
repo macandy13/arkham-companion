@@ -11,7 +11,6 @@ import type {
   TokensChanged,
 } from './events';
 import type { InstanceId } from './ids';
-import type { CardModifierHook } from './skill_modifiers';
 import { apply } from './reducer';
 import type { GameState } from './state';
 
@@ -58,8 +57,6 @@ export interface ScenarioHooks {
 export interface CardEffect {
   /** After the card is turned face up (e.g. a location being revealed). */
   onReveal?: TriggerHook<CardFlipped>;
-  /** How the card changes skill tests while it is in play (see `skillTestSuggestion`). */
-  skillModifiers?: CardModifierHook;
 }
 
 /** Card scripts keyed by card code; passed to the engine via `EngineContext.effects`. */

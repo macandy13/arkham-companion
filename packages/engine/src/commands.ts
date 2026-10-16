@@ -1,5 +1,5 @@
 import type { CardType, Trait } from './cards';
-import type { DecisionId, InstanceId, InvestigatorId, LastingEffectId, MapId } from './ids';
+import type { DecisionId, InstanceId, InvestigatorId, MapId } from './ids';
 import type { MapSpec } from './map';
 import type {
   CampaignLog,
@@ -8,7 +8,6 @@ import type {
   Difficulty,
   Investigator,
   InvestigatorStat,
-  LastingEffect,
   TokenKind,
 } from './state';
 import type { Zone } from './zone';
@@ -43,8 +42,6 @@ export type Command =
   | MoveHunter
   | RequestDecision
   | ResolveDecision
-  | AddLastingEffect
-  | EndLastingEffect
   | CheckDoomThreshold
   | NextPhase
   | StartTurn
@@ -667,27 +664,6 @@ export interface Evade {
   type: 'Evade';
   investigatorId: InvestigatorId;
   enemyId: InstanceId;
-}
-
-/**
- * A card or scenario effect starts a skill test modifier that lasts "until
- * the end of the round" (`LastingEffect`); the players add it from the card,
- * or a hook returns it. Rejected for an id already in effect or a modifier
- * amount that is not a non-zero integer. Produces `LastingEffectAdded`.
- */
-export interface AddLastingEffect {
-  type: 'AddLastingEffect';
-  effect: LastingEffect;
-}
-
-/**
- * Ends a lasting effect before it expires on its own: a card that cancels
- * it, or a correction. Rejected for an id not in effect. Produces
- * `LastingEffectEnded`.
- */
-export interface EndLastingEffect {
-  type: 'EndLastingEffect';
-  effectId: LastingEffectId;
 }
 
 /** String literal of every command type. */

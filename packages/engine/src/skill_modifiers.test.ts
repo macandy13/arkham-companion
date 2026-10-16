@@ -4,7 +4,6 @@ import {
   decisionId,
   instanceId,
   investigatorId,
-  lastingEffectId,
   skillTestDecision,
   skillTestSuggestion,
   suggestSkillTest,
@@ -12,7 +11,6 @@ import {
   type Difficulty,
   type EngineContext,
   type GameState,
-  type LastingEffect,
   type ScenarioReference,
   type SkillTestContext,
   type StartingCard,
@@ -28,18 +26,12 @@ import {
 
 const alice = investigatorId('alice');
 const study = instanceId('study');
-const attic = instanceId('attic');
 const ghoul = instanceId('ghoul');
 
-/**
- * The study (shroud 3, 2 clues) and the attic (shroud 1); a Ghoul enemy
- * (fight 4) and a treachery that sticks in a threat area.
- */
+/** The study (shroud 3, 2 clues) and a Ghoul enemy (fight 4). */
 const cards = contextWith(
   makeCard({ code: 'study', name: 'Study', typeCode: 'location', shroud: 3, clues: fixed(2) }),
-  makeCard({ code: 'attic', name: 'Attic', typeCode: 'location', shroud: 1 }),
   makeCard({ code: 'ghoul', name: 'Ghoul', typeCode: 'enemy', fight: 4, traits: [trait('Ghoul')] }),
-  makeCard({ code: 'dread', name: 'Dread', entersThreatArea: true }),
 );
 
 /** Alice (willpower 2, intellect 4, combat 3, agility 1) in the study, with `extra` cards. */
@@ -48,7 +40,7 @@ function aliceInStudy({
   difficulty = 'standard',
 }: { extra?: StartingCard[]; difficulty?: Difficulty } = {}): GameState {
   return startBoard(cards, {
-    maps: { house: { locations: { study: 'study', attic: 'attic' } } },
+    maps: { house: { locations: { study: 'study' } } },
     investigators: [
       makeInvestigator({
         id: 'alice',
@@ -66,12 +58,10 @@ const investigateStudy: SkillTestContext = {
   investigatorId: alice,
   skill: 'intellect',
   difficulty: 3,
-  action: 'investigate',
-  subject: study,
   locationId: study,
 };
 
-describe('skillTestSuggestion: base values, icons and tokens', () => {
+describe("skillTestSuggestion: base values, the players' modifier and tokens", () => {
   it('starts from the investigator skill and the printed difficulty', () => {
     const suggestion = skillTestSuggestion(cards, aliceInStudy(), investigateStudy);
 
@@ -87,18 +77,26 @@ describe('skillTestSuggestion: base values, icons and tokens', () => {
     });
   });
 
-  it('adds the committed icons and the revealed number token to the skill', () => {
+  it("adds the players' modifier and the revealed number token to the skill", () => {
     const suggestion = skillTestSuggestion(cards, aliceInStudy(), investigateStudy, {
-      committedIcons: 1,
+      modifier: 1,
       tokens: ['-3'],
     });
 
     expect(suggestion.trace).toEqual([
       { target: 'skill', source: { kind: 'baseSkill' }, change: 4, total: 4 },
-      { target: 'skill', source: { kind: 'committedIcons' }, change: 1, total: 5 },
+      { target: 'skill', source: { kind: 'playerModifier' }, change: 1, total: 5 },
       { target: 'skill', source: { kind: 'chaosToken', token: '-3' }, change: -3, total: 2 },
       { target: 'difficulty', source: { kind: 'baseDifficulty' }, change: 3, total: 3 },
     ]);
+    expect(suggestion).toMatchObject({ skill: 2, difficulty: 3, outcome: 'fail' });
+  });
+
+  it('takes a negative modifier, e.g. a card that raises the difficulty by 2', () => {
+    const suggestion = skillTestSuggestion(cards, aliceInStudy(), investigateStudy, {
+      modifier: -2,
+    });
+
     expect(suggestion).toMatchObject({ skill: 2, difficulty: 3, outcome: 'fail' });
   });
 
@@ -120,7 +118,7 @@ describe('skillTestSuggestion: base values, icons and tokens', () => {
 
   it('makes the skill 0 and the test a fail on auto-fail, as a step of the trace', () => {
     const suggestion = skillTestSuggestion(cards, aliceInStudy(), investigateStudy, {
-      committedIcons: 2,
+      modifier: 2,
       tokens: ['autoFail'],
     });
 
@@ -147,12 +145,9 @@ describe('skillTestSuggestion: base values, icons and tokens', () => {
     });
   });
 
-  it.each([
-    { committedIcons: -1, why: 'negative' },
-    { committedIcons: 1.5, why: 'a fraction' },
-  ])('rejects a committed icon count that is $why', ({ committedIcons }) => {
+  it('rejects a modifier that is not a whole number', () => {
     expect(() =>
-      skillTestSuggestion(cards, aliceInStudy(), investigateStudy, { committedIcons }),
+      skillTestSuggestion(cards, aliceInStudy(), investigateStudy, { modifier: 1.5 }),
     ).toThrow(CommandRejected);
   });
 });
@@ -225,145 +220,6 @@ describe('skillTestSuggestion: scenario reference card', () => {
   });
 });
 
-describe('skillTestSuggestion: lasting effects', () => {
-  const effect = (overrides: Partial<LastingEffect>): LastingEffect => ({
-    id: lastingEffectId('effect'),
-    label: 'Effect',
-    until: 'endOfRound',
-    appliesTo: {},
-    modifier: { target: 'skill', amount: 1 },
-    ...overrides,
-  });
-
-  it('applies an effect whose filter matches the test', () => {
-    const lowerShroud = effect({
-      id: lastingEffectId('lantern'),
-      label: 'Lantern',
-      appliesTo: { action: 'investigate', locationId: study },
-      modifier: { target: 'difficulty', amount: -2 },
-    });
-    const state = stateAfter(cards, aliceInStudy(), {
-      type: 'AddLastingEffect',
-      effect: lowerShroud,
-    });
-
-    const suggestion = skillTestSuggestion(cards, state, investigateStudy);
-
-    expect(suggestion.difficulty).toBe(1);
-    expect(suggestion.trace).toContainEqual({
-      target: 'difficulty',
-      source: { kind: 'lastingEffect', effectId: 'lantern', label: 'Lantern' },
-      change: -2,
-      total: 1,
-    });
-  });
-
-  it.each([
-    { name: 'another investigator', appliesTo: { investigatorId: investigatorId('bob') } },
-    { name: 'another skill', appliesTo: { skill: 'combat' as const } },
-    { name: 'another action', appliesTo: { action: 'fight' as const } },
-    { name: 'another location', appliesTo: { locationId: attic } },
-    { name: 'another subject', appliesTo: { subject: ghoul } },
-  ])('ignores an effect for $name', ({ appliesTo }) => {
-    const state = stateAfter(cards, aliceInStudy(), {
-      type: 'AddLastingEffect',
-      effect: effect({ appliesTo }),
-    });
-
-    expect(skillTestSuggestion(cards, state, investigateStudy).skill).toBe(4);
-  });
-});
-
-describe('skillTestSuggestion: cards in play and scenario rules', () => {
-  it('applies the modifiers of a card in play', () => {
-    const dreadful: EngineContext = {
-      ...cards,
-      effects: {
-        dread: { skillModifiers: () => [{ target: 'skill', amount: -1 }] },
-      },
-    };
-    const dread = instanceId('dread');
-    const state = aliceInStudy({
-      extra: [{ id: dread, code: 'dread', zone: { kind: 'threatArea', investigatorId: alice } }],
-    });
-
-    const suggestion = skillTestSuggestion(dreadful, state, investigateStudy);
-
-    expect(suggestion.trace).toContainEqual({
-      target: 'skill',
-      source: { kind: 'card', cardId: dread },
-      change: -1,
-      total: 3,
-    });
-  });
-
-  it('ignores a card that is not in play', () => {
-    const dreadful: EngineContext = {
-      ...cards,
-      effects: {
-        dread: { skillModifiers: () => [{ target: 'skill', amount: -1 }] },
-      },
-    };
-    const state = aliceInStudy({
-      extra: [{ id: instanceId('dread'), code: 'dread', zone: { kind: 'encounterDeck' } }],
-    });
-
-    expect(skillTestSuggestion(dreadful, state, investigateStudy).skill).toBe(4);
-  });
-
-  it('lets a location modify only the tests taken at it', () => {
-    const steepStudy: EngineContext = {
-      ...cards,
-      effects: {
-        study: {
-          skillModifiers: (_ctx, _state, test, location) =>
-            test.locationId === location.id ? [{ target: 'difficulty', amount: 1 }] : [],
-        },
-      },
-    };
-
-    const inStudy = skillTestSuggestion(steepStudy, aliceInStudy(), investigateStudy);
-    const inAttic = skillTestSuggestion(steepStudy, aliceInStudy(), {
-      ...investigateStudy,
-      difficulty: 1,
-      subject: attic,
-      locationId: attic,
-    });
-
-    expect(inStudy.difficulty).toBe(4);
-    expect(inAttic.difficulty).toBe(1);
-  });
-
-  it('applies a scenario rule with its label', () => {
-    const darkHouse: EngineContext = {
-      ...cards,
-      modifiers: {
-        sources: [() => [{ target: 'skill', amount: -1, label: 'scenario.darkness' }]],
-      },
-    };
-
-    const suggestion = skillTestSuggestion(darkHouse, aliceInStudy(), investigateStudy);
-
-    expect(suggestion.trace).toContainEqual({
-      target: 'skill',
-      source: { kind: 'scenario', label: 'scenario.darkness' },
-      change: -1,
-      total: 3,
-    });
-  });
-
-  it('rejects a modifier that is not a whole number, so a broken hook shows up', () => {
-    const broken: EngineContext = {
-      ...cards,
-      modifiers: { sources: [() => [{ target: 'skill', amount: 0.5, label: 'broken' }]] },
-    };
-
-    expect(() => skillTestSuggestion(broken, aliceInStudy(), investigateStudy)).toThrow(
-      CommandRejected,
-    );
-  });
-});
-
 describe('suggestions on skill test decisions', () => {
   it('raises Investigate with the suggestion before icons and tokens', () => {
     const asked = stateAfter(cards, aliceInStudy(), { type: 'Investigate', investigatorId: alice });
@@ -375,7 +231,7 @@ describe('suggestions on skill test decisions', () => {
     });
   });
 
-  it('names the action, so effects for one action can tell the tests apart', () => {
+  it("raises Fight with the enemy's fight value as the difficulty", () => {
     const state = aliceInStudy({
       extra: [{ id: ghoul, code: 'ghoul', zone: { kind: 'engaged', investigatorId: alice } }],
     });
@@ -386,10 +242,10 @@ describe('suggestions on skill test decisions', () => {
       enemyId: ghoul,
     });
 
-    expect(asked.pending[0]?.skillTest).toEqual({
-      skill: 'combat',
+    expect(asked.pending[0]?.suggestion).toMatchObject({
+      skill: 3,
       difficulty: 4,
-      action: 'fight',
+      outcome: 'fail',
     });
   });
 
@@ -433,10 +289,25 @@ describe('suggestions on skill test decisions', () => {
     const asked = stateAfter(cards, aliceInStudy(), { type: 'Investigate', investigatorId: alice });
 
     const suggestion = suggestSkillTest(cards, asked, asked.pending[0]!, {
-      committedIcons: 1,
+      modifier: 1,
       tokens: ['-2'],
     });
 
     expect(suggestion).toMatchObject({ skill: 3, difficulty: 3, outcome: 'pass' });
+  });
+
+  it('follows the players changing their modifier after the reveal, e.g. "when you would fail: +2"', () => {
+    const asked = stateAfter(cards, aliceInStudy(), { type: 'Investigate', investigatorId: alice });
+    const decision = asked.pending[0]!;
+
+    const beforeReveal = suggestSkillTest(cards, asked, decision, { modifier: 1 });
+    const revealed = suggestSkillTest(cards, asked, decision, { modifier: 1, tokens: ['-4'] });
+    const raised = suggestSkillTest(cards, asked, decision, { modifier: 3, tokens: ['-4'] });
+
+    expect([beforeReveal?.outcome, revealed?.outcome, raised?.outcome]).toEqual([
+      'pass',
+      'fail',
+      'pass',
+    ]);
   });
 });

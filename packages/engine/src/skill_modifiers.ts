@@ -1,81 +1,58 @@
 import { withRunningTotals } from '@arkham/util';
 import type { EngineContext } from './cards';
-import { isInPlay } from './doom';
 import type { InstanceId, InvestigatorId } from './ids';
 import { CommandRejected } from './rejection';
 import { referenceSide, type SymbolToken } from './scenario';
 import type {
-  CardInstance,
   ChaosToken,
   Decision,
   GameState,
   ModifierSource,
   ModifierStep,
   ModifierTarget,
-  SkillModifier,
   SkillName,
-  SkillTestAction,
-  SkillTestFilter,
   SkillTestSuggestion,
 } from './state';
 
 /**
- * What a modifier source sees of a skill test: who takes it, which skill
- * against which printed difficulty, the action it belongs to, what it is
- * about and where it happens. Derived from a `skillTestResult` decision by
- * `skillTestContext`; the keys match `SkillTestFilter`, which lasting effects
- * use to pick their tests.
+ * What a token value sees of a skill test: who takes it, which skill
+ * against which printed difficulty, and where it happens. Derived from a
+ * `skillTestResult` decision by `skillTestContext`.
  */
 export interface SkillTestContext {
   investigatorId: InvestigatorId;
   skill: SkillName;
   /** The printed difficulty (shroud, enemy value, card number), before modifiers. */
   difficulty: number;
-  action?: SkillTestAction;
-  /** `Decision.subject`: the location investigated, the enemy fought or evaded, the treachery. */
-  subject?: InstanceId;
   /** The investigator's location when the test is taken; absent while they are on none. */
   locationId?: InstanceId;
 }
 
 /**
- * What the players enter while they resolve the test at the table: the
- * number of matching icons on the cards they committed, and the chaos tokens
- * they revealed (several when an effect says "reveal another token").
+ * What the players enter while they resolve the test at the table, following
+ * the skill test timing (Rules Reference, "Skill Test Timing"):
+ *
+ * - `modifier`: one whole number, positive or negative, for everything the
+ *   engine does not track – committed icons, cards in play, lasting effects,
+ *   "while investigating" rules. The players enter it before drawing the
+ *   token: the player windows after ST.1 (test begins) and ST.2 (commit
+ *   cards) are where cards are committed and fast effects add to the test.
+ * - `tokens`: the chaos tokens revealed in ST.3 (several when an effect says
+ *   "reveal another token").
+ *
+ * There is no player window after ST.2, but abilities that trigger on the
+ * reveal (ST.3/ST.4, e.g. "after you reveal a chaos token") or on the
+ * result ("when you would fail", ST.6) can still raise or lower the value,
+ * so the players may change `modifier` up or down until they answer pass or
+ * fail; the suggestion is recomputed from whatever they entered last.
+ * Modelling each card's effect instead is deliberately out of scope: the
+ * players play their own cards (§1), and one number is enough for the
+ * suggestion.
  */
 export interface SkillTestInput {
-  committedIcons?: number;
+  modifier?: number;
   tokens?: readonly ChaosToken[];
 }
-
-/**
- * A card's contribution to skill tests while it is in play (a location,
- * an enemy, a treachery in a threat area, an attachment), registered as
- * `CardEffect.skillModifiers` under the card's code. Returns the modifiers it
- * applies to `test`, or none; a location that modifies tests taken at it
- * compares `test.locationId` with `card.id`. Must be pure.
- */
-export type CardModifierHook = (
-  ctx: EngineContext,
-  state: GameState,
-  test: SkillTestContext,
-  card: CardInstance,
-) => readonly SkillModifier[];
-
-/** A modifier with the i18n key or plain text that names its source in the trace. */
-export interface LabelledModifier extends SkillModifier {
-  label: string;
-}
-
-/**
- * A scenario rule that changes skill tests (e.g. "while there is doom on the
- * agenda, …"); see `SkillModifierRegistry.sources`. Must be pure.
- */
-export type ScenarioModifierSource = (
-  ctx: EngineContext,
-  state: GameState,
-  test: SkillTestContext,
-) => readonly LabelledModifier[];
 
 /**
  * The modifier of a symbol token whose value depends on the state, like
@@ -87,12 +64,10 @@ export type TokenValue = (ctx: EngineContext, state: GameState, test: SkillTestC
 /**
  * The scenario's code-side contributions to skill tests
  * (`ScenarioDefinition.modifiers`, passed to the engine as
- * `EngineContext.modifiers`), so a scenario changes tests without engine
- * changes. Cards contribute through `CardEffect.skillModifiers` instead.
+ * `EngineContext.modifiers`), so a scenario values its tokens without engine
+ * changes.
  */
 export interface SkillModifierRegistry {
-  /** Scenario-wide rules, applied to every test in this order. */
-  sources?: readonly ScenarioModifierSource[];
   /**
    * Symbol token values computed from the state, for the reference card
    * effects without a printed `modifier` (a "-X"). A printed modifier wins,
@@ -129,7 +104,7 @@ const FIXED_TOKEN_VALUES: Partial<Record<ChaosToken, number>> = {
 };
 
 /**
- * The skill test behind a `skillTestResult` decision, as modifier sources
+ * The skill test behind a `skillTestResult` decision, as token values
  * see it; `undefined` for any other decision and for a test decided by the
  * lead or the group, since then nobody's skill is known.
  */
@@ -146,8 +121,6 @@ export function skillTestContext(
     investigatorId,
     skill: test.skill,
     difficulty: test.difficulty,
-    ...(test.action ? { action: test.action } : {}),
-    ...(decision.subject === undefined ? {} : { subject: decision.subject }),
     ...(locationId === undefined ? {} : { locationId }),
   };
 }
@@ -155,7 +128,8 @@ export function skillTestContext(
 /**
  * The suggestion for a pending `skillTestResult` decision with what the
  * players entered so far; `undefined` where `skillTestContext` has no test.
- * The UI calls this as the players commit cards and reveal tokens.
+ * The UI calls this whenever the players change their modifier or reveal
+ * a token (see `SkillTestInput` for when that happens).
  */
 export function suggestSkillTest(
   ctx: EngineContext,
@@ -169,7 +143,7 @@ export function suggestSkillTest(
 
 /**
  * `decision` with the suggestion it is raised with (`Decision.suggestion`):
- * the modified values before any icons or tokens. Unchanged where
+ * the modified values before the players' modifier or any token. Unchanged where
  * `skillTestContext` has no test.
  */
 export function withSuggestion(ctx: EngineContext, state: GameState, decision: Decision): Decision {
@@ -178,16 +152,15 @@ export function withSuggestion(ctx: EngineContext, state: GameState, decision: D
 }
 
 /**
- * The modifier pipeline: the investigator's printed skill and the test's
- * printed difficulty, changed in this order by the committed icons, the
- * revealed chaos tokens (fixed values, the reference card side for the
- * difficulty, then the scenario's `tokenValues`), the lasting effects whose filter
- * matches, the cards in play with a `skillModifiers` hook, and the
- * scenario's `sources` (Rules Reference, "Skill Tests", ST.5). Neither value
- * goes below 0 (Rules Reference, "Modifiers": a modified quantity cannot be
- * reduced below zero), and the auto-fail token makes the skill value 0 (ST.6). Rejects a
- * modifier or icon count that is not a whole number (`invalidModifierAmount`),
- * so a broken hook or input shows up instead of skewing the numbers.
+ * The modifier pipeline: the investigator's printed skill, changed by the
+ * players' modifier and then by the revealed chaos tokens (fixed values, the
+ * reference card side for the difficulty, then the scenario's
+ * `tokenValues`), against the test's printed difficulty (Rules Reference,
+ * "Skill Tests", ST.5). Neither value goes below 0 (Rules Reference,
+ * "Modifiers": a modified quantity cannot be reduced below zero), and the
+ * auto-fail token makes the skill value 0 (ST.6). Rejects a modifier that is
+ * not a whole number (`invalidModifierAmount`), so a broken input or token
+ * value shows up instead of skewing the numbers.
  */
 export function skillTestSuggestion(
   ctx: EngineContext,
@@ -204,11 +177,8 @@ export function skillTestSuggestion(
     change: tokenChange(ctx, state, test, token),
   }));
   const changes = [
-    ...iconChanges(input.committedIcons ?? 0),
+    ...playerChanges(input.modifier ?? 0),
     ...tokenChanges.flatMap(({ change }) => change ?? []),
-    ...lastingEffectChanges(state, test),
-    ...cardChanges(ctx, state, test),
-    ...scenarioChanges(ctx, state, test),
   ];
   for (const change of changes) assertWhole(change.change);
   const autoFail = tokens.includes('autoFail');
@@ -256,11 +226,9 @@ function targetTrace(
   };
 }
 
-function iconChanges(committedIcons: number): Change[] {
-  if (!Number.isInteger(committedIcons) || committedIcons < 0)
-    throw new CommandRejected({ code: 'invalidModifierAmount', amount: committedIcons });
-  if (committedIcons === 0) return [];
-  return [{ target: 'skill', source: { kind: 'committedIcons' }, change: committedIcons }];
+function playerChanges(modifier: number): Change[] {
+  if (modifier === 0) return [];
+  return [{ target: 'skill', source: { kind: 'playerModifier' }, change: modifier }];
 }
 
 /**
@@ -292,45 +260,6 @@ function tokenChange(
 
 function isSymbolToken(token: ChaosToken): token is SymbolToken {
   return SYMBOL_TOKENS.includes(token);
-}
-
-function lastingEffectChanges(state: GameState, test: SkillTestContext): Change[] {
-  return state.lastingEffects
-    .filter((effect) => matchesFilter(effect.appliesTo, test))
-    .map((effect) => ({
-      target: effect.modifier.target,
-      source: { kind: 'lastingEffect', effectId: effect.id, label: effect.label },
-      change: effect.modifier.amount,
-    }));
-}
-
-/** Whether every condition of `filter` holds for `test`; an empty filter matches every test. */
-function matchesFilter(filter: SkillTestFilter, test: SkillTestContext): boolean {
-  return (Object.keys(filter) as (keyof SkillTestFilter)[]).every(
-    (key) => filter[key] === undefined || filter[key] === test[key],
-  );
-}
-
-function cardChanges(ctx: EngineContext, state: GameState, test: SkillTestContext): Change[] {
-  return Object.values(state.cards).flatMap((card) => {
-    const hook = ctx.effects?.[card.code]?.skillModifiers;
-    if (!hook || !isInPlay(state, card)) return [];
-    return hook(ctx, state, test, card).map((modifier) => ({
-      target: modifier.target,
-      source: { kind: 'card', cardId: card.id } as const,
-      change: modifier.amount,
-    }));
-  });
-}
-
-function scenarioChanges(ctx: EngineContext, state: GameState, test: SkillTestContext): Change[] {
-  return (ctx.modifiers?.sources ?? []).flatMap((source) =>
-    source(ctx, state, test).map((modifier) => ({
-      target: modifier.target,
-      source: { kind: 'scenario', label: modifier.label } as const,
-      change: modifier.amount,
-    })),
-  );
 }
 
 function assertWhole(amount: number): void {

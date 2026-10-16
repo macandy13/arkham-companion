@@ -1,5 +1,5 @@
 import type { Command, EngageEnemy, Investigate, MoveInvestigator } from './commands';
-import type { DecisionId, InstanceId, InvestigatorId, LastingEffectId, MapId, SlotId } from './ids';
+import type { DecisionId, InstanceId, InvestigatorId, MapId, SlotId } from './ids';
 import type { GameMap } from './map';
 import type { RngState } from './rng';
 import type { Zone, ZoneKey } from './zone';
@@ -137,10 +137,7 @@ export type PhaseStepId =
   | 'readyExhausted'
   /** 4.4 Upkeep: each investigator gains 1 resource; drawing 1 card is left to the players. */
   | 'gainResources'
-  /**
-   * 4.6 Upkeep: the upkeep phase and the round end (`RoundEnded`, `onRoundEnd`);
-   * "until the end of the round" lasting effects expire (`LastingEffectEnded`).
-   */
+  /** 4.6 Upkeep: the upkeep phase and the round end (`RoundEnded`, `onRoundEnd`). */
   | 'endRound';
 
 /** One enemy attack that step 3.3 still has to resolve (`ResolveEnemyAttack`). */
@@ -226,83 +223,29 @@ export type Decider =
 /** The investigator skills a skill test can use. */
 export type SkillName = 'willpower' | 'intellect' | 'combat' | 'agility';
 
-/** The basic actions that are skill tests (Rules Reference "Investigate", "Fight", "Evade"). */
-export type SkillTestAction = 'investigate' | 'fight' | 'evade';
-
 /** The test the players resolve at the table for a `skillTestResult` decision. */
 export interface SkillTest {
   skill: SkillName;
   /** Shroud, enemy value or the number printed on the card. */
   difficulty: number;
-  /**
-   * The basic action the test belongs to, so modifiers like "while
-   * investigating" or "when you fight this enemy" can tell it apart; absent
-   * for revelation and other card tests.
-   */
-  action?: SkillTestAction;
 }
 
 /** Which number of a skill test a modifier changes: the investigator's skill value or the difficulty. */
 export type ModifierTarget = 'skill' | 'difficulty';
 
-/** A change to one number of a skill test, e.g. `{ target: 'difficulty', amount: -2 }`. */
-export interface SkillModifier {
-  target: ModifierTarget;
-  /** Added to the target; negative to lower it. */
-  amount: number;
-}
-
-/**
- * The skill tests a `LastingEffect` applies to: every condition given must
- * hold, so an empty filter matches every test. Data rather than code because
- * lasting effects live in the serialisable state.
- */
-export interface SkillTestFilter {
-  /** Only tests this investigator takes. */
-  investigatorId?: InvestigatorId;
-  skill?: SkillName;
-  action?: SkillTestAction;
-  /** Only tests taken at this location, e.g. "investigating the Attic gets -2 shroud this round". */
-  locationId?: InstanceId;
-  /** Only tests about this card (`Decision.subject`), e.g. fights against one enemy. */
-  subject?: InstanceId;
-}
-
-/**
- * A modifier that lasts for a while ("… until the end of the round"),
- * created by a card or scenario effect with `AddLastingEffect` and kept in
- * `GameState.lastingEffects` until it expires (upkeep step 4.6 for
- * `endOfRound`) or the players end it (`EndLastingEffect`). The pipeline
- * applies it to every test its `appliesTo` matches.
- */
-export interface LastingEffect {
-  id: LastingEffectId;
-  /** i18n key or plain text naming the effect for the explanation trace. */
-  label: string;
-  /** The card whose effect created it, if any. */
-  sourceCardId?: InstanceId;
-  /** When it expires; only "until the end of the round" so far. */
-  until: 'endOfRound';
-  appliesTo: SkillTestFilter;
-  modifier: SkillModifier;
-}
-
 /**
  * Where one step of a skill test's explanation trace comes from
  * (`ModifierStep`), so the UI can name it: the investigator's printed skill,
- * the test's printed difficulty, the players' committed icons, a revealed
- * chaos token (with the reference card's effect text, if it has one), a
- * lasting effect, a card in play, a scenario rule, or the rules that cap the
- * result (auto-fail, nothing below 0).
+ * the test's printed difficulty, the one modifier the players enter
+ * (`SkillTestInput.modifier`), a revealed chaos token (with the reference
+ * card's effect text, if it has one), or the rules that cap the result
+ * (auto-fail, nothing below 0).
  */
 export type ModifierSource =
   | { kind: 'baseSkill' }
   | { kind: 'baseDifficulty' }
-  | { kind: 'committedIcons' }
+  | { kind: 'playerModifier' }
   | { kind: 'chaosToken'; token: ChaosToken; effectKey?: string }
-  | { kind: 'lastingEffect'; effectId: LastingEffectId; label: string }
-  | { kind: 'card'; cardId: InstanceId }
-  | { kind: 'scenario'; label: string }
   | { kind: 'autoFail' }
   | { kind: 'minimumZero' };
 
@@ -360,9 +303,9 @@ export interface Decision {
   skillTest?: SkillTest;
   /**
    * Only for `skillTestResult` decided by one investigator: the modified
-   * values before any icons are committed or a token is revealed, computed
-   * when the decision is raised. The UI recomputes it with the players' input
-   * (`suggestSkillTest`); the answer stays pass/fail either way.
+   * values before the players enter their modifier or reveal a token,
+   * computed when the decision is raised. The UI recomputes it with the
+   * players' input (`suggestSkillTest`); the answer stays pass/fail either way.
    */
   suggestion?: SkillTestSuggestion;
   /**
@@ -479,8 +422,6 @@ export interface GameState {
   /** Typed per scenario (zod schema in the scenario package). */
   scenario: unknown;
   pending: Decision[];
-  /** Skill test modifiers in effect for a while, oldest first (see `LastingEffect`). */
-  lastingEffects: LastingEffect[];
 }
 
 /** State before any `ScenarioStarted` event. */
@@ -506,6 +447,5 @@ export function emptyState(): GameState {
     act: {},
     scenario: undefined,
     pending: [],
-    lastingEffects: [],
   };
 }

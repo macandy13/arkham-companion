@@ -113,7 +113,7 @@ describe('Investigate', () => {
         prompt: 'decision.investigate',
         subject: study,
         decider: { kind: 'investigator', investigatorId: alice },
-        skillTest: { skill: 'intellect', difficulty: 3, action: 'investigate' },
+        skillTest: { skill: 'intellect', difficulty: 3 },
         // The whole suggestion is covered in skill_modifiers.test.ts.
         suggestion: expect.objectContaining({ skill: 4, difficulty: 3, outcome: 'pass' }),
         options: [

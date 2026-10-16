@@ -116,13 +116,6 @@ export function apply(state: GameState, event: Event): GameState {
       }));
     case 'TurnEnded':
       return endTurn(state, event.investigatorId);
-    case 'LastingEffectAdded':
-      return { ...state, lastingEffects: [...state.lastingEffects, event.effect] };
-    case 'LastingEffectEnded':
-      return {
-        ...state,
-        lastingEffects: state.lastingEffects.filter((effect) => effect.id !== event.effectId),
-      };
     case 'ActionHeld':
       return { ...state, meta: { ...state.meta, heldAction: event.command } };
     case 'ActionResumed':

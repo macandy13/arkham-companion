@@ -3,7 +3,6 @@ import {
   formatBoard,
   instanceId,
   investigatorId,
-  lastingEffectId,
   mapId,
   type GameState,
   type StartScenario,
@@ -130,29 +129,14 @@ describe('formatBoard', () => {
     `);
   });
 
-  it('shows the suggested values of a pending skill test and the lasting effects', () => {
-    const state = stateAfter(
-      ctx,
-      startedBoard(),
-      {
-        type: 'AddLastingEffect',
-        effect: {
-          id: lastingEffectId('fog'),
-          label: 'Fog',
-          until: 'endOfRound',
-          appliesTo: { locationId: hall },
-          modifier: { target: 'difficulty', amount: 2 },
-        },
-      },
-      { type: 'Investigate', investigatorId: alice },
-    );
+  it('shows the suggested values of a pending skill test', () => {
+    const state = stateAfter(ctx, startedBoard(), { type: 'Investigate', investigatorId: alice });
 
-    expect(formatBoard(ctx, state).split('\n').slice(-4)).toMatchInlineSnapshot(`
+    expect(formatBoard(ctx, state).split('\n').slice(-3)).toMatchInlineSnapshot(`
       [
-        "Lasting effects: Fog (difficulty +2, end of round)",
         "Pending decisions:",
         "  Investigate Hall: intellect (0) pass ×1 (1–3) / fail [skillTestResult]",
-        "    suggested: skill 4 vs difficulty 2 (pass)",
+        "    suggested: skill 4 vs difficulty 0 (pass)",
       ]
     `);
   });
