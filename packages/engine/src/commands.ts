@@ -48,6 +48,7 @@ export type Command =
   | EndTurn
   | AdjustActions
   | ResolveEnemyAttack
+  | DealEnemyAttack
   | Investigate
   | Fight
   | Evade;
@@ -506,6 +507,13 @@ export interface ResolveDecision {
    * without a range or outside it.
    */
   amount?: number;
+  /**
+   * The counts the players confirmed for an option with named `amounts`
+   * (an attack's damage and horror); each replaces the field of that name in
+   * the option's commands. Counts left out keep their default. Rejected for
+   * a name the option has no range for, or outside its range.
+   */
+  amounts?: Readonly<Record<string, number>>;
 }
 
 /**
@@ -595,6 +603,26 @@ export interface ResolveEnemyAttack {
   investigatorId: InvestigatorId;
   damage?: number;
   horror?: number;
+}
+
+/**
+ * An enemy attack outside enemy step 3.3: an attack of opportunity (raised by
+ * `attackOfOpportunityDecisions`, whose confirm option runs this) or a card
+ * that says the enemy attacks. Deals `damage` and `horror` at once with one
+ * defeat check, like `ResolveEnemyAttack`, but the enemy does not exhaust
+ * (Rules Reference, "Attack of Opportunity"). The amounts are the ones the
+ * players confirmed (printed values, less what assets soak). An attack whose
+ * enemy has left play or whose investigator is no longer active does nothing,
+ * so a second attack of opportunity on an investigator the first one defeated
+ * can still be answered. Produces `InvestigatorChanged` and, as usual,
+ * `InvestigatorDefeated`.
+ */
+export interface DealEnemyAttack {
+  type: 'DealEnemyAttack';
+  enemyId: InstanceId;
+  investigatorId: InvestigatorId;
+  damage: number;
+  horror: number;
 }
 
 /**
