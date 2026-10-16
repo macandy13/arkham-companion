@@ -3,6 +3,7 @@
 Web companion app (PWA) that runs the scenario side of Arkham Horror LCG (Chapter Two, starting with `core_2026`).
 The full design is in `docs/architecture.md` – read the relevant section before changing architecture, don't re-derive it.
 Work is tracked in `docs/tasks/`. Each task file is self-contained.
+Game rules are summarised in `docs/rules.md` with links to the Rules Reference – check there before searching the web, and update it when a change corrects a rule.
 Code style and conventions (functions, comments, tests, markup, CSS, helpers) are in `docs/coding-guidelines.md` – follow them in every change.
 
 ## Ground rules
@@ -40,7 +41,7 @@ Before finishing a task: `pnpm typecheck && pnpm lint && pnpm test` must pass. A
 
 1. Read the task file in `docs/tasks/` and only the architecture sections it references.
 2. Keep the change small and focused on that task; note follow-ups in the task file instead of doing them.
-3. Tick the task's checklist and add a short "Done" note when finished.
+3. Tick the task's checklist and add a short "Done" note when finished. Once a task and its follow-ups are finished and no open PR edits its section, move the section to the matching file in `docs/tasks/done/`, so sessions reading the task file only load open work.
 4. Open a PR against `main`. **The PR title is a Conventional Commit** – it becomes the squash commit and the changelog entry (Release Please):
    `feat(engine): add hunter movement (M1.8)`, `fix(web): …`, `docs: …`, `test: …`, `refactor: …`, `chore: …`, `ci: …`. Scope = package (`engine`, `carddata`, `scenarios`, `web`, `util`) when it fits.
    **The PR description starts with the motivation** – why the PR exists and what it is trying to accomplish – before any list of changes. Follow `.github/pull_request_template.md`.

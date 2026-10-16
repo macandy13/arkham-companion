@@ -10,7 +10,7 @@ Do the tasks in order. Each task = one Claude Code session = one PR.
 - **Why at this point:** It comes first because everything else builds on it; doing it later would mean rewriting code written without these guardrails.
 
 Model hint: **S** = Sonnet is enough, **O** = use Opus (design-heavy).
-To start a task from the phone: Code tab → repo `macandy13/arkham-companion` → prompt: `Do task M0.x from docs/tasks/M0-foundation.md`.
+To start a task from the phone: Code tab → repo `macandy13/arkham-companion` → prompt: `Do task M0.x from docs/tasks/done/M0-foundation.md`.
 
 ---
 
