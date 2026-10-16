@@ -7,6 +7,7 @@ export default defineConfig({
       'apps/*/src/**/*.test.{ts,tsx}',
       'apps/*/scripts/**/*.test.ts',
     ],
+    setupFiles: ['apps/web/src/test_setup.ts'],
     coverage: {
       provider: 'v8',
       include: ['packages/*/src/**', 'apps/web/src/**', 'apps/web/scripts/**'],
@@ -14,6 +15,7 @@ export default defineConfig({
         '**/*.test.{ts,tsx}',
         // Entry points and network scripts are covered by E2E / the carddata check workflow.
         'apps/web/src/main.tsx',
+        'apps/web/src/test_setup.ts',
         'packages/carddata/src/fetch.ts',
         'apps/web/scripts/screencast/cli.ts',
         'apps/web/scripts/tsconfig.json',

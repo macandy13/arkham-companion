@@ -11,6 +11,7 @@ import {
   instanceId,
   isInPlay,
   locationsNamed,
+  optionName,
   optionNamed,
   replay,
   mapId,
@@ -18,6 +19,7 @@ import {
   zoneKey,
   type CardInstance,
   type Command,
+  type Decision,
   type EngineContext,
   type Event,
   type GameState,
@@ -25,7 +27,10 @@ import {
   type InvestigatorId,
   type InvestigatorStat,
   type Phase,
+  type PhaseStep,
+  type PhaseStepId,
   type ScenarioDefinition,
+  type SkillTest,
   type Zone,
 } from '@arkham/engine';
 
@@ -33,6 +38,65 @@ import {
 interface LoggedEvent {
   commandId: string;
   event: Event;
+}
+
+/**
+ * Where the phase assistant stopped after a `TestTable.nextPhase()`. `step`
+ * is the step (`PhaseStepId`) it stopped at: the step whose decision is
+ * pending, or `enemiesAttack` while its attacks wait for the players.
+ * No `step` means the phase ran all its steps; it is left only by the next
+ * "Next", so the players see the phase's outcome before moving on.
+ */
+export interface PhaseStop {
+  round: number;
+  phase: Phase;
+  step?: PhaseStepId;
+}
+
+/**
+ * One enemy in play as a player reads it off the table: its name, the
+ * location it is at, the investigator it is engaged with, its damage and
+ * whether it is exhausted. The last three are left out when there is none,
+ * so a list of enemies reads like the table and asserts only what is there.
+ */
+export interface EnemyView {
+  name: string;
+  at: string;
+  engagedWith?: InvestigatorId;
+  damage?: number;
+  exhausted?: true;
+}
+
+/**
+ * Picks one enemy in play: by name alone, or narrowed by the investigator it
+ * is engaged with or the location (by name) it is at, for when several
+ * copies of a card are in play at once (three Swarms of Rats). A lookup that
+ * matches more than one enemy fails instead of guessing.
+ */
+export type EnemySelector = string | { name: string; engagedWith?: InvestigatorId; at?: string };
+
+/**
+ * One open decision as the players see it: the question (`prompt`, the
+ * engine's i18n key), the card it is `about`, the investigator it is `for`
+ * (the one tested or attacked, who answers it), the dialog `kind`, the test of
+ * a skill test, the options by readable name (`optionName`) and, for options
+ * whose counts the players confirm or adjust, the default counts by option
+ * name (e.g. `{ attack: { damage: 1, horror: 2 } }`).
+ */
+export interface DecisionView {
+  prompt: string;
+  kind: Decision['kind'];
+  about?: string;
+  for?: InvestigatorId;
+  test?: SkillTest;
+  options: string[];
+  defaults?: Record<string, Record<string, number>>;
+}
+
+/** One enemy attack enemy step 3.3 lists: the enemy by name and the investigator it attacks. */
+export interface DueAttackView {
+  enemy: string;
+  investigator: InvestigatorId;
 }
 
 /** What `TestTable.setUp` needs to start a scenario. */
@@ -113,12 +177,22 @@ export class TestTable {
   /**
    * The phase assistant's "Next" (`NextPhase`): runs the steps of the current
    * phase until one needs the players (a decision, an enemy attack), or moves
-   * on to the next phase. Returns the phase it lands on (the current one when
-   * it stops mid-phase), so a script asserts where it is at every step.
+   * on to the next phase. Returns where it stopped (`PhaseStop`), so a script
+   * asserts the round, phase and step at every "Next".
    */
-  nextPhase(): Phase {
+  nextPhase(): PhaseStop {
+    const stepsBefore = this.current.meta.steps;
+    const logged = this.log.length;
     this.play({ type: 'NextPhase' });
-    return this.current.meta.phase;
+    const { round, phase, steps } = this.current.meta;
+    const step =
+      this.current.pending.length > 0
+        ? lastStepStarted(
+            stepsBefore,
+            this.log.slice(logged).map((entry) => entry.event),
+          )
+        : steps[0]?.id;
+    return { round, phase, ...(step === undefined ? {} : { step }) };
   }
 
   /** The round and phase the game is in. */
@@ -157,22 +231,25 @@ export class TestTable {
 
   /**
    * Answers the open decision about the card named `subjectName` by picking
-   * the option shown as `optionName` (e.g. `answer('Swarm of Rats', 'Roland
+   * the option shown as `optionShown` (e.g. `answer('Swarm of Rats', 'Roland
    * Banks')`, `answer("What's Going On?!", 'yes')`). Fails with the board
-   * attached if no such decision or option exists, so a script that answers
-   * the wrong question breaks where it happens.
+   * attached if no such decision or option exists, or several decisions are
+   * about cards of that name, so a script that answers the wrong question
+   * breaks where it happens.
    */
-  answer(subjectName: string, optionName: string): void {
-    const decision = this.current.pending.find(
-      (pending) =>
-        pending.subject !== undefined &&
-        this.nameOf(this.cardWithId(pending.subject)) === subjectName,
+  answer(subjectName: string, optionShown: string): void {
+    const decision = this.onlyOne(
+      this.current.pending.filter(
+        (pending) =>
+          pending.subject !== undefined &&
+          this.nameOf(this.cardWithId(pending.subject)) === subjectName,
+      ),
+      `open decision about ${subjectName}`,
     );
-    if (!decision) throw new Error(`no open decision about ${subjectName}\n${this.board()}`);
-    const option = optionNamed(decision, optionName);
+    const option = optionNamed(decision, optionShown);
     if (!option)
       throw new Error(
-        `no option ${optionName} in: ${describeDecision(this.ctx, this.current, decision)}\n${this.board()}`,
+        `no option ${optionShown} in: ${describeDecision(this.ctx, this.current, decision)}\n${this.board()}`,
       );
     this.play({ type: 'ResolveDecision', decisionId: decision.id, optionId: option.id });
   }
@@ -189,9 +266,22 @@ export class TestTable {
   /**
    * An investigate action whose intellect test the players pass at the table,
    * discovering `clues` (default 1; more when a card adds to the result).
+   * Fails when the action provokes attacks of opportunity: those come before
+   * the test, so a script takes them (`takeAttackOfOpportunity`) and then
+   * passes the test with `passInvestigateTest`.
    */
   investigate(investigator: InvestigatorId, { clues }: { clues?: number } = {}): void {
+    this.startInvestigating(investigator);
+    this.passInvestigateTest(investigator, { clues });
+  }
+
+  /** An investigate action, up to its intellect test (or the attacks of opportunity before it). */
+  startInvestigating(investigator: InvestigatorId): void {
     this.play({ type: 'Investigate', investigatorId: investigator });
+  }
+
+  /** The players pass the intellect test of the investigator's investigate action, discovering `clues` (default 1). */
+  passInvestigateTest(investigator: InvestigatorId, { clues }: { clues?: number } = {}): void {
     this.passTest(`investigate:${investigator}`, clues);
   }
 
@@ -207,41 +297,70 @@ export class TestTable {
   }
 
   /**
-   * The enemy named `enemyName` engages the investigator (or switches to
-   * them): an engage action, or a rule that engages without one (an enemy at
-   * the location the investigator enters).
+   * The `enemy` engages the investigator (or switches to them): an engage
+   * action, or a rule that engages without one (an enemy at the location the
+   * investigator enters).
    */
-  engage(investigator: InvestigatorId, enemyName: string): void {
+  engage(investigator: InvestigatorId, enemy: EnemySelector): void {
     this.play({
       type: 'EngageEnemy',
-      enemyId: this.enemyNamed(enemyName).id,
+      enemyId: this.enemyInstance(enemy).id,
       investigatorId: investigator,
     });
   }
 
   /**
-   * An evade action against the enemy engaged with the investigator, whose
+   * An evade action against the `enemy`, engaged with the investigator, whose
    * agility test the players pass: it is disengaged and exhausted, and stays where it is.
    */
-  evade(investigator: InvestigatorId, enemyName: string): void {
-    const enemy = this.enemyEngagedWith(investigator, enemyName);
-    this.play({ type: 'Evade', investigatorId: investigator, enemyId: enemy.id });
-    this.passTest(`evade:${investigator}:${enemy.id}`);
+  evade(investigator: InvestigatorId, enemy: EnemySelector): void {
+    const { id } = this.enemyInstance(enemy);
+    this.play({ type: 'Evade', investigatorId: investigator, enemyId: id });
+    this.passTest(`evade:${investigator}:${id}`);
   }
 
   /**
-   * A fight action against the enemy engaged with the investigator, whose
-   * combat test the players pass. It deals the basic attack's 1 damage, or
-   * the `damage` the players confirm (a weapon, a skill card adding damage).
+   * A fight action against the `enemy`, whose combat test the players pass.
+   * It deals the basic attack's 1 damage, or the `damage` the players
+   * confirm (a weapon, a skill card adding damage).
    */
   fight(
     investigator: InvestigatorId,
-    enemyName: string,
+    enemy: EnemySelector,
     { damage }: { damage?: number } = {},
   ): void {
-    const enemy = this.enemyEngagedWith(investigator, enemyName);
-    this.play({ type: 'Fight', investigatorId: investigator, enemyId: enemy.id });
-    this.passTest(`fight:${investigator}:${enemy.id}`, damage);
+    const { id } = this.enemyInstance(enemy);
+    this.play({ type: 'Fight', investigatorId: investigator, enemyId: id });
+    this.passTest(`fight:${investigator}:${id}`, damage);
+  }
+
+  /**
+   * The players resolve the attack of opportunity `enemy` makes: at its
+   * printed damage and horror, or at the `damage` and `horror` they lower it
+   * to (an asset soaking part of it).
+   */
+  takeAttackOfOpportunity(
+    enemy: EnemySelector,
+    amounts: { damage?: number; horror?: number } = {},
+  ): void {
+    const { id } = this.enemyInstance(enemy);
+    this.play({
+      type: 'ResolveDecision',
+      decisionId: decisionId(`attackOfOpportunity:${id}`),
+      optionId: 'attack',
+      amounts,
+    });
+  }
+
+  /** A fight action against the `enemy` whose combat test the players fail: nothing happens. */
+  failFight(investigator: InvestigatorId, enemy: EnemySelector): void {
+    const { id } = this.enemyInstance(enemy);
+    this.play({ type: 'Fight', investigatorId: investigator, enemyId: id });
+    this.play({
+      type: 'ResolveDecision',
+      decisionId: decisionId(`fight:${investigator}:${id}`),
+      optionId: 'fail',
+    });
   }
 
   /** Resources from the resource action or a card. */
@@ -265,19 +384,19 @@ export class TestTable {
    */
   resolveEnemyAttacks(): void {
     const [step] = this.current.meta.steps;
-    if (step?.id !== '3.3' || step.attacks === undefined)
+    if (step?.id !== 'enemiesAttack' || step.attacks === undefined)
       throw new Error(`no enemy attacks to resolve\n${this.board()}`);
     for (const attack of step.attacks) this.play({ type: 'ResolveEnemyAttack', ...attack });
   }
 
-  /** One line per enemy attack step 3.3 lists, e.g. "Swarm of Rats attacks roland". */
-  attacksDue(): string[] {
+  /** The enemy attacks step 3.3 lists, in its order; none outside that step. */
+  attacksDue(): DueAttackView[] {
     const [step] = this.current.meta.steps;
-    if (step?.id !== '3.3') return [];
-    return (step.attacks ?? []).map(
-      (attack) =>
-        `${this.nameOf(this.cardWithId(attack.enemyId))} attacks ${attack.investigatorId}`,
-    );
+    if (step?.id !== 'enemiesAttack') return [];
+    return (step.attacks ?? []).map((attack) => ({
+      enemy: this.nameOf(this.cardWithId(attack.enemyId)),
+      investigator: attack.investigatorId,
+    }));
   }
 
   /** Where each investigator is, by investigator id and location name. */
@@ -310,24 +429,14 @@ export class TestTable {
     return Object.fromEntries(this.current.investigators.map((inv) => [inv.id, inv.resources]));
   }
 
-  /**
-   * One line per enemy in play, in card order: name, location, engagement,
-   * then damage and exhaustion if any, e.g. "Icy Ghoul: Cellar, engaged with wendy, 2 damage".
-   */
-  enemyLines(): string[] {
-    return this.enemiesInPlay().map((enemy) => {
-      const engagedWith = enemy.zone.kind === 'engaged' ? enemy.zone.investigatorId : undefined;
-      const location =
-        enemy.zone.kind === 'atLocation'
-          ? enemy.zone.locationId
-          : this.investigator(engagedWith ?? '').locationId;
-      return [
-        `${this.nameOf(enemy)}: ${this.locationName(location)}`,
-        engagedWith === undefined ? 'unengaged' : `engaged with ${engagedWith}`,
-        ...(enemy.tokens.damage ? [`${enemy.tokens.damage} damage`] : []),
-        ...(enemy.exhausted ? ['exhausted'] : []),
-      ].join(', ');
-    });
+  /** Every enemy in play, in card order, as `EnemyView`s. */
+  enemies(): EnemyView[] {
+    return this.enemiesInPlay().map((enemy) => this.enemyView(enemy));
+  }
+
+  /** The one enemy `selector` picks (see `EnemySelector`). */
+  enemy(selector: EnemySelector): EnemyView {
+    return this.enemyView(this.enemyInstance(selector));
   }
 
   /** Clues on the location named `locationName`. */
@@ -356,15 +465,9 @@ export class TestTable {
     return (this.current.order[zoneKey(zone)] ?? []).map((id) => this.nameOf(this.cardWithId(id)));
   }
 
-  /**
-   * One line per open decision (`describeDecision`): the question, the options
-   * by name and the kind, e.g. "Whom does Swarm of Rats engage? Roland Banks /
-   * Daisy Walker / Wendy Adams [chooseInvestigator]".
-   */
-  pendingDecisions(): string[] {
-    return this.current.pending.map((decision) =>
-      describeDecision(this.ctx, this.current, decision),
-    );
+  /** The open decisions, oldest first, as `DecisionView`s. */
+  decisions(): DecisionView[] {
+    return this.current.pending.map((decision) => this.decisionView(decision));
   }
 
   private adjust(investigator: InvestigatorId, stat: InvestigatorStat, delta: number): void {
@@ -394,20 +497,69 @@ export class TestTable {
     );
   }
 
-  /** The one copy of `name` in play; several copies of a name (rats, minions) are never in play together here. */
-  private enemyNamed(name: string): CardInstance {
-    const inPlay = cardsNamed(this.ctx, this.current, name, { typeCode: 'enemy' }).filter((card) =>
-      isInPlay(this.current, card),
+  /**
+   * The one enemy in play `selector` picks. Fails with the board attached
+   * when none or several match, naming the narrowing to use, so a script never
+   * acts on the wrong copy of a card.
+   */
+  private enemyInstance(selector: EnemySelector): CardInstance {
+    const { name, engagedWith, at } = typeof selector === 'string' ? { name: selector } : selector;
+    const matches = cardsNamed(this.ctx, this.current, name, { typeCode: 'enemy' })
+      .filter((card) => isInPlay(this.current, card))
+      .map((card) => ({ card, view: this.enemyView(card) }))
+      .filter(
+        ({ view }) =>
+          (engagedWith === undefined || view.engagedWith === engagedWith) &&
+          (at === undefined || view.at === at),
+      );
+    if (matches.length > 1)
+      throw new Error(
+        `${matches.length} enemies match ${JSON.stringify(selector)}; narrow it with { name, engagedWith } or { name, at }\n${this.board()}`,
+      );
+    return this.onlyOne(
+      matches.map(({ card }) => card),
+      `enemy matching ${JSON.stringify(selector)}`,
     );
-    return this.onlyOne(inPlay, `enemy ${name} in play`);
   }
 
-  /** The enemy named `name`, which must be engaged with `investigator` for their action to target it. */
-  private enemyEngagedWith(investigator: InvestigatorId, name: string): CardInstance {
-    const enemy = this.enemyNamed(name);
-    if (enemy.zone.kind !== 'engaged' || enemy.zone.investigatorId !== investigator)
-      throw new Error(`${name} is not engaged with ${investigator}\n${this.board()}`);
-    return enemy;
+  private enemyView(enemy: CardInstance): EnemyView {
+    const engagedWith = enemy.zone.kind === 'engaged' ? enemy.zone.investigatorId : undefined;
+    const location =
+      enemy.zone.kind === 'atLocation'
+        ? enemy.zone.locationId
+        : this.investigator(engagedWith ?? '').locationId;
+    return {
+      name: this.nameOf(enemy),
+      at: this.locationName(location),
+      ...(engagedWith === undefined ? {} : { engagedWith }),
+      ...(enemy.tokens.damage ? { damage: enemy.tokens.damage } : {}),
+      ...(enemy.exhausted ? { exhausted: true } : {}),
+    };
+  }
+
+  private decisionView(decision: Decision): DecisionView {
+    const defaults = Object.fromEntries(
+      decision.options.flatMap((option) => {
+        const counts = {
+          ...(option.amount ? { amount: option.amount.default } : {}),
+          ...Object.fromEntries(
+            Object.entries(option.amounts ?? {}).map(([name, range]) => [name, range.default]),
+          ),
+        };
+        return Object.keys(counts).length > 0 ? [[optionName(option), counts]] : [];
+      }),
+    );
+    return {
+      prompt: decision.prompt,
+      kind: decision.kind,
+      ...(decision.subject === undefined
+        ? {}
+        : { about: this.nameOf(this.cardWithId(decision.subject)) }),
+      ...(decision.decider.kind === 'investigator' ? { for: decision.decider.investigatorId } : {}),
+      ...(decision.skillTest ? { test: decision.skillTest } : {}),
+      options: decision.options.map(optionName),
+      ...(Object.keys(defaults).length > 0 ? { defaults } : {}),
+    };
   }
 
   private locationNamed(name: string): CardInstance {
@@ -417,10 +569,10 @@ export class TestTable {
     );
   }
 
-  private onlyOne(cards: readonly CardInstance[], what: string): CardInstance {
-    const [only, ...others] = cards;
+  private onlyOne<T>(found: readonly T[], what: string): T {
+    const [only, ...others] = found;
     if (only === undefined || others.length > 0)
-      throw new Error(`expected exactly one ${what}, found ${cards.length}\n${this.board()}`);
+      throw new Error(`expected exactly one ${what}, found ${found.length}\n${this.board()}`);
     return only;
   }
 
@@ -442,4 +594,26 @@ export class TestTable {
   private nameOf(card: CardInstance): string {
     return cardStats(this.ctx.cards, card.code).name;
   }
+}
+
+/**
+ * The step whose decision stopped a `NextPhase`: each step removes itself
+ * from `GameMeta.steps` before it runs (`PhaseStepsChanged`), so the cursor
+ * already points past it, and the step is the last one the events removed.
+ * `stepsBefore` is the cursor before the command; a `PhaseChanged` lists the
+ * steps of the phase it enters.
+ */
+function lastStepStarted(
+  stepsBefore: readonly PhaseStep[],
+  events: readonly Event[],
+): PhaseStepId | undefined {
+  let steps = stepsBefore;
+  let started: PhaseStepId | undefined;
+  for (const event of events) {
+    if (event.type === 'PhaseChanged') steps = event.steps;
+    if (event.type !== 'PhaseStepsChanged') continue;
+    if (event.steps.length < steps.length) started = steps[0]?.id;
+    steps = event.steps;
+  }
+  return started;
 }
