@@ -17,7 +17,13 @@ import type {
 } from './events';
 import { handleRevealLocation } from './handle_board';
 import type { InvestigatorId } from './ids';
-import { defeatCause, requireInvestigator, statValue, withStatDelta } from './investigators';
+import {
+  defeatCause,
+  discoverCluesEvents,
+  requireInvestigator,
+  statValue,
+  withStatDelta,
+} from './investigators';
 import { requireCard } from './lookup';
 import { CommandRejected } from './rejection';
 import type { GameState, Investigator } from './state';
@@ -136,15 +142,7 @@ export function handleDiscoverClues(
       requested: cmd.amount,
     });
 
-  return [
-    { type: 'TokensChanged', cardId: location.id, token: 'clue', delta: -cmd.amount },
-    {
-      type: 'InvestigatorChanged',
-      investigatorId: investigator.id,
-      stat: 'clues',
-      delta: cmd.amount,
-    },
-  ];
+  return discoverCluesEvents(investigator.id, location.id, cmd.amount);
 }
 
 /** The investigator, rejecting unknown IDs and those who are no longer in the scenario. */

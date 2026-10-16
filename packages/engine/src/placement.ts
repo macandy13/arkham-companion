@@ -1,8 +1,8 @@
-import type { CardMoved } from './events';
+import type { CardMoved, Event, TokensChanged } from './events';
 import { requireCard } from './lookup';
 import { CommandRejected } from './rejection';
 import type { InstanceId } from './ids';
-import type { CardInstance, GameState } from './state';
+import { TOKEN_KINDS, type CardInstance, type GameState, type TokenKind } from './state';
 import { sameZone, zoneKey, type Zone } from './zone';
 
 /** The IDs a zone may refer to, used to validate card placements. */
@@ -64,6 +64,25 @@ export function stateZoneRefs(state: GameState): ZoneRefs {
   };
 }
 
+/**
+ * The `CardMoved` for moving `card` to `to` (at `index`, default the end),
+ * without validation. For moves the engine itself decides, whose zone is
+ * known to be valid; a move a command asks for goes through `cardMoved`.
+ */
+export function moveCardEvent(
+  card: Pick<CardInstance, 'id' | 'zone'>,
+  to: Zone,
+  index?: number,
+): CardMoved {
+  return {
+    type: 'CardMoved',
+    cardId: card.id,
+    from: card.zone,
+    to,
+    ...(index !== undefined ? { index } : {}),
+  };
+}
+
 /** The `CardMoved` for moving `card` to `to` (at `index`, default the end), after validating both. */
 export function cardMoved(
   state: GameState,
@@ -78,11 +97,36 @@ export function cardMoved(
   if (index !== undefined && (!Number.isInteger(index) || index < 0 || index > maxIndex)) {
     throw new CommandRejected({ code: 'indexOutOfRange', index, max: maxIndex });
   }
-  return {
-    type: 'CardMoved',
-    cardId: card.id,
-    from: card.zone,
-    to,
-    ...(index !== undefined ? { index } : {}),
-  };
+  return moveCardEvent(card, to, index);
+}
+
+/** Removes every token of the given kinds (default all) from `card`; no event for a kind it has none of. */
+export function clearTokensEvents(
+  card: CardInstance,
+  tokens: readonly TokenKind[] = TOKEN_KINDS,
+): TokensChanged[] {
+  return tokens.flatMap((token) => {
+    const amount = card.tokens[token] ?? 0;
+    return amount === 0 ? [] : [{ type: 'TokensChanged', cardId: card.id, token, delta: -amount }];
+  });
+}
+
+/**
+ * `cardId` and everything attached to it, attachments first, to the top of
+ * the encounter discard. Attachments go with their host because a card in the
+ * discard cannot host anything. Tokens are removed with each card: doom on a
+ * discarded treachery must not come back if the discard is reshuffled into
+ * the deck.
+ */
+export function discardEncounterCard(state: GameState, cardId: InstanceId): Event[] {
+  const card = state.cards[cardId];
+  if (!card) return [];
+  const attachments = (state.order[zoneKey({ kind: 'attachedTo', hostId: cardId })] ?? []).flatMap(
+    (attachedId) => discardEncounterCard(state, attachedId),
+  );
+  return [
+    ...attachments,
+    ...clearTokensEvents(card),
+    moveCardEvent(card, { kind: 'encounterDiscard' }, 0),
+  ];
 }

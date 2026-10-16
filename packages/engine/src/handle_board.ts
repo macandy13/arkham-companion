@@ -3,6 +3,7 @@ import { cardStats, resolveValue, type EngineContext } from './cards';
 import type { AddConnection, AddMap, RemoveConnection, RevealLocation } from './commands';
 import { isInPlay } from './doom';
 import type { CardFlipped, CardMoved, ConnectionChanged, MapAdded, TokensChanged } from './events';
+import { moveCardEvent } from './placement';
 import type { InstanceId, MapId } from './ids';
 import { requireCard } from './lookup';
 import { createMap, type Edge, type GameMap } from './map';
@@ -74,12 +75,7 @@ export function handleAddMap(
     validateLocationCard(ctx, state.cards, cardId);
     const card = requireCard(state.cards, cardId);
     if (isInPlay(state, card)) throw new CommandRejected({ code: 'cardAlreadyInPlay', cardId });
-    return {
-      type: 'CardMoved',
-      cardId,
-      from: card.zone,
-      to: { kind: 'location', mapId: cmd.mapId },
-    };
+    return moveCardEvent(card, { kind: 'location', mapId: cmd.mapId });
   });
   validateConnections(ctx, state.cards, { ...state.board.maps, [cmd.mapId]: map });
   return [{ type: 'MapAdded', mapId: cmd.mapId, map }, ...moves];

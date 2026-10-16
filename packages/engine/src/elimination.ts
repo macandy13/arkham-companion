@@ -2,7 +2,9 @@ import { decisionId, type InstanceId } from './ids';
 import { requestDecision } from './decisions';
 import type { Event, InvestigatorDefeated, InvestigatorResigned } from './events';
 import { replay } from './reducer';
-import { TOKEN_KINDS, type GameState, type Investigator } from './state';
+import { cluesToLocationEvents } from './investigators';
+import { discardEncounterCard } from './placement';
+import type { GameState, Investigator } from './state';
 import { zoneKey, type Zone } from './zone';
 
 /** Id of the decision that asks the group for a new lead investigator. */
@@ -42,20 +44,7 @@ export function investigatorLeavesEvents(
 /** Clues move to the location they were found at, where the remaining investigators can discover them. */
 function clueEvents(investigator: Investigator): Event[] {
   if (investigator.clues === 0 || investigator.locationId === undefined) return [];
-  return [
-    {
-      type: 'InvestigatorChanged',
-      investigatorId: investigator.id,
-      stat: 'clues',
-      delta: -investigator.clues,
-    },
-    {
-      type: 'TokensChanged',
-      cardId: investigator.locationId,
-      token: 'clue',
-      delta: investigator.clues,
-    },
-  ];
+  return cluesToLocationEvents(investigator.id, investigator.locationId, investigator.clues);
 }
 
 /**
@@ -67,39 +56,16 @@ function clueEvents(investigator: Investigator): Event[] {
 function engagedEnemyEvents(state: GameState, investigator: Investigator): Event[] {
   const { locationId } = investigator;
   const engaged = cardsInZone(state, { kind: 'engaged', investigatorId: investigator.id });
-  if (locationId === undefined) return engaged.flatMap((enemyId) => discardEvents(state, enemyId));
+  if (locationId === undefined)
+    return engaged.flatMap((enemyId) => discardEncounterCard(state, enemyId));
   return engaged.map((enemyId) => ({ type: 'EnemyDisengaged', enemyId, locationId }));
 }
 
 /** Threat-area cards are encounter cards (player cards are not modelled), so they go to the encounter discard. */
 function threatAreaEvents(state: GameState, investigator: Investigator): Event[] {
   return cardsInZone(state, { kind: 'threatArea', investigatorId: investigator.id }).flatMap(
-    (cardId) => discardEvents(state, cardId),
+    (cardId) => discardEncounterCard(state, cardId),
   );
-}
-
-/**
- * `cardId` and everything attached to it, attachments first, to the top of
- * the encounter discard. Attachments go with their host because a card in the
- * discard cannot host anything. Tokens are removed with each card: doom on a
- * discarded treachery must not come back if the discard is reshuffled into
- * the deck.
- */
-function discardEvents(state: GameState, cardId: InstanceId): Event[] {
-  const card = state.cards[cardId];
-  if (!card) return [];
-  const attachments = cardsInZone(state, { kind: 'attachedTo', hostId: cardId }).flatMap(
-    (attachedId) => discardEvents(state, attachedId),
-  );
-  const tokensRemoved: Event[] = TOKEN_KINDS.flatMap((token) => {
-    const amount = card.tokens[token] ?? 0;
-    return amount === 0 ? [] : [{ type: 'TokensChanged', cardId, token, delta: -amount }];
-  });
-  return [
-    ...attachments,
-    ...tokensRemoved,
-    { type: 'CardMoved', cardId, from: card.zone, to: { kind: 'encounterDiscard' }, index: 0 },
-  ];
 }
 
 function cardsInZone(state: GameState, zone: Zone): InstanceId[] {
