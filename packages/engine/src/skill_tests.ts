@@ -1,4 +1,4 @@
-import { cardStats, type EngineContext } from './cards';
+import { cardStats, type CardStats, type EngineContext } from './cards';
 import type { Command, Evade, Fight, Investigate } from './commands';
 import { requestDecision, skillTestDecision, type SkillTestOutcomes } from './decisions';
 import type { DecisionRequested } from './events';
@@ -67,6 +67,8 @@ export function handleFight(ctx: EngineContext, state: GameState, cmd: Fight): D
       investigatorId: investigator.id,
       locationId: enemyLocation,
     });
+  if (isUnengagedAloof(enemy, stats))
+    throw new CommandRejected({ code: 'aloofNotEngaged', cardId: enemy.id });
   const damage = cmd.damage ?? 1;
   if (!Number.isInteger(damage) || damage <= 0)
     throw new CommandRejected({ code: 'invalidTokenDelta', delta: damage });
@@ -82,6 +84,18 @@ export function handleFight(ctx: EngineContext, state: GameState, cmd: Fight): D
       onFail: failedFightCommands(state, investigator, enemy, damage),
     },
   });
+}
+
+/**
+ * Rules Reference, "Aloof": an aloof enemy cannot be attacked while it is not
+ * engaged with an investigator, though anyone at its location may attack it
+ * once it is. A massive enemy counts as engaged with everyone at its location,
+ * so it is never unengaged even though it is not in the `engaged` zone.
+ */
+function isUnengagedAloof(enemy: CardInstance, stats: CardStats): boolean {
+  return (
+    hasKeyword(stats, 'aloof') && enemy.zone.kind !== 'engaged' && !hasKeyword(stats, 'massive')
+  );
 }
 
 /**
