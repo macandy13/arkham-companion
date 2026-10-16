@@ -10,7 +10,13 @@ import {
   type Command,
   type StartScenario,
 } from './index';
-import { makeInvestigator, rejectionOf, run as runWith, testContext } from '../test/utils';
+import {
+  makeInvestigator,
+  rejectionFrom,
+  rejectionOf,
+  run as runWith,
+  testContext,
+} from '../test/utils';
 
 const main = mapId('main');
 const loc = instanceId('loc');
@@ -330,5 +336,49 @@ describe('ManualAdjust', () => {
         }),
       ),
     ).toMatchObject({ code: 'unknownCard', cardId: 'nope' });
+  });
+});
+
+describe('MoveCard', () => {
+  it('moves a card to the end of the destination zone', () => {
+    const { state, events } = run([
+      { ...start, shuffleEncounterDeck: false },
+      { type: 'MoveCard', cardId: instanceId('c2'), to: { kind: 'encounterDiscard' } },
+    ]);
+
+    expect(events.at(-1)).toEqual({
+      type: 'CardMoved',
+      cardId: 'c2',
+      from: { kind: 'encounterDeck' },
+      to: { kind: 'encounterDiscard' },
+    });
+    expect(state.order[zoneKey({ kind: 'encounterDiscard' })]).toEqual(['c2']);
+    expect(checkInvariants(state)).toEqual([]);
+  });
+
+  it('rejects a destination on an unknown map, like a manual move', () => {
+    const { state } = run([start]);
+    const elsewhere = mapId('elsewhere');
+
+    const rejection = rejectionFrom(testContext, state, {
+      type: 'MoveCard',
+      cardId: loc,
+      to: { kind: 'location', mapId: elsewhere },
+    });
+
+    expect(rejection).toEqual({ code: 'unknownMap', mapId: elsewhere });
+  });
+
+  it('rejects an unknown card', () => {
+    const { state } = run([start]);
+    const missing = instanceId('missing');
+
+    const rejection = rejectionFrom(testContext, state, {
+      type: 'MoveCard',
+      cardId: missing,
+      to: { kind: 'outOfGame' },
+    });
+
+    expect(rejection).toEqual({ code: 'unknownCard', cardId: missing });
   });
 });

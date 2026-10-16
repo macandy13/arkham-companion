@@ -9,7 +9,10 @@ import { zoneKey } from './zone';
  * every card is in exactly one zone and listed exactly once in that zone's
  * order, no order list is empty or names an unknown card, no token count is
  * negative, every connection (of any map) joins two known cards and appears only once,
- * and every investigator is consistent (see `investigatorErrors`).
+ * every investigator is consistent (see `investigatorErrors`), pending decisions are
+ * well-formed, every investigator has taken at most one turn this round and
+ * the turn in progress (investigation phase only) belongs to an active
+ * investigator who has not had theirs yet.
  */
 export function checkInvariants(state: GameState): string[] {
   const errors: string[] = [];
@@ -33,8 +36,51 @@ export function checkInvariants(state: GameState): string[] {
       if (n !== undefined && n < 0) errors.push(`card ${card.id} has ${n} ${token}`);
     }
   }
+  errors.push(...currentCardErrors(state));
   errors.push(...connectionErrors(state));
   errors.push(...investigatorErrors(state));
+  errors.push(...decisionErrors(state));
+  errors.push(...turnErrors(state));
+  return errors;
+}
+
+/** Violations of the per-round turn flags and of the turn in progress. */
+function turnErrors(state: GameState): string[] {
+  const { turnsTaken } = state.meta;
+  const taken = turnsTaken.flatMap((id, i) => [
+    ...(state.investigators.some((inv) => inv.id === id)
+      ? []
+      : [`turn taken by unknown investigator ${id}`]),
+    ...(turnsTaken.indexOf(id) < i ? [`turn of ${id} taken more than once`] : []),
+  ]);
+  return [...taken, ...currentTurnErrors(state)];
+}
+
+function currentTurnErrors(state: GameState): string[] {
+  const { turn, phase, turnsTaken } = state.meta;
+  if (!turn) return [];
+  const investigator = state.investigators.find((inv) => inv.id === turn.investigatorId);
+  return [
+    ...(phase === 'investigation' ? [] : [`turn in progress in the ${phase} phase`]),
+    ...(investigator?.status === 'active'
+      ? []
+      : [`turn of ${turn.investigatorId}, who is not an active investigator`]),
+    ...(turnsTaken.includes(turn.investigatorId)
+      ? [`turn of ${turn.investigatorId} in progress after it was taken`]
+      : []),
+  ];
+}
+
+/** Violations for the current agenda and act: they must name known cards. */
+function currentCardErrors(state: GameState): string[] {
+  const errors: string[] = [];
+  for (const [deck, current] of [
+    ['agenda', state.agenda.current],
+    ['act', state.act.current],
+  ] as const) {
+    if (current !== undefined && !state.cards[current])
+      errors.push(`current ${deck} is unknown card ${current}`);
+  }
   return errors;
 }
 
@@ -53,11 +99,25 @@ function connectionErrors(state: GameState): string[] {
   return errors;
 }
 
+/** Violations of the pending decisions: ids and option ids must be unique, and every decision needs an option. */
+function decisionErrors(state: GameState): string[] {
+  const errors: string[] = [];
+  state.pending.forEach((decision, i) => {
+    if (state.pending.slice(0, i).some((earlier) => earlier.id === decision.id))
+      errors.push(`decision ${decision.id} is pending more than once`);
+    if (decision.options.length === 0) errors.push(`decision ${decision.id} has no options`);
+    const optionIds = new Set(decision.options.map((option) => option.id));
+    if (optionIds.size !== decision.options.length)
+      errors.push(`decision ${decision.id} has repeated option ids`);
+  });
+  return errors;
+}
+
 /**
- * Violations for investigators: negative counters, an unknown location, and
- * the defeat rule - an active investigator always has health and sanity left,
- * and a defeated one is what `AdjustInvestigator` leaves behind, so no check
- * applies to them.
+ * Violations for investigators: negative counters (remaining actions
+ * included), an unknown location, and the defeat rule - an active
+ * investigator always has health and sanity left, and a defeated one is what
+ * `AdjustInvestigator` leaves behind, so no check applies to them.
  */
 function investigatorErrors(state: GameState): string[] {
   const errors: string[] = [];
@@ -65,6 +125,8 @@ function investigatorErrors(state: GameState): string[] {
     for (const stat of INVESTIGATOR_STATS) {
       if (statValue(inv, stat) < 0) errors.push(`investigator ${inv.id} has negative ${stat}`);
     }
+    if (!Number.isInteger(inv.actionsRemaining) || inv.actionsRemaining < 0)
+      errors.push(`investigator ${inv.id} has ${inv.actionsRemaining} actions remaining`);
     if (inv.locationId !== undefined && !state.cards[inv.locationId])
       errors.push(`investigator ${inv.id} is at unknown card ${inv.locationId}`);
     if (inv.status === 'active' && defeatCause(inv) !== undefined)

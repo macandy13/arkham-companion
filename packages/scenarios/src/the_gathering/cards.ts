@@ -3,7 +3,9 @@ import {
   trait,
   type CardDb,
   type CardStats,
+  type Keyword,
   type ScaledValue,
+  type SkillTest,
   type Trait,
 } from '@arkham/engine';
 
@@ -12,7 +14,7 @@ import {
  * scenario's own set plus the generic sets its setup gathers.
  */
 export const GATHERING_SETS = {
-  theGathering: 'the_gathering',
+  theGathering: 'torch',
   rats: 'rats',
   ghouls: 'ghouls',
   strikingFear: 'striking_fear',
@@ -43,9 +45,10 @@ const ghoulTraits = ['Humanoid', 'Monster', 'Ghoul'];
 
 /**
  * Hand-entered card data for The Gathering, keyed by the real ArkhamDB codes
- * so it lines up with the cached card data later. Only names, codes, numbers
- * and traits – no card text, no ArkhamDB JSON, no images – so it may be
- * committed (see CLAUDE.md). It is the test scenario for the generic rules
+ * so it lines up with the cached card data later. Only names, codes, numbers,
+ * traits, keywords, the threat-area flag and revelation tests (skill and
+ * difficulty, checked against ArkhamDB's `core_encounter.json`) – no card text, no ArkhamDB JSON,
+ * no images – so it may be committed (see CLAUDE.md). It is the test scenario for the generic rules
  * until real scenario data arrives (M4).
  */
 export const theGatheringCardDefs: readonly CardStats[] = [
@@ -71,6 +74,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     damage: 2,
     horror: 2,
     victory: 2,
+    keywords: [{ name: 'hunter' }, prey('Highest [combat]'), { name: 'retaliate' }],
   }),
   {
     code: codes.litaChantler,
@@ -91,6 +95,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     damage: 1,
     horror: 2,
     victory: 1,
+    keywords: [spawn('Attic')],
   }),
   enemy({
     code: '01119',
@@ -103,6 +108,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     damage: 2,
     horror: 1,
     victory: 1,
+    keywords: [spawn('Cellar')],
   }),
   enemy({
     code: '01159',
@@ -115,6 +121,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     damage: 1,
     horror: 0,
     quantity: 3,
+    keywords: [{ name: 'hunter' }],
   }),
   enemy({
     code: '01160',
@@ -138,6 +145,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     health: fixed(3),
     damage: 1,
     horror: 1,
+    keywords: [prey('Lowest remaining health')],
   }),
   treachery({
     code: '01162',
@@ -145,6 +153,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     set: sets.ghouls,
     traits: ['Hazard'],
     quantity: 3,
+    revelationTest: { skill: 'agility', difficulty: 3 },
   }),
   treachery({
     code: '01163',
@@ -152,6 +161,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     set: sets.strikingFear,
     traits: ['Terror'],
     quantity: 3,
+    revelationTest: { skill: 'willpower', difficulty: 3 },
   }),
   treachery({
     code: '01164',
@@ -159,6 +169,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     set: sets.strikingFear,
     traits: ['Terror'],
     quantity: 2,
+    entersThreatArea: true,
   }),
   treachery({
     code: '01165',
@@ -166,6 +177,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     set: sets.strikingFear,
     traits: ['Terror'],
     quantity: 2,
+    entersThreatArea: true,
   }),
   treachery({
     code: '01166',
@@ -180,6 +192,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     set: sets.chillingCold,
     traits: ['Hazard'],
     quantity: 2,
+    revelationTest: { skill: 'willpower', difficulty: 4 },
   }),
   treachery({
     code: '01168',
@@ -265,6 +278,7 @@ interface EnemyOptions {
   horror: number;
   victory?: number;
   quantity?: number;
+  keywords?: readonly Keyword[];
 }
 
 function enemy({ set, traits, quantity = 1, victory, ...stats }: EnemyOptions): CardStats {
@@ -285,9 +299,24 @@ interface TreacheryOptions {
   set: string;
   traits: readonly string[];
   quantity: number;
+  /** Set for a treachery that stays in the drawer's threat area. */
+  entersThreatArea?: boolean;
+  /**
+   * The skill test of the card's revelation, if it has one. Frozen in Fear's
+   * willpower test is not one: it comes at the end of each turn, not when drawn.
+   */
+  revelationTest?: SkillTest;
 }
 
-function treachery({ code, name, set, traits, quantity }: TreacheryOptions): CardStats {
+function treachery({
+  code,
+  name,
+  set,
+  traits,
+  quantity,
+  entersThreatArea,
+  revelationTest,
+}: TreacheryOptions): CardStats {
   return {
     code,
     name,
@@ -295,6 +324,8 @@ function treachery({ code, name, set, traits, quantity }: TreacheryOptions): Car
     traits: traitsOf(traits),
     encounterCode: set,
     quantity,
+    ...(entersThreatArea ? { entersThreatArea } : {}),
+    ...(revelationTest ? { revelationTest } : {}),
   };
 }
 
@@ -305,6 +336,16 @@ function scenarioCard(code: string, name: string): Omit<CardStats, 'typeCode'> {
 
 function traitsOf(names: readonly string[]): Trait[] {
   return names.map(trait);
+}
+
+/** The `prey` keyword with its printed instruction. */
+function prey(detail: string): Keyword {
+  return { name: 'prey', detail };
+}
+
+/** The `spawn` keyword with the location it names. */
+function spawn(detail: string): Keyword {
+  return { name: 'spawn', detail };
 }
 
 /** A printed value that does not scale with the player count. */

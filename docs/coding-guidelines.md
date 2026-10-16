@@ -38,10 +38,28 @@ How code in this repo should look, so every task lands in the same style.
 
 ## 3. Tests
 
-- **Keep it local.** A reader should understand a test without scrolling. The values that matter for an assertion are visible in the test itself, or at least in the `beforeEach`/setup of the same `describe` block – never in a distant shared fixture.
+- **Keep it local and readable.** A reader must understand each test from its body plus the `describe` setup right above it, without scrolling or decoding. Every card, ID, zone and value an assertion checks is written there with a readable name. No generated or positional IDs (`d0`, `L1`), no cryptic codes (`'SUR'`), no shared fixtures whose contents matter but sit far away, no hidden defaults that affect the result. Helpers may build state, but their call site names what they build:
+
+  ```ts
+  // Bad: what is `d0`, what does `SUR` do, where is it?
+  const state = started({ deck: ['SUR', 'DUL'] });
+  expect(order(after, deck)).toEqual(['d0']);
+
+  // Good: the cards, IDs and zones are in the test.
+  const state = startedWith(
+    {
+      deck: [card('surge_treachery', 'surge_card'), card('plain_treachery', 'after_surge')],
+    },
+    { aliceAt: hall },
+  );
+  expect(idsIn(after, encounterDeck)).toEqual(['after_surge']);
+  ```
+
 - **Sane defaults via builders.** Use small factory helpers with defaults and overrides (`makeInvestigator({ id: 'a', clues: 2 })`) so tests only spell out what is relevant to them. Defaults should be boring; anything a test depends on is passed explicitly.
 - **Shared test helpers** live in `packages/engine/test/utils/` (standard investigators, card and definition builders, `startScenario`, `run`, `codesIn`, `rejectionOf`); import them from `../test/utils` in the engine and `@arkham/engine/test/utils` elsewhere. Add a helper there once a second test file needs it.
 - **One behaviour per test**, named as a sentence about behaviour: `it('rejects moving a card into its own zone')`.
+- **Exception: end-to-end scenario tests** (`packages/scenarios/src/*/end_to_end.test.ts`) may be one long narrative test that plays the scenario in order, with short phase/turn comment headers (`// Round 2 – investigation: Roland's turn`) and assertions in place.
+- **Scenario flow tests reuse the shared `TestTable` helpers** (`packages/scenarios/src/<scenario>/test_table.ts`): every test that plays a scenario through phases and turns sets up and drives the game with the same table instead of its own command lists, so all flow tests read alike. Unit tests of single rules stay fine-grained in the engine.
 - **Arrange – act – assert**, separated by blank lines; no logic (loops, conditionals) in assertions.
 - **Test through the public API** of the module (commands in, events/state out for the engine), not internals.
 - **Invariants are covered by example-based table tests** (`it.each` over a few named, readable cases), not property-based testing. Unit tests for concrete rules and edge cases.
@@ -65,6 +83,7 @@ The DOM is a clearly structured document tree – good structure _is_ accessibil
 - Give landmarks and controls an accessible name (`aria-label`/`aria-labelledby`) when visible text doesn't provide one. Use ARIA only where native semantics are insufficient.
 - No presentational markup: no wrapper `div`s just for styling when an existing element can be styled, no `<b>`/`<strong>`/`<br>`, no inline `style`, no layout or utility class names (see `CLAUDE.md`).
 - Every visible string goes through i18n.
+- **Show results where the user acted.** Details, sheets and confirmations open next to the element that opened them (e.g. an expanded row inside the list, right after the tapped item), never at the end of a long list, so a tap never needs a scroll to see what it did.
 
 ## 5. CSS
 
@@ -83,4 +102,5 @@ Common, generic operations go into small, tested helpers instead of being re-imp
 - **`@arkham/util`** (`packages/util`) holds pure, dependency-free helpers usable from every package, grouped by topic (`string.ts`, later e.g. `array.ts`, `record.ts`). Example: `stripSuffix(name, '.json')` instead of `name.endsWith('.json') ? name.slice(0, -5) : name`.
 - Before writing a one-off string/array/object manipulation, check `@arkham/util` and the standard library. If it's not there and it's generic, add it there (with tests) rather than inline.
 - Domain helpers stay in their package (e.g. card helpers in `packages/carddata/src/helpers.ts`, zone helpers in the engine).
+- **Shared functions live next to the entity they handle.** A lookup or query that several modules need is built once, in the module of the thing it finds, and the others import it: card lookups with the cards (`cardsNamed`, `cardsOfType` in the engine's `lookup.ts`), location queries with the board (`locationsNamed`, `locationsInPlay` in `board.ts`). Before writing another `Object.values(state.cards).filter(…)`, check whether such a function exists; if not, add it there with tests. Only generic string, array and object helpers go to `@arkham/util`.
 - Helpers are pure, small, total (defined for every input, including empty strings/arrays) and named after what they return.

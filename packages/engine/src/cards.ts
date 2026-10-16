@@ -1,5 +1,9 @@
+import { stripTrailingDot } from '@arkham/util';
 import type { Brand } from './ids';
+import type { Keyword } from './keywords';
+import type { SkillTest } from './state';
 import { CommandRejected } from './rejection';
+import type { EffectsRegistry, ScenarioHooks } from './triggers';
 
 /**
  * ArkhamDB `type_code` values, covering encounter and player cards.
@@ -114,6 +118,20 @@ export interface CardStats {
   encounterCode?: string;
   /** Number of physical copies in the product; treated as 1 when absent. */
   quantity?: number;
+  /** Keywords parsed from the card text at load time; none when absent. */
+  keywords?: readonly Keyword[];
+  /**
+   * A treachery with this stays in the drawing investigator's threat area
+   * instead of being discarded (derived from the card text by `carddata`).
+   */
+  entersThreatArea?: boolean;
+  /**
+   * The skill test a treachery's revelation asks of the drawing investigator
+   * ("Revelation – Test [willpower] (3)"), entered with the card data; drawing
+   * the card raises it as a `skillTestResult` decision. Only the test itself:
+   * what failing costs stays card text the players apply.
+   */
+  revelationTest?: SkillTest;
 }
 
 /**
@@ -136,10 +154,15 @@ export interface CardDb {
  * Everything `handle` needs besides the state and the command. Passed in
  * rather than stored in `GameState` so the state stays small and serialisable,
  * and so the reducer cannot depend on card data – events already carry the
- * values a rule computed from it.
+ * values a rule computed from it. Hooks and effects are code, which is
+ * another reason they live here and not in the serialisable state.
  */
 export interface EngineContext {
   cards: CardDb;
+  /** The running scenario's forced effects (`ScenarioDefinition.hooks`); none when absent. */
+  hooks?: Partial<ScenarioHooks>;
+  /** Card scripts by card code; none when absent. */
+  effects?: EffectsRegistry;
 }
 
 /** Builds a `CardDb` from a list of definitions; a later duplicate code replaces an earlier one. */
@@ -151,6 +174,16 @@ export function cardDbFrom(defs: Iterable<CardStats>): CardDb {
     encounterSet: (encounterCode) =>
       [...byCode.values()].filter((def) => def.encounterCode === encounterCode),
   };
+}
+
+/**
+ * The form in which card names and keyword details (a `spawn` location, a
+ * `prey` criterion) are compared: case-insensitive, ignoring surrounding
+ * whitespace and the full stop that ends a printed instruction ("Spawn -
+ * Attic."). One function so that every lookup by printed text agrees.
+ */
+export function comparableName(text: string): string {
+  return stripTrailingDot(text.trim()).toLowerCase();
 }
 
 /** The definition for `code`; throws `CommandRejected` (`unknownCardCode`) if the db lacks it. */

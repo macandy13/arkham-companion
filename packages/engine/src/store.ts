@@ -38,12 +38,16 @@ export interface GameSummary {
 /**
  * An `Event` as persisted in the append-only log. `seq` is 1-based and gapless
  * per game; `timestamp` is assigned by the store (the engine itself never reads clocks).
+ * `commandId` groups the events of one player command (including its trigger
+ * chain), which is the unit `GameStore.undoLast` removes.
  */
 export interface StoredEvent {
   gameId: GameId;
   seq: number;
   /** Epoch ms. */
   timestamp: number;
+  /** Shared by all events returned by one `execute` call; assigned by the store unless the caller passes one. */
+  commandId: string;
   event: Event;
 }
 
@@ -73,12 +77,24 @@ export interface GameStore {
    * Appends events to the log and returns them with assigned `seq`/`timestamp`.
    * If `expectedSeq` is given and differs from the current last seq, rejects
    * (optimistic concurrency for multiple tabs/devices) and writes nothing.
+   * One call is one undo group: pass the events of exactly one command. The
+   * store generates the `commandId` unless the caller supplies one (the engine
+   * never generates IDs itself).
    */
   appendEvents(
     gameId: GameId,
     events: readonly Event[],
     expectedSeq?: number,
+    commandId?: string,
   ): Promise<StoredEvent[]>;
+  /**
+   * Removes the last command group from the log, drops snapshots beyond the
+   * new end and returns the game replayed to that point (unchanged if the log
+   * is empty). Rejects like `appendEvents` if `expectedSeq` is stale; `undefined`
+   * if the game doesn't exist. The RNG state is part of the replayed state, so
+   * redoing a command after an undo reproduces the same shuffle.
+   */
+  undoLast(gameId: GameId, expectedSeq?: number): Promise<LoadedGame | undefined>;
   /** Latest snapshot + replay of the events after it; `undefined` if the game doesn't exist. */
   loadGame(gameId: GameId): Promise<LoadedGame | undefined>;
   /** All games, most recently updated first. */

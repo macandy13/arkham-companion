@@ -1,9 +1,11 @@
 import { allConnections, sameEdge } from './board';
 import { cardStats, resolveValue, type EngineContext } from './cards';
-import type { AddConnection, RemoveConnection, RevealLocation } from './commands';
-import type { CardFlipped, ConnectionChanged, TokensChanged } from './events';
+import type { AddConnection, AddMap, RemoveConnection, RevealLocation } from './commands';
+import { isInPlay } from './doom';
+import type { CardFlipped, CardMoved, ConnectionChanged, MapAdded, TokensChanged } from './events';
 import type { InstanceId, MapId } from './ids';
-import type { Edge, GameMap } from './map';
+import { requireCard } from './lookup';
+import { createMap, type Edge, type GameMap } from './map';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
 
@@ -16,8 +18,7 @@ export function validateLocationCard(
   cards: Readonly<Record<InstanceId, CardInstance>>,
   cardId: InstanceId,
 ): void {
-  const card = cards[cardId];
-  if (!card) throw new CommandRejected({ code: 'unknownCard', cardId });
+  const card = requireCard(cards, cardId);
   if (cardStats(ctx.cards, card.code).typeCode !== 'location')
     throw new CommandRejected({ code: 'notALocation', cardId });
 }
@@ -52,6 +53,36 @@ export function handleAddConnection(
   if (allConnections(state).some(({ edge: existing }) => sameEdge(existing, edge)))
     throw new CommandRejected({ code: 'duplicateConnection', from: edge.from, to: edge.to });
   return [{ type: 'ConnectionChanged', change: 'added', mapId: cmd.mapId, edge }];
+}
+
+/**
+ * `AddMap`: the map must be new and each location a location card outside
+ * play, named once; its connections are validated like starting ones,
+ * against every edge already on the board.
+ */
+export function handleAddMap(
+  ctx: EngineContext,
+  state: GameState,
+  cmd: AddMap,
+): [MapAdded, ...CardMoved[]] {
+  if (state.board.maps[cmd.mapId])
+    throw new CommandRejected({ code: 'duplicateMap', mapId: cmd.mapId });
+  const map = createMap(cmd.map);
+  const moves = cmd.locations.map((cardId, i): CardMoved => {
+    if (cmd.locations.indexOf(cardId) !== i)
+      throw new CommandRejected({ code: 'duplicateCard', cardId });
+    validateLocationCard(ctx, state.cards, cardId);
+    const card = requireCard(state.cards, cardId);
+    if (isInPlay(state, card)) throw new CommandRejected({ code: 'cardAlreadyInPlay', cardId });
+    return {
+      type: 'CardMoved',
+      cardId,
+      from: card.zone,
+      to: { kind: 'location', mapId: cmd.mapId },
+    };
+  });
+  validateConnections(ctx, state.cards, { ...state.board.maps, [cmd.mapId]: map });
+  return [{ type: 'MapAdded', mapId: cmd.mapId, map }, ...moves];
 }
 
 /** `RemoveConnection`: finds the map that owns the edge; rejects an edge that is not on the board. */
@@ -100,8 +131,7 @@ export function handleRevealLocation(
   state: GameState,
   cmd: RevealLocation,
 ): (CardFlipped | TokensChanged)[] {
-  const card = state.cards[cmd.locationId];
-  if (!card) throw new CommandRejected({ code: 'unknownCard', cardId: cmd.locationId });
+  const card = requireCard(state.cards, cmd.locationId);
   if (card.zone.kind !== 'location')
     throw new CommandRejected({ code: 'notALocation', cardId: card.id });
   if (card.faceUp) throw new CommandRejected({ code: 'alreadyRevealed', cardId: card.id });
