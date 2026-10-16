@@ -1,0 +1,37 @@
+/* Settings screen (architecture §11). */
+#settings,
+#settings > section {
+  display: grid;
+  gap: var(--space-3);
+}
+
+#settings fieldset {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+#settings label {
+  display: grid;
+  gap: var(--space-1);
+}
+
+#settings label:has(input[type='checkbox']) {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch-target);
+}
+
+#settings select {
+  min-height: var(--touch-target);
+  box-sizing: border-box;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+}

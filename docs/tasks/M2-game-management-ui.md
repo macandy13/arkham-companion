@@ -50,12 +50,17 @@ Follow-ups: `CHAPTER_TWO_PACK_CODES` only lists `core_2026` – verify against r
 
 **Benefit:** Fast, visual team setup, similar to the Mansions of Madness app.
 
-- [ ] Portrait grid (image with text fallback), lazy-loaded images
-- [ ] Filters: class chips, cycle/pack, chapter (1/2), "my collection"; search by name
-- [ ] Chapter badge ("Ch. 1" / "Ch. 2") on every portrait and in the detail sheet; the detail sheet links to the other chapter's version
-- [ ] Detail sheet: front/back, health, sanity, skills
-- [ ] Seats: select assigns next seat (max 4), drag to reorder, remove; lead investigator marker
-- [ ] Component tests with a fixture catalog
+- [x] Portrait grid (image with text fallback), lazy-loaded images
+- [x] Filters: class chips, cycle/pack, chapter (1/2), "my collection"; search by name
+- [x] Chapter badge ("Ch. 1" / "Ch. 2") on every portrait and in the detail sheet; the detail sheet links to the other chapter's version
+- [x] Detail sheet: front/back, health, sanity, skills
+- [x] Seats: select assigns next seat (max 4), drag to reorder, remove; lead investigator marker
+- [x] Component tests with a fixture catalog
+
+Done: `apps/web/src/picker/` holds the controlled `InvestigatorPicker` (props: `catalog`, `seats` as investigator codes, `onSeatsChange`, optional `ownedPacks`, `maxSeats`, `imageHost`), its filter bar, detail sheet and seat list, the pure filter/reorder helpers in `pickerLogic.ts`, `picker.css` and tests with a hand-written fixture catalog. Seats can be reordered by drag and drop and by move up/down buttons; the first seat is marked as lead investigator. The `@flow` spec `e2e/new_game.spec.ts` ("start a new game") searches, filters by class and seats an investigator from stubbed ArkhamDB data.
+The picker is mounted on `/new` (`NewGameScreen`, seats in component state until the M2.5 wizard owns them): the app store exposes `loadCatalog(lang)` (cache-first via `catalog/loadCatalog.ts`), `useCatalog` turns it into loading/error/ready states with a retry button, and E2E stubs the ArkhamDB API with a fake catalog (`apps/web/e2e/fixtures/`).
+Follow-ups: the card language is hard-coded to `en` until the settings module exists (M2.4); pass the owned packs from settings as `ownedPacks` (M2.4) – without them the "my collection" checkbox is hidden; the detail sheet shows no ability text (it is not in `InvestigatorDef`); drag and drop is mouse-only (HTML5 drag events do not fire on touch), so touch users rely on the move buttons until a pointer-based drag is added; the image host is a prop defaulting to `https://arkhamdb.com`; the cycle filter shows "Cycle N" because the packs API has no cycle names.
+Review (PR #17): the detail sheet now opens inside the portrait grid, right after the tapped portrait (the grid was missing `display: grid`, so every portrait took a full row and the sheet landed at the end of the list). Starting the game with the seated investigators arrives with the wizard (M2.5). Follow-up for a styling milestone near the end: make the picker look like the Mansions of Madness app (two rows of about ten portraits, scrolled sideways) with the filters subtle and in the background.
 
 ## M2.4 Settings: collection and language (S)
 
@@ -63,8 +68,12 @@ Follow-ups: `CHAPTER_TWO_PACK_CODES` only lists `core_2026` – verify against r
 
 **Benefit:** A picker tailored to the group's collection, and a language choice that persists.
 
-- [ ] Settings screen: owned packs (checkbox list by cycle), card language (any language ArkhamDB offers), UI language (EN/DE first), theme
-- [ ] Stored in localStorage via a small `settings` module (try/catch, defaults)
+- [x] Settings screen: owned packs (checkbox list by cycle), card language (any language ArkhamDB offers), UI language (EN/DE first), theme
+- [x] Stored in localStorage via a small `settings` module (try/catch, defaults)
+
+Done: `apps/web/src/settings/` holds the `settings` module (`loadSettings`/`saveSettings` over localStorage with per-field defaults, try/catch for throwing storage and corrupt JSON) and `applySettings` (theme via `data-theme`, UI language via i18next); `main.tsx` applies them at boot. `SettingsScreen` offers owned packs grouped by cycle (from a `packs` prop), card language (all ArkhamDB languages), UI language (EN/DE) and theme (dark default, light via token overrides in `tokens.css`), saved on every change. The `@flow` spec `e2e/settings.spec.ts` ("change the settings") switches card language, app language and theme and checks they survive a reload (it replaces the former settings deep-link test; pack ownership joins the flow once the catalog packs are wired up).
+Follow-ups: `SettingsScreen` gets no `packs` yet (shows a hint) because `loadCatalog` is still unwired – pass `catalog.packs` and `settings.ownedPacks` into the picker (M2.7); `loadCatalog` only knows the `en`/`de` hosts, so the card language is stored but not yet used for fetching; the cycle groups show "Cycle N" (no cycle names in the packs API); new UI languages need translation strings and an entry in `UI_LANGUAGES`.
+Review fix: both catches in `settings.ts` now `console.warn` with context (fallback unchanged); the rule "never swallow a caught error silently" is in `CLAUDE.md` and `docs/coding-guidelines.md` and ESLint rejects empty `catch` blocks.
 
 ## M2.5 New game wizard (S)
 

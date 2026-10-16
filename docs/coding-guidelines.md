@@ -14,6 +14,16 @@ How code in this repo should look, so every task lands in the same style.
 - **Early returns over nested `if`/`else`.** Handle edge cases and errors first, then the main path.
 - **Make illegal states unrepresentable.** Discriminated unions and branded IDs over loose strings and optional flags.
 - **Options objects for unclear arguments.** A function with more than one non-obvious parameter (several numbers, booleans or strings in a row) takes an options object, so call sites read `location({ code, shroud: 2, cluesPerInvestigator: 1 })` instead of `location(code, 2, 1)`.
+- **Never swallow a caught error silently.** A `catch` either rethrows or logs a `console.warn` with context; a fallback is fine, a silent one is not. The error is always bound (`catch (error)`) so it can be passed on. The engine has no console and turns errors into rejections instead. ESLint rejects empty `catch` blocks (a comment alone does not count).
+
+  ```ts
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  } catch (error) {
+    console.warn('Could not save settings; they apply for this session only.', error);
+  }
+  ```
+
 - **No dead code, no speculative abstractions.** Delete unused code; generalise once the second caller appears (see "Generic before specific").
 
 ## 2. Comments
@@ -73,6 +83,7 @@ The DOM is a clearly structured document tree – good structure _is_ accessibil
 - Give landmarks and controls an accessible name (`aria-label`/`aria-labelledby`) when visible text doesn't provide one. Use ARIA only where native semantics are insufficient.
 - No presentational markup: no wrapper `div`s just for styling when an existing element can be styled, no `<b>`/`<strong>`/`<br>`, no inline `style`, no layout or utility class names (see `CLAUDE.md`).
 - Every visible string goes through i18n.
+- **Show results where the user acted.** Details, sheets and confirmations open next to the element that opened them (e.g. an expanded row inside the list, right after the tapped item), never at the end of a long list, so a tap never needs a scroll to see what it did.
 
 ## 5. CSS
 

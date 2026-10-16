@@ -29,4 +29,18 @@
   --layout-content-width: 60rem;
   --layout-board-panel-width: 16rem;
   --layout-board-bar-height: 8rem;
+  --layout-portrait-width: 9rem;
+  --layout-sheet-width: 22rem;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --color-background: #f6f4f0;
+  --color-surface: #ffffff;
+  --color-border: #c9c5bd;
+  --color-text: #1f1e1c;
+  --color-text-muted: #5f5c57;
+  --color-accent: #2c7a68;
+  --color-accent-text: #ffffff;
 }
