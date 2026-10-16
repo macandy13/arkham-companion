@@ -1,6 +1,12 @@
 import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
-import { instanceId, investigatorId, replay, type Event, type Investigator } from '@arkham/engine';
+import {
+  instanceId,
+  investigatorId,
+  replay,
+  type Event,
+  type StartingInvestigator,
+} from '@arkham/engine';
 import { theGathering, theGatheringCards } from '@arkham/scenarios';
 import { GameImportError } from '../storage/gameExport';
 import { IndexedDbStore } from '../storage/IndexedDbStore';
@@ -96,7 +102,7 @@ describe('appStore', () => {
   });
 
   describe('startScenario', () => {
-    const investigator: Investigator = {
+    const investigator: StartingInvestigator = {
       id: investigatorId('inv'),
       code: 'inv',
       name: 'Alder',
@@ -105,6 +111,7 @@ describe('appStore', () => {
       sanity: { max: 8, horror: 0 },
       clues: 0,
       resources: 5,
+      doomOnPlayerCards: 0,
       status: 'active',
     };
     const start = {

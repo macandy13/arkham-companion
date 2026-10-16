@@ -119,13 +119,19 @@ importers:
         specifier: ^4.23.15
         version: 4.23.15
 
-  packages/engine: {}
+  packages/engine:
+    dependencies:
+      '@arkham/util':
+        specifier: workspace:*
+        version: link:../util
 
   packages/scenarios:
     dependencies:
       '@arkham/engine':
         specifier: workspace:*
         version: link:../engine
+
+  packages/util: {}
 
 packages:
 

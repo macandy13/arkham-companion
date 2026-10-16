@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { entersThreatArea, KeywordSchema, parseKeywords } from './keywords';
 
 /** Normalised card definition (subset of the ArkhamDB fields the app needs). */
 export const CardDefSchema = z.object({
@@ -34,6 +35,10 @@ export const CardDefSchema = z.object({
   horror: z.number().int().optional(),
   victory: z.number().int().optional(),
   doom: z.number().int().optional(),
+  /** Parsed from `text` and `traits` at load time (`parseKeywords`). */
+  keywords: z.array(KeywordSchema).default([]),
+  /** A drawn treachery with this stays in the drawer's threat area (`entersThreatArea`). */
+  entersThreatArea: z.boolean().default(false),
   imageSrc: z.string().optional(),
   backImageSrc: z.string().optional(),
 });
@@ -117,6 +122,8 @@ export function normaliseCard(raw: unknown): CardDef {
     horror: r.enemy_horror,
     victory: r.victory,
     doom: r.doom,
+    keywords: parseKeywords(r.text, traits),
+    entersThreatArea: entersThreatArea(r.text),
     imageSrc: r.imagesrc,
     backImageSrc: r.backimagesrc,
   });

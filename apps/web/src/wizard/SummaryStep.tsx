@@ -1,11 +1,11 @@
-import type { Investigator } from '@arkham/engine';
+import type { StartingInvestigator } from '@arkham/engine';
 import { useTranslation } from 'react-i18next';
 import { chosenScenario, type WizardChoices } from './wizardState';
 
 interface SummaryStepProps {
   readonly choices: WizardChoices;
   /** The seated investigators as the engine will receive them. */
-  readonly investigators: readonly Investigator[];
+  readonly investigators: readonly StartingInvestigator[];
 }
 
 /** Last wizard step: what will be started, so the players can check it before confirming. */

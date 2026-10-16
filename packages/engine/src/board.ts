@@ -1,6 +1,8 @@
+import type { EngineContext } from './cards';
 import type { InstanceId, MapId } from './ids';
+import { cardsNamed, cardsOfType } from './lookup';
 import type { Edge, GameMap } from './map';
-import type { GameState } from './state';
+import type { CardInstance, GameState } from './state';
 
 /**
  * True if both edges are the same connection: an undirected edge matches in
@@ -52,8 +54,28 @@ export function shortestPaths(state: GameState, from: InstanceId, to: InstanceId
  * Whether the card is a location currently on a map. Named for locations
  * because "in play" is a broader game-rule notion (any card in a play area).
  */
-function isLocationInPlay(state: GameState, id: InstanceId): boolean {
+export function isLocationInPlay(state: GameState, id: InstanceId): boolean {
   return state.cards[id]?.zone.kind === 'location';
+}
+
+/** The location cards currently on a map, in card order. */
+export function locationsInPlay(ctx: EngineContext, state: GameState): CardInstance[] {
+  return cardsOfType(ctx, state, 'location').filter((card) => isLocationInPlay(state, card.id));
+}
+
+/**
+ * The location cards printed with `name` (see `cardsNamed`); with `inPlay` only
+ * those on a map. Without it a location that is set aside or out of the game
+ * counts too, which lets a spawn tell "no such location" from "not in play".
+ */
+export function locationsNamed(
+  ctx: EngineContext,
+  state: GameState,
+  name: string,
+  { inPlay = false }: { inPlay?: boolean } = {},
+): CardInstance[] {
+  const named = cardsNamed(ctx, state, name, { typeCode: 'location' });
+  return inPlay ? named.filter((card) => isLocationInPlay(state, card.id)) : named;
 }
 
 /**

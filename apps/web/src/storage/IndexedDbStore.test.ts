@@ -39,6 +39,8 @@ const started: ScenarioStarted = {
       sanity: { max: 6, horror: 0 },
       clues: 0,
       resources: 5,
+      doomOnPlayerCards: 0,
+      actionsRemaining: 3,
       status: 'active',
     },
   ],
@@ -177,6 +179,63 @@ describe('IndexedDbStore', () => {
     expect((await store.loadEvents(b)).length).toBe(1);
   });
 
+  it('groups the events of one append under one commandId', async () => {
+    const id = await store.createGame();
+    const first = await store.appendEvents(id, [started, tokens(1)]);
+    const second = await store.appendEvents(id, [tokens(1)], undefined, 'given');
+    expect(first[0]?.commandId).toBe(first[1]?.commandId);
+    expect(second[0]?.commandId).toBe('given');
+    expect(first[0]?.commandId).not.toBe('given');
+  });
+
+  it('undoes the last command group and replays the rest', async () => {
+    const id = await store.createGame();
+    await store.appendEvents(id, [started]);
+    await store.appendEvents(id, [tokens(1), tokens(2)]);
+
+    const undone = await store.undoLast(id);
+
+    expect(undone?.state).toEqual(replay([started]));
+    expect(undone?.summary.lastSeq).toBe(1);
+    expect((await store.loadEvents(id)).map((e) => e.seq)).toEqual([1]);
+    const next = await store.appendEvents(id, [tokens(3)]);
+    expect(next[0]?.seq).toBe(2);
+  });
+
+  it('undoes everything down to an empty log and then does nothing', async () => {
+    const id = await store.createGame();
+    await store.appendEvents(id, [started]);
+
+    expect((await store.undoLast(id))?.state).toEqual(emptyState());
+    expect((await store.undoLast(id))?.summary.lastSeq).toBe(0);
+  });
+
+  it('drops a snapshot beyond the new end but keeps one before it', async () => {
+    const id = await store.createGame();
+    await store.appendEvents(id, [started]);
+    await store.appendEvents(id, [tokens(1)]);
+    await store.saveSnapshot(id, 2, replay([started, tokens(1)]));
+    await store.appendEvents(id, [tokens(5)]);
+
+    await store.undoLast(id);
+    expect((await store.loadGame(id))?.state).toEqual(replay([started, tokens(1)]));
+
+    await store.undoLast(id);
+    // A leftover snapshot at seq 2 would make this state wrong.
+    expect((await store.loadGame(id))?.state).toEqual(replay([started]));
+  });
+
+  it('rejects undo with a stale expectedSeq and removes nothing', async () => {
+    const id = await store.createGame();
+    await store.appendEvents(id, [started]);
+    await expect(store.undoLast(id, 0)).rejects.toBeInstanceOf(SeqConflictError);
+    expect((await store.loadEvents(id)).length).toBe(1);
+  });
+
+  it('returns undefined when undoing an unknown game', async () => {
+    expect(await store.undoLast('nope')).toBeUndefined();
+  });
+
   it('caches cards per language and pack', async () => {
     const def = { code: '1', name: 'Fake' } as CardDef; // partial fixture is enough for storage
     await store.putCards('en', 'core_2026', [def]);
@@ -189,20 +248,20 @@ describe('IndexedDbStore', () => {
 });
 
 describe('IndexedDbStore.importGame', () => {
-  it('creates a new game from exported events, keeping their timestamps', async () => {
+  it('creates a new game from exported events, keeping their timestamps and command ids', async () => {
     const source = await store.createGame({ title: 'Night' });
     const id = await store.importGame({
       title: 'Imported',
       events: [
-        { timestamp: 1000, event: started },
-        { timestamp: 2000, event: tokens(1) },
+        { timestamp: 1000, commandId: 'start', event: started },
+        { timestamp: 2000, commandId: 'add_doom', event: tokens(1) },
       ],
     });
 
     expect(id).not.toBe(source);
-    expect((await store.loadEvents(id)).map((e) => [e.seq, e.timestamp])).toEqual([
-      [1, 1000],
-      [2, 2000],
+    expect((await store.loadEvents(id)).map((e) => [e.seq, e.timestamp, e.commandId])).toEqual([
+      [1, 1000, 'start'],
+      [2, 2000, 'add_doom'],
     ]);
     const loaded = await store.loadGame(id);
     expect(loaded?.state).toEqual(replay([started, tokens(1)]));

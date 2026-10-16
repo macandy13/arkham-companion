@@ -31,7 +31,13 @@ const doom = (delta: number): Event => ({
 });
 
 const stored = (events: Event[]): StoredEvent[] =>
-  events.map((event, i) => ({ gameId: 'g', seq: i + 1, timestamp: 1000 + i, event }));
+  events.map((event, i) => ({
+    gameId: 'g',
+    seq: i + 1,
+    timestamp: 1000 + i,
+    commandId: `command_${i + 1}`,
+    event,
+  }));
 
 /** The failure reason of `parseGameExport`, or `undefined` if the text was accepted. */
 function failureOf(text: string) {
@@ -48,11 +54,11 @@ describe('game export format', () => {
     vi.restoreAllMocks();
   });
 
-  it('parses what it serialises, keeping title and timestamps', () => {
+  it('parses what it serialises, keeping title, timestamps and command ids', () => {
     const text = serialiseGameExport('Night', 5, stored([started]));
     expect(parseGameExport(text)).toEqual({
       title: 'Night',
-      events: [{ timestamp: 1000, event: started }],
+      events: [{ timestamp: 1000, commandId: 'command_1', event: started }],
     });
   });
 
