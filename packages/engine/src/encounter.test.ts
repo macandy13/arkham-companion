@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   checkInvariants,
+  CommandRejected,
   execute,
   instanceId,
   investigatorId,
@@ -760,8 +761,9 @@ describe('encounter deck invariants', () => {
       for (const step of steps) {
         try {
           state = stateAfter(ctx, state, step);
-        } catch {
+        } catch (error) {
           // A rejected step leaves the state unchanged, which the checks below still cover.
+          if (!(error instanceof CommandRejected)) throw error;
         }
 
         const placed = Object.values(state.order).reduce((sum, ids) => sum + ids.length, 0);

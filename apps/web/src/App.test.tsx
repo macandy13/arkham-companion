@@ -12,7 +12,7 @@ function renderAt(path: string) {
   const store = createAppStore(new IndexedDbStore('app-routes-test'));
   render(
     <MemoryRouter initialEntries={[path]}>
-      <AppRoutes store={store} />
+      <AppRoutes store={store} catalog={() => new Promise(() => undefined)} />
     </MemoryRouter>,
   );
 }

@@ -8,6 +8,7 @@ import {
   type GameState,
   type GameStore,
   type GameSummary,
+  type ImportedGame,
   type LoadedGame,
   type NewGame,
   type Snapshot,
@@ -15,7 +16,7 @@ import {
 } from '@arkham/engine';
 import type { CardCatalog, CardDef } from '@arkham/carddata';
 
-/** Row of the `games` table: a `GameSummary` is derived from it. */
+/** Row of the `games` table: a `GameSummary` is derived from it plus the replayed state. */
 interface GameRow {
   gameId: GameId;
   title: string;
@@ -158,7 +159,7 @@ export class IndexedDbStore implements GameStore {
     );
     // Opportunistic snapshot so long games don't replay from scratch on every refresh.
     if (tail.length >= SNAPSHOT_INTERVAL) await this.saveSnapshot(gameId, game.lastSeq, state);
-    return { summary: toSummary(game), state };
+    return { summary: toSummary(game, state), state };
   }
 
   async undoLast(gameId: GameId, expectedSeq?: number): Promise<LoadedGame | undefined> {
@@ -182,14 +183,69 @@ export class IndexedDbStore implements GameStore {
 
   async listGames(): Promise<GameSummary[]> {
     const rows = await this.db.games.orderBy('updatedAt').reverse().toArray();
-    return rows.map(toSummary);
+    // Progress is derived from the state rather than stored, so it can never disagree with the log.
+    const loaded = await Promise.all(rows.map((row) => this.loadGame(row.gameId)));
+    return loaded.flatMap((game) => (game ? [game.summary] : []));
+  }
+
+  async renameGame(gameId: GameId, title: string): Promise<void> {
+    if ((await this.db.games.update(gameId, { title })) === 0) {
+      throw new Error(`Unknown game ${gameId}`);
+    }
+  }
+
+  async duplicateGame(gameId: GameId, title?: string): Promise<GameId> {
+    return this.db.transaction('rw', this.db.games, this.db.events, this.db.snapshots, async () => {
+      const game = await this.db.games.get(gameId);
+      if (!game) throw new Error(`Unknown game ${gameId}`);
+      const copyId = crypto.randomUUID();
+      const now = Date.now();
+      await this.db.games.add({
+        ...game,
+        gameId: copyId,
+        title: title ?? game.title,
+        createdAt: now,
+        updatedAt: now,
+      });
+      const events = await this.loadEvents(gameId);
+      await this.db.events.bulkAdd(events.map((e) => ({ ...e, gameId: copyId })));
+      const snapshot = await this.db.snapshots.get(gameId);
+      if (snapshot) await this.db.snapshots.add({ ...snapshot, gameId: copyId });
+      return copyId;
+    });
+  }
+
+  async deleteGame(gameId: GameId): Promise<void> {
+    await this.db.transaction('rw', this.db.games, this.db.events, this.db.snapshots, async () => {
+      await this.db.events
+        .where('[gameId+seq]')
+        .between([gameId, Dexie.minKey], [gameId, Dexie.maxKey])
+        .delete();
+      await this.db.snapshots.delete(gameId);
+      await this.db.games.delete(gameId);
+    });
   }
 
   async saveSnapshot(gameId: GameId, seq: number, state: GameState): Promise<void> {
     await this.db.snapshots.put({ gameId, seq, stateVersion: STATE_VERSION, state });
   }
 
-  /** Returns the stored events of a game with `seq` greater than `afterSeq` (for export/sync). */
+  async importGame(game: ImportedGame): Promise<GameId> {
+    const gameId = crypto.randomUUID();
+    const now = Date.now();
+    await this.db.transaction('rw', this.db.games, this.db.events, async () => {
+      await this.db.games.add({
+        gameId,
+        title: game.title,
+        createdAt: game.events[0]?.timestamp ?? now,
+        updatedAt: game.events.at(-1)?.timestamp ?? now,
+        lastSeq: game.events.length,
+      });
+      await this.db.events.bulkAdd(game.events.map((e, i) => ({ gameId, seq: i + 1, ...e })));
+    });
+    return gameId;
+  }
+
   async loadEvents(gameId: GameId, afterSeq = 0): Promise<StoredEvent[]> {
     return this.db.events
       .where('[gameId+seq]')
@@ -229,6 +285,14 @@ export class IndexedDbStore implements GameStore {
   }
 }
 
-function toSummary(row: GameRow): GameSummary {
-  return { ...row };
+function toSummary(row: GameRow, state: GameState): GameSummary {
+  return {
+    ...row,
+    scenarioId: state.meta.scenarioId,
+    round: state.meta.round,
+    phase: state.meta.phase,
+    investigators: [...state.investigators]
+      .sort((a, b) => a.seat - b.seat)
+      .map(({ code, name }) => ({ code, name })),
+  };
 }

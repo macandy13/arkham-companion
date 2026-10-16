@@ -1,0 +1,48 @@
+/* Home screen: saved game list and delete confirmation (architecture §11). */
+#app > main ul > li {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+#app > main ul > li dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+}
+
+#app > main ul > li dt {
+  color: var(--color-text-muted);
+}
+
+#app > main ul > li dd {
+  margin: 0;
+}
+
+#app > main ul > li form,
+#app > main ul > li nav,
+#app > main section {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+dialog {
+  max-width: var(--layout-sheet-width);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+dialog footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}

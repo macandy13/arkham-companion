@@ -134,6 +134,51 @@ describe('IndexedDbStore', () => {
     expect((await store.loadEvents(b)).length).toBe(1);
   });
 
+  it('summarises scenario, round, phase and investigators from the replayed state', async () => {
+    const id = await store.createGame();
+    await store.appendEvents(id, [started]);
+    const [summary] = await store.listGames();
+    expect(summary).toMatchObject({
+      scenarioId: 'test',
+      round: 0,
+      phase: 'setup',
+      investigators: [{ code: 'inv', name: 'Tester' }],
+    });
+  });
+
+  it('renames a game without counting it as play', async () => {
+    const id = await store.createGame({ title: 'Old' });
+    const before = (await store.listGames())[0]!.updatedAt;
+    await store.renameGame(id, 'New');
+    expect((await store.listGames())[0]).toMatchObject({ title: 'New', updatedAt: before });
+    await expect(store.renameGame('nope', 'x')).rejects.toThrow(/Unknown game/);
+  });
+
+  it('duplicates a game with its log, independent of the original', async () => {
+    const id = await store.createGame({ title: 'Orig' });
+    await store.appendEvents(id, [started, tokens(1)]);
+    await store.saveSnapshot(id, 2, replay([started, tokens(1)]));
+    const copy = await store.duplicateGame(id, 'Copy');
+    await store.appendEvents(copy, [tokens(5)]);
+    expect((await store.loadGame(copy))?.state).toEqual(replay([started, tokens(1), tokens(5)]));
+    expect((await store.loadGame(id))?.state).toEqual(replay([started, tokens(1)]));
+    expect((await store.loadGame(copy))?.summary).toMatchObject({ title: 'Copy', lastSeq: 3 });
+    await expect(store.duplicateGame('nope')).rejects.toThrow(/Unknown game/);
+  });
+
+  it('deletes a game with its events and snapshot, leaving others alone', async () => {
+    const a = await store.createGame();
+    const b = await store.createGame();
+    await store.appendEvents(a, [started]);
+    await store.appendEvents(b, [started]);
+    await store.saveSnapshot(a, 1, replay([started]));
+    await store.deleteGame(a);
+    expect(await store.loadGame(a)).toBeUndefined();
+    expect(await store.loadEvents(a)).toEqual([]);
+    expect((await store.listGames()).map((g) => g.gameId)).toEqual([b]);
+    expect((await store.loadEvents(b)).length).toBe(1);
+  });
+
   it('groups the events of one append under one commandId', async () => {
     const id = await store.createGame();
     const first = await store.appendEvents(id, [started, tokens(1)]);
@@ -199,5 +244,28 @@ describe('IndexedDbStore', () => {
     await store.putCards('en', 'core_2026', []);
     expect(await store.getCards('en', 'core_2026')).toEqual([]);
     expect(await store.getCards('de', 'core_2026')).toHaveLength(1);
+  });
+});
+
+describe('IndexedDbStore.importGame', () => {
+  it('creates a new game from exported events, keeping their timestamps and command ids', async () => {
+    const source = await store.createGame({ title: 'Night' });
+    const id = await store.importGame({
+      title: 'Imported',
+      events: [
+        { timestamp: 1000, commandId: 'start', event: started },
+        { timestamp: 2000, commandId: 'add_doom', event: tokens(1) },
+      ],
+    });
+
+    expect(id).not.toBe(source);
+    expect((await store.loadEvents(id)).map((e) => [e.seq, e.timestamp, e.commandId])).toEqual([
+      [1, 1000, 'start'],
+      [2, 2000, 'add_doom'],
+    ]);
+    const loaded = await store.loadGame(id);
+    expect(loaded?.state).toEqual(replay([started, tokens(1)]));
+    expect(loaded?.summary).toMatchObject({ title: 'Imported', lastSeq: 2, updatedAt: 2000 });
+    expect((await store.appendEvents(id, [tokens(1)]))[0]?.seq).toBe(3);
   });
 });
