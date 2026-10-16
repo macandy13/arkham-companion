@@ -38,7 +38,7 @@ All UI actions dispatch engine commands through the Zustand store; no component 
 
 **Benefit:** The whole scenario state is visible at a glance.
 
-Ref: architecture "Game state" (connections) and "Board rendering".
+Ref: architecture "Game state" (connections) and product.md "Board rendering".
 
 - [ ] SVG board with pan/zoom/pinch (react-zoom-pan-pinch); slots from the scenario layout
 - [ ] Location tiles: name, revealed/unrevealed, shroud, clues, doom, attachments badge

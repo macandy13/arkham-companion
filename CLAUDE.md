@@ -1,7 +1,7 @@
 # CLAUDE.md – Arkham Companion
 
 Web companion app (PWA) that runs the scenario side of Arkham Horror LCG (Chapter Two, starting with `core_2026`).
-The architecture is in `docs/architecture.md`: an overview, then one section per piece (what it does, where it lives, how to extend it, what must stay true). Read the piece you change before changing it, don't re-derive it, and update that section in the same PR when the change extends or alters the piece. Scope, screens and roadmap are in `docs/product.md`.
+`docs/architecture.md` describes the app as built: an overview, then one section per component (how it works and why, its key types, its extension points). Read the component you change before changing it, don't re-derive it, and update its section in the same PR when the change extends or alters it. Requirements, screens, the milestone plan and designs for what isn't built yet are in `docs/product.md`.
 Work is tracked in `docs/tasks/`. Each task file is self-contained.
 Game rules are summarised in `docs/rules.md` with links to the Rules Reference – check there before searching the web, and update it when a change corrects a rule.
 Code style and conventions (functions, comments, tests, markup, CSS, helpers) are in `docs/coding-guidelines.md` – follow them in every change.

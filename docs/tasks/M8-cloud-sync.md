@@ -1,7 +1,7 @@
 # M8 – Cloud and sync
 
 Goal: games stored in the cloud and shared between several devices at the table.
-Ref: architecture "Cloud sync".
+Ref: product.md "Cloud sync".
 
 **Why this milestone**
 
@@ -18,7 +18,7 @@ Ref: architecture "Cloud sync".
 **Benefit:** A documented, reasoned decision instead of an accidental one.
 
 - [ ] Compare Supabase, Firebase/Firestore and Cloudflare D1 + Durable Objects for: auth, append-only event log, realtime, free tier, offline story
-- [ ] Write the decision into architecture "Cloud sync"
+- [ ] Write the decision into product.md "Cloud sync"
 
 ## M8.2 Login (S)
 

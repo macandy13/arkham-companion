@@ -26,7 +26,7 @@ interface GameRow {
   lastSeq: number;
 }
 
-/** Row of the `campaigns` table; campaign mode is not implemented yet (architecture "Campaign mode"). */
+/** Row of the `campaigns` table; campaign mode is not implemented yet (product.md "Campaign mode"). */
 interface CampaignRow {
   campaignId: string;
   title: string;

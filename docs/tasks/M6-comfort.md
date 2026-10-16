@@ -16,7 +16,7 @@ Goal: quality-of-life features that make the app nicer at the table.
 
 **Benefit:** No bag needed if players want that, and current token values are always shown correctly.
 
-Ref: architecture "Campaign mode".
+Ref: product.md "Campaign mode".
 
 - [ ] Optional module (off by default): draw, seal, return; symbol effects with current values (e.g. act number)
 - [ ] Bag from campaign log or scenario default

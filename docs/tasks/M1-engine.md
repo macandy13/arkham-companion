@@ -1,6 +1,6 @@
 # M1 – Generic engine
 
-Goal: all generic rules from architecture "Pieces" in `packages/engine`, driven only by commands and tested without any UI.
+Goal: all generic rules from architecture "Components" in `packages/engine`, driven only by commands and tested without any UI.
 At the end a hand-written **test scenario** – The Gathering from the original Core Set, with real card codes but hand-entered stats and no card text – can be played through a whole game in tests (it replaced the earlier invented sandbox scenario in M1.2).
 
 **Why this milestone**

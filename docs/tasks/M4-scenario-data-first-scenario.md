@@ -1,6 +1,6 @@
 # M4 – Scenario data pipeline + first scenario
 
-Goal: a repeatable way to turn a real scenario into data (architecture "Scenario data pipeline"), then _Spreading Flames_ fully playable.
+Goal: a repeatable way to turn a real scenario into data (product.md "Scenario data pipeline"), then _Spreading Flames_ fully playable.
 
 **Why this milestone**
 

@@ -286,7 +286,7 @@ export interface AmountRange {
   max?: number;
 }
 
-/** Campaign log – stub until campaign mode (architecture "Campaign mode"). */
+/** Campaign log – stub until campaign mode (product.md "Campaign mode"). */
 export interface CampaignLog {
   campaignId: string;
   /** Free-form campaign log entries ("The investigators …"). */
