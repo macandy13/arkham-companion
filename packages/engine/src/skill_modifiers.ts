@@ -183,8 +183,9 @@ export function withSuggestion(ctx: EngineContext, state: GameState, decision: D
  * revealed chaos tokens (fixed values, the reference card side for the
  * difficulty, then the scenario's `tokenValues`), the lasting effects whose filter
  * matches, the cards in play with a `skillModifiers` hook, and the
- * scenario's `sources`. Rules Reference, "Skill Tests" (ST.5): neither value
- * goes below 0, and the auto-fail token makes the skill value 0. Rejects a
+ * scenario's `sources` (Rules Reference, "Skill Tests", ST.5). Neither value
+ * goes below 0 (Rules Reference, "Modifiers": a modified quantity cannot be
+ * reduced below zero), and the auto-fail token makes the skill value 0 (ST.6). Rejects a
  * modifier or icon count that is not a whole number (`invalidModifierAmount`),
  * so a broken hook or input shows up instead of skewing the numbers.
  */
