@@ -1,7 +1,7 @@
 # M5 – Core campaign
 
 Goal: the full three-scenario introductory campaign of `core_2026`, with campaign log and chaos bag carried between scenarios.
-Ref: architecture §8.
+Ref: architecture §8. Builds on the campaign engine (M1C).
 
 **Why this milestone**
 
@@ -14,15 +14,9 @@ Start from the phone: Code tab → repo → `Do task M5.x from docs/tasks/M5-cor
 
 ---
 
-## M5.1 Campaign model (O)
+## M5.1 Campaign model – moved to M1C
 
-**Why:** A campaign spans several games and must outlive each of them. Event-sourcing it gives the same undo, recovery and export benefits as a game; declarative resolution steps keep scenarios data-driven.
-
-**Benefit:** Campaign state is never lost or mis-recorded, and later scenarios can read earlier outcomes.
-
-- [ ] `CampaignLog` (investigators, trauma, XP, killed/insane, story records, chaos bag) as its own event-sourced aggregate stored in the `campaigns` table
-- [ ] Resolution steps: `record`, `addChaosToken`, `removeChaosToken`, `awardXp`, `addTrauma`
-- [ ] `campaignSetup(log)` support in `compileSetup`
+The campaign model, chaos bag, resolutions, campaign setup and storage are engine work and moved to `docs/tasks/M1C-campaign-engine.md`, so the play screen and the wizard are built with campaigns in mind. M5 keeps the campaign UI and the real scenarios.
 
 ## M5.2 Campaign UI (S)
 
