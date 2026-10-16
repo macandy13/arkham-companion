@@ -23,10 +23,10 @@ Every change the engine makes on the players' behalf (a token added to the bag, 
 
 Ref: product.md "Campaign mode".
 
-- [ ] `CampaignLog`: campaign id, difficulty, investigators (code, physical/mental trauma, XP earned/spent, killed/insane), story records (key → value, e.g. `"ghoulPriestDefeated": true`, counts, lists such as "cultists who got away"), chaos bag contents, scenario sequence with the current position
-- [ ] Campaign commands, events and reducer, separate from the game's (`StartCampaign`, `RecordStory`, `AddChaosToken`, `RemoveChaosToken`, `AwardXp`, `AddTrauma`, `MarkKilled`, `MarkInsane`, `ReplaceInvestigator`, `AdvanceScenario`, `ManualAdjust` for corrections) with rejections and invariants (no negative XP or trauma, killed/insane investigators cannot play)
-- [ ] Campaign definition type (scenario order, starting chaos bag per difficulty, interlude steps if any) next to `ScenarioDefinition`; the Night of the Zealot definition (three scenarios, Core Set chaos bags per difficulty), with The Midnight Masks and The Devourer Below entered only as far as the campaign tests need (identity, campaign setup, resolutions)
-- [ ] Readable unit tests (M1.14 conventions if merged)
+- [x] `CampaignLog`: campaign id, difficulty, investigators (code, physical/mental trauma, XP earned/spent, killed/insane), story records (key → value, e.g. `"ghoulPriestDefeated": true`, counts, lists such as "cultists who got away"), chaos bag contents, scenario sequence with the current position
+- [x] Campaign commands, events and reducer, separate from the game's (`StartCampaign`, `RecordStory`, `AddChaosToken`, `RemoveChaosToken`, `AwardXp`, `AddTrauma`, `MarkKilled`, `MarkInsane`, `ReplaceInvestigator`, `AdvanceScenario`, `ManualAdjust` for corrections) with rejections and invariants (no negative XP or trauma, killed/insane investigators cannot play)
+- [x] Campaign definition type (scenario order, starting chaos bag per difficulty, interlude steps if any) next to `ScenarioDefinition`; the Night of the Zealot definition (three scenarios, Core Set chaos bags per difficulty), with The Midnight Masks and The Devourer Below entered only as far as the campaign tests need (identity, campaign setup, resolutions)
+- [x] Readable unit tests (M1.14 conventions if merged)
 
 Slices (review of #50: one PR was too big to review), each its own PR on top of the previous one:
 
@@ -36,6 +36,8 @@ Slices (review of #50: one PR was too big to review), each its own PR on top of 
 4. Investigator commands: XP, trauma, killed/insane, `ReplaceInvestigator`
 5. `ManualAdjust` corrections
 6. `CampaignDefinition`, `compileCampaign` and the Night of the Zealot definition
+
+Done: the campaign is its own aggregate in `packages/engine/src/campaign/`, exported from `@arkham/engine`. `CampaignLog` (replacing the old stub in `state.ts`, so `GameState.campaign` holds the real log): campaign and definition id, difficulty, the team in seat order (`CampaignInvestigator`: card code, printed health and sanity, physical/mental trauma, XP earned and spent, `fate` alive/killed/insane), replaced investigators (`formerInvestigators`), typed story records (`StoryValue`: flag, count, list, crossable list; a key keeps its kind), the chaos bag and the scenario order with the position. Commands `StartCampaign`, `RecordStory`, `AddChaosToken`, `RemoveChaosToken`, `AwardXp`, `SpendXp`, `AddTrauma` (trauma reaching health or sanity kills or drives insane, Rules Reference "Trauma"), `MarkKilled`, `MarkInsane`, `ReplaceInvestigator` (only for a killed or insane investigator; nobody can return), `AdvanceScenario` and `ManualAdjust` (XP, trauma, fate, story removal, position; rejected if the result breaks an invariant) go through `handleCampaign`/`executeCampaign`, events through `applyCampaign`/`replayCampaign`, with `CampaignCommandRejected` and `checkCampaignInvariants` (team of 1–4, no duplicates, no negative or overspent XP, trauma consistent with fate, no alive former investigator). `CampaignDefinition` and `compileCampaign` sit next to `ScenarioDefinition`. **Night of the Zealot** (`packages/scenarios/src/night_of_the_zealot/campaign.ts`): The Gathering, then The Midnight Masks and The Devourer Below by id only; the campaign starts with The Gathering's bag per difficulty. Follow-up: the setup and resolutions of The Midnight Masks come with the task whose tests first need them (M1C.4/M1C.7).
 
 ## M1C.2 Change notices (O)
 
