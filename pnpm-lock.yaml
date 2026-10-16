@@ -125,6 +125,12 @@ importers:
         specifier: workspace:*
         version: link:../util
 
+  packages/review_digest:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.20.5
+        version: 22.20.5
+
   packages/scenarios:
     dependencies:
       '@arkham/engine':
