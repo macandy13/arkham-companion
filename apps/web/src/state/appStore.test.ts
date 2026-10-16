@@ -112,6 +112,7 @@ describe('appStore', () => {
       clues: 0,
       resources: 5,
       doomOnPlayerCards: 0,
+      skills: { willpower: 3, intellect: 3, combat: 3, agility: 3 },
       status: 'active',
     };
     const start = {
