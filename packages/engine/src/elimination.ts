@@ -3,7 +3,7 @@ import { requestDecision } from './decisions';
 import type { Event, InvestigatorDefeated, InvestigatorResigned } from './events';
 import { replay } from './reducer';
 import { cluesToLocationEvents } from './investigators';
-import { discardEvents } from './placement';
+import { discardEncounterCard } from './placement';
 import type { GameState, Investigator } from './state';
 import { zoneKey, type Zone } from './zone';
 
@@ -56,14 +56,15 @@ function clueEvents(investigator: Investigator): Event[] {
 function engagedEnemyEvents(state: GameState, investigator: Investigator): Event[] {
   const { locationId } = investigator;
   const engaged = cardsInZone(state, { kind: 'engaged', investigatorId: investigator.id });
-  if (locationId === undefined) return engaged.flatMap((enemyId) => discardEvents(state, enemyId));
+  if (locationId === undefined)
+    return engaged.flatMap((enemyId) => discardEncounterCard(state, enemyId));
   return engaged.map((enemyId) => ({ type: 'EnemyDisengaged', enemyId, locationId }));
 }
 
 /** Threat-area cards are encounter cards (player cards are not modelled), so they go to the encounter discard. */
 function threatAreaEvents(state: GameState, investigator: Investigator): Event[] {
   return cardsInZone(state, { kind: 'threatArea', investigatorId: investigator.id }).flatMap(
-    (cardId) => discardEvents(state, cardId),
+    (cardId) => discardEncounterCard(state, cardId),
   );
 }
 

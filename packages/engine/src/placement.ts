@@ -118,11 +118,11 @@ export function clearTokensEvents(
  * discarded treachery must not come back if the discard is reshuffled into
  * the deck.
  */
-export function discardEvents(state: GameState, cardId: InstanceId): Event[] {
+export function discardEncounterCard(state: GameState, cardId: InstanceId): Event[] {
   const card = state.cards[cardId];
   if (!card) return [];
   const attachments = (state.order[zoneKey({ kind: 'attachedTo', hostId: cardId })] ?? []).flatMap(
-    (attachedId) => discardEvents(state, attachedId),
+    (attachedId) => discardEncounterCard(state, attachedId),
   );
   return [
     ...attachments,
