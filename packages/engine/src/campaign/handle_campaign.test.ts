@@ -129,6 +129,12 @@ describe('commands before the campaign started', () => {
     { type: 'RecordStory', key: 'house_burned', value: { kind: 'flag', value: true } },
     { type: 'AddChaosToken', token: 'skull' },
     { type: 'RemoveChaosToken', token: 'skull' },
+    { type: 'AwardXp', code: '01001', amount: 1 },
+    { type: 'SpendXp', code: '01001', amount: 1 },
+    { type: 'AddTrauma', code: '01001', kind: 'physical', amount: 1 },
+    { type: 'MarkKilled', code: '01001' },
+    { type: 'MarkInsane', code: '01001' },
+    { type: 'ReplaceInvestigator', code: '01001', by: agnes },
     { type: 'AdvanceScenario' },
   ])('rejects $type with campaignNotStarted', (command) => {
     expect(campaignRejectionOf(() => handleCampaign(emptyCampaignLog(), command))).toEqual({

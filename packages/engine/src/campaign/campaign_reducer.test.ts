@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  agnes,
   agnesLine,
   daisy,
   daisyLine,
@@ -162,8 +163,12 @@ describe('replayCampaign', () => {
 describe('campaign replay of commands', () => {
   const commands: CampaignCommand[] = [
     makeStartCampaign({ investigators: [roland, daisy], chaosBag: ['0', 'skull'] }),
+    { type: 'AwardXp', code: '01001', amount: 3 },
+    { type: 'SpendXp', code: '01001', amount: 1 },
     { type: 'AddChaosToken', token: 'tablet' },
     { type: 'RecordStory', key: 'doubt', value: { kind: 'count', value: 1 } },
+    { type: 'AddTrauma', code: '01002', kind: 'physical', amount: 5 },
+    { type: 'ReplaceInvestigator', code: '01002', by: agnes },
     { type: 'AdvanceScenario' },
   ];
 
