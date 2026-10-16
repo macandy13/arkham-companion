@@ -556,6 +556,27 @@ describe('enemy phase', () => {
 describe('upkeep phase', () => {
   const aliceInHall = [makeInvestigator({ id: 'alice', locationId: hall })];
 
+  it('resets the remaining actions of each active investigator to 3 plus their extra actions (4.2)', () => {
+    const state = stateAfter(
+      ctx,
+      startedWith([
+        makeInvestigator({ id: 'alice', seat: 0, locationId: hall }),
+        makeInvestigator({ id: 'bob', seat: 1, locationId: hall, extraActions: 1 }),
+      ]),
+      next,
+      { type: 'AdjustActions', investigatorId: alice, delta: -3 },
+      { type: 'AdjustActions', investigatorId: bob, delta: 1 },
+      ...turnsOf(alice, bob),
+    );
+
+    const upkeep = stateAfter(ctx, state, next, next);
+
+    expect(upkeep.investigators.map((inv) => [inv.id, inv.actionsRemaining])).toEqual([
+      ['alice', 3],
+      ['bob', 4],
+    ]);
+  });
+
   it('readies exhausted enemies (4.3), which engage investigators at their location', () => {
     const state = stateAfter(
       ctx,
@@ -623,7 +644,7 @@ describe('upkeep phase', () => {
 });
 
 describe('investigation phase', () => {
-  it('lets the investigators advance the act during a turn without spending an action', () => {
+  it('lets the investigators advance the act during a turn', () => {
     const turn = stateAfter(
       ctx,
       startedWith([makeInvestigator({ id: 'alice', locationId: hall, clues: 1 })]),
@@ -637,11 +658,7 @@ describe('investigation phase', () => {
     });
 
     expect(after.act.current).toBe(secondAct);
-    expect(after.meta.turn).toEqual({
-      investigatorId: alice,
-      actionsTaken: 0,
-      actionAdjustment: 0,
-    });
+    expect(after.meta.turn).toEqual({ investigatorId: alice });
     expect(checkInvariants(after)).toEqual([]);
   });
 });

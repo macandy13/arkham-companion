@@ -6,14 +6,14 @@ import {
   type EngineContext,
   type ScaledValue,
 } from './cards';
-import type { Command, StartScenario, StartingCard } from './commands';
+import type { Command, StartScenario, StartingCard, StartingInvestigator } from './commands';
 import { isInPlay } from './doom';
 import { instanceId, type InstanceId, type MapId } from './ids';
 import type { Edge, MapSpec } from './map';
 import { CommandRejected } from './rejection';
 import type { ScenarioDefinition } from './scenario';
 import { spawnZone } from './spawn';
-import type { CampaignLog, Difficulty, GameState, Investigator, TokenKind } from './state';
+import type { CampaignLog, Difficulty, GameState, TokenKind } from './state';
 import type { Zone } from './zone';
 
 /**
@@ -110,7 +110,7 @@ export interface SetupOptions {
   difficulty: Difficulty;
   seed: number;
   /** In seat order; the first one is the lead investigator. */
-  investigators: readonly Investigator[];
+  investigators: readonly StartingInvestigator[];
   campaign?: CampaignLog;
 }
 

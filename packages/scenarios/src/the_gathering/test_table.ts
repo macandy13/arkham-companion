@@ -1,5 +1,4 @@
 import {
-  actionAllowance,
   cardStats,
   cardsNamed,
   checkInvariants,
@@ -27,7 +26,6 @@ import {
   type InvestigatorStat,
   type Phase,
   type ScenarioDefinition,
-  type TableAction,
   type Zone,
 } from '@arkham/engine';
 
@@ -115,10 +113,12 @@ export class TestTable {
   /**
    * The phase assistant's "Next" (`NextPhase`): runs the steps of the current
    * phase until one needs the players (a decision, an enemy attack), or moves
-   * on to the next phase.
+   * on to the next phase. Returns the phase it lands on (the current one when
+   * it stops mid-phase), so a script asserts where it is at every step.
    */
-  nextPhase(): void {
+  nextPhase(): Phase {
     this.play({ type: 'NextPhase' });
+    return this.current.meta.phase;
   }
 
   /** The round and phase the game is in. */
@@ -136,22 +136,18 @@ export class TestTable {
     this.play({ type: 'EndTurn', investigatorId: investigator });
   }
 
-  /** The turn in progress as `formatBoard` shows it, e.g. "Daisy Walker, actions 1/3". */
+  /** The name of the investigator whose turn is in progress, or "none" between turns. */
   turn(): string {
     const { turn } = this.current.meta;
-    if (!turn) return 'none';
-    const name = this.investigator(turn.investigatorId).name;
-    return `${name}, actions ${turn.actionsTaken}/${actionAllowance(this.current, turn)}`;
+    return turn ? this.investigator(turn.investigatorId).name : 'none';
   }
 
-  /** A card effect changes the action allowance of the investigator's turn by `delta`. */
+  /**
+   * The players change the investigator's remaining actions by `delta`: -1 per
+   * action they count off in the turn, or what a card grants or takes away.
+   */
   adjustActions(investigator: InvestigatorId, delta: number): void {
     this.play({ type: 'AdjustActions', investigatorId: investigator, delta });
-  }
-
-  /** An action resolved at the table (draw, resource, play, activate), counted against the turn. */
-  takeAction(investigator: InvestigatorId, action: TableAction): void {
-    this.play({ type: 'TakeAction', investigatorId: investigator, action });
   }
 
   /** Doom from a card effect (e.g. Ancient Evils) on the current agenda. */
@@ -212,15 +208,14 @@ export class TestTable {
 
   /**
    * The enemy named `enemyName` engages the investigator (or switches to
-   * them): an engage action, or with `free` a rule that engages without one
-   * (an enemy at the location the investigator enters).
+   * them): an engage action, or a rule that engages without one (an enemy at
+   * the location the investigator enters).
    */
-  engage(investigator: InvestigatorId, enemyName: string, { free }: { free?: boolean } = {}): void {
+  engage(investigator: InvestigatorId, enemyName: string): void {
     this.play({
       type: 'EngageEnemy',
       enemyId: this.enemyNamed(enemyName).id,
       investigatorId: investigator,
-      ...(free ? { free } : {}),
     });
   }
 
@@ -247,6 +242,11 @@ export class TestTable {
     const enemy = this.enemyEngagedWith(investigator, enemyName);
     this.play({ type: 'Fight', investigatorId: investigator, enemyId: enemy.id });
     this.passTest(`fight:${investigator}:${enemy.id}`, damage);
+  }
+
+  /** Resources from the resource action or a card. */
+  gainResources(investigator: InvestigatorId, amount: number): void {
+    this.adjust(investigator, 'resources', amount);
   }
 
   /** Damage from a failed treachery test or an attack. */
@@ -296,6 +296,13 @@ export class TestTable {
   wounds(investigator: InvestigatorId): { damage: number; horror: number } {
     const { health, sanity } = this.investigator(investigator);
     return { damage: health.damage, horror: sanity.horror };
+  }
+
+  /** Remaining actions of each investigator, by investigator id. */
+  actionsLeft(): Record<string, number> {
+    return Object.fromEntries(
+      this.current.investigators.map((inv) => [inv.id, inv.actionsRemaining]),
+    );
   }
 
   /** Resources of each investigator, by investigator id. */

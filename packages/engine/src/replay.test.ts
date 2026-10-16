@@ -104,6 +104,14 @@ const scripts: [string, Adjustment[]][] = [
       { kind: 'tokens', cardId: rat, token: 'horror', delta: 1 },
     ],
   ],
+  [
+    'counting actions down, with a rejected drop below zero',
+    [
+      { kind: 'actions', investigatorId: lead, delta: -2 },
+      { kind: 'actions', investigatorId: lead, delta: -2 },
+      { kind: 'actions', investigatorId: lead, delta: 1 },
+    ],
+  ],
 ];
 
 describe('event log replay', () => {

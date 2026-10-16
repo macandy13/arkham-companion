@@ -68,9 +68,6 @@ function currentTurnErrors(state: GameState): string[] {
     ...(turnsTaken.includes(turn.investigatorId)
       ? [`turn of ${turn.investigatorId} in progress after it was taken`]
       : []),
-    ...(Number.isInteger(turn.actionsTaken) && turn.actionsTaken >= 0
-      ? []
-      : [`turn of ${turn.investigatorId} has ${turn.actionsTaken} actions taken`]),
   ];
 }
 
@@ -117,10 +114,10 @@ function decisionErrors(state: GameState): string[] {
 }
 
 /**
- * Violations for investigators: negative counters, an unknown location, and
- * the defeat rule - an active investigator always has health and sanity left,
- * and a defeated one is what `AdjustInvestigator` leaves behind, so no check
- * applies to them.
+ * Violations for investigators: negative counters (remaining actions
+ * included), an unknown location, and the defeat rule - an active
+ * investigator always has health and sanity left, and a defeated one is what
+ * `AdjustInvestigator` leaves behind, so no check applies to them.
  */
 function investigatorErrors(state: GameState): string[] {
   const errors: string[] = [];
@@ -128,6 +125,8 @@ function investigatorErrors(state: GameState): string[] {
     for (const stat of INVESTIGATOR_STATS) {
       if (statValue(inv, stat) < 0) errors.push(`investigator ${inv.id} has negative ${stat}`);
     }
+    if (!Number.isInteger(inv.actionsRemaining) || inv.actionsRemaining < 0)
+      errors.push(`investigator ${inv.id} has ${inv.actionsRemaining} actions remaining`);
     if (inv.locationId !== undefined && !state.cards[inv.locationId])
       errors.push(`investigator ${inv.id} is at unknown card ${inv.locationId}`);
     if (inv.status === 'active' && defeatCause(inv) !== undefined)
