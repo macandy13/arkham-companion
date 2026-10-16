@@ -204,7 +204,7 @@ describe('AdjustInvestigator', () => {
       delta: 3,
     });
 
-    expect(result.events.map((e) => e.type)).toEqual([
+    expect(result.events.slice(0, 2).map((e) => e.type)).toEqual([
       'InvestigatorChanged',
       'InvestigatorDefeated',
     ]);

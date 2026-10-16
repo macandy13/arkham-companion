@@ -137,6 +137,8 @@ export type Rejection =
   | { code: 'wrongPhase'; expected: Phase; actual: Phase }
   /** `EndTurn` for an investigator who has already taken their turn this round. */
   | { code: 'turnAlreadyTaken'; investigatorId: InvestigatorId }
+  /** `SetLeadInvestigator` for the investigator who already is the lead. */
+  | { code: 'alreadyLeadInvestigator'; investigatorId: InvestigatorId }
   /** `StartTurn` while another turn is in progress, or `NextPhase` before it ended. */
   | { code: 'turnInProgress'; investigatorId: InvestigatorId }
   /**
@@ -319,6 +321,8 @@ function describe(r: Rejection): string {
       return `only allowed in the ${r.expected} phase, not in ${r.actual}`;
     case 'turnAlreadyTaken':
       return `investigator ${r.investigatorId} has already taken their turn this round`;
+    case 'alreadyLeadInvestigator':
+      return `investigator ${r.investigatorId} is already the lead investigator`;
     case 'turnInProgress':
       return `the turn of ${r.investigatorId} is still in progress`;
     case 'turnNotInProgress':
