@@ -1,3 +1,5 @@
+import type { InvestigatorChanged, TokensChanged } from './events';
+import type { InstanceId, InvestigatorId } from './ids';
 import type { GameState, Investigator, InvestigatorStat } from './state';
 
 /** Health the investigator has left; 0 or less means they are defeated. */
@@ -137,4 +139,28 @@ export function playerOrder(state: GameState): Investigator[] {
     seated.findIndex((inv) => inv.id === state.meta.leadInvestigator),
   );
   return [...seated.slice(lead), ...seated.slice(0, lead)].filter((inv) => inv.status === 'active');
+}
+
+/** `amount` clues go from `locationId` to the investigator, as `DiscoverClues` does. */
+export function discoverCluesEvents(
+  investigatorId: InvestigatorId,
+  locationId: InstanceId,
+  amount: number,
+): [TokensChanged, InvestigatorChanged] {
+  return [
+    { type: 'TokensChanged', cardId: locationId, token: 'clue', delta: -amount },
+    { type: 'InvestigatorChanged', investigatorId, stat: 'clues', delta: amount },
+  ];
+}
+
+/** The reverse of `discoverCluesEvents`: `amount` of the investigator's clues go onto `locationId`. */
+export function cluesToLocationEvents(
+  investigatorId: InvestigatorId,
+  locationId: InstanceId,
+  amount: number,
+): [InvestigatorChanged, TokensChanged] {
+  return [
+    { type: 'InvestigatorChanged', investigatorId, stat: 'clues', delta: -amount },
+    { type: 'TokensChanged', cardId: locationId, token: 'clue', delta: amount },
+  ];
 }

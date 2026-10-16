@@ -15,6 +15,7 @@ import type {
 import { activeInvestigator } from './handle_investigator';
 import type { InstanceId } from './ids';
 import { requireCard } from './lookup';
+import { clearTokensEvents, moveCardEvent } from './placement';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
 import { zoneKey } from './zone';
@@ -88,7 +89,7 @@ export function completeAdvance(
   if (nextId === undefined && !ended && resolution === undefined)
     throw new CommandRejected({ code: 'resolutionRequired', deck });
   return [
-    { type: 'CardMoved', cardId: card.id, from: card.zone, to: { kind: 'outOfGame' } },
+    moveCardEvent(card, { kind: 'outOfGame' }),
     { type: 'CurrentCardChanged', deck, ...(nextId === undefined ? {} : { cardId: nextId }) },
     ...(nextId === undefined && !ended && resolution !== undefined
       ? [{ type: 'ScenarioEnded' as const, resolution }]
@@ -128,12 +129,7 @@ function nextCardId(state: GameState, deck: Deck, cardId: InstanceId): InstanceI
 
 /** Removes all doom in play: from cards and from the investigators' counters. */
 function doomRemoval(state: GameState): (TokensChanged | InvestigatorChanged)[] {
-  const fromCards: TokensChanged[] = cardsWithDoom(state).map((card) => ({
-    type: 'TokensChanged',
-    cardId: card.id,
-    token: 'doom',
-    delta: -(card.tokens.doom ?? 0),
-  }));
+  const fromCards = cardsWithDoom(state).flatMap((card) => clearTokensEvents(card, ['doom']));
   const fromPlayerCards: InvestigatorChanged[] = state.investigators
     .filter((inv) => inv.status === 'active' && inv.doomOnPlayerCards > 0)
     .map((inv) => ({
