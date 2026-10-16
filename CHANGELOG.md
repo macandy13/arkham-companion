@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.2.0](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.1.0...arkham-companion-v1.2.0) (2026-10-16)
+
+
+### Features
+
+* **engine:** add skill test modifiers with an explanation trace (M1.13) ([b8a198e](https://github.com/macandy13/arkham-companion/commit/b8a198ef26a4622c31b2b8270c0ed375088b3393))
+* **engine:** investigator defeat clean-up and resign (M1.15) ([44a8923](https://github.com/macandy13/arkham-companion/commit/44a8923072c51e9d3a6503d3541a90aff4245c43))
+
+
+### Refactoring
+
+* **engine:** share event building blocks (M1.19) ([494b4cd](https://github.com/macandy13/arkham-companion/commit/494b4cdc2e4d47209bf4b84c7bcdb42e57a6c7c4))
+* **engine:** share event building blocks (M1.19) ([8347181](https://github.com/macandy13/arkham-companion/commit/83471814e16338cf64a47aa3bc99a52358f284af))
+
+
+### Documentation
+
+* add a review map to the PR template, REVIEW.md and collapsed plumbing ([1a25165](https://github.com/macandy13/arkham-companion/commit/1a25165d6e2479e3d32b78a3a70abfd114dabe0e))
+* add size and splitting rules for small, reviewable PRs ([#51](https://github.com/macandy13/arkham-companion/issues/51)) ([7bc5f5a](https://github.com/macandy13/arkham-companion/commit/7bc5f5a2e9ce38501f59fd12a9d8531f2767cf4a))
+* architecture as current state, product as plan ([8a76a37](https://github.com/macandy13/arkham-companion/commit/8a76a37b529493d1e545f5c901550df566461ea1))
+* architecture as current state, product as plan (review) ([e791565](https://github.com/macandy13/arkham-companion/commit/e7915657c88a8a44701e03b32e54c9d31c686649))
+* inline code links with full paths in architecture.md ([1ec426c](https://github.com/macandy13/arkham-companion/commit/1ec426c4d10bcdbe31a4e44b82584e08958d6b84))
+* mention the ESLint ground rules from [#56](https://github.com/macandy13/arkham-companion/issues/56) in the architecture ([f4bfee1](https://github.com/macandy13/arkham-companion/commit/f4bfee15315f2ddbdfdedd624aaaba6f5570edf6))
+* restructure architecture into overview and pieces ([b0e0b37](https://github.com/macandy13/arkham-companion/commit/b0e0b372088930e9ff1f186df65bc74ff68383b0))
+* rules claims table from rules-checker and a playthrough step for every rule ([85a2004](https://github.com/macandy13/arkham-companion/commit/85a200402e0d1d1ce3847d4d0742fc61dd4792db))
+* show functions where explained, add rules verification milestone ([c1b708c](https://github.com/macandy13/arkham-companion/commit/c1b708cb788e97cfba79a44121df303800da3b7d))
+
 ## [1.1.0](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.0.0...arkham-companion-v1.1.0) (2026-10-16)
 
 
