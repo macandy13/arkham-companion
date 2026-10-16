@@ -55,7 +55,7 @@ export interface ScenarioStarted {
   scenarioId: string;
   difficulty: Difficulty;
   seed: number;
-  /** With `actionsRemaining` set to `actionsPerTurn`, so round 1 starts like every other. */
+  /** With `actionsRemaining` set to `BASE_ACTIONS_PER_TURN`, so round 1 starts like every other. */
   investigators: Investigator[];
   /** Every map with its connections, written to `board.maps` as one unit. */
   maps: Record<MapId, GameMap>;
@@ -323,7 +323,7 @@ export interface ActionsAdjusted {
 
 /**
  * An investigator's remaining actions were set to `actions`
- * (`actionsPerTurn`). Produced by upkeep step 4.2 ("reset actions"); an
+ * (`BASE_ACTIONS_PER_TURN`). Produced by upkeep step 4.2 ("reset actions"); an
  * absolute value rather than a delta, since a reset ignores what was left.
  */
 export interface ActionsReset {

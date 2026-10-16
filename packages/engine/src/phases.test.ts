@@ -556,12 +556,12 @@ describe('enemy phase', () => {
 describe('upkeep phase', () => {
   const aliceInHall = [makeInvestigator({ id: 'alice', locationId: hall })];
 
-  it('resets the remaining actions of each active investigator to 3 plus their extra actions (4.2)', () => {
+  it('resets the remaining actions of each active investigator to 3 (4.2)', () => {
     const state = stateAfter(
       ctx,
       startedWith([
         makeInvestigator({ id: 'alice', seat: 0, locationId: hall }),
-        makeInvestigator({ id: 'bob', seat: 1, locationId: hall, extraActions: 1 }),
+        makeInvestigator({ id: 'bob', seat: 1, locationId: hall }),
       ]),
       next,
       { type: 'AdjustActions', investigatorId: alice, delta: -3 },
@@ -573,7 +573,7 @@ describe('upkeep phase', () => {
 
     expect(upkeep.investigators.map((inv) => [inv.id, inv.actionsRemaining])).toEqual([
       ['alice', 3],
-      ['bob', 4],
+      ['bob', 3],
     ]);
   });
 

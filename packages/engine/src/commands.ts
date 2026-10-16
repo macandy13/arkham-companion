@@ -65,7 +65,7 @@ export interface StartingCard {
 
 /**
  * An investigator as the scenario starts with them. `actionsRemaining` is
- * left out because the start sets it (`actionsPerTurn`), like upkeep step 4.2
+ * left out because the start sets it (`BASE_ACTIONS_PER_TURN`), like upkeep step 4.2
  * does every round.
  */
 export type StartingInvestigator = Omit<Investigator, 'actionsRemaining'>;
@@ -570,9 +570,9 @@ export interface EndTurn {
  * not drop below zero. The players count actions themselves, since player
  * cards are not modelled: they pass -1 for each action they take, and an
  * encounter card or player card that takes or grants an action passes its
- * delta, in any phase. Upkeep step 4.2 resets the count. Effects that grant
- * an action for the rest of the scenario change `Investigator.extraActions`
- * (`AdjustInvestigator`) instead. Produces `ActionsAdjusted`.
+ * delta, in any phase. Upkeep step 4.2 resets the count to 3; an
+ * investigator whose cards grant an additional action each turn gets it by
+ * the players passing +1 after that reset. Produces `ActionsAdjusted`.
  */
 export interface AdjustActions {
   type: 'AdjustActions';
