@@ -1,54 +1,58 @@
 import { z } from 'zod';
-import { entersThreatArea, KeywordSchema, parseKeywords } from './keywords';
+import { entersThreatArea, parseKeywords, type Keyword } from './keywords';
 
-/** Normalised card definition (subset of the ArkhamDB fields the app needs). */
-export const CardDefSchema = z.object({
-  code: z.string(),
-  name: z.string(),
-  subname: z.string().optional(),
-  typeCode: z.string(),
-  packCode: z.string(),
-  position: z.number().int(),
-  quantity: z.number().int().nonnegative(),
-  encounterCode: z.string().optional(),
-  encounterPosition: z.number().int().optional(),
-  factionCode: z.string().optional(),
-  traits: z.array(z.string()),
-  text: z.string().optional(),
-  flavor: z.string().optional(),
-  backText: z.string().optional(),
-  backFlavor: z.string().optional(),
-  doubleSided: z.boolean(),
-  linkedToCode: z.string().optional(),
-  isUnique: z.boolean(),
-  stage: z.number().int().optional(),
+/**
+ * Normalised card definition (subset of the ArkhamDB fields the app needs), built by
+ * `normaliseCard`. A plain interface rather than a zod schema: only our own code constructs it,
+ * after the raw ArkhamDB input has been validated by `RawCardSchema`.
+ */
+export interface CardDef {
+  code: string;
+  name: string;
+  subname?: string;
+  typeCode: string;
+  packCode: string;
+  position: number;
+  quantity: number;
+  encounterCode?: string;
+  encounterPosition?: number;
+  factionCode?: string;
+  traits: string[];
+  text?: string;
+  flavor?: string;
+  backText?: string;
+  backFlavor?: string;
+  doubleSided: boolean;
+  linkedToCode?: string;
+  isUnique: boolean;
+  stage?: number;
   // Locations
-  shroud: z.number().int().optional(),
-  clues: z.number().int().optional(),
-  cluesFixed: z.boolean().optional(),
+  shroud?: number;
+  clues?: number;
+  cluesFixed?: boolean;
   // Enemies
-  fight: z.number().int().optional(),
-  evade: z.number().int().optional(),
-  health: z.number().int().optional(),
-  healthPerInvestigator: z.boolean().optional(),
-  damage: z.number().int().optional(),
-  horror: z.number().int().optional(),
-  victory: z.number().int().optional(),
-  doom: z.number().int().optional(),
+  fight?: number;
+  evade?: number;
+  health?: number;
+  healthPerInvestigator?: boolean;
+  damage?: number;
+  horror?: number;
+  victory?: number;
+  doom?: number;
   /** Parsed from `text` and `traits` at load time (`parseKeywords`). */
-  keywords: z.array(KeywordSchema).default([]),
+  keywords: Keyword[];
   /** A drawn treachery with this stays in the drawer's threat area (`entersThreatArea`). */
-  entersThreatArea: z.boolean().default(false),
-  imageSrc: z.string().optional(),
-  backImageSrc: z.string().optional(),
-});
-export type CardDef = z.infer<typeof CardDefSchema>;
-
-export const CardPackSchema = z.array(CardDefSchema);
+  entersThreatArea: boolean;
+  imageSrc?: string;
+  backImageSrc?: string;
+}
 
 const opt = <T extends z.ZodTypeAny>(s: T) => s.nullish().transform((v) => v ?? undefined);
 
-/** Raw ArkhamDB card shape (only the fields we read; the rest is ignored). */
+/**
+ * Raw ArkhamDB card shape (only the fields we read; the rest is ignored). zod checks it at runtime
+ * because ArkhamDB is an external API whose fields can be null, missing or renamed.
+ */
 const RawCardSchema = z.object({
   code: z.string(),
   name: z.string(),
@@ -91,7 +95,7 @@ export function normaliseCard(raw: unknown): CardDef {
     .split('.')
     .map((t) => t.trim())
     .filter(Boolean);
-  return CardDefSchema.parse({
+  return {
     code: r.code,
     name: r.name,
     subname: r.subname,
@@ -126,7 +130,7 @@ export function normaliseCard(raw: unknown): CardDef {
     entersThreatArea: entersThreatArea(r.text),
     imageSrc: r.imagesrc,
     backImageSrc: r.backimagesrc,
-  });
+  };
 }
 
 export function normalisePack(raw: unknown): CardDef[] {

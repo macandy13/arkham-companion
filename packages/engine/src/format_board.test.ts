@@ -160,7 +160,7 @@ describe('formatBoard', () => {
     expect(formatBoard(ctx, state).split('\n').slice(0, 2)).toMatchInlineSnapshot(`
       [
         "Round 2, mythos phase",
-        "Steps left: 1.4 (Alice), 1.4 (Bob)",
+        "Steps left: drawEncounterCard (Alice), drawEncounterCard (Bob)",
       ]
     `);
   });
