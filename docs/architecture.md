@@ -85,7 +85,7 @@ Connections between locations form an explicit graph on each [`GameMap`](../pack
 interface GameState {
   meta: GameMeta;                        // scenario, difficulty, playerCount, seed, rngState, round, phase,
                                          // steps, turn, turnsTaken, leadInvestigator, heldAction
-  campaign?: CampaignLog;                // stub until campaign mode
+  campaign?: CampaignLog;                // the campaign this game belongs to (see Campaign)
   investigators: Investigator[];
   cards: Record<InstanceId, CardInstance>;
   order: Record<ZoneKey, InstanceId[]>;  // index 0 is the top of a deck
@@ -294,6 +294,19 @@ type SetupStep = AddMapStep | SetAsideStep | BuildEncounterDeckStep | PlaceToken
 
 - **A new scenario:** add a folder in [`packages/scenarios/src/`](../packages/scenarios/src/) with its definition, card list, hooks and an end-to-end test, export it from the package index, and add an entry to the app's [scenario catalog](../apps/web/src/scenarios/scenarioCatalog.ts).
 - **A new setup instruction:** add a `SetupStep` kind and its compilation in [`setup.ts`](../packages/engine/src/setup.ts). Do this only when two scenarios need it; a one-off belongs in that scenario's hooks.
+
+### Campaign
+
+A campaign spans several games and outlives each of them, so it is its own aggregate in [`campaign/`](../packages/engine/src/campaign/). [`CampaignLog`](../packages/engine/src/campaign/campaign_log.ts) holds the team with trauma, XP and fate, replaced investigators, typed story records, the chaos bag and the scenario order. [`checkCampaignInvariants`](../packages/engine/src/campaign/campaign_invariants.ts) states what must always hold (team of 1–4, no overspent XP, trauma consistent with fate). A game's `GameState.campaign` holds a copy of the log at scenario start.
+
+```ts
+type StoryValue = { kind: 'flag'; value: boolean } | { kind: 'count'; value: number }
+  | { kind: 'list'; entries: string[] } | { kind: 'crossableList'; entries: CrossableEntry[] };
+```
+
+**Extension points**
+
+- **A new campaign record:** add its field to `CampaignLog`. If it can become inconsistent, add the rule to `checkCampaignInvariants`.
 
 ### Card data
 

@@ -28,6 +28,15 @@ Ref: product.md "Campaign mode".
 - [ ] Campaign definition type (scenario order, starting chaos bag per difficulty, interlude steps if any) next to `ScenarioDefinition`; the Night of the Zealot definition (three scenarios, Core Set chaos bags per difficulty), with The Midnight Masks and The Devourer Below entered only as far as the campaign tests need (identity, campaign setup, resolutions)
 - [ ] Readable unit tests (M1.14 conventions if merged)
 
+Slices (review of #50: one PR was too big to review), each its own PR on top of the previous one:
+
+1. `CampaignLog`, its queries and `checkCampaignInvariants`, replacing the stub in `state.ts`
+2. Campaign events and the reducer (`applyCampaign`, `replayCampaign`)
+3. `StartCampaign`, story records, chaos bag and `AdvanceScenario` with `handleCampaign`/`executeCampaign` and the rejections
+4. Investigator commands: XP, trauma, killed/insane, `ReplaceInvestigator`
+5. `ManualAdjust` corrections
+6. `CampaignDefinition`, `compileCampaign` and the Night of the Zealot definition
+
 ## M1C.2 Change notices (O)
 
 **Why:** The engine applies changes the players would otherwise make by hand (tokens into the bag, trauma, XP, story records, and in a game doom, damage or moves). If they happen silently, the players cannot tell what the app did and stop trusting it, or rely on it more than they want to ("assistant, not referee", architecture "Overview").
