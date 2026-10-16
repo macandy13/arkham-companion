@@ -2,7 +2,7 @@ name: Claude review
 
 # Reviews every non-draft PR with claude-code-action against REVIEW.md, CLAUDE.md and the
 # coding guidelines, so mechanical review points are raised before the owner reads the PR.
-# Needs the repo secret ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN; without one the job
+# Needs the repo secret ANTHROPIC_CI_KEY or CLAUDE_CODE_OAUTH_TOKEN; without one the job
 # skips instead of failing (also on Dependabot PRs, which get no secrets).
 
 on:
@@ -22,10 +22,10 @@ jobs:
       pull-requests: write
       id-token: write
     env:
-      HAS_CREDENTIAL: ${{ secrets.ANTHROPIC_API_KEY != '' || secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
+      HAS_CREDENTIAL: ${{ secrets.ANTHROPIC_CI_KEY != '' || secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
     steps:
       - if: env.HAS_CREDENTIAL != 'true'
-        run: echo "::notice::No ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN secret; skipping the Claude review."
+        run: echo "::notice::No ANTHROPIC_CI_KEY or CLAUDE_CODE_OAUTH_TOKEN secret; skipping the Claude review."
       - if: env.HAS_CREDENTIAL == 'true'
         uses: actions/checkout@v7
         with:
@@ -33,7 +33,7 @@ jobs:
       - if: env.HAS_CREDENTIAL == 'true'
         uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          anthropic_api_key: ${{ secrets.ANTHROPIC_CI_KEY }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           prompt: |
             REPO: ${{ github.repository }}
