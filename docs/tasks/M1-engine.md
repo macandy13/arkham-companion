@@ -143,3 +143,16 @@ Ref: M1.5, M1.6, M1.9, M1.10 follow-ups.
 - [ ] After a doom `ManualAdjust`, offer `CheckDoomThreshold` (a `confirm` decision), never advance silently
 - [ ] `ManualAdjust` cannot move the current agenda or act out of its deck (rejection)
 - [ ] `decider` is checked against who answers a decision, if the command carries the answering investigator
+
+## M1.19 Shared event building blocks (S)
+
+**Why:** Several modules build the same basic events by hand: moving a card (`CardMoved` in board, placement, hunters, scenario and elimination code), removing every token from a card, moving clues between an investigator and a location, discarding a card with its attachments (review #45). Each copy can drift, and a module's intent is hidden behind event plumbing.
+
+**Benefit:** Modules say what happens ("discard this treachery", "these clues go to the location") and share one correct way of doing it.
+
+Ref: review #45 (`elimination.ts`). A `refactor:` PR with no behaviour change.
+
+- [ ] `moveCardEvent(card, to, index?)` next to the zones, used wherever `CardMoved` is built
+- [ ] `clearTokensEvents(card)` next to the cards (used by elimination and the doom removal in `handle_scenario.ts`)
+- [ ] `cluesToLocationEvents(investigator, locationId, amount)` next to `DiscoverClues`, its reverse
+- [ ] `discardEvents(state, cardId)` (attachments first, tokens cleared) moved next to the cards
