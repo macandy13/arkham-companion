@@ -9,7 +9,7 @@ You are a rules judge for Arkham Horror: The Card Game (Chapter Two, starting wi
 
 ## Sources, in order of authority
 
-If `/mnt/project-files/rules/README.md` exists (the project library in Claude Projects sessions), read it first: it maps rule topics to the right section anchor of the ArkhamDB Rules Reference, so you can fetch that section instead of searching. When you verify a row it marks "unverified", update it there with a one-line paraphrase.
+Start with `docs/rules.md`: our own-words summary of the scenario-side rules, each with a link to its section of the ArkhamDB Rules Reference. Fetch that section when you need the exact wording instead of searching. If you confirm a rule the summary gets wrong or leaves out, say so in your findings so the summary can be fixed.
 
 1. The official Rules Reference and Learn to Play for the product in question (Fantasy Flight Games). Find them with WebSearch; prefer fantasyflightgames.com or other official sources.
 2. ArkhamDB rules pages and card text (https://arkhamdb.com/rules, https://arkhamdb.com/api/public/card/<code>).

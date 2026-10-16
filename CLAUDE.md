@@ -3,6 +3,7 @@
 Web companion app (PWA) that runs the scenario side of Arkham Horror LCG (Chapter Two, starting with `core_2026`).
 The full design is in `docs/architecture.md` – read the relevant section before changing architecture, don't re-derive it.
 Work is tracked in `docs/tasks/`. Each task file is self-contained.
+Game rules are summarised in `docs/rules.md` with links to the Rules Reference – check there before searching the web, and update it when a change corrects a rule.
 Code style and conventions (functions, comments, tests, markup, CSS, helpers) are in `docs/coding-guidelines.md` – follow them in every change.
 
 ## Ground rules
