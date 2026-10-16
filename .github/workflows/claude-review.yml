@@ -1,0 +1,56 @@
+name: Claude review
+
+# Reviews every non-draft PR with claude-code-action against REVIEW.md, CLAUDE.md and the
+# coding guidelines, so mechanical review points are raised before the owner reads the PR.
+# Needs the repo secret ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN; without one the job
+# skips instead of failing (also on Dependabot PRs, which get no secrets).
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+
+concurrency:
+  group: claude-review-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    env:
+      HAS_CREDENTIAL: ${{ secrets.ANTHROPIC_API_KEY != '' || secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
+    steps:
+      - if: env.HAS_CREDENTIAL != 'true'
+        run: echo "::notice::No ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN secret; skipping the Claude review."
+      - if: env.HAS_CREDENTIAL == 'true'
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+      - if: env.HAS_CREDENTIAL == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Review this pull request. The PR branch is checked out in the working directory.
+            Follow REVIEW.md if it exists: it says what is blocking, what is a nit and what
+            to leave alone. The rules it refers to are in CLAUDE.md and
+            docs/coding-guidelines.md; game rules are summarised in docs/rules.md.
+
+            Check the "Rules claims" in the PR description's review map against
+            docs/rules.md, and flag rule changes in the diff that the map does not claim.
+
+            Use `gh pr diff` and `gh pr view` to read the PR. Post one top-level summary
+            with `gh pr comment`, in the format REVIEW.md asks for, short enough to read on
+            a phone. Post each blocking finding and each nit as an inline comment with
+            `mcp__github_inline_comment__create_inline_comment` (with `confirmed: true`);
+            start nits with "Nit:". Only post GitHub comments; don't reply with review text.
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
