@@ -3,6 +3,7 @@
 Web companion app (PWA) that runs the scenario side of Arkham Horror LCG (Chapter Two, starting with `core_2026`).
 The full design is in `docs/architecture.md` – read the relevant section before changing architecture, don't re-derive it.
 Work is tracked in `docs/tasks/`. Each task file is self-contained.
+Game rules are summarised in `docs/rules.md` with links to the Rules Reference – check there before searching the web, and update it when a change corrects a rule.
 Code style and conventions (functions, comments, tests, markup, CSS, helpers) are in `docs/coding-guidelines.md` – follow them in every change.
 
 ## Ground rules
@@ -18,6 +19,7 @@ Code style and conventions (functions, comments, tests, markup, CSS, helpers) ar
 - TypeScript strict, no `any` without a comment explaining why.
 - Every exported interface, type, class and non-trivial function gets a doc comment explaining its purpose and, where it isn't obvious, how it relates to other types (e.g. which reducer produces it, which ID it refers to). Also explain non-obvious design choices (why, not what).
 - **In-code comments explain why, not what.** Inside function bodies, comment only to give a motivation the code can't express (game rule, workaround, trade-off) – never to narrate steps.
+- **Never swallow a caught error silently.** A `catch` at least `console.warn`s with context (and may still fall back), or rethrows. The engine has no console: it turns errors into rejections instead.
 - **Styles use tokens.** Colours, spacing, sizes come from `apps/web/src/styles/tokens.css`; no raw values or copy-pasted declarations elsewhere.
 - **Reuse helpers.** Generic string/array/object operations live in `@arkham/util` (`packages/util`); add missing ones there with tests instead of inlining them. **Shared functions live next to the entity they handle** (card lookups with the cards, location queries with the board); only generic string, array and object helpers go to `@arkham/util`.
 - Tests with every change: Vitest unit tests for engine logic; cover invariants with example-based table tests (`it.each`), no property-based testing.
@@ -39,7 +41,7 @@ Before finishing a task: `pnpm typecheck && pnpm lint && pnpm test` must pass. A
 
 1. Read the task file in `docs/tasks/` and only the architecture sections it references.
 2. Keep the change small and focused on that task; note follow-ups in the task file instead of doing them.
-3. Tick the task's checklist and add a short "Done" note when finished.
+3. Tick the task's checklist and add a short "Done" note when finished. Once a task and its follow-ups are finished and no open PR edits its section, move the section to the matching file in `docs/tasks/done/`, so sessions reading the task file only load open work.
 4. Open a PR against `main`. **The PR title is a Conventional Commit** – it becomes the squash commit and the changelog entry (Release Please):
    `feat(engine): add hunter movement (M1.8)`, `fix(web): …`, `docs: …`, `test: …`, `refactor: …`, `chore: …`, `ci: …`. Scope = package (`engine`, `carddata`, `scenarios`, `web`, `util`) when it fits.
    **The PR description starts with the motivation** – why the PR exists and what it is trying to accomplish – before any list of changes. Follow `.github/pull_request_template.md`.

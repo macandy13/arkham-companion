@@ -1,5 +1,5 @@
 import type { Event } from './events';
-import type { GameState } from './state';
+import type { GameState, Phase } from './state';
 
 /** UUID (v4) identifying one game; never device-bound so it stays valid for later cloud sync (architecture §10). */
 export type GameId = string;
@@ -26,6 +26,13 @@ export interface GameSummary {
   updatedAt: number;
   /** Sequence number of the last event, 0 if the log is empty. */
   lastSeq: number;
+  /** Scenario being played; empty until the scenario has started. Derived from the replayed state. */
+  scenarioId: string;
+  /** Current round and phase of the replayed state, so the list can show progress. */
+  round: number;
+  phase: Phase;
+  /** Seated investigators in seat order (`code` is the ArkhamDB card code, used to look up portraits). */
+  investigators: { code: string; name: string }[];
 }
 
 /**
@@ -56,6 +63,16 @@ export interface Snapshot {
 export interface LoadedGame {
   summary: GameSummary;
   state: GameState;
+}
+
+/** A game to be restored by `GameStore.importGame`: an event log without ids, as found in an export file. */
+export interface ImportedGame {
+  title: string;
+  /**
+   * Original timestamps are kept so an imported game still shows when it was last played;
+   * command ids are kept so undo still steps back one player command at a time.
+   */
+  events: readonly Pick<StoredEvent, 'timestamp' | 'commandId' | 'event'>[];
 }
 
 /**
@@ -92,6 +109,22 @@ export interface GameStore {
   loadGame(gameId: GameId): Promise<LoadedGame | undefined>;
   /** All games, most recently updated first. */
   listGames(): Promise<GameSummary[]>;
+  /** Changes the title of a game; does not count as play, so `updatedAt` stays. Rejects for unknown games. */
+  renameGame(gameId: GameId, title: string): Promise<void>;
+  /**
+   * Copies a game including its event log under a new UUID, so both continue independently.
+   * `title` defaults to the original's. Rejects for unknown games.
+   */
+  duplicateGame(gameId: GameId, title?: string): Promise<GameId>;
+  /** Permanently removes a game with its events and snapshot; unknown games are ignored. */
+  deleteGame(gameId: GameId): Promise<void>;
+  /** Stored events of a game with `seq` greater than `afterSeq`, oldest first (for export and sync). */
+  loadEvents(gameId: GameId, afterSeq?: number): Promise<StoredEvent[]>;
+  /**
+   * Creates a game under a new UUID from an exported log. Keeps the events' timestamps and
+   * links no campaign (the original campaign does not exist on this device).
+   */
+  importGame(game: ImportedGame): Promise<GameId>;
   /** Stores a snapshot, replacing older ones of the same game. */
   saveSnapshot(gameId: GameId, seq: number, state: GameState): Promise<void>;
 }
