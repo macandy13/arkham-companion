@@ -128,6 +128,6 @@ export function handleDealEnemyAttack(
   const investigator = state.investigators.find((inv) => inv.id === cmd.investigatorId);
   if (!investigator)
     throw new CommandRejected({ code: 'unknownInvestigator', investigatorId: cmd.investigatorId });
-  const dealt = enemyAttackEvents(investigator, cmd.damage, cmd.horror);
+  const dealt = enemyAttackEvents(state, investigator, cmd.damage, cmd.horror);
   return investigator.status === 'active' && isInPlay(enemy) ? dealt : [];
 }

@@ -1,5 +1,6 @@
 import { cardStats, type EngineContext } from './cards';
-import type { InvestigatorChanged, InvestigatorDefeated } from './events';
+import { investigatorLeavesEvents } from './elimination';
+import type { Event, InvestigatorChanged } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
 import { defeatCause, playerOrder, withStatDelta } from './investigators';
 import { hasKeyword } from './keywords';
@@ -68,15 +69,18 @@ export function readyEngagedEnemies(
 
 /**
  * Damage and horror of one enemy attack, followed by a single defeat check
- * over both, as the rules deal them simultaneously. Shared by the enemy
- * phase (`ResolveEnemyAttack`) and attacks outside it (`DealEnemyAttack`).
+ * over both, as the rules deal them simultaneously, and on a defeat the
+ * clean-up (`investigatorLeavesEvents`). Shared by the enemy phase
+ * (`ResolveEnemyAttack`) and attacks outside it (`DealEnemyAttack`), so an
+ * attack of opportunity that defeats leaves the same board.
  * Rejects an amount that is not a non-negative integer.
  */
 export function enemyAttackEvents(
+  state: GameState,
   investigator: Investigator,
   damage: number,
   horror: number,
-): (InvestigatorChanged | InvestigatorDefeated)[] {
+): Event[] {
   const changes: InvestigatorChanged[] = (
     [
       ['damage', attackAmount(damage)],
@@ -95,9 +99,15 @@ export function enemyAttackEvents(
     investigator,
   );
   const cause = defeatCause(after);
-  return cause === undefined
-    ? changes
-    : [...changes, { type: 'InvestigatorDefeated', investigatorId: investigator.id, cause }];
+  if (cause === undefined) return changes;
+  return [
+    ...changes,
+    ...investigatorLeavesEvents(state, investigator, {
+      type: 'InvestigatorDefeated',
+      investigatorId: investigator.id,
+      cause,
+    }),
+  ];
 }
 
 function attackAmount(amount: number): number {

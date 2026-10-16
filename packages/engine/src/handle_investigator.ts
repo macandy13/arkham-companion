@@ -1,11 +1,18 @@
 import { neighbours } from './board';
 import type { EngineContext } from './cards';
-import type { AdjustInvestigator, DiscoverClues, MoveInvestigator } from './commands';
+import type {
+  AdjustInvestigator,
+  DiscoverClues,
+  MoveInvestigator,
+  SetLeadInvestigator,
+} from './commands';
+import { investigatorLeavesEvents } from './elimination';
 import type {
   CardFlipped,
+  Event,
   InvestigatorChanged,
-  InvestigatorDefeated,
   InvestigatorMoved,
+  LeadInvestigatorChanged,
   TokensChanged,
 } from './events';
 import { handleRevealLocation } from './handle_board';
@@ -56,12 +63,10 @@ export function handleMoveInvestigator(
 /**
  * `AdjustInvestigator`: changes one counter and defeats the investigator in
  * the same step if that uses up their health or sanity, so no state ever
- * shows an active investigator with nothing left.
+ * shows an active investigator with nothing left. A defeat comes with the
+ * clean-up of `investigatorLeavesEvents`.
  */
-export function handleAdjustInvestigator(
-  state: GameState,
-  cmd: AdjustInvestigator,
-): (InvestigatorChanged | InvestigatorDefeated)[] {
+export function handleAdjustInvestigator(state: GameState, cmd: AdjustInvestigator): Event[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
   if (!Number.isInteger(cmd.delta) || cmd.delta === 0)
     throw new CommandRejected({ code: 'invalidTokenDelta', delta: cmd.delta });
@@ -83,7 +88,28 @@ export function handleAdjustInvestigator(
   };
   const cause = defeatCause(withStatDelta(investigator, cmd.stat, cmd.delta));
   if (cause === undefined) return [changed];
-  return [changed, { type: 'InvestigatorDefeated', investigatorId: investigator.id, cause }];
+  return [
+    changed,
+    ...investigatorLeavesEvents(state, investigator, {
+      type: 'InvestigatorDefeated',
+      investigatorId: investigator.id,
+      cause,
+    }),
+  ];
+}
+
+/** `SetLeadInvestigator`: the lead investigator is an active investigator, and a change needs a different one. */
+export function handleSetLeadInvestigator(
+  state: GameState,
+  cmd: SetLeadInvestigator,
+): LeadInvestigatorChanged[] {
+  const investigator = activeInvestigator(state, cmd.investigatorId);
+  if (state.meta.leadInvestigator === investigator.id)
+    throw new CommandRejected({
+      code: 'alreadyLeadInvestigator',
+      investigatorId: investigator.id,
+    });
+  return [{ type: 'LeadInvestigatorChanged', investigatorId: investigator.id }];
 }
 
 /** `DiscoverClues`: moves `amount` clues from the investigator's own location to them. */

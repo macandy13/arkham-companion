@@ -43,7 +43,7 @@ const ghoulMinion = 'Ghoul Minion';
 const ravenousGhoul = 'Ravenous Ghoul';
 
 describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
-  it('plays seven rounds from setup: act 1 opens the house, the agenda advances, enemies spawn, hunt, attack and are defeated, and the clues for act 2 are in hand', () => {
+  it('plays eight rounds from setup: act 1 opens the house, the agenda advances, enemies spawn, hunt, attack and are defeated, the clues for act 2 are in hand, and Wendy resigns', () => {
     // Setup
     const table = TestTable.setUp({
       scenario: theGathering,
@@ -638,6 +638,33 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       Victory display: Icy Ghoul
       Pending decisions: none"
     `);
+
+    // Round 8 – mythos: Roland draws Dissonant Voices and Daisy a Ghoul Minion;
+    // Wendy passes her willpower test against Crypt Chill.
+    expect(table.nextPhase()).toEqual({ round: 8, phase: 'mythos', step: 'drawEncounterCard' });
+    table.answer('Crypt Chill', 'pass');
+
+    // Round 8 – investigation: Wendy, with Frozen in Fear and Dissonant Voices on
+    // her, resigns. Her 3 clues go to the Cellar and both treacheries are discarded.
+    expect(table.nextPhase()).toEqual({ round: 8, phase: 'investigation' });
+    table.startTurn(wendy);
+    table.resign(wendy);
+
+    expect(table.turn()).toBe('none');
+    expect(table.investigatorClues()).toEqual({ roland: 5, daisy: 1, wendy: 0 });
+    expect(table.cluesOn('Cellar')).toBe(3);
+    expect(table.namesIn({ kind: 'threatArea', investigatorId: wendy })).toEqual([]);
+    expect(table.namesIn({ kind: 'encounterDiscard' }).slice(0, 2)).toEqual([
+      'Dissonant Voices',
+      'Frozen in Fear',
+    ]);
+
+    // The phase ends without waiting for Wendy.
+    table.startTurn(roland);
+    table.endTurn(roland);
+    table.startTurn(daisy);
+    table.endTurn(daisy);
+    expect(table.nextPhase()).toEqual({ round: 8, phase: 'enemy', step: 'enemiesAttack' });
 
     // The whole event log, setup included, replays to the live state.
     expect(replay(table.events)).toEqual(table.state);
