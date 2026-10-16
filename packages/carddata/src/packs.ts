@@ -11,17 +11,17 @@ export const CHAPTER_TWO_PACK_CODES: readonly string[] = ['core_2026'];
 export type Chapter = 1 | 2;
 
 /** Normalised ArkhamDB pack, used for the cycle/pack filters of the investigator picker. */
-export const PackDefSchema = z.object({
-  code: z.string(),
-  name: z.string(),
+export interface PackDef {
+  code: string;
+  name: string;
   /** Position of the pack within its cycle (ArkhamDB `position`). */
-  position: z.number().int(),
+  position: number;
   /** Position of the cycle (ArkhamDB `cycle_position`); packs of one cycle share it. */
-  cyclePosition: z.number().int(),
-  chapter: z.union([z.literal(1), z.literal(2)]),
-});
-export type PackDef = z.infer<typeof PackDefSchema>;
+  cyclePosition: number;
+  chapter: Chapter;
+}
 
+/** Raw ArkhamDB pack shape, checked at runtime because the API is external. */
 const RawPackSchema = z.object({
   code: z.string(),
   name: z.string(),
