@@ -130,35 +130,41 @@ interface Investigator {
 
 This is the core of the engine: [`handle`](../packages/engine/src/handle.ts) turns one command into the complete list of events it causes, and [`apply`](../packages/engine/src/reducer.ts) folds an event into the state. A command is a request that may be refused and may need card data or randomness. An event is a fact that always applies the same way. So all logic lives in `handle`, and `apply` never checks anything, generates IDs or draws random numbers. Replaying a log therefore needs neither card data nor the RNG. `DeckShuffled`, for example, carries the new order rather than a seed.
 
+```ts
+function handle(ctx: EngineContext, state: GameState, command: Command): Event[];  // throws CommandRejected
+function apply(state: GameState, event: Event): GameState;
+function replay(events: readonly Event[], initial?: GameState): GameState;          // apply, folded over a log
+function execute(ctx: EngineContext, state: GameState, command: Command): { state: GameState; events: Event[] };  // handle + replay
+```
+
+The commands are a union in [`commands.ts`](../packages/engine/src/commands.ts), the events one in [`events.ts`](../packages/engine/src/events.ts). The context holds code and static data, never part of the saved state:
+
+```ts
+type Command = StartScenario | ManualAdjust | MoveCard | AddMap | MoveInvestigator | PlaceDoom
+  | AdvanceAgenda | DrawEncounter | SpawnEnemy | MoveHunters | RequestDecision | ResolveDecision
+  | NextPhase | Investigate | Fight | Evade | …;      // ~40 kinds
+type Event = ScenarioStarted | DeckShuffled | CardMoved | TokensChanged | CardFlipped
+  | ConnectionChanged | InvestigatorChanged | DecisionRequested | AgendaAdvanced | PhaseChanged
+  | ActionHeld | …;                                   // ~30 kinds
+
+interface EngineContext {          // cards.ts
+  cards: CardDb;
+  hooks?: Partial<ScenarioHooks>;
+  effects?: EffectsRegistry;
+}
+```
+
 `handle` never changes the state. It works out what would happen by replaying its own events onto a copy as it goes:
 
 1. **The command's own events.** `handleCommand` dispatches on `command.type` to a handler in one of the `handle_<area>.ts` files ([board](../packages/engine/src/handle_board.ts), [encounter](../packages/engine/src/handle_encounter.ts), [enemy](../packages/engine/src/handle_enemy.ts), [investigator](../packages/engine/src/handle_investigator.ts), [scenario](../packages/engine/src/handle_scenario.ts)) or a rule module. The handler checks the command against the state and returns its events, or throws `CommandRejected` with a [`Rejection`](../packages/engine/src/rejection.ts) code the UI can explain.
 2. **Forced effects.** [`triggeredCommands`](../packages/engine/src/triggers.ts) steps through those events one at a time, applying each to a working copy of the state and asking the scenario hooks and card effects whether it triggers them. The matched hooks then run against the state after all of the command's events, so each one sees the command's complete outcome, and they return follow-up commands. If the command answered a decision, the chosen option's commands come first.
+
+   > **To verify** ([M1V.1](tasks/M1V-rules-verification.md)): hooks are evaluated only after all of the command's events, not the moment their event happens. Some forced effects may have to resolve immediately, between two events of one command. Check this against the Rules Reference and cover the edge cases with tests.
 3. **Follow-ups, depth first.** `withFollowUps` handles each follow-up command exactly like a player command, against the working copy as it stands after the previous follow-up, so its own forced effects resolve before the next sibling's. Its events append to the same list. A refused follow-up refuses the original command (`triggeredCommandRejected`), and a chain of more than `MAX_TRIGGERED_COMMANDS` follow-ups refuses it with `triggerLoop`. A bad hook can therefore neither hang the app nor leave half its effect behind.
 4. **Commands that continue after their effects.** Advancing an agenda or act happens in two parts. First the card flips and its reverse side (the hook) resolves while it is still current. Only then does `completeCommand` move it out and make the next card current, with that part's own forced effects. `NextPhase` likewise goes on with the phase's outstanding steps (see "Rounds, phases and turns").
 5. **Held actions.** If the command is an action that provokes attacks of opportunity, `handle` first does a dry run to reject an illegal action. It then returns only one decision per attacking enemy and an `ActionHeld` event. Once the last of those decisions is answered, the held action resumes (`ActionResumed` and its events) or is dropped (`ActionDropped`).
 
 The result is one list of events per player command. The store files them under one `commandId`, so undo ([`undo.ts`](../packages/engine/src/undo.ts)) always removes a whole command with its chain. The RNG state ([`rng.ts`](../packages/engine/src/rng.ts), xoshiro128\*\*) is part of `GameMeta`, so handling the same command again gives the same shuffle.
-
-```ts
-type Command = StartScenario | ManualAdjust | MoveCard | AddMap | MoveInvestigator | PlaceDoom
-  | AdvanceAgenda | DrawEncounter | SpawnEnemy | MoveHunters | RequestDecision | ResolveDecision
-  | NextPhase | Investigate | Fight | Evade | …;      // commands.ts, ~40 kinds
-type Event = ScenarioStarted | DeckShuffled | CardMoved | TokensChanged | CardFlipped
-  | ConnectionChanged | InvestigatorChanged | DecisionRequested | AgendaAdvanced | PhaseChanged
-  | ActionHeld | …;                                   // events.ts, ~30 kinds
-
-interface EngineContext {          // code and static data; never part of the saved state
-  cards: CardDb;
-  hooks?: Partial<ScenarioHooks>;
-  effects?: EffectsRegistry;
-}
-
-function handle(ctx: EngineContext, state: GameState, command: Command): Event[];  // throws CommandRejected
-function apply(state: GameState, event: Event): GameState;
-function replay(events: readonly Event[], initial?: GameState): GameState;
-function execute(ctx: EngineContext, state: GameState, command: Command): { state: GameState; events: Event[] };
-```
 
 **Extension points**
 
@@ -255,6 +261,11 @@ The generic rules are small modules, one per subject, called by the handlers. Qu
 
 A scenario is mostly data, a [`ScenarioDefinition`](../packages/engine/src/scenario.ts): agenda and act decks, chaos bag per difficulty, reference card, setup steps, and hooks for the few rules that need code. Data is easy to check, review and later generate from imports. [`compileSetup`](../packages/engine/src/setup.ts) turns the definition plus the players' choices into one `StartScenario` command, resolving per-investigator values and building the encounter deck. Mid-scenario board changes reuse the same steps: `compileMapStep` turns an `addMap` step into an `AddMap` command.
 
+```ts
+function compileSetup(ctx: EngineContext, def: ScenarioDefinition, options: SetupOptions): StartScenario;
+function compileMapStep(state: GameState, step: AddMapStep): Command[];
+```
+
 Hooks return commands that go through the normal `handle` path. Game commands such as `MoveCard` and `AddMap` exist for hooks: unlike a `ManualAdjust` correction, they are game events and fire further triggers.
 
 The only scenario so far is the hand-entered test scenario [`the_gathering/`](../packages/scenarios/src/the_gathering/). It has real card codes and names but no card text, and stands in for real scenario data. The app lists playable scenarios in its [scenario catalog](../apps/web/src/scenarios/scenarioCatalog.ts).
@@ -270,8 +281,6 @@ interface ScenarioDefinition {
 }
 type SetupStep = AddMapStep | SetAsideStep | BuildEncounterDeckStep | PlaceTokensStep | SpawnStep | MoveInvestigatorsStep;
 
-function compileSetup(ctx: EngineContext, def: ScenarioDefinition, options: SetupOptions): StartScenario;
-function compileMapStep(state: GameState, step: AddMapStep): Command[];
 ```
 
 **Extension points**
