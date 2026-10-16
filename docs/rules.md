@@ -139,6 +139,8 @@ The game rules the engine implements, summarised in our own words so sessions do
 7. Apply results in an order the tester chooses (clue discovered, damage dealt, card effects).
 8. Discard committed cards and return the tokens to the bag.
 
+Bless (+2), curse (-2), frost (-1) and the Core Set (2026) blood token (-1) each make the tester reveal another token, whose modifier also applies. Blood also seals the first box on the investigator card.
+
 If auto-success or auto-failure is known before step 3, skip steps 3 and 4. [Variable difficulty](https://arkhamdb.com/rules#Variable_Difficulty_Skill_Tests) is fixed once step 6 checks it.
 
 ## Damage, horror and defeat
