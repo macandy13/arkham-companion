@@ -155,7 +155,7 @@ Follow-ups: M1.9 `ResolveDecision` must turn the answers into `EngageEnemy` (`ch
 
 **Benefit:** One readable test that plays The Gathering like a session report. Each following PR extends it with its feature, so the reviewer sees every feature in context, and a broken interaction shows up as a broken round.
 
-**Convention:** every later M1 PR extends `packages/scenarios/src/the_gathering/end_to_end.test.ts` with its feature: M1.9 answers the decisions the script now steps around (whom the rats engage, the threshold question; done, agenda 1's reverse-side choice and `hunterOrder` remain until a hook or a second hunter exists) with `ResolveDecision`; M1.10 replaces the manual phase commands (`placeMythosDoom`, `drawEncounterCard`, `moveHunters`, `resolveEnemyAttacks`, `upkeep`) with `NextPhase`, plays each turn with `StartTurn`/`EndTurn`, answers skill and revelation tests and asserts the round counter (done, see the M1.10 Done note); M1.11 undoes a step (e.g. a mis-tapped move) and shows the replayed state (done, see the M1.11 Done note); M1.12 plays on to a resolution.
+**Convention:** every later M1 PR extends `packages/scenarios/src/the_gathering/end_to_end.test.ts` with its feature: M1.9 answers the decisions the script now steps around (whom the rats engage, the threshold question; done, agenda 1's reverse-side choice and `hunterOrder` remain until a hook or a second hunter exists) with `ResolveDecision`; M1.10 replaces the manual phase commands (`placeMythosDoom`, `drawEncounterCard`, `moveHunters`, `resolveEnemyAttacks`, `upkeep`) with `NextPhase`, plays each turn with `StartTurn`/`EndTurn`, answers skill and revelation tests and asserts the round counter (done, see the M1.10 Done note); M1.11 undoes a step (e.g. a mis-tapped move) and shows the replayed state (done, see the M1.11 Done note); M1.12 plays on toward a resolution (done, see the M1.12 Done note).
 
 - [x] Test in `packages/scenarios/src/the_gathering/end_to_end.test.ts` on the real `theGathering`/`theGatheringCards`, three real core investigators (Roland Banks, Daisy Walker, Wendy Adams), fixed seed
 - [x] About five rounds driven by commands that exist on main, as one narrative `it` from setup to round 5 with phase/turn comment headers; each investigator's turn takes at most 3 actions; every action names the acting investigator; encounter cards are drawn per investigator
@@ -235,19 +235,22 @@ Follow-ups: no redo stack (redo = executing the command again, which is determin
 
 End-to-end test (M1.E), done: `TestTable` logs events with a `commandId` per `play` and has `undo()` (`undoLastGroup` on that log, then `replay`). In round 2 Roland's mis-tapped move to the Parlor is undone: he is back in the Hallway and `turn()` reads `actions 0/3` again; the final replay check still holds.
 
-## M1.12 Sandbox playthrough (S)
+## M1.12 End-to-end test continued toward a resolution (S)
 
-**Why:** Unit tests prove each module alone; this proves they work together. The scripted game becomes a regression test for every later change.
+**Why:** Unit tests prove each module alone; the one end-to-end test proves they work together. Instead of a separate golden playthrough with its own investigators, M1.12 continues the existing Gathering story, so there is one narrative to read and keep green.
 
-**Benefit:** Confidence to build the UI on top of the engine, and an architecture doc that matches the code.
+**Benefit:** Confidence to build the UI on top of the engine; later changes show up as a broken round of the same session report.
 
-- [ ] Golden-replay test: scripted full game of the sandbox scenario to a resolution
-- [ ] Property test: random legal commands never break invariants
-- [ ] Update §6 of `docs/architecture.md` if anything changed
+- [x] End-to-end test continued toward a resolution (rounds 6 and 7 added to `end_to_end.test.ts`)
+- [x] Small readable table over 1-3 investigators (invariants and replay), written with `TestTable`
+- [x] Update §6 of `docs/architecture.md` if anything changed (it describes neither a golden playthrough nor the sandbox; no change)
+- [ ] Play to a resolution (`ScenarioEnded`): blocked on the hooks below
 
-End-to-end test (M1.E): continue `end_to_end.test.ts` to a resolution instead of starting a separate playthrough.
+Done when: The Gathering plays through its implemented rules in tests; engine coverage >= 90 %.
 
-Done when: the sandbox scenario plays to an end in tests; engine coverage ≥ 90 %.
+Done: `end_to_end.test.ts` goes on from the round 5 upkeep. Round 6: Rotting Remains is passed, three Swarms of Rats spawn engaged (so `TestTable.fight`/`evade` now find the enemy by the investigator it is engaged with, not by a unique name), everybody defeats the rats and Roland clears the Cellar's clues, the Ravenous Ghoul attacks Daisy. Round 7 mythos shows undo of a whole trigger chain: the `NextPhase` that raises doom and draws Grasping Hands with its revelation test is undone and run again, and the second run's events equal the first's. Then Daisy evades the Ghoul, Roland enters the Attic (the Flesh-Eater engages for free), the group holds the 9 clues act 2 needs, and the Flesh-Eater attacks; a board snapshot closes round 7 and the replay check covers the whole log. A second `describe` plays one round plus the start of round 2 with one, two and three investigators (`it.each`, the real investigators) and checks invariants, replay and a second table producing identical events. The old sandbox/golden playthrough (`playthrough.test.ts`, golden file, 4-seed random table) is deleted: its act 1 advance, agenda 1 advance, hunter move and engage, attacks, fight/evade and undo are all in the end-to-end test already. The random multi-seed table was reduced to the readable 1-3 investigator table (only three real investigators exist; a fourth would need an invented one). Agenda 1 to 2 and the hunter (round 4-5) were already covered; agenda 2 to 3 needs doom 7 (round 9 at the earliest), so the script stops at doom 5. To check against the rules: the engine keeps clues of a defeated investigator (not reached here); Dissonant Voices and Frozen in Fear have no modelled effects.
+
+Follow-ups: hooks for act 2 ("The Barrier") and act 3, agenda 2 and 3 reverse sides, the Ghoul Priest and Lita Chantler, and `ScenarioEnded`; once they exist, advance act 2 in round 7 (the clues are in hand) and play on to a resolution.
 
 ## M1.13 Skill test modifiers (O)
 
