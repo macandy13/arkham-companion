@@ -70,10 +70,19 @@ export interface Investigator {
   /**
    * Actions per turn beyond the standard 3, granted for the rest of the
    * scenario by the investigator's cards ("you may take an additional action
-   * during your turn"). Changed with `AdjustInvestigator`; a one-turn bonus is
-   * `AdjustActions` instead (`Turn.actionAdjustment`).
+   * during your turn"). Changed with `AdjustInvestigator`; takes effect at the
+   * next reset of `actionsRemaining`. A one-turn bonus is `AdjustActions`
+   * instead.
    */
   extraActions: number;
+  /**
+   * Actions the investigator has left this round. A plain counter the players
+   * manage (`AdjustActions`): the engine cannot tell an action from a card
+   * effect while player cards are not modelled, so it does not count actions
+   * itself. Set to `actionsPerTurn` by the scenario start and by upkeep step
+   * 4.2 (`ActionsReset`); never negative.
+   */
+  actionsRemaining: number;
   status: InvestigatorStatus;
 }
 
@@ -101,10 +110,10 @@ export type Phase = 'setup' | 'mythos' | 'investigation' | 'enemy' | 'upkeep';
  * 2.1, 2.3, 3.1, 3.4, 4.1) are the `PhaseChanged` of `NextPhase`, and the
  * investigation phase's turns (2.2 "next investigator's turn begins", 2.2.1
  * actions, 2.2.2 "turn ends") are the players' `StartTurn`/`EndTurn`, so they
- * are not steps here. 4.2 "reset actions" needs no step: actions are counted
- * per turn (`Turn`). Player cards are not modelled, so the players handle
- * their part themselves: readying their cards (4.3), drawing 1 card (4.4)
- * and checking hand size (4.5).
+ * are not steps here. Player cards are not modelled, so the players handle
+ * their part themselves: counting their actions during the turn (2.2.1,
+ * `AdjustActions`), readying their cards (4.3), drawing 1 card (4.4) and
+ * checking hand size (4.5).
  */
 export type PhaseStepId =
   /** Mythos: place 1 doom on the current agenda. */
@@ -117,6 +126,8 @@ export type PhaseStepId =
   | '3.2'
   /** Enemy: each investigator, in player order, resolves the attacks of engaged enemies. */
   | '3.3'
+  /** Upkeep: reset each investigator's remaining actions (`ActionsReset`). */
+  | '4.2'
   /**
    * Upkeep: ready each exhausted card. Only enemies are modelled; the players
    * ready their own cards at the table.
@@ -152,23 +163,19 @@ export type PhaseStep =
    * step stays current until the players resolved each of them.
    */
   | { id: '3.3'; attacks?: DueAttack[] }
+  | { id: '4.2' }
   | { id: '4.3' }
   | { id: '4.4' }
   | { id: '4.6' };
 
 /**
  * The investigator turn in progress (Rules Reference 2.2: "next
- * investigator's turn begins"), between `StartTurn` and `EndTurn`. Actions
- * are counted per turn against the allowance (`actionAllowance`: the base 3,
- * the investigator's persistent `extraActions` and this turn's
- * `actionAdjustment`), so the upkeep's "reset actions" needs no bookkeeping.
+ * investigator's turn begins"), between `StartTurn` and `EndTurn`. It tells
+ * the UI whose turn it is and gates the end of the investigation phase; the
+ * players count that investigator's actions (`Investigator.actionsRemaining`).
  */
 export interface Turn {
   investigatorId: InvestigatorId;
-  /** Actions taken so far in this turn (`ActionTaken`). */
-  actionsTaken: number;
-  /** Change to the allowance for this turn only (`AdjustActions`, `ManualAdjust`). */
-  actionAdjustment: number;
 }
 
 /** Tokens in the chaos bag. */

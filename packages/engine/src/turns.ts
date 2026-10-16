@@ -1,96 +1,33 @@
-import type {
-  AdjustActions,
-  Command,
-  EndTurn,
-  StartTurn,
-  TableAction,
-  TakeAction,
-} from './commands';
-import type {
-  ActionTaken,
-  ActionsAdjusted,
-  InvestigatorChanged,
-  TurnEnded,
-  TurnStarted,
-} from './events';
+import type { AdjustActions, EndTurn, StartTurn } from './commands';
+import type { ActionsAdjusted, ActionsReset, TurnEnded, TurnStarted } from './events';
 import { activeInvestigator } from './handle_investigator';
 import type { InvestigatorId } from './ids';
 import { playerOrder } from './investigators';
 import { CommandRejected } from './rejection';
-import type { GameState, Phase, Turn } from './state';
+import type { GameState, Investigator, Phase } from './state';
 
 /** Actions every investigator may take in a turn (Rules Reference, "Investigation Phase"). */
 export const BASE_ACTIONS_PER_TURN = 3;
 
 /**
- * The actions an investigator can take in their turn: the ones the engine
- * resolves (`MoveInvestigator`, `Investigate`, `Fight`, `Evade`,
- * `EngageEnemy`) and the ones the players resolve at the table
- * (`TakeAction`, see `TableAction`).
+ * The actions an investigator starts each round with: the base 3 plus their
+ * persistent `extraActions`. What the scenario start and upkeep step 4.2 set
+ * `Investigator.actionsRemaining` to.
  */
-export type ActionKind = 'move' | 'investigate' | 'fight' | 'evade' | 'engage' | TableAction;
-
-/** An action a command stands for, and the investigator who takes it. */
-export interface CommandAction {
-  kind: ActionKind;
-  investigatorId: InvestigatorId;
+export function actionsPerTurn(investigator: Pick<Investigator, 'extraActions'>): number {
+  return BASE_ACTIONS_PER_TURN + investigator.extraActions;
 }
 
 /**
- * The action `command` stands for, or `undefined` if it is none. Everything
- * else is free: decision answers, phase steps, corrections, adjustments,
- * advancing the act, and the action commands marked `free` (card effects).
+ * Upkeep step 4.2 ("reset actions"): one `ActionsReset` per active
+ * investigator, back to `actionsPerTurn`.
  */
-export function actionOf(command: Command): CommandAction | undefined {
-  switch (command.type) {
-    case 'MoveInvestigator':
-      return command.free ? undefined : { kind: 'move', investigatorId: command.investigatorId };
-    case 'Investigate':
-      return command.free
-        ? undefined
-        : { kind: 'investigate', investigatorId: command.investigatorId };
-    case 'Fight':
-      return command.free ? undefined : { kind: 'fight', investigatorId: command.investigatorId };
-    case 'Evade':
-      return command.free ? undefined : { kind: 'evade', investigatorId: command.investigatorId };
-    case 'EngageEnemy':
-      return command.free ? undefined : { kind: 'engage', investigatorId: command.investigatorId };
-    case 'TakeAction':
-      return { kind: command.action, investigatorId: command.investigatorId };
-    default:
-      return undefined;
-  }
-}
-
-/**
- * The `ActionTaken` that a command issued by the players costs, checked
- * against the turn: in the investigation phase an action belongs to the
- * investigator whose turn is in progress and must fit their allowance.
- * Outside the investigation phase nothing is counted: an action command
- * there can only be a card effect or a correction the players enter.
- */
-export function actionEvents(state: GameState, command: Command): ActionTaken[] {
-  const action = actionOf(command);
-  if (!action || state.meta.phase !== 'investigation') return [];
-  const turn = turnOf(state, action.investigatorId);
-  const allowance = actionAllowance(state, turn);
-  if (turn.actionsTaken >= allowance)
-    throw new CommandRejected({
-      code: 'noActionsLeft',
-      investigatorId: action.investigatorId,
-      allowance,
-    });
-  return [{ type: 'ActionTaken', investigatorId: action.investigatorId, action: action.kind }];
-}
-
-/**
- * How many actions the turn allows: the base 3, the investigator's
- * persistent `extraActions` and the turn's own adjustment.
- */
-export function actionAllowance(state: GameState, turn: Turn): number {
-  const extra =
-    state.investigators.find((inv) => inv.id === turn.investigatorId)?.extraActions ?? 0;
-  return BASE_ACTIONS_PER_TURN + extra + turn.actionAdjustment;
+export function actionsResetEvents(state: GameState): ActionsReset[] {
+  return playerOrder(state).map((inv) => ({
+    type: 'ActionsReset',
+    investigatorId: inv.id,
+    actions: actionsPerTurn(inv),
+  }));
 }
 
 /** `StartTurn`: the group picks the next investigator whose turn begins. */
@@ -108,56 +45,50 @@ export function handleStartTurn(state: GameState, cmd: StartTurn): TurnStarted[]
 /** `EndTurn`: ends the turn in progress, which must be the investigator's. */
 export function handleEndTurn(state: GameState, cmd: EndTurn): TurnEnded[] {
   requirePhase(state, 'investigation');
-  turnOf(state, cmd.investigatorId);
+  const { turn } = state.meta;
+  if (turn?.investigatorId !== cmd.investigatorId)
+    throw new CommandRejected({
+      code: 'turnNotInProgress',
+      investigatorId: cmd.investigatorId,
+      ...(turn ? { activeInvestigatorId: turn.investigatorId } : {}),
+    });
   return [{ type: 'TurnEnded', investigatorId: cmd.investigatorId }];
 }
 
-/** `AdjustActions`: changes this turn's allowance. */
+/** `AdjustActions`: changes the investigator's remaining actions. */
 export function handleAdjustActions(state: GameState, cmd: AdjustActions): ActionsAdjusted[] {
   return [actionsAdjusted(state, cmd.investigatorId, cmd.delta)];
 }
 
 /**
- * The `ActionsAdjusted` of `AdjustActions` and of a `ManualAdjust` of the
- * allowance: `delta` must be a non-zero integer, the turn the investigator's,
- * and the allowance must not drop below zero.
+ * The `ActionsAdjusted` of `AdjustActions` and of a `ManualAdjust` of kind
+ * `actions`: `delta` must be a non-zero integer and the active investigator's
+ * remaining actions must not drop below zero. Allowed in any phase and turn:
+ * encounter cards take actions away in the mythos phase, and the players
+ * count down during the turn, which the engine does not police.
  */
 export function actionsAdjusted(
   state: GameState,
   investigatorId: InvestigatorId,
   delta: number,
 ): ActionsAdjusted {
-  const turn = turnOf(state, investigatorId);
-  const allowance = actionAllowance(state, turn);
-  if (!Number.isInteger(delta) || delta === 0 || allowance + delta < 0)
+  const { actionsRemaining } = activeInvestigator(state, investigatorId);
+  if (!Number.isInteger(delta) || delta === 0 || actionsRemaining + delta < 0)
     throw new CommandRejected({
       code: 'invalidActionAdjustment',
       investigatorId,
       delta,
-      allowance,
+      actionsRemaining,
     });
   return { type: 'ActionsAdjusted', investigatorId, delta };
 }
 
 /**
- * `TakeAction`, own part (the action itself is counted by `actionEvents`):
- * the resource action gives 1 resource; the others are resolved at the table.
- */
-export function handleTakeAction(state: GameState, cmd: TakeAction): InvestigatorChanged[] {
-  requirePhase(state, 'investigation');
-  const investigator = activeInvestigator(state, cmd.investigatorId);
-  if (cmd.action !== 'resource') return [];
-  return [
-    { type: 'InvestigatorChanged', investigatorId: investigator.id, stat: 'resources', delta: 1 },
-  ];
-}
-
-/**
  * Rejects leaving the investigation phase (Rules Reference 2.2/2.3: turns
- * follow each other until each investigator has taken one, then the phase ends) while a turn is in progress
- * or an active investigator has not had theirs. Rejecting is simpler than a
- * confirmation and costs the group little: a turn without actions is just
- * `StartTurn` and `EndTurn`.
+ * follow each other until each investigator has taken one, then the phase
+ * ends) while a turn is in progress or an active investigator has not had
+ * theirs. Rejecting is simpler than a confirmation and costs the group
+ * little: a turn without actions is just `StartTurn` and `EndTurn`.
  */
 export function assertTurnsTaken(state: GameState): void {
   const { turn, turnsTaken } = state.meta;
@@ -168,18 +99,6 @@ export function assertTurnsTaken(state: GameState): void {
     .filter((id) => !turnsTaken.includes(id));
   if (untaken.length > 0)
     throw new CommandRejected({ code: 'turnsNotTaken', investigatorIds: untaken });
-}
-
-/** The turn in progress, which must be `investigatorId`'s. */
-function turnOf(state: GameState, investigatorId: InvestigatorId): Turn {
-  const { turn } = state.meta;
-  if (!turn || turn.investigatorId !== investigatorId)
-    throw new CommandRejected({
-      code: 'notTheirTurn',
-      investigatorId,
-      ...(turn ? { activeInvestigatorId: turn.investigatorId } : {}),
-    });
-  return turn;
 }
 
 function requirePhase(state: GameState, expected: Phase): void {

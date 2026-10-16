@@ -1,7 +1,6 @@
 import type { DecisionId, InstanceId, InvestigatorId, MapId } from './ids';
 import type { Edge, GameMap } from './map';
 import type { RngState } from './rng';
-import type { ActionKind } from './turns';
 import type {
   CampaignLog,
   CardInstance,
@@ -46,8 +45,8 @@ export type Event =
   | PhaseStepsChanged
   | RoundEnded
   | TurnStarted
-  | ActionTaken
   | ActionsAdjusted
+  | ActionsReset
   | TurnEnded;
 
 /** A scenario was set up; replaces the whole state. Produced by `StartScenario`. */
@@ -56,6 +55,7 @@ export interface ScenarioStarted {
   scenarioId: string;
   difficulty: Difficulty;
   seed: number;
+  /** With `actionsRemaining` set to `actionsPerTurn`, so round 1 starts like every other. */
   investigators: Investigator[];
   /** Every map with its connections, written to `board.maps` as one unit. */
   maps: Record<MapId, GameMap>;
@@ -304,33 +304,32 @@ export interface RoundEnded {
   round: number;
 }
 
-/** The investigator's turn begins (`GameMeta.turn`, no actions taken yet). Produced by `StartTurn`. */
+/** The investigator's turn begins (`GameMeta.turn`). Produced by `StartTurn`. */
 export interface TurnStarted {
   type: 'TurnStarted';
   investigatorId: InvestigatorId;
 }
 
 /**
- * The investigator whose turn is in progress spent one action
- * (`Turn.actionsTaken`). Produced by `handle` ahead of the events of an
- * action command the players issue during the investigation phase (see
- * `actionOf`); follow-up commands of hooks and answers are never actions.
- */
-export interface ActionTaken {
-  type: 'ActionTaken';
-  investigatorId: InvestigatorId;
-  action: ActionKind;
-}
-
-/**
- * The action allowance of the turn in progress changed by `delta`
- * (`Turn.actionAdjustment`). Produced by `AdjustActions` and by a
- * `ManualAdjust` of kind `actions`.
+ * An investigator's remaining actions (`Investigator.actionsRemaining`)
+ * changed by `delta`. Produced by `AdjustActions` and by a `ManualAdjust` of
+ * kind `actions`.
  */
 export interface ActionsAdjusted {
   type: 'ActionsAdjusted';
   investigatorId: InvestigatorId;
   delta: number;
+}
+
+/**
+ * An investigator's remaining actions were set to `actions`
+ * (`actionsPerTurn`). Produced by upkeep step 4.2 ("reset actions"); an
+ * absolute value rather than a delta, since a reset ignores what was left.
+ */
+export interface ActionsReset {
+  type: 'ActionsReset';
+  investigatorId: InvestigatorId;
+  actions: number;
 }
 
 /** The investigator has taken their turn this round (`GameMeta.turnsTaken`). Produced by `EndTurn`. */

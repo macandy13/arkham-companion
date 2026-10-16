@@ -10,9 +10,7 @@ import type {
   EnemyDisengaged,
   EnemyEngaged,
   Event,
-  InvestigatorChanged,
   InvestigatorDefeated,
-  InvestigatorMoved,
   MapAdded,
   ScenarioEnded,
   ScenarioStarted,
@@ -22,13 +20,7 @@ import type { InstanceId } from './ids';
 import type { Edge } from './map';
 import { seedRng } from './rng';
 import { withStatDelta } from './investigators';
-import {
-  emptyState,
-  type CardInstance,
-  type GameState,
-  type Investigator,
-  type Turn,
-} from './state';
+import { emptyState, type CardInstance, type GameState, type Investigator } from './state';
 import { zoneKey, type Zone, type ZoneKey } from './zone';
 
 /**
@@ -46,12 +38,6 @@ function applyInvestigatorDefeated(state: GameState, event: InvestigatorDefeated
 function endTurn(state: GameState, investigatorId: Investigator['id']): GameState {
   const meta = withoutKey(state.meta, 'turn');
   return { ...state, meta: { ...meta, turnsTaken: [...meta.turnsTaken, investigatorId] } };
-}
-
-/** `state` with the turn in progress changed; unchanged when no turn is in progress. */
-function updateTurn(state: GameState, update: (turn: Turn) => Turn): GameState {
-  const { turn } = state.meta;
-  return turn ? { ...state, meta: { ...state.meta, turn: update(turn) } } : state;
 }
 
 /** Pure reducer: applies one event and returns the next state. Never mutates `state`. */
@@ -115,15 +101,18 @@ export function apply(state: GameState, event: Event): GameState {
         ...state,
         meta: {
           ...state.meta,
-          turn: { investigatorId: event.investigatorId, actionsTaken: 0, actionAdjustment: 0 },
+          turn: { investigatorId: event.investigatorId },
         },
       };
-    case 'ActionTaken':
-      return updateTurn(state, (turn) => ({ ...turn, actionsTaken: turn.actionsTaken + 1 }));
     case 'ActionsAdjusted':
-      return updateTurn(state, (turn) => ({
-        ...turn,
-        actionAdjustment: turn.actionAdjustment + event.delta,
+      return applyInvestigator(state, event, (inv) => ({
+        ...inv,
+        actionsRemaining: inv.actionsRemaining + event.delta,
+      }));
+    case 'ActionsReset':
+      return applyInvestigator(state, event, (inv) => ({
+        ...inv,
+        actionsRemaining: event.actions,
       }));
     case 'TurnEnded':
       return endTurn(state, event.investigatorId);
@@ -275,7 +264,7 @@ function withoutDecisionsAbout(state: GameState, cardId: InstanceId): GameState 
 /** Replaces the event's investigator with `update(investigator)`; unknown IDs leave the state as is. */
 function applyInvestigator(
   state: GameState,
-  event: InvestigatorMoved | InvestigatorChanged | InvestigatorDefeated,
+  event: { investigatorId: Investigator['id'] },
   update: (investigator: Investigator) => Investigator,
 ): GameState {
   return {

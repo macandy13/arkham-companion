@@ -80,7 +80,7 @@ const nextPhase: Command = { type: 'NextPhase' };
 const startTurn: Command = { type: 'StartTurn', investigatorId: alice };
 const endTurn: Command = { type: 'EndTurn', investigatorId: alice };
 const moveToCellar: Command = { type: 'MoveInvestigator', investigatorId: alice, to: cellar };
-const adjustActions: Command = { type: 'AdjustActions', investigatorId: alice, delta: 1 };
+const spendAction: Command = { type: 'AdjustActions', investigatorId: alice, delta: -1 };
 const passChillTest: Command = {
   type: 'ResolveDecision',
   decisionId: decisionId('revelation:chill'),
@@ -184,8 +184,8 @@ describe('undoing group by group', () => {
     ['a shuffle between draws', [draw, passChillTest, shuffleInto, draw]],
     ['phase changes with their steps', [...intoInvestigation, startTurn, endTurn, nextPhase]],
     [
-      'turns with actions and an allowance change',
-      [...intoInvestigation, startTurn, moveToCellar, adjustActions, endTurn],
+      'a turn with a move and the players counting it',
+      [...intoInvestigation, startTurn, moveToCellar, spendAction, endTurn],
     ],
     ['a revelation test answered', [draw, passChillTest, draw]],
     ['a decision asked and answered', [ask, answer, draw]],
@@ -220,15 +220,21 @@ describe('undoing group by group', () => {
 });
 
 describe('undo and the turn', () => {
-  it('gives back the action of a move taken mid-turn', () => {
-    const commands = [...intoInvestigation, startTurn, moveToCellar];
-    const moved = play(commands).states.at(-1)!;
+  it('restores the counter when an AdjustActions is undone', () => {
+    const commands = [...intoInvestigation, startTurn, spendAction];
+    const spent = play(commands).states.at(-1)!;
 
     const afterUndo = afterUndoOf(commands);
 
-    expect(moved.meta.turn).toMatchObject({ investigatorId: alice, actionsTaken: 1 });
-    expect(afterUndo.meta.turn).toMatchObject({ investigatorId: alice, actionsTaken: 0 });
+    expect(spent.investigators[0]?.actionsRemaining).toBe(2);
+    expect(afterUndo.investigators[0]?.actionsRemaining).toBe(3);
+  });
+
+  it('puts the investigator back when a move taken mid-turn is undone', () => {
+    const afterUndo = afterUndoOf([...intoInvestigation, startTurn, moveToCellar]);
+
     expect(afterUndo.investigators[0]?.locationId).toBe(hall);
+    expect(afterUndo.meta.turn).toEqual({ investigatorId: alice });
   });
 
   it('reopens the turn when ending it is undone', () => {
@@ -239,14 +245,8 @@ describe('undo and the turn', () => {
 
     expect(ended.meta.turn).toBeUndefined();
     expect(ended.meta.turnsTaken).toEqual([alice]);
-    expect(afterUndo.meta.turn).toMatchObject({ investigatorId: alice, actionsTaken: 1 });
+    expect(afterUndo.meta.turn).toEqual({ investigatorId: alice });
     expect(afterUndo.meta.turnsTaken).toEqual([]);
-  });
-
-  it('takes back a change of the action allowance', () => {
-    const afterUndo = afterUndoOf([...intoInvestigation, startTurn, adjustActions]);
-
-    expect(afterUndo.meta.turn).toMatchObject({ investigatorId: alice, actionAdjustment: 0 });
   });
 
   it('takes back the start of the turn', () => {
@@ -311,9 +311,8 @@ describe('the events of one command form one group', () => {
     return undoLastGroup(play(commands).log).removed.map((entry) => entry.event.type);
   }
 
-  it('keeps ActionTaken ahead of the own events of the action', () => {
+  it('keeps a move and the reveal of its destination in one group', () => {
     expect(lastGroupTypes([...intoInvestigation, startTurn, moveToCellar])).toEqual([
-      'ActionTaken',
       'InvestigatorMoved',
       'CardFlipped',
     ]);
@@ -324,7 +323,7 @@ describe('the events of one command form one group', () => {
   });
 
   it('keeps ActionsAdjusted in the group of AdjustActions', () => {
-    expect(lastGroupTypes([...intoInvestigation, startTurn, adjustActions])).toEqual([
+    expect(lastGroupTypes([...intoInvestigation, startTurn, spendAction])).toEqual([
       'ActionsAdjusted',
     ]);
   });

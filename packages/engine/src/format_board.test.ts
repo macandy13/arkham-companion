@@ -97,8 +97,8 @@ describe('formatBoard', () => {
           investigators: Bob
           connects to: Hall
       Investigators:
-        Alice – Hall; damage 0/8, horror 0/6, 1 clues, 5 resources; threat area: Dread
-        Bob – Attic; damage 0/8, horror 0/6, 0 clues, 5 resources; threat area: none
+        Alice – Hall; damage 0/8, horror 0/6, 1 clues, 5 resources, actions left 3; threat area: Dread
+        Bob – Attic; damage 0/8, horror 0/6, 0 clues, 5 resources, actions left 3; threat area: none
       Encounter deck: 1 cards; discard: 1 cards, top: Dread
       Set aside: 1 cards
       Victory display: Rat
@@ -122,7 +122,7 @@ describe('formatBoard', () => {
     `);
   });
 
-  it('shows the turn in progress with its actions and the turns taken', () => {
+  it('shows the turn in progress, the turns taken and the actions left', () => {
     const state = stateAfter(
       ctx,
       startedBoard(),
@@ -130,16 +130,17 @@ describe('formatBoard', () => {
       { type: 'StartTurn', investigatorId: bob },
       { type: 'EndTurn', investigatorId: bob },
       { type: 'StartTurn', investigatorId: alice },
-      { type: 'TakeAction', investigatorId: alice, action: 'draw' },
+      { type: 'AdjustActions', investigatorId: alice, delta: -1 },
     );
 
     expect(formatBoard(ctx, state).split('\n').slice(0, 3)).toMatchInlineSnapshot(`
       [
         "Round 1, investigation phase",
-        "Turn: Alice, actions 1/3",
+        "Turn: Alice",
         "Turns taken: Bob",
       ]
     `);
+    expect(formatBoard(ctx, state)).toContain('5 resources, actions left 2;');
   });
 
   it('shows the phase steps left while a decision holds up the mythos phase', () => {
@@ -194,7 +195,7 @@ describe('formatBoard', () => {
       Map Manor (hidden):
         no locations
       Investigators:
-        Bob – nowhere; damage 0/8, horror 0/6, 0 clues, 5 resources; threat area: none
+        Bob – nowhere; damage 0/8, horror 0/6, 0 clues, 5 resources, actions left 3; threat area: none
       Encounter deck: 0 cards; discard: 0 cards
       Set aside: 0 cards
       Victory display: none

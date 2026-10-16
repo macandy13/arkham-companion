@@ -16,7 +16,7 @@ import { cardsOfType } from './lookup';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
 import type { DueAttack, GameState, Investigator, Phase, PhaseStep, PhaseStepId } from './state';
-import { assertTurnsTaken } from './turns';
+import { actionsResetEvents, assertTurnsTaken } from './turns';
 import { zoneKey } from './zone';
 
 /** The phase that follows each phase; the first round starts with investigation (no mythos). */
@@ -35,6 +35,7 @@ export const PHASE_STEP_TITLES: Readonly<Record<PhaseStepId, string>> = {
   '1.4': 'each investigator draws 1 encounter card',
   '3.2': 'hunter enemies move',
   '3.3': 'resolve engaged enemy attacks',
+  '4.2': 'reset actions',
   '4.3': 'ready each exhausted enemy (players ready their own cards)',
   '4.4': 'each investigator gains 1 resource (and draws 1 card at the table)',
   '4.6': 'round ends',
@@ -99,6 +100,8 @@ export function nextStepPlan(ctx: EngineContext, state: GameState): StepPlan | u
   switch (step.id) {
     case '3.3':
       return attackStepPlan(ctx, state, step, rest);
+    case '4.2':
+      return { events: [done, ...actionsResetEvents(state)], commands: [] };
     case '4.6':
       return { events: [done, { type: 'RoundEnded', round: state.meta.round }], commands: [] };
     default:
@@ -172,7 +175,7 @@ function stepsOf(state: GameState, phase: Phase): PhaseStep[] {
     case 'enemy':
       return [{ id: '3.2' }, { id: '3.3' }];
     case 'upkeep':
-      return [{ id: '4.3' }, { id: '4.4' }, { id: '4.6' }];
+      return [{ id: '4.2' }, { id: '4.3' }, { id: '4.4' }, { id: '4.6' }];
     case 'setup':
     case 'investigation':
       return [];
@@ -187,7 +190,7 @@ function stepsOf(state: GameState, phase: Phase): PhaseStep[] {
 function stepCommands(
   ctx: EngineContext,
   state: GameState,
-  step: Exclude<PhaseStep, { id: '3.3' | '4.6' }>,
+  step: Exclude<PhaseStep, { id: '3.3' | '4.2' | '4.6' }>,
 ): Command[] {
   switch (step.id) {
     case '1.2':
