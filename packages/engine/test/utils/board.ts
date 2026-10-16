@@ -1,6 +1,7 @@
 import {
   instanceId,
   mapId,
+  type Difficulty,
   type Edge,
   type EngineContext,
   type GameState,
@@ -37,6 +38,8 @@ export interface BoardOptions {
   playerCount?: number;
   /** Investigators to start with instead of the standard ones. */
   investigators?: readonly Investigator[];
+  /** Scenario difficulty (default standard). */
+  difficulty?: Difficulty;
 }
 
 /**
@@ -54,6 +57,7 @@ export function startBoard(
     shuffleEncounterDeck,
     playerCount = 1,
     investigators: custom,
+    difficulty = 'standard',
   }: BoardOptions,
 ): GameState {
   const specs: Record<string, MapSpec> = {};
@@ -72,7 +76,7 @@ export function startBoard(
   const start: StartScenario = {
     type: 'StartScenario',
     scenarioId: 'test',
-    difficulty: 'standard',
+    difficulty,
     seed,
     ...(shuffleEncounterDeck === undefined ? {} : { shuffleEncounterDeck }),
     investigators: [...(custom ?? investigators(playerCount))],

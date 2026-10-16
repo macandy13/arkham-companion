@@ -337,7 +337,7 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
     case 'MoveHunter':
       return handleMoveHunter(ctx, state, command);
     case 'RequestDecision':
-      return handleRequestDecision(state, command);
+      return handleRequestDecision(ctx, state, command);
     case 'ResolveDecision':
       return handleResolveDecision(state, command);
     case 'CheckDoomThreshold':

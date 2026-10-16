@@ -36,7 +36,7 @@ const ctx = contextWith(
 );
 
 /**
- * Alice in the revealed Hall (3 clues) with a damaged, exhausted Ghoul engaged
+ * Alice (intellect 4) in the revealed Hall (3 clues, no shroud) with a damaged, exhausted Ghoul engaged
  * and Dread in her threat area and attached to the Hall; Bob next door in the unrevealed Attic, which
  * only connects one way back to the Hall. The Plan holds 1 of its 2 doom.
  */
@@ -47,7 +47,14 @@ const start: StartScenario = {
   seed: 1,
   shuffleEncounterDeck: false,
   investigators: [
-    makeInvestigator({ id: 'alice', name: 'Alice', seat: 0, locationId: hall, clues: 1 }),
+    makeInvestigator({
+      id: 'alice',
+      name: 'Alice',
+      seat: 0,
+      locationId: hall,
+      clues: 1,
+      skills: { willpower: 3, intellect: 4, combat: 2, agility: 1 },
+    }),
     makeInvestigator({ id: 'bob', name: 'Bob', seat: 1, locationId: attic }),
   ],
   maps: { [manor]: { name: 'Manor', connections: [edge('attic', 'hall', { oneWay: true })] } },
@@ -118,6 +125,18 @@ describe('formatBoard', () => {
       [
         "Pending decisions:",
         "  Advance agenda The Plan yes / no [confirm]",
+      ]
+    `);
+  });
+
+  it('shows the suggested values of a pending skill test', () => {
+    const state = stateAfter(ctx, startedBoard(), { type: 'Investigate', investigatorId: alice });
+
+    expect(formatBoard(ctx, state).split('\n').slice(-3)).toMatchInlineSnapshot(`
+      [
+        "Pending decisions:",
+        "  Investigate Hall: intellect (0) pass ×1 (1–3) / fail [skillTestResult]",
+        "    suggested: skill 4 vs difficulty 0 (pass)",
       ]
     `);
   });

@@ -1,6 +1,8 @@
 import { stripTrailingDot } from '@arkham/util';
 import type { Brand } from './ids';
 import type { Keyword } from './keywords';
+import type { ScenarioReference } from './scenario';
+import type { SkillModifierRegistry } from './skill_modifiers';
 import type { SkillTest } from './state';
 import { CommandRejected } from './rejection';
 import type { EffectsRegistry, ScenarioHooks } from './triggers';
@@ -163,6 +165,14 @@ export interface EngineContext {
   hooks?: Partial<ScenarioHooks>;
   /** Card scripts by card code; none when absent. */
   effects?: EffectsRegistry;
+  /**
+   * The running scenario's reference card (`ScenarioDefinition.reference`),
+   * for the symbol token modifiers of skill test suggestions; without it
+   * those tokens count as unknown.
+   */
+  reference?: ScenarioReference;
+  /** The running scenario's skill test modifiers (`ScenarioDefinition.modifiers`); none when absent. */
+  modifiers?: SkillModifierRegistry;
 }
 
 /** Builds a `CardDb` from a list of definitions; a later duplicate code replaces an earlier one. */

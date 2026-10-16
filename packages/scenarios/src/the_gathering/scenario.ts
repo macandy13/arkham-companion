@@ -2,13 +2,16 @@ import {
   CommandRejected,
   cardStats,
   compileMapStep,
+  enemiesAt,
   mapId,
+  trait,
   type AddMapStep,
   type CardInstance,
   type Command,
   type EngineContext,
   type GameState,
   type ScenarioDefinition,
+  type TokenValue,
 } from '@arkham/engine';
 import { GATHERING_CODES, GATHERING_SETS } from './cards';
 
@@ -85,6 +88,21 @@ function trappedReverseSide(ctx: EngineContext, state: GameState): Command[] {
   ];
 }
 
+/**
+ * The skull token on Easy/Standard: -X, where X is the number of Ghoul
+ * enemies at the testing investigator's location (engaged ones included,
+ * since they are at that location too). The printed -2 of Hard/Expert comes
+ * from `reference` and takes precedence.
+ */
+const ghoulsAtYourLocation: TokenValue = (ctx, state, test) => {
+  if (test.locationId === undefined) return 0;
+  const ghouls = enemiesAt(state, test.locationId).filter((enemy) =>
+    cardStats(ctx.cards, enemy.code).traits.includes(trait('Ghoul')),
+  );
+  // Subtracting from 0 rather than negating keeps "no Ghouls" a plain 0, not -0, in the trace.
+  return 0 - ghouls.length;
+};
+
 /** The one instance of `code` (the Gathering has a single copy of each location). */
 function onlyCard(state: GameState, code: string): CardInstance {
   const card = Object.values(state.cards).find((candidate) => candidate.code === code);
@@ -99,7 +117,12 @@ function onlyCard(state: GameState, code: string): CardInstance {
  * rest of the six encounter sets is shuffled into the encounter deck. Card
  * data is hand-entered (`theGatheringCardDefs`); it is the shared test
  * scenario for the generic rules until real scenario data arrives (M4). Its
- * `hooks` hold act 1's reverse side; pass them as `EngineContext.hooks`.
+ * `hooks` hold act 1's reverse side; pass them as `EngineContext.hooks`, and
+ * `reference` and `modifiers` (the skull's "-X") as `EngineContext.reference`
+ * and `EngineContext.modifiers` for skill test suggestions. The reference
+ * card's modifiers are hand-entered from the 2016 Core Set card as known
+ * (Easy/Standard: skull -X, cultist -1, tablet -2; Hard/Expert: skull -2,
+ * cultist reveals another token, tablet -4), not checked against a source.
  */
 export const theGathering: ScenarioDefinition = {
   id: 'the-gathering',
@@ -156,4 +179,5 @@ export const theGathering: ScenarioDefinition = {
   hooks: {
     onActAdvance: { [codes.trapped]: trappedReverseSide },
   },
+  modifiers: { tokenValues: { skull: ghoulsAtYourLocation } },
 };

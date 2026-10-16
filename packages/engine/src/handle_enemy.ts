@@ -152,6 +152,21 @@ export function locationOf(state: GameState, enemy: CardInstance): InstanceId {
   throw new CommandRejected({ code: 'enemyNotInPlay', cardId: enemy.id });
 }
 
+/**
+ * The enemies in play at `locationId`, unengaged there or engaged with an
+ * investigator standing there, in card order. Used for "enemies at your
+ * location" (e.g. The Gathering's skull token).
+ */
+export function enemiesAt(state: GameState, locationId: InstanceId): CardInstance[] {
+  return Object.values(state.cards).filter((card) => {
+    const zone = card.zone;
+    if (zone.kind === 'atLocation') return zone.locationId === locationId;
+    if (zone.kind !== 'engaged') return false;
+    const engaged = state.investigators.find((inv) => inv.id === zone.investigatorId);
+    return engaged?.locationId === locationId;
+  });
+}
+
 function defeated(enemyId: InstanceId, stats: CardStats): EnemyDefeated {
   const hasVictory = (stats.victory ?? 0) > 0;
   return { type: 'EnemyDefeated', enemyId, to: hasVictory ? VICTORY_DISPLAY : ENCOUNTER_DISCARD };

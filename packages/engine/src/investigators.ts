@@ -1,5 +1,6 @@
 import type { InvestigatorChanged, TokensChanged } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
+import { CommandRejected } from './rejection';
 import type { GameState, Investigator, InvestigatorStat } from './state';
 
 /** Health the investigator has left; 0 or less means they are defeated. */
@@ -163,4 +164,16 @@ export function cluesToLocationEvents(
     { type: 'InvestigatorChanged', investigatorId, stat: 'clues', delta: -amount },
     { type: 'TokensChanged', cardId: locationId, token: 'clue', delta: amount },
   ];
+}
+
+/** The investigator with `id`, in any status; `undefined` for an unknown ID. */
+export function findInvestigator(state: GameState, id: InvestigatorId): Investigator | undefined {
+  return state.investigators.find((inv) => inv.id === id);
+}
+
+/** The investigator with `id`, in any status; rejects an unknown ID (`unknownInvestigator`). */
+export function requireInvestigator(state: GameState, id: InvestigatorId): Investigator {
+  const investigator = findInvestigator(state, id);
+  if (!investigator) throw new CommandRejected({ code: 'unknownInvestigator', investigatorId: id });
+  return investigator;
 }

@@ -22,6 +22,16 @@ export * from './investigators';
 export { enemyAttackList, type EnemyAttack } from './enemies';
 export { describeDecision, optionName, optionNamed } from './describe_decision';
 export { confirmOptions, skillTestDecision, type SkillTestOutcomes } from './decisions';
+export {
+  skillTestContext,
+  skillTestSuggestion,
+  suggestSkillTest,
+  type SkillModifierRegistry,
+  type SkillTestContext,
+  type SkillTestInput,
+  type TokenValue,
+} from './skill_modifiers';
+export { enemiesAt } from './handle_enemy';
 export { doomInPlay, isInPlay } from './doom';
 export { checkInvariants } from './invariants';
 export { PHASE_STEP_TITLES } from './phases';

@@ -75,8 +75,17 @@ export interface Investigator {
    * more action gets it by the players adjusting this counter after the reset.
    */
   actionsRemaining: number;
+  /**
+   * The printed skill values of the investigator card, the base of every
+   * skill test they take (`skillTestSuggestion`). Fixed for the scenario:
+   * changes by cards are modifiers, not edits of these values.
+   */
+  skills: SkillValues;
   status: InvestigatorStatus;
 }
+
+/** One value per skill, e.g. an investigator's printed skills. */
+export type SkillValues = Readonly<Record<SkillName, number>>;
 
 /**
  * Maps and their layout. Each `GameMap` owns its locations and connections
@@ -191,7 +200,9 @@ export type ChaosToken =
   | 'elderSign'
   | 'bless'
   | 'curse'
-  | 'frost';
+  | 'frost'
+  /** Core Set (2026): -1, reveal another token, seal the first box on the investigator card. */
+  | 'blood';
 
 /** The kinds of decision; the UI has one dialog per kind (M3.7). */
 export type DecisionKind =
@@ -221,6 +232,56 @@ export interface SkillTest {
   difficulty: number;
 }
 
+/** Which number of a skill test a modifier changes: the investigator's skill value or the difficulty. */
+export type ModifierTarget = 'skill' | 'difficulty';
+
+/**
+ * Where one step of a skill test's explanation trace comes from
+ * (`ModifierStep`), so the UI can name it: the investigator's printed skill,
+ * the test's printed difficulty, the one modifier the players enter
+ * (`SkillTestInput.modifier`), a revealed chaos token (with the reference
+ * card's effect text, if it has one), or the rules that cap the result
+ * (auto-fail, nothing below 0).
+ */
+export type ModifierSource =
+  | { kind: 'baseSkill' }
+  | { kind: 'baseDifficulty' }
+  | { kind: 'playerModifier' }
+  | { kind: 'chaosToken'; token: ChaosToken; effectKey?: string }
+  | { kind: 'autoFail' }
+  | { kind: 'minimumZero' };
+
+/** One line of the explanation trace: what `source` changed and the running total after it. */
+export interface ModifierStep {
+  target: ModifierTarget;
+  source: ModifierSource;
+  change: number;
+  /** The target's value after this step. */
+  total: number;
+}
+
+/**
+ * The modified skill value and difficulty the engine computes for a skill
+ * test (`skillTestSuggestion`), with the steps that led there. Only a
+ * suggestion: the players resolve the test at the table and still answer the
+ * decision with pass or fail, so a modifier the engine does not know about
+ * (a player card, a misread token) never decides a test.
+ */
+export interface SkillTestSuggestion {
+  skill: number;
+  difficulty: number;
+  /** `pass` when the skill value reaches the difficulty and no auto-fail was revealed. */
+  outcome: 'pass' | 'fail';
+  /**
+   * Revealed tokens whose modifier the engine cannot tell (the elder sign,
+   * which is the investigator's ability, or a symbol whose reference card
+   * effect has no number): the players add those themselves.
+   */
+  unknownTokens: ChaosToken[];
+  /** Base values first, then every change in the order applied. */
+  trace: ModifierStep[];
+}
+
 /**
  * An open choice for the players (hunter tie, spawn location, effect target,
  * skill test outcome …). The engine never guesses; the answer comes back as a
@@ -242,6 +303,13 @@ export interface Decision {
   decider: Decider;
   /** Only for `skillTestResult`: what the players are testing. */
   skillTest?: SkillTest;
+  /**
+   * Only for `skillTestResult` decided by one investigator: the modified
+   * values before the players enter their modifier or reveal a token,
+   * computed when the decision is raised. The UI recomputes it with the
+   * players' input (`suggestSkillTest`); the answer stays pass/fail either way.
+   */
+  suggestion?: SkillTestSuggestion;
   /**
    * The answers. Each carries the commands it triggers, so the mapping from
    * answer to consequence is data and any module (or scenario) can raise a decision.

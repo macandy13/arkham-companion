@@ -7,6 +7,7 @@ import { activeInvestigator } from './handle_investigator';
 import { decisionId, type InstanceId } from './ids';
 import { hasKeyword } from './keywords';
 import { CommandRejected } from './rejection';
+import { withSuggestion } from './skill_modifiers';
 import type { CardInstance, GameState, Investigator, SkillTest } from './state';
 
 /**
@@ -39,7 +40,7 @@ export function handleInvestigate(
         }
       : { onPass: [] };
   const shroud = cardStats(ctx.cards, location.code).shroud ?? 0;
-  return skillTest(state, {
+  return skillTest(ctx, state, {
     investigator,
     id: `investigate:${investigator.id}`,
     prompt: 'decision.investigate',
@@ -72,7 +73,7 @@ export function handleFight(ctx: EngineContext, state: GameState, cmd: Fight): D
   const damage = cmd.damage ?? 1;
   if (!Number.isInteger(damage) || damage <= 0)
     throw new CommandRejected({ code: 'invalidTokenDelta', delta: damage });
-  return skillTest(state, {
+  return skillTest(ctx, state, {
     investigator,
     id: `fight:${investigator.id}:${enemy.id}`,
     prompt: 'decision.fight',
@@ -140,7 +141,7 @@ export function handleEvade(ctx: EngineContext, state: GameState, cmd: Evade): D
     ...(enemy.exhausted ? [] : [{ type: 'ExhaustEnemy', enemyId: enemy.id } as const]),
     ...(engaged ? [{ type: 'DisengageEnemy', enemyId: enemy.id } as const] : []),
   ];
-  return skillTest(state, {
+  return skillTest(ctx, state, {
     investigator,
     id: `evade:${investigator.id}:${enemy.id}`,
     prompt: 'decision.evade',
@@ -169,7 +170,7 @@ export function revelationTestDecision(
   const card = state.cards[cardId];
   const test = card === undefined ? undefined : cardStats(ctx.cards, card.code).revelationTest;
   if (!test) return [];
-  return skillTest(state, {
+  return skillTest(ctx, state, {
     investigator,
     id: `revelation:${cardId}`,
     prompt: 'decision.revelationTest',
@@ -190,8 +191,12 @@ interface SkillTestRequest {
   outcomes: SkillTestOutcomes;
 }
 
-/** The `skillTestResult` decision of a test, answered by the investigator taking it. */
+/**
+ * The `skillTestResult` decision of a test, answered by the investigator
+ * taking it, with the suggested modified values (`withSuggestion`).
+ */
 function skillTest(
+  ctx: EngineContext,
   state: GameState,
   { investigator, id, prompt, subject, test, outcomes }: SkillTestRequest,
 ): DecisionRequested[] {
@@ -205,7 +210,7 @@ function skillTest(
     },
     outcomes,
   );
-  return requestDecision(state, decision);
+  return requestDecision(state, withSuggestion(ctx, state, decision));
 }
 
 function investigatorLocation(state: GameState, investigator: Investigator): CardInstance {

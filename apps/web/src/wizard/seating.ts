@@ -26,6 +26,7 @@ export function seatInvestigators(
       clues: 0,
       resources: STARTING_RESOURCES,
       doomOnPlayerCards: 0,
+      skills: def.skills,
       status: 'active',
     }));
 }

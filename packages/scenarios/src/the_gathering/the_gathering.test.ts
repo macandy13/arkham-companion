@@ -6,6 +6,7 @@ import {
   investigatorId,
   mapId,
   neighbours,
+  skillTestSuggestion,
   type Command,
   type EngineContext,
   type GameState,
@@ -129,6 +130,59 @@ describe('The Gathering reference card', () => {
   it('uses no elder thing effect', () => {
     expect(theGathering.reference.easyStandard.elderThing).toBeUndefined();
     expect(theGathering.reference.hardExpert.elderThing).toBeUndefined();
+  });
+});
+
+describe('The Gathering skull token', () => {
+  const playing: EngineContext = {
+    cards: theGatheringCards,
+    reference: theGathering.reference,
+    ...(theGathering.modifiers ? { modifiers: theGathering.modifiers } : {}),
+  };
+  const studyCard = instanceId('01111#1');
+  const icyGhoul = instanceId('01119#1');
+  const fleshEater = instanceId('01118#1');
+  const tank = investigatorId('tank');
+
+  /** Tank's intellect 2 test in the Study against difficulty 2, with the skull revealed. */
+  function skullInStudy(state: GameState): number {
+    const test = {
+      investigatorId: tank,
+      skill: 'intellect',
+      difficulty: 2,
+      locationId: studyCard,
+    } as const;
+    const suggestion = skillTestSuggestion(playing, state, test, { tokens: ['skull'] });
+    return suggestion.trace.find((step) => step.source.kind === 'chaosToken')?.change ?? 0;
+  }
+
+  it('is -X on Standard, X being the Ghoul enemies at the location, engaged ones included', () => {
+    const twoGhouls = stateAfter(
+      playing,
+      startScenario(playing, theGathering, { playerCount: 2 }),
+      {
+        type: 'ManualAdjust',
+        adjustment: {
+          kind: 'moveCard',
+          cardId: icyGhoul,
+          to: { kind: 'engaged', investigatorId: tank },
+        },
+      },
+      {
+        type: 'ManualAdjust',
+        adjustment: {
+          kind: 'moveCard',
+          cardId: fleshEater,
+          to: { kind: 'atLocation', locationId: studyCard },
+        },
+      },
+    );
+
+    expect(skullInStudy(twoGhouls)).toBe(-2);
+  });
+
+  it('is 0 on Standard with no Ghoul at the location', () => {
+    expect(skullInStudy(startScenario(playing, theGathering, { playerCount: 2 }))).toBe(0);
   });
 });
 

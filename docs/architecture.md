@@ -202,6 +202,8 @@ Where the rules give the players a choice, or the engine needs an answer it cann
 
 `ResolveDecision` runs the chosen option's commands like trigger follow-ups, in the same undo group. If one is refused, the answer is refused and the decision stays. While a decision is pending, every player command except `ManualAdjust` and `ResolveDecision` is refused ([`decisions.ts`](../packages/engine/src/decisions.ts)). Skill tests ([`skill_tests.ts`](../packages/engine/src/skill_tests.ts)) and attacks of opportunity ([`attacks_of_opportunity.ts`](../packages/engine/src/attacks_of_opportunity.ts)) are built on this mechanism.
 
+A skill test decision raised for one investigator also carries a suggestion ([`skillTestSuggestion`](../packages/engine/src/skill_modifiers.ts)): the printed skill, plus one modifier the players enter for everything the engine does not track (committed icons, cards, lasting effects), plus the revealed chaos tokens valued from the scenario reference card, against the printed difficulty, with a trace of each step for the UI. The engine deliberately models no card effects here: the players play their own cards, and one number is enough. Following the skill test timing, the players enter the modifier before drawing the token and may still change it until they answer, because abilities triggered by the reveal or the result can change the value. The answer stays pass or fail.
+
 ```ts
 interface Decision {
   id: DecisionId;          // derived from kind and subject, so a repeated check doesn't ask twice
@@ -218,6 +220,7 @@ interface DecisionOption { id: string; label: string; target?: InstanceId | Inve
 **Extension points**
 
 - **Ask the players something:** return a `RequestDecision` whose options carry their commands. Use `confirmOptions` or `skillTestDecision` ([`decisions.ts`](../packages/engine/src/decisions.ts)) for the common shapes.
+- **A symbol token whose value depends on the board** (a "-X"): add a `tokenValues` entry to the scenario's `modifiers` ([`scenario.ts`](../packages/engine/src/scenario.ts)); the printed reference card values need no code.
 - **A new kind of question:** add a `DecisionKind` in [`state.ts`](../packages/engine/src/state.ts). A new engine-raised prompt also gets its debug sentence in [`describe_decision.ts`](../packages/engine/src/describe_decision.ts).
 
 ### Rounds, phases and turns
@@ -253,6 +256,7 @@ The generic rules are small modules, one per subject, called by the handlers. Qu
 | Investigators: health, sanity, defeat, movement | [`investigators.ts`](../packages/engine/src/investigators.ts), [`handle_investigator.ts`](../packages/engine/src/handle_investigator.ts) |
 | Elimination: defeat and resign clean-up, new lead, no investigator left | [`elimination.ts`](../packages/engine/src/elimination.ts) |
 | Keywords the rules react to | [`keywords.ts`](../packages/engine/src/keywords.ts) (parsed from card text by `@arkham/carddata`) |
+| Skill test suggestions: modifier, chaos tokens, trace | [`skill_modifiers.ts`](../packages/engine/src/skill_modifiers.ts) |
 | Card lookups by ID and name | [`lookup.ts`](../packages/engine/src/lookup.ts), [`cards.ts`](../packages/engine/src/cards.ts) |
 
 **Extension points**
@@ -280,6 +284,7 @@ interface ScenarioDefinition {
   agendaDeck: readonly string[]; actDeck: readonly string[];
   setup: readonly SetupStep[];
   hooks?: Partial<ScenarioHooks>;
+  modifiers?: SkillModifierRegistry;     // token values computed from the board ("-X")
 }
 type SetupStep = AddMapStep | SetAsideStep | BuildEncounterDeckStep | PlaceTokensStep | SpawnStep | MoveInvestigatorsStep;
 
