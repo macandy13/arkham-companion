@@ -5,7 +5,7 @@ import { doomInPlay } from './doom';
 import type { InstanceId, MapId } from './ids';
 import { mapLocations } from './map';
 import { PHASE_STEP_TITLES } from './phases';
-import type { CardInstance, GameState, Investigator, PhaseStep } from './state';
+import type { CardInstance, Decision, GameState, Investigator, PhaseStep } from './state';
 import { zoneKey, type Zone } from './zone';
 
 /**
@@ -13,7 +13,8 @@ import { zoneKey, type Zone } from './zone';
  * phase, the outstanding phase steps, the turn in progress and the turns
  * taken, current agenda and act, every map with its locations (clues,
  * investigators, enemies, connections), every investigator, the encounter
- * piles and a card whose revelation is being resolved, set-aside cards, victory display and pending decisions. Cards are
+ * piles and a card whose revelation is being resolved, set-aside cards, victory display and
+ * pending decisions, each skill test with its suggested values. Cards are
  * named by their `CardDb` name; instance IDs appear only in brackets where
  * copies need telling apart (locations and enemies). The order is fixed (map,
  * zone and seat order), so the output is stable enough for inline snapshots.
@@ -171,7 +172,21 @@ function decisionLines(ctx: EngineContext, state: GameState): string[] {
   if (state.pending.length === 0) return ['Pending decisions: none'];
   return [
     'Pending decisions:',
-    ...state.pending.map((decision) => `  ${describeDecision(ctx, state, decision)}`),
+    ...state.pending.flatMap((decision) => [
+      `  ${describeDecision(ctx, state, decision)}`,
+      ...suggestionLines(decision),
+    ]),
+  ];
+}
+
+/**
+ * The suggested values of a skill test, on a line of their own so the
+ * decision line (`describeDecision`) reads the same with or without them.
+ */
+function suggestionLines({ suggestion }: Decision): string[] {
+  if (!suggestion) return [];
+  return [
+    `    suggested: skill ${suggestion.skill} vs difficulty ${suggestion.difficulty} (${suggestion.outcome})`,
   ];
 }
 

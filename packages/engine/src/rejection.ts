@@ -125,6 +125,8 @@ export type Rejection =
   | { code: 'unknownDecision'; decisionId: DecisionId }
   /** `ResolveDecision` with an option the decision does not have. */
   | { code: 'unknownOption'; decisionId: DecisionId; optionId: string }
+  /** A skill test modifier that is not a whole number. */
+  | { code: 'invalidModifierAmount'; amount: number }
   /** `NextPhase` while an enemy attack of the enemy phase still has to be resolved. */
   | { code: 'enemyAttackPending'; enemyId: InstanceId; investigatorId: InvestigatorId }
   /** `ResolveEnemyAttack` for an attack that is not an outstanding, due step. */
@@ -307,6 +309,8 @@ function describe(r: Rejection): string {
       return `no pending decision ${r.decisionId}`;
     case 'unknownOption':
       return `decision ${r.decisionId} has no option ${r.optionId}`;
+    case 'invalidModifierAmount':
+      return `skill test modifier ${r.amount} is not allowed here`;
     case 'enemyAttackPending':
       return `the attack of ${r.enemyId} on ${r.investigatorId} must be resolved first`;
     case 'attackNotDue':
