@@ -39,7 +39,7 @@ export function formatBoard(ctx: EngineContext, state: GameState): string {
   ].join('\n');
 }
 
-/** The phase steps still to run, by Rules Reference number; nothing when none are left. */
+/** The phase steps still to run, by name; nothing when none are left. */
 function stepLines(state: GameState): string[] {
   const { steps } = state.meta;
   if (steps.length === 0) return [];
@@ -47,8 +47,10 @@ function stepLines(state: GameState): string[] {
 }
 
 function stepLabel(state: GameState, step: PhaseStep): string {
-  if (step.id === '1.4') return `1.4 (${investigatorName(state, step.investigatorId)})`;
-  if (step.id === '3.3' && step.attacks) return `3.3 (${step.attacks.length} attacks to resolve)`;
+  if (step.id === 'drawEncounterCard')
+    return `drawEncounterCard (${investigatorName(state, step.investigatorId)})`;
+  if (step.id === 'enemiesAttack' && step.attacks)
+    return `enemiesAttack (${step.attacks.length} attacks to resolve)`;
   return `${step.id} (${PHASE_STEP_TITLES[step.id]})`;
 }
 

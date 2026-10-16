@@ -1,8 +1,10 @@
 import type { DecisionId, InstanceId, InvestigatorId, LastingEffectId, MapId } from './ids';
 import type { Edge, GameMap } from './map';
+import type { Rejection } from './rejection';
 import type { RngState } from './rng';
 import type {
   CampaignLog,
+  HeldAction,
   CardInstance,
   ChaosToken,
   Decision,
@@ -50,7 +52,10 @@ export type Event =
   | ActionsReset
   | TurnEnded
   | LastingEffectAdded
-  | LastingEffectEnded;
+  | LastingEffectEnded
+  | ActionHeld
+  | ActionResumed
+  | ActionDropped;
 
 /** A scenario was set up; replaces the whole state. Produced by `StartScenario`. */
 export interface ScenarioStarted {
@@ -354,4 +359,34 @@ export interface LastingEffectAdded {
 export interface LastingEffectEnded {
   type: 'LastingEffectEnded';
   effectId: LastingEffectId;
+}
+
+/**
+ * An action that provokes attacks of opportunity waits until they are
+ * resolved (`GameMeta.heldAction`): the attacks come after the action is
+ * paid for but before its effect. Produced by `handle` together with the
+ * attack decisions (`attackOfOpportunityDecisions`).
+ */
+export interface ActionHeld {
+  type: 'ActionHeld';
+  command: HeldAction;
+}
+
+/**
+ * The held action resolves now; its own events follow. Produced by `handle`
+ * once no decision is pending any more (`resumeHeldAction`).
+ */
+export interface ActionResumed {
+  type: 'ActionResumed';
+}
+
+/**
+ * The held action does not resolve: an attack of opportunity defeated the
+ * investigator, or the action is no longer legal (`reason`). Produced by
+ * `handle` where `ActionResumed` would be.
+ */
+export interface ActionDropped {
+  type: 'ActionDropped';
+  command: HeldAction;
+  reason: Rejection;
 }

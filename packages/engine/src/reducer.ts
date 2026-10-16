@@ -123,6 +123,11 @@ export function apply(state: GameState, event: Event): GameState {
         ...state,
         lastingEffects: state.lastingEffects.filter((effect) => effect.id !== event.effectId),
       };
+    case 'ActionHeld':
+      return { ...state, meta: { ...state.meta, heldAction: event.command } };
+    case 'ActionResumed':
+    case 'ActionDropped':
+      return { ...state, meta: withoutKey(state.meta, 'heldAction') };
   }
 }
 

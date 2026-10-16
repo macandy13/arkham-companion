@@ -2,37 +2,37 @@ import { z } from 'zod';
 import { chapterOfPack, type Chapter, type PackDef } from './packs';
 
 /** Investigator entry of the catalog the picker lists; see `buildInvestigatorCatalog`. */
-export const InvestigatorDefSchema = z.object({
-  code: z.string(),
-  name: z.string(),
-  subname: z.string().optional(),
-  factionCode: z.string(),
-  health: z.number().int(),
-  sanity: z.number().int(),
-  skills: z.object({
-    willpower: z.number().int(),
-    intellect: z.number().int(),
-    combat: z.number().int(),
-    agility: z.number().int(),
-  }),
-  packCode: z.string(),
+export interface InvestigatorDef {
+  code: string;
+  name: string;
+  subname?: string;
+  factionCode: string;
+  health: number;
+  sanity: number;
+  skills: {
+    willpower: number;
+    intellect: number;
+    combat: number;
+    agility: number;
+  };
+  packCode: string;
   /** Cycle of the pack (`PackDef.cyclePosition`); 0 if the pack is unknown. */
-  cyclePosition: z.number().int(),
-  imageSrc: z.string().optional(),
-  backImageSrc: z.string().optional(),
+  cyclePosition: number;
+  imageSrc?: string;
+  backImageSrc?: string;
   /** ArkhamDB `duplicate_of_code`; true reprints are removed from the catalog. */
-  duplicateOfCode: z.string().optional(),
+  duplicateOfCode?: string;
   /** True for parallel versions; they stay in the catalog and point to their original. */
-  parallel: z.boolean(),
-  parallelOfCode: z.string().optional(),
-  chapter: z.union([z.literal(1), z.literal(2)]),
+  parallel: boolean;
+  parallelOfCode?: string;
+  chapter: Chapter;
   /** The same investigator in the other chapter, if the catalog has one. */
-  otherChapterCode: z.string().optional(),
-});
-export type InvestigatorDef = z.infer<typeof InvestigatorDefSchema>;
+  otherChapterCode?: string;
+}
 
 const opt = <T extends z.ZodTypeAny>(s: T) => s.nullish().transform((v) => v ?? undefined);
 
+/** Raw ArkhamDB investigator shape, checked at runtime because the API is external. */
 const RawInvestigatorSchema = z.object({
   code: z.string(),
   name: z.string(),
@@ -69,7 +69,7 @@ export function normaliseInvestigator(
   packs: readonly PackDef[] = [],
 ): InvestigatorDef {
   const r = RawInvestigatorSchema.parse(raw);
-  return InvestigatorDefSchema.parse({
+  return {
     code: r.code,
     name: r.name,
     subname: r.subname,
@@ -90,7 +90,7 @@ export function normaliseInvestigator(
     parallel: r.alternate_of_code !== undefined,
     parallelOfCode: r.alternate_of_code,
     chapter: chapterOfPack(r.pack_code),
-  });
+  };
 }
 
 /** Identity of "the same investigator" across chapters: names are the only link ArkhamDB gives. */

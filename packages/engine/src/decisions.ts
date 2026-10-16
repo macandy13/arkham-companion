@@ -70,27 +70,54 @@ export function answerCommands(state: GameState, command: Command): readonly Com
   return optionCommands(state, command);
 }
 
-/** The chosen option's commands, with the confirmed amount if the answer gives one. */
+/** The chosen option's commands, with the confirmed amount and named amounts if the answer gives them. */
 function optionCommands(state: GameState, command: ResolveDecision): readonly Command[] {
   const option = chosenOption(state, command);
-  if (command.amount === undefined) return option.commands;
-  if (!option.amount)
-    throw new CommandRejected({
-      code: 'amountNotAdjustable',
-      decisionId: command.decisionId,
-      optionId: option.id,
-    });
-  if (!inRange(command.amount, option.amount))
+  const withAmount =
+    command.amount === undefined
+      ? option.commands
+      : replaceField(
+          option.commands,
+          'amount',
+          confirmedAmount(command, option.amount, command.amount),
+        );
+  return Object.entries(command.amounts ?? {}).reduce(
+    (commands, [name, amount]) =>
+      replaceField(commands, name, confirmedAmount(command, option.amounts?.[name], amount, name)),
+    withAmount,
+  );
+}
+
+/**
+ * `amount`, checked against the option's `range` for it; `name` is set for a
+ * named amount (`DecisionOption.amounts`) and absent for the plain `amount`.
+ */
+function confirmedAmount(
+  command: ResolveDecision,
+  range: AmountRange | undefined,
+  amount: number,
+  name?: string,
+): number {
+  const where = {
+    decisionId: command.decisionId,
+    optionId: command.optionId,
+    ...(name === undefined ? {} : { name }),
+  };
+  if (!range) throw new CommandRejected({ code: 'amountNotAdjustable', ...where });
+  if (!inRange(amount, range))
     throw new CommandRejected({
       code: 'amountOutOfRange',
-      decisionId: command.decisionId,
-      optionId: option.id,
-      amount: command.amount,
-      min: option.amount.min,
-      ...(option.amount.max === undefined ? {} : { max: option.amount.max }),
+      ...where,
+      amount,
+      min: range.min,
+      ...(range.max === undefined ? {} : { max: range.max }),
     });
-  const amount = command.amount;
-  return option.commands.map((cmd) => ('amount' in cmd ? { ...cmd, amount } : cmd));
+  return amount;
+}
+
+/** `commands` with `field` set to `value` in each command that has such a field. */
+function replaceField(commands: readonly Command[], field: string, value: number): Command[] {
+  return commands.map((cmd) => (field in cmd ? { ...cmd, [field]: value } : cmd));
 }
 
 function inRange(amount: number, range: AmountRange): boolean {

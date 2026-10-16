@@ -164,13 +164,17 @@ export type Rejection =
     }
   /** `NextPhase` out of investigation while these active investigators have not taken their turn. */
   | { code: 'turnsNotTaken'; investigatorIds: InvestigatorId[] }
-  /** `ResolveDecision` with an `amount` for an option that has no adjustable count. */
-  | { code: 'amountNotAdjustable'; decisionId: DecisionId; optionId: string }
-  /** `ResolveDecision` with an `amount` outside the option's range. */
+  /**
+   * `ResolveDecision` with an `amount` (or a named one in `amounts`, then
+   * `name`) for an option that has no such adjustable count.
+   */
+  | { code: 'amountNotAdjustable'; decisionId: DecisionId; optionId: string; name?: string }
+  /** `ResolveDecision` with an `amount` (or the named one `name`) outside the option's range. */
   | {
       code: 'amountOutOfRange';
       decisionId: DecisionId;
       optionId: string;
+      name?: string;
       amount: number;
       min: number;
       max?: number;
@@ -337,9 +341,9 @@ function describe(r: Rejection): string {
     case 'turnsNotTaken':
       return `the investigation phase ends after each turn; still to go: ${r.investigatorIds.join(', ')}`;
     case 'amountNotAdjustable':
-      return `option ${r.optionId} of decision ${r.decisionId} has no adjustable amount`;
+      return `option ${r.optionId} of decision ${r.decisionId} has no adjustable ${r.name ?? 'amount'}`;
     case 'amountOutOfRange':
-      return `option ${r.optionId} of decision ${r.decisionId} takes ${r.min}${r.max === undefined ? ' or more' : `–${r.max}`}, got ${r.amount}`;
+      return `${r.name ?? 'amount'} of option ${r.optionId} of decision ${r.decisionId} takes ${r.min}${r.max === undefined ? ' or more' : `–${r.max}`}, got ${r.amount}`;
     case 'triggerLoop':
       return `forced effects triggered more than ${r.limit} follow-up commands`;
     case 'triggeredCommandRejected':

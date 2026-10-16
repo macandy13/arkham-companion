@@ -1,5 +1,3 @@
-import { z } from 'zod';
-
 /**
  * Keywords the engine reacts to. Mirrors `KeywordName` in `@arkham/engine`
  * (the engine declares its own copy so it never imports `carddata`).
@@ -23,12 +21,11 @@ export const KEYWORD_NAMES = [
  * Victory points are not a keyword here: ArkhamDB has a `victory` field for
  * them (`CardDef.victory`).
  */
-export const KeywordSchema = z.object({
-  name: z.enum(KEYWORD_NAMES),
+export interface Keyword {
+  name: (typeof KEYWORD_NAMES)[number];
   /** The free text after `patrol`, `prey` and `spawn`; interpreted by the rule that uses it. */
-  detail: z.string().optional(),
-});
-export type Keyword = z.infer<typeof KeywordSchema>;
+  detail?: string;
+}
 
 const PLAIN_KEYWORDS: ReadonlySet<string> = new Set([
   'surge',
