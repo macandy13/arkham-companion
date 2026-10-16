@@ -9,7 +9,7 @@ import { zoneKey } from './zone';
  * every card is in exactly one zone and listed exactly once in that zone's
  * order, no order list is empty or names an unknown card, no token count is
  * negative, every connection (of any map) joins two known cards and appears only once,
- * and every investigator is consistent (see `investigatorErrors`).
+ * every investigator is consistent (see `investigatorErrors`) and pending decisions are well-formed.
  */
 export function checkInvariants(state: GameState): string[] {
   const errors: string[] = [];
@@ -36,6 +36,7 @@ export function checkInvariants(state: GameState): string[] {
   errors.push(...currentCardErrors(state));
   errors.push(...connectionErrors(state));
   errors.push(...investigatorErrors(state));
+  errors.push(...decisionErrors(state));
   return errors;
 }
 
@@ -63,6 +64,20 @@ function connectionErrors(state: GameState): string[] {
     }
     if (edges.slice(0, i).some((earlier) => sameEdge(earlier, edge)))
       errors.push(`connection ${edge.from} - ${edge.to} appears more than once`);
+  });
+  return errors;
+}
+
+/** Violations of the pending decisions: ids and option ids must be unique, and every decision needs an option. */
+function decisionErrors(state: GameState): string[] {
+  const errors: string[] = [];
+  state.pending.forEach((decision, i) => {
+    if (state.pending.slice(0, i).some((earlier) => earlier.id === decision.id))
+      errors.push(`decision ${decision.id} is pending more than once`);
+    if (decision.options.length === 0) errors.push(`decision ${decision.id} has no options`);
+    const optionIds = new Set(decision.options.map((option) => option.id));
+    if (optionIds.size !== decision.options.length)
+      errors.push(`decision ${decision.id} has repeated option ids`);
   });
   return errors;
 }

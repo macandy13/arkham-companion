@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  apply,
   checkInvariants,
+  decisionId,
   enemyAttackList,
   execute,
   instanceId,
@@ -303,9 +305,9 @@ describe('SpawnEnemy', () => {
     const asked = stateAfter(ctx, state, { type: 'SpawnEnemy', enemyId: ghoul, at: hall });
 
     const after = stateAfter(ctx, asked, {
-      type: 'EngageEnemy',
-      enemyId: ghoul,
-      investigatorId: bob,
+      type: 'ResolveDecision',
+      decisionId: decisionId('engage:ghoul'),
+      optionId: bob,
     });
 
     expect(asked.pending).toHaveLength(1);
@@ -467,13 +469,17 @@ describe('damage and defeat', () => {
     expect(after.cards[ghoul]?.exhausted).toBe(false);
   });
 
-  it('drops an open engagement question when the enemy is defeated', () => {
+  it('drops an open engagement question when the enemy leaves play', () => {
     const state = startedWith([placed(ghoul, 'ghoul', setAside)], {
       investigators: aliceAndBobAt(hall, { alice: 0, bob: 0 }),
     });
     const asked = stateAfter(ctx, state, { type: 'SpawnEnemy', enemyId: ghoul, at: hall });
 
-    const after = stateAfter(ctx, asked, { type: 'DefeatEnemy', enemyId: ghoul });
+    const after = apply(asked, {
+      type: 'EnemyDefeated',
+      enemyId: ghoul,
+      to: { kind: 'encounterDiscard' },
+    });
 
     expect(asked.pending).toHaveLength(1);
     expect(after.pending).toEqual([]);

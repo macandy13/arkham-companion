@@ -265,7 +265,7 @@ describe('trigger bus', () => {
 
     const { state } = execute(ctx, startedState(), advanceAct);
 
-    expect(state.pending.map((decision) => decision.kind)).toEqual(['advanceAgenda']);
+    expect(state.pending.map((decision) => decision.kind)).toEqual(['confirm']);
   });
 });
 

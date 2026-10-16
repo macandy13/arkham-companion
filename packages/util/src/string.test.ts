@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { stripTrailingDot } from './index';
+import { camelCaseToWords, stripTrailingDot } from './index';
+
+describe('camelCaseToWords', () => {
+  it.each([
+    { name: 'splits at each capital', text: 'chooseHunterOrder', expected: 'choose hunter order' },
+    { name: 'keeps a single word', text: 'yes', expected: 'yes' },
+    { name: 'lower-cases a leading capital', text: 'Yes', expected: 'yes' },
+    { name: 'keeps an empty string', text: '', expected: '' },
+  ])('$name', ({ text, expected }) => {
+    expect(camelCaseToWords(text)).toEqual(expected);
+  });
+});
 
 describe('stripTrailingDot', () => {
   it.each([

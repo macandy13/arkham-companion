@@ -1,3 +1,4 @@
+import type { Command } from './commands';
 import type { DecisionId, InstanceId, InvestigatorId, MapId, SlotId } from './ids';
 import type { GameMap } from './map';
 import type { RngState } from './rng';
@@ -106,41 +107,77 @@ export type ChaosToken =
   | 'curse'
   | 'frost';
 
-/**
- * Who answers a decision: the lead investigator (a choice between several valid
- * options that the rules leave to the lead) or the group. A hint for the UI
- * only; the engine accepts an answer from anyone, because it does not know who
- * sits at the table.
- */
-export type Decider = { kind: 'lead' } | { kind: 'group' };
+/** The kinds of decision; the UI has one dialog per kind (M3.7). */
+export type DecisionKind =
+  | 'confirm'
+  | 'chooseInvestigator'
+  | 'chooseLocation'
+  | 'chooseCard'
+  | 'chooseOption'
+  | 'skillTestResult';
 
 /**
- * An open choice for the players (hunter tie, spawn location, effect target …).
- * The engine never guesses; the answer comes back as a `ResolveDecision` command.
- * Created by a `DecisionRequested` event and kept in `GameState.pending` until
- * the card it is about advances or (M1.9) the players resolve it.
+ * Who answers a decision: the lead investigator (ties, "of your choice" rules
+ * the lead settles), one named investigator (a choice only they make) or the
+ * group. A hint for the UI only; the engine accepts an answer from anyone,
+ * because it does not know who sits at the table.
+ */
+export type Decider =
+  { kind: 'lead' } | { kind: 'investigator'; investigatorId: InvestigatorId } | { kind: 'group' };
+
+/** The investigator skills a skill test can use. */
+export type SkillName = 'willpower' | 'intellect' | 'combat' | 'agility';
+
+/** The test the players resolve at the table for a `skillTestResult` decision. */
+export interface SkillTest {
+  skill: SkillName;
+  /** Shroud, enemy value or the number printed on the card. */
+  difficulty: number;
+}
+
+/**
+ * An open choice for the players (hunter tie, spawn location, effect target,
+ * skill test outcome …). The engine never guesses; the answer comes back as a
+ * `ResolveDecision` command, which runs the commands of the chosen option.
+ * Created by a `DecisionRequested` event (from a rule module or a
+ * `RequestDecision` command, e.g. returned by a scenario hook) and kept in
+ * `GameState.pending` until it is resolved or the card it is about advances
+ * or leaves play. While any decision is pending `handle` rejects every
+ * command except `ManualAdjust` and `ResolveDecision`.
  */
 export interface Decision {
   /** Unique among pending decisions; derived from kind and subject so a repeated check does not ask twice. */
   id: DecisionId;
-  /** Machine-readable kind, e.g. 'advanceAgenda', 'chooseInvestigator' (prey tie, who an enemy engages) or 'chooseLocation' (hunter destination tie). Interpreted by the rule module that created it. */
-  kind: string;
+  kind: DecisionKind;
   /** The card the decision is about, if any; the decision is dropped when this card advances. */
   subject?: InstanceId;
   /** i18n key or plain text describing the choice. */
   prompt: string;
-  /** Who answers; unset for decisions that do not say yet (M1.9 makes it required). */
-  decider?: Decider;
+  decider: Decider;
+  /** Only for `skillTestResult`: what the players are testing. */
+  skillTest?: SkillTest;
+  /**
+   * The answers. Each carries the commands it triggers, so the mapping from
+   * answer to consequence is data and any module (or scenario) can raise a decision.
+   */
   options: DecisionOption[];
 }
 
 /** One answer the players can pick for a `Decision`. */
 export interface DecisionOption {
+  /** Unique within its decision. */
   id: string;
   /** i18n key or plain text. */
   label: string;
   /** Optional reference to a card or investigator the option is about. */
   target?: InstanceId | InvestigatorId;
+  /**
+   * Commands `ResolveDecision` runs through `handle` when this option is
+   * picked (validated, in the same undo group). They are checked when the
+   * decision is resolved, not when it is raised, so they may refer to the
+   * state of that later moment.
+   */
+  commands: Command[];
 }
 
 /** Campaign log – stub until campaign mode (architecture §8). */

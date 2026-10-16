@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   checkInvariants,
+  decisionId,
   execute,
   instanceId,
   investigatorId,
@@ -17,6 +18,7 @@ import {
   edge,
   makeCard,
   makeInvestigator,
+  rejectionFrom,
   startBoard,
   stateAfter,
 } from '../test/utils';
@@ -220,15 +222,38 @@ describe('MoveHunters', () => {
       ]);
     });
 
-    it('does not ask again while the question is open', () => {
+    it('rejects another hunter move while the question is open', () => {
       const state = started({
         ...fork,
         investigators: [investigator('alice', 'd')],
         enemies: [enemy(hunter, 'hunter_ghoul', at('a'))],
       });
-      const asked = execute(ctx, state, moveHunters).state;
+      const asked = stateAfter(ctx, state, moveHunters);
 
-      expect(execute(ctx, asked, moveHunters).events).toEqual([]);
+      const rejection = rejectionFrom(ctx, asked, moveHunters);
+
+      expect(rejection).toEqual({
+        code: 'decisionPending',
+        decisionId: decisionId('hunter:hunter:location'),
+      });
+    });
+
+    it('moves the hunter to the location the players chose', () => {
+      const state = started({
+        ...fork,
+        investigators: [investigator('alice', 'd')],
+        enemies: [enemy(hunter, 'hunter_ghoul', at('a'))],
+      });
+      const asked = stateAfter(ctx, state, moveHunters);
+
+      const after = stateAfter(ctx, asked, {
+        type: 'ResolveDecision',
+        decisionId: decisionId('hunter:hunter:location'),
+        optionId: 'c',
+      });
+
+      expect(zoneOf(after, hunter)).toEqual(at('c'));
+      expect(after.pending).toEqual([]);
     });
 
     it('asks which investigator to hunt when equally near investigators lead apart', () => {
@@ -248,6 +273,24 @@ describe('MoveHunters', () => {
           options: [{ target: alice }, { target: bob }],
         },
       ]);
+    });
+
+    it('engages the investigator the players chose when the hunter can reach them', () => {
+      const state = started({
+        places: ['a', 'b', 'c'],
+        edges: [edge('a', 'b'), edge('a', 'c')],
+        investigators: [investigator('alice', 'b'), investigator('bob', 'c')],
+        enemies: [enemy(hunter, 'hunter_ghoul', at('a'))],
+      });
+      const asked = stateAfter(ctx, state, moveHunters);
+
+      const after = stateAfter(ctx, asked, {
+        type: 'ResolveDecision',
+        decisionId: decisionId('hunter:hunter:investigator'),
+        optionId: bob,
+      });
+
+      expect(zoneOf(after, hunter)).toEqual(engagedWith(bob));
     });
 
     it('lets prey pick between equally near investigators', () => {
@@ -310,10 +353,12 @@ describe('MoveHunters order', () => {
     expect(zoneOf(after, second)).toEqual(at('b'));
   });
 
-  it('does not ask again while the order question is open', () => {
+  it('rejects another hunter move while the order question is open', () => {
     const asked = stateAfter(ctx, twoHunters(), moveHunters);
 
-    expect(execute(ctx, asked, moveHunters).events).toEqual([]);
+    const rejection = rejectionFrom(ctx, asked, moveHunters);
+
+    expect(rejection).toEqual({ code: 'decisionPending', decisionId: decisionId('hunterOrder') });
   });
 
   it('moves a single hunter directly when no other hunter would move', () => {
@@ -334,23 +379,45 @@ describe('MoveHunters order', () => {
   });
 
   it('skips a hunter that has an open decision about itself', () => {
-    const forked = instanceId('forked_hunter');
-    const lone = instanceId('lone_hunter');
+    const waiting = instanceId('waiting_hunter');
     const state = started({
-      ...fork,
-      investigators: [investigator('alice', 'd')],
-      enemies: [enemy(forked, 'hunter_ghoul', at('a')), enemy(lone, 'hunter_ghoul', at('b'))],
+      places: ['a', 'b', 'c'],
+      edges: line('a', 'b', 'c'),
+      investigators: [investigator('alice', 'c')],
+      enemies: [enemy(waiting, 'hunter_ghoul', at('a')), enemy(second, 'hunter_ghoul', at('b'))],
     });
-    const loneExhausted = stateAfter(ctx, state, { type: 'ExhaustEnemy', enemyId: lone });
-    const forkedAsked = stateAfter(ctx, loneExhausted, moveHunters);
-    const loneReady = stateAfter(ctx, forkedAsked, { type: 'ReadyEnemy', enemyId: lone });
+    const aboutWaiting: Command = {
+      type: 'RequestDecision',
+      decision: {
+        id: decisionId('about_waiting_hunter'),
+        kind: 'confirm',
+        subject: waiting,
+        prompt: 'Does the waiting hunter stay?',
+        decider: { kind: 'group' },
+        options: [{ id: 'yes', label: 'Yes', commands: [] }],
+      },
+    };
+    // The follow-up commands of an answer run while the new question is open, unlike commands from outside.
+    const asked = stateAfter(ctx, state, {
+      type: 'RequestDecision',
+      decision: {
+        id: decisionId('start_hunting'),
+        kind: 'confirm',
+        prompt: 'Start hunting?',
+        decider: { kind: 'group' },
+        options: [{ id: 'yes', label: 'Yes', commands: [aboutWaiting, moveHunters] }],
+      },
+    });
 
-    const after = stateAfter(ctx, loneReady, moveHunters);
+    const after = stateAfter(ctx, asked, {
+      type: 'ResolveDecision',
+      decisionId: decisionId('start_hunting'),
+      optionId: 'yes',
+    });
 
-    expect(forkedAsked.pending).toMatchObject([{ kind: 'chooseLocation', subject: forked }]);
-    expect(zoneOf(after, lone)).toEqual(engagedWith(alice));
-    expect(zoneOf(after, forked)).toEqual(at('a'));
-    expect(after.pending).toHaveLength(1);
+    expect(zoneOf(after, second)).toEqual(engagedWith(alice));
+    expect(zoneOf(after, waiting)).toEqual(at('a'));
+    expect(after.pending.map((decision) => decision.id)).toEqual(['about_waiting_hunter']);
   });
 
   it('considers only the listed hunters, as the answer to the order question does', () => {
@@ -363,6 +430,199 @@ describe('MoveHunters order', () => {
     expect(zoneOf(afterFirst, second)).toEqual(at('b'));
     expect(zoneOf(afterBoth, first)).toEqual(at('b'));
     expect(zoneOf(afterBoth, second)).toEqual(engagedWith(alice));
+  });
+});
+
+describe('answering the hunter order', () => {
+  const first = instanceId('first_hunter');
+  const second = instanceId('second_hunter');
+  const third = instanceId('third_hunter');
+  const chooseOrder = (hunterId: InstanceId): Command => ({
+    type: 'ResolveDecision',
+    decisionId: decisionId('hunterOrder'),
+    optionId: hunterId,
+  });
+  /** a - b - c with alice at c: the hunters at a and at b both have a step to take. */
+  const twoHunters = () =>
+    started({
+      places: ['a', 'b', 'c'],
+      edges: line('a', 'b', 'c'),
+      investigators: [investigator('alice', 'c')],
+      enemies: [enemy(first, 'hunter_ghoul', at('a')), enemy(second, 'hunter_ghoul', at('b'))],
+    });
+  /** a - b - c - d with alice at d: the hunters at a, b and c all have a step to take. */
+  const threeHunters = () =>
+    started({
+      places: ['a', 'b', 'c', 'd'],
+      edges: line('a', 'b', 'c', 'd'),
+      investigators: [investigator('alice', 'd')],
+      enemies: [
+        enemy(first, 'hunter_ghoul', at('a')),
+        enemy(second, 'hunter_ghoul', at('b')),
+        enemy(third, 'hunter_ghoul', at('c')),
+      ],
+    });
+
+  it('moves the chosen hunter, which engages on arrival, then the other one, in one event list', () => {
+    const asked = stateAfter(ctx, twoHunters(), moveHunters);
+
+    const { state: after, events } = execute(ctx, asked, chooseOrder(second));
+
+    expect(zoneOf(after, second)).toEqual(engagedWith(alice));
+    expect(zoneOf(after, first)).toEqual(at('b'));
+    expect(after.pending).toEqual([]);
+    expect(events.map((e) => e.type)).toEqual([
+      'DecisionResolved',
+      'CardMoved',
+      'EnemyEngaged',
+      'CardMoved',
+    ]);
+  });
+
+  it('lets the first hunter go first when the lead chooses it', () => {
+    const asked = stateAfter(ctx, twoHunters(), moveHunters);
+
+    const after = stateAfter(ctx, asked, chooseOrder(first));
+
+    expect(zoneOf(after, first)).toEqual(at('b'));
+    expect(zoneOf(after, second)).toEqual(engagedWith(alice));
+  });
+
+  it('asks the order of the remaining hunters again after the first choice', () => {
+    const asked = stateAfter(ctx, threeHunters(), moveHunters);
+
+    const askedAgain = stateAfter(ctx, asked, chooseOrder(second));
+
+    expect(asked.pending[0]?.options.map((option) => option.id)).toEqual([first, second, third]);
+    expect(zoneOf(askedAgain, second)).toEqual(at('c'));
+    expect(zoneOf(askedAgain, first)).toEqual(at('a'));
+    expect(askedAgain.pending[0]?.options.map((option) => option.id)).toEqual([first, third]);
+  });
+
+  it('moves every hunter exactly once after two rounds of questions', () => {
+    const asked = stateAfter(ctx, threeHunters(), moveHunters);
+
+    const after = stateAfter(ctx, asked, chooseOrder(second), chooseOrder(third));
+
+    expect(zoneOf(after, second)).toEqual(at('c'));
+    expect(zoneOf(after, third)).toEqual(engagedWith(alice));
+    expect(zoneOf(after, first)).toEqual(at('b'));
+    expect(after.pending).toEqual([]);
+  });
+
+  it("still raises the chosen hunter's own tie decision and moves the others", () => {
+    const forked = instanceId('forked_hunter');
+    const state = started({
+      ...fork,
+      investigators: [investigator('alice', 'd')],
+      enemies: [enemy(forked, 'hunter_ghoul', at('a')), enemy(second, 'hunter_ghoul', at('b'))],
+    });
+    const asked = stateAfter(ctx, state, moveHunters);
+
+    const after = stateAfter(ctx, asked, chooseOrder(forked));
+
+    expect(zoneOf(after, forked)).toEqual(at('a'));
+    expect(zoneOf(after, second)).toEqual(engagedWith(alice));
+    expect(after.pending.map((decision) => decision.id)).toEqual(['hunter:forked_hunter:location']);
+  });
+});
+
+describe('MoveHunter', () => {
+  const engaged = instanceId('engaged_hunter');
+  const ghoul = instanceId('plain_ghoul');
+  const layout = (): GameState =>
+    started({
+      ...fork,
+      investigators: [investigator('alice', 'd')],
+      enemies: [
+        enemy(hunter, 'hunter_ghoul', at('a')),
+        enemy(engaged, 'hunter_ghoul', engagedWith(alice)),
+        enemy(ghoul, 'plain_ghoul', at('a')),
+      ],
+    });
+
+  it.each([
+    { name: 'an engaged enemy', enemyId: engaged, to: 'b', code: 'notAHunter' },
+    { name: 'an unknown card', enemyId: instanceId('nobody'), to: 'b', code: 'unknownCard' },
+    {
+      name: 'a location that is not connected',
+      enemyId: hunter,
+      to: 'd',
+      code: 'hunterCannotMove',
+    },
+  ])('rejects moving $name', ({ enemyId, to, code }) => {
+    const rejection = rejectionFrom(ctx, layout(), {
+      type: 'MoveHunter',
+      enemyId,
+      to: instanceId(to),
+    });
+
+    expect(rejection.code).toBe(code);
+  });
+
+  it('rejects moving towards an unknown investigator', () => {
+    const rejection = rejectionFrom(ctx, layout(), {
+      type: 'MoveHunter',
+      enemyId: hunter,
+      towards: investigatorId('nobody'),
+    });
+
+    expect(rejection.code).toBe('unknownInvestigator');
+  });
+
+  it('rejects moving towards an investigator the hunter cannot reach', () => {
+    const state = started({
+      places: ['a', 'b'],
+      edges: [],
+      investigators: [investigator('alice', 'b')],
+      enemies: [enemy(hunter, 'hunter_ghoul', at('a'))],
+    });
+
+    const rejection = rejectionFrom(ctx, state, {
+      type: 'MoveHunter',
+      enemyId: hunter,
+      towards: alice,
+    });
+
+    expect(rejection.code).toBe('noRoute');
+  });
+
+  it('takes the only step towards an investigator', () => {
+    const state = started({
+      places: ['a', 'b', 'c'],
+      edges: line('a', 'b', 'c'),
+      investigators: [investigator('alice', 'c')],
+      enemies: [enemy(hunter, 'hunter_ghoul', at('a'))],
+    });
+
+    const after = stateAfter(ctx, state, { type: 'MoveHunter', enemyId: hunter, towards: alice });
+
+    expect(zoneOf(after, hunter)).toEqual(at('b'));
+  });
+
+  it('moves along its own rule when given neither a location nor an investigator', () => {
+    const state = started({
+      places: ['a', 'b', 'c'],
+      edges: line('a', 'b', 'c'),
+      investigators: [investigator('alice', 'c')],
+      enemies: [enemy(hunter, 'hunter_ghoul', at('a'))],
+    });
+
+    const after = stateAfter(ctx, state, { type: 'MoveHunter', enemyId: hunter });
+
+    expect(zoneOf(after, hunter)).toEqual(at('b'));
+  });
+
+  it('asks the players when its own rule leaves a tie', () => {
+    const state = started({
+      ...fork,
+      investigators: [investigator('alice', 'd')],
+      enemies: [enemy(hunter, 'hunter_ghoul', at('a'))],
+    });
+
+    const after = stateAfter(ctx, state, { type: 'MoveHunter', enemyId: hunter });
+
+    expect(after.pending.map((decision) => decision.id)).toEqual(['hunter:hunter:location']);
   });
 });
 

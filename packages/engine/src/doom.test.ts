@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   checkInvariants,
+  decisionId,
   doomInPlay,
   execute,
+  apply,
   instanceId,
   investigatorId,
   mapId,
@@ -41,8 +43,9 @@ function makeInvestigator(
 
 /**
  * Agenda 1 (A1, threshold 3 doom) then agenda 2 (A2, threshold 5); act 1 (C1,
- * 2 clues per investigator) then act 2 (C2, 3 per investigator). A ghoul at the
- * hall and a treachery in the encounter deck.
+ * 2 clues per investigator) then act 2 (C2, 3 per investigator). A ghoul engaged
+ * with Alice (so a second investigator at the hall causes no engagement decision)
+ * and a treachery in the encounter deck.
  */
 function startedWith(investigators: Investigator[]): GameState {
   return run(testContext, [
@@ -59,7 +62,7 @@ function startedWith(investigators: Investigator[]): GameState {
         { id: act1, code: 'C1', zone: { kind: 'actDeck' }, faceUp: true },
         { id: act2, code: 'C2', zone: { kind: 'actDeck' }, faceUp: true },
         { id: hall, code: 'L1', zone: { kind: 'location', mapId: main }, faceUp: true },
-        { id: ghoul, code: 'E1', zone: { kind: 'atLocation', locationId: hall }, faceUp: true },
+        { id: ghoul, code: 'E1', zone: { kind: 'engaged', investigatorId: alice }, faceUp: true },
         { id: deckTreachery, code: 'E4', zone: { kind: 'encounterDeck' } },
       ],
     },
@@ -175,6 +178,22 @@ const manualDoom = (cardId: typeof hall, delta: number): Command => ({
   adjustment: { kind: 'tokens', cardId, token: 'doom', delta },
 });
 
+/** Like `stateAfter`, but declines the agenda question before each command, which would block it otherwise. */
+function stateAfterDeclining(
+  ctx: typeof testContext,
+  state: GameState,
+  ...commands: Command[]
+): GameState {
+  return commands.reduce((current, command) => {
+    const declines = current.pending.map((decision): Command => ({
+      type: 'ResolveDecision',
+      decisionId: decision.id,
+      optionId: 'no',
+    }));
+    return stateAfter(ctx, current, ...declines, command);
+  }, state);
+}
+
 describe('doom total invariant', () => {
   it.each<{ name: string; commands: Command[]; total: number }>([
     { name: 'nothing placed', commands: [], total: 0 },
@@ -217,7 +236,7 @@ describe('doom total invariant', () => {
       total: 1,
     },
   ])('equals agenda, cards in play and counters after $name', ({ commands, total }) => {
-    const state = stateAfter(
+    const state = stateAfterDeclining(
       testContext,
       startedWith([makeInvestigator({ id: alice }), makeInvestigator({ id: bob, seat: 1 })]),
       ...commands,
@@ -236,7 +255,7 @@ describe('doom total', () => {
       makeInvestigator({ id: bob, seat: 1 }),
     ]);
 
-    state = stateAfter(
+    state = stateAfterDeclining(
       testContext,
       state,
       { type: 'PlaceDoom', amount: 1 },
@@ -294,12 +313,18 @@ describe('threshold check', () => {
     expect(next.pending).toEqual([
       {
         id: 'advanceAgenda:agenda1',
-        kind: 'advanceAgenda',
+        kind: 'confirm',
         subject: agenda1,
         prompt: 'decision.advanceAgenda',
+        decider: { kind: 'group' },
         options: [
-          { id: 'yes', label: 'decision.yes', target: agenda1 },
-          { id: 'no', label: 'decision.no' },
+          {
+            id: 'yes',
+            label: 'decision.yes',
+            target: agenda1,
+            commands: [{ type: 'AdvanceAgenda' }],
+          },
+          { id: 'no', label: 'decision.no', commands: [] },
         ],
       },
     ]);
@@ -314,15 +339,57 @@ describe('threshold check', () => {
       { type: 'AdjustInvestigator', investigatorId: alice, stat: 'doomOnPlayerCards', delta: 1 },
     );
 
-    expect(next.pending.map((d) => d.kind)).toEqual(['advanceAgenda']);
+    expect(next.pending.map((d) => d.kind)).toEqual(['confirm']);
   });
 
-  it('does not ask again while the question is open', () => {
+  it('rejects more doom while the question is open', () => {
     const asked = stateAfter(testContext, state, { type: 'PlaceDoom', amount: 3 });
 
-    const events = eventsOf(asked, { type: 'PlaceDoom', amount: 1 });
+    const rejection = rejectionFrom(testContext, asked, { type: 'PlaceDoom', amount: 1 });
 
-    expect(events.map((e) => e.type)).toEqual(['TokensChanged']);
+    expect(rejection).toEqual({
+      code: 'decisionPending',
+      decisionId: decisionId('advanceAgenda:agenda1'),
+    });
+  });
+
+  it('asks again when more doom is placed after the question was declined', () => {
+    const declined = stateAfter(
+      testContext,
+      state,
+      { type: 'PlaceDoom', amount: 3 },
+      { type: 'ResolveDecision', decisionId: decisionId('advanceAgenda:agenda1'), optionId: 'no' },
+    );
+
+    const next = stateAfter(testContext, declined, { type: 'PlaceDoom', amount: 1 });
+
+    expect(next.pending.map((d) => d.id)).toEqual(['advanceAgenda:agenda1']);
+  });
+
+  it('advances the agenda when the question is answered yes', () => {
+    const asked = stateAfter(testContext, state, { type: 'PlaceDoom', amount: 3 });
+
+    const next = stateAfter(testContext, asked, {
+      type: 'ResolveDecision',
+      decisionId: decisionId('advanceAgenda:agenda1'),
+      optionId: 'yes',
+    });
+
+    expect(next.pending).toEqual([]);
+    expect(next.agenda.current).toBe(agenda2);
+  });
+
+  it('leaves the agenda alone when the question is answered no', () => {
+    const asked = stateAfter(testContext, state, { type: 'PlaceDoom', amount: 3 });
+
+    const next = stateAfter(testContext, asked, {
+      type: 'ResolveDecision',
+      decisionId: decisionId('advanceAgenda:agenda1'),
+      optionId: 'no',
+    });
+
+    expect(next.pending).toEqual([]);
+    expect(next.agenda.current).toBe(agenda1);
   });
 
   it('removes player-card doom without asking', () => {
@@ -363,7 +430,10 @@ describe('AdvanceAgenda', () => {
       startedWith([makeInvestigator({ id: alice })]),
       { type: 'PlaceDoom', amount: 2 },
       { type: 'PlaceDoom', cardId: ghoul, amount: 1 },
+      // The threshold question is open now; declining it keeps later commands unblocked.
+      { type: 'ResolveDecision', decisionId: decisionId('advanceAgenda:agenda1'), optionId: 'no' },
       { type: 'AdjustInvestigator', investigatorId: alice, stat: 'doomOnPlayerCards', delta: 1 },
+      { type: 'ResolveDecision', decisionId: decisionId('advanceAgenda:agenda1'), optionId: 'no' },
     );
   });
 
@@ -387,7 +457,7 @@ describe('AdvanceAgenda', () => {
   it('drops the pending question about the old agenda', () => {
     const asked = stateAfter(testContext, state, { type: 'PlaceDoom', amount: 1 });
 
-    const next = stateAfter(testContext, asked, { type: 'AdvanceAgenda' });
+    const next = apply(asked, { type: 'AgendaAdvanced', cardId: agenda1 });
 
     expect(asked.pending).toHaveLength(1);
     expect(next.pending).toEqual([]);

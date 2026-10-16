@@ -1,4 +1,5 @@
 import { cardStats, comparableName, type CardStats, type EngineContext } from './cards';
+import type { Command } from './commands';
 import type { DecisionRequested, EnemyEngaged, Event } from './events';
 import { decisionId, type InstanceId, type InvestigatorId } from './ids';
 import {
@@ -7,10 +8,11 @@ import {
   mostClues,
   mostResources,
 } from './investigators';
+import { requestDecision } from './decisions';
 import { hasKeyword } from './keywords';
 import { cardsOfType } from './lookup';
 import { replay } from './reducer';
-import type { Decision, GameState, Investigator } from './state';
+import type { GameState, Investigator } from './state';
 
 /** Prey criteria the engine can evaluate from investigator counters; each returns the tied best. */
 const PREY_CRITERIA: Record<string, (investigators: readonly Investigator[]) => Investigator[]> = {
@@ -47,7 +49,7 @@ export function preferredByPrey(
  * What happens when the unengaged enemy `enemyId` is at a location with
  * investigators (it just spawned or arrived, or was readied): it engages the
  * only investigator there, or the one its prey picks. If several remain the
- * players choose (`chooseInvestigator` decision, to be answered by
+ * players choose (`chooseInvestigator` decision whose options run
  * `EngageEnemy`). `drawerId` is the investigator who drew an enemy without a
  * spawn instruction: that one is engaged whatever the prey (Rules Reference,
  * "Spawn"). Nothing for aloof or exhausted enemies and when nobody is there.
@@ -75,6 +77,7 @@ export function engageEvents(
     `engage:${enemyId}`,
     'decision.chooseEngagement',
     preferred,
+    (chosen) => ({ type: 'EngageEnemy', enemyId, investigatorId: chosen.id }),
   );
 }
 
@@ -104,13 +107,20 @@ export function chooseInvestigator(
   id: string,
   prompt: string,
   options: readonly Investigator[],
+  answer: (chosen: Investigator) => Command,
 ): DecisionRequested[] {
   return requestDecision(state, {
     id: decisionId(id),
     kind: 'chooseInvestigator',
     subject,
     prompt,
-    options: options.map((inv) => ({ id: inv.id, label: inv.name, target: inv.id })),
+    decider: { kind: 'lead' },
+    options: options.map((inv) => ({
+      id: inv.id,
+      label: inv.name,
+      target: inv.id,
+      commands: [answer(inv)],
+    })),
   });
 }
 
@@ -122,24 +132,21 @@ export function chooseLocation(
   id: string,
   prompt: string,
   locations: readonly InstanceId[],
+  answer: (chosen: InstanceId) => Command,
 ): DecisionRequested[] {
   return requestDecision(state, {
     id: decisionId(id),
     kind: 'chooseLocation',
     subject,
     prompt,
+    decider: { kind: 'lead' },
     options: locations.map((locationId) => ({
       id: locationId,
       label: ctx.cards.get(state.cards[locationId]?.code ?? '')?.name ?? locationId,
       target: locationId,
+      commands: [answer(locationId)],
     })),
   });
-}
-
-/** A `DecisionRequested` for `decision`, unless one with this id is already open. */
-export function requestDecision(state: GameState, decision: Decision): DecisionRequested[] {
-  if (state.pending.some((pending) => pending.id === decision.id)) return [];
-  return [{ type: 'DecisionRequested', decision }];
 }
 
 function engaged(enemyId: InstanceId, investigator: Investigator): EnemyEngaged {

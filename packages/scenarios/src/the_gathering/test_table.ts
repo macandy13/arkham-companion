@@ -2,6 +2,7 @@ import {
   cardStats,
   cardsNamed,
   checkInvariants,
+  describeDecision,
   compileSetup,
   emptyState,
   enemyAttackList,
@@ -10,6 +11,7 @@ import {
   instanceId,
   isInPlay,
   locationsNamed,
+  optionNamed,
   mapId,
   zoneKey,
   type CardInstance,
@@ -95,9 +97,26 @@ export class TestTable {
     this.play({ type: 'PlaceDoom', amount });
   }
 
-  /** The players answer the agenda's doom threshold by advancing it. */
-  advanceAgenda(): void {
-    this.play({ type: 'AdvanceAgenda' });
+  /**
+   * Answers the open decision about the card named `subjectName` by picking
+   * the option shown as `optionName` (e.g. `answer('Swarm of Rats', 'Roland
+   * Banks')`, `answer("What's Going On?!", 'yes')`). Fails with the board
+   * attached if no such decision or option exists, so a script that answers
+   * the wrong question breaks where it happens.
+   */
+  answer(subjectName: string, optionName: string): void {
+    const decision = this.current.pending.find(
+      (pending) =>
+        pending.subject !== undefined &&
+        this.nameOf(this.cardWithId(pending.subject)) === subjectName,
+    );
+    if (!decision) throw new Error(`no open decision about ${subjectName}\n${this.board()}`);
+    const option = optionNamed(decision, optionName);
+    if (!option)
+      throw new Error(
+        `no option ${optionName} in: ${describeDecision(this.ctx, this.current, decision)}\n${this.board()}`,
+      );
+    this.play({ type: 'ResolveDecision', decisionId: decision.id, optionId: option.id });
   }
 
   /**
@@ -266,17 +285,14 @@ export class TestTable {
   }
 
   /**
-   * One line per open decision: its kind, the card it is about and the option
-   * labels, e.g. "chooseInvestigator about Swarm of Rats: Roland Banks, Daisy Walker, Wendy Adams".
+   * One line per open decision (`describeDecision`): the question, the options
+   * by name and the kind, e.g. "Whom does Swarm of Rats engage? Roland Banks /
+   * Daisy Walker / Wendy Adams [chooseInvestigator]".
    */
   pendingDecisions(): string[] {
-    return this.current.pending.map((decision) => {
-      const about =
-        decision.subject === undefined
-          ? ''
-          : ` about ${this.nameOf(this.cardWithId(decision.subject))}`;
-      return `${decision.kind}${about}: ${decision.options.map((option) => option.label).join(', ')}`;
-    });
+    return this.current.pending.map((decision) =>
+      describeDecision(this.ctx, this.current, decision),
+    );
   }
 
   private adjust(investigator: InvestigatorId, stat: InvestigatorStat, delta: number): void {

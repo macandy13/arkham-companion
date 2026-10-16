@@ -1,5 +1,5 @@
 import type { CommandType, EncounterMatch, EncounterSource } from './commands';
-import type { InstanceId, InvestigatorId, MapId } from './ids';
+import type { DecisionId, InstanceId, InvestigatorId, MapId } from './ids';
 import type { InvestigatorStat, TokenKind } from './state';
 
 /**
@@ -98,6 +98,22 @@ export type Rejection =
   | { code: 'notEngaged'; cardId: InstanceId }
   /** Exhausting an exhausted card or readying a ready one. */
   | { code: 'exhaustUnchanged'; cardId: InstanceId; exhausted: boolean }
+  /** A hunter command names an enemy that is not an unengaged hunter at a location. */
+  | { code: 'notAHunter'; cardId: InstanceId }
+  /** `MoveHunter` to a location that is not connected to the hunter's. */
+  | { code: 'hunterCannotMove'; cardId: InstanceId; to: InstanceId }
+  /** `MoveHunter` towards an investigator the hunter cannot reach. */
+  | { code: 'noRoute'; cardId: InstanceId; investigatorId: InvestigatorId }
+  /** A command other than `ManualAdjust`/`ResolveDecision` while `decisionId` is pending. */
+  | { code: 'decisionPending'; decisionId: DecisionId }
+  /** `RequestDecision` with an id that is already pending. */
+  | { code: 'duplicateDecision'; decisionId: DecisionId }
+  /** `RequestDecision` without options, or with two options of the same id. */
+  | { code: 'invalidDecisionOptions'; decisionId: DecisionId }
+  /** `ResolveDecision` for a decision that is not pending. */
+  | { code: 'unknownDecision'; decisionId: DecisionId }
+  /** `ResolveDecision` with an option the decision does not have. */
+  | { code: 'unknownOption'; decisionId: DecisionId; optionId: string }
   | { code: 'triggerLoop'; limit: number }
   /** A command returned by a hook or card effect was rejected for `reason`. */
   | { code: 'triggeredCommandRejected'; command: CommandType; reason: Rejection }
@@ -213,6 +229,22 @@ function describe(r: Rejection): string {
       return `${r.cardId} is not engaged`;
     case 'exhaustUnchanged':
       return `${r.cardId} is already ${r.exhausted ? 'exhausted' : 'ready'}`;
+    case 'notAHunter':
+      return `${r.cardId} is not an unengaged hunter at a location`;
+    case 'hunterCannotMove':
+      return `${r.cardId} cannot move to ${r.to}`;
+    case 'noRoute':
+      return `${r.cardId} has no route to ${r.investigatorId}`;
+    case 'decisionPending':
+      return `decision ${r.decisionId} must be resolved first`;
+    case 'duplicateDecision':
+      return `decision ${r.decisionId} is already pending`;
+    case 'invalidDecisionOptions':
+      return `decision ${r.decisionId} needs at least one option, each with a unique id`;
+    case 'unknownDecision':
+      return `no pending decision ${r.decisionId}`;
+    case 'unknownOption':
+      return `decision ${r.decisionId} has no option ${r.optionId}`;
     case 'triggerLoop':
       return `forced effects triggered more than ${r.limit} follow-up commands`;
     case 'triggeredCommandRejected':

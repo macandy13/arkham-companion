@@ -1,17 +1,13 @@
-import { shortestPaths } from './board';
-import type { MoveHunters } from './commands';
+import { neighbours, shortestPaths } from './board';
+import type { MoveHunter, MoveHunters } from './commands';
+import { CommandRejected } from './rejection';
 import { cardStats, type EngineContext } from './cards';
-import {
-  chooseInvestigator,
-  chooseLocation,
-  engageEvents,
-  preferredByPrey,
-  requestDecision,
-} from './engagement';
+import { chooseInvestigator, chooseLocation, engageEvents, preferredByPrey } from './engagement';
+import { requestDecision } from './decisions';
 import type { CardMoved, Event } from './events';
 import { decisionId, type InstanceId } from './ids';
 import { hasKeyword } from './keywords';
-import { cardsOfType } from './lookup';
+import { cardsOfType, requireCard } from './lookup';
 import { replay } from './reducer';
 import type { CardInstance, GameState, Investigator } from './state';
 
@@ -67,8 +63,56 @@ export function handleMoveHunters(
       id: hunter.id,
       label: cardStats(ctx.cards, hunter.code).name,
       target: hunter.id,
+      commands: [
+        { type: 'MoveHunter', enemyId: hunter.id },
+        {
+          type: 'MoveHunters',
+          hunters: movers
+            .filter((mover) => mover.hunter.id !== hunter.id)
+            .map((mover) => mover.hunter.id),
+        },
+      ],
     })),
   });
+}
+
+/**
+ * `MoveHunter`: the step a decision settled. `towards` re-runs the route
+ * choice for the chosen investigator only, which can leave a location tie.
+ * Without `to` and `towards` the hunter follows its own rule (`hunterEvents`),
+ * which is what the `hunterOrder` answer needs: the lead only picks who goes
+ * first, the hunter's tie-breaking decisions stay the ones `MoveHunters` would
+ * have raised.
+ */
+export function handleMoveHunter(
+  ctx: EngineContext,
+  state: GameState,
+  command: MoveHunter,
+): Event[] {
+  const hunter = requireCard(state.cards, command.enemyId);
+  if (hunter.zone.kind !== 'atLocation' || ctx.cards.get(hunter.code)?.typeCode !== 'enemy')
+    throw new CommandRejected({ code: 'notAHunter', cardId: hunter.id });
+  if (command.to === undefined && command.towards === undefined)
+    return hunterEvents(ctx, state, hunter);
+  if (command.to !== undefined) {
+    if (!neighbours(state, hunter.zone.locationId).includes(command.to))
+      throw new CommandRejected({ code: 'hunterCannotMove', cardId: hunter.id, to: command.to });
+    return moveTo(ctx, state, hunter, command.to);
+  }
+  const investigator = state.investigators.find((inv) => inv.id === command.towards);
+  if (!investigator)
+    throw new CommandRejected({ code: 'unknownInvestigator', investigatorId: command.towards });
+  const routes = routeTo(state, hunter.zone.locationId, investigator);
+  const steps = distinctSteps(routes);
+  const [only] = steps;
+  if (only === undefined)
+    throw new CommandRejected({
+      code: 'noRoute',
+      cardId: hunter.id,
+      investigatorId: investigator.id,
+    });
+  if (steps.length === 1) return moveTo(ctx, state, hunter, only);
+  return chooseHunterLocation(ctx, state, hunter, steps);
 }
 
 /** Ready, unengaged hunters at a location, in card order; only those in `only` when it is given. */
@@ -119,7 +163,17 @@ function hunterEvents(ctx: EngineContext, state: GameState, hunter: CardInstance
       `hunter:${hunter.id}:investigator`,
       'decision.chooseHunterTarget',
       preferred.map((route) => route.investigator),
+      (chosen) => ({ type: 'MoveHunter', enemyId: hunter.id, towards: chosen.id }),
     );
+  return chooseHunterLocation(ctx, state, hunter, steps);
+}
+
+function chooseHunterLocation(
+  ctx: EngineContext,
+  state: GameState,
+  hunter: CardInstance,
+  steps: readonly InstanceId[],
+): Event[] {
   return chooseLocation(
     ctx,
     state,
@@ -127,6 +181,7 @@ function hunterEvents(ctx: EngineContext, state: GameState, hunter: CardInstance
     `hunter:${hunter.id}:location`,
     'decision.chooseHunterDestination',
     steps,
+    (chosen) => ({ type: 'MoveHunter', enemyId: hunter.id, to: chosen }),
   );
 }
 
@@ -163,6 +218,15 @@ function moveTowards(
 ): Event[] {
   const [destination] = distinctSteps(routes);
   if (destination === undefined) return [];
+  return moveTo(ctx, state, hunter, destination);
+}
+
+function moveTo(
+  ctx: EngineContext,
+  state: GameState,
+  hunter: CardInstance,
+  destination: InstanceId,
+): Event[] {
   const moved: CardMoved = {
     type: 'CardMoved',
     cardId: hunter.id,

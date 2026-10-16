@@ -1,8 +1,9 @@
 import type { CardType, Trait } from './cards';
-import type { InstanceId, InvestigatorId, MapId } from './ids';
+import type { DecisionId, InstanceId, InvestigatorId, MapId } from './ids';
 import type { MapSpec } from './map';
 import type {
   CampaignLog,
+  Decision,
   ChaosToken,
   Difficulty,
   Investigator,
@@ -37,7 +38,10 @@ export type Command =
   | DefeatEnemy
   | ExhaustEnemy
   | ReadyEnemy
-  | MoveHunters;
+  | MoveHunters
+  | MoveHunter
+  | RequestDecision
+  | ResolveDecision;
 
 /** A card instance to create when the scenario starts. */
 export interface StartingCard {
@@ -210,8 +214,8 @@ export interface PlaceDoom {
  * Advances the current agenda: all doom in play is removed, the agenda is
  * flipped and its reverse side (`onAgendaAdvance` hook) resolves while it is
  * still current; then it leaves the game and the next agenda becomes current.
- * Used both for the players' answer to the threshold question (until
- * `ResolveDecision` exists, M1.9) and for card effects that advance the agenda.
+ * Run by the "yes" answer to the threshold question (see
+ * `ResolveDecision`) and by card effects that advance the agenda.
  * Produces `TokensChanged`/`InvestigatorChanged` (doom removal), `CardFlipped`,
  * `AgendaAdvanced`, the reverse side's events, `CardMoved`, `CurrentCardChanged`
  * and, for the last agenda, `ScenarioEnded` unless the reverse side ended the scenario.
@@ -432,6 +436,47 @@ export interface MoveHunters {
    * moved yet, so a hunter that already moved is not moved again.
    */
   hunters?: InstanceId[];
+}
+
+/**
+ * Moves one hunter a step, as the players decided a tie in `MoveHunters`: to
+ * the neighbouring location `to`, or towards `towards` along that
+ * investigator's shortest routes (a remaining tie between routes becomes a
+ * `chooseLocation` decision). The hunter must be an unengaged enemy at a location;
+ * `to` must be connected to it. With neither `to` nor `towards` the hunter moves
+ * along its own rule, as `MoveHunters` would move it alone. Produces `CardMoved`, then `EnemyEngaged` or
+ * `DecisionRequested`.
+ */
+export type MoveHunter = {
+  type: 'MoveHunter';
+  enemyId: InstanceId;
+} & (
+  | { to: InstanceId; towards?: never }
+  | { towards: InvestigatorId; to?: never }
+  | { to?: never; towards?: never }
+);
+
+/**
+ * Raises a decision, for scenario hooks and card effects ("choose one: …").
+ * The id must not be pending, there must be at least one option and option
+ * ids must be unique. Produces `DecisionRequested`.
+ */
+export interface RequestDecision {
+  type: 'RequestDecision';
+  decision: Decision;
+}
+
+/**
+ * The players' answer to a pending decision. Produces `DecisionResolved`
+ * (which removes the decision), followed by the events of the chosen option's
+ * commands, each handled like a hook's follow-up command (validated, with
+ * their own forced effects, in the same undo group). If one of them is
+ * rejected the whole answer is rejected and the decision stays pending.
+ */
+export interface ResolveDecision {
+  type: 'ResolveDecision';
+  decisionId: DecisionId;
+  optionId: string;
 }
 
 /** String literal of every command type. */

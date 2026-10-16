@@ -1,5 +1,6 @@
 import { cardStats, resolveValue, type EngineContext } from './cards';
 import type { DecisionRequested, Event } from './events';
+import { confirmOptions, requestDecision } from './decisions';
 import { decisionId } from './ids';
 import { replay } from './reducer';
 import type { CardInstance, GameState } from './state';
@@ -67,23 +68,14 @@ export function agendaThresholdDecision(ctx: EngineContext, state: GameState): D
     doomInPlay(state) < resolveValue(threshold, state.meta.playerCount)
   )
     return [];
-  const id = decisionId(`advanceAgenda:${agenda.id}`);
-  if (state.pending.some((decision) => decision.id === id)) return [];
-  return [
-    {
-      type: 'DecisionRequested',
-      decision: {
-        id,
-        kind: 'advanceAgenda',
-        subject: agenda.id,
-        prompt: 'decision.advanceAgenda',
-        options: [
-          { id: 'yes', label: 'decision.yes', target: agenda.id },
-          { id: 'no', label: 'decision.no' },
-        ],
-      },
-    },
-  ];
+  return requestDecision(state, {
+    id: decisionId(`advanceAgenda:${agenda.id}`),
+    kind: 'confirm',
+    subject: agenda.id,
+    prompt: 'decision.advanceAgenda',
+    decider: { kind: 'group' },
+    options: confirmOptions([{ type: 'AdvanceAgenda' }], agenda.id),
+  });
 }
 
 /** `events` followed by the agenda question if they brought the doom total to the threshold. */

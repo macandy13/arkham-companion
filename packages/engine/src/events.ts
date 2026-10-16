@@ -1,4 +1,4 @@
-import type { InstanceId, InvestigatorId, MapId } from './ids';
+import type { DecisionId, InstanceId, InvestigatorId, MapId } from './ids';
 import type { Edge, GameMap } from './map';
 import type { RngState } from './rng';
 import type {
@@ -29,6 +29,7 @@ export type Event =
   | InvestigatorChanged
   | InvestigatorDefeated
   | DecisionRequested
+  | DecisionResolved
   | AgendaAdvanced
   | ActAdvanced
   | CurrentCardChanged
@@ -147,12 +148,23 @@ export interface InvestigatorDefeated {
 
 /**
  * The players have to answer `decision`; it is added to `GameState.pending`.
- * Produced by `PlaceDoom` and `AdjustInvestigator` when the doom threshold is
- * reached ('advanceAgenda'); M1.9 generalises this for all decisions.
+ * Produced by rules that need an answer (doom threshold, engagement and hunter
+ * ties) and by `RequestDecision`.
  */
 export interface DecisionRequested {
   type: 'DecisionRequested';
   decision: Decision;
+}
+
+/**
+ * The players answered a pending decision; removes it from `GameState.pending`.
+ * Produced by `ResolveDecision`, which follows it with the events of the
+ * chosen option's commands.
+ */
+export interface DecisionResolved {
+  type: 'DecisionResolved';
+  decisionId: DecisionId;
+  optionId: string;
 }
 
 /**

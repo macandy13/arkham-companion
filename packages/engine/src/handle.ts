@@ -22,7 +22,13 @@ import {
 } from './handle_enemy';
 import { startingEngagements } from './engagement';
 import { handleSpawnEnemy } from './spawn';
-import { handleMoveHunters } from './hunters';
+import {
+  answerCommands,
+  assertNoPendingDecision,
+  handleRequestDecision,
+  handleResolveDecision,
+} from './decisions';
+import { handleMoveHunter, handleMoveHunters } from './hunters';
 import { withAgendaCheck } from './doom';
 import {
   completeAdvance,
@@ -61,9 +67,13 @@ import { zoneKey, type Zone } from './zone';
  * A rejected follow-up or a chain longer than `MAX_TRIGGERED_COMMANDS`
  * rejects the originating command, so a bad hook can neither hang the app nor
  * leave half its effect behind.
+ * While a decision is pending only `ManualAdjust` and `ResolveDecision` are
+ * accepted; the commands of an answer (`ResolveDecision`) run first in the
+ * chain, like a hook's follow-ups, before the forced effects of its events.
  * Pure: the same state, command and context always yield the same events.
  */
 export function handle(ctx: EngineContext, state: GameState, command: Command): Event[] {
+  assertNoPendingDecision(state, command);
   return handleWithTriggers(ctx, state, command, { remaining: MAX_TRIGGERED_COMMANDS });
 }
 
@@ -94,7 +104,7 @@ function withForcedEffects(
   budget: TriggerBudget,
 ): Event[] {
   if (!firesTriggers(command)) return events;
-  const followUps = triggeredCommands(ctx, state, events);
+  const followUps = [...answerCommands(state, command), ...triggeredCommands(ctx, state, events)];
   let current = replay(events, state);
   const chain = [...events];
   for (const followUp of followUps) {
@@ -214,6 +224,12 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
       return handleReadyEnemy(ctx, state, command);
     case 'MoveHunters':
       return handleMoveHunters(ctx, state, command);
+    case 'MoveHunter':
+      return handleMoveHunter(ctx, state, command);
+    case 'RequestDecision':
+      return handleRequestDecision(state, command);
+    case 'ResolveDecision':
+      return handleResolveDecision(state, command);
   }
 }
 
