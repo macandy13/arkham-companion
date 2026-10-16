@@ -244,6 +244,26 @@ export class TestTable {
     this.passTest(`fight:${investigator}:${enemy.id}`, damage);
   }
 
+  /**
+   * The players resolve the attack of opportunity the enemy named
+   * `enemyName`, engaged with the investigator, makes against them: at its
+   * printed damage and horror, or at the `damage` and `horror` they lower it
+   * to (an asset soaking part of it).
+   */
+  takeAttackOfOpportunity(
+    investigator: InvestigatorId,
+    enemyName: string,
+    amounts: { damage?: number; horror?: number } = {},
+  ): void {
+    const enemy = this.enemyEngagedWith(investigator, enemyName);
+    this.play({
+      type: 'ResolveDecision',
+      decisionId: decisionId(`attackOfOpportunity:${enemy.id}`),
+      optionId: 'attack',
+      amounts,
+    });
+  }
+
   /** Resources from the resource action or a card. */
   gainResources(investigator: InvestigatorId, amount: number): void {
     this.adjust(investigator, 'resources', amount);

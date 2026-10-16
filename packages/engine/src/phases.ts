@@ -1,17 +1,10 @@
 import type { EngineContext } from './cards';
 import type { Command, ResolveEnemyAttack } from './commands';
-import { enemyAttackList } from './enemies';
-import type {
-  Event,
-  ExhaustChanged,
-  InvestigatorChanged,
-  InvestigatorDefeated,
-  PhaseChanged,
-  PhaseStepsChanged,
-} from './events';
+import { enemyAttackEvents, enemyAttackList } from './enemies';
+import type { Event, ExhaustChanged, PhaseChanged, PhaseStepsChanged } from './events';
 import { isInPlay } from './handle_enemy';
 import { activeInvestigator } from './handle_investigator';
-import { defeatCause, playerOrder, withStatDelta } from './investigators';
+import { playerOrder } from './investigators';
 import { cardsOfType } from './lookup';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
@@ -149,10 +142,10 @@ export function handleResolveEnemyAttack(
       enemyId: cmd.enemyId,
       investigatorId: cmd.investigatorId,
     });
-  const dealt = attackEvents(
+  const dealt = enemyAttackEvents(
     activeInvestigator(state, cmd.investigatorId),
-    attackAmount(cmd.damage ?? attack.damage),
-    attackAmount(cmd.horror ?? attack.horror),
+    cmd.damage ?? attack.damage,
+    cmd.horror ?? attack.horror,
   );
   const after = replay(dealt, state);
   const remaining = dueAttacksOf(ctx, after, step).filter((due) => !isThisAttack(due));
@@ -249,39 +242,4 @@ function dueAttacksOf(
         attack.enemyId === listed.enemyId && attack.investigatorId === listed.investigatorId,
     ),
   );
-}
-
-function attackAmount(amount: number): number {
-  if (!Number.isInteger(amount) || amount < 0)
-    throw new CommandRejected({ code: 'invalidAttackAmount', amount });
-  return amount;
-}
-
-/** Damage and horror of one attack, followed by a single defeat check over both. */
-function attackEvents(
-  investigator: Investigator,
-  damage: number,
-  horror: number,
-): (InvestigatorChanged | InvestigatorDefeated)[] {
-  const changes: InvestigatorChanged[] = (
-    [
-      ['damage', damage],
-      ['horror', horror],
-    ] as const
-  )
-    .filter(([, amount]) => amount > 0)
-    .map(([stat, delta]) => ({
-      type: 'InvestigatorChanged',
-      investigatorId: investigator.id,
-      stat,
-      delta,
-    }));
-  const after = changes.reduce(
-    (inv, change) => withStatDelta(inv, change.stat, change.delta),
-    investigator,
-  );
-  const cause = defeatCause(after);
-  return cause === undefined
-    ? changes
-    : [...changes, { type: 'InvestigatorDefeated', investigatorId: investigator.id, cause }];
 }

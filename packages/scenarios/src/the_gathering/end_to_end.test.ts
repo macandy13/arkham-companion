@@ -486,16 +486,17 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     ]);
 
     // Round 6 – investigation: each investigator defeats the rats engaged with them
-    // (1 health) and then searches the Cellar.
+    // (1 health); Roland then takes the Cellar's last 2 clues.
     expect(table.nextPhase()).toBe('investigation');
     table.startTurn(roland);
     table.fight(roland, swarmOfRats);
     table.investigate(roland);
     table.investigate(roland);
     table.endTurn(roland);
+    // Daisy stops after the rats: the Cellar has no clues left, and any other
+    // action would provoke an attack of opportunity from the Ravenous Ghoul.
     table.startTurn(daisy);
     table.fight(daisy, swarmOfRats);
-    table.investigate(daisy);
     table.endTurn(daisy);
     table.startTurn(wendy);
     table.fight(wendy, swarmOfRats);
@@ -550,6 +551,20 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.moveTo(roland, 'Attic');
     table.engage(roland, 'Flesh-Eater');
     table.investigate(roland);
+
+    // Searching while engaged with the ready Flesh-Eater provokes its attack of
+    // opportunity (1 damage, 2 horror), raised before the investigate test.
+    // At 2 of 5 sanity, Roland lets his Beat Cop (an ally the app does not
+    // model) soak the 2 horror, so the players lower the horror to 0.
+    expect(table.pendingDecisions()).toEqual([
+      'Attack of opportunity by Flesh-Eater: attack damage ×1 (0+) horror ×2 (0+) / does not provoke [confirm]',
+    ]);
+
+    table.takeAttackOfOpportunity(roland, 'Flesh-Eater', { horror: 0 });
+
+    expect(table.wounds(roland)).toEqual({ damage: 3, horror: 2 });
+    expect(table.enemyLines()).toContain('Flesh-Eater: Attic, engaged with roland');
+
     table.endTurn(roland);
     // Daisy, at 4 of 5 health, evades the Ravenous Ghoul rather than risk its
     // next attack, then takes the resource action.
@@ -596,7 +611,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         Parlor [01115#1] – unrevealed
           connects to: Hallway
       Investigators:
-        Roland Banks – Attic; damage 3/9, horror 4/5, 5 clues, 13 resources, actions left 3; threat area: none
+        Roland Banks – Attic; damage 4/9, horror 4/5, 5 clues, 13 resources, actions left 3; threat area: none
         Daisy Walker – Cellar; damage 4/5, horror 2/9, 1 clues, 13 resources, actions left 3; threat area: none
         Wendy Adams – Cellar; damage 4/7, horror 2/7, 3 clues, 12 resources, actions left 3; threat area: Frozen in Fear, Dissonant Voices
       Encounter deck: 8 cards; discard: 13 cards, top: Grasping Hands

@@ -20,6 +20,7 @@ import {
   handleExhaustEnemy,
   handleReadyEnemy,
 } from './handle_enemy';
+import { attackOfOpportunityDecisions, handleDealEnemyAttack } from './attacks_of_opportunity';
 import { startingEngagements } from './engagement';
 import { handleSpawnEnemy } from './spawn';
 import {
@@ -95,11 +96,17 @@ import { zoneKey, type Zone } from './zone';
  * chain, like a hook's follow-ups, before the forced effects of its events.
  * `NextPhase` continues with the outstanding phase steps (`phaseStepEvents`),
  * so one "Next" yields the whole automated part of a phase.
+ * A player command that is an action provoking attacks of opportunity
+ * (`attackOfOpportunityDecisions`) starts with one decision per attacking
+ * enemy; follow-ups never provoke, which is why this happens here and not
+ * in `handleWithTriggers`.
  * Pure: the same state, command and context always yield the same events.
  */
 export function handle(ctx: EngineContext, state: GameState, command: Command): Event[] {
   assertNoPendingDecision(state, command);
-  return handleWithTriggers(ctx, state, command, { remaining: MAX_TRIGGERED_COMMANDS });
+  const attacks = attackOfOpportunityDecisions(ctx, state, command);
+  const budget = { remaining: MAX_TRIGGERED_COMMANDS };
+  return [...attacks, ...handleWithTriggers(ctx, replay(attacks, state), command, budget)];
 }
 
 /** How many follow-up commands the current chain may still run; shared by the whole chain. */
@@ -301,6 +308,8 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
       return handleAdjustActions(state, command);
     case 'ResolveEnemyAttack':
       return handleResolveEnemyAttack(ctx, state, command);
+    case 'DealEnemyAttack':
+      return handleDealEnemyAttack(ctx, state, command);
     case 'Investigate':
       return handleInvestigate(ctx, state, command);
     case 'Fight':

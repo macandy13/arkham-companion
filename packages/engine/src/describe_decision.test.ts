@@ -98,6 +98,27 @@ describe('describeDecision', () => {
     );
   });
 
+  it('names each named count of an attack of opportunity', () => {
+    const attack: Decision = {
+      ...engage,
+      kind: 'confirm',
+      prompt: 'decision.attackOfOpportunity',
+      options: [
+        {
+          id: 'attack',
+          label: 'decision.attack',
+          amounts: { damage: { default: 1, min: 0 }, horror: { default: 0, min: 0 } },
+          commands: [],
+        },
+        { id: 'skip', label: 'decision.doesNotProvoke', commands: [] },
+      ],
+    };
+
+    expect(describeDecision(ctx, state, attack)).toEqual(
+      'Attack of opportunity by Swarm of Rats: attack damage ×1 (0+) horror ×0 (0+) / does not provoke [confirm]',
+    );
+  });
+
   it('shows the key of a prompt without a sentence', () => {
     const custom: Decision = { ...engage, subject: undefined, prompt: 'decision.chooseCellar' };
 

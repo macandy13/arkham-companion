@@ -270,6 +270,12 @@ export interface DecisionOption {
    * `amount` of each of them.
    */
   amount?: AmountRange;
+  /**
+   * Like `amount`, for an option with several counts the players confirm or
+   * adjust (an attack's damage and horror): each range is keyed by the
+   * command field it replaces, and `ResolveDecision.amounts` sets them.
+   */
+  amounts?: Readonly<Record<string, AmountRange>>;
 }
 
 /** The counts an option with an adjustable amount accepts; no `max` means no upper bound. */
