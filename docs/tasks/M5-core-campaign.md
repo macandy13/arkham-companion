@@ -1,7 +1,7 @@
 # M5 – Core campaign
 
 Goal: the full three-scenario introductory campaign of `core_2026`, with campaign log and chaos bag carried between scenarios.
-Ref: architecture §8. Builds on the campaign engine (M1C).
+Ref: product.md "Campaign mode". Builds on the campaign engine (M1C).
 
 **Why this milestone**
 

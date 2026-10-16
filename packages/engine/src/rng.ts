@@ -3,8 +3,8 @@
  *
  * Why not `Math.random()` or `crypto.getRandomValues()`? Neither can be seeded
  * nor have their internal state saved and restored. The engine is event-sourced
- * (architecture §2, §6): undo, refresh recovery and bug reproduction all rebuild
- * the game by replaying, and "same state + same command = same events" must hold
+ * (architecture "Overview", "Command handling"): undo, refresh recovery and
+ * bug reproduction all rebuild the game by replaying, and "same state + same command = same events" must hold
  * for every shuffle and random draw. So the generator state has to live inside
  * `GameState` as plain serialisable data. xoshiro128** is small, fast, uses only
  * 32-bit integer maths (exact in JS) and has good statistical quality for games.

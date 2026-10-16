@@ -2,4 +2,5 @@ pnpm-lock.yaml
 dist
 .cache
 docs/architecture.md
+docs/product.md
 CHANGELOG.md

@@ -1,7 +1,7 @@
 # M2 – Game management UI
 
 Goal: everything before and around a game – browse investigators, start a new game, resume or delete saved games, export and import.
-Ref: architecture §11 "Game management" and "Investigator picker". Builds on the M0.6 app shell; the play screen itself is M3 (here it can be a placeholder that shows the game state as text).
+Ref: product.md "UI concept" ("Game management", "Investigator picker"). Builds on the M0.6 app shell; the play screen itself is M3 (here it can be a placeholder that shows the game state as text).
 
 **Why this milestone**
 
@@ -9,7 +9,7 @@ Ref: architecture §11 "Game management" and "Investigator picker". Builds on th
 - **What the app gains:** The full lifecycle around a game works on a tablet: pick investigators, start, leave, resume, back up and restore.
 - **Why at this point:** It only needs the M1 setup (`compileSetup`), not the full play screen. Doing it before M3 means real persisted games exist to build and test the play screen against.
 
-Prerequisite: the cloud environment can reach `arkhamdb.com` (see architecture §15, open question 1). Tests never hit the network.
+Prerequisite: the cloud environment can reach `arkhamdb.com` (see product.md "Decisions and open questions", open question 1). Tests never hit the network.
 
 ---
 
@@ -61,7 +61,7 @@ Review (PR #17): the detail sheet now opens inside the portrait grid, right afte
 
 ## M2.4 Settings: collection and language (S)
 
-**Why:** Filtering by owned packs avoids scrolling through hundreds of investigators. These are per-device preferences, so localStorage is enough (§10).
+**Why:** Filtering by owned packs avoids scrolling through hundreds of investigators. These are per-device preferences, so localStorage is enough (architecture "Persistence").
 
 **Benefit:** A picker tailored to the group's collection, and a language choice that persists.
 
@@ -106,7 +106,7 @@ Follow-ups: a campaign only starts its first scenario and stores no `campaignId`
 
 **Benefit:** Backups, moving a game between devices before M8, and reproducible bug reports.
 
-Ref: §10.
+Ref: architecture "Persistence".
 
 - [x] Resume = `loadGame` (snapshot + replay) → play route
 - [x] Export game (and later campaign) as JSON file: metadata + events + `stateVersion`

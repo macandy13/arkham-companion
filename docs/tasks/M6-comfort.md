@@ -16,7 +16,7 @@ Goal: quality-of-life features that make the app nicer at the table.
 
 **Benefit:** No bag needed if players want that, and current token values are always shown correctly.
 
-Ref: §8.
+Ref: product.md "Campaign mode".
 
 - [ ] Optional module (off by default): draw, seal, return; symbol effects with current values (e.g. act number)
 - [ ] Bag from campaign log or scenario default
@@ -60,7 +60,7 @@ Ref: §8.
 
 ## M6.6 ArkhamDB deck import (S) – if decided
 
-**Why:** Groups that build decks on ArkhamDB already have their investigator choice there (open question §15.2).
+**Why:** Groups that build decks on ArkhamDB already have their investigator choice there (product.md "Decisions and open questions", open question 2).
 
 **Benefit:** Faster game setup for those groups.
 

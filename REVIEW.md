@@ -16,6 +16,7 @@ For automated reviewers (Claude Code Review) and for Claude sessions reviewing t
   - A test helper a second test file needs that is not in `packages/engine/test/utils/` or the scenario's `TestTable`.
   - A lookup or query re-implemented inline when it exists, or should exist, next to its entity (`board.ts`, `lookup.ts`).
   - A generic string, array or object operation inlined instead of living in `@arkham/util`.
+- **Architecture doc out of date.** A change that adds or alters a component (a new kind of command, trigger, decision, setup step, store method, package or dependency direction) without updating that component's section in `docs/architecture.md`.
 - **Silent `catch`**, `any` without a comment, an exported type or function without a doc comment.
 - **PR shape** (coding guidelines §7): more than one reviewable idea, or over the size budget without a stack plan in the task file; a review thread from an earlier round left unanswered.
 

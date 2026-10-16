@@ -26,7 +26,7 @@ interface GameRow {
   lastSeq: number;
 }
 
-/** Row of the `campaigns` table; campaign mode is not implemented yet (architecture §8). */
+/** Row of the `campaigns` table; campaign mode is not implemented yet (product.md "Campaign mode"). */
 interface CampaignRow {
   campaignId: string;
   title: string;
@@ -60,7 +60,7 @@ export class SeqConflictError extends Error {
   }
 }
 
-/** Dexie schema (architecture §10). Bump `version()` and add `upgrade` when it changes. */
+/** Dexie schema (architecture "Persistence"). Bump `version()` and add `upgrade` when it changes. */
 class ArkhamDb extends Dexie {
   campaigns!: EntityTable<CampaignRow, 'campaignId'>;
   games!: EntityTable<GameRow, 'gameId'>;

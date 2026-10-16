@@ -16,7 +16,7 @@
 
 **API and architecture**
 
-<!-- New or changed commands, events, state shape and exported types; new dependencies or patterns, and why not the standard alternative. -->
+<!-- New or changed commands, events, state shape and exported types; new dependencies or patterns, and why not the standard alternative. Link the docs/architecture.md section this PR updates, or say no component changed. -->
 
 **Decisions for you**
 

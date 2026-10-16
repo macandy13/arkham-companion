@@ -1,13 +1,13 @@
 # M8 – Cloud and sync
 
 Goal: games stored in the cloud and shared between several devices at the table.
-Ref: architecture §10 "Later: cloud and multi-device sync".
+Ref: product.md "Cloud sync".
 
 **Why this milestone**
 
 - **Problem:** With one tablet, only one person can update the game, and a lost or wiped device loses the campaign. Players want to see and change state from their own phones.
 - **What the app gains:** Games and campaigns backed up in the cloud, and several devices at the table showing the same live game.
-- **Why at this point:** A backend adds cost, accounts and operations, and a single tablet already covers the core use case – so it comes last. The groundwork is already in place: the `GameStore` interface, UUID game IDs and an append-only event log with `expectedSeq` for optimistic concurrency (§10).
+- **Why at this point:** A backend adds cost, accounts and operations, and a single tablet already covers the core use case – so it comes last. The groundwork is already in place: the `GameStore` interface, UUID game IDs and an append-only event log with `expectedSeq` for optimistic concurrency (architecture "Persistence").
 
 ---
 
@@ -18,7 +18,7 @@ Ref: architecture §10 "Later: cloud and multi-device sync".
 **Benefit:** A documented, reasoned decision instead of an accidental one.
 
 - [ ] Compare Supabase, Firebase/Firestore and Cloudflare D1 + Durable Objects for: auth, append-only event log, realtime, free tier, offline story
-- [ ] Write the decision into architecture §10
+- [ ] Write the decision into product.md "Cloud sync"
 
 ## M8.2 Login (S)
 

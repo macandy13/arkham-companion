@@ -1,4 +1,4 @@
-/* Home screen: saved game list and delete confirmation (architecture §11). */
+/* Home screen: saved game list and delete confirmation (product.md "UI concept"). */
 #app > main ul > li {
   display: grid;
   gap: var(--space-2);
