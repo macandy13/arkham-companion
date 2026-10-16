@@ -14,6 +14,16 @@ How code in this repo should look, so every task lands in the same style.
 - **Early returns over nested `if`/`else`.** Handle edge cases and errors first, then the main path.
 - **Make illegal states unrepresentable.** Discriminated unions and branded IDs over loose strings and optional flags.
 - **Options objects for unclear arguments.** A function with more than one non-obvious parameter (several numbers, booleans or strings in a row) takes an options object, so call sites read `location({ code, shroud: 2, cluesPerInvestigator: 1 })` instead of `location(code, 2, 1)`.
+- **Never swallow a caught error silently.** A `catch` either rethrows or logs a `console.warn` with context; a fallback is fine, a silent one is not. The error is always bound (`catch (error)`) so it can be passed on. The engine has no console and turns errors into rejections instead. ESLint rejects empty `catch` blocks (a comment alone does not count).
+
+  ```ts
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  } catch (error) {
+    console.warn('Could not save settings; they apply for this session only.', error);
+  }
+  ```
+
 - **No dead code, no speculative abstractions.** Delete unused code; generalise once the second caller appears (see "Generic before specific").
 
 ## 2. Comments
@@ -49,6 +59,7 @@ How code in this repo should look, so every task lands in the same style.
 - **Shared test helpers** live in `packages/engine/test/utils/` (standard investigators, card and definition builders, `startScenario`, `run`, `codesIn`, `rejectionOf`); import them from `../test/utils` in the engine and `@arkham/engine/test/utils` elsewhere. Add a helper there once a second test file needs it.
 - **One behaviour per test**, named as a sentence about behaviour: `it('rejects moving a card into its own zone')`.
 - **Exception: end-to-end scenario tests** (`packages/scenarios/src/*/end_to_end.test.ts`) may be one long narrative test that plays the scenario in order, with short phase/turn comment headers (`// Round 2 – investigation: Roland's turn`) and assertions in place.
+- **A new or changed rule shows up at the table.** Every PR that adds or changes a game rule extends an end-to-end scenario test with a step where the rule happens in play, and links that step in the PR's review map. Rule gaps are easiest to spot in a playthrough, not in unit tests of the rule alone.
 - **Scenario flow tests reuse the shared `TestTable` helpers** (`packages/scenarios/src/<scenario>/test_table.ts`): every test that plays a scenario through phases and turns sets up and drives the game with the same table instead of its own command lists, so all flow tests read alike. Unit tests of single rules stay fine-grained in the engine.
 - **Arrange – act – assert**, separated by blank lines; no logic (loops, conditionals) in assertions.
 - **Test through the public API** of the module (commands in, events/state out for the engine), not internals.
@@ -57,6 +68,7 @@ How code in this repo should look, so every task lands in the same style.
 
 **E2E flow specs** (`apps/web/e2e/`, tagged `@flow`) are recorded as screencasts for every PR that changes the UI (`docs/automation.md`). Keep them few and stable:
 
+- **A UI PR shows its change in a screencast.** Every PR that changes the UI adds or extends a `@flow` spec that walks through the change, so reviewers see it in the PR description. Once the change is reviewed and its recording is no longer of interest, a follow-up PR drops the `@flow` tag (the spec stays as a plain E2E test if it still guards something, otherwise it goes). That way a PR carries only the screencasts that matter for it, not every flow in the app.
 - **One spec per user journey, not per feature.** A UI change extends the flow it belongs to before it adds a new one. Cap: 8 flow specs; past that, merge flows.
 - **They check wiring, not rules.** Game rules are tested in engine unit tests; a flow only asserts that the screen reacts and the journey completes.
 - **Locate by role and accessible name** (`getByRole('button', { name: … })`), never by CSS class or DOM shape – the markup rules make this always possible.
@@ -73,6 +85,7 @@ The DOM is a clearly structured document tree – good structure _is_ accessibil
 - Give landmarks and controls an accessible name (`aria-label`/`aria-labelledby`) when visible text doesn't provide one. Use ARIA only where native semantics are insufficient.
 - No presentational markup: no wrapper `div`s just for styling when an existing element can be styled, no `<b>`/`<strong>`/`<br>`, no inline `style`, no layout or utility class names (see `CLAUDE.md`).
 - Every visible string goes through i18n.
+- **Show results where the user acted.** Details, sheets and confirmations open next to the element that opened them (e.g. an expanded row inside the list, right after the tapped item), never at the end of a long list, so a tap never needs a scroll to see what it did.
 
 ## 5. CSS
 
@@ -93,3 +106,19 @@ Common, generic operations go into small, tested helpers instead of being re-imp
 - Domain helpers stay in their package (e.g. card helpers in `packages/carddata/src/helpers.ts`, zone helpers in the engine).
 - **Shared functions live next to the entity they handle.** A lookup or query that several modules need is built once, in the module of the thing it finds, and the others import it: card lookups with the cards (`cardsNamed`, `cardsOfType` in the engine's `lookup.ts`), location queries with the board (`locationsNamed`, `locationsInPlay` in `board.ts`). Before writing another `Object.values(state.cards).filter(…)`, check whether such a function exists; if not, add it there with tests. Only generic string, array and object helpers go to `@arkham/util`.
 - Helpers are pure, small, total (defined for every input, including empty strings/arrays) and named after what they return.
+
+## 7. Pull requests
+
+A PR is reviewed on a phone, in one sitting. Its size and shape decide whether the review catches the rules and design questions or drowns in plumbing.
+
+- **One reviewable idea per PR:** one rule, one API change (commands, events, state shape), one screen or one refactor. A task that needs several of these becomes several PRs.
+- **Size budget.** Aim for at most ~400 changed lines of production code and ~1000 changed lines in total (tests included; lockfile, generated files and `docs/tasks/` excluded). Past that, split, unless the extra lines are one mechanical change (a rename, a moved file) that reads at a glance.
+- **Plan the slices before coding.** When a task will exceed the budget, list its PRs in the task file first (`M1.13a – modifier types and events`, `M1.13b – …`), so each session knows its slice and the reviewer knows what comes next.
+- **Split in reading order:**
+  1. preparatory `refactor:` PRs that change no behaviour: helper moves, test-util changes, renames. The description says "no behaviour change", so they can be approved by skimming;
+  2. types and API: new commands, events and state, with the reducer cases and invariants;
+  3. the rule or logic itself, with its unit tests and its step in the end-to-end scenario test;
+  4. wiring and UI.
+- **Stacked PRs** each target the previous PR's branch, are green on their own, and carry their position in the title (`feat(engine): add skill modifiers (M1.13, 2/3)`). Merge them in order.
+- **Review fixes stay in the reviewed PR.** Answer every review thread in the PR it was raised on; never merge with open threads, and don't push the fix into a later PR of the stack. If a point is out of scope, the reply names the task it was moved to.
+- **Commits in reading order** inside a PR: types and API first, then logic, then tests, then wiring, so "review by commit" tells the story.

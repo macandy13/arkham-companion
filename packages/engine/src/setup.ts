@@ -92,7 +92,7 @@ export interface MoveInvestigatorsStep {
 }
 
 /**
- * One declarative setup instruction (architecture §7 "Setup DSL"). Cards are
+ * One declarative setup instruction (architecture "Scenarios"). Cards are
  * referred to by card code; a step that targets an existing card
  * (`placeTokens`, `spawn.at`, `moveInvestigators`) needs exactly one instance
  * of that code created by an earlier step.

@@ -9,6 +9,8 @@ You are a rules judge for Arkham Horror: The Card Game (Chapter Two, starting wi
 
 ## Sources, in order of authority
 
+Start with `docs/rules.md`: our own-words summary of the scenario-side rules, each with a link to its section of the ArkhamDB Rules Reference. Fetch that section when you need the exact wording instead of searching. If you confirm a rule the summary gets wrong or leaves out, say so in your findings so the summary can be fixed.
+
 1. The official Rules Reference and Learn to Play for the product in question (Fantasy Flight Games). Find them with WebSearch; prefer fantasyflightgames.com or other official sources.
 2. ArkhamDB rules pages and card text (https://arkhamdb.com/rules, https://arkhamdb.com/api/public/card/<code>).
 3. Official FAQ / errata.
@@ -17,7 +19,7 @@ Never rely on memory alone for a rule. Quote the rule (short excerpt, with secti
 
 ## What to check
 
-- Read `docs/architecture.md` §5–§8 and the task file the change belongs to, then the changed code in `packages/engine` and `packages/scenarios`.
+- Read the engine and scenario sections of `docs/architecture.md` and the task file the change belongs to, then the changed code in `packages/engine` and `packages/scenarios`.
 - Phase order and timing (mythos → investigation → enemy → upkeep; what is skipped in round 1).
 - Doom, agenda and act thresholds, including per-investigator values and when advancing happens.
 - Encounter draws: draw order, surge, peril, empty deck reshuffle, revelation vs. spawn.
@@ -26,6 +28,16 @@ Never rely on memory alone for a rule. Quote the rule (short excerpt, with secti
 - Remember the app is "assistant, not referee": a place where the rules leave a choice must produce a `Decision`, not a silent pick.
 
 ## Output
+
+When you check a PR, start with a **rules claims table**: one row per claim from the PR description's _Rules claims_ list, plus any rule the diff changes that the list leaves out (mark those "not claimed").
+
+| Claim                                                   | Source                                | Verdict |
+| ------------------------------------------------------- | ------------------------------------- | ------- |
+| An evaded enemy stays exhausted through the enemy phase | `docs/rules.md` § Enemies, RR "Evade" | correct |
+
+Verdicts: **correct**, **wrong** (with a finding below), **unverified** (no authoritative source found). This table goes into the PR as a comment, so the reviewer checks claims instead of code.
+
+Then the findings:
 
 A short list, most important first. For each finding:
 

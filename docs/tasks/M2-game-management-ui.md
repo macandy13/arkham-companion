@@ -1,7 +1,7 @@
 # M2 – Game management UI
 
 Goal: everything before and around a game – browse investigators, start a new game, resume or delete saved games, export and import.
-Ref: architecture §11 "Game management" and "Investigator picker". Builds on the M0.6 app shell; the play screen itself is M3 (here it can be a placeholder that shows the game state as text).
+Ref: product.md "UI concept" ("Game management", "Investigator picker"). Builds on the M0.6 app shell; the play screen itself is M3 (here it can be a placeholder that shows the game state as text).
 
 **Why this milestone**
 
@@ -9,10 +9,7 @@ Ref: architecture §11 "Game management" and "Investigator picker". Builds on th
 - **What the app gains:** The full lifecycle around a game works on a tablet: pick investigators, start, leave, resume, back up and restore.
 - **Why at this point:** It only needs the M1 setup (`compileSetup`), not the full play screen. Doing it before M3 means real persisted games exist to build and test the play screen against.
 
-Model hint: **S** = Sonnet, **O** = Opus. Each task = one session = one PR.
-Start from the phone: Code tab → repo → `Do task M2.x from docs/tasks/M2-game-management-ui.md`.
-
-Prerequisite: the cloud environment can reach `arkhamdb.com` (see architecture §15, open question 1). Tests never hit the network.
+Prerequisite: the cloud environment can reach `arkhamdb.com` (see product.md "Decisions and open questions", open question 1). Tests never hit the network.
 
 ---
 
@@ -50,21 +47,30 @@ Follow-ups: `CHAPTER_TWO_PACK_CODES` only lists `core_2026` – verify against r
 
 **Benefit:** Fast, visual team setup, similar to the Mansions of Madness app.
 
-- [ ] Portrait grid (image with text fallback), lazy-loaded images
-- [ ] Filters: class chips, cycle/pack, chapter (1/2), "my collection"; search by name
-- [ ] Chapter badge ("Ch. 1" / "Ch. 2") on every portrait and in the detail sheet; the detail sheet links to the other chapter's version
-- [ ] Detail sheet: front/back, health, sanity, skills
-- [ ] Seats: select assigns next seat (max 4), drag to reorder, remove; lead investigator marker
-- [ ] Component tests with a fixture catalog
+- [x] Portrait grid (image with text fallback), lazy-loaded images
+- [x] Filters: class chips, cycle/pack, chapter (1/2), "my collection"; search by name
+- [x] Chapter badge ("Ch. 1" / "Ch. 2") on every portrait and in the detail sheet; the detail sheet links to the other chapter's version
+- [x] Detail sheet: front/back, health, sanity, skills
+- [x] Seats: select assigns next seat (max 4), drag to reorder, remove; lead investigator marker
+- [x] Component tests with a fixture catalog
+
+Done: `apps/web/src/picker/` holds the controlled `InvestigatorPicker` (props: `catalog`, `seats` as investigator codes, `onSeatsChange`, optional `ownedPacks`, `maxSeats`, `imageHost`), its filter bar, detail sheet and seat list, the pure filter/reorder helpers in `pickerLogic.ts`, `picker.css` and tests with a hand-written fixture catalog. Seats can be reordered by drag and drop and by move up/down buttons; the first seat is marked as lead investigator. The `@flow` spec `e2e/new_game.spec.ts` ("start a new game") searches, filters by class and seats an investigator from stubbed ArkhamDB data.
+The picker is mounted on `/new` (`NewGameScreen`, seats in component state until the M2.5 wizard owns them): the app store exposes `loadCatalog(lang)` (cache-first via `catalog/loadCatalog.ts`), `useCatalog` turns it into loading/error/ready states with a retry button, and E2E stubs the ArkhamDB API with a fake catalog (`apps/web/e2e/fixtures/`).
+Follow-ups: the card language is hard-coded to `en` until the settings module exists (M2.4); pass the owned packs from settings as `ownedPacks` (M2.4) – without them the "my collection" checkbox is hidden; the detail sheet shows no ability text (it is not in `InvestigatorDef`); drag and drop is mouse-only (HTML5 drag events do not fire on touch), so touch users rely on the move buttons until a pointer-based drag is added; the image host is a prop defaulting to `https://arkhamdb.com`; the cycle filter shows "Cycle N" because the packs API has no cycle names.
+Review (PR #17): the detail sheet now opens inside the portrait grid, right after the tapped portrait (the grid was missing `display: grid`, so every portrait took a full row and the sheet landed at the end of the list). Starting the game with the seated investigators arrives with the wizard (M2.5). Follow-up for a styling milestone near the end: make the picker look like the Mansions of Madness app (two rows of about ten portraits, scrolled sideways) with the filters subtle and in the background.
 
 ## M2.4 Settings: collection and language (S)
 
-**Why:** Filtering by owned packs avoids scrolling through hundreds of investigators. These are per-device preferences, so localStorage is enough (§10).
+**Why:** Filtering by owned packs avoids scrolling through hundreds of investigators. These are per-device preferences, so localStorage is enough (architecture "Persistence").
 
 **Benefit:** A picker tailored to the group's collection, and a language choice that persists.
 
-- [ ] Settings screen: owned packs (checkbox list by cycle), card language (any language ArkhamDB offers), UI language (EN/DE first), theme
-- [ ] Stored in localStorage via a small `settings` module (try/catch, defaults)
+- [x] Settings screen: owned packs (checkbox list by cycle), card language (any language ArkhamDB offers), UI language (EN/DE first), theme
+- [x] Stored in localStorage via a small `settings` module (try/catch, defaults)
+
+Done: `apps/web/src/settings/` holds the `settings` module (`loadSettings`/`saveSettings` over localStorage with per-field defaults, try/catch for throwing storage and corrupt JSON) and `applySettings` (theme via `data-theme`, UI language via i18next); `main.tsx` applies them at boot. `SettingsScreen` offers owned packs grouped by cycle (from a `packs` prop), card language (all ArkhamDB languages), UI language (EN/DE) and theme (dark default, light via token overrides in `tokens.css`), saved on every change. The `@flow` spec `e2e/settings.spec.ts` ("change the settings") switches card language, app language and theme and checks they survive a reload (it replaces the former settings deep-link test; pack ownership joins the flow once the catalog packs are wired up).
+Follow-ups: `SettingsScreen` gets no `packs` yet (shows a hint) because `loadCatalog` is still unwired – pass `catalog.packs` and `settings.ownedPacks` into the picker (M2.7); `loadCatalog` only knows the `en`/`de` hosts, so the card language is stored but not yet used for fetching; the cycle groups show "Cycle N" (no cycle names in the packs API); new UI languages need translation strings and an entry in `UI_LANGUAGES`.
+Review fix: both catches in `settings.ts` now `console.warn` with context (fallback unchanged); the rule "never swallow a caught error silently" is in `CLAUDE.md` and `docs/coding-guidelines.md` and ESLint rejects empty `catch` blocks.
 
 ## M2.5 New game wizard (S)
 
@@ -72,12 +78,15 @@ Follow-ups: `CHAPTER_TWO_PACK_CODES` only lists `core_2026` – verify against r
 
 **Benefit:** A game is set up in about a minute, and an accidental refresh does not lose the wizard's choices.
 
-- [ ] Two entry points on the home screen:
+- [x] Two entry points on the home screen:
   - **New campaign:** campaign + difficulty → investigators (picker) → summary; starts the campaign's first scenario (campaign log itself arrives in M5)
   - **Quick game:** any single scenario + difficulty → investigators → summary; standalone chaos bag, no campaign log
-- [ ] Scenario list from `packages/scenarios` (sandbox only until M4)
-- [ ] Confirm: `compileSetup` → `StartScenario` → `GameStore.createGame` → navigate to `/game/:id`
-- [ ] Back/forward keeps choices; wizard state survives refresh (sessionStorage)
+- [x] Scenario list from `packages/scenarios` (sandbox only until M4)
+- [x] Confirm: `compileSetup` → `StartScenario` → `GameStore.createGame` → navigate to `/game/:id`
+- [x] Back/forward keeps choices; wizard state survives refresh (sessionStorage)
+
+**Done:** `/new` without `mode` offers both entry points; `?mode=campaign|quick&step=setup|investigators|summary` runs the wizard (`screens/NewGameScreen.tsx`, steps in `wizard/`). The step lives in the URL so browser back/forward walks the steps, the choices (`wizard/wizardState.ts`) in sessionStorage (try/catch, per mode, cleared after starting). Scenarios and campaigns come from `scenarios/scenarioCatalog.ts` (sandbox only; swapping the scenario is a change in that one file). The investigator step mounts `InvestigatorPicker` with `settings.ownedPacks`; `loadCatalog` is wired in `main.tsx` and passed to the wizard and, for the pack list, to the settings screen via `useCatalog`. Confirm calls the new `appStore.startScenario` (`compileSetup` -> `execute` -> `createGame` + one `appendEvents`), then navigates to `/game/:id`; the temporary "create empty game" button is gone. Tests: wizard state, seating, `startScenario`, wizard component tests with a fixture catalog, E2E with ArkhamDB requests stubbed by Playwright routes. `ScenarioStarted` now requires `connections`, so two older test fixtures got `connections: []`. The wizard now starts The Gathering (`packages/scenarios`, replacing the sandbox) and the "Night of the Zealot" campaign entry. The `@flow` spec `e2e/new_game.spec.ts` ("start a new game") walks the whole wizard – setup, search and class filter, two seats, reload and back, summary – to a started game; it replaced the picker-only flow from M2.3 and the former wizard persistence test, and `e2e/fixtures/wizard.ts` gives the home flow a quick start.
+Follow-ups: a campaign only starts its first scenario and stores no `campaignId` (campaign log, M5); the catalog is requested on every wizard/settings visit (packs always refetched, cards via `If-Modified-Since`) - share one load in the app if that is too chatty; the summary shows names and health/sanity only (no portraits); a failed catalog load has no retry button; `newGame` (empty game) is unused by the UI now and can go once tests no longer need it.
 
 ## M2.6 Home screen (S)
 
@@ -85,9 +94,11 @@ Follow-ups: `CHAPTER_TWO_PACK_CODES` only lists `core_2026` – verify against r
 
 **Benefit:** Pick up exactly where you left off; keep the list tidy.
 
-- [ ] List saved games via `GameStore.listGames`: scenario, investigators (portraits), round/phase, last played
-- [ ] Actions: resume, rename, duplicate, delete (with confirm)
-- [ ] Empty state with "New campaign" and "Quick game"
+- [x] List saved games via `GameStore.listGames`: scenario, investigators (portraits), round/phase, last played
+- [x] Actions: resume, rename, duplicate, delete (with confirm)
+- [x] Empty state with "New campaign" and "Quick game"
+
+**Done:** `GameSummary` now also carries `scenarioId`, `round`, `phase` and `investigators` (derived by `IndexedDbStore.listGames` from the replayed state, using snapshots); `GameStore` gains `renameGame` (keeps `updatedAt`), `duplicateGame` (copies log and snapshot under a new UUID) and `deleteGame`, mirrored in `appStore`. The home screen (`screens/HomeScreen.tsx`, `GameListItem.tsx`, `home.css`) shows each game with resume/rename/duplicate/delete; delete asks via an accessible native-`<dialog>` `ConfirmDialog`. The empty state links to `/new?mode=campaign` and `/new?mode=quick`. Follow-ups: M2.5 must read the `mode` query parameter; investigators are shown by name – portraits need the catalog wired into the home screen (M2.7); the scenario shows its raw `scenarioId` until scenario names exist; `listGames` replays every game, so cache the summary in the row if the list gets slow. The home `@flow` in `e2e/smoke.spec.ts` now also renames, duplicates, deletes (with confirm) and resumes a game from the list.
 
 ## M2.7 Resume, export and import (S)
 
@@ -95,12 +106,15 @@ Follow-ups: `CHAPTER_TWO_PACK_CODES` only lists `core_2026` – verify against r
 
 **Benefit:** Backups, moving a game between devices before M8, and reproducible bug reports.
 
-Ref: §10.
+Ref: architecture "Persistence".
 
-- [ ] Resume = `loadGame` (snapshot + replay) → play route
-- [ ] Export game (and later campaign) as JSON file: metadata + events + `stateVersion`
-- [ ] Import: zod-validate, create a new game id, append events; reject newer `stateVersion` with a clear message
-- [ ] Round-trip test: export → import → identical state
+- [x] Resume = `loadGame` (snapshot + replay) → play route
+- [x] Export game (and later campaign) as JSON file: metadata + events + `stateVersion`
+- [x] Import: zod-validate, create a new game id, append events; reject newer `stateVersion` with a clear message
+- [x] Round-trip test: export → import → identical state
+
+**Done:** Resume was already `openGame` → `loadGame` (snapshot + replay) on the `/game/:id` route; now covered by an `appStore` test. `GameStore` gains `loadEvents` (was only on `IndexedDbStore`) and `importGame` (new UUID, original event timestamps kept, no campaign link). `apps/web/src/storage/gameExport.ts` holds the zod envelope schema, `serialiseGameExport` and `parseGameExport`; the file is `{format, stateVersion, game: {title, createdAt}, events: [{timestamp, commandId, event}]}` (the `commandId` keeps undo groups intact after an import). A `stateVersion` above `STATE_VERSION` throws `GameImportError('newerVersion')` (checked before the schema), anything else malformed `'invalid'`; the home screen shows both as translated (en/de) alerts. `appStore` gets `exportGame`/`importGame`; the home screen has an Export button per game (download via `downloadFile.ts`) and an "Import game" file input. Tests: round trip incl. a fast-check property, store, appStore, home screen, and an E2E export → import. The `@flow` spec `e2e/backup.spec.ts` ("back up and restore a game") exports a game to a file and imports it as a new game; the home smoke spec is no longer a flow (review on #20/#22); the export round-trip property test became an `it.each` table and `fast-check` was dropped to follow the no-property-tests rule on main.
+Follow-ups: events are only validated as objects with a `type` and then replayed to catch bad payloads – a full zod schema for `Event` (generated or hand-kept next to `events.ts`) would give precise errors; there is no migration path yet (older versions are accepted unchanged, which is fine while `STATE_VERSION` is 1); campaign export arrives with M5; `toFileStem` is a one-off string helper that belongs in `@arkham/util` once that package exists (it is not in the repo yet); zod pushes the web bundle further over Vite's 500 kB chunk warning – consider code-splitting the import path.
 
 ## M2.8 E2E pass (S)
 
@@ -108,7 +122,9 @@ Ref: §10.
 
 **Benefit:** CI protects the core game lifecycle against regressions.
 
-- [ ] Playwright: new game with 2 investigators → reload → resume → delete
-- [ ] Runs in CI with a fixture catalog (no network)
+- [x] Playwright: new game with 2 investigators → reload → resume → delete
+- [x] Runs in CI with a fixture catalog (no network)
 
 Done when: on a tablet you can pick investigators, start the sandbox scenario, close the tab and resume it.
+
+**Done:** `apps/web/e2e/fixtures/test.ts` extends Playwright's `test` with an auto-used network guard: the ArkhamDB packs/cards requests are answered from the invented `cards.json`/`packs.json`, any other non-local request is aborted and recorded, and the test fails if one occurred (it replaces the per-spec `stubArkhamDb`). `lifecycle.spec.ts` is the `@flow` for the game's whole life – quick game with two investigators -> reload -> listed -> resume from home -> rename -> duplicate -> export -> import -> cancel and confirm delete -> reload – and absorbs the former smoke/home flow and the backup flow (`smoke.spec.ts` and `backup.spec.ts` are gone), so the suite is three `@flow` specs (`new_game`, `settings`, `lifecycle`) with `fixtures/wizard.ts` as the shared quick start. All run in the tablet-landscape project with role/label selectors and no sleeps. No app bugs found. M2 is complete.

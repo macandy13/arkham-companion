@@ -8,7 +8,7 @@
  */
 export type Brand<T, B extends string> = T & { readonly __brand: B };
 
-/** Unique ID of one physical card on the table (see architecture §5). */
+/** Unique ID of one physical card on the table (see architecture "Game state"). */
 export type InstanceId = Brand<string, 'InstanceId'>;
 /** ID of an `Investigator` in `GameState.investigators`. */
 export type InvestigatorId = Brand<string, 'InvestigatorId'>;

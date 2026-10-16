@@ -2,8 +2,6 @@
 
 Goal: more Chapter Two products as soon as ArkhamDB lists them, and more automated encounter cards.
 
-Model hint: **S** = Sonnet, **O** = Opus. Each task = one session = one PR.
-
 **Why this milestone**
 
 - **Problem:** the app is only as useful as the content it covers, and each scenario still needs some manual work at the table for cards that are only displayed, not automated.
@@ -34,4 +32,4 @@ This milestone is a repeatable recipe rather than a fixed list. Add a section pe
 
 - [ ] Pick the most frequent manual quick actions from playtests
 - [ ] Script them in the effects registry, with tests
-- [ ] Per-game automation level setting (display / assist / auto)
+- [ ] Per-game automation level setting (display / assist / auto); extends the helper-reliance setting from M1C.2 rather than adding a second one

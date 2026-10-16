@@ -1,0 +1,6 @@
+# Collapsed by default in GitHub diffs, so reviews start with the files that matter.
+# Still one tap away; mark only files nobody reviews line by line.
+pnpm-lock.yaml linguist-generated=true
+CHANGELOG.md linguist-generated=true
+.release-please-manifest.json linguist-generated=true
+docs/tasks/done/** linguist-generated=true

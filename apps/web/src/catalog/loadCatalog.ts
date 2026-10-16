@@ -6,7 +6,7 @@ export interface CatalogCache {
   putCatalog(lang: string, catalog: CardCatalog): Promise<void>;
 }
 
-/** ArkhamDB hosts per UI language (architecture §9). */
+/** ArkhamDB hosts per UI language (architecture "Card data"). */
 const HOSTS: Record<string, string> = {
   en: 'https://arkhamdb.com',
   de: 'https://de.arkhamdb.com',
@@ -31,6 +31,7 @@ export async function loadCatalog(
     }
   } catch (error) {
     if (!cached) throw error;
+    console.warn('Could not refresh the card catalog; using the cached copy.', error);
   }
   // A 304 is only possible when we sent `If-Modified-Since`, i.e. when `cached` exists.
   return cached as CardCatalog;
