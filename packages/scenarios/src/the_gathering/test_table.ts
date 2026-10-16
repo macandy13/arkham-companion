@@ -92,10 +92,12 @@ export class TestTable {
   /**
    * The phase assistant's "Next" (`NextPhase`): runs the steps of the current
    * phase until one needs the players (a decision, an enemy attack), or moves
-   * on to the next phase.
+   * on to the next phase. Returns the phase it lands on (the current one when
+   * it stops mid-phase), so a script asserts where it is at every step.
    */
-  nextPhase(): void {
+  nextPhase(): Phase {
     this.play({ type: 'NextPhase' });
+    return this.current.meta.phase;
   }
 
   /** The round and phase the game is in. */
