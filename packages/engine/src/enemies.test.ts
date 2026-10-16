@@ -393,6 +393,14 @@ describe('engagement commands', () => {
     ).toEqual(rejection);
   });
 
+  it('rejects engaging a massive enemy, which already counts as engaged with everyone at its location', () => {
+    const state = startedWith([placed(ghoul, 'massive_ghoul', at(hall))]);
+
+    expect(
+      rejectionFrom(ctx, state, { type: 'EngageEnemy', enemyId: ghoul, investigatorId: alice }),
+    ).toEqual({ code: 'massiveNotEngageable', cardId: ghoul });
+  });
+
   it('disengages an enemy, leaving it at the investigator`s location', () => {
     const state = startedWith([placed(ghoul, 'ghoul', engagedWith(alice))]);
 

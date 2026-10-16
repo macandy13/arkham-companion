@@ -96,6 +96,17 @@ export type Rejection =
   | { code: 'alreadyEngaged'; cardId: InstanceId; investigatorId: InvestigatorId }
   /** `DisengageEnemy` for an enemy that is not engaged. */
   | { code: 'notEngaged'; cardId: InstanceId }
+  /**
+   * `Fight` against an aloof enemy nobody is engaged with (Rules Reference,
+   * "Aloof"); it has to be engaged first, e.g. with the Engage action.
+   */
+  | { code: 'aloofNotEngaged'; cardId: InstanceId }
+  /**
+   * `EngageEnemy` for a massive enemy: it is never placed in a threat area but
+   * counts as engaged with every investigator at its location (Rules
+   * Reference, "Massive"), so there is nothing to engage.
+   */
+  | { code: 'massiveNotEngageable'; cardId: InstanceId }
   /** Exhausting an exhausted card or readying a ready one. */
   | { code: 'exhaustUnchanged'; cardId: InstanceId; exhausted: boolean }
   /** A hunter command names an enemy that is not an unengaged hunter at a location. */
@@ -266,6 +277,10 @@ function describe(r: Rejection): string {
       return `${r.cardId} is already engaged with ${r.investigatorId}`;
     case 'notEngaged':
       return `${r.cardId} is not engaged`;
+    case 'aloofNotEngaged':
+      return `${r.cardId} is aloof and must be engaged before it can be attacked`;
+    case 'massiveNotEngageable':
+      return `${r.cardId} is massive and already engaged with everyone at its location`;
     case 'exhaustUnchanged':
       return `${r.cardId} is already ${r.exhausted ? 'exhausted' : 'ready'}`;
     case 'notAHunter':

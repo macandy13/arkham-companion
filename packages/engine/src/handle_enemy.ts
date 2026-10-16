@@ -11,6 +11,7 @@ import { engageEvents } from './engagement';
 import type { EnemyDefeated, EnemyEngaged, Event, ExhaustChanged } from './events';
 import { activeInvestigator } from './handle_investigator';
 import type { InstanceId } from './ids';
+import { hasKeyword } from './keywords';
 import { requireCard } from './lookup';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
@@ -20,13 +21,19 @@ import type { Zone } from './zone';
 const ENCOUNTER_DISCARD: Zone = { kind: 'encounterDiscard' };
 const VICTORY_DISPLAY: Zone = { kind: 'victoryDisplay' };
 
-/** `EngageEnemy`: the enemy engages the investigator, who must be at its location. */
+/**
+ * `EngageEnemy`: the enemy engages the investigator, who must be at its
+ * location. A massive enemy is rejected rather than ignored, so the UI can
+ * explain that it already counts as engaged with everyone at its location.
+ */
 export function handleEngageEnemy(
   ctx: EngineContext,
   state: GameState,
   cmd: EngageEnemy,
 ): EnemyEngaged[] {
-  const { enemy } = inPlayEnemyOf(ctx, state, cmd.enemyId);
+  const { enemy, stats } = inPlayEnemyOf(ctx, state, cmd.enemyId);
+  if (hasKeyword(stats, 'massive'))
+    throw new CommandRejected({ code: 'massiveNotEngageable', cardId: enemy.id });
   const investigator = activeInvestigator(state, cmd.investigatorId);
   if (enemy.zone.kind === 'engaged' && enemy.zone.investigatorId === investigator.id)
     throw new CommandRejected({

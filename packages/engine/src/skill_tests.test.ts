@@ -29,7 +29,8 @@ const ghoul = instanceId('ghoul');
 
 /**
  * The study (shroud 3, 2 clues) next to the bare hallway (shroud 1, no
- * clues); a ghoul (fight 4, evade 2, 3 health) and a massive ghoul (evade 5);
+ * clues); a ghoul (fight 4, evade 2, 3 health), a massive ghoul (evade 5), an
+ * aloof ghoul and a ghoul that is both massive and aloof;
  * treacheries with a revelation test that is discarded (willpower 4) or stays
  * in the threat area (agility 2), and one without a test.
  */
@@ -38,6 +39,13 @@ const ctx = contextWith(
   makeCard({ code: 'hallway', name: 'Hallway', typeCode: 'location', shroud: 1 }),
   makeCard({ code: 'ghoul', typeCode: 'enemy', fight: 4, evade: 2, health: fixed(3) }),
   makeCard({ code: 'massive_ghoul', typeCode: 'enemy', evade: 5, keywords: [{ name: 'massive' }] }),
+  makeCard({ code: 'aloof_ghoul', typeCode: 'enemy', fight: 3, keywords: [{ name: 'aloof' }] }),
+  makeCard({
+    code: 'massive_aloof_ghoul',
+    typeCode: 'enemy',
+    fight: 3,
+    keywords: [{ name: 'massive' }, { name: 'aloof' }],
+  }),
   makeCard({ code: 'chilling_treachery', revelationTest: { skill: 'willpower', difficulty: 4 } }),
   makeCard({
     code: 'clinging_treachery',
@@ -288,6 +296,41 @@ describe('Fight', () => {
     expect(asked.pending.map((decision) => decision.id)).toEqual(['fight:alice:ghoul']);
   });
 
+  it('rejects attacking an aloof enemy nobody is engaged with', () => {
+    const state = aliceInStudyWith([{ id: ghoul, code: 'aloof_ghoul', zone: at(study) }]);
+
+    expect(rejectionFrom(ctx, state, fight)).toEqual({ code: 'aloofNotEngaged', cardId: ghoul });
+  });
+
+  it('can attack an aloof enemy engaged with another investigator at the location', () => {
+    const board = startBoard(ctx, {
+      maps: { main: { locations: { study: 'study' } } },
+      investigators: [
+        makeInvestigator({ id: 'alice', seat: 0, locationId: study }),
+        makeInvestigator({ id: 'bob', seat: 1, locationId: study }),
+      ],
+      cards: [{ id: ghoul, code: 'aloof_ghoul', zone: engagedWith(bob) }],
+    });
+
+    const asked = stateAfter(ctx, board, fight);
+
+    expect(asked.pending[0]).toMatchObject({
+      id: 'fight:alice:ghoul',
+      skillTest: { skill: 'combat', difficulty: 3 },
+    });
+  });
+
+  it('can attack a massive aloof enemy, which counts as engaged with everyone at its location', () => {
+    const state = aliceInStudyWith([{ id: ghoul, code: 'massive_aloof_ghoul', zone: at(study) }]);
+
+    const asked = stateAfter(ctx, state, fight);
+
+    expect(asked.pending[0]).toMatchObject({
+      id: 'fight:alice:ghoul',
+      skillTest: { skill: 'combat', difficulty: 3 },
+    });
+  });
+
   it('rejects an enemy at another location', () => {
     const state = aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: at(hallway) }]);
 
@@ -430,6 +473,12 @@ describe('Evade', () => {
 
   it('rejects an enemy that is not engaged with the investigator', () => {
     const state = aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: at(hallway) }]);
+
+    expect(rejectionFrom(ctx, state, evade)).toEqual({ code: 'notEngaged', cardId: ghoul });
+  });
+
+  it('rejects an aloof enemy at the location that nobody is engaged with', () => {
+    const state = aliceInStudyWith([{ id: ghoul, code: 'aloof_ghoul', zone: at(study) }]);
 
     expect(rejectionFrom(ctx, state, evade)).toEqual({ code: 'notEngaged', cardId: ghoul });
   });
