@@ -1,11 +1,12 @@
 import type { SetupStep } from './setup';
 import type { ChaosToken, Difficulty } from './state';
+import type { ScenarioHooks } from './triggers';
 
 /**
  * A scenario as data (architecture §7): its agendas and acts, chaos bag,
  * reference card and setup steps. `compileSetup` turns it into a
- * `StartScenario`. Hooks, resolutions and campaign variants join this type
- * with the tasks that need them.
+ * `StartScenario`. Resolutions and campaign variants join this type with the
+ * tasks that need them.
  */
 export interface ScenarioDefinition {
   /** Stored as `GameMeta.scenarioId`. */
@@ -19,6 +20,11 @@ export interface ScenarioDefinition {
   /** Act codes, first act first. */
   actDeck: readonly string[];
   setup: readonly SetupStep[];
+  /**
+   * The scenario's forced effects. Not read by `compileSetup`: the app passes
+   * them to the engine as `EngineContext.hooks` for the whole scenario.
+   */
+  hooks?: Partial<ScenarioHooks>;
 }
 
 /** The chaos tokens whose effect each scenario defines on its reference card. */

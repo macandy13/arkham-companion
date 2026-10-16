@@ -1,11 +1,5 @@
 import { z } from 'zod';
-import {
-  STATE_VERSION,
-  replay,
-  type Event,
-  type ImportedGame,
-  type StoredEvent,
-} from '@arkham/engine';
+import { STATE_VERSION, replay, type ImportedGame, type StoredEvent } from '@arkham/engine';
 
 /** Marker so arbitrary JSON files are rejected early with a clear reason. */
 const FORMAT = 'arkham-companion-game';
@@ -22,6 +16,7 @@ const exportSchema = z.object({
   events: z.array(
     z.object({
       timestamp: z.number(),
+      commandId: z.string(),
       event: z.looseObject({ type: z.string() }),
     }),
   ),
@@ -52,7 +47,7 @@ export function serialiseGameExport(
     format: FORMAT,
     stateVersion: STATE_VERSION,
     game: { title, createdAt },
-    events: events.map(({ timestamp, event }) => ({ timestamp, event })),
+    events: events.map(({ timestamp, commandId, event }) => ({ timestamp, commandId, event })),
   });
 }
 
@@ -77,7 +72,7 @@ export function parseGameExport(text: string): ImportedGame {
   if (!parsed.success) throw new GameImportError('invalid');
 
   // The schema above cannot vouch for event payloads, but the cast is checked by the replay below.
-  const events = parsed.data.events as unknown as { timestamp: number; event: Event }[];
+  const events = parsed.data.events as unknown as ImportedGame['events'];
   try {
     if (!replay(events.map((e) => e.event))) throw new Error('unknown event');
   } catch (error) {

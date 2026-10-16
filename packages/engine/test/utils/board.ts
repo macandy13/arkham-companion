@@ -7,6 +7,7 @@ import {
   type Investigator,
   type MapSpec,
   type StartScenario,
+  type StartingCard,
 } from '../../src/index';
 import { investigators } from './investigators';
 import { run } from './scenario';
@@ -26,6 +27,12 @@ export interface BoardOptions {
   maps: Readonly<Record<string, BoardMapOptions>>;
   /** Cards that start set aside: instance ID to card code. */
   setAside?: Readonly<Record<string, string>>;
+  /** Further cards to create, with explicit IDs and zones (encounter deck, discard, in play, …). */
+  cards?: readonly StartingCard[];
+  /** RNG seed (default 1). */
+  seed?: number;
+  /** Whether setup shuffles the encounter deck; pass `false` to keep the order of `cards`. */
+  shuffleEncounterDeck?: boolean;
   /** Number of standard investigators (default 1); ignored when `investigators` is given. */
   playerCount?: number;
   /** Investigators to start with instead of the standard ones. */
@@ -34,12 +41,20 @@ export interface BoardOptions {
 
 /**
  * The state after starting a scenario that consists only of the given maps,
- * their locations (unrevealed) and set-aside cards. For tests about the
+ * their locations (unrevealed), set-aside cards and any further `cards`. For tests about the
  * connection graph and locations; instance IDs are exactly the keys given.
  */
 export function startBoard(
   ctx: EngineContext,
-  { maps, setAside = {}, playerCount = 1, investigators: custom }: BoardOptions,
+  {
+    maps,
+    setAside = {},
+    cards: extraCards = [],
+    seed = 1,
+    shuffleEncounterDeck,
+    playerCount = 1,
+    investigators: custom,
+  }: BoardOptions,
 ): GameState {
   const specs: Record<string, MapSpec> = {};
   const cards: StartScenario['cards'] = [];
@@ -58,10 +73,11 @@ export function startBoard(
     type: 'StartScenario',
     scenarioId: 'test',
     difficulty: 'standard',
-    seed: 1,
+    seed,
+    ...(shuffleEncounterDeck === undefined ? {} : { shuffleEncounterDeck }),
     investigators: [...(custom ?? investigators(playerCount))],
     maps: specs,
-    cards,
+    cards: [...cards, ...extraCards],
   };
   return run(ctx, [start]).state;
 }

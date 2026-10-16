@@ -1,5 +1,5 @@
 import type { CardCatalog } from '@arkham/carddata';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { InvestigatorSheet } from './InvestigatorSheet';
 import { PickerFilterBar } from './PickerFilterBar';
@@ -30,6 +30,8 @@ interface InvestigatorPickerProps {
 /**
  * Investigator picker (architecture §11): a filterable portrait grid, a detail sheet and the
  * seat list. Tapping a portrait opens the sheet; "select" there assigns the next free seat.
+ * The sheet opens inside the grid, right after the tapped portrait, so the player does not
+ * have to scroll to the end of a long list to see it.
  */
 export function InvestigatorPicker({
   catalog,
@@ -42,17 +44,43 @@ export function InvestigatorPicker({
   const { t } = useTranslation();
   const [filters, setFilters] = useState(NO_FILTERS);
   const [openCode, setOpenCode] = useState<string>();
+  // Switching to the other chapter swaps the sheet's content but keeps it where it was opened.
+  const [anchorCode, setAnchorCode] = useState<string>();
 
   const byCode = new Map(catalog.investigators.map((i) => [i.code, i]));
   const imageUrl = (src: string) => `${imageHost}${src}`;
   const seated = seats.flatMap((code) => byCode.get(code) ?? []);
   const visible = applyPickerFilters(catalog.investigators, filters, ownedPacks);
   const open = openCode === undefined ? undefined : byCode.get(openCode);
+  const anchorVisible = visible.some((investigator) => investigator.code === anchorCode);
+
+  function openSheet(code: string) {
+    setOpenCode(code);
+    setAnchorCode(code);
+  }
+
+  function closeSheet() {
+    setOpenCode(undefined);
+    setAnchorCode(undefined);
+  }
 
   function select(code: string) {
     onSeatsChange([...seats, code]);
-    setOpenCode(undefined);
+    closeSheet();
   }
+
+  const sheet = open && (
+    <InvestigatorSheet
+      investigator={open}
+      otherChapter={open.otherChapterCode ? byCode.get(open.otherChapterCode) : undefined}
+      seatNumber={seats.includes(open.code) ? seats.indexOf(open.code) + 1 : undefined}
+      seatsFull={seats.length >= maxSeats}
+      imageUrl={imageUrl}
+      onSelect={() => select(open.code)}
+      onShowOtherChapter={() => setOpenCode(open.otherChapterCode)}
+      onClose={closeSheet}
+    />
+  );
 
   return (
     <section id="investigator-picker" aria-labelledby="picker-heading">
@@ -69,40 +97,32 @@ export function InvestigatorPicker({
       ) : (
         <ul aria-label={t('picker.portraits')}>
           {visible.map((investigator) => (
-            <li key={investigator.code}>
-              <button type="button" onClick={() => setOpenCode(investigator.code)}>
-                {investigator.imageSrc && (
-                  <img
-                    src={imageUrl(investigator.imageSrc)}
-                    alt=""
-                    loading="lazy"
-                    onError={(e) => e.currentTarget.setAttribute('hidden', '')}
-                  />
-                )}
-                <span>{investigator.name}</span>
-                <small data-chapter={investigator.chapter}>
-                  {t('picker.chapterBadge', { n: investigator.chapter })}
-                </small>
-                {seats.includes(investigator.code) && (
-                  <small>{t('picker.seated', { n: seats.indexOf(investigator.code) + 1 })}</small>
-                )}
-              </button>
-            </li>
+            <Fragment key={investigator.code}>
+              <li>
+                <button type="button" onClick={() => openSheet(investigator.code)}>
+                  {investigator.imageSrc && (
+                    <img
+                      src={imageUrl(investigator.imageSrc)}
+                      alt=""
+                      loading="lazy"
+                      onError={(e) => e.currentTarget.setAttribute('hidden', '')}
+                    />
+                  )}
+                  <span>{investigator.name}</span>
+                  <small data-chapter={investigator.chapter}>
+                    {t('picker.chapterBadge', { n: investigator.chapter })}
+                  </small>
+                  {seats.includes(investigator.code) && (
+                    <small>{t('picker.seated', { n: seats.indexOf(investigator.code) + 1 })}</small>
+                  )}
+                </button>
+              </li>
+              {investigator.code === anchorCode && sheet && <li>{sheet}</li>}
+            </Fragment>
           ))}
         </ul>
       )}
-      {open && (
-        <InvestigatorSheet
-          investigator={open}
-          otherChapter={open.otherChapterCode ? byCode.get(open.otherChapterCode) : undefined}
-          seatNumber={seats.includes(open.code) ? seats.indexOf(open.code) + 1 : undefined}
-          seatsFull={seats.length >= maxSeats}
-          imageUrl={imageUrl}
-          onSelect={() => select(open.code)}
-          onShowOtherChapter={() => setOpenCode(open.otherChapterCode)}
-          onClose={() => setOpenCode(undefined)}
-        />
-      )}
+      {!anchorVisible && sheet}
     </section>
   );
 }

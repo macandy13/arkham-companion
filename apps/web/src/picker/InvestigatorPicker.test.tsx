@@ -208,6 +208,27 @@ describe('InvestigatorPicker', () => {
     expect(within(sheet).getByAltText('Back')).toBeTruthy();
   });
 
+  it('opens the detail sheet right after the tapped portrait', () => {
+    render(<Harness />);
+
+    openPortrait('Birch');
+
+    const birchPortrait = screen.getByRole('button', { name: /Birch/ }).closest('li');
+    const sheet = screen.getByRole('complementary', { name: 'Birch' });
+    expect(birchPortrait?.nextElementSibling?.firstElementChild).toBe(sheet);
+  });
+
+  it('keeps the detail sheet open below the list when a filter hides its portrait', () => {
+    render(<Harness />);
+
+    openPortrait('Birch');
+    fireEvent.change(screen.getByLabelText('Search by name'), { target: { value: 'cedar' } });
+
+    const portraits = screen.getByRole('list', { name: 'Investigators' });
+    const sheet = screen.getByRole('complementary', { name: 'Birch' });
+    expect(portraits.contains(sheet)).toBe(false);
+  });
+
   it('links the detail sheet to the other chapter version', () => {
     render(<Harness />);
 

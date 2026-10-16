@@ -3,6 +3,7 @@ import {
   CommandRejected,
   cardDbFrom,
   cardStats,
+  comparableName,
   resolveValue,
   trait,
   type CardStats,
@@ -105,5 +106,16 @@ describe('resolveValue', () => {
 
   it('adds the fixed part to the scaled part', () => {
     expect(resolveValue({ fixed: 3, perInvestigator: 2 }, 4)).toBe(11);
+  });
+});
+
+describe('comparableName', () => {
+  it.each([
+    { name: 'ignores case', text: 'Most Clues', expected: 'most clues' },
+    { name: 'strips a trailing dot', text: 'Attic.', expected: 'attic' },
+    { name: 'trims before stripping the dot', text: '  Attic. ', expected: 'attic' },
+    { name: 'keeps inner dots', text: 'St. Mary', expected: 'st. mary' },
+  ])('$name', ({ text, expected }) => {
+    expect(comparableName(text)).toEqual(expected);
   });
 });
