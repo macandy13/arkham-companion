@@ -9,8 +9,6 @@ Ref: architecture §10 "Later: cloud and multi-device sync".
 - **What the app gains:** Games and campaigns backed up in the cloud, and several devices at the table showing the same live game.
 - **Why at this point:** A backend adds cost, accounts and operations, and a single tablet already covers the core use case – so it comes last. The groundwork is already in place: the `GameStore` interface, UUID game IDs and an append-only event log with `expectedSeq` for optimistic concurrency (§10).
 
-Model hint: **S** = Sonnet, **O** = Opus. Each task = one session = one PR.
-
 ---
 
 ## M8.1 Backend decision (O)
