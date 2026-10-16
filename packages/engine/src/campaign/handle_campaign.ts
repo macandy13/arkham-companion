@@ -66,10 +66,7 @@ export interface CampaignExecuteResult {
  * Runs a campaign command end to end (`handleCampaign`, then the reducer),
  * like the game's `execute`. Throws `CampaignCommandRejected`.
  */
-export function executeCampaign(
-  log: CampaignLog,
-  command: CampaignCommand,
-): CampaignExecuteResult {
+export function executeCampaign(log: CampaignLog, command: CampaignCommand): CampaignExecuteResult {
   const events = handleCampaign(log, command);
   return { log: replayCampaign(events, log), events };
 }
@@ -81,7 +78,10 @@ function handleStartCampaign(log: CampaignLog, command: StartCampaign): Campaign
     throw new CampaignCommandRejected({ code: 'invalidTeamSize', count });
   const [repeated] = duplicates(command.investigators.map((inv) => inv.code));
   if (repeated !== undefined)
-    throw new CampaignCommandRejected({ code: 'duplicateInvestigator', investigatorCode: repeated });
+    throw new CampaignCommandRejected({
+      code: 'duplicateInvestigator',
+      investigatorCode: repeated,
+    });
   if (command.scenarioIds.length === 0) throw new CampaignCommandRejected({ code: 'noScenarios' });
   return [
     {
@@ -99,7 +99,8 @@ function handleStartCampaign(log: CampaignLog, command: StartCampaign): Campaign
 function handleRecordStory(log: CampaignLog, command: RecordStory): CampaignEvent[] {
   const { key, value } = command;
   if (key.trim() === '') throw new CampaignCommandRejected({ code: 'invalidStoryKey', key });
-  if (!storyValueIsValid(value)) throw new CampaignCommandRejected({ code: 'invalidStoryValue', key });
+  if (!storyValueIsValid(value))
+    throw new CampaignCommandRejected({ code: 'invalidStoryValue', key });
   const recorded = log.story[key];
   if (recorded && recorded.kind !== value.kind)
     throw new CampaignCommandRejected({

@@ -1,8 +1,8 @@
+import type { CampaignLog } from './campaign/campaign_log';
 import type { CardType, Trait } from './cards';
 import type { DecisionId, InstanceId, InvestigatorId, MapId } from './ids';
 import type { MapSpec } from './map';
 import type {
-  CampaignLog,
   Decision,
   ChaosToken,
   Difficulty,

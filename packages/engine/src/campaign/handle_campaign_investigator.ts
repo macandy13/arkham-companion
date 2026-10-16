@@ -136,5 +136,6 @@ function requireAlive(log: CampaignLog, code: string): CampaignInvestigator {
 }
 
 function requireAmount(amount: number): void {
-  if (!isPositiveInteger(amount)) throw new CampaignCommandRejected({ code: 'invalidAmount', amount });
+  if (!isPositiveInteger(amount))
+    throw new CampaignCommandRejected({ code: 'invalidAmount', amount });
 }

@@ -155,7 +155,12 @@ export interface CampaignManualAdjust {
 
 /** The corrections a `CampaignManualAdjust` can make; each produces the matching regular event. */
 export type CampaignAdjustment =
-  | { readonly kind: 'xp'; readonly code: string; readonly account: XpAccount; readonly delta: number }
+  | {
+      readonly kind: 'xp';
+      readonly code: string;
+      readonly account: XpAccount;
+      readonly delta: number;
+    }
   | {
       readonly kind: 'trauma';
       readonly code: string;

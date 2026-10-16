@@ -1,8 +1,8 @@
+import type { CampaignLog } from './campaign/campaign_log';
 import type { DecisionId, InstanceId, InvestigatorId, MapId } from './ids';
 import type { Edge, GameMap } from './map';
 import type { RngState } from './rng';
 import type {
-  CampaignLog,
   CardInstance,
   ChaosToken,
   Decision,

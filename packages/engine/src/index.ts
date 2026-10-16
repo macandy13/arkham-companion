@@ -36,3 +36,4 @@ export {
 } from './triggers';
 export * from './store';
 export { undoLastGroup } from './undo';
+export * from './campaign';

@@ -27,9 +27,7 @@ export function applyCampaign(log: CampaignLog, event: CampaignEvent): CampaignL
           : { ...inv, xpSpent: inv.xpSpent + event.delta },
       );
     case 'TraumaChanged':
-      return updateInvestigator(log, event.code, (inv) =>
-        withTrauma(inv, event.kind, event.delta),
-      );
+      return updateInvestigator(log, event.code, (inv) => withTrauma(inv, event.kind, event.delta));
     case 'InvestigatorFateChanged':
       return updateInvestigator(log, event.code, (inv) => ({ ...inv, fate: event.fate }));
     case 'InvestigatorReplaced':
