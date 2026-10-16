@@ -4,7 +4,8 @@ import { CommandRejected } from './rejection';
 import { cardStats, type EngineContext } from './cards';
 import { chooseInvestigator, chooseLocation, engageEvents, preferredByPrey } from './engagement';
 import { requestDecision } from './decisions';
-import type { CardMoved, Event } from './events';
+import type { Event } from './events';
+import { moveCardEvent } from './placement';
 import { decisionId, type InstanceId } from './ids';
 import { hasKeyword } from './keywords';
 import { cardsOfType, requireCard } from './lookup';
@@ -227,11 +228,6 @@ function moveTo(
   hunter: CardInstance,
   destination: InstanceId,
 ): Event[] {
-  const moved: CardMoved = {
-    type: 'CardMoved',
-    cardId: hunter.id,
-    from: hunter.zone,
-    to: { kind: 'atLocation', locationId: destination },
-  };
+  const moved = moveCardEvent(hunter, { kind: 'atLocation', locationId: destination });
   return [moved, ...engageEvents(ctx, replay([moved], state), hunter.id)];
 }

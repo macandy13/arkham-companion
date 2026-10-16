@@ -1,6 +1,6 @@
 # M1 – Generic engine: finished tasks
 
-Finished tasks M1.1–M1.11 moved out of `docs/tasks/M1-engine.md` so sessions working on open tasks read less. Their Done and Follow-ups notes stay here for reference; M1.E stays in the main file because later tasks still extend it.
+Finished tasks moved out of `docs/tasks/M1-engine.md` so sessions working on open tasks read less. Their Done and Follow-ups notes stay here for reference; M1.E stays in the main file because later tasks still extend it.
 
 ---
 
@@ -205,3 +205,40 @@ Done: `StoredEvent.commandId` is shared by all events of one `appendEvents` call
 Follow-ups: no redo stack (redo = executing the command again, which is deterministic); events stored before this change have no `commandId` (the schema is unreleased, no migration); `undoLast` loads the whole log to find the last group (fine for table-sized games, could read the tail only); the UI (M3) must call `appendEvents` once per `execute` result and not split it; undoing is allowed past `ScenarioEnded`.
 
 End-to-end test (M1.E), done: `TestTable` logs events with a `commandId` per `play` and has `undo()` (`undoLastGroup` on that log, then `replay`). In round 2 Roland's mis-tapped move to the Parlor is undone: he is back in the Hallway (the players had not counted the move off his counter yet, so only the location is checked); the final replay check still holds.
+
+---
+
+## M1.15 Investigator defeat and resign (S)
+
+**Why:** Defeat only sets a status today. The rules also put the investigator's clues on their location, disengage their enemies, remove their threat-area cards and pass the lead on (M1.4 follow-up); `resigned` has no command. A defeat in the middle of a game leaves the board wrong.
+
+**Benefit:** A defeated or resigned investigator leaves the table the way the rules say, so the rest of the group can keep playing on a correct board.
+
+Ref: RR "Investigator Elimination"; M1.4, M1.8 follow-ups.
+
+- [x] On defeat or resign: clues to the investigator's location, engaged enemies stay at that location unengaged, threat-area treacheries to the encounter discard
+- [x] `Resign` command (an action, in the investigator's turn), status `resigned`, same clean-up as defeat
+- [x] A defeated or resigned lead investigator: the group picks a new lead (`chooseInvestigator` decision)
+- [x] All investigators defeated or resigned ends the scenario (`ScenarioEnded`, no resolution given → the scenario's "no resolution" hook)
+- [x] Rules to check: a defeated drawer mid-mythos, doom on defeated investigators' cards
+- [x] End-to-end test: an investigator resigns or is defeated in a later round
+
+Done: `elimination.ts` holds `investigatorLeavesEvents(state, investigator, left)`, the one place every way out of the scenario goes through (`AdjustInvestigator` and `ResolveEnemyAttack` on a defeat, `Resign`). Events, in order: the departure (`InvestigatorDefeated` or the new `InvestigatorResigned`; the reducer sets the status and ends a turn in progress), then the clean-up as ordinary events (clues: `InvestigatorChanged` -n plus `TokensChanged` on the location, skipped for an investigator without a location; `EnemyDisengaged` for each engaged enemy, which keeps damage and exhaustion; `TokensChanged` removing the tokens of each threat-area card, then `CardMoved` to the top of the encounter discard, so doom does not return if the discard is reshuffled), then the succession. **Lead:** `GameMeta.leadInvestigator` was already stored; new event `LeadInvestigatorChanged` and command `SetLeadInvestigator {investigatorId}` (active investigators only, `alreadyLeadInvestigator` if unchanged; also usable for card effects). When the lead leaves and several investigators remain, a `chooseInvestigator` decision `newLeadInvestigator` (decider: group, no subject) has one `SetLeadInvestigator` option per remaining investigator; with a single one left they become lead directly. `playerOrder` keeps rotating from the old lead's seat until the new lead is set. **No one left:** `ScenarioEnded` without `resolution` (it is now optional); the engine has no scenario "no resolution" hook, so `GameMeta.resolution` stays absent and "ended" is not visible in the state (see follow-ups). **`Resign {investigatorId}`:** only in the investigation phase (`wrongPhase`), for an active investigator (`unknownInvestigator`, `investigatorNotActive`) whose turn is in progress (`turnNotInProgress`, shared with `EndTurn` via `requireTurnOf`); no new rejection code. The last turn of the investigation phase no longer waits for departed investigators (`playerOrder` only lists active ones). Tests: `elimination.test.ts` (`describe.each` over defeat by damage, by horror and resign: clues, enemy zone/tokens/exhaustion, threat area and doom, turn, invariants; lead decision and answer, single successor, non-lead leaving; last investigator; `Resign` and `SetLeadInvestigator` rejections; an enemy-attack defeat drops the other attacks of that investigator from step 3.3). The Gathering end-to-end test: in round 6 Wendy resigns with Frozen in Fear and a Swarm of Rats on her (`TestTable.resign`). Existing defeat tests in `investigators.test.ts` and `phases.test.ts` now also see the clean-up events. **Rules check (#45):** all interpretations hold; two loose ends fixed: an investigator without a location has nowhere to leave their engaged enemies, so those are discarded (an unengaged enemy must be at a location), and cards attached to a discarded threat-area card go to the encounter discard with it, tokens removed (`discardEncounterCard`).
+Follow-ups: `ScenarioEnded` without a resolution leaves no trace in `GameMeta` (and commands after the end are still not blocked, M1.4 follow-up): add an `ended` marker when the end is enforced, and a scenario "no resolution" hook (The Gathering's guide names what follows when every investigator resigned or was defeated); the lead decision is not about a card, so it has no `subject` and `TestTable.answer` (which looks up by subject name) cannot answer it, scripts use `ResolveDecision` with `newLeadInvestigator`; rules to check: (1) a drawer defeated mid-mythos: their own encounter card stays in the `resolving` zone until its test is answered (the tests that defeat them are the card's own), and the remaining 1.4 draws skip them (`canDraw`), a surge draw of the defeated drawer is not special-cased; (2) doom on a defeated investigator's cards: treachery doom is removed with the discard, `doomOnPlayerCards` stays on the defeated investigator but no longer counts (`doomInPlay` counts active investigators only) and is not cleared; (3) clues of an investigator without a location stay with them; (4) a defeated lead during a phase step: the decision blocks further commands until answered, so `NextPhase` stops there like at any other decision; (5) player cards are not modelled, so the discarding of the investigator's own cards, weaknesses and the "remove from game" of story assets are left to the players.
+
+---
+
+## M1.19 Shared event building blocks (S)
+
+**Why:** Several modules build the same basic events by hand: moving a card (`CardMoved` in board, placement, hunters, scenario and elimination code), removing every token from a card, moving clues between an investigator and a location, discarding a card with its attachments (review #45). Each copy can drift, and a module's intent is hidden behind event plumbing.
+
+**Benefit:** Modules say what happens ("discard this treachery", "these clues go to the location") and share one correct way of doing it.
+
+Ref: review #45 (`elimination.ts`). A `refactor:` PR with no behaviour change.
+
+- [x] `moveCardEvent(card, to, index?)` next to the zones, used wherever `CardMoved` is built
+- [x] `clearTokensEvents(card)` next to the cards (used by elimination and the doom removal in `handle_scenario.ts`)
+- [x] `cluesToLocationEvents(investigator, locationId, amount)` next to `DiscoverClues`, its reverse
+- [x] `discardEncounterCard(state, cardId)` (attachments first, tokens cleared) moved next to the cards
+
+Done: the card builders live in `placement.ts`, where card moves already were (`zone.ts` only describes zones): `moveCardEvent(card, to, index?)` builds a `CardMoved` without validation, for moves the engine decides (hunters, maps, agenda/act advance, discards); the validating `cardMoved` used by commands now builds on it. `clearTokensEvents(card, tokens = TOKEN_KINDS)` removes every token of the given kinds; the agenda advance uses it with `['doom']`. `discardEncounterCard(state, cardId)` moved there from `elimination.ts` and was renamed from `discardEvents` (review #60: an "event" is also a player card type, and this only discards encounter cards). The clue builders live with the investigator in `investigators.ts`: `discoverCluesEvents` (used by `DiscoverClues`) and its reverse `cluesToLocationEvents` (used by elimination). No `CardMoved` is built by hand any more outside `placement.ts`. No behaviour change: event lists and their order are the same. Tests: `placement.test.ts` for the builders; the existing tests cover every caller.
