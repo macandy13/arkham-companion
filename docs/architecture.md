@@ -46,7 +46,7 @@ Arrows are package dependencies. The engine depends on nothing but `@arkham/util
 5. **Generic before specific.** What two scenarios need becomes an engine primitive – each new scenario gets cheaper.
 6. **Seams before features.** Card effects, cloud sync and auto-layout have an interface before they have an implementation – something playable early, no rewrites later.
 
-**Technology:** TypeScript (strict) in a pnpm workspace; Vite, React 19, React Router (hash routes for static hosting), Zustand, i18next, vite-plugin-pwa; Dexie for IndexedDB; zod for external input (ArkhamDB JSON, imported saves); Vitest and Playwright.
+**Technology:** TypeScript (strict) in a pnpm workspace; Vite, React 19, React Router (hash routes for static hosting), Zustand, i18next, vite-plugin-pwa; Dexie for IndexedDB; zod for external input (ArkhamDB JSON, imported saves); Vitest and Playwright. ESLint (`eslint.config.js`) enforces the engine's purity and that only `IndexedDbStore` imports Dexie.
 
 ## Pieces
 
@@ -158,7 +158,7 @@ The game rules each module implements are summarised in [rules.md](rules.md).
 
 **Extend it:** a new operation is a method on `GameStore` with its doc comment as the contract, implemented and tested in `IndexedDbStore`. A schema change bumps the Dexie `version()` with an `upgrade`; a change of the state shape bumps `STATE_VERSION`.
 
-**Must stay true:** only `IndexedDbStore` talks to IndexedDB. Every command is written before the UI updates. Game IDs are UUIDs and never device-bound, so they survive a later cloud store. localStorage holds only per-device settings.
+**Must stay true:** only `IndexedDbStore` talks to IndexedDB (ESLint enforces it). Every command is written before the UI updates. Game IDs are UUIDs and never device-bound, so they survive a later cloud store. localStorage holds only per-device settings.
 
 **Why:** a tablet at the table gets refreshed and runs out of battery; writing the log first means nothing is lost, and the log doubles as export format and basis for sync.
 
