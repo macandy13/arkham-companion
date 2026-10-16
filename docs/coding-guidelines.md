@@ -83,6 +83,7 @@ The DOM is a clearly structured document tree – good structure _is_ accessibil
 - Give landmarks and controls an accessible name (`aria-label`/`aria-labelledby`) when visible text doesn't provide one. Use ARIA only where native semantics are insufficient.
 - No presentational markup: no wrapper `div`s just for styling when an existing element can be styled, no `<b>`/`<strong>`/`<br>`, no inline `style`, no layout or utility class names (see `CLAUDE.md`).
 - Every visible string goes through i18n.
+- **Show results where the user acted.** Details, sheets and confirmations open next to the element that opened them (e.g. an expanded row inside the list, right after the tapped item), never at the end of a long list, so a tap never needs a scroll to see what it did.
 
 ## 5. CSS
 
