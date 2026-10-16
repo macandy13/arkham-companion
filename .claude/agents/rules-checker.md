@@ -29,6 +29,16 @@ Never rely on memory alone for a rule. Quote the rule (short excerpt, with secti
 
 ## Output
 
+When you check a PR, start with a **rules claims table**: one row per claim from the PR description's _Rules claims_ list, plus any rule the diff changes that the list leaves out (mark those "not claimed").
+
+| Claim                                                   | Source                                | Verdict |
+| ------------------------------------------------------- | ------------------------------------- | ------- |
+| An evaded enemy stays exhausted through the enemy phase | `docs/rules.md` § Enemies, RR "Evade" | correct |
+
+Verdicts: **correct**, **wrong** (with a finding below), **unverified** (no authoritative source found). This table goes into the PR as a comment, so the reviewer checks claims instead of code.
+
+Then the findings:
+
 A short list, most important first. For each finding:
 
 - **Where:** `file:line`

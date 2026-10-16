@@ -52,7 +52,7 @@ Each milestone file in `docs/tasks/` lists its tasks in order; do them in that o
 
 ## Subagents
 
-- `rules-checker` – after implementing or changing game rules, ask it to check the change against the official rules.
+- `rules-checker` – after implementing or changing game rules, ask it to check the change against the official rules. Post its rules claims table as a PR comment, and when it confirms a correction, update `docs/rules.md` in the same PR.
 - `test-writer` – to add missing unit/property tests, e.g. when coverage drops below the floor.
 
 More on the automation: `docs/automation.md`.
