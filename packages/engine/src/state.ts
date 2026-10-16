@@ -200,7 +200,9 @@ export type ChaosToken =
   | 'elderSign'
   | 'bless'
   | 'curse'
-  | 'frost';
+  | 'frost'
+  /** Core Set (2026): -1, reveal another token, seal the first box on the investigator card. */
+  | 'blood';
 
 /** The kinds of decision; the UI has one dialog per kind (M3.7). */
 export type DecisionKind =

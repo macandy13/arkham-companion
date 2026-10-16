@@ -17,7 +17,7 @@ import type {
 } from './events';
 import { handleRevealLocation } from './handle_board';
 import type { InvestigatorId } from './ids';
-import { defeatCause, statValue, withStatDelta } from './investigators';
+import { defeatCause, requireInvestigator, statValue, withStatDelta } from './investigators';
 import { requireCard } from './lookup';
 import { CommandRejected } from './rejection';
 import type { GameState, Investigator } from './state';
@@ -149,8 +149,7 @@ export function handleDiscoverClues(
 
 /** The investigator, rejecting unknown IDs and those who are no longer in the scenario. */
 export function activeInvestigator(state: GameState, id: InvestigatorId): Investigator {
-  const investigator = state.investigators.find((inv) => inv.id === id);
-  if (!investigator) throw new CommandRejected({ code: 'unknownInvestigator', investigatorId: id });
+  const investigator = requireInvestigator(state, id);
   if (investigator.status !== 'active')
     throw new CommandRejected({ code: 'investigatorNotActive', investigatorId: id });
   return investigator;

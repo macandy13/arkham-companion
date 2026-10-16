@@ -108,6 +108,14 @@ describe("skillTestSuggestion: base values, the players' modifier and tokens", (
     expect(suggestion.skill).toBe(5);
   });
 
+  it('takes -1 for a blood token and adds the token it makes the players reveal', () => {
+    const suggestion = skillTestSuggestion(cards, aliceInStudy(), investigateStudy, {
+      tokens: ['blood', '-1'],
+    });
+
+    expect(suggestion).toMatchObject({ skill: 2, unknownTokens: [] });
+  });
+
   it('lists the elder sign as unknown, since its effect is the investigator ability', () => {
     const suggestion = skillTestSuggestion(cards, aliceInStudy(), investigateStudy, {
       tokens: ['elderSign'],

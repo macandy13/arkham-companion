@@ -1,6 +1,7 @@
 import { withRunningTotals } from '@arkham/util';
 import type { EngineContext } from './cards';
 import type { InstanceId, InvestigatorId } from './ids';
+import { findInvestigator, requireInvestigator } from './investigators';
 import { CommandRejected } from './rejection';
 import { referenceSide, type SymbolToken } from './scenario';
 import type {
@@ -84,8 +85,9 @@ const SYMBOL_TOKENS: readonly ChaosToken[] = ['skull', 'cultist', 'tablet', 'eld
 
 /**
  * The modifiers of the tokens whose value is the same in every scenario.
- * Bless (+2), curse (-2) and frost (-1) also make the players reveal another
- * token, which they enter as one more token.
+ * Bless (+2), curse (-2), frost (-1) and blood (-1) also make the players
+ * reveal another token, which they enter as one more token. Blood also seals
+ * the first box on the investigator card; the players do that on the table.
  */
 const FIXED_TOKEN_VALUES: Partial<Record<ChaosToken, number>> = {
   '+1': 1,
@@ -101,6 +103,7 @@ const FIXED_TOKEN_VALUES: Partial<Record<ChaosToken, number>> = {
   bless: 2,
   curse: -2,
   frost: -1,
+  blood: -1,
 };
 
 /**
@@ -116,7 +119,7 @@ export function skillTestContext(
   if (decision.kind !== 'skillTestResult' || !test || decision.decider.kind !== 'investigator')
     return undefined;
   const { investigatorId } = decision.decider;
-  const locationId = state.investigators.find((inv) => inv.id === investigatorId)?.locationId;
+  const locationId = findInvestigator(state, investigatorId)?.locationId;
   return {
     investigatorId,
     skill: test.skill,
@@ -168,9 +171,7 @@ export function skillTestSuggestion(
   test: SkillTestContext,
   input: SkillTestInput = {},
 ): SkillTestSuggestion {
-  const investigator = state.investigators.find((inv) => inv.id === test.investigatorId);
-  if (!investigator)
-    throw new CommandRejected({ code: 'unknownInvestigator', investigatorId: test.investigatorId });
+  const investigator = requireInvestigator(state, test.investigatorId);
   const tokens = input.tokens ?? [];
   const tokenChanges = tokens.map((token) => ({
     token,
