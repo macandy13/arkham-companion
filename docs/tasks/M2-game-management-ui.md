@@ -67,8 +67,12 @@ Follow-ups: the card language is hard-coded to `en` until the settings module ex
 
 **Benefit:** A picker tailored to the group's collection, and a language choice that persists.
 
-- [ ] Settings screen: owned packs (checkbox list by cycle), card language (any language ArkhamDB offers), UI language (EN/DE first), theme
-- [ ] Stored in localStorage via a small `settings` module (try/catch, defaults)
+- [x] Settings screen: owned packs (checkbox list by cycle), card language (any language ArkhamDB offers), UI language (EN/DE first), theme
+- [x] Stored in localStorage via a small `settings` module (try/catch, defaults)
+
+Done: `apps/web/src/settings/` holds the `settings` module (`loadSettings`/`saveSettings` over localStorage with per-field defaults, try/catch for throwing storage and corrupt JSON) and `applySettings` (theme via `data-theme`, UI language via i18next); `main.tsx` applies them at boot. `SettingsScreen` offers owned packs grouped by cycle (from a `packs` prop), card language (all ArkhamDB languages), UI language (EN/DE) and theme (dark default, light via token overrides in `tokens.css`), saved on every change. The `@flow` spec `e2e/settings.spec.ts` ("change the settings") switches card language, app language and theme and checks they survive a reload (it replaces the former settings deep-link test; pack ownership joins the flow once the catalog packs are wired up).
+Follow-ups: `SettingsScreen` gets no `packs` yet (shows a hint) because `loadCatalog` is still unwired – pass `catalog.packs` and `settings.ownedPacks` into the picker (M2.7); `loadCatalog` only knows the `en`/`de` hosts, so the card language is stored but not yet used for fetching; the cycle groups show "Cycle N" (no cycle names in the packs API); new UI languages need translation strings and an entry in `UI_LANGUAGES`.
+Review fix: both catches in `settings.ts` now `console.warn` with context (fallback unchanged); the rule "never swallow a caught error silently" is in `CLAUDE.md` and `docs/coding-guidelines.md` and ESLint rejects empty `catch` blocks.
 
 ## M2.5 New game wizard (S)
 

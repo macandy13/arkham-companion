@@ -35,8 +35,3 @@ test('app boots and a new game survives reload', { tag: '@flow' }, async ({ page
     );
   });
 });
-
-test('deep links to settings work', async ({ page }) => {
-  await page.goto('/#/settings');
-  await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
-});
