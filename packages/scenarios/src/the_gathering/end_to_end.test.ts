@@ -15,10 +15,11 @@
  *
  * The phase assistant (`nextPhase`) runs the steps of each phase, numbered as
  * in the Rules Reference (1.2 doom, 1.3 threshold check, 1.4 encounter draws,
- * 3.2 hunters, 3.3 attacks, 4.3 ready, 4.4 resources, 4.6 round end), and
- * stops wherever the players have to answer. Each investigation turn is
- * started and ended explicitly, in the order the group chooses, and counts
- * its actions. Skill tests are resolved at the table: the engine asks for the
+ * 3.2 hunters, 3.3 attacks, 4.2 reset actions, 4.3 ready, 4.4 resources, 4.6
+ * round end), and stops wherever the players have to answer. Each
+ * investigation turn is started and ended explicitly, in the order the group
+ * chooses; the players count actions off each investigator's counter
+ * themselves, where the script shows it. Skill tests are resolved at the table: the engine asks for the
  * result (`skillTestResult`), and the comments say why it is a pass or fail.
  * What a failed revelation costs is card text, so the script applies it by hand.
  */
@@ -60,9 +61,9 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
           investigators: Roland Banks, Daisy Walker, Wendy Adams
           connects to: none
       Investigators:
-        Roland Banks – Study; damage 0/9, horror 0/5, 0 clues, 5 resources; threat area: none
-        Daisy Walker – Study; damage 0/5, horror 0/9, 0 clues, 5 resources; threat area: none
-        Wendy Adams – Study; damage 0/7, horror 0/7, 0 clues, 5 resources; threat area: none
+        Roland Banks – Study; damage 0/9, horror 0/5, 0 clues, 5 resources, actions left 3; threat area: none
+        Daisy Walker – Study; damage 0/5, horror 0/9, 0 clues, 5 resources, actions left 3; threat area: none
+        Wendy Adams – Study; damage 0/7, horror 0/7, 0 clues, 5 resources, actions left 3; threat area: none
       Encounter deck: 26 cards; discard: 0 cards
       Set aside: 6 cards
       Victory display: none
@@ -85,8 +86,11 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.startTurn(roland);
     table.investigate(roland);
     table.investigate(roland);
+    // The players count both actions off Roland's counter.
+    table.adjustActions(roland, -2);
 
-    expect(table.turn()).toBe('Roland Banks, actions 2/3');
+    expect(table.turn()).toBe('Roland Banks');
+    expect(table.actionsLeft()).toEqual({ roland: 1, daisy: 3, wendy: 3 });
 
     table.endTurn(roland);
 
@@ -108,7 +112,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     expect(table.board()).toMatchInlineSnapshot(`
       "Round 1, investigation phase
-      Turn: Wendy Adams, actions 2/3
+      Turn: Wendy Adams
       Turns taken: Roland Banks, Daisy Walker
       Agenda: What's Going On?! – doom 0/3
       Act: The Barrier – needs 9 clues
@@ -125,9 +129,9 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         Parlor [01115#1] – unrevealed
           connects to: Hallway
       Investigators:
-        Roland Banks – Hallway; damage 0/9, horror 0/5, 0 clues, 5 resources; threat area: none
-        Daisy Walker – Hallway; damage 0/5, horror 0/9, 0 clues, 5 resources; threat area: none
-        Wendy Adams – Hallway; damage 0/7, horror 0/7, 0 clues, 5 resources; threat area: none
+        Roland Banks – Hallway; damage 0/9, horror 0/5, 0 clues, 5 resources, actions left 1; threat area: none
+        Daisy Walker – Hallway; damage 0/5, horror 0/9, 0 clues, 5 resources, actions left 3; threat area: none
+        Wendy Adams – Hallway; damage 0/7, horror 0/7, 0 clues, 5 resources, actions left 3; threat area: none
       Encounter deck: 26 cards; discard: 0 cards
       Set aside: 2 cards
       Victory display: none
@@ -145,10 +149,12 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.phase()).toEqual({ round: 1, phase: 'enemy' });
     expect(table.attacksDue()).toEqual([]);
 
-    // Round 1 – upkeep: 4.4 each investigator gains a resource, 4.6 the round ends
+    // Round 1 – upkeep: 4.2 resets Roland's counter, 4.4 each investigator
+    // gains a resource, 4.6 the round ends
     table.nextPhase();
 
     expect(table.phase()).toEqual({ round: 1, phase: 'upkeep' });
+    expect(table.actionsLeft()).toEqual({ roland: 3, daisy: 3, wendy: 3 });
     expect(table.investigatorResources()).toEqual({ roland: 6, daisy: 6, wendy: 6 });
 
     // Round 2 – mythos: 1.2 doom, 1.3 below the threshold, 1.4 Roland draws the
@@ -191,11 +197,8 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.startTurn(wendy);
     table.moveTo(wendy, 'Cellar');
     // Entering a location with a ready enemy engages it, which is no action;
-    // `MoveInvestigator` does not do that yet (M1.8 follow-up), so the script engages for free.
-    table.engage(wendy, icyGhoul, { free: true });
-
-    expect(table.turn()).toBe('Wendy Adams, actions 1/3');
-
+    // `MoveInvestigator` does not do that yet (M1.8 follow-up), so the script engages it.
+    table.engage(wendy, icyGhoul);
     table.endTurn(wendy);
 
     // Round 2 – investigation: Daisy's turn (intellect 5 against the Cellar's shroud 4)
@@ -253,9 +256,9 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         Parlor [01115#1] – unrevealed
           connects to: Hallway
       Investigators:
-        Roland Banks – Attic; damage 0/9, horror 0/5, 2 clues, 7 resources; threat area: none
-        Daisy Walker – Cellar; damage 2/5, horror 0/9, 1 clues, 7 resources; threat area: none
-        Wendy Adams – Cellar; damage 2/7, horror 1/7, 0 clues, 7 resources; threat area: none
+        Roland Banks – Attic; damage 0/9, horror 0/5, 2 clues, 7 resources, actions left 3; threat area: none
+        Daisy Walker – Cellar; damage 2/5, horror 0/9, 1 clues, 7 resources, actions left 3; threat area: none
+        Wendy Adams – Cellar; damage 2/7, horror 1/7, 0 clues, 7 resources, actions left 3; threat area: none
       Encounter deck: 23 cards; discard: 2 cards, top: Ancient Evils
       Set aside: 2 cards
       Victory display: none
@@ -293,12 +296,15 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.evade(roland, swarmOfRats);
     table.moveTo(roland, 'Hallway');
     table.moveTo(roland, 'Cellar');
+    table.adjustActions(roland, -3);
 
-    // A fourth action is beyond Roland's three.
-    expect(() => table.moveTo(roland, 'Hallway')).toThrow(
-      expect.objectContaining({ rejection: expect.objectContaining({ code: 'noActionsLeft' }) }),
+    // The counter tells the players that a fourth action is beyond Roland's three.
+    expect(() => table.adjustActions(roland, -1)).toThrow(
+      expect.objectContaining({
+        rejection: expect.objectContaining({ code: 'invalidActionAdjustment' }),
+      }),
     );
-    expect(table.investigatorLocations().roland).toBe('Cellar');
+    expect(table.actionsLeft().roland).toBe(0);
 
     table.endTurn(roland);
 
@@ -357,18 +363,20 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     expect(table.namesIn({ kind: 'victoryDisplay' })).toEqual(['Icy Ghoul']);
 
-    table.takeAction(roland, 'resource');
+    // His third action is the resource action.
+    table.gainResources(roland, 1);
     table.endTurn(roland);
 
     // Round 4 – investigation: Daisy's turn. Her ability grants an additional
-    // action for Tome abilities: she reads her Old Book of Lore with it.
+    // action for Tome abilities: she reads her Old Book of Lore with it, then
+    // fights twice. The players count those three actions off her four.
     table.startTurn(daisy);
     table.adjustActions(daisy, 1);
-    table.takeAction(daisy, 'activate');
     table.fight(daisy, ghoulMinion);
     table.fight(daisy, ghoulMinion);
+    table.adjustActions(daisy, -3);
 
-    expect(table.turn()).toBe('Daisy Walker, actions 3/4');
+    expect(table.actionsLeft().daisy).toBe(1);
 
     table.endTurn(daisy);
 

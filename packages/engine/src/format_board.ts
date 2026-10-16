@@ -6,13 +6,12 @@ import type { InstanceId, MapId } from './ids';
 import { mapLocations } from './map';
 import { PHASE_STEP_TITLES } from './phases';
 import type { CardInstance, GameState, Investigator, PhaseStep } from './state';
-import { actionAllowance } from './turns';
 import { zoneKey, type Zone } from './zone';
 
 /**
  * The board as plain text, for debugging and test failure messages: round and
- * phase, the outstanding phase steps, the turn in progress with its actions
- * and the turns taken, current agenda and act, every map with its locations (clues,
+ * phase, the outstanding phase steps, the turn in progress and the turns
+ * taken, current agenda and act, every map with its locations (clues,
  * investigators, enemies, connections), every investigator, the encounter
  * piles and a card whose revelation is being resolved, set-aside cards, victory display and pending decisions. Cards are
  * named by their `CardDb` name; instance IDs appear only in brackets where
@@ -51,16 +50,11 @@ function stepLabel(state: GameState, step: PhaseStep): string {
   return `${step.id} (${PHASE_STEP_TITLES[step.id]})`;
 }
 
-/** The turn in progress (`actions 1/3`) and the turns already taken this round, if any. */
+/** The turn in progress and the turns already taken this round, if any. */
 function turnLines(state: GameState): string[] {
   const { turn, turnsTaken } = state.meta;
   return [
-    ...(turn
-      ? [
-          `Turn: ${investigatorName(state, turn.investigatorId)}, ` +
-            `actions ${turn.actionsTaken}/${actionAllowance(state, turn)}`,
-        ]
-      : []),
+    ...(turn ? [`Turn: ${investigatorName(state, turn.investigatorId)}`] : []),
     ...(turnsTaken.length > 0
       ? [`Turns taken: ${turnsTaken.map((id) => investigatorName(state, id)).join(', ')}`]
       : []),
@@ -150,7 +144,8 @@ function investigatorLine(
     `  ${investigator.name}${status} – ${where}; ` +
     `damage ${investigator.health.damage}/${investigator.health.max}, ` +
     `horror ${investigator.sanity.horror}/${investigator.sanity.max}, ` +
-    `${investigator.clues} clues, ${investigator.resources} resources; ` +
+    `${investigator.clues} clues, ${investigator.resources} resources, ` +
+    `actions left ${investigator.actionsRemaining}; ` +
     `threat area: ${listOrNone(threatArea)}`
   );
 }

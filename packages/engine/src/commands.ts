@@ -47,7 +47,6 @@ export type Command =
   | StartTurn
   | EndTurn
   | AdjustActions
-  | TakeAction
   | ResolveEnemyAttack
   | Investigate
   | Fight
@@ -65,6 +64,13 @@ export interface StartingCard {
 }
 
 /**
+ * An investigator as the scenario starts with them. `actionsRemaining` is
+ * left out because the start sets it (`actionsPerTurn`), like upkeep step 4.2
+ * does every round.
+ */
+export type StartingInvestigator = Omit<Investigator, 'actionsRemaining'>;
+
+/**
  * Sets up a scenario from scratch: investigators, maps and every card instance
  * in its initial zone. Produces `ScenarioStarted` and, unless disabled, a
  * `DeckShuffled` for the encounter deck. `compileSetup` builds this command
@@ -76,7 +82,7 @@ export interface StartScenario {
   scenarioId: string;
   difficulty: Difficulty;
   seed: number;
-  investigators: Investigator[];
+  investigators: StartingInvestigator[];
   /** Maps with their connections; each edge must join two starting locations of that map. */
   maps?: Record<MapId, MapSpec>;
   cards: StartingCard[];
@@ -123,8 +129,8 @@ export interface AddMap {
 }
 
 /**
- * The concrete corrections a `ManualAdjust` can make. `actions` changes the
- * action allowance of the turn in progress, like `AdjustActions`.
+ * The concrete corrections a `ManualAdjust` can make. `actions` changes an
+ * investigator's remaining actions, like `AdjustActions`.
  */
 export type Adjustment =
   | { kind: 'moveCard'; cardId: InstanceId; to: Zone; index?: number }
@@ -187,12 +193,6 @@ export interface MoveInvestigator {
   to: InstanceId;
   /** Skip the connection check (card effects). Default false. */
   ignoreConnections?: boolean;
-  /**
-   * Not an action: a card effect or rule performs it (a fast ability, an
-   * enemy engaging on arrival). Not counted against the turn's allowance and
-   * allowed outside the investigator's turn. Default false.
-   */
-  free?: boolean;
 }
 
 /**
@@ -391,12 +391,6 @@ export interface EngageEnemy {
   type: 'EngageEnemy';
   enemyId: InstanceId;
   investigatorId: InvestigatorId;
-  /**
-   * Not an action: a card effect or rule performs it (a fast ability, an
-   * enemy engaging on arrival). Not counted against the turn's allowance and
-   * allowed outside the investigator's turn. Default false.
-   */
-  free?: boolean;
 }
 
 /**
@@ -540,7 +534,7 @@ export interface CheckDoomThreshold {
  * turn (the group ends every turn first, even one without actions). Produces
  * `PhaseChanged`, then per step `PhaseStepsChanged` and the events of the
  * step (`PlaceDoom`, `CheckDoomThreshold`, `DrawEncounter`, `MoveHunters`,
- * `ReadyEnemy`, `AdjustInvestigator`, `RoundEnded`).
+ * `ActionsReset`, `ReadyEnemy`, `AdjustInvestigator`, `RoundEnded`).
  */
 export interface NextPhase {
   type: 'NextPhase';
@@ -550,7 +544,10 @@ export interface NextPhase {
  * Rules Reference 2.2: the group picks the investigator whose turn begins,
  * any active investigator who has not taken a turn this round, in any order.
  * Only in the investigation phase and while no other turn is in progress.
- * Produces `TurnStarted`.
+ * The turn tells the UI whose turn it is; the engine does not restrict other
+ * commands to the investigator whose turn is in progress, since without
+ * player cards it cannot tell an action from a card effect. Produces
+ * `TurnStarted`.
  */
 export interface StartTurn {
   type: 'StartTurn';
@@ -568,38 +565,19 @@ export interface EndTurn {
 }
 
 /**
- * Changes the action allowance of the turn in progress by `delta` (a
- * non-zero integer), for this turn only: a card that grants "take an
- * additional action this turn", or one that costs an action. The allowance
- * may not drop below zero. Effects that grant an action for the rest of the
- * scenario change `Investigator.extraActions` (`AdjustInvestigator`)
- * instead. Not an action itself. Produces `ActionsAdjusted`.
+ * Changes an active investigator's remaining actions
+ * (`Investigator.actionsRemaining`) by `delta`, a non-zero integer; they may
+ * not drop below zero. The players count actions themselves, since player
+ * cards are not modelled: they pass -1 for each action they take, and an
+ * encounter card or player card that takes or grants an action passes its
+ * delta, in any phase. Upkeep step 4.2 resets the count. Effects that grant
+ * an action for the rest of the scenario change `Investigator.extraActions`
+ * (`AdjustInvestigator`) instead. Produces `ActionsAdjusted`.
  */
 export interface AdjustActions {
   type: 'AdjustActions';
   investigatorId: InvestigatorId;
   delta: number;
-}
-
-/**
- * The actions the app tracks only as a count, since player cards are not
- * modelled: draw a card, gain a resource, play a card, activate an ability
- * (an activated ability that fights or investigates is a `Fight` or
- * `Investigate` instead).
- */
-export type TableAction = 'draw' | 'resource' | 'play' | 'activate';
-
-/**
- * An action the players resolve at the table (`TableAction`), counted
- * against the turn's allowance like the actions the engine resolves. Only in
- * the investigation phase. The `resource` action also gives the investigator
- * 1 resource. Produces `ActionTaken`, then `InvestigatorChanged` for
- * `resource`.
- */
-export interface TakeAction {
-  type: 'TakeAction';
-  investigatorId: InvestigatorId;
-  action: TableAction;
 }
 
 /**
@@ -631,12 +609,6 @@ export interface ResolveEnemyAttack {
 export interface Investigate {
   type: 'Investigate';
   investigatorId: InvestigatorId;
-  /**
-   * Not an action: a card effect or rule performs it (a fast ability, an
-   * enemy engaging on arrival). Not counted against the turn's allowance and
-   * allowed outside the investigator's turn. Default false.
-   */
-  free?: boolean;
 }
 
 /**
@@ -652,12 +624,6 @@ export interface Fight {
   enemyId: InstanceId;
   /** Damage of the attack, the pass option's default; 1 (the basic attack) unless a weapon deals more. */
   damage?: number;
-  /**
-   * Not an action: a card effect or rule performs it (a fast ability, an
-   * enemy engaging on arrival). Not counted against the turn's allowance and
-   * allowed outside the investigator's turn. Default false.
-   */
-  free?: boolean;
 }
 
 /**
@@ -670,12 +636,6 @@ export interface Evade {
   type: 'Evade';
   investigatorId: InvestigatorId;
   enemyId: InstanceId;
-  /**
-   * Not an action: a card effect or rule performs it (a fast ability, an
-   * enemy engaging on arrival). Not counted against the turn's allowance and
-   * allowed outside the investigator's turn. Default false.
-   */
-  free?: boolean;
 }
 
 /** String literal of every command type. */
