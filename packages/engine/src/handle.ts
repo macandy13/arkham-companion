@@ -20,6 +20,11 @@ import {
   handleExhaustEnemy,
   handleReadyEnemy,
 } from './handle_enemy';
+import {
+  attackOfOpportunityDecisions,
+  handleDealEnemyAttack,
+  provokingAction,
+} from './attacks_of_opportunity';
 import { startingEngagements } from './engagement';
 import { handleSpawnEnemy } from './spawn';
 import {
@@ -95,11 +100,55 @@ import { zoneKey, type Zone } from './zone';
  * chain, like a hook's follow-ups, before the forced effects of its events.
  * `NextPhase` continues with the outstanding phase steps (`phaseStepEvents`),
  * so one "Next" yields the whole automated part of a phase.
+ * A player command that is an action provoking attacks of opportunity
+ * (`attackOfOpportunityDecisions`) yields one decision per attacking enemy
+ * and is held (`ActionHeld`) until all of them are answered; follow-ups
+ * never provoke, which is why this happens here and not in
+ * `handleWithTriggers`. Once no decision is pending, any command (usually
+ * the last answer) ends with the held action (`resumeHeldAction`).
  * Pure: the same state, command and context always yield the same events.
  */
 export function handle(ctx: EngineContext, state: GameState, command: Command): Event[] {
   assertNoPendingDecision(state, command);
-  return handleWithTriggers(ctx, state, command, { remaining: MAX_TRIGGERED_COMMANDS });
+  const budget = { remaining: MAX_TRIGGERED_COMMANDS };
+  const action = provokingAction(state, command);
+  const attacks = action ? attackOfOpportunityDecisions(ctx, state, action) : [];
+  if (action && attacks.length > 0) {
+    // An illegal action must be rejected before it provokes anything; the
+    // events of this dry run are dropped, the action resolves after the attacks.
+    handleWithTriggers(ctx, state, command, budget);
+    return [...attacks, { type: 'ActionHeld', command: action }];
+  }
+  const events = handleWithTriggers(ctx, state, command, budget);
+  return [...events, ...resumeHeldAction(ctx, replay(events, state), budget)];
+}
+
+/**
+ * The held action (`GameMeta.heldAction`) once nothing is pending any more:
+ * `ActionResumed` and the action's own events, or `ActionDropped` when an
+ * attack of opportunity defeated the investigator or the action has become
+ * illegal meanwhile (an attack's forced effect moved them, say). Dropping
+ * rather than rejecting keeps the answer that released it valid.
+ */
+function resumeHeldAction(ctx: EngineContext, state: GameState, budget: TriggerBudget): Event[] {
+  const held = state.meta.heldAction;
+  if (held === undefined || state.pending.length > 0) return [];
+  const investigator = state.investigators.find((inv) => inv.id === held.investigatorId);
+  if (investigator?.status !== 'active')
+    return [
+      {
+        type: 'ActionDropped',
+        command: held,
+        reason: { code: 'investigatorNotActive', investigatorId: held.investigatorId },
+      },
+    ];
+  const resumed: Event = { type: 'ActionResumed' };
+  try {
+    return [resumed, ...handleWithTriggers(ctx, replay([resumed], state), held, budget)];
+  } catch (error) {
+    if (!(error instanceof CommandRejected)) throw error;
+    return [{ type: 'ActionDropped', command: held, reason: error.rejection }];
+  }
 }
 
 /** How many follow-up commands the current chain may still run; shared by the whole chain. */
@@ -301,6 +350,8 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
       return handleAdjustActions(state, command);
     case 'ResolveEnemyAttack':
       return handleResolveEnemyAttack(ctx, state, command);
+    case 'DealEnemyAttack':
+      return handleDealEnemyAttack(ctx, state, command);
     case 'Investigate':
       return handleInvestigate(ctx, state, command);
     case 'Fight':
