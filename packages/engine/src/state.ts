@@ -34,8 +34,7 @@ export interface CardInstance {
 export type InvestigatorStatus = 'active' | 'resigned' | 'defeated';
 
 /** The investigator counters that commands and events can change. */
-export type InvestigatorStat =
-  'damage' | 'horror' | 'clues' | 'resources' | 'doomOnPlayerCards' | 'extraActions';
+export type InvestigatorStat = 'damage' | 'horror' | 'clues' | 'resources' | 'doomOnPlayerCards';
 /** All investigator stats, e.g. for iterating in tests. */
 export const INVESTIGATOR_STATS: readonly InvestigatorStat[] = [
   'damage',
@@ -43,7 +42,6 @@ export const INVESTIGATOR_STATS: readonly InvestigatorStat[] = [
   'clues',
   'resources',
   'doomOnPlayerCards',
-  'extraActions',
 ];
 
 /**
@@ -68,19 +66,13 @@ export interface Investigator {
    */
   doomOnPlayerCards: number;
   /**
-   * Actions per turn beyond the standard 3, granted for the rest of the
-   * scenario by the investigator's cards ("you may take an additional action
-   * during your turn"). Changed with `AdjustInvestigator`; takes effect at the
-   * next reset of `actionsRemaining`. A one-turn bonus is `AdjustActions`
-   * instead.
-   */
-  extraActions: number;
-  /**
    * Actions the investigator has left this round. A plain counter the players
    * manage (`AdjustActions`): the engine cannot tell an action from a card
    * effect while player cards are not modelled, so it does not count actions
-   * itself. Set to `actionsPerTurn` by the scenario start and by upkeep step
-   * 4.2 (`ActionsReset`); never negative.
+   * itself. Set to `BASE_ACTIONS_PER_TURN` by the scenario start and by
+   * upkeep step 4.2 (`ActionsReset`); never negative. There is deliberately no
+   * separate count of extra actions: an investigator whose cards grant one
+   * more action gets it by the players adjusting this counter after the reset.
    */
   actionsRemaining: number;
   status: InvestigatorStatus;

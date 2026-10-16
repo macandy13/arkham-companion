@@ -34,7 +34,7 @@ import { handleNextPhase, handleResolveEnemyAttack, nextStepPlan } from './phase
 import { handleEvade, handleFight, handleInvestigate } from './skill_tests';
 import {
   actionsAdjusted,
-  actionsPerTurn,
+  BASE_ACTIONS_PER_TURN,
   handleAdjustActions,
   handleEndTurn,
   handleStartTurn,
@@ -337,7 +337,7 @@ function handleStartScenario(ctx: EngineContext, state: GameState, cmd: StartSce
     seed: cmd.seed,
     investigators: cmd.investigators.map((inv) => ({
       ...inv,
-      actionsRemaining: actionsPerTurn(inv),
+      actionsRemaining: BASE_ACTIONS_PER_TURN,
     })),
     maps,
     cards,

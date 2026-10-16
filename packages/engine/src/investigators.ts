@@ -30,8 +30,6 @@ export function statValue(investigator: Investigator, stat: InvestigatorStat): n
       return investigator.resources;
     case 'doomOnPlayerCards':
       return investigator.doomOnPlayerCards;
-    case 'extraActions':
-      return investigator.extraActions;
   }
 }
 
@@ -62,8 +60,6 @@ export function withStatDelta(
       return { ...investigator, resources: investigator.resources + delta };
     case 'doomOnPlayerCards':
       return { ...investigator, doomOnPlayerCards: investigator.doomOnPlayerCards + delta };
-    case 'extraActions':
-      return { ...investigator, extraActions: investigator.extraActions + delta };
   }
 }
 
