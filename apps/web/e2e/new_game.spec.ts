@@ -1,9 +1,4 @@
-import { expect, test } from '@playwright/test';
-import { stubArkhamDb } from './fixtures/arkhamdb';
-
-test.beforeEach(async ({ page }) => {
-  await stubArkhamDb(page);
-});
+import { expect, test } from './fixtures/test';
 
 // Journey: the new game wizard from the entry points to a started game.
 test('start a new game', { tag: '@flow' }, async ({ page }) => {
