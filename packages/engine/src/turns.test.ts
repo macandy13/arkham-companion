@@ -5,7 +5,6 @@ import {
   investigatorId,
   type Command,
   type GameState,
-  type Investigator,
   type InvestigatorId,
 } from './index';
 import {
@@ -40,14 +39,12 @@ const adjustActions = (investigator: InvestigatorId, delta: number): Command => 
 });
 
 /** Alice (seat 0, the lead) and bob (seat 1) in the hall, still in setup. */
-function aliceAndBobInHall(
-  overrides: { alice?: Partial<Investigator>; bob?: Partial<Investigator> } = {},
-): GameState {
+function aliceAndBobInHall(): GameState {
   return startBoard(ctx, {
     maps: { main: { locations: { hall: 'hall' } } },
     investigators: [
-      makeInvestigator({ id: 'alice', seat: 0, locationId: hall, ...overrides.alice }),
-      makeInvestigator({ id: 'bob', seat: 1, locationId: hall, ...overrides.bob }),
+      makeInvestigator({ id: 'alice', seat: 0, locationId: hall }),
+      makeInvestigator({ id: 'bob', seat: 1, locationId: hall }),
     ],
   });
 }
@@ -148,11 +145,11 @@ describe('EndTurn', () => {
 });
 
 describe('remaining actions', () => {
-  it('start at 3 plus the extra actions when the scenario starts', () => {
-    const started = aliceAndBobInHall({ bob: { extraActions: 1 } });
+  it('start at 3 for every investigator when the scenario starts', () => {
+    const started = aliceAndBobInHall();
 
     expect(investigatorOf(started, alice).actionsRemaining).toBe(3);
-    expect(investigatorOf(started, bob).actionsRemaining).toBe(4);
+    expect(investigatorOf(started, bob).actionsRemaining).toBe(3);
   });
 
   it('count down as the players spend actions in the turn', () => {

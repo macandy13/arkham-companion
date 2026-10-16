@@ -4,29 +4,24 @@ import { activeInvestigator } from './handle_investigator';
 import type { InvestigatorId } from './ids';
 import { playerOrder } from './investigators';
 import { CommandRejected } from './rejection';
-import type { GameState, Investigator, Phase } from './state';
+import type { GameState, Phase } from './state';
 
-/** Actions every investigator may take in a turn (Rules Reference, "Investigation Phase"). */
+/**
+ * Actions every investigator may take in a turn (Rules Reference,
+ * "Investigation Phase"); what the scenario start and upkeep step 4.2 set
+ * `Investigator.actionsRemaining` to.
+ */
 export const BASE_ACTIONS_PER_TURN = 3;
 
 /**
- * The actions an investigator starts each round with: the base 3 plus their
- * persistent `extraActions`. What the scenario start and upkeep step 4.2 set
- * `Investigator.actionsRemaining` to.
- */
-export function actionsPerTurn(investigator: Pick<Investigator, 'extraActions'>): number {
-  return BASE_ACTIONS_PER_TURN + investigator.extraActions;
-}
-
-/**
  * Upkeep step 4.2 ("reset actions"): one `ActionsReset` per active
- * investigator, back to `actionsPerTurn`.
+ * investigator, back to `BASE_ACTIONS_PER_TURN`.
  */
 export function actionsResetEvents(state: GameState): ActionsReset[] {
   return playerOrder(state).map((inv) => ({
     type: 'ActionsReset',
     investigatorId: inv.id,
-    actions: actionsPerTurn(inv),
+    actions: BASE_ACTIONS_PER_TURN,
   }));
 }
 
