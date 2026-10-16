@@ -25,9 +25,7 @@ export function ConfirmDialog({
   const dialog = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
-    // jsdom (unit tests) lacks showModal; the open attribute gives the same markup there.
-    if (typeof dialog.current?.showModal === 'function') dialog.current.showModal();
-    else dialog.current?.setAttribute('open', '');
+    dialog.current?.showModal();
   }, []);
 
   return (
