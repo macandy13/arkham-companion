@@ -8,9 +8,6 @@ Goal: a repeatable way to turn a real scenario into data (architecture §5 "Wher
 - **What the app gains:** A repeatable data pipeline (import → extract → review → fix in-app) plus the first real, table-ready scenario. The pipeline is reused for every later scenario (M5, M7).
 - **Why at this point:** Engine and UI are already proven with the sandbox, so anything that breaks now is data or scenario rules – much easier to diagnose.
 
-Model hint: **S** = Sonnet, **O** = Opus. Each task = one session = one PR.
-Start from the phone: Code tab → repo → `Do task M4.x from docs/tasks/M4-scenario-data-first-scenario.md`.
-
 Rule: nothing from ArkhamDB or ArkhamCards is committed except card codes, symbol names and our own layout/override files.
 
 ---
