@@ -44,7 +44,7 @@ Before finishing a task: `pnpm typecheck && pnpm lint && pnpm test` must pass. A
 3. Tick the task's checklist and add a short "Done" note when finished. Once a task and its follow-ups are finished and no open PR edits its section, move the section to the matching file in `docs/tasks/done/`, so sessions reading the task file only load open work.
 4. Open a PR against `main`. **The PR title is a Conventional Commit** – it becomes the squash commit and the changelog entry (Release Please):
    `feat(engine): add hunter movement (M1.8)`, `fix(web): …`, `docs: …`, `test: …`, `refactor: …`, `chore: …`, `ci: …`. Scope = package (`engine`, `carddata`, `scenarios`, `web`, `util`) when it fits.
-   **The PR description starts with the motivation** – why the PR exists and what it is trying to accomplish – before any list of changes. Follow `.github/pull_request_template.md`.
+   **The PR description starts with the motivation** – why the PR exists and what it is trying to accomplish – before any list of changes. Follow `.github/pull_request_template.md` and fill in its **Review map** (read first, rules claims, API changes, decisions for the reviewer, what to skip). Before opening, review your own diff against `REVIEW.md`.
 5. CI must be green: typecheck, lint, coverage floors, E2E, CodeQL. Check the PR preview link and the bundle-size comment for UI changes.
    **UI changes extend or add an `@flow` E2E spec** (rules in `docs/coding-guidelines.md` §3); the preview workflow records it and puts the screencast into the PR description.
 

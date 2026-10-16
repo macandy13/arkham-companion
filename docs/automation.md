@@ -20,6 +20,12 @@ What runs automatically, where, and what you need to do yourself.
 
 UI changes are easier to review as a recording than as a diff. E2E specs tagged `@flow` (`test('…', { tag: '@flow' }, …)`) are re-run by the `screencast` Playwright project with `slowMo` of 250 ms and video on, with a pointer and a highlight drawn on every interaction and the current `test.step` name as a caption (`video.show`, `pnpm e2e:screencast`). `apps/web/scripts/screencast/cli.ts` converts each passing flow into a GIF at 4 fps (one frame per 250 ms step, 800 px wide) plus the original WebM, and renders the Markdown section; the preview workflow publishes both under `pr-preview/pr-<n>/screencasts/` and replaces the section between `<!-- screencasts:start -->` and `<!-- screencasts:end -->` in the PR description (appending it if the markers are missing). Text outside the markers is never touched. A failing flow does not block the preview; it shows up as "not recorded" and in the E2E check. Rules for flow specs are in `docs/coding-guidelines.md` §3.
 
+### Review aids
+
+- **Review map**: the PR template's section that tells the reviewer what to read first, which rules changed, the API changes and the decisions left to them. Claude fills it in when it opens a PR.
+- **`REVIEW.md`**: what an automated reviewer (Claude Code Review) flags as blocking, flags as optional, or ignores. Claude sessions also check their own diff against it before opening a PR.
+- **`.gitattributes`**: the lockfile, changelog, release manifest and `docs/tasks/done/` are marked `linguist-generated`, so GitHub collapses them in the diff.
+
 ## On `main`
 
 - **Deploy** (`deploy.yml`): builds and publishes to the root of the `gh-pages` branch → https://macandy13.github.io/arkham-companion/
