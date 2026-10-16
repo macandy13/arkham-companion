@@ -3,7 +3,7 @@ import { requestDecision } from './decisions';
 import type { Event, InvestigatorDefeated, InvestigatorResigned } from './events';
 import { replay } from './reducer';
 import { TOKEN_KINDS, type GameState, type Investigator } from './state';
-import { zoneKey } from './zone';
+import { zoneKey, type Zone } from './zone';
 
 /** Id of the decision that asks the group for a new lead investigator. */
 const NEW_LEAD_DECISION = decisionId('newLeadInvestigator');
@@ -58,44 +58,52 @@ function clueEvents(investigator: Investigator): Event[] {
   ];
 }
 
-/** Engaged enemies stay where the investigator was; a massive enemy was never engaged, so it is not touched. */
+/**
+ * Engaged enemies stay where the investigator was; a massive enemy was never
+ * engaged, so it is not touched. An investigator without a location (not yet
+ * placed, or removed by a card effect) leaves their enemies nowhere to stay,
+ * and an unengaged enemy must be at a location, so they are discarded.
+ */
 function engagedEnemyEvents(state: GameState, investigator: Investigator): Event[] {
   const { locationId } = investigator;
-  if (locationId === undefined) return [];
-  return cardsInZone(state, 'engaged', investigator).map((enemyId) => ({
-    type: 'EnemyDisengaged',
-    enemyId,
-    locationId,
-  }));
+  const engaged = cardsInZone(state, { kind: 'engaged', investigatorId: investigator.id });
+  if (locationId === undefined) return engaged.flatMap((enemyId) => discardEvents(state, enemyId));
+  return engaged.map((enemyId) => ({ type: 'EnemyDisengaged', enemyId, locationId }));
+}
+
+/** Threat-area cards are encounter cards (player cards are not modelled), so they go to the encounter discard. */
+function threatAreaEvents(state: GameState, investigator: Investigator): Event[] {
+  return cardsInZone(state, { kind: 'threatArea', investigatorId: investigator.id }).flatMap(
+    (cardId) => discardEvents(state, cardId),
+  );
 }
 
 /**
- * Threat-area cards are encounter cards (player cards are not modelled), so
- * they go to the top of the encounter discard. Tokens are removed with them:
- * doom on a discarded treachery must not come back if the discard is
- * reshuffled into the deck.
+ * `cardId` and everything attached to it, attachments first, to the top of
+ * the encounter discard. Attachments go with their host because a card in the
+ * discard cannot host anything. Tokens are removed with each card: doom on a
+ * discarded treachery must not come back if the discard is reshuffled into
+ * the deck.
  */
-function threatAreaEvents(state: GameState, investigator: Investigator): Event[] {
-  return cardsInZone(state, 'threatArea', investigator).flatMap((cardId) => {
-    const card = state.cards[cardId];
-    if (!card) return [];
-    const tokensRemoved: Event[] = TOKEN_KINDS.flatMap((token) => {
-      const amount = card.tokens[token] ?? 0;
-      return amount === 0 ? [] : [{ type: 'TokensChanged', cardId, token, delta: -amount }];
-    });
-    return [
-      ...tokensRemoved,
-      { type: 'CardMoved', cardId, from: card.zone, to: { kind: 'encounterDiscard' }, index: 0 },
-    ];
+function discardEvents(state: GameState, cardId: InstanceId): Event[] {
+  const card = state.cards[cardId];
+  if (!card) return [];
+  const attachments = cardsInZone(state, { kind: 'attachedTo', hostId: cardId }).flatMap(
+    (attachedId) => discardEvents(state, attachedId),
+  );
+  const tokensRemoved: Event[] = TOKEN_KINDS.flatMap((token) => {
+    const amount = card.tokens[token] ?? 0;
+    return amount === 0 ? [] : [{ type: 'TokensChanged', cardId, token, delta: -amount }];
   });
+  return [
+    ...attachments,
+    ...tokensRemoved,
+    { type: 'CardMoved', cardId, from: card.zone, to: { kind: 'encounterDiscard' }, index: 0 },
+  ];
 }
 
-function cardsInZone(
-  state: GameState,
-  kind: 'engaged' | 'threatArea',
-  investigator: Investigator,
-): InstanceId[] {
-  return state.order[zoneKey({ kind, investigatorId: investigator.id })] ?? [];
+function cardsInZone(state: GameState, zone: Zone): InstanceId[] {
+  return state.order[zoneKey(zone)] ?? [];
 }
 
 /**

@@ -215,6 +215,44 @@ describe('an investigator who leaves', () => {
     expect(defeated.cards[hall]?.tokens.clue).toBeUndefined();
   });
 
+  it('discards the enemies of an investigator without a location, without their damage', () => {
+    const unplacedGhoul = instanceId('unplaced_ghoul');
+    const unplaced = startBoard(ctx, {
+      maps: { main: { locations: { hall: 'hall' } } },
+      investigators: [
+        makeInvestigator({ id: 'alice', seat: 0 }),
+        makeInvestigator({ id: 'bob', seat: 1, locationId: hall }),
+      ],
+      cards: [placed(unplacedGhoul, 'ghoul', engagedWith(alice), { damage: 1 })],
+    });
+
+    const defeated = stateAfter(ctx, unplaced, takeDamage(alice, 8));
+
+    expect(idsIn(defeated, { kind: 'encounterDiscard' })).toEqual([unplacedGhoul]);
+    expect(defeated.cards[unplacedGhoul]?.tokens).toEqual({});
+    expect(checkInvariants(defeated)).toEqual([]);
+  });
+
+  it('discards the cards attached to a threat-area card along with it', () => {
+    const attachedFear = instanceId('attached_fear');
+    const withAttachment = threeInvestigators([
+      placed(
+        attachedFear,
+        'frozen_in_fear',
+        { kind: 'attachedTo', hostId: frozenInFear },
+        {
+          doom: 1,
+        },
+      ),
+    ]);
+
+    const resigned = stateAfter(ctx, withAttachment, nextPhase, startTurn(alice), resign(alice));
+
+    expect(idsIn(resigned, { kind: 'encounterDiscard' })).toEqual([frozenInFear, attachedFear]);
+    expect(resigned.cards[attachedFear]?.tokens).toEqual({});
+    expect(checkInvariants(resigned)).toEqual([]);
+  });
+
   it('is cleaned up the same way when an enemy attack defeats them', () => {
     const secondAliceGhoul = instanceId('second_alice_ghoul');
     const attackPhase = stateAfter(
