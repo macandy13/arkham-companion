@@ -136,6 +136,11 @@ export class TestTable {
     this.play({ type: 'EndTurn', investigatorId: investigator });
   }
 
+  /** The investigator resigns as the action of their turn, which ends it. */
+  resign(investigator: InvestigatorId): void {
+    this.play({ type: 'Resign', investigatorId: investigator });
+  }
+
   /** The name of the investigator whose turn is in progress, or "none" between turns. */
   turn(): string {
     const { turn } = this.current.meta;

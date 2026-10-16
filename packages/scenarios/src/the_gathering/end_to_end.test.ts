@@ -470,6 +470,33 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     expect(table.investigatorResources()).toEqual({ roland: 11, daisy: 10, wendy: 10 });
 
+    // Round 6 – mythos: Roland passes his willpower test against Rotting Remains again;
+    // Daisy and Wendy each draw another Swarm of Rats.
+    expect(table.nextPhase()).toBe('mythos');
+    table.answer('Rotting Remains', 'pass');
+    expect(table.nextPhase()).toBe('mythos');
+
+    // Round 6 – investigation: Wendy, with Frozen in Fear and a Swarm of Rats on her,
+    // resigns. Her 3 clues go to the Cellar, the rats stay there unengaged and her
+    // treachery is discarded.
+    expect(table.nextPhase()).toBe('investigation');
+    table.startTurn(wendy);
+    table.resign(wendy);
+
+    expect(table.turn()).toBe('none');
+    expect(table.investigatorClues()).toEqual({ roland: 2, daisy: 1, wendy: 0 });
+    expect(table.cluesOn('Cellar')).toBe(5);
+    expect(table.enemyLines()).toContain('Swarm of Rats: Cellar, unengaged');
+    expect(table.namesIn({ kind: 'threatArea', investigatorId: wendy })).toEqual([]);
+    expect(table.namesIn({ kind: 'encounterDiscard' })[0]).toBe('Frozen in Fear');
+
+    // The phase ends without waiting for Wendy.
+    table.startTurn(roland);
+    table.endTurn(roland);
+    table.startTurn(daisy);
+    table.endTurn(daisy);
+    expect(table.nextPhase()).toBe('enemy');
+
     // The whole event log, setup included, replays to the live state.
     expect(replay(table.events)).toEqual(table.state);
   });

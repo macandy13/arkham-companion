@@ -1,11 +1,11 @@
 import type { EngineContext } from './cards';
 import type { Command, ResolveEnemyAttack } from './commands';
 import { enemyAttackList } from './enemies';
+import { investigatorLeavesEvents } from './elimination';
 import type {
   Event,
   ExhaustChanged,
   InvestigatorChanged,
-  InvestigatorDefeated,
   PhaseChanged,
   PhaseStepsChanged,
 } from './events';
@@ -150,6 +150,7 @@ export function handleResolveEnemyAttack(
       investigatorId: cmd.investigatorId,
     });
   const dealt = attackEvents(
+    state,
     activeInvestigator(state, cmd.investigatorId),
     attackAmount(cmd.damage ?? attack.damage),
     attackAmount(cmd.horror ?? attack.horror),
@@ -257,12 +258,16 @@ function attackAmount(amount: number): number {
   return amount;
 }
 
-/** Damage and horror of one attack, followed by a single defeat check over both. */
+/**
+ * Damage and horror of one attack, followed by a single defeat check over
+ * both and, on a defeat, the clean-up (`investigatorLeavesEvents`).
+ */
 function attackEvents(
+  state: GameState,
   investigator: Investigator,
   damage: number,
   horror: number,
-): (InvestigatorChanged | InvestigatorDefeated)[] {
+): Event[] {
   const changes: InvestigatorChanged[] = (
     [
       ['damage', damage],
@@ -281,7 +286,13 @@ function attackEvents(
     investigator,
   );
   const cause = defeatCause(after);
-  return cause === undefined
-    ? changes
-    : [...changes, { type: 'InvestigatorDefeated', investigatorId: investigator.id, cause }];
+  if (cause === undefined) return changes;
+  return [
+    ...changes,
+    ...investigatorLeavesEvents(state, investigator, {
+      type: 'InvestigatorDefeated',
+      investigatorId: investigator.id,
+      cause,
+    }),
+  ];
 }

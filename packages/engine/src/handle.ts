@@ -9,6 +9,7 @@ import {
 import {
   handleAdjustInvestigator,
   handleDiscoverClues,
+  handleSetLeadInvestigator,
   handleMoveInvestigator,
 } from './handle_investigator';
 import { handleDrawEncounter, handleFromSetAside, handleShuffleInto } from './handle_encounter';
@@ -37,6 +38,7 @@ import {
   BASE_ACTIONS_PER_TURN,
   handleAdjustActions,
   handleEndTurn,
+  handleResign,
   handleStartTurn,
 } from './turns';
 import {
@@ -297,6 +299,10 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
       return handleStartTurn(state, command);
     case 'EndTurn':
       return handleEndTurn(state, command);
+    case 'Resign':
+      return handleResign(state, command);
+    case 'SetLeadInvestigator':
+      return handleSetLeadInvestigator(state, command);
     case 'AdjustActions':
       return handleAdjustActions(state, command);
     case 'ResolveEnemyAttack':
