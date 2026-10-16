@@ -17,19 +17,35 @@ const QUESTIONS: Readonly<Record<string, (subject: string) => string>> = {
   'decision.chooseHunterTarget': (subject) => `Whom does ${subject} hunt?`,
   'decision.chooseHunterDestination': (subject) => `Where does ${subject} move?`,
   'decision.chooseSpawnLocation': (subject) => `Where does ${subject} spawn?`,
+  'decision.investigate': (subject) => `Investigate ${subject}:`,
+  'decision.fight': (subject) => `Fight ${subject}:`,
+  'decision.evade': (subject) => `Evade ${subject}:`,
+  'decision.revelationTest': (subject) => `Revelation of ${subject}:`,
 };
 
 /**
  * `decision` in plain words for `formatBoard` and test read-backs, e.g.
  * `Whom does Swarm of Rats engage? Roland Banks / Daisy Walker / Wendy Adams [chooseInvestigator]`:
- * the question, the options by readable name and the widget kind for debugging.
- * A prompt without a sentence here (scenario- or card-defined) shows its key.
+ * the question, the test of a skill test (`intellect (4)`), the options by
+ * readable name with their adjustable count (`pass ×1 (1–3)`) and the widget
+ * kind for debugging. A prompt without a sentence here (scenario- or
+ * card-defined) shows its key.
  */
 export function describeDecision(ctx: EngineContext, state: GameState, decision: Decision): string {
   const subject = subjectName(ctx, state, decision);
   const question = QUESTIONS[decision.prompt]?.(subject) ?? decision.prompt;
-  const options = decision.options.map(optionName).join(' / ');
-  return `${question} ${options} [${decision.kind}]`;
+  const test = decision.skillTest
+    ? ` ${decision.skillTest.skill} (${decision.skillTest.difficulty})`
+    : '';
+  const options = decision.options.map(optionWithAmount).join(' / ');
+  return `${question}${test} ${options} [${decision.kind}]`;
+}
+
+function optionWithAmount(option: DecisionOption): string {
+  const { amount } = option;
+  if (!amount) return optionName(option);
+  const range = amount.max === undefined ? `${amount.min}+` : `${amount.min}–${amount.max}`;
+  return `${optionName(option)} ×${amount.default} (${range})`;
 }
 
 /**

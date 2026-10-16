@@ -1,6 +1,6 @@
 import type { CommandType, EncounterMatch, EncounterSource } from './commands';
 import type { DecisionId, InstanceId, InvestigatorId, MapId } from './ids';
-import type { InvestigatorStat, TokenKind } from './state';
+import type { InvestigatorStat, Phase, TokenKind } from './state';
 
 /**
  * Structured reason why `handle` refused a command. The UI can switch on
@@ -96,6 +96,17 @@ export type Rejection =
   | { code: 'alreadyEngaged'; cardId: InstanceId; investigatorId: InvestigatorId }
   /** `DisengageEnemy` for an enemy that is not engaged. */
   | { code: 'notEngaged'; cardId: InstanceId }
+  /**
+   * `Fight` against an aloof enemy nobody is engaged with (Rules Reference,
+   * "Aloof"); it has to be engaged first, e.g. with the Engage action.
+   */
+  | { code: 'aloofNotEngaged'; cardId: InstanceId }
+  /**
+   * `EngageEnemy` for a massive enemy: it is never placed in a threat area but
+   * counts as engaged with every investigator at its location (Rules
+   * Reference, "Massive"), so there is nothing to engage.
+   */
+  | { code: 'massiveNotEngageable'; cardId: InstanceId }
   /** Exhausting an exhausted card or readying a ready one. */
   | { code: 'exhaustUnchanged'; cardId: InstanceId; exhausted: boolean }
   /** A hunter command names an enemy that is not an unengaged hunter at a location. */
@@ -114,6 +125,47 @@ export type Rejection =
   | { code: 'unknownDecision'; decisionId: DecisionId }
   /** `ResolveDecision` with an option the decision does not have. */
   | { code: 'unknownOption'; decisionId: DecisionId; optionId: string }
+  /** `NextPhase` while an enemy attack of the enemy phase still has to be resolved. */
+  | { code: 'enemyAttackPending'; enemyId: InstanceId; investigatorId: InvestigatorId }
+  /** `ResolveEnemyAttack` for an attack that is not an outstanding, due step. */
+  | { code: 'attackNotDue'; enemyId: InstanceId; investigatorId: InvestigatorId }
+  /** `ResolveEnemyAttack` with damage or horror that is not a non-negative integer. */
+  | { code: 'invalidAttackAmount'; amount: number }
+  /** A command that belongs to another phase (e.g. `EndTurn` outside investigation). */
+  | { code: 'wrongPhase'; expected: Phase; actual: Phase }
+  /** `EndTurn` for an investigator who has already taken their turn this round. */
+  | { code: 'turnAlreadyTaken'; investigatorId: InvestigatorId }
+  /** `StartTurn` while another turn is in progress, or `NextPhase` before it ended. */
+  | { code: 'turnInProgress'; investigatorId: InvestigatorId }
+  /**
+   * `EndTurn` for an investigator whose turn is not in progress
+   * (`activeInvestigatorId`: whose is, if any).
+   */
+  | {
+      code: 'turnNotInProgress';
+      investigatorId: InvestigatorId;
+      activeInvestigatorId?: InvestigatorId;
+    }
+  /** `AdjustActions` with a delta that is zero, fractional or takes the remaining actions below zero. */
+  | {
+      code: 'invalidActionAdjustment';
+      investigatorId: InvestigatorId;
+      delta: number;
+      actionsRemaining: number;
+    }
+  /** `NextPhase` out of investigation while these active investigators have not taken their turn. */
+  | { code: 'turnsNotTaken'; investigatorIds: InvestigatorId[] }
+  /** `ResolveDecision` with an `amount` for an option that has no adjustable count. */
+  | { code: 'amountNotAdjustable'; decisionId: DecisionId; optionId: string }
+  /** `ResolveDecision` with an `amount` outside the option's range. */
+  | {
+      code: 'amountOutOfRange';
+      decisionId: DecisionId;
+      optionId: string;
+      amount: number;
+      min: number;
+      max?: number;
+    }
   | { code: 'triggerLoop'; limit: number }
   /** A command returned by a hook or card effect was rejected for `reason`. */
   | { code: 'triggeredCommandRejected'; command: CommandType; reason: Rejection }
@@ -227,6 +279,10 @@ function describe(r: Rejection): string {
       return `${r.cardId} is already engaged with ${r.investigatorId}`;
     case 'notEngaged':
       return `${r.cardId} is not engaged`;
+    case 'aloofNotEngaged':
+      return `${r.cardId} is aloof and must be engaged before it can be attacked`;
+    case 'massiveNotEngageable':
+      return `${r.cardId} is massive and already engaged with everyone at its location`;
     case 'exhaustUnchanged':
       return `${r.cardId} is already ${r.exhausted ? 'exhausted' : 'ready'}`;
     case 'notAHunter':
@@ -245,6 +301,30 @@ function describe(r: Rejection): string {
       return `no pending decision ${r.decisionId}`;
     case 'unknownOption':
       return `decision ${r.decisionId} has no option ${r.optionId}`;
+    case 'enemyAttackPending':
+      return `the attack of ${r.enemyId} on ${r.investigatorId} must be resolved first`;
+    case 'attackNotDue':
+      return `${r.enemyId} has no attack on ${r.investigatorId} to resolve`;
+    case 'invalidAttackAmount':
+      return `attack damage and horror must be non-negative integers, got ${r.amount}`;
+    case 'wrongPhase':
+      return `only allowed in the ${r.expected} phase, not in ${r.actual}`;
+    case 'turnAlreadyTaken':
+      return `investigator ${r.investigatorId} has already taken their turn this round`;
+    case 'turnInProgress':
+      return `the turn of ${r.investigatorId} is still in progress`;
+    case 'turnNotInProgress':
+      return r.activeInvestigatorId === undefined
+        ? `no turn is in progress, so ${r.investigatorId} cannot end one`
+        : `it is the turn of ${r.activeInvestigatorId}, not ${r.investigatorId}`;
+    case 'invalidActionAdjustment':
+      return `cannot change the ${r.actionsRemaining} remaining actions of ${r.investigatorId} by ${r.delta}`;
+    case 'turnsNotTaken':
+      return `the investigation phase ends after each turn; still to go: ${r.investigatorIds.join(', ')}`;
+    case 'amountNotAdjustable':
+      return `option ${r.optionId} of decision ${r.decisionId} has no adjustable amount`;
+    case 'amountOutOfRange':
+      return `option ${r.optionId} of decision ${r.decisionId} takes ${r.min}${r.max === undefined ? ' or more' : `–${r.max}`}, got ${r.amount}`;
     case 'triggerLoop':
       return `forced effects triggered more than ${r.limit} follow-up commands`;
     case 'triggeredCommandRejected':

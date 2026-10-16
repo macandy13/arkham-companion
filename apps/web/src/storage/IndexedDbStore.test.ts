@@ -40,6 +40,7 @@ const started: ScenarioStarted = {
       clues: 0,
       resources: 5,
       doomOnPlayerCards: 0,
+      actionsRemaining: 3,
       status: 'active',
     },
   ],

@@ -7,6 +7,12 @@ export type Zone =
   | { kind: 'setAside' }
   | { kind: 'victoryDisplay' }
   | { kind: 'outOfGame' }
+  /**
+   * A drawn encounter card whose revelation is still being resolved (its
+   * revelation test is pending). Rules Reference, "Revelation": the card is
+   * discarded only once the revelation has resolved, so it waits here.
+   */
+  | { kind: 'resolving' }
   | { kind: 'agendaDeck' }
   | { kind: 'actDeck' }
   /** Location card on a map. */

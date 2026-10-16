@@ -2,10 +2,10 @@ import {
   cardStats,
   cardsNamed,
   checkInvariants,
+  decisionId,
   describeDecision,
   compileSetup,
   emptyState,
-  enemyAttackList,
   execute,
   formatBoard,
   instanceId,
@@ -22,6 +22,7 @@ import {
   type Investigator,
   type InvestigatorId,
   type InvestigatorStat,
+  type Phase,
   type ScenarioDefinition,
   type Zone,
 } from '@arkham/engine';
@@ -37,8 +38,9 @@ export interface TableOptions {
 
 /**
  * A scenario being played in a test, driven in game language
- * (`moveTo(daisy, 'Attic')`, `drawEncounterCard(roland)`) so a scripted session
- * reads like a session report. Every step is an engine command run through
+ * (`nextPhase()`, `startTurn(daisy)`, `moveTo(daisy, 'Attic')`) so a scripted
+ * session reads like a session report. Shared by every flow test of the
+ * scenario, so they all set up and drive the game the same way. Every step is an engine command run through
  * `execute`; the table keeps the live state and the full event log, and checks
  * `checkInvariants` after each command so a broken step fails where it
  * happens, with the board (`formatBoard`) in the message.
@@ -87,9 +89,44 @@ export class TestTable {
       );
   }
 
-  /** Mythos step 1.2: one doom on the current agenda. */
-  placeMythosDoom(): void {
-    this.placeDoom(1);
+  /**
+   * The phase assistant's "Next" (`NextPhase`): runs the steps of the current
+   * phase until one needs the players (a decision, an enemy attack), or moves
+   * on to the next phase. Returns the phase it lands on (the current one when
+   * it stops mid-phase), so a script asserts where it is at every step.
+   */
+  nextPhase(): Phase {
+    this.play({ type: 'NextPhase' });
+    return this.current.meta.phase;
+  }
+
+  /** The round and phase the game is in. */
+  phase(): { round: number; phase: Phase } {
+    return { round: this.current.meta.round, phase: this.current.meta.phase };
+  }
+
+  /** The group picks `investigator` to take the next turn of the investigation phase. */
+  startTurn(investigator: InvestigatorId): void {
+    this.play({ type: 'StartTurn', investigatorId: investigator });
+  }
+
+  /** The investigator ends their turn. */
+  endTurn(investigator: InvestigatorId): void {
+    this.play({ type: 'EndTurn', investigatorId: investigator });
+  }
+
+  /** The name of the investigator whose turn is in progress, or "none" between turns. */
+  turn(): string {
+    const { turn } = this.current.meta;
+    return turn ? this.investigator(turn.investigatorId).name : 'none';
+  }
+
+  /**
+   * The players change the investigator's remaining actions by `delta`: -1 per
+   * action they count off in the turn, or what a card grants or takes away.
+   */
+  adjustActions(investigator: InvestigatorId, delta: number): void {
+    this.play({ type: 'AdjustActions', investigatorId: investigator, delta });
   }
 
   /** Doom from a card effect (e.g. Ancient Evils) on the current agenda. */
@@ -119,16 +156,7 @@ export class TestTable {
     this.play({ type: 'ResolveDecision', decisionId: decision.id, optionId: option.id });
   }
 
-  /**
-   * Mythos step 1.4 for one investigator: they draw the top encounter card and
-   * resolve it. One call per investigator, in player order, so the script can
-   * check (and later answer) what each draw brings before the next one.
-   */
-  drawEncounterCard(investigator: InvestigatorId): void {
-    this.play({ type: 'DrawEncounter', investigatorId: investigator });
-  }
-
-  /** Moves an investigator along a connection to the location named `locationName`. */
+  /** A move action along a connection to the location named `locationName`. */
   moveTo(investigator: InvestigatorId, locationName: string): void {
     this.play({
       type: 'MoveInvestigator',
@@ -137,11 +165,13 @@ export class TestTable {
     });
   }
 
-  /** A successful investigate action: one clue from the investigator's location. */
-  investigate(investigator: InvestigatorId): void {
-    const locationId = this.investigator(investigator).locationId;
-    if (locationId === undefined) throw new Error(`${investigator} is at no location`);
-    this.play({ type: 'DiscoverClues', investigatorId: investigator, locationId, amount: 1 });
+  /**
+   * An investigate action whose intellect test the players pass at the table,
+   * discovering `clues` (default 1; more when a card adds to the result).
+   */
+  investigate(investigator: InvestigatorId, { clues }: { clues?: number } = {}): void {
+    this.play({ type: 'Investigate', investigatorId: investigator });
+    this.passTest(`investigate:${investigator}`, clues);
   }
 
   /** The investigators pay the act's clue requirement, `spend` clues each, and advance it. */
@@ -155,7 +185,11 @@ export class TestTable {
     });
   }
 
-  /** The enemy named `enemyName` engages the investigator (or switches to them). */
+  /**
+   * The enemy named `enemyName` engages the investigator (or switches to
+   * them): an engage action, or a rule that engages without one (an enemy at
+   * the location the investigator enters).
+   */
   engage(investigator: InvestigatorId, enemyName: string): void {
     this.play({
       type: 'EngageEnemy',
@@ -165,22 +199,33 @@ export class TestTable {
   }
 
   /**
-   * A successful evade action by `investigator` against the enemy engaged with
-   * them: it is disengaged and exhausted, and stays where it is.
+   * An evade action against the enemy engaged with the investigator, whose
+   * agility test the players pass: it is disengaged and exhausted, and stays where it is.
    */
   evade(investigator: InvestigatorId, enemyName: string): void {
     const enemy = this.enemyEngagedWith(investigator, enemyName);
-    this.play({ type: 'DisengageEnemy', enemyId: enemy.id });
-    this.play({ type: 'ExhaustEnemy', enemyId: enemy.id });
+    this.play({ type: 'Evade', investigatorId: investigator, enemyId: enemy.id });
+    this.passTest(`evade:${investigator}:${enemy.id}`);
   }
 
   /**
-   * A successful fight action by `investigator` against the enemy engaged with
-   * them. It deals the basic attack's 1 damage; the script fights again for more.
+   * A fight action against the enemy engaged with the investigator, whose
+   * combat test the players pass. It deals the basic attack's 1 damage, or
+   * the `damage` the players confirm (a weapon, a skill card adding damage).
    */
-  fight(investigator: InvestigatorId, enemyName: string): void {
+  fight(
+    investigator: InvestigatorId,
+    enemyName: string,
+    { damage }: { damage?: number } = {},
+  ): void {
     const enemy = this.enemyEngagedWith(investigator, enemyName);
-    this.play({ type: 'DamageEnemy', enemyId: enemy.id, amount: 1 });
+    this.play({ type: 'Fight', investigatorId: investigator, enemyId: enemy.id });
+    this.passTest(`fight:${investigator}:${enemy.id}`, damage);
+  }
+
+  /** Resources from the resource action or a card. */
+  gainResources(investigator: InvestigatorId, amount: number): void {
+    this.adjust(investigator, 'resources', amount);
   }
 
   /** Damage from a failed treachery test or an attack. */
@@ -193,26 +238,25 @@ export class TestTable {
     this.adjust(investigator, 'horror', amount);
   }
 
-  /** Enemy step 3.2: hunters move. */
-  moveHunters(): void {
-    this.play({ type: 'MoveHunters' });
-  }
-
-  /** Enemy step 3.3: each ready engaged enemy attacks (`enemyAttackList`) and exhausts. */
+  /**
+   * Enemy step 3.3: the players resolve each attack the step lists, in its
+   * order, with the printed damage and horror; each enemy exhausts after its attack.
+   */
   resolveEnemyAttacks(): void {
-    for (const attack of enemyAttackList(this.ctx, this.current)) {
-      if (attack.damage > 0) this.takeDamage(attack.investigatorId, attack.damage);
-      if (attack.horror > 0) this.takeHorror(attack.investigatorId, attack.horror);
-      this.play({ type: 'ExhaustEnemy', enemyId: attack.enemyId });
-    }
+    const [step] = this.current.meta.steps;
+    if (step?.id !== '3.3' || step.attacks === undefined)
+      throw new Error(`no enemy attacks to resolve\n${this.board()}`);
+    for (const attack of step.attacks) this.play({ type: 'ResolveEnemyAttack', ...attack });
   }
 
-  /** Upkeep: every exhausted enemy in play readies, each investigator gains 1 resource. */
-  upkeep(): void {
-    for (const enemy of this.enemiesInPlay().filter((card) => card.exhausted))
-      this.play({ type: 'ReadyEnemy', enemyId: enemy.id });
-    for (const investigator of this.activeInvestigators())
-      this.adjust(investigator.id, 'resources', 1);
+  /** One line per enemy attack step 3.3 lists, e.g. "Swarm of Rats attacks roland". */
+  attacksDue(): string[] {
+    const [step] = this.current.meta.steps;
+    if (step?.id !== '3.3') return [];
+    return (step.attacks ?? []).map(
+      (attack) =>
+        `${this.nameOf(this.cardWithId(attack.enemyId))} attacks ${attack.investigatorId}`,
+    );
   }
 
   /** Where each investigator is, by investigator id and location name. */
@@ -231,6 +275,13 @@ export class TestTable {
   wounds(investigator: InvestigatorId): { damage: number; horror: number } {
     const { health, sanity } = this.investigator(investigator);
     return { damage: health.damage, horror: sanity.horror };
+  }
+
+  /** Remaining actions of each investigator, by investigator id. */
+  actionsLeft(): Record<string, number> {
+    return Object.fromEntries(
+      this.current.investigators.map((inv) => [inv.id, inv.actionsRemaining]),
+    );
   }
 
   /** Resources of each investigator, by investigator id. */
@@ -299,8 +350,14 @@ export class TestTable {
     this.play({ type: 'AdjustInvestigator', investigatorId: investigator, stat, delta });
   }
 
-  private activeInvestigators(): Investigator[] {
-    return this.current.investigators.filter((inv) => inv.status === 'active');
+  /** The players passed the skill test of decision `id`, confirming `amount` if given. */
+  private passTest(id: string, amount?: number): void {
+    this.play({
+      type: 'ResolveDecision',
+      decisionId: decisionId(id),
+      optionId: 'pass',
+      ...(amount === undefined ? {} : { amount }),
+    });
   }
 
   private investigator(id: string): Investigator {

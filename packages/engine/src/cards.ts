@@ -1,6 +1,7 @@
 import { stripTrailingDot } from '@arkham/util';
 import type { Brand } from './ids';
 import type { Keyword } from './keywords';
+import type { SkillTest } from './state';
 import { CommandRejected } from './rejection';
 import type { EffectsRegistry, ScenarioHooks } from './triggers';
 
@@ -124,6 +125,13 @@ export interface CardStats {
    * instead of being discarded (derived from the card text by `carddata`).
    */
   entersThreatArea?: boolean;
+  /**
+   * The skill test a treachery's revelation asks of the drawing investigator
+   * ("Revelation – Test [willpower] (3)"), entered with the card data; drawing
+   * the card raises it as a `skillTestResult` decision. Only the test itself:
+   * what failing costs stays card text the players apply.
+   */
+  revelationTest?: SkillTest;
 }
 
 /**

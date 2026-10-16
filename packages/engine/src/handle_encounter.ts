@@ -4,6 +4,7 @@ import type {
   EncounterMatch,
   EncounterSource,
   FromSetAside,
+  MoveCard,
   ShuffleInto,
 } from './commands';
 import type { CardFlipped, CardMoved, DeckShuffled, EncounterCardDrawn, Event } from './events';
@@ -12,6 +13,7 @@ import type { InstanceId } from './ids';
 import { hasKeyword } from './keywords';
 import { requireCard } from './lookup';
 import { cardMoved } from './placement';
+import { revelationTestDecision } from './skill_tests';
 import { spawnEvents } from './spawn';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
@@ -22,6 +24,7 @@ import { zoneKey, type Zone } from './zone';
 const ENCOUNTER_DECK: Zone = { kind: 'encounterDeck' };
 const ENCOUNTER_DISCARD: Zone = { kind: 'encounterDiscard' };
 const SET_ASIDE: Zone = { kind: 'setAside' };
+const RESOLVING: Zone = { kind: 'resolving' };
 
 /** The events of one card drawn from the encounter deck, and whether it makes the drawer draw again. */
 interface Draw {
@@ -176,8 +179,12 @@ function refillIfEmpty(state: GameState): Event[] {
 /**
  * The events that place a drawn card. An enemy spawns (spawn instruction,
  * engagement) like `SpawnEnemy`, with the drawer as fallback location; every
- * other card goes to the threat area or the top of the discard. The card may
- * come from the discard (`match`), so the origin is read from the state.
+ * other card goes to the threat area or the top of the discard. A treachery
+ * with a revelation test asks the drawer for its result; one that does not
+ * stay in the threat area waits in the `resolving` zone until the answer
+ * discards it (Rules Reference: a card is discarded after its revelation
+ * resolves). The card may come from the discard (`match`), so the origin is
+ * read from the state.
  */
 function placement(
   ctx: EngineContext,
@@ -188,19 +195,25 @@ function placement(
 ): Event[] {
   if (stats.typeCode === 'enemy')
     return spawnEvents(ctx, state, cardId, { investigatorId: investigator.id });
-  const to: Zone =
-    stats.typeCode === 'treachery' && stats.entersThreatArea
-      ? { kind: 'threatArea', investigatorId: investigator.id }
-      : ENCOUNTER_DISCARD;
+  const card = requireCard(state.cards, cardId);
+  if (stats.typeCode === 'treachery' && stats.entersThreatArea) {
+    const moved = cardMoved(state, card, { kind: 'threatArea', investigatorId: investigator.id });
+    return [moved, ...revelationTestDecision(ctx, replay([moved], state), cardId, investigator)];
+  }
+  if (stats.typeCode === 'treachery' && stats.revelationTest) {
+    const resolving = cardMoved(state, card, RESOLVING);
+    const test = revelationTestDecision(ctx, replay([resolving], state), cardId, investigator, [
+      discardToTop(cardId),
+    ]);
+    return [resolving, ...test];
+  }
   // Index 0 is the top, and the discard's top is what "topmost" effects look for.
-  return [
-    cardMoved(
-      state,
-      requireCard(state.cards, cardId),
-      to,
-      to.kind === 'encounterDiscard' ? 0 : undefined,
-    ),
-  ];
+  return [cardMoved(state, card, ENCOUNTER_DISCARD, 0)];
+}
+
+/** The command that discards a resolved encounter card onto the top of the discard. */
+function discardToTop(cardId: InstanceId): MoveCard {
+  return { type: 'MoveCard', cardId, to: ENCOUNTER_DISCARD, index: 0 };
 }
 
 /**

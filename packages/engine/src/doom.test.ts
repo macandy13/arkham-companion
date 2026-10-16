@@ -178,22 +178,6 @@ const manualDoom = (cardId: typeof hall, delta: number): Command => ({
   adjustment: { kind: 'tokens', cardId, token: 'doom', delta },
 });
 
-/** Like `stateAfter`, but declines the agenda question before each command, which would block it otherwise. */
-function stateAfterDeclining(
-  ctx: typeof testContext,
-  state: GameState,
-  ...commands: Command[]
-): GameState {
-  return commands.reduce((current, command) => {
-    const declines = current.pending.map((decision): Command => ({
-      type: 'ResolveDecision',
-      decisionId: decision.id,
-      optionId: 'no',
-    }));
-    return stateAfter(ctx, current, ...declines, command);
-  }, state);
-}
-
 describe('doom total invariant', () => {
   it.each<{ name: string; commands: Command[]; total: number }>([
     { name: 'nothing placed', commands: [], total: 0 },
@@ -236,7 +220,7 @@ describe('doom total invariant', () => {
       total: 1,
     },
   ])('equals agenda, cards in play and counters after $name', ({ commands, total }) => {
-    const state = stateAfterDeclining(
+    const state = stateAfter(
       testContext,
       startedWith([makeInvestigator({ id: alice }), makeInvestigator({ id: bob, seat: 1 })]),
       ...commands,
@@ -255,7 +239,7 @@ describe('doom total', () => {
       makeInvestigator({ id: bob, seat: 1 }),
     ]);
 
-    state = stateAfterDeclining(
+    state = stateAfter(
       testContext,
       state,
       { type: 'PlaceDoom', amount: 1 },
@@ -302,13 +286,29 @@ describe('threshold check', () => {
   });
 
   it('stays silent below the threshold', () => {
-    const next = stateAfter(testContext, state, { type: 'PlaceDoom', amount: 2 });
+    const next = stateAfter(
+      testContext,
+      state,
+      { type: 'PlaceDoom', amount: 2 },
+      { type: 'CheckDoomThreshold' },
+    );
 
     expect(next.pending).toEqual([]);
   });
 
-  it('asks whether to advance the agenda when doom reaches the threshold', () => {
+  it('does not ask when doom reaches the threshold outside a check', () => {
     const next = stateAfter(testContext, state, { type: 'PlaceDoom', amount: 3 });
+
+    expect(next.pending).toEqual([]);
+  });
+
+  it('asks to advance the agenda when a check finds the threshold reached', () => {
+    const next = stateAfter(
+      testContext,
+      state,
+      { type: 'PlaceDoom', amount: 3 },
+      { type: 'CheckDoomThreshold' },
+    );
 
     expect(next.pending).toEqual([
       {
@@ -337,13 +337,19 @@ describe('threshold check', () => {
       state,
       { type: 'PlaceDoom', cardId: ghoul, amount: 2 },
       { type: 'AdjustInvestigator', investigatorId: alice, stat: 'doomOnPlayerCards', delta: 1 },
+      { type: 'CheckDoomThreshold' },
     );
 
     expect(next.pending.map((d) => d.kind)).toEqual(['confirm']);
   });
 
   it('rejects more doom while the question is open', () => {
-    const asked = stateAfter(testContext, state, { type: 'PlaceDoom', amount: 3 });
+    const asked = stateAfter(
+      testContext,
+      state,
+      { type: 'PlaceDoom', amount: 3 },
+      { type: 'CheckDoomThreshold' },
+    );
 
     const rejection = rejectionFrom(testContext, asked, { type: 'PlaceDoom', amount: 1 });
 
@@ -353,21 +359,28 @@ describe('threshold check', () => {
     });
   });
 
-  it('asks again when more doom is placed after the question was declined', () => {
+  it('asks again at the next check after the question was declined', () => {
     const declined = stateAfter(
       testContext,
       state,
       { type: 'PlaceDoom', amount: 3 },
+      { type: 'CheckDoomThreshold' },
       { type: 'ResolveDecision', decisionId: decisionId('advanceAgenda:agenda1'), optionId: 'no' },
     );
 
-    const next = stateAfter(testContext, declined, { type: 'PlaceDoom', amount: 1 });
+    const next = stateAfter(testContext, declined, { type: 'CheckDoomThreshold' });
 
+    expect(declined.pending).toEqual([]);
     expect(next.pending.map((d) => d.id)).toEqual(['advanceAgenda:agenda1']);
   });
 
   it('advances the agenda when the question is answered yes', () => {
-    const asked = stateAfter(testContext, state, { type: 'PlaceDoom', amount: 3 });
+    const asked = stateAfter(
+      testContext,
+      state,
+      { type: 'PlaceDoom', amount: 3 },
+      { type: 'CheckDoomThreshold' },
+    );
 
     const next = stateAfter(testContext, asked, {
       type: 'ResolveDecision',
@@ -380,7 +393,12 @@ describe('threshold check', () => {
   });
 
   it('leaves the agenda alone when the question is answered no', () => {
-    const asked = stateAfter(testContext, state, { type: 'PlaceDoom', amount: 3 });
+    const asked = stateAfter(
+      testContext,
+      state,
+      { type: 'PlaceDoom', amount: 3 },
+      { type: 'CheckDoomThreshold' },
+    );
 
     const next = stateAfter(testContext, asked, {
       type: 'ResolveDecision',
@@ -430,10 +448,7 @@ describe('AdvanceAgenda', () => {
       startedWith([makeInvestigator({ id: alice })]),
       { type: 'PlaceDoom', amount: 2 },
       { type: 'PlaceDoom', cardId: ghoul, amount: 1 },
-      // The threshold question is open now; declining it keeps later commands unblocked.
-      { type: 'ResolveDecision', decisionId: decisionId('advanceAgenda:agenda1'), optionId: 'no' },
       { type: 'AdjustInvestigator', investigatorId: alice, stat: 'doomOnPlayerCards', delta: 1 },
-      { type: 'ResolveDecision', decisionId: decisionId('advanceAgenda:agenda1'), optionId: 'no' },
     );
   });
 
@@ -455,7 +470,7 @@ describe('AdvanceAgenda', () => {
   });
 
   it('drops the pending question about the old agenda', () => {
-    const asked = stateAfter(testContext, state, { type: 'PlaceDoom', amount: 1 });
+    const asked = stateAfter(testContext, state, { type: 'CheckDoomThreshold' });
 
     const next = apply(asked, { type: 'AgendaAdvanced', cardId: agenda1 });
 
@@ -750,7 +765,12 @@ describe('cards without a threshold', () => {
   });
 
   it('never asks to advance an agenda that has no doom threshold', () => {
-    const next = stateAfter(ctx, state, { type: 'PlaceDoom', amount: 50 });
+    const next = stateAfter(
+      ctx,
+      state,
+      { type: 'PlaceDoom', amount: 50 },
+      { type: 'CheckDoomThreshold' },
+    );
 
     expect(next.pending).toEqual([]);
   });

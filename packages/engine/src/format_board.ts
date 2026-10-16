@@ -4,14 +4,16 @@ import { describeDecision } from './describe_decision';
 import { doomInPlay } from './doom';
 import type { InstanceId, MapId } from './ids';
 import { mapLocations } from './map';
-import type { CardInstance, GameState, Investigator } from './state';
+import { PHASE_STEP_TITLES } from './phases';
+import type { CardInstance, GameState, Investigator, PhaseStep } from './state';
 import { zoneKey, type Zone } from './zone';
 
 /**
  * The board as plain text, for debugging and test failure messages: round and
- * phase, current agenda and act, every map with its locations (clues,
+ * phase, the outstanding phase steps, the turn in progress and the turns
+ * taken, current agenda and act, every map with its locations (clues,
  * investigators, enemies, connections), every investigator, the encounter
- * piles, set-aside cards, victory display and pending decisions. Cards are
+ * piles and a card whose revelation is being resolved, set-aside cards, victory display and pending decisions. Cards are
  * named by their `CardDb` name; instance IDs appear only in brackets where
  * copies need telling apart (locations and enemies). The order is fixed (map,
  * zone and seat order), so the output is stable enough for inline snapshots.
@@ -20,16 +22,43 @@ import { zoneKey, type Zone } from './zone';
 export function formatBoard(ctx: EngineContext, state: GameState): string {
   return [
     `Round ${state.meta.round}, ${state.meta.phase} phase`,
+    ...stepLines(state),
+    ...turnLines(state),
     agendaLine(ctx, state),
     actLine(ctx, state),
     ...Object.keys(state.board.maps).flatMap((id) => mapLines(ctx, state, id as MapId)),
     'Investigators:',
     ...state.investigators.map((investigator) => investigatorLine(ctx, state, investigator)),
     encounterLine(ctx, state),
+    ...resolvingLines(ctx, state),
     `Set aside: ${countIn(state, { kind: 'setAside' })} cards`,
     `Victory display: ${listOrNone(namesIn(ctx, state, { kind: 'victoryDisplay' }))}`,
     ...decisionLines(ctx, state),
   ].join('\n');
+}
+
+/** The phase steps still to run, by Rules Reference number; nothing when none are left. */
+function stepLines(state: GameState): string[] {
+  const { steps } = state.meta;
+  if (steps.length === 0) return [];
+  return [`Steps left: ${steps.map((step) => stepLabel(state, step)).join(', ')}`];
+}
+
+function stepLabel(state: GameState, step: PhaseStep): string {
+  if (step.id === '1.4') return `1.4 (${investigatorName(state, step.investigatorId)})`;
+  if (step.id === '3.3' && step.attacks) return `3.3 (${step.attacks.length} attacks to resolve)`;
+  return `${step.id} (${PHASE_STEP_TITLES[step.id]})`;
+}
+
+/** The turn in progress and the turns already taken this round, if any. */
+function turnLines(state: GameState): string[] {
+  const { turn, turnsTaken } = state.meta;
+  return [
+    ...(turn ? [`Turn: ${investigatorName(state, turn.investigatorId)}`] : []),
+    ...(turnsTaken.length > 0
+      ? [`Turns taken: ${turnsTaken.map((id) => investigatorName(state, id)).join(', ')}`]
+      : []),
+  ];
 }
 
 function agendaLine(ctx: EngineContext, state: GameState): string {
@@ -115,7 +144,8 @@ function investigatorLine(
     `  ${investigator.name}${status} – ${where}; ` +
     `damage ${investigator.health.damage}/${investigator.health.max}, ` +
     `horror ${investigator.sanity.horror}/${investigator.sanity.max}, ` +
-    `${investigator.clues} clues, ${investigator.resources} resources; ` +
+    `${investigator.clues} clues, ${investigator.resources} resources, ` +
+    `actions left ${investigator.actionsRemaining}; ` +
     `threat area: ${listOrNone(threatArea)}`
   );
 }
@@ -127,6 +157,12 @@ function encounterLine(ctx: EngineContext, state: GameState): string {
     `Encounter deck: ${countIn(state, { kind: 'encounterDeck' })} cards; ` +
     `discard: ${countIn(state, { kind: 'encounterDiscard' })} cards${discardTop}`
   );
+}
+
+/** The encounter cards whose revelation is still being resolved, if any. */
+function resolvingLines(ctx: EngineContext, state: GameState): string[] {
+  const resolving = namesIn(ctx, state, { kind: 'resolving' });
+  return resolving.length > 0 ? [`Resolving: ${resolving.join(', ')}`] : [];
 }
 
 function decisionLines(ctx: EngineContext, state: GameState): string[] {

@@ -29,7 +29,16 @@ import {
   handleResolveDecision,
 } from './decisions';
 import { handleMoveHunter, handleMoveHunters } from './hunters';
-import { withAgendaCheck } from './doom';
+import { agendaThresholdDecision } from './doom';
+import { handleNextPhase, handleResolveEnemyAttack, nextStepPlan } from './phases';
+import { handleEvade, handleFight, handleInvestigate } from './skill_tests';
+import {
+  actionsAdjusted,
+  BASE_ACTIONS_PER_TURN,
+  handleAdjustActions,
+  handleEndTurn,
+  handleStartTurn,
+} from './turns';
 import {
   completeAdvance,
   handleAdvanceAct,
@@ -37,15 +46,29 @@ import {
   handleEndScenario,
   handlePlaceDoom,
 } from './handle_scenario';
-import type { Adjustment, Command, MoveCard, StartScenario, StartingCard } from './commands';
-import type { CardMoved, DeckShuffled, Event, ScenarioStarted, TokensChanged } from './events';
+import type {
+  Adjustment,
+  Command,
+  MoveCard,
+  StartScenario,
+  StartingCard,
+  StartingInvestigator,
+} from './commands';
+import type {
+  ActionsAdjusted,
+  CardMoved,
+  DeckShuffled,
+  Event,
+  ScenarioStarted,
+  TokensChanged,
+} from './events';
 import { instanceId, type InstanceId, type MapId } from './ids';
 import { requireCard } from './lookup';
 import { createMap, type GameMap, type MapSpec } from './map';
 import { apply, replay } from './reducer';
 import { CommandRejected, type Rejection } from './rejection';
 import { shuffle } from './rng';
-import type { CardInstance, GameState, Investigator, TokenKind } from './state';
+import type { CardInstance, GameState, TokenKind } from './state';
 import { cardMoved, validateZone, type ZoneRefs } from './placement';
 import { MAX_TRIGGERED_COMMANDS, triggeredCommands } from './triggers';
 import { zoneKey, type Zone } from './zone';
@@ -70,6 +93,8 @@ import { zoneKey, type Zone } from './zone';
  * While a decision is pending only `ManualAdjust` and `ResolveDecision` are
  * accepted; the commands of an answer (`ResolveDecision`) run first in the
  * chain, like a hook's follow-ups, before the forced effects of its events.
+ * `NextPhase` continues with the outstanding phase steps (`phaseStepEvents`),
+ * so one "Next" yields the whole automated part of a phase.
  * Pure: the same state, command and context always yield the same events.
  */
 export function handle(ctx: EngineContext, state: GameState, command: Command): Event[] {
@@ -90,6 +115,7 @@ function handleWithTriggers(
 ): Event[] {
   const events = withForcedEffects(ctx, state, handleCommand(ctx, state, command), command, budget);
   const after = replay(events, state);
+  if (command.type === 'NextPhase') return [...events, ...phaseStepEvents(ctx, after)];
   const completion = completeCommand(state, after, command);
   if (completion.length === 0) return events;
   return [...events, ...withForcedEffects(ctx, after, completion, command, budget)];
@@ -105,6 +131,17 @@ function withForcedEffects(
 ): Event[] {
   if (!firesTriggers(command)) return events;
   const followUps = [...answerCommands(state, command), ...triggeredCommands(ctx, state, events)];
+  return withFollowUps(ctx, state, events, followUps, budget);
+}
+
+/** `events` (produced from `state`) followed by the events of `followUps`, handled in order. */
+function withFollowUps(
+  ctx: EngineContext,
+  state: GameState,
+  events: Event[],
+  followUps: readonly Command[],
+  budget: TriggerBudget,
+): Event[] {
   let current = replay(events, state);
   const chain = [...events];
   for (const followUp of followUps) {
@@ -116,6 +153,30 @@ function withForcedEffects(
     chain.push(...followUpEvents);
   }
   return chain;
+}
+
+/**
+ * `NextPhase`, continued: runs the outstanding phase steps one at a time
+ * until one leaves a decision pending or an enemy attack waits for the
+ * players. A step's commands come first, then the forced effects of its own
+ * events (`RoundEnded` -> `onRoundEnd`). Each step gets its own loop budget:
+ * a phase has a fixed, small number of steps, and the guard is about hooks
+ * re-triggering themselves within one of them.
+ */
+function phaseStepEvents(ctx: EngineContext, state: GameState): Event[] {
+  const events: Event[] = [];
+  let current = state;
+  while (current.pending.length === 0) {
+    const plan = nextStepPlan(ctx, current);
+    if (!plan) break;
+    const followUps = [...plan.commands, ...triggeredCommands(ctx, current, plan.events)];
+    const stepEvents = withFollowUps(ctx, current, plan.events, followUps, {
+      remaining: MAX_TRIGGERED_COMMANDS,
+    });
+    events.push(...stepEvents);
+    current = replay(stepEvents, current);
+  }
+  return events;
 }
 
 /**
@@ -189,13 +250,11 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
     case 'MoveInvestigator':
       return handleMoveInvestigator(ctx, state, command);
     case 'AdjustInvestigator':
-      return command.stat === 'doomOnPlayerCards'
-        ? withAgendaCheck(ctx, state, handleAdjustInvestigator(state, command))
-        : handleAdjustInvestigator(state, command);
+      return handleAdjustInvestigator(state, command);
     case 'DiscoverClues':
       return handleDiscoverClues(state, command);
     case 'PlaceDoom':
-      return withAgendaCheck(ctx, state, handlePlaceDoom(state, command));
+      return handlePlaceDoom(state, command);
     case 'AdvanceAgenda':
       return handleAdvanceAgenda(state, command);
     case 'AdvanceAct':
@@ -230,6 +289,24 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
       return handleRequestDecision(state, command);
     case 'ResolveDecision':
       return handleResolveDecision(state, command);
+    case 'CheckDoomThreshold':
+      return agendaThresholdDecision(ctx, state);
+    case 'NextPhase':
+      return handleNextPhase(ctx, state);
+    case 'StartTurn':
+      return handleStartTurn(state, command);
+    case 'EndTurn':
+      return handleEndTurn(state, command);
+    case 'AdjustActions':
+      return handleAdjustActions(state, command);
+    case 'ResolveEnemyAttack':
+      return handleResolveEnemyAttack(ctx, state, command);
+    case 'Investigate':
+      return handleInvestigate(ctx, state, command);
+    case 'Fight':
+      return handleFight(ctx, state, command);
+    case 'Evade':
+      return handleEvade(ctx, state, command);
   }
 }
 
@@ -258,7 +335,10 @@ function handleStartScenario(ctx: EngineContext, state: GameState, cmd: StartSce
     scenarioId: cmd.scenarioId,
     difficulty: cmd.difficulty,
     seed: cmd.seed,
-    investigators: cmd.investigators,
+    investigators: cmd.investigators.map((inv) => ({
+      ...inv,
+      actionsRemaining: BASE_ACTIONS_PER_TURN,
+    })),
     maps,
     cards,
     chaosBag: cmd.chaosBag ?? [],
@@ -272,7 +352,7 @@ function handleStartScenario(ctx: EngineContext, state: GameState, cmd: StartSce
 }
 
 /** The investigators' IDs; rejects a duplicate. */
-function uniqueInvestigatorIds(investigators: readonly Investigator[]): Set<string> {
+function uniqueInvestigatorIds(investigators: readonly StartingInvestigator[]): Set<string> {
   const ids = new Set<string>();
   for (const inv of investigators) {
     if (ids.has(inv.id))
@@ -337,10 +417,14 @@ function encounterDeckShuffle(state: GameState): DeckShuffled[] {
 
 /** `MoveCard`: the same move a `ManualAdjust` makes, as a game event. */
 function handleMoveCard(state: GameState, cmd: MoveCard): CardMoved {
-  return cardMoved(state, requireCard(state.cards, cmd.cardId), cmd.to);
+  return cardMoved(state, requireCard(state.cards, cmd.cardId), cmd.to, cmd.index);
 }
 
-function handleAdjustment(state: GameState, adj: Adjustment): CardMoved | TokensChanged {
+function handleAdjustment(
+  state: GameState,
+  adj: Adjustment,
+): CardMoved | TokensChanged | ActionsAdjusted {
+  if (adj.kind === 'actions') return actionsAdjusted(state, adj.investigatorId, adj.delta);
   const card = requireCard(state.cards, adj.cardId);
 
   switch (adj.kind) {

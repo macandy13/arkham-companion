@@ -7,6 +7,7 @@ import type {
   CardFlipped,
   CardMoved,
   Event,
+  RoundEnded,
   TokensChanged,
 } from './events';
 import type { InstanceId } from './ids';
@@ -42,11 +43,8 @@ export interface ScenarioHooks {
   onAgendaAdvance: Readonly<Record<string, TriggerHook<AgendaAdvanced>>>;
   /** The reverse side of an act, keyed by the code of the act that advanced. */
   onActAdvance: Readonly<Record<string, TriggerHook<ActAdvanced>>>;
-  /**
-   * At the end of each round. Declared for scenario authors now; it fires once
-   * the phase assistant emits a round-end event (M1.10).
-   */
-  onRoundEnd: TriggerHook<Event>;
+  /** At the end of each round, the last step of the upkeep phase (`RoundEnded`). */
+  onRoundEnd: TriggerHook<RoundEnded>;
   /** After any card enters play from outside play (deck, set aside, discard, …). */
   onCardEnters: TriggerHook<CardMoved>;
 }
@@ -118,6 +116,8 @@ function matchingTriggers(
       return bind(forCard(hooks.onActAdvance, event.cardId), event);
     case 'CardMoved':
       return entersPlay(before, after, event) ? bind(hooks.onCardEnters, event) : [];
+    case 'RoundEnded':
+      return bind(hooks.onRoundEnd, event);
     case 'CardFlipped':
       return event.faceUp ? bind(forCard(ctx.effects, event.cardId)?.onReveal, event) : [];
     default:

@@ -19,6 +19,7 @@ import {
 } from '../test/utils';
 
 const alice = investigatorId('alice');
+const bob = investigatorId('bob');
 const manor = mapId('manor');
 const hall = instanceId('hall');
 const attic = instanceId('attic');
@@ -96,8 +97,8 @@ describe('formatBoard', () => {
           investigators: Bob
           connects to: Hall
       Investigators:
-        Alice – Hall; damage 0/8, horror 0/6, 1 clues, 5 resources; threat area: Dread
-        Bob – Attic; damage 0/8, horror 0/6, 0 clues, 5 resources; threat area: none
+        Alice – Hall; damage 0/8, horror 0/6, 1 clues, 5 resources, actions left 3; threat area: Dread
+        Bob – Attic; damage 0/8, horror 0/6, 0 clues, 5 resources, actions left 3; threat area: none
       Encounter deck: 1 cards; discard: 1 cards, top: Dread
       Set aside: 1 cards
       Victory display: Rat
@@ -106,7 +107,12 @@ describe('formatBoard', () => {
   });
 
   it('lists pending decisions with their options', () => {
-    const state = stateAfter(ctx, startedBoard(), { type: 'PlaceDoom', amount: 1 });
+    const state = stateAfter(
+      ctx,
+      startedBoard(),
+      { type: 'PlaceDoom', amount: 1 },
+      { type: 'CheckDoomThreshold' },
+    );
 
     expect(formatBoard(ctx, state).split('\n').slice(-2)).toMatchInlineSnapshot(`
       [
@@ -114,6 +120,59 @@ describe('formatBoard', () => {
         "  Advance agenda The Plan yes / no [confirm]",
       ]
     `);
+  });
+
+  it('shows the turn in progress, the turns taken and the actions left', () => {
+    const state = stateAfter(
+      ctx,
+      startedBoard(),
+      { type: 'NextPhase' },
+      { type: 'StartTurn', investigatorId: bob },
+      { type: 'EndTurn', investigatorId: bob },
+      { type: 'StartTurn', investigatorId: alice },
+      { type: 'AdjustActions', investigatorId: alice, delta: -1 },
+    );
+
+    expect(formatBoard(ctx, state).split('\n').slice(0, 3)).toMatchInlineSnapshot(`
+      [
+        "Round 1, investigation phase",
+        "Turn: Alice",
+        "Turns taken: Bob",
+      ]
+    `);
+    expect(formatBoard(ctx, state)).toContain('5 resources, actions left 2;');
+  });
+
+  it('shows the phase steps left while a decision holds up the mythos phase', () => {
+    const state = stateAfter(
+      ctx,
+      startedBoard(),
+      { type: 'NextPhase' },
+      { type: 'StartTurn', investigatorId: alice },
+      { type: 'EndTurn', investigatorId: alice },
+      { type: 'StartTurn', investigatorId: bob },
+      { type: 'EndTurn', investigatorId: bob },
+      { type: 'NextPhase' },
+      { type: 'NextPhase' },
+      { type: 'NextPhase' },
+    );
+
+    expect(formatBoard(ctx, state).split('\n').slice(0, 2)).toMatchInlineSnapshot(`
+      [
+        "Round 2, mythos phase",
+        "Steps left: 1.4 (Alice), 1.4 (Bob)",
+      ]
+    `);
+  });
+
+  it('shows an encounter card whose revelation is still being resolved', () => {
+    const state = stateAfter(ctx, startedBoard(), {
+      type: 'MoveCard',
+      cardId: instanceId('dread2'),
+      to: { kind: 'resolving' },
+    });
+
+    expect(formatBoard(ctx, state)).toContain('discard: 0 cards\nResolving: Dread\n');
   });
 
   it('marks a hidden map, an empty map and a missing agenda and act', () => {
@@ -136,7 +195,7 @@ describe('formatBoard', () => {
       Map Manor (hidden):
         no locations
       Investigators:
-        Bob – nowhere; damage 0/8, horror 0/6, 0 clues, 5 resources; threat area: none
+        Bob – nowhere; damage 0/8, horror 0/6, 0 clues, 5 resources, actions left 3; threat area: none
       Encounter deck: 0 cards; discard: 0 cards
       Set aside: 0 cards
       Victory display: none

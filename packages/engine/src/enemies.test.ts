@@ -393,6 +393,14 @@ describe('engagement commands', () => {
     ).toEqual(rejection);
   });
 
+  it('rejects engaging a massive enemy, which already counts as engaged with everyone at its location', () => {
+    const state = startedWith([placed(ghoul, 'massive_ghoul', at(hall))]);
+
+    expect(
+      rejectionFrom(ctx, state, { type: 'EngageEnemy', enemyId: ghoul, investigatorId: alice }),
+    ).toEqual({ code: 'massiveNotEngageable', cardId: ghoul });
+  });
+
   it('disengages an enemy, leaving it at the investigator`s location', () => {
     const state = startedWith([placed(ghoul, 'ghoul', engagedWith(alice))]);
 
@@ -569,6 +577,32 @@ describe('enemyAttackList', () => {
     expect(enemyAttackList(ctx, withTired)).toEqual([
       { enemyId: forAlice, investigatorId: alice, damage: 1, horror: 2 },
       { enemyId: forBob, investigatorId: bob, damage: 1, horror: 2 },
+    ]);
+  });
+
+  it('starts with the lead investigator, then follows the seats clockwise', () => {
+    const carol = investigatorId('carol');
+    const forCarol = instanceId('ghoul_for_carol');
+    const state = startedWith(
+      [
+        placed(forAlice, 'ghoul', engagedWith(alice)),
+        placed(forBob, 'ghoul', engagedWith(bob)),
+        placed(forCarol, 'ghoul', engagedWith(carol)),
+      ],
+      {
+        investigators: [
+          makeInvestigator({ id: 'bob', seat: 1, locationId: hall }),
+          makeInvestigator({ id: 'alice', seat: 0, locationId: cellar }),
+          makeInvestigator({ id: 'carol', seat: 2, locationId: attic }),
+        ],
+      },
+    );
+
+    expect(state.meta.leadInvestigator).toBe(bob);
+    expect(enemyAttackList(ctx, state).map((attack) => attack.investigatorId)).toEqual([
+      bob,
+      carol,
+      alice,
     ]);
   });
 
