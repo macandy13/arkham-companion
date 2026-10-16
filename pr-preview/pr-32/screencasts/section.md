@@ -2,12 +2,12 @@
 
 ## Screencasts
 
-_Recorded from 9386815 by the PR preview workflow; updated on every push that changes `apps/web`._
+_Recorded from cf91e98 by the PR preview workflow; updated on every push that changes `apps/web`._
 
 ### app boots and a new game survives reload
 
-![app boots and a new game survives reload](https://macandy13.github.io/arkham-companion/pr-preview/pr-32/screencasts/app-boots-and-a-new-game-survives-reload.gif?v=9386815)
+![app boots and a new game survives reload](https://macandy13.github.io/arkham-companion/pr-preview/pr-32/screencasts/app-boots-and-a-new-game-survives-reload.gif?v=cf91e98)
 
-[Full-quality video](https://macandy13.github.io/arkham-companion/pr-preview/pr-32/screencasts/app-boots-and-a-new-game-survives-reload.webm?v=9386815)
+[Full-quality video](https://macandy13.github.io/arkham-companion/pr-preview/pr-32/screencasts/app-boots-and-a-new-game-survives-reload.webm?v=cf91e98)
 
 <!-- screencasts:end -->
