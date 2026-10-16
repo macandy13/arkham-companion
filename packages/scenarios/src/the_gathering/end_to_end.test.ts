@@ -139,7 +139,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // Round 2 – mythos: 1.2 doom, 1.3 below the threshold, 1.4 Roland draws the
     // Icy Ghoul, which spawns in the Cellar, and Daisy draws Crypt Chill: its
     // revelation test stops the phase at Daisy's step 1.4 until the players enter the result.
-    expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos', step: '1.4' });
+    expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos', step: 'drawEncounterCard' });
 
     expect(table.enemies()).toEqual([{ name: icyGhoul, at: 'Cellar' }]);
     expect(table.decisions()).toEqual([
@@ -147,6 +147,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         prompt: 'decision.revelationTest',
         kind: 'skillTestResult',
         about: 'Crypt Chill',
+        for: daisy,
         test: { skill: 'willpower', difficulty: 4 },
         options: ['pass', 'fail'],
       },
@@ -210,7 +211,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.cluesOn('Cellar')).toBe(5);
 
     // Round 2 – enemy phase: 3.2 no hunter, 3.3 the Icy Ghoul attacks Wendy
-    expect(table.nextPhase()).toEqual({ round: 2, phase: 'enemy', step: '3.3' });
+    expect(table.nextPhase()).toEqual({ round: 2, phase: 'enemy', step: 'enemiesAttack' });
 
     expect(table.attacksDue()).toEqual([{ enemy: icyGhoul, investigator: wendy }]);
 
@@ -223,7 +224,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     // Round 3 – mythos: 1.2 brings the doom to the threshold, and the agenda
     // question comes at 1.3, the only regular moment the agenda can advance.
-    expect(table.nextPhase()).toEqual({ round: 3, phase: 'mythos', step: '1.3' });
+    expect(table.nextPhase()).toEqual({ round: 3, phase: 'mythos', step: 'checkDoomThreshold' });
 
     expect(table.agenda()).toEqual({ name: "What's Going On?!", doom: 3 });
     expect(table.decisions()).toEqual([
@@ -293,7 +294,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.endTurn(wendy);
 
     // Round 3 – enemy phase: the evaded rats are exhausted and stay; the Icy Ghoul attacks again
-    expect(table.nextPhase()).toEqual({ round: 3, phase: 'enemy', step: '3.3' });
+    expect(table.nextPhase()).toEqual({ round: 3, phase: 'enemy', step: 'enemiesAttack' });
     table.resolveEnemyAttacks();
 
     expect(table.wounds(wendy)).toEqual({ damage: 4, horror: 2 });
@@ -307,7 +308,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     ]);
 
     // Round 4 – mythos: Roland draws Grasping Hands, an agility (3) test
-    expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos', step: '1.4' });
+    expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos', step: 'drawEncounterCard' });
 
     // With agility 2 he fails by 1 and takes 1 damage.
     table.answer('Grasping Hands', 'fail');
@@ -370,7 +371,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'upkeep' });
 
     // Round 5 – mythos: Roland draws Rotting Remains, a willpower (3) test
-    expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos', step: '1.4' });
+    expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos', step: 'drawEncounterCard' });
 
     // With willpower 3 he passes and takes no horror.
     table.answer('Rotting Remains', 'pass');
@@ -401,7 +402,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     // Round 5 – enemy phase: 3.2 the rats reach the Cellar, where three investigators
     // are and none is their prey, so the engine asks whom they engage.
-    expect(table.nextPhase()).toEqual({ round: 5, phase: 'enemy', step: '3.2' });
+    expect(table.nextPhase()).toEqual({ round: 5, phase: 'enemy', step: 'huntersMove' });
 
     expect(table.decisions()).toEqual([
       {
@@ -419,7 +420,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     // The players choose Roland; 3.3 then lists both attacks in player order.
     table.answer(swarmOfRats, 'Roland Banks');
-    expect(table.nextPhase()).toEqual({ round: 5, phase: 'enemy', step: '3.3' });
+    expect(table.nextPhase()).toEqual({ round: 5, phase: 'enemy', step: 'enemiesAttack' });
 
     expect(table.attacksDue()).toEqual([
       { enemy: swarmOfRats, investigator: roland },
@@ -438,7 +439,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     // Round 6 – mythos: Roland draws Rotting Remains again and passes with willpower 3;
     // the Swarms of Rats Daisy and Wendy draw spawn engaged with them.
-    expect(table.nextPhase()).toEqual({ round: 6, phase: 'mythos', step: '1.4' });
+    expect(table.nextPhase()).toEqual({ round: 6, phase: 'mythos', step: 'drawEncounterCard' });
     table.answer('Rotting Remains', 'pass');
     // Answering only resolves the revelation; the paused phase goes on with the
     // next "Next", which runs Daisy's and Wendy's draws. That finishes the
@@ -468,17 +469,20 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.investigate(roland);
     table.investigate(roland);
     table.endTurn(roland);
-    // Daisy stops after the rats: the Cellar has no clues left, and any other
-    // action would provoke an attack of opportunity from the Ravenous Ghoul.
+    // Daisy then fights the Ravenous Ghoul: the Cellar has no clues left, and
+    // fighting is the one useful action that provokes no attack of opportunity.
+    // With combat 2 against its fight 3 she misses twice.
     table.startTurn(daisy);
     table.fight(daisy, { name: swarmOfRats, engagedWith: daisy });
+    table.failFight(daisy, ravenousGhoul);
+    table.failFight(daisy, ravenousGhoul);
     table.endTurn(daisy);
     table.startTurn(wendy);
     table.fight(wendy, { name: swarmOfRats, engagedWith: wendy });
     table.endTurn(wendy);
 
     // Round 6 – enemy phase and upkeep: only the Ravenous Ghoul is left to attack
-    expect(table.nextPhase()).toEqual({ round: 6, phase: 'enemy', step: '3.3' });
+    expect(table.nextPhase()).toEqual({ round: 6, phase: 'enemy', step: 'enemiesAttack' });
 
     expect(table.attacksDue()).toEqual([{ enemy: ravenousGhoul, investigator: daisy }]);
 
@@ -489,7 +493,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // Grasping Hands and its revelation test are one chain, so taking the
     // command back removes all of it, and running it again gives the same events.
     const eventsBefore = table.events.length;
-    expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: '1.4' });
+    expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'drawEncounterCard' });
     const drawn = table.events.slice(eventsBefore);
 
     expect(table.decisions()).toEqual([
@@ -497,6 +501,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         prompt: 'decision.revelationTest',
         kind: 'skillTestResult',
         about: 'Grasping Hands',
+        for: roland,
         test: { skill: 'agility', difficulty: 3 },
         options: ['pass', 'fail'],
       },
@@ -507,7 +512,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.phase()).toEqual({ round: 6, phase: 'upkeep' });
     expect(table.decisions()).toEqual([]);
 
-    expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: '1.4' });
+    expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'drawEncounterCard' });
 
     expect(table.events.slice(eventsBefore)).toEqual(drawn);
     expect(table.agenda()).toEqual({ name: 'Rise of the Ghouls', doom: 5 });
@@ -516,7 +521,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.answer('Grasping Hands', 'pass');
     // 1.4 continues: Daisy's Grasping Hands (agility 3, she passes), then Wendy
     // draws Dissonant Voices, which stays in play in her threat area.
-    expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: '1.4' });
+    expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'drawEncounterCard' });
     table.answer('Grasping Hands', 'pass');
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos' });
 
@@ -531,23 +536,40 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.moveTo(roland, 'Hallway');
     table.moveTo(roland, 'Attic');
     table.engage(roland, 'Flesh-Eater');
-    table.investigate(roland);
+    table.startInvestigating(roland);
 
     // Searching while engaged with the ready Flesh-Eater provokes its attack of
-    // opportunity (1 damage, 2 horror), raised before the investigate test.
-    // At 2 of 5 sanity, Roland lets his Beat Cop (an ally the app does not
-    // model) soak the 2 horror, so the players lower the horror to 0.
+    // opportunity on Roland (1 damage, 2 horror). It comes before the search
+    // itself, so there is no investigate test yet.
     expect(table.decisions()).toEqual([
       {
         prompt: 'decision.attackOfOpportunity',
         kind: 'confirm',
         about: 'Flesh-Eater',
+        for: roland,
         options: ['attack', 'does not provoke'],
         defaults: { attack: { damage: 1, horror: 2 } },
       },
     ]);
 
+    // At 2 of 5 sanity, Roland lets his Beat Cop (an ally the app does not
+    // model) soak the 2 horror, so the players lower the horror to 0. Only
+    // then does the search go ahead with its intellect test.
     table.takeAttackOfOpportunity('Flesh-Eater', { horror: 0 });
+
+    expect(table.decisions()).toEqual([
+      {
+        prompt: 'decision.investigate',
+        kind: 'skillTestResult',
+        about: 'Attic',
+        for: roland,
+        test: { skill: 'intellect', difficulty: 1 },
+        options: ['pass', 'fail'],
+        defaults: { pass: { amount: 1 } },
+      },
+    ]);
+
+    table.passInvestigateTest(roland);
 
     // The attack does not exhaust the Flesh-Eater, so it attacks again in the enemy phase.
     expect(table.wounds(roland)).toEqual({ damage: 3, horror: 2 });
@@ -581,7 +603,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.act()).toBe('The Barrier');
 
     // Round 7 – enemy phase: the exhausted Ravenous Ghoul does not attack, the Flesh-Eater does
-    expect(table.nextPhase()).toEqual({ round: 7, phase: 'enemy', step: '3.3' });
+    expect(table.nextPhase()).toEqual({ round: 7, phase: 'enemy', step: 'enemiesAttack' });
 
     expect(table.attacksDue()).toEqual([{ enemy: 'Flesh-Eater', investigator: roland }]);
 

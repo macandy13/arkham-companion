@@ -5,6 +5,7 @@ import {
   instanceId,
   investigatorId,
   type Command,
+  type DecisionId,
   type GameState,
   type InstanceId,
   type Investigator,
@@ -232,14 +233,6 @@ describe('attacks of opportunity', () => {
     expect(wounds(after)).toEqual({ damage: 8, horror: 2 });
   });
 
-  it('asks before the investigate test, which comes second', () => {
-    const state = aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)]);
-
-    const after = stateAfter(ctx, state, { type: 'Investigate', investigatorId: alice });
-
-    expect(pendingIds(after)).toEqual([`attackOfOpportunity:${ghoul}`, `investigate:${alice}`]);
-  });
-
   it('lets the other engaged enemy attack an engage action, but not the enemy being engaged', () => {
     const bob = makeInvestigator({ id: 'bob', seat: 1, locationId: hall });
     const state = aliceTurnWith(
@@ -326,6 +319,91 @@ describe('attacks of opportunity', () => {
 
     expect(investigatorOf(after, alice).locationId).toBe(cellar);
     expect(after.pending).toEqual([]);
+  });
+});
+
+describe('the action that provokes attacks of opportunity', () => {
+  const ratAttack = decisionId(`attackOfOpportunity:${rat}`);
+  const answer = (id: DecisionId, optionId: 'attack' | 'skip'): Command => ({
+    type: 'ResolveDecision',
+    decisionId: id,
+    optionId,
+  });
+
+  it('waits in the hall until the attack is answered, then moves', () => {
+    const state = aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)]);
+
+    const asked = stateAfter(ctx, state, moveToCellar);
+    const answered = stateAfter(ctx, asked, answer(ghoulAttack, 'attack'));
+
+    expect(investigatorOf(asked, alice).locationId).toBe(hall);
+    expect(asked.meta.heldAction).toEqual(moveToCellar);
+    expect(investigatorOf(answered, alice).locationId).toBe(cellar);
+    expect(answered.meta.heldAction).toBeUndefined();
+  });
+
+  it('moves after a skipped attack too', () => {
+    const state = aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)]);
+
+    const after = stateAfter(ctx, state, moveToCellar, answer(ghoulAttack, 'skip'));
+
+    expect(investigatorOf(after, alice).locationId).toBe(cellar);
+  });
+
+  it('drops the move when the attack defeats the investigator, who stays in the hall', () => {
+    const state = aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)], {
+      health: { max: 8, damage: 7 },
+    });
+
+    const { events, state: after } = execute(
+      ctx,
+      stateAfter(ctx, state, moveToCellar),
+      answer(ghoulAttack, 'attack'),
+    );
+
+    expect(investigatorOf(after, alice).status).toBe('defeated');
+    expect(investigatorOf(after, alice).locationId).toBe(hall);
+    expect(events).toContainEqual({
+      type: 'ActionDropped',
+      command: moveToCellar,
+      reason: { code: 'investigatorNotActive', investigatorId: alice },
+    });
+    expect(events.some((event) => event.type === 'InvestigatorMoved')).toBe(false);
+  });
+
+  it('asks for the investigate test only after the attack is resolved', () => {
+    const state = aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)]);
+
+    const asked = stateAfter(ctx, state, { type: 'Investigate', investigatorId: alice });
+    const answered = stateAfter(ctx, asked, answer(ghoulAttack, 'attack'));
+
+    expect(pendingIds(asked)).toEqual([`attackOfOpportunity:${ghoul}`]);
+    expect(pendingIds(answered)).toEqual([`investigate:${alice}`]);
+  });
+
+  it.each<[string, DecisionId, DecisionId]>([
+    ['ghoul first', ghoulAttack, ratAttack],
+    ['rat first', ratAttack, ghoulAttack],
+  ])('moves once both attacks are answered, in any order (%s)', (_, first, second) => {
+    const state = aliceTurnWith([
+      placed(ghoul, 'ghoul', engagedWithAlice),
+      placed(rat, 'rat', engagedWithAlice),
+    ]);
+
+    const halfway = stateAfter(ctx, state, moveToCellar, answer(first, 'attack'));
+    const after = stateAfter(ctx, halfway, answer(second, 'attack'));
+
+    expect(investigatorOf(halfway, alice).locationId).toBe(hall);
+    expect(investigatorOf(after, alice).locationId).toBe(cellar);
+    expect(wounds(after)).toEqual({ damage: 2, horror: 2 });
+  });
+
+  it('rejects an illegal action before any enemy attacks', () => {
+    const state = aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)]);
+
+    expect(
+      rejectionFrom(ctx, state, { type: 'MoveInvestigator', investigatorId: alice, to: hall }),
+    ).toEqual({ code: 'alreadyAtLocation', investigatorId: alice, locationId: hall });
   });
 });
 

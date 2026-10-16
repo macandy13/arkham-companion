@@ -1,4 +1,4 @@
-import type { Command } from './commands';
+import type { Command, EngageEnemy, Investigate, MoveInvestigator } from './commands';
 import type { DecisionId, InstanceId, InvestigatorId, MapId, SlotId } from './ids';
 import type { GameMap } from './map';
 import type { RngState } from './rng';
@@ -96,8 +96,9 @@ export type Difficulty = 'easy' | 'standard' | 'hard' | 'expert';
 export type Phase = 'setup' | 'mythos' | 'investigation' | 'enemy' | 'upkeep';
 
 /**
- * The steps of the round the phase assistant runs itself, numbered as in the
- * Rules Reference, Appendix I ("Framework"): 1.x mythos, 2.x investigation,
+ * The steps of the round the phase assistant runs itself, named for what they
+ * do; each comment gives its number in the Rules Reference, Appendix I
+ * ("Framework"): 1.x mythos, 2.x investigation,
  * 3.x enemy, 4.x upkeep. The "phase begins"/"phase ends" steps (1.1, 1.5,
  * 2.1, 2.3, 3.1, 3.4, 4.1) are the `PhaseChanged` of `NextPhase`, and the
  * investigation phase's turns (2.2 "next investigator's turn begins", 2.2.1
@@ -108,27 +109,27 @@ export type Phase = 'setup' | 'mythos' | 'investigation' | 'enemy' | 'upkeep';
  * checking hand size (4.5).
  */
 export type PhaseStepId =
-  /** Mythos: place 1 doom on the current agenda. */
-  | '1.2'
-  /** Mythos: check the doom threshold (the only regular moment the agenda advances). */
-  | '1.3'
-  /** Mythos: each investigator draws 1 encounter card (one step each, in player order). */
-  | '1.4'
-  /** Enemy: hunter enemies move. */
-  | '3.2'
-  /** Enemy: each investigator, in player order, resolves the attacks of engaged enemies. */
-  | '3.3'
-  /** Upkeep: reset each investigator's remaining actions (`ActionsReset`). */
-  | '4.2'
+  /** 1.2 Mythos: place 1 doom on the current agenda. */
+  | 'placeDoom'
+  /** 1.3 Mythos: check the doom threshold (the only regular moment the agenda advances). */
+  | 'checkDoomThreshold'
+  /** 1.4 Mythos: each investigator draws 1 encounter card (one step each, in player order). */
+  | 'drawEncounterCard'
+  /** 3.2 Enemy: hunter enemies move. */
+  | 'huntersMove'
+  /** 3.3 Enemy: each investigator, in player order, resolves the attacks of engaged enemies. */
+  | 'enemiesAttack'
+  /** 4.2 Upkeep: reset each investigator's remaining actions (`ActionsReset`). */
+  | 'resetActions'
   /**
-   * Upkeep: ready each exhausted card. Only enemies are modelled; the players
+   * 4.3 Upkeep: ready each exhausted card. Only enemies are modelled; the players
    * ready their own cards at the table.
    */
-  | '4.3'
-  /** Upkeep: each investigator gains 1 resource; drawing 1 card is left to the players. */
-  | '4.4'
-  /** Upkeep: the upkeep phase and the round end (`RoundEnded`, `onRoundEnd`). */
-  | '4.6';
+  | 'readyExhausted'
+  /** 4.4 Upkeep: each investigator gains 1 resource; drawing 1 card is left to the players. */
+  | 'gainResources'
+  /** 4.6 Upkeep: the upkeep phase and the round end (`RoundEnded`, `onRoundEnd`). */
+  | 'endRound';
 
 /** One enemy attack that step 3.3 still has to resolve (`ResolveEnemyAttack`). */
 export interface DueAttack {
@@ -138,27 +139,27 @@ export interface DueAttack {
 
 /**
  * One outstanding step of the current phase (the phase assistant's cursor,
- * `GameMeta.steps`), identified by its Rules Reference number (`PhaseStepId`).
+ * `GameMeta.steps`), identified by a readable name (`PhaseStepId`).
  * Entering a phase lists its steps; `NextPhase` runs them in order and stops
  * when one leaves a decision pending, so the next `NextPhase` resumes with the
  * step after it. Steps are data in the state rather than a position in code so
  * a mythos phase interrupted by a decision survives undo, replay and a reload.
  */
 export type PhaseStep =
-  | { id: '1.2' }
-  | { id: '1.3' }
-  | { id: '1.4'; investigatorId: InvestigatorId }
-  | { id: '3.2' }
+  | { id: 'placeDoom' }
+  | { id: 'checkDoomThreshold' }
+  | { id: 'drawEncounterCard'; investigatorId: InvestigatorId }
+  | { id: 'huntersMove' }
   /**
    * `attacks` is absent until the step is reached; then it lists the due
    * attacks, so the list reflects hunters that just moved and engaged. The
    * step stays current until the players resolved each of them.
    */
-  | { id: '3.3'; attacks?: DueAttack[] }
-  | { id: '4.2' }
-  | { id: '4.3' }
-  | { id: '4.4' }
-  | { id: '4.6' };
+  | { id: 'enemiesAttack'; attacks?: DueAttack[] }
+  | { id: 'resetActions' }
+  | { id: 'readyExhausted' }
+  | { id: 'gainResources' }
+  | { id: 'endRound' };
 
 /**
  * The investigator turn in progress (Rules Reference 2.2: "next
@@ -323,7 +324,15 @@ export interface GameMeta {
   /** The turn in progress during the investigation phase; absent between turns. */
   turn?: Turn;
   leadInvestigator?: InvestigatorId;
+  /**
+   * An action waiting for the attacks of opportunity it provoked (`ActionHeld`);
+   * absent otherwise. Only set while those decisions are pending.
+   */
+  heldAction?: HeldAction;
 }
+
+/** The actions the engine sees that provoke attacks of opportunity (`attackOfOpportunityDecisions`). */
+export type HeldAction = MoveInvestigator | Investigate | EngageEnemy;
 
 /**
  * Complete state of one scenario in play. Only ever produced by the reducer

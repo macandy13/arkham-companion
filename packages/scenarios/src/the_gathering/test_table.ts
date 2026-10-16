@@ -42,8 +42,8 @@ interface LoggedEvent {
 
 /**
  * Where the phase assistant stopped after a `TestTable.nextPhase()`. `step`
- * is the Rules Reference step (`PhaseStepId`) it stopped at: the step whose
- * decision is pending, or step 3.3 while its attacks wait for the players.
+ * is the step (`PhaseStepId`) it stopped at: the step whose decision is
+ * pending, or `enemiesAttack` while its attacks wait for the players.
  * No `step` means the phase ran all its steps; it is left only by the next
  * "Next", so the players see the phase's outcome before moving on.
  */
@@ -77,7 +77,8 @@ export type EnemySelector = string | { name: string; engagedWith?: InvestigatorI
 
 /**
  * One open decision as the players see it: the question (`prompt`, the
- * engine's i18n key), the card it is `about`, the dialog `kind`, the test of
+ * engine's i18n key), the card it is `about`, the investigator it is `for`
+ * (the one tested or attacked, who answers it), the dialog `kind`, the test of
  * a skill test, the options by readable name (`optionName`) and, for options
  * whose counts the players confirm or adjust, the default counts by option
  * name (e.g. `{ attack: { damage: 1, horror: 2 } }`).
@@ -86,6 +87,7 @@ export interface DecisionView {
   prompt: string;
   kind: Decision['kind'];
   about?: string;
+  for?: InvestigatorId;
   test?: SkillTest;
   options: string[];
   defaults?: Record<string, Record<string, number>>;
@@ -264,9 +266,22 @@ export class TestTable {
   /**
    * An investigate action whose intellect test the players pass at the table,
    * discovering `clues` (default 1; more when a card adds to the result).
+   * Fails when the action provokes attacks of opportunity: those come before
+   * the test, so a script takes them (`takeAttackOfOpportunity`) and then
+   * passes the test with `passInvestigateTest`.
    */
   investigate(investigator: InvestigatorId, { clues }: { clues?: number } = {}): void {
+    this.startInvestigating(investigator);
+    this.passInvestigateTest(investigator, { clues });
+  }
+
+  /** An investigate action, up to its intellect test (or the attacks of opportunity before it). */
+  startInvestigating(investigator: InvestigatorId): void {
     this.play({ type: 'Investigate', investigatorId: investigator });
+  }
+
+  /** The players pass the intellect test of the investigator's investigate action, discovering `clues` (default 1). */
+  passInvestigateTest(investigator: InvestigatorId, { clues }: { clues?: number } = {}): void {
     this.passTest(`investigate:${investigator}`, clues);
   }
 
@@ -337,6 +352,17 @@ export class TestTable {
     });
   }
 
+  /** A fight action against the `enemy` whose combat test the players fail: nothing happens. */
+  failFight(investigator: InvestigatorId, enemy: EnemySelector): void {
+    const { id } = this.enemyInstance(enemy);
+    this.play({ type: 'Fight', investigatorId: investigator, enemyId: id });
+    this.play({
+      type: 'ResolveDecision',
+      decisionId: decisionId(`fight:${investigator}:${id}`),
+      optionId: 'fail',
+    });
+  }
+
   /** Resources from the resource action or a card. */
   gainResources(investigator: InvestigatorId, amount: number): void {
     this.adjust(investigator, 'resources', amount);
@@ -358,7 +384,7 @@ export class TestTable {
    */
   resolveEnemyAttacks(): void {
     const [step] = this.current.meta.steps;
-    if (step?.id !== '3.3' || step.attacks === undefined)
+    if (step?.id !== 'enemiesAttack' || step.attacks === undefined)
       throw new Error(`no enemy attacks to resolve\n${this.board()}`);
     for (const attack of step.attacks) this.play({ type: 'ResolveEnemyAttack', ...attack });
   }
@@ -366,7 +392,7 @@ export class TestTable {
   /** The enemy attacks step 3.3 lists, in its order; none outside that step. */
   attacksDue(): DueAttackView[] {
     const [step] = this.current.meta.steps;
-    if (step?.id !== '3.3') return [];
+    if (step?.id !== 'enemiesAttack') return [];
     return (step.attacks ?? []).map((attack) => ({
       enemy: this.nameOf(this.cardWithId(attack.enemyId)),
       investigator: attack.investigatorId,
@@ -529,6 +555,7 @@ export class TestTable {
       ...(decision.subject === undefined
         ? {}
         : { about: this.nameOf(this.cardWithId(decision.subject)) }),
+      ...(decision.decider.kind === 'investigator' ? { for: decision.decider.investigatorId } : {}),
       ...(decision.skillTest ? { test: decision.skillTest } : {}),
       options: decision.options.map(optionName),
       ...(Object.keys(defaults).length > 0 ? { defaults } : {}),
