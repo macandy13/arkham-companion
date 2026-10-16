@@ -278,3 +278,61 @@ Ref: `docs/coding-guidelines.md` (tests); M1.E `TestTable`.
 - [ ] Consider extracting the scenario-independent part of `TestTable` (`packages/scenarios/src/the_gathering/test_table.ts`) into `packages/engine/test/utils` so unit and flow tests share one vocabulary
 - [ ] Migrate the engine test files incrementally, one file or module per step, with no behaviour change (same cases, coverage floors hold)
 - [ ] Document the conventions in `docs/coding-guidelines.md`
+
+## M1.15 Investigator defeat and resign (S)
+
+**Why:** Defeat only sets a status today. The rules also put the investigator's clues on their location, disengage their enemies, remove their threat-area cards and pass the lead on (M1.4 follow-up); `resigned` has no command. A defeat in the middle of a game leaves the board wrong.
+
+**Benefit:** A defeated or resigned investigator leaves the table the way the rules say, so the rest of the group can keep playing on a correct board.
+
+Ref: RR "Investigator Elimination"; M1.4, M1.8 follow-ups.
+
+- [ ] On defeat or resign: clues to the investigator's location, engaged enemies stay at that location unengaged, threat-area treacheries to the encounter discard
+- [ ] `Resign` command (an action, in the investigator's turn), status `resigned`, same clean-up as defeat
+- [ ] A defeated or resigned lead investigator: the group picks a new lead (`chooseInvestigator` decision)
+- [ ] All investigators defeated or resigned ends the scenario (`ScenarioEnded`, no resolution given → the scenario's "no resolution" hook)
+- [ ] Rules to check: a defeated drawer mid-mythos, doom on defeated investigators' cards
+- [ ] End-to-end test: an investigator resigns or is defeated in a later round
+
+## M1.16 Enemy keywords and engagement on move (O)
+
+**Why:** Several forced enemy rules are still left to memory: retaliate on a failed fight, alert on a failed evade, and a ready enemy engaging an investigator who moves into its location (M1.8, M1.10 follow-ups). Attacks of opportunity arrive in M1.12; these belong to the same family.
+
+**Benefit:** The app reminds the players of every enemy attack the rules trigger, with the values pre-filled and adjustable, like the enemy phase and attacks of opportunity.
+
+Ref: RR "Retaliate", "Alert", "Engagement", "Patrol"; M1.8, M1.10 follow-ups.
+
+- [ ] `MoveInvestigator` engages ready, unengaged, non-aloof enemies at the destination (prey/decision as in `engageEvents`)
+- [ ] Retaliate: a failed `Fight` against a ready retaliate enemy raises an attack decision (same shape as attacks of opportunity)
+- [ ] Alert: a failed `Evade` against an alert enemy raises an attack decision
+- [ ] Patrol (if a Core scenario needs it): moves in the enemy phase toward the named location
+- [ ] Fight effects that engage an aloof enemy as part of the attack (Spectral Razor): a card-effect path
+- [ ] rules-checker review; end-to-end test covers a move into an enemy's location and one retaliate
+
+## M1.17 The Gathering to a resolution (S)
+
+**Why:** The end-to-end test stops before act 2 because act 2/3 and agenda 2/3 have no reverse-side hooks, and the Ghoul Priest and Lita Chantler set-aside cards are not wired (M1.6, M1.12 follow-ups). M1's goal is a whole game in tests.
+
+**Benefit:** The Gathering plays from setup to a resolution in tests, which proves the engine can run a complete scenario before the UI is built on it.
+
+Ref: M1.6 hooks; M1.12; scenario guide of The Gathering (hand-entered, no card text).
+
+- [ ] Hooks for act 2 and act 3 reverse sides (Ghoul Priest spawn, Lita Chantler, resolutions via `EndScenario`)
+- [ ] Hooks for agenda 2 and agenda 3 reverse sides (Rise of the Ghouls: shuffle the encounter discard into the deck; agenda 3 → resolution)
+- [ ] A command to shuffle the encounter discard into the deck (M1.7 follow-up)
+- [ ] Commands after `ScenarioEnded` are rejected, except undo and `ManualAdjust` (M1.5, M1.10 follow-ups)
+- [ ] End-to-end test continued to a resolution
+
+## M1.18 Timing gaps (S)
+
+**Why:** A few rule timings are still approximated (M1.5, M1.6, M1.9, M1.10 follow-ups): no end-of-turn hook (Frozen in Fear), simultaneous forced effects run in a fixed order, a doom `ManualAdjust` never re-checks the threshold, and `ManualAdjust` can move the current agenda/act out of its deck.
+
+**Benefit:** Fewer cases where the players must remember a forced effect the app silently skipped, and manual corrections can't put the game into an impossible state.
+
+Ref: M1.5, M1.6, M1.9, M1.10 follow-ups.
+
+- [ ] `onTurnEnd` hook fired by `EndTurn`; Frozen in Fear raises its willpower test there
+- [ ] Simultaneous forced effects: the lead investigator picks the order (`chooseOption` decision) when more than one applies
+- [ ] After a doom `ManualAdjust`, offer `CheckDoomThreshold` (a `confirm` decision), never advance silently
+- [ ] `ManualAdjust` cannot move the current agenda or act out of its deck (rejection)
+- [ ] `decider` is checked against who answers a decision, if the command carries the answering investigator
