@@ -8,6 +8,7 @@ import {
   type GameState,
   type GameStore,
   type GameSummary,
+  type ImportedGame,
   type LoadedGame,
   type NewGame,
   type Snapshot,
@@ -229,7 +230,22 @@ export class IndexedDbStore implements GameStore {
     await this.db.snapshots.put({ gameId, seq, stateVersion: STATE_VERSION, state });
   }
 
-  /** Returns the stored events of a game with `seq` greater than `afterSeq` (for export/sync). */
+  async importGame(game: ImportedGame): Promise<GameId> {
+    const gameId = crypto.randomUUID();
+    const now = Date.now();
+    await this.db.transaction('rw', this.db.games, this.db.events, async () => {
+      await this.db.games.add({
+        gameId,
+        title: game.title,
+        createdAt: game.events[0]?.timestamp ?? now,
+        updatedAt: game.events.at(-1)?.timestamp ?? now,
+        lastSeq: game.events.length,
+      });
+      await this.db.events.bulkAdd(game.events.map((e, i) => ({ gameId, seq: i + 1, ...e })));
+    });
+    return gameId;
+  }
+
   async loadEvents(gameId: GameId, afterSeq = 0): Promise<StoredEvent[]> {
     return this.db.events
       .where('[gameId+seq]')

@@ -2,6 +2,7 @@ import type { CardCatalog } from '@arkham/carddata';
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import type { GameId, GameState, GameStore, GameSummary } from '@arkham/engine';
 import { emptyState } from '@arkham/engine';
+import { parseGameExport, serialiseGameExport } from '../storage/gameExport';
 
 /** Loads the investigator catalog of a card language (cache-first, see `loadCatalog`). */
 export type CatalogLoader = (lang: string) => Promise<CardCatalog>;
@@ -22,6 +23,13 @@ export interface AppState {
   duplicateGame(gameId: GameId, title: string): Promise<GameId>;
   /** Deletes a saved game and reloads the list; closes it if it is the open one. */
   deleteGame(gameId: GameId): Promise<void>;
+  /** JSON export text of a saved game (metadata, events, `stateVersion`). Rejects for unknown games. */
+  exportGame(gameId: GameId): Promise<string>;
+  /**
+   * Creates a saved game from export text under a new id and reloads the list.
+   * Rejects with a `GameImportError` if the text is not a valid export of this or an older version.
+   */
+  importGame(text: string): Promise<GameId>;
   /** Investigator catalog for the picker; screens call it through `useCatalog`. */
   loadCatalog: CatalogLoader;
 }
@@ -65,6 +73,17 @@ export function createAppStore(
       await gameStore.deleteGame(gameId);
       if (get().current?.gameId === gameId) set({ current: undefined });
       await get().refresh();
+    },
+    async exportGame(gameId) {
+      const loaded = await gameStore.loadGame(gameId);
+      if (!loaded) throw new Error(`Unknown game ${gameId}`);
+      const { title, createdAt } = loaded.summary;
+      return serialiseGameExport(title, createdAt, await gameStore.loadEvents(gameId));
+    },
+    async importGame(text) {
+      const gameId = await gameStore.importGame(parseGameExport(text));
+      await get().refresh();
+      return gameId;
     },
   }));
 }

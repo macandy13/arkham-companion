@@ -10,15 +10,17 @@ interface GameListItemProps {
   readonly untitledLabel: string;
   readonly onRename: (title: string) => void;
   readonly onDuplicate: () => void;
+  readonly onExport: () => void;
   readonly onDelete: () => void;
 }
 
-/** One saved game on the home screen: progress summary plus resume, rename, duplicate and delete. */
+/** One saved game on the home screen: progress summary plus resume, rename, duplicate, export and delete. */
 export function GameListItem({
   game,
   untitledLabel,
   onRename,
   onDuplicate,
+  onExport,
   onDelete,
 }: GameListItemProps) {
   const { t, i18n } = useTranslation();
@@ -78,6 +80,9 @@ export function GameListItem({
         </button>
         <button type="button" onClick={onDuplicate}>
           {t('games.duplicate')}
+        </button>
+        <button type="button" onClick={onExport}>
+          {t('games.export')}
         </button>
         <button type="button" onClick={() => setConfirmingDelete(true)}>
           {t('games.delete')}

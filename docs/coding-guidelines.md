@@ -67,6 +67,7 @@ How code in this repo should look, so every task lands in the same style.
 
 **E2E flow specs** (`apps/web/e2e/`, tagged `@flow`) are recorded as screencasts for every PR that changes the UI (`docs/automation.md`). Keep them few and stable:
 
+- **A UI PR shows its change in a screencast.** Every PR that changes the UI adds or extends a `@flow` spec that walks through the change, so reviewers see it in the PR description. Once the change is reviewed and its recording is no longer of interest, a follow-up PR drops the `@flow` tag (the spec stays as a plain E2E test if it still guards something, otherwise it goes). That way a PR carries only the screencasts that matter for it, not every flow in the app.
 - **One spec per user journey, not per feature.** A UI change extends the flow it belongs to before it adds a new one. Cap: 8 flow specs; past that, merge flows.
 - **They check wiring, not rules.** Game rules are tested in engine unit tests; a flow only asserts that the screen reacts and the journey completes.
 - **Locate by role and accessible name** (`getByRole('button', { name: … })`), never by CSS class or DOM shape – the markup rules make this always possible.

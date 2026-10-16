@@ -108,10 +108,13 @@ Review fix: both catches in `settings.ts` now `console.warn` with context (fallb
 
 Ref: §10.
 
-- [ ] Resume = `loadGame` (snapshot + replay) → play route
-- [ ] Export game (and later campaign) as JSON file: metadata + events + `stateVersion`
-- [ ] Import: zod-validate, create a new game id, append events; reject newer `stateVersion` with a clear message
-- [ ] Round-trip test: export → import → identical state
+- [x] Resume = `loadGame` (snapshot + replay) → play route
+- [x] Export game (and later campaign) as JSON file: metadata + events + `stateVersion`
+- [x] Import: zod-validate, create a new game id, append events; reject newer `stateVersion` with a clear message
+- [x] Round-trip test: export → import → identical state
+
+**Done:** Resume was already `openGame` → `loadGame` (snapshot + replay) on the `/game/:id` route; now covered by an `appStore` test. `GameStore` gains `loadEvents` (was only on `IndexedDbStore`) and `importGame` (new UUID, original event timestamps kept, no campaign link). `apps/web/src/storage/gameExport.ts` holds the zod envelope schema, `serialiseGameExport` and `parseGameExport`; the file is `{format, stateVersion, game: {title, createdAt}, events: [{timestamp, event}]}`. A `stateVersion` above `STATE_VERSION` throws `GameImportError('newerVersion')` (checked before the schema), anything else malformed `'invalid'`; the home screen shows both as translated (en/de) alerts. `appStore` gets `exportGame`/`importGame`; the home screen has an Export button per game (download via `downloadFile.ts`) and an "Import game" file input. Tests: round trip incl. a fast-check property, store, appStore, home screen, and an E2E export → import. The `@flow` spec `e2e/backup.spec.ts` ("back up and restore a game") exports a game to a file and imports it as a new game; the home smoke spec is no longer a flow (review on #20/#22); the export round-trip property test became an `it.each` table and `fast-check` was dropped to follow the no-property-tests rule on main.
+Follow-ups: events are only validated as objects with a `type` and then replayed to catch bad payloads – a full zod schema for `Event` (generated or hand-kept next to `events.ts`) would give precise errors; there is no migration path yet (older versions are accepted unchanged, which is fine while `STATE_VERSION` is 1); campaign export arrives with M5; `toFileStem` is a one-off string helper that belongs in `@arkham/util` once that package exists (it is not in the repo yet); zod pushes the web bundle further over Vite's 500 kB chunk warning – consider code-splitting the import path.
 
 ## M2.8 E2E pass (S)
 
