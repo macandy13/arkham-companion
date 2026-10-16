@@ -8,9 +8,6 @@ Goal: quality-of-life features that make the app nicer at the table.
 - **What the app gains:** An app that is comfortable for German-speaking groups, reliable offline and polished enough to use every week.
 - **Why at this point:** None of these blocks playing, so they wait until the core product is complete (M5); each is small and independent.
 
-Model hint: **S** = Sonnet, **O** = Opus. Each task = one session, delivered as one or more small PRs (`docs/coding-guidelines.md` §7).
-Start from the phone: Code tab → repo → `Do task M6.x from docs/tasks/M6-comfort.md`.
-
 ---
 
 ## M6.1 Chaos bag module (S)

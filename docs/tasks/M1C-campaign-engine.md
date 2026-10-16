@@ -9,9 +9,6 @@ Ref: architecture §5 (`CampaignLog`), §7 (`campaignSetup`, `resolutions`), §8
 - **What the app gains:** The engine and storage know what a campaign is before any campaign screen exists: which games belong to it, what each resolution writes, how the next scenario starts. The UI milestones only present it.
 - **Why at this point:** Same reasoning as M1 itself: screens display engine state and send commands, so the state and commands come first. It needs a scenario that can end (M1.17) and defeat with trauma (M1.15), so it follows those tasks, but its model task can start earlier.
 
-Model hint: **S** = Sonnet is enough, **O** = use Opus (design-heavy). Each task = one session, delivered as one or more small PRs (`docs/coding-guidelines.md` §7).
-Start from the phone: Code tab → repo → `Do task M1C.x from docs/tasks/M1C-campaign-engine.md`.
-
 Every task: the campaign is its own event-sourced aggregate (commands → events → reducer, like a game), pure and deterministic. The test campaign is _Night of the Zealot_ from the original Core Set (The Gathering → The Midnight Masks → The Devourer Below): its structure and resolutions are known and The Gathering is already hand-entered, so the campaign rules are checked against a real campaign rather than an invented one. Its scenarios are entered by hand like The Gathering (real card codes and names, stats by hand, no card text/JSON/images); extend CLAUDE.md's test-data rule to the new scenario directories in the task that adds them.
 
 Every change the engine makes on the players' behalf (a token added to the bag, trauma, XP, a story record) produces a notice (M1C.2), so the players see it and can correct it.

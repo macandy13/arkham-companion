@@ -2,8 +2,6 @@
 
 Goal: more Chapter Two products as soon as ArkhamDB lists them, and more automated encounter cards.
 
-Model hint: **S** = Sonnet, **O** = Opus. Each task = one session, delivered as one or more small PRs (`docs/coding-guidelines.md` §7).
-
 **Why this milestone**
 
 - **Problem:** the app is only as useful as the content it covers, and each scenario still needs some manual work at the table for cards that are only displayed, not automated.

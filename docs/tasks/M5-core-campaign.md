@@ -9,9 +9,6 @@ Ref: architecture §8. Builds on the campaign engine (M1C).
 - **What the app gains:** The complete Core Set experience, and campaign infrastructure (log, resolutions, chaos bag carry-over) reused by every future campaign.
 - **Why at this point:** The scenario pipeline and one real scenario (M4) are proven, so the remaining two scenarios should mostly be data.
 
-Model hint: **S** = Sonnet, **O** = Opus. Each task = one session, delivered as one or more small PRs (`docs/coding-guidelines.md` §7).
-Start from the phone: Code tab → repo → `Do task M5.x from docs/tasks/M5-core-campaign.md`.
-
 ---
 
 ## M5.1 Campaign model – moved to M1C
