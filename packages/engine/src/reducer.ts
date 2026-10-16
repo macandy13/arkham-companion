@@ -116,6 +116,11 @@ export function apply(state: GameState, event: Event): GameState {
       }));
     case 'TurnEnded':
       return endTurn(state, event.investigatorId);
+    case 'ActionHeld':
+      return { ...state, meta: { ...state.meta, heldAction: event.command } };
+    case 'ActionResumed':
+    case 'ActionDropped':
+      return { ...state, meta: withoutKey(state.meta, 'heldAction') };
   }
 }
 
