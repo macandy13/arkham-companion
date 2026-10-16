@@ -59,6 +59,7 @@ How code in this repo should look, so every task lands in the same style.
 - **Shared test helpers** live in `packages/engine/test/utils/` (standard investigators, card and definition builders, `startScenario`, `run`, `codesIn`, `rejectionOf`); import them from `../test/utils` in the engine and `@arkham/engine/test/utils` elsewhere. Add a helper there once a second test file needs it.
 - **One behaviour per test**, named as a sentence about behaviour: `it('rejects moving a card into its own zone')`.
 - **Exception: end-to-end scenario tests** (`packages/scenarios/src/*/end_to_end.test.ts`) may be one long narrative test that plays the scenario in order, with short phase/turn comment headers (`// Round 2 – investigation: Roland's turn`) and assertions in place.
+- **A new or changed rule shows up at the table.** Every PR that adds or changes a game rule extends an end-to-end scenario test with a step where the rule happens in play, and links that step in the PR's review map. Rule gaps are easiest to spot in a playthrough, not in unit tests of the rule alone.
 - **Scenario flow tests reuse the shared `TestTable` helpers** (`packages/scenarios/src/<scenario>/test_table.ts`): every test that plays a scenario through phases and turns sets up and drives the game with the same table instead of its own command lists, so all flow tests read alike. Unit tests of single rules stay fine-grained in the engine.
 - **Arrange – act – assert**, separated by blank lines; no logic (loops, conditionals) in assertions.
 - **Test through the public API** of the module (commands in, events/state out for the engine), not internals.
@@ -105,3 +106,19 @@ Common, generic operations go into small, tested helpers instead of being re-imp
 - Domain helpers stay in their package (e.g. card helpers in `packages/carddata/src/helpers.ts`, zone helpers in the engine).
 - **Shared functions live next to the entity they handle.** A lookup or query that several modules need is built once, in the module of the thing it finds, and the others import it: card lookups with the cards (`cardsNamed`, `cardsOfType` in the engine's `lookup.ts`), location queries with the board (`locationsNamed`, `locationsInPlay` in `board.ts`). Before writing another `Object.values(state.cards).filter(…)`, check whether such a function exists; if not, add it there with tests. Only generic string, array and object helpers go to `@arkham/util`.
 - Helpers are pure, small, total (defined for every input, including empty strings/arrays) and named after what they return.
+
+## 7. Pull requests
+
+A PR is reviewed on a phone, in one sitting. Its size and shape decide whether the review catches the rules and design questions or drowns in plumbing.
+
+- **One reviewable idea per PR:** one rule, one API change (commands, events, state shape), one screen or one refactor. A task that needs several of these becomes several PRs.
+- **Size budget.** Aim for at most ~400 changed lines of production code and ~1000 changed lines in total (tests included; lockfile, generated files and `docs/tasks/` excluded). Past that, split, unless the extra lines are one mechanical change (a rename, a moved file) that reads at a glance.
+- **Plan the slices before coding.** When a task will exceed the budget, list its PRs in the task file first (`M1.13a – modifier types and events`, `M1.13b – …`), so each session knows its slice and the reviewer knows what comes next.
+- **Split in reading order:**
+  1. preparatory `refactor:` PRs that change no behaviour: helper moves, test-util changes, renames. The description says "no behaviour change", so they can be approved by skimming;
+  2. types and API: new commands, events and state, with the reducer cases and invariants;
+  3. the rule or logic itself, with its unit tests and its step in the end-to-end scenario test;
+  4. wiring and UI.
+- **Stacked PRs** each target the previous PR's branch, are green on their own, and carry their position in the title (`feat(engine): add skill modifiers (M1.13, 2/3)`). Merge them in order.
+- **Review fixes stay in the reviewed PR.** Answer every review thread in the PR it was raised on; never merge with open threads, and don't push the fix into a later PR of the stack. If a point is out of scope, the reply names the task it was moved to.
+- **Commits in reading order** inside a PR: types and API first, then logic, then tests, then wiring, so "review by commit" tells the story.

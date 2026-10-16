@@ -1,0 +1,39 @@
+# Review guide
+
+For automated reviewers (Claude Code Review) and for Claude sessions reviewing their own diff before opening a PR. The owner reviews on a phone and spends that time on rules, readable tests and API design. This guide makes sure the mechanical points are caught before the owner looks. The rules themselves live in `CLAUDE.md` and `docs/coding-guidelines.md`; this file only says what to check and how hard.
+
+## Blocking: always flag
+
+- **Game rules.** Behaviour that contradicts `docs/rules.md` or the Rules Reference, or a rule choice the players make at the table that the code picks silently instead of raising a `Decision`. Quote the rule.
+- **Ground rules.** Engine purity (no React, DOM, IndexedDB, fetch, `Date.now()`, `Math.random()`); state changes outside Command → Events → reducer; storage outside `GameStore`; ArkhamDB card JSON, card text or images in the repo.
+- **Test readability** (coding guidelines §3):
+  - a test that can't be understood from its body plus the `describe` right above it;
+  - generated or positional IDs (`d0`, `L1`), cryptic codes, or far-away fixtures whose contents matter;
+  - property-based tests;
+  - assertions on formatted text where structured data exists.
+- **Test coverage.** New engine or scenario behaviour without a unit test, and a new rule without a step in the end-to-end scenario test.
+- **Helpers in the wrong place.**
+  - A test helper a second test file needs that is not in `packages/engine/test/utils/` or the scenario's `TestTable`.
+  - A lookup or query re-implemented inline when it exists, or should exist, next to its entity (`board.ts`, `lookup.ts`).
+  - A generic string, array or object operation inlined instead of living in `@arkham/util`.
+- **Silent `catch`**, `any` without a comment, an exported type or function without a doc comment.
+- **PR shape** (coding guidelines §7): more than one reviewable idea, or over the size budget without a stack plan in the task file; a review thread from an earlier round left unanswered.
+
+## Nits: flag as optional
+
+- Naming: an abbreviation, a vague name, or one that hides what the value is about (`acc`, `isInPlay` on locations).
+- More than one non-obvious positional argument where an options object reads better; `ctx` not the first argument.
+- `if` chains where a `switch` over a union reads better.
+- A comment that narrates what the code does instead of why.
+- Dashes in file names, German identifiers, presentational markup, raw CSS values.
+
+## Don't comment on
+
+- Formatting and import order (Prettier and ESLint own them).
+- Lockfile, changelog, release manifest, task checklist ticks and `docs/tasks/done/` moves.
+- Bundle size and Lighthouse numbers (their own jobs report them).
+- Test details that don't affect readability, such as the exact choice of example values.
+
+## Summary format
+
+Start with one line per **rules claim** in the PR description, each marked as verified, wrong or unverified. Then list the blocking findings, then the count of nits. Keep it short enough to read on a phone.
