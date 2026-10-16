@@ -1,12 +1,16 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { appShellNavigation } from './src/pwa/appShellNavigation';
+
+const base = process.env.VITE_BASE ?? '/';
 
 export default defineConfig({
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      workbox: { navigateFallbackAllowlist: [appShellNavigation(base)] },
       manifest: {
         name: 'Arkham Companion',
         short_name: 'Arkham',
@@ -18,5 +22,5 @@ export default defineConfig({
       },
     }),
   ],
-  base: process.env.VITE_BASE ?? '/',
+  base,
 });

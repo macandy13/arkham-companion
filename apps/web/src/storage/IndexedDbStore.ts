@@ -1,6 +1,7 @@
 import Dexie, { type EntityTable } from 'dexie';
 import {
   STATE_VERSION,
+  undoLastGroup,
   replay,
   type Event,
   type GameId,
@@ -115,6 +116,7 @@ export class IndexedDbStore implements GameStore {
     gameId: GameId,
     events: readonly Event[],
     expectedSeq?: number,
+    commandId: string = crypto.randomUUID(),
   ): Promise<StoredEvent[]> {
     return this.db.transaction('rw', this.db.games, this.db.events, this.db.snapshots, async () => {
       const game = await this.db.games.get(gameId);
@@ -128,6 +130,7 @@ export class IndexedDbStore implements GameStore {
         gameId,
         seq: game.lastSeq + i + 1,
         timestamp,
+        commandId,
         event,
       }));
       await this.db.events.bulkAdd(stored);
@@ -156,6 +159,25 @@ export class IndexedDbStore implements GameStore {
     // Opportunistic snapshot so long games don't replay from scratch on every refresh.
     if (tail.length >= SNAPSHOT_INTERVAL) await this.saveSnapshot(gameId, game.lastSeq, state);
     return { summary: toSummary(game), state };
+  }
+
+  async undoLast(gameId: GameId, expectedSeq?: number): Promise<LoadedGame | undefined> {
+    await this.db.transaction('rw', this.db.games, this.db.events, this.db.snapshots, async () => {
+      const game = await this.db.games.get(gameId);
+      if (!game) return;
+      if (expectedSeq !== undefined && expectedSeq !== game.lastSeq) {
+        throw new SeqConflictError(gameId, expectedSeq, game.lastSeq);
+      }
+      const log = await this.loadEvents(gameId);
+      const { kept, removed } = undoLastGroup(log);
+      if (removed.length === 0) return;
+      await this.db.events.bulkDelete(removed.map((e) => [gameId, e.seq] as unknown as number));
+      const lastSeq = kept.at(-1)?.seq ?? 0;
+      await this.db.games.update(gameId, { lastSeq, updatedAt: Date.now() });
+      const snapshot = await this.db.snapshots.get(gameId);
+      if (snapshot && snapshot.seq > lastSeq) await this.db.snapshots.delete(gameId);
+    });
+    return this.loadGame(gameId);
   }
 
   async listGames(): Promise<GameSummary[]> {

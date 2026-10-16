@@ -3,14 +3,20 @@ import {
   checkInvariants,
   compileSetup,
   instanceId,
+  investigatorId,
   mapId,
+  neighbours,
+  type Command,
   type EngineContext,
+  type GameState,
 } from '@arkham/engine';
 import {
   codesIn,
   makeDefinition,
   makeSetupOptions,
+  runFrom,
   startScenario,
+  stateAfter,
 } from '@arkham/engine/test/utils';
 import {
   GATHERING_CODES as codes,
@@ -137,5 +143,144 @@ describe('The Gathering house (after act 1)', () => {
       { from: '01112#1', to: '01114#1', oneWay: false },
       { from: '01112#1', to: '01115#1', oneWay: false },
     ]);
+  });
+});
+
+describe('The Gathering act 1 reverse side', () => {
+  const playing: EngineContext = { cards: theGatheringCards, hooks: theGathering.hooks };
+  const studyCard = instanceId('01111#1');
+  const hallway = instanceId('01112#1');
+  const tank = investigatorId('tank');
+  const seeker = investigatorId('seeker');
+
+  /** Both investigators take the Study's 4 clues and spend 2 each to advance act 1. */
+  const advanceTrapped: Command[] = [
+    { type: 'DiscoverClues', investigatorId: tank, locationId: studyCard, amount: 2 },
+    { type: 'DiscoverClues', investigatorId: seeker, locationId: studyCard, amount: 2 },
+    {
+      type: 'AdvanceAct',
+      spend: [
+        { investigatorId: tank, amount: 2 },
+        { investigatorId: seeker, amount: 2 },
+      ],
+    },
+  ];
+
+  function startTwoPlayer(): GameState {
+    return startScenario(playing, theGathering, { playerCount: 2 });
+  }
+
+  it('puts the house into play with the Hallway connected to the other three rooms', () => {
+    const state = stateAfter(playing, startTwoPlayer(), ...advanceTrapped);
+
+    expect(codesIn(state, { kind: 'location', mapId: mapId('house') })).toEqual([
+      codes.hallway,
+      codes.attic,
+      codes.cellar,
+      codes.parlor,
+    ]);
+    expect(neighbours(state, hallway)).toEqual(['01113#1', '01114#1', '01115#1']);
+    expect(checkInvariants(state)).toEqual([]);
+  });
+
+  it('moves every investigator to the revealed Hallway and removes the Study', () => {
+    const state = stateAfter(playing, startTwoPlayer(), ...advanceTrapped);
+
+    expect(state.investigators.map((inv) => inv.locationId)).toEqual([hallway, hallway]);
+    expect(state.cards[hallway]?.faceUp).toBe(true);
+    expect(codesIn(state, { kind: 'location', mapId: study })).toEqual([]);
+    expect(state.cards[studyCard]?.zone).toEqual({ kind: 'outOfGame' });
+  });
+
+  it('discards the enemies in the Study, engaged ones included', () => {
+    const fleshEater = instanceId('01118#1');
+    const icyGhoul = instanceId('01119#1');
+    const withEnemies = stateAfter(
+      playing,
+      startTwoPlayer(),
+      {
+        type: 'ManualAdjust',
+        adjustment: {
+          kind: 'moveCard',
+          cardId: fleshEater,
+          to: { kind: 'atLocation', locationId: studyCard },
+        },
+      },
+      {
+        type: 'ManualAdjust',
+        adjustment: {
+          kind: 'moveCard',
+          cardId: icyGhoul,
+          to: { kind: 'engaged', investigatorId: seeker },
+        },
+      },
+    );
+
+    const state = stateAfter(playing, withEnemies, ...advanceTrapped);
+
+    expect(codesIn(state, { kind: 'encounterDiscard' })).toEqual(['01118', '01119']);
+  });
+
+  it('resolves before act 2 becomes current', () => {
+    const { events } = runFrom(playing, startTwoPlayer(), advanceTrapped);
+
+    expect(events.slice(-3)).toMatchObject([
+      { type: 'CardMoved', cardId: studyCard, to: { kind: 'outOfGame' } },
+      { type: 'CardMoved', cardId: '01108#1', to: { kind: 'outOfGame' } },
+      { type: 'CurrentCardChanged', deck: 'act', cardId: '01109#1' },
+    ]);
+  });
+});
+
+describe('The Gathering enemies', () => {
+  const playing: EngineContext = { cards: theGatheringCards, hooks: theGathering.hooks };
+  const fleshEater = instanceId('01118#1');
+  const priest = instanceId('01116#1');
+  const attic = instanceId('01113#1');
+  const hallway = instanceId('01112#1');
+  const tank = investigatorId('tank');
+  const seeker = investigatorId('seeker');
+  const studyCard = instanceId('01111#1');
+  const advanceTrapped: Command[] = [
+    { type: 'DiscoverClues', investigatorId: tank, locationId: studyCard, amount: 2 },
+    { type: 'DiscoverClues', investigatorId: seeker, locationId: studyCard, amount: 2 },
+    {
+      type: 'AdvanceAct',
+      spend: [
+        { investigatorId: tank, amount: 2 },
+        { investigatorId: seeker, amount: 2 },
+      ],
+    },
+  ];
+  const start = () => startScenario(playing, theGathering, { playerCount: 2 });
+
+  it('discards the Flesh-Eater while the Attic is not in play', () => {
+    const { state } = runFrom(playing, start(), [
+      { type: 'SpawnEnemy', enemyId: fleshEater, investigatorId: tank },
+    ]);
+
+    expect(state.cards[fleshEater]?.zone).toEqual({ kind: 'encounterDiscard' });
+  });
+
+  it('spawns the Flesh-Eater at the Attic once the house is in play', () => {
+    const { state } = runFrom(playing, start(), [
+      ...advanceTrapped,
+      { type: 'SpawnEnemy', enemyId: fleshEater, investigatorId: tank },
+    ]);
+
+    expect(state.cards[fleshEater]?.zone).toEqual({ kind: 'atLocation', locationId: attic });
+  });
+
+  it('lets the hunting Ghoul Priest walk to the Hallway and ask whom to engage', () => {
+    const { state } = runFrom(playing, start(), [
+      ...advanceTrapped,
+      { type: 'SpawnEnemy', enemyId: priest, at: attic },
+      { type: 'MoveHunters' },
+    ]);
+
+    // Prey "Highest [combat]" needs investigator card data, so the players choose.
+    expect(state.cards[priest]?.zone).toEqual({ kind: 'atLocation', locationId: hallway });
+    expect(state.pending).toMatchObject([{ kind: 'chooseInvestigator', subject: priest }]);
+    expect(checkInvariants(state)).toEqual([]);
   });
 });

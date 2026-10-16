@@ -1,7 +1,9 @@
-import type { InstanceId, InvestigatorId, MapId } from './ids';
+import type { CardType, Trait } from './cards';
+import type { DecisionId, InstanceId, InvestigatorId, MapId } from './ids';
 import type { MapSpec } from './map';
 import type {
   CampaignLog,
+  Decision,
   ChaosToken,
   Difficulty,
   Investigator,
@@ -14,12 +16,41 @@ import type { Zone } from './zone';
 export type Command =
   | StartScenario
   | ManualAdjust
+  | MoveCard
+  | AddMap
   | AddConnection
   | RemoveConnection
   | RevealLocation
   | MoveInvestigator
   | AdjustInvestigator
-  | DiscoverClues;
+  | DiscoverClues
+  | PlaceDoom
+  | AdvanceAgenda
+  | AdvanceAct
+  | EndScenario
+  | DrawEncounter
+  | FromSetAside
+  | ShuffleInto
+  | SpawnEnemy
+  | EngageEnemy
+  | DisengageEnemy
+  | DamageEnemy
+  | DefeatEnemy
+  | ExhaustEnemy
+  | ReadyEnemy
+  | MoveHunters
+  | MoveHunter
+  | RequestDecision
+  | ResolveDecision
+  | CheckDoomThreshold
+  | NextPhase
+  | StartTurn
+  | EndTurn
+  | AdjustActions
+  | ResolveEnemyAttack
+  | Investigate
+  | Fight
+  | Evade;
 
 /** A card instance to create when the scenario starts. */
 export interface StartingCard {
@@ -33,6 +64,13 @@ export interface StartingCard {
 }
 
 /**
+ * An investigator as the scenario starts with them. `actionsRemaining` is
+ * left out because the start sets it (`BASE_ACTIONS_PER_TURN`), like upkeep step 4.2
+ * does every round.
+ */
+export type StartingInvestigator = Omit<Investigator, 'actionsRemaining'>;
+
+/**
  * Sets up a scenario from scratch: investigators, maps and every card instance
  * in its initial zone. Produces `ScenarioStarted` and, unless disabled, a
  * `DeckShuffled` for the encounter deck. `compileSetup` builds this command
@@ -44,7 +82,7 @@ export interface StartScenario {
   scenarioId: string;
   difficulty: Difficulty;
   seed: number;
-  investigators: Investigator[];
+  investigators: StartingInvestigator[];
   /** Maps with their connections; each edge must join two starting locations of that map. */
   maps?: Record<MapId, MapSpec>;
   cards: StartingCard[];
@@ -60,10 +98,44 @@ export interface ManualAdjust {
   adjustment: Adjustment;
 }
 
-/** The concrete corrections a `ManualAdjust` can make. */
+/**
+ * A card effect or reverse side moves a card to another zone ("remove the
+ * Study from the game", "discard each enemy there"). Validated like a
+ * `ManualAdjust` move, but it is a game event, so forced effects fire (a card
+ * entering play triggers `onCardEnters`). Produces `CardMoved`.
+ */
+export interface MoveCard {
+  type: 'MoveCard';
+  cardId: InstanceId;
+  to: Zone;
+  /** Position in the destination, 0 = top (e.g. the top of the encounter discard); default the bottom. */
+  index?: number;
+}
+
+/**
+ * Puts a new map into play mid-scenario (architecture §5 "a second board
+ * added mid-scenario"), declared as one unit like setup's `addMap` step:
+ * `compileMapStep` builds it from such a step. The `locations` are cards
+ * outside play (typically set aside) that move onto the map in the given
+ * order, as they are (set-aside locations stay unrevealed). The map's
+ * connections may also end on other maps. Produces `MapAdded`, then one
+ * `CardMoved` per location.
+ */
+export interface AddMap {
+  type: 'AddMap';
+  mapId: MapId;
+  map: MapSpec;
+  locations: readonly InstanceId[];
+}
+
+/**
+ * The concrete corrections a `ManualAdjust` can make. `actions` changes an
+ * investigator's remaining actions, like `AdjustActions`.
+ */
 export type Adjustment =
   | { kind: 'moveCard'; cardId: InstanceId; to: Zone; index?: number }
-  | { kind: 'tokens'; cardId: InstanceId; token: TokenKind; delta: number };
+  | { kind: 'tokens'; cardId: InstanceId; token: TokenKind; delta: number }
+  | { kind: 'actions'; investigatorId: InvestigatorId; delta: number };
 
 /**
  * Connects two location cards (a card effect or scenario step). The cards may
@@ -145,6 +217,425 @@ export interface DiscoverClues {
   investigatorId: InvestigatorId;
   locationId: InstanceId;
   amount: number;
+}
+
+/**
+ * Puts `amount` (positive) doom on a card in play, by default on the current
+ * agenda. Produces `TokensChanged`. The threshold is not checked here: the agenda
+ * only advances at a `CheckDoomThreshold` (mythos phase). Removing doom is a
+ * `ManualAdjust` for now.
+ */
+export interface PlaceDoom {
+  type: 'PlaceDoom';
+  /** Defaults to the current agenda. */
+  cardId?: InstanceId;
+  amount: number;
+}
+
+/**
+ * Advances the current agenda: all doom in play is removed, the agenda is
+ * flipped and its reverse side (`onAgendaAdvance` hook) resolves while it is
+ * still current; then it leaves the game and the next agenda becomes current.
+ * Run by the "yes" answer to the threshold question (see
+ * `ResolveDecision`) and by card effects that advance the agenda.
+ * Produces `TokensChanged`/`InvestigatorChanged` (doom removal), `CardFlipped`,
+ * `AgendaAdvanced`, the reverse side's events, `CardMoved`, `CurrentCardChanged`
+ * and, for the last agenda, `ScenarioEnded` unless the reverse side ended the scenario.
+ */
+export interface AdvanceAgenda {
+  type: 'AdvanceAgenda';
+  /**
+   * Fallback resolution for the last agenda when its reverse side does not end
+   * the scenario itself; rejected while further agendas follow.
+   */
+  resolution?: string;
+}
+
+/** Clues one investigator pays towards advancing the act. */
+export interface ClueSpend {
+  investigatorId: InvestigatorId;
+  amount: number;
+}
+
+/**
+ * Advances the current act. Paying clues is only one way to advance: other
+ * acts need an objective, an action or an event (an enemy defeated or out of
+ * play, …), which players or scenario hooks decide, so those advance with no
+ * `spend`. With `spend` the investigators choose who pays; the total must
+ * equal the act's clue requirement (its `clues`, resolved for the starting
+ * player count) and the act must have one. Like `AdvanceAgenda`, the reverse
+ * side (`onActAdvance` hook) resolves before the next act becomes current.
+ * Produces `InvestigatorChanged` per payment, `CardFlipped`, `ActAdvanced`,
+ * the reverse side's events, `CardMoved`, `CurrentCardChanged` and, for the
+ * last act, `ScenarioEnded` unless the reverse side ended the scenario.
+ */
+export interface AdvanceAct {
+  type: 'AdvanceAct';
+  /** Clue payments; omit to advance without paying (any act can advance that way). */
+  spend?: ClueSpend[];
+  /**
+   * Fallback resolution for the last act when its reverse side does not end
+   * the scenario itself; rejected while further acts follow.
+   */
+  resolution?: string;
+}
+
+/**
+ * Ends the scenario with `resolution` (a resolution id of the scenario).
+ * Mostly returned by a reverse-side hook ("(→R1)"), which is how the last
+ * agenda/act names its resolution. Produces `ScenarioEnded`.
+ */
+export interface EndScenario {
+  type: 'EndScenario';
+  resolution: string;
+}
+
+/**
+ * An investigator draws the top card of the encounter deck (mythos phase or a
+ * card effect), or with `match` the first card that matches (see below). The
+ * card is revealed and then: an enemy is placed unengaged at
+ * the investigator's location (engagement, aloof and spawn instructions are
+ * `SpawnEnemy`, M1.8); a treachery goes to the investigator's threat area if
+ * its card says so (`CardStats.entersThreatArea`), otherwise to the encounter
+ * discard; anything else goes to the discard. As soon as the deck is empty
+ * the discard is shuffled back into it; a card with surge makes the
+ * investigator draw again. Produces, per card drawn, `EncounterCardDrawn`,
+ * `CardFlipped` and `CardMoved`, followed by `CardMoved`s and a `DeckShuffled`
+ * when that card emptied the deck and the discard was shuffled back.
+ */
+export interface DrawEncounter {
+  type: 'DrawEncounter';
+  investigatorId: InvestigatorId;
+  /**
+   * Where a `match` is looked for (default `'deck'`); without `match` the
+   * draw always takes the top of the deck and `from` is ignored.
+   */
+  from?: EncounterSource;
+  /**
+   * Draws the first card that matches instead of the top card: deck top-down,
+   * then discard top-down (the discard's top is its first entry). Every given
+   * field has to match; the card is then revealed and placed exactly like a
+   * top-of-deck draw, so surge and the empty-deck reshuffle apply as well.
+   * Rejected with `noMatchingCard` when nothing matches.
+   */
+  match?: EncounterMatch;
+  /**
+   * With `match` in the deck: first discards every card above the match
+   * ("discard cards from the top of the encounter deck until a Ghoul enemy is
+   * discarded. The lead investigator draws that enemy"). Without it the
+   * matching card is taken out of the deck and the rest stays where it is.
+   */
+  discardSkipped?: boolean;
+}
+
+/** The part of the encounter cards a `DrawEncounter` with `match` looks through. */
+export type EncounterSource = 'deck' | 'discard' | 'deckOrDiscard';
+
+/** What a card has to be to be drawn by a matched `DrawEncounter`; at least one field. */
+export interface EncounterMatch {
+  /** Card name as in the `CardDb`, compared exactly. */
+  name?: string;
+  /** A trait the card has, e.g. the `Ghoul` of "draw a Ghoul enemy". */
+  trait?: Trait;
+  /** Card type, e.g. `enemy` for "a Ghoul enemy". */
+  typeCode?: CardType;
+}
+
+/**
+ * Takes one set-aside copy of each code (a code listed twice takes two copies)
+ * and moves it to `to`. A move into play makes the bus fire `onCardEnters`.
+ * Produces `CardMoved` per card.
+ */
+export interface FromSetAside {
+  type: 'FromSetAside';
+  codes: readonly string[];
+  to: Zone;
+}
+
+/**
+ * Takes one set-aside copy of each code, adds it to `zone` and shuffles the
+ * whole zone (usually the encounter deck). Produces `CardMoved` per card,
+ * then `DeckShuffled`.
+ */
+export interface ShuffleInto {
+  type: 'ShuffleInto';
+  codes: readonly string[];
+  zone: Zone;
+}
+
+/**
+ * Puts an enemy that is not in play (encounter deck, set aside, …) into play.
+ * Where it appears, in this order: `at`; the location named by its `spawn`
+ * keyword (several matches or unreadable text: `DecisionRequested` of kind
+ * `chooseLocation`, enemy stays put; no such location in play: discarded);
+ * the location of `investigatorId` (the investigator who drew it), whom it
+ * engages whatever its prey. Elsewhere it engages per `engageEvents`. Produces
+ * `CardMoved`, then `EnemyEngaged` or `DecisionRequested` (prey tie). `DrawEncounter` resolves
+ * a drawn enemy the same way.
+ */
+export interface SpawnEnemy {
+  type: 'SpawnEnemy';
+  enemyId: InstanceId;
+  /** The drawing investigator; the fallback spawn location. */
+  investigatorId?: InvestigatorId;
+  /** Explicit spawn location (a card effect or scenario step); overrides the keyword. */
+  at?: InstanceId;
+}
+
+/**
+ * Engages an enemy in play with an active investigator at its location (an
+ * unengaged enemy must be at the investigator's location; an engaged one
+ * switches investigator). Produces `EnemyEngaged`.
+ */
+export interface EngageEnemy {
+  type: 'EngageEnemy';
+  enemyId: InstanceId;
+  investigatorId: InvestigatorId;
+}
+
+/**
+ * Breaks an enemy's engagement; it stays at the location of the investigator
+ * it was engaged with. Produces `EnemyDisengaged`.
+ */
+export interface DisengageEnemy {
+  type: 'DisengageEnemy';
+  enemyId: InstanceId;
+}
+
+/**
+ * Puts `amount` (positive) damage on an enemy in play. An enemy with damage
+ * equal to or above its health (per `resolveValue`) is defeated in the same
+ * step. Produces `TokensChanged`, then `EnemyDefeated`.
+ */
+export interface DamageEnemy {
+  type: 'DamageEnemy';
+  enemyId: InstanceId;
+  amount: number;
+}
+
+/**
+ * Defeats an enemy in play: it goes to the victory display if the card has
+ * victory, otherwise to the top of the encounter discard, and loses its
+ * tokens. Produces `EnemyDefeated`.
+ */
+export interface DefeatEnemy {
+  type: 'DefeatEnemy';
+  enemyId: InstanceId;
+}
+
+/** Exhausts a ready enemy in play (after it attacked, or by a card effect). Produces `ExhaustChanged`. */
+export interface ExhaustEnemy {
+  type: 'ExhaustEnemy';
+  enemyId: InstanceId;
+}
+
+/**
+ * Readies an exhausted enemy in play (upkeep, or a card effect). A readied,
+ * unengaged enemy with an investigator at its location engages, as the rules
+ * demand. Produces `ExhaustChanged`, then `EnemyEngaged` or `DecisionRequested`.
+ */
+export interface ReadyEnemy {
+  type: 'ReadyEnemy';
+  enemyId: InstanceId;
+}
+
+/**
+ * Moves the ready, unengaged hunter enemies one step towards the nearest
+ * investigator (enemy phase; the phase assistant of M1.10 issues it). Hunters
+ * with an investigator at their location, without a route or with a pending
+ * decision stay. Equally near investigators and equally short routes are
+ * settled by prey and then handed to the players. When two or more hunters
+ * would move, the lead investigator chooses the order (`hunterOrder`
+ * decision, see `handleMoveHunters`) and nothing moves yet. Produces
+ * `CardMoved` per moving hunter, then `EnemyEngaged` or `DecisionRequested`,
+ * or only the `hunterOrder` `DecisionRequested`.
+ */
+export interface MoveHunters {
+  type: 'MoveHunters';
+  /**
+   * Only these hunters are considered (default: every hunter in play). The
+   * answer to the `hunterOrder` decision passes the hunters that have not
+   * moved yet, so a hunter that already moved is not moved again.
+   */
+  hunters?: InstanceId[];
+}
+
+/**
+ * Moves one hunter a step, as the players decided a tie in `MoveHunters`: to
+ * the neighbouring location `to`, or towards `towards` along that
+ * investigator's shortest routes (a remaining tie between routes becomes a
+ * `chooseLocation` decision). The hunter must be an unengaged enemy at a location;
+ * `to` must be connected to it. With neither `to` nor `towards` the hunter moves
+ * along its own rule, as `MoveHunters` would move it alone. Produces `CardMoved`, then `EnemyEngaged` or
+ * `DecisionRequested`.
+ */
+export type MoveHunter = {
+  type: 'MoveHunter';
+  enemyId: InstanceId;
+} & (
+  | { to: InstanceId; towards?: never }
+  | { towards: InvestigatorId; to?: never }
+  | { to?: never; towards?: never }
+);
+
+/**
+ * Raises a decision, for scenario hooks and card effects ("choose one: …").
+ * The id must not be pending, there must be at least one option and option
+ * ids must be unique. Produces `DecisionRequested`.
+ */
+export interface RequestDecision {
+  type: 'RequestDecision';
+  decision: Decision;
+}
+
+/**
+ * The players' answer to a pending decision. Produces `DecisionResolved`
+ * (which removes the decision), followed by the events of the chosen option's
+ * commands, each handled like a hook's follow-up command (validated, with
+ * their own forced effects, in the same undo group). If one of them is
+ * rejected the whole answer is rejected and the decision stays pending.
+ */
+export interface ResolveDecision {
+  type: 'ResolveDecision';
+  decisionId: DecisionId;
+  optionId: string;
+  /**
+   * The count the players confirmed for an option with an `amount` range
+   * (clues discovered, damage dealt); replaces the `amount` of the option's
+   * commands. Omit to accept the option's default. Rejected for an option
+   * without a range or outside it.
+   */
+  amount?: number;
+}
+
+/**
+ * Checks the doom threshold: if the doom in play has reached the current
+ * agenda's threshold, the players are asked to confirm advancing it
+ * (`DecisionRequested` of kind `confirm`, "no" overrides the count at the
+ * table and is asked again at the next check). The mythos phase runs it
+ * after placing its doom; card effects that say "check the doom threshold"
+ * return it. Doom placed at other times never advances the agenda by itself
+ * (Rules Reference, "Agenda Deck"). Produces nothing below the threshold.
+ */
+export interface CheckDoomThreshold {
+  type: 'CheckDoomThreshold';
+}
+
+/**
+ * The phase assistant's "Next": runs the outstanding steps of the current
+ * phase (`GameMeta.steps`, numbered as in the Rules Reference, `PhaseStepId`),
+ * or, when none are left, moves on to the next phase (setup → investigation
+ * of round 1, skipping its mythos phase; investigation → enemy → upkeep →
+ * mythos of the next round) and runs its steps. Steps run until one leaves a
+ * decision pending or an enemy attack needs resolving (`ResolveEnemyAttack`);
+ * the next `NextPhase` after the answer resumes there. Rejected while an
+ * enemy attack of step 3.3 is still due, and in the investigation phase
+ * while a turn is in progress or an active investigator has not taken their
+ * turn (the group ends every turn first, even one without actions). Produces
+ * `PhaseChanged`, then per step `PhaseStepsChanged` and the events of the
+ * step (`PlaceDoom`, `CheckDoomThreshold`, `DrawEncounter`, `MoveHunters`,
+ * `ActionsReset`, `ReadyEnemy`, `AdjustInvestigator`, `RoundEnded`).
+ */
+export interface NextPhase {
+  type: 'NextPhase';
+}
+
+/**
+ * Rules Reference 2.2: the group picks the investigator whose turn begins,
+ * any active investigator who has not taken a turn this round, in any order.
+ * Only in the investigation phase and while no other turn is in progress.
+ * The turn tells the UI whose turn it is; the engine does not restrict other
+ * commands to the investigator whose turn is in progress, since without
+ * player cards it cannot tell an action from a card effect. Produces
+ * `TurnStarted`.
+ */
+export interface StartTurn {
+  type: 'StartTurn';
+  investigatorId: InvestigatorId;
+}
+
+/**
+ * Rules Reference 2.2.2: the investigator whose turn is in progress ends it,
+ * whether or not they used all their actions; sets the per-round "turn
+ * taken" flag (`GameMeta.turnsTaken`). Produces `TurnEnded`.
+ */
+export interface EndTurn {
+  type: 'EndTurn';
+  investigatorId: InvestigatorId;
+}
+
+/**
+ * Changes an active investigator's remaining actions
+ * (`Investigator.actionsRemaining`) by `delta`, a non-zero integer; they may
+ * not drop below zero. The players count actions themselves, since player
+ * cards are not modelled: they pass -1 for each action they take, and an
+ * encounter card or player card that takes or grants an action passes its
+ * delta, in any phase. Upkeep step 4.2 resets the count to 3; an
+ * investigator whose cards grant an additional action each turn gets it by
+ * the players passing +1 after that reset. Produces `ActionsAdjusted`.
+ */
+export interface AdjustActions {
+  type: 'AdjustActions';
+  investigatorId: InvestigatorId;
+  delta: number;
+}
+
+/**
+ * The players resolved one enemy attack of the enemy phase (an `enemyAttack`
+ * step). `damage`/`horror` default to the enemy's printed values; the players
+ * pass less when assets soak part of it. The enemy exhausts after its last
+ * due attack (a massive enemy attacks everyone at its location first).
+ * Produces `PhaseStepsChanged`, `InvestigatorChanged` (damage, horror; with
+ * `InvestigatorDefeated` as usual, horror is skipped for an investigator the
+ * damage defeated) and `ExhaustChanged`.
+ */
+export interface ResolveEnemyAttack {
+  type: 'ResolveEnemyAttack';
+  enemyId: InstanceId;
+  investigatorId: InvestigatorId;
+  damage?: number;
+  horror?: number;
+}
+
+/**
+ * Investigate action: the investigator investigates their location. The
+ * players resolve the intellect test against its shroud at the table; the
+ * engine raises a `skillTestResult` decision whose pass discovers clues: 1
+ * by default, or the count the players confirm in `ResolveDecision.amount`
+ * (cards that discover more, up to the clues on the location). A location
+ * without clues makes the pass do nothing. Skipping the test and using
+ * `DiscoverClues` directly is equally valid. Produces `DecisionRequested`.
+ */
+export interface Investigate {
+  type: 'Investigate';
+  investigatorId: InvestigatorId;
+}
+
+/**
+ * Fight action: the investigator attacks an enemy at their location
+ * (combat test against its fight value). A pass deals `damage` via
+ * `DamageEnemy`, or the damage the players confirm in
+ * `ResolveDecision.amount` (effects that add damage on a good result).
+ * Produces `DecisionRequested`.
+ */
+export interface Fight {
+  type: 'Fight';
+  investigatorId: InvestigatorId;
+  enemyId: InstanceId;
+  /** Damage of the attack, the pass option's default; 1 (the basic attack) unless a weapon deals more. */
+  damage?: number;
+}
+
+/**
+ * Evade action: the investigator evades an enemy engaged with them (agility
+ * test against its evade value). A pass exhausts the enemy (if ready) and
+ * disengages it (a massive enemy is not in the `engaged` zone and stays).
+ * Produces `DecisionRequested`.
+ */
+export interface Evade {
+  type: 'Evade';
+  investigatorId: InvestigatorId;
+  enemyId: InstanceId;
 }
 
 /** String literal of every command type. */
