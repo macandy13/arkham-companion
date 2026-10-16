@@ -1,7 +1,7 @@
 import type { Event } from './events';
 import type { GameState, Phase } from './state';
 
-/** UUID (v4) identifying one game; never device-bound so it stays valid for later cloud sync (architecture §10). */
+/** UUID (v4) identifying one game; never device-bound so it stays valid for later cloud sync (architecture "Persistence"). */
 export type GameId = string;
 
 /** Version of the persisted `GameState` shape; bump together with a migration when `GameState` changes. */
@@ -76,7 +76,7 @@ export interface ImportedGame {
 }
 
 /**
- * Persistence boundary (architecture §10). The app only talks to this
+ * Persistence boundary (architecture "Persistence"). The app only talks to this
  * interface; `IndexedDbStore` implements it now, a cloud store may later.
  * The event log is the source of truth, snapshots are only a speed-up.
  */

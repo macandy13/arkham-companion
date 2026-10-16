@@ -1,7 +1,7 @@
 # M1C – Campaign engine
 
 Goal: campaign mode in `packages/engine` (and its storage), driven only by commands and tested without any UI: a campaign log that outlives each game, chaos bag carried between scenarios, resolutions applied to the log, and a scenario started from the log.
-Ref: architecture §5 (`CampaignLog`), §7 (`campaignSetup`, `resolutions`), §8 Campaign mode.
+Ref: architecture "Campaign mode" (`CampaignLog`, `campaignSetup`, `resolutions`).
 
 **Why this milestone**
 
@@ -21,7 +21,7 @@ Every change the engine makes on the players' behalf (a token added to the bag, 
 
 **Benefit:** Campaign state is never lost or mis-recorded, and later scenarios can read earlier outcomes.
 
-Ref: §5, §8.
+Ref: architecture "Campaign mode".
 
 - [ ] `CampaignLog`: campaign id, difficulty, investigators (code, physical/mental trauma, XP earned/spent, killed/insane), story records (key → value, e.g. `"ghoulPriestDefeated": true`, counts, lists such as "cultists who got away"), chaos bag contents, scenario sequence with the current position
 - [ ] Campaign commands, events and reducer, separate from the game's (`StartCampaign`, `RecordStory`, `AddChaosToken`, `RemoveChaosToken`, `AwardXp`, `AddTrauma`, `MarkKilled`, `MarkInsane`, `ReplaceInvestigator`, `AdvanceScenario`, `ManualAdjust` for corrections) with rejections and invariants (no negative XP or trauma, killed/insane investigators cannot play)
@@ -30,11 +30,11 @@ Ref: §5, §8.
 
 ## M1C.2 Change notices (O)
 
-**Why:** The engine applies changes the players would otherwise make by hand (tokens into the bag, trauma, XP, story records, and in a game doom, damage or moves). If they happen silently, the players cannot tell what the app did and stop trusting it, or rely on it more than they want to ("assistant, not referee", §2).
+**Why:** The engine applies changes the players would otherwise make by hand (tokens into the bag, trauma, XP, story records, and in a game doom, damage or moves). If they happen silently, the players cannot tell what the app did and stop trusting it, or rely on it more than they want to ("assistant, not referee", architecture "Overview").
 
 **Benefit:** Every automatic change is visible and correctable, and each group decides how much it leans on the digital helpers.
 
-Ref: §2; M7 per-game automation level.
+Ref: architecture "Overview"; M7 per-game automation level.
 
 - [ ] A pure function maps events (campaign and game) to player-facing notices: what changed, why (the card, rule or resolution step that caused it) and how to undo or correct it
 - [ ] Notices carry a kind (e.g. chaos bag, trauma/XP, story record, board) so the UI can filter them; no automatic change reaches the log without one
@@ -47,7 +47,7 @@ Ref: §2; M7 per-game automation level.
 
 **Benefit:** The bag is always right for the game in front of the players, standalone or campaign, and the token values feed the skill test suggestion.
 
-Ref: §5 `chaosBag`, §8; M1.13.
+Ref: architecture "Campaign mode" (chaos bag); M1.13.
 
 - [ ] Game state carries the chaos bag: standalone = scenario default per difficulty, campaign = from the log at scenario start
 - [ ] Token values per scenario and difficulty (number tokens, skull/cultist/tablet/elder thing from the scenario reference card, auto-fail, elder sign from the investigator) feed the M1.13 pipeline
@@ -60,7 +60,7 @@ Ref: §5 `chaosBag`, §8; M1.13.
 
 **Benefit:** Ending a scenario produces a list of log changes the players confirm, and the log is updated in one step.
 
-Ref: §7 `resolutions`, §8.
+Ref: architecture "Campaign mode" (resolutions).
 
 - [ ] Declarative resolution steps on the scenario definition (`record`, `addChaosToken`, `removeChaosToken`, `awardXp` (victory display + fixed bonus), `addTrauma`, `markKilled`/`markInsane`), including conditional steps that read game state (e.g. "if the Ghoul Priest is in the victory display")
 - [ ] `ScenarioEnded { resolution }` → a pure function computes the proposed campaign commands; players confirm or edit them; applying them writes the campaign log and produces notices (M1C.2)
@@ -74,7 +74,7 @@ Ref: §7 `resolutions`, §8.
 
 **Benefit:** Starting scenario 2 is one command; the board, the bag and the investigators are already right.
 
-Ref: §7 `campaignSetup`; §11 (picker only for replacements).
+Ref: architecture "Campaign mode" (`campaignSetup`); product.md "UI concept" (picker only for replacements).
 
 - [ ] `compileSetup` takes the campaign log: `campaignSetup(log)` adds or replaces setup steps
 - [ ] Investigators start with physical trauma as damage and mental trauma as horror; killed/insane ones need a replacement first (rejection otherwise)
@@ -87,7 +87,7 @@ Ref: §7 `campaignSetup`; §11 (picker only for replacements).
 
 **Benefit:** Campaigns are saved, resumed and undone like games, and M2/M5 screens can list them.
 
-Ref: §10 Persistence (`campaigns` table).
+Ref: architecture "Persistence" (`campaigns` table).
 
 - [ ] `GameStore` methods for campaigns: create, load (replay), append events, undo last group, list; games carry an optional `campaignId`
 - [ ] `IndexedDbStore` implementation with fake-indexeddb tests; export/import of a whole campaign stays in M5.5

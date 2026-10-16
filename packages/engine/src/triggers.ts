@@ -19,7 +19,7 @@ import type { GameState } from './state';
  * the event that triggered it, returns the commands that resolve the effect.
  * Hooks return commands rather than events so that `handle` validates their
  * effect and they can use card data and the RNG like any player command
- * (architecture §7). Must be pure; an empty list means "nothing happens".
+ * (architecture "Triggers and card effects"). Must be pure; an empty list means "nothing happens".
  */
 export type TriggerHook<E extends Event> = (
   ctx: EngineContext,
@@ -28,7 +28,7 @@ export type TriggerHook<E extends Event> = (
 ) => readonly Command[];
 
 /**
- * Scenario-wide forced effects (architecture §7 `hooks`), set on
+ * Scenario-wide forced effects (architecture "Triggers and card effects"), set on
  * `ScenarioDefinition.hooks` and handed to the engine via `EngineContext.hooks`.
  * Each fires once per matching event.
  */
@@ -50,7 +50,7 @@ export interface ScenarioHooks {
 }
 
 /**
- * The script of one card (architecture §6 "Effects"). Unlike `ScenarioHooks`
+ * The script of one card (architecture "Triggers and card effects"). Unlike `ScenarioHooks`
  * it belongs to the card, so the same encounter card behaves the same in every
  * scenario that uses it.
  */

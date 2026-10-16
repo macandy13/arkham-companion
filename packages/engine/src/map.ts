@@ -11,7 +11,7 @@ export interface Edge {
 }
 
 /**
- * One map of the board (architecture §5 "Map model"): a set of locations and
+ * One map of the board (architecture "Game state"): a set of locations and
  * the connections between them, kept together so a map is set up, changed
  * and drawn as one unit. A scenario can have several (`Board.maps`).
  *

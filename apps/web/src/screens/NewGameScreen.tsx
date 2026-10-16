@@ -30,7 +30,7 @@ interface NewGameScreenProps {
 
 /**
  * Route `/new`: without a `mode` it offers the two entry points, with `?mode=campaign|quick`
- * it runs the wizard (architecture §11). The step is in the URL (`&step=…`), so browser back
+ * it runs the wizard (product.md "UI concept"). The step is in the URL (`&step=…`), so browser back
  * and forward walk the steps while the choices live in sessionStorage.
  */
 export function NewGameScreen({ store, catalog }: NewGameScreenProps) {

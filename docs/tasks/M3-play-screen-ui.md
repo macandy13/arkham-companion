@@ -1,6 +1,6 @@
 # M3 – Play screen UI
 
-Goal: the in-game screen from architecture §11, wired to the M1 engine, so the sandbox scenario is playable on a tablet.
+Goal: the in-game screen from product.md "UI concept", wired to the M1 engine, so the sandbox scenario is playable on a tablet.
 
 **Why this milestone**
 
@@ -38,7 +38,7 @@ All UI actions dispatch engine commands through the Zustand store; no component 
 
 **Benefit:** The whole scenario state is visible at a glance.
 
-Ref: §5 Map model.
+Ref: architecture "Game state" (connections) and "Board rendering".
 
 - [ ] SVG board with pan/zoom/pinch (react-zoom-pan-pinch); slots from the scenario layout
 - [ ] Location tiles: name, revealed/unrevealed, shroud, clues, doom, attachments badge

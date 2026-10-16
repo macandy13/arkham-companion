@@ -1,377 +1,212 @@
-# Arkham Companion – System and Application Architecture
+# Arkham Companion – Architecture
 
-Draft v0.3 · 2026-10-14 · Living version: https://claude.ai/code/artifact/12ad5370-637f-4943-a562-74dbc1768fec
+How the code is put together, as built. What the app is for, its scope, screens and roadmap are in [product.md](product.md).
 
-## At a glance
+The document has two levels. **Overview** is the whole system on one page. **Pieces** has one section per part that gets extended, each with the same headings: what it does, where it lives, how to extend it, what must stay true, and why it is built that way. **Not built yet** keeps the designs of planned pieces until they exist.
 
-- **The problem:** in Arkham Horror LCG the players also run the "game master" side: building and shuffling the encounter deck, counting doom, laying out and connecting locations, moving hunter enemies, remembering forced effects and keeping the campaign log. This bookkeeping is slow and error-prone, and mistakes change the outcome of a scenario.
-- **The app:** a tablet companion that takes over exactly this scenario side, while players keep their own decks, skill tests and (optionally) the chaos bag in hand – the tactile, fun part stays physical.
-- **Key bets:** a pure, event-sourced rules engine (gives undo, refresh safety, export and later sync from one mechanism); scenarios as data with small code hooks (new content is cheap); card data from ArkhamDB instead of hand-typed (accurate, bilingual, nothing copyrighted in git); offline-first PWA with no backend (free hosting, works at any table).
-- **How it gets built:** in milestones M0–M8 (§14), each a sequence of small tasks done in one Claude Code session per task. Every section below starts with a short *Why* so a reviewer can judge a decision without reading the details.
+**Keeping it current:** a PR that adds or changes a piece (a new kind of command, trigger, decision, setup step, store method, package or dependency direction) updates that piece's section in the same PR, and a PR that builds a planned piece moves its design from "Not built yet" into "Pieces". The diff of this file is where a reviewer sees an architecture change. Refer to sections by name (architecture "Triggers and card effects"), not by number.
 
-## 1. Goal and scope
+## Overview
 
-*Why:* a tight scope keeps v1 shippable. The scenario side is where the bookkeeping pain is; player cards would mean modelling thousands of individual card effects for little gain at the table.
-
-The app takes over the **scenario side** of Arkham Horror LCG: setup, agenda/act/doom, encounter deck, map with locations and enemies, threat areas and special mechanics. Players keep their own decks, skill tests and (optionally) the chaos bag in hand.
-
-**In scope v1**
-
-- Agenda, act and doom management incl. threshold checks and reverse-side effects
-- Encounter deck: building from encounter sets, drawing, discard, reshuffle, surge/peril, set-aside cards
-- Map: location graph with explicit connections, multiple maps/regions, locations added or replaced mid-scenario, scenario-book layout plus optional auto-layout, randomised location placement
-- Enemies: spawn, hunter movement, engagement, exhaustion, damage; investigator positions
-- Investigator tracking: health, horror, clues, resources, threat area, engaged enemies
-- Campaign mode: campaign log across the three intro scenarios, chaos bag carried forward
-- Mid-scenario setup changes (replace locations, set-aside cards into play, cards into discard)
-- Scenario-specific mechanics via scripts
-- Card language configurable (English, German and the other languages ArkhamDB offers)
-- Local persistence, refresh-proof, undo
-
-**Not in scope v1:** player card logic, skill test resolution, deck building, multi-device sync and cloud storage (both planned, see sections 10 and 15).
-
-**First content:** Chapter Two starts with the Core Set (2026), ArkhamDB pack code `core_2026`, with an introductory campaign of three scenarios. The first scenario is *Spreading Flames* (encounter code `spreading_flames`).
-
-## 2. Guiding principles
-
-*Why:* these rules decide most design questions up front, so individual tasks don't re-argue them. Each one names the benefit it buys.
-
-1. **Assistant, not referee.** The app suggests the next step; players confirm. Every state can be corrected manually. *Benefit:* a rules bug or a house rule never blocks a game night.
-2. **Pure, deterministic engine.** Game logic is a pure reducer with no UI or I/O dependency. Randomness only via a seeded RNG in the state. *Benefit:* rules are fast to test exhaustively, and the same inputs always give the same game.
-3. **Event sourcing.** Every change is an event in the log. This gives undo, refresh recovery, export, reproducible bugs – and later, sync. *Benefit:* five features from one mechanism instead of five separate implementations.
-4. **Data separate from rules.** Card data comes from ArkhamDB; rules and scenario flow come from our own scenario definitions. *Benefit:* card errata and translations arrive without code changes; nothing copyrighted is committed.
-5. **Offline-first.** After the first load everything runs without network – important at the table. *Benefit:* bad Wi-Fi never interrupts a game.
-6. **Generic before specific.** What several scenarios need (e.g. taking the topmost copy of X from the discard pile) becomes an engine primitive; only true one-offs become scenario code. *Benefit:* each new scenario gets cheaper to add.
-7. **Start simple, design for growth.** v1 automates little, but every extension point (card effects, sync, auto-layout) has a seam from day one. *Benefit:* something playable early, without rewrites later.
-
-## 3. System context
-
-*Why no backend in v1:* a static site is free to host, needs no accounts and works offline. The one thing a backend adds – sharing a game across devices – is planned for M8 behind an interface that already exists.
-
-There is **no backend of our own in v1**. The app is a static single-page app (PWA) that runs in the browser.
+The app is an offline PWA with no backend. Players run their own cards; the app runs the scenario side: the encounter deck, doom, agenda and act, the map, enemies and forced effects.
 
 ```mermaid
 flowchart LR
-  subgraph Browser["Browser / Tablet (PWA)"]
-    UI["UI layer<br/>React components"]
-    APP["Application layer<br/>Commands, decisions, undo"]
-    ENG["Engine<br/>pure reducer + rule modules"]
-    SCN["Scenario plugins<br/>Setup DSL + hooks"]
-    REPO["Card repository<br/>Normalisation + cache"]
-    STORE["GameStore<br/>IndexedDB now, cloud later"]
-    SW["Service worker<br/>Image and app cache"]
-  end
-  ADB["ArkhamDB public API<br/>JSON + card images"]
-  HOST["Static hosting<br/>GitHub Pages / Cloudflare Pages"]
-  UI --> APP --> ENG
-  ENG --> SCN
-  ENG --> REPO
-  APP --> STORE
-  REPO --> STORE
-  REPO --> ADB
-  SW --> ADB
-  HOST --> Browser
+  WEB["apps/web<br/>React screens, Zustand store"]
+  SCN["@arkham/scenarios<br/>scenario definitions + hooks"]
+  ENG["@arkham/engine<br/>pure rules engine"]
+  CD["@arkham/carddata<br/>ArkhamDB fetch + normalise"]
+  UTIL["@arkham/util<br/>generic helpers"]
+  IDB[("IndexedDB<br/>via Dexie")]
+  ADB["ArkhamDB API"]
+  WEB --> SCN --> ENG --> UTIL
+  WEB --> ENG
+  WEB --> CD
+  WEB --> IDB
+  CD --> ADB
 ```
 
-The ArkhamDB public API sends `Access-Control-Allow-Origin: *`, so it can be queried directly from the browser. ArkhamDB asks clients to respect HTTP caching (max-age, last-modified), which fits our offline approach.
+Arrows are package dependencies. The engine depends on nothing but `@arkham/util`; it never sees React, storage, the network, a clock or `Math.random`. `packages/review_digest` is CI tooling and no part of the app.
 
-## 4. Technology stack
+**How one player action flows:**
 
-*Why these choices:* mainstream, well-documented tools (good for both the human maintainer and Claude Code sessions), all running in the browser with no server. The rationale per choice is in the table.
+1. A screen calls the app store (`apps/web/src/state/appStore.ts`), which builds a `Command`.
+2. `execute(ctx, state, command)` calls `handle`, which validates the command against the state and returns `Event`s, including the whole chain of forced effects it triggered. A refused command throws `CommandRejected` and changes nothing.
+3. `apply` folds the events into a new `GameState`.
+4. The store writes the events through `GameStore.appendEvents` before the screen updates. Loading a game replays its log from the last snapshot.
 
-| Area | Choice | Rationale |
-| --- | --- | --- |
-| Language | TypeScript (strict) | Complex domain model, discriminated unions for events/commands |
-| Build | Vite + pnpm workspaces | Fast, monorepo-ready |
-| UI | React 19 | Existing experience, largest ecosystem |
-| UI state | Zustand (thin wrapper around the engine) | Engine stays framework-free |
-| Map rendering | SVG + react-zoom-pan-pinch | Crisp at any zoom, easy hit-testing |
-| Auto-layout | elkjs (optional) | Graph layout for locations without a book layout |
-| Drag and drop | dnd-kit | Touch-friendly for tablet |
-| i18n | i18next | UI strings; card text comes from ArkhamDB per language |
-| Persistence | IndexedDB via Dexie behind a `GameStore` interface | localStorage is limited to ~5 MB and synchronous; cloud storage comes later as a second adapter |
-| Validation | zod | Check scenario definitions and imported saves |
-| Offline | vite-plugin-pwa (Workbox) | Cache-first for card images |
-| Tests | Vitest, Playwright | Engine unit and table tests, E2E |
-| Repo / CI | GitHub + GitHub Actions | Tests on every push, deploy to Pages |
+`ctx` (`EngineContext`, `packages/engine/src/cards.ts`) carries what is code or static data: the `CardDb`, the scenario's `hooks` and the card `effects`. Nothing in it is part of the saved state.
 
-**Repository structure**
+**Principles** (each buys the benefit after the dash):
 
-```
-arkham-companion/
-  packages/
-    engine/       # pure TS core: state, commands, events, rule modules
-    carddata/     # ArkhamDB adapter, normalisation, fetch script
-    scenarios/    # scenario definitions, one folder per campaign
-      core-2026/
-        campaign.ts
-        spreading-flames/
-  apps/
-    web/          # React PWA
-```
+1. **Assistant, not referee.** The app suggests, players confirm, and every state can be corrected with `ManualAdjust` – a rules bug or a house rule never blocks a game night.
+2. **Pure, deterministic engine.** Same state plus same command gives the same events; randomness only through the seeded RNG in the state – rules are fast to test, and every game can be reproduced.
+3. **Event sourcing.** Every change is an event in the log – undo, refresh recovery, export, bug reports and later sync all come from one mechanism.
+4. **Data separate from rules.** Card data comes from ArkhamDB at build or run time – errata and translations need no code change, and nothing copyrighted is committed.
+5. **Generic before specific.** What two scenarios need becomes an engine primitive – each new scenario gets cheaper.
+6. **Seams before features.** Card effects, cloud sync and auto-layout have an interface before they have an implementation – something playable early, no rewrites later.
 
-## 5. Domain model
+**Technology:** TypeScript (strict) in a pnpm workspace; Vite, React 19, React Router (hash routes for static hosting), Zustand, i18next, vite-plugin-pwa; Dexie for IndexedDB; zod for external input (ArkhamDB JSON, imported saves); Vitest and Playwright.
 
-*Why:* modelling every physical card as one instance with exactly one zone means "where is this card?" always has a single answer. Every rule, every UI panel and every invariant test relies on that; moving a card anywhere is the same operation.
+## Pieces
 
-Core idea: **every physical card on the table is a `CardInstance`** with a unique ID, card code and current zone. Multiple copies (e.g. 4× *Fire!*) are separate instances.
+### Game state
 
-```ts
-type Zone =
-  | { kind: 'encounterDeck' } | { kind: 'encounterDiscard' }
-  | { kind: 'setAside' } | { kind: 'victoryDisplay' } | { kind: 'outOfGame' }
-  | { kind: 'agendaDeck' } | { kind: 'actDeck' }
-  | { kind: 'location'; mapId: MapId }                    // location card on a map
-  | { kind: 'atLocation'; locationId: InstanceId }         // unengaged enemy at a location
-  | { kind: 'engaged'; investigatorId: string }
-  | { kind: 'threatArea'; investigatorId: string }
-  | { kind: 'attachedTo'; hostId: InstanceId };           // attachment to location/enemy/agenda
+**What:** the whole table as one serialisable value, `GameState`. Every physical card is one `CardInstance` with a unique ID, its card code and exactly one `Zone`; four copies of a card are four instances.
 
-interface CardInstance {
-  id: InstanceId; code: string;        // ArkhamDB code, e.g. '12106'
-  zone: Zone; faceUp: boolean;          // unrevealed/revealed or front/back
-  exhausted: boolean;
-  tokens: Partial<Record<'doom'|'clue'|'damage'|'horror'|'resource', number>>;
-  flags: Record<string, unknown>;       // scenario-specific markers
-}
+**Where:** `packages/engine/src/state.ts` (`GameState`, `CardInstance`, `Investigator`, `GameMeta`, `Decision`), `zone.ts`, `map.ts` (`GameMap`, `Edge`), `ids.ts` (branded IDs), `invariants.ts`.
 
-interface Investigator {
-  id: string; code: string; name: string; seat: number;
-  locationId?: InstanceId;
-  health: { max: number; damage: number };
-  sanity: { max: number; horror: number };
-  clues: number; resources: number;
-  doomOnPlayerCards: number;   // doom on player cards the app does not model
-  status: 'active' | 'resigned' | 'defeated';
-}
+**Extend it:** add a field to the type with a doc comment, give it a value in `emptyState()` and in the reducer case that creates it, and add its rule to `checkInvariants` if it can become inconsistent. A new kind of place for cards is a new `Zone` kind plus its key in `zoneKey` (`zone.ts`) and its reference check in `validateZone` (`placement.ts`).
 
-interface Board {
-  maps: Record<MapId, GameMap>;  // e.g. two parallel maps
-  slots: Record<SlotId, { mapId: MapId; x: number; y: number }>;
-  placement: Record<InstanceId, SlotId | { x: number; y: number }>;
-  layoutMode: 'book' | 'auto';
-}
+**Must stay true** (`checkInvariants`, run after every command in the end-to-end test): each card is in one zone and listed once in `order` for that zone; no token count is negative; every connection joins two known cards once; pending decisions and turns are well formed.
 
-interface GameMap {             // one map = its locations + their connections (map.ts)
-  name: string; visible: boolean;
-  connections: Edge[];          // explicit graph, incl. one-way edges
-}
+**Why:** "where is this card?" always has one answer, so moving a card anywhere is the same operation and every rule can rely on it. Values printed per investigator (clues, health, thresholds) are a `ScaledValue` resolved with the player count, not stored. Connections are an explicit graph on `GameMap`, not derived from where tiles sit, because they change during play, can be one-way and can span several maps; an edge is stored on the map named when it was added and movement ignores which map owns it.
 
-interface GameState {
-  meta: { scenarioId; difficulty; playerCount; seed; rngState; round; phase; leadInvestigator };
-  campaign?: CampaignLog;               // absent in standalone play
-  investigators: Investigator[];
-  cards: Record<InstanceId, CardInstance>;
-  order: Record<ZoneKey, InstanceId[]>; // order in decks/discards
-  board: Board;
-  chaosBag: ChaosToken[];
-  agenda: { current: InstanceId };  act: { current: InstanceId };
-  scenario: unknown;                    // typed per scenario (zod schema)
-  pending: Decision[];                  // open decisions for the players
-}
-```
+### Commands, events and the reducer
 
-Per-investigator values (clues on locations, enemy health, act thresholds) are computed at runtime from `playerCount`, not stored. Investigator stats (health, sanity) come from ArkhamDB and can be edited manually.
+**What:** a `Command` is a request that may be refused and may need card data or randomness. An `Event` is a fact that is always applied the same way. `handle` turns commands into events, `apply` folds events into state.
 
-**Map model**
+**Where:** `packages/engine/src/commands.ts`, `events.ts`, `handle.ts` (dispatch and the trigger loop) with one `handle_<area>.ts` per area (board, encounter, enemy, investigator, scenario), `reducer.ts` (`apply`, `replay`), `execute.ts`, `rejection.ts` (`Rejection` codes), `rng.ts`, `undo.ts`.
 
-*Why an explicit graph:* movement and hunter pathing depend on connections, which change during play and can be one-way or span several maps – none of that can be derived from where tiles sit on screen.
+**Extend it:** a new command is a type in `commands.ts` added to the `Command` union, a case in `handle.ts` that calls a handler in the matching `handle_<area>.ts`, and tests that call `handle` with it. Prefer reusing existing events; a new event is a type in `events.ts` with a reducer case. A new reason to refuse is a `RejectionCode` with its fields, so the UI can explain it.
 
-- **Connections are an explicit graph**, not derived from positions. ArkhamDB does not expose connection symbols in structured form, so they come from the scenario data pipeline below; the engine builds edges from the revealed/unrevealed state. Card effects can add or remove edges at runtime (`AddConnection`, `RemoveConnection`), including one-way edges. An edge is stored on exactly one map (the one named when it is added); its ends may be on other maps, and movement ignores which map owns it.
-- **Multiple maps:** a scenario can define several maps (parallel areas, a second board added mid-scenario). The UI shows them as tabs or side by side.
-- **Layout:** the scenario book layout is stored as slots (often a grid, sometimes free positions). Optionally, auto-layout arranges the graph with elkjs. Players can always drag locations manually.
-- **Randomised locations:** the setup DSL has `randomLocations(pool, slots)` using the seeded RNG, so it stays reproducible.
+**Must stay true:** all logic is in `handle`; `apply` never validates, generates IDs or draws random numbers, so replaying a log needs no card data and no RNG (`DeckShuffled` carries the new order). The RNG state lives in `GameMeta`, so redoing a command gives the same shuffle. One player command and its whole trigger chain is one undo group (`StoredEvent.commandId`).
 
-**Where scenario data comes from**
+**Why:** keeping all decisions in `handle` makes replay deterministic and cheap, and makes refused commands free: nothing is applied until the whole chain succeeded.
 
-*Why a layered pipeline:* no single source has everything. Taking each field from the best available source, with a manual override on top, avoids typing data by hand while still allowing every mistake to be fixed.
+### Triggers and card effects
 
-Per field, the first source that has it wins; every value can be overridden by hand.
+**What:** forced effects as code. A `TriggerHook` is `(ctx, state, event) => Command[]`. `ScenarioHooks` are the scenario's own (`afterDoomPlaced`, `onAgendaAdvance[code]`, `onActAdvance[code]`, `onRoundEnd`, `onCardEnters`); a `CardEffect` belongs to one card code (`onReveal`) and behaves the same in every scenario.
 
-1. **ArkhamDB:** card stats and text, encounter sets and quantities, agenda/act order (`stage`), doom and clue values, victory points, investigators. ArkhamDB has no connection symbols and no layout.
-2. **ArkhamCards campaign data** ([zzorba/arkham-cards-data](https://github.com/zzorba/arkham-cards-data)): scenario setup steps including `location_setup` grids (the book layout as rows of location codes, with arrows and annotations), chaos bags per difficulty, campaign log entries and resolutions. Imported at build time like the ArkhamDB data and not committed, since that repo carries no licence.
-3. **Card images:** connection symbols (a location's own symbol and the symbols it connects to) are only printed on the cards. A dev-time extraction step – a Claude Code task that reads the location images, or a script calling a vision model – writes them as JSON to `packages/scenarios/data/connections/<pack>.json`. It holds only card codes and symbol names, no card text, so it can be committed. Each extraction is reviewed once against a generated contact sheet before merging.
-4. **Manual:** the board's edit mode lets you add or remove connections, fix symbols and move slots. Edits are saved as a scenario override file, which can be exported and committed to the repo.
+**Where:** `packages/engine/src/triggers.ts`; the loop that runs them is in `handle.ts`. Scenarios set `ScenarioDefinition.hooks`; card scripts go in an `EffectsRegistry`. Both reach the engine through `EngineContext`.
 
-## 6. Engine: commands, events, decisions
+**Extend it:** a new trigger point is a field on `ScenarioHooks` or `CardEffect` and a case in `matchingTriggers` naming the event that fires it, with a test in `triggers.test.ts`. A new scripted card is an entry in the effects registry.
 
-*Why commands and events are separate:* a command is a request that may be rejected and may need card data or randomness; an event is a plain fact that is always applied the same way. Keeping all logic in command handling makes replay deterministic and cheap. *Why decisions:* where the rules give players a choice, the engine asks instead of guessing (principle 1), through one mechanism the UI shows as one dialog.
+**Must stay true:** hooks are pure and return commands, never events, so their effect is validated and can use card data and the RNG like a player command. After a command, hooks are matched per event (scenario hooks before card effects) and evaluated against the state after all of that command's events; their commands are handled depth first and append to the same event list. A refused follow-up refuses the original command (`triggeredCommandRejected`); more than `MAX_TRIGGERED_COMMANDS` refuses it with `triggerLoop`. `ManualAdjust` and `StartScenario` fire no triggers.
 
-**Flow:** the UI sends a `Command` → `handle(ctx, state, command)` validates it against the current state and returns the `Event`s (a `CommandRejected` leaves the state untouched) → `apply` folds them into the state → the store persists them. `execute` bundles the three steps atomically.
+**Why:** one bus for every forced effect means scenarios add rules without touching the engine, and the depth-first chain matches the order the rules resolve them in.
 
-- **Context first:** every engine function takes `ctx: EngineContext` as its first parameter. It carries the `CardDb` (`ctx.cards.get(code)` returns the engine's own `CardStats`, so the engine never loads card data itself), the scenario's trigger `hooks` and the card `effects`. Context holds code and static data, so none of it is in the serialisable state. Tests pass a small fake `CardDb`.
-- **Scaled values:** printed numbers that depend on the player count (health, clues, doom) are a `ScaledValue` (`{ fixed, perInvestigator }`), resolved in one place with `resolveValue(value, playerCount)`.
-- **Commands** (intent): scenario and board (`StartScenario`, `EndScenario`, `AddConnection`, `RemoveConnection`, `RevealLocation`, `ManualAdjust`), progress (`NextPhase`, `EndTurn`, `PlaceDoom`, `CheckDoomThreshold`, `AdvanceAgenda`, `AdvanceAct`), encounter (`DrawEncounter`, `DrawTopmostFromDiscard`, `FromSetAside`, `ShuffleInto`), enemies (`SpawnEnemy`, `EngageEnemy`, `DisengageEnemy`, `DamageEnemy`, `DefeatEnemy`, `ExhaustEnemy`, `ReadyEnemy`, `MoveHunters`, `MoveHunter`, `ResolveEnemyAttack`, `DealEnemyAttack`), investigators (`MoveInvestigator`, `DiscoverClues`, `AdjustInvestigator`, `Investigate`, `Fight`, `Evade`) and decisions (`RequestDecision`, `ResolveDecision`).
-- **Events** (facts): fine-grained, e.g. `CardMoved`, `TokensChanged`, `CardFlipped`, `ConnectionChanged`, `InvestigatorChanged`, `DeckShuffled` (carries the new order, so replay needs no RNG), `PhaseChanged`, `PhaseStepsChanged`, `AgendaAdvanced`, `ActAdvanced`, `DecisionRequested`, `DecisionResolved`, `ScenarioEnded`.
-- **Decisions:** where the engine cannot continue without an answer from the players – a rules choice (hunter tie, spawn location, effect target), a confirmation (advance agenda?) or the result of a skill test – it puts a `Decision` into `pending` instead of guessing. Kinds: `confirm`, `chooseInvestigator`, `chooseLocation`, `chooseCard`, `chooseOption`, `skillTestResult`. **Every option carries the commands it triggers**, so the mapping from answer to consequence is data and any module or scenario can raise a decision with `RequestDecision`. `ResolveDecision` emits `DecisionResolved`, then runs the option's commands like trigger follow-ups (validated, in the same undo group); if one is rejected, the answer is rejected and the decision stays pending. **A pending decision blocks** every other player command (`decisionPending`), except `ManualAdjust` and `ResolveDecision`; follow-ups of triggers and answers are not blocked. What players do on their own initiative (move, adjust tokens) are commands, not decisions.
-- **Attacks of opportunity** (Rules Reference): when the investigator whose turn is in progress takes an action the engine sees – `MoveInvestigator` (not with `ignoreConnections`), `Investigate`, or `EngageEnemy` – while ready enemies are engaged with them (ready massive enemies at their location included), `handle` checks the action is legal, raises one `confirm` decision per enemy (`attackOfOpportunity:<enemy>`) and holds the action (`ActionHeld`, `GameMeta.heldAction`): the attacks resolve after the action is paid for but before its effect. Its `attack` option runs `DealEnemyAttack` with the printed damage and horror, which the players may lower (`ResolveDecision.amounts`, soak); `skip` covers cards that do not provoke. The decisions can be answered in any order; once none is pending, the command that cleared the last one ends with `ActionResumed` and the action's own events (the move, the investigate test), or with `ActionDropped` and the reason when an attack defeated the investigator or the action has become illegal. Only player commands provoke: follow-ups of hooks and answers are rule consequences. `Fight`, `Evade` and `AdjustActions` never provoke (players count the actions the engine saw as well, so a -1 would ask twice).
-- **Skill tests** are resolved by the players with their own cards and chaos bag (§1). `Investigate`, `Fight` and `Evade` state the test (skill and difficulty, e.g. the location's shroud) in a `skillTestResult` decision with the options `pass`, `fail` and `failedBy:<n>`; the pass or fail commands apply the consequence (clue discovered, enemy damaged or exhausted and disengaged).
-- **Trigger bus:** forced effects are `ScenarioHooks` (`afterDoomPlaced`, `onAgendaAdvance[code]`, `onActAdvance[code]`, `onCardEnters`, `onRoundEnd`) and per-card `CardEffect`s (`onReveal`). A hook is `(ctx, state, event) -> Command[]`. After a command's events, `handle` matches them per event (order: event order, scenario hooks before card effects), evaluates hooks against the state after all of the command's events, and handles each returned command like a player command, depth first, appending its events to the same list. A rejected follow-up rejects the originating command (`triggeredCommandRejected`); more than 50 follow-ups reject it with `triggerLoop`. `ManualAdjust` and `StartScenario` fire no triggers.
-- **Agenda and act advance** run in two steps inside one command: first the doom or clue payment, `CardFlipped` and `AgendaAdvanced`/`ActAdvanced`, whose hook is the reverse side and sees the advancing card still current; then, after that chain, the card moves out of the game and the next one becomes current (`CurrentCardChanged`). On the last card the hook ends the scenario by returning `EndScenario`; the command's `resolution` is only a fallback. Agendas never advance on their own: `CheckDoomThreshold` (mythos step, or a card effect) raises a `confirm` decision and "no" is a table override asked again at the next check.
-- **Undo:** one player command with its whole trigger chain is one group of events (`StoredEvent.commandId`); undo deletes the last group and replays from the last snapshot. The RNG state is part of the game state, so redoing gives the same result.
-- **Randomness:** seeded PRNG (xoshiro128) in the state; every shuffle is reproducible.
+### Decisions
 
-**Engine rule modules**
+**What:** where the rules give the players a choice or the engine needs an answer (a hunter tie, a spawn location, "advance the agenda?", a skill test result), the engine puts a `Decision` into `GameState.pending` instead of guessing.
 
-| Module | Responsibility |
+**Where:** `packages/engine/src/decisions.ts` (`RequestDecision`, `ResolveDecision`, `skillTestDecision`, `confirmOptions`), `describe_decision.ts` (debug text), `skill_tests.ts` (`Investigate`, `Fight`, `Evade`), `attacks_of_opportunity.ts`.
+
+**Extend it:** raise one by returning a `RequestDecision` command (from a handler, hook or phase step) whose options each carry the commands they trigger. A new kind of question is a `DecisionKind` in `state.ts`; a new engine-raised prompt also gets its debug text in `describe_decision.ts`.
+
+**Must stay true:** every option carries its commands, so the mapping from answer to consequence is data. `ResolveDecision` runs the chosen option's commands like trigger follow-ups, in the same undo group; if one is refused, the answer is refused and the decision stays. A pending decision blocks every player command except `ManualAdjust` and `ResolveDecision`. An action that provokes attacks of opportunity is held (`ActionHeld`) until their decisions are answered, then resumes or is dropped.
+
+**Why:** one mechanism means one dialog in the UI, and any rule or scenario can ask without new plumbing.
+
+### Rounds, phases and turns
+
+**What:** the phase assistant. `NextPhase` runs the outstanding steps of the current phase (`GameMeta.steps`) or moves to the next phase and runs its steps; turns track who acts in the investigation phase.
+
+**Where:** `packages/engine/src/phases.ts` (`PhaseStepId`, the steps of each phase), `turns.ts` (`StartTurn`, `EndTurn`, `AdjustActions`), `enemies.ts` (enemy phase attacks), `hunters.ts`.
+
+**Extend it:** a new step is a `PhaseStepId` with its title in `PHASE_STEP_TITLES`, placed in the phase's step list in `phases.ts`, with the commands it runs.
+
+**Must stay true:** each step removes itself first (`PhaseStepsChanged`) and then runs its commands through `handle`; the loop stops as soon as a decision is pending, so the next `NextPhase` resumes with the following step. The first round starts in the investigation phase.
+
+**Why:** steps as data make the assistant resumable after any answer and let the UI show what is left in a phase.
+
+### Rule modules
+
+The rules themselves are spread over small modules, one per subject. Shared queries live with the subject they are about.
+
+| Subject | Files |
 | --- | --- |
-| Doom | Sum doom (agenda + cards in play + each investigator's player-card doom counter) against threshold, suggest advancing |
-| Act | Per-investigator clue thresholds, trigger reverse side |
-| Mythos | Place doom, draw in player order, surge, peril, reshuffle empty deck |
-| Enemy | Spawn, hunter path (shortest path over the graph, tie → decision), aloof, massive, retaliate/alert reminders, exhaust/ready |
-| Board | Connection graph, multiple maps, reveal, place clues, attachments, random placement |
-| Investigator | Health/horror/clues/resources, defeat check, prey criteria |
-| Keywords | Parser for keywords in card text (surge, peril, hunter, aloof, elite, victory X, spawn, prey, patrol …) |
-| Triggers | Event bus for forced effects: `afterDoomPlaced`, `onRoundEnd`, `onAgendaAdvance` |
-| Effects | Registry of card scripts keyed by card code; in v1 only board-changing cards |
+| Board: connections, reveal, maps, placement | `board.ts`, `handle_board.ts`, `placement.ts`, `map.ts` |
+| Doom, agenda and act | `doom.ts`, `handle_scenario.ts` |
+| Encounter deck: draws, surge, peril, revelation tests | `handle_encounter.ts` |
+| Enemies: spawn, engagement, prey, hunters, attacks | `spawn.ts`, `engagement.ts`, `hunters.ts`, `enemies.ts`, `handle_enemy.ts` |
+| Investigators: health, sanity, defeat, movement | `investigators.ts`, `handle_investigator.ts` |
+| Keywords the rules react to | `keywords.ts` (parsed by `@arkham/carddata`) |
+| Card lookups by ID and name | `lookup.ts`, `cards.ts` |
 
-**Phase assistant:** guides through mythos → investigation → enemy → upkeep. `NextPhase` runs the outstanding **steps** of the current phase (`GameMeta.steps`) or, with none left, moves to the next phase and runs its steps: mythos (place doom, check the doom threshold, one encounter draw per investigator in player order), enemy (hunters move, then one `enemyAttack` step per due attack in player order), upkeep (ready enemies, +1 resource, end of round). Each step first removes itself (`PhaseStepsChanged`), then runs its commands through `handle`, and the loop stops as soon as a decision is pending, so the next `NextPhase` after the answer resumes with the following step. Attacks are resolved by the players with `ResolveEnemyAttack` (assets may soak part of it), and `NextPhase` is rejected while one is due. Investigation offers the quick actions investigate, fight and evade as skill-test hand-offs; `EndTurn` only records the turn.
+The game rules each module implements are summarised in [rules.md](rules.md).
 
-## 7. Scenario plugins and setup changes
+### Scenarios
 
-*Why mostly declarative:* most of a scenario is setup data (which cards, where, how many). Data is easy to validate, review and generate from imports; code is reserved for the few truly special rules. *Benefit:* new scenarios are cheap, and the same setup steps handle mid-scenario changes.
+**What:** a scenario is mostly data, `ScenarioDefinition`: agenda and act decks, chaos bag per difficulty, reference card, setup steps, and `hooks` for the rules that need code. `compileSetup` turns it into one `StartScenario` command.
 
-A scenario is **mostly declarative** (data) with **TypeScript hooks** for special mechanics.
+**Where:** the types and the setup DSL are in `packages/engine/src/scenario.ts` and `setup.ts`; scenarios live in `packages/scenarios/src/<scenario>/` (today only the hand-entered test scenario `the_gathering/`). The app lists playable scenarios in `apps/web/src/scenarios/scenarioCatalog.ts`.
 
-```ts
-interface ScenarioDefinition {
-  id: 'core2026-spreading-flames';
-  packCode: 'core_2026';
-  encounterSets: string[];                 // ArkhamDB encounter_codes
-  chaosBag: Record<Difficulty, Token[]>;   // standalone default
-  agendaDeck: string[]; actDeck: string[];
-  maps: MapDefinition[];                   // slots (grid or free), book layout
-  connections: Record<LocationCode, ConnectionSpec>;
-  setup: SetupStep[];
-  campaignSetup?: (log: CampaignLog) => SetupStep[];
-  resolutions?: Record<string, ResolutionStep[]>;
-  hooks?: Partial<ScenarioHooks>;
-  actions?: ScenarioAction[];
-  stateSchema?: ZodSchema;
-}
-```
+**Extend it:** a new scenario is a folder with its definition, its hooks and an end-to-end test, plus an entry in the app's catalog. A setup instruction that two scenarios need is a new `SetupStep` kind in `setup.ts`; a mid-scenario change of the board uses the same steps (`compileMapStep` turns an `addMap` step into an `AddMap` command).
 
-**Setup DSL** – same steps for initial setup and mid-scenario changes:
+**Must stay true:** hooks return commands that run through the normal `handle` path. Game commands such as `MoveCard` and `AddMap` exist for hooks: unlike `ManualAdjust` they fire further triggers.
 
-- `putIntoPlay(location, slot?, faceUp?)`, `replaceLocation(old, new)`, `removeLocation`, `randomLocations(pool, slots)`
-- `addMap(mapId, locations, connections)` (a map is declared as one unit; mid-scenario, `compileMapStep` turns it into an `AddMap` command that takes the locations from outside play), `addConnection(a, b, oneWay?)`/`removeConnection(a, b)` for mid-scenario changes
-- `setAside(codes)`, `fromSetAside(codes, to: Zone)`
-- `buildEncounterDeck(sets, exclude)`, `shuffleInto(codes, 'encounterDeck')`
-- `placeTokens(target, type, n | perInvestigator(n))`
-- `spawn(enemy, at)`, `moveInvestigators(to)`, `removeFromGame(codes)`
+**Why:** data is easy to validate, review and later generate from imports; code is kept for the few truly special rules.
 
-**Spreading Flames primitives:** skull token depends on act number (chaos module reads state); `DrawEncounter` with `from: 'discard'` and a `name` match for *Fire!*; parley `ScenarioAction` on agendas; `fromSetAside` when advancing to agenda 2; `afterDoomPlaced` trigger on agenda 3.
+### Card data
 
-**Hooks** return commands, which run through the normal `handle` path (validated, with access to card data and the RNG), never raw events. Game commands such as `MoveCard` and `AddMap` exist for them: unlike a `ManualAdjust` correction they are game events, so they fire further triggers (e.g. `onCardEnters`).
+**What:** the engine reads card numbers through `CardDb` (`ctx.cards.get(code)` returns `CardStats`) and never loads card data itself. `@arkham/carddata` fetches ArkhamDB packs, validates the raw JSON with zod and normalises it to `CardDef`; it also builds the investigator catalog.
 
-**Card effects – start simple:** encounter cards are displayed, keywords and spawn evaluated; board-changing cards get a script in the effects registry. More cards can be automated one by one later.
+**Where:** `packages/engine/src/cards.ts` (`CardStats`, `CardDb`, `EngineContext`), `packages/carddata/src/` (`schema.ts`, `fetch.ts`, `catalog.ts`, `keywords.ts`, `packs.ts`), the app's loader in `apps/web/src/catalog/`.
 
-## 8. Campaign mode
+**Extend it:** a new card field is read in `RawCardSchema`, normalised in `normaliseCard` and, only if a rule needs it, copied into `CardStats`.
 
-*Why:* the Core Set is a campaign – outcomes of one scenario change the next one's setup and the chaos bag. The paper campaign log is easy to lose or fill in wrongly; the app keeps it and applies it automatically.
+**Must stay true:** fetched JSON and images are never committed; they go to `packages/carddata/.cache/` or IndexedDB. Tests use invented cards or hand-entered numbers. The app refreshes with `If-Modified-Since` and keeps working offline from its cache.
 
-- **Campaign log:** investigators, trauma, XP, killed/insane, story records, chaos bag.
-- **Chaos bag:** standalone = scenario default per difficulty; campaign = from the log, modified by resolutions. Scenarios building on earlier ones read the log in `campaignSetup`.
-- **Resolutions:** declarative steps (`record`, `addChaosToken`, `removeChaosToken`, `awardXp`, `addTrauma`), confirmed by players.
-- Deck upgrades stay with the players.
+**Why:** ArkhamDB is the community reference with a public API, CORS and translations, so cards arrive accurate and in the players' language without copyrighted text in the repository.
 
-## 9. Card data from ArkhamDB
+### Persistence
 
-*Why ArkhamDB:* it is the community's reference database, has a free public API with CORS, includes encounter cards and has a German edition. Fetching at build/run time instead of committing keeps copyrighted text and images out of the repository.
+**What:** `GameStore` is the only way to save or load a game. It stores the event log and snapshots, replays a game on load, groups undo by `commandId` and rejects a write whose `expectedSeq` doesn't match (optimistic concurrency for several tabs).
 
-- `GET /api/public/packs/`, `GET /api/public/cards/{pack_code}.json?encounter=1`, `GET /api/public/card/{code}`; images: `https://arkhamdb.com` + `imagesrc`/`backimagesrc`.
-- A script in `packages/carddata` fetches and normalises into `CardDef`. **Fetched JSON is generated in CI/build, not committed** (repo may become public).
-- Runtime refresh via `If-Modified-Since`, stored in IndexedDB. Images loaded at runtime, cached by the service worker; text-card fallback.
-- **Language configurable:** any language ArkhamDB offers via `<lang>.arkhamdb.com/api/` (e.g. `de`), per-card fallback to English. UI strings start with EN/DE; more can be added as translation files.
-- Card texts/images © Fantasy Flight Games.
+**Where:** the interface is `packages/engine/src/store.ts`; `apps/web/src/storage/IndexedDbStore.ts` implements it with Dexie (tables `games`, `events`, `snapshots`, `campaigns`, `cards`, `catalog`); `gameExport.ts` reads and writes the JSON export.
 
-## 10. Persistence and recovery
+**Extend it:** a new operation is a method on `GameStore` with its doc comment as the contract, implemented and tested in `IndexedDbStore`. A schema change bumps the Dexie `version()` with an `upgrade`; a change of the state shape bumps `STATE_VERSION`.
 
-*Why:* a tablet at the table gets refreshed, goes to sleep and runs out of battery. Writing every command before the screen updates means nothing is ever lost; the event log doubles as backup format and as the basis for later sync.
+**Must stay true:** only `IndexedDbStore` talks to IndexedDB. Every command is written before the UI updates. Game IDs are UUIDs and never device-bound, so they survive a later cloud store. localStorage holds only per-device settings.
 
-IndexedDB tables: `campaigns`, `games`, `events`, `snapshots` (every ~50 events), `cards`.
+**Why:** a tablet at the table gets refreshed and runs out of battery; writing the log first means nothing is lost, and the log doubles as export format and basis for sync.
 
-- Refresh = last snapshot + replay. Every command written before the UI updates.
-- `stateVersion` + migrations. JSON export/import. `BroadcastChannel` for multiple tabs. localStorage only for UI settings.
+### Web app
 
-**Later: cloud and multi-device sync** – `GameStore` interface from day one (`IndexedDbStore` now, `CloudStore` later); sync via the append-only event log with optimistic concurrency; login; backend TBD (Supabase / Firebase / Cloudflare). v1 prep: UUID `gameId`, timestamped events, no device-bound IDs.
+**What:** the React PWA: routes and screens, the Zustand app store that wraps the engine and the `GameStore`, the new game wizard and investigator picker, translations and settings.
 
-## 11. UI concept
+**Where:** `apps/web/src/` – `App.tsx` (routes), `screens/`, `state/appStore.ts`, `wizard/`, `picker/`, `i18n/`, `settings/`, `pwa/`, `styles/tokens.css`.
 
-*Why tablet landscape first:* the typical setup is one shared device in the middle of the table, replacing the physical scenario area. Large touch targets and drag-and-drop matter more than dense information.
+**Extend it:** a new screen is a route in `App.tsx` and a component in `screens/`; anything that changes a game goes through the app store, which sends engine commands and persists their events. Text goes into the i18n files in English and German, styles use the tokens, and UI changes extend an `@flow` E2E spec.
 
-Tablet landscape first. Header (round, phase, agenda/act, undo), map centre (pan/zoom, map tabs), investigator bar (steppers), encounter panel, decision dialog, card zoom, event log, campaign screen.
+**Must stay true:** components never mutate game state or touch storage directly; the app store is a factory around a `GameStore` so tests can inject an in-memory one. Markup is structure only; presentation is in CSS.
 
-**Game management**
+**Why:** a thin UI over a proven engine keeps UI problems and rules problems apart.
 
-- **Home screen:** saved games and campaigns, newest first, each with scenario, investigators, round/phase and last played. Actions: resume, rename, duplicate, delete, export.
-- **Two ways to start:** *New campaign* (campaign and difficulty → investigators → summary; plays the scenarios in order with a campaign log) and *Quick game* (any single scenario and difficulty → investigators → summary; standalone chaos bag, no log). Investigators are 1–4 in player order. Confirming runs the setup and opens the board.
-- **Resume** restores the exact state (snapshot + replay). **Load** imports a JSON export as a new saved game.
-- **Auto-save** on every command; there is no manual save.
+### Tests and debugging
 
-**Investigator picker** (inspired by the Mansions of Madness app)
+**What:** unit tests per engine module, table tests for invariants, and one end-to-end test per scenario that plays several rounds through a game-language driver.
 
-- Catalog of all investigators from ArkhamDB (`type_code = investigator`, all packs), deduplicated across true reprints (`duplicate_of_code`), parallel versions grouped with the original. Investigators revised for Chapter Two are **not** merged with their Chapter One version: both are listed, each with a chapter badge, and can be filtered by chapter.
-- Grid of portraits; filter by class, cycle/pack and "my collection" (owned packs, set once in settings); search by name.
-- Tap shows front and back with health, sanity, skills and ability; select assigns the next seat, drag reorders seats, remove frees one.
-- In campaign play investigators come from the campaign log; the picker only opens to replace killed or insane ones.
-- The catalog is fetched with the card data and cached in IndexedDB, so it works offline.
+**Where:** `packages/scenarios/src/the_gathering/end_to_end.test.ts` with its driver `test_table.ts` (`TestTable`); `formatBoard(ctx, state)` in `packages/engine/src/format_board.ts` renders the board as stable plain text for inline snapshots and failure messages; `checkInvariants` runs after every command there.
 
-## 12. Quality assurance
+**Extend it:** every rule change adds a step to the end-to-end test where the rule shows at the table, so reviewers see it in context.
 
-*Why this mix:* a rules bug discovered at the table costs a game night. The deterministic engine makes property tests and golden replays (full recorded games) cheap, and they catch whole classes of bugs that example tests miss.
+## Not built yet
 
-Engine unit tests, setup tests per scenario, property tests (no negative tokens, one zone per card, replay determinism), golden replays, Playwright E2E for refresh, GitHub Actions CI.
+Designs for pieces that have a task but no code. Each moves into "Pieces" with the PR that builds it.
 
-A scenario end-to-end test (`packages/scenarios/src/the_gathering/end_to_end.test.ts`) plays The Gathering for a few rounds through a game-language test driver (`TestTable`), checking invariants after every command and replaying the event log at the end; each engine feature extends it, so reviewers see the feature in context. For debugging, `formatBoard(ctx, state)` (engine, `format_board.ts`) renders the board as stable plain text – agenda/act, maps and locations with investigators, enemies and connections, investigators, encounter piles, victory display and pending decisions, by card name. It is pure (returns a string, never prints), so tests use it in inline snapshots and failure messages.
+### Campaign mode (M1C, M5)
 
-## 13. Repository and publishing
+- **Campaign log:** investigators, trauma, XP, killed or insane, story records, chaos bag. `GameState.campaign` is a stub until then.
+- **Chaos bag:** standalone uses the scenario default per difficulty; a campaign uses the log, modified by resolutions. Scenarios that build on earlier ones read the log in `campaignSetup`.
+- **Resolutions:** declarative steps (`record`, `addChaosToken`, `removeChaosToken`, `awardXp`, `addTrauma`), confirmed by the players. Deck upgrades stay with the players.
 
-Private GitHub repo, possibly public later. Before going public: no card text/images committed, MIT licence (`LICENSE`), an unofficial-fan-project notice. Hosting via GitHub Pages or Cloudflare Pages.
+### Scenario data pipeline (M4)
 
-## 14. Roadmap
+No single source has everything, so each field comes from the first source that has it, with a manual override on top:
 
-Each milestone has a task plan under `docs/tasks/`, one task per Claude Code session. Every milestone file opens with *Why this milestone* (problem, gain, timing) and every task has a *Why* and a *Benefit* line.
+1. **ArkhamDB:** card stats and text, encounter sets and quantities, agenda and act order, doom and clue values, victory points, investigators. No connection symbols and no layout.
+2. **ArkhamCards campaign data** ([zzorba/arkham-cards-data](https://github.com/zzorba/arkham-cards-data)): setup steps including `location_setup` grids (the book layout), chaos bags per difficulty, campaign log entries and resolutions. Imported at build time and not committed, since that repo carries no licence.
+3. **Card images:** connection symbols are only printed on the cards. A dev-time extraction step (a Claude Code task or a vision-model script) writes them to `packages/scenarios/data/connections/<pack>.json`, card codes and symbol names only, reviewed once against a contact sheet.
+4. **Manual:** the board's edit mode adds or removes connections and moves slots, saved as a scenario override file that can be committed.
 
-**Ordering logic:** foundations → rules → screens → real content → polish → cloud. Rules come before screens because the screens only display engine state and send commands. Screens are built against a fake sandbox scenario so UI problems and real-data problems never have to be debugged at the same time. Comfort features and the cloud come last because none of them blocks playing.
+The engine then builds edges from the revealed state. The setup DSL gains `randomLocations(pool, slots)` (seeded RNG) and `replaceLocation`.
 
-```mermaid
-flowchart LR
-  M0[M0 Foundation] --> M1[M1 Engine] --> M1C[M1C Campaign engine] --> M2[M2 Game management] --> M3[M3 Play screen] --> M4[M4 First scenario] --> M5[M5 Core campaign]
-  M5 --> M6[M6 Comfort]
-  M5 --> M7[M7 Expansion]
-  M5 --> M8[M8 Cloud and sync]
-```
+### Board rendering (M3, M6)
 
-| Milestone | Content | Why at this point | What players get at the end |
-| --- | --- | --- | --- |
-| M0 Foundation | Monorepo, CI, card import, domain model, `GameStore`, app shell | Everything builds on it; these are the expensive decisions to change later | An installable app that keeps a (still empty) game across refreshes |
-| M1 Generic engine | Agenda/act/doom, encounter deck, map graph, enemies, investigators, threat area, undo, phase assistant; sandbox scenario; no UI | The UI is defined by the engine's commands and state | Nothing visible yet – a rules core that plays a whole fake scenario in tests |
-| M1C Campaign engine | Campaign log aggregate, change notices, chaos bag, resolutions, scenario start from the log, campaign storage; tested with *Night of the Zealot*; no UI | The screens (M2 wizard, M3 board, M5 campaign screen) display campaign state, so it must exist first | Nothing visible yet – The Gathering into The Midnight Masks runs in tests |
-| M2 Game management UI | Investigator catalog, home screen with saved games, new-game wizard with investigator picker, resume, export/import | Needs only engine setup, and gives M3 real saved games to work with | Pick investigators, start, leave and resume games on a tablet; back them up |
-| M3 Play screen UI | Header, map with pan/zoom, investigator bar, encounter panel, decision dialog, card zoom, event log; sandbox scenario playable on a tablet | Built on the proven engine with fake data, so only UI issues remain | A full game loop on a tablet (with the sandbox scenario) |
-| M4 Scenario data + first scenario | ArkhamCards layout import, connection symbol extraction, manual connection editor; *Spreading Flames* complete | Engine and UI are proven; now only data and scenario rules can break | The first real scenario, playable at the table; a recipe for every later one |
-| M5 Core campaign | Scenarios 2 and 3, campaign screen and resolution confirmation (on the M1C engine) | Reuses the M4 recipe | The complete Core Set campaign, no paper log needed |
-| M6 Comfort | Chaos bag module, card and UI languages, auto-layout, offline preload, polish | Nice to have, nothing blocks play | Cards in the group's language, reliable offline play, tidier maps, smoother app |
-| M7 Expansion | More Chapter Two products; more automated card effects | Driven by new releases and playtest findings | New content soon after release, less manual work per round |
-| M8 Cloud and sync | Login, games in the cloud, sync across devices at the table | Adds cost and operations; one tablet covers the core use case | Games backed up online, several devices showing the same live game |
+The book layout is stored as slots (a grid or free positions); the map is SVG with pan and zoom, several maps as tabs or side by side; elkjs auto-layout for maps without a book layout; dnd-kit for dragging locations on a tablet.
 
-## 15. Decisions and open questions
+### Cloud sync (M8)
 
-**Decided** (with the main reason)
-
-- One device in v1, sync in M8 – a backend adds cost and accounts; one shared tablet covers the main use case.
-- Investigator tracking (health, horror, clues, resources) – removes most physical tokens, and enemy rules (prey) need these values.
-- Encounter automation starts with display + keywords – keywords are generic and cover most rules; individual card scripts are added where playtests show they pay off.
-- Card language configurable – groups want screen text that matches their cards; ArkhamDB offers several languages.
-- Campaign mode in v1 – the Core Set is a campaign; standalone-only would miss its point.
-- React – existing experience and the largest ecosystem.
-- GitHub, possibly public – free CI and hosting; nothing copyrighted is committed, so going public stays possible.
-- Connection data from ArkhamDB → ArkhamCards layouts + image extraction → manual editor – no single source has connections, and hand-typing does not scale.
-- MIT licence – simple and permissive for a fan project.
-- Game management (M2) and play screen (M3) before the first real scenario – UI problems and real-data problems are then never debugged at the same time.
-
-**Open**
-
-1. Network for cloud sessions: allow `arkhamdb.com`, `de.arkhamdb.com` and `raw.githubusercontent.com` in the Claude Code environment so sessions can fetch card data and images (needed from M2 on).
-2. Import investigators from an ArkhamDB deck link in the new-game wizard?
+A second `GameStore` (`CloudStore`) next to `IndexedDbStore`; sync through the append-only event log with optimistic concurrency (`expectedSeq`); login; backend to be decided (Supabase, Firebase or Cloudflare). Already prepared: UUID game IDs, timestamped events, no device-bound IDs.

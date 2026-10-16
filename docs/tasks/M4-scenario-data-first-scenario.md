@@ -1,6 +1,6 @@
 # M4 – Scenario data pipeline + first scenario
 
-Goal: a repeatable way to turn a real scenario into data (architecture §5 "Where scenario data comes from"), then _Spreading Flames_ fully playable.
+Goal: a repeatable way to turn a real scenario into data (architecture "Scenario data pipeline"), then _Spreading Flames_ fully playable.
 
 **Why this milestone**
 
@@ -51,14 +51,14 @@ Rule: nothing from ArkhamDB or ArkhamCards is committed except card codes, symbo
 
 **Benefit:** One-tap setup of _Spreading Flames_.
 
-Ref: §7 example.
+Ref: architecture "Scenarios".
 
 - [ ] `ScenarioDefinition` for `core2026-spreading-flames`: encounter sets, agenda/act decks, maps from M4.1, connections from M4.2
 - [ ] Setup steps and set-aside cards; setup test against ArkhamDB quantities (via cached data, skipped offline)
 
 ## M4.5 Spreading Flames: special mechanics (O)
 
-**Why:** Every scenario has rules the generic engine does not cover. Implementing them shows which ones should become engine primitives (§2 "generic before specific").
+**Why:** Every scenario has rules the generic engine does not cover. Implementing them shows which ones should become engine primitives (architecture "Overview", "generic before specific").
 
 **Benefit:** The scenario plays correctly, not just its setup.
 

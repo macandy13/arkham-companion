@@ -1,6 +1,6 @@
 import type { InstanceId, InvestigatorId, MapId } from './ids';
 
-/** Where a card instance currently is (architecture §5). */
+/** Where a card instance currently is (architecture "Game state"). */
 export type Zone =
   | { kind: 'encounterDeck' }
   | { kind: 'encounterDiscard' }
