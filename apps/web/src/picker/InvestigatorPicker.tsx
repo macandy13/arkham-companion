@@ -28,7 +28,7 @@ interface InvestigatorPickerProps {
 }
 
 /**
- * Investigator picker (architecture §11): a filterable portrait grid, a detail sheet and the
+ * Investigator picker (product.md "UI concept"): a filterable portrait grid, a detail sheet and the
  * seat list. Tapping a portrait opens the sheet; "select" there assigns the next free seat.
  * The sheet opens inside the grid, right after the tapped portrait, so the player does not
  * have to scroll to the end of a long list to see it.

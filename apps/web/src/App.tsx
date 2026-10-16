@@ -19,7 +19,7 @@ interface AppProps {
 }
 
 /**
- * Screen routes inside a shared layout (architecture §11). Separate from `App` so tests
+ * Screen routes inside a shared layout (product.md "UI concept"). Separate from `App` so tests
  * can mount it in a `MemoryRouter`.
  */
 export function AppRoutes({ store, catalog }: AppProps) {

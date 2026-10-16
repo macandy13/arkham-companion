@@ -114,8 +114,8 @@ export interface MoveCard {
 }
 
 /**
- * Puts a new map into play mid-scenario (architecture §5 "a second board
- * added mid-scenario"), declared as one unit like setup's `addMap` step:
+ * Puts a new map into play mid-scenario (a second board, see architecture "Game
+ * state" and "Scenarios"), declared as one unit like setup's `addMap` step:
  * `compileMapStep` builds it from such a step. The `locations` are cards
  * outside play (typically set aside) that move onto the map in the given
  * order, as they are (set-aside locations stay unrevealed). The map's

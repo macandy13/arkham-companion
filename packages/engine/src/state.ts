@@ -10,7 +10,7 @@ export type TokenKind = 'doom' | 'clue' | 'damage' | 'horror' | 'resource';
 export const TOKEN_KINDS: readonly TokenKind[] = ['doom', 'clue', 'damage', 'horror', 'resource'];
 
 /**
- * One physical card on the table (architecture §5). Multiple copies of the same
+ * One physical card on the table (architecture "Game state"). Multiple copies of the same
  * card are separate instances sharing a `code`; the card's static data
  * (name, text, stats) is looked up by `code` in the `CardDb` of the `EngineContext`.
  */
@@ -352,7 +352,7 @@ export interface AmountRange {
   max?: number;
 }
 
-/** Campaign log – stub until campaign mode (architecture §8). */
+/** Campaign log – stub until campaign mode (product.md "Campaign mode"). */
 export interface CampaignLog {
   campaignId: string;
   /** Free-form campaign log entries ("The investigators …"). */

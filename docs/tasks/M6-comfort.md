@@ -8,9 +8,6 @@ Goal: quality-of-life features that make the app nicer at the table.
 - **What the app gains:** An app that is comfortable for German-speaking groups, reliable offline and polished enough to use every week.
 - **Why at this point:** None of these blocks playing, so they wait until the core product is complete (M5); each is small and independent.
 
-Model hint: **S** = Sonnet, **O** = Opus. Each task = one session = one PR.
-Start from the phone: Code tab → repo → `Do task M6.x from docs/tasks/M6-comfort.md`.
-
 ---
 
 ## M6.1 Chaos bag module (S)
@@ -19,7 +16,7 @@ Start from the phone: Code tab → repo → `Do task M6.x from docs/tasks/M6-com
 
 **Benefit:** No bag needed if players want that, and current token values are always shown correctly.
 
-Ref: §8.
+Ref: product.md "Campaign mode".
 
 - [ ] Optional module (off by default): draw, seal, return; symbol effects with current values (e.g. act number)
 - [ ] Bag from campaign log or scenario default
@@ -63,7 +60,7 @@ Ref: §8.
 
 ## M6.6 ArkhamDB deck import (S) – if decided
 
-**Why:** Groups that build decks on ArkhamDB already have their investigator choice there (open question §15.2).
+**Why:** Groups that build decks on ArkhamDB already have their investigator choice there (product.md "Decisions and open questions", open question 2).
 
 **Benefit:** Faster game setup for those groups.
 

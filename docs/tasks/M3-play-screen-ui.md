@@ -1,15 +1,12 @@
 # M3 – Play screen UI
 
-Goal: the in-game screen from architecture §11, wired to the M1 engine, so the sandbox scenario is playable on a tablet.
+Goal: the in-game screen from product.md "UI concept", wired to the M1 engine, so the sandbox scenario is playable on a tablet.
 
 **Why this milestone**
 
 - **Problem:** This is the screen used for the whole evening – the actual product experience. It has to make the engine's state readable and changeable with a few taps on a shared tablet.
 - **What the app gains:** A complete, playable game loop on a tablet: phases, map, investigators, encounter deck, decisions, undo.
 - **Why at this point:** It is built against the sandbox scenario so UI problems are separated from real-scenario data problems. M4 then only adds data and scenario-specific rules on top of a proven screen.
-
-Model hint: **S** = Sonnet, **O** = Opus. Each task = one session = one PR.
-Start from the phone: Code tab → repo → `Do task M3.x from docs/tasks/M3-play-screen-ui.md`.
 
 All UI actions dispatch engine commands through the Zustand store; no component mutates state.
 
@@ -41,7 +38,7 @@ All UI actions dispatch engine commands through the Zustand store; no component 
 
 **Benefit:** The whole scenario state is visible at a glance.
 
-Ref: §5 Map model.
+Ref: architecture "Game state" (connections) and product.md "Board rendering".
 
 - [ ] SVG board with pan/zoom/pinch (react-zoom-pan-pinch); slots from the scenario layout
 - [ ] Location tiles: name, revealed/unrevealed, shroud, clues, doom, attachments badge

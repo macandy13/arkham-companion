@@ -47,3 +47,52 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: npx --yes @lhci/cli@0.15.1 autorun
+
+  # Comments a review digest (packages/review_digest): the PR size against the budget in
+  # docs/coding-guidelines.md §7, changed engine and scenario lines no test runs, and the
+  # test names the PR adds and removes. Informational; the check job enforces tests and floors.
+  review-digest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      BASE: origin/${{ github.base_ref }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Check out the base branch next to the PR
+        run: |
+          echo "OUT=$RUNNER_TEMP/digest" >> "$GITHUB_ENV"
+          git worktree add "$RUNNER_TEMP/base" "$BASE"
+          cd "$RUNNER_TEMP/base" && pnpm install --frozen-lockfile
+      - name: Collect test lists, coverage and the diff
+        run: |
+          mkdir -p "$OUT"
+          (cd "$RUNNER_TEMP/base" && pnpm exec vitest list --json="$OUT/base_tests.json")
+          pnpm exec vitest list --json="$OUT/head_tests.json"
+          # A failing test or floor is the check job's to report; the digest still shows what ran.
+          pnpm exec vitest run --coverage --coverage.reporter=json --coverage.reportOnFailure \
+            --coverage.reportsDirectory="$OUT/coverage" || echo "::warning::Tests failed; see the check job."
+          git diff --unified=0 "$BASE...HEAD" > "$OUT/diff.txt"
+          git diff --numstat "$BASE...HEAD" > "$OUT/numstat.txt"
+      - name: Render the digest
+        run: >
+          node packages/review_digest/src/cli.ts
+          --base-tests "$OUT/base_tests.json" --base-root "$RUNNER_TEMP/base"
+          --head-tests "$OUT/head_tests.json" --head-root "$GITHUB_WORKSPACE"
+          --coverage "$OUT/coverage/coverage-final.json"
+          --diff "$OUT/diff.txt" --numstat "$OUT/numstat.txt"
+          --blob-url "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.event.pull_request.head.sha }}"
+          > "$OUT/digest.md"
+      - uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: review-digest
+          path: ${{ runner.temp }}/digest/digest.md

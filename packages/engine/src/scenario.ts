@@ -4,7 +4,7 @@ import type { SkillModifierRegistry } from './skill_modifiers';
 import type { ScenarioHooks } from './triggers';
 
 /**
- * A scenario as data (architecture §7): its agendas and acts, chaos bag,
+ * A scenario as data (architecture "Scenarios"): its agendas and acts, chaos bag,
  * reference card and setup steps. `compileSetup` turns it into a
  * `StartScenario`. Resolutions and campaign variants join this type with the
  * tasks that need them.

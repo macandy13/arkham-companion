@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 import { SCREENCAST_STEP_MS } from './scripts/screencast/screencasts';
 
-// The app's primary device is a landscape tablet (architecture §11).
+// The app's primary device is a landscape tablet (product.md "UI concept").
 const tablet = {
   ...devices['Desktop Chrome'],
   viewport: { width: 1180, height: 820 },

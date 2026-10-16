@@ -1,6 +1,6 @@
 # M1 – Generic engine
 
-Goal: all generic rules from architecture §6 in `packages/engine`, driven only by commands and tested without any UI.
+Goal: all generic rules from architecture "Components" in `packages/engine`, driven only by commands and tested without any UI.
 At the end a hand-written **test scenario** – The Gathering from the original Core Set, with real card codes but hand-entered stats and no card text – can be played through a whole game in tests (it replaced the earlier invented sandbox scenario in M1.2).
 
 **Why this milestone**
@@ -8,9 +8,6 @@ At the end a hand-written **test scenario** – The Gathering from the original 
 - **Problem:** The rules for the scenario side (doom, agenda/act, encounter deck, map, enemies) are what makes the app useful – and what players most often get wrong at the table. They must be correct before anything is drawn on screen.
 - **What the app gains:** A complete, deterministic rules core that can play a whole (fake) scenario in tests. The UI milestones (M2/M3) then only present state and send commands; real scenarios (M4+) become mostly data plus a few hooks.
 - **Why at this point:** The UI is defined by the commands and state this milestone creates, so it has to exist first. A sandbox scenario with fake cards lets us test every rule quickly and without depending on real card data or copyrighted text while the rules are still changing.
-
-Model hint: **S** = Sonnet is enough, **O** = use Opus (design-heavy). Do tasks in order; each task = one session = one PR.
-Start from the phone: Code tab → repo → `Do task M1.x from docs/tasks/M1-engine.md`.
 
 Every task: new commands/events go through `handle` → `apply`, invariants keep passing, tests use invented cards or the hand-written Gathering scenario (hand-entered stats, no card text/JSON/images).
 
@@ -46,7 +43,7 @@ Follow-ups: treacheries with a revelation test (Crypt Chill, Grasping Hands, Rot
 
 - [x] End-to-end test continued toward a resolution (rounds 6 and 7 added to `end_to_end.test.ts`)
 - [x] Small readable table over 1-3 investigators (invariants and replay), written with `TestTable`
-- [x] Update §6 of `docs/architecture.md` if anything changed (it describes neither a golden playthrough nor the sandbox; no change)
+- [x] Update the engine sections of `docs/architecture.md` if anything changed (it describes neither a golden playthrough nor the sandbox; no change)
 - [ ] Play to a resolution (`ScenarioEnded`): blocked on the hooks below
 
 Done when: The Gathering plays through its implemented rules in tests; engine coverage >= 90 %.
@@ -65,7 +62,7 @@ Follow-ups: hooks for act 2 ("The Barrier") and act 3, agenda 2 and 3 reverse si
 
 **Benefit:** One generic pipeline computes the modified skill and difficulty for every test the engine raises (investigate, fight, evade, revelation and card tests), and the UI can show where each number comes from.
 
-Ref: §6 Phase assistant; M1.10 skill test hand-off.
+Ref: architecture "Rounds, phases and turns"; M1.10 skill test hand-off.
 
 - [x] Generic modifier pipeline: base skill + the players' modifier + chaos token modifier vs. difficulty
 - [x] Modifier sources: the scenario reference card (per difficulty: token values for skull, cultist, tablet, elder thing); everything else (committed icons, locations, cards in play, lasting effects) is one number the players enter (review #49)

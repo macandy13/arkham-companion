@@ -6,7 +6,7 @@ export interface CatalogCache {
   putCatalog(lang: string, catalog: CardCatalog): Promise<void>;
 }
 
-/** ArkhamDB hosts per UI language (architecture §9). */
+/** ArkhamDB hosts per UI language (architecture "Card data"). */
 const HOSTS: Record<string, string> = {
   en: 'https://arkhamdb.com',
   de: 'https://de.arkhamdb.com',

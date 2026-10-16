@@ -21,6 +21,62 @@ export default tseslint.config(
       ],
     },
   },
+  // CLAUDE.md ground rule: the engine and the scenarios are pure. Randomness comes from the
+  // seeded RNG in state, time and I/O from the app, so a game replays identically.
+  {
+    files: ['packages/engine/src/**/*.ts', 'packages/scenarios/src/**/*.ts'],
+    ignores: ['**/*.test.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['react', 'react-*', 'dexie', 'i18next', 'zustand', '@arkham/web', 'node:*'],
+              message: 'The engine is pure: no UI, storage, i18n or Node APIs (CLAUDE.md).',
+            },
+          ],
+        },
+      ],
+      'no-restricted-properties': [
+        'error',
+        { object: 'Math', property: 'random', message: 'Use the seeded RNG in state.' },
+        { object: 'Date', property: 'now', message: 'Time comes from the app, not the engine.' },
+      ],
+      'no-restricted-globals': [
+        'error',
+        ...['fetch', 'window', 'document', 'localStorage', 'indexedDB', 'console'].map((name) => ({
+          name,
+          message: 'The engine is pure and has no I/O; return a rejection or an event instead.',
+        })),
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'CatchClause > BlockStatement[body.length=0]',
+          message: 'Do not swallow errors: console.warn them with context or rethrow.',
+        },
+        {
+          selector: 'NewExpression[callee.name="Date"]',
+          message: 'Time comes from the app, not the engine.',
+        },
+      ],
+    },
+  },
+  // CLAUDE.md ground rule: storage only via GameStore, whose IndexedDB implementation is the
+  // one file allowed to touch Dexie.
+  {
+    files: ['apps/web/**/*.{ts,tsx}'],
+    ignores: ['apps/web/src/storage/IndexedDbStore.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [{ name: 'dexie', message: 'Use GameStore; only IndexedDbStore talks to Dexie.' }],
+        },
+      ],
+    },
+  },
   {
     files: ['apps/web/**/*.{ts,tsx}'],
     plugins: { 'react-hooks': reactHooks },

@@ -1,4 +1,4 @@
-/* Settings screen (architecture §11). */
+/* Settings screen (product.md "UI concept"). */
 #settings,
 #settings > section {
   display: grid;

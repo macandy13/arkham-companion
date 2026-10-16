@@ -1,4 +1,4 @@
-/* New game wizard (architecture §11). */
+/* New game wizard (product.md "UI concept"). */
 #app > main > ol {
   display: flex;
   flex-wrap: wrap;

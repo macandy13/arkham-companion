@@ -19,7 +19,7 @@ Never rely on memory alone for a rule. Quote the rule (short excerpt, with secti
 
 ## What to check
 
-- Read `docs/architecture.md` §5–§8 and the task file the change belongs to, then the changed code in `packages/engine` and `packages/scenarios`.
+- Read the engine and scenario sections of `docs/architecture.md` and the task file the change belongs to, then the changed code in `packages/engine` and `packages/scenarios`.
 - Phase order and timing (mythos → investigation → enemy → upkeep; what is skipped in round 1).
 - Doom, agenda and act thresholds, including per-investigator values and when advancing happens.
 - Encounter draws: draw order, surge, peril, empty deck reshuffle, revelation vs. spawn.
@@ -28,6 +28,16 @@ Never rely on memory alone for a rule. Quote the rule (short excerpt, with secti
 - Remember the app is "assistant, not referee": a place where the rules leave a choice must produce a `Decision`, not a silent pick.
 
 ## Output
+
+When you check a PR, start with a **rules claims table**: one row per claim from the PR description's _Rules claims_ list, plus any rule the diff changes that the list leaves out (mark those "not claimed").
+
+| Claim                                                   | Source                                | Verdict |
+| ------------------------------------------------------- | ------------------------------------- | ------- |
+| An evaded enemy stays exhausted through the enemy phase | `docs/rules.md` § Enemies, RR "Evade" | correct |
+
+Verdicts: **correct**, **wrong** (with a finding below), **unverified** (no authoritative source found). This table goes into the PR as a comment, so the reviewer checks claims instead of code.
+
+Then the findings:
 
 A short list, most important first. For each finding:
 

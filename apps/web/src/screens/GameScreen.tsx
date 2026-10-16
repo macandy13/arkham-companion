@@ -9,7 +9,7 @@ import './game.css';
 
 /**
  * Route `/game/:id`: loads the game named in the URL (so deep links and reloads work)
- * and shows the board layout of architecture §11 as placeholders.
+ * and shows the board layout of product.md "UI concept" as placeholders.
  */
 export function GameScreen({ store }: { store: StoreApi<AppState> }) {
   const { t } = useTranslation();
