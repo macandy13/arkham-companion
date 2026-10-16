@@ -1,4 +1,4 @@
-/* Investigator picker (architecture §11). Styled by structure inside #investigator-picker. */
+/* Investigator picker (product.md "UI concept"). Styled by structure inside #investigator-picker. */
 #investigator-picker {
   display: grid;
   gap: var(--space-3);

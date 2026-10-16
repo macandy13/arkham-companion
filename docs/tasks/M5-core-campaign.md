@@ -1,16 +1,13 @@
 # M5 – Core campaign
 
 Goal: the full three-scenario introductory campaign of `core_2026`, with campaign log and chaos bag carried between scenarios.
-Ref: architecture §8. Builds on the campaign engine (M1C).
+Ref: product.md "Campaign mode". Builds on the campaign engine (M1C).
 
 **Why this milestone**
 
 - **Problem:** The Core Set is a three-scenario campaign: choices and outcomes in one scenario change the setup of the next, and the chaos bag evolves. Today this is tracked on paper and often gets lost or mis-recorded.
 - **What the app gains:** The complete Core Set experience, and campaign infrastructure (log, resolutions, chaos bag carry-over) reused by every future campaign.
 - **Why at this point:** The scenario pipeline and one real scenario (M4) are proven, so the remaining two scenarios should mostly be data.
-
-Model hint: **S** = Sonnet, **O** = Opus. Each task = one session = one PR.
-Start from the phone: Code tab → repo → `Do task M5.x from docs/tasks/M5-core-campaign.md`.
 
 ---
 

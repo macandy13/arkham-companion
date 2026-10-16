@@ -1,4 +1,4 @@
-/* Play screen board layout (architecture §11); replaces the page's usual content column. */
+/* Play screen board layout (product.md "UI concept"); replaces the page's usual content column. */
 #app > main:has(#board) {
   max-width: none;
   padding: 0;

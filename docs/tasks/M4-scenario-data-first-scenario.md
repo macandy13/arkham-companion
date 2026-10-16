@@ -1,15 +1,12 @@
 # M4 – Scenario data pipeline + first scenario
 
-Goal: a repeatable way to turn a real scenario into data (architecture §5 "Where scenario data comes from"), then _Spreading Flames_ fully playable.
+Goal: a repeatable way to turn a real scenario into data (product.md "Scenario data pipeline"), then _Spreading Flames_ fully playable.
 
 **Why this milestone**
 
 - **Problem:** The engine is generic, but a real scenario needs its map layout, location connections and special rules. ArkhamDB has no connection or layout data, and typing it by hand for every scenario does not scale.
 - **What the app gains:** A repeatable data pipeline (import → extract → review → fix in-app) plus the first real, table-ready scenario. The pipeline is reused for every later scenario (M5, M7).
 - **Why at this point:** Engine and UI are already proven with the sandbox, so anything that breaks now is data or scenario rules – much easier to diagnose.
-
-Model hint: **S** = Sonnet, **O** = Opus. Each task = one session = one PR.
-Start from the phone: Code tab → repo → `Do task M4.x from docs/tasks/M4-scenario-data-first-scenario.md`.
 
 Rule: nothing from ArkhamDB or ArkhamCards is committed except card codes, symbol names and our own layout/override files.
 
@@ -54,14 +51,14 @@ Rule: nothing from ArkhamDB or ArkhamCards is committed except card codes, symbo
 
 **Benefit:** One-tap setup of _Spreading Flames_.
 
-Ref: §7 example.
+Ref: architecture "Scenarios".
 
 - [ ] `ScenarioDefinition` for `core2026-spreading-flames`: encounter sets, agenda/act decks, maps from M4.1, connections from M4.2
 - [ ] Setup steps and set-aside cards; setup test against ArkhamDB quantities (via cached data, skipped offline)
 
 ## M4.5 Spreading Flames: special mechanics (O)
 
-**Why:** Every scenario has rules the generic engine does not cover. Implementing them shows which ones should become engine primitives (§2 "generic before specific").
+**Why:** Every scenario has rules the generic engine does not cover. Implementing them shows which ones should become engine primitives (architecture "Overview", "generic before specific").
 
 **Benefit:** The scenario plays correctly, not just its setup.
 

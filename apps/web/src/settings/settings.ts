@@ -21,7 +21,7 @@ export type CardLanguage = (typeof CARD_LANGUAGES)[number];
 export const THEMES = ['dark', 'light'] as const;
 export type Theme = (typeof THEMES)[number];
 
-/** Per-device preferences; they live in localStorage, not with the games (architecture §10). */
+/** Per-device preferences; they live in localStorage, not with the games (architecture "Persistence"). */
 export interface Settings {
   /** Pack codes the player owns; drives the picker's "my collection" filter. */
   readonly ownedPacks: readonly string[];

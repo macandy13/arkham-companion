@@ -90,7 +90,7 @@ export function withStats(
 }
 
 /**
- * Prey criterion "lowest remaining health" (architecture §5). The prey helpers
+ * Prey criterion "lowest remaining health" (architecture "Game state"). The prey helpers
  * return every active investigator tied for the extreme, in the order given,
  * because the players, not the engine, break ties (M1.8/M1.9). Defeated and
  * resigned investigators never count; the result is empty if none is active.

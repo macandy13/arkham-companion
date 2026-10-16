@@ -1,8 +1,9 @@
 # CLAUDE.md – Arkham Companion
 
 Web companion app (PWA) that runs the scenario side of Arkham Horror LCG (Chapter Two, starting with `core_2026`).
-The full design is in `docs/architecture.md` – read the relevant section before changing architecture, don't re-derive it.
+`docs/architecture.md` describes the app as built: an overview, then one section per component (how it works and why, its key types, its extension points). Read the component you change before changing it, don't re-derive it, and update its section in the same PR when the change extends or alters it. Requirements, screens, the milestone plan and designs for what isn't built yet are in `docs/product.md`.
 Work is tracked in `docs/tasks/`. Each task file is self-contained.
+Game rules are summarised in `docs/rules.md` with links to the Rules Reference – check there before searching the web, and update it when a change corrects a rule.
 Code style and conventions (functions, comments, tests, markup, CSS, helpers) are in `docs/coding-guidelines.md` – follow them in every change.
 
 ## Ground rules
@@ -38,18 +39,20 @@ Before finishing a task: `pnpm typecheck && pnpm lint && pnpm test` must pass. A
 
 ## Workflow for tasks
 
+Each milestone file in `docs/tasks/` lists its tasks in order; do them in that order. A task heading's **(S)** means Sonnet is enough, **(O)** means use Opus (design-heavy). A task is one session, delivered as one or more small PRs. Start one from the phone: Code tab → repo → `Do task M1.x from docs/tasks/M1-engine.md`.
+
 1. Read the task file in `docs/tasks/` and only the architecture sections it references.
-2. Keep the change small and focused on that task; note follow-ups in the task file instead of doing them.
-3. Tick the task's checklist and add a short "Done" note when finished.
+2. Keep the change small and focused on that task: one reviewable idea per PR, within the size budget in `docs/coding-guidelines.md` §7 – split bigger tasks into a stack of PRs and list the slices in the task file first. Note follow-ups in the task file instead of doing them.
+3. Tick the task's checklist and add a short "Done" note when finished. Once a task and its follow-ups are finished and no open PR edits its section, move the section to the matching file in `docs/tasks/done/`, so sessions reading the task file only load open work.
 4. Open a PR against `main`. **The PR title is a Conventional Commit** – it becomes the squash commit and the changelog entry (Release Please):
    `feat(engine): add hunter movement (M1.8)`, `fix(web): …`, `docs: …`, `test: …`, `refactor: …`, `chore: …`, `ci: …`. Scope = package (`engine`, `carddata`, `scenarios`, `web`, `util`) when it fits.
-   **The PR description starts with the motivation** – why the PR exists and what it is trying to accomplish – before any list of changes. Follow `.github/pull_request_template.md`.
+   **The PR description starts with the motivation** – why the PR exists and what it is trying to accomplish – before any list of changes. Follow `.github/pull_request_template.md` and fill in its **Review map** (read first, rules claims, API changes, decisions for the reviewer, what to skip). Before opening, review your own diff against `REVIEW.md`.
 5. CI must be green: typecheck, lint, coverage floors, E2E, CodeQL. Check the PR preview link and the bundle-size comment for UI changes.
    **UI changes extend or add an `@flow` E2E spec** (rules in `docs/coding-guidelines.md` §3); the preview workflow records it and puts the screencast into the PR description.
 
 ## Subagents
 
-- `rules-checker` – after implementing or changing game rules, ask it to check the change against the official rules.
+- `rules-checker` – after implementing or changing game rules, ask it to check the change against the official rules. Post its rules claims table as a PR comment, and when it confirms a correction, update `docs/rules.md` in the same PR.
 - `test-writer` – to add missing unit/property tests, e.g. when coverage drops below the floor.
 
 More on the automation: `docs/automation.md`.
