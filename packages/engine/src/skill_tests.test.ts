@@ -61,7 +61,10 @@ const engagedWith = (investigator: typeof alice): Zone => ({
 });
 const at = (locationId: typeof study): Zone => ({ kind: 'atLocation', locationId });
 
-/** Alice in the revealed study (2 clues), with `cards` besides; still in setup, so no turn is needed. */
+/**
+ * Alice (willpower 2, intellect 4) in the revealed study (2 clues), with
+ * `cards` besides; still in setup, so no turn is needed.
+ */
 function aliceInStudyWith(cards: StartingCard[] = []): GameState {
   const board = startBoard(ctx, {
     maps: {
@@ -70,7 +73,13 @@ function aliceInStudyWith(cards: StartingCard[] = []): GameState {
         connections: [edge('study', 'hallway')],
       },
     },
-    investigators: [makeInvestigator({ id: 'alice', locationId: study })],
+    investigators: [
+      makeInvestigator({
+        id: 'alice',
+        locationId: study,
+        skills: { willpower: 2, intellect: 4, combat: 3, agility: 3 },
+      }),
+    ],
     cards,
     shuffleEncounterDeck: false,
   });
@@ -104,7 +113,9 @@ describe('Investigate', () => {
         prompt: 'decision.investigate',
         subject: study,
         decider: { kind: 'investigator', investigatorId: alice },
-        skillTest: { skill: 'intellect', difficulty: 3 },
+        skillTest: { skill: 'intellect', difficulty: 3, action: 'investigate' },
+        // The whole suggestion is covered in skill_modifiers.test.ts.
+        suggestion: expect.objectContaining({ skill: 4, difficulty: 3, outcome: 'pass' }),
         options: [
           {
             id: 'pass',
@@ -513,6 +524,7 @@ describe('revelation test', () => {
         subject: chill,
         decider: { kind: 'investigator', investigatorId: alice },
         skillTest: { skill: 'willpower', difficulty: 4 },
+        suggestion: expect.objectContaining({ skill: 2, difficulty: 4, outcome: 'fail' }),
         options: [
           { id: 'pass', label: 'decision.pass', commands: [discardChill] },
           { id: 'fail', label: 'decision.fail', commands: [discardChill] },

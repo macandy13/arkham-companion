@@ -41,6 +41,7 @@ const started: ScenarioStarted = {
       resources: 5,
       doomOnPlayerCards: 0,
       actionsRemaining: 3,
+      skills: { willpower: 3, intellect: 3, combat: 3, agility: 3 },
       status: 'active',
     },
   ],

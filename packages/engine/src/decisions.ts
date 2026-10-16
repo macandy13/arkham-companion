@@ -1,7 +1,9 @@
+import type { EngineContext } from './cards';
 import type { Command, RequestDecision, ResolveDecision } from './commands';
 import type { DecisionRequested, DecisionResolved } from './events';
 import type { InstanceId } from './ids';
 import { CommandRejected } from './rejection';
+import { withSuggestion } from './skill_modifiers';
 import type { AmountRange, Decider, Decision, DecisionOption, GameState, SkillTest } from './state';
 
 /** Commands that stay allowed while a decision is pending: corrections, and the answer itself. */
@@ -30,8 +32,13 @@ export function requestDecision(state: GameState, decision: Decision): DecisionR
   return [{ type: 'DecisionRequested', decision }];
 }
 
-/** `RequestDecision`: raises a scenario- or card-defined decision. */
+/**
+ * `RequestDecision`: raises a scenario- or card-defined decision. A card's
+ * skill test (`skillTestDecision`) is built without the state, so its
+ * suggestion is attached here, where the state is known.
+ */
 export function handleRequestDecision(
+  ctx: EngineContext,
   state: GameState,
   command: RequestDecision,
 ): DecisionRequested[] {
@@ -41,7 +48,7 @@ export function handleRequestDecision(
   const optionIds = new Set(decision.options.map((option) => option.id));
   if (decision.options.length === 0 || optionIds.size !== decision.options.length)
     throw new CommandRejected({ code: 'invalidDecisionOptions', decisionId: decision.id });
-  return [{ type: 'DecisionRequested', decision }];
+  return [{ type: 'DecisionRequested', decision: withSuggestion(ctx, state, decision) }];
 }
 
 /** `ResolveDecision`: the decision is cleared; the option's commands follow via `answerCommands`. */

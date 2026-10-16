@@ -32,6 +32,7 @@ import { handleMoveHunter, handleMoveHunters } from './hunters';
 import { agendaThresholdDecision } from './doom';
 import { handleNextPhase, handleResolveEnemyAttack, nextStepPlan } from './phases';
 import { handleEvade, handleFight, handleInvestigate } from './skill_tests';
+import { handleAddLastingEffect, handleEndLastingEffect } from './lasting_effects';
 import {
   actionsAdjusted,
   BASE_ACTIONS_PER_TURN,
@@ -286,11 +287,15 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
     case 'MoveHunter':
       return handleMoveHunter(ctx, state, command);
     case 'RequestDecision':
-      return handleRequestDecision(state, command);
+      return handleRequestDecision(ctx, state, command);
     case 'ResolveDecision':
       return handleResolveDecision(state, command);
     case 'CheckDoomThreshold':
       return agendaThresholdDecision(ctx, state);
+    case 'AddLastingEffect':
+      return handleAddLastingEffect(state, command);
+    case 'EndLastingEffect':
+      return handleEndLastingEffect(state, command);
     case 'NextPhase':
       return handleNextPhase(ctx, state);
     case 'StartTurn':

@@ -1,5 +1,6 @@
 import type { SetupStep } from './setup';
 import type { ChaosToken, Difficulty } from './state';
+import type { SkillModifierRegistry } from './skill_modifiers';
 import type { ScenarioHooks } from './triggers';
 
 /**
@@ -25,6 +26,12 @@ export interface ScenarioDefinition {
    * them to the engine as `EngineContext.hooks` for the whole scenario.
    */
   hooks?: Partial<ScenarioHooks>;
+  /**
+   * The scenario's skill test modifiers in code (a "-X" token value, a
+   * scenario-wide rule). Like `hooks`, the app passes them as
+   * `EngineContext.modifiers`, and `reference` as `EngineContext.reference`.
+   */
+  modifiers?: SkillModifierRegistry;
 }
 
 /** The chaos tokens whose effect each scenario defines on its reference card. */
@@ -40,8 +47,8 @@ export type ReferenceSide = 'easyStandard' | 'hardExpert';
  * The scenario reference card as data: per side, the effect of each symbol
  * token the scenario uses (a token missing from a side has no special effect
  * there). Only numbers and translation keys – no card text – so it can be
- * committed. Resolving a revealed token is a later task; this only records
- * what the card says.
+ * committed. Skill test suggestions read the `modifier` of a revealed token
+ * from here (`skillTestSuggestion`); the rest of the effect stays with the players.
  */
 export type ScenarioReference = Record<
   ReferenceSide,

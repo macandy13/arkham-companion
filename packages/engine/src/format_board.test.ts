@@ -3,6 +3,7 @@ import {
   formatBoard,
   instanceId,
   investigatorId,
+  lastingEffectId,
   mapId,
   type GameState,
   type StartScenario,
@@ -36,7 +37,7 @@ const ctx = contextWith(
 );
 
 /**
- * Alice in the revealed Hall (3 clues) with a damaged, exhausted Ghoul engaged
+ * Alice (intellect 4) in the revealed Hall (3 clues, no shroud) with a damaged, exhausted Ghoul engaged
  * and Dread in her threat area and attached to the Hall; Bob next door in the unrevealed Attic, which
  * only connects one way back to the Hall. The Plan holds 1 of its 2 doom.
  */
@@ -47,7 +48,14 @@ const start: StartScenario = {
   seed: 1,
   shuffleEncounterDeck: false,
   investigators: [
-    makeInvestigator({ id: 'alice', name: 'Alice', seat: 0, locationId: hall, clues: 1 }),
+    makeInvestigator({
+      id: 'alice',
+      name: 'Alice',
+      seat: 0,
+      locationId: hall,
+      clues: 1,
+      skills: { willpower: 3, intellect: 4, combat: 2, agility: 1 },
+    }),
     makeInvestigator({ id: 'bob', name: 'Bob', seat: 1, locationId: attic }),
   ],
   maps: { [manor]: { name: 'Manor', connections: [edge('attic', 'hall', { oneWay: true })] } },
@@ -120,6 +128,27 @@ describe('formatBoard', () => {
         "  Advance agenda The Plan yes / no [confirm]",
       ]
     `);
+  });
+
+  it('shows the suggested values of a pending skill test and the lasting effects', () => {
+    const state = stateAfter(
+      ctx,
+      startedBoard(),
+      {
+        type: 'AddLastingEffect',
+        effect: {
+          id: lastingEffectId('fog'),
+          label: 'Fog',
+          until: 'endOfRound',
+          appliesTo: { locationId: hall },
+          modifier: { target: 'difficulty', amount: 2 },
+        },
+      },
+      { type: 'Investigate', investigatorId: alice },
+    );
+
+    expect(formatBoard(ctx, state).split('
+').slice(-4)).toMatchInlineSnapshot();
   });
 
   it('shows the turn in progress, the turns taken and the actions left', () => {

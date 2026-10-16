@@ -1,5 +1,5 @@
 import type { CommandType, EncounterMatch, EncounterSource } from './commands';
-import type { DecisionId, InstanceId, InvestigatorId, MapId } from './ids';
+import type { DecisionId, InstanceId, InvestigatorId, LastingEffectId, MapId } from './ids';
 import type { InvestigatorStat, Phase, TokenKind } from './state';
 
 /**
@@ -125,6 +125,15 @@ export type Rejection =
   | { code: 'unknownDecision'; decisionId: DecisionId }
   /** `ResolveDecision` with an option the decision does not have. */
   | { code: 'unknownOption'; decisionId: DecisionId; optionId: string }
+  /** `AddLastingEffect` with an id that is already in effect. */
+  | { code: 'duplicateLastingEffect'; effectId: LastingEffectId }
+  /** `EndLastingEffect` for an id that is not in effect. */
+  | { code: 'unknownLastingEffect'; effectId: LastingEffectId }
+  /**
+   * A skill test modifier or committed icon count that is not a whole number
+   * (icons also not negative, a lasting effect's modifier also not zero).
+   */
+  | { code: 'invalidModifierAmount'; amount: number }
   /** `NextPhase` while an enemy attack of the enemy phase still has to be resolved. */
   | { code: 'enemyAttackPending'; enemyId: InstanceId; investigatorId: InvestigatorId }
   /** `ResolveEnemyAttack` for an attack that is not an outstanding, due step. */
@@ -301,6 +310,12 @@ function describe(r: Rejection): string {
       return `no pending decision ${r.decisionId}`;
     case 'unknownOption':
       return `decision ${r.decisionId} has no option ${r.optionId}`;
+    case 'duplicateLastingEffect':
+      return `lasting effect ${r.effectId} is already in effect`;
+    case 'unknownLastingEffect':
+      return `lasting effect ${r.effectId} is not in effect`;
+    case 'invalidModifierAmount':
+      return `skill test modifier ${r.amount} is not allowed here`;
     case 'enemyAttackPending':
       return `the attack of ${r.enemyId} on ${r.investigatorId} must be resolved first`;
     case 'attackNotDue':
