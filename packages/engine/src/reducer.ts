@@ -1,13 +1,18 @@
+import { withoutKey } from '@arkham/util';
 import { sameEdge } from './board';
 import type {
   CardFlipped,
   CardMoved,
   ConnectionChanged,
   DeckShuffled,
+  DecisionRequested,
+  EnemyDefeated,
+  EnemyDisengaged,
+  EnemyEngaged,
   Event,
-  InvestigatorChanged,
   InvestigatorDefeated,
-  InvestigatorMoved,
+  MapAdded,
+  ScenarioEnded,
   ScenarioStarted,
   TokensChanged,
 } from './events';
@@ -16,7 +21,24 @@ import type { Edge } from './map';
 import { seedRng } from './rng';
 import { withStatDelta } from './investigators';
 import { emptyState, type CardInstance, type GameState, type Investigator } from './state';
-import { zoneKey, type ZoneKey } from './zone';
+import { zoneKey, type Zone, type ZoneKey } from './zone';
+
+/**
+ * A defeated investigator is out of the scenario; if it happens during their
+ * turn, the turn ends with them (it counts as taken), so the group can go on
+ * with the next investigator.
+ */
+function applyInvestigatorDefeated(state: GameState, event: InvestigatorDefeated): GameState {
+  const defeated = applyInvestigator(state, event, (inv) => ({ ...inv, status: 'defeated' }));
+  return state.meta.turn?.investigatorId === event.investigatorId
+    ? endTurn(defeated, event.investigatorId)
+    : defeated;
+}
+
+function endTurn(state: GameState, investigatorId: Investigator['id']): GameState {
+  const meta = withoutKey(state.meta, 'turn');
+  return { ...state, meta: { ...meta, turnsTaken: [...meta.turnsTaken, investigatorId] } };
+}
 
 /** Pure reducer: applies one event and returns the next state. Never mutates `state`. */
 export function apply(state: GameState, event: Event): GameState {
@@ -33,12 +55,67 @@ export function apply(state: GameState, event: Event): GameState {
       return applyCardFlipped(state, event);
     case 'ConnectionChanged':
       return applyConnectionChanged(state, event);
+    case 'MapAdded':
+      return applyMapAdded(state, event);
     case 'InvestigatorMoved':
       return applyInvestigator(state, event, (inv) => ({ ...inv, locationId: event.to }));
     case 'InvestigatorChanged':
       return applyInvestigator(state, event, (inv) => withStatDelta(inv, event.stat, event.delta));
     case 'InvestigatorDefeated':
-      return applyInvestigator(state, event, (inv) => ({ ...inv, status: 'defeated' }));
+      return applyInvestigatorDefeated(state, event);
+    case 'DecisionRequested':
+      return applyDecisionRequested(state, event);
+    case 'DecisionResolved':
+      return { ...state, pending: state.pending.filter((d) => d.id !== event.decisionId) };
+    case 'AgendaAdvanced':
+    case 'ActAdvanced':
+      return withoutDecisionsAbout(state, event.cardId);
+    case 'CurrentCardChanged':
+      return { ...state, [event.deck]: { current: event.cardId } };
+    case 'ScenarioEnded':
+      return applyScenarioEnded(state, event);
+    case 'EncounterCardDrawn':
+      return state;
+    case 'EnemyEngaged':
+      return applyEnemyMoved(state, event, {
+        kind: 'engaged',
+        investigatorId: event.investigatorId,
+      });
+    case 'EnemyDisengaged':
+      return applyEnemyMoved(state, event, { kind: 'atLocation', locationId: event.locationId });
+    case 'EnemyDefeated':
+      return applyEnemyDefeated(state, event);
+    case 'ExhaustChanged':
+      return updateCard(state, event.cardId, (card) => ({ ...card, exhausted: event.exhausted }));
+    case 'PhaseChanged':
+      return {
+        ...state,
+        meta: { ...state.meta, phase: event.phase, round: event.round, steps: event.steps },
+      };
+    case 'PhaseStepsChanged':
+      return { ...state, meta: { ...state.meta, steps: event.steps } };
+    case 'RoundEnded':
+      return { ...state, meta: { ...state.meta, turnsTaken: [] } };
+    case 'TurnStarted':
+      return {
+        ...state,
+        meta: {
+          ...state.meta,
+          turn: { investigatorId: event.investigatorId },
+        },
+      };
+    case 'ActionsAdjusted':
+      return applyInvestigator(state, event, (inv) => ({
+        ...inv,
+        actionsRemaining: inv.actionsRemaining + event.delta,
+      }));
+    case 'ActionsReset':
+      return applyInvestigator(state, event, (inv) => ({
+        ...inv,
+        actionsRemaining: event.actions,
+      }));
+    case 'TurnEnded':
+      return endTurn(state, event.investigatorId);
   }
 }
 
@@ -71,6 +148,8 @@ function applyScenarioStarted(e: ScenarioStarted): GameState {
     investigators: e.investigators,
     cards,
     order,
+    agenda: { current: order[zoneKey({ kind: 'agendaDeck' })]?.[0] },
+    act: { current: order[zoneKey({ kind: 'actDeck' })]?.[0] },
     board: { ...base.board, maps: e.maps },
     chaosBag: e.chaosBag,
   };
@@ -85,18 +164,50 @@ function applyDeckShuffled(state: GameState, e: DeckShuffled): GameState {
 }
 
 function applyCardMoved(state: GameState, e: CardMoved): GameState {
-  const card = state.cards[e.cardId];
+  return moveCard(state, e.cardId, e.to, e.index);
+}
+
+/** Moves a card to `to` (position `index`, default the end); unknown cards leave the state as is. */
+function moveCard(state: GameState, cardId: InstanceId, to: Zone, index?: number): GameState {
+  const card = state.cards[cardId];
   if (!card) return state;
-  // Remove from the card's actual zone; `e.from` is informational.
+  // Remove from the card's actual zone; the event's `from` is informational.
   const fromKey = zoneKey(card.zone);
-  const toKey = zoneKey(e.to);
-  let order = withZoneOrder(state.order, fromKey, without(state.order[fromKey] ?? [], e.cardId));
-  order = withZoneOrder(order, toKey, insertedAt(order[toKey] ?? [], e.cardId, e.index));
+  const toKey = zoneKey(to);
+  let order = withZoneOrder(state.order, fromKey, without(state.order[fromKey] ?? [], cardId));
+  order = withZoneOrder(order, toKey, insertedAt(order[toKey] ?? [], cardId, index));
   return {
     ...state,
-    cards: { ...state.cards, [e.cardId]: { ...card, zone: e.to } },
+    cards: { ...state.cards, [cardId]: { ...card, zone: to } },
     order,
   };
+}
+
+/** Engagement changes: the enemy moves and any open question about it is answered. */
+function applyEnemyMoved(state: GameState, e: EnemyEngaged | EnemyDisengaged, to: Zone): GameState {
+  return withoutDecisionsAbout(moveCard(state, e.enemyId, to), e.enemyId);
+}
+
+function applyEnemyDefeated(state: GameState, e: EnemyDefeated): GameState {
+  // The top of the discard is where "topmost" effects look; a defeated enemy keeps nothing it carried.
+  const moved = moveCard(state, e.enemyId, e.to, e.to.kind === 'encounterDiscard' ? 0 : undefined);
+  const cleared = updateCard(moved, e.enemyId, (card) => ({
+    ...card,
+    exhausted: false,
+    tokens: {},
+  }));
+  return withoutDecisionsAbout(cleared, e.enemyId);
+}
+
+/** Replaces one card with `update(card)`; unknown cards leave the state as is. */
+function updateCard(
+  state: GameState,
+  cardId: InstanceId,
+  update: (card: CardInstance) => CardInstance,
+): GameState {
+  const card = state.cards[cardId];
+  if (!card) return state;
+  return { ...state, cards: { ...state.cards, [cardId]: update(card) } };
 }
 
 function applyTokensChanged(state: GameState, e: TokensChanged): GameState {
@@ -133,10 +244,27 @@ function applyConnectionChanged(state: GameState, e: ConnectionChanged): GameSta
   };
 }
 
+function applyDecisionRequested(state: GameState, e: DecisionRequested): GameState {
+  return { ...state, pending: [...state.pending, e.decision] };
+}
+
+function applyMapAdded(state: GameState, e: MapAdded): GameState {
+  return { ...state, board: { ...state.board, maps: { ...state.board.maps, [e.mapId]: e.map } } };
+}
+
+function applyScenarioEnded(state: GameState, e: ScenarioEnded): GameState {
+  return { ...state, meta: { ...state.meta, resolution: e.resolution } };
+}
+
+/** Drops pending decisions about a card that has advanced or left play, so none outlives its subject. */
+function withoutDecisionsAbout(state: GameState, cardId: InstanceId): GameState {
+  return { ...state, pending: state.pending.filter((d) => d.subject !== cardId) };
+}
+
 /** Replaces the event's investigator with `update(investigator)`; unknown IDs leave the state as is. */
 function applyInvestigator(
   state: GameState,
-  event: InvestigatorMoved | InvestigatorChanged | InvestigatorDefeated,
+  event: { investigatorId: Investigator['id'] },
   update: (investigator: Investigator) => Investigator,
 ): GameState {
   return {

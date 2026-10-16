@@ -1,5 +1,5 @@
 import type { InvestigatorDef } from '@arkham/carddata';
-import { investigatorId, type Investigator } from '@arkham/engine';
+import { investigatorId, type StartingInvestigator } from '@arkham/engine';
 
 /** Resources every investigator starts a scenario with (rules reference, "Setup"). */
 const STARTING_RESOURCES = 5;
@@ -12,7 +12,7 @@ const STARTING_RESOURCES = 5;
 export function seatInvestigators(
   catalog: readonly InvestigatorDef[],
   codes: readonly string[],
-): Investigator[] {
+): StartingInvestigator[] {
   const byCode = new Map(catalog.map((def) => [def.code, def]));
   return codes
     .flatMap((code) => byCode.get(code) ?? [])
@@ -25,6 +25,7 @@ export function seatInvestigators(
       sanity: { max: def.sanity, horror: 0 },
       clues: 0,
       resources: STARTING_RESOURCES,
+      doomOnPlayerCards: 0,
       status: 'active',
     }));
 }
