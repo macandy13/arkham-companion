@@ -3,7 +3,7 @@
  * Adams, a fixed seed, five rounds. An integration narrative rather than a
  * rules test – it shows the engine features working together in a real
  * scenario (setup, the phase assistant, turns and actions, skill tests,
- * clues, the act 1 hook, doom and the agenda, encounter draws and revelation
+ * clues, undoing a mis-tapped move, the act 1 hook, doom and the agenda, encounter draws and revelation
  * tests, spawn instructions, engagement, hunters, attacks and upkeep) as one
  * session report: game-language steps on a `TestTable`, phase by phase and
  * turn by turn, with the facts a player would check at the table asserted
@@ -186,6 +186,15 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // Round 2 – investigation: Roland's turn (the Attic's shroud is 1)
     expect(table.nextPhase()).toBe('investigation');
     table.startTurn(roland);
+    // A mis-tapped move to the Parlor is taken back.
+    table.moveTo(roland, 'Parlor');
+
+    expect(table.investigatorLocations()).toMatchObject({ roland: 'Parlor' });
+
+    table.undo();
+
+    expect(table.investigatorLocations()).toMatchObject({ roland: 'Hallway' });
+
     table.moveTo(roland, 'Attic');
     table.investigate(roland);
     table.investigate(roland);

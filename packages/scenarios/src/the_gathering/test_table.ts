@@ -12,7 +12,9 @@ import {
   isInPlay,
   locationsNamed,
   optionNamed,
+  replay,
   mapId,
+  undoLastGroup,
   zoneKey,
   type CardInstance,
   type Command,
@@ -26,6 +28,12 @@ import {
   type ScenarioDefinition,
   type Zone,
 } from '@arkham/engine';
+
+/** An event with the id of the command that produced it, as the store's undo groups them. */
+interface LoggedEvent {
+  commandId: string;
+  event: Event;
+}
 
 /** What `TestTable.setUp` needs to start a scenario. */
 export interface TableOptions {
@@ -51,7 +59,8 @@ export interface TableOptions {
  */
 export class TestTable {
   private current: GameState = emptyState();
-  private readonly log: Event[] = [];
+  private log: LoggedEvent[] = [];
+  private commandCount = 0;
 
   private constructor(readonly ctx: EngineContext) {}
 
@@ -69,7 +78,7 @@ export class TestTable {
 
   /** Every event so far, setup included, in the order they were applied. */
   get events(): readonly Event[] {
-    return this.log;
+    return this.log.map((entry) => entry.event);
   }
 
   /** The board as text (`formatBoard`), for snapshots and failure messages. */
@@ -81,12 +90,24 @@ export class TestTable {
   play(command: Command): void {
     const result = execute(this.ctx, this.current, command);
     this.current = result.state;
-    this.log.push(...result.events);
+    const commandId = `command-${this.commandCount++}`;
+    this.log.push(...result.events.map((event) => ({ commandId, event })));
     const violations = checkInvariants(this.current);
     if (violations.length > 0)
       throw new Error(
         `${command.type} broke invariants: ${violations.join('; ')}\n${this.board()}`,
       );
+  }
+
+  /**
+   * Takes back the last command with everything it caused (the store's
+   * `undoLast`): its group leaves the log and the state is replayed from
+   * what remains. Fails with the board attached if there is nothing to undo.
+   */
+  undo(): void {
+    if (this.log.length === 0) throw new Error(`nothing to undo\n${this.board()}`);
+    this.log = undoLastGroup(this.log).kept;
+    this.current = replay(this.events);
   }
 
   /**

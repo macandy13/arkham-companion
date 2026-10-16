@@ -35,3 +35,4 @@ export {
   type TriggerHook,
 } from './triggers';
 export * from './store';
+export { undoLastGroup } from './undo';
