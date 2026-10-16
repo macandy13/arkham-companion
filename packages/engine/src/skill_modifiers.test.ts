@@ -17,7 +17,14 @@ import {
   type SkillTestContext,
   type StartingCard,
 } from './index';
-import { contextWith, fixed, makeCard, makeInvestigator, startBoard, stateAfter } from '../test/utils';
+import {
+  contextWith,
+  fixed,
+  makeCard,
+  makeInvestigator,
+  startBoard,
+  stateAfter,
+} from '../test/utils';
 
 const alice = investigatorId('alice');
 const study = instanceId('study');
@@ -36,9 +43,10 @@ const cards = contextWith(
 );
 
 /** Alice (willpower 2, intellect 4, combat 3, agility 1) in the study, with `extra` cards. */
-function aliceInStudy(
-  { extra = [], difficulty = 'standard' }: { extra?: StartingCard[]; difficulty?: Difficulty } = {},
-): GameState {
+function aliceInStudy({
+  extra = [],
+  difficulty = 'standard',
+}: { extra?: StartingCard[]; difficulty?: Difficulty } = {}): GameState {
   return startBoard(cards, {
     maps: { house: { locations: { study: 'study', attic: 'attic' } } },
     investigators: [
@@ -360,7 +368,11 @@ describe('suggestions on skill test decisions', () => {
   it('raises Investigate with the suggestion before icons and tokens', () => {
     const asked = stateAfter(cards, aliceInStudy(), { type: 'Investigate', investigatorId: alice });
 
-    expect(asked.pending[0]?.suggestion).toMatchObject({ skill: 4, difficulty: 3, outcome: 'pass' });
+    expect(asked.pending[0]?.suggestion).toMatchObject({
+      skill: 4,
+      difficulty: 3,
+      outcome: 'pass',
+    });
   });
 
   it('names the action, so effects for one action can tell the tests apart', () => {
@@ -374,7 +386,11 @@ describe('suggestions on skill test decisions', () => {
       enemyId: ghoul,
     });
 
-    expect(asked.pending[0]?.skillTest).toEqual({ skill: 'combat', difficulty: 4, action: 'fight' });
+    expect(asked.pending[0]?.skillTest).toEqual({
+      skill: 'combat',
+      difficulty: 4,
+      action: 'fight',
+    });
   });
 
   it('attaches the suggestion to a card test raised with RequestDecision', () => {
@@ -390,7 +406,11 @@ describe('suggestions on skill test decisions', () => {
 
     const asked = stateAfter(cards, aliceInStudy(), { type: 'RequestDecision', decision: test });
 
-    expect(asked.pending[0]?.suggestion).toMatchObject({ skill: 2, difficulty: 3, outcome: 'fail' });
+    expect(asked.pending[0]?.suggestion).toMatchObject({
+      skill: 2,
+      difficulty: 3,
+      outcome: 'fail',
+    });
   });
 
   it('suggests nothing for a test the group decides, since nobody’s skill is known', () => {

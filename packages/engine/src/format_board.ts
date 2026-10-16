@@ -193,7 +193,8 @@ function suggestionLines({ suggestion }: Decision): string[] {
 function lastingEffectLines(state: GameState): string[] {
   if (state.lastingEffects.length === 0) return [];
   const effects = state.lastingEffects.map(
-    ({ label, modifier }) => `${label} (${modifier.target} ${signed(modifier.amount)}, end of round)`,
+    ({ label, modifier }) =>
+      `${label} (${modifier.target} ${signed(modifier.amount)}, end of round)`,
   );
   return [`Lasting effects: ${effects.join(', ')}`];
 }

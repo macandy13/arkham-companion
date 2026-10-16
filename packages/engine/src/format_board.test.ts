@@ -147,8 +147,14 @@ describe('formatBoard', () => {
       { type: 'Investigate', investigatorId: alice },
     );
 
-    expect(formatBoard(ctx, state).split('
-').slice(-4)).toMatchInlineSnapshot();
+    expect(formatBoard(ctx, state).split('\n').slice(-4)).toMatchInlineSnapshot(`
+      [
+        "Lasting effects: Fog (difficulty +2, end of round)",
+        "Pending decisions:",
+        "  Investigate Hall: intellect (0) pass ×1 (1–3) / fail [skillTestResult]",
+        "    suggested: skill 4 vs difficulty 2 (pass)",
+      ]
+    `);
   });
 
   it('shows the turn in progress, the turns taken and the actions left', () => {

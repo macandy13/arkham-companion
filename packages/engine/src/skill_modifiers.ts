@@ -198,7 +198,10 @@ export function skillTestSuggestion(
   if (!investigator)
     throw new CommandRejected({ code: 'unknownInvestigator', investigatorId: test.investigatorId });
   const tokens = input.tokens ?? [];
-  const tokenChanges = tokens.map((token) => ({ token, change: tokenChange(ctx, state, test, token) }));
+  const tokenChanges = tokens.map((token) => ({
+    token,
+    change: tokenChange(ctx, state, test, token),
+  }));
   const changes = [
     ...iconChanges(input.committedIcons ?? 0),
     ...tokenChanges.flatMap(({ change }) => change ?? []),
@@ -330,5 +333,6 @@ function scenarioChanges(ctx: EngineContext, state: GameState, test: SkillTestCo
 }
 
 function assertWhole(amount: number): void {
-  if (!Number.isInteger(amount)) throw new CommandRejected({ code: 'invalidModifierAmount', amount });
+  if (!Number.isInteger(amount))
+    throw new CommandRejected({ code: 'invalidModifierAmount', amount });
 }

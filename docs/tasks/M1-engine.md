@@ -260,10 +260,13 @@ Done when: the sandbox scenario plays to an end in tests; engine coverage ≥ 90
 
 Ref: §6 Phase assistant; M1.10 skill test hand-off.
 
-- [ ] Generic modifier pipeline: base skill + committed icons + chaos token modifier vs. difficulty
-- [ ] Modifier sources: the scenario reference card (per difficulty: token values for skull, cultist, tablet, elder thing), locations, cards in play and lasting effects ("until the end of the round")
-- [ ] An explanation trace (each step: source, change, running total) for the UI
-- [ ] Decisions keep entering pass/fail; the computed values are a suggestion the players can override
+- [x] Generic modifier pipeline: base skill + committed icons + chaos token modifier vs. difficulty
+- [x] Modifier sources: the scenario reference card (per difficulty: token values for skull, cultist, tablet, elder thing), locations, cards in play and lasting effects ("until the end of the round")
+- [x] An explanation trace (each step: source, change, running total) for the UI
+- [x] Decisions keep entering pass/fail; the computed values are a suggestion the players can override
+
+Done: `skill_modifiers.ts` holds the pipeline. `Investigator.skills` carries the printed skills (the Core Set values for Roland, Daisy and Wendy in `packages/scenarios/src/investigators.ts`). `skillTestSuggestion(ctx, state, test, input)` starts from the printed skill and difficulty and applies, in order: committed icons and revealed chaos tokens (`SkillTestInput`, entered by the players; fixed token values, then the `ScenarioReference` side for the difficulty, then the scenario's `tokenValues` for a "-X"), lasting effects whose `SkillTestFilter` matches, cards in play with a `CardEffect.skillModifiers` hook (locations, enemies, treacheries, attachments), and the scenario's `modifiers.sources`. Neither value goes below 0 and auto-fail sets the skill to 0, each as a trace step of its own (`ModifierStep`: source, change, running total). Tokens the engine cannot value (elder sign, a symbol without a number) are listed in `unknownTokens`. Investigate, fight, evade and revelation tests carry the suggestion before any input (`Decision.suggestion`, `withSuggestion`); `suggestSkillTest` recomputes it as the players enter icons and tokens; the answer stays pass/fail. `SkillTest.action` tells investigate, fight and evade apart for filters. **Lasting effects:** `AddLastingEffect`/`EndLastingEffect`, `GameState.lastingEffects`; "until the end of the round" effects end at upkeep step 4.6 before `RoundEnded`. The Gathering registers its Easy/Standard skull ("-X, X = Ghoul enemies at your location", `enemiesAt`). `formatBoard` lists lasting effects and the suggestion under each skill test.
+Follow-ups: the end-to-end test should assert a suggestion (e.g. the skull with a Ghoul at the location) once #33 (M1.12) is merged, to avoid a conflicting rewrite of the same script; token effects beyond the modifier (take horror, reveal another token) stay with the players; lasting effects other than "until the end of the round" (until the end of the turn, of the phase) when a card needs them; the UI (M3) shows the trace and the input fields.
 
 ## M1.14 Readable unit test infrastructure (O)
 

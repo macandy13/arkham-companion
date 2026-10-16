@@ -1,12 +1,5 @@
 import type { Command } from './commands';
-import type {
-  DecisionId,
-  InstanceId,
-  InvestigatorId,
-  LastingEffectId,
-  MapId,
-  SlotId,
-} from './ids';
+import type { DecisionId, InstanceId, InvestigatorId, LastingEffectId, MapId, SlotId } from './ids';
 import type { GameMap } from './map';
 import type { RngState } from './rng';
 import type { Zone, ZoneKey } from './zone';

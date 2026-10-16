@@ -99,7 +99,8 @@ const ghoulsAtYourLocation: TokenValue = (ctx, state, test) => {
   const ghouls = enemiesAt(state, test.locationId).filter((enemy) =>
     cardStats(ctx.cards, enemy.code).traits.includes(trait('Ghoul')),
   );
-  return -ghouls.length;
+  // Subtracting from 0 rather than negating keeps "no Ghouls" a plain 0, not -0, in the trace.
+  return 0 - ghouls.length;
 };
 
 /** The one instance of `code` (the Gathering has a single copy of each location). */
