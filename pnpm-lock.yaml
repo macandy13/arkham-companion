@@ -47,6 +47,9 @@ importers:
       '@arkham/engine':
         specifier: workspace:*
         version: link:../../packages/engine
+      '@arkham/scenarios':
+        specifier: workspace:*
+        version: link:../../packages/scenarios
       dexie:
         specifier: ^4.4.6
         version: 4.4.6

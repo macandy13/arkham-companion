@@ -1,78 +1,179 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import type { CardCatalog } from '@arkham/carddata';
+import type { CardCatalog, InvestigatorDef } from '@arkham/carddata';
 import { initI18n } from '../i18n';
 import { createAppStore } from '../state/appStore';
 import { IndexedDbStore } from '../storage/IndexedDbStore';
 import { NewGameScreen } from './NewGameScreen';
 
+function makeInvestigator(code: string, name: string, health: number, sanity: number) {
+  return {
+    code,
+    name,
+    factionCode: 'seeker',
+    health,
+    sanity,
+    skills: { willpower: 3, intellect: 3, combat: 3, agility: 3 },
+    packCode: 'pack1',
+    cyclePosition: 1,
+    parallel: false,
+    chapter: 1,
+  } satisfies InvestigatorDef;
+}
+
 const catalog: CardCatalog = {
   packs: [{ code: 'pack1', name: 'First Pack', position: 1, cyclePosition: 1, chapter: 1 }],
-  investigators: [
-    {
-      code: 'a1',
-      name: 'Alder',
-      factionCode: 'seeker',
-      health: 6,
-      sanity: 8,
-      skills: { willpower: 1, intellect: 4, combat: 2, agility: 3 },
-      packCode: 'pack1',
-      cyclePosition: 1,
-      parallel: false,
-      chapter: 1,
-    },
-  ],
+  investigators: [makeInvestigator('a1', 'Alder', 6, 8), makeInvestigator('b1', 'Birch', 9, 5)],
 };
 
-function renderScreen(loadCatalog: () => Promise<CardCatalog>) {
-  const store = createAppStore(new IndexedDbStore('new-game-screen-test'), loadCatalog);
+function Location() {
+  const { pathname, search } = useLocation();
+  return <output>{pathname + search}</output>;
+}
+
+let n = 0;
+function renderWizard(path: string, source = () => Promise.resolve(catalog)) {
+  const gameStore = new IndexedDbStore(`wizard-test-${n++}`);
+  const store = createAppStore(gameStore);
   render(
-    <MemoryRouter>
-      <NewGameScreen store={store} />
+    <MemoryRouter initialEntries={[path]}>
+      <Routes>
+        <Route path="new" element={<NewGameScreen store={store} catalog={source} />} />
+        <Route path="game/:id" element={<p>Game page</p>} />
+      </Routes>
+      <Location />
     </MemoryRouter>,
   );
+  return { store, gameStore };
+}
+
+function selectInvestigator(name: string) {
+  fireEvent.click(
+    within(screen.getByRole('list', { name: 'Investigators' })).getByRole('button', {
+      name: new RegExp(name),
+    }),
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Select' }));
 }
 
 describe('NewGameScreen', () => {
   beforeAll(async () => {
     await initI18n('en');
   });
-  afterEach(cleanup);
-
-  it('shows a loading message, then the picker', async () => {
-    renderScreen(() => Promise.resolve(catalog));
-
-    expect(screen.getByRole('status').textContent).toBe('Loading investigators…');
-    expect(await screen.findByRole('heading', { name: 'Choose investigators' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /Alder/ })).toBeTruthy();
+  afterEach(() => {
+    cleanup();
+    sessionStorage.clear();
+    vi.restoreAllMocks();
   });
 
-  it('shows an error with a retry button that loads the catalog again', async () => {
-    const load = vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValue(catalog);
-    renderScreen(load);
+  it('offers both entry points without a mode', () => {
+    renderWizard('/new');
 
-    const alert = await screen.findByRole('alert');
-    expect(alert.textContent).toBe('Card data could not be loaded – check your connection.');
-
-    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
-
-    expect(await screen.findByRole('heading', { name: 'Choose investigators' })).toBeTruthy();
-    expect(load).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole('link', { name: 'New campaign' }).getAttribute('href')).toBe(
+      '/new?mode=campaign',
+    );
+    expect(screen.getByRole('link', { name: 'Quick game' }).getAttribute('href')).toBe(
+      '/new?mode=quick',
+    );
   });
 
-  it('shows an empty state when the catalog has no investigators', async () => {
-    renderScreen(() => Promise.resolve({ ...catalog, investigators: [] }));
+  it('starts a quick game and opens it', async () => {
+    const { gameStore } = renderWizard('/new?mode=quick');
 
-    expect(await screen.findByText('No investigators are available.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('radio', { name: 'Hard' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await screen.findByRole('list', { name: 'Investigators' });
+    selectInvestigator('Birch');
+    selectInvestigator('Alder');
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    const summary = screen.getByRole('region', { name: 'Summary' });
+    expect(
+      within(summary)
+        .getAllByRole('listitem')
+        .map((li) => li.textContent),
+    ).toEqual(['Birch (health 9, sanity 5)', 'Alder (health 6, sanity 8)']);
+    fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+
+    await screen.findByText('Game page');
+    const [game] = await gameStore.listGames();
+    expect(game).toMatchObject({
+      scenarioId: 'the-gathering',
+      title: 'The Gathering – Birch – Alder',
+      investigators: [
+        { code: 'b1', name: 'Birch' },
+        { code: 'a1', name: 'Alder' },
+      ],
+    });
+    expect((await gameStore.loadGame(game!.gameId))?.state.meta.difficulty).toBe('hard');
   });
 
-  it('keeps the empty game shortcut available while loading fails', async () => {
-    renderScreen(() => Promise.reject(new Error('offline')));
+  it("starts a campaign's first scenario", async () => {
+    const { gameStore } = renderWizard('/new?mode=campaign');
 
-    await screen.findByRole('alert');
-    expect(screen.getByRole('button', { name: 'Create empty game' })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'Night of the Zealot' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await screen.findByRole('list', { name: 'Investigators' });
+    selectInvestigator('Alder');
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+
+    await screen.findByText('Game page');
+    expect((await gameStore.listGames())[0]?.scenarioId).toBe('the-gathering');
+  });
+
+  it('needs at least one investigator to continue', async () => {
+    renderWizard('/new?mode=quick&step=investigators');
+
+    await screen.findByRole('list', { name: 'Investigators' });
+
+    expect((screen.getByRole('button', { name: 'Next' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('keeps the choices when going back', async () => {
+    renderWizard('/new?mode=quick&step=investigators');
+    await screen.findByRole('list', { name: 'Investigators' });
+    selectInvestigator('Alder');
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+
+    expect(screen.getByRole('region', { name: 'Seats' }).textContent).toContain('Alder');
+  });
+
+  it('keeps the choices over a page refresh', async () => {
+    renderWizard('/new?mode=quick');
+    fireEvent.click(screen.getByRole('radio', { name: 'Expert' }));
+    cleanup();
+
+    renderWizard('/new?mode=quick');
+
+    expect((screen.getByRole('radio', { name: 'Expert' }) as HTMLInputElement).checked).toBe(true);
+  });
+
+  it('shows an alert when the catalog cannot be loaded', async () => {
+    renderWizard('/new?mode=quick&step=investigators', () => Promise.reject(new Error('offline')));
+
+    expect((await screen.findByRole('alert')).textContent).toContain('could not be loaded');
+  });
+
+  it('shows an alert and stays on the summary when the game cannot be started', async () => {
+    const { store } = renderWizard('/new?mode=quick&step=investigators');
+    await screen.findByRole('list', { name: 'Investigators' });
+    selectInvestigator('Alder');
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    const failure = new Error('rejected');
+    vi.spyOn(store.getState(), 'startScenario').mockRejectedValue(failure);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
+
+    await waitFor(() =>
+      expect(screen.getByRole('alert').textContent).toContain('could not be started'),
+    );
+    expect(screen.getByRole('button', { name: 'Start game' })).toBeTruthy();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('start the game'), failure);
   });
 });

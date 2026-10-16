@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { stubArkhamDb } from './fixtures/arkhamdb';
+import { startQuickGame } from './fixtures/wizard';
 
 test.beforeEach(async ({ page }) => {
   await stubArkhamDb(page);
@@ -9,10 +10,9 @@ test.beforeEach(async ({ page }) => {
 test('back up and restore a game', { tag: '@flow' }, async ({ page }) => {
   const games = page.getByRole('list', { name: 'Games' });
 
-  await test.step('Create an empty game', async () => {
+  await test.step('Start a quick game', async () => {
     await page.goto('/#/new');
-    await page.getByRole('button', { name: /create empty game/i }).click();
-    await expect(page).toHaveURL(/#\/game\/.+/);
+    await startQuickGame(page);
   });
 
   const before = await test.step('Open the game list', async () => {

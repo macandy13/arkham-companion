@@ -1,6 +1,13 @@
 import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
-import { instanceId, replay, type Event } from '@arkham/engine';
+import {
+  instanceId,
+  investigatorId,
+  replay,
+  type Event,
+  type StartingInvestigator,
+} from '@arkham/engine';
+import { theGathering, theGatheringCards } from '@arkham/scenarios';
 import { GameImportError } from '../storage/gameExport';
 import { IndexedDbStore } from '../storage/IndexedDbStore';
 import { createAppStore } from './appStore';
@@ -27,22 +34,20 @@ const started: Event = {
 };
 const doom: Event = { type: 'TokensChanged', cardId: instanceId('c1'), token: 'doom', delta: 2 };
 
-const neverLoads = () => new Promise<never>(() => {});
-
 describe('appStore', () => {
   it('creates a game that survives a "refresh" (new store, same database)', async () => {
     const db = 'appstore-test';
-    const first = createAppStore(new IndexedDbStore(db), neverLoads);
+    const first = createAppStore(new IndexedDbStore(db));
     const id = await first.getState().newGame();
     expect(first.getState().current?.gameId).toBe(id);
 
-    const second = createAppStore(new IndexedDbStore(db), neverLoads);
+    const second = createAppStore(new IndexedDbStore(db));
     await second.getState().refresh();
     expect(second.getState().games.map((g) => g.gameId)).toEqual([id]);
   });
 
   it('renames, duplicates and deletes games and keeps the list in sync', async () => {
-    const store = createAppStore(new IndexedDbStore('appstore-manage-test'), neverLoads);
+    const store = createAppStore(new IndexedDbStore('appstore-manage-test'));
     const id = await store.getState().newGame();
 
     await store.getState().renameGame(id, 'Renamed');
@@ -65,7 +70,7 @@ describe('appStore', () => {
     const id = await gameStore.createGame({ title: 'Night' });
     await gameStore.appendEvents(id, [started, doom]);
 
-    const reopened = createAppStore(new IndexedDbStore(db), neverLoads);
+    const reopened = createAppStore(new IndexedDbStore(db));
     await reopened.getState().openGame(id);
 
     expect(reopened.getState().current).toEqual({ gameId: id, state: replay([started, doom]) });
@@ -73,7 +78,7 @@ describe('appStore', () => {
 
   it('exports a game and imports it as a new game with an identical state', async () => {
     const gameStore = new IndexedDbStore('appstore-roundtrip-test');
-    const store = createAppStore(gameStore, neverLoads);
+    const store = createAppStore(gameStore);
     const id = await gameStore.createGame({ title: 'Night' });
     await gameStore.appendEvents(id, [started, doom]);
 
@@ -91,8 +96,53 @@ describe('appStore', () => {
   });
 
   it('refuses to import text that is not an export', async () => {
-    const store = createAppStore(new IndexedDbStore('appstore-badimport-test'), neverLoads);
+    const store = createAppStore(new IndexedDbStore('appstore-badimport-test'));
     await expect(store.getState().importGame('{}')).rejects.toBeInstanceOf(GameImportError);
     expect(store.getState().games).toEqual([]);
+  });
+
+  describe('startScenario', () => {
+    const investigator: StartingInvestigator = {
+      id: investigatorId('inv'),
+      code: 'inv',
+      name: 'Alder',
+      seat: 0,
+      health: { max: 6, damage: 0 },
+      sanity: { max: 8, horror: 0 },
+      clues: 0,
+      resources: 5,
+      doomOnPlayerCards: 0,
+      status: 'active',
+    };
+    const start = {
+      title: 'The Gathering',
+      ctx: { cards: theGatheringCards },
+      definition: theGathering,
+      difficulty: 'easy' as const,
+      seed: 3,
+      investigators: [investigator],
+    };
+
+    it('stores the setup events as a new game and opens it', async () => {
+      const db = new IndexedDbStore('appstore-start-test');
+      const store = createAppStore(db);
+
+      const id = await store.getState().startScenario(start);
+
+      expect(store.getState().current?.state.meta).toMatchObject({
+        scenarioId: 'the-gathering',
+        difficulty: 'easy',
+      });
+      expect((await db.loadGame(id))?.state).toEqual(store.getState().current?.state);
+      expect(store.getState().games.map((g) => g.title)).toEqual(['The Gathering']);
+    });
+
+    it('stores nothing when the setup is invalid', async () => {
+      const store = createAppStore(new IndexedDbStore('appstore-start-invalid-test'));
+      const broken = { ...start, definition: { ...theGathering, actDeck: ['missing'] } };
+
+      await expect(store.getState().startScenario(broken)).rejects.toThrow();
+      expect(store.getState().games).toEqual([]);
+    });
   });
 });

@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { stubArkhamDb } from './fixtures/arkhamdb';
+import { startQuickGame } from './fixtures/wizard';
 
 test.beforeEach(async ({ page }) => {
   await stubArkhamDb(page);
@@ -16,11 +17,10 @@ test('a new game survives reload and is managed from the home screen', async ({ 
     return page.getByRole('list', { name: 'Games' }).getByRole('listitem').count();
   });
 
-  await test.step('Create an empty game', async () => {
+  await test.step('Start a quick game', async () => {
     await page.getByRole('link', { name: /new game/i }).click();
     await expect(page).toHaveURL(/#\/new$/);
-    await page.getByRole('button', { name: /create empty game/i }).click();
-    await expect(page).toHaveURL(/#\/game\/.+/);
+    await startQuickGame(page);
   });
 
   await test.step('Reload the game', async () => {
