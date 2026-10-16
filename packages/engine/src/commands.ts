@@ -46,6 +46,8 @@ export type Command =
   | NextPhase
   | StartTurn
   | EndTurn
+  | Resign
+  | SetLeadInvestigator
   | AdjustActions
   | ResolveEnemyAttack
   | DealEnemyAttack
@@ -569,6 +571,34 @@ export interface StartTurn {
  */
 export interface EndTurn {
   type: 'EndTurn';
+  investigatorId: InvestigatorId;
+}
+
+/**
+ * Rules Reference, "Resign": an investigator resigns as an action in their
+ * own turn, so only in the investigation phase while their turn is in
+ * progress. They leave the scenario with status `resigned`, their turn ends
+ * and the same clean-up as for a defeat follows: their clues stay on their
+ * location, enemies engaged with them stay there unengaged, treacheries in
+ * their threat area are discarded, and a new lead investigator is chosen if
+ * they were the lead. The last investigator to resign ends the scenario
+ * without a resolution. Produces `InvestigatorResigned` and the clean-up
+ * events, then possibly `LeadInvestigatorChanged`, `DecisionRequested` or
+ * `ScenarioEnded`.
+ */
+export interface Resign {
+  type: 'Resign';
+  investigatorId: InvestigatorId;
+}
+
+/**
+ * Makes an active investigator the lead investigator. Raised by the decision
+ * that asks the group for a new lead after the lead was defeated or resigned;
+ * also usable on its own, as the lead investigator may change by card effect
+ * or by the group's choice. Produces `LeadInvestigatorChanged`.
+ */
+export interface SetLeadInvestigator {
+  type: 'SetLeadInvestigator';
   investigatorId: InvestigatorId;
 }
 

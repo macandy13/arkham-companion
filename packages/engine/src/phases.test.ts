@@ -477,6 +477,8 @@ describe('enemy phase', () => {
       'InvestigatorChanged',
       'InvestigatorChanged',
       'InvestigatorDefeated',
+      'EnemyDisengaged',
+      'ScenarioEnded',
       'ExhaustChanged',
     ]);
   });

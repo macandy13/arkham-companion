@@ -1,5 +1,6 @@
-import type { AdjustActions, EndTurn, StartTurn } from './commands';
-import type { ActionsAdjusted, ActionsReset, TurnEnded, TurnStarted } from './events';
+import type { AdjustActions, EndTurn, Resign, StartTurn } from './commands';
+import { investigatorLeavesEvents } from './elimination';
+import type { ActionsAdjusted, ActionsReset, Event, TurnEnded, TurnStarted } from './events';
 import { activeInvestigator } from './handle_investigator';
 import type { InvestigatorId } from './ids';
 import { playerOrder } from './investigators';
@@ -40,14 +41,33 @@ export function handleStartTurn(state: GameState, cmd: StartTurn): TurnStarted[]
 /** `EndTurn`: ends the turn in progress, which must be the investigator's. */
 export function handleEndTurn(state: GameState, cmd: EndTurn): TurnEnded[] {
   requirePhase(state, 'investigation');
+  requireTurnOf(state, cmd.investigatorId);
+  return [{ type: 'TurnEnded', investigatorId: cmd.investigatorId }];
+}
+
+/**
+ * `Resign`: an action of the investigator's own turn, so the same phase and
+ * turn rules as `EndTurn` apply; the investigator leaves the scenario and the
+ * turn ends with them (see `investigatorLeavesEvents`).
+ */
+export function handleResign(state: GameState, cmd: Resign): Event[] {
+  requirePhase(state, 'investigation');
+  const investigator = activeInvestigator(state, cmd.investigatorId);
+  requireTurnOf(state, investigator.id);
+  return investigatorLeavesEvents(state, investigator, {
+    type: 'InvestigatorResigned',
+    investigatorId: investigator.id,
+  });
+}
+
+function requireTurnOf(state: GameState, investigatorId: InvestigatorId): void {
   const { turn } = state.meta;
-  if (turn?.investigatorId !== cmd.investigatorId)
+  if (turn?.investigatorId !== investigatorId)
     throw new CommandRejected({
       code: 'turnNotInProgress',
-      investigatorId: cmd.investigatorId,
+      investigatorId,
       ...(turn ? { activeInvestigatorId: turn.investigatorId } : {}),
     });
-  return [{ type: 'TurnEnded', investigatorId: cmd.investigatorId }];
 }
 
 /** `AdjustActions`: changes the investigator's remaining actions. */

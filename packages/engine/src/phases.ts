@@ -143,6 +143,7 @@ export function handleResolveEnemyAttack(
       investigatorId: cmd.investigatorId,
     });
   const dealt = enemyAttackEvents(
+    state,
     activeInvestigator(state, cmd.investigatorId),
     cmd.damage ?? attack.damage,
     cmd.horror ?? attack.horror,

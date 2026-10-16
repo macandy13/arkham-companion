@@ -32,6 +32,8 @@ export type Event =
   | InvestigatorMoved
   | InvestigatorChanged
   | InvestigatorDefeated
+  | InvestigatorResigned
+  | LeadInvestigatorChanged
   | DecisionRequested
   | DecisionResolved
   | AgendaAdvanced
@@ -152,13 +154,35 @@ export interface InvestigatorChanged {
 
 /**
  * An investigator ran out of health (`damage`) or sanity (`horror`); their status
- * becomes `defeated`. Produced by `AdjustInvestigator` right after the
- * `InvestigatorChanged` that caused it.
+ * becomes `defeated`, and a turn in progress ends with them. Produced by
+ * `AdjustInvestigator` and `ResolveEnemyAttack` right after the
+ * `InvestigatorChanged` that caused it, followed by the clean-up events
+ * (`investigatorLeavesEvents`).
  */
 export interface InvestigatorDefeated {
   type: 'InvestigatorDefeated';
   investigatorId: InvestigatorId;
   cause: 'damage' | 'horror';
+}
+
+/**
+ * The investigator left the scenario by resigning; their status becomes
+ * `resigned`, and their turn ends with it. Produced by `Resign`, followed by
+ * the same clean-up events as a defeat (`investigatorLeavesEvents`).
+ */
+export interface InvestigatorResigned {
+  type: 'InvestigatorResigned';
+  investigatorId: InvestigatorId;
+}
+
+/**
+ * `investigatorId` is now the lead investigator (`GameMeta.leadInvestigator`).
+ * Produced by `SetLeadInvestigator`, and directly when the lead leaves the
+ * scenario and only one investigator remains (nothing to choose).
+ */
+export interface LeadInvestigatorChanged {
+  type: 'LeadInvestigatorChanged';
+  investigatorId: InvestigatorId;
 }
 
 /**
@@ -216,10 +240,15 @@ export interface CurrentCardChanged {
  * the campaign records. Produced by `EndScenario` (typically returned by a
  * reverse-side hook) and by `AdvanceAgenda`/`AdvanceAct` when the last card of
  * a deck advances without its reverse side ending the scenario.
+ *
+ * Without a `resolution` no resolution was reached because every investigator
+ * resigned or was defeated (`investigatorLeavesEvents`); the scenario's own
+ * rules say what follows, which the engine cannot know, so `GameMeta.resolution`
+ * stays absent.
  */
 export interface ScenarioEnded {
   type: 'ScenarioEnded';
-  resolution: string;
+  resolution?: string;
 }
 
 /** String literal of every event type. */

@@ -207,23 +207,18 @@ describe('attacks of opportunity', () => {
     ]);
   });
 
-  it('asks once per ready engaged enemy, and the second attack does nothing after the first defeated the investigator', () => {
+  it('asks once per ready engaged enemy, and drops the second attack once the first defeated the investigator', () => {
     const state = aliceTurnWith(
       [placed(ghoul, 'ghoul', engagedWithAlice), placed(rat, 'rat', engagedWithAlice)],
       { health: { max: 8, damage: 7 } },
     );
     const moved = stateAfter(ctx, state, moveToCellar);
 
-    const after = stateAfter(
-      ctx,
-      moved,
-      { type: 'ResolveDecision', decisionId: ghoulAttack, optionId: 'attack' },
-      {
-        type: 'ResolveDecision',
-        decisionId: decisionId(`attackOfOpportunity:${rat}`),
-        optionId: 'attack',
-      },
-    );
+    const after = stateAfter(ctx, moved, {
+      type: 'ResolveDecision',
+      decisionId: ghoulAttack,
+      optionId: 'attack',
+    });
 
     expect(pendingIds(moved)).toEqual([
       `attackOfOpportunity:${ghoul}`,
@@ -231,6 +226,9 @@ describe('attacks of opportunity', () => {
     ]);
     expect(investigatorOf(after, alice).status).toBe('defeated');
     expect(wounds(after)).toEqual({ damage: 8, horror: 2 });
+    // The defeat leaves the rat unengaged in the hall, so it has nobody to attack.
+    expect(after.cards[rat]?.zone).toEqual({ kind: 'atLocation', locationId: hall });
+    expect(pendingIds(after)).toEqual([]);
   });
 
   it('lets the other engaged enemy attack an engage action, but not the enemy being engaged', () => {

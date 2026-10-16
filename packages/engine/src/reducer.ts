@@ -10,7 +10,6 @@ import type {
   EnemyDisengaged,
   EnemyEngaged,
   Event,
-  InvestigatorDefeated,
   MapAdded,
   ScenarioEnded,
   ScenarioStarted,
@@ -24,15 +23,17 @@ import { emptyState, type CardInstance, type GameState, type Investigator } from
 import { zoneKey, type Zone, type ZoneKey } from './zone';
 
 /**
- * A defeated investigator is out of the scenario; if it happens during their
- * turn, the turn ends with them (it counts as taken), so the group can go on
- * with the next investigator.
+ * A defeated or resigned investigator is out of the scenario; if it happens
+ * during their turn, the turn ends with them (it counts as taken), so the
+ * group can go on with the next investigator.
  */
-function applyInvestigatorDefeated(state: GameState, event: InvestigatorDefeated): GameState {
-  const defeated = applyInvestigator(state, event, (inv) => ({ ...inv, status: 'defeated' }));
-  return state.meta.turn?.investigatorId === event.investigatorId
-    ? endTurn(defeated, event.investigatorId)
-    : defeated;
+function applyInvestigatorLeft(
+  state: GameState,
+  investigatorId: Investigator['id'],
+  status: 'defeated' | 'resigned',
+): GameState {
+  const left = applyInvestigator(state, { investigatorId }, (inv) => ({ ...inv, status }));
+  return state.meta.turn?.investigatorId === investigatorId ? endTurn(left, investigatorId) : left;
 }
 
 function endTurn(state: GameState, investigatorId: Investigator['id']): GameState {
@@ -62,7 +63,11 @@ export function apply(state: GameState, event: Event): GameState {
     case 'InvestigatorChanged':
       return applyInvestigator(state, event, (inv) => withStatDelta(inv, event.stat, event.delta));
     case 'InvestigatorDefeated':
-      return applyInvestigatorDefeated(state, event);
+      return applyInvestigatorLeft(state, event.investigatorId, 'defeated');
+    case 'InvestigatorResigned':
+      return applyInvestigatorLeft(state, event.investigatorId, 'resigned');
+    case 'LeadInvestigatorChanged':
+      return { ...state, meta: { ...state.meta, leadInvestigator: event.investigatorId } };
     case 'DecisionRequested':
       return applyDecisionRequested(state, event);
     case 'DecisionResolved':
@@ -258,6 +263,7 @@ function applyMapAdded(state: GameState, e: MapAdded): GameState {
 }
 
 function applyScenarioEnded(state: GameState, e: ScenarioEnded): GameState {
+  if (e.resolution === undefined) return state;
   return { ...state, meta: { ...state.meta, resolution: e.resolution } };
 }
 
