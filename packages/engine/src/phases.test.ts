@@ -301,8 +301,8 @@ describe('mythos phase', () => {
 
     expect(asked.pending.map((decision) => decision.id)).toEqual(['advanceAgenda:first_agenda']);
     expect(asked.meta.steps).toEqual([
-      { id: '1.4', investigatorId: alice },
-      { id: '1.4', investigatorId: bob },
+      { id: 'drawEncounterCard', investigatorId: alice },
+      { id: 'drawEncounterCard', investigatorId: bob },
     ]);
     expect(answered.agenda.current).toBe(secondAgenda);
     expect(drawsOf(answered, next)).toEqual([
@@ -378,7 +378,7 @@ describe('enemy phase', () => {
 
     expect(enemy.cards[instanceId('rat')]!.zone).toEqual(engagedWith(alice));
     expect(enemy.meta.steps).toEqual([
-      { id: '3.3', attacks: [{ enemyId: instanceId('rat'), investigatorId: alice }] },
+      { id: 'enemiesAttack', attacks: [{ enemyId: instanceId('rat'), investigatorId: alice }] },
     ]);
   });
 
@@ -400,9 +400,9 @@ describe('enemy phase', () => {
     const resumed = stateAfter(ctx, answered, next);
 
     expect(asked.pending.map((decision) => decision.id)).toEqual(['hunter:rat:investigator']);
-    expect(asked.meta.steps).toEqual([{ id: '3.3' }]);
+    expect(asked.meta.steps).toEqual([{ id: 'enemiesAttack' }]);
     expect(resumed.meta.steps).toEqual([
-      { id: '3.3', attacks: [{ enemyId: instanceId('rat'), investigatorId: bob }] },
+      { id: 'enemiesAttack', attacks: [{ enemyId: instanceId('rat'), investigatorId: bob }] },
     ]);
   });
 

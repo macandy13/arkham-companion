@@ -279,7 +279,7 @@ describe('an investigator who leaves', () => {
     expect(defeated.cards[hall]?.tokens.clue).toBe(2);
     expect(defeated.cards[secondAliceGhoul]?.zone).toEqual(at(hall));
     expect(defeated.meta.steps[0]).toEqual({
-      id: '3.3',
+      id: 'enemiesAttack',
       attacks: [{ enemyId: bobGhoul, investigatorId: bob }],
     });
   });

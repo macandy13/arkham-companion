@@ -1,6 +1,6 @@
 import { camelCaseToWords } from '@arkham/util';
 import type { EngineContext } from './cards';
-import type { Decision, DecisionOption, GameState } from './state';
+import type { AmountRange, Decision, DecisionOption, GameState } from './state';
 
 const PROMPT_PREFIX = 'decision.';
 
@@ -22,13 +22,15 @@ const QUESTIONS: Readonly<Record<string, (subject: string) => string>> = {
   'decision.fight': (subject) => `Fight ${subject}:`,
   'decision.evade': (subject) => `Evade ${subject}:`,
   'decision.revelationTest': (subject) => `Revelation of ${subject}:`,
+  'decision.attackOfOpportunity': (subject) => `Attack of opportunity by ${subject}:`,
 };
 
 /**
  * `decision` in plain words for `formatBoard` and test read-backs, e.g.
  * `Whom does Swarm of Rats engage? Roland Banks / Daisy Walker / Wendy Adams [chooseInvestigator]`:
  * the question, the test of a skill test (`intellect (4)`), the options by
- * readable name with their adjustable count (`pass ×1 (1–3)`) and the widget
+ * readable name with their adjustable counts (`pass ×1 (1–3)`,
+ * `attack damage ×1 (0+) horror ×2 (0+)`) and the widget
  * kind for debugging. A prompt without a sentence here (scenario- or
  * card-defined) shows its key.
  */
@@ -43,10 +45,17 @@ export function describeDecision(ctx: EngineContext, state: GameState, decision:
 }
 
 function optionWithAmount(option: DecisionOption): string {
-  const { amount } = option;
-  if (!amount) return optionName(option);
+  const named = Object.entries(option.amounts ?? {}).map(
+    ([name, range]) => `${name} ${amountText(range)}`,
+  );
+  const counts = [...(option.amount ? [amountText(option.amount)] : []), ...named];
+  return [optionName(option), ...counts].join(' ');
+}
+
+/** An adjustable count as `×default (range)`, e.g. `×1 (1–3)` or `×2 (0+)`. */
+function amountText(amount: AmountRange): string {
   const range = amount.max === undefined ? `${amount.min}+` : `${amount.min}–${amount.max}`;
-  return `${optionName(option)} ×${amount.default} (${range})`;
+  return `×${amount.default} (${range})`;
 }
 
 /**

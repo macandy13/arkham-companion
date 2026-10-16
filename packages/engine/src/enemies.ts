@@ -1,8 +1,11 @@
 import { cardStats, type EngineContext } from './cards';
+import { investigatorLeavesEvents } from './elimination';
+import type { Event, InvestigatorChanged } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
-import { playerOrder } from './investigators';
+import { defeatCause, playerOrder, withStatDelta } from './investigators';
 import { hasKeyword } from './keywords';
-import type { GameState } from './state';
+import { CommandRejected } from './rejection';
+import type { GameState, Investigator } from './state';
 import { zoneKey } from './zone';
 
 /** One enemy attack of the enemy phase: who attacks whom, and for how much. */
@@ -27,7 +30,7 @@ export interface EnemyAttack {
  */
 export function enemyAttackList(ctx: EngineContext, state: GameState): EnemyAttack[] {
   return playerOrder(state).flatMap((investigator) =>
-    readyAttackers(ctx, state, investigator.id, investigator.locationId).map((enemyId) => {
+    readyEngagedEnemies(ctx, state, investigator).map((enemyId) => {
       const stats = cardStats(ctx.cards, state.cards[enemyId]?.code ?? '');
       return {
         enemyId,
@@ -39,11 +42,17 @@ export function enemyAttackList(ctx: EngineContext, state: GameState): EnemyAtta
   );
 }
 
-function readyAttackers(
+/**
+ * The ready enemies engaged with `investigator`: those in their `engaged`
+ * zone, then ready massive enemies at their location, which count as engaged
+ * with everyone there (see `enemyAttackList`). These are the enemies that
+ * attack in the enemy phase and make attacks of opportunity
+ * (`attackOfOpportunityDecisions`).
+ */
+export function readyEngagedEnemies(
   ctx: EngineContext,
   state: GameState,
-  investigatorId: InvestigatorId,
-  locationId: InstanceId | undefined,
+  { id: investigatorId, locationId }: Pick<Investigator, 'id' | 'locationId'>,
 ): InstanceId[] {
   const engaged = state.order[zoneKey({ kind: 'engaged', investigatorId })] ?? [];
   const unengaged =
@@ -56,4 +65,53 @@ function readyAttackers(
     return stats?.typeCode === 'enemy' && hasKeyword(stats, 'massive');
   });
   return [...engaged, ...massive].filter((id) => state.cards[id]?.exhausted === false);
+}
+
+/**
+ * Damage and horror of one enemy attack, followed by a single defeat check
+ * over both, as the rules deal them simultaneously, and on a defeat the
+ * clean-up (`investigatorLeavesEvents`). Shared by the enemy phase
+ * (`ResolveEnemyAttack`) and attacks outside it (`DealEnemyAttack`), so an
+ * attack of opportunity that defeats leaves the same board.
+ * Rejects an amount that is not a non-negative integer.
+ */
+export function enemyAttackEvents(
+  state: GameState,
+  investigator: Investigator,
+  damage: number,
+  horror: number,
+): Event[] {
+  const changes: InvestigatorChanged[] = (
+    [
+      ['damage', attackAmount(damage)],
+      ['horror', attackAmount(horror)],
+    ] as const
+  )
+    .filter(([, amount]) => amount > 0)
+    .map(([stat, delta]) => ({
+      type: 'InvestigatorChanged',
+      investigatorId: investigator.id,
+      stat,
+      delta,
+    }));
+  const after = changes.reduce(
+    (inv, change) => withStatDelta(inv, change.stat, change.delta),
+    investigator,
+  );
+  const cause = defeatCause(after);
+  if (cause === undefined) return changes;
+  return [
+    ...changes,
+    ...investigatorLeavesEvents(state, investigator, {
+      type: 'InvestigatorDefeated',
+      investigatorId: investigator.id,
+      cause,
+    }),
+  ];
+}
+
+function attackAmount(amount: number): number {
+  if (!Number.isInteger(amount) || amount < 0)
+    throw new CommandRejected({ code: 'invalidAttackAmount', amount });
+  return amount;
 }
