@@ -395,12 +395,19 @@ export class TestTable {
     return this.onlyOne(inPlay, `enemy ${name} in play`);
   }
 
-  /** The enemy named `name`, which must be engaged with `investigator` for their action to target it. */
+  /**
+   * The enemy named `name` engaged with `investigator`, the target of their
+   * fight or evade action. Looked up by engagement because several copies of
+   * a name (three Swarms of Rats) can be in play, but one investigator is engaged with one of them at a time.
+   */
   private enemyEngagedWith(investigator: InvestigatorId, name: string): CardInstance {
-    const enemy = this.enemyNamed(name);
-    if (enemy.zone.kind !== 'engaged' || enemy.zone.investigatorId !== investigator)
-      throw new Error(`${name} is not engaged with ${investigator}\n${this.board()}`);
-    return enemy;
+    const engaged = this.enemiesInPlay().filter(
+      (enemy) =>
+        this.nameOf(enemy) === name &&
+        enemy.zone.kind === 'engaged' &&
+        enemy.zone.investigatorId === investigator,
+    );
+    return this.onlyOne(engaged, `enemy ${name} engaged with ${investigator}`);
   }
 
   private locationNamed(name: string): CardInstance {

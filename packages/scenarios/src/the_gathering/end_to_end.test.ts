@@ -1,10 +1,10 @@
 /**
  * The Gathering, played end to end: Roland Banks, Daisy Walker and Wendy
- * Adams, a fixed seed, five rounds. An integration narrative rather than a
+ * Adams, a fixed seed, seven rounds. An integration narrative rather than a
  * rules test – it shows the engine features working together in a real
  * scenario (setup, the phase assistant, turns and actions, skill tests,
  * clues, undoing a mis-tapped move, the act 1 hook, doom and the agenda, encounter draws and revelation
- * tests, spawn instructions, engagement, hunters, attacks and upkeep) as one
+ * tests, spawn instructions, engagement, hunters, attacks, upkeep, and undoing a whole mythos phase) as one
  * session report: game-language steps on a `TestTable`, phase by phase and
  * turn by turn, with the facts a player would check at the table asserted
  * where they happen.
@@ -38,7 +38,7 @@ const swarmOfRats = 'Swarm of Rats';
 const ghoulMinion = 'Ghoul Minion';
 
 describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
-  it('plays five rounds from setup: act 1 opens the house, the agenda advances, enemies spawn, hunt, attack and are defeated', () => {
+  it('plays seven rounds from setup: act 1 opens the house, the agenda advances, enemies spawn, hunt, attack and are defeated, and the clues for act 2 are in hand', () => {
     // Setup
     const table = TestTable.setUp({
       scenario: theGathering,
@@ -467,7 +467,173 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.phase()).toEqual({ round: 5, phase: 'upkeep' });
     expect(table.investigatorResources()).toEqual({ roland: 11, daisy: 10, wendy: 10 });
 
+    // Round 6 – mythos: Roland draws Rotting Remains again and passes with willpower 3;
+    // the Swarms of Rats Daisy and Wendy draw spawn engaged with them.
+    table.nextPhase();
+    table.answer('Rotting Remains', 'pass');
+    table.nextPhase();
+
+    expect(table.agenda()).toEqual({ name: 'Rise of the Ghouls', doom: 4 });
+    expect(table.enemyLines()).toEqual([
+      'Flesh-Eater: Attic, unengaged',
+      'Swarm of Rats: Cellar, engaged with daisy',
+      'Swarm of Rats: Cellar, engaged with roland',
+      'Swarm of Rats: Cellar, engaged with wendy',
+      'Ravenous Ghoul: Cellar, engaged with daisy',
+    ]);
+
+    // Round 6 – investigation: each investigator defeats the rats engaged with them
+    // (1 health) and then searches the Cellar.
+    table.nextPhase();
+    table.startTurn(roland);
+    table.fight(roland, swarmOfRats);
+    table.investigate(roland);
+    table.investigate(roland);
+    table.endTurn(roland);
+    table.startTurn(daisy);
+    table.fight(daisy, swarmOfRats);
+    table.investigate(daisy);
+    table.endTurn(daisy);
+    table.startTurn(wendy);
+    table.fight(wendy, swarmOfRats);
+    table.endTurn(wendy);
+
+    // Round 6 – enemy phase and upkeep: only the Ravenous Ghoul is left to attack
+    table.nextPhase();
+
+    expect(table.attacksDue()).toEqual(['Ravenous Ghoul attacks daisy']);
+
+    table.resolveEnemyAttacks();
+    table.nextPhase();
+
+    // Round 7 – mythos: one command, one undo group. Raising the doom, drawing
+    // Grasping Hands and its revelation test are one chain, so taking the
+    // command back removes all of it, and running it again gives the same events.
+    const eventsBefore = table.events.length;
+    table.nextPhase();
+    const drawn = table.events.slice(eventsBefore);
+
+    expect(table.pendingDecisions()).toEqual([
+      'Revelation of Grasping Hands: agility (3) pass / fail [skillTestResult]',
+    ]);
+
+    table.undo();
+
+    expect(table.phase()).toEqual({ round: 6, phase: 'upkeep' });
+    expect(table.pendingDecisions()).toEqual([]);
+
+    table.nextPhase();
+
+    expect(table.events.slice(eventsBefore)).toEqual(drawn);
+    expect(table.agenda()).toEqual({ name: 'Rise of the Ghouls', doom: 5 });
+
+    // Roland passes (agility 2 and a +1 token), so the Grasping Hands do nothing.
+    table.answer('Grasping Hands', 'pass');
+    // 1.4 continues: Daisy's Grasping Hands (agility 3, she passes), then Wendy
+    // draws Dissonant Voices, which stays in play in her threat area.
+    table.nextPhase();
+    table.answer('Grasping Hands', 'pass');
+    table.nextPhase();
+
+    expect(table.namesIn({ kind: 'threatArea', investigatorId: wendy })).toContain(
+      'Dissonant Voices',
+    );
+
+    // Round 7 – investigation: Roland goes for the Attic's clues. Entering
+    // engages the Flesh-Eater (no action); he searches and takes the 9th clue the group needs.
+    table.nextPhase();
+    table.startTurn(roland);
+    table.moveTo(roland, 'Hallway');
+    table.moveTo(roland, 'Attic');
+    table.engage(roland, 'Flesh-Eater', { free: true });
+    table.investigate(roland);
+    table.endTurn(roland);
+    // Daisy, at 4 of 5 health, evades the Ravenous Ghoul rather than risk its next attack.
+    table.startTurn(daisy);
+    table.evade(daisy, 'Ravenous Ghoul');
+    table.takeAction(daisy, 'resource');
+    table.endTurn(daisy);
+    table.startTurn(wendy);
+    table.endTurn(wendy);
+
+    // The Barrier needs 3 clues per investigator, 9 for three: the group holds them now.
+    // Act 2 has no reverse-side hook yet (the Ghoul Priest and Lita Chantler), so the script
+    // stops before advancing it (follow-up in M1.12).
+    const clues = Object.values(table.investigatorClues()).reduce((sum, n) => sum + n, 0);
+
+    expect(clues).toBe(9);
+    expect(table.act()).toBe('The Barrier');
+
+    // Round 7 – enemy phase: the exhausted Ravenous Ghoul does not attack, the Flesh-Eater does
+    table.nextPhase();
+
+    expect(table.attacksDue()).toEqual(['Flesh-Eater attacks roland']);
+
+    table.resolveEnemyAttacks();
+    table.nextPhase();
+
+    expect(table.phase()).toEqual({ round: 7, phase: 'upkeep' });
+    expect(table.board()).toMatchInlineSnapshot(`
+      "Round 7, upkeep phase
+      Agenda: Rise of the Ghouls – doom 5/7
+      Act: The Barrier – needs 9 clues
+      Map Study:
+        no locations
+      Map House:
+        Hallway [01112#1] – revealed, 0 clues
+          connects to: Attic, Cellar, Parlor
+        Attic [01113#1] – revealed, 3 clues
+          investigators: Roland Banks
+          Flesh-Eater [01118#1] – engaged with Roland Banks
+          connects to: Hallway
+        Cellar [01114#1] – revealed, 0 clues
+          investigators: Daisy Walker, Wendy Adams
+          Ravenous Ghoul [01161#1] – engaged with Daisy Walker
+          connects to: Hallway
+        Parlor [01115#1] – unrevealed
+          connects to: Hallway
+      Investigators:
+        Roland Banks – Attic; damage 3/9, horror 4/5, 5 clues, 13 resources; threat area: none
+        Daisy Walker – Cellar; damage 4/5, horror 2/9, 1 clues, 13 resources; threat area: none
+        Wendy Adams – Cellar; damage 4/7, horror 2/7, 3 clues, 12 resources; threat area: Frozen in Fear, Dissonant Voices
+      Encounter deck: 8 cards; discard: 13 cards, top: Grasping Hands
+      Set aside: 2 cards
+      Victory display: Icy Ghoul
+      Pending decisions: none"
+    `);
+
     // The whole event log, setup included, replays to the live state.
     expect(replay(table.events)).toEqual(table.state);
   });
+});
+
+describe('The Gathering with one to three investigators, seed 24', () => {
+  const seated = [rolandBanks, daisyWalker, wendyAdams];
+
+  /** Round 1 with every investigator investigating once, then on to the mythos phase of round 2. */
+  function playOneRound(count: number): TestTable {
+    const investigators = seated.slice(0, count).map((inv, seat) => ({ ...inv, seat }));
+    const table = TestTable.setUp({ scenario: theGathering, ctx, investigators, seed: 24 });
+    table.nextPhase();
+    for (const { id } of investigators) {
+      table.startTurn(id);
+      table.investigate(id);
+      table.endTurn(id);
+    }
+    table.nextPhase();
+    table.nextPhase();
+    table.nextPhase();
+    return table;
+  }
+
+  it.each([1, 2, 3])(
+    'keeps the invariants and replays the same events with %i investigator(s)',
+    (count) => {
+      const table = playOneRound(count);
+
+      expect(table.phase()).toEqual({ round: 2, phase: 'mythos' });
+      expect(replay(table.events)).toEqual(table.state);
+      expect(playOneRound(count).events).toEqual(table.events);
+    },
+  );
 });
