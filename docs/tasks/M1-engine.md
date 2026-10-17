@@ -142,4 +142,6 @@ Ref: M1.5, M1.6, M1.9, M1.10 follow-ups.
 - [ ] Simultaneous forced effects: the lead investigator picks the order (`chooseOption` decision) when more than one applies
 - [ ] After a doom `ManualAdjust`, offer `CheckDoomThreshold` (a `confirm` decision), never advance silently
 - [ ] `ManualAdjust` cannot move the current agenda or act out of its deck (rejection)
-- [ ] `decider` is checked against who answers a decision, if the command carries the answering investigator
+- [x] `decider` is checked against who answers a decision, if the command carries the answering investigator
+
+Done (decider slice): `ResolveDecision.answeredBy` is optional, since the app runs on one shared device for now. When it is set, the answer is refused unless that investigator is the named one, the lead, or, for a group decision, any investigator still in the scenario (`notTheDecider`).

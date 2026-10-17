@@ -1,7 +1,7 @@
 import type { EngineContext } from './cards';
 import type { Command, RequestDecision, ResolveDecision } from './commands';
 import type { DecisionRequested, DecisionResolved } from './events';
-import type { InstanceId } from './ids';
+import type { InstanceId, InvestigatorId } from './ids';
 import { CommandRejected } from './rejection';
 import { withSuggestion } from './skill_modifiers';
 import type { AmountRange, Decider, Decision, DecisionOption, GameState, SkillTest } from './state';
@@ -132,6 +132,13 @@ function chosenOption(state: GameState, command: ResolveDecision): DecisionOptio
   const decision = state.pending.find((pending) => pending.id === command.decisionId);
   if (!decision)
     throw new CommandRejected({ code: 'unknownDecision', decisionId: command.decisionId });
+  if (command.answeredBy !== undefined && !mayAnswer(state, decision.decider, command.answeredBy))
+    throw new CommandRejected({
+      code: 'notTheDecider',
+      decisionId: decision.id,
+      answeredBy: command.answeredBy,
+      decider: decision.decider,
+    });
   const option = decision.options.find((candidate) => candidate.id === command.optionId);
   if (!option)
     throw new CommandRejected({
@@ -140,6 +147,23 @@ function chosenOption(state: GameState, command: ResolveDecision): DecisionOptio
       optionId: command.optionId,
     });
   return option;
+}
+
+/**
+ * Whether `investigatorId` may answer for `decider`: the named investigator,
+ * the current lead, or for the group any investigator still in the scenario.
+ */
+function mayAnswer(state: GameState, decider: Decider, investigatorId: InvestigatorId): boolean {
+  switch (decider.kind) {
+    case 'investigator':
+      return decider.investigatorId === investigatorId;
+    case 'lead':
+      return state.meta.leadInvestigator === investigatorId;
+    case 'group':
+      return state.investigators.some(
+        (inv) => inv.id === investigatorId && inv.status === 'active',
+      );
+  }
 }
 
 /** The yes/no options of a `confirm` decision: "yes" runs `onYes`, "no" does nothing. */
