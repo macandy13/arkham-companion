@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { agnesLine, daisyLine, makeCampaignLog, rolandLine } from '../../test/utils';
+import { agnesMember, daisyMember, makeCampaignLog, rolandMember } from '../../test/utils';
 import type { CampaignEvent } from './campaign_events';
 import { emptyCampaignLog } from './campaign_log';
 import { applyCampaign, replayCampaign } from './campaign_reducer';
@@ -11,7 +11,7 @@ describe('applyCampaign', () => {
       campaignId: 'campaign_b',
       definitionId: 'night_of_the_zealot',
       difficulty: 'hard',
-      investigators: [daisyLine],
+      investigators: [daisyMember],
       chaosBag: ['skull'],
       scenarioIds: ['the_gathering'],
     });
@@ -21,7 +21,7 @@ describe('applyCampaign', () => {
       campaignId: 'campaign_b',
       definitionId: 'night_of_the_zealot',
       difficulty: 'hard',
-      investigators: [daisyLine],
+      investigators: [daisyMember],
       chaosBag: ['skull'],
       scenarioIds: ['the_gathering'],
     });
@@ -55,15 +55,15 @@ describe('applyCampaign', () => {
     { account: 'earned', delta: 3, changed: { xpEarned: 3, xpSpent: 0 } },
     { account: 'spent', delta: 2, changed: { xpEarned: 0, xpSpent: 2 } },
   ] as const)('changes the $account XP of one investigator', ({ account, delta, changed }) => {
-    const log = makeCampaignLog({ investigators: [rolandLine, daisyLine] });
+    const log = makeCampaignLog({ investigators: [rolandMember, daisyMember] });
 
     const after = applyCampaign(log, { type: 'XpChanged', code: '01001', account, delta });
 
-    expect(after.investigators).toEqual([{ ...rolandLine, ...changed }, daisyLine]);
+    expect(after.investigators).toEqual([{ ...rolandMember, ...changed }, daisyMember]);
   });
 
   it('changes the trauma of one kind', () => {
-    const log = makeCampaignLog({ investigators: [rolandLine] });
+    const log = makeCampaignLog({ investigators: [rolandMember] });
 
     const after = applyCampaign(log, {
       type: 'TraumaChanged',
@@ -72,11 +72,11 @@ describe('applyCampaign', () => {
       delta: 2,
     });
 
-    expect(after.investigators).toEqual([{ ...rolandLine, mentalTrauma: 2 }]);
+    expect(after.investigators).toEqual([{ ...rolandMember, mentalTrauma: 2 }]);
   });
 
   it('changes the fate of one investigator', () => {
-    const log = makeCampaignLog({ investigators: [rolandLine] });
+    const log = makeCampaignLog({ investigators: [rolandMember] });
 
     const after = applyCampaign(log, {
       type: 'InvestigatorFateChanged',
@@ -84,20 +84,20 @@ describe('applyCampaign', () => {
       fate: 'insane',
     });
 
-    expect(after.investigators).toEqual([{ ...rolandLine, fate: 'insane' }]);
+    expect(after.investigators).toEqual([{ ...rolandMember, fate: 'insane' }]);
   });
 
   it('puts the newcomer in the seat of the replaced investigator, who becomes a former one', () => {
-    const killedRoland = { ...rolandLine, fate: 'killed' } as const;
-    const log = makeCampaignLog({ investigators: [killedRoland, daisyLine] });
+    const killedRoland = { ...rolandMember, fate: 'killed' } as const;
+    const log = makeCampaignLog({ investigators: [killedRoland, daisyMember] });
 
     const after = applyCampaign(log, {
       type: 'InvestigatorReplaced',
       code: '01001',
-      by: agnesLine,
+      by: agnesMember,
     });
 
-    expect(after.investigators).toEqual([agnesLine, daisyLine]);
+    expect(after.investigators).toEqual([agnesMember, daisyMember]);
     expect(after.formerInvestigators).toEqual([killedRoland]);
   });
 
@@ -130,7 +130,7 @@ describe('replayCampaign', () => {
         campaignId: 'campaign_a',
         definitionId: 'test_campaign',
         difficulty: 'standard',
-        investigators: [rolandLine],
+        investigators: [rolandMember],
         chaosBag: ['0'],
         scenarioIds: ['first_scenario', 'second_scenario'],
       },
@@ -140,7 +140,7 @@ describe('replayCampaign', () => {
 
     expect(replayCampaign(events)).toEqual(
       makeCampaignLog({
-        investigators: [{ ...rolandLine, xpEarned: 2 }],
+        investigators: [{ ...rolandMember, xpEarned: 2 }],
         chaosBag: ['0'],
         position: 1,
       }),
