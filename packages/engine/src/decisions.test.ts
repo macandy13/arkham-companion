@@ -433,17 +433,24 @@ describe('pending decision invariants', () => {
 });
 
 describe('who answers', () => {
-  const askedBy = (decider: Decider): GameState =>
-    stateAfter(ctx, started([alicePlacedAt(hall), bobPlacedAt(hall)]), {
-      type: 'RequestDecision',
-      decision: {
-        id: decisionId('pick_reward'),
-        kind: 'chooseOption',
-        prompt: 'decision.pickReward',
-        decider,
-        options: [{ id: 'gain_resource', label: 'Gain a resource', commands: [gainResource] }],
+  /** Alice and bob in the hall, bob made the lead, then asked `decider`'s decision. */
+  const askedBy = (decider: Decider, ...before: Command[]): GameState =>
+    stateAfter(
+      ctx,
+      started([alicePlacedAt(hall), bobPlacedAt(hall)]),
+      { type: 'SetLeadInvestigator', investigatorId: bob },
+      ...before,
+      {
+        type: 'RequestDecision',
+        decision: {
+          id: decisionId('pick_reward'),
+          kind: 'chooseOption',
+          prompt: 'decision.pickReward',
+          decider,
+          options: [{ id: 'gain_resource', label: 'Gain a resource', commands: [gainResource] }],
+        },
       },
-    });
+    );
   const answerBy = (answeredBy?: InvestigatorId): Command => ({
     ...resolveDecision('pick_reward', 'gain_resource'),
     ...(answeredBy === undefined ? {} : { answeredBy }),
@@ -452,7 +459,7 @@ describe('who answers', () => {
 
   it.each<{ decider: Decider; answeredBy?: InvestigatorId }>([
     { decider: aliceDecides, answeredBy: alice },
-    { decider: { kind: 'lead' }, answeredBy: alice },
+    { decider: { kind: 'lead' }, answeredBy: bob },
     { decider: { kind: 'group' }, answeredBy: bob },
     { decider: aliceDecides, answeredBy: undefined },
   ])('accepts $answeredBy answering for $decider.kind', ({ decider, answeredBy }) => {
@@ -461,13 +468,30 @@ describe('who answers', () => {
 
   it.each<{ decider: Decider; answeredBy: InvestigatorId }>([
     { decider: aliceDecides, answeredBy: bob },
-    { decider: { kind: 'lead' }, answeredBy: bob },
+    { decider: { kind: 'lead' }, answeredBy: alice },
     { decider: { kind: 'group' }, answeredBy: investigatorId('carol') },
   ])('rejects $answeredBy answering for $decider.kind', ({ decider, answeredBy }) => {
     expect(rejectionFrom(ctx, askedBy(decider), answerBy(answeredBy))).toEqual({
       code: 'notTheDecider',
       decisionId: 'pick_reward',
       answeredBy,
+      decider,
+    });
+  });
+
+  it('rejects a defeated investigator answering for the group', () => {
+    const aliceDefeated: Command = {
+      type: 'AdjustInvestigator',
+      investigatorId: alice,
+      stat: 'horror',
+      delta: 6,
+    };
+    const decider: Decider = { kind: 'group' };
+
+    expect(rejectionFrom(ctx, askedBy(decider, aliceDefeated), answerBy(alice))).toEqual({
+      code: 'notTheDecider',
+      decisionId: 'pick_reward',
+      answeredBy: alice,
       decider,
     });
   });

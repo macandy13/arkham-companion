@@ -171,6 +171,11 @@ export function findInvestigator(state: GameState, id: InvestigatorId): Investig
   return state.investigators.find((inv) => inv.id === id);
 }
 
+/** Whether `id` names an investigator still in the scenario (not defeated or resigned). */
+export function isActiveInvestigator(state: GameState, id: InvestigatorId): boolean {
+  return findInvestigator(state, id)?.status === 'active';
+}
+
 /** The investigator with `id`, in any status; rejects an unknown ID (`unknownInvestigator`). */
 export function requireInvestigator(state: GameState, id: InvestigatorId): Investigator {
   const investigator = findInvestigator(state, id);

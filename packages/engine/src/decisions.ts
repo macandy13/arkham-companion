@@ -2,6 +2,7 @@ import type { EngineContext } from './cards';
 import type { Command, RequestDecision, ResolveDecision } from './commands';
 import type { DecisionRequested, DecisionResolved } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
+import { isActiveInvestigator } from './investigators';
 import { CommandRejected } from './rejection';
 import { withSuggestion } from './skill_modifiers';
 import type { AmountRange, Decider, Decision, DecisionOption, GameState, SkillTest } from './state';
@@ -160,9 +161,7 @@ function mayAnswer(state: GameState, decider: Decider, investigatorId: Investiga
     case 'lead':
       return state.meta.leadInvestigator === investigatorId;
     case 'group':
-      return state.investigators.some(
-        (inv) => inv.id === investigatorId && inv.status === 'active',
-      );
+      return isActiveInvestigator(state, investigatorId);
   }
 }
 
