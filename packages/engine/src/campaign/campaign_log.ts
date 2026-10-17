@@ -19,13 +19,15 @@ export type XpAccount = 'earned' | 'spent';
  * One investigator's line in the campaign log, identified by the ArkhamDB
  * code of the investigator card (a campaign never has two copies of one
  * investigator). Unlike the game's `Investigator`, it survives every
- * scenario. `health` and `sanity` are the printed values: trauma reaching
- * them kills the investigator or drives them insane, so the log needs them
- * without a `CardDb`.
+ * scenario. `name`, `health` and `sanity` are the printed values, copied in
+ * so the log reads and checks itself without a `CardDb`: trauma reaching
+ * health or sanity kills the investigator or drives them insane.
  */
 export interface CampaignInvestigator {
   /** ArkhamDB code of the investigator card. */
   readonly code: string;
+  /** Printed name, as written on the paper campaign log. */
+  readonly name: string;
   readonly health: number;
   readonly sanity: number;
   readonly physicalTrauma: number;
