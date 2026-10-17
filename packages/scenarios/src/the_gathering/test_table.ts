@@ -357,7 +357,10 @@ export class TestTable {
     });
   }
 
-  /** A fight action against the `enemy` whose combat test the players fail: nothing happens. */
+  /**
+   * A fight action against the `enemy` whose combat test the players fail: no
+   * damage; a ready enemy with retaliate then asks to attack the fighter.
+   */
   failFight(investigator: InvestigatorId, enemy: EnemySelector): void {
     const { id } = this.enemyInstance(enemy);
     this.play({ type: 'Fight', investigatorId: investigator, enemyId: id });
