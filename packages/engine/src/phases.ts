@@ -5,7 +5,7 @@ import { enemyAttackEvents, enemyAttackList } from './enemies';
 import type { Event, ExhaustChanged, PhaseChanged, PhaseStepsChanged } from './events';
 import { isInPlay } from './handle_enemy';
 import { activeInvestigator } from './handle_investigator';
-import { playerOrder } from './investigators';
+import { isActiveInvestigator, playerOrder } from './investigators';
 import { discardEncounterCard } from './placement';
 import { cardsOfType } from './lookup';
 import { replay } from './reducer';
@@ -237,13 +237,10 @@ function stepCommands(
 }
 
 function canDraw(state: GameState, investigatorId: Investigator['id']): boolean {
-  const active = state.investigators.some(
-    (inv) => inv.id === investigatorId && inv.status === 'active',
-  );
   const cards =
     (state.order[zoneKey({ kind: 'encounterDeck' })]?.length ?? 0) +
     (state.order[zoneKey({ kind: 'encounterDiscard' })]?.length ?? 0);
-  return active && cards > 0;
+  return isActiveInvestigator(state, investigatorId) && cards > 0;
 }
 
 /** The attacks of `enemyAttackList` as step 3.3 lists them. */

@@ -1,6 +1,6 @@
 import type { CommandType, EncounterMatch, EncounterSource } from './commands';
 import type { DecisionId, InstanceId, InvestigatorCode, InvestigatorId, MapId } from './ids';
-import type { InvestigatorStat, Phase, TokenKind } from './state';
+import type { Decider, InvestigatorStat, Phase, TokenKind } from './state';
 
 /**
  * Structured reason why `handle` refused a command. The UI can switch on
@@ -129,6 +129,8 @@ export type Rejection =
   | { code: 'unknownDecision'; decisionId: DecisionId }
   /** `ResolveDecision` with an option the decision does not have. */
   | { code: 'unknownOption'; decisionId: DecisionId; optionId: string }
+  /** `ResolveDecision` by an investigator the decision's `decider` does not name. */
+  | { code: 'notTheDecider'; decisionId: DecisionId; answeredBy: InvestigatorId; decider: Decider }
   /** A skill test modifier that is not a whole number. */
   | { code: 'invalidModifierAmount'; amount: number }
   /** `NextPhase` while an enemy attack of the enemy phase still has to be resolved. */
@@ -322,6 +324,8 @@ function describe(r: Rejection): string {
       return `no pending decision ${r.decisionId}`;
     case 'unknownOption':
       return `decision ${r.decisionId} has no option ${r.optionId}`;
+    case 'notTheDecider':
+      return `${r.answeredBy} may not answer decision ${r.decisionId}`;
     case 'invalidModifierAmount':
       return `skill test modifier ${r.amount} is not allowed here`;
     case 'enemyAttackPending':
