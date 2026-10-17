@@ -48,7 +48,7 @@ export type CampaignRejection =
   | { code: 'unknownStoryRecord'; key: string }
   /** `AdjustCampaign` `position` outside 0..`max` (the number of scenarios). */
   | { code: 'invalidPosition'; position: number; max: number }
-  /** A `AdjustCampaign` that would leave the log inconsistent; `violations` from `checkCampaignInvariants`. */
+  /** An `AdjustCampaign` that would leave the log inconsistent; `violations` from `checkCampaignInvariants`. */
   | { code: 'inconsistentAdjustment'; violations: readonly string[] };
 
 /** The `code` of every campaign rejection. */
