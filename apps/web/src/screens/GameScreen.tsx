@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
 import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
-import type { GameId } from '@arkham/engine';
+import { gameId as toGameId } from '@arkham/engine';
 import type { AppState } from '../state/appStore';
 import './game.css';
 
@@ -13,8 +13,8 @@ import './game.css';
  */
 export function GameScreen({ store }: { store: StoreApi<AppState> }) {
   const { t } = useTranslation();
-  // The route only matches with an `:id` segment, so it is always present.
-  const gameId = useParams().id as GameId;
+  // The route only matches with an `:id` segment; the fallback only satisfies the type.
+  const gameId = toGameId(useParams().id ?? '');
   const current = useStore(store, (s) => s.current);
   const open = current?.gameId === gameId ? current : undefined;
 
