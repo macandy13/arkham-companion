@@ -509,7 +509,14 @@ function handleMoveCard(state: GameState, cmd: MoveCard): CardMoved {
  */
 function handleManualAdjust(ctx: EngineContext, state: GameState, adj: Adjustment): Event[] {
   const event = handleAdjustment(state, adj);
-  if (event.type !== 'TokensChanged' || event.token !== 'doom' || event.delta < 0) return [event];
+  // After the end nothing could answer the question (`scenarioEnded`), and no agenda advances any more.
+  if (
+    event.type !== 'TokensChanged' ||
+    event.token !== 'doom' ||
+    event.delta < 0 ||
+    state.meta.ended
+  )
+    return [event];
   return [event, ...agendaThresholdDecision(ctx, apply(state, event))];
 }
 

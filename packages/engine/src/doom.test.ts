@@ -11,6 +11,7 @@ import {
   type Command,
   type Event,
   type GameState,
+  type InstanceId,
   type Investigator,
 } from './index';
 import {
@@ -874,6 +875,12 @@ describe('manual doom corrections', () => {
     expect(corrected.agenda.current).toBe(agenda1);
   });
 
+  it('do not ask once the scenario has ended', () => {
+    const ended = stateAfter(testContext, aliceAlone(), { type: 'EndScenario', resolution: 'R1' });
+
+    expect(stateAfter(testContext, ended, manualDoom(ghoul, 3)).pending).toEqual([]);
+  });
+
   it('do not ask again when doom is taken off above the threshold', () => {
     const answered = stateAfter(testContext, aliceAlone(), manualDoom(ghoul, 4), {
       type: 'ResolveDecision',
@@ -886,7 +893,7 @@ describe('manual doom corrections', () => {
 });
 
 describe('manual moves of agenda and act cards', () => {
-  const removeFromGame = (cardId: typeof hall): Command => ({
+  const removeFromGame = (cardId: InstanceId): Command => ({
     type: 'ManualAdjust',
     adjustment: { kind: 'moveCard', cardId, to: { kind: 'outOfGame' } },
   });
