@@ -943,8 +943,9 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         defaults: { attack: { damage: 2, horror: 2 } },
       },
     ]);
-    table.spendResources(roland, 1);
     table.answer('Ghoul Priest', 'attack cancelled');
+    // The open attack blocks every other command, so the cost is noted after it.
+    table.spendResources(roland, 1);
     expect(table.wounds(daisy)).toEqual({ damage: 4, horror: 2 });
 
     // Her next blow is the Priest's fifteenth damage. It goes to the victory
