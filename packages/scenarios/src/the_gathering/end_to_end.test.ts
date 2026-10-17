@@ -190,10 +190,9 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     // Round 2 – investigation: Wendy's turn (the group lets her go before Daisy)
     table.startTurn(wendy);
+    // Entering the Cellar engages the ready Icy Ghoul waiting there, which is no action.
     table.moveTo(wendy, 'Cellar');
-    // Entering a location with a ready enemy engages it, which is no action;
-    // `MoveInvestigator` does not do that yet (M1.8 follow-up), so the script engages it.
-    table.engage(wendy, icyGhoul);
+    expect(table.enemy(icyGhoul)).toMatchObject({ at: 'Cellar', engagedWith: wendy });
     table.endTurn(wendy);
 
     // Round 2 – investigation: Daisy's turn (intellect 5 against the Cellar's shroud 4)
@@ -535,7 +534,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.startTurn(roland);
     table.moveTo(roland, 'Hallway');
     table.moveTo(roland, 'Attic');
-    table.engage(roland, 'Flesh-Eater');
+    expect(table.enemy('Flesh-Eater')).toMatchObject({ at: 'Attic', engagedWith: roland });
     table.startInvestigating(roland);
 
     // Searching while engaged with the ready Flesh-Eater provokes its attack of
