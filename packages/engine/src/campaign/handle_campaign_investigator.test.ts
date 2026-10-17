@@ -249,7 +249,7 @@ describe('ReplaceInvestigator (Roland is killed, Daisy stays alive)', () => {
         handleCampaign(killedRoland, {
           type: 'ReplaceInvestigator',
           code: '01001',
-          by: { code: wendy.code, health: 0, sanity: 7 },
+          by: { ...wendy, health: 0 },
         }),
       ),
     ).toEqual({

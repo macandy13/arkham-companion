@@ -90,12 +90,12 @@ export function handleReplaceInvestigator(
 }
 
 /**
- * The log line of an investigator joining the campaign (at the start or as
+ * The campaign log entry of an investigator joining the campaign (at the start or as
  * a replacement): no trauma, no XP, alive. Rejects printed stats that are
  * not positive integers.
  */
 export function newCampaignInvestigator(joining: JoiningInvestigator): CampaignInvestigator {
-  const { code, health, sanity } = joining;
+  const { code, name, health, sanity } = joining;
   if (!isPositiveInteger(health) || !isPositiveInteger(sanity))
     throw new CampaignCommandRejected({
       code: 'invalidInvestigatorStats',
@@ -105,6 +105,7 @@ export function newCampaignInvestigator(joining: JoiningInvestigator): CampaignI
     });
   return {
     code,
+    name,
     health,
     sanity,
     physicalTrauma: 0,
