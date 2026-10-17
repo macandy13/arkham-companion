@@ -283,7 +283,7 @@ function compileMapStep(state: GameState, step: AddMapStep): Command[];
 
 Hooks return commands that go through the normal `handle` path. Game commands such as `MoveCard` and `AddMap` exist for hooks: unlike a `ManualAdjust` correction, they are game events and fire further triggers.
 
-The only scenario so far is the hand-entered test scenario [`the_gathering/`](../packages/scenarios/src/the_gathering/). It has real card codes and names but no card text, and stands in for real scenario data. The app lists playable scenarios in its [scenario catalog](../apps/web/src/scenarios/scenarioCatalog.ts).
+The only scenario so far is the hand-entered test scenario [`the_gathering/`](../packages/scenarios/src/the_gathering/). It has real card codes and names but no card text, and stands in for real scenario data. Its hooks cover the reverse sides of all three acts and of agendas 2 and 3, and act 3's objective; a reverse side that lets the lead investigator choose the resolution raises a decision whose options end the scenario. The app lists playable scenarios in its [scenario catalog](../apps/web/src/scenarios/scenarioCatalog.ts).
 
 ```ts
 interface ScenarioDefinition {
