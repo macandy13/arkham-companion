@@ -8,6 +8,16 @@ export function duplicates<T>(items: readonly T[]): T[] {
 }
 
 /**
+ * A copy of `items` without the first occurrence of `item` (compared with
+ * `===`). Removes one copy, unlike `filter`, so it suits multisets such as a
+ * bag of tokens. Total: an absent item leaves an equal copy.
+ */
+export function withoutFirst<T>(items: readonly T[], item: T): T[] {
+  const index = items.indexOf(item);
+  return index === -1 ? [...items] : [...items.slice(0, index), ...items.slice(index + 1)];
+}
+
+/**
  * Each item of `items` with the running total of `valueOf` up to and
  * including it, starting from `start`: the last item's `total` is the sum of
  * all of them. Copies the items; empty for an empty list.

@@ -297,16 +297,18 @@ type SetupStep = AddMapStep | SetAsideStep | BuildEncounterDeckStep | PlaceToken
 
 ### Campaign
 
-A campaign spans several games and outlives each of them, so it is its own aggregate in [`campaign/`](../packages/engine/src/campaign/). [`CampaignLog`](../packages/engine/src/campaign/campaign_log.ts) holds the team with trauma, XP and fate, replaced investigators, typed story records, the chaos bag and the scenario order. [`checkCampaignInvariants`](../packages/engine/src/campaign/campaign_invariants.ts) states what must always hold (team of 1–4, no overspent XP, trauma consistent with fate). A game's `GameState.campaign` holds a copy of the log at scenario start.
+A campaign spans several games and outlives each of them, so it is its own aggregate in [`campaign/`](../packages/engine/src/campaign/), event-sourced like a game but with its own events and reducer ([`campaign_reducer.ts`](../packages/engine/src/campaign/campaign_reducer.ts)). The same reasons apply: undo, recovery after a crash and export come for free, and later scenarios read earlier outcomes from the log rather than from the players' memory. [`CampaignLog`](../packages/engine/src/campaign/campaign_log.ts) holds the team with trauma, XP and fate, replaced investigators, typed story records, the chaos bag and the scenario order. [`checkCampaignInvariants`](../packages/engine/src/campaign/campaign_invariants.ts) states what must always hold (team of 1–4, no overspent XP, trauma consistent with fate). A game's `GameState.campaign` holds a copy of the log at scenario start.
 
 ```ts
+function applyCampaign(log: CampaignLog, event: CampaignEvent): CampaignLog;
+
 type StoryValue = { kind: 'flag'; value: boolean } | { kind: 'count'; value: number }
   | { kind: 'list'; entries: string[] } | { kind: 'crossableList'; entries: CrossableEntry[] };
 ```
 
 **Extension points**
 
-- **A new campaign record:** add its field to `CampaignLog`. If it can become inconsistent, add the rule to `checkCampaignInvariants`.
+- **A new campaign record:** add its field to `CampaignLog`, the `CampaignEvent` that changes it in [`campaign_events.ts`](../packages/engine/src/campaign/campaign_events.ts) and its case in `applyCampaign`. If it can become inconsistent, add the rule to `checkCampaignInvariants`.
 
 ### Card data
 
