@@ -4,14 +4,12 @@ import {
   emptyCampaignLog,
   executeCampaign,
 } from '@arkham/engine';
+import { daisy, roland } from '@arkham/engine/test/utils';
 import { describe, expect, it } from 'vitest';
 import { theGathering } from '../the_gathering/scenario';
 import { nightOfTheZealot } from './campaign';
 
 describe('Night of the Zealot campaign definition', () => {
-  const roland = { code: '01001', name: 'Roland Banks', health: 9, sanity: 5 };
-  const daisy = { code: '01002', name: 'Daisy Walker', health: 5, sanity: 9 };
-
   it('lists the three scenarios in campaign order', () => {
     const start = compileCampaign(nightOfTheZealot, {
       campaignId: 'campaign_a',
