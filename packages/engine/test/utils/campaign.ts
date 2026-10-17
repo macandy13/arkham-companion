@@ -1,9 +1,15 @@
 import type { CampaignInvestigator, CampaignLog } from '../../src/index';
 
 /** A team member as the log holds them at campaign start: no trauma, no XP, alive. */
-export function campaignLine(code: string, health: number, sanity: number): CampaignInvestigator {
+export function campaignMember(
+  code: string,
+  name: string,
+  health: number,
+  sanity: number,
+): CampaignInvestigator {
   return {
     code,
+    name,
     health,
     sanity,
     physicalTrauma: 0,
@@ -14,10 +20,10 @@ export function campaignLine(code: string, health: number, sanity: number): Camp
   };
 }
 
-/** Night of the Zealot investigators with their printed health and sanity, as fresh log lines. */
-export const rolandLine = campaignLine('01001', 9, 5);
-export const daisyLine = campaignLine('01002', 5, 9);
-export const agnesLine = campaignLine('01004', 6, 8);
+/** Night of the Zealot investigators with their printed health and sanity, as fresh team members. */
+export const rolandMember = campaignMember('01001', 'Roland Banks', 9, 5);
+export const daisyMember = campaignMember('01002', 'Daisy Walker', 5, 9);
+export const agnesMember = campaignMember('01004', 'Agnes Baker', 6, 8);
 
 /**
  * A started campaign log with boring defaults: standard difficulty, Roland
@@ -29,7 +35,7 @@ export function makeCampaignLog(overrides: Partial<CampaignLog> = {}): CampaignL
     campaignId: 'campaign_a',
     definitionId: 'test_campaign',
     difficulty: 'standard',
-    investigators: [rolandLine],
+    investigators: [rolandMember],
     formerInvestigators: [],
     story: {},
     chaosBag: ['0', '-1', 'skull'],
