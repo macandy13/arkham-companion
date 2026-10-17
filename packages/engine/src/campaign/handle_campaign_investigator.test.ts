@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   agnes,
+  campaignContext,
   campaignRejectionOf,
   daisy,
   roland,
   startedCampaign,
-  wendy,
 } from '../../test/utils';
 import { investigatorCode } from '../ids';
 import { campaignInvestigator } from './campaign_log';
@@ -15,7 +15,7 @@ import { handleCampaign } from './handle_campaign';
 const notOnTeam = investigatorCode('not_on_team');
 
 describe('AwardXp and SpendXp', () => {
-  const team = { investigators: [roland, daisy] };
+  const team = { investigators: [roland.code, daisy.code] };
 
   it('award raises earned XP of that investigator only', () => {
     const log = startedCampaign(team, { type: 'AwardXp', code: roland.code, amount: 3 });
@@ -49,7 +49,7 @@ describe('AwardXp and SpendXp', () => {
     );
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(log, { type: 'SpendXp', code: roland.code, amount: 2 }),
+        handleCampaign(campaignContext, log, { type: 'SpendXp', code: roland.code, amount: 2 }),
       ),
     ).toEqual({ code: 'notEnoughXp', investigatorCode: roland.code, available: 1, requested: 2 });
   });
@@ -58,7 +58,9 @@ describe('AwardXp and SpendXp', () => {
     const log = startedCampaign(team, { type: 'AwardXp', code: roland.code, amount: 5 });
     for (const type of ['AwardXp', 'SpendXp'] as const) {
       expect(
-        campaignRejectionOf(() => handleCampaign(log, { type, code: roland.code, amount })),
+        campaignRejectionOf(() =>
+          handleCampaign(campaignContext, log, { type, code: roland.code, amount }),
+        ),
       ).toEqual({
         code: 'invalidAmount',
         amount,
@@ -69,7 +71,11 @@ describe('AwardXp and SpendXp', () => {
   it('rejects an investigator who is not on the team', () => {
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(startedCampaign(team), { type: 'AwardXp', code: notOnTeam, amount: 1 }),
+        handleCampaign(campaignContext, startedCampaign(team), {
+          type: 'AwardXp',
+          code: notOnTeam,
+          amount: 1,
+        }),
       ),
     ).toEqual({ code: 'unknownInvestigator', investigatorCode: notOnTeam });
   });
@@ -78,7 +84,7 @@ describe('AwardXp and SpendXp', () => {
 describe('AddTrauma (Roland: health 9, sanity 5)', () => {
   it('adds trauma of the given kind and leaves the investigator alive below the limit', () => {
     const log = startedCampaign(
-      { investigators: [roland] },
+      { investigators: [roland.code] },
       { type: 'AddTrauma', code: roland.code, kind: 'physical', amount: 2 },
       { type: 'AddTrauma', code: roland.code, kind: 'mental', amount: 4 },
     );
@@ -91,7 +97,7 @@ describe('AddTrauma (Roland: health 9, sanity 5)', () => {
 
   it('physical trauma reaching health kills the investigator', () => {
     const log = startedCampaign(
-      { investigators: [roland] },
+      { investigators: [roland.code] },
       { type: 'AddTrauma', code: roland.code, kind: 'physical', amount: 9 },
     );
     expect(campaignInvestigator(log, roland.code)).toMatchObject({
@@ -102,7 +108,7 @@ describe('AddTrauma (Roland: health 9, sanity 5)', () => {
 
   it('mental trauma reaching sanity drives the investigator insane', () => {
     const log = startedCampaign(
-      { investigators: [roland] },
+      { investigators: [roland.code] },
       { type: 'AddTrauma', code: roland.code, kind: 'mental', amount: 3 },
       { type: 'AddTrauma', code: roland.code, kind: 'mental', amount: 2 },
     );
@@ -113,12 +119,16 @@ describe('AddTrauma (Roland: health 9, sanity 5)', () => {
   });
 
   it('produces the trauma event followed by the fate event at the limit', () => {
-    const events = handleCampaign(startedCampaign({ investigators: [roland] }), {
-      type: 'AddTrauma',
-      code: roland.code,
-      kind: 'mental',
-      amount: 5,
-    });
+    const events = handleCampaign(
+      campaignContext,
+      startedCampaign({ investigators: [roland.code] }),
+      {
+        type: 'AddTrauma',
+        code: roland.code,
+        kind: 'mental',
+        amount: 5,
+      },
+    );
     expect(events).toEqual([
       { type: 'TraumaChanged', code: roland.code, kind: 'mental', delta: 5 },
       { type: 'InvestigatorFateChanged', code: roland.code, fate: 'insane' },
@@ -128,7 +138,7 @@ describe('AddTrauma (Roland: health 9, sanity 5)', () => {
   it.each([0, -2, 0.5])('rejects the amount %s', (amount) => {
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(startedCampaign({ investigators: [roland] }), {
+        handleCampaign(campaignContext, startedCampaign({ investigators: [roland.code] }), {
           type: 'AddTrauma',
           code: roland.code,
           kind: 'physical',
@@ -144,14 +154,14 @@ describe('MarkKilled and MarkInsane', () => {
     { type: 'MarkKilled', fate: 'killed' },
     { type: 'MarkInsane', fate: 'insane' },
   ] as const)('$type sets the fate to $fate', ({ type, fate }) => {
-    const log = startedCampaign({ investigators: [roland] }, { type, code: roland.code });
+    const log = startedCampaign({ investigators: [roland.code] }, { type, code: roland.code });
     expect(campaignInvestigator(log, roland.code)?.fate).toBe(fate);
   });
 
   it('rejects an unknown investigator', () => {
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(startedCampaign({ investigators: [roland] }), {
+        handleCampaign(campaignContext, startedCampaign({ investigators: [roland.code] }), {
           type: 'MarkKilled',
           code: daisy.code,
         }),
@@ -162,7 +172,7 @@ describe('MarkKilled and MarkInsane', () => {
 
 describe('eliminated investigators (Roland is killed, Daisy is insane)', () => {
   const log = startedCampaign(
-    { investigators: [roland, daisy] },
+    { investigators: [roland.code, daisy.code] },
     { type: 'MarkKilled', code: roland.code },
     { type: 'MarkInsane', code: daisy.code },
   );
@@ -181,7 +191,7 @@ describe('eliminated investigators (Roland is killed, Daisy is insane)', () => {
         { type: 'MarkInsane', code },
       ] as const;
       for (const command of commands) {
-        expect(campaignRejectionOf(() => handleCampaign(log, command))).toEqual({
+        expect(campaignRejectionOf(() => handleCampaign(campaignContext, log, command))).toEqual({
           code: 'investigatorEliminated',
           investigatorCode: code,
           fate,
@@ -193,15 +203,15 @@ describe('eliminated investigators (Roland is killed, Daisy is insane)', () => {
 
 describe('ReplaceInvestigator (Roland is killed, Daisy stays alive)', () => {
   const killedRoland = startedCampaign(
-    { investigators: [roland, daisy] },
+    { investigators: [roland.code, daisy.code] },
     { type: 'MarkKilled', code: roland.code },
   );
 
   it('puts the newcomer into the same seat and moves Roland to the former investigators', () => {
     const log = startedCampaign(
-      { investigators: [roland, daisy] },
+      { investigators: [roland.code, daisy.code] },
       { type: 'MarkKilled', code: roland.code },
-      { type: 'ReplaceInvestigator', code: roland.code, by: agnes },
+      { type: 'ReplaceInvestigator', code: roland.code, by: agnes.code },
     );
 
     expect(log.investigators.map((member) => member.code)).toEqual([agnes.code, daisy.code]);
@@ -220,7 +230,11 @@ describe('ReplaceInvestigator (Roland is killed, Daisy stays alive)', () => {
   it('rejects replacing an investigator who is still alive', () => {
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(killedRoland, { type: 'ReplaceInvestigator', code: daisy.code, by: agnes }),
+        handleCampaign(campaignContext, killedRoland, {
+          type: 'ReplaceInvestigator',
+          code: daisy.code,
+          by: agnes.code,
+        }),
       ),
     ).toEqual({ code: 'investigatorNotEliminated', investigatorCode: daisy.code });
   });
@@ -228,7 +242,11 @@ describe('ReplaceInvestigator (Roland is killed, Daisy stays alive)', () => {
   it('rejects replacing someone who is not on the team', () => {
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(killedRoland, { type: 'ReplaceInvestigator', code: notOnTeam, by: agnes }),
+        handleCampaign(campaignContext, killedRoland, {
+          type: 'ReplaceInvestigator',
+          code: notOnTeam,
+          by: agnes.code,
+        }),
       ),
     ).toEqual({ code: 'unknownInvestigator', investigatorCode: notOnTeam });
   });
@@ -236,39 +254,43 @@ describe('ReplaceInvestigator (Roland is killed, Daisy stays alive)', () => {
   it('rejects a replacement who is a current team member', () => {
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(killedRoland, { type: 'ReplaceInvestigator', code: roland.code, by: daisy }),
+        handleCampaign(campaignContext, killedRoland, {
+          type: 'ReplaceInvestigator',
+          code: roland.code,
+          by: daisy.code,
+        }),
       ),
     ).toEqual({ code: 'duplicateInvestigator', investigatorCode: daisy.code });
   });
 
   it('rejects a replacement who is a former investigator', () => {
     const replaced = startedCampaign(
-      { investigators: [roland, daisy] },
+      { investigators: [roland.code, daisy.code] },
       { type: 'MarkKilled', code: roland.code },
-      { type: 'ReplaceInvestigator', code: roland.code, by: agnes },
+      { type: 'ReplaceInvestigator', code: roland.code, by: agnes.code },
       { type: 'MarkInsane', code: agnes.code },
     );
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(replaced, { type: 'ReplaceInvestigator', code: agnes.code, by: roland }),
+        handleCampaign(campaignContext, replaced, {
+          type: 'ReplaceInvestigator',
+          code: agnes.code,
+          by: roland.code,
+        }),
       ),
     ).toEqual({ code: 'duplicateInvestigator', investigatorCode: roland.code });
   });
 
-  it('rejects a replacement with invalid printed stats', () => {
+  it('rejects a replacement whose card is not in the context', () => {
+    const notACard = investigatorCode('not_a_card');
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(killedRoland, {
+        handleCampaign(campaignContext, killedRoland, {
           type: 'ReplaceInvestigator',
           code: roland.code,
-          by: { ...wendy, health: 0 },
+          by: notACard,
         }),
       ),
-    ).toEqual({
-      code: 'invalidInvestigatorStats',
-      investigatorCode: wendy.code,
-      health: 0,
-      sanity: wendy.sanity,
-    });
+    ).toEqual({ code: 'unknownInvestigatorCard', investigatorCode: notACard });
   });
 });

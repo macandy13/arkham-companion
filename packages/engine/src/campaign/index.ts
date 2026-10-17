@@ -12,5 +12,10 @@ export {
   type CampaignRejectionCode,
 } from './campaign_rejection';
 export { applyCampaign, replayCampaign } from './campaign_reducer';
-export { executeCampaign, handleCampaign, type CampaignExecuteResult } from './handle_campaign';
+export {
+  executeCampaign,
+  handleCampaign,
+  type CampaignContext,
+  type CampaignExecuteResult,
+} from './handle_campaign';
 export { checkCampaignInvariants, MAX_TEAM_SIZE } from './campaign_invariants';

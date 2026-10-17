@@ -1,13 +1,16 @@
 import {
   CampaignCommandRejected,
+  cardDbFrom,
   emptyCampaignLog,
   executeCampaign,
+  investigatorCardStats,
   investigatorCode,
   type CampaignCommand,
+  type CampaignContext,
   type CampaignInvestigator,
   type CampaignLog,
   type CampaignRejection,
-  type JoiningInvestigator,
+  type InvestigatorCard,
   type StartCampaign,
 } from '../../src/index';
 
@@ -58,40 +61,53 @@ export function makeCampaignLog(overrides: Partial<CampaignLog> = {}): CampaignL
   };
 }
 
-/** Night of the Zealot investigators as they join a campaign, with their printed health and sanity. */
-export const roland: JoiningInvestigator = {
+/**
+ * Core Set investigator cards with their printed health, sanity and skills
+ * (hand-entered, no card data), as the campaign handlers look them up.
+ */
+export const roland: InvestigatorCard = {
   code: investigatorCode('01001'),
   name: 'Roland Banks',
   health: 9,
   sanity: 5,
+  skills: { willpower: 3, intellect: 3, combat: 4, agility: 2 },
 };
-export const daisy: JoiningInvestigator = {
+export const daisy: InvestigatorCard = {
   code: investigatorCode('01002'),
   name: 'Daisy Walker',
   health: 5,
   sanity: 9,
+  skills: { willpower: 3, intellect: 5, combat: 2, agility: 2 },
 };
-export const wendy: JoiningInvestigator = {
+export const wendy: InvestigatorCard = {
   code: investigatorCode('01005'),
   name: 'Wendy Adams',
   health: 7,
   sanity: 7,
+  skills: { willpower: 4, intellect: 3, combat: 1, agility: 4 },
 };
-export const agnes: JoiningInvestigator = {
+export const agnes: InvestigatorCard = {
   code: investigatorCode('01004'),
   name: 'Agnes Baker',
   health: 6,
   sanity: 8,
+  skills: { willpower: 5, intellect: 2, combat: 2, agility: 3 },
 };
-export const skids: JoiningInvestigator = {
+export const skids: InvestigatorCard = {
   code: investigatorCode('01003'),
   name: "Skids O'Toole",
   health: 8,
   sanity: 6,
+  skills: { willpower: 2, intellect: 3, combat: 3, agility: 4 },
+};
+
+/** A campaign context that knows exactly Roland, Daisy, Wendy, Agnes and Skids. */
+export const campaignContext: CampaignContext = {
+  cards: cardDbFrom([roland, daisy, wendy, agnes, skids].map(investigatorCardStats)),
 };
 
 /**
- * A `StartCampaign` with boring defaults: standard difficulty, a three-token
+ * A `StartCampaign` with boring defaults: standard difficulty, Roland alone, a three-token
  * bag and two scenarios. Tests that assert on any of these pass them explicitly.
  */
 export function makeStartCampaign(overrides: Partial<StartCampaign> = {}): StartCampaign {
@@ -100,7 +116,7 @@ export function makeStartCampaign(overrides: Partial<StartCampaign> = {}): Start
     campaignId: 'campaign_a',
     definitionId: 'test_campaign',
     difficulty: 'standard',
-    investigators: [roland],
+    investigators: [roland.code],
     chaosBag: ['0', '-1', 'skull'],
     scenarioIds: ['first_scenario', 'second_scenario'],
     ...overrides,
@@ -113,8 +129,8 @@ export function startedCampaign(
   ...commands: CampaignCommand[]
 ): CampaignLog {
   return commands.reduce(
-    (log, command) => executeCampaign(log, command).log,
-    executeCampaign(emptyCampaignLog(), makeStartCampaign(start)).log,
+    (log, command) => executeCampaign(campaignContext, log, command).log,
+    executeCampaign(campaignContext, emptyCampaignLog(), makeStartCampaign(start)).log,
   );
 }
 

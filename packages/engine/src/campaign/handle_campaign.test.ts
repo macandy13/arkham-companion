@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   agnes,
+  campaignContext,
   campaignRejectionOf,
   daisy,
   makeStartCampaign,
@@ -9,6 +10,9 @@ import {
   startedCampaign,
   wendy,
 } from '../../test/utils';
+import { investigatorCode } from '../ids';
+import { cardDbFrom } from '../cards';
+import { investigatorCardStats } from '../investigator_cards';
 import type { CampaignCommand } from './campaign_commands';
 import type { CampaignRejection } from './campaign_rejection';
 import { emptyCampaignLog } from './campaign_log';
@@ -17,12 +21,13 @@ import { executeCampaign, handleCampaign } from './handle_campaign';
 describe('StartCampaign', () => {
   it('writes the campaign log with fresh investigators, the bag and the scenario order', () => {
     const { log, events } = executeCampaign(
+      campaignContext,
       emptyCampaignLog(),
       makeStartCampaign({
         campaignId: 'campaign_a',
         definitionId: 'night-of-the-zealot',
         difficulty: 'hard',
-        investigators: [roland, daisy],
+        investigators: [roland.code, daisy.code],
         chaosBag: ['0', 'skull'],
         scenarioIds: ['the-gathering', 'the-midnight-masks'],
       }),
@@ -66,7 +71,9 @@ describe('StartCampaign', () => {
   });
 
   it('accepts a team of four', () => {
-    const log = startedCampaign({ investigators: [roland, daisy, wendy, agnes] });
+    const log = startedCampaign({
+      investigators: [roland.code, daisy.code, wendy.code, agnes.code],
+    });
     expect(log.investigators.map((member) => member.code)).toEqual(
       [roland, daisy, wendy, agnes].map((joining) => joining.code),
     );
@@ -85,45 +92,60 @@ describe('StartCampaign', () => {
     {
       name: 'five investigators',
       setup: {
-        investigators: [roland, daisy, wendy, agnes, skids],
+        investigators: [roland.code, daisy.code, wendy.code, agnes.code, skids.code],
       },
       expected: { code: 'invalidTeamSize', count: 5 },
     },
     {
       name: 'the same investigator twice',
-      setup: { investigators: [roland, daisy, roland] },
+      setup: { investigators: [roland.code, daisy.code, roland.code] },
       expected: { code: 'duplicateInvestigator', investigatorCode: roland.code },
     },
     { name: 'no scenarios', setup: { scenarioIds: [] }, expected: { code: 'noScenarios' } },
-    {
-      name: 'zero health',
-      setup: { investigators: [{ ...roland, health: 0, sanity: 5 }] },
-      expected: {
-        code: 'invalidInvestigatorStats',
-        investigatorCode: roland.code,
-        health: 0,
-        sanity: 5,
-      },
-    },
-    {
-      name: 'fractional sanity',
-      setup: { investigators: [{ ...roland, health: 9, sanity: 2.5 }] },
-      expected: {
-        code: 'invalidInvestigatorStats',
-        investigatorCode: roland.code,
-        health: 9,
-        sanity: 2.5,
-      },
-    },
   ])('rejects $name', ({ setup, expected }) => {
     expect(
-      campaignRejectionOf(() => handleCampaign(emptyCampaignLog(), makeStartCampaign(setup))),
+      campaignRejectionOf(() =>
+        handleCampaign(campaignContext, emptyCampaignLog(), makeStartCampaign(setup)),
+      ),
     ).toEqual(expected);
   });
 
+  it.each([
+    { name: 'zero health', health: 0, sanity: 5 },
+    { name: 'fractional sanity', health: 9, sanity: 2.5 },
+  ])('rejects an investigator card with $name', ({ health, sanity }) => {
+    const contextWithBrokenRoland = {
+      cards: cardDbFrom([investigatorCardStats({ ...roland, health, sanity })]),
+    };
+    expect(
+      campaignRejectionOf(() =>
+        handleCampaign(
+          contextWithBrokenRoland,
+          emptyCampaignLog(),
+          makeStartCampaign({ investigators: [roland.code] }),
+        ),
+      ),
+    ).toEqual({ code: 'invalidInvestigatorStats', investigatorCode: roland.code, health, sanity });
+  });
+
+  it('rejects an investigator whose card is not in the context', () => {
+    const notACard = investigatorCode('not_a_card');
+    expect(
+      campaignRejectionOf(() =>
+        handleCampaign(
+          campaignContext,
+          emptyCampaignLog(),
+          makeStartCampaign({ investigators: [notACard] }),
+        ),
+      ),
+    ).toEqual({ code: 'unknownInvestigatorCard', investigatorCode: notACard });
+  });
+
   it('rejects starting a second campaign on a started log', () => {
-    const started = startedCampaign({ investigators: [roland] });
-    expect(campaignRejectionOf(() => handleCampaign(started, makeStartCampaign()))).toEqual({
+    const started = startedCampaign({ investigators: [roland.code] });
+    expect(
+      campaignRejectionOf(() => handleCampaign(campaignContext, started, makeStartCampaign())),
+    ).toEqual({
       code: 'campaignAlreadyStarted',
     });
   });
@@ -139,11 +161,13 @@ describe('commands before the campaign started', () => {
     { type: 'AddTrauma', code: roland.code, kind: 'physical', amount: 1 },
     { type: 'MarkKilled', code: roland.code },
     { type: 'MarkInsane', code: roland.code },
-    { type: 'ReplaceInvestigator', code: roland.code, by: agnes },
+    { type: 'ReplaceInvestigator', code: roland.code, by: agnes.code },
     { type: 'AdvanceScenario' },
     { type: 'AdjustCampaign', adjustment: { kind: 'position', position: 0 } },
   ])('rejects $type with campaignNotStarted', (command) => {
-    expect(campaignRejectionOf(() => handleCampaign(emptyCampaignLog(), command))).toEqual({
+    expect(
+      campaignRejectionOf(() => handleCampaign(campaignContext, emptyCampaignLog(), command)),
+    ).toEqual({
       code: 'campaignNotStarted',
     });
   });
@@ -181,7 +205,7 @@ describe('RecordStory', () => {
     );
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(log, {
+        handleCampaign(campaignContext, log, {
           type: 'RecordStory',
           key: house,
           value: { kind: 'count', value: 1 },
@@ -193,7 +217,7 @@ describe('RecordStory', () => {
   it.each(['', '   ', ' doubt'])('rejects the blank or padded key %j', (key) => {
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(startedCampaign(), {
+        handleCampaign(campaignContext, startedCampaign(), {
           type: 'RecordStory',
           key,
           value: { kind: 'flag', value: true },
@@ -220,7 +244,11 @@ describe('RecordStory', () => {
   ] as const)('rejects $name', ({ value }) => {
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(startedCampaign(), { type: 'RecordStory', key: house, value }),
+        handleCampaign(campaignContext, startedCampaign(), {
+          type: 'RecordStory',
+          key: house,
+          value,
+        }),
       ),
     ).toEqual({ code: 'invalidStoryValue', key: house });
   });
@@ -246,7 +274,9 @@ describe('chaos bag', () => {
   it('rejects removing a token that is not in the bag', () => {
     const log = startedCampaign({ chaosBag: ['0', 'skull'] });
     expect(
-      campaignRejectionOf(() => handleCampaign(log, { type: 'RemoveChaosToken', token: 'tablet' })),
+      campaignRejectionOf(() =>
+        handleCampaign(campaignContext, log, { type: 'RemoveChaosToken', token: 'tablet' }),
+      ),
     ).toEqual({ code: 'chaosTokenNotInBag', token: 'tablet' });
   });
 });
@@ -257,10 +287,13 @@ describe('AdvanceScenario', () => {
   it('moves through the scenarios until the campaign is complete, then rejects', () => {
     const start = { scenarioIds: ['the-gathering', 'the-midnight-masks', 'the-devourer-below'] };
     const positions = [startedCampaign(start)];
-    for (let i = 0; i < 3; i++) positions.push(executeCampaign(positions[i]!, advance).log);
+    for (let i = 0; i < 3; i++)
+      positions.push(executeCampaign(campaignContext, positions[i]!, advance).log);
 
     expect(positions.map((log) => log.position)).toEqual([0, 1, 2, 3]);
-    expect(campaignRejectionOf(() => handleCampaign(positions[3]!, advance))).toEqual({
+    expect(
+      campaignRejectionOf(() => handleCampaign(campaignContext, positions[3]!, advance)),
+    ).toEqual({
       code: 'campaignComplete',
     });
   });

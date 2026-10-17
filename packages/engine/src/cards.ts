@@ -3,7 +3,7 @@ import type { Brand } from './ids';
 import type { Keyword } from './keywords';
 import type { ScenarioReference } from './scenario';
 import type { SkillModifierRegistry } from './skill_modifiers';
-import type { SkillTest } from './state';
+import type { SkillTest, SkillValues } from './state';
 import { CommandRejected } from './rejection';
 import type { EffectsRegistry, ScenarioHooks } from './triggers';
 
@@ -107,8 +107,12 @@ export interface CardStats {
   clues?: ScaledValue;
   fight?: number;
   evade?: number;
-  /** Enemy health. */
+  /** Enemy health, or an investigator's printed health (always `fixed`). */
   health?: ScaledValue;
+  /** Only on investigators. */
+  sanity?: number;
+  /** Only on investigators: the printed willpower, intellect, combat and agility. */
+  skills?: SkillValues;
   /** Damage an enemy deals when it attacks. */
   damage?: number;
   /** Horror an enemy deals when it attacks. */

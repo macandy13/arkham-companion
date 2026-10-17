@@ -11,6 +11,7 @@ describe('CampaignCommandRejected', () => {
     { code: 'invalidInvestigatorStats', investigatorCode: roland.code, health: 0, sanity: 5 },
     { code: 'noScenarios' },
     { code: 'unknownInvestigator', investigatorCode: roland.code },
+    { code: 'unknownInvestigatorCard', investigatorCode: roland.code },
     { code: 'investigatorEliminated', investigatorCode: roland.code, fate: 'killed' },
     { code: 'investigatorNotEliminated', investigatorCode: roland.code },
     { code: 'invalidAmount', amount: 0 },

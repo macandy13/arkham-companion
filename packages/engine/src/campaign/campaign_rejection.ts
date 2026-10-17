@@ -28,6 +28,8 @@ export type CampaignRejection =
   | { code: 'noScenarios' }
   /** No current team member has this code. */
   | { code: 'unknownInvestigator'; investigatorCode: InvestigatorCode }
+  /** A joining investigator whose code is not an investigator card in the `CardDb`. */
+  | { code: 'unknownInvestigatorCard'; investigatorCode: InvestigatorCode }
   /** The investigator is killed or insane and can no longer take part. */
   | { code: 'investigatorEliminated'; investigatorCode: InvestigatorCode; fate: InvestigatorFate }
   /** `ReplaceInvestigator` for an investigator who is still alive. */
@@ -93,6 +95,8 @@ function describeCampaignRejection(r: CampaignRejection): string {
       return 'a campaign needs at least one scenario';
     case 'unknownInvestigator':
       return `no investigator ${r.investigatorCode} on the team`;
+    case 'unknownInvestigatorCard':
+      return `no investigator card ${r.investigatorCode}`;
     case 'investigatorEliminated':
       return `investigator ${r.investigatorCode} is ${r.fate}`;
     case 'investigatorNotEliminated':

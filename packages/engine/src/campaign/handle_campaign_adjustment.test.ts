@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { campaignRejectionOf, daisy, roland, startedCampaign, wendy } from '../../test/utils';
+import {
+  campaignContext,
+  campaignRejectionOf,
+  daisy,
+  roland,
+  startedCampaign,
+  wendy,
+} from '../../test/utils';
 import type { CampaignAdjustment } from './campaign_commands';
 import type { CampaignRejection } from './campaign_rejection';
 import { campaignInvestigator } from './campaign_log';
@@ -8,7 +15,7 @@ import { handleCampaign } from './handle_campaign';
 describe('AdjustCampaign (Roland: health 9, sanity 5; three scenarios; Roland has 4 XP earned, 1 spent, 2 physical trauma; story: doubt = count 2)', () => {
   const log = startedCampaign(
     {
-      investigators: [roland, daisy],
+      investigators: [roland.code, daisy.code],
       scenarioIds: ['the-gathering', 'the-midnight-masks', 'the-devourer-below'],
     },
     { type: 'AwardXp', code: roland.code, amount: 4 },
@@ -17,7 +24,7 @@ describe('AdjustCampaign (Roland: health 9, sanity 5; three scenarios; Roland ha
     { type: 'RecordStory', key: 'doubt', value: { kind: 'count', value: 2 } },
   );
   const adjust = (adjustment: CampaignAdjustment) =>
-    handleCampaign(log, { type: 'AdjustCampaign', adjustment });
+    handleCampaign(campaignContext, log, { type: 'AdjustCampaign', adjustment });
 
   it('lowers earned XP', () => {
     expect(adjust({ kind: 'xp', code: roland.code, account: 'earned', delta: -1 })).toEqual([
@@ -39,10 +46,10 @@ describe('AdjustCampaign (Roland: health 9, sanity 5; three scenarios; Roland ha
 
   it('revives a killed investigator', () => {
     const killed = startedCampaign(
-      { investigators: [roland] },
+      { investigators: [roland.code] },
       { type: 'MarkKilled', code: roland.code },
     );
-    const events = handleCampaign(killed, {
+    const events = handleCampaign(campaignContext, killed, {
       type: 'AdjustCampaign',
       adjustment: { kind: 'fate', code: roland.code, fate: 'alive' },
     });
@@ -63,7 +70,7 @@ describe('AdjustCampaign (Roland: health 9, sanity 5; three scenarios; Roland ha
 
   it('leaves the log with the corrected values when applied', () => {
     const corrected = startedCampaign(
-      { investigators: [roland] },
+      { investigators: [roland.code] },
       { type: 'AwardXp', code: roland.code, amount: 4 },
       {
         type: 'AdjustCampaign',
