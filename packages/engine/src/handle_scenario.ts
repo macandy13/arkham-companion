@@ -84,7 +84,7 @@ export function handleAdvanceAct(ctx: EngineContext, state: GameState, cmd: Adva
  * forced effects of the first step: the advanced card leaves the game and the
  * next card becomes current. When that was the last card, the scenario ends
  * with the command's `resolution` unless the reverse side already ended it or
- * left a decision whose answer will (a choice between resolutions).
+ * raised a new decision whose answer will (a choice between resolutions).
  *
  * Why two steps: the rules resolve the reverse side before the next card
  * becomes current, so an effect on "the current agenda/act" must still hit
@@ -106,8 +106,8 @@ export function completeAdvance(
   const advanced = currentCard(before, deck);
   const card = after.cards[advanced.id] ?? advanced;
   const nextId = nextCardId(after, deck, card.id);
-  // Outside commands are refused while a decision is pending, so a pending one comes from this advance.
-  const decided = after.meta.ended === true || after.pending.length > 0;
+  const asked = after.pending.some((decision) => !before.pending.some((d) => d.id === decision.id));
+  const decided = after.meta.ended === true || asked;
   const lastCard = nextId === undefined;
   if (lastCard && !decided && resolution === undefined)
     throw new CommandRejected({ code: 'resolutionRequired', deck });

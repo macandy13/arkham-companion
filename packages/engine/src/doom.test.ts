@@ -715,12 +715,14 @@ describe('AdvanceAct', () => {
 describe('a last act whose reverse side lets the lead investigator choose the resolution', () => {
   const chooseResolution = decisionId('chooseResolution');
   const endWith = (resolution: string): Command => ({ type: 'EndScenario', resolution });
-  /** C2's reverse side asks "R1 or R2?"; each answer ends the scenario. */
+  /** C2, the second and last act of `startedWith`. */
+  const lastActCode = 'C2';
+  /** The last act's reverse side asks "R1 or R2?"; each answer ends the scenario. */
   const choosingContext = {
     ...testContext,
     hooks: {
       onActAdvance: {
-        C2: (): Command[] => [
+        [lastActCode]: (): Command[] => [
           {
             type: 'RequestDecision',
             decision: {

@@ -371,17 +371,18 @@ describe('the last investigator leaving', () => {
 
   it('rejects further play, but still takes a correction of the final board', () => {
     const ended = stateAfter(ctx, lastInvestigator(), resign(alice));
-    const moveCluesBack: Command = {
+    const removeOneHallClue: Command = {
       type: 'ManualAdjust',
       adjustment: { kind: 'tokens', cardId: hall, token: 'clue', delta: -1 },
     };
+    const hallClues = (state: GameState) => state.cards[hall]?.tokens.clue ?? 0;
 
     expect(ended.meta.ended).toBe(true);
     expect(rejectionFrom(ctx, ended, nextPhase)).toEqual({
       code: 'scenarioEnded',
       command: 'NextPhase',
     });
-    expect(stateAfter(ctx, ended, moveCluesBack).cards[hall]?.tokens.clue).toBe(1);
+    expect(hallClues(stateAfter(ctx, ended, removeOneHallClue))).toBe(hallClues(ended) - 1);
   });
 });
 
