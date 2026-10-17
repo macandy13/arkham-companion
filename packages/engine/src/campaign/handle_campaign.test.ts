@@ -35,6 +35,7 @@ describe('StartCampaign', () => {
       investigators: [
         {
           code: '01001',
+          name: 'Roland Banks',
           health: 9,
           sanity: 5,
           physicalTrauma: 0,
@@ -45,6 +46,7 @@ describe('StartCampaign', () => {
         },
         {
           code: '01002',
+          name: 'Daisy Walker',
           health: 5,
           sanity: 9,
           physicalTrauma: 0,
@@ -80,7 +82,13 @@ describe('StartCampaign', () => {
     {
       name: 'five investigators',
       setup: {
-        investigators: [roland, daisy, wendy, agnes, { code: '01003', health: 8, sanity: 6 }],
+        investigators: [
+          roland,
+          daisy,
+          wendy,
+          agnes,
+          { code: '01003', name: "Skids O'Toole", health: 8, sanity: 6 },
+        ],
       },
       expected: { code: 'invalidTeamSize', count: 5 },
     },
@@ -92,7 +100,7 @@ describe('StartCampaign', () => {
     { name: 'no scenarios', setup: { scenarioIds: [] }, expected: { code: 'noScenarios' } },
     {
       name: 'zero health',
-      setup: { investigators: [{ code: '01001', health: 0, sanity: 5 }] },
+      setup: { investigators: [{ code: '01001', name: 'Roland Banks', health: 0, sanity: 5 }] },
       expected: {
         code: 'invalidInvestigatorStats',
         investigatorCode: '01001',
@@ -102,7 +110,7 @@ describe('StartCampaign', () => {
     },
     {
       name: 'fractional sanity',
-      setup: { investigators: [{ code: '01001', health: 9, sanity: 2.5 }] },
+      setup: { investigators: [{ code: '01001', name: 'Roland Banks', health: 9, sanity: 2.5 }] },
       expected: {
         code: 'invalidInvestigatorStats',
         investigatorCode: '01001',

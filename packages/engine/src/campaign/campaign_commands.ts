@@ -23,12 +23,13 @@ export type CampaignCommand =
 export type CampaignCommandType = CampaignCommand['type'];
 
 /**
- * An investigator as they join the campaign: card code plus printed health
- * and sanity (looked up in the `CardDb` by the caller, so the campaign log
+ * An investigator as they join the campaign: card code plus printed name,
+ * health and sanity (looked up in the `CardDb` by the caller, so the campaign log
  * needs no card data). They start without trauma or XP.
  */
 export interface JoiningInvestigator {
   readonly code: string;
+  readonly name: string;
   readonly health: number;
   readonly sanity: number;
 }
