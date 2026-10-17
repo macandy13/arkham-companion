@@ -16,7 +16,7 @@ Code style and conventions (functions, comments, tests, markup, CSS, helpers) ar
 - **Markup is structure only.** JSX/HTML is a plain document tree of semantic elements (no `<strong>`, `<b>`, `<br>`, inline `style`, layout/styling class names); all presentation lives in CSS.
 - **Underscores, never dashes, in source file and directory names** under `packages/` and `apps/` (`handle_board.ts`, `the_gathering/`). Tool-mandated names keep theirs (`pnpm-workspace.yaml`, `release-please-config.json`, `.claude/` agent and hook files, `docs/*.md`).
 - **No German words in code** (identifiers); German only in UI translation strings.
-- TypeScript strict, no `any` without a comment explaining why.
+- TypeScript strict, no `any` without a comment explaining why. **Prefer strong types:** branded types for identifiers and card codes, literal unions for closed sets, no bare `string`/`number` for domain values (`docs/coding-guidelines.md` §1).
 - Every exported interface, type, class and non-trivial function gets a doc comment explaining its purpose and, where it isn't obvious, how it relates to other types (e.g. which reducer produces it, which ID it refers to). Also explain non-obvious design choices (why, not what).
 - **In-code comments explain why, not what.** Inside function bodies, comment only to give a motivation the code can't express (game rule, workaround, trade-off) – never to narrate steps.
 - **Never swallow a caught error silently.** A `catch` at least `console.warn`s with context (and may still fall back), or rethrows. The engine has no console: it turns errors into rejections instead.
