@@ -11,9 +11,15 @@ import {
 } from '../../src/index';
 
 /** A team member as the log holds them at campaign start: no trauma, no XP, alive. */
-export function campaignLine(code: string, health: number, sanity: number): CampaignInvestigator {
+export function campaignMember(
+  code: string,
+  name: string,
+  health: number,
+  sanity: number,
+): CampaignInvestigator {
   return {
     code,
+    name,
     health,
     sanity,
     physicalTrauma: 0,
@@ -24,10 +30,10 @@ export function campaignLine(code: string, health: number, sanity: number): Camp
   };
 }
 
-/** Night of the Zealot investigators with their printed health and sanity, as fresh log lines. */
-export const rolandLine = campaignLine('01001', 9, 5);
-export const daisyLine = campaignLine('01002', 5, 9);
-export const agnesLine = campaignLine('01004', 6, 8);
+/** Night of the Zealot investigators with their printed health and sanity, as fresh team members. */
+export const rolandMember = campaignMember('01001', 'Roland Banks', 9, 5);
+export const daisyMember = campaignMember('01002', 'Daisy Walker', 5, 9);
+export const agnesMember = campaignMember('01004', 'Agnes Baker', 6, 8);
 
 /**
  * A started campaign log with boring defaults: standard difficulty, Roland
@@ -39,7 +45,7 @@ export function makeCampaignLog(overrides: Partial<CampaignLog> = {}): CampaignL
     campaignId: 'campaign_a',
     definitionId: 'test_campaign',
     difficulty: 'standard',
-    investigators: [rolandLine],
+    investigators: [rolandMember],
     formerInvestigators: [],
     story: {},
     chaosBag: ['0', '-1', 'skull'],
@@ -50,10 +56,30 @@ export function makeCampaignLog(overrides: Partial<CampaignLog> = {}): CampaignL
 }
 
 /** Night of the Zealot investigators as they join a campaign, with their printed health and sanity. */
-export const roland: JoiningInvestigator = { code: '01001', health: 9, sanity: 5 };
-export const daisy: JoiningInvestigator = { code: '01002', health: 5, sanity: 9 };
-export const wendy: JoiningInvestigator = { code: '01005', health: 7, sanity: 7 };
-export const agnes: JoiningInvestigator = { code: '01004', health: 6, sanity: 8 };
+export const roland: JoiningInvestigator = {
+  code: '01001',
+  name: 'Roland Banks',
+  health: 9,
+  sanity: 5,
+};
+export const daisy: JoiningInvestigator = {
+  code: '01002',
+  name: 'Daisy Walker',
+  health: 5,
+  sanity: 9,
+};
+export const wendy: JoiningInvestigator = {
+  code: '01005',
+  name: 'Wendy Adams',
+  health: 7,
+  sanity: 7,
+};
+export const agnes: JoiningInvestigator = {
+  code: '01004',
+  name: 'Agnes Baker',
+  health: 6,
+  sanity: 8,
+};
 
 /**
  * A `StartCampaign` with boring defaults: standard difficulty, a three-token
