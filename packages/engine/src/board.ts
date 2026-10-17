@@ -1,6 +1,6 @@
-import type { EngineContext } from './cards';
+import { cardStats, type EngineContext, type LocationAttachment } from './cards';
 import type { InstanceId, MapId } from './ids';
-import { cardsNamed, cardsOfType } from './lookup';
+import { cardsInZone, cardsNamed, cardsOfType, requireCard } from './lookup';
 import type { Edge, GameMap } from './map';
 import type { CardInstance, GameState } from './state';
 
@@ -118,5 +118,30 @@ function pathsBack(
   if (to === from) return [[from]];
   return (predecessors.get(to) ?? []).flatMap((previous) =>
     pathsBack(predecessors, from, previous).map((path) => [...path, to]),
+  );
+}
+
+/** The cards attached to `location` that came there through `CardStats.locationAttachment`, with it. */
+export function locationAttachments(
+  ctx: EngineContext,
+  state: GameState,
+  location: CardInstance,
+): { card: CardInstance; attachment: LocationAttachment }[] {
+  return cardsInZone(state, { kind: 'attachedTo', hostId: location.id }).flatMap((cardId) => {
+    const card = requireCard(state.cards, cardId);
+    const attachment = cardStats(ctx.cards, card.code).locationAttachment;
+    return attachment ? [{ card, attachment }] : [];
+  });
+}
+
+/** The shroud of `location`: the printed value plus what its attachments add (`LocationAttachment.shroud`). */
+export function locationShroud(
+  ctx: EngineContext,
+  state: GameState,
+  location: CardInstance,
+): number {
+  return locationAttachments(ctx, state, location).reduce(
+    (shroud, { attachment }) => shroud + (attachment.shroud ?? 0),
+    cardStats(ctx.cards, location.code).shroud ?? 0,
   );
 }

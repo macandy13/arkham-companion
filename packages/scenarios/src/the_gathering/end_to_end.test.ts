@@ -789,12 +789,8 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     });
 
     // 1.4: both draw Obscuring Fog, which attaches to the drawer's location
-    // (+2 shroud) until it is investigated. The card data has no attachment,
-    // so the app discards each Fog and the players attach them by hand.
+    // (+2 shroud) until that location is investigated successfully.
     expect(table.nextPhase()).toEqual({ round: 9, phase: 'mythos' });
-    table.attachTopOfDiscardTo('Cellar');
-    table.attachTopOfDiscardTo('Attic');
-
     expect(table.attachedTo('Attic')).toEqual(['Obscuring Fog']);
     expect(table.attachedTo('Cellar')).toEqual(['Obscuring Fog']);
 
@@ -805,9 +801,14 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.nextPhase()).toEqual({ round: 9, phase: 'investigation' });
     table.startTurn(roland);
     table.fight(roland, { name: ghoulMinion, engagedWith: roland }, { damage: 2 });
-    table.investigate(roland);
-    // His successful search clears the Attic's fog.
-    table.discardAttachedTo('Attic');
+    // The fog raises the Attic's shroud from 1 to 3; his successful search
+    // clears it.
+    table.startInvestigating(roland);
+    expect(table.decisions()).toMatchObject([
+      { about: 'Attic', test: { skill: 'intellect', difficulty: 3 } },
+    ]);
+    table.passInvestigateTest(roland);
+    expect(table.attachedTo('Attic')).toEqual([]);
     table.moveTo(roland, 'Hallway');
     table.endTurn(roland);
     table.startTurn(daisy);

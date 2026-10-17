@@ -198,7 +198,7 @@ interface CardEffect { onReveal?: TriggerHook<CardFlipped>; }
 type EffectsRegistry = Readonly<Record<string, CardEffect>>;           // by card code
 ```
 
-Forced effects an encounter card repeats on a fixed timing are card data rather than code, like a revelation test: `CardStats.turnEndTest` makes `EndTurn` raise the test of each card in the investigator's threat area that has one (Frozen in Fear: a pass discards it), and `CardStats.discardAtRoundEnd` makes upkeep step 4.6 discard the card wherever it is in play (Dissonant Voices).
+Forced effects an encounter card repeats on a fixed timing are card data rather than code, like a revelation test: `CardStats.turnEndTest` makes `EndTurn` raise the test of each card in the investigator's threat area that has one (Frozen in Fear: a pass discards it), and `CardStats.discardAtRoundEnd` makes upkeep step 4.6 discard the card wherever it is in play (Dissonant Voices). A treachery that attaches to a location is card data too: `CardStats.locationAttachment` makes `DrawEncounter` attach it to the drawer's location (discarded instead with no location, or when `onePerLocation` finds a copy already there), `locationShroud` (board.ts) adds its `shroud` to the location's printed shroud for `Investigate`, and `discardWhenInvestigated` makes a passed `Investigate` there discard it after the clues (Obscuring Fog).
 
 **Extension points**
 
@@ -345,6 +345,7 @@ interface CardStats {
   encounterCode?: EncounterSetCode; quantity?: number; keywords?: readonly Keyword[];
   entersThreatArea?: boolean; revelationTest?: SkillTest;
   turnEndTest?: SkillTest; discardAtRoundEnd?: boolean;
+  locationAttachment?: { onePerLocation?: boolean; shroud?: number; discardWhenInvestigated?: boolean };
   sanity?: number; skills?: SkillValues;   // investigators
 }
 ```

@@ -385,31 +385,6 @@ export class TestTable {
     this.adjust(investigator, 'horror', amount);
   }
 
-  /**
-   * The players attach the top card of the encounter discard to the location
-   * named `locationName` by hand (`ManualAdjust`), for a treachery whose
-   * attachment the card data does not model (Obscuring Fog).
-   */
-  attachTopOfDiscardTo(locationName: string): void {
-    const [cardId] = this.current.order[zoneKey({ kind: 'encounterDiscard' })] ?? [];
-    if (cardId === undefined) throw new Error(`the encounter discard is empty\n${this.board()}`);
-    const hostId = this.locationNamed(locationName).id;
-    this.play({
-      type: 'ManualAdjust',
-      adjustment: { kind: 'moveCard', cardId, to: { kind: 'attachedTo', hostId } },
-    });
-  }
-
-  /** The players discard every card attached to the location named `locationName` by hand. */
-  discardAttachedTo(locationName: string): void {
-    const hostId = this.locationNamed(locationName).id;
-    for (const cardId of this.current.order[zoneKey({ kind: 'attachedTo', hostId })] ?? [])
-      this.play({
-        type: 'ManualAdjust',
-        adjustment: { kind: 'moveCard', cardId, to: { kind: 'encounterDiscard' }, index: 0 },
-      });
-  }
-
   /** Names of the cards attached to the location named `locationName`. */
   attachedTo(locationName: string): string[] {
     return this.namesIn({ kind: 'attachedTo', hostId: this.locationNamed(locationName).id });

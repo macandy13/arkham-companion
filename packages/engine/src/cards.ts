@@ -152,6 +152,34 @@ export interface CardStats {
    * data; upkeep step 4.6 discards it wherever it is in play.
    */
   discardAtRoundEnd?: boolean;
+  /**
+   * Set for a treachery whose revelation attaches it to the drawing
+   * investigator's location (Obscuring Fog), entered with the card data;
+   * `DrawEncounter` places it there, and its fields say what it does there.
+   * It takes the place of `entersThreatArea` and `revelationTest`, which a
+   * card with it has no use for (Obscuring Fog has neither).
+   */
+  locationAttachment?: LocationAttachment;
+}
+
+/**
+ * What a treachery attached to a location by its revelation does
+ * (`CardStats.locationAttachment`). Only what the engine applies: anything
+ * else the card says stays card text the players apply.
+ */
+export interface LocationAttachment {
+  /**
+   * "Limit 1 per location": drawn while a card of the same title is attached
+   * there, it is discarded instead, since its revelation cannot attach it.
+   */
+  onePerLocation?: boolean;
+  /** Added to the location's shroud while attached ("Attached location gets +2 shroud"). */
+  shroud?: number;
+  /**
+   * "Forced – After attached location is successfully investigated: Discard
+   * …": a passed `Investigate` there discards the card after its clues.
+   */
+  discardWhenInvestigated?: boolean;
 }
 
 /**

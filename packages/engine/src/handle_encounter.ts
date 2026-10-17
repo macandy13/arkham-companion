@@ -1,10 +1,10 @@
+import { locationAttachments } from './board';
 import { cardStats, type CardStats, type EngineContext } from './cards';
 import type {
   DrawEncounter,
   EncounterMatch,
   EncounterSource,
   FromSetAside,
-  MoveCard,
   ShuffleInto,
 } from './commands';
 import type { CardFlipped, CardMoved, DeckShuffled, EncounterCardDrawn, Event } from './events';
@@ -12,13 +12,13 @@ import { activeInvestigator } from './handle_investigator';
 import type { CardCode, InstanceId } from './ids';
 import { hasKeyword } from './keywords';
 import { requireCard } from './lookup';
-import { cardMoved } from './placement';
+import { cardMoved, discardToTop } from './placement';
 import { revelationTestDecision } from './skill_tests';
 import { spawnEvents } from './spawn';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
 import { shuffle } from './rng';
-import type { GameState, Investigator } from './state';
+import type { CardInstance, GameState, Investigator } from './state';
 import { zoneKey, type Zone } from './zone';
 
 const ENCOUNTER_DECK: Zone = { kind: 'encounterDeck' };
@@ -192,7 +192,8 @@ function refillIfEmpty(state: GameState): Event[] {
 /**
  * The events that place a drawn card. An enemy spawns (spawn instruction,
  * engagement) like `SpawnEnemy`, with the drawer as fallback location; every
- * other card goes to the threat area or the top of the discard. A treachery
+ * other card goes to the threat area, the drawer's location (see
+ * `attachmentHost`) or the top of the discard. A treachery
  * with a revelation test asks the drawer for its result; one that does not
  * stay in the threat area waits in the `resolving` zone until the answer
  * discards it (Rules Reference: a card is discarded after its revelation
@@ -209,6 +210,8 @@ function placement(
   if (stats.typeCode === 'enemy')
     return spawnEvents(ctx, state, cardId, { investigatorId: investigator.id });
   const card = requireCard(state.cards, cardId);
+  const host = attachmentHost(ctx, state, stats, investigator);
+  if (host) return [cardMoved(state, card, { kind: 'attachedTo', hostId: host.id })];
   if (stats.typeCode === 'treachery' && stats.entersThreatArea) {
     const moved = cardMoved(state, card, { kind: 'threatArea', investigatorId: investigator.id });
     return [moved, ...revelationTestDecision(ctx, replay([moved], state), cardId, investigator)];
@@ -224,9 +227,29 @@ function placement(
   return [cardMoved(state, card, ENCOUNTER_DISCARD, 0)];
 }
 
-/** The command that discards a resolved encounter card onto the top of the discard. */
-function discardToTop(cardId: InstanceId): MoveCard {
-  return { type: 'MoveCard', cardId, to: ENCOUNTER_DISCARD, index: 0 };
+/**
+ * The location a treachery with `CardStats.locationAttachment` attaches to:
+ * the drawer's. None for any other card, for a drawer without a location, or
+ * when the card's limit of one per location is reached (counted by title, so
+ * a reprint with another code counts too), so the card is discarded like one
+ * without a lasting effect.
+ */
+function attachmentHost(
+  ctx: EngineContext,
+  state: GameState,
+  stats: CardStats,
+  investigator: Investigator,
+): CardInstance | undefined {
+  if (stats.typeCode !== 'treachery' || !stats.locationAttachment) return undefined;
+  const location =
+    investigator.locationId === undefined ? undefined : state.cards[investigator.locationId];
+  if (!location) return undefined;
+  const limitReached =
+    stats.locationAttachment.onePerLocation &&
+    locationAttachments(ctx, state, location).some(
+      ({ card }) => cardStats(ctx.cards, card.code).name === stats.name,
+    );
+  return limitReached ? undefined : location;
 }
 
 /**
