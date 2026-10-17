@@ -2,6 +2,7 @@ import { comparableName, type CardType, type EngineContext } from './cards';
 import type { InstanceId } from './ids';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
+import { zoneKey, type Zone } from './zone';
 
 /**
  * The card with id `cardId`; throws `CommandRejected` (`unknownCard`) if there
@@ -15,6 +16,11 @@ export function requireCard(
   const card = cards[cardId];
   if (!card) throw new CommandRejected({ code: 'unknownCard', cardId });
   return card;
+}
+
+/** Ids of the cards in `zone`, in zone order (top first for piles). */
+export function cardsInZone(state: GameState, zone: Zone): readonly InstanceId[] {
+  return state.order[zoneKey(zone)] ?? [];
 }
 
 /** Every card of the state whose printed type is `typeCode`, wherever it is, in card order. */

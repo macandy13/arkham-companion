@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   checkInvariants,
+  decisionId,
   instanceId,
   investigatorId,
+  zoneKey,
   type Command,
+  type EngineContext,
   type GameState,
   type InvestigatorId,
 } from './index';
@@ -141,6 +144,116 @@ describe('EndTurn', () => {
     expect(defeated.meta.turn).toBeUndefined();
     expect(defeated.meta.turnsTaken).toEqual([alice]);
     expect(checkInvariants(defeated)).toEqual([]);
+  });
+});
+
+describe('the end of a turn', () => {
+  const frozenInFear = instanceId('frozen_in_fear');
+  const dissonantVoices = instanceId('dissonant_voices');
+  const fearCtx = contextWith(
+    makeCard({ code: 'hall', typeCode: 'location' }),
+    makeCard({
+      code: 'frozen_in_fear',
+      entersThreatArea: true,
+      turnEndTest: { skill: 'willpower', difficulty: 3 },
+    }),
+    makeCard({ code: 'dissonant_voices', entersThreatArea: true }),
+  );
+
+  /**
+   * Alice's turn in progress in the hall, with Frozen in Fear (an end-of-turn
+   * willpower test) and Dissonant Voices (none) in her threat area; bob in the
+   * hall with an empty threat area.
+   */
+  function aliceTurnFrozenInFear(): GameState {
+    const started = startBoard(fearCtx, {
+      maps: { main: { locations: { hall: 'hall' } } },
+      investigators: [
+        makeInvestigator({ id: 'alice', seat: 0, locationId: hall }),
+        makeInvestigator({ id: 'bob', seat: 1, locationId: hall }),
+      ],
+      cards: [
+        {
+          id: frozenInFear,
+          code: 'frozen_in_fear',
+          zone: { kind: 'threatArea', investigatorId: alice },
+        },
+        {
+          id: dissonantVoices,
+          code: 'dissonant_voices',
+          zone: { kind: 'threatArea', investigatorId: alice },
+        },
+      ],
+    });
+    return stateAfter(fearCtx, started, next, startTurn(alice));
+  }
+
+  const answer = (optionId: string): Command => ({
+    type: 'ResolveDecision',
+    decisionId: decisionId('turnEnd:frozen_in_fear'),
+    optionId,
+  });
+  const aliceThreatArea = (state: GameState) =>
+    state.order[zoneKey({ kind: 'threatArea', investigatorId: alice })];
+
+  it('asks the investigator for the willpower test of Frozen in Fear in their threat area', () => {
+    const ended = stateAfter(fearCtx, aliceTurnFrozenInFear(), endTurn(alice));
+
+    expect(ended.meta.turnsTaken).toEqual([alice]);
+    expect(ended.pending).toMatchObject([
+      {
+        id: 'turnEnd:frozen_in_fear',
+        kind: 'skillTestResult',
+        prompt: 'decision.turnEndTest',
+        subject: frozenInFear,
+        decider: { kind: 'investigator', investigatorId: alice },
+        skillTest: { skill: 'willpower', difficulty: 3 },
+      },
+    ]);
+  });
+
+  it.each([
+    { result: 'pass', threatArea: [dissonantVoices], discard: [frozenInFear] },
+    { result: 'fail', threatArea: [frozenInFear, dissonantVoices], discard: undefined },
+  ])('$result: Frozen in Fear stays only on a fail', ({ result, threatArea, discard }) => {
+    const ended = stateAfter(fearCtx, aliceTurnFrozenInFear(), endTurn(alice), answer(result));
+
+    expect(ended.pending).toEqual([]);
+    expect(aliceThreatArea(ended)).toEqual(threatArea);
+    expect(ended.order[zoneKey({ kind: 'encounterDiscard' })]).toEqual(discard);
+  });
+
+  it("does not test at the end of another investigator's turn", () => {
+    const bobsTurn = stateAfter(
+      fearCtx,
+      aliceTurnFrozenInFear(),
+      endTurn(alice),
+      answer('fail'),
+      startTurn(bob),
+    );
+
+    expect(stateAfter(fearCtx, bobsTurn, endTurn(bob)).pending).toEqual([]);
+  });
+
+  it('fires the scenario hook onTurnEnd with the investigator whose turn ended', () => {
+    const clueAtTurnEnd: EngineContext = {
+      ...ctx,
+      hooks: {
+        onTurnEnd: (_ctx, _state, event) => [
+          {
+            type: 'AdjustInvestigator',
+            investigatorId: event.investigatorId,
+            stat: 'clues',
+            delta: 1,
+          },
+        ],
+      },
+    };
+
+    const ended = stateAfter(clueAtTurnEnd, aliceTurn(), endTurn(alice));
+
+    expect(investigatorOf(ended, alice).clues).toBe(1);
+    expect(investigatorOf(ended, bob).clues).toBe(0);
   });
 });
 
