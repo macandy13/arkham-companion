@@ -41,7 +41,7 @@ Arrows are package dependencies; [ESLint](../eslint.config.js) enforces the two 
 Every change to a game takes the same path. Take starting a scenario, the one engine command the app sends today; the play screen will send its commands the same way.
 
 1. The new game wizard collects the scenario, difficulty and investigators and calls [`startScenario`](../apps/web/src/state/appStore.ts) on the app store. The app store is a Zustand store that holds the saved game list (`GameSummary[]`) and the open game (`{ gameId, state }`), and it is the only place in the app that sends commands or writes games.
-2. The app store builds the command: [`compileSetup`](../packages/engine/src/setup.ts) turns the scenario definition into one `StartScenario` command. The `EngineContext` it passes holds the scenario's card data, which the wizard took from the [scenario catalog](../apps/web/src/scenarios/scenarioCatalog.ts). The scenario's hooks aren't in it yet: `StartScenario` fires no triggers, and they join the context once the play screen sends commands.
+2. The app store builds the command: [`compileSetup`](../packages/engine/src/setup.ts) turns the scenario definition into one `StartScenario` command. The `EngineContext` it passes holds the scenario's card data, which the wizard took from the [scenario catalog](../apps/web/src/scenarios/scenarioCatalog.ts), with the chosen investigator cards added (`cardDbWith`). The wizard seats them by code ([`seating.ts`](../apps/web/src/wizard/seating.ts)), and `compileSetup` takes their printed stats from the context. The scenario's hooks aren't in it yet: `StartScenario` fires no triggers, and they join the context once the play screen sends commands.
 3. [`execute(ctx, state, command)`](../packages/engine/src/execute.ts) calls [`handle`](../packages/engine/src/handle.ts). `handle` checks the command against the state and returns the `Event`s it causes, including every forced effect it triggered (see "Command handling"). A refused command throws `CommandRejected`, and nothing is stored.
 4. [`replay`](../packages/engine/src/reducer.ts) folds the events into the new `GameState`.
 5. The app store writes the events with [`GameStore.appendEvents`](../packages/engine/src/store.ts) and only then shows the new state. Opening a game later replays its log from the last snapshot.
@@ -114,7 +114,7 @@ type Zone =
   | { kind: 'attachedTo'; hostId: InstanceId };
 
 interface Investigator {
-  id: InvestigatorId; code: string; name: string; seat: number;
+  id: InvestigatorId; code: InvestigatorCode; name: string; seat: number;
   locationId?: InstanceId;
   health: { max: number; damage: number }; sanity: { max: number; horror: number };
   clues: number; resources: number; doomOnPlayerCards: number;
@@ -166,6 +166,8 @@ interface EngineContext {          // cards.ts
 4. **Commands that continue after their effects.** Advancing an agenda or act happens in two parts. First the card flips and its reverse side (the hook) resolves while it is still current. Only then does `completeCommand` move it out and make the next card current, with that part's own forced effects. On the last card the reverse side names the resolution (`EndScenario`), or raises a decision whose options do, when the investigators choose it. `NextPhase` likewise goes on with the phase's outstanding steps (see "Rounds, phases and turns").
 5. **Held actions.** If the command is an action that provokes attacks of opportunity, `handle` first does a dry run to reject an illegal action. It then returns only one decision per attacking enemy and an `ActionHeld` event. Once the last of those decisions is answered, the held action resumes (`ActionResumed` and its events) or is dropped (`ActionDropped`).
 
+`ManualAdjust` corrects almost anything, with two guards against an impossible state. It cannot move the current agenda or act (`currentStageCard`), because only advancing changes which card is current. Added doom fires no forced effects, but if it reaches the threshold the engine asks the group whether to advance the agenda (the same `advanceAgenda` decision as the mythos check) instead of staying silent or advancing on its own.
+
 Once `ScenarioEnded` has set `GameMeta.ended`, `handle` refuses every command except `ManualAdjust` (`scenarioEnded`): the game is over, but the players may still correct the final board before the campaign reads it. Undo works on the log, outside `handle`, so it still takes back the command that ended the scenario.
 
 The result is one list of events per player command. The store files them under one `commandId`, so undo ([`undo.ts`](../packages/engine/src/undo.ts)) always removes a whole command with its chain. The RNG state ([`rng.ts`](../packages/engine/src/rng.ts), xoshiro128\*\*) is part of `GameMeta`, so handling the same command again gives the same shuffle.
@@ -188,12 +190,15 @@ interface ScenarioHooks {
   onAgendaAdvance: Readonly<Record<string, TriggerHook<AgendaAdvanced>>>;  // reverse side, by agenda code
   onActAdvance: Readonly<Record<string, TriggerHook<ActAdvanced>>>;        // reverse side, by act code
   onRoundEnd: TriggerHook<RoundEnded>;
+  onTurnEnd: TriggerHook<TurnEnded>;                                   // an investigator's turn ends (EndTurn)
   onCardEnters: TriggerHook<CardMoved>;                                // a card enters play from outside play
   afterEnemyDefeated: TriggerHook<EnemyDefeated>;                      // e.g. "if the Ghoul Priest is defeated, advance"
 }
 interface CardEffect { onReveal?: TriggerHook<CardFlipped>; }
 type EffectsRegistry = Readonly<Record<string, CardEffect>>;           // by card code
 ```
+
+Forced effects an encounter card repeats on a fixed timing are card data rather than code, like a revelation test: `CardStats.turnEndTest` makes `EndTurn` raise the test of each card in the investigator's threat area that has one (Frozen in Fear: a pass discards it), and `CardStats.discardAtRoundEnd` makes upkeep step 4.6 discard the card wherever it is in play (Dissonant Voices).
 
 **Extension points**
 
@@ -204,7 +209,7 @@ type EffectsRegistry = Readonly<Record<string, CardEffect>>;           // by car
 
 Where the rules give the players a choice, or the engine needs an answer it cannot know, the engine puts a [`Decision`](../packages/engine/src/state.ts) into `pending` instead of guessing. Examples are a hunter tie, a spawn location, "advance the agenda?" and the result of a skill test the players resolve with their own cards. Every option carries the commands it triggers, so the mapping from answer to consequence is data. Any handler, hook or phase step can therefore ask by returning a `RequestDecision` command, and the UI needs only one dialog for all of them.
 
-`ResolveDecision` runs the chosen option's commands like trigger follow-ups, in the same undo group. If one is refused, the answer is refused and the decision stays. While a decision is pending, every player command except `ManualAdjust` and `ResolveDecision` is refused ([`decisions.ts`](../packages/engine/src/decisions.ts)). Skill tests ([`skill_tests.ts`](../packages/engine/src/skill_tests.ts)) and attacks of opportunity ([`attacks_of_opportunity.ts`](../packages/engine/src/attacks_of_opportunity.ts)) are built on this mechanism.
+`ResolveDecision` runs the chosen option's commands like trigger follow-ups, in the same undo group. An answer may name who gives it (`answeredBy`, for one device per player); it is then refused unless the `decider` allows that investigator (`notTheDecider`). Without it, a shared device answers for anyone. If one is refused, the answer is refused and the decision stays. While a decision is pending, every player command except `ManualAdjust` and `ResolveDecision` is refused ([`decisions.ts`](../packages/engine/src/decisions.ts)). Skill tests ([`skill_tests.ts`](../packages/engine/src/skill_tests.ts)) and the enemy attacks the rules force outside the enemy phase are built on this mechanism: attacks of opportunity ([`attacks_of_opportunity.ts`](../packages/engine/src/attacks_of_opportunity.ts)), retaliate after a failed fight and alert after a failed evade. All three ask the same `forcedAttackDecision` ([`forced_attacks.ts`](../packages/engine/src/forced_attacks.ts)): `attack` with the printed damage and horror, which the players may lower for soak, or `skip` for a card that prevents or cancels it. A retaliate or alert decision is the last fail command of its test, so it comes after the test's other results.
 
 A skill test decision raised for one investigator also carries a suggestion ([`skillTestSuggestion`](../packages/engine/src/skill_modifiers.ts)): the printed skill, plus one modifier the players enter for everything the engine does not track (committed icons, cards, lasting effects), plus the revealed chaos tokens valued from the scenario reference card, against the printed difficulty, with a trace of each step for the UI. The engine deliberately models no card effects here: the players play their own cards, and one number is enough. Following the skill test timing, the players enter the modifier before drawing the token and may still change it until they answer, because abilities triggered by the reveal or the result can change the value. The answer stays pass or fail.
 
@@ -233,7 +238,7 @@ The phase assistant runs the parts of a round the app can do by itself. `GameMet
 
 - mythos places doom, checks the doom threshold and draws one encounter card per investigator;
 - enemy moves hunters ([`hunters.ts`](../packages/engine/src/hunters.ts)) and then resolves the attacks of engaged enemies ([`enemies.ts`](../packages/engine/src/enemies.ts));
-- upkeep resets actions, readies enemies, gives each investigator a resource and ends the round.
+- upkeep resets actions, readies enemies, gives each investigator a resource and ends the round, discarding the cards that last until the end of the round.
 
 Each step removes itself first (`PhaseStepsChanged`) and then runs its commands through `handle`. The loop stops as soon as a decision is pending, so the next `NextPhase` after the answer resumes with the following step. Steps as data make the assistant resumable after any answer, and let the UI show what is left in a phase. Turns in the investigation phase ([`turns.ts`](../packages/engine/src/turns.ts)) only record who is acting and how many actions they have left. The first round starts in the investigation phase.
 
@@ -256,7 +261,7 @@ The generic rules are small modules, one per subject, called by the handlers. Qu
 | Board: connections, reveal, maps, placement | [`board.ts`](../packages/engine/src/board.ts), [`handle_board.ts`](../packages/engine/src/handle_board.ts), [`placement.ts`](../packages/engine/src/placement.ts), [`map.ts`](../packages/engine/src/map.ts) |
 | Doom, agenda and act | [`doom.ts`](../packages/engine/src/doom.ts), [`handle_scenario.ts`](../packages/engine/src/handle_scenario.ts) |
 | Encounter deck: draws, surge, peril, revelation tests | [`handle_encounter.ts`](../packages/engine/src/handle_encounter.ts) |
-| Enemies: spawn, engagement, prey, hunters, attacks | [`spawn.ts`](../packages/engine/src/spawn.ts), [`engagement.ts`](../packages/engine/src/engagement.ts), [`hunters.ts`](../packages/engine/src/hunters.ts), [`enemies.ts`](../packages/engine/src/enemies.ts), [`handle_enemy.ts`](../packages/engine/src/handle_enemy.ts) |
+| Enemies: spawn, engagement, prey, hunters, attacks, retaliate and alert | [`spawn.ts`](../packages/engine/src/spawn.ts), [`engagement.ts`](../packages/engine/src/engagement.ts), [`hunters.ts`](../packages/engine/src/hunters.ts), [`enemies.ts`](../packages/engine/src/enemies.ts), [`forced_attacks.ts`](../packages/engine/src/forced_attacks.ts), [`handle_enemy.ts`](../packages/engine/src/handle_enemy.ts) |
 | Investigators: health, sanity, defeat, movement | [`investigators.ts`](../packages/engine/src/investigators.ts), [`handle_investigator.ts`](../packages/engine/src/handle_investigator.ts) |
 | Elimination: defeat and resign clean-up, new lead, no investigator left | [`elimination.ts`](../packages/engine/src/elimination.ts) |
 | Keywords the rules react to | [`keywords.ts`](../packages/engine/src/keywords.ts) (parsed from card text by `@arkham/carddata`) |
@@ -269,7 +274,7 @@ The generic rules are small modules, one per subject, called by the handlers. Qu
 
 ### Scenarios
 
-A scenario is mostly data, a [`ScenarioDefinition`](../packages/engine/src/scenario.ts): agenda and act decks, chaos bag per difficulty, reference card, setup steps, and hooks for the few rules that need code. Data is easy to check, review and later generate from imports. [`compileSetup`](../packages/engine/src/setup.ts) turns the definition plus the players' choices into one `StartScenario` command, resolving per-investigator values and building the encounter deck. Mid-scenario board changes reuse the same steps: `compileMapStep` turns an `addMap` step into an `AddMap` command.
+A scenario is mostly data, a [`ScenarioDefinition`](../packages/engine/src/scenario.ts): agenda and act decks, chaos bag per difficulty, reference card, setup steps, and hooks for the few rules that need code. Data is easy to check, review and later generate from imports. [`compileSetup`](../packages/engine/src/setup.ts) turns the definition plus the players' choices into one `StartScenario` command, resolving per-investigator values and building the encounter deck. The players' choices name each seat by an `InvestigatorSeat` (the game's `InvestigatorId` and the card's `InvestigatorCode`), and `compileSetup` fills in name, health, sanity and skills from the investigator cards in the context's `CardDb`, so the setup cannot disagree with the card. `StartScenario` itself still carries complete investigators, so its event replays without the context and tests can start from any board. Mid-scenario board changes reuse the same steps: `compileMapStep` turns an `addMap` step into an `AddMap` command.
 
 ```ts
 function compileSetup(ctx: EngineContext, def: ScenarioDefinition, options: SetupOptions): StartScenario;
@@ -301,12 +306,13 @@ type SetupStep = AddMapStep | SetAsideStep | BuildEncounterDeckStep | PlaceToken
 
 ### Campaign
 
-A campaign spans several games and outlives each of them, so it is its own aggregate in [`campaign/`](../packages/engine/src/campaign/), event-sourced like a game but with its own commands ([`handle_campaign.ts`](../packages/engine/src/campaign/handle_campaign.ts)), events and reducer ([`campaign_reducer.ts`](../packages/engine/src/campaign/campaign_reducer.ts)). The same reasons apply: undo, recovery after a crash and export come for free, and later scenarios read earlier outcomes from the log rather than from the players' memory. The two aggregates do not share a command union, so a game command can never change the campaign by accident. [`CampaignLog`](../packages/engine/src/campaign/campaign_log.ts) holds the team with trauma, XP and fate, replaced investigators, typed story records, the chaos bag and the scenario order. [`checkCampaignInvariants`](../packages/engine/src/campaign/campaign_invariants.ts) states what must always hold (team of 1–4, no overspent XP, trauma consistent with fate). A game's `GameState.campaign` holds a copy of the log at scenario start.
+A campaign spans several games and outlives each of them, so it is its own aggregate in [`campaign/`](../packages/engine/src/campaign/), event-sourced like a game but with its own commands ([`handle_campaign.ts`](../packages/engine/src/campaign/handle_campaign.ts)), events and reducer ([`campaign_reducer.ts`](../packages/engine/src/campaign/campaign_reducer.ts)). The same reasons apply: undo, recovery after a crash and export come for free, and later scenarios read earlier outcomes from the log rather than from the players' memory. The two aggregates do not share a command union, so a game command can never change the campaign by accident. [`CampaignLog`](../packages/engine/src/campaign/campaign_log.ts) holds the team with trauma, XP and fate, keyed by `InvestigatorCode` (the investigator card's code, unique within a campaign; a game's `InvestigatorId` names one seat in one game instead), replaced investigators, typed story records, the chaos bag and the scenario order. [`checkCampaignInvariants`](../packages/engine/src/campaign/campaign_invariants.ts) states what must always hold (team of 1–4, no overspent XP, trauma consistent with fate). Commands name investigators by code only. The handlers look up their printed name, health and sanity in the `CampaignContext`'s `CardDb` ([`investigatorCard`](../packages/engine/src/investigator_cards.ts)), as game handlers look up cards in the `EngineContext`, so the caller cannot send stats that disagree with the card. The events still carry the full log entry, so a replay needs no context. A game's `GameState.campaign` holds a copy of the log at scenario start.
 
 ```ts
-function handleCampaign(log: CampaignLog, command: CampaignCommand): CampaignEvent[];  // throws CampaignCommandRejected
+interface CampaignContext { cards: CardDb; }   // holds the investigator cards
+function handleCampaign(ctx: CampaignContext, log: CampaignLog, command: CampaignCommand): CampaignEvent[];  // throws CampaignCommandRejected
 function applyCampaign(log: CampaignLog, event: CampaignEvent): CampaignLog;
-function executeCampaign(log: CampaignLog, command: CampaignCommand): { log: CampaignLog; events: CampaignEvent[] };
+function executeCampaign(ctx: CampaignContext, log: CampaignLog, command: CampaignCommand): { log: CampaignLog; events: CampaignEvent[] };
 function compileCampaign(def: CampaignDefinition, options: CampaignOptions): StartCampaign;
 
 type StoryValue = { kind: 'flag'; value: boolean } | { kind: 'count'; value: number }
@@ -325,7 +331,7 @@ The only campaign so far is Night of the Zealot ([`night_of_the_zealot/campaign.
 
 ### Card data
 
-The engine reads card numbers only through a [`CardDb`](../packages/engine/src/cards.ts) in its context (`ctx.cards.get(code)` returns `CardStats`), so it never loads data itself and tests pass a small fake one. [`@arkham/carddata`](../packages/carddata/src/) fetches ArkhamDB packs ([`fetch.ts`](../packages/carddata/src/fetch.ts)), validates the raw JSON with zod (`RawCardSchema`) and normalises it to `CardDef` ([`schema.ts`](../packages/carddata/src/schema.ts)). It also builds the investigator catalog ([`catalog.ts`](../packages/carddata/src/catalog.ts)). ArkhamDB is the community reference with a public API, CORS and translations, so cards arrive accurate and in the players' language. Fetched JSON and images are never committed: they go to `packages/carddata/.cache/` or IndexedDB. The app refreshes its copy with `If-Modified-Since` ([`loadCatalog.ts`](../apps/web/src/catalog/loadCatalog.ts)) and keeps working offline from it.
+The engine reads card numbers only through a [`CardDb`](../packages/engine/src/cards.ts) in its context (`ctx.cards.get(code)` returns `CardStats`), so it never loads data itself and tests pass a small fake one. [`@arkham/carddata`](../packages/carddata/src/) fetches ArkhamDB packs ([`fetch.ts`](../packages/carddata/src/fetch.ts)), validates the raw JSON with zod (`RawCardSchema`) and normalises it to `CardDef` ([`schema.ts`](../packages/carddata/src/schema.ts)). It also builds the investigator catalog ([`catalog.ts`](../packages/carddata/src/catalog.ts)). Investigator cards are in the same `CardDb`, so there is one place for all cards; [`investigatorCard(cards, code)`](../packages/engine/src/investigator_cards.ts) reads one as an `InvestigatorCard` (name, health, sanity, skills), and `investigatorCardStats` turns one back into `CardStats`. ArkhamDB is the community reference with a public API, CORS and translations, so cards arrive accurate and in the players' language. Fetched JSON and images are never committed: they go to `packages/carddata/.cache/` or IndexedDB. The app refreshes its copy with `If-Modified-Since` ([`loadCatalog.ts`](../apps/web/src/catalog/loadCatalog.ts)) and keeps working offline from it.
 
 ```ts
 interface CardDb {
@@ -338,6 +344,7 @@ interface CardStats {
   damage?: number; horror?: number; doom?: ScaledValue; victory?: number;
   encounterCode?: string; quantity?: number; keywords?: readonly Keyword[];
   entersThreatArea?: boolean; revelationTest?: SkillTest;
+  turnEndTest?: SkillTest; discardAtRoundEnd?: boolean;
 }
 ```
 

@@ -9,7 +9,14 @@ import {
 } from './cards';
 import type { Command, StartScenario, StartingCard, StartingInvestigator } from './commands';
 import { isInPlay } from './doom';
-import { instanceId, type InstanceId, type MapId } from './ids';
+import {
+  instanceId,
+  type InstanceId,
+  type InvestigatorCode,
+  type InvestigatorId,
+  type MapId,
+} from './ids';
+import { investigatorCard } from './investigator_cards';
 import type { Edge, MapSpec } from './map';
 import { CommandRejected } from './rejection';
 import type { ScenarioDefinition } from './scenario';
@@ -106,12 +113,27 @@ export type SetupStep =
   | SpawnStep
   | MoveInvestigatorsStep;
 
+/** Resources every investigator starts a scenario with (rules reference, "Setup"). */
+const STARTING_RESOURCES = 5;
+
+/**
+ * One seat at the table: which investigator card plays and the ID it has in
+ * this game. The caller picks the ID because the engine generates none.
+ */
+export interface InvestigatorSeat {
+  readonly id: InvestigatorId;
+  readonly code: InvestigatorCode;
+}
+
 /** What the players choose when starting a scenario; input to `compileSetup`. */
 export interface SetupOptions {
   difficulty: Difficulty;
   seed: number;
-  /** In seat order; the first one is the lead investigator. */
-  investigators: readonly StartingInvestigator[];
+  /**
+   * In seat order; the first one is the lead investigator. `compileSetup`
+   * takes their printed stats from the `EngineContext`'s `CardDb`.
+   */
+  investigators: readonly InvestigatorSeat[];
   campaign?: CampaignLog;
 }
 
@@ -171,13 +193,37 @@ export function compileSetup(
     scenarioId: def.id,
     difficulty: options.difficulty,
     seed: options.seed,
-    investigators: options.investigators.map((inv) =>
-      location === undefined ? inv : { ...inv, locationId: location },
-    ),
+    investigators: options.investigators.map((seat, index) => ({
+      ...startingInvestigator(ctx, seat, index),
+      ...(location === undefined ? {} : { locationId: location }),
+    })),
     maps: draft.maps,
     cards: draft.cards.map((card) => withRevealClues(card, env)),
     chaosBag: [...def.chaosBag[options.difficulty]],
     ...(options.campaign ? { campaign: options.campaign } : {}),
+  };
+}
+
+/** The investigator in `seat` as printed on their card, before any damage, horror or clues. */
+function startingInvestigator(
+  ctx: EngineContext,
+  { id, code }: InvestigatorSeat,
+  seat: number,
+): StartingInvestigator {
+  const card = investigatorCard(ctx.cards, code);
+  if (!card) throw new CommandRejected({ code: 'unknownInvestigatorCard', investigatorCode: code });
+  return {
+    id,
+    code,
+    name: card.name,
+    seat,
+    health: { max: card.health, damage: 0 },
+    sanity: { max: card.sanity, horror: 0 },
+    clues: 0,
+    resources: STARTING_RESOURCES,
+    doomOnPlayerCards: 0,
+    skills: card.skills,
+    status: 'active',
   };
 }
 

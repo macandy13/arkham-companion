@@ -1,11 +1,14 @@
 import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
 import {
+  cardDbWith,
   instanceId,
+  investigatorCode,
+  investigatorCardStats,
   investigatorId,
   replay,
   type Event,
-  type StartingInvestigator,
+  type InvestigatorCard,
 } from '@arkham/engine';
 import { theGathering, theGatheringCards } from '@arkham/scenarios';
 import { GameImportError } from '../storage/gameExport';
@@ -102,26 +105,20 @@ describe('appStore', () => {
   });
 
   describe('startScenario', () => {
-    const investigator: StartingInvestigator = {
-      id: investigatorId('inv'),
-      code: 'inv',
+    const alder: InvestigatorCard = {
+      code: investigatorCode('alder'),
       name: 'Alder',
-      seat: 0,
-      health: { max: 6, damage: 0 },
-      sanity: { max: 8, horror: 0 },
-      clues: 0,
-      resources: 5,
-      doomOnPlayerCards: 0,
+      health: 6,
+      sanity: 8,
       skills: { willpower: 3, intellect: 3, combat: 3, agility: 3 },
-      status: 'active',
     };
     const start = {
       title: 'The Gathering',
-      ctx: { cards: theGatheringCards },
+      ctx: { cards: cardDbWith(theGatheringCards, [investigatorCardStats(alder)]) },
       definition: theGathering,
       difficulty: 'easy' as const,
       seed: 3,
-      investigators: [investigator],
+      investigators: [{ id: investigatorId('alder'), code: alder.code }],
     };
 
     it('stores the setup events as a new game and opens it', async () => {

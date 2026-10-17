@@ -1,11 +1,8 @@
 import { isPositiveInteger } from '@arkham/util';
-import type {
-  AddTrauma,
-  AwardXp,
-  JoiningInvestigator,
-  ReplaceInvestigator,
-  SpendXp,
-} from './campaign_commands';
+import type { InvestigatorCode } from '../ids';
+import type { CardDb } from '../cards';
+import { investigatorCard } from '../investigator_cards';
+import type { AddTrauma, AwardXp, ReplaceInvestigator, SpendXp } from './campaign_commands';
 import type { CampaignEvent } from './campaign_events';
 import {
   availableXp,
@@ -17,6 +14,7 @@ import {
   type InvestigatorFate,
 } from './campaign_log';
 import { CampaignCommandRejected } from './campaign_rejection';
+import type { CampaignContext } from './handle_campaign';
 
 /** `AwardXp`: more earned XP for a living team member. */
 export function handleAwardXp(log: CampaignLog, command: AwardXp): CampaignEvent[] {
@@ -59,7 +57,7 @@ export function handleAddTrauma(log: CampaignLog, command: AddTrauma): CampaignE
 /** `MarkKilled`/`MarkInsane`: a living team member meets `fate`. */
 export function handleMarkFate(
   log: CampaignLog,
-  code: string,
+  code: InvestigatorCode,
   fate: Exclude<InvestigatorFate, 'alive'>,
 ): CampaignEvent[] {
   requireAlive(log, code);
@@ -68,6 +66,7 @@ export function handleMarkFate(
 
 /** `ReplaceInvestigator`: a newcomer takes the seat of a killed or insane team member. */
 export function handleReplaceInvestigator(
+  ctx: CampaignContext,
   log: CampaignLog,
   command: ReplaceInvestigator,
 ): CampaignEvent[] {
@@ -79,23 +78,33 @@ export function handleReplaceInvestigator(
     });
   // A campaign has one copy of each investigator, and a killed or insane one may not return.
   const everyone = [...log.investigators, ...log.formerInvestigators];
-  if (everyone.some((inv) => inv.code === command.by.code))
+  if (everyone.some((inv) => inv.code === command.by))
     throw new CampaignCommandRejected({
       code: 'duplicateInvestigator',
-      investigatorCode: command.by.code,
+      investigatorCode: command.by,
     });
   return [
-    { type: 'InvestigatorReplaced', code: command.code, by: newCampaignInvestigator(command.by) },
+    {
+      type: 'InvestigatorReplaced',
+      code: command.code,
+      by: newCampaignInvestigator(ctx.cards, command.by),
+    },
   ];
 }
 
 /**
  * The campaign log entry of an investigator joining the campaign (at the start or as
- * a replacement): no trauma, no XP, alive. Rejects printed stats that are
- * not positive integers.
+ * a replacement), from their card: no trauma, no XP, alive. Rejects a code
+ * that is not an investigator card in `cards` and printed stats that are not positive integers.
  */
-export function newCampaignInvestigator(joining: JoiningInvestigator): CampaignInvestigator {
-  const { code, name, health, sanity } = joining;
+export function newCampaignInvestigator(
+  cards: CardDb,
+  code: InvestigatorCode,
+): CampaignInvestigator {
+  const card = investigatorCard(cards, code);
+  if (!card)
+    throw new CampaignCommandRejected({ code: 'unknownInvestigatorCard', investigatorCode: code });
+  const { name, health, sanity } = card;
   if (!isPositiveInteger(health) || !isPositiveInteger(sanity))
     throw new CampaignCommandRejected({
       code: 'invalidInvestigatorStats',
@@ -117,7 +126,10 @@ export function newCampaignInvestigator(joining: JoiningInvestigator): CampaignI
 }
 
 /** The current team member with `code`; rejects an unknown code. */
-export function requireCampaignInvestigator(log: CampaignLog, code: string): CampaignInvestigator {
+export function requireCampaignInvestigator(
+  log: CampaignLog,
+  code: InvestigatorCode,
+): CampaignInvestigator {
   const investigator = campaignInvestigator(log, code);
   if (!investigator)
     throw new CampaignCommandRejected({ code: 'unknownInvestigator', investigatorCode: code });
@@ -125,7 +137,7 @@ export function requireCampaignInvestigator(log: CampaignLog, code: string): Cam
 }
 
 /** The living team member with `code`; killed and insane investigators can no longer take part. */
-function requireAlive(log: CampaignLog, code: string): CampaignInvestigator {
+function requireAlive(log: CampaignLog, code: InvestigatorCode): CampaignInvestigator {
   const investigator = requireCampaignInvestigator(log, code);
   if (investigator.fate !== 'alive')
     throw new CampaignCommandRejected({

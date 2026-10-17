@@ -1,3 +1,4 @@
+import type { InvestigatorCode } from '../ids';
 import type { ChaosToken } from '../state';
 import type { InvestigatorFate, StoryKind } from './campaign_log';
 
@@ -15,21 +16,33 @@ export type CampaignRejection =
   /** `StartCampaign` with fewer than 1 or more than `MAX_TEAM_SIZE` investigators. */
   | { code: 'invalidTeamSize'; count: number }
   /** An investigator code that is already in the campaign, current or former. */
-  | { code: 'duplicateInvestigator'; investigatorCode: string }
+  | { code: 'duplicateInvestigator'; investigatorCode: InvestigatorCode }
   /** Printed health or sanity that is not a positive integer. */
-  | { code: 'invalidInvestigatorStats'; investigatorCode: string; health: number; sanity: number }
+  | {
+      code: 'invalidInvestigatorStats';
+      investigatorCode: InvestigatorCode;
+      health: number;
+      sanity: number;
+    }
   /** `StartCampaign` without scenarios. */
   | { code: 'noScenarios' }
   /** No current team member has this code. */
-  | { code: 'unknownInvestigator'; investigatorCode: string }
+  | { code: 'unknownInvestigator'; investigatorCode: InvestigatorCode }
+  /** A joining investigator whose code is not an investigator card in the `CardDb`. */
+  | { code: 'unknownInvestigatorCard'; investigatorCode: InvestigatorCode }
   /** The investigator is killed or insane and can no longer take part. */
-  | { code: 'investigatorEliminated'; investigatorCode: string; fate: InvestigatorFate }
+  | { code: 'investigatorEliminated'; investigatorCode: InvestigatorCode; fate: InvestigatorFate }
   /** `ReplaceInvestigator` for an investigator who is still alive. */
-  | { code: 'investigatorNotEliminated'; investigatorCode: string }
+  | { code: 'investigatorNotEliminated'; investigatorCode: InvestigatorCode }
   /** XP or trauma amount that is not a positive integer. */
   | { code: 'invalidAmount'; amount: number }
   /** `SpendXp` for more XP than is available. */
-  | { code: 'notEnoughXp'; investigatorCode: string; available: number; requested: number }
+  | {
+      code: 'notEnoughXp';
+      investigatorCode: InvestigatorCode;
+      available: number;
+      requested: number;
+    }
   /** A story key that is empty or only whitespace. */
   | { code: 'invalidStoryKey'; key: string }
   /** A count that is not a non-negative integer, or a list with an empty or repeated name. */
@@ -43,7 +56,7 @@ export type CampaignRejection =
   /** `AdjustCampaign` delta that is zero or not an integer. */
   | { code: 'invalidDelta'; delta: number }
   /** `AdjustCampaign` `fate` to the fate the investigator already has. */
-  | { code: 'fateUnchanged'; investigatorCode: string; fate: InvestigatorFate }
+  | { code: 'fateUnchanged'; investigatorCode: InvestigatorCode; fate: InvestigatorFate }
   /** `AdjustCampaign` `removeStory` for a key with no record. */
   | { code: 'unknownStoryRecord'; key: string }
   /** `AdjustCampaign` `position` outside 0..`max` (the number of scenarios). */
@@ -82,6 +95,8 @@ function describeCampaignRejection(r: CampaignRejection): string {
       return 'a campaign needs at least one scenario';
     case 'unknownInvestigator':
       return `no investigator ${r.investigatorCode} on the team`;
+    case 'unknownInvestigatorCard':
+      return `no investigator card ${r.investigatorCode}`;
     case 'investigatorEliminated':
       return `investigator ${r.investigatorCode} is ${r.fate}`;
     case 'investigatorNotEliminated':

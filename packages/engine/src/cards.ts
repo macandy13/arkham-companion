@@ -3,7 +3,7 @@ import type { Brand } from './ids';
 import type { Keyword } from './keywords';
 import type { ScenarioReference } from './scenario';
 import type { SkillModifierRegistry } from './skill_modifiers';
-import type { SkillTest } from './state';
+import type { SkillTest, SkillValues } from './state';
 import { CommandRejected } from './rejection';
 import type { EffectsRegistry, ScenarioHooks } from './triggers';
 
@@ -107,8 +107,12 @@ export interface CardStats {
   clues?: ScaledValue;
   fight?: number;
   evade?: number;
-  /** Enemy health. */
+  /** Enemy health, or an investigator's printed health (always `fixed`). */
   health?: ScaledValue;
+  /** Only on investigators. */
+  sanity?: number;
+  /** Only on investigators: the printed willpower, intellect, combat and agility. */
+  skills?: SkillValues;
   /** Damage an enemy deals when it attacks. */
   damage?: number;
   /** Horror an enemy deals when it attacks. */
@@ -134,6 +138,20 @@ export interface CardStats {
    * what failing costs stays card text the players apply.
    */
   revelationTest?: SkillTest;
+  /**
+   * The skill test a treachery in an investigator's threat area forces at the
+   * end of that investigator's turn ("Forced – At the end of your turn: Test
+   * [willpower] (3). If you succeed, discard …", Frozen in Fear), entered with
+   * the card data; `EndTurn` raises it as a `skillTestResult` decision. A pass
+   * discards the card; anything else the card does stays card text.
+   */
+  turnEndTest?: SkillTest;
+  /**
+   * Set for a card that is discarded when the round ends ("Forced – At the
+   * end of the round: Discard …", Dissonant Voices), entered with the card
+   * data; upkeep step 4.6 discards it wherever it is in play.
+   */
+  discardAtRoundEnd?: boolean;
 }
 
 /**
@@ -183,6 +201,21 @@ export function cardDbFrom(defs: Iterable<CardStats>): CardDb {
     get: (code) => byCode.get(code),
     encounterSet: (encounterCode) =>
       [...byCode.values()].filter((def) => def.encounterCode === encounterCode),
+  };
+}
+
+/**
+ * `base` plus `extra`, e.g. a scenario's cards plus the chosen investigators;
+ * a card in `extra` replaces one with the same code in `base`.
+ */
+export function cardDbWith(base: CardDb, extra: Iterable<CardStats>): CardDb {
+  const added = cardDbFrom(extra);
+  return {
+    get: (code) => added.get(code) ?? base.get(code),
+    encounterSet: (encounterCode) => [
+      ...base.encounterSet(encounterCode).filter((def) => added.get(def.code) === undefined),
+      ...added.encounterSet(encounterCode),
+    ],
   };
 }
 

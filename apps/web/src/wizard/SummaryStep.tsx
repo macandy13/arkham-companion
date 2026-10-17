@@ -1,11 +1,11 @@
-import type { StartingInvestigator } from '@arkham/engine';
+import type { InvestigatorCard } from '@arkham/engine';
 import { useTranslation } from 'react-i18next';
 import { chosenScenario, type WizardChoices } from './wizardState';
 
 interface SummaryStepProps {
   readonly choices: WizardChoices;
-  /** The seated investigators as the engine will receive them. */
-  readonly investigators: readonly StartingInvestigator[];
+  /** The chosen investigator cards in seat order. */
+  readonly investigators: readonly InvestigatorCard[];
 }
 
 /** Last wizard step: what will be started, so the players can check it before confirming. */
@@ -23,11 +23,11 @@ export function SummaryStep({ choices, investigators }: SummaryStepProps) {
       <dd>
         <ol>
           {investigators.map((investigator) => (
-            <li key={investigator.id}>
+            <li key={investigator.code}>
               {t('wizard.investigatorLine', {
                 name: investigator.name,
-                health: investigator.health.max,
-                sanity: investigator.sanity.max,
+                health: investigator.health,
+                sanity: investigator.sanity,
               })}
             </li>
           ))}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { daisyMember, makeCampaignLog, rolandMember } from '../../test/utils';
+import { daisyMember, makeCampaignLog, rolandMember, wendyMember } from '../../test/utils';
 import {
   availableXp,
   campaignInvestigator,
@@ -14,7 +14,7 @@ import {
 
 describe('campaign log queries', () => {
   const woundedRoland: CampaignInvestigator = {
-    code: '01001',
+    code: rolandMember.code,
     name: 'Roland Banks',
     health: 9,
     sanity: 5,
@@ -32,7 +32,7 @@ describe('campaign log queries', () => {
 
   it('finds a current team member by code', () => {
     const log = makeCampaignLog({ investigators: [rolandMember, daisyMember] });
-    const notOnTeam = '01005';
+    const notOnTeam = wendyMember.code;
     expect(campaignInvestigator(log, daisyMember.code)).toBe(daisyMember);
     expect(campaignInvestigator(log, notOnTeam)).toBeUndefined();
   });

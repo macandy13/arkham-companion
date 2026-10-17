@@ -190,7 +190,9 @@ export interface RevealLocation {
  * investigator "to any location" set `ignoreConnections`; the destination must
  * still be in play. An unrevealed destination is revealed through the same path
  * as `RevealLocation`. Produces `InvestigatorMoved`, then `CardFlipped` and
- * `TokensChanged` if the destination was unrevealed.
+ * `TokensChanged` if the destination was unrevealed, then `EnemyEngaged` (or
+ * a `chooseInvestigator` decision) for each ready enemy waiting there, unless
+ * `avoidEngagement` is set.
  */
 export interface MoveInvestigator {
   type: 'MoveInvestigator';
@@ -198,6 +200,12 @@ export interface MoveInvestigator {
   to: InstanceId;
   /** Skip the connection check (card effects). Default false. */
   ignoreConnections?: boolean;
+  /**
+   * The enemies at the destination do not engage (card effects that move
+   * "without being engaged"; they stay unengaged there until a rule engages
+   * them again, e.g. readying, or the engage action). Default false.
+   */
+  avoidEngagement?: boolean;
 }
 
 /**
@@ -539,6 +547,13 @@ export interface ResolveDecision {
    * a name the option has no range for, or outside its range.
    */
   amounts?: Readonly<Record<string, number>>;
+  /**
+   * The investigator giving the answer, when the app knows who it is (one
+   * device per player). The answer is then rejected unless they may give it
+   * (`Decision.decider`). Omitted when the table shares one device, which is
+   * why it is optional: the group then answers for whoever decides.
+   */
+  answeredBy?: InvestigatorId;
 }
 
 /**

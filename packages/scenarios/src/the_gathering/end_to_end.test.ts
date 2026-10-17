@@ -28,15 +28,24 @@
  * What a failed revelation costs is card text, so the script applies it by hand.
  */
 import { describe, expect, it } from 'vitest';
-import { replay, type EngineContext } from '@arkham/engine';
+import { cardDbWith, investigatorId, replay, type EngineContext } from '@arkham/engine';
 import { BURN_THE_HOUSE_DECISION, theGathering, theGatheringCards } from '../index';
-import { daisyWalker, rolandBanks, wendyAdams } from '../investigators';
+import { daisyWalker, rolandBanks, wendyAdams, zealotInvestigatorCards } from '../investigators';
 import { TestTable } from './test_table';
 
-const ctx: EngineContext = { cards: theGatheringCards, hooks: theGathering.hooks };
-const roland = rolandBanks.id;
-const daisy = daisyWalker.id;
-const wendy = wendyAdams.id;
+const ctx: EngineContext = {
+  cards: cardDbWith(theGatheringCards, zealotInvestigatorCards),
+  hooks: theGathering.hooks,
+};
+const roland = investigatorId('roland');
+const daisy = investigatorId('daisy');
+const wendy = investigatorId('wendy');
+/** Roland, Daisy and Wendy in seat order. */
+const zealotSeats = [
+  { id: roland, code: rolandBanks.code },
+  { id: daisy, code: daisyWalker.code },
+  { id: wendy, code: wendyAdams.code },
+];
 
 const icyGhoul = 'Icy Ghoul';
 const swarmOfRats = 'Swarm of Rats';
@@ -49,11 +58,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     const table = TestTable.setUp({
       scenario: theGathering,
       ctx,
-      investigators: [
-        { ...rolandBanks, seat: 0 },
-        { ...daisyWalker, seat: 1 },
-        { ...wendyAdams, seat: 2 },
-      ],
+      investigators: zealotSeats,
       seed: 24,
     });
 
@@ -191,10 +196,9 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     // Round 2 – investigation: Wendy's turn (the group lets her go before Daisy)
     table.startTurn(wendy);
+    // Entering the Cellar engages the ready Icy Ghoul waiting there, which is no action.
     table.moveTo(wendy, 'Cellar');
-    // Entering a location with a ready enemy engages it, which is no action;
-    // `MoveInvestigator` does not do that yet (M1.8 follow-up), so the script engages it.
-    table.engage(wendy, icyGhoul);
+    expect(table.enemy(icyGhoul)).toMatchObject({ at: 'Cellar', engagedWith: wendy });
     table.endTurn(wendy);
 
     // Round 2 – investigation: Daisy's turn (intellect 5 against the Cellar's shroud 4)
@@ -586,7 +590,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.startTurn(roland);
     table.moveTo(roland, 'Hallway');
     table.moveTo(roland, 'Attic');
-    table.engage(roland, 'Flesh-Eater');
+    expect(table.enemy('Flesh-Eater')).toMatchObject({ at: 'Attic', engagedWith: roland });
     table.startInvestigating(roland);
 
     // Searching while engaged with the ready Flesh-Eater provokes its attack of
@@ -952,11 +956,9 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 });
 
 describe('The Gathering with one to three investigators, seed 24', () => {
-  const seated = [rolandBanks, daisyWalker, wendyAdams];
-
   /** Round 1 with every investigator investigating once, then on to the mythos phase of round 2. */
   function playOneRound(count: number): TestTable {
-    const investigators = seated.slice(0, count).map((inv, seat) => ({ ...inv, seat }));
+    const investigators = zealotSeats.slice(0, count);
     const table = TestTable.setUp({ scenario: theGathering, ctx, investigators, seed: 24 });
     expect(table.nextPhase()).toEqual({ round: 1, phase: 'investigation' });
     for (const { id } of investigators) {

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { roland } from '../../test/utils';
 import { CampaignCommandRejected, type CampaignRejection } from './campaign_rejection';
 
 describe('CampaignCommandRejected', () => {
@@ -6,21 +7,22 @@ describe('CampaignCommandRejected', () => {
     { code: 'campaignNotStarted' },
     { code: 'campaignAlreadyStarted' },
     { code: 'invalidTeamSize', count: 5 },
-    { code: 'duplicateInvestigator', investigatorCode: '01001' },
-    { code: 'invalidInvestigatorStats', investigatorCode: '01001', health: 0, sanity: 5 },
+    { code: 'duplicateInvestigator', investigatorCode: roland.code },
+    { code: 'invalidInvestigatorStats', investigatorCode: roland.code, health: 0, sanity: 5 },
     { code: 'noScenarios' },
-    { code: 'unknownInvestigator', investigatorCode: '01001' },
-    { code: 'investigatorEliminated', investigatorCode: '01001', fate: 'killed' },
-    { code: 'investigatorNotEliminated', investigatorCode: '01001' },
+    { code: 'unknownInvestigator', investigatorCode: roland.code },
+    { code: 'unknownInvestigatorCard', investigatorCode: roland.code },
+    { code: 'investigatorEliminated', investigatorCode: roland.code, fate: 'killed' },
+    { code: 'investigatorNotEliminated', investigatorCode: roland.code },
     { code: 'invalidAmount', amount: 0 },
-    { code: 'notEnoughXp', investigatorCode: '01001', available: 1, requested: 2 },
+    { code: 'notEnoughXp', investigatorCode: roland.code, available: 1, requested: 2 },
     { code: 'invalidStoryKey', key: ' ' },
     { code: 'invalidStoryValue', key: 'doubt' },
     { code: 'storyKindMismatch', key: 'doubt', recorded: 'count', given: 'flag' },
     { code: 'chaosTokenNotInBag', token: 'tablet' },
     { code: 'campaignComplete' },
     { code: 'invalidDelta', delta: 0 },
-    { code: 'fateUnchanged', investigatorCode: '01001', fate: 'alive' },
+    { code: 'fateUnchanged', investigatorCode: roland.code, fate: 'alive' },
     { code: 'unknownStoryRecord', key: 'doubt' },
     { code: 'invalidPosition', position: 4, max: 3 },
     { code: 'inconsistentAdjustment', violations: ['first', 'second'] },
@@ -39,7 +41,7 @@ describe('CampaignCommandRejected', () => {
   it('names the numbers of a notEnoughXp rejection in its message', () => {
     const error = new CampaignCommandRejected({
       code: 'notEnoughXp',
-      investigatorCode: '01001',
+      investigatorCode: roland.code,
       available: 1,
       requested: 2,
     });

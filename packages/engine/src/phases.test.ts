@@ -38,7 +38,8 @@ const secondAct = instanceId('second_act');
  * The cards of these tests: the hall - cellar - attic line of locations, a
  * first agenda with a threshold of 2 doom, a second one with 9, an act that
  * needs 1 clue, enemies that differ in what the phase steps do with them,
- * and a plain treachery to draw.
+ * a plain treachery to draw and Dissonant Voices, discarded at the end of
+ * the round.
  */
 const ctx = contextWith(
   makeCard({ code: 'hall', name: 'Hall', typeCode: 'location' }),
@@ -69,6 +70,7 @@ const ctx = contextWith(
     keywords: [{ name: 'spawn', detail: 'the location with the most clues' }],
   }),
   makeCard({ code: 'plain_treachery' }),
+  makeCard({ code: 'dissonant_voices', entersThreatArea: true, discardAtRoundEnd: true }),
 );
 
 /**
@@ -642,6 +644,22 @@ describe('upkeep phase', () => {
     expect(upkeep.meta.turnsTaken).toEqual([]);
     expect(upkeep.investigators[0]!.clues).toBe(1);
     expect(upkeep.meta).toMatchObject({ round: 1, phase: 'upkeep', steps: [] });
+  });
+
+  it('ends the round (4.6) by discarding the cards that last until the end of the round', () => {
+    const threatArea: Zone = { kind: 'threatArea', investigatorId: alice };
+    const state = startedWith(aliceInHall, [
+      placed('dissonant_voices', 'dissonant_voices', threatArea),
+      placed('plain_treachery', 'plain_treachery', threatArea),
+    ]);
+    const enemy = stateAfter(ctx, state, next, ...turnsOf(alice), next);
+
+    const upkeep = stateAfter(ctx, enemy, next);
+
+    expect(upkeep.cards[instanceId('dissonant_voices')]!.zone).toEqual({
+      kind: 'encounterDiscard',
+    });
+    expect(upkeep.cards[instanceId('plain_treachery')]!.zone).toEqual(threatArea);
   });
 });
 

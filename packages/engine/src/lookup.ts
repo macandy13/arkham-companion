@@ -2,6 +2,7 @@ import { comparableName, type CardType, type EngineContext } from './cards';
 import type { InstanceId } from './ids';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
+import { zoneKey, type Zone } from './zone';
 
 /**
  * The card with id `cardId`; throws `CommandRejected` (`unknownCard`) if there
@@ -17,6 +18,11 @@ export function requireCard(
   return card;
 }
 
+/** Ids of the cards in `zone`, in zone order (top first for piles). */
+export function cardsInZone(state: GameState, zone: Zone): readonly InstanceId[] {
+  return state.order[zoneKey(zone)] ?? [];
+}
+
 /** Every card of the state whose printed type is `typeCode`, wherever it is, in card order. */
 export function cardsOfType(
   ctx: EngineContext,
@@ -25,6 +31,18 @@ export function cardsOfType(
 ): CardInstance[] {
   return Object.values(state.cards).filter(
     (card) => ctx.cards.get(card.code)?.typeCode === typeCode,
+  );
+}
+
+/**
+ * The cards placed unengaged at `locationId` (zone `atLocation`: enemies,
+ * and other cards put there), in card order. Enemies engaged with an
+ * investigator standing there are in that investigator's threat area, not
+ * here; `enemiesAt` (`handle_enemy.ts`) counts both.
+ */
+export function cardsAtLocation(state: GameState, locationId: InstanceId): CardInstance[] {
+  return Object.values(state.cards).filter(
+    (card) => card.zone.kind === 'atLocation' && card.zone.locationId === locationId,
   );
 }
 

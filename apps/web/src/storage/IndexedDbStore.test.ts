@@ -4,6 +4,7 @@ import {
   STATE_VERSION,
   emptyState,
   instanceId,
+  investigatorCode,
   investigatorId,
   mapId,
   replay,
@@ -32,7 +33,7 @@ const started: ScenarioStarted = {
   investigators: [
     {
       id: investigatorId('i1'),
-      code: 'inv',
+      code: investigatorCode('inv'),
       name: 'Tester',
       seat: 0,
       health: { max: 8, damage: 0 },

@@ -31,7 +31,7 @@ Finished tasks M1.1–M1.11 (with their Done and Follow-ups notes) are in `docs/
 
 Done: `end_to_end.test.ts` plays seed 24 (the setup step pins the encounter deck's first twelve cards): round 1 takes the Study's 6 clues and advances act 1 (hook 01108: house map, everyone to the Hallway, Study out of the game); round 2 spawns the Icy Ghoul in the Cellar by its spawn instruction, applies Crypt Chill and Ancient Evils by hand, reveals the Attic and Cellar, Wendy engages the ghoul and is attacked; round 3 reaches agenda 1's threshold (a `confirm` decision, answered with `ResolveDecision` since M1.9), advances to Rise of the Ghouls, a Swarm of Rats engages Roland alone in the Attic, Roland evades it and walks to the Cellar, Daisy defeats the Ghoul Minion to the discard, Wendy wounds the Icy Ghoul and is attacked again; round 4 spawns the Flesh-Eater in the Attic, Roland takes over the Icy Ghoul and defeats it into the victory display, Daisy defeats the second Ghoul Minion and the hunting rats move to the Hallway; round 5 puts Frozen in Fear into Wendy's threat area, the rats reach the Cellar and raise a `chooseInvestigator` engagement decision (answered with `ResolveDecision` since M1.9), and both engaged enemies attack. `TestTable` (`packages/scenarios/src/the_gathering/test_table.ts`) wraps `execute` in game language (`moveTo`, `investigate`, `spendCluesToAdvanceAct`, `placeMythosDoom`, `placeDoom`, `answer`, `drawEncounterCard`, `engage`, `evade`, `fight`, `takeDamage`, `takeHorror`, `moveHunters`, `resolveEnemyAttacks` via `enemyAttackList`, `upkeep`) and reads the table back (`investigatorLocations`, `enemyLines`, `agenda`, `act`, `cluesOn`, `namesIn`, `wounds`, `pendingDecisions`); it throws with the board attached when a command breaks an invariant. `formatBoard` (`packages/engine/src/format_board.ts`, exported) renders round/phase, agenda (doom in play/threshold), act (clue requirement), each map's locations (revealed, clues, investigators, enemies with damage/exhaustion/engagement, attachments, connections), investigators (location, damage/health, horror/sanity, clues, resources, threat area), encounter deck/discard counts and top, set-aside count, victory display and pending decisions; tested with inline snapshots in `format_board.test.ts`. The engine index now also exports `cardsNamed` and `locationsNamed` so the test driver reuses them.
 Skipped, because The Gathering's first rounds cannot show them: surge and peril (no Gathering encounter card has them), the empty-deck reshuffle (26 cards, 3 draws a round), the `hunterOrder` decision (only one hunter, the Swarm of Rats, is ever in play; the Ghoul Priest stays set aside), investigator defeat, cross-map and one-way connections, `FromSetAside`/`ShuffleInto`/matched draws (Rise of the Ghouls' reverse side is not reached).
-Gaps the script steps around: agenda 1's reverse side (lead investigator's choice) is applied as 2 horror on Roland; treachery effects (Crypt Chill, Grasping Hands, Rotting Remains, Ancient Evils) are applied by hand since no effects registry covers them; `MoveInvestigator` does not engage enemies at the destination, so the script engages explicitly; round and phase stay at 0/`setup` without `NextPhase`. The script stops before act 2 (The Barrier) and agenda 2 advance, whose reverse sides (Parlor, Ghoul Priest, Lita Chantler) and agenda 3/act 3 have no hooks yet.
+Gaps the script steps around: agenda 1's reverse side (lead investigator's choice) is applied as 2 horror on Roland; treachery effects (Crypt Chill, Grasping Hands, Rotting Remains, Ancient Evils) are applied by hand since no effects registry covers them; round and phase stay at 0/`setup` without `NextPhase`. The script stops before act 2 (The Barrier) and agenda 2 advance, whose reverse sides (Parlor, Ghoul Priest, Lita Chantler) and agenda 3/act 3 have no hooks yet.
 Review (#42): the investigators are Roland Banks (01001: health 9, sanity 5), Daisy Walker (01002: health 5, sanity 9) and Wendy Adams (01005: health 7, sanity 7), all 5 starting resources, hand-entered in `packages/scenarios/src/investigators.ts` (checked against ArkhamDB's `pack/core/core.json`; the Core Set 2016 codes match The Gathering's 01xxx cards, core_2026 is not in arkhamdb-json-data yet). Skills are not modelled; the comments that resolve skill tests by hand name them. The test is one narrative `it` with `// Round N – <phase>` and `// Round N – investigation: <name>'s turn` headers (turn order chosen by the group: Wendy goes before Daisy in round 2), ending with the replay check; `drawEncounterCard(investigator)` replaces the batch draw, `investigate(investigator)` (1 clue) replaces `discoverClues`, `fight(investigator, enemy)` deals the basic 1 damage and `evade(investigator, enemy)` checks the enemy is engaged with them; the table's read-backs are keyed by investigator id. `docs/coding-guidelines.md` allows the long narrative form for end-to-end scenario tests.
 Follow-ups: treacheries with a revelation test (Crypt Chill, Grasping Hands, Rotting Remains in this script) should raise a `skillTestResult` decision for the drawing investigator when drawn (M1.10); the script resolves them in comments and applies the failure by hand. `formatBoard` should show actions taken/allowance for the active investigator once M1.10 tracks turns.
 
@@ -54,7 +54,7 @@ Done (review): attacks of opportunity are an engine primitive (`attacks_of_oppor
 
 Done (review, test structure): `TestTable.nextPhase()` returns where the phase assistant stopped, `{ round, phase, step? }` with the engine's step ids: the step whose decision is pending (the step removed itself from the cursor before it ran, so the table reads it from the events) or 3.3 while attacks are due; no `step` once the phase has run all its steps. The end-to-end test reads the board as structured data instead of text: `enemies()`/`enemy(selector)` (`EnemyView`: name, location, engagement, damage, exhausted), `decisions()` (`DecisionView`: prompt key, kind, subject, test, option names, default counts) and `attacksDue()` (enemy and investigator); the act 1 and agenda-question `formatBoard` snapshots are replaced by structured asserts, the setup and final snapshots stay as milestone overviews. Enemy lookups take an `EnemySelector` (a name, or `{ name, engagedWith?, at? }`) and fail with the board attached when several enemies match, as with the three Swarms of Rats in round 6; `answer` fails when several open decisions are about cards of the same name.
 
-Follow-ups: hooks for act 2 ("The Barrier") and act 3, agenda 2 and 3 reverse sides, the Ghoul Priest and Lita Chantler, and `ScenarioEnded`; once they exist, advance act 2 in round 7 (the clues are in hand) and play on to a resolution. Attacks of opportunity for actions the engine cannot see (resource, draw, play, activate): needs an action command or an action flag on `AdjustActions` so a counted action is not asked about twice. Once `MoveInvestigator` engages ready enemies on entry (M1.8 follow-up), an explicit `EngageEnemy` is always the engage action and the `skip` for rule engagements goes away. Parley and resign are not modelled; when they are, they must not provoke either.
+Follow-ups: hooks for act 2 ("The Barrier") and act 3, agenda 2 and 3 reverse sides, the Ghoul Priest and Lita Chantler, and `ScenarioEnded`; once they exist, advance act 2 in round 7 (the clues are in hand) and play on to a resolution. Attacks of opportunity for actions the engine cannot see (resource, draw, play, activate): needs an action command or an action flag on `AdjustActions` so a counted action is not asked about twice. `MoveInvestigator` engages ready enemies on entry since M1.16, so an explicit `EngageEnemy` is always the engage action. Parley and resign are not modelled; when they are, they must not provoke either.
 
 ## M1.13 Skill test modifiers (O)
 
@@ -94,12 +94,19 @@ Ref: `docs/coding-guidelines.md` (tests); M1.E `TestTable`.
 
 Ref: RR "Retaliate", "Alert", "Engagement", "Patrol"; M1.8, M1.10 follow-ups.
 
-- [ ] `MoveInvestigator` engages ready, unengaged, non-aloof enemies at the destination (prey/decision as in `engageEvents`)
-- [ ] Retaliate: a failed `Fight` against a ready retaliate enemy raises an attack decision (same shape as attacks of opportunity)
-- [ ] Alert: a failed `Evade` against an alert enemy raises an attack decision
+Slices: (1) engagement on move; (2) retaliate and alert attacks, stacked on (1).
+
+- [x] `MoveInvestigator` engages ready, unengaged, non-aloof enemies at the destination (prey/decision as in `engageEvents`)
+- [x] Retaliate: a failed `Fight` against a ready retaliate enemy raises an attack decision (same shape as attacks of opportunity)
+- [x] Alert: a failed `Evade` against an alert enemy raises an attack decision
 - [ ] Patrol (if a Core scenario needs it): moves in the enemy phase toward the named location
 - [ ] Fight effects that engage an aloof enemy as part of the attack (Spectral Razor): a card-effect path
-- [ ] rules-checker review; end-to-end test covers a move into an enemy's location and one retaliate
+- [x] rules-checker review; end-to-end test covers a move into an enemy's location (a retaliate is left to M1.17, see below)
+
+Done (slice 1): `handleMoveInvestigator` ends with `arrivalEngagements` (`engagement.ts`), which runs `engageEvents` for each unengaged enemy at the destination after the move and any reveal, so aloof, massive and exhausted enemies stay put and prey or a `chooseInvestigator` decision picks between investigators as on spawn. It applies to every move, card effects (`ignoreConnections`) included, except a card effect that moves without being engaged (`MoveInvestigator.avoidEngagement`, review #73), and to a held move only once it resumes after its attacks of opportunity. The end-to-end test no longer engages by hand: Wendy's move into the Cellar (round 2) and Roland's into the Attic (round 7) engage the Icy Ghoul and the Flesh-Eater.
+
+Done (slice 2): `forced_attacks.ts` holds the one `confirm` decision for every enemy attack outside the enemy phase (`forcedAttackDecision`, id `<kind>:<enemy>` with kind `attackOfOpportunity`, `retaliate` or `alert`; `attack` with the printed damage and horror as adjustable amounts, `skip`). Attacks of opportunity now use it too, so its decision is unchanged. A failed `Fight` against a ready retaliate enemy and a failed `Evade` against a ready alert enemy raise it for the tester as the last fail command (`RequestDecision`), after a failed attack's damage to another engaged investigator; the enemy stays ready. Readiness is read when the test starts, since nothing but `ManualAdjust` changes it while the test is pending. `skip` is labelled `decision.attackCancelled` here, because cards can cancel any attack (RR "Cancel"). **Rules check:** the 2026 Core rulebook says alert needs a ready enemy too (the older RR text leaves it out); `docs/rules.md` is corrected.
+Not done: patrol (no enemy of The Gathering has it) and fight effects that engage an aloof enemy as part of the attack (Spectral Razor; player cards are not modelled, the players engage first). The end-to-end test has no retaliate enemy before the Ghoul Priest (retaliate), who enters with act 2 in M1.17; that thread should show one failed fight against him.
 
 ## M1.17 The Gathering to a resolution (S)
 
@@ -119,6 +126,7 @@ Slices (one PR each, the second stacked on the first):
 - [x] A command to shuffle the encounter discard into the deck (M1.7 follow-up)
 - [x] Commands after `ScenarioEnded` are rejected, except undo and `ManualAdjust` (M1.5, M1.10 follow-ups)
 - [x] End-to-end test continued to a resolution
+- [ ] End-to-end test: one failed fight against the Ghoul Priest raises and resolves his retaliate attack (M1.16 follow-up)
 
 Done (slice 1): `ShuffleEncounterDiscard` moves the whole discard into the deck and shuffles it; with an empty discard it does nothing (RR "Discard Piles", rules check on #74). `ScenarioEnded` sets `GameMeta.ended` (with or without a resolution), and `handle` then refuses every command except `ManualAdjust` (`scenarioEnded`); undo works on the log, outside `handle`. A last agenda or act whose reverse side leaves a decision pending no longer needs a resolution: the answer's `EndScenario` names it (act 3 of The Gathering: burn the house, R1, or not, R2). `ScenarioHooks.afterEnemyDefeated` fires on `EnemyDefeated`. `DefeatInvestigator` defeats an investigator by a card effect (`InvestigatorDefeated` with the new cause `cardEffect`) with the usual elimination clean-up.
 
@@ -134,9 +142,23 @@ Follow-ups: show a retaliate in the end-to-end test once M1.16's #76 is on main 
 
 Ref: M1.5, M1.6, M1.9, M1.10 follow-ups.
 
-- [ ] `onTurnEnd` hook fired by `EndTurn`; Frozen in Fear raises its willpower test there
-- [ ] Dissonant Voices discards itself at the end of the round (the end-to-end test still shows it on Roland in round 10)
-- [ ] Simultaneous forced effects: the lead investigator picks the order (`chooseOption` decision) when more than one applies
-- [ ] After a doom `ManualAdjust`, offer `CheckDoomThreshold` (a `confirm` decision), never advance silently
-- [ ] `ManualAdjust` cannot move the current agenda or act out of its deck (rejection)
-- [ ] `decider` is checked against who answers a decision, if the command carries the answering investigator
+Slices (one PR each):
+
+1. Engine: `onTurnEnd`, end-of-turn tests and end-of-round discards as card data.
+2. The Gathering: Frozen in Fear's and Dissonant Voices' card data, end-to-end test updated (after M1.17 slice 2, #78, which edits that test).
+3. Engine: `ManualAdjust` guards (doom threshold confirm, current agenda/act stay in their deck).
+4. ~~Engine: the lead investigator orders simultaneous forced effects.~~ Deferred (Andy, 2026-10-17): every event fires at most one hook, and no Core card's outcome depends on the order of end-of-turn or end-of-round effects. Build it when a scenario needs it.
+5. Engine: `decider` checked against the answering investigator.
+
+- [x] `onTurnEnd` hook fired by `EndTurn`; Frozen in Fear raises its willpower test there (engine; card data in slice 2)
+- [x] End-of-round discards (Dissonant Voices: "Forced – At the end of the round: Discard"), found by the M1.17 end-to-end test
+- [ ] ~~Simultaneous forced effects: the lead investigator picks the order (`chooseOption` decision) when more than one applies~~ (deferred, see slice 4)
+- [x] After a doom `ManualAdjust`, offer `CheckDoomThreshold` (a `confirm` decision), never advance silently
+- [x] `ManualAdjust` cannot move the current agenda or act out of its deck (rejection)
+- [x] `decider` is checked against who answers a decision, if the command carries the answering investigator
+
+Done (slice 1, #79): `EndTurn` raises the `turnEndTest` of each card in the investigator's threat area (a pass discards it), `TurnEnded` fires `ScenarioHooks.onTurnEnd`, and upkeep step 4.6 discards every in-play card with `discardAtRoundEnd`. The Gathering's card data and the end-to-end test follow in slice 2.
+
+Done (manual-adjust slice): added doom in a `ManualAdjust` that reaches the threshold raises the usual `advanceAgenda` confirm instead of a separate "check the threshold?" question, since that check would only ask the same thing again. Moving the current agenda or act is rejected (`currentStageCard`); later cards of either deck can still be moved.
+
+Done (decider slice): `ResolveDecision.answeredBy` is optional, since the app runs on one shared device for now. When it is set, the answer is refused unless that investigator is the named one, the lead, or, for a group decision, any investigator still in the scenario (`notTheDecider`).

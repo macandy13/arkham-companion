@@ -19,14 +19,14 @@ describe('compileCampaign', () => {
       compileCampaign(definition, {
         campaignId: 'campaign_a',
         difficulty: 'hard',
-        investigators: [roland, daisy],
+        investigators: [roland.code, daisy.code],
       }),
     ).toEqual({
       type: 'StartCampaign',
       campaignId: 'campaign_a',
       definitionId: 'test_campaign',
       difficulty: 'hard',
-      investigators: [roland, daisy],
+      investigators: [roland.code, daisy.code],
       chaosBag: ['-1', '-2'],
       scenarioIds: ['first_scenario', 'second_scenario'],
     });
