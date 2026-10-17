@@ -6,6 +6,7 @@ import type {
   InvestigatorCode,
   InvestigatorId,
   MapId,
+  EncounterSetCode,
 } from './ids';
 import type { Decider, InvestigatorStat, Phase, TokenKind } from './state';
 
@@ -42,7 +43,7 @@ export type Rejection =
   /** A setup step refers to `cardCode`, but several instances of it exist. */
   | { code: 'setupTargetAmbiguous'; cardCode: CardCode }
   /** No card in the `CardDb` belongs to `encounterCode` (usually a typo in scenario data). */
-  | { code: 'unknownEncounterSet'; encounterCode: string }
+  | { code: 'unknownEncounterSet'; encounterCode: EncounterSetCode }
   /** `AddConnection` for an edge that already exists. */
   | { code: 'duplicateConnection'; from: InstanceId; to: InstanceId }
   /** `RemoveConnection` for an edge that does not exist. */

@@ -1,9 +1,11 @@
 import {
   cardCode,
   cardDbFrom,
+  encounterSetCode,
   trait,
   type CardDb,
   type CardStats,
+  type EncounterSetCode,
   type Keyword,
   type ScaledValue,
   type SkillTest,
@@ -15,12 +17,12 @@ import {
  * scenario's own set plus the generic sets its setup gathers.
  */
 export const GATHERING_SETS = {
-  theGathering: 'torch',
-  rats: 'rats',
-  ghouls: 'ghouls',
-  strikingFear: 'striking_fear',
-  ancientEvils: 'ancient_evils',
-  chillingCold: 'chilling_cold',
+  theGathering: encounterSetCode('torch'),
+  rats: encounterSetCode('rats'),
+  ghouls: encounterSetCode('ghouls'),
+  strikingFear: encounterSetCode('striking_fear'),
+  ancientEvils: encounterSetCode('ancient_evils'),
+  chillingCold: encounterSetCode('chilling_cold'),
 } as const;
 
 /** ArkhamDB card codes of the cards the scenario definition refers to by name. */
@@ -270,7 +272,7 @@ function location({
 interface EnemyOptions {
   code: string;
   name: string;
-  set: string;
+  set: EncounterSetCode;
   traits: readonly string[];
   fight: number;
   evade: number;
@@ -298,7 +300,7 @@ function enemy({ code, set, traits, quantity = 1, victory, ...stats }: EnemyOpti
 interface TreacheryOptions {
   code: string;
   name: string;
-  set: string;
+  set: EncounterSetCode;
   traits: readonly string[];
   quantity: number;
   /** Set for a treachery that stays in the drawer's threat area. */

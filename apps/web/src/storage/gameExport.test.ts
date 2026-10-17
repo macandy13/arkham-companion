@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   STATE_VERSION,
   cardCode,
+  scenarioId,
   instanceId,
   replay,
   type Event,
@@ -11,7 +12,7 @@ import { GameImportError, parseGameExport, serialiseGameExport } from './gameExp
 
 const started: Event = {
   type: 'ScenarioStarted',
-  scenarioId: 'test',
+  scenarioId: scenarioId('test'),
   difficulty: 'standard',
   seed: 7,
   investigators: [],

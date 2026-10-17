@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   CommandRejected,
   cardCode,
+  encounterSetCode,
   cardDbFrom,
   cardDbWith,
   cardStats,
@@ -68,27 +69,27 @@ describe('cardDbFrom', () => {
 
   it('lists the definitions of an encounter set', () => {
     const cards = cardDbFrom([
-      makeCard({ code: 'a', encounterCode: 'cult' }),
-      makeCard({ code: 'b', encounterCode: 'rats' }),
-      makeCard({ code: 'c', encounterCode: 'cult' }),
+      makeCard({ code: 'a', encounterCode: encounterSetCode('cult') }),
+      makeCard({ code: 'b', encounterCode: encounterSetCode('rats') }),
+      makeCard({ code: 'c', encounterCode: encounterSetCode('cult') }),
     ]);
 
-    const codes = cards.encounterSet('cult').map((def) => def.code);
+    const codes = cards.encounterSet(encounterSetCode('cult')).map((def) => def.code);
 
     expect(codes).toEqual(['a', 'c']);
   });
 
   it('lists nothing for an unknown encounter set', () => {
-    const cards = cardDbFrom([makeCard({ code: 'a', encounterCode: 'cult' })]);
+    const cards = cardDbFrom([makeCard({ code: 'a', encounterCode: encounterSetCode('cult') })]);
 
-    expect(cards.encounterSet('unknown')).toEqual([]);
+    expect(cards.encounterSet(encounterSetCode('unknown'))).toEqual([]);
   });
 });
 
 describe('cardDbWith', () => {
   const scenarioCards = cardDbFrom([
     makeCard({ code: 'study', typeCode: 'location' }),
-    makeCard({ code: 'rat', typeCode: 'enemy', encounterCode: 'rats' }),
+    makeCard({ code: 'rat', typeCode: 'enemy', encounterCode: encounterSetCode('rats') }),
   ]);
 
   it('finds the cards of both the base and the extra cards', () => {
@@ -104,11 +105,18 @@ describe('cardDbWith', () => {
 
   it('lets an extra card replace a base card with the same code, in encounter sets too', () => {
     const cards = cardDbWith(scenarioCards, [
-      makeCard({ code: 'rat', name: 'Big Rat', typeCode: 'enemy', encounterCode: 'rats' }),
+      makeCard({
+        code: 'rat',
+        name: 'Big Rat',
+        typeCode: 'enemy',
+        encounterCode: encounterSetCode('rats'),
+      }),
     ]);
 
     expect(cards.get(cardCode('rat'))?.name).toBe('Big Rat');
-    expect(cards.encounterSet('rats').map((card) => card.name)).toEqual(['Big Rat']);
+    expect(cards.encounterSet(encounterSetCode('rats')).map((card) => card.name)).toEqual([
+      'Big Rat',
+    ]);
   });
 });
 

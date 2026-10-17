@@ -1,13 +1,15 @@
 import type { CampaignLog } from './campaign/campaign_log';
 import type { Command, EngageEnemy, Investigate, MoveInvestigator } from './commands';
-import type {
-  CardCode,
-  DecisionId,
-  InstanceId,
-  InvestigatorCode,
-  InvestigatorId,
-  MapId,
-  SlotId,
+import {
+  scenarioId,
+  type CardCode,
+  type DecisionId,
+  type InstanceId,
+  type InvestigatorCode,
+  type InvestigatorId,
+  type MapId,
+  type ScenarioId,
+  type SlotId,
 } from './ids';
 import type { GameMap } from './map';
 import type { RngState } from './rng';
@@ -365,7 +367,7 @@ export interface AmountRange {
 
 /** Scenario-wide bookkeeping: identity, randomness and turn structure. */
 export interface GameMeta {
-  scenarioId: string;
+  scenarioId: ScenarioId;
   difficulty: Difficulty;
   /**
    * Number of investigators who started the scenario. Never decremented when an
@@ -437,7 +439,7 @@ export interface GameState {
 export function emptyState(): GameState {
   return {
     meta: {
-      scenarioId: '',
+      scenarioId: scenarioId(''),
       difficulty: 'standard',
       playerCount: 0,
       seed: 0,

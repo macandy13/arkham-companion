@@ -287,10 +287,10 @@ The only scenario so far is the hand-entered test scenario [`the_gathering/`](..
 
 ```ts
 interface ScenarioDefinition {
-  id: string;
+  id: ScenarioId;
   chaosBag: Record<Difficulty, readonly ChaosToken[]>;
   reference: ScenarioReference;          // symbol token effects per reference card side
-  agendaDeck: readonly string[]; actDeck: readonly string[];
+  agendaDeck: readonly CardCode[]; actDeck: readonly CardCode[];
   setup: readonly SetupStep[];
   hooks?: Partial<ScenarioHooks>;
   modifiers?: SkillModifierRegistry;     // token values computed from the board ("-X")
@@ -317,7 +317,7 @@ function compileCampaign(def: CampaignDefinition, options: CampaignOptions): Sta
 
 type StoryValue = { kind: 'flag'; value: boolean } | { kind: 'count'; value: number }
   | { kind: 'list'; entries: string[] } | { kind: 'crossableList'; entries: CrossableEntry[] };
-interface CampaignDefinition { id: string; scenarios: readonly string[]; chaosBag: Record<Difficulty, readonly ChaosToken[]>; }
+interface CampaignDefinition { id: CampaignDefinitionId; scenarios: readonly ScenarioId[]; chaosBag: Record<Difficulty, readonly ChaosToken[]>; }
 ```
 
 The only campaign so far is Night of the Zealot ([`night_of_the_zealot/campaign.ts`](../packages/scenarios/src/night_of_the_zealot/campaign.ts)); its second and third scenarios are ids only until their data arrives.
@@ -331,18 +331,18 @@ The only campaign so far is Night of the Zealot ([`night_of_the_zealot/campaign.
 
 ### Card data
 
-The engine reads card numbers only through a [`CardDb`](../packages/engine/src/cards.ts) in its context (`ctx.cards.get(code)` returns `CardStats`), so it never loads data itself and tests pass a small fake one. Inside the engine and the scenarios, card codes are a branded `CardCode` (card stats, card instances, setup steps, decks), so a code can't be mixed up with an instance ID or a name; an `InvestigatorCode` is a `CardCode` with one more tag. `@arkham/carddata` doesn't depend on the engine, so its `CardDef.code` stays a plain string until it is mapped to `CardStats`. [`@arkham/carddata`](../packages/carddata/src/) fetches ArkhamDB packs ([`fetch.ts`](../packages/carddata/src/fetch.ts)), validates the raw JSON with zod (`RawCardSchema`) and normalises it to `CardDef` ([`schema.ts`](../packages/carddata/src/schema.ts)). It also builds the investigator catalog ([`catalog.ts`](../packages/carddata/src/catalog.ts)). Investigator cards are in the same `CardDb`, so there is one place for all cards; [`investigatorCard(cards, code)`](../packages/engine/src/investigator_cards.ts) reads one as an `InvestigatorCard` (name, health, sanity, skills), and `investigatorCardStats` turns one back into `CardStats`. ArkhamDB is the community reference with a public API, CORS and translations, so cards arrive accurate and in the players' language. Fetched JSON and images are never committed: they go to `packages/carddata/.cache/` or IndexedDB. The app refreshes its copy with `If-Modified-Since` ([`loadCatalog.ts`](../apps/web/src/catalog/loadCatalog.ts)) and keeps working offline from it.
+The engine reads card numbers only through a [`CardDb`](../packages/engine/src/cards.ts) in its context (`ctx.cards.get(code)` returns `CardStats`), so it never loads data itself and tests pass a small fake one. Inside the engine and the scenarios, card codes are a branded `CardCode` (card stats, card instances, setup steps, decks), so a code can't be mixed up with an instance ID or a name; an `InvestigatorCode` is a `CardCode` with one more tag. Encounter set codes (`EncounterSetCode`), scenario IDs (`ScenarioId`) and campaign definition IDs (`CampaignDefinitionId`) are branded the same way. `@arkham/carddata` doesn't depend on the engine, so its `CardDef.code` stays a plain string until it is mapped to `CardStats`. [`@arkham/carddata`](../packages/carddata/src/) fetches ArkhamDB packs ([`fetch.ts`](../packages/carddata/src/fetch.ts)), validates the raw JSON with zod (`RawCardSchema`) and normalises it to `CardDef` ([`schema.ts`](../packages/carddata/src/schema.ts)). It also builds the investigator catalog ([`catalog.ts`](../packages/carddata/src/catalog.ts)). Investigator cards are in the same `CardDb`, so there is one place for all cards; [`investigatorCard(cards, code)`](../packages/engine/src/investigator_cards.ts) reads one as an `InvestigatorCard` (name, health, sanity, skills), and `investigatorCardStats` turns one back into `CardStats`. ArkhamDB is the community reference with a public API, CORS and translations, so cards arrive accurate and in the players' language. Fetched JSON and images are never committed: they go to `packages/carddata/.cache/` or IndexedDB. The app refreshes its copy with `If-Modified-Since` ([`loadCatalog.ts`](../apps/web/src/catalog/loadCatalog.ts)) and keeps working offline from it.
 
 ```ts
 interface CardDb {
   get(code: CardCode): CardStats | undefined;
-  encounterSet(encounterCode: string): CardStats[];
+  encounterSet(encounterCode: EncounterSetCode): CardStats[];
 }
 interface CardStats {
   code: CardCode; name: string; typeCode: CardType; traits: readonly Trait[];
   shroud?: number; clues?: ScaledValue; fight?: number; evade?: number; health?: ScaledValue;
   damage?: number; horror?: number; doom?: ScaledValue; victory?: number;
-  encounterCode?: string; quantity?: number; keywords?: readonly Keyword[];
+  encounterCode?: EncounterSetCode; quantity?: number; keywords?: readonly Keyword[];
   entersThreatArea?: boolean; revelationTest?: SkillTest;
   turnEndTest?: SkillTest; discardAtRoundEnd?: boolean;
   sanity?: number; skills?: SkillValues;   // investigators

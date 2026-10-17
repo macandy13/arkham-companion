@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import {
   STATE_VERSION,
   cardCode,
+  scenarioId,
   emptyState,
   instanceId,
   investigatorCode,
@@ -28,7 +29,7 @@ const card = (id: string): CardInstance => ({
 
 const started: ScenarioStarted = {
   type: 'ScenarioStarted',
-  scenarioId: 'test',
+  scenarioId: scenarioId('test'),
   difficulty: 'standard',
   seed: 7,
   investigators: [

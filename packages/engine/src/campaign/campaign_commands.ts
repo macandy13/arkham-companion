@@ -1,4 +1,4 @@
-import type { InvestigatorCode } from '../ids';
+import type { CampaignDefinitionId, InvestigatorCode, ScenarioId } from '../ids';
 import type { ChaosToken, Difficulty } from '../state';
 import type { InvestigatorFate, StoryValue, TraumaKind, XpAccount } from './campaign_log';
 
@@ -33,13 +33,13 @@ export interface StartCampaign {
   readonly type: 'StartCampaign';
   readonly campaignId: string;
   /** `CampaignDefinition.id`. */
-  readonly definitionId: string;
+  readonly definitionId: CampaignDefinitionId;
   readonly difficulty: Difficulty;
   /** The team in seat order; the handler looks up their printed stats in the `CardDb`. */
   readonly investigators: readonly InvestigatorCode[];
   readonly chaosBag: readonly ChaosToken[];
   /** At least one `ScenarioDefinition.id`, in campaign order. */
-  readonly scenarioIds: readonly string[];
+  readonly scenarioIds: readonly ScenarioId[];
 }
 
 /**

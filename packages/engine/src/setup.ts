@@ -12,6 +12,7 @@ import { isInPlay } from './doom';
 import {
   instanceId,
   type CardCode,
+  type EncounterSetCode,
   type InstanceId,
   type InvestigatorCode,
   type InvestigatorId,
@@ -75,7 +76,7 @@ export interface SetAsideStep {
  */
 export interface BuildEncounterDeckStep {
   kind: 'buildEncounterDeck';
-  sets: readonly string[];
+  sets: readonly EncounterSetCode[];
   exclude?: readonly CardCode[];
 }
 
@@ -387,7 +388,7 @@ function withRevealClues(card: DraftCard, env: SetupEnv): DraftCard {
 
 /** Codes of the encounter deck cards, one entry per copy, in set and db order. */
 function encounterDeckCards(
-  sets: readonly string[],
+  sets: readonly EncounterSetCode[],
   exclude: readonly CardCode[],
   env: SetupEnv,
 ): CardCode[] {
@@ -401,7 +402,7 @@ function encounterDeckCards(
 }
 
 /** The definitions in an encounter set; rejects an empty (unknown) set. */
-function encounterSetCards(ctx: EngineContext, set: string): readonly CardStats[] {
+function encounterSetCards(ctx: EngineContext, set: EncounterSetCode): readonly CardStats[] {
   const cards = ctx.cards.encounterSet(set);
   if (cards.length === 0)
     throw new CommandRejected({ code: 'unknownEncounterSet', encounterCode: set });

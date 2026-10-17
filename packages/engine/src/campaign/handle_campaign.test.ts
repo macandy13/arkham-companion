@@ -10,7 +10,7 @@ import {
   startedCampaign,
   wendy,
 } from '../../test/utils';
-import { investigatorCode } from '../ids';
+import { campaignDefinitionId, scenarioId, investigatorCode } from '../ids';
 import { cardDbFrom } from '../cards';
 import { investigatorCardStats } from '../investigator_cards';
 import type { CampaignCommand } from './campaign_commands';
@@ -25,11 +25,11 @@ describe('StartCampaign', () => {
       emptyCampaignLog(),
       makeStartCampaign({
         campaignId: 'campaign_a',
-        definitionId: 'night-of-the-zealot',
+        definitionId: campaignDefinitionId('night-of-the-zealot'),
         difficulty: 'hard',
         investigators: [roland.code, daisy.code],
         chaosBag: ['0', 'skull'],
-        scenarioIds: ['the-gathering', 'the-midnight-masks'],
+        scenarioIds: [scenarioId('the-gathering'), scenarioId('the-midnight-masks')],
       }),
     );
 
@@ -285,7 +285,9 @@ describe('AdvanceScenario', () => {
   const advance: CampaignCommand = { type: 'AdvanceScenario' };
 
   it('moves through the scenarios until the campaign is complete, then rejects', () => {
-    const start = { scenarioIds: ['the-gathering', 'the-midnight-masks', 'the-devourer-below'] };
+    const start = {
+      scenarioIds: ['the-gathering', 'the-midnight-masks', 'the-devourer-below'].map(scenarioId),
+    };
     const positions = [startedCampaign(start)];
     for (let i = 0; i < 3; i++)
       positions.push(executeCampaign(campaignContext, positions[i]!, advance).log);

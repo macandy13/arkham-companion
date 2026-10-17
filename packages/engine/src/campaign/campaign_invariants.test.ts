@@ -1,3 +1,4 @@
+import { scenarioId } from '../ids';
 import { describe, expect, it } from 'vitest';
 import {
   agnesMember,
@@ -13,7 +14,7 @@ import { emptyCampaignLog, type CampaignInvestigator, type CampaignLog } from '.
 describe('checkCampaignInvariants', () => {
   const started = makeCampaignLog({
     investigators: [rolandMember],
-    scenarioIds: ['the-gathering', 'the-midnight-masks'],
+    scenarioIds: [scenarioId('the-gathering'), scenarioId('the-midnight-masks')],
   });
   const withRoland = (changes: Partial<CampaignInvestigator>): CampaignLog => ({
     ...started,

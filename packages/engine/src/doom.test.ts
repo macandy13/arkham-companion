@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   cardCode,
+  scenarioId,
   checkInvariants,
   decisionId,
   doomInPlay,
@@ -53,7 +54,7 @@ function startedWith(investigators: Investigator[]): GameState {
   return run(testContext, [
     {
       type: 'StartScenario',
-      scenarioId: 'test',
+      scenarioId: scenarioId('test'),
       difficulty: 'standard',
       seed: 1,
       investigators,
@@ -819,7 +820,7 @@ describe('cards without a threshold', () => {
     state = run(ctx, [
       {
         type: 'StartScenario',
-        scenarioId: 'test',
+        scenarioId: scenarioId('test'),
         difficulty: 'standard',
         seed: 1,
         investigators: [makeInvestigator({ id: alice, clues: 3 })],

@@ -1,3 +1,4 @@
+import { scenarioId } from '../ids';
 import { describe, expect, it } from 'vitest';
 import { daisyMember, makeCampaignLog, rolandMember, wendyMember } from '../../test/utils';
 import {
@@ -84,7 +85,9 @@ describe('campaign log queries', () => {
   });
 
   it('the current scenario is the one at the position, none once complete', () => {
-    const log = makeCampaignLog({ scenarioIds: ['the-gathering', 'the-midnight-masks'] });
+    const log = makeCampaignLog({
+      scenarioIds: [scenarioId('the-gathering'), scenarioId('the-midnight-masks')],
+    });
     expect(currentScenarioId(log)).toBe('the-gathering');
     expect(currentScenarioId({ ...log, position: 2 })).toBeUndefined();
   });

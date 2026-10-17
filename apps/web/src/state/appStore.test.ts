@@ -2,6 +2,7 @@ import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
 import {
   cardCode,
+  scenarioId,
   cardDbWith,
   instanceId,
   investigatorCode,
@@ -18,7 +19,7 @@ import { createAppStore } from './appStore';
 
 const started: Event = {
   type: 'ScenarioStarted',
-  scenarioId: 'test',
+  scenarioId: scenarioId('test'),
   difficulty: 'standard',
   seed: 7,
   investigators: [],

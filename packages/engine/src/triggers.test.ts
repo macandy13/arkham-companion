@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   MAX_TRIGGERED_COMMANDS,
   cardCode,
+  scenarioId,
   checkInvariants,
   execute,
   instanceId,
@@ -37,7 +38,7 @@ function startedState(): GameState {
   return run(testContext, [
     {
       type: 'StartScenario',
-      scenarioId: 'triggers',
+      scenarioId: scenarioId('triggers'),
       difficulty: 'standard',
       seed: 1,
       investigators: [makeInvestigator({ id: 'alice', locationId: hall, clues: 2 })],
