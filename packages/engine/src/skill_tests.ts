@@ -7,6 +7,7 @@ import { enemyOf, isInPlay, locationOf } from './handle_enemy';
 import { activeInvestigator } from './handle_investigator';
 import { decisionId, type InstanceId } from './ids';
 import { hasKeyword } from './keywords';
+import { cardsInZone, requireCard } from './lookup';
 import { CommandRejected } from './rejection';
 import { withSuggestion } from './skill_modifiers';
 import type { CardInstance, GameState, Investigator, SkillTest } from './state';
@@ -186,6 +187,39 @@ export function revelationTestDecision(
     subject: cardId,
     test,
     outcomes: { onPass: afterwards, onFail: afterwards },
+  });
+}
+
+/**
+ * The end-of-turn tests of the cards in the investigator's threat area that
+ * have one (`CardStats.turnEndTest`): one `skillTestResult` decision
+ * (`turnEnd:<card>`) each, for that investigator. A pass discards the card
+ * onto the top of the encounter discard; a fail leaves it in play for the
+ * next turn.
+ */
+export function turnEndTestDecisions(
+  ctx: EngineContext,
+  state: GameState,
+  investigator: Investigator,
+): DecisionRequested[] {
+  const threatArea = { kind: 'threatArea', investigatorId: investigator.id } as const;
+  return cardsInZone(state, threatArea).flatMap((cardId) => {
+    const test = cardStats(ctx.cards, requireCard(state.cards, cardId).code).turnEndTest;
+    if (!test) return [];
+    const discard: Command = {
+      type: 'MoveCard',
+      cardId,
+      to: { kind: 'encounterDiscard' },
+      index: 0,
+    };
+    return skillTest(ctx, state, {
+      investigator,
+      id: `turnEnd:${cardId}`,
+      prompt: 'decision.turnEndTest',
+      subject: cardId,
+      test,
+      outcomes: { onPass: [discard], onFail: [] },
+    });
   });
 }
 

@@ -371,7 +371,7 @@ export interface ActionsReset {
   actions: number;
 }
 
-/** The investigator has taken their turn this round (`GameMeta.turnsTaken`). Produced by `EndTurn`. */
+/** The investigator has taken their turn this round (`GameMeta.turnsTaken`). Produced by `EndTurn`; fires `onTurnEnd`. */
 export interface TurnEnded {
   type: 'TurnEnded';
   investigatorId: InvestigatorId;

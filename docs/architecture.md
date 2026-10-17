@@ -188,12 +188,15 @@ interface ScenarioHooks {
   onAgendaAdvance: Readonly<Record<string, TriggerHook<AgendaAdvanced>>>;  // reverse side, by agenda code
   onActAdvance: Readonly<Record<string, TriggerHook<ActAdvanced>>>;        // reverse side, by act code
   onRoundEnd: TriggerHook<RoundEnded>;
+  onTurnEnd: TriggerHook<TurnEnded>;                                   // an investigator's turn ends (EndTurn)
   onCardEnters: TriggerHook<CardMoved>;                                // a card enters play from outside play
   afterEnemyDefeated: TriggerHook<EnemyDefeated>;                      // e.g. "if the Ghoul Priest is defeated, advance"
 }
 interface CardEffect { onReveal?: TriggerHook<CardFlipped>; }
 type EffectsRegistry = Readonly<Record<string, CardEffect>>;           // by card code
 ```
+
+Forced effects an encounter card repeats on a fixed timing are card data rather than code, like a revelation test: `CardStats.turnEndTest` makes `EndTurn` raise the test of each card in the investigator's threat area that has one (Frozen in Fear: a pass discards it), and `CardStats.discardAtRoundEnd` makes upkeep step 4.6 discard the card wherever it is in play (Dissonant Voices).
 
 **Extension points**
 
@@ -233,7 +236,7 @@ The phase assistant runs the parts of a round the app can do by itself. `GameMet
 
 - mythos places doom, checks the doom threshold and draws one encounter card per investigator;
 - enemy moves hunters ([`hunters.ts`](../packages/engine/src/hunters.ts)) and then resolves the attacks of engaged enemies ([`enemies.ts`](../packages/engine/src/enemies.ts));
-- upkeep resets actions, readies enemies, gives each investigator a resource and ends the round.
+- upkeep resets actions, readies enemies, gives each investigator a resource and ends the round, discarding the cards that last until the end of the round.
 
 Each step removes itself first (`PhaseStepsChanged`) and then runs its commands through `handle`. The loop stops as soon as a decision is pending, so the next `NextPhase` after the answer resumes with the following step. Steps as data make the assistant resumable after any answer, and let the UI show what is left in a phase. Turns in the investigation phase ([`turns.ts`](../packages/engine/src/turns.ts)) only record who is acting and how many actions they have left. The first round starts in the investigation phase.
 
