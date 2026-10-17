@@ -242,3 +242,34 @@ Ref: review #45 (`elimination.ts`). A `refactor:` PR with no behaviour change.
 - [x] `discardEncounterCard(state, cardId)` (attachments first, tokens cleared) moved next to the cards
 
 Done: the card builders live in `placement.ts`, where card moves already were (`zone.ts` only describes zones): `moveCardEvent(card, to, index?)` builds a `CardMoved` without validation, for moves the engine decides (hunters, maps, agenda/act advance, discards); the validating `cardMoved` used by commands now builds on it. `clearTokensEvents(card, tokens = TOKEN_KINDS)` removes every token of the given kinds; the agenda advance uses it with `['doom']`. `discardEncounterCard(state, cardId)` moved there from `elimination.ts` and was renamed from `discardEvents` (review #60: an "event" is also a player card type, and this only discards encounter cards). The clue builders live with the investigator in `investigators.ts`: `discoverCluesEvents` (used by `DiscoverClues`) and its reverse `cluesToLocationEvents` (used by elimination). No `CardMoved` is built by hand any more outside `placement.ts`. No behaviour change: event lists and their order are the same. Tests: `placement.test.ts` for the builders; the existing tests cover every caller.
+
+## M1.18 Timing gaps (S)
+
+**Why:** A few rule timings are still approximated (M1.5, M1.6, M1.9, M1.10 follow-ups): no end-of-turn hook (Frozen in Fear), simultaneous forced effects run in a fixed order, a doom `ManualAdjust` never re-checks the threshold, and `ManualAdjust` can move the current agenda/act out of its deck.
+
+**Benefit:** Fewer cases where the players must remember a forced effect the app silently skipped, and manual corrections can't put the game into an impossible state.
+
+Ref: M1.5, M1.6, M1.9, M1.10 follow-ups.
+
+Slices (one PR each):
+
+1. Engine: `onTurnEnd`, end-of-turn tests and end-of-round discards as card data.
+2. The Gathering: Frozen in Fear's and Dissonant Voices' card data, end-to-end test updated (after M1.17 slice 2, #78, which edits that test).
+3. Engine: `ManualAdjust` guards (doom threshold confirm, current agenda/act stay in their deck).
+4. ~~Engine: the lead investigator orders simultaneous forced effects.~~ Deferred (Andy, 2026-10-17): every event fires at most one hook, and no Core card's outcome depends on the order of end-of-turn or end-of-round effects. Build it when a scenario needs it.
+5. Engine: `decider` checked against the answering investigator.
+
+- [x] `onTurnEnd` hook fired by `EndTurn`; Frozen in Fear raises its willpower test there
+- [x] End-of-round discards (Dissonant Voices: "Forced – At the end of the round: Discard"), found by the M1.17 end-to-end test
+- [ ] ~~Simultaneous forced effects: the lead investigator picks the order (`chooseOption` decision) when more than one applies~~ (deferred, see slice 4)
+- [x] After a doom `ManualAdjust`, offer `CheckDoomThreshold` (a `confirm` decision), never advance silently
+- [x] `ManualAdjust` cannot move the current agenda or act out of its deck (rejection)
+- [x] `decider` is checked against who answers a decision, if the command carries the answering investigator
+
+Done (slice 1, #79): `EndTurn` raises the `turnEndTest` of each card in the investigator's threat area (a pass discards it), `TurnEnded` fires `ScenarioHooks.onTurnEnd`, and upkeep step 4.6 discards every in-play card with `discardAtRoundEnd`. The Gathering's card data and the end-to-end test follow in slice 2.
+
+Done (manual-adjust slice): added doom in a `ManualAdjust` that reaches the threshold raises the usual `advanceAgenda` confirm instead of a separate "check the threshold?" question, since that check would only ask the same thing again. Moving the current agenda or act is rejected (`currentStageCard`); later cards of either deck can still be moved.
+
+Done (decider slice): `ResolveDecision.answeredBy` is optional, since the app runs on one shared device for now. When it is set, the answer is refused unless that investigator is the named one, the lead, or, for a group decision, any investigator still in the scenario (`notTheDecider`).
+
+Done (slice 2): Frozen in Fear has `turnEndTest` (willpower 3) and Dissonant Voices `discardAtRoundEnd` in The Gathering's card data. The end-to-end test answers Wendy's end-of-turn test in rounds 5 to 7 (she fails each time, so the card stays until she resigns), and Dissonant Voices leaves her at the end of round 7 and Roland at the end of round 10. The earlier discards change the shuffle of Rise of the Ghouls, so rounds 9 to 11 draw other cards (Obscuring Fog, Dissonant Voices, Rotting Remains, Crypt Chill); the story to resolution 1 is unchanged.

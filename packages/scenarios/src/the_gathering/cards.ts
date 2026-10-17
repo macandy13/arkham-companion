@@ -173,6 +173,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     traits: ['Terror'],
     quantity: 2,
     entersThreatArea: true,
+    turnEndTest: { skill: 'willpower', difficulty: 3 },
   }),
   treachery({
     code: '01165',
@@ -181,6 +182,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     traits: ['Terror'],
     quantity: 2,
     entersThreatArea: true,
+    discardAtRoundEnd: true,
   }),
   treachery({
     code: '01166',
@@ -305,11 +307,12 @@ interface TreacheryOptions {
   quantity: number;
   /** Set for a treachery that stays in the drawer's threat area. */
   entersThreatArea?: boolean;
-  /**
-   * The skill test of the card's revelation, if it has one. Frozen in Fear's
-   * willpower test is not one: it comes at the end of each turn, not when drawn.
-   */
+  /** The skill test of the card's revelation, if it has one. */
   revelationTest?: SkillTest;
+  /** The test it forces at the end of its holder's turn (Frozen in Fear). */
+  turnEndTest?: SkillTest;
+  /** Set for a treachery discarded at the end of the round (Dissonant Voices). */
+  discardAtRoundEnd?: boolean;
 }
 
 function treachery({
@@ -320,6 +323,8 @@ function treachery({
   quantity,
   entersThreatArea,
   revelationTest,
+  turnEndTest,
+  discardAtRoundEnd,
 }: TreacheryOptions): CardStats {
   return {
     code: cardCode(code),
@@ -330,6 +335,8 @@ function treachery({
     quantity,
     ...(entersThreatArea ? { entersThreatArea } : {}),
     ...(revelationTest ? { revelationTest } : {}),
+    ...(turnEndTest ? { turnEndTest } : {}),
+    ...(discardAtRoundEnd ? { discardAtRoundEnd } : {}),
   };
 }
 
