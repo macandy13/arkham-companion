@@ -3,7 +3,7 @@ import type { EngineContext } from './cards';
 import type { InstanceId, InvestigatorId } from './ids';
 import { findInvestigator, requireInvestigator } from './investigators';
 import { CommandRejected } from './rejection';
-import { referenceSide, type SymbolToken } from './scenario';
+import { pickReferenceSide, type SymbolToken } from './scenario';
 import type {
   ChaosToken,
   Decision,
@@ -247,7 +247,7 @@ function tokenChange(
   if (fixed !== undefined)
     return { target: 'skill', source: { kind: 'chaosToken', token }, change: fixed };
   if (!isSymbolToken(token)) return undefined;
-  const effect = ctx.reference?.[referenceSide(state.meta.difficulty)][token];
+  const effect = ctx.reference?.[pickReferenceSide(state.meta.difficulty)][token];
   const value = ctx.modifiers?.tokenValues?.[token];
   const amount = effect?.modifier ?? value?.(ctx, state, test);
   if (amount === undefined) return undefined;

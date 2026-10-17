@@ -9,7 +9,7 @@ import type {
   InvestigatorSeat,
   ScenarioDefinition,
 } from '@arkham/engine';
-import { compileSetup, emptyState, execute } from '@arkham/engine';
+import { emptyState, execute, scenario } from '@arkham/engine';
 import { parseGameExport, serialiseGameExport } from '../storage/gameExport';
 
 /** Everything the new game wizard has decided; input to `AppState.startScenario`. */
@@ -75,7 +75,7 @@ export function createAppStore(gameStore: GameStore): StoreApi<AppState> {
       return gameId;
     },
     async startScenario({ title, ctx, definition, difficulty, seed, investigators }) {
-      const command = compileSetup(ctx, definition, { difficulty, seed, investigators });
+      const command = scenario.compileSetup(ctx, definition, { difficulty, seed, investigators });
       const { events } = execute(ctx, emptyState(), command);
       const gameId = await gameStore.createGame({ title });
       await gameStore.appendEvents(gameId, events);

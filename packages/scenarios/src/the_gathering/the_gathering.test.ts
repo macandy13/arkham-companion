@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   cardDbWith,
   checkInvariants,
-  compileSetup,
+  scenario,
   instanceId,
   investigatorId,
   mapId,
@@ -207,7 +207,7 @@ describe('The Gathering house (after act 1)', () => {
   it('connects the Hallway to the Attic, the Cellar and the Parlor', () => {
     const def = makeDefinition({ setup: [theGatheringHouse] });
 
-    const command = compileSetup(ctx, def, makeSetupOptions());
+    const command = scenario.compileSetup(ctx, def, makeSetupOptions());
 
     expect(command.maps?.[mapId('house')]?.connections).toEqual([
       { from: '01112#1', to: '01113#1', oneWay: false },

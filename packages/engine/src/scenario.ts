@@ -40,7 +40,7 @@ export type SymbolToken = Extract<ChaosToken, 'skull' | 'cultist' | 'tablet' | '
 
 /**
  * Side of the scenario reference card: one side covers Easy and Standard, the
- * other Hard and Expert. `referenceSide` picks it for a difficulty.
+ * other Hard and Expert. `pickReferenceSide` picks it for a difficulty.
  */
 export type ReferenceSide = 'easyStandard' | 'hardExpert';
 
@@ -69,6 +69,6 @@ export interface SymbolTokenEffect {
 }
 
 /** The reference card side that applies at `difficulty`. */
-export function referenceSide(difficulty: Difficulty): ReferenceSide {
+export function pickReferenceSide(difficulty: Difficulty): ReferenceSide {
   return difficulty === 'easy' || difficulty === 'standard' ? 'easyStandard' : 'hardExpert';
 }
