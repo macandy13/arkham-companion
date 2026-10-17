@@ -9,3 +9,4 @@ export * from './board';
 export * from './cards';
 export * from './investigators';
 export * from './scenario';
+export * from './campaign';
