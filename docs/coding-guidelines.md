@@ -12,7 +12,7 @@ How code in this repo should look, so every task lands in the same style.
 - **Pure functions by default.** Compute and return new values instead of mutating arguments or touching globals. Push side effects (storage, network, DOM, time) to the edges and keep them thin, so the logic in between is trivially testable.
 - **Immutable data.** Use `readonly` in types and spread/`map`/`filter` over in-place mutation.
 - **Early returns over nested `if`/`else`.** Handle edge cases and errors first, then the main path.
-- **Make illegal states unrepresentable.** Discriminated unions and branded IDs over loose strings and optional flags.
+- **Strong types wherever possible.** A domain value gets its own type, never a bare `string` or `number`: branded types (`Brand` in `ids.ts`) for every kind of identifier, card codes included, so an investigator's card code can't be passed where an `InvestigatorId` is expected; literal unions over `string` for closed sets (`'physical' | 'mental'`); discriminated unions over optional flags, so illegal states are unrepresentable. Plain `string`/`number` is for free text and real quantities only.
 - **Options objects for unclear arguments.** A function with more than one non-obvious parameter (several numbers, booleans or strings in a row) takes an options object, so call sites read `location({ code, shroud: 2, cluesPerInvestigator: 1 })` instead of `location(code, 2, 1)`.
 - **Never swallow a caught error silently.** A `catch` either rethrows or logs a `console.warn` with context; a fallback is fine, a silent one is not. The error is always bound (`catch (error)`) so it can be passed on. The engine has no console and turns errors into rejections instead. ESLint rejects empty `catch` blocks (a comment alone does not count).
 
