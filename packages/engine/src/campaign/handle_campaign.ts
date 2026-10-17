@@ -10,7 +10,14 @@ import { MAX_TEAM_SIZE, storyValueIsValid } from './campaign_invariants';
 import { isCampaignStarted, type CampaignLog } from './campaign_log';
 import { replayCampaign } from './campaign_reducer';
 import { CampaignCommandRejected } from './campaign_rejection';
-import { newCampaignInvestigator } from './handle_campaign_investigator';
+import {
+  handleAddTrauma,
+  handleAwardXp,
+  handleMarkFate,
+  handleReplaceInvestigator,
+  handleSpendXp,
+  newCampaignInvestigator,
+} from './handle_campaign_investigator';
 
 /**
  * Validates a campaign command against the log and returns the resulting
@@ -29,6 +36,18 @@ export function handleCampaign(log: CampaignLog, command: CampaignCommand): Camp
       return [{ type: 'ChaosTokenAdded', token: command.token }];
     case 'RemoveChaosToken':
       return handleRemoveChaosToken(log, command);
+    case 'AwardXp':
+      return handleAwardXp(log, command);
+    case 'SpendXp':
+      return handleSpendXp(log, command);
+    case 'AddTrauma':
+      return handleAddTrauma(log, command);
+    case 'MarkKilled':
+      return handleMarkFate(log, command.code, 'killed');
+    case 'MarkInsane':
+      return handleMarkFate(log, command.code, 'insane');
+    case 'ReplaceInvestigator':
+      return handleReplaceInvestigator(log, command);
     case 'AdvanceScenario':
       return handleAdvanceScenario(log);
   }

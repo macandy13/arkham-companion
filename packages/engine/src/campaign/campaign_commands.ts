@@ -1,5 +1,5 @@
 import type { ChaosToken, Difficulty } from '../state';
-import type { StoryValue } from './campaign_log';
+import type { StoryValue, TraumaKind } from './campaign_log';
 
 /**
  * Intents for the campaign aggregate, kept apart from the game's `Command`:
@@ -7,7 +7,17 @@ import type { StoryValue } from './campaign_log';
  * validates them against the `CampaignLog` and produces `CampaignEvent`s.
  */
 export type CampaignCommand =
-  StartCampaign | RecordStory | AddChaosToken | RemoveChaosToken | AdvanceScenario;
+  | StartCampaign
+  | RecordStory
+  | AddChaosToken
+  | RemoveChaosToken
+  | AwardXp
+  | SpendXp
+  | AddTrauma
+  | MarkKilled
+  | MarkInsane
+  | ReplaceInvestigator
+  | AdvanceScenario;
 
 /** The `type` of every campaign command. */
 export type CampaignCommandType = CampaignCommand['type'];
@@ -64,6 +74,61 @@ export interface AddChaosToken {
 export interface RemoveChaosToken {
   readonly type: 'RemoveChaosToken';
   readonly token: ChaosToken;
+}
+
+/** Gives a living team member XP (positive integer). Produces `XpChanged` on `earned`. */
+export interface AwardXp {
+  readonly type: 'AwardXp';
+  readonly code: string;
+  readonly amount: number;
+}
+
+/**
+ * Records XP the players spent on deck upgrades (positive integer, at most
+ * the XP still available). The upgrades themselves stay with the players
+ * (architecture §8). Produces `XpChanged` on `spent`.
+ */
+export interface SpendXp {
+  readonly type: 'SpendXp';
+  readonly code: string;
+  readonly amount: number;
+}
+
+/**
+ * Gives a living team member trauma (positive integer). Produces
+ * `TraumaChanged`, then `InvestigatorFateChanged` when the trauma reaches
+ * their health (killed) or sanity (insane), per the Rules Reference.
+ */
+export interface AddTrauma {
+  readonly type: 'AddTrauma';
+  readonly code: string;
+  readonly kind: TraumaKind;
+  readonly amount: number;
+}
+
+/** A living team member is killed (a resolution or story effect). Produces `InvestigatorFateChanged`. */
+export interface MarkKilled {
+  readonly type: 'MarkKilled';
+  readonly code: string;
+}
+
+/** A living team member is driven insane. Produces `InvestigatorFateChanged`. */
+export interface MarkInsane {
+  readonly type: 'MarkInsane';
+  readonly code: string;
+}
+
+/**
+ * A player whose investigator was killed or driven insane picks a new one
+ * (Rules Reference, "Campaign Play"). The new investigator takes the old
+ * one's seat and starts without trauma or XP; the old one moves to
+ * `formerInvestigators`. Produces `InvestigatorReplaced`.
+ */
+export interface ReplaceInvestigator {
+  readonly type: 'ReplaceInvestigator';
+  /** Code of the killed or insane team member. */
+  readonly code: string;
+  readonly by: JoiningInvestigator;
 }
 
 /**

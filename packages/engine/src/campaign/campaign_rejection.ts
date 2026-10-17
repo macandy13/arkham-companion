@@ -1,5 +1,5 @@
 import type { ChaosToken } from '../state';
-import type { StoryKind } from './campaign_log';
+import type { InvestigatorFate, StoryKind } from './campaign_log';
 
 /**
  * Structured reason why `handleCampaign` refused a campaign command; the
@@ -20,6 +20,16 @@ export type CampaignRejection =
   | { code: 'invalidInvestigatorStats'; investigatorCode: string; health: number; sanity: number }
   /** `StartCampaign` without scenarios. */
   | { code: 'noScenarios' }
+  /** No current team member has this code. */
+  | { code: 'unknownInvestigator'; investigatorCode: string }
+  /** The investigator is killed or insane and can no longer take part. */
+  | { code: 'investigatorEliminated'; investigatorCode: string; fate: InvestigatorFate }
+  /** `ReplaceInvestigator` for an investigator who is still alive. */
+  | { code: 'investigatorNotEliminated'; investigatorCode: string }
+  /** XP or trauma amount that is not a positive integer. */
+  | { code: 'invalidAmount'; amount: number }
+  /** `SpendXp` for more XP than is available. */
+  | { code: 'notEnoughXp'; investigatorCode: string; available: number; requested: number }
   /** A story key that is empty or only whitespace. */
   | { code: 'invalidStoryKey'; key: string }
   /** A count that is not a non-negative integer, or a list with an empty or repeated name. */
@@ -60,6 +70,16 @@ function describeCampaignRejection(r: CampaignRejection): string {
       return `health and sanity of ${r.investigatorCode} must be positive integers, got ${r.health} and ${r.sanity}`;
     case 'noScenarios':
       return 'a campaign needs at least one scenario';
+    case 'unknownInvestigator':
+      return `no investigator ${r.investigatorCode} on the team`;
+    case 'investigatorEliminated':
+      return `investigator ${r.investigatorCode} is ${r.fate}`;
+    case 'investigatorNotEliminated':
+      return `investigator ${r.investigatorCode} is neither killed nor insane`;
+    case 'invalidAmount':
+      return `amount must be a positive integer, got ${r.amount}`;
+    case 'notEnoughXp':
+      return `${r.investigatorCode} has ${r.available} XP, ${r.requested} requested`;
     case 'invalidStoryKey':
       return `story key must not be blank, got "${r.key}"`;
     case 'invalidStoryValue':
