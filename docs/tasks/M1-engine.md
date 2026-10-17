@@ -121,6 +121,7 @@ Ref: M1.6 hooks; M1.12; scenario guide of The Gathering (hand-entered, no card t
 - [ ] A command to shuffle the encounter discard into the deck (M1.7 follow-up)
 - [ ] Commands after `ScenarioEnded` are rejected, except undo and `ManualAdjust` (M1.5, M1.10 follow-ups)
 - [ ] End-to-end test continued to a resolution
+- [ ] End-to-end test: one failed fight against the Ghoul Priest raises and resolves his retaliate attack (M1.16 follow-up)
 
 ## M1.18 Timing gaps (S)
 

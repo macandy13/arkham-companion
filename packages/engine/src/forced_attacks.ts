@@ -1,5 +1,5 @@
 import { cardStats, type CardStats, type EngineContext } from './cards';
-import type { Command, DealEnemyAttack, RequestDecision } from './commands';
+import type { DealEnemyAttack, RequestDecision } from './commands';
 import { decisionId, type InstanceId, type InvestigatorId } from './ids';
 import { hasKeyword } from './keywords';
 import type { CardInstance, Decision, GameState } from './state';
@@ -9,8 +9,8 @@ import type { CardInstance, Decision, GameState } from './state';
  * `confirm` decision (`<kind>:<enemy>`) for the attacked investigator:
  * - `attackOfOpportunity`: an action taken while engaged with the ready enemy
  *   (`attackOfOpportunityDecisions`).
- * - `retaliate`: a failed attack against the ready retaliate enemy (`retaliateCommands`).
- * - `alert`: a failed evade against the alert enemy (`alertCommands`).
+ * - `retaliate`: a failed attack against the ready retaliate enemy (`keywordAttackCommands`).
+ * - `alert`: a failed evade against the ready alert enemy (`keywordAttackCommands`).
  *
  * None of them exhausts the enemy (`DealEnemyAttack`).
  */
@@ -65,52 +65,32 @@ export function forcedAttackDecision(
   };
 }
 
+/** The forced attacks a keyword triggers after a failed test; the kind is also the keyword's name. */
+export type KeywordAttackKind = Extract<ForcedAttackKind, 'retaliate' | 'alert'>;
+
 /**
- * Rules Reference, "Retaliate": after an investigator fails an attack against
- * a ready retaliate enemy, and after the test's other results, the enemy
- * attacks that investigator, engaged with them or not. Belongs at the end of
- * a fight's fail commands. Readiness is read when the fight starts: nothing
- * but a `ManualAdjust` can change it while the test is pending.
+ * Rules Reference, "Retaliate" and "Alert": after an investigator fails a
+ * fight (retaliate) or an evade (alert) against a ready enemy with that
+ * keyword, and after the test's other results, the enemy attacks that
+ * investigator, engaged with them or not. The 2026 Core rulebook requires a
+ * ready enemy for both; the older Rules Reference text leaves it out for
+ * alert. Belongs at the end of the test's fail commands. Readiness is read
+ * when the test starts: nothing but a `ManualAdjust` can change it while the
+ * test is pending.
  */
-export function retaliateCommands(
+export function keywordAttackCommands(
   ctx: EngineContext,
   state: GameState,
+  kind: KeywordAttackKind,
   enemy: CardInstance,
   stats: CardStats,
   investigatorId: InvestigatorId,
 ): RequestDecision[] {
-  if (!hasKeyword(stats, 'retaliate') || enemy.exhausted) return [];
-  return [attackRequest(ctx, state, 'retaliate', enemy.id, investigatorId)];
-}
-
-/**
- * Rules Reference, "Alert": after an investigator fails to evade a ready
- * alert enemy (the 2026 Core rulebook names "ready"; the older Rules
- * Reference text does not), and after the test's other results, the enemy
- * attacks that investigator, engaged with them or not. Belongs at the end of
- * an evade's fail commands; readiness is read when the evade starts, as for
- * retaliate.
- */
-export function alertCommands(
-  ctx: EngineContext,
-  state: GameState,
-  enemy: CardInstance,
-  stats: CardStats,
-  investigatorId: InvestigatorId,
-): RequestDecision[] {
-  if (!hasKeyword(stats, 'alert') || enemy.exhausted) return [];
-  return [attackRequest(ctx, state, 'alert', enemy.id, investigatorId)];
-}
-
-function attackRequest(
-  ctx: EngineContext,
-  state: GameState,
-  kind: ForcedAttackKind,
-  enemyId: InstanceId,
-  investigatorId: InvestigatorId,
-): RequestDecision & Command {
-  return {
-    type: 'RequestDecision',
-    decision: forcedAttackDecision(ctx, state, kind, enemyId, investigatorId),
-  };
+  if (!hasKeyword(stats, kind) || enemy.exhausted) return [];
+  return [
+    {
+      type: 'RequestDecision',
+      decision: forcedAttackDecision(ctx, state, kind, enemy.id, investigatorId),
+    },
+  ];
 }
