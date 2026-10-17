@@ -40,6 +40,10 @@ describe('checkCampaignInvariants', () => {
         formerInvestigators: [{ ...rolandMember, fate: 'killed' }],
       },
     },
+    {
+      name: 'Agnes, alive, whose player left the campaign',
+      log: { ...started, formerInvestigators: [agnesMember] },
+    },
   ])('finds no violation in $name', ({ log }) => {
     expect(checkCampaignInvariants(log)).toEqual([]);
   });
@@ -92,11 +96,6 @@ describe('checkCampaignInvariants', () => {
       name: 'a living investigator with mental trauma at his sanity',
       log: withRoland({ mentalTrauma: rolandMember.sanity }),
       violation: `investigator ${rolandMember.code} is alive with trauma at the limit`,
-    },
-    {
-      name: 'a former investigator who is alive',
-      log: { ...started, formerInvestigators: [agnesMember] },
-      violation: `former investigator ${agnesMember.code} is alive`,
     },
     {
       name: 'a malformed story record',
