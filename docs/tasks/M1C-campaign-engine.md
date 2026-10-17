@@ -48,7 +48,7 @@ Follow-ups from Andy's review of #63/#64, for one refactoring PR after this stac
 - [x] Encounter set codes, scenario IDs and campaign definition IDs are branded (`EncounterSetCode`, `ScenarioId`, `CampaignDefinitionId`)
 - [x] The campaign ID and the game ID are branded (`CampaignId`, `GameId`); the IndexedDB store creates game IDs through one `newGameId()`
 - [x] Campaign functions are imported through the `campaign` namespace and named verb + noun (`campaign.handleCommand`, `campaign.compileStart`); the campaign types stay flat
-- [ ] The same for the scenario functions (`scenario.compileSetup`, …)
+- [x] The scenario setup functions are imported through the `scenario` namespace (`scenario.compileSetup`, `scenario.compileMapStep`, `scenario.pickReferenceSide`); the game functions (`execute`, `replay`, `handle`) stay flat (Andy's choice)
 
 ## M1C.2 Change notices (O)
 

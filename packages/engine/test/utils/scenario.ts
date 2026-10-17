@@ -1,7 +1,7 @@
 import {
   scenarioId,
   CommandRejected,
-  compileSetup,
+  scenario,
   emptyState,
   execute,
   zoneKey,
@@ -56,7 +56,7 @@ export function startScenario(
     seed,
     investigators: investigatorSeats(playerCount),
   });
-  return execute(ctx, emptyState(), compileSetup(ctx, def, options)).state;
+  return execute(ctx, emptyState(), scenario.compileSetup(ctx, def, options)).state;
 }
 
 /** Executes commands from `state`, returning the final state and all events. */

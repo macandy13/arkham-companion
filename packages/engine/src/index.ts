@@ -6,7 +6,7 @@ export * from './rng';
 export * from './state';
 export * from './map';
 export * from './spawn';
-export * from './scenario';
+export type * from './scenario';
 export * from './cards';
 export * from './investigator_cards';
 export * from './keywords';
@@ -18,7 +18,10 @@ export { locationsNamed, neighbours, sameEdge, shortestPaths } from './board';
 export { cardsNamed } from './lookup';
 export { CommandRejected, type Rejection, type RejectionCode } from './rejection';
 export { execute, type ExecuteResult } from './execute';
-export * from './setup';
+export type * from './setup';
+// Scenario functions are reached as `scenario.compileSetup` and so on, like
+// the `campaign` namespace below.
+export * as scenario from './scenario_api';
 export * from './investigators';
 export { enemyAttackList, type EnemyAttack } from './enemies';
 export { describeDecision, optionName, optionNamed } from './describe_decision';

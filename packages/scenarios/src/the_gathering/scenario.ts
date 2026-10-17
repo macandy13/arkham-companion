@@ -1,7 +1,7 @@
 import {
   CommandRejected,
   cardStats,
-  compileMapStep,
+  scenario,
   decisionId,
   enemiesAt,
   mapId,
@@ -94,7 +94,7 @@ function trappedReverseSide(ctx: EngineContext, state: GameState): Command[] {
     );
   });
   return [
-    ...compileMapStep(state, theGatheringHouse),
+    ...scenario.compileMapStep(state, theGatheringHouse),
     ...enemies.map((enemy): Command => ({
       type: 'MoveCard',
       cardId: enemy.id,

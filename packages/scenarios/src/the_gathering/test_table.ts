@@ -4,7 +4,7 @@ import {
   checkInvariants,
   decisionId,
   describeDecision,
-  compileSetup,
+  scenario,
   emptyState,
   execute,
   formatBoard,
@@ -130,9 +130,11 @@ export class TestTable {
   private constructor(readonly ctx: EngineContext) {}
 
   /** A table with `scenario` set up from scratch (its compiled setup is the first command). */
-  static setUp({ scenario, ctx, investigators, seed }: TableOptions): TestTable {
+  static setUp({ scenario: definition, ctx, investigators, seed }: TableOptions): TestTable {
     const table = new TestTable(ctx);
-    table.play(compileSetup(ctx, scenario, { difficulty: 'standard', seed, investigators }));
+    table.play(
+      scenario.compileSetup(ctx, definition, { difficulty: 'standard', seed, investigators }),
+    );
     return table;
   }
 
