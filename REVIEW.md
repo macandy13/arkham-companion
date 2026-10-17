@@ -1,6 +1,6 @@
 # Review guide
 
-For automated reviewers (Claude Code Review) and for Claude sessions reviewing their own diff before opening a PR. The owner reviews on a phone and spends that time on rules, readable tests and API design. This guide makes sure the mechanical points are caught before the owner looks. The rules themselves live in `CLAUDE.md` and `docs/coding-guidelines.md`; this file only says what to check and how hard.
+For the `pr-reviewer` subagent, which Claude sessions run on their branch before opening a PR, and for the on-demand CI review (`claude-review` label). The owner reviews on a phone and spends that time on rules, readable tests and API design. This guide makes sure the mechanical points are caught before the owner looks. The rules themselves live in `CLAUDE.md` and `docs/coding-guidelines.md`; this file only says what to check and how hard.
 
 ## Blocking: always flag
 
