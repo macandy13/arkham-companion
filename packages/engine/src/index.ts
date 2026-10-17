@@ -50,8 +50,6 @@ export * from './store';
 export { undoLastGroup } from './undo';
 // Campaign functions are reached as `campaign.handleCommand` and so on, so
 // their names don't repeat "campaign" (Andy on #64); the types stay flat.
-// Campaign functions are reached as `campaign.handleCommand` and so on, so
-// their names don't repeat "campaign" (Andy on #64); the types stay flat.
 export * as campaign from './campaign';
 export type * from './campaign/campaign_commands';
 export type * from './campaign/campaign_events';

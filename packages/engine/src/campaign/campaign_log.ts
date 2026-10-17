@@ -150,7 +150,7 @@ export function countTrauma(investigator: CampaignInvestigator, kind: TraumaKind
 }
 
 /** `investigator` with `delta` more trauma of `kind`. */
-export function addTrauma(
+export function changeTrauma(
   investigator: CampaignInvestigator,
   kind: TraumaKind,
   delta: number,

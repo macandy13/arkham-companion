@@ -3,7 +3,7 @@ import { withoutFirst, withoutKey } from '@arkham/util';
 import type { CampaignEvent, CampaignStarted, InvestigatorReplaced } from './campaign_events';
 import {
   createEmptyLog,
-  addTrauma,
+  changeTrauma,
   type CampaignInvestigator,
   type CampaignLog,
 } from './campaign_log';
@@ -29,7 +29,7 @@ export function applyEvent(log: CampaignLog, event: CampaignEvent): CampaignLog 
       );
     case 'TraumaChanged':
       return updateInvestigator(log, event.code, (investigator) =>
-        addTrauma(investigator, event.kind, event.delta),
+        changeTrauma(investigator, event.kind, event.delta),
       );
     case 'InvestigatorFateChanged':
       return updateInvestigator(log, event.code, (investigator) => ({

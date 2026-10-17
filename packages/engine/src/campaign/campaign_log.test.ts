@@ -9,7 +9,7 @@ import {
   isStarted,
   findTraumaFate,
   countTrauma,
-  addTrauma,
+  changeTrauma,
   type CampaignInvestigator,
 } from './campaign_log';
 
@@ -45,11 +45,11 @@ describe('campaign log queries', () => {
   it('reads and raises trauma of one kind without touching the other', () => {
     expect(countTrauma(woundedRoland, 'physical')).toBe(2);
     expect(countTrauma(woundedRoland, 'mental')).toBe(1);
-    expect(addTrauma(woundedRoland, 'physical', 3)).toMatchObject({
+    expect(changeTrauma(woundedRoland, 'physical', 3)).toMatchObject({
       physicalTrauma: 5,
       mentalTrauma: 1,
     });
-    expect(addTrauma(woundedRoland, 'mental', 3)).toMatchObject({
+    expect(changeTrauma(woundedRoland, 'mental', 3)).toMatchObject({
       physicalTrauma: 2,
       mentalTrauma: 4,
     });

@@ -8,7 +8,7 @@ import {
   countAvailableXp,
   findInvestigator,
   findTraumaFate,
-  addTrauma,
+  changeTrauma,
   type CampaignInvestigator,
   type CampaignLog,
   type InvestigatorFate,
@@ -48,7 +48,10 @@ export function handleAddTrauma(log: CampaignLog, command: AddTrauma): CampaignE
     kind: command.kind,
     delta: command.amount,
   };
-  const fate = findTraumaFate(addTrauma(investigator, command.kind, command.amount), command.kind);
+  const fate = findTraumaFate(
+    changeTrauma(investigator, command.kind, command.amount),
+    command.kind,
+  );
   return fate
     ? [traumaChanged, { type: 'InvestigatorFateChanged', code: command.code, fate }]
     : [traumaChanged];
