@@ -1,6 +1,7 @@
 import type { CampaignLog } from './campaign/campaign_log';
 import type { Command, EngageEnemy, Investigate, MoveInvestigator } from './commands';
 import type {
+  CardCode,
   DecisionId,
   InstanceId,
   InvestigatorCode,
@@ -25,7 +26,7 @@ export const TOKEN_KINDS: readonly TokenKind[] = ['doom', 'clue', 'damage', 'hor
 export interface CardInstance {
   id: InstanceId;
   /** ArkhamDB card code, e.g. '12106'. */
-  code: string;
+  code: CardCode;
   zone: Zone;
   /** Unrevealed/revealed or front/back. */
   faceUp: boolean;

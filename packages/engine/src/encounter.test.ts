@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  cardCode,
   checkInvariants,
   CommandRejected,
   execute,
@@ -68,7 +69,7 @@ function startedWith(
   context: EngineContext = ctx,
 ): GameState {
   const inZone = (cards: { code: string; id: InstanceId }[], zone: Zone): StartingCard[] =>
-    cards.map(({ code, id }) => ({ code, id, zone }));
+    cards.map(({ code, id }) => ({ code: cardCode(code), id, zone }));
   return startBoard(context, {
     maps: { main: { locations: { hall: 'hall_location' } } },
     investigators: [
@@ -608,7 +609,7 @@ describe('FromSetAside', () => {
 
     const after = stateAfter(ctx, state, {
       type: 'FromSetAside',
-      codes: ['foe', 'foe'],
+      codes: [cardCode('foe'), cardCode('foe')],
       to: { kind: 'victoryDisplay' },
     });
 
@@ -622,7 +623,7 @@ describe('FromSetAside', () => {
     expect(
       rejectionFrom(ctx, state, {
         type: 'FromSetAside',
-        codes: ['foe', 'foe'],
+        codes: [cardCode('foe'), cardCode('foe')],
         to: { kind: 'outOfGame' },
       }),
     ).toEqual({ code: 'cardNotInZone', zone: 'setAside', match: 'foe' });
@@ -638,7 +639,7 @@ describe('FromSetAside', () => {
 
     const after = stateAfter({ ...ctx, hooks }, state, {
       type: 'FromSetAside',
-      codes: ['foe'],
+      codes: [cardCode('foe')],
       to: { kind: 'atLocation', locationId: hall },
     });
 
@@ -662,7 +663,7 @@ describe('ShuffleInto', () => {
 
     const { state: after, events } = execute(ctx, state, {
       type: 'ShuffleInto',
-      codes: ['foe', 'relic'],
+      codes: [cardCode('foe'), cardCode('relic')],
       zone: encounterDeck,
     });
 
@@ -681,7 +682,11 @@ describe('ShuffleInto', () => {
     const state = startedWith({ deck: [card('foe', 'deck_foe')] }, { aliceAt: hall });
 
     expect(
-      rejectionFrom(ctx, state, { type: 'ShuffleInto', codes: ['foe'], zone: encounterDeck }).code,
+      rejectionFrom(ctx, state, {
+        type: 'ShuffleInto',
+        codes: [cardCode('foe')],
+        zone: encounterDeck,
+      }).code,
     ).toBe('cardNotInZone');
   });
 });
@@ -724,7 +729,7 @@ describe('ShuffleEncounterDiscard', () => {
 describe('encounter deck invariants', () => {
   const shuffleIn = (code: string): Command => ({
     type: 'ShuffleInto',
-    codes: [code],
+    codes: [cardCode(code)],
     zone: encounterDeck,
   });
 

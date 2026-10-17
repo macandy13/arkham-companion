@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  cardCode,
   emptyCampaignLog,
   compileMapStep,
   compileSetup,
@@ -28,7 +29,12 @@ const main = mapId('main');
 
 /** A map step for `main` with the given locations (unrevealed) and no connections. */
 function mainMap(...codes: string[]): AddMapStep {
-  return { kind: 'addMap', mapId: main, name: 'Main', locations: codes.map((code) => ({ code })) };
+  return {
+    kind: 'addMap',
+    mapId: main,
+    name: 'Main',
+    locations: codes.map((code) => ({ code: cardCode(code) })),
+  };
 }
 
 describe('compileSetup', () => {
@@ -54,7 +60,10 @@ describe('compileSetup', () => {
   });
 
   it('puts agendas and acts into their decks in order, side a up', () => {
-    const def = makeDefinition({ agendaDeck: ['ag1', 'ag2'], actDeck: ['act1'] });
+    const def = makeDefinition({
+      agendaDeck: [cardCode('ag1'), cardCode('ag2')],
+      actDeck: [cardCode('act1')],
+    });
 
     const command = compileSetup(contextWith(), def, makeSetupOptions());
 
@@ -66,7 +75,9 @@ describe('compileSetup', () => {
   });
 
   it('sets cards aside and numbers copies of the same code', () => {
-    const def = makeDefinition({ setup: [{ kind: 'setAside', codes: ['x', 'x', 'y'] }] });
+    const def = makeDefinition({
+      setup: [{ kind: 'setAside', codes: [cardCode('x'), cardCode('x'), cardCode('y')] }],
+    });
 
     const command = compileSetup(contextWith(), def, makeSetupOptions());
 
@@ -79,7 +90,7 @@ describe('compileSetup', () => {
 
   it('spawns an enemy at a location', () => {
     const def = makeDefinition({
-      setup: [mainMap('loc'), { kind: 'spawn', code: 'enemy', at: 'loc' }],
+      setup: [mainMap('loc'), { kind: 'spawn', code: cardCode('enemy'), at: cardCode('loc') }],
     });
 
     const command = compileSetup(contextWith(), def, makeSetupOptions());
@@ -149,7 +160,7 @@ describe('compileSetup', () => {
       makeCard({ code: 'start', typeCode: 'location', clues: perInvestigator(1) }),
     );
     const def = makeDefinition({
-      setup: [mainMap('start'), { kind: 'moveInvestigators', to: 'start' }],
+      setup: [mainMap('start'), { kind: 'moveInvestigators', to: cardCode('start') }],
     });
 
     const command = compileSetup(
@@ -171,9 +182,9 @@ describe('compileSetup', () => {
   it('places a fixed number of tokens and adds to tokens already there', () => {
     const def = makeDefinition({
       setup: [
-        { kind: 'setAside', codes: ['target'] },
-        { kind: 'placeTokens', target: 'target', token: 'doom', amount: 1 },
-        { kind: 'placeTokens', target: 'target', token: 'doom', amount: 2 },
+        { kind: 'setAside', codes: [cardCode('target')] },
+        { kind: 'placeTokens', target: cardCode('target'), token: 'doom', amount: 1 },
+        { kind: 'placeTokens', target: cardCode('target'), token: 'doom', amount: 2 },
       ],
     });
 
@@ -185,8 +196,13 @@ describe('compileSetup', () => {
   it('places tokens per investigator', () => {
     const def = makeDefinition({
       setup: [
-        { kind: 'setAside', codes: ['target'] },
-        { kind: 'placeTokens', target: 'target', token: 'clue', amount: perInvestigator(2) },
+        { kind: 'setAside', codes: [cardCode('target')] },
+        {
+          kind: 'placeTokens',
+          target: cardCode('target'),
+          token: 'clue',
+          amount: perInvestigator(2),
+        },
       ],
     });
 
@@ -200,7 +216,7 @@ describe('compileSetup', () => {
   });
 
   it('rejects a step that targets a card no earlier step created', () => {
-    const def = makeDefinition({ setup: [{ kind: 'moveInvestigators', to: 'missing' }] });
+    const def = makeDefinition({ setup: [{ kind: 'moveInvestigators', to: cardCode('missing') }] });
 
     const rejection = rejectionOf(() => compileSetup(contextWith(), def, makeSetupOptions()));
 
@@ -210,8 +226,8 @@ describe('compileSetup', () => {
   it('rejects a step that targets a code with several instances', () => {
     const def = makeDefinition({
       setup: [
-        { kind: 'setAside', codes: ['twin', 'twin'] },
-        { kind: 'placeTokens', target: 'twin', token: 'doom', amount: 1 },
+        { kind: 'setAside', codes: [cardCode('twin'), cardCode('twin')] },
+        { kind: 'placeTokens', target: cardCode('twin'), token: 'doom', amount: 1 },
       ],
     });
 
@@ -241,7 +257,12 @@ describe('compileSetup addMap', () => {
   it('puts its locations onto the map unrevealed unless face up', () => {
     const ctx = contextWith(makeCard({ code: 'b', typeCode: 'location' }));
     const def = makeDefinition({
-      setup: [{ ...mainMap(), locations: [{ code: 'a' }, { code: 'b', faceUp: true }] }],
+      setup: [
+        {
+          ...mainMap(),
+          locations: [{ code: cardCode('a') }, { code: cardCode('b'), faceUp: true }],
+        },
+      ],
     });
 
     const command = compileSetup(ctx, def, makeSetupOptions());
@@ -257,7 +278,7 @@ describe('compileSetup addMap', () => {
       makeCard({ code: 'loc', typeCode: 'location', clues: perInvestigator(2) }),
     );
     const def = makeDefinition({
-      setup: [{ ...mainMap(), locations: [{ code: 'loc', faceUp: true }] }],
+      setup: [{ ...mainMap(), locations: [{ code: cardCode('loc'), faceUp: true }] }],
     });
 
     const command = compileSetup(
@@ -274,7 +295,7 @@ describe('compileSetup addMap', () => {
       makeCard({ code: 'loc', typeCode: 'location', clues: perInvestigator(0) }),
     );
     const def = makeDefinition({
-      setup: [{ ...mainMap(), locations: [{ code: 'loc', faceUp: true }] }],
+      setup: [{ ...mainMap(), locations: [{ code: cardCode('loc'), faceUp: true }] }],
     });
 
     const command = compileSetup(ctx, def, makeSetupOptions());
@@ -288,8 +309,8 @@ describe('compileSetup addMap', () => {
         {
           ...mainMap('a', 'b'),
           connections: [
-            { from: 'a', to: 'b' },
-            { from: 'b', to: 'a', oneWay: true },
+            { from: cardCode('a'), to: cardCode('b') },
+            { from: cardCode('b'), to: cardCode('a'), oneWay: true },
           ],
         },
       ],
@@ -306,8 +327,8 @@ describe('compileSetup addMap', () => {
   it('resolves connection codes among its own locations only', () => {
     const def = makeDefinition({
       setup: [
-        { kind: 'setAside', codes: ['a'] },
-        { ...mainMap('a', 'b'), connections: [{ from: 'a', to: 'b' }] },
+        { kind: 'setAside', codes: [cardCode('a')] },
+        { ...mainMap('a', 'b'), connections: [{ from: cardCode('a'), to: cardCode('b') }] },
       ],
     });
 
@@ -319,8 +340,8 @@ describe('compileSetup addMap', () => {
   it('rejects a connection to a location that is not on the map', () => {
     const def = makeDefinition({
       setup: [
-        { kind: 'setAside', codes: ['b'] },
-        { ...mainMap('a'), connections: [{ from: 'a', to: 'b' }] },
+        { kind: 'setAside', codes: [cardCode('b')] },
+        { ...mainMap('a'), connections: [{ from: cardCode('a'), to: cardCode('b') }] },
       ],
     });
 
@@ -353,16 +374,18 @@ describe('compileSetup buildEncounterDeck', () => {
 
   it('leaves out copies that other steps put on the table, before or after the deck', () => {
     const codes = deckCodes([
-      { kind: 'setAside', codes: ['ghoul'] },
+      { kind: 'setAside', codes: [cardCode('ghoul')] },
       { kind: 'buildEncounterDeck', sets: ['set1'] },
-      { kind: 'setAside', codes: ['curse', 'curse'] },
+      { kind: 'setAside', codes: [cardCode('curse'), cardCode('curse')] },
     ]);
 
     expect(codes).toEqual(['ghoul', 'ghoul']);
   });
 
   it('leaves out every copy of an excluded code', () => {
-    const codes = deckCodes([{ kind: 'buildEncounterDeck', sets: ['set1'], exclude: ['ghoul'] }]);
+    const codes = deckCodes([
+      { kind: 'buildEncounterDeck', sets: ['set1'], exclude: [cardCode('ghoul')] },
+    ]);
 
     expect(codes).toEqual(['curse', 'curse']);
   });
@@ -412,7 +435,9 @@ describe('compileMapStep', () => {
 
   /** A started scenario with location `a` on main and one set-aside copy per entry of `setAside`. */
   function startedWith(setAside: string[]) {
-    const def = makeDefinition({ setup: [mainMap('a'), { kind: 'setAside', codes: setAside }] });
+    const def = makeDefinition({
+      setup: [mainMap('a'), { kind: 'setAside', codes: setAside.map(cardCode) }],
+    });
     return startScenario(ctx, def);
   }
 
@@ -423,8 +448,8 @@ describe('compileMapStep', () => {
 
   it('takes the locations from outside play and resolves the connections among them', () => {
     const step: AddMapStep = {
-      ...wingMap({ code: 'a' }, { code: 'b' }),
-      connections: [{ from: 'a', to: 'b' }],
+      ...wingMap({ code: cardCode('a') }, { code: cardCode('b') }),
+      connections: [{ from: cardCode('a'), to: cardCode('b') }],
     };
 
     const commands = compileMapStep(startedWith(['a', 'b']), step);
@@ -444,7 +469,10 @@ describe('compileMapStep', () => {
   });
 
   it('reveals a face-up location after adding the map', () => {
-    const commands = compileMapStep(startedWith(['b']), wingMap({ code: 'b', faceUp: true }));
+    const commands = compileMapStep(
+      startedWith(['b']),
+      wingMap({ code: cardCode('b'), faceUp: true }),
+    );
 
     expect(commands.map((command) => command.type)).toEqual(['AddMap', 'RevealLocation']);
     expect(commands[1]).toEqual({ type: 'RevealLocation', locationId: 'b#1' });
@@ -456,7 +484,9 @@ describe('compileMapStep', () => {
   ])('rejects a location that is $name', ({ location, setAside, code }) => {
     const state = startedWith(setAside);
 
-    const rejection = rejectionOf(() => compileMapStep(state, wingMap({ code: location })));
+    const rejection = rejectionOf(() =>
+      compileMapStep(state, wingMap({ code: cardCode(location) })),
+    );
 
     expect(rejection.code).toBe(code);
   });

@@ -1,7 +1,7 @@
 import { cardStats, comparableName, type CardStats, type EngineContext } from './cards';
 import type { Command } from './commands';
 import type { DecisionRequested, EnemyEngaged, Event } from './events';
-import { decisionId, type InstanceId, type InvestigatorId } from './ids';
+import { cardCode, decisionId, type InstanceId, type InvestigatorId } from './ids';
 import {
   lowestRemainingHealth,
   lowestRemainingSanity,
@@ -169,7 +169,7 @@ export function chooseLocation(
     decider: { kind: 'lead' },
     options: locations.map((locationId) => ({
       id: locationId,
-      label: ctx.cards.get(state.cards[locationId]?.code ?? '')?.name ?? locationId,
+      label: ctx.cards.get(state.cards[locationId]?.code ?? cardCode(''))?.name ?? locationId,
       target: locationId,
       commands: [answer(locationId)],
     })),

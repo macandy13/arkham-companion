@@ -1,3 +1,4 @@
+import type { CardCode } from './ids';
 import type { SetupStep } from './setup';
 import type { ChaosToken, Difficulty } from './state';
 import type { SkillModifierRegistry } from './skill_modifiers';
@@ -17,9 +18,9 @@ export interface ScenarioDefinition {
   /** What the symbol chaos tokens do, as printed on the scenario reference card. */
   reference: ScenarioReference;
   /** Agenda codes, first agenda first. */
-  agendaDeck: readonly string[];
+  agendaDeck: readonly CardCode[];
   /** Act codes, first act first. */
-  actDeck: readonly string[];
+  actDeck: readonly CardCode[];
   setup: readonly SetupStep[];
   /**
    * The scenario's forced effects. Not read by `compileSetup`: the app passes

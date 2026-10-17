@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   apply,
+  cardCode,
   checkInvariants,
   decisionId,
   enemyAttackList,
@@ -86,7 +87,7 @@ const encounterDiscard: Zone = { kind: 'encounterDiscard' };
 
 /** A card to create: `id` is how the test refers to it, `code` says what it is. */
 function placed(id: InstanceId, code: string, zone: Zone): StartingCard {
-  return { id, code, zone };
+  return { id, code: cardCode(code), zone };
 }
 
 /**

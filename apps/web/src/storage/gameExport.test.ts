@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { STATE_VERSION, instanceId, replay, type Event, type StoredEvent } from '@arkham/engine';
+import {
+  STATE_VERSION,
+  cardCode,
+  instanceId,
+  replay,
+  type Event,
+  type StoredEvent,
+} from '@arkham/engine';
 import { GameImportError, parseGameExport, serialiseGameExport } from './gameExport';
 
 const started: Event = {
@@ -12,7 +19,7 @@ const started: Event = {
   cards: [
     {
       id: instanceId('c1'),
-      code: '0001',
+      code: cardCode('0001'),
       zone: { kind: 'encounterDeck' },
       faceUp: false,
       exhausted: false,

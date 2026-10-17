@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  cardCode,
   checkInvariants,
   decisionId,
   execute,
@@ -89,10 +90,10 @@ function startedWith(investigators: Investigator[], cards: StartingCard[] = []):
     investigators,
     shuffleEncounterDeck: false,
     cards: [
-      { id: firstAgenda, code: 'agenda_of_2', zone: { kind: 'agendaDeck' } },
-      { id: secondAgenda, code: 'agenda_of_9', zone: { kind: 'agendaDeck' } },
-      { id: firstAct, code: 'act_of_1', zone: { kind: 'actDeck' } },
-      { id: secondAct, code: 'last_act', zone: { kind: 'actDeck' } },
+      { id: firstAgenda, code: cardCode('agenda_of_2'), zone: { kind: 'agendaDeck' } },
+      { id: secondAgenda, code: cardCode('agenda_of_9'), zone: { kind: 'agendaDeck' } },
+      { id: firstAct, code: cardCode('act_of_1'), zone: { kind: 'actDeck' } },
+      { id: secondAct, code: cardCode('last_act'), zone: { kind: 'actDeck' } },
       ...cards,
     ],
   });
@@ -105,12 +106,12 @@ const engagedWith = (investigator: typeof alice): Zone => ({
 });
 const inDeck = (id: string, code: string): StartingCard => ({
   id: instanceId(id),
-  code,
+  code: cardCode(code),
   zone: { kind: 'encounterDeck' },
 });
 const placed = (id: string, code: string, zone: Zone): StartingCard => ({
   id: instanceId(id),
-  code,
+  code: cardCode(code),
   zone,
 });
 

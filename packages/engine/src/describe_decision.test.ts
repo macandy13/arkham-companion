@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  cardCode,
   confirmOptions,
   decisionId,
   describeDecision,
@@ -14,7 +15,7 @@ const rats = instanceId('rats');
 const state = startBoard(ctx, {
   maps: {},
   investigators: [],
-  cards: [{ id: rats, code: 'rat', zone: { kind: 'setAside' } }],
+  cards: [{ id: rats, code: cardCode('rat'), zone: { kind: 'setAside' } }],
 });
 
 const engage: Decision = {

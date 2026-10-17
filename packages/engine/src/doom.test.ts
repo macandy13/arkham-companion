@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  cardCode,
   checkInvariants,
   decisionId,
   doomInPlay,
@@ -57,13 +58,18 @@ function startedWith(investigators: Investigator[]): GameState {
       investigators,
       maps: { [main]: { name: 'Main' } },
       cards: [
-        { id: agenda1, code: 'A1', zone: { kind: 'agendaDeck' }, faceUp: true },
-        { id: agenda2, code: 'A2', zone: { kind: 'agendaDeck' }, faceUp: true },
-        { id: act1, code: 'C1', zone: { kind: 'actDeck' }, faceUp: true },
-        { id: act2, code: 'C2', zone: { kind: 'actDeck' }, faceUp: true },
-        { id: hall, code: 'L1', zone: { kind: 'location', mapId: main }, faceUp: true },
-        { id: ghoul, code: 'E1', zone: { kind: 'engaged', investigatorId: alice }, faceUp: true },
-        { id: deckTreachery, code: 'E4', zone: { kind: 'encounterDeck' } },
+        { id: agenda1, code: cardCode('A1'), zone: { kind: 'agendaDeck' }, faceUp: true },
+        { id: agenda2, code: cardCode('A2'), zone: { kind: 'agendaDeck' }, faceUp: true },
+        { id: act1, code: cardCode('C1'), zone: { kind: 'actDeck' }, faceUp: true },
+        { id: act2, code: cardCode('C2'), zone: { kind: 'actDeck' }, faceUp: true },
+        { id: hall, code: cardCode('L1'), zone: { kind: 'location', mapId: main }, faceUp: true },
+        {
+          id: ghoul,
+          code: cardCode('E1'),
+          zone: { kind: 'engaged', investigatorId: alice },
+          faceUp: true,
+        },
+        { id: deckTreachery, code: cardCode('E4'), zone: { kind: 'encounterDeck' } },
       ],
     },
   ]).state;
@@ -818,10 +824,10 @@ describe('cards without a threshold', () => {
         investigators: [makeInvestigator({ id: alice, clues: 3 })],
         maps: { [main]: { name: 'Main' } },
         cards: [
-          { id: plainAgenda, code: 'PA', zone: { kind: 'agendaDeck' }, faceUp: true },
-          { id: plainAct, code: 'PC', zone: { kind: 'actDeck' }, faceUp: true },
-          { id: nextAct, code: 'PD', zone: { kind: 'actDeck' }, faceUp: true },
-          { id: hall, code: 'PL', zone: { kind: 'location', mapId: main }, faceUp: true },
+          { id: plainAgenda, code: cardCode('PA'), zone: { kind: 'agendaDeck' }, faceUp: true },
+          { id: plainAct, code: cardCode('PC'), zone: { kind: 'actDeck' }, faceUp: true },
+          { id: nextAct, code: cardCode('PD'), zone: { kind: 'actDeck' }, faceUp: true },
+          { id: hall, code: cardCode('PL'), zone: { kind: 'location', mapId: main }, faceUp: true },
         ],
       },
     ]).state;

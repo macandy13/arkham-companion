@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
 import {
+  cardCode,
   cardDbWith,
   instanceId,
   investigatorCode,
@@ -25,7 +26,7 @@ const started: Event = {
   cards: [
     {
       id: instanceId('c1'),
-      code: '0001',
+      code: cardCode('0001'),
       zone: { kind: 'encounterDeck' },
       faceUp: false,
       exhausted: false,
@@ -137,7 +138,7 @@ describe('appStore', () => {
 
     it('stores nothing when the setup is invalid', async () => {
       const store = createAppStore(new IndexedDbStore('appstore-start-invalid-test'));
-      const broken = { ...start, definition: { ...theGathering, actDeck: ['missing'] } };
+      const broken = { ...start, definition: { ...theGathering, actDeck: [cardCode('missing')] } };
 
       await expect(store.getState().startScenario(broken)).rejects.toThrow();
       expect(store.getState().games).toEqual([]);

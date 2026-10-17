@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { instanceId, investigatorId } from './ids';
+import { cardCode, instanceId, investigatorId } from './ids';
 import { cluesToLocationEvents, discoverCluesEvents } from './investigators';
 import { clearTokensEvents, moveCardEvent } from './placement';
 import type { CardInstance } from './state';
@@ -28,7 +28,7 @@ describe('moveCardEvent', () => {
 describe('clearTokensEvents', () => {
   const ghoulWith = (tokens: CardInstance['tokens']): CardInstance => ({
     id: ghoul,
-    code: 'ghoul',
+    code: cardCode('ghoul'),
     zone: { kind: 'atLocation', locationId: study },
     faceUp: true,
     exhausted: false,

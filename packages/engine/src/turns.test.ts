@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  cardCode,
   checkInvariants,
   decisionId,
   instanceId,
@@ -175,12 +176,12 @@ describe('the end of a turn', () => {
       cards: [
         {
           id: frozenInFear,
-          code: 'frozen_in_fear',
+          code: cardCode('frozen_in_fear'),
           zone: { kind: 'threatArea', investigatorId: alice },
         },
         {
           id: dissonantVoices,
-          code: 'dissonant_voices',
+          code: cardCode('dissonant_voices'),
           zone: { kind: 'threatArea', investigatorId: alice },
         },
       ],

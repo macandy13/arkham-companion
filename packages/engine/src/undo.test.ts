@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  cardCode,
   decisionId,
   emptyState,
   execute,
@@ -51,20 +52,20 @@ const start: StartScenario = {
   maps: { [mapId('main')]: { name: 'main', connections: [edge('hall', 'cellar')] } },
   shuffleEncounterDeck: false,
   cards: [
-    { id: hall, code: 'hall', zone: { kind: 'location', mapId: mapId('main') } },
-    { id: cellar, code: 'cellar', zone: { kind: 'location', mapId: mapId('main') } },
-    { id: chill, code: 'chilling_treachery', zone: encounterDeck },
-    { id: firstPlain, code: 'plain_treachery', zone: encounterDeck },
-    { id: instanceId('second_plain'), code: 'plain_treachery', zone: encounterDeck },
-    { id: instanceId('spare_one'), code: 'plain_treachery', zone: setAside },
-    { id: instanceId('spare_two'), code: 'plain_treachery', zone: setAside },
+    { id: hall, code: cardCode('hall'), zone: { kind: 'location', mapId: mapId('main') } },
+    { id: cellar, code: cardCode('cellar'), zone: { kind: 'location', mapId: mapId('main') } },
+    { id: chill, code: cardCode('chilling_treachery'), zone: encounterDeck },
+    { id: firstPlain, code: cardCode('plain_treachery'), zone: encounterDeck },
+    { id: instanceId('second_plain'), code: cardCode('plain_treachery'), zone: encounterDeck },
+    { id: instanceId('spare_one'), code: cardCode('plain_treachery'), zone: setAside },
+    { id: instanceId('spare_two'), code: cardCode('plain_treachery'), zone: setAside },
   ],
 };
 
 const draw: Command = { type: 'DrawEncounter', investigatorId: alice };
 const shuffleInto: Command = {
   type: 'ShuffleInto',
-  codes: ['plain_treachery', 'plain_treachery'],
+  codes: [cardCode('plain_treachery'), cardCode('plain_treachery')],
   zone: encounterDeck,
 };
 const addClue: Command = {

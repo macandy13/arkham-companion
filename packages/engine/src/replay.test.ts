@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   CommandRejected,
+  cardCode,
   checkInvariants,
   emptyState,
   execute,
@@ -32,11 +33,11 @@ const start: StartScenario = {
   investigators: investigators(2),
   maps: { [main]: { name: 'Main' } },
   cards: [
-    { id: hall, code: 'L1', zone: { kind: 'location', mapId: main } },
-    { id: ghoul, code: 'E1', zone: { kind: 'encounterDeck' } },
-    { id: rat, code: 'E2', zone: { kind: 'encounterDeck' } },
-    { id: dread, code: 'E3', zone: { kind: 'encounterDeck' } },
-    { id: plan, code: 'A1', zone: { kind: 'agendaDeck' } },
+    { id: hall, code: cardCode('L1'), zone: { kind: 'location', mapId: main } },
+    { id: ghoul, code: cardCode('E1'), zone: { kind: 'encounterDeck' } },
+    { id: rat, code: cardCode('E2'), zone: { kind: 'encounterDeck' } },
+    { id: dread, code: cardCode('E3'), zone: { kind: 'encounterDeck' } },
+    { id: plan, code: cardCode('A1'), zone: { kind: 'agendaDeck' } },
   ],
 };
 

@@ -1,7 +1,7 @@
 import { cardStats, type EngineContext } from './cards';
 import { investigatorLeavesEvents } from './elimination';
 import type { Event, InvestigatorChanged } from './events';
-import type { InstanceId, InvestigatorId } from './ids';
+import { cardCode, type InstanceId, type InvestigatorId } from './ids';
 import { defeatCause, playerOrder, withStatDelta } from './investigators';
 import { hasKeyword } from './keywords';
 import { CommandRejected } from './rejection';
@@ -31,7 +31,7 @@ export interface EnemyAttack {
 export function enemyAttackList(ctx: EngineContext, state: GameState): EnemyAttack[] {
   return playerOrder(state).flatMap((investigator) =>
     readyEngagedEnemies(ctx, state, investigator).map((enemyId) => {
-      const stats = cardStats(ctx.cards, state.cards[enemyId]?.code ?? '');
+      const stats = cardStats(ctx.cards, state.cards[enemyId]?.code ?? cardCode(''));
       return {
         enemyId,
         investigatorId: investigator.id,

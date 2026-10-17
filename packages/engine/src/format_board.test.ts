@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  cardCode,
   formatBoard,
   instanceId,
   investigatorId,
@@ -59,23 +60,36 @@ const start: StartScenario = {
   ],
   maps: { [manor]: { name: 'Manor', connections: [edge('attic', 'hall', { oneWay: true })] } },
   cards: [
-    { id: instanceId('plan'), code: 'plan', zone: { kind: 'agendaDeck' }, tokens: { doom: 1 } },
-    { id: instanceId('search'), code: 'search', zone: { kind: 'actDeck' } },
+    {
+      id: instanceId('plan'),
+      code: cardCode('plan'),
+      zone: { kind: 'agendaDeck' },
+      tokens: { doom: 1 },
+    },
+    { id: instanceId('search'), code: cardCode('search'), zone: { kind: 'actDeck' } },
     {
       id: hall,
-      code: 'hall',
+      code: cardCode('hall'),
       zone: { kind: 'location', mapId: manor },
       faceUp: true,
       tokens: { clue: 3 },
     },
-    { id: attic, code: 'attic', zone: { kind: 'location', mapId: manor } },
-    { id: ghoul, code: 'ghoul', zone: { kind: 'engaged', investigatorId: alice } },
-    { id: instanceId('dread'), code: 'dread', zone: { kind: 'threatArea', investigatorId: alice } },
-    { id: instanceId('dread3'), code: 'dread', zone: { kind: 'attachedTo', hostId: hall } },
-    { id: instanceId('rat'), code: 'rat', zone: { kind: 'victoryDisplay' } },
-    { id: instanceId('dread2'), code: 'dread', zone: { kind: 'encounterDiscard' } },
-    { id: instanceId('rat2'), code: 'rat', zone: { kind: 'encounterDeck' } },
-    { id: instanceId('rat3'), code: 'rat', zone: { kind: 'setAside' } },
+    { id: attic, code: cardCode('attic'), zone: { kind: 'location', mapId: manor } },
+    { id: ghoul, code: cardCode('ghoul'), zone: { kind: 'engaged', investigatorId: alice } },
+    {
+      id: instanceId('dread'),
+      code: cardCode('dread'),
+      zone: { kind: 'threatArea', investigatorId: alice },
+    },
+    {
+      id: instanceId('dread3'),
+      code: cardCode('dread'),
+      zone: { kind: 'attachedTo', hostId: hall },
+    },
+    { id: instanceId('rat'), code: cardCode('rat'), zone: { kind: 'victoryDisplay' } },
+    { id: instanceId('dread2'), code: cardCode('dread'), zone: { kind: 'encounterDiscard' } },
+    { id: instanceId('rat2'), code: cardCode('rat'), zone: { kind: 'encounterDeck' } },
+    { id: instanceId('rat3'), code: cardCode('rat'), zone: { kind: 'setAside' } },
   ],
 };
 

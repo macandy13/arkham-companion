@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  cardCode,
   decisionId,
   instanceId,
   investigatorId,
@@ -237,7 +238,7 @@ describe('Fight', () => {
   it('asks alice for a combat test against the fight value, passing for the basic 1 damage or more', () => {
     const asked = stateAfter(
       ctx,
-      aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: engagedWith(alice) }]),
+      aliceInStudyWith([{ id: ghoul, code: cardCode('ghoul'), zone: engagedWith(alice) }]),
       fight,
     );
 
@@ -260,7 +261,7 @@ describe('Fight', () => {
   it('deals 1 damage on a pass by default', () => {
     const asked = stateAfter(
       ctx,
-      aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: engagedWith(alice) }]),
+      aliceInStudyWith([{ id: ghoul, code: cardCode('ghoul'), zone: engagedWith(alice) }]),
       fight,
     );
 
@@ -272,7 +273,7 @@ describe('Fight', () => {
   it('deals the damage of the weapon used by default', () => {
     const asked = stateAfter(
       ctx,
-      aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: engagedWith(alice) }]),
+      aliceInStudyWith([{ id: ghoul, code: cardCode('ghoul'), zone: engagedWith(alice) }]),
       {
         ...fight,
         damage: 2,
@@ -287,7 +288,7 @@ describe('Fight', () => {
   it('deals the damage the players confirm, which can defeat the enemy', () => {
     const asked = stateAfter(
       ctx,
-      aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: engagedWith(alice) }]),
+      aliceInStudyWith([{ id: ghoul, code: cardCode('ghoul'), zone: engagedWith(alice) }]),
       fight,
     );
 
@@ -299,7 +300,7 @@ describe('Fight', () => {
   it('can attack an unengaged enemy at the location', () => {
     const asked = stateAfter(
       ctx,
-      aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: engagedWith(alice) }]),
+      aliceInStudyWith([{ id: ghoul, code: cardCode('ghoul'), zone: engagedWith(alice) }]),
       { type: 'DisengageEnemy', enemyId: ghoul },
       fight,
     );
@@ -308,7 +309,7 @@ describe('Fight', () => {
   });
 
   it('rejects attacking an aloof enemy nobody is engaged with', () => {
-    const state = aliceInStudyWith([{ id: ghoul, code: 'aloof_ghoul', zone: at(study) }]);
+    const state = aliceInStudyWith([{ id: ghoul, code: cardCode('aloof_ghoul'), zone: at(study) }]);
 
     expect(rejectionFrom(ctx, state, fight)).toEqual({ code: 'aloofNotEngaged', cardId: ghoul });
   });
@@ -320,7 +321,7 @@ describe('Fight', () => {
         makeInvestigator({ id: 'alice', seat: 0, locationId: study }),
         makeInvestigator({ id: 'bob', seat: 1, locationId: study }),
       ],
-      cards: [{ id: ghoul, code: 'aloof_ghoul', zone: engagedWith(bob) }],
+      cards: [{ id: ghoul, code: cardCode('aloof_ghoul'), zone: engagedWith(bob) }],
     });
 
     const asked = stateAfter(ctx, board, fight);
@@ -332,7 +333,9 @@ describe('Fight', () => {
   });
 
   it('can attack a massive aloof enemy, which counts as engaged with everyone at its location', () => {
-    const state = aliceInStudyWith([{ id: ghoul, code: 'massive_aloof_ghoul', zone: at(study) }]);
+    const state = aliceInStudyWith([
+      { id: ghoul, code: cardCode('massive_aloof_ghoul'), zone: at(study) },
+    ]);
 
     const asked = stateAfter(ctx, state, fight);
 
@@ -343,7 +346,7 @@ describe('Fight', () => {
   });
 
   it('rejects an enemy at another location', () => {
-    const state = aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: at(hallway) }]);
+    const state = aliceInStudyWith([{ id: ghoul, code: cardCode('ghoul'), zone: at(hallway) }]);
 
     expect(rejectionFrom(ctx, state, fight)).toEqual({
       code: 'investigatorNotAtLocation',
@@ -353,13 +356,17 @@ describe('Fight', () => {
   });
 
   it('rejects an enemy that is not in play', () => {
-    const state = aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: { kind: 'encounterDeck' } }]);
+    const state = aliceInStudyWith([
+      { id: ghoul, code: cardCode('ghoul'), zone: { kind: 'encounterDeck' } },
+    ]);
 
     expect(rejectionFrom(ctx, state, fight)).toEqual({ code: 'enemyNotInPlay', cardId: ghoul });
   });
 
   it('rejects a damage amount that is not positive', () => {
-    const state = aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: engagedWith(alice) }]);
+    const state = aliceInStudyWith([
+      { id: ghoul, code: cardCode('ghoul'), zone: engagedWith(alice) },
+    ]);
 
     expect(rejectionFrom(ctx, state, { ...fight, damage: 0 })).toEqual({
       code: 'invalidTokenDelta',
@@ -377,7 +384,7 @@ describe('failed Fight', () => {
         makeInvestigator({ id: 'alice', seat: 0, locationId: study }),
         makeInvestigator({ id: 'bob', seat: 1, locationId: study, health: { max: 3, damage: 1 } }),
       ],
-      cards: [{ id: ghoul, code, zone }],
+      cards: [{ id: ghoul, code: cardCode(code), zone }],
     });
     const asked = stateAfter(ctx, board, ...before, {
       type: 'Fight',
@@ -422,7 +429,7 @@ describe('Evade', () => {
   it('asks alice for an agility test against the evade value', () => {
     const asked = stateAfter(
       ctx,
-      aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: engagedWith(alice) }]),
+      aliceInStudyWith([{ id: ghoul, code: cardCode('ghoul'), zone: engagedWith(alice) }]),
       evade,
     );
 
@@ -436,7 +443,7 @@ describe('Evade', () => {
   it('exhausts and disengages the enemy on a pass', () => {
     const asked = stateAfter(
       ctx,
-      aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: engagedWith(alice) }]),
+      aliceInStudyWith([{ id: ghoul, code: cardCode('ghoul'), zone: engagedWith(alice) }]),
       evade,
     );
 
@@ -448,7 +455,7 @@ describe('Evade', () => {
   it('only disengages an enemy that is already exhausted', () => {
     const asked = stateAfter(
       ctx,
-      aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: engagedWith(alice) }]),
+      aliceInStudyWith([{ id: ghoul, code: cardCode('ghoul'), zone: engagedWith(alice) }]),
       { type: 'ExhaustEnemy', enemyId: ghoul },
       evade,
     );
@@ -461,7 +468,7 @@ describe('Evade', () => {
   it('only exhausts a massive enemy, which stays engaged with everyone at its location', () => {
     const asked = stateAfter(
       ctx,
-      aliceInStudyWith([{ id: ghoul, code: 'massive_ghoul', zone: at(study) }]),
+      aliceInStudyWith([{ id: ghoul, code: cardCode('massive_ghoul'), zone: at(study) }]),
       evade,
     );
 
@@ -473,7 +480,7 @@ describe('Evade', () => {
   it('leaves the enemy engaged on a fail', () => {
     const asked = stateAfter(
       ctx,
-      aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: engagedWith(alice) }]),
+      aliceInStudyWith([{ id: ghoul, code: cardCode('ghoul'), zone: engagedWith(alice) }]),
       evade,
     );
 
@@ -483,13 +490,13 @@ describe('Evade', () => {
   });
 
   it('rejects an enemy that is not engaged with the investigator', () => {
-    const state = aliceInStudyWith([{ id: ghoul, code: 'ghoul', zone: at(hallway) }]);
+    const state = aliceInStudyWith([{ id: ghoul, code: cardCode('ghoul'), zone: at(hallway) }]);
 
     expect(rejectionFrom(ctx, state, evade)).toEqual({ code: 'notEngaged', cardId: ghoul });
   });
 
   it('rejects an aloof enemy at the location that nobody is engaged with', () => {
-    const state = aliceInStudyWith([{ id: ghoul, code: 'aloof_ghoul', zone: at(study) }]);
+    const state = aliceInStudyWith([{ id: ghoul, code: cardCode('aloof_ghoul'), zone: at(study) }]);
 
     expect(rejectionFrom(ctx, state, evade)).toEqual({ code: 'notEngaged', cardId: ghoul });
   });
@@ -509,8 +516,12 @@ describe('revelation test', () => {
     stateAfter(
       ctx,
       aliceInStudyWith([
-        { id: chill, code: 'chilling_treachery', zone: { kind: 'encounterDeck' } },
-        { id: instanceId('next_card'), code: 'plain_treachery', zone: { kind: 'encounterDeck' } },
+        { id: chill, code: cardCode('chilling_treachery'), zone: { kind: 'encounterDeck' } },
+        {
+          id: instanceId('next_card'),
+          code: cardCode('plain_treachery'),
+          zone: { kind: 'encounterDeck' },
+        },
       ]),
       draw,
     );
@@ -556,7 +567,7 @@ describe('revelation test', () => {
     const drawn = stateAfter(
       ctx,
       aliceInStudyWith([
-        { id: clinging, code: 'clinging_treachery', zone: { kind: 'encounterDeck' } },
+        { id: clinging, code: cardCode('clinging_treachery'), zone: { kind: 'encounterDeck' } },
       ]),
       draw,
     );
@@ -569,7 +580,11 @@ describe('revelation test', () => {
     const drawn = stateAfter(
       ctx,
       aliceInStudyWith([
-        { id: instanceId('plain'), code: 'plain_treachery', zone: { kind: 'encounterDeck' } },
+        {
+          id: instanceId('plain'),
+          code: cardCode('plain_treachery'),
+          zone: { kind: 'encounterDeck' },
+        },
       ]),
       draw,
     );

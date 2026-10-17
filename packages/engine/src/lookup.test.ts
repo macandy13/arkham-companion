@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { instanceId } from './index';
+import { cardCode, instanceId } from './index';
 import { locationsInPlay, locationsNamed } from './board';
 import { cardsAtLocation, cardsNamed, cardsOfType, requireCard } from './lookup';
 import type { CardInstance } from './state';
@@ -9,7 +9,7 @@ describe('requireCard', () => {
   const known = instanceId('known');
   const card: CardInstance = {
     id: known,
-    code: 'L1',
+    code: cardCode('L1'),
     zone: { kind: 'outOfGame' },
     faceUp: true,
     exhausted: false,
@@ -103,9 +103,17 @@ describe('cardsAtLocation', () => {
   const state = startBoard(ctx, {
     maps: { main: { locations: { cellar: 'cellar', attic: 'attic' } } },
     cards: [
-      { id: cellarGhoul, code: 'ghoul', zone: { kind: 'atLocation', locationId: cellar } },
-      { id: atticGhoul, code: 'ghoul', zone: { kind: 'atLocation', locationId: attic } },
-      { id: cellarRelic, code: 'relic', zone: { kind: 'atLocation', locationId: cellar } },
+      {
+        id: cellarGhoul,
+        code: cardCode('ghoul'),
+        zone: { kind: 'atLocation', locationId: cellar },
+      },
+      { id: atticGhoul, code: cardCode('ghoul'), zone: { kind: 'atLocation', locationId: attic } },
+      {
+        id: cellarRelic,
+        code: cardCode('relic'),
+        zone: { kind: 'atLocation', locationId: cellar },
+      },
     ],
   });
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { cardDbFrom } from './cards';
-import { investigatorCode } from './ids';
+import { cardCode, investigatorCode } from './ids';
 import {
   investigatorCard,
   investigatorCardStats,
@@ -27,7 +27,12 @@ describe('investigatorCard', () => {
   });
 
   it('returns undefined for a card that is not an investigator', () => {
-    const study = { code: '01111', name: 'Study', typeCode: 'location' as const, traits: [] };
+    const study = {
+      code: cardCode('01111'),
+      name: 'Study',
+      typeCode: 'location' as const,
+      traits: [],
+    };
 
     expect(investigatorCard(cardDbFrom([study]), investigatorCode('01111'))).toBeUndefined();
   });
