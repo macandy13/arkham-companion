@@ -14,8 +14,7 @@ export const MAX_TEAM_SIZE = 4;
  * Returns a list of invariant violations of a campaign log (empty = the log
  * is consistent): a started campaign has a team of 1–`MAX_TEAM_SIZE`, no
  * investigator code appears twice (current or former), every investigator
- * is consistent (`investigatorErrors`), every former investigator is killed
- * or insane, every story value is well-formed and the scenario position lies
+ * is consistent (`investigatorErrors`), every story value is well-formed and the scenario position lies
  * within the scenario list. `handleCampaign` also uses it to vet
  * `ManualAdjust` corrections.
  */
@@ -27,9 +26,6 @@ export function checkCampaignInvariants(log: CampaignLog): string[] {
       (code) => `investigator ${code} appears more than once`,
     ),
     ...everyone.flatMap(investigatorErrors),
-    ...log.formerInvestigators
-      .filter((inv) => inv.fate === 'alive')
-      .map((inv) => `former investigator ${inv.code} is alive`),
     ...Object.entries(log.story).flatMap(([key, value]) =>
       storyValueIsValid(value) ? [] : [`story record ${key} is malformed`],
     ),

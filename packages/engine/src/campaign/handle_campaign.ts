@@ -95,7 +95,9 @@ function handleStartCampaign(log: CampaignLog, command: StartCampaign): Campaign
 
 function handleRecordStory(log: CampaignLog, command: RecordStory): CampaignEvent[] {
   const { key, value } = command;
-  if (key.trim() === '') throw new CampaignCommandRejected({ code: 'invalidStoryKey', key });
+  // A key with spaces around it would be a second record next to the trimmed one.
+  if (key.trim() === '' || key !== key.trim())
+    throw new CampaignCommandRejected({ code: 'invalidStoryKey', key });
   if (!storyValueIsValid(value))
     throw new CampaignCommandRejected({ code: 'invalidStoryValue', key });
   const recorded = log.story[key];

@@ -69,7 +69,12 @@ describe('applyCampaign', () => {
   ] as const)('changes the $account XP of one investigator', ({ account, delta, changed }) => {
     const log = makeCampaignLog({ investigators: [rolandMember, daisyMember] });
 
-    const after = applyCampaign(log, { type: 'XpChanged', code: '01001', account, delta });
+    const after = applyCampaign(log, {
+      type: 'XpChanged',
+      code: rolandMember.code,
+      account,
+      delta,
+    });
 
     expect(after.investigators).toEqual([{ ...rolandMember, ...changed }, daisyMember]);
   });
@@ -79,7 +84,7 @@ describe('applyCampaign', () => {
 
     const after = applyCampaign(log, {
       type: 'TraumaChanged',
-      code: '01001',
+      code: rolandMember.code,
       kind: 'mental',
       delta: 2,
     });
@@ -92,7 +97,7 @@ describe('applyCampaign', () => {
 
     const after = applyCampaign(log, {
       type: 'InvestigatorFateChanged',
-      code: '01001',
+      code: rolandMember.code,
       fate: 'insane',
     });
 
@@ -105,7 +110,7 @@ describe('applyCampaign', () => {
 
     const after = applyCampaign(log, {
       type: 'InvestigatorReplaced',
-      code: '01001',
+      code: rolandMember.code,
       by: agnesMember,
     });
 
@@ -128,7 +133,11 @@ describe('applyCampaign', () => {
 
     applyCampaign(log, { type: 'ChaosTokenAdded', token: 'skull' });
     applyCampaign(log, { type: 'StoryRecordRemoved', key: 'doubt' });
-    applyCampaign(log, { type: 'InvestigatorFateChanged', code: '01001', fate: 'killed' });
+    applyCampaign(log, {
+      type: 'InvestigatorFateChanged',
+      code: rolandMember.code,
+      fate: 'killed',
+    });
 
     expect(log).toEqual(before);
   });
@@ -146,17 +155,20 @@ describe('replayCampaign', () => {
         chaosBag: ['0'],
         scenarioIds: ['first_scenario', 'second_scenario'],
       },
-      { type: 'XpChanged', code: '01001', account: 'earned', delta: 2 },
+      { type: 'XpChanged', code: rolandMember.code, account: 'earned', delta: 2 },
       { type: 'ScenarioPositionChanged', position: 1 },
     ];
 
-    expect(replayCampaign(events)).toEqual(
-      makeCampaignLog({
-        investigators: [{ ...rolandMember, xpEarned: 2 }],
-        chaosBag: ['0'],
-        position: 1,
-      }),
-    );
+    expect(replayCampaign(events)).toEqual({
+      ...emptyCampaignLog(),
+      campaignId: 'campaign_a',
+      definitionId: 'test_campaign',
+      difficulty: 'standard',
+      investigators: [{ ...rolandMember, xpEarned: 2 }],
+      chaosBag: ['0'],
+      scenarioIds: ['first_scenario', 'second_scenario'],
+      position: 1,
+    });
   });
 });
 
