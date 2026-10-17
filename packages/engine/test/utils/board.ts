@@ -1,5 +1,6 @@
 import {
   cardCode,
+  scenarioId,
   instanceId,
   mapId,
   type Difficulty,
@@ -80,7 +81,7 @@ export function startBoard(
     cards.push({ id: instanceId(id), code: cardCode(code), zone: { kind: 'setAside' } });
   const start: StartScenario = {
     type: 'StartScenario',
-    scenarioId: 'test',
+    scenarioId: scenarioId('test'),
     difficulty,
     seed,
     ...(shuffleEncounterDeck === undefined ? {} : { shuffleEncounterDeck }),

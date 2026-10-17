@@ -45,7 +45,8 @@ Follow-ups from Andy's review of #63/#64, for one refactoring PR after this stac
 - [x] Campaign commands carry only the card code, and the handlers look up name, health and sanity in the `CampaignContext`'s `CardDb`, which holds investigator cards like every other card, like the game's `execute(ctx, …)`
 - [x] The same for the game's setup: `SetupOptions` seats investigators by ID and code, and `compileSetup` takes stats and skills from the `EngineContext`'s `CardDb` (`StartScenario` keeps full investigators, so tests can start from any board)
 - [x] Card codes are a branded `CardCode` everywhere (`CardStats`, `CardInstance`, setup steps, decks, set-aside commands); `InvestigatorCode` is a `CardCode` with one more tag (Andy on #72)
-- [ ] Brand the remaining code and ID strings the same way: encounter set codes, scenario and campaign definition IDs, the campaign ID
+- [x] Encounter set codes, scenario IDs and campaign definition IDs are branded (`EncounterSetCode`, `ScenarioId`, `CampaignDefinitionId`)
+- [ ] Brand the campaign ID and the game ID (`CampaignId`, `GameId`), which the store and the app create
 - [ ] Import campaign and scenario functions through a namespace (`campaign.handle`, `scenario.compileSetup`) and name functions verb + noun
 
 ## M1C.2 Change notices (O)

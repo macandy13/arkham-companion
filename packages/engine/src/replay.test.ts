@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   CommandRejected,
   cardCode,
+  scenarioId,
   checkInvariants,
   emptyState,
   execute,
@@ -27,7 +28,7 @@ const lead = investigatorId('tank');
 /** Two investigators, a location, three encounter cards and an agenda. */
 const start: StartScenario = {
   type: 'StartScenario',
-  scenarioId: 'replay',
+  scenarioId: scenarioId('replay'),
   difficulty: 'standard',
   seed: 99,
   investigators: investigators(2),

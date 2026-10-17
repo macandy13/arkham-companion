@@ -1,3 +1,4 @@
+import { campaignDefinitionId, scenarioId } from '../ids';
 import { describe, expect, it } from 'vitest';
 import {
   agnes,
@@ -22,11 +23,11 @@ describe('applyCampaign', () => {
     const log = applyCampaign(makeCampaignLog({ position: 1 }), {
       type: 'CampaignStarted',
       campaignId: 'campaign_b',
-      definitionId: 'night_of_the_zealot',
+      definitionId: campaignDefinitionId('night_of_the_zealot'),
       difficulty: 'hard',
       investigators: [daisyMember],
       chaosBag: ['skull'],
-      scenarioIds: ['the_gathering'],
+      scenarioIds: [scenarioId('the_gathering')],
     });
 
     expect(log).toEqual({
@@ -150,11 +151,11 @@ describe('replayCampaign', () => {
       {
         type: 'CampaignStarted',
         campaignId: 'campaign_a',
-        definitionId: 'test_campaign',
+        definitionId: campaignDefinitionId('test_campaign'),
         difficulty: 'standard',
         investigators: [rolandMember],
         chaosBag: ['0'],
-        scenarioIds: ['first_scenario', 'second_scenario'],
+        scenarioIds: [scenarioId('first_scenario'), scenarioId('second_scenario')],
       },
       { type: 'XpChanged', code: rolandMember.code, account: 'earned', delta: 2 },
       { type: 'ScenarioPositionChanged', position: 1 },

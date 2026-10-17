@@ -1,4 +1,6 @@
 import {
+  campaignDefinitionId,
+  scenarioId,
   CampaignCommandRejected,
   cardDbFrom,
   emptyCampaignLog,
@@ -49,13 +51,13 @@ export const skidsMember = campaignMember('01003', "Skids O'Toole", 8, 6);
 export function makeCampaignLog(overrides: Partial<CampaignLog> = {}): CampaignLog {
   return {
     campaignId: 'campaign_a',
-    definitionId: 'test_campaign',
+    definitionId: campaignDefinitionId('test_campaign'),
     difficulty: 'standard',
     investigators: [rolandMember],
     formerInvestigators: [],
     story: {},
     chaosBag: ['0', '-1', 'skull'],
-    scenarioIds: ['first_scenario', 'second_scenario'],
+    scenarioIds: [scenarioId('first_scenario'), scenarioId('second_scenario')],
     position: 0,
     ...overrides,
   };
@@ -114,11 +116,11 @@ export function makeStartCampaign(overrides: Partial<StartCampaign> = {}): Start
   return {
     type: 'StartCampaign',
     campaignId: 'campaign_a',
-    definitionId: 'test_campaign',
+    definitionId: campaignDefinitionId('test_campaign'),
     difficulty: 'standard',
     investigators: [roland.code],
     chaosBag: ['0', '-1', 'skull'],
-    scenarioIds: ['first_scenario', 'second_scenario'],
+    scenarioIds: [scenarioId('first_scenario'), scenarioId('second_scenario')],
     ...overrides,
   };
 }

@@ -1,4 +1,4 @@
-import type { InvestigatorCode } from '../ids';
+import type { CampaignDefinitionId, InvestigatorCode, ScenarioId } from '../ids';
 import type { ChaosToken, Difficulty } from '../state';
 import type {
   CampaignInvestigator,
@@ -30,12 +30,12 @@ export type CampaignEvent =
 export interface CampaignStarted {
   readonly type: 'CampaignStarted';
   readonly campaignId: string;
-  readonly definitionId: string;
+  readonly definitionId: CampaignDefinitionId;
   readonly difficulty: Difficulty;
   /** Already in their starting state: no trauma, no XP, alive. */
   readonly investigators: readonly CampaignInvestigator[];
   readonly chaosBag: readonly ChaosToken[];
-  readonly scenarioIds: readonly string[];
+  readonly scenarioIds: readonly ScenarioId[];
 }
 
 /** A story record was written or overwritten. Produced by `RecordStory`. */

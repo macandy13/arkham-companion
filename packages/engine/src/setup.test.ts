@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   cardCode,
+  encounterSetCode,
+  scenarioId,
   emptyCampaignLog,
   compileMapStep,
   compileSetup,
@@ -40,7 +42,7 @@ function mainMap(...codes: string[]): AddMapStep {
 describe('compileSetup', () => {
   it('copies identity, difficulty, seed and the chaos bag for the difficulty', () => {
     const def = makeDefinition({
-      id: 'demo',
+      id: scenarioId('demo'),
       chaosBag: { easy: ['+1'], standard: [], hard: ['-4', 'skull'], expert: [] },
     });
 
@@ -352,11 +354,24 @@ describe('compileSetup addMap', () => {
 });
 
 describe('compileSetup buildEncounterDeck', () => {
-  const ghoul = makeCard({ code: 'ghoul', typeCode: 'enemy', encounterCode: 'set1', quantity: 3 });
-  const curse = makeCard({ code: 'curse', encounterCode: 'set1', quantity: 2 });
-  const rat = makeCard({ code: 'rat', typeCode: 'enemy', encounterCode: 'set2' });
-  const room = makeCard({ code: 'room', typeCode: 'location', encounterCode: 'set1' });
-  const plan = makeCard({ code: 'plan', typeCode: 'agenda', encounterCode: 'set1' });
+  const ghoul = makeCard({
+    code: 'ghoul',
+    typeCode: 'enemy',
+    encounterCode: encounterSetCode('set1'),
+    quantity: 3,
+  });
+  const curse = makeCard({ code: 'curse', encounterCode: encounterSetCode('set1'), quantity: 2 });
+  const rat = makeCard({ code: 'rat', typeCode: 'enemy', encounterCode: encounterSetCode('set2') });
+  const room = makeCard({
+    code: 'room',
+    typeCode: 'location',
+    encounterCode: encounterSetCode('set1'),
+  });
+  const plan = makeCard({
+    code: 'plan',
+    typeCode: 'agenda',
+    encounterCode: encounterSetCode('set1'),
+  });
   const ctx = contextWith(ghoul, curse, rat, room, plan);
 
   function deckCodes(setup: SetupStep[]): string[] {
@@ -367,7 +382,9 @@ describe('compileSetup buildEncounterDeck', () => {
   }
 
   it('adds every copy of the enemies and treacheries in the given sets', () => {
-    const codes = deckCodes([{ kind: 'buildEncounterDeck', sets: ['set1', 'set2'] }]);
+    const codes = deckCodes([
+      { kind: 'buildEncounterDeck', sets: [encounterSetCode('set1'), encounterSetCode('set2')] },
+    ]);
 
     expect(codes).toEqual(['ghoul', 'ghoul', 'ghoul', 'curse', 'curse', 'rat']);
   });
@@ -375,7 +392,7 @@ describe('compileSetup buildEncounterDeck', () => {
   it('leaves out copies that other steps put on the table, before or after the deck', () => {
     const codes = deckCodes([
       { kind: 'setAside', codes: [cardCode('ghoul')] },
-      { kind: 'buildEncounterDeck', sets: ['set1'] },
+      { kind: 'buildEncounterDeck', sets: [encounterSetCode('set1')] },
       { kind: 'setAside', codes: [cardCode('curse'), cardCode('curse')] },
     ]);
 
@@ -384,20 +401,26 @@ describe('compileSetup buildEncounterDeck', () => {
 
   it('leaves out every copy of an excluded code', () => {
     const codes = deckCodes([
-      { kind: 'buildEncounterDeck', sets: ['set1'], exclude: [cardCode('ghoul')] },
+      {
+        kind: 'buildEncounterDeck',
+        sets: [encounterSetCode('set1')],
+        exclude: [cardCode('ghoul')],
+      },
     ]);
 
     expect(codes).toEqual(['curse', 'curse']);
   });
 
   it('counts a card without a quantity as one copy', () => {
-    const codes = deckCodes([{ kind: 'buildEncounterDeck', sets: ['set2'] }]);
+    const codes = deckCodes([{ kind: 'buildEncounterDeck', sets: [encounterSetCode('set2')] }]);
 
     expect(codes).toEqual(['rat']);
   });
 
   it('rejects an encounter set without cards', () => {
-    const def = makeDefinition({ setup: [{ kind: 'buildEncounterDeck', sets: ['typo'] }] });
+    const def = makeDefinition({
+      setup: [{ kind: 'buildEncounterDeck', sets: [encounterSetCode('typo')] }],
+    });
 
     const rejection = rejectionOf(() => compileSetup(ctx, def, makeSetupOptions()));
 

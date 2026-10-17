@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   cardCode,
+  scenarioId,
   formatBoard,
   instanceId,
   investigatorId,
@@ -43,7 +44,7 @@ const ctx = contextWith(
  */
 const start: StartScenario = {
   type: 'StartScenario',
-  scenarioId: 'format',
+  scenarioId: scenarioId('format'),
   difficulty: 'standard',
   seed: 1,
   shuffleEncounterDeck: false,
@@ -212,7 +213,7 @@ describe('formatBoard', () => {
     const { state } = run(ctx, [
       {
         type: 'StartScenario',
-        scenarioId: 'empty',
+        scenarioId: scenarioId('empty'),
         difficulty: 'standard',
         seed: 1,
         investigators: [makeInvestigator({ id: 'bob', name: 'Bob' })],

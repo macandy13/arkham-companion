@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   cardCode,
+  scenarioId,
   decisionId,
   emptyState,
   execute,
@@ -45,7 +46,7 @@ const setAside: Zone = { kind: 'setAside' };
  */
 const start: StartScenario = {
   type: 'StartScenario',
-  scenarioId: 'test',
+  scenarioId: scenarioId('test'),
   difficulty: 'standard',
   seed: 7,
   investigators: [makeInvestigator({ id: 'alice', locationId: hall })],

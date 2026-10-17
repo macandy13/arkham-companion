@@ -1,3 +1,4 @@
+import { scenarioId } from '../ids';
 import { describe, expect, it } from 'vitest';
 import {
   campaignContext,
@@ -16,7 +17,11 @@ describe('AdjustCampaign (Roland: health 9, sanity 5; three scenarios; Roland ha
   const log = startedCampaign(
     {
       investigators: [roland.code, daisy.code],
-      scenarioIds: ['the-gathering', 'the-midnight-masks', 'the-devourer-below'],
+      scenarioIds: [
+        scenarioId('the-gathering'),
+        scenarioId('the-midnight-masks'),
+        scenarioId('the-devourer-below'),
+      ],
     },
     { type: 'AwardXp', code: roland.code, amount: 4 },
     { type: 'SpendXp', code: roland.code, amount: 1 },

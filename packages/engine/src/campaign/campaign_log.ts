@@ -1,4 +1,9 @@
-import type { InvestigatorCode } from '../ids';
+import {
+  campaignDefinitionId,
+  type CampaignDefinitionId,
+  type InvestigatorCode,
+  type ScenarioId,
+} from '../ids';
 import type { ChaosToken, Difficulty } from '../state';
 
 /**
@@ -75,7 +80,7 @@ export interface CampaignLog {
   /** ID of this campaign (one play-through); `GameStore` links games to it. */
   readonly campaignId: string;
   /** `CampaignDefinition.id` of the campaign being played. */
-  readonly definitionId: string;
+  readonly definitionId: CampaignDefinitionId;
   readonly difficulty: Difficulty;
   /** The current team in seat order; a replaced investigator moves to `formerInvestigators`. */
   readonly investigators: readonly CampaignInvestigator[];
@@ -92,7 +97,7 @@ export interface CampaignLog {
   /** The campaign's chaos bag; a multiset, so order carries no meaning. */
   readonly chaosBag: readonly ChaosToken[];
   /** `ScenarioDefinition.id`s in campaign order. Empty only before `CampaignStarted`. */
-  readonly scenarioIds: readonly string[];
+  readonly scenarioIds: readonly ScenarioId[];
   /**
    * Index into `scenarioIds` of the scenario to play next; equal to its
    * length once the campaign is complete.
@@ -104,7 +109,7 @@ export interface CampaignLog {
 export function emptyCampaignLog(): CampaignLog {
   return {
     campaignId: '',
-    definitionId: '',
+    definitionId: campaignDefinitionId(''),
     difficulty: 'standard',
     investigators: [],
     formerInvestigators: [],
@@ -168,6 +173,6 @@ export function traumaFate(
 }
 
 /** The ID of the scenario to play next, or `undefined` once the campaign is complete. */
-export function currentScenarioId(log: CampaignLog): string | undefined {
+export function currentScenarioId(log: CampaignLog): ScenarioId | undefined {
   return log.scenarioIds[log.position];
 }

@@ -4,6 +4,7 @@ import {
   compileMapStep,
   enemiesAt,
   mapId,
+  scenarioId,
   trait,
   type AddMapStep,
   type CardCode,
@@ -126,7 +127,7 @@ function onlyCard(state: GameState, code: CardCode): CardInstance {
  * cultist reveals another token, tablet -4), not checked against a source.
  */
 export const theGathering: ScenarioDefinition = {
-  id: 'the-gathering',
+  id: scenarioId('the-gathering'),
   // Number tokens, then symbol tokens: easier to check against the guide than one token per line.
   // prettier-ignore
   chaosBag: {

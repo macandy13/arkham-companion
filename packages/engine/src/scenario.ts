@@ -1,4 +1,4 @@
-import type { CardCode } from './ids';
+import type { CardCode, ScenarioId } from './ids';
 import type { SetupStep } from './setup';
 import type { ChaosToken, Difficulty } from './state';
 import type { SkillModifierRegistry } from './skill_modifiers';
@@ -12,7 +12,7 @@ import type { ScenarioHooks } from './triggers';
  */
 export interface ScenarioDefinition {
   /** Stored as `GameMeta.scenarioId`. */
-  id: string;
+  id: ScenarioId;
   /** Standalone chaos bag per difficulty. */
   chaosBag: Record<Difficulty, readonly ChaosToken[]>;
   /** What the symbol chaos tokens do, as printed on the scenario reference card. */

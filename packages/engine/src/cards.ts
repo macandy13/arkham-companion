@@ -1,5 +1,5 @@
 import { stripTrailingDot } from '@arkham/util';
-import type { Brand, CardCode } from './ids';
+import type { Brand, CardCode, EncounterSetCode } from './ids';
 import type { Keyword } from './keywords';
 import type { ScenarioReference } from './scenario';
 import type { SkillModifierRegistry } from './skill_modifiers';
@@ -121,7 +121,7 @@ export interface CardStats {
   /** Doom threshold of an agenda. */
   doom?: ScaledValue;
   /** ArkhamDB encounter set the card belongs to; absent for player cards. */
-  encounterCode?: string;
+  encounterCode?: EncounterSetCode;
   /** Number of physical copies in the product; treated as 1 when absent. */
   quantity?: number;
   /** Keywords parsed from the card text at load time; none when absent. */
@@ -167,7 +167,7 @@ export interface CardDb {
    * code (not per copy). Empty for an unknown set. Used to build the
    * encounter deck from a scenario's encounter sets.
    */
-  encounterSet(encounterCode: string): readonly CardStats[];
+  encounterSet(encounterCode: EncounterSetCode): readonly CardStats[];
 }
 
 /**

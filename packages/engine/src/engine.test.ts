@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   cardCode,
+  scenarioId,
   checkInvariants,
   handle,
   instanceId,
@@ -25,7 +26,7 @@ const investigator = makeInvestigator({ id: 'inv1' });
 
 const start: StartScenario = {
   type: 'StartScenario',
-  scenarioId: 'test',
+  scenarioId: scenarioId('test'),
   difficulty: 'standard',
   seed: 1234,
   investigators: [investigator],
