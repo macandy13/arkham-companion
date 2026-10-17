@@ -1,4 +1,5 @@
 import {
+  campaignId,
   checkCampaignInvariants,
   compileCampaign,
   emptyCampaignLog,
@@ -12,7 +13,7 @@ import { nightOfTheZealot } from './campaign';
 describe('Night of the Zealot campaign definition', () => {
   it('lists the three scenarios in campaign order', () => {
     const start = compileCampaign(nightOfTheZealot, {
-      campaignId: 'campaign_a',
+      campaignId: campaignId('campaign_a'),
       difficulty: 'standard',
       investigators: [roland.code],
     });
@@ -28,7 +29,7 @@ describe('Night of the Zealot campaign definition', () => {
     'starts the %s campaign with the bag of that difficulty',
     (difficulty) => {
       const start = compileCampaign(nightOfTheZealot, {
-        campaignId: 'campaign_a',
+        campaignId: campaignId('campaign_a'),
         difficulty,
         investigators: [roland.code],
       });
@@ -41,7 +42,7 @@ describe('Night of the Zealot campaign definition', () => {
       campaignContext,
       emptyCampaignLog(),
       compileCampaign(nightOfTheZealot, {
-        campaignId: 'campaign_a',
+        campaignId: campaignId('campaign_a'),
         difficulty: 'standard',
         investigators: [roland.code, daisy.code],
       }),

@@ -1,6 +1,8 @@
 import {
   campaignDefinitionId,
+  campaignId,
   type CampaignDefinitionId,
+  type CampaignId,
   type InvestigatorCode,
   type ScenarioId,
 } from '../ids';
@@ -78,7 +80,7 @@ export type StoryKind = StoryValue['kind'];
  */
 export interface CampaignLog {
   /** ID of this campaign (one play-through); `GameStore` links games to it. */
-  readonly campaignId: string;
+  readonly campaignId: CampaignId;
   /** `CampaignDefinition.id` of the campaign being played. */
   readonly definitionId: CampaignDefinitionId;
   readonly difficulty: Difficulty;
@@ -108,7 +110,7 @@ export interface CampaignLog {
 /** Log before any `CampaignStarted` event. */
 export function emptyCampaignLog(): CampaignLog {
   return {
-    campaignId: '',
+    campaignId: campaignId(''),
     definitionId: campaignDefinitionId(''),
     difficulty: 'standard',
     investigators: [],

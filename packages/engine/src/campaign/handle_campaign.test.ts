@@ -10,7 +10,7 @@ import {
   startedCampaign,
   wendy,
 } from '../../test/utils';
-import { campaignDefinitionId, scenarioId, investigatorCode } from '../ids';
+import { campaignId, campaignDefinitionId, scenarioId, investigatorCode } from '../ids';
 import { cardDbFrom } from '../cards';
 import { investigatorCardStats } from '../investigator_cards';
 import type { CampaignCommand } from './campaign_commands';
@@ -24,7 +24,7 @@ describe('StartCampaign', () => {
       campaignContext,
       emptyCampaignLog(),
       makeStartCampaign({
-        campaignId: 'campaign_a',
+        campaignId: campaignId('campaign_a'),
         definitionId: campaignDefinitionId('night-of-the-zealot'),
         difficulty: 'hard',
         investigators: [roland.code, daisy.code],
@@ -35,7 +35,7 @@ describe('StartCampaign', () => {
 
     expect(events.map((e) => e.type)).toEqual(['CampaignStarted']);
     expect(log).toEqual({
-      campaignId: 'campaign_a',
+      campaignId: campaignId('campaign_a'),
       definitionId: 'night-of-the-zealot',
       difficulty: 'hard',
       investigators: [

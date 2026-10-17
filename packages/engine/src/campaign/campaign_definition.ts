@@ -1,5 +1,5 @@
 import type { ChaosToken, Difficulty } from '../state';
-import type { CampaignDefinitionId, InvestigatorCode, ScenarioId } from '../ids';
+import type { CampaignDefinitionId, CampaignId, InvestigatorCode, ScenarioId } from '../ids';
 import type { StartCampaign } from './campaign_commands';
 
 /**
@@ -42,7 +42,7 @@ export interface InterludeDefinition {
 /** What the players choose when starting a campaign from a `CampaignDefinition`. */
 export interface CampaignOptions {
   /** Unique ID of this play-through, chosen by the caller (the engine generates no IDs). */
-  readonly campaignId: string;
+  readonly campaignId: CampaignId;
   readonly difficulty: Difficulty;
   readonly investigators: readonly InvestigatorCode[];
 }
