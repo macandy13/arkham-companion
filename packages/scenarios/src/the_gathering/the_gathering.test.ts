@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  cardDbWith,
   checkInvariants,
   compileSetup,
   instanceId,
@@ -16,6 +17,7 @@ import {
   makeDefinition,
   makeSetupOptions,
   runFrom,
+  standardInvestigatorCards,
   startScenario,
   stateAfter,
 } from '@arkham/engine/test/utils';
@@ -26,7 +28,7 @@ import {
   theGatheringHouse,
 } from '../index';
 
-const ctx: EngineContext = { cards: theGatheringCards };
+const ctx: EngineContext = { cards: cardDbWith(theGatheringCards, standardInvestigatorCards) };
 const study = mapId('study');
 
 describe('The Gathering setup', () => {
@@ -135,7 +137,7 @@ describe('The Gathering reference card', () => {
 
 describe('The Gathering skull token', () => {
   const playing: EngineContext = {
-    cards: theGatheringCards,
+    ...ctx,
     reference: theGathering.reference,
     ...(theGathering.modifiers ? { modifiers: theGathering.modifiers } : {}),
   };
@@ -201,7 +203,7 @@ describe('The Gathering house (after act 1)', () => {
 });
 
 describe('The Gathering act 1 reverse side', () => {
-  const playing: EngineContext = { cards: theGatheringCards, hooks: theGathering.hooks };
+  const playing: EngineContext = { ...ctx, hooks: theGathering.hooks };
   const studyCard = instanceId('01111#1');
   const hallway = instanceId('01112#1');
   const tank = investigatorId('tank');
@@ -287,7 +289,7 @@ describe('The Gathering act 1 reverse side', () => {
 });
 
 describe('The Gathering enemies', () => {
-  const playing: EngineContext = { cards: theGatheringCards, hooks: theGathering.hooks };
+  const playing: EngineContext = { ...ctx, hooks: theGathering.hooks };
   const fleshEater = instanceId('01118#1');
   const priest = instanceId('01116#1');
   const attic = instanceId('01113#1');

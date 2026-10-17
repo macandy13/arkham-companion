@@ -146,11 +146,15 @@ Slices (one PR each):
 4. ~~Engine: the lead investigator orders simultaneous forced effects.~~ Deferred (Andy, 2026-10-17): every event fires at most one hook, and no Core card's outcome depends on the order of end-of-turn or end-of-round effects. Build it when a scenario needs it.
 5. Engine: `decider` checked against the answering investigator.
 
-- [ ] `onTurnEnd` hook fired by `EndTurn`; Frozen in Fear raises its willpower test there
-- [ ] End-of-round discards (Dissonant Voices: "Forced – At the end of the round: Discard"), found by the M1.17 end-to-end test
-- [ ] Simultaneous forced effects: the lead investigator picks the order (`chooseOption` decision) when more than one applies
-- [ ] After a doom `ManualAdjust`, offer `CheckDoomThreshold` (a `confirm` decision), never advance silently
-- [ ] `ManualAdjust` cannot move the current agenda or act out of its deck (rejection)
+- [x] `onTurnEnd` hook fired by `EndTurn`; Frozen in Fear raises its willpower test there (engine; card data in slice 2)
+- [x] End-of-round discards (Dissonant Voices: "Forced – At the end of the round: Discard"), found by the M1.17 end-to-end test
+- [ ] ~~Simultaneous forced effects: the lead investigator picks the order (`chooseOption` decision) when more than one applies~~ (deferred, see slice 4)
+- [x] After a doom `ManualAdjust`, offer `CheckDoomThreshold` (a `confirm` decision), never advance silently
+- [x] `ManualAdjust` cannot move the current agenda or act out of its deck (rejection)
 - [x] `decider` is checked against who answers a decision, if the command carries the answering investigator
+
+Done (slice 1, #79): `EndTurn` raises the `turnEndTest` of each card in the investigator's threat area (a pass discards it), `TurnEnded` fires `ScenarioHooks.onTurnEnd`, and upkeep step 4.6 discards every in-play card with `discardAtRoundEnd`. The Gathering's card data and the end-to-end test follow in slice 2.
+
+Done (manual-adjust slice): added doom in a `ManualAdjust` that reaches the threshold raises the usual `advanceAgenda` confirm instead of a separate "check the threshold?" question, since that check would only ask the same thing again. Moving the current agenda or act is rejected (`currentStageCard`); later cards of either deck can still be moved.
 
 Done (decider slice): `ResolveDecision.answeredBy` is optional, since the app runs on one shared device for now. When it is set, the answer is refused unless that investigator is the named one, the lead, or, for a group decision, any investigator still in the scenario (`notTheDecider`).

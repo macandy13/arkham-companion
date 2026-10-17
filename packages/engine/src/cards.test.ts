@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   CommandRejected,
   cardDbFrom,
+  cardDbWith,
   cardStats,
   comparableName,
   resolveValue,
@@ -71,6 +72,33 @@ describe('cardDbFrom', () => {
     const cards = cardDbFrom([makeCard({ code: 'a', encounterCode: 'cult' })]);
 
     expect(cards.encounterSet('unknown')).toEqual([]);
+  });
+});
+
+describe('cardDbWith', () => {
+  const scenarioCards = cardDbFrom([
+    makeCard({ code: 'study', typeCode: 'location' }),
+    makeCard({ code: 'rat', typeCode: 'enemy', encounterCode: 'rats' }),
+  ]);
+
+  it('finds the cards of both the base and the extra cards', () => {
+    const cards = cardDbWith(scenarioCards, [
+      makeCard({ code: 'roland', typeCode: 'investigator' }),
+    ]);
+
+    expect([cards.get('study')?.typeCode, cards.get('roland')?.typeCode]).toEqual([
+      'location',
+      'investigator',
+    ]);
+  });
+
+  it('lets an extra card replace a base card with the same code, in encounter sets too', () => {
+    const cards = cardDbWith(scenarioCards, [
+      makeCard({ code: 'rat', name: 'Big Rat', typeCode: 'enemy', encounterCode: 'rats' }),
+    ]);
+
+    expect(cards.get('rat')?.name).toBe('Big Rat');
+    expect(cards.encounterSet('rats').map((card) => card.name)).toEqual(['Big Rat']);
   });
 });
 

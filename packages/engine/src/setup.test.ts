@@ -4,6 +4,9 @@ import {
   compileMapStep,
   compileSetup,
   instanceId,
+  investigatorCode,
+  investigatorCardStats,
+  investigatorId,
   mapId,
   referenceSide,
   spawnZone,
@@ -12,7 +15,7 @@ import {
 } from './index';
 import {
   contextWith,
-  investigators,
+  investigatorSeats,
   makeCard,
   makeDefinition,
   makeSetupOptions,
@@ -89,6 +92,58 @@ describe('compileSetup', () => {
     });
   });
 
+  it('seats investigators in the given order with the printed stats of their card', () => {
+    const roland = {
+      code: investigatorCode('01001'),
+      name: 'Roland Banks',
+      health: 9,
+      sanity: 5,
+      skills: { willpower: 3, intellect: 3, combat: 4, agility: 2 },
+    };
+    const daisy = {
+      code: investigatorCode('01002'),
+      name: 'Daisy Walker',
+      health: 5,
+      sanity: 9,
+      skills: { willpower: 3, intellect: 5, combat: 2, agility: 2 },
+    };
+    const ctx = contextWith(investigatorCardStats(roland), investigatorCardStats(daisy));
+    const seats = [
+      { id: investigatorId('daisy'), code: daisy.code },
+      { id: investigatorId('roland'), code: roland.code },
+    ];
+
+    const command = compileSetup(ctx, makeDefinition(), makeSetupOptions({ investigators: seats }));
+
+    expect(command.investigators).toEqual([
+      {
+        id: 'daisy',
+        code: daisy.code,
+        name: 'Daisy Walker',
+        seat: 0,
+        health: { max: 5, damage: 0 },
+        sanity: { max: 9, horror: 0 },
+        clues: 0,
+        resources: 5,
+        doomOnPlayerCards: 0,
+        skills: daisy.skills,
+        status: 'active',
+      },
+      expect.objectContaining({ id: 'roland', name: 'Roland Banks', seat: 1 }),
+    ]);
+  });
+
+  it('rejects a seat whose code has no investigator card', () => {
+    const notACard = investigatorCode('not_a_card');
+    const seats = [{ id: investigatorId('nobody'), code: notACard }];
+
+    const rejection = rejectionOf(() =>
+      compileSetup(contextWith(), makeDefinition(), makeSetupOptions({ investigators: seats })),
+    );
+
+    expect(rejection).toEqual({ code: 'unknownInvestigatorCard', investigatorCode: notACard });
+  });
+
   it('places investigators at a location and reveals it with its clues', () => {
     const ctx = contextWith(
       makeCard({ code: 'start', typeCode: 'location', clues: perInvestigator(1) }),
@@ -97,7 +152,11 @@ describe('compileSetup', () => {
       setup: [mainMap('start'), { kind: 'moveInvestigators', to: 'start' }],
     });
 
-    const command = compileSetup(ctx, def, makeSetupOptions({ investigators: investigators(2) }));
+    const command = compileSetup(
+      ctx,
+      def,
+      makeSetupOptions({ investigators: investigatorSeats(2) }),
+    );
 
     expect(command.investigators.map((inv) => inv.locationId)).toEqual(['start#1', 'start#1']);
     expect(command.cards[0]).toMatchObject({ faceUp: true, tokens: { clue: 2 } });
@@ -134,7 +193,7 @@ describe('compileSetup', () => {
     const command = compileSetup(
       contextWith(),
       def,
-      makeSetupOptions({ investigators: investigators(3) }),
+      makeSetupOptions({ investigators: investigatorSeats(3) }),
     );
 
     expect(command.cards[0]?.tokens).toEqual({ clue: 6 });
@@ -201,7 +260,11 @@ describe('compileSetup addMap', () => {
       setup: [{ ...mainMap(), locations: [{ code: 'loc', faceUp: true }] }],
     });
 
-    const command = compileSetup(ctx, def, makeSetupOptions({ investigators: investigators(2) }));
+    const command = compileSetup(
+      ctx,
+      def,
+      makeSetupOptions({ investigators: investigatorSeats(2) }),
+    );
 
     expect(command.cards[0]?.tokens).toEqual({ clue: 4 });
   });
