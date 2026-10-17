@@ -24,7 +24,7 @@ Every change the engine makes on the players' behalf (a token added to the bag, 
 Ref: product.md "Campaign mode".
 
 - [ ] `CampaignLog`: campaign id, difficulty, investigators (code, physical/mental trauma, XP earned/spent, killed/insane), story records (key → value, e.g. `"ghoulPriestDefeated": true`, counts, lists such as "cultists who got away"), chaos bag contents, scenario sequence with the current position
-- [ ] Campaign commands, events and reducer, separate from the game's (`StartCampaign`, `RecordStory`, `AddChaosToken`, `RemoveChaosToken`, `AwardXp`, `AddTrauma`, `MarkKilled`, `MarkInsane`, `ReplaceInvestigator`, `AdvanceScenario`, `ManualAdjust` for corrections) with rejections and invariants (no negative XP or trauma, killed/insane investigators cannot play)
+- [ ] Campaign commands, events and reducer, separate from the game's (`StartCampaign`, `RecordStory`, `AddChaosToken`, `RemoveChaosToken`, `AwardXp`, `AddTrauma`, `MarkKilled`, `MarkInsane`, `ReplaceInvestigator`, `AdvanceScenario`, `AdjustCampaign` for corrections) with rejections and invariants (no negative XP or trauma, killed/insane investigators cannot play)
 - [ ] Campaign definition type (scenario order, starting chaos bag per difficulty, interlude steps if any) next to `ScenarioDefinition`; the Night of the Zealot definition (three scenarios, Core Set chaos bags per difficulty), with The Midnight Masks and The Devourer Below entered only as far as the campaign tests need (identity, campaign setup, resolutions)
 - [ ] Readable unit tests (M1.14 conventions if merged)
 
@@ -34,7 +34,7 @@ Slices (review of #50: one PR was too big to review), each its own PR on top of 
 2. Campaign events and the reducer (`applyCampaign`, `replayCampaign`)
 3. `StartCampaign`, story records, chaos bag and `AdvanceScenario` with `handleCampaign`/`executeCampaign` and the rejections
 4. Investigator commands: XP, trauma, killed/insane, `ReplaceInvestigator`
-5. `ManualAdjust` corrections
+5. `AdjustCampaign` corrections
 6. `CampaignDefinition`, `compileCampaign` and the Night of the Zealot definition
 
 ## M1C.2 Change notices (O)

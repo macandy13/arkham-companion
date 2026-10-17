@@ -18,7 +18,7 @@ export type CampaignCommand =
   | MarkInsane
   | ReplaceInvestigator
   | AdvanceScenario
-  | CampaignManualAdjust;
+  | AdjustCampaign;
 
 /** The `type` of every campaign command. */
 export type CampaignCommandType = CampaignCommand['type'];
@@ -56,7 +56,7 @@ export interface StartCampaign {
  * Writes a story record, replacing any earlier value of the same kind
  * (crossing out a name or counting up is recording the new value). A record
  * never changes kind, which catches a resolution writing to the wrong key;
- * `ManualAdjust` `removeStory` clears it first if it really must.
+ * `AdjustCampaign` `removeStory` clears it first if it really must.
  * Produces `StoryRecorded`.
  */
 export interface RecordStory {
@@ -150,12 +150,12 @@ export interface AdvanceScenario {
  * does not cascade, so e.g. raising trauma to the limit here is rejected
  * instead of killing the investigator - use `AddTrauma` for that.
  */
-export interface CampaignManualAdjust {
-  readonly type: 'ManualAdjust';
+export interface AdjustCampaign {
+  readonly type: 'AdjustCampaign';
   readonly adjustment: CampaignAdjustment;
 }
 
-/** The corrections a `CampaignManualAdjust` can make; each produces the matching regular event. */
+/** The corrections a `AdjustCampaign` can make; each produces the matching regular event. */
 export type CampaignAdjustment =
   | {
       readonly kind: 'xp';

@@ -1,5 +1,5 @@
 import { isNonNegativeInteger, isNonZeroInteger } from '@arkham/util';
-import type { CampaignAdjustment, CampaignManualAdjust } from './campaign_commands';
+import type { CampaignAdjustment, AdjustCampaign } from './campaign_commands';
 import type { CampaignEvent } from './campaign_events';
 import { checkCampaignInvariants } from './campaign_invariants';
 import type { CampaignLog } from './campaign_log';
@@ -8,15 +8,12 @@ import { CampaignCommandRejected } from './campaign_rejection';
 import { requireCampaignInvestigator } from './handle_campaign_investigator';
 
 /**
- * `ManualAdjust`: turns a correction into the matching regular event, then
+ * `AdjustCampaign`: turns a correction into the matching regular event, then
  * vets the result against `checkCampaignInvariants`. Checking the outcome
  * instead of listing every bad combination keeps corrections flexible
  * ("assistant, not referee") while the log can never become inconsistent.
  */
-export function handleCampaignManualAdjust(
-  log: CampaignLog,
-  command: CampaignManualAdjust,
-): CampaignEvent[] {
+export function handleAdjustCampaign(log: CampaignLog, command: AdjustCampaign): CampaignEvent[] {
   const events = [adjustmentEvent(log, command.adjustment)];
   const violations = checkCampaignInvariants(replayCampaign(events, log));
   if (violations.length > 0)
