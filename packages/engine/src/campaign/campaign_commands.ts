@@ -4,7 +4,7 @@ import type { InvestigatorFate, StoryValue, TraumaKind, XpAccount } from './camp
 
 /**
  * Intents for the campaign aggregate, kept apart from the game's `Command`:
- * a campaign outlives each game and has its own event log. `handleCampaign`
+ * a campaign outlives each game and has its own event log. `handleCommand`
  * validates them against the `CampaignLog` and produces `CampaignEvent`s.
  */
 export type CampaignCommand =
@@ -26,7 +26,7 @@ export type CampaignCommandType = CampaignCommand['type'];
 
 /**
  * Starts a campaign with 1–4 investigators, the starting chaos bag of the
- * chosen difficulty and the scenario order. `compileCampaign` builds it from
+ * chosen difficulty and the scenario order. `compileStart` builds it from
  * a `CampaignDefinition`. Produces `CampaignStarted`.
  */
 export interface StartCampaign {
@@ -137,7 +137,7 @@ export interface AdvanceScenario {
  * regular commands cannot undo: lowering XP or trauma, reviving an
  * investigator, deleting a story record or moving the scenario position.
  * Adding tokens, XP or records goes through the regular commands. Every
- * correction must leave the log consistent (`checkCampaignInvariants`); it
+ * correction must leave the log consistent (`checkInvariants`); it
  * does not cascade, so e.g. raising trauma to the limit here is rejected
  * instead of killing the investigator - use `AddTrauma` for that.
  */

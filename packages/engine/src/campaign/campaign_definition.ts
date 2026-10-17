@@ -5,7 +5,7 @@ import type { StartCampaign } from './campaign_commands';
 /**
  * A campaign as data (architecture §8), the campaign counterpart of
  * `ScenarioDefinition`: which scenarios it plays in which order and the
- * chaos bag it starts with. `compileCampaign` turns it into a
+ * chaos bag it starts with. `compileStart` turns it into a
  * `StartCampaign`. Resolutions and `campaignSetup` live on each
  * `ScenarioDefinition` (M1C.3/M1C.4), because they belong to the scenario.
  */
@@ -48,7 +48,7 @@ export interface CampaignOptions {
 }
 
 /** The `StartCampaign` for `definition` with the players' choices. */
-export function compileCampaign(
+export function compileStart(
   definition: CampaignDefinition,
   options: CampaignOptions,
 ): StartCampaign {

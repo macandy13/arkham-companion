@@ -4,7 +4,7 @@ import {
   cardCode,
   encounterSetCode,
   scenarioId,
-  emptyCampaignLog,
+  campaign,
   compileMapStep,
   compileSetup,
   instanceId,
@@ -431,11 +431,15 @@ describe('compileSetup buildEncounterDeck', () => {
 
 describe('compileSetup campaign', () => {
   it('passes the campaign log through', () => {
-    const campaign = { ...emptyCampaignLog(), campaignId: campaignId('night_of_the_zealot_1') };
+    const log = { ...campaign.createEmptyLog(), campaignId: campaignId('night_of_the_zealot_1') };
 
-    const command = compileSetup(contextWith(), makeDefinition(), makeSetupOptions({ campaign }));
+    const command = compileSetup(
+      contextWith(),
+      makeDefinition(),
+      makeSetupOptions({ campaign: log }),
+    );
 
-    expect(command.campaign).toBe(campaign);
+    expect(command.campaign).toBe(log);
   });
 });
 

@@ -1,9 +1,9 @@
 import { campaignId, campaignDefinitionId, scenarioId } from '../ids';
 import { describe, expect, it } from 'vitest';
 import { daisy, roland } from '../../test/utils';
-import { compileCampaign, type CampaignDefinition } from './campaign_definition';
+import { compileStart, type CampaignDefinition } from './campaign_definition';
 
-describe('compileCampaign', () => {
+describe('compileStart', () => {
   const definition: CampaignDefinition = {
     id: campaignDefinitionId('test_campaign'),
     scenarios: [scenarioId('first_scenario'), scenarioId('second_scenario')],
@@ -17,7 +17,7 @@ describe('compileCampaign', () => {
 
   it('builds a StartCampaign with the bag of the chosen difficulty and the scenario order', () => {
     expect(
-      compileCampaign(definition, {
+      compileStart(definition, {
         campaignId: campaignId('campaign_a'),
         difficulty: 'hard',
         investigators: [roland.code, daisy.code],

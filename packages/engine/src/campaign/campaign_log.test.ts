@@ -2,14 +2,14 @@ import { scenarioId } from '../ids';
 import { describe, expect, it } from 'vitest';
 import { daisyMember, makeCampaignLog, rolandMember, wendyMember } from '../../test/utils';
 import {
-  availableXp,
-  campaignInvestigator,
-  currentScenarioId,
-  emptyCampaignLog,
-  isCampaignStarted,
-  traumaFate,
-  traumaOf,
-  withTrauma,
+  countAvailableXp,
+  findInvestigator,
+  findCurrentScenarioId,
+  createEmptyLog,
+  isStarted,
+  findTraumaFate,
+  countTrauma,
+  addTrauma,
   type CampaignInvestigator,
 } from './campaign_log';
 
@@ -27,29 +27,29 @@ describe('campaign log queries', () => {
   };
 
   it('an empty log has not started, a started one has', () => {
-    expect(isCampaignStarted(emptyCampaignLog())).toBe(false);
-    expect(isCampaignStarted(makeCampaignLog())).toBe(true);
+    expect(isStarted(createEmptyLog())).toBe(false);
+    expect(isStarted(makeCampaignLog())).toBe(true);
   });
 
   it('finds a current team member by code', () => {
     const log = makeCampaignLog({ investigators: [rolandMember, daisyMember] });
     const notOnTeam = wendyMember.code;
-    expect(campaignInvestigator(log, daisyMember.code)).toBe(daisyMember);
-    expect(campaignInvestigator(log, notOnTeam)).toBeUndefined();
+    expect(findInvestigator(log, daisyMember.code)).toBe(daisyMember);
+    expect(findInvestigator(log, notOnTeam)).toBeUndefined();
   });
 
   it('available XP is earned minus spent', () => {
-    expect(availableXp(woundedRoland)).toBe(3);
+    expect(countAvailableXp(woundedRoland)).toBe(3);
   });
 
   it('reads and raises trauma of one kind without touching the other', () => {
-    expect(traumaOf(woundedRoland, 'physical')).toBe(2);
-    expect(traumaOf(woundedRoland, 'mental')).toBe(1);
-    expect(withTrauma(woundedRoland, 'physical', 3)).toMatchObject({
+    expect(countTrauma(woundedRoland, 'physical')).toBe(2);
+    expect(countTrauma(woundedRoland, 'mental')).toBe(1);
+    expect(addTrauma(woundedRoland, 'physical', 3)).toMatchObject({
       physicalTrauma: 5,
       mentalTrauma: 1,
     });
-    expect(withTrauma(woundedRoland, 'mental', 3)).toMatchObject({
+    expect(addTrauma(woundedRoland, 'mental', 3)).toMatchObject({
       physicalTrauma: 2,
       mentalTrauma: 4,
     });
@@ -81,14 +81,14 @@ describe('campaign log queries', () => {
       fate: 'insane',
     },
   ] as const)('$name leads to $fate', ({ trauma, kind, fate }) => {
-    expect(traumaFate({ ...woundedRoland, ...trauma }, kind)).toBe(fate);
+    expect(findTraumaFate({ ...woundedRoland, ...trauma }, kind)).toBe(fate);
   });
 
   it('the current scenario is the one at the position, none once complete', () => {
     const log = makeCampaignLog({
       scenarioIds: [scenarioId('the-gathering'), scenarioId('the-midnight-masks')],
     });
-    expect(currentScenarioId(log)).toBe('the-gathering');
-    expect(currentScenarioId({ ...log, position: 2 })).toBeUndefined();
+    expect(findCurrentScenarioId(log)).toBe('the-gathering');
+    expect(findCurrentScenarioId({ ...log, position: 2 })).toBeUndefined();
   });
 });

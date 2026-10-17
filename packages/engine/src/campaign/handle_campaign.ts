@@ -7,9 +7,9 @@ import type {
   StartCampaign,
 } from './campaign_commands';
 import type { CampaignEvent } from './campaign_events';
-import { MAX_TEAM_SIZE, storyValueIsValid } from './campaign_invariants';
-import { isCampaignStarted, type CampaignLog } from './campaign_log';
-import { replayCampaign } from './campaign_reducer';
+import { MAX_TEAM_SIZE, isValidStoryValue } from './campaign_invariants';
+import { isStarted, type CampaignLog } from './campaign_log';
+import { replayEvents } from './campaign_reducer';
 import { CampaignCommandRejected } from './campaign_rejection';
 import {
   handleAddTrauma,
@@ -37,13 +37,13 @@ export interface CampaignContext {
  * and command always yield the same events. Campaign commands trigger no
  * follow-ups, so unlike a game command one command is exactly its own events.
  */
-export function handleCampaign(
+export function handleCommand(
   ctx: CampaignContext,
   log: CampaignLog,
   command: CampaignCommand,
 ): CampaignEvent[] {
   if (command.type === 'StartCampaign') return handleStartCampaign(ctx, log, command);
-  if (!isCampaignStarted(log)) throw new CampaignCommandRejected({ code: 'campaignNotStarted' });
+  if (!isStarted(log)) throw new CampaignCommandRejected({ code: 'campaignNotStarted' });
   switch (command.type) {
     case 'RecordStory':
       return handleRecordStory(log, command);
@@ -77,16 +77,16 @@ export interface CampaignExecuteResult {
 }
 
 /**
- * Runs a campaign command end to end (`handleCampaign`, then the reducer),
+ * Runs a campaign command end to end (`handleCommand`, then the reducer),
  * like the game's `execute`. Throws `CampaignCommandRejected`.
  */
-export function executeCampaign(
+export function executeCommand(
   ctx: CampaignContext,
   log: CampaignLog,
   command: CampaignCommand,
 ): CampaignExecuteResult {
-  const events = handleCampaign(ctx, log, command);
-  return { log: replayCampaign(events, log), events };
+  const events = handleCommand(ctx, log, command);
+  return { log: replayEvents(events, log), events };
 }
 
 function handleStartCampaign(
@@ -94,7 +94,7 @@ function handleStartCampaign(
   log: CampaignLog,
   command: StartCampaign,
 ): CampaignEvent[] {
-  if (isCampaignStarted(log)) throw new CampaignCommandRejected({ code: 'campaignAlreadyStarted' });
+  if (isStarted(log)) throw new CampaignCommandRejected({ code: 'campaignAlreadyStarted' });
   const count = command.investigators.length;
   if (count < 1 || count > MAX_TEAM_SIZE)
     throw new CampaignCommandRejected({ code: 'invalidTeamSize', count });
@@ -123,7 +123,7 @@ function handleRecordStory(log: CampaignLog, command: RecordStory): CampaignEven
   // A key with spaces around it would be a second record next to the trimmed one.
   if (key.trim() === '' || key !== key.trim())
     throw new CampaignCommandRejected({ code: 'invalidStoryKey', key });
-  if (!storyValueIsValid(value))
+  if (!isValidStoryValue(value))
     throw new CampaignCommandRejected({ code: 'invalidStoryValue', key });
   const recorded = log.story[key];
   if (recorded && recorded.kind !== value.kind)

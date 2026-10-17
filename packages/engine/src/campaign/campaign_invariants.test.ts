@@ -8,10 +8,10 @@ import {
   skidsMember,
   wendyMember,
 } from '../../test/utils';
-import { checkCampaignInvariants, storyValueIsValid } from './campaign_invariants';
-import { emptyCampaignLog, type CampaignInvestigator, type CampaignLog } from './campaign_log';
+import { checkInvariants, isValidStoryValue } from './campaign_invariants';
+import { createEmptyLog, type CampaignInvestigator, type CampaignLog } from './campaign_log';
 
-describe('checkCampaignInvariants', () => {
+describe('checkInvariants', () => {
   const started = makeCampaignLog({
     investigators: [rolandMember],
     scenarioIds: [scenarioId('the-gathering'), scenarioId('the-midnight-masks')],
@@ -22,7 +22,7 @@ describe('checkCampaignInvariants', () => {
   });
 
   it.each<{ name: string; log: CampaignLog }>([
-    { name: 'the empty log before the campaign starts', log: emptyCampaignLog() },
+    { name: 'the empty log before the campaign starts', log: createEmptyLog() },
     { name: 'a freshly started campaign', log: started },
     { name: 'a completed campaign', log: { ...started, position: 2 } },
     {
@@ -46,7 +46,7 @@ describe('checkCampaignInvariants', () => {
       log: { ...started, formerInvestigators: [agnesMember] },
     },
   ])('finds no violation in $name', ({ log }) => {
-    expect(checkCampaignInvariants(log)).toEqual([]);
+    expect(checkInvariants(log)).toEqual([]);
   });
 
   it.each<{ name: string; log: CampaignLog; violation: string }>([
@@ -114,11 +114,11 @@ describe('checkCampaignInvariants', () => {
       violation: 'scenario position -1 is outside 0..2',
     },
   ])('reports $name', ({ log, violation }) => {
-    expect(checkCampaignInvariants(log)).toContain(violation);
+    expect(checkInvariants(log)).toContain(violation);
   });
 });
 
-describe('storyValueIsValid', () => {
+describe('isValidStoryValue', () => {
   it.each([
     { name: 'a flag', value: { kind: 'flag', value: false }, valid: true },
     { name: 'a zero count', value: { kind: 'count', value: 0 }, valid: true },
@@ -141,6 +141,6 @@ describe('storyValueIsValid', () => {
       valid: true,
     },
   ] as const)('judges $name', ({ value, valid }) => {
-    expect(storyValueIsValid(value)).toBe(valid);
+    expect(isValidStoryValue(value)).toBe(valid);
   });
 });

@@ -2,14 +2,14 @@ import type { InvestigatorCode } from '../ids';
 import { withoutFirst, withoutKey } from '@arkham/util';
 import type { CampaignEvent, CampaignStarted, InvestigatorReplaced } from './campaign_events';
 import {
-  emptyCampaignLog,
-  withTrauma,
+  createEmptyLog,
+  addTrauma,
   type CampaignInvestigator,
   type CampaignLog,
 } from './campaign_log';
 
 /** Pure reducer of the campaign aggregate: applies one event and returns the next log. Never mutates `log`. */
-export function applyCampaign(log: CampaignLog, event: CampaignEvent): CampaignLog {
+export function applyEvent(log: CampaignLog, event: CampaignEvent): CampaignLog {
   switch (event.type) {
     case 'CampaignStarted':
       return applyCampaignStarted(event);
@@ -29,7 +29,7 @@ export function applyCampaign(log: CampaignLog, event: CampaignEvent): CampaignL
       );
     case 'TraumaChanged':
       return updateInvestigator(log, event.code, (investigator) =>
-        withTrauma(investigator, event.kind, event.delta),
+        addTrauma(investigator, event.kind, event.delta),
       );
     case 'InvestigatorFateChanged':
       return updateInvestigator(log, event.code, (investigator) => ({
@@ -44,16 +44,16 @@ export function applyCampaign(log: CampaignLog, event: CampaignEvent): CampaignL
 }
 
 /** Applies events in order, starting from `log` (default: the empty log). */
-export function replayCampaign(
+export function replayEvents(
   events: readonly CampaignEvent[],
-  log: CampaignLog = emptyCampaignLog(),
+  log: CampaignLog = createEmptyLog(),
 ): CampaignLog {
-  return events.reduce(applyCampaign, log);
+  return events.reduce(applyEvent, log);
 }
 
 function applyCampaignStarted(event: CampaignStarted): CampaignLog {
   return {
-    ...emptyCampaignLog(),
+    ...createEmptyLog(),
     campaignId: event.campaignId,
     definitionId: event.definitionId,
     difficulty: event.difficulty,

@@ -1,10 +1,4 @@
-import {
-  campaignId,
-  checkCampaignInvariants,
-  compileCampaign,
-  emptyCampaignLog,
-  executeCampaign,
-} from '@arkham/engine';
+import { campaign, campaignId } from '@arkham/engine';
 import { campaignContext, daisy, roland } from '@arkham/engine/test/utils';
 import { describe, expect, it } from 'vitest';
 import { theGathering } from '../the_gathering/scenario';
@@ -12,7 +6,7 @@ import { nightOfTheZealot } from './campaign';
 
 describe('Night of the Zealot campaign definition', () => {
   it('lists the three scenarios in campaign order', () => {
-    const start = compileCampaign(nightOfTheZealot, {
+    const start = campaign.compileStart(nightOfTheZealot, {
       campaignId: campaignId('campaign_a'),
       difficulty: 'standard',
       investigators: [roland.code],
@@ -28,7 +22,7 @@ describe('Night of the Zealot campaign definition', () => {
   it.each(['easy', 'standard', 'hard', 'expert'] as const)(
     'starts the %s campaign with the bag of that difficulty',
     (difficulty) => {
-      const start = compileCampaign(nightOfTheZealot, {
+      const start = campaign.compileStart(nightOfTheZealot, {
         campaignId: campaignId('campaign_a'),
         difficulty,
         investigators: [roland.code],
@@ -38,16 +32,16 @@ describe('Night of the Zealot campaign definition', () => {
   );
 
   it('produces a valid campaign log at the first scenario', () => {
-    const { log } = executeCampaign(
+    const { log } = campaign.executeCommand(
       campaignContext,
-      emptyCampaignLog(),
-      compileCampaign(nightOfTheZealot, {
+      campaign.createEmptyLog(),
+      campaign.compileStart(nightOfTheZealot, {
         campaignId: campaignId('campaign_a'),
         difficulty: 'standard',
         investigators: [roland.code, daisy.code],
       }),
     );
-    expect(checkCampaignInvariants(log)).toEqual([]);
+    expect(campaign.checkInvariants(log)).toEqual([]);
     expect(log).toMatchObject({ definitionId: 'night-of-the-zealot', position: 0 });
     expect(log.investigators.map((inv) => inv.code)).toEqual(['01001', '01002']);
   });

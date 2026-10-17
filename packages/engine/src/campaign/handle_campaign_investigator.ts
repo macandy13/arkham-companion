@@ -5,10 +5,10 @@ import { investigatorCard } from '../investigator_cards';
 import type { AddTrauma, AwardXp, ReplaceInvestigator, SpendXp } from './campaign_commands';
 import type { CampaignEvent } from './campaign_events';
 import {
-  availableXp,
-  campaignInvestigator,
-  traumaFate,
-  withTrauma,
+  countAvailableXp,
+  findInvestigator,
+  findTraumaFate,
+  addTrauma,
   type CampaignInvestigator,
   type CampaignLog,
   type InvestigatorFate,
@@ -27,7 +27,7 @@ export function handleAwardXp(log: CampaignLog, command: AwardXp): CampaignEvent
 export function handleSpendXp(log: CampaignLog, command: SpendXp): CampaignEvent[] {
   requireAmount(command.amount);
   const investigator = requireAlive(log, command.code);
-  const available = availableXp(investigator);
+  const available = countAvailableXp(investigator);
   if (command.amount > available)
     throw new CampaignCommandRejected({
       code: 'notEnoughXp',
@@ -48,7 +48,7 @@ export function handleAddTrauma(log: CampaignLog, command: AddTrauma): CampaignE
     kind: command.kind,
     delta: command.amount,
   };
-  const fate = traumaFate(withTrauma(investigator, command.kind, command.amount), command.kind);
+  const fate = findTraumaFate(addTrauma(investigator, command.kind, command.amount), command.kind);
   return fate
     ? [traumaChanged, { type: 'InvestigatorFateChanged', code: command.code, fate }]
     : [traumaChanged];
@@ -130,7 +130,7 @@ export function requireCampaignInvestigator(
   log: CampaignLog,
   code: InvestigatorCode,
 ): CampaignInvestigator {
-  const investigator = campaignInvestigator(log, code);
+  const investigator = findInvestigator(log, code);
   if (!investigator)
     throw new CampaignCommandRejected({ code: 'unknownInvestigator', investigatorCode: code });
   return investigator;
