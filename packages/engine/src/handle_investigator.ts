@@ -8,8 +8,8 @@ import type {
   SetLeadInvestigator,
 } from './commands';
 import { investigatorLeavesEvents } from './elimination';
+import { arrivalEngagements } from './engagement';
 import type {
-  CardFlipped,
   Event,
   InvestigatorChanged,
   InvestigatorMoved,
@@ -26,19 +26,23 @@ import {
   withStatDelta,
 } from './investigators';
 import { requireCard } from './lookup';
+import { replay } from './reducer';
 import { CommandRejected } from './rejection';
 import type { GameState, Investigator } from './state';
 
 /**
  * `MoveInvestigator`: moves to a connected location (or any location in play
  * with `ignoreConnections`). The reveal goes through `handleRevealLocation`, so
- * clues are placed exactly as for an explicit `RevealLocation`.
+ * clues are placed exactly as for an explicit `RevealLocation`. Ready,
+ * unengaged enemies at the destination then engage (`arrivalEngagements`),
+ * whether the move is an action or a card effect, unless the effect avoids
+ * engagement (`avoidEngagement`).
  */
 export function handleMoveInvestigator(
   ctx: EngineContext,
   state: GameState,
   cmd: MoveInvestigator,
-): (InvestigatorMoved | CardFlipped | TokensChanged)[] {
+): Event[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
   const destination = requireCard(state.cards, cmd.to);
   if (destination.zone.kind !== 'location')
@@ -62,9 +66,12 @@ export function handleMoveInvestigator(
     investigatorId: investigator.id,
     to: cmd.to,
   };
-  if (destination.faceUp) return [moved];
-  const reveal = handleRevealLocation(ctx, state, { type: 'RevealLocation', locationId: cmd.to });
-  return [moved, ...reveal];
+  const reveal = destination.faceUp
+    ? []
+    : handleRevealLocation(ctx, state, { type: 'RevealLocation', locationId: cmd.to });
+  const arrived = [moved, ...reveal];
+  if (cmd.avoidEngagement) return arrived;
+  return [...arrived, ...arrivalEngagements(ctx, replay(arrived, state), cmd.to)];
 }
 
 /**

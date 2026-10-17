@@ -361,6 +361,82 @@ describe('setup', () => {
   });
 });
 
+describe('moving into an enemy`s location', () => {
+  const aliceMovesToCellar = {
+    type: 'MoveInvestigator',
+    investigatorId: alice,
+    to: cellar,
+  } as const;
+
+  it.each([
+    { code: 'ghoul', name: 'engages a ready enemy', zone: engagedWith(alice) },
+    { code: 'aloof_ghoul', name: 'leaves an aloof enemy unengaged', zone: at(cellar) },
+    {
+      code: 'massive_ghoul',
+      name: 'leaves a massive enemy at the location, out of any threat area',
+      zone: at(cellar),
+    },
+  ])('$name', ({ code, zone }) => {
+    const state = startedWith([placed(ghoul, code, at(cellar))]);
+
+    const after = stateAfter(ctx, state, aliceMovesToCellar);
+
+    expect(zoneOf(after, ghoul)).toEqual(zone);
+  });
+
+  it('leaves an exhausted enemy unengaged', () => {
+    const state = startedWith([placed(ghoul, 'ghoul', at(cellar))]);
+    const exhausted = stateAfter(ctx, state, { type: 'ExhaustEnemy', enemyId: ghoul });
+
+    const after = stateAfter(ctx, exhausted, aliceMovesToCellar);
+
+    expect(zoneOf(after, ghoul)).toEqual(at(cellar));
+  });
+
+  it('engages every ready enemy there', () => {
+    const secondGhoul = instanceId('second_ghoul');
+    const state = startedWith([
+      placed(ghoul, 'ghoul', at(cellar)),
+      placed(secondGhoul, 'ghoul', at(cellar)),
+    ]);
+
+    const after = stateAfter(ctx, state, aliceMovesToCellar);
+
+    expect(zoneOf(after, ghoul)).toEqual(engagedWith(alice));
+    expect(zoneOf(after, secondGhoul)).toEqual(engagedWith(alice));
+  });
+
+  it('engages after a move that ignores connections, which only card effects make', () => {
+    const state = startedWith([placed(ghoul, 'ghoul', at(attic))]);
+
+    const after = stateAfter(ctx, state, {
+      type: 'MoveInvestigator',
+      investigatorId: alice,
+      to: attic,
+      ignoreConnections: true,
+    });
+
+    expect(zoneOf(after, ghoul)).toEqual(engagedWith(alice));
+  });
+
+  it('leaves the enemy unengaged after a move that avoids engagement, which only card effects make', () => {
+    const state = startedWith([placed(ghoul, 'ghoul', at(cellar))]);
+
+    const after = stateAfter(ctx, state, { ...aliceMovesToCellar, avoidEngagement: true });
+
+    expect(zoneOf(after, ghoul)).toEqual(at(cellar));
+    expect(after.investigators[0]?.locationId).toBe(cellar);
+  });
+
+  it('leaves an enemy at another location alone', () => {
+    const state = startedWith([placed(ghoul, 'ghoul', at(attic))]);
+
+    const after = stateAfter(ctx, state, aliceMovesToCellar);
+
+    expect(zoneOf(after, ghoul)).toEqual(at(attic));
+  });
+});
+
 describe('engagement commands', () => {
   it('engages an enemy at the investigator`s location', () => {
     const state = startedWith([placed(ghoul, 'aloof_ghoul', at(hall))]);

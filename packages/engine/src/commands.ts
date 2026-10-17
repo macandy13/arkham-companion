@@ -190,7 +190,9 @@ export interface RevealLocation {
  * investigator "to any location" set `ignoreConnections`; the destination must
  * still be in play. An unrevealed destination is revealed through the same path
  * as `RevealLocation`. Produces `InvestigatorMoved`, then `CardFlipped` and
- * `TokensChanged` if the destination was unrevealed.
+ * `TokensChanged` if the destination was unrevealed, then `EnemyEngaged` (or
+ * a `chooseInvestigator` decision) for each ready enemy waiting there, unless
+ * `avoidEngagement` is set.
  */
 export interface MoveInvestigator {
   type: 'MoveInvestigator';
@@ -198,6 +200,12 @@ export interface MoveInvestigator {
   to: InstanceId;
   /** Skip the connection check (card effects). Default false. */
   ignoreConnections?: boolean;
+  /**
+   * The enemies at the destination do not engage (card effects that move
+   * "without being engaged"; they stay unengaged there until a rule engages
+   * them again, e.g. readying, or the engage action). Default false.
+   */
+  avoidEngagement?: boolean;
 }
 
 /**

@@ -29,6 +29,18 @@ export function cardsOfType(
 }
 
 /**
+ * The cards placed unengaged at `locationId` (zone `atLocation`: enemies,
+ * and other cards put there), in card order. Enemies engaged with an
+ * investigator standing there are in that investigator's threat area, not
+ * here; `enemiesAt` (`handle_enemy.ts`) counts both.
+ */
+export function cardsAtLocation(state: GameState, locationId: InstanceId): CardInstance[] {
+  return Object.values(state.cards).filter(
+    (card) => card.zone.kind === 'atLocation' && card.zone.locationId === locationId,
+  );
+}
+
+/**
  * Every card printed with `name` (compared with `comparableName`), optionally
  * only of one `typeCode`. Several cards can share a name, so the result is a
  * list and the caller decides what none or many mean (spawn asks the players,

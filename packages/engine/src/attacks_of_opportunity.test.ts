@@ -348,6 +348,20 @@ describe('the action that provokes attacks of opportunity', () => {
     expect(investigatorOf(after, alice).locationId).toBe(cellar);
   });
 
+  it('engages the enemy waiting in the cellar only once the held move resumes', () => {
+    const state = aliceTurnWith([
+      placed(ghoul, 'ghoul', engagedWithAlice),
+      placed(rat, 'rat', { kind: 'atLocation', locationId: cellar }),
+    ]);
+
+    const asked = stateAfter(ctx, state, moveToCellar);
+    const answered = stateAfter(ctx, asked, answer(ghoulAttack, 'attack'));
+
+    expect(asked.cards[rat]?.zone).toEqual({ kind: 'atLocation', locationId: cellar });
+    expect(answered.cards[rat]?.zone).toEqual(engagedWithAlice);
+    expect(answered.cards[ghoul]?.zone).toEqual(engagedWithAlice);
+  });
+
   it('drops the move when the attack defeats the investigator, who stays in the hall', () => {
     const state = aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)], {
       health: { max: 8, damage: 7 },

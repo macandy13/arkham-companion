@@ -303,9 +303,8 @@ export class TestTable {
   }
 
   /**
-   * The `enemy` engages the investigator (or switches to them): an engage
-   * action, or a rule that engages without one (an enemy at the location the
-   * investigator enters).
+   * The engage action: the `enemy` engages the investigator (or switches to
+   * them). Entering a location with a ready enemy needs none, `moveTo` engages it.
    */
   engage(investigator: InvestigatorId, enemy: EnemySelector): void {
     this.play({
