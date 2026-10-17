@@ -1,4 +1,4 @@
-import { isNonZeroInteger } from '@arkham/util';
+import { isNonNegativeInteger, isNonZeroInteger } from '@arkham/util';
 import type { CampaignAdjustment, CampaignManualAdjust } from './campaign_commands';
 import type { CampaignEvent } from './campaign_events';
 import { checkCampaignInvariants } from './campaign_invariants';
@@ -67,7 +67,7 @@ function fateEvent(
 
 function positionEvent(log: CampaignLog, position: number): CampaignEvent {
   const max = log.scenarioIds.length;
-  if (!Number.isInteger(position) || position < 0 || position > max)
+  if (!isNonNegativeInteger(position) || position > max)
     throw new CampaignCommandRejected({ code: 'invalidPosition', position, max });
   return { type: 'ScenarioPositionChanged', position };
 }
