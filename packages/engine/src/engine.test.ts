@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  cardCode,
+  scenarioId,
   checkInvariants,
   handle,
   instanceId,
@@ -24,18 +26,18 @@ const investigator = makeInvestigator({ id: 'inv1' });
 
 const start: StartScenario = {
   type: 'StartScenario',
-  scenarioId: 'test',
+  scenarioId: scenarioId('test'),
   difficulty: 'standard',
   seed: 1234,
   investigators: [investigator],
   maps: { [main]: { name: 'Main' } },
   cards: [
-    { id: loc, code: 'L1', zone: { kind: 'location', mapId: main }, faceUp: true },
-    { code: 'E1', zone: { kind: 'encounterDeck' } },
-    { code: 'E2', zone: { kind: 'encounterDeck' } },
-    { code: 'E3', zone: { kind: 'encounterDeck' } },
-    { code: 'E4', zone: { kind: 'encounterDeck' } },
-    { code: 'A1', zone: { kind: 'agendaDeck' } },
+    { id: loc, code: cardCode('L1'), zone: { kind: 'location', mapId: main }, faceUp: true },
+    { code: cardCode('E1'), zone: { kind: 'encounterDeck' } },
+    { code: cardCode('E2'), zone: { kind: 'encounterDeck' } },
+    { code: cardCode('E3'), zone: { kind: 'encounterDeck' } },
+    { code: cardCode('E4'), zone: { kind: 'encounterDeck' } },
+    { code: cardCode('A1'), zone: { kind: 'agendaDeck' } },
   ],
 };
 
@@ -69,7 +71,9 @@ describe('StartScenario', () => {
       rejectionOf(() =>
         handle(testContext, emptyState(), {
           ...start,
-          cards: [{ code: 'E3', zone: { kind: 'atLocation', locationId: instanceId('nope') } }],
+          cards: [
+            { code: cardCode('E3'), zone: { kind: 'atLocation', locationId: instanceId('nope') } },
+          ],
         }),
       ),
     ).toMatchObject({ code: 'unknownCard', cardId: 'nope' });
@@ -77,7 +81,7 @@ describe('StartScenario', () => {
       rejectionOf(() =>
         handle(testContext, emptyState(), {
           ...start,
-          cards: [{ code: 'E3', zone: { kind: 'location', mapId: mapId('nope') } }],
+          cards: [{ code: cardCode('E3'), zone: { kind: 'location', mapId: mapId('nope') } }],
         }),
       ),
     ).toMatchObject({ code: 'unknownMap', mapId: 'nope' });
@@ -86,8 +90,8 @@ describe('StartScenario', () => {
         handle(testContext, emptyState(), {
           ...start,
           cards: [
-            { id: loc, code: 'E3', zone: { kind: 'setAside' } },
-            { id: loc, code: 'E4', zone: { kind: 'setAside' } },
+            { id: loc, code: cardCode('E3'), zone: { kind: 'setAside' } },
+            { id: loc, code: cardCode('E4'), zone: { kind: 'setAside' } },
           ],
         }),
       ),
@@ -97,7 +101,7 @@ describe('StartScenario', () => {
   it('rejects card codes the card db does not know', () => {
     const command: StartScenario = {
       ...start,
-      cards: [{ code: 'missing', zone: { kind: 'setAside' } }],
+      cards: [{ code: cardCode('missing'), zone: { kind: 'setAside' } }],
     };
 
     const rejection = rejectionOf(() => handle(testContext, emptyState(), command));
@@ -109,7 +113,12 @@ describe('StartScenario', () => {
     const command: StartScenario = {
       ...start,
       cards: [
-        { id: loc, code: 'L1', zone: { kind: 'location', mapId: main }, tokens: { clue: 2 } },
+        {
+          id: loc,
+          code: cardCode('L1'),
+          zone: { kind: 'location', mapId: main },
+          tokens: { clue: 2 },
+        },
       ],
     };
 
@@ -121,7 +130,7 @@ describe('StartScenario', () => {
   it('rejects negative or fractional starting tokens', () => {
     const command: StartScenario = {
       ...start,
-      cards: [{ id: loc, code: 'L1', zone: { kind: 'setAside' }, tokens: { doom: -1 } }],
+      cards: [{ id: loc, code: cardCode('L1'), zone: { kind: 'setAside' }, tokens: { doom: -1 } }],
     };
 
     const rejection = rejectionOf(() => handle(testContext, emptyState(), command));
@@ -141,8 +150,8 @@ describe('StartScenario', () => {
       investigators: [{ ...investigator, locationId: loc }],
       maps: { [main]: { name: 'Main', connections: [{ from: loc, to: other, oneWay: true }] } },
       cards: [
-        { id: loc, code: 'L1', zone: { kind: 'location', mapId: main } },
-        { id: other, code: 'L2', zone: { kind: 'location', mapId: main } },
+        { id: loc, code: cardCode('L1'), zone: { kind: 'location', mapId: main } },
+        { id: other, code: cardCode('L2'), zone: { kind: 'location', mapId: main } },
       ],
     };
 
@@ -169,8 +178,8 @@ describe('StartScenario', () => {
       ...start,
       maps: { [main]: { name: 'Main', connections: [{ from: loc, to: aside, oneWay: false }] } },
       cards: [
-        { id: loc, code: 'L1', zone: { kind: 'location', mapId: main } },
-        { id: aside, code: 'E1', zone: { kind: 'setAside' } },
+        { id: loc, code: cardCode('L1'), zone: { kind: 'location', mapId: main } },
+        { id: aside, code: cardCode('E1'), zone: { kind: 'setAside' } },
       ],
     };
 
@@ -189,8 +198,8 @@ describe('StartScenario', () => {
         [dream]: { name: 'Dream' },
       },
       cards: [
-        { id: loc, code: 'L1', zone: { kind: 'location', mapId: main } },
-        { id: far, code: 'L2', zone: { kind: 'location', mapId: dream } },
+        { id: loc, code: cardCode('L1'), zone: { kind: 'location', mapId: main } },
+        { id: far, code: cardCode('L2'), zone: { kind: 'location', mapId: dream } },
       ],
     };
 

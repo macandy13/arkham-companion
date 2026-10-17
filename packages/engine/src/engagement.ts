@@ -169,7 +169,7 @@ export function chooseLocation(
     decider: { kind: 'lead' },
     options: locations.map((locationId) => ({
       id: locationId,
-      label: ctx.cards.get(state.cards[locationId]?.code ?? '')?.name ?? locationId,
+      label: locationName(ctx, state, locationId),
       target: locationId,
       commands: [answer(locationId)],
     })),
@@ -178,4 +178,10 @@ export function chooseLocation(
 
 function engaged(enemyId: InstanceId, investigator: Investigator): EnemyEngaged {
   return { type: 'EnemyEngaged', enemyId, investigatorId: investigator.id };
+}
+
+/** The location's card name, or its ID when the card or its definition is missing. */
+function locationName(ctx: EngineContext, state: GameState, locationId: InstanceId): string {
+  const card = state.cards[locationId];
+  return (card && ctx.cards.get(card.code)?.name) ?? locationId;
 }

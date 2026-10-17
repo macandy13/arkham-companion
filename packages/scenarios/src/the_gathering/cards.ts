@@ -1,8 +1,11 @@
 import {
+  cardCode,
   cardDbFrom,
+  encounterSetCode,
   trait,
   type CardDb,
   type CardStats,
+  type EncounterSetCode,
   type Keyword,
   type ScaledValue,
   type SkillTest,
@@ -14,29 +17,29 @@ import {
  * scenario's own set plus the generic sets its setup gathers.
  */
 export const GATHERING_SETS = {
-  theGathering: 'torch',
-  rats: 'rats',
-  ghouls: 'ghouls',
-  strikingFear: 'striking_fear',
-  ancientEvils: 'ancient_evils',
-  chillingCold: 'chilling_cold',
+  theGathering: encounterSetCode('torch'),
+  rats: encounterSetCode('rats'),
+  ghouls: encounterSetCode('ghouls'),
+  strikingFear: encounterSetCode('striking_fear'),
+  ancientEvils: encounterSetCode('ancient_evils'),
+  chillingCold: encounterSetCode('chilling_cold'),
 } as const;
 
 /** ArkhamDB card codes of the cards the scenario definition refers to by name. */
 export const GATHERING_CODES = {
-  whatsGoingOn: '01105',
-  riseOfTheGhouls: '01106',
-  theyreGettingOut: '01107',
-  trapped: '01108',
-  theBarrier: '01109',
-  whatHaveYouDone: '01110',
-  study: '01111',
-  hallway: '01112',
-  attic: '01113',
-  cellar: '01114',
-  parlor: '01115',
-  ghoulPriest: '01116',
-  litaChantler: '01117',
+  whatsGoingOn: cardCode('01105'),
+  riseOfTheGhouls: cardCode('01106'),
+  theyreGettingOut: cardCode('01107'),
+  trapped: cardCode('01108'),
+  theBarrier: cardCode('01109'),
+  whatHaveYouDone: cardCode('01110'),
+  study: cardCode('01111'),
+  hallway: cardCode('01112'),
+  attic: cardCode('01113'),
+  cellar: cardCode('01114'),
+  parlor: cardCode('01115'),
+  ghoulPriest: cardCode('01116'),
+  litaChantler: cardCode('01117'),
 } as const;
 
 const codes = GATHERING_CODES;
@@ -269,7 +272,7 @@ function location({
 interface EnemyOptions {
   code: string;
   name: string;
-  set: string;
+  set: EncounterSetCode;
   traits: readonly string[];
   fight: number;
   evade: number;
@@ -281,9 +284,10 @@ interface EnemyOptions {
   keywords?: readonly Keyword[];
 }
 
-function enemy({ set, traits, quantity = 1, victory, ...stats }: EnemyOptions): CardStats {
+function enemy({ code, set, traits, quantity = 1, victory, ...stats }: EnemyOptions): CardStats {
   return {
     ...stats,
+    code: cardCode(code),
     typeCode: 'enemy',
     traits: traitsOf(traits),
     encounterCode: set,
@@ -296,7 +300,7 @@ function enemy({ set, traits, quantity = 1, victory, ...stats }: EnemyOptions): 
 interface TreacheryOptions {
   code: string;
   name: string;
-  set: string;
+  set: EncounterSetCode;
   traits: readonly string[];
   quantity: number;
   /** Set for a treachery that stays in the drawer's threat area. */
@@ -318,7 +322,7 @@ function treachery({
   revelationTest,
 }: TreacheryOptions): CardStats {
   return {
-    code,
+    code: cardCode(code),
     name,
     typeCode: 'treachery',
     traits: traitsOf(traits),
@@ -331,7 +335,7 @@ function treachery({
 
 /** A single-copy, trait-less card of The Gathering's own encounter set. */
 function scenarioCard(code: string, name: string): Omit<CardStats, 'typeCode'> {
-  return { code, name, traits: [], encounterCode: sets.theGathering, quantity: 1 };
+  return { code: cardCode(code), name, traits: [], encounterCode: sets.theGathering, quantity: 1 };
 }
 
 function traitsOf(names: readonly string[]): Trait[] {

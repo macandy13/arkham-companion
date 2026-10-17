@@ -1,11 +1,12 @@
+import { campaignDefinitionId, scenarioId } from '../ids';
 import { describe, expect, it } from 'vitest';
 import { daisy, roland } from '../../test/utils';
 import { compileCampaign, type CampaignDefinition } from './campaign_definition';
 
 describe('compileCampaign', () => {
   const definition: CampaignDefinition = {
-    id: 'test_campaign',
-    scenarios: ['first_scenario', 'second_scenario'],
+    id: campaignDefinitionId('test_campaign'),
+    scenarios: [scenarioId('first_scenario'), scenarioId('second_scenario')],
     chaosBag: {
       easy: ['+1', '0'],
       standard: ['0', '-1'],

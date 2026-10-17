@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   CommandRejected,
+  cardCode,
   decisionId,
   instanceId,
   investigatorId,
@@ -241,7 +242,9 @@ describe('suggestions on skill test decisions', () => {
 
   it("raises Fight with the enemy's fight value as the difficulty", () => {
     const state = aliceInStudy({
-      extra: [{ id: ghoul, code: 'ghoul', zone: { kind: 'engaged', investigatorId: alice } }],
+      extra: [
+        { id: ghoul, code: cardCode('ghoul'), zone: { kind: 'engaged', investigatorId: alice } },
+      ],
     });
 
     const asked = stateAfter(cards, state, {

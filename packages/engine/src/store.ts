@@ -1,3 +1,4 @@
+import type { ScenarioId } from './ids';
 import type { Event } from './events';
 import type { GameState, Phase } from './state';
 
@@ -27,7 +28,7 @@ export interface GameSummary {
   /** Sequence number of the last event, 0 if the log is empty. */
   lastSeq: number;
   /** Scenario being played; empty until the scenario has started. Derived from the replayed state. */
-  scenarioId: string;
+  scenarioId: ScenarioId;
   /** Current round and phase of the replayed state, so the list can show progress. */
   round: number;
   phase: Phase;

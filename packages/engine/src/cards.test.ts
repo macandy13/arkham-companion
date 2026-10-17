@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   CommandRejected,
+  cardCode,
+  encounterSetCode,
   cardDbFrom,
   cardDbWith,
   cardStats,
@@ -10,9 +12,18 @@ import {
   type CardStats,
 } from './index';
 
-/** A card definition with boring defaults; tests pass only the fields they assert on. */
-function makeCard(overrides: Partial<CardStats> & { code: string }): CardStats {
-  return { name: overrides.code, typeCode: 'treachery', traits: [], ...overrides };
+/**
+ * A card definition with boring defaults; tests pass only the fields they
+ * assert on. Takes the code as a plain string so card tables stay readable.
+ */
+function makeCard(overrides: Partial<Omit<CardStats, 'code'>> & { code: string }): CardStats {
+  return {
+    name: overrides.code,
+    typeCode: 'treachery',
+    traits: [],
+    ...overrides,
+    code: cardCode(overrides.code),
+  };
 }
 
 describe('cardDbFrom', () => {
@@ -20,7 +31,7 @@ describe('cardDbFrom', () => {
     const location = makeCard({ code: 'loc', typeCode: 'location', shroud: 4 });
     const cards = cardDbFrom([location]);
 
-    const stats = cards.get('loc');
+    const stats = cards.get(cardCode('loc'));
 
     expect(stats?.shroud).toBe(4);
   });
@@ -28,7 +39,7 @@ describe('cardDbFrom', () => {
   it('returns undefined for an unknown code', () => {
     const cards = cardDbFrom([makeCard({ code: 'known' })]);
 
-    expect(cards.get('unknown')).toBeUndefined();
+    expect(cards.get(cardCode('unknown'))).toBeUndefined();
   });
 
   it('lets a later definition replace an earlier one with the same code', () => {
@@ -37,7 +48,7 @@ describe('cardDbFrom', () => {
       makeCard({ code: 'loc', shroud: 3 }),
     ]);
 
-    expect(cards.get('loc')?.shroud).toBe(3);
+    expect(cards.get(cardCode('loc'))?.shroud).toBe(3);
   });
 
   it('keeps alternative cards of the same stage apart by variant', () => {
@@ -46,39 +57,39 @@ describe('cardDbFrom', () => {
       makeCard({ code: 'act2c', typeCode: 'act', stage: { number: 2, variant: 'c' } }),
     ]);
 
-    expect(cards.get('act2a')?.stage).toEqual({ number: 2 });
-    expect(cards.get('act2c')?.stage).toEqual({ number: 2, variant: 'c' });
+    expect(cards.get(cardCode('act2a'))?.stage).toEqual({ number: 2 });
+    expect(cards.get(cardCode('act2c'))?.stage).toEqual({ number: 2, variant: 'c' });
   });
 
   it('keeps traits as given', () => {
     const cards = cardDbFrom([makeCard({ code: 'ghoul', traits: [trait('Monster')] })]);
 
-    expect(cards.get('ghoul')?.traits).toEqual(['Monster']);
+    expect(cards.get(cardCode('ghoul'))?.traits).toEqual(['Monster']);
   });
 
   it('lists the definitions of an encounter set', () => {
     const cards = cardDbFrom([
-      makeCard({ code: 'a', encounterCode: 'cult' }),
-      makeCard({ code: 'b', encounterCode: 'rats' }),
-      makeCard({ code: 'c', encounterCode: 'cult' }),
+      makeCard({ code: 'a', encounterCode: encounterSetCode('cult') }),
+      makeCard({ code: 'b', encounterCode: encounterSetCode('rats') }),
+      makeCard({ code: 'c', encounterCode: encounterSetCode('cult') }),
     ]);
 
-    const codes = cards.encounterSet('cult').map((def) => def.code);
+    const codes = cards.encounterSet(encounterSetCode('cult')).map((def) => def.code);
 
     expect(codes).toEqual(['a', 'c']);
   });
 
   it('lists nothing for an unknown encounter set', () => {
-    const cards = cardDbFrom([makeCard({ code: 'a', encounterCode: 'cult' })]);
+    const cards = cardDbFrom([makeCard({ code: 'a', encounterCode: encounterSetCode('cult') })]);
 
-    expect(cards.encounterSet('unknown')).toEqual([]);
+    expect(cards.encounterSet(encounterSetCode('unknown'))).toEqual([]);
   });
 });
 
 describe('cardDbWith', () => {
   const scenarioCards = cardDbFrom([
     makeCard({ code: 'study', typeCode: 'location' }),
-    makeCard({ code: 'rat', typeCode: 'enemy', encounterCode: 'rats' }),
+    makeCard({ code: 'rat', typeCode: 'enemy', encounterCode: encounterSetCode('rats') }),
   ]);
 
   it('finds the cards of both the base and the extra cards', () => {
@@ -86,19 +97,26 @@ describe('cardDbWith', () => {
       makeCard({ code: 'roland', typeCode: 'investigator' }),
     ]);
 
-    expect([cards.get('study')?.typeCode, cards.get('roland')?.typeCode]).toEqual([
-      'location',
-      'investigator',
-    ]);
+    expect([
+      cards.get(cardCode('study'))?.typeCode,
+      cards.get(cardCode('roland'))?.typeCode,
+    ]).toEqual(['location', 'investigator']);
   });
 
   it('lets an extra card replace a base card with the same code, in encounter sets too', () => {
     const cards = cardDbWith(scenarioCards, [
-      makeCard({ code: 'rat', name: 'Big Rat', typeCode: 'enemy', encounterCode: 'rats' }),
+      makeCard({
+        code: 'rat',
+        name: 'Big Rat',
+        typeCode: 'enemy',
+        encounterCode: encounterSetCode('rats'),
+      }),
     ]);
 
-    expect(cards.get('rat')?.name).toBe('Big Rat');
-    expect(cards.encounterSet('rats').map((card) => card.name)).toEqual(['Big Rat']);
+    expect(cards.get(cardCode('rat'))?.name).toBe('Big Rat');
+    expect(cards.encounterSet(encounterSetCode('rats')).map((card) => card.name)).toEqual([
+      'Big Rat',
+    ]);
   });
 });
 
@@ -108,7 +126,7 @@ describe('cardStats', () => {
       makeCard({ code: 'agenda', typeCode: 'agenda', doom: { fixed: 6, perInvestigator: 0 } }),
     ]);
 
-    const doom = cardStats(cards, 'agenda').doom;
+    const doom = cardStats(cards, cardCode('agenda')).doom;
 
     expect(doom).toEqual({ fixed: 6, perInvestigator: 0 });
   });
@@ -116,7 +134,7 @@ describe('cardStats', () => {
   it('rejects an unknown code', () => {
     const cards = cardDbFrom([]);
 
-    const lookup = () => cardStats(cards, 'nope');
+    const lookup = () => cardStats(cards, cardCode('nope'));
 
     expect(lookup).toThrow(CommandRejected);
     expect(lookup).toThrow('no card definition for code nope');

@@ -6,8 +6,10 @@ import {
   enemiesAt,
   mapId,
   matchesEncounter,
+  scenarioId,
   trait,
   type AddMapStep,
+  type CardCode,
   type CardInstance,
   type Command,
   type EncounterMatch,
@@ -241,7 +243,7 @@ const ghoulsAtYourLocation: TokenValue = (ctx, state, test) => {
 };
 
 /** The one instance of `code` (the Gathering has a single copy of each location). */
-function onlyCard(state: GameState, code: string): CardInstance {
+function onlyCard(state: GameState, code: CardCode): CardInstance {
   const card = Object.values(state.cards).find((candidate) => candidate.code === code);
   if (!card) throw new CommandRejected({ code: 'setupTargetNotFound', cardCode: code });
   return card;
@@ -264,7 +266,7 @@ function onlyCard(state: GameState, code: string): CardInstance {
  * cultist reveals another token, tablet -4), not checked against a source.
  */
 export const theGathering: ScenarioDefinition = {
-  id: 'the-gathering',
+  id: scenarioId('the-gathering'),
   // Number tokens, then symbol tokens: easier to check against the guide than one token per line.
   // prettier-ignore
   chaosBag: {

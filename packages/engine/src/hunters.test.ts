@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  cardCode,
   checkInvariants,
   decisionId,
   execute,
@@ -51,7 +52,7 @@ const ctx = contextWith(
 
 /** A card to create: `id` is how the test refers to it, `code` says what it is. */
 function enemy(id: InstanceId, code: string, zone: Zone): StartingCard {
-  return { id, code, zone };
+  return { id, code: cardCode(code), zone };
 }
 
 const at = (place: string): Zone => ({ kind: 'atLocation', locationId: instanceId(place) });

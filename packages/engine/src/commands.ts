@@ -1,6 +1,6 @@
 import type { CampaignLog } from './campaign/campaign_log';
 import type { CardType, Trait } from './cards';
-import type { DecisionId, InstanceId, InvestigatorId, MapId } from './ids';
+import type { CardCode, DecisionId, InstanceId, InvestigatorId, MapId, ScenarioId } from './ids';
 import type { MapSpec } from './map';
 import type {
   Decision,
@@ -61,7 +61,7 @@ export type Command =
 export interface StartingCard {
   /** Explicit instance ID, so other starting cards can reference it. Defaults to `c<index>`. */
   id?: InstanceId;
-  code: string;
+  code: CardCode;
   zone: Zone;
   faceUp?: boolean;
   /** Tokens the card starts with (doom placed by setup, clues on a revealed location, …). */
@@ -84,7 +84,7 @@ export type StartingInvestigator = Omit<Investigator, 'actionsRemaining'>;
  */
 export interface StartScenario {
   type: 'StartScenario';
-  scenarioId: string;
+  scenarioId: ScenarioId;
   difficulty: Difficulty;
   seed: number;
   investigators: StartingInvestigator[];
@@ -372,7 +372,7 @@ export interface EncounterMatch {
  */
 export interface FromSetAside {
   type: 'FromSetAside';
-  codes: readonly string[];
+  codes: readonly CardCode[];
   to: Zone;
 }
 
@@ -383,7 +383,7 @@ export interface FromSetAside {
  */
 export interface ShuffleInto {
   type: 'ShuffleInto';
-  codes: readonly string[];
+  codes: readonly CardCode[];
   zone: Zone;
 }
 

@@ -12,6 +12,7 @@ import {
   matchesEncounter,
   trait,
   zoneKey,
+  type CardCode,
   type Command,
   type Zone,
   type EngineContext,
@@ -459,8 +460,7 @@ describe('The Gathering agendas 2 and 3', () => {
   const theyreGettingOut = instanceId('01107#1');
   const secondGhoulMinion = instanceId('01160#2');
   const ghoulEnemy = { trait: trait('Ghoul'), typeCode: 'enemy' } as const;
-  const isGhoulEnemy = (code: string) =>
-    matchesEncounter(cardStats(theGatheringCards, code), ghoulEnemy);
+  const isGhoulEnemy = (code: CardCode) => matchesEncounter(cardStats(ctx.cards, code), ghoulEnemy);
   const toDiscard = (cardId: typeof fleshEater): Command => ({
     type: 'ManualAdjust',
     adjustment: { kind: 'moveCard', cardId, to: { kind: 'encounterDiscard' } },

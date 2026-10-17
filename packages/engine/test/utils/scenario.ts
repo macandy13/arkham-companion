@@ -1,4 +1,5 @@
 import {
+  scenarioId,
   CommandRejected,
   compileSetup,
   emptyState,
@@ -22,7 +23,7 @@ import { investigatorSeats } from './investigators';
  */
 export function makeDefinition(overrides: Partial<ScenarioDefinition> = {}): ScenarioDefinition {
   return {
-    id: 'test',
+    id: scenarioId('test'),
     chaosBag: { easy: [], standard: [], hard: [], expert: [] },
     reference: { easyStandard: {}, hardExpert: {} },
     agendaDeck: [],

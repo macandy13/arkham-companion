@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  cardCode,
   decisionId,
   instanceId,
   investigatorId,
@@ -55,7 +56,7 @@ const engagedWith = (investigator: typeof alice): Zone => ({
 
 /** Alice and bob in the study, with the enemy `code` in `zone`; still in setup. */
 function inStudyWith(code: string, zone: Zone): GameState {
-  const card: StartingCard = { id: enemy, code, zone };
+  const card: StartingCard = { id: enemy, code: cardCode(code), zone };
   return startBoard(ctx, {
     maps: { main: { locations: { study: 'study' }, connections: [] } },
     investigators: [

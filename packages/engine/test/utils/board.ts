@@ -1,4 +1,6 @@
 import {
+  cardCode,
+  scenarioId,
   instanceId,
   mapId,
   type Difficulty,
@@ -69,13 +71,17 @@ export function startBoard(
       ...(map.connections ? { connections: map.connections } : {}),
     };
     for (const [location, code] of Object.entries(map.locations))
-      cards.push({ id: instanceId(location), code, zone: { kind: 'location', mapId: mapId(id) } });
+      cards.push({
+        id: instanceId(location),
+        code: cardCode(code),
+        zone: { kind: 'location', mapId: mapId(id) },
+      });
   }
   for (const [id, code] of Object.entries(setAside))
-    cards.push({ id: instanceId(id), code, zone: { kind: 'setAside' } });
+    cards.push({ id: instanceId(id), code: cardCode(code), zone: { kind: 'setAside' } });
   const start: StartScenario = {
     type: 'StartScenario',
-    scenarioId: 'test',
+    scenarioId: scenarioId('test'),
     difficulty,
     seed,
     ...(shuffleEncounterDeck === undefined ? {} : { shuffleEncounterDeck }),

@@ -1,5 +1,5 @@
 import type { CampaignLog } from './campaign/campaign_log';
-import type { DecisionId, InstanceId, InvestigatorId, MapId } from './ids';
+import type { DecisionId, InstanceId, InvestigatorId, MapId, ScenarioId } from './ids';
 import type { Edge, GameMap } from './map';
 import type { Rejection } from './rejection';
 import type { RngState } from './rng';
@@ -59,7 +59,7 @@ export type Event =
 /** A scenario was set up; replaces the whole state. Produced by `StartScenario`. */
 export interface ScenarioStarted {
   type: 'ScenarioStarted';
-  scenarioId: string;
+  scenarioId: ScenarioId;
   difficulty: Difficulty;
   seed: number;
   /** With `actionsRemaining` set to `BASE_ACTIONS_PER_TURN`, so round 1 starts like every other. */

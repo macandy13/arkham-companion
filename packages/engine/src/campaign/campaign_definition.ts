@@ -1,5 +1,5 @@
 import type { ChaosToken, Difficulty } from '../state';
-import type { InvestigatorCode } from '../ids';
+import type { CampaignDefinitionId, InvestigatorCode, ScenarioId } from '../ids';
 import type { StartCampaign } from './campaign_commands';
 
 /**
@@ -11,13 +11,13 @@ import type { StartCampaign } from './campaign_commands';
  */
 export interface CampaignDefinition {
   /** Stored as `CampaignLog.definitionId`. */
-  readonly id: string;
+  readonly id: CampaignDefinitionId;
   /**
    * `ScenarioDefinition.id`s in campaign order. A fixed list is enough for
    * Night of the Zealot; campaigns whose next scenario depends on the log
    * will pick it from the played scenarios instead (M1C.4 follow-up).
    */
-  readonly scenarios: readonly string[];
+  readonly scenarios: readonly ScenarioId[];
   /**
    * Starting chaos bag per difficulty. The campaign's own bag, separate from
    * each scenario's standalone bag, since resolutions modify it from here on.
@@ -36,7 +36,7 @@ export interface CampaignDefinition {
 export interface InterludeDefinition {
   readonly id: string;
   /** `ScenarioDefinition.id` of the scenario the interlude follows. */
-  readonly afterScenario: string;
+  readonly afterScenario: ScenarioId;
 }
 
 /** What the players choose when starting a campaign from a `CampaignDefinition`. */
