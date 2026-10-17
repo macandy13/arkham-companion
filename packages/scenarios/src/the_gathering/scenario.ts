@@ -6,6 +6,7 @@ import {
   mapId,
   trait,
   type AddMapStep,
+  type CardCode,
   type CardInstance,
   type Command,
   type EngineContext,
@@ -104,7 +105,7 @@ const ghoulsAtYourLocation: TokenValue = (ctx, state, test) => {
 };
 
 /** The one instance of `code` (the Gathering has a single copy of each location). */
-function onlyCard(state: GameState, code: string): CardInstance {
+function onlyCard(state: GameState, code: CardCode): CardInstance {
   const card = Object.values(state.cards).find((candidate) => candidate.code === code);
   if (!card) throw new CommandRejected({ code: 'setupTargetNotFound', cardCode: code });
   return card;

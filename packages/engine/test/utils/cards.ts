@@ -1,12 +1,21 @@
-import { cardDbFrom, trait, type CardStats, type EngineContext } from '../../src/index';
+import { cardCode, cardDbFrom, trait, type CardStats, type EngineContext } from '../../src/index';
 import { standardInvestigatorCards } from './investigators';
 
 /**
  * A card definition with boring defaults (a trait-less treachery named after
- * its code); tests pass only the fields they assert on.
+ * its code); tests pass only the fields they assert on. Takes the code as a
+ * plain string so card tables stay readable.
  */
-export function makeCard(overrides: Partial<CardStats> & { code: string }): CardStats {
-  return { name: overrides.code, typeCode: 'treachery', traits: [], ...overrides };
+export function makeCard(
+  overrides: Partial<Omit<CardStats, 'code'>> & { code: string },
+): CardStats {
+  return {
+    name: overrides.code,
+    typeCode: 'treachery',
+    traits: [],
+    ...overrides,
+    code: cardCode(overrides.code),
+  };
 }
 
 /** An engine context whose card db holds exactly `cards`, with the standard investigators to seat. */

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   MAX_TRIGGERED_COMMANDS,
+  cardCode,
   checkInvariants,
   execute,
   instanceId,
@@ -42,15 +43,20 @@ function startedState(): GameState {
       investigators: [makeInvestigator({ id: 'alice', locationId: hall, clues: 2 })],
       maps: { [main]: { name: 'Main', connections: [edge('hall', 'cellar')] } },
       cards: [
-        { id: agenda1, code: 'A1', zone: { kind: 'agendaDeck' }, faceUp: true },
-        { id: agenda2, code: 'A2', zone: { kind: 'agendaDeck' }, faceUp: true },
-        { id: act1, code: 'C1', zone: { kind: 'actDeck' }, faceUp: true },
-        { id: act2, code: 'C2', zone: { kind: 'actDeck' }, faceUp: true },
-        { id: hall, code: 'L1', zone: { kind: 'location', mapId: main }, faceUp: true },
-        { id: cellar, code: 'L2', zone: { kind: 'location', mapId: main } },
-        { id: crypt, code: 'L3', zone: { kind: 'setAside' } },
-        { id: ghoul, code: 'E1', zone: { kind: 'atLocation', locationId: hall }, faceUp: true },
-        { id: deckGhoul, code: 'E1', zone: { kind: 'encounterDeck' } },
+        { id: agenda1, code: cardCode('A1'), zone: { kind: 'agendaDeck' }, faceUp: true },
+        { id: agenda2, code: cardCode('A2'), zone: { kind: 'agendaDeck' }, faceUp: true },
+        { id: act1, code: cardCode('C1'), zone: { kind: 'actDeck' }, faceUp: true },
+        { id: act2, code: cardCode('C2'), zone: { kind: 'actDeck' }, faceUp: true },
+        { id: hall, code: cardCode('L1'), zone: { kind: 'location', mapId: main }, faceUp: true },
+        { id: cellar, code: cardCode('L2'), zone: { kind: 'location', mapId: main } },
+        { id: crypt, code: cardCode('L3'), zone: { kind: 'setAside' } },
+        {
+          id: ghoul,
+          code: cardCode('E1'),
+          zone: { kind: 'atLocation', locationId: hall },
+          faceUp: true,
+        },
+        { id: deckGhoul, code: cardCode('E1'), zone: { kind: 'encounterDeck' } },
       ],
     },
   ]).state;

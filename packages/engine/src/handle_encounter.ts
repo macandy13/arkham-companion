@@ -9,7 +9,7 @@ import type {
 } from './commands';
 import type { CardFlipped, CardMoved, DeckShuffled, EncounterCardDrawn, Event } from './events';
 import { activeInvestigator } from './handle_investigator';
-import type { InstanceId } from './ids';
+import type { CardCode, InstanceId } from './ids';
 import { hasKeyword } from './keywords';
 import { requireCard } from './lookup';
 import { cardMoved } from './placement';
@@ -244,7 +244,7 @@ function shuffleInto(state: GameState, cardIds: readonly InstanceId[], zone: Zon
 }
 
 /** One set-aside copy of each code, in the order of `codes`; rejects a code with no copy left. */
-function takeFromSetAside(state: GameState, codes: readonly string[]): InstanceId[] {
+function takeFromSetAside(state: GameState, codes: readonly CardCode[]): InstanceId[] {
   const { taken } = codes.reduce(
     (acc, code) => {
       const cardId = acc.available.find((id) => requireCard(state.cards, id).code === code);

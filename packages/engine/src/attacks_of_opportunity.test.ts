@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  cardCode,
   decisionId,
   execute,
   instanceId,
@@ -53,7 +54,7 @@ const moveToCellar: Command = { type: 'MoveInvestigator', investigatorId: alice,
 const ghoulAttack = decisionId(`attackOfOpportunity:${ghoul}`);
 
 function placed(id: InstanceId, code: string, zone: Zone): StartingCard {
-  return { id, code, zone };
+  return { id, code: cardCode(code), zone };
 }
 
 /**

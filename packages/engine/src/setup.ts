@@ -11,6 +11,7 @@ import type { Command, StartScenario, StartingCard, StartingInvestigator } from 
 import { isInPlay } from './doom';
 import {
   instanceId,
+  type CardCode,
   type InstanceId,
   type InvestigatorCode,
   type InvestigatorId,
@@ -33,7 +34,7 @@ export type TokenAmount = number | ScaledValue;
 
 /** A location an `AddMapStep` puts into play, unrevealed unless `faceUp`. */
 export interface MapLocation {
-  code: string;
+  code: CardCode;
   faceUp?: boolean;
 }
 
@@ -42,8 +43,8 @@ export interface MapLocation {
  * card code. One-way connections only allow movement from `from` to `to`.
  */
 export interface MapConnection {
-  from: string;
-  to: string;
+  from: CardCode;
+  to: CardCode;
   oneWay?: boolean;
 }
 
@@ -64,7 +65,7 @@ export interface AddMapStep {
 /** Puts one copy of each code into the set-aside zone. */
 export interface SetAsideStep {
   kind: 'setAside';
-  codes: readonly string[];
+  codes: readonly CardCode[];
 }
 
 /**
@@ -75,13 +76,13 @@ export interface SetAsideStep {
 export interface BuildEncounterDeckStep {
   kind: 'buildEncounterDeck';
   sets: readonly string[];
-  exclude?: readonly string[];
+  exclude?: readonly CardCode[];
 }
 
 /** Places tokens on the one instance of the card with code `target`. */
 export interface PlaceTokensStep {
   kind: 'placeTokens';
-  target: string;
+  target: CardCode;
   token: TokenKind;
   amount: TokenAmount;
 }
@@ -89,14 +90,14 @@ export interface PlaceTokensStep {
 /** Spawns an enemy at the location with code `at` (see `spawnZone`). */
 export interface SpawnStep {
   kind: 'spawn';
-  code: string;
-  at: string;
+  code: CardCode;
+  at: CardCode;
 }
 
 /** Places every investigator at the location with code `to`, revealing it. */
 export interface MoveInvestigatorsStep {
   kind: 'moveInvestigators';
-  to: string;
+  to: CardCode;
 }
 
 /**
@@ -152,7 +153,7 @@ interface SetupEnv {
   readonly ctx: EngineContext;
   readonly playerCount: number;
   /** Copies of each code that steps other than `buildEncounterDeck` put on the table. */
-  readonly usedCopies: ReadonlyMap<string, number>;
+  readonly usedCopies: ReadonlyMap<CardCode, number>;
 }
 
 /**
@@ -258,7 +259,7 @@ export function compileMapStep(state: GameState, step: AddMapStep): Command[] {
 }
 
 /** Starting cards for an agenda or act deck, in deck order. */
-function deckCards(codes: readonly string[], zone: Zone): DraftCard[] {
+function deckCards(codes: readonly CardCode[], zone: Zone): DraftCard[] {
   // Agendas and acts are double-sided; face up means side "a" is showing.
   return codes.map((code, i) => ({ id: newId(code, codes.slice(0, i)), code, zone, faceUp: true }));
 }
@@ -303,7 +304,7 @@ function withMap(draft: SetupDraft, step: AddMapStep): SetupDraft {
 /** A card as far as resolving setup codes is concerned: a draft card or a card in the game. */
 interface CodedCard {
   readonly id: InstanceId;
-  readonly code: string;
+  readonly code: CardCode;
 }
 
 /** The edge for a connection, resolved among the map's own location cards. */
@@ -316,7 +317,7 @@ function edge(locations: readonly CodedCard[], connection: MapConnection): Edge 
 }
 
 /** The draft with one new instance of `code` appended in `zone`. */
-function withCard(draft: SetupDraft, code: string, zone: Zone, faceUp = false): SetupDraft {
+function withCard(draft: SetupDraft, code: CardCode, zone: Zone, faceUp = false): SetupDraft {
   const id = newId(
     code,
     draft.cards.map((card) => card.code),
@@ -328,13 +329,13 @@ function withCard(draft: SetupDraft, code: string, zone: Zone, faceUp = false): 
  * A readable, deterministic instance ID: the code plus a copy number
  * (`L1#1`, `L1#2`), so tests and saved games show which card is meant.
  */
-function newId(code: string, existingCodes: readonly string[]): InstanceId {
+function newId(code: CardCode, existingCodes: readonly CardCode[]): InstanceId {
   const copy = existingCodes.filter((other) => other === code).length + 1;
   return instanceId(`${code}#${copy}`);
 }
 
 /** The ID of the single card with `code` among `cards`. */
-function targetId(cards: readonly CodedCard[], code: string): InstanceId {
+function targetId(cards: readonly CodedCard[], code: CardCode): InstanceId {
   const matches = cards.filter((card) => card.code === code);
   const [match] = matches;
   if (!match) throw new CommandRejected({ code: 'setupTargetNotFound', cardCode: code });
@@ -387,9 +388,9 @@ function withRevealClues(card: DraftCard, env: SetupEnv): DraftCard {
 /** Codes of the encounter deck cards, one entry per copy, in set and db order. */
 function encounterDeckCards(
   sets: readonly string[],
-  exclude: readonly string[],
+  exclude: readonly CardCode[],
   env: SetupEnv,
-): string[] {
+): CardCode[] {
   return sets
     .flatMap((set) => encounterSetCards(env.ctx, set))
     .filter((stats) => ENCOUNTER_DECK_TYPES.has(stats.typeCode) && !exclude.includes(stats.code))
@@ -412,15 +413,15 @@ function encounterSetCards(ctx: EngineContext, set: string): readonly CardStats[
  * encounter deck. Counted over all steps, so the deck excludes a set-aside
  * enemy whether it is set aside before or after the deck is built.
  */
-function usedCopies(def: ScenarioDefinition): Map<string, number> {
+function usedCopies(def: ScenarioDefinition): Map<CardCode, number> {
   const codes = [...def.agendaDeck, ...def.actDeck, ...def.setup.flatMap(stepCodes)];
-  const counts = new Map<string, number>();
+  const counts = new Map<CardCode, number>();
   for (const code of codes) counts.set(code, (counts.get(code) ?? 0) + 1);
   return counts;
 }
 
 /** Codes of the cards a step creates (other than encounter deck cards). */
-function stepCodes(step: SetupStep): readonly string[] {
+function stepCodes(step: SetupStep): readonly CardCode[] {
   switch (step.kind) {
     case 'addMap':
       return step.locations.map((location) => location.code);

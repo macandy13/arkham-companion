@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  cardCode,
   checkInvariants,
   decisionId,
   execute,
@@ -67,7 +68,11 @@ function started(investigators: Investigator[], cards: StartingCard[] = []): Gam
   });
 }
 
-const ghoulAt = (code: string, zone: Zone): StartingCard => ({ id: ghoul, code, zone });
+const ghoulAt = (code: string, zone: Zone): StartingCard => ({
+  id: ghoul,
+  code: cardCode(code),
+  zone,
+});
 const atHall: Zone = { kind: 'atLocation', locationId: hall };
 const setAside: Zone = { kind: 'setAside' };
 

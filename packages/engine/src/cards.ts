@@ -1,5 +1,5 @@
 import { stripTrailingDot } from '@arkham/util';
-import type { Brand } from './ids';
+import type { Brand, CardCode } from './ids';
 import type { Keyword } from './keywords';
 import type { ScenarioReference } from './scenario';
 import type { SkillModifierRegistry } from './skill_modifiers';
@@ -96,7 +96,7 @@ export interface CardStage {
  */
 export interface CardStats {
   /** ArkhamDB card code; `CardInstance.code` refers to it. */
-  code: string;
+  code: CardCode;
   name: string;
   typeCode: CardType;
   traits: readonly Trait[];
@@ -161,7 +161,7 @@ export interface CardStats {
  */
 export interface CardDb {
   /** The definition for `code`, or `undefined` if the code is not known. */
-  get(code: string): CardStats | undefined;
+  get(code: CardCode): CardStats | undefined;
   /**
    * Every definition whose `encounterCode` is `encounterCode`, one entry per
    * code (not per copy). Empty for an unknown set. Used to build the
@@ -195,7 +195,7 @@ export interface EngineContext {
 
 /** Builds a `CardDb` from a list of definitions; a later duplicate code replaces an earlier one. */
 export function cardDbFrom(defs: Iterable<CardStats>): CardDb {
-  const byCode = new Map<string, CardStats>();
+  const byCode = new Map<CardCode, CardStats>();
   for (const def of defs) byCode.set(def.code, def);
   return {
     get: (code) => byCode.get(code),
@@ -230,7 +230,7 @@ export function comparableName(text: string): string {
 }
 
 /** The definition for `code`; throws `CommandRejected` (`unknownCardCode`) if the db lacks it. */
-export function cardStats(cards: CardDb, code: string): CardStats {
+export function cardStats(cards: CardDb, code: CardCode): CardStats {
   const stats = cards.get(code);
   if (!stats) throw new CommandRejected({ code: 'unknownCardCode', cardCode: code });
   return stats;

@@ -1,5 +1,12 @@
 import type { CommandType, EncounterMatch, EncounterSource } from './commands';
-import type { DecisionId, InstanceId, InvestigatorCode, InvestigatorId, MapId } from './ids';
+import type {
+  CardCode,
+  DecisionId,
+  InstanceId,
+  InvestigatorCode,
+  InvestigatorId,
+  MapId,
+} from './ids';
 import type { Decider, InvestigatorStat, Phase, TokenKind } from './state';
 
 /**
@@ -13,7 +20,7 @@ export type Rejection =
   | { code: 'duplicateCard'; cardId: InstanceId }
   | { code: 'unknownCard'; cardId: InstanceId }
   /** `cardCode` has no definition in the `CardDb` passed to `handle`. */
-  | { code: 'unknownCardCode'; cardCode: string }
+  | { code: 'unknownCardCode'; cardCode: CardCode }
   | { code: 'unknownInvestigator'; investigatorId: InvestigatorId }
   /** A seat in `SetupOptions` names a code that is not an investigator card in the `EngineContext`'s `CardDb`. */
   | { code: 'unknownInvestigatorCard'; investigatorCode: InvestigatorCode }
@@ -31,9 +38,9 @@ export type Rejection =
   /** `cardId` is used as a location but is not one: not on a map (investigator position, reveal) or not a location card (connection). */
   | { code: 'notALocation'; cardId: InstanceId }
   /** A setup step refers to `cardCode`, but no earlier step created an instance of it. */
-  | { code: 'setupTargetNotFound'; cardCode: string }
+  | { code: 'setupTargetNotFound'; cardCode: CardCode }
   /** A setup step refers to `cardCode`, but several instances of it exist. */
-  | { code: 'setupTargetAmbiguous'; cardCode: string }
+  | { code: 'setupTargetAmbiguous'; cardCode: CardCode }
   /** No card in the `CardDb` belongs to `encounterCode` (usually a typo in scenario data). */
   | { code: 'unknownEncounterSet'; encounterCode: string }
   /** `AddConnection` for an edge that already exists. */

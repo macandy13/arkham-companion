@@ -2,6 +2,7 @@ import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   STATE_VERSION,
+  cardCode,
   emptyState,
   instanceId,
   investigatorCode,
@@ -17,7 +18,7 @@ import { IndexedDbStore, SeqConflictError } from './IndexedDbStore';
 
 const card = (id: string): CardInstance => ({
   id: instanceId(id),
-  code: '0001',
+  code: cardCode('0001'),
   zone: { kind: 'encounterDeck' },
   faceUp: false,
   exhausted: false,

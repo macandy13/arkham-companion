@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  cardCode,
   checkInvariants,
   decisionId,
   describeDecision,
@@ -96,7 +97,7 @@ const threatAreaOf = (investigator: InvestigatorId): Zone => ({
 });
 
 function placed(id: typeof hall, code: string, zone: Zone, tokens = {}): StartingCard {
-  return { id, code, zone, tokens };
+  return { id, code: cardCode(code), zone, tokens };
 }
 
 /** Ids of the cards in `zone`, top first. */
