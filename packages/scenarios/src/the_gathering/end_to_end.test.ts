@@ -1,10 +1,11 @@
 /**
  * The Gathering, played end to end: Roland Banks, Daisy Walker and Wendy
- * Adams, a fixed seed, seven rounds. An integration narrative rather than a
+ * Adams, a fixed seed, eleven rounds to resolution 1. An integration narrative rather than a
  * rules test – it shows the engine features working together in a real
  * scenario (setup, the phase assistant, turns and actions, skill tests,
  * clues, undoing a mis-tapped move, the act 1 hook, doom and the agenda, encounter draws and revelation
- * tests, spawn instructions, engagement, hunters, attacks, attacks of opportunity, upkeep, and undoing a whole mythos phase) as one
+ * tests, spawn instructions, engagement, hunters, attacks, attacks of opportunity, upkeep, undoing a whole mythos phase,
+ * resigning, the reverse sides of agenda 2 and acts 2 and 3, and the end of the scenario) as one
  * session report: game-language steps on a `TestTable`, phase by phase and
  * turn by turn, with the facts a player would check at the table asserted
  * where they happen.
@@ -20,7 +21,7 @@
  * asserts where it stopped (round, phase and the step a decision or an
  * attack holds it at). The board is read back as structured data (enemies,
  * decisions, attacks due), with full-board snapshots only at setup and at the
- * end. Each investigation turn is started and ended explicitly, in the order the group
+ * end of round 7. Each investigation turn is started and ended explicitly, in the order the group
  * chooses; the players count actions off each investigator's counter
  * themselves, where the script shows it. Skill tests are resolved at the table: the engine asks for the
  * result (`skillTestResult`), and the comments say why it is a pass or fail.
@@ -28,7 +29,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { replay, type EngineContext } from '@arkham/engine';
-import { theGathering, theGatheringCards } from '../index';
+import { BURN_THE_HOUSE_DECISION, theGathering, theGatheringCards } from '../index';
 import { daisyWalker, rolandBanks, wendyAdams } from '../investigators';
 import { TestTable } from './test_table';
 
@@ -43,7 +44,7 @@ const ghoulMinion = 'Ghoul Minion';
 const ravenousGhoul = 'Ravenous Ghoul';
 
 describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
-  it('plays eight rounds from setup: act 1 opens the house, the agenda advances, enemies spawn, hunt, attack and are defeated, the clues for act 2 are in hand, and Wendy resigns', () => {
+  it('plays from setup to resolution 1: act 1 opens the house, enemies spawn, hunt, attack and are defeated, Wendy resigns, the ghouls rise, act 2 brings the Ghoul Priest and its defeat lets the group burn the house', () => {
     // Setup
     const table = TestTable.setUp({
       scenario: theGathering,
@@ -659,12 +660,154 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       'Frozen in Fear',
     ]);
 
-    // The phase ends without waiting for Wendy.
+    // The phase ends without waiting for Wendy. Roland empties his .38 Special
+    // into the Flesh-Eater (2 damage a shot) and searches the Attic again.
     table.startTurn(roland);
+    table.fight(roland, 'Flesh-Eater', { damage: 2 });
+    table.fight(roland, 'Flesh-Eater', { damage: 2 });
+    table.investigate(roland);
+    table.endTurn(roland);
+    // Daisy, one damage from defeat, slips away from both ghouls and searches the Cellar.
+    table.startTurn(daisy);
+    table.evade(daisy, ravenousGhoul);
+    table.evade(daisy, ghoulMinion);
+    table.investigate(daisy);
+    table.endTurn(daisy);
+
+    expect(table.namesIn({ kind: 'victoryDisplay' })).toEqual(['Icy Ghoul', 'Flesh-Eater']);
+    expect(table.investigatorClues()).toEqual({ roland: 6, daisy: 2, wendy: 0 });
+
+    // Round 8 – enemy phase and upkeep: both ghouls are exhausted, nobody is
+    // attacked; readied in upkeep, they engage Daisy again in the Cellar.
+    expect(table.nextPhase()).toEqual({ round: 8, phase: 'enemy' });
+    expect(table.nextPhase()).toEqual({ round: 8, phase: 'upkeep' });
+
+    // Round 9 – mythos: the 7th doom advances Rise of the Ghouls. Its reverse
+    // side shuffles the discard back into the deck and turns cards over until
+    // a Ghoul enemy comes up: the top card is a Ghoul Minion, which Roland, the
+    // lead investigator, draws.
+    expect(table.nextPhase()).toEqual({ round: 9, phase: 'mythos', step: 'checkDoomThreshold' });
+    table.answer('Rise of the Ghouls', 'yes');
+
+    expect(table.agenda()).toEqual({ name: "They're Getting Out!", doom: 0 });
+    expect(table.namesIn({ kind: 'encounterDiscard' })).toEqual([]);
+    expect(table.enemy({ name: ghoulMinion, engagedWith: roland })).toEqual({
+      name: ghoulMinion,
+      at: 'Attic',
+      engagedWith: roland,
+    });
+
+    // 1.4: Rotting Remains for both; willpower 3 against 3, both pass.
+    expect(table.nextPhase()).toEqual({ round: 9, phase: 'mythos', step: 'drawEncounterCard' });
+    table.answer('Rotting Remains', 'pass');
+    expect(table.nextPhase()).toEqual({ round: 9, phase: 'mythos', step: 'drawEncounterCard' });
+    table.answer('Rotting Remains', 'pass');
+
+    // Round 9 – investigation: The Barrier asks for the investigators in the
+    // Hallway at the end of the round. Roland shoots the new Ghoul Minion,
+    // takes another Attic clue and walks to the Hallway; Daisy evades both
+    // ghouls again and follows him.
+    expect(table.nextPhase()).toEqual({ round: 9, phase: 'investigation' });
+    table.startTurn(roland);
+    table.fight(roland, { name: ghoulMinion, engagedWith: roland }, { damage: 2 });
+    table.investigate(roland);
+    table.moveTo(roland, 'Hallway');
     table.endTurn(roland);
     table.startTurn(daisy);
+    table.evade(daisy, ghoulMinion);
+    table.evade(daisy, ravenousGhoul);
+    table.moveTo(daisy, 'Hallway');
     table.endTurn(daisy);
-    expect(table.nextPhase()).toEqual({ round: 8, phase: 'enemy', step: 'enemiesAttack' });
+    expect(table.nextPhase()).toEqual({ round: 9, phase: 'enemy' });
+    expect(table.nextPhase()).toEqual({ round: 9, phase: 'upkeep' });
+
+    // The round has ended with both in the Hallway holding 9 clues, the 3 per
+    // investigator act 2 asks for (Wendy still counts). Its reverse side
+    // reveals the Parlor, puts Lita Chantler there and spawns the Ghoul Priest
+    // in the Hallway; its prey (highest combat) is Roland.
+    expect(table.investigatorLocations()).toEqual({
+      roland: 'Hallway',
+      daisy: 'Hallway',
+      wendy: 'Cellar',
+    });
+    table.spendCluesToAdvanceAct({ roland: 7, daisy: 2 });
+    table.answer('Ghoul Priest', 'Roland Banks');
+
+    expect(table.act()).toBe('What Have You Done?');
+    expect(table.cardsAt('Parlor')).toEqual(['Lita Chantler']);
+    expect(table.enemy('Ghoul Priest')).toEqual({
+      name: 'Ghoul Priest',
+      at: 'Hallway',
+      engagedWith: roland,
+    });
+
+    // Round 10 – mythos: Roland draws Frozen in Fear, Daisy Grasping Hands
+    // (agility 2 and a +1 token against 3: she passes).
+    expect(table.nextPhase()).toEqual({ round: 10, phase: 'mythos', step: 'drawEncounterCard' });
+    table.answer('Grasping Hands', 'pass');
+
+    // Round 10 – investigation: the Ghoul Priest has 5 health per investigator,
+    // 15. Frozen in Fear makes Roland's first fight cost an extra action, so he
+    // fights twice with his .45 Automatic and Vicious Blow (3 damage each);
+    // Daisy fights three times with her bare hands.
+    expect(table.nextPhase()).toEqual({ round: 10, phase: 'investigation' });
+    table.startTurn(roland);
+    table.adjustActions(roland, -1);
+    table.fight(roland, 'Ghoul Priest', { damage: 3 });
+    table.fight(roland, 'Ghoul Priest', { damage: 3 });
+    table.endTurn(roland);
+    table.startTurn(daisy);
+    table.fight(daisy, 'Ghoul Priest');
+    table.fight(daisy, 'Ghoul Priest');
+    table.fight(daisy, 'Ghoul Priest');
+    table.endTurn(daisy);
+
+    expect(table.enemy('Ghoul Priest')).toMatchObject({ damage: 9 });
+
+    // Round 10 – enemy phase: the Priest hits Roland for 2 damage and 2
+    // horror; his Guard Dog soaks the horror.
+    expect(table.nextPhase()).toEqual({ round: 10, phase: 'enemy', step: 'enemiesAttack' });
+    table.resolveEnemyAttacks({ horror: 0 });
+
+    expect(table.wounds(roland)).toEqual({ damage: 6, horror: 4 });
+
+    // Round 11 – mythos: Roland draws a Swarm of Rats, Daisy Ancient Evils (1 doom).
+    expect(table.nextPhase()).toEqual({ round: 10, phase: 'upkeep' });
+    expect(table.nextPhase()).toEqual({ round: 11, phase: 'mythos' });
+    table.placeDoom(1);
+
+    // Round 11 – investigation: Roland's two shots defeat the Ghoul Priest. It
+    // goes to the victory display, which meets act 3's objective: the act
+    // advances by itself and asks Roland, the lead, whether to burn the house.
+    expect(table.nextPhase()).toEqual({ round: 11, phase: 'investigation' });
+    table.startTurn(roland);
+    table.adjustActions(roland, -1);
+    table.fight(roland, 'Ghoul Priest', { damage: 3 });
+    table.fight(roland, 'Ghoul Priest', { damage: 3 });
+
+    expect(table.namesIn({ kind: 'victoryDisplay' })).toEqual([
+      'Icy Ghoul',
+      'Flesh-Eater',
+      'Ghoul Priest',
+    ]);
+    expect(table.decisions()).toEqual([
+      {
+        prompt: 'scenario.theGathering.burnTheHouse.prompt',
+        kind: 'chooseOption',
+        options: [
+          'scenario.theGathering.burnTheHouse.burn',
+          'scenario.theGathering.burnTheHouse.spare',
+        ],
+      },
+    ]);
+
+    // They burn it down: resolution 1. The game is over; only corrections remain.
+    table.play({ type: 'ResolveDecision', decisionId: BURN_THE_HOUSE_DECISION, optionId: 'burn' });
+
+    expect(table.state.meta).toMatchObject({ ended: true, resolution: 'R1' });
+    expect(() => table.endTurn(roland)).toThrow(
+      expect.objectContaining({ rejection: expect.objectContaining({ code: 'scenarioEnded' }) }),
+    );
 
     // The whole event log, setup included, replays to the live state.
     expect(replay(table.events)).toEqual(table.state);

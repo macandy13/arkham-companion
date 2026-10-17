@@ -385,13 +385,15 @@ export class TestTable {
 
   /**
    * Enemy step 3.3: the players resolve each attack the step lists, in its
-   * order, with the printed damage and horror; each enemy exhausts after its attack.
+   * order, with the printed damage and horror, or the `lowered` amounts when
+   * assets soak part of every attack; each enemy exhausts after its attack.
    */
-  resolveEnemyAttacks(): void {
+  resolveEnemyAttacks(lowered: { damage?: number; horror?: number } = {}): void {
     const [step] = this.current.meta.steps;
     if (step?.id !== 'enemiesAttack' || step.attacks === undefined)
       throw new Error(`no enemy attacks to resolve\n${this.board()}`);
-    for (const attack of step.attacks) this.play({ type: 'ResolveEnemyAttack', ...attack });
+    for (const attack of step.attacks)
+      this.play({ type: 'ResolveEnemyAttack', ...attack, ...lowered });
   }
 
   /** The enemy attacks step 3.3 lists, in its order; none outside that step. */
@@ -447,6 +449,11 @@ export class TestTable {
   /** Clues on the location named `locationName`. */
   cluesOn(locationName: string): number {
     return this.locationNamed(locationName).tokens.clue ?? 0;
+  }
+
+  /** Names of the cards at the location named `locationName` (enemies and story assets alike). */
+  cardsAt(locationName: string): string[] {
+    return this.namesIn({ kind: 'atLocation', locationId: this.locationNamed(locationName).id });
   }
 
   /** Names of the locations on a map, in map order. */
