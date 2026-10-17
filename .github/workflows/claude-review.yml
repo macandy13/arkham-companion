@@ -64,3 +64,13 @@ jobs:
         run: |
           jq -r '(if type == "array" then .[] else . end) | select(.type == "result") | .result // "no result text"' \
             "$EXECUTION_FILE" | sed 's/^/::error title=Claude review::/'
+      # Token counts only (no transcript), so the job log shows whether prompt caching hits.
+      - if: always() && (steps.review.conclusion == 'success' || steps.review.conclusion == 'failure')
+        env:
+          EXECUTION_FILE: ${{ steps.review.outputs.execution_file || format('{0}/claude-execution-output.json', runner.temp) }}
+        run: |
+          jq -r '
+            [(if type == "array" then .[] else . end) | select(.type == "assistant") | .message]
+            | unique_by(.id) | map(.usage)
+            | "::notice title=Claude review tokens::\(length) API calls; input \(map(.input_tokens // 0) | add // 0), cache write \(map(.cache_creation_input_tokens // 0) | add // 0), cache read \(map(.cache_read_input_tokens // 0) | add // 0), output \(map(.output_tokens // 0) | add // 0)"
+          ' "$EXECUTION_FILE"
