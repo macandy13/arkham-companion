@@ -133,32 +133,3 @@ Done (slice 1): `ShuffleEncounterDiscard` moves the whole discard into the deck 
 Done (slice 2): `theGathering.hooks` now hold act 2's reverse side (reveal the Parlor, Lita Chantler into play there, the Ghoul Priest spawns in the Hallway), act 3's objective (`afterEnemyDefeated`: the Ghoul Priest defeated during act 3 advances it) and reverse side (a `chooseOption` decision for the lead, `BURN_THE_HOUSE_DECISION`: burn → R1, spare → R2), agenda 2's reverse side (`ShuffleEncounterDiscard`, then the lead draws the first Ghoul enemy with the cards above it discarded; only the shuffle when no Ghoul enemy is left) and agenda 3's (R3 before act 3; at act 3 every active investigator is defeated, the lead last, so the scenario ends without a resolution and no new-lead question is left open). `GATHERING_RESOLUTIONS` names R1–R3. The end-to-end test plays rounds 8–11: the Flesh-Eater falls, Rise of the Ghouls advances in round 9 (the lead draws a Ghoul Minion), Roland and Daisy end round 9 in the Hallway with 9 clues and advance The Barrier, the Ghoul Priest engages Roland (Roland evades it in round 10 rather than take its attack at 4 of 5 horror), falls to Daisy in round 11, act 3 asks, the group burns the house (R1), and the next command is refused with `scenarioEnded`. `TestTable` gained `cardsAt(location)`; the hook checks for a Ghoul enemy with the engine's `matchesEncounter` (slice 1).
 
 Follow-ups: show a retaliate in the end-to-end test once M1.16's #76 is on main (the Ghoul Priest has retaliate; every fight in the script passes, so a failed one is needed); agenda 1's reverse side (the lead's choice) and agenda 3's forced effects (Ghouls move toward the Parlor, doom per Ghoul in the Hallway or Parlor) are still left to the players; act 2's objective is offered by nobody: the players spend the clues after the round ends, and the engine checks neither the timing nor that only investigators in the Hallway pay; the unrevealed Parlor can still be entered (its back says it cannot); the physical trauma of agenda 3 at act 3 and the campaign guide's "no resolution" instruction belong to the campaign (M1C); `formatBoard` shows Lita Chantler (a story asset at a location) as an "unengaged" enemy; parley with Lita is not modelled.
-
-## M1.18 Timing gaps (S)
-
-**Why:** A few rule timings are still approximated (M1.5, M1.6, M1.9, M1.10 follow-ups): no end-of-turn hook (Frozen in Fear), simultaneous forced effects run in a fixed order, a doom `ManualAdjust` never re-checks the threshold, and `ManualAdjust` can move the current agenda/act out of its deck.
-
-**Benefit:** Fewer cases where the players must remember a forced effect the app silently skipped, and manual corrections can't put the game into an impossible state.
-
-Ref: M1.5, M1.6, M1.9, M1.10 follow-ups.
-
-Slices (one PR each):
-
-1. Engine: `onTurnEnd`, end-of-turn tests and end-of-round discards as card data.
-2. The Gathering: Frozen in Fear's and Dissonant Voices' card data, end-to-end test updated (after M1.17 slice 2, #78, which edits that test).
-3. Engine: `ManualAdjust` guards (doom threshold confirm, current agenda/act stay in their deck).
-4. ~~Engine: the lead investigator orders simultaneous forced effects.~~ Deferred (Andy, 2026-10-17): every event fires at most one hook, and no Core card's outcome depends on the order of end-of-turn or end-of-round effects. Build it when a scenario needs it.
-5. Engine: `decider` checked against the answering investigator.
-
-- [x] `onTurnEnd` hook fired by `EndTurn`; Frozen in Fear raises its willpower test there (engine; card data in slice 2)
-- [x] End-of-round discards (Dissonant Voices: "Forced – At the end of the round: Discard"), found by the M1.17 end-to-end test
-- [ ] ~~Simultaneous forced effects: the lead investigator picks the order (`chooseOption` decision) when more than one applies~~ (deferred, see slice 4)
-- [x] After a doom `ManualAdjust`, offer `CheckDoomThreshold` (a `confirm` decision), never advance silently
-- [x] `ManualAdjust` cannot move the current agenda or act out of its deck (rejection)
-- [x] `decider` is checked against who answers a decision, if the command carries the answering investigator
-
-Done (slice 1, #79): `EndTurn` raises the `turnEndTest` of each card in the investigator's threat area (a pass discards it), `TurnEnded` fires `ScenarioHooks.onTurnEnd`, and upkeep step 4.6 discards every in-play card with `discardAtRoundEnd`. The Gathering's card data and the end-to-end test follow in slice 2.
-
-Done (manual-adjust slice): added doom in a `ManualAdjust` that reaches the threshold raises the usual `advanceAgenda` confirm instead of a separate "check the threshold?" question, since that check would only ask the same thing again. Moving the current agenda or act is rejected (`currentStageCard`); later cards of either deck can still be moved.
-
-Done (decider slice): `ResolveDecision.answeredBy` is optional, since the app runs on one shared device for now. When it is set, the answer is refused unless that investigator is the named one, the lead, or, for a group decision, any investigator still in the scenario (`notTheDecider`).
