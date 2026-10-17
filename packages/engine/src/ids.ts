@@ -24,7 +24,7 @@ export type CardCode = Brand<string, 'CardCode'>;
 export type InvestigatorCode = CardCode & { readonly __investigatorCode: true };
 /** ArkhamDB encounter set code, e.g. 'rats'; `CardStats.encounterCode`. */
 export type EncounterSetCode = Brand<string, 'EncounterSetCode'>;
-/** `ScenarioDefinition.id`, e.g. 'the-gathering'; `GameMeta.scenarioId` and `CampaignLog.scenarioIds`. */
+/** `ScenarioDefinition.id`, e.g. 'the-gathering'; wherever a game or campaign refers to a scenario. */
 export type ScenarioId = Brand<string, 'ScenarioId'>;
 /** `CampaignDefinition.id`, e.g. 'night-of-the-zealot'; `CampaignLog.definitionId`. */
 export type CampaignDefinitionId = Brand<string, 'CampaignDefinitionId'>;

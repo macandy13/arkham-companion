@@ -34,7 +34,7 @@ export interface CampaignDefinition {
  * scenarios needs it).
  */
 export interface InterludeDefinition {
-  readonly id: CampaignDefinitionId;
+  readonly id: string;
   /** `ScenarioDefinition.id` of the scenario the interlude follows. */
   readonly afterScenario: ScenarioId;
 }
