@@ -375,6 +375,13 @@ export interface GameMeta {
   playerCount: number;
   /** Resolution id the scenario ended with (`ScenarioEnded`); absent while it is still running. */
   resolution?: string;
+  /**
+   * Set by `ScenarioEnded`, with or without a resolution. Kept apart from
+   * `resolution` because a scenario in which every investigator was
+   * eliminated ends with no resolution, and `handle` must still refuse play
+   * from then on (`assertScenarioRunning`).
+   */
+  ended?: true;
   seed: number;
   rngState: RngState;
   /** Number of the current round; 0 during setup, 1 from the first investigation phase. */

@@ -84,7 +84,8 @@ Connections between locations form an explicit graph on each [`GameMap`](../pack
 ```ts
 interface GameState {
   meta: GameMeta;                        // scenario, difficulty, playerCount, seed, rngState, round, phase,
-                                         // steps, turn, turnsTaken, leadInvestigator, heldAction
+                                         // steps, turn, turnsTaken, leadInvestigator, heldAction,
+                                         // ended, resolution
   campaign?: CampaignLog;                // the campaign this game belongs to (see Campaign)
   investigators: Investigator[];
   cards: Record<InstanceId, CardInstance>;
@@ -162,8 +163,10 @@ interface EngineContext {          // cards.ts
 
    > **To verify** ([M1V.1](tasks/M1V-rules-verification.md)): hooks are evaluated only after all of the command's events, not the moment their event happens. Some forced effects may have to resolve immediately, between two events of one command. Check this against the Rules Reference and cover the edge cases with tests.
 3. **Follow-ups, depth first.** `withFollowUps` handles each follow-up command exactly like a player command, against the working copy as it stands after the previous follow-up, so its own forced effects resolve before the next sibling's. Its events append to the same list. A refused follow-up refuses the original command (`triggeredCommandRejected`), and a chain of more than `MAX_TRIGGERED_COMMANDS` follow-ups refuses it with `triggerLoop`. A bad hook can therefore neither hang the app nor leave half its effect behind.
-4. **Commands that continue after their effects.** Advancing an agenda or act happens in two parts. First the card flips and its reverse side (the hook) resolves while it is still current. Only then does `completeCommand` move it out and make the next card current, with that part's own forced effects. `NextPhase` likewise goes on with the phase's outstanding steps (see "Rounds, phases and turns").
+4. **Commands that continue after their effects.** Advancing an agenda or act happens in two parts. First the card flips and its reverse side (the hook) resolves while it is still current. Only then does `completeCommand` move it out and make the next card current, with that part's own forced effects. On the last card the reverse side names the resolution (`EndScenario`), or raises a decision whose options do, when the investigators choose it. `NextPhase` likewise goes on with the phase's outstanding steps (see "Rounds, phases and turns").
 5. **Held actions.** If the command is an action that provokes attacks of opportunity, `handle` first does a dry run to reject an illegal action. It then returns only one decision per attacking enemy and an `ActionHeld` event. Once the last of those decisions is answered, the held action resumes (`ActionResumed` and its events) or is dropped (`ActionDropped`).
+
+Once `ScenarioEnded` has set `GameMeta.ended`, `handle` refuses every command except `ManualAdjust` (`scenarioEnded`): the game is over, but the players may still correct the final board before the campaign reads it. Undo works on the log, outside `handle`, so it still takes back the command that ended the scenario.
 
 The result is one list of events per player command. The store files them under one `commandId`, so undo ([`undo.ts`](../packages/engine/src/undo.ts)) always removes a whole command with its chain. The RNG state ([`rng.ts`](../packages/engine/src/rng.ts), xoshiro128\*\*) is part of `GameMeta`, so handling the same command again gives the same shuffle.
 
@@ -186,6 +189,7 @@ interface ScenarioHooks {
   onActAdvance: Readonly<Record<string, TriggerHook<ActAdvanced>>>;        // reverse side, by act code
   onRoundEnd: TriggerHook<RoundEnded>;
   onCardEnters: TriggerHook<CardMoved>;                                // a card enters play from outside play
+  afterEnemyDefeated: TriggerHook<EnemyDefeated>;                      // e.g. "if the Ghoul Priest is defeated, advance"
 }
 interface CardEffect { onReveal?: TriggerHook<CardFlipped>; }
 type EffectsRegistry = Readonly<Record<string, CardEffect>>;           // by card code

@@ -139,7 +139,7 @@ describe('PlaceDoom', () => {
     );
   });
 
-  it('rejects doom once the agenda deck is used up', () => {
+  it('rejects doom once the last agenda has ended the scenario', () => {
     const ended = stateAfter(
       testContext,
       state,
@@ -148,8 +148,8 @@ describe('PlaceDoom', () => {
     );
 
     expect(rejectionFrom(testContext, ended, { type: 'PlaceDoom', amount: 1 })).toEqual({
-      code: 'noCurrentCard',
-      deck: 'agenda',
+      code: 'scenarioEnded',
+      command: 'PlaceDoom',
     });
   });
 });
@@ -690,7 +690,7 @@ describe('AdvanceAct', () => {
     ).toEqual({ code: 'unexpectedResolution', deck: 'act' });
   });
 
-  it('rejects advancing once the act deck is used up', () => {
+  it('rejects advancing once the last act has ended the scenario', () => {
     const ended = stateAfter(
       testContext,
       state,
@@ -706,9 +706,72 @@ describe('AdvanceAct', () => {
     );
 
     expect(rejectionFrom(testContext, ended, { type: 'AdvanceAct', spend: [] })).toEqual({
-      code: 'noCurrentCard',
-      deck: 'act',
+      code: 'scenarioEnded',
+      command: 'AdvanceAct',
     });
+  });
+});
+
+describe('a last act whose reverse side lets the lead investigator choose the resolution', () => {
+  const chooseResolution = decisionId('chooseResolution');
+  const endWith = (resolution: string): Command => ({ type: 'EndScenario', resolution });
+  /** C2, the second and last act of `startedWith`. */
+  const lastActCode = 'C2';
+  /** The last act's reverse side asks "R1 or R2?"; each answer ends the scenario. */
+  const choosingContext = {
+    ...testContext,
+    hooks: {
+      onActAdvance: {
+        [lastActCode]: (): Command[] => [
+          {
+            type: 'RequestDecision',
+            decision: {
+              id: chooseResolution,
+              kind: 'chooseOption',
+              prompt: 'burn the house?',
+              decider: { kind: 'lead' },
+              options: [
+                { id: 'burn', label: 'burn it', commands: [endWith('R1')] },
+                { id: 'spare', label: 'spare it', commands: [endWith('R2')] },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  };
+  const lastAct = () =>
+    stateAfter(choosingContext, startedWith([makeInvestigator({ id: alice })]), {
+      type: 'AdvanceAct',
+    });
+
+  it('leaves the scenario running with the question open instead of asking for a resolution', () => {
+    const asked = stateAfter(choosingContext, lastAct(), { type: 'AdvanceAct' });
+
+    expect(asked.act.current).toBeUndefined();
+    expect(asked.meta.ended).toBeUndefined();
+    expect(asked.pending.map((decision) => decision.id)).toEqual([chooseResolution]);
+  });
+
+  it('ends the scenario with the resolution the lead investigator picks', () => {
+    const asked = stateAfter(choosingContext, lastAct(), { type: 'AdvanceAct' });
+
+    const ended = stateAfter(choosingContext, asked, {
+      type: 'ResolveDecision',
+      decisionId: chooseResolution,
+      optionId: 'spare',
+    });
+
+    expect(ended.meta).toMatchObject({ ended: true, resolution: 'R2' });
+  });
+
+  it('ignores a fallback resolution while the question is open', () => {
+    const { events } = execute(choosingContext, lastAct(), {
+      type: 'AdvanceAct',
+      resolution: 'R3',
+    });
+
+    expect(events.map((event) => event.type)).not.toContain('ScenarioEnded');
   });
 });
 

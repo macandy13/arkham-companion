@@ -273,6 +273,52 @@ describe('trigger bus', () => {
   });
 });
 
+describe('afterEnemyDefeated', () => {
+  /** Advances the act (C1 to C2) when the hall's ghoul is defeated, as "if this enemy is defeated, advance". */
+  const advanceOnGhoulDefeat = withHooks({
+    afterEnemyDefeated: (_ctx, _state, event) =>
+      event.enemyId === ghoul ? [{ type: 'AdvanceAct' }] : [],
+  });
+
+  it('runs the follow-up when the enemy the hook names is defeated', () => {
+    const { state } = execute(advanceOnGhoulDefeat, startedState(), {
+      type: 'DefeatEnemy',
+      enemyId: ghoul,
+    });
+
+    expect(state.act.current).toBe(act2);
+  });
+
+  it('does nothing when another enemy is defeated', () => {
+    const withDeckGhoulInHall = stateAfter(advanceOnGhoulDefeat, startedState(), {
+      type: 'SpawnEnemy',
+      enemyId: deckGhoul,
+      at: hall,
+    });
+
+    const { state } = execute(advanceOnGhoulDefeat, withDeckGhoulInHall, {
+      type: 'DefeatEnemy',
+      enemyId: deckGhoul,
+    });
+
+    expect(state.act.current).toBe(act1);
+  });
+
+  it('sees the enemy where the defeat put it', () => {
+    const seen: unknown[] = [];
+    const ctx = withHooks({
+      afterEnemyDefeated: (_ctx, state, event) => {
+        seen.push(state.cards[event.enemyId]?.zone);
+        return [];
+      },
+    });
+
+    execute(ctx, startedState(), { type: 'DefeatEnemy', enemyId: ghoul });
+
+    expect(seen).toEqual([{ kind: 'encounterDiscard' }]);
+  });
+});
+
 describe('trigger bus failures', () => {
   it('rejects a chain that keeps re-triggering itself', () => {
     const ctx = withHooks({ afterDoomPlaced: () => [placeDoomOnGhoul] });
