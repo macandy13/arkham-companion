@@ -2,6 +2,7 @@ import { neighbours } from './board';
 import type { EngineContext } from './cards';
 import type {
   AdjustInvestigator,
+  DefeatInvestigator,
   DiscoverClues,
   MoveInvestigator,
   SetLeadInvestigator,
@@ -109,6 +110,16 @@ export function handleAdjustInvestigator(state: GameState, cmd: AdjustInvestigat
       cause,
     }),
   ];
+}
+
+/** `DefeatInvestigator`: a card effect defeats the investigator, with the clean-up of any defeat. */
+export function handleDefeatInvestigator(state: GameState, cmd: DefeatInvestigator): Event[] {
+  const investigator = activeInvestigator(state, cmd.investigatorId);
+  return investigatorLeavesEvents(state, investigator, {
+    type: 'InvestigatorDefeated',
+    investigatorId: investigator.id,
+    cause: 'cardEffect',
+  });
 }
 
 /** `SetLeadInvestigator`: the lead investigator is an active investigator, and a change needs a different one. */

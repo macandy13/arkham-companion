@@ -1,5 +1,5 @@
 import type { InvestigatorDef } from '@arkham/carddata';
-import { investigatorId, type StartingInvestigator } from '@arkham/engine';
+import { investigatorCode, investigatorId, type StartingInvestigator } from '@arkham/engine';
 
 /** Resources every investigator starts a scenario with (rules reference, "Setup"). */
 const STARTING_RESOURCES = 5;
@@ -18,7 +18,7 @@ export function seatInvestigators(
     .flatMap((code) => byCode.get(code) ?? [])
     .map((def, seat) => ({
       id: investigatorId(def.code),
-      code: def.code,
+      code: investigatorCode(def.code),
       name: def.name,
       seat,
       health: { max: def.health, damage: 0 },

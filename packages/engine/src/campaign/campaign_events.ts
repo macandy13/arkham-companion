@@ -1,3 +1,4 @@
+import type { InvestigatorCode } from '../ids';
 import type { ChaosToken, Difficulty } from '../state';
 import type {
   CampaignInvestigator,
@@ -65,7 +66,7 @@ export interface ChaosTokenRemoved {
 /** An XP total changed by `delta`. Produced by `AwardXp`, `SpendXp` and `AdjustCampaign` `xp`. */
 export interface XpChanged {
   readonly type: 'XpChanged';
-  readonly code: string;
+  readonly code: InvestigatorCode;
   readonly account: XpAccount;
   readonly delta: number;
 }
@@ -73,7 +74,7 @@ export interface XpChanged {
 /** A trauma count changed by `delta`. Produced by `AddTrauma` and `AdjustCampaign` `trauma`. */
 export interface TraumaChanged {
   readonly type: 'TraumaChanged';
-  readonly code: string;
+  readonly code: InvestigatorCode;
   readonly kind: TraumaKind;
   readonly delta: number;
 }
@@ -84,7 +85,7 @@ export interface TraumaChanged {
  */
 export interface InvestigatorFateChanged {
   readonly type: 'InvestigatorFateChanged';
-  readonly code: string;
+  readonly code: InvestigatorCode;
   readonly fate: InvestigatorFate;
 }
 
@@ -95,7 +96,7 @@ export interface InvestigatorFateChanged {
 export interface InvestigatorReplaced {
   readonly type: 'InvestigatorReplaced';
   /** Code of the investigator who moves to `formerInvestigators`. */
-  readonly code: string;
+  readonly code: InvestigatorCode;
   /** The newcomer in their starting state. */
   readonly by: CampaignInvestigator;
 }

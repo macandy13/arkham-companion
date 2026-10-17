@@ -1,3 +1,4 @@
+import type { InvestigatorCode } from '../ids';
 import type { ChaosToken, Difficulty } from '../state';
 import type { InvestigatorFate, StoryValue, TraumaKind, XpAccount } from './campaign_log';
 
@@ -29,7 +30,7 @@ export type CampaignCommandType = CampaignCommand['type'];
  * needs no card data). They start without trauma or XP.
  */
 export interface JoiningInvestigator {
-  readonly code: string;
+  readonly code: InvestigatorCode;
   readonly name: string;
   readonly health: number;
   readonly sanity: number;
@@ -80,7 +81,7 @@ export interface RemoveChaosToken {
 /** Gives a living team member XP (positive integer). Produces `XpChanged` on `earned`. */
 export interface AwardXp {
   readonly type: 'AwardXp';
-  readonly code: string;
+  readonly code: InvestigatorCode;
   readonly amount: number;
 }
 
@@ -91,7 +92,7 @@ export interface AwardXp {
  */
 export interface SpendXp {
   readonly type: 'SpendXp';
-  readonly code: string;
+  readonly code: InvestigatorCode;
   readonly amount: number;
 }
 
@@ -102,7 +103,7 @@ export interface SpendXp {
  */
 export interface AddTrauma {
   readonly type: 'AddTrauma';
-  readonly code: string;
+  readonly code: InvestigatorCode;
   readonly kind: TraumaKind;
   readonly amount: number;
 }
@@ -110,13 +111,13 @@ export interface AddTrauma {
 /** A living team member is killed (a resolution or story effect). Produces `InvestigatorFateChanged`. */
 export interface MarkKilled {
   readonly type: 'MarkKilled';
-  readonly code: string;
+  readonly code: InvestigatorCode;
 }
 
 /** A living team member is driven insane. Produces `InvestigatorFateChanged`. */
 export interface MarkInsane {
   readonly type: 'MarkInsane';
-  readonly code: string;
+  readonly code: InvestigatorCode;
 }
 
 /**
@@ -128,7 +129,7 @@ export interface MarkInsane {
 export interface ReplaceInvestigator {
   readonly type: 'ReplaceInvestigator';
   /** Code of the killed or insane team member. */
-  readonly code: string;
+  readonly code: InvestigatorCode;
   readonly by: JoiningInvestigator;
 }
 
@@ -159,16 +160,16 @@ export interface AdjustCampaign {
 export type CampaignAdjustment =
   | {
       readonly kind: 'xp';
-      readonly code: string;
+      readonly code: InvestigatorCode;
       readonly account: XpAccount;
       readonly delta: number;
     }
   | {
       readonly kind: 'trauma';
-      readonly code: string;
+      readonly code: InvestigatorCode;
       readonly trauma: TraumaKind;
       readonly delta: number;
     }
-  | { readonly kind: 'fate'; readonly code: string; readonly fate: InvestigatorFate }
+  | { readonly kind: 'fate'; readonly code: InvestigatorCode; readonly fate: InvestigatorFate }
   | { readonly kind: 'removeStory'; readonly key: string }
   | { readonly kind: 'position'; readonly position: number };

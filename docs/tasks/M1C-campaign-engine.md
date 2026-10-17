@@ -41,7 +41,7 @@ Done: the campaign is its own aggregate in `packages/engine/src/campaign/`, expo
 
 Follow-ups from Andy's review of #63/#64, for one refactoring PR after this stack:
 
-- [ ] Branded `InvestigatorCode` for the card code that keys the campaign team, so it can't be mixed up with a game's `InvestigatorId` (strong-typing rule, #71)
+- [x] Branded `InvestigatorCode` for the card code that keys the campaign team, so it can't be mixed up with a game's `InvestigatorId` (strong-typing rule, #71)
 - [ ] Commands carry only the card code, and the handlers look up name, health and sanity themselves through a context, like the game's `execute(ctx, …)`. Needs an investigator lookup in that context (investigators are not in the `CardDb` today); do the same for the game's `StartScenario`
 - [ ] Import campaign and scenario functions through a namespace (`campaign.handle`, `scenario.compileSetup`) and name functions verb + noun
 
@@ -81,7 +81,7 @@ Ref: product.md "Campaign mode" (resolutions).
 
 - [ ] Declarative resolution steps on the scenario definition (`record`, `addChaosToken`, `removeChaosToken`, `awardXp` (victory display + fixed bonus), `addTrauma`, `markKilled`/`markInsane`), including conditional steps that read game state (e.g. "if the Ghoul Priest is in the victory display")
 - [ ] `ScenarioEnded { resolution }` → a pure function computes the proposed campaign commands; players confirm or edit them; applying them writes the campaign log and produces notices (M1C.2)
-- [ ] Defeat trauma: an investigator defeated by damage gets 1 physical trauma, by horror 1 mental trauma; resigning gives none (needs M1.15)
+- [ ] Defeat trauma: an investigator defeated by damage gets 1 physical trauma, by horror 1 mental trauma; resigning gives none (needs M1.15); a defeat by a card effect (`cause: 'cardEffect'`, M1.17) gives only the trauma the card names, e.g. The Gathering's agenda 3 at act 3 ("is defeated and suffers 1 physical trauma"), which nothing in the game log records yet
 - [ ] "No resolution was reached" handled per scenario
 - [ ] The Gathering's and The Midnight Masks' resolutions entered by hand
 - [ ] Leaving and joining a campaign (review of #62): a player may leave between scenarios (their living investigator moves to the former investigators and may rejoin), and a joining player picks an investigator not used before; today `ReplaceInvestigator` only replaces a killed or insane one. Also the 2026 Core Set's third fate, devoured

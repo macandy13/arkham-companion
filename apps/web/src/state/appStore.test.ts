@@ -2,6 +2,7 @@ import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
 import {
   instanceId,
+  investigatorCode,
   investigatorId,
   replay,
   type Event,
@@ -104,7 +105,7 @@ describe('appStore', () => {
   describe('startScenario', () => {
     const investigator: StartingInvestigator = {
       id: investigatorId('inv'),
-      code: 'inv',
+      code: investigatorCode('inv'),
       name: 'Alder',
       seat: 0,
       health: { max: 6, damage: 0 },
