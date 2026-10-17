@@ -449,6 +449,11 @@ export class TestTable {
     return this.locationNamed(locationName).tokens.clue ?? 0;
   }
 
+  /** Names of the cards at the location named `locationName` (enemies and story assets alike). */
+  cardsAt(locationName: string): string[] {
+    return this.namesIn({ kind: 'atLocation', locationId: this.locationNamed(locationName).id });
+  }
+
   /** Names of the locations on a map, in map order. */
   locationsOn(map: string): string[] {
     return this.namesIn({ kind: 'location', mapId: mapId(map) });

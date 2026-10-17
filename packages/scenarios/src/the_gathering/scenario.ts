@@ -2,15 +2,19 @@ import {
   CommandRejected,
   cardStats,
   compileMapStep,
+  decisionId,
   enemiesAt,
   mapId,
+  matchesEncounter,
   scenarioId,
   trait,
   type AddMapStep,
   type CardCode,
   type CardInstance,
   type Command,
+  type EncounterMatch,
   type EngineContext,
+  type EnemyDefeated,
   type GameState,
   type ScenarioDefinition,
   type TokenValue,
@@ -22,6 +26,24 @@ const sets = GATHERING_SETS;
 
 /** Translation key prefix for The Gathering's reference card effects. */
 const reference = 'scenario.theGathering.reference';
+
+/**
+ * The Gathering's resolutions, as the campaign guide numbers them: R1 the
+ * house is burned down, R2 it is left standing (both from act 3), R3 the
+ * investigators are trapped in the house (agenda 3 before act 3).
+ */
+export const GATHERING_RESOLUTIONS = {
+  burnedDown: 'R1',
+  leftStanding: 'R2',
+  trapped: 'R3',
+} as const;
+
+const resolutions = GATHERING_RESOLUTIONS;
+
+/** Id of act 3's question to the lead investigator: burn the house down or not. */
+export const BURN_THE_HOUSE_DECISION = decisionId('theGathering.burnTheHouse');
+
+const ghoulEnemy: EncounterMatch = { trait: trait('Ghoul'), typeCode: 'enemy' };
 
 /**
  * The house as act 1 ("Trapped") reveals it: the Hallway connects to the
@@ -91,6 +113,121 @@ function trappedReverseSide(ctx: EngineContext, state: GameState): Command[] {
 }
 
 /**
+ * Act 2 ("The Barrier"), reverse side: the Parlor, in play on the house map
+ * since act 1 (`theGatheringHouse`) but unrevealed, is revealed; Lita
+ * Chantler is put into play there, and the Ghoul Priest spawns in the
+ * Hallway, where it engages per its prey like any spawn.
+ */
+function theBarrierReverseSide(_ctx: EngineContext, state: GameState): Command[] {
+  const parlor = onlyCard(state, codes.parlor);
+  return [
+    { type: 'RevealLocation', locationId: parlor.id },
+    {
+      type: 'FromSetAside',
+      codes: [codes.litaChantler],
+      to: { kind: 'atLocation', locationId: parlor.id },
+    },
+    {
+      type: 'SpawnEnemy',
+      enemyId: onlyCard(state, codes.ghoulPriest).id,
+      at: onlyCard(state, codes.hallway).id,
+    },
+  ];
+}
+
+/**
+ * Act 3 ("What Have You Done?"), objective: once the Ghoul Priest is
+ * defeated, the act advances by itself. The Priest only enters play on act
+ * 2's reverse side, but the current act is checked anyway, so a Priest
+ * defeated by a correction later on cannot advance a used-up act deck.
+ */
+function ghoulPriestDefeated(
+  _ctx: EngineContext,
+  state: GameState,
+  event: EnemyDefeated,
+): Command[] {
+  const enemy = state.cards[event.enemyId];
+  const act = state.act.current === undefined ? undefined : state.cards[state.act.current];
+  if (enemy?.code !== codes.ghoulPriest || act?.code !== codes.whatHaveYouDone) return [];
+  return [{ type: 'AdvanceAct' }];
+}
+
+/**
+ * Act 3, reverse side: the lead investigator decides whether to burn the
+ * house down (R1) or leave it standing (R2). The decision has no `subject`:
+ * one about the act would be dropped as the act leaves play.
+ */
+function whatHaveYouDoneReverseSide(): Command[] {
+  const prefix = 'scenario.theGathering.burnTheHouse';
+  return [
+    {
+      type: 'RequestDecision',
+      decision: {
+        id: BURN_THE_HOUSE_DECISION,
+        kind: 'chooseOption',
+        prompt: `${prefix}.prompt`,
+        decider: { kind: 'lead' },
+        options: [
+          {
+            id: 'burn',
+            label: `${prefix}.burn`,
+            commands: [{ type: 'EndScenario', resolution: resolutions.burnedDown }],
+          },
+          {
+            id: 'spare',
+            label: `${prefix}.spare`,
+            commands: [{ type: 'EndScenario', resolution: resolutions.leftStanding }],
+          },
+        ],
+      },
+    },
+  ];
+}
+
+/**
+ * Agenda 2 ("Rise of the Ghouls"), reverse side: the encounter discard is
+ * shuffled into the deck, then cards are discarded from the top until a
+ * Ghoul enemy turns up, which the lead investigator draws. Without any Ghoul
+ * enemy left among those cards only the shuffle happens; the draw would
+ * otherwise reject the whole advance.
+ */
+function riseOfTheGhoulsReverseSide(ctx: EngineContext, state: GameState): Command[] {
+  const shuffle: Command = { type: 'ShuffleEncounterDiscard' };
+  const lead = state.meta.leadInvestigator;
+  const ghoulLeft = Object.values(state.cards).some(
+    (card) =>
+      (card.zone.kind === 'encounterDeck' || card.zone.kind === 'encounterDiscard') &&
+      matchesEncounter(cardStats(ctx.cards, card.code), ghoulEnemy),
+  );
+  if (lead === undefined || !ghoulLeft) return [shuffle];
+  return [
+    shuffle,
+    { type: 'DrawEncounter', investigatorId: lead, match: ghoulEnemy, discardSkipped: true },
+  ];
+}
+
+/**
+ * Agenda 3 ("They're Getting Out!"), reverse side. Before act 3 the
+ * investigators are trapped in the house (R3). At act 3 each investigator who
+ * has not resigned is defeated, which leaves nobody in the scenario, so it
+ * ends without a resolution. The lead goes last: defeating them while others
+ * remain would ask for a new lead nobody can answer once the scenario is over.
+ * The physical trauma the card adds is the campaign's to record (M1C).
+ */
+function theyreGettingOutReverseSide(_ctx: EngineContext, state: GameState): Command[] {
+  const act = state.act.current === undefined ? undefined : state.cards[state.act.current];
+  if (act?.code !== codes.whatHaveYouDone)
+    return [{ type: 'EndScenario', resolution: resolutions.trapped }];
+  const lead = state.meta.leadInvestigator;
+  const active = state.investigators.filter((inv) => inv.status === 'active');
+  const leadLast = [
+    ...active.filter((inv) => inv.id !== lead),
+    ...active.filter((inv) => inv.id === lead),
+  ];
+  return leadLast.map((inv): Command => ({ type: 'DefeatInvestigator', investigatorId: inv.id }));
+}
+
+/**
  * The skull token on Easy/Standard: -X, where X is the number of Ghoul
  * enemies at the testing investigator's location (engaged ones included,
  * since they are at that location too). The printed -2 of Hard/Expert comes
@@ -119,7 +256,9 @@ function onlyCard(state: GameState, code: CardCode): CardInstance {
  * rest of the six encounter sets is shuffled into the encounter deck. Card
  * data is hand-entered (`theGatheringCardDefs`); it is the shared test
  * scenario for the generic rules until real scenario data arrives (M4). Its
- * `hooks` hold act 1's reverse side; pass them as `EngineContext.hooks`, and
+ * `hooks` hold the reverse sides of the acts and of agendas 2 and 3 and act
+ * 3's objective (agenda 1's choice and agenda 3's forced effects are left to
+ * the players); pass them as `EngineContext.hooks`, and
  * `reference` and `modifiers` (the skull's "-X") as `EngineContext.reference`
  * and `EngineContext.modifiers` for skill test suggestions. The reference
  * card's modifiers are hand-entered from the 2016 Core Set card as known
@@ -179,7 +318,16 @@ export const theGathering: ScenarioDefinition = {
     { kind: 'buildEncounterDeck', sets: Object.values(sets) },
   ],
   hooks: {
-    onActAdvance: { [codes.trapped]: trappedReverseSide },
+    onActAdvance: {
+      [codes.trapped]: trappedReverseSide,
+      [codes.theBarrier]: theBarrierReverseSide,
+      [codes.whatHaveYouDone]: whatHaveYouDoneReverseSide,
+    },
+    onAgendaAdvance: {
+      [codes.riseOfTheGhouls]: riseOfTheGhoulsReverseSide,
+      [codes.theyreGettingOut]: theyreGettingOutReverseSide,
+    },
+    afterEnemyDefeated: ghoulPriestDefeated,
   },
   modifiers: { tokenValues: { skull: ghoulsAtYourLocation } },
 };

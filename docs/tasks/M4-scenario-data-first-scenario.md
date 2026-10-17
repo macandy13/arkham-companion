@@ -55,6 +55,7 @@ Ref: architecture "Scenarios".
 
 - [ ] `ScenarioDefinition` for `core2026-spreading-flames`: encounter sets, agenda/act decks, maps from M4.1, connections from M4.2
 - [ ] Setup steps and set-aside cards; setup test against ArkhamDB quantities (via cached data, skipped offline)
+- [ ] One `CardDb` for every card: map carddata's cached `CardDef`s to engine `CardStats` (investigators included) and build the app's `CardDb` from all of them, so scenario packages only add hand-entered extras on top and the wizard no longer joins two sources with `cardDbWith` (Andy on #77)
 
 ## M4.5 Spreading Flames: special mechanics (O)
 

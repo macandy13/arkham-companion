@@ -44,7 +44,7 @@ Follow-ups: treacheries with a revelation test (Crypt Chill, Grasping Hands, Rot
 - [x] End-to-end test continued toward a resolution (rounds 6 and 7 added to `end_to_end.test.ts`)
 - [x] Small readable table over 1-3 investigators (invariants and replay), written with `TestTable`
 - [x] Update the engine sections of `docs/architecture.md` if anything changed (it describes neither a golden playthrough nor the sandbox; no change)
-- [ ] Play to a resolution (`ScenarioEnded`): blocked on the hooks below
+- [x] Play to a resolution (`ScenarioEnded`): done with M1.17
 
 Done when: The Gathering plays through its implemented rules in tests; engine coverage >= 90 %.
 
@@ -121,14 +121,18 @@ Slices (one PR each, the second stacked on the first):
 1. Engine primitives: `ShuffleEncounterDiscard`, commands rejected after `ScenarioEnded`, a last reverse side that lets the investigators choose the resolution (a decision), the `afterEnemyDefeated` hook (act 3's objective) and `DefeatInvestigator` (agenda 3 at act 3).
 2. The Gathering: act 2/3 and agenda 2/3 reverse-side hooks, act 3's objective, and the end-to-end test played to a resolution.
 
-- [ ] Hooks for act 2 and act 3 reverse sides (Ghoul Priest spawn, Lita Chantler, resolutions via `EndScenario`)
-- [ ] Hooks for agenda 2 and agenda 3 reverse sides (Rise of the Ghouls: shuffle the encounter discard into the deck; agenda 3 → resolution)
+- [x] Hooks for act 2 and act 3 reverse sides (Ghoul Priest spawn, Lita Chantler, resolutions via `EndScenario`)
+- [x] Hooks for agenda 2 and agenda 3 reverse sides (Rise of the Ghouls: shuffle the encounter discard into the deck; agenda 3 → resolution)
 - [x] A command to shuffle the encounter discard into the deck (M1.7 follow-up)
 - [x] Commands after `ScenarioEnded` are rejected, except undo and `ManualAdjust` (M1.5, M1.10 follow-ups)
-- [ ] End-to-end test continued to a resolution
+- [x] End-to-end test continued to a resolution
 - [ ] End-to-end test: one failed fight against the Ghoul Priest raises and resolves his retaliate attack (M1.16 follow-up)
 
 Done (slice 1): `ShuffleEncounterDiscard` moves the whole discard into the deck and shuffles it; with an empty discard it does nothing (RR "Discard Piles", rules check on #74). `ScenarioEnded` sets `GameMeta.ended` (with or without a resolution), and `handle` then refuses every command except `ManualAdjust` (`scenarioEnded`); undo works on the log, outside `handle`. A last agenda or act whose reverse side leaves a decision pending no longer needs a resolution: the answer's `EndScenario` names it (act 3 of The Gathering: burn the house, R1, or not, R2). `ScenarioHooks.afterEnemyDefeated` fires on `EnemyDefeated`. `DefeatInvestigator` defeats an investigator by a card effect (`InvestigatorDefeated` with the new cause `cardEffect`) with the usual elimination clean-up.
+
+Done (slice 2): `theGathering.hooks` now hold act 2's reverse side (reveal the Parlor, Lita Chantler into play there, the Ghoul Priest spawns in the Hallway), act 3's objective (`afterEnemyDefeated`: the Ghoul Priest defeated during act 3 advances it) and reverse side (a `chooseOption` decision for the lead, `BURN_THE_HOUSE_DECISION`: burn → R1, spare → R2), agenda 2's reverse side (`ShuffleEncounterDiscard`, then the lead draws the first Ghoul enemy with the cards above it discarded; only the shuffle when no Ghoul enemy is left) and agenda 3's (R3 before act 3; at act 3 every active investigator is defeated, the lead last, so the scenario ends without a resolution and no new-lead question is left open). `GATHERING_RESOLUTIONS` names R1–R3. The end-to-end test plays rounds 8–11: the Flesh-Eater falls, Rise of the Ghouls advances in round 9 (the lead draws a Ghoul Minion), Roland and Daisy end round 9 in the Hallway with 9 clues and advance The Barrier, the Ghoul Priest engages Roland (Roland evades it in round 10 rather than take its attack at 4 of 5 horror), falls to Daisy in round 11, act 3 asks, the group burns the house (R1), and the next command is refused with `scenarioEnded`. `TestTable` gained `cardsAt(location)`; the hook checks for a Ghoul enemy with the engine's `matchesEncounter` (slice 1).
+
+Follow-ups: show a retaliate in the end-to-end test once M1.16's #76 is on main (the Ghoul Priest has retaliate; every fight in the script passes, so a failed one is needed); agenda 1's reverse side (the lead's choice) and agenda 3's forced effects (Ghouls move toward the Parlor, doom per Ghoul in the Hallway or Parlor) are still left to the players; act 2's objective is offered by nobody: the players spend the clues after the round ends, and the engine checks neither the timing nor that only investigators in the Hallway pay; the unrevealed Parlor can still be entered (its back says it cannot); the physical trauma of agenda 3 at act 3 and the campaign guide's "no resolution" instruction belong to the campaign (M1C); `formatBoard` shows Lita Chantler (a story asset at a location) as an "unengaged" enemy; parley with Lita is not modelled.
 
 ## M1.18 Timing gaps (S)
 
