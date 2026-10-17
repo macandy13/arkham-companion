@@ -263,8 +263,8 @@ function applyMapAdded(state: GameState, e: MapAdded): GameState {
 }
 
 function applyScenarioEnded(state: GameState, e: ScenarioEnded): GameState {
-  if (e.resolution === undefined) return state;
-  return { ...state, meta: { ...state.meta, resolution: e.resolution } };
+  const resolution = e.resolution === undefined ? {} : { resolution: e.resolution };
+  return { ...state, meta: { ...state.meta, ended: true, ...resolution } };
 }
 
 /** Drops pending decisions about a card that has advanced or left play, so none outlives its subject. */

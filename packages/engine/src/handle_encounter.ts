@@ -91,13 +91,17 @@ function findMatch(
       : [from === 'deck' ? ENCOUNTER_DECK : ENCOUNTER_DISCARD];
   const found = zones
     .flatMap((zone) => cardsIn(state, zone))
-    .find((id) => matches(cardStats(ctx.cards, requireCard(state.cards, id).code), match));
+    .find((id) => matchesEncounter(cardStats(ctx.cards, requireCard(state.cards, id).code), match));
   if (found === undefined) throw new CommandRejected({ code: 'noMatchingCard', from, match });
   return found;
 }
 
-/** Whether the card fulfils every field `match` sets. */
-function matches(stats: CardStats, match: EncounterMatch): boolean {
+/**
+ * Whether the card fulfils every field `match` sets, as a matched
+ * `DrawEncounter` checks it; also for scenario hooks that must know whether a
+ * matching card is left before they ask for the draw.
+ */
+export function matchesEncounter(stats: CardStats, match: EncounterMatch): boolean {
   return (
     (match.name === undefined || stats.name === match.name) &&
     (match.trait === undefined || stats.traits.includes(match.trait)) &&
@@ -123,6 +127,15 @@ export function handleFromSetAside(state: GameState, cmd: FromSetAside): CardMov
 export function handleShuffleInto(state: GameState, cmd: ShuffleInto): Event[] {
   const cardIds = takeFromSetAside(state, cmd.codes);
   return shuffleInto(state, cardIds, cmd.zone);
+}
+
+/**
+ * `ShuffleEncounterDiscard`: the whole discard goes into the encounter deck,
+ * which is then shuffled. Rules Reference, "Discard Piles": shuffling an empty
+ * discard pile into a deck does not shuffle the deck, so that yields nothing.
+ */
+export function handleShuffleEncounterDiscard(state: GameState): Event[] {
+  return shuffleInto(state, cardsIn(state, ENCOUNTER_DISCARD), ENCOUNTER_DECK);
 }
 
 /** Cards in the encounter deck and its discard, i.e. how many cards could still be drawn. */

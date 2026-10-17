@@ -686,6 +686,41 @@ describe('ShuffleInto', () => {
   });
 });
 
+describe('ShuffleEncounterDiscard', () => {
+  const shuffleDiscard: Command = { type: 'ShuffleEncounterDiscard' };
+
+  it('moves the whole discard into the deck and shuffles all of it', () => {
+    const state = startedWith(
+      {
+        deck: [card('plain_treachery', 'deck_card')],
+        discard: [card('foe', 'discarded_foe'), card('plain_treachery', 'discarded_treachery')],
+      },
+      { aliceAt: hall },
+    );
+
+    const { state: after, events } = execute(ctx, state, shuffleDiscard);
+
+    expect(events.at(-1)?.type).toBe('DeckShuffled');
+    expect([...idsIn(after, encounterDeck)].sort()).toEqual([
+      'deck_card',
+      'discarded_foe',
+      'discarded_treachery',
+    ]);
+    expect(idsIn(after, encounterDiscard)).toEqual([]);
+  });
+
+  it('leaves the deck in its order when the discard is empty', () => {
+    const state = startedWith(
+      { deck: [card('plain_treachery', 'deck_card_a'), card('foe', 'deck_card_b')] },
+      { aliceAt: hall },
+    );
+
+    const { events } = execute(ctx, state, shuffleDiscard);
+
+    expect(events).toEqual([]);
+  });
+});
+
 describe('encounter deck invariants', () => {
   const shuffleIn = (code: string): Command => ({
     type: 'ShuffleInto',
