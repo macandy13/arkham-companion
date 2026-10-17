@@ -26,6 +26,11 @@ describe('CampaignCommandRejected', () => {
     expect(error.message).not.toBe('');
   });
 
+  it('names the team size of an invalidTeamSize rejection in its message', () => {
+    const error = new CampaignCommandRejected({ code: 'invalidTeamSize', count: 5 });
+    expect(error.message).toBe('a campaign needs 1 to 4 investigators, got 5');
+  });
+
   it('names the numbers of a notEnoughXp rejection in its message', () => {
     const error = new CampaignCommandRejected({
       code: 'notEnoughXp',

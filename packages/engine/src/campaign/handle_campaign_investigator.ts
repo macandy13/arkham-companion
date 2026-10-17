@@ -71,7 +71,7 @@ export function handleReplaceInvestigator(
   log: CampaignLog,
   command: ReplaceInvestigator,
 ): CampaignEvent[] {
-  const replaced = requireInvestigator(log, command.code);
+  const replaced = requireCampaignInvestigator(log, command.code);
   if (replaced.fate === 'alive')
     throw new CampaignCommandRejected({
       code: 'investigatorNotEliminated',
@@ -117,7 +117,7 @@ export function newCampaignInvestigator(joining: JoiningInvestigator): CampaignI
 }
 
 /** The current team member with `code`; rejects an unknown code. */
-export function requireInvestigator(log: CampaignLog, code: string): CampaignInvestigator {
+export function requireCampaignInvestigator(log: CampaignLog, code: string): CampaignInvestigator {
   const investigator = campaignInvestigator(log, code);
   if (!investigator)
     throw new CampaignCommandRejected({ code: 'unknownInvestigator', investigatorCode: code });
@@ -126,7 +126,7 @@ export function requireInvestigator(log: CampaignLog, code: string): CampaignInv
 
 /** The living team member with `code`; killed and insane investigators can no longer take part. */
 function requireAlive(log: CampaignLog, code: string): CampaignInvestigator {
-  const investigator = requireInvestigator(log, code);
+  const investigator = requireCampaignInvestigator(log, code);
   if (investigator.fate !== 'alive')
     throw new CampaignCommandRejected({
       code: 'investigatorEliminated',
