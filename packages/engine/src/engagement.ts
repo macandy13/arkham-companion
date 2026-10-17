@@ -10,9 +10,9 @@ import {
 } from './investigators';
 import { requestDecision } from './decisions';
 import { hasKeyword } from './keywords';
-import { cardsOfType } from './lookup';
+import { cardsAtLocation, cardsOfType } from './lookup';
 import { replay } from './reducer';
-import type { GameState, Investigator } from './state';
+import type { CardInstance, GameState, Investigator } from './state';
 
 /** Prey criteria the engine can evaluate from investigator counters; each returns the tied best. */
 const PREY_CRITERIA: Record<string, (investigators: readonly Investigator[]) => Investigator[]> = {
@@ -90,6 +90,33 @@ export function startingEngagements(ctx: EngineContext, state: GameState): Event
   const enemies = cardsOfType(ctx, state, 'enemy').filter(
     (card) => card.zone.kind === 'atLocation',
   );
+  return engageEach(ctx, state, enemies);
+}
+
+/**
+ * Rules Reference, "Enemy Engagement": a ready, unengaged enemy engages an
+ * investigator who moves into its location. `state` is the state right after
+ * the investigator arrived at `locationId`; each unengaged enemy there goes
+ * through `engageEvents`, so aloof, massive and exhausted enemies stay where
+ * they are.
+ */
+export function arrivalEngagements(
+  ctx: EngineContext,
+  state: GameState,
+  locationId: InstanceId,
+): Event[] {
+  const enemies = cardsAtLocation(state, locationId).filter(
+    (card) => ctx.cards.get(card.code)?.typeCode === 'enemy',
+  );
+  return engageEach(ctx, state, enemies);
+}
+
+/** `engageEvents` for each enemy in turn, each one seeing the engagements before it. */
+function engageEach(
+  ctx: EngineContext,
+  state: GameState,
+  enemies: readonly CardInstance[],
+): Event[] {
   let current = state;
   const events: Event[] = [];
   for (const enemy of enemies) {

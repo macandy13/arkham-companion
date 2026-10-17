@@ -53,8 +53,7 @@ export function attackOfOpportunityDecisions(
  * - `EngageEnemy` is the engage action; the other engaged enemies attack (the
  *   enemy being engaged is not engaged yet, and a massive one cannot be
  *   engaged, `massiveNotEngageable`). An engagement by rule (entering a
- *   location with a ready enemy, which the script still issues by hand) is
- *   no action: the players `skip` it.
+ *   location with a ready enemy) is part of the move, not an `EngageEnemy`.
  * - `AdjustActions` does not provoke, even with a negative delta. The
  *   players count off the actions the engine saw as well (move, investigate),
  *   so treating every -1 as an action would ask twice for the same action.

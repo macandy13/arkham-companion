@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { instanceId } from './index';
 import { locationsInPlay, locationsNamed } from './board';
-import { cardsNamed, cardsOfType, requireCard } from './lookup';
+import { cardsAtLocation, cardsNamed, cardsOfType, requireCard } from './lookup';
 import type { CardInstance } from './state';
 import { contextWith, makeCard, rejectionOf, startBoard } from '../test/utils';
 
@@ -85,5 +85,38 @@ describe('card queries', () => {
     expect(locationsNamed(ctx, state, 'Attic', { inPlay: true }).map((card) => card.id)).toEqual([
       mainAttic,
     ]);
+  });
+});
+
+describe('cardsAtLocation', () => {
+  const ctx = contextWith(
+    makeCard({ code: 'cellar', name: 'Cellar', typeCode: 'location' }),
+    makeCard({ code: 'attic', name: 'Attic', typeCode: 'location' }),
+    makeCard({ code: 'ghoul', name: 'Ghoul', typeCode: 'enemy' }),
+    makeCard({ code: 'relic', name: 'Relic', typeCode: 'asset' }),
+  );
+  const cellar = instanceId('cellar');
+  const attic = instanceId('attic');
+  const cellarGhoul = instanceId('cellar_ghoul');
+  const cellarRelic = instanceId('cellar_relic');
+  const atticGhoul = instanceId('attic_ghoul');
+  const state = startBoard(ctx, {
+    maps: { main: { locations: { cellar: 'cellar', attic: 'attic' } } },
+    cards: [
+      { id: cellarGhoul, code: 'ghoul', zone: { kind: 'atLocation', locationId: cellar } },
+      { id: atticGhoul, code: 'ghoul', zone: { kind: 'atLocation', locationId: attic } },
+      { id: cellarRelic, code: 'relic', zone: { kind: 'atLocation', locationId: cellar } },
+    ],
+  });
+
+  it('finds the cards at one location, of any type, in card order', () => {
+    expect(cardsAtLocation(state, cellar).map((card) => card.id)).toEqual([
+      cellarGhoul,
+      cellarRelic,
+    ]);
+  });
+
+  it('finds nothing at a location no card stands at', () => {
+    expect(cardsAtLocation(state, instanceId('nowhere'))).toEqual([]);
   });
 });
