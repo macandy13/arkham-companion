@@ -1,11 +1,11 @@
-import { decisionId, type InstanceId } from './ids';
+import { decisionId } from './ids';
 import { requestDecision } from './decisions';
 import type { Event, InvestigatorDefeated, InvestigatorResigned } from './events';
 import { replay } from './reducer';
 import { cluesToLocationEvents } from './investigators';
+import { cardsInZone } from './lookup';
 import { discardEncounterCard } from './placement';
 import type { GameState, Investigator } from './state';
-import { zoneKey, type Zone } from './zone';
 
 /** Id of the decision that asks the group for a new lead investigator. */
 const NEW_LEAD_DECISION = decisionId('newLeadInvestigator');
@@ -66,10 +66,6 @@ function threatAreaEvents(state: GameState, investigator: Investigator): Event[]
   return cardsInZone(state, { kind: 'threatArea', investigatorId: investigator.id }).flatMap(
     (cardId) => discardEncounterCard(state, cardId),
   );
-}
-
-function cardsInZone(state: GameState, zone: Zone): InstanceId[] {
-  return state.order[zoneKey(zone)] ?? [];
 }
 
 /**

@@ -22,6 +22,7 @@ const QUESTIONS: Readonly<Record<string, (subject: string) => string>> = {
   'decision.fight': (subject) => `Fight ${subject}:`,
   'decision.evade': (subject) => `Evade ${subject}:`,
   'decision.revelationTest': (subject) => `Revelation of ${subject}:`,
+  'decision.turnEndTest': (subject) => `End of turn, ${subject}:`,
   'decision.attackOfOpportunity': (subject) => `Attack of opportunity by ${subject}:`,
   'decision.retaliate': (subject) => `${subject} retaliates:`,
   'decision.alert': (subject) => `${subject} attacks after the failed evasion:`,

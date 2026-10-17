@@ -10,6 +10,7 @@ import type {
   Event,
   RoundEnded,
   TokensChanged,
+  TurnEnded,
 } from './events';
 import type { InstanceId } from './ids';
 import { apply } from './reducer';
@@ -46,6 +47,14 @@ export interface ScenarioHooks {
   onActAdvance: Readonly<Record<string, TriggerHook<ActAdvanced>>>;
   /** At the end of each round, the last step of the upkeep phase (`RoundEnded`). */
   onRoundEnd: TriggerHook<RoundEnded>;
+  /**
+   * At the end of an investigator's turn (`TurnEnded`, from `EndTurn`). A
+   * turn cut short by resignation or defeat fires nothing: the investigator
+   * has left the scenario, and with them what their turn end would affect.
+   * A treachery's own end-of-turn test needs no hook: it is card data
+   * (`CardStats.turnEndTest`).
+   */
+  onTurnEnd: TriggerHook<TurnEnded>;
   /** After any card enters play from outside play (deck, set aside, discard, …). */
   onCardEnters: TriggerHook<CardMoved>;
   /**
@@ -125,6 +134,8 @@ function matchingTriggers(
       return entersPlay(before, after, event) ? bind(hooks.onCardEnters, event) : [];
     case 'RoundEnded':
       return bind(hooks.onRoundEnd, event);
+    case 'TurnEnded':
+      return bind(hooks.onTurnEnd, event);
     case 'EnemyDefeated':
       return bind(hooks.afterEnemyDefeated, event);
     case 'CardFlipped':

@@ -138,7 +138,16 @@ Done (slice 1): `ShuffleEncounterDiscard` moves the whole discard into the deck 
 
 Ref: M1.5, M1.6, M1.9, M1.10 follow-ups.
 
+Slices (one PR each):
+
+1. Engine: `onTurnEnd`, end-of-turn tests and end-of-round discards as card data.
+2. The Gathering: Frozen in Fear's and Dissonant Voices' card data, end-to-end test updated (after M1.17 slice 2, #78, which edits that test).
+3. Engine: `ManualAdjust` guards (doom threshold confirm, current agenda/act stay in their deck).
+4. ~~Engine: the lead investigator orders simultaneous forced effects.~~ Deferred (Andy, 2026-10-17): every event fires at most one hook, and no Core card's outcome depends on the order of end-of-turn or end-of-round effects. Build it when a scenario needs it.
+5. Engine: `decider` checked against the answering investigator.
+
 - [ ] `onTurnEnd` hook fired by `EndTurn`; Frozen in Fear raises its willpower test there
+- [ ] End-of-round discards (Dissonant Voices: "Forced – At the end of the round: Discard"), found by the M1.17 end-to-end test
 - [ ] Simultaneous forced effects: the lead investigator picks the order (`chooseOption` decision) when more than one applies
 - [ ] After a doom `ManualAdjust`, offer `CheckDoomThreshold` (a `confirm` decision), never advance silently
 - [ ] `ManualAdjust` cannot move the current agenda or act out of its deck (rejection)
