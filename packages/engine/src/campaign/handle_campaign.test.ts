@@ -113,11 +113,13 @@ describe('StartCampaign', () => {
     { name: 'zero health', health: 0, sanity: 5 },
     { name: 'fractional sanity', health: 9, sanity: 2.5 },
   ])('rejects an investigator card with $name', ({ health, sanity }) => {
-    const brokenRoland = { investigators: investigatorDbFrom([{ ...roland, health, sanity }]) };
+    const contextWithBrokenRoland = {
+      investigators: investigatorDbFrom([{ ...roland, health, sanity }]),
+    };
     expect(
       campaignRejectionOf(() =>
         handleCampaign(
-          brokenRoland,
+          contextWithBrokenRoland,
           emptyCampaignLog(),
           makeStartCampaign({ investigators: [roland.code] }),
         ),

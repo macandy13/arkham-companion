@@ -44,6 +44,7 @@ Follow-ups from Andy's review of #63/#64, for one refactoring PR after this stac
 - [x] Branded `InvestigatorCode` for the card code that keys the campaign team, so it can't be mixed up with a game's `InvestigatorId` (strong-typing rule, #71)
 - [x] Campaign commands carry only the card code, and the handlers look up name, health and sanity in the `CampaignContext`'s `InvestigatorDb`, like the game's `execute(ctx, …)`
 - [ ] The same for the game's `StartScenario`: investigators by code and seat, stats and skills from an `InvestigatorDb` in the `EngineContext`
+- [ ] Brand every other code and ID string the same way (card codes such as `CardStats.code`, scenario and campaign definition IDs), so the pattern is consistent across the codebase (Andy on #72)
 - [ ] Import campaign and scenario functions through a namespace (`campaign.handle`, `scenario.compileSetup`) and name functions verb + noun
 
 ## M1C.2 Change notices (O)

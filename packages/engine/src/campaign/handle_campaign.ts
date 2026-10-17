@@ -62,7 +62,7 @@ export function handleCampaign(
     case 'MarkInsane':
       return handleMarkFate(log, command.code, 'insane');
     case 'ReplaceInvestigator':
-      return handleReplaceInvestigator(ctx.investigators, log, command);
+      return handleReplaceInvestigator(ctx, log, command);
     case 'AdvanceScenario':
       return handleAdvanceScenario(log);
     case 'AdjustCampaign':

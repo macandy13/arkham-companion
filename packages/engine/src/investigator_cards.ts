@@ -4,13 +4,15 @@ import type { SkillValues } from './state';
 /**
  * What an investigator card prints that the engine models. Investigators are
  * not in the `CardDb` (that holds the scenario's encounter and location
- * cards), so they get their own lookup, `InvestigatorDb`.
+ * cards), so they get their own lookup, `InvestigatorDb`. The app maps it
+ * from `@arkham/carddata`'s `InvestigatorDef`.
  */
 export interface InvestigatorCard {
   readonly code: InvestigatorCode;
   readonly name: string;
   readonly health: number;
   readonly sanity: number;
+  /** Not read by the campaign; the game's `StartScenario` will seat investigators with them (M1C follow-up). */
   readonly skills: SkillValues;
 }
 

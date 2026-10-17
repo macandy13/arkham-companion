@@ -13,6 +13,7 @@ import {
   type InvestigatorFate,
 } from './campaign_log';
 import { CampaignCommandRejected } from './campaign_rejection';
+import type { CampaignContext } from './handle_campaign';
 
 /** `AwardXp`: more earned XP for a living team member. */
 export function handleAwardXp(log: CampaignLog, command: AwardXp): CampaignEvent[] {
@@ -64,7 +65,7 @@ export function handleMarkFate(
 
 /** `ReplaceInvestigator`: a newcomer takes the seat of a killed or insane team member. */
 export function handleReplaceInvestigator(
-  investigators: InvestigatorDb,
+  ctx: CampaignContext,
   log: CampaignLog,
   command: ReplaceInvestigator,
 ): CampaignEvent[] {
@@ -85,7 +86,7 @@ export function handleReplaceInvestigator(
     {
       type: 'InvestigatorReplaced',
       code: command.code,
-      by: newCampaignInvestigator(investigators, command.by),
+      by: newCampaignInvestigator(ctx.investigators, command.by),
     },
   ];
 }
