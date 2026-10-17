@@ -373,6 +373,11 @@ export class TestTable {
     this.adjust(investigator, 'resources', amount);
   }
 
+  /** Resources paid for a card the players play (the app does not track player cards). */
+  spendResources(investigator: InvestigatorId, amount: number): void {
+    this.adjust(investigator, 'resources', -amount);
+  }
+
   /** Damage from a failed treachery test or an attack. */
   takeDamage(investigator: InvestigatorId, amount: number): void {
     this.adjust(investigator, 'damage', amount);

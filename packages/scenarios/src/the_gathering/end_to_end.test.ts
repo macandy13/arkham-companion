@@ -918,18 +918,38 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.nextPhase()).toEqual({ round: 11, phase: 'mythos', step: 'drawEncounterCard' });
     table.answer('Crypt Chill', 'pass');
 
-    // Round 11 – investigation: Roland's two shots and Daisy's third blow
-    // defeat the Ghoul Priest. It goes to the victory display, which meets act
-    // 3's objective: the act advances by itself and asks Roland, the lead,
-    // whether to burn the house.
+    // Round 11 – investigation: Roland shoots the Priest three times, the first
+    // two with a Vicious Blow (3, 3 and 2 damage, his .45 Automatic's last
+    // ammo): 14 of 15.
     expect(table.nextPhase()).toEqual({ round: 11, phase: 'investigation' });
     table.startTurn(roland);
     table.fight(roland, 'Ghoul Priest', { damage: 3 });
     table.fight(roland, 'Ghoul Priest', { damage: 3 });
+    table.fight(roland, 'Ghoul Priest', { damage: 2 });
     table.endTurn(roland);
+
+    // Daisy misses her first blow. The Priest is ready, so it retaliates: its
+    // attack (2 damage, 2 horror) would defeat her at 4 of 5 damage. Roland,
+    // in the Hallway with her, plays Dodge (1 resource) and cancels it.
     table.startTurn(daisy);
-    table.fight(daisy, 'Ghoul Priest');
-    table.fight(daisy, 'Ghoul Priest');
+    table.failFight(daisy, 'Ghoul Priest');
+    expect(table.decisions()).toEqual([
+      {
+        prompt: 'decision.retaliate',
+        kind: 'confirm',
+        about: 'Ghoul Priest',
+        for: daisy,
+        options: ['attack', 'attack cancelled'],
+        defaults: { attack: { damage: 2, horror: 2 } },
+      },
+    ]);
+    table.answer('Ghoul Priest', 'attack cancelled');
+    table.spendResources(roland, 1);
+    expect(table.wounds(daisy)).toEqual({ damage: 4, horror: 2 });
+
+    // Her next blow is the Priest's fifteenth damage. It goes to the victory
+    // display, which meets act 3's objective: the act advances by itself and
+    // asks Roland, the lead, whether to burn the house.
     table.fight(daisy, 'Ghoul Priest');
 
     expect(table.namesIn({ kind: 'victoryDisplay' })).toEqual([
