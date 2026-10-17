@@ -59,7 +59,7 @@ Ref: architecture "Scenarios".
 
 ## M4.5 Spreading Flames: special mechanics (O)
 
-Generic rules this scenario needs (Doomed, Elusive, scenario actions, skill test margin, location attachments, timing windows) are planned in [encounter-card-analysis.md](../encounter-card-analysis.md#implementation-plan), steps 4–8; build them as their own PRs before the scenario-specific parts.
+Generic rules this scenario needs (Doomed, Elusive, scenario actions, skill test margin, location attachments, timing windows) are planned in [encounter-card-analysis.md](../encounter-card-analysis.md#implementation-plan), steps 3–7; build them as their own PRs before the scenario-specific parts.
 
 **Why:** Every scenario has rules the generic engine does not cover. Implementing them shows which ones should become engine primitives (architecture "Overview", "generic before specific").
 
