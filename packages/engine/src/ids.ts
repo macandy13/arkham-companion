@@ -28,6 +28,14 @@ export type EncounterSetCode = Brand<string, 'EncounterSetCode'>;
 export type ScenarioId = Brand<string, 'ScenarioId'>;
 /** `CampaignDefinition.id`, e.g. 'night-of-the-zealot'; `CampaignLog.definitionId`. */
 export type CampaignDefinitionId = Brand<string, 'CampaignDefinitionId'>;
+/** UUID (v4) identifying one game; never device-bound so it stays valid for later cloud sync (architecture "Persistence"). */
+export type GameId = Brand<string, 'GameId'>;
+/**
+ * ID of one campaign play-through (`CampaignLog.campaignId`), chosen by the
+ * caller of `compileStart`; the games of a campaign carry it as
+ * `GameSummary.campaignId`.
+ */
+export type CampaignId = Brand<string, 'CampaignId'>;
 /** ID of a map in `Board.maps` (a scenario can have several). */
 export type MapId = Brand<string, 'MapId'>;
 /** ID of a layout slot in `Board.slots`. */
@@ -43,6 +51,8 @@ export const cardCode = (code: string) => code as CardCode;
 export const encounterSetCode = (code: string) => code as EncounterSetCode;
 export const scenarioId = (id: string) => id as ScenarioId;
 export const campaignDefinitionId = (id: string) => id as CampaignDefinitionId;
+export const gameId = (id: string) => id as GameId;
+export const campaignId = (id: string) => id as CampaignId;
 export const mapId = (id: string) => id as MapId;
 export const slotId = (id: string) => id as SlotId;
 export const decisionId = (id: string) => id as DecisionId;

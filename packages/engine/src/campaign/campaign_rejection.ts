@@ -3,7 +3,7 @@ import type { ChaosToken } from '../state';
 import type { InvestigatorFate, StoryKind } from './campaign_log';
 
 /**
- * Structured reason why `handleCampaign` refused a campaign command; the
+ * Structured reason why `handleCommand` refused a campaign command; the
  * campaign counterpart of the game's `Rejection`. The UI switches on `code`
  * for a translated message; `CampaignCommandRejected.message` is only a
  * developer-facing fallback.
@@ -61,13 +61,13 @@ export type CampaignRejection =
   | { code: 'unknownStoryRecord'; key: string }
   /** `AdjustCampaign` `position` outside 0..`max` (the number of scenarios). */
   | { code: 'invalidPosition'; position: number; max: number }
-  /** An `AdjustCampaign` that would leave the log inconsistent; `violations` from `checkCampaignInvariants`. */
+  /** An `AdjustCampaign` that would leave the log inconsistent; `violations` from `checkInvariants`. */
   | { code: 'inconsistentAdjustment'; violations: readonly string[] };
 
 /** The `code` of every campaign rejection. */
 export type CampaignRejectionCode = CampaignRejection['code'];
 
-/** Thrown by `handleCampaign` when a command is not valid for the current log. */
+/** Thrown by `handleCommand` when a command is not valid for the current log. */
 export class CampaignCommandRejected extends Error {
   /** Machine-readable reason, see `CampaignRejection`. */
   readonly rejection: CampaignRejection;

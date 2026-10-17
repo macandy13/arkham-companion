@@ -105,6 +105,10 @@ No single source has everything, so each field comes from the first source that 
 
 The engine then builds edges from the revealed state. The setup DSL gains `randomLocations(pool, slots)` (seeded RNG) and `replaceLocation`.
 
+### Encounter card special cases ([M4](tasks/M4-scenario-data-first-scenario.md), [M5](tasks/M5-core-campaign.md), [M7](tasks/M7-expansion.md))
+
+[encounter-card-analysis.md](encounter-card-analysis.md) lists what every Chapter Two encounter card needs beyond the generic rules (new keywords, location modifiers, scenario actions, skill test margins, timing windows, blood tokens), sorted into auto, assist and display, and orders the primitives into an implementation plan across M4, M5 and M7.
+
 ### Board rendering ([M3](tasks/M3-play-screen-ui.md), [M6](tasks/M6-comfort.md))
 
 The book layout is stored as slots (a grid or free positions); the map is SVG with pan and zoom, several maps as tabs or side by side; elkjs auto-layout for maps without a book layout; dnd-kit for dragging locations on a tablet.

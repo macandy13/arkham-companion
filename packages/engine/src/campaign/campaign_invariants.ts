@@ -1,7 +1,7 @@
 import { duplicates, isNonNegativeInteger, isPositiveInteger } from '@arkham/util';
 import {
-  isCampaignStarted,
-  traumaFate,
+  isStarted,
+  findTraumaFate,
   type CampaignInvestigator,
   type CampaignLog,
   type StoryValue,
@@ -15,10 +15,10 @@ export const MAX_TEAM_SIZE = 4;
  * is consistent): a started campaign has a team of 1–`MAX_TEAM_SIZE`, no
  * investigator code appears twice (current or former), every investigator
  * is consistent (`investigatorErrors`), every story value is well-formed and the scenario position lies
- * within the scenario list. `handleCampaign` also uses it to vet
+ * within the scenario list. `handleCommand` also uses it to vet
  * `AdjustCampaign` corrections.
  */
-export function checkCampaignInvariants(log: CampaignLog): string[] {
+export function checkInvariants(log: CampaignLog): string[] {
   const everyone = [...log.investigators, ...log.formerInvestigators];
   return [
     ...teamErrors(log),
@@ -27,7 +27,7 @@ export function checkCampaignInvariants(log: CampaignLog): string[] {
     ),
     ...everyone.flatMap(investigatorErrors),
     ...Object.entries(log.story).flatMap(([key, value]) =>
-      storyValueIsValid(value) ? [] : [`story record ${key} is malformed`],
+      isValidStoryValue(value) ? [] : [`story record ${key} is malformed`],
     ),
     ...positionErrors(log),
   ];
@@ -38,7 +38,7 @@ export function checkCampaignInvariants(log: CampaignLog): string[] {
  * and a list names each entry once, none of them blank. Shared by the
  * invariants and `RecordStory` validation.
  */
-export function storyValueIsValid(value: StoryValue): boolean {
+export function isValidStoryValue(value: StoryValue): boolean {
   switch (value.kind) {
     case 'flag':
       return true;
@@ -56,7 +56,7 @@ function namesAreValid(names: readonly string[]): boolean {
 }
 
 function teamErrors(log: CampaignLog): string[] {
-  if (!isCampaignStarted(log)) return [];
+  if (!isStarted(log)) return [];
   const size = log.investigators.length;
   return size >= 1 && size <= MAX_TEAM_SIZE ? [] : [`team has ${size} investigators`];
 }
@@ -85,7 +85,7 @@ function investigatorErrors(inv: CampaignInvestigator): string[] {
     ...(isPositiveInteger(inv.health) && isPositiveInteger(inv.sanity)
       ? []
       : [`investigator ${inv.code} has health ${inv.health} and sanity ${inv.sanity}`]),
-    ...(inv.fate === 'alive' && (traumaFate(inv, 'physical') ?? traumaFate(inv, 'mental'))
+    ...(inv.fate === 'alive' && (findTraumaFate(inv, 'physical') ?? findTraumaFate(inv, 'mental'))
       ? [`investigator ${inv.code} is alive with trauma at the limit`]
       : []),
   ];

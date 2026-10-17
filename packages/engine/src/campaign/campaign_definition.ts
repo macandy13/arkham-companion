@@ -1,11 +1,11 @@
 import type { ChaosToken, Difficulty } from '../state';
-import type { CampaignDefinitionId, InvestigatorCode, ScenarioId } from '../ids';
+import type { CampaignDefinitionId, CampaignId, InvestigatorCode, ScenarioId } from '../ids';
 import type { StartCampaign } from './campaign_commands';
 
 /**
  * A campaign as data (architecture §8), the campaign counterpart of
  * `ScenarioDefinition`: which scenarios it plays in which order and the
- * chaos bag it starts with. `compileCampaign` turns it into a
+ * chaos bag it starts with. `compileStart` turns it into a
  * `StartCampaign`. Resolutions and `campaignSetup` live on each
  * `ScenarioDefinition` (M1C.3/M1C.4), because they belong to the scenario.
  */
@@ -42,13 +42,13 @@ export interface InterludeDefinition {
 /** What the players choose when starting a campaign from a `CampaignDefinition`. */
 export interface CampaignOptions {
   /** Unique ID of this play-through, chosen by the caller (the engine generates no IDs). */
-  readonly campaignId: string;
+  readonly campaignId: CampaignId;
   readonly difficulty: Difficulty;
   readonly investigators: readonly InvestigatorCode[];
 }
 
 /** The `StartCampaign` for `definition` with the players' choices. */
-export function compileCampaign(
+export function compileStart(
   definition: CampaignDefinition,
   options: CampaignOptions,
 ): StartCampaign {

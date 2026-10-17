@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   STATE_VERSION,
   cardCode,
+  gameId,
   scenarioId,
   instanceId,
   replay,
@@ -40,7 +41,7 @@ const doom = (delta: number): Event => ({
 
 const stored = (events: Event[]): StoredEvent[] =>
   events.map((event, i) => ({
-    gameId: 'g',
+    gameId: gameId('g'),
     seq: i + 1,
     timestamp: 1000 + i,
     commandId: `command_${i + 1}`,

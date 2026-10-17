@@ -8,8 +8,8 @@ import {
   startedCampaign,
 } from '../../test/utils';
 import { investigatorCode } from '../ids';
-import { campaignInvestigator } from './campaign_log';
-import { handleCampaign } from './handle_campaign';
+import { findInvestigator } from './campaign_log';
+import { handleCommand } from './handle_campaign';
 
 /** A card code of an investigator who is on no team in these tests. */
 const notOnTeam = investigatorCode('not_on_team');
@@ -19,8 +19,8 @@ describe('AwardXp and SpendXp', () => {
 
   it('award raises earned XP of that investigator only', () => {
     const log = startedCampaign(team, { type: 'AwardXp', code: roland.code, amount: 3 });
-    expect(campaignInvestigator(log, roland.code)).toMatchObject({ xpEarned: 3, xpSpent: 0 });
-    expect(campaignInvestigator(log, daisy.code)).toMatchObject({ xpEarned: 0, xpSpent: 0 });
+    expect(findInvestigator(log, roland.code)).toMatchObject({ xpEarned: 3, xpSpent: 0 });
+    expect(findInvestigator(log, daisy.code)).toMatchObject({ xpEarned: 0, xpSpent: 0 });
   });
 
   it('spending raises spent XP and keeps the earned total', () => {
@@ -29,7 +29,7 @@ describe('AwardXp and SpendXp', () => {
       { type: 'AwardXp', code: roland.code, amount: 5 },
       { type: 'SpendXp', code: roland.code, amount: 2 },
     );
-    expect(campaignInvestigator(log, roland.code)).toMatchObject({ xpEarned: 5, xpSpent: 2 });
+    expect(findInvestigator(log, roland.code)).toMatchObject({ xpEarned: 5, xpSpent: 2 });
   });
 
   it('allows spending exactly the available XP', () => {
@@ -38,7 +38,7 @@ describe('AwardXp and SpendXp', () => {
       { type: 'AwardXp', code: roland.code, amount: 2 },
       { type: 'SpendXp', code: roland.code, amount: 2 },
     );
-    expect(campaignInvestigator(log, roland.code)).toMatchObject({ xpEarned: 2, xpSpent: 2 });
+    expect(findInvestigator(log, roland.code)).toMatchObject({ xpEarned: 2, xpSpent: 2 });
   });
 
   it('rejects spending more than is available', () => {
@@ -49,7 +49,7 @@ describe('AwardXp and SpendXp', () => {
     );
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(campaignContext, log, { type: 'SpendXp', code: roland.code, amount: 2 }),
+        handleCommand(campaignContext, log, { type: 'SpendXp', code: roland.code, amount: 2 }),
       ),
     ).toEqual({ code: 'notEnoughXp', investigatorCode: roland.code, available: 1, requested: 2 });
   });
@@ -59,7 +59,7 @@ describe('AwardXp and SpendXp', () => {
     for (const type of ['AwardXp', 'SpendXp'] as const) {
       expect(
         campaignRejectionOf(() =>
-          handleCampaign(campaignContext, log, { type, code: roland.code, amount }),
+          handleCommand(campaignContext, log, { type, code: roland.code, amount }),
         ),
       ).toEqual({
         code: 'invalidAmount',
@@ -71,7 +71,7 @@ describe('AwardXp and SpendXp', () => {
   it('rejects an investigator who is not on the team', () => {
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(campaignContext, startedCampaign(team), {
+        handleCommand(campaignContext, startedCampaign(team), {
           type: 'AwardXp',
           code: notOnTeam,
           amount: 1,
@@ -88,7 +88,7 @@ describe('AddTrauma (Roland: health 9, sanity 5)', () => {
       { type: 'AddTrauma', code: roland.code, kind: 'physical', amount: 2 },
       { type: 'AddTrauma', code: roland.code, kind: 'mental', amount: 4 },
     );
-    expect(campaignInvestigator(log, roland.code)).toMatchObject({
+    expect(findInvestigator(log, roland.code)).toMatchObject({
       physicalTrauma: 2,
       mentalTrauma: 4,
       fate: 'alive',
@@ -100,7 +100,7 @@ describe('AddTrauma (Roland: health 9, sanity 5)', () => {
       { investigators: [roland.code] },
       { type: 'AddTrauma', code: roland.code, kind: 'physical', amount: 9 },
     );
-    expect(campaignInvestigator(log, roland.code)).toMatchObject({
+    expect(findInvestigator(log, roland.code)).toMatchObject({
       physicalTrauma: 9,
       fate: 'killed',
     });
@@ -112,14 +112,14 @@ describe('AddTrauma (Roland: health 9, sanity 5)', () => {
       { type: 'AddTrauma', code: roland.code, kind: 'mental', amount: 3 },
       { type: 'AddTrauma', code: roland.code, kind: 'mental', amount: 2 },
     );
-    expect(campaignInvestigator(log, roland.code)).toMatchObject({
+    expect(findInvestigator(log, roland.code)).toMatchObject({
       mentalTrauma: 5,
       fate: 'insane',
     });
   });
 
   it('produces the trauma event followed by the fate event at the limit', () => {
-    const events = handleCampaign(
+    const events = handleCommand(
       campaignContext,
       startedCampaign({ investigators: [roland.code] }),
       {
@@ -138,7 +138,7 @@ describe('AddTrauma (Roland: health 9, sanity 5)', () => {
   it.each([0, -2, 0.5])('rejects the amount %s', (amount) => {
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(campaignContext, startedCampaign({ investigators: [roland.code] }), {
+        handleCommand(campaignContext, startedCampaign({ investigators: [roland.code] }), {
           type: 'AddTrauma',
           code: roland.code,
           kind: 'physical',
@@ -155,13 +155,13 @@ describe('MarkKilled and MarkInsane', () => {
     { type: 'MarkInsane', fate: 'insane' },
   ] as const)('$type sets the fate to $fate', ({ type, fate }) => {
     const log = startedCampaign({ investigators: [roland.code] }, { type, code: roland.code });
-    expect(campaignInvestigator(log, roland.code)?.fate).toBe(fate);
+    expect(findInvestigator(log, roland.code)?.fate).toBe(fate);
   });
 
   it('rejects an unknown investigator', () => {
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(campaignContext, startedCampaign({ investigators: [roland.code] }), {
+        handleCommand(campaignContext, startedCampaign({ investigators: [roland.code] }), {
           type: 'MarkKilled',
           code: daisy.code,
         }),
@@ -191,7 +191,7 @@ describe('eliminated investigators (Roland is killed, Daisy is insane)', () => {
         { type: 'MarkInsane', code },
       ] as const;
       for (const command of commands) {
-        expect(campaignRejectionOf(() => handleCampaign(campaignContext, log, command))).toEqual({
+        expect(campaignRejectionOf(() => handleCommand(campaignContext, log, command))).toEqual({
           code: 'investigatorEliminated',
           investigatorCode: code,
           fate,
@@ -230,7 +230,7 @@ describe('ReplaceInvestigator (Roland is killed, Daisy stays alive)', () => {
   it('rejects replacing an investigator who is still alive', () => {
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(campaignContext, killedRoland, {
+        handleCommand(campaignContext, killedRoland, {
           type: 'ReplaceInvestigator',
           code: daisy.code,
           by: agnes.code,
@@ -242,7 +242,7 @@ describe('ReplaceInvestigator (Roland is killed, Daisy stays alive)', () => {
   it('rejects replacing someone who is not on the team', () => {
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(campaignContext, killedRoland, {
+        handleCommand(campaignContext, killedRoland, {
           type: 'ReplaceInvestigator',
           code: notOnTeam,
           by: agnes.code,
@@ -254,7 +254,7 @@ describe('ReplaceInvestigator (Roland is killed, Daisy stays alive)', () => {
   it('rejects a replacement who is a current team member', () => {
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(campaignContext, killedRoland, {
+        handleCommand(campaignContext, killedRoland, {
           type: 'ReplaceInvestigator',
           code: roland.code,
           by: daisy.code,
@@ -272,7 +272,7 @@ describe('ReplaceInvestigator (Roland is killed, Daisy stays alive)', () => {
     );
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(campaignContext, replaced, {
+        handleCommand(campaignContext, replaced, {
           type: 'ReplaceInvestigator',
           code: agnes.code,
           by: roland.code,
@@ -285,7 +285,7 @@ describe('ReplaceInvestigator (Roland is killed, Daisy stays alive)', () => {
     const notACard = investigatorCode('not_a_card');
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(campaignContext, killedRoland, {
+        handleCommand(campaignContext, killedRoland, {
           type: 'ReplaceInvestigator',
           code: roland.code,
           by: notACard,

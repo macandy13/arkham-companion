@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
+import type { GameId } from '@arkham/engine';
 import type { AppState } from '../state/appStore';
 import { GameImportError } from '../storage/gameExport';
 import { downloadTextFile, toFileStem } from './downloadFile';
@@ -15,7 +16,7 @@ export function HomeScreen({ store }: { store: StoreApi<AppState> }) {
   const games = useStore(store, (s) => s.games);
   const [importError, setImportError] = useState<string>();
 
-  async function exportGame(gameId: string, title: string) {
+  async function exportGame(gameId: GameId, title: string) {
     downloadTextFile(`${toFileStem(title)}.arkham.json`, await store.getState().exportGame(gameId));
   }
 

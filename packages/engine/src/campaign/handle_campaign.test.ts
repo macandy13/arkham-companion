@@ -10,21 +10,21 @@ import {
   startedCampaign,
   wendy,
 } from '../../test/utils';
-import { campaignDefinitionId, scenarioId, investigatorCode } from '../ids';
+import { campaignId, campaignDefinitionId, scenarioId, investigatorCode } from '../ids';
 import { cardDbFrom } from '../cards';
 import { investigatorCardStats } from '../investigator_cards';
 import type { CampaignCommand } from './campaign_commands';
 import type { CampaignRejection } from './campaign_rejection';
-import { emptyCampaignLog } from './campaign_log';
-import { executeCampaign, handleCampaign } from './handle_campaign';
+import { createEmptyLog } from './campaign_log';
+import { executeCommand, handleCommand } from './handle_campaign';
 
 describe('StartCampaign', () => {
   it('writes the campaign log with fresh investigators, the bag and the scenario order', () => {
-    const { log, events } = executeCampaign(
+    const { log, events } = executeCommand(
       campaignContext,
-      emptyCampaignLog(),
+      createEmptyLog(),
       makeStartCampaign({
-        campaignId: 'campaign_a',
+        campaignId: campaignId('campaign_a'),
         definitionId: campaignDefinitionId('night-of-the-zealot'),
         difficulty: 'hard',
         investigators: [roland.code, daisy.code],
@@ -35,7 +35,7 @@ describe('StartCampaign', () => {
 
     expect(events.map((e) => e.type)).toEqual(['CampaignStarted']);
     expect(log).toEqual({
-      campaignId: 'campaign_a',
+      campaignId: campaignId('campaign_a'),
       definitionId: 'night-of-the-zealot',
       difficulty: 'hard',
       investigators: [
@@ -105,7 +105,7 @@ describe('StartCampaign', () => {
   ])('rejects $name', ({ setup, expected }) => {
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(campaignContext, emptyCampaignLog(), makeStartCampaign(setup)),
+        handleCommand(campaignContext, createEmptyLog(), makeStartCampaign(setup)),
       ),
     ).toEqual(expected);
   });
@@ -119,9 +119,9 @@ describe('StartCampaign', () => {
     };
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(
+        handleCommand(
           contextWithBrokenRoland,
-          emptyCampaignLog(),
+          createEmptyLog(),
           makeStartCampaign({ investigators: [roland.code] }),
         ),
       ),
@@ -132,9 +132,9 @@ describe('StartCampaign', () => {
     const notACard = investigatorCode('not_a_card');
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(
+        handleCommand(
           campaignContext,
-          emptyCampaignLog(),
+          createEmptyLog(),
           makeStartCampaign({ investigators: [notACard] }),
         ),
       ),
@@ -144,7 +144,7 @@ describe('StartCampaign', () => {
   it('rejects starting a second campaign on a started log', () => {
     const started = startedCampaign({ investigators: [roland.code] });
     expect(
-      campaignRejectionOf(() => handleCampaign(campaignContext, started, makeStartCampaign())),
+      campaignRejectionOf(() => handleCommand(campaignContext, started, makeStartCampaign())),
     ).toEqual({
       code: 'campaignAlreadyStarted',
     });
@@ -166,7 +166,7 @@ describe('commands before the campaign started', () => {
     { type: 'AdjustCampaign', adjustment: { kind: 'position', position: 0 } },
   ])('rejects $type with campaignNotStarted', (command) => {
     expect(
-      campaignRejectionOf(() => handleCampaign(campaignContext, emptyCampaignLog(), command)),
+      campaignRejectionOf(() => handleCommand(campaignContext, createEmptyLog(), command)),
     ).toEqual({
       code: 'campaignNotStarted',
     });
@@ -205,7 +205,7 @@ describe('RecordStory', () => {
     );
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(campaignContext, log, {
+        handleCommand(campaignContext, log, {
           type: 'RecordStory',
           key: house,
           value: { kind: 'count', value: 1 },
@@ -217,7 +217,7 @@ describe('RecordStory', () => {
   it.each(['', '   ', ' doubt'])('rejects the blank or padded key %j', (key) => {
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(campaignContext, startedCampaign(), {
+        handleCommand(campaignContext, startedCampaign(), {
           type: 'RecordStory',
           key,
           value: { kind: 'flag', value: true },
@@ -244,7 +244,7 @@ describe('RecordStory', () => {
   ] as const)('rejects $name', ({ value }) => {
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(campaignContext, startedCampaign(), {
+        handleCommand(campaignContext, startedCampaign(), {
           type: 'RecordStory',
           key: house,
           value,
@@ -275,7 +275,7 @@ describe('chaos bag', () => {
     const log = startedCampaign({ chaosBag: ['0', 'skull'] });
     expect(
       campaignRejectionOf(() =>
-        handleCampaign(campaignContext, log, { type: 'RemoveChaosToken', token: 'tablet' }),
+        handleCommand(campaignContext, log, { type: 'RemoveChaosToken', token: 'tablet' }),
       ),
     ).toEqual({ code: 'chaosTokenNotInBag', token: 'tablet' });
   });
@@ -290,11 +290,11 @@ describe('AdvanceScenario', () => {
     };
     const positions = [startedCampaign(start)];
     for (let i = 0; i < 3; i++)
-      positions.push(executeCampaign(campaignContext, positions[i]!, advance).log);
+      positions.push(executeCommand(campaignContext, positions[i]!, advance).log);
 
     expect(positions.map((log) => log.position)).toEqual([0, 1, 2, 3]);
     expect(
-      campaignRejectionOf(() => handleCampaign(campaignContext, positions[3]!, advance)),
+      campaignRejectionOf(() => handleCommand(campaignContext, positions[3]!, advance)),
     ).toEqual({
       code: 'campaignComplete',
     });

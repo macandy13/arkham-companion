@@ -1,4 +1,4 @@
-import type { CampaignDefinitionId, InvestigatorCode, ScenarioId } from '../ids';
+import type { CampaignDefinitionId, CampaignId, InvestigatorCode, ScenarioId } from '../ids';
 import type { ChaosToken, Difficulty } from '../state';
 import type {
   CampaignInvestigator,
@@ -10,7 +10,7 @@ import type {
 
 /**
  * Facts of the campaign aggregate. Like the game's `Event`s they carry
- * everything `applyCampaign` needs, so replaying a stored campaign log never
+ * everything `applyEvent` needs, so replaying a stored campaign log never
  * validates or looks anything up. Regular commands and `AdjustCampaign`
  * corrections produce the same events.
  */
@@ -29,7 +29,7 @@ export type CampaignEvent =
 /** A campaign began; replaces the whole log. Produced by `StartCampaign`. */
 export interface CampaignStarted {
   readonly type: 'CampaignStarted';
-  readonly campaignId: string;
+  readonly campaignId: CampaignId;
   readonly definitionId: CampaignDefinitionId;
   readonly difficulty: Difficulty;
   /** Already in their starting state: no trauma, no XP, alive. */

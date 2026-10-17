@@ -1,8 +1,10 @@
 import Dexie, { type EntityTable } from 'dexie';
 import {
   STATE_VERSION,
+  gameId as toGameId,
   undoLastGroup,
   replay,
+  type CampaignId,
   type Event,
   type GameId,
   type GameState,
@@ -16,11 +18,16 @@ import {
 } from '@arkham/engine';
 import type { CardCatalog, CardDef } from '@arkham/carddata';
 
+/** A fresh UUID for a created, duplicated or imported game. */
+function newGameId(): GameId {
+  return toGameId(crypto.randomUUID());
+}
+
 /** Row of the `games` table: a `GameSummary` is derived from it plus the replayed state. */
 interface GameRow {
   gameId: GameId;
   title: string;
-  campaignId?: string;
+  campaignId?: CampaignId;
   createdAt: number;
   updatedAt: number;
   lastSeq: number;
@@ -28,7 +35,7 @@ interface GameRow {
 
 /** Row of the `campaigns` table; campaign mode is not implemented yet (product.md "Campaign mode"). */
 interface CampaignRow {
-  campaignId: string;
+  campaignId: CampaignId;
   title: string;
   createdAt: number;
 }
@@ -100,7 +107,7 @@ export class IndexedDbStore implements GameStore {
   }
 
   async createGame(init: NewGame = {}): Promise<GameId> {
-    const gameId = crypto.randomUUID();
+    const gameId = newGameId();
     const now = Date.now();
     await this.db.games.add({
       gameId,
@@ -198,7 +205,7 @@ export class IndexedDbStore implements GameStore {
     return this.db.transaction('rw', this.db.games, this.db.events, this.db.snapshots, async () => {
       const game = await this.db.games.get(gameId);
       if (!game) throw new Error(`Unknown game ${gameId}`);
-      const copyId = crypto.randomUUID();
+      const copyId = newGameId();
       const now = Date.now();
       await this.db.games.add({
         ...game,
@@ -231,7 +238,7 @@ export class IndexedDbStore implements GameStore {
   }
 
   async importGame(game: ImportedGame): Promise<GameId> {
-    const gameId = crypto.randomUUID();
+    const gameId = newGameId();
     const now = Date.now();
     await this.db.transaction('rw', this.db.games, this.db.events, async () => {
       await this.db.games.add({

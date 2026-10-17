@@ -1,4 +1,4 @@
-import { campaignDefinitionId, scenarioId } from '../ids';
+import { campaignId, campaignDefinitionId, scenarioId } from '../ids';
 import { describe, expect, it } from 'vitest';
 import {
   agnes,
@@ -13,16 +13,16 @@ import {
 } from '../../test/utils';
 import type { CampaignCommand } from './campaign_commands';
 import type { CampaignEvent } from './campaign_events';
-import { checkCampaignInvariants } from './campaign_invariants';
-import { emptyCampaignLog } from './campaign_log';
-import { applyCampaign, replayCampaign } from './campaign_reducer';
-import { executeCampaign } from './handle_campaign';
+import { checkInvariants } from './campaign_invariants';
+import { createEmptyLog } from './campaign_log';
+import { applyEvent, replayEvents } from './campaign_reducer';
+import { executeCommand } from './handle_campaign';
 
-describe('applyCampaign', () => {
+describe('applyEvent', () => {
   it('starts a campaign by replacing the whole log', () => {
-    const log = applyCampaign(makeCampaignLog({ position: 1 }), {
+    const log = applyEvent(makeCampaignLog({ position: 1 }), {
       type: 'CampaignStarted',
-      campaignId: 'campaign_b',
+      campaignId: campaignId('campaign_b'),
       definitionId: campaignDefinitionId('night_of_the_zealot'),
       difficulty: 'hard',
       investigators: [daisyMember],
@@ -31,8 +31,8 @@ describe('applyCampaign', () => {
     });
 
     expect(log).toEqual({
-      ...emptyCampaignLog(),
-      campaignId: 'campaign_b',
+      ...createEmptyLog(),
+      campaignId: campaignId('campaign_b'),
       definitionId: 'night_of_the_zealot',
       difficulty: 'hard',
       investigators: [daisyMember],
@@ -48,20 +48,20 @@ describe('applyCampaign', () => {
       value: { kind: 'count', value },
     });
 
-    const recorded = replayCampaign([doubt(1), doubt(2)], makeCampaignLog());
+    const recorded = replayEvents([doubt(1), doubt(2)], makeCampaignLog());
     expect(recorded.story).toEqual({ doubt: { kind: 'count', value: 2 } });
 
-    const removed = applyCampaign(recorded, { type: 'StoryRecordRemoved', key: 'doubt' });
+    const removed = applyEvent(recorded, { type: 'StoryRecordRemoved', key: 'doubt' });
     expect(removed.story).toEqual({});
   });
 
   it('adds a token to the bag and removes one copy of it', () => {
     const log = makeCampaignLog({ chaosBag: ['-1', 'skull'] });
 
-    const added = applyCampaign(log, { type: 'ChaosTokenAdded', token: '-1' });
+    const added = applyEvent(log, { type: 'ChaosTokenAdded', token: '-1' });
     expect(added.chaosBag).toEqual(['-1', 'skull', '-1']);
 
-    const removed = applyCampaign(added, { type: 'ChaosTokenRemoved', token: '-1' });
+    const removed = applyEvent(added, { type: 'ChaosTokenRemoved', token: '-1' });
     expect(removed.chaosBag).toEqual(['skull', '-1']);
   });
 
@@ -71,7 +71,7 @@ describe('applyCampaign', () => {
   ] as const)('changes the $account XP of one investigator', ({ account, delta, changed }) => {
     const log = makeCampaignLog({ investigators: [rolandMember, daisyMember] });
 
-    const after = applyCampaign(log, {
+    const after = applyEvent(log, {
       type: 'XpChanged',
       code: rolandMember.code,
       account,
@@ -84,7 +84,7 @@ describe('applyCampaign', () => {
   it('changes the trauma of one kind', () => {
     const log = makeCampaignLog({ investigators: [rolandMember] });
 
-    const after = applyCampaign(log, {
+    const after = applyEvent(log, {
       type: 'TraumaChanged',
       code: rolandMember.code,
       kind: 'mental',
@@ -97,7 +97,7 @@ describe('applyCampaign', () => {
   it('changes the fate of one investigator', () => {
     const log = makeCampaignLog({ investigators: [rolandMember] });
 
-    const after = applyCampaign(log, {
+    const after = applyEvent(log, {
       type: 'InvestigatorFateChanged',
       code: rolandMember.code,
       fate: 'insane',
@@ -110,7 +110,7 @@ describe('applyCampaign', () => {
     const killedRoland = { ...rolandMember, fate: 'killed' } as const;
     const log = makeCampaignLog({ investigators: [killedRoland, daisyMember] });
 
-    const after = applyCampaign(log, {
+    const after = applyEvent(log, {
       type: 'InvestigatorReplaced',
       code: rolandMember.code,
       by: agnesMember,
@@ -121,7 +121,7 @@ describe('applyCampaign', () => {
   });
 
   it('moves the scenario position', () => {
-    const after = applyCampaign(makeCampaignLog(), {
+    const after = applyEvent(makeCampaignLog(), {
       type: 'ScenarioPositionChanged',
       position: 1,
     });
@@ -133,9 +133,9 @@ describe('applyCampaign', () => {
     const log = makeCampaignLog({ story: { doubt: { kind: 'count', value: 1 } } });
     const before = structuredClone(log);
 
-    applyCampaign(log, { type: 'ChaosTokenAdded', token: 'skull' });
-    applyCampaign(log, { type: 'StoryRecordRemoved', key: 'doubt' });
-    applyCampaign(log, {
+    applyEvent(log, { type: 'ChaosTokenAdded', token: 'skull' });
+    applyEvent(log, { type: 'StoryRecordRemoved', key: 'doubt' });
+    applyEvent(log, {
       type: 'InvestigatorFateChanged',
       code: rolandMember.code,
       fate: 'killed',
@@ -145,12 +145,12 @@ describe('applyCampaign', () => {
   });
 });
 
-describe('replayCampaign', () => {
+describe('replayEvents', () => {
   it('applies the events in order, starting from the empty log', () => {
     const events: CampaignEvent[] = [
       {
         type: 'CampaignStarted',
-        campaignId: 'campaign_a',
+        campaignId: campaignId('campaign_a'),
         definitionId: campaignDefinitionId('test_campaign'),
         difficulty: 'standard',
         investigators: [rolandMember],
@@ -161,9 +161,9 @@ describe('replayCampaign', () => {
       { type: 'ScenarioPositionChanged', position: 1 },
     ];
 
-    expect(replayCampaign(events)).toEqual({
-      ...emptyCampaignLog(),
-      campaignId: 'campaign_a',
+    expect(replayEvents(events)).toEqual({
+      ...createEmptyLog(),
+      campaignId: campaignId('campaign_a'),
       definitionId: 'test_campaign',
       difficulty: 'standard',
       investigators: [{ ...rolandMember, xpEarned: 2 }],
@@ -187,10 +187,10 @@ describe('campaign replay of commands', () => {
   ];
 
   const play = () => {
-    let log = emptyCampaignLog();
+    let log = createEmptyLog();
     const events: CampaignEvent[] = [];
     for (const command of commands) {
-      const result = executeCampaign(campaignContext, log, command);
+      const result = executeCommand(campaignContext, log, command);
       log = result.log;
       events.push(...result.events);
     }
@@ -203,14 +203,14 @@ describe('campaign replay of commands', () => {
 
   it('replaying the stored events from the empty log reproduces the log', () => {
     const { log, events } = play();
-    expect(replayCampaign(events)).toEqual(log);
+    expect(replayEvents(events)).toEqual(log);
   });
 
   it('keeps the log consistent after every command', () => {
-    let log = emptyCampaignLog();
+    let log = createEmptyLog();
     for (const command of commands) {
-      log = executeCampaign(campaignContext, log, command).log;
-      expect(checkCampaignInvariants(log)).toEqual([]);
+      log = executeCommand(campaignContext, log, command).log;
+      expect(checkInvariants(log)).toEqual([]);
     }
   });
 });

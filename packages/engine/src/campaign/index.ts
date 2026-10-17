@@ -11,11 +11,11 @@ export {
   type CampaignRejection,
   type CampaignRejectionCode,
 } from './campaign_rejection';
-export { applyCampaign, replayCampaign } from './campaign_reducer';
+export { applyEvent, replayEvents } from './campaign_reducer';
 export {
-  executeCampaign,
-  handleCampaign,
+  executeCommand,
+  handleCommand,
   type CampaignContext,
   type CampaignExecuteResult,
 } from './handle_campaign';
-export { checkCampaignInvariants, MAX_TEAM_SIZE } from './campaign_invariants';
+export { checkInvariants, MAX_TEAM_SIZE } from './campaign_invariants';

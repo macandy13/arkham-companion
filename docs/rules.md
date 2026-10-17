@@ -106,7 +106,7 @@ An ability that shuffles an empty discard pile into a deck does not shuffle the 
 - In enemy step 1, each **ready, unengaged** hunter moves one connection along the shortest path toward the nearest investigator. It doesn't move if an investigator is already at its location.
 - "Nearest" counts connections even through moves a card blocks. If the next step on the path is blocked by a card, the hunter doesn't move.
 - Equidistant investigators: prey picks the target; if prey doesn't decide it or there is none, the lead investigator does. The lead investigator also picks between several shortest paths.
-- [Patrol](https://arkhamdb.com/rules#Patrol) works the same way but toward a named location. It doesn't move if it's already there, and the lead investigator picks between equal targets.
+- [Patrol](https://arkhamdb.com/rules#Patrol) works the same way but toward the target its text names (a location, a direction or a scenario card, 2026 Core rulebook p. 17). It doesn't move if it's already there, and the lead investigator picks between equal targets. Chapter One names a location; Chapter Two also names an enemy (Julia Stern: "nearest [[Civilian]] enemy") or a filtered location (Factory Worker: "nearest location with no [[Elite]] enemies").
 
 ## Prey
 
@@ -118,7 +118,9 @@ An ability that shuffles an empty discard pile into a deck does not shuffle the 
 - [Retaliate](https://arkhamdb.com/rules#Retaliate): when an investigator fails an attack (combat test) against it while it is ready, it attacks that investigator after the test's results. It doesn't exhaust, and engagement doesn't matter.
 - [Alert](https://arkhamdb.com/rules#Alert): when an investigator fails an evade (evasion test) against it while it is ready, it attacks after the test's results. It doesn't exhaust, and engagement doesn't matter. The [2026 Core rulebook](https://images-cdn.fantasyflightgames.com/filer_public/0e/d0/0ed09507-1705-47ed-a630-cd15885cabb0/ahc100_rulebook-web.pdf) (keyword glossary: "fails an evasion test targeting a ready enemy with the alert keyword") names "ready"; the older Rules Reference text leaves it out.
 - An exhausted enemy makes no keyword, attack-of-opportunity or enemy-phase attack (2026 Core rulebook: exhausted enemies "do not perform attacks of opportunity" and do not attack in the enemy phase; retaliate and alert name a ready enemy). Any of these attacks can be cancelled by a card ([Cancel](https://arkhamdb.com/rules#Cancel)).
-- [Elusive](https://arkhamdb.com/rules#Elusive) (later expansion): after it attacks or is attacked while ready, it disengages, moves to a connecting location (without investigators if possible) and exhausts.
+- [Elusive](https://arkhamdb.com/rules#Elusive) (also on Core Set (2026) cards, e.g. Bat Horror): after it attacks or is attacked while ready, it disengages, moves to a connecting location (without investigators if possible) and exhausts.
+- Doomed (Core Set (2026), reminder text on Bystander): when the enemy is defeated, place 1 doom on the current agenda. This can make the agenda advance. Discarding the enemy (e.g. Factory Worker's Parley) is not defeating it, so Doomed doesn't trigger (2026 Core rulebook glossary).
+- Predator ([Children of Blood campaign guide](https://images-cdn.fantasyflightgames.com/filer_public/a8/9c/a89c98b9-9de4-4b6c-8110-80fedbdcdb60/ahc106_campaign_guide-web.pdf), p. 4): in the enemy phase, after hunters move and before enemies attack, each ready, unengaged predator deals 1 damage to a non-Elite enemy at its location with a lower fight value than its own. Between several, it picks the one with the lowest remaining health; the guide names no tie-break, so the players choose.
 - [Keywords](https://arkhamdb.com/rules#Keywords) in general: having the same keyword twice counts once. Keywords are mandatory unless their text says "may".
 
 ## Investigator actions against enemies
@@ -142,7 +144,9 @@ An ability that shuffles an empty discard pile into a deck does not shuffle the 
 7. Apply results in an order the tester chooses (clue discovered, damage dealt, card effects).
 8. Discard committed cards and return the tokens to the bag.
 
-Bless (+2), curse (-2), frost (-1) and the Core Set (2026) blood token (-1) each make the tester reveal another token, whose modifier also applies. Blood also seals the first box on the investigator card.
+Bless (+2), curse (-2), frost (-1) and the blood token (-1) each make the tester reveal another token, whose modifier also applies.
+
+The blood token comes with Children of Blood, not the Core Set (2026) ([campaign guide](https://images-cdn.fantasyflightgames.com/filer_public/a8/9c/a89c98b9-9de4-4b6c-8110-80fedbdcdb60/ahc106_campaign_guide-web.pdf), p. 3): if a test with a blood token fails, 1 blood token revealed during it is sealed on the tester (only for the first blood token of the test). At most 3 are sealed on one investigator, and at most 12 are in the bag and sealed together. Added tokens stay in the bag for the campaign. Some resolutions (River of Blood, New Horizons) release the sealed ones back into the bag. A blood token revealed outside a skill test has no effect unless a card says so. Encounter cards check for, and can release, blood tokens sealed on an investigator.
 
 If auto-success or auto-failure is known before step 3, skip steps 3 and 4. [Variable difficulty](https://arkhamdb.com/rules#Variable_Difficulty_Skill_Tests) is fixed once step 6 checks it.
 

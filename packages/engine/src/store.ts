@@ -1,9 +1,6 @@
-import type { ScenarioId } from './ids';
+import type { CampaignId, GameId, ScenarioId } from './ids';
 import type { Event } from './events';
 import type { GameState, Phase } from './state';
-
-/** UUID (v4) identifying one game; never device-bound so it stays valid for later cloud sync (architecture "Persistence"). */
-export type GameId = string;
 
 /** Version of the persisted `GameState` shape; bump together with a migration when `GameState` changes. */
 export const STATE_VERSION = 1;
@@ -13,14 +10,14 @@ export interface NewGame {
   /** Human-readable name shown in the game list. */
   title?: string;
   /** Campaign this game belongs to; absent in standalone play. */
-  campaignId?: string;
+  campaignId?: CampaignId;
 }
 
 /** Row of `GameStore.listGames`: enough to render a game list without loading events. */
 export interface GameSummary {
   gameId: GameId;
   title: string;
-  campaignId?: string;
+  campaignId?: CampaignId;
   /** Epoch ms of creation, set by the store. */
   createdAt: number;
   /** Epoch ms of the last appended event (or creation). */

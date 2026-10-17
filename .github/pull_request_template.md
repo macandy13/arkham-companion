@@ -1,6 +1,6 @@
 ## Motivation
 
-<!-- Why does this PR exist? What problem does it solve or what is it trying to accomplish? Link the task in docs/tasks/ if there is one. If it is part of a stack, say which slice it is and what comes next. -->
+<!-- Why does this PR exist? What problem does it solve or what is it trying to accomplish? Link the task in docs/tasks/ if there is one. If it is part of a stack, say which slice it is and what comes next. State the rationale itself, never who asked for or chose something. -->
 
 ## Review map
 
