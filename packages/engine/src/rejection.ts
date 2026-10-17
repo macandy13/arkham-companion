@@ -185,7 +185,12 @@ export type Rejection =
       token: TokenKind;
       current: number;
       delta: number;
-    };
+    }
+  /**
+   * A `ManualAdjust` would move the current agenda or act out of its place
+   * (the top of its deck); only advancing changes it.
+   */
+  | { code: 'currentStageCard'; cardId: InstanceId; deck: 'agenda' | 'act' };
 
 export type RejectionCode = Rejection['code'];
 
@@ -347,5 +352,7 @@ function describe(r: Rejection): string {
       return `forced effect ${r.command} rejected: ${describe(r.reason)}`;
     case 'negativeTokens':
       return `${r.token} on ${r.cardId} would become ${r.current + r.delta}`;
+    case 'currentStageCard':
+      return `${r.cardId} is the current ${r.deck}; advance it instead of moving it`;
   }
 }
