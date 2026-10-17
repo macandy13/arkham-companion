@@ -1,12 +1,12 @@
-import { cardStats, type EngineContext } from './cards';
+import type { EngineContext } from './cards';
 import type { Command, DealEnemyAttack } from './commands';
 import { requestDecision } from './decisions';
 import { enemyAttackEvents, readyEngagedEnemies } from './enemies';
 import type { DecisionRequested, Event } from './events';
+import { forcedAttackDecision } from './forced_attacks';
 import { enemyOf, isInPlay } from './handle_enemy';
-import { decisionId, type InstanceId, type InvestigatorId } from './ids';
 import { CommandRejected } from './rejection';
-import type { Decision, GameState, HeldAction } from './state';
+import type { GameState, HeldAction } from './state';
 
 /**
  * Rules Reference, "Attack of Opportunity": an investigator engaged with
@@ -14,10 +14,8 @@ import type { Decision, GameState, HeldAction } from './state';
  * resign is attacked by each of them "after all costs of initiating the
  * action have been paid, but before the application of that action's
  * effect". For every such enemy (a ready massive enemy at the location
- * included) this raises a `confirm` decision (`attackOfOpportunity:<enemy>`)
- * for that investigator: `attack` deals the enemy's printed damage and
- * horror, which the players may lower (assets soak part of it) through
- * `ResolveDecision.amounts`; `skip` is the way out for a card that "does not
+ * included) this raises a `forcedAttackDecision` (`attackOfOpportunity:<enemy>`)
+ * for that investigator; its `skip` is the way out for a card that "does not
  * provoke attacks of opportunity", which the engine cannot read. Nothing for
  * any other command.
  *
@@ -36,7 +34,10 @@ export function attackOfOpportunityDecisions(
   const investigator = state.investigators.find((inv) => inv.id === action.investigatorId);
   if (investigator?.status !== 'active') return [];
   return readyEngagedEnemies(ctx, state, investigator).flatMap((enemyId) =>
-    requestDecision(state, attackDecision(ctx, state, enemyId, investigator.id)),
+    requestDecision(
+      state,
+      forcedAttackDecision(ctx, state, 'attackOfOpportunity', enemyId, investigator.id),
+    ),
   );
 }
 
@@ -78,39 +79,6 @@ function actionOf(command: Command): HeldAction | undefined {
     default:
       return undefined;
   }
-}
-
-/** The decision for one attack of opportunity, with the enemy's printed damage and horror as defaults. */
-function attackDecision(
-  ctx: EngineContext,
-  state: GameState,
-  enemyId: InstanceId,
-  investigatorId: InvestigatorId,
-): Decision {
-  const { damage = 0, horror = 0 } = cardStats(ctx.cards, state.cards[enemyId]?.code ?? '');
-  const attack: DealEnemyAttack = {
-    type: 'DealEnemyAttack',
-    enemyId,
-    investigatorId,
-    damage,
-    horror,
-  };
-  return {
-    id: decisionId(`attackOfOpportunity:${enemyId}`),
-    kind: 'confirm',
-    subject: enemyId,
-    prompt: 'decision.attackOfOpportunity',
-    decider: { kind: 'investigator', investigatorId },
-    options: [
-      {
-        id: 'attack',
-        label: 'decision.attack',
-        commands: [attack],
-        amounts: { damage: { default: damage, min: 0 }, horror: { default: horror, min: 0 } },
-      },
-      { id: 'skip', label: 'decision.doesNotProvoke', commands: [] },
-    ],
-  };
 }
 
 /**

@@ -119,6 +119,20 @@ describe('describeDecision', () => {
     );
   });
 
+  it.each([
+    { prompt: 'decision.retaliate', question: 'Swarm of Rats retaliates:' },
+    { prompt: 'decision.alert', question: 'Swarm of Rats attacks after the failed evasion:' },
+  ])('words the keyword attack $prompt', ({ prompt, question }) => {
+    const attack: Decision = {
+      ...engage,
+      kind: 'confirm',
+      prompt,
+      options: [{ id: 'skip', label: 'decision.attackCancelled', commands: [] }],
+    };
+
+    expect(describeDecision(ctx, state, attack)).toEqual(`${question} attack cancelled [confirm]`);
+  });
+
   it('shows the key of a prompt without a sentence', () => {
     const custom: Decision = { ...engage, subject: undefined, prompt: 'decision.chooseCellar' };
 
