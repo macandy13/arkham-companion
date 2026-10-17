@@ -2,6 +2,7 @@ import { cardStats, type CardStats, type EngineContext } from './cards';
 import type { Command, Evade, Fight, Investigate } from './commands';
 import { requestDecision, skillTestDecision, type SkillTestOutcomes } from './decisions';
 import type { DecisionRequested } from './events';
+import { alertCommands, retaliateCommands } from './forced_attacks';
 import { enemyOf, isInPlay, locationOf } from './handle_enemy';
 import { activeInvestigator } from './handle_investigator';
 import { decisionId, type InstanceId } from './ids';
@@ -55,7 +56,8 @@ export function handleInvestigate(
  * investigator's location. A pass deals the attack's damage (`DamageEnemy`):
  * `damage` (1 for the basic attack) unless the players confirm another
  * amount. A fail deals that damage to the other investigator the enemy is
- * engaged with, if any (see `failedFightCommands`).
+ * engaged with, if any (see `failedFightCommands`), and then lets a ready
+ * retaliate enemy attack the fighter (`retaliateCommands`).
  */
 export function handleFight(ctx: EngineContext, state: GameState, cmd: Fight): DecisionRequested[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
@@ -82,7 +84,10 @@ export function handleFight(ctx: EngineContext, state: GameState, cmd: Fight): D
     outcomes: {
       onPass: [{ type: 'DamageEnemy', enemyId: enemy.id, amount: damage }],
       passAmount: { default: damage, min: 1 },
-      onFail: failedFightCommands(state, investigator, enemy, damage),
+      onFail: [
+        ...failedFightCommands(state, investigator, enemy, damage),
+        ...retaliateCommands(ctx, state, enemy, stats, investigator.id),
+      ],
     },
   });
 }
@@ -126,7 +131,8 @@ function failedFightCommands(
  * `Evade`: an agility test against the evade value of an enemy engaged with
  * the investigator (a massive enemy at their location counts, see
  * `enemyAttackList`). A pass exhausts and disengages it; a massive enemy only
- * exhausts, since it is never in the `engaged` zone.
+ * exhausts, since it is never in the `engaged` zone. A fail lets an alert
+ * enemy attack the evader (`alertCommands`).
  */
 export function handleEvade(ctx: EngineContext, state: GameState, cmd: Evade): DecisionRequested[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
@@ -147,7 +153,7 @@ export function handleEvade(ctx: EngineContext, state: GameState, cmd: Evade): D
     prompt: 'decision.evade',
     subject: enemy.id,
     test: { skill: 'agility', difficulty: stats.evade ?? 0 },
-    outcomes: { onPass, onFail: [] },
+    outcomes: { onPass, onFail: alertCommands(ctx, state, enemy, stats, investigator.id) },
   });
 }
 

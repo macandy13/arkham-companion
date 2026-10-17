@@ -97,13 +97,16 @@ Ref: RR "Retaliate", "Alert", "Engagement", "Patrol"; M1.8, M1.10 follow-ups.
 Slices: (1) engagement on move; (2) retaliate and alert attacks, stacked on (1).
 
 - [x] `MoveInvestigator` engages ready, unengaged, non-aloof enemies at the destination (prey/decision as in `engageEvents`)
-- [ ] Retaliate: a failed `Fight` against a ready retaliate enemy raises an attack decision (same shape as attacks of opportunity)
-- [ ] Alert: a failed `Evade` against an alert enemy raises an attack decision
+- [x] Retaliate: a failed `Fight` against a ready retaliate enemy raises an attack decision (same shape as attacks of opportunity)
+- [x] Alert: a failed `Evade` against an alert enemy raises an attack decision
 - [ ] Patrol (if a Core scenario needs it): moves in the enemy phase toward the named location
 - [ ] Fight effects that engage an aloof enemy as part of the attack (Spectral Razor): a card-effect path
-- [ ] rules-checker review; end-to-end test covers a move into an enemy's location and one retaliate
+- [x] rules-checker review; end-to-end test covers a move into an enemy's location (a retaliate is left to M1.17, see below)
 
 Done (slice 1): `handleMoveInvestigator` ends with `arrivalEngagements` (`engagement.ts`), which runs `engageEvents` for each unengaged enemy at the destination after the move and any reveal, so aloof, massive and exhausted enemies stay put and prey or a `chooseInvestigator` decision picks between investigators as on spawn. It applies to every move, card effects (`ignoreConnections`) included, except a card effect that moves without being engaged (`MoveInvestigator.avoidEngagement`, review #73), and to a held move only once it resumes after its attacks of opportunity. The end-to-end test no longer engages by hand: Wendy's move into the Cellar (round 2) and Roland's into the Attic (round 7) engage the Icy Ghoul and the Flesh-Eater.
+
+Done (slice 2): `forced_attacks.ts` holds the one `confirm` decision for every enemy attack outside the enemy phase (`forcedAttackDecision`, id `<kind>:<enemy>` with kind `attackOfOpportunity`, `retaliate` or `alert`; `attack` with the printed damage and horror as adjustable amounts, `skip`). Attacks of opportunity now use it too, so its decision is unchanged. A failed `Fight` against a ready retaliate enemy and a failed `Evade` against a ready alert enemy raise it for the tester as the last fail command (`RequestDecision`), after a failed attack's damage to another engaged investigator; the enemy stays ready. Readiness is read when the test starts, since nothing but `ManualAdjust` changes it while the test is pending. `skip` is labelled `decision.attackCancelled` here, because cards can cancel any attack (RR "Cancel"). **Rules check:** the 2026 Core rulebook says alert needs a ready enemy too (the older RR text leaves it out); `docs/rules.md` is corrected.
+Not done: patrol (no enemy of The Gathering has it) and fight effects that engage an aloof enemy as part of the attack (Spectral Razor; player cards are not modelled, the players engage first). The end-to-end test has no retaliate enemy before the Ghoul Priest (retaliate), who enters with act 2 in M1.17; that thread should show one failed fight against him.
 
 ## M1.17 The Gathering to a resolution (S)
 
