@@ -788,13 +788,15 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       engagedWith: roland,
     });
 
-    // 1.4: both draw Obscuring Fog. It has no test, so it goes to the discard;
-    // its +2 shroud on their locations is card text the players apply.
+    // 1.4: both draw Obscuring Fog, which attaches to the drawer's location
+    // (+2 shroud) until it is investigated. The card data has no attachment,
+    // so the app discards each Fog and the players attach them by hand.
     expect(table.nextPhase()).toEqual({ round: 9, phase: 'mythos' });
-    expect(table.namesIn({ kind: 'encounterDiscard' }).slice(0, 2)).toEqual([
-      'Obscuring Fog',
-      'Obscuring Fog',
-    ]);
+    table.attachTopOfDiscardTo('Cellar');
+    table.attachTopOfDiscardTo('Attic');
+
+    expect(table.attachedTo('Attic')).toEqual(['Obscuring Fog']);
+    expect(table.attachedTo('Cellar')).toEqual(['Obscuring Fog']);
 
     // Round 9 – investigation: The Barrier asks for the investigators in the
     // Hallway at the end of the round. Roland shoots the new Ghoul Minion,
@@ -804,6 +806,8 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.startTurn(roland);
     table.fight(roland, { name: ghoulMinion, engagedWith: roland }, { damage: 2 });
     table.investigate(roland);
+    // His successful search clears the Attic's fog.
+    table.discardAttachedTo('Attic');
     table.moveTo(roland, 'Hallway');
     table.endTurn(roland);
     table.startTurn(daisy);
@@ -864,8 +868,8 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // Round 10 – investigation: the Ghoul Priest has 5 health per investigator,
     // 15. Roland fights once with his .45 Automatic and Vicious Blow (3
     // damage), then evades the Priest so it cannot attack him at 4 of 5
-    // horror. Dissonant Voices keeps him from playing cards this round, so his
-    // last action is a resource. Daisy hits it three times (combat 2 against
+    // horror. Dissonant Voices keeps him from playing assets and events this round,
+    // so his last action is a resource. Daisy hits it three times (combat 2 against
     // 4: she commits her two combat icons and the tokens are kind).
     expect(table.nextPhase()).toEqual({ round: 10, phase: 'investigation' });
     table.startTurn(roland);
