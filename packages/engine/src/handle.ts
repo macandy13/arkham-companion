@@ -360,7 +360,7 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
     case 'StartTurn':
       return handleStartTurn(state, command);
     case 'EndTurn':
-      return handleEndTurn(state, command);
+      return handleEndTurn(ctx, state, command);
     case 'Resign':
       return handleResign(state, command);
     case 'SetLeadInvestigator':
