@@ -29,7 +29,7 @@ The game rules the engine implements, summarised in our own words so sessions do
 
 - Investigators pick among themselves who goes next. A turn runs to completion before the next one starts, and each investigator takes exactly one turn.
 - A turn has 3 actions, in any order and repeatable: investigate, move, draw, resource, play, activate an [action] ability, fight, engage, evade. [Basic actions](https://arkhamdb.com/rules#Basic_Action_Types) are draw, resource, move, investigate, fight, engage and evade.
-- An investigator may end the turn early.
+- An investigator may end the turn early. "At the end of your turn" forced abilities (Frozen in Fear) resolve when the turn ends (framework step 2.2.2). A turn cut short by defeat or resignation triggers none: elimination has already discarded the threat area.
 
 ### Enemy
 
@@ -42,7 +42,7 @@ The game rules the engine implements, summarised in our own words so sessions do
 2. Ready every exhausted card simultaneously.
 3. In player order each investigator draws 1 card, then each gains 1 resource.
 4. In player order, anyone holding more than 8 cards discards down to 8.
-5. The round ends, and "until the end of the round" effects expire.
+5. The round ends (framework step 4.6): "until the end of the round" effects expire and "at the end of the round" forced abilities resolve (Dissonant Voices is discarded).
 
 ## Setup
 

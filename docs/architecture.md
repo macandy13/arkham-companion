@@ -342,6 +342,7 @@ interface CardStats {
   damage?: number; horror?: number; doom?: ScaledValue; victory?: number;
   encounterCode?: string; quantity?: number; keywords?: readonly Keyword[];
   entersThreatArea?: boolean; revelationTest?: SkillTest;
+  turnEndTest?: SkillTest; discardAtRoundEnd?: boolean;
 }
 ```
 
