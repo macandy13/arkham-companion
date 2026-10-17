@@ -134,7 +134,10 @@ describe('AdjustCampaign (Roland: health 9, sanity 5; three scenarios; Roland ha
       adjustment: { kind: 'xp', code: roland.code, account: 'earned', delta: -5 },
       expected: {
         code: 'inconsistentAdjustment',
-        violations: ['investigator 01001 has -1 earned XP', 'investigator 01001 spent 1 of -1 XP'],
+        violations: [
+          `investigator ${roland.code} has -1 earned XP`,
+          `investigator ${roland.code} spent 1 of -1 XP`,
+        ],
       },
     },
     {
@@ -142,7 +145,7 @@ describe('AdjustCampaign (Roland: health 9, sanity 5; three scenarios; Roland ha
       adjustment: { kind: 'xp', code: roland.code, account: 'spent', delta: 4 },
       expected: {
         code: 'inconsistentAdjustment',
-        violations: ['investigator 01001 spent 5 of 4 XP'],
+        violations: [`investigator ${roland.code} spent 5 of 4 XP`],
       },
     },
     {
@@ -150,7 +153,7 @@ describe('AdjustCampaign (Roland: health 9, sanity 5; three scenarios; Roland ha
       adjustment: { kind: 'trauma', code: roland.code, trauma: 'physical', delta: -3 },
       expected: {
         code: 'inconsistentAdjustment',
-        violations: ['investigator 01001 has -1 physical trauma'],
+        violations: [`investigator ${roland.code} has -1 physical trauma`],
       },
     },
     {
@@ -158,7 +161,7 @@ describe('AdjustCampaign (Roland: health 9, sanity 5; three scenarios; Roland ha
       adjustment: { kind: 'trauma', code: roland.code, trauma: 'physical', delta: 7 },
       expected: {
         code: 'inconsistentAdjustment',
-        violations: ['investigator 01001 is alive with trauma at the limit'],
+        violations: [`investigator ${roland.code} is alive with trauma at the limit`],
       },
     },
   ])('rejects $name', ({ adjustment, expected }) => {

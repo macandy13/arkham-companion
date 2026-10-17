@@ -97,7 +97,7 @@ describe('StartCampaign', () => {
     { name: 'no scenarios', setup: { scenarioIds: [] }, expected: { code: 'noScenarios' } },
     {
       name: 'zero health',
-      setup: { investigators: [{ ...roland, health: 0 }] },
+      setup: { investigators: [{ ...roland, health: 0, sanity: 5 }] },
       expected: {
         code: 'invalidInvestigatorStats',
         investigatorCode: roland.code,
@@ -107,7 +107,7 @@ describe('StartCampaign', () => {
     },
     {
       name: 'fractional sanity',
-      setup: { investigators: [{ ...roland, sanity: 2.5 }] },
+      setup: { investigators: [{ ...roland, health: 9, sanity: 2.5 }] },
       expected: {
         code: 'invalidInvestigatorStats',
         investigatorCode: roland.code,
