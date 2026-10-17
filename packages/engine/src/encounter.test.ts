@@ -709,7 +709,7 @@ describe('ShuffleEncounterDiscard', () => {
     expect(idsIn(after, encounterDiscard)).toEqual([]);
   });
 
-  it('still shuffles the deck when the discard is empty', () => {
+  it('leaves the deck in its order when the discard is empty', () => {
     const state = startedWith(
       { deck: [card('plain_treachery', 'deck_card_a'), card('foe', 'deck_card_b')] },
       { aliceAt: hall },
@@ -717,7 +717,7 @@ describe('ShuffleEncounterDiscard', () => {
 
     const { events } = execute(ctx, state, shuffleDiscard);
 
-    expect(events.map((e) => e.type)).toEqual(['DeckShuffled']);
+    expect(events).toEqual([]);
   });
 });
 

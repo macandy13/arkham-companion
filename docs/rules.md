@@ -80,7 +80,8 @@ The game rules the engine implements, summarised in our own words so sessions do
 3. Resolve its [revelation](https://arkhamdb.com/rules#Revelation) ability before it enters play (or, for a treachery, before it is discarded).
 4. An enemy [spawns](#spawn-and-engagement).
 5. A treachery goes to the encounter discard pile unless its text says otherwise. A treachery or enemy with Victory X goes to the victory display instead when it is overcome (see [Victory display](https://arkhamdb.com/rules#Victory_Display_Victory_Points)).
-6. [Surge](https://arkhamdb.com/rules#Surge): after resolving, draw another encounter card and start over.
+
+An ability that shuffles an empty discard pile into a deck does not shuffle the deck ([discard piles](https://arkhamdb.com/rules#Discard_Piles)). 6. [Surge](https://arkhamdb.com/rules#Surge): after resolving, draw another encounter card and start over.
 
 ## Spawn and engagement
 
@@ -156,7 +157,8 @@ If auto-success or auto-failure is known before step 3, skip steps 3 and 4. [Var
 
 - Defeat or resigning eliminates the investigator. Resigning is not a defeat.
 - On elimination: "when the game ends" effects on their weaknesses in play trigger, then those weaknesses are removed. Cards they control and all their out-of-play cards are removed from the game. Cards they own but don't control stay until they leave play, and are then removed. Their clues go to their location, and their resources return to the pool. Engaged enemies are placed unengaged at that location and otherwise keep their state. Other cards in their threat area go to the appropriate discard pile.
-- A new lead investigator is chosen if needed. If nobody is left, the scenario ends with "no resolution".
+- A new lead investigator is chosen if needed. If nobody is left, the scenario ends with "no resolution", and the players read the scenario's "if no resolution was reached" entry in the campaign guide (Learn to Play).
+- A card ability can defeat an investigator outright; what follows from that is only what the ability says ([investigator defeat](https://arkhamdb.com/rules#Investigator_Defeat)).
 - Eliminated investigators still count for per-investigator values.
 
 ## Campaign
@@ -164,7 +166,7 @@ If auto-success or auto-failure is known before step 3, skip steps 3 and 4. [Var
 [Campaign play](https://arkhamdb.com/rules#Campaign_Play), [trauma](https://arkhamdb.com/rules#Trauma), [killed/insane](https://arkhamdb.com/rules#Killed_Insane_Investigators), [joining or leaving](https://arkhamdb.com/rules#Joining_or_Leaving_a_Campaign), [victory display](https://arkhamdb.com/rules#Victory_Display_Victory_Points).
 
 - The game is for 1–4 players, each choosing one investigator ([setup](https://arkhamdb.com/rules#Appendix_III_Setting_Up_The_Game), step 1), so a campaign team has 1–4 investigators.
-- Defeat by damage gives 1 physical trauma, and defeat by horror gives 1 mental trauma. If both happen at once, the player picks which. Each trauma means starting later scenarios with 1 damage or 1 horror.
+- Defeat by damage gives 1 physical trauma, and defeat by horror gives 1 mental trauma. A defeat by a card ability gives trauma only if the ability says so. If both happen at once, the player picks which. Each trauma means starting later scenarios with 1 damage or 1 horror.
 - Physical trauma ≥ printed health means killed, and mental trauma ≥ printed sanity means insane. That investigator can't be used again in the campaign, and the player picks a new one with a new level 0 deck for the next scenario. The 2026 Core Set adds a third way out, devoured. If no investigator is left to choose, the campaign is lost.
 - Players may drop out and back in between scenarios. A leaving player's log entry stays so they can rejoin. A joining player picks an investigator not used before in this campaign and starts with no experience and no trauma. The rules don't cover one player swapping a living investigator for another.
 - At the end of a scenario, revealed locations in play with Victory X and no clues go to the victory display. Experience equals the victory points in the display plus or minus the resolution's adjustments, and unspent experience carries over.

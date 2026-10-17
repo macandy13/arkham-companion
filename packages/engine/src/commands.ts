@@ -381,9 +381,9 @@ export interface ShuffleInto {
 
 /**
  * Shuffles the encounter discard pile into the encounter deck (a reverse
- * side such as Rise of the Ghouls, or a card effect). The deck is shuffled
- * even when the discard is empty, since the effect shuffles the deck as a
- * whole. Produces `CardMoved` per discarded card, then `DeckShuffled`.
+ * side such as Rise of the Ghouls, or a card effect). Produces `CardMoved` per
+ * discarded card, then `DeckShuffled`; nothing at all when the discard is
+ * empty, because the rules do not shuffle the deck then.
  */
 export interface ShuffleEncounterDiscard {
   type: 'ShuffleEncounterDiscard';
