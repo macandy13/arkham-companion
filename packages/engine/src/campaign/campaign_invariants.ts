@@ -1,4 +1,4 @@
-import { duplicates, isPositiveInteger } from '@arkham/util';
+import { duplicates, isNonNegativeInteger, isPositiveInteger } from '@arkham/util';
 import {
   isCampaignStarted,
   traumaFate,
@@ -7,7 +7,7 @@ import {
   type StoryValue,
 } from './campaign_log';
 
-/** Most investigators a campaign team can have (Rules Reference: 1–4 players). */
+/** Most investigators a campaign team can have (1–4 players, see docs/rules.md "Campaign"). */
 export const MAX_TEAM_SIZE = 4;
 
 /**
@@ -47,7 +47,7 @@ export function storyValueIsValid(value: StoryValue): boolean {
     case 'flag':
       return true;
     case 'count':
-      return Number.isInteger(value.value) && value.value >= 0;
+      return isNonNegativeInteger(value.value);
     case 'list':
       return namesAreValid(value.entries);
     case 'crossableList':
@@ -81,7 +81,7 @@ function investigatorErrors(inv: CampaignInvestigator): string[] {
   };
   return [
     ...Object.entries(counters)
-      .filter(([, value]) => !Number.isInteger(value) || value < 0)
+      .filter(([, value]) => !isNonNegativeInteger(value))
       .map(([name, value]) => `investigator ${inv.code} has ${value} ${name}`),
     ...(inv.xpSpent > inv.xpEarned
       ? [`investigator ${inv.code} spent ${inv.xpSpent} of ${inv.xpEarned} XP`]
@@ -97,7 +97,7 @@ function investigatorErrors(inv: CampaignInvestigator): string[] {
 
 function positionErrors(log: CampaignLog): string[] {
   const { position, scenarioIds } = log;
-  return Number.isInteger(position) && position >= 0 && position <= scenarioIds.length
+  return isNonNegativeInteger(position) && position <= scenarioIds.length
     ? []
     : [`scenario position ${position} is outside 0..${scenarioIds.length}`];
 }
