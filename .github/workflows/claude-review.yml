@@ -11,7 +11,7 @@ on:
     types: [labeled]
 
 concurrency:
-  group: claude-review-${{ github.ref }}
+  group: claude-review-${{ github.ref }}-${{ github.event.label.name }}
   cancel-in-progress: true
 
 jobs:

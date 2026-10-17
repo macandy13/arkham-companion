@@ -43,7 +43,7 @@ UI changes are easier to review as a recording than as a diff. E2E specs tagged 
 
 - **SessionStart hook**: installs dependencies in fresh sessions.
 - **Stop hook**: runs typecheck, lint and tests when code changed; failures go back to Claude to fix.
-- **Subagents**: `rules-checker` (game rules vs. code, read-only) and `test-writer` (missing tests).
+- **Subagents**: `rules-checker` (game rules vs. code, read-only), `pr-reviewer` (the branch against `REVIEW.md`, read-only) and `test-writer` (missing tests).
 - **Auto-fix**: for PRs opened from a cloud session, turn on Auto-fix in the session's CI bar (or tell Claude "watch this PR and fix CI failures") so it fixes failing checks on its own.
 
 ## Repository settings (one-time, by the owner)
