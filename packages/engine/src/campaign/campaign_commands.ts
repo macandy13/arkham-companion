@@ -155,7 +155,7 @@ export interface AdjustCampaign {
   readonly adjustment: CampaignAdjustment;
 }
 
-/** The corrections a `AdjustCampaign` can make; each produces the matching regular event. */
+/** The corrections an `AdjustCampaign` can make; each produces the matching regular event. */
 export type CampaignAdjustment =
   | {
       readonly kind: 'xp';
