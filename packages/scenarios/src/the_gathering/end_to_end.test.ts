@@ -40,6 +40,12 @@ const ctx: EngineContext = {
 const roland = investigatorId('roland');
 const daisy = investigatorId('daisy');
 const wendy = investigatorId('wendy');
+/** Roland, Daisy and Wendy in seat order. */
+const zealotSeats = [
+  { id: roland, code: rolandBanks.code },
+  { id: daisy, code: daisyWalker.code },
+  { id: wendy, code: wendyAdams.code },
+];
 
 const icyGhoul = 'Icy Ghoul';
 const swarmOfRats = 'Swarm of Rats';
@@ -52,11 +58,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     const table = TestTable.setUp({
       scenario: theGathering,
       ctx,
-      investigators: [
-        { id: roland, code: rolandBanks.code },
-        { id: daisy, code: daisyWalker.code },
-        { id: wendy, code: wendyAdams.code },
-      ],
+      investigators: zealotSeats,
       seed: 24,
     });
 
@@ -676,15 +678,9 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 });
 
 describe('The Gathering with one to three investigators, seed 24', () => {
-  const seated = [
-    { id: roland, code: rolandBanks.code },
-    { id: daisy, code: daisyWalker.code },
-    { id: wendy, code: wendyAdams.code },
-  ];
-
   /** Round 1 with every investigator investigating once, then on to the mythos phase of round 2. */
   function playOneRound(count: number): TestTable {
-    const investigators = seated.slice(0, count);
+    const investigators = zealotSeats.slice(0, count);
     const table = TestTable.setUp({ scenario: theGathering, ctx, investigators, seed: 24 });
     expect(table.nextPhase()).toEqual({ round: 1, phase: 'investigation' });
     for (const { id } of investigators) {

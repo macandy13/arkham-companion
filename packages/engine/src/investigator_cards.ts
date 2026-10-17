@@ -12,7 +12,7 @@ export interface InvestigatorCard {
   readonly name: string;
   readonly health: number;
   readonly sanity: number;
-  /** Not read by the campaign; the game's `StartScenario` will seat investigators with them (M1C follow-up). */
+  /** Not read by the campaign; `compileSetup` gives them to each seat. */
   readonly skills: SkillValues;
 }
 
