@@ -153,17 +153,22 @@ export interface InvestigatorChanged {
 }
 
 /**
- * An investigator ran out of health (`damage`) or sanity (`horror`); their status
+ * An investigator ran out of health (`damage`) or sanity (`horror`), or a
+ * card effect defeated them (`cardEffect`, `DefeatInvestigator`); their status
  * becomes `defeated`, and a turn in progress ends with them. Produced by
  * `AdjustInvestigator` and `ResolveEnemyAttack` right after the
- * `InvestigatorChanged` that caused it, followed by the clean-up events
- * (`investigatorLeavesEvents`).
+ * `InvestigatorChanged` that caused it, and by `DefeatInvestigator`, followed
+ * by the clean-up events (`investigatorLeavesEvents`). The cause matters to the
+ * campaign: only a defeat by damage or horror earns trauma by itself.
  */
 export interface InvestigatorDefeated {
   type: 'InvestigatorDefeated';
   investigatorId: InvestigatorId;
-  cause: 'damage' | 'horror';
+  cause: DefeatCause;
 }
+
+/** Why an investigator was defeated (`InvestigatorDefeated`). */
+export type DefeatCause = 'damage' | 'horror' | 'cardEffect';
 
 /**
  * The investigator left the scenario by resigning; their status becomes
@@ -244,7 +249,7 @@ export interface CurrentCardChanged {
  * Without a `resolution` no resolution was reached because every investigator
  * resigned or was defeated (`investigatorLeavesEvents`); the scenario's own
  * rules say what follows, which the engine cannot know, so `GameMeta.resolution`
- * stays absent.
+ * stays absent. `GameMeta.ended` is set either way.
  */
 export interface ScenarioEnded {
   type: 'ScenarioEnded';

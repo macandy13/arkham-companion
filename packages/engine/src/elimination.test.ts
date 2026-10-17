@@ -67,6 +67,10 @@ const takeDamage = (investigator: InvestigatorId, delta: number): Command => ({
   stat: 'damage',
   delta,
 });
+const defeat = (investigator: InvestigatorId): Command => ({
+  type: 'DefeatInvestigator',
+  investigatorId: investigator,
+});
 const takeHorror = (investigator: InvestigatorId, delta: number): Command => ({
   type: 'AdjustInvestigator',
   investigatorId: investigator,
@@ -139,6 +143,7 @@ function aliceTurn(): GameState {
 describe.each([
   ['is defeated by damage', takeDamage(alice, 8)],
   ['is defeated by horror', takeHorror(alice, 6)],
+  ['is defeated by a card effect', defeat(alice)],
   ['resigns', resign(alice)],
 ])('an investigator who %s', (_, leave) => {
   const after = () => stateAfter(ctx, aliceTurn(), leave);
@@ -362,6 +367,48 @@ describe('the last investigator leaving', () => {
     const { events } = execute(ctx, aliceTurn(), resign(alice));
 
     expect(events.map((event) => event.type)).not.toContain('ScenarioEnded');
+  });
+
+  it('rejects further play, but still takes a correction of the final board', () => {
+    const ended = stateAfter(ctx, lastInvestigator(), resign(alice));
+    const moveCluesBack: Command = {
+      type: 'ManualAdjust',
+      adjustment: { kind: 'tokens', cardId: hall, token: 'clue', delta: -1 },
+    };
+
+    expect(ended.meta.ended).toBe(true);
+    expect(rejectionFrom(ctx, ended, nextPhase)).toEqual({
+      code: 'scenarioEnded',
+      command: 'NextPhase',
+    });
+    expect(stateAfter(ctx, ended, moveCluesBack).cards[hall]?.tokens.clue).toBe(1);
+  });
+});
+
+describe('DefeatInvestigator', () => {
+  it('records that a card effect defeated the investigator', () => {
+    const { events } = execute(ctx, aliceTurn(), defeat(bob));
+
+    expect(events[0]).toEqual({
+      type: 'InvestigatorDefeated',
+      investigatorId: bob,
+      cause: 'cardEffect',
+    });
+  });
+
+  it('defeats an investigator outside their turn and the investigation phase', () => {
+    const defeated = stateAfter(ctx, threeInvestigators(), defeat(carol));
+
+    expect(investigatorOf(defeated, carol).status).toBe('defeated');
+  });
+
+  it('rejects an investigator who already left', () => {
+    const resigned = stateAfter(ctx, aliceTurn(), resign(alice), chooseLead(bob));
+
+    expect(rejectionFrom(ctx, resigned, defeat(alice))).toEqual({
+      code: 'investigatorNotActive',
+      investigatorId: alice,
+    });
   });
 });
 

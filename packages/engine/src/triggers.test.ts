@@ -273,6 +273,33 @@ describe('trigger bus', () => {
   });
 });
 
+describe('afterEnemyDefeated', () => {
+  it('advances the act when the defeated enemy is the one its objective names', () => {
+    const ctx = withHooks({
+      afterEnemyDefeated: (_ctx, state, event) =>
+        state.cards[event.enemyId]?.code === 'E1' ? [{ type: 'AdvanceAct' }] : [],
+    });
+
+    const { state } = execute(ctx, startedState(), { type: 'DefeatEnemy', enemyId: ghoul });
+
+    expect(state.act.current).toBe(act2);
+  });
+
+  it('sees the enemy where the defeat put it', () => {
+    const seen: unknown[] = [];
+    const ctx = withHooks({
+      afterEnemyDefeated: (_ctx, state, event) => {
+        seen.push(state.cards[event.enemyId]?.zone);
+        return [];
+      },
+    });
+
+    execute(ctx, startedState(), { type: 'DefeatEnemy', enemyId: ghoul });
+
+    expect(seen).toEqual([{ kind: 'encounterDiscard' }]);
+  });
+});
+
 describe('trigger bus failures', () => {
   it('rejects a chain that keeps re-triggering itself', () => {
     const ctx = withHooks({ afterDoomPlaced: () => [placeDoomOnGhoul] });

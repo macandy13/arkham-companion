@@ -1,5 +1,12 @@
 import { cardStats, resolveValue, type EngineContext } from './cards';
-import type { AdvanceAct, AdvanceAgenda, ClueSpend, EndScenario, PlaceDoom } from './commands';
+import type {
+  AdvanceAct,
+  AdvanceAgenda,
+  ClueSpend,
+  Command,
+  EndScenario,
+  PlaceDoom,
+} from './commands';
 import { cardsWithDoom, isInPlay } from './doom';
 import type {
   ActAdvanced,
@@ -21,6 +28,18 @@ import type { CardInstance, GameState } from './state';
 import { zoneKey } from './zone';
 
 type Deck = 'agenda' | 'act';
+
+/**
+ * Rejects every command once the scenario has ended (`GameMeta.ended`),
+ * except `ManualAdjust`: the players may still correct the final board (a
+ * miscounted clue changes what goes to the victory display), and undo works
+ * on the log, outside `handle`. Only checked for commands from outside; the
+ * rest of the chain that ended the scenario still resolves.
+ */
+export function assertScenarioRunning(state: GameState, command: Command): void {
+  if (state.meta.ended && command.type !== 'ManualAdjust')
+    throw new CommandRejected({ code: 'scenarioEnded', command: command.type });
+}
 
 /** `PlaceDoom`: doom on a card in play; the current agenda unless the command names another. */
 export function handlePlaceDoom(state: GameState, cmd: PlaceDoom): TokensChanged[] {
@@ -64,15 +83,17 @@ export function handleAdvanceAct(ctx: EngineContext, state: GameState, cmd: Adva
  * `AdvanceAgenda`/`AdvanceAct`, second step, which `handle` runs after the
  * forced effects of the first step: the advanced card leaves the game and the
  * next card becomes current. When that was the last card, the scenario ends
- * with the command's `resolution` unless the reverse side already ended it.
+ * with the command's `resolution` unless the reverse side already ended it or
+ * left a decision whose answer will (a choice between resolutions).
  *
  * Why two steps: the rules resolve the reverse side before the next card
  * becomes current, so an effect on "the current agenda/act" must still hit
  * the advancing card, and on the last card it is the reverse side that names
- * the resolution. The reverse side is the `onAgendaAdvance`/`onActAdvance`
- * hook on the first step's `AgendaAdvanced`/`ActAdvanced`, so running the
- * trigger bus between the steps gives that order while every event stays in
- * the originating command's list (one undo group) and under its loop guard.
+ * the resolution or lets the investigators choose it. The reverse side is
+ * the `onAgendaAdvance`/`onActAdvance` hook on the first step's
+ * `AgendaAdvanced`/`ActAdvanced`, so running the trigger bus between the
+ * steps gives that order while every event stays in the originating
+ * command's list (one undo group) and under its loop guard.
  * `before` is the state the command started from (it tells which card
  * advanced), `after` the state after the first step and its forced effects.
  */
@@ -85,13 +106,15 @@ export function completeAdvance(
   const advanced = currentCard(before, deck);
   const card = after.cards[advanced.id] ?? advanced;
   const nextId = nextCardId(after, deck, card.id);
-  const ended = after.meta.resolution !== undefined;
-  if (nextId === undefined && !ended && resolution === undefined)
+  // Outside commands are refused while a decision is pending, so a pending one comes from this advance.
+  const decided = after.meta.ended === true || after.pending.length > 0;
+  const lastCard = nextId === undefined;
+  if (lastCard && !decided && resolution === undefined)
     throw new CommandRejected({ code: 'resolutionRequired', deck });
   return [
     moveCardEvent(card, { kind: 'outOfGame' }),
     { type: 'CurrentCardChanged', deck, ...(nextId === undefined ? {} : { cardId: nextId }) },
-    ...(nextId === undefined && !ended && resolution !== undefined
+    ...(lastCard && !decided && resolution !== undefined
       ? [{ type: 'ScenarioEnded' as const, resolution }]
       : []),
   ];

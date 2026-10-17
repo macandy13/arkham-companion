@@ -23,6 +23,7 @@ export type Command =
   | RevealLocation
   | MoveInvestigator
   | AdjustInvestigator
+  | DefeatInvestigator
   | DiscoverClues
   | PlaceDoom
   | AdvanceAgenda
@@ -31,6 +32,7 @@ export type Command =
   | DrawEncounter
   | FromSetAside
   | ShuffleInto
+  | ShuffleEncounterDiscard
   | SpawnEnemy
   | EngageEnemy
   | DisengageEnemy
@@ -211,6 +213,17 @@ export interface AdjustInvestigator {
 }
 
 /**
+ * A card effect defeats an active investigator outright ("each investigator
+ * that has not resigned is defeated"), without damage or horror. Produces
+ * `InvestigatorDefeated` with cause `cardEffect` and the same clean-up as any
+ * defeat (`investigatorLeavesEvents`), ending the scenario if nobody is left.
+ */
+export interface DefeatInvestigator {
+  type: 'DefeatInvestigator';
+  investigatorId: InvestigatorId;
+}
+
+/**
  * An active investigator takes `amount` clues from the location they are at.
  * Produces `TokensChanged` (clues leave the location) and `InvestigatorChanged`
  * (clues arrive).
@@ -364,6 +377,16 @@ export interface ShuffleInto {
   type: 'ShuffleInto';
   codes: readonly string[];
   zone: Zone;
+}
+
+/**
+ * Shuffles the encounter discard pile into the encounter deck (a reverse
+ * side such as Rise of the Ghouls, or a card effect). The deck is shuffled
+ * even when the discard is empty, since the effect shuffles the deck as a
+ * whole. Produces `CardMoved` per discarded card, then `DeckShuffled`.
+ */
+export interface ShuffleEncounterDiscard {
+  type: 'ShuffleEncounterDiscard';
 }
 
 /**

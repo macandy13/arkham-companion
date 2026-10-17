@@ -109,11 +109,18 @@ Ref: RR "Retaliate", "Alert", "Engagement", "Patrol"; M1.8, M1.10 follow-ups.
 
 Ref: M1.6 hooks; M1.12; scenario guide of The Gathering (hand-entered, no card text).
 
+Slices (one PR each, the second stacked on the first):
+
+1. Engine primitives: `ShuffleEncounterDiscard`, commands rejected after `ScenarioEnded`, a last reverse side that lets the investigators choose the resolution (a decision), the `afterEnemyDefeated` hook (act 3's objective) and `DefeatInvestigator` (agenda 3 at act 3).
+2. The Gathering: act 2/3 and agenda 2/3 reverse-side hooks, act 3's objective, and the end-to-end test played to a resolution.
+
 - [ ] Hooks for act 2 and act 3 reverse sides (Ghoul Priest spawn, Lita Chantler, resolutions via `EndScenario`)
 - [ ] Hooks for agenda 2 and agenda 3 reverse sides (Rise of the Ghouls: shuffle the encounter discard into the deck; agenda 3 → resolution)
-- [ ] A command to shuffle the encounter discard into the deck (M1.7 follow-up)
-- [ ] Commands after `ScenarioEnded` are rejected, except undo and `ManualAdjust` (M1.5, M1.10 follow-ups)
+- [x] A command to shuffle the encounter discard into the deck (M1.7 follow-up)
+- [x] Commands after `ScenarioEnded` are rejected, except undo and `ManualAdjust` (M1.5, M1.10 follow-ups)
 - [ ] End-to-end test continued to a resolution
+
+Done (slice 1): `ShuffleEncounterDiscard` moves the whole discard into the deck and shuffles it (also with an empty discard, since the effect shuffles the deck as a whole). `ScenarioEnded` sets `GameMeta.ended` (with or without a resolution), and `handle` then refuses every command except `ManualAdjust` (`scenarioEnded`); undo works on the log, outside `handle`. A last agenda or act whose reverse side leaves a decision pending no longer needs a resolution: the answer's `EndScenario` names it (act 3 of The Gathering: burn the house, R1, or not, R2). `ScenarioHooks.afterEnemyDefeated` fires on `EnemyDefeated`. `DefeatInvestigator` defeats an investigator by a card effect (`InvestigatorDefeated` with the new cause `cardEffect`) with the usual elimination clean-up.
 
 ## M1.18 Timing gaps (S)
 

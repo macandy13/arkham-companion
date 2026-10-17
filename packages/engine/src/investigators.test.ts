@@ -266,7 +266,12 @@ describe('AdjustInvestigator', () => {
   });
 
   it('rejects adjusting a defeated investigator', () => {
-    const defeated = run(state, {
+    // Bob stays in the game, so the scenario goes on after Alice's defeat.
+    const withBob = startWith([
+      makeInvestigator({ id: alice, health: { max: 3, damage: 0 } }),
+      makeInvestigator({ id: bob, seat: 1 }),
+    ]);
+    const defeated = run(withBob, {
       type: 'AdjustInvestigator',
       investigatorId: alice,
       stat: 'damage',

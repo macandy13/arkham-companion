@@ -8,11 +8,17 @@ import {
 } from './handle_board';
 import {
   handleAdjustInvestigator,
+  handleDefeatInvestigator,
   handleDiscoverClues,
   handleSetLeadInvestigator,
   handleMoveInvestigator,
 } from './handle_investigator';
-import { handleDrawEncounter, handleFromSetAside, handleShuffleInto } from './handle_encounter';
+import {
+  handleDrawEncounter,
+  handleFromSetAside,
+  handleShuffleEncounterDiscard,
+  handleShuffleInto,
+} from './handle_encounter';
 import {
   handleDamageEnemy,
   handleDefeatEnemy,
@@ -50,6 +56,7 @@ import {
   completeAdvance,
   handleAdvanceAct,
   handleAdvanceAgenda,
+  assertScenarioRunning,
   handleEndScenario,
   handlePlaceDoom,
 } from './handle_scenario';
@@ -97,6 +104,7 @@ import { zoneKey, type Zone } from './zone';
  * A rejected follow-up or a chain longer than `MAX_TRIGGERED_COMMANDS`
  * rejects the originating command, so a bad hook can neither hang the app nor
  * leave half its effect behind.
+ * Once the scenario has ended only `ManualAdjust` is accepted.
  * While a decision is pending only `ManualAdjust` and `ResolveDecision` are
  * accepted; the commands of an answer (`ResolveDecision`) run first in the
  * chain, like a hook's follow-ups, before the forced effects of its events.
@@ -111,6 +119,7 @@ import { zoneKey, type Zone } from './zone';
  * Pure: the same state, command and context always yield the same events.
  */
 export function handle(ctx: EngineContext, state: GameState, command: Command): Event[] {
+  assertScenarioRunning(state, command);
   assertNoPendingDecision(state, command);
   const budget = { remaining: MAX_TRIGGERED_COMMANDS };
   const action = provokingAction(state, command);
@@ -302,6 +311,8 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
       return handleMoveInvestigator(ctx, state, command);
     case 'AdjustInvestigator':
       return handleAdjustInvestigator(state, command);
+    case 'DefeatInvestigator':
+      return handleDefeatInvestigator(state, command);
     case 'DiscoverClues':
       return handleDiscoverClues(state, command);
     case 'PlaceDoom':
@@ -318,6 +329,8 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
       return handleFromSetAside(state, command);
     case 'ShuffleInto':
       return handleShuffleInto(state, command);
+    case 'ShuffleEncounterDiscard':
+      return handleShuffleEncounterDiscard(state);
     case 'SpawnEnemy':
       return handleSpawnEnemy(ctx, state, command);
     case 'EngageEnemy':

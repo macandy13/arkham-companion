@@ -125,6 +125,13 @@ export function handleShuffleInto(state: GameState, cmd: ShuffleInto): Event[] {
   return shuffleInto(state, cardIds, cmd.zone);
 }
 
+/** `ShuffleEncounterDiscard`: the whole discard goes into the encounter deck, which is then shuffled. */
+export function handleShuffleEncounterDiscard(state: GameState): Event[] {
+  return shuffleInto(state, cardsIn(state, ENCOUNTER_DISCARD), ENCOUNTER_DECK, {
+    evenIfNoneAdded: true,
+  });
+}
+
 /** Cards in the encounter deck and its discard, i.e. how many cards could still be drawn. */
 function encounterCardCount(state: GameState): number {
   return cardsIn(state, ENCOUNTER_DECK).length + cardsIn(state, ENCOUNTER_DISCARD).length;
@@ -219,10 +226,16 @@ function discardToTop(cardId: InstanceId): MoveCard {
 /**
  * Moves `cardIds` into `zone` and shuffles the whole zone with the state's
  * RNG. The shuffled order is in the event, so replaying never draws random
- * numbers. Nothing for an empty list, so an empty discard does not shuffle.
+ * numbers. Nothing for an empty list, so an empty discard does not refill the
+ * deck, unless `evenIfNoneAdded` asks for the shuffle itself.
  */
-function shuffleInto(state: GameState, cardIds: readonly InstanceId[], zone: Zone): Event[] {
-  if (cardIds.length === 0) return [];
+function shuffleInto(
+  state: GameState,
+  cardIds: readonly InstanceId[],
+  zone: Zone,
+  { evenIfNoneAdded = false } = {},
+): Event[] {
+  if (cardIds.length === 0 && !evenIfNoneAdded) return [];
   const moves = cardIds.map((cardId) => cardMoved(state, requireCard(state.cards, cardId), zone));
   const remaining = cardsIn(state, zone).filter((id) => !cardIds.includes(id));
   const [order, rngState] = shuffle([...remaining, ...cardIds], state.meta.rngState);
