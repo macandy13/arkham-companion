@@ -1,3 +1,4 @@
+import type { CampaignLog } from './campaign/campaign_log';
 import {
   cardStats,
   resolveValue,
@@ -13,7 +14,7 @@ import type { Edge, MapSpec } from './map';
 import { CommandRejected } from './rejection';
 import type { ScenarioDefinition } from './scenario';
 import { spawnZone } from './spawn';
-import type { CampaignLog, Difficulty, GameState, TokenKind } from './state';
+import type { Difficulty, GameState, TokenKind } from './state';
 import type { Zone } from './zone';
 
 /**

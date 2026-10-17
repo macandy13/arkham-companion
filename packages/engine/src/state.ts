@@ -1,3 +1,4 @@
+import type { CampaignLog } from './campaign/campaign_log';
 import type { Command, EngageEnemy, Investigate, MoveInvestigator } from './commands';
 import type { DecisionId, InstanceId, InvestigatorId, MapId, SlotId } from './ids';
 import type { GameMap } from './map';
@@ -352,15 +353,6 @@ export interface AmountRange {
   default: number;
   min: number;
   max?: number;
-}
-
-/** Campaign log – stub until campaign mode (product.md "Campaign mode"). */
-export interface CampaignLog {
-  campaignId: string;
-  /** Free-form campaign log entries ("The investigators …"). */
-  entries: string[];
-  /** Crossed-out / counted records keyed by name. */
-  records: Record<string, number | boolean | string>;
 }
 
 /** Scenario-wide bookkeeping: identity, randomness and turn structure. */

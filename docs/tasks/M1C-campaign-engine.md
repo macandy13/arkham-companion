@@ -28,6 +28,15 @@ Ref: product.md "Campaign mode".
 - [ ] Campaign definition type (scenario order, starting chaos bag per difficulty, interlude steps if any) next to `ScenarioDefinition`; the Night of the Zealot definition (three scenarios, Core Set chaos bags per difficulty), with The Midnight Masks and The Devourer Below entered only as far as the campaign tests need (identity, campaign setup, resolutions)
 - [ ] Readable unit tests (M1.14 conventions if merged)
 
+Slices (review of #50: one PR was too big to review), each its own PR on top of the previous one:
+
+1. `CampaignLog`, its queries and `checkCampaignInvariants`, replacing the stub in `state.ts`
+2. Campaign events and the reducer (`applyCampaign`, `replayCampaign`)
+3. `StartCampaign`, story records, chaos bag and `AdvanceScenario` with `handleCampaign`/`executeCampaign` and the rejections
+4. Investigator commands: XP, trauma, killed/insane, `ReplaceInvestigator`
+5. `ManualAdjust` corrections
+6. `CampaignDefinition`, `compileCampaign` and the Night of the Zealot definition
+
 ## M1C.2 Change notices (O)
 
 **Why:** The engine applies changes the players would otherwise make by hand (tokens into the bag, trauma, XP, story records, and in a game doom, damage or moves). If they happen silently, the players cannot tell what the app did and stop trusting it, or rely on it more than they want to ("assistant, not referee", architecture "Overview").
@@ -67,6 +76,8 @@ Ref: product.md "Campaign mode" (resolutions).
 - [ ] Defeat trauma: an investigator defeated by damage gets 1 physical trauma, by horror 1 mental trauma; resigning gives none (needs M1.15)
 - [ ] "No resolution was reached" handled per scenario
 - [ ] The Gathering's and The Midnight Masks' resolutions entered by hand
+- [ ] Leaving and joining a campaign (review of #62): a player may leave between scenarios (their living investigator moves to the former investigators and may rejoin), and a joining player picks an investigator not used before; today `ReplaceInvestigator` only replaces a killed or insane one. Also the 2026 Core Set's third fate, devoured
+- [ ] Played scenarios with their resolution in the campaign log (Andy, review of #62), e.g. `playedScenarios: { scenarioId, resolution }[]`, written when the resolution is confirmed. It also prepares for non-linear campaigns: the definition then picks the next scenario from the log instead of advancing `position` through a fixed `scenarioIds` order
 
 ## M1C.5 Starting a scenario from the campaign (S)
 
