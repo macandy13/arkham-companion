@@ -188,7 +188,8 @@ export interface RevealLocation {
  * investigator "to any location" set `ignoreConnections`; the destination must
  * still be in play. An unrevealed destination is revealed through the same path
  * as `RevealLocation`. Produces `InvestigatorMoved`, then `CardFlipped` and
- * `TokensChanged` if the destination was unrevealed.
+ * `TokensChanged` if the destination was unrevealed, then `EnemyEngaged` (or
+ * a `chooseInvestigator` decision) for each ready enemy waiting there.
  */
 export interface MoveInvestigator {
   type: 'MoveInvestigator';

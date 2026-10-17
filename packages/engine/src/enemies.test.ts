@@ -373,7 +373,7 @@ describe('moving into an enemy`s location', () => {
     { code: 'aloof_ghoul', name: 'leaves an aloof enemy unengaged', zone: at(cellar) },
     {
       code: 'massive_ghoul',
-      name: 'leaves a massive enemy at the location, engaged with everyone there',
+      name: 'leaves a massive enemy at the location, out of any threat area',
       zone: at(cellar),
     },
   ])('$name', ({ code, zone }) => {
@@ -419,7 +419,7 @@ describe('moving into an enemy`s location', () => {
     expect(zoneOf(after, ghoul)).toEqual(engagedWith(alice));
   });
 
-  it('leaves an enemy at the location the investigator left alone', () => {
+  it('leaves an enemy at another location alone', () => {
     const state = startedWith([placed(ghoul, 'ghoul', at(attic))]);
 
     const after = stateAfter(ctx, state, aliceMovesToCellar);
