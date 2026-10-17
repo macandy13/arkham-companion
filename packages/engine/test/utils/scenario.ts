@@ -14,7 +14,7 @@ import {
   type SetupOptions,
   type Zone,
 } from '../../src/index';
-import { investigators } from './investigators';
+import { investigatorSeats } from './investigators';
 
 /**
  * A scenario definition with no agendas, acts, chaos tokens, reference
@@ -32,9 +32,9 @@ export function makeDefinition(overrides: Partial<ScenarioDefinition> = {}): Sce
   };
 }
 
-/** Setup options for one standard investigator on standard difficulty with seed 1. */
+/** Setup options seating the first standard investigator, on standard difficulty with seed 1. */
 export function makeSetupOptions(overrides: Partial<SetupOptions> = {}): SetupOptions {
-  return { difficulty: 'standard', seed: 1, investigators: investigators(1), ...overrides };
+  return { difficulty: 'standard', seed: 1, investigators: investigatorSeats(1), ...overrides };
 }
 
 /** What `startScenario` varies; everything else uses `makeSetupOptions` defaults. */
@@ -53,7 +53,7 @@ export function startScenario(
   const options = makeSetupOptions({
     difficulty,
     seed,
-    investigators: investigators(playerCount),
+    investigators: investigatorSeats(playerCount),
   });
   return execute(ctx, emptyState(), compileSetup(ctx, def, options)).state;
 }

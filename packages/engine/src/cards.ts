@@ -6,6 +6,7 @@ import type { SkillModifierRegistry } from './skill_modifiers';
 import type { SkillTest } from './state';
 import { CommandRejected } from './rejection';
 import type { EffectsRegistry, ScenarioHooks } from './triggers';
+import type { InvestigatorDb } from './investigator_cards';
 
 /**
  * ArkhamDB `type_code` values, covering encounter and player cards.
@@ -161,6 +162,11 @@ export interface CardDb {
  */
 export interface EngineContext {
   cards: CardDb;
+  /**
+   * Investigator cards, from which `compileSetup` takes each seat's printed
+   * stats; without it every seat is rejected as `unknownInvestigatorCard`.
+   */
+  investigators?: InvestigatorDb;
   /** The running scenario's forced effects (`ScenarioDefinition.hooks`); none when absent. */
   hooks?: Partial<ScenarioHooks>;
   /** Card scripts by card code; none when absent. */

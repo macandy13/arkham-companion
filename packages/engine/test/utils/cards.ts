@@ -1,4 +1,5 @@
 import { cardDbFrom, trait, type CardStats, type EngineContext } from '../../src/index';
+import { standardInvestigatorDb } from './investigators';
 
 /**
  * A card definition with boring defaults (a trait-less treachery named after
@@ -8,9 +9,9 @@ export function makeCard(overrides: Partial<CardStats> & { code: string }): Card
   return { name: overrides.code, typeCode: 'treachery', traits: [], ...overrides };
 }
 
-/** An engine context whose card db holds exactly `cards`. */
+/** An engine context whose card db holds exactly `cards`, with the standard investigators to seat. */
 export function contextWith(...cards: CardStats[]): EngineContext {
-  return { cards: cardDbFrom(cards) };
+  return { cards: cardDbFrom(cards), investigators: standardInvestigatorDb };
 }
 
 /**
@@ -53,7 +54,10 @@ export const testCardDefs: readonly CardStats[] = [
 ];
 
 /** Engine context backed by `testCardDefs`; pass it to `handle`/`execute` in tests. */
-export const testContext: EngineContext = { cards: cardDbFrom(testCardDefs) };
+export const testContext: EngineContext = {
+  cards: cardDbFrom(testCardDefs),
+  investigators: standardInvestigatorDb,
+};
 
 /** A printed value that does not scale with the player count. */
 export function fixed(value: number) {

@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import type { StoreApi } from 'zustand/vanilla';
+import { investigatorDbFrom } from '@arkham/engine';
 import { useCatalog, type CatalogSource } from '../catalog/useCatalog';
 import { InvestigatorPicker } from '../picker/InvestigatorPicker';
 import { loadSettings } from '../settings/settings';
 import type { AppState } from '../state/appStore';
-import { seatInvestigators } from '../wizard/seating';
+import { chosenInvestigators, seatsFor } from '../wizard/seating';
 import { SetupStep } from '../wizard/SetupStep';
 import { SummaryStep } from '../wizard/SummaryStep';
 import {
@@ -76,7 +77,7 @@ function Wizard({ store, catalogSource, mode, step }: WizardProps) {
   const scenario = chosenScenario(choices);
   const investigators =
     catalog.status === 'ready'
-      ? seatInvestigators(catalog.catalog.investigators, choices.seats)
+      ? chosenInvestigators(catalog.catalog.investigators, choices.seats)
       : [];
 
   function update(changes: Partial<WizardChoices>) {
@@ -95,12 +96,12 @@ function Wizard({ store, catalogSource, mode, step }: WizardProps) {
     try {
       const gameId = await store.getState().startScenario({
         title: [t(scenario.nameKey), ...investigators.map((i) => i.name)].join(' – '),
-        ctx: { cards: scenario.cards },
+        ctx: { cards: scenario.cards, investigators: investigatorDbFrom(investigators) },
         definition: scenario.definition,
         difficulty: choices.difficulty,
         // The engine never reads randomness itself, so the seed is drawn at the edge.
         seed: Math.floor(Math.random() * 2 ** 31),
-        investigators,
+        investigators: seatsFor(investigators),
       });
       clearChoices();
       await navigate(`/game/${gameId}`);

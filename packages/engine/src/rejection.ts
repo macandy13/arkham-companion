@@ -1,5 +1,5 @@
 import type { CommandType, EncounterMatch, EncounterSource } from './commands';
-import type { DecisionId, InstanceId, InvestigatorId, MapId } from './ids';
+import type { DecisionId, InstanceId, InvestigatorCode, InvestigatorId, MapId } from './ids';
 import type { InvestigatorStat, Phase, TokenKind } from './state';
 
 /**
@@ -15,6 +15,8 @@ export type Rejection =
   /** `cardCode` has no definition in the `CardDb` passed to `handle`. */
   | { code: 'unknownCardCode'; cardCode: string }
   | { code: 'unknownInvestigator'; investigatorId: InvestigatorId }
+  /** A seat in `SetupOptions` names a code that has no card in the `EngineContext`'s `InvestigatorDb`. */
+  | { code: 'unknownInvestigatorCard'; investigatorCode: InvestigatorCode }
   | { code: 'unknownMap'; mapId: MapId }
   /** `AddMap` names a map that is already on the board. */
   | { code: 'duplicateMap'; mapId: MapId }
@@ -213,6 +215,8 @@ function describe(r: Rejection): string {
       return `no card definition for code ${r.cardCode}`;
     case 'unknownInvestigator':
       return `unknown investigator ${r.investigatorId}`;
+    case 'unknownInvestigatorCard':
+      return `no investigator card ${r.investigatorCode}`;
     case 'unknownMap':
       return `unknown map ${r.mapId}`;
     case 'duplicateMap':
