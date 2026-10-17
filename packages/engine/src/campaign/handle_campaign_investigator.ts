@@ -1,6 +1,7 @@
 import { isPositiveInteger } from '@arkham/util';
 import type { InvestigatorCode } from '../ids';
-import type { InvestigatorDb } from '../investigator_cards';
+import type { CardDb } from '../cards';
+import { investigatorCard } from '../investigator_cards';
 import type { AddTrauma, AwardXp, ReplaceInvestigator, SpendXp } from './campaign_commands';
 import type { CampaignEvent } from './campaign_events';
 import {
@@ -86,7 +87,7 @@ export function handleReplaceInvestigator(
     {
       type: 'InvestigatorReplaced',
       code: command.code,
-      by: newCampaignInvestigator(ctx.investigators, command.by),
+      by: newCampaignInvestigator(ctx.cards, command.by),
     },
   ];
 }
@@ -94,13 +95,13 @@ export function handleReplaceInvestigator(
 /**
  * The campaign log entry of an investigator joining the campaign (at the start or as
  * a replacement), from their card: no trauma, no XP, alive. Rejects a code
- * missing from `investigators` and printed stats that are not positive integers.
+ * that is not an investigator card in `cards` and printed stats that are not positive integers.
  */
 export function newCampaignInvestigator(
-  investigators: InvestigatorDb,
+  cards: CardDb,
   code: InvestigatorCode,
 ): CampaignInvestigator {
-  const card = investigators.get(code);
+  const card = investigatorCard(cards, code);
   if (!card)
     throw new CampaignCommandRejected({ code: 'unknownInvestigatorCard', investigatorCode: code });
   const { name, health, sanity } = card;

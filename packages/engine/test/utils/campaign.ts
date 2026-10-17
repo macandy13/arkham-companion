@@ -1,9 +1,10 @@
 import {
   CampaignCommandRejected,
+  cardDbFrom,
   emptyCampaignLog,
   executeCampaign,
+  investigatorCardStats,
   investigatorCode,
-  investigatorDbFrom,
   type CampaignCommand,
   type CampaignContext,
   type CampaignInvestigator,
@@ -102,7 +103,7 @@ export const skids: InvestigatorCard = {
 
 /** A campaign context that knows exactly Roland, Daisy, Wendy, Agnes and Skids. */
 export const campaignContext: CampaignContext = {
-  investigators: investigatorDbFrom([roland, daisy, wendy, agnes, skids]),
+  cards: cardDbFrom([roland, daisy, wendy, agnes, skids].map(investigatorCardStats)),
 };
 
 /**

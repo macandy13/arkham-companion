@@ -28,7 +28,7 @@ export type CampaignRejection =
   | { code: 'noScenarios' }
   /** No current team member has this code. */
   | { code: 'unknownInvestigator'; investigatorCode: InvestigatorCode }
-  /** A joining investigator whose card is not in the `InvestigatorDb`. */
+  /** A joining investigator whose code is not an investigator card in the `CardDb`. */
   | { code: 'unknownInvestigatorCard'; investigatorCode: InvestigatorCode }
   /** The investigator is killed or insane and can no longer take part. */
   | { code: 'investigatorEliminated'; investigatorCode: InvestigatorCode; fate: InvestigatorFate }
