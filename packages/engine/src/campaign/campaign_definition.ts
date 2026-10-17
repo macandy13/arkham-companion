@@ -11,7 +11,11 @@ import type { JoiningInvestigator, StartCampaign } from './campaign_commands';
 export interface CampaignDefinition {
   /** Stored as `CampaignLog.definitionId`. */
   readonly id: string;
-  /** `ScenarioDefinition.id`s in campaign order. */
+  /**
+   * `ScenarioDefinition.id`s in campaign order. A fixed list is enough for
+   * Night of the Zealot; campaigns whose next scenario depends on the log
+   * will pick it from the played scenarios instead (M1C.4 follow-up).
+   */
   readonly scenarios: readonly string[];
   /**
    * Starting chaos bag per difficulty. The campaign's own bag, separate from
