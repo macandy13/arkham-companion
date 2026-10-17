@@ -10,7 +10,7 @@ import {
 } from './investigators';
 import { requestDecision } from './decisions';
 import { hasKeyword } from './keywords';
-import { cardsOfType } from './lookup';
+import { cardsAtLocation, cardsOfType } from './lookup';
 import { replay } from './reducer';
 import type { CardInstance, GameState, Investigator } from './state';
 
@@ -105,8 +105,8 @@ export function arrivalEngagements(
   state: GameState,
   locationId: InstanceId,
 ): Event[] {
-  const enemies = cardsOfType(ctx, state, 'enemy').filter(
-    (card) => card.zone.kind === 'atLocation' && card.zone.locationId === locationId,
+  const enemies = cardsAtLocation(state, locationId).filter(
+    (card) => ctx.cards.get(card.code)?.typeCode === 'enemy',
   );
   return engageEach(ctx, state, enemies);
 }

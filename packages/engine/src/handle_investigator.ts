@@ -34,7 +34,8 @@ import type { GameState, Investigator } from './state';
  * with `ignoreConnections`). The reveal goes through `handleRevealLocation`, so
  * clues are placed exactly as for an explicit `RevealLocation`. Ready,
  * unengaged enemies at the destination then engage (`arrivalEngagements`),
- * whether the move is an action or a card effect.
+ * whether the move is an action or a card effect, unless the effect avoids
+ * engagement (`avoidEngagement`).
  */
 export function handleMoveInvestigator(
   ctx: EngineContext,
@@ -68,6 +69,7 @@ export function handleMoveInvestigator(
     ? []
     : handleRevealLocation(ctx, state, { type: 'RevealLocation', locationId: cmd.to });
   const arrived = [moved, ...reveal];
+  if (cmd.avoidEngagement) return arrived;
   return [...arrived, ...arrivalEngagements(ctx, replay(arrived, state), cmd.to)];
 }
 

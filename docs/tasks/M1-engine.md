@@ -103,7 +103,7 @@ Slices: (1) engagement on move; (2) retaliate and alert attacks, stacked on (1).
 - [ ] Fight effects that engage an aloof enemy as part of the attack (Spectral Razor): a card-effect path
 - [ ] rules-checker review; end-to-end test covers a move into an enemy's location and one retaliate
 
-Done (slice 1): `handleMoveInvestigator` ends with `arrivalEngagements` (`engagement.ts`), which runs `engageEvents` for each unengaged enemy at the destination after the move and any reveal, so aloof, massive and exhausted enemies stay put and prey or a `chooseInvestigator` decision picks between investigators as on spawn. It applies to every move, card effects (`ignoreConnections`) included, and to a held move only once it resumes after its attacks of opportunity. The end-to-end test no longer engages by hand: Wendy's move into the Cellar (round 2) and Roland's into the Attic (round 7) engage the Icy Ghoul and the Flesh-Eater.
+Done (slice 1): `handleMoveInvestigator` ends with `arrivalEngagements` (`engagement.ts`), which runs `engageEvents` for each unengaged enemy at the destination after the move and any reveal, so aloof, massive and exhausted enemies stay put and prey or a `chooseInvestigator` decision picks between investigators as on spawn. It applies to every move, card effects (`ignoreConnections`) included, except a card effect that moves without being engaged (`MoveInvestigator.avoidEngagement`, review #73), and to a held move only once it resumes after its attacks of opportunity. The end-to-end test no longer engages by hand: Wendy's move into the Cellar (round 2) and Roland's into the Attic (round 7) engage the Icy Ghoul and the Flesh-Eater.
 
 ## M1.17 The Gathering to a resolution (S)
 

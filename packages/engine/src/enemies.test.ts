@@ -419,6 +419,15 @@ describe('moving into an enemy`s location', () => {
     expect(zoneOf(after, ghoul)).toEqual(engagedWith(alice));
   });
 
+  it('leaves the enemy unengaged after a move that avoids engagement, which only card effects make', () => {
+    const state = startedWith([placed(ghoul, 'ghoul', at(cellar))]);
+
+    const after = stateAfter(ctx, state, { ...aliceMovesToCellar, avoidEngagement: true });
+
+    expect(zoneOf(after, ghoul)).toEqual(at(cellar));
+    expect(after.investigators[0]?.locationId).toBe(cellar);
+  });
+
   it('leaves an enemy at another location alone', () => {
     const state = startedWith([placed(ghoul, 'ghoul', at(attic))]);
 
