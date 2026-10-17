@@ -79,9 +79,10 @@ The game rules the engine implements, summarised in our own words so sessions do
 2. [Peril](https://arkhamdb.com/rules#Peril): while it resolves, other players can't confer, play cards, trigger abilities or commit cards to that investigator's tests.
 3. Resolve its [revelation](https://arkhamdb.com/rules#Revelation) ability before it enters play (or, for a treachery, before it is discarded).
 4. An enemy [spawns](#spawn-and-engagement).
-5. A treachery goes to the encounter discard pile unless its text says otherwise. One whose revelation attaches it somewhere stays there; if a limit ("Limit 1 per location") keeps it from attaching, it is discarded (see [Limits](https://arkhamdb.com/rules#Limits_and_Maximums)). A treachery or enemy with Victory X goes to the victory display instead when it is overcome (see [Victory display](https://arkhamdb.com/rules#Victory_Display_Victory_Points)).
+5. A treachery goes to the encounter discard pile unless its text says otherwise. One whose revelation attaches it somewhere stays there; if there is nothing to attach it to, or a [limit](https://arkhamdb.com/rules#Limits_and_Maximums) ("Limit 1 per location", counted by title) keeps it from attaching, it is discarded ([Attach To](https://arkhamdb.com/rules#Attach_To)). A treachery or enemy with Victory X goes to the victory display instead when it is overcome (see [Victory display](https://arkhamdb.com/rules#Victory_Display_Victory_Points)).
+6. [Surge](https://arkhamdb.com/rules#Surge): after resolving, draw another encounter card and start over.
 
-An ability that shuffles an empty discard pile into a deck does not shuffle the deck ([discard piles](https://arkhamdb.com/rules#Discard_Piles)). 6. [Surge](https://arkhamdb.com/rules#Surge): after resolving, draw another encounter card and start over.
+An ability that shuffles an empty discard pile into a deck does not shuffle the deck ([discard piles](https://arkhamdb.com/rules#Discard_Piles)).
 
 ## Spawn and engagement
 

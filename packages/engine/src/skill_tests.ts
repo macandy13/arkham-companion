@@ -9,6 +9,7 @@ import { activeInvestigator } from './handle_investigator';
 import { decisionId, type InstanceId } from './ids';
 import { hasKeyword } from './keywords';
 import { cardsInZone, requireCard } from './lookup';
+import { discardToTop } from './placement';
 import { CommandRejected } from './rejection';
 import { withSuggestion } from './skill_modifiers';
 import type { CardInstance, GameState, Investigator, SkillTest } from './state';
@@ -47,12 +48,7 @@ export function handleInvestigate(
       : { onPass: [] };
   const discardAttachments: Command[] = locationAttachments(ctx, state, location)
     .filter(({ attachment }) => attachment.discardWhenInvestigated)
-    .map(({ card }) => ({
-      type: 'MoveCard',
-      cardId: card.id,
-      to: { kind: 'encounterDiscard' },
-      index: 0,
-    }));
+    .map(({ card }) => discardToTop(card.id));
   return skillTest(ctx, state, {
     investigator,
     id: `investigate:${investigator.id}`,
@@ -221,19 +217,13 @@ export function turnEndTestDecisions(
   return cardsInZone(state, threatArea).flatMap((cardId) => {
     const test = cardStats(ctx.cards, requireCard(state.cards, cardId).code).turnEndTest;
     if (!test) return [];
-    const discard: Command = {
-      type: 'MoveCard',
-      cardId,
-      to: { kind: 'encounterDiscard' },
-      index: 0,
-    };
     return skillTest(ctx, state, {
       investigator,
       id: `turnEnd:${cardId}`,
       prompt: 'decision.turnEndTest',
       subject: cardId,
       test,
-      outcomes: { onPass: [discard], onFail: [] },
+      outcomes: { onPass: [discardToTop(cardId)], onFail: [] },
     });
   });
 }

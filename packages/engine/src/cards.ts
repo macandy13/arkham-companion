@@ -156,6 +156,8 @@ export interface CardStats {
    * Set for a treachery whose revelation attaches it to the drawing
    * investigator's location (Obscuring Fog), entered with the card data;
    * `DrawEncounter` places it there, and its fields say what it does there.
+   * It takes the place of `entersThreatArea` and `revelationTest`, which a
+   * card with it has no use for (Obscuring Fog has neither).
    */
   locationAttachment?: LocationAttachment;
 }
@@ -167,8 +169,8 @@ export interface CardStats {
  */
 export interface LocationAttachment {
   /**
-   * "Limit 1 per location": a copy drawn while the location already has one
-   * attached is discarded instead, since its revelation cannot attach it.
+   * "Limit 1 per location": drawn while a card of the same title is attached
+   * there, it is discarded instead, since its revelation cannot attach it.
    */
   onePerLocation?: boolean;
   /** Added to the location's shroud while attached ("Attached location gets +2 shroud"). */

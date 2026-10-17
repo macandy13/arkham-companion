@@ -5,7 +5,6 @@ import type {
   EncounterMatch,
   EncounterSource,
   FromSetAside,
-  MoveCard,
   ShuffleInto,
 } from './commands';
 import type { CardFlipped, CardMoved, DeckShuffled, EncounterCardDrawn, Event } from './events';
@@ -13,7 +12,7 @@ import { activeInvestigator } from './handle_investigator';
 import type { CardCode, InstanceId } from './ids';
 import { hasKeyword } from './keywords';
 import { requireCard } from './lookup';
-import { cardMoved } from './placement';
+import { cardMoved, discardToTop } from './placement';
 import { revelationTestDecision } from './skill_tests';
 import { spawnEvents } from './spawn';
 import { replay } from './reducer';
@@ -231,8 +230,9 @@ function placement(
 /**
  * The location a treachery with `CardStats.locationAttachment` attaches to:
  * the drawer's. None for any other card, for a drawer without a location, or
- * when the card's limit of one per location is reached, so the card is
- * discarded like one without a lasting effect.
+ * when the card's limit of one per location is reached (counted by title, so
+ * a reprint with another code counts too), so the card is discarded like one
+ * without a lasting effect.
  */
 function attachmentHost(
   ctx: EngineContext,
@@ -246,13 +246,10 @@ function attachmentHost(
   if (!location) return undefined;
   const limitReached =
     stats.locationAttachment.onePerLocation &&
-    locationAttachments(ctx, state, location).some(({ card }) => card.code === stats.code);
+    locationAttachments(ctx, state, location).some(
+      ({ card }) => cardStats(ctx.cards, card.code).name === stats.name,
+    );
   return limitReached ? undefined : location;
-}
-
-/** The command that discards a resolved encounter card onto the top of the discard. */
-function discardToTop(cardId: InstanceId): MoveCard {
-  return { type: 'MoveCard', cardId, to: ENCOUNTER_DISCARD, index: 0 };
 }
 
 /**
