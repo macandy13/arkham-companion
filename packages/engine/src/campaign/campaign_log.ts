@@ -1,3 +1,4 @@
+import type { InvestigatorCode } from '../ids';
 import type { ChaosToken, Difficulty } from '../state';
 
 /**
@@ -25,7 +26,7 @@ export type XpAccount = 'earned' | 'spent';
  */
 export interface CampaignInvestigator {
   /** ArkhamDB code of the investigator card. */
-  readonly code: string;
+  readonly code: InvestigatorCode;
   /** Printed name, as written on the paper campaign log. */
   readonly name: string;
   readonly health: number;
@@ -126,7 +127,7 @@ export function isCampaignStarted(log: CampaignLog): boolean {
 /** The current team member with card code `code`, if any. */
 export function campaignInvestigator(
   log: CampaignLog,
-  code: string,
+  code: InvestigatorCode,
 ): CampaignInvestigator | undefined {
   return log.investigators.find((investigator) => investigator.code === code);
 }

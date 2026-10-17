@@ -1,4 +1,5 @@
 import {
+  investigatorCode,
   investigatorId,
   type GameState,
   type Investigator,
@@ -14,7 +15,7 @@ export function makeInvestigator(
   overrides: Partial<Omit<Investigator, 'id'>> & { id: string },
 ): Investigator {
   return {
-    code: overrides.id,
+    code: investigatorCode(overrides.id),
     name: overrides.id,
     seat: 0,
     health: { max: 8, damage: 0 },
@@ -38,28 +39,28 @@ export function makeInvestigator(
 export const standardInvestigators: readonly Investigator[] = [
   makeInvestigator({
     id: 'tank',
-    code: 'INV-1',
+    code: investigatorCode('INV-1'),
     seat: 0,
     health: { max: 9, damage: 0 },
     sanity: { max: 5, horror: 0 },
   }),
   makeInvestigator({
     id: 'seeker',
-    code: 'INV-2',
+    code: investigatorCode('INV-2'),
     seat: 1,
     health: { max: 6, damage: 0 },
     sanity: { max: 9, horror: 0 },
   }),
   makeInvestigator({
     id: 'rogue',
-    code: 'INV-3',
+    code: investigatorCode('INV-3'),
     seat: 2,
     health: { max: 7, damage: 0 },
     sanity: { max: 7, horror: 0 },
   }),
   makeInvestigator({
     id: 'mystic',
-    code: 'INV-4',
+    code: investigatorCode('INV-4'),
     seat: 3,
     health: { max: 5, damage: 0 },
     sanity: { max: 8, horror: 0 },

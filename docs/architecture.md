@@ -114,7 +114,7 @@ type Zone =
   | { kind: 'attachedTo'; hostId: InstanceId };
 
 interface Investigator {
-  id: InvestigatorId; code: string; name: string; seat: number;
+  id: InvestigatorId; code: InvestigatorCode; name: string; seat: number;
   locationId?: InstanceId;
   health: { max: number; damage: number }; sanity: { max: number; horror: number };
   clues: number; resources: number; doomOnPlayerCards: number;
@@ -301,7 +301,7 @@ type SetupStep = AddMapStep | SetAsideStep | BuildEncounterDeckStep | PlaceToken
 
 ### Campaign
 
-A campaign spans several games and outlives each of them, so it is its own aggregate in [`campaign/`](../packages/engine/src/campaign/), event-sourced like a game but with its own commands ([`handle_campaign.ts`](../packages/engine/src/campaign/handle_campaign.ts)), events and reducer ([`campaign_reducer.ts`](../packages/engine/src/campaign/campaign_reducer.ts)). The same reasons apply: undo, recovery after a crash and export come for free, and later scenarios read earlier outcomes from the log rather than from the players' memory. The two aggregates do not share a command union, so a game command can never change the campaign by accident. [`CampaignLog`](../packages/engine/src/campaign/campaign_log.ts) holds the team with trauma, XP and fate, replaced investigators, typed story records, the chaos bag and the scenario order. [`checkCampaignInvariants`](../packages/engine/src/campaign/campaign_invariants.ts) states what must always hold (team of 1–4, no overspent XP, trauma consistent with fate). A game's `GameState.campaign` holds a copy of the log at scenario start.
+A campaign spans several games and outlives each of them, so it is its own aggregate in [`campaign/`](../packages/engine/src/campaign/), event-sourced like a game but with its own commands ([`handle_campaign.ts`](../packages/engine/src/campaign/handle_campaign.ts)), events and reducer ([`campaign_reducer.ts`](../packages/engine/src/campaign/campaign_reducer.ts)). The same reasons apply: undo, recovery after a crash and export come for free, and later scenarios read earlier outcomes from the log rather than from the players' memory. The two aggregates do not share a command union, so a game command can never change the campaign by accident. [`CampaignLog`](../packages/engine/src/campaign/campaign_log.ts) holds the team with trauma, XP and fate, keyed by `InvestigatorCode` (the investigator card's code, unique within a campaign; a game's `InvestigatorId` names one seat in one game instead), replaced investigators, typed story records, the chaos bag and the scenario order. [`checkCampaignInvariants`](../packages/engine/src/campaign/campaign_invariants.ts) states what must always hold (team of 1–4, no overspent XP, trauma consistent with fate). A game's `GameState.campaign` holds a copy of the log at scenario start.
 
 ```ts
 function handleCampaign(log: CampaignLog, command: CampaignCommand): CampaignEvent[];  // throws CampaignCommandRejected

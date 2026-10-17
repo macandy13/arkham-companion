@@ -2,6 +2,7 @@ import {
   CampaignCommandRejected,
   emptyCampaignLog,
   executeCampaign,
+  investigatorCode,
   type CampaignCommand,
   type CampaignInvestigator,
   type CampaignLog,
@@ -18,7 +19,7 @@ export function campaignMember(
   sanity: number,
 ): CampaignInvestigator {
   return {
-    code,
+    code: investigatorCode(code),
     name,
     health,
     sanity,
@@ -59,28 +60,34 @@ export function makeCampaignLog(overrides: Partial<CampaignLog> = {}): CampaignL
 
 /** Night of the Zealot investigators as they join a campaign, with their printed health and sanity. */
 export const roland: JoiningInvestigator = {
-  code: '01001',
+  code: investigatorCode('01001'),
   name: 'Roland Banks',
   health: 9,
   sanity: 5,
 };
 export const daisy: JoiningInvestigator = {
-  code: '01002',
+  code: investigatorCode('01002'),
   name: 'Daisy Walker',
   health: 5,
   sanity: 9,
 };
 export const wendy: JoiningInvestigator = {
-  code: '01005',
+  code: investigatorCode('01005'),
   name: 'Wendy Adams',
   health: 7,
   sanity: 7,
 };
 export const agnes: JoiningInvestigator = {
-  code: '01004',
+  code: investigatorCode('01004'),
   name: 'Agnes Baker',
   health: 6,
   sanity: 8,
+};
+export const skids: JoiningInvestigator = {
+  code: investigatorCode('01003'),
+  name: "Skids O'Toole",
+  health: 8,
+  sanity: 6,
 };
 
 /**

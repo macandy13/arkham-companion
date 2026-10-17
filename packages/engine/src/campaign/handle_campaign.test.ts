@@ -5,6 +5,7 @@ import {
   daisy,
   makeStartCampaign,
   roland,
+  skids,
   startedCampaign,
   wendy,
 } from '../../test/utils';
@@ -34,7 +35,7 @@ describe('StartCampaign', () => {
       difficulty: 'hard',
       investigators: [
         {
-          code: '01001',
+          code: roland.code,
           name: 'Roland Banks',
           health: 9,
           sanity: 5,
@@ -45,7 +46,7 @@ describe('StartCampaign', () => {
           fate: 'alive',
         },
         {
-          code: '01002',
+          code: daisy.code,
           name: 'Daisy Walker',
           health: 5,
           sanity: 9,
@@ -84,38 +85,32 @@ describe('StartCampaign', () => {
     {
       name: 'five investigators',
       setup: {
-        investigators: [
-          roland,
-          daisy,
-          wendy,
-          agnes,
-          { code: '01003', name: "Skids O'Toole", health: 8, sanity: 6 },
-        ],
+        investigators: [roland, daisy, wendy, agnes, skids],
       },
       expected: { code: 'invalidTeamSize', count: 5 },
     },
     {
       name: 'the same investigator twice',
       setup: { investigators: [roland, daisy, roland] },
-      expected: { code: 'duplicateInvestigator', investigatorCode: '01001' },
+      expected: { code: 'duplicateInvestigator', investigatorCode: roland.code },
     },
     { name: 'no scenarios', setup: { scenarioIds: [] }, expected: { code: 'noScenarios' } },
     {
       name: 'zero health',
-      setup: { investigators: [{ code: '01001', name: 'Roland Banks', health: 0, sanity: 5 }] },
+      setup: { investigators: [{ ...roland, health: 0, sanity: 5 }] },
       expected: {
         code: 'invalidInvestigatorStats',
-        investigatorCode: '01001',
+        investigatorCode: roland.code,
         health: 0,
         sanity: 5,
       },
     },
     {
       name: 'fractional sanity',
-      setup: { investigators: [{ code: '01001', name: 'Roland Banks', health: 9, sanity: 2.5 }] },
+      setup: { investigators: [{ ...roland, health: 9, sanity: 2.5 }] },
       expected: {
         code: 'invalidInvestigatorStats',
-        investigatorCode: '01001',
+        investigatorCode: roland.code,
         health: 9,
         sanity: 2.5,
       },
@@ -139,12 +134,12 @@ describe('commands before the campaign started', () => {
     { type: 'RecordStory', key: 'house_burned', value: { kind: 'flag', value: true } },
     { type: 'AddChaosToken', token: 'skull' },
     { type: 'RemoveChaosToken', token: 'skull' },
-    { type: 'AwardXp', code: '01001', amount: 1 },
-    { type: 'SpendXp', code: '01001', amount: 1 },
-    { type: 'AddTrauma', code: '01001', kind: 'physical', amount: 1 },
-    { type: 'MarkKilled', code: '01001' },
-    { type: 'MarkInsane', code: '01001' },
-    { type: 'ReplaceInvestigator', code: '01001', by: agnes },
+    { type: 'AwardXp', code: roland.code, amount: 1 },
+    { type: 'SpendXp', code: roland.code, amount: 1 },
+    { type: 'AddTrauma', code: roland.code, kind: 'physical', amount: 1 },
+    { type: 'MarkKilled', code: roland.code },
+    { type: 'MarkInsane', code: roland.code },
+    { type: 'ReplaceInvestigator', code: roland.code, by: agnes },
     { type: 'AdvanceScenario' },
     { type: 'AdjustCampaign', adjustment: { kind: 'position', position: 0 } },
   ])('rejects $type with campaignNotStarted', (command) => {
