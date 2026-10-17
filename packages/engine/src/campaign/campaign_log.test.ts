@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { daisyMember, makeCampaignLog, rolandMember as freshRoland } from '../../test/utils';
+import { daisyMember, makeCampaignLog, rolandMember } from '../../test/utils';
 import {
   availableXp,
   campaignInvestigator,
@@ -13,7 +13,7 @@ import {
 } from './campaign_log';
 
 describe('campaign log queries', () => {
-  const roland: CampaignInvestigator = {
+  const woundedRoland: CampaignInvestigator = {
     code: '01001',
     name: 'Roland Banks',
     health: 9,
@@ -31,23 +31,24 @@ describe('campaign log queries', () => {
   });
 
   it('finds a current team member by code', () => {
-    const log = makeCampaignLog({ investigators: [freshRoland, daisyMember] });
-    expect(campaignInvestigator(log, '01002')?.sanity).toBe(9);
-    expect(campaignInvestigator(log, '01005')).toBeUndefined();
+    const log = makeCampaignLog({ investigators: [rolandMember, daisyMember] });
+    const notOnTeam = '01005';
+    expect(campaignInvestigator(log, daisyMember.code)).toBe(daisyMember);
+    expect(campaignInvestigator(log, notOnTeam)).toBeUndefined();
   });
 
   it('available XP is earned minus spent', () => {
-    expect(availableXp(roland)).toBe(3);
+    expect(availableXp(woundedRoland)).toBe(3);
   });
 
   it('reads and raises trauma of one kind without touching the other', () => {
-    expect(traumaOf(roland, 'physical')).toBe(2);
-    expect(traumaOf(roland, 'mental')).toBe(1);
-    expect(withTrauma(roland, 'physical', 3)).toMatchObject({
+    expect(traumaOf(woundedRoland, 'physical')).toBe(2);
+    expect(traumaOf(woundedRoland, 'mental')).toBe(1);
+    expect(withTrauma(woundedRoland, 'physical', 3)).toMatchObject({
       physicalTrauma: 5,
       mentalTrauma: 1,
     });
-    expect(withTrauma(roland, 'mental', 3)).toMatchObject({
+    expect(withTrauma(woundedRoland, 'mental', 3)).toMatchObject({
       physicalTrauma: 2,
       mentalTrauma: 4,
     });
@@ -79,7 +80,7 @@ describe('campaign log queries', () => {
       fate: 'insane',
     },
   ] as const)('$name leads to $fate', ({ trauma, kind, fate }) => {
-    expect(traumaFate({ ...roland, ...trauma }, kind)).toBe(fate);
+    expect(traumaFate({ ...woundedRoland, ...trauma }, kind)).toBe(fate);
   });
 
   it('the current scenario is the one at the position, none once complete', () => {

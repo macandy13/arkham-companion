@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isPositiveInteger } from './index';
+import { isNonNegativeInteger, isPositiveInteger } from './index';
 
 describe('isPositiveInteger', () => {
   it.each([
@@ -12,5 +12,18 @@ describe('isPositiveInteger', () => {
     { value: Number.POSITIVE_INFINITY, expected: false },
   ])('is $expected for $value', ({ value, expected }) => {
     expect(isPositiveInteger(value)).toBe(expected);
+  });
+});
+
+describe('isNonNegativeInteger', () => {
+  it.each([
+    { value: 0, expected: true },
+    { value: 3, expected: true },
+    { value: -1, expected: false },
+    { value: 0.5, expected: false },
+    { value: Number.NaN, expected: false },
+    { value: Number.POSITIVE_INFINITY, expected: false },
+  ])('is $expected for $value', ({ value, expected }) => {
+    expect(isNonNegativeInteger(value)).toBe(expected);
   });
 });
