@@ -21,15 +21,20 @@ export function applyCampaign(log: CampaignLog, event: CampaignEvent): CampaignL
     case 'ChaosTokenRemoved':
       return { ...log, chaosBag: withoutFirst(log.chaosBag, event.token) };
     case 'XpChanged':
-      return updateInvestigator(log, event.code, (inv) =>
+      return updateInvestigator(log, event.code, (investigator) =>
         event.account === 'earned'
-          ? { ...inv, xpEarned: inv.xpEarned + event.delta }
-          : { ...inv, xpSpent: inv.xpSpent + event.delta },
+          ? { ...investigator, xpEarned: investigator.xpEarned + event.delta }
+          : { ...investigator, xpSpent: investigator.xpSpent + event.delta },
       );
     case 'TraumaChanged':
-      return updateInvestigator(log, event.code, (inv) => withTrauma(inv, event.kind, event.delta));
+      return updateInvestigator(log, event.code, (investigator) =>
+        withTrauma(investigator, event.kind, event.delta),
+      );
     case 'InvestigatorFateChanged':
-      return updateInvestigator(log, event.code, (inv) => ({ ...inv, fate: event.fate }));
+      return updateInvestigator(log, event.code, (investigator) => ({
+        ...investigator,
+        fate: event.fate,
+      }));
     case 'InvestigatorReplaced':
       return applyInvestigatorReplaced(log, event);
     case 'ScenarioPositionChanged':
@@ -58,10 +63,12 @@ function applyCampaignStarted(event: CampaignStarted): CampaignLog {
 }
 
 function applyInvestigatorReplaced(log: CampaignLog, event: InvestigatorReplaced): CampaignLog {
-  const replaced = log.investigators.filter((inv) => inv.code === event.code);
+  const replaced = log.investigators.filter((investigator) => investigator.code === event.code);
   return {
     ...log,
-    investigators: log.investigators.map((inv) => (inv.code === event.code ? event.by : inv)),
+    investigators: log.investigators.map((investigator) =>
+      investigator.code === event.code ? event.by : investigator,
+    ),
     formerInvestigators: [...log.formerInvestigators, ...replaced],
   };
 }
@@ -73,6 +80,8 @@ function updateInvestigator(
 ): CampaignLog {
   return {
     ...log,
-    investigators: log.investigators.map((inv) => (inv.code === code ? update(inv) : inv)),
+    investigators: log.investigators.map((investigator) =>
+      investigator.code === code ? update(investigator) : investigator,
+    ),
   };
 }

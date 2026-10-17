@@ -5,7 +5,7 @@ import { checkCampaignInvariants } from './campaign_invariants';
 import type { CampaignLog } from './campaign_log';
 import { replayCampaign } from './campaign_reducer';
 import { CampaignCommandRejected } from './campaign_rejection';
-import { requireInvestigator } from './handle_campaign_investigator';
+import { requireCampaignInvestigator } from './handle_campaign_investigator';
 
 /**
  * `ManualAdjust`: turns a correction into the matching regular event, then
@@ -28,7 +28,7 @@ function adjustmentEvent(log: CampaignLog, adjustment: CampaignAdjustment): Camp
   switch (adjustment.kind) {
     case 'xp':
       requireDelta(adjustment.delta);
-      requireInvestigator(log, adjustment.code);
+      requireCampaignInvestigator(log, adjustment.code);
       return {
         type: 'XpChanged',
         code: adjustment.code,
@@ -37,7 +37,7 @@ function adjustmentEvent(log: CampaignLog, adjustment: CampaignAdjustment): Camp
       };
     case 'trauma':
       requireDelta(adjustment.delta);
-      requireInvestigator(log, adjustment.code);
+      requireCampaignInvestigator(log, adjustment.code);
       return {
         type: 'TraumaChanged',
         code: adjustment.code,
@@ -60,7 +60,7 @@ function fateEvent(
   adjustment: Extract<CampaignAdjustment, { kind: 'fate' }>,
 ): CampaignEvent {
   const { code, fate } = adjustment;
-  if (requireInvestigator(log, code).fate === fate)
+  if (requireCampaignInvestigator(log, code).fate === fate)
     throw new CampaignCommandRejected({ code: 'fateUnchanged', investigatorCode: code, fate });
   return { type: 'InvestigatorFateChanged', code, fate };
 }

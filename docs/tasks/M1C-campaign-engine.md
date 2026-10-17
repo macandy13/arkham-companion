@@ -78,6 +78,7 @@ Ref: product.md "Campaign mode" (resolutions).
 - [ ] Defeat trauma: an investigator defeated by damage gets 1 physical trauma, by horror 1 mental trauma; resigning gives none (needs M1.15)
 - [ ] "No resolution was reached" handled per scenario
 - [ ] The Gathering's and The Midnight Masks' resolutions entered by hand
+- [ ] Leaving and joining a campaign (review of #62): a player may leave between scenarios (their living investigator moves to the former investigators and may rejoin), and a joining player picks an investigator not used before; today `ReplaceInvestigator` only replaces a killed or insane one. Also the 2026 Core Set's third fate, devoured
 - [ ] Played scenarios with their resolution in the campaign log (Andy, review of #62), e.g. `playedScenarios: { scenarioId, resolution }[]`, written when the resolution is confirmed. It also prepares for non-linear campaigns: the definition then picks the next scenario from the log instead of advancing `position` through a fixed `scenarioIds` order
 
 ## M1C.5 Starting a scenario from the campaign (S)
