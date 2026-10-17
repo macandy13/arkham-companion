@@ -1,6 +1,13 @@
 import type { CampaignLog } from './campaign/campaign_log';
 import type { Command, EngageEnemy, Investigate, MoveInvestigator } from './commands';
-import type { DecisionId, InstanceId, InvestigatorId, MapId, SlotId } from './ids';
+import type {
+  DecisionId,
+  InstanceId,
+  InvestigatorCode,
+  InvestigatorId,
+  MapId,
+  SlotId,
+} from './ids';
 import type { GameMap } from './map';
 import type { RngState } from './rng';
 import type { Zone, ZoneKey } from './zone';
@@ -52,7 +59,7 @@ export const INVESTIGATOR_STATS: readonly InvestigatorStat[] = [
 export interface Investigator {
   id: InvestigatorId;
   /** ArkhamDB card code of the investigator card. */
-  code: string;
+  code: InvestigatorCode;
   name: string;
   seat: number;
   locationId?: InstanceId;

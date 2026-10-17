@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { campaignRejectionOf, daisy, roland, startedCampaign } from '../../test/utils';
+import { campaignRejectionOf, daisy, roland, startedCampaign, wendy } from '../../test/utils';
 import type { CampaignAdjustment } from './campaign_commands';
 import type { CampaignRejection } from './campaign_rejection';
 import { campaignInvestigator } from './campaign_log';
@@ -11,42 +11,42 @@ describe('AdjustCampaign (Roland: health 9, sanity 5; three scenarios; Roland ha
       investigators: [roland, daisy],
       scenarioIds: ['the-gathering', 'the-midnight-masks', 'the-devourer-below'],
     },
-    { type: 'AwardXp', code: '01001', amount: 4 },
-    { type: 'SpendXp', code: '01001', amount: 1 },
-    { type: 'AddTrauma', code: '01001', kind: 'physical', amount: 2 },
+    { type: 'AwardXp', code: roland.code, amount: 4 },
+    { type: 'SpendXp', code: roland.code, amount: 1 },
+    { type: 'AddTrauma', code: roland.code, kind: 'physical', amount: 2 },
     { type: 'RecordStory', key: 'doubt', value: { kind: 'count', value: 2 } },
   );
   const adjust = (adjustment: CampaignAdjustment) =>
     handleCampaign(log, { type: 'AdjustCampaign', adjustment });
 
   it('lowers earned XP', () => {
-    expect(adjust({ kind: 'xp', code: '01001', account: 'earned', delta: -1 })).toEqual([
-      { type: 'XpChanged', code: '01001', account: 'earned', delta: -1 },
+    expect(adjust({ kind: 'xp', code: roland.code, account: 'earned', delta: -1 })).toEqual([
+      { type: 'XpChanged', code: roland.code, account: 'earned', delta: -1 },
     ]);
   });
 
   it('lowers spent XP', () => {
-    expect(adjust({ kind: 'xp', code: '01001', account: 'spent', delta: -1 })).toEqual([
-      { type: 'XpChanged', code: '01001', account: 'spent', delta: -1 },
+    expect(adjust({ kind: 'xp', code: roland.code, account: 'spent', delta: -1 })).toEqual([
+      { type: 'XpChanged', code: roland.code, account: 'spent', delta: -1 },
     ]);
   });
 
   it('lowers trauma', () => {
-    expect(adjust({ kind: 'trauma', code: '01001', trauma: 'physical', delta: -1 })).toEqual([
-      { type: 'TraumaChanged', code: '01001', kind: 'physical', delta: -1 },
+    expect(adjust({ kind: 'trauma', code: roland.code, trauma: 'physical', delta: -1 })).toEqual([
+      { type: 'TraumaChanged', code: roland.code, kind: 'physical', delta: -1 },
     ]);
   });
 
   it('revives a killed investigator', () => {
     const killed = startedCampaign(
       { investigators: [roland] },
-      { type: 'MarkKilled', code: '01001' },
+      { type: 'MarkKilled', code: roland.code },
     );
     const events = handleCampaign(killed, {
       type: 'AdjustCampaign',
-      adjustment: { kind: 'fate', code: '01001', fate: 'alive' },
+      adjustment: { kind: 'fate', code: roland.code, fate: 'alive' },
     });
-    expect(events).toEqual([{ type: 'InvestigatorFateChanged', code: '01001', fate: 'alive' }]);
+    expect(events).toEqual([{ type: 'InvestigatorFateChanged', code: roland.code, fate: 'alive' }]);
   });
 
   it('removes a story record', () => {
@@ -64,45 +64,45 @@ describe('AdjustCampaign (Roland: health 9, sanity 5; three scenarios; Roland ha
   it('leaves the log with the corrected values when applied', () => {
     const corrected = startedCampaign(
       { investigators: [roland] },
-      { type: 'AwardXp', code: '01001', amount: 4 },
+      { type: 'AwardXp', code: roland.code, amount: 4 },
       {
         type: 'AdjustCampaign',
-        adjustment: { kind: 'xp', code: '01001', account: 'earned', delta: -3 },
+        adjustment: { kind: 'xp', code: roland.code, account: 'earned', delta: -3 },
       },
     );
-    expect(campaignInvestigator(corrected, '01001')?.xpEarned).toBe(1);
+    expect(campaignInvestigator(corrected, roland.code)?.xpEarned).toBe(1);
   });
 
   it.each<{ name: string; adjustment: CampaignAdjustment; expected: CampaignRejection }>([
     {
       name: 'a zero XP delta',
-      adjustment: { kind: 'xp', code: '01001', account: 'earned', delta: 0 },
+      adjustment: { kind: 'xp', code: roland.code, account: 'earned', delta: 0 },
       expected: { code: 'invalidDelta', delta: 0 },
     },
     {
       name: 'a fractional trauma delta',
-      adjustment: { kind: 'trauma', code: '01001', trauma: 'mental', delta: 0.5 },
+      adjustment: { kind: 'trauma', code: roland.code, trauma: 'mental', delta: 0.5 },
       expected: { code: 'invalidDelta', delta: 0.5 },
     },
     {
       name: 'XP for an unknown investigator',
-      adjustment: { kind: 'xp', code: '01005', account: 'earned', delta: 1 },
-      expected: { code: 'unknownInvestigator', investigatorCode: '01005' },
+      adjustment: { kind: 'xp', code: wendy.code, account: 'earned', delta: 1 },
+      expected: { code: 'unknownInvestigator', investigatorCode: wendy.code },
     },
     {
       name: 'trauma for an unknown investigator',
-      adjustment: { kind: 'trauma', code: '01005', trauma: 'mental', delta: 1 },
-      expected: { code: 'unknownInvestigator', investigatorCode: '01005' },
+      adjustment: { kind: 'trauma', code: wendy.code, trauma: 'mental', delta: 1 },
+      expected: { code: 'unknownInvestigator', investigatorCode: wendy.code },
     },
     {
       name: 'a fate for an unknown investigator',
-      adjustment: { kind: 'fate', code: '01005', fate: 'killed' },
-      expected: { code: 'unknownInvestigator', investigatorCode: '01005' },
+      adjustment: { kind: 'fate', code: wendy.code, fate: 'killed' },
+      expected: { code: 'unknownInvestigator', investigatorCode: wendy.code },
     },
     {
       name: 'a fate the investigator already has',
-      adjustment: { kind: 'fate', code: '01001', fate: 'alive' },
-      expected: { code: 'fateUnchanged', investigatorCode: '01001', fate: 'alive' },
+      adjustment: { kind: 'fate', code: roland.code, fate: 'alive' },
+      expected: { code: 'fateUnchanged', investigatorCode: roland.code, fate: 'alive' },
     },
     {
       name: 'removing a story record that does not exist',
@@ -131,7 +131,7 @@ describe('AdjustCampaign (Roland: health 9, sanity 5; three scenarios; Roland ha
     },
     {
       name: 'a negative earned XP total',
-      adjustment: { kind: 'xp', code: '01001', account: 'earned', delta: -5 },
+      adjustment: { kind: 'xp', code: roland.code, account: 'earned', delta: -5 },
       expected: {
         code: 'inconsistentAdjustment',
         violations: ['investigator 01001 has -1 earned XP', 'investigator 01001 spent 1 of -1 XP'],
@@ -139,7 +139,7 @@ describe('AdjustCampaign (Roland: health 9, sanity 5; three scenarios; Roland ha
     },
     {
       name: 'more spent XP than earned',
-      adjustment: { kind: 'xp', code: '01001', account: 'spent', delta: 4 },
+      adjustment: { kind: 'xp', code: roland.code, account: 'spent', delta: 4 },
       expected: {
         code: 'inconsistentAdjustment',
         violations: ['investigator 01001 spent 5 of 4 XP'],
@@ -147,7 +147,7 @@ describe('AdjustCampaign (Roland: health 9, sanity 5; three scenarios; Roland ha
     },
     {
       name: 'negative trauma',
-      adjustment: { kind: 'trauma', code: '01001', trauma: 'physical', delta: -3 },
+      adjustment: { kind: 'trauma', code: roland.code, trauma: 'physical', delta: -3 },
       expected: {
         code: 'inconsistentAdjustment',
         violations: ['investigator 01001 has -1 physical trauma'],
@@ -155,7 +155,7 @@ describe('AdjustCampaign (Roland: health 9, sanity 5; three scenarios; Roland ha
     },
     {
       name: 'trauma up to the limit on a living investigator',
-      adjustment: { kind: 'trauma', code: '01001', trauma: 'physical', delta: 7 },
+      adjustment: { kind: 'trauma', code: roland.code, trauma: 'physical', delta: 7 },
       expected: {
         code: 'inconsistentAdjustment',
         violations: ['investigator 01001 is alive with trauma at the limit'],

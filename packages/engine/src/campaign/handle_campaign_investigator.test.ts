@@ -7,11 +7,12 @@ import {
   startedCampaign,
   wendy,
 } from '../../test/utils';
+import { investigatorCode } from '../ids';
 import { campaignInvestigator } from './campaign_log';
+import { handleCampaign } from './handle_campaign';
 
 /** A card code of an investigator who is on no team in these tests. */
-const notOnTeam = 'not_on_team';
-import { handleCampaign } from './handle_campaign';
+const notOnTeam = investigatorCode('not_on_team');
 
 describe('AwardXp and SpendXp', () => {
   const team = { investigators: [roland, daisy] };

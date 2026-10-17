@@ -41,7 +41,7 @@ Done: the campaign is its own aggregate in `packages/engine/src/campaign/`, expo
 
 Follow-ups from Andy's review of #63/#64, for one refactoring PR after this stack:
 
-- [ ] Branded `InvestigatorCode` for the card code that keys the campaign team, so it can't be mixed up with a game's `InvestigatorId` (strong-typing rule, #71)
+- [x] Branded `InvestigatorCode` for the card code that keys the campaign team, so it can't be mixed up with a game's `InvestigatorId` (strong-typing rule, #71)
 - [ ] Commands carry only the card code, and the handlers look up name, health and sanity themselves through a context, like the game's `execute(ctx, …)`. Needs an investigator lookup in that context (investigators are not in the `CardDb` today); do the same for the game's `StartScenario`
 - [ ] Import campaign and scenario functions through a namespace (`campaign.handle`, `scenario.compileSetup`) and name functions verb + noun
 

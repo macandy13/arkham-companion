@@ -1,3 +1,4 @@
+import type { InvestigatorCode } from '../ids';
 import { isPositiveInteger } from '@arkham/util';
 import type {
   AddTrauma,
@@ -59,7 +60,7 @@ export function handleAddTrauma(log: CampaignLog, command: AddTrauma): CampaignE
 /** `MarkKilled`/`MarkInsane`: a living team member meets `fate`. */
 export function handleMarkFate(
   log: CampaignLog,
-  code: string,
+  code: InvestigatorCode,
   fate: Exclude<InvestigatorFate, 'alive'>,
 ): CampaignEvent[] {
   requireAlive(log, code);
@@ -117,7 +118,10 @@ export function newCampaignInvestigator(joining: JoiningInvestigator): CampaignI
 }
 
 /** The current team member with `code`; rejects an unknown code. */
-export function requireCampaignInvestigator(log: CampaignLog, code: string): CampaignInvestigator {
+export function requireCampaignInvestigator(
+  log: CampaignLog,
+  code: InvestigatorCode,
+): CampaignInvestigator {
   const investigator = campaignInvestigator(log, code);
   if (!investigator)
     throw new CampaignCommandRejected({ code: 'unknownInvestigator', investigatorCode: code });
@@ -125,7 +129,7 @@ export function requireCampaignInvestigator(log: CampaignLog, code: string): Cam
 }
 
 /** The living team member with `code`; killed and insane investigators can no longer take part. */
-function requireAlive(log: CampaignLog, code: string): CampaignInvestigator {
+function requireAlive(log: CampaignLog, code: InvestigatorCode): CampaignInvestigator {
   const investigator = requireCampaignInvestigator(log, code);
   if (investigator.fate !== 'alive')
     throw new CampaignCommandRejected({

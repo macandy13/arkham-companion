@@ -1,3 +1,4 @@
+import type { InvestigatorCode } from '../ids';
 import { withoutFirst, withoutKey } from '@arkham/util';
 import type { CampaignEvent, CampaignStarted, InvestigatorReplaced } from './campaign_events';
 import {
@@ -75,7 +76,7 @@ function applyInvestigatorReplaced(log: CampaignLog, event: InvestigatorReplaced
 
 function updateInvestigator(
   log: CampaignLog,
-  code: string,
+  code: InvestigatorCode,
   update: (investigator: CampaignInvestigator) => CampaignInvestigator,
 ): CampaignLog {
   return {
