@@ -54,7 +54,10 @@ jobs:
             a phone. Post each blocking finding and each nit as an inline comment with
             `mcp__github_inline_comment__create_inline_comment` (with `confirmed: true`);
             start nits with "Nit:". Only post GitHub comments; don't reply with review text.
+          # Sonnet is cheaper per run than the default Opus, and checking a diff against
+          # REVIEW.md doesn't need more.
           claude_args: |
+            --model claude-sonnet-5-5
             --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
       # The action hides Claude's output, so an API rejection (bad key, no credit, no model
       # access) shows only as "is_error:true". Print just the result text, not the transcript.
