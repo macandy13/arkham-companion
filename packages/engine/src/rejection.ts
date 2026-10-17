@@ -7,7 +7,7 @@ import type {
   InvestigatorId,
   MapId,
 } from './ids';
-import type { InvestigatorStat, Phase, TokenKind } from './state';
+import type { Decider, InvestigatorStat, Phase, TokenKind } from './state';
 
 /**
  * Structured reason why `handle` refused a command. The UI can switch on
@@ -136,6 +136,8 @@ export type Rejection =
   | { code: 'unknownDecision'; decisionId: DecisionId }
   /** `ResolveDecision` with an option the decision does not have. */
   | { code: 'unknownOption'; decisionId: DecisionId; optionId: string }
+  /** `ResolveDecision` by an investigator the decision's `decider` does not name. */
+  | { code: 'notTheDecider'; decisionId: DecisionId; answeredBy: InvestigatorId; decider: Decider }
   /** A skill test modifier that is not a whole number. */
   | { code: 'invalidModifierAmount'; amount: number }
   /** `NextPhase` while an enemy attack of the enemy phase still has to be resolved. */
@@ -194,7 +196,12 @@ export type Rejection =
       token: TokenKind;
       current: number;
       delta: number;
-    };
+    }
+  /**
+   * A `ManualAdjust` would move the current agenda or act out of its place
+   * (the top of its deck); only advancing changes it.
+   */
+  | { code: 'currentStageCard'; cardId: InstanceId; deck: 'agenda' | 'act' };
 
 export type RejectionCode = Rejection['code'];
 
@@ -324,6 +331,8 @@ function describe(r: Rejection): string {
       return `no pending decision ${r.decisionId}`;
     case 'unknownOption':
       return `decision ${r.decisionId} has no option ${r.optionId}`;
+    case 'notTheDecider':
+      return `${r.answeredBy} may not answer decision ${r.decisionId}`;
     case 'invalidModifierAmount':
       return `skill test modifier ${r.amount} is not allowed here`;
     case 'enemyAttackPending':
@@ -358,5 +367,7 @@ function describe(r: Rejection): string {
       return `forced effect ${r.command} rejected: ${describe(r.reason)}`;
     case 'negativeTokens':
       return `${r.token} on ${r.cardId} would become ${r.current + r.delta}`;
+    case 'currentStageCard':
+      return `${r.cardId} is the current ${r.deck}; advance it instead of moving it`;
   }
 }

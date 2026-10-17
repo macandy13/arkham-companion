@@ -252,10 +252,10 @@ describe('ManualAdjust', () => {
       start,
       {
         type: 'ManualAdjust',
-        adjustment: { kind: 'moveCard', cardId: instanceId('c5'), to: { kind: 'outOfGame' } },
+        adjustment: { kind: 'moveCard', cardId: loc, to: { kind: 'outOfGame' } },
       },
     ]);
-    expect(state.order[zoneKey({ kind: 'agendaDeck' })]).toBeUndefined();
+    expect(state.order[zoneKey({ kind: 'location', mapId: main })]).toBeUndefined();
   });
 
   it('rejects placing a card on itself or creating a hosting cycle', () => {

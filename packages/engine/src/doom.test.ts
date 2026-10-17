@@ -12,6 +12,7 @@ import {
   type Command,
   type Event,
   type GameState,
+  type InstanceId,
   type Investigator,
 } from './index';
 import {
@@ -864,5 +865,66 @@ describe('cards without a threshold', () => {
       code: 'noClueThreshold',
       cardId: plainAct,
     });
+  });
+});
+
+describe('manual doom corrections', () => {
+  const aliceAlone = () => startedWith([makeInvestigator({ id: alice })]);
+
+  it.each([
+    { name: 'reaches the threshold of 3', doom: 3, pending: ['advanceAgenda:agenda1'] },
+    { name: 'stays below the threshold', doom: 2, pending: [] },
+  ])('ask to advance the agenda only when the doom $name', ({ doom, pending }) => {
+    const corrected = stateAfter(testContext, aliceAlone(), manualDoom(ghoul, doom));
+
+    expect(corrected.pending.map((decision) => decision.id)).toEqual(pending);
+    expect(corrected.agenda.current).toBe(agenda1);
+  });
+
+  it('do not ask once the scenario has ended', () => {
+    const ended = stateAfter(testContext, aliceAlone(), { type: 'EndScenario', resolution: 'R1' });
+
+    expect(stateAfter(testContext, ended, manualDoom(ghoul, 3)).pending).toEqual([]);
+  });
+
+  it('do not ask again when doom is taken off above the threshold', () => {
+    const answered = stateAfter(testContext, aliceAlone(), manualDoom(ghoul, 4), {
+      type: 'ResolveDecision',
+      decisionId: decisionId('advanceAgenda:agenda1'),
+      optionId: 'no',
+    });
+
+    expect(stateAfter(testContext, answered, manualDoom(ghoul, -1)).pending).toEqual([]);
+  });
+});
+
+describe('manual moves of agenda and act cards', () => {
+  const removeFromGame = (cardId: InstanceId): Command => ({
+    type: 'ManualAdjust',
+    adjustment: { kind: 'moveCard', cardId, to: { kind: 'outOfGame' } },
+  });
+
+  it.each([
+    { name: 'agenda', cardId: agenda1 },
+    { name: 'act', cardId: act1 },
+  ] as const)('reject moving the current $name', ({ name, cardId }) => {
+    expect(
+      rejectionFrom(
+        testContext,
+        startedWith([makeInvestigator({ id: alice })]),
+        removeFromGame(cardId),
+      ),
+    ).toEqual({ code: 'currentStageCard', cardId, deck: name });
+  });
+
+  it('allow moving a later agenda', () => {
+    const moved = stateAfter(
+      testContext,
+      startedWith([makeInvestigator({ id: alice })]),
+      removeFromGame(agenda2),
+    );
+
+    expect(moved.cards[agenda2]!.zone).toEqual({ kind: 'outOfGame' });
+    expect(checkInvariants(moved)).toEqual([]);
   });
 });
