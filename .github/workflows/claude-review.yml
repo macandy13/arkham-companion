@@ -1,21 +1,22 @@
 name: Claude review
 
-# Reviews every non-draft PR with claude-code-action against REVIEW.md, CLAUDE.md and the
-# coding guidelines, so mechanical review points are raised before the owner reads the PR.
+# Reviews a PR with claude-code-action against REVIEW.md, CLAUDE.md and the coding guidelines
+# when the `claude-review` label is added. On demand only, because every run is billed to the
+# API key; the regular review is the pr-reviewer subagent in the session that opens the PR.
 # Needs the repo secret ANTHROPIC_CI_KEY or CLAUDE_CODE_OAUTH_TOKEN; without one the job
 # skips instead of failing (also on Dependabot PRs, which get no secrets).
 
 on:
   pull_request:
-    types: [opened, synchronize, ready_for_review]
+    types: [labeled]
 
 concurrency:
-  group: claude-review-${{ github.ref }}
+  group: claude-review-${{ github.ref }}-${{ github.event.label.name }}
   cancel-in-progress: true
 
 jobs:
   review:
-    if: github.event.pull_request.draft == false
+    if: github.event.label.name == 'claude-review'
     runs-on: ubuntu-latest
     permissions:
       contents: read
