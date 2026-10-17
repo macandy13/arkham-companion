@@ -303,13 +303,18 @@ A campaign spans several games and outlives each of them, so it is its own aggre
 function handleCampaign(log: CampaignLog, command: CampaignCommand): CampaignEvent[];  // throws CampaignCommandRejected
 function applyCampaign(log: CampaignLog, event: CampaignEvent): CampaignLog;
 function executeCampaign(log: CampaignLog, command: CampaignCommand): { log: CampaignLog; events: CampaignEvent[] };
+function compileCampaign(def: CampaignDefinition, options: CampaignOptions): StartCampaign;
 
 type StoryValue = { kind: 'flag'; value: boolean } | { kind: 'count'; value: number }
   | { kind: 'list'; entries: string[] } | { kind: 'crossableList'; entries: CrossableEntry[] };
+interface CampaignDefinition { id: string; scenarios: readonly string[]; chaosBag: Record<Difficulty, readonly ChaosToken[]>; }
 ```
+
+The only campaign so far is Night of the Zealot ([`night_of_the_zealot/campaign.ts`](../packages/scenarios/src/night_of_the_zealot/campaign.ts)); its second and third scenarios are ids only until their data arrives.
 
 **Extension points**
 
+- **A new campaign:** add a `CampaignDefinition` next to its scenarios in [`packages/scenarios/src/`](../packages/scenarios/src/) and export it from the package index.
 - **A new correction:** add a `CampaignAdjustment` kind and its case in [`handle_campaign_adjustment.ts`](../packages/engine/src/campaign/handle_campaign_adjustment.ts); it produces the regular event, and the result is checked against `checkCampaignInvariants`.
 - **A new campaign command:** add it to [`campaign_commands.ts`](../packages/engine/src/campaign/campaign_commands.ts), handle it in `handleCampaign` with a `CampaignRejection` for each way it can be refused, and produce existing events where they fit.
 - **A new campaign record:** add its field to `CampaignLog`, the `CampaignEvent` that changes it in [`campaign_events.ts`](../packages/engine/src/campaign/campaign_events.ts) and its case in `applyCampaign`. If it can become inconsistent, add the rule to `checkCampaignInvariants`.

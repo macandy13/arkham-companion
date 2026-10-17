@@ -7,3 +7,4 @@ export {
   theGatheringCardDefs,
   theGatheringCards,
 } from './the_gathering/cards';
+export { nightOfTheZealot } from './night_of_the_zealot/campaign';
