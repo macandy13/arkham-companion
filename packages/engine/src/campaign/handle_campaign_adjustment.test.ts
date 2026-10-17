@@ -110,6 +110,11 @@ describe('ManualAdjust (Roland: health 9, sanity 5; three scenarios; Roland has 
       expected: { code: 'unknownStoryRecord', key: 'house_burned' },
     },
     {
+      name: 'removing a key every object inherits',
+      adjustment: { kind: 'removeStory', key: 'toString' },
+      expected: { code: 'unknownStoryRecord', key: 'toString' },
+    },
+    {
       name: 'a negative position',
       adjustment: { kind: 'position', position: -1 },
       expected: { code: 'invalidPosition', position: -1, max: 3 },
