@@ -1,27 +1,23 @@
 import { describe, expect, it } from 'vitest';
-import { agnesMember, makeCampaignLog } from '../../test/utils';
+import {
+  agnesMember,
+  daisyMember,
+  makeCampaignLog,
+  rolandMember,
+  skidsMember,
+  wendyMember,
+} from '../../test/utils';
 import { checkCampaignInvariants, storyValueIsValid } from './campaign_invariants';
 import { emptyCampaignLog, type CampaignInvestigator, type CampaignLog } from './campaign_log';
 
 describe('checkCampaignInvariants', () => {
-  const roland: CampaignInvestigator = {
-    code: '01001',
-    name: 'Roland Banks',
-    health: 9,
-    sanity: 5,
-    physicalTrauma: 0,
-    mentalTrauma: 0,
-    xpEarned: 0,
-    xpSpent: 0,
-    fate: 'alive',
-  };
   const started = makeCampaignLog({
-    investigators: [roland],
+    investigators: [rolandMember],
     scenarioIds: ['the-gathering', 'the-midnight-masks'],
   });
   const withRoland = (changes: Partial<CampaignInvestigator>): CampaignLog => ({
     ...started,
-    investigators: [{ ...roland, ...changes }],
+    investigators: [{ ...rolandMember, ...changes }],
   });
 
   it.each<{ name: string; log: CampaignLog }>([
@@ -41,7 +37,7 @@ describe('checkCampaignInvariants', () => {
       log: {
         ...started,
         investigators: [agnesMember],
-        formerInvestigators: [{ ...roland, fate: 'killed' }],
+        formerInvestigators: [{ ...rolandMember, fate: 'killed' }],
       },
     },
   ])('finds no violation in $name', ({ log }) => {
@@ -58,18 +54,18 @@ describe('checkCampaignInvariants', () => {
       name: 'a team of five',
       log: {
         ...started,
-        investigators: ['a', 'b', 'c', 'd', 'e'].map((code) => ({ ...roland, code })),
+        investigators: [rolandMember, daisyMember, agnesMember, wendyMember, skidsMember],
       },
       violation: 'team has 5 investigators',
     },
     {
       name: 'the same investigator twice',
-      log: { ...started, investigators: [roland, roland] },
+      log: { ...started, investigators: [rolandMember, rolandMember] },
       violation: 'investigator 01001 appears more than once',
     },
     {
       name: 'a current investigator who is also a former one',
-      log: { ...started, formerInvestigators: [{ ...roland, fate: 'killed' }] },
+      log: { ...started, formerInvestigators: [{ ...rolandMember, fate: 'killed' }] },
       violation: 'investigator 01001 appears more than once',
     },
     {
@@ -99,7 +95,7 @@ describe('checkCampaignInvariants', () => {
     },
     {
       name: 'a former investigator who is alive',
-      log: { ...started, formerInvestigators: [{ ...roland, code: '01004' }] },
+      log: { ...started, formerInvestigators: [{ ...rolandMember, code: '01004' }] },
       violation: 'former investigator 01004 is alive',
     },
     {
