@@ -25,8 +25,8 @@ describe('checkCampaignInvariants', () => {
     { name: 'a freshly started campaign', log: started },
     { name: 'a completed campaign', log: { ...started, position: 2 } },
     {
-      name: 'Roland killed by physical trauma at his health of 9',
-      log: withRoland({ physicalTrauma: 9, fate: 'killed' }),
+      name: 'Roland killed by physical trauma at his health',
+      log: withRoland({ physicalTrauma: rolandMember.health, fate: 'killed' }),
     },
     {
       name: 'Roland who spent all his earned XP',
@@ -61,42 +61,42 @@ describe('checkCampaignInvariants', () => {
     {
       name: 'the same investigator twice',
       log: { ...started, investigators: [rolandMember, rolandMember] },
-      violation: 'investigator 01001 appears more than once',
+      violation: `investigator ${rolandMember.code} appears more than once`,
     },
     {
       name: 'a current investigator who is also a former one',
       log: { ...started, formerInvestigators: [{ ...rolandMember, fate: 'killed' }] },
-      violation: 'investigator 01001 appears more than once',
+      violation: `investigator ${rolandMember.code} appears more than once`,
     },
     {
       name: 'negative physical trauma',
       log: withRoland({ physicalTrauma: -1 }),
-      violation: 'investigator 01001 has -1 physical trauma',
+      violation: `investigator ${rolandMember.code} has -1 physical trauma`,
     },
     {
       name: 'fractional mental trauma',
       log: withRoland({ mentalTrauma: 0.5 }),
-      violation: 'investigator 01001 has 0.5 mental trauma',
+      violation: `investigator ${rolandMember.code} has 0.5 mental trauma`,
     },
     {
       name: 'more spent than earned XP',
       log: withRoland({ xpEarned: 1, xpSpent: 2 }),
-      violation: 'investigator 01001 spent 2 of 1 XP',
+      violation: `investigator ${rolandMember.code} spent 2 of 1 XP`,
     },
     {
       name: 'zero health',
       log: withRoland({ health: 0 }),
-      violation: 'investigator 01001 has health 0 and sanity 5',
+      violation: `investigator ${rolandMember.code} has health 0 and sanity ${rolandMember.sanity}`,
     },
     {
-      name: 'a living investigator with mental trauma at his sanity of 5',
-      log: withRoland({ mentalTrauma: 5 }),
-      violation: 'investigator 01001 is alive with trauma at the limit',
+      name: 'a living investigator with mental trauma at his sanity',
+      log: withRoland({ mentalTrauma: rolandMember.sanity }),
+      violation: `investigator ${rolandMember.code} is alive with trauma at the limit`,
     },
     {
       name: 'a former investigator who is alive',
-      log: { ...started, formerInvestigators: [{ ...rolandMember, code: '01004' }] },
-      violation: 'former investigator 01004 is alive',
+      log: { ...started, formerInvestigators: [agnesMember] },
+      violation: `former investigator ${agnesMember.code} is alive`,
     },
     {
       name: 'a malformed story record',
