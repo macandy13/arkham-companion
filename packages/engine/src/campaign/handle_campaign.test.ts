@@ -66,7 +66,9 @@ describe('StartCampaign', () => {
 
   it('accepts a team of four', () => {
     const log = startedCampaign({ investigators: [roland, daisy, wendy, agnes] });
-    expect(log.investigators.map((inv) => inv.code)).toEqual(['01001', '01002', '01005', '01004']);
+    expect(log.investigators.map((member) => member.code)).toEqual(
+      [roland, daisy, wendy, agnes].map((joining) => joining.code),
+    );
   });
 
   it.each<{
@@ -193,7 +195,7 @@ describe('RecordStory', () => {
     ).toEqual({ code: 'storyKindMismatch', key: house, recorded: 'flag', given: 'count' });
   });
 
-  it.each(['', '   '])('rejects the blank key %j', (key) => {
+  it.each(['', '   ', ' doubt'])('rejects the blank or padded key %j', (key) => {
     expect(
       campaignRejectionOf(() =>
         handleCampaign(startedCampaign(), {
