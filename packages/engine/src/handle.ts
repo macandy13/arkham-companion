@@ -296,7 +296,7 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
     case 'StartScenario':
       return handleStartScenario(ctx, state, command);
     case 'ManualAdjust':
-      return [handleAdjustment(state, command.adjustment)];
+      return handleManualAdjust(ctx, state, command.adjustment);
     case 'MoveCard':
       return [handleMoveCard(state, command)];
     case 'AddMap':
@@ -485,9 +485,39 @@ function encounterDeckShuffle(state: GameState): DeckShuffled[] {
   return [{ type: 'DeckShuffled', zone, order, rngState }];
 }
 
+/**
+ * Rejects moving the current agenda or act: `GameState.agenda.current` would
+ * point at a card outside its deck. Advancing is the only way to change it.
+ */
+function assertNotCurrentStage(state: GameState, cardId: InstanceId): void {
+  const deck =
+    state.agenda.current === cardId ? 'agenda' : state.act.current === cardId ? 'act' : undefined;
+  if (deck) throw new CommandRejected({ code: 'currentStageCard', cardId, deck });
+}
+
 /** `MoveCard`: the same move a `ManualAdjust` makes, as a game event. */
 function handleMoveCard(state: GameState, cmd: MoveCard): CardMoved {
   return cardMoved(state, requireCard(state.cards, cmd.cardId), cmd.to, cmd.index);
+}
+
+/**
+ * `ManualAdjust`: the correction's own event, then, after added doom, the
+ * "advance the agenda?" question if the threshold is now reached. A
+ * correction fires no forced effects, but the players may have put the doom
+ * on late that the mythos check missed, so the engine asks rather than
+ * advancing on its own or staying silent.
+ */
+function handleManualAdjust(ctx: EngineContext, state: GameState, adj: Adjustment): Event[] {
+  const event = handleAdjustment(state, adj);
+  // After the end nothing could answer the question (`scenarioEnded`), and no agenda advances any more.
+  if (
+    event.type !== 'TokensChanged' ||
+    event.token !== 'doom' ||
+    event.delta < 0 ||
+    state.meta.ended
+  )
+    return [event];
+  return [event, ...agendaThresholdDecision(ctx, apply(state, event))];
 }
 
 function handleAdjustment(
@@ -499,6 +529,7 @@ function handleAdjustment(
 
   switch (adj.kind) {
     case 'moveCard':
+      assertNotCurrentStage(state, card.id);
       return cardMoved(state, card, adj.to, adj.index);
     case 'tokens': {
       if (!Number.isInteger(adj.delta) || adj.delta === 0) {
