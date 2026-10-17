@@ -47,7 +47,7 @@ function adjustmentEvent(log: CampaignLog, adjustment: CampaignAdjustment): Camp
     case 'fate':
       return fateEvent(log, adjustment);
     case 'removeStory':
-      if (!(adjustment.key in log.story))
+      if (!Object.hasOwn(log.story, adjustment.key))
         throw new CampaignCommandRejected({ code: 'unknownStoryRecord', key: adjustment.key });
       return { type: 'StoryRecordRemoved', key: adjustment.key };
     case 'position':
