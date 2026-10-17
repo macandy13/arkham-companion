@@ -38,7 +38,7 @@ export const GATHERING_CODES = {
   parlor: cardCode('01115'),
   ghoulPriest: cardCode('01116'),
   litaChantler: cardCode('01117'),
-};
+} as const;
 
 const codes = GATHERING_CODES;
 const sets = GATHERING_SETS;

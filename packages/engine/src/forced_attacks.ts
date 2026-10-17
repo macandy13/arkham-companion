@@ -1,6 +1,7 @@
 import { cardStats, type CardStats, type EngineContext } from './cards';
 import type { DealEnemyAttack, RequestDecision } from './commands';
-import { cardCode, decisionId, type InstanceId, type InvestigatorId } from './ids';
+import { decisionId, type InstanceId, type InvestigatorId } from './ids';
+import { requireCard } from './lookup';
 import { hasKeyword } from './keywords';
 import type { CardInstance, Decision, GameState } from './state';
 
@@ -39,10 +40,7 @@ export function forcedAttackDecision(
   enemyId: InstanceId,
   investigatorId: InvestigatorId,
 ): Decision {
-  const { damage = 0, horror = 0 } = cardStats(
-    ctx.cards,
-    state.cards[enemyId]?.code ?? cardCode(''),
-  );
+  const { damage = 0, horror = 0 } = cardStats(ctx.cards, requireCard(state.cards, enemyId).code);
   const attack: DealEnemyAttack = {
     type: 'DealEnemyAttack',
     enemyId,
