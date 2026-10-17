@@ -16,7 +16,7 @@ Code style and conventions (functions, comments, tests, markup, CSS, helpers) ar
 - **Markup is structure only.** JSX/HTML is a plain document tree of semantic elements (no `<strong>`, `<b>`, `<br>`, inline `style`, layout/styling class names); all presentation lives in CSS.
 - **Underscores, never dashes, in source file and directory names** under `packages/` and `apps/` (`handle_board.ts`, `the_gathering/`). Tool-mandated names keep theirs (`pnpm-workspace.yaml`, `release-please-config.json`, `.claude/` agent and hook files, `docs/*.md`).
 - **No German words in code** (identifiers); German only in UI translation strings.
-- TypeScript strict, no `any` without a comment explaining why.
+- TypeScript strict, no `any` without a comment explaining why. **Prefer strong types:** branded types for identifiers and card codes, literal unions for closed sets, no bare `string`/`number` for domain values (`docs/coding-guidelines.md` §1).
 - Every exported interface, type, class and non-trivial function gets a doc comment explaining its purpose and, where it isn't obvious, how it relates to other types (e.g. which reducer produces it, which ID it refers to). Also explain non-obvious design choices (why, not what).
 - **In-code comments explain why, not what.** Inside function bodies, comment only to give a motivation the code can't express (game rule, workaround, trade-off) – never to narrate steps.
 - **Never swallow a caught error silently.** A `catch` at least `console.warn`s with context (and may still fall back), or rethrows. The engine has no console: it turns errors into rejections instead.
@@ -46,13 +46,14 @@ Each milestone file in `docs/tasks/` lists its tasks in order; do them in that o
 3. Tick the task's checklist and add a short "Done" note when finished. Once a task and its follow-ups are finished and no open PR edits its section, move the section to the matching file in `docs/tasks/done/`, so sessions reading the task file only load open work.
 4. Open a PR against `main`. **The PR title is a Conventional Commit** – it becomes the squash commit and the changelog entry (Release Please):
    `feat(engine): add hunter movement (M1.8)`, `fix(web): …`, `docs: …`, `test: …`, `refactor: …`, `chore: …`, `ci: …`. Scope = package (`engine`, `carddata`, `scenarios`, `web`, `util`) when it fits.
-   **The PR description starts with the motivation** – why the PR exists and what it is trying to accomplish – before any list of changes. Follow `.github/pull_request_template.md` and fill in its **Review map** (read first, rules claims, API changes, decisions for the reviewer, what to skip). Before opening, review your own diff against `REVIEW.md`.
+   **The PR description starts with the motivation** – why the PR exists and what it is trying to accomplish – before any list of changes. Follow `.github/pull_request_template.md` and fill in its **Review map** (read first, rules claims, API changes, decisions for the reviewer, what to skip). Before opening, run the `pr-reviewer` subagent on the branch and fix its blocking findings; then post its summary as a PR comment and its remaining findings as inline comments. Run it again before asking for review after a round of changes.
 5. CI must be green: typecheck, lint, coverage floors, E2E, CodeQL. Check the PR preview link and the bundle-size comment for UI changes.
    **UI changes extend or add an `@flow` E2E spec** (rules in `docs/coding-guidelines.md` §3); the preview workflow records it and puts the screencast into the PR description.
 
 ## Subagents
 
 - `rules-checker` – after implementing or changing game rules, ask it to check the change against the official rules. Post its rules claims table as a PR comment, and when it confirms a correction, update `docs/rules.md` in the same PR.
+- `pr-reviewer` – reviews the branch against `REVIEW.md` in a fresh context; replaces a paid CI reviewer because it runs in the session.
 - `test-writer` – to add missing unit/property tests, e.g. when coverage drops below the floor.
 
 More on the automation: `docs/automation.md`.
