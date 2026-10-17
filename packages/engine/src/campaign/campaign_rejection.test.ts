@@ -19,6 +19,11 @@ describe('CampaignCommandRejected', () => {
     { code: 'storyKindMismatch', key: 'doubt', recorded: 'count', given: 'flag' },
     { code: 'chaosTokenNotInBag', token: 'tablet' },
     { code: 'campaignComplete' },
+    { code: 'invalidDelta', delta: 0 },
+    { code: 'fateUnchanged', investigatorCode: '01001', fate: 'alive' },
+    { code: 'unknownStoryRecord', key: 'doubt' },
+    { code: 'invalidPosition', position: 4, max: 3 },
+    { code: 'inconsistentAdjustment', violations: ['first', 'second'] },
   ])('carries the structured rejection and a message for $code', (rejection) => {
     const error = new CampaignCommandRejected(rejection);
     expect(error.rejection).toEqual(rejection);

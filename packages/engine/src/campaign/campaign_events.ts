@@ -10,7 +10,7 @@ import type {
 /**
  * Facts of the campaign aggregate. Like the game's `Event`s they carry
  * everything `applyCampaign` needs, so replaying a stored campaign log never
- * validates or looks anything up. Regular commands and `ManualAdjust`
+ * validates or looks anything up. Regular commands and `AdjustCampaign`
  * corrections produce the same events.
  */
 export type CampaignEvent =
@@ -44,7 +44,7 @@ export interface StoryRecorded {
   readonly value: StoryValue;
 }
 
-/** A story record was deleted. Produced by `ManualAdjust` `removeStory`. */
+/** A story record was deleted. Produced by `AdjustCampaign` `removeStory`. */
 export interface StoryRecordRemoved {
   readonly type: 'StoryRecordRemoved';
   readonly key: string;
@@ -62,7 +62,7 @@ export interface ChaosTokenRemoved {
   readonly token: ChaosToken;
 }
 
-/** An XP total changed by `delta`. Produced by `AwardXp`, `SpendXp` and `ManualAdjust` `xp`. */
+/** An XP total changed by `delta`. Produced by `AwardXp`, `SpendXp` and `AdjustCampaign` `xp`. */
 export interface XpChanged {
   readonly type: 'XpChanged';
   readonly code: string;
@@ -70,7 +70,7 @@ export interface XpChanged {
   readonly delta: number;
 }
 
-/** A trauma count changed by `delta`. Produced by `AddTrauma` and `ManualAdjust` `trauma`. */
+/** A trauma count changed by `delta`. Produced by `AddTrauma` and `AdjustCampaign` `trauma`. */
 export interface TraumaChanged {
   readonly type: 'TraumaChanged';
   readonly code: string;
@@ -80,7 +80,7 @@ export interface TraumaChanged {
 
 /**
  * A team member's fate changed. Produced by `MarkKilled`, `MarkInsane`,
- * `AddTrauma` reaching the limit and `ManualAdjust` `fate`.
+ * `AddTrauma` reaching the limit and `AdjustCampaign` `fate`.
  */
 export interface InvestigatorFateChanged {
   readonly type: 'InvestigatorFateChanged';
@@ -100,7 +100,7 @@ export interface InvestigatorReplaced {
   readonly by: CampaignInvestigator;
 }
 
-/** The scenario position moved. Produced by `AdvanceScenario` and `ManualAdjust` `position`. */
+/** The scenario position moved. Produced by `AdvanceScenario` and `AdjustCampaign` `position`. */
 export interface ScenarioPositionChanged {
   readonly type: 'ScenarioPositionChanged';
   readonly position: number;

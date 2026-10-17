@@ -39,7 +39,17 @@ export type CampaignRejection =
   /** `RemoveChaosToken` for a token that is not in the bag. */
   | { code: 'chaosTokenNotInBag'; token: ChaosToken }
   /** `AdvanceScenario` after the last scenario. */
-  | { code: 'campaignComplete' };
+  | { code: 'campaignComplete' }
+  /** `AdjustCampaign` delta that is zero or not an integer. */
+  | { code: 'invalidDelta'; delta: number }
+  /** `AdjustCampaign` `fate` to the fate the investigator already has. */
+  | { code: 'fateUnchanged'; investigatorCode: string; fate: InvestigatorFate }
+  /** `AdjustCampaign` `removeStory` for a key with no record. */
+  | { code: 'unknownStoryRecord'; key: string }
+  /** `AdjustCampaign` `position` outside 0..`max` (the number of scenarios). */
+  | { code: 'invalidPosition'; position: number; max: number }
+  /** An `AdjustCampaign` that would leave the log inconsistent; `violations` from `checkCampaignInvariants`. */
+  | { code: 'inconsistentAdjustment'; violations: readonly string[] };
 
 /** The `code` of every campaign rejection. */
 export type CampaignRejectionCode = CampaignRejection['code'];
@@ -90,5 +100,15 @@ function describeCampaignRejection(r: CampaignRejection): string {
       return `no ${r.token} token in the chaos bag`;
     case 'campaignComplete':
       return 'the campaign has no further scenario';
+    case 'invalidDelta':
+      return `delta must be a non-zero integer, got ${r.delta}`;
+    case 'fateUnchanged':
+      return `investigator ${r.investigatorCode} is already ${r.fate}`;
+    case 'unknownStoryRecord':
+      return `no story record ${r.key}`;
+    case 'invalidPosition':
+      return `position ${r.position} out of range 0..${r.max}`;
+    case 'inconsistentAdjustment':
+      return `adjustment would break the campaign log: ${r.violations.join('; ')}`;
   }
 }

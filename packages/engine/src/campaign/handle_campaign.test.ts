@@ -146,6 +146,7 @@ describe('commands before the campaign started', () => {
     { type: 'MarkInsane', code: '01001' },
     { type: 'ReplaceInvestigator', code: '01001', by: agnes },
     { type: 'AdvanceScenario' },
+    { type: 'AdjustCampaign', adjustment: { kind: 'position', position: 0 } },
   ])('rejects $type with campaignNotStarted', (command) => {
     expect(campaignRejectionOf(() => handleCampaign(emptyCampaignLog(), command))).toEqual({
       code: 'campaignNotStarted',

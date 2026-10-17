@@ -310,6 +310,7 @@ type StoryValue = { kind: 'flag'; value: boolean } | { kind: 'count'; value: num
 
 **Extension points**
 
+- **A new correction:** add a `CampaignAdjustment` kind and its case in [`handle_campaign_adjustment.ts`](../packages/engine/src/campaign/handle_campaign_adjustment.ts); it produces the regular event, and the result is checked against `checkCampaignInvariants`.
 - **A new campaign command:** add it to [`campaign_commands.ts`](../packages/engine/src/campaign/campaign_commands.ts), handle it in `handleCampaign` with a `CampaignRejection` for each way it can be refused, and produce existing events where they fit.
 - **A new campaign record:** add its field to `CampaignLog`, the `CampaignEvent` that changes it in [`campaign_events.ts`](../packages/engine/src/campaign/campaign_events.ts) and its case in `applyCampaign`. If it can become inconsistent, add the rule to `checkCampaignInvariants`.
 

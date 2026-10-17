@@ -18,6 +18,7 @@ import {
   handleSpendXp,
   newCampaignInvestigator,
 } from './handle_campaign_investigator';
+import { handleAdjustCampaign } from './handle_campaign_adjustment';
 
 /**
  * Validates a campaign command against the log and returns the resulting
@@ -50,6 +51,8 @@ export function handleCampaign(log: CampaignLog, command: CampaignCommand): Camp
       return handleReplaceInvestigator(log, command);
     case 'AdvanceScenario':
       return handleAdvanceScenario(log);
+    case 'AdjustCampaign':
+      return handleAdjustCampaign(log, command);
   }
 }
 

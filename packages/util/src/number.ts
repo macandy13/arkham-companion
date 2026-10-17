@@ -7,3 +7,8 @@ export function isPositiveInteger(value: number): boolean {
 export function isNonNegativeInteger(value: number): boolean {
   return Number.isInteger(value) && value >= 0;
 }
+
+/** Whether `value` is a whole number other than 0, e.g. a valid correction delta. */
+export function isNonZeroInteger(value: number): boolean {
+  return Number.isInteger(value) && value !== 0;
+}

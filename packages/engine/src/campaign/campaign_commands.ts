@@ -1,5 +1,5 @@
 import type { ChaosToken, Difficulty } from '../state';
-import type { StoryValue, TraumaKind } from './campaign_log';
+import type { InvestigatorFate, StoryValue, TraumaKind, XpAccount } from './campaign_log';
 
 /**
  * Intents for the campaign aggregate, kept apart from the game's `Command`:
@@ -17,7 +17,8 @@ export type CampaignCommand =
   | MarkKilled
   | MarkInsane
   | ReplaceInvestigator
-  | AdvanceScenario;
+  | AdvanceScenario
+  | AdjustCampaign;
 
 /** The `type` of every campaign command. */
 export type CampaignCommandType = CampaignCommand['type'];
@@ -55,7 +56,7 @@ export interface StartCampaign {
  * Writes a story record, replacing any earlier value of the same kind
  * (crossing out a name or counting up is recording the new value). A record
  * never changes kind, which catches a resolution writing to the wrong key;
- * `ManualAdjust` `removeStory` clears it first if it really must.
+ * `AdjustCampaign` `removeStory` clears it first if it really must.
  * Produces `StoryRecorded`.
  */
 export interface RecordStory {
@@ -139,3 +140,35 @@ export interface ReplaceInvestigator {
 export interface AdvanceScenario {
   readonly type: 'AdvanceScenario';
 }
+
+/**
+ * A correction by the players ("assistant, not referee"), for what the
+ * regular commands cannot undo: lowering XP or trauma, reviving an
+ * investigator, deleting a story record or moving the scenario position.
+ * Adding tokens, XP or records goes through the regular commands. Every
+ * correction must leave the log consistent (`checkCampaignInvariants`); it
+ * does not cascade, so e.g. raising trauma to the limit here is rejected
+ * instead of killing the investigator - use `AddTrauma` for that.
+ */
+export interface AdjustCampaign {
+  readonly type: 'AdjustCampaign';
+  readonly adjustment: CampaignAdjustment;
+}
+
+/** The corrections an `AdjustCampaign` can make; each produces the matching regular event. */
+export type CampaignAdjustment =
+  | {
+      readonly kind: 'xp';
+      readonly code: string;
+      readonly account: XpAccount;
+      readonly delta: number;
+    }
+  | {
+      readonly kind: 'trauma';
+      readonly code: string;
+      readonly trauma: TraumaKind;
+      readonly delta: number;
+    }
+  | { readonly kind: 'fate'; readonly code: string; readonly fate: InvestigatorFate }
+  | { readonly kind: 'removeStory'; readonly key: string }
+  | { readonly kind: 'position'; readonly position: number };
