@@ -5,6 +5,7 @@ import {
   trait,
   type CardDb,
   type CardStats,
+  type LocationAttachment,
   type EncounterSetCode,
   type Keyword,
   type ScaledValue,
@@ -205,6 +206,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     set: sets.chillingCold,
     traits: ['Hazard'],
     quantity: 2,
+    locationAttachment: { onePerLocation: true, shroud: 2, discardWhenInvestigated: true },
   }),
 ];
 
@@ -313,6 +315,8 @@ interface TreacheryOptions {
   turnEndTest?: SkillTest;
   /** Set for a treachery discarded at the end of the round (Dissonant Voices). */
   discardAtRoundEnd?: boolean;
+  /** What it does attached to the drawer's location (Obscuring Fog). */
+  locationAttachment?: LocationAttachment;
 }
 
 function treachery({
@@ -325,6 +329,7 @@ function treachery({
   revelationTest,
   turnEndTest,
   discardAtRoundEnd,
+  locationAttachment,
 }: TreacheryOptions): CardStats {
   return {
     code: cardCode(code),
@@ -337,6 +342,7 @@ function treachery({
     ...(revelationTest ? { revelationTest } : {}),
     ...(turnEndTest ? { turnEndTest } : {}),
     ...(discardAtRoundEnd ? { discardAtRoundEnd } : {}),
+    ...(locationAttachment ? { locationAttachment } : {}),
   };
 }
 

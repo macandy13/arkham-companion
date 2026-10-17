@@ -33,7 +33,9 @@ const ghoul = instanceId('ghoul');
  * clues); a ghoul (fight 4, evade 2, 3 health), a massive ghoul (evade 5), an
  * aloof ghoul and a ghoul that is both massive and aloof;
  * treacheries with a revelation test that is discarded (willpower 4) or stays
- * in the threat area (agility 2), and one without a test.
+ * in the threat area (agility 2), and one without a test; location
+ * attachments that add 2 shroud and leave after a successful investigation
+ * (fog) or add 1 and stay (lasting fog).
  */
 const ctx = contextWith(
   makeCard({ code: 'study', name: 'Study', typeCode: 'location', shroud: 3, clues: fixed(2) }),
@@ -54,6 +56,12 @@ const ctx = contextWith(
     revelationTest: { skill: 'agility', difficulty: 2 },
   }),
   makeCard({ code: 'plain_treachery' }),
+  makeCard({
+    code: 'fog',
+    name: 'Fog',
+    locationAttachment: { shroud: 2, discardWhenInvestigated: true },
+  }),
+  makeCard({ code: 'lasting_fog', name: 'Lasting Fog', locationAttachment: { shroud: 1 } }),
 );
 
 const engagedWith = (investigator: typeof alice): Zone => ({
@@ -229,6 +237,46 @@ describe('Investigate', () => {
       code: 'investigatorHasNoLocation',
       investigatorId: alice,
     });
+  });
+});
+
+describe('Investigate at a location with attachments', () => {
+  const investigate: Command = { type: 'Investigate', investigatorId: alice };
+  const attachedToStudy: Zone = { kind: 'attachedTo', hostId: study };
+  const fog = instanceId('fog_card');
+  const lastingFog = instanceId('lasting_fog_card');
+  const bothFogsInStudy = (): GameState =>
+    aliceInStudyWith([
+      { code: cardCode('fog'), id: fog, zone: attachedToStudy },
+      { code: cardCode('lasting_fog'), id: lastingFog, zone: attachedToStudy },
+    ]);
+
+  it('tests against the printed shroud 3 plus 2 and 1 from the attachments', () => {
+    const asked = stateAfter(ctx, bothFogsInStudy(), investigate);
+
+    expect(asked.pending[0]?.skillTest).toEqual({ skill: 'intellect', difficulty: 6 });
+  });
+
+  it('discards the fog after the clue on a pass and keeps the lasting fog', () => {
+    const asked = stateAfter(ctx, bothFogsInStudy(), investigate);
+
+    expect(asked.pending[0]?.options[0]?.commands).toEqual([
+      { type: 'DiscoverClues', investigatorId: alice, locationId: study, amount: 1 },
+      { type: 'MoveCard', cardId: fog, to: { kind: 'encounterDiscard' }, index: 0 },
+    ]);
+    const passed = answered(asked, 'investigate:alice', 'pass');
+    expect(passed.order[zoneKey(attachedToStudy)]).toEqual([lastingFog]);
+    expect(passed.order[zoneKey({ kind: 'encounterDiscard' })]).toEqual([fog]);
+  });
+
+  it('keeps both on a fail', () => {
+    const failed = answered(
+      stateAfter(ctx, bothFogsInStudy(), investigate),
+      'investigate:alice',
+      'fail',
+    );
+
+    expect(failed.order[zoneKey(attachedToStudy)]).toEqual([fog, lastingFog]);
   });
 });
 

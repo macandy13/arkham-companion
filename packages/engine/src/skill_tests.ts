@@ -1,3 +1,4 @@
+import { locationAttachments, locationShroud } from './board';
 import { cardStats, type CardStats, type EngineContext } from './cards';
 import type { Command, Evade, Fight, Investigate } from './commands';
 import { requestDecision, skillTestDecision, type SkillTestOutcomes } from './decisions';
@@ -14,10 +15,13 @@ import type { CardInstance, GameState, Investigator, SkillTest } from './state';
 
 /**
  * `Investigate`: an intellect test against the shroud of the investigator's
- * location. A pass discovers 1 clue unless the players confirm another count
- * (cards that discover more, or more on a good result), up to the clues on
- * the location. A location without clues left makes the pass do nothing
- * rather than fail the answer.
+ * location (`locationShroud`, attachments included). A pass discovers 1 clue
+ * unless the players confirm another count (cards that discover more, or more
+ * on a good result), up to the clues on the location. A location without
+ * clues left makes the pass do nothing rather than fail the answer. A pass
+ * also discards the attachments that leave after a successful investigation
+ * (`LocationAttachment.discardWhenInvestigated`), after the clues, as their
+ * "After … is successfully investigated" says.
  */
 export function handleInvestigate(
   ctx: EngineContext,
@@ -27,7 +31,7 @@ export function handleInvestigate(
   const investigator = activeInvestigator(state, cmd.investigatorId);
   const location = investigatorLocation(state, investigator);
   const clues = location.tokens.clue ?? 0;
-  const pass: Pick<SkillTestOutcomes, 'onPass' | 'passAmount'> =
+  const discoverClues: Pick<SkillTestOutcomes, 'onPass' | 'passAmount'> =
     clues > 0
       ? {
           onPass: [
@@ -41,14 +45,25 @@ export function handleInvestigate(
           passAmount: { default: 1, min: 1, max: clues },
         }
       : { onPass: [] };
-  const shroud = cardStats(ctx.cards, location.code).shroud ?? 0;
+  const discardAttachments: Command[] = locationAttachments(ctx, state, location)
+    .filter(({ attachment }) => attachment.discardWhenInvestigated)
+    .map(({ card }) => ({
+      type: 'MoveCard',
+      cardId: card.id,
+      to: { kind: 'encounterDiscard' },
+      index: 0,
+    }));
   return skillTest(ctx, state, {
     investigator,
     id: `investigate:${investigator.id}`,
     prompt: 'decision.investigate',
     subject: location.id,
-    test: { skill: 'intellect', difficulty: shroud },
-    outcomes: { ...pass, onFail: [] },
+    test: { skill: 'intellect', difficulty: locationShroud(ctx, state, location) },
+    outcomes: {
+      ...discoverClues,
+      onPass: [...discoverClues.onPass, ...discardAttachments],
+      onFail: [],
+    },
   });
 }
 

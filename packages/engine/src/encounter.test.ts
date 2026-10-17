@@ -43,6 +43,11 @@ const ctx = contextWith(
   makeCard({ code: 'surge_foe', typeCode: 'enemy', keywords: [{ name: 'surge' }] }),
   makeCard({ code: 'peril_treachery', typeCode: 'treachery', keywords: [{ name: 'peril' }] }),
   makeCard({ code: 'lingering_treachery', typeCode: 'treachery', entersThreatArea: true }),
+  makeCard({
+    code: 'one_per_location_attachment',
+    typeCode: 'treachery',
+    locationAttachment: { onePerLocation: true },
+  }),
   makeCard({ code: 'relic', typeCode: 'asset' }),
 );
 
@@ -135,6 +140,57 @@ describe('DrawEncounter', () => {
     expect(after.cards[instanceId('lingering_card')]?.zone).toEqual({
       kind: 'threatArea',
       investigatorId: alice,
+    });
+  });
+
+  describe('a treachery that attaches to the location, limit 1 per location', () => {
+    const attachedToHall: Zone = { kind: 'attachedTo', hostId: hall };
+
+    it('attaches to the drawing investigator`s location', () => {
+      const state = startedWith(
+        { deck: [card('one_per_location_attachment', 'fog_card')] },
+        { aliceAt: hall },
+      );
+
+      const after = stateAfter(ctx, state, draw);
+
+      expect(idsIn(after, attachedToHall)).toEqual(['fog_card']);
+    });
+
+    it('is discarded while another copy is attached there', () => {
+      const state = startedWith(
+        {
+          deck: [
+            card('one_per_location_attachment', 'first_fog'),
+            card('one_per_location_attachment', 'second_fog'),
+            // Keeps the deck from running out, which would shuffle the discard back.
+            card('plain_treachery', 'bottom_card'),
+          ],
+        },
+        { aliceAt: hall },
+      );
+
+      const after = stateAfter(ctx, stateAfter(ctx, state, draw), draw);
+
+      expect(idsIn(after, attachedToHall)).toEqual(['first_fog']);
+      expect(idsIn(after, encounterDiscard)).toEqual(['second_fog']);
+    });
+
+    it('is discarded when the drawer is at no location', () => {
+      const state = startedWith(
+        {
+          deck: [
+            card('one_per_location_attachment', 'fog_card'),
+            // Keeps the deck from running out, which would shuffle the discard back.
+            card('plain_treachery', 'bottom_card'),
+          ],
+        },
+        { aliceAt: undefined },
+      );
+
+      const after = stateAfter(ctx, state, draw);
+
+      expect(idsIn(after, encounterDiscard)).toEqual(['fog_card']);
     });
   });
 
