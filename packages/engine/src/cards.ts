@@ -205,6 +205,21 @@ export function cardDbFrom(defs: Iterable<CardStats>): CardDb {
 }
 
 /**
+ * `base` plus `extra`, e.g. a scenario's cards plus the chosen investigators;
+ * a card in `extra` replaces one with the same code in `base`.
+ */
+export function cardDbWith(base: CardDb, extra: Iterable<CardStats>): CardDb {
+  const added = cardDbFrom(extra);
+  return {
+    get: (code) => added.get(code) ?? base.get(code),
+    encounterSet: (encounterCode) => [
+      ...base.encounterSet(encounterCode).filter((def) => added.get(def.code) === undefined),
+      ...added.encounterSet(encounterCode),
+    ],
+  };
+}
+
+/**
  * The form in which card names and keyword details (a `spawn` location, a
  * `prey` criterion) are compared: case-insensitive, ignoring surrounding
  * whitespace and the full stop that ends a printed instruction ("Spawn -

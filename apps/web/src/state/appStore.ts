@@ -6,7 +6,7 @@ import type {
   GameState,
   GameStore,
   GameSummary,
-  StartingInvestigator,
+  InvestigatorSeat,
   ScenarioDefinition,
 } from '@arkham/engine';
 import { compileSetup, emptyState, execute } from '@arkham/engine';
@@ -16,13 +16,14 @@ import { parseGameExport, serialiseGameExport } from '../storage/gameExport';
 export interface ScenarioStart {
   /** Name shown in the game list. */
   title: string;
+  /** Its `CardDb` must hold the seated investigators' cards, since `compileSetup` takes their stats from it. */
   ctx: EngineContext;
   definition: ScenarioDefinition;
   difficulty: Difficulty;
   /** Seeds the game's RNG; chosen by the caller because the engine never reads randomness itself. */
   seed: number;
   /** In seat order; the first one is the lead investigator. */
-  investigators: readonly StartingInvestigator[];
+  investigators: readonly InvestigatorSeat[];
 }
 
 /** UI-facing state: the persisted game list plus the currently open game. */

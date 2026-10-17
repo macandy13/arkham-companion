@@ -1,9 +1,12 @@
 import {
+  investigatorCardStats,
   investigatorCode,
   investigatorId,
+  type CardStats,
   type GameState,
   type Investigator,
   type InvestigatorId,
+  type InvestigatorSeat,
 } from '../../src/index';
 
 /**
@@ -33,34 +36,30 @@ export function makeInvestigator(
 
 /**
  * Four invented investigators with distinct health and sanity, so tests about
- * prey, defeat or seat order can tell them apart. Codes start with `INV-`.
+ * prey, defeat or seat order can tell them apart. Each one's card code is its ID.
  * `investigators(n)` takes the first `n` in seat order.
  */
 export const standardInvestigators: readonly Investigator[] = [
   makeInvestigator({
     id: 'tank',
-    code: investigatorCode('INV-1'),
     seat: 0,
     health: { max: 9, damage: 0 },
     sanity: { max: 5, horror: 0 },
   }),
   makeInvestigator({
     id: 'seeker',
-    code: investigatorCode('INV-2'),
     seat: 1,
     health: { max: 6, damage: 0 },
     sanity: { max: 9, horror: 0 },
   }),
   makeInvestigator({
     id: 'rogue',
-    code: investigatorCode('INV-3'),
     seat: 2,
     health: { max: 7, damage: 0 },
     sanity: { max: 7, horror: 0 },
   }),
   makeInvestigator({
     id: 'mystic',
-    code: investigatorCode('INV-4'),
     seat: 3,
     health: { max: 5, damage: 0 },
     sanity: { max: 8, horror: 0 },
@@ -72,6 +71,22 @@ export function investigators(count: number): Investigator[] {
   if (count < 1 || count > standardInvestigators.length)
     throw new RangeError(`expected 1–4 investigators, got ${count}`);
   return standardInvestigators.slice(0, count);
+}
+
+/** The standard investigators' cards, so `compileSetup` can seat them; in `testContext` and `contextWith`. */
+export const standardInvestigatorCards: readonly CardStats[] = standardInvestigators.map((inv) =>
+  investigatorCardStats({
+    code: inv.code,
+    name: inv.name,
+    health: inv.health.max,
+    sanity: inv.sanity.max,
+    skills: inv.skills,
+  }),
+);
+
+/** Seats for the first `count` (1–4) standard investigators, lead investigator first. */
+export function investigatorSeats(count: number): InvestigatorSeat[] {
+  return investigators(count).map(({ id, code }) => ({ id, code }));
 }
 
 /** The investigator with `id` in `state` (fails the test if there is none). */

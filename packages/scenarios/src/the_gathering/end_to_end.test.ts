@@ -27,15 +27,24 @@
  * What a failed revelation costs is card text, so the script applies it by hand.
  */
 import { describe, expect, it } from 'vitest';
-import { replay, type EngineContext } from '@arkham/engine';
+import { cardDbWith, investigatorId, replay, type EngineContext } from '@arkham/engine';
 import { theGathering, theGatheringCards } from '../index';
-import { daisyWalker, rolandBanks, wendyAdams } from '../investigators';
+import { daisyWalker, rolandBanks, wendyAdams, zealotInvestigatorCards } from '../investigators';
 import { TestTable } from './test_table';
 
-const ctx: EngineContext = { cards: theGatheringCards, hooks: theGathering.hooks };
-const roland = rolandBanks.id;
-const daisy = daisyWalker.id;
-const wendy = wendyAdams.id;
+const ctx: EngineContext = {
+  cards: cardDbWith(theGatheringCards, zealotInvestigatorCards),
+  hooks: theGathering.hooks,
+};
+const roland = investigatorId('roland');
+const daisy = investigatorId('daisy');
+const wendy = investigatorId('wendy');
+/** Roland, Daisy and Wendy in seat order. */
+const zealotSeats = [
+  { id: roland, code: rolandBanks.code },
+  { id: daisy, code: daisyWalker.code },
+  { id: wendy, code: wendyAdams.code },
+];
 
 const icyGhoul = 'Icy Ghoul';
 const swarmOfRats = 'Swarm of Rats';
@@ -48,11 +57,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     const table = TestTable.setUp({
       scenario: theGathering,
       ctx,
-      investigators: [
-        { ...rolandBanks, seat: 0 },
-        { ...daisyWalker, seat: 1 },
-        { ...wendyAdams, seat: 2 },
-      ],
+      investigators: zealotSeats,
       seed: 24,
     });
 
@@ -671,11 +676,9 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 });
 
 describe('The Gathering with one to three investigators, seed 24', () => {
-  const seated = [rolandBanks, daisyWalker, wendyAdams];
-
   /** Round 1 with every investigator investigating once, then on to the mythos phase of round 2. */
   function playOneRound(count: number): TestTable {
-    const investigators = seated.slice(0, count).map((inv, seat) => ({ ...inv, seat }));
+    const investigators = zealotSeats.slice(0, count);
     const table = TestTable.setUp({ scenario: theGathering, ctx, investigators, seed: 24 });
     expect(table.nextPhase()).toEqual({ round: 1, phase: 'investigation' });
     for (const { id } of investigators) {
