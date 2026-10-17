@@ -27,15 +27,14 @@
  * What a failed revelation costs is card text, so the script applies it by hand.
  */
 import { describe, expect, it } from 'vitest';
-import { investigatorId, replay, type EngineContext } from '@arkham/engine';
+import { cardDbWith, investigatorId, replay, type EngineContext } from '@arkham/engine';
 import { theGathering, theGatheringCards } from '../index';
-import { daisyWalker, rolandBanks, wendyAdams, zealotInvestigators } from '../investigators';
+import { daisyWalker, rolandBanks, wendyAdams, zealotInvestigatorCards } from '../investigators';
 import { TestTable } from './test_table';
 
 const ctx: EngineContext = {
-  cards: theGatheringCards,
+  cards: cardDbWith(theGatheringCards, zealotInvestigatorCards),
   hooks: theGathering.hooks,
-  investigators: zealotInvestigators,
 };
 const roland = investigatorId('roland');
 const daisy = investigatorId('daisy');

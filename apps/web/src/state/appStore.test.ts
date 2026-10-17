@@ -1,9 +1,10 @@
 import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
 import {
+  cardDbWith,
   instanceId,
   investigatorCode,
-  investigatorDbFrom,
+  investigatorCardStats,
   investigatorId,
   replay,
   type Event,
@@ -113,7 +114,7 @@ describe('appStore', () => {
     };
     const start = {
       title: 'The Gathering',
-      ctx: { cards: theGatheringCards, investigators: investigatorDbFrom([alder]) },
+      ctx: { cards: cardDbWith(theGatheringCards, [investigatorCardStats(alder)]) },
       definition: theGathering,
       difficulty: 'easy' as const,
       seed: 3,

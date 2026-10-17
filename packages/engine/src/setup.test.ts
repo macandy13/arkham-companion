@@ -5,7 +5,7 @@ import {
   compileSetup,
   instanceId,
   investigatorCode,
-  investigatorDbFrom,
+  investigatorCardStats,
   investigatorId,
   mapId,
   referenceSide,
@@ -107,7 +107,7 @@ describe('compileSetup', () => {
       sanity: 9,
       skills: { willpower: 3, intellect: 5, combat: 2, agility: 2 },
     };
-    const ctx = { ...contextWith(), investigators: investigatorDbFrom([roland, daisy]) };
+    const ctx = contextWith(investigatorCardStats(roland), investigatorCardStats(daisy));
     const seats = [
       { id: investigatorId('daisy'), code: daisy.code },
       { id: investigatorId('roland'), code: roland.code },

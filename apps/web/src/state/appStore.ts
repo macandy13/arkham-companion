@@ -16,7 +16,7 @@ import { parseGameExport, serialiseGameExport } from '../storage/gameExport';
 export interface ScenarioStart {
   /** Name shown in the game list. */
   title: string;
-  /** Must hold the seated investigators' cards, since `compileSetup` takes their stats from it. */
+  /** Its `CardDb` must hold the seated investigators' cards, since `compileSetup` takes their stats from it. */
   ctx: EngineContext;
   definition: ScenarioDefinition;
   difficulty: Difficulty;

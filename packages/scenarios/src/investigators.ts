@@ -1,8 +1,8 @@
 import {
+  investigatorCardStats,
   investigatorCode,
-  investigatorDbFrom,
+  type CardStats,
   type InvestigatorCard,
-  type InvestigatorDb,
 } from '@arkham/engine';
 
 /*
@@ -11,7 +11,7 @@ import {
  * found at a real table. Only the stats the engine models are hand-entered:
  * health, sanity, the printed skills (willpower/intellect/combat/agility, as
  * on the Core Set cards; ArkhamDB was not checked from the session).
- * `compileSetup` seats them from `zealotInvestigators`.
+ * `compileSetup` seats them from `zealotInvestigatorCards`.
  */
 
 /** Roland Banks (01001), the Guardian: health 9, sanity 5, skills 3/3/4/2. */
@@ -41,9 +41,9 @@ export const wendyAdams: InvestigatorCard = {
   skills: { willpower: 4, intellect: 3, combat: 1, agility: 4 },
 };
 
-/** The three investigators above, for the `EngineContext` of scenario tests. */
-export const zealotInvestigators: InvestigatorDb = investigatorDbFrom([
+/** The three investigators above as card data, for the `CardDb` of scenario tests. */
+export const zealotInvestigatorCards: readonly CardStats[] = [
   rolandBanks,
   daisyWalker,
   wendyAdams,
-]);
+].map(investigatorCardStats);

@@ -1,33 +1,45 @@
+import type { CardDb, CardStats } from './cards';
 import type { InvestigatorCode } from './ids';
 import type { SkillValues } from './state';
 
 /**
- * What an investigator card prints that the engine models. Investigators are
- * not in the `CardDb` (that holds the scenario's encounter and location
- * cards), so they get their own lookup, `InvestigatorDb`. The app maps it
- * from `@arkham/carddata`'s `InvestigatorDef`.
+ * What an investigator card prints that the engine models: the investigator's
+ * fields of `CardStats`, all required. Investigators live in the `CardDb`
+ * like every other card; this is the typed view the campaign and setup read
+ * through `investigatorCard`.
  */
 export interface InvestigatorCard {
   readonly code: InvestigatorCode;
   readonly name: string;
   readonly health: number;
   readonly sanity: number;
-  /** Not read by the campaign; `compileSetup` gives them to each seat. */
   readonly skills: SkillValues;
 }
 
-/**
- * Investigator cards by code, so commands can name an investigator by code and
- * the handler looks up the printed stats. The app builds it from its
- * investigator catalog, tests from hand-entered cards.
- */
-export interface InvestigatorDb {
-  get(code: InvestigatorCode): InvestigatorCard | undefined;
+/** The `CardStats` that put `card` into a `CardDb`. */
+export function investigatorCardStats(card: InvestigatorCard): CardStats {
+  return {
+    code: card.code,
+    name: card.name,
+    typeCode: 'investigator',
+    traits: [],
+    health: { fixed: card.health, perInvestigator: 0 },
+    sanity: card.sanity,
+    skills: card.skills,
+  };
 }
 
-/** Builds an `InvestigatorDb`; a later duplicate code replaces an earlier one. */
-export function investigatorDbFrom(cards: Iterable<InvestigatorCard>): InvestigatorDb {
-  const byCode = new Map<InvestigatorCode, InvestigatorCard>();
-  for (const card of cards) byCode.set(card.code, card);
-  return { get: (code) => byCode.get(code) };
+/**
+ * The investigator card `code` in `cards`; undefined when `cards` lacks it or
+ * it is not an investigator with health, sanity and skills.
+ */
+export function investigatorCard(
+  cards: CardDb,
+  code: InvestigatorCode,
+): InvestigatorCard | undefined {
+  const stats = cards.get(code);
+  if (stats?.typeCode !== 'investigator') return undefined;
+  const { name, health, sanity, skills } = stats;
+  if (health === undefined || sanity === undefined || skills === undefined) return undefined;
+  return { code, name, health: health.fixed, sanity, skills };
 }

@@ -1,5 +1,5 @@
 import { duplicates } from '@arkham/util';
-import type { InvestigatorDb } from '../investigator_cards';
+import type { CardDb } from '../cards';
 import type {
   CampaignCommand,
   RecordStory,
@@ -27,7 +27,7 @@ import { handleAdjustCampaign } from './handle_campaign_adjustment';
  * code, and the handlers look up their printed stats here.
  */
 export interface CampaignContext {
-  readonly investigators: InvestigatorDb;
+  readonly cards: CardDb;
 }
 
 /**
@@ -111,9 +111,7 @@ function handleStartCampaign(
       campaignId: command.campaignId,
       definitionId: command.definitionId,
       difficulty: command.difficulty,
-      investigators: command.investigators.map((code) =>
-        newCampaignInvestigator(ctx.investigators, code),
-      ),
+      investigators: command.investigators.map((code) => newCampaignInvestigator(ctx.cards, code)),
       chaosBag: command.chaosBag,
       scenarioIds: command.scenarioIds,
     },

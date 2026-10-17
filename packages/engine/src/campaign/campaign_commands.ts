@@ -35,7 +35,7 @@ export interface StartCampaign {
   /** `CampaignDefinition.id`. */
   readonly definitionId: string;
   readonly difficulty: Difficulty;
-  /** The team in seat order; the handler looks up their printed stats in the `InvestigatorDb`. */
+  /** The team in seat order; the handler looks up their printed stats in the `CardDb`. */
   readonly investigators: readonly InvestigatorCode[];
   readonly chaosBag: readonly ChaosToken[];
   /** At least one `ScenarioDefinition.id`, in campaign order. */
@@ -119,7 +119,7 @@ export interface ReplaceInvestigator {
   readonly type: 'ReplaceInvestigator';
   /** Code of the killed or insane team member. */
   readonly code: InvestigatorCode;
-  /** The newcomer, looked up in the `InvestigatorDb` like the starting team. */
+  /** The newcomer, looked up in the `CardDb` like the starting team. */
   readonly by: InvestigatorCode;
 }
 

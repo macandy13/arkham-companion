@@ -16,6 +16,7 @@ import {
   type InvestigatorId,
   type MapId,
 } from './ids';
+import { investigatorCard } from './investigator_cards';
 import type { Edge, MapSpec } from './map';
 import { CommandRejected } from './rejection';
 import type { ScenarioDefinition } from './scenario';
@@ -130,7 +131,7 @@ export interface SetupOptions {
   seed: number;
   /**
    * In seat order; the first one is the lead investigator. `compileSetup`
-   * takes their printed stats from the `EngineContext`'s `InvestigatorDb`.
+   * takes their printed stats from the `EngineContext`'s `CardDb`.
    */
   investigators: readonly InvestigatorSeat[];
   campaign?: CampaignLog;
@@ -209,7 +210,7 @@ function startingInvestigator(
   { id, code }: InvestigatorSeat,
   seat: number,
 ): StartingInvestigator {
-  const card = ctx.investigators?.get(code);
+  const card = investigatorCard(ctx.cards, code);
   if (!card) throw new CommandRejected({ code: 'unknownInvestigatorCard', investigatorCode: code });
   return {
     id,

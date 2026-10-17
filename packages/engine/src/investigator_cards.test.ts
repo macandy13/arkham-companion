@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { cardDbFrom } from './cards';
 import { investigatorCode } from './ids';
-import { investigatorDbFrom, type InvestigatorCard } from './investigator_cards';
+import {
+  investigatorCard,
+  investigatorCardStats,
+  type InvestigatorCard,
+} from './investigator_cards';
 
-describe('investigatorDbFrom', () => {
+describe('investigatorCard', () => {
   const roland: InvestigatorCard = {
     code: investigatorCode('01001'),
     name: 'Roland Banks',
@@ -11,16 +16,25 @@ describe('investigatorDbFrom', () => {
     skills: { willpower: 3, intellect: 3, combat: 4, agility: 2 },
   };
 
-  it('looks up a card by code', () => {
-    expect(investigatorDbFrom([roland]).get(roland.code)).toBe(roland);
+  it('reads back an investigator put into the card db', () => {
+    const cards = cardDbFrom([investigatorCardStats(roland)]);
+
+    expect(investigatorCard(cards, roland.code)).toEqual(roland);
   });
 
-  it('returns undefined for an unknown code', () => {
-    expect(investigatorDbFrom([roland]).get(investigatorCode('unknown'))).toBeUndefined();
+  it('returns undefined for a code the card db lacks', () => {
+    expect(investigatorCard(cardDbFrom([]), roland.code)).toBeUndefined();
   });
 
-  it('lets a later card replace an earlier one with the same code', () => {
-    const reprintedRoland = { ...roland, name: 'Roland Banks (reprint)' };
-    expect(investigatorDbFrom([roland, reprintedRoland]).get(roland.code)).toBe(reprintedRoland);
+  it('returns undefined for a card that is not an investigator', () => {
+    const study = { code: '01111', name: 'Study', typeCode: 'location' as const, traits: [] };
+
+    expect(investigatorCard(cardDbFrom([study]), investigatorCode('01111'))).toBeUndefined();
+  });
+
+  it('returns undefined for an investigator card without sanity or skills', () => {
+    const withoutSanity = { ...investigatorCardStats(roland), sanity: undefined };
+
+    expect(investigatorCard(cardDbFrom([withoutSanity]), roland.code)).toBeUndefined();
   });
 });

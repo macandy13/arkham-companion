@@ -3,10 +3,9 @@ import type { Brand } from './ids';
 import type { Keyword } from './keywords';
 import type { ScenarioReference } from './scenario';
 import type { SkillModifierRegistry } from './skill_modifiers';
-import type { SkillTest } from './state';
+import type { SkillTest, SkillValues } from './state';
 import { CommandRejected } from './rejection';
 import type { EffectsRegistry, ScenarioHooks } from './triggers';
-import type { InvestigatorDb } from './investigator_cards';
 
 /**
  * ArkhamDB `type_code` values, covering encounter and player cards.
@@ -108,8 +107,12 @@ export interface CardStats {
   clues?: ScaledValue;
   fight?: number;
   evade?: number;
-  /** Enemy health. */
+  /** Enemy health, or an investigator's printed health (always `fixed`). */
   health?: ScaledValue;
+  /** Only on investigators. */
+  sanity?: number;
+  /** Only on investigators: the printed willpower, intellect, combat and agility. */
+  skills?: SkillValues;
   /** Damage an enemy deals when it attacks. */
   damage?: number;
   /** Horror an enemy deals when it attacks. */
@@ -162,11 +165,6 @@ export interface CardDb {
  */
 export interface EngineContext {
   cards: CardDb;
-  /**
-   * Investigator cards, from which `compileSetup` takes each seat's printed
-   * stats; without it every seat is rejected as `unknownInvestigatorCard`.
-   */
-  investigators?: InvestigatorDb;
   /** The running scenario's forced effects (`ScenarioDefinition.hooks`); none when absent. */
   hooks?: Partial<ScenarioHooks>;
   /** Card scripts by card code; none when absent. */
@@ -189,6 +187,21 @@ export function cardDbFrom(defs: Iterable<CardStats>): CardDb {
     get: (code) => byCode.get(code),
     encounterSet: (encounterCode) =>
       [...byCode.values()].filter((def) => def.encounterCode === encounterCode),
+  };
+}
+
+/**
+ * `base` plus `extra`, e.g. a scenario's cards plus the chosen investigators;
+ * a card in `extra` replaces one with the same code in `base`.
+ */
+export function cardDbWith(base: CardDb, extra: Iterable<CardStats>): CardDb {
+  const added = cardDbFrom(extra);
+  return {
+    get: (code) => added.get(code) ?? base.get(code),
+    encounterSet: (encounterCode) => [
+      ...base.encounterSet(encounterCode).filter((def) => added.get(def.code) === undefined),
+      ...added.encounterSet(encounterCode),
+    ],
   };
 }
 

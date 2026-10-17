@@ -15,7 +15,7 @@ export type Rejection =
   /** `cardCode` has no definition in the `CardDb` passed to `handle`. */
   | { code: 'unknownCardCode'; cardCode: string }
   | { code: 'unknownInvestigator'; investigatorId: InvestigatorId }
-  /** A seat in `SetupOptions` names a code that has no card in the `EngineContext`'s `InvestigatorDb`. */
+  /** A seat in `SetupOptions` names a code that is not an investigator card in the `EngineContext`'s `CardDb`. */
   | { code: 'unknownInvestigatorCard'; investigatorCode: InvestigatorCode }
   | { code: 'unknownMap'; mapId: MapId }
   /** `AddMap` names a map that is already on the board. */

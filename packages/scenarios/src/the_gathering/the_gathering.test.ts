@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  cardDbWith,
   checkInvariants,
   compileSetup,
   instanceId,
@@ -16,7 +17,7 @@ import {
   makeDefinition,
   makeSetupOptions,
   runFrom,
-  standardInvestigatorDb,
+  standardInvestigatorCards,
   startScenario,
   stateAfter,
 } from '@arkham/engine/test/utils';
@@ -27,7 +28,7 @@ import {
   theGatheringHouse,
 } from '../index';
 
-const ctx: EngineContext = { cards: theGatheringCards, investigators: standardInvestigatorDb };
+const ctx: EngineContext = { cards: cardDbWith(theGatheringCards, standardInvestigatorCards) };
 const study = mapId('study');
 
 describe('The Gathering setup', () => {

@@ -11,7 +11,8 @@ import {
   wendy,
 } from '../../test/utils';
 import { investigatorCode } from '../ids';
-import { investigatorDbFrom } from '../investigator_cards';
+import { cardDbFrom } from '../cards';
+import { investigatorCardStats } from '../investigator_cards';
 import type { CampaignCommand } from './campaign_commands';
 import type { CampaignRejection } from './campaign_rejection';
 import { emptyCampaignLog } from './campaign_log';
@@ -114,7 +115,7 @@ describe('StartCampaign', () => {
     { name: 'fractional sanity', health: 9, sanity: 2.5 },
   ])('rejects an investigator card with $name', ({ health, sanity }) => {
     const contextWithBrokenRoland = {
-      investigators: investigatorDbFrom([{ ...roland, health, sanity }]),
+      cards: cardDbFrom([investigatorCardStats({ ...roland, health, sanity })]),
     };
     expect(
       campaignRejectionOf(() =>

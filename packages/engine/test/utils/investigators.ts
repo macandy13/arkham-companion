@@ -1,11 +1,10 @@
 import {
+  investigatorCardStats,
   investigatorCode,
-  investigatorDbFrom,
   investigatorId,
+  type CardStats,
   type GameState,
   type Investigator,
-  type InvestigatorCard,
-  type InvestigatorDb,
   type InvestigatorId,
   type InvestigatorSeat,
 } from '../../src/index';
@@ -75,14 +74,14 @@ export function investigators(count: number): Investigator[] {
 }
 
 /** The standard investigators' cards, so `compileSetup` can seat them; in `testContext` and `contextWith`. */
-export const standardInvestigatorDb: InvestigatorDb = investigatorDbFrom(
-  standardInvestigators.map((inv): InvestigatorCard => ({
+export const standardInvestigatorCards: readonly CardStats[] = standardInvestigators.map((inv) =>
+  investigatorCardStats({
     code: inv.code,
     name: inv.name,
     health: inv.health.max,
     sanity: inv.sanity.max,
     skills: inv.skills,
-  })),
+  }),
 );
 
 /** Seats for the first `count` (1–4) standard investigators, lead investigator first. */
