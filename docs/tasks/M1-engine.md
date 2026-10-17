@@ -149,6 +149,8 @@ Slices (one PR each):
 - [ ] `onTurnEnd` hook fired by `EndTurn`; Frozen in Fear raises its willpower test there
 - [ ] End-of-round discards (Dissonant Voices: "Forced – At the end of the round: Discard"), found by the M1.17 end-to-end test
 - [ ] Simultaneous forced effects: the lead investigator picks the order (`chooseOption` decision) when more than one applies
-- [ ] After a doom `ManualAdjust`, offer `CheckDoomThreshold` (a `confirm` decision), never advance silently
-- [ ] `ManualAdjust` cannot move the current agenda or act out of its deck (rejection)
+- [x] After a doom `ManualAdjust`, offer `CheckDoomThreshold` (a `confirm` decision), never advance silently
+- [x] `ManualAdjust` cannot move the current agenda or act out of its deck (rejection)
 - [ ] `decider` is checked against who answers a decision, if the command carries the answering investigator
+
+Done (manual-adjust slice): added doom in a `ManualAdjust` that reaches the threshold raises the usual `advanceAgenda` confirm instead of a separate "check the threshold?" question, since that check would only ask the same thing again. Moving the current agenda or act is rejected (`currentStageCard`); later cards of either deck can still be moved.
