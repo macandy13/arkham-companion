@@ -66,6 +66,8 @@ export type Rejection =
   | { code: 'noCurrentCard'; deck: 'agenda' | 'act' }
   /** The last card of a deck advances, but neither its reverse side nor the command names a resolution. */
   | { code: 'resolutionRequired'; deck: 'agenda' | 'act' }
+  /** A command after the scenario ended (`GameMeta.ended`); only `ManualAdjust` is still accepted. */
+  | { code: 'scenarioEnded'; command: CommandType }
   /** `AdvanceAgenda`/`AdvanceAct` names a fallback resolution although further cards follow. */
   | { code: 'unexpectedResolution'; deck: 'agenda' | 'act' }
   /** `AdvanceAct` pays clues for an act whose card data has no clue threshold. */
@@ -261,6 +263,8 @@ function describe(r: Rejection): string {
       return `there is no current ${r.deck}`;
     case 'resolutionRequired':
       return `the last ${r.deck} needs a resolution`;
+    case 'scenarioEnded':
+      return `the scenario has ended, ${r.command} is not possible any more`;
     case 'unexpectedResolution':
       return `a resolution is only allowed for the last ${r.deck}`;
     case 'noClueThreshold':
