@@ -547,6 +547,13 @@ export interface ResolveDecision {
    * a name the option has no range for, or outside its range.
    */
   amounts?: Readonly<Record<string, number>>;
+  /**
+   * The investigator giving the answer, when the app knows who it is (one
+   * device per player). The answer is then rejected unless they may give it
+   * (`Decision.decider`). Omitted when the table shares one device, which is
+   * why it is optional: the group then answers for whoever decides.
+   */
+  answeredBy?: InvestigatorId;
 }
 
 /**
