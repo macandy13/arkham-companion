@@ -4,7 +4,7 @@ import {
   emptyCampaignLog,
   executeCampaign,
 } from '@arkham/engine';
-import { daisy, roland } from '@arkham/engine/test/utils';
+import { campaignContext, daisy, roland } from '@arkham/engine/test/utils';
 import { describe, expect, it } from 'vitest';
 import { theGathering } from '../the_gathering/scenario';
 import { nightOfTheZealot } from './campaign';
@@ -14,7 +14,7 @@ describe('Night of the Zealot campaign definition', () => {
     const start = compileCampaign(nightOfTheZealot, {
       campaignId: 'campaign_a',
       difficulty: 'standard',
-      investigators: [roland],
+      investigators: [roland.code],
     });
     expect(start.definitionId).toBe('night-of-the-zealot');
     expect(start.scenarioIds).toEqual([
@@ -30,7 +30,7 @@ describe('Night of the Zealot campaign definition', () => {
       const start = compileCampaign(nightOfTheZealot, {
         campaignId: 'campaign_a',
         difficulty,
-        investigators: [roland],
+        investigators: [roland.code],
       });
       expect(start.chaosBag).toEqual(theGathering.chaosBag[difficulty]);
     },
@@ -38,11 +38,12 @@ describe('Night of the Zealot campaign definition', () => {
 
   it('produces a valid campaign log at the first scenario', () => {
     const { log } = executeCampaign(
+      campaignContext,
       emptyCampaignLog(),
       compileCampaign(nightOfTheZealot, {
         campaignId: 'campaign_a',
         difficulty: 'standard',
-        investigators: [roland, daisy],
+        investigators: [roland.code, daisy.code],
       }),
     );
     expect(checkCampaignInvariants(log)).toEqual([]);

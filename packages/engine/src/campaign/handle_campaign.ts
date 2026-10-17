@@ -1,4 +1,5 @@
 import { duplicates } from '@arkham/util';
+import type { InvestigatorDb } from '../investigator_cards';
 import type {
   CampaignCommand,
   RecordStory,
@@ -21,14 +22,27 @@ import {
 import { handleAdjustCampaign } from './handle_campaign_adjustment';
 
 /**
+ * The static data campaign commands are handled against, the campaign
+ * counterpart of the game's `EngineContext`: commands name investigators by
+ * code, and the handlers look up their printed stats here.
+ */
+export interface CampaignContext {
+  readonly investigators: InvestigatorDb;
+}
+
+/**
  * Validates a campaign command against the log and returns the resulting
  * events; the campaign counterpart of the game's `handle`. Throws
- * `CampaignCommandRejected` for an invalid command. Pure: the same log and
- * command always yield the same events. Campaign commands trigger no
+ * `CampaignCommandRejected` for an invalid command. Pure: the same context, log
+ * and command always yield the same events. Campaign commands trigger no
  * follow-ups, so unlike a game command one command is exactly its own events.
  */
-export function handleCampaign(log: CampaignLog, command: CampaignCommand): CampaignEvent[] {
-  if (command.type === 'StartCampaign') return handleStartCampaign(log, command);
+export function handleCampaign(
+  ctx: CampaignContext,
+  log: CampaignLog,
+  command: CampaignCommand,
+): CampaignEvent[] {
+  if (command.type === 'StartCampaign') return handleStartCampaign(ctx, log, command);
   if (!isCampaignStarted(log)) throw new CampaignCommandRejected({ code: 'campaignNotStarted' });
   switch (command.type) {
     case 'RecordStory':
@@ -48,7 +62,7 @@ export function handleCampaign(log: CampaignLog, command: CampaignCommand): Camp
     case 'MarkInsane':
       return handleMarkFate(log, command.code, 'insane');
     case 'ReplaceInvestigator':
-      return handleReplaceInvestigator(log, command);
+      return handleReplaceInvestigator(ctx.investigators, log, command);
     case 'AdvanceScenario':
       return handleAdvanceScenario(log);
     case 'AdjustCampaign':
@@ -66,17 +80,25 @@ export interface CampaignExecuteResult {
  * Runs a campaign command end to end (`handleCampaign`, then the reducer),
  * like the game's `execute`. Throws `CampaignCommandRejected`.
  */
-export function executeCampaign(log: CampaignLog, command: CampaignCommand): CampaignExecuteResult {
-  const events = handleCampaign(log, command);
+export function executeCampaign(
+  ctx: CampaignContext,
+  log: CampaignLog,
+  command: CampaignCommand,
+): CampaignExecuteResult {
+  const events = handleCampaign(ctx, log, command);
   return { log: replayCampaign(events, log), events };
 }
 
-function handleStartCampaign(log: CampaignLog, command: StartCampaign): CampaignEvent[] {
+function handleStartCampaign(
+  ctx: CampaignContext,
+  log: CampaignLog,
+  command: StartCampaign,
+): CampaignEvent[] {
   if (isCampaignStarted(log)) throw new CampaignCommandRejected({ code: 'campaignAlreadyStarted' });
   const count = command.investigators.length;
   if (count < 1 || count > MAX_TEAM_SIZE)
     throw new CampaignCommandRejected({ code: 'invalidTeamSize', count });
-  const [repeated] = duplicates(command.investigators.map((inv) => inv.code));
+  const [repeated] = duplicates(command.investigators);
   if (repeated !== undefined)
     throw new CampaignCommandRejected({
       code: 'duplicateInvestigator',
@@ -89,7 +111,9 @@ function handleStartCampaign(log: CampaignLog, command: StartCampaign): Campaign
       campaignId: command.campaignId,
       definitionId: command.definitionId,
       difficulty: command.difficulty,
-      investigators: command.investigators.map(newCampaignInvestigator),
+      investigators: command.investigators.map((code) =>
+        newCampaignInvestigator(ctx.investigators, code),
+      ),
       chaosBag: command.chaosBag,
       scenarioIds: command.scenarioIds,
     },

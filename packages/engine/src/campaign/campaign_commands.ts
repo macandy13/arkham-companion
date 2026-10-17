@@ -25,18 +25,6 @@ export type CampaignCommand =
 export type CampaignCommandType = CampaignCommand['type'];
 
 /**
- * An investigator as they join the campaign: card code plus printed name,
- * health and sanity (looked up in the `CardDb` by the caller, so the campaign log
- * needs no card data). They start without trauma or XP.
- */
-export interface JoiningInvestigator {
-  readonly code: InvestigatorCode;
-  readonly name: string;
-  readonly health: number;
-  readonly sanity: number;
-}
-
-/**
  * Starts a campaign with 1–4 investigators, the starting chaos bag of the
  * chosen difficulty and the scenario order. `compileCampaign` builds it from
  * a `CampaignDefinition`. Produces `CampaignStarted`.
@@ -47,7 +35,8 @@ export interface StartCampaign {
   /** `CampaignDefinition.id`. */
   readonly definitionId: string;
   readonly difficulty: Difficulty;
-  readonly investigators: readonly JoiningInvestigator[];
+  /** The team in seat order; the handler looks up their printed stats in the `InvestigatorDb`. */
+  readonly investigators: readonly InvestigatorCode[];
   readonly chaosBag: readonly ChaosToken[];
   /** At least one `ScenarioDefinition.id`, in campaign order. */
   readonly scenarioIds: readonly string[];
@@ -130,7 +119,8 @@ export interface ReplaceInvestigator {
   readonly type: 'ReplaceInvestigator';
   /** Code of the killed or insane team member. */
   readonly code: InvestigatorCode;
-  readonly by: JoiningInvestigator;
+  /** The newcomer, looked up in the `InvestigatorDb` like the starting team. */
+  readonly by: InvestigatorCode;
 }
 
 /**

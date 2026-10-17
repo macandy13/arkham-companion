@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   agnes,
   agnesMember,
+  campaignContext,
   daisy,
   daisyMember,
   makeCampaignLog,
@@ -174,13 +175,13 @@ describe('replayCampaign', () => {
 
 describe('campaign replay of commands', () => {
   const commands: CampaignCommand[] = [
-    makeStartCampaign({ investigators: [roland, daisy], chaosBag: ['0', 'skull'] }),
+    makeStartCampaign({ investigators: [roland.code, daisy.code], chaosBag: ['0', 'skull'] }),
     { type: 'AwardXp', code: roland.code, amount: 3 },
     { type: 'SpendXp', code: roland.code, amount: 1 },
     { type: 'AddChaosToken', token: 'tablet' },
     { type: 'RecordStory', key: 'doubt', value: { kind: 'count', value: 1 } },
     { type: 'AddTrauma', code: daisy.code, kind: 'physical', amount: 5 },
-    { type: 'ReplaceInvestigator', code: daisy.code, by: agnes },
+    { type: 'ReplaceInvestigator', code: daisy.code, by: agnes.code },
     { type: 'AdvanceScenario' },
   ];
 
@@ -188,7 +189,7 @@ describe('campaign replay of commands', () => {
     let log = emptyCampaignLog();
     const events: CampaignEvent[] = [];
     for (const command of commands) {
-      const result = executeCampaign(log, command);
+      const result = executeCampaign(campaignContext, log, command);
       log = result.log;
       events.push(...result.events);
     }
@@ -207,7 +208,7 @@ describe('campaign replay of commands', () => {
   it('keeps the log consistent after every command', () => {
     let log = emptyCampaignLog();
     for (const command of commands) {
-      log = executeCampaign(log, command).log;
+      log = executeCampaign(campaignContext, log, command).log;
       expect(checkCampaignInvariants(log)).toEqual([]);
     }
   });

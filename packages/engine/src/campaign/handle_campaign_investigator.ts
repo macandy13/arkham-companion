@@ -1,12 +1,7 @@
-import type { InvestigatorCode } from '../ids';
 import { isPositiveInteger } from '@arkham/util';
-import type {
-  AddTrauma,
-  AwardXp,
-  JoiningInvestigator,
-  ReplaceInvestigator,
-  SpendXp,
-} from './campaign_commands';
+import type { InvestigatorCode } from '../ids';
+import type { InvestigatorDb } from '../investigator_cards';
+import type { AddTrauma, AwardXp, ReplaceInvestigator, SpendXp } from './campaign_commands';
 import type { CampaignEvent } from './campaign_events';
 import {
   availableXp,
@@ -69,6 +64,7 @@ export function handleMarkFate(
 
 /** `ReplaceInvestigator`: a newcomer takes the seat of a killed or insane team member. */
 export function handleReplaceInvestigator(
+  investigators: InvestigatorDb,
   log: CampaignLog,
   command: ReplaceInvestigator,
 ): CampaignEvent[] {
@@ -80,23 +76,33 @@ export function handleReplaceInvestigator(
     });
   // A campaign has one copy of each investigator, and a killed or insane one may not return.
   const everyone = [...log.investigators, ...log.formerInvestigators];
-  if (everyone.some((inv) => inv.code === command.by.code))
+  if (everyone.some((inv) => inv.code === command.by))
     throw new CampaignCommandRejected({
       code: 'duplicateInvestigator',
-      investigatorCode: command.by.code,
+      investigatorCode: command.by,
     });
   return [
-    { type: 'InvestigatorReplaced', code: command.code, by: newCampaignInvestigator(command.by) },
+    {
+      type: 'InvestigatorReplaced',
+      code: command.code,
+      by: newCampaignInvestigator(investigators, command.by),
+    },
   ];
 }
 
 /**
  * The campaign log entry of an investigator joining the campaign (at the start or as
- * a replacement): no trauma, no XP, alive. Rejects printed stats that are
- * not positive integers.
+ * a replacement), from their card: no trauma, no XP, alive. Rejects a code
+ * missing from `investigators` and printed stats that are not positive integers.
  */
-export function newCampaignInvestigator(joining: JoiningInvestigator): CampaignInvestigator {
-  const { code, name, health, sanity } = joining;
+export function newCampaignInvestigator(
+  investigators: InvestigatorDb,
+  code: InvestigatorCode,
+): CampaignInvestigator {
+  const card = investigators.get(code);
+  if (!card)
+    throw new CampaignCommandRejected({ code: 'unknownInvestigatorCard', investigatorCode: code });
+  const { name, health, sanity } = card;
   if (!isPositiveInteger(health) || !isPositiveInteger(sanity))
     throw new CampaignCommandRejected({
       code: 'invalidInvestigatorStats',
