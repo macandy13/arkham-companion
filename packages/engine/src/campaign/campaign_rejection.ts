@@ -40,15 +40,15 @@ export type CampaignRejection =
   | { code: 'chaosTokenNotInBag'; token: ChaosToken }
   /** `AdvanceScenario` after the last scenario. */
   | { code: 'campaignComplete' }
-  /** `ManualAdjust` delta that is zero or not an integer. */
+  /** `AdjustCampaign` delta that is zero or not an integer. */
   | { code: 'invalidDelta'; delta: number }
-  /** `ManualAdjust` `fate` to the fate the investigator already has. */
+  /** `AdjustCampaign` `fate` to the fate the investigator already has. */
   | { code: 'fateUnchanged'; investigatorCode: string; fate: InvestigatorFate }
-  /** `ManualAdjust` `removeStory` for a key with no record. */
+  /** `AdjustCampaign` `removeStory` for a key with no record. */
   | { code: 'unknownStoryRecord'; key: string }
-  /** `ManualAdjust` `position` outside 0..`max` (the number of scenarios). */
+  /** `AdjustCampaign` `position` outside 0..`max` (the number of scenarios). */
   | { code: 'invalidPosition'; position: number; max: number }
-  /** A `ManualAdjust` that would leave the log inconsistent; `violations` from `checkCampaignInvariants`. */
+  /** A `AdjustCampaign` that would leave the log inconsistent; `violations` from `checkCampaignInvariants`. */
   | { code: 'inconsistentAdjustment'; violations: readonly string[] };
 
 /** The `code` of every campaign rejection. */

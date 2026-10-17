@@ -5,7 +5,7 @@ import type { CampaignRejection } from './campaign_rejection';
 import { campaignInvestigator } from './campaign_log';
 import { handleCampaign } from './handle_campaign';
 
-describe('ManualAdjust (Roland: health 9, sanity 5; three scenarios; Roland has 4 XP earned, 1 spent, 2 physical trauma; story: doubt = count 2)', () => {
+describe('AdjustCampaign (Roland: health 9, sanity 5; three scenarios; Roland has 4 XP earned, 1 spent, 2 physical trauma; story: doubt = count 2)', () => {
   const log = startedCampaign(
     {
       investigators: [roland, daisy],
@@ -17,7 +17,7 @@ describe('ManualAdjust (Roland: health 9, sanity 5; three scenarios; Roland has 
     { type: 'RecordStory', key: 'doubt', value: { kind: 'count', value: 2 } },
   );
   const adjust = (adjustment: CampaignAdjustment) =>
-    handleCampaign(log, { type: 'ManualAdjust', adjustment });
+    handleCampaign(log, { type: 'AdjustCampaign', adjustment });
 
   it('lowers earned XP', () => {
     expect(adjust({ kind: 'xp', code: '01001', account: 'earned', delta: -1 })).toEqual([
@@ -43,7 +43,7 @@ describe('ManualAdjust (Roland: health 9, sanity 5; three scenarios; Roland has 
       { type: 'MarkKilled', code: '01001' },
     );
     const events = handleCampaign(killed, {
-      type: 'ManualAdjust',
+      type: 'AdjustCampaign',
       adjustment: { kind: 'fate', code: '01001', fate: 'alive' },
     });
     expect(events).toEqual([{ type: 'InvestigatorFateChanged', code: '01001', fate: 'alive' }]);
@@ -66,7 +66,7 @@ describe('ManualAdjust (Roland: health 9, sanity 5; three scenarios; Roland has 
       { investigators: [roland] },
       { type: 'AwardXp', code: '01001', amount: 4 },
       {
-        type: 'ManualAdjust',
+        type: 'AdjustCampaign',
         adjustment: { kind: 'xp', code: '01001', account: 'earned', delta: -3 },
       },
     );

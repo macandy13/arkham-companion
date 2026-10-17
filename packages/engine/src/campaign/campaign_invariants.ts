@@ -16,7 +16,7 @@ export const MAX_TEAM_SIZE = 4;
  * investigator code appears twice (current or former), every investigator
  * is consistent (`investigatorErrors`), every story value is well-formed and the scenario position lies
  * within the scenario list. `handleCampaign` also uses it to vet
- * `ManualAdjust` corrections.
+ * `AdjustCampaign` corrections.
  */
 export function checkCampaignInvariants(log: CampaignLog): string[] {
   const everyone = [...log.investigators, ...log.formerInvestigators];

@@ -3,7 +3,7 @@ import type { ChaosToken, Difficulty } from '../state';
 /**
  * What became of an investigator over the campaign. A single field rather
  * than separate killed/insane flags, so an investigator can never be both.
- * `killed` and `insane` are permanent in play (only a `ManualAdjust`
+ * `killed` and `insane` are permanent in play (only a `AdjustCampaign`
  * correction undoes them): such an investigator cannot gain XP or trauma and
  * must be replaced (`ReplaceInvestigator`) before the next scenario (M1C.4).
  */
