@@ -359,7 +359,10 @@ export class TestTable {
     });
   }
 
-  /** A fight action against the `enemy` whose combat test the players fail: nothing happens. */
+  /**
+   * A fight action against the `enemy` whose combat test the players fail: no
+   * damage; a ready enemy with retaliate then asks to attack the fighter.
+   */
   failFight(investigator: InvestigatorId, enemy: EnemySelector): void {
     const { id } = this.enemyInstance(enemy);
     this.play({ type: 'Fight', investigatorId: investigator, enemyId: id });
@@ -373,6 +376,11 @@ export class TestTable {
   /** Resources from the resource action or a card. */
   gainResources(investigator: InvestigatorId, amount: number): void {
     this.adjust(investigator, 'resources', amount);
+  }
+
+  /** Resources paid for a card the players play (the app does not track player cards). */
+  spendResources(investigator: InvestigatorId, amount: number): void {
+    this.adjust(investigator, 'resources', -amount);
   }
 
   /** Damage from a failed treachery test or an attack. */
