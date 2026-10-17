@@ -46,7 +46,7 @@ Follow-ups from Andy's review of #63/#64, for one refactoring PR after this stac
 - [x] The same for the game's setup: `SetupOptions` seats investigators by ID and code, and `compileSetup` takes stats and skills from the `EngineContext`'s `CardDb` (`StartScenario` keeps full investigators, so tests can start from any board)
 - [x] Card codes are a branded `CardCode` everywhere (`CardStats`, `CardInstance`, setup steps, decks, set-aside commands); `InvestigatorCode` is a `CardCode` with one more tag (Andy on #72)
 - [x] Encounter set codes, scenario IDs and campaign definition IDs are branded (`EncounterSetCode`, `ScenarioId`, `CampaignDefinitionId`)
-- [ ] Brand the campaign ID and the game ID (`CampaignId`, `GameId`), which the store and the app create
+- [x] The campaign ID and the game ID are branded (`CampaignId`, `GameId`); the IndexedDB store creates game IDs through one `newGameId()`
 - [ ] Import campaign and scenario functions through a namespace (`campaign.handle`, `scenario.compileSetup`) and name functions verb + noun
 
 ## M1C.2 Change notices (O)

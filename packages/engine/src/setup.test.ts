@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  campaignId,
   cardCode,
   encounterSetCode,
   scenarioId,
@@ -430,7 +431,7 @@ describe('compileSetup buildEncounterDeck', () => {
 
 describe('compileSetup campaign', () => {
   it('passes the campaign log through', () => {
-    const campaign = { ...emptyCampaignLog(), campaignId: 'night_of_the_zealot_1' };
+    const campaign = { ...emptyCampaignLog(), campaignId: campaignId('night_of_the_zealot_1') };
 
     const command = compileSetup(contextWith(), makeDefinition(), makeSetupOptions({ campaign }));
 

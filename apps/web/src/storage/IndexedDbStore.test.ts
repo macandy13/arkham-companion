@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import {
   STATE_VERSION,
   cardCode,
+  gameId,
   scenarioId,
   emptyState,
   instanceId,
@@ -125,8 +126,8 @@ describe('IndexedDbStore', () => {
   });
 
   it('returns undefined for unknown games and rejects appends to them', async () => {
-    expect(await store.loadGame('nope')).toBeUndefined();
-    await expect(store.appendEvents('nope', [started])).rejects.toThrow(/Unknown game/);
+    expect(await store.loadGame(gameId('nope'))).toBeUndefined();
+    await expect(store.appendEvents(gameId('nope'), [started])).rejects.toThrow(/Unknown game/);
   });
 
   it('keeps games isolated from each other', async () => {
@@ -155,7 +156,7 @@ describe('IndexedDbStore', () => {
     const before = (await store.listGames())[0]!.updatedAt;
     await store.renameGame(id, 'New');
     expect((await store.listGames())[0]).toMatchObject({ title: 'New', updatedAt: before });
-    await expect(store.renameGame('nope', 'x')).rejects.toThrow(/Unknown game/);
+    await expect(store.renameGame(gameId('nope'), 'x')).rejects.toThrow(/Unknown game/);
   });
 
   it('duplicates a game with its log, independent of the original', async () => {
@@ -167,7 +168,7 @@ describe('IndexedDbStore', () => {
     expect((await store.loadGame(copy))?.state).toEqual(replay([started, tokens(1), tokens(5)]));
     expect((await store.loadGame(id))?.state).toEqual(replay([started, tokens(1)]));
     expect((await store.loadGame(copy))?.summary).toMatchObject({ title: 'Copy', lastSeq: 3 });
-    await expect(store.duplicateGame('nope')).rejects.toThrow(/Unknown game/);
+    await expect(store.duplicateGame(gameId('nope'))).rejects.toThrow(/Unknown game/);
   });
 
   it('deletes a game with its events and snapshot, leaving others alone', async () => {
@@ -237,7 +238,7 @@ describe('IndexedDbStore', () => {
   });
 
   it('returns undefined when undoing an unknown game', async () => {
-    expect(await store.undoLast('nope')).toBeUndefined();
+    expect(await store.undoLast(gameId('nope'))).toBeUndefined();
   });
 
   it('caches cards per language and pack', async () => {

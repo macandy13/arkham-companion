@@ -1,4 +1,4 @@
-import type { CampaignDefinitionId, InvestigatorCode, ScenarioId } from '../ids';
+import type { CampaignDefinitionId, CampaignId, InvestigatorCode, ScenarioId } from '../ids';
 import type { ChaosToken, Difficulty } from '../state';
 import type {
   CampaignInvestigator,
@@ -29,7 +29,7 @@ export type CampaignEvent =
 /** A campaign began; replaces the whole log. Produced by `StartCampaign`. */
 export interface CampaignStarted {
   readonly type: 'CampaignStarted';
-  readonly campaignId: string;
+  readonly campaignId: CampaignId;
   readonly definitionId: CampaignDefinitionId;
   readonly difficulty: Difficulty;
   /** Already in their starting state: no trauma, no XP, alive. */

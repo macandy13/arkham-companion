@@ -1,4 +1,4 @@
-import { campaignDefinitionId, scenarioId } from '../ids';
+import { campaignId, campaignDefinitionId, scenarioId } from '../ids';
 import { describe, expect, it } from 'vitest';
 import {
   agnes,
@@ -22,7 +22,7 @@ describe('applyCampaign', () => {
   it('starts a campaign by replacing the whole log', () => {
     const log = applyCampaign(makeCampaignLog({ position: 1 }), {
       type: 'CampaignStarted',
-      campaignId: 'campaign_b',
+      campaignId: campaignId('campaign_b'),
       definitionId: campaignDefinitionId('night_of_the_zealot'),
       difficulty: 'hard',
       investigators: [daisyMember],
@@ -32,7 +32,7 @@ describe('applyCampaign', () => {
 
     expect(log).toEqual({
       ...emptyCampaignLog(),
-      campaignId: 'campaign_b',
+      campaignId: campaignId('campaign_b'),
       definitionId: 'night_of_the_zealot',
       difficulty: 'hard',
       investigators: [daisyMember],
@@ -150,7 +150,7 @@ describe('replayCampaign', () => {
     const events: CampaignEvent[] = [
       {
         type: 'CampaignStarted',
-        campaignId: 'campaign_a',
+        campaignId: campaignId('campaign_a'),
         definitionId: campaignDefinitionId('test_campaign'),
         difficulty: 'standard',
         investigators: [rolandMember],
@@ -163,7 +163,7 @@ describe('replayCampaign', () => {
 
     expect(replayCampaign(events)).toEqual({
       ...emptyCampaignLog(),
-      campaignId: 'campaign_a',
+      campaignId: campaignId('campaign_a'),
       definitionId: 'test_campaign',
       difficulty: 'standard',
       investigators: [{ ...rolandMember, xpEarned: 2 }],

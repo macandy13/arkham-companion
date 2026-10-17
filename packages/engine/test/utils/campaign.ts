@@ -1,5 +1,6 @@
 import {
   campaignDefinitionId,
+  campaignId,
   scenarioId,
   CampaignCommandRejected,
   cardDbFrom,
@@ -50,7 +51,7 @@ export const skidsMember = campaignMember('01003', "Skids O'Toole", 8, 6);
  */
 export function makeCampaignLog(overrides: Partial<CampaignLog> = {}): CampaignLog {
   return {
-    campaignId: 'campaign_a',
+    campaignId: campaignId('campaign_a'),
     definitionId: campaignDefinitionId('test_campaign'),
     difficulty: 'standard',
     investigators: [rolandMember],
@@ -115,7 +116,7 @@ export const campaignContext: CampaignContext = {
 export function makeStartCampaign(overrides: Partial<StartCampaign> = {}): StartCampaign {
   return {
     type: 'StartCampaign',
-    campaignId: 'campaign_a',
+    campaignId: campaignId('campaign_a'),
     definitionId: campaignDefinitionId('test_campaign'),
     difficulty: 'standard',
     investigators: [roland.code],

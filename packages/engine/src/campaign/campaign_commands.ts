@@ -1,4 +1,4 @@
-import type { CampaignDefinitionId, InvestigatorCode, ScenarioId } from '../ids';
+import type { CampaignDefinitionId, CampaignId, InvestigatorCode, ScenarioId } from '../ids';
 import type { ChaosToken, Difficulty } from '../state';
 import type { InvestigatorFate, StoryValue, TraumaKind, XpAccount } from './campaign_log';
 
@@ -31,7 +31,7 @@ export type CampaignCommandType = CampaignCommand['type'];
  */
 export interface StartCampaign {
   readonly type: 'StartCampaign';
-  readonly campaignId: string;
+  readonly campaignId: CampaignId;
   /** `CampaignDefinition.id`. */
   readonly definitionId: CampaignDefinitionId;
   readonly difficulty: Difficulty;
