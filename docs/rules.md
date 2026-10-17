@@ -163,6 +163,7 @@ If auto-success or auto-failure is known before step 3, skip steps 3 and 4. [Var
 
 [Campaign play](https://arkhamdb.com/rules#Campaign_Play), [trauma](https://arkhamdb.com/rules#Trauma), [killed/insane](https://arkhamdb.com/rules#Killed_Insane_Investigators), [victory display](https://arkhamdb.com/rules#Victory_Display_Victory_Points).
 
+- The game is for 1–4 players, each choosing one investigator ([setup](https://arkhamdb.com/rules#Appendix_III_Setting_Up_The_Game), step 1), so a campaign team has 1–4 investigators.
 - Defeat by damage gives 1 physical trauma, and defeat by horror gives 1 mental trauma. If both happen at once, the player picks which. Each trauma means starting later scenarios with 1 damage or 1 horror.
 - Physical trauma ≥ printed health means killed, and mental trauma ≥ printed sanity means insane. That investigator can't be used again in the campaign. If no investigator is left to choose, the campaign is lost.
 - At the end of a scenario, revealed locations in play with Victory X and no clues go to the victory display. Experience equals the victory points in the display plus or minus the resolution's adjustments, and unspent experience carries over.
