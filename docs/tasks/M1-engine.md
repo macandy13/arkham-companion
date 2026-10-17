@@ -135,6 +135,7 @@ Follow-ups: show a retaliate in the end-to-end test once M1.16's #76 is on main 
 Ref: M1.5, M1.6, M1.9, M1.10 follow-ups.
 
 - [ ] `onTurnEnd` hook fired by `EndTurn`; Frozen in Fear raises its willpower test there
+- [ ] Dissonant Voices discards itself at the end of the round (the end-to-end test still shows it on Roland in round 10)
 - [ ] Simultaneous forced effects: the lead investigator picks the order (`chooseOption` decision) when more than one applies
 - [ ] After a doom `ManualAdjust`, offer `CheckDoomThreshold` (a `confirm` decision), never advance silently
 - [ ] `ManualAdjust` cannot move the current agenda or act out of its deck (rejection)

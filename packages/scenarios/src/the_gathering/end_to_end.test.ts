@@ -310,6 +310,16 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     // Round 4 – mythos: Roland draws Grasping Hands, an agility (3) test
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos', step: 'drawEncounterCard' });
+    expect(table.decisions()).toEqual([
+      {
+        prompt: 'decision.revelationTest',
+        kind: 'skillTestResult',
+        about: 'Grasping Hands',
+        for: roland,
+        test: { skill: 'agility', difficulty: 3 },
+        options: ['pass', 'fail'],
+      },
+    ]);
 
     // With agility 2 he fails by 1 and takes 1 damage.
     table.answer('Grasping Hands', 'fail');
@@ -373,6 +383,16 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     // Round 5 – mythos: Roland draws Rotting Remains, a willpower (3) test
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos', step: 'drawEncounterCard' });
+    expect(table.decisions()).toEqual([
+      {
+        prompt: 'decision.revelationTest',
+        kind: 'skillTestResult',
+        about: 'Rotting Remains',
+        for: roland,
+        test: { skill: 'willpower', difficulty: 3 },
+        options: ['pass', 'fail'],
+      },
+    ]);
 
     // With willpower 3 he passes and takes no horror.
     table.answer('Rotting Remains', 'pass');
@@ -441,6 +461,16 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // Round 6 – mythos: Roland draws Rotting Remains again and passes with willpower 3;
     // the Swarms of Rats Daisy and Wendy draw spawn engaged with them.
     expect(table.nextPhase()).toEqual({ round: 6, phase: 'mythos', step: 'drawEncounterCard' });
+    expect(table.decisions()).toEqual([
+      {
+        prompt: 'decision.revelationTest',
+        kind: 'skillTestResult',
+        about: 'Rotting Remains',
+        for: roland,
+        test: { skill: 'willpower', difficulty: 3 },
+        options: ['pass', 'fail'],
+      },
+    ]);
     table.answer('Rotting Remains', 'pass');
     // Answering only resolves the revelation; the paused phase goes on with the
     // next "Next", which runs Daisy's and Wendy's draws. That finishes the
@@ -517,12 +547,32 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     expect(table.events.slice(eventsBefore)).toEqual(drawn);
     expect(table.agenda()).toEqual({ name: 'Rise of the Ghouls', doom: 5 });
+    expect(table.decisions()).toEqual([
+      {
+        prompt: 'decision.revelationTest',
+        kind: 'skillTestResult',
+        about: 'Grasping Hands',
+        for: roland,
+        test: { skill: 'agility', difficulty: 3 },
+        options: ['pass', 'fail'],
+      },
+    ]);
 
     // Roland passes (agility 2 and a +1 token), so the Grasping Hands do nothing.
     table.answer('Grasping Hands', 'pass');
     // 1.4 continues: Daisy's Grasping Hands (agility 3, she passes), then Wendy
     // draws Dissonant Voices, which stays in play in her threat area.
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'drawEncounterCard' });
+    expect(table.decisions()).toEqual([
+      {
+        prompt: 'decision.revelationTest',
+        kind: 'skillTestResult',
+        about: 'Grasping Hands',
+        for: daisy,
+        test: { skill: 'agility', difficulty: 3 },
+        options: ['pass', 'fail'],
+      },
+    ]);
     table.answer('Grasping Hands', 'pass');
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos' });
 
@@ -643,6 +693,16 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // Round 8 – mythos: Roland draws Dissonant Voices and Daisy a Ghoul Minion;
     // Wendy passes her willpower test against Crypt Chill.
     expect(table.nextPhase()).toEqual({ round: 8, phase: 'mythos', step: 'drawEncounterCard' });
+    expect(table.decisions()).toEqual([
+      {
+        prompt: 'decision.revelationTest',
+        kind: 'skillTestResult',
+        about: 'Crypt Chill',
+        for: wendy,
+        test: { skill: 'willpower', difficulty: 4 },
+        options: ['pass', 'fail'],
+      },
+    ]);
     table.answer('Crypt Chill', 'pass');
 
     // Round 8 – investigation: Wendy, with Frozen in Fear and Dissonant Voices on
@@ -687,6 +747,14 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // a Ghoul enemy comes up: the top card is a Ghoul Minion, which Roland, the
     // lead investigator, draws.
     expect(table.nextPhase()).toEqual({ round: 9, phase: 'mythos', step: 'checkDoomThreshold' });
+    expect(table.decisions()).toEqual([
+      {
+        prompt: 'decision.advanceAgenda',
+        kind: 'confirm',
+        about: 'Rise of the Ghouls',
+        options: ['yes', 'no'],
+      },
+    ]);
     table.answer('Rise of the Ghouls', 'yes');
 
     expect(table.agenda()).toEqual({ name: "They're Getting Out!", doom: 0 });
@@ -699,8 +767,28 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     // 1.4: Rotting Remains for both; willpower 3 against 3, both pass.
     expect(table.nextPhase()).toEqual({ round: 9, phase: 'mythos', step: 'drawEncounterCard' });
+    expect(table.decisions()).toEqual([
+      {
+        prompt: 'decision.revelationTest',
+        kind: 'skillTestResult',
+        about: 'Rotting Remains',
+        for: roland,
+        test: { skill: 'willpower', difficulty: 3 },
+        options: ['pass', 'fail'],
+      },
+    ]);
     table.answer('Rotting Remains', 'pass');
     expect(table.nextPhase()).toEqual({ round: 9, phase: 'mythos', step: 'drawEncounterCard' });
+    expect(table.decisions()).toEqual([
+      {
+        prompt: 'decision.revelationTest',
+        kind: 'skillTestResult',
+        about: 'Rotting Remains',
+        for: daisy,
+        test: { skill: 'willpower', difficulty: 3 },
+        options: ['pass', 'fail'],
+      },
+    ]);
     table.answer('Rotting Remains', 'pass');
 
     // Round 9 – investigation: The Barrier asks for the investigators in the
@@ -723,14 +811,23 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     // The round has ended with both in the Hallway holding 9 clues, the 3 per
     // investigator act 2 asks for (Wendy still counts). Its reverse side
-    // reveals the Parlor, puts Lita Chantler there and spawns the Ghoul Priest
-    // in the Hallway; its prey (highest combat) is Roland.
+    // reveals the Parlor (on the house map, unrevealed, since act 1), puts Lita
+    // Chantler there and spawns the Ghoul Priest in the Hallway. The players
+    // pick whom it engages by its prey (highest combat): Roland.
     expect(table.investigatorLocations()).toEqual({
       roland: 'Hallway',
       daisy: 'Hallway',
       wendy: 'Cellar',
     });
     table.spendCluesToAdvanceAct({ roland: 7, daisy: 2 });
+    expect(table.decisions()).toEqual([
+      {
+        prompt: 'decision.chooseEngagement',
+        kind: 'chooseInvestigator',
+        about: 'Ghoul Priest',
+        options: ['Roland Banks', 'Daisy Walker'],
+      },
+    ]);
     table.answer('Ghoul Priest', 'Roland Banks');
 
     expect(table.act()).toBe('What Have You Done?');
@@ -744,14 +841,32 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // Round 10 – mythos: Roland draws Frozen in Fear, Daisy Grasping Hands
     // (agility 2 and a +1 token against 3: she passes).
     expect(table.nextPhase()).toEqual({ round: 10, phase: 'mythos', step: 'drawEncounterCard' });
+    expect(table.decisions()).toEqual([
+      {
+        prompt: 'decision.revelationTest',
+        kind: 'skillTestResult',
+        about: 'Grasping Hands',
+        for: daisy,
+        test: { skill: 'agility', difficulty: 3 },
+        options: ['pass', 'fail'],
+      },
+    ]);
     table.answer('Grasping Hands', 'pass');
+    // Dissonant Voices from round 8 is still there: its end-of-round discard
+    // is not automated yet either.
+    expect(table.namesIn({ kind: 'threatArea', investigatorId: roland })).toEqual([
+      'Dissonant Voices',
+      'Frozen in Fear',
+    ]);
 
     // Round 10 – investigation: the Ghoul Priest has 5 health per investigator,
-    // 15. Frozen in Fear makes Roland's first fight cost an extra action: he
-    // fights once with his .45 Automatic and Vicious Blow (3 damage), then
-    // evades the Priest so it cannot attack him at 4 of 5 horror. Daisy hits
-    // it three times (combat 2 against 4: she commits her two combat icons and
-    // the tokens are kind).
+    // 15. Frozen in Fear makes Roland's first fight cost an extra action, which
+    // the players take off by hand. Its end-of-turn willpower test is not
+    // automated yet, so it stays for round 11 as if he failed it. He fights
+    // once with his .45 Automatic and Vicious Blow (3 damage), then evades the
+    // Priest so it cannot attack him at 4 of 5 horror. Daisy hits it three
+    // times (combat 2 against 4: she commits her two combat icons and the
+    // tokens are kind).
     expect(table.nextPhase()).toEqual({ round: 10, phase: 'investigation' });
     table.startTurn(roland);
     table.adjustActions(roland, -1);
@@ -775,6 +890,14 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // readied in 4.3, it engages its prey again, highest combat: Roland.
     expect(table.nextPhase()).toEqual({ round: 10, phase: 'enemy' });
     expect(table.nextPhase()).toEqual({ round: 10, phase: 'upkeep', step: 'readyExhausted' });
+    expect(table.decisions()).toEqual([
+      {
+        prompt: 'decision.chooseEngagement',
+        kind: 'chooseInvestigator',
+        about: 'Ghoul Priest',
+        options: ['Roland Banks', 'Daisy Walker'],
+      },
+    ]);
     table.answer('Ghoul Priest', 'Roland Banks');
     expect(table.nextPhase()).toEqual({ round: 10, phase: 'upkeep' });
 

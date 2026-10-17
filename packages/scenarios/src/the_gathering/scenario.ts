@@ -111,9 +111,10 @@ function trappedReverseSide(ctx: EngineContext, state: GameState): Command[] {
 }
 
 /**
- * Act 2 ("The Barrier"), reverse side: the Parlor is revealed, Lita Chantler
- * is put into play there, and the Ghoul Priest spawns in the Hallway, where
- * it engages per its prey like any spawn.
+ * Act 2 ("The Barrier"), reverse side: the Parlor, in play on the house map
+ * since act 1 (`theGatheringHouse`) but unrevealed, is revealed; Lita
+ * Chantler is put into play there, and the Ghoul Priest spawns in the
+ * Hallway, where it engages per its prey like any spawn.
  */
 function theBarrierReverseSide(_ctx: EngineContext, state: GameState): Command[] {
   const parlor = onlyCard(state, codes.parlor);
