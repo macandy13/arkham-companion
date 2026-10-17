@@ -75,7 +75,7 @@ export type StoryKind = StoryValue['kind'];
 /**
  * The campaign log (architecture §5, §8): everything that carries over from
  * one scenario to the next. The state of the campaign aggregate, only ever
- * produced by `applyCampaign`/`replayCampaign` from campaign events; a
+ * produced by `applyEvent`/`replayEvents` from campaign events; a
  * game's `GameState.campaign` holds a copy of it at scenario start.
  */
 export interface CampaignLog {
@@ -108,7 +108,7 @@ export interface CampaignLog {
 }
 
 /** Log before any `CampaignStarted` event. */
-export function emptyCampaignLog(): CampaignLog {
+export function createEmptyLog(): CampaignLog {
   return {
     campaignId: campaignId(''),
     definitionId: campaignDefinitionId(''),
@@ -127,12 +127,12 @@ export function emptyCampaignLog(): CampaignLog {
  * list because `StartCampaign` requires at least one scenario, so no extra
  * flag can drift out of sync.
  */
-export function isCampaignStarted(log: CampaignLog): boolean {
+export function isStarted(log: CampaignLog): boolean {
   return log.scenarioIds.length > 0;
 }
 
 /** The current team member with card code `code`, if any. */
-export function campaignInvestigator(
+export function findInvestigator(
   log: CampaignLog,
   code: InvestigatorCode,
 ): CampaignInvestigator | undefined {
@@ -140,17 +140,17 @@ export function campaignInvestigator(
 }
 
 /** The XP an investigator can still spend. */
-export function availableXp(investigator: CampaignInvestigator): number {
+export function countAvailableXp(investigator: CampaignInvestigator): number {
   return investigator.xpEarned - investigator.xpSpent;
 }
 
 /** The trauma count of one kind. */
-export function traumaOf(investigator: CampaignInvestigator, kind: TraumaKind): number {
+export function countTrauma(investigator: CampaignInvestigator, kind: TraumaKind): number {
   return kind === 'physical' ? investigator.physicalTrauma : investigator.mentalTrauma;
 }
 
 /** `investigator` with `delta` more trauma of `kind`. */
-export function withTrauma(
+export function changeTrauma(
   investigator: CampaignInvestigator,
   kind: TraumaKind,
   delta: number,
@@ -165,16 +165,16 @@ export function withTrauma(
  * health (physical) or sanity (mental), per the Rules Reference ("Trauma"),
  * or `undefined` while it is below.
  */
-export function traumaFate(
+export function findTraumaFate(
   investigator: CampaignInvestigator,
   kind: TraumaKind,
 ): InvestigatorFate | undefined {
   const limit = kind === 'physical' ? investigator.health : investigator.sanity;
-  if (traumaOf(investigator, kind) < limit) return undefined;
+  if (countTrauma(investigator, kind) < limit) return undefined;
   return kind === 'physical' ? 'killed' : 'insane';
 }
 
 /** The ID of the scenario to play next, or `undefined` once the campaign is complete. */
-export function currentScenarioId(log: CampaignLog): ScenarioId | undefined {
+export function findCurrentScenarioId(log: CampaignLog): ScenarioId | undefined {
   return log.scenarioIds[log.position];
 }

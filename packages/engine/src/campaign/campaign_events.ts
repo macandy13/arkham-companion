@@ -10,7 +10,7 @@ import type {
 
 /**
  * Facts of the campaign aggregate. Like the game's `Event`s they carry
- * everything `applyCampaign` needs, so replaying a stored campaign log never
+ * everything `applyEvent` needs, so replaying a stored campaign log never
  * validates or looks anything up. Regular commands and `AdjustCampaign`
  * corrections produce the same events.
  */

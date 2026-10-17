@@ -48,4 +48,29 @@ export {
 } from './triggers';
 export * from './store';
 export { undoLastGroup } from './undo';
-export * from './campaign';
+// Campaign functions are reached as `campaign.handleCommand` and so on, so
+// their names don't repeat "campaign" (Andy on #64); the types stay flat.
+export * as campaign from './campaign';
+export type * from './campaign/campaign_commands';
+export type * from './campaign/campaign_events';
+export type {
+  CampaignInvestigator,
+  CampaignLog,
+  CrossableEntry,
+  InvestigatorFate,
+  StoryKind,
+  StoryValue,
+  TraumaKind,
+  XpAccount,
+} from './campaign/campaign_log';
+export type {
+  CampaignDefinition,
+  CampaignOptions,
+  InterludeDefinition,
+} from './campaign/campaign_definition';
+export type { CampaignContext, CampaignExecuteResult } from './campaign/handle_campaign';
+export {
+  CampaignCommandRejected,
+  type CampaignRejection,
+  type CampaignRejectionCode,
+} from './campaign/campaign_rejection';

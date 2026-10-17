@@ -4,8 +4,7 @@ import {
   scenarioId,
   CampaignCommandRejected,
   cardDbFrom,
-  emptyCampaignLog,
-  executeCampaign,
+  campaign,
   investigatorCardStats,
   investigatorCode,
   type CampaignCommand,
@@ -132,8 +131,9 @@ export function startedCampaign(
   ...commands: CampaignCommand[]
 ): CampaignLog {
   return commands.reduce(
-    (log, command) => executeCampaign(campaignContext, log, command).log,
-    executeCampaign(campaignContext, emptyCampaignLog(), makeStartCampaign(start)).log,
+    (log, command) => campaign.executeCommand(campaignContext, log, command).log,
+    campaign.executeCommand(campaignContext, campaign.createEmptyLog(), makeStartCampaign(start))
+      .log,
   );
 }
 

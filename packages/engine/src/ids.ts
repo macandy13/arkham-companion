@@ -32,7 +32,7 @@ export type CampaignDefinitionId = Brand<string, 'CampaignDefinitionId'>;
 export type GameId = Brand<string, 'GameId'>;
 /**
  * ID of one campaign play-through (`CampaignLog.campaignId`), chosen by the
- * caller of `compileCampaign`; the games of a campaign carry it as
+ * caller of `compileStart`; the games of a campaign carry it as
  * `GameSummary.campaignId`.
  */
 export type CampaignId = Brand<string, 'CampaignId'>;
