@@ -143,7 +143,7 @@ Slices (one PR each):
 1. Engine: `onTurnEnd`, end-of-turn tests and end-of-round discards as card data.
 2. The Gathering: Frozen in Fear's and Dissonant Voices' card data, end-to-end test updated (after M1.17 slice 2, #78, which edits that test).
 3. Engine: `ManualAdjust` guards (doom threshold confirm, current agenda/act stay in their deck).
-4. Engine: the lead investigator orders simultaneous forced effects.
+4. ~~Engine: the lead investigator orders simultaneous forced effects.~~ Deferred (Andy, 2026-10-17): every event fires at most one hook, and no Core card's outcome depends on the order of end-of-turn or end-of-round effects. Build it when a scenario needs it.
 5. Engine: `decider` checked against the answering investigator.
 
 - [ ] `onTurnEnd` hook fired by `EndTurn`; Frozen in Fear raises its willpower test there
