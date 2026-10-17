@@ -2,13 +2,9 @@ import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { normaliseCard, type CardDef } from './schema';
 
-/**
- * Reads cards from a checkout of arkhamdb-json-data
- * (https://github.com/Kamalisk/arkhamdb-json-data), the repository ArkhamDB is built from.
- * It is the fallback source when the ArkhamDB API is unreachable (cloud sessions block it), and
- * it has every pack in one clone. Its card files differ from the API in two ways that
- * `resolveJsonDataCards` evens out before `normaliseCard` sees them.
- */
+// Cards from a checkout of arkhamdb-json-data (https://github.com/Kamalisk/arkhamdb-json-data),
+// the repository ArkhamDB is built from. It is the source when the ArkhamDB API is unreachable
+// (cloud sessions block it), and one clone holds every pack.
 
 /** One raw card entry as the data repository stores it; checked later by `normaliseCard`. */
 type RawEntry = Readonly<Record<string, unknown>>;
@@ -44,15 +40,6 @@ function withOriginal(
   return { ...withOriginal(original, byCode, seen), ...entry };
 }
 
-/** Normalised cards grouped by pack code, in the order they appear. */
-export function cardsByPack(cards: readonly CardDef[]): Map<string, CardDef[]> {
-  const packs = new Map<string, CardDef[]>();
-  for (const card of cards) {
-    packs.set(card.packCode, [...(packs.get(card.packCode) ?? []), card]);
-  }
-  return packs;
-}
-
 /**
  * Every card of the checkout at `dir`, normalised and grouped by pack. Reads all JSON files
  * under `dir/pack/` (one per pack plus one per pack's encounter cards). Throws on malformed
@@ -68,4 +55,14 @@ export async function readJsonDataPacks(dir: string): Promise<Map<string, CardDe
     entries.push(...(parsed as RawEntry[]));
   }
   return cardsByPack(resolveJsonDataCards(entries).map(normaliseCard));
+}
+
+function cardsByPack(cards: readonly CardDef[]): Map<string, CardDef[]> {
+  const packs = new Map<string, CardDef[]>();
+  for (const card of cards) {
+    const pack = packs.get(card.packCode);
+    if (pack) pack.push(card);
+    else packs.set(card.packCode, [card]);
+  }
+  return packs;
 }
