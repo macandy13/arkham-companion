@@ -385,15 +385,13 @@ export class TestTable {
 
   /**
    * Enemy step 3.3: the players resolve each attack the step lists, in its
-   * order, with the printed damage and horror, or the `lowered` amounts when
-   * assets soak part of every attack; each enemy exhausts after its attack.
+   * order, with the printed damage and horror; each enemy exhausts after its attack.
    */
-  resolveEnemyAttacks(lowered: { damage?: number; horror?: number } = {}): void {
+  resolveEnemyAttacks(): void {
     const [step] = this.current.meta.steps;
     if (step?.id !== 'enemiesAttack' || step.attacks === undefined)
       throw new Error(`no enemy attacks to resolve\n${this.board()}`);
-    for (const attack of step.attacks)
-      this.play({ type: 'ResolveEnemyAttack', ...attack, ...lowered });
+    for (const attack of step.attacks) this.play({ type: 'ResolveEnemyAttack', ...attack });
   }
 
   /** The enemy attacks step 3.3 lists, in its order; none outside that step. */

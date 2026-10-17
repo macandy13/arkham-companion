@@ -5,6 +5,7 @@ import {
   decisionId,
   enemiesAt,
   mapId,
+  matchesEncounter,
   trait,
   type AddMapStep,
   type CardInstance,
@@ -190,13 +191,11 @@ function whatHaveYouDoneReverseSide(): Command[] {
 function riseOfTheGhoulsReverseSide(ctx: EngineContext, state: GameState): Command[] {
   const shuffle: Command = { type: 'ShuffleEncounterDiscard' };
   const lead = state.meta.leadInvestigator;
-  const encounterCards = Object.values(state.cards).filter(
-    (card) => card.zone.kind === 'encounterDeck' || card.zone.kind === 'encounterDiscard',
+  const ghoulLeft = Object.values(state.cards).some(
+    (card) =>
+      (card.zone.kind === 'encounterDeck' || card.zone.kind === 'encounterDiscard') &&
+      matchesEncounter(cardStats(ctx.cards, card.code), ghoulEnemy),
   );
-  const ghoulLeft = encounterCards.some((card) => {
-    const stats = cardStats(ctx.cards, card.code);
-    return stats.typeCode === 'enemy' && stats.traits.includes(trait('Ghoul'));
-  });
   if (lead === undefined || !ghoulLeft) return [shuffle];
   return [
     shuffle,

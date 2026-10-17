@@ -8,10 +8,10 @@ import {
   neighbours,
   cardStats,
   skillTestSuggestion,
+  matchesEncounter,
   trait,
   zoneKey,
   type Command,
-  type InstanceId,
   type Zone,
   type EngineContext,
   type GameState,
@@ -34,9 +34,11 @@ import {
 
 const ctx: EngineContext = { cards: theGatheringCards };
 
-/** Instance ids in `zone`, top first. */
-function idsIn(state: GameState, zone: Zone): InstanceId[] {
-  return state.order[zoneKey(zone)] ?? [];
+/** Card names in `zone`, top first. */
+function namesIn(state: GameState, zone: Zone): string[] {
+  return (state.order[zoneKey(zone)] ?? []).map(
+    (id) => cardStats(theGatheringCards, state.cards[id]!.code).name,
+  );
 }
 const study = mapId('study');
 
@@ -353,10 +355,12 @@ describe('The Gathering enemies', () => {
 describe('The Gathering acts 2 and 3', () => {
   const playing: EngineContext = { cards: theGatheringCards, hooks: theGathering.hooks };
   const hallway = instanceId('01112#1');
+  const attic = instanceId('01113#1');
   const parlor = instanceId('01115#1');
   const priest = instanceId('01116#1');
   const lita = instanceId('01117#1');
   const fleshEater = instanceId('01118#1');
+  const whatHaveYouDone = instanceId('01110#1');
   const tank = investigatorId('tank');
 
   /** Two investigators; act 1 (house into play, everyone to the Hallway) and act 2 advance without paying. */
@@ -369,6 +373,16 @@ describe('The Gathering acts 2 and 3', () => {
     );
   }
 
+  /** `state` with the Ghoul Priest's prey question answered: it engages `investigator`. */
+  function priestEngages(state: GameState, investigator: typeof tank): GameState {
+    const preyQuestion = state.pending.find((decision) => decision.subject === priest);
+    return stateAfter(playing, state, {
+      type: 'ResolveDecision',
+      decisionId: preyQuestion!.id,
+      optionId: investigator,
+    });
+  }
+
   it('reveals the Parlor, puts Lita Chantler there and spawns the Ghoul Priest in the Hallway', () => {
     const state = atAct3();
 
@@ -379,17 +393,15 @@ describe('The Gathering acts 2 and 3', () => {
     expect(codesIn(state, { kind: 'atLocation', locationId: hallway })).toEqual([
       codes.ghoulPriest,
     ]);
-    expect(state.act.current).toBe(instanceId('01110#1'));
+    expect(state.act.current).toBe(whatHaveYouDone);
     expect(checkInvariants(state)).toEqual([]);
   });
 
   it('advances act 3 when the Ghoul Priest is defeated and asks the lead whether to burn the house', () => {
-    const asked = stateAfter(
-      playing,
-      atAct3(),
-      { type: 'ResolveDecision', decisionId: atAct3().pending[0]!.id, optionId: tank },
-      { type: 'DefeatEnemy', enemyId: priest },
-    );
+    const asked = stateAfter(playing, priestEngages(atAct3(), tank), {
+      type: 'DefeatEnemy',
+      enemyId: priest,
+    });
 
     expect(asked.act.current).toBeUndefined();
     expect(asked.pending).toMatchObject([
@@ -406,12 +418,10 @@ describe('The Gathering acts 2 and 3', () => {
     ['burn', 'R1'],
     ['spare', 'R2'],
   ])('ends the scenario with the lead choosing to %s the house (%s)', (optionId, resolution) => {
-    const asked = stateAfter(
-      playing,
-      atAct3(),
-      { type: 'ResolveDecision', decisionId: atAct3().pending[0]!.id, optionId: tank },
-      { type: 'DefeatEnemy', enemyId: priest },
-    );
+    const asked = stateAfter(playing, priestEngages(atAct3(), tank), {
+      type: 'DefeatEnemy',
+      enemyId: priest,
+    });
 
     const ended = stateAfter(playing, asked, {
       type: 'ResolveDecision',
@@ -423,21 +433,16 @@ describe('The Gathering acts 2 and 3', () => {
   });
 
   it('does not advance act 3 when another enemy is defeated', () => {
-    const answered = stateAfter(playing, atAct3(), {
-      type: 'ResolveDecision',
-      decisionId: atAct3().pending[0]!.id,
-      optionId: tank,
-    });
     // In the empty Attic, so it engages nobody.
-    const withFleshEater = stateAfter(playing, answered, {
+    const withFleshEater = stateAfter(playing, priestEngages(atAct3(), tank), {
       type: 'SpawnEnemy',
       enemyId: fleshEater,
-      at: instanceId('01113#1'),
+      at: attic,
     });
 
     const state = stateAfter(playing, withFleshEater, { type: 'DefeatEnemy', enemyId: fleshEater });
 
-    expect(state.act.current).toBe(instanceId('01110#1'));
+    expect(state.act.current).toBe(whatHaveYouDone);
   });
 });
 
@@ -447,12 +452,18 @@ describe('The Gathering agendas 2 and 3', () => {
   const seeker = investigatorId('seeker');
   const fleshEater = instanceId('01118#1');
   const ratSwarm = instanceId('01159#1');
+  const priest = instanceId('01116#1');
+  const theyreGettingOut = instanceId('01107#1');
+  const secondGhoulMinion = instanceId('01160#2');
+  const ghoulEnemy = { trait: trait('Ghoul'), typeCode: 'enemy' } as const;
+  const isGhoulEnemy = (code: string) =>
+    matchesEncounter(cardStats(theGatheringCards, code), ghoulEnemy);
   const toDiscard = (cardId: typeof fleshEater): Command => ({
     type: 'ManualAdjust',
     adjustment: { kind: 'moveCard', cardId, to: { kind: 'encounterDiscard' } },
   });
 
-  /** Two investigators, the Flesh-Eater and a Swarm of Rats in the discard, agenda 1 advanced. */
+  /** Two investigators (seed 1), the Flesh-Eater and a Swarm of Rats in the discard, agenda 1 advanced. */
   function atAgenda2(): GameState {
     return stateAfter(
       playing,
@@ -468,21 +479,24 @@ describe('The Gathering agendas 2 and 3', () => {
     const { state, events } = runFrom(playing, atAgenda2(), [{ type: 'AdvanceAgenda' }]);
 
     const drawn = events.find((event) => event.type === 'EncounterCardDrawn');
-    const statsOf = (cardId: InstanceId) => cardStats(theGatheringCards, state.cards[cardId]!.code);
-    const isGhoulEnemy = (cardId: InstanceId) =>
-      statsOf(cardId).typeCode === 'enemy' && statsOf(cardId).traits.includes(trait('Ghoul'));
-    expect(drawn).toMatchObject({ investigatorId: tank });
-    expect(drawn?.type === 'EncounterCardDrawn' && isGhoulEnemy(drawn.cardId)).toBe(true);
-    // The shuffle emptied the discard, so it now holds only the cards discarded above the Ghoul.
-    expect(idsIn(state, { kind: 'encounterDiscard' }).filter(isGhoulEnemy)).toEqual([]);
-    expect(state.agenda.current).toBe(instanceId('01107#1'));
+    expect(drawn).toMatchObject({ investigatorId: tank, cardId: secondGhoulMinion });
+    expect(state.cards[secondGhoulMinion]?.zone).toEqual({
+      kind: 'engaged',
+      investigatorId: tank,
+    });
+    // The three cards turned over above it; the Flesh-Eater and the rats went back into the deck.
+    expect(namesIn(state, { kind: 'encounterDiscard' })).toEqual([
+      'Crypt Chill',
+      'Crypt Chill',
+      'Ancient Evils',
+    ]);
+    expect(state.cards[fleshEater]?.zone).toEqual({ kind: 'encounterDeck' });
+    expect(state.cards[ratSwarm]?.zone).toEqual({ kind: 'encounterDeck' });
+    expect(state.agenda.current).toBe(theyreGettingOut);
   });
 
   it('only shuffles when no Ghoul enemy is left among the encounter cards', () => {
-    const ghoulEnemies = Object.values(atAgenda2().cards).filter((card) => {
-      const stats = cardStats(theGatheringCards, card.code);
-      return stats.typeCode === 'enemy' && stats.traits.includes(trait('Ghoul'));
-    });
+    const ghoulEnemies = Object.values(atAgenda2().cards).filter((card) => isGhoulEnemy(card.code));
     const noGhouls = stateAfter(
       playing,
       atAgenda2(),
@@ -513,13 +527,14 @@ describe('The Gathering agendas 2 and 3', () => {
       { type: 'AdvanceAgenda' },
       { type: 'AdvanceAct' },
     );
-    const answered = stateAfter(playing, atAct3, {
+    const preyQuestion = atAct3.pending.find((decision) => decision.subject === priest);
+    const priestOnTank = stateAfter(playing, atAct3, {
       type: 'ResolveDecision',
-      decisionId: atAct3.pending[0]!.id,
+      decisionId: preyQuestion!.id,
       optionId: tank,
     });
 
-    const { state, events } = runFrom(playing, answered, [{ type: 'AdvanceAgenda' }]);
+    const { state, events } = runFrom(playing, priestOnTank, [{ type: 'AdvanceAgenda' }]);
 
     expect(events.filter((event) => event.type === 'InvestigatorDefeated')).toEqual([
       { type: 'InvestigatorDefeated', investigatorId: seeker, cause: 'cardEffect' },

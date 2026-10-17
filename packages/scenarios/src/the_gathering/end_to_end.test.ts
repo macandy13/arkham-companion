@@ -747,10 +747,48 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.answer('Grasping Hands', 'pass');
 
     // Round 10 – investigation: the Ghoul Priest has 5 health per investigator,
-    // 15. Frozen in Fear makes Roland's first fight cost an extra action, so he
-    // fights twice with his .45 Automatic and Vicious Blow (3 damage each);
-    // Daisy fights three times with her bare hands.
+    // 15. Frozen in Fear makes Roland's first fight cost an extra action: he
+    // fights once with his .45 Automatic and Vicious Blow (3 damage), then
+    // evades the Priest so it cannot attack him at 4 of 5 horror. Daisy hits
+    // it three times (combat 2 against 4: she commits her two combat icons and
+    // the tokens are kind).
     expect(table.nextPhase()).toEqual({ round: 10, phase: 'investigation' });
+    table.startTurn(roland);
+    table.adjustActions(roland, -1);
+    table.fight(roland, 'Ghoul Priest', { damage: 3 });
+    table.evade(roland, 'Ghoul Priest');
+    table.endTurn(roland);
+    table.startTurn(daisy);
+    table.fight(daisy, 'Ghoul Priest');
+    table.fight(daisy, 'Ghoul Priest');
+    table.fight(daisy, 'Ghoul Priest');
+    table.endTurn(daisy);
+
+    expect(table.enemy('Ghoul Priest')).toEqual({
+      name: 'Ghoul Priest',
+      at: 'Hallway',
+      damage: 6,
+      exhausted: true,
+    });
+
+    // Round 10 – enemy phase and upkeep: the exhausted Priest does not attack;
+    // readied in 4.3, it engages its prey again, highest combat: Roland.
+    expect(table.nextPhase()).toEqual({ round: 10, phase: 'enemy' });
+    expect(table.nextPhase()).toEqual({ round: 10, phase: 'upkeep', step: 'readyExhausted' });
+    table.answer('Ghoul Priest', 'Roland Banks');
+    expect(table.nextPhase()).toEqual({ round: 10, phase: 'upkeep' });
+
+    expect(table.enemy('Ghoul Priest')).toMatchObject({ engagedWith: roland });
+
+    // Round 11 – mythos: Roland draws a Swarm of Rats, Daisy Ancient Evils (1 doom).
+    expect(table.nextPhase()).toEqual({ round: 11, phase: 'mythos' });
+    table.placeDoom(1);
+
+    // Round 11 – investigation: Roland's two shots and Daisy's third blow
+    // defeat the Ghoul Priest. It goes to the victory display, which meets act
+    // 3's objective: the act advances by itself and asks Roland, the lead,
+    // whether to burn the house.
+    expect(table.nextPhase()).toEqual({ round: 11, phase: 'investigation' });
     table.startTurn(roland);
     table.adjustActions(roland, -1);
     table.fight(roland, 'Ghoul Priest', { damage: 3 });
@@ -760,30 +798,6 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.fight(daisy, 'Ghoul Priest');
     table.fight(daisy, 'Ghoul Priest');
     table.fight(daisy, 'Ghoul Priest');
-    table.endTurn(daisy);
-
-    expect(table.enemy('Ghoul Priest')).toMatchObject({ damage: 9 });
-
-    // Round 10 – enemy phase: the Priest hits Roland for 2 damage and 2
-    // horror; his Guard Dog soaks the horror.
-    expect(table.nextPhase()).toEqual({ round: 10, phase: 'enemy', step: 'enemiesAttack' });
-    table.resolveEnemyAttacks({ horror: 0 });
-
-    expect(table.wounds(roland)).toEqual({ damage: 6, horror: 4 });
-
-    // Round 11 – mythos: Roland draws a Swarm of Rats, Daisy Ancient Evils (1 doom).
-    expect(table.nextPhase()).toEqual({ round: 10, phase: 'upkeep' });
-    expect(table.nextPhase()).toEqual({ round: 11, phase: 'mythos' });
-    table.placeDoom(1);
-
-    // Round 11 – investigation: Roland's two shots defeat the Ghoul Priest. It
-    // goes to the victory display, which meets act 3's objective: the act
-    // advances by itself and asks Roland, the lead, whether to burn the house.
-    expect(table.nextPhase()).toEqual({ round: 11, phase: 'investigation' });
-    table.startTurn(roland);
-    table.adjustActions(roland, -1);
-    table.fight(roland, 'Ghoul Priest', { damage: 3 });
-    table.fight(roland, 'Ghoul Priest', { damage: 3 });
 
     expect(table.namesIn({ kind: 'victoryDisplay' })).toEqual([
       'Icy Ghoul',
@@ -805,7 +819,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.play({ type: 'ResolveDecision', decisionId: BURN_THE_HOUSE_DECISION, optionId: 'burn' });
 
     expect(table.state.meta).toMatchObject({ ended: true, resolution: 'R1' });
-    expect(() => table.endTurn(roland)).toThrow(
+    expect(() => table.endTurn(daisy)).toThrow(
       expect.objectContaining({ rejection: expect.objectContaining({ code: 'scenarioEnded' }) }),
     );
 
