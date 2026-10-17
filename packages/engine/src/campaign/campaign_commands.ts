@@ -67,8 +67,9 @@ export interface RemoveChaosToken {
 }
 
 /**
- * Moves on to the next scenario of the campaign, once the current one is
- * resolved. Produces `ScenarioPositionChanged`.
+ * Moves on to the next scenario of the campaign. The caller sends it once the
+ * current scenario is resolved; the handler only refuses it past the last
+ * scenario. Produces `ScenarioPositionChanged`.
  */
 export interface AdvanceScenario {
   readonly type: 'AdvanceScenario';
