@@ -909,9 +909,11 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.enemy('Ghoul Priest')).toMatchObject({ engagedWith: roland });
     expect(table.namesIn({ kind: 'threatArea', investigatorId: roland })).toEqual([]);
 
-    // Round 11 – mythos: Roland draws Rotting Remains (willpower 3 against 3),
-    // Daisy Crypt Chill (willpower 3 against 4, and a +1 token): both pass.
+    // Round 11 – mythos: 1.2 places the agenda's second doom. Roland draws
+    // Rotting Remains (willpower 3 against 3), Daisy Crypt Chill (willpower 3
+    // against 4, and a +1 token): both pass.
     expect(table.nextPhase()).toEqual({ round: 11, phase: 'mythos', step: 'drawEncounterCard' });
+    expect(table.agenda()).toEqual({ name: "They're Getting Out!", doom: 2 });
     table.answer('Rotting Remains', 'pass');
     expect(table.nextPhase()).toEqual({ round: 11, phase: 'mythos', step: 'drawEncounterCard' });
     table.answer('Crypt Chill', 'pass');
