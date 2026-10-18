@@ -58,11 +58,11 @@ const { context, state: startState } = newGame()
   .withCard(instanceId('search'), searchCard, { kind: 'actDeck' })
   .withCard(ghoul, ghoulCard, engagedWith(alice))
   .withCard(instanceId('dread'), dreadCard, threatAreaOf(alice))
-  .withCard(instanceId('dread3'), dreadCard, attachedTo(hall))
+  .withCard(instanceId('attached_dread'), dreadCard, attachedTo(hall))
   .withCard(instanceId('rat'), ratCard, { kind: 'victoryDisplay' })
-  .withCard(instanceId('dread2'), dreadCard, { kind: 'encounterDiscard' })
-  .withCard(instanceId('rat2'), ratCard, { kind: 'encounterDeck' })
-  .withCard(instanceId('rat3'), ratCard, { kind: 'setAside' })
+  .withCard(instanceId('discarded_dread'), dreadCard, { kind: 'encounterDiscard' })
+  .withCard(instanceId('rat_in_deck'), ratCard, { kind: 'encounterDeck' })
+  .withCard(instanceId('set_aside_rat'), ratCard, { kind: 'setAside' })
   .start();
 
 function startedBoard(): GameState {
@@ -176,7 +176,7 @@ describe('formatBoard', () => {
   it('shows an encounter card whose revelation is still being resolved', () => {
     const state = stateAfter(context, startedBoard(), {
       type: 'MoveCard',
-      cardId: instanceId('dread2'),
+      cardId: instanceId('discarded_dread'),
       to: { kind: 'resolving' },
     });
 

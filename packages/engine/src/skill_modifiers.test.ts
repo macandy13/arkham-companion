@@ -156,8 +156,7 @@ describe('skillTestSuggestion: scenario reference card', () => {
       cultist: { effectKey: 'test.cultist.hardExpert' },
     },
   };
-  const { context } = aliceInStudy.start();
-  const withReference = withScenario(context, { reference });
+  const withReference = withScenario(aliceInStudy.context(), { reference });
 
   it('takes a symbol token modifier from the side for the difficulty, with its effect text', () => {
     const suggestion = skillTestSuggestion(
