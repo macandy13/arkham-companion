@@ -15,7 +15,7 @@ import {
   type CardCode,
   type Command,
   type Zone,
-  type EngineContext,
+  type ScenarioContext,
   type GameState,
 } from '@arkham/engine';
 import {
@@ -35,7 +35,10 @@ import {
   theGatheringHouse,
 } from '../index';
 
-const ctx: EngineContext = { cards: cardDbWith(theGatheringCards, standardInvestigatorCards) };
+const ctx: ScenarioContext = {
+  cards: cardDbWith(theGatheringCards, standardInvestigatorCards),
+  scenario: theGathering,
+};
 
 /** Card names in `zone`, top first. */
 function namesIn(state: GameState, zone: Zone): string[] {
@@ -48,14 +51,14 @@ const study = mapId('study');
 
 describe('The Gathering setup', () => {
   it('puts the three agendas and three acts into their decks in stage order', () => {
-    const state = startScenario(ctx, theGathering, { playerCount: 2 });
+    const state = startScenario(ctx, { playerCount: 2 });
 
     expect(codesIn(state, { kind: 'agendaDeck' })).toEqual(['01105', '01106', '01107']);
     expect(codesIn(state, { kind: 'actDeck' })).toEqual(['01108', '01109', '01110']);
   });
 
   it('starts the investigators in the revealed Study with two clues per investigator', () => {
-    const state = startScenario(ctx, theGathering, { playerCount: 3 });
+    const state = startScenario(ctx, { playerCount: 3 });
 
     expect(codesIn(state, { kind: 'location', mapId: study })).toEqual([codes.study]);
     expect(state.investigators.map((inv) => inv.locationId)).toEqual([
@@ -67,7 +70,7 @@ describe('The Gathering setup', () => {
   });
 
   it('sets aside the other four locations, the Ghoul Priest and Lita Chantler', () => {
-    const state = startScenario(ctx, theGathering);
+    const state = startScenario(ctx);
 
     expect(codesIn(state, { kind: 'setAside' })).toEqual([
       '01112',
@@ -80,7 +83,7 @@ describe('The Gathering setup', () => {
   });
 
   it('shuffles the remaining 26 enemies and treacheries of the six sets into the encounter deck', () => {
-    const state = startScenario(ctx, theGathering);
+    const state = startScenario(ctx);
 
     const deck = codesIn(state, { kind: 'encounterDeck' }).sort();
 
@@ -106,7 +109,7 @@ describe('The Gathering setup', () => {
     ['hard', 17],
     ['expert', 18],
   ] as const)('uses the %s chaos bag of %i tokens', (difficulty, size) => {
-    const state = startScenario(ctx, theGathering, { difficulty });
+    const state = startScenario(ctx, { difficulty });
 
     expect(state.chaosBag).toEqual(theGathering.chaosBag[difficulty]);
     expect(state.chaosBag).toHaveLength(size);
@@ -120,7 +123,7 @@ describe('The Gathering setup', () => {
   ])(
     'sets up a consistent state for $playerCount investigators (seed $seed)',
     ({ playerCount, seed }) => {
-      const state = startScenario(ctx, theGathering, { playerCount, seed });
+      const state = startScenario(ctx, { playerCount, seed });
 
       expect(checkInvariants(state)).toEqual([]);
       expect(codesIn(state, { kind: 'encounterDeck' })).toHaveLength(26);
@@ -151,7 +154,6 @@ describe('The Gathering reference card', () => {
 });
 
 describe('The Gathering skull token', () => {
-  const playing: EngineContext = { ...ctx, scenario: theGathering };
   const studyCard = instanceId('01111#1');
   const icyGhoul = instanceId('01119#1');
   const fleshEater = instanceId('01118#1');
@@ -165,14 +167,14 @@ describe('The Gathering skull token', () => {
       difficulty: 2,
       locationId: studyCard,
     } as const;
-    const suggestion = skillTestSuggestion(playing, state, test, { tokens: ['skull'] });
+    const suggestion = skillTestSuggestion(ctx, state, test, { tokens: ['skull'] });
     return suggestion.trace.find((step) => step.source.kind === 'chaosToken')?.change ?? 0;
   }
 
   it('is -X on Standard, X being the Ghoul enemies at the location, engaged ones included', () => {
     const twoGhouls = stateAfter(
-      playing,
-      startScenario(playing, theGathering, { playerCount: 2 }),
+      ctx,
+      startScenario(ctx, { playerCount: 2 }),
       {
         type: 'ManualAdjust',
         adjustment: {
@@ -195,7 +197,7 @@ describe('The Gathering skull token', () => {
   });
 
   it('is 0 on Standard with no Ghoul at the location', () => {
-    expect(skullInStudy(startScenario(playing, theGathering, { playerCount: 2 }))).toBe(0);
+    expect(skullInStudy(startScenario(ctx, { playerCount: 2 }))).toBe(0);
   });
 });
 
@@ -203,7 +205,7 @@ describe('The Gathering house (after act 1)', () => {
   it('connects the Hallway to the Attic, the Cellar and the Parlor', () => {
     const def = makeDefinition({ setup: [theGatheringHouse] });
 
-    const command = scenario.compileSetup(ctx, def, makeSetupOptions());
+    const command = scenario.compileSetup({ ...ctx, scenario: def }, makeSetupOptions());
 
     expect(command.maps?.[mapId('house')]?.connections).toEqual([
       { from: '01112#1', to: '01113#1', oneWay: false },
@@ -214,7 +216,6 @@ describe('The Gathering house (after act 1)', () => {
 });
 
 describe('The Gathering act 1 reverse side', () => {
-  const playing: EngineContext = { ...ctx, scenario: theGathering };
   const studyCard = instanceId('01111#1');
   const hallway = instanceId('01112#1');
   const tank = investigatorId('tank');
@@ -234,11 +235,11 @@ describe('The Gathering act 1 reverse side', () => {
   ];
 
   function startTwoPlayer(): GameState {
-    return startScenario(playing, theGathering, { playerCount: 2 });
+    return startScenario(ctx, { playerCount: 2 });
   }
 
   it('puts the house into play with the Hallway connected to the other three rooms', () => {
-    const state = stateAfter(playing, startTwoPlayer(), ...advanceTrapped);
+    const state = stateAfter(ctx, startTwoPlayer(), ...advanceTrapped);
 
     expect(codesIn(state, { kind: 'location', mapId: mapId('house') })).toEqual([
       codes.hallway,
@@ -251,7 +252,7 @@ describe('The Gathering act 1 reverse side', () => {
   });
 
   it('moves every investigator to the revealed Hallway and removes the Study', () => {
-    const state = stateAfter(playing, startTwoPlayer(), ...advanceTrapped);
+    const state = stateAfter(ctx, startTwoPlayer(), ...advanceTrapped);
 
     expect(state.investigators.map((inv) => inv.locationId)).toEqual([hallway, hallway]);
     expect(state.cards[hallway]?.faceUp).toBe(true);
@@ -263,7 +264,7 @@ describe('The Gathering act 1 reverse side', () => {
     const fleshEater = instanceId('01118#1');
     const icyGhoul = instanceId('01119#1');
     const withEnemies = stateAfter(
-      playing,
+      ctx,
       startTwoPlayer(),
       {
         type: 'ManualAdjust',
@@ -283,13 +284,13 @@ describe('The Gathering act 1 reverse side', () => {
       },
     );
 
-    const state = stateAfter(playing, withEnemies, ...advanceTrapped);
+    const state = stateAfter(ctx, withEnemies, ...advanceTrapped);
 
     expect(codesIn(state, { kind: 'encounterDiscard' })).toEqual(['01118', '01119']);
   });
 
   it('resolves before act 2 becomes current', () => {
-    const { events } = runFrom(playing, startTwoPlayer(), advanceTrapped);
+    const { events } = runFrom(ctx, startTwoPlayer(), advanceTrapped);
 
     expect(events.slice(-3)).toMatchObject([
       { type: 'CardMoved', cardId: studyCard, to: { kind: 'outOfGame' } },
@@ -300,7 +301,6 @@ describe('The Gathering act 1 reverse side', () => {
 });
 
 describe('The Gathering enemies', () => {
-  const playing: EngineContext = { ...ctx, scenario: theGathering };
   const fleshEater = instanceId('01118#1');
   const priest = instanceId('01116#1');
   const attic = instanceId('01113#1');
@@ -319,10 +319,10 @@ describe('The Gathering enemies', () => {
       ],
     },
   ];
-  const start = () => startScenario(playing, theGathering, { playerCount: 2 });
+  const start = () => startScenario(ctx, { playerCount: 2 });
 
   it('discards the Flesh-Eater while the Attic is not in play', () => {
-    const { state } = runFrom(playing, start(), [
+    const { state } = runFrom(ctx, start(), [
       { type: 'SpawnEnemy', enemyId: fleshEater, investigatorId: tank },
     ]);
 
@@ -330,7 +330,7 @@ describe('The Gathering enemies', () => {
   });
 
   it('spawns the Flesh-Eater at the Attic once the house is in play', () => {
-    const { state } = runFrom(playing, start(), [
+    const { state } = runFrom(ctx, start(), [
       ...advanceTrapped,
       { type: 'SpawnEnemy', enemyId: fleshEater, investigatorId: tank },
     ]);
@@ -339,7 +339,7 @@ describe('The Gathering enemies', () => {
   });
 
   it('lets the hunting Ghoul Priest walk to the Hallway and ask whom to engage', () => {
-    const { state } = runFrom(playing, start(), [
+    const { state } = runFrom(ctx, start(), [
       ...advanceTrapped,
       { type: 'SpawnEnemy', enemyId: priest, at: attic },
       { type: 'MoveHunters' },
@@ -353,7 +353,6 @@ describe('The Gathering enemies', () => {
 });
 
 describe('The Gathering acts 2 and 3', () => {
-  const playing: EngineContext = { ...ctx, scenario: theGathering };
   const hallway = instanceId('01112#1');
   const attic = instanceId('01113#1');
   const parlor = instanceId('01115#1');
@@ -366,8 +365,8 @@ describe('The Gathering acts 2 and 3', () => {
   /** Two investigators; act 1 (house into play, everyone to the Hallway) and act 2 advance without paying. */
   function atAct3(): GameState {
     return stateAfter(
-      playing,
-      startScenario(playing, theGathering, { playerCount: 2 }),
+      ctx,
+      startScenario(ctx, { playerCount: 2 }),
       { type: 'AdvanceAct' },
       { type: 'AdvanceAct' },
     );
@@ -376,7 +375,7 @@ describe('The Gathering acts 2 and 3', () => {
   /** `state` with the Ghoul Priest's prey question answered: it engages `investigator`. */
   function priestEngages(state: GameState, investigator: typeof tank): GameState {
     const preyQuestion = state.pending.find((decision) => decision.subject === priest);
-    return stateAfter(playing, state, {
+    return stateAfter(ctx, state, {
       type: 'ResolveDecision',
       decisionId: preyQuestion!.id,
       optionId: investigator,
@@ -398,7 +397,7 @@ describe('The Gathering acts 2 and 3', () => {
   });
 
   it('advances act 3 when the Ghoul Priest is defeated and asks the lead whether to burn the house', () => {
-    const asked = stateAfter(playing, priestEngages(atAct3(), tank), {
+    const asked = stateAfter(ctx, priestEngages(atAct3(), tank), {
       type: 'DefeatEnemy',
       enemyId: priest,
     });
@@ -418,12 +417,12 @@ describe('The Gathering acts 2 and 3', () => {
     ['burn', 'R1'],
     ['spare', 'R2'],
   ])('ends the scenario with the lead choosing to %s the house (%s)', (optionId, resolution) => {
-    const asked = stateAfter(playing, priestEngages(atAct3(), tank), {
+    const asked = stateAfter(ctx, priestEngages(atAct3(), tank), {
       type: 'DefeatEnemy',
       enemyId: priest,
     });
 
-    const ended = stateAfter(playing, asked, {
+    const ended = stateAfter(ctx, asked, {
       type: 'ResolveDecision',
       decisionId: BURN_THE_HOUSE_DECISION,
       optionId,
@@ -434,20 +433,19 @@ describe('The Gathering acts 2 and 3', () => {
 
   it('does not advance act 3 when another enemy is defeated', () => {
     // In the empty Attic, so it engages nobody.
-    const withFleshEater = stateAfter(playing, priestEngages(atAct3(), tank), {
+    const withFleshEater = stateAfter(ctx, priestEngages(atAct3(), tank), {
       type: 'SpawnEnemy',
       enemyId: fleshEater,
       at: attic,
     });
 
-    const state = stateAfter(playing, withFleshEater, { type: 'DefeatEnemy', enemyId: fleshEater });
+    const state = stateAfter(ctx, withFleshEater, { type: 'DefeatEnemy', enemyId: fleshEater });
 
     expect(state.act.current).toBe(whatHaveYouDone);
   });
 });
 
 describe('The Gathering agendas 2 and 3', () => {
-  const playing: EngineContext = { ...ctx, scenario: theGathering };
   const tank = investigatorId('tank');
   const seeker = investigatorId('seeker');
   const fleshEater = instanceId('01118#1');
@@ -465,8 +463,8 @@ describe('The Gathering agendas 2 and 3', () => {
   /** Two investigators (seed 1), the Flesh-Eater and a Swarm of Rats in the discard, agenda 1 advanced. */
   function atAgenda2(): GameState {
     return stateAfter(
-      playing,
-      startScenario(playing, theGathering, { playerCount: 2 }),
+      ctx,
+      startScenario(ctx, { playerCount: 2 }),
       { type: 'AdvanceAct' },
       toDiscard(fleshEater),
       toDiscard(ratSwarm),
@@ -475,7 +473,7 @@ describe('The Gathering agendas 2 and 3', () => {
   }
 
   it('shuffles the discard back and makes the lead draw the first Ghoul enemy', () => {
-    const { state, events } = runFrom(playing, atAgenda2(), [{ type: 'AdvanceAgenda' }]);
+    const { state, events } = runFrom(ctx, atAgenda2(), [{ type: 'AdvanceAgenda' }]);
 
     const drawn = events.find((event) => event.type === 'EncounterCardDrawn');
     expect(drawn).toMatchObject({ investigatorId: tank, cardId: secondGhoulMinion });
@@ -497,7 +495,7 @@ describe('The Gathering agendas 2 and 3', () => {
   it('only shuffles when no Ghoul enemy is left among the encounter cards', () => {
     const ghoulEnemies = Object.values(atAgenda2().cards).filter((card) => isGhoulEnemy(card.code));
     const noGhouls = stateAfter(
-      playing,
+      ctx,
       atAgenda2(),
       ...ghoulEnemies.map((card): Command => ({
         type: 'ManualAdjust',
@@ -505,35 +503,30 @@ describe('The Gathering agendas 2 and 3', () => {
       })),
     );
 
-    const { events } = runFrom(playing, noGhouls, [{ type: 'AdvanceAgenda' }]);
+    const { events } = runFrom(ctx, noGhouls, [{ type: 'AdvanceAgenda' }]);
 
     expect(events.map((event) => event.type)).toContain('DeckShuffled');
     expect(events.map((event) => event.type)).not.toContain('EncounterCardDrawn');
   });
 
   it('traps the investigators (R3) when agenda 3 advances before act 3', () => {
-    const atAgenda3 = stateAfter(playing, atAgenda2(), { type: 'AdvanceAgenda' });
+    const atAgenda3 = stateAfter(ctx, atAgenda2(), { type: 'AdvanceAgenda' });
 
-    const ended = stateAfter(playing, atAgenda3, { type: 'AdvanceAgenda' });
+    const ended = stateAfter(ctx, atAgenda3, { type: 'AdvanceAgenda' });
 
     expect(ended.meta).toMatchObject({ ended: true, resolution: 'R3' });
   });
 
   it('defeats every investigator who has not resigned when agenda 3 advances at act 3', () => {
-    const atAct3 = stateAfter(
-      playing,
-      atAgenda2(),
-      { type: 'AdvanceAgenda' },
-      { type: 'AdvanceAct' },
-    );
+    const atAct3 = stateAfter(ctx, atAgenda2(), { type: 'AdvanceAgenda' }, { type: 'AdvanceAct' });
     const preyQuestion = atAct3.pending.find((decision) => decision.subject === priest);
-    const priestOnTank = stateAfter(playing, atAct3, {
+    const priestOnTank = stateAfter(ctx, atAct3, {
       type: 'ResolveDecision',
       decisionId: preyQuestion!.id,
       optionId: tank,
     });
 
-    const { state, events } = runFrom(playing, priestOnTank, [{ type: 'AdvanceAgenda' }]);
+    const { state, events } = runFrom(ctx, priestOnTank, [{ type: 'AdvanceAgenda' }]);
 
     expect(events.filter((event) => event.type === 'InvestigatorDefeated')).toEqual([
       { type: 'InvestigatorDefeated', investigatorId: seeker, cause: 'cardEffect' },
