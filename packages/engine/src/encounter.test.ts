@@ -1134,8 +1134,9 @@ describe('revelation before the drawn card is placed', () => {
 
   /**
    * Every card here has a revelation script. `scorching_*` cards deal alice 1
-   * damage; `lethal_treachery` deals her 8 (her whole health);
-   * `vanishing_treachery` sets itself aside.
+   * damage; `lethal_*` cards deal her 8 (her whole health);
+   * `vanishing_treachery` sets itself aside. `lethal_hall_foe` spawns at
+   * the Hall.
    */
   const revelationCtx: EngineContext = {
     ...contextWith(
@@ -1149,6 +1150,12 @@ describe('revelation before the drawn card is placed', () => {
         locationAttachment: { onePerLocation: true },
       }),
       makeCard({ code: 'lethal_treachery', typeCode: 'treachery' }),
+      makeCard({ code: 'lethal_foe', typeCode: 'enemy' }),
+      makeCard({
+        code: 'lethal_hall_foe',
+        typeCode: 'enemy',
+        keywords: [{ name: 'spawn', detail: 'hall_location' }],
+      }),
       makeCard({ code: 'vanishing_treachery', typeCode: 'treachery' }),
     ),
     effects: {
@@ -1157,6 +1164,8 @@ describe('revelation before the drawn card is placed', () => {
       [cardCode('scorching_lingering')]: { onReveal: () => [hurtAlice(1)] },
       [cardCode('scorching_attachment')]: { onReveal: () => [hurtAlice(1)] },
       [cardCode('lethal_treachery')]: { onReveal: () => [hurtAlice(8)] },
+      [cardCode('lethal_foe')]: { onReveal: () => [hurtAlice(8)] },
+      [cardCode('lethal_hall_foe')]: { onReveal: () => [hurtAlice(8)] },
       [cardCode('vanishing_treachery')]: {
         onReveal: (_ctx, _state, event) => [
           { type: 'MoveCard', cardId: event.cardId, to: { kind: 'setAside' } },
@@ -1224,19 +1233,19 @@ describe('revelation before the drawn card is placed', () => {
     expect(after.cards[instanceId('vanishing_card')]?.zone).toEqual({ kind: 'setAside' });
   });
 
-  it('discards the card when its revelation defeated the drawer', () => {
+  it.each([
+    { code: 'lethal_treachery', placed: 'lethal_card to encounterDiscard' },
+    { code: 'lethal_foe', placed: 'lethal_card to encounterDiscard' },
+    { code: 'lethal_hall_foe', placed: 'lethal_card to atLocation' },
+  ])('places $code without the drawer it defeated: $placed', ({ code, placed }) => {
     const state = startedWith(
-      { deck: [card('lethal_treachery', 'lethal_card'), card('scorching_foe', 'next_foe')] },
+      { deck: [card(code, 'lethal_card'), card('scorching_foe', 'next_foe')] },
       { aliceAt: hall },
       revelationCtx,
     );
 
     const { events } = execute(revelationCtx, state, draw);
 
-    expect(resolutionOrder(events)).toEqual([
-      'draws lethal_card',
-      'alice damage +8',
-      'lethal_card to encounterDiscard',
-    ]);
+    expect(resolutionOrder(events)).toEqual(['draws lethal_card', 'alice damage +8', placed]);
   });
 });

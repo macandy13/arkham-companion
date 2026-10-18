@@ -182,7 +182,7 @@ function drawOne(
  * empty the discard is shuffled back in, so a discarded card is in the deck
  * again before the next draw. Nothing when the revelation has already moved
  * the card out of `resolving`. A drawer who has left the scenario meanwhile
- * has no location or threat area to take the card, so it is discarded.
+ * has no location or threat area to take the card (`withoutDrawer`).
  */
 export function placeDrawnCard(
   ctx: EngineContext,
@@ -192,10 +192,11 @@ export function placeDrawnCard(
   const card = requireCard(state.cards, drawn.cardId);
   if (card.zone.kind !== 'resolving') return [];
   const drawer = state.investigators.find((inv) => inv.id === drawn.investigatorId);
+  const stats = cardStats(ctx.cards, card.code);
   const placed =
     drawer?.status === 'active'
-      ? placement(ctx, state, cardStats(ctx.cards, card.code), card.id, drawer)
-      : [cardMoved(state, card, ENCOUNTER_DISCARD, 0)];
+      ? placement(ctx, state, stats, card.id, drawer)
+      : withoutDrawer(ctx, state, stats, card);
   return [...placed, ...refillIfEmpty(replay(placed, state))];
 }
 
@@ -238,6 +239,27 @@ function placement(
   if (stats.typeCode === 'treachery' && stats.revelationTest)
     return revelationTestDecision(ctx, state, cardId, investigator, [discardToTop(cardId)]);
   // Index 0 is the top, and the discard's top is what "topmost" effects look for.
+  return [cardMoved(state, card, ENCOUNTER_DISCARD, 0)];
+}
+
+/**
+ * The placement of a drawn card whose drawer was eliminated by its
+ * revelation. An enemy with a spawn instruction still spawns there, since
+ * the instruction does not need the drawer; without one it would spawn
+ * engaged with the drawer, an instruction that can no longer be fulfilled,
+ * so it is discarded (2026 Core rulebook p. 19). Any other card is
+ * discarded, as the drawer's threat area and location are gone with them.
+ * The rules have no explicit ruling on this case (rules.md, "Encounter
+ * draws").
+ */
+function withoutDrawer(
+  ctx: EngineContext,
+  state: GameState,
+  stats: CardStats,
+  card: CardInstance,
+): Event[] {
+  const instructed = stats.keywords?.some((keyword) => keyword.name === 'spawn') ?? false;
+  if (stats.typeCode === 'enemy' && instructed) return spawnEvents(ctx, state, card.id, {});
   return [cardMoved(state, card, ENCOUNTER_DISCARD, 0)];
 }
 
