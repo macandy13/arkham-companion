@@ -1,7 +1,7 @@
 import {
+  blankInvestigator,
   investigatorCardStats,
-  investigatorCode,
-  investigatorId,
+  type BlankInvestigatorFields,
   type CardStats,
   type GameState,
   type Investigator,
@@ -10,28 +10,14 @@ import {
 } from '../../src/index';
 
 /**
- * An investigator with boring defaults (8 health, 6 sanity, 5 resources, no
- * clues, 3 actions left, 3 in every skill, seat 0, not placed); tests pass
- * only what they depend on.
+ * `blankInvestigator` with the ID among the fields, the form the tests not yet
+ * built with `newGame()` use; M1V.3 slice 4 removes it.
  */
-export function makeInvestigator(
-  overrides: Partial<Omit<Investigator, 'id'>> & { id: string },
-): Investigator {
-  return {
-    code: investigatorCode(overrides.id),
-    name: overrides.id,
-    seat: 0,
-    health: { max: 8, damage: 0 },
-    sanity: { max: 6, horror: 0 },
-    clues: 0,
-    resources: 5,
-    doomOnPlayerCards: 0,
-    actionsRemaining: 3,
-    skills: { willpower: 3, intellect: 3, combat: 3, agility: 3 },
-    status: 'active',
-    ...overrides,
-    id: investigatorId(overrides.id),
-  };
+export function makeInvestigator({
+  id,
+  ...fields
+}: BlankInvestigatorFields & { id: string }): Investigator {
+  return blankInvestigator(id, fields);
 }
 
 /**

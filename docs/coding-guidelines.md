@@ -57,6 +57,7 @@ How code in this repo should look, so every task lands in the same style.
   ```
 
 - **Sane defaults via builders.** Use small factory helpers with defaults and overrides (`makeInvestigator({ id: 'a', clues: 2 })`) so tests only spell out what is relevant to them. Defaults should be boring; anything a test depends on is passed explicitly.
+- **Build the table with `newGame()`** and blank cards (`blankLocation('study', { shroud: 2 })`) instead of a file-local `startedWith` helper: a describe-level builder holds the common table, and each test adds the cards it is about (`table.withCard(ghoul, ghoulCard, engagedWith(alice)).start()`).
 - **Shared test helpers** live in `packages/engine/test/utils/` (standard investigators, card and definition builders, `startScenario`, `run`, `codesIn`, `rejectionOf`); import them from `../test/utils` in the engine and `@arkham/engine/test/utils` elsewhere. Add a helper there once a second test file needs it.
 - **One behaviour per test**, named as a sentence about behaviour: `it('rejects moving a card into its own zone')`.
 - **Exception: end-to-end scenario tests** (`packages/scenarios/src/*/end_to_end.test.ts`) may be one long narrative test that plays the scenario in order, with short phase/turn comment headers (`// Round 2 – investigation: Roland's turn`) and assertions in place.

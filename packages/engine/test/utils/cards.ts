@@ -1,4 +1,12 @@
-import { cardCode, cardDbFrom, trait, type CardStats, type EngineContext } from '../../src/index';
+import {
+  cardCode,
+  cardDbFrom,
+  fixed,
+  perInvestigator,
+  trait,
+  type CardStats,
+  type EngineContext,
+} from '../../src/index';
 import { standardInvestigatorCards } from './investigators';
 
 /**
@@ -22,6 +30,9 @@ export function makeCard(
 export function contextWith(...cards: CardStats[]): EngineContext {
   return { cards: cardDbFrom([...cards, ...standardInvestigatorCards]) };
 }
+
+/** Re-exported so tests keep importing every card helper from `test/utils`. */
+export { fixed, perInvestigator };
 
 /**
  * Invented card definitions for engine tests that need *some* known cards
@@ -66,13 +77,3 @@ export const testCardDefs: readonly CardStats[] = [
 export const testContext: EngineContext = {
   cards: cardDbFrom([...testCardDefs, ...standardInvestigatorCards]),
 };
-
-/** A printed value that does not scale with the player count. */
-export function fixed(value: number) {
-  return { fixed: value, perInvestigator: 0 };
-}
-
-/** A printed "n per investigator" value. */
-export function perInvestigator(value: number) {
-  return { fixed: 0, perInvestigator: value };
-}
