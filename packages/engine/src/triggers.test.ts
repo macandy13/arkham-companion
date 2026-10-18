@@ -72,8 +72,7 @@ function withHooks(
   hooks: Partial<ScenarioHooks>,
   effects?: EngineContext['effects'],
 ): EngineContext {
-  const { context } = table.start();
-  return { ...withScenario(context, { hooks }), ...(effects ? { effects } : {}) };
+  return { ...withScenario(table.context(), { hooks }), ...(effects ? { effects } : {}) };
 }
 
 const placeDoomOnGhoul: Command = { type: 'PlaceDoom', cardId: ghoul, amount: 1 };
