@@ -138,14 +138,7 @@ describe('Investigate', () => {
     const { context, state } = aliceInStudy.start();
     const asked = stateAfter(context, state, investigate);
 
-    expect(
-      rejectionFrom(context, asked, {
-        type: 'ResolveDecision',
-        decisionId: decisionId('investigate:alice'),
-        optionId: 'pass',
-        amount,
-      }),
-    ).toEqual({
+    expect(rejectionFrom(context, asked, answer('investigate:alice', 'pass', amount))).toEqual({
       code: 'amountOutOfRange',
       decisionId: decisionId('investigate:alice'),
       optionId: 'pass',
@@ -159,14 +152,7 @@ describe('Investigate', () => {
     const { context, state } = aliceInStudy.start();
     const asked = stateAfter(context, state, investigate);
 
-    expect(
-      rejectionFrom(context, asked, {
-        type: 'ResolveDecision',
-        decisionId: decisionId('investigate:alice'),
-        optionId: 'fail',
-        amount: 1,
-      }),
-    ).toEqual({
+    expect(rejectionFrom(context, asked, answer('investigate:alice', 'fail', 1))).toEqual({
       code: 'amountNotAdjustable',
       decisionId: decisionId('investigate:alice'),
       optionId: 'fail',
