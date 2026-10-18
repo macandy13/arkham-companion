@@ -926,9 +926,10 @@ describe('encounter deck invariants', () => {
 
 describe('surge after the drawn card has resolved', () => {
   /**
-   * The cards above plus two surge treacheries: `burning_surge`, whose script
-   * deals alice 1 damage when it is revealed, and `testing_surge`, which asks
-   * for a willpower (3) test.
+   * The cards above plus three surge cards: `burning_surge`, whose script
+   * deals alice 1 damage when it is revealed, `testing_surge`, which asks
+   * for a willpower (3) test, and `choosy_foe`, an enemy whose spawn text the
+   * engine cannot read, so the players choose its location.
    */
   const surgeCtx: EngineContext = {
     ...contextWith(
@@ -939,6 +940,14 @@ describe('surge after the drawn card has resolved', () => {
         code: 'testing_surge',
         keywords: [{ name: 'surge' }],
         revelationTest: { skill: 'willpower', difficulty: 3 },
+      }),
+      makeCard({
+        code: 'choosy_foe',
+        typeCode: 'enemy',
+        keywords: [
+          { name: 'surge' },
+          { name: 'spawn', detail: 'the location with the most clues' },
+        ],
       }),
     ),
     effects: {
@@ -1018,5 +1027,31 @@ describe('surge after the drawn card has resolved', () => {
     const asked = stateAfter(surgeCtx, state, draw);
 
     expect(asked.meta.heldAction).toBeUndefined();
+  });
+
+  it('draws the surge card only after the players chose where the enemy spawns', () => {
+    const state = startedWith(
+      { deck: [card('choosy_foe', 'choosy_card'), card('plain_treachery', 'after_surge')] },
+      { aliceAt: hall },
+      surgeCtx,
+    );
+    const asked = stateAfter(surgeCtx, state, draw);
+
+    const { events } = execute(surgeCtx, asked, {
+      type: 'ResolveDecision',
+      decisionId: asked.pending[0]!.id,
+      optionId: hall,
+    });
+
+    expect(asked.pending.map((decision) => decision.id)).toEqual(['spawn:choosy_card']);
+    expect(asked.meta.heldAction).toEqual(draw);
+    const resolution = events.flatMap((e) =>
+      e.type === 'EncounterCardDrawn'
+        ? [`draws ${e.cardId}`]
+        : e.type === 'EnemyEngaged'
+          ? [`${e.enemyId} engages ${e.investigatorId}`]
+          : [],
+    );
+    expect(resolution).toEqual(['choosy_card engages alice', 'draws after_surge']);
   });
 });

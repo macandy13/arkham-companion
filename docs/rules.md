@@ -13,6 +13,17 @@ The game rules the engine implements, summarised in our own words so sessions do
 - [Choices](https://arkhamdb.com/rules#Choices_and_the_Grim_Rule), [lead investigator](https://arkhamdb.com/rules#Lead_Investigator): when the group must choose between valid options (ties for hunter movement, prey, spawn location, order of simultaneous forced effects), the lead investigator decides. The app turns each such choice into a `Decision`. If the lead investigator is eliminated, the remaining players pick a new one.
 - [Simultaneous resolution](https://arkhamdb.com/rules#Priority_of_Simultaneous_Resolution): individual choices for an effect that hits several players are made in player order, then the effect applies to all at once. The lead investigator orders forced abilities and lasting effects that would resolve at the same time.
 
+## Timing of forced effects
+
+[Forced abilities](https://arkhamdb.com/rules#Forced_Abilities), [At](https://arkhamdb.com/rules#At), [Effects](https://arkhamdb.com/rules#Effects), [FAQ v2.5](https://images-cdn.fantasyflightgames.com/filer_public/c1/d0/c1d0fab6-7fa6-4ce2-af6a-16416381a19b/ahc_faq_v25_february_2026-web.pdf) §1.4 (nested sequences).
+
+- Each triggering condition runs "when" → the condition resolves → "after". A forced "When…" starts before the condition takes effect; a forced "After…" starts once its effect has fully resolved. "At …" and "If …" abilities (also "at the end of the turn/round") resolve between the two.
+- Every part of an effect resolves before the "after" triggers it causes. So an engine command that is one effect may run its "after" hooks once all its events are done.
+- Forced abilities on a timing point resolve before reactions to it.
+- A forced ability that causes a new trigger opens a nested sequence. It finishes, choices included, before the sequence it interrupted goes on (last in, first out).
+- A [Revelation](https://arkhamdb.com/rules#Revelation_Abilities) starts as the card is drawn: before an enemy spawns and before a treachery is placed or discarded.
+- Forced abilities that resolve at the same time are ordered by the lead investigator (see [Precedence](#precedence)).
+
 ## Round structure
 
 [Phase sequence](https://arkhamdb.com/rules#Phase_Sequence_Timing), [framework details](https://arkhamdb.com/rules#Framework_Event_Details). A round is mythos → investigation → enemy → upkeep. **The mythos phase is skipped in round 1.**
@@ -80,7 +91,7 @@ The game rules the engine implements, summarised in our own words so sessions do
 3. Resolve its [revelation](https://arkhamdb.com/rules#Revelation) ability before it enters play (or, for a treachery, before it is discarded).
 4. An enemy [spawns](#spawn-and-engagement).
 5. A treachery goes to the encounter discard pile unless its text says otherwise. One whose revelation attaches it somewhere stays there; if there is nothing to attach it to, or a [limit](https://arkhamdb.com/rules#Limits_and_Maximums) ("Limit 1 per location", counted by title) keeps it from attaching, it is discarded ([Attach To](https://arkhamdb.com/rules#Attach_To)). A treachery or enemy with Victory X goes to the victory display instead when it is overcome (see [Victory display](https://arkhamdb.com/rules#Victory_Display_Victory_Points)).
-6. [Surge](https://arkhamdb.com/rules#Surge): after resolving, draw another encounter card and start over.
+6. [Surge](https://arkhamdb.com/rules#Surge): after resolving, draw another encounter card and start over. "Resolving" covers the whole card: its revelation and revelation test, its spawn and engagement, and the forced effects it triggers (2026 Core rulebook p. 19: "after resolving its text"; FAQ §1.4).
 
 An ability that shuffles an empty discard pile into a deck does not shuffle the deck ([discard piles](https://arkhamdb.com/rules#Discard_Piles)).
 

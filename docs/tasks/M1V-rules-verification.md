@@ -17,10 +17,27 @@ Ref: architecture "Command handling", "Triggers and card effects"; [rules.md](..
 
 **Benefit:** forced effects resolve in the order the rules prescribe, and a test shows it for each case.
 
-- [ ] List the trigger points (`ScenarioHooks`, `CardEffect`) and, for each, the Rules Reference timing ("Forced", "when"/"after", "Priority of simultaneous resolution"); ask `rules-checker` and record the answers in `docs/rules.md`
-- [ ] Find the commands whose events can trigger an effect midway (an advance that also places doom, a draw that spawns, a move that reveals)
+- [x] List the trigger points (`ScenarioHooks`, `CardEffect`) and, for each, the Rules Reference timing ("Forced", "when"/"after", "Priority of simultaneous resolution"); ask `rules-checker` and record the answers in `docs/rules.md`
+- [x] Find the commands whose events can trigger an effect midway (an advance that also places doom, a draw that spawns, a move that reveals)
 - [ ] If any effect must resolve immediately, design the change and update architecture "Command handling"
 - [ ] Table tests for each case found, plus an end-to-end step that shows one at the table
+
+**Findings** (`rules-checker`, 2026-10-18). Running "after" hooks once a command's events are done is right when the command is one effect (rules.md, "Timing of forced effects"). Correct as built: doom placed, agenda and act advance, enemy defeated, card enters play, a move that reveals and then engages.
+
+- **Surge** (high): the surge card was drawn before the first card's revelation, spawn choice, test and forced effects had resolved. A surge enemy waiting for a spawn choice was even drawn again, since it stays on top of the deck.
+- **Revelation of a drawn card** (medium): `CardEffect.onReveal` runs after the card is placed. The rules resolve the revelation first, so an enemy has already spawned and engaged when its revelation runs.
+- **Follow-ups after a decision** (medium, latent): `withFollowUps` runs a hook's later commands while an earlier one waits for an answer. The rules finish a nested sequence, choices included, before going on.
+- **Order of simultaneous forced effects** (low): the engine uses a fixed order where the lead investigator chooses. Today no two hooks share one event; it shows only between events of one command (turn end hook and turn-end tests, round end hook and round-end discards). Decide together with the timing windows the architecture review proposes.
+- **No "when … would" hooks** (gap): no trigger point can act before its condition resolves. Needed once an M4 scenario has such a forced effect.
+
+**Slices**
+
+1. [ ] Surge waits for the drawn card (this PR): `DrawEncounter` draws one card; `surgeEvents` draws again after its forced effects, held while a decision is open.
+2. [ ] Revelation before placement: run `onReveal` follow-ups between `CardFlipped` and the placement; move a drawn enemy that waits for a spawn choice out of the deck (to `resolving`).
+3. [ ] Hold the remaining follow-ups of a chain while one of them waits for an answer.
+4. [ ] End-to-end step at the table: The Gathering has no surge card, so add one with slice 2 or 3 where the scenario shows it.
+
+Follow-ups: simultaneous ordering and "when" hooks wait for the decision on the architecture review's timing windows.
 
 ## M1V.2 Edge case tests (S)
 
