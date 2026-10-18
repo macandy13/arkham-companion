@@ -18,6 +18,7 @@ import {
   encounterCardCount,
   handleDrawEncounter,
   handleFromSetAside,
+  placeDrawnCard,
   surgeDraw,
   handleShuffleEncounterDiscard,
   handleShuffleInto,
@@ -196,14 +197,15 @@ function handleWithTriggers(
   const events = withForcedEffects(ctx, state, own, command, budget);
   const after = replay(events, state);
   if (command.type === 'NextPhase') return [...events, ...phaseStepEvents(ctx, after)];
+  const completion = completeCommand(ctx, state, after, command, own);
+  const completed =
+    completion.length === 0
+      ? events
+      : [...events, ...withForcedEffects(ctx, after, completion, command, budget)];
   const surge = surgeDraw(own);
-  if (surge) {
-    budget.encounterCards ??= encounterCardCount(state);
-    return [...events, ...surgeEvents(ctx, after, surge, budget)];
-  }
-  const completion = completeCommand(state, after, command);
-  if (completion.length === 0) return events;
-  return [...events, ...withForcedEffects(ctx, after, completion, command, budget)];
+  if (!surge) return completed;
+  budget.encounterCards ??= encounterCardCount(state);
+  return [...completed, ...surgeEvents(ctx, replay(completed, state), surge, budget)];
 }
 
 /** `events` (produced from `state`) followed by the chains of forced effects they trigger. */
@@ -291,13 +293,25 @@ function surgeEvents(
 
 /**
  * The rest of a command whose rules continue only after the forced effects
- * of its first events have resolved; empty for most commands. Advancing
- * agenda/act is the case: the reverse side resolves before the next card
- * becomes current (`completeAdvance`). `before` is the state the command
- * started from, `after` the state after its first events and their effects.
+ * of its first events (`own`) have resolved; empty for most commands.
+ * Advancing agenda/act: the reverse side resolves before the next card
+ * becomes current (`completeAdvance`). Drawing an encounter card: its
+ * revelation resolves before the card is placed (`placeDrawnCard`). `before`
+ * is the state the command started from, `after` the state after its first
+ * events and their effects.
  */
-function completeCommand(before: GameState, after: GameState, command: Command): Event[] {
+function completeCommand(
+  ctx: EngineContext,
+  before: GameState,
+  after: GameState,
+  command: Command,
+  own: readonly Event[],
+): Event[] {
   switch (command.type) {
+    case 'DrawEncounter': {
+      const drawn = own.find((event) => event.type === 'EncounterCardDrawn');
+      return drawn ? placeDrawnCard(ctx, after, drawn) : [];
+    }
     case 'AdvanceAgenda':
       return completeAdvance(before, after, 'agenda', command.resolution);
     case 'AdvanceAct':

@@ -28,13 +28,14 @@ const SET_ASIDE: Zone = { kind: 'setAside' };
 const RESOLVING: Zone = { kind: 'resolving' };
 
 /**
- * `DrawEncounter`: draws one card and places it. The card is the top of the
- * deck or, with `match`, the first matching card; both go through the same
- * `drawOne`, so a card taken from the discard is revealed and placed exactly
- * like one from the deck. The deck is refilled as soon as its last card has
- * been placed, so a discarded card is shuffled back in before the next draw.
- * Surge is not drawn here: the drawn card's forced effects and decisions
- * must resolve first, so `handle` draws again afterwards (`surgeDraw`).
+ * `DrawEncounter`: draws one card into the `resolving` zone and turns it face
+ * up. The card is the top of the deck or, with `match`, the first matching
+ * card; both go through the same `drawOne`, so a card taken from the discard
+ * is revealed and placed exactly like one from the deck. Placing it waits:
+ * Rules Reference, "Revelation": the revelation resolves as the card is
+ * drawn, before an enemy spawns or a treachery is placed or discarded, so
+ * `handle` places it (`placeDrawnCard`) only after the forced effects of the
+ * reveal, and draws again for surge (`surgeDraw`) after that.
  */
 export function handleDrawEncounter(
   ctx: EngineContext,
@@ -146,9 +147,9 @@ export function encounterCardCount(state: GameState): number {
 }
 
 /**
- * Draws `target` (default: the top card of the encounter deck) and places it;
- * if that emptied the deck, the discard is shuffled back in right away.
- * `undefined` when there is no card left to draw.
+ * Draws `target` (default: the top card of the encounter deck) into the
+ * `resolving` zone and reveals it. `undefined` when there is no card left to
+ * draw.
  */
 function drawOne(
   ctx: EngineContext,
@@ -170,14 +171,32 @@ function drawOne(
     peril: hasKeyword(stats, 'peril'),
     surge: hasKeyword(stats, 'surge'),
   };
+  const resolving = cardMoved(replay(refill, state), requireCard(state.cards, cardId), RESOLVING);
   const revealed: CardFlipped = { type: 'CardFlipped', cardId, faceUp: true };
-  const events: Event[] = [
-    ...refill,
-    drawn,
-    revealed,
-    ...placement(ctx, state, stats, cardId, investigator),
-  ];
-  return [...events, ...refillIfEmpty(replay(events, state))];
+  return [...refill, drawn, resolving, revealed];
+}
+
+/**
+ * The rest of a `DrawEncounter` once the drawn card's revelation has
+ * resolved: the card is placed (`placement`), and if that left the deck
+ * empty the discard is shuffled back in, so a discarded card is in the deck
+ * again before the next draw. Nothing when the revelation has already moved
+ * the card out of `resolving`. A drawer who has left the scenario meanwhile
+ * has no location or threat area to take the card, so it is discarded.
+ */
+export function placeDrawnCard(
+  ctx: EngineContext,
+  state: GameState,
+  drawn: EncounterCardDrawn,
+): Event[] {
+  const card = requireCard(state.cards, drawn.cardId);
+  if (card.zone.kind !== 'resolving') return [];
+  const drawer = state.investigators.find((inv) => inv.id === drawn.investigatorId);
+  const placed =
+    drawer?.status === 'active'
+      ? placement(ctx, state, cardStats(ctx.cards, card.code), card.id, drawer)
+      : [cardMoved(state, card, ENCOUNTER_DISCARD, 0)];
+  return [...placed, ...refillIfEmpty(replay(placed, state))];
 }
 
 /**
@@ -191,15 +210,14 @@ function refillIfEmpty(state: GameState): Event[] {
 }
 
 /**
- * The events that place a drawn card. An enemy spawns (spawn instruction,
- * engagement) like `SpawnEnemy`, with the drawer as fallback location; every
- * other card goes to the threat area, the drawer's location (see
- * `attachmentHost`) or the top of the discard. A treachery
- * with a revelation test asks the drawer for its result; one that does not
- * stay in the threat area waits in the `resolving` zone until the answer
+ * The events that place a drawn card, which waits in the `resolving` zone.
+ * An enemy spawns (spawn instruction, engagement) like `SpawnEnemy`, with
+ * the drawer as fallback location; every other card goes to the threat area,
+ * the drawer's location (see `attachmentHost`) or the top of the discard. A
+ * treachery with a revelation test asks the drawer for its result; one that
+ * does not stay in the threat area stays in `resolving` until the answer
  * discards it (Rules Reference: a card is discarded after its revelation
- * resolves). The card may come from the discard (`match`), so the origin is
- * read from the state.
+ * resolves).
  */
 function placement(
   ctx: EngineContext,
@@ -217,13 +235,8 @@ function placement(
     const moved = cardMoved(state, card, { kind: 'threatArea', investigatorId: investigator.id });
     return [moved, ...revelationTestDecision(ctx, replay([moved], state), cardId, investigator)];
   }
-  if (stats.typeCode === 'treachery' && stats.revelationTest) {
-    const resolving = cardMoved(state, card, RESOLVING);
-    const test = revelationTestDecision(ctx, replay([resolving], state), cardId, investigator, [
-      discardToTop(cardId),
-    ]);
-    return [resolving, ...test];
-  }
+  if (stats.typeCode === 'treachery' && stats.revelationTest)
+    return revelationTestDecision(ctx, state, cardId, investigator, [discardToTop(cardId)]);
   // Index 0 is the top, and the discard's top is what "topmost" effects look for.
   return [cardMoved(state, card, ENCOUNTER_DISCARD, 0)];
 }
