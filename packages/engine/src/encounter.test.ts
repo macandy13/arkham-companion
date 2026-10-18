@@ -9,24 +9,23 @@ import {
   CommandRejected,
   confirmOptions,
   decisionId,
-  emptyState,
+  encounterDeck,
+  encounterDiscard,
   engagedWith,
   execute,
   instanceId,
   investigatorId,
   newGame,
   replay,
+  setAside,
   threatAreaOf,
   trait,
   zoneKey,
-  type BuiltGame,
   type CardStats,
   type Command,
   type EffectsRegistry,
   type Event,
-  type GameBuilder,
   type GameState,
-  type InstanceId,
   type Zone,
   type ScenarioHooks,
 } from './index';
@@ -34,9 +33,6 @@ import { rejectionFrom, stateAfter, withScenario } from '../test/utils';
 
 const hall = instanceId('hall');
 const alice = investigatorId('alice');
-const encounterDeck: Zone = { kind: 'encounterDeck' };
-const encounterDiscard: Zone = { kind: 'encounterDiscard' };
-const setAsideZone: Zone = { kind: 'setAside' };
 const hallCard = blankLocation('hall');
 
 /**
@@ -55,23 +51,6 @@ const onePerLocationAttachment = blankTreachery('one_per_location_attachment', {
 });
 const relicCard = blankAsset('relic');
 
-/** An encounter card to create: `card` as which card, `id` as how the test refers to it. */
-interface EncounterCard {
-  card: CardStats;
-  id: InstanceId;
-}
-
-function card(definition: CardStats, id: string): EncounterCard {
-  return { card: definition, id: instanceId(id) };
-}
-
-/** Where the cards of a test start; each list is top first. */
-interface Cards {
-  deck?: EncounterCard[];
-  discard?: EncounterCard[];
-  setAside?: EncounterCard[];
-}
-
 /** The hall, with alice standing in it. */
 const aliceInHall = newGame()
   .withLocation(hall, hallCard)
@@ -79,31 +58,6 @@ const aliceInHall = newGame()
 
 /** The hall, with alice at no location. */
 const aliceNowhere = newGame().withLocation(hall, hallCard).withInvestigator(alice);
-
-/** `table` with exactly the given cards, in the given order (the encounter deck is not shuffled by setup). */
-function withCards(table: GameBuilder, { deck = [], discard = [], setAside = [] }: Cards) {
-  return [
-    ...deck.map((entry) => ({ ...entry, zone: encounterDeck })),
-    ...discard.map((entry) => ({ ...entry, zone: encounterDiscard })),
-    ...setAside.map((entry) => ({ ...entry, zone: setAsideZone })),
-  ].reduce((built, { id, card, zone }) => built.withCard(id, card, zone), table);
-}
-
-/** `table` started with exactly the given cards and the card scripts in `effects`. */
-function startedWith(table: GameBuilder, cards: Cards, effects?: EffectsRegistry): BuiltGame {
-  const { context, state } = withCards(table, cards).start();
-  return { context: effects ? { ...context, effects } : context, state };
-}
-
-/** Like `startedWith(aliceInHall, cards)`, but with `seed` for the shuffles. */
-function startedWithSeed(cards: Cards, seed: number): BuiltGame {
-  const table = withCards(aliceInHall, cards);
-  const context = table.context();
-  return {
-    context,
-    state: execute(context, emptyState(), { ...table.startCommand(), seed }).state,
-  };
-}
 
 const draw: Command = { type: 'DrawEncounter', investigatorId: alice };
 
@@ -114,10 +68,11 @@ function idsIn(state: GameState, zone: Zone): string[] {
 
 describe('DrawEncounter', () => {
   it('reveals the top card and discards a plain treachery on top of the discard', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      deck: [card(plainTreachery, 'top_card'), card(foeCard, 'second_card')],
-      discard: [card(relicCard, 'old_discard')],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('top_card'), plainTreachery, encounterDeck)
+      .withCard(instanceId('second_card'), foeCard, encounterDeck)
+      .withCard(instanceId('old_discard'), relicCard, encounterDiscard)
+      .start();
 
     const { state: after, events } = execute(context, state, draw);
 
@@ -136,7 +91,9 @@ describe('DrawEncounter', () => {
   });
 
   it('spawns an enemy at the drawing investigator`s location and engages them', () => {
-    const { context, state } = startedWith(aliceInHall, { deck: [card(foeCard, 'drawn_foe')] });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('drawn_foe'), foeCard, encounterDeck)
+      .start();
 
     const after = stateAfter(context, state, draw);
 
@@ -144,9 +101,9 @@ describe('DrawEncounter', () => {
   });
 
   it('puts a treachery that stays in play into the threat area', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      deck: [card(lingeringTreachery, 'lingering_card')],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('lingering_card'), lingeringTreachery, encounterDeck)
+      .start();
 
     const after = stateAfter(context, state, draw);
 
@@ -155,9 +112,9 @@ describe('DrawEncounter', () => {
 
   describe('a treachery that attaches to the location, limit 1 per location', () => {
     it('attaches to the drawing investigator`s location', () => {
-      const { context, state } = startedWith(aliceInHall, {
-        deck: [card(onePerLocationAttachment, 'fog_card')],
-      });
+      const { context, state } = aliceInHall
+        .withCard(instanceId('fog_card'), onePerLocationAttachment, encounterDeck)
+        .start();
 
       const after = stateAfter(context, state, draw);
 
@@ -165,14 +122,12 @@ describe('DrawEncounter', () => {
     });
 
     it('is discarded while another copy is attached there', () => {
-      const { context, state } = startedWith(aliceInHall, {
-        deck: [
-          card(onePerLocationAttachment, 'first_fog'),
-          card(onePerLocationAttachment, 'second_fog'),
-          // Keeps the deck from running out, which would shuffle the discard back.
-          card(plainTreachery, 'bottom_card'),
-        ],
-      });
+      const { context, state } = aliceInHall
+        .withCard(instanceId('first_fog'), onePerLocationAttachment, encounterDeck)
+        .withCard(instanceId('second_fog'), onePerLocationAttachment, encounterDeck)
+        // Keeps the deck from running out, which would shuffle the discard back.
+        .withCard(instanceId('bottom_card'), plainTreachery, encounterDeck)
+        .start();
 
       const after = stateAfter(context, stateAfter(context, state, draw), draw);
 
@@ -181,13 +136,11 @@ describe('DrawEncounter', () => {
     });
 
     it('is discarded when the drawer is at no location', () => {
-      const { context, state } = startedWith(aliceNowhere, {
-        deck: [
-          card(onePerLocationAttachment, 'fog_card'),
-          // Keeps the deck from running out, which would shuffle the discard back.
-          card(plainTreachery, 'bottom_card'),
-        ],
-      });
+      const { context, state } = aliceNowhere
+        .withCard(instanceId('fog_card'), onePerLocationAttachment, encounterDeck)
+        // Keeps the deck from running out, which would shuffle the discard back.
+        .withCard(instanceId('bottom_card'), plainTreachery, encounterDeck)
+        .start();
 
       const after = stateAfter(context, state, draw);
 
@@ -196,9 +149,10 @@ describe('DrawEncounter', () => {
   });
 
   it('discards a card that is neither enemy nor treachery', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      deck: [card(relicCard, 'drawn_relic'), card(plainTreachery, 'second_card')],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('drawn_relic'), relicCard, encounterDeck)
+      .withCard(instanceId('second_card'), plainTreachery, encounterDeck)
+      .start();
 
     const after = stateAfter(context, state, draw);
 
@@ -206,9 +160,9 @@ describe('DrawEncounter', () => {
   });
 
   it('records peril on the draw', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      deck: [card(perilTreachery, 'peril_card')],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('peril_card'), perilTreachery, encounterDeck)
+      .start();
 
     const { events } = execute(context, state, draw);
 
@@ -221,13 +175,11 @@ describe('DrawEncounter', () => {
   });
 
   it('draws again after a surge card', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      deck: [
-        card(surgeTreachery, 'surge_card'),
-        card(plainTreachery, 'after_surge'),
-        card(foeCard, 'untouched_foe'),
-      ],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('surge_card'), surgeTreachery, encounterDeck)
+      .withCard(instanceId('after_surge'), plainTreachery, encounterDeck)
+      .withCard(instanceId('untouched_foe'), foeCard, encounterDeck)
+      .start();
 
     const { state: after, events } = execute(context, state, draw);
 
@@ -237,9 +189,10 @@ describe('DrawEncounter', () => {
   });
 
   it('stops drawing when every encounter card has surge', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      deck: [card(surgeTreachery, 'first_surge'), card(surgeTreachery, 'second_surge')],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('first_surge'), surgeTreachery, encounterDeck)
+      .withCard(instanceId('second_surge'), surgeTreachery, encounterDeck)
+      .start();
 
     const { events } = execute(context, state, draw);
 
@@ -247,7 +200,9 @@ describe('DrawEncounter', () => {
   });
 
   it('stops a surge when no card is left to draw', () => {
-    const { context, state } = startedWith(aliceInHall, { deck: [card(surgeFoe, 'last_card')] });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('last_card'), surgeFoe, encounterDeck)
+      .start();
 
     const { events } = execute(context, state, draw);
 
@@ -255,10 +210,10 @@ describe('DrawEncounter', () => {
   });
 
   it('reshuffles the discard as soon as the last card has left the deck', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      deck: [card(plainTreachery, 'last_deck_card')],
-      discard: [card(foeCard, 'discarded_foe')],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('last_deck_card'), plainTreachery, encounterDeck)
+      .withCard(instanceId('discarded_foe'), foeCard, encounterDiscard)
+      .start();
 
     const { state: after, events } = execute(context, state, draw);
 
@@ -276,10 +231,10 @@ describe('DrawEncounter', () => {
   });
 
   it('reshuffles the discard when the last card of the deck is an enemy that stays in play', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      deck: [card(foeCard, 'last_deck_foe')],
-      discard: [card(plainTreachery, 'discarded_treachery')],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('last_deck_foe'), foeCard, encounterDeck)
+      .withCard(instanceId('discarded_treachery'), plainTreachery, encounterDiscard)
+      .start();
 
     const after = stateAfter(context, state, draw);
 
@@ -288,7 +243,9 @@ describe('DrawEncounter', () => {
   });
 
   it('does not shuffle when the deck runs out with an empty discard', () => {
-    const { context, state } = startedWith(aliceInHall, { deck: [card(foeCard, 'last_deck_foe')] });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('last_deck_foe'), foeCard, encounterDeck)
+      .start();
 
     const { events } = execute(context, state, draw);
 
@@ -296,13 +253,11 @@ describe('DrawEncounter', () => {
   });
 
   it('reshuffles the discard into a deck that was already empty before drawing', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      discard: [
-        card(plainTreachery, 'discard_one'),
-        card(plainTreachery, 'discard_two'),
-        card(plainTreachery, 'discard_three'),
-      ],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('discard_one'), plainTreachery, encounterDiscard)
+      .withCard(instanceId('discard_two'), plainTreachery, encounterDiscard)
+      .withCard(instanceId('discard_three'), plainTreachery, encounterDiscard)
+      .start();
 
     const { state: after, events } = execute(context, state, draw);
 
@@ -312,20 +267,19 @@ describe('DrawEncounter', () => {
   });
 
   describe('reshuffling with a seed', () => {
-    const discard = [
-      card(plainTreachery, 'plain_a'),
-      card(foeCard, 'foe_a'),
-      card(relicCard, 'relic_a'),
-      card(perilTreachery, 'peril_a'),
-      card(lingeringTreachery, 'lingering_a'),
-      card(plainTreachery, 'plain_b'),
-      card(foeCard, 'foe_b'),
-      card(relicCard, 'relic_b'),
-    ];
+    const table = aliceInHall
+      .withCard(instanceId('plain_a'), plainTreachery, encounterDiscard)
+      .withCard(instanceId('foe_a'), foeCard, encounterDiscard)
+      .withCard(instanceId('relic_a'), relicCard, encounterDiscard)
+      .withCard(instanceId('peril_a'), perilTreachery, encounterDiscard)
+      .withCard(instanceId('lingering_a'), lingeringTreachery, encounterDiscard)
+      .withCard(instanceId('plain_b'), plainTreachery, encounterDiscard)
+      .withCard(instanceId('foe_b'), foeCard, encounterDiscard)
+      .withCard(instanceId('relic_b'), relicCard, encounterDiscard);
 
     it('reshuffles the same way for the same seed and differently across seeds', () => {
       const seeded = (seed: number) => {
-        const { context, state } = startedWithSeed({ discard }, seed);
+        const { context, state } = table.withSeed(seed).start();
         return idsIn(stateAfter(context, state, draw), encounterDeck);
       };
 
@@ -335,10 +289,10 @@ describe('DrawEncounter', () => {
   });
 
   it('reshuffles a surge card that was just discarded before the surge draw', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      deck: [card(surgeTreachery, 'surge_card')],
-      discard: [card(plainTreachery, 'discarded_treachery')],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('surge_card'), surgeTreachery, encounterDeck)
+      .withCard(instanceId('discarded_treachery'), plainTreachery, encounterDiscard)
+      .start();
 
     const { state: after, events } = execute(context, state, draw);
 
@@ -354,13 +308,15 @@ describe('DrawEncounter', () => {
   });
 
   it('rejects a draw when the deck and the discard are empty', () => {
-    const { context, state } = startedWith(aliceInHall, {});
+    const { context, state } = aliceInHall.start();
 
     expect(rejectionFrom(context, state, draw)).toEqual({ code: 'encounterDeckEmpty' });
   });
 
   it('rejects an enemy draw for an investigator without a location', () => {
-    const { context, state } = startedWith(aliceNowhere, { deck: [card(foeCard, 'drawn_foe')] });
+    const { context, state } = aliceNowhere
+      .withCard(instanceId('drawn_foe'), foeCard, encounterDeck)
+      .start();
 
     expect(rejectionFrom(context, state, draw)).toEqual({
       code: 'investigatorHasNoLocation',
@@ -369,9 +325,9 @@ describe('DrawEncounter', () => {
   });
 
   it('rejects a draw for an unknown investigator', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      deck: [card(plainTreachery, 'top_card')],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('top_card'), plainTreachery, encounterDeck)
+      .start();
     const command: Command = { type: 'DrawEncounter', investigatorId: investigatorId('nobody') };
 
     expect(rejectionFrom(context, state, command).code).toBe('unknownInvestigator');
@@ -383,10 +339,10 @@ describe('DrawEncounter', () => {
         { type: 'PlaceDoom', cardId: event.cardId, amount: 1 },
       ],
     };
-    const enemyDeck = startedWith(aliceInHall, { deck: [card(foeCard, 'drawn_foe')] });
-    const treacheryDeck = startedWith(aliceInHall, {
-      deck: [card(plainTreachery, 'drawn_treachery')],
-    });
+    const enemyDeck = aliceInHall.withCard(instanceId('drawn_foe'), foeCard, encounterDeck).start();
+    const treacheryDeck = aliceInHall
+      .withCard(instanceId('drawn_treachery'), plainTreachery, encounterDeck)
+      .start();
 
     const enemy = stateAfter(withScenario(enemyDeck.context, { hooks }), enemyDeck.state, draw);
     const treachery = stateAfter(
@@ -415,13 +371,11 @@ describe('DrawEncounter with a match', () => {
   };
 
   it('takes the first matching card of the deck and leaves the cards above it', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      deck: [
-        card(plainTreachery, 'top_card'),
-        card(ghoulFoe, 'first_ghoul'),
-        card(ghoulFoe, 'second_ghoul'),
-      ],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('top_card'), plainTreachery, encounterDeck)
+      .withCard(instanceId('first_ghoul'), ghoulFoe, encounterDeck)
+      .withCard(instanceId('second_ghoul'), ghoulFoe, encounterDeck)
+      .start();
 
     const after = stateAfter(context, state, drawGhoulEnemy);
 
@@ -433,15 +387,13 @@ describe('DrawEncounter with a match', () => {
   });
 
   it('discards the cards above the match first when asked to', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      deck: [
-        card(plainTreachery, 'skipped_treachery'),
-        card(otherFoe, 'skipped_foe'),
-        card(ghoulFoe, 'drawn_ghoul'),
-        card(plainTreachery, 'below_ghoul'),
-      ],
-      discard: [card(plainTreachery, 'old_discard')],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('skipped_treachery'), plainTreachery, encounterDeck)
+      .withCard(instanceId('skipped_foe'), otherFoe, encounterDeck)
+      .withCard(instanceId('drawn_ghoul'), ghoulFoe, encounterDeck)
+      .withCard(instanceId('below_ghoul'), plainTreachery, encounterDeck)
+      .withCard(instanceId('old_discard'), plainTreachery, encounterDiscard)
+      .start();
 
     const after = stateAfter(context, state, { ...drawGhoulEnemy, discardSkipped: true });
 
@@ -455,14 +407,13 @@ describe('DrawEncounter with a match', () => {
   });
 
   it('takes the topmost matching card from the discard when drawing from the discard', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      deck: [card(ghoulFoe, 'ghoul_in_deck'), card(plainTreachery, 'deck_filler')],
-      discard: [
-        card(plainTreachery, 'discarded_treachery'),
-        card(ghoulFoe, 'upper_discarded_ghoul'),
-        card(ghoulFoe, 'lower_discarded_ghoul'),
-      ],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('ghoul_in_deck'), ghoulFoe, encounterDeck)
+      .withCard(instanceId('deck_filler'), plainTreachery, encounterDeck)
+      .withCard(instanceId('discarded_treachery'), plainTreachery, encounterDiscard)
+      .withCard(instanceId('upper_discarded_ghoul'), ghoulFoe, encounterDiscard)
+      .withCard(instanceId('lower_discarded_ghoul'), ghoulFoe, encounterDiscard)
+      .start();
 
     const after = stateAfter(context, state, { ...drawGhoulEnemy, from: 'discard' });
 
@@ -475,10 +426,11 @@ describe('DrawEncounter with a match', () => {
   });
 
   it('searches the deck before the discard when drawing from either', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      deck: [card(ghoulFoe, 'ghoul_in_deck'), card(plainTreachery, 'deck_filler')],
-      discard: [card(ghoulFoe, 'ghoul_in_discard')],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('ghoul_in_deck'), ghoulFoe, encounterDeck)
+      .withCard(instanceId('deck_filler'), plainTreachery, encounterDeck)
+      .withCard(instanceId('ghoul_in_discard'), ghoulFoe, encounterDiscard)
+      .start();
 
     const after = stateAfter(context, state, { ...drawGhoulEnemy, from: 'deckOrDiscard' });
 
@@ -487,10 +439,11 @@ describe('DrawEncounter with a match', () => {
   });
 
   it('finds a card that is only in the discard when drawing from either', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      deck: [card(plainTreachery, 'deck_filler'), card(plainTreachery, 'second_filler')],
-      discard: [card(ghoulFoe, 'ghoul_in_discard')],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('deck_filler'), plainTreachery, encounterDeck)
+      .withCard(instanceId('second_filler'), plainTreachery, encounterDeck)
+      .withCard(instanceId('ghoul_in_discard'), ghoulFoe, encounterDiscard)
+      .start();
 
     const after = stateAfter(context, state, { ...drawGhoulEnemy, from: 'deckOrDiscard' });
 
@@ -498,9 +451,10 @@ describe('DrawEncounter with a match', () => {
   });
 
   it('matches by name', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      deck: [card(ghoulFoe, 'ghoul_minion'), card(otherFoe, 'other_foe_card')],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('ghoul_minion'), ghoulFoe, encounterDeck)
+      .withCard(instanceId('other_foe_card'), otherFoe, encounterDeck)
+      .start();
 
     const after = stateAfter(context, state, {
       type: 'DrawEncounter',
@@ -513,9 +467,9 @@ describe('DrawEncounter with a match', () => {
   });
 
   it('requires every given field to match', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      deck: [card(ghoulTreachery, 'ghoul_treachery_card')],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('ghoul_treachery_card'), ghoulTreachery, encounterDeck)
+      .start();
 
     expect(rejectionFrom(context, state, drawGhoulEnemy)).toEqual({
       code: 'noMatchingCard',
@@ -525,17 +479,17 @@ describe('DrawEncounter with a match', () => {
   });
 
   it('does not look in the discard unless told to', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      discard: [card(ghoulFoe, 'ghoul_in_discard')],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('ghoul_in_discard'), ghoulFoe, encounterDiscard)
+      .start();
 
     expect(rejectionFrom(context, state, drawGhoulEnemy).code).toBe('noMatchingCard');
   });
 
   it('changes nothing when it rejects, even when asked to discard the cards above', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      deck: [card(plainTreachery, 'top_card')],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('top_card'), plainTreachery, encounterDeck)
+      .start();
 
     const rejection = rejectionFrom(context, state, { ...drawGhoulEnemy, discardSkipped: true });
 
@@ -544,10 +498,11 @@ describe('DrawEncounter with a match', () => {
   });
 
   it('draws again from the top after a matched card with surge', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      deck: [card(plainTreachery, 'top_card'), card(surgeGhoulFoe, 'surging_ghoul')],
-      discard: [card(plainTreachery, 'old_discard')],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('top_card'), plainTreachery, encounterDeck)
+      .withCard(instanceId('surging_ghoul'), surgeGhoulFoe, encounterDeck)
+      .withCard(instanceId('old_discard'), plainTreachery, encounterDiscard)
+      .start();
 
     const { state: after, events } = execute(context, state, drawGhoulEnemy);
 
@@ -557,10 +512,10 @@ describe('DrawEncounter with a match', () => {
   });
 
   it('reshuffles the discard when the matched card was the last one in the deck', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      deck: [card(ghoulFoe, 'last_deck_ghoul')],
-      discard: [card(plainTreachery, 'discarded_treachery')],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('last_deck_ghoul'), ghoulFoe, encounterDeck)
+      .withCard(instanceId('discarded_treachery'), plainTreachery, encounterDiscard)
+      .start();
 
     const after = stateAfter(context, state, drawGhoulEnemy);
 
@@ -574,9 +529,9 @@ describe('DrawEncounter with a match', () => {
         { type: 'PlaceDoom', cardId: event.cardId, amount: 1 },
       ],
     };
-    const { context, state } = startedWith(aliceInHall, {
-      discard: [card(ghoulFoe, 'discarded_ghoul')],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('discarded_ghoul'), ghoulFoe, encounterDiscard)
+      .start();
 
     const after = stateAfter(withScenario(context, { hooks }), state, {
       ...drawGhoulEnemy,
@@ -589,13 +544,11 @@ describe('DrawEncounter with a match', () => {
 
 describe('FromSetAside', () => {
   it('moves one copy per listed code, taking two copies for a code listed twice', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      setAside: [
-        card(foeCard, 'first_foe'),
-        card(plainTreachery, 'set_aside_treachery'),
-        card(foeCard, 'second_foe'),
-      ],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('first_foe'), foeCard, setAside)
+      .withCard(instanceId('set_aside_treachery'), plainTreachery, setAside)
+      .withCard(instanceId('second_foe'), foeCard, setAside)
+      .start();
 
     const after = stateAfter(context, state, {
       type: 'FromSetAside',
@@ -604,11 +557,13 @@ describe('FromSetAside', () => {
     });
 
     expect(idsIn(after, { kind: 'victoryDisplay' })).toEqual(['first_foe', 'second_foe']);
-    expect(idsIn(after, setAsideZone)).toEqual(['set_aside_treachery']);
+    expect(idsIn(after, setAside)).toEqual(['set_aside_treachery']);
   });
 
   it('rejects a code with no set-aside copy left', () => {
-    const { context, state } = startedWith(aliceInHall, { setAside: [card(foeCard, 'only_foe')] });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('only_foe'), foeCard, setAside)
+      .start();
 
     expect(
       rejectionFrom(context, state, {
@@ -625,9 +580,9 @@ describe('FromSetAside', () => {
         { type: 'PlaceDoom', cardId: event.cardId, amount: 2 },
       ],
     };
-    const { context, state } = startedWith(aliceInHall, {
-      setAside: [card(foeCard, 'set_aside_foe')],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('set_aside_foe'), foeCard, setAside)
+      .start();
 
     const after = stateAfter(withScenario(context, { hooks }), state, {
       type: 'FromSetAside',
@@ -641,14 +596,13 @@ describe('FromSetAside', () => {
 
 describe('ShuffleInto', () => {
   it('adds the set-aside cards to the deck and shuffles all of it', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      deck: [
-        card(plainTreachery, 'deck_card_a'),
-        card(plainTreachery, 'deck_card_b'),
-        card(plainTreachery, 'deck_card_c'),
-      ],
-      setAside: [card(foeCard, 'set_aside_foe'), card(relicCard, 'set_aside_relic')],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('deck_card_a'), plainTreachery, encounterDeck)
+      .withCard(instanceId('deck_card_b'), plainTreachery, encounterDeck)
+      .withCard(instanceId('deck_card_c'), plainTreachery, encounterDeck)
+      .withCard(instanceId('set_aside_foe'), foeCard, setAside)
+      .withCard(instanceId('set_aside_relic'), relicCard, setAside)
+      .start();
 
     const { state: after, events } = execute(context, state, {
       type: 'ShuffleInto',
@@ -664,11 +618,13 @@ describe('ShuffleInto', () => {
       'set_aside_foe',
       'set_aside_relic',
     ]);
-    expect(idsIn(after, setAsideZone)).toEqual([]);
+    expect(idsIn(after, setAside)).toEqual([]);
   });
 
   it('rejects a code that is not set aside', () => {
-    const { context, state } = startedWith(aliceInHall, { deck: [card(foeCard, 'deck_foe')] });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('deck_foe'), foeCard, encounterDeck)
+      .start();
 
     expect(
       rejectionFrom(context, state, {
@@ -684,10 +640,11 @@ describe('ShuffleEncounterDiscard', () => {
   const shuffleDiscard: Command = { type: 'ShuffleEncounterDiscard' };
 
   it('moves the whole discard into the deck and shuffles all of it', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      deck: [card(plainTreachery, 'deck_card')],
-      discard: [card(foeCard, 'discarded_foe'), card(plainTreachery, 'discarded_treachery')],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('deck_card'), plainTreachery, encounterDeck)
+      .withCard(instanceId('discarded_foe'), foeCard, encounterDiscard)
+      .withCard(instanceId('discarded_treachery'), plainTreachery, encounterDiscard)
+      .start();
 
     const { state: after, events } = execute(context, state, shuffleDiscard);
 
@@ -701,9 +658,10 @@ describe('ShuffleEncounterDiscard', () => {
   });
 
   it('leaves the deck in its order when the discard is empty', () => {
-    const { context, state } = startedWith(aliceInHall, {
-      deck: [card(plainTreachery, 'deck_card_a'), card(foeCard, 'deck_card_b')],
-    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('deck_card_a'), plainTreachery, encounterDeck)
+      .withCard(instanceId('deck_card_b'), foeCard, encounterDeck)
+      .start();
 
     const { events } = execute(context, state, shuffleDiscard);
 
@@ -721,60 +679,51 @@ describe('encounter deck invariants', () => {
   it.each([
     {
       name: 'plain draws',
-      cards: {
-        deck: [
-          card(plainTreachery, 'plain_card'),
-          card(foeCard, 'foe_card'),
-          card(lingeringTreachery, 'lingering_card'),
-        ],
-      },
+      table: aliceInHall
+        .withCard(instanceId('plain_card'), plainTreachery, encounterDeck)
+        .withCard(instanceId('foe_card'), foeCard, encounterDeck)
+        .withCard(instanceId('lingering_card'), lingeringTreachery, encounterDeck),
       steps: [draw, draw, draw],
     },
     {
       name: 'draws through a reshuffle',
-      cards: {
-        deck: [card(plainTreachery, 'last_deck_card')],
-        discard: [
-          card(foeCard, 'discarded_foe'),
-          card(relicCard, 'discarded_relic'),
-          card(perilTreachery, 'discarded_peril'),
-        ],
-      },
+      table: aliceInHall
+        .withCard(instanceId('last_deck_card'), plainTreachery, encounterDeck)
+        .withCard(instanceId('discarded_foe'), foeCard, encounterDiscard)
+        .withCard(instanceId('discarded_relic'), relicCard, encounterDiscard)
+        .withCard(instanceId('discarded_peril'), perilTreachery, encounterDiscard),
       steps: [draw, draw, draw, draw, draw],
     },
     {
       name: 'a surge chain',
-      cards: {
-        deck: [
-          card(surgeTreachery, 'surge_treachery_card'),
-          card(surgeFoe, 'surge_foe_card'),
-          card(plainTreachery, 'plain_card'),
-        ],
-        discard: [card(foeCard, 'discarded_foe')],
-      },
+      table: aliceInHall
+        .withCard(instanceId('surge_treachery_card'), surgeTreachery, encounterDeck)
+        .withCard(instanceId('surge_foe_card'), surgeFoe, encounterDeck)
+        .withCard(instanceId('plain_card'), plainTreachery, encounterDeck)
+        .withCard(instanceId('discarded_foe'), foeCard, encounterDiscard),
       steps: [draw, draw],
     },
     {
       name: 'only surge cards',
-      cards: {
-        deck: [card(surgeTreachery, 'surge_treachery_card'), card(surgeTreachery, 'other_surge')],
-        discard: [card(surgeFoe, 'discarded_surge_foe')],
-      },
+      table: aliceInHall
+        .withCard(instanceId('surge_treachery_card'), surgeTreachery, encounterDeck)
+        .withCard(instanceId('other_surge'), surgeTreachery, encounterDeck)
+        .withCard(instanceId('discarded_surge_foe'), surgeFoe, encounterDiscard),
       steps: [draw, draw],
     },
     {
       name: 'cards shuffled in between draws',
-      cards: {
-        deck: [card(plainTreachery, 'plain_card')],
-        setAside: [card(foeCard, 'set_aside_foe'), card(lingeringTreachery, 'set_aside_lingering')],
-      },
+      table: aliceInHall
+        .withCard(instanceId('plain_card'), plainTreachery, encounterDeck)
+        .withCard(instanceId('set_aside_foe'), foeCard, setAside)
+        .withCard(instanceId('set_aside_lingering'), lingeringTreachery, setAside),
       steps: [draw, shuffleIn(foeCard), draw, shuffleIn(lingeringTreachery), draw, draw],
     },
-    { name: 'a draw from nothing', cards: {}, steps: [draw] },
+    { name: 'a draw from nothing', table: aliceInHall, steps: [draw] },
   ])(
     'keeps every card in exactly one zone and the card count constant: $name',
-    ({ cards, steps }) => {
-      const { context, state: started } = startedWith(aliceInHall, cards);
+    ({ table, steps }) => {
+      const { context, state: started } = table.start();
       let state = started;
       const cardCount = Object.keys(state.cards).length;
 
@@ -797,49 +746,45 @@ describe('encounter deck invariants', () => {
   it.each([
     {
       name: 'one plain card in the deck, a foe in the discard',
-      cards: {
-        deck: [card(plainTreachery, 'deck_card')],
-        discard: [card(foeCard, 'discarded_foe')],
-      },
+      table: aliceInHall
+        .withCard(instanceId('deck_card'), plainTreachery, encounterDeck)
+        .withCard(instanceId('discarded_foe'), foeCard, encounterDiscard),
     },
     {
       name: 'a foe in the deck, two plain cards in the discard',
-      cards: {
-        deck: [card(foeCard, 'deck_foe')],
-        discard: [card(plainTreachery, 'discard_a'), card(plainTreachery, 'discard_b')],
-      },
+      table: aliceInHall
+        .withCard(instanceId('deck_foe'), foeCard, encounterDeck)
+        .withCard(instanceId('discard_a'), plainTreachery, encounterDiscard)
+        .withCard(instanceId('discard_b'), plainTreachery, encounterDiscard),
     },
     {
       name: 'a lingering treachery in the deck, a relic in the discard',
-      cards: {
-        deck: [card(lingeringTreachery, 'deck_lingering')],
-        discard: [card(relicCard, 'discarded_relic')],
-      },
+      table: aliceInHall
+        .withCard(instanceId('deck_lingering'), lingeringTreachery, encounterDeck)
+        .withCard(instanceId('discarded_relic'), relicCard, encounterDiscard),
     },
     {
       name: 'an empty deck, three cards in the discard',
-      cards: {
-        discard: [
-          card(plainTreachery, 'discarded_treachery'),
-          card(foeCard, 'discarded_foe'),
-          card(relicCard, 'discarded_relic'),
-        ],
-      },
+      table: aliceInHall
+        .withCard(instanceId('discarded_treachery'), plainTreachery, encounterDiscard)
+        .withCard(instanceId('discarded_foe'), foeCard, encounterDiscard)
+        .withCard(instanceId('discarded_relic'), relicCard, encounterDiscard),
     },
     {
       name: 'a surge card in the deck, a peril card in the discard',
-      cards: {
-        deck: [card(surgeTreachery, 'deck_surge')],
-        discard: [card(perilTreachery, 'discarded_peril')],
-      },
+      table: aliceInHall
+        .withCard(instanceId('deck_surge'), surgeTreachery, encounterDeck)
+        .withCard(instanceId('discarded_peril'), perilTreachery, encounterDiscard),
     },
     {
       name: 'two plain cards in the deck, an empty discard',
-      cards: { deck: [card(plainTreachery, 'deck_a'), card(plainTreachery, 'deck_b')] },
+      table: aliceInHall
+        .withCard(instanceId('deck_a'), plainTreachery, encounterDeck)
+        .withCard(instanceId('deck_b'), plainTreachery, encounterDeck),
     },
-  ])('never leaves the deck empty while the discard has cards: $name', ({ cards }) => {
+  ])('never leaves the deck empty while the discard has cards: $name', ({ table }) => {
     for (const seed of [1, 2, 3]) {
-      const { context, state } = startedWithSeed(cards, seed);
+      const { context, state } = table.withSeed(seed).start();
       const after = stateAfter(context, state, draw);
 
       const deckSize = idsIn(after, encounterDeck).length;
@@ -918,11 +863,11 @@ describe('surge after the drawn card has resolved', () => {
   }
 
   it('resolves the revealed card`s effect before the surge draw', () => {
-    const { context, state } = startedWith(
-      aliceInHall,
-      { deck: [card(burningSurge, 'burning_card'), card(plainTreachery, 'after_surge')] },
-      surgeEffects,
-    );
+    const { context, state } = aliceInHall
+      .withCard(instanceId('burning_card'), burningSurge, encounterDeck)
+      .withCard(instanceId('after_surge'), plainTreachery, encounterDeck)
+      .withEffects(surgeEffects)
+      .start();
 
     const { events } = execute(context, state, draw);
 
@@ -936,11 +881,11 @@ describe('surge after the drawn card has resolved', () => {
   });
 
   it('holds the surge draw while the card`s revelation test waits for its result', () => {
-    const { context, state } = startedWith(
-      aliceInHall,
-      { deck: [card(testingSurge, 'testing_card'), card(plainTreachery, 'after_surge')] },
-      surgeEffects,
-    );
+    const { context, state } = aliceInHall
+      .withCard(instanceId('testing_card'), testingSurge, encounterDeck)
+      .withCard(instanceId('after_surge'), plainTreachery, encounterDeck)
+      .withEffects(surgeEffects)
+      .start();
 
     const asked = stateAfter(context, state, draw);
 
@@ -950,11 +895,11 @@ describe('surge after the drawn card has resolved', () => {
   });
 
   it('draws the surge card once the test is answered and the card discarded', () => {
-    const { context, state } = startedWith(
-      aliceInHall,
-      { deck: [card(testingSurge, 'testing_card'), card(plainTreachery, 'after_surge')] },
-      surgeEffects,
-    );
+    const { context, state } = aliceInHall
+      .withCard(instanceId('testing_card'), testingSurge, encounterDeck)
+      .withCard(instanceId('after_surge'), plainTreachery, encounterDeck)
+      .withEffects(surgeEffects)
+      .start();
     const asked = stateAfter(context, state, draw);
 
     const { state: answered, events } = execute(context, asked, {
@@ -972,11 +917,10 @@ describe('surge after the drawn card has resolved', () => {
   });
 
   it('holds no surge draw when the surging card was the last one', () => {
-    const { context, state } = startedWith(
-      aliceInHall,
-      { deck: [card(testingSurge, 'testing_card')] },
-      surgeEffects,
-    );
+    const { context, state } = aliceInHall
+      .withCard(instanceId('testing_card'), testingSurge, encounterDeck)
+      .withEffects(surgeEffects)
+      .start();
 
     const asked = stateAfter(context, state, draw);
 
@@ -984,11 +928,11 @@ describe('surge after the drawn card has resolved', () => {
   });
 
   it('drops the held surge draw when the card`s effect defeated alice', () => {
-    const { context, state } = startedWith(
-      aliceInHall,
-      { deck: [card(deadlySurge, 'deadly_card'), card(plainTreachery, 'after_surge')] },
-      surgeEffects,
-    );
+    const { context, state } = aliceInHall
+      .withCard(instanceId('deadly_card'), deadlySurge, encounterDeck)
+      .withCard(instanceId('after_surge'), plainTreachery, encounterDeck)
+      .withEffects(surgeEffects)
+      .start();
     const asked = stateAfter(context, state, draw);
 
     const { events } = execute(context, asked, {
@@ -1005,11 +949,11 @@ describe('surge after the drawn card has resolved', () => {
   });
 
   it('draws the surge card only after the players chose where the enemy spawns', () => {
-    const { context, state } = startedWith(
-      aliceInHall,
-      { deck: [card(choosyFoe, 'choosy_card'), card(plainTreachery, 'after_surge')] },
-      surgeEffects,
-    );
+    const { context, state } = aliceInHall
+      .withCard(instanceId('choosy_card'), choosyFoe, encounterDeck)
+      .withCard(instanceId('after_surge'), plainTreachery, encounterDeck)
+      .withEffects(surgeEffects)
+      .start();
     const asked = stateAfter(context, state, draw);
 
     const { events } = execute(context, asked, {
@@ -1090,11 +1034,11 @@ describe('revelation before the drawn card is placed', () => {
     { drawn: scorchingLingering, placed: 'drawn_card to threatArea' },
     { drawn: scorchingAttachment, placed: 'drawn_card to attachedTo' },
   ])('resolves the revelation of $drawn.code before placing it', ({ drawn, placed }) => {
-    const { context, state } = startedWith(
-      aliceInHall,
-      { deck: [card(drawn, 'drawn_card'), card(scorchingTreachery, 'next_card')] },
-      revelationEffects,
-    );
+    const { context, state } = aliceInHall
+      .withCard(instanceId('drawn_card'), drawn, encounterDeck)
+      .withCard(instanceId('next_card'), scorchingTreachery, encounterDeck)
+      .withEffects(revelationEffects)
+      .start();
 
     const { events } = execute(context, state, draw);
 
@@ -1102,11 +1046,10 @@ describe('revelation before the drawn card is placed', () => {
   });
 
   it('keeps the card in the resolving zone while its revelation resolves', () => {
-    const { context, state } = startedWith(
-      aliceInHall,
-      { deck: [card(scorchingFoe, 'drawn_foe')] },
-      revelationEffects,
-    );
+    const { context, state } = aliceInHall
+      .withCard(instanceId('drawn_foe'), scorchingFoe, encounterDeck)
+      .withEffects(revelationEffects)
+      .start();
 
     const { events } = execute(context, state, draw);
 
@@ -1116,15 +1059,14 @@ describe('revelation before the drawn card is placed', () => {
   });
 
   it('does not place a card its revelation has already moved', () => {
-    const { context, state } = startedWith(
-      aliceInHall,
-      { deck: [card(vanishingTreachery, 'vanishing_card')] },
-      revelationEffects,
-    );
+    const { context, state } = aliceInHall
+      .withCard(instanceId('vanishing_card'), vanishingTreachery, encounterDeck)
+      .withEffects(revelationEffects)
+      .start();
 
     const after = stateAfter(context, state, draw);
 
-    expect(after.cards[instanceId('vanishing_card')]?.zone).toEqual(setAsideZone);
+    expect(after.cards[instanceId('vanishing_card')]?.zone).toEqual(setAside);
   });
 
   it.each([
@@ -1132,11 +1074,11 @@ describe('revelation before the drawn card is placed', () => {
     { drawn: lethalFoe, placed: 'lethal_card to encounterDiscard' },
     { drawn: lethalHallFoe, placed: 'lethal_card to atLocation' },
   ])('places $drawn.code without the drawer it defeated: $placed', ({ drawn, placed }) => {
-    const { context, state } = startedWith(
-      aliceInHall,
-      { deck: [card(drawn, 'lethal_card'), card(scorchingFoe, 'next_foe')] },
-      revelationEffects,
-    );
+    const { context, state } = aliceInHall
+      .withCard(instanceId('lethal_card'), drawn, encounterDeck)
+      .withCard(instanceId('next_foe'), scorchingFoe, encounterDeck)
+      .withEffects(revelationEffects)
+      .start();
 
     const { events } = execute(context, state, draw);
 

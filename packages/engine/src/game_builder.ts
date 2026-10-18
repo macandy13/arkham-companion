@@ -12,6 +12,7 @@ import {
 import type { Edge, MapSpec } from './map';
 import { blankInvestigator } from './blank_cards';
 import { emptyState, type Difficulty, type GameState, type TokenKind } from './state';
+import type { EffectsRegistry } from './triggers';
 import type { Zone } from './zone';
 
 /** How `GameBuilder.withLocation` places a location. */
@@ -81,6 +82,7 @@ interface GameSpec {
   readonly difficulty: Difficulty;
   readonly seed: number;
   readonly shuffleEncounterDeck: boolean;
+  readonly effects?: EffectsRegistry;
 }
 
 const EMPTY_SPEC: GameSpec = {
@@ -98,10 +100,10 @@ const EMPTY_SPEC: GameSpec = {
  * Describes a game table piece by piece (locations, maps and connections,
  * investigators, cards in their zones, and difficulty, seed and shuffle) and
  * starts it as a scenario, so a test, a sandbox board or a scenario under
- * construction spells out only what it is about. Each card is passed with its definition, typically a
- * `blank*` card with the stats that matter, and the builder collects the
- * definitions into the context, so the stats stay next to where the card is
- * placed.
+ * construction spells out only what it is about. Each card is passed with
+ * its definition, typically a `blank*` card with the stats that matter, and
+ * the builder collects the definitions into the context, so the stats stay
+ * next to where the card is placed.
  *
  * Immutable: every `with*` returns a new builder, so one builder can be the
  * common table of several tests that each add their own cards.
@@ -183,9 +185,22 @@ export class GameBuilder {
     return this.withCard(id, card, { kind: 'actDeck' }, { faceUp: true });
   }
 
-  /** A context whose card db holds the definition of every card on the table. */
+  /**
+   * The table with these card scripts (`EngineContext.effects`) in its
+   * context, in place of any given before; for tests of cards whose text the
+   * engine only knows from a script.
+   */
+  withEffects(effects: EffectsRegistry): GameBuilder {
+    return this.with({ effects });
+  }
+
+  /**
+   * A context whose card db holds the definition of every card on the table,
+   * with the card scripts of `withEffects`.
+   */
   context(): EngineContext {
-    return { cards: cardDbFrom(this.definitions()) };
+    const cards = cardDbFrom(this.definitions());
+    return this.spec.effects ? { cards, effects: this.spec.effects } : { cards };
   }
 
   /** The `StartScenario` that sets up this table (standard difficulty and seed 1 unless set). */
