@@ -1,12 +1,5 @@
 import { cardStats, resolveValue, type EngineContext } from './cards';
-import type {
-  AdvanceAct,
-  AdvanceAgenda,
-  ClueSpend,
-  Command,
-  EndScenario,
-  PlaceDoom,
-} from './commands';
+import type { AdvanceAct, AdvanceAgenda, ClueSpend, EndScenario, PlaceDoom } from './commands';
 import { cardsWithDoom, isInPlay } from './doom';
 import type {
   ActAdvanced,
@@ -28,18 +21,6 @@ import type { CardInstance, GameState } from './state';
 import { zoneKey } from './zone';
 
 type Deck = 'agenda' | 'act';
-
-/**
- * Rejects every command once the scenario has ended (`GameMeta.ended`),
- * except `ManualAdjust`: the players may still correct the final board (a
- * miscounted clue changes what goes to the victory display), and undo works
- * on the log, outside `handle`. Only checked for commands from outside; the
- * rest of the chain that ended the scenario still resolves.
- */
-export function assertScenarioRunning(state: GameState, command: Command): void {
-  if (state.meta.ended && command.type !== 'ManualAdjust')
-    throw new CommandRejected({ code: 'scenarioEnded', command: command.type });
-}
 
 /** `PlaceDoom`: doom on a card in play; the current agenda unless the command names another. */
 export function handlePlaceDoom(state: GameState, cmd: PlaceDoom): TokensChanged[] {

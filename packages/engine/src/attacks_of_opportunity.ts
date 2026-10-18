@@ -1,5 +1,5 @@
 import type { EngineContext } from './cards';
-import type { Command, DealEnemyAttack } from './commands';
+import type { DealEnemyAttack } from './commands';
 import { requestDecision } from './decisions';
 import { enemyAttackEvents, readyEngagedEnemies } from './enemies';
 import type { DecisionRequested, Event } from './events';
@@ -21,7 +21,7 @@ import type { GameState, HeldAction } from './state';
  *
  * `handle` calls this for player commands only: follow-ups of hooks and of
  * decision answers are rule consequences, not actions, so they never
- * provoke (`provokingAction` tells which commands do). When it raises any decision, `handle` holds the action
+ * provoke (`CommandSpec.provokes` tells which commands do). When it raises any decision, `handle` holds the action
  * (`ActionHeld`) and resolves it only after the last answer
  * (`resumeHeldAction`). The decisions may be answered in any order, because
  * the attacking enemies' controller (the players) picks it.
@@ -42,43 +42,13 @@ export function attackOfOpportunityDecisions(
 }
 
 /**
- * `command` as an action that provokes, if it is one. The engine does not
- * count actions (the players do, see `Investigator.actionsRemaining`), so it
- * recognises only the action-like commands it sees, and only for the
- * investigator whose turn is in progress, because actions are taken in one's
- * own turn: the same command at another time (a treachery moving someone,
- * setup) is a card effect.
- * - `MoveInvestigator` is the move action, unless it ignores connections,
- *   which only card effects do.
- * - `Investigate` is the investigate action.
- * - `EngageEnemy` is the engage action; the other engaged enemies attack (the
- *   enemy being engaged is not engaged yet, and a massive one cannot be
- *   engaged, `massiveNotEngageable`). An engagement by rule (entering a
- *   location with a ready enemy) is part of the move, not an `EngageEnemy`.
- * - `AdjustActions` does not provoke, even with a negative delta. The
- *   players count off the actions the engine saw as well (move, investigate),
- *   so treating every -1 as an action would ask twice for the same action.
- *   Actions the engine cannot see (resource, draw, play, activate) are
- *   therefore left to the players (M1.12 follow-up).
- * - `Fight` and `Evade` never provoke; the rules exempt them.
+ * Whether `action` is taken by the investigator whose turn is in progress.
+ * Actions are taken in one's own turn, so the same command at another time
+ * (a treachery moving someone, setup) is a card effect and does not provoke.
+ * Which commands are actions at all is up to `CommandSpec.provokes`.
  */
-export function provokingAction(state: GameState, command: Command): HeldAction | undefined {
-  const action = actionOf(command);
-  if (action === undefined || state.meta.turn?.investigatorId !== action.investigatorId)
-    return undefined;
-  return action;
-}
-
-function actionOf(command: Command): HeldAction | undefined {
-  switch (command.type) {
-    case 'MoveInvestigator':
-      return command.ignoreConnections ? undefined : command;
-    case 'Investigate':
-    case 'EngageEnemy':
-      return command;
-    default:
-      return undefined;
-  }
+export function isOwnTurnAction(state: GameState, action: HeldAction): boolean {
+  return state.meta.turn?.investigatorId === action.investigatorId;
 }
 
 /**
