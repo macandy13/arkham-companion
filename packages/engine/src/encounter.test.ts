@@ -923,3 +923,100 @@ describe('encounter deck invariants', () => {
     }
   });
 });
+
+describe('surge after the drawn card has resolved', () => {
+  /**
+   * The cards above plus two surge treacheries: `burning_surge`, whose script
+   * deals alice 1 damage when it is revealed, and `testing_surge`, which asks
+   * for a willpower (3) test.
+   */
+  const surgeCtx: EngineContext = {
+    ...contextWith(
+      makeCard({ code: 'hall_location', typeCode: 'location' }),
+      makeCard({ code: 'plain_treachery', typeCode: 'treachery' }),
+      makeCard({ code: 'burning_surge', keywords: [{ name: 'surge' }] }),
+      makeCard({
+        code: 'testing_surge',
+        keywords: [{ name: 'surge' }],
+        revelationTest: { skill: 'willpower', difficulty: 3 },
+      }),
+    ),
+    effects: {
+      [cardCode('burning_surge')]: {
+        onReveal: () => [
+          { type: 'AdjustInvestigator', investigatorId: alice, stat: 'damage', delta: 1 },
+        ],
+      },
+    },
+  };
+
+  it('resolves the revealed card`s effect before the surge draw', () => {
+    const state = startedWith(
+      { deck: [card('burning_surge', 'burning_card'), card('plain_treachery', 'after_surge')] },
+      { aliceAt: hall },
+      surgeCtx,
+    );
+
+    const { events } = execute(surgeCtx, state, draw);
+
+    const resolution = events.flatMap((e) =>
+      e.type === 'EncounterCardDrawn'
+        ? [`draws ${e.cardId}`]
+        : e.type === 'InvestigatorChanged'
+          ? [`alice ${e.stat} +${e.delta}`]
+          : [],
+    );
+    expect(resolution).toEqual(['draws burning_card', 'alice damage +1', 'draws after_surge']);
+  });
+
+  it('holds the surge draw while the card`s revelation test waits for its result', () => {
+    const state = startedWith(
+      { deck: [card('testing_surge', 'testing_card'), card('plain_treachery', 'after_surge')] },
+      { aliceAt: hall },
+      surgeCtx,
+    );
+
+    const asked = stateAfter(surgeCtx, state, draw);
+
+    expect(asked.pending.map((decision) => decision.id)).toEqual(['revelation:testing_card']);
+    expect(asked.meta.heldAction).toEqual(draw);
+    expect(idsIn(asked, encounterDeck)).toEqual(['after_surge']);
+  });
+
+  it('draws the surge card once the test is answered and the card discarded', () => {
+    const state = startedWith(
+      { deck: [card('testing_surge', 'testing_card'), card('plain_treachery', 'after_surge')] },
+      { aliceAt: hall },
+      surgeCtx,
+    );
+    const asked = stateAfter(surgeCtx, state, draw);
+
+    const { state: answered, events } = execute(surgeCtx, asked, {
+      type: 'ResolveDecision',
+      decisionId: asked.pending[0]!.id,
+      optionId: 'fail',
+    });
+
+    const resolution = events.flatMap((e) =>
+      e.type === 'EncounterCardDrawn'
+        ? [`draws ${e.cardId}`]
+        : e.type === 'CardMoved' && e.from.kind === 'resolving'
+          ? [`discards ${e.cardId}`]
+          : [],
+    );
+    expect(resolution).toEqual(['discards testing_card', 'draws after_surge']);
+    expect(answered.meta.heldAction).toBeUndefined();
+  });
+
+  it('holds no surge draw when the surging card was the last one', () => {
+    const state = startedWith(
+      { deck: [card('testing_surge', 'testing_card')] },
+      { aliceAt: hall },
+      surgeCtx,
+    );
+
+    const asked = stateAfter(surgeCtx, state, draw);
+
+    expect(asked.meta.heldAction).toBeUndefined();
+  });
+});

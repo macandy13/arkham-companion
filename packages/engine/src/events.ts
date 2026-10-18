@@ -378,10 +378,12 @@ export interface TurnEnded {
 }
 
 /**
- * An action that provokes attacks of opportunity waits until they are
- * resolved (`GameMeta.heldAction`): the attacks come after the action is
- * paid for but before its effect. Produced by `handle` together with the
- * attack decisions (`attackOfOpportunityDecisions`).
+ * A command waits until the pending decisions are answered
+ * (`GameMeta.heldAction`). An action that provokes attacks of opportunity:
+ * the attacks come after the action is paid for but before its effect
+ * (produced by `handle` together with the attack decisions,
+ * `attackOfOpportunityDecisions`). A surge draw: the next card is drawn only
+ * after the surging card's decisions are answered (`surgeEvents`).
  */
 export interface ActionHeld {
   type: 'ActionHeld';
@@ -397,9 +399,10 @@ export interface ActionResumed {
 }
 
 /**
- * The held action does not resolve: an attack of opportunity defeated the
- * investigator, or the action is no longer legal (`reason`). Produced by
- * `handle` where `ActionResumed` would be.
+ * The held action does not resolve: an attack of opportunity or the surging
+ * card defeated the investigator, or the command is no longer legal
+ * (`reason`, e.g. no encounter card left). Produced by `handle` where
+ * `ActionResumed` would be.
  */
 export interface ActionDropped {
   type: 'ActionDropped';
