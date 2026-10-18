@@ -19,6 +19,7 @@ All UI actions dispatch engine commands through the Zustand store; no component 
 **Benefit:** Components stay simple, and the screen can never drift from the saved game.
 
 - [ ] Zustand store: current `GameState`, `dispatch(command)` → `handle` → persist events via `GameStore` → apply → re-render
+- [ ] Opening a saved game rebuilds its `EngineContext` (cards and `scenario`) from the catalog entry for `meta.scenarioId` (`findScenario`), so hooks and the reference card apply to its commands
 - [ ] Rejected commands show a toast with the reason
 - [ ] Undo wired to the M1 undo; selectors for derived values (doom total, thresholds)
 
