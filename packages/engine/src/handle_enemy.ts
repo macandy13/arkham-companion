@@ -16,9 +16,8 @@ import { requireCard } from './lookup';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
-import type { Zone } from './zone';
+import { encounterDiscard, type Zone } from './zone';
 
-const ENCOUNTER_DISCARD: Zone = { kind: 'encounterDiscard' };
 const VICTORY_DISPLAY: Zone = { kind: 'victoryDisplay' };
 
 /**
@@ -169,7 +168,7 @@ export function enemiesAt(state: GameState, locationId: InstanceId): CardInstanc
 
 function defeated(enemyId: InstanceId, stats: CardStats): EnemyDefeated {
   const hasVictory = (stats.victory ?? 0) > 0;
-  return { type: 'EnemyDefeated', enemyId, to: hasVictory ? VICTORY_DISPLAY : ENCOUNTER_DISCARD };
+  return { type: 'EnemyDefeated', enemyId, to: hasVictory ? VICTORY_DISPLAY : encounterDiscard };
 }
 
 function exhaustChange(enemy: CardInstance, exhausted: boolean): ExhaustChanged {
