@@ -32,8 +32,8 @@ Ref: architecture "Command handling", "Triggers and card effects"; [rules.md](..
 
 **Slices**
 
-1. [ ] Surge waits for the drawn card (this PR): `DrawEncounter` draws one card; `surgeEvents` draws again after its forced effects, held while a decision is open.
-2. [ ] Revelation before placement: run `onReveal` follow-ups between `CardFlipped` and the placement; move a drawn enemy that waits for a spawn choice out of the deck (to `resolving`).
+1. [x] Surge waits for the drawn card (#95): `DrawEncounter` draws one card; `surgeEvents` draws again after its forced effects, held while a decision is open.
+2. [x] Revelation before placement: the drawn card waits in `resolving` while its `onReveal` follow-ups run, then `placeDrawnCard` places it (a drawn enemy that waits for a spawn choice is no longer left on the deck). A revelation that asks something still lets the placement go on before the answer; slice 3 covers that.
 3. [ ] Hold the remaining follow-ups of a chain while one of them waits for an answer.
 4. [ ] End-to-end step at the table: The Gathering has no surge card, so add one with slice 2 or 3 where the scenario shows it.
 

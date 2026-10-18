@@ -71,7 +71,11 @@ export interface ScenarioHooks {
  * scenario that uses it.
  */
 export interface CardEffect {
-  /** After the card is turned face up (e.g. a location being revealed). */
+  /**
+   * After the card is turned face up: a location being revealed, or a drawn
+   * encounter card, for which this is its revelation. A drawn card waits in
+   * `resolving` until this has resolved and is placed afterwards.
+   */
   onReveal?: TriggerHook<CardFlipped>;
 }
 

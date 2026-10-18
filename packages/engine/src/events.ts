@@ -261,8 +261,9 @@ export type EventType = Event['type'];
 
 /**
  * An investigator revealed `cardId` from the encounter deck. Only a record for
- * the log and the UI: the card's moves are the `CardFlipped` and `CardMoved`
- * that follow, and the reducer ignores this event. `peril` is carried here
+ * the log and the UI: the card's moves are the `CardMoved` (to `resolving`)
+ * and `CardFlipped` that follow, and its placement once its revelation has
+ * resolved (`placeDrawnCard`); the reducer ignores this event. `peril` is carried here
  * because the app cannot hide information; the UI uses it to warn the players
  * not to discuss the card. `surge` tells that another draw follows. Produced
  * by `DrawEncounter`.

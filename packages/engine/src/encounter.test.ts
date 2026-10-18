@@ -8,6 +8,7 @@ import {
   execute,
   instanceId,
   investigatorId,
+  replay,
   trait,
   zoneKey,
   type Command,
@@ -114,7 +115,12 @@ describe('DrawEncounter', () => {
 
     const { state: after, events } = execute(ctx, state, draw);
 
-    expect(events.map((e) => e.type)).toEqual(['EncounterCardDrawn', 'CardFlipped', 'CardMoved']);
+    expect(events.map((e) => e.type)).toEqual([
+      'EncounterCardDrawn',
+      'CardMoved',
+      'CardFlipped',
+      'CardMoved',
+    ]);
     expect(after.cards[instanceId('top_card')]).toMatchObject({
       faceUp: true,
       zone: encounterDiscard,
@@ -276,6 +282,7 @@ describe('DrawEncounter', () => {
 
     expect(events.map((e) => e.type)).toEqual([
       'EncounterCardDrawn',
+      'CardMoved',
       'CardFlipped',
       'CardMoved',
       'CardMoved',
@@ -987,7 +994,10 @@ describe('surge after the drawn card has resolved', () => {
     },
   };
 
-  /** What happened, in order, as far as these tests look: draws, damage, discards, engagements, dropped draws. */
+  /**
+   * What happened, in order, as far as these tests look: draws, damage,
+   * drawn cards discarded after resolving, engagements, dropped draws.
+   */
   function resolutionOrder(events: readonly Event[]): string[] {
     return events.flatMap((e) => {
       switch (e.type) {
@@ -996,7 +1006,9 @@ describe('surge after the drawn card has resolved', () => {
         case 'InvestigatorChanged':
           return [`alice ${e.stat} +${e.delta}`];
         case 'CardMoved':
-          return e.from.kind === 'resolving' ? [`discards ${e.cardId}`] : [];
+          return e.from.kind === 'resolving' && e.to.kind === 'encounterDiscard'
+            ? [`discards ${e.cardId}`]
+            : [];
         case 'EnemyEngaged':
           return [`${e.enemyId} engages ${e.investigatorId}`];
         case 'ActionDropped':
@@ -1019,7 +1031,9 @@ describe('surge after the drawn card has resolved', () => {
     expect(resolutionOrder(events)).toEqual([
       'draws burning_card',
       'alice damage +1',
+      'discards burning_card',
       'draws after_surge',
+      'discards after_surge',
     ]);
   });
 
@@ -1051,7 +1065,11 @@ describe('surge after the drawn card has resolved', () => {
       optionId: 'fail',
     });
 
-    expect(resolutionOrder(events)).toEqual(['discards testing_card', 'draws after_surge']);
+    expect(resolutionOrder(events)).toEqual([
+      'discards testing_card',
+      'draws after_surge',
+      'discards after_surge',
+    ]);
     expect(answered.meta.heldAction).toBeUndefined();
   });
 
@@ -1103,6 +1121,136 @@ describe('surge after the drawn card has resolved', () => {
     });
 
     expect(asked.meta.heldAction).toEqual(aliceDrawsAgain);
-    expect(resolutionOrder(events)).toEqual(['choosy_card engages alice', 'draws after_surge']);
+    expect(resolutionOrder(events)).toEqual([
+      'choosy_card engages alice',
+      'draws after_surge',
+      'discards after_surge',
+    ]);
+  });
+});
+
+describe('revelation before the drawn card is placed', () => {
+  const hurtAlice = (delta: number): Command => ({
+    type: 'AdjustInvestigator',
+    investigatorId: alice,
+    stat: 'damage',
+    delta,
+  });
+
+  /**
+   * Every card here has a revelation script. `scorching_*` cards deal alice 1
+   * damage; `lethal_*` cards deal her 8 (her whole health);
+   * `vanishing_treachery` sets itself aside. `lethal_hall_foe` spawns at
+   * the Hall.
+   */
+  const revelationCtx: EngineContext = {
+    ...contextWith(
+      makeCard({ code: 'hall_location', typeCode: 'location' }),
+      makeCard({ code: 'scorching_treachery', typeCode: 'treachery' }),
+      makeCard({ code: 'scorching_foe', typeCode: 'enemy' }),
+      makeCard({ code: 'scorching_lingering', typeCode: 'treachery', entersThreatArea: true }),
+      makeCard({
+        code: 'scorching_attachment',
+        typeCode: 'treachery',
+        locationAttachment: { onePerLocation: true },
+      }),
+      makeCard({ code: 'lethal_treachery', typeCode: 'treachery' }),
+      makeCard({ code: 'lethal_foe', typeCode: 'enemy' }),
+      makeCard({
+        code: 'lethal_hall_foe',
+        typeCode: 'enemy',
+        keywords: [{ name: 'spawn', detail: 'hall_location' }],
+      }),
+      makeCard({ code: 'vanishing_treachery', typeCode: 'treachery' }),
+    ),
+    effects: {
+      [cardCode('scorching_treachery')]: { onReveal: () => [hurtAlice(1)] },
+      [cardCode('scorching_foe')]: { onReveal: () => [hurtAlice(1)] },
+      [cardCode('scorching_lingering')]: { onReveal: () => [hurtAlice(1)] },
+      [cardCode('scorching_attachment')]: { onReveal: () => [hurtAlice(1)] },
+      [cardCode('lethal_treachery')]: { onReveal: () => [hurtAlice(8)] },
+      [cardCode('lethal_foe')]: { onReveal: () => [hurtAlice(8)] },
+      [cardCode('lethal_hall_foe')]: { onReveal: () => [hurtAlice(8)] },
+      [cardCode('vanishing_treachery')]: {
+        onReveal: (_ctx, _state, event) => [
+          { type: 'MoveCard', cardId: event.cardId, to: { kind: 'setAside' } },
+        ],
+      },
+    },
+  };
+
+  /** What happened, in order: draws, damage, and where the drawn card went. */
+  function resolutionOrder(events: readonly Event[]): string[] {
+    return events.flatMap((e) => {
+      switch (e.type) {
+        case 'EncounterCardDrawn':
+          return [`draws ${e.cardId}`];
+        case 'InvestigatorChanged':
+          return [`alice ${e.stat} +${e.delta}`];
+        case 'CardMoved':
+          return e.from.kind === 'resolving' ? [`${e.cardId} to ${e.to.kind}`] : [];
+        default:
+          return [];
+      }
+    });
+  }
+
+  it.each([
+    { code: 'scorching_treachery', placed: 'drawn_card to encounterDiscard' },
+    { code: 'scorching_foe', placed: 'drawn_card to atLocation' },
+    { code: 'scorching_lingering', placed: 'drawn_card to threatArea' },
+    { code: 'scorching_attachment', placed: 'drawn_card to attachedTo' },
+  ])('resolves the revelation of $code before placing it', ({ code, placed }) => {
+    const state = startedWith(
+      { deck: [card(code, 'drawn_card'), card('scorching_treachery', 'next_card')] },
+      { aliceAt: hall },
+      revelationCtx,
+    );
+
+    const { events } = execute(revelationCtx, state, draw);
+
+    expect(resolutionOrder(events)).toEqual(['draws drawn_card', 'alice damage +1', placed]);
+  });
+
+  it('keeps the card in the resolving zone while its revelation resolves', () => {
+    const state = startedWith(
+      { deck: [card('scorching_foe', 'drawn_foe')] },
+      { aliceAt: hall },
+      revelationCtx,
+    );
+
+    const { events } = execute(revelationCtx, state, draw);
+
+    const revelationAt = events.findIndex((e) => e.type === 'InvestigatorChanged');
+    const beforeRevelation = replay(events.slice(0, revelationAt), state);
+    expect(beforeRevelation.cards[instanceId('drawn_foe')]?.zone).toEqual({ kind: 'resolving' });
+  });
+
+  it('does not place a card its revelation has already moved', () => {
+    const state = startedWith(
+      { deck: [card('vanishing_treachery', 'vanishing_card')] },
+      { aliceAt: hall },
+      revelationCtx,
+    );
+
+    const after = stateAfter(revelationCtx, state, draw);
+
+    expect(after.cards[instanceId('vanishing_card')]?.zone).toEqual({ kind: 'setAside' });
+  });
+
+  it.each([
+    { code: 'lethal_treachery', placed: 'lethal_card to encounterDiscard' },
+    { code: 'lethal_foe', placed: 'lethal_card to encounterDiscard' },
+    { code: 'lethal_hall_foe', placed: 'lethal_card to atLocation' },
+  ])('places $code without the drawer it defeated: $placed', ({ code, placed }) => {
+    const state = startedWith(
+      { deck: [card(code, 'lethal_card'), card('scorching_foe', 'next_foe')] },
+      { aliceAt: hall },
+      revelationCtx,
+    );
+
+    const { events } = execute(revelationCtx, state, draw);
+
+    expect(resolutionOrder(events)).toEqual(['draws lethal_card', 'alice damage +8', placed]);
   });
 });
