@@ -224,7 +224,7 @@ export function skillTestDecision(
 ): Decision {
   const { test, ...rest } = decision;
   const margins = Object.entries(outcomes.failedBy ?? {}).map(([margin, commands]) => ({
-    id: `failedBy:${margin}`,
+    id: `${FAILED_BY}${margin}`,
     label: 'decision.failedBy',
     commands,
   }));

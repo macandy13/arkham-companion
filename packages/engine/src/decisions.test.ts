@@ -337,23 +337,67 @@ describe('skill test outcome record', () => {
   });
 
   it.each([
-    { answer: 'pass', outcome: 'pass', failedBy: undefined },
-    { answer: 'fail', outcome: 'fail', failedBy: undefined },
-    { answer: 'failedBy:2', outcome: 'fail', failedBy: 2 },
-  ])('records "$answer" as a $outcome right after the answer', ({ answer, outcome, failedBy }) => {
-    const events = handle(ctx, asked, resolveDecision('investigate_hall', answer));
-
-    expect(events.slice(0, 2)).toEqual([
-      { type: 'DecisionResolved', decisionId: 'investigate_hall', optionId: answer },
-      {
+    {
+      answer: 'pass',
+      recorded: {
         type: 'SkillTestResolved',
         decisionId: 'investigate_hall',
         investigatorId: alice,
         subject: hall,
         skillTest: test,
-        outcome,
-        ...(failedBy === undefined ? {} : { failedBy }),
+        outcome: 'pass',
       },
+    },
+    {
+      answer: 'fail',
+      recorded: {
+        type: 'SkillTestResolved',
+        decisionId: 'investigate_hall',
+        investigatorId: alice,
+        subject: hall,
+        skillTest: test,
+        outcome: 'fail',
+      },
+    },
+    {
+      answer: 'failedBy:2',
+      recorded: {
+        type: 'SkillTestResolved',
+        decisionId: 'investigate_hall',
+        investigatorId: alice,
+        subject: hall,
+        skillTest: test,
+        outcome: 'fail',
+        failedBy: 2,
+      },
+    },
+  ])('records "$answer" right after the answer', ({ answer, recorded }) => {
+    const events = handle(ctx, asked, resolveDecision('investigate_hall', answer));
+
+    expect(events.slice(0, 2)).toEqual([
+      { type: 'DecisionResolved', decisionId: 'investigate_hall', optionId: answer },
+      recorded,
+    ]);
+  });
+
+  it('records no investigator or subject for a test the lead answers about no card', () => {
+    const leadTest = skillTestDecision(
+      {
+        id: decisionId('lead_test'),
+        prompt: 'decision.skillTest',
+        decider: { kind: 'lead' },
+        test,
+      },
+      { onPass: [], onFail: [] },
+    );
+    const leadAsked = stateAfter(ctx, started([alicePlacedAt(hall)]), {
+      type: 'RequestDecision',
+      decision: leadTest,
+    });
+
+    expect(handle(ctx, leadAsked, resolveDecision('lead_test', 'pass'))).toEqual([
+      { type: 'DecisionResolved', decisionId: 'lead_test', optionId: 'pass' },
+      { type: 'SkillTestResolved', decisionId: 'lead_test', skillTest: test, outcome: 'pass' },
     ]);
   });
 
