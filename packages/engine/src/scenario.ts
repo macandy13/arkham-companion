@@ -23,14 +23,14 @@ export interface ScenarioDefinition {
   actDeck: readonly CardCode[];
   setup: readonly SetupStep[];
   /**
-   * The scenario's forced effects. Not read by `compileSetup`: the app passes
-   * them to the engine as `EngineContext.hooks` for the whole scenario.
+   * The scenario's forced effects. Not read by `compileSetup`: the engine
+   * reads them from `EngineContext.scenario` for the whole scenario.
    */
   hooks?: Partial<ScenarioHooks>;
   /**
    * The scenario's skill test modifiers in code (a "-X" token value, a
-   * scenario-wide rule). Like `hooks`, the app passes them as
-   * `EngineContext.modifiers`, and `reference` as `EngineContext.reference`.
+   * scenario-wide rule). Like `hooks` and `reference`, the engine reads them
+   * from `EngineContext.scenario`.
    */
   modifiers?: SkillModifierRegistry;
 }

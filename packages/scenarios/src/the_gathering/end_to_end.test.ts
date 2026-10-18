@@ -35,7 +35,7 @@ import { TestTable } from './test_table';
 
 const ctx: EngineContext = {
   cards: cardDbWith(theGatheringCards, zealotInvestigatorCards),
-  hooks: theGathering.hooks,
+  scenario: theGathering,
 };
 const roland = investigatorId('roland');
 const daisy = investigatorId('daisy');

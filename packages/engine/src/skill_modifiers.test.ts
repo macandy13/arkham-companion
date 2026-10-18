@@ -10,7 +10,6 @@ import {
   suggestSkillTest,
   trait,
   type Difficulty,
-  type EngineContext,
   type GameState,
   type ScenarioReference,
   type SkillTestContext,
@@ -23,6 +22,7 @@ import {
   makeInvestigator,
   startBoard,
   stateAfter,
+  withScenario,
 } from '../test/utils';
 
 const alice = investigatorId('alice');
@@ -173,7 +173,7 @@ describe('skillTestSuggestion: scenario reference card', () => {
       cultist: { effectKey: 'test.cultist.hardExpert' },
     },
   };
-  const withReference: EngineContext = { ...cards, reference };
+  const withReference = withScenario(cards, { reference });
 
   it('takes a symbol token modifier from the side for the difficulty, with its effect text', () => {
     const suggestion = skillTestSuggestion(
@@ -215,10 +215,10 @@ describe('skillTestSuggestion: scenario reference card', () => {
   });
 
   it('asks the scenario for the value of a symbol without a printed number ("-X")', () => {
-    const minusTwo: EngineContext = {
-      ...withReference,
+    const minusTwo = withScenario(cards, {
+      reference,
       modifiers: { tokenValues: { skull: () => -2, cultist: () => -5 } },
-    };
+    });
 
     const suggestion = skillTestSuggestion(minusTwo, aliceInStudy(), investigateStudy, {
       tokens: ['skull', 'cultist'],

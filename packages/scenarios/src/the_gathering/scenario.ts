@@ -258,9 +258,9 @@ function onlyCard(state: GameState, code: CardCode): CardInstance {
  * scenario for the generic rules until real scenario data arrives (M4). Its
  * `hooks` hold the reverse sides of the acts and of agendas 2 and 3 and act
  * 3's objective (agenda 1's choice and agenda 3's forced effects are left to
- * the players); pass them as `EngineContext.hooks`, and
- * `reference` and `modifiers` (the skull's "-X") as `EngineContext.reference`
- * and `EngineContext.modifiers` for skill test suggestions. The reference
+ * the players). Pass the whole definition as `EngineContext.scenario`, so the
+ * engine gets the hooks together with `reference` and `modifiers` (the
+ * skull's "-X") for skill test suggestions. The reference
  * card's modifiers are hand-entered from the 2016 Core Set card as known
  * (Easy/Standard: skull -X, cultist -1, tablet -2; Hard/Expert: skull -2,
  * cultist reveals another token, tablet -4), not checked against a source.

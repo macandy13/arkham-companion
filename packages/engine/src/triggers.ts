@@ -31,7 +31,7 @@ export type TriggerHook<E extends Event> = (
 
 /**
  * Scenario-wide forced effects (architecture "Triggers and card effects"), set on
- * `ScenarioDefinition.hooks` and handed to the engine via `EngineContext.hooks`.
+ * `ScenarioDefinition.hooks`; the engine reads them from `EngineContext.scenario`.
  * Each fires once per matching event.
  */
 export interface ScenarioHooks {
@@ -116,7 +116,7 @@ function matchingTriggers(
   after: GameState,
   event: Event,
 ): PendingTrigger[] {
-  const hooks = ctx.hooks ?? {};
+  const hooks = ctx.scenario?.hooks ?? {};
   const forCard = <T>(registry: Readonly<Record<string, T>> | undefined, cardId: InstanceId) => {
     const code = after.cards[cardId]?.code;
     return code === undefined ? undefined : registry?.[code];

@@ -97,7 +97,7 @@ import { zoneKey, type Zone } from './zone';
  * events, so `apply` never needs the `CardDb`.
  *
  * The returned events include the whole chain of forced effects the command
- * triggered (`ctx.hooks`, `ctx.effects`): the follow-up commands are handled
+ * triggered (`ctx.scenario.hooks`, `ctx.effects`): the follow-up commands are handled
  * like player commands after the events of the command that triggered them
  * (depth first, so a follow-up's own chain resolves before the next sibling),
  * and their events are appended to the originating command's list. A command

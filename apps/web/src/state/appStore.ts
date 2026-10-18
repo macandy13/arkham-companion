@@ -16,9 +16,12 @@ import { parseGameExport, serialiseGameExport } from '../storage/gameExport';
 export interface ScenarioStart {
   /** Name shown in the game list. */
   title: string;
-  /** Its `CardDb` must hold the seated investigators' cards, since `compileSetup` takes their stats from it. */
-  ctx: EngineContext;
-  definition: ScenarioDefinition;
+  /**
+   * The scenario to set up (`scenario`) and its card data. Its `CardDb` must hold the seated
+   * investigators' cards, since `compileSetup` takes their stats from it. The same context runs
+   * the game, so the definition is given once and its hooks and reference card come with it.
+   */
+  ctx: EngineContext & { readonly scenario: ScenarioDefinition };
   difficulty: Difficulty;
   /** Seeds the game's RNG; chosen by the caller because the engine never reads randomness itself. */
   seed: number;
@@ -74,8 +77,9 @@ export function createAppStore(gameStore: GameStore): StoreApi<AppState> {
       await get().openGame(gameId);
       return gameId;
     },
-    async startScenario({ title, ctx, definition, difficulty, seed, investigators }) {
-      const command = scenario.compileSetup(ctx, definition, { difficulty, seed, investigators });
+    async startScenario({ title, ctx, difficulty, seed, investigators }) {
+      const options = { difficulty, seed, investigators };
+      const command = scenario.compileSetup(ctx, ctx.scenario, options);
       const { events } = execute(ctx, emptyState(), command);
       const gameId = await gameStore.createGame({ title });
       await gameStore.appendEvents(gameId, events);
