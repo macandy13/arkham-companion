@@ -43,7 +43,7 @@ const ghoulOnAlice = aliceInHall.withCard(ghoul, ghoulCard, engagedWith(alice));
 const moveToCellar: Command = { type: 'MoveInvestigator', investigatorId: alice, to: cellar };
 const ghoulAttack = decisionId(`attackOfOpportunity:${ghoul}`);
 
-/** From setup into round 1's investigation phase. */
+/** From setup into round 1's investigation phase, then alice starts her turn. */
 const nextPhase: Command = { type: 'NextPhase' };
 const aliceStartsTurn: Command = { type: 'StartTurn', investigatorId: alice };
 
