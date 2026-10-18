@@ -16,7 +16,7 @@ import {
   type InstanceId,
   type Zone,
 } from './index';
-import { edge, rejectionFrom, rejectionOf, runFrom, stateAfter, startBoard } from '../test/utils';
+import { edge, rejectionFrom, rejectionOf, runFrom, stateAfter } from '../test/utils';
 
 const main = mapId('main');
 const annex = mapId('annex');
@@ -207,18 +207,8 @@ describe('RemoveConnection', () => {
 
 describe('connections at start', () => {
   it('rejects starting connections that repeat an edge, even across maps', () => {
-    const context = table.context();
-
     const rejection = rejectionOf(() =>
-      startBoard(context, {
-        maps: {
-          main: {
-            locations: { study: 'study', hall: 'hall' },
-            connections: [edge('study', 'hall')],
-          },
-          annex: { locations: {}, connections: [edge('hall', 'study')] },
-        },
-      }),
+      table.withConnection(study, hall).withConnection(hall, study, { map: annex }).start(),
     );
 
     expect(rejection).toEqual({ code: 'duplicateConnection', from: hall, to: study });
