@@ -80,7 +80,7 @@ Follow-ups: the end-to-end test should assert a suggestion (e.g. the skull with 
 
 Ref: `docs/coding-guidelines.md` (tests); M1.E `TestTable`.
 
-- [ ] Review the engine test helpers in `packages/engine/test/utils` (board builders such as `startBoard` and the per-file `startedWith` variants, `stateAfter`/`rejectionFrom`, `makeInvestigator`, card factories such as `makeCard`) and list what makes tests hard to read
+- [ ] Review the engine test helpers in `packages/engine/test/utils` (`stateAfter`/`rejectionFrom`, `startScenario`) and list what makes tests hard to read; M1V.3 replaced `startBoard`, `makeInvestigator`, `makeCard` and the per-file `startedWith` variants with `newGame()` and blank cards
 - [ ] Design a clearer, game-language way to set up and assert non-flow tests (who stands where, which enemies and tokens are in play; "Alice investigates", "rejected because …"), keeping the values an assertion depends on visible in the test
 - [ ] Consider extracting the scenario-independent part of `TestTable` (`packages/scenarios/src/the_gathering/test_table.ts`) into `packages/engine/test/utils` so unit and flow tests share one vocabulary
 - [ ] Migrate the engine test files incrementally, one file or module per step, with no behaviour change (same cases, coverage floors hold)

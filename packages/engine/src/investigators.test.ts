@@ -1,5 +1,7 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
+  blankInvestigator,
+  blankLocation,
   checkInvariants,
   execute,
   instanceId,
@@ -8,23 +10,13 @@ import {
   lowestRemainingSanity,
   mostClues,
   mostResources,
+  newGame,
+  perInvestigator,
   withStatDelta,
   withStats,
   type Command,
-  type GameState,
-  type Investigator,
 } from './index';
-import {
-  edge,
-  investigatorOf,
-  contextWith,
-  makeCard,
-  makeInvestigator,
-  perInvestigator,
-  rejectionFrom,
-  stateAfter,
-  startBoard,
-} from '../test/utils';
+import { investigatorOf, rejectionFrom, stateAfter } from '../test/utils';
 
 const hall = instanceId('hall');
 const cellar = instanceId('cellar');
@@ -32,38 +24,32 @@ const attic = instanceId('attic');
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
 
-const context = contextWith(
-  makeCard({ code: 'hall', typeCode: 'location', shroud: 2, clues: perInvestigator(1) }),
-  makeCard({ code: 'cellar', typeCode: 'location', shroud: 3, clues: perInvestigator(2) }),
-  makeCard({ code: 'attic', typeCode: 'location', shroud: 1, clues: perInvestigator(1) }),
-);
+/** 1 clue per investigator. */
+const hallCard = blankLocation('hall', { clues: perInvestigator(1) });
+/** 2 clues per investigator. */
+const cellarCard = blankLocation('cellar', { clues: perInvestigator(2) });
+const atticCard = blankLocation('attic', { clues: perInvestigator(1) });
 
 /**
- * Hall (1 clue per investigator) - Cellar (2 per investigator), both
- * unrevealed; Attic is unconnected. Alice is placed at the hall, which
- * reveals it (2 clues with two investigators); Bob has no location.
+ * The hall, revealed with its clues, connected to the unrevealed cellar; the
+ * unrevealed attic is unconnected. No investigators yet.
  */
-function startWith(investigators: Investigator[]): GameState {
-  const board = startBoard(context, {
-    maps: {
-      main: {
-        locations: { hall: 'hall', cellar: 'cellar', attic: 'attic' },
-        connections: [edge('hall', 'cellar')],
-      },
-    },
-    investigators,
-  });
-  return run(board, { type: 'MoveInvestigator', investigatorId: alice, to: hall });
-}
+const hallCellarAttic = newGame()
+  .withLocation(hall, hallCard, { revealed: true })
+  .withLocation(cellar, cellarCard)
+  .withLocation(attic, atticCard)
+  .withConnection(hall, cellar);
 
-const run = (state: GameState, ...commands: Command[]) => stateAfter(context, state, ...commands);
-const reject = (state: GameState, command: Command) => rejectionFrom(context, state, command);
+/**
+ * The table with alice (seat 0) in the hall and bob (seat 1) without a
+ * location: two investigators, so the hall has 2 clues and the cellar 4.
+ */
+const aliceInHallBobNowhere = hallCellarAttic
+  .withInvestigator(alice, { locationId: hall })
+  .withInvestigator(bob);
 
 describe('MoveInvestigator', () => {
-  let state: GameState;
-  beforeEach(() => {
-    state = startWith([makeInvestigator({ id: alice }), makeInvestigator({ id: bob, seat: 1 })]);
-  });
+  const { context, state } = aliceInHallBobNowhere.start();
 
   it('moves along a connection and reveals the destination with its clues', () => {
     const result = execute(context, state, {
@@ -83,7 +69,11 @@ describe('MoveInvestigator', () => {
   });
 
   it('does not reveal a destination that is already revealed', () => {
-    const atCellar = run(state, { type: 'MoveInvestigator', investigatorId: alice, to: cellar });
+    const atCellar = stateAfter(context, state, {
+      type: 'MoveInvestigator',
+      investigatorId: alice,
+      to: cellar,
+    });
 
     const result = execute(context, atCellar, {
       type: 'MoveInvestigator',
@@ -95,7 +85,9 @@ describe('MoveInvestigator', () => {
   });
 
   it('rejects a location that is not connected', () => {
-    expect(reject(state, { type: 'MoveInvestigator', investigatorId: alice, to: attic })).toEqual({
+    expect(
+      rejectionFrom(context, state, { type: 'MoveInvestigator', investigatorId: alice, to: attic }),
+    ).toEqual({
       code: 'notConnected',
       from: hall,
       to: attic,
@@ -103,7 +95,7 @@ describe('MoveInvestigator', () => {
   });
 
   it('allows an unconnected destination when connections are ignored', () => {
-    const moved = run(state, {
+    const moved = stateAfter(context, state, {
       type: 'MoveInvestigator',
       investigatorId: alice,
       to: attic,
@@ -115,13 +107,19 @@ describe('MoveInvestigator', () => {
   });
 
   it('places an investigator without a location anywhere in play', () => {
-    const placed = run(state, { type: 'MoveInvestigator', investigatorId: bob, to: attic });
+    const placed = stateAfter(context, state, {
+      type: 'MoveInvestigator',
+      investigatorId: bob,
+      to: attic,
+    });
 
     expect(investigatorOf(placed, bob).locationId).toBe(attic);
   });
 
   it('rejects moving to the current location', () => {
-    expect(reject(state, { type: 'MoveInvestigator', investigatorId: alice, to: hall })).toEqual({
+    expect(
+      rejectionFrom(context, state, { type: 'MoveInvestigator', investigatorId: alice, to: hall }),
+    ).toEqual({
       code: 'alreadyAtLocation',
       investigatorId: alice,
       locationId: hall,
@@ -129,7 +127,7 @@ describe('MoveInvestigator', () => {
   });
 
   it('rejects an unknown investigator', () => {
-    const rejection = reject(state, {
+    const rejection = rejectionFrom(context, state, {
       type: 'MoveInvestigator',
       investigatorId: investigatorId('nobody'),
       to: cellar,
@@ -139,7 +137,7 @@ describe('MoveInvestigator', () => {
   });
 
   it('rejects a destination that is not on a map', () => {
-    const rejection = reject(state, {
+    const rejection = rejectionFrom(context, state, {
       type: 'MoveInvestigator',
       investigatorId: alice,
       to: instanceId('nowhere'),
@@ -149,7 +147,7 @@ describe('MoveInvestigator', () => {
   });
 
   it('rejects a defeated investigator', () => {
-    const defeated = run(state, {
+    const defeated = stateAfter(context, state, {
       type: 'AdjustInvestigator',
       investigatorId: alice,
       stat: 'damage',
@@ -157,7 +155,11 @@ describe('MoveInvestigator', () => {
     });
 
     expect(
-      reject(defeated, { type: 'MoveInvestigator', investigatorId: alice, to: cellar }),
+      rejectionFrom(context, defeated, {
+        type: 'MoveInvestigator',
+        investigatorId: alice,
+        to: cellar,
+      }),
     ).toEqual({
       code: 'investigatorNotActive',
       investigatorId: alice,
@@ -166,20 +168,18 @@ describe('MoveInvestigator', () => {
 });
 
 describe('AdjustInvestigator', () => {
-  let state: GameState;
-  beforeEach(() => {
-    state = startWith([
-      makeInvestigator({
-        id: alice,
-        health: { max: 3, damage: 0 },
-        sanity: { max: 2, horror: 0 },
-        clues: 1,
-      }),
-    ]);
-  });
+  const { context, state } = hallCellarAttic
+    .withInvestigator(alice, {
+      locationId: hall,
+      health: { max: 3, damage: 0 },
+      sanity: { max: 2, horror: 0 },
+      clues: 1,
+    })
+    .start();
 
   it('changes damage, horror, clues and resources', () => {
-    const adjusted = run(
+    const adjusted = stateAfter(
+      context,
       state,
       { type: 'AdjustInvestigator', investigatorId: alice, stat: 'damage', delta: 2 },
       { type: 'AdjustInvestigator', investigatorId: alice, stat: 'horror', delta: 1 },
@@ -213,7 +213,7 @@ describe('AdjustInvestigator', () => {
   });
 
   it('defeats the investigator when horror reaches sanity', () => {
-    const defeated = run(state, {
+    const defeated = stateAfter(context, state, {
       type: 'AdjustInvestigator',
       investigatorId: alice,
       stat: 'horror',
@@ -227,7 +227,7 @@ describe('AdjustInvestigator', () => {
   });
 
   it('does not defeat the investigator while health and sanity remain', () => {
-    const hurt = run(state, {
+    const hurt = stateAfter(context, state, {
       type: 'AdjustInvestigator',
       investigatorId: alice,
       stat: 'damage',
@@ -239,7 +239,7 @@ describe('AdjustInvestigator', () => {
 
   it('rejects a counter dropping below zero', () => {
     expect(
-      reject(state, {
+      rejectionFrom(context, state, {
         type: 'AdjustInvestigator',
         investigatorId: alice,
         stat: 'clues',
@@ -256,7 +256,7 @@ describe('AdjustInvestigator', () => {
 
   it('rejects a zero delta', () => {
     expect(
-      reject(state, {
+      rejectionFrom(context, state, {
         type: 'AdjustInvestigator',
         investigatorId: alice,
         stat: 'clues',
@@ -267,11 +267,11 @@ describe('AdjustInvestigator', () => {
 
   it('rejects adjusting a defeated investigator', () => {
     // Bob stays in the game, so the scenario goes on after Alice's defeat.
-    const withBob = startWith([
-      makeInvestigator({ id: alice, health: { max: 3, damage: 0 } }),
-      makeInvestigator({ id: bob, seat: 1 }),
-    ]);
-    const defeated = run(withBob, {
+    const withBob = hallCellarAttic
+      .withInvestigator(alice, { locationId: hall, health: { max: 3, damage: 0 } })
+      .withInvestigator(bob)
+      .start();
+    const defeated = stateAfter(withBob.context, withBob.state, {
       type: 'AdjustInvestigator',
       investigatorId: alice,
       stat: 'damage',
@@ -279,7 +279,7 @@ describe('AdjustInvestigator', () => {
     });
 
     expect(
-      reject(defeated, {
+      rejectionFrom(withBob.context, defeated, {
         type: 'AdjustInvestigator',
         investigatorId: alice,
         stat: 'resources',
@@ -289,23 +289,24 @@ describe('AdjustInvestigator', () => {
   });
 
   it('keeps the starting player count after a defeat', () => {
-    const defeated = run(
-      startWith([makeInvestigator({ id: alice }), makeInvestigator({ id: bob, seat: 1 })]),
-      { type: 'AdjustInvestigator', investigatorId: alice, stat: 'damage', delta: 8 },
-    );
+    const { context, state } = aliceInHallBobNowhere.start();
+
+    const defeated = stateAfter(context, state, {
+      type: 'AdjustInvestigator',
+      investigatorId: alice,
+      stat: 'damage',
+      delta: 8,
+    });
 
     expect(defeated.meta.playerCount).toBe(2);
   });
 });
 
 describe('DiscoverClues', () => {
-  let state: GameState;
-  beforeEach(() => {
-    state = startWith([makeInvestigator({ id: alice }), makeInvestigator({ id: bob, seat: 1 })]);
-  });
+  const { context, state } = aliceInHallBobNowhere.start();
 
   it('moves clues from the location to the investigator', () => {
-    const discovered = run(state, {
+    const discovered = stateAfter(context, state, {
       type: 'DiscoverClues',
       investigatorId: alice,
       locationId: hall,
@@ -319,7 +320,7 @@ describe('DiscoverClues', () => {
 
   it('rejects more clues than the location has', () => {
     expect(
-      reject(state, {
+      rejectionFrom(context, state, {
         type: 'DiscoverClues',
         investigatorId: alice,
         locationId: hall,
@@ -330,7 +331,7 @@ describe('DiscoverClues', () => {
 
   it('rejects an investigator who is elsewhere', () => {
     expect(
-      reject(state, {
+      rejectionFrom(context, state, {
         type: 'DiscoverClues',
         investigatorId: bob,
         locationId: hall,
@@ -341,7 +342,7 @@ describe('DiscoverClues', () => {
 
   it('rejects a non-positive amount', () => {
     expect(
-      reject(state, {
+      rejectionFrom(context, state, {
         type: 'DiscoverClues',
         investigatorId: alice,
         locationId: hall,
@@ -352,15 +353,13 @@ describe('DiscoverClues', () => {
 });
 
 describe('prey helpers', () => {
-  const hurt = makeInvestigator({
-    id: alice,
+  const hurt = blankInvestigator(alice, {
     health: { max: 7, damage: 4 },
     sanity: { max: 6, horror: 1 },
     clues: 3,
     resources: 1,
   });
-  const shaken = makeInvestigator({
-    id: bob,
+  const shaken = blankInvestigator(bob, {
     seat: 1,
     health: { max: 9, damage: 1 },
     sanity: { max: 6, horror: 3 },
@@ -412,15 +411,15 @@ describe('investigator state over a sequence of adjustments', () => {
   ] as const)(
     'after %s the investigator is %s and the state is consistent',
     (_, commands, status) => {
-      const start = startWith([
-        makeInvestigator({
-          id: alice,
+      const { context, state } = hallCellarAttic
+        .withInvestigator(alice, {
+          locationId: hall,
           health: { max: 3, damage: 0 },
           sanity: { max: 2, horror: 0 },
-        }),
-      ]);
+        })
+        .start();
 
-      const end = run(start, ...commands);
+      const end = stateAfter(context, state, ...commands);
 
       expect(investigatorOf(end, alice).status).toBe(status);
       expect(checkInvariants(end)).toEqual([]);
@@ -430,7 +429,7 @@ describe('investigator state over a sequence of adjustments', () => {
 
 describe('lowestRemainingHealth with ties', () => {
   const hurt = (id: string, maxHealth: number, damage: number) =>
-    withStats(makeInvestigator({ id, health: { max: maxHealth, damage: 0 } }), { damage });
+    withStats(blankInvestigator(id, { health: { max: maxHealth, damage: 0 } }), { damage });
 
   it.each([
     ['a single investigator', [hurt('a', 5, 4)], ['a']],
@@ -446,8 +445,7 @@ describe('lowestRemainingHealth with ties', () => {
 });
 
 describe('withStats', () => {
-  const base = makeInvestigator({
-    id: 'a',
+  const base = blankInvestigator('a', {
     health: { max: 8, damage: 3 },
     sanity: { max: 6, horror: 2 },
     clues: 1,

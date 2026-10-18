@@ -1,24 +1,23 @@
 import { describe, expect, it } from 'vitest';
 import {
-  cardCode,
-  scenarioId,
+  attachedTo,
+  blankAct,
+  blankAgenda,
+  blankEnemy,
+  blankLocation,
+  blankTreachery,
+  engagedWith,
+  fixed,
   formatBoard,
   instanceId,
   investigatorId,
   mapId,
-  type GameState,
-  type StartScenario,
-} from './index';
-import {
-  contextWith,
-  edge,
-  fixed,
-  makeCard,
-  makeInvestigator,
+  newGame,
   perInvestigator,
-  run,
-  stateAfter,
-} from '../test/utils';
+  threatAreaOf,
+  type GameState,
+} from './index';
+import { stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -27,77 +26,49 @@ const hall = instanceId('hall');
 const attic = instanceId('attic');
 const ghoul = instanceId('ghoul');
 
-const ctx = contextWith(
-  makeCard({ code: 'plan', name: 'The Plan', typeCode: 'agenda', doom: fixed(2) }),
-  makeCard({ code: 'search', name: 'The Search', typeCode: 'act', clues: perInvestigator(2) }),
-  makeCard({ code: 'hall', name: 'Hall', typeCode: 'location' }),
-  makeCard({ code: 'attic', name: 'Attic', typeCode: 'location' }),
-  makeCard({ code: 'ghoul', name: 'Ghoul', typeCode: 'enemy', health: fixed(3) }),
-  makeCard({ code: 'dread', name: 'Dread' }),
-  makeCard({ code: 'rat', name: 'Rat', typeCode: 'enemy', victory: 1 }),
-);
+/** Every card has a printed name, since the board lists cards by name. */
+const planCard = blankAgenda('plan', fixed(2), { name: 'The Plan' });
+/** Needs 2 clues per investigator, so 4 with Alice and Bob. */
+const searchCard = blankAct('search', { name: 'The Search', clues: perInvestigator(2) });
+const hallCard = blankLocation('hall', { name: 'Hall' });
+const atticCard = blankLocation('attic', { name: 'Attic' });
+/** 3 health, so it survives the 2 damage the board shows. */
+const ghoulCard = blankEnemy('ghoul', { name: 'Ghoul', health: fixed(3) });
+const dreadCard = blankTreachery('dread', { name: 'Dread' });
+const ratCard = blankEnemy('rat', { name: 'Rat', victory: 1 });
 
 /**
  * Alice (intellect 4) in the revealed Hall (3 clues, no shroud) with a damaged, exhausted Ghoul engaged
  * and Dread in her threat area and attached to the Hall; Bob next door in the unrevealed Attic, which
  * only connects one way back to the Hall. The Plan holds 1 of its 2 doom.
  */
-const start: StartScenario = {
-  type: 'StartScenario',
-  scenarioId: scenarioId('format'),
-  difficulty: 'standard',
-  seed: 1,
-  shuffleEncounterDeck: false,
-  investigators: [
-    makeInvestigator({
-      id: 'alice',
-      name: 'Alice',
-      seat: 0,
-      locationId: hall,
-      clues: 1,
-      skills: { willpower: 3, intellect: 4, combat: 2, agility: 1 },
-    }),
-    makeInvestigator({ id: 'bob', name: 'Bob', seat: 1, locationId: attic }),
-  ],
-  maps: { [manor]: { name: 'Manor', connections: [edge('attic', 'hall', { oneWay: true })] } },
-  cards: [
-    {
-      id: instanceId('plan'),
-      code: cardCode('plan'),
-      zone: { kind: 'agendaDeck' },
-      tokens: { doom: 1 },
-    },
-    { id: instanceId('search'), code: cardCode('search'), zone: { kind: 'actDeck' } },
-    {
-      id: hall,
-      code: cardCode('hall'),
-      zone: { kind: 'location', mapId: manor },
-      faceUp: true,
-      tokens: { clue: 3 },
-    },
-    { id: attic, code: cardCode('attic'), zone: { kind: 'location', mapId: manor } },
-    { id: ghoul, code: cardCode('ghoul'), zone: { kind: 'engaged', investigatorId: alice } },
-    {
-      id: instanceId('dread'),
-      code: cardCode('dread'),
-      zone: { kind: 'threatArea', investigatorId: alice },
-    },
-    {
-      id: instanceId('dread3'),
-      code: cardCode('dread'),
-      zone: { kind: 'attachedTo', hostId: hall },
-    },
-    { id: instanceId('rat'), code: cardCode('rat'), zone: { kind: 'victoryDisplay' } },
-    { id: instanceId('dread2'), code: cardCode('dread'), zone: { kind: 'encounterDiscard' } },
-    { id: instanceId('rat2'), code: cardCode('rat'), zone: { kind: 'encounterDeck' } },
-    { id: instanceId('rat3'), code: cardCode('rat'), zone: { kind: 'setAside' } },
-  ],
-};
+const { context, state: startState } = newGame()
+  .withMap(manor, { name: 'Manor' })
+  .withLocation(hall, hallCard, { revealed: true, clues: 3, map: manor })
+  .withLocation(attic, atticCard, { map: manor })
+  .withConnection(attic, hall, { oneWay: true })
+  .withInvestigator(alice, {
+    name: 'Alice',
+    locationId: hall,
+    clues: 1,
+    skills: { willpower: 3, intellect: 4, combat: 2, agility: 1 },
+  })
+  .withInvestigator(bob, { name: 'Bob', locationId: attic })
+  .withCard(instanceId('plan'), planCard, { kind: 'agendaDeck' }, { tokens: { doom: 1 } })
+  .withCard(instanceId('search'), searchCard, { kind: 'actDeck' })
+  .withCard(ghoul, ghoulCard, engagedWith(alice))
+  .withCard(instanceId('dread'), dreadCard, threatAreaOf(alice))
+  .withCard(instanceId('attached_dread'), dreadCard, attachedTo(hall))
+  .withCard(instanceId('rat'), ratCard, { kind: 'victoryDisplay' })
+  .withCard(instanceId('discarded_dread'), dreadCard, { kind: 'encounterDiscard' })
+  .withCard(instanceId('rat_in_deck'), ratCard, { kind: 'encounterDeck' })
+  .withCard(instanceId('set_aside_rat'), ratCard, { kind: 'setAside' })
+  .start();
 
 function startedBoard(): GameState {
   return stateAfter(
-    ctx,
-    run(ctx, [start]).state,
+    context,
+    startState,
     { type: 'DamageEnemy', enemyId: ghoul, amount: 2 },
     { type: 'ExhaustEnemy', enemyId: ghoul },
   );
@@ -105,7 +76,7 @@ function startedBoard(): GameState {
 
 describe('formatBoard', () => {
   it('lists the agenda, act, locations, investigators and piles by card name', () => {
-    expect(formatBoard(ctx, startedBoard())).toMatchInlineSnapshot(`
+    expect(formatBoard(context, startedBoard())).toMatchInlineSnapshot(`
       "Round 0, setup phase
       Agenda: The Plan – doom 1/2
       Act: The Search – needs 4 clues
@@ -130,13 +101,13 @@ describe('formatBoard', () => {
 
   it('lists pending decisions with their options', () => {
     const state = stateAfter(
-      ctx,
+      context,
       startedBoard(),
       { type: 'PlaceDoom', amount: 1 },
       { type: 'CheckDoomThreshold' },
     );
 
-    expect(formatBoard(ctx, state).split('\n').slice(-2)).toMatchInlineSnapshot(`
+    expect(formatBoard(context, state).split('\n').slice(-2)).toMatchInlineSnapshot(`
       [
         "Pending decisions:",
         "  Advance agenda The Plan yes / no [confirm]",
@@ -145,9 +116,12 @@ describe('formatBoard', () => {
   });
 
   it('shows the suggested values of a pending skill test', () => {
-    const state = stateAfter(ctx, startedBoard(), { type: 'Investigate', investigatorId: alice });
+    const state = stateAfter(context, startedBoard(), {
+      type: 'Investigate',
+      investigatorId: alice,
+    });
 
-    expect(formatBoard(ctx, state).split('\n').slice(-3)).toMatchInlineSnapshot(`
+    expect(formatBoard(context, state).split('\n').slice(-3)).toMatchInlineSnapshot(`
       [
         "Pending decisions:",
         "  Investigate Hall: intellect (0) pass ×1 (1–3) / fail [skillTestResult]",
@@ -158,7 +132,7 @@ describe('formatBoard', () => {
 
   it('shows the turn in progress, the turns taken and the actions left', () => {
     const state = stateAfter(
-      ctx,
+      context,
       startedBoard(),
       { type: 'NextPhase' },
       { type: 'StartTurn', investigatorId: bob },
@@ -167,19 +141,19 @@ describe('formatBoard', () => {
       { type: 'AdjustActions', investigatorId: alice, delta: -1 },
     );
 
-    expect(formatBoard(ctx, state).split('\n').slice(0, 3)).toMatchInlineSnapshot(`
+    expect(formatBoard(context, state).split('\n').slice(0, 3)).toMatchInlineSnapshot(`
       [
         "Round 1, investigation phase",
         "Turn: Alice",
         "Turns taken: Bob",
       ]
     `);
-    expect(formatBoard(ctx, state)).toContain('5 resources, actions left 2;');
+    expect(formatBoard(context, state)).toContain('5 resources, actions left 2;');
   });
 
   it('shows the phase steps left while a decision holds up the mythos phase', () => {
     const state = stateAfter(
-      ctx,
+      context,
       startedBoard(),
       { type: 'NextPhase' },
       { type: 'StartTurn', investigatorId: alice },
@@ -191,7 +165,7 @@ describe('formatBoard', () => {
       { type: 'NextPhase' },
     );
 
-    expect(formatBoard(ctx, state).split('\n').slice(0, 2)).toMatchInlineSnapshot(`
+    expect(formatBoard(context, state).split('\n').slice(0, 2)).toMatchInlineSnapshot(`
       [
         "Round 2, mythos phase",
         "Steps left: drawEncounterCard (Alice), drawEncounterCard (Bob)",
@@ -200,29 +174,22 @@ describe('formatBoard', () => {
   });
 
   it('shows an encounter card whose revelation is still being resolved', () => {
-    const state = stateAfter(ctx, startedBoard(), {
+    const state = stateAfter(context, startedBoard(), {
       type: 'MoveCard',
-      cardId: instanceId('dread2'),
+      cardId: instanceId('discarded_dread'),
       to: { kind: 'resolving' },
     });
 
-    expect(formatBoard(ctx, state)).toContain('discard: 0 cards\nResolving: Dread\n');
+    expect(formatBoard(context, state)).toContain('discard: 0 cards\nResolving: Dread\n');
   });
 
   it('marks a hidden map, an empty map and a missing agenda and act', () => {
-    const { state } = run(ctx, [
-      {
-        type: 'StartScenario',
-        scenarioId: scenarioId('empty'),
-        difficulty: 'standard',
-        seed: 1,
-        investigators: [makeInvestigator({ id: 'bob', name: 'Bob' })],
-        maps: { [manor]: { name: 'Manor', visible: false } },
-        cards: [],
-      },
-    ]);
+    const empty = newGame()
+      .withMap(manor, { name: 'Manor', visible: false })
+      .withInvestigator(bob, { name: 'Bob' })
+      .start();
 
-    expect(formatBoard(ctx, state)).toMatchInlineSnapshot(`
+    expect(formatBoard(empty.context, empty.state)).toMatchInlineSnapshot(`
       "Round 0, setup phase
       Agenda: none
       Act: none

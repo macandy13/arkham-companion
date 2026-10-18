@@ -1,30 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import {
   apply,
-  cardCode,
+  atLocation,
+  blankEnemy,
+  blankLocation,
   decisionId,
+  engagedWith,
   execute,
   instanceId,
   investigatorId,
+  newGame,
   type Command,
   type DecisionId,
   type GameState,
   type HeldAction,
-  type InstanceId,
-  type Investigator,
-  type StartingCard,
-  type Zone,
 } from './index';
-import {
-  contextWith,
-  edge,
-  investigatorOf,
-  makeCard,
-  makeInvestigator,
-  rejectionFrom,
-  startBoard,
-  stateAfter,
-} from '../test/utils';
+import { investigatorOf, rejectionFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const hall = instanceId('hall');
@@ -32,60 +23,31 @@ const cellar = instanceId('cellar');
 const ghoul = instanceId('ghoul');
 const rat = instanceId('rat');
 
-/**
- * Hall and cellar, connected. The ghoul deals 1 damage and 2 horror, the rat
- * 1 damage and no horror; the massive brute 2 damage and 1 horror.
- */
-const ctx = contextWith(
-  makeCard({ code: 'hall', name: 'Hall', typeCode: 'location', shroud: 2 }),
-  makeCard({ code: 'cellar', name: 'Cellar', typeCode: 'location' }),
-  makeCard({ code: 'ghoul', name: 'Ghoul', typeCode: 'enemy', damage: 1, horror: 2 }),
-  makeCard({ code: 'rat', name: 'Rat', typeCode: 'enemy', damage: 1, horror: 0 }),
-  makeCard({
-    code: 'brute',
-    name: 'Brute',
-    typeCode: 'enemy',
-    damage: 2,
-    horror: 1,
-    keywords: [{ name: 'massive' }],
-  }),
-);
+/** An enemy dealing 1 damage and 2 horror. */
+const ghoulCard = blankEnemy('ghoul', { damage: 1, horror: 2 });
+/** An enemy dealing 1 damage and no horror. */
+const ratCard = blankEnemy('rat', { damage: 1 });
+/** A massive enemy dealing 2 damage and 1 horror. */
+const bruteCard = blankEnemy('brute', { damage: 2, horror: 1, keywords: [{ name: 'massive' }] });
 
-const engagedWithAlice: Zone = { kind: 'engaged', investigatorId: alice };
+/** Hall and cellar, connected, without investigators. */
+const hallAndCellar = newGame()
+  .withLocation(hall, blankLocation('hall'))
+  .withLocation(cellar, blankLocation('cellar'))
+  .withConnection(hall, cellar);
+
+/** Alice (8 health, 6 sanity) in the hall. */
+const aliceInHall = hallAndCellar.withInvestigator(alice, { locationId: hall });
+
+/** Alice in the hall, engaged with the ghoul. */
+const ghoulOnAlice = aliceInHall.withCard(ghoul, ghoulCard, engagedWith(alice));
+
 const moveToCellar: Command = { type: 'MoveInvestigator', investigatorId: alice, to: cellar };
 const ghoulAttack = decisionId(`attackOfOpportunity:${ghoul}`);
 
-function placed(id: InstanceId, code: string, zone: Zone): StartingCard {
-  return { id, code: cardCode(code), zone };
-}
-
-/**
- * Round 1, investigation phase, with alice's turn in progress: alice (8
- * health, 6 sanity, unless `aliceStats` says otherwise) in the hall with
- * `cards`, and any `others` after her in seat order.
- */
-function aliceTurnWith(
-  cards: StartingCard[],
-  aliceStats: Partial<Investigator> = {},
-  others: Investigator[] = [],
-): GameState {
-  const started = startBoard(ctx, {
-    maps: {
-      main: {
-        locations: { hall: 'hall', cellar: 'cellar' },
-        connections: [edge('hall', 'cellar')],
-      },
-    },
-    investigators: [makeInvestigator({ id: 'alice', locationId: hall, ...aliceStats }), ...others],
-    cards,
-  });
-  return stateAfter(
-    ctx,
-    started,
-    { type: 'NextPhase' },
-    { type: 'StartTurn', investigatorId: alice },
-  );
-}
+/** From setup into round 1's investigation phase, then alice starts her turn. */
+const nextPhase: Command = { type: 'NextPhase' };
+const aliceStartsTurn: Command = { type: 'StartTurn', investigatorId: alice };
 
 function pendingIds(state: GameState): string[] {
   return state.pending.map((decision) => decision.id);
@@ -98,9 +60,10 @@ function wounds(state: GameState): { damage: number; horror: number } {
 
 describe('attacks of opportunity', () => {
   it('asks the moving investigator to resolve the attack of a ready engaged enemy, at its printed damage and horror', () => {
-    const state = aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)]);
+    const { context, state: started } = ghoulOnAlice.start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
 
-    const after = stateAfter(ctx, state, moveToCellar);
+    const after = stateAfter(context, state, moveToCellar);
 
     expect(after.pending).toEqual([
       {
@@ -131,9 +94,10 @@ describe('attacks of opportunity', () => {
   });
 
   it('deals the printed damage and horror on confirm and leaves the enemy ready', () => {
-    const state = aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)]);
+    const { context, state: started } = ghoulOnAlice.start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
 
-    const after = stateAfter(ctx, state, moveToCellar, {
+    const after = stateAfter(context, state, moveToCellar, {
       type: 'ResolveDecision',
       decisionId: ghoulAttack,
       optionId: 'attack',
@@ -145,9 +109,10 @@ describe('attacks of opportunity', () => {
   });
 
   it('deals the damage and horror the players lower it to when assets soak part of the attack', () => {
-    const state = aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)]);
+    const { context, state: started } = ghoulOnAlice.start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
 
-    const after = stateAfter(ctx, state, moveToCellar, {
+    const after = stateAfter(context, state, moveToCellar, {
       type: 'ResolveDecision',
       decisionId: ghoulAttack,
       optionId: 'attack',
@@ -158,14 +123,11 @@ describe('attacks of opportunity', () => {
   });
 
   it('rejects a negative amount for the attack', () => {
-    const state = stateAfter(
-      ctx,
-      aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)]),
-      moveToCellar,
-    );
+    const { context, state: started } = ghoulOnAlice.start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn, moveToCellar);
 
     expect(
-      rejectionFrom(ctx, state, {
+      rejectionFrom(context, state, {
         type: 'ResolveDecision',
         decisionId: ghoulAttack,
         optionId: 'attack',
@@ -182,9 +144,10 @@ describe('attacks of opportunity', () => {
   });
 
   it('deals nothing when the players skip it for an action that does not provoke', () => {
-    const state = aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)]);
+    const { context, state: started } = ghoulOnAlice.start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
 
-    const after = stateAfter(ctx, state, moveToCellar, {
+    const after = stateAfter(context, state, moveToCellar, {
       type: 'ResolveDecision',
       decisionId: ghoulAttack,
       optionId: 'skip',
@@ -194,12 +157,17 @@ describe('attacks of opportunity', () => {
   });
 
   it('defeats the investigator once with damage and horror counted together', () => {
-    const state = aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)], {
-      health: { max: 8, damage: 7 },
-      sanity: { max: 6, horror: 5 },
-    });
+    const { context, state: started } = hallAndCellar
+      .withInvestigator(alice, {
+        locationId: hall,
+        health: { max: 8, damage: 7 },
+        sanity: { max: 6, horror: 5 },
+      })
+      .withCard(ghoul, ghoulCard, engagedWith(alice))
+      .start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
 
-    const { events } = execute(ctx, stateAfter(ctx, state, moveToCellar), {
+    const { events } = execute(context, stateAfter(context, state, moveToCellar), {
       type: 'ResolveDecision',
       decisionId: ghoulAttack,
       optionId: 'attack',
@@ -211,13 +179,15 @@ describe('attacks of opportunity', () => {
   });
 
   it('asks once per ready engaged enemy, and drops the second attack once the first defeated the investigator', () => {
-    const state = aliceTurnWith(
-      [placed(ghoul, 'ghoul', engagedWithAlice), placed(rat, 'rat', engagedWithAlice)],
-      { health: { max: 8, damage: 7 } },
-    );
-    const moved = stateAfter(ctx, state, moveToCellar);
+    const { context, state: started } = hallAndCellar
+      .withInvestigator(alice, { locationId: hall, health: { max: 8, damage: 7 } })
+      .withCard(ghoul, ghoulCard, engagedWith(alice))
+      .withCard(rat, ratCard, engagedWith(alice))
+      .start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
+    const moved = stateAfter(context, state, moveToCellar);
 
-    const after = stateAfter(ctx, moved, {
+    const after = stateAfter(context, moved, {
       type: 'ResolveDecision',
       decisionId: ghoulAttack,
       optionId: 'attack',
@@ -230,22 +200,19 @@ describe('attacks of opportunity', () => {
     expect(investigatorOf(after, alice).status).toBe('defeated');
     expect(wounds(after)).toEqual({ damage: 8, horror: 2 });
     // The defeat leaves the rat unengaged in the hall, so it has nobody to attack.
-    expect(after.cards[rat]?.zone).toEqual({ kind: 'atLocation', locationId: hall });
+    expect(after.cards[rat]?.zone).toEqual(atLocation(hall));
     expect(pendingIds(after)).toEqual([]);
   });
 
   it('lets the other engaged enemy attack an engage action, but not the enemy being engaged', () => {
-    const bob = makeInvestigator({ id: 'bob', seat: 1, locationId: hall });
-    const state = aliceTurnWith(
-      [
-        placed(ghoul, 'ghoul', engagedWithAlice),
-        placed(rat, 'rat', { kind: 'engaged', investigatorId: bob.id }),
-      ],
-      {},
-      [bob],
-    );
+    const bob = investigatorId('bob');
+    const { context, state: started } = ghoulOnAlice
+      .withInvestigator(bob, { locationId: hall })
+      .withCard(rat, ratCard, engagedWith(bob))
+      .start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
 
-    const after = stateAfter(ctx, state, {
+    const after = stateAfter(context, state, {
       type: 'EngageEnemy',
       enemyId: rat,
       investigatorId: alice,
@@ -256,9 +223,12 @@ describe('attacks of opportunity', () => {
 
   it('includes a ready massive enemy at the investigator location', () => {
     const brute = instanceId('brute');
-    const state = aliceTurnWith([placed(brute, 'brute', { kind: 'atLocation', locationId: hall })]);
+    const { context, state: started } = aliceInHall
+      .withCard(brute, bruteCard, atLocation(hall))
+      .start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
 
-    const after = stateAfter(ctx, state, moveToCellar);
+    const after = stateAfter(context, state, moveToCellar);
 
     expect(pendingIds(after)).toEqual([`attackOfOpportunity:${brute}`]);
   });
@@ -269,41 +239,45 @@ describe('attacks of opportunity', () => {
     ['counting off an action', { type: 'AdjustActions', investigatorId: alice, delta: -1 }],
     ['a card effect moving her anywhere', { ...moveToCellar, ignoreConnections: true }],
   ])('does not ask for %s', (_, command) => {
-    const state = aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)]);
+    const { context, state: started } = ghoulOnAlice.start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
 
-    const after = stateAfter(ctx, state, command);
+    const after = stateAfter(context, state, command);
 
     expect(pendingIds(after)).not.toContain(`attackOfOpportunity:${ghoul}`);
   });
 
   it('does not ask when the engaged enemy is exhausted', () => {
-    const state = stateAfter(ctx, aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)]), {
+    const { context, state: started } = ghoulOnAlice.start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn, {
       type: 'ExhaustEnemy',
       enemyId: ghoul,
     });
 
-    const after = stateAfter(ctx, state, moveToCellar);
+    const after = stateAfter(context, state, moveToCellar);
 
     expect(after.pending).toEqual([]);
   });
 
   it('does not ask for a move outside the investigator turn', () => {
-    const state = stateAfter(ctx, aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)]), {
+    const { context, state: started } = ghoulOnAlice.start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn, {
       type: 'EndTurn',
       investigatorId: alice,
     });
 
-    const after = stateAfter(ctx, state, moveToCellar);
+    const after = stateAfter(context, state, moveToCellar);
 
     expect(after.pending).toEqual([]);
   });
 
   it('does not ask when a decision answer moves the investigator', () => {
-    const state = aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)]);
+    const { context, state: started } = ghoulOnAlice.start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
     const offer = decisionId('secret_passage');
 
     const after = stateAfter(
-      ctx,
+      context,
       state,
       {
         type: 'RequestDecision',
@@ -332,10 +306,11 @@ describe('the action that provokes attacks of opportunity', () => {
   });
 
   it('waits in the hall until the attack is answered, then moves', () => {
-    const state = aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)]);
+    const { context, state: started } = ghoulOnAlice.start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
 
-    const asked = stateAfter(ctx, state, moveToCellar);
-    const answered = stateAfter(ctx, asked, answer(ghoulAttack, 'attack'));
+    const asked = stateAfter(context, state, moveToCellar);
+    const answered = stateAfter(context, asked, answer(ghoulAttack, 'attack'));
 
     expect(investigatorOf(asked, alice).locationId).toBe(hall);
     expect(asked.meta.queue).toEqual([{ kind: 'command', command: moveToCellar }]);
@@ -344,35 +319,38 @@ describe('the action that provokes attacks of opportunity', () => {
   });
 
   it('moves after a skipped attack too', () => {
-    const state = aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)]);
+    const { context, state: started } = ghoulOnAlice.start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
 
-    const after = stateAfter(ctx, state, moveToCellar, answer(ghoulAttack, 'skip'));
+    const after = stateAfter(context, state, moveToCellar, answer(ghoulAttack, 'skip'));
 
     expect(investigatorOf(after, alice).locationId).toBe(cellar);
   });
 
   it('engages the enemy waiting in the cellar only once the held move resumes', () => {
-    const state = aliceTurnWith([
-      placed(ghoul, 'ghoul', engagedWithAlice),
-      placed(rat, 'rat', { kind: 'atLocation', locationId: cellar }),
-    ]);
+    const { context, state: started } = ghoulOnAlice
+      .withCard(rat, ratCard, atLocation(cellar))
+      .start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
 
-    const asked = stateAfter(ctx, state, moveToCellar);
-    const answered = stateAfter(ctx, asked, answer(ghoulAttack, 'attack'));
+    const asked = stateAfter(context, state, moveToCellar);
+    const answered = stateAfter(context, asked, answer(ghoulAttack, 'attack'));
 
-    expect(asked.cards[rat]?.zone).toEqual({ kind: 'atLocation', locationId: cellar });
-    expect(answered.cards[rat]?.zone).toEqual(engagedWithAlice);
-    expect(answered.cards[ghoul]?.zone).toEqual(engagedWithAlice);
+    expect(asked.cards[rat]?.zone).toEqual(atLocation(cellar));
+    expect(answered.cards[rat]?.zone).toEqual(engagedWith(alice));
+    expect(answered.cards[ghoul]?.zone).toEqual(engagedWith(alice));
   });
 
   it('drops the move when the attack defeats the investigator, who stays in the hall', () => {
-    const state = aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)], {
-      health: { max: 8, damage: 7 },
-    });
+    const { context, state: started } = hallAndCellar
+      .withInvestigator(alice, { locationId: hall, health: { max: 8, damage: 7 } })
+      .withCard(ghoul, ghoulCard, engagedWith(alice))
+      .start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
 
     const { events, state: after } = execute(
-      ctx,
-      stateAfter(ctx, state, moveToCellar),
+      context,
+      stateAfter(context, state, moveToCellar),
       answer(ghoulAttack, 'attack'),
     );
 
@@ -387,13 +365,14 @@ describe('the action that provokes attacks of opportunity', () => {
   });
 
   it('drops the move, with nothing of it left in the log, once the cellar has left play', () => {
-    const state = aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)]);
-    const cellarRemoved = stateAfter(ctx, state, moveToCellar, {
+    const { context, state: started } = ghoulOnAlice.start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
+    const cellarRemoved = stateAfter(context, state, moveToCellar, {
       type: 'ManualAdjust',
       adjustment: { kind: 'moveCard', cardId: cellar, to: { kind: 'outOfGame' } },
     });
 
-    const { events } = execute(ctx, cellarRemoved, answer(ghoulAttack, 'attack'));
+    const { events } = execute(context, cellarRemoved, answer(ghoulAttack, 'attack'));
 
     expect(events.map((event) => event.type)).not.toContain('StepResumed');
     expect(events.at(-1)).toMatchObject({
@@ -405,10 +384,11 @@ describe('the action that provokes attacks of opportunity', () => {
   });
 
   it('asks for the investigate test only after the attack is resolved', () => {
-    const state = aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)]);
+    const { context, state: started } = ghoulOnAlice.start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
 
-    const asked = stateAfter(ctx, state, { type: 'Investigate', investigatorId: alice });
-    const answered = stateAfter(ctx, asked, answer(ghoulAttack, 'attack'));
+    const asked = stateAfter(context, state, { type: 'Investigate', investigatorId: alice });
+    const answered = stateAfter(context, asked, answer(ghoulAttack, 'attack'));
 
     expect(pendingIds(asked)).toEqual([`attackOfOpportunity:${ghoul}`]);
     expect(pendingIds(answered)).toEqual([`investigate:${alice}`]);
@@ -418,13 +398,13 @@ describe('the action that provokes attacks of opportunity', () => {
     ['ghoul first', ghoulAttack, ratAttack],
     ['rat first', ratAttack, ghoulAttack],
   ])('moves once both attacks are answered, in any order (%s)', (_, first, second) => {
-    const state = aliceTurnWith([
-      placed(ghoul, 'ghoul', engagedWithAlice),
-      placed(rat, 'rat', engagedWithAlice),
-    ]);
+    const { context, state: started } = ghoulOnAlice
+      .withCard(rat, ratCard, engagedWith(alice))
+      .start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
 
-    const halfway = stateAfter(ctx, state, moveToCellar, answer(first, 'attack'));
-    const after = stateAfter(ctx, halfway, answer(second, 'attack'));
+    const halfway = stateAfter(context, state, moveToCellar, answer(first, 'attack'));
+    const after = stateAfter(context, halfway, answer(second, 'attack'));
 
     expect(investigatorOf(halfway, alice).locationId).toBe(hall);
     expect(investigatorOf(after, alice).locationId).toBe(cellar);
@@ -432,10 +412,11 @@ describe('the action that provokes attacks of opportunity', () => {
   });
 
   it('rejects an illegal action before any enemy attacks', () => {
-    const state = aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)]);
+    const { context, state: started } = ghoulOnAlice.start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
 
     expect(
-      rejectionFrom(ctx, state, { type: 'MoveInvestigator', investigatorId: alice, to: hall }),
+      rejectionFrom(context, state, { type: 'MoveInvestigator', investigatorId: alice, to: hall }),
     ).toEqual({ code: 'alreadyAtLocation', investigatorId: alice, locationId: hall });
   });
 });
@@ -449,15 +430,20 @@ describe('several steps waiting in the queue', () => {
   const investigateHall: HeldAction = { type: 'Investigate', investigatorId: alice };
   const drawFromEmptyDeck: HeldAction = { type: 'DrawEncounter', investigatorId: alice };
 
+  const { context, state: started } = ghoulOnAlice.start();
+
   /** The ghoul's attack on alice's move to the cellar is open, and `first` waits in front of the move. */
   function moveQueuedBehind(first: HeldAction): GameState {
-    const state = aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)]);
-    const asked = stateAfter(ctx, state, moveToCellar);
+    const asked = stateAfter(context, started, nextPhase, aliceStartsTurn, moveToCellar);
     return apply(asked, { type: 'StepsQueued', steps: [{ kind: 'command', command: first }] });
   }
 
   it('resolves every queued step in order once the last answer comes in', () => {
-    const { state, events } = execute(ctx, moveQueuedBehind(drawFromEmptyDeck), skipGhoulAttack);
+    const { state, events } = execute(
+      context,
+      moveQueuedBehind(drawFromEmptyDeck),
+      skipGhoulAttack,
+    );
 
     const outcomes = events.filter(
       (event) => event.type === 'ActionDropped' || event.type === 'InvestigatorMoved',
@@ -468,7 +454,7 @@ describe('several steps waiting in the queue', () => {
   });
 
   it('stops after a step that asks something, leaving the rest queued', () => {
-    const state = stateAfter(ctx, moveQueuedBehind(investigateHall), skipGhoulAttack);
+    const state = stateAfter(context, moveQueuedBehind(investigateHall), skipGhoulAttack);
 
     expect(pendingIds(state)).toEqual([`investigate:${alice}`]);
     expect(state.meta.queue).toEqual([{ kind: 'command', command: moveToCellar }]);
@@ -478,9 +464,10 @@ describe('several steps waiting in the queue', () => {
 
 describe('DealEnemyAttack', () => {
   it('deals damage and horror without exhausting the enemy', () => {
-    const state = aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)]);
+    const { context, state: started } = ghoulOnAlice.start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
 
-    const after = stateAfter(ctx, state, {
+    const after = stateAfter(context, state, {
       type: 'DealEnemyAttack',
       enemyId: ghoul,
       investigatorId: alice,
@@ -493,11 +480,12 @@ describe('DealEnemyAttack', () => {
   });
 
   it('rejects an unknown investigator', () => {
-    const state = aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)]);
+    const { context, state: started } = ghoulOnAlice.start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
     const nobody = investigatorId('nobody');
 
     expect(
-      rejectionFrom(ctx, state, {
+      rejectionFrom(context, state, {
         type: 'DealEnemyAttack',
         enemyId: ghoul,
         investigatorId: nobody,
@@ -508,9 +496,12 @@ describe('DealEnemyAttack', () => {
   });
 
   it('does nothing when the enemy is no longer in play', () => {
-    const state = aliceTurnWith([placed(ghoul, 'ghoul', { kind: 'encounterDiscard' })]);
+    const { context, state: started } = aliceInHall
+      .withCard(ghoul, ghoulCard, { kind: 'encounterDiscard' })
+      .start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
 
-    const { events } = execute(ctx, state, {
+    const { events } = execute(context, state, {
       type: 'DealEnemyAttack',
       enemyId: ghoul,
       investigatorId: alice,

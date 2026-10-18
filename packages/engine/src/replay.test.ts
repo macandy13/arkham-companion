@@ -1,56 +1,56 @@
 import { describe, expect, it } from 'vitest';
 import {
   CommandRejected,
-  cardCode,
-  scenarioId,
+  blankAgenda,
+  blankEnemy,
+  blankLocation,
+  blankTreachery,
   checkInvariants,
   emptyState,
   execute,
+  fixed,
   instanceId,
   investigatorId,
-  mapId,
+  newGame,
   replay,
   type Adjustment,
   type Event,
   type GameState,
-  type StartScenario,
 } from './index';
-import { investigators, testContext } from '../test/utils';
 
-const main = mapId('main');
 const hall = instanceId('hall');
 const ghoul = instanceId('ghoul');
 const rat = instanceId('rat');
 const dread = instanceId('dread');
 const plan = instanceId('plan');
-const lead = investigatorId('tank');
+const alice = investigatorId('alice');
 
-/** Two investigators, a location, three encounter cards and an agenda. */
-const start: StartScenario = {
-  type: 'StartScenario',
-  scenarioId: scenarioId('replay'),
-  difficulty: 'standard',
-  seed: 99,
-  investigators: investigators(2),
-  maps: { [main]: { name: 'Main' } },
-  cards: [
-    { id: hall, code: cardCode('L1'), zone: { kind: 'location', mapId: main } },
-    { id: ghoul, code: cardCode('E1'), zone: { kind: 'encounterDeck' } },
-    { id: rat, code: cardCode('E2'), zone: { kind: 'encounterDeck' } },
-    { id: dread, code: cardCode('E3'), zone: { kind: 'encounterDeck' } },
-    { id: plan, code: cardCode('A1'), zone: { kind: 'agendaDeck' } },
-  ],
-};
+/**
+ * Two investigators, lead investigator Alice, the hall, three encounter
+ * cards (ghoul, rat and dread, shuffled with seed 99) and an agenda.
+ */
+const table = newGame()
+  .withSeed(99)
+  .withShuffledEncounterDeck()
+  .withLocation(hall, blankLocation('hall'))
+  .withInvestigator(alice)
+  .withInvestigator(investigatorId('bob'))
+  .withCard(ghoul, blankEnemy('ghoul'), { kind: 'encounterDeck' })
+  .withCard(rat, blankEnemy('rat'), { kind: 'encounterDeck' })
+  .withCard(dread, blankTreachery('dread'), { kind: 'encounterDeck' })
+  .withAgenda(plan, blankAgenda('plan', fixed(3)));
+const context = table.context();
+const start = table.startCommand();
 
 /** Plays `start` plus adjustments; rejected adjustments are skipped, like the app does. */
 function play(adjustments: readonly Adjustment[]) {
-  const started = execute(testContext, emptyState(), start);
+  const started = execute(context, emptyState(), start);
   let state: GameState = started.state;
   const events: Event[] = [...started.events];
   const states: GameState[] = [state];
   for (const adjustment of adjustments) {
     try {
-      const result = execute(testContext, state, { type: 'ManualAdjust', adjustment });
+      const result = execute(context, state, { type: 'ManualAdjust', adjustment });
       state = result.state;
       events.push(...result.events);
       states.push(state);
@@ -83,8 +83,8 @@ const scripts: [string, Adjustment[]][] = [
   [
     'engaging, threat area and attachments',
     [
-      { kind: 'moveCard', cardId: ghoul, to: { kind: 'engaged', investigatorId: lead } },
-      { kind: 'moveCard', cardId: dread, to: { kind: 'threatArea', investigatorId: lead } },
+      { kind: 'moveCard', cardId: ghoul, to: { kind: 'engaged', investigatorId: alice } },
+      { kind: 'moveCard', cardId: dread, to: { kind: 'threatArea', investigatorId: alice } },
       { kind: 'moveCard', cardId: rat, to: { kind: 'attachedTo', hostId: plan } },
     ],
   ],
@@ -109,9 +109,9 @@ const scripts: [string, Adjustment[]][] = [
   [
     'counting actions down, with a rejected drop below zero',
     [
-      { kind: 'actions', investigatorId: lead, delta: -2 },
-      { kind: 'actions', investigatorId: lead, delta: -2 },
-      { kind: 'actions', investigatorId: lead, delta: 1 },
+      { kind: 'actions', investigatorId: alice, delta: -2 },
+      { kind: 'actions', investigatorId: alice, delta: -2 },
+      { kind: 'actions', investigatorId: alice, delta: 1 },
     ],
   ],
 ];
