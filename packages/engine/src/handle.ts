@@ -118,8 +118,10 @@ import { zoneKey, type Zone } from './zone';
  * (`attackOfOpportunityDecisions`) yields one decision per attacking enemy
  * and is held (`ActionHeld`) until all of them are answered; follow-ups
  * never provoke, which is why this happens here and not in
- * `handleWithTriggers`. Once no decision is pending, any command (usually
- * the last answer) ends with the held action (`resumeHeldAction`).
+ * `handleWithTriggers`. A surge draw waiting for the decisions of the card
+ * before it is held the same way (`surgeEvents`). Once no decision is
+ * pending, any command (usually the last answer) ends with the held command
+ * (`resumeHeldAction`).
  * Pure: the same state, command and context always yield the same events.
  */
 export function handle(ctx: EngineContext, state: GameState, command: Command): Event[] {
@@ -171,8 +173,10 @@ interface TriggerBudget {
   remaining: number;
   /**
    * Surge draws so far, and the cards the deck and discard held before the
-   * chain's first encounter draw. A deck made only of surge cards would
-   * reshuffle and draw forever, so a chain draws each card at most once.
+   * first surging draw of this `handle` call. A deck made only of surge cards
+   * would reshuffle and draw forever, so one call makes at most that many
+   * draws in surge chains. A held surge resumes in a later call and counts
+   * afresh; it only waits there because the players have to answer first.
    */
   surges: number;
   encounterCards?: number;
@@ -267,6 +271,8 @@ function phaseStepEvents(ctx: EngineContext, state: GameState): Event[] {
  * chain has already drawn every card (`TriggerBudget.encounterCards`).
  * If a held action is already waiting (a forced effect during attacks of
  * opportunity drew the card), the slot is taken and the draw happens at once.
+ * No trigger point fires during those attacks today, so that case cannot
+ * arise yet; M1V.1 tracks it.
  */
 function surgeEvents(
   ctx: EngineContext,

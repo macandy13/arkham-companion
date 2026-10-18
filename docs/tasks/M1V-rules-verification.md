@@ -37,7 +37,7 @@ Ref: architecture "Command handling", "Triggers and card effects"; [rules.md](..
 3. [ ] Hold the remaining follow-ups of a chain while one of them waits for an answer.
 4. [ ] End-to-end step at the table: The Gathering has no surge card, so add one with slice 2 or 3 where the scenario shows it.
 
-Follow-ups: simultaneous ordering and "when" hooks wait for the decision on the architecture review's timing windows.
+Follow-ups: the held command has one slot (`GameMeta.heldAction`). A surge card drawn by a forced effect while attacks of opportunity are pending, and asking something, would surge at once. No trigger point fires there yet; make the slot a stack when one does. Simultaneous ordering and "when" hooks wait for the decision on the architecture review's timing windows.
 
 ## M1V.2 Edge case tests (S)
 

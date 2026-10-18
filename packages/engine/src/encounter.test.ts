@@ -3,6 +3,8 @@ import {
   cardCode,
   checkInvariants,
   CommandRejected,
+  confirmOptions,
+  decisionId,
   execute,
   instanceId,
   investigatorId,
@@ -10,6 +12,7 @@ import {
   zoneKey,
   type Command,
   type EngineContext,
+  type Event,
   type GameState,
   type InstanceId,
   type StartingCard,
@@ -925,11 +928,14 @@ describe('encounter deck invariants', () => {
 });
 
 describe('surge after the drawn card has resolved', () => {
+  const aliceDrawsAgain: Command = { type: 'DrawEncounter', investigatorId: alice };
+
   /**
-   * The cards above plus three surge cards: `burning_surge`, whose script
-   * deals alice 1 damage when it is revealed, `testing_surge`, which asks
-   * for a willpower (3) test, and `choosy_foe`, an enemy whose spawn text the
-   * engine cannot read, so the players choose its location.
+   * The cards above plus four surge cards: `burning_surge`, whose script
+   * deals alice 1 damage when it is revealed; `testing_surge`, which asks
+   * for a willpower (3) test; `deadly_surge`, whose script asks alice to
+   * confirm 8 damage (her whole health); and `choosy_foe`, an enemy whose
+   * spawn text the engine cannot read, so the players choose its location.
    */
   const surgeCtx: EngineContext = {
     ...contextWith(
@@ -941,6 +947,7 @@ describe('surge after the drawn card has resolved', () => {
         keywords: [{ name: 'surge' }],
         revelationTest: { skill: 'willpower', difficulty: 3 },
       }),
+      makeCard({ code: 'deadly_surge', keywords: [{ name: 'surge' }] }),
       makeCard({
         code: 'choosy_foe',
         typeCode: 'enemy',
@@ -956,8 +963,44 @@ describe('surge after the drawn card has resolved', () => {
           { type: 'AdjustInvestigator', investigatorId: alice, stat: 'damage', delta: 1 },
         ],
       },
+      [cardCode('deadly_surge')]: {
+        onReveal: () => [
+          {
+            type: 'RequestDecision',
+            decision: {
+              id: decisionId('deadly'),
+              kind: 'confirm',
+              prompt: 'decision.deadly',
+              decider: { kind: 'investigator', investigatorId: alice },
+              options: confirmOptions([
+                { type: 'AdjustInvestigator', investigatorId: alice, stat: 'damage', delta: 8 },
+              ]),
+            },
+          },
+        ],
+      },
     },
   };
+
+  /** What happened, in order, as far as these tests look: draws, damage, discards, engagements, dropped draws. */
+  function resolutionOrder(events: readonly Event[]): string[] {
+    return events.flatMap((e) => {
+      switch (e.type) {
+        case 'EncounterCardDrawn':
+          return [`draws ${e.cardId}`];
+        case 'InvestigatorChanged':
+          return [`alice ${e.stat} +${e.delta}`];
+        case 'CardMoved':
+          return e.from.kind === 'resolving' ? [`discards ${e.cardId}`] : [];
+        case 'EnemyEngaged':
+          return [`${e.enemyId} engages ${e.investigatorId}`];
+        case 'ActionDropped':
+          return [`drops ${e.command.type} (${e.reason.code})`];
+        default:
+          return [];
+      }
+    });
+  }
 
   it('resolves the revealed card`s effect before the surge draw', () => {
     const state = startedWith(
@@ -968,14 +1011,11 @@ describe('surge after the drawn card has resolved', () => {
 
     const { events } = execute(surgeCtx, state, draw);
 
-    const resolution = events.flatMap((e) =>
-      e.type === 'EncounterCardDrawn'
-        ? [`draws ${e.cardId}`]
-        : e.type === 'InvestigatorChanged'
-          ? [`alice ${e.stat} +${e.delta}`]
-          : [],
-    );
-    expect(resolution).toEqual(['draws burning_card', 'alice damage +1', 'draws after_surge']);
+    expect(resolutionOrder(events)).toEqual([
+      'draws burning_card',
+      'alice damage +1',
+      'draws after_surge',
+    ]);
   });
 
   it('holds the surge draw while the card`s revelation test waits for its result', () => {
@@ -988,7 +1028,7 @@ describe('surge after the drawn card has resolved', () => {
     const asked = stateAfter(surgeCtx, state, draw);
 
     expect(asked.pending.map((decision) => decision.id)).toEqual(['revelation:testing_card']);
-    expect(asked.meta.heldAction).toEqual(draw);
+    expect(asked.meta.heldAction).toEqual(aliceDrawsAgain);
     expect(idsIn(asked, encounterDeck)).toEqual(['after_surge']);
   });
 
@@ -1002,18 +1042,11 @@ describe('surge after the drawn card has resolved', () => {
 
     const { state: answered, events } = execute(surgeCtx, asked, {
       type: 'ResolveDecision',
-      decisionId: asked.pending[0]!.id,
+      decisionId: decisionId('revelation:testing_card'),
       optionId: 'fail',
     });
 
-    const resolution = events.flatMap((e) =>
-      e.type === 'EncounterCardDrawn'
-        ? [`draws ${e.cardId}`]
-        : e.type === 'CardMoved' && e.from.kind === 'resolving'
-          ? [`discards ${e.cardId}`]
-          : [],
-    );
-    expect(resolution).toEqual(['discards testing_card', 'draws after_surge']);
+    expect(resolutionOrder(events)).toEqual(['discards testing_card', 'draws after_surge']);
     expect(answered.meta.heldAction).toBeUndefined();
   });
 
@@ -1029,6 +1062,27 @@ describe('surge after the drawn card has resolved', () => {
     expect(asked.meta.heldAction).toBeUndefined();
   });
 
+  it('drops the held surge draw when the card`s effect defeated alice', () => {
+    const state = startedWith(
+      { deck: [card('deadly_surge', 'deadly_card'), card('plain_treachery', 'after_surge')] },
+      { aliceAt: hall },
+      surgeCtx,
+    );
+    const asked = stateAfter(surgeCtx, state, draw);
+
+    const { events } = execute(surgeCtx, asked, {
+      type: 'ResolveDecision',
+      decisionId: decisionId('deadly'),
+      optionId: 'yes',
+    });
+
+    expect(asked.meta.heldAction).toEqual(aliceDrawsAgain);
+    expect(resolutionOrder(events)).toEqual([
+      'alice damage +8',
+      'drops DrawEncounter (investigatorNotActive)',
+    ]);
+  });
+
   it('draws the surge card only after the players chose where the enemy spawns', () => {
     const state = startedWith(
       { deck: [card('choosy_foe', 'choosy_card'), card('plain_treachery', 'after_surge')] },
@@ -1039,19 +1093,11 @@ describe('surge after the drawn card has resolved', () => {
 
     const { events } = execute(surgeCtx, asked, {
       type: 'ResolveDecision',
-      decisionId: asked.pending[0]!.id,
+      decisionId: decisionId('spawn:choosy_card'),
       optionId: hall,
     });
 
-    expect(asked.pending.map((decision) => decision.id)).toEqual(['spawn:choosy_card']);
-    expect(asked.meta.heldAction).toEqual(draw);
-    const resolution = events.flatMap((e) =>
-      e.type === 'EncounterCardDrawn'
-        ? [`draws ${e.cardId}`]
-        : e.type === 'EnemyEngaged'
-          ? [`${e.enemyId} engages ${e.investigatorId}`]
-          : [],
-    );
-    expect(resolution).toEqual(['choosy_card engages alice', 'draws after_surge']);
+    expect(asked.meta.heldAction).toEqual(aliceDrawsAgain);
+    expect(resolutionOrder(events)).toEqual(['choosy_card engages alice', 'draws after_surge']);
   });
 });
