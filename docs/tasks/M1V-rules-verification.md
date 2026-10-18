@@ -36,7 +36,8 @@ Ref: architecture "Command handling", "Triggers and card effects"; [rules.md](..
 2. [x] Revelation before placement: the drawn card waits in `resolving` while its `onReveal` follow-ups run, then `placeDrawnCard` places it (a drawn enemy that waits for a spawn choice is no longer left on the deck). A revelation that asks something still lets the placement go on before the answer; slice 3 covers that.
 3. [ ] Hold the remaining follow-ups of a chain while one of them waits for an answer.
        Built as one resolution queue (architecture review P8): a list of plain-data steps that `handle` runs until a decision is pending, then stores in state. Three PRs:
-   - [ ] 3a. One `Resolution` builder per `handle` call, with rollback for held actions; no behaviour change (#101).
+   - [x] 3a. One `Resolution` builder per `handle` call, with rollback for held actions; no behaviour change (#101).
+         Done: each step of `handle`'s pipeline now `emit`s into one `Resolution` (working state plus events so far) instead of returning event lists that were replayed between steps; a held action that turns out illegal takes its events back with `checkpoint`. A new test drops a held move whose destination left play and leaves nothing of it in the log.
    - [ ] 3b. The stored queue (`GameMeta.queue`, `QueueSuspended`) replaces the held-action slot and `ActionHeld`/`ActionResumed`; behaviour unchanged.
    - [ ] 3c. Everything as steps: forced effects queued when their events are emitted, `complete` and the phase step loop as continuation steps, and an answer's forced effects before its option commands (ST.6 before ST.7). Carries the intended behaviour changes, with a rules-checker table.
 4. [ ] End-to-end step at the table: The Gathering has no surge card, so add one with slice 2 or 3 where the scenario shows it.
@@ -60,7 +61,8 @@ Follow-ups: the held command has one slot (`GameMeta.heldAction`). A surge card 
 
 **Slices**
 
-1. [ ] `newGame()` builder and blank cards (`blankLocation`, `blankEnemy`, …), zone constructors, `forced_attacks.test.ts` as the first migrated file.
+1. [x] `newGame()` builder and blank cards (`blankLocation`, `blankEnemy`, …), zone constructors, `forced_attacks.test.ts` as the first migrated file.
+       Done (#104): `newGame()` (`game_builder.ts`) is an immutable builder that starts the table through `StartScenario` and returns `{ context, state }`; the blank cards (`blank_cards.ts`, `blankInvestigator` replaces the `makeInvestigator` defaults) and the zone constructors (`atLocation`, `engagedWith`, `threatAreaOf`, `attachedTo`) live in the engine's source and are exported. `forced_attacks.test.ts` is migrated with the same assertions.
 2. [ ] Migrate the board and enemy tests: `skill_tests`, `enemies`, `hunters`, `board`, `investigators`, `elimination`, `turns`.
 3. [ ] Migrate the rest once the resolution queue (M1V.1 slice 3) has merged, since it edits them: `decisions`, `triggers`, `encounter`, `attacks_of_opportunity`, `phases`, `doom`, `undo`, `skill_modifiers`, `format_board`.
 4. [ ] Remove what is left unused of `startBoard`, `makeCard`, `testCardDefs` and the `L*`/`E*` codes, and point `docs/coding-guidelines.md` §3 at the builder only.
