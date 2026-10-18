@@ -118,7 +118,9 @@ function assertAccepted<C extends Command>(
  * action's own events, or `ActionDropped` when an attack of opportunity
  * defeated the investigator or the action has become illegal meanwhile (an
  * attack's forced effect moved them, say). Dropping rather than rejecting
- * keeps the answer that released it valid.
+ * keeps the answer that released it valid. More than one step waits only
+ * when a surge card drawn during attacks of opportunity asks something; no
+ * trigger point fires there yet, so the queue holds one step in practice.
  */
 function resumeQueue(resolution: Resolution, budget: TriggerBudget): void {
   for (;;) {

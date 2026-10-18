@@ -34,23 +34,23 @@ describe('stored queue (GameMeta.queue)', () => {
     expect(state.meta.queue).toEqual([surgeDraw, moveToCellar]);
   });
 
-  it.each<{ name: string; taken: Event }>([
-    { name: 'resumed', taken: { type: 'StepResumed' } },
+  it.each<{ name: string; taken: (step: QueuedStep) => Event }>([
+    { name: 'resumed', taken: () => ({ type: 'StepResumed' }) },
     {
       name: 'dropped',
-      taken: {
+      taken: (step) => ({
         type: 'ActionDropped',
-        command: surgeDraw.command,
+        command: step.command,
         reason: { code: 'investigatorNotActive', investigatorId: alice },
-      },
+      }),
     },
   ])('takes the first step off the queue once it is $name', ({ taken }) => {
     const queued = replay([moveQueued, surgeQueued], emptyState());
 
-    const afterFirst = apply(queued, taken);
-    const afterBoth = apply(afterFirst, taken);
+    const afterSurge = apply(queued, taken(surgeDraw));
+    const afterMove = apply(afterSurge, taken(moveToCellar));
 
-    expect(afterFirst.meta.queue).toEqual([moveToCellar]);
-    expect(afterBoth.meta).not.toHaveProperty('queue');
+    expect(afterSurge.meta.queue).toEqual([moveToCellar]);
+    expect(afterMove.meta).not.toHaveProperty('queue');
   });
 });
