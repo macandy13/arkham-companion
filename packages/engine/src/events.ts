@@ -425,7 +425,7 @@ export interface TurnEnded {
  * the attacks come after the action is paid for but before its effect
  * (produced by `handle` together with the attack decisions,
  * `attackOfOpportunityDecisions`). A surge draw: the next card is drawn only
- * after the surging card's decisions are answered (`surgeEvents`).
+ * after the surging card's decisions are answered (`resolveSurge`).
  */
 export interface ActionHeld {
   type: 'ActionHeld';
