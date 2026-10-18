@@ -1,9 +1,11 @@
+import type { EngineContext } from './cards';
+import { engageEach } from './engagement';
 import { decisionId } from './ids';
 import { requestDecision } from './decisions';
 import type { Event, InvestigatorDefeated, InvestigatorResigned } from './events';
 import { replay } from './reducer';
 import { cluesToLocationEvents } from './investigators';
-import { cardsInZone } from './lookup';
+import { cardsInZone, requireCard } from './lookup';
 import { discardEncounterCard } from './placement';
 import type { GameState, Investigator } from './state';
 
@@ -17,7 +19,10 @@ const NEW_LEAD_DECISION = decisionId('newLeadInvestigator');
  * 1. `left` itself (`InvestigatorDefeated` or `InvestigatorResigned`).
  * 2. Their clues are placed on their location, enemies engaged with them stay
  *    at that location unengaged (keeping damage and exhaustion), and cards in
- *    their threat area are discarded.
+ *    their threat area are discarded. A released enemy that is ready engages
+ *    an investigator still at that location right away (Rules Reference,
+ *    "Enemy Engagement": a ready unengaged enemy engages as soon as it shares
+ *    a location with an investigator), like one an investigator moves to.
  * 3. If they were the lead investigator, the group picks a new one.
  * 4. If nobody is left, the scenario ends without a resolution.
  *
@@ -27,16 +32,20 @@ const NEW_LEAD_DECISION = decisionId('newLeadInvestigator');
  * event that precedes the departure (damage, horror) changes.
  */
 export function investigatorLeavesEvents(
+  ctx: EngineContext,
   state: GameState,
   investigator: Investigator,
   left: InvestigatorDefeated | InvestigatorResigned,
 ): Event[] {
-  const events: Event[] = [
-    left,
-    ...clueEvents(investigator),
-    ...engagedEnemyEvents(state, investigator),
-    ...threatAreaEvents(state, investigator),
-  ];
+  const released = [left, ...clueEvents(investigator), ...engagedEnemyEvents(state, investigator)];
+  const reengaged = engageEach(
+    ctx,
+    replay(released, state),
+    cardsInZone(state, { kind: 'engaged', investigatorId: investigator.id }).map((id) =>
+      requireCard(state.cards, id),
+    ),
+  );
+  const events: Event[] = [...released, ...reengaged, ...threatAreaEvents(state, investigator)];
   const after = replay(events, state);
   return [...events, ...successionEvents(after, investigator)];
 }

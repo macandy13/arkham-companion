@@ -112,7 +112,7 @@ export function arrivalEngagements(
 }
 
 /** `engageEvents` for each enemy in turn, each one seeing the engagements before it. */
-function engageEach(
+export function engageEach(
   ctx: EngineContext,
   state: GameState,
   enemies: readonly CardInstance[],

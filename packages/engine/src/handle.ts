@@ -374,9 +374,9 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
     case 'MoveInvestigator':
       return handleMoveInvestigator(ctx, state, command);
     case 'AdjustInvestigator':
-      return handleAdjustInvestigator(state, command);
+      return handleAdjustInvestigator(ctx, state, command);
     case 'DefeatInvestigator':
-      return handleDefeatInvestigator(state, command);
+      return handleDefeatInvestigator(ctx, state, command);
     case 'DiscoverClues':
       return handleDiscoverClues(state, command);
     case 'PlaceDoom':
@@ -426,7 +426,7 @@ function handleCommand(ctx: EngineContext, state: GameState, command: Command): 
     case 'EndTurn':
       return handleEndTurn(ctx, state, command);
     case 'Resign':
-      return handleResign(state, command);
+      return handleResign(ctx, state, command);
     case 'SetLeadInvestigator':
       return handleSetLeadInvestigator(state, command);
     case 'AdjustActions':
