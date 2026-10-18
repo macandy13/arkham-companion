@@ -40,7 +40,10 @@ const hallCellarAttic = newGame()
   .withLocation(attic, atticCard)
   .withConnection(hall, cellar);
 
-/** The table with alice (seat 0) in the hall and bob (seat 1) without a location. */
+/**
+ * The table with alice (seat 0) in the hall and bob (seat 1) without a
+ * location: two investigators, so the hall has 2 clues and the cellar 4.
+ */
 const aliceInHallBobNowhere = hallCellarAttic
   .withInvestigator(alice, { locationId: hall })
   .withInvestigator(bob);

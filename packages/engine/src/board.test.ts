@@ -391,6 +391,7 @@ describe('shortestPaths', () => {
 
 describe('RevealLocation', () => {
   it.each([
+    // The hall's 2 clues per investigator, for alice and bob of `table`.
     ['per investigator', hall, 4],
     ['as a fixed amount regardless of investigators', cellar, 1],
   ])('flips the location and places clues %s', (_name, locationId, clues) => {
