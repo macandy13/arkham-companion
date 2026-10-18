@@ -17,8 +17,6 @@ import {
   type Command,
   type Rejection,
   type EngineContext,
-  type GameState,
-  type ScenarioHooks,
 } from './index';
 import { triggeredCommands } from './triggers';
 import { rejectionFrom, stateAfter, withScenario } from '../test/utils';
@@ -63,28 +61,19 @@ const table = newGame()
   .withCard(deckGhoul, ghoulCard, { kind: 'encounterDeck' })
   .withInvestigator(alice, { locationId: hall, clues: 2 });
 
-function startedState(): GameState {
-  return table.start().state;
-}
-
-/** The context of the table playing a scenario with `hooks`, and with the card `effects` if given. */
-function withHooks(
-  hooks: Partial<ScenarioHooks>,
-  effects?: EngineContext['effects'],
-): EngineContext {
-  return { ...withScenario(table.context(), { hooks }), ...(effects ? { effects } : {}) };
-}
-
 const placeDoomOnGhoul: Command = { type: 'PlaceDoom', cardId: ghoul, amount: 1 };
 const advanceAct: Command = { type: 'AdvanceAct', spend: [{ investigatorId: alice, amount: 2 }] };
 
 describe('trigger bus', () => {
   it('appends the events of an afterDoomPlaced follow-up to the originating command', () => {
-    const ctx = withHooks({
-      afterDoomPlaced: () => [{ type: 'RevealLocation', locationId: cellar }],
+    const { context, state: started } = table.start();
+    const ctx = withScenario(context, {
+      hooks: {
+        afterDoomPlaced: () => [{ type: 'RevealLocation', locationId: cellar }],
+      },
     });
 
-    const { events } = execute(ctx, startedState(), placeDoomOnGhoul);
+    const { events } = execute(ctx, started, placeDoomOnGhoul);
 
     expect(events.map((event) => event.type)).toEqual([
       'TokensChanged',
@@ -95,24 +84,30 @@ describe('trigger bus', () => {
 
   it('passes the triggering event to the hook', () => {
     const seen: unknown[] = [];
-    const ctx = withHooks({
-      afterDoomPlaced: (_ctx, _state, event) => {
-        seen.push(event);
-        return [];
+    const { context, state: started } = table.start();
+    const ctx = withScenario(context, {
+      hooks: {
+        afterDoomPlaced: (_ctx, _state, event) => {
+          seen.push(event);
+          return [];
+        },
       },
     });
 
-    execute(ctx, startedState(), { type: 'PlaceDoom', cardId: ghoul, amount: 2 });
+    execute(ctx, started, { type: 'PlaceDoom', cardId: ghoul, amount: 2 });
 
     expect(seen).toEqual([{ type: 'TokensChanged', cardId: ghoul, token: 'doom', delta: 2 }]);
   });
 
   it('does not fire forced effects for a manual correction', () => {
-    const ctx = withHooks({
-      afterDoomPlaced: () => [{ type: 'RevealLocation', locationId: cellar }],
+    const { context, state: started } = table.start();
+    const ctx = withScenario(context, {
+      hooks: {
+        afterDoomPlaced: () => [{ type: 'RevealLocation', locationId: cellar }],
+      },
     });
 
-    const { events } = execute(ctx, startedState(), {
+    const { events } = execute(ctx, started, {
       type: 'ManualAdjust',
       adjustment: { kind: 'tokens', cardId: ghoul, token: 'doom', delta: 1 },
     });
@@ -122,17 +117,20 @@ describe('trigger bus', () => {
 
   it('runs the reverse side of the advancing agenda while it is still current', () => {
     const seen: unknown[] = [];
-    const ctx = withHooks({
-      onAgendaAdvance: {
-        first_agenda: (_ctx, state) => {
-          seen.push({ current: state.agenda.current, faceUp: state.cards[agenda1]?.faceUp });
-          return [{ type: 'RevealLocation', locationId: cellar }];
+    const { context, state: started } = table.start();
+    const ctx = withScenario(context, {
+      hooks: {
+        onAgendaAdvance: {
+          first_agenda: (_ctx, state) => {
+            seen.push({ current: state.agenda.current, faceUp: state.cards[agenda1]?.faceUp });
+            return [{ type: 'RevealLocation', locationId: cellar }];
+          },
+          second_agenda: () => [{ type: 'PlaceDoom', cardId: ghoul, amount: 1 }],
         },
-        second_agenda: () => [{ type: 'PlaceDoom', cardId: ghoul, amount: 1 }],
       },
     });
 
-    const { events, state } = execute(ctx, startedState(), { type: 'AdvanceAgenda' });
+    const { events, state } = execute(ctx, started, { type: 'AdvanceAgenda' });
 
     expect(seen).toEqual([{ current: agenda1, faceUp: false }]);
     expect(events.map((event) => event.type)).toEqual([
@@ -148,21 +146,27 @@ describe('trigger bus', () => {
   });
 
   it('applies a reverse-side effect on the current agenda to the advancing agenda', () => {
-    const ctx = withHooks({
-      onAgendaAdvance: { first_agenda: () => [{ type: 'PlaceDoom', amount: 1 }] },
+    const { context, state: started } = table.start();
+    const ctx = withScenario(context, {
+      hooks: {
+        onAgendaAdvance: { first_agenda: () => [{ type: 'PlaceDoom', amount: 1 }] },
+      },
     });
 
-    const { state } = execute(ctx, startedState(), { type: 'AdvanceAgenda' });
+    const { state } = execute(ctx, started, { type: 'AdvanceAgenda' });
 
     expect(state.cards[agenda1]?.tokens.doom).toBe(1);
     expect(state.cards[agenda2]?.tokens.doom).toBeUndefined();
   });
 
   it('lets the reverse side of the last agenda end the scenario with its resolution', () => {
-    const ctx = withHooks({
-      onAgendaAdvance: { second_agenda: () => [{ type: 'EndScenario', resolution: 'R2' }] },
+    const { context, state: started } = table.start();
+    const ctx = withScenario(context, {
+      hooks: {
+        onAgendaAdvance: { second_agenda: () => [{ type: 'EndScenario', resolution: 'R2' }] },
+      },
     });
-    const lastAgenda = stateAfter(ctx, startedState(), { type: 'AdvanceAgenda' });
+    const lastAgenda = stateAfter(ctx, started, { type: 'AdvanceAgenda' });
 
     const { events, state } = execute(ctx, lastAgenda, { type: 'AdvanceAgenda' });
 
@@ -176,10 +180,13 @@ describe('trigger bus', () => {
   });
 
   it('prefers the resolution of the reverse side over the fallback resolution', () => {
-    const ctx = withHooks({
-      onAgendaAdvance: { second_agenda: () => [{ type: 'EndScenario', resolution: 'R2' }] },
+    const { context, state: started } = table.start();
+    const ctx = withScenario(context, {
+      hooks: {
+        onAgendaAdvance: { second_agenda: () => [{ type: 'EndScenario', resolution: 'R2' }] },
+      },
     });
-    const lastAgenda = stateAfter(ctx, startedState(), { type: 'AdvanceAgenda' });
+    const lastAgenda = stateAfter(ctx, started, { type: 'AdvanceAgenda' });
 
     const { events, state } = execute(ctx, lastAgenda, { type: 'AdvanceAgenda', resolution: 'R1' });
 
@@ -191,16 +198,19 @@ describe('trigger bus', () => {
 
   it('runs the reverse side of the advancing act while it is still current', () => {
     const currentActs: unknown[] = [];
-    const ctx = withHooks({
-      onActAdvance: {
-        first_act: (_ctx, state) => {
-          currentActs.push(state.act.current);
-          return [{ type: 'RevealLocation', locationId: cellar }];
+    const { context, state: started } = table.start();
+    const ctx = withScenario(context, {
+      hooks: {
+        onActAdvance: {
+          first_act: (_ctx, state) => {
+            currentActs.push(state.act.current);
+            return [{ type: 'RevealLocation', locationId: cellar }];
+          },
         },
       },
     });
 
-    const { state } = execute(ctx, startedState(), advanceAct);
+    const { state } = execute(ctx, started, advanceAct);
 
     expect(currentActs).toEqual([act1]);
     expect(state.act.current).toBe(act2);
@@ -208,35 +218,33 @@ describe('trigger bus', () => {
   });
 
   it('runs the onReveal effect of a card turned face up', () => {
-    const ctx = withHooks(
-      {},
-      {
+    const { context, state: started } = table
+      .withEffects({
         cellar: {
           onReveal: (_ctx, _state, event) => [
             { type: 'PlaceDoom', cardId: event.cardId, amount: 1 },
           ],
         },
-      },
-    );
+      })
+      .start();
 
-    const { state } = execute(ctx, startedState(), { type: 'RevealLocation', locationId: cellar });
+    const { state } = execute(context, started, { type: 'RevealLocation', locationId: cellar });
 
     expect(state.cards[cellar]?.tokens.doom).toBe(1);
   });
 
   it('lets a card effect connect a revealed location to a set-aside one', () => {
-    const ctx = withHooks(
-      {},
-      {
+    const { context, state: started } = table
+      .withEffects({
         cellar: {
           onReveal: (_ctx, _state, event) => [
             { type: 'AddConnection', mapId: main, from: event.cardId, to: crypt },
           ],
         },
-      },
-    );
+      })
+      .start();
 
-    const { events, state } = execute(ctx, startedState(), {
+    const { events, state } = execute(context, started, {
       type: 'MoveInvestigator',
       investigatorId: alice,
       to: cellar,
@@ -252,36 +260,43 @@ describe('trigger bus', () => {
   });
 
   it('does not run onReveal when a card is turned face down', () => {
-    const ctx = withHooks(
-      {},
-      { first_agenda: { onReveal: () => [{ type: 'RevealLocation', locationId: cellar }] } },
-    );
+    const { context, state: started } = table
+      .withEffects({
+        first_agenda: { onReveal: () => [{ type: 'RevealLocation', locationId: cellar }] },
+      })
+      .start();
 
-    const { state } = execute(ctx, startedState(), { type: 'AdvanceAgenda' });
+    const { state } = execute(context, started, { type: 'AdvanceAgenda' });
 
     expect(state.cards[cellar]?.faceUp).toBe(false);
   });
 
   it('resolves the forced effects a follow-up triggers within the same command', () => {
-    const ctx = withHooks({
-      onActAdvance: { first_act: () => [placeDoomOnGhoul] },
-      afterDoomPlaced: () => [{ type: 'RevealLocation', locationId: cellar }],
+    const { context, state: started } = table.start();
+    const ctx = withScenario(context, {
+      hooks: {
+        onActAdvance: { first_act: () => [placeDoomOnGhoul] },
+        afterDoomPlaced: () => [{ type: 'RevealLocation', locationId: cellar }],
+      },
     });
 
-    const { state } = execute(ctx, startedState(), advanceAct);
+    const { state } = execute(ctx, started, advanceAct);
 
     expect(state.cards[ghoul]?.tokens.doom).toBe(1);
     expect(state.cards[cellar]?.faceUp).toBe(true);
   });
 
   it('runs follow-ups through the full command handling, including a doom threshold check', () => {
-    const ctx = withHooks({
-      onActAdvance: {
-        first_act: () => [{ type: 'PlaceDoom', amount: 3 }, { type: 'CheckDoomThreshold' }],
+    const { context, state: started } = table.start();
+    const ctx = withScenario(context, {
+      hooks: {
+        onActAdvance: {
+          first_act: () => [{ type: 'PlaceDoom', amount: 3 }, { type: 'CheckDoomThreshold' }],
+        },
       },
     });
 
-    const { state } = execute(ctx, startedState(), advanceAct);
+    const { state } = execute(ctx, started, advanceAct);
 
     expect(state.pending.map((decision) => decision.kind)).toEqual(['confirm']);
   });
@@ -289,13 +304,17 @@ describe('trigger bus', () => {
 
 describe('afterEnemyDefeated', () => {
   /** Advances the act (first to second) when the hall's ghoul is defeated, as "if this enemy is defeated, advance". */
-  const advanceOnGhoulDefeat = withHooks({
-    afterEnemyDefeated: (_ctx, _state, event) =>
-      event.enemyId === ghoul ? [{ type: 'AdvanceAct' }] : [],
+  const advanceOnGhoulDefeat = withScenario(table.context(), {
+    hooks: {
+      afterEnemyDefeated: (_ctx, _state, event) =>
+        event.enemyId === ghoul ? [{ type: 'AdvanceAct' }] : [],
+    },
   });
 
   it('runs the follow-up when the enemy the hook names is defeated', () => {
-    const { state } = execute(advanceOnGhoulDefeat, startedState(), {
+    const { state: started } = table.start();
+
+    const { state } = execute(advanceOnGhoulDefeat, started, {
       type: 'DefeatEnemy',
       enemyId: ghoul,
     });
@@ -304,7 +323,8 @@ describe('afterEnemyDefeated', () => {
   });
 
   it('does nothing when another enemy is defeated', () => {
-    const withDeckGhoulInHall = stateAfter(advanceOnGhoulDefeat, startedState(), {
+    const { state: started } = table.start();
+    const withDeckGhoulInHall = stateAfter(advanceOnGhoulDefeat, started, {
       type: 'SpawnEnemy',
       enemyId: deckGhoul,
       at: hall,
@@ -320,14 +340,17 @@ describe('afterEnemyDefeated', () => {
 
   it('sees the enemy where the defeat put it', () => {
     const seen: unknown[] = [];
-    const ctx = withHooks({
-      afterEnemyDefeated: (_ctx, state, event) => {
-        seen.push(state.cards[event.enemyId]?.zone);
-        return [];
+    const { context, state: started } = table.start();
+    const ctx = withScenario(context, {
+      hooks: {
+        afterEnemyDefeated: (_ctx, state, event) => {
+          seen.push(state.cards[event.enemyId]?.zone);
+          return [];
+        },
       },
     });
 
-    execute(ctx, startedState(), { type: 'DefeatEnemy', enemyId: ghoul });
+    execute(ctx, started, { type: 'DefeatEnemy', enemyId: ghoul });
 
     expect(seen).toEqual([{ kind: 'encounterDiscard' }]);
   });
@@ -335,30 +358,39 @@ describe('afterEnemyDefeated', () => {
 
 describe('trigger bus failures', () => {
   it('rejects a chain that keeps re-triggering itself', () => {
-    const ctx = withHooks({ afterDoomPlaced: () => [placeDoomOnGhoul] });
+    const { context, state: started } = table.start();
+    const ctx = withScenario(context, { hooks: { afterDoomPlaced: () => [placeDoomOnGhoul] } });
 
-    const rejection = rejectionFrom(ctx, startedState(), placeDoomOnGhoul);
+    const rejection = rejectionFrom(ctx, started, placeDoomOnGhoul);
 
     expect(rejection).toEqual({ code: 'triggerLoop', limit: MAX_TRIGGERED_COMMANDS });
   });
 
   it('allows a chain of exactly the limit', () => {
-    const ctx = withHooks({
-      afterDoomPlaced: (_ctx, state) =>
-        (state.cards[ghoul]?.tokens.doom ?? 0) <= MAX_TRIGGERED_COMMANDS ? [placeDoomOnGhoul] : [],
+    const { context, state: started } = table.start();
+    const ctx = withScenario(context, {
+      hooks: {
+        afterDoomPlaced: (_ctx, state) =>
+          (state.cards[ghoul]?.tokens.doom ?? 0) <= MAX_TRIGGERED_COMMANDS
+            ? [placeDoomOnGhoul]
+            : [],
+      },
     });
 
-    const { state } = execute(ctx, startedState(), placeDoomOnGhoul);
+    const { state } = execute(ctx, started, placeDoomOnGhoul);
 
     expect(state.cards[ghoul]?.tokens.doom).toBe(MAX_TRIGGERED_COMMANDS + 1);
   });
 
   it('rejects the originating command when a follow-up is invalid, naming its reason', () => {
-    const ctx = withHooks({
-      afterDoomPlaced: () => [{ type: 'RevealLocation', locationId: hall }],
+    const { context, state: started } = table.start();
+    const ctx = withScenario(context, {
+      hooks: {
+        afterDoomPlaced: () => [{ type: 'RevealLocation', locationId: hall }],
+      },
     });
 
-    const rejection = rejectionFrom(ctx, startedState(), placeDoomOnGhoul);
+    const rejection = rejectionFrom(ctx, started, placeDoomOnGhoul);
 
     expect(rejection).toEqual({
       code: 'triggeredCommandRejected',
@@ -368,12 +400,15 @@ describe('trigger bus failures', () => {
   });
 
   it('reports the innermost rejected follow-up of a nested chain', () => {
-    const ctx = withHooks({
-      onActAdvance: { first_act: () => [placeDoomOnGhoul] },
-      afterDoomPlaced: () => [{ type: 'RevealLocation', locationId: hall }],
+    const { context, state: started } = table.start();
+    const ctx = withScenario(context, {
+      hooks: {
+        onActAdvance: { first_act: () => [placeDoomOnGhoul] },
+        afterDoomPlaced: () => [{ type: 'RevealLocation', locationId: hall }],
+      },
     });
 
-    const rejection = rejectionFrom(ctx, startedState(), advanceAct);
+    const rejection = rejectionFrom(ctx, started, advanceAct);
 
     expect(rejection).toMatchObject({
       code: 'triggeredCommandRejected',
@@ -385,16 +420,19 @@ describe('trigger bus failures', () => {
 describe('onCardEnters', () => {
   it('fires for a card a MoveCard puts into play, but not for the same ManualAdjust move', () => {
     const entered: unknown[] = [];
-    const ctx = withHooks({
-      onCardEnters: (_ctx, _state, event) => {
-        entered.push(event.cardId);
-        return [];
+    const { context, state: started } = table.start();
+    const ctx = withScenario(context, {
+      hooks: {
+        onCardEnters: (_ctx, _state, event) => {
+          entered.push(event.cardId);
+          return [];
+        },
       },
     });
     const to = atLocation(hall);
 
-    execute(ctx, startedState(), { type: 'MoveCard', cardId: deckGhoul, to });
-    execute(ctx, startedState(), {
+    execute(ctx, started, { type: 'MoveCard', cardId: deckGhoul, to });
+    execute(ctx, started, {
       type: 'ManualAdjust',
       adjustment: { kind: 'moveCard', cardId: deckGhoul, to },
     });
@@ -404,14 +442,17 @@ describe('onCardEnters', () => {
 
   it('fires for each location an AddMap puts into play', () => {
     const entered: unknown[] = [];
-    const ctx = withHooks({
-      onCardEnters: (_ctx, _state, event) => {
-        entered.push(event.cardId);
-        return [];
+    const { context, state: started } = table.start();
+    const ctx = withScenario(context, {
+      hooks: {
+        onCardEnters: (_ctx, _state, event) => {
+          entered.push(event.cardId);
+          return [];
+        },
       },
     });
 
-    execute(ctx, startedState(), {
+    execute(ctx, started, {
       type: 'AddMap',
       mapId: mapId('vault'),
       map: { name: 'Vault' },
@@ -422,9 +463,12 @@ describe('onCardEnters', () => {
   });
 
   it('fires when a card moves from outside play onto the board', () => {
-    const ctx = withHooks({ onCardEnters: () => [{ type: 'RevealLocation', locationId: cellar }] });
+    const { context, state: started } = table.start();
+    const ctx = withScenario(context, {
+      hooks: { onCardEnters: () => [{ type: 'RevealLocation', locationId: cellar }] },
+    });
 
-    const commands = triggeredCommands(ctx, startedState(), [
+    const commands = triggeredCommands(ctx, started, [
       {
         type: 'CardMoved',
         cardId: deckGhoul,
@@ -437,9 +481,12 @@ describe('onCardEnters', () => {
   });
 
   it('does not fire when a card moves within play', () => {
-    const ctx = withHooks({ onCardEnters: () => [{ type: 'RevealLocation', locationId: cellar }] });
+    const { context, state: started } = table.start();
+    const ctx = withScenario(context, {
+      hooks: { onCardEnters: () => [{ type: 'RevealLocation', locationId: cellar }] },
+    });
 
-    const commands = triggeredCommands(ctx, startedState(), [
+    const commands = triggeredCommands(ctx, started, [
       {
         type: 'CardMoved',
         cardId: ghoul,
@@ -465,11 +512,13 @@ interface Program {
 }
 
 function programContext({ chainLength, fanOut, invalidAt }: Program): EngineContext {
-  return withHooks({
-    afterDoomPlaced: (_ctx, state) => {
-      const doom = state.cards[ghoul]?.tokens.doom ?? 0;
-      if (doom === invalidAt) return [{ type: 'RevealLocation', locationId: hall }];
-      return doom < chainLength ? Array.from({ length: fanOut }, () => placeDoomOnGhoul) : [];
+  return withScenario(table.context(), {
+    hooks: {
+      afterDoomPlaced: (_ctx, state) => {
+        const doom = state.cards[ghoul]?.tokens.doom ?? 0;
+        if (doom === invalidAt) return [{ type: 'RevealLocation', locationId: hall }];
+        return doom < chainLength ? Array.from({ length: fanOut }, () => placeDoomOnGhoul) : [];
+      },
     },
   });
 }
@@ -490,7 +539,9 @@ describe('trigger bus loop guard', () => {
       doom: 3,
     },
   ])('finishes $name within the guard', ({ program, doom }) => {
-    const { state } = execute(programContext(program), startedState(), placeDoomOnGhoul);
+    const { state: started } = table.start();
+
+    const { state } = execute(programContext(program), started, placeDoomOnGhoul);
 
     expect(state.cards[ghoul]?.tokens.doom).toBe(doom);
     expect(checkInvariants(state)).toEqual([]);
@@ -513,7 +564,7 @@ describe('trigger bus loop guard', () => {
       code: 'triggeredCommandRejected',
     },
   ])('rejects $name and leaves the state unchanged', ({ program, code }) => {
-    const state = startedState();
+    const { state } = table.start();
     const snapshot = structuredClone(state);
 
     const rejection = rejectionFrom(programContext(program), state, placeDoomOnGhoul);

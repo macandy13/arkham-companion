@@ -67,7 +67,7 @@ Follow-ups: the held command has one slot (`GameMeta.heldAction`). A surge card 
 5. [x] Migrate `encounter`; add `withEffects` and the encounter pile zone constants (#111).
 6. [x] Builder seed, difficulty, shuffle and maps; migrate `phases` (#112), then `doom`, `undo`, `skill_modifiers`, `format_board` (#113).
 7. [x] Move `setup`, `cards`, `engine`, `replay` onto blank cards and the builder; remove `startBoard`, `makeCard`, `contextWith`, `makeInvestigator`, `testCardDefs`, `testContext` and the `L*`/`E*` codes; point `docs/coding-guidelines.md` §3 at the builder only.
-8. [ ] Sweep the remaining file-local setup helpers (e.g. in `enemies`, `triggers`, `decisions`) onto the builder chain, using `withEffects` where tests spread `effects` into the context.
+8. [x] Sweep the remaining file-local setup helpers (`forced_attacks`, `skill_tests`, `triggers`, `attacks_of_opportunity`, `turns`) onto the builder chain, using `withEffects` for card scripts.
 
 The slices are stacked PRs. Slices 4–6 edit test files the resolution queue (M1V.1 slice 3) also changes; whichever merges second merges the other in. Tests of setup compilation (`setup`, The Gathering) keep `startScenario`, since they test the real setup.
 
