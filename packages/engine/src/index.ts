@@ -8,6 +8,8 @@ export * from './map';
 export * from './spawn';
 export type * from './scenario';
 export * from './cards';
+export * from './blank_cards';
+export * from './game_builder';
 export * from './investigator_cards';
 export * from './keywords';
 export * from './commands';

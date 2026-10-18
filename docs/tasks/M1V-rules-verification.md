@@ -51,3 +51,18 @@ Follow-ups: the held command has one slot (`GameMeta.heldAction`). A surge card 
 
 - [ ] Collect interaction cases from `docs/rules.md` and past review comments (e.g. a defeated investigator during their own turn, an empty encounter deck during a surge, an agenda advancing during the enemy phase)
 - [ ] One table test per case, written so the reader sees the table situation in the test body
+
+## M1V.3 Test table builder (S)
+
+**Why:** almost every engine test starts from a board, and each file grew its own `startedWith`/`placed`/`at` helpers around `startBoard` and a module-level card table, so a reader has to learn a new setup vocabulary per file before the edge-case tests of M1V.2 can be read.
+
+**Benefit:** one way to build a table, with each card's stats next to where it is placed; the same builder can set up a sandbox board or a scenario under construction outside tests.
+
+**Slices**
+
+1. [ ] `newGame()` builder and blank cards (`blankLocation`, `blankEnemy`, …), zone constructors, `forced_attacks.test.ts` as the first migrated file.
+2. [ ] Migrate the board and enemy tests: `skill_tests`, `enemies`, `hunters`, `board`, `investigators`, `elimination`, `turns`.
+3. [ ] Migrate the rest once the resolution queue (M1V.1 slice 3) has merged, since it edits them: `decisions`, `triggers`, `encounter`, `attacks_of_opportunity`, `phases`, `doom`, `undo`, `skill_modifiers`, `format_board`.
+4. [ ] Remove what is left unused of `startBoard`, `makeCard`, `testCardDefs` and the `L*`/`E*` codes, and point `docs/coding-guidelines.md` §3 at the builder only.
+
+Each migration slice keeps the tests' assertions as they are; the builder adds `with*` methods (seed, difficulty, scenario, hidden maps) as the first test needs them.

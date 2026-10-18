@@ -57,3 +57,23 @@ export function zoneKey(zone: Zone): ZoneKey {
 export function sameZone(a: Zone, b: Zone): boolean {
   return zoneKey(a) === zoneKey(b);
 }
+
+/** The zone of an unengaged card at a location, e.g. an enemy that spawned there. */
+export function atLocation(locationId: InstanceId): Zone {
+  return { kind: 'atLocation', locationId };
+}
+
+/** The zone of an enemy engaged with an investigator. */
+export function engagedWith(investigatorId: InvestigatorId): Zone {
+  return { kind: 'engaged', investigatorId };
+}
+
+/** The zone of a non-enemy card in an investigator's threat area. */
+export function threatAreaOf(investigatorId: InvestigatorId): Zone {
+  return { kind: 'threatArea', investigatorId };
+}
+
+/** The zone of a card attached to another card (a location, an enemy, an agenda, …). */
+export function attachedTo(hostId: InstanceId): Zone {
+  return { kind: 'attachedTo', hostId };
+}
