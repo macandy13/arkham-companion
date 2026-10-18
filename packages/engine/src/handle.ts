@@ -1,5 +1,5 @@
 import type { EngineContext } from './cards';
-import { commandSpec, type CommandSpec, type Step } from './command_specs';
+import { commandSpec, type CommandSpec, type Continuation, type Step } from './command_specs';
 import type { Command, DrawEncounter } from './commands';
 import { attackOfOpportunityDecisions, isOwnTurnAction } from './attacks_of_opportunity';
 import { answerCommands } from './decisions';
@@ -297,13 +297,8 @@ function followUp(command: Command): Step {
 }
 
 /** Continuation steps of a follow-up belong to it, so a rejection names it. */
-function withOrigin(steps: readonly Step[], origin: Command['type'] | undefined): Step[] {
-  if (origin === undefined) return [...steps];
-  return steps.map((step) =>
-    step.kind === 'phaseStep' || step.kind === 'action' || step.kind === 'command'
-      ? step
-      : { ...step, origin },
-  );
+function withOrigin(steps: readonly Continuation[], origin: Command['type'] | undefined): Step[] {
+  return origin === undefined ? [...steps] : steps.map((step) => ({ ...step, origin }));
 }
 
 /**
@@ -333,8 +328,8 @@ function resolvePhaseStep(resolution: Resolution, budget: TriggerBudget): Step[]
  * (`TriggerBudget.encounterCards`). Counted when the surge is queued, so a
  * surge stored for an answer keeps the count of the call that drew its card.
  */
-function withinSurgeLimit(steps: readonly Step[], budget: TriggerBudget): Step[] {
-  const allowed: Step[] = [];
+function withinSurgeLimit(steps: readonly Continuation[], budget: TriggerBudget): Continuation[] {
+  const allowed: Continuation[] = [];
   for (const step of steps) {
     // The first draw counts too.
     if (step.kind === 'surge' && budget.surges + 1 >= (budget.encounterCards ?? 0)) continue;

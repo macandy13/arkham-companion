@@ -1,5 +1,5 @@
 import type { EngineContext } from './cards';
-import type { AdvanceAct, AdvanceAgenda, Command } from './commands';
+import type { AdvanceAct, AdvanceAgenda, Command, CommandType } from './commands';
 import { handleDealEnemyAttack } from './attacks_of_opportunity';
 import { handleRequestDecision, handleResolveDecision } from './decisions';
 import { agendaThresholdDecision } from './doom';
@@ -94,7 +94,7 @@ export interface CommandSpec<C extends Command> {
    * those effects, and stores them while one of the effects asks the players
    * something.
    */
-  continueWith?(command: C, own: readonly Event[]): Step[];
+  continueWith?(command: C, own: readonly Event[]): Continuation[];
 }
 
 /**
@@ -102,13 +102,16 @@ export interface CommandSpec<C extends Command> {
  * outstanding phase steps after `NextPhase`. A phase step is never stored:
  * once one waits for the players, they go on with the next "Next".
  */
-export type Step = QueuedStep | { kind: 'phaseStep' };
+export type Step = QueuedStep | { kind: 'phaseStep'; origin?: CommandType };
+
+/** The steps a command's spec continues with (`CommandSpec.continueWith`). */
+export type Continuation = Exclude<Step, { kind: 'command' | 'action' }>;
 
 /**
  * `AdvanceAgenda`/`AdvanceAct`, continued: the advanced card is replaced
  * once its reverse side has resolved (`completeAdvance`).
  */
-function finishAdvance(command: AdvanceAgenda | AdvanceAct, own: readonly Event[]): Step[] {
+function finishAdvance(command: AdvanceAgenda | AdvanceAct, own: readonly Event[]): Continuation[] {
   const advanced = own.find(
     (event) => event.type === 'AgendaAdvanced' || event.type === 'ActAdvanced',
   );
