@@ -11,6 +11,7 @@ import {
   type Event,
   type GameState,
   type Rejection,
+  type ScenarioContext,
   type ScenarioDefinition,
   type SetupOptions,
   type Zone,
@@ -45,10 +46,9 @@ export interface StartOptions {
   difficulty?: Difficulty;
 }
 
-/** The state after compiling and starting `def` with the first `playerCount` standard investigators. */
+/** The state after compiling and starting `ctx.scenario` with the first `playerCount` standard investigators. */
 export function startScenario(
-  ctx: EngineContext,
-  def: ScenarioDefinition,
+  ctx: ScenarioContext,
   { playerCount = 1, seed = 1, difficulty = 'standard' }: StartOptions = {},
 ): GameState {
   const options = makeSetupOptions({
@@ -56,7 +56,7 @@ export function startScenario(
     seed,
     investigators: investigatorSeats(playerCount),
   });
-  return execute(ctx, emptyState(), scenario.compileSetup(ctx, def, options)).state;
+  return execute(ctx, emptyState(), scenario.compileSetup(ctx, options)).state;
 }
 
 /** Executes commands from `state`, returning the final state and all events. */
@@ -121,6 +121,6 @@ export function rejectionOf(fn: () => unknown): Rejection {
 export function withScenario(
   ctx: EngineContext,
   overrides: Partial<ScenarioDefinition>,
-): EngineContext {
+): ScenarioContext {
   return { ...ctx, scenario: makeDefinition(overrides) };
 }

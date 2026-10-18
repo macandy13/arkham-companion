@@ -5,6 +5,7 @@ import {
   type CardStats,
   type CardType,
   type EngineContext,
+  type ScenarioContext,
   type ScaledValue,
 } from './cards';
 import type { Command, StartScenario, StartingCard, StartingInvestigator } from './commands';
@@ -165,17 +166,14 @@ interface SetupEnv {
 const ENCOUNTER_DECK_TYPES: ReadonlySet<CardType> = new Set<CardType>(['enemy', 'treachery']);
 
 /**
- * Compiles a scenario definition into the `StartScenario` command that sets it
- * up. Pure: card data comes from `ctx`, and shuffling the encounter deck is
+ * Compiles the scenario definition in `ctx.scenario` into the `StartScenario`
+ * command that sets it up. Pure: card data comes from `ctx`, and shuffling the encounter deck is
  * left to `handle` (seeded by `options.seed`), so the same inputs always
  * produce the same command. Throws `CommandRejected` for scenario data errors.
  * Locations that start revealed get their clues, as revealing would place them.
  */
-export function compileSetup(
-  ctx: EngineContext,
-  def: ScenarioDefinition,
-  options: SetupOptions,
-): StartScenario {
+export function compileSetup(ctx: ScenarioContext, options: SetupOptions): StartScenario {
+  const def = ctx.scenario;
   const env: SetupEnv = {
     ctx,
     playerCount: options.investigators.length,

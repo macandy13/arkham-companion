@@ -277,7 +277,7 @@ The generic rules are small modules, one per subject, called by the handlers. Qu
 A scenario is mostly data, a [`ScenarioDefinition`](../packages/engine/src/scenario.ts): agenda and act decks, chaos bag per difficulty, reference card, setup steps, and hooks for the few rules that need code. Data is easy to check, review and later generate from imports. [`compileSetup`](../packages/engine/src/setup.ts) turns the definition plus the players' choices into one `StartScenario` command, resolving per-investigator values and building the encounter deck. The players' choices name each seat by an `InvestigatorSeat` (the game's `InvestigatorId` and the card's `InvestigatorCode`), and `compileSetup` fills in name, health, sanity and skills from the investigator cards in the context's `CardDb`, so the setup cannot disagree with the card. `StartScenario` itself still carries complete investigators, so its event replays without the context and tests can start from any board. Mid-scenario board changes reuse the same steps: `compileMapStep` turns an `addMap` step into an `AddMap` command. Callers reach the scenario functions through the `scenario` namespace export (`scenario.compileSetup`, `scenario.compileMapStep`, `scenario.pickReferenceSide`), like the campaign ones; the scenario types are exported flat. The game's own functions (`execute`, `replay`, `handle`) stay flat.
 
 ```ts
-function compileSetup(ctx: EngineContext, def: ScenarioDefinition, options: SetupOptions): StartScenario;
+function compileSetup(ctx: ScenarioContext, options: SetupOptions): StartScenario;  // sets up ctx.scenario
 function compileMapStep(state: GameState, step: AddMapStep): Command[];
 ```
 

@@ -28,12 +28,12 @@
  * What a failed revelation costs is card text, so the script applies it by hand.
  */
 import { describe, expect, it } from 'vitest';
-import { cardDbWith, investigatorId, replay, type EngineContext } from '@arkham/engine';
+import { cardDbWith, investigatorId, replay, type ScenarioContext } from '@arkham/engine';
 import { BURN_THE_HOUSE_DECISION, theGathering, theGatheringCards } from '../index';
 import { daisyWalker, rolandBanks, wendyAdams, zealotInvestigatorCards } from '../investigators';
 import { TestTable } from './test_table';
 
-const ctx: EngineContext = {
+const ctx: ScenarioContext = {
   cards: cardDbWith(theGatheringCards, zealotInvestigatorCards),
   scenario: theGathering,
 };
@@ -56,7 +56,6 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
   it('plays from setup to resolution 1: act 1 opens the house, enemies spawn, hunt, attack and are defeated, Wendy resigns, the ghouls rise, act 2 brings the Ghoul Priest and its defeat lets the group burn the house', () => {
     // Setup
     const table = TestTable.setUp({
-      scenario: theGathering,
       ctx,
       investigators: zealotSeats,
       seed: 24,
@@ -987,7 +986,7 @@ describe('The Gathering with one to three investigators, seed 24', () => {
   /** Round 1 with every investigator investigating once, then on to the mythos phase of round 2. */
   function playOneRound(count: number): TestTable {
     const investigators = zealotSeats.slice(0, count);
-    const table = TestTable.setUp({ scenario: theGathering, ctx, investigators, seed: 24 });
+    const table = TestTable.setUp({ ctx, investigators, seed: 24 });
     expect(table.nextPhase()).toEqual({ round: 1, phase: 'investigation' });
     for (const { id } of investigators) {
       table.startTurn(id);
