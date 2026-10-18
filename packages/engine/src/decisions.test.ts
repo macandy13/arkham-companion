@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
-  apply,
   cardCode,
   checkInvariants,
   decisionId,
@@ -26,6 +25,7 @@ import {
   rejectionFrom,
   startBoard,
   stateAfter,
+  withPendingDecisions,
   withScenario,
 } from '../test/utils';
 
@@ -487,10 +487,10 @@ describe('decisions raised by hooks', () => {
       decider: { kind: 'lead' },
       options: [{ id: 'yes', label: 'decision.yes', commands: [placeDoomOnHall] }],
     };
-    // Both pending at once, as two attacks of opportunity are; built from events because no command asks two.
-    const bothAsked = [offerResourceDecision, placeDoomFirst].reduce(
-      (state, decision) => apply(state, { type: 'DecisionRequested', decision }),
+    const bothAsked = withPendingDecisions(
       started([alicePlacedAt(hall)]),
+      offerResourceDecision,
+      placeDoomFirst,
     );
 
     const rejection = rejectionFrom(hooked, bothAsked, resolveDecision('place_doom_first', 'yes'));

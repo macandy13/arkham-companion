@@ -60,12 +60,16 @@ export function handle(ctx: EngineContext, state: GameState, command: Command): 
   if (action && attacks.length > 0) {
     // An illegal action must be rejected before it provokes anything; this
     // dry run gets a resolution of its own that is dropped, the action
-    // resolves after the attacks.
-    run({ ctx, state, events: [] }, [{ kind: 'command', command }], newBudget(), false);
+    // resolves after the attacks. It stops at the first decision the action's
+    // chain asks, like the real run: what follows the answer is checked when
+    // it resolves, and dropped then if it has become illegal.
+    run({ ctx, state, events: [] }, [{ kind: 'command', command }], newBudget(), {
+      resumesStored: false,
+    });
     return [...attacks, { type: 'StepsQueued', steps: [{ kind: 'action', command: action }] }];
   }
   const resolution: Resolution = { ctx, state, events: [] };
-  run(resolution, [{ kind: 'command', command }], newBudget(), true);
+  run(resolution, [{ kind: 'command', command }], newBudget(), { resumesStored: true });
   return resolution.events;
 }
 
@@ -135,6 +139,12 @@ function newBudget(): TriggerBudget {
   return { remaining: MAX_TRIGGERED_COMMANDS, surges: 0 };
 }
 
+/** Gives the chain a fresh budget from here on (`newBudget`), for steps that share its object. */
+function resetBudget(budget: TriggerBudget): void {
+  delete budget.encounterCards;
+  Object.assign(budget, newBudget());
+}
+
 /**
  * Resolves `steps` in order, each step's own steps in front of the rest,
  * until none is left or one raised a decision; then the rest is stored
@@ -147,7 +157,7 @@ function run(
   resolution: Resolution,
   steps: readonly Step[],
   budget: TriggerBudget,
-  resumesStored: boolean,
+  { resumesStored }: { resumesStored: boolean },
 ): void {
   const queue = [...steps];
   const pendingBefore = new Set(resolution.state.pending.map((decision) => decision.id));
@@ -247,6 +257,11 @@ function resolveQueuedStep(
  * `command`'s own events, then the steps that follow them: the follow-ups
  * their forced effects trigger, then the chosen option's commands if it is
  * an answer, then whatever continues it (`CommandSpec.continueWith`).
+ * Triggers on an answer's events coming first is right for a skill test
+ * (`SkillTestResolved`: "after you fail" is ST.6, the results ST.7). For a
+ * plain choice the chosen option is part of the effect, so an "after" hook
+ * on `DecisionResolved` would have to wait for it; no hook reads either
+ * event yet, and the timing windows (P1) decide where each one fires.
  */
 function resolveCommand(
   resolution: Resolution,
@@ -259,9 +274,7 @@ function resolveCommand(
   const own = spec.handle(resolution.ctx, before, command);
   if (surgeDraw(own)) budget.encounterCards ??= encounterCardCount(before);
   const continuation = withOrigin(
-    (spec.continueWith?.(command, own) ?? []).filter(
-      (step) => step.kind !== 'surge' || admitsSurge(budget),
-    ),
+    withinSurgeLimit(spec.continueWith?.(command, own) ?? [], budget),
     origin,
   );
   if (spec.firesNoTriggers) {
@@ -304,9 +317,7 @@ function withOrigin(steps: readonly Step[], origin: Command['type'] | undefined)
 function resolvePhaseStep(resolution: Resolution, budget: TriggerBudget): Step[] {
   const plan = nextStepPlan(resolution.ctx, resolution.state);
   if (!plan) return [];
-  budget.remaining = MAX_TRIGGERED_COMMANDS;
-  budget.surges = 0;
-  delete budget.encounterCards;
+  resetBudget(budget);
   const before = resolution.state;
   emit(resolution, plan.events);
   return [
@@ -317,16 +328,20 @@ function resolvePhaseStep(resolution: Resolution, budget: TriggerBudget): Step[]
 }
 
 /**
- * Whether the chain may make one more surge draw, counting it if so: no more
- * than the cards the deck and discard held (`TriggerBudget.encounterCards`).
- * Counted when the surge is queued, so a surge stored for an answer keeps
- * the count of the call that drew its card.
+ * `steps` without a surge the chain may not make any more, counting each one
+ * it may: no more surge draws than the cards the deck and discard held
+ * (`TriggerBudget.encounterCards`). Counted when the surge is queued, so a
+ * surge stored for an answer keeps the count of the call that drew its card.
  */
-function admitsSurge(budget: TriggerBudget): boolean {
-  // The first draw counts too.
-  if (budget.surges + 1 >= (budget.encounterCards ?? 0)) return false;
-  budget.surges += 1;
-  return true;
+function withinSurgeLimit(steps: readonly Step[], budget: TriggerBudget): Step[] {
+  const allowed: Step[] = [];
+  for (const step of steps) {
+    // The first draw counts too.
+    if (step.kind === 'surge' && budget.surges + 1 >= (budget.encounterCards ?? 0)) continue;
+    if (step.kind === 'surge') budget.surges += 1;
+    allowed.push(step);
+  }
+  return allowed;
 }
 
 /**
@@ -362,7 +377,7 @@ function resumeHeldAction(resolution: Resolution, held: HeldAction, budget: Trig
   const restore = checkpoint(resolution);
   try {
     emit(resolution, [{ type: 'StepResumed' }]);
-    run(resolution, [{ kind: 'command', command: held }], budget, false);
+    run(resolution, [{ kind: 'command', command: held }], budget, { resumesStored: false });
   } catch (error) {
     if (!(error instanceof CommandRejected)) throw error;
     restore();

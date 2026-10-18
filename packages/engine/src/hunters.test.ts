@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  apply,
   cardCode,
   checkInvariants,
   decisionId,
@@ -24,6 +23,7 @@ import {
   rejectionFrom,
   startBoard,
   stateAfter,
+  withPendingDecisions,
 } from '../test/utils';
 
 const alice = investigatorId('alice');
@@ -404,11 +404,7 @@ describe('MoveHunters order', () => {
       decider: { kind: 'group' },
       options: [{ id: 'yes', label: 'Yes', commands: [moveHunters] }],
     };
-    // Both pending at once, as two attacks of opportunity are; built from events because no command asks two.
-    const asked = [aboutWaiting, startHunting].reduce(
-      (built, decision) => apply(built, { type: 'DecisionRequested', decision }),
-      state,
-    );
+    const asked = withPendingDecisions(state, aboutWaiting, startHunting);
 
     const after = stateAfter(ctx, asked, {
       type: 'ResolveDecision',

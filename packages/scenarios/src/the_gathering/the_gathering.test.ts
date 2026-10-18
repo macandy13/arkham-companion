@@ -367,7 +367,7 @@ describe('The Gathering acts 2 and 3', () => {
    * Two investigators; act 1 (house into play, everyone to the Hallway) and act 2 advance without paying.
    * Act 2 stays current until its reverse side has resolved, the Ghoul Priest's prey question included.
    */
-  function atAct3(): GameState {
+  function act2WaitingForPrey(): GameState {
     return stateAfter(
       ctx,
       startScenario(ctx, { playerCount: 2 }),
@@ -387,7 +387,7 @@ describe('The Gathering acts 2 and 3', () => {
   }
 
   it('reveals the Parlor, puts Lita Chantler there and spawns the Ghoul Priest in the Hallway', () => {
-    const state = atAct3();
+    const state = act2WaitingForPrey();
 
     expect(state.cards[parlor]?.faceUp).toBe(true);
     expect(state.cards[lita]?.zone).toEqual({ kind: 'atLocation', locationId: parlor });
@@ -402,7 +402,7 @@ describe('The Gathering acts 2 and 3', () => {
   });
 
   it('advances act 3 when the Ghoul Priest is defeated and asks the lead whether to burn the house', () => {
-    const asked = stateAfter(ctx, priestEngages(atAct3(), tank), {
+    const asked = stateAfter(ctx, priestEngages(act2WaitingForPrey(), tank), {
       type: 'DefeatEnemy',
       enemyId: priest,
     });
@@ -422,7 +422,7 @@ describe('The Gathering acts 2 and 3', () => {
     ['burn', 'R1'],
     ['spare', 'R2'],
   ])('ends the scenario with the lead choosing to %s the house (%s)', (optionId, resolution) => {
-    const asked = stateAfter(ctx, priestEngages(atAct3(), tank), {
+    const asked = stateAfter(ctx, priestEngages(act2WaitingForPrey(), tank), {
       type: 'DefeatEnemy',
       enemyId: priest,
     });
@@ -439,7 +439,7 @@ describe('The Gathering acts 2 and 3', () => {
 
   it('does not advance act 3 when another enemy is defeated', () => {
     // In the empty Attic, so it engages nobody.
-    const withFleshEater = stateAfter(ctx, priestEngages(atAct3(), tank), {
+    const withFleshEater = stateAfter(ctx, priestEngages(act2WaitingForPrey(), tank), {
       type: 'SpawnEnemy',
       enemyId: fleshEater,
       at: attic,
