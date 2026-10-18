@@ -9,6 +9,7 @@ import {
   blankLocation,
   blankTreachery,
   boardView,
+  decisionId,
   engagedWith,
   fixed,
   instanceId,
@@ -128,7 +129,7 @@ describe('investigators', () => {
 
     expect(board.investigator(alice).id).toBe(alice);
     expect(() => board.investigator(bob)).toThrow(TableError);
-    expect(() => board.investigator(bob)).toThrow(/no investigator bob\nRound 0, setup phase/);
+    expect(() => board.investigator(bob)).toThrow(/^no investigator bob\n/);
   });
 });
 
@@ -181,6 +182,18 @@ describe('locations', () => {
     expect(names).toEqual(['study', 'hallway', 'attic']);
   });
 
+  it('turns revealed true once RevealLocation flips the location', () => {
+    const { context, state } = house.start();
+
+    const board = boardView(
+      context,
+      stateAfter(context, state, { type: 'RevealLocation', locationId: hallway }),
+    );
+
+    expect(board.location('hallway').revealed).toBe(true);
+    expect(boardView(context, state).location('hallway').revealed).toBe(false);
+  });
+
   it('finds a location by name or by id', () => {
     const { context, state } = house.start();
     const board = boardView(context, state);
@@ -197,7 +210,7 @@ describe('locations', () => {
       .start();
     const board = boardView(context, state);
 
-    expect(() => board.location('cellar')).toThrow(/no location cellar in play\nRound 0/);
+    expect(() => board.location('cellar')).toThrow(/^no location cellar in play\n/);
     expect(() => board.location('garden')).toThrow(TableError);
   });
 
@@ -209,8 +222,9 @@ describe('locations', () => {
       .start();
     const board = boardView(context, state);
 
+    expect(() => board.location('cellar')).toThrow(TableError);
     expect(() => board.location('cellar')).toThrow(
-      /2 locations are named cellar; use one of cellar_east, cellar_west\nRound 0/,
+      /^2 locations are named cellar; use one of cellar_east, cellar_west\n/,
     );
     expect(board.location(instanceId('cellar_west')).id).toBe('cellar_west');
   });
@@ -290,9 +304,9 @@ describe('enemies', () => {
       const board = boardView(context, state);
 
       expect(() => board.enemy('rat')).toThrow(
-        /3 enemies match "rat" \(rat_on_alice, rat_on_bob, rat_in_hallway\); narrow it with \{ name, engagedWith \} or \{ name, at \}.*\nRound 0/,
+        /^3 enemies match "rat" \(rat_on_alice, rat_on_bob, rat_in_hallway\); narrow it with \{ name, engagedWith \} or \{ name, at \}[^\n]*\n/,
       );
-      expect(() => board.enemy({ name: 'rat', at: 'study' })).toThrow(/2 enemies match/);
+      expect(() => board.enemy({ name: 'rat', at: 'study' })).toThrow(/^2 enemies match/);
     });
 
     it.each([
@@ -302,9 +316,8 @@ describe('enemies', () => {
     ])('fails with the board when $selector matches nothing', ({ selector, message }) => {
       const { context, state } = rats.start();
 
-      expect(() => boardView(context, state).enemy(selector)).toThrow(
-        new RegExp(`${message}[^]*Round 0`),
-      );
+      expect(() => boardView(context, state).enemy(selector)).toThrow(TableError);
+      expect(() => boardView(context, state).enemy(selector)).toThrow(new RegExp(`^${message}`));
     });
 
     it('fails when the location of the selector is not in play', () => {
@@ -406,6 +419,47 @@ describe('decisions and attacks', () => {
     expect(enemyPhase).toMatchObject({ phase: 'enemy', step: 'enemiesAttack' });
     expect(enemyPhase.attacksDue).toEqual([{ enemy: 'ghoul', investigator: alice }]);
     expect(boardView(context, afterTurn).attacksDue).toEqual([]);
+  });
+});
+
+describe('a decision with one adjustable amount', () => {
+  it('reads the default of the option amount', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withInvestigator(alice, { locationId: study })
+      .start();
+    const asked = stateAfter(context, state, {
+      type: 'RequestDecision',
+      decision: {
+        id: decisionId('discover_clues'),
+        kind: 'confirm',
+        prompt: 'decision.confirm',
+        decider: { kind: 'lead' },
+        options: [
+          {
+            id: 'discover',
+            label: 'discover',
+            commands: [],
+            amount: { default: 2, min: 0, max: 3 },
+          },
+        ],
+      },
+    });
+
+    expect(boardView(context, asked).decisions[0]?.defaults).toEqual({ discover: { amount: 2 } });
+  });
+});
+
+describe('TableError', () => {
+  it('ends its message with the board', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withInvestigator(alice, { locationId: study })
+      .start();
+
+    expect(() => boardView(context, state).investigator(bob)).toThrow(
+      /^no investigator bob\nRound 0, setup phase/,
+    );
   });
 });
 

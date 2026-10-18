@@ -1,3 +1,4 @@
+import { listIfAny } from '@arkham/util';
 import { locationsNamed } from './board';
 import { cardStats, resolveValue, type EngineContext } from './cards';
 import { optionName } from './describe_decision';
@@ -273,11 +274,6 @@ function nameOfId(
   id: InstanceId | undefined,
 ): string | undefined {
   return id === undefined ? undefined : nameOf(ctx, requireCard(state, id));
-}
-
-/** `{ key: value }` when the list has entries, else nothing, so empty lists stay out of a view. */
-function listIfAny<K extends string, T>(key: K, list: readonly T[]): { [P in K]?: T[] } {
-  return list.length > 0 ? ({ [key]: [...list] } as { [P in K]: T[] }) : {};
 }
 
 function investigatorView(
