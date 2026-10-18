@@ -95,10 +95,10 @@ const EMPTY_SPEC: GameSpec = {
 };
 
 /**
- * Describes a game table piece by piece (locations, connections,
- * investigators, cards in their zones) and starts it as a scenario, so a
- * test, a sandbox board or a scenario under construction spells out only
- * what it is about. Each card is passed with its definition, typically a
+ * Describes a game table piece by piece (locations, maps and connections,
+ * investigators, cards in their zones, and difficulty, seed and shuffle) and
+ * starts it as a scenario, so a test, a sandbox board or a scenario under
+ * construction spells out only what it is about. Each card is passed with its definition, typically a
  * `blank*` card with the stats that matter, and the builder collects the
  * definitions into the context, so the stats stay next to where the card is
  * placed.
@@ -111,7 +111,8 @@ const EMPTY_SPEC: GameSpec = {
  * pieces given are there: no agenda, act or chaos tokens unless added, and
  * none of setup's rules beyond placing a revealed location's clues (an
  * investigator does not reveal the location they start at, and the
- * encounter deck keeps the order its cards were added in, top first).
+ * encounter deck keeps the order its cards were added in, top first, unless
+ * `withShuffledEncounterDeck`).
  */
 export class GameBuilder {
   private constructor(private readonly spec: GameSpec) {}
