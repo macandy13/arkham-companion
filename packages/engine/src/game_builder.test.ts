@@ -253,7 +253,7 @@ describe('newGame', () => {
     expect(context.effects).toBe(burningScripts);
   });
 
-  it("starts in round 1's investigation phase with the turn of withTurnOf begun", () => {
+  it("starts in round 1's investigation phase with bob's turn begun for withTurnOf(bob)", () => {
     const { state } = newGame()
       .withLocation(study, studyCard, { revealed: true })
       .withInvestigator(alice, { locationId: study })
