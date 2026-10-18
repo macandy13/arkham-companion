@@ -336,6 +336,17 @@ describe('ManualAdjust', () => {
     expect(back.cards[loc]?.tokens).toEqual({});
   });
 
+  it.each([0, 1.5])('rejects a token delta of %s', (delta) => {
+    expect(
+      rejectionOf(() =>
+        handle(testContext, run([start]).state, {
+          type: 'ManualAdjust',
+          adjustment: { kind: 'tokens', cardId: loc, token: 'clue', delta },
+        }),
+      ),
+    ).toMatchObject({ code: 'invalidTokenDelta', delta });
+  });
+
   it('rejects unknown cards', () => {
     expect(
       rejectionOf(() =>
