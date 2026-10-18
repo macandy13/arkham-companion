@@ -32,6 +32,8 @@ import {
 } from '../test/utils';
 
 const main = mapId('main');
+/** A card db with only the standard investigators, whom `makeSetupOptions` seats. */
+const investigatorCards = cardDbFrom(standardInvestigatorCards);
 
 /** A map step for `main` with the given locations (unrevealed) and no connections. */
 function mainMap(...codes: string[]): AddMapStep {
@@ -51,7 +53,7 @@ describe('compileSetup', () => {
     });
 
     const command = scenario.compileSetup(
-      { cards: cardDbFrom(standardInvestigatorCards), scenario: def },
+      { cards: investigatorCards, scenario: def },
       makeSetupOptions({ difficulty: 'hard', seed: 42 }),
     );
 
@@ -71,7 +73,7 @@ describe('compileSetup', () => {
     });
 
     const command = scenario.compileSetup(
-      { cards: cardDbFrom(standardInvestigatorCards), scenario: def },
+      { cards: investigatorCards, scenario: def },
       makeSetupOptions(),
     );
 
@@ -88,7 +90,7 @@ describe('compileSetup', () => {
     });
 
     const command = scenario.compileSetup(
-      { cards: cardDbFrom(standardInvestigatorCards), scenario: def },
+      { cards: investigatorCards, scenario: def },
       makeSetupOptions(),
     );
 
@@ -105,7 +107,7 @@ describe('compileSetup', () => {
     });
 
     const command = scenario.compileSetup(
-      { cards: cardDbFrom(standardInvestigatorCards), scenario: def },
+      { cards: investigatorCards, scenario: def },
       makeSetupOptions(),
     );
 
@@ -173,7 +175,7 @@ describe('compileSetup', () => {
 
     const rejection = rejectionOf(() =>
       scenario.compileSetup(
-        { cards: cardDbFrom(standardInvestigatorCards), scenario: makeDefinition() },
+        { cards: investigatorCards, scenario: makeDefinition() },
         makeSetupOptions({ investigators: seats }),
       ),
     );
@@ -203,7 +205,7 @@ describe('compileSetup', () => {
 
   it('leaves investigators unplaced without a moveInvestigators step', () => {
     const command = scenario.compileSetup(
-      { cards: cardDbFrom(standardInvestigatorCards), scenario: makeDefinition() },
+      { cards: investigatorCards, scenario: makeDefinition() },
       makeSetupOptions(),
     );
 
@@ -220,7 +222,7 @@ describe('compileSetup', () => {
     });
 
     const command = scenario.compileSetup(
-      { cards: cardDbFrom(standardInvestigatorCards), scenario: def },
+      { cards: investigatorCards, scenario: def },
       makeSetupOptions(),
     );
 
@@ -241,7 +243,7 @@ describe('compileSetup', () => {
     });
 
     const command = scenario.compileSetup(
-      { cards: cardDbFrom(standardInvestigatorCards), scenario: def },
+      { cards: investigatorCards, scenario: def },
       makeSetupOptions({ investigators: investigatorSeats(3) }),
     );
 
@@ -252,10 +254,7 @@ describe('compileSetup', () => {
     const def = makeDefinition({ setup: [{ kind: 'moveInvestigators', to: cardCode('missing') }] });
 
     const rejection = rejectionOf(() =>
-      scenario.compileSetup(
-        { cards: cardDbFrom(standardInvestigatorCards), scenario: def },
-        makeSetupOptions(),
-      ),
+      scenario.compileSetup({ cards: investigatorCards, scenario: def }, makeSetupOptions()),
     );
 
     expect(rejection).toEqual({ code: 'setupTargetNotFound', cardCode: 'missing' });
@@ -270,10 +269,7 @@ describe('compileSetup', () => {
     });
 
     const rejection = rejectionOf(() =>
-      scenario.compileSetup(
-        { cards: cardDbFrom(standardInvestigatorCards), scenario: def },
-        makeSetupOptions(),
-      ),
+      scenario.compileSetup({ cards: investigatorCards, scenario: def }, makeSetupOptions()),
     );
 
     expect(rejection).toEqual({ code: 'setupTargetAmbiguous', cardCode: 'twin' });
@@ -290,7 +286,7 @@ describe('compileSetup addMap', () => {
     });
 
     const command = scenario.compileSetup(
-      { cards: cardDbFrom(standardInvestigatorCards), scenario: def },
+      { cards: investigatorCards, scenario: def },
       makeSetupOptions(),
     );
 
@@ -368,7 +364,7 @@ describe('compileSetup addMap', () => {
     });
 
     const command = scenario.compileSetup(
-      { cards: cardDbFrom(standardInvestigatorCards), scenario: def },
+      { cards: investigatorCards, scenario: def },
       makeSetupOptions(),
     );
 
@@ -387,7 +383,7 @@ describe('compileSetup addMap', () => {
     });
 
     const command = scenario.compileSetup(
-      { cards: cardDbFrom(standardInvestigatorCards), scenario: def },
+      { cards: investigatorCards, scenario: def },
       makeSetupOptions(),
     );
 
@@ -403,10 +399,7 @@ describe('compileSetup addMap', () => {
     });
 
     const rejection = rejectionOf(() =>
-      scenario.compileSetup(
-        { cards: cardDbFrom(standardInvestigatorCards), scenario: def },
-        makeSetupOptions(),
-      ),
+      scenario.compileSetup({ cards: investigatorCards, scenario: def }, makeSetupOptions()),
     );
 
     expect(rejection).toEqual({ code: 'setupTargetNotFound', cardCode: 'b' });
@@ -485,7 +478,7 @@ describe('compileSetup campaign', () => {
     const log = { ...campaign.createEmptyLog(), campaignId: campaignId('night_of_the_zealot_1') };
 
     const command = scenario.compileSetup(
-      { cards: cardDbFrom(standardInvestigatorCards), scenario: makeDefinition() },
+      { cards: investigatorCards, scenario: makeDefinition() },
       makeSetupOptions({ campaign: log }),
     );
 

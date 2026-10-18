@@ -33,24 +33,26 @@ const omen = instanceId('omen');
 const studyCard = blankLocation('study');
 const dreadCard = blankTreachery('dread');
 const omenCard = blankTreachery('omen');
+const ghoulCard = blankEnemy('ghoul');
+const ratCard = blankEnemy('rat');
 
-/**
- * Alice and the revealed study; the encounter deck holds ghoul, rat, dread
- * and omen in that order, top first, and the agenda deck one agenda.
- */
-const table = newGame()
+/** Alice in the revealed study, with one agenda in the agenda deck. */
+const aliceInStudy = newGame()
   .withSeed(1234)
   .withLocation(study, studyCard, { revealed: true })
   .withInvestigator(alice)
-  .withCard(ghoul, blankEnemy('ghoul'), encounterDeck)
-  .withCard(rat, blankEnemy('rat'), encounterDeck)
-  .withCard(dread, dreadCard, encounterDeck)
-  .withCard(omen, omenCard, encounterDeck)
   .withAgenda(instanceId('plan'), blankAgenda('plan', fixed(3)));
-const context = table.context();
-const start = table.startCommand();
 
 describe('StartScenario', () => {
+  /** The encounter deck holds ghoul, rat, dread and omen, top first. */
+  const table = aliceInStudy
+    .withCard(ghoul, ghoulCard, encounterDeck)
+    .withCard(rat, ratCard, encounterDeck)
+    .withCard(dread, dreadCard, encounterDeck)
+    .withCard(omen, omenCard, encounterDeck);
+  const context = table.context();
+  const start = table.startCommand();
+
   it('creates card instances and shuffles the encounter deck reproducibly', () => {
     const shuffled = table.withShuffledEncounterDeck();
     const { state, events } = run(context, [shuffled.startCommand()]);
@@ -188,6 +190,15 @@ describe('StartScenario', () => {
 });
 
 describe('ManualAdjust', () => {
+  /** The encounter deck holds ghoul, rat, dread and omen, top first. */
+  const table = aliceInStudy
+    .withCard(ghoul, ghoulCard, encounterDeck)
+    .withCard(rat, ratCard, encounterDeck)
+    .withCard(dread, dreadCard, encounterDeck)
+    .withCard(omen, omenCard, encounterDeck);
+  const context = table.context();
+  const start = table.startCommand();
+
   it('moves a card between zones and to a given index', () => {
     const { state } = run(context, [
       start,
@@ -330,6 +341,15 @@ describe('ManualAdjust', () => {
 });
 
 describe('MoveCard', () => {
+  /** The encounter deck holds ghoul, rat, dread and omen, top first. */
+  const table = aliceInStudy
+    .withCard(ghoul, ghoulCard, encounterDeck)
+    .withCard(rat, ratCard, encounterDeck)
+    .withCard(dread, dreadCard, encounterDeck)
+    .withCard(omen, omenCard, encounterDeck);
+  const context = table.context();
+  const start = table.startCommand();
+
   it('moves a card to the end of the destination zone', () => {
     const { state, events } = run(context, [
       start,
