@@ -69,10 +69,11 @@ export interface InvestigatorView {
  * One enemy in play: its name, the location it is at (by name), the
  * investigator it is engaged with, its damage and whether it is exhausted.
  * The last three are left out when there is none, so a list of enemies reads
- * like the table and asserts only what is there.
+ * like the table and asserts only what is there. It has no instance id: a
+ * view compares whole (`toEqual`), and `BoardView.enemy` still accepts an
+ * instance id to pick one of several copies.
  */
 export interface EnemyView {
-  id: InstanceId;
   name: string;
   at?: string;
   engagedWith?: InvestigatorId;
@@ -195,6 +196,25 @@ export class BoardView {
     return found;
   }
 
+  /**
+   * One field of every investigator by id, in seat order
+   * (`board.perInvestigator('clues')` is `{ roland: 1, daisy: 3 }`), so a test
+   * asserts the whole table in one `toEqual`.
+   */
+  perInvestigator<K extends keyof InvestigatorView>(
+    field: K,
+  ): Record<InvestigatorId, InvestigatorView[K]> {
+    return Object.fromEntries(this.investigators.map((inv) => [inv.id, inv[field]])) as Record<
+      InvestigatorId,
+      InvestigatorView[K]
+    >;
+  }
+
+  /** The names of the in-play locations on `map`, in map order. */
+  locationsOn(map: MapId): string[] {
+    return this.locations.filter((location) => location.map === map).map((l) => l.name);
+  }
+
   /** The one location in play `ref` names (an id, else a printed name). */
   location(ref: CardRef): LocationView {
     const byId = this.locations.find((location) => location.id === ref);
@@ -314,7 +334,6 @@ function enemyLocation(state: GameState, enemy: CardInstance): InstanceId | unde
 function enemyView(ctx: EngineContext, state: GameState, enemy: CardInstance): EnemyView {
   const at = nameOfId(ctx, state, enemyLocation(state, enemy));
   return {
-    id: enemy.id,
     name: nameOf(ctx, enemy),
     ...(at === undefined ? {} : { at }),
     ...(enemy.zone.kind === 'engaged' ? { engagedWith: enemy.zone.investigatorId } : {}),

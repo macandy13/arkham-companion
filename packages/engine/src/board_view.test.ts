@@ -131,6 +131,23 @@ describe('investigators', () => {
     expect(() => board.investigator(bob)).toThrow(TableError);
     expect(() => board.investigator(bob)).toThrow(/^no investigator bob\n/);
   });
+  it.each([
+    { field: 'clues' as const, expected: { alice: 2, bob: 0, carol: 1 } },
+    { field: 'at' as const, expected: { alice: 'study', bob: 'hallway', carol: undefined } },
+    { field: 'actions' as const, expected: { alice: 3, bob: 3, carol: 3 } },
+  ])('reads $field of every investigator by id, in seat order', ({ field, expected }) => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withLocation(hallway, blankLocation('hallway'))
+      .withInvestigator(alice, { locationId: study, clues: 2 })
+      .withInvestigator(bob, { locationId: hallway })
+      .withInvestigator(investigatorId('carol'), { clues: 1 })
+      .start();
+    const board = boardView(context, state);
+
+    expect(board.perInvestigator(field)).toEqual(expected);
+    expect(Object.keys(board.perInvestigator(field))).toEqual(['alice', 'bob', 'carol']);
+  });
 });
 
 describe('locations', () => {
@@ -180,6 +197,18 @@ describe('locations', () => {
     const names = boardView(context, state).locations.map((location) => location.name);
 
     expect(names).toEqual(['study', 'hallway', 'attic']);
+  });
+
+  it.each([
+    { map: 'main', expected: ['study', 'hallway'] },
+    { map: 'upstairs', expected: ['attic'] },
+    { map: 'cellar', expected: [] },
+  ])('lists the locations on the $map map in map order', ({ map, expected }) => {
+    const { context, state } = house
+      .withCard(instanceId('pantry'), blankLocation('pantry'), { kind: 'setAside' })
+      .start();
+
+    expect(boardView(context, state).locationsOn(mapId(map))).toEqual(expected);
   });
 
   it('turns revealed true once RevealLocation flips the location', () => {
@@ -245,8 +274,8 @@ describe('enemies', () => {
     const { enemies } = boardView(context, state);
 
     expect(enemies).toEqual([
-      { id: instanceId('lurker'), name: 'lurker', at: 'hallway' },
-      { id: instanceId('ghoul'), name: 'ghoul', at: 'study', engagedWith: alice, damage: 2 },
+      { name: 'lurker', at: 'hallway' },
+      { name: 'ghoul', at: 'study', engagedWith: alice, damage: 2 },
     ]);
   });
 
@@ -284,19 +313,22 @@ describe('enemies', () => {
       .withCard(instanceId('rat_in_hallway'), rat, atLocation(hallway))
       .withCard(instanceId('ghoul'), ghoul, atLocation(study));
 
+    const inHallway = { name: 'rat', at: 'hallway' };
+    const onAlice = { name: 'rat', at: 'study', engagedWith: alice };
+
     it.each([
-      { selector: 'ghoul', found: 'ghoul' },
-      { selector: 'Ghoul', found: 'ghoul' },
-      { selector: instanceId('rat_in_hallway'), found: 'rat_in_hallway' },
-      { selector: { name: 'rat', engagedWith: alice }, found: 'rat_on_alice' },
-      { selector: { name: 'rat', engagedWith: bob }, found: 'rat_on_bob' },
-      { selector: { name: 'rat', at: 'hallway' }, found: 'rat_in_hallway' },
-      { selector: { name: 'rat', at: hallway }, found: 'rat_in_hallway' },
-      { selector: { name: 'rat', engagedWith: alice, at: 'study' }, found: 'rat_on_alice' },
+      { selector: 'ghoul', found: { name: 'ghoul', at: 'study' } },
+      { selector: 'Ghoul', found: { name: 'ghoul', at: 'study' } },
+      { selector: instanceId('rat_in_hallway'), found: inHallway },
+      { selector: { name: 'rat', engagedWith: alice }, found: onAlice },
+      { selector: { name: 'rat', engagedWith: bob }, found: { ...onAlice, engagedWith: bob } },
+      { selector: { name: 'rat', at: 'hallway' }, found: inHallway },
+      { selector: { name: 'rat', at: hallway }, found: inHallway },
+      { selector: { name: 'rat', engagedWith: alice, at: 'study' }, found: onAlice },
     ])('finds $found with $selector', ({ selector, found }) => {
       const { context, state } = rats.start();
 
-      expect(boardView(context, state).enemy(selector).id).toBe(found);
+      expect(boardView(context, state).enemy(selector)).toEqual(found);
     });
 
     it('fails and says how to narrow when several enemies match', () => {
