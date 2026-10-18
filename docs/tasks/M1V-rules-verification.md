@@ -61,13 +61,22 @@ Follow-ups: the held command has one slot (`GameMeta.heldAction`). A surge card 
 **Slices**
 
 1. [x] `newGame()` builder and blank cards (`blankLocation`, `blankEnemy`, …), zone constructors, `forced_attacks.test.ts` as the first migrated file (#104).
-2. [ ] Migrate `skill_tests` and `hunters`, then `enemies` (two PRs, for the size budget).
-3. [ ] Migrate `board`, `investigators`, `elimination`, `turns`, `lookup`.
-4. [ ] Migrate `decisions`, `triggers`, `attacks_of_opportunity`, `describe_decision`.
-5. [ ] Migrate `encounter`.
-6. [ ] Migrate `phases`, `doom`, `undo`, `skill_modifiers`, `format_board`, `engine`, `replay`.
-7. [ ] Remove what is left unused of `startBoard`, `makeCard`, `makeInvestigator`, `testCardDefs` and the `L*`/`E*` codes, and point `docs/coding-guidelines.md` §3 at the builder only.
+2. [x] Migrate `skill_tests` and `hunters`, then `enemies` (#107, #108).
+3. [x] Migrate `board`, `investigators`, `elimination`, `turns`, `lookup` (#109).
+4. [x] Migrate `decisions`, `triggers`, `attacks_of_opportunity`, `describe_decision` (#110).
+5. [x] Migrate `encounter`; add `withEffects` and the encounter pile zone constants (#111).
+6. [x] Builder seed, difficulty, shuffle and maps; migrate `phases` (#112), then `doom`, `undo`, `skill_modifiers`, `format_board` (#113).
+7. [x] Move `setup`, `cards`, `engine`, `replay` onto blank cards and the builder; remove `startBoard`, `makeCard`, `contextWith`, `makeInvestigator`, `testCardDefs`, `testContext` and the `L*`/`E*` codes; point `docs/coding-guidelines.md` §3 at the builder only.
+8. [x] Sweep the remaining file-local setup helpers (`forced_attacks`, `skill_tests`, `triggers`, `attacks_of_opportunity`, `turns`) onto the builder chain, using `withEffects` for card scripts.
 
 The slices are stacked PRs. Slices 4–6 edit test files the resolution queue (M1V.1 slice 3) also changes; whichever merges second merges the other in. Tests of setup compilation (`setup`, The Gathering) keep `startScenario`, since they test the real setup.
 
 Each migration slice keeps the tests' assertions as they are; the builder adds `with*` methods (seed, difficulty, scenario, hidden maps) as the first test needs them.
+
+**Follow-ups**
+
+- One shared `answer(decision, optionId, amount?)` command builder in `packages/engine/test/utils/` instead of the copies in eight test files.
+- A `withHooks` builder method next to `withEffects`, so hook tests don't start the table and then wrap its context with `withScenario`.
+- A general way to start a table in the investigation phase with one investigator's turn begun; about 30 tests in `attacks_of_opportunity` and `turns` (and some in `elimination`, `undo`, `format_board`) run `NextPhase` and `StartTurn` first.
+
+- `blankAgenda` always takes a doom threshold, so `doom.test.ts` builds an agenda without one as `blankAgenda(code, fixed(0), { doom: undefined })`; let it build a thresholdless agenda directly. `blankAct`'s doc should say that its default `fixed(0)` clues is a threshold of 0, not none.
