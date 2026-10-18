@@ -89,16 +89,13 @@ export function completeAdvance(
   const nextId = nextCardId(state, deck, card.id);
   // A question that chose no resolution (a prey tie, say) leaves the fallback to end it.
   const decided = state.meta.ended === true || (asked && resolution === undefined);
-  const lastCard = nextId === undefined;
-  if (lastCard && !decided && resolution === undefined)
-    throw new CommandRejected({ code: 'resolutionRequired', deck });
-  return [
+  const replaced: (CardMoved | CurrentCardChanged)[] = [
     moveCardEvent(card, { kind: 'outOfGame' }),
     { type: 'CurrentCardChanged', deck, ...(nextId === undefined ? {} : { cardId: nextId }) },
-    ...(lastCard && !decided && resolution !== undefined
-      ? [{ type: 'ScenarioEnded' as const, resolution }]
-      : []),
   ];
+  if (nextId !== undefined || decided) return replaced;
+  if (resolution === undefined) throw new CommandRejected({ code: 'resolutionRequired', deck });
+  return [...replaced, { type: 'ScenarioEnded', resolution }];
 }
 
 /** `EndScenario`: the scenario is over with the command's resolution. */
