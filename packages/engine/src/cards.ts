@@ -218,6 +218,13 @@ export interface EngineContext {
   effects?: EffectsRegistry;
 }
 
+/**
+ * The context of a game of one scenario: `EngineContext` with its `scenario`
+ * required. `compileSetup` takes one, so the definition a game is set up from
+ * is the one its later commands run with.
+ */
+export type ScenarioContext = EngineContext & { readonly scenario: ScenarioDefinition };
+
 /** Builds a `CardDb` from a list of definitions; a later duplicate code replaces an earlier one. */
 export function cardDbFrom(defs: Iterable<CardStats>): CardDb {
   const byCode = new Map<CardCode, CardStats>();

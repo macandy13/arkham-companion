@@ -21,6 +21,7 @@ import {
   type Command,
   type Decision,
   type EngineContext,
+  type ScenarioContext,
   type Event,
   type GameState,
   type Investigator,
@@ -30,7 +31,6 @@ import {
   type Phase,
   type PhaseStep,
   type PhaseStepId,
-  type ScenarioDefinition,
   type SkillTest,
   type Zone,
 } from '@arkham/engine';
@@ -102,8 +102,8 @@ export interface DueAttackView {
 
 /** What `TestTable.setUp` needs to start a scenario. */
 export interface TableOptions {
-  scenario: ScenarioDefinition;
-  ctx: EngineContext;
+  /** The scenario to set up (`ctx.scenario`) and the context every command of the game runs with. */
+  ctx: ScenarioContext;
   /** In seat order; the first one is the lead investigator. */
   investigators: readonly InvestigatorSeat[];
   seed: number;
@@ -129,12 +129,10 @@ export class TestTable {
 
   private constructor(readonly ctx: EngineContext) {}
 
-  /** A table with `scenario` set up from scratch (its compiled setup is the first command). */
-  static setUp({ scenario: definition, ctx, investigators, seed }: TableOptions): TestTable {
+  /** A table with `ctx.scenario` set up from scratch (its compiled setup is the first command). */
+  static setUp({ ctx, investigators, seed }: TableOptions): TestTable {
     const table = new TestTable(ctx);
-    table.play(
-      scenario.compileSetup(ctx, definition, { difficulty: 'standard', seed, investigators }),
-    );
+    table.play(scenario.compileSetup(ctx, { difficulty: 'standard', seed, investigators }));
     return table;
   }
 

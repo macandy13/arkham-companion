@@ -46,8 +46,7 @@ describe('compileSetup', () => {
     });
 
     const command = scenario.compileSetup(
-      contextWith(),
-      def,
+      { ...contextWith(), scenario: def },
       makeSetupOptions({ difficulty: 'hard', seed: 42 }),
     );
 
@@ -66,7 +65,7 @@ describe('compileSetup', () => {
       actDeck: [cardCode('act1')],
     });
 
-    const command = scenario.compileSetup(contextWith(), def, makeSetupOptions());
+    const command = scenario.compileSetup({ ...contextWith(), scenario: def }, makeSetupOptions());
 
     expect(command.cards).toEqual([
       { id: 'ag1#1', code: 'ag1', zone: { kind: 'agendaDeck' }, faceUp: true },
@@ -80,7 +79,7 @@ describe('compileSetup', () => {
       setup: [{ kind: 'setAside', codes: [cardCode('x'), cardCode('x'), cardCode('y')] }],
     });
 
-    const command = scenario.compileSetup(contextWith(), def, makeSetupOptions());
+    const command = scenario.compileSetup({ ...contextWith(), scenario: def }, makeSetupOptions());
 
     expect(command.cards.map((c) => [c.id, c.zone.kind])).toEqual([
       ['x#1', 'setAside'],
@@ -94,7 +93,7 @@ describe('compileSetup', () => {
       setup: [mainMap('loc'), { kind: 'spawn', code: cardCode('enemy'), at: cardCode('loc') }],
     });
 
-    const command = scenario.compileSetup(contextWith(), def, makeSetupOptions());
+    const command = scenario.compileSetup({ ...contextWith(), scenario: def }, makeSetupOptions());
 
     expect(command.cards[1]).toEqual({
       id: 'enemy#1',
@@ -126,8 +125,7 @@ describe('compileSetup', () => {
     ];
 
     const command = scenario.compileSetup(
-      ctx,
-      makeDefinition(),
+      { ...ctx, scenario: makeDefinition() },
       makeSetupOptions({ investigators: seats }),
     );
 
@@ -155,8 +153,7 @@ describe('compileSetup', () => {
 
     const rejection = rejectionOf(() =>
       scenario.compileSetup(
-        contextWith(),
-        makeDefinition(),
+        { ...contextWith(), scenario: makeDefinition() },
         makeSetupOptions({ investigators: seats }),
       ),
     );
@@ -173,8 +170,7 @@ describe('compileSetup', () => {
     });
 
     const command = scenario.compileSetup(
-      ctx,
-      def,
+      { ...ctx, scenario: def },
       makeSetupOptions({ investigators: investigatorSeats(2) }),
     );
 
@@ -183,7 +179,10 @@ describe('compileSetup', () => {
   });
 
   it('leaves investigators unplaced without a moveInvestigators step', () => {
-    const command = scenario.compileSetup(contextWith(), makeDefinition(), makeSetupOptions());
+    const command = scenario.compileSetup(
+      { ...contextWith(), scenario: makeDefinition() },
+      makeSetupOptions(),
+    );
 
     expect(command.investigators[0]?.locationId).toBeUndefined();
   });
@@ -197,7 +196,7 @@ describe('compileSetup', () => {
       ],
     });
 
-    const command = scenario.compileSetup(contextWith(), def, makeSetupOptions());
+    const command = scenario.compileSetup({ ...contextWith(), scenario: def }, makeSetupOptions());
 
     expect(command.cards[0]?.tokens).toEqual({ doom: 3 });
   });
@@ -216,8 +215,7 @@ describe('compileSetup', () => {
     });
 
     const command = scenario.compileSetup(
-      contextWith(),
-      def,
+      { ...contextWith(), scenario: def },
       makeSetupOptions({ investigators: investigatorSeats(3) }),
     );
 
@@ -228,7 +226,7 @@ describe('compileSetup', () => {
     const def = makeDefinition({ setup: [{ kind: 'moveInvestigators', to: cardCode('missing') }] });
 
     const rejection = rejectionOf(() =>
-      scenario.compileSetup(contextWith(), def, makeSetupOptions()),
+      scenario.compileSetup({ ...contextWith(), scenario: def }, makeSetupOptions()),
     );
 
     expect(rejection).toEqual({ code: 'setupTargetNotFound', cardCode: 'missing' });
@@ -243,7 +241,7 @@ describe('compileSetup', () => {
     });
 
     const rejection = rejectionOf(() =>
-      scenario.compileSetup(contextWith(), def, makeSetupOptions()),
+      scenario.compileSetup({ ...contextWith(), scenario: def }, makeSetupOptions()),
     );
 
     expect(rejection).toEqual({ code: 'setupTargetAmbiguous', cardCode: 'twin' });
@@ -259,7 +257,7 @@ describe('compileSetup addMap', () => {
       ],
     });
 
-    const command = scenario.compileSetup(contextWith(), def, makeSetupOptions());
+    const command = scenario.compileSetup({ ...contextWith(), scenario: def }, makeSetupOptions());
 
     expect(command.maps).toEqual({
       main: { name: 'Main', visible: true, connections: [] },
@@ -278,7 +276,7 @@ describe('compileSetup addMap', () => {
       ],
     });
 
-    const command = scenario.compileSetup(ctx, def, makeSetupOptions());
+    const command = scenario.compileSetup({ ...ctx, scenario: def }, makeSetupOptions());
 
     expect(command.cards).toEqual([
       { id: 'a#1', code: 'a', zone: { kind: 'location', mapId: main }, faceUp: false },
@@ -295,8 +293,7 @@ describe('compileSetup addMap', () => {
     });
 
     const command = scenario.compileSetup(
-      ctx,
-      def,
+      { ...ctx, scenario: def },
       makeSetupOptions({ investigators: investigatorSeats(2) }),
     );
 
@@ -311,7 +308,7 @@ describe('compileSetup addMap', () => {
       setup: [{ ...mainMap(), locations: [{ code: cardCode('loc'), faceUp: true }] }],
     });
 
-    const command = scenario.compileSetup(ctx, def, makeSetupOptions());
+    const command = scenario.compileSetup({ ...ctx, scenario: def }, makeSetupOptions());
 
     expect(command.cards[0]?.tokens).toBeUndefined();
   });
@@ -329,7 +326,7 @@ describe('compileSetup addMap', () => {
       ],
     });
 
-    const command = scenario.compileSetup(contextWith(), def, makeSetupOptions());
+    const command = scenario.compileSetup({ ...contextWith(), scenario: def }, makeSetupOptions());
 
     expect(command.maps?.[main]?.connections).toEqual([
       { from: 'a#1', to: 'b#1', oneWay: false },
@@ -345,7 +342,7 @@ describe('compileSetup addMap', () => {
       ],
     });
 
-    const command = scenario.compileSetup(contextWith(), def, makeSetupOptions());
+    const command = scenario.compileSetup({ ...contextWith(), scenario: def }, makeSetupOptions());
 
     expect(command.maps?.[main]?.connections).toEqual([{ from: 'a#2', to: 'b#1', oneWay: false }]);
   });
@@ -359,7 +356,7 @@ describe('compileSetup addMap', () => {
     });
 
     const rejection = rejectionOf(() =>
-      scenario.compileSetup(contextWith(), def, makeSetupOptions()),
+      scenario.compileSetup({ ...contextWith(), scenario: def }, makeSetupOptions()),
     );
 
     expect(rejection).toEqual({ code: 'setupTargetNotFound', cardCode: 'b' });
@@ -388,7 +385,10 @@ describe('compileSetup buildEncounterDeck', () => {
   const ctx = contextWith(ghoul, curse, rat, room, plan);
 
   function deckCodes(setup: SetupStep[]): string[] {
-    const command = scenario.compileSetup(ctx, makeDefinition({ setup }), makeSetupOptions());
+    const command = scenario.compileSetup(
+      { ...ctx, scenario: makeDefinition({ setup }) },
+      makeSetupOptions(),
+    );
     return command.cards
       .filter((card) => card.zone.kind === 'encounterDeck')
       .map((card) => card.code);
@@ -435,7 +435,9 @@ describe('compileSetup buildEncounterDeck', () => {
       setup: [{ kind: 'buildEncounterDeck', sets: [encounterSetCode('typo')] }],
     });
 
-    const rejection = rejectionOf(() => scenario.compileSetup(ctx, def, makeSetupOptions()));
+    const rejection = rejectionOf(() =>
+      scenario.compileSetup({ ...ctx, scenario: def }, makeSetupOptions()),
+    );
 
     expect(rejection).toEqual({ code: 'unknownEncounterSet', encounterCode: 'typo' });
   });
@@ -446,8 +448,7 @@ describe('compileSetup campaign', () => {
     const log = { ...campaign.createEmptyLog(), campaignId: campaignId('night_of_the_zealot_1') };
 
     const command = scenario.compileSetup(
-      contextWith(),
-      makeDefinition(),
+      { ...contextWith(), scenario: makeDefinition() },
       makeSetupOptions({ campaign: log }),
     );
 
@@ -478,7 +479,7 @@ describe('compileMapStep', () => {
     const def = makeDefinition({
       setup: [mainMap('a'), { kind: 'setAside', codes: setAside.map(cardCode) }],
     });
-    return startScenario(ctx, def);
+    return startScenario({ ...ctx, scenario: def });
   }
 
   /** A step for the wing with the given locations and no connections. */

@@ -1,13 +1,12 @@
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import type {
   Difficulty,
-  EngineContext,
   GameId,
   GameState,
   GameStore,
   GameSummary,
   InvestigatorSeat,
-  ScenarioDefinition,
+  ScenarioContext,
 } from '@arkham/engine';
 import { emptyState, execute, scenario } from '@arkham/engine';
 import { parseGameExport, serialiseGameExport } from '../storage/gameExport';
@@ -21,7 +20,7 @@ export interface ScenarioStart {
    * investigators' cards, since `compileSetup` takes their stats from it. The same context runs
    * the game, so the definition is given once and its hooks and reference card come with it.
    */
-  ctx: EngineContext & { readonly scenario: ScenarioDefinition };
+  ctx: ScenarioContext;
   difficulty: Difficulty;
   /** Seeds the game's RNG; chosen by the caller because the engine never reads randomness itself. */
   seed: number;
@@ -78,8 +77,7 @@ export function createAppStore(gameStore: GameStore): StoreApi<AppState> {
       return gameId;
     },
     async startScenario({ title, ctx, difficulty, seed, investigators }) {
-      const options = { difficulty, seed, investigators };
-      const command = scenario.compileSetup(ctx, ctx.scenario, options);
+      const command = scenario.compileSetup(ctx, { difficulty, seed, investigators });
       const { events } = execute(ctx, emptyState(), command);
       const gameId = await gameStore.createGame({ title });
       await gameStore.appendEvents(gameId, events);
