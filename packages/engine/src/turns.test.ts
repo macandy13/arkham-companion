@@ -63,8 +63,7 @@ describe('StartTurn', () => {
   });
 
   it('rejects a turn while another one is in progress', () => {
-    const { context, state: started } = aliceAndBobInHall.start();
-    const state = stateAfter(context, started, next, startTurn(alice));
+    const { context, state } = aliceAndBobInHall.withTurnOf(alice).start();
 
     expect(rejectionFrom(context, state, startTurn(bob))).toEqual({
       code: 'turnInProgress',
@@ -73,8 +72,7 @@ describe('StartTurn', () => {
   });
 
   it('rejects a second turn in the same round', () => {
-    const { context, state: started } = aliceAndBobInHall.start();
-    const state = stateAfter(context, started, next, startTurn(alice));
+    const { context, state } = aliceAndBobInHall.withTurnOf(alice).start();
     const turnTaken = stateAfter(context, state, endTurn(alice));
 
     expect(rejectionFrom(context, turnTaken, startTurn(alice))).toEqual({
@@ -101,8 +99,7 @@ describe('StartTurn', () => {
 
 describe('EndTurn', () => {
   it('ends the turn and marks it taken for the round', () => {
-    const { context, state: started } = aliceAndBobInHall.start();
-    const state = stateAfter(context, started, next, startTurn(alice));
+    const { context, state } = aliceAndBobInHall.withTurnOf(alice).start();
     const ended = stateAfter(context, state, endTurn(alice));
 
     expect(ended.meta.turn).toBeUndefined();
@@ -110,8 +107,7 @@ describe('EndTurn', () => {
   });
 
   it('rejects ending the turn of someone else', () => {
-    const { context, state: started } = aliceAndBobInHall.start();
-    const state = stateAfter(context, started, next, startTurn(alice));
+    const { context, state } = aliceAndBobInHall.withTurnOf(alice).start();
 
     expect(rejectionFrom(context, state, endTurn(bob))).toEqual({
       code: 'turnNotInProgress',
@@ -131,8 +127,7 @@ describe('EndTurn', () => {
   });
 
   it('ends the turn of an investigator who is defeated during it', () => {
-    const { context, state: started } = aliceAndBobInHall.start();
-    const state = stateAfter(context, started, next, startTurn(alice));
+    const { context, state } = aliceAndBobInHall.withTurnOf(alice).start();
     const defeated = stateAfter(context, state, {
       type: 'AdjustInvestigator',
       investigatorId: alice,
@@ -168,8 +163,7 @@ describe('the end of a turn', () => {
   const aliceThreatArea = (state: GameState) => state.order[zoneKey(threatAreaOf(alice))];
 
   it('asks the investigator for the willpower test of Frozen in Fear in their threat area', () => {
-    const { context, state: started } = frozenInFearOnAlice.start();
-    const state = stateAfter(context, started, next, startTurn(alice));
+    const { context, state } = frozenInFearOnAlice.withTurnOf(alice).start();
     const ended = stateAfter(context, state, endTurn(alice));
 
     expect(ended.meta.turnsTaken).toEqual([alice]);
@@ -189,8 +183,7 @@ describe('the end of a turn', () => {
     { result: 'pass', threatArea: [dissonantVoices], discard: [frozenInFear] },
     { result: 'fail', threatArea: [frozenInFear, dissonantVoices], discard: undefined },
   ])('$result: Frozen in Fear stays only on a fail', ({ result, threatArea, discard }) => {
-    const { context, state: started } = frozenInFearOnAlice.start();
-    const state = stateAfter(context, started, next, startTurn(alice));
+    const { context, state } = frozenInFearOnAlice.withTurnOf(alice).start();
     const ended = stateAfter(
       context,
       state,
@@ -204,8 +197,7 @@ describe('the end of a turn', () => {
   });
 
   it("does not test at the end of another investigator's turn", () => {
-    const { context, state: started } = frozenInFearOnAlice.start();
-    const state = stateAfter(context, started, next, startTurn(alice));
+    const { context, state } = frozenInFearOnAlice.withTurnOf(alice).start();
     const bobsTurn = stateAfter(
       context,
       state,
@@ -218,9 +210,7 @@ describe('the end of a turn', () => {
   });
 
   it('fires the scenario hook onTurnEnd with the investigator whose turn ended', () => {
-    const { context, state: started } = aliceAndBobInHall.start();
-    const state = stateAfter(context, started, next, startTurn(alice));
-    const clueAtTurnEnd = aliceAndBobInHall
+    const { context: clueAtTurnEnd, state } = aliceAndBobInHall
       .withHooks({
         onTurnEnd: (_ctx, _state, event) => [
           {
@@ -231,7 +221,8 @@ describe('the end of a turn', () => {
           },
         ],
       })
-      .context();
+      .withTurnOf(alice)
+      .start();
 
     const ended = stateAfter(clueAtTurnEnd, state, endTurn(alice));
 
@@ -249,24 +240,21 @@ describe('remaining actions', () => {
   });
 
   it('count down as the players spend actions in the turn', () => {
-    const { context, state: started } = aliceAndBobInHall.start();
-    const state = stateAfter(context, started, next, startTurn(alice));
+    const { context, state } = aliceAndBobInHall.withTurnOf(alice).start();
     const afterTwo = stateAfter(context, state, adjustActions(alice, -1), adjustActions(alice, -1));
 
     expect(investigatorOf(afterTwo, alice).actionsRemaining).toBe(1);
   });
 
   it('go up for an effect that grants an action this round', () => {
-    const { context, state: started } = aliceAndBobInHall.start();
-    const state = stateAfter(context, started, next, startTurn(alice));
+    const { context, state } = aliceAndBobInHall.withTurnOf(alice).start();
     const granted = stateAfter(context, state, adjustActions(alice, 1));
 
     expect(investigatorOf(granted, alice).actionsRemaining).toBe(4);
   });
 
   it('change through a manual adjustment as well', () => {
-    const { context, state: started } = aliceAndBobInHall.start();
-    const state = stateAfter(context, started, next, startTurn(alice));
+    const { context, state } = aliceAndBobInHall.withTurnOf(alice).start();
     const adjusted = stateAfter(context, state, {
       type: 'ManualAdjust',
       adjustment: { kind: 'actions', investigatorId: alice, delta: -2 },
@@ -288,8 +276,7 @@ describe('remaining actions', () => {
     { name: 'a fractional change', delta: 0.5 },
     { name: 'a count below zero', delta: -4 },
   ])('reject $name', ({ delta }) => {
-    const { context, state: started } = aliceAndBobInHall.start();
-    const state = stateAfter(context, started, next, startTurn(alice));
+    const { context, state } = aliceAndBobInHall.withTurnOf(alice).start();
 
     expect(rejectionFrom(context, state, adjustActions(alice, delta))).toEqual({
       code: 'invalidActionAdjustment',

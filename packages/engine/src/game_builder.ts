@@ -1,5 +1,5 @@
 import { cardDbFrom, resolveValue, type CardStats, type EngineContext } from './cards';
-import type { StartScenario, StartingCard, StartingInvestigator } from './commands';
+import type { Command, StartScenario, StartingCard, StartingInvestigator } from './commands';
 import { execute } from './execute';
 import {
   mapId,
@@ -88,6 +88,8 @@ interface GameSpec {
   readonly seed: number;
   readonly shuffleEncounterDeck: boolean;
   readonly effects?: EffectsRegistry;
+  /** The investigator whose turn `start` begins; none means the table stays at the start of the scenario. */
+  readonly turnOf?: InvestigatorId;
   /** The parts of a scenario the engine reads while it plays; set means the context has a scenario. */
   readonly rules?: ScenarioRules;
 }
@@ -209,6 +211,17 @@ export class GameBuilder {
   }
 
   /**
+   * The table started into round 1's investigation phase with `investigator`'s
+   * turn begun, for tests of what happens during a turn (actions, attacks of
+   * opportunity, turn end). `start` gets there through `NextPhase` and
+   * `StartTurn` after `startCommand`, so the phase and turn are set up like
+   * at the table.
+   */
+  withTurnOf(investigator: InvestigatorId): GameBuilder {
+    return this.with({ turnOf: investigator });
+  }
+
+  /**
    * The table playing a scenario with these forced effects
    * (`ScenarioDefinition.hooks`) in place of any given before; for tests of
    * trigger points and of what a scenario's hooks do.
@@ -262,10 +275,16 @@ export class GameBuilder {
     };
   }
 
-  /** The context and the state after `startCommand`. */
+  /** The context and the state after `startCommand`, and after the turn of `withTurnOf` began. */
   start(): BuiltGame {
     const context = this.context();
-    return { context, state: execute(context, emptyState(), this.startCommand()).state };
+    const { turnOf } = this.spec;
+    const commands = [this.startCommand(), ...(turnOf ? beginTurn(turnOf) : [])];
+    const state = commands.reduce(
+      (current, command) => execute(context, current, command).state,
+      emptyState(),
+    );
+    return { context, state };
   }
 
   private with(changes: Partial<GameSpec>): GameBuilder {
@@ -331,6 +350,11 @@ function startingInvestigator(
   options: InvestigatorOptions,
 ): StartingInvestigator {
   return blankInvestigator(id, { seat, ...options });
+}
+
+/** From setup into round 1's investigation phase, then `investigator` starts their turn. */
+function beginTurn(investigator: InvestigatorId): Command[] {
+  return [{ type: 'NextPhase' }, { type: 'StartTurn', investigatorId: investigator }];
 }
 
 /** A scenario with `rules` and nothing to set up: the builder places the table itself. */

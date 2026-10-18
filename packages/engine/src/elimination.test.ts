@@ -93,10 +93,10 @@ const threeInvestigators = newGame()
 
 /** Round 1's investigation phase with alice's turn in progress and her ghoul exhausted. */
 function aliceTurn(): BuiltGame {
-  const { context, state } = threeInvestigators.start();
+  const { context, state } = threeInvestigators.withTurnOf(alice).start();
   return {
     context,
-    state: stateAfter(context, state, nextPhase, startTurn(alice), {
+    state: stateAfter(context, state, {
       type: 'ExhaustEnemy',
       enemyId: aliceGhoul,
     }),
@@ -206,15 +206,10 @@ describe('an investigator who leaves', () => {
     const attachedFear = instanceId('attached_fear');
     const { context, state: withAttachment } = threeInvestigators
       .withCard(attachedFear, frozenInFearCard, attachedTo(frozenInFear), { tokens: { doom: 1 } })
+      .withTurnOf(alice)
       .start();
 
-    const resigned = stateAfter(
-      context,
-      withAttachment,
-      nextPhase,
-      startTurn(alice),
-      resign(alice),
-    );
+    const resigned = stateAfter(context, withAttachment, resign(alice));
 
     expect(idsIn(resigned, { kind: 'encounterDiscard' })).toEqual([frozenInFear, attachedFear]);
     expect(resigned.cards[attachedFear]?.tokens).toEqual({});
