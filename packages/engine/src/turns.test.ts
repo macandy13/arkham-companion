@@ -9,8 +9,6 @@ import {
   newGame,
   threatAreaOf,
   zoneKey,
-  type BuiltGame,
-  type GameBuilder,
   type Command,
   type GameState,
   type InvestigatorId,
@@ -42,12 +40,6 @@ const aliceAndBobInHall = newGame()
   .withInvestigator(alice, { locationId: hall })
   .withInvestigator(bob, { locationId: hall });
 
-/** Round 1's investigation phase at `table` with alice's turn in progress. */
-function aliceTurn(table: GameBuilder = aliceAndBobInHall): BuiltGame {
-  const { context, state } = table.start();
-  return { context, state: stateAfter(context, state, next, startTurn(alice)) };
-}
-
 describe('StartTurn', () => {
   it('starts the turn of the investigator the group picks, in any order', () => {
     const { context, state } = aliceAndBobInHall.start();
@@ -72,7 +64,8 @@ describe('StartTurn', () => {
   });
 
   it('rejects a turn while another one is in progress', () => {
-    const { context, state } = aliceTurn();
+    const { context, state: started } = aliceAndBobInHall.start();
+    const state = stateAfter(context, started, next, startTurn(alice));
 
     expect(rejectionFrom(context, state, startTurn(bob))).toEqual({
       code: 'turnInProgress',
@@ -81,7 +74,8 @@ describe('StartTurn', () => {
   });
 
   it('rejects a second turn in the same round', () => {
-    const { context, state } = aliceTurn();
+    const { context, state: started } = aliceAndBobInHall.start();
+    const state = stateAfter(context, started, next, startTurn(alice));
     const turnTaken = stateAfter(context, state, endTurn(alice));
 
     expect(rejectionFrom(context, turnTaken, startTurn(alice))).toEqual({
@@ -108,7 +102,8 @@ describe('StartTurn', () => {
 
 describe('EndTurn', () => {
   it('ends the turn and marks it taken for the round', () => {
-    const { context, state } = aliceTurn();
+    const { context, state: started } = aliceAndBobInHall.start();
+    const state = stateAfter(context, started, next, startTurn(alice));
     const ended = stateAfter(context, state, endTurn(alice));
 
     expect(ended.meta.turn).toBeUndefined();
@@ -116,7 +111,8 @@ describe('EndTurn', () => {
   });
 
   it('rejects ending the turn of someone else', () => {
-    const { context, state } = aliceTurn();
+    const { context, state: started } = aliceAndBobInHall.start();
+    const state = stateAfter(context, started, next, startTurn(alice));
 
     expect(rejectionFrom(context, state, endTurn(bob))).toEqual({
       code: 'turnNotInProgress',
@@ -136,7 +132,8 @@ describe('EndTurn', () => {
   });
 
   it('ends the turn of an investigator who is defeated during it', () => {
-    const { context, state } = aliceTurn();
+    const { context, state: started } = aliceAndBobInHall.start();
+    const state = stateAfter(context, started, next, startTurn(alice));
     const defeated = stateAfter(context, state, {
       type: 'AdjustInvestigator',
       investigatorId: alice,
@@ -162,17 +159,12 @@ describe('the end of a turn', () => {
   const dissonantVoicesCard = blankTreachery('dissonant_voices', { entersThreatArea: true });
 
   /**
-   * Alice's turn in progress in the hall, with Frozen in Fear (an end-of-turn
-   * willpower test) and Dissonant Voices (none) in her threat area; bob in the
-   * hall with an empty threat area.
+   * Alice and bob in the hall, with Frozen in Fear (an end-of-turn willpower
+   * test) and Dissonant Voices (none) in alice's threat area and none in bob's.
    */
-  function aliceTurnFrozenInFear(): BuiltGame {
-    return aliceTurn(
-      aliceAndBobInHall
-        .withCard(frozenInFear, frozenInFearCard, threatAreaOf(alice))
-        .withCard(dissonantVoices, dissonantVoicesCard, threatAreaOf(alice)),
-    );
-  }
+  const frozenInFearOnAlice = aliceAndBobInHall
+    .withCard(frozenInFear, frozenInFearCard, threatAreaOf(alice))
+    .withCard(dissonantVoices, dissonantVoicesCard, threatAreaOf(alice));
 
   const answer = (optionId: string): Command => ({
     type: 'ResolveDecision',
@@ -182,7 +174,8 @@ describe('the end of a turn', () => {
   const aliceThreatArea = (state: GameState) => state.order[zoneKey(threatAreaOf(alice))];
 
   it('asks the investigator for the willpower test of Frozen in Fear in their threat area', () => {
-    const { context, state } = aliceTurnFrozenInFear();
+    const { context, state: started } = frozenInFearOnAlice.start();
+    const state = stateAfter(context, started, next, startTurn(alice));
     const ended = stateAfter(context, state, endTurn(alice));
 
     expect(ended.meta.turnsTaken).toEqual([alice]);
@@ -202,7 +195,8 @@ describe('the end of a turn', () => {
     { result: 'pass', threatArea: [dissonantVoices], discard: [frozenInFear] },
     { result: 'fail', threatArea: [frozenInFear, dissonantVoices], discard: undefined },
   ])('$result: Frozen in Fear stays only on a fail', ({ result, threatArea, discard }) => {
-    const { context, state } = aliceTurnFrozenInFear();
+    const { context, state: started } = frozenInFearOnAlice.start();
+    const state = stateAfter(context, started, next, startTurn(alice));
     const ended = stateAfter(context, state, endTurn(alice), answer(result));
 
     expect(ended.pending).toEqual([]);
@@ -211,14 +205,16 @@ describe('the end of a turn', () => {
   });
 
   it("does not test at the end of another investigator's turn", () => {
-    const { context, state } = aliceTurnFrozenInFear();
+    const { context, state: started } = frozenInFearOnAlice.start();
+    const state = stateAfter(context, started, next, startTurn(alice));
     const bobsTurn = stateAfter(context, state, endTurn(alice), answer('fail'), startTurn(bob));
 
     expect(stateAfter(context, bobsTurn, endTurn(bob)).pending).toEqual([]);
   });
 
   it('fires the scenario hook onTurnEnd with the investigator whose turn ended', () => {
-    const { context, state } = aliceTurn();
+    const { context, state: started } = aliceAndBobInHall.start();
+    const state = stateAfter(context, started, next, startTurn(alice));
     const clueAtTurnEnd = withScenario(context, {
       hooks: {
         onTurnEnd: (_ctx, _state, event) => [
@@ -248,21 +244,24 @@ describe('remaining actions', () => {
   });
 
   it('count down as the players spend actions in the turn', () => {
-    const { context, state } = aliceTurn();
+    const { context, state: started } = aliceAndBobInHall.start();
+    const state = stateAfter(context, started, next, startTurn(alice));
     const afterTwo = stateAfter(context, state, adjustActions(alice, -1), adjustActions(alice, -1));
 
     expect(investigatorOf(afterTwo, alice).actionsRemaining).toBe(1);
   });
 
   it('go up for an effect that grants an action this round', () => {
-    const { context, state } = aliceTurn();
+    const { context, state: started } = aliceAndBobInHall.start();
+    const state = stateAfter(context, started, next, startTurn(alice));
     const granted = stateAfter(context, state, adjustActions(alice, 1));
 
     expect(investigatorOf(granted, alice).actionsRemaining).toBe(4);
   });
 
   it('change through a manual adjustment as well', () => {
-    const { context, state } = aliceTurn();
+    const { context, state: started } = aliceAndBobInHall.start();
+    const state = stateAfter(context, started, next, startTurn(alice));
     const adjusted = stateAfter(context, state, {
       type: 'ManualAdjust',
       adjustment: { kind: 'actions', investigatorId: alice, delta: -2 },
@@ -284,7 +283,8 @@ describe('remaining actions', () => {
     { name: 'a fractional change', delta: 0.5 },
     { name: 'a count below zero', delta: -4 },
   ])('reject $name', ({ delta }) => {
-    const { context, state } = aliceTurn();
+    const { context, state: started } = aliceAndBobInHall.start();
+    const state = stateAfter(context, started, next, startTurn(alice));
 
     expect(rejectionFrom(context, state, adjustActions(alice, delta))).toEqual({
       code: 'invalidActionAdjustment',

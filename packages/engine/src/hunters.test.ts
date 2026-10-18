@@ -11,14 +11,13 @@ import {
   investigatorId,
   newGame,
   type BuiltGame,
-  type CardStats,
   type Command,
-  type Edge,
+  type GameBuilder,
   type GameState,
   type InstanceId,
   type Zone,
 } from './index';
-import { edge, rejectionFrom, stateAfter } from '../test/utils';
+import { rejectionFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -37,82 +36,46 @@ const aloofHunter = blankEnemy('aloof_hunter', {
 /** An enemy without the hunter keyword. */
 const plainGhoul = blankEnemy('plain_ghoul');
 
-/** An enemy to place: `id` is how the test refers to it, `card` says what it is. */
-interface PlacedEnemy {
-  id: InstanceId;
-  card: CardStats;
-  zone: Zone;
-}
-
-function enemy(id: InstanceId, card: CardStats, zone: Zone): PlacedEnemy {
-  return { id, card, zone };
-}
-
 /** Unengaged at the place named `place` of the map diagram. */
 const at = (place: string): Zone => atLocation(instanceId(place));
 const moveHunters: Command = { type: 'MoveHunters' };
 
-/** An investigator standing at a place; `clues` matter for prey. */
-interface PlacedInvestigator {
-  id: 'alice' | 'bob';
-  location: string;
-  clues: number;
-}
-
-function investigator(id: 'alice' | 'bob', location: string, clues = 0): PlacedInvestigator {
-  return { id, location, clues };
-}
-
-interface Layout {
-  /** Place names; each is also its instance ID. */
-  places: string[];
-  edges: Edge[];
-  /** In seat order. */
-  investigators: PlacedInvestigator[];
-  enemies: PlacedEnemy[];
-}
-
-/** The started table of `layout`: every place is an unrevealed `location`. */
-function started({ places, edges, investigators, enemies }: Layout): BuiltGame {
-  const withPlaces = places.reduce(
-    (game, place) => game.withLocation(instanceId(place), location),
-    newGame(),
-  );
-  const withEdges = edges.reduce(
-    (game, { from, to, oneWay }) => game.withConnection(from, to, { oneWay }),
-    withPlaces,
-  );
-  const withInvestigators = investigators.reduce(
-    (game, { id, location, clues }) =>
-      game.withInvestigator(investigatorId(id), { locationId: instanceId(location), clues }),
-    withEdges,
-  );
-  return enemies
-    .reduce((game, { id, card, zone }) => game.withCard(id, card, zone), withInvestigators)
-    .start();
-}
-
 const zoneOf = (state: GameState, cardId: InstanceId): Zone | undefined =>
   state.cards[cardId]?.zone;
 
-/** Undirected edges joining consecutive places. */
-const line = (...places: string[]): Edge[] =>
-  places.slice(1).map((place, i) => edge(places[i] ?? place, place));
+/** A table of unconnected places: each name is the instance ID of a `location`. */
+function places(...names: string[]): GameBuilder {
+  return names.reduce((game, name) => game.withLocation(instanceId(name), location), newGame());
+}
+
+/** The places `names` in a row, each joined to the next by an undirected connection. */
+function line(...names: string[]): GameBuilder {
+  return names
+    .slice(1)
+    .reduce(
+      (game, name, i) => game.withConnection(instanceId(names[i] ?? name), instanceId(name)),
+      places(...names),
+    );
+}
 
 /** A diamond a-b-d and a-c-d: two equally short routes from a to d. */
-const fork = {
-  places: ['a', 'b', 'c', 'd'],
-  edges: [edge('a', 'b'), edge('a', 'c'), edge('b', 'd'), edge('c', 'd')],
-};
+const fork = places('a', 'b', 'c', 'd')
+  .withConnection(instanceId('a'), instanceId('b'))
+  .withConnection(instanceId('a'), instanceId('c'))
+  .withConnection(instanceId('b'), instanceId('d'))
+  .withConnection(instanceId('c'), instanceId('d'));
+
+/** a joined to b and to c: investigators at b and c are equally near a hunter at a, apart. */
+const split = places('a', 'b', 'c')
+  .withConnection(instanceId('a'), instanceId('b'))
+  .withConnection(instanceId('a'), instanceId('c'));
 
 describe('MoveHunters', () => {
   it('moves a hunter one step along the path to the investigator', () => {
-    const { context, state } = started({
-      places: ['a', 'b', 'c'],
-      edges: line('a', 'b', 'c'),
-      investigators: [investigator('alice', 'c')],
-      enemies: [enemy(hunter, hunterGhoul, at('a'))],
-    });
+    const { context, state } = line('a', 'b', 'c')
+      .withInvestigator(alice, { locationId: instanceId('c') })
+      .withCard(hunter, hunterGhoul, at('a'))
+      .start();
 
     const { state: after, events } = execute(context, state, moveHunters);
 
@@ -128,12 +91,10 @@ describe('MoveHunters', () => {
     },
     { name: 'does not engage an aloof hunter on arrival', card: aloofHunter, zone: at('b') },
   ])('$name', ({ card, zone }) => {
-    const { context, state } = started({
-      places: ['a', 'b'],
-      edges: line('a', 'b'),
-      investigators: [investigator('alice', 'b')],
-      enemies: [enemy(hunter, card, at('a'))],
-    });
+    const { context, state } = line('a', 'b')
+      .withInvestigator(alice, { locationId: instanceId('b') })
+      .withCard(hunter, card, at('a'))
+      .start();
 
     const { state: after } = execute(context, state, moveHunters);
 
@@ -143,37 +104,33 @@ describe('MoveHunters', () => {
   it.each([
     {
       name: 'shares a location with an investigator',
-      edges: line('a', 'b'),
-      investigators: [investigator('alice', 'b'), investigator('bob', 'a')],
+      table: line('a', 'b')
+        .withInvestigator(alice, { locationId: instanceId('b') })
+        .withInvestigator(bob, { locationId: instanceId('a') }),
     },
-    { name: 'cannot reach anyone', edges: [], investigators: [investigator('alice', 'b')] },
+    {
+      name: 'cannot reach anyone',
+      table: places('a', 'b').withInvestigator(alice, { locationId: instanceId('b') }),
+    },
     {
       name: 'is cut off by a one-way connection',
-      edges: [edge('b', 'a', { oneWay: true })],
-      investigators: [investigator('alice', 'b')],
+      table: places('a', 'b')
+        .withConnection(instanceId('b'), instanceId('a'), { oneWay: true })
+        .withInvestigator(alice, { locationId: instanceId('b') }),
     },
-  ])('does not move a hunter that $name', ({ edges, investigators }) => {
-    const { context, state } = started({
-      places: ['a', 'b'],
-      edges,
-      investigators,
-      enemies: [enemy(hunter, hunterGhoul, at('a'))],
-    });
+  ])('does not move a hunter that $name', ({ table }) => {
+    const { context, state } = table.withCard(hunter, hunterGhoul, at('a')).start();
 
     expect(execute(context, state, moveHunters).events).toEqual([]);
   });
 
   it('does not move exhausted, engaged or non-hunter enemies', () => {
-    const { context, state } = started({
-      places: ['a', 'b', 'c'],
-      edges: line('a', 'b', 'c'),
-      investigators: [investigator('alice', 'c')],
-      enemies: [
-        enemy(instanceId('tired_hunter'), hunterGhoul, at('a')),
-        enemy(instanceId('engaged_hunter'), hunterGhoul, engagedWith(alice)),
-        enemy(instanceId('plain_ghoul'), plainGhoul, at('a')),
-      ],
-    });
+    const { context, state } = line('a', 'b', 'c')
+      .withInvestigator(alice, { locationId: instanceId('c') })
+      .withCard(instanceId('tired_hunter'), hunterGhoul, at('a'))
+      .withCard(instanceId('engaged_hunter'), hunterGhoul, engagedWith(alice))
+      .withCard(instanceId('plain_ghoul'), plainGhoul, at('a'))
+      .start();
     const exhausted = stateAfter(context, state, {
       type: 'ExhaustEnemy',
       enemyId: instanceId('tired_hunter'),
@@ -183,12 +140,11 @@ describe('MoveHunters', () => {
   });
 
   it('heads for the nearest investigator', () => {
-    const { context, state } = started({
-      places: ['x', 'far', 'a', 'near'],
-      edges: line('x', 'far', 'a', 'near'),
-      investigators: [investigator('alice', 'x'), investigator('bob', 'near')],
-      enemies: [enemy(hunter, hunterGhoul, at('a'))],
-    });
+    const { context, state } = line('x', 'far', 'a', 'near')
+      .withInvestigator(alice, { locationId: instanceId('x') })
+      .withInvestigator(bob, { locationId: instanceId('near') })
+      .withCard(hunter, hunterGhoul, at('a'))
+      .start();
 
     const { state: after } = execute(context, state, moveHunters);
 
@@ -196,12 +152,14 @@ describe('MoveHunters', () => {
   });
 
   it('moves the same way when equally near investigators share the first step', () => {
-    const { context, state } = started({
-      places: ['a', 'b', 'c', 'd'],
-      edges: [edge('a', 'b'), edge('b', 'c'), edge('b', 'd')],
-      investigators: [investigator('alice', 'c'), investigator('bob', 'd')],
-      enemies: [enemy(hunter, hunterGhoul, at('a'))],
-    });
+    const { context, state } = places('a', 'b', 'c', 'd')
+      .withConnection(instanceId('a'), instanceId('b'))
+      .withConnection(instanceId('b'), instanceId('c'))
+      .withConnection(instanceId('b'), instanceId('d'))
+      .withInvestigator(alice, { locationId: instanceId('c') })
+      .withInvestigator(bob, { locationId: instanceId('d') })
+      .withCard(hunter, hunterGhoul, at('a'))
+      .start();
 
     const { state: after, events } = execute(context, state, moveHunters);
 
@@ -211,11 +169,10 @@ describe('MoveHunters', () => {
 
   describe('ties', () => {
     it('asks for the destination when two shortest paths differ', () => {
-      const { context, state } = started({
-        ...fork,
-        investigators: [investigator('alice', 'd')],
-        enemies: [enemy(hunter, hunterGhoul, at('a'))],
-      });
+      const { context, state } = fork
+        .withInvestigator(alice, { locationId: instanceId('d') })
+        .withCard(hunter, hunterGhoul, at('a'))
+        .start();
 
       const { state: after } = execute(context, state, moveHunters);
 
@@ -226,11 +183,10 @@ describe('MoveHunters', () => {
     });
 
     it('rejects another hunter move while the question is open', () => {
-      const { context, state } = started({
-        ...fork,
-        investigators: [investigator('alice', 'd')],
-        enemies: [enemy(hunter, hunterGhoul, at('a'))],
-      });
+      const { context, state } = fork
+        .withInvestigator(alice, { locationId: instanceId('d') })
+        .withCard(hunter, hunterGhoul, at('a'))
+        .start();
       const asked = stateAfter(context, state, moveHunters);
 
       const rejection = rejectionFrom(context, asked, moveHunters);
@@ -242,11 +198,10 @@ describe('MoveHunters', () => {
     });
 
     it('moves the hunter to the location the players chose', () => {
-      const { context, state } = started({
-        ...fork,
-        investigators: [investigator('alice', 'd')],
-        enemies: [enemy(hunter, hunterGhoul, at('a'))],
-      });
+      const { context, state } = fork
+        .withInvestigator(alice, { locationId: instanceId('d') })
+        .withCard(hunter, hunterGhoul, at('a'))
+        .start();
       const asked = stateAfter(context, state, moveHunters);
 
       const after = stateAfter(context, asked, {
@@ -260,12 +215,11 @@ describe('MoveHunters', () => {
     });
 
     it('asks which investigator to hunt when equally near investigators lead apart', () => {
-      const { context, state } = started({
-        places: ['a', 'b', 'c'],
-        edges: [edge('a', 'b'), edge('a', 'c')],
-        investigators: [investigator('alice', 'b'), investigator('bob', 'c')],
-        enemies: [enemy(hunter, hunterGhoul, at('a'))],
-      });
+      const { context, state } = split
+        .withInvestigator(alice, { locationId: instanceId('b') })
+        .withInvestigator(bob, { locationId: instanceId('c') })
+        .withCard(hunter, hunterGhoul, at('a'))
+        .start();
 
       const { state: after } = execute(context, state, moveHunters);
 
@@ -279,12 +233,11 @@ describe('MoveHunters', () => {
     });
 
     it('engages the investigator the players chose when the hunter can reach them', () => {
-      const { context, state } = started({
-        places: ['a', 'b', 'c'],
-        edges: [edge('a', 'b'), edge('a', 'c')],
-        investigators: [investigator('alice', 'b'), investigator('bob', 'c')],
-        enemies: [enemy(hunter, hunterGhoul, at('a'))],
-      });
+      const { context, state } = split
+        .withInvestigator(alice, { locationId: instanceId('b') })
+        .withInvestigator(bob, { locationId: instanceId('c') })
+        .withCard(hunter, hunterGhoul, at('a'))
+        .start();
       const asked = stateAfter(context, state, moveHunters);
 
       const after = stateAfter(context, asked, {
@@ -297,12 +250,11 @@ describe('MoveHunters', () => {
     });
 
     it('lets prey pick between equally near investigators', () => {
-      const { context, state } = started({
-        places: ['a', 'b', 'c'],
-        edges: [edge('a', 'b'), edge('a', 'c')],
-        investigators: [investigator('alice', 'b', 1), investigator('bob', 'c', 2)],
-        enemies: [enemy(hunter, mostCluesPreyHunter, at('a'))],
-      });
+      const { context, state } = split
+        .withInvestigator(alice, { locationId: instanceId('b'), clues: 1 })
+        .withInvestigator(bob, { locationId: instanceId('c'), clues: 2 })
+        .withCard(hunter, mostCluesPreyHunter, at('a'))
+        .start();
 
       const { state: after } = execute(context, state, moveHunters);
 
@@ -310,11 +262,11 @@ describe('MoveHunters', () => {
     });
 
     it('asks for the destination after prey picked one investigator with two routes', () => {
-      const { context, state } = started({
-        ...fork,
-        investigators: [investigator('alice', 'd', 1), investigator('bob', 'd', 1)],
-        enemies: [enemy(hunter, mostCluesPreyHunter, at('a'))],
-      });
+      const { context, state } = fork
+        .withInvestigator(alice, { locationId: instanceId('d'), clues: 1 })
+        .withInvestigator(bob, { locationId: instanceId('d'), clues: 1 })
+        .withCard(hunter, mostCluesPreyHunter, at('a'))
+        .start();
 
       const { state: after } = execute(context, state, moveHunters);
 
@@ -328,12 +280,11 @@ describe('MoveHunters order', () => {
   const second = instanceId('second_hunter');
   /** a - b - c with alice at c: a hunter at a and one at b both have a step to take. */
   const twoHunters = () =>
-    started({
-      places: ['a', 'b', 'c'],
-      edges: line('a', 'b', 'c'),
-      investigators: [investigator('alice', 'c')],
-      enemies: [enemy(first, hunterGhoul, at('a')), enemy(second, hunterGhoul, at('b'))],
-    });
+    line('a', 'b', 'c')
+      .withInvestigator(alice, { locationId: instanceId('c') })
+      .withCard(first, hunterGhoul, at('a'))
+      .withCard(second, hunterGhoul, at('b'))
+      .start();
 
   it('asks the lead investigator for the order when two hunters would move, and moves none', () => {
     const { context, state } = twoHunters();
@@ -366,12 +317,11 @@ describe('MoveHunters order', () => {
   });
 
   it('moves a single hunter directly when no other hunter would move', () => {
-    const { context, state } = started({
-      places: ['a', 'b', 'c'],
-      edges: line('a', 'b', 'c'),
-      investigators: [investigator('alice', 'c')],
-      enemies: [enemy(first, hunterGhoul, at('a')), enemy(second, hunterGhoul, engagedWith(alice))],
-    });
+    const { context, state } = line('a', 'b', 'c')
+      .withInvestigator(alice, { locationId: instanceId('c') })
+      .withCard(first, hunterGhoul, at('a'))
+      .withCard(second, hunterGhoul, engagedWith(alice))
+      .start();
 
     const after = stateAfter(context, state, moveHunters);
 
@@ -381,12 +331,11 @@ describe('MoveHunters order', () => {
 
   it('skips a hunter that has an open decision about itself', () => {
     const waiting = instanceId('waiting_hunter');
-    const { context, state } = started({
-      places: ['a', 'b', 'c'],
-      edges: line('a', 'b', 'c'),
-      investigators: [investigator('alice', 'c')],
-      enemies: [enemy(waiting, hunterGhoul, at('a')), enemy(second, hunterGhoul, at('b'))],
-    });
+    const { context, state } = line('a', 'b', 'c')
+      .withInvestigator(alice, { locationId: instanceId('c') })
+      .withCard(waiting, hunterGhoul, at('a'))
+      .withCard(second, hunterGhoul, at('b'))
+      .start();
     const aboutWaiting: Command = {
       type: 'RequestDecision',
       decision: {
@@ -445,24 +394,19 @@ describe('answering the hunter order', () => {
   });
   /** a - b - c with alice at c: the hunters at a and at b both have a step to take. */
   const twoHunters = () =>
-    started({
-      places: ['a', 'b', 'c'],
-      edges: line('a', 'b', 'c'),
-      investigators: [investigator('alice', 'c')],
-      enemies: [enemy(first, hunterGhoul, at('a')), enemy(second, hunterGhoul, at('b'))],
-    });
+    line('a', 'b', 'c')
+      .withInvestigator(alice, { locationId: instanceId('c') })
+      .withCard(first, hunterGhoul, at('a'))
+      .withCard(second, hunterGhoul, at('b'))
+      .start();
   /** a - b - c - d with alice at d: the hunters at a, b and c all have a step to take. */
   const threeHunters = () =>
-    started({
-      places: ['a', 'b', 'c', 'd'],
-      edges: line('a', 'b', 'c', 'd'),
-      investigators: [investigator('alice', 'd')],
-      enemies: [
-        enemy(first, hunterGhoul, at('a')),
-        enemy(second, hunterGhoul, at('b')),
-        enemy(third, hunterGhoul, at('c')),
-      ],
-    });
+    line('a', 'b', 'c', 'd')
+      .withInvestigator(alice, { locationId: instanceId('d') })
+      .withCard(first, hunterGhoul, at('a'))
+      .withCard(second, hunterGhoul, at('b'))
+      .withCard(third, hunterGhoul, at('c'))
+      .start();
 
   it('moves the chosen hunter, which engages on arrival, then the other one, in one event list', () => {
     const { context, state } = twoHunters();
@@ -517,11 +461,11 @@ describe('answering the hunter order', () => {
 
   it("still raises the chosen hunter's own tie decision and moves the others", () => {
     const forked = instanceId('forked_hunter');
-    const { context, state } = started({
-      ...fork,
-      investigators: [investigator('alice', 'd')],
-      enemies: [enemy(forked, hunterGhoul, at('a')), enemy(second, hunterGhoul, at('b'))],
-    });
+    const { context, state } = fork
+      .withInvestigator(alice, { locationId: instanceId('d') })
+      .withCard(forked, hunterGhoul, at('a'))
+      .withCard(second, hunterGhoul, at('b'))
+      .start();
     const asked = stateAfter(context, state, moveHunters);
 
     const after = stateAfter(context, asked, chooseOrder(forked));
@@ -536,15 +480,12 @@ describe('MoveHunter', () => {
   const engaged = instanceId('engaged_hunter');
   const ghoul = instanceId('plain_ghoul');
   const layout = (): BuiltGame =>
-    started({
-      ...fork,
-      investigators: [investigator('alice', 'd')],
-      enemies: [
-        enemy(hunter, hunterGhoul, at('a')),
-        enemy(engaged, hunterGhoul, engagedWith(alice)),
-        enemy(ghoul, plainGhoul, at('a')),
-      ],
-    });
+    fork
+      .withInvestigator(alice, { locationId: instanceId('d') })
+      .withCard(hunter, hunterGhoul, at('a'))
+      .withCard(engaged, hunterGhoul, engagedWith(alice))
+      .withCard(ghoul, plainGhoul, at('a'))
+      .start();
 
   it.each([
     { name: 'an engaged enemy', enemyId: engaged, to: 'b', code: 'notAHunter' },
@@ -580,12 +521,10 @@ describe('MoveHunter', () => {
   });
 
   it('rejects moving towards an investigator the hunter cannot reach', () => {
-    const { context, state } = started({
-      places: ['a', 'b'],
-      edges: [],
-      investigators: [investigator('alice', 'b')],
-      enemies: [enemy(hunter, hunterGhoul, at('a'))],
-    });
+    const { context, state } = places('a', 'b')
+      .withInvestigator(alice, { locationId: instanceId('b') })
+      .withCard(hunter, hunterGhoul, at('a'))
+      .start();
 
     const rejection = rejectionFrom(context, state, {
       type: 'MoveHunter',
@@ -597,12 +536,10 @@ describe('MoveHunter', () => {
   });
 
   it('takes the only step towards an investigator', () => {
-    const { context, state } = started({
-      places: ['a', 'b', 'c'],
-      edges: line('a', 'b', 'c'),
-      investigators: [investigator('alice', 'c')],
-      enemies: [enemy(hunter, hunterGhoul, at('a'))],
-    });
+    const { context, state } = line('a', 'b', 'c')
+      .withInvestigator(alice, { locationId: instanceId('c') })
+      .withCard(hunter, hunterGhoul, at('a'))
+      .start();
 
     const after = stateAfter(context, state, {
       type: 'MoveHunter',
@@ -614,12 +551,10 @@ describe('MoveHunter', () => {
   });
 
   it('moves along its own rule when given neither a location nor an investigator', () => {
-    const { context, state } = started({
-      places: ['a', 'b', 'c'],
-      edges: line('a', 'b', 'c'),
-      investigators: [investigator('alice', 'c')],
-      enemies: [enemy(hunter, hunterGhoul, at('a'))],
-    });
+    const { context, state } = line('a', 'b', 'c')
+      .withInvestigator(alice, { locationId: instanceId('c') })
+      .withCard(hunter, hunterGhoul, at('a'))
+      .start();
 
     const after = stateAfter(context, state, { type: 'MoveHunter', enemyId: hunter });
 
@@ -627,11 +562,10 @@ describe('MoveHunter', () => {
   });
 
   it('asks the players when its own rule leaves a tie', () => {
-    const { context, state } = started({
-      ...fork,
-      investigators: [investigator('alice', 'd')],
-      enemies: [enemy(hunter, hunterGhoul, at('a'))],
-    });
+    const { context, state } = fork
+      .withInvestigator(alice, { locationId: instanceId('d') })
+      .withCard(hunter, hunterGhoul, at('a'))
+      .start();
 
     const after = stateAfter(context, state, { type: 'MoveHunter', enemyId: hunter });
 
@@ -643,39 +577,34 @@ describe('MoveHunters routes', () => {
   it.each([
     {
       name: 'a line',
-      places: ['a', 'b', 'c', 'd'],
-      edges: line('a', 'b', 'c', 'd'),
-      investigators: [investigator('alice', 'd')],
+      table: line('a', 'b', 'c', 'd').withInvestigator(alice, { locationId: instanceId('d') }),
       zone: at('b'),
     },
     {
       name: 'a cycle where alice is one step away and bob two',
-      places: ['a', 'b', 'c', 'd'],
-      edges: [...line('a', 'b', 'c', 'd'), edge('d', 'a')],
-      investigators: [investigator('alice', 'b'), investigator('bob', 'c')],
+      table: line('a', 'b', 'c', 'd')
+        .withConnection(instanceId('d'), instanceId('a'))
+        .withInvestigator(alice, { locationId: instanceId('b') })
+        .withInvestigator(bob, { locationId: instanceId('c') }),
       zone: engagedWith(alice),
     },
     {
       name: 'a one-way shortcut from the hunter to alice',
-      places: ['a', 'b', 'c', 'd'],
-      edges: [...line('a', 'b', 'c', 'd'), edge('a', 'd', { oneWay: true })],
-      investigators: [investigator('alice', 'd')],
+      table: line('a', 'b', 'c', 'd')
+        .withConnection(instanceId('a'), instanceId('d'), { oneWay: true })
+        .withInvestigator(alice, { locationId: instanceId('d') }),
       zone: engagedWith(alice),
     },
     {
       name: 'a map where bob cannot be reached',
-      places: ['a', 'b', 'e'],
-      edges: line('a', 'b'),
-      investigators: [investigator('alice', 'b'), investigator('bob', 'e')],
+      table: line('a', 'b')
+        .withLocation(instanceId('e'), location)
+        .withInvestigator(alice, { locationId: instanceId('b') })
+        .withInvestigator(bob, { locationId: instanceId('e') }),
       zone: engagedWith(alice),
     },
-  ])('on $name the hunter ends at $zone', ({ places, edges, investigators, zone }) => {
-    const { context, state: before } = started({
-      places,
-      edges,
-      investigators,
-      enemies: [enemy(hunter, hunterGhoul, at('a'))],
-    });
+  ])('on $name the hunter ends at $zone', ({ table, zone }) => {
+    const { context, state: before } = table.withCard(hunter, hunterGhoul, at('a')).start();
 
     const after = stateAfter(context, before, moveHunters);
 
