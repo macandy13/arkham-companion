@@ -1,13 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import {
   MAX_TRIGGERED_COMMANDS,
-  cardCode,
-  scenarioId,
+  atLocation,
+  blankAct,
+  blankAgenda,
+  blankEnemy,
+  blankLocation,
   checkInvariants,
   execute,
+  fixed,
   instanceId,
   investigatorId,
   mapId,
+  newGame,
+  perInvestigator,
   type Command,
   type Rejection,
   type EngineContext,
@@ -15,15 +21,7 @@ import {
   type ScenarioHooks,
 } from './index';
 import { triggeredCommands } from './triggers';
-import {
-  edge,
-  makeInvestigator,
-  rejectionFrom,
-  run,
-  stateAfter,
-  testContext,
-  withScenario,
-} from '../test/utils';
+import { rejectionFrom, stateAfter, withScenario } from '../test/utils';
 
 const main = mapId('main');
 const hall = instanceId('hall');
@@ -37,46 +35,44 @@ const act1 = instanceId('act1');
 const act2 = instanceId('act2');
 const alice = investigatorId('alice');
 
+/** The first agenda advances at 3 doom; the follow-up threshold check relies on it. */
+const firstAgendaCard = blankAgenda('first_agenda', fixed(3));
+const secondAgendaCard = blankAgenda('second_agenda', fixed(5), { stage: { number: 2 } });
+/** The first act needs 2 clues per investigator, the 2 alice spends to advance it. */
+const firstActCard = blankAct('first_act', { clues: perInvestigator(2) });
+const secondActCard = blankAct('second_act', { stage: { number: 2 } });
+/** The cellar has clues, so revealing it places them (a `TokensChanged` after its `CardFlipped`). */
+const cellarCard = blankLocation('cellar', { clues: perInvestigator(2) });
+const ghoulCard = blankEnemy('ghoul');
+
 /**
- * Alice with 2 clues in the revealed hall (L1), an unrevealed cellar (L2)
- * next to it and a set-aside crypt (L3); a ghoul (E1) at the hall and one in
- * the encounter deck; agendas A1 (threshold 3) and A2, acts C1 (2 clues per
- * investigator) and C2.
+ * Alice with 2 clues in the revealed hall, an unrevealed cellar next to it
+ * and a set-aside crypt; a ghoul at the hall and one in the encounter deck;
+ * the first and second agenda and act.
  */
+const table = newGame()
+  .withAgenda(agenda1, firstAgendaCard)
+  .withAgenda(agenda2, secondAgendaCard)
+  .withAct(act1, firstActCard)
+  .withAct(act2, secondActCard)
+  .withLocation(hall, blankLocation('hall'), { revealed: true })
+  .withLocation(cellar, cellarCard)
+  .withConnection(hall, cellar)
+  .withCard(crypt, blankLocation('crypt'), { kind: 'setAside' })
+  .withCard(ghoul, ghoulCard, atLocation(hall), { faceUp: true })
+  .withCard(deckGhoul, ghoulCard, { kind: 'encounterDeck' })
+  .withInvestigator(alice, { locationId: hall, clues: 2 });
+
 function startedState(): GameState {
-  return run(testContext, [
-    {
-      type: 'StartScenario',
-      scenarioId: scenarioId('triggers'),
-      difficulty: 'standard',
-      seed: 1,
-      investigators: [makeInvestigator({ id: 'alice', locationId: hall, clues: 2 })],
-      maps: { [main]: { name: 'Main', connections: [edge('hall', 'cellar')] } },
-      cards: [
-        { id: agenda1, code: cardCode('A1'), zone: { kind: 'agendaDeck' }, faceUp: true },
-        { id: agenda2, code: cardCode('A2'), zone: { kind: 'agendaDeck' }, faceUp: true },
-        { id: act1, code: cardCode('C1'), zone: { kind: 'actDeck' }, faceUp: true },
-        { id: act2, code: cardCode('C2'), zone: { kind: 'actDeck' }, faceUp: true },
-        { id: hall, code: cardCode('L1'), zone: { kind: 'location', mapId: main }, faceUp: true },
-        { id: cellar, code: cardCode('L2'), zone: { kind: 'location', mapId: main } },
-        { id: crypt, code: cardCode('L3'), zone: { kind: 'setAside' } },
-        {
-          id: ghoul,
-          code: cardCode('E1'),
-          zone: { kind: 'atLocation', locationId: hall },
-          faceUp: true,
-        },
-        { id: deckGhoul, code: cardCode('E1'), zone: { kind: 'encounterDeck' } },
-      ],
-    },
-  ]).state;
+  return table.start().state;
 }
 
+/** The context of the table playing a scenario with `hooks`, and with the card `effects` if given. */
 function withHooks(
   hooks: Partial<ScenarioHooks>,
   effects?: EngineContext['effects'],
 ): EngineContext {
-  return { ...withScenario(testContext, { hooks }), ...(effects ? { effects } : {}) };
+  return { ...withScenario(table.context(), { hooks }), ...(effects ? { effects } : {}) };
 }
 
 const placeDoomOnGhoul: Command = { type: 'PlaceDoom', cardId: ghoul, amount: 1 };
@@ -128,11 +124,11 @@ describe('trigger bus', () => {
     const seen: unknown[] = [];
     const ctx = withHooks({
       onAgendaAdvance: {
-        A1: (_ctx, state) => {
+        first_agenda: (_ctx, state) => {
           seen.push({ current: state.agenda.current, faceUp: state.cards[agenda1]?.faceUp });
           return [{ type: 'RevealLocation', locationId: cellar }];
         },
-        A2: () => [{ type: 'PlaceDoom', cardId: ghoul, amount: 1 }],
+        second_agenda: () => [{ type: 'PlaceDoom', cardId: ghoul, amount: 1 }],
       },
     });
 
@@ -152,7 +148,9 @@ describe('trigger bus', () => {
   });
 
   it('applies a reverse-side effect on the current agenda to the advancing agenda', () => {
-    const ctx = withHooks({ onAgendaAdvance: { A1: () => [{ type: 'PlaceDoom', amount: 1 }] } });
+    const ctx = withHooks({
+      onAgendaAdvance: { first_agenda: () => [{ type: 'PlaceDoom', amount: 1 }] },
+    });
 
     const { state } = execute(ctx, startedState(), { type: 'AdvanceAgenda' });
 
@@ -162,7 +160,7 @@ describe('trigger bus', () => {
 
   it('lets the reverse side of the last agenda end the scenario with its resolution', () => {
     const ctx = withHooks({
-      onAgendaAdvance: { A2: () => [{ type: 'EndScenario', resolution: 'R2' }] },
+      onAgendaAdvance: { second_agenda: () => [{ type: 'EndScenario', resolution: 'R2' }] },
     });
     const lastAgenda = stateAfter(ctx, startedState(), { type: 'AdvanceAgenda' });
 
@@ -179,7 +177,7 @@ describe('trigger bus', () => {
 
   it('prefers the resolution of the reverse side over the fallback resolution', () => {
     const ctx = withHooks({
-      onAgendaAdvance: { A2: () => [{ type: 'EndScenario', resolution: 'R2' }] },
+      onAgendaAdvance: { second_agenda: () => [{ type: 'EndScenario', resolution: 'R2' }] },
     });
     const lastAgenda = stateAfter(ctx, startedState(), { type: 'AdvanceAgenda' });
 
@@ -195,7 +193,7 @@ describe('trigger bus', () => {
     const currentActs: unknown[] = [];
     const ctx = withHooks({
       onActAdvance: {
-        C1: (_ctx, state) => {
+        first_act: (_ctx, state) => {
           currentActs.push(state.act.current);
           return [{ type: 'RevealLocation', locationId: cellar }];
         },
@@ -213,7 +211,7 @@ describe('trigger bus', () => {
     const ctx = withHooks(
       {},
       {
-        L2: {
+        cellar: {
           onReveal: (_ctx, _state, event) => [
             { type: 'PlaceDoom', cardId: event.cardId, amount: 1 },
           ],
@@ -230,7 +228,7 @@ describe('trigger bus', () => {
     const ctx = withHooks(
       {},
       {
-        L2: {
+        cellar: {
           onReveal: (_ctx, _state, event) => [
             { type: 'AddConnection', mapId: main, from: event.cardId, to: crypt },
           ],
@@ -256,7 +254,7 @@ describe('trigger bus', () => {
   it('does not run onReveal when a card is turned face down', () => {
     const ctx = withHooks(
       {},
-      { A1: { onReveal: () => [{ type: 'RevealLocation', locationId: cellar }] } },
+      { first_agenda: { onReveal: () => [{ type: 'RevealLocation', locationId: cellar }] } },
     );
 
     const { state } = execute(ctx, startedState(), { type: 'AdvanceAgenda' });
@@ -266,7 +264,7 @@ describe('trigger bus', () => {
 
   it('resolves the forced effects a follow-up triggers within the same command', () => {
     const ctx = withHooks({
-      onActAdvance: { C1: () => [placeDoomOnGhoul] },
+      onActAdvance: { first_act: () => [placeDoomOnGhoul] },
       afterDoomPlaced: () => [{ type: 'RevealLocation', locationId: cellar }],
     });
 
@@ -279,7 +277,7 @@ describe('trigger bus', () => {
   it('runs follow-ups through the full command handling, including a doom threshold check', () => {
     const ctx = withHooks({
       onActAdvance: {
-        C1: () => [{ type: 'PlaceDoom', amount: 3 }, { type: 'CheckDoomThreshold' }],
+        first_act: () => [{ type: 'PlaceDoom', amount: 3 }, { type: 'CheckDoomThreshold' }],
       },
     });
 
@@ -290,7 +288,7 @@ describe('trigger bus', () => {
 });
 
 describe('afterEnemyDefeated', () => {
-  /** Advances the act (C1 to C2) when the hall's ghoul is defeated, as "if this enemy is defeated, advance". */
+  /** Advances the act (first to second) when the hall's ghoul is defeated, as "if this enemy is defeated, advance". */
   const advanceOnGhoulDefeat = withHooks({
     afterEnemyDefeated: (_ctx, _state, event) =>
       event.enemyId === ghoul ? [{ type: 'AdvanceAct' }] : [],
@@ -371,7 +369,7 @@ describe('trigger bus failures', () => {
 
   it('reports the innermost rejected follow-up of a nested chain', () => {
     const ctx = withHooks({
-      onActAdvance: { C1: () => [placeDoomOnGhoul] },
+      onActAdvance: { first_act: () => [placeDoomOnGhoul] },
       afterDoomPlaced: () => [{ type: 'RevealLocation', locationId: hall }],
     });
 
@@ -393,7 +391,7 @@ describe('onCardEnters', () => {
         return [];
       },
     });
-    const to = { kind: 'atLocation' as const, locationId: hall };
+    const to = atLocation(hall);
 
     execute(ctx, startedState(), { type: 'MoveCard', cardId: deckGhoul, to });
     execute(ctx, startedState(), {

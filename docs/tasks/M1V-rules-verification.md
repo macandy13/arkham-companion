@@ -60,9 +60,14 @@ Follow-ups: the held command has one slot (`GameMeta.heldAction`). A surge card 
 
 **Slices**
 
-1. [ ] `newGame()` builder and blank cards (`blankLocation`, `blankEnemy`, …), zone constructors, `forced_attacks.test.ts` as the first migrated file.
-2. [ ] Migrate the board and enemy tests: `skill_tests`, `enemies`, `hunters`, `board`, `investigators`, `elimination`, `turns`.
-3. [ ] Migrate the rest once the resolution queue (M1V.1 slice 3) has merged, since it edits them: `decisions`, `triggers`, `encounter`, `attacks_of_opportunity`, `phases`, `doom`, `undo`, `skill_modifiers`, `format_board`.
-4. [ ] Remove what is left unused of `startBoard`, `makeCard`, `testCardDefs` and the `L*`/`E*` codes, and point `docs/coding-guidelines.md` §3 at the builder only.
+1. [x] `newGame()` builder and blank cards (`blankLocation`, `blankEnemy`, …), zone constructors, `forced_attacks.test.ts` as the first migrated file (#104).
+2. [ ] Migrate `skill_tests` and `hunters`, then `enemies` (two PRs, for the size budget).
+3. [ ] Migrate `board`, `investigators`, `elimination`, `turns`, `lookup`.
+4. [ ] Migrate `decisions`, `triggers`, `attacks_of_opportunity`, `describe_decision`.
+5. [ ] Migrate `encounter`.
+6. [ ] Migrate `phases`, `doom`, `undo`, `skill_modifiers`, `format_board`, `engine`, `replay`.
+7. [ ] Remove what is left unused of `startBoard`, `makeCard`, `makeInvestigator`, `testCardDefs` and the `L*`/`E*` codes, and point `docs/coding-guidelines.md` §3 at the builder only.
+
+The slices are stacked PRs. Slices 4–6 edit test files the resolution queue (M1V.1 slice 3) also changes; whichever merges second merges the other in. Tests of setup compilation (`setup`, The Gathering) keep `startScenario`, since they test the real setup.
 
 Each migration slice keeps the tests' assertions as they are; the builder adds `with*` methods (seed, difficulty, scenario, hidden maps) as the first test needs them.

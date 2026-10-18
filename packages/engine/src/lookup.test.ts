@@ -1,15 +1,23 @@
 import { describe, expect, it } from 'vitest';
-import { cardCode, instanceId } from './index';
+import {
+  atLocation,
+  blankAsset,
+  blankEnemy,
+  blankLocation,
+  cardCode,
+  instanceId,
+  newGame,
+} from './index';
 import { locationsInPlay, locationsNamed } from './board';
 import { cardsAtLocation, cardsNamed, cardsOfType, requireCard } from './lookup';
 import type { CardInstance } from './state';
-import { contextWith, makeCard, rejectionOf, startBoard } from '../test/utils';
+import { rejectionOf } from '../test/utils';
 
 describe('requireCard', () => {
   const known = instanceId('known');
   const card: CardInstance = {
     id: known,
-    code: cardCode('L1'),
+    code: cardCode('known_card'),
     zone: { kind: 'outOfGame' },
     faceUp: true,
     exhausted: false,
@@ -32,24 +40,22 @@ describe('requireCard', () => {
 });
 
 describe('card queries', () => {
-  const ctx = contextWith(
-    makeCard({ code: 'attic_location', name: 'Attic', typeCode: 'location' }),
-    makeCard({ code: 'cellar_location', name: 'Cellar', typeCode: 'location' }),
-    makeCard({ code: 'attic_ghoul', name: 'Attic', typeCode: 'enemy' }),
-    makeCard({ code: 'relic', name: 'Relic', typeCode: 'asset' }),
-  );
+  /** Two locations and an enemy share the name Attic, so name searches find cards of several types. */
+  const atticLocation = blankLocation('attic_location', { name: 'Attic' });
+  const cellarLocation = blankLocation('cellar_location', { name: 'Cellar' });
+  const atticGhoulCard = blankEnemy('attic_ghoul', { name: 'Attic' });
+  const relicCard = blankAsset('relic', { name: 'Relic' });
   const mainAttic = instanceId('main_attic');
   const mainCellar = instanceId('main_cellar');
   const setAsideAttic = instanceId('set_aside_attic');
   const atticGhoul = instanceId('attic_ghoul_card');
-  const state = startBoard(ctx, {
-    maps: { main: { locations: { main_attic: 'attic_location', main_cellar: 'cellar_location' } } },
-    setAside: {
-      set_aside_attic: 'attic_location',
-      attic_ghoul_card: 'attic_ghoul',
-      relic_card: 'relic',
-    },
-  });
+  const { context: ctx, state } = newGame()
+    .withLocation(mainAttic, atticLocation)
+    .withLocation(mainCellar, cellarLocation)
+    .withCard(setAsideAttic, atticLocation, { kind: 'setAside' })
+    .withCard(atticGhoul, atticGhoulCard, { kind: 'setAside' })
+    .withCard(instanceId('relic_card'), relicCard, { kind: 'setAside' })
+    .start();
 
   it('finds all cards of a type, wherever they are', () => {
     const ids = cardsOfType(ctx, state, 'location').map((card) => card.id);
@@ -89,33 +95,20 @@ describe('card queries', () => {
 });
 
 describe('cardsAtLocation', () => {
-  const ctx = contextWith(
-    makeCard({ code: 'cellar', name: 'Cellar', typeCode: 'location' }),
-    makeCard({ code: 'attic', name: 'Attic', typeCode: 'location' }),
-    makeCard({ code: 'ghoul', name: 'Ghoul', typeCode: 'enemy' }),
-    makeCard({ code: 'relic', name: 'Relic', typeCode: 'asset' }),
-  );
+  const ghoulCard = blankEnemy('ghoul');
+  const relicCard = blankAsset('relic');
   const cellar = instanceId('cellar');
   const attic = instanceId('attic');
   const cellarGhoul = instanceId('cellar_ghoul');
   const cellarRelic = instanceId('cellar_relic');
   const atticGhoul = instanceId('attic_ghoul');
-  const state = startBoard(ctx, {
-    maps: { main: { locations: { cellar: 'cellar', attic: 'attic' } } },
-    cards: [
-      {
-        id: cellarGhoul,
-        code: cardCode('ghoul'),
-        zone: { kind: 'atLocation', locationId: cellar },
-      },
-      { id: atticGhoul, code: cardCode('ghoul'), zone: { kind: 'atLocation', locationId: attic } },
-      {
-        id: cellarRelic,
-        code: cardCode('relic'),
-        zone: { kind: 'atLocation', locationId: cellar },
-      },
-    ],
-  });
+  const { state } = newGame()
+    .withLocation(cellar, blankLocation('cellar'))
+    .withLocation(attic, blankLocation('attic'))
+    .withCard(cellarGhoul, ghoulCard, atLocation(cellar))
+    .withCard(atticGhoul, ghoulCard, atLocation(attic))
+    .withCard(cellarRelic, relicCard, atLocation(cellar))
+    .start();
 
   it('finds the cards at one location, of any type, in card order', () => {
     expect(cardsAtLocation(state, cellar).map((card) => card.id)).toEqual([

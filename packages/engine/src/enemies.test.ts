@@ -1,32 +1,28 @@
 import { describe, expect, it } from 'vitest';
 import {
   apply,
-  cardCode,
+  atLocation,
+  blankAsset,
+  blankEnemy,
+  blankLocation,
   checkInvariants,
   decisionId,
   enemyAttackList,
+  engagedWith,
   execute,
   instanceId,
   investigatorId,
+  newGame,
+  perInvestigator,
   zoneKey,
+  type GameBuilder,
   type GameState,
   type InstanceId,
-  type Investigator,
-  type StartingCard,
   type Zone,
 } from './index';
 import { engageEvents } from './engagement';
 import { replay } from './reducer';
-import {
-  contextWith,
-  edge,
-  makeCard,
-  makeInvestigator,
-  perInvestigator,
-  rejectionFrom,
-  startBoard,
-  stateAfter,
-} from '../test/utils';
+import { rejectionFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -35,91 +31,48 @@ const cellar = instanceId('cellar');
 const attic = instanceId('attic');
 const ghoul = instanceId('ghoul');
 
-/**
- * The cards of these tests. The three locations lie in a line (hall - cellar -
- * attic, see `startedWith`). Every enemy is a plain ghoul (2 health per
- * investigator, 1 damage, 2 horror) unless its code names a keyword.
- */
-const ctx = contextWith(
-  makeCard({ code: 'hall', name: 'Hall', typeCode: 'location' }),
-  makeCard({ code: 'cellar', name: 'Cellar', typeCode: 'location' }),
-  makeCard({ code: 'attic', name: 'Attic', typeCode: 'location' }),
-  makeCard({
-    code: 'ghoul',
-    typeCode: 'enemy',
-    health: perInvestigator(2),
-    damage: 1,
-    horror: 2,
-  }),
-  makeCard({ code: 'victory_ghoul', typeCode: 'enemy', victory: 1 }),
-  makeCard({ code: 'aloof_ghoul', typeCode: 'enemy', keywords: [{ name: 'aloof' }] }),
-  makeCard({
-    code: 'massive_ghoul',
-    typeCode: 'enemy',
-    damage: 2,
-    keywords: [{ name: 'massive' }],
-  }),
-  makeCard({
-    code: 'most_clues_prey_ghoul',
-    typeCode: 'enemy',
-    keywords: [{ name: 'prey', detail: 'Most clues' }],
-  }),
-  makeCard({
-    code: 'cellar_spawn_ghoul',
-    typeCode: 'enemy',
-    keywords: [{ name: 'spawn', detail: 'Cellar' }],
-  }),
-  makeCard({
-    code: 'unreadable_spawn_ghoul',
-    typeCode: 'enemy',
-    keywords: [{ name: 'spawn', detail: 'the location with the most clues' }],
-  }),
-  makeCard({ code: 'relic', typeCode: 'asset' }),
-);
-
-const at = (locationId: InstanceId): Zone => ({ kind: 'atLocation', locationId });
-const engagedWith = (investigatorId: Investigator['id']): Zone => ({
-  kind: 'engaged',
-  investigatorId,
+const hallCard = blankLocation('hall');
+const cellarCard = blankLocation('cellar');
+const atticCard = blankLocation('attic');
+/** The plain enemy of these tests: 2 health per investigator, 1 damage, 2 horror. */
+const ghoulCard = blankEnemy('ghoul', { health: perInvestigator(2), damage: 1, horror: 2 });
+const victoryGhoulCard = blankEnemy('victory_ghoul', { victory: 1 });
+const aloofGhoulCard = blankEnemy('aloof_ghoul', { keywords: [{ name: 'aloof' }] });
+/** A massive enemy dealing 2 damage and no horror. */
+const massiveGhoulCard = blankEnemy('massive_ghoul', {
+  damage: 2,
+  keywords: [{ name: 'massive' }],
 });
+const mostCluesPreyGhoulCard = blankEnemy('most_clues_prey_ghoul', {
+  keywords: [{ name: 'prey', detail: 'Most clues' }],
+});
+const cellarSpawnGhoulCard = blankEnemy('cellar_spawn_ghoul', {
+  keywords: [{ name: 'spawn', detail: 'Cellar' }],
+});
+const unreadableSpawnGhoulCard = blankEnemy('unreadable_spawn_ghoul', {
+  keywords: [{ name: 'spawn', detail: 'the location with the most clues' }],
+});
+const relicCard = blankAsset('relic');
+
 const setAside: Zone = { kind: 'setAside' };
 const encounterDiscard: Zone = { kind: 'encounterDiscard' };
 
-/** A card to create: `id` is how the test refers to it, `code` says what it is. */
-function placed(id: InstanceId, code: string, zone: Zone): StartingCard {
-  return { id, code: cardCode(code), zone };
-}
+/** The map of these tests: hall - cellar - attic in a line, without investigators. */
+const hallCellarAttic = newGame()
+  .withLocation(hall, hallCard)
+  .withLocation(cellar, cellarCard)
+  .withLocation(attic, atticCard)
+  .withConnection(hall, cellar)
+  .withConnection(cellar, attic);
 
-/**
- * A started scenario on the map hall - cellar - attic (plus the `extraLocations`
- * given as instance ID to code), with `cards` besides the locations. The
- * default investigator is alice in the hall.
- */
-function startedWith(
-  cards: StartingCard[],
-  {
-    investigators = [makeInvestigator({ id: 'alice', locationId: hall })],
-    extraLocations = {},
-  }: { investigators?: Investigator[]; extraLocations?: Record<string, string> } = {},
-): GameState {
-  return startBoard(ctx, {
-    maps: {
-      main: {
-        locations: { hall: 'hall', cellar: 'cellar', attic: 'attic', ...extraLocations },
-        connections: [edge('hall', 'cellar'), edge('cellar', 'attic')],
-      },
-    },
-    investigators,
-    cards,
-  });
-}
+/** The map with alice (seat 0) in the hall, the table of most tests. */
+const aliceInHall = hallCellarAttic.withInvestigator(alice, { locationId: hall });
 
-/** Alice (seat 0) and bob (seat 1), both at `where`, with the given clues. */
-function aliceAndBobAt(where: InstanceId, clues: { alice: number; bob: number }): Investigator[] {
-  return [
-    makeInvestigator({ id: 'alice', seat: 0, locationId: where, clues: clues.alice }),
-    makeInvestigator({ id: 'bob', seat: 1, locationId: where, clues: clues.bob }),
-  ];
+/** The map with alice (seat 0) and bob (seat 1), both at `where`, with the given clues. */
+function aliceAndBobAt(where: InstanceId, clues: { alice: number; bob: number }): GameBuilder {
+  return hallCellarAttic
+    .withInvestigator(alice, { locationId: where, clues: clues.alice })
+    .withInvestigator(bob, { locationId: where, clues: clues.bob });
 }
 
 function zoneOf(state: GameState, cardId: InstanceId): Zone | undefined {
@@ -130,53 +83,53 @@ describe('SpawnEnemy', () => {
   it.each([
     {
       name: 'engages the drawer at the drawer`s location',
-      code: 'ghoul',
+      card: ghoulCard,
       target: { investigatorId: alice },
       zone: engagedWith(alice),
     },
     {
       name: 'stays unengaged when nobody is at the spawn location',
-      code: 'ghoul',
+      card: ghoulCard,
       target: { at: attic },
-      zone: at(attic),
+      zone: atLocation(attic),
     },
     {
       name: 'follows the spawn keyword',
-      code: 'cellar_spawn_ghoul',
+      card: cellarSpawnGhoulCard,
       target: { investigatorId: alice },
-      zone: at(cellar),
+      zone: atLocation(cellar),
     },
     {
       name: 'lets an explicit location override the spawn keyword',
-      code: 'cellar_spawn_ghoul',
+      card: cellarSpawnGhoulCard,
       target: { at: attic },
-      zone: at(attic),
+      zone: atLocation(attic),
     },
     {
       name: 'does not engage an aloof enemy',
-      code: 'aloof_ghoul',
+      card: aloofGhoulCard,
       target: { investigatorId: alice },
-      zone: at(hall),
+      zone: atLocation(hall),
     },
     {
       name: 'keeps a massive enemy at the location',
-      code: 'massive_ghoul',
+      card: massiveGhoulCard,
       target: { investigatorId: alice },
-      zone: at(hall),
+      zone: atLocation(hall),
     },
-  ])('$name', ({ code, target, zone }) => {
-    const state = startedWith([placed(ghoul, code, setAside)]);
+  ])('$name', ({ card, target, zone }) => {
+    const { context, state } = aliceInHall.withCard(ghoul, card, setAside).start();
 
-    const after = stateAfter(ctx, state, { type: 'SpawnEnemy', enemyId: ghoul, ...target });
+    const after = stateAfter(context, state, { type: 'SpawnEnemy', enemyId: ghoul, ...target });
 
     expect(zoneOf(after, ghoul)).toEqual(zone);
     expect(checkInvariants(after)).toEqual([]);
   });
 
   it('produces a move and an engagement', () => {
-    const state = startedWith([placed(ghoul, 'ghoul', setAside)]);
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, setAside).start();
 
-    const { events } = execute(ctx, state, {
+    const { events } = execute(context, state, {
       type: 'SpawnEnemy',
       enemyId: ghoul,
       investigatorId: alice,
@@ -187,11 +140,12 @@ describe('SpawnEnemy', () => {
 
   it('asks the players when the spawn keyword matches several locations', () => {
     const second = instanceId('second_cellar');
-    const state = startedWith([placed(ghoul, 'cellar_spawn_ghoul', setAside)], {
-      extraLocations: { second_cellar: 'cellar' },
-    });
+    const { context, state } = aliceInHall
+      .withLocation(second, cellarCard)
+      .withCard(ghoul, cellarSpawnGhoulCard, setAside)
+      .start();
 
-    const after = stateAfter(ctx, state, {
+    const after = stateAfter(context, state, {
       type: 'SpawnEnemy',
       enemyId: ghoul,
       investigatorId: alice,
@@ -208,9 +162,11 @@ describe('SpawnEnemy', () => {
   });
 
   it('asks the players, among all locations in play, when the spawn text is unreadable', () => {
-    const state = startedWith([placed(ghoul, 'unreadable_spawn_ghoul', setAside)]);
+    const { context, state } = aliceInHall
+      .withCard(ghoul, unreadableSpawnGhoulCard, setAside)
+      .start();
 
-    const after = stateAfter(ctx, state, {
+    const after = stateAfter(context, state, {
       type: 'SpawnEnemy',
       enemyId: ghoul,
       investigatorId: alice,
@@ -226,13 +182,13 @@ describe('SpawnEnemy', () => {
   });
 
   it('discards the enemy when the named location is not in play', () => {
-    const state = startedWith([placed(ghoul, 'cellar_spawn_ghoul', setAside)]);
-    const withoutCellar = stateAfter(ctx, state, {
+    const { context, state } = aliceInHall.withCard(ghoul, cellarSpawnGhoulCard, setAside).start();
+    const withoutCellar = stateAfter(context, state, {
       type: 'ManualAdjust',
       adjustment: { kind: 'moveCard', cardId: cellar, to: setAside },
     });
 
-    const after = stateAfter(ctx, withoutCellar, {
+    const after = stateAfter(context, withoutCellar, {
       type: 'SpawnEnemy',
       enemyId: ghoul,
       investigatorId: alice,
@@ -243,37 +199,37 @@ describe('SpawnEnemy', () => {
   });
 
   it('never engages an exhausted enemy', () => {
-    const state = startedWith([placed(ghoul, 'ghoul', at(attic))]);
-    const exhausted = stateAfter(ctx, state, { type: 'ExhaustEnemy', enemyId: ghoul });
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, atLocation(attic)).start();
+    const exhausted = stateAfter(context, state, { type: 'ExhaustEnemy', enemyId: ghoul });
     const arrivedInHall = replay(
-      [{ type: 'CardMoved', cardId: ghoul, from: at(attic), to: at(hall) }],
+      [{ type: 'CardMoved', cardId: ghoul, from: atLocation(attic), to: atLocation(hall) }],
       exhausted,
     );
 
-    expect(engageEvents(ctx, arrivedInHall, ghoul)).toEqual([]);
-    expect(engageEvents(ctx, arrivedInHall, ghoul, alice)).toEqual([]);
+    expect(engageEvents(context, arrivedInHall, ghoul)).toEqual([]);
+    expect(engageEvents(context, arrivedInHall, ghoul, alice)).toEqual([]);
   });
 
   describe('with alice (1 clue) and bob (3 clues) at the hall', () => {
-    const investigators = aliceAndBobAt(hall, { alice: 1, bob: 3 });
+    const aliceAndBob = aliceAndBobAt(hall, { alice: 1, bob: 3 });
 
     it('engages the investigator its prey picks, when spawned by an effect', () => {
-      const state = startedWith([placed(ghoul, 'most_clues_prey_ghoul', setAside)], {
-        investigators,
-      });
+      const { context, state } = aliceAndBob
+        .withCard(ghoul, mostCluesPreyGhoulCard, setAside)
+        .start();
 
-      const after = stateAfter(ctx, state, { type: 'SpawnEnemy', enemyId: ghoul, at: hall });
+      const after = stateAfter(context, state, { type: 'SpawnEnemy', enemyId: ghoul, at: hall });
 
       expect(zoneOf(after, ghoul)).toEqual(engagedWith(bob));
       expect(after.pending).toEqual([]);
     });
 
     it('engages the drawer whatever the prey, without a spawn instruction', () => {
-      const state = startedWith([placed(ghoul, 'most_clues_prey_ghoul', setAside)], {
-        investigators,
-      });
+      const { context, state } = aliceAndBob
+        .withCard(ghoul, mostCluesPreyGhoulCard, setAside)
+        .start();
 
-      const after = stateAfter(ctx, state, {
+      const after = stateAfter(context, state, {
         type: 'SpawnEnemy',
         enemyId: ghoul,
         investigatorId: alice,
@@ -284,11 +240,11 @@ describe('SpawnEnemy', () => {
     });
 
     it('asks the players when there is no prey and no drawer', () => {
-      const state = startedWith([placed(ghoul, 'ghoul', setAside)], { investigators });
+      const { context, state } = aliceAndBob.withCard(ghoul, ghoulCard, setAside).start();
 
-      const after = stateAfter(ctx, state, { type: 'SpawnEnemy', enemyId: ghoul, at: hall });
+      const after = stateAfter(context, state, { type: 'SpawnEnemy', enemyId: ghoul, at: hall });
 
-      expect(zoneOf(after, ghoul)).toEqual(at(hall));
+      expect(zoneOf(after, ghoul)).toEqual(atLocation(hall));
       expect(after.pending).toMatchObject([
         {
           kind: 'chooseInvestigator',
@@ -300,12 +256,12 @@ describe('SpawnEnemy', () => {
   });
 
   it('asks the players when prey is tied, and engaging answers the question', () => {
-    const state = startedWith([placed(ghoul, 'most_clues_prey_ghoul', setAside)], {
-      investigators: aliceAndBobAt(hall, { alice: 2, bob: 2 }),
-    });
-    const asked = stateAfter(ctx, state, { type: 'SpawnEnemy', enemyId: ghoul, at: hall });
+    const { context, state } = aliceAndBobAt(hall, { alice: 2, bob: 2 })
+      .withCard(ghoul, mostCluesPreyGhoulCard, setAside)
+      .start();
+    const asked = stateAfter(context, state, { type: 'SpawnEnemy', enemyId: ghoul, at: hall });
 
-    const after = stateAfter(ctx, asked, {
+    const after = stateAfter(context, asked, {
       type: 'ResolveDecision',
       decisionId: decisionId('engage:ghoul'),
       optionId: bob,
@@ -319,46 +275,53 @@ describe('SpawnEnemy', () => {
   it.each([
     {
       name: 'an enemy that is already in play',
-      card: placed(ghoul, 'ghoul', at(hall)),
+      card: ghoulCard,
+      zone: atLocation(hall),
       command: { type: 'SpawnEnemy', enemyId: ghoul, at: hall },
       rejection: { code: 'enemyAlreadyInPlay', cardId: ghoul },
     },
     {
       name: 'a card that is not an enemy',
-      card: placed(ghoul, 'relic', setAside),
+      card: relicCard,
+      zone: setAside,
       command: { type: 'SpawnEnemy', enemyId: ghoul, at: hall },
       rejection: { code: 'notAnEnemy', cardId: ghoul },
     },
     {
       name: 'a spawn without any location',
-      card: placed(ghoul, 'ghoul', setAside),
+      card: ghoulCard,
+      zone: setAside,
       command: { type: 'SpawnEnemy', enemyId: ghoul },
       rejection: { code: 'noSpawnLocation', cardId: ghoul },
     },
     {
       name: 'an explicit location that is not on a map',
-      card: placed(ghoul, 'ghoul', setAside),
+      card: ghoulCard,
+      zone: setAside,
       command: { type: 'SpawnEnemy', enemyId: ghoul, at: instanceId('relic_card') },
       rejection: { code: 'notALocation', cardId: instanceId('relic_card') },
     },
-  ] as const)('rejects $name', ({ card, command, rejection }) => {
-    const state = startedWith([card, placed(instanceId('relic_card'), 'relic', setAside)]);
+  ] as const)('rejects $name', ({ card, zone, command, rejection }) => {
+    const { context, state } = aliceInHall
+      .withCard(ghoul, card, zone)
+      .withCard(instanceId('relic_card'), relicCard, setAside)
+      .start();
 
-    expect(rejectionFrom(ctx, state, command)).toEqual(rejection);
+    expect(rejectionFrom(context, state, command)).toEqual(rejection);
   });
 });
 
 describe('setup', () => {
   it('engages an enemy that starts at the investigators` location', () => {
-    const state = startedWith([placed(ghoul, 'ghoul', at(hall))]);
+    const { state } = aliceInHall.withCard(ghoul, ghoulCard, atLocation(hall)).start();
 
     expect(zoneOf(state, ghoul)).toEqual(engagedWith(alice));
   });
 
   it('leaves an enemy that starts elsewhere unengaged', () => {
-    const state = startedWith([placed(ghoul, 'ghoul', at(attic))]);
+    const { state } = aliceInHall.withCard(ghoul, ghoulCard, atLocation(attic)).start();
 
-    expect(zoneOf(state, ghoul)).toEqual(at(attic));
+    expect(zoneOf(state, ghoul)).toEqual(atLocation(attic));
   });
 });
 
@@ -370,47 +333,47 @@ describe('moving into an enemy`s location', () => {
   } as const;
 
   it.each([
-    { code: 'ghoul', name: 'engages a ready enemy', zone: engagedWith(alice) },
-    { code: 'aloof_ghoul', name: 'leaves an aloof enemy unengaged', zone: at(cellar) },
+    { card: ghoulCard, name: 'engages a ready enemy', zone: engagedWith(alice) },
+    { card: aloofGhoulCard, name: 'leaves an aloof enemy unengaged', zone: atLocation(cellar) },
     {
-      code: 'massive_ghoul',
+      card: massiveGhoulCard,
       name: 'leaves a massive enemy at the location, out of any threat area',
-      zone: at(cellar),
+      zone: atLocation(cellar),
     },
-  ])('$name', ({ code, zone }) => {
-    const state = startedWith([placed(ghoul, code, at(cellar))]);
+  ])('$name', ({ card, zone }) => {
+    const { context, state } = aliceInHall.withCard(ghoul, card, atLocation(cellar)).start();
 
-    const after = stateAfter(ctx, state, aliceMovesToCellar);
+    const after = stateAfter(context, state, aliceMovesToCellar);
 
     expect(zoneOf(after, ghoul)).toEqual(zone);
   });
 
   it('leaves an exhausted enemy unengaged', () => {
-    const state = startedWith([placed(ghoul, 'ghoul', at(cellar))]);
-    const exhausted = stateAfter(ctx, state, { type: 'ExhaustEnemy', enemyId: ghoul });
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, atLocation(cellar)).start();
+    const exhausted = stateAfter(context, state, { type: 'ExhaustEnemy', enemyId: ghoul });
 
-    const after = stateAfter(ctx, exhausted, aliceMovesToCellar);
+    const after = stateAfter(context, exhausted, aliceMovesToCellar);
 
-    expect(zoneOf(after, ghoul)).toEqual(at(cellar));
+    expect(zoneOf(after, ghoul)).toEqual(atLocation(cellar));
   });
 
   it('engages every ready enemy there', () => {
     const secondGhoul = instanceId('second_ghoul');
-    const state = startedWith([
-      placed(ghoul, 'ghoul', at(cellar)),
-      placed(secondGhoul, 'ghoul', at(cellar)),
-    ]);
+    const { context, state } = aliceInHall
+      .withCard(ghoul, ghoulCard, atLocation(cellar))
+      .withCard(secondGhoul, ghoulCard, atLocation(cellar))
+      .start();
 
-    const after = stateAfter(ctx, state, aliceMovesToCellar);
+    const after = stateAfter(context, state, aliceMovesToCellar);
 
     expect(zoneOf(after, ghoul)).toEqual(engagedWith(alice));
     expect(zoneOf(after, secondGhoul)).toEqual(engagedWith(alice));
   });
 
   it('engages after a move that ignores connections, which only card effects make', () => {
-    const state = startedWith([placed(ghoul, 'ghoul', at(attic))]);
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, atLocation(attic)).start();
 
-    const after = stateAfter(ctx, state, {
+    const after = stateAfter(context, state, {
       type: 'MoveInvestigator',
       investigatorId: alice,
       to: attic,
@@ -421,28 +384,30 @@ describe('moving into an enemy`s location', () => {
   });
 
   it('leaves the enemy unengaged after a move that avoids engagement, which only card effects make', () => {
-    const state = startedWith([placed(ghoul, 'ghoul', at(cellar))]);
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, atLocation(cellar)).start();
 
-    const after = stateAfter(ctx, state, { ...aliceMovesToCellar, avoidEngagement: true });
+    const after = stateAfter(context, state, { ...aliceMovesToCellar, avoidEngagement: true });
 
-    expect(zoneOf(after, ghoul)).toEqual(at(cellar));
+    expect(zoneOf(after, ghoul)).toEqual(atLocation(cellar));
     expect(after.investigators[0]?.locationId).toBe(cellar);
   });
 
   it('leaves an enemy at another location alone', () => {
-    const state = startedWith([placed(ghoul, 'ghoul', at(attic))]);
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, atLocation(attic)).start();
 
-    const after = stateAfter(ctx, state, aliceMovesToCellar);
+    const after = stateAfter(context, state, aliceMovesToCellar);
 
-    expect(zoneOf(after, ghoul)).toEqual(at(attic));
+    expect(zoneOf(after, ghoul)).toEqual(atLocation(attic));
   });
 });
 
 describe('engagement commands', () => {
   it('engages an enemy at the investigator`s location', () => {
-    const state = startedWith([placed(ghoul, 'aloof_ghoul', at(hall))]);
+    const { context, state } = aliceInHall
+      .withCard(ghoul, aloofGhoulCard, atLocation(hall))
+      .start();
 
-    const after = stateAfter(ctx, state, {
+    const after = stateAfter(context, state, {
       type: 'EngageEnemy',
       enemyId: ghoul,
       investigatorId: alice,
@@ -454,7 +419,7 @@ describe('engagement commands', () => {
   it.each([
     {
       name: 'an enemy at another location',
-      zone: at(attic),
+      zone: atLocation(attic),
       rejection: { code: 'investigatorNotAtLocation', investigatorId: alice, locationId: attic },
     },
     {
@@ -463,33 +428,37 @@ describe('engagement commands', () => {
       rejection: { code: 'alreadyEngaged', cardId: ghoul, investigatorId: alice },
     },
   ])('rejects engaging $name', ({ zone, rejection }) => {
-    const state = startedWith([placed(ghoul, 'ghoul', zone)]);
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, zone).start();
 
     expect(
-      rejectionFrom(ctx, state, { type: 'EngageEnemy', enemyId: ghoul, investigatorId: alice }),
+      rejectionFrom(context, state, { type: 'EngageEnemy', enemyId: ghoul, investigatorId: alice }),
     ).toEqual(rejection);
   });
 
   it('rejects engaging a massive enemy, which already counts as engaged with everyone at its location', () => {
-    const state = startedWith([placed(ghoul, 'massive_ghoul', at(hall))]);
+    const { context, state } = aliceInHall
+      .withCard(ghoul, massiveGhoulCard, atLocation(hall))
+      .start();
 
     expect(
-      rejectionFrom(ctx, state, { type: 'EngageEnemy', enemyId: ghoul, investigatorId: alice }),
+      rejectionFrom(context, state, { type: 'EngageEnemy', enemyId: ghoul, investigatorId: alice }),
     ).toEqual({ code: 'massiveNotEngageable', cardId: ghoul });
   });
 
   it('disengages an enemy, leaving it at the investigator`s location', () => {
-    const state = startedWith([placed(ghoul, 'ghoul', engagedWith(alice))]);
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, engagedWith(alice)).start();
 
-    const after = stateAfter(ctx, state, { type: 'DisengageEnemy', enemyId: ghoul });
+    const after = stateAfter(context, state, { type: 'DisengageEnemy', enemyId: ghoul });
 
-    expect(zoneOf(after, ghoul)).toEqual(at(hall));
+    expect(zoneOf(after, ghoul)).toEqual(atLocation(hall));
   });
 
   it('rejects disengaging an unengaged enemy', () => {
-    const state = startedWith([placed(ghoul, 'aloof_ghoul', at(hall))]);
+    const { context, state } = aliceInHall
+      .withCard(ghoul, aloofGhoulCard, atLocation(hall))
+      .start();
 
-    expect(rejectionFrom(ctx, state, { type: 'DisengageEnemy', enemyId: ghoul })).toEqual({
+    expect(rejectionFrom(context, state, { type: 'DisengageEnemy', enemyId: ghoul })).toEqual({
       code: 'notEngaged',
       cardId: ghoul,
     });
@@ -498,28 +467,27 @@ describe('engagement commands', () => {
 
 describe('damage and defeat', () => {
   it('puts damage on an enemy without defeating it below its health', () => {
-    const state = startedWith([placed(ghoul, 'ghoul', engagedWith(alice))]);
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, engagedWith(alice)).start();
 
-    const after = stateAfter(ctx, state, { type: 'DamageEnemy', enemyId: ghoul, amount: 1 });
+    const after = stateAfter(context, state, { type: 'DamageEnemy', enemyId: ghoul, amount: 1 });
 
     expect(after.cards[ghoul]?.tokens).toEqual({ damage: 1 });
     expect(zoneOf(after, ghoul)).toEqual(engagedWith(alice));
   });
 
   it('defeats an enemy whose damage reaches its health, scaled by the starting player count', () => {
-    const state = startedWith([placed(ghoul, 'ghoul', engagedWith(alice))], {
-      investigators: [
-        makeInvestigator({ id: 'alice', seat: 0, locationId: hall }),
-        makeInvestigator({ id: 'bob', seat: 1, locationId: attic }),
-      ],
-    });
-    const threeOfFourDamage = stateAfter(ctx, state, {
+    const { context, state } = hallCellarAttic
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: attic })
+      .withCard(ghoul, ghoulCard, engagedWith(alice))
+      .start();
+    const threeOfFourDamage = stateAfter(context, state, {
       type: 'DamageEnemy',
       enemyId: ghoul,
       amount: 3,
     });
 
-    const fourthDamage = execute(ctx, threeOfFourDamage, {
+    const fourthDamage = execute(context, threeOfFourDamage, {
       type: 'DamageEnemy',
       enemyId: ghoul,
       amount: 1,
@@ -532,9 +500,11 @@ describe('damage and defeat', () => {
   });
 
   it('sends a defeated enemy with victory to the victory display', () => {
-    const state = startedWith([placed(ghoul, 'victory_ghoul', engagedWith(alice))]);
+    const { context, state } = aliceInHall
+      .withCard(ghoul, victoryGhoulCard, engagedWith(alice))
+      .start();
 
-    const after = stateAfter(ctx, state, { type: 'DefeatEnemy', enemyId: ghoul });
+    const after = stateAfter(context, state, { type: 'DefeatEnemy', enemyId: ghoul });
 
     expect(zoneOf(after, ghoul)).toEqual({ kind: 'victoryDisplay' });
     expect(checkInvariants(after)).toEqual([]);
@@ -542,23 +512,23 @@ describe('damage and defeat', () => {
 
   it('puts a defeated enemy on top of the encounter discard and readies it', () => {
     const old = instanceId('old_discard');
-    const state = startedWith([
-      placed(old, 'relic', encounterDiscard),
-      placed(ghoul, 'ghoul', engagedWith(alice)),
-    ]);
-    const exhausted = stateAfter(ctx, state, { type: 'ExhaustEnemy', enemyId: ghoul });
+    const { context, state } = aliceInHall
+      .withCard(old, relicCard, encounterDiscard)
+      .withCard(ghoul, ghoulCard, engagedWith(alice))
+      .start();
+    const exhausted = stateAfter(context, state, { type: 'ExhaustEnemy', enemyId: ghoul });
 
-    const after = stateAfter(ctx, exhausted, { type: 'DefeatEnemy', enemyId: ghoul });
+    const after = stateAfter(context, exhausted, { type: 'DefeatEnemy', enemyId: ghoul });
 
     expect(after.order[zoneKey(encounterDiscard)]).toEqual([ghoul, old]);
     expect(after.cards[ghoul]?.exhausted).toBe(false);
   });
 
   it('drops an open engagement question when the enemy leaves play', () => {
-    const state = startedWith([placed(ghoul, 'ghoul', setAside)], {
-      investigators: aliceAndBobAt(hall, { alice: 0, bob: 0 }),
-    });
-    const asked = stateAfter(ctx, state, { type: 'SpawnEnemy', enemyId: ghoul, at: hall });
+    const { context, state } = aliceAndBobAt(hall, { alice: 0, bob: 0 })
+      .withCard(ghoul, ghoulCard, setAside)
+      .start();
+    const asked = stateAfter(context, state, { type: 'SpawnEnemy', enemyId: ghoul, at: hall });
 
     const after = apply(asked, {
       type: 'EnemyDefeated',
@@ -584,9 +554,9 @@ describe('damage and defeat', () => {
       rejection: { code: 'enemyNotInPlay', cardId: ghoul },
     },
   ])('rejects $name', ({ zone, amount, rejection }) => {
-    const state = startedWith([placed(ghoul, 'ghoul', zone)]);
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, zone).start();
 
-    expect(rejectionFrom(ctx, state, { type: 'DamageEnemy', enemyId: ghoul, amount })).toEqual(
+    expect(rejectionFrom(context, state, { type: 'DamageEnemy', enemyId: ghoul, amount })).toEqual(
       rejection,
     );
   });
@@ -594,19 +564,19 @@ describe('damage and defeat', () => {
 
 describe('exhaust and ready', () => {
   it('exhausts and readies an enemy', () => {
-    const state = startedWith([placed(ghoul, 'ghoul', engagedWith(alice))]);
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, engagedWith(alice)).start();
 
-    const exhausted = stateAfter(ctx, state, { type: 'ExhaustEnemy', enemyId: ghoul });
-    const readied = stateAfter(ctx, exhausted, { type: 'ReadyEnemy', enemyId: ghoul });
+    const exhausted = stateAfter(context, state, { type: 'ExhaustEnemy', enemyId: ghoul });
+    const readied = stateAfter(context, exhausted, { type: 'ReadyEnemy', enemyId: ghoul });
 
     expect(exhausted.cards[ghoul]?.exhausted).toBe(true);
     expect(readied.cards[ghoul]?.exhausted).toBe(false);
   });
 
   it('rejects readying a ready enemy', () => {
-    const state = startedWith([placed(ghoul, 'ghoul', engagedWith(alice))]);
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, engagedWith(alice)).start();
 
-    expect(rejectionFrom(ctx, state, { type: 'ReadyEnemy', enemyId: ghoul })).toEqual({
+    expect(rejectionFrom(context, state, { type: 'ReadyEnemy', enemyId: ghoul })).toEqual({
       code: 'exhaustUnchanged',
       cardId: ghoul,
       exhausted: false,
@@ -614,18 +584,18 @@ describe('exhaust and ready', () => {
   });
 
   it('engages when a readied unengaged enemy shares a location with an investigator', () => {
-    const state = startedWith([placed(ghoul, 'ghoul', at(attic))]);
-    const exhausted = stateAfter(ctx, state, { type: 'ExhaustEnemy', enemyId: ghoul });
-    const aliceInAttic = stateAfter(ctx, exhausted, {
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, atLocation(attic)).start();
+    const exhausted = stateAfter(context, state, { type: 'ExhaustEnemy', enemyId: ghoul });
+    const aliceInAttic = stateAfter(context, exhausted, {
       type: 'MoveInvestigator',
       investigatorId: alice,
       to: attic,
       ignoreConnections: true,
     });
 
-    const readied = stateAfter(ctx, aliceInAttic, { type: 'ReadyEnemy', enemyId: ghoul });
+    const readied = stateAfter(context, aliceInAttic, { type: 'ReadyEnemy', enemyId: ghoul });
 
-    expect(zoneOf(aliceInAttic, ghoul)).toEqual(at(attic));
+    expect(zoneOf(aliceInAttic, ghoul)).toEqual(atLocation(attic));
     expect(zoneOf(readied, ghoul)).toEqual(engagedWith(alice));
   });
 });
@@ -636,22 +606,16 @@ describe('enemyAttackList', () => {
   const tired = instanceId('tired_ghoul');
 
   it('lists ready engaged enemies per investigator in seat order, with their damage and horror', () => {
-    const state = startedWith(
-      [
-        placed(forBob, 'ghoul', engagedWith(bob)),
-        placed(forAlice, 'ghoul', engagedWith(alice)),
-        placed(tired, 'ghoul', engagedWith(alice)),
-      ],
-      {
-        investigators: [
-          makeInvestigator({ id: 'alice', seat: 0, locationId: hall }),
-          makeInvestigator({ id: 'bob', seat: 1, locationId: cellar }),
-        ],
-      },
-    );
-    const withTired = stateAfter(ctx, state, { type: 'ExhaustEnemy', enemyId: tired });
+    const { context, state } = hallCellarAttic
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: cellar })
+      .withCard(forBob, ghoulCard, engagedWith(bob))
+      .withCard(forAlice, ghoulCard, engagedWith(alice))
+      .withCard(tired, ghoulCard, engagedWith(alice))
+      .start();
+    const withTired = stateAfter(context, state, { type: 'ExhaustEnemy', enemyId: tired });
 
-    expect(enemyAttackList(ctx, withTired)).toEqual([
+    expect(enemyAttackList(context, withTired)).toEqual([
       { enemyId: forAlice, investigatorId: alice, damage: 1, horror: 2 },
       { enemyId: forBob, investigatorId: bob, damage: 1, horror: 2 },
     ]);
@@ -660,23 +624,17 @@ describe('enemyAttackList', () => {
   it('starts with the lead investigator, then follows the seats clockwise', () => {
     const carol = investigatorId('carol');
     const forCarol = instanceId('ghoul_for_carol');
-    const state = startedWith(
-      [
-        placed(forAlice, 'ghoul', engagedWith(alice)),
-        placed(forBob, 'ghoul', engagedWith(bob)),
-        placed(forCarol, 'ghoul', engagedWith(carol)),
-      ],
-      {
-        investigators: [
-          makeInvestigator({ id: 'bob', seat: 1, locationId: hall }),
-          makeInvestigator({ id: 'alice', seat: 0, locationId: cellar }),
-          makeInvestigator({ id: 'carol', seat: 2, locationId: attic }),
-        ],
-      },
-    );
+    const { context, state } = hallCellarAttic
+      .withInvestigator(bob, { seat: 1, locationId: hall })
+      .withInvestigator(alice, { seat: 0, locationId: cellar })
+      .withInvestigator(carol, { seat: 2, locationId: attic })
+      .withCard(forAlice, ghoulCard, engagedWith(alice))
+      .withCard(forBob, ghoulCard, engagedWith(bob))
+      .withCard(forCarol, ghoulCard, engagedWith(carol))
+      .start();
 
     expect(state.meta.leadInvestigator).toBe(bob);
-    expect(enemyAttackList(ctx, state).map((attack) => attack.investigatorId)).toEqual([
+    expect(enemyAttackList(context, state).map((attack) => attack.investigatorId)).toEqual([
       bob,
       carol,
       alice,
@@ -685,28 +643,24 @@ describe('enemyAttackList', () => {
 
   it('includes a ready massive enemy for every investigator at its location', () => {
     const massive = instanceId('massive_ghoul');
-    const state = startedWith(
-      [
-        placed(massive, 'massive_ghoul', at(hall)),
-        placed(instanceId('aloof_ghoul'), 'aloof_ghoul', at(hall)),
-      ],
-      { investigators: aliceAndBobAt(hall, { alice: 0, bob: 0 }) },
-    );
+    const { context, state } = aliceAndBobAt(hall, { alice: 0, bob: 0 })
+      .withCard(massive, massiveGhoulCard, atLocation(hall))
+      .withCard(instanceId('aloof_ghoul'), aloofGhoulCard, atLocation(hall))
+      .start();
 
-    expect(enemyAttackList(ctx, state)).toEqual([
+    expect(enemyAttackList(context, state)).toEqual([
       { enemyId: massive, investigatorId: alice, damage: 2, horror: 0 },
       { enemyId: massive, investigatorId: bob, damage: 2, horror: 0 },
     ]);
   });
 
   it('ignores defeated investigators and unengaged enemies', () => {
-    const state = startedWith(
-      [placed(ghoul, 'ghoul', engagedWith(alice)), placed(instanceId('far'), 'ghoul', at(attic))],
-      {
-        investigators: [makeInvestigator({ id: 'alice', locationId: hall, status: 'defeated' })],
-      },
-    );
+    const { context, state } = hallCellarAttic
+      .withInvestigator(alice, { locationId: hall, status: 'defeated' })
+      .withCard(ghoul, ghoulCard, engagedWith(alice))
+      .withCard(instanceId('far'), ghoulCard, atLocation(attic))
+      .start();
 
-    expect(enemyAttackList(ctx, state)).toEqual([]);
+    expect(enemyAttackList(context, state)).toEqual([]);
   });
 });
