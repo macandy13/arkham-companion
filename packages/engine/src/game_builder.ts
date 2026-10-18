@@ -11,7 +11,7 @@ import {
 } from './ids';
 import type { Edge, MapSpec } from './map';
 import { blankInvestigator } from './blank_cards';
-import { emptyState, type GameState, type TokenKind } from './state';
+import { emptyState, type Difficulty, type GameState, type TokenKind } from './state';
 import type { EffectsRegistry } from './triggers';
 import type { Zone } from './zone';
 
@@ -59,24 +59,51 @@ interface CardEntry {
   options: CardOptions;
 }
 
+interface ConnectionEntry {
+  edge: Edge;
+  /** The map that owns the edge; the map of `edge.from` when absent. */
+  map?: MapId;
+}
+
+/** How `GameBuilder.withMap` sets up a map. */
+export interface MapOptions {
+  /** Default the map's ID. */
+  name?: string;
+  /** Default true; a hidden map is an area the players cannot see yet. */
+  visible?: boolean;
+}
+
 interface GameSpec {
   readonly locations: readonly LocationEntry[];
-  readonly connections: readonly Edge[];
+  readonly connections: readonly ConnectionEntry[];
+  readonly maps: Readonly<Record<MapId, MapOptions>>;
   readonly investigators: readonly StartingInvestigator[];
   readonly cards: readonly CardEntry[];
+  readonly difficulty: Difficulty;
+  readonly seed: number;
+  readonly shuffleEncounterDeck: boolean;
   readonly effects?: EffectsRegistry;
 }
 
-const EMPTY_SPEC: GameSpec = { locations: [], connections: [], investigators: [], cards: [] };
+const EMPTY_SPEC: GameSpec = {
+  locations: [],
+  connections: [],
+  maps: {},
+  investigators: [],
+  cards: [],
+  difficulty: 'standard',
+  seed: 1,
+  shuffleEncounterDeck: false,
+};
 
 /**
- * Describes a game table piece by piece (locations, connections,
- * investigators, cards in their zones) and starts it as a scenario, so a
- * test, a sandbox board or a scenario under construction spells out only
- * what it is about. Each card is passed with its definition, typically a
- * `blank*` card with the stats that matter, and the builder collects the
- * definitions into the context, so the stats stay next to where the card is
- * placed.
+ * Describes a game table piece by piece (locations, maps and connections,
+ * investigators, cards in their zones, and difficulty, seed and shuffle) and
+ * starts it as a scenario, so a test, a sandbox board or a scenario under
+ * construction spells out only what it is about. Each card is passed with
+ * its definition, typically a `blank*` card with the stats that matter, and
+ * the builder collects the definitions into the context, so the stats stay
+ * next to where the card is placed.
  *
  * Immutable: every `with*` returns a new builder, so one builder can be the
  * common table of several tests that each add their own cards.
@@ -86,7 +113,8 @@ const EMPTY_SPEC: GameSpec = { locations: [], connections: [], investigators: []
  * pieces given are there: no agenda, act or chaos tokens unless added, and
  * none of setup's rules beyond placing a revealed location's clues (an
  * investigator does not reveal the location they start at, and the
- * encounter deck keeps the order its cards were added in, top first).
+ * encounter deck keeps the order its cards were added in, top first, unless
+ * `withShuffledEncounterDeck`).
  */
 export class GameBuilder {
   private constructor(private readonly spec: GameSpec) {}
@@ -101,13 +129,37 @@ export class GameBuilder {
     return this.with({ locations: [...this.spec.locations, { id, card, options }] });
   }
 
-  /** The table with a connection between two of its locations, on the map of `from`. */
+  /**
+   * The table with a connection between two of its locations, owned by the
+   * map of `from` unless `map` names another one.
+   */
   withConnection(
     from: InstanceId,
     to: InstanceId,
-    { oneWay = false }: { oneWay?: boolean } = {},
+    { oneWay = false, map }: { oneWay?: boolean; map?: MapId } = {},
   ): GameBuilder {
-    return this.with({ connections: [...this.spec.connections, { from, to, oneWay }] });
+    const entry: ConnectionEntry = { edge: { from, to, oneWay }, ...(map ? { map } : {}) };
+    return this.with({ connections: [...this.spec.connections, entry] });
+  }
+
+  /** The table with a map set up as `options` says; a map with locations needs this only to change its name or visibility. */
+  withMap(id: MapId, options: MapOptions): GameBuilder {
+    return this.with({ maps: { ...this.spec.maps, [id]: options } });
+  }
+
+  /** The table played on `difficulty` instead of standard. */
+  withDifficulty(difficulty: Difficulty): GameBuilder {
+    return this.with({ difficulty });
+  }
+
+  /** The table started with `seed` instead of 1, for tests about what the RNG decides. */
+  withSeed(seed: number): GameBuilder {
+    return this.with({ seed });
+  }
+
+  /** The table with its encounter deck shuffled at the start instead of kept in the order added. */
+  withShuffledEncounterDeck(): GameBuilder {
+    return this.with({ shuffleEncounterDeck: true });
   }
 
   /** The table with an investigator (`blankInvestigator` stats unless `options` sets them). */
@@ -151,15 +203,15 @@ export class GameBuilder {
     return this.spec.effects ? { cards, effects: this.spec.effects } : { cards };
   }
 
-  /** The `StartScenario` that sets up this table (standard difficulty, seed 1). */
+  /** The `StartScenario` that sets up this table (standard difficulty and seed 1 unless set). */
   startCommand(): StartScenario {
     const playerCount = this.spec.investigators.length;
     return {
       type: 'StartScenario',
       scenarioId: scenarioId('custom'),
-      difficulty: 'standard',
-      seed: 1,
-      shuffleEncounterDeck: false,
+      difficulty: this.spec.difficulty,
+      seed: this.spec.seed,
+      shuffleEncounterDeck: this.spec.shuffleEncounterDeck,
       investigators: [...this.spec.investigators],
       maps: this.maps(),
       cards: [
@@ -191,17 +243,29 @@ export class GameBuilder {
     return [...byCode.values()];
   }
 
-  /** The maps of the locations, each with the connections that start at one of its locations. */
+  /**
+   * The maps of the locations and of `withMap`, each with the connections it
+   * owns: those `withConnection` gave it, else those starting at one of its
+   * locations.
+   */
   private maps(): Record<MapId, MapSpec> {
     const mapOf = new Map(
       this.spec.locations.map(({ id, options }) => [id, options.map ?? MAIN_MAP]),
     );
     // An edge from an ID that is no location goes to the main map, so `StartScenario` rejects it.
-    const ownerOf = (edge: Edge) => mapOf.get(edge.from) ?? MAIN_MAP;
+    const ownerOf = ({ edge, map }: ConnectionEntry) => map ?? mapOf.get(edge.from) ?? MAIN_MAP;
+    const ids = new Set([
+      ...mapOf.values(),
+      ...this.spec.connections.map(ownerOf),
+      ...(Object.keys(this.spec.maps) as MapId[]),
+    ]);
     const maps: Record<MapId, MapSpec> = {};
-    for (const map of new Set([...mapOf.values(), ...this.spec.connections.map(ownerOf)])) {
-      const connections = this.spec.connections.filter((edge) => ownerOf(edge) === map);
-      maps[map] = { name: map, connections };
+    for (const map of ids) {
+      const { name = map, visible } = this.spec.maps[map] ?? {};
+      const connections = this.spec.connections
+        .filter((entry) => ownerOf(entry) === map)
+        .map(({ edge }) => edge);
+      maps[map] = { name, connections, ...(visible === undefined ? {} : { visible }) };
     }
     return maps;
   }

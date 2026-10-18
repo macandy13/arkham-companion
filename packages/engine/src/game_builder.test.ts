@@ -116,6 +116,44 @@ describe('newGame', () => {
     ]);
   });
 
+  it('puts a connection on the map it names, even one without locations', () => {
+    const annex = mapId('annex');
+    const { state } = newGame()
+      .withLocation(study, studyCard)
+      .withLocation(hallway, hallwayCard)
+      .withMap(annex, { name: 'Annex', visible: false })
+      .withConnection(study, hallway, { map: annex })
+      .start();
+
+    expect(state.board.maps[annex]).toEqual({
+      name: 'Annex',
+      visible: false,
+      connections: [{ from: study, to: hallway, oneWay: false }],
+    });
+    expect(state.board.maps[mapId('main')]?.connections).toEqual([]);
+  });
+
+  it('starts on the difficulty and with the seed it is given', () => {
+    const { state } = newGame().withDifficulty('hard').withSeed(7).start();
+
+    expect(state.meta).toMatchObject({ difficulty: 'hard', seed: 7 });
+  });
+
+  it('shuffles the encounter deck only when asked to', () => {
+    const codes = ['curse', 'hex', 'omen', 'plague', 'rot', 'storm', 'void', 'wail'];
+    const deck = codes.reduce(
+      (game, code) =>
+        game.withCard(instanceId(code), blankTreachery(code), { kind: 'encounterDeck' }),
+      newGame(),
+    );
+
+    const shuffled = deck.withShuffledEncounterDeck().start().state;
+
+    expect(deck.start().state.order[zoneKey({ kind: 'encounterDeck' })]).toEqual(codes);
+    expect(shuffled.order[zoneKey({ kind: 'encounterDeck' })]).not.toEqual(codes);
+    expect([...(shuffled.order[zoneKey({ kind: 'encounterDeck' })] ?? [])].sort()).toEqual(codes);
+  });
+
   it('seats investigators in the order they are added, with what they are given', () => {
     const { state } = newGame()
       .withLocation(study, studyCard)
