@@ -10,6 +10,7 @@ import type {
 import { investigatorLeavesEvents } from './elimination';
 import { arrivalEngagements } from './engagement';
 import type {
+  CluesDiscovered,
   Event,
   InvestigatorChanged,
   InvestigatorMoved,
@@ -140,7 +141,7 @@ export function handleSetLeadInvestigator(
 export function handleDiscoverClues(
   state: GameState,
   cmd: DiscoverClues,
-): (TokensChanged | InvestigatorChanged)[] {
+): (TokensChanged | InvestigatorChanged | CluesDiscovered)[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
   if (!Number.isInteger(cmd.amount) || cmd.amount <= 0)
     throw new CommandRejected({ code: 'invalidTokenDelta', delta: cmd.amount });

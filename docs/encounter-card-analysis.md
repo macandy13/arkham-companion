@@ -178,11 +178,11 @@ Ordered so each step unlocks the most cards for the scenarios coming next (M4 _S
 
 ### M4 – Spreading Flames, and the generic rules it needs
 
-3. **Doomed and Elusive** – rules with unit tests and an end-to-end step (Bystander in _Spreading Flames_).
-4. **Scenario actions** – cost (actions, resources, clues as a group per investigator), condition, test, effect, ability limits; Parley and Resign on agendas, acts and locations. Generalises the `ScenarioAction` M4.5 plans for Parley.
-5. **Skill test margin** – the answer carries "by how much"; the suggestion computes it; revelation tests use it.
-6. **Location attachments and modifiers** – Fire! (attach to nearest without Fire!, phase-end damage), shroud and movement costs from attachments.
-7. **Timing windows** – one list of windows, used by hooks and by reminders; migrate `turnEndTest` and `discardAtRoundEnd`.
+3. **Timing windows** – one list of windows, used by card and scenario abilities (data only, replacing the code hooks) and by reminders; migrate `turnEndTest` and `discardAtRoundEnd`. First, because every later step lands as an ability.
+4. **Skill test margin** – the answer carries "by how much"; the suggestion computes it; revelation tests use it. Second, so the steps after it can use the margin.
+5. **Doomed and Elusive** – rules with unit tests and an end-to-end step (Bystander in _Spreading Flames_).
+6. **Scenario actions** – cost (actions, resources, clues as a group per investigator), condition, test, effect, ability limits; Parley and Resign on agendas, acts and locations. Generalises the `ScenarioAction` M4.5 plans for Parley.
+7. **Location attachments and modifiers** – Fire! (attach to nearest without Fire!, phase-end damage), shroud and movement costs from attachments.
 
 ### M5 – Smoke and Mirrors, Queen of Ash
 

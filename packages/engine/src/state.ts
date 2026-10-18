@@ -249,6 +249,9 @@ export interface SkillTest {
   difficulty: number;
 }
 
+/** Whether a skill test succeeded or failed (`SkillTestResolved`). */
+export type SkillTestOutcome = 'pass' | 'fail';
+
 /** Which number of a skill test a modifier changes: the investigator's skill value or the difficulty. */
 export type ModifierTarget = 'skill' | 'difficulty';
 

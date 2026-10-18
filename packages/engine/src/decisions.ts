@@ -1,6 +1,6 @@
 import type { EngineContext } from './cards';
 import type { Command, RequestDecision, ResolveDecision } from './commands';
-import type { DecisionRequested, DecisionResolved } from './events';
+import type { DecisionRequested, DecisionResolved, SkillTestResolved } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
 import { isActiveInvestigator } from './investigators';
 import { CommandRejected } from './rejection';
@@ -37,13 +37,47 @@ export function handleRequestDecision(
   return [{ type: 'DecisionRequested', decision: withSuggestion(ctx, state, decision) }];
 }
 
-/** `ResolveDecision`: the decision is cleared; the option's commands follow via `answerCommands`. */
+/**
+ * `ResolveDecision`: the decision is cleared, with the test's outcome
+ * (`SkillTestResolved`) when it was a skill test; the option's commands
+ * follow via `answerCommands`.
+ */
 export function handleResolveDecision(
   state: GameState,
   command: ResolveDecision,
-): DecisionResolved[] {
+): (DecisionResolved | SkillTestResolved)[] {
   optionCommands(state, command);
-  return [{ type: 'DecisionResolved', decisionId: command.decisionId, optionId: command.optionId }];
+  const resolved: DecisionResolved = {
+    type: 'DecisionResolved',
+    decisionId: command.decisionId,
+    optionId: command.optionId,
+  };
+  const decision = state.pending.find((pending) => pending.id === command.decisionId);
+  return decision?.skillTest
+    ? [resolved, skillTestResolved(decision, decision.skillTest, command.optionId)]
+    : [resolved];
+}
+
+/** The outcome the answer `optionId` gives a `skillTestResult` decision (`skillTestDecision`). */
+function skillTestResolved(
+  decision: Decision,
+  skillTest: SkillTest,
+  optionId: string,
+): SkillTestResolved {
+  const margin = optionId.startsWith(FAILED_BY)
+    ? Number(optionId.slice(FAILED_BY.length))
+    : undefined;
+  return {
+    type: 'SkillTestResolved',
+    decisionId: decision.id,
+    ...(decision.decider.kind === 'investigator'
+      ? { investigatorId: decision.decider.investigatorId }
+      : {}),
+    ...(decision.subject ? { subject: decision.subject } : {}),
+    skillTest,
+    outcome: optionId === 'pass' ? 'pass' : 'fail',
+    ...(margin === undefined ? {} : { failedBy: margin }),
+  };
 }
 
 /**
@@ -157,6 +191,9 @@ export function confirmOptions(onYes: Command[], target?: InstanceId): DecisionO
     { id: 'no', label: 'decision.no', commands: [] },
   ];
 }
+
+/** Option id prefix of a "failed by <n>" answer (`SkillTestOutcomes.failedBy`). */
+const FAILED_BY = 'failedBy:';
 
 /** What follows each outcome of a skill test. */
 export interface SkillTestOutcomes {

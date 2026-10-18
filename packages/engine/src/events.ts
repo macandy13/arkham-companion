@@ -13,6 +13,8 @@ import type {
   InvestigatorStat,
   Phase,
   PhaseStep,
+  SkillTest,
+  SkillTestOutcome,
   TokenKind,
 } from './state';
 import type { Zone } from './zone';
@@ -41,6 +43,8 @@ export type Event =
   | CurrentCardChanged
   | ScenarioEnded
   | EncounterCardDrawn
+  | CluesDiscovered
+  | SkillTestResolved
   | EnemyEngaged
   | EnemyDisengaged
   | EnemyDefeated
@@ -274,6 +278,39 @@ export interface EncounterCardDrawn {
   cardId: InstanceId;
   peril: boolean;
   surge: boolean;
+}
+
+/**
+ * The investigator discovered `amount` clues at `locationId`. Only a record
+ * for the log and for "after you discover clues" abilities: the clues move
+ * with the `TokensChanged` and `InvestigatorChanged` before it, and the
+ * reducer ignores this event. Produced by `DiscoverClues`.
+ */
+export interface CluesDiscovered {
+  type: 'CluesDiscovered';
+  investigatorId: InvestigatorId;
+  locationId: InstanceId;
+  amount: number;
+}
+
+/**
+ * The players determined the outcome of a skill test by answering its
+ * `skillTestResult` decision. Only a record for the log and for "after you
+ * succeed / fail" abilities; the reducer ignores it. It comes right after the
+ * `DecisionResolved`, ahead of the events of the answer's commands, which
+ * apply the test's results. `failedBy` is set only when the answer names
+ * the margin (a `failedBy:<n>` option). Produced by `ResolveDecision`.
+ */
+export interface SkillTestResolved {
+  type: 'SkillTestResolved';
+  decisionId: DecisionId;
+  /** Absent when the decision is not one investigator's (`Decider`). */
+  investigatorId?: InvestigatorId;
+  /** The decision's subject: the location, enemy or card the test is about. */
+  subject?: InstanceId;
+  skillTest: SkillTest;
+  outcome: SkillTestOutcome;
+  failedBy?: number;
 }
 
 /**
