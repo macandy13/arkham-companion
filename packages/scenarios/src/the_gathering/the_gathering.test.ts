@@ -359,10 +359,14 @@ describe('The Gathering acts 2 and 3', () => {
   const priest = instanceId('01116#1');
   const lita = instanceId('01117#1');
   const fleshEater = instanceId('01118#1');
+  const theBarrier = instanceId('01109#1');
   const whatHaveYouDone = instanceId('01110#1');
   const tank = investigatorId('tank');
 
-  /** Two investigators; act 1 (house into play, everyone to the Hallway) and act 2 advance without paying. */
+  /**
+   * Two investigators; act 1 (house into play, everyone to the Hallway) and act 2 advance without paying.
+   * Act 2 stays current until its reverse side has resolved, the Ghoul Priest's prey question included.
+   */
   function atAct3(): GameState {
     return stateAfter(
       ctx,
@@ -392,7 +396,8 @@ describe('The Gathering acts 2 and 3', () => {
     expect(codesIn(state, { kind: 'atLocation', locationId: hallway })).toEqual([
       codes.ghoulPriest,
     ]);
-    expect(state.act.current).toBe(whatHaveYouDone);
+    expect(state.act.current).toBe(theBarrier);
+    expect(priestEngages(state, tank).act.current).toBe(whatHaveYouDone);
     expect(checkInvariants(state)).toEqual([]);
   });
 
@@ -402,7 +407,7 @@ describe('The Gathering acts 2 and 3', () => {
       enemyId: priest,
     });
 
-    expect(asked.act.current).toBeUndefined();
+    expect(asked.act.current).toBe(whatHaveYouDone);
     expect(asked.pending).toMatchObject([
       {
         id: BURN_THE_HOUSE_DECISION,
@@ -429,6 +434,7 @@ describe('The Gathering acts 2 and 3', () => {
     });
 
     expect(ended.meta).toMatchObject({ ended: true, resolution });
+    expect(ended.act.current).toBeUndefined();
   });
 
   it('does not advance act 3 when another enemy is defeated', () => {

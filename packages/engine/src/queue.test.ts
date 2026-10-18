@@ -5,25 +5,19 @@ import {
   instanceId,
   investigatorId,
   replay,
-  type DrawEncounter,
   type Event,
-  type MoveInvestigator,
   type QueuedStep,
 } from './index';
 
 describe('stored queue (GameMeta.queue)', () => {
   const alice = investigatorId('alice');
   const moveToCellar: QueuedStep = {
-    kind: 'command',
-    command: {
-      type: 'MoveInvestigator',
-      investigatorId: alice,
-      to: instanceId('cellar'),
-    } satisfies MoveInvestigator,
+    kind: 'action',
+    command: { type: 'MoveInvestigator', investigatorId: alice, to: instanceId('cellar') },
   };
   const surgeDraw: QueuedStep = {
-    kind: 'command',
-    command: { type: 'DrawEncounter', investigatorId: alice } satisfies DrawEncounter,
+    kind: 'surge',
+    draw: { type: 'DrawEncounter', investigatorId: alice },
   };
   const moveQueued: Event = { type: 'StepsQueued', steps: [moveToCellar] };
   const surgeQueued: Event = { type: 'StepsQueued', steps: [surgeDraw] };
@@ -34,23 +28,25 @@ describe('stored queue (GameMeta.queue)', () => {
     expect(state.meta.queue).toEqual([surgeDraw, moveToCellar]);
   });
 
-  it.each<{ name: string; taken: (step: QueuedStep) => Event }>([
-    { name: 'resumed', taken: () => ({ type: 'StepResumed' }) },
-    {
-      name: 'dropped',
-      taken: (step) => ({
-        type: 'ActionDropped',
-        command: step.command,
-        reason: { code: 'investigatorNotActive', investigatorId: alice },
-      }),
-    },
-  ])('takes the first step off the queue once it is $name', ({ taken }) => {
+  it('takes the first step off the queue once it resumes, and the queue once it is empty', () => {
     const queued = replay([moveQueued, surgeQueued], emptyState());
 
-    const afterSurge = apply(queued, taken(surgeDraw));
-    const afterMove = apply(afterSurge, taken(moveToCellar));
+    const afterSurge = apply(queued, { type: 'StepResumed' });
+    const afterMove = apply(afterSurge, { type: 'StepResumed' });
 
     expect(afterSurge.meta.queue).toEqual([moveToCellar]);
     expect(afterMove.meta).not.toHaveProperty('queue');
+  });
+
+  it('takes a dropped held action off the queue', () => {
+    const queued = replay([moveQueued], emptyState());
+
+    const dropped = apply(queued, {
+      type: 'ActionDropped',
+      command: moveToCellar.command,
+      reason: { code: 'investigatorNotActive', investigatorId: alice },
+    });
+
+    expect(dropped.meta).not.toHaveProperty('queue');
   });
 });

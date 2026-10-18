@@ -1,6 +1,9 @@
 import type { CampaignLog } from './campaign/campaign_log';
 import type {
+  AdvanceAct,
+  AdvanceAgenda,
   Command,
+  CommandType,
   DrawEncounter,
   EngageEnemy,
   Investigate,
@@ -17,6 +20,7 @@ import {
   type ScenarioId,
   type SlotId,
 } from './ids';
+import type { EncounterCardDrawn } from './events';
 import type { GameMap } from './map';
 import type { RngState } from './rng';
 import type { Zone, ZoneKey } from './zone';
@@ -412,31 +416,53 @@ export interface GameMeta {
   leadInvestigator?: InvestigatorId;
   /**
    * The rest of a resolution that waits for pending decisions, next first
-   * (`StepsQueued`): an action for the attacks of opportunity it provoked,
-   * or a surge draw for the decisions of the card before it. The command
-   * that clears the last decision resolves them (`StepResumed`). Absent
-   * when nothing waits.
+   * (`StepsQueued`). Once nothing is pending, the next command resolves these
+   * steps after its own (`StepResumed`), until one asks something again.
+   * Absent when nothing waits.
    */
   queue?: readonly QueuedStep[];
 }
 
 /**
- * One piece of a resolution stored until the pending decisions are
- * answered (`GameMeta.queue`). Plain data, so a saved game holds it like
- * any other state. Only held commands wait today; the resolution queue
- * (M1V.1 slice 3c) adds the other continuations as further kinds.
+ * One piece of a resolution that `handle` runs as a step and stores in
+ * `GameMeta.queue` while a decision it raised is pending. Plain data, so the
+ * state stays serialisable. `origin` is the follow-up command the step
+ * belongs to: a rejected step rejects the player command as
+ * `triggeredCommandRejected` naming it, and each follow-up counts against
+ * the loop guard (`MAX_TRIGGERED_COMMANDS`). Absent for the player
+ * command's own steps.
  */
-export interface QueuedStep {
-  kind: 'command';
-  command: HeldAction;
-}
+export type QueuedStep =
+  | { kind: 'command'; command: Command; origin?: CommandType }
+  /**
+   * An action waiting for the attacks of opportunity it provoked. Dropped
+   * (`ActionDropped`) rather than rejected if it has become illegal, so the
+   * answer that released it stays valid.
+   */
+  | { kind: 'action'; command: HeldAction }
+  /**
+   * The rest of `AdvanceAgenda`/`AdvanceAct` once the reverse side of
+   * `cardId` has resolved (`completeAdvance`). `asked` is set when it had to
+   * wait for a decision raised meanwhile: on the last card that decision is
+   * what ends the scenario.
+   */
+  | {
+      kind: 'finishAdvance';
+      command: AdvanceAgenda | AdvanceAct;
+      cardId: InstanceId;
+      asked?: true;
+      origin?: CommandType;
+    }
+  /** The drawn card is placed once its revelation has resolved (`placeDrawnCard`). */
+  | { kind: 'placeDrawnCard'; drawn: EncounterCardDrawn; origin?: CommandType }
+  /** The surge draw, once the surging card has been placed (`resolveSurge`). */
+  | { kind: 'surge'; draw: DrawEncounter; origin?: CommandType };
 
 /**
- * The commands that can wait for pending decisions: the actions the engine
- * sees that provoke attacks of opportunity (`attackOfOpportunityDecisions`),
- * and a surge draw (`surgeDraw`).
+ * The actions the engine sees that provoke attacks of opportunity
+ * (`attackOfOpportunityDecisions`), which wait for those attacks.
  */
-export type HeldAction = MoveInvestigator | Investigate | EngageEnemy | DrawEncounter;
+export type HeldAction = MoveInvestigator | Investigate | EngageEnemy;
 
 /**
  * Complete state of one scenario in play. Only ever produced by the reducer

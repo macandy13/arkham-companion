@@ -338,7 +338,7 @@ describe('the action that provokes attacks of opportunity', () => {
     const answered = stateAfter(ctx, asked, answer(ghoulAttack, 'attack'));
 
     expect(investigatorOf(asked, alice).locationId).toBe(hall);
-    expect(asked.meta.queue).toEqual([{ kind: 'command', command: moveToCellar }]);
+    expect(asked.meta.queue).toEqual([{ kind: 'action', command: moveToCellar }]);
     expect(investigatorOf(answered, alice).locationId).toBe(cellar);
     expect(answered.meta.queue).toBeUndefined();
   });

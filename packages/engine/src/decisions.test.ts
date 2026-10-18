@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
+  apply,
   cardCode,
   checkInvariants,
   decisionId,
@@ -434,19 +435,17 @@ describe('skill test outcome record', () => {
 });
 
 describe('decisions raised by hooks', () => {
-  const offerResource: Command = {
-    type: 'RequestDecision',
-    decision: {
-      id: decisionId('offer_resource'),
-      kind: 'confirm',
-      prompt: 'decision.applyForcedEffect',
-      decider: { kind: 'lead' },
-      options: [
-        { id: 'yes', label: 'decision.yes', commands: [gainResource] },
-        { id: 'no', label: 'decision.no', commands: [] },
-      ],
-    },
+  const offerResourceDecision: Decision = {
+    id: decisionId('offer_resource'),
+    kind: 'confirm',
+    prompt: 'decision.applyForcedEffect',
+    decider: { kind: 'lead' },
+    options: [
+      { id: 'yes', label: 'decision.yes', commands: [gainResource] },
+      { id: 'no', label: 'decision.no', commands: [] },
+    ],
   };
+  const offerResource: Command = { type: 'RequestDecision', decision: offerResourceDecision };
   const placeDoomOnHall: Command = { type: 'PlaceDoom', cardId: hall, amount: 1 };
 
   it('lets a scenario hook ask the players after doom is placed', () => {
@@ -457,12 +456,44 @@ describe('decisions raised by hooks', () => {
     expect(asked.pending.map((decision) => decision.id)).toEqual(['offer_resource']);
   });
 
-  it('rejects a hook that raises the same decision twice', () => {
+  it('asks the second question of a hook only once the first is answered', () => {
+    const offerAgain: Command = {
+      type: 'RequestDecision',
+      decision: {
+        id: decisionId('offer_again'),
+        kind: 'confirm',
+        prompt: 'decision.applyForcedEffect',
+        decider: { kind: 'lead' },
+        options: [{ id: 'yes', label: 'decision.yes', commands: [] }],
+      },
+    };
     const hooked = withScenario(ctx, {
-      hooks: { afterDoomPlaced: () => [offerResource, offerResource] },
+      hooks: { afterDoomPlaced: () => [offerResource, offerAgain] },
     });
+    const asked = stateAfter(hooked, started([alicePlacedAt(hall)]), placeDoomOnHall);
 
-    const rejection = rejectionFrom(hooked, started([alicePlacedAt(hall)]), placeDoomOnHall);
+    const answered = stateAfter(hooked, asked, resolveDecision('offer_resource', 'no'));
+
+    expect(asked.pending.map((decision) => decision.id)).toEqual(['offer_resource']);
+    expect(answered.pending.map((decision) => decision.id)).toEqual(['offer_again']);
+  });
+
+  it('rejects a hook that raises a decision that is already pending', () => {
+    const hooked = withScenario(ctx, { hooks: { afterDoomPlaced: () => [offerResource] } });
+    const placeDoomFirst: Decision = {
+      id: decisionId('place_doom_first'),
+      kind: 'confirm',
+      prompt: 'decision.applyForcedEffect',
+      decider: { kind: 'lead' },
+      options: [{ id: 'yes', label: 'decision.yes', commands: [placeDoomOnHall] }],
+    };
+    // Both pending at once, as two attacks of opportunity are; built from events because no command asks two.
+    const bothAsked = [offerResourceDecision, placeDoomFirst].reduce(
+      (state, decision) => apply(state, { type: 'DecisionRequested', decision }),
+      started([alicePlacedAt(hall)]),
+    );
+
+    const rejection = rejectionFrom(hooked, bothAsked, resolveDecision('place_doom_first', 'yes'));
 
     expect(rejection).toEqual({
       code: 'triggeredCommandRejected',

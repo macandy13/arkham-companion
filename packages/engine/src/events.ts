@@ -300,10 +300,10 @@ export interface CluesDiscovered {
  * you succeed / fail" abilities; the reducer ignores it. It comes right
  * after the `DecisionResolved`, ahead of the events of the answer's
  * commands, which apply the test's results (ST.7), "if this test succeeds"
- * effects included. Commands triggered by this event would still run after
- * those results, because `handle` queues an answer's commands before
- * triggered ones; no hook reads it yet, and the timing-window work orders
- * them first. `failedBy` is set only when the answer names the margin (a
+ * effects included. Commands triggered by this event run before those
+ * results, because `handle` queues the forced effects of an answer's own
+ * events ahead of its option commands; no hook reads it yet (the timing
+ * windows add one). `failedBy` is set only when the answer names the margin (a
  * `failedBy:<n>` option). Produced by `ResolveDecision`.
  */
 export interface SkillTestResolved {

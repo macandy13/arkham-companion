@@ -753,10 +753,10 @@ describe('a last act whose reverse side lets the lead investigator choose the re
       type: 'AdvanceAct',
     });
 
-  it('leaves the scenario running with the question open instead of asking for a resolution', () => {
+  it('keeps the last act in play while the question is open instead of asking for a resolution', () => {
     const asked = stateAfter(choosingContext, lastAct(), { type: 'AdvanceAct' });
 
-    expect(asked.act.current).toBeUndefined();
+    expect(asked.act.current).toBe(act2);
     expect(asked.meta.ended).toBeUndefined();
     expect(asked.pending.map((decision) => decision.id)).toEqual([chooseResolution]);
   });
@@ -771,6 +771,7 @@ describe('a last act whose reverse side lets the lead investigator choose the re
     });
 
     expect(ended.meta).toMatchObject({ ended: true, resolution: 'R2' });
+    expect(ended.act.current).toBeUndefined();
   });
 
   it('ignores a fallback resolution while the question is open', () => {

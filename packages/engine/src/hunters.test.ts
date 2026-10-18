@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  apply,
   cardCode,
   checkInvariants,
   decisionId,
@@ -7,6 +8,7 @@ import {
   instanceId,
   investigatorId,
   type Command,
+  type Decision,
   type Edge,
   type GameState,
   type InstanceId,
@@ -387,28 +389,26 @@ describe('MoveHunters order', () => {
       investigators: [investigator('alice', 'c')],
       enemies: [enemy(waiting, 'hunter_ghoul', at('a')), enemy(second, 'hunter_ghoul', at('b'))],
     });
-    const aboutWaiting: Command = {
-      type: 'RequestDecision',
-      decision: {
-        id: decisionId('about_waiting_hunter'),
-        kind: 'confirm',
-        subject: waiting,
-        prompt: 'Does the waiting hunter stay?',
-        decider: { kind: 'group' },
-        options: [{ id: 'yes', label: 'Yes', commands: [] }],
-      },
+    const aboutWaiting: Decision = {
+      id: decisionId('about_waiting_hunter'),
+      kind: 'confirm',
+      subject: waiting,
+      prompt: 'Does the waiting hunter stay?',
+      decider: { kind: 'group' },
+      options: [{ id: 'yes', label: 'Yes', commands: [] }],
     };
-    // The follow-up commands of an answer run while the new question is open, unlike commands from outside.
-    const asked = stateAfter(ctx, state, {
-      type: 'RequestDecision',
-      decision: {
-        id: decisionId('start_hunting'),
-        kind: 'confirm',
-        prompt: 'Start hunting?',
-        decider: { kind: 'group' },
-        options: [{ id: 'yes', label: 'Yes', commands: [aboutWaiting, moveHunters] }],
-      },
-    });
+    const startHunting: Decision = {
+      id: decisionId('start_hunting'),
+      kind: 'confirm',
+      prompt: 'Start hunting?',
+      decider: { kind: 'group' },
+      options: [{ id: 'yes', label: 'Yes', commands: [moveHunters] }],
+    };
+    // Both pending at once, as two attacks of opportunity are; built from events because no command asks two.
+    const asked = [aboutWaiting, startHunting].reduce(
+      (built, decision) => apply(built, { type: 'DecisionRequested', decision }),
+      state,
+    );
 
     const after = stateAfter(ctx, asked, {
       type: 'ResolveDecision',
@@ -511,7 +511,7 @@ describe('answering the hunter order', () => {
     expect(after.pending).toEqual([]);
   });
 
-  it("still raises the chosen hunter's own tie decision and moves the others", () => {
+  it("resolves the chosen hunter's own tie decision before the other hunter moves", () => {
     const forked = instanceId('forked_hunter');
     const state = started({
       ...fork,
@@ -519,12 +519,20 @@ describe('answering the hunter order', () => {
       enemies: [enemy(forked, 'hunter_ghoul', at('a')), enemy(second, 'hunter_ghoul', at('b'))],
     });
     const asked = stateAfter(ctx, state, moveHunters);
+    const tieAsked = stateAfter(ctx, asked, chooseOrder(forked));
 
-    const after = stateAfter(ctx, asked, chooseOrder(forked));
+    const after = stateAfter(ctx, tieAsked, {
+      type: 'ResolveDecision',
+      decisionId: decisionId('hunter:forked_hunter:location'),
+      optionId: 'c',
+    });
 
-    expect(zoneOf(after, forked)).toEqual(at('a'));
+    expect(tieAsked.pending.map((decision) => decision.id)).toEqual([
+      'hunter:forked_hunter:location',
+    ]);
+    expect(zoneOf(tieAsked, second)).toEqual(at('b'));
+    expect(zoneOf(after, forked)).toEqual(at('c'));
     expect(zoneOf(after, second)).toEqual(engagedWith(alice));
-    expect(after.pending.map((decision) => decision.id)).toEqual(['hunter:forked_hunter:location']);
   });
 });
 

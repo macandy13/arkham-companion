@@ -1047,7 +1047,7 @@ describe('surge after the drawn card has resolved', () => {
     const asked = stateAfter(surgeCtx, state, draw);
 
     expect(asked.pending.map((decision) => decision.id)).toEqual(['revelation:testing_card']);
-    expect(asked.meta.queue).toEqual([{ kind: 'command', command: aliceDrawsAgain }]);
+    expect(asked.meta.queue).toEqual([{ kind: 'surge', draw: aliceDrawsAgain }]);
     expect(idsIn(asked, encounterDeck)).toEqual(['after_surge']);
   });
 
@@ -1073,19 +1073,25 @@ describe('surge after the drawn card has resolved', () => {
     expect(answered.meta.queue).toBeUndefined();
   });
 
-  it('holds no surge draw when the surging card was the last one', () => {
+  it('draws nothing more when the surging card was the last one', () => {
     const state = startedWith(
       { deck: [card('testing_surge', 'testing_card')] },
       { aliceAt: hall },
       surgeCtx,
     );
-
     const asked = stateAfter(surgeCtx, state, draw);
 
-    expect(asked.meta.queue).toBeUndefined();
+    const { state: answered, events } = execute(surgeCtx, asked, {
+      type: 'ResolveDecision',
+      decisionId: decisionId('revelation:testing_card'),
+      optionId: 'fail',
+    });
+
+    expect(resolutionOrder(events)).toEqual(['discards testing_card']);
+    expect(answered.meta.queue).toBeUndefined();
   });
 
-  it('drops the held surge draw when the card`s effect defeated alice', () => {
+  it('places the card after its revelation`s question, but draws nothing more once that defeated alice', () => {
     const state = startedWith(
       { deck: [card('deadly_surge', 'deadly_card'), card('plain_treachery', 'after_surge')] },
       { aliceAt: hall },
@@ -1099,11 +1105,8 @@ describe('surge after the drawn card has resolved', () => {
       optionId: 'yes',
     });
 
-    expect(asked.meta.queue).toEqual([{ kind: 'command', command: aliceDrawsAgain }]);
-    expect(resolutionOrder(events)).toEqual([
-      'alice damage +8',
-      'drops DrawEncounter (investigatorNotActive)',
-    ]);
+    expect(idsIn(asked, { kind: 'resolving' })).toEqual(['deadly_card']);
+    expect(resolutionOrder(events)).toEqual(['alice damage +8', 'discards deadly_card']);
   });
 
   it('draws the surge card only after the players chose where the enemy spawns', () => {
@@ -1120,7 +1123,7 @@ describe('surge after the drawn card has resolved', () => {
       optionId: hall,
     });
 
-    expect(asked.meta.queue).toEqual([{ kind: 'command', command: aliceDrawsAgain }]);
+    expect(asked.meta.queue).toEqual([{ kind: 'surge', draw: aliceDrawsAgain }]);
     expect(resolutionOrder(events)).toEqual([
       'choosy_card engages alice',
       'draws after_surge',
