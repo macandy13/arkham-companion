@@ -206,7 +206,7 @@ function startingInvestigator(
   seat: number,
   options: InvestigatorOptions,
 ): StartingInvestigator {
-  return blankInvestigator({ id, seat, ...options });
+  return blankInvestigator(id, { seat, ...options });
 }
 
 function startingLocation({ id, card, options }: LocationEntry, playerCount: number): StartingCard {

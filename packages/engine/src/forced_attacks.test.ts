@@ -27,25 +27,23 @@ const enemy = instanceId('enemy');
  * health, so a hit for 1 does not defeat it), an alert ghoul and a plain
  * ghoul without either keyword.
  */
-const retaliateGhoul = blankEnemy({
-  code: 'retaliate_ghoul',
+const retaliateGhoul = blankEnemy('retaliate_ghoul', {
   fight: 4,
   health: fixed(3),
   damage: 1,
   horror: 2,
   keywords: [{ name: 'retaliate' }],
 });
-const alertGhoul = blankEnemy({
-  code: 'alert_ghoul',
+const alertGhoul = blankEnemy('alert_ghoul', {
   evade: 4,
   damage: 1,
   horror: 2,
   keywords: [{ name: 'alert' }],
 });
-const plainGhoul = blankEnemy({ code: 'plain_ghoul', fight: 4, evade: 4, damage: 1, horror: 2 });
+const plainGhoul = blankEnemy('plain_ghoul', { fight: 4, evade: 4, damage: 1, horror: 2 });
 
 const aliceAndBobInStudy = newGame()
-  .withLocation(study, blankLocation({ code: 'study' }))
+  .withLocation(study, blankLocation('study'))
   .withInvestigator(alice, { locationId: study })
   .withInvestigator(bob, { locationId: study });
 

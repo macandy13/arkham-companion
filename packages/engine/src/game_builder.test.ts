@@ -31,28 +31,28 @@ describe('blank cards', () => {
   it.each([
     {
       name: 'location',
-      card: blankLocation({ code: 'study' }),
+      card: blankLocation('study'),
       stats: { typeCode: 'location', shroud: 0, clues: fixed(0) },
     },
     {
       name: 'enemy',
-      card: blankEnemy({ code: 'ghoul' }),
+      card: blankEnemy('ghoul'),
       stats: { typeCode: 'enemy', fight: 0, evade: 0, health: fixed(1), damage: 0, horror: 0 },
     },
     {
       name: 'treachery',
-      card: blankTreachery({ code: 'curse' }),
+      card: blankTreachery('curse'),
       stats: { typeCode: 'treachery' },
     },
-    { name: 'asset', card: blankAsset({ code: 'lantern' }), stats: { typeCode: 'asset' } },
+    { name: 'asset', card: blankAsset('lantern'), stats: { typeCode: 'asset' } },
     {
       name: 'agenda',
-      card: blankAgenda({ code: 'agenda', doom: fixed(3) }),
+      card: blankAgenda('agenda', fixed(3)),
       stats: { typeCode: 'agenda', stage: { number: 1 }, doom: fixed(3) },
     },
     {
       name: 'act',
-      card: blankAct({ code: 'act' }),
+      card: blankAct('act'),
       stats: { typeCode: 'act', stage: { number: 1 }, clues: fixed(0) },
     },
   ])('makes a $name with nothing on it, named after its code', ({ card, stats }) => {
@@ -60,7 +60,7 @@ describe('blank cards', () => {
   });
 
   it('takes the stats a card sets over the blank ones', () => {
-    expect(blankLocation({ code: 'study', name: 'Study', shroud: 3 })).toMatchObject({
+    expect(blankLocation('study', { name: 'Study', shroud: 3 })).toMatchObject({
       code: cardCode('study'),
       name: 'Study',
       shroud: 3,
@@ -70,8 +70,8 @@ describe('blank cards', () => {
 });
 
 describe('newGame', () => {
-  const studyCard = blankLocation({ code: 'study', clues: perInvestigator(2) });
-  const hallwayCard = blankLocation({ code: 'hallway' });
+  const studyCard = blankLocation('study', { clues: perInvestigator(2) });
+  const hallwayCard = blankLocation('hallway');
 
   it('places locations unrevealed and without clues on the main map', () => {
     const { state } = newGame().withLocation(study, studyCard).start();
@@ -101,7 +101,7 @@ describe('newGame', () => {
     const { state } = newGame()
       .withLocation(study, studyCard)
       .withLocation(hallway, hallwayCard)
-      .withLocation(attic, blankLocation({ code: 'attic' }), { map: upstairs })
+      .withLocation(attic, blankLocation('attic'), { map: upstairs })
       .withConnection(study, hallway)
       .withConnection(attic, hallway, { oneWay: true })
       .start();
@@ -131,8 +131,8 @@ describe('newGame', () => {
     const top = instanceId('top_card');
     const below = instanceId('below_card');
     const { state } = newGame()
-      .withCard(top, blankTreachery({ code: 'curse' }), { kind: 'encounterDeck' })
-      .withCard(below, blankTreachery({ code: 'hex' }), { kind: 'encounterDeck' })
+      .withCard(top, blankTreachery('curse'), { kind: 'encounterDeck' })
+      .withCard(below, blankTreachery('hex'), { kind: 'encounterDeck' })
       .start();
 
     expect(state.order[zoneKey({ kind: 'encounterDeck' })]).toEqual([top, below]);
@@ -148,7 +148,7 @@ describe('newGame', () => {
     const { state } = newGame()
       .withLocation(study, studyCard)
       .withInvestigator(alice, { locationId: study })
-      .withCard(lantern, blankAsset({ code: 'lantern' }), zone, {
+      .withCard(lantern, blankAsset('lantern'), zone, {
         faceUp: true,
         tokens: { doom: 1 },
       })
@@ -167,9 +167,9 @@ describe('newGame', () => {
     const firstAgenda = instanceId('first_agenda');
     const firstAct = instanceId('first_act');
     const { state } = newGame()
-      .withAgenda(firstAgenda, blankAgenda({ code: 'agenda_1', doom: fixed(3) }))
-      .withAgenda(instanceId('second_agenda'), blankAgenda({ code: 'agenda_2', doom: fixed(5) }))
-      .withAct(firstAct, blankAct({ code: 'act_1' }))
+      .withAgenda(firstAgenda, blankAgenda('agenda_1', fixed(3)))
+      .withAgenda(instanceId('second_agenda'), blankAgenda('agenda_2', fixed(5)))
+      .withAct(firstAct, blankAct('act_1'))
       .start();
 
     expect(state.agenda.current).toBe(firstAgenda);
@@ -177,7 +177,7 @@ describe('newGame', () => {
   });
 
   it('gives a context that knows every card on the table', () => {
-    const ghoul = blankEnemy({ code: 'ghoul' });
+    const ghoul = blankEnemy('ghoul');
     const { context } = newGame()
       .withLocation(study, studyCard)
       .withInvestigator(alice, { locationId: study })
@@ -199,7 +199,7 @@ describe('newGame', () => {
   it('refuses two different definitions for one card code', () => {
     const table = newGame()
       .withLocation(study, studyCard)
-      .withLocation(hallway, blankLocation({ code: 'study' }));
+      .withLocation(hallway, blankLocation('study'));
 
     expect(() => table.start()).toThrow('two different definitions for card code study');
   });

@@ -1,6 +1,7 @@
 import {
   blankInvestigator,
   investigatorCardStats,
+  type BlankInvestigatorFields,
   type CardStats,
   type GameState,
   type Investigator,
@@ -8,8 +9,16 @@ import {
   type InvestigatorSeat,
 } from '../../src/index';
 
-/** The old name of `blankInvestigator`, until M1V.3 slice 4 moves its callers to the builder. */
-export { blankInvestigator as makeInvestigator };
+/**
+ * `blankInvestigator` with the ID among the fields, the form the tests not yet
+ * built with `newGame()` use; M1V.3 slice 4 removes it.
+ */
+export function makeInvestigator({
+  id,
+  ...fields
+}: BlankInvestigatorFields & { id: string }): Investigator {
+  return blankInvestigator(id, fields);
+}
 
 /**
  * Four invented investigators with distinct health and sanity, so tests about
@@ -17,25 +26,25 @@ export { blankInvestigator as makeInvestigator };
  * `investigators(n)` takes the first `n` in seat order.
  */
 export const standardInvestigators: readonly Investigator[] = [
-  blankInvestigator({
+  makeInvestigator({
     id: 'tank',
     seat: 0,
     health: { max: 9, damage: 0 },
     sanity: { max: 5, horror: 0 },
   }),
-  blankInvestigator({
+  makeInvestigator({
     id: 'seeker',
     seat: 1,
     health: { max: 6, damage: 0 },
     sanity: { max: 9, horror: 0 },
   }),
-  blankInvestigator({
+  makeInvestigator({
     id: 'rogue',
     seat: 2,
     health: { max: 7, damage: 0 },
     sanity: { max: 7, horror: 0 },
   }),
-  blankInvestigator({
+  makeInvestigator({
     id: 'mystic',
     seat: 3,
     health: { max: 5, damage: 0 },
