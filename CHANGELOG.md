@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.3.0...arkham-companion-v1.3.1) (2026-10-18)
+
+
+### Refactoring
+
+* **engine:** grow one resolution per handle call ([867ea13](https://github.com/macandy13/arkham-companion/commit/867ea13552776bcb42f2c0c241c11b5b6ae8faaf))
+
 ## [1.3.0](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.2.0...arkham-companion-v1.3.0) (2026-10-18)
 
 
