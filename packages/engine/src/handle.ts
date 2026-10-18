@@ -162,7 +162,8 @@ interface TriggerBudget {
    * first surging draw of this `handle` call. A deck made only of surge cards
    * would reshuffle and draw forever, so one call makes at most that many
    * draws in surge chains. A queued surge resumes in a later call and counts
-   * afresh; it only waits there because the players have to answer first.
+   * afresh, sharing that call's count with the other queued steps it
+   * resolves; it only waits there because the players have to answer first.
    */
   surges: number;
   encounterCards?: number;
