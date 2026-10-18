@@ -90,7 +90,7 @@ Ref: architecture "Persistence" (`campaigns` table).
 
 **Benefit:** A regression test for the whole campaign flow before any campaign screen exists.
 
-- [ ] Test: start the test campaign → play The Gathering via `TestTable` to a resolution (shortened if M1.17's test already covers the game) → confirm the resolution → the log shows records, XP, trauma and bag changes → start The Midnight Masks from the log → its setup reflects a story record (e.g. whether the house is still standing, Lita Chantler) and the trauma
+- [ ] Test: start the test campaign → play The Gathering via `PlayTable` to a resolution (shortened if M1.17's test already covers the game) → confirm the resolution → the log shows records, XP, trauma and bag changes → start The Midnight Masks from the log → its setup reflects a story record (e.g. whether the house is still standing, Lita Chantler) and the trauma
 - [ ] Replay check for the campaign aggregate
 
 Done when: Night of the Zealot runs from The Gathering into The Midnight Masks in tests, with log, trauma and chaos bag carried over.
