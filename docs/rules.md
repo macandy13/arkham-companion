@@ -152,7 +152,7 @@ An ability that shuffles an empty discard pile into a deck does not shuffle the 
 4. Resolve its symbol: skull, cultist, tablet and elder thing use the scenario reference card, elder sign uses the tester's investigator card, and auto-fail fails the test.
 5. Modified skill = base skill plus icons, the token's modifier and active effects.
 6. Success if the skill is at or above the difficulty. Auto-fail sets the skill to 0, and auto-success sets the difficulty to 0. Reactions and forced effects on "succeeded/failed" trigger here.
-7. Apply results in an order the tester chooses (clue discovered, damage dealt, card effects).
+7. Apply results in an order the tester chooses (clue discovered, damage dealt, card effects), including "if this test succeeds/fails" effects. "After you succeed/fail" abilities are not results: they trigger in step 6, before these (Rules Reference, "Skill Test Results and Advanced Timing").
 8. Discard committed cards and return the tokens to the bag.
 
 Bless (+2), curse (-2), frost (-1) and the blood token (-1) each make the tester reveal another token, whose modifier also applies.

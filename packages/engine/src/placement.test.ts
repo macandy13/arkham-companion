@@ -55,10 +55,11 @@ describe('clearTokensEvents', () => {
 });
 
 describe('clues between an investigator and a location', () => {
-  it('discovering moves clues from the location to the investigator', () => {
+  it('discovering moves clues from the location to the investigator and records the discovery', () => {
     expect(discoverCluesEvents(roland, study, 2)).toEqual([
       { type: 'TokensChanged', cardId: study, token: 'clue', delta: -2 },
       { type: 'InvestigatorChanged', investigatorId: roland, stat: 'clues', delta: 2 },
+      { type: 'CluesDiscovered', investigatorId: roland, locationId: study, amount: 2 },
     ]);
   });
 

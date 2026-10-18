@@ -4,6 +4,7 @@ import {
   checkInvariants,
   decisionId,
   execute,
+  handle,
   instanceId,
   investigatorId,
   skillTestDecision,
@@ -307,6 +308,128 @@ describe('skill test result', () => {
     const after = stateAfter(ctx, asked, resolveDecision('investigate_hall', 'failedBy:2'));
 
     expect(after.investigators[0]?.sanity.horror).toBe(2);
+  });
+});
+
+describe('skill test outcome record', () => {
+  const test = { skill: 'intellect', difficulty: 3 } as const;
+  const decision = skillTestDecision(
+    {
+      id: decisionId('investigate_hall'),
+      prompt: 'decision.skillTest',
+      subject: hall,
+      decider: { kind: 'investigator', investigatorId: alice },
+      test,
+    },
+    {
+      onPass: [{ type: 'DiscoverClues', investigatorId: alice, locationId: hall, amount: 1 }],
+      onFail: [gainHorror(1)],
+      failedBy: { 2: [gainHorror(2)] },
+    },
+  );
+  let asked: GameState;
+  beforeEach(() => {
+    const hallWithTwoClues = stateAfter(ctx, started([alicePlacedAt(hall)]), {
+      type: 'ManualAdjust',
+      adjustment: { kind: 'tokens', cardId: hall, token: 'clue', delta: 2 },
+    });
+    asked = stateAfter(ctx, hallWithTwoClues, { type: 'RequestDecision', decision });
+  });
+
+  it.each([
+    {
+      answer: 'pass',
+      recorded: {
+        type: 'SkillTestResolved',
+        decisionId: 'investigate_hall',
+        investigatorId: alice,
+        subject: hall,
+        skillTest: test,
+        outcome: 'pass',
+      },
+    },
+    {
+      answer: 'fail',
+      recorded: {
+        type: 'SkillTestResolved',
+        decisionId: 'investigate_hall',
+        investigatorId: alice,
+        subject: hall,
+        skillTest: test,
+        outcome: 'fail',
+      },
+    },
+    {
+      answer: 'failedBy:2',
+      recorded: {
+        type: 'SkillTestResolved',
+        decisionId: 'investigate_hall',
+        investigatorId: alice,
+        subject: hall,
+        skillTest: test,
+        outcome: 'fail',
+        failedBy: 2,
+      },
+    },
+  ])('records "$answer" right after the answer', ({ answer, recorded }) => {
+    const events = handle(ctx, asked, resolveDecision('investigate_hall', answer));
+
+    expect(events.slice(0, 2)).toEqual([
+      { type: 'DecisionResolved', decisionId: 'investigate_hall', optionId: answer },
+      recorded,
+    ]);
+  });
+
+  it('records no investigator or subject for a test the lead answers about no card', () => {
+    const leadTest = skillTestDecision(
+      {
+        id: decisionId('lead_test'),
+        prompt: 'decision.skillTest',
+        decider: { kind: 'lead' },
+        test,
+      },
+      { onPass: [], onFail: [] },
+    );
+    const leadAsked = stateAfter(ctx, started([alicePlacedAt(hall)]), {
+      type: 'RequestDecision',
+      decision: leadTest,
+    });
+
+    expect(handle(ctx, leadAsked, resolveDecision('lead_test', 'pass'))).toEqual([
+      { type: 'DecisionResolved', decisionId: 'lead_test', optionId: 'pass' },
+      { type: 'SkillTestResolved', decisionId: 'lead_test', skillTest: test, outcome: 'pass' },
+    ]);
+  });
+
+  it('records the clues the pass discovers', () => {
+    const events = handle(ctx, asked, resolveDecision('investigate_hall', 'pass'));
+
+    expect(events).toContainEqual({
+      type: 'CluesDiscovered',
+      investigatorId: alice,
+      locationId: hall,
+      amount: 1,
+    });
+  });
+
+  it('records nothing for a decision that is not a skill test', () => {
+    const question: Decision = {
+      id: decisionId('open_the_door'),
+      kind: 'confirm',
+      prompt: 'decision.confirm',
+      decider: { kind: 'lead' },
+      options: [{ id: 'yes', label: 'decision.yes', commands: [] }],
+    };
+    const events = handle(
+      ctx,
+      stateAfter(ctx, started([alicePlacedAt(hall)]), {
+        type: 'RequestDecision',
+        decision: question,
+      }),
+      resolveDecision('open_the_door', 'yes'),
+    );
+
+    expect(events.map((event) => event.type)).toEqual(['DecisionResolved']);
   });
 });
 

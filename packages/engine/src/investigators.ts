@@ -1,4 +1,4 @@
-import type { InvestigatorChanged, TokensChanged } from './events';
+import type { CluesDiscovered, InvestigatorChanged, TokensChanged } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
 import { CommandRejected } from './rejection';
 import type { GameState, Investigator, InvestigatorStat } from './state';
@@ -147,10 +147,11 @@ export function discoverCluesEvents(
   investigatorId: InvestigatorId,
   locationId: InstanceId,
   amount: number,
-): [TokensChanged, InvestigatorChanged] {
+): [TokensChanged, InvestigatorChanged, CluesDiscovered] {
   return [
     { type: 'TokensChanged', cardId: locationId, token: 'clue', delta: -amount },
     { type: 'InvestigatorChanged', investigatorId, stat: 'clues', delta: amount },
+    { type: 'CluesDiscovered', investigatorId, locationId, amount },
   ];
 }
 
