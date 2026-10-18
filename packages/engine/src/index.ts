@@ -47,6 +47,7 @@ export {
   type InvestigatorView,
   type LocationView,
 } from './board_view';
+export { PlayTable, TableRejected, type PhaseStop, type SkillTestResult } from './play_table';
 export { CommandRejected, type Rejection, type RejectionCode } from './rejection';
 export { execute, type ExecuteResult } from './execute';
 export type * from './setup';

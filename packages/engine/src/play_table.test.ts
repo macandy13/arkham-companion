@@ -1,0 +1,559 @@
+import { describe, expect, it } from 'vitest';
+import {
+  blankAct,
+  blankAgenda,
+  blankEnemy,
+  blankLocation,
+  CommandRejected,
+  decisionId,
+  emptyState,
+  engagedWith,
+  fixed,
+  instanceId,
+  investigatorId,
+  newGame,
+  PlayTable,
+  replay,
+  skillTestDecision,
+  TableError,
+  TableRejected,
+} from './index';
+
+const alice = investigatorId('alice');
+const bob = investigatorId('bob');
+const study = instanceId('study');
+const hallway = instanceId('hallway');
+const ghoul = instanceId('ghoul');
+
+describe('starting a table', () => {
+  const game = newGame()
+    .withLocation(study, blankLocation('study'), { revealed: true })
+    .withInvestigator(alice, { locationId: study });
+
+  it('starts from a builder with a log that replays to the state', () => {
+    const table = PlayTable.start(game);
+
+    expect(replay(table.events)).toEqual(table.state);
+    expect(table.state).toEqual(game.start().state);
+    expect(table.board.investigator(alice)).toMatchObject({ at: 'study', actions: 3 });
+  });
+
+  it('starts from a start command in a given context', () => {
+    const table = PlayTable.from(game.context(), game.startCommand());
+
+    expect(replay(table.events)).toEqual(table.state);
+    expect(table.board.locations.map((location) => location.name)).toEqual(['study']);
+  });
+
+  it('fails when the start leaves the state inconsistent, with the board attached', () => {
+    const defeatedAtStart = game.withInvestigator(bob, {
+      locationId: study,
+      health: { max: 0, damage: 0 },
+    });
+
+    expect(() => PlayTable.start(defeatedAtStart)).toThrow(
+      /StartScenario broke invariants: investigator bob is active but has no health or sanity left\nRound 0/,
+    );
+  });
+
+  it('reads a fresh board on each access', () => {
+    const table = PlayTable.start(
+      game.withLocation(hallway, blankLocation('hallway')).withConnection(study, hallway),
+    );
+    const before = table.board;
+    table.nextPhase();
+    table.startTurn(alice);
+
+    table.moveTo(alice, 'hallway');
+
+    expect(before.investigator(alice).at).toBe('study');
+    expect(table.board.investigator(alice).at).toBe('hallway');
+    expect(table.formatted()).toContain('hallway');
+  });
+});
+
+describe('rejected and broken steps', () => {
+  const game = newGame()
+    .withLocation(study, blankLocation('study'))
+    .withLocation(hallway, blankLocation('hallway'))
+    .withInvestigator(alice, { locationId: study });
+
+  it('wraps a refusal with the board and leaves state and log untouched', () => {
+    const table = PlayTable.start(game);
+    table.nextPhase();
+    table.startTurn(alice);
+    const stateBefore = table.state;
+    const eventsBefore = table.events;
+
+    expect(() => table.moveTo(alice, 'hallway')).toThrow(TableRejected);
+    expect(() => table.moveTo(alice, 'hallway')).toThrow(CommandRejected);
+    expect(() => table.moveTo(alice, 'hallway')).toThrow(/study.*hallway.*\nRound 1/s);
+    expect(table.state).toBe(stateBefore);
+    expect(table.events).toEqual(eventsBefore);
+  });
+
+  it('keeps the engine rejection unchanged', () => {
+    const table = PlayTable.start(game);
+    table.nextPhase();
+    table.startTurn(alice);
+
+    const thrown = (() => {
+      try {
+        table.moveTo(alice, 'hallway');
+      } catch (error) {
+        return error as TableRejected;
+      }
+    })();
+
+    expect(thrown?.rejection).toEqual({ code: 'notConnected', from: study, to: hallway });
+  });
+
+  it('does not wrap an error that is not a rejection', () => {
+    const table = PlayTable.start(game);
+
+    expect(() => table.moveTo(alice, 'garden')).toThrow(TableError);
+    expect(() => table.moveTo(alice, 'garden')).not.toThrow(CommandRejected);
+  });
+});
+
+describe('the round', () => {
+  const game = newGame()
+    .withLocation(study, blankLocation('study'))
+    .withInvestigator(alice, { locationId: study })
+    .withCard(ghoul, blankEnemy('ghoul', { damage: 2, horror: 1 }), engagedWith(alice));
+
+  it('reports where each Next stops', () => {
+    const table = PlayTable.start(game);
+
+    expect(table.nextPhase()).toMatchObject({ round: 1, phase: 'investigation' });
+    table.startTurn(alice);
+    table.endTurn(alice);
+    expect(table.nextPhase()).toEqual({ round: 1, phase: 'enemy', step: 'enemiesAttack' });
+  });
+
+  it('resolves the attacks of enemy step 3.3 and exhausts the attacker', () => {
+    const table = PlayTable.start(game);
+    table.nextPhase();
+    table.startTurn(alice);
+    table.endTurn(alice);
+    table.nextPhase();
+    expect(table.board.attacksDue).toEqual([{ enemy: 'ghoul', investigator: alice }]);
+
+    table.resolveEnemyAttacks();
+
+    expect(table.board.investigator(alice)).toMatchObject({ damage: 2, horror: 1 });
+    expect(table.board.enemy('ghoul')).toMatchObject({ exhausted: true });
+  });
+
+  it('fails to resolve attacks when the step lists none', () => {
+    const table = PlayTable.start(game);
+
+    expect(() => table.resolveEnemyAttacks()).toThrow(/no enemy attacks to resolve\nRound 0/);
+  });
+});
+
+describe('turns, actions and tokens', () => {
+  const game = newGame()
+    .withLocation(study, blankLocation('study'))
+    .withInvestigator(alice, { locationId: study });
+
+  it('counts actions off and on', () => {
+    const table = PlayTable.start(game);
+    table.nextPhase();
+    table.startTurn(alice);
+
+    table.spendAction(alice);
+    expect(table.board.investigator(alice).actions).toBe(2);
+    table.spendAction(alice, 2);
+    expect(table.board.investigator(alice).actions).toBe(0);
+    table.adjustActions(alice, 1);
+    expect(table.board.investigator(alice).actions).toBe(1);
+  });
+
+  it('shows whose turn it is until they end it', () => {
+    const table = PlayTable.start(game);
+    table.nextPhase();
+
+    table.startTurn(alice);
+    expect(table.board.turn).toBe(alice);
+    table.endTurn(alice);
+
+    expect(table.board.turn).toBeUndefined();
+  });
+
+  it('lets an investigator resign', () => {
+    const table = PlayTable.start(game);
+    table.nextPhase();
+    table.startTurn(alice);
+
+    table.resign(alice);
+
+    expect(table.board.investigator(alice).status).toBe('resigned');
+  });
+
+  it('gains and spends resources and takes damage and horror', () => {
+    const table = PlayTable.start(game);
+
+    table.gainResources(alice, 3);
+    table.spendResources(alice, 2);
+    table.takeDamage(alice, 2);
+    table.takeHorror(alice, 1);
+
+    expect(table.board.investigator(alice)).toMatchObject({
+      resources: 6,
+      damage: 2,
+      horror: 1,
+    });
+  });
+
+  it('places doom on the agenda', () => {
+    const table = PlayTable.start(
+      game.withAgenda(instanceId('agenda'), blankAgenda('agenda', fixed(5))),
+    );
+
+    table.placeDoom(2);
+
+    expect(table.board.agenda).toEqual({ name: 'agenda', doom: 2 });
+  });
+
+  it('advances the act by spending the clues of several investigators', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withInvestigator(alice, { locationId: study, clues: 1 })
+        .withInvestigator(bob, { locationId: study, clues: 1 })
+        .withAct(instanceId('first_act'), blankAct('first_act', { clues: fixed(2) }))
+        .withAct(instanceId('last_act'), blankAct('last_act', { stage: { number: 2 } })),
+    );
+
+    table.spendCluesToAdvanceAct([
+      [alice, 1],
+      [bob, 1],
+    ]);
+
+    expect(table.board.act).toMatchObject({ name: 'last_act' });
+    expect(table.board.investigators.map((inv) => inv.clues)).toEqual([0, 0]);
+  });
+});
+
+describe('investigating', () => {
+  const game = newGame()
+    .withLocation(study, blankLocation('study', { shroud: 2 }), { revealed: true, clues: 3 })
+    .withInvestigator(alice, { locationId: study });
+
+  it('passes the test and discovers a clue by default', () => {
+    const table = PlayTable.start(game);
+
+    table.investigate(alice);
+
+    expect(table.board.investigator(alice).clues).toBe(1);
+    expect(table.board.location('study').clues).toBe(2);
+    expect(table.board.decisions).toEqual([]);
+  });
+
+  it('discovers the clues the players confirm', () => {
+    const table = PlayTable.start(game);
+
+    table.investigate(alice, { clues: 2 });
+
+    expect(table.board.investigator(alice).clues).toBe(2);
+  });
+
+  it('discovers nothing when the test fails', () => {
+    const table = PlayTable.start(game);
+
+    table.investigate(alice, { result: 'fail' });
+
+    expect(table.board.investigator(alice).clues).toBe(0);
+    expect(table.board.decisions).toEqual([]);
+  });
+
+  it('leaves an open test pending until it is resolved', () => {
+    const table = PlayTable.start(game);
+
+    table.investigate(alice, { result: 'open' });
+    expect(table.board.decisions).toMatchObject([{ kind: 'skillTestResult', about: 'study' }]);
+    expect(table.board.investigator(alice).clues).toBe(0);
+    table.resolveTest('pass', { amount: 2 });
+
+    expect(table.board.investigator(alice).clues).toBe(2);
+    expect(table.board.decisions).toEqual([]);
+  });
+
+  it('refuses a count for a test that is left open', () => {
+    const table = PlayTable.start(game);
+
+    expect(() => table.investigate(alice, { result: 'open', clues: 2 })).toThrow(TableError);
+  });
+
+  it('points to the attack of opportunity that comes before the test', () => {
+    const table = PlayTable.start(
+      game.withCard(ghoul, blankEnemy('ghoul', { damage: 1 }), engagedWith(alice)),
+    );
+
+    table.nextPhase();
+    table.startTurn(alice);
+
+    expect(() => table.investigate(alice)).toThrow(/takeAttackOfOpportunity/);
+    table.takeAttackOfOpportunity('ghoul', { damage: 0 });
+    table.resolveTest('pass');
+
+    expect(table.board.investigator(alice)).toMatchObject({ clues: 1, damage: 0 });
+  });
+
+  it('does not resolve the test of an investigator who has none open', () => {
+    const table = PlayTable.start(game.withInvestigator(bob, { locationId: study }));
+    table.investigate(alice, { result: 'open' });
+
+    expect(() => table.resolveTest('pass', { for: bob })).toThrow(
+      /open skill test for bob, found 0/,
+    );
+    table.resolveTest('pass', { for: alice });
+
+    expect(table.board.investigator(alice).clues).toBe(1);
+  });
+
+  it('fails when no skill test is open', () => {
+    const table = PlayTable.start(game);
+
+    expect(() => table.resolveTest('pass')).toThrow(
+      /expected exactly one open skill test, found 0/,
+    );
+  });
+});
+
+describe('fighting and evading', () => {
+  const game = newGame()
+    .withLocation(study, blankLocation('study'))
+    .withInvestigator(alice, { locationId: study })
+    .withCard(ghoul, blankEnemy('ghoul', { health: fixed(4) }), engagedWith(alice));
+
+  it('deals the basic attack on a pass by default', () => {
+    const table = PlayTable.start(game);
+
+    table.fight(alice, 'ghoul');
+
+    expect(table.board.enemy('ghoul')).toMatchObject({ damage: 1 });
+  });
+
+  it('deals the damage the players confirm', () => {
+    const table = PlayTable.start(game);
+
+    table.fight(alice, 'ghoul', { damage: 3 });
+
+    expect(table.board.enemy('ghoul')).toMatchObject({ damage: 3 });
+  });
+
+  it('deals no damage on a fail', () => {
+    const table = PlayTable.start(game);
+
+    table.fight(alice, 'ghoul', { result: 'fail' });
+
+    expect(table.board.enemy('ghoul').damage).toBeUndefined();
+    expect(table.board.decisions).toEqual([]);
+  });
+
+  it('exhausts and disengages an enemy that is evaded', () => {
+    const table = PlayTable.start(game);
+
+    table.evade(alice, 'ghoul');
+
+    expect(table.board.enemy('ghoul')).toEqual({
+      id: ghoul,
+      name: 'ghoul',
+      at: 'study',
+      exhausted: true,
+    });
+  });
+
+  it('leaves a failed evade without exhausting the enemy', () => {
+    const table = PlayTable.start(game);
+
+    table.evade(alice, 'ghoul', { result: 'fail' });
+
+    expect(table.board.enemy('ghoul')).toMatchObject({ engagedWith: alice });
+    expect(table.board.enemy('ghoul').exhausted).toBeUndefined();
+  });
+
+  it('switches an enemy to the investigator who engages it', () => {
+    const table = PlayTable.start(game.withInvestigator(bob, { locationId: study }));
+
+    table.engage(bob, 'ghoul');
+
+    expect(table.board.enemy('ghoul')).toMatchObject({ engagedWith: bob });
+  });
+
+  describe('with two ghouls', () => {
+    const ghoulCard = blankEnemy('ghoul', { health: fixed(3) });
+    const twoGhouls = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withInvestigator(alice, { locationId: study })
+      .withInvestigator(bob, { locationId: study })
+      .withCard(instanceId('ghoul_a'), ghoulCard, engagedWith(alice))
+      .withCard(instanceId('ghoul_b'), ghoulCard, engagedWith(bob));
+
+    it('refuses a name that matches both, listing the narrowings', () => {
+      const table = PlayTable.start(twoGhouls);
+
+      expect(() => table.fight(alice, 'ghoul')).toThrow(/2 enemies match "ghoul".*narrow it/s);
+    });
+
+    it('takes a selector or an instance id to pick one', () => {
+      const table = PlayTable.start(twoGhouls);
+
+      table.fight(alice, { name: 'ghoul', engagedWith: alice });
+      table.fight(bob, instanceId('ghoul_b'));
+
+      expect(table.board.enemies).toMatchObject([
+        { id: 'ghoul_a', damage: 1 },
+        { id: 'ghoul_b', damage: 1 },
+      ]);
+    });
+  });
+});
+
+describe('answering decisions', () => {
+  const game = newGame()
+    .withLocation(study, blankLocation('study'), { revealed: true, clues: 2 })
+    .withInvestigator(alice, { locationId: study });
+
+  it('answers the decision about a card by the option shown', () => {
+    const table = PlayTable.start(game);
+    table.investigate(alice, { result: 'open' });
+
+    table.answer('study', 'pass');
+
+    expect(table.board.investigator(alice).clues).toBe(1);
+  });
+
+  it('confirms an amount where the option takes one', () => {
+    const table = PlayTable.start(game);
+    table.investigate(alice, { result: 'open' });
+
+    table.answer('study', 'pass', { amount: 2 });
+
+    expect(table.board.investigator(alice).clues).toBe(2);
+  });
+
+  it('answers the only open decision without naming its card', () => {
+    const table = PlayTable.start(game);
+    table.investigate(alice, { result: 'open' });
+
+    table.answerOnly('fail');
+
+    expect(table.board.decisions).toEqual([]);
+    expect(table.board.investigator(alice).clues).toBe(0);
+  });
+
+  it('fails with the decision shown when the option is not offered', () => {
+    const table = PlayTable.start(game);
+    table.investigate(alice, { result: 'open' });
+
+    expect(() => table.answer('study', 'maybe')).toThrow(/no option maybe in: .*pass.*fail/);
+  });
+
+  it('fails when no decision is about the card', () => {
+    const table = PlayTable.start(game);
+    table.investigate(alice, { result: 'open' });
+
+    expect(() => table.answer('ghoul', 'pass')).toThrow(
+      /expected exactly one open decision about ghoul, found 0/,
+    );
+  });
+
+  it('fails to answer the only decision when none is open', () => {
+    const table = PlayTable.start(game);
+
+    expect(() => table.answerOnly('pass')).toThrow(/open decision, found 0/);
+  });
+
+  describe('with an attack of opportunity open from each of two ghouls', () => {
+    const ghoulCard = blankEnemy('ghoul', { damage: 1 });
+    const twoGhoulsOnAlice = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withLocation(hallway, blankLocation('hallway'))
+      .withConnection(study, hallway)
+      .withInvestigator(alice, { locationId: study })
+      .withCard(instanceId('ghoul_a'), ghoulCard, engagedWith(alice))
+      .withCard(instanceId('ghoul_b'), ghoulCard, engagedWith(alice));
+
+    it('refuses to answer "the only" decision or a name that fits both', () => {
+      const table = PlayTable.start(twoGhoulsOnAlice);
+      table.nextPhase();
+      table.startTurn(alice);
+      table.moveTo(alice, 'hallway');
+
+      expect(() => table.answerOnly('attack')).toThrow(/open decision, found 2/);
+      expect(() => table.answer('ghoul', 'attack')).toThrow(/open decision about ghoul, found 2/);
+    });
+
+    it('answers by instance id', () => {
+      const table = PlayTable.start(twoGhoulsOnAlice);
+      table.nextPhase();
+      table.startTurn(alice);
+      table.moveTo(alice, 'hallway');
+
+      table.answer(instanceId('ghoul_b'), 'attack');
+
+      expect(table.board.investigator(alice).damage).toBe(1);
+      expect(table.board.decisions).toMatchObject([{ about: 'ghoul' }]);
+    });
+  });
+
+  it('reports a test failed by a margin', () => {
+    const table = PlayTable.start(game);
+    table.play({
+      type: 'RequestDecision',
+      decision: skillTestDecision(
+        {
+          id: decisionId('crypt_chill'),
+          prompt: 'decision.cryptChill',
+          decider: { kind: 'investigator', investigatorId: alice },
+          test: { skill: 'willpower', difficulty: 4 },
+        },
+        {
+          onPass: [],
+          onFail: [],
+          failedBy: {
+            2: [{ type: 'AdjustInvestigator', investigatorId: alice, stat: 'horror', delta: 2 }],
+          },
+        },
+      ),
+    });
+
+    table.resolveTest({ failedBy: 2 });
+
+    expect(table.board.investigator(alice).horror).toBe(2);
+    expect(table.events).toContainEqual(
+      expect.objectContaining({ type: 'SkillTestResolved', outcome: 'fail', failedBy: 2 }),
+    );
+  });
+});
+
+describe('undo', () => {
+  const game = newGame()
+    .withLocation(study, blankLocation('study'), { revealed: true, clues: 2 })
+    .withInvestigator(alice, { locationId: study });
+
+  it('takes back the last command with everything it caused', () => {
+    const table = PlayTable.start(game);
+    table.takeDamage(alice, 1);
+    const stateBefore = table.state;
+    const eventsBefore = table.events;
+    table.takeHorror(alice, 2);
+
+    table.undo();
+
+    expect(table.state).toEqual(stateBefore);
+    expect(table.events).toEqual(eventsBefore);
+  });
+
+  it('can take back the start, and then has nothing to undo', () => {
+    const table = PlayTable.start(game);
+
+    table.undo();
+
+    expect(table.state).toEqual(emptyState());
+    expect(() => table.undo()).toThrow(/nothing to undo/);
+  });
+});
