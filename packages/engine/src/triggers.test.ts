@@ -12,9 +12,18 @@ import {
   type Rejection,
   type EngineContext,
   type GameState,
+  type ScenarioHooks,
 } from './index';
 import { triggeredCommands } from './triggers';
-import { edge, makeInvestigator, rejectionFrom, run, stateAfter, testContext } from '../test/utils';
+import {
+  edge,
+  makeInvestigator,
+  rejectionFrom,
+  run,
+  stateAfter,
+  testContext,
+  withScenario,
+} from '../test/utils';
 
 const main = mapId('main');
 const hall = instanceId('hall');
@@ -64,10 +73,10 @@ function startedState(): GameState {
 }
 
 function withHooks(
-  hooks: EngineContext['hooks'],
+  hooks: Partial<ScenarioHooks>,
   effects?: EngineContext['effects'],
 ): EngineContext {
-  return { ...testContext, hooks, ...(effects ? { effects } : {}) };
+  return { ...withScenario(testContext, { hooks }), ...(effects ? { effects } : {}) };
 }
 
 const placeDoomOnGhoul: Command = { type: 'PlaceDoom', cardId: ghoul, amount: 1 };

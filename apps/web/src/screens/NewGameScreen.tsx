@@ -96,8 +96,10 @@ function Wizard({ store, catalogSource, mode, step }: WizardProps) {
     try {
       const gameId = await store.getState().startScenario({
         title: [t(scenario.nameKey), ...investigators.map((i) => i.name)].join(' – '),
-        ctx: { cards: cardDbWith(scenario.cards, investigators.map(investigatorCardStats)) },
-        definition: scenario.definition,
+        ctx: {
+          cards: cardDbWith(scenario.cards, investigators.map(investigatorCardStats)),
+          scenario: scenario.definition,
+        },
         difficulty: choices.difficulty,
         // The engine never reads randomness itself, so the seed is drawn at the edge.
         seed: Math.floor(Math.random() * 2 ** 31),

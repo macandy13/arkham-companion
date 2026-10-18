@@ -10,7 +10,6 @@ import {
   type Command,
   type Decider,
   type Decision,
-  type EngineContext,
   type GameState,
   type Investigator,
   type InvestigatorId,
@@ -25,6 +24,7 @@ import {
   rejectionFrom,
   startBoard,
   stateAfter,
+  withScenario,
 } from '../test/utils';
 
 const alice = investigatorId('alice');
@@ -327,7 +327,7 @@ describe('decisions raised by hooks', () => {
   const placeDoomOnHall: Command = { type: 'PlaceDoom', cardId: hall, amount: 1 };
 
   it('lets a scenario hook ask the players after doom is placed', () => {
-    const hooked: EngineContext = { ...ctx, hooks: { afterDoomPlaced: () => [offerResource] } };
+    const hooked = withScenario(ctx, { hooks: { afterDoomPlaced: () => [offerResource] } });
 
     const asked = stateAfter(hooked, started([alicePlacedAt(hall)]), placeDoomOnHall);
 
@@ -335,10 +335,9 @@ describe('decisions raised by hooks', () => {
   });
 
   it('rejects a hook that raises the same decision twice', () => {
-    const hooked: EngineContext = {
-      ...ctx,
+    const hooked = withScenario(ctx, {
       hooks: { afterDoomPlaced: () => [offerResource, offerResource] },
-    };
+    });
 
     const rejection = rejectionFrom(hooked, started([alicePlacedAt(hall)]), placeDoomOnHall);
 

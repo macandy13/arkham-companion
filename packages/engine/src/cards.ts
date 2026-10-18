@@ -1,11 +1,10 @@
 import { stripTrailingDot } from '@arkham/util';
 import type { Brand, CardCode, EncounterSetCode } from './ids';
 import type { Keyword } from './keywords';
-import type { ScenarioReference } from './scenario';
-import type { SkillModifierRegistry } from './skill_modifiers';
+import type { ScenarioDefinition } from './scenario';
 import type { SkillTest, SkillValues } from './state';
 import { CommandRejected } from './rejection';
-import type { EffectsRegistry, ScenarioHooks } from './triggers';
+import type { EffectsRegistry } from './triggers';
 
 /**
  * ArkhamDB `type_code` values, covering encounter and player cards.
@@ -207,18 +206,16 @@ export interface CardDb {
  */
 export interface EngineContext {
   cards: CardDb;
-  /** The running scenario's forced effects (`ScenarioDefinition.hooks`); none when absent. */
-  hooks?: Partial<ScenarioHooks>;
+  /**
+   * The running scenario. The engine reads its forced effects (`hooks`), its
+   * reference card and its skill test modifiers from here, so a caller passes
+   * the definition once and cannot leave one of them out. Absent for tests
+   * that start from a bare board: then nothing scenario-specific happens and
+   * symbol tokens count as unknown in skill test suggestions.
+   */
+  scenario?: ScenarioDefinition;
   /** Card scripts by card code; none when absent. */
   effects?: EffectsRegistry;
-  /**
-   * The running scenario's reference card (`ScenarioDefinition.reference`),
-   * for the symbol token modifiers of skill test suggestions; without it
-   * those tokens count as unknown.
-   */
-  reference?: ScenarioReference;
-  /** The running scenario's skill test modifiers (`ScenarioDefinition.modifiers`); none when absent. */
-  modifiers?: SkillModifierRegistry;
 }
 
 /** Builds a `CardDb` from a list of definitions; a later duplicate code replaces an earlier one. */

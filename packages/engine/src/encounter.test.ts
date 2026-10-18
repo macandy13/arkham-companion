@@ -14,6 +14,7 @@ import {
   type InstanceId,
   type StartingCard,
   type Zone,
+  type ScenarioHooks,
 } from './index';
 import {
   contextWith,
@@ -22,6 +23,7 @@ import {
   rejectionFrom,
   startBoard,
   stateAfter,
+  withScenario,
 } from '../test/utils';
 
 const hall = instanceId('hall');
@@ -392,12 +394,12 @@ describe('DrawEncounter', () => {
   });
 
   it('feeds onCardEnters when an enemy enters play, but not for a discarded treachery', () => {
-    const hooks: EngineContext['hooks'] = {
+    const hooks: Partial<ScenarioHooks> = {
       onCardEnters: (_ctx, _state, event) => [
         { type: 'PlaceDoom', cardId: event.cardId, amount: 1 },
       ],
     };
-    const withHooks = { ...ctx, hooks };
+    const withHooks = withScenario(ctx, { hooks });
     const enemyDeck = startedWith({ deck: [card('foe', 'drawn_foe')] }, { aliceAt: hall });
     const treacheryDeck = startedWith(
       { deck: [card('plain_treachery', 'drawn_treachery')] },
@@ -633,7 +635,7 @@ describe('DrawEncounter with a match', () => {
   });
 
   it('feeds onCardEnters for an enemy drawn from the discard', () => {
-    const hooks: EngineContext['hooks'] = {
+    const hooks: Partial<ScenarioHooks> = {
       onCardEnters: (_ctx, _state, event) => [
         { type: 'PlaceDoom', cardId: event.cardId, amount: 1 },
       ],
@@ -644,7 +646,10 @@ describe('DrawEncounter with a match', () => {
       matchCtx,
     );
 
-    const after = stateAfter({ ...matchCtx, hooks }, state, { ...drawGhoulEnemy, from: 'discard' });
+    const after = stateAfter(withScenario(matchCtx, { hooks }), state, {
+      ...drawGhoulEnemy,
+      from: 'discard',
+    });
 
     expect(after.cards[instanceId('discarded_ghoul')]?.tokens.doom).toBe(1);
   });
@@ -686,14 +691,14 @@ describe('FromSetAside', () => {
   });
 
   it('feeds onCardEnters when the card goes into play', () => {
-    const hooks: EngineContext['hooks'] = {
+    const hooks: Partial<ScenarioHooks> = {
       onCardEnters: (_ctx, _state, event) => [
         { type: 'PlaceDoom', cardId: event.cardId, amount: 2 },
       ],
     };
     const state = startedWith({ setAside: [card('foe', 'set_aside_foe')] }, { aliceAt: hall });
 
-    const after = stateAfter({ ...ctx, hooks }, state, {
+    const after = stateAfter(withScenario(ctx, { hooks }), state, {
       type: 'FromSetAside',
       codes: [cardCode('foe')],
       to: { kind: 'atLocation', locationId: hall },

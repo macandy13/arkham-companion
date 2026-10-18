@@ -24,6 +24,7 @@ import {
   testContext,
   contextWith,
   makeCard,
+  withScenario,
 } from '../test/utils';
 
 const main = mapId('main');
@@ -726,8 +727,7 @@ describe('a last act whose reverse side lets the lead investigator choose the re
   /** C2, the second and last act of `startedWith`. */
   const lastActCode = 'C2';
   /** The last act's reverse side asks "R1 or R2?"; each answer ends the scenario. */
-  const choosingContext = {
-    ...testContext,
+  const choosingContext = withScenario(testContext, {
     hooks: {
       onActAdvance: {
         [lastActCode]: (): Command[] => [
@@ -747,7 +747,7 @@ describe('a last act whose reverse side lets the lead investigator choose the re
         ],
       },
     },
-  };
+  });
   const lastAct = () =>
     stateAfter(choosingContext, startedWith([makeInvestigator({ id: alice })]), {
       type: 'AdvanceAct',

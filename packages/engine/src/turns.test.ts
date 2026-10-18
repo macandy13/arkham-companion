@@ -7,7 +7,6 @@ import {
   investigatorId,
   zoneKey,
   type Command,
-  type EngineContext,
   type GameState,
   type InvestigatorId,
 } from './index';
@@ -19,6 +18,7 @@ import {
   rejectionFrom,
   startBoard,
   stateAfter,
+  withScenario,
 } from '../test/utils';
 
 const alice = investigatorId('alice');
@@ -237,8 +237,7 @@ describe('the end of a turn', () => {
   });
 
   it('fires the scenario hook onTurnEnd with the investigator whose turn ended', () => {
-    const clueAtTurnEnd: EngineContext = {
-      ...ctx,
+    const clueAtTurnEnd = withScenario(ctx, {
       hooks: {
         onTurnEnd: (_ctx, _state, event) => [
           {
@@ -249,7 +248,7 @@ describe('the end of a turn', () => {
           },
         ],
       },
-    };
+    });
 
     const ended = stateAfter(clueAtTurnEnd, aliceTurn(), endTurn(alice));
 

@@ -151,11 +151,7 @@ describe('The Gathering reference card', () => {
 });
 
 describe('The Gathering skull token', () => {
-  const playing: EngineContext = {
-    ...ctx,
-    reference: theGathering.reference,
-    ...(theGathering.modifiers ? { modifiers: theGathering.modifiers } : {}),
-  };
+  const playing: EngineContext = { ...ctx, scenario: theGathering };
   const studyCard = instanceId('01111#1');
   const icyGhoul = instanceId('01119#1');
   const fleshEater = instanceId('01118#1');
@@ -218,7 +214,7 @@ describe('The Gathering house (after act 1)', () => {
 });
 
 describe('The Gathering act 1 reverse side', () => {
-  const playing: EngineContext = { ...ctx, hooks: theGathering.hooks };
+  const playing: EngineContext = { ...ctx, scenario: theGathering };
   const studyCard = instanceId('01111#1');
   const hallway = instanceId('01112#1');
   const tank = investigatorId('tank');
@@ -304,7 +300,7 @@ describe('The Gathering act 1 reverse side', () => {
 });
 
 describe('The Gathering enemies', () => {
-  const playing: EngineContext = { ...ctx, hooks: theGathering.hooks };
+  const playing: EngineContext = { ...ctx, scenario: theGathering };
   const fleshEater = instanceId('01118#1');
   const priest = instanceId('01116#1');
   const attic = instanceId('01113#1');
@@ -357,7 +353,7 @@ describe('The Gathering enemies', () => {
 });
 
 describe('The Gathering acts 2 and 3', () => {
-  const playing: EngineContext = { ...ctx, hooks: theGathering.hooks };
+  const playing: EngineContext = { ...ctx, scenario: theGathering };
   const hallway = instanceId('01112#1');
   const attic = instanceId('01113#1');
   const parlor = instanceId('01115#1');
@@ -451,7 +447,7 @@ describe('The Gathering acts 2 and 3', () => {
 });
 
 describe('The Gathering agendas 2 and 3', () => {
-  const playing: EngineContext = { ...ctx, hooks: theGathering.hooks };
+  const playing: EngineContext = { ...ctx, scenario: theGathering };
   const tank = investigatorId('tank');
   const seeker = investigatorId('seeker');
   const fleshEater = instanceId('01118#1');

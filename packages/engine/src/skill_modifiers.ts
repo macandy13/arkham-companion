@@ -64,9 +64,8 @@ export type TokenValue = (ctx: EngineContext, state: GameState, test: SkillTestC
 
 /**
  * The scenario's code-side contributions to skill tests
- * (`ScenarioDefinition.modifiers`, passed to the engine as
- * `EngineContext.modifiers`), so a scenario values its tokens without engine
- * changes.
+ * (`ScenarioDefinition.modifiers`, read from `EngineContext.scenario`), so a
+ * scenario values its tokens without engine changes.
  */
 export interface SkillModifierRegistry {
   /**
@@ -247,8 +246,8 @@ function tokenChange(
   if (fixed !== undefined)
     return { target: 'skill', source: { kind: 'chaosToken', token }, change: fixed };
   if (!isSymbolToken(token)) return undefined;
-  const effect = ctx.reference?.[pickReferenceSide(state.meta.difficulty)][token];
-  const value = ctx.modifiers?.tokenValues?.[token];
+  const effect = ctx.scenario?.reference[pickReferenceSide(state.meta.difficulty)][token];
+  const value = ctx.scenario?.modifiers?.tokenValues?.[token];
   const amount = effect?.modifier ?? value?.(ctx, state, test);
   if (amount === undefined) return undefined;
   const source: ModifierSource = {

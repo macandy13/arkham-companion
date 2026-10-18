@@ -7,7 +7,6 @@ import {
   instanceId,
   investigatorId,
   type Command,
-  type EngineContext,
   type GameState,
   type Investigator,
   type StartingCard,
@@ -23,6 +22,7 @@ import {
   runFrom,
   startBoard,
   stateAfter,
+  withScenario,
 } from '../test/utils';
 
 const alice = investigatorId('alice');
@@ -625,14 +625,13 @@ describe('upkeep phase', () => {
   });
 
   it('ends the round (4.6): fires onRoundEnd and clears the turns taken', () => {
-    const cluePerRound: EngineContext = {
-      ...ctx,
+    const cluePerRound = withScenario(ctx, {
       hooks: {
         onRoundEnd: (_ctx, _state, event) => [
           { type: 'AdjustInvestigator', investigatorId: alice, stat: 'clues', delta: event.round },
         ],
       },
-    };
+    });
     const enemy = runFrom(cluePerRound, startedWith(aliceInHall), [
       next,
       ...turnsOf(alice),

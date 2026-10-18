@@ -41,7 +41,7 @@ Arrows are package dependencies; [ESLint](../eslint.config.js) enforces the two 
 Every change to a game takes the same path. Take starting a scenario, the one engine command the app sends today; the play screen will send its commands the same way.
 
 1. The new game wizard collects the scenario, difficulty and investigators and calls [`startScenario`](../apps/web/src/state/appStore.ts) on the app store. The app store is a Zustand store that holds the saved game list (`GameSummary[]`) and the open game (`{ gameId, state }`), and it is the only place in the app that sends commands or writes games.
-2. The app store builds the command: [`scenario.compileSetup`](../packages/engine/src/setup.ts) turns the scenario definition into one `StartScenario` command. The `EngineContext` it passes holds the scenario's card data, which the wizard took from the [scenario catalog](../apps/web/src/scenarios/scenarioCatalog.ts), with the chosen investigator cards added (`cardDbWith`). The wizard seats them by code ([`seating.ts`](../apps/web/src/wizard/seating.ts)), and `compileSetup` takes their printed stats from the context. The scenario's hooks aren't in it yet: `StartScenario` fires no triggers, and they join the context once the play screen sends commands.
+2. The app store builds the command: [`scenario.compileSetup`](../packages/engine/src/setup.ts) turns the scenario definition into one `StartScenario` command. The `EngineContext` it passes holds the scenario definition and its card data, which the wizard took from the [scenario catalog](../apps/web/src/scenarios/scenarioCatalog.ts), with the chosen investigator cards added (`cardDbWith`). The wizard seats them by code ([`seating.ts`](../apps/web/src/wizard/seating.ts)), and `compileSetup` takes their printed stats from the context. The same context, with the scenario's hooks and reference card, runs the game's later commands; a saved game finds its catalog entry again by `meta.scenarioId` (`findScenario`).
 3. [`execute(ctx, state, command)`](../packages/engine/src/execute.ts) calls [`handle`](../packages/engine/src/handle.ts). `handle` checks the command against the state and returns the `Event`s it causes, including every forced effect it triggered (see "Command handling"). A refused command throws `CommandRejected`, and nothing is stored.
 4. [`replay`](../packages/engine/src/reducer.ts) folds the events into the new `GameState`.
 5. The app store writes the events with [`GameStore.appendEvents`](../packages/engine/src/store.ts) and only then shows the new state. Opening a game later replays its log from the last snapshot.
@@ -151,7 +151,7 @@ type Event = ScenarioStarted | DeckShuffled | CardMoved | TokensChanged | CardFl
 
 interface EngineContext {          // cards.ts
   cards: CardDb;
-  hooks?: Partial<ScenarioHooks>;
+  scenario?: ScenarioDefinition;   // hooks, reference card and modifiers of the running scenario
   effects?: EffectsRegistry;
 }
 ```
@@ -180,7 +180,7 @@ The result is one list of events per player command. The store files them under 
 
 ### Triggers and card effects
 
-Forced effects are code that reacts to events. A [`TriggerHook`](../packages/engine/src/triggers.ts) gets the context, the state after the triggering command and the event, and returns commands. Hooks return commands rather than events so their effect is checked by `handle` and can use card data and the RNG like any player command. A scenario's own effects are its `ScenarioHooks`. A [`CardEffect`](../packages/engine/src/triggers.ts) belongs to one card code instead, so the same encounter card behaves the same in every scenario. `matchingTriggers` decides which event fires which hook: per event, scenario hooks before card effects. `ManualAdjust` and `StartScenario` fire nothing, because a correction or the setup is not a game event.
+Forced effects are code that reacts to events. A [`TriggerHook`](../packages/engine/src/triggers.ts) gets the context, the state after the triggering command and the event, and returns commands. Hooks return commands rather than events so their effect is checked by `handle` and can use card data and the RNG like any player command. A scenario's own effects are its `ScenarioHooks`, which the engine reads from `EngineContext.scenario`: the context carries the whole definition, so its hooks, reference card and modifiers cannot be passed separately or forgotten. A [`CardEffect`](../packages/engine/src/triggers.ts) belongs to one card code instead, so the same encounter card behaves the same in every scenario. `matchingTriggers` decides which event fires which hook: per event, scenario hooks before card effects. `ManualAdjust` and `StartScenario` fire nothing, because a correction or the setup is not a game event.
 
 ```ts
 type TriggerHook<E extends Event> = (ctx: EngineContext, state: GameState, event: E) => readonly Command[];

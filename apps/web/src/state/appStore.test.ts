@@ -116,8 +116,10 @@ describe('appStore', () => {
     };
     const start = {
       title: 'The Gathering',
-      ctx: { cards: cardDbWith(theGatheringCards, [investigatorCardStats(alder)]) },
-      definition: theGathering,
+      ctx: {
+        cards: cardDbWith(theGatheringCards, [investigatorCardStats(alder)]),
+        scenario: theGathering,
+      },
       difficulty: 'easy' as const,
       seed: 3,
       investigators: [{ id: investigatorId('alder'), code: alder.code }],
@@ -139,7 +141,10 @@ describe('appStore', () => {
 
     it('stores nothing when the setup is invalid', async () => {
       const store = createAppStore(new IndexedDbStore('appstore-start-invalid-test'));
-      const broken = { ...start, definition: { ...theGathering, actDeck: [cardCode('missing')] } };
+      const broken = {
+        ...start,
+        ctx: { ...start.ctx, scenario: { ...theGathering, actDeck: [cardCode('missing')] } },
+      };
 
       await expect(store.getState().startScenario(broken)).rejects.toThrow();
       expect(store.getState().games).toEqual([]);
