@@ -12,6 +12,7 @@ import {
 import type { Edge, MapSpec } from './map';
 import { blankInvestigator } from './blank_cards';
 import { emptyState, type GameState, type TokenKind } from './state';
+import type { EffectsRegistry } from './triggers';
 import type { Zone } from './zone';
 
 /** How `GameBuilder.withLocation` places a location. */
@@ -63,6 +64,7 @@ interface GameSpec {
   readonly connections: readonly Edge[];
   readonly investigators: readonly StartingInvestigator[];
   readonly cards: readonly CardEntry[];
+  readonly effects?: EffectsRegistry;
 }
 
 const EMPTY_SPEC: GameSpec = { locations: [], connections: [], investigators: [], cards: [] };
@@ -131,9 +133,22 @@ export class GameBuilder {
     return this.withCard(id, card, { kind: 'actDeck' }, { faceUp: true });
   }
 
-  /** A context whose card db holds the definition of every card on the table. */
+  /**
+   * The table with these card scripts (`EngineContext.effects`) in its
+   * context, in place of any given before; for tests of cards whose text the
+   * engine only knows from a script.
+   */
+  withEffects(effects: EffectsRegistry): GameBuilder {
+    return this.with({ effects });
+  }
+
+  /**
+   * A context whose card db holds the definition of every card on the table,
+   * with the card scripts of `withEffects`.
+   */
   context(): EngineContext {
-    return { cards: cardDbFrom(this.definitions()) };
+    const cards = cardDbFrom(this.definitions());
+    return this.spec.effects ? { cards, effects: this.spec.effects } : { cards };
   }
 
   /** The `StartScenario` that sets up this table (standard difficulty, seed 1). */

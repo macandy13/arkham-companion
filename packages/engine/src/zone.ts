@@ -58,6 +58,15 @@ export function sameZone(a: Zone, b: Zone): boolean {
   return zoneKey(a) === zoneKey(b);
 }
 
+/** The encounter deck, shared by all investigators; its order is top first. */
+export const encounterDeck: Zone = { kind: 'encounterDeck' };
+
+/** The encounter discard pile; its order is top first. */
+export const encounterDiscard: Zone = { kind: 'encounterDiscard' };
+
+/** Cards the scenario set aside, out of play until a card or setup brings them in. */
+export const setAside: Zone = { kind: 'setAside' };
+
 /** The zone of an unengaged card at a location, e.g. an enemy that spawned there. */
 export function atLocation(locationId: InstanceId): Zone {
   return { kind: 'atLocation', locationId };
