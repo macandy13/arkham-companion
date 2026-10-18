@@ -1047,7 +1047,7 @@ describe('surge after the drawn card has resolved', () => {
     const asked = stateAfter(surgeCtx, state, draw);
 
     expect(asked.pending.map((decision) => decision.id)).toEqual(['revelation:testing_card']);
-    expect(asked.meta.heldAction).toEqual(aliceDrawsAgain);
+    expect(asked.meta.queue).toEqual([{ kind: 'command', command: aliceDrawsAgain }]);
     expect(idsIn(asked, encounterDeck)).toEqual(['after_surge']);
   });
 
@@ -1070,7 +1070,7 @@ describe('surge after the drawn card has resolved', () => {
       'draws after_surge',
       'discards after_surge',
     ]);
-    expect(answered.meta.heldAction).toBeUndefined();
+    expect(answered.meta.queue).toBeUndefined();
   });
 
   it('holds no surge draw when the surging card was the last one', () => {
@@ -1082,7 +1082,7 @@ describe('surge after the drawn card has resolved', () => {
 
     const asked = stateAfter(surgeCtx, state, draw);
 
-    expect(asked.meta.heldAction).toBeUndefined();
+    expect(asked.meta.queue).toBeUndefined();
   });
 
   it('drops the held surge draw when the card`s effect defeated alice', () => {
@@ -1099,7 +1099,7 @@ describe('surge after the drawn card has resolved', () => {
       optionId: 'yes',
     });
 
-    expect(asked.meta.heldAction).toEqual(aliceDrawsAgain);
+    expect(asked.meta.queue).toEqual([{ kind: 'command', command: aliceDrawsAgain }]);
     expect(resolutionOrder(events)).toEqual([
       'alice damage +8',
       'drops DrawEncounter (investigatorNotActive)',
@@ -1120,7 +1120,7 @@ describe('surge after the drawn card has resolved', () => {
       optionId: hall,
     });
 
-    expect(asked.meta.heldAction).toEqual(aliceDrawsAgain);
+    expect(asked.meta.queue).toEqual([{ kind: 'command', command: aliceDrawsAgain }]);
     expect(resolutionOrder(events)).toEqual([
       'choosy_card engages alice',
       'draws after_surge',

@@ -411,11 +411,24 @@ export interface GameMeta {
   turn?: Turn;
   leadInvestigator?: InvestigatorId;
   /**
-   * A command waiting for pending decisions (`ActionHeld`): an action for
-   * the attacks of opportunity it provoked, or a surge draw for the
-   * decisions of the card before it. Absent otherwise.
+   * The rest of a resolution that waits for pending decisions, next first
+   * (`StepsQueued`): an action for the attacks of opportunity it provoked,
+   * or a surge draw for the decisions of the card before it. The command
+   * that clears the last decision resolves them (`StepResumed`). Absent
+   * when nothing waits.
    */
-  heldAction?: HeldAction;
+  queue?: readonly QueuedStep[];
+}
+
+/**
+ * One piece of a resolution stored until the pending decisions are
+ * answered (`GameMeta.queue`). Plain data, so a saved game holds it like
+ * any other state. Only held commands wait today; the resolution queue
+ * (M1V.1 slice 3c) adds the other continuations as further kinds.
+ */
+export interface QueuedStep {
+  kind: 'command';
+  command: HeldAction;
 }
 
 /**
