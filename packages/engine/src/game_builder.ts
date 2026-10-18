@@ -1,7 +1,14 @@
 import { cardDbFrom, resolveValue, type CardStats, type EngineContext } from './cards';
 import type { StartScenario, StartingCard, StartingInvestigator } from './commands';
 import { execute } from './execute';
-import { mapId, scenarioId, type InstanceId, type InvestigatorId, type MapId } from './ids';
+import {
+  mapId,
+  scenarioId,
+  type CardCode,
+  type InstanceId,
+  type InvestigatorId,
+  type MapId,
+} from './ids';
 import type { Edge, MapSpec } from './map';
 import { blankInvestigator } from './blank_cards';
 import { emptyState, type GameState, type TokenKind } from './state';
@@ -159,7 +166,7 @@ export class GameBuilder {
 
   /** Each card definition once; two different definitions for one code are a mistake in the table. */
   private definitions(): CardStats[] {
-    const byCode = new Map<string, CardStats>();
+    const byCode = new Map<CardCode, CardStats>();
     for (const { card } of [...this.spec.locations, ...this.spec.cards]) {
       const known = byCode.get(card.code);
       if (known && known !== card)
@@ -174,9 +181,11 @@ export class GameBuilder {
     const mapOf = new Map(
       this.spec.locations.map(({ id, options }) => [id, options.map ?? MAIN_MAP]),
     );
+    // An edge from an ID that is no location goes to the main map, so `StartScenario` rejects it.
+    const ownerOf = (edge: Edge) => mapOf.get(edge.from) ?? MAIN_MAP;
     const maps: Record<MapId, MapSpec> = {};
-    for (const map of new Set(mapOf.values())) {
-      const connections = this.spec.connections.filter((edge) => mapOf.get(edge.from) === map);
+    for (const map of new Set([...mapOf.values(), ...this.spec.connections.map(ownerOf)])) {
+      const connections = this.spec.connections.filter((edge) => ownerOf(edge) === map);
       maps[map] = { name: map, connections };
     }
     return maps;

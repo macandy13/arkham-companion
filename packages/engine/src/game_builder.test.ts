@@ -5,6 +5,8 @@ import {
   blankAsset,
   blankEnemy,
   blankLocation,
+  attachedTo,
+  atLocation,
   blankTreachery,
   cardCode,
   engagedWith,
@@ -14,8 +16,10 @@ import {
   mapId,
   newGame,
   perInvestigator,
+  threatAreaOf,
   zoneKey,
 } from './index';
+import { rejectionOf } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -132,6 +136,31 @@ describe('newGame', () => {
       .start();
 
     expect(state.order[zoneKey({ kind: 'encounterDeck' })]).toEqual([top, below]);
+  });
+
+  it.each([
+    { name: 'at a location', zone: atLocation(study) },
+    { name: 'engaged with an investigator', zone: engagedWith(alice) },
+    { name: 'in a threat area', zone: threatAreaOf(alice) },
+    { name: 'attached to a location', zone: attachedTo(study) },
+  ])('places a card $name, face up and with tokens as given', ({ zone }) => {
+    const lantern = instanceId('lantern_card');
+    const { state } = newGame()
+      .withLocation(study, studyCard)
+      .withInvestigator(alice, { locationId: study })
+      .withCard(lantern, blankAsset({ code: 'lantern' }), zone, {
+        faceUp: true,
+        tokens: { doom: 1 },
+      })
+      .start();
+
+    expect(state.cards[lantern]).toMatchObject({ zone, faceUp: true, tokens: { doom: 1 } });
+  });
+
+  it('refuses a connection from an ID that is no location', () => {
+    const table = newGame().withLocation(study, studyCard).withConnection(attic, study);
+
+    expect(rejectionOf(() => table.start())).toEqual({ code: 'unknownCard', cardId: attic });
   });
 
   it('makes the first agenda and act added the current ones', () => {

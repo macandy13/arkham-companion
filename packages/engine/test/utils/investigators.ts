@@ -1,7 +1,6 @@
 import {
   blankInvestigator,
   investigatorCardStats,
-  type BlankInvestigatorOverrides,
   type CardStats,
   type GameState,
   type Investigator,
@@ -9,10 +8,8 @@ import {
   type InvestigatorSeat,
 } from '../../src/index';
 
-/** An investigator with `blankInvestigator` stats; tests pass only what they depend on. */
-export function makeInvestigator(overrides: BlankInvestigatorOverrides): Investigator {
-  return blankInvestigator(overrides);
-}
+/** The old name of `blankInvestigator`, until M1V.3 slice 4 moves its callers to the builder. */
+export { blankInvestigator as makeInvestigator };
 
 /**
  * Four invented investigators with distinct health and sanity, so tests about
@@ -20,25 +17,25 @@ export function makeInvestigator(overrides: BlankInvestigatorOverrides): Investi
  * `investigators(n)` takes the first `n` in seat order.
  */
 export const standardInvestigators: readonly Investigator[] = [
-  makeInvestigator({
+  blankInvestigator({
     id: 'tank',
     seat: 0,
     health: { max: 9, damage: 0 },
     sanity: { max: 5, horror: 0 },
   }),
-  makeInvestigator({
+  blankInvestigator({
     id: 'seeker',
     seat: 1,
     health: { max: 6, damage: 0 },
     sanity: { max: 9, horror: 0 },
   }),
-  makeInvestigator({
+  blankInvestigator({
     id: 'rogue',
     seat: 2,
     health: { max: 7, damage: 0 },
     sanity: { max: 7, horror: 0 },
   }),
-  makeInvestigator({
+  blankInvestigator({
     id: 'mystic',
     seat: 3,
     health: { max: 5, damage: 0 },
