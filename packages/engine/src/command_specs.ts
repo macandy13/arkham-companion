@@ -1,5 +1,5 @@
 import type { EngineContext } from './cards';
-import type { AdvanceAct, AdvanceAgenda, Command, CommandType } from './commands';
+import type { AdvanceAct, AdvanceAgenda, Command, CommandType, DrawEncounter } from './commands';
 import { handleDealEnemyAttack } from './attacks_of_opportunity';
 import { handleRequestDecision, handleResolveDecision } from './decisions';
 import { agendaThresholdDecision } from './doom';
@@ -118,6 +118,19 @@ function finishAdvance(command: AdvanceAgenda | AdvanceAct, own: readonly Event[
   return advanced ? [{ kind: 'finishAdvance', command, cardId: advanced.cardId }] : [];
 }
 
+/**
+ * `DrawEncounter`, continued: the drawn card is placed once its revelation
+ * has resolved, then a surge draws the next card.
+ */
+function placeDrawnCard(_command: DrawEncounter, own: readonly Event[]): Continuation[] {
+  const drawn = own.find((event) => event.type === 'EncounterCardDrawn');
+  const surge = surgeDraw(own);
+  return [
+    ...(drawn ? [{ kind: 'placeDrawnCard' as const, drawn }] : []),
+    ...(surge ? [{ kind: 'surge' as const, draw: surge }] : []),
+  ];
+}
+
 /** One spec per command type; the mapped type makes a missing or mistyped entry a type error. */
 type CommandSpecs = { readonly [K in Command['type']]: CommandSpec<Extract<Command, { type: K }>> };
 
@@ -161,14 +174,7 @@ const COMMAND_SPECS: CommandSpecs = {
   DrawEncounter: {
     handle: handleDrawEncounter,
     // The card's revelation resolves before the card is placed.
-    continueWith: (_command, own) => {
-      const drawn = own.find((event) => event.type === 'EncounterCardDrawn');
-      const surge = surgeDraw(own);
-      return [
-        ...(drawn ? [{ kind: 'placeDrawnCard' as const, drawn }] : []),
-        ...(surge ? [{ kind: 'surge' as const, draw: surge }] : []),
-      ];
-    },
+    continueWith: placeDrawnCard,
   },
   FromSetAside: { handle: (_ctx, state, command) => handleFromSetAside(state, command) },
   ShuffleInto: { handle: (_ctx, state, command) => handleShuffleInto(state, command) },
