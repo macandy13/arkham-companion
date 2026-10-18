@@ -60,7 +60,7 @@ interface LoggedEvent {
   event: Event;
 }
 
-/** How an action's skill test is resolved: the `result` (default `pass`) and the count a pass confirms. */
+/** How an action's skill test is resolved. */
 interface TestOptions {
   /** `open` leaves the test pending, to answer later with `PlayTable.resolveTest`. */
   result?: SkillTestResult | 'open';
@@ -79,7 +79,8 @@ interface TestOptions {
  * Mutable on purpose: a script is a sequence of steps against one table, and
  * threading an immutable state through dozens of calls would bury the
  * narrative. A step that fails (a refused command, a broken invariant, a wrong
- * name) leaves state and log as they were. Action methods do not spend actions
+ * name) leaves state and log as they were, even when it runs several commands
+ * (an action and its test, the attacks of a step) and a later one fails. Action methods do not spend actions
  * (the engine leaves that to the players); `spendAction` is explicit.
  * Investigators are given by `InvestigatorId`, cards by `CardRef`.
  */
@@ -145,11 +146,11 @@ export class PlayTable {
   /**
    * Takes back the last command with everything it caused (the store's
    * `undoLast`): its group leaves the log and the state is replayed from what
-   * remains. Fails if there is nothing to undo.
+   * remains. Fails if only the start is left, which is the game itself.
    */
   undo(): void {
-    if (this.log.length === 0) throw this.error('nothing to undo');
     const kept = undoLastGroup(this.log).kept;
+    if (kept.length === 0) throw this.error('nothing to undo: only the start is left');
     const state = replay(kept.map((entry) => entry.event));
     this.assertConsistent('undo', state);
     this.log = kept;
@@ -225,8 +226,10 @@ export class PlayTable {
     investigator: InvestigatorId,
     { result = 'pass', clues }: TestOptions & { clues?: number } = {},
   ): void {
-    this.play({ type: 'Investigate', investigatorId: investigator });
-    this.finishTest(`investigate:${investigator}`, result, clues);
+    this.atomically(() => {
+      this.play({ type: 'Investigate', investigatorId: investigator });
+      this.finishTest(`investigate:${investigator}`, result, clues);
+    });
   }
 
   /**
@@ -241,8 +244,10 @@ export class PlayTable {
     { result = 'pass', damage }: TestOptions & { damage?: number } = {},
   ): void {
     const { id } = this.board.enemy(enemy);
-    this.play({ type: 'Fight', investigatorId: investigator, enemyId: id });
-    this.finishTest(`fight:${investigator}:${id}`, result, damage);
+    this.atomically(() => {
+      this.play({ type: 'Fight', investigatorId: investigator, enemyId: id });
+      this.finishTest(`fight:${investigator}:${id}`, result, damage);
+    });
   }
 
   /**
@@ -256,8 +261,10 @@ export class PlayTable {
     { result = 'pass' }: TestOptions = {},
   ): void {
     const { id } = this.board.enemy(enemy);
-    this.play({ type: 'Evade', investigatorId: investigator, enemyId: id });
-    this.finishTest(`evade:${investigator}:${id}`, result);
+    this.atomically(() => {
+      this.play({ type: 'Evade', investigatorId: investigator, enemyId: id });
+      this.finishTest(`evade:${investigator}:${id}`, result);
+    });
   }
 
   /**
@@ -297,7 +304,10 @@ export class PlayTable {
     const [step] = this.current.meta.steps;
     if (step?.id !== 'enemiesAttack' || step.attacks === undefined)
       throw this.error('no enemy attacks to resolve');
-    for (const attack of step.attacks) this.play({ type: 'ResolveEnemyAttack', ...attack });
+    const { attacks } = step;
+    this.atomically(() => {
+      for (const attack of attacks) this.play({ type: 'ResolveEnemyAttack', ...attack });
+    });
   }
 
   /** The investigators pay the act's clue requirement, each the clues listed with them, and advance it. */
@@ -379,6 +389,24 @@ export class PlayTable {
   /** Doom from a card effect (e.g. Ancient Evils) on the current agenda. */
   placeDoom(amount: number): void {
     this.play({ type: 'PlaceDoom', amount });
+  }
+
+  /**
+   * Runs a step made of several commands as one: if any throws, the table
+   * goes back to how it was before the step, so a failed step never leaves
+   * half of itself behind. Restoring is idempotent, so nested steps are safe.
+   */
+  private atomically(step: () => void): void {
+    const { current, commandCount } = this;
+    const log = [...this.log];
+    try {
+      step();
+    } catch (error) {
+      this.current = current;
+      this.log = log;
+      this.commandCount = commandCount;
+      throw error;
+    }
   }
 
   private adjust(investigator: InvestigatorId, stat: InvestigatorStat, delta: number): void {

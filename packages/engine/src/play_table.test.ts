@@ -6,7 +6,6 @@ import {
   blankLocation,
   CommandRejected,
   decisionId,
-  emptyState,
   engagedWith,
   fixed,
   instanceId,
@@ -97,15 +96,11 @@ describe('rejected and broken steps', () => {
     table.nextPhase();
     table.startTurn(alice);
 
-    const thrown = (() => {
-      try {
-        table.moveTo(alice, 'hallway');
-      } catch (error) {
-        return error as TableRejected;
-      }
-    })();
-
-    expect(thrown?.rejection).toEqual({ code: 'notConnected', from: study, to: hallway });
+    expect(() => table.moveTo(alice, 'hallway')).toThrow(
+      expect.objectContaining({
+        rejection: { code: 'notConnected', from: study, to: hallway },
+      }),
+    );
   });
 
   it('does not wrap an error that is not a rejection', () => {
@@ -131,6 +126,28 @@ describe('the round', () => {
     expect(table.nextPhase()).toEqual({ round: 1, phase: 'enemy', step: 'enemiesAttack' });
   });
 
+  it('reports the step a phase stops at when it raises a decision', () => {
+    const agendaOf1 = blankAgenda('agenda_of_1', fixed(1));
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withInvestigator(alice, { locationId: study })
+        .withAgenda(instanceId('first_agenda'), agendaOf1)
+        .withAgenda(
+          instanceId('second_agenda'),
+          blankAgenda('second_agenda', fixed(9), { stage: { number: 2 } }),
+        ),
+    );
+    table.nextPhase();
+    table.startTurn(alice);
+    table.endTurn(alice);
+    table.nextPhase();
+    table.nextPhase();
+
+    expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos', step: 'checkDoomThreshold' });
+    expect(table.board.decisions).toMatchObject([{ about: 'agenda_of_1' }]);
+  });
+
   it('resolves the attacks of enemy step 3.3 and exhausts the attacker', () => {
     const table = PlayTable.start(game);
     table.nextPhase();
@@ -143,6 +160,27 @@ describe('the round', () => {
 
     expect(table.board.investigator(alice)).toMatchObject({ damage: 2, horror: 1 });
     expect(table.board.enemy('ghoul')).toMatchObject({ exhausted: true });
+  });
+
+  it('leaves the table as it was when an attack fails halfway', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withInvestigator(alice, { locationId: study })
+        .withCard(ghoul, blankEnemy('ghoul', { damage: 99 }), engagedWith(alice))
+        .withCard(instanceId('second_ghoul'), blankEnemy('second_ghoul'), engagedWith(alice)),
+    );
+    table.nextPhase();
+    table.startTurn(alice);
+    table.endTurn(alice);
+    table.nextPhase();
+    const stateBefore = table.state;
+    const eventsBefore = table.events;
+
+    expect(() => table.resolveEnemyAttacks()).toThrow();
+
+    expect(table.state).toBe(stateBefore);
+    expect(table.events).toEqual(eventsBefore);
   });
 
   it('fails to resolve attacks when the step lists none', () => {
@@ -294,11 +332,26 @@ describe('investigating', () => {
     table.nextPhase();
     table.startTurn(alice);
 
-    expect(() => table.investigate(alice)).toThrow(/takeAttackOfOpportunity/);
+    table.investigate(alice, { result: 'open' });
     table.takeAttackOfOpportunity('ghoul', { damage: 0 });
     table.resolveTest('pass');
 
     expect(table.board.investigator(alice)).toMatchObject({ clues: 1, damage: 0 });
+  });
+
+  it('fails an investigate that meets an attack of opportunity first, leaving the table as it was', () => {
+    const table = PlayTable.start(
+      game.withCard(ghoul, blankEnemy('ghoul', { damage: 1 }), engagedWith(alice)),
+    );
+    table.nextPhase();
+    table.startTurn(alice);
+    const stateBefore = table.state;
+    const eventsBefore = table.events;
+
+    expect(() => table.investigate(alice)).toThrow(/takeAttackOfOpportunity/);
+
+    expect(table.state).toBe(stateBefore);
+    expect(table.events).toEqual(eventsBefore);
   });
 
   it('does not resolve the test of an investigator who has none open', () => {
@@ -548,12 +601,13 @@ describe('undo', () => {
     expect(table.events).toEqual(eventsBefore);
   });
 
-  it('can take back the start, and then has nothing to undo', () => {
+  it('refuses to take back the start', () => {
     const table = PlayTable.start(game);
+    const stateBefore = table.state;
 
-    table.undo();
-
-    expect(table.state).toEqual(emptyState());
+    expect(() => table.undo()).toThrow(TableError);
     expect(() => table.undo()).toThrow(/nothing to undo/);
+
+    expect(table.state).toBe(stateBefore);
   });
 });
