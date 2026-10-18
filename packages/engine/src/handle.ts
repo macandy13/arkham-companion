@@ -61,8 +61,8 @@ export function handle(ctx: EngineContext, state: GameState, command: Command): 
     // An illegal action must be rejected before it provokes anything; this
     // dry run gets a resolution of its own that is dropped, the action
     // resolves after the attacks. It stops at the first decision the action's
-    // chain asks, like the real run: what follows the answer is checked when
-    // it resolves, and dropped then if it has become illegal.
+    // chain asks, like the real run: what follows that answer is checked only
+    // when it resolves, and a rejection there rejects the answer.
     run({ ctx, state, events: [] }, [{ kind: 'command', command }], newBudget(), {
       resumesStored: false,
     });

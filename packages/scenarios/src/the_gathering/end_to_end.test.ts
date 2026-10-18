@@ -837,6 +837,8 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         options: ['Roland Banks', 'Daisy Walker'],
       },
     ]);
+    // The act's reverse side is still resolving, so it stays current until the answer.
+    expect(table.act()).toBe('The Barrier');
     table.answer('Ghoul Priest', 'Roland Banks');
 
     expect(table.act()).toBe('What Have You Done?');
@@ -968,6 +970,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         ],
       },
     ]);
+    expect(table.act()).toBe('What Have You Done?');
 
     // They burn it down: resolution 1. The game is over; only corrections remain.
     table.play({ type: 'ResolveDecision', decisionId: BURN_THE_HOUSE_DECISION, optionId: 'burn' });

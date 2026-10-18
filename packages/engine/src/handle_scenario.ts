@@ -87,7 +87,8 @@ export function completeAdvance(
 ): (CardMoved | CurrentCardChanged | ScenarioEnded)[] {
   const card = requireCard(state.cards, cardId);
   const nextId = nextCardId(state, deck, card.id);
-  const decided = state.meta.ended === true || asked;
+  // A question that chose no resolution (a prey tie, say) leaves the fallback to end it.
+  const decided = state.meta.ended === true || (asked && resolution === undefined);
   const lastCard = nextId === undefined;
   if (lastCard && !decided && resolution === undefined)
     throw new CommandRejected({ code: 'resolutionRequired', deck });
