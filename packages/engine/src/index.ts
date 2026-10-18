@@ -18,6 +18,20 @@ export { apply, replay } from './reducer';
 export { handle } from './handle';
 export { locationsNamed, neighbours, sameEdge, shortestPaths } from './board';
 export { cardsNamed } from './lookup';
+export {
+  BoardView,
+  boardView,
+  TableError,
+  type ActView,
+  type AgendaView,
+  type CardRef,
+  type DecisionView,
+  type DueAttackView,
+  type EnemySelector,
+  type EnemyView,
+  type InvestigatorView,
+  type LocationView,
+} from './board_view';
 export { CommandRejected, type Rejection, type RejectionCode } from './rejection';
 export { execute, type ExecuteResult } from './execute';
 export type * from './setup';
