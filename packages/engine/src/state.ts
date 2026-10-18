@@ -1,5 +1,11 @@
 import type { CampaignLog } from './campaign/campaign_log';
-import type { Command, EngageEnemy, Investigate, MoveInvestigator } from './commands';
+import type {
+  Command,
+  DrawEncounter,
+  EngageEnemy,
+  Investigate,
+  MoveInvestigator,
+} from './commands';
 import {
   scenarioId,
   type CardCode,
@@ -402,14 +408,19 @@ export interface GameMeta {
   turn?: Turn;
   leadInvestigator?: InvestigatorId;
   /**
-   * An action waiting for the attacks of opportunity it provoked (`ActionHeld`);
-   * absent otherwise. Only set while those decisions are pending.
+   * A command waiting for pending decisions (`ActionHeld`): an action for
+   * the attacks of opportunity it provoked, or a surge draw for the
+   * decisions of the card before it. Absent otherwise.
    */
   heldAction?: HeldAction;
 }
 
-/** The actions the engine sees that provoke attacks of opportunity (`attackOfOpportunityDecisions`). */
-export type HeldAction = MoveInvestigator | Investigate | EngageEnemy;
+/**
+ * The commands that can wait for pending decisions: the actions the engine
+ * sees that provoke attacks of opportunity (`attackOfOpportunityDecisions`),
+ * and a surge draw (`surgeDraw`).
+ */
+export type HeldAction = MoveInvestigator | Investigate | EngageEnemy | DrawEncounter;
 
 /**
  * Complete state of one scenario in play. Only ever produced by the reducer

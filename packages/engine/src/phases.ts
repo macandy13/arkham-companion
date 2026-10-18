@@ -5,14 +5,14 @@ import { enemyAttackEvents, enemyAttackList } from './enemies';
 import type { Event, ExhaustChanged, PhaseChanged, PhaseStepsChanged } from './events';
 import { isInPlay } from './handle_enemy';
 import { activeInvestigator } from './handle_investigator';
-import { isActiveInvestigator, playerOrder } from './investigators';
+import { playerOrder } from './investigators';
+import { canDrawEncounter } from './handle_encounter';
 import { discardEncounterCard } from './placement';
 import { cardsOfType } from './lookup';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
-import type { DueAttack, GameState, Investigator, Phase, PhaseStep, PhaseStepId } from './state';
+import type { DueAttack, GameState, Phase, PhaseStep, PhaseStepId } from './state';
 import { actionsResetEvents, assertTurnsTaken } from './turns';
-import { zoneKey } from './zone';
 
 /** The phase that follows each phase; the first round starts with investigation (no mythos). */
 const NEXT_PHASE: Readonly<Record<Phase, Phase>> = {
@@ -217,7 +217,7 @@ function stepCommands(
     case 'checkDoomThreshold':
       return [{ type: 'CheckDoomThreshold' }];
     case 'drawEncounterCard':
-      return canDraw(state, step.investigatorId)
+      return canDrawEncounter(state, step.investigatorId)
         ? [{ type: 'DrawEncounter', investigatorId: step.investigatorId }]
         : [];
     case 'huntersMove':
@@ -234,13 +234,6 @@ function stepCommands(
         delta: 1,
       }));
   }
-}
-
-function canDraw(state: GameState, investigatorId: Investigator['id']): boolean {
-  const cards =
-    (state.order[zoneKey({ kind: 'encounterDeck' })]?.length ?? 0) +
-    (state.order[zoneKey({ kind: 'encounterDiscard' })]?.length ?? 0);
-  return isActiveInvestigator(state, investigatorId) && cards > 0;
 }
 
 /** The attacks of `enemyAttackList` as step 3.3 lists them. */

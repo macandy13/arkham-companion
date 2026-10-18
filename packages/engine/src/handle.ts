@@ -14,8 +14,11 @@ import {
   handleMoveInvestigator,
 } from './handle_investigator';
 import {
+  canDrawEncounter,
+  encounterCardCount,
   handleDrawEncounter,
   handleFromSetAside,
+  surgeDraw,
   handleShuffleEncounterDiscard,
   handleShuffleInto,
 } from './handle_encounter';
@@ -63,6 +66,7 @@ import {
 import type {
   Adjustment,
   Command,
+  DrawEncounter,
   MoveCard,
   StartScenario,
   StartingCard,
@@ -114,14 +118,16 @@ import { zoneKey, type Zone } from './zone';
  * (`attackOfOpportunityDecisions`) yields one decision per attacking enemy
  * and is held (`ActionHeld`) until all of them are answered; follow-ups
  * never provoke, which is why this happens here and not in
- * `handleWithTriggers`. Once no decision is pending, any command (usually
- * the last answer) ends with the held action (`resumeHeldAction`).
+ * `handleWithTriggers`. A surge draw waiting for the decisions of the card
+ * before it is held the same way (`surgeEvents`). Once no decision is
+ * pending, any command (usually the last answer) ends with the held command
+ * (`resumeHeldAction`).
  * Pure: the same state, command and context always yield the same events.
  */
 export function handle(ctx: EngineContext, state: GameState, command: Command): Event[] {
   assertScenarioRunning(state, command);
   assertNoPendingDecision(state, command);
-  const budget = { remaining: MAX_TRIGGERED_COMMANDS };
+  const budget = newBudget();
   const action = provokingAction(state, command);
   const attacks = action ? attackOfOpportunityDecisions(ctx, state, action) : [];
   if (action && attacks.length > 0) {
@@ -165,6 +171,19 @@ function resumeHeldAction(ctx: EngineContext, state: GameState, budget: TriggerB
 /** How many follow-up commands the current chain may still run; shared by the whole chain. */
 interface TriggerBudget {
   remaining: number;
+  /**
+   * Surge draws so far, and the cards the deck and discard held before the
+   * first surging draw of this `handle` call. A deck made only of surge cards
+   * would reshuffle and draw forever, so one call makes at most that many
+   * draws in surge chains. A held surge resumes in a later call and counts
+   * afresh; it only waits there because the players have to answer first.
+   */
+  surges: number;
+  encounterCards?: number;
+}
+
+function newBudget(): TriggerBudget {
+  return { remaining: MAX_TRIGGERED_COMMANDS, surges: 0 };
 }
 
 function handleWithTriggers(
@@ -173,9 +192,15 @@ function handleWithTriggers(
   command: Command,
   budget: TriggerBudget,
 ): Event[] {
-  const events = withForcedEffects(ctx, state, handleCommand(ctx, state, command), command, budget);
+  const own = handleCommand(ctx, state, command);
+  const events = withForcedEffects(ctx, state, own, command, budget);
   const after = replay(events, state);
   if (command.type === 'NextPhase') return [...events, ...phaseStepEvents(ctx, after)];
+  const surge = surgeDraw(own);
+  if (surge) {
+    budget.encounterCards ??= encounterCardCount(state);
+    return [...events, ...surgeEvents(ctx, after, surge, budget)];
+  }
   const completion = completeCommand(state, after, command);
   if (completion.length === 0) return events;
   return [...events, ...withForcedEffects(ctx, after, completion, command, budget)];
@@ -230,13 +255,38 @@ function phaseStepEvents(ctx: EngineContext, state: GameState): Event[] {
     const plan = nextStepPlan(ctx, current);
     if (!plan) break;
     const followUps = [...plan.commands, ...triggeredCommands(ctx, current, plan.events)];
-    const stepEvents = withFollowUps(ctx, current, plan.events, followUps, {
-      remaining: MAX_TRIGGERED_COMMANDS,
-    });
+    const stepEvents = withFollowUps(ctx, current, plan.events, followUps, newBudget());
     events.push(...stepEvents);
     current = replay(stepEvents, current);
   }
   return events;
+}
+
+/**
+ * The surge draw, once the surging card and its forced effects have resolved
+ * (`after`). While one of them still waits for an answer, the draw is held
+ * (`ActionHeld`) and `resumeHeldAction` makes it after the last answer, so
+ * the next card is not drawn before the players have resolved this one.
+ * Nothing when the drawer has left the scenario, no card is left, or the
+ * chain has already drawn every card (`TriggerBudget.encounterCards`).
+ * If a held action is already waiting (a forced effect during attacks of
+ * opportunity drew the card), the slot is taken and the draw happens at once.
+ * No trigger point fires during those attacks today, so that case cannot
+ * arise yet; M1V.1 tracks it.
+ */
+function surgeEvents(
+  ctx: EngineContext,
+  after: GameState,
+  surge: DrawEncounter,
+  budget: TriggerBudget,
+): Event[] {
+  if (!canDrawEncounter(after, surge.investigatorId)) return [];
+  // The first draw counts too.
+  if (budget.surges + 1 >= (budget.encounterCards ?? 0)) return [];
+  budget.surges += 1;
+  if (after.pending.length > 0 && after.meta.heldAction === undefined)
+    return [{ type: 'ActionHeld', command: surge }];
+  return withFollowUps(ctx, after, [], [surge], budget);
 }
 
 /**

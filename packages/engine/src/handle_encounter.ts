@@ -9,7 +9,8 @@ import type {
 } from './commands';
 import type { CardFlipped, CardMoved, DeckShuffled, EncounterCardDrawn, Event } from './events';
 import { activeInvestigator } from './handle_investigator';
-import type { CardCode, InstanceId } from './ids';
+import type { CardCode, InstanceId, InvestigatorId } from './ids';
+import { isActiveInvestigator } from './investigators';
 import { hasKeyword } from './keywords';
 import { requireCard } from './lookup';
 import { cardMoved, discardToTop } from './placement';
@@ -26,22 +27,14 @@ const ENCOUNTER_DISCARD: Zone = { kind: 'encounterDiscard' };
 const SET_ASIDE: Zone = { kind: 'setAside' };
 const RESOLVING: Zone = { kind: 'resolving' };
 
-/** The events of one card drawn from the encounter deck, and whether it makes the drawer draw again. */
-interface Draw {
-  events: Event[];
-  surge: boolean;
-}
-
 /**
- * `DrawEncounter`: draws until a card without surge has been drawn. The first
- * card is the top of the deck or, with `match`, the first matching card; both
- * go through the same `drawOne`, so a card taken from the discard is revealed,
- * placed and checked for surge exactly like one from the deck, and surge draws
- * continue from the top. Each card is resolved (moved to its place) before the
- * next is drawn, and the deck is refilled as soon as its last card has been
- * placed, so a discarded surge card is shuffled back in before the surge draw.
- * The players resolve the revelation effects themselves; the app does not wait
- * for that between surge draws.
+ * `DrawEncounter`: draws one card and places it. The card is the top of the
+ * deck or, with `match`, the first matching card; both go through the same
+ * `drawOne`, so a card taken from the discard is revealed and placed exactly
+ * like one from the deck. The deck is refilled as soon as its last card has
+ * been placed, so a discarded card is shuffled back in before the next draw.
+ * Surge is not drawn here: the drawn card's forced effects and decisions
+ * must resolve first, so `handle` draws again afterwards (`surgeDraw`).
  */
 export function handleDrawEncounter(
   ctx: EngineContext,
@@ -49,30 +42,39 @@ export function handleDrawEncounter(
   cmd: DrawEncounter,
 ): Event[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
-  const events: Event[] = [];
-  let current = state;
-  let target: InstanceId | undefined;
-  if (cmd.match) {
-    const from = cmd.from ?? 'deck';
-    target = findMatch(ctx, state, from, cmd.match);
-    // Only a deck match has cards above it to discard; a discard match has none.
-    const skipped = cmd.discardSkipped ? cardsAbove(state, target) : [];
-    events.push(
-      ...skipped.map((id) => cardMoved(state, requireCard(state.cards, id), ENCOUNTER_DISCARD, 0)),
-    );
-    current = replay(events, state);
-  }
-  // A deck made only of surge cards would otherwise reshuffle and draw forever.
-  for (let budget = encounterCardCount(state); budget > 0; budget--) {
-    const draw = drawOne(ctx, current, investigator, target);
-    target = undefined;
-    if (!draw) break;
-    events.push(...draw.events);
-    current = replay(draw.events, current);
-    if (!draw.surge) break;
-  }
-  if (events.length === 0) throw new CommandRejected({ code: 'encounterDeckEmpty' });
-  return events;
+  if (!cmd.match) return drawOne(ctx, state, investigator) ?? rejectEmptyDeck();
+  const target = findMatch(ctx, state, cmd.from ?? 'deck', cmd.match);
+  // Only a deck match has cards above it to discard; a discard match has none.
+  const skipped = (cmd.discardSkipped ? cardsAbove(state, target) : []).map((id) =>
+    cardMoved(state, requireCard(state.cards, id), ENCOUNTER_DISCARD, 0),
+  );
+  const drawn = drawOne(ctx, replay(skipped, state), investigator, target) ?? rejectEmptyDeck();
+  return [...skipped, ...drawn];
+}
+
+function rejectEmptyDeck(): never {
+  throw new CommandRejected({ code: 'encounterDeckEmpty' });
+}
+
+/**
+ * The surge draw that follows `events`, the events of one `DrawEncounter`
+ * without its forced effects: another draw from the top for the same
+ * investigator if the drawn card has surge. Rules Reference, "Surge": the
+ * draw comes after the card has resolved, so `handle` runs it only after the
+ * card's forced effects and decisions.
+ */
+export function surgeDraw(events: readonly Event[]): DrawEncounter | undefined {
+  const drawn = events.find((event) => event.type === 'EncounterCardDrawn');
+  return drawn?.surge ? { type: 'DrawEncounter', investigatorId: drawn.investigatorId } : undefined;
+}
+
+/**
+ * Whether the investigator can draw an encounter card: they are still in the
+ * scenario and the deck or its discard has a card. A mythos draw or a surge
+ * without either is skipped rather than refused.
+ */
+export function canDrawEncounter(state: GameState, investigatorId: InvestigatorId): boolean {
+  return isActiveInvestigator(state, investigatorId) && encounterCardCount(state) > 0;
 }
 
 /**
@@ -139,7 +141,7 @@ export function handleShuffleEncounterDiscard(state: GameState): Event[] {
 }
 
 /** Cards in the encounter deck and its discard, i.e. how many cards could still be drawn. */
-function encounterCardCount(state: GameState): number {
+export function encounterCardCount(state: GameState): number {
   return cardsIn(state, ENCOUNTER_DECK).length + cardsIn(state, ENCOUNTER_DISCARD).length;
 }
 
@@ -153,7 +155,7 @@ function drawOne(
   state: GameState,
   investigator: Investigator,
   target?: InstanceId,
-): Draw | undefined {
+): Event[] | undefined {
   // Draws keep the deck refilled themselves; an empty deck with a discard can
   // still come from a manual correction or a setup, and the rule applies then too.
   const refill = refillIfEmpty(state);
@@ -161,13 +163,12 @@ function drawOne(
   if (cardId === undefined) return undefined;
 
   const stats = cardStats(ctx.cards, requireCard(state.cards, cardId).code);
-  const surge = hasKeyword(stats, 'surge');
   const drawn: EncounterCardDrawn = {
     type: 'EncounterCardDrawn',
     investigatorId: investigator.id,
     cardId,
     peril: hasKeyword(stats, 'peril'),
-    surge,
+    surge: hasKeyword(stats, 'surge'),
   };
   const revealed: CardFlipped = { type: 'CardFlipped', cardId, faceUp: true };
   const events: Event[] = [
@@ -176,7 +177,7 @@ function drawOne(
     revealed,
     ...placement(ctx, state, stats, cardId, investigator),
   ];
-  return { events: [...events, ...refillIfEmpty(replay(events, state))], surge };
+  return [...events, ...refillIfEmpty(replay(events, state))];
 }
 
 /**
