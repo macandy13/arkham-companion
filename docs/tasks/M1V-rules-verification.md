@@ -32,9 +32,13 @@ Ref: architecture "Command handling", "Triggers and card effects"; [rules.md](..
 
 **Slices**
 
-1. [x] Surge waits for the drawn card (#95): `DrawEncounter` draws one card; `surgeEvents` draws again after its forced effects, held while a decision is open.
+1. [x] Surge waits for the drawn card (#95): `DrawEncounter` draws one card; `resolveSurge` draws again after its forced effects, held while a decision is open.
 2. [x] Revelation before placement: the drawn card waits in `resolving` while its `onReveal` follow-ups run, then `placeDrawnCard` places it (a drawn enemy that waits for a spawn choice is no longer left on the deck). A revelation that asks something still lets the placement go on before the answer; slice 3 covers that.
 3. [ ] Hold the remaining follow-ups of a chain while one of them waits for an answer.
+   Built as one resolution queue (architecture review P8): a list of plain-data steps that `handle` runs until a decision is pending, then stores in state. Three PRs:
+   - [ ] 3a. One `Resolution` builder per `handle` call, with rollback for held actions; no behaviour change (#101).
+   - [ ] 3b. The stored queue (`GameMeta.queue`, `QueueSuspended`) replaces the held-action slot and `ActionHeld`/`ActionResumed`; behaviour unchanged.
+   - [ ] 3c. Everything as steps: forced effects queued when their events are emitted, `complete` and the phase step loop as continuation steps, and an answer's forced effects before its option commands (ST.6 before ST.7). Carries the intended behaviour changes, with a rules-checker table.
 4. [ ] End-to-end step at the table: The Gathering has no surge card, so add one with slice 2 or 3 where the scenario shows it.
 
 Follow-ups: the held command has one slot (`GameMeta.heldAction`). A surge card drawn by a forced effect while attacks of opportunity are pending, and asking something, would surge at once. No trigger point fires there yet; make the slot a stack when one does. Simultaneous ordering and "when" hooks wait for the decision on the architecture review's timing windows.
