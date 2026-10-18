@@ -1,22 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import {
-  cardCode,
+  blankEnemy,
   confirmOptions,
   decisionId,
   describeDecision,
   instanceId,
+  newGame,
   optionNamed,
   type Decision,
 } from './index';
-import { contextWith, makeCard, startBoard } from '../test/utils';
 
-const ctx = contextWith(makeCard({ code: 'rat', name: 'Swarm of Rats', typeCode: 'enemy' }));
+/** The decisions below are about this enemy; only its name matters. */
+const swarmOfRatsCard = blankEnemy('rat', { name: 'Swarm of Rats' });
 const rats = instanceId('rats');
-const state = startBoard(ctx, {
-  maps: {},
-  investigators: [],
-  cards: [{ id: rats, code: cardCode('rat'), zone: { kind: 'setAside' } }],
-});
+const { context, state } = newGame().withCard(rats, swarmOfRatsCard, { kind: 'setAside' }).start();
 
 const engage: Decision = {
   id: decisionId('engage:rats'),
@@ -32,7 +29,7 @@ const engage: Decision = {
 
 describe('describeDecision', () => {
   it('asks the question about the subject and lists the options by name', () => {
-    expect(describeDecision(ctx, state, engage)).toEqual(
+    expect(describeDecision(context, state, engage)).toEqual(
       'Whom does Swarm of Rats engage? Roland Banks / Daisy Walker [chooseInvestigator]',
     );
   });
@@ -45,7 +42,7 @@ describe('describeDecision', () => {
       options: confirmOptions([], rats),
     };
 
-    expect(describeDecision(ctx, state, advance)).toEqual(
+    expect(describeDecision(context, state, advance)).toEqual(
       'Advance agenda Swarm of Rats yes / no [confirm]',
     );
   });
@@ -57,7 +54,7 @@ describe('describeDecision', () => {
       options: [{ id: 'failedBy:2', label: 'decision.failedBy', commands: [] }],
     };
 
-    expect(describeDecision(ctx, state, test)).toEqual(
+    expect(describeDecision(context, state, test)).toEqual(
       'decision.skillTest failed by 2 [chooseInvestigator]',
     );
   });
@@ -74,7 +71,7 @@ describe('describeDecision', () => {
       ],
     };
 
-    expect(describeDecision(ctx, state, fight)).toEqual(
+    expect(describeDecision(context, state, fight)).toEqual(
       'Fight Swarm of Rats: combat (1) pass ×1 (1+) / fail [skillTestResult]',
     );
   });
@@ -94,7 +91,7 @@ describe('describeDecision', () => {
       ],
     };
 
-    expect(describeDecision(ctx, state, investigate)).toEqual(
+    expect(describeDecision(context, state, investigate)).toEqual(
       'Investigate Swarm of Rats: pass ×1 (1–3) [skillTestResult]',
     );
   });
@@ -115,7 +112,7 @@ describe('describeDecision', () => {
       ],
     };
 
-    expect(describeDecision(ctx, state, attack)).toEqual(
+    expect(describeDecision(context, state, attack)).toEqual(
       'Attack of opportunity by Swarm of Rats: attack damage ×1 (0+) horror ×0 (0+) / does not provoke [confirm]',
     );
   });
@@ -131,13 +128,15 @@ describe('describeDecision', () => {
       options: [{ id: 'skip', label: 'decision.attackCancelled', commands: [] }],
     };
 
-    expect(describeDecision(ctx, state, attack)).toEqual(`${question} attack cancelled [confirm]`);
+    expect(describeDecision(context, state, attack)).toEqual(
+      `${question} attack cancelled [confirm]`,
+    );
   });
 
   it('shows the key of a prompt without a sentence', () => {
     const custom: Decision = { ...engage, subject: undefined, prompt: 'decision.chooseCellar' };
 
-    expect(describeDecision(ctx, state, custom)).toMatch(/^decision\.chooseCellar /);
+    expect(describeDecision(context, state, custom)).toMatch(/^decision\.chooseCellar /);
   });
 });
 

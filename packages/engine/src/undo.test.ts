@@ -1,23 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import {
+  blankLocation,
+  blankTreachery,
   cardCode,
-  scenarioId,
   decisionId,
   emptyState,
   execute,
   instanceId,
   investigatorId,
-  mapId,
+  newGame,
   replay,
   undoLastGroup,
   type Command,
   type Decision,
   type Event,
   type GameState,
-  type StartScenario,
   type Zone,
 } from './index';
-import { contextWith, edge, makeCard, makeInvestigator } from '../test/utils';
 
 /** A log entry as the store keeps it, reduced to what undo looks at. */
 interface LogEntry {
@@ -25,12 +24,11 @@ interface LogEntry {
   event: Event;
 }
 
-const ctx = contextWith(
-  makeCard({ code: 'hall', name: 'Hall', typeCode: 'location' }),
-  makeCard({ code: 'cellar', name: 'Cellar', typeCode: 'location' }),
-  makeCard({ code: 'plain_treachery' }),
-  makeCard({ code: 'chilling_treachery', revelationTest: { skill: 'willpower', difficulty: 4 } }),
-);
+/** A treachery whose revelation is a willpower 4 test, so drawing it raises a decision. */
+const chillingTreacheryCard = blankTreachery('chilling_treachery', {
+  revelationTest: { skill: 'willpower', difficulty: 4 },
+});
+const plainTreacheryCard = blankTreachery('plain_treachery');
 const alice = investigatorId('alice');
 const hall = instanceId('hall');
 const cellar = instanceId('cellar');
@@ -40,28 +38,24 @@ const encounterDeck: Zone = { kind: 'encounterDeck' };
 const setAside: Zone = { kind: 'setAside' };
 
 /**
- * Alice in the hall next to the cellar; the encounter deck holds the chilling
- * treachery (a willpower 4 revelation test) above two plain treacheries, and
- * two more plain ones are set aside for `shuffleInto`.
+ * Alice in the unrevealed hall next to the unrevealed cellar; the encounter
+ * deck holds the chilling treachery above two plain treacheries, and two more
+ * plain ones are set aside for `shuffleInto`.
  */
-const start: StartScenario = {
-  type: 'StartScenario',
-  scenarioId: scenarioId('test'),
-  difficulty: 'standard',
-  seed: 7,
-  investigators: [makeInvestigator({ id: 'alice', locationId: hall })],
-  maps: { [mapId('main')]: { name: 'main', connections: [edge('hall', 'cellar')] } },
-  shuffleEncounterDeck: false,
-  cards: [
-    { id: hall, code: cardCode('hall'), zone: { kind: 'location', mapId: mapId('main') } },
-    { id: cellar, code: cardCode('cellar'), zone: { kind: 'location', mapId: mapId('main') } },
-    { id: chill, code: cardCode('chilling_treachery'), zone: encounterDeck },
-    { id: firstPlain, code: cardCode('plain_treachery'), zone: encounterDeck },
-    { id: instanceId('second_plain'), code: cardCode('plain_treachery'), zone: encounterDeck },
-    { id: instanceId('spare_one'), code: cardCode('plain_treachery'), zone: setAside },
-    { id: instanceId('spare_two'), code: cardCode('plain_treachery'), zone: setAside },
-  ],
-};
+const table = newGame()
+  .withSeed(7)
+  .withLocation(hall, blankLocation('hall'))
+  .withLocation(cellar, blankLocation('cellar'))
+  .withConnection(hall, cellar)
+  .withInvestigator(alice, { locationId: hall })
+  .withCard(chill, chillingTreacheryCard, encounterDeck)
+  .withCard(firstPlain, plainTreacheryCard, encounterDeck)
+  .withCard(instanceId('second_plain'), plainTreacheryCard, encounterDeck)
+  .withCard(instanceId('spare_one'), plainTreacheryCard, setAside)
+  .withCard(instanceId('spare_two'), plainTreacheryCard, setAside);
+const context = table.context();
+/** Played from the empty state, so undo can walk back past the start too. */
+const start = table.startCommand();
 
 const draw: Command = { type: 'DrawEncounter', investigatorId: alice };
 const shuffleInto: Command = {
@@ -111,7 +105,7 @@ function play(commands: readonly Command[]): { log: LogEntry[]; states: GameStat
   const states: GameState[] = [];
   const log: LogEntry[] = [];
   for (const [i, command] of [start, ...commands].entries()) {
-    const result = execute(ctx, state, command);
+    const result = execute(context, state, command);
     state = result.state;
     states.push(state);
     log.push(...result.events.map((event) => ({ commandId: `cmd-${i}`, event })));
@@ -162,7 +156,7 @@ describe('undo with the seeded RNG', () => {
     const { log, states } = play([shuffleInto]);
     const { kept, removed } = undoLastGroup(log);
 
-    const redo = execute(ctx, stateOf(kept), shuffleInto);
+    const redo = execute(context, stateOf(kept), shuffleInto);
 
     expect(stateOf(kept)).toEqual(states[0]);
     expect(redo.state).toEqual(states[1]);
@@ -303,7 +297,7 @@ describe('undo and pending decisions', () => {
   it('accepts commands again after undoing the group that raised the decision', () => {
     const afterUndo = afterUndoOf([ask]);
 
-    expect(() => execute(ctx, afterUndo, draw)).not.toThrow();
+    expect(() => execute(context, afterUndo, draw)).not.toThrow();
   });
 });
 

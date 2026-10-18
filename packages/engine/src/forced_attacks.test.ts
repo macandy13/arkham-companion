@@ -1,23 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import {
-  cardCode,
+  blankEnemy,
+  blankLocation,
   decisionId,
+  engagedWith,
+  fixed,
   instanceId,
   investigatorId,
+  newGame,
   type Command,
   type GameState,
-  type InstanceId,
-  type StartingCard,
-  type Zone,
 } from './index';
-import {
-  contextWith,
-  investigatorOf,
-  makeCard,
-  makeInvestigator,
-  startBoard,
-  stateAfter,
-} from '../test/utils';
+import { investigatorOf, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -25,47 +19,29 @@ const study = instanceId('study');
 const enemy = instanceId('enemy');
 
 /**
- * The study and three enemies that each deal 1 damage and 2 horror: a
- * retaliate ghoul, an alert ghoul and a plain ghoul without either keyword.
+ * Three enemies that each deal 1 damage and 2 horror: a retaliate ghoul (3
+ * health, so a hit for 1 does not defeat it), an alert ghoul and a plain
+ * ghoul without either keyword.
  */
-const ctx = contextWith(
-  makeCard({ code: 'study', name: 'Study', typeCode: 'location' }),
-  makeCard({
-    code: 'retaliate_ghoul',
-    typeCode: 'enemy',
-    fight: 4,
-    damage: 1,
-    horror: 2,
-    keywords: [{ name: 'retaliate' }],
-  }),
-  makeCard({
-    code: 'alert_ghoul',
-    typeCode: 'enemy',
-    evade: 4,
-    damage: 1,
-    horror: 2,
-    keywords: [{ name: 'alert' }],
-  }),
-  makeCard({ code: 'plain_ghoul', typeCode: 'enemy', fight: 4, evade: 4, damage: 1, horror: 2 }),
-);
-
-const engagedWith = (investigator: typeof alice): Zone => ({
-  kind: 'engaged',
-  investigatorId: investigator,
+const retaliateGhoul = blankEnemy('retaliate_ghoul', {
+  fight: 4,
+  health: fixed(3),
+  damage: 1,
+  horror: 2,
+  keywords: [{ name: 'retaliate' }],
 });
+const alertGhoul = blankEnemy('alert_ghoul', {
+  evade: 4,
+  damage: 1,
+  horror: 2,
+  keywords: [{ name: 'alert' }],
+});
+const plainGhoul = blankEnemy('plain_ghoul', { fight: 4, evade: 4, damage: 1, horror: 2 });
 
-/** Alice and bob in the study, with the enemy `code` in `zone`; still in setup. */
-function inStudyWith(code: string, zone: Zone): GameState {
-  const card: StartingCard = { id: enemy, code: cardCode(code), zone };
-  return startBoard(ctx, {
-    maps: { main: { locations: { study: 'study' }, connections: [] } },
-    investigators: [
-      makeInvestigator({ id: 'alice', seat: 0, locationId: study }),
-      makeInvestigator({ id: 'bob', seat: 1, locationId: study }),
-    ],
-    cards: [card],
-  });
-}
+const aliceAndBobInStudy = newGame()
+  .withLocation(study, blankLocation('study'))
+  .withInvestigator(alice, { locationId: study })
+  .withInvestigator(bob, { locationId: study });
 
 function answer(decision: string, optionId: string): Command {
   return { type: 'ResolveDecision', decisionId: decisionId(decision), optionId };
@@ -103,24 +79,26 @@ function attackOnAlice(kind: 'retaliate' | 'alert', skipLabel: string) {
   };
 }
 
-function exhausted(state: GameState, enemyId: InstanceId): GameState {
-  return stateAfter(ctx, state, { type: 'ExhaustEnemy', enemyId });
-}
+const exhaustEnemy: Command = { type: 'ExhaustEnemy', enemyId: enemy };
 
 describe('retaliate', () => {
   it('asks alice to resolve the attack of the ready retaliate enemy she failed to hit', () => {
-    const state = inStudyWith('retaliate_ghoul', engagedWith(alice));
+    const { context, state } = aliceAndBobInStudy
+      .withCard(enemy, retaliateGhoul, engagedWith(alice))
+      .start();
 
-    const after = stateAfter(ctx, state, aliceFights, answer(fightTest, 'fail'));
+    const after = stateAfter(context, state, aliceFights, answer(fightTest, 'fail'));
 
     expect(after.pending).toEqual([attackOnAlice('retaliate', 'decision.attackCancelled')]);
   });
 
   it('deals the attack and leaves the enemy ready', () => {
-    const state = inStudyWith('retaliate_ghoul', engagedWith(alice));
+    const { context, state } = aliceAndBobInStudy
+      .withCard(enemy, retaliateGhoul, engagedWith(alice))
+      .start();
 
     const after = stateAfter(
-      ctx,
+      context,
       state,
       aliceFights,
       answer(fightTest, 'fail'),
@@ -132,10 +110,12 @@ describe('retaliate', () => {
   });
 
   it('deals nothing when the players cancel the attack', () => {
-    const state = inStudyWith('retaliate_ghoul', engagedWith(alice));
+    const { context, state } = aliceAndBobInStudy
+      .withCard(enemy, retaliateGhoul, engagedWith(alice))
+      .start();
 
     const after = stateAfter(
-      ctx,
+      context,
       state,
       aliceFights,
       answer(fightTest, 'fail'),
@@ -146,10 +126,12 @@ describe('retaliate', () => {
   });
 
   it('first deals the failed attack to bob, who is engaged with the enemy, then attacks alice', () => {
-    const state = inStudyWith('retaliate_ghoul', engagedWith(bob));
+    const { context, state } = aliceAndBobInStudy
+      .withCard(enemy, retaliateGhoul, engagedWith(bob))
+      .start();
 
     const after = stateAfter(
-      ctx,
+      context,
       state,
       aliceFights,
       answer(fightTest, 'fail'),
@@ -161,19 +143,18 @@ describe('retaliate', () => {
   });
 
   it.each([
-    { name: 'a passed attack', code: 'retaliate_ghoul', exhaust: false, result: 'pass' },
+    { name: 'a passed attack', card: retaliateGhoul, before: [], result: 'pass' },
     {
       name: 'an exhausted retaliate enemy',
-      code: 'retaliate_ghoul',
-      exhaust: true,
+      card: retaliateGhoul,
+      before: [exhaustEnemy],
       result: 'fail',
     },
-    { name: 'an enemy without retaliate', code: 'plain_ghoul', exhaust: false, result: 'fail' },
-  ])('does not attack after $name', ({ code, exhaust, result }) => {
-    const started = inStudyWith(code, engagedWith(alice));
-    const state = exhaust ? exhausted(started, enemy) : started;
+    { name: 'an enemy without retaliate', card: plainGhoul, before: [], result: 'fail' },
+  ])('does not attack after $name', ({ card, before, result }) => {
+    const { context, state } = aliceAndBobInStudy.withCard(enemy, card, engagedWith(alice)).start();
 
-    const after = stateAfter(ctx, state, aliceFights, answer(fightTest, result));
+    const after = stateAfter(context, state, ...before, aliceFights, answer(fightTest, result));
 
     expect(after.pending).toEqual([]);
   });
@@ -181,18 +162,22 @@ describe('retaliate', () => {
 
 describe('alert', () => {
   it('asks alice to resolve the attack of the alert enemy she failed to evade', () => {
-    const state = inStudyWith('alert_ghoul', engagedWith(alice));
+    const { context, state } = aliceAndBobInStudy
+      .withCard(enemy, alertGhoul, engagedWith(alice))
+      .start();
 
-    const after = stateAfter(ctx, state, aliceEvades, answer(evadeTest, 'fail'));
+    const after = stateAfter(context, state, aliceEvades, answer(evadeTest, 'fail'));
 
     expect(after.pending).toEqual([attackOnAlice('alert', 'decision.attackCancelled')]);
   });
 
   it('deals the attack, and the enemy stays ready and engaged with alice', () => {
-    const state = inStudyWith('alert_ghoul', engagedWith(alice));
+    const { context, state } = aliceAndBobInStudy
+      .withCard(enemy, alertGhoul, engagedWith(alice))
+      .start();
 
     const after = stateAfter(
-      ctx,
+      context,
       state,
       aliceEvades,
       answer(evadeTest, 'fail'),
@@ -205,14 +190,13 @@ describe('alert', () => {
   });
 
   it.each([
-    { name: 'a passed evasion', code: 'alert_ghoul', exhaust: false, result: 'pass' },
-    { name: 'an exhausted alert enemy', code: 'alert_ghoul', exhaust: true, result: 'fail' },
-    { name: 'an enemy without alert', code: 'plain_ghoul', exhaust: false, result: 'fail' },
-  ])('does not attack after $name', ({ code, exhaust, result }) => {
-    const started = inStudyWith(code, engagedWith(alice));
-    const state = exhaust ? exhausted(started, enemy) : started;
+    { name: 'a passed evasion', card: alertGhoul, before: [], result: 'pass' },
+    { name: 'an exhausted alert enemy', card: alertGhoul, before: [exhaustEnemy], result: 'fail' },
+    { name: 'an enemy without alert', card: plainGhoul, before: [], result: 'fail' },
+  ])('does not attack after $name', ({ card, before, result }) => {
+    const { context, state } = aliceAndBobInStudy.withCard(enemy, card, engagedWith(alice)).start();
 
-    const after = stateAfter(ctx, state, aliceEvades, answer(evadeTest, result));
+    const after = stateAfter(context, state, ...before, aliceEvades, answer(evadeTest, result));
 
     expect(after.pending).toEqual([]);
   });

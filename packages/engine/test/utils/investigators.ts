@@ -1,7 +1,6 @@
 import {
+  blankInvestigator,
   investigatorCardStats,
-  investigatorCode,
-  investigatorId,
   type CardStats,
   type GameState,
   type Investigator,
@@ -10,56 +9,27 @@ import {
 } from '../../src/index';
 
 /**
- * An investigator with boring defaults (8 health, 6 sanity, 5 resources, no
- * clues, 3 actions left, 3 in every skill, seat 0, not placed); tests pass
- * only what they depend on.
- */
-export function makeInvestigator(
-  overrides: Partial<Omit<Investigator, 'id'>> & { id: string },
-): Investigator {
-  return {
-    code: investigatorCode(overrides.id),
-    name: overrides.id,
-    seat: 0,
-    health: { max: 8, damage: 0 },
-    sanity: { max: 6, horror: 0 },
-    clues: 0,
-    resources: 5,
-    doomOnPlayerCards: 0,
-    actionsRemaining: 3,
-    skills: { willpower: 3, intellect: 3, combat: 3, agility: 3 },
-    status: 'active',
-    ...overrides,
-    id: investigatorId(overrides.id),
-  };
-}
-
-/**
  * Four invented investigators with distinct health and sanity, so tests about
  * prey, defeat or seat order can tell them apart. Each one's card code is its ID.
  * `investigators(n)` takes the first `n` in seat order.
  */
 export const standardInvestigators: readonly Investigator[] = [
-  makeInvestigator({
-    id: 'tank',
+  blankInvestigator('tank', {
     seat: 0,
     health: { max: 9, damage: 0 },
     sanity: { max: 5, horror: 0 },
   }),
-  makeInvestigator({
-    id: 'seeker',
+  blankInvestigator('seeker', {
     seat: 1,
     health: { max: 6, damage: 0 },
     sanity: { max: 9, horror: 0 },
   }),
-  makeInvestigator({
-    id: 'rogue',
+  blankInvestigator('rogue', {
     seat: 2,
     health: { max: 7, damage: 0 },
     sanity: { max: 7, horror: 0 },
   }),
-  makeInvestigator({
-    id: 'mystic',
+  blankInvestigator('mystic', {
     seat: 3,
     health: { max: 5, damage: 0 },
     sanity: { max: 8, horror: 0 },
@@ -73,7 +43,7 @@ export function investigators(count: number): Investigator[] {
   return standardInvestigators.slice(0, count);
 }
 
-/** The standard investigators' cards, so `compileSetup` can seat them; in `testContext` and `contextWith`. */
+/** The standard investigators' cards, so `compileSetup` can seat them. */
 export const standardInvestigatorCards: readonly CardStats[] = standardInvestigators.map((inv) =>
   investigatorCardStats({
     code: inv.code,
