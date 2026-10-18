@@ -100,10 +100,10 @@ const EMPTY_SPEC: GameSpec = {
  * Describes a game table piece by piece (locations, maps and connections,
  * investigators, cards in their zones, and difficulty, seed and shuffle) and
  * starts it as a scenario, so a test, a sandbox board or a scenario under
- * construction spells out only what it is about. Each card is passed with its definition, typically a
- * `blank*` card with the stats that matter, and the builder collects the
- * definitions into the context, so the stats stay next to where the card is
- * placed.
+ * construction spells out only what it is about. Each card is passed with
+ * its definition, typically a `blank*` card with the stats that matter, and
+ * the builder collects the definitions into the context, so the stats stay
+ * next to where the card is placed.
  *
  * Immutable: every `with*` returns a new builder, so one builder can be the
  * common table of several tests that each add their own cards.

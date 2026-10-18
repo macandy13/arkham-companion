@@ -9,7 +9,6 @@ import {
   CommandRejected,
   confirmOptions,
   decisionId,
-  emptyState,
   encounterDeck,
   encounterDiscard,
   engagedWith,
@@ -280,8 +279,7 @@ describe('DrawEncounter', () => {
 
     it('reshuffles the same way for the same seed and differently across seeds', () => {
       const seeded = (seed: number) => {
-        const context = table.context();
-        const { state } = execute(context, emptyState(), { ...table.startCommand(), seed });
+        const { context, state } = table.withSeed(seed).start();
         return idsIn(stateAfter(context, state, draw), encounterDeck);
       };
 
@@ -786,8 +784,7 @@ describe('encounter deck invariants', () => {
     },
   ])('never leaves the deck empty while the discard has cards: $name', ({ table }) => {
     for (const seed of [1, 2, 3]) {
-      const context = table.context();
-      const { state } = execute(context, emptyState(), { ...table.startCommand(), seed });
+      const { context, state } = table.withSeed(seed).start();
       const after = stateAfter(context, state, draw);
 
       const deckSize = idsIn(after, encounterDeck).length;
