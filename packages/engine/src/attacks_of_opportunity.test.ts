@@ -384,6 +384,24 @@ describe('the action that provokes attacks of opportunity', () => {
     expect(events.some((event) => event.type === 'InvestigatorMoved')).toBe(false);
   });
 
+  it('drops the move, with nothing of it left in the log, once the cellar has left play', () => {
+    const state = aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)]);
+    const cellarRemoved = stateAfter(ctx, state, moveToCellar, {
+      type: 'ManualAdjust',
+      adjustment: { kind: 'moveCard', cardId: cellar, to: { kind: 'outOfGame' } },
+    });
+
+    const { events } = execute(ctx, cellarRemoved, answer(ghoulAttack, 'attack'));
+
+    expect(events.map((event) => event.type)).not.toContain('ActionResumed');
+    expect(events.at(-1)).toMatchObject({
+      type: 'ActionDropped',
+      command: moveToCellar,
+      reason: { code: 'notALocation' },
+    });
+    expect(events.some((event) => event.type === 'InvestigatorMoved')).toBe(false);
+  });
+
   it('asks for the investigate test only after the attack is resolved', () => {
     const state = aliceTurnWith([placed(ghoul, 'ghoul', engagedWithAlice)]);
 

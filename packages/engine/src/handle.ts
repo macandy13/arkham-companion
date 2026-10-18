@@ -53,14 +53,10 @@ export function handle(ctx: EngineContext, state: GameState, command: Command): 
   const action = provoking && isOwnTurnAction(state, provoking) ? provoking : undefined;
   const attacks = action ? attackOfOpportunityDecisions(ctx, state, action) : [];
   if (action && attacks.length > 0) {
-    // An illegal action must be rejected before it provokes anything; the
-    // events of this dry run are dropped, the action resolves after the attacks.
-    const restore = checkpoint(resolution);
-    try {
-      resolveCommand(resolution, command, budget);
-    } finally {
-      restore();
-    }
+    // An illegal action must be rejected before it provokes anything; this
+    // dry run gets a resolution of its own that is dropped, the action
+    // resolves after the attacks.
+    resolveCommand({ ctx, state, events: [] }, command, budget);
     return [...attacks, { type: 'ActionHeld', command: action }];
   }
   resolveCommand(resolution, command, budget);
