@@ -91,11 +91,16 @@ export function completeAdvance(
   const decided = state.meta.ended === true || (asked && resolution === undefined);
   const replaced: (CardMoved | CurrentCardChanged)[] = [
     moveCardEvent(card, { kind: 'outOfGame' }),
-    { type: 'CurrentCardChanged', deck, ...(nextId === undefined ? {} : { cardId: nextId }) },
+    currentCardChanged(deck, nextId),
   ];
   if (nextId !== undefined || decided) return replaced;
   if (resolution === undefined) throw new CommandRejected({ code: 'resolutionRequired', deck });
   return [...replaced, { type: 'ScenarioEnded', resolution }];
+}
+
+/** The event that makes `cardId` the current card of `deck`, or leaves the deck without one. */
+function currentCardChanged(deck: Deck, cardId: InstanceId | undefined): CurrentCardChanged {
+  return { type: 'CurrentCardChanged', deck, ...(cardId === undefined ? {} : { cardId }) };
 }
 
 /** `EndScenario`: the scenario is over with the command's resolution. */
