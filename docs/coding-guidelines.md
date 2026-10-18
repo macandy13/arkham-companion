@@ -56,7 +56,7 @@ How code in this repo should look, so every task lands in the same style.
   expect(idsIn(after, encounterDeck)).toEqual(['after_surge']);
   ```
 
-- **Sane defaults via builders.** Use small factory helpers with defaults and overrides (`makeInvestigator({ id: 'a', clues: 2 })`) so tests only spell out what is relevant to them. Defaults should be boring; anything a test depends on is passed explicitly.
+- **Sane defaults via builders.** Blank cards and `newGame()` have boring defaults, and a test passes only what it depends on (`blankLocation('study', { shroud: 2 })`, `.withInvestigator(alice, { clues: 2 })`). Tests chain the builder themselves instead of wrapping it in file-local setup helpers; a pattern several test files need becomes a `with*` method or an engine helper (zone constants, `withEffects`).
 - **Build the table with `newGame()`** and blank cards (`blankLocation('study', { shroud: 2 })`) instead of a file-local `startedWith` helper: a describe-level builder holds the common table, and each test adds the cards it is about (`table.withCard(ghoul, ghoulCard, engagedWith(alice)).start()`).
 - **Shared test helpers** live in `packages/engine/test/utils/` (standard investigators, card and definition builders, `startScenario`, `run`, `codesIn`, `rejectionOf`); import them from `../test/utils` in the engine and `@arkham/engine/test/utils` elsewhere. Add a helper there once a second test file needs it.
 - **One behaviour per test**, named as a sentence about behaviour: `it('rejects moving a card into its own zone')`.

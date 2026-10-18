@@ -6,7 +6,6 @@
  * depends on is passed explicitly in the test.
  */
 export * from './board';
-export * from './cards';
 export * from './investigators';
 export * from './scenario';
 export * from './campaign';

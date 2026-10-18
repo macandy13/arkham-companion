@@ -61,13 +61,18 @@ Follow-ups: the held command has one slot (`GameMeta.heldAction`). A surge card 
 **Slices**
 
 1. [x] `newGame()` builder and blank cards (`blankLocation`, `blankEnemy`, …), zone constructors, `forced_attacks.test.ts` as the first migrated file (#104).
-2. [ ] Migrate `skill_tests` and `hunters`, then `enemies` (two PRs, for the size budget).
-3. [ ] Migrate `board`, `investigators`, `elimination`, `turns`, `lookup`.
-4. [ ] Migrate `decisions`, `triggers`, `attacks_of_opportunity`, `describe_decision`.
-5. [ ] Migrate `encounter`.
-6. [ ] Migrate `phases`, `doom`, `undo`, `skill_modifiers`, `format_board`, `engine`, `replay`.
-7. [ ] Remove what is left unused of `startBoard`, `makeCard`, `makeInvestigator`, `testCardDefs` and the `L*`/`E*` codes, and point `docs/coding-guidelines.md` §3 at the builder only.
+2. [x] Migrate `skill_tests` and `hunters`, then `enemies` (#107, #108).
+3. [x] Migrate `board`, `investigators`, `elimination`, `turns`, `lookup` (#109).
+4. [x] Migrate `decisions`, `triggers`, `attacks_of_opportunity`, `describe_decision` (#110).
+5. [x] Migrate `encounter`; add `withEffects` and the encounter pile zone constants (#111).
+6. [x] Builder seed, difficulty, shuffle and maps; migrate `phases` (#112), then `doom`, `undo`, `skill_modifiers`, `format_board` (#113).
+7. [x] Move `setup`, `cards`, `engine`, `replay` onto blank cards and the builder; remove `startBoard`, `makeCard`, `contextWith`, `makeInvestigator`, `testCardDefs`, `testContext` and the `L*`/`E*` codes; point `docs/coding-guidelines.md` §3 at the builder only.
+8. [ ] Sweep the remaining file-local setup helpers (e.g. in `enemies`, `triggers`, `decisions`) onto the builder chain, using `withEffects` where tests spread `effects` into the context.
 
 The slices are stacked PRs. Slices 4–6 edit test files the resolution queue (M1V.1 slice 3) also changes; whichever merges second merges the other in. Tests of setup compilation (`setup`, The Gathering) keep `startScenario`, since they test the real setup.
 
 Each migration slice keeps the tests' assertions as they are; the builder adds `with*` methods (seed, difficulty, scenario, hidden maps) as the first test needs them.
+
+**Follow-ups**
+
+- `blankAgenda` always takes a doom threshold, so `doom.test.ts` builds an agenda without one as `blankAgenda(code, fixed(0), { doom: undefined })`; let it build a thresholdless agenda directly. `blankAct`'s doc should say that its default `fixed(0)` clues is a threshold of 0, not none.
