@@ -6,7 +6,7 @@ import { answerCommands } from './decisions';
 import type { Event } from './events';
 import { canDrawEncounter, encounterCardCount, surgeDraw } from './handle_encounter';
 import { nextStepPlan } from './phases';
-import { replay } from './reducer';
+import { apply } from './reducer';
 import { CommandRejected, type Rejection } from './rejection';
 import type { GameState } from './state';
 import { MAX_TRIGGERED_COMMANDS, triggeredCommands } from './triggers';
@@ -31,21 +31,23 @@ import { MAX_TRIGGERED_COMMANDS, triggeredCommands } from './triggers';
  * Which commands are accepted once the scenario has ended or while a
  * decision is pending is up to their `CommandSpec`; the commands of an answer (`ResolveDecision`) run first in the
  * chain, like a hook's follow-ups, before the forced effects of its events.
- * `NextPhase` continues with the outstanding phase steps (`phaseStepEvents`),
+ * `NextPhase` continues with the outstanding phase steps (`resolvePhaseSteps`),
  * so one "Next" yields the whole automated part of a phase.
  * A player command that is an action provoking attacks of opportunity
  * (`CommandSpec.provokes`, `attackOfOpportunityDecisions`) yields one decision per attacking enemy
  * and is held (`ActionHeld`) until all of them are answered; follow-ups
  * never provoke, which is why this happens here and not in
- * `handleWithTriggers`. A surge draw waiting for the decisions of the card
- * before it is held the same way (`surgeEvents`). Once no decision is
+ * `resolveCommand`. A surge draw waiting for the decisions of the card
+ * before it is held the same way (`resolveSurge`). Once no decision is
  * pending, any command (usually the last answer) ends with the held command
  * (`resumeHeldAction`).
  * Pure: the same state, command and context always yield the same events.
+ * Inside, the chain grows one `Resolution`, which never leaves this call.
  */
 export function handle(ctx: EngineContext, state: GameState, command: Command): Event[] {
   const spec = commandSpec(command);
   assertAccepted(state, command, spec);
+  const resolution: Resolution = { ctx, state, events: [] };
   const budget = newBudget();
   const provoking = spec.provokes?.(command);
   const action = provoking && isOwnTurnAction(state, provoking) ? provoking : undefined;
@@ -53,11 +55,47 @@ export function handle(ctx: EngineContext, state: GameState, command: Command): 
   if (action && attacks.length > 0) {
     // An illegal action must be rejected before it provokes anything; the
     // events of this dry run are dropped, the action resolves after the attacks.
-    handleWithTriggers(ctx, state, command, budget);
+    const restore = checkpoint(resolution);
+    try {
+      resolveCommand(resolution, command, budget);
+    } finally {
+      restore();
+    }
     return [...attacks, { type: 'ActionHeld', command: action }];
   }
-  const events = handleWithTriggers(ctx, state, command, budget);
-  return [...events, ...resumeHeldAction(ctx, replay(events, state), budget)];
+  resolveCommand(resolution, command, budget);
+  resumeHeldAction(resolution, budget);
+  return resolution.events;
+}
+
+/**
+ * The growing result of one `handle` call: the state so far and the events
+ * that led there. The chain appends to it (`emit`) instead of passing
+ * states and event lists along and replaying them at every step. It is
+ * created by `handle` and never escapes it, so `handle` stays pure.
+ */
+interface Resolution {
+  readonly ctx: EngineContext;
+  state: GameState;
+  readonly events: Event[];
+}
+
+/** Appends `events` to the chain and applies them to its state. */
+function emit(resolution: Resolution, events: readonly Event[]): void {
+  for (const event of events) {
+    resolution.state = apply(resolution.state, event);
+    resolution.events.push(event);
+  }
+}
+
+/** A way back to the chain as it is now: the returned function takes back everything emitted since. */
+function checkpoint(resolution: Resolution): () => void {
+  const { state } = resolution;
+  const length = resolution.events.length;
+  return () => {
+    resolution.state = state;
+    resolution.events.length = length;
+  };
 }
 
 /**
@@ -85,24 +123,28 @@ function assertAccepted<C extends Command>(
  * illegal meanwhile (an attack's forced effect moved them, say). Dropping
  * rather than rejecting keeps the answer that released it valid.
  */
-function resumeHeldAction(ctx: EngineContext, state: GameState, budget: TriggerBudget): Event[] {
-  const held = state.meta.heldAction;
-  if (held === undefined || state.pending.length > 0) return [];
-  const investigator = state.investigators.find((inv) => inv.id === held.investigatorId);
-  if (investigator?.status !== 'active')
-    return [
+function resumeHeldAction(resolution: Resolution, budget: TriggerBudget): void {
+  const held = resolution.state.meta.heldAction;
+  if (held === undefined || resolution.state.pending.length > 0) return;
+  const investigator = resolution.state.investigators.find((inv) => inv.id === held.investigatorId);
+  if (investigator?.status !== 'active') {
+    emit(resolution, [
       {
         type: 'ActionDropped',
         command: held,
         reason: { code: 'investigatorNotActive', investigatorId: held.investigatorId },
       },
-    ];
-  const resumed: Event = { type: 'ActionResumed' };
+    ]);
+    return;
+  }
+  const restore = checkpoint(resolution);
   try {
-    return [resumed, ...handleWithTriggers(ctx, replay([resumed], state), held, budget)];
+    emit(resolution, [{ type: 'ActionResumed' }]);
+    resolveCommand(resolution, held, budget);
   } catch (error) {
     if (!(error instanceof CommandRejected)) throw error;
-    return [{ type: 'ActionDropped', command: held, reason: error.rejection }];
+    restore();
+    emit(resolution, [{ type: 'ActionDropped', command: held, reason: error.rejection }]);
   }
 }
 
@@ -124,60 +166,53 @@ function newBudget(): TriggerBudget {
   return { remaining: MAX_TRIGGERED_COMMANDS, surges: 0 };
 }
 
-function handleWithTriggers(
-  ctx: EngineContext,
-  state: GameState,
-  command: Command,
-  budget: TriggerBudget,
-): Event[] {
+/** `command`'s own events, then their forced effects, then whatever continues it (`CommandSpec`). */
+function resolveCommand(resolution: Resolution, command: Command, budget: TriggerBudget): void {
   const spec = commandSpec(command);
-  const own = spec.handle(ctx, state, command);
-  const events = withForcedEffects(ctx, state, own, command, budget);
-  const after = replay(events, state);
-  if (spec.continuesWithPhaseSteps) return [...events, ...phaseStepEvents(ctx, after)];
-  const completion = spec.complete?.(ctx, state, after, command, own) ?? [];
-  const completed =
-    completion.length === 0
-      ? events
-      : [...events, ...withForcedEffects(ctx, after, completion, command, budget)];
+  const before = resolution.state;
+  const own = spec.handle(resolution.ctx, before, command);
+  resolveWithForcedEffects(resolution, own, command, budget);
+  if (spec.continuesWithPhaseSteps) {
+    resolvePhaseSteps(resolution);
+    return;
+  }
+  const completion = spec.complete?.(resolution.ctx, before, resolution.state, command, own) ?? [];
+  if (completion.length > 0) resolveWithForcedEffects(resolution, completion, command, budget);
   const surge = surgeDraw(own);
-  if (!surge) return completed;
-  budget.encounterCards ??= encounterCardCount(state);
-  return [...completed, ...surgeEvents(ctx, replay(completed, state), surge, budget)];
+  if (!surge) return;
+  budget.encounterCards ??= encounterCardCount(before);
+  resolveSurge(resolution, surge, budget);
 }
 
-/** `events` (produced from `state`) followed by the chains of forced effects they trigger. */
-function withForcedEffects(
-  ctx: EngineContext,
-  state: GameState,
-  events: Event[],
+/** Emits `events`, then resolves the chains of forced effects they trigger. */
+function resolveWithForcedEffects(
+  resolution: Resolution,
+  events: readonly Event[],
   command: Command,
   budget: TriggerBudget,
-): Event[] {
-  if (commandSpec(command).firesNoTriggers) return events;
-  const followUps = [...answerCommands(state, command), ...triggeredCommands(ctx, state, events)];
-  return withFollowUps(ctx, state, events, followUps, budget);
+): void {
+  const before = resolution.state;
+  emit(resolution, events);
+  if (commandSpec(command).firesNoTriggers) return;
+  resolveFollowUps(
+    resolution,
+    [...answerCommands(before, command), ...triggeredCommands(resolution.ctx, before, events)],
+    budget,
+  );
 }
 
-/** `events` (produced from `state`) followed by the events of `followUps`, handled in order. */
-function withFollowUps(
-  ctx: EngineContext,
-  state: GameState,
-  events: Event[],
+/** Resolves each of `followUps` with its whole chain, in order. */
+function resolveFollowUps(
+  resolution: Resolution,
   followUps: readonly Command[],
   budget: TriggerBudget,
-): Event[] {
-  let current = replay(events, state);
-  const chain = [...events];
+): void {
   for (const followUp of followUps) {
     if (budget.remaining === 0)
       throw new CommandRejected({ code: 'triggerLoop', limit: MAX_TRIGGERED_COMMANDS });
     budget.remaining -= 1;
-    const followUpEvents = handleFollowUp(ctx, current, followUp, budget);
-    current = replay(followUpEvents, current);
-    chain.push(...followUpEvents);
+    resolveFollowUp(resolution, followUp, budget);
   }
-  return chain;
 }
 
 /**
@@ -188,23 +223,23 @@ function withFollowUps(
  * a phase has a fixed, small number of steps, and the guard is about hooks
  * re-triggering themselves within one of them.
  */
-function phaseStepEvents(ctx: EngineContext, state: GameState): Event[] {
-  const events: Event[] = [];
-  let current = state;
-  while (current.pending.length === 0) {
-    const plan = nextStepPlan(ctx, current);
-    if (!plan) break;
-    const followUps = [...plan.commands, ...triggeredCommands(ctx, current, plan.events)];
-    const stepEvents = withFollowUps(ctx, current, plan.events, followUps, newBudget());
-    events.push(...stepEvents);
-    current = replay(stepEvents, current);
+function resolvePhaseSteps(resolution: Resolution): void {
+  while (resolution.state.pending.length === 0) {
+    const plan = nextStepPlan(resolution.ctx, resolution.state);
+    if (!plan) return;
+    const before = resolution.state;
+    emit(resolution, plan.events);
+    resolveFollowUps(
+      resolution,
+      [...plan.commands, ...triggeredCommands(resolution.ctx, before, plan.events)],
+      newBudget(),
+    );
   }
-  return events;
 }
 
 /**
- * The surge draw, once the surging card and its forced effects have resolved
- * (`after`). While one of them still waits for an answer, the draw is held
+ * The surge draw, once the surging card and its forced effects have resolved.
+ * While one of them still waits for an answer, the draw is held
  * (`ActionHeld`) and `resumeHeldAction` makes it after the last answer, so
  * the next card is not drawn before the players have resolved this one.
  * Nothing when the drawer has left the scenario, no card is left, or the
@@ -214,30 +249,23 @@ function phaseStepEvents(ctx: EngineContext, state: GameState): Event[] {
  * No trigger point fires during those attacks today, so that case cannot
  * arise yet; M1V.1 tracks it.
  */
-function surgeEvents(
-  ctx: EngineContext,
-  after: GameState,
-  surge: DrawEncounter,
-  budget: TriggerBudget,
-): Event[] {
-  if (!canDrawEncounter(after, surge.investigatorId)) return [];
+function resolveSurge(resolution: Resolution, surge: DrawEncounter, budget: TriggerBudget): void {
+  const { state } = resolution;
+  if (!canDrawEncounter(state, surge.investigatorId)) return;
   // The first draw counts too.
-  if (budget.surges + 1 >= (budget.encounterCards ?? 0)) return [];
+  if (budget.surges + 1 >= (budget.encounterCards ?? 0)) return;
   budget.surges += 1;
-  if (after.pending.length > 0 && after.meta.heldAction === undefined)
-    return [{ type: 'ActionHeld', command: surge }];
-  return withFollowUps(ctx, after, [], [surge], budget);
+  if (state.pending.length > 0 && state.meta.heldAction === undefined) {
+    emit(resolution, [{ type: 'ActionHeld', command: surge }]);
+    return;
+  }
+  resolveFollowUps(resolution, [surge], budget);
 }
 
-/** Handles a hook's command, naming the command when it is rejected. */
-function handleFollowUp(
-  ctx: EngineContext,
-  state: GameState,
-  command: Command,
-  budget: TriggerBudget,
-): Event[] {
+/** Resolves a hook's command, naming the command when it is rejected. */
+function resolveFollowUp(resolution: Resolution, command: Command, budget: TriggerBudget): void {
   try {
-    return handleWithTriggers(ctx, state, command, budget);
+    resolveCommand(resolution, command, budget);
   } catch (error) {
     // Rethrow nested wrappers and loop reports as they are: the innermost reason is the useful one.
     if (!(error instanceof CommandRejected) || isChainRejection(error.rejection)) throw error;
