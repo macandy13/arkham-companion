@@ -20,11 +20,8 @@ import { replay } from './reducer';
 import { CommandRejected } from './rejection';
 import { shuffle } from './rng';
 import type { CardInstance, GameState, Investigator } from './state';
-import { zoneKey, type Zone } from './zone';
+import { encounterDeck, encounterDiscard, setAside, zoneKey, type Zone } from './zone';
 
-const ENCOUNTER_DECK: Zone = { kind: 'encounterDeck' };
-const ENCOUNTER_DISCARD: Zone = { kind: 'encounterDiscard' };
-const SET_ASIDE: Zone = { kind: 'setAside' };
 const RESOLVING: Zone = { kind: 'resolving' };
 
 /**
@@ -47,7 +44,7 @@ export function handleDrawEncounter(
   const target = findMatch(ctx, state, cmd.from ?? 'deck', cmd.match);
   // Only a deck match has cards above it to discard; a discard match has none.
   const skipped = (cmd.discardSkipped ? cardsAbove(state, target) : []).map((id) =>
-    cardMoved(state, requireCard(state.cards, id), ENCOUNTER_DISCARD, 0),
+    cardMoved(state, requireCard(state.cards, id), encounterDiscard, 0),
   );
   const drawn = drawOne(ctx, replay(skipped, state), investigator, target) ?? rejectEmptyDeck();
   return [...skipped, ...drawn];
@@ -90,8 +87,8 @@ function findMatch(
 ): InstanceId {
   const zones =
     from === 'deckOrDiscard'
-      ? [ENCOUNTER_DECK, ENCOUNTER_DISCARD]
-      : [from === 'deck' ? ENCOUNTER_DECK : ENCOUNTER_DISCARD];
+      ? [encounterDeck, encounterDiscard]
+      : [from === 'deck' ? encounterDeck : encounterDiscard];
   const found = zones
     .flatMap((zone) => cardsIn(state, zone))
     .find((id) => matchesEncounter(cardStats(ctx.cards, requireCard(state.cards, id).code), match));
@@ -114,7 +111,7 @@ export function matchesEncounter(stats: CardStats, match: EncounterMatch): boole
 
 /** The deck cards above `cardId`, top first; none when it is not in the deck. */
 function cardsAbove(state: GameState, cardId: InstanceId): readonly InstanceId[] {
-  const deck = cardsIn(state, ENCOUNTER_DECK);
+  const deck = cardsIn(state, encounterDeck);
   const index = deck.indexOf(cardId);
   return index < 0 ? [] : deck.slice(0, index);
 }
@@ -138,12 +135,12 @@ export function handleShuffleInto(state: GameState, cmd: ShuffleInto): Event[] {
  * discard pile into a deck does not shuffle the deck, so that yields nothing.
  */
 export function handleShuffleEncounterDiscard(state: GameState): Event[] {
-  return shuffleInto(state, cardsIn(state, ENCOUNTER_DISCARD), ENCOUNTER_DECK);
+  return shuffleInto(state, cardsIn(state, encounterDiscard), encounterDeck);
 }
 
 /** Cards in the encounter deck and its discard, i.e. how many cards could still be drawn. */
 export function encounterCardCount(state: GameState): number {
-  return cardsIn(state, ENCOUNTER_DECK).length + cardsIn(state, ENCOUNTER_DISCARD).length;
+  return cardsIn(state, encounterDeck).length + cardsIn(state, encounterDiscard).length;
 }
 
 /**
@@ -160,7 +157,7 @@ function drawOne(
   // Draws keep the deck refilled themselves; an empty deck with a discard can
   // still come from a manual correction or a setup, and the rule applies then too.
   const refill = refillIfEmpty(state);
-  const cardId = target ?? cardsIn(replay(refill, state), ENCOUNTER_DECK)[0];
+  const cardId = target ?? cardsIn(replay(refill, state), encounterDeck)[0];
   if (cardId === undefined) return undefined;
 
   const stats = cardStats(ctx.cards, requireCard(state.cards, cardId).code);
@@ -206,8 +203,8 @@ export function placeDrawnCard(
  * or the discard is empty.
  */
 function refillIfEmpty(state: GameState): Event[] {
-  if (cardsIn(state, ENCOUNTER_DECK).length > 0) return [];
-  return shuffleInto(state, cardsIn(state, ENCOUNTER_DISCARD), ENCOUNTER_DECK);
+  if (cardsIn(state, encounterDeck).length > 0) return [];
+  return shuffleInto(state, cardsIn(state, encounterDiscard), encounterDeck);
 }
 
 /**
@@ -239,7 +236,7 @@ function placement(
   if (stats.typeCode === 'treachery' && stats.revelationTest)
     return revelationTestDecision(ctx, state, cardId, investigator, [discardToTop(cardId)]);
   // Index 0 is the top, and the discard's top is what "topmost" effects look for.
-  return [cardMoved(state, card, ENCOUNTER_DISCARD, 0)];
+  return [cardMoved(state, card, encounterDiscard, 0)];
 }
 
 /**
@@ -260,7 +257,7 @@ function withoutDrawer(
 ): Event[] {
   const instructed = stats.keywords?.some((keyword) => keyword.name === 'spawn') ?? false;
   if (stats.typeCode === 'enemy' && instructed) return spawnEvents(ctx, state, card.id, {});
-  return [cardMoved(state, card, ENCOUNTER_DISCARD, 0)];
+  return [cardMoved(state, card, encounterDiscard, 0)];
 }
 
 /**
@@ -314,7 +311,7 @@ function takeFromSetAside(state: GameState, codes: readonly CardCode[]): Instanc
         available: acc.available.filter((id) => id !== cardId),
       };
     },
-    { taken: [] as InstanceId[], available: cardsIn(state, SET_ASIDE) },
+    { taken: [] as InstanceId[], available: cardsIn(state, setAside) },
   );
   return taken;
 }

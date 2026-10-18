@@ -9,6 +9,7 @@ import {
   atLocation,
   blankTreachery,
   cardCode,
+  encounterDeck,
   engagedWith,
   fixed,
   instanceId,
@@ -18,6 +19,7 @@ import {
   perInvestigator,
   threatAreaOf,
   zoneKey,
+  type EffectsRegistry,
 } from './index';
 import { rejectionOf } from '../test/utils';
 
@@ -224,6 +226,24 @@ describe('newGame', () => {
 
     expect(context.cards.get(cardCode('study'))).toBe(studyCard);
     expect(context.cards.get(cardCode('ghoul'))).toBe(ghoul);
+  });
+
+  it('gives a context with the card scripts of withEffects', () => {
+    const burningTreachery = blankTreachery('burning_treachery');
+    const burningScripts: EffectsRegistry = {
+      [burningTreachery.code]: {
+        onReveal: () => [
+          { type: 'AdjustInvestigator', investigatorId: alice, stat: 'damage', delta: 1 },
+        ],
+      },
+    };
+
+    const { context } = newGame()
+      .withCard(instanceId('burning_card'), burningTreachery, encounterDeck)
+      .withEffects(burningScripts)
+      .start();
+
+    expect(context.effects).toBe(burningScripts);
   });
 
   it('leaves the builder it extends unchanged, so tests can share a table', () => {
