@@ -165,7 +165,9 @@ const COMMAND_SPECS: CommandSpecs = {
   SpawnEnemy: { handle: handleSpawnEnemy },
   EngageEnemy: {
     handle: handleEngageEnemy,
-    // The other engaged enemies attack; the one being engaged is not engaged yet.
+    // The other engaged enemies attack: the one being engaged is not engaged yet, and a massive
+    // one cannot be engaged (`massiveNotEngageable`). An engagement by rule (entering a location
+    // with a ready enemy) is part of the move, not an `EngageEnemy`.
     provokes: (command) => command,
   },
   DisengageEnemy: { handle: handleDisengageEnemy },
