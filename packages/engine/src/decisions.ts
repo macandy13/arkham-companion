@@ -7,21 +7,6 @@ import { CommandRejected } from './rejection';
 import { withSuggestion } from './skill_modifiers';
 import type { AmountRange, Decider, Decision, DecisionOption, GameState, SkillTest } from './state';
 
-/** Commands that stay allowed while a decision is pending: corrections, and the answer itself. */
-const ALLOWED_WHILE_PENDING: readonly Command['type'][] = ['ManualAdjust', 'ResolveDecision'];
-
-/**
- * Rejects `command` while any decision is pending. The engine needs the
- * answer before it can continue, so other commands would act on a state the
- * pending decision is about to change. Only applies to commands from outside:
- * follow-ups of hooks and of an answer run inside the chain that is allowed.
- */
-export function assertNoPendingDecision(state: GameState, command: Command): void {
-  const [pending] = state.pending;
-  if (pending === undefined || ALLOWED_WHILE_PENDING.includes(command.type)) return;
-  throw new CommandRejected({ code: 'decisionPending', decisionId: pending.id });
-}
-
 /**
  * A `DecisionRequested` for `decision`, unless one with this id is already open.
  * For rule modules that re-check a condition after every change (agenda

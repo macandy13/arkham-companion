@@ -388,7 +388,7 @@ export interface GameMeta {
    * Set by `ScenarioEnded`, with or without a resolution. Kept apart from
    * `resolution` because a scenario in which every investigator was
    * eliminated ends with no resolution, and `handle` must still refuse play
-   * from then on (`assertScenarioRunning`).
+   * from then on (`CommandSpec.allowedAfterEnd`).
    */
   ended?: true;
   seed: number;
