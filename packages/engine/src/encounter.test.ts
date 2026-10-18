@@ -9,12 +9,14 @@ import {
   CommandRejected,
   confirmOptions,
   decisionId,
+  emptyState,
   engagedWith,
   execute,
   instanceId,
   investigatorId,
   newGame,
   replay,
+  threatAreaOf,
   trait,
   zoneKey,
   type BuiltGame,
@@ -25,30 +27,23 @@ import {
   type GameBuilder,
   type GameState,
   type InstanceId,
-  type StartingCard,
   type Zone,
   type ScenarioHooks,
 } from './index';
-import {
-  makeInvestigator,
-  rejectionFrom,
-  startBoard,
-  stateAfter,
-  withScenario,
-} from '../test/utils';
+import { rejectionFrom, stateAfter, withScenario } from '../test/utils';
 
 const hall = instanceId('hall');
 const alice = investigatorId('alice');
 const encounterDeck: Zone = { kind: 'encounterDeck' };
 const encounterDiscard: Zone = { kind: 'encounterDiscard' };
 const setAsideZone: Zone = { kind: 'setAside' };
+const hallCard = blankLocation('hall');
 
 /**
  * The encounter cards of these tests. A name says what the card is; every
  * card has no other property than the one in its name (a plain treachery has
  * no keyword and does not stay in play).
  */
-const hallCard = blankLocation('hall');
 const foeCard = blankEnemy('foe');
 const plainTreachery = blankTreachery('plain_treachery');
 const surgeTreachery = blankTreachery('surge_treachery', { keywords: [{ name: 'surge' }] });
@@ -85,45 +80,29 @@ const aliceInHall = newGame()
 /** The hall, with alice at no location. */
 const aliceNowhere = newGame().withLocation(hall, hallCard).withInvestigator(alice);
 
-/**
- * `table` started with exactly the given cards, in the given order (the
- * encounter deck is not shuffled by setup), and the card scripts in `effects`.
- */
-function startedWith(
-  table: GameBuilder,
-  { deck = [], discard = [], setAside = [] }: Cards,
-  effects?: EffectsRegistry,
-): BuiltGame {
-  const placed = [
+/** `table` with exactly the given cards, in the given order (the encounter deck is not shuffled by setup). */
+function withCards(table: GameBuilder, { deck = [], discard = [], setAside = [] }: Cards) {
+  return [
     ...deck.map((entry) => ({ ...entry, zone: encounterDeck })),
     ...discard.map((entry) => ({ ...entry, zone: encounterDiscard })),
     ...setAside.map((entry) => ({ ...entry, zone: setAsideZone })),
   ].reduce((built, { id, card, zone }) => built.withCard(id, card, zone), table);
-  const { context, state } = placed.start();
+}
+
+/** `table` started with exactly the given cards and the card scripts in `effects`. */
+function startedWith(table: GameBuilder, cards: Cards, effects?: EffectsRegistry): BuiltGame {
+  const { context, state } = withCards(table, cards).start();
   return { context: effects ? { ...context, effects } : context, state };
 }
 
-/**
- * Like `startedWith(aliceInHall, cards)`, but with `seed` for the shuffles.
- * The game builder always seeds 1, so tests that compare seeds still start
- * the board with `startBoard`.
- */
+/** Like `startedWith(aliceInHall, cards)`, but with `seed` for the shuffles. */
 function startedWithSeed(cards: Cards, seed: number): BuiltGame {
-  const { context } = startedWith(aliceInHall, cards);
-  const inZone = (entries: EncounterCard[] = [], zone: Zone): StartingCard[] =>
-    entries.map(({ card, id }) => ({ code: card.code, id, zone }));
-  const state = startBoard(context, {
-    maps: { main: { locations: { hall: 'hall' } } },
-    investigators: [makeInvestigator({ id: 'alice', locationId: hall })],
-    cards: [
-      ...inZone(cards.deck, encounterDeck),
-      ...inZone(cards.discard, encounterDiscard),
-      ...inZone(cards.setAside, setAsideZone),
-    ],
-    seed,
-    shuffleEncounterDeck: false,
-  });
-  return { context, state };
+  const table = withCards(aliceInHall, cards);
+  const context = table.context();
+  return {
+    context,
+    state: execute(context, emptyState(), { ...table.startCommand(), seed }).state,
+  };
 }
 
 const draw: Command = { type: 'DrawEncounter', investigatorId: alice };
@@ -161,10 +140,7 @@ describe('DrawEncounter', () => {
 
     const after = stateAfter(context, state, draw);
 
-    expect(after.cards[instanceId('drawn_foe')]?.zone).toEqual({
-      kind: 'engaged',
-      investigatorId: alice,
-    });
+    expect(after.cards[instanceId('drawn_foe')]?.zone).toEqual(engagedWith(alice));
   });
 
   it('puts a treachery that stays in play into the threat area', () => {
@@ -174,10 +150,7 @@ describe('DrawEncounter', () => {
 
     const after = stateAfter(context, state, draw);
 
-    expect(after.cards[instanceId('lingering_card')]?.zone).toEqual({
-      kind: 'threatArea',
-      investigatorId: alice,
-    });
+    expect(after.cards[instanceId('lingering_card')]?.zone).toEqual(threatAreaOf(alice));
   });
 
   describe('a treachery that attaches to the location, limit 1 per location', () => {
@@ -631,7 +604,7 @@ describe('FromSetAside', () => {
     });
 
     expect(idsIn(after, { kind: 'victoryDisplay' })).toEqual(['first_foe', 'second_foe']);
-    expect(idsIn(after, { kind: 'setAside' })).toEqual(['set_aside_treachery']);
+    expect(idsIn(after, setAsideZone)).toEqual(['set_aside_treachery']);
   });
 
   it('rejects a code with no set-aside copy left', () => {
@@ -691,7 +664,7 @@ describe('ShuffleInto', () => {
       'set_aside_foe',
       'set_aside_relic',
     ]);
-    expect(idsIn(after, { kind: 'setAside' })).toEqual([]);
+    expect(idsIn(after, setAsideZone)).toEqual([]);
   });
 
   it('rejects a code that is not set aside', () => {
@@ -1151,7 +1124,7 @@ describe('revelation before the drawn card is placed', () => {
 
     const after = stateAfter(context, state, draw);
 
-    expect(after.cards[instanceId('vanishing_card')]?.zone).toEqual({ kind: 'setAside' });
+    expect(after.cards[instanceId('vanishing_card')]?.zone).toEqual(setAsideZone);
   });
 
   it.each([
