@@ -11,8 +11,10 @@ import {
 } from './ids';
 import type { Edge, MapSpec } from './map';
 import { blankInvestigator } from './blank_cards';
+import type { ScenarioDefinition, ScenarioReference } from './scenario';
+import type { SkillModifierRegistry } from './skill_modifiers';
 import { emptyState, type Difficulty, type GameState, type TokenKind } from './state';
-import type { EffectsRegistry } from './triggers';
+import type { EffectsRegistry, ScenarioHooks } from './triggers';
 import type { Zone } from './zone';
 
 /** How `GameBuilder.withLocation` places a location. */
@@ -45,6 +47,9 @@ export interface BuiltGame {
 
 /** The map every location is on unless `LocationOptions.map` names another. */
 const MAIN_MAP = mapId('main');
+
+/** The scenario ID of every built table, stored as `GameMeta.scenarioId`. */
+const CUSTOM_SCENARIO = scenarioId('custom');
 
 interface LocationEntry {
   id: InstanceId;
@@ -83,7 +88,16 @@ interface GameSpec {
   readonly seed: number;
   readonly shuffleEncounterDeck: boolean;
   readonly effects?: EffectsRegistry;
+  /** The parts of a scenario the engine reads while it plays; set means the context has a scenario. */
+  readonly rules?: ScenarioRules;
 }
+
+/**
+ * What `withHooks`, `withReferenceCard` and `withSkillModifiers` set: the
+ * parts of a `ScenarioDefinition` the engine reads while it plays. The setup
+ * parts don't apply, since the builder places the table itself.
+ */
+type ScenarioRules = Partial<Pick<ScenarioDefinition, 'hooks' | 'reference' | 'modifiers'>>;
 
 const EMPTY_SPEC: GameSpec = {
   locations: [],
@@ -195,12 +209,39 @@ export class GameBuilder {
   }
 
   /**
+   * The table playing a scenario with these forced effects
+   * (`ScenarioDefinition.hooks`) in place of any given before; for tests of
+   * trigger points and of what a scenario's hooks do.
+   */
+  withHooks(hooks: Partial<ScenarioHooks>): GameBuilder {
+    return this.withRules({ hooks });
+  }
+
+  /**
+   * The table playing a scenario with this reference card in place of any
+   * given before; without one, no symbol token has a printed modifier.
+   */
+  withReferenceCard(reference: ScenarioReference): GameBuilder {
+    return this.withRules({ reference });
+  }
+
+  /** The table playing a scenario with these skill test modifiers in place of any given before. */
+  withSkillModifiers(modifiers: SkillModifierRegistry): GameBuilder {
+    return this.withRules({ modifiers });
+  }
+
+  /**
    * A context whose card db holds the definition of every card on the table,
-   * with the card scripts of `withEffects`.
+   * with the card scripts of `withEffects`, and a scenario when `withHooks`,
+   * `withReferenceCard` or `withSkillModifiers` gave one.
    */
   context(): EngineContext {
-    const cards = cardDbFrom(this.definitions());
-    return this.spec.effects ? { cards, effects: this.spec.effects } : { cards };
+    const { effects, rules } = this.spec;
+    return {
+      cards: cardDbFrom(this.definitions()),
+      ...(effects ? { effects } : {}),
+      ...(rules ? { scenario: scenarioOf(rules) } : {}),
+    };
   }
 
   /** The `StartScenario` that sets up this table (standard difficulty and seed 1 unless set). */
@@ -208,7 +249,7 @@ export class GameBuilder {
     const playerCount = this.spec.investigators.length;
     return {
       type: 'StartScenario',
-      scenarioId: scenarioId('custom'),
+      scenarioId: CUSTOM_SCENARIO,
       difficulty: this.spec.difficulty,
       seed: this.spec.seed,
       shuffleEncounterDeck: this.spec.shuffleEncounterDeck,
@@ -229,6 +270,10 @@ export class GameBuilder {
 
   private with(changes: Partial<GameSpec>): GameBuilder {
     return new GameBuilder({ ...this.spec, ...changes });
+  }
+
+  private withRules(changes: ScenarioRules): GameBuilder {
+    return this.with({ rules: { ...this.spec.rules, ...changes } });
   }
 
   /** Each card definition once; two different definitions for one code are a mistake in the table. */
@@ -286,6 +331,20 @@ function startingInvestigator(
   options: InvestigatorOptions,
 ): StartingInvestigator {
   return blankInvestigator(id, { seat, ...options });
+}
+
+/** A scenario with `rules` and nothing to set up: the builder places the table itself. */
+function scenarioOf({ hooks, reference, modifiers }: ScenarioRules): ScenarioDefinition {
+  return {
+    id: CUSTOM_SCENARIO,
+    chaosBag: { easy: [], standard: [], hard: [], expert: [] },
+    reference: reference ?? { easyStandard: {}, hardExpert: {} },
+    agendaDeck: [],
+    actDeck: [],
+    setup: [],
+    ...(hooks ? { hooks } : {}),
+    ...(modifiers ? { modifiers } : {}),
+  };
 }
 
 function startingLocation({ id, card, options }: LocationEntry, playerCount: number): StartingCard {

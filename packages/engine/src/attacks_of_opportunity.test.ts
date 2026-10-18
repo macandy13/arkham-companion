@@ -13,7 +13,7 @@ import {
   type DecisionId,
   type GameState,
 } from './index';
-import { investigatorOf, rejectionFrom, stateAfter } from '../test/utils';
+import { answer, investigatorOf, rejectionFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const hall = instanceId('hall');
@@ -95,11 +95,7 @@ describe('attacks of opportunity', () => {
     const { context, state: started } = ghoulOnAlice.start();
     const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
 
-    const after = stateAfter(context, state, moveToCellar, {
-      type: 'ResolveDecision',
-      decisionId: ghoulAttack,
-      optionId: 'attack',
-    });
+    const after = stateAfter(context, state, moveToCellar, answer(ghoulAttack, 'attack'));
 
     expect(wounds(after)).toEqual({ damage: 1, horror: 2 });
     expect(after.cards[ghoul]?.exhausted).toBe(false);
@@ -145,11 +141,7 @@ describe('attacks of opportunity', () => {
     const { context, state: started } = ghoulOnAlice.start();
     const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
 
-    const after = stateAfter(context, state, moveToCellar, {
-      type: 'ResolveDecision',
-      decisionId: ghoulAttack,
-      optionId: 'skip',
-    });
+    const after = stateAfter(context, state, moveToCellar, answer(ghoulAttack, 'skip'));
 
     expect(wounds(after)).toEqual({ damage: 0, horror: 0 });
   });
@@ -165,11 +157,11 @@ describe('attacks of opportunity', () => {
       .start();
     const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
 
-    const { events } = execute(context, stateAfter(context, state, moveToCellar), {
-      type: 'ResolveDecision',
-      decisionId: ghoulAttack,
-      optionId: 'attack',
-    });
+    const { events } = execute(
+      context,
+      stateAfter(context, state, moveToCellar),
+      answer(ghoulAttack, 'attack'),
+    );
 
     expect(events.filter((event) => event.type === 'InvestigatorDefeated')).toEqual([
       { type: 'InvestigatorDefeated', investigatorId: alice, cause: 'damage' },
@@ -185,11 +177,7 @@ describe('attacks of opportunity', () => {
     const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
     const moved = stateAfter(context, state, moveToCellar);
 
-    const after = stateAfter(context, moved, {
-      type: 'ResolveDecision',
-      decisionId: ghoulAttack,
-      optionId: 'attack',
-    });
+    const after = stateAfter(context, moved, answer(ghoulAttack, 'attack'));
 
     expect(pendingIds(moved)).toEqual([
       `attackOfOpportunity:${ghoul}`,
@@ -287,7 +275,7 @@ describe('attacks of opportunity', () => {
           options: [{ id: 'yes', label: 'decision.yes', commands: [moveToCellar] }],
         },
       },
-      { type: 'ResolveDecision', decisionId: offer, optionId: 'yes' },
+      answer(offer, 'yes'),
     );
 
     expect(investigatorOf(after, alice).locationId).toBe(cellar);
@@ -297,12 +285,6 @@ describe('attacks of opportunity', () => {
 
 describe('the action that provokes attacks of opportunity', () => {
   const ratAttack = decisionId(`attackOfOpportunity:${rat}`);
-  const answer = (id: DecisionId, optionId: 'attack' | 'skip'): Command => ({
-    type: 'ResolveDecision',
-    decisionId: id,
-    optionId,
-  });
-
   it('waits in the hall until the attack is answered, then moves', () => {
     const { context, state: started } = ghoulOnAlice.start();
     const state = stateAfter(context, started, nextPhase, aliceStartsTurn);

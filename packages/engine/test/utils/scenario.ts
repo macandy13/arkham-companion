@@ -112,15 +112,3 @@ export function rejectionOf(fn: () => unknown): Rejection {
   }
   throw new Error('expected CommandRejected');
 }
-
-/**
- * `ctx` playing a test scenario made of `overrides` (`makeDefinition`), e.g.
- * `withScenario(ctx, { hooks: { onRoundEnd } })`; the engine reads the hooks,
- * reference card and modifiers from it.
- */
-export function withScenario(
-  ctx: EngineContext,
-  overrides: Partial<ScenarioDefinition>,
-): ScenarioContext {
-  return { ...ctx, scenario: makeDefinition(overrides) };
-}

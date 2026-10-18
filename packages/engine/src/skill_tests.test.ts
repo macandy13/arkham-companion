@@ -17,7 +17,7 @@ import {
   type Command,
   type Zone,
 } from './index';
-import { rejectionFrom, stateAfter } from '../test/utils';
+import { answer, rejectionFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -79,16 +79,6 @@ const aliceInStudy = newGame()
     locationId: study,
     skills: { willpower: 2, intellect: 4, combat: 3, agility: 3 },
   });
-
-/** The answer `optionId` to `decision`, confirming `amount` when given. */
-function answer(decision: string, optionId: string, amount?: number): Command {
-  return {
-    type: 'ResolveDecision',
-    decisionId: decisionId(decision),
-    optionId,
-    ...(amount === undefined ? {} : { amount }),
-  };
-}
 
 describe('Investigate', () => {
   const investigate: Command = { type: 'Investigate', investigatorId: alice };

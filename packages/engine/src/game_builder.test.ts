@@ -20,6 +20,8 @@ import {
   threatAreaOf,
   zoneKey,
   type EffectsRegistry,
+  type ScenarioHooks,
+  type ScenarioReference,
 } from './index';
 import { rejectionOf } from '../test/utils';
 
@@ -51,6 +53,11 @@ describe('blank cards', () => {
       name: 'agenda',
       card: blankAgenda('agenda', fixed(3)),
       stats: { typeCode: 'agenda', stage: { number: 1 }, doom: fixed(3) },
+    },
+    {
+      name: 'agenda without a doom threshold',
+      card: blankAgenda('agenda', null),
+      stats: { typeCode: 'agenda', stage: { number: 1 } },
     },
     {
       name: 'act',
@@ -244,6 +251,29 @@ describe('newGame', () => {
       .start();
 
     expect(context.effects).toBe(burningScripts);
+  });
+
+  it('gives a context without a scenario unless one of its rules is set', () => {
+    expect(newGame().context().scenario).toBeUndefined();
+  });
+
+  it('gives a context playing a scenario with the hooks and reference card given', () => {
+    const onRoundEnd: ScenarioHooks['onRoundEnd'] = () => [];
+    const reference: ScenarioReference = {
+      easyStandard: { skull: { modifier: -1, effectKey: 'test.skull' } },
+      hardExpert: {},
+    };
+
+    const { scenario } = newGame().withHooks({ onRoundEnd }).withReferenceCard(reference).context();
+
+    expect(scenario).toMatchObject({
+      id: 'custom',
+      hooks: { onRoundEnd },
+      reference,
+      agendaDeck: [],
+      actDeck: [],
+      setup: [],
+    });
   });
 
   it('leaves the builder it extends unchanged, so tests can share a table', () => {

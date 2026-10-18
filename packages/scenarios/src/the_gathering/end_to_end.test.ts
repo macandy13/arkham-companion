@@ -29,6 +29,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { cardDbWith, investigatorId, replay, type ScenarioContext } from '@arkham/engine';
+import { answer } from '@arkham/engine/test/utils';
 import { BURN_THE_HOUSE_DECISION, theGathering, theGatheringCards } from '../index';
 import { daisyWalker, rolandBanks, wendyAdams, zealotInvestigatorCards } from '../investigators';
 import { TestTable } from './test_table';
@@ -970,7 +971,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     ]);
 
     // They burn it down: resolution 1. The game is over; only corrections remain.
-    table.play({ type: 'ResolveDecision', decisionId: BURN_THE_HOUSE_DECISION, optionId: 'burn' });
+    table.play(answer(BURN_THE_HOUSE_DECISION, 'burn'));
 
     expect(table.state.meta).toMatchObject({ ended: true, resolution: 'R1' });
     expect(() => table.endTurn(daisy)).toThrow(

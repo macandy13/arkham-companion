@@ -3,7 +3,6 @@ import {
   blankLocation,
   blankTreachery,
   checkInvariants,
-  decisionId,
   instanceId,
   investigatorId,
   newGame,
@@ -13,7 +12,7 @@ import {
   type GameState,
   type InvestigatorId,
 } from './index';
-import { investigatorOf, rejectionFrom, stateAfter, withScenario } from '../test/utils';
+import { answer, investigatorOf, rejectionFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -166,11 +165,6 @@ describe('the end of a turn', () => {
     .withCard(frozenInFear, frozenInFearCard, threatAreaOf(alice))
     .withCard(dissonantVoices, dissonantVoicesCard, threatAreaOf(alice));
 
-  const answer = (optionId: string): Command => ({
-    type: 'ResolveDecision',
-    decisionId: decisionId('turnEnd:frozen_in_fear'),
-    optionId,
-  });
   const aliceThreatArea = (state: GameState) => state.order[zoneKey(threatAreaOf(alice))];
 
   it('asks the investigator for the willpower test of Frozen in Fear in their threat area', () => {
@@ -197,7 +191,12 @@ describe('the end of a turn', () => {
   ])('$result: Frozen in Fear stays only on a fail', ({ result, threatArea, discard }) => {
     const { context, state: started } = frozenInFearOnAlice.start();
     const state = stateAfter(context, started, next, startTurn(alice));
-    const ended = stateAfter(context, state, endTurn(alice), answer(result));
+    const ended = stateAfter(
+      context,
+      state,
+      endTurn(alice),
+      answer('turnEnd:frozen_in_fear', result),
+    );
 
     expect(ended.pending).toEqual([]);
     expect(aliceThreatArea(ended)).toEqual(threatArea);
@@ -207,7 +206,13 @@ describe('the end of a turn', () => {
   it("does not test at the end of another investigator's turn", () => {
     const { context, state: started } = frozenInFearOnAlice.start();
     const state = stateAfter(context, started, next, startTurn(alice));
-    const bobsTurn = stateAfter(context, state, endTurn(alice), answer('fail'), startTurn(bob));
+    const bobsTurn = stateAfter(
+      context,
+      state,
+      endTurn(alice),
+      answer('turnEnd:frozen_in_fear', 'fail'),
+      startTurn(bob),
+    );
 
     expect(stateAfter(context, bobsTurn, endTurn(bob)).pending).toEqual([]);
   });
@@ -215,8 +220,8 @@ describe('the end of a turn', () => {
   it('fires the scenario hook onTurnEnd with the investigator whose turn ended', () => {
     const { context, state: started } = aliceAndBobInHall.start();
     const state = stateAfter(context, started, next, startTurn(alice));
-    const clueAtTurnEnd = withScenario(context, {
-      hooks: {
+    const clueAtTurnEnd = aliceAndBobInHall
+      .withHooks({
         onTurnEnd: (_ctx, _state, event) => [
           {
             type: 'AdjustInvestigator',
@@ -225,8 +230,8 @@ describe('the end of a turn', () => {
             delta: 1,
           },
         ],
-      },
-    });
+      })
+      .context();
 
     const ended = stateAfter(clueAtTurnEnd, state, endTurn(alice));
 

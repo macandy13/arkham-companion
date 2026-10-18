@@ -17,7 +17,7 @@ import {
   type InstanceId,
   type Zone,
 } from './index';
-import { rejectionFrom, stateAfter } from '../test/utils';
+import { answer, rejectionFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -204,11 +204,7 @@ describe('MoveHunters', () => {
         .start();
       const asked = stateAfter(context, state, moveHunters);
 
-      const after = stateAfter(context, asked, {
-        type: 'ResolveDecision',
-        decisionId: decisionId('hunter:hunter:location'),
-        optionId: 'c',
-      });
+      const after = stateAfter(context, asked, answer('hunter:hunter:location', 'c'));
 
       expect(zoneOf(after, hunter)).toEqual(at('c'));
       expect(after.pending).toEqual([]);
@@ -240,11 +236,7 @@ describe('MoveHunters', () => {
         .start();
       const asked = stateAfter(context, state, moveHunters);
 
-      const after = stateAfter(context, asked, {
-        type: 'ResolveDecision',
-        decisionId: decisionId('hunter:hunter:investigator'),
-        optionId: bob,
-      });
+      const after = stateAfter(context, asked, answer('hunter:hunter:investigator', bob));
 
       expect(zoneOf(after, hunter)).toEqual(engagedWith(bob));
     });
@@ -359,11 +351,7 @@ describe('MoveHunters order', () => {
       },
     });
 
-    const after = stateAfter(context, asked, {
-      type: 'ResolveDecision',
-      decisionId: decisionId('start_hunting'),
-      optionId: 'yes',
-    });
+    const after = stateAfter(context, asked, answer('start_hunting', 'yes'));
 
     expect(zoneOf(after, second)).toEqual(engagedWith(alice));
     expect(zoneOf(after, waiting)).toEqual(at('a'));
@@ -387,11 +375,6 @@ describe('answering the hunter order', () => {
   const first = instanceId('first_hunter');
   const second = instanceId('second_hunter');
   const third = instanceId('third_hunter');
-  const chooseOrder = (hunterId: InstanceId): Command => ({
-    type: 'ResolveDecision',
-    decisionId: decisionId('hunterOrder'),
-    optionId: hunterId,
-  });
   /** a - b - c with alice at c: the hunters at a and at b both have a step to take. */
   const twoHunters = () =>
     line('a', 'b', 'c')
@@ -412,7 +395,7 @@ describe('answering the hunter order', () => {
     const { context, state } = twoHunters();
     const asked = stateAfter(context, state, moveHunters);
 
-    const { state: after, events } = execute(context, asked, chooseOrder(second));
+    const { state: after, events } = execute(context, asked, answer('hunterOrder', second));
 
     expect(zoneOf(after, second)).toEqual(engagedWith(alice));
     expect(zoneOf(after, first)).toEqual(at('b'));
@@ -429,7 +412,7 @@ describe('answering the hunter order', () => {
     const { context, state } = twoHunters();
     const asked = stateAfter(context, state, moveHunters);
 
-    const after = stateAfter(context, asked, chooseOrder(first));
+    const after = stateAfter(context, asked, answer('hunterOrder', first));
 
     expect(zoneOf(after, first)).toEqual(at('b'));
     expect(zoneOf(after, second)).toEqual(engagedWith(alice));
@@ -439,7 +422,7 @@ describe('answering the hunter order', () => {
     const { context, state } = threeHunters();
     const asked = stateAfter(context, state, moveHunters);
 
-    const askedAgain = stateAfter(context, asked, chooseOrder(second));
+    const askedAgain = stateAfter(context, asked, answer('hunterOrder', second));
 
     expect(asked.pending[0]?.options.map((option) => option.id)).toEqual([first, second, third]);
     expect(zoneOf(askedAgain, second)).toEqual(at('c'));
@@ -451,7 +434,12 @@ describe('answering the hunter order', () => {
     const { context, state } = threeHunters();
     const asked = stateAfter(context, state, moveHunters);
 
-    const after = stateAfter(context, asked, chooseOrder(second), chooseOrder(third));
+    const after = stateAfter(
+      context,
+      asked,
+      answer('hunterOrder', second),
+      answer('hunterOrder', third),
+    );
 
     expect(zoneOf(after, second)).toEqual(at('c'));
     expect(zoneOf(after, third)).toEqual(engagedWith(alice));
@@ -468,7 +456,7 @@ describe('answering the hunter order', () => {
       .start();
     const asked = stateAfter(context, state, moveHunters);
 
-    const after = stateAfter(context, asked, chooseOrder(forked));
+    const after = stateAfter(context, asked, answer('hunterOrder', forked));
 
     expect(zoneOf(after, forked)).toEqual(at('a'));
     expect(zoneOf(after, second)).toEqual(engagedWith(alice));
