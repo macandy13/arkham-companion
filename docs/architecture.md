@@ -37,6 +37,42 @@ Arrows are package dependencies; [ESLint](../eslint.config.js) enforces the two 
 | [`packages/util`](../packages/util/src/) | Generic string, array and object helpers |
 | [`apps/web`](../apps/web/src/) | The React PWA: screens, the app store and the IndexedDB store |
 
+### Main pieces and how they interact
+
+Most of the engine is plain data plus pure functions; its few classes are errors (`CommandRejected`) and test tools, and the store class lives in the app. These are the pieces a reader meets first, in the order a command meets them. Each component section below has the details.
+
+```mermaid
+flowchart LR
+  CMD["Command"] --> EXE["execute / handle"]
+  CTX["EngineContext<br/>CardDb, scenario, effects"] --> EXE
+  ST["GameState"] --> EXE
+  EXE --> EV["Event[]"]
+  EV --> RED["reducer / replay"]
+  RED --> ST2["new GameState<br/>pending Decisions, queue"]
+  EV --> STORE["GameStore<br/>event log"]
+```
+
+- **`GameState`** ([`state.ts`](../packages/engine/src/state.ts)): the whole table as one serialisable value, with the cards, investigators, maps, agenda and act, open `Decision`s and the stored `queue` of steps still to run (see "Game state").
+- **`Command`** ([`commands.ts`](../packages/engine/src/commands.ts)): what a player or the phase assistant asks for (`MoveInvestigator`, `DrawEncounter`, `ResolveDecision`, `NextPhase`, …).
+- **`execute` / `handle`** ([`execute.ts`](../packages/engine/src/execute.ts), [`handle.ts`](../packages/engine/src/handle.ts)): check a command against the state and return the `Event`s it causes, forced effects included, or throw `CommandRejected` (see "Command handling").
+- **`EngineContext`** ([`cards.ts`](../packages/engine/src/cards.ts)): what `handle` reads besides the state. That is the `CardDb` with every card's printed stats, the running `ScenarioDefinition` with its hooks, and card scripts (`effects`). It is code and lookup data, so it is passed in rather than stored (see "Triggers and card effects", "Scenarios").
+- **`Event` and the reducer** ([`events.ts`](../packages/engine/src/events.ts), [`reducer.ts`](../packages/engine/src/reducer.ts)): the facts a command produced. `replay` folds them into the next state; the log of events is the game.
+- **`Decision`** ([`state.ts`](../packages/engine/src/state.ts)): a question to the players. A command that needs an answer raises one, holds the rest of its sequence in the queue, and `ResolveDecision` carries on (see "Decisions").
+- **`GameStore`** ([`store.ts`](../packages/engine/src/store.ts)): the interface the app saves and loads event logs through; `IndexedDbStore` implements it (see "Persistence").
+- **For tests and sandboxes:** `GameBuilder` (`newGame()`) describes a table and starts it, `PlayTable` plays it step by step in game language, and `BoardView` reads it back by card name (see "Tests and debugging").
+
+### Cards, investigators and their identifiers
+
+A card has two sides in the code: its printed data, shared by every copy, and the copies on the table. Investigators are kept apart from cards. All identifiers are branded strings defined in [`ids.ts`](../packages/engine/src/ids.ts) (`instanceId('hall')`), so one kind of ID can't be passed for another.
+
+- **`CardCode`**: an ArkhamDB card code, the key of a card's printed data. Several copies share one code.
+- **`CardStats`** ([`cards.ts`](../packages/engine/src/cards.ts)): that printed data, as the rules read it (name, type, traits, shroud, clues, enemy stats, doom threshold, keywords, …). The `CardDb` looks it up by code; tests build it with the `blank*` cards ([`blank_cards.ts`](../packages/engine/src/blank_cards.ts)).
+- **`InstanceId`** and **`CardInstance`** ([`state.ts`](../packages/engine/src/state.ts) for the instance): one physical card on the table, with its code, its `Zone`, face, exhaustion and tokens. It holds the code only, so the state never copies card data.
+- **`InvestigatorId`** and **`Investigator`**: one seat in one game, with its location, health, sanity, clues, resources, actions and status. The investigator card is not a `CardInstance`; cards engaged with or in the threat area of an investigator name the `InvestigatorId` in their zone.
+- **`InvestigatorCode`**: the card code of an investigator card. It names the investigator, not the seat, so the campaign log keys its team by it; an `InvestigatorSeat` pairs the two for setup.
+- **`CardName`**: a printed name. Views and matchers use it for readability (`byName('Hallway')`), but copies share a name, so it is never an identity.
+- **Placing cards:** a scenario's setup names cards by code, and `compileSetup` generates readable instance IDs (`code#copy`). A `StartingCard` carries a code and may carry its own `id`. The test builder takes an instance ID and the card's `CardStats` (`withCard(id, card, zone)`), so the stats sit next to where the card is placed.
+
 ### How one player action flows
 
 Every change to a game takes the same path. Take starting a scenario; every later action goes through the app store's `actions` and a `PlayTable` the same way, minus step 2.
