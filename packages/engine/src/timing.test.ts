@@ -64,7 +64,7 @@ describe('an attack of opportunity before the move that provoked it', () => {
       to: cellar,
       asAction: true,
     });
-    const moved = stateAfter(context, attacked, answer(`attackOfOpportunity:${ghoul}`, 'attack'));
+    const moved = stateAfter(context, attacked, answer('attackOfOpportunity:ghoul', 'attack'));
 
     expect(pendingIds(attacked)).toEqual(['attackOfOpportunity:ghoul']);
     expect(investigatorOf(attacked, alice).locationId).toBe(hall);
@@ -111,7 +111,9 @@ describe('a surge after a revelation that asks something', () => {
 
   it('draws nothing more once the revelation defeated alice', () => {
     const deadlySurge = blankTreachery('deadly_surge', { keywords: [{ name: 'surge' }] });
-    const { context, state } = aliceInHall
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'))
+      .withInvestigator(alice, { locationId: hall, health: { max: 8, damage: 0 } })
       .withCard(surgingCard, deadlySurge, encounterDeck)
       .withCard(nextCard, plainTreachery, encounterDeck)
       .withCard(bottomCard, plainTreachery, encounterDeck)
@@ -149,35 +151,43 @@ describe('hunters moving one at a time', () => {
   const forked = instanceId('forked_hunter');
   const second = instanceId('second_hunter');
   const hunterGhoul = blankEnemy('hunter_ghoul', { keywords: [{ name: 'hunter' }] });
-  const [a, b, c, d] = [instanceId('a'), instanceId('b'), instanceId('c'), instanceId('d')];
+  const crossroads = instanceId('crossroads');
+  const leftPath = instanceId('left_path');
+  const rightPath = instanceId('right_path');
+  const den = instanceId('den');
   /**
-   * A diamond a-b-d and a-c-d with alice at d: the hunter at a has two equally
-   * short routes to her, the hunter at b one.
+   * Two routes from the crossroads to alice's den, one by the left path and
+   * one by the right: the forked hunter at the crossroads has two equally
+   * short routes to her, the second hunter on the left path one.
    */
   const table = newGame()
-    .withLocation(a, blankLocation('a'))
-    .withLocation(b, blankLocation('b'))
-    .withLocation(c, blankLocation('c'))
-    .withLocation(d, blankLocation('d'))
-    .withConnection(a, b)
-    .withConnection(a, c)
-    .withConnection(b, d)
-    .withConnection(c, d)
-    .withInvestigator(alice, { locationId: d })
-    .withCard(forked, hunterGhoul, atLocation(a))
-    .withCard(second, hunterGhoul, atLocation(b));
+    .withLocation(crossroads, blankLocation('crossroads'))
+    .withLocation(leftPath, blankLocation('left_path'))
+    .withLocation(rightPath, blankLocation('right_path'))
+    .withLocation(den, blankLocation('den'))
+    .withConnection(crossroads, leftPath)
+    .withConnection(crossroads, rightPath)
+    .withConnection(leftPath, den)
+    .withConnection(rightPath, den)
+    .withInvestigator(alice, { locationId: den })
+    .withCard(forked, hunterGhoul, atLocation(crossroads))
+    .withCard(second, hunterGhoul, atLocation(leftPath));
 
   it('settles the chosen hunter`s route before the other hunter moves', () => {
     const { context, state } = table.start();
 
     const orderAsked = stateAfter(context, state, { type: 'MoveHunters' });
     const routeAsked = stateAfter(context, orderAsked, answer('hunterOrder', forked));
-    const moved = stateAfter(context, routeAsked, answer('hunter:forked_hunter:location', 'c'));
+    const moved = stateAfter(
+      context,
+      routeAsked,
+      answer('hunter:forked_hunter:location', 'right_path'),
+    );
 
     expect(pendingIds(orderAsked)).toEqual(['hunterOrder']);
     expect(pendingIds(routeAsked)).toEqual(['hunter:forked_hunter:location']);
-    expect(whereIs(routeAsked, second)).toEqual(atLocation(b));
-    expect(whereIs(moved, forked)).toEqual(atLocation(c));
+    expect(whereIs(routeAsked, second)).toEqual(atLocation(leftPath));
+    expect(whereIs(moved, forked)).toEqual(atLocation(rightPath));
     expect(whereIs(moved, second)).toEqual(engagedWith(alice));
   });
 });
@@ -205,7 +215,7 @@ describe('the last act whose reverse side asks something', () => {
               decision: {
                 id: decisionId('burn_the_house'),
                 kind: 'chooseOption',
-                prompt: 'burn the house?',
+                prompt: 'decision.burnTheHouse',
                 decider: { kind: 'lead' },
                 options: [
                   {
