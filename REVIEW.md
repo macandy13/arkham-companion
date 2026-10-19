@@ -25,6 +25,7 @@ For the `pr-reviewer` subagent, which Claude sessions run on their branch before
 - Naming: an abbreviation, a vague name, or one that hides what the value is about (`acc`, `isInPlay` on locations).
 - More than one non-obvious positional argument where an options object reads better; `ctx` not the first argument.
 - `if` chains where a `switch` over a union reads better.
+- A new dispatch over a closed union (discriminant or literal union) that is not an exhaustive `switch` with an `assertNever` default (coding guidelines §1).
 - A comment that narrates what the code does instead of why.
 - Dashes in file names, German identifiers, presentational markup, raw CSS values.
 

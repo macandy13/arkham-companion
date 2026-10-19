@@ -1,3 +1,4 @@
+import { assertNever } from '@arkham/util';
 import { cardStats, comparableName, type EngineContext } from './cards';
 import {
   cardName,
@@ -91,13 +92,21 @@ export function matchingCards(
   matcher: CardMatcher,
 ): CardInstance[] {
   return cards.filter((card) => {
-    if (matcher.by === 'id') return card.id === matcher.id;
-    if (matcher.by === 'code') return card.code === matcher.code;
     const name = cardStats(ctx.cards, card.code).name;
-    if (matcher.by === 'any') {
-      return card.id === matcher.text || card.code === matcher.text || sameName(name, matcher.text);
+    switch (matcher.by) {
+      case 'id':
+        return card.id === matcher.id;
+      case 'code':
+        return card.code === matcher.code;
+      case 'name':
+        return sameName(name, matcher.name);
+      case 'any':
+        return (
+          card.id === matcher.text || card.code === matcher.text || sameName(name, matcher.text)
+        );
+      default:
+        return assertNever(matcher);
     }
-    return sameName(name, matcher.name);
   });
 }
 
@@ -107,14 +116,20 @@ export function matchingInvestigators(
   matcher: InvestigatorMatcher,
 ): Investigator[] {
   return investigators.filter((inv) => {
-    if (matcher.by === 'id') return inv.id === matcher.id;
-    if (matcher.by === 'code') return inv.code === matcher.code;
-    if (matcher.by === 'any') {
-      return (
-        inv.id === matcher.text || inv.code === matcher.text || sameName(inv.name, matcher.text)
-      );
+    switch (matcher.by) {
+      case 'id':
+        return inv.id === matcher.id;
+      case 'code':
+        return inv.code === matcher.code;
+      case 'name':
+        return sameName(inv.name, matcher.name);
+      case 'any':
+        return (
+          inv.id === matcher.text || inv.code === matcher.text || sameName(inv.name, matcher.text)
+        );
+      default:
+        return assertNever(matcher);
     }
-    return sameName(inv.name, matcher.name);
   });
 }
 
@@ -129,6 +144,8 @@ export function describeMatcher(matcher: CardMatcher | InvestigatorMatcher): str
       return `with code ${matcher.code}`;
     case 'any':
       return `with id, code or name "${matcher.text}"`;
+    default:
+      return assertNever(matcher);
   }
 }
 
