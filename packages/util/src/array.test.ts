@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { duplicates, withoutFirst, withRunningTotals } from './index';
+import { duplicates, runsBy, withoutFirst, withRunningTotals } from './index';
 
 describe('duplicates', () => {
   it('lists each repeated item once', () => {
@@ -69,5 +69,21 @@ describe('withRunningTotals', () => {
 
   it('is empty for an empty list', () => {
     expect(withRunningTotals([], () => 1, 4)).toEqual([]);
+  });
+});
+
+describe('runsBy', () => {
+  it('splits a list where the key changes, starting a new run when a key comes back', () => {
+    const turns = ['roland', 'roland', 'daisy', 'roland'];
+
+    expect(runsBy(turns, (name) => name)).toEqual([
+      { key: 'roland', items: ['roland', 'roland'] },
+      { key: 'daisy', items: ['daisy'] },
+      { key: 'roland', items: ['roland'] },
+    ]);
+  });
+
+  it('is empty for an empty list', () => {
+    expect(runsBy([], (item) => item)).toEqual([]);
   });
 });

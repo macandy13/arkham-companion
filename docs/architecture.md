@@ -38,7 +38,7 @@ Arrows are package dependencies; [ESLint](../eslint.config.js) enforces the two 
 
 ### How one player action flows
 
-Every change to a game takes the same path. Take starting a scenario; every later command goes through the app store's `dispatch` the same way, minus step 2.
+Every change to a game takes the same path. Take starting a scenario; every later step goes through the app store's `play` and a `PlayTable` the same way, minus step 2.
 
 1. The new game wizard collects the scenario, difficulty and investigators and calls [`startScenario`](../apps/web/src/state/appStore.ts) on the app store. The app store is a Zustand store that holds the saved game list (`GameSummary[]`) and the open game (`OpenGame`), and it is the only place in the app that sends commands or writes games.
 2. The app store builds the command: [`scenario.compileSetup`](../packages/engine/src/setup.ts) turns the scenario definition into one `StartScenario` command. The `ScenarioContext` it passes (an `EngineContext` with its `scenario` set) holds the scenario definition and its card data, which the wizard took from the [scenario catalog](../apps/web/src/scenarios/scenarioCatalog.ts), with the chosen investigator cards added (`cardDbWith`). The wizard seats them by code ([`seating.ts`](../apps/web/src/wizard/seating.ts)), and `compileSetup` takes their printed stats from the context. The same context, with the scenario's hooks and reference card, is the one the game's later commands need.
@@ -387,7 +387,7 @@ interface StoredEvent { gameId: GameId; seq: number; timestamp: number; commandI
 
 The React PWA is a thin layer over the engine, which keeps UI problems and rules problems apart. [`App.tsx`](../apps/web/src/App.tsx) defines the hash routes; the screens are in [`screens/`](../apps/web/src/screens/): home with the saved games, the new game wizard ([`wizard/`](../apps/web/src/wizard/)) with the investigator picker ([`picker/`](../apps/web/src/picker/)), the game screen and settings. Components read state from the [app store](../apps/web/src/state/appStore.ts) and call its methods; they never change game state or touch storage themselves. The app store is a factory around a `GameStore` and a scenario lookup, so tests inject an in-memory store and their own scenarios. Markup is structure only and all presentation is in CSS built on [`tokens.css`](../apps/web/src/styles/tokens.css). UI strings are in [`i18n`](../apps/web/src/i18n/).
 
-The open game (`OpenGame`) is the play screen's single source of truth. `dispatch(command)` runs the command with `execute`, writes its events with `appendEvents` (passing the last `seq`, so a second tab cannot interleave) and only then shows the new state; a refused command writes nothing and leaves its `Rejection` on the open game for the screen to explain. Commands and undos run one after another in the order they were sent, so two quick taps never both build on the same state. `undo()` takes back the last command group through `GameStore.undoLast`, but never the scenario start. Opening a saved game rebuilds its `ScenarioContext` from the [scenario catalog](../apps/web/src/scenarios/scenarioCatalog.ts) entry for `meta.scenarioId`, so its hooks and reference card apply again; the investigator cards are not needed, since after setup the engine reads the investigators from the state. A game whose scenario the catalog lacks opens without a context and cannot be played.
+The open game (`OpenGame`) is the play screen's single source of truth. Components play it in game language, not in raw commands: `play((table) => table.moveTo(roland, hallway))` hands a step to a [`GameSession`](../apps/web/src/state/gameSession.ts), the buffer between the pure engine and the screen. The session holds a `PlayTable` resumed from the game's stored log (`PlayTable.resume`), so the UI shares the verbs, the atomic multi-command steps and the invariant checks of the end-to-end tests. It plays the step, writes the events it added with `appendEvents` under the step's undo group (passing the last `seq`, so a second tab cannot interleave), and only then does the app store show the new state. A refused step writes nothing and leaves its `Rejection` on the open game for the screen to explain. If a write fails (another tab wrote first), the session reloads the stored game and the step is lost rather than shown. Steps and undos run one after another in the order they were sent, so two quick taps never both build on the same state. `undo()` takes back the last step in the table and the store alike, never the scenario start. The table is mutable, so it lives in the store's closure and only its state is published. Opening a saved game rebuilds its `ScenarioContext` from the [scenario catalog](../apps/web/src/scenarios/scenarioCatalog.ts) entry for `meta.scenarioId`, so its hooks and reference card apply again; the investigator cards are not needed, since after setup the engine reads the investigators from the state. A game whose scenario the catalog lacks has no session and cannot be played (`playable: false`).
 
 ```ts
 interface AppState {
@@ -395,17 +395,23 @@ interface AppState {
   current?: OpenGame;
   startScenario(start: ScenarioStart): Promise<GameId>;
   openGame(gameId: GameId): Promise<void>;
-  dispatch(command: Command): Promise<void>;   // execute, store, then show; a refusal sets current.rejection
-  undo(): Promise<void>;                       // last command group, never the scenario start
+  play(step: PlayStep): Promise<void>;     // play, store, then show; a refusal sets current.rejection
+  undo(): Promise<void>;                   // last step, never the scenario start
   dismissRejection(): void;
   refresh(); newGame(); renameGame(…); duplicateGame(…); deleteGame(…); exportGame(…); importGame(…);
 }
 interface OpenGame {
   gameId: GameId;
-  state: GameState;              // always the replay of its event log
-  lastSeq: number;               // expected by the next write
-  ctx?: ScenarioContext;         // from the catalog; absent = not playable
-  rejection?: Rejection;         // why the last command was refused
+  state: GameState;              // always the replay of its stored log
+  playable: boolean;             // the catalog has its scenario
+  rejection?: Rejection;         // why the last step was refused
+}
+type PlayStep = (table: PlayTable) => void;   // UI action steps leave skill tests open
+class GameSession {             // gameSession.ts
+  static open(store: GameStore, gameId: GameId, ctx: ScenarioContext): Promise<GameSession>;
+  readonly state: GameState;
+  play(step: PlayStep): Promise<Rejection | undefined>;
+  undo(): Promise<void>;
 }
 function createAppStore(gameStore: GameStore, scenarios?: ScenarioLookup): StoreApi<AppState>;
 ```
@@ -413,7 +419,7 @@ function createAppStore(gameStore: GameStore, scenarios?: ScenarioLookup): Store
 **Extension points**
 
 - **A new screen:** add a route in [`App.tsx`](../apps/web/src/App.tsx) and a component in [`screens/`](../apps/web/src/screens/), extend an `@flow` E2E spec ([`apps/web/e2e/`](../apps/web/e2e/)), and add its strings in English and German.
-- **A new game action:** the component calls `dispatch` with the engine command; it never calls the engine or the `GameStore` itself. Only an action that is not one engine command on the open game (like `startScenario`) gets its own `AppState` method in [`appStore.ts`](../apps/web/src/state/appStore.ts).
+- **A new game action:** the component calls `play` with the `PlayTable` verb; it never builds commands or calls the `GameStore` itself. A verb the table lacks is added to `PlayTable` (architecture "Tests and debugging"), so tests gain it too. Only an action outside the open game (like `startScenario`) gets its own `AppState` method in [`appStore.ts`](../apps/web/src/state/appStore.ts).
 
 ### Tests and debugging
 

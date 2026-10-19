@@ -1,19 +1,17 @@
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import type {
-  Command,
   Difficulty,
-  ExecuteResult,
   GameId,
   GameState,
   GameStore,
   GameSummary,
   InvestigatorSeat,
-  LoadedGame,
   Rejection,
   ScenarioContext,
   ScenarioId,
 } from '@arkham/engine';
-import { CommandRejected, emptyState, execute, scenario, undoLastGroup } from '@arkham/engine';
+import { emptyState, execute, scenario } from '@arkham/engine';
+import { GameSession, type PlayStep } from './gameSession';
 import { findScenario, type ScenarioEntry } from '../scenarios/scenarioCatalog';
 import { parseGameExport, serialiseGameExport } from '../storage/gameExport';
 
@@ -34,20 +32,17 @@ export interface ScenarioStart {
   investigators: readonly InvestigatorSeat[];
 }
 
-/** The game on the play screen, as `AppState.openGame` loaded it and `dispatch` and `undo` keep it. */
+/** The game on the play screen, as `AppState.openGame` loaded it and `play` and `undo` keep it. */
 export interface OpenGame {
   gameId: GameId;
-  /** Always the result of replaying the game's event log. */
+  /** Always the result of replaying the game's stored event log. */
   state: GameState;
-  /** `seq` of the last stored event; the next write expects it, so a second tab can't interleave. */
-  lastSeq: number;
   /**
-   * The rules the game's commands run with, rebuilt from the scenario catalog entry for
-   * `state.meta.scenarioId`. Absent when the catalog has no such scenario (a game not set up yet,
-   * or one imported from a newer app): the game can then be shown but not played.
+   * Whether the game can be played: its scenario is in the catalog, which rebuilds the rules its
+   * steps run with. A game not set up yet, or one imported from a newer app, can only be shown.
    */
-  ctx?: ScenarioContext;
-  /** Why the last command was refused, until the next command or `dismissRejection`. */
+  playable: boolean;
+  /** Why the last step was refused, until the next step or `dismissRejection`. */
   rejection?: Rejection;
 }
 
@@ -70,15 +65,13 @@ export interface AppState {
   startScenario(start: ScenarioStart): Promise<GameId>;
   openGame(gameId: GameId): Promise<void>;
   /**
-   * Runs `command` on the open game and stores its events before showing the new state. A refused
-   * command stores nothing and sets `current.rejection`. Commands run one after another in the
-   * order they were sent, so two quick taps never both build on the same state.
+   * Plays one step on the open game in `PlayTable` terms (`play((table) => table.nextPhase())`)
+   * and stores its events before showing the new state. A refused step stores nothing and sets
+   * `current.rejection`. Steps run one after another in the order they were sent, so two quick
+   * taps never both build on the same state. Rejects if the open game is not `playable`.
    */
-  dispatch(command: Command): Promise<void>;
-  /**
-   * Takes back the open game's last command with its whole chain (`GameStore.undoLast`). Never
-   * takes back the scenario start, which would leave a game with nothing to play.
-   */
+  play(step: PlayStep): Promise<void>;
+  /** Takes back the open game's last step (`GameSession.undo`); never the scenario start. */
   undo(): Promise<void>;
   /** Clears `current.rejection` once the screen has shown it. */
   dismissRejection(): void;
@@ -97,25 +90,14 @@ export interface AppState {
   importGame(text: string): Promise<GameId>;
 }
 
-/** The rules a loaded game runs with: its catalog scenario's definition and cards. */
-function contextFor(state: GameState, scenarios: ScenarioLookup): ScenarioContext | undefined {
-  const entry = scenarios(state.meta.scenarioId);
+/** The rules a game of `scenarioId` runs with: its catalog entry's definition and cards. */
+function contextFor(
+  scenarioId: ScenarioId,
+  scenarios: ScenarioLookup,
+): ScenarioContext | undefined {
+  const entry = scenarios(scenarioId);
   // Investigator cards are not needed: after setup the engine reads investigators from the state.
   return entry && { cards: entry.cards, scenario: entry.definition };
-}
-
-/** `execute`, with a refusal returned as a value: it is an expected answer, not a failure. */
-function executeOrRefuse(
-  ctx: ScenarioContext,
-  state: GameState,
-  command: Command,
-): ExecuteResult | { rejection: Rejection } {
-  try {
-    return execute(ctx, state, command);
-  } catch (error) {
-    if (error instanceof CommandRejected) return { rejection: error.rejection };
-    throw error;
-  }
 }
 
 /**
@@ -129,62 +111,53 @@ export function createAppStore(
   scenarios: ScenarioLookup = findScenario,
 ): StoreApi<AppState> {
   return createStore<AppState>((set, get) => {
-    // Each command must see the state its predecessor left, so they run strictly one at a time.
-    let commandQueue = Promise.resolve();
+    // Each step must see the state its predecessor left, so they run strictly one at a time.
+    let stepQueue = Promise.resolve();
+    // The table behind `current`; mutable, so it stays out of the published state.
+    let session: GameSession | undefined;
 
-    function showLoaded(gameId: GameId, loaded: LoadedGame | undefined): void {
+    async function open(gameId: GameId): Promise<void> {
+      const loaded = await gameStore.loadGame(gameId);
       const state = loaded?.state ?? emptyState();
-      set({
-        current: {
-          gameId,
-          state,
-          lastSeq: loaded?.summary.lastSeq ?? 0,
-          ctx: contextFor(state, scenarios),
-        },
-      });
+      const ctx = loaded && contextFor(state.meta.scenarioId, scenarios);
+      session = ctx && (await GameSession.open(gameStore, gameId, ctx));
+      set({ current: { gameId, state: session?.state ?? state, playable: session !== undefined } });
     }
 
-    /** The open game if it is still `gameId`: the player may have left it while a write was pending. */
-    function stillOpen(gameId: GameId): OpenGame | undefined {
+    /** Publishes the session's state, unless the player left the game while a write was pending. */
+    function publish(played: GameSession, rejection?: Rejection): void {
       const current = get().current;
-      return current?.gameId === gameId ? current : undefined;
+      if (current?.gameId !== played.gameId) return;
+      set({ current: { ...current, state: played.state, rejection } });
     }
 
-    async function runCommand(command: Command): Promise<void> {
-      const open = get().current;
-      if (!open?.ctx) throw new Error(`No playable game is open for ${command.type}`);
-      const result = executeOrRefuse(open.ctx, open.state, command);
-      if ('rejection' in result) {
-        set({ current: { ...open, rejection: result.rejection } });
-        return;
+    async function playStep(step: PlayStep): Promise<void> {
+      const played = session;
+      if (!played) throw new Error('No playable game is open');
+      try {
+        publish(played, await played.play(step));
+      } catch (error) {
+        // The session reloaded what is stored; show that instead of the lost step.
+        publish(played);
+        throw error;
       }
-      const stored = await gameStore.appendEvents(open.gameId, result.events, open.lastSeq);
-      const now = stillOpen(open.gameId);
-      if (!now) return;
-      set({
-        current: {
-          ...now,
-          state: result.state,
-          lastSeq: stored.at(-1)?.seq ?? open.lastSeq,
-          rejection: undefined,
-        },
-      });
     }
 
-    async function undoCommand(): Promise<void> {
-      const open = get().current;
-      if (!open) return;
-      const { kept } = undoLastGroup(await gameStore.loadEvents(open.gameId));
-      if (kept.length === 0) return;
-      const loaded = await gameStore.undoLast(open.gameId, open.lastSeq);
-      if (stillOpen(open.gameId)) showLoaded(open.gameId, loaded);
+    async function undoStep(): Promise<void> {
+      const played = session;
+      if (!played) return;
+      try {
+        await played.undo();
+      } finally {
+        publish(played);
+      }
     }
 
-    /** Puts `task` behind every command and undo sent before it; a failed one doesn't block the rest. */
+    /** Puts `task` behind every step and undo sent before it; a failed one doesn't block the rest. */
     function enqueue(task: () => Promise<void>): Promise<void> {
-      const run = commandQueue.then(task);
-      commandQueue = run.catch((error: unknown) => {
-        console.warn('A game command failed; nothing was stored for it.', error);
+      const run = stepQueue.then(task);
+      stepQueue = run.catch((error: unknown) => {
+        console.warn('A game step failed; nothing was stored for it.', error);
       });
       return run;
     }
@@ -209,14 +182,14 @@ export function createAppStore(
         await get().openGame(gameId);
         return gameId;
       },
-      async openGame(gameId) {
-        showLoaded(gameId, await gameStore.loadGame(gameId));
+      openGame(gameId) {
+        return enqueue(() => open(gameId));
       },
-      dispatch(command) {
-        return enqueue(() => runCommand(command));
+      play(step) {
+        return enqueue(() => playStep(step));
       },
       undo() {
-        return enqueue(undoCommand);
+        return enqueue(undoStep);
       },
       dismissRejection() {
         const open = get().current;
@@ -233,7 +206,10 @@ export function createAppStore(
       },
       async deleteGame(gameId) {
         await gameStore.deleteGame(gameId);
-        if (get().current?.gameId === gameId) set({ current: undefined });
+        if (get().current?.gameId === gameId) {
+          session = undefined;
+          set({ current: undefined });
+        }
         await get().refresh();
       },
       async exportGame(gameId) {

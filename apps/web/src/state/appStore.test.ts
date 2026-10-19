@@ -81,7 +81,7 @@ describe('appStore', () => {
     expect(reopened.getState().current).toMatchObject({
       gameId: id,
       state: replay([started, doom]),
-      lastSeq: 2,
+      playable: false,
     });
   });
 
@@ -156,13 +156,13 @@ describe('appStore', () => {
       });
     });
 
-    describe('dispatch and undo', () => {
-      it("stores a command's events, so reopening the game shows the same state", async () => {
-        const db = 'appstore-dispatch-test';
+    describe('play and undo', () => {
+      it("stores a step's events, so reopening the game shows the same state", async () => {
+        const db = 'appstore-play-test';
         const store = createAppStore(new IndexedDbStore(db));
         const id = await store.getState().startScenario(start);
 
-        await store.getState().dispatch({ type: 'NextPhase' });
+        await store.getState().play((table) => table.nextPhase());
 
         expect(store.getState().current?.state.meta.phase).toBe('investigation');
         const reopened = createAppStore(new IndexedDbStore(db));
@@ -176,48 +176,45 @@ describe('appStore', () => {
         const reopened = createAppStore(new IndexedDbStore(db));
         await reopened.getState().openGame(id);
 
-        await reopened.getState().dispatch({ type: 'NextPhase' });
+        await reopened.getState().play((table) => table.nextPhase());
 
-        expect(reopened.getState().current?.ctx?.scenario).toBe(theGathering);
-        expect(reopened.getState().current?.state.meta.phase).toBe('investigation');
+        expect(reopened.getState().current).toMatchObject({
+          playable: true,
+          state: { meta: { phase: 'investigation' } },
+        });
       });
 
-      it("keeps a refused command's reason and stores nothing", async () => {
+      it("keeps a refused step's reason and shows the state unchanged", async () => {
         const store = createAppStore(new IndexedDbStore('appstore-refused-test'));
         await store.getState().startScenario(start);
-        const before = store.getState().current;
+        const before = store.getState().current?.state;
 
-        await store
-          .getState()
-          .dispatch({ type: 'EndTurn', investigatorId: investigatorId('alder') });
+        await store.getState().play((table) => table.endTurn(investigatorId('alder')));
 
         expect(store.getState().current?.rejection).toMatchObject({
           code: 'wrongPhase',
           actual: 'setup',
         });
-        expect(store.getState().current?.state).toBe(before?.state);
-        expect(store.getState().current?.lastSeq).toBe(before?.lastSeq);
+        expect(store.getState().current?.state).toBe(before);
       });
 
-      it('clears the refusal once the next command succeeds', async () => {
+      it('clears the refusal once the next step succeeds', async () => {
         const store = createAppStore(new IndexedDbStore('appstore-refused-clear-test'));
         await store.getState().startScenario(start);
-        await store
-          .getState()
-          .dispatch({ type: 'EndTurn', investigatorId: investigatorId('alder') });
+        await store.getState().play((table) => table.endTurn(investigatorId('alder')));
 
-        await store.getState().dispatch({ type: 'NextPhase' });
+        await store.getState().play((table) => table.nextPhase());
 
         expect(store.getState().current?.rejection).toBeUndefined();
       });
 
-      it('runs commands sent without waiting in the order they were sent', async () => {
+      it('runs steps sent without waiting in the order they were sent', async () => {
         const store = createAppStore(new IndexedDbStore('appstore-order-test'));
         await store.getState().startScenario(start);
 
         await Promise.all([
-          store.getState().dispatch({ type: 'NextPhase' }),
-          store.getState().dispatch({ type: 'StartTurn', investigatorId: investigatorId('alder') }),
+          store.getState().play((table) => table.nextPhase()),
+          store.getState().play((table) => table.startTurn(investigatorId('alder'))),
         ]);
 
         expect(store.getState().current?.state.meta).toMatchObject({
@@ -226,12 +223,12 @@ describe('appStore', () => {
         });
       });
 
-      it('undoes the last command in memory and in storage', async () => {
+      it('undoes the last step in memory and in storage', async () => {
         const db = new IndexedDbStore('appstore-undo-test');
         const store = createAppStore(db);
         const id = await store.getState().startScenario(start);
         const atSetup = store.getState().current?.state;
-        await store.getState().dispatch({ type: 'NextPhase' });
+        await store.getState().play((table) => table.nextPhase());
 
         await store.getState().undo();
 
@@ -246,7 +243,7 @@ describe('appStore', () => {
 
         await store.getState().undo();
 
-        expect(store.getState().current?.state).toBe(atSetup);
+        expect(store.getState().current?.state).toEqual(atSetup);
       });
 
       it('refuses to play a game whose scenario is not in the catalog', async () => {
@@ -256,10 +253,10 @@ describe('appStore', () => {
         );
         await store.getState().startScenario(start);
 
-        await expect(store.getState().dispatch({ type: 'NextPhase' })).rejects.toThrow(
+        await expect(store.getState().play((table) => table.nextPhase())).rejects.toThrow(
           'No playable game is open',
         );
-        expect(store.getState().current?.ctx).toBeUndefined();
+        expect(store.getState().current?.playable).toBe(false);
       });
     });
   });
