@@ -23,15 +23,24 @@ export {
   byCode,
   byId,
   byName,
+  cardMatcher,
   describeMatcher,
+  enemyMatcher,
+  enemyMatching,
+  investigatorMatcher,
   matchingCards,
   matchingInvestigators,
   type AnyIdentifierMatcher,
   type CardMatcher,
+  type CardRef,
   type CodeMatcher,
+  type EnemyMatcher,
+  type EnemyNarrowingMatcher,
+  type EnemyRef,
   type InstanceIdMatcher,
   type InvestigatorIdMatcher,
   type InvestigatorMatcher,
+  type InvestigatorRef,
   type NameMatcher,
 } from './card_matchers';
 export {
@@ -42,11 +51,11 @@ export {
   type AgendaView,
   type DecisionView,
   type DueAttackView,
-  type EnemySelector,
   type EnemyView,
   type InvestigatorView,
   type LocationView,
 } from './board_view';
+export { PlayTable, TableRejected, type PhaseStop, type SkillTestResult } from './play_table';
 export { CommandRejected, type Rejection, type RejectionCode } from './rejection';
 export { execute, type ExecuteResult } from './execute';
 export type * from './setup';

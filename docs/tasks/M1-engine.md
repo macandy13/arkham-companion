@@ -83,7 +83,7 @@ Ref: `docs/coding-guidelines.md` (tests); M1.E `TestTable`.
 Slices: (1) `BoardView`, structured read-backs of the board in the engine; (2) `PlayTable`, a driver built on `BoardView` for unit tests; (3) migrate the end-to-end test onto `PlayTable` and delete `TestTable`.
 
 - [x] Slice 1: `boardView(ctx, state)` with views, finders and `TableError` (`packages/engine/src/board_view.ts`)
-- [ ] Slice 2: `PlayTable` on top of `BoardView`
+- [x] Slice 2: `PlayTable` on top of `BoardView` (`packages/engine/src/play_table.ts`)
 - [ ] Slice 3: migrate `end_to_end.test.ts`, delete `TestTable`, update the docs that mention it
 
 - [ ] Review the engine test helpers in `packages/engine/test/utils` (`stateAfter`/`rejectionFrom`, `startScenario`) and list what makes tests hard to read; M1V.3 replaced `startBoard`, `makeInvestigator`, `makeCard` and the per-file `startedWith` variants with `newGame()` and blank cards

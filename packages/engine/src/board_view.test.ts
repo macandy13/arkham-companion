@@ -16,6 +16,7 @@ import {
   cardCode,
   decisionId,
   engagedWith,
+  enemyMatching,
   fixed,
   instanceId,
   investigatorCode,
@@ -146,6 +147,7 @@ describe('investigators', () => {
 
     it.each([
       { matcher: byId(bob), expected: bob },
+      { matcher: bob, expected: bob },
       { matcher: byName('Alice'), expected: alice },
       { matcher: byCode(investigatorCode('bob')), expected: bob },
       { matcher: byAny('bob'), expected: bob },
@@ -273,6 +275,7 @@ describe('locations', () => {
     { matcher: byName('study'), found: study },
     { matcher: byName('Study'), found: study },
     { matcher: byId(hallway), found: hallway },
+    { matcher: hallway, found: hallway },
     { matcher: byCode(cardCode('hallway')), found: hallway },
     { matcher: byAny('attic'), found: instanceId('attic') },
     { matcher: byAny('HALLWAY'), found: hallway },
@@ -372,11 +375,21 @@ describe('enemies', () => {
       { selector: byAny('rat_in_hallway'), found: inHallway },
       { selector: byAny('GHOUL'), found: { name: 'ghoul', at: 'study' } },
       { selector: byId(instanceId('rat_in_hallway')), found: inHallway },
-      { selector: { card: any_rat, engagedWith: alice }, found: onAlice },
-      { selector: { card: any_rat, engagedWith: bob }, found: { ...onAlice, engagedWith: bob } },
-      { selector: { card: any_rat, at: byName('hallway') }, found: inHallway },
-      { selector: { card: any_rat, at: byId(hallway) }, found: inHallway },
-      { selector: { card: any_rat, engagedWith: alice, at: byName('study') }, found: onAlice },
+      { selector: enemyMatching(any_rat, { engagedWith: alice }), found: onAlice },
+      {
+        selector: enemyMatching(any_rat, { engagedWith: bob }),
+        found: { ...onAlice, engagedWith: bob },
+      },
+      { selector: enemyMatching(any_rat, { at: byName('hallway') }), found: inHallway },
+      { selector: enemyMatching(any_rat, { at: byId(hallway) }), found: inHallway },
+      { selector: instanceId('rat_in_hallway'), found: inHallway },
+      { selector: enemyMatching(instanceId('rat_in_hallway')), found: inHallway },
+      { selector: enemyMatching(any_rat, { at: hallway }), found: inHallway },
+      { selector: enemyMatching(any_rat, { engagedWith: byName('Alice') }), found: onAlice },
+      {
+        selector: enemyMatching(any_rat, { engagedWith: alice, at: byName('study') }),
+        found: onAlice,
+      },
     ])('finds $found with $selector', ({ selector, found }) => {
       const { context, state } = rats.start();
 
@@ -388,19 +401,21 @@ describe('enemies', () => {
       const board = boardView(context, state);
 
       expect(() => board.enemy(any_rat)).toThrow(
-        /^3 enemies match named "rat" \(rat_on_alice, rat_on_bob, rat_in_hallway\); narrow it with \{ card, engagedWith \} or \{ card, at \}[^\n]*\n/,
+        /^3 enemies match named "rat" \(rat_on_alice, rat_on_bob, rat_in_hallway\); narrow it with enemyMatching\(card, \{ engagedWith, at \}\), or use byId[^\n]*\n/,
       );
-      expect(() => board.enemy({ card: any_rat, at: byName('study') })).toThrow(/^2 enemies match/);
+      expect(() => board.enemy(enemyMatching(any_rat, { at: byName('study') }))).toThrow(
+        /^2 enemies match/,
+      );
     });
 
     it.each([
       { selector: byName('goblin'), message: 'no enemy in play named "goblin"' },
       {
-        selector: { card: byName('ghoul'), engagedWith: alice },
-        message: 'no enemy in play named "ghoul" engaged with alice',
+        selector: enemyMatching(byName('ghoul'), { engagedWith: alice }),
+        message: 'no enemy in play named "ghoul" engaged with an investigator with id alice',
       },
       {
-        selector: { card: byName('ghoul'), at: byName('hallway') },
+        selector: enemyMatching(byName('ghoul'), { at: byName('hallway') }),
         message: 'no enemy in play named "ghoul" at a location named "hallway"',
       },
     ])('fails with the board when $selector matches nothing', ({ selector, message }) => {
@@ -414,7 +429,7 @@ describe('enemies', () => {
       const { context, state } = rats.start();
 
       expect(() =>
-        boardView(context, state).enemy({ card: any_rat, at: byName('cellar') }),
+        boardView(context, state).enemy(enemyMatching(any_rat, { at: byName('cellar') })),
       ).toThrow(/no location named "cellar" in play/);
     });
 
