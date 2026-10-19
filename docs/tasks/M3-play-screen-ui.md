@@ -13,16 +13,17 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 **Slices** (one small PR each, in this order)
 
 1. M3.1a: `PlayTable` steps as undo groups and `resume` (engine), then the app store's `GameActions` through a `GameSession`, context rebuilt on open, refusals kept on the open game
-2. M3.1b: toast for refused commands, selectors for derived values
-3. M3.2: header
-4. M3.3a: static SVG map with location tiles and connections
-5. M3.3b: pan/zoom/pinch, pawns, enemy chips, map tabs
-6. M3.4: board interactions
-7. M3.5: investigator bar
-8. M3.6: encounter panel
-9. M3.7: decision dialog and card zoom
-10. M3.8: event log
-11. M3.9: tablet pass and E2E
+2. M3.1b: the remaining `GameActions` (move, fight, evade, engage, resign, actions left, enemy attacks, act advance, steppers, doom)
+3. M3.1c: toast for refused commands, selectors for derived values
+4. M3.2: header
+5. M3.3a: static SVG map with location tiles and connections
+6. M3.3b: pan/zoom/pinch, pawns, enemy chips, map tabs
+7. M3.4: board interactions
+8. M3.5: investigator bar
+9. M3.6: encounter panel
+10. M3.7: decision dialog and card zoom
+11. M3.8: event log
+12. M3.9: tablet pass and E2E
 
 ---
 
