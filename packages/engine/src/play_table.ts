@@ -1,5 +1,5 @@
 import { BoardView, boardView, TableError, type CardRef, type EnemySelector } from './board_view';
-import { cardStats, type EngineContext } from './cards';
+import { cardStats, type EngineContext, type ScenarioContext } from './cards';
 import type { Command } from './commands';
 import { describeDecision, optionNamed } from './describe_decision';
 import type { Event } from './events';
@@ -9,10 +9,12 @@ import { checkInvariants } from './invariants';
 import { requireCard } from './lookup';
 import { replay } from './reducer';
 import { CommandRejected, type Rejection } from './rejection';
+import { compileSetup, type InvestigatorSeat } from './setup';
 import { execute, type ExecuteResult } from './execute';
 import {
   emptyState,
   type Decision,
+  type Difficulty,
   type GameState,
   type InvestigatorStat,
   type Phase,
@@ -96,11 +98,30 @@ export class PlayTable {
     return PlayTable.from(game.context(), game.startCommand());
   }
 
-  /** A table started by `start`, e.g. `scenario.compileSetup(ctx, …)`, in `ctx`. */
+  /** A table started by `start`, e.g. `compileSetup(ctx, …)`, in `ctx`. */
   static from(ctx: EngineContext, start: Command): PlayTable {
     const table = new PlayTable(ctx);
     table.play(start);
     return table;
+  }
+
+  /**
+   * A table with `ctx.scenario` set up from scratch: its compiled setup is the
+   * first command. The seed fixes the shuffled decks; `difficulty` defaults to
+   * standard. `investigators` are in seat order, the first being the lead.
+   */
+  static setUp(
+    ctx: ScenarioContext,
+    options: {
+      investigators: readonly InvestigatorSeat[];
+      seed: number;
+      difficulty?: Difficulty;
+    },
+  ): PlayTable {
+    return PlayTable.from(
+      ctx,
+      compileSetup(ctx, { ...options, difficulty: options.difficulty ?? 'standard' }),
+    );
   }
 
   /** The live state after the last command. */
@@ -243,7 +264,7 @@ export class PlayTable {
     enemy: EnemySelector,
     { result = 'pass', damage }: TestOptions & { damage?: number } = {},
   ): void {
-    const { id } = this.board.enemy(enemy);
+    const id = this.board.enemyId(enemy);
     this.atomically(() => {
       this.play({ type: 'Fight', investigatorId: investigator, enemyId: id });
       this.finishTest(`fight:${investigator}:${id}`, result, damage);
@@ -260,7 +281,7 @@ export class PlayTable {
     enemy: EnemySelector,
     { result = 'pass' }: TestOptions = {},
   ): void {
-    const { id } = this.board.enemy(enemy);
+    const id = this.board.enemyId(enemy);
     this.atomically(() => {
       this.play({ type: 'Evade', investigatorId: investigator, enemyId: id });
       this.finishTest(`evade:${investigator}:${id}`, result);
@@ -274,7 +295,7 @@ export class PlayTable {
   engage(investigator: InvestigatorId, enemy: EnemySelector): void {
     this.play({
       type: 'EngageEnemy',
-      enemyId: this.board.enemy(enemy).id,
+      enemyId: this.board.enemyId(enemy),
       investigatorId: investigator,
     });
   }
@@ -290,7 +311,7 @@ export class PlayTable {
   ): void {
     this.play({
       type: 'ResolveDecision',
-      decisionId: decisionId(`attackOfOpportunity:${this.board.enemy(enemy).id}`),
+      decisionId: decisionId(`attackOfOpportunity:${this.board.enemyId(enemy)}`),
       optionId: 'attack',
       amounts,
     });

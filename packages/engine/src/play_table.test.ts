@@ -4,12 +4,15 @@ import {
   blankAgenda,
   blankEnemy,
   blankLocation,
+  cardCode,
+  cardDbFrom,
   CommandRejected,
   decisionId,
   engagedWith,
   fixed,
   instanceId,
   investigatorId,
+  mapId,
   newGame,
   PlayTable,
   replay,
@@ -17,12 +20,49 @@ import {
   TableError,
   TableRejected,
 } from './index';
+import { investigatorSeats, makeDefinition, standardInvestigatorCards } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
 const study = instanceId('study');
 const hallway = instanceId('hallway');
 const ghoul = instanceId('ghoul');
+
+describe('setting up a scenario', () => {
+  const study = cardCode('study');
+  const ctx = {
+    cards: cardDbFrom([...standardInvestigatorCards, blankLocation('study')]),
+    scenario: makeDefinition({
+      chaosBag: { easy: [], standard: ['+1', '-2'], hard: ['-4'], expert: [] },
+      setup: [
+        {
+          kind: 'addMap',
+          mapId: mapId('main'),
+          name: 'Main',
+          locations: [{ code: study, faceUp: true }],
+        },
+        { kind: 'moveInvestigators', to: study },
+      ],
+    }),
+  };
+
+  it.each([
+    { difficulty: undefined, bag: ['+1', '-2'] },
+    { difficulty: 'standard' as const, bag: ['+1', '-2'] },
+    { difficulty: 'hard' as const, bag: ['-4'] },
+  ])('seats the investigators in $difficulty difficulty ($bag)', ({ difficulty, bag }) => {
+    const table = PlayTable.setUp(ctx, {
+      investigators: investigatorSeats(2),
+      seed: 7,
+      difficulty,
+    });
+
+    expect(table.board.perInvestigator('at')).toEqual({ tank: 'study', seeker: 'study' });
+    expect(table.board.lead).toBe('tank');
+    expect([...table.state.chaosBag].sort()).toEqual([...bag].sort());
+    expect(replay(table.events)).toEqual(table.state);
+  });
+});
 
 describe('starting a table', () => {
   const game = newGame()
@@ -412,7 +452,6 @@ describe('fighting and evading', () => {
     table.evade(alice, 'ghoul');
 
     expect(table.board.enemy('ghoul')).toEqual({
-      id: ghoul,
       name: 'ghoul',
       at: 'study',
       exhausted: true,
@@ -457,9 +496,9 @@ describe('fighting and evading', () => {
       table.fight(alice, { name: 'ghoul', engagedWith: alice });
       table.fight(bob, instanceId('ghoul_b'));
 
-      expect(table.board.enemies).toMatchObject([
-        { id: 'ghoul_a', damage: 1 },
-        { id: 'ghoul_b', damage: 1 },
+      expect(table.board.enemies).toEqual([
+        { name: 'ghoul', at: 'study', engagedWith: alice, damage: 1 },
+        { name: 'ghoul', at: 'study', engagedWith: bob, damage: 1 },
       ]);
     });
   });

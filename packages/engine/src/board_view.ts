@@ -248,6 +248,18 @@ export class BoardView {
 
   /** The one enemy in play `selector` picks (see `EnemySelector`). */
   enemy(selector: EnemySelector): EnemyView {
+    return enemyView(this.ctx, this.state, this.enemyCard(selector));
+  }
+
+  /**
+   * The instance id of the enemy `selector` picks, for the commands that name
+   * it (`PlayTable` resolves its selectors here); the view itself has no id.
+   */
+  enemyId(selector: EnemySelector): InstanceId {
+    return this.enemyCard(selector).id;
+  }
+
+  private enemyCard(selector: EnemySelector): CardInstance {
     const { card, engagedWith, at } = 'by' in selector ? { card: selector } : selector;
     const atId = at === undefined ? undefined : this.location(at).id;
     const matches = matchingCards(this.ctx, enemiesInPlay(this.ctx, this.state), card).filter(
@@ -263,7 +275,7 @@ export class BoardView {
         `${matches.length} enemies match ${describeSelector(selector)} (${ids(matches)}); ` +
           'narrow it with { card, engagedWith } or { card, at }, or use byId',
       );
-    return enemyView(this.ctx, this.state, only);
+    return only;
   }
 
   /** The printed names of the cards in `zone`, top first. */
