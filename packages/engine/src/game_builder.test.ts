@@ -253,6 +253,21 @@ describe('newGame', () => {
     expect(context.effects).toBe(burningScripts);
   });
 
+  it("starts in round 1's investigation phase with bob's turn begun for withTurnOf(bob)", () => {
+    const { state } = newGame()
+      .withLocation(study, studyCard, { revealed: true })
+      .withInvestigator(alice, { locationId: study })
+      .withInvestigator(bob, { locationId: study })
+      .withTurnOf(bob)
+      .start();
+
+    expect(state.meta).toMatchObject({
+      round: 1,
+      phase: 'investigation',
+      turn: { investigatorId: bob },
+    });
+  });
+
   it('gives a context without a scenario unless one of its rules is set', () => {
     expect(newGame().context().scenario).toBeUndefined();
   });
