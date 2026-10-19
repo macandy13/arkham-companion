@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.4.0...arkham-companion-v1.4.1) (2026-10-19)
+
+
+### Bug fixes
+
+* **engine:** repair the rat engagement test after [#130](https://github.com/macandy13/arkham-companion/issues/130); close M1V.3 ([cc0af2a](https://github.com/macandy13/arkham-companion/commit/cc0af2a8018805acb69037afd3ad644f58bb8251))
+
 ## [1.4.0](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.3.1...arkham-companion-v1.4.0) (2026-10-19)
 
 
