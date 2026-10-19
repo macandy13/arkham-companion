@@ -17,6 +17,7 @@ import {
   type GameState,
   type Zone,
 } from './index';
+import { answer } from '../test/utils';
 
 /** A log entry as the store keeps it, reduced to what undo looks at. */
 interface LogEntry {
@@ -77,11 +78,7 @@ const startTurn: Command = { type: 'StartTurn', investigatorId: alice };
 const endTurn: Command = { type: 'EndTurn', investigatorId: alice };
 const moveToCellar: Command = { type: 'MoveInvestigator', investigatorId: alice, to: cellar };
 const spendAction: Command = { type: 'AdjustActions', investigatorId: alice, delta: -1 };
-const passChillTest: Command = {
-  type: 'ResolveDecision',
-  decisionId: decisionId('revelation:chill'),
-  optionId: 'pass',
-};
+const passChillTest: Command = answer('revelation:chill', 'pass');
 const pick: Decision = {
   id: decisionId('pick'),
   kind: 'chooseOption',
@@ -90,7 +87,7 @@ const pick: Decision = {
   options: [{ id: 'nothing', label: 'Nothing', commands: [] }],
 };
 const ask: Command = { type: 'RequestDecision', decision: pick };
-const answer: Command = { type: 'ResolveDecision', decisionId: pick.id, optionId: 'nothing' };
+const answerPick: Command = answer(pick.id, 'nothing');
 
 /** Round 1's investigation phase, in which alice may start her turn. */
 const intoInvestigation: Command[] = [revealHall, nextPhase];
@@ -184,7 +181,7 @@ describe('undoing group by group', () => {
       [...intoInvestigation, startTurn, moveToCellar, spendAction, endTurn],
     ],
     ['a revelation test answered', [draw, passChillTest, draw]],
-    ['a decision asked and answered', [ask, answer, draw]],
+    ['a decision asked and answered', [ask, answerPick, draw]],
     [
       'every kind of command',
       [
@@ -197,7 +194,7 @@ describe('undoing group by group', () => {
         moveToCellar,
         moveFirstPlainToDiscard,
         ask,
-        answer,
+        answerPick,
       ],
     ],
   ])('walks back through every earlier state to the empty one (%s)', (_name, commands) => {
@@ -286,9 +283,9 @@ describe('undo and pending decisions', () => {
   });
 
   it('brings the decision back when the answer is undone', () => {
-    const { states } = play([ask, answer]);
+    const { states } = play([ask, answerPick]);
 
-    const afterUndo = afterUndoOf([ask, answer]);
+    const afterUndo = afterUndoOf([ask, answerPick]);
 
     expect(states[2]?.pending).toEqual([]);
     expect(afterUndo.pending).toEqual(states[1]?.pending);

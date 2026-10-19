@@ -19,6 +19,7 @@ import {
   type GameState,
 } from '@arkham/engine';
 import {
+  answer,
   codesIn,
   makeDefinition,
   makeSetupOptions,
@@ -379,11 +380,7 @@ describe('The Gathering acts 2 and 3', () => {
   /** `state` with the Ghoul Priest's prey question answered: it engages `investigator`. */
   function priestEngages(state: GameState, investigator: typeof tank): GameState {
     const preyQuestion = state.pending.find((decision) => decision.subject === priest);
-    return stateAfter(ctx, state, {
-      type: 'ResolveDecision',
-      decisionId: preyQuestion!.id,
-      optionId: investigator,
-    });
+    return stateAfter(ctx, state, answer(preyQuestion!.id, investigator));
   }
 
   it('reveals the Parlor, puts Lita Chantler there and spawns the Ghoul Priest in the Hallway', () => {
@@ -427,11 +424,7 @@ describe('The Gathering acts 2 and 3', () => {
       enemyId: priest,
     });
 
-    const ended = stateAfter(ctx, asked, {
-      type: 'ResolveDecision',
-      decisionId: BURN_THE_HOUSE_DECISION,
-      optionId,
-    });
+    const ended = stateAfter(ctx, asked, answer(BURN_THE_HOUSE_DECISION, optionId));
 
     expect(ended.meta).toMatchObject({ ended: true, resolution });
     expect(ended.act.current).toBeUndefined();
@@ -526,11 +519,7 @@ describe('The Gathering agendas 2 and 3', () => {
   it('defeats every investigator who has not resigned when agenda 3 advances at act 3', () => {
     const atAct3 = stateAfter(ctx, atAgenda2(), { type: 'AdvanceAgenda' }, { type: 'AdvanceAct' });
     const preyQuestion = atAct3.pending.find((decision) => decision.subject === priest);
-    const priestOnTank = stateAfter(ctx, atAct3, {
-      type: 'ResolveDecision',
-      decisionId: preyQuestion!.id,
-      optionId: tank,
-    });
+    const priestOnTank = stateAfter(ctx, atAct3, answer(preyQuestion!.id, tank));
 
     const { state, events } = runFrom(ctx, priestOnTank, [{ type: 'AdvanceAgenda' }]);
 

@@ -78,8 +78,7 @@ Each migration slice keeps the tests' assertions as they are; the builder adds `
 
 **Follow-ups**
 
-- One shared `answer(decision, optionId, amount?)` command builder in `packages/engine/test/utils/` instead of the copies in eight test files.
-- A `withHooks` builder method next to `withEffects`, so hook tests don't start the table and then wrap its context with `withScenario`.
-- A general way to start a table in the investigation phase with one investigator's turn begun; about 30 tests in `attacks_of_opportunity` and `turns` (and some in `elimination`, `undo`, `format_board`) run `NextPhase` and `StartTurn` first.
-
-- `blankAgenda` always takes a doom threshold, so `doom.test.ts` builds an agenda without one as `blankAgenda(code, fixed(0), { doom: undefined })`; let it build a thresholdless agenda directly. `blankAct`'s doc should say that its default `fixed(0)` clues is a threshold of 0, not none.
+- [x] One shared `answer(decision, optionId, amount?)` command builder in `packages/engine/test/utils/` instead of the copies in eight test files.
+- [x] `withHooks`, `withReferenceCard` and `withSkillModifiers` builder methods next to `withEffects`, replacing the `withScenario` test helper.
+- [x] `blankAgenda(code, null)` builds an agenda without a doom threshold; `blankAct`'s doc says its default `fixed(0)` clues is a threshold of 0, not none.
+- [ ] A general way to start a table in the investigation phase with one investigator's turn begun; about 30 tests in `attacks_of_opportunity` and `turns` (and some in `elimination`, `undo`, `format_board`) run `NextPhase` and `StartTurn` first.

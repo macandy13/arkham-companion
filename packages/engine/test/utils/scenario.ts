@@ -116,18 +116,6 @@ export function rejectionOf(fn: () => unknown): Rejection {
 }
 
 /**
- * `ctx` playing a test scenario made of `overrides` (`makeDefinition`), e.g.
- * `withScenario(ctx, { hooks: { onRoundEnd } })`; the engine reads the hooks,
- * reference card and modifiers from it.
- */
-export function withScenario(
-  ctx: EngineContext,
-  overrides: Partial<ScenarioDefinition>,
-): ScenarioContext {
-  return { ...ctx, scenario: makeDefinition(overrides) };
-}
-
-/**
  * `state` with `decisions` pending at once, as two attacks of opportunity
  * are. Built from events, because no command asks two unrelated questions
  * at once.

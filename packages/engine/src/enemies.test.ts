@@ -6,7 +6,6 @@ import {
   blankEnemy,
   blankLocation,
   checkInvariants,
-  decisionId,
   enemyAttackList,
   engagedWith,
   execute,
@@ -22,7 +21,7 @@ import {
 } from './index';
 import { engageEvents } from './engagement';
 import { replay } from './reducer';
-import { rejectionFrom, stateAfter } from '../test/utils';
+import { answer, rejectionFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -261,11 +260,7 @@ describe('SpawnEnemy', () => {
       .start();
     const asked = stateAfter(context, state, { type: 'SpawnEnemy', enemyId: ghoul, at: hall });
 
-    const after = stateAfter(context, asked, {
-      type: 'ResolveDecision',
-      decisionId: decisionId('engage:ghoul'),
-      optionId: bob,
-    });
+    const after = stateAfter(context, asked, answer('engage:ghoul', bob));
 
     expect(asked.pending).toHaveLength(1);
     expect(after.pending).toEqual([]);
