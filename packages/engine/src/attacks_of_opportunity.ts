@@ -22,8 +22,8 @@ import type { GameState, HeldAction } from './state';
  * `handle` calls this for player commands only: follow-ups of hooks and of
  * decision answers are rule consequences, not actions, so they never
  * provoke (`CommandSpec.provokes` tells which commands do). When it raises any decision, `handle` holds the action
- * (`ActionHeld`) and resolves it only after the last answer
- * (`resumeHeldAction`). The decisions may be answered in any order, because
+ * (`StepsQueued`) and resolves it only after the last answer
+ * (`resumeQueue`). The decisions may be answered in any order, because
  * the attacking enemies' controller (the players) picks it.
  */
 export function attackOfOpportunityDecisions(

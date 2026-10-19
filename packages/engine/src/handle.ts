@@ -8,7 +8,7 @@ import { canDrawEncounter, encounterCardCount, surgeDraw } from './handle_encoun
 import { nextStepPlan } from './phases';
 import { apply } from './reducer';
 import { CommandRejected, type Rejection } from './rejection';
-import type { GameState } from './state';
+import type { GameState, HeldAction } from './state';
 import { MAX_TRIGGERED_COMMANDS, triggeredCommands } from './triggers';
 
 /**
@@ -35,12 +35,12 @@ import { MAX_TRIGGERED_COMMANDS, triggeredCommands } from './triggers';
  * so one "Next" yields the whole automated part of a phase.
  * A player command that is an action provoking attacks of opportunity
  * (`CommandSpec.provokes`, `attackOfOpportunityDecisions`) yields one decision per attacking enemy
- * and is held (`ActionHeld`) until all of them are answered; follow-ups
- * never provoke, which is why this happens here and not in
+ * and queues the action (`StepsQueued`) until all of them are answered;
+ * follow-ups never provoke, which is why this happens here and not in
  * `resolveCommand`. A surge draw waiting for the decisions of the card
- * before it is held the same way (`resolveSurge`). Once no decision is
- * pending, any command (usually the last answer) ends with the held command
- * (`resumeHeldAction`).
+ * before it is queued the same way (`resolveSurge`). Once no decision is
+ * pending, any command (usually the last answer) ends with the queued steps
+ * (`resumeQueue`).
  * Pure: the same state, command and context always yield the same events.
  * Inside, the chain grows one `Resolution`, which never leaves this call.
  */
@@ -57,10 +57,10 @@ export function handle(ctx: EngineContext, state: GameState, command: Command): 
     // dry run gets a resolution of its own that is dropped, the action
     // resolves after the attacks.
     resolveCommand({ ctx, state, events: [] }, command, budget);
-    return [...attacks, { type: 'ActionHeld', command: action }];
+    return [...attacks, { type: 'StepsQueued', steps: [{ kind: 'command', command: action }] }];
   }
   resolveCommand(resolution, command, budget);
-  resumeHeldAction(resolution, budget);
+  resumeQueue(resolution, budget);
   return resolution.events;
 }
 
@@ -113,15 +113,25 @@ function assertAccepted<C extends Command>(
 }
 
 /**
- * The held action (`GameMeta.heldAction`) once nothing is pending any more:
- * `ActionResumed` and the action's own events, or `ActionDropped` when an
- * attack of opportunity defeated the investigator or the action has become
- * illegal meanwhile (an attack's forced effect moved them, say). Dropping
- * rather than rejecting keeps the answer that released it valid.
+ * The queued steps (`GameMeta.queue`), next first, until one of them asks
+ * the players something or none is left. Each is `StepResumed` and the held
+ * action's own events, or `ActionDropped` when an attack of opportunity
+ * defeated the investigator or the action has become illegal meanwhile (an
+ * attack's forced effect moved them, say). Dropping rather than rejecting
+ * keeps the answer that released it valid. More than one step waits only
+ * when a surge card drawn during attacks of opportunity asks something; no
+ * trigger point fires there yet, so the queue holds one step in practice.
  */
-function resumeHeldAction(resolution: Resolution, budget: TriggerBudget): void {
-  const held = resolution.state.meta.heldAction;
-  if (held === undefined || resolution.state.pending.length > 0) return;
+function resumeQueue(resolution: Resolution, budget: TriggerBudget): void {
+  for (;;) {
+    const [step] = resolution.state.meta.queue ?? [];
+    if (step === undefined || resolution.state.pending.length > 0) return;
+    resumeHeldAction(resolution, step.command, budget);
+  }
+}
+
+/** One queued held action, resolved or dropped (`resumeQueue`). */
+function resumeHeldAction(resolution: Resolution, held: HeldAction, budget: TriggerBudget): void {
   const investigator = resolution.state.investigators.find((inv) => inv.id === held.investigatorId);
   if (investigator?.status !== 'active') {
     emit(resolution, [
@@ -135,7 +145,7 @@ function resumeHeldAction(resolution: Resolution, budget: TriggerBudget): void {
   }
   const restore = checkpoint(resolution);
   try {
-    emit(resolution, [{ type: 'ActionResumed' }]);
+    emit(resolution, [{ type: 'StepResumed' }]);
     resolveCommand(resolution, held, budget);
   } catch (error) {
     if (!(error instanceof CommandRejected)) throw error;
@@ -151,8 +161,9 @@ interface TriggerBudget {
    * Surge draws so far, and the cards the deck and discard held before the
    * first surging draw of this `handle` call. A deck made only of surge cards
    * would reshuffle and draw forever, so one call makes at most that many
-   * draws in surge chains. A held surge resumes in a later call and counts
-   * afresh; it only waits there because the players have to answer first.
+   * draws in surge chains. A queued surge resumes in a later call and counts
+   * afresh, sharing that call's count with the other queued steps it
+   * resolves; it only waits there because the players have to answer first.
    */
   surges: number;
   encounterCards?: number;
@@ -235,15 +246,12 @@ function resolvePhaseSteps(resolution: Resolution): void {
 
 /**
  * The surge draw, once the surging card and its forced effects have resolved.
- * While one of them still waits for an answer, the draw is held
- * (`ActionHeld`) and `resumeHeldAction` makes it after the last answer, so
- * the next card is not drawn before the players have resolved this one.
- * Nothing when the drawer has left the scenario, no card is left, or the
- * chain has already drawn every card (`TriggerBudget.encounterCards`).
- * If a held action is already waiting (a forced effect during attacks of
- * opportunity drew the card), the slot is taken and the draw happens at once.
- * No trigger point fires during those attacks today, so that case cannot
- * arise yet; M1V.1 tracks it.
+ * While one of them still waits for an answer, the draw is queued
+ * (`StepsQueued`) in front of anything already waiting, and `resumeQueue`
+ * makes it after the last answer, so the next card is not drawn before the
+ * players have resolved this one. Nothing when the drawer has left the
+ * scenario, no card is left, or the chain has already drawn every card
+ * (`TriggerBudget.encounterCards`).
  */
 function resolveSurge(resolution: Resolution, surge: DrawEncounter, budget: TriggerBudget): void {
   const { state } = resolution;
@@ -251,8 +259,8 @@ function resolveSurge(resolution: Resolution, surge: DrawEncounter, budget: Trig
   // The first draw counts too.
   if (budget.surges + 1 >= (budget.encounterCards ?? 0)) return;
   budget.surges += 1;
-  if (state.pending.length > 0 && state.meta.heldAction === undefined) {
-    emit(resolution, [{ type: 'ActionHeld', command: surge }]);
+  if (state.pending.length > 0) {
+    emit(resolution, [{ type: 'StepsQueued', steps: [{ kind: 'command', command: surge }] }]);
     return;
   }
   resolveFollowUps(resolution, [surge], budget);
