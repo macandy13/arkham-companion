@@ -235,6 +235,7 @@ export class PlayTable {
       type: 'MoveInvestigator',
       investigatorId: investigator,
       to: this.board.location(location).id,
+      asAction: true,
     });
   }
 
@@ -250,7 +251,7 @@ export class PlayTable {
     { result = 'pass', clues }: TestOptions & { clues?: number } = {},
   ): void {
     this.atomically(() => {
-      this.play({ type: 'Investigate', investigatorId: investigator });
+      this.play({ type: 'Investigate', investigatorId: investigator, asAction: true });
       this.finishTest(`investigate:${investigator}`, result, clues);
     });
   }
@@ -299,6 +300,7 @@ export class PlayTable {
       type: 'EngageEnemy',
       enemyId: this.board.enemyId(enemy),
       investigatorId: investigator,
+      asAction: true,
     });
   }
 
