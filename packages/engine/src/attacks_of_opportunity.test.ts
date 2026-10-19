@@ -399,11 +399,11 @@ describe('several steps waiting in the queue', () => {
     draw: { type: 'DrawEncounter', investigatorId: alice },
   };
 
-  const { context, state: started } = ghoulOnAlice.start();
+  const { context, state: started } = ghoulOnAlice.withTurnOf(alice).start();
 
   /** The ghoul's attack on alice's move to the cellar is open, and `first` waits in front of the move. */
   function moveQueuedBehind(first: QueuedStep): GameState {
-    const asked = stateAfter(context, started, nextPhase, aliceStartsTurn, moveToCellar);
+    const asked = stateAfter(context, started, moveToCellar);
     return apply(asked, { type: 'StepsQueued', steps: [first] });
   }
 
