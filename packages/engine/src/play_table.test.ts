@@ -4,6 +4,8 @@ import {
   blankAgenda,
   blankEnemy,
   blankLocation,
+  byId,
+  byName,
   cardCode,
   cardDbFrom,
   CommandRejected,
@@ -108,7 +110,7 @@ describe('starting a table', () => {
     table.nextPhase();
     table.startTurn(alice);
 
-    table.moveTo(alice, 'hallway');
+    table.moveTo(alice, byName('hallway'));
 
     expect(before.investigator(alice).at).toBe('study');
     expect(table.board.investigator(alice).at).toBe('hallway');
@@ -129,9 +131,9 @@ describe('rejected and broken steps', () => {
     const stateBefore = table.state;
     const eventsBefore = table.events;
 
-    expect(() => table.moveTo(alice, 'hallway')).toThrow(TableRejected);
-    expect(() => table.moveTo(alice, 'hallway')).toThrow(CommandRejected);
-    expect(() => table.moveTo(alice, 'hallway')).toThrow(/study.*hallway.*\nRound 1/s);
+    expect(() => table.moveTo(alice, byName('hallway'))).toThrow(TableRejected);
+    expect(() => table.moveTo(alice, byName('hallway'))).toThrow(CommandRejected);
+    expect(() => table.moveTo(alice, byName('hallway'))).toThrow(/study.*hallway.*\nRound 1/s);
     expect(table.state).toBe(stateBefore);
     expect(table.events).toEqual(eventsBefore);
   });
@@ -141,7 +143,7 @@ describe('rejected and broken steps', () => {
     table.nextPhase();
     table.startTurn(alice);
 
-    expect(() => table.moveTo(alice, 'hallway')).toThrow(
+    expect(() => table.moveTo(alice, byName('hallway'))).toThrow(
       expect.objectContaining({
         rejection: { code: 'notConnected', from: study, to: hallway },
       }),
@@ -151,8 +153,8 @@ describe('rejected and broken steps', () => {
   it('does not wrap an error that is not a rejection', () => {
     const table = PlayTable.start(game);
 
-    expect(() => table.moveTo(alice, 'garden')).toThrow(TableError);
-    expect(() => table.moveTo(alice, 'garden')).not.toThrow(CommandRejected);
+    expect(() => table.moveTo(alice, byName('garden'))).toThrow(TableError);
+    expect(() => table.moveTo(alice, byName('garden'))).not.toThrow(CommandRejected);
   });
 });
 
@@ -204,7 +206,7 @@ describe('the round', () => {
     table.resolveEnemyAttacks();
 
     expect(table.board.investigator(alice)).toMatchObject({ damage: 2, horror: 1 });
-    expect(table.board.enemy('ghoul')).toMatchObject({ exhausted: true });
+    expect(table.board.enemy(byName('ghoul'))).toMatchObject({ exhausted: true });
   });
 
   it('leaves the table as it was when an attack fails halfway', () => {
@@ -330,7 +332,7 @@ describe('investigating', () => {
     table.investigate(alice);
 
     expect(table.board.investigator(alice).clues).toBe(1);
-    expect(table.board.location('study').clues).toBe(2);
+    expect(table.board.location(byName('study')).clues).toBe(2);
     expect(table.board.decisions).toEqual([]);
   });
 
@@ -378,7 +380,7 @@ describe('investigating', () => {
     table.startTurn(alice);
 
     table.investigate(alice, { result: 'open' });
-    table.takeAttackOfOpportunity('ghoul', { damage: 0 });
+    table.takeAttackOfOpportunity(byName('ghoul'), { damage: 0 });
     table.resolveTest('pass');
 
     expect(table.board.investigator(alice)).toMatchObject({ clues: 1, damage: 0 });
@@ -429,34 +431,34 @@ describe('fighting and evading', () => {
   it('deals the basic attack on a pass by default', () => {
     const table = PlayTable.start(game);
 
-    table.fight(alice, 'ghoul');
+    table.fight(alice, byName('ghoul'));
 
-    expect(table.board.enemy('ghoul')).toMatchObject({ damage: 1 });
+    expect(table.board.enemy(byName('ghoul'))).toMatchObject({ damage: 1 });
   });
 
   it('deals the damage the players confirm', () => {
     const table = PlayTable.start(game);
 
-    table.fight(alice, 'ghoul', { damage: 3 });
+    table.fight(alice, byName('ghoul'), { damage: 3 });
 
-    expect(table.board.enemy('ghoul')).toMatchObject({ damage: 3 });
+    expect(table.board.enemy(byName('ghoul'))).toMatchObject({ damage: 3 });
   });
 
   it('deals no damage on a fail', () => {
     const table = PlayTable.start(game);
 
-    table.fight(alice, 'ghoul', { result: 'fail' });
+    table.fight(alice, byName('ghoul'), { result: 'fail' });
 
-    expect(table.board.enemy('ghoul').damage).toBeUndefined();
+    expect(table.board.enemy(byName('ghoul')).damage).toBeUndefined();
     expect(table.board.decisions).toEqual([]);
   });
 
   it('exhausts and disengages an enemy that is evaded', () => {
     const table = PlayTable.start(game);
 
-    table.evade(alice, 'ghoul');
+    table.evade(alice, byName('ghoul'));
 
-    expect(table.board.enemy('ghoul')).toEqual({
+    expect(table.board.enemy(byName('ghoul'))).toEqual({
       name: 'ghoul',
       at: 'study',
       exhausted: true,
@@ -466,18 +468,18 @@ describe('fighting and evading', () => {
   it('leaves a failed evade without exhausting the enemy', () => {
     const table = PlayTable.start(game);
 
-    table.evade(alice, 'ghoul', { result: 'fail' });
+    table.evade(alice, byName('ghoul'), { result: 'fail' });
 
-    expect(table.board.enemy('ghoul')).toMatchObject({ engagedWith: alice });
-    expect(table.board.enemy('ghoul').exhausted).toBeUndefined();
+    expect(table.board.enemy(byName('ghoul'))).toMatchObject({ engagedWith: alice });
+    expect(table.board.enemy(byName('ghoul')).exhausted).toBeUndefined();
   });
 
   it('switches an enemy to the investigator who engages it', () => {
     const table = PlayTable.start(game.withInvestigator(bob, { locationId: study }));
 
-    table.engage(bob, 'ghoul');
+    table.engage(bob, byName('ghoul'));
 
-    expect(table.board.enemy('ghoul')).toMatchObject({ engagedWith: bob });
+    expect(table.board.enemy(byName('ghoul'))).toMatchObject({ engagedWith: bob });
   });
 
   describe('with two ghouls', () => {
@@ -492,14 +494,16 @@ describe('fighting and evading', () => {
     it('refuses a name that matches both, listing the narrowings', () => {
       const table = PlayTable.start(twoGhouls);
 
-      expect(() => table.fight(alice, 'ghoul')).toThrow(/2 enemies match "ghoul".*narrow it/s);
+      expect(() => table.fight(alice, byName('ghoul'))).toThrow(
+        /2 enemies match named "ghoul".*narrow it/s,
+      );
     });
 
     it('takes a selector or an instance id to pick one', () => {
       const table = PlayTable.start(twoGhouls);
 
-      table.fight(alice, { name: 'ghoul', engagedWith: alice });
-      table.fight(bob, instanceId('ghoul_b'));
+      table.fight(alice, { card: byName('ghoul'), engagedWith: alice });
+      table.fight(bob, byId(instanceId('ghoul_b')));
 
       expect(table.board.enemies).toEqual([
         { name: 'ghoul', at: 'study', engagedWith: alice, damage: 1 },
@@ -518,7 +522,7 @@ describe('answering decisions', () => {
     const table = PlayTable.start(game);
     table.investigate(alice, { result: 'open' });
 
-    table.answer('study', 'pass');
+    table.answer(byName('study'), 'pass');
 
     expect(table.board.investigator(alice).clues).toBe(1);
   });
@@ -527,7 +531,7 @@ describe('answering decisions', () => {
     const table = PlayTable.start(game);
     table.investigate(alice, { result: 'open' });
 
-    table.answer('study', 'pass', { amount: 2 });
+    table.answer(byName('study'), 'pass', { amount: 2 });
 
     expect(table.board.investigator(alice).clues).toBe(2);
   });
@@ -546,15 +550,17 @@ describe('answering decisions', () => {
     const table = PlayTable.start(game);
     table.investigate(alice, { result: 'open' });
 
-    expect(() => table.answer('study', 'maybe')).toThrow(/no option maybe in: .*pass.*fail/);
+    expect(() => table.answer(byName('study'), 'maybe')).toThrow(
+      /no option maybe in: .*pass.*fail/,
+    );
   });
 
   it('fails when no decision is about the card', () => {
     const table = PlayTable.start(game);
     table.investigate(alice, { result: 'open' });
 
-    expect(() => table.answer('ghoul', 'pass')).toThrow(
-      /expected exactly one open decision about ghoul, found 0/,
+    expect(() => table.answer(byName('ghoul'), 'pass')).toThrow(
+      /expected exactly one open decision about a card named "ghoul", found 0/,
     );
   });
 
@@ -578,19 +584,21 @@ describe('answering decisions', () => {
       const table = PlayTable.start(twoGhoulsOnAlice);
       table.nextPhase();
       table.startTurn(alice);
-      table.moveTo(alice, 'hallway');
+      table.moveTo(alice, byName('hallway'));
 
       expect(() => table.answerOnly('attack')).toThrow(/open decision, found 2/);
-      expect(() => table.answer('ghoul', 'attack')).toThrow(/open decision about ghoul, found 2/);
+      expect(() => table.answer(byName('ghoul'), 'attack')).toThrow(
+        /open decision about a card named "ghoul", found 2/,
+      );
     });
 
     it('answers by instance id', () => {
       const table = PlayTable.start(twoGhoulsOnAlice);
       table.nextPhase();
       table.startTurn(alice);
-      table.moveTo(alice, 'hallway');
+      table.moveTo(alice, byName('hallway'));
 
-      table.answer(instanceId('ghoul_b'), 'attack');
+      table.answer(byId(instanceId('ghoul_b')), 'attack');
 
       expect(table.board.investigator(alice).damage).toBe(1);
       expect(table.board.decisions).toMatchObject([{ about: 'ghoul' }]);

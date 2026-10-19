@@ -1,5 +1,6 @@
-import { BoardView, boardView, TableError, type CardRef, type EnemySelector } from './board_view';
-import { cardStats, type EngineContext, type ScenarioContext } from './cards';
+import { BoardView, boardView, TableError, type EnemySelector } from './board_view';
+import { describeMatcher, matchingCards, type CardMatcher } from './card_matchers';
+import { type EngineContext, type ScenarioContext } from './cards';
 import type { Command } from './commands';
 import { describeDecision, optionNamed } from './describe_decision';
 import type { Event } from './events';
@@ -70,7 +71,7 @@ interface TestOptions {
 
 /**
  * A game being played in a test or a sandbox, driven in game language
- * (`nextPhase()`, `startTurn(daisy)`, `moveTo(daisy, 'Attic')`) so a scripted
+ * (`nextPhase()`, `startTurn(daisy)`, `moveTo(daisy, byName('Attic'))`) so a scripted
  * session reads like a session report. Start it from a `GameBuilder`
  * (`PlayTable.start`) or from any start command (`PlayTable.from`, e.g. a
  * scenario's compiled setup). Every step is an engine command run through
@@ -85,7 +86,7 @@ interface TestOptions {
  * (an action and its test, the attacks of a step) and a later one fails.
  * Action methods do not spend actions (the engine leaves that to the players);
  * `spendAction` is explicit. Investigators are given by `InvestigatorId`,
- * cards by `CardRef`.
+ * cards by `CardMatcher`.
  */
 export class PlayTable {
   private current: GameState = emptyState();
@@ -229,7 +230,7 @@ export class PlayTable {
   }
 
   /** A move action along a connection to the location `location` names. */
-  moveTo(investigator: InvestigatorId, location: CardRef): void {
+  moveTo(investigator: InvestigatorId, location: CardMatcher): void {
     this.play({
       type: 'MoveInvestigator',
       investigatorId: investigator,
@@ -342,21 +343,25 @@ export class PlayTable {
 
   /**
    * Answers the open decision about the card `subject` names by picking the
-   * option shown as `option` (`answer('Swarm of Rats', 'Roland Banks')`,
-   * `answer('Crypt Chill', 'fail')`), confirming `amount` where the option
+   * option shown as `option` (`answer(byName('Swarm of Rats'), 'Roland Banks')`,
+   * `answer(byName('Crypt Chill'), 'fail')`), confirming `amount` where the option
    * takes one. Fails when no decision, or several, are about that card or the
    * option is not offered, so a script that answers the wrong question breaks
    * where it happens.
    */
-  answer(subject: CardRef, option: string, { amount }: { amount?: number } = {}): void {
+  answer(subject: CardMatcher, option: string, { amount }: { amount?: number } = {}): void {
     const { pending, cards } = this.current;
-    const byId = pending.filter((decision) => decision.subject === subject);
-    const named = pending.filter(
-      (decision) =>
-        decision.subject !== undefined &&
-        cardStats(this.ctx.cards, requireCard(cards, decision.subject).code).name === subject,
+    const subjects = matchingCards(
+      this.ctx,
+      pending.flatMap((decision) =>
+        decision.subject === undefined ? [] : [requireCard(cards, decision.subject)],
+      ),
+      subject,
+    ).map((card) => card.id);
+    const about = pending.filter(
+      (decision) => decision.subject !== undefined && subjects.includes(decision.subject),
     );
-    const decision = this.onlyOne(byId.length > 0 ? byId : named, `open decision about ${subject}`);
+    const decision = this.onlyOne(about, `open decision about a card ${describeMatcher(subject)}`);
     this.answerWith(decision, option, amount);
   }
 
