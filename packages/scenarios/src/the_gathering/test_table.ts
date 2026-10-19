@@ -266,6 +266,7 @@ export class TestTable {
       type: 'MoveInvestigator',
       investigatorId: investigator,
       to: this.locationNamed(locationName).id,
+      asAction: true,
     });
   }
 
@@ -283,7 +284,7 @@ export class TestTable {
 
   /** An investigate action, up to its intellect test (or the attacks of opportunity before it). */
   startInvestigating(investigator: InvestigatorId): void {
-    this.play({ type: 'Investigate', investigatorId: investigator });
+    this.play({ type: 'Investigate', investigatorId: investigator, asAction: true });
   }
 
   /** The players pass the intellect test of the investigator's investigate action, discovering `clues` (default 1). */
@@ -311,6 +312,7 @@ export class TestTable {
       type: 'EngageEnemy',
       enemyId: this.enemyInstance(enemy).id,
       investigatorId: investigator,
+      asAction: true,
     });
   }
 

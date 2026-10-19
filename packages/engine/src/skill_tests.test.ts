@@ -17,7 +17,7 @@ import {
   type Command,
   type Zone,
 } from './index';
-import { rejectionFrom, stateAfter } from '../test/utils';
+import { answer, rejectionFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -80,16 +80,6 @@ const aliceInStudy = newGame()
     skills: { willpower: 2, intellect: 4, combat: 3, agility: 3 },
   });
 
-/** The answer `optionId` to `decision`, confirming `amount` when given. */
-function answer(decision: string, optionId: string, amount?: number): Command {
-  return {
-    type: 'ResolveDecision',
-    decisionId: decisionId(decision),
-    optionId,
-    ...(amount === undefined ? {} : { amount }),
-  };
-}
-
 describe('Investigate', () => {
   const investigate: Command = { type: 'Investigate', investigatorId: alice };
 
@@ -148,14 +138,7 @@ describe('Investigate', () => {
     const { context, state } = aliceInStudy.start();
     const asked = stateAfter(context, state, investigate);
 
-    expect(
-      rejectionFrom(context, asked, {
-        type: 'ResolveDecision',
-        decisionId: decisionId('investigate:alice'),
-        optionId: 'pass',
-        amount,
-      }),
-    ).toEqual({
+    expect(rejectionFrom(context, asked, answer('investigate:alice', 'pass', amount))).toEqual({
       code: 'amountOutOfRange',
       decisionId: decisionId('investigate:alice'),
       optionId: 'pass',
@@ -169,14 +152,7 @@ describe('Investigate', () => {
     const { context, state } = aliceInStudy.start();
     const asked = stateAfter(context, state, investigate);
 
-    expect(
-      rejectionFrom(context, asked, {
-        type: 'ResolveDecision',
-        decisionId: decisionId('investigate:alice'),
-        optionId: 'fail',
-        amount: 1,
-      }),
-    ).toEqual({
+    expect(rejectionFrom(context, asked, answer('investigate:alice', 'fail', 1))).toEqual({
       code: 'amountNotAdjustable',
       decisionId: decisionId('investigate:alice'),
       optionId: 'fail',

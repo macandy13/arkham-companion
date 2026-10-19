@@ -22,7 +22,7 @@ import {
   type GameState,
   type InstanceId,
 } from './index';
-import { rejectionFrom, stateAfter, withScenario } from '../test/utils';
+import { answer, rejectionFrom, stateAfter } from '../test/utils';
 
 const hall = instanceId('hall');
 const ghoul = instanceId('ghoul');
@@ -352,7 +352,7 @@ describe('threshold check', () => {
       state,
       { type: 'PlaceDoom', amount: 3 },
       { type: 'CheckDoomThreshold' },
-      { type: 'ResolveDecision', decisionId: decisionId('advanceAgenda:agenda1'), optionId: 'no' },
+      answer('advanceAgenda:agenda1', 'no'),
     );
 
     const next = stateAfter(context, declined, { type: 'CheckDoomThreshold' });
@@ -369,11 +369,7 @@ describe('threshold check', () => {
       { type: 'CheckDoomThreshold' },
     );
 
-    const next = stateAfter(context, asked, {
-      type: 'ResolveDecision',
-      decisionId: decisionId('advanceAgenda:agenda1'),
-      optionId: 'yes',
-    });
+    const next = stateAfter(context, asked, answer('advanceAgenda:agenda1', 'yes'));
 
     expect(next.pending).toEqual([]);
     expect(next.agenda.current).toBe(agenda2);
@@ -387,11 +383,7 @@ describe('threshold check', () => {
       { type: 'CheckDoomThreshold' },
     );
 
-    const next = stateAfter(context, asked, {
-      type: 'ResolveDecision',
-      decisionId: decisionId('advanceAgenda:agenda1'),
-      optionId: 'no',
-    });
+    const next = stateAfter(context, asked, answer('advanceAgenda:agenda1', 'no'));
 
     expect(next.pending).toEqual([]);
     expect(next.agenda.current).toBe(agenda1);
@@ -694,10 +686,9 @@ describe('AdvanceAct', () => {
 describe('a last act whose reverse side lets the lead investigator choose the resolution', () => {
   const chooseResolution = decisionId('chooseResolution');
   const endWith = (resolution: string): Command => ({ type: 'EndScenario', resolution });
-  const { context, state } = aliceAlone.start();
   /** The last act's reverse side asks "R1 or R2?"; each answer ends the scenario. */
-  const choosingContext = withScenario(context, {
-    hooks: {
+  const { context: choosingContext, state } = aliceAlone
+    .withHooks({
       onActAdvance: {
         [secondActCard.code]: (): Command[] => [
           {
@@ -715,17 +706,17 @@ describe('a last act whose reverse side lets the lead investigator choose the re
           },
         ],
       },
-    },
-  });
+    })
+    .start();
   const lastAct = () =>
     stateAfter(choosingContext, state, {
       type: 'AdvanceAct',
     });
 
-  it('leaves the scenario running with the question open instead of asking for a resolution', () => {
+  it('keeps the last act in play while the question is open instead of asking for a resolution', () => {
     const asked = stateAfter(choosingContext, lastAct(), { type: 'AdvanceAct' });
 
-    expect(asked.act.current).toBeUndefined();
+    expect(asked.act.current).toBe(act2);
     expect(asked.meta.ended).toBeUndefined();
     expect(asked.pending.map((decision) => decision.id)).toEqual([chooseResolution]);
   });
@@ -733,13 +724,10 @@ describe('a last act whose reverse side lets the lead investigator choose the re
   it('ends the scenario with the resolution the lead investigator picks', () => {
     const asked = stateAfter(choosingContext, lastAct(), { type: 'AdvanceAct' });
 
-    const ended = stateAfter(choosingContext, asked, {
-      type: 'ResolveDecision',
-      decisionId: chooseResolution,
-      optionId: 'spare',
-    });
+    const ended = stateAfter(choosingContext, asked, answer(chooseResolution, 'spare'));
 
     expect(ended.meta).toMatchObject({ ended: true, resolution: 'R2' });
+    expect(ended.act.current).toBeUndefined();
   });
 
   it('ignores a fallback resolution while the question is open', () => {
@@ -749,6 +737,39 @@ describe('a last act whose reverse side lets the lead investigator choose the re
     });
 
     expect(events.map((event) => event.type)).not.toContain('ScenarioEnded');
+  });
+});
+
+describe('a last act whose reverse side asks something that names no resolution', () => {
+  const whoPays = decisionId('who_pays');
+  /** The last act's reverse side only asks who takes a horror; the resolution comes from the command. */
+  const { context: askingContext, state } = aliceAlone
+    .withHooks({
+      onActAdvance: {
+        [secondActCard.code]: (): Command[] => [
+          {
+            type: 'RequestDecision',
+            decision: {
+              id: whoPays,
+              kind: 'confirm',
+              prompt: 'take a horror?',
+              decider: { kind: 'lead' },
+              options: [{ id: 'yes', label: 'yes', commands: [] }],
+            },
+          },
+        ],
+      },
+    })
+    .start();
+
+  it('ends the scenario with the fallback resolution once the question is answered', () => {
+    const lastAct = stateAfter(askingContext, state, { type: 'AdvanceAct' });
+    const asked = stateAfter(askingContext, lastAct, { type: 'AdvanceAct', resolution: 'R3' });
+
+    const answered = stateAfter(askingContext, asked, answer(whoPays, 'yes'));
+
+    expect(asked.meta.ended).toBeUndefined();
+    expect(answered.meta).toMatchObject({ ended: true, resolution: 'R3' });
   });
 });
 
@@ -783,7 +804,7 @@ describe('cards without a threshold', () => {
   const plainAct = instanceId('plainAct');
   const nextAct = instanceId('nextAct');
   /** An agenda without a printed doom threshold. */
-  const plainAgendaCard = blankAgenda('plain_agenda', fixed(0), { doom: undefined });
+  const plainAgendaCard = blankAgenda('plain_agenda', null);
   /** Two acts without a printed clue threshold. */
   const plainActCard = blankAct('plain_act', { clues: undefined });
   const nextActCard = blankAct('next_act', { stage: { number: 2 }, clues: undefined });
@@ -849,11 +870,12 @@ describe('manual doom corrections', () => {
   });
 
   it('do not ask again when doom is taken off above the threshold', () => {
-    const answered = stateAfter(context, aliceAloneState, manualDoom(ghoul, 4), {
-      type: 'ResolveDecision',
-      decisionId: decisionId('advanceAgenda:agenda1'),
-      optionId: 'no',
-    });
+    const answered = stateAfter(
+      context,
+      aliceAloneState,
+      manualDoom(ghoul, 4),
+      answer('advanceAgenda:agenda1', 'no'),
+    );
 
     expect(stateAfter(context, answered, manualDoom(ghoul, -1)).pending).toEqual([]);
   });

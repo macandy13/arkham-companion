@@ -22,8 +22,8 @@ import type { GameState, HeldAction } from './state';
  * `handle` calls this for player commands only: follow-ups of hooks and of
  * decision answers are rule consequences, not actions, so they never
  * provoke (`CommandSpec.provokes` tells which commands do). When it raises any decision, `handle` holds the action
- * (`ActionHeld`) and resolves it only after the last answer
- * (`resumeHeldAction`). The decisions may be answered in any order, because
+ * (`StepsQueued`) and resolves it only after the last answer
+ * (`resumeQueue`). The decisions may be answered in any order, because
  * the attacking enemies' controller (the players) picks it.
  */
 export function attackOfOpportunityDecisions(
@@ -43,9 +43,9 @@ export function attackOfOpportunityDecisions(
 
 /**
  * Whether `action` is taken by the investigator whose turn is in progress.
- * Actions are taken in one's own turn, so the same command at another time
- * (a treachery moving someone, setup) is a card effect and does not provoke.
- * Which commands are actions at all is up to `CommandSpec.provokes`.
+ * Actions are taken in one's own turn, so an `asAction` command at another
+ * time does not provoke. Which commands are actions at all is up to
+ * `CommandSpec.provokes`.
  */
 export function isOwnTurnAction(state: GameState, action: HeldAction): boolean {
   return state.meta.turn?.investigatorId === action.investigatorId;

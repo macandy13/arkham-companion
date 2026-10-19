@@ -5,6 +5,7 @@ import type { Rejection } from './rejection';
 import type { RngState } from './rng';
 import type {
   HeldAction,
+  QueuedStep,
   CardInstance,
   ChaosToken,
   Decision,
@@ -56,8 +57,8 @@ export type Event =
   | ActionsAdjusted
   | ActionsReset
   | TurnEnded
-  | ActionHeld
-  | ActionResumed
+  | StepsQueued
+  | StepResumed
   | ActionDropped;
 
 /** A scenario was set up; replaces the whole state. Produced by `StartScenario`. */
@@ -299,10 +300,10 @@ export interface CluesDiscovered {
  * you succeed / fail" abilities; the reducer ignores it. It comes right
  * after the `DecisionResolved`, ahead of the events of the answer's
  * commands, which apply the test's results (ST.7), "if this test succeeds"
- * effects included. Commands triggered by this event would still run after
- * those results, because `handle` queues an answer's commands before
- * triggered ones; no hook reads it yet, and the timing-window work orders
- * them first. `failedBy` is set only when the answer names the margin (a
+ * effects included. Commands triggered by this event run before those
+ * results, because `handle` queues the forced effects of an answer's own
+ * events ahead of its option commands; no hook reads it yet (the timing
+ * windows add one). `failedBy` is set only when the answer names the margin (a
  * `failedBy:<n>` option). Produced by `ResolveDecision`.
  */
 export interface SkillTestResolved {
@@ -420,31 +421,33 @@ export interface TurnEnded {
 }
 
 /**
- * A command waits until the pending decisions are answered
- * (`GameMeta.heldAction`). An action that provokes attacks of opportunity:
- * the attacks come after the action is paid for but before its effect
+ * Steps wait until the pending decisions are answered; they go in front of
+ * whatever already waits (`GameMeta.queue`), so the newest resolution
+ * finishes first. An action that provokes attacks of opportunity: the
+ * attacks come after the action is paid for but before its effect
  * (produced by `handle` together with the attack decisions,
  * `attackOfOpportunityDecisions`). A surge draw: the next card is drawn only
  * after the surging card's decisions are answered (`resolveSurge`).
  */
-export interface ActionHeld {
-  type: 'ActionHeld';
-  command: HeldAction;
+export interface StepsQueued {
+  type: 'StepsQueued';
+  steps: QueuedStep[];
 }
 
 /**
- * The held action resolves now; its own events follow. Produced by `handle`
- * once no decision is pending any more (`resumeHeldAction`).
+ * The first queued step resolves now; its own events follow. Produced by
+ * `handle` once no decision is pending any more (`resumeQueue`).
  */
-export interface ActionResumed {
-  type: 'ActionResumed';
+export interface StepResumed {
+  type: 'StepResumed';
 }
 
 /**
- * The held action does not resolve: an attack of opportunity or the surging
- * card defeated the investigator, or the command is no longer legal
- * (`reason`, e.g. no encounter card left). Produced by `handle` where
- * `ActionResumed` would be.
+ * The first queued step, a held action, does not resolve: an attack of
+ * opportunity or the surging card defeated the investigator, or the command
+ * is no longer legal (`reason`, e.g. no encounter card left). Produced by
+ * `handle` where `StepResumed` would be, and takes the step off the queue
+ * just as that does.
  */
 export interface ActionDropped {
   type: 'ActionDropped';
