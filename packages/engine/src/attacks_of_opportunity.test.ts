@@ -209,11 +209,11 @@ describe('attacks of opportunity', () => {
 
   it('lets no enemy attack when a card effect makes bob`s rat engage alice', () => {
     const bob = investigatorId('bob');
-    const { context, state: started } = ghoulOnAlice
+    const { context, state } = ghoulOnAlice
       .withInvestigator(bob, { locationId: hall })
       .withCard(rat, ratCard, engagedWith(bob))
+      .withTurnOf(alice)
       .start();
-    const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
 
     const after = stateAfter(context, state, {
       type: 'EngageEnemy',
