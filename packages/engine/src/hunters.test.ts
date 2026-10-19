@@ -10,12 +10,11 @@ import {
   instanceId,
   investigatorId,
   newGame,
+  zoneOf,
   type BuiltGame,
   type Command,
   type Decision,
   type GameBuilder,
-  type GameState,
-  type InstanceId,
   type Zone,
 } from './index';
 import { answer, rejectionFrom, stateAfter, withPendingDecisions } from '../test/utils';
@@ -40,9 +39,6 @@ const plainGhoul = blankEnemy('plain_ghoul');
 /** Unengaged at the place named `place` of the map diagram. */
 const at = (place: string): Zone => atLocation(instanceId(place));
 const moveHunters: Command = { type: 'MoveHunters' };
-
-const zoneOf = (state: GameState, cardId: InstanceId): Zone | undefined =>
-  state.cards[cardId]?.zone;
 
 /** A table of unconnected places: each name is the instance ID of a `location`. */
 function places(...names: string[]): GameBuilder {

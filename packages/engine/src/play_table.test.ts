@@ -85,6 +85,13 @@ describe('starting a table', () => {
     expect(table.board.investigator(alice)).toMatchObject({ at: 'study', actions: 3 });
   });
 
+  it('begins the turn the builder names with withTurnOf', () => {
+    const table = PlayTable.start(game.withTurnOf(alice));
+
+    expect(table.board).toMatchObject({ round: 1, phase: 'investigation', turn: 'alice' });
+    expect(replay(table.events)).toEqual(table.state);
+  });
+
   it('starts from a start command in a given context', () => {
     const table = PlayTable.from(game.context(), game.startCommand());
 

@@ -9,7 +9,7 @@ import {
   newGame,
 } from './index';
 import { locationsInPlay, locationsNamed } from './board';
-import { cardsAtLocation, cardsNamed, cardsOfType, requireCard } from './lookup';
+import { cardsAtLocation, cardsNamed, cardsOfType, requireCard, zoneOf } from './lookup';
 import type { CardInstance } from './state';
 import { rejectionOf } from '../test/utils';
 
@@ -91,6 +91,18 @@ describe('card queries', () => {
     expect(locationsNamed(ctx, state, 'Attic', { inPlay: true }).map((card) => card.id)).toEqual([
       mainAttic,
     ]);
+  });
+});
+
+describe('zoneOf', () => {
+  const relic = instanceId('relic');
+  const { state } = newGame().withCard(relic, blankAsset('relic'), { kind: 'setAside' }).start();
+
+  it.each([
+    { name: 'the zone of a card in the state', cardId: relic, zone: { kind: 'setAside' } },
+    { name: 'nothing for a card not in the state', cardId: instanceId('nowhere'), zone: undefined },
+  ])('returns $name', ({ cardId, zone }) => {
+    expect(zoneOf(state, cardId)).toEqual(zone);
   });
 });
 

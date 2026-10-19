@@ -18,6 +18,11 @@ export function requireCard(
   return card;
 }
 
+/** The zone the card `cardId` is in; undefined for a card not in the state. */
+export function zoneOf(state: GameState, cardId: InstanceId): Zone | undefined {
+  return state.cards[cardId]?.zone;
+}
+
 /** Ids of the cards in `zone`, in zone order (top first for piles). */
 export function cardsInZone(state: GameState, zone: Zone): readonly InstanceId[] {
   return state.order[zoneKey(zone)] ?? [];
