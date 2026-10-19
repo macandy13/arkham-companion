@@ -80,6 +80,12 @@ Follow-ups: the end-to-end test should assert a suggestion (e.g. the skull with 
 
 Ref: `docs/coding-guidelines.md` (tests); M1.E `TestTable`.
 
+Slices: (1) `BoardView`, structured read-backs of the board in the engine; (2) `PlayTable`, a driver built on `BoardView` for unit tests; (3) migrate the end-to-end test onto `PlayTable` and delete `TestTable`.
+
+- [x] Slice 1: `boardView(ctx, state)` with views, finders and `TableError` (`packages/engine/src/board_view.ts`)
+- [ ] Slice 2: `PlayTable` on top of `BoardView`
+- [ ] Slice 3: migrate `end_to_end.test.ts`, delete `TestTable`, update the docs that mention it
+
 - [ ] Review the engine test helpers in `packages/engine/test/utils` (`stateAfter`/`rejectionFrom`, `startScenario`) and list what makes tests hard to read; M1V.3 replaced `startBoard`, `makeInvestigator`, `makeCard` and the per-file `startedWith` variants with `newGame()` and blank cards
 - [ ] Design a clearer, game-language way to set up and assert non-flow tests (who stands where, which enemies and tokens are in play; "Alice investigates", "rejected because …"), keeping the values an assertion depends on visible in the test
 - [ ] Consider extracting the scenario-independent part of `TestTable` (`packages/scenarios/src/the_gathering/test_table.ts`) into `packages/engine/test/utils` so unit and flow tests share one vocabulary

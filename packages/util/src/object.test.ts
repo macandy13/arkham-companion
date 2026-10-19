@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { withoutKey } from './index';
+import { listIfAny, withoutKey } from './index';
 
 describe('withoutKey', () => {
   it('removes the key from the copy', () => {
@@ -20,5 +20,21 @@ describe('withoutKey', () => {
     const meta: { round: number; turn?: string } = { round: 1 };
 
     expect(withoutKey(meta, 'turn')).toStrictEqual({ round: 1 });
+  });
+});
+
+describe('listIfAny', () => {
+  it.each([
+    { list: [], expected: {} },
+    { list: ['study'], expected: { cards: ['study'] } },
+    { list: ['study', 'hallway'], expected: { cards: ['study', 'hallway'] } },
+  ])('returns $expected for $list', ({ list, expected }) => {
+    expect(listIfAny('cards', list)).toStrictEqual(expected);
+  });
+
+  it('returns a copy, not the list itself', () => {
+    const list = ['study'];
+
+    expect(listIfAny('cards', list).cards).not.toBe(list);
   });
 });
