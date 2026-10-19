@@ -1,7 +1,6 @@
 import {
   scenarioId,
   CommandRejected,
-  decisionId,
   apply,
   scenario,
   emptyState,
@@ -117,18 +116,6 @@ export function rejectionOf(fn: () => unknown): Rejection {
 }
 
 /**
- * `ctx` playing a test scenario made of `overrides` (`makeDefinition`), e.g.
- * `withScenario(ctx, { hooks: { onRoundEnd } })`; the engine reads the hooks,
- * reference card and modifiers from it.
- */
-export function withScenario(
-  ctx: EngineContext,
-  overrides: Partial<ScenarioDefinition>,
-): ScenarioContext {
-  return { ...ctx, scenario: makeDefinition(overrides) };
-}
-
-/**
  * `state` with `decisions` pending at once, as two attacks of opportunity
  * are. Built from events, because no command asks two unrelated questions
  * at once.
@@ -138,19 +125,4 @@ export function withPendingDecisions(state: GameState, ...decisions: Decision[])
     (built, decision) => apply(built, { type: 'DecisionRequested', decision }),
     state,
   );
-}
-
-/** The `ResolveDecision` that answers the open decision `id` with `optionId` (and `amount`). */
-export function answer(id: string, optionId: string, amount?: number): Command {
-  return {
-    type: 'ResolveDecision',
-    decisionId: decisionId(id),
-    optionId,
-    ...(amount === undefined ? {} : { amount }),
-  };
-}
-
-/** The IDs of the open decisions, oldest first. */
-export function pendingIds(state: GameState): string[] {
-  return state.pending.map((decision) => decision.id);
 }

@@ -18,7 +18,7 @@ import {
   type InvestigatorId,
   type Zone,
 } from './index';
-import { rejectionFrom, stateAfter, withPendingDecisions, withScenario } from '../test/utils';
+import { answer, rejectionFrom, stateAfter, withPendingDecisions } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -46,12 +46,6 @@ const hallWithAlice = hallAndCellars.withInvestigator(alice, { locationId: hall 
 const hallWithAliceAndBob = hallWithAlice.withInvestigator(bob, { locationId: hall });
 
 const setAside: Zone = { kind: 'setAside' };
-
-const resolveDecision = (id: string, optionId: string): Command => ({
-  type: 'ResolveDecision',
-  decisionId: decisionId(id),
-  optionId,
-});
 
 const gainResource: Command = {
   type: 'AdjustInvestigator',
@@ -89,7 +83,7 @@ describe('engagement choice', () => {
   it('engages the investigator the players chose and clears the question', () => {
     const { context, state: asked } = ghoulInHallWithAliceAndBob.start();
 
-    const after = stateAfter(context, asked, resolveDecision('engage:ghoul', alice));
+    const after = stateAfter(context, asked, answer('engage:ghoul', alice));
 
     expect(after.cards[ghoul]?.zone).toEqual({ kind: 'engaged', investigatorId: alice });
     expect(after.pending).toEqual([]);
@@ -121,7 +115,7 @@ describe('spawn choice', () => {
     const { context, state } = aliceInSouthCellar.start();
     const asked = stateAfter(context, state, { type: 'SpawnEnemy', enemyId: ghoul });
 
-    const after = stateAfter(context, asked, resolveDecision('spawn:ghoul', cellarSouth));
+    const after = stateAfter(context, asked, answer('spawn:ghoul', cellarSouth));
 
     expect(after.cards[ghoul]?.zone).toEqual({ kind: 'engaged', investigatorId: alice });
     expect(after.pending).toEqual([]);
@@ -165,11 +159,7 @@ describe('pending decisions', () => {
   });
 
   it('runs the commands of the chosen option and clears the decision in one event list', () => {
-    const { state, events } = execute(
-      context,
-      asked,
-      resolveDecision('pick_reward', 'gain_resource'),
-    );
+    const { state, events } = execute(context, asked, answer('pick_reward', 'gain_resource'));
 
     expect(events.map((e) => e.type)).toEqual(['DecisionResolved', 'InvestigatorChanged']);
     expect(state.investigators[0]?.resources).toBe(6);
@@ -177,23 +167,19 @@ describe('pending decisions', () => {
   });
 
   it('runs nothing for an option without commands', () => {
-    const { events } = execute(context, asked, resolveDecision('pick_reward', 'nothing'));
+    const { events } = execute(context, asked, answer('pick_reward', 'nothing'));
 
     expect(events.map((e) => e.type)).toEqual(['DecisionResolved']);
   });
 
   it('rejects an unknown decision', () => {
-    const rejection = rejectionFrom(context, asked, resolveDecision('no_such_decision', 'nothing'));
+    const rejection = rejectionFrom(context, asked, answer('no_such_decision', 'nothing'));
 
     expect(rejection).toEqual({ code: 'unknownDecision', decisionId: 'no_such_decision' });
   });
 
   it('rejects an unknown option', () => {
-    const rejection = rejectionFrom(
-      context,
-      asked,
-      resolveDecision('pick_reward', 'no_such_option'),
-    );
+    const rejection = rejectionFrom(context, asked, answer('pick_reward', 'no_such_option'));
 
     expect(rejection).toEqual({
       code: 'unknownOption',
@@ -213,7 +199,7 @@ describe('pending decisions', () => {
       },
     });
 
-    const rejection = rejectionFrom(context, state, resolveDecision('overspend', 'spend_six'));
+    const rejection = rejectionFrom(context, state, answer('overspend', 'spend_six'));
 
     expect(rejection).toMatchObject({
       code: 'triggeredCommandRejected',
@@ -280,21 +266,21 @@ describe('skill test result', () => {
   });
 
   it('discovers a clue when the test is passed', () => {
-    const after = stateAfter(context, asked, resolveDecision('investigate_hall', 'pass'));
+    const after = stateAfter(context, asked, answer('investigate_hall', 'pass'));
 
     expect(after.investigators[0]?.clues).toBe(1);
     expect(after.cards[hall]?.tokens.clue).toBe(1);
   });
 
   it('adds one horror when the test is failed', () => {
-    const after = stateAfter(context, asked, resolveDecision('investigate_hall', 'fail'));
+    const after = stateAfter(context, asked, answer('investigate_hall', 'fail'));
 
     expect(after.investigators[0]?.sanity.horror).toBe(1);
     expect(after.investigators[0]?.clues).toBe(0);
   });
 
   it('adds two horror when the test is failed by 2', () => {
-    const after = stateAfter(context, asked, resolveDecision('investigate_hall', 'failedBy:2'));
+    const after = stateAfter(context, asked, answer('investigate_hall', 'failedBy:2'));
 
     expect(after.investigators[0]?.sanity.horror).toBe(2);
   });
@@ -328,7 +314,7 @@ describe('skill test outcome record', () => {
 
   it.each([
     {
-      answer: 'pass',
+      option: 'pass',
       recorded: {
         type: 'SkillTestResolved',
         decisionId: 'investigate_hall',
@@ -339,7 +325,7 @@ describe('skill test outcome record', () => {
       },
     },
     {
-      answer: 'fail',
+      option: 'fail',
       recorded: {
         type: 'SkillTestResolved',
         decisionId: 'investigate_hall',
@@ -350,7 +336,7 @@ describe('skill test outcome record', () => {
       },
     },
     {
-      answer: 'failedBy:2',
+      option: 'failedBy:2',
       recorded: {
         type: 'SkillTestResolved',
         decisionId: 'investigate_hall',
@@ -361,11 +347,11 @@ describe('skill test outcome record', () => {
         failedBy: 2,
       },
     },
-  ])('records "$answer" right after the answer', ({ answer, recorded }) => {
-    const events = handle(context, asked, resolveDecision('investigate_hall', answer));
+  ])('records "$option" right after the answer', ({ option, recorded }) => {
+    const events = handle(context, asked, answer('investigate_hall', option));
 
     expect(events.slice(0, 2)).toEqual([
-      { type: 'DecisionResolved', decisionId: 'investigate_hall', optionId: answer },
+      { type: 'DecisionResolved', decisionId: 'investigate_hall', optionId: option },
       recorded,
     ]);
   });
@@ -385,14 +371,14 @@ describe('skill test outcome record', () => {
       decision: leadTest,
     });
 
-    expect(handle(context, leadAsked, resolveDecision('lead_test', 'pass'))).toEqual([
+    expect(handle(context, leadAsked, answer('lead_test', 'pass'))).toEqual([
       { type: 'DecisionResolved', decisionId: 'lead_test', optionId: 'pass' },
       { type: 'SkillTestResolved', decisionId: 'lead_test', skillTest: test, outcome: 'pass' },
     ]);
   });
 
   it('records the clues the pass discovers', () => {
-    const events = handle(context, asked, resolveDecision('investigate_hall', 'pass'));
+    const events = handle(context, asked, answer('investigate_hall', 'pass'));
 
     expect(events).toContainEqual({
       type: 'CluesDiscovered',
@@ -416,7 +402,7 @@ describe('skill test outcome record', () => {
         type: 'RequestDecision',
         decision: question,
       }),
-      resolveDecision('open_the_door', 'yes'),
+      answer('open_the_door', 'yes'),
     );
 
     expect(events.map((event) => event.type)).toEqual(['DecisionResolved']);
@@ -424,7 +410,7 @@ describe('skill test outcome record', () => {
 });
 
 describe('decisions raised by hooks', () => {
-  const { context, state: aliceInHall } = hallWithAlice.start();
+  const { state: aliceInHall } = hallWithAlice.start();
   const offerResourceDecision: Decision = {
     id: decisionId('offer_resource'),
     kind: 'confirm',
@@ -439,7 +425,7 @@ describe('decisions raised by hooks', () => {
   const placeDoomOnHall: Command = { type: 'PlaceDoom', cardId: hall, amount: 1 };
 
   it('lets a scenario hook ask the players after doom is placed', () => {
-    const hooked = withScenario(context, { hooks: { afterDoomPlaced: () => [offerResource] } });
+    const hooked = hallWithAlice.withHooks({ afterDoomPlaced: () => [offerResource] }).context();
 
     const asked = stateAfter(hooked, aliceInHall, placeDoomOnHall);
 
@@ -457,19 +443,19 @@ describe('decisions raised by hooks', () => {
         options: [{ id: 'yes', label: 'decision.yes', commands: [] }],
       },
     };
-    const hooked = withScenario(context, {
-      hooks: { afterDoomPlaced: () => [offerResource, offerAgain] },
-    });
+    const hooked = hallWithAlice
+      .withHooks({ afterDoomPlaced: () => [offerResource, offerAgain] })
+      .context();
     const asked = stateAfter(hooked, aliceInHall, placeDoomOnHall);
 
-    const answered = stateAfter(hooked, asked, resolveDecision('offer_resource', 'no'));
+    const answered = stateAfter(hooked, asked, answer('offer_resource', 'no'));
 
     expect(asked.pending.map((decision) => decision.id)).toEqual(['offer_resource']);
     expect(answered.pending.map((decision) => decision.id)).toEqual(['offer_again']);
   });
 
   it('rejects a hook that raises a decision that is already pending', () => {
-    const hooked = withScenario(context, { hooks: { afterDoomPlaced: () => [offerResource] } });
+    const hooked = hallWithAlice.withHooks({ afterDoomPlaced: () => [offerResource] }).context();
     const placeDoomFirst: Decision = {
       id: decisionId('place_doom_first'),
       kind: 'confirm',
@@ -479,7 +465,7 @@ describe('decisions raised by hooks', () => {
     };
     const bothAsked = withPendingDecisions(aliceInHall, offerResourceDecision, placeDoomFirst);
 
-    const rejection = rejectionFrom(hooked, bothAsked, resolveDecision('place_doom_first', 'yes'));
+    const rejection = rejectionFrom(hooked, bothAsked, answer('place_doom_first', 'yes'));
 
     expect(rejection).toEqual({
       code: 'triggeredCommandRejected',
@@ -569,7 +555,7 @@ describe('pending decision invariants', () => {
     });
 
     const results = decision.options.map((option) =>
-      stateAfter(context, asked, resolveDecision(decision.id, option.id)),
+      stateAfter(context, asked, answer(decision.id, option.id)),
     );
 
     expect(results.map((state) => state.pending)).toEqual(decision.options.map(() => []));
@@ -598,7 +584,7 @@ describe('who answers', () => {
       },
     );
   const answerBy = (answeredBy?: InvestigatorId): Command => ({
-    ...resolveDecision('pick_reward', 'gain_resource'),
+    ...answer('pick_reward', 'gain_resource'),
     ...(answeredBy === undefined ? {} : { answeredBy }),
   });
   const aliceDecides: Decider = { kind: 'investigator', investigatorId: alice };

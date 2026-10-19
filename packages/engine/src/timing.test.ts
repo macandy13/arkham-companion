@@ -28,7 +28,7 @@ import {
   type InstanceId,
   type Zone,
 } from './index';
-import { answer, investigatorOf, pendingIds, stateAfter, withScenario } from '../test/utils';
+import { answer, investigatorOf, pendingIds, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const hall = instanceId('hall');
@@ -50,13 +50,7 @@ describe('an attack of opportunity before the move that provoked it', () => {
     .withCard(ghoul, blankEnemy('ghoul', { damage: 1 }), engagedWith(alice));
 
   it('keeps alice in the hall until the attack is resolved, then moves her', () => {
-    const { context, state } = table.start();
-    const aliceTurn = stateAfter(
-      context,
-      state,
-      { type: 'NextPhase' },
-      { type: 'StartTurn', investigatorId: alice },
-    );
+    const { context, state: aliceTurn } = table.withTurnOf(alice).start();
 
     const attacked = stateAfter(context, aliceTurn, {
       type: 'MoveInvestigator',
@@ -204,10 +198,9 @@ describe('the last act whose reverse side asks something', () => {
     .withInvestigator(alice, { locationId: hall });
 
   it('keeps the last act in play until the lead investigator picks the resolution', () => {
-    const { context, state } = table.start();
     /** The last act's reverse side asks "burn the house?"; each answer ends the scenario. */
-    const burnTheHouse = withScenario(context, {
-      hooks: {
+    const { context, state } = table
+      .withHooks({
         onActAdvance: {
           [lastActCard.code]: (): Command[] => [
             {
@@ -233,11 +226,11 @@ describe('the last act whose reverse side asks something', () => {
             },
           ],
         },
-      },
-    });
+      })
+      .start();
 
-    const asked = stateAfter(burnTheHouse, state, { type: 'AdvanceAct' }, { type: 'AdvanceAct' });
-    const ended = stateAfter(burnTheHouse, asked, answer('burn_the_house', 'spare'));
+    const asked = stateAfter(context, state, { type: 'AdvanceAct' }, { type: 'AdvanceAct' });
+    const ended = stateAfter(context, asked, answer('burn_the_house', 'spare'));
 
     expect(pendingIds(asked)).toEqual(['burn_the_house']);
     expect(asked.act.current).toBe(lastAct);
@@ -254,7 +247,6 @@ describe('a forced effect that asks two questions', () => {
     .withInvestigator(alice, { locationId: hall, resources: 0 });
 
   it('asks the second question only once the first is answered', () => {
-    const { context, state } = table.start();
     const gainResource: Command = {
       type: 'AdjustInvestigator',
       investigatorId: alice,
@@ -262,8 +254,8 @@ describe('a forced effect that asks two questions', () => {
       delta: 1,
     };
     /** After doom is placed, the scenario offers alice a resource twice, one question at a time. */
-    const offerTwice = withScenario(context, {
-      hooks: {
+    const { context, state } = table
+      .withHooks({
         afterDoomPlaced: () =>
           ['first_offer', 'second_offer'].map((id): Command => ({
             type: 'RequestDecision',
@@ -275,16 +267,16 @@ describe('a forced effect that asks two questions', () => {
               options: confirmOptions([gainResource]),
             },
           })),
-      },
-    });
+      })
+      .start();
 
-    const firstAsked = stateAfter(offerTwice, state, {
+    const firstAsked = stateAfter(context, state, {
       type: 'PlaceDoom',
       cardId: hall,
       amount: 1,
     });
-    const secondAsked = stateAfter(offerTwice, firstAsked, answer('first_offer', 'yes'));
-    const done = stateAfter(offerTwice, secondAsked, answer('second_offer', 'yes'));
+    const secondAsked = stateAfter(context, firstAsked, answer('first_offer', 'yes'));
+    const done = stateAfter(context, secondAsked, answer('second_offer', 'yes'));
 
     expect(pendingIds(firstAsked)).toEqual(['first_offer']);
     expect(pendingIds(secondAsked)).toEqual(['second_offer']);
