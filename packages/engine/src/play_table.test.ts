@@ -780,4 +780,21 @@ describe('resuming a stored log', () => {
 
     expect(resumed.state).toEqual(afterStart);
   });
+
+  it('starts a new undo group after a log with undone steps', () => {
+    const played = PlayTable.start(game);
+    played.takeDamage(alice, 1);
+    played.takeDamage(alice, 1);
+    played.undo();
+    played.takeHorror(alice, 1);
+    const beforeResume = played.state;
+
+    const resumed = PlayTable.resume(played.ctx, played.entries);
+    resumed.takeHorror(alice, 1);
+    resumed.takeHorror(alice, 1);
+    resumed.undo();
+    resumed.undo();
+
+    expect(resumed.state).toEqual(beforeResume);
+  });
 });

@@ -123,9 +123,7 @@ export class PlayTable {
     const table = new PlayTable(ctx);
     table.current = replay(log.map((entry) => entry.event));
     table.log = [...log];
-    // A table-made log uses `command-<n>` ids with n below its length; starting past it keeps
-    // the next step from joining the log's last group.
-    table.commandCount = log.length;
+    table.commandCount = nextGroupNumber(log);
     return table;
   }
 
@@ -167,7 +165,7 @@ export class PlayTable {
 
   /** The log with each event's group id, so a caller can store what a step added. */
   get entries(): readonly LoggedEvent[] {
-    return this.log;
+    return [...this.log];
   }
 
   /** The board as it is now; a fresh snapshot per access, so keep it only for one assertion. */
@@ -579,4 +577,14 @@ function lastStepStarted(
     steps = event.steps;
   }
   return started;
+}
+
+/**
+ * The first `command-<n>` number above every one in `log`, so a resumed table's next step never
+ * joins a stored group. Undo leaves gaps, so the log's length is not enough; ids of another form
+ * (the store's UUIDs) cannot collide.
+ */
+function nextGroupNumber(log: readonly LoggedEvent[]): number {
+  const numbers = log.map((entry) => /^command-(\d+)$/.exec(entry.commandId)?.[1]);
+  return Math.max(-1, ...numbers.map(Number).filter(Number.isInteger)) + 1;
 }
