@@ -9,10 +9,16 @@ import {
   blankLocation,
   blankTreachery,
   boardView,
+  byCode,
+  byId,
+  byName,
+  cardCode,
   decisionId,
   engagedWith,
   fixed,
+  fuzzy,
   instanceId,
+  investigatorCode,
   investigatorId,
   mapId,
   newGame,
@@ -129,8 +135,46 @@ describe('investigators', () => {
 
     expect(board.investigator(alice).id).toBe(alice);
     expect(() => board.investigator(bob)).toThrow(TableError);
-    expect(() => board.investigator(bob)).toThrow(/^no investigator bob\n/);
+    expect(() => board.investigator(bob)).toThrow(/^no investigator with id bob\n/);
   });
+
+  describe('with two investigators', () => {
+    const duo = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withInvestigator(alice, { locationId: study })
+      .withInvestigator(bob, { locationId: study });
+
+    it.each([
+      { matcher: byId(bob), expected: bob },
+      { matcher: byName('Alice'), expected: alice },
+      { matcher: byCode(investigatorCode('bob')), expected: bob },
+      { matcher: fuzzy('ALI'), expected: alice },
+    ])('finds the investigator $expected with $matcher', ({ matcher, expected }) => {
+      const { context, state } = duo.start();
+
+      expect(boardView(context, state).investigator(matcher).id).toBe(expected);
+    });
+
+    it('fails with the board for a matcher that matches nobody', () => {
+      const { context, state } = duo.start();
+
+      expect(() => boardView(context, state).investigator(fuzzy('zed'))).toThrow(
+        /^no investigator matching "zed"\n/,
+      );
+    });
+
+    it('fails and lists the ids when several investigators match', () => {
+      const { context, state } = newGame()
+        .withInvestigator(investigatorId('roland'), { name: 'Roland Banks' })
+        .withInvestigator(investigatorId('rita'), { name: 'Rita Young' })
+        .start();
+
+      expect(() => boardView(context, state).investigator(fuzzy('r'))).toThrow(
+        /^2 investigators match matching "r"; use one of roland, rita\n/,
+      );
+    });
+  });
+
   it.each([
     { field: 'clues' as const, expected: { alice: 2, bob: 0, carol: 1 } },
     { field: 'at' as const, expected: { alice: 'study', bob: 'hallway', carol: undefined } },
@@ -219,18 +263,20 @@ describe('locations', () => {
       stateAfter(context, state, { type: 'RevealLocation', locationId: hallway }),
     );
 
-    expect(board.location('hallway').revealed).toBe(true);
-    expect(boardView(context, state).location('hallway').revealed).toBe(false);
+    expect(board.location(byName('hallway')).revealed).toBe(true);
+    expect(boardView(context, state).location(byName('hallway')).revealed).toBe(false);
   });
 
-  it('finds a location by name or by id', () => {
+  it.each([
+    { matcher: byName('study'), found: study },
+    { matcher: byName('Study'), found: study },
+    { matcher: byId(hallway), found: hallway },
+    { matcher: byCode(cardCode('hallway')), found: hallway },
+    { matcher: fuzzy('ATT'), found: instanceId('attic') },
+  ])('finds the location $found with $matcher', ({ matcher, found }) => {
     const { context, state } = house.start();
-    const board = boardView(context, state);
 
-    expect(board.location('study').id).toBe(study);
-    expect(board.location('Study').id).toBe(study);
-    expect(board.location('hallway').id).toBe(hallway);
-    expect(board.location(hallway).name).toBe('hallway');
+    expect(boardView(context, state).location(matcher).id).toBe(found);
   });
 
   it('fails with the board for a location that is not in play', () => {
@@ -239,8 +285,8 @@ describe('locations', () => {
       .start();
     const board = boardView(context, state);
 
-    expect(() => board.location('cellar')).toThrow(/^no location cellar in play\n/);
-    expect(() => board.location('garden')).toThrow(TableError);
+    expect(() => board.location(byName('cellar'))).toThrow(/^no location named "cellar" in play\n/);
+    expect(() => board.location(byName('garden'))).toThrow(TableError);
   });
 
   it('fails and lists the ids when several locations share a name', () => {
@@ -251,11 +297,11 @@ describe('locations', () => {
       .start();
     const board = boardView(context, state);
 
-    expect(() => board.location('cellar')).toThrow(TableError);
-    expect(() => board.location('cellar')).toThrow(
-      /^2 locations are named cellar; use one of cellar_east, cellar_west\n/,
+    expect(() => board.location(byName('cellar'))).toThrow(TableError);
+    expect(() => board.location(byName('cellar'))).toThrow(
+      /^2 locations are named "cellar"; use one of cellar_east, cellar_west\n/,
     );
-    expect(board.location(instanceId('cellar_west')).id).toBe('cellar_west');
+    expect(board.location(byId(instanceId('cellar_west'))).id).toBe('cellar_west');
   });
 });
 
@@ -315,16 +361,18 @@ describe('enemies', () => {
 
     const inHallway = { name: 'rat', at: 'hallway' };
     const onAlice = { name: 'rat', at: 'study', engagedWith: alice };
+    const rat_ = byName('rat');
 
     it.each([
-      { selector: 'ghoul', found: { name: 'ghoul', at: 'study' } },
-      { selector: 'Ghoul', found: { name: 'ghoul', at: 'study' } },
-      { selector: instanceId('rat_in_hallway'), found: inHallway },
-      { selector: { name: 'rat', engagedWith: alice }, found: onAlice },
-      { selector: { name: 'rat', engagedWith: bob }, found: { ...onAlice, engagedWith: bob } },
-      { selector: { name: 'rat', at: 'hallway' }, found: inHallway },
-      { selector: { name: 'rat', at: hallway }, found: inHallway },
-      { selector: { name: 'rat', engagedWith: alice, at: 'study' }, found: onAlice },
+      { selector: byName('ghoul'), found: { name: 'ghoul', at: 'study' } },
+      { selector: byName('Ghoul'), found: { name: 'ghoul', at: 'study' } },
+      { selector: fuzzy('GHO'), found: { name: 'ghoul', at: 'study' } },
+      { selector: byId(instanceId('rat_in_hallway')), found: inHallway },
+      { selector: { card: rat_, engagedWith: alice }, found: onAlice },
+      { selector: { card: rat_, engagedWith: bob }, found: { ...onAlice, engagedWith: bob } },
+      { selector: { card: rat_, at: byName('hallway') }, found: inHallway },
+      { selector: { card: rat_, at: byId(hallway) }, found: inHallway },
+      { selector: { card: rat_, engagedWith: alice, at: byName('study') }, found: onAlice },
     ])('finds $found with $selector', ({ selector, found }) => {
       const { context, state } = rats.start();
 
@@ -335,28 +383,34 @@ describe('enemies', () => {
       const { context, state } = rats.start();
       const board = boardView(context, state);
 
-      expect(() => board.enemy('rat')).toThrow(
-        /^3 enemies match "rat" \(rat_on_alice, rat_on_bob, rat_in_hallway\); narrow it with \{ name, engagedWith \} or \{ name, at \}[^\n]*\n/,
+      expect(() => board.enemy(rat_)).toThrow(
+        /^3 enemies match named "rat" \(rat_on_alice, rat_on_bob, rat_in_hallway\); narrow it with \{ card, engagedWith \} or \{ card, at \}[^\n]*\n/,
       );
-      expect(() => board.enemy({ name: 'rat', at: 'study' })).toThrow(/^2 enemies match/);
+      expect(() => board.enemy({ card: rat_, at: byName('study') })).toThrow(/^2 enemies match/);
     });
 
     it.each([
-      { selector: 'goblin', message: 'no enemy in play matching "goblin"' },
-      { selector: { name: 'ghoul', engagedWith: alice }, message: 'no enemy in play matching' },
-      { selector: { name: 'ghoul', at: 'hallway' }, message: 'no enemy in play matching' },
+      { selector: byName('goblin'), message: 'no enemy in play matching named "goblin"' },
+      {
+        selector: { card: byName('ghoul'), engagedWith: alice },
+        message: 'no enemy in play matching named "ghoul" engaged with alice',
+      },
+      {
+        selector: { card: byName('ghoul'), at: byName('hallway') },
+        message: 'no enemy in play matching named "ghoul" at a location named "hallway"',
+      },
     ])('fails with the board when $selector matches nothing', ({ selector, message }) => {
       const { context, state } = rats.start();
 
       expect(() => boardView(context, state).enemy(selector)).toThrow(TableError);
-      expect(() => boardView(context, state).enemy(selector)).toThrow(new RegExp(`^${message}`));
+      expect(() => boardView(context, state).enemy(selector)).toThrow(message);
     });
 
     it('fails when the location of the selector is not in play', () => {
       const { context, state } = rats.start();
 
-      expect(() => boardView(context, state).enemy({ name: 'rat', at: 'cellar' })).toThrow(
-        /no location cellar in play/,
+      expect(() => boardView(context, state).enemy({ card: rat_, at: byName('cellar') })).toThrow(
+        /no location named "cellar" in play/,
       );
     });
 
@@ -365,7 +419,7 @@ describe('enemies', () => {
         .withCard(instanceId('stored_goblin'), blankEnemy('goblin'), { kind: 'setAside' })
         .start();
 
-      expect(() => boardView(context, state).enemy('goblin')).toThrow(TableError);
+      expect(() => boardView(context, state).enemy(byName('goblin'))).toThrow(TableError);
     });
   });
 });
@@ -490,7 +544,7 @@ describe('TableError', () => {
       .start();
 
     expect(() => boardView(context, state).investigator(bob)).toThrow(
-      /^no investigator bob\nRound 0, setup phase/,
+      /^no investigator with id bob\nRound 0, setup phase/,
     );
   });
 });

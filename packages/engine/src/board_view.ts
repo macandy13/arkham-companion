@@ -1,11 +1,17 @@
 import { listIfAny } from '@arkham/util';
-import { locationsNamed } from './board';
 import { cardStats, resolveValue, type EngineContext } from './cards';
 import { optionName } from './describe_decision';
 import { isInPlay } from './doom';
 import { formatBoard } from './format_board';
-import type { InstanceId, InvestigatorId, MapId } from './ids';
-import { cardsInZone, cardsNamed, cardsOfType } from './lookup';
+import {
+  describeMatcher,
+  matchingCards,
+  matchingInvestigators,
+  type CardMatcher,
+  type InvestigatorMatcher,
+} from './card_matchers';
+import { cardName, type CardName, type InstanceId, type InvestigatorId, type MapId } from './ids';
+import { cardsInZone, cardsOfType } from './lookup';
 import { mapLocations } from './map';
 import type {
   CardInstance,
@@ -20,18 +26,13 @@ import type {
 import type { Zone } from './zone';
 
 /**
- * A card named the way a player says it: its printed name, or an exact
- * `InstanceId` when copies share a name. An exact id match wins over a name match.
+ * Picks one enemy in play: by a `CardMatcher` alone, or narrowed by the
+ * investigator it is engaged with or the location (a `CardMatcher`) it is at,
+ * for when several copies of a card are in play at once (three Swarms of
+ * Rats). A lookup that matches more than one enemy fails instead of guessing.
  */
-export type CardRef = string;
-
-/**
- * Picks one enemy in play: by `CardRef` alone, or narrowed by the investigator
- * it is engaged with or the location (`CardRef`) it is at, for when several
- * copies of a card are in play at once (three Swarms of Rats). A lookup that
- * matches more than one enemy fails instead of guessing.
- */
-export type EnemySelector = CardRef | { name: CardRef; engagedWith?: InvestigatorId; at?: CardRef };
+export type EnemySelector =
+  CardMatcher | { card: CardMatcher; engagedWith?: InvestigatorId; at?: CardMatcher };
 
 /**
  * A usage error of a test table: an unknown or ambiguous name, a decision or
@@ -47,66 +48,71 @@ export class TableError extends Error {
 }
 
 /**
- * One investigator as a player reads them off the table. `at` is the name of
- * their location and `threatArea` the names of the cards in their threat area;
- * both are left out when empty, so an expectation lists only what is there.
+ * One investigator as a player reads them off the table. `at` is the printed
+ * name of their location and `threatArea` the printed names of the cards in
+ * their threat area, in play order; both are left out when empty, so an
+ * expectation lists only what is there. Names, not instance ids, keep an
+ * expectation readable; the location's id is `BoardView.location(byName(at)).id`.
  */
 export interface InvestigatorView {
   id: InvestigatorId;
-  name: string;
+  /** The printed name of the investigator card. */
+  name: CardName;
   status: InvestigatorStatus;
-  at?: string;
+  at?: CardName;
   clues: number;
   resources: number;
   damage: number;
   horror: number;
   /** Actions left this round (`Investigator.actionsRemaining`). */
   actions: number;
-  threatArea?: string[];
+  threatArea?: CardName[];
 }
 
 /**
- * One enemy in play: its name, the location it is at (by name), the
+ * One enemy in play: its printed name, the location it is at (its printed name), the
  * investigator it is engaged with, its damage and whether it is exhausted.
  * The last three are left out when there is none, so a list of enemies reads
  * like the table and asserts only what is there. It has no instance id: a
- * view compares whole (`toEqual`), and `BoardView.enemy` still accepts an
- * instance id to pick one of several copies.
+ * view compares whole (`toEqual`), and `BoardView.enemy` still accepts
+ * `byId` to pick one of several copies.
  */
 export interface EnemyView {
-  name: string;
-  at?: string;
+  name: CardName;
+  /** The printed name of the location it is at, or that of the investigator it is engaged with. */
+  at?: CardName;
   engagedWith?: InvestigatorId;
   damage?: number;
   exhausted?: true;
 }
 
 /**
- * One location on a map. `cards` are the names of the cards placed unengaged
- * at it (enemies and story assets; enemies engaged with an investigator are in
- * `enemies` of the `BoardView` only), `attachments` those attached to it.
+ * One location on a map. `cards` are the printed names of the cards placed
+ * unengaged at it (enemies and story assets; enemies engaged with an
+ * investigator are in `enemies` of the `BoardView` only), `attachments` those
+ * attached to it, both in play order.
  * Empty lists are left out.
  */
 export interface LocationView {
   id: InstanceId;
-  name: string;
+  name: CardName;
   map: MapId;
   revealed: boolean;
   clues: number;
   investigators?: InvestigatorId[];
-  cards?: string[];
-  attachments?: string[];
+  cards?: CardName[];
+  attachments?: CardName[];
 }
 
 /** The current agenda's name and the doom on the card itself (not the total in play). */
 export interface AgendaView {
-  name: string;
+  name: CardName;
   doom: number;
 }
 
 /** The current act's name and, when it has one, the clues it needs for the player count. */
 export interface ActView {
-  name: string;
+  name: CardName;
   clues?: number;
 }
 
@@ -121,16 +127,17 @@ export interface ActView {
 export interface DecisionView {
   prompt: string;
   kind: Decision['kind'];
-  about?: string;
+  /** The printed name of the card the decision is about (`Decision.subject`). */
+  about?: CardName;
   for?: InvestigatorId;
   test?: SkillTest;
   options: string[];
   defaults?: Record<string, Record<string, number>>;
 }
 
-/** One enemy attack enemy step 3.3 lists: the enemy by name and the investigator it attacks. */
+/** One enemy attack enemy step 3.3 lists: the enemy by printed name and the investigator it attacks. */
 export interface DueAttackView {
-  enemy: string;
+  enemy: CardName;
   investigator: InvestigatorId;
 }
 
@@ -189,11 +196,22 @@ export class BoardView {
     this.attacksDue = dueAttacks(ctx, state);
   }
 
-  /** The investigator with `id`; fails with the board attached if there is none. */
-  investigator(id: InvestigatorId): InvestigatorView {
-    const found = this.investigators.find((inv) => inv.id === id);
-    if (!found) throw this.error(`no investigator ${id}`);
-    return found;
+  /**
+   * The one investigator `matcher` picks (a bare `InvestigatorId` is
+   * `byId(id)`); fails with the board attached if there is none or several.
+   */
+  investigator(matcher: InvestigatorMatcher | InvestigatorId): InvestigatorView {
+    const wanted: InvestigatorMatcher =
+      typeof matcher === 'string' ? { by: 'id', id: matcher } : matcher;
+    const matches = matchingInvestigators(this.state.investigators, wanted);
+    const [only, ...others] = matches;
+    if (!only) throw this.error(`no investigator ${describeMatcher(wanted)}`);
+    if (others.length > 0)
+      throw this.error(
+        `${matches.length} investigators match ${describeMatcher(wanted)}; ` +
+          `use one of ${matches.map((inv) => inv.id).join(', ')}`,
+      );
+    return investigatorView(this.ctx, this.state, only);
   }
 
   /**
@@ -210,53 +228,46 @@ export class BoardView {
     >;
   }
 
-  /** The names of the in-play locations on `map`, in map order. */
-  locationsOn(map: MapId): string[] {
+  /** The printed names of the in-play locations on `map`, in map order. */
+  locationsOn(map: MapId): CardName[] {
     return this.locations.filter((location) => location.map === map).map((l) => l.name);
   }
 
-  /** The one location in play `ref` names (an id, else a printed name). */
-  location(ref: CardRef): LocationView {
-    const byId = this.locations.find((location) => location.id === ref);
-    if (byId) return byId;
-    const named = locationsNamed(this.ctx, this.state, ref, { inPlay: true });
-    const [only, ...others] = named;
-    if (!only) throw this.error(`no location ${ref} in play`);
+  /** The one location in play `matcher` picks; fails with the board attached if none or several match. */
+  location(matcher: CardMatcher): LocationView {
+    const inPlay = this.locations.map((location) => requireCard(this.state, location.id));
+    const matches = matchingCards(this.ctx, inPlay, matcher);
+    const [only, ...others] = matches;
+    if (!only) throw this.error(`no location ${describeMatcher(matcher)} in play`);
     if (others.length > 0)
-      throw this.error(`${named.length} locations are named ${ref}; use one of ${ids(named)}`);
+      throw this.error(
+        `${matches.length} locations are ${describeMatcher(matcher)}; use one of ${ids(matches)}`,
+      );
     return locationView(this.ctx, this.state, only);
   }
 
   /** The one enemy in play `selector` picks (see `EnemySelector`). */
   enemy(selector: EnemySelector): EnemyView {
-    const { name, engagedWith, at } = typeof selector === 'string' ? { name: selector } : selector;
+    const { card, engagedWith, at } = 'by' in selector ? { card: selector } : selector;
     const atId = at === undefined ? undefined : this.location(at).id;
-    const inPlay = enemiesInPlay(this.ctx, this.state);
-    const byId = inPlay.filter((card) => card.id === name);
-    const candidates =
-      byId.length > 0
-        ? byId
-        : cardsNamed(this.ctx, this.state, name, { typeCode: 'enemy' }).filter((card) =>
-            inPlay.includes(card),
-          );
-    const matches = candidates.filter(
-      (card) =>
+    const matches = matchingCards(this.ctx, enemiesInPlay(this.ctx, this.state), card).filter(
+      (enemy) =>
         (engagedWith === undefined ||
-          (card.zone.kind === 'engaged' && card.zone.investigatorId === engagedWith)) &&
-        (atId === undefined || enemyLocation(this.state, card) === atId),
+          (enemy.zone.kind === 'engaged' && enemy.zone.investigatorId === engagedWith)) &&
+        (atId === undefined || enemyLocation(this.state, enemy) === atId),
     );
     const [only, ...others] = matches;
-    if (!only) throw this.error(`no enemy in play matching ${JSON.stringify(selector)}`);
+    if (!only) throw this.error(`no enemy in play matching ${describeSelector(selector)}`);
     if (others.length > 0)
       throw this.error(
-        `${matches.length} enemies match ${JSON.stringify(selector)} (${ids(matches)}); ` +
-          'narrow it with { name, engagedWith } or { name, at }, or use an instance id',
+        `${matches.length} enemies match ${describeSelector(selector)} (${ids(matches)}); ` +
+          'narrow it with { card, engagedWith } or { card, at }, or use byId',
       );
     return enemyView(this.ctx, this.state, only);
   }
 
-  /** The names of the cards in `zone`, top first. */
-  namesIn(zone: Zone): string[] {
+  /** The printed names of the cards in `zone`, top first. */
+  namesIn(zone: Zone): CardName[] {
     return namesIn(this.ctx, this.state, zone);
   }
 
@@ -274,17 +285,28 @@ function ids(cards: readonly CardInstance[]): string {
   return cards.map((card) => card.id).join(', ');
 }
 
+/** The selector in words for an error message. */
+function describeSelector(selector: EnemySelector): string {
+  if ('by' in selector) return describeMatcher(selector);
+  const { card, engagedWith, at } = selector;
+  return [
+    describeMatcher(card),
+    ...(engagedWith === undefined ? [] : [`engaged with ${engagedWith}`]),
+    ...(at === undefined ? [] : [`at a location ${describeMatcher(at)}`]),
+  ].join(' ');
+}
+
 function requireCard(state: GameState, id: InstanceId): CardInstance {
   const card = state.cards[id];
   if (!card) throw new RangeError(`the state has no card ${id}`);
   return card;
 }
 
-function nameOf(ctx: EngineContext, card: CardInstance): string {
-  return cardStats(ctx.cards, card.code).name;
+function nameOf(ctx: EngineContext, card: CardInstance): CardName {
+  return cardName(cardStats(ctx.cards, card.code).name);
 }
 
-function namesIn(ctx: EngineContext, state: GameState, zone: Zone): string[] {
+function namesIn(ctx: EngineContext, state: GameState, zone: Zone): CardName[] {
   return cardsInZone(state, zone).map((id) => nameOf(ctx, requireCard(state, id)));
 }
 
@@ -292,7 +314,7 @@ function nameOfId(
   ctx: EngineContext,
   state: GameState,
   id: InstanceId | undefined,
-): string | undefined {
+): CardName | undefined {
   return id === undefined ? undefined : nameOf(ctx, requireCard(state, id));
 }
 
@@ -304,7 +326,7 @@ function investigatorView(
   const at = nameOfId(ctx, state, investigator.locationId);
   return {
     id: investigator.id,
-    name: investigator.name,
+    name: cardName(investigator.name),
     status: investigator.status,
     ...(at === undefined ? {} : { at }),
     clues: investigator.clues,

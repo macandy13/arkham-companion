@@ -19,12 +19,27 @@ export { handle } from './handle';
 export { locationsNamed, neighbours, sameEdge, shortestPaths } from './board';
 export { cardsNamed } from './lookup';
 export {
+  byCode,
+  byId,
+  byName,
+  describeMatcher,
+  fuzzy,
+  matchingCards,
+  matchingInvestigators,
+  type CardMatcher,
+  type CodeMatcher,
+  type FuzzyMatcher,
+  type InstanceIdMatcher,
+  type InvestigatorIdMatcher,
+  type InvestigatorMatcher,
+  type NameMatcher,
+} from './card_matchers';
+export {
   BoardView,
   boardView,
   TableError,
   type ActView,
   type AgendaView,
-  type CardRef,
   type DecisionView,
   type DueAttackView,
   type EnemySelector,
