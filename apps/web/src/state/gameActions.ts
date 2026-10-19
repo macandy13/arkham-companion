@@ -2,13 +2,14 @@ import type {
   DecisionId,
   InstanceId,
   InvestigatorId,
+  InvestigatorStat,
   PlayTable,
   SkillTestResult,
 } from '@arkham/engine';
 import { assertNever } from '@arkham/util';
 
 /** The investigator counters the screen's +/− steppers change. */
-export type SteppedStat = 'resources' | 'damage' | 'horror';
+export type SteppedStat = Extract<InvestigatorStat, 'resources' | 'damage' | 'horror'>;
 
 /** Counts the players confirm when they answer a decision (clues found, damage soaked). */
 export interface DecisionAmounts {
@@ -105,7 +106,7 @@ export function gameActions(
   };
 }
 
-/** The `PlayTable` verb behind a stepper; fewer resources is spending, fewer damage is healing. */
+/** The `PlayTable` verb behind a stepper; a negative `delta` takes the counter down. */
 function adjustStat(
   table: PlayTable,
   investigator: InvestigatorId,

@@ -21,6 +21,7 @@ flowchart LR
   ADB["ArkhamDB API"]
   WEB --> SCN --> ENG --> UTIL
   WEB --> ENG
+  WEB --> UTIL
   WEB --> CD
   WEB --> IDB
   CD --> ADB

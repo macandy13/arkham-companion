@@ -307,13 +307,16 @@ describe('appStore', () => {
           { stat: 'resources', delta: -2, expected: { resources: 3 } },
           { stat: 'damage', delta: 1, expected: { damage: 1 } },
           { stat: 'horror', delta: 2, expected: { horror: 2 } },
-        ] as const)('steps $stat by $delta', async ({ stat, delta, expected }) => {
-          const store = await aldersTurn(`actions-adjust-${stat}-test`);
+        ] as const)(
+          'steps $stat by $delta (from 5 resources, no damage, no horror)',
+          async ({ stat, delta, expected }) => {
+            const store = await aldersTurn(`actions-adjust-${stat}-test`);
 
-          await store.getState().actions.adjust(investigatorId('alder'), stat, delta);
+            await store.getState().actions.adjust(investigatorId('alder'), stat, delta);
 
-          expect(alderIn(store)).toMatchObject(expected);
-        });
+            expect(alderIn(store)).toMatchObject(expected);
+          },
+        );
 
         it('places doom on the current agenda', async () => {
           const store = await aldersTurn('actions-doom-test');
