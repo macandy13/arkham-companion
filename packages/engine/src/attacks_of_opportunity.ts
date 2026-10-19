@@ -43,9 +43,9 @@ export function attackOfOpportunityDecisions(
 
 /**
  * Whether `action` is taken by the investigator whose turn is in progress.
- * Actions are taken in one's own turn, so the same command at another time
- * (a treachery moving someone, setup) is a card effect and does not provoke.
- * Which commands are actions at all is up to `CommandSpec.provokes`.
+ * Actions are taken in one's own turn, so an `asAction` command at another
+ * time does not provoke. Which commands are actions at all is up to
+ * `CommandSpec.provokes`.
  */
 export function isOwnTurnAction(state: GameState, action: HeldAction): boolean {
   return state.meta.turn?.investigatorId === action.investigatorId;
