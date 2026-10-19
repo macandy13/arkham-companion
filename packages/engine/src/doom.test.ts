@@ -722,10 +722,10 @@ describe('a last act whose reverse side lets the lead investigator choose the re
       type: 'AdvanceAct',
     });
 
-  it('leaves the scenario running with the question open instead of asking for a resolution', () => {
+  it('keeps the last act in play while the question is open instead of asking for a resolution', () => {
     const asked = stateAfter(choosingContext, lastAct(), { type: 'AdvanceAct' });
 
-    expect(asked.act.current).toBeUndefined();
+    expect(asked.act.current).toBe(act2);
     expect(asked.meta.ended).toBeUndefined();
     expect(asked.pending.map((decision) => decision.id)).toEqual([chooseResolution]);
   });
@@ -740,6 +740,7 @@ describe('a last act whose reverse side lets the lead investigator choose the re
     });
 
     expect(ended.meta).toMatchObject({ ended: true, resolution: 'R2' });
+    expect(ended.act.current).toBeUndefined();
   });
 
   it('ignores a fallback resolution while the question is open', () => {
@@ -749,6 +750,44 @@ describe('a last act whose reverse side lets the lead investigator choose the re
     });
 
     expect(events.map((event) => event.type)).not.toContain('ScenarioEnded');
+  });
+});
+
+describe('a last act whose reverse side asks something that names no resolution', () => {
+  const whoPays = decisionId('who_pays');
+  const { context, state } = aliceAlone.start();
+  /** The last act's reverse side only asks who takes a horror; the resolution comes from the command. */
+  const askingContext = withScenario(context, {
+    hooks: {
+      onActAdvance: {
+        [secondActCard.code]: (): Command[] => [
+          {
+            type: 'RequestDecision',
+            decision: {
+              id: whoPays,
+              kind: 'confirm',
+              prompt: 'take a horror?',
+              decider: { kind: 'lead' },
+              options: [{ id: 'yes', label: 'yes', commands: [] }],
+            },
+          },
+        ],
+      },
+    },
+  });
+
+  it('ends the scenario with the fallback resolution once the question is answered', () => {
+    const lastAct = stateAfter(askingContext, state, { type: 'AdvanceAct' });
+    const asked = stateAfter(askingContext, lastAct, { type: 'AdvanceAct', resolution: 'R3' });
+
+    const answered = stateAfter(askingContext, asked, {
+      type: 'ResolveDecision',
+      decisionId: whoPays,
+      optionId: 'yes',
+    });
+
+    expect(asked.meta.ended).toBeUndefined();
+    expect(answered.meta).toMatchObject({ ended: true, resolution: 'R3' });
   });
 });
 

@@ -13,7 +13,7 @@ import {
   type Command,
   type DecisionId,
   type GameState,
-  type HeldAction,
+  type QueuedStep,
 } from './index';
 import { investigatorOf, rejectionFrom, stateAfter } from '../test/utils';
 
@@ -313,7 +313,7 @@ describe('the action that provokes attacks of opportunity', () => {
     const answered = stateAfter(context, asked, answer(ghoulAttack, 'attack'));
 
     expect(investigatorOf(asked, alice).locationId).toBe(hall);
-    expect(asked.meta.queue).toEqual([{ kind: 'command', command: moveToCellar }]);
+    expect(asked.meta.queue).toEqual([{ kind: 'action', command: moveToCellar }]);
     expect(investigatorOf(answered, alice).locationId).toBe(cellar);
     expect(answered.meta.queue).toBeUndefined();
   });
@@ -427,28 +427,39 @@ describe('several steps waiting in the queue', () => {
     decisionId: ghoulAttack,
     optionId: 'skip',
   };
-  const investigateHall: HeldAction = { type: 'Investigate', investigatorId: alice };
-  const drawFromEmptyDeck: HeldAction = { type: 'DrawEncounter', investigatorId: alice };
+  const investigateHall: QueuedStep = {
+    kind: 'action',
+    command: { type: 'Investigate', investigatorId: alice },
+  };
+  const surgeFromEmptyDeck: QueuedStep = {
+    kind: 'surge',
+    draw: { type: 'DrawEncounter', investigatorId: alice },
+  };
 
   const { context, state: started } = ghoulOnAlice.start();
 
   /** The ghoul's attack on alice's move to the cellar is open, and `first` waits in front of the move. */
-  function moveQueuedBehind(first: HeldAction): GameState {
+  function moveQueuedBehind(first: QueuedStep): GameState {
     const asked = stateAfter(context, started, nextPhase, aliceStartsTurn, moveToCellar);
-    return apply(asked, { type: 'StepsQueued', steps: [{ kind: 'command', command: first }] });
+    return apply(asked, { type: 'StepsQueued', steps: [first] });
   }
 
   it('resolves every queued step in order once the last answer comes in', () => {
     const { state, events } = execute(
       context,
-      moveQueuedBehind(drawFromEmptyDeck),
+      moveQueuedBehind(surgeFromEmptyDeck),
       skipGhoulAttack,
     );
 
     const outcomes = events.filter(
-      (event) => event.type === 'ActionDropped' || event.type === 'InvestigatorMoved',
+      (event) => event.type === 'StepResumed' || event.type === 'InvestigatorMoved',
     );
-    expect(outcomes.map((event) => event.type)).toEqual(['ActionDropped', 'InvestigatorMoved']);
+    // The surge finds no card to draw; the move follows.
+    expect(outcomes.map((event) => event.type)).toEqual([
+      'StepResumed',
+      'StepResumed',
+      'InvestigatorMoved',
+    ]);
     expect(investigatorOf(state, alice).locationId).toBe(cellar);
     expect(state.meta.queue).toBeUndefined();
   });
@@ -457,7 +468,7 @@ describe('several steps waiting in the queue', () => {
     const state = stateAfter(context, moveQueuedBehind(investigateHall), skipGhoulAttack);
 
     expect(pendingIds(state)).toEqual([`investigate:${alice}`]);
-    expect(state.meta.queue).toEqual([{ kind: 'command', command: moveToCellar }]);
+    expect(state.meta.queue).toEqual([{ kind: 'action', command: moveToCellar }]);
     expect(investigatorOf(state, alice).locationId).toBe(hall);
   });
 });

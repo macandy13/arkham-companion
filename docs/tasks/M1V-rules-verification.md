@@ -26,7 +26,7 @@ Ref: architecture "Command handling", "Triggers and card effects"; [rules.md](..
 
 - **Surge** (high): the surge card was drawn before the first card's revelation, spawn choice, test and forced effects had resolved. A surge enemy waiting for a spawn choice was even drawn again, since it stays on top of the deck.
 - **Revelation of a drawn card** (medium): `CardEffect.onReveal` runs after the card is placed. The rules resolve the revelation first, so an enemy has already spawned and engaged when its revelation runs.
-- **Follow-ups after a decision** (medium, latent): `resolveFollowUps` runs a hook's later commands while an earlier one waits for an answer. The rules finish a nested sequence, choices included, before going on.
+- **Follow-ups after a decision** (medium, fixed in slice 3c): `handle` ran a hook's later commands while an earlier one waited for an answer. The rules finish a nested sequence, choices included, before going on; the rest of the chain now waits in `GameMeta.queue`.
 - **Order of simultaneous forced effects** (low): the engine uses a fixed order where the lead investigator chooses. Today no two hooks share one event; it shows only between events of one command (turn end hook and turn-end tests, round end hook and round-end discards). Decide together with the timing windows the architecture review proposes.
 - **No "when … would" hooks** (gap): no trigger point can act before its condition resolves. Needed once an M4 scenario has such a forced effect.
 
@@ -34,14 +34,16 @@ Ref: architecture "Command handling", "Triggers and card effects"; [rules.md](..
 
 1. [x] Surge waits for the drawn card (#95): `DrawEncounter` draws one card; `resolveSurge` draws again after its forced effects, held while a decision is open.
 2. [x] Revelation before placement: the drawn card waits in `resolving` while its `onReveal` follow-ups run, then `placeDrawnCard` places it (a drawn enemy that waits for a spawn choice is no longer left on the deck). A revelation that asks something still lets the placement go on before the answer; slice 3 covers that.
-3. [ ] Hold the remaining follow-ups of a chain while one of them waits for an answer.
+3. [x] Hold the remaining follow-ups of a chain while one of them waits for an answer.
        Built as one resolution queue (architecture review P8): a list of plain-data steps that `handle` runs until a decision is pending, then stores in state. Three PRs:
    - [x] 3a. One `Resolution` builder per `handle` call, with rollback for held actions; no behaviour change (#101).
    - [x] 3b. The stored queue (`GameMeta.queue`, `StepsQueued`/`StepResumed`) replaces the held-action slot and `ActionHeld`/`ActionResumed`; behaviour unchanged, except that a surge waiting during attacks of opportunity now queues in front of the action instead of drawing at once.
-   - [ ] 3c. Everything as steps: forced effects queued when their events are emitted, `complete` and the phase step loop as continuation steps, and an answer's forced effects before its option commands (ST.6 before ST.7). Carries the intended behaviour changes, with a rules-checker table.
+   - [x] 3c. Everything as steps: forced effects queued when their events are emitted, `complete` and the phase step loop as continuation steps, and an answer's forced effects before its option commands (ST.6 before ST.7). Carries the intended behaviour changes, with a rules-checker table.
 4. [ ] End-to-end step at the table: The Gathering has no surge card, so add one with slice 2 or 3 where the scenario shows it.
 
-Follow-ups: simultaneous ordering and "when" hooks wait for the decision on the architecture review's timing windows.
+Follow-ups: simultaneous ordering and "when" hooks wait for the decision on the architecture review's timing windows. With the queue, the fixed order of two forced abilities on one timing point is binding: a hook bundling several should raise an ordering decision for the lead. A hook on `DecisionResolved` must fire after the chosen option (only `SkillTestResolved` triggers come before it, ST.6).
+
+Next after slice 3 (agreed in the #105 review): `MoveInvestigator`, `Investigate` and `EngageEnemy` get an `asAction` flag that the action buttons set, and `provokes` reads it instead of inferring the move action from `ignoreConnections` (today a card effect moving an investigator to a connecting location wrongly provokes attacks of opportunity). Then M1V.2.
 
 ## M1V.2 Edge case tests (S)
 
@@ -51,6 +53,7 @@ Follow-ups: simultaneous ordering and "when" hooks wait for the decision on the 
 
 - [ ] Collect interaction cases from `docs/rules.md` and past review comments (e.g. a defeated investigator during their own turn, an empty encounter deck during a surge, an agenda advancing during the enemy phase)
 - [ ] One table test per case, written so the reader sees the table situation in the test body
+- [ ] Put them in one engine suite of their own (`timing.test.ts`), one short named game per corner case on the builder, played through the public commands. Start with the cases slice 3 of M1V.1 fixed: an attack of opportunity holding a move, moves queued behind it, a surge waiting on a revelation's question and after a defeat, a hunter's tie inside the order question, a last act's question before the resolution, a hook asking two questions. Each later corner case adds one entry.
 
 ## M1V.3 Test table builder (S)
 

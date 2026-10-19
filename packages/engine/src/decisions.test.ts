@@ -18,7 +18,7 @@ import {
   type InvestigatorId,
   type Zone,
 } from './index';
-import { rejectionFrom, stateAfter, withScenario } from '../test/utils';
+import { rejectionFrom, stateAfter, withPendingDecisions, withScenario } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -425,19 +425,17 @@ describe('skill test outcome record', () => {
 
 describe('decisions raised by hooks', () => {
   const { context, state: aliceInHall } = hallWithAlice.start();
-  const offerResource: Command = {
-    type: 'RequestDecision',
-    decision: {
-      id: decisionId('offer_resource'),
-      kind: 'confirm',
-      prompt: 'decision.applyForcedEffect',
-      decider: { kind: 'lead' },
-      options: [
-        { id: 'yes', label: 'decision.yes', commands: [gainResource] },
-        { id: 'no', label: 'decision.no', commands: [] },
-      ],
-    },
+  const offerResourceDecision: Decision = {
+    id: decisionId('offer_resource'),
+    kind: 'confirm',
+    prompt: 'decision.applyForcedEffect',
+    decider: { kind: 'lead' },
+    options: [
+      { id: 'yes', label: 'decision.yes', commands: [gainResource] },
+      { id: 'no', label: 'decision.no', commands: [] },
+    ],
   };
+  const offerResource: Command = { type: 'RequestDecision', decision: offerResourceDecision };
   const placeDoomOnHall: Command = { type: 'PlaceDoom', cardId: hall, amount: 1 };
 
   it('lets a scenario hook ask the players after doom is placed', () => {
@@ -448,12 +446,40 @@ describe('decisions raised by hooks', () => {
     expect(asked.pending.map((decision) => decision.id)).toEqual(['offer_resource']);
   });
 
-  it('rejects a hook that raises the same decision twice', () => {
+  it('asks the second question of a hook only once the first is answered', () => {
+    const offerAgain: Command = {
+      type: 'RequestDecision',
+      decision: {
+        id: decisionId('offer_again'),
+        kind: 'confirm',
+        prompt: 'decision.applyForcedEffect',
+        decider: { kind: 'lead' },
+        options: [{ id: 'yes', label: 'decision.yes', commands: [] }],
+      },
+    };
     const hooked = withScenario(context, {
-      hooks: { afterDoomPlaced: () => [offerResource, offerResource] },
+      hooks: { afterDoomPlaced: () => [offerResource, offerAgain] },
     });
+    const asked = stateAfter(hooked, aliceInHall, placeDoomOnHall);
 
-    const rejection = rejectionFrom(hooked, aliceInHall, placeDoomOnHall);
+    const answered = stateAfter(hooked, asked, resolveDecision('offer_resource', 'no'));
+
+    expect(asked.pending.map((decision) => decision.id)).toEqual(['offer_resource']);
+    expect(answered.pending.map((decision) => decision.id)).toEqual(['offer_again']);
+  });
+
+  it('rejects a hook that raises a decision that is already pending', () => {
+    const hooked = withScenario(context, { hooks: { afterDoomPlaced: () => [offerResource] } });
+    const placeDoomFirst: Decision = {
+      id: decisionId('place_doom_first'),
+      kind: 'confirm',
+      prompt: 'decision.applyForcedEffect',
+      decider: { kind: 'lead' },
+      options: [{ id: 'yes', label: 'decision.yes', commands: [placeDoomOnHall] }],
+    };
+    const bothAsked = withPendingDecisions(aliceInHall, offerResourceDecision, placeDoomFirst);
+
+    const rejection = rejectionFrom(hooked, bothAsked, resolveDecision('place_doom_first', 'yes'));
 
     expect(rejection).toEqual({
       code: 'triggeredCommandRejected',
