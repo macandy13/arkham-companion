@@ -82,9 +82,10 @@ interface TestOptions {
  * threading an immutable state through dozens of calls would bury the
  * narrative. A step that fails (a refused command, a broken invariant, a wrong
  * name) leaves state and log as they were, even when it runs several commands
- * (an action and its test, the attacks of a step) and a later one fails. Action methods do not spend actions
- * (the engine leaves that to the players); `spendAction` is explicit.
- * Investigators are given by `InvestigatorId`, cards by `CardRef`.
+ * (an action and its test, the attacks of a step) and a later one fails.
+ * Action methods do not spend actions (the engine leaves that to the players);
+ * `spendAction` is explicit. Investigators are given by `InvestigatorId`,
+ * cards by `CardRef`.
  */
 export class PlayTable {
   private current: GameState = emptyState();

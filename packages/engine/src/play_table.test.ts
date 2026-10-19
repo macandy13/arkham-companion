@@ -11,6 +11,7 @@ import {
   engagedWith,
   fixed,
   instanceId,
+  investigatorCode,
   investigatorId,
   mapId,
   newGame,
@@ -20,7 +21,7 @@ import {
   TableError,
   TableRejected,
 } from './index';
-import { investigatorSeats, makeDefinition, standardInvestigatorCards } from '../test/utils';
+import { makeDefinition, standardInvestigatorCards } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -29,7 +30,11 @@ const hallway = instanceId('hallway');
 const ghoul = instanceId('ghoul');
 
 describe('setting up a scenario', () => {
-  const study = cardCode('study');
+  const studyCode = cardCode('study');
+  const seats = [
+    { id: alice, code: investigatorCode('tank') },
+    { id: bob, code: investigatorCode('seeker') },
+  ];
   const ctx = {
     cards: cardDbFrom([...standardInvestigatorCards, blankLocation('study')]),
     scenario: makeDefinition({
@@ -39,9 +44,9 @@ describe('setting up a scenario', () => {
           kind: 'addMap',
           mapId: mapId('main'),
           name: 'Main',
-          locations: [{ code: study, faceUp: true }],
+          locations: [{ code: studyCode, faceUp: true }],
         },
-        { kind: 'moveInvestigators', to: study },
+        { kind: 'moveInvestigators', to: studyCode },
       ],
     }),
   };
@@ -52,13 +57,13 @@ describe('setting up a scenario', () => {
     { difficulty: 'hard' as const, bag: ['-4'] },
   ])('seats the investigators in $difficulty difficulty ($bag)', ({ difficulty, bag }) => {
     const table = PlayTable.setUp(ctx, {
-      investigators: investigatorSeats(2),
+      investigators: seats,
       seed: 7,
       difficulty,
     });
 
-    expect(table.board.perInvestigator('at')).toEqual({ tank: 'study', seeker: 'study' });
-    expect(table.board.lead).toBe('tank');
+    expect(table.board.perInvestigator('at')).toEqual({ alice: 'study', bob: 'study' });
+    expect(table.board.lead).toBe('alice');
     expect([...table.state.chaosBag].sort()).toEqual([...bag].sort());
     expect(replay(table.events)).toEqual(table.state);
   });
