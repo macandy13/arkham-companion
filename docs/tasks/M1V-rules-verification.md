@@ -53,7 +53,9 @@ Done after slice 3: `MoveInvestigator`, `Investigate` and `EngageEnemy` carry an
 
 - [ ] Collect interaction cases from `docs/rules.md` and past review comments (e.g. a defeated investigator during their own turn, an empty encounter deck during a surge, an agenda advancing during the enemy phase)
 - [ ] One table test per case, written so the reader sees the table situation in the test body
-- [ ] Put them in one engine suite of their own (`timing.test.ts`), one short named game per corner case on the builder, played through the public commands. Start with the cases slice 3 of M1V.1 fixed: an attack of opportunity holding a move, moves queued behind it, a surge waiting on a revelation's question and after a defeat, a hunter's tie inside the order question, a last act's question before the resolution, a hook asking two questions. Each later corner case adds one entry.
+- [x] Put them in one engine suite of their own (`timing.test.ts`), one short named game per corner case on the builder, played through the public commands. Start with the cases slice 3 of M1V.1 fixed: an attack of opportunity holding a move, moves queued behind it, a surge waiting on a revelation's question and after a defeat, a hunter's tie inside the order question, a last act's question before the resolution, a hook asking two questions. Each later corner case adds one entry.
+
+Slice 1 (timing suite): `packages/engine/src/timing.test.ts` plays the six timing cases M1V.1 slice 3 fixed (the queued moves are unit tests only, since no command queues them from outside). The other interaction cases above (a defeat in one's own turn, an agenda advancing in the enemy phase) are still open.
 
 ## M1V.3 Test table builder (S)
 
@@ -78,7 +80,7 @@ Each migration slice keeps the tests' assertions as they are; the builder adds `
 
 **Follow-ups**
 
-- One shared `answer(decision, optionId, amount?)` command builder in `packages/engine/test/utils/` instead of the copies in eight test files.
+- `answer(id, optionId, amount?)` and `pendingIds` now live in `packages/engine/test/utils/` (used by `timing.test.ts`); switch the remaining file-local copies and inline `ResolveDecision` literals to them.
 - A `withHooks` builder method next to `withEffects`, so hook tests don't start the table and then wrap its context with `withScenario`.
 - A general way to start a table in the investigation phase with one investigator's turn begun; about 30 tests in `attacks_of_opportunity` and `turns` (and some in `elimination`, `undo`, `format_board`) run `NextPhase` and `StartTurn` first.
 

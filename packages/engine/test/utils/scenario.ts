@@ -1,6 +1,7 @@
 import {
   scenarioId,
   CommandRejected,
+  decisionId,
   apply,
   scenario,
   emptyState,
@@ -137,4 +138,19 @@ export function withPendingDecisions(state: GameState, ...decisions: Decision[])
     (built, decision) => apply(built, { type: 'DecisionRequested', decision }),
     state,
   );
+}
+
+/** The `ResolveDecision` that answers the open decision `id` with `optionId` (and `amount`). */
+export function answer(id: string, optionId: string, amount?: number): Command {
+  return {
+    type: 'ResolveDecision',
+    decisionId: decisionId(id),
+    optionId,
+    ...(amount === undefined ? {} : { amount }),
+  };
+}
+
+/** The IDs of the open decisions, oldest first. */
+export function pendingIds(state: GameState): string[] {
+  return state.pending.map((decision) => decision.id);
 }
