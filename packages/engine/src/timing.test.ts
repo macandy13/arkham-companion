@@ -96,13 +96,16 @@ describe('a surge after a revelation that asks something', () => {
     expect(table.board.namesIn(encounterDeck)).toEqual(['bottom_card']);
   });
 
-  it('draws nothing more once the revelation defeated alice', () => {
+  it('draws nothing more once the revelation defeated alice, while bob plays on', () => {
+    const bob = investigatorId('bob');
     const deadlySurge = blankTreachery('deadly_surge', { keywords: [{ name: 'surge' }] });
     const table = PlayTable.start(
       belowTheSurge(
         newGame()
           .withLocation(hall, blankLocation('hall'))
           .withInvestigator(alice, { locationId: hall, health: { max: 8, damage: 0 } })
+          // Bob keeps the scenario going, so the surge stops because alice is out, not because the game ended.
+          .withInvestigator(bob, { locationId: hall })
           .withCard(instanceId('surging_card'), deadlySurge, encounterDeck),
       ).withEffects({
         // The revelation asks alice to confirm 8 damage, her whole health.
@@ -128,7 +131,8 @@ describe('a surge after a revelation that asks something', () => {
     table.play(draw);
     table.answerOnly('yes');
 
-    expect(table.board.investigator(alice).status).toBe('defeated');
+    expect(table.board.perInvestigator('status')).toEqual({ alice: 'defeated', bob: 'active' });
+    expect(table.board.ended).toBe(false);
     expect(table.board.namesIn(encounterDiscard)).toEqual(['deadly_surge']);
     expect(table.board.namesIn(encounterDeck)).toEqual(['next_card', 'bottom_card']);
   });
