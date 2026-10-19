@@ -65,40 +65,42 @@ export function handleAdvanceAct(ctx: EngineContext, state: GameState, cmd: Adva
  * forced effects of the first step: the advanced card leaves the game and the
  * next card becomes current. When that was the last card, the scenario ends
  * with the command's `resolution` unless the reverse side already ended it or
- * raised a new decision whose answer will (a choice between resolutions).
+ * raised a decision whose answer chose the resolution.
  *
  * Why two steps: the rules resolve the reverse side before the next card
  * becomes current, so an effect on "the current agenda/act" must still hit
  * the advancing card, and on the last card it is the reverse side that names
  * the resolution or lets the investigators choose it. The reverse side is
  * the `onAgendaAdvance`/`onActAdvance` hook on the first step's
- * `AgendaAdvanced`/`ActAdvanced`, so running the trigger bus between the
- * steps gives that order while every event stays in the originating
- * command's list (one undo group) and under its loop guard.
- * `before` is the state the command started from (it tells which card
- * advanced), `after` the state after the first step and its forced effects.
+ * `AgendaAdvanced`/`ActAdvanced`, so `handle` runs this as a step after the
+ * hook's follow-ups (`QueuedStep` `finishAdvance`). If the reverse side asks
+ * something, this waits for the answer and its events go with that answer.
+ * `cardId` is the card that advanced; `asked` tells whether the reverse
+ * side raised a decision the players have answered meanwhile.
  */
 export function completeAdvance(
-  before: GameState,
-  after: GameState,
+  state: GameState,
   deck: Deck,
+  cardId: InstanceId,
   resolution: string | undefined,
+  asked: boolean,
 ): (CardMoved | CurrentCardChanged | ScenarioEnded)[] {
-  const advanced = currentCard(before, deck);
-  const card = after.cards[advanced.id] ?? advanced;
-  const nextId = nextCardId(after, deck, card.id);
-  const asked = after.pending.some((decision) => !before.pending.some((d) => d.id === decision.id));
-  const decided = after.meta.ended === true || asked;
-  const lastCard = nextId === undefined;
-  if (lastCard && !decided && resolution === undefined)
-    throw new CommandRejected({ code: 'resolutionRequired', deck });
-  return [
+  const card = requireCard(state.cards, cardId);
+  const nextId = nextCardId(state, deck, card.id);
+  // A question that chose no resolution (a prey tie, say) leaves the fallback to end it.
+  const decided = state.meta.ended === true || (asked && resolution === undefined);
+  const replaced: (CardMoved | CurrentCardChanged)[] = [
     moveCardEvent(card, { kind: 'outOfGame' }),
-    { type: 'CurrentCardChanged', deck, ...(nextId === undefined ? {} : { cardId: nextId }) },
-    ...(lastCard && !decided && resolution !== undefined
-      ? [{ type: 'ScenarioEnded' as const, resolution }]
-      : []),
+    currentCardChanged(deck, nextId),
   ];
+  if (nextId !== undefined || decided) return replaced;
+  if (resolution === undefined) throw new CommandRejected({ code: 'resolutionRequired', deck });
+  return [...replaced, { type: 'ScenarioEnded', resolution }];
+}
+
+/** The event that makes `cardId` the current card of `deck`, or leaves the deck without one. */
+function currentCardChanged(deck: Deck, cardId: InstanceId | undefined): CurrentCardChanged {
+  return { type: 'CurrentCardChanged', deck, ...(cardId === undefined ? {} : { cardId }) };
 }
 
 /** `EndScenario`: the scenario is over with the command's resolution. */

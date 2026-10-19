@@ -1,5 +1,5 @@
 import type { EngineContext } from './cards';
-import type { Command } from './commands';
+import type { AdvanceAct, AdvanceAgenda, Command, CommandType, DrawEncounter } from './commands';
 import { handleDealEnemyAttack } from './attacks_of_opportunity';
 import { handleRequestDecision, handleResolveDecision } from './decisions';
 import { agendaThresholdDecision } from './doom';
@@ -15,7 +15,7 @@ import {
   handleFromSetAside,
   handleShuffleEncounterDiscard,
   handleShuffleInto,
-  placeDrawnCard,
+  surgeDraw,
 } from './handle_encounter';
 import {
   handleDamageEnemy,
@@ -34,7 +34,6 @@ import {
 } from './handle_investigator';
 import { handleManualAdjust, handleMoveCard } from './handle_manual_adjust';
 import {
-  completeAdvance,
   handleAdvanceAct,
   handleAdvanceAgenda,
   handleEndScenario,
@@ -45,7 +44,7 @@ import { handleMoveHunter, handleMoveHunters } from './hunters';
 import { handleNextPhase, handleResolveEnemyAttack } from './phases';
 import { handleEvade, handleFight, handleInvestigate } from './skill_tests';
 import { handleSpawnEnemy } from './spawn';
-import type { GameState, HeldAction } from './state';
+import type { GameState, HeldAction, QueuedStep } from './state';
 import { handleAdjustActions, handleEndTurn, handleResign, handleStartTurn } from './turns';
 
 /**
@@ -91,22 +90,45 @@ export interface CommandSpec<C extends Command> {
   provokes?(command: C): HeldAction | undefined;
   /**
    * The rest of a command whose rules continue only after the forced effects
-   * of its first events (`own`) have resolved. `before` is the state the
-   * command started from, `after` the state after its first events and their
-   * effects. The events it returns fire forced effects of their own.
+   * of its own events (`own`) have resolved. `handle` runs these steps after
+   * those effects, and stores them while one of the effects asks the players
+   * something.
    */
-  complete?(
-    ctx: EngineContext,
-    before: GameState,
-    after: GameState,
-    command: C,
-    own: readonly Event[],
-  ): Event[];
-  /**
-   * Set for `NextPhase`: once its own events have resolved, `handle` runs
-   * the outstanding phase steps until one waits for the players.
-   */
-  continuesWithPhaseSteps?: true;
+  continueWith?(command: C, own: readonly Event[]): Continuation[];
+}
+
+/**
+ * One step of a resolution (`handle`): a `QueuedStep`, or the next of the
+ * outstanding phase steps after `NextPhase`. A phase step is never stored:
+ * once one waits for the players, they go on with the next "Next".
+ */
+export type Step = QueuedStep | { kind: 'phaseStep'; origin?: CommandType };
+
+/** The steps a command's spec continues with (`CommandSpec.continueWith`). */
+export type Continuation = Exclude<Step, { kind: 'command' | 'action' }>;
+
+/**
+ * `AdvanceAgenda`/`AdvanceAct`, continued: the advanced card is replaced
+ * once its reverse side has resolved (`completeAdvance`).
+ */
+function finishAdvance(command: AdvanceAgenda | AdvanceAct, own: readonly Event[]): Continuation[] {
+  const advanced = own.find(
+    (event) => event.type === 'AgendaAdvanced' || event.type === 'ActAdvanced',
+  );
+  return advanced ? [{ kind: 'finishAdvance', command, cardId: advanced.cardId }] : [];
+}
+
+/**
+ * `DrawEncounter`, continued: the drawn card is placed once its revelation
+ * has resolved, then a surge draws the next card.
+ */
+function placeDrawnCard(_command: DrawEncounter, own: readonly Event[]): Continuation[] {
+  const drawn = own.find((event) => event.type === 'EncounterCardDrawn');
+  const surge = surgeDraw(own);
+  return [
+    ...(drawn ? [{ kind: 'placeDrawnCard' as const, drawn }] : []),
+    ...(surge ? [{ kind: 'surge' as const, draw: surge }] : []),
+  ];
 }
 
 /** One spec per command type; the mapped type makes a missing or mistyped entry a type error. */
@@ -142,22 +164,17 @@ const COMMAND_SPECS: CommandSpecs = {
   AdvanceAgenda: {
     handle: (_ctx, state, command) => handleAdvanceAgenda(state, command),
     // The reverse side resolves before the next agenda becomes current.
-    complete: (_ctx, before, after, command) =>
-      completeAdvance(before, after, 'agenda', command.resolution),
+    continueWith: finishAdvance,
   },
   AdvanceAct: {
     handle: handleAdvanceAct,
-    complete: (_ctx, before, after, command) =>
-      completeAdvance(before, after, 'act', command.resolution),
+    continueWith: finishAdvance,
   },
   EndScenario: { handle: (_ctx, _state, command) => handleEndScenario(command) },
   DrawEncounter: {
     handle: handleDrawEncounter,
     // The card's revelation resolves before the card is placed.
-    complete: (ctx, _before, after, _command, own) => {
-      const drawn = own.find((event) => event.type === 'EncounterCardDrawn');
-      return drawn ? placeDrawnCard(ctx, after, drawn) : [];
-    },
+    continueWith: placeDrawnCard,
   },
   FromSetAside: { handle: (_ctx, state, command) => handleFromSetAside(state, command) },
   ShuffleInto: { handle: (_ctx, state, command) => handleShuffleInto(state, command) },
@@ -183,7 +200,10 @@ const COMMAND_SPECS: CommandSpecs = {
     allowedWhilePending: true,
   },
   CheckDoomThreshold: { handle: (ctx, state) => agendaThresholdDecision(ctx, state) },
-  NextPhase: { handle: (ctx, state) => handleNextPhase(ctx, state), continuesWithPhaseSteps: true },
+  NextPhase: {
+    handle: (ctx, state) => handleNextPhase(ctx, state),
+    continueWith: () => [{ kind: 'phaseStep' }],
+  },
   StartTurn: { handle: (_ctx, state, command) => handleStartTurn(state, command) },
   EndTurn: { handle: handleEndTurn },
   Resign: { handle: (_ctx, state, command) => handleResign(state, command) },

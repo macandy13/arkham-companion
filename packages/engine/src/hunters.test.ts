@@ -12,12 +12,13 @@ import {
   newGame,
   type BuiltGame,
   type Command,
+  type Decision,
   type GameBuilder,
   type GameState,
   type InstanceId,
   type Zone,
 } from './index';
-import { answer, rejectionFrom, stateAfter } from '../test/utils';
+import { answer, rejectionFrom, stateAfter, withPendingDecisions } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -328,28 +329,22 @@ describe('MoveHunters order', () => {
       .withCard(waiting, hunterGhoul, at('a'))
       .withCard(second, hunterGhoul, at('b'))
       .start();
-    const aboutWaiting: Command = {
-      type: 'RequestDecision',
-      decision: {
-        id: decisionId('about_waiting_hunter'),
-        kind: 'confirm',
-        subject: waiting,
-        prompt: 'Does the waiting hunter stay?',
-        decider: { kind: 'group' },
-        options: [{ id: 'yes', label: 'Yes', commands: [] }],
-      },
+    const aboutWaiting: Decision = {
+      id: decisionId('about_waiting_hunter'),
+      kind: 'confirm',
+      subject: waiting,
+      prompt: 'Does the waiting hunter stay?',
+      decider: { kind: 'group' },
+      options: [{ id: 'yes', label: 'Yes', commands: [] }],
     };
-    // The follow-up commands of an answer run while the new question is open, unlike commands from outside.
-    const asked = stateAfter(context, state, {
-      type: 'RequestDecision',
-      decision: {
-        id: decisionId('start_hunting'),
-        kind: 'confirm',
-        prompt: 'Start hunting?',
-        decider: { kind: 'group' },
-        options: [{ id: 'yes', label: 'Yes', commands: [aboutWaiting, moveHunters] }],
-      },
-    });
+    const startHunting: Decision = {
+      id: decisionId('start_hunting'),
+      kind: 'confirm',
+      prompt: 'Start hunting?',
+      decider: { kind: 'group' },
+      options: [{ id: 'yes', label: 'Yes', commands: [moveHunters] }],
+    };
+    const asked = withPendingDecisions(state, aboutWaiting, startHunting);
 
     const after = stateAfter(context, asked, answer('start_hunting', 'yes'));
 
@@ -447,7 +442,7 @@ describe('answering the hunter order', () => {
     expect(after.pending).toEqual([]);
   });
 
-  it("still raises the chosen hunter's own tie decision and moves the others", () => {
+  it("resolves the chosen hunter's own tie decision before the other hunter moves", () => {
     const forked = instanceId('forked_hunter');
     const { context, state } = fork
       .withInvestigator(alice, { locationId: instanceId('d') })
@@ -455,12 +450,16 @@ describe('answering the hunter order', () => {
       .withCard(second, hunterGhoul, at('b'))
       .start();
     const asked = stateAfter(context, state, moveHunters);
+    const tieAsked = stateAfter(context, asked, answer('hunterOrder', forked));
 
-    const after = stateAfter(context, asked, answer('hunterOrder', forked));
+    const after = stateAfter(context, tieAsked, answer('hunter:forked_hunter:location', 'c'));
 
-    expect(zoneOf(after, forked)).toEqual(at('a'));
+    expect(tieAsked.pending.map((decision) => decision.id)).toEqual([
+      'hunter:forked_hunter:location',
+    ]);
+    expect(zoneOf(tieAsked, second)).toEqual(at('b'));
+    expect(zoneOf(after, forked)).toEqual(at('c'));
     expect(zoneOf(after, second)).toEqual(engagedWith(alice));
-    expect(after.pending.map((decision) => decision.id)).toEqual(['hunter:forked_hunter:location']);
   });
 });
 
