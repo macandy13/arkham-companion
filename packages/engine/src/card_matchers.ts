@@ -61,6 +61,42 @@ export type CardMatcher = NameMatcher | InstanceIdMatcher | CodeMatcher | AnyIde
 export type InvestigatorMatcher =
   NameMatcher | InvestigatorIdMatcher | CodeMatcher | AnyIdentifierMatcher;
 
+/**
+ * Matches one enemy in play by a card reference, narrowed by the investigator
+ * it is engaged with and/or the location it is at; built by `enemyMatching`.
+ * It needs the board (zones, locations), so unlike the plain matchers
+ * `matchingCards` cannot apply it: `BoardView.enemy` resolves it.
+ */
+export interface EnemyNarrowingMatcher {
+  by: 'enemy';
+  card: CardRef;
+  engagedWith?: InvestigatorRef;
+  at?: CardRef;
+}
+
+/**
+ * How a player points at an enemy in play: any `CardMatcher`, or an
+ * `EnemyNarrowingMatcher` for when several copies are in play at once (three
+ * Swarms of Rats). A lookup that matches more than one enemy fails instead of guessing.
+ */
+export type EnemyMatcher = CardMatcher | EnemyNarrowingMatcher;
+
+/** An `EnemyMatcher`, or the bare `InstanceId` as shorthand for `byId(id)`. Normalise with `enemyMatcher`. */
+export type EnemyRef = EnemyMatcher | InstanceId;
+
+/**
+ * What a table or test script passes to point at one card: a `CardMatcher`, or
+ * the bare `InstanceId` as shorthand for `byId(id)`. Normalise with `cardMatcher`.
+ */
+export type CardRef = CardMatcher | InstanceId;
+
+/**
+ * What a table or test script passes to point at one investigator: an
+ * `InvestigatorMatcher`, or the bare `InvestigatorId` as shorthand for
+ * `byId(id)`. Normalise with `investigatorMatcher`.
+ */
+export type InvestigatorRef = InvestigatorMatcher | InvestigatorId;
+
 /** Matches cards printed with `name`; case and a trailing full stop do not matter. */
 export const byName = (name: string): NameMatcher => ({ by: 'name', name: cardName(name) });
 
@@ -84,6 +120,33 @@ export const byCode = (code: CardCode): CodeMatcher => ({ by: 'code', code });
  * values only, no substrings, so a short text cannot match half the table.
  */
 export const byAny = (text: string): AnyIdentifierMatcher => ({ by: 'any', text });
+
+/**
+ * Matches the enemy `card` picks, narrowed to the one engaged with
+ * `engagedWith` and/or at the location `at`:
+ * `enemyMatching(byName('Swarm of Rats'), { engagedWith: roland })`.
+ */
+export function enemyMatching(
+  card: CardRef,
+  narrowing: { engagedWith?: InvestigatorRef; at?: CardRef } = {},
+): EnemyNarrowingMatcher {
+  return { by: 'enemy', card, ...narrowing };
+}
+
+/** The `EnemyMatcher` an `EnemyRef` stands for: a bare instance id becomes `byId(id)`, a matcher is returned as is. */
+export function enemyMatcher(ref: EnemyRef): EnemyMatcher {
+  return typeof ref === 'string' ? { by: 'id', id: ref } : ref;
+}
+
+/** The `CardMatcher` a `CardRef` stands for: a bare instance id becomes `byId(id)`, a matcher is returned as is. */
+export function cardMatcher(ref: CardRef): CardMatcher {
+  return typeof ref === 'string' ? { by: 'id', id: ref } : ref;
+}
+
+/** The `InvestigatorMatcher` an `InvestigatorRef` stands for: a bare seat id becomes `byId(id)`, a matcher is returned as is. */
+export function investigatorMatcher(ref: InvestigatorRef): InvestigatorMatcher {
+  return typeof ref === 'string' ? { by: 'id', id: ref } : ref;
+}
 
 /** The cards of `cards` that `matcher` matches, in the order given. Pure, so handlers can share it with `BoardView`. */
 export function matchingCards(
@@ -134,8 +197,20 @@ export function matchingInvestigators(
 }
 
 /** The matcher in words for an error message: `named "Hallway"`, `with id study`, `with code 01111`, `with id, code or name "hall"`. */
-export function describeMatcher(matcher: CardMatcher | InvestigatorMatcher): string {
+export function describeMatcher(matcher: EnemyMatcher | InvestigatorMatcher): string {
   switch (matcher.by) {
+    case 'enemy':
+      return [
+        describeMatcher(cardMatcher(matcher.card)),
+        ...(matcher.engagedWith === undefined
+          ? []
+          : [
+              `engaged with an investigator ${describeMatcher(investigatorMatcher(matcher.engagedWith))}`,
+            ]),
+        ...(matcher.at === undefined
+          ? []
+          : [`at a location ${describeMatcher(cardMatcher(matcher.at))}`]),
+      ].join(' ');
     case 'name':
       return `named "${matcher.name}"`;
     case 'id':
