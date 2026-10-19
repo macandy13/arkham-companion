@@ -78,17 +78,21 @@ Follow-ups: the end-to-end test should assert a suggestion (e.g. the skull with 
 
 **Benefit:** Each engine unit test reads like the rule it checks: set-up, action and expectation in game terms, short enough to review at a glance, which makes gaps and wrong rules easier to spot and new tests cheaper to write.
 
-Ref: `docs/coding-guidelines.md` (tests); M1.E `TestTable`.
+Ref: `docs/coding-guidelines.md` (tests); `PlayTable`.
 
 Slices: (1) `BoardView`, structured read-backs of the board in the engine; (2) `PlayTable`, a driver built on `BoardView` for unit tests; (3) migrate the end-to-end test onto `PlayTable` and delete `TestTable`.
 
 - [x] Slice 1: `boardView(ctx, state)` with views, finders and `TableError` (`packages/engine/src/board_view.ts`)
 - [x] Slice 2: `PlayTable` on top of `BoardView` (`packages/engine/src/play_table.ts`)
-- [ ] Slice 3: migrate `end_to_end.test.ts`, delete `TestTable`, update the docs that mention it
+- [x] Slice 3: migrate `end_to_end.test.ts`, delete `TestTable`, update the docs that mention it
+
+Done (slices 1-3): `BoardView` and `PlayTable` live in the engine; the end-to-end test plays on `PlayTable` (`PlayTable.setUp(ctx, { investigators, seed })`) and reads the board back through `BoardView`, its `formatBoard` snapshots unchanged; `test_table.ts` is deleted. The test reads through `table.board` directly, with no local helpers.
+
+Follow-ups (from QA): the ambiguous-enemy message suggests `{ name, engagedWith }` even when the selector already has it; two identical pending decisions (two ghouls' attacks of opportunity) print as identical lines in `formatBoard`; some `TableError` messages name internal decision ids (`investigate:alice`, `failedBy:2`).
 
 - [ ] Review the engine test helpers in `packages/engine/test/utils` (`stateAfter`/`rejectionFrom`, `startScenario`) and list what makes tests hard to read; M1V.3 replaced `startBoard`, `makeInvestigator`, `makeCard` and the per-file `startedWith` variants with `newGame()` and blank cards
 - [ ] Design a clearer, game-language way to set up and assert non-flow tests (who stands where, which enemies and tokens are in play; "Alice investigates", "rejected because …"), keeping the values an assertion depends on visible in the test
-- [ ] Consider extracting the scenario-independent part of `TestTable` (`packages/scenarios/src/the_gathering/test_table.ts`) into `packages/engine/test/utils` so unit and flow tests share one vocabulary
+- [x] Consider extracting the scenario-independent part of `TestTable` so unit and flow tests share one vocabulary (done as `PlayTable` and `BoardView` in `packages/engine/src`, slices 1-3 above)
 - [ ] Migrate the engine test files incrementally, one file or module per step, with no behaviour change (same cases, coverage floors hold)
 - [ ] Document the conventions in `docs/coding-guidelines.md`
 

@@ -13,7 +13,7 @@ For the `pr-reviewer` subagent, which Claude sessions run on their branch before
   - assertions on formatted text where structured data exists.
 - **Test coverage.** New engine or scenario behaviour without a unit test, and a new rule without a step in the end-to-end scenario test.
 - **Helpers in the wrong place.**
-  - A test helper a second test file needs that is not in `packages/engine/test/utils/` or the scenario's `TestTable`.
+  - A test helper a second test file needs that is not in `packages/engine/test/utils/` or `PlayTable` / `BoardView` (`packages/engine/src`).
   - A lookup or query re-implemented inline when it exists, or should exist, next to its entity (`board.ts`, `lookup.ts`).
   - A generic string, array or object operation inlined instead of living in `@arkham/util`.
 - **Architecture doc out of date.** A change that adds or alters a component (a new kind of command, trigger, decision, setup step, store method, package or dependency direction) without updating that component's section in `docs/architecture.md`.
