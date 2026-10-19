@@ -64,8 +64,12 @@ export class TableRejected extends CommandRejected {
   }
 }
 
-/** An event with the id of the command that produced it, as the store's undo groups them. */
-interface LoggedEvent {
+/**
+ * An event with the id of the table step that produced it, as the store's undo groups them
+ * (`StoredEvent.commandId`). All commands of one step (an action and its test) share the id,
+ * so undo takes back the whole step.
+ */
+export interface LoggedEvent {
   commandId: string;
   event: Event;
 }
@@ -101,12 +105,28 @@ export class PlayTable {
   private current: GameState = emptyState();
   private log: LoggedEvent[] = [];
   private commandCount = 0;
+  /** The group id of the step being played; set only while `atomically` runs one. */
+  private stepId: string | undefined;
 
   private constructor(readonly ctx: EngineContext) {}
 
   /** A table started from the game `game` describes, in the context that knows its cards. */
   static start(game: GameBuilder): PlayTable {
     return PlayTable.from(game.context(), game.startCommand());
+  }
+
+  /**
+   * A table that goes on from a stored log, e.g. a saved game's events with their
+   * `commandId`s, in the `ctx` of its scenario. Undo takes back the log's own groups too.
+   */
+  static resume(ctx: EngineContext, log: readonly LoggedEvent[]): PlayTable {
+    const table = new PlayTable(ctx);
+    table.current = replay(log.map((entry) => entry.event));
+    table.log = [...log];
+    // A table-made log uses `command-<n>` ids with n below its length; starting past it keeps
+    // the next step from joining the log's last group.
+    table.commandCount = log.length;
+    return table;
   }
 
   /** A table started by `start`, e.g. `compileSetup(ctx, …)`, in `ctx`. */
@@ -145,6 +165,11 @@ export class PlayTable {
     return this.log.map((entry) => entry.event);
   }
 
+  /** The log with each event's group id, so a caller can store what a step added. */
+  get entries(): readonly LoggedEvent[] {
+    return this.log;
+  }
+
   /** The board as it is now; a fresh snapshot per access, so keep it only for one assertion. */
   get board(): BoardView {
     return boardView(this.ctx, this.current);
@@ -171,12 +196,12 @@ export class PlayTable {
     }
     this.assertConsistent(command.type, result.state);
     this.current = result.state;
-    const commandId = `command-${this.commandCount++}`;
+    const commandId = this.stepId ?? this.nextGroupId();
     this.log.push(...result.events.map((event) => ({ commandId, event })));
   }
 
   /**
-   * Takes back the last command with everything it caused (the store's
+   * Takes back the last step with everything it caused (the store's
    * `undoLast`): its group leaves the log and the state is replayed from what
    * remains. Fails if only the start is left, which is the game itself.
    */
@@ -437,13 +462,15 @@ export class PlayTable {
   }
 
   /**
-   * Runs a step made of several commands as one: if any throws, the table
-   * goes back to how it was before the step, so a failed step never leaves
-   * half of itself behind. Restoring is idempotent, so nested steps are safe.
+   * Runs a step made of several commands as one: they share one undo group,
+   * and if any throws, the table goes back to how it was before the step, so a
+   * failed step never leaves half of itself behind. A nested step joins the
+   * outer one's group, and restoring is idempotent, so nesting is safe.
    */
   private atomically(step: () => void): void {
-    const { current, commandCount } = this;
+    const { current, commandCount, stepId } = this;
     const log = [...this.log];
+    this.stepId = stepId ?? this.nextGroupId();
     try {
       step();
     } catch (error) {
@@ -451,7 +478,14 @@ export class PlayTable {
       this.log = log;
       this.commandCount = commandCount;
       throw error;
+    } finally {
+      this.stepId = stepId;
     }
+  }
+
+  /** A fresh undo group id; ids only need to differ within one table's log. */
+  private nextGroupId(): string {
+    return `command-${this.commandCount++}`;
   }
 
   /** The seat `investigator` picks; fails with the board attached if none or several match. */

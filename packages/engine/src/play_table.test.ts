@@ -668,6 +668,16 @@ describe('undo', () => {
     expect(table.events).toEqual(eventsBefore);
   });
 
+  it('takes back an action together with its skill test', () => {
+    const table = PlayTable.start(game);
+    const stateBefore = table.state;
+    table.investigate(alice);
+
+    table.undo();
+
+    expect(table.state).toEqual(stateBefore);
+  });
+
   it('refuses to take back the start', () => {
     const table = PlayTable.start(game);
     const stateBefore = table.state;
@@ -750,5 +760,24 @@ describe('naming an investigator by a matcher', () => {
     const table = PlayTable.start(game);
 
     expect(() => table.startTurn(byName('Carol'))).toThrow(/^no investigator named "Carol"\n/);
+  });
+});
+
+describe('resuming a stored log', () => {
+  const game = newGame()
+    .withLocation(study, blankLocation('study'), { revealed: true })
+    .withInvestigator(alice, { locationId: study });
+
+  it("goes on from the log's state and keeps its undo groups", () => {
+    const played = PlayTable.start(game);
+    played.takeDamage(alice, 1);
+    const afterStart = PlayTable.start(game).state;
+
+    const resumed = PlayTable.resume(played.ctx, played.entries);
+    resumed.takeHorror(alice, 2);
+    resumed.undo();
+    resumed.undo();
+
+    expect(resumed.state).toEqual(afterStart);
   });
 });
