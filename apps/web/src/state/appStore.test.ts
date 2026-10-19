@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   cardCode,
   scenarioId,
+  boardView,
   cardDbWith,
   instanceId,
   investigatorCode,
@@ -156,13 +157,13 @@ describe('appStore', () => {
       });
     });
 
-    describe('play and undo', () => {
-      it("stores a step's events, so reopening the game shows the same state", async () => {
+    describe('actions', () => {
+      it("stores an action's events, so reopening the game shows the same state", async () => {
         const db = 'appstore-play-test';
         const store = createAppStore(new IndexedDbStore(db));
         const id = await store.getState().startScenario(start);
 
-        await store.getState().play((table) => table.nextPhase());
+        await store.getState().actions.nextPhase();
 
         expect(store.getState().current?.state.meta.phase).toBe('investigation');
         const reopened = createAppStore(new IndexedDbStore(db));
@@ -176,7 +177,7 @@ describe('appStore', () => {
         const reopened = createAppStore(new IndexedDbStore(db));
         await reopened.getState().openGame(id);
 
-        await reopened.getState().play((table) => table.nextPhase());
+        await reopened.getState().actions.nextPhase();
 
         expect(reopened.getState().current).toMatchObject({
           playable: true,
@@ -184,12 +185,12 @@ describe('appStore', () => {
         });
       });
 
-      it("keeps a refused step's reason and shows the state unchanged", async () => {
+      it("keeps a refused action's reason and shows the state unchanged", async () => {
         const store = createAppStore(new IndexedDbStore('appstore-refused-test'));
         await store.getState().startScenario(start);
         const before = store.getState().current?.state;
 
-        await store.getState().play((table) => table.endTurn(investigatorId('alder')));
+        await store.getState().actions.endTurn(investigatorId('alder'));
 
         expect(store.getState().current?.rejection).toMatchObject({
           code: 'wrongPhase',
@@ -198,23 +199,23 @@ describe('appStore', () => {
         expect(store.getState().current?.state).toBe(before);
       });
 
-      it('clears the refusal once the next step succeeds', async () => {
+      it('clears the refusal once the next action succeeds', async () => {
         const store = createAppStore(new IndexedDbStore('appstore-refused-clear-test'));
         await store.getState().startScenario(start);
-        await store.getState().play((table) => table.endTurn(investigatorId('alder')));
+        await store.getState().actions.endTurn(investigatorId('alder'));
 
-        await store.getState().play((table) => table.nextPhase());
+        await store.getState().actions.nextPhase();
 
         expect(store.getState().current?.rejection).toBeUndefined();
       });
 
-      it('runs steps sent without waiting in the order they were sent', async () => {
+      it('runs actions sent without waiting in the order they were sent', async () => {
         const store = createAppStore(new IndexedDbStore('appstore-order-test'));
         await store.getState().startScenario(start);
 
         await Promise.all([
-          store.getState().play((table) => table.nextPhase()),
-          store.getState().play((table) => table.startTurn(investigatorId('alder'))),
+          store.getState().actions.nextPhase(),
+          store.getState().actions.startTurn(investigatorId('alder')),
         ]);
 
         expect(store.getState().current?.state.meta).toMatchObject({
@@ -223,14 +224,14 @@ describe('appStore', () => {
         });
       });
 
-      it('undoes the last step in memory and in storage', async () => {
+      it('undoes the last action in memory and in storage', async () => {
         const db = new IndexedDbStore('appstore-undo-test');
         const store = createAppStore(db);
         const id = await store.getState().startScenario(start);
         const atSetup = store.getState().current?.state;
-        await store.getState().play((table) => table.nextPhase());
+        await store.getState().actions.nextPhase();
 
-        await store.getState().undo();
+        await store.getState().actions.undo();
 
         expect(store.getState().current?.state).toEqual(atSetup);
         expect((await db.loadGame(id))?.state).toEqual(atSetup);
@@ -241,7 +242,7 @@ describe('appStore', () => {
         await store.getState().startScenario(start);
         const atSetup = store.getState().current?.state;
 
-        await store.getState().undo();
+        await store.getState().actions.undo();
 
         expect(store.getState().current?.state).toEqual(atSetup);
       });
@@ -253,10 +254,76 @@ describe('appStore', () => {
         );
         await store.getState().startScenario(start);
 
-        await expect(store.getState().play((table) => table.nextPhase())).rejects.toThrow(
+        await expect(store.getState().actions.nextPhase()).rejects.toThrow(
           'No playable game is open',
         );
         expect(store.getState().current?.playable).toBe(false);
+      });
+
+      describe("during Alder's turn", () => {
+        async function aldersTurn(db: string) {
+          const store = createAppStore(new IndexedDbStore(db));
+          await store.getState().startScenario(start);
+          await store.getState().actions.nextPhase();
+          await store.getState().actions.startTurn(investigatorId('alder'));
+          return store;
+        }
+        const alderIn = (store: Awaited<ReturnType<typeof aldersTurn>>) =>
+          boardView(start.ctx, store.getState().current!.state).investigator(
+            investigatorId('alder'),
+          );
+
+        it("leaves an investigation's skill test open for the players to report", async () => {
+          const store = await aldersTurn('actions-investigate-test');
+
+          await store.getState().actions.investigate(investigatorId('alder'));
+
+          expect(store.getState().current?.state.pending).toMatchObject([
+            { kind: 'skillTestResult' },
+          ]);
+        });
+
+        it('finds a clue once the players report the investigation passed', async () => {
+          const store = await aldersTurn('actions-resolve-test');
+          await store.getState().actions.investigate(investigatorId('alder'));
+
+          await store.getState().actions.resolveTest(investigatorId('alder'), 'pass');
+
+          expect(alderIn(store)).toMatchObject({ clues: 1 });
+        });
+
+        it('answers an open decision by its id', async () => {
+          const store = await aldersTurn('actions-answer-test');
+          await store.getState().actions.investigate(investigatorId('alder'));
+          const [test] = store.getState().current!.state.pending;
+
+          await store.getState().actions.answer(test!.id, 'fail');
+
+          expect(store.getState().current?.state.pending).toEqual([]);
+          expect(alderIn(store)).toMatchObject({ clues: 0 });
+        });
+
+        it.each([
+          { stat: 'resources', delta: -2, expected: { resources: 3 } },
+          { stat: 'damage', delta: 1, expected: { damage: 1 } },
+          { stat: 'horror', delta: 2, expected: { horror: 2 } },
+        ] as const)('steps $stat by $delta', async ({ stat, delta, expected }) => {
+          const store = await aldersTurn(`actions-adjust-${stat}-test`);
+
+          await store.getState().actions.adjust(investigatorId('alder'), stat, delta);
+
+          expect(alderIn(store)).toMatchObject(expected);
+        });
+
+        it('places doom on the current agenda', async () => {
+          const store = await aldersTurn('actions-doom-test');
+
+          await store.getState().actions.placeDoom(1);
+
+          expect(boardView(start.ctx, store.getState().current!.state).agenda).toMatchObject({
+            doom: 1,
+          });
+        });
       });
     });
   });

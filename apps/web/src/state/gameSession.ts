@@ -11,8 +11,8 @@ import {
 
 /**
  * One step the players take, in the game language of `PlayTable` (`moveTo`, `investigate`,
- * `answer`, `nextPhase`, …). The screen's skill tests come from the physical chaos bag, so its
- * action steps pass `result: 'open'` and report the outcome with `resolveTest`.
+ * `answer`, `nextPhase`, …). Only `GameActions` writes steps, so the table's test defaults never
+ * reach the screen.
  */
 export type PlayStep = (table: PlayTable) => void;
 

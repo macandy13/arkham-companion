@@ -8,11 +8,11 @@ Goal: the in-game screen from product.md "UI concept", wired to the M1 engine, s
 - **What the app gains:** A complete, playable game loop on a tablet: phases, map, investigators, encounter deck, decisions, undo.
 - **Why at this point:** It is built against the sandbox scenario so UI problems are separated from real-scenario data problems. M4 then only adds data and scenario-specific rules on top of a proven screen.
 
-All UI actions play `PlayTable` steps through the Zustand store (`play`), which stores them via a `GameSession`; no component builds commands or mutates state.
+All UI actions go through the Zustand store's `GameActions`, which play `PlayTable` steps and store them via a `GameSession`; no component builds commands, sees the table or mutates state.
 
 **Slices** (one small PR each, in this order)
 
-1. M3.1a: `PlayTable` steps as undo groups and `resume` (engine), then the app store's `play` and `undo` through a `GameSession`, context rebuilt on open, refusals kept on the open game
+1. M3.1a: `PlayTable` steps as undo groups and `resume` (engine), then the app store's `GameActions` through a `GameSession`, context rebuilt on open, refusals kept on the open game
 2. M3.1b: toast for refused commands, selectors for derived values
 3. M3.2: header
 4. M3.3a: static SVG map with location tiles and connections
@@ -32,12 +32,12 @@ All UI actions play `PlayTable` steps through the Zustand store (`play`), which 
 
 **Benefit:** Components stay simple, and the screen can never drift from the saved game.
 
-- [x] Zustand store: current `GameState`, `play(step)` → `PlayTable` → persist events via `GameStore` → re-render
+- [x] Zustand store: current `GameState`, `actions.<verb>` → `PlayTable` → persist events via `GameStore` → re-render
 - [x] Opening a saved game rebuilds its `EngineContext` (cards and `scenario`) from the catalog entry for `meta.scenarioId` (`findScenario`), so hooks and the reference card apply to its commands
 - [ ] Rejected commands show a toast with the reason
 - [ ] Undo wired to the M1 undo; selectors for derived values (doom total, thresholds)
 
-M3.1a done: the screen plays `PlayTable` verbs (`play`, `undo`, `dismissRejection` on the app store) through a `GameSession` that stores each step as one undo group and reloads the stored game when a write fails (another tab). The refusal is kept on `OpenGame.rejection`; the undo button comes with the header.
+M3.1a done: the screen calls `GameActions` (the `PlayTable` verbs with screen defaults: skill tests stay open) on the app store, which play them through a `GameSession` that stores each step as one undo group and reloads the stored game when a write fails (another tab). The refusal is kept on `OpenGame.rejection`; the undo button comes with the header.
 
 ## M3.2 Header (S)
 

@@ -11,6 +11,7 @@ import type {
   ScenarioId,
 } from '@arkham/engine';
 import { emptyState, execute, scenario } from '@arkham/engine';
+import { gameActions, type GameActions } from './gameActions';
 import { GameSession, type PlayStep } from './gameSession';
 import { findScenario, type ScenarioEntry } from '../scenarios/scenarioCatalog';
 import { parseGameExport, serialiseGameExport } from '../storage/gameExport';
@@ -32,7 +33,7 @@ export interface ScenarioStart {
   investigators: readonly InvestigatorSeat[];
 }
 
-/** The game on the play screen, as `AppState.openGame` loaded it and `play` and `undo` keep it. */
+/** The game on the play screen, as `AppState.openGame` loaded it and `AppState.actions` keep it. */
 export interface OpenGame {
   gameId: GameId;
   /** Always the result of replaying the game's stored event log. */
@@ -42,7 +43,7 @@ export interface OpenGame {
    * steps run with. A game not set up yet, or one imported from a newer app, can only be shown.
    */
   playable: boolean;
-  /** Why the last step was refused, until the next step or `dismissRejection`. */
+  /** Why the last action was refused, until the next action or `dismissRejection`. */
   rejection?: Rejection;
 }
 
@@ -65,14 +66,12 @@ export interface AppState {
   startScenario(start: ScenarioStart): Promise<GameId>;
   openGame(gameId: GameId): Promise<void>;
   /**
-   * Plays one step on the open game in `PlayTable` terms (`play((table) => table.nextPhase())`)
-   * and stores its events before showing the new state. A refused step stores nothing and sets
-   * `current.rejection`. Steps run one after another in the order they were sent, so two quick
-   * taps never both build on the same state. Rejects if the open game is not `playable`.
+   * What the play screen can do to the open game (`GameActions`). Each action is stored before
+   * the new state shows; a refused one stores nothing and sets `current.rejection`. Actions run
+   * one after another in the order they were sent, so two quick taps never both build on the
+   * same state. They reject if the open game is not `playable`.
    */
-  play(step: PlayStep): Promise<void>;
-  /** Takes back the open game's last step (`GameSession.undo`); never the scenario start. */
-  undo(): Promise<void>;
+  actions: GameActions;
   /** Clears `current.rejection` once the screen has shown it. */
   dismissRejection(): void;
   /** Renames a saved game and reloads the list. */
@@ -185,12 +184,10 @@ export function createAppStore(
       openGame(gameId) {
         return enqueue(() => open(gameId));
       },
-      play(step) {
-        return enqueue(() => playStep(step));
-      },
-      undo() {
-        return enqueue(undoStep);
-      },
+      actions: gameActions(
+        (step) => enqueue(() => playStep(step)),
+        () => enqueue(undoStep),
+      ),
       dismissRejection() {
         const open = get().current;
         if (open?.rejection) set({ current: { ...open, rejection: undefined } });
