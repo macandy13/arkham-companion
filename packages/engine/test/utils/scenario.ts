@@ -1,11 +1,13 @@
 import {
   scenarioId,
   CommandRejected,
+  apply,
   scenario,
   emptyState,
   execute,
   zoneKey,
   type Command,
+  type Decision,
   type Difficulty,
   type EngineContext,
   type Event,
@@ -114,13 +116,13 @@ export function rejectionOf(fn: () => unknown): Rejection {
 }
 
 /**
- * `ctx` playing a test scenario made of `overrides` (`makeDefinition`), e.g.
- * `withScenario(ctx, { hooks: { onRoundEnd } })`; the engine reads the hooks,
- * reference card and modifiers from it.
+ * `state` with `decisions` pending at once, as two attacks of opportunity
+ * are. Built from events, because no command asks two unrelated questions
+ * at once.
  */
-export function withScenario(
-  ctx: EngineContext,
-  overrides: Partial<ScenarioDefinition>,
-): ScenarioContext {
-  return { ...ctx, scenario: makeDefinition(overrides) };
+export function withPendingDecisions(state: GameState, ...decisions: Decision[]): GameState {
+  return decisions.reduce(
+    (built, decision) => apply(built, { type: 'DecisionRequested', decision }),
+    state,
+  );
 }

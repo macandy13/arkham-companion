@@ -9,6 +9,7 @@ import {
   atLocation,
   blankTreachery,
   cardCode,
+  encounterDeck,
   engagedWith,
   fixed,
   instanceId,
@@ -18,6 +19,9 @@ import {
   perInvestigator,
   threatAreaOf,
   zoneKey,
+  type EffectsRegistry,
+  type ScenarioHooks,
+  type ScenarioReference,
 } from './index';
 import { rejectionOf } from '../test/utils';
 
@@ -49,6 +53,11 @@ describe('blank cards', () => {
       name: 'agenda',
       card: blankAgenda('agenda', fixed(3)),
       stats: { typeCode: 'agenda', stage: { number: 1 }, doom: fixed(3) },
+    },
+    {
+      name: 'agenda without a doom threshold',
+      card: blankAgenda('agenda', null),
+      stats: { typeCode: 'agenda', stage: { number: 1 } },
     },
     {
       name: 'act',
@@ -112,6 +121,44 @@ describe('newGame', () => {
     expect(state.board.maps[upstairs]?.connections).toEqual([
       { from: attic, to: hallway, oneWay: true },
     ]);
+  });
+
+  it('puts a connection on the map it names, even one without locations', () => {
+    const annex = mapId('annex');
+    const { state } = newGame()
+      .withLocation(study, studyCard)
+      .withLocation(hallway, hallwayCard)
+      .withMap(annex, { name: 'Annex', visible: false })
+      .withConnection(study, hallway, { map: annex })
+      .start();
+
+    expect(state.board.maps[annex]).toEqual({
+      name: 'Annex',
+      visible: false,
+      connections: [{ from: study, to: hallway, oneWay: false }],
+    });
+    expect(state.board.maps[mapId('main')]?.connections).toEqual([]);
+  });
+
+  it('starts on the difficulty and with the seed it is given', () => {
+    const { state } = newGame().withDifficulty('hard').withSeed(7).start();
+
+    expect(state.meta).toMatchObject({ difficulty: 'hard', seed: 7 });
+  });
+
+  it('shuffles the encounter deck only when asked to', () => {
+    const codes = ['curse', 'hex', 'omen', 'plague', 'rot', 'storm', 'void', 'wail'];
+    const deck = codes.reduce(
+      (game, code) =>
+        game.withCard(instanceId(code), blankTreachery(code), { kind: 'encounterDeck' }),
+      newGame(),
+    );
+
+    const shuffled = deck.withShuffledEncounterDeck().start().state;
+
+    expect(deck.start().state.order[zoneKey({ kind: 'encounterDeck' })]).toEqual(codes);
+    expect(shuffled.order[zoneKey({ kind: 'encounterDeck' })]).not.toEqual(codes);
+    expect([...(shuffled.order[zoneKey({ kind: 'encounterDeck' })] ?? [])].sort()).toEqual(codes);
   });
 
   it('seats investigators in the order they are added, with what they are given', () => {
@@ -186,6 +233,62 @@ describe('newGame', () => {
 
     expect(context.cards.get(cardCode('study'))).toBe(studyCard);
     expect(context.cards.get(cardCode('ghoul'))).toBe(ghoul);
+  });
+
+  it('gives a context with the card scripts of withEffects', () => {
+    const burningTreachery = blankTreachery('burning_treachery');
+    const burningScripts: EffectsRegistry = {
+      [burningTreachery.code]: {
+        onReveal: () => [
+          { type: 'AdjustInvestigator', investigatorId: alice, stat: 'damage', delta: 1 },
+        ],
+      },
+    };
+
+    const { context } = newGame()
+      .withCard(instanceId('burning_card'), burningTreachery, encounterDeck)
+      .withEffects(burningScripts)
+      .start();
+
+    expect(context.effects).toBe(burningScripts);
+  });
+
+  it("starts in round 1's investigation phase with bob's turn begun for withTurnOf(bob)", () => {
+    const { state } = newGame()
+      .withLocation(study, studyCard, { revealed: true })
+      .withInvestigator(alice, { locationId: study })
+      .withInvestigator(bob, { locationId: study })
+      .withTurnOf(bob)
+      .start();
+
+    expect(state.meta).toMatchObject({
+      round: 1,
+      phase: 'investigation',
+      turn: { investigatorId: bob },
+    });
+  });
+
+  it('gives a context without a scenario unless one of its rules is set', () => {
+    expect(newGame().context().scenario).toBeUndefined();
+  });
+
+  it('gives a context playing a scenario with the hooks and reference card given', () => {
+    const onRoundEnd: ScenarioHooks['onRoundEnd'] = () => [];
+    const reference: ScenarioReference = {
+      easyStandard: { skull: { modifier: -1, effectKey: 'test.skull' } },
+      hardExpert: {},
+    };
+
+    const { scenario } = newGame().withHooks({ onRoundEnd }).withReferenceCard(reference).context();
+
+    expect(scenario).toMatchObject({
+      id: 'custom',
+      hooks: { onRoundEnd },
+      reference,
+      agendaDeck: [],
+      actDeck: [],
+      setup: [],
+    });
   });
 
   it('leaves the builder it extends unchanged, so tests can share a table', () => {

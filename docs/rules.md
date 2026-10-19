@@ -21,6 +21,7 @@ The game rules the engine implements, summarised in our own words so sessions do
 - Every part of an effect resolves before the "after" triggers it causes. So an engine command that is one effect may run its "after" hooks once all its events are done.
 - Forced abilities on a timing point resolve before reactions to it.
 - A forced ability that causes a new trigger opens a nested sequence. It finishes, choices included, before the sequence it interrupted goes on (last in, first out).
+- Once an ability starts, as much of it as possible resolves, in order, before the next one starts ([Triggered Abilities](https://arkhamdb.com/rules#Triggered_Abilities)). A choice that is part of an effect is part of that effect, so it comes before "after" triggers on it. The one exception is a skill test: "after you succeed/fail" triggers in step 6, before the results (FAQ v2.5 §1.7).
 - A [Revelation](https://arkhamdb.com/rules#Revelation_Abilities) starts as the card is drawn: before an enemy spawns and before a treachery is placed or discarded.
 - Forced abilities that resolve at the same time are ordered by the lead investigator (see [Precedence](#precedence)).
 
@@ -76,6 +77,7 @@ The game rules the engine implements, summarised in our own words so sessions do
 - A successful investigate discovers 1 clue: it moves from the location to the investigator.
 - If the act has no "Objective –", the group may spend the required clues from any mix of investigators at any player window during an investigator's turn ([free] ability) to advance it. An "Objective –" replaces or adds to that requirement.
 - Advancing an act removes tokens from it, flips it, follows the back, and makes the next act current (unless the back names one).
+- For agenda and act alike, the back resolves completely first, including any choice it asks. Only then does the next card become current, and at that same moment the advanced card leaves the game (RR "Act Deck and Agenda Deck" step 3: "simultaneously removed").
 - A "(→R#)" on any card ends the scenario with that resolution. [Winning and losing](https://arkhamdb.com/rules#Winning_and_Losing): act resolutions are wins in standalone mode, anything else is a loss. If every investigator is eliminated, the scenario ends with "no resolution".
 
 ## Per-investigator values
@@ -117,6 +119,7 @@ An ability that shuffles an empty discard pile into a deck does not shuffle the 
 - In enemy step 1, each **ready, unengaged** hunter moves one connection along the shortest path toward the nearest investigator. It doesn't move if an investigator is already at its location.
 - "Nearest" counts connections even through moves a card blocks. If the next step on the path is blocked by a card, the hunter doesn't move.
 - Equidistant investigators: prey picks the target; if prey doesn't decide it or there is none, the lead investigator does. The lead investigator also picks between several shortest paths.
+- Several hunters move one at a time, in an order the lead investigator picks, each with its own choices before the next moves. This is our reading of [Choices](https://arkhamdb.com/rules#Choices_and_the_Grim_Rule); no rule says it explicitly.
 - [Patrol](https://arkhamdb.com/rules#Patrol) works the same way but toward the target its text names (a location, a direction or a scenario card, 2026 Core rulebook p. 17). It doesn't move if it's already there, and the lead investigator picks between equal targets. Chapter One names a location; Chapter Two also names an enemy (Julia Stern: "nearest [[Civilian]] enemy") or a filtered location (Factory Worker: "nearest location with no [[Elite]] enemies").
 
 ## Prey
@@ -136,7 +139,7 @@ An ability that shuffles an empty discard pile into a deck does not shuffle the 
 
 ## Investigator actions against enemies
 
-- [Attacks of opportunity](https://arkhamdb.com/rules#Attack_of_Opportunity): if an investigator engaged with ready enemies spends an action on anything other than fight, evade, parley or resign, each of those enemies attacks them. The investigator picks the order. The attacks happen after the action's costs are paid and before its effect, and the enemies don't exhaust. Abilities costing several actions provoke only once per enemy. [free]/fast abilities don't provoke.
+- [Attacks of opportunity](https://arkhamdb.com/rules#Attack_of_Opportunity): if an investigator engaged with ready enemies spends an action on anything other than fight, evade, parley or resign, each of those enemies attacks them. The investigator picks the order. The attacks happen after the action's costs are paid and before its effect, and the enemies don't exhaust. Abilities costing several actions provoke only once per enemy. [free]/fast abilities don't provoke. Only spending an action provokes: a card effect that moves an investigator, makes them investigate or engages an enemy without costing an action never provokes, while an ability that costs an action provokes like the basic action ([Action Designators](https://arkhamdb.com/rules#Action_Designators)).
 - [Fight](https://arkhamdb.com/rules#Fight_Action): combat test against the enemy's fight value, which can target any enemy at the location. Success deals 1 damage by default. On failure against an enemy engaged with exactly one _other_ investigator, the damage goes to that investigator instead.
 - [Evade](https://arkhamdb.com/rules#Evade_Action): only against an enemy engaged with you; agility test against its evade value. Success (or any "evade" effect) exhausts the enemy if it is ready and moves it unengaged to your location. "Automatically evade" makes no test and isn't a successful evasion.
 - [Engage](https://arkhamdb.com/rules#Engage_Action): take an enemy at your location into your threat area, even if it's exhausted, aloof or engaged with someone else (it disengages from them). Engaging and being engaged are the same event.

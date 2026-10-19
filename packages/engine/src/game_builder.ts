@@ -1,5 +1,5 @@
 import { cardDbFrom, resolveValue, type CardStats, type EngineContext } from './cards';
-import type { StartScenario, StartingCard, StartingInvestigator } from './commands';
+import type { Command, StartScenario, StartingCard, StartingInvestigator } from './commands';
 import { execute } from './execute';
 import {
   mapId,
@@ -11,7 +11,10 @@ import {
 } from './ids';
 import type { Edge, MapSpec } from './map';
 import { blankInvestigator } from './blank_cards';
-import { emptyState, type GameState, type TokenKind } from './state';
+import type { ScenarioDefinition, ScenarioReference } from './scenario';
+import type { SkillModifierRegistry } from './skill_modifiers';
+import { emptyState, type Difficulty, type GameState, type TokenKind } from './state';
+import type { EffectsRegistry, ScenarioHooks } from './triggers';
 import type { Zone } from './zone';
 
 /** How `GameBuilder.withLocation` places a location. */
@@ -45,6 +48,9 @@ export interface BuiltGame {
 /** The map every location is on unless `LocationOptions.map` names another. */
 const MAIN_MAP = mapId('main');
 
+/** The scenario ID of every built table, stored as `GameMeta.scenarioId`. */
+const CUSTOM_SCENARIO = scenarioId('custom');
+
 interface LocationEntry {
   id: InstanceId;
   card: CardStats;
@@ -58,23 +64,62 @@ interface CardEntry {
   options: CardOptions;
 }
 
-interface GameSpec {
-  readonly locations: readonly LocationEntry[];
-  readonly connections: readonly Edge[];
-  readonly investigators: readonly StartingInvestigator[];
-  readonly cards: readonly CardEntry[];
+interface ConnectionEntry {
+  edge: Edge;
+  /** The map that owns the edge; the map of `edge.from` when absent. */
+  map?: MapId;
 }
 
-const EMPTY_SPEC: GameSpec = { locations: [], connections: [], investigators: [], cards: [] };
+/** How `GameBuilder.withMap` sets up a map. */
+export interface MapOptions {
+  /** Default the map's ID. */
+  name?: string;
+  /** Default true; a hidden map is an area the players cannot see yet. */
+  visible?: boolean;
+}
+
+interface GameSpec {
+  readonly locations: readonly LocationEntry[];
+  readonly connections: readonly ConnectionEntry[];
+  readonly maps: Readonly<Record<MapId, MapOptions>>;
+  readonly investigators: readonly StartingInvestigator[];
+  readonly cards: readonly CardEntry[];
+  readonly difficulty: Difficulty;
+  readonly seed: number;
+  readonly shuffleEncounterDeck: boolean;
+  readonly effects?: EffectsRegistry;
+  /** The investigator whose turn `start` begins; none means the table stays at the start of the scenario. */
+  readonly turnOf?: InvestigatorId;
+  /** The parts of a scenario the engine reads while it plays; set means the context has a scenario. */
+  readonly rules?: ScenarioRules;
+}
 
 /**
- * Describes a game table piece by piece (locations, connections,
- * investigators, cards in their zones) and starts it as a scenario, so a
- * test, a sandbox board or a scenario under construction spells out only
- * what it is about. Each card is passed with its definition, typically a
- * `blank*` card with the stats that matter, and the builder collects the
- * definitions into the context, so the stats stay next to where the card is
- * placed.
+ * What `withHooks`, `withReferenceCard` and `withSkillModifiers` set: the
+ * parts of a `ScenarioDefinition` the engine reads while it plays. The setup
+ * parts don't apply, since the builder places the table itself.
+ */
+type ScenarioRules = Partial<Pick<ScenarioDefinition, 'hooks' | 'reference' | 'modifiers'>>;
+
+const EMPTY_SPEC: GameSpec = {
+  locations: [],
+  connections: [],
+  maps: {},
+  investigators: [],
+  cards: [],
+  difficulty: 'standard',
+  seed: 1,
+  shuffleEncounterDeck: false,
+};
+
+/**
+ * Describes a game table piece by piece (locations, maps and connections,
+ * investigators, cards in their zones, and difficulty, seed and shuffle) and
+ * starts it as a scenario, so a test, a sandbox board or a scenario under
+ * construction spells out only what it is about. Each card is passed with
+ * its definition, typically a `blank*` card with the stats that matter, and
+ * the builder collects the definitions into the context, so the stats stay
+ * next to where the card is placed.
  *
  * Immutable: every `with*` returns a new builder, so one builder can be the
  * common table of several tests that each add their own cards.
@@ -84,7 +129,8 @@ const EMPTY_SPEC: GameSpec = { locations: [], connections: [], investigators: []
  * pieces given are there: no agenda, act or chaos tokens unless added, and
  * none of setup's rules beyond placing a revealed location's clues (an
  * investigator does not reveal the location they start at, and the
- * encounter deck keeps the order its cards were added in, top first).
+ * encounter deck keeps the order its cards were added in, top first, unless
+ * `withShuffledEncounterDeck`).
  */
 export class GameBuilder {
   private constructor(private readonly spec: GameSpec) {}
@@ -99,13 +145,37 @@ export class GameBuilder {
     return this.with({ locations: [...this.spec.locations, { id, card, options }] });
   }
 
-  /** The table with a connection between two of its locations, on the map of `from`. */
+  /**
+   * The table with a connection between two of its locations, owned by the
+   * map of `from` unless `map` names another one.
+   */
   withConnection(
     from: InstanceId,
     to: InstanceId,
-    { oneWay = false }: { oneWay?: boolean } = {},
+    { oneWay = false, map }: { oneWay?: boolean; map?: MapId } = {},
   ): GameBuilder {
-    return this.with({ connections: [...this.spec.connections, { from, to, oneWay }] });
+    const entry: ConnectionEntry = { edge: { from, to, oneWay }, ...(map ? { map } : {}) };
+    return this.with({ connections: [...this.spec.connections, entry] });
+  }
+
+  /** The table with a map set up as `options` says; a map with locations needs this only to change its name or visibility. */
+  withMap(id: MapId, options: MapOptions): GameBuilder {
+    return this.with({ maps: { ...this.spec.maps, [id]: options } });
+  }
+
+  /** The table played on `difficulty` instead of standard. */
+  withDifficulty(difficulty: Difficulty): GameBuilder {
+    return this.with({ difficulty });
+  }
+
+  /** The table started with `seed` instead of 1, for tests about what the RNG decides. */
+  withSeed(seed: number): GameBuilder {
+    return this.with({ seed });
+  }
+
+  /** The table with its encounter deck shuffled at the start instead of kept in the order added. */
+  withShuffledEncounterDeck(): GameBuilder {
+    return this.with({ shuffleEncounterDeck: true });
   }
 
   /** The table with an investigator (`blankInvestigator` stats unless `options` sets them). */
@@ -131,20 +201,71 @@ export class GameBuilder {
     return this.withCard(id, card, { kind: 'actDeck' }, { faceUp: true });
   }
 
-  /** A context whose card db holds the definition of every card on the table. */
-  context(): EngineContext {
-    return { cards: cardDbFrom(this.definitions()) };
+  /**
+   * The table with these card scripts (`EngineContext.effects`) in its
+   * context, in place of any given before; for tests of cards whose text the
+   * engine only knows from a script.
+   */
+  withEffects(effects: EffectsRegistry): GameBuilder {
+    return this.with({ effects });
   }
 
-  /** The `StartScenario` that sets up this table (standard difficulty, seed 1). */
+  /**
+   * The table started into round 1's investigation phase with `investigator`'s
+   * turn begun, for tests of what happens during a turn (actions, attacks of
+   * opportunity, turn end). `start` gets there through `NextPhase` and
+   * `StartTurn` after `startCommand`, so the phase and turn are set up like
+   * at the table.
+   */
+  withTurnOf(investigator: InvestigatorId): GameBuilder {
+    return this.with({ turnOf: investigator });
+  }
+
+  /**
+   * The table playing a scenario with these forced effects
+   * (`ScenarioDefinition.hooks`) in place of any given before; for tests of
+   * trigger points and of what a scenario's hooks do.
+   */
+  withHooks(hooks: Partial<ScenarioHooks>): GameBuilder {
+    return this.withRules({ hooks });
+  }
+
+  /**
+   * The table playing a scenario with this reference card in place of any
+   * given before; without one, no symbol token has a printed modifier.
+   */
+  withReferenceCard(reference: ScenarioReference): GameBuilder {
+    return this.withRules({ reference });
+  }
+
+  /** The table playing a scenario with these skill test modifiers in place of any given before. */
+  withSkillModifiers(modifiers: SkillModifierRegistry): GameBuilder {
+    return this.withRules({ modifiers });
+  }
+
+  /**
+   * A context whose card db holds the definition of every card on the table,
+   * with the card scripts of `withEffects`, and a scenario when `withHooks`,
+   * `withReferenceCard` or `withSkillModifiers` gave one.
+   */
+  context(): EngineContext {
+    const { effects, rules } = this.spec;
+    return {
+      cards: cardDbFrom(this.definitions()),
+      ...(effects ? { effects } : {}),
+      ...(rules ? { scenario: scenarioOf(rules) } : {}),
+    };
+  }
+
+  /** The `StartScenario` that sets up this table (standard difficulty and seed 1 unless set). */
   startCommand(): StartScenario {
     const playerCount = this.spec.investigators.length;
     return {
       type: 'StartScenario',
-      scenarioId: scenarioId('custom'),
-      difficulty: 'standard',
-      seed: 1,
-      shuffleEncounterDeck: false,
+      scenarioId: CUSTOM_SCENARIO,
+      difficulty: this.spec.difficulty,
+      seed: this.spec.seed,
+      shuffleEncounterDeck: this.spec.shuffleEncounterDeck,
       investigators: [...this.spec.investigators],
       maps: this.maps(),
       cards: [
@@ -154,14 +275,24 @@ export class GameBuilder {
     };
   }
 
-  /** The context and the state after `startCommand`. */
+  /** The context and the state after `startCommand`, and after the turn of `withTurnOf` began. */
   start(): BuiltGame {
     const context = this.context();
-    return { context, state: execute(context, emptyState(), this.startCommand()).state };
+    const { turnOf } = this.spec;
+    const commands = [this.startCommand(), ...(turnOf ? beginTurn(turnOf) : [])];
+    const state = commands.reduce(
+      (current, command) => execute(context, current, command).state,
+      emptyState(),
+    );
+    return { context, state };
   }
 
   private with(changes: Partial<GameSpec>): GameBuilder {
     return new GameBuilder({ ...this.spec, ...changes });
+  }
+
+  private withRules(changes: ScenarioRules): GameBuilder {
+    return this.with({ rules: { ...this.spec.rules, ...changes } });
   }
 
   /** Each card definition once; two different definitions for one code are a mistake in the table. */
@@ -176,17 +307,29 @@ export class GameBuilder {
     return [...byCode.values()];
   }
 
-  /** The maps of the locations, each with the connections that start at one of its locations. */
+  /**
+   * The maps of the locations and of `withMap`, each with the connections it
+   * owns: those `withConnection` gave it, else those starting at one of its
+   * locations.
+   */
   private maps(): Record<MapId, MapSpec> {
     const mapOf = new Map(
       this.spec.locations.map(({ id, options }) => [id, options.map ?? MAIN_MAP]),
     );
     // An edge from an ID that is no location goes to the main map, so `StartScenario` rejects it.
-    const ownerOf = (edge: Edge) => mapOf.get(edge.from) ?? MAIN_MAP;
+    const ownerOf = ({ edge, map }: ConnectionEntry) => map ?? mapOf.get(edge.from) ?? MAIN_MAP;
+    const ids = new Set([
+      ...mapOf.values(),
+      ...this.spec.connections.map(ownerOf),
+      ...(Object.keys(this.spec.maps) as MapId[]),
+    ]);
     const maps: Record<MapId, MapSpec> = {};
-    for (const map of new Set([...mapOf.values(), ...this.spec.connections.map(ownerOf)])) {
-      const connections = this.spec.connections.filter((edge) => ownerOf(edge) === map);
-      maps[map] = { name: map, connections };
+    for (const map of ids) {
+      const { name = map, visible } = this.spec.maps[map] ?? {};
+      const connections = this.spec.connections
+        .filter((entry) => ownerOf(entry) === map)
+        .map(({ edge }) => edge);
+      maps[map] = { name, connections, ...(visible === undefined ? {} : { visible }) };
     }
     return maps;
   }
@@ -207,6 +350,25 @@ function startingInvestigator(
   options: InvestigatorOptions,
 ): StartingInvestigator {
   return blankInvestigator(id, { seat, ...options });
+}
+
+/** From setup into round 1's investigation phase, then `investigator` starts their turn. */
+function beginTurn(investigator: InvestigatorId): Command[] {
+  return [{ type: 'NextPhase' }, { type: 'StartTurn', investigatorId: investigator }];
+}
+
+/** A scenario with `rules` and nothing to set up: the builder places the table itself. */
+function scenarioOf({ hooks, reference, modifiers }: ScenarioRules): ScenarioDefinition {
+  return {
+    id: CUSTOM_SCENARIO,
+    chaosBag: { easy: [], standard: [], hard: [], expert: [] },
+    reference: reference ?? { easyStandard: {}, hardExpert: {} },
+    agendaDeck: [],
+    actDeck: [],
+    setup: [],
+    ...(hooks ? { hooks } : {}),
+    ...(modifiers ? { modifiers } : {}),
+  };
 }
 
 function startingLocation({ id, card, options }: LocationEntry, playerCount: number): StartingCard {

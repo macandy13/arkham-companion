@@ -1,29 +1,26 @@
 import { describe, expect, it } from 'vitest';
 import {
-  cardCode,
+  atLocation,
+  blankAct,
+  blankAgenda,
+  blankEnemy,
+  blankLocation,
+  blankTreachery,
   checkInvariants,
   decisionId,
+  engagedWith,
   execute,
+  fixed,
   instanceId,
   investigatorId,
+  newGame,
+  threatAreaOf,
   type Command,
+  type EngineContext,
   type GameState,
-  type Investigator,
-  type StartingCard,
   type Zone,
 } from './index';
-import {
-  contextWith,
-  edge,
-  fixed,
-  makeCard,
-  makeInvestigator,
-  rejectionFrom,
-  runFrom,
-  startBoard,
-  stateAfter,
-  withScenario,
-} from '../test/utils';
+import { answer, rejectionFrom, runFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -35,85 +32,53 @@ const secondAgenda = instanceId('second_agenda');
 const firstAct = instanceId('first_act');
 const secondAct = instanceId('second_act');
 
-/**
- * The cards of these tests: the hall - cellar - attic line of locations, a
- * first agenda with a threshold of 2 doom, a second one with 9, an act that
- * needs 1 clue, enemies that differ in what the phase steps do with them,
- * a plain treachery to draw and Dissonant Voices, discarded at the end of
- * the round.
- */
-const ctx = contextWith(
-  makeCard({ code: 'hall', name: 'Hall', typeCode: 'location' }),
-  makeCard({ code: 'cellar', name: 'Cellar', typeCode: 'location' }),
-  makeCard({ code: 'attic', name: 'Attic', typeCode: 'location' }),
-  makeCard({ code: 'agenda_of_2', typeCode: 'agenda', stage: { number: 1 }, doom: fixed(2) }),
-  makeCard({ code: 'agenda_of_9', typeCode: 'agenda', stage: { number: 2 }, doom: fixed(9) }),
-  makeCard({ code: 'act_of_1', typeCode: 'act', stage: { number: 1 }, clues: fixed(1) }),
-  makeCard({ code: 'last_act', typeCode: 'act', stage: { number: 2 } }),
-  makeCard({ code: 'ghoul', typeCode: 'enemy', damage: 2, horror: 1 }),
-  makeCard({
-    code: 'hunting_rat',
-    typeCode: 'enemy',
-    damage: 1,
-    horror: 0,
-    keywords: [{ name: 'hunter' }],
-  }),
-  makeCard({
-    code: 'massive_ghoul',
-    typeCode: 'enemy',
-    damage: 1,
-    horror: 0,
-    keywords: [{ name: 'massive' }],
-  }),
-  makeCard({
-    code: 'unreadable_spawn_ghoul',
-    typeCode: 'enemy',
-    keywords: [{ name: 'spawn', detail: 'the location with the most clues' }],
-  }),
-  makeCard({ code: 'plain_treachery' }),
-  makeCard({ code: 'dissonant_voices', entersThreatArea: true, discardAtRoundEnd: true }),
-);
+/** The first agenda advances at 2 doom; the second one, at 9, is not reached by these tests. */
+const agendaOf2 = blankAgenda('agenda_of_2', fixed(2));
+const agendaOf9 = blankAgenda('agenda_of_9', fixed(9), { stage: { number: 2 } });
+/** The first act needs 1 clue to advance. */
+const actOf1 = blankAct('act_of_1', { clues: fixed(1) });
+const lastAct = blankAct('last_act', { stage: { number: 2 } });
+/** A ghoul dealing 2 damage and 1 horror. */
+const ghoulCard = blankEnemy('ghoul', { damage: 2, horror: 1 });
+const huntingRatCard = blankEnemy('hunting_rat', { damage: 1, keywords: [{ name: 'hunter' }] });
+const massiveGhoulCard = blankEnemy('massive_ghoul', {
+  damage: 1,
+  keywords: [{ name: 'massive' }],
+});
+const unreadableSpawnGhoulCard = blankEnemy('unreadable_spawn_ghoul', {
+  keywords: [{ name: 'spawn', detail: 'the location with the most clues' }],
+});
+const plainTreachery = blankTreachery('plain_treachery');
+/** Dissonant Voices stays in the threat area until the end of the round. */
+const dissonantVoices = blankTreachery('dissonant_voices', {
+  entersThreatArea: true,
+  discardAtRoundEnd: true,
+});
+
+const encounterDeck: Zone = { kind: 'encounterDeck' };
 
 /**
- * A started scenario on the hall - cellar - attic map with the agendas and
- * acts above and `cards` besides. The encounter deck is not shuffled, so the
- * draw order is the order of `cards`. The first investigator is the lead.
+ * The table of these tests, without investigators: the hall - cellar - attic
+ * line of locations, the two agendas and the two acts above. The encounter
+ * deck is not shuffled, so the draw order is the order the cards are added
+ * in. The first investigator added is the lead.
  */
-function startedWith(investigators: Investigator[], cards: StartingCard[] = []): GameState {
-  return startBoard(ctx, {
-    maps: {
-      main: {
-        locations: { hall: 'hall', cellar: 'cellar', attic: 'attic' },
-        connections: [edge('hall', 'cellar'), edge('cellar', 'attic')],
-      },
-    },
-    investigators,
-    shuffleEncounterDeck: false,
-    cards: [
-      { id: firstAgenda, code: cardCode('agenda_of_2'), zone: { kind: 'agendaDeck' } },
-      { id: secondAgenda, code: cardCode('agenda_of_9'), zone: { kind: 'agendaDeck' } },
-      { id: firstAct, code: cardCode('act_of_1'), zone: { kind: 'actDeck' } },
-      { id: secondAct, code: cardCode('last_act'), zone: { kind: 'actDeck' } },
-      ...cards,
-    ],
-  });
-}
+const table = newGame()
+  .withLocation(hall, blankLocation('hall'))
+  .withLocation(cellar, blankLocation('cellar'))
+  .withLocation(attic, blankLocation('attic'))
+  .withConnection(hall, cellar)
+  .withConnection(cellar, attic)
+  .withAgenda(firstAgenda, agendaOf2)
+  .withAgenda(secondAgenda, agendaOf9)
+  .withAct(firstAct, actOf1)
+  .withAct(secondAct, lastAct);
 
-const at = (locationId: typeof hall): Zone => ({ kind: 'atLocation', locationId });
-const engagedWith = (investigator: typeof alice): Zone => ({
-  kind: 'engaged',
-  investigatorId: investigator,
-});
-const inDeck = (id: string, code: string): StartingCard => ({
-  id: instanceId(id),
-  code: cardCode(code),
-  zone: { kind: 'encounterDeck' },
-});
-const placed = (id: string, code: string, zone: Zone): StartingCard => ({
-  id: instanceId(id),
-  code: cardCode(code),
-  zone,
-});
+/** The table with alice (seat 0) in the hall. */
+const aliceInHall = table.withInvestigator(alice, { locationId: hall });
+
+/** The table with alice (seat 0) and bob (seat 1) in the hall. */
+const aliceAndBobInHall = aliceInHall.withInvestigator(bob, { locationId: hall });
 
 const next: Command = { type: 'NextPhase' };
 
@@ -126,20 +91,19 @@ function turnsOf(...investigators: (typeof alice)[]): Command[] {
 }
 
 /** The investigator and card of each encounter draw `command` makes from `state`. */
-function drawsOf(state: GameState, command: Command): string[] {
-  return execute(ctx, state, command).events.flatMap((event) =>
+function drawsOf(context: EngineContext, state: GameState, command: Command): string[] {
+  return execute(context, state, command).events.flatMap((event) =>
     event.type === 'EncounterCardDrawn' ? [`${event.investigatorId} draws ${event.cardId}`] : [],
   );
 }
 
 describe('NextPhase', () => {
   it('starts round 1 with the investigation phase, skipping its mythos phase', () => {
-    const state = startedWith(
-      [makeInvestigator({ id: 'alice', locationId: hall })],
-      [inDeck('waiting_treachery', 'plain_treachery')],
-    );
+    const { context, state } = aliceInHall
+      .withCard(instanceId('waiting_treachery'), plainTreachery, encounterDeck)
+      .start();
 
-    const after = stateAfter(ctx, state, next);
+    const after = stateAfter(context, state, next);
 
     expect(after.meta).toMatchObject({ round: 1, phase: 'investigation', steps: [] });
     expect(after.cards[firstAgenda]!.tokens.doom).toBeUndefined();
@@ -147,12 +111,12 @@ describe('NextPhase', () => {
   });
 
   it('walks investigation, enemy and upkeep within a round, then starts the next with mythos', () => {
-    const state = startedWith([makeInvestigator({ id: 'alice', locationId: hall })]);
+    const { context, state } = aliceInHall.start();
 
-    const investigation = stateAfter(ctx, state, next);
-    const enemy = stateAfter(ctx, investigation, ...turnsOf(alice), next);
-    const upkeep = stateAfter(ctx, enemy, next);
-    const mythos = stateAfter(ctx, upkeep, next);
+    const investigation = stateAfter(context, state, next);
+    const enemy = stateAfter(context, investigation, ...turnsOf(alice), next);
+    const upkeep = stateAfter(context, enemy, next);
+    const mythos = stateAfter(context, upkeep, next);
 
     expect([investigation, enemy, upkeep, mythos].map((s) => [s.meta.round, s.meta.phase])).toEqual(
       [
@@ -165,94 +129,80 @@ describe('NextPhase', () => {
   });
 
   it('is rejected while a decision is pending', () => {
+    const { context, state } = aliceInHall.start();
     const investigation = stateAfter(
-      ctx,
-      startedWith([makeInvestigator({ id: 'alice', locationId: hall })]),
+      context,
+      state,
       next,
       { type: 'StartTurn', investigatorId: alice },
       { type: 'Investigate', investigatorId: alice },
     );
 
-    expect(rejectionFrom(ctx, investigation, next)).toEqual({
+    expect(rejectionFrom(context, investigation, next)).toEqual({
       code: 'decisionPending',
       decisionId: decisionId('investigate:alice'),
     });
   });
 
   it('does not leave the investigation phase before every active investigator had a turn', () => {
-    const investigation = stateAfter(
-      ctx,
-      startedWith([
-        makeInvestigator({ id: 'alice', seat: 0, locationId: hall }),
-        makeInvestigator({ id: 'bob', seat: 1, locationId: hall }),
-      ]),
-      next,
-      ...turnsOf(alice),
-    );
+    const { context, state } = aliceAndBobInHall.start();
+    const investigation = stateAfter(context, state, next, ...turnsOf(alice));
 
-    expect(rejectionFrom(ctx, investigation, next)).toEqual({
+    expect(rejectionFrom(context, investigation, next)).toEqual({
       code: 'turnsNotTaken',
       investigatorIds: [bob],
     });
   });
 
   it('does not leave the investigation phase during a turn', () => {
-    const investigation = stateAfter(
-      ctx,
-      startedWith([makeInvestigator({ id: 'alice', locationId: hall })]),
-      next,
-      { type: 'StartTurn', investigatorId: alice },
-    );
+    const { context, state } = aliceInHall.start();
+    const investigation = stateAfter(context, state, next, {
+      type: 'StartTurn',
+      investigatorId: alice,
+    });
 
-    expect(rejectionFrom(ctx, investigation, next)).toEqual({
+    expect(rejectionFrom(context, investigation, next)).toEqual({
       code: 'turnInProgress',
       investigatorId: alice,
     });
   });
 
   it('lets a defeated investigator`s turn go untaken', () => {
+    const { context, state } = aliceInHall
+      .withInvestigator(bob, { locationId: hall, health: { max: 1, damage: 0 } })
+      .start();
     const investigation = stateAfter(
-      ctx,
-      startedWith([
-        makeInvestigator({ id: 'alice', seat: 0, locationId: hall }),
-        makeInvestigator({
-          id: 'bob',
-          seat: 1,
-          locationId: hall,
-          health: { max: 1, damage: 0 },
-        }),
-      ]),
+      context,
+      state,
       next,
       { type: 'AdjustInvestigator', investigatorId: bob, stat: 'damage', delta: 1 },
       ...turnsOf(alice),
     );
 
-    const enemy = stateAfter(ctx, investigation, next);
+    const enemy = stateAfter(context, investigation, next);
 
     expect(enemy.meta.phase).toBe('enemy');
   });
 });
 
 describe('mythos phase', () => {
-  const aliceAndBob = [
-    makeInvestigator({ id: 'alice', seat: 0, locationId: hall }),
-    makeInvestigator({ id: 'bob', seat: 1, locationId: cellar }),
-  ];
+  /** Alice (seat 0) in the hall and bob (seat 1) in the cellar. */
+  const aliceAndBob = aliceInHall.withInvestigator(bob, { locationId: cellar });
+  /** Alice and bob with two plain treacheries in the encounter deck, `first_treachery` on top. */
+  const aliceAndBobWithTwoTreacheries = aliceAndBob
+    .withCard(instanceId('first_treachery'), plainTreachery, encounterDeck)
+    .withCard(instanceId('second_treachery'), plainTreachery, encounterDeck);
   /** The state at the end of round 1, so the next `NextPhase` runs the mythos phase of round 2. */
-  const upkeepOf = (state: GameState): GameState =>
-    stateAfter(ctx, state, next, ...turnsOf(alice, bob), next, next);
+  const upkeepOf = (context: EngineContext, state: GameState): GameState =>
+    stateAfter(context, state, next, ...turnsOf(alice, bob), next, next);
 
   it('places 1 doom on the agenda (1.2) and lets each investigator draw in player order (1.4)', () => {
-    const upkeep = upkeepOf(
-      startedWith(aliceAndBob, [
-        inDeck('first_treachery', 'plain_treachery'),
-        inDeck('second_treachery', 'plain_treachery'),
-      ]),
-    );
+    const { context, state } = aliceAndBobWithTwoTreacheries.start();
+    const upkeep = upkeepOf(context, state);
 
-    const mythos = stateAfter(ctx, upkeep, next);
+    const mythos = stateAfter(context, upkeep, next);
 
-    expect(drawsOf(upkeep, next)).toEqual([
+    expect(drawsOf(context, upkeep, next)).toEqual([
       'alice draws first_treachery',
       'bob draws second_treachery',
     ]);
@@ -261,46 +211,26 @@ describe('mythos phase', () => {
   });
 
   it('starts the draws with the lead investigator, then follows the seats', () => {
-    const bobLeads = [
-      makeInvestigator({ id: 'bob', seat: 1, locationId: cellar }),
-      makeInvestigator({ id: 'alice', seat: 0, locationId: hall }),
-    ];
-    const upkeep = stateAfter(
-      ctx,
-      startedWith(bobLeads, [
-        inDeck('first_treachery', 'plain_treachery'),
-        inDeck('second_treachery', 'plain_treachery'),
-      ]),
-      next,
-      ...turnsOf(alice, bob),
-      next,
-      next,
-    );
+    const { context, state } = table
+      .withInvestigator(bob, { seat: 1, locationId: cellar })
+      .withInvestigator(alice, { seat: 0, locationId: hall })
+      .withCard(instanceId('first_treachery'), plainTreachery, encounterDeck)
+      .withCard(instanceId('second_treachery'), plainTreachery, encounterDeck)
+      .start();
+    const upkeep = stateAfter(context, state, next, ...turnsOf(alice, bob), next, next);
 
-    expect(drawsOf(upkeep, next)).toEqual([
+    expect(drawsOf(context, upkeep, next)).toEqual([
       'bob draws first_treachery',
       'alice draws second_treachery',
     ]);
   });
 
   it('asks to advance the agenda at the threshold check (1.3) and draws only after the answer', () => {
-    const upkeep = stateAfter(
-      ctx,
-      upkeepOf(
-        startedWith(aliceAndBob, [
-          inDeck('first_treachery', 'plain_treachery'),
-          inDeck('second_treachery', 'plain_treachery'),
-        ]),
-      ),
-      { type: 'PlaceDoom', amount: 1 },
-    );
+    const { context, state } = aliceAndBobWithTwoTreacheries.start();
+    const upkeep = stateAfter(context, upkeepOf(context, state), { type: 'PlaceDoom', amount: 1 });
 
-    const asked = stateAfter(ctx, upkeep, next);
-    const answered = stateAfter(ctx, asked, {
-      type: 'ResolveDecision',
-      decisionId: decisionId('advanceAgenda:first_agenda'),
-      optionId: 'yes',
-    });
+    const asked = stateAfter(context, upkeep, next);
+    const answered = stateAfter(context, asked, answer('advanceAgenda:first_agenda', 'yes'));
 
     expect(asked.pending.map((decision) => decision.id)).toEqual(['advanceAgenda:first_agenda']);
     expect(asked.meta.steps).toEqual([
@@ -308,16 +238,17 @@ describe('mythos phase', () => {
       { id: 'drawEncounterCard', investigatorId: bob },
     ]);
     expect(answered.agenda.current).toBe(secondAgenda);
-    expect(drawsOf(answered, next)).toEqual([
+    expect(drawsOf(context, answered, next)).toEqual([
       'alice draws first_treachery',
       'bob draws second_treachery',
     ]);
   });
 
   it('does not ask when doom reached the threshold earlier but was corrected before the check', () => {
+    const { context, state } = aliceAndBob.start();
     const corrected = stateAfter(
-      ctx,
-      upkeepOf(startedWith(aliceAndBob)),
+      context,
+      upkeepOf(context, state),
       { type: 'PlaceDoom', amount: 2 },
       {
         type: 'ManualAdjust',
@@ -325,59 +256,66 @@ describe('mythos phase', () => {
       },
     );
 
-    const mythos = stateAfter(ctx, corrected, next);
+    const mythos = stateAfter(context, corrected, next);
 
     expect(mythos.pending).toEqual([]);
     expect(mythos.cards[firstAgenda]!.tokens.doom).toBe(1);
   });
 
   it('keeps the later draws when a draw raises a decision', () => {
-    const upkeep = upkeepOf(
-      startedWith(aliceAndBob, [
-        inDeck('unreadable_spawner', 'unreadable_spawn_ghoul'),
-        inDeck('bobs_treachery', 'plain_treachery'),
-      ]),
-    );
+    const { context, state } = aliceAndBob
+      .withCard(instanceId('unreadable_spawner'), unreadableSpawnGhoulCard, encounterDeck)
+      .withCard(instanceId('bobs_treachery'), plainTreachery, encounterDeck)
+      .start();
+    const upkeep = upkeepOf(context, state);
 
-    const asked = stateAfter(ctx, upkeep, next);
-    const answered = stateAfter(ctx, asked, {
-      type: 'ResolveDecision',
-      decisionId: decisionId('spawn:unreadable_spawner'),
-      optionId: 'attic',
-    });
+    const asked = stateAfter(context, upkeep, next);
+    const answered = stateAfter(context, asked, answer('spawn:unreadable_spawner', 'attic'));
 
     expect(asked.pending.map((decision) => decision.id)).toEqual(['spawn:unreadable_spawner']);
-    expect(answered.cards[instanceId('unreadable_spawner')]!.zone).toEqual(at(attic));
-    expect(drawsOf(answered, next)).toEqual(['bob draws bobs_treachery']);
+    expect(answered.cards[instanceId('unreadable_spawner')]!.zone).toEqual(atLocation(attic));
+    expect(drawsOf(context, answered, next)).toEqual(['bob draws bobs_treachery']);
   });
 
   it('skips the draws when there is no encounter card left', () => {
-    const mythos = stateAfter(ctx, upkeepOf(startedWith(aliceAndBob)), next);
+    const { context, state } = aliceAndBob.start();
+
+    const mythos = stateAfter(context, upkeepOf(context, state), next);
 
     expect(mythos.meta).toMatchObject({ round: 2, phase: 'mythos', steps: [] });
   });
 
   it('skips the draw of an investigator defeated before their turn to draw', () => {
-    const upkeep = stateAfter(
-      ctx,
-      upkeepOf(startedWith(aliceAndBob, [inDeck('first_treachery', 'plain_treachery')])),
-      { type: 'AdjustInvestigator', investigatorId: alice, stat: 'damage', delta: 8 },
-    );
+    const { context, state } = aliceAndBob
+      .withCard(instanceId('first_treachery'), plainTreachery, encounterDeck)
+      .start();
+    const upkeep = stateAfter(context, upkeepOf(context, state), {
+      type: 'AdjustInvestigator',
+      investigatorId: alice,
+      stat: 'damage',
+      delta: 8,
+    });
 
-    expect(drawsOf(upkeep, next)).toEqual(['bob draws first_treachery']);
+    expect(drawsOf(context, upkeep, next)).toEqual(['bob draws first_treachery']);
   });
 });
 
 describe('enemy phase', () => {
-  const aliceInHall = [makeInvestigator({ id: 'alice', locationId: hall })];
-  /** From setup to the enemy phase of round 1, alice having taken her turn. */
-  const toEnemyPhase = (state: GameState, ...investigators: (typeof alice)[]): GameState =>
-    stateAfter(ctx, state, next, ...turnsOf(...investigators), next);
+  /** Alice in the hall, engaged with the ghoul (2 damage, 1 horror). */
+  const engagedWithGhoul = aliceInHall.withCard(instanceId('ghoul'), ghoulCard, engagedWith(alice));
+  /** From setup to the enemy phase of round 1, the given investigators having taken their turns. */
+  const toEnemyPhase = (
+    context: EngineContext,
+    state: GameState,
+    ...investigators: (typeof alice)[]
+  ): GameState => stateAfter(context, state, next, ...turnsOf(...investigators), next);
 
   it('moves the hunters (3.2), then lists the attacks of the ready engaged enemies (3.3)', () => {
-    const state = startedWith(aliceInHall, [placed('rat', 'hunting_rat', at(cellar))]);
+    const { context, state } = aliceInHall
+      .withCard(instanceId('rat'), huntingRatCard, atLocation(cellar))
+      .start();
 
-    const enemy = toEnemyPhase(state, alice);
+    const enemy = toEnemyPhase(context, state, alice);
 
     expect(enemy.cards[instanceId('rat')]!.zone).toEqual(engagedWith(alice));
     expect(enemy.meta.steps).toEqual([
@@ -386,21 +324,14 @@ describe('enemy phase', () => {
   });
 
   it('stops at a hunter decision and lists the attacks once it is answered', () => {
-    const state = startedWith(
-      [
-        makeInvestigator({ id: 'alice', seat: 0, locationId: hall }),
-        makeInvestigator({ id: 'bob', seat: 1, locationId: attic }),
-      ],
-      [placed('rat', 'hunting_rat', at(cellar))],
-    );
+    const { context, state } = aliceInHall
+      .withInvestigator(bob, { locationId: attic })
+      .withCard(instanceId('rat'), huntingRatCard, atLocation(cellar))
+      .start();
 
-    const asked = toEnemyPhase(state, alice, bob);
-    const answered = stateAfter(ctx, asked, {
-      type: 'ResolveDecision',
-      decisionId: decisionId('hunter:rat:investigator'),
-      optionId: 'bob',
-    });
-    const resumed = stateAfter(ctx, answered, next);
+    const asked = toEnemyPhase(context, state, alice, bob);
+    const answered = stateAfter(context, asked, answer('hunter:rat:investigator', 'bob'));
+    const resumed = stateAfter(context, answered, next);
 
     expect(asked.pending.map((decision) => decision.id)).toEqual(['hunter:rat:investigator']);
     expect(asked.meta.steps).toEqual([{ id: 'enemiesAttack' }]);
@@ -410,12 +341,10 @@ describe('enemy phase', () => {
   });
 
   it('rejects moving on while an attack is due', () => {
-    const enemy = toEnemyPhase(
-      startedWith(aliceInHall, [placed('ghoul', 'ghoul', engagedWith(alice))]),
-      alice,
-    );
+    const { context, state } = engagedWithGhoul.start();
+    const enemy = toEnemyPhase(context, state, alice);
 
-    expect(rejectionFrom(ctx, enemy, next)).toEqual({
+    expect(rejectionFrom(context, enemy, next)).toEqual({
       code: 'enemyAttackPending',
       enemyId: instanceId('ghoul'),
       investigatorId: alice,
@@ -423,12 +352,10 @@ describe('enemy phase', () => {
   });
 
   it('deals the printed damage and horror of an attack, exhausts the enemy and ends the step', () => {
-    const enemy = toEnemyPhase(
-      startedWith(aliceInHall, [placed('ghoul', 'ghoul', engagedWith(alice))]),
-      alice,
-    );
+    const { context, state } = engagedWithGhoul.start();
+    const enemy = toEnemyPhase(context, state, alice);
 
-    const after = stateAfter(ctx, enemy, {
+    const after = stateAfter(context, enemy, {
       type: 'ResolveEnemyAttack',
       enemyId: instanceId('ghoul'),
       investigatorId: alice,
@@ -440,12 +367,10 @@ describe('enemy phase', () => {
   });
 
   it('deals the reduced amounts the players enter when assets soak part of an attack', () => {
-    const enemy = toEnemyPhase(
-      startedWith(aliceInHall, [placed('ghoul', 'ghoul', engagedWith(alice))]),
-      alice,
-    );
+    const { context, state } = engagedWithGhoul.start();
+    const enemy = toEnemyPhase(context, state, alice);
 
-    const after = stateAfter(ctx, enemy, {
+    const after = stateAfter(context, enemy, {
       type: 'ResolveEnemyAttack',
       enemyId: instanceId('ghoul'),
       investigatorId: alice,
@@ -458,18 +383,17 @@ describe('enemy phase', () => {
   });
 
   it('defeats an investigator once from damage and horror dealt together', () => {
-    const fragileAlice = makeInvestigator({
-      id: 'alice',
-      locationId: hall,
-      health: { max: 3, damage: 1 },
-      sanity: { max: 3, horror: 2 },
-    });
-    const enemy = toEnemyPhase(
-      startedWith([fragileAlice], [placed('ghoul', 'ghoul', engagedWith(alice))]),
-      alice,
-    );
+    const { context, state } = table
+      .withInvestigator(alice, {
+        locationId: hall,
+        health: { max: 3, damage: 1 },
+        sanity: { max: 3, horror: 2 },
+      })
+      .withCard(instanceId('ghoul'), ghoulCard, engagedWith(alice))
+      .start();
+    const enemy = toEnemyPhase(context, state, alice);
 
-    const { events } = execute(ctx, enemy, {
+    const { events } = execute(context, enemy, {
       type: 'ResolveEnemyAttack',
       enemyId: instanceId('ghoul'),
       investigatorId: alice,
@@ -487,13 +411,11 @@ describe('enemy phase', () => {
   });
 
   it('rejects an attack that is not due', () => {
-    const enemy = toEnemyPhase(
-      startedWith(aliceInHall, [placed('ghoul', 'ghoul', engagedWith(alice))]),
-      alice,
-    );
+    const { context, state } = engagedWithGhoul.start();
+    const enemy = toEnemyPhase(context, state, alice);
 
     expect(
-      rejectionFrom(ctx, enemy, {
+      rejectionFrom(context, enemy, {
         type: 'ResolveEnemyAttack',
         enemyId: instanceId('ghoul'),
         investigatorId: bob,
@@ -502,13 +424,11 @@ describe('enemy phase', () => {
   });
 
   it('rejects a negative amount', () => {
-    const enemy = toEnemyPhase(
-      startedWith(aliceInHall, [placed('ghoul', 'ghoul', engagedWith(alice))]),
-      alice,
-    );
+    const { context, state } = engagedWithGhoul.start();
+    const enemy = toEnemyPhase(context, state, alice);
 
     expect(
-      rejectionFrom(ctx, enemy, {
+      rejectionFrom(context, enemy, {
         type: 'ResolveEnemyAttack',
         enemyId: instanceId('ghoul'),
         investigatorId: alice,
@@ -518,24 +438,17 @@ describe('enemy phase', () => {
   });
 
   it('exhausts a massive enemy only after it attacked everyone at its location', () => {
-    const enemy = toEnemyPhase(
-      startedWith(
-        [
-          makeInvestigator({ id: 'alice', seat: 0, locationId: hall }),
-          makeInvestigator({ id: 'bob', seat: 1, locationId: hall }),
-        ],
-        [placed('giant', 'massive_ghoul', at(hall))],
-      ),
-      alice,
-      bob,
-    );
+    const { context, state } = aliceAndBobInHall
+      .withCard(instanceId('giant'), massiveGhoulCard, atLocation(hall))
+      .start();
+    const enemy = toEnemyPhase(context, state, alice, bob);
 
-    const first = stateAfter(ctx, enemy, {
+    const first = stateAfter(context, enemy, {
       type: 'ResolveEnemyAttack',
       enemyId: instanceId('giant'),
       investigatorId: alice,
     });
-    const second = stateAfter(ctx, first, {
+    const second = stateAfter(context, first, {
       type: 'ResolveEnemyAttack',
       enemyId: instanceId('giant'),
       investigatorId: bob,
@@ -546,35 +459,32 @@ describe('enemy phase', () => {
   });
 
   it('drops an attack whose enemy left play meanwhile', () => {
-    const enemy = toEnemyPhase(
-      startedWith(aliceInHall, [placed('ghoul', 'ghoul', engagedWith(alice))]),
-      alice,
-    );
-    const defeated = stateAfter(ctx, enemy, { type: 'DefeatEnemy', enemyId: instanceId('ghoul') });
+    const { context, state } = engagedWithGhoul.start();
+    const enemy = toEnemyPhase(context, state, alice);
+    const defeated = stateAfter(context, enemy, {
+      type: 'DefeatEnemy',
+      enemyId: instanceId('ghoul'),
+    });
 
-    const after = stateAfter(ctx, defeated, next);
+    const after = stateAfter(context, defeated, next);
 
     expect(after.meta).toMatchObject({ phase: 'enemy', steps: [] });
   });
 });
 
 describe('upkeep phase', () => {
-  const aliceInHall = [makeInvestigator({ id: 'alice', locationId: hall })];
-
   it('resets the remaining actions of each active investigator to 3 (4.2)', () => {
+    const { context, state: started } = aliceAndBobInHall.start();
     const state = stateAfter(
-      ctx,
-      startedWith([
-        makeInvestigator({ id: 'alice', seat: 0, locationId: hall }),
-        makeInvestigator({ id: 'bob', seat: 1, locationId: hall }),
-      ]),
+      context,
+      started,
       next,
       { type: 'AdjustActions', investigatorId: alice, delta: -3 },
       { type: 'AdjustActions', investigatorId: bob, delta: 1 },
       ...turnsOf(alice, bob),
     );
 
-    const upkeep = stateAfter(ctx, state, next, next);
+    const upkeep = stateAfter(context, state, next, next);
 
     expect(upkeep.investigators.map((inv) => [inv.id, inv.actionsRemaining])).toEqual([
       ['alice', 3],
@@ -583,14 +493,17 @@ describe('upkeep phase', () => {
   });
 
   it('readies exhausted enemies (4.3), which engage investigators at their location', () => {
+    const { context, state: started } = aliceInHall
+      .withCard(instanceId('ghoul'), ghoulCard, atLocation(hall))
+      .start();
     const state = stateAfter(
-      ctx,
-      startedWith(aliceInHall, [placed('ghoul', 'ghoul', at(hall))]),
+      context,
+      started,
       { type: 'DisengageEnemy', enemyId: instanceId('ghoul') },
       { type: 'ExhaustEnemy', enemyId: instanceId('ghoul') },
     );
 
-    const upkeep = stateAfter(ctx, state, next, ...turnsOf(alice), next, next);
+    const upkeep = stateAfter(context, state, next, ...turnsOf(alice), next, next);
 
     expect(upkeep.cards[instanceId('ghoul')]).toMatchObject({
       exhausted: false,
@@ -599,24 +512,19 @@ describe('upkeep phase', () => {
   });
 
   it('gives each active investigator 1 resource (4.4)', () => {
+    const { context, state: started } = table
+      .withInvestigator(alice, { locationId: hall, resources: 0 })
+      .withInvestigator(bob, { locationId: hall, resources: 0, sanity: { max: 3, horror: 0 } })
+      .start();
     const state = stateAfter(
-      ctx,
-      startedWith([
-        makeInvestigator({ id: 'alice', seat: 0, locationId: hall, resources: 0 }),
-        makeInvestigator({
-          id: 'bob',
-          seat: 1,
-          locationId: hall,
-          resources: 0,
-          sanity: { max: 3, horror: 0 },
-        }),
-      ]),
+      context,
+      started,
       next,
       { type: 'AdjustInvestigator', investigatorId: bob, stat: 'horror', delta: 3 },
       ...turnsOf(alice),
     );
 
-    const upkeep = stateAfter(ctx, state, next, next);
+    const upkeep = stateAfter(context, state, next, next);
 
     expect(upkeep.investigators.map((inv) => [inv.id, inv.resources])).toEqual([
       ['alice', 1],
@@ -625,18 +533,19 @@ describe('upkeep phase', () => {
   });
 
   it('ends the round (4.6): fires onRoundEnd and clears the turns taken', () => {
-    const cluePerRound = withScenario(ctx, {
-      hooks: {
+    const { context: cluePerRound, state } = aliceInHall
+      .withHooks({
         onRoundEnd: (_ctx, _state, event) => [
-          { type: 'AdjustInvestigator', investigatorId: alice, stat: 'clues', delta: event.round },
+          {
+            type: 'AdjustInvestigator',
+            investigatorId: alice,
+            stat: 'clues',
+            delta: event.round,
+          },
         ],
-      },
-    });
-    const enemy = runFrom(cluePerRound, startedWith(aliceInHall), [
-      next,
-      ...turnsOf(alice),
-      next,
-    ]).state;
+      })
+      .start();
+    const enemy = runFrom(cluePerRound, state, [next, ...turnsOf(alice), next]).state;
 
     const upkeep = runFrom(cluePerRound, enemy, [next]).state;
 
@@ -647,32 +556,29 @@ describe('upkeep phase', () => {
   });
 
   it('ends the round (4.6) by discarding the cards that last until the end of the round', () => {
-    const threatArea: Zone = { kind: 'threatArea', investigatorId: alice };
-    const state = startedWith(aliceInHall, [
-      placed('dissonant_voices', 'dissonant_voices', threatArea),
-      placed('plain_treachery', 'plain_treachery', threatArea),
-    ]);
-    const enemy = stateAfter(ctx, state, next, ...turnsOf(alice), next);
+    const { context, state } = aliceInHall
+      .withCard(instanceId('dissonant_voices'), dissonantVoices, threatAreaOf(alice))
+      .withCard(instanceId('plain_treachery'), plainTreachery, threatAreaOf(alice))
+      .start();
+    const enemy = stateAfter(context, state, next, ...turnsOf(alice), next);
 
-    const upkeep = stateAfter(ctx, enemy, next);
+    const upkeep = stateAfter(context, enemy, next);
 
     expect(upkeep.cards[instanceId('dissonant_voices')]!.zone).toEqual({
       kind: 'encounterDiscard',
     });
-    expect(upkeep.cards[instanceId('plain_treachery')]!.zone).toEqual(threatArea);
+    expect(upkeep.cards[instanceId('plain_treachery')]!.zone).toEqual(threatAreaOf(alice));
   });
 });
 
 describe('investigation phase', () => {
   it('lets the investigators advance the act during a turn', () => {
-    const turn = stateAfter(
-      ctx,
-      startedWith([makeInvestigator({ id: 'alice', locationId: hall, clues: 1 })]),
-      next,
-      { type: 'StartTurn', investigatorId: alice },
-    );
+    const { context, state } = table
+      .withInvestigator(alice, { locationId: hall, clues: 1 })
+      .start();
+    const turn = stateAfter(context, state, next, { type: 'StartTurn', investigatorId: alice });
 
-    const after = stateAfter(ctx, turn, {
+    const after = stateAfter(context, turn, {
       type: 'AdvanceAct',
       spend: [{ investigatorId: alice, amount: 1 }],
     });

@@ -1,7 +1,6 @@
 import {
   blankInvestigator,
   investigatorCardStats,
-  type BlankInvestigatorFields,
   type CardStats,
   type GameState,
   type Investigator,
@@ -10,42 +9,27 @@ import {
 } from '../../src/index';
 
 /**
- * `blankInvestigator` with the ID among the fields, the form the tests not yet
- * built with `newGame()` use; M1V.3 slice 4 removes it.
- */
-export function makeInvestigator({
-  id,
-  ...fields
-}: BlankInvestigatorFields & { id: string }): Investigator {
-  return blankInvestigator(id, fields);
-}
-
-/**
  * Four invented investigators with distinct health and sanity, so tests about
  * prey, defeat or seat order can tell them apart. Each one's card code is its ID.
  * `investigators(n)` takes the first `n` in seat order.
  */
 export const standardInvestigators: readonly Investigator[] = [
-  makeInvestigator({
-    id: 'tank',
+  blankInvestigator('tank', {
     seat: 0,
     health: { max: 9, damage: 0 },
     sanity: { max: 5, horror: 0 },
   }),
-  makeInvestigator({
-    id: 'seeker',
+  blankInvestigator('seeker', {
     seat: 1,
     health: { max: 6, damage: 0 },
     sanity: { max: 9, horror: 0 },
   }),
-  makeInvestigator({
-    id: 'rogue',
+  blankInvestigator('rogue', {
     seat: 2,
     health: { max: 7, damage: 0 },
     sanity: { max: 7, horror: 0 },
   }),
-  makeInvestigator({
-    id: 'mystic',
+  blankInvestigator('mystic', {
     seat: 3,
     health: { max: 5, damage: 0 },
     sanity: { max: 8, horror: 0 },
@@ -59,7 +43,7 @@ export function investigators(count: number): Investigator[] {
   return standardInvestigators.slice(0, count);
 }
 
-/** The standard investigators' cards, so `compileSetup` can seat them; in `testContext` and `contextWith`. */
+/** The standard investigators' cards, so `compileSetup` can seat them. */
 export const standardInvestigatorCards: readonly CardStats[] = standardInvestigators.map((inv) =>
   investigatorCardStats({
     code: inv.code,
