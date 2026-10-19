@@ -78,10 +78,10 @@ export interface CommandSpec<C extends Command> {
   allowedAfterEnd?: true;
   /**
    * The command as an action that provokes attacks of opportunity, if it is
-   * one; `handle` asks only for a player command in that investigator's own
-   * turn (`isOwnTurnAction`). The engine does not count actions (the players
-   * do, see `Investigator.actionsRemaining`), so it recognises only the
-   * action-like commands it sees. `Fight` and `Evade` never provoke: the
+   * one (`ActionCommand.asAction`); `handle` asks only for a player command
+   * in that investigator's own turn (`isOwnTurnAction`). The engine does not
+   * count actions (the players do, see `Investigator.actionsRemaining`), so
+   * it recognises only the action commands it sees. `Fight` and `Evade` never provoke: the
    * rules exempt them. `AdjustActions` does not either, even with a negative
    * delta: the players count off the actions the engine saw as well, so
    * treating every -1 as an action would ask twice for the same action, and
@@ -131,6 +131,11 @@ function placeDrawnCard(_command: DrawEncounter, own: readonly Event[]): Continu
   ];
 }
 
+/** `provokes` of the action commands: the command when the players took it as an action. */
+function asAction<C extends HeldAction>(command: C): C | undefined {
+  return command.asAction ? command : undefined;
+}
+
 /** One spec per command type; the mapped type makes a missing or mistyped entry a type error. */
 type CommandSpecs = { readonly [K in Command['type']]: CommandSpec<Extract<Command, { type: K }>> };
 
@@ -150,8 +155,7 @@ const COMMAND_SPECS: CommandSpecs = {
   RevealLocation: { handle: handleRevealLocation },
   MoveInvestigator: {
     handle: handleMoveInvestigator,
-    // A move that ignores connections is always a card effect, never the move action.
-    provokes: (command) => (command.ignoreConnections ? undefined : command),
+    provokes: asAction,
   },
   AdjustInvestigator: {
     handle: (_ctx, state, command) => handleAdjustInvestigator(state, command),
@@ -185,7 +189,7 @@ const COMMAND_SPECS: CommandSpecs = {
     // The other engaged enemies attack: the one being engaged is not engaged yet, and a massive
     // one cannot be engaged (`massiveNotEngageable`). An engagement by rule (entering a location
     // with a ready enemy) is part of the move, not an `EngageEnemy`.
-    provokes: (command) => command,
+    provokes: asAction,
   },
   DisengageEnemy: { handle: handleDisengageEnemy },
   DamageEnemy: { handle: handleDamageEnemy },
@@ -213,7 +217,7 @@ const COMMAND_SPECS: CommandSpecs = {
   AdjustActions: { handle: (_ctx, state, command) => handleAdjustActions(state, command) },
   ResolveEnemyAttack: { handle: handleResolveEnemyAttack },
   DealEnemyAttack: { handle: handleDealEnemyAttack },
-  Investigate: { handle: handleInvestigate, provokes: (command) => command },
+  Investigate: { handle: handleInvestigate, provokes: asAction },
   Fight: { handle: handleFight },
   Evade: { handle: handleEvade },
 };

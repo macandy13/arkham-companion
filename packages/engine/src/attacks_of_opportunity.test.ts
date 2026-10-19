@@ -42,7 +42,12 @@ const aliceInHall = hallAndCellar.withInvestigator(alice, { locationId: hall });
 /** Alice in the hall, engaged with the ghoul. */
 const ghoulOnAlice = aliceInHall.withCard(ghoul, ghoulCard, engagedWith(alice));
 
-const moveToCellar: Command = { type: 'MoveInvestigator', investigatorId: alice, to: cellar };
+const moveToCellar: Command = {
+  type: 'MoveInvestigator',
+  investigatorId: alice,
+  to: cellar,
+  asAction: true,
+};
 const ghoulAttack = decisionId(`attackOfOpportunity:${ghoul}`);
 
 /** From setup into round 1's investigation phase, then alice starts her turn. */
@@ -216,9 +221,27 @@ describe('attacks of opportunity', () => {
       type: 'EngageEnemy',
       enemyId: rat,
       investigatorId: alice,
+      asAction: true,
     });
 
     expect(pendingIds(after)).toEqual([`attackOfOpportunity:${ghoul}`]);
+  });
+
+  it('lets no enemy attack when a card effect makes bob`s rat engage alice', () => {
+    const bob = investigatorId('bob');
+    const { context, state: started } = ghoulOnAlice
+      .withInvestigator(bob, { locationId: hall })
+      .withCard(rat, ratCard, engagedWith(bob))
+      .start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
+
+    const after = stateAfter(context, state, {
+      type: 'EngageEnemy',
+      enemyId: rat,
+      investigatorId: alice,
+    });
+
+    expect(pendingIds(after)).toEqual([]);
   });
 
   it('includes a ready massive enemy at the investigator location', () => {
@@ -237,7 +260,15 @@ describe('attacks of opportunity', () => {
     ['a fight action', { type: 'Fight', investigatorId: alice, enemyId: ghoul }],
     ['an evade action', { type: 'Evade', investigatorId: alice, enemyId: ghoul }],
     ['counting off an action', { type: 'AdjustActions', investigatorId: alice, delta: -1 }],
-    ['a card effect moving her anywhere', { ...moveToCellar, ignoreConnections: true }],
+    [
+      'a card effect moving her to a connecting location',
+      { type: 'MoveInvestigator', investigatorId: alice, to: cellar },
+    ],
+    [
+      'a card effect moving her anywhere',
+      { type: 'MoveInvestigator', investigatorId: alice, to: cellar, ignoreConnections: true },
+    ],
+    ['a card effect making her investigate', { type: 'Investigate', investigatorId: alice }],
   ])('does not ask for %s', (_, command) => {
     const { context, state: started } = ghoulOnAlice.start();
     const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
@@ -387,7 +418,11 @@ describe('the action that provokes attacks of opportunity', () => {
     const { context, state: started } = ghoulOnAlice.start();
     const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
 
-    const asked = stateAfter(context, state, { type: 'Investigate', investigatorId: alice });
+    const asked = stateAfter(context, state, {
+      type: 'Investigate',
+      investigatorId: alice,
+      asAction: true,
+    });
     const answered = stateAfter(context, asked, answer(ghoulAttack, 'attack'));
 
     expect(pendingIds(asked)).toEqual([`attackOfOpportunity:${ghoul}`]);
@@ -415,9 +450,11 @@ describe('the action that provokes attacks of opportunity', () => {
     const { context, state: started } = ghoulOnAlice.start();
     const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
 
-    expect(
-      rejectionFrom(context, state, { type: 'MoveInvestigator', investigatorId: alice, to: hall }),
-    ).toEqual({ code: 'alreadyAtLocation', investigatorId: alice, locationId: hall });
+    expect(rejectionFrom(context, state, { ...moveToCellar, to: hall })).toEqual({
+      code: 'alreadyAtLocation',
+      investigatorId: alice,
+      locationId: hall,
+    });
   });
 });
 
@@ -429,7 +466,7 @@ describe('several steps waiting in the queue', () => {
   };
   const investigateHall: QueuedStep = {
     kind: 'action',
-    command: { type: 'Investigate', investigatorId: alice },
+    command: { type: 'Investigate', investigatorId: alice, asAction: true },
   };
   const surgeFromEmptyDeck: QueuedStep = {
     kind: 'surge',

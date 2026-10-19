@@ -185,6 +185,18 @@ export interface RevealLocation {
 }
 
 /**
+ * A command that can be taken as an action. Only spending an action provokes
+ * attacks of opportunity, so `asAction` is set when an action is spent on it:
+ * a basic action, or a card ability that costs an action. The same command
+ * from an effect that spends none (a treachery moving someone, a scenario
+ * step, a fast ability) leaves it out. `CommandSpec.provokes` reads it.
+ */
+export interface ActionCommand {
+  /** Taken as the investigator's action. Default: a card effect. */
+  asAction?: true;
+}
+
+/**
  * Moves an active investigator to a location on a map. Normally the destination
  * must be a `neighbours` of the current location. Card effects that move an
  * investigator "to any location" set `ignoreConnections`; the destination must
@@ -194,7 +206,7 @@ export interface RevealLocation {
  * a `chooseInvestigator` decision) for each ready enemy waiting there, unless
  * `avoidEngagement` is set.
  */
-export interface MoveInvestigator {
+export interface MoveInvestigator extends ActionCommand {
   type: 'MoveInvestigator';
   investigatorId: InvestigatorId;
   to: InstanceId;
@@ -421,7 +433,7 @@ export interface SpawnEnemy {
  * unengaged enemy must be at the investigator's location; an engaged one
  * switches investigator). Produces `EnemyEngaged`.
  */
-export interface EngageEnemy {
+export interface EngageEnemy extends ActionCommand {
   type: 'EngageEnemy';
   enemyId: InstanceId;
   investigatorId: InvestigatorId;
@@ -702,7 +714,7 @@ export interface DealEnemyAttack {
  * without clues makes the pass do nothing. Skipping the test and using
  * `DiscoverClues` directly is equally valid. Produces `DecisionRequested`.
  */
-export interface Investigate {
+export interface Investigate extends ActionCommand {
   type: 'Investigate';
   investigatorId: InvestigatorId;
 }

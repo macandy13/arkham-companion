@@ -43,7 +43,7 @@ Ref: architecture "Command handling", "Triggers and card effects"; [rules.md](..
 
 Follow-ups: simultaneous ordering and "when" hooks wait for the decision on the architecture review's timing windows. With the queue, the fixed order of two forced abilities on one timing point is binding: a hook bundling several should raise an ordering decision for the lead. A hook on `DecisionResolved` must fire after the chosen option (only `SkillTestResolved` triggers come before it, ST.6).
 
-Next after slice 3 (agreed in the #105 review): `MoveInvestigator`, `Investigate` and `EngageEnemy` get an `asAction` flag that the action buttons set, and `provokes` reads it instead of inferring the move action from `ignoreConnections` (today a card effect moving an investigator to a connecting location wrongly provokes attacks of opportunity). Then M1V.2.
+Done after slice 3: `MoveInvestigator`, `Investigate` and `EngageEnemy` carry an `asAction` flag, and only a command with it provokes attacks of opportunity; before, a card effect moving an investigator to a connecting location provoked too. The web app sends none of these commands yet; its action buttons must set the flag. Next: M1V.2.
 
 ## M1V.2 Edge case tests (S)
 
