@@ -199,12 +199,25 @@ export class PlayTable {
   }
 
   /**
+   * Plays `steps` (several verbs, e.g. a move and the investigate after it) as one step: one undo
+   * group, and if any part fails the table stays as it was before all of them.
+   */
+  step(steps: () => void): void {
+    this.atomically(steps);
+  }
+
+  /** Whether `undo` has a step to take back, i.e. more than the start is in the log. */
+  get canUndo(): boolean {
+    return undoLastGroup(this.log).kept.length > 0;
+  }
+
+  /**
    * Takes back the last step with everything it caused (the store's
    * `undoLast`): its group leaves the log and the state is replayed from what
    * remains. Fails if only the start is left, which is the game itself.
    */
   undo(): void {
-    const kept = undoLastGroup(this.log).kept;
+    const { kept } = undoLastGroup(this.log);
     if (kept.length === 0) throw this.error('nothing to undo: only the start is left');
     const state = replay(kept.map((entry) => entry.event));
     this.assertConsistent('undo', state);
