@@ -185,10 +185,11 @@ export interface RevealLocation {
 }
 
 /**
- * A command that can be taken as an action. Only an action provokes attacks
- * of opportunity, so the players' action buttons set `asAction`; the same
- * command from a card effect or a scenario step (a treachery moving someone,
- * an enemy engaging by rule) leaves it out. `CommandSpec.provokes` reads it.
+ * A command that can be taken as an action. Only spending an action provokes
+ * attacks of opportunity, so `asAction` is set when an action is spent on it:
+ * a basic action, or a card ability that costs an action. The same command
+ * from an effect that spends none (a treachery moving someone, a scenario
+ * step, a fast ability) leaves it out. `CommandSpec.provokes` reads it.
  */
 export interface ActionCommand {
   /** Taken as the investigator's action. Default: a card effect. */

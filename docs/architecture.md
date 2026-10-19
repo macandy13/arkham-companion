@@ -177,7 +177,7 @@ The result is one list of events per player command. The store files them under 
 
 **Extension points**
 
-- **A new command:** add its type to the `Command` union in [`commands.ts`](../packages/engine/src/commands.ts), its handler in the matching `handle_<area>.ts` and its entry in `COMMAND_SPECS` ([`command_specs.ts`](../packages/engine/src/command_specs.ts)), with tests that call `handle`. The compiler rejects a command without an entry. The entry's optional fields decide whether it fires triggers, may run while a decision is pending or after the end, provokes attacks of opportunity, or continues after its forced effects.
+- **A new command:** add its type to the `Command` union in [`commands.ts`](../packages/engine/src/commands.ts), its handler in the matching `handle_<area>.ts` and its entry in `COMMAND_SPECS` ([`command_specs.ts`](../packages/engine/src/command_specs.ts)), with tests that call `handle`. The compiler rejects a command without an entry. The entry's optional fields decide whether it fires triggers, may run while a decision is pending or after the end, provokes attacks of opportunity, or continues after its forced effects. A command that can be taken as an action extends `ActionCommand` and uses `provokes: asAction`, so it provokes only when an action was spent on it.
 - **A new event:** reuse an existing one if you can. Otherwise add its type in [`events.ts`](../packages/engine/src/events.ts) and its case in `apply` ([`reducer.ts`](../packages/engine/src/reducer.ts)); the case must not validate anything.
 - **A new reason to refuse:** add a `RejectionCode` with the fields the UI needs to explain it in [`rejection.ts`](../packages/engine/src/rejection.ts).
 

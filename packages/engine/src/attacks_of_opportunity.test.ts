@@ -227,6 +227,23 @@ describe('attacks of opportunity', () => {
     expect(pendingIds(after)).toEqual([`attackOfOpportunity:${ghoul}`]);
   });
 
+  it('lets no enemy attack when a card effect makes bob`s rat engage alice', () => {
+    const bob = investigatorId('bob');
+    const { context, state: started } = ghoulOnAlice
+      .withInvestigator(bob, { locationId: hall })
+      .withCard(rat, ratCard, engagedWith(bob))
+      .start();
+    const state = stateAfter(context, started, nextPhase, aliceStartsTurn);
+
+    const after = stateAfter(context, state, {
+      type: 'EngageEnemy',
+      enemyId: rat,
+      investigatorId: alice,
+    });
+
+    expect(pendingIds(after)).toEqual([]);
+  });
+
   it('includes a ready massive enemy at the investigator location', () => {
     const brute = instanceId('brute');
     const { context, state: started } = aliceInHall
