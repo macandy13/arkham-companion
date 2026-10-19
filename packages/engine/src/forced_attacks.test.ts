@@ -11,7 +11,7 @@ import {
   type Command,
   type GameState,
 } from './index';
-import { investigatorOf, stateAfter } from '../test/utils';
+import { answer, investigatorOf, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -42,10 +42,6 @@ const aliceAndBobInStudy = newGame()
   .withLocation(study, blankLocation('study'))
   .withInvestigator(alice, { locationId: study })
   .withInvestigator(bob, { locationId: study });
-
-function answer(decision: string, optionId: string): Command {
-  return { type: 'ResolveDecision', decisionId: decisionId(decision), optionId };
-}
 
 function wounds(state: GameState, investigator: typeof alice) {
   const { health, sanity } = investigatorOf(state, investigator);

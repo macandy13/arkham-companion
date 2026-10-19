@@ -23,7 +23,7 @@ import {
   type InvestigatorId,
   type Zone,
 } from './index';
-import { investigatorOf, rejectionFrom, stateAfter } from '../test/utils';
+import { answer, investigatorOf, rejectionFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -69,13 +69,6 @@ const takeHorror = (investigator: InvestigatorId, delta: number): Command => ({
   delta,
 });
 
-/** The group's answer to "who is the new lead investigator?". */
-const chooseLead = (investigator: InvestigatorId): Command => ({
-  type: 'ResolveDecision',
-  decisionId: decisionId('newLeadInvestigator'),
-  optionId: investigator,
-});
-
 /** Ids of the cards in `zone`, top first. */
 function idsIn(state: GameState, zone: Zone): string[] {
   return state.order[zoneKey(zone)] ?? [];
@@ -100,10 +93,10 @@ const threeInvestigators = newGame()
 
 /** Round 1's investigation phase with alice's turn in progress and her ghoul exhausted. */
 function aliceTurn(): BuiltGame {
-  const { context, state } = threeInvestigators.start();
+  const { context, state } = threeInvestigators.withTurnOf(alice).start();
   return {
     context,
-    state: stateAfter(context, state, nextPhase, startTurn(alice), {
+    state: stateAfter(context, state, {
       type: 'ExhaustEnemy',
       enemyId: aliceGhoul,
     }),
@@ -160,7 +153,7 @@ describe('an investigator who leaves', () => {
       context,
       state,
       resign(alice),
-      chooseLead(bob),
+      answer('newLeadInvestigator', bob),
       startTurn(bob),
       endTurn(bob),
       startTurn(carol),
@@ -172,7 +165,7 @@ describe('an investigator who leaves', () => {
 
   it('cannot start a turn', () => {
     const { context, state } = aliceTurn();
-    const resigned = stateAfter(context, state, resign(alice), chooseLead(bob));
+    const resigned = stateAfter(context, state, resign(alice), answer('newLeadInvestigator', bob));
 
     expect(rejectionFrom(context, resigned, startTurn(alice))).toEqual({
       code: 'investigatorNotActive',
@@ -213,15 +206,10 @@ describe('an investigator who leaves', () => {
     const attachedFear = instanceId('attached_fear');
     const { context, state: withAttachment } = threeInvestigators
       .withCard(attachedFear, frozenInFearCard, attachedTo(frozenInFear), { tokens: { doom: 1 } })
+      .withTurnOf(alice)
       .start();
 
-    const resigned = stateAfter(
-      context,
-      withAttachment,
-      nextPhase,
-      startTurn(alice),
-      resign(alice),
-    );
+    const resigned = stateAfter(context, withAttachment, resign(alice));
 
     expect(idsIn(resigned, { kind: 'encounterDiscard' })).toEqual([frozenInFear, attachedFear]);
     expect(resigned.cards[attachedFear]?.tokens).toEqual({});
@@ -292,7 +280,7 @@ describe('the lead investigator leaving', () => {
     const { context, state } = aliceTurn();
     const resigned = stateAfter(context, state, resign(alice));
 
-    const chosen = stateAfter(context, resigned, chooseLead(carol));
+    const chosen = stateAfter(context, resigned, answer('newLeadInvestigator', carol));
 
     expect(chosen.meta.leadInvestigator).toBe(carol);
     expect(chosen.pending).toEqual([]);
@@ -393,7 +381,7 @@ describe('DefeatInvestigator', () => {
 
   it('rejects an investigator who already left', () => {
     const { context, state } = aliceTurn();
-    const resigned = stateAfter(context, state, resign(alice), chooseLead(bob));
+    const resigned = stateAfter(context, state, resign(alice), answer('newLeadInvestigator', bob));
 
     expect(rejectionFrom(context, resigned, defeat(alice))).toEqual({
       code: 'investigatorNotActive',
@@ -435,7 +423,13 @@ describe('Resign', () => {
 
   it('rejects an investigator who already left', () => {
     const { context, state } = aliceTurn();
-    const resigned = stateAfter(context, state, resign(alice), chooseLead(bob), startTurn(bob));
+    const resigned = stateAfter(
+      context,
+      state,
+      resign(alice),
+      answer('newLeadInvestigator', bob),
+      startTurn(bob),
+    );
 
     expect(rejectionFrom(context, resigned, resign(alice))).toEqual({
       code: 'investigatorNotActive',

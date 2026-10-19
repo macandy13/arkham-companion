@@ -123,12 +123,22 @@ export function apply(state: GameState, event: Event): GameState {
       }));
     case 'TurnEnded':
       return endTurn(state, event.investigatorId);
-    case 'ActionHeld':
-      return { ...state, meta: { ...state.meta, heldAction: event.command } };
-    case 'ActionResumed':
+    case 'StepsQueued':
+      return {
+        ...state,
+        meta: { ...state.meta, queue: [...event.steps, ...(state.meta.queue ?? [])] },
+      };
+    case 'StepResumed':
     case 'ActionDropped':
-      return { ...state, meta: withoutKey(state.meta, 'heldAction') };
+      return withoutFirstQueuedStep(state);
   }
+}
+
+/** Takes the step that resolves now off `GameMeta.queue`, dropping the queue once it is empty. */
+function withoutFirstQueuedStep(state: GameState): GameState {
+  const rest = state.meta.queue?.slice(1) ?? [];
+  const meta = withoutKey(state.meta, 'queue');
+  return { ...state, meta: rest.length > 0 ? { ...meta, queue: rest } : meta };
 }
 
 /** Folds a list of events over an initial state (default: empty state). */
