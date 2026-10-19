@@ -43,6 +43,8 @@ Ref: architecture "Command handling", "Triggers and card effects"; [rules.md](..
 
 Follow-ups: simultaneous ordering and "when" hooks wait for the decision on the architecture review's timing windows. With the queue, the fixed order of two forced abilities on one timing point is binding: a hook bundling several should raise an ordering decision for the lead. A hook on `DecisionResolved` must fire after the chosen option (only `SkillTestResolved` triggers come before it, ST.6).
 
+Next after slice 3 (agreed in the #105 review): `MoveInvestigator`, `Investigate` and `EngageEnemy` get an `asAction` flag that the action buttons set, and `provokes` reads it instead of inferring the move action from `ignoreConnections` (today a card effect moving an investigator to a connecting location wrongly provokes attacks of opportunity). Then M1V.2.
+
 ## M1V.2 Edge case tests (S)
 
 **Why:** most engine tests follow the happy path; the rules bugs found in review came from interactions (hunter order, attacks of opportunity, turn structure).
@@ -51,6 +53,7 @@ Follow-ups: simultaneous ordering and "when" hooks wait for the decision on the 
 
 - [ ] Collect interaction cases from `docs/rules.md` and past review comments (e.g. a defeated investigator during their own turn, an empty encounter deck during a surge, an agenda advancing during the enemy phase)
 - [ ] One table test per case, written so the reader sees the table situation in the test body
+- [ ] Put them in one engine suite of their own (`timing.test.ts`), one short named game per corner case on the builder, played through the public commands. Start with the cases slice 3 of M1V.1 fixed: an attack of opportunity holding a move, moves queued behind it, a surge waiting on a revelation's question and after a defeat, a hunter's tie inside the order question, a last act's question before the resolution, a hook asking two questions. Each later corner case adds one entry.
 
 ## M1V.3 Test table builder (S)
 
