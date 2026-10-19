@@ -678,6 +678,34 @@ describe('undo', () => {
     expect(table.state).toEqual(stateBefore);
   });
 
+  it('takes back several verbs played as one step together', () => {
+    const table = PlayTable.start(game);
+    const stateBefore = table.state;
+    table.step(() => {
+      table.takeDamage(alice, 1);
+      table.takeHorror(alice, 1);
+    });
+
+    table.undo();
+
+    expect(table.state).toEqual(stateBefore);
+  });
+
+  it('keeps nothing of a step whose second verb is refused', () => {
+    const table = PlayTable.start(game);
+    const stateBefore = table.state;
+
+    expect(() =>
+      table.step(() => {
+        table.takeDamage(alice, 1);
+        table.endTurn(alice);
+      }),
+    ).toThrow(TableRejected);
+
+    expect(table.state).toBe(stateBefore);
+    expect(table.canUndo).toBe(false);
+  });
+
   it('refuses to take back the start', () => {
     const table = PlayTable.start(game);
     const stateBefore = table.state;
