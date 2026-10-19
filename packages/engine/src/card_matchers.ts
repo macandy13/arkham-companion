@@ -196,7 +196,11 @@ export function matchingInvestigators(
   });
 }
 
-/** The matcher in words for an error message: `named "Hallway"`, `with id study`, `with code 01111`, `with id, code or name "hall"`. */
+/**
+ * The matcher in words for an error message: `named "Hallway"`, `with id study`,
+ * `with code 01111`, `with id, code or name "hall"`, and for an enemy
+ * `named "Rat" engaged with an investigator with id daisy at a location with id study`.
+ */
 export function describeMatcher(matcher: EnemyMatcher | InvestigatorMatcher): string {
   switch (matcher.by) {
     case 'enemy':
