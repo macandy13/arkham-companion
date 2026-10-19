@@ -10,6 +10,20 @@ Goal: the in-game screen from product.md "UI concept", wired to the M1 engine, s
 
 All UI actions dispatch engine commands through the Zustand store; no component mutates state.
 
+**Slices** (one small PR each, in this order)
+
+1. M3.1a: store `dispatch` and `undo`, context rebuilt on open, refusals kept on the open game
+2. M3.1b: toast for refused commands, selectors for derived values
+3. M3.2: header
+4. M3.3a: static SVG map with location tiles and connections
+5. M3.3b: pan/zoom/pinch, pawns, enemy chips, map tabs
+6. M3.4: board interactions
+7. M3.5: investigator bar
+8. M3.6: encounter panel
+9. M3.7: decision dialog and card zoom
+10. M3.8: event log
+11. M3.9: tablet pass and E2E
+
 ---
 
 ## M3.1 Game store and command dispatch (O)
@@ -18,10 +32,12 @@ All UI actions dispatch engine commands through the Zustand store; no component 
 
 **Benefit:** Components stay simple, and the screen can never drift from the saved game.
 
-- [ ] Zustand store: current `GameState`, `dispatch(command)` → `handle` → persist events via `GameStore` → apply → re-render
-- [ ] Opening a saved game rebuilds its `EngineContext` (cards and `scenario`) from the catalog entry for `meta.scenarioId` (`findScenario`), so hooks and the reference card apply to its commands
+- [x] Zustand store: current `GameState`, `dispatch(command)` → `handle` → persist events via `GameStore` → apply → re-render
+- [x] Opening a saved game rebuilds its `EngineContext` (cards and `scenario`) from the catalog entry for `meta.scenarioId` (`findScenario`), so hooks and the reference card apply to its commands
 - [ ] Rejected commands show a toast with the reason
 - [ ] Undo wired to the M1 undo; selectors for derived values (doom total, thresholds)
+
+M3.1a done: `dispatch`, `undo` and `dismissRejection` on the app store; the refusal is kept on `OpenGame.rejection`, and undo is in the store (the button comes with the header). Follow-up: a write that fails because another tab wrote first (`SeqConflictError`) should reload the game instead of only failing.
 
 ## M3.2 Header (S)
 

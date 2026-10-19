@@ -1,14 +1,20 @@
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import type {
+  Command,
   Difficulty,
+  ExecuteResult,
   GameId,
   GameState,
   GameStore,
   GameSummary,
   InvestigatorSeat,
+  LoadedGame,
+  Rejection,
   ScenarioContext,
+  ScenarioId,
 } from '@arkham/engine';
-import { emptyState, execute, scenario } from '@arkham/engine';
+import { CommandRejected, emptyState, execute, scenario, undoLastGroup } from '@arkham/engine';
+import { findScenario, type ScenarioEntry } from '../scenarios/scenarioCatalog';
 import { parseGameExport, serialiseGameExport } from '../storage/gameExport';
 
 /** Everything the new game wizard has decided; input to `AppState.startScenario`. */
@@ -28,11 +34,31 @@ export interface ScenarioStart {
   investigators: readonly InvestigatorSeat[];
 }
 
+/** The game on the play screen, as `AppState.openGame` loaded it and `dispatch` and `undo` keep it. */
+export interface OpenGame {
+  gameId: GameId;
+  /** Always the result of replaying the game's event log. */
+  state: GameState;
+  /** `seq` of the last stored event; the next write expects it, so a second tab can't interleave. */
+  lastSeq: number;
+  /**
+   * The rules the game's commands run with, rebuilt from the scenario catalog entry for
+   * `state.meta.scenarioId`. Absent when the catalog has no such scenario (a game not set up yet,
+   * or one imported from a newer app): the game can then be shown but not played.
+   */
+  ctx?: ScenarioContext;
+  /** Why the last command was refused, until the next command or `dismissRejection`. */
+  rejection?: Rejection;
+}
+
+/** Looks a scenario up by id; `findScenario` in the app, a stub in tests. */
+export type ScenarioLookup = (id: ScenarioId) => ScenarioEntry | undefined;
+
 /** UI-facing state: the persisted game list plus the currently open game. */
 export interface AppState {
   games: GameSummary[];
-  /** Open game, if any; `state` is always the result of replaying its event log. */
-  current?: { gameId: GameId; state: GameState };
+  /** Open game, if any. */
+  current?: OpenGame;
   /** Reloads the game list from the `GameStore`. */
   refresh(): Promise<void>;
   /** Creates an empty game, reloads the list and opens it. */
@@ -43,6 +69,19 @@ export interface AppState {
    */
   startScenario(start: ScenarioStart): Promise<GameId>;
   openGame(gameId: GameId): Promise<void>;
+  /**
+   * Runs `command` on the open game and stores its events before showing the new state. A refused
+   * command stores nothing and sets `current.rejection`. Commands run one after another in the
+   * order they were sent, so two quick taps never both build on the same state.
+   */
+  dispatch(command: Command): Promise<void>;
+  /**
+   * Takes back the open game's last command with its whole chain (`GameStore.undoLast`). Never
+   * takes back the scenario start, which would leave a game with nothing to play.
+   */
+  undo(): Promise<void>;
+  /** Clears `current.rejection` once the screen has shown it. */
+  dismissRejection(): void;
   /** Renames a saved game and reloads the list. */
   renameGame(gameId: GameId, title: string): Promise<void>;
   /** Copies a saved game under `title` and reloads the list; returns the copy's id. */
@@ -58,61 +97,156 @@ export interface AppState {
   importGame(text: string): Promise<GameId>;
 }
 
+/** The rules a loaded game runs with: its catalog scenario's definition and cards. */
+function contextFor(state: GameState, scenarios: ScenarioLookup): ScenarioContext | undefined {
+  const entry = scenarios(state.meta.scenarioId);
+  // Investigator cards are not needed: after setup the engine reads investigators from the state.
+  return entry && { cards: entry.cards, scenario: entry.definition };
+}
+
+/** `execute`, with a refusal returned as a value: it is an expected answer, not a failure. */
+function executeOrRefuse(
+  ctx: ScenarioContext,
+  state: GameState,
+  command: Command,
+): ExecuteResult | { rejection: Rejection } {
+  try {
+    return execute(ctx, state, command);
+  } catch (error) {
+    if (error instanceof CommandRejected) return { rejection: error.rejection };
+    throw error;
+  }
+}
+
 /**
  * Builds the app store around a `GameStore`. It is a factory (not a singleton)
- * so tests can inject an in-memory database; the app never touches IndexedDB
- * directly (CLAUDE.md ground rules). Engine commands will be dispatched from
- * here via `execute` + `appendEvents` once scenarios exist.
+ * so tests can inject an in-memory database and their own scenarios; the app
+ * never touches IndexedDB directly (CLAUDE.md ground rules). It is the only
+ * place that runs engine commands (`execute`) and writes their events.
  */
-export function createAppStore(gameStore: GameStore): StoreApi<AppState> {
-  return createStore<AppState>((set, get) => ({
-    games: [],
-    async refresh() {
-      set({ games: await gameStore.listGames() });
-    },
-    async newGame() {
-      const gameId = await gameStore.createGame({});
-      await get().refresh();
-      await get().openGame(gameId);
-      return gameId;
-    },
-    async startScenario({ title, ctx, difficulty, seed, investigators }) {
-      const command = scenario.compileSetup(ctx, { difficulty, seed, investigators });
-      const { events } = execute(ctx, emptyState(), command);
-      const gameId = await gameStore.createGame({ title });
-      await gameStore.appendEvents(gameId, events);
-      await get().refresh();
-      await get().openGame(gameId);
-      return gameId;
-    },
-    async openGame(gameId) {
-      const loaded = await gameStore.loadGame(gameId);
-      set({ current: { gameId, state: loaded?.state ?? emptyState() } });
-    },
-    async renameGame(gameId, title) {
-      await gameStore.renameGame(gameId, title);
-      await get().refresh();
-    },
-    async duplicateGame(gameId, title) {
-      const copyId = await gameStore.duplicateGame(gameId, title);
-      await get().refresh();
-      return copyId;
-    },
-    async deleteGame(gameId) {
-      await gameStore.deleteGame(gameId);
-      if (get().current?.gameId === gameId) set({ current: undefined });
-      await get().refresh();
-    },
-    async exportGame(gameId) {
-      const loaded = await gameStore.loadGame(gameId);
-      if (!loaded) throw new Error(`Unknown game ${gameId}`);
-      const { title, createdAt } = loaded.summary;
-      return serialiseGameExport(title, createdAt, await gameStore.loadEvents(gameId));
-    },
-    async importGame(text) {
-      const gameId = await gameStore.importGame(parseGameExport(text));
-      await get().refresh();
-      return gameId;
-    },
-  }));
+export function createAppStore(
+  gameStore: GameStore,
+  scenarios: ScenarioLookup = findScenario,
+): StoreApi<AppState> {
+  return createStore<AppState>((set, get) => {
+    // Each command must see the state its predecessor left, so they run strictly one at a time.
+    let commandQueue = Promise.resolve();
+
+    function showLoaded(gameId: GameId, loaded: LoadedGame | undefined): void {
+      const state = loaded?.state ?? emptyState();
+      set({
+        current: {
+          gameId,
+          state,
+          lastSeq: loaded?.summary.lastSeq ?? 0,
+          ctx: contextFor(state, scenarios),
+        },
+      });
+    }
+
+    /** The open game if it is still `gameId`: the player may have left it while a write was pending. */
+    function stillOpen(gameId: GameId): OpenGame | undefined {
+      const current = get().current;
+      return current?.gameId === gameId ? current : undefined;
+    }
+
+    async function runCommand(command: Command): Promise<void> {
+      const open = get().current;
+      if (!open?.ctx) throw new Error(`No playable game is open for ${command.type}`);
+      const result = executeOrRefuse(open.ctx, open.state, command);
+      if ('rejection' in result) {
+        set({ current: { ...open, rejection: result.rejection } });
+        return;
+      }
+      const stored = await gameStore.appendEvents(open.gameId, result.events, open.lastSeq);
+      const now = stillOpen(open.gameId);
+      if (!now) return;
+      set({
+        current: {
+          ...now,
+          state: result.state,
+          lastSeq: stored.at(-1)?.seq ?? open.lastSeq,
+          rejection: undefined,
+        },
+      });
+    }
+
+    async function undoCommand(): Promise<void> {
+      const open = get().current;
+      if (!open) return;
+      const { kept } = undoLastGroup(await gameStore.loadEvents(open.gameId));
+      if (kept.length === 0) return;
+      const loaded = await gameStore.undoLast(open.gameId, open.lastSeq);
+      if (stillOpen(open.gameId)) showLoaded(open.gameId, loaded);
+    }
+
+    /** Puts `task` behind every command and undo sent before it; a failed one doesn't block the rest. */
+    function enqueue(task: () => Promise<void>): Promise<void> {
+      const run = commandQueue.then(task);
+      commandQueue = run.catch((error: unknown) => {
+        console.warn('A game command failed; nothing was stored for it.', error);
+      });
+      return run;
+    }
+
+    return {
+      games: [],
+      async refresh() {
+        set({ games: await gameStore.listGames() });
+      },
+      async newGame() {
+        const gameId = await gameStore.createGame({});
+        await get().refresh();
+        await get().openGame(gameId);
+        return gameId;
+      },
+      async startScenario({ title, ctx, difficulty, seed, investigators }) {
+        const command = scenario.compileSetup(ctx, { difficulty, seed, investigators });
+        const { events } = execute(ctx, emptyState(), command);
+        const gameId = await gameStore.createGame({ title });
+        await gameStore.appendEvents(gameId, events);
+        await get().refresh();
+        await get().openGame(gameId);
+        return gameId;
+      },
+      async openGame(gameId) {
+        showLoaded(gameId, await gameStore.loadGame(gameId));
+      },
+      dispatch(command) {
+        return enqueue(() => runCommand(command));
+      },
+      undo() {
+        return enqueue(undoCommand);
+      },
+      dismissRejection() {
+        const open = get().current;
+        if (open?.rejection) set({ current: { ...open, rejection: undefined } });
+      },
+      async renameGame(gameId, title) {
+        await gameStore.renameGame(gameId, title);
+        await get().refresh();
+      },
+      async duplicateGame(gameId, title) {
+        const copyId = await gameStore.duplicateGame(gameId, title);
+        await get().refresh();
+        return copyId;
+      },
+      async deleteGame(gameId) {
+        await gameStore.deleteGame(gameId);
+        if (get().current?.gameId === gameId) set({ current: undefined });
+        await get().refresh();
+      },
+      async exportGame(gameId) {
+        const loaded = await gameStore.loadGame(gameId);
+        if (!loaded) throw new Error(`Unknown game ${gameId}`);
+        const { title, createdAt } = loaded.summary;
+        return serialiseGameExport(title, createdAt, await gameStore.loadEvents(gameId));
+      },
+      async importGame(text) {
+        const gameId = await gameStore.importGame(parseGameExport(text));
+        await get().refresh();
+        return gameId;
+      },
+    };
+  });
 }

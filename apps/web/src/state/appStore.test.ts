@@ -78,7 +78,11 @@ describe('appStore', () => {
     const reopened = createAppStore(new IndexedDbStore(db));
     await reopened.getState().openGame(id);
 
-    expect(reopened.getState().current).toEqual({ gameId: id, state: replay([started, doom]) });
+    expect(reopened.getState().current).toMatchObject({
+      gameId: id,
+      state: replay([started, doom]),
+      lastSeq: 2,
+    });
   });
 
   it('exports a game and imports it as a new game with an identical state', async () => {
@@ -106,7 +110,7 @@ describe('appStore', () => {
     expect(store.getState().games).toEqual([]);
   });
 
-  describe('startScenario', () => {
+  describe('with The Gathering', () => {
     const alder: InvestigatorCard = {
       code: investigatorCode('alder'),
       name: 'Alder',
@@ -125,29 +129,138 @@ describe('appStore', () => {
       investigators: [{ id: investigatorId('alder'), code: alder.code }],
     };
 
-    it('stores the setup events as a new game and opens it', async () => {
-      const db = new IndexedDbStore('appstore-start-test');
-      const store = createAppStore(db);
+    describe('startScenario', () => {
+      it('stores the setup events as a new game and opens it', async () => {
+        const db = new IndexedDbStore('appstore-start-test');
+        const store = createAppStore(db);
 
-      const id = await store.getState().startScenario(start);
+        const id = await store.getState().startScenario(start);
 
-      expect(store.getState().current?.state.meta).toMatchObject({
-        scenarioId: 'the-gathering',
-        difficulty: 'easy',
+        expect(store.getState().current?.state.meta).toMatchObject({
+          scenarioId: 'the-gathering',
+          difficulty: 'easy',
+        });
+        expect((await db.loadGame(id))?.state).toEqual(store.getState().current?.state);
+        expect(store.getState().games.map((g) => g.title)).toEqual(['The Gathering']);
       });
-      expect((await db.loadGame(id))?.state).toEqual(store.getState().current?.state);
-      expect(store.getState().games.map((g) => g.title)).toEqual(['The Gathering']);
+
+      it('stores nothing when the setup is invalid', async () => {
+        const store = createAppStore(new IndexedDbStore('appstore-start-invalid-test'));
+        const broken = {
+          ...start,
+          ctx: { ...start.ctx, scenario: { ...theGathering, actDeck: [cardCode('missing')] } },
+        };
+
+        await expect(store.getState().startScenario(broken)).rejects.toThrow();
+        expect(store.getState().games).toEqual([]);
+      });
     });
 
-    it('stores nothing when the setup is invalid', async () => {
-      const store = createAppStore(new IndexedDbStore('appstore-start-invalid-test'));
-      const broken = {
-        ...start,
-        ctx: { ...start.ctx, scenario: { ...theGathering, actDeck: [cardCode('missing')] } },
-      };
+    describe('dispatch and undo', () => {
+      it('stores a command\'s events before showing them, so a "refresh" shows the same state', async () => {
+        const db = 'appstore-dispatch-test';
+        const store = createAppStore(new IndexedDbStore(db));
+        const id = await store.getState().startScenario(start);
 
-      await expect(store.getState().startScenario(broken)).rejects.toThrow();
-      expect(store.getState().games).toEqual([]);
+        await store.getState().dispatch({ type: 'NextPhase' });
+
+        expect(store.getState().current?.state.meta.phase).toBe('investigation');
+        const reopened = createAppStore(new IndexedDbStore(db));
+        await reopened.getState().openGame(id);
+        expect(reopened.getState().current?.state).toEqual(store.getState().current?.state);
+      });
+
+      it('rebuilds the scenario rules when a saved game is opened, so it can be played on', async () => {
+        const db = 'appstore-reopen-play-test';
+        const id = await createAppStore(new IndexedDbStore(db)).getState().startScenario(start);
+        const reopened = createAppStore(new IndexedDbStore(db));
+        await reopened.getState().openGame(id);
+
+        await reopened.getState().dispatch({ type: 'NextPhase' });
+
+        expect(reopened.getState().current?.ctx?.scenario).toBe(theGathering);
+        expect(reopened.getState().current?.state.meta.phase).toBe('investigation');
+      });
+
+      it("keeps a refused command's reason and stores nothing", async () => {
+        const store = createAppStore(new IndexedDbStore('appstore-refused-test'));
+        await store.getState().startScenario(start);
+        const before = store.getState().current;
+
+        await store
+          .getState()
+          .dispatch({ type: 'EndTurn', investigatorId: investigatorId('alder') });
+
+        expect(store.getState().current?.rejection).toMatchObject({
+          code: 'wrongPhase',
+          actual: 'setup',
+        });
+        expect(store.getState().current?.state).toBe(before?.state);
+        expect(store.getState().current?.lastSeq).toBe(before?.lastSeq);
+      });
+
+      it('clears the refusal once the next command succeeds', async () => {
+        const store = createAppStore(new IndexedDbStore('appstore-refused-clear-test'));
+        await store.getState().startScenario(start);
+        await store
+          .getState()
+          .dispatch({ type: 'EndTurn', investigatorId: investigatorId('alder') });
+
+        await store.getState().dispatch({ type: 'NextPhase' });
+
+        expect(store.getState().current?.rejection).toBeUndefined();
+      });
+
+      it('runs commands sent without waiting in the order they were sent', async () => {
+        const store = createAppStore(new IndexedDbStore('appstore-order-test'));
+        await store.getState().startScenario(start);
+
+        await Promise.all([
+          store.getState().dispatch({ type: 'NextPhase' }),
+          store.getState().dispatch({ type: 'StartTurn', investigatorId: investigatorId('alder') }),
+        ]);
+
+        expect(store.getState().current?.state.meta).toMatchObject({
+          phase: 'investigation',
+          turn: { investigatorId: 'alder' },
+        });
+      });
+
+      it('undoes the last command in memory and in storage', async () => {
+        const db = new IndexedDbStore('appstore-undo-test');
+        const store = createAppStore(db);
+        const id = await store.getState().startScenario(start);
+        const atSetup = store.getState().current?.state;
+        await store.getState().dispatch({ type: 'NextPhase' });
+
+        await store.getState().undo();
+
+        expect(store.getState().current?.state).toEqual(atSetup);
+        expect((await db.loadGame(id))?.state).toEqual(atSetup);
+      });
+
+      it('never undoes the scenario start', async () => {
+        const store = createAppStore(new IndexedDbStore('appstore-undo-start-test'));
+        await store.getState().startScenario(start);
+        const atSetup = store.getState().current?.state;
+
+        await store.getState().undo();
+
+        expect(store.getState().current?.state).toBe(atSetup);
+      });
+
+      it('refuses to play a game whose scenario is not in the catalog', async () => {
+        const store = createAppStore(
+          new IndexedDbStore('appstore-unknown-scenario-test'),
+          () => undefined,
+        );
+        await store.getState().startScenario(start);
+
+        await expect(store.getState().dispatch({ type: 'NextPhase' })).rejects.toThrow(
+          'No playable game is open',
+        );
+        expect(store.getState().current?.ctx).toBeUndefined();
+      });
     });
   });
 });
