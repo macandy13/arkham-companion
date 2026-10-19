@@ -10,9 +10,9 @@ import type {
   ScenarioContext,
   ScenarioId,
 } from '@arkham/engine';
-import { emptyState, execute, scenario } from '@arkham/engine';
+import { emptyState } from '@arkham/engine';
 import { gameActions, type GameActions } from './gameActions';
-import { GameSession, type PlayStep } from './gameSession';
+import { GameSession, startGame, type PlayStep } from './gameSession';
 import { findScenario, type ScenarioEntry } from '../scenarios/scenarioCatalog';
 import { parseGameExport, serialiseGameExport } from '../storage/gameExport';
 
@@ -60,8 +60,8 @@ export interface AppState {
   /** Creates an empty game, reloads the list and opens it. */
   newGame(): Promise<GameId>;
   /**
-   * Sets a scenario up (`compileSetup` + `StartScenario`), stores the resulting events as a new
-   * game and opens it. Rejects with `CommandRejected` for invalid scenario data before anything is stored.
+   * Sets a scenario up as a new saved game (`startGame`) and opens it. Rejects with
+   * `CommandRejected` for invalid scenario data before anything is stored.
    */
   startScenario(start: ScenarioStart): Promise<GameId>;
   openGame(gameId: GameId): Promise<void>;
@@ -102,8 +102,8 @@ function contextFor(
 /**
  * Builds the app store around a `GameStore`. It is a factory (not a singleton)
  * so tests can inject an in-memory database and their own scenarios; the app
- * never touches IndexedDB directly (CLAUDE.md ground rules). It is the only
- * place that runs engine commands (`execute`) and writes their events.
+ * never touches IndexedDB directly (CLAUDE.md ground rules). It plays the
+ * game only through `startGame` and a `GameSession`, never by running commands itself.
  */
 export function createAppStore(
   gameStore: GameStore,
@@ -173,10 +173,7 @@ export function createAppStore(
         return gameId;
       },
       async startScenario({ title, ctx, difficulty, seed, investigators }) {
-        const command = scenario.compileSetup(ctx, { difficulty, seed, investigators });
-        const { events } = execute(ctx, emptyState(), command);
-        const gameId = await gameStore.createGame({ title });
-        await gameStore.appendEvents(gameId, events);
+        const gameId = await startGame(gameStore, title, ctx, { difficulty, seed, investigators });
         await get().refresh();
         await get().openGame(gameId);
         return gameId;

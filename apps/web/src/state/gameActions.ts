@@ -1,10 +1,11 @@
-import type {
-  DecisionId,
-  InstanceId,
-  InvestigatorId,
-  InvestigatorStat,
-  PlayTable,
-  SkillTestResult,
+import {
+  CommandRejected,
+  type DecisionId,
+  type GameState,
+  type InstanceId,
+  type InvestigatorId,
+  type InvestigatorStat,
+  type PlayTable,
 } from '@arkham/engine';
 import { assertNever } from '@arkham/util';
 
@@ -20,43 +21,44 @@ export interface DecisionAmounts {
 }
 
 /**
- * What the play screen can do to the open game, in the players' words and with the ids the
- * screen holds. It mirrors `PlayTable`'s verbs, but with the screen's defaults: a skill test is
- * never assumed passed (the chaos bag is on the table), so an action leaves it open and the players
- * report it with `resolveTest`. Each call is one step: stored before it shows, one undo group,
- * and a refusal ends up in `OpenGame.rejection`.
+ * What the play screen can do to the open game, in the players' words. It mirrors `PlayTable`'s
+ * verbs, but with the screen's defaults:
+ * - An action is taken by the investigator whose turn it is, since the rules allow actions only
+ *   during one's own turn; without a turn it is refused with `noTurnInProgress`.
+ * - The decision dialog shows the first open decision, so an answer picks an option of that one;
+ *   without one it is refused with `noPendingDecision`.
+ * - A skill test is never assumed passed (the chaos bag is on the table): an action leaves it
+ *   open, and the players report it like any decision, by answering `pass` or `fail`.
+ *
+ * Each call is one step: stored before it shows, one undo group, and a refusal ends up in
+ * `OpenGame.rejection`.
  */
 export interface GameActions {
   /** The phase assistant's "Next". */
   nextPhase(): Promise<void>;
+  /** Begins the turn of `investigator`, whom the players picked. */
   startTurn(investigator: InvestigatorId): Promise<void>;
-  endTurn(investigator: InvestigatorId): Promise<void>;
-  resign(investigator: InvestigatorId): Promise<void>;
-  /** Changes the actions the investigator has left this round. */
-  adjustActions(investigator: InvestigatorId, delta: number): Promise<void>;
+  endTurn(): Promise<void>;
+  resign(): Promise<void>;
+  /** Changes the actions left this turn. */
+  adjustActions(delta: number): Promise<void>;
   /** A move action to a connected location. */
-  moveTo(investigator: InvestigatorId, location: InstanceId): Promise<void>;
-  /** An investigate action; its test stays open for `resolveTest`. */
-  investigate(investigator: InvestigatorId): Promise<void>;
-  /** A fight action; its test stays open for `resolveTest`. */
-  fight(investigator: InvestigatorId, enemy: InstanceId): Promise<void>;
-  /** An evade action; its test stays open for `resolveTest`. */
-  evade(investigator: InvestigatorId, enemy: InstanceId): Promise<void>;
+  moveTo(location: InstanceId): Promise<void>;
+  /** An investigate action; its test stays open as a decision. */
+  investigate(): Promise<void>;
+  /** A fight action; its test stays open as a decision. */
+  fight(enemy: InstanceId): Promise<void>;
+  /** An evade action; its test stays open as a decision. */
+  evade(enemy: InstanceId): Promise<void>;
   /** An engage action. */
-  engage(investigator: InvestigatorId, enemy: InstanceId): Promise<void>;
-  /** Reports the open skill test of `investigator`; `amount` is the count a pass confirms. */
-  resolveTest(
-    investigator: InvestigatorId,
-    result: SkillTestResult,
-    amount?: number,
-  ): Promise<void>;
-  /** Picks `option` of the open `decision`, as the decision dialog lists them. */
-  answer(decision: DecisionId, option: string, counts?: DecisionAmounts): Promise<void>;
+  engage(enemy: InstanceId): Promise<void>;
+  /** Picks `option` of the first open decision, as the decision dialog lists them. */
+  answer(option: string, counts?: DecisionAmounts): Promise<void>;
   /** Enemy step 3.3: each listed enemy attack at its printed damage and horror. */
   resolveEnemyAttacks(): Promise<void>;
   /** The investigators spend the clues listed with them to advance the act. */
   advanceAct(spend: readonly { investigator: InvestigatorId; clues: number }[]): Promise<void>;
-  /** One tap on a stepper: `delta` more (or, negative, fewer) of `stat`. */
+  /** One tap on an investigator's stepper: `delta` more (or, negative, fewer) of `stat`. */
   adjust(investigator: InvestigatorId, stat: SteppedStat, delta: number): Promise<void>;
   /** Doom on the current agenda. */
   placeDoom(amount: number): Promise<void>;
@@ -73,26 +75,31 @@ export function gameActions(
   play: (step: (table: PlayTable) => void) => Promise<void>,
   undo: () => Promise<void>,
 ): GameActions {
+  const onTurn = (action: (table: PlayTable, investigator: InvestigatorId) => void) =>
+    play((table) => action(table, turnInvestigator(table.state)));
   return {
     nextPhase: () => play((table) => void table.nextPhase()),
     startTurn: (investigator) => play((table) => table.startTurn(investigator)),
-    endTurn: (investigator) => play((table) => table.endTurn(investigator)),
-    resign: (investigator) => play((table) => table.resign(investigator)),
-    adjustActions: (investigator, delta) =>
-      play((table) => table.adjustActions(investigator, delta)),
-    moveTo: (investigator, location) => play((table) => table.moveTo(investigator, location)),
-    investigate: (investigator) =>
-      play((table) => table.investigate(investigator, { result: 'open' })),
-    fight: (investigator, enemy) =>
-      play((table) => table.fight(investigator, enemy, { result: 'open' })),
-    evade: (investigator, enemy) =>
-      play((table) => table.evade(investigator, enemy, { result: 'open' })),
-    engage: (investigator, enemy) => play((table) => table.engage(investigator, enemy)),
-    resolveTest: (investigator, result, amount) =>
-      play((table) => table.resolveTest(result, { for: investigator, amount })),
-    answer: (decision, option, counts = {}) =>
+    endTurn: () => onTurn((table, investigator) => table.endTurn(investigator)),
+    resign: () => onTurn((table, investigator) => table.resign(investigator)),
+    adjustActions: (delta) =>
+      onTurn((table, investigator) => table.adjustActions(investigator, delta)),
+    moveTo: (location) => onTurn((table, investigator) => table.moveTo(investigator, location)),
+    investigate: () =>
+      onTurn((table, investigator) => table.investigate(investigator, { result: 'open' })),
+    fight: (enemy) =>
+      onTurn((table, investigator) => table.fight(investigator, enemy, { result: 'open' })),
+    evade: (enemy) =>
+      onTurn((table, investigator) => table.evade(investigator, enemy, { result: 'open' })),
+    engage: (enemy) => onTurn((table, investigator) => table.engage(investigator, enemy)),
+    answer: (option, counts = {}) =>
       play((table) =>
-        table.play({ type: 'ResolveDecision', decisionId: decision, optionId: option, ...counts }),
+        table.play({
+          type: 'ResolveDecision',
+          decisionId: firstDecision(table.state),
+          optionId: option,
+          ...counts,
+        }),
       ),
     resolveEnemyAttacks: () => play((table) => table.resolveEnemyAttacks()),
     advanceAct: (spend) =>
@@ -123,4 +130,18 @@ function adjustStat(
     default:
       return assertNever(stat);
   }
+}
+
+/** Whose turn it is; refused like an engine command when no one's is. */
+function turnInvestigator(state: GameState): InvestigatorId {
+  const investigator = state.meta.turn?.investigatorId;
+  if (investigator === undefined) throw new CommandRejected({ code: 'noTurnInProgress' });
+  return investigator;
+}
+
+/** The decision the dialog shows; refused like an engine command when none is open. */
+function firstDecision(state: GameState): DecisionId {
+  const [decision] = state.pending;
+  if (decision === undefined) throw new CommandRejected({ code: 'noPendingDecision' });
+  return decision.id;
 }
