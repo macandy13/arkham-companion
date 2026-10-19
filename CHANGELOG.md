@@ -1,5 +1,44 @@
 # Changelog
 
+## [1.4.0](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.3.1...arkham-companion-v1.4.0) (2026-10-19)
+
+
+### Features
+
+* **engine:** let the table builder set difficulty, seed, shuffle and maps ([01d6508](https://github.com/macandy13/arkham-companion/commit/01d6508aa08cce9f35f01612e19531312e739259))
+* **engine:** let the table builder set difficulty, seed, shuffle and maps (M1V.3, 7/9) ([fd547a4](https://github.com/macandy13/arkham-companion/commit/fd547a4aea9a854e28656bf0985144df97c65930))
+* **engine:** provoke attacks of opportunity only for commands taken as actions ([ae582ca](https://github.com/macandy13/arkham-companion/commit/ae582ca91d6d6277099077f0285125d2dd8aa021))
+* **engine:** provoke attacks of opportunity only for commands taken as actions ([44d0b2d](https://github.com/macandy13/arkham-companion/commit/44d0b2de1ce930a8a63e96e45dccf1a8336952a7))
+
+
+### Bug fixes
+
+* **engine:** address the review and rules findings on asAction ([949f5f3](https://github.com/macandy13/arkham-companion/commit/949f5f3657d1f9b08451b48adbae102eca7fdba2))
+
+
+### Refactoring
+
+* **engine:** add a game table builder and blank cards (M1V.3, 1/4) ([536b7a2](https://github.com/macandy13/arkham-companion/commit/536b7a21669f4f1ee4c89eab4c4c70527fc351e9))
+* **engine:** add a game table builder and blank cards for tests ([2c8c254](https://github.com/macandy13/arkham-companion/commit/2c8c25407544c631aaf6840b9ed5b4cd3eb25318))
+* **engine:** address review nits on the table builder ([68e6e12](https://github.com/macandy13/arkham-companion/commit/68e6e1270e18e481b14c489ad4bf48b1a84cac8a))
+* **engine:** address review of the step queue; document the timing rules it follows ([474a502](https://github.com/macandy13/arkham-companion/commit/474a5024e70ce2f258137ba97da633142786e0cc))
+* **engine:** build CurrentCardChanged in a helper ([bcaee62](https://github.com/macandy13/arkham-companion/commit/bcaee6250a520f0bca340a75315b5a48cfcd1fd1))
+* **engine:** end the last card's advance with early returns ([bad5871](https://github.com/macandy13/arkham-companion/commit/bad5871fcb690c4fed741520dc16e914a9c9c80b))
+* **engine:** name the DrawEncounter continuation ([bb53e39](https://github.com/macandy13/arkham-companion/commit/bb53e39b0b806422549c872c0ded17513c319345))
+* **engine:** resolve every command as a queue of steps that waits for decisions (P8) ([2b51cc4](https://github.com/macandy13/arkham-companion/commit/2b51cc4e7b17a5c521e24bfcb7250c78243d8cd1))
+* **engine:** resolve every command as a queue of steps that waits for decisions (P8) ([c591147](https://github.com/macandy13/arkham-companion/commit/c5911474c302a1bb32c50bb9234505f8f15c2218))
+* **engine:** store waiting steps in a queue instead of the held-action slot (P8) ([ba80a89](https://github.com/macandy13/arkham-companion/commit/ba80a89678665130070a7a385d383bd94875ad5e))
+* **engine:** store waiting steps in a queue instead of the held-action slot (P8) ([62f2e00](https://github.com/macandy13/arkham-companion/commit/62f2e008c8ded4405ad8678b1e6d171f340e6a48))
+* **engine:** take a blank card's required values as parameters ([1836ac1](https://github.com/macandy13/arkham-companion/commit/1836ac11f465b59c2726d8ff323b4ee54e651bb5))
+* **engine:** type spec continuations so every one takes its follow-up's origin ([55a8441](https://github.com/macandy13/arkham-companion/commit/55a84411208024c2a838a1d19263bded1561f790))
+
+
+### Documentation
+
+* **engine:** name the builder's maps and start options in its docs ([a54d4a2](https://github.com/macandy13/arkham-companion/commit/a54d4a24c10109bd1d34702fc1629b3d027066e4))
+* list the next test helper follow-ups ([c55456c](https://github.com/macandy13/arkham-companion/commit/c55456c1a86e3950e7feb8ec53eb966f25bd1009))
+* plan the asAction flag and the timing suite after P8 ([f857f04](https://github.com/macandy13/arkham-companion/commit/f857f04fa7d593a325e58c009af6586a3b89f375))
+
 ## [1.3.1](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.3.0...arkham-companion-v1.3.1) (2026-10-18)
 
 
