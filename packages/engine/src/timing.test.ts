@@ -22,22 +22,15 @@ import {
   instanceId,
   investigatorId,
   newGame,
+  zoneOf,
   perInvestigator,
   type Command,
-  type GameState,
-  type InstanceId,
-  type Zone,
 } from './index';
 import { answer, investigatorOf, pendingIds, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const hall = instanceId('hall');
 const cellar = instanceId('cellar');
-
-/** The zone a card is in. */
-function whereIs(state: GameState, cardId: InstanceId): Zone | undefined {
-  return state.cards[cardId]?.zone;
-}
 
 describe('an attack of opportunity before the move that provoked it', () => {
   const ghoul = instanceId('ghoul');
@@ -97,10 +90,10 @@ describe('a surge after a revelation that asks something', () => {
     const resolved = stateAfter(context, testing, answer('revelation:surging_card', 'fail'));
 
     expect(pendingIds(testing)).toEqual(['revelation:surging_card']);
-    expect(whereIs(testing, surgingCard)).toEqual({ kind: 'resolving' });
-    expect(whereIs(testing, nextCard)).toEqual(encounterDeck);
-    expect(whereIs(resolved, surgingCard)).toEqual(encounterDiscard);
-    expect(whereIs(resolved, nextCard)).toEqual(encounterDiscard);
+    expect(zoneOf(testing, surgingCard)).toEqual({ kind: 'resolving' });
+    expect(zoneOf(testing, nextCard)).toEqual(encounterDeck);
+    expect(zoneOf(resolved, surgingCard)).toEqual(encounterDiscard);
+    expect(zoneOf(resolved, nextCard)).toEqual(encounterDiscard);
   });
 
   it('draws nothing more once the revelation defeated alice', () => {
@@ -136,8 +129,8 @@ describe('a surge after a revelation that asks something', () => {
     const defeated = stateAfter(context, asked, answer('deadly', 'yes'));
 
     expect(investigatorOf(defeated, alice).status).toBe('defeated');
-    expect(whereIs(defeated, surgingCard)).toEqual(encounterDiscard);
-    expect(whereIs(defeated, nextCard)).toEqual(encounterDeck);
+    expect(zoneOf(defeated, surgingCard)).toEqual(encounterDiscard);
+    expect(zoneOf(defeated, nextCard)).toEqual(encounterDeck);
   });
 });
 
@@ -180,9 +173,9 @@ describe('hunters moving one at a time', () => {
 
     expect(pendingIds(orderAsked)).toEqual(['hunterOrder']);
     expect(pendingIds(routeAsked)).toEqual(['hunter:forked_hunter:location']);
-    expect(whereIs(routeAsked, second)).toEqual(atLocation(leftPath));
-    expect(whereIs(moved, forked)).toEqual(atLocation(rightPath));
-    expect(whereIs(moved, second)).toEqual(engagedWith(alice));
+    expect(zoneOf(routeAsked, second)).toEqual(atLocation(leftPath));
+    expect(zoneOf(moved, forked)).toEqual(atLocation(rightPath));
+    expect(zoneOf(moved, second)).toEqual(engagedWith(alice));
   });
 });
 

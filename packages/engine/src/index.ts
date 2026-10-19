@@ -17,7 +17,7 @@ export * from './events';
 export { apply, replay } from './reducer';
 export { handle } from './handle';
 export { locationsNamed, neighbours, sameEdge, shortestPaths } from './board';
-export { cardsNamed } from './lookup';
+export { cardsNamed, zoneOf } from './lookup';
 export { CommandRejected, type Rejection, type RejectionCode } from './rejection';
 export { execute, type ExecuteResult } from './execute';
 export type * from './setup';
