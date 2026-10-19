@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   blankEnemy,
   blankInvestigator,
+  byAny,
   byCode,
   byId,
   byName,
   cardCode,
   describeMatcher,
-  fuzzy,
   instanceId,
   investigatorCode,
   investigatorId,
@@ -35,9 +35,10 @@ describe('matchingCards', () => {
     { matcher: byName('Ghoul'), found: [] },
     { matcher: byId(ghoul_b), found: [ghoul_b] },
     { matcher: byCode(cardCode('Ghoul Priest')), found: [ghoul_priest] },
-    { matcher: fuzzy('ghoul'), found: [ghoul_a, ghoul_b, ghoul_priest] },
-    { matcher: fuzzy('PRIEST'), found: [ghoul_priest] },
-    { matcher: fuzzy('rat'), found: [] },
+    { matcher: byAny('ghoul_b'), found: [ghoul_b] },
+    { matcher: byAny('Ghoul Priest'), found: [ghoul_priest] },
+    { matcher: byAny('ghoul minion.'), found: [ghoul_a, ghoul_b] },
+    { matcher: byAny('Ghoul'), found: [] },
   ])('finds $found with $matcher', ({ matcher, found }) => {
     const matches = matchingCards(context, cards, matcher).map((card) => card.id);
 
@@ -60,8 +61,10 @@ describe('matchingInvestigators', () => {
     { matcher: byId(investigatorId('daisy')), found: ['daisy'] },
     { matcher: byName('roland banks'), found: ['roland'] },
     { matcher: byCode(investigatorCode('01002')), found: ['daisy'] },
-    { matcher: fuzzy('a'), found: ['roland', 'daisy'] },
-    { matcher: fuzzy('walker'), found: ['daisy'] },
+    { matcher: byAny('daisy'), found: ['daisy'] },
+    { matcher: byAny('01001'), found: ['roland'] },
+    { matcher: byAny('Daisy Walker'), found: ['daisy'] },
+    { matcher: byAny('Walker'), found: [] },
   ])('finds $found with $matcher', ({ matcher, found }) => {
     expect(matchingInvestigators(seated, matcher).map((inv) => inv.id)).toEqual(found);
   });
@@ -72,7 +75,7 @@ describe('describeMatcher', () => {
     { matcher: byName('Hallway'), text: 'named "Hallway"' },
     { matcher: byId(instanceId('study')), text: 'with id study' },
     { matcher: byCode(cardCode('01111')), text: 'with code 01111' },
-    { matcher: fuzzy('hall'), text: 'with text "hall"' },
+    { matcher: byAny('hall'), text: 'with id, code or name "hall"' },
   ])('describes $matcher as $text', ({ matcher, text }) => {
     expect(describeMatcher(matcher)).toBe(text);
   });

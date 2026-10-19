@@ -19,16 +19,16 @@ export { handle } from './handle';
 export { locationsNamed, neighbours, sameEdge, shortestPaths } from './board';
 export { cardsNamed } from './lookup';
 export {
+  byAny,
   byCode,
   byId,
   byName,
   describeMatcher,
-  fuzzy,
   matchingCards,
   matchingInvestigators,
+  type AnyIdentifierMatcher,
   type CardMatcher,
   type CodeMatcher,
-  type FuzzyMatcher,
   type InstanceIdMatcher,
   type InvestigatorIdMatcher,
   type InvestigatorMatcher,

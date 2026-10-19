@@ -26,9 +26,13 @@ export interface CodeMatcher {
   code: CardCode;
 }
 
-/** Matches the cards whose printed name contains `text` (case-insensitive); built by `fuzzy`. */
-export interface FuzzyMatcher {
-  by: 'fuzzy';
+/**
+ * Matches a card whose instance id or card code equals `text`, or whose printed
+ * name matches it like `NameMatcher` does; built by `byAny`. For a player or
+ * test script that has one string and does not care which kind of identifier it is.
+ */
+export interface AnyIdentifierMatcher {
+  by: 'any';
   text: string;
 }
 
@@ -40,20 +44,21 @@ export interface InvestigatorIdMatcher {
 
 /**
  * How a player (or a test script) points at cards: by printed name, exact
- * instance id, card code, or a fragment of the name. Build one with `byName`,
- * `byId`, `byCode` or `fuzzy`; `matchingCards` applies it. A matcher can match
+ * instance id, card code, or any one of the three. Build one with `byName`,
+ * `byId`, `byCode` or `byAny`; `matchingCards` applies it. A matcher can match
  * several copies: whoever needs exactly one decides what none or many mean
  * (`BoardView` throws a `TableError`, a handler could reject the command).
  */
-export type CardMatcher = NameMatcher | InstanceIdMatcher | CodeMatcher | FuzzyMatcher;
+export type CardMatcher = NameMatcher | InstanceIdMatcher | CodeMatcher | AnyIdentifierMatcher;
 
 /**
  * `CardMatcher` for investigators. Investigators are seats (`Investigator`), not
- * card instances, so the exact reference is the `InvestigatorId`; name, code and
- * fragment match the investigator card. It shares the name, code and fuzzy
+ * card instances, so the exact reference is the `InvestigatorId`; name and
+ * code match the investigator card. It shares the name, code and any-identifier
  * variants with `CardMatcher`, so `byName('Roland Banks')` serves both.
  */
-export type InvestigatorMatcher = NameMatcher | InvestigatorIdMatcher | CodeMatcher | FuzzyMatcher;
+export type InvestigatorMatcher =
+  NameMatcher | InvestigatorIdMatcher | CodeMatcher | AnyIdentifierMatcher;
 
 /** Matches cards printed with `name`; case and a trailing full stop do not matter. */
 export const byName = (name: string): NameMatcher => ({ by: 'name', name: cardName(name) });
@@ -72,8 +77,12 @@ export function byId(id: InstanceId | InvestigatorId): InstanceIdMatcher | Inves
 /** Matches cards with ArkhamDB code `code`, e.g. every copy of one enemy. */
 export const byCode = (code: CardCode): CodeMatcher => ({ by: 'code', code });
 
-/** Matches cards whose printed name contains `text`, ignoring case: `fuzzy('hall')` finds Hallway. */
-export const fuzzy = (text: string): FuzzyMatcher => ({ by: 'fuzzy', text });
+/**
+ * Matches cards whose id, code or printed name is `text` (name as in `byName`):
+ * `byAny('hallway')` finds the Hallway by name, `byAny('01111')` by code. Whole
+ * values only, no substrings, so a short text cannot match half the table.
+ */
+export const byAny = (text: string): AnyIdentifierMatcher => ({ by: 'any', text });
 
 /** The cards of `cards` that `matcher` matches, in the order given. Pure, so handlers can share it with `BoardView`. */
 export function matchingCards(
@@ -84,7 +93,11 @@ export function matchingCards(
   return cards.filter((card) => {
     if (matcher.by === 'id') return card.id === matcher.id;
     if (matcher.by === 'code') return card.code === matcher.code;
-    return matchesText(cardStats(ctx.cards, card.code).name, matcher);
+    const name = cardStats(ctx.cards, card.code).name;
+    if (matcher.by === 'any') {
+      return card.id === matcher.text || card.code === matcher.text || sameName(name, matcher.text);
+    }
+    return sameName(name, matcher.name);
   });
 }
 
@@ -96,11 +109,16 @@ export function matchingInvestigators(
   return investigators.filter((inv) => {
     if (matcher.by === 'id') return inv.id === matcher.id;
     if (matcher.by === 'code') return inv.code === matcher.code;
-    return matchesText(inv.name, matcher);
+    if (matcher.by === 'any') {
+      return (
+        inv.id === matcher.text || inv.code === matcher.text || sameName(inv.name, matcher.text)
+      );
+    }
+    return sameName(inv.name, matcher.name);
   });
 }
 
-/** The matcher in words for an error message: `named "Hallway"`, `with id study`, `with code 01111`, `with text "hall"`. */
+/** The matcher in words for an error message: `named "Hallway"`, `with id study`, `with code 01111`, `with id, code or name "hall"`. */
 export function describeMatcher(matcher: CardMatcher | InvestigatorMatcher): string {
   switch (matcher.by) {
     case 'name':
@@ -109,14 +127,11 @@ export function describeMatcher(matcher: CardMatcher | InvestigatorMatcher): str
       return `with id ${matcher.id}`;
     case 'code':
       return `with code ${matcher.code}`;
-    case 'fuzzy':
-      return `with text "${matcher.text}"`;
+    case 'any':
+      return `with id, code or name "${matcher.text}"`;
   }
 }
 
-function matchesText(printed: string, matcher: NameMatcher | FuzzyMatcher): boolean {
-  const have = comparableName(printed);
-  return matcher.by === 'name'
-    ? have === comparableName(matcher.name)
-    : have.includes(comparableName(matcher.text));
+function sameName(printed: string, wanted: string): boolean {
+  return comparableName(printed) === comparableName(wanted);
 }

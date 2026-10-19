@@ -9,6 +9,7 @@ import {
   blankLocation,
   blankTreachery,
   boardView,
+  byAny,
   byCode,
   byId,
   byName,
@@ -16,7 +17,6 @@ import {
   decisionId,
   engagedWith,
   fixed,
-  fuzzy,
   instanceId,
   investigatorCode,
   investigatorId,
@@ -148,7 +148,8 @@ describe('investigators', () => {
       { matcher: byId(bob), expected: bob },
       { matcher: byName('Alice'), expected: alice },
       { matcher: byCode(investigatorCode('bob')), expected: bob },
-      { matcher: fuzzy('ALI'), expected: alice },
+      { matcher: byAny('bob'), expected: bob },
+      { matcher: byAny('ALICE'), expected: alice },
     ])('finds the investigator $expected with $matcher', ({ matcher, expected }) => {
       const { context, state } = duo.start();
 
@@ -158,8 +159,8 @@ describe('investigators', () => {
     it('fails with the board for a matcher that matches nobody', () => {
       const { context, state } = duo.start();
 
-      expect(() => boardView(context, state).investigator(fuzzy('zed'))).toThrow(
-        /^no investigator with text "zed"\n/,
+      expect(() => boardView(context, state).investigator(byAny('zed'))).toThrow(
+        /^no investigator with id, code or name "zed"\n/,
       );
     });
 
@@ -167,10 +168,11 @@ describe('investigators', () => {
       const { context, state } = newGame()
         .withInvestigator(investigatorId('roland'), { name: 'Roland Banks' })
         .withInvestigator(investigatorId('rita'), { name: 'Rita Young' })
+        .withInvestigator(investigatorId('daisy'), { name: 'rita' })
         .start();
 
-      expect(() => boardView(context, state).investigator(fuzzy('r'))).toThrow(
-        /^2 investigators match with text "r"; use one of roland, rita\n/,
+      expect(() => boardView(context, state).investigator(byAny('rita'))).toThrow(
+        /^2 investigators match with id, code or name "rita"; use one of rita, daisy\n/,
       );
     });
   });
@@ -272,7 +274,8 @@ describe('locations', () => {
     { matcher: byName('Study'), found: study },
     { matcher: byId(hallway), found: hallway },
     { matcher: byCode(cardCode('hallway')), found: hallway },
-    { matcher: fuzzy('ATT'), found: instanceId('attic') },
+    { matcher: byAny('attic'), found: instanceId('attic') },
+    { matcher: byAny('HALLWAY'), found: hallway },
   ])('finds the location $found with $matcher', ({ matcher, found }) => {
     const { context, state } = house.start();
 
@@ -366,7 +369,8 @@ describe('enemies', () => {
     it.each([
       { selector: byName('ghoul'), found: { name: 'ghoul', at: 'study' } },
       { selector: byName('Ghoul'), found: { name: 'ghoul', at: 'study' } },
-      { selector: fuzzy('GHO'), found: { name: 'ghoul', at: 'study' } },
+      { selector: byAny('rat_in_hallway'), found: inHallway },
+      { selector: byAny('GHOUL'), found: { name: 'ghoul', at: 'study' } },
       { selector: byId(instanceId('rat_in_hallway')), found: inHallway },
       { selector: { card: any_rat, engagedWith: alice }, found: onAlice },
       { selector: { card: any_rat, engagedWith: bob }, found: { ...onAlice, engagedWith: bob } },
