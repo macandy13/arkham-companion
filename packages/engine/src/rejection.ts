@@ -135,6 +135,8 @@ export type Rejection =
   | { code: 'invalidDecisionOptions'; decisionId: DecisionId }
   /** `ResolveDecision` for a decision that is not pending. */
   | { code: 'unknownDecision'; decisionId: DecisionId }
+  /** An answer to "the open decision" (the app's decision dialog) when none is open. */
+  | { code: 'noPendingDecision' }
   /** `ResolveDecision` with an option the decision does not have. */
   | { code: 'unknownOption'; decisionId: DecisionId; optionId: string }
   /** `ResolveDecision` by an investigator the decision's `decider` does not name. */
@@ -164,6 +166,8 @@ export type Rejection =
       investigatorId: InvestigatorId;
       activeInvestigatorId?: InvestigatorId;
     }
+  /** An action for "whoever's turn it is" (the app's action buttons) when no turn is in progress. */
+  | { code: 'noTurnInProgress' }
   /** `AdjustActions` with a delta that is zero, fractional or takes the remaining actions below zero. */
   | {
       code: 'invalidActionAdjustment';
@@ -330,6 +334,8 @@ function describe(r: Rejection): string {
       return `decision ${r.decisionId} needs at least one option, each with a unique id`;
     case 'unknownDecision':
       return `no pending decision ${r.decisionId}`;
+    case 'noPendingDecision':
+      return 'no decision is open';
     case 'unknownOption':
       return `decision ${r.decisionId} has no option ${r.optionId}`;
     case 'notTheDecider':
@@ -354,6 +360,8 @@ function describe(r: Rejection): string {
       return r.activeInvestigatorId === undefined
         ? `no turn is in progress, so ${r.investigatorId} cannot end one`
         : `it is the turn of ${r.activeInvestigatorId}, not ${r.investigatorId}`;
+    case 'noTurnInProgress':
+      return 'no investigator is taking their turn';
     case 'invalidActionAdjustment':
       return `cannot change the ${r.actionsRemaining} remaining actions of ${r.investigatorId} by ${r.delta}`;
     case 'turnsNotTaken':

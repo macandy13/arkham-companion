@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   cardCode,
   scenarioId,
+  boardView,
   cardDbWith,
   instanceId,
   investigatorCode,
@@ -16,6 +17,7 @@ import { theGathering, theGatheringCards } from '@arkham/scenarios';
 import { GameImportError } from '../storage/gameExport';
 import { IndexedDbStore } from '../storage/IndexedDbStore';
 import { createAppStore } from './appStore';
+import type { GameActions } from './gameActions';
 
 const started: Event = {
   type: 'ScenarioStarted',
@@ -78,7 +80,11 @@ describe('appStore', () => {
     const reopened = createAppStore(new IndexedDbStore(db));
     await reopened.getState().openGame(id);
 
-    expect(reopened.getState().current).toEqual({ gameId: id, state: replay([started, doom]) });
+    expect(reopened.getState().current).toMatchObject({
+      gameId: id,
+      state: replay([started, doom]),
+      playable: false,
+    });
   });
 
   it('exports a game and imports it as a new game with an identical state', async () => {
@@ -106,7 +112,7 @@ describe('appStore', () => {
     expect(store.getState().games).toEqual([]);
   });
 
-  describe('startScenario', () => {
+  describe('with The Gathering', () => {
     const alder: InvestigatorCard = {
       code: investigatorCode('alder'),
       name: 'Alder',
@@ -125,29 +131,198 @@ describe('appStore', () => {
       investigators: [{ id: investigatorId('alder'), code: alder.code }],
     };
 
-    it('stores the setup events as a new game and opens it', async () => {
-      const db = new IndexedDbStore('appstore-start-test');
-      const store = createAppStore(db);
+    describe('startScenario', () => {
+      it('stores the setup events as a new game and opens it', async () => {
+        const db = new IndexedDbStore('appstore-start-test');
+        const store = createAppStore(db);
 
-      const id = await store.getState().startScenario(start);
+        const id = await store.getState().startScenario(start);
 
-      expect(store.getState().current?.state.meta).toMatchObject({
-        scenarioId: 'the-gathering',
-        difficulty: 'easy',
+        expect(store.getState().current?.state.meta).toMatchObject({
+          scenarioId: 'the-gathering',
+          difficulty: 'easy',
+        });
+        expect((await db.loadGame(id))?.state).toEqual(store.getState().current?.state);
+        expect(store.getState().games.map((g) => g.title)).toEqual(['The Gathering']);
       });
-      expect((await db.loadGame(id))?.state).toEqual(store.getState().current?.state);
-      expect(store.getState().games.map((g) => g.title)).toEqual(['The Gathering']);
+
+      it('stores nothing when the setup is invalid', async () => {
+        const store = createAppStore(new IndexedDbStore('appstore-start-invalid-test'));
+        const broken = {
+          ...start,
+          ctx: { ...start.ctx, scenario: { ...theGathering, actDeck: [cardCode('missing')] } },
+        };
+
+        await expect(store.getState().startScenario(broken)).rejects.toThrow();
+        expect(store.getState().games).toEqual([]);
+      });
     });
 
-    it('stores nothing when the setup is invalid', async () => {
-      const store = createAppStore(new IndexedDbStore('appstore-start-invalid-test'));
-      const broken = {
-        ...start,
-        ctx: { ...start.ctx, scenario: { ...theGathering, actDeck: [cardCode('missing')] } },
-      };
+    describe('actions', () => {
+      it("stores an action's events, so reopening the game shows the same state", async () => {
+        const db = 'appstore-play-test';
+        const store = createAppStore(new IndexedDbStore(db));
+        const id = await store.getState().startScenario(start);
 
-      await expect(store.getState().startScenario(broken)).rejects.toThrow();
-      expect(store.getState().games).toEqual([]);
+        await store.getState().actions.nextPhase();
+
+        expect(store.getState().current?.state.meta.phase).toBe('investigation');
+        const reopened = createAppStore(new IndexedDbStore(db));
+        await reopened.getState().openGame(id);
+        expect(reopened.getState().current?.state).toEqual(store.getState().current?.state);
+      });
+
+      it('rebuilds the scenario rules when a saved game is opened, so it can be played on', async () => {
+        const db = 'appstore-reopen-play-test';
+        const id = await createAppStore(new IndexedDbStore(db)).getState().startScenario(start);
+        const reopened = createAppStore(new IndexedDbStore(db));
+        await reopened.getState().openGame(id);
+
+        await reopened.getState().actions.nextPhase();
+
+        expect(reopened.getState().current).toMatchObject({
+          playable: true,
+          state: { meta: { phase: 'investigation' } },
+        });
+      });
+
+      it("keeps a refused action's reason and shows the state unchanged", async () => {
+        const store = createAppStore(new IndexedDbStore('appstore-refused-test'));
+        await store.getState().startScenario(start);
+        const before = store.getState().current?.state;
+
+        await store.getState().actions.startTurn(investigatorId('alder'));
+
+        expect(store.getState().current?.rejection).toMatchObject({
+          code: 'wrongPhase',
+          actual: 'setup',
+        });
+        expect(store.getState().current?.state).toBe(before);
+      });
+
+      it('clears the refusal once the next action succeeds', async () => {
+        const store = createAppStore(new IndexedDbStore('appstore-refused-clear-test'));
+        await store.getState().startScenario(start);
+        await store.getState().actions.startTurn(investigatorId('alder'));
+
+        await store.getState().actions.nextPhase();
+
+        expect(store.getState().current?.rejection).toBeUndefined();
+      });
+
+      it('runs actions sent without waiting in the order they were sent', async () => {
+        const store = createAppStore(new IndexedDbStore('appstore-order-test'));
+        await store.getState().startScenario(start);
+
+        await Promise.all([
+          store.getState().actions.nextPhase(),
+          store.getState().actions.startTurn(investigatorId('alder')),
+        ]);
+
+        expect(store.getState().current?.state.meta).toMatchObject({
+          phase: 'investigation',
+          turn: { investigatorId: 'alder' },
+        });
+      });
+
+      it('undoes the last action in memory and in storage', async () => {
+        const db = new IndexedDbStore('appstore-undo-test');
+        const store = createAppStore(db);
+        const id = await store.getState().startScenario(start);
+        const atSetup = store.getState().current?.state;
+        await store.getState().actions.nextPhase();
+
+        await store.getState().actions.undo();
+
+        expect(store.getState().current?.state).toEqual(atSetup);
+        expect((await db.loadGame(id))?.state).toEqual(atSetup);
+      });
+
+      it('never undoes the scenario start', async () => {
+        const store = createAppStore(new IndexedDbStore('appstore-undo-start-test'));
+        await store.getState().startScenario(start);
+        const atSetup = store.getState().current?.state;
+
+        await store.getState().actions.undo();
+
+        expect(store.getState().current?.state).toEqual(atSetup);
+      });
+
+      it('refuses to play a game whose scenario is not in the catalog', async () => {
+        const store = createAppStore(
+          new IndexedDbStore('appstore-unknown-scenario-test'),
+          () => undefined,
+        );
+        await store.getState().startScenario(start);
+
+        await expect(store.getState().actions.nextPhase()).rejects.toThrow(
+          'No playable game is open',
+        );
+        expect(store.getState().current?.playable).toBe(false);
+      });
+
+      describe("during Alder's turn", () => {
+        async function aldersTurn(db: string) {
+          const store = createAppStore(new IndexedDbStore(db));
+          await store.getState().startScenario(start);
+          await store.getState().actions.nextPhase();
+          await store.getState().actions.startTurn(investigatorId('alder'));
+          return store;
+        }
+        const alderIn = (store: Awaited<ReturnType<typeof aldersTurn>>) =>
+          boardView(start.ctx, store.getState().current!.state).investigator(
+            investigatorId('alder'),
+          );
+
+        it("leaves an investigation's skill test open for the players to answer", async () => {
+          const store = await aldersTurn('actions-investigate-test');
+
+          await store.getState().actions.investigate();
+
+          expect(store.getState().current?.state.pending).toMatchObject([
+            { kind: 'skillTestResult', decider: { investigatorId: 'alder' } },
+          ]);
+        });
+
+        it.each([
+          [1, 'pass'],
+          [0, 'fail'],
+        ])(
+          'finds %i clues once the players answer the investigation with %s',
+          async (clues, option) => {
+            const store = await aldersTurn(`actions-answer-${option}-test`);
+            await store.getState().actions.investigate();
+
+            await store.getState().actions.answer(option);
+
+            expect(store.getState().current?.state.pending).toEqual([]);
+            expect(alderIn(store)).toMatchObject({ clues });
+          },
+        );
+
+        it('refuses an answer while no decision is open', async () => {
+          const store = await aldersTurn('actions-answer-none-test');
+
+          await store.getState().actions.answer('pass');
+
+          expect(store.getState().current?.rejection).toEqual({ code: 'noPendingDecision' });
+        });
+      });
+
+      it.each([
+        ['investigate', (actions: GameActions) => actions.investigate()],
+        ['endTurn', (actions: GameActions) => actions.endTurn()],
+      ])('refuses %s while no one is taking their turn', async (name, action) => {
+        const store = createAppStore(new IndexedDbStore(`appstore-no-turn-${name}-test`));
+        await store.getState().startScenario(start);
+        await store.getState().actions.nextPhase();
+        expect(store.getState().current?.state.meta).toMatchObject({ phase: 'investigation' });
+        expect(store.getState().current?.state.meta.turn).toBeUndefined();
+
+        await action(store.getState().actions);
+
+        expect(store.getState().current?.rejection).toEqual({ code: 'noTurnInProgress' });
+      });
     });
   });
 });

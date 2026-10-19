@@ -8,7 +8,22 @@ Goal: the in-game screen from product.md "UI concept", wired to the M1 engine, s
 - **What the app gains:** A complete, playable game loop on a tablet: phases, map, investigators, encounter deck, decisions, undo.
 - **Why at this point:** It is built against the sandbox scenario so UI problems are separated from real-scenario data problems. M4 then only adds data and scenario-specific rules on top of a proven screen.
 
-All UI actions dispatch engine commands through the Zustand store; no component mutates state.
+All UI actions go through the Zustand store's `GameActions`, which play `PlayTable` steps and store them via a `GameSession`; no component builds commands, sees the table or mutates state.
+
+**Slices** (one small PR each, in this order)
+
+1. M3.1a: `PlayTable` steps as undo groups and `resume` (engine), then the app store's `GameActions` through a `GameSession`, context rebuilt on open, refusals kept on the open game
+2. M3.1b: the remaining `GameActions` (move, fight, evade, engage, resign, actions left, enemy attacks, act advance, steppers, doom)
+3. M3.1c: toast for refused commands, selectors for derived values
+4. M3.2: header
+5. M3.3a: static SVG map with location tiles and connections
+6. M3.3b: pan/zoom/pinch, pawns, enemy chips, map tabs
+7. M3.4: board interactions
+8. M3.5: investigator bar
+9. M3.6: encounter panel
+10. M3.7: decision dialog and card zoom
+11. M3.8: event log
+12. M3.9: tablet pass and E2E
 
 ---
 
@@ -18,10 +33,13 @@ All UI actions dispatch engine commands through the Zustand store; no component 
 
 **Benefit:** Components stay simple, and the screen can never drift from the saved game.
 
-- [ ] Zustand store: current `GameState`, `dispatch(command)` → `handle` → persist events via `GameStore` → apply → re-render
-- [ ] Opening a saved game rebuilds its `EngineContext` (cards and `scenario`) from the catalog entry for `meta.scenarioId` (`findScenario`), so hooks and the reference card apply to its commands
+- [x] Zustand store: current `GameState`, `actions.<verb>` → `PlayTable` → persist events via `GameStore` → re-render
+- [x] Opening a saved game rebuilds its `EngineContext` (cards and `scenario`) from the catalog entry for `meta.scenarioId` (`findScenario`), so hooks and the reference card apply to its commands
 - [ ] Rejected commands show a toast with the reason
 - [ ] Undo wired to the M1 undo; selectors for derived values (doom total, thresholds)
+- [ ] A busy flag while a step runs, so the screen disables its buttons: actions act on the turn in progress and the first open decision, so a second tap would hit whatever is open next
+
+M3.1a done: the screen calls `GameActions` (the `PlayTable` verbs with screen defaults: actions are taken by the investigator whose turn it is, answers go to the first open decision, skill tests stay open) on the app store, which play them through a `GameSession` that stores each step as one undo group and reloads the stored game when a write fails (another tab). The refusal is kept on `OpenGame.rejection`; the undo button comes with the header.
 
 ## M3.2 Header (S)
 
