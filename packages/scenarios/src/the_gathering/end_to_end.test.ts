@@ -31,6 +31,7 @@ import { describe, expect, it } from 'vitest';
 import {
   byName,
   cardDbWith,
+  enemyMatching,
   investigatorId,
   mapId,
   PlayTable,
@@ -527,7 +528,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     expect(() => table.fight(roland, byName(swarmOfRats))).toThrow(/3 enemies match/);
 
-    table.fight(roland, { card: byName(swarmOfRats), engagedWith: roland });
+    table.fight(roland, enemyMatching(byName(swarmOfRats), { engagedWith: roland }));
     table.investigate(roland);
     table.investigate(roland);
     table.endTurn(roland);
@@ -535,12 +536,12 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // fighting is the one useful action that provokes no attack of opportunity.
     // With combat 2 against its fight 3 she misses twice.
     table.startTurn(daisy);
-    table.fight(daisy, { card: byName(swarmOfRats), engagedWith: daisy });
+    table.fight(daisy, enemyMatching(byName(swarmOfRats), { engagedWith: daisy }));
     table.fight(daisy, byName(ravenousGhoul), { result: 'fail' });
     table.fight(daisy, byName(ravenousGhoul), { result: 'fail' });
     table.endTurn(daisy);
     table.startTurn(wendy);
-    table.fight(wendy, { card: byName(swarmOfRats), engagedWith: wendy });
+    table.fight(wendy, enemyMatching(byName(swarmOfRats), { engagedWith: wendy }));
     table.endTurn(wendy);
     table.answer(byName('Frozen in Fear'), 'fail');
 
@@ -800,7 +801,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       'Swarm of Rats',
       'Grasping Hands',
     ]);
-    expect(table.board.enemy({ card: byName(ghoulMinion), engagedWith: roland })).toEqual({
+    expect(table.board.enemy(enemyMatching(byName(ghoulMinion), { engagedWith: roland }))).toEqual({
       name: ghoulMinion,
       at: 'Attic',
       engagedWith: roland,
@@ -818,7 +819,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // ghouls again and follows him.
     expect(table.nextPhase()).toEqual({ round: 9, phase: 'investigation' });
     table.startTurn(roland);
-    table.fight(roland, { card: byName(ghoulMinion), engagedWith: roland }, { damage: 2 });
+    table.fight(roland, enemyMatching(byName(ghoulMinion), { engagedWith: roland }), { damage: 2 });
     // The fog raises the Attic's shroud from 1 to 3; his successful search
     // clears it.
     table.investigate(roland, { result: 'open' });
