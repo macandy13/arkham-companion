@@ -316,6 +316,8 @@ describe('appStore', () => {
         const store = createAppStore(new IndexedDbStore(`appstore-no-turn-${name}-test`));
         await store.getState().startScenario(start);
         await store.getState().actions.nextPhase();
+        expect(store.getState().current?.state.meta).toMatchObject({ phase: 'investigation' });
+        expect(store.getState().current?.state.meta.turn).toBeUndefined();
 
         await action(store.getState().actions);
 

@@ -20,11 +20,10 @@ export async function startGame(
   ctx: ScenarioContext,
   options: SetupOptions,
 ): Promise<GameId> {
-  const [first, ...rest] = PlayTable.setUp(ctx, options).entries;
+  const { entries } = PlayTable.setUp(ctx, options);
   const gameId = await store.createGame({ title });
-  if (first === undefined) return gameId;
-  const events = [first, ...rest].map((entry) => entry.event);
-  await store.appendEvents(gameId, events, undefined, first.commandId);
+  const events = entries.map((entry) => entry.event);
+  await store.appendEvents(gameId, events, undefined, entries[0]?.commandId);
   return gameId;
 }
 
