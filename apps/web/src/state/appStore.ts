@@ -157,7 +157,7 @@ export function createAppStore(
     function enqueue(task: () => Promise<void>): Promise<void> {
       const run = stepQueue.then(task);
       stepQueue = run.catch((error: unknown) => {
-        console.warn('A game step failed; nothing was stored for it.', error);
+        console.warn('A queued game task failed.', error);
       });
       return run;
     }

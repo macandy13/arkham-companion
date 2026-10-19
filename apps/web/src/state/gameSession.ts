@@ -1,7 +1,6 @@
 import {
   CommandRejected,
   PlayTable,
-  undoLastGroup,
   type GameId,
   type GameState,
   type GameStore,
@@ -9,7 +8,6 @@ import {
   type Rejection,
   type ScenarioContext,
 } from '@arkham/engine';
-import { runsBy } from '@arkham/util';
 
 /**
  * One step the players take, in the game language of `PlayTable` (`moveTo`, `investigate`,
@@ -45,19 +43,32 @@ export class GameSession {
   }
 
   /**
-   * Plays `step` and stores the events it added, one undo group per step. Returns the reason if
-   * the engine refused it (nothing is stored then). If storing fails, for example because another
-   * tab wrote first, the session reloads the stored game and rejects.
+   * Plays `step` as one step (`PlayTable.step`: one undo group, nothing kept if any verb fails)
+   * and stores the events it added. Returns the reason if the engine refused it (nothing is
+   * stored then). If storing fails, for example because another tab wrote first, the session
+   * reloads the stored game and rejects.
    */
   async play(step: PlayStep): Promise<Rejection | undefined> {
-    const before = this.table.entries.length;
+    const before = this.table.entries;
     try {
-      step(this.table);
+      this.table.step(() => step(this.table));
     } catch (error) {
       if (error instanceof CommandRejected) return error.rejection;
       throw error;
     }
-    await this.storing(() => this.append(this.table.entries.slice(before)));
+    const added = this.table.entries.slice(before.length);
+    const [first] = added;
+    if (first === undefined) return undefined;
+    await this.storing(before, async () => {
+      const events = added.map((entry) => entry.event);
+      const stored = await this.store.appendEvents(
+        this.gameId,
+        events,
+        this.lastSeq,
+        first.commandId,
+      );
+      this.lastSeq = stored.at(-1)?.seq ?? this.lastSeq;
+    });
     return undefined;
   }
 
@@ -66,34 +77,34 @@ export class GameSession {
    * Does nothing when only the scenario start is left, which would leave nothing to play.
    */
   async undo(): Promise<void> {
-    if (undoLastGroup(this.table.entries).kept.length === 0) return;
+    if (!this.table.canUndo) return;
+    const before = this.table.entries;
     this.table.undo();
-    await this.storing(async () => {
+    await this.storing(before, async () => {
       const loaded = await this.store.undoLast(this.gameId, this.lastSeq);
       this.lastSeq = loaded?.summary.lastSeq ?? 0;
     });
   }
 
-  /** Stores `added` one group at a time, each under the group id the table gave it. */
-  private async append(added: readonly LoggedEvent[]): Promise<void> {
-    for (const group of runsBy(added, (entry) => entry.commandId)) {
-      const events = group.items.map((entry) => entry.event);
-      const stored = await this.store.appendEvents(this.gameId, events, this.lastSeq, group.key);
-      this.lastSeq = stored.at(-1)?.seq ?? this.lastSeq;
-    }
-  }
-
-  /** Runs a write; on failure the table goes back to what is stored, so memory never runs ahead. */
-  private async storing(write: () => Promise<void>): Promise<void> {
+  /**
+   * Runs a write of what changed since `before`. If it fails, the table first goes back to
+   * `before`, so memory never shows what was not stored, then reloads what is stored, which may
+   * include another tab's steps.
+   */
+  private async storing(before: readonly LoggedEvent[], write: () => Promise<void>): Promise<void> {
     try {
       await write();
     } catch (error) {
-      console.warn(`Could not store a step of game ${this.gameId}; reloading it.`, error);
-      ({ table: this.table, lastSeq: this.lastSeq } = await loadTable(
-        this.store,
-        this.gameId,
-        this.ctx,
-      ));
+      this.table = PlayTable.resume(this.ctx, before);
+      try {
+        ({ table: this.table, lastSeq: this.lastSeq } = await loadTable(
+          this.store,
+          this.gameId,
+          this.ctx,
+        ));
+      } catch (reloadError) {
+        console.warn(`Could not reload game ${this.gameId}; showing it as it was.`, reloadError);
+      }
       throw error;
     }
   }

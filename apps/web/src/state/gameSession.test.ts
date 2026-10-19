@@ -54,6 +54,21 @@ describe('GameSession on The Gathering', () => {
     expect((await store.loadGame(gameId))?.state).toEqual(beforeInvestigating);
   });
 
+  it('stores nothing of a step whose second verb is refused', async () => {
+    const { store, gameId } = await storedGame('session-refused-step-test');
+    const session = await GameSession.open(store, gameId, ctx);
+    const atSetup = session.state;
+
+    const rejection = await session.play((table) => {
+      table.nextPhase();
+      table.endTurn(investigatorId('alder'));
+    });
+
+    expect(rejection).toEqual({ code: 'turnNotInProgress', investigatorId: 'alder' });
+    expect(session.state).toBe(atSetup);
+    expect((await store.loadGame(gameId))?.state).toEqual(atSetup);
+  });
+
   it('takes back a step in memory and in storage alike', async () => {
     const { store, gameId } = await storedGame('session-undo-test');
     const session = await GameSession.open(store, gameId, ctx);
