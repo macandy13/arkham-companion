@@ -56,3 +56,8 @@ Done after slice 3: `MoveInvestigator`, `Investigate` and `EngageEnemy` carry an
 - [x] Put them in one engine suite of their own (`timing.test.ts`), one short named game per corner case on the builder, played through the public commands. Start with the cases slice 3 of M1V.1 fixed: an attack of opportunity holding a move, moves queued behind it, a surge waiting on a revelation's question and after a defeat, a hunter's tie inside the order question, a last act's question before the resolution, a hook asking two questions. Each later corner case adds one entry.
 
 Slice 1 (timing suite): `packages/engine/src/timing.test.ts` plays the six timing cases M1V.1 slice 3 fixed (the queued moves are unit tests only, since no command queues them from outside). The other interaction cases above (a defeat in one's own turn, an agenda advancing in the enemy phase) are still open.
+
+Follow-ups:
+
+- `GameBuilder.withCard(id, card, zone)` takes the instance id and the card's stats as two leading arguments, which reads ambiguously in a test (`withCard(surgingCard, testingSurge, encounterDeck)`). Design one value that combines a card's instance id and its stats (TODO on `withCard`), then migrate the tests in one go.
+- Play the timing suite on `PlayTable` and read it back with `BoardView` (M1.14, #131/#136) once they are on main.
