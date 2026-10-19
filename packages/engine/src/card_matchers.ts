@@ -1,4 +1,4 @@
-import { comparableName, type EngineContext } from './cards';
+import { cardStats, comparableName, type EngineContext } from './cards';
 import {
   cardName,
   type CardCode,
@@ -65,6 +65,7 @@ export const byName = (name: string): NameMatcher => ({ by: 'name', name: cardNa
 export function byId(id: InstanceId): InstanceIdMatcher;
 export function byId(id: InvestigatorId): InvestigatorIdMatcher;
 export function byId(id: InstanceId | InvestigatorId): InstanceIdMatcher | InvestigatorIdMatcher {
+  // The overloads guarantee id and matcher share a brand; TypeScript cannot correlate them in the union.
   return { by: 'id', id } as InstanceIdMatcher | InvestigatorIdMatcher;
 }
 
@@ -83,8 +84,7 @@ export function matchingCards(
   return cards.filter((card) => {
     if (matcher.by === 'id') return card.id === matcher.id;
     if (matcher.by === 'code') return card.code === matcher.code;
-    const printed = ctx.cards.get(card.code)?.name;
-    return printed !== undefined && matchesText(printed, matcher);
+    return matchesText(cardStats(ctx.cards, card.code).name, matcher);
   });
 }
 
@@ -100,7 +100,7 @@ export function matchingInvestigators(
   });
 }
 
-/** The matcher in words for an error message: `named "Hallway"`, `with id study`, `with code 01111`, `matching "hall"`. */
+/** The matcher in words for an error message: `named "Hallway"`, `with id study`, `with code 01111`, `with text "hall"`. */
 export function describeMatcher(matcher: CardMatcher | InvestigatorMatcher): string {
   switch (matcher.by) {
     case 'name':
@@ -110,7 +110,7 @@ export function describeMatcher(matcher: CardMatcher | InvestigatorMatcher): str
     case 'code':
       return `with code ${matcher.code}`;
     case 'fuzzy':
-      return `matching "${matcher.text}"`;
+      return `with text "${matcher.text}"`;
   }
 }
 

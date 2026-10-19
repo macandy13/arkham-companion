@@ -159,7 +159,7 @@ describe('investigators', () => {
       const { context, state } = duo.start();
 
       expect(() => boardView(context, state).investigator(fuzzy('zed'))).toThrow(
-        /^no investigator matching "zed"\n/,
+        /^no investigator with text "zed"\n/,
       );
     });
 
@@ -170,7 +170,7 @@ describe('investigators', () => {
         .start();
 
       expect(() => boardView(context, state).investigator(fuzzy('r'))).toThrow(
-        /^2 investigators match matching "r"; use one of roland, rita\n/,
+        /^2 investigators match with text "r"; use one of roland, rita\n/,
       );
     });
   });
@@ -299,7 +299,7 @@ describe('locations', () => {
 
     expect(() => board.location(byName('cellar'))).toThrow(TableError);
     expect(() => board.location(byName('cellar'))).toThrow(
-      /^2 locations are named "cellar"; use one of cellar_east, cellar_west\n/,
+      /^2 locations match named "cellar"; use one of cellar_east, cellar_west\n/,
     );
     expect(board.location(byId(instanceId('cellar_west'))).id).toBe('cellar_west');
   });
@@ -361,18 +361,18 @@ describe('enemies', () => {
 
     const inHallway = { name: 'rat', at: 'hallway' };
     const onAlice = { name: 'rat', at: 'study', engagedWith: alice };
-    const rat_ = byName('rat');
+    const any_rat = byName('rat');
 
     it.each([
       { selector: byName('ghoul'), found: { name: 'ghoul', at: 'study' } },
       { selector: byName('Ghoul'), found: { name: 'ghoul', at: 'study' } },
       { selector: fuzzy('GHO'), found: { name: 'ghoul', at: 'study' } },
       { selector: byId(instanceId('rat_in_hallway')), found: inHallway },
-      { selector: { card: rat_, engagedWith: alice }, found: onAlice },
-      { selector: { card: rat_, engagedWith: bob }, found: { ...onAlice, engagedWith: bob } },
-      { selector: { card: rat_, at: byName('hallway') }, found: inHallway },
-      { selector: { card: rat_, at: byId(hallway) }, found: inHallway },
-      { selector: { card: rat_, engagedWith: alice, at: byName('study') }, found: onAlice },
+      { selector: { card: any_rat, engagedWith: alice }, found: onAlice },
+      { selector: { card: any_rat, engagedWith: bob }, found: { ...onAlice, engagedWith: bob } },
+      { selector: { card: any_rat, at: byName('hallway') }, found: inHallway },
+      { selector: { card: any_rat, at: byId(hallway) }, found: inHallway },
+      { selector: { card: any_rat, engagedWith: alice, at: byName('study') }, found: onAlice },
     ])('finds $found with $selector', ({ selector, found }) => {
       const { context, state } = rats.start();
 
@@ -383,21 +383,21 @@ describe('enemies', () => {
       const { context, state } = rats.start();
       const board = boardView(context, state);
 
-      expect(() => board.enemy(rat_)).toThrow(
+      expect(() => board.enemy(any_rat)).toThrow(
         /^3 enemies match named "rat" \(rat_on_alice, rat_on_bob, rat_in_hallway\); narrow it with \{ card, engagedWith \} or \{ card, at \}[^\n]*\n/,
       );
-      expect(() => board.enemy({ card: rat_, at: byName('study') })).toThrow(/^2 enemies match/);
+      expect(() => board.enemy({ card: any_rat, at: byName('study') })).toThrow(/^2 enemies match/);
     });
 
     it.each([
-      { selector: byName('goblin'), message: 'no enemy in play matching named "goblin"' },
+      { selector: byName('goblin'), message: 'no enemy in play named "goblin"' },
       {
         selector: { card: byName('ghoul'), engagedWith: alice },
-        message: 'no enemy in play matching named "ghoul" engaged with alice',
+        message: 'no enemy in play named "ghoul" engaged with alice',
       },
       {
         selector: { card: byName('ghoul'), at: byName('hallway') },
-        message: 'no enemy in play matching named "ghoul" at a location named "hallway"',
+        message: 'no enemy in play named "ghoul" at a location named "hallway"',
       },
     ])('fails with the board when $selector matches nothing', ({ selector, message }) => {
       const { context, state } = rats.start();
@@ -409,9 +409,9 @@ describe('enemies', () => {
     it('fails when the location of the selector is not in play', () => {
       const { context, state } = rats.start();
 
-      expect(() => boardView(context, state).enemy({ card: rat_, at: byName('cellar') })).toThrow(
-        /no location named "cellar" in play/,
-      );
+      expect(() =>
+        boardView(context, state).enemy({ card: any_rat, at: byName('cellar') }),
+      ).toThrow(/no location named "cellar" in play/);
     });
 
     it('does not find an enemy outside play', () => {

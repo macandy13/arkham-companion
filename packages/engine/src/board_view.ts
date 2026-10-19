@@ -79,7 +79,7 @@ export interface InvestigatorView {
  */
 export interface EnemyView {
   name: CardName;
-  /** The printed name of the location it is at, or that of the investigator it is engaged with. */
+  /** The printed name of the location it is at. */
   at?: CardName;
   engagedWith?: InvestigatorId;
   damage?: number;
@@ -241,7 +241,7 @@ export class BoardView {
     if (!only) throw this.error(`no location ${describeMatcher(matcher)} in play`);
     if (others.length > 0)
       throw this.error(
-        `${matches.length} locations are ${describeMatcher(matcher)}; use one of ${ids(matches)}`,
+        `${matches.length} locations match ${describeMatcher(matcher)}; use one of ${ids(matches)}`,
       );
     return locationView(this.ctx, this.state, only);
   }
@@ -257,7 +257,7 @@ export class BoardView {
         (atId === undefined || enemyLocation(this.state, enemy) === atId),
     );
     const [only, ...others] = matches;
-    if (!only) throw this.error(`no enemy in play matching ${describeSelector(selector)}`);
+    if (!only) throw this.error(`no enemy in play ${describeSelector(selector)}`);
     if (others.length > 0)
       throw this.error(
         `${matches.length} enemies match ${describeSelector(selector)} (${ids(matches)}); ` +

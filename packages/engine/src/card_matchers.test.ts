@@ -72,7 +72,7 @@ describe('describeMatcher', () => {
     { matcher: byName('Hallway'), text: 'named "Hallway"' },
     { matcher: byId(instanceId('study')), text: 'with id study' },
     { matcher: byCode(cardCode('01111')), text: 'with code 01111' },
-    { matcher: fuzzy('hall'), text: 'matching "hall"' },
+    { matcher: fuzzy('hall'), text: 'with text "hall"' },
   ])('describes $matcher as $text', ({ matcher, text }) => {
     expect(describeMatcher(matcher)).toBe(text);
   });
