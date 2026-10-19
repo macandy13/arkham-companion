@@ -157,7 +157,7 @@ describe('appStore', () => {
     });
 
     describe('dispatch and undo', () => {
-      it('stores a command\'s events, so reopening the game shows the same state', async () => {
+      it("stores a command's events, so reopening the game shows the same state", async () => {
         const db = 'appstore-dispatch-test';
         const store = createAppStore(new IndexedDbStore(db));
         const id = await store.getState().startScenario(start);
