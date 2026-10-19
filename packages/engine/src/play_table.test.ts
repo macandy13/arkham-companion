@@ -151,11 +151,25 @@ describe('rejected and broken steps', () => {
     );
   });
 
-  it('does not wrap an error that is not a rejection', () => {
+  it('fails a name that matches no card with a TableError, not a rejection', () => {
     const table = PlayTable.start(game);
 
     expect(() => table.moveTo(alice, byName('garden'))).toThrow(TableError);
     expect(() => table.moveTo(alice, byName('garden'))).not.toThrow(CommandRejected);
+  });
+
+  it('passes on an error the engine throws that is not a rejection', () => {
+    const brokenHook = new RangeError('broken doom hook');
+    const table = PlayTable.start(
+      game.withAgenda(instanceId('agenda'), blankAgenda('agenda', fixed(5))).withHooks({
+        afterDoomPlaced: () => {
+          throw brokenHook;
+        },
+      }),
+    );
+
+    expect(() => table.placeDoom(1)).toThrow(brokenHook);
+    expect(table.board.agenda).toEqual({ name: 'agenda', doom: 0 });
   });
 });
 
