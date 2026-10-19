@@ -110,9 +110,14 @@ export class PlayTable {
 
   private constructor(readonly ctx: EngineContext) {}
 
-  /** A table started from the game `game` describes, in the context that knows its cards. */
+  /**
+   * A table started from the game `game` describes, in the context that knows
+   * its cards, with the turn of `withTurnOf` begun if one was given.
+   */
   static start(game: GameBuilder): PlayTable {
-    return PlayTable.from(game.context(), game.startCommand());
+    const table = PlayTable.from(game.context(), game.startCommand());
+    game.turnCommands().forEach((command) => table.play(command));
+    return table;
   }
 
   /**
