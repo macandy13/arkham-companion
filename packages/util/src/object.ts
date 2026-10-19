@@ -8,3 +8,12 @@ export function withoutKey<T extends object, K extends keyof T>(object: T, key: 
   delete copy[key];
   return copy;
 }
+
+/**
+ * `{ [key]: copy of list }` when the list has entries, else the empty object.
+ * Meant for spreading into an object literal so that empty lists stay out of
+ * a view instead of showing up as `key: []`. The list is copied, never shared.
+ */
+export function listIfAny<K extends string, T>(key: K, list: readonly T[]): { [P in K]?: T[] } {
+  return list.length > 0 ? ({ [key]: [...list] } as { [P in K]: T[] }) : {};
+}

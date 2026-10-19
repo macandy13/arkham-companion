@@ -4,6 +4,7 @@
  * other domain type belongs next to that entity instead.
  */
 export * from './array';
+export * from './assert';
 export * from './number';
 export * from './object';
 export * from './string';

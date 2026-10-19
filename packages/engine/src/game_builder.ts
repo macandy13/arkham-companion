@@ -279,12 +279,16 @@ export class GameBuilder {
     };
   }
 
-  /** The context and the state after `startCommand`, and after the turn of `withTurnOf` began. */
+  /** The commands after `startCommand` that begin the turn of `withTurnOf`; none without it. */
+  turnCommands(): Command[] {
+    const { turnOf } = this.spec;
+    return turnOf ? beginTurn(turnOf) : [];
+  }
+
+  /** The context and the state after `startCommand` and `turnCommands`. */
   start(): BuiltGame {
     const context = this.context();
-    const { turnOf } = this.spec;
-    const commands = [this.startCommand(), ...(turnOf ? beginTurn(turnOf) : [])];
-    const state = commands.reduce(
+    const state = [this.startCommand(), ...this.turnCommands()].reduce(
       (current, command) => execute(context, current, command).state,
       emptyState(),
     );

@@ -60,4 +60,4 @@ Slice 1 (timing suite): `packages/engine/src/timing.test.ts` plays the six timin
 Follow-ups:
 
 - `GameBuilder.withCard(id, card, zone)` takes the instance id and the card's stats as two leading arguments, which reads ambiguously in a test (`withCard(surgingCard, testingSurge, encounterDeck)`). Design one value that combines a card's instance id and its stats (TODO on `withCard`), then migrate the tests in one go.
-- Play the timing suite on `PlayTable` and read it back with `BoardView` (M1.14, #131/#136) once they are on main.
+- [x] Play the timing suite on `PlayTable` and read it back with `BoardView` (M1.14, #131/#136). Done in #138; `PlayTable.start` now begins the turn of `withTurnOf` too.

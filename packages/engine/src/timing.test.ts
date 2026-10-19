@@ -1,78 +1,76 @@
 /**
- * Timing corner cases, each played as a short game through the public
- * commands: what waits for what when a step of a sequence asks the players
- * something. The rules finish a nested sequence, its choices included,
- * before the interrupted one goes on (docs/rules.md, "Timing of forced
- * effects"). The unit tests of each rule sit with the rule; this suite keeps
- * the interactions together, one game per case, so a new corner case is one
- * more `describe` here.
+ * Timing corner cases, each played as a short game on a `PlayTable`: what
+ * waits for what when a step of a sequence asks the players something. The
+ * rules finish a nested sequence, its choices included, before the
+ * interrupted one goes on (docs/rules.md, "Timing of forced effects"). The
+ * unit tests of each rule sit with the rule; this suite keeps the
+ * interactions together, one game per case, so a new corner case is one more
+ * `describe` here.
  */
 import { describe, expect, it } from 'vitest';
 import {
+  atLocation,
   blankAct,
   blankEnemy,
   blankLocation,
   blankTreachery,
+  byName,
   confirmOptions,
   decisionId,
   encounterDeck,
   encounterDiscard,
   engagedWith,
-  atLocation,
   instanceId,
   investigatorId,
   newGame,
-  zoneOf,
   perInvestigator,
+  PlayTable,
   type Command,
 } from './index';
-import { answer, investigatorOf, pendingIds, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const hall = instanceId('hall');
-const cellar = instanceId('cellar');
 
 describe('an attack of opportunity before the move that provoked it', () => {
-  const ghoul = instanceId('ghoul');
-  /** Hall and cellar, connected; alice in the hall, engaged with a ghoul dealing 1 damage. */
-  const table = newGame()
+  const cellar = instanceId('cellar');
+  /** Hall and cellar, connected; alice in the hall on her turn, engaged with a ghoul dealing 1 damage. */
+  const game = newGame()
     .withLocation(hall, blankLocation('hall'))
     .withLocation(cellar, blankLocation('cellar'))
     .withConnection(hall, cellar)
     .withInvestigator(alice, { locationId: hall })
-    .withCard(ghoul, blankEnemy('ghoul', { damage: 1 }), engagedWith(alice));
+    .withCard(instanceId('ghoul'), blankEnemy('ghoul', { damage: 1 }), engagedWith(alice))
+    .withTurnOf(alice);
 
   it('keeps alice in the hall until the attack is resolved, then moves her', () => {
-    const { context, state: aliceTurn } = table.withTurnOf(alice).start();
+    const table = PlayTable.start(game);
 
-    const attacked = stateAfter(context, aliceTurn, {
-      type: 'MoveInvestigator',
-      investigatorId: alice,
-      to: cellar,
-      asAction: true,
-    });
-    const moved = stateAfter(context, attacked, answer('attackOfOpportunity:ghoul', 'attack'));
+    table.moveTo(alice, byName('cellar'));
 
-    expect(pendingIds(attacked)).toEqual(['attackOfOpportunity:ghoul']);
-    expect(investigatorOf(attacked, alice).locationId).toBe(hall);
-    expect(investigatorOf(moved, alice).locationId).toBe(cellar);
-    expect(investigatorOf(moved, alice).health.damage).toBe(1);
+    expect(table.board.decisions).toMatchObject([
+      { prompt: 'decision.attackOfOpportunity', about: 'ghoul' },
+    ]);
+    expect(table.board.investigator(alice).at).toBe('hall');
+
+    table.takeAttackOfOpportunity(byName('ghoul'));
+
+    expect(table.board.investigator(alice)).toMatchObject({ at: 'cellar', damage: 1 });
   });
 });
 
 describe('a surge after a revelation that asks something', () => {
-  const surgingCard = instanceId('surging_card');
-  const nextCard = instanceId('next_card');
-  const bottomCard = instanceId('bottom_card');
   /**
-   * The hall with alice. Each test fills the encounter deck with a surge card,
-   * a plain treachery below it and one more at the bottom, so drawing both
-   * leaves a card and the discard pile is not shuffled back in.
+   * The hall with alice. Each test puts a surge card on top of the encounter
+   * deck with two plain treacheries below it, so drawing two cards leaves one
+   * and the discard pile is not shuffled back in.
    */
   const aliceInHall = newGame()
     .withLocation(hall, blankLocation('hall'))
     .withInvestigator(alice, { locationId: hall });
-  const plainTreachery = blankTreachery('plain_treachery');
+  const belowTheSurge = (game: typeof aliceInHall) =>
+    game
+      .withCard(instanceId('next_card'), blankTreachery('next_card'), encounterDeck)
+      .withCard(instanceId('bottom_card'), blankTreachery('bottom_card'), encounterDeck);
   const draw: Command = { type: 'DrawEncounter', investigatorId: alice };
 
   it('draws the surge card only once the revelation test is resolved', () => {
@@ -80,31 +78,33 @@ describe('a surge after a revelation that asks something', () => {
       keywords: [{ name: 'surge' }],
       revelationTest: { skill: 'willpower', difficulty: 3 },
     });
-    const { context, state } = aliceInHall
-      .withCard(surgingCard, testingSurge, encounterDeck)
-      .withCard(nextCard, plainTreachery, encounterDeck)
-      .withCard(bottomCard, plainTreachery, encounterDeck)
-      .start();
+    const table = PlayTable.start(
+      belowTheSurge(aliceInHall.withCard(instanceId('surging_card'), testingSurge, encounterDeck)),
+    );
 
-    const testing = stateAfter(context, state, draw);
-    const resolved = stateAfter(context, testing, answer('revelation:surging_card', 'fail'));
+    table.play(draw);
 
-    expect(pendingIds(testing)).toEqual(['revelation:surging_card']);
-    expect(zoneOf(testing, surgingCard)).toEqual({ kind: 'resolving' });
-    expect(zoneOf(testing, nextCard)).toEqual(encounterDeck);
-    expect(zoneOf(resolved, surgingCard)).toEqual(encounterDiscard);
-    expect(zoneOf(resolved, nextCard)).toEqual(encounterDiscard);
+    expect(table.board.decisions).toMatchObject([
+      { prompt: 'decision.revelationTest', about: 'testing_surge' },
+    ]);
+    expect(table.board.namesIn({ kind: 'resolving' })).toEqual(['testing_surge']);
+    expect(table.board.namesIn(encounterDeck)).toEqual(['next_card', 'bottom_card']);
+
+    table.resolveTest('fail');
+
+    expect(table.board.namesIn(encounterDiscard)).toEqual(['next_card', 'testing_surge']);
+    expect(table.board.namesIn(encounterDeck)).toEqual(['bottom_card']);
   });
 
   it('draws nothing more once the revelation defeated alice', () => {
     const deadlySurge = blankTreachery('deadly_surge', { keywords: [{ name: 'surge' }] });
-    const { context, state } = newGame()
-      .withLocation(hall, blankLocation('hall'))
-      .withInvestigator(alice, { locationId: hall, health: { max: 8, damage: 0 } })
-      .withCard(surgingCard, deadlySurge, encounterDeck)
-      .withCard(nextCard, plainTreachery, encounterDeck)
-      .withCard(bottomCard, plainTreachery, encounterDeck)
-      .withEffects({
+    const table = PlayTable.start(
+      belowTheSurge(
+        newGame()
+          .withLocation(hall, blankLocation('hall'))
+          .withInvestigator(alice, { locationId: hall, health: { max: 8, damage: 0 } })
+          .withCard(instanceId('surging_card'), deadlySurge, encounterDeck),
+      ).withEffects({
         // The revelation asks alice to confirm 8 damage, her whole health.
         [deadlySurge.code]: {
           onReveal: () => [
@@ -122,32 +122,30 @@ describe('a surge after a revelation that asks something', () => {
             },
           ],
         },
-      })
-      .start();
+      }),
+    );
 
-    const asked = stateAfter(context, state, draw);
-    const defeated = stateAfter(context, asked, answer('deadly', 'yes'));
+    table.play(draw);
+    table.answerOnly('yes');
 
-    expect(investigatorOf(defeated, alice).status).toBe('defeated');
-    expect(zoneOf(defeated, surgingCard)).toEqual(encounterDiscard);
-    expect(zoneOf(defeated, nextCard)).toEqual(encounterDeck);
+    expect(table.board.investigator(alice).status).toBe('defeated');
+    expect(table.board.namesIn(encounterDiscard)).toEqual(['deadly_surge']);
+    expect(table.board.namesIn(encounterDeck)).toEqual(['next_card', 'bottom_card']);
   });
 });
 
 describe('hunters moving one at a time', () => {
-  const forked = instanceId('forked_hunter');
-  const second = instanceId('second_hunter');
-  const hunterGhoul = blankEnemy('hunter_ghoul', { keywords: [{ name: 'hunter' }] });
   const crossroads = instanceId('crossroads');
   const leftPath = instanceId('left_path');
   const rightPath = instanceId('right_path');
   const den = instanceId('den');
+  const hunter = { keywords: [{ name: 'hunter' as const }] };
   /**
    * Two routes from the crossroads to alice's den, one by the left path and
    * one by the right: the forked hunter at the crossroads has two equally
    * short routes to her, the second hunter on the left path one.
    */
-  const table = newGame()
+  const game = newGame()
     .withLocation(crossroads, blankLocation('crossroads'))
     .withLocation(leftPath, blankLocation('left_path'))
     .withLocation(rightPath, blankLocation('right_path'))
@@ -157,45 +155,57 @@ describe('hunters moving one at a time', () => {
     .withConnection(leftPath, den)
     .withConnection(rightPath, den)
     .withInvestigator(alice, { locationId: den })
-    .withCard(forked, hunterGhoul, atLocation(crossroads))
-    .withCard(second, hunterGhoul, atLocation(leftPath));
-
-  it('settles the chosen hunter`s route before the other hunter moves', () => {
-    const { context, state } = table.start();
-
-    const orderAsked = stateAfter(context, state, { type: 'MoveHunters' });
-    const routeAsked = stateAfter(context, orderAsked, answer('hunterOrder', forked));
-    const moved = stateAfter(
-      context,
-      routeAsked,
-      answer('hunter:forked_hunter:location', 'right_path'),
+    .withCard(
+      instanceId('forked_hunter'),
+      blankEnemy('forked_hunter', hunter),
+      atLocation(crossroads),
+    )
+    .withCard(
+      instanceId('second_hunter'),
+      blankEnemy('second_hunter', hunter),
+      atLocation(leftPath),
     );
 
-    expect(pendingIds(orderAsked)).toEqual(['hunterOrder']);
-    expect(pendingIds(routeAsked)).toEqual(['hunter:forked_hunter:location']);
-    expect(zoneOf(routeAsked, second)).toEqual(atLocation(leftPath));
-    expect(zoneOf(moved, forked)).toEqual(atLocation(rightPath));
-    expect(zoneOf(moved, second)).toEqual(engagedWith(alice));
+  it('settles the chosen hunter`s route before the other hunter moves', () => {
+    const table = PlayTable.start(game);
+
+    table.play({ type: 'MoveHunters' });
+
+    expect(table.board.decisions).toMatchObject([
+      { prompt: 'decision.chooseHunterOrder', options: ['forked_hunter', 'second_hunter'] },
+    ]);
+
+    table.answerOnly('forked_hunter');
+
+    expect(table.board.decisions).toMatchObject([
+      { about: 'forked_hunter', options: ['left_path', 'right_path'] },
+    ]);
+    expect(table.board.enemy(byName('second_hunter')).at).toBe('left_path');
+
+    table.answer(byName('forked_hunter'), 'right_path');
+
+    expect(table.board.enemies).toEqual([
+      { name: 'forked_hunter', at: 'right_path' },
+      { name: 'second_hunter', at: 'den', engagedWith: alice },
+    ]);
   });
 });
 
 describe('the last act whose reverse side asks something', () => {
-  const firstAct = instanceId('first_act');
-  const lastAct = instanceId('last_act');
-  const lastActCard = blankAct('last_act', { stage: { number: 2 }, clues: perInvestigator(3) });
+  const lastAct = blankAct('last_act', { stage: { number: 2 }, clues: perInvestigator(3) });
   /** Two acts and the hall with alice. */
-  const table = newGame()
-    .withAct(firstAct, blankAct('first_act', { clues: perInvestigator(2) }))
-    .withAct(lastAct, lastActCard)
+  const game = newGame()
+    .withAct(instanceId('first_act'), blankAct('first_act', { clues: perInvestigator(2) }))
+    .withAct(instanceId('last_act'), lastAct)
     .withLocation(hall, blankLocation('hall'))
     .withInvestigator(alice, { locationId: hall });
 
   it('keeps the last act in play until the lead investigator picks the resolution', () => {
     /** The last act's reverse side asks "burn the house?"; each answer ends the scenario. */
-    const { context, state } = table
-      .withHooks({
+    const table = PlayTable.start(
+      game.withHooks({
         onActAdvance: {
-          [lastActCard.code]: (): Command[] => [
+          [lastAct.code]: (): Command[] => [
             {
               type: 'RequestDecision',
               decision: {
@@ -219,23 +229,27 @@ describe('the last act whose reverse side asks something', () => {
             },
           ],
         },
-      })
-      .start();
+      }),
+    );
 
-    const asked = stateAfter(context, state, { type: 'AdvanceAct' }, { type: 'AdvanceAct' });
-    const ended = stateAfter(context, asked, answer('burn_the_house', 'spare'));
+    table.play({ type: 'AdvanceAct' });
+    table.play({ type: 'AdvanceAct' });
 
-    expect(pendingIds(asked)).toEqual(['burn_the_house']);
-    expect(asked.act.current).toBe(lastAct);
-    expect(asked.meta.ended).toBeUndefined();
-    expect(ended.meta).toMatchObject({ ended: true, resolution: 'R2' });
-    expect(ended.act.current).toBeUndefined();
+    expect(table.board).toMatchObject({
+      act: { name: 'last_act' },
+      ended: false,
+      decisions: [{ prompt: 'decision.burnTheHouse' }],
+    });
+
+    table.answerOnly('spare it');
+
+    expect(table.board).toMatchObject({ act: undefined, ended: true, resolution: 'R2' });
   });
 });
 
 describe('a forced effect that asks two questions', () => {
   /** The hall with alice, who has no resources. */
-  const table = newGame()
+  const game = newGame()
     .withLocation(hall, blankLocation('hall'))
     .withInvestigator(alice, { locationId: hall, resources: 0 });
 
@@ -247,34 +261,34 @@ describe('a forced effect that asks two questions', () => {
       delta: 1,
     };
     /** After doom is placed, the scenario offers alice a resource twice, one question at a time. */
-    const { context, state } = table
-      .withHooks({
+    const table = PlayTable.start(
+      game.withHooks({
         afterDoomPlaced: () =>
-          ['first_offer', 'second_offer'].map((id): Command => ({
+          ['firstOffer', 'secondOffer'].map((offer): Command => ({
             type: 'RequestDecision',
             decision: {
-              id: decisionId(id),
+              id: decisionId(offer),
               kind: 'confirm',
-              prompt: 'decision.applyForcedEffect',
+              prompt: `decision.${offer}`,
               decider: { kind: 'lead' },
               options: confirmOptions([gainResource]),
             },
           })),
-      })
-      .start();
+      }),
+    );
 
-    const firstAsked = stateAfter(context, state, {
-      type: 'PlaceDoom',
-      cardId: hall,
-      amount: 1,
-    });
-    const secondAsked = stateAfter(context, firstAsked, answer('first_offer', 'yes'));
-    const done = stateAfter(context, secondAsked, answer('second_offer', 'yes'));
+    table.play({ type: 'PlaceDoom', cardId: hall, amount: 1 });
 
-    expect(pendingIds(firstAsked)).toEqual(['first_offer']);
-    expect(pendingIds(secondAsked)).toEqual(['second_offer']);
-    expect(investigatorOf(secondAsked, alice).resources).toBe(1);
-    expect(done.pending).toEqual([]);
-    expect(investigatorOf(done, alice).resources).toBe(2);
+    expect(table.board.decisions).toMatchObject([{ prompt: 'decision.firstOffer' }]);
+
+    table.answerOnly('yes');
+
+    expect(table.board.decisions).toMatchObject([{ prompt: 'decision.secondOffer' }]);
+    expect(table.board.investigator(alice).resources).toBe(1);
+
+    table.answerOnly('yes');
+
+    expect(table.board.decisions).toEqual([]);
+    expect(table.board.investigator(alice).resources).toBe(2);
   });
 });

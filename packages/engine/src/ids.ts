@@ -22,6 +22,13 @@ export type CardCode = Brand<string, 'CardCode'>;
  * investigator code.
  */
 export type InvestigatorCode = CardCode & { readonly __investigatorCode: true };
+/**
+ * The printed name of a card as a player says it ("Hallway", "Swarm of Rats"),
+ * for what the views show and the matchers compare. A name is not an identity:
+ * several copies of a card share it, so `InstanceId` stays the exact reference.
+ * Compared with `comparableName` (case and a trailing full stop do not matter).
+ */
+export type CardName = Brand<string, 'CardName'>;
 /** ArkhamDB encounter set code, e.g. 'rats'; `CardStats.encounterCode`. */
 export type EncounterSetCode = Brand<string, 'EncounterSetCode'>;
 /** `ScenarioDefinition.id`, e.g. 'the-gathering'; wherever a game or campaign refers to a scenario. */
@@ -48,6 +55,7 @@ export const instanceId = (id: string) => id as InstanceId;
 export const investigatorId = (id: string) => id as InvestigatorId;
 export const investigatorCode = (code: string) => code as InvestigatorCode;
 export const cardCode = (code: string) => code as CardCode;
+export const cardName = (name: string) => name as CardName;
 export const encounterSetCode = (code: string) => code as EncounterSetCode;
 export const scenarioId = (id: string) => id as ScenarioId;
 export const campaignDefinitionId = (id: string) => id as CampaignDefinitionId;
