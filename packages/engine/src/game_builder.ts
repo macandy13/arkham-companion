@@ -188,8 +188,8 @@ export class GameBuilder {
 
   /**
    * The table with a card in `zone`; cards in one zone keep the order they were added in, top first.
-   * TODO(M1V.2 follow-up): the instance id and the card's stats as two leading arguments read
-   * ambiguously at the call site; combine them into one value (see the M1V task file).
+   * The instance id and the card's stats stay two arguments: no engine type pairs them (an
+   * instance holds only its card code), and most tests name the instance after its card.
    */
   withCard(id: InstanceId, card: CardStats, zone: Zone, options: CardOptions = {}): GameBuilder {
     return this.with({ cards: [...this.spec.cards, { id, card, zone, options }] });
