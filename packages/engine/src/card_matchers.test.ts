@@ -7,10 +7,14 @@ import {
   byId,
   byName,
   cardCode,
+  cardMatcher,
   describeMatcher,
+  enemyMatcher,
+  enemyMatching,
   instanceId,
   investigatorCode,
   investigatorId,
+  investigatorMatcher,
   matchingCards,
   matchingInvestigators,
   newGame,
@@ -76,7 +80,49 @@ describe('describeMatcher', () => {
     { matcher: byId(instanceId('study')), text: 'with id study' },
     { matcher: byCode(cardCode('01111')), text: 'with code 01111' },
     { matcher: byAny('hall'), text: 'with id, code or name "hall"' },
+    { matcher: enemyMatching(byName('Rat')), text: 'named "Rat"' },
+    {
+      matcher: enemyMatching(byName('Rat'), {
+        engagedWith: investigatorId('daisy'),
+        at: instanceId('study'),
+      }),
+      text: 'named "Rat" engaged with an investigator with id daisy at a location with id study',
+    },
   ])('describes $matcher as $text', ({ matcher, text }) => {
     expect(describeMatcher(matcher)).toBe(text);
+  });
+});
+
+describe('cardMatcher', () => {
+  it.each([
+    { ref: ghoul_a, matcher: byId(ghoul_a) },
+    { ref: byId(ghoul_b), matcher: byId(ghoul_b) },
+    { ref: byName('Ghoul Minion'), matcher: byName('Ghoul Minion') },
+    { ref: byAny('ghoul_a'), matcher: byAny('ghoul_a') },
+  ])('turns $ref into $matcher', ({ ref, matcher }) => {
+    expect(cardMatcher(ref)).toEqual(matcher);
+  });
+});
+
+describe('investigatorMatcher', () => {
+  const daisy = investigatorId('daisy');
+
+  it.each([
+    { ref: daisy, matcher: byId(daisy) },
+    { ref: byId(daisy), matcher: byId(daisy) },
+    { ref: byName('Daisy Walker'), matcher: byName('Daisy Walker') },
+    { ref: byAny('daisy'), matcher: byAny('daisy') },
+  ])('turns $ref into $matcher', ({ ref, matcher }) => {
+    expect(investigatorMatcher(ref)).toEqual(matcher);
+  });
+});
+
+describe('enemyMatcher', () => {
+  it.each([
+    { ref: ghoul_a, matcher: byId(ghoul_a) },
+    { ref: byName('Ghoul Minion'), matcher: byName('Ghoul Minion') },
+    { ref: enemyMatching(ghoul_b), matcher: enemyMatching(ghoul_b) },
+  ])('turns $ref into $matcher', ({ ref, matcher }) => {
+    expect(enemyMatcher(ref)).toEqual(matcher);
   });
 });

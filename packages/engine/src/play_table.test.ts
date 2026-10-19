@@ -4,13 +4,14 @@ import {
   blankAgenda,
   blankEnemy,
   blankLocation,
-  byId,
+  byAny,
   byName,
   cardCode,
   cardDbFrom,
   CommandRejected,
   decisionId,
   engagedWith,
+  enemyMatching,
   fixed,
   instanceId,
   investigatorCode,
@@ -499,11 +500,11 @@ describe('fighting and evading', () => {
       );
     });
 
-    it('takes a selector or an instance id to pick one', () => {
+    it('takes an enemy matcher or a bare instance id to pick one', () => {
       const table = PlayTable.start(twoGhouls);
 
-      table.fight(alice, { card: byName('ghoul'), engagedWith: alice });
-      table.fight(bob, byId(instanceId('ghoul_b')));
+      table.fight(alice, enemyMatching(byName('ghoul'), { engagedWith: alice }));
+      table.fight(bob, instanceId('ghoul_b'));
 
       expect(table.board.enemies).toEqual([
         { name: 'ghoul', at: 'study', engagedWith: alice, damage: 1 },
@@ -598,7 +599,7 @@ describe('answering decisions', () => {
       table.startTurn(alice);
       table.moveTo(alice, byName('hallway'));
 
-      table.answer(byId(instanceId('ghoul_b')), 'attack');
+      table.answer(instanceId('ghoul_b'), 'attack');
 
       expect(table.board.investigator(alice).damage).toBe(1);
       expect(table.board.decisions).toMatchObject([{ about: 'ghoul' }]);
@@ -661,5 +662,79 @@ describe('undo', () => {
     expect(() => table.undo()).toThrow(/nothing to undo/);
 
     expect(table.state).toBe(stateBefore);
+  });
+});
+
+describe('naming an investigator by a matcher', () => {
+  const game = newGame()
+    .withLocation(study, blankLocation('study'))
+    .withLocation(hallway, blankLocation('hallway'))
+    .withConnection(study, hallway)
+    .withInvestigator(alice, { locationId: study })
+    .withInvestigator(bob, { locationId: study });
+
+  it.each([
+    { ref: byName('Alice'), step: (table: PlayTable) => table.startTurn(byName('Alice')) },
+    { ref: byAny('alice'), step: (table: PlayTable) => table.startTurn(byAny('alice')) },
+    { ref: alice, step: (table: PlayTable) => table.startTurn(alice) },
+  ])('starts a turn with $ref', ({ step }) => {
+    const table = PlayTable.start(game);
+    table.nextPhase();
+
+    step(table);
+
+    expect(table.board.turn).toBe(alice);
+  });
+
+  it.each([
+    {
+      step: 'moveTo',
+      act: (table: PlayTable) => table.moveTo(byName('Alice'), byName('hallway')),
+      expected: { at: 'hallway' },
+    },
+    {
+      step: 'moveTo to a bare location id',
+      act: (table: PlayTable) => table.moveTo(byName('Alice'), hallway),
+      expected: { at: 'hallway' },
+    },
+    {
+      step: 'gainResources',
+      act: (table: PlayTable) => table.gainResources(byName('Alice'), 3),
+      expected: { resources: 8 },
+    },
+    {
+      step: 'spendResources',
+      act: (table: PlayTable) => table.spendResources(byName('Alice'), 2),
+      expected: { resources: 3 },
+    },
+    {
+      step: 'takeDamage',
+      act: (table: PlayTable) => table.takeDamage(byName('Alice'), 2),
+      expected: { damage: 2 },
+    },
+    {
+      step: 'takeHorror',
+      act: (table: PlayTable) => table.takeHorror(byName('Alice'), 1),
+      expected: { horror: 1 },
+    },
+    {
+      step: 'spendAction',
+      act: (table: PlayTable) => table.spendAction(byName('Alice')),
+      expected: { actions: 2 },
+    },
+  ])('$step accepts byName for the investigator', ({ act, expected }) => {
+    const table = PlayTable.start(game);
+    table.nextPhase();
+    table.startTurn(alice);
+
+    act(table);
+
+    expect(table.board.investigator(alice)).toMatchObject(expected);
+  });
+
+  it('fails with the board when the name matches no investigator', () => {
+    const table = PlayTable.start(game);
+
+    expect(() => table.startTurn(byName('Carol'))).toThrow(/^no investigator named "Carol"\n/);
   });
 });

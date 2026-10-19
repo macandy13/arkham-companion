@@ -1,5 +1,12 @@
-import { BoardView, boardView, TableError, type EnemySelector } from './board_view';
-import { describeMatcher, matchingCards, type CardMatcher } from './card_matchers';
+import { BoardView, boardView, TableError } from './board_view';
+import {
+  cardMatcher,
+  describeMatcher,
+  matchingCards,
+  type CardRef,
+  type EnemyRef,
+  type InvestigatorRef,
+} from './card_matchers';
 import { type EngineContext, type ScenarioContext } from './cards';
 import type { Command } from './commands';
 import { describeDecision, optionNamed } from './describe_decision';
@@ -85,8 +92,10 @@ interface TestOptions {
  * name) leaves state and log as they were, even when it runs several commands
  * (an action and its test, the attacks of a step) and a later one fails.
  * Action methods do not spend actions (the engine leaves that to the players);
- * `spendAction` is explicit. Investigators are given by `InvestigatorId`,
- * cards by `CardMatcher`.
+ * `spendAction` is explicit. Investigators are given by
+ * an `InvestigatorRef` (`byName('Roland Banks')` or the bare `InvestigatorId`),
+ * cards by a `CardRef` and enemies by an `EnemyRef` (a matcher or the bare
+ * `InstanceId`), all resolved through `board`.
  */
 export class PlayTable {
   private current: GameState = emptyState();
@@ -202,38 +211,38 @@ export class PlayTable {
   }
 
   /** The group picks `investigator` to take the next turn of the investigation phase. */
-  startTurn(investigator: InvestigatorId): void {
-    this.play({ type: 'StartTurn', investigatorId: investigator });
+  startTurn(investigator: InvestigatorRef): void {
+    this.play({ type: 'StartTurn', investigatorId: this.seat(investigator) });
   }
 
   /** The investigator ends their turn. */
-  endTurn(investigator: InvestigatorId): void {
-    this.play({ type: 'EndTurn', investigatorId: investigator });
+  endTurn(investigator: InvestigatorRef): void {
+    this.play({ type: 'EndTurn', investigatorId: this.seat(investigator) });
   }
 
   /** The investigator resigns as the action of their turn, which ends it. */
-  resign(investigator: InvestigatorId): void {
-    this.play({ type: 'Resign', investigatorId: investigator });
+  resign(investigator: InvestigatorRef): void {
+    this.play({ type: 'Resign', investigatorId: this.seat(investigator) });
   }
 
   /**
    * The players change the investigator's remaining actions by `delta`: -1 per
    * action they count off in the turn, or what a card grants or takes away.
    */
-  adjustActions(investigator: InvestigatorId, delta: number): void {
-    this.play({ type: 'AdjustActions', investigatorId: investigator, delta });
+  adjustActions(investigator: InvestigatorRef, delta: number): void {
+    this.play({ type: 'AdjustActions', investigatorId: this.seat(investigator), delta });
   }
 
   /** The investigator counts off `count` actions (default 1) they took. */
-  spendAction(investigator: InvestigatorId, count = 1): void {
+  spendAction(investigator: InvestigatorRef, count = 1): void {
     this.adjustActions(investigator, -count);
   }
 
   /** A move action along a connection to the location `location` names. */
-  moveTo(investigator: InvestigatorId, location: CardMatcher): void {
+  moveTo(investigator: InvestigatorRef, location: CardRef): void {
     this.play({
       type: 'MoveInvestigator',
-      investigatorId: investigator,
+      investigatorId: this.seat(investigator),
       to: this.board.location(location).id,
       asAction: true,
     });
@@ -247,12 +256,13 @@ export class PlayTable {
    * take them (`takeAttackOfOpportunity`), then use `resolveTest`.
    */
   investigate(
-    investigator: InvestigatorId,
+    investigator: InvestigatorRef,
     { result = 'pass', clues }: TestOptions & { clues?: number } = {},
   ): void {
+    const seat = this.seat(investigator);
     this.atomically(() => {
-      this.play({ type: 'Investigate', investigatorId: investigator, asAction: true });
-      this.finishTest(`investigate:${investigator}`, result, clues);
+      this.play({ type: 'Investigate', investigatorId: seat, asAction: true });
+      this.finishTest(`investigate:${seat}`, result, clues);
     });
   }
 
@@ -263,14 +273,15 @@ export class PlayTable {
    * enemy then asks to attack the fighter.
    */
   fight(
-    investigator: InvestigatorId,
-    enemy: EnemySelector,
+    investigator: InvestigatorRef,
+    enemy: EnemyRef,
     { result = 'pass', damage }: TestOptions & { damage?: number } = {},
   ): void {
+    const seat = this.seat(investigator);
     const id = this.board.enemyId(enemy);
     this.atomically(() => {
-      this.play({ type: 'Fight', investigatorId: investigator, enemyId: id });
-      this.finishTest(`fight:${investigator}:${id}`, result, damage);
+      this.play({ type: 'Fight', investigatorId: seat, enemyId: id });
+      this.finishTest(`fight:${seat}:${id}`, result, damage);
     });
   }
 
@@ -280,14 +291,15 @@ export class PlayTable {
    * and stays where it is.
    */
   evade(
-    investigator: InvestigatorId,
-    enemy: EnemySelector,
+    investigator: InvestigatorRef,
+    enemy: EnemyRef,
     { result = 'pass' }: TestOptions = {},
   ): void {
+    const seat = this.seat(investigator);
     const id = this.board.enemyId(enemy);
     this.atomically(() => {
-      this.play({ type: 'Evade', investigatorId: investigator, enemyId: id });
-      this.finishTest(`evade:${investigator}:${id}`, result);
+      this.play({ type: 'Evade', investigatorId: seat, enemyId: id });
+      this.finishTest(`evade:${seat}:${id}`, result);
     });
   }
 
@@ -295,11 +307,11 @@ export class PlayTable {
    * The engage action: the `enemy` engages the investigator (or switches to
    * them). Entering a location with a ready enemy needs none, `moveTo` engages it.
    */
-  engage(investigator: InvestigatorId, enemy: EnemySelector): void {
+  engage(investigator: InvestigatorRef, enemy: EnemyRef): void {
     this.play({
       type: 'EngageEnemy',
       enemyId: this.board.enemyId(enemy),
-      investigatorId: investigator,
+      investigatorId: this.seat(investigator),
       asAction: true,
     });
   }
@@ -310,7 +322,7 @@ export class PlayTable {
    * to (an asset soaking part of it).
    */
   takeAttackOfOpportunity(
-    enemy: EnemySelector,
+    enemy: EnemyRef,
     amounts: { damage?: number; horror?: number } = {},
   ): void {
     this.play({
@@ -336,10 +348,13 @@ export class PlayTable {
   }
 
   /** The investigators pay the act's clue requirement, each the clues listed with them, and advance it. */
-  spendCluesToAdvanceAct(spend: ReadonlyArray<readonly [InvestigatorId, number]>): void {
+  spendCluesToAdvanceAct(spend: ReadonlyArray<readonly [InvestigatorRef, number]>): void {
     this.play({
       type: 'AdvanceAct',
-      spend: spend.map(([investigatorId, amount]) => ({ investigatorId, amount })),
+      spend: spend.map(([investigator, amount]) => ({
+        investigatorId: this.seat(investigator),
+        amount,
+      })),
     });
   }
 
@@ -351,19 +366,20 @@ export class PlayTable {
    * option is not offered, so a script that answers the wrong question breaks
    * where it happens.
    */
-  answer(subject: CardMatcher, option: string, { amount }: { amount?: number } = {}): void {
+  answer(subject: CardRef, option: string, { amount }: { amount?: number } = {}): void {
     const { pending, cards } = this.current;
+    const matcher = cardMatcher(subject);
     const subjects = matchingCards(
       this.ctx,
       pending.flatMap((decision) =>
         decision.subject === undefined ? [] : [requireCard(cards, decision.subject)],
       ),
-      subject,
+      matcher,
     ).map((card) => card.id);
     const about = pending.filter(
       (decision) => decision.subject !== undefined && subjects.includes(decision.subject),
     );
-    const decision = this.onlyOne(about, `open decision about a card ${describeMatcher(subject)}`);
+    const decision = this.onlyOne(about, `open decision about a card ${describeMatcher(matcher)}`);
     this.answerWith(decision, option, amount);
   }
 
@@ -380,38 +396,38 @@ export class PlayTable {
    */
   resolveTest(
     result: SkillTestResult,
-    { for: investigator, amount }: { for?: InvestigatorId; amount?: number } = {},
+    { for: investigator, amount }: { for?: InvestigatorRef; amount?: number } = {},
   ): void {
+    const seat = investigator === undefined ? undefined : this.seat(investigator);
     const decision = this.onlyOne(
       this.current.pending.filter(
         (pending) =>
           pending.kind === 'skillTestResult' &&
-          (investigator === undefined ||
-            (pending.decider.kind === 'investigator' &&
-              pending.decider.investigatorId === investigator)),
+          (seat === undefined ||
+            (pending.decider.kind === 'investigator' && pending.decider.investigatorId === seat)),
       ),
-      `open skill test${investigator === undefined ? '' : ` for ${investigator}`}`,
+      `open skill test${seat === undefined ? '' : ` for ${seat}`}`,
     );
     this.resolve(decision, testOptionId(result), amount);
   }
 
   /** Resources from the resource action or a card. */
-  gainResources(investigator: InvestigatorId, amount: number): void {
+  gainResources(investigator: InvestigatorRef, amount: number): void {
     this.adjust(investigator, 'resources', amount);
   }
 
   /** Resources paid for a card the players play (the app does not track player cards). */
-  spendResources(investigator: InvestigatorId, amount: number): void {
+  spendResources(investigator: InvestigatorRef, amount: number): void {
     this.adjust(investigator, 'resources', -amount);
   }
 
   /** Damage from a failed treachery test or an attack. */
-  takeDamage(investigator: InvestigatorId, amount: number): void {
+  takeDamage(investigator: InvestigatorRef, amount: number): void {
     this.adjust(investigator, 'damage', amount);
   }
 
   /** Horror from a failed treachery test, an attack or an agenda's reverse side. */
-  takeHorror(investigator: InvestigatorId, amount: number): void {
+  takeHorror(investigator: InvestigatorRef, amount: number): void {
     this.adjust(investigator, 'horror', amount);
   }
 
@@ -438,8 +454,13 @@ export class PlayTable {
     }
   }
 
-  private adjust(investigator: InvestigatorId, stat: InvestigatorStat, delta: number): void {
-    this.play({ type: 'AdjustInvestigator', investigatorId: investigator, stat, delta });
+  /** The seat `investigator` picks; fails with the board attached if none or several match. */
+  private seat(investigator: InvestigatorRef): InvestigatorId {
+    return this.board.investigator(investigator).id;
+  }
+
+  private adjust(investigator: InvestigatorRef, stat: InvestigatorStat, delta: number): void {
+    this.play({ type: 'AdjustInvestigator', investigatorId: this.seat(investigator), stat, delta });
   }
 
   /**

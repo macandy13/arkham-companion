@@ -4,11 +4,15 @@ import { optionName } from './describe_decision';
 import { isInPlay } from './doom';
 import { formatBoard } from './format_board';
 import {
+  cardMatcher,
   describeMatcher,
+  enemyMatcher,
+  investigatorMatcher,
   matchingCards,
   matchingInvestigators,
-  type CardMatcher,
-  type InvestigatorMatcher,
+  type CardRef,
+  type EnemyRef,
+  type InvestigatorRef,
 } from './card_matchers';
 import { cardName, type CardName, type InstanceId, type InvestigatorId, type MapId } from './ids';
 import { cardsInZone, cardsOfType } from './lookup';
@@ -24,15 +28,6 @@ import type {
   SkillTest,
 } from './state';
 import type { Zone } from './zone';
-
-/**
- * Picks one enemy in play: by a `CardMatcher` alone, or narrowed by the
- * investigator it is engaged with or the location (a `CardMatcher`) it is at,
- * for when several copies of a card are in play at once (three Swarms of
- * Rats). A lookup that matches more than one enemy fails instead of guessing.
- */
-export type EnemySelector =
-  CardMatcher | { card: CardMatcher; engagedWith?: InvestigatorId; at?: CardMatcher };
 
 /**
  * A usage error of a test table: an unknown or ambiguous name, a decision or
@@ -200,9 +195,8 @@ export class BoardView {
    * The one investigator `matcher` picks (a bare `InvestigatorId` is
    * `byId(id)`); fails with the board attached if there is none or several.
    */
-  investigator(matcher: InvestigatorMatcher | InvestigatorId): InvestigatorView {
-    const wanted: InvestigatorMatcher =
-      typeof matcher === 'string' ? { by: 'id', id: matcher } : matcher;
+  investigator(ref: InvestigatorRef): InvestigatorView {
+    const wanted = investigatorMatcher(ref);
     const matches = matchingInvestigators(this.state.investigators, wanted);
     const [only, ...others] = matches;
     if (!only) throw this.error(`no investigator ${describeMatcher(wanted)}`);
@@ -233,8 +227,9 @@ export class BoardView {
     return this.locations.filter((location) => location.map === map).map((l) => l.name);
   }
 
-  /** The one location in play `matcher` picks; fails with the board attached if none or several match. */
-  location(matcher: CardMatcher): LocationView {
+  /** The one location in play `ref` picks (a bare `InstanceId` is `byId(id)`); fails with the board attached if none or several match. */
+  location(ref: CardRef): LocationView {
+    const matcher = cardMatcher(ref);
     const inPlay = this.locations.map((location) => requireCard(this.state, location.id));
     const matches = matchingCards(this.ctx, inPlay, matcher);
     const [only, ...others] = matches;
@@ -246,34 +241,43 @@ export class BoardView {
     return locationView(this.ctx, this.state, only);
   }
 
-  /** The one enemy in play `selector` picks (see `EnemySelector`). */
-  enemy(selector: EnemySelector): EnemyView {
-    return enemyView(this.ctx, this.state, this.enemyCard(selector));
+  /** The one enemy in play `ref` picks (see `EnemyMatcher`; a bare `InstanceId` is `byId(id)`). */
+  enemy(ref: EnemyRef): EnemyView {
+    return enemyView(this.ctx, this.state, this.enemyCard(ref));
   }
 
   /**
-   * The instance id of the enemy `selector` picks, for the commands that name
-   * it (`PlayTable` resolves its selectors here); the view itself has no id.
+   * The instance id of the enemy `ref` picks, for the commands that name
+   * it (`PlayTable` resolves its enemy refs here); the view itself has no id.
    */
-  enemyId(selector: EnemySelector): InstanceId {
-    return this.enemyCard(selector).id;
+  enemyId(ref: EnemyRef): InstanceId {
+    return this.enemyCard(ref).id;
   }
 
-  private enemyCard(selector: EnemySelector): CardInstance {
-    const { card, engagedWith, at } = 'by' in selector ? { card: selector } : selector;
+  private enemyCard(ref: EnemyRef): CardInstance {
+    const selector = enemyMatcher(ref);
+    const { card, engagedWith, at } =
+      selector.by === 'enemy'
+        ? selector
+        : { card: selector, engagedWith: undefined, at: undefined };
     const atId = at === undefined ? undefined : this.location(at).id;
-    const matches = matchingCards(this.ctx, enemiesInPlay(this.ctx, this.state), card).filter(
+    const engagedId = engagedWith === undefined ? undefined : this.investigator(engagedWith).id;
+    const matches = matchingCards(
+      this.ctx,
+      enemiesInPlay(this.ctx, this.state),
+      cardMatcher(card),
+    ).filter(
       (enemy) =>
-        (engagedWith === undefined ||
-          (enemy.zone.kind === 'engaged' && enemy.zone.investigatorId === engagedWith)) &&
+        (engagedId === undefined ||
+          (enemy.zone.kind === 'engaged' && enemy.zone.investigatorId === engagedId)) &&
         (atId === undefined || enemyLocation(this.state, enemy) === atId),
     );
     const [only, ...others] = matches;
-    if (!only) throw this.error(`no enemy in play ${describeSelector(selector)}`);
+    if (!only) throw this.error(`no enemy in play ${describeMatcher(selector)}`);
     if (others.length > 0)
       throw this.error(
-        `${matches.length} enemies match ${describeSelector(selector)} (${ids(matches)}); ` +
-          'narrow it with { card, engagedWith } or { card, at }, or use byId',
+        `${matches.length} enemies match ${describeMatcher(selector)} (${ids(matches)}); ` +
+          'narrow it with enemyMatching(card, { engagedWith, at }), or use byId',
       );
     return only;
   }
@@ -295,17 +299,6 @@ export function boardView(ctx: EngineContext, state: GameState): BoardView {
 
 function ids(cards: readonly CardInstance[]): string {
   return cards.map((card) => card.id).join(', ');
-}
-
-/** The selector in words for an error message. */
-function describeSelector(selector: EnemySelector): string {
-  if ('by' in selector) return describeMatcher(selector);
-  const { card, engagedWith, at } = selector;
-  return [
-    describeMatcher(card),
-    ...(engagedWith === undefined ? [] : [`engaged with ${engagedWith}`]),
-    ...(at === undefined ? [] : [`at a location ${describeMatcher(at)}`]),
-  ].join(' ');
 }
 
 function requireCard(state: GameState, id: InstanceId): CardInstance {
