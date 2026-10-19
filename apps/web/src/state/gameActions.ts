@@ -2,9 +2,15 @@ import {
   CommandRejected,
   type DecisionId,
   type GameState,
+  type InstanceId,
   type InvestigatorId,
+  type InvestigatorStat,
   type PlayTable,
 } from '@arkham/engine';
+import { assertNever } from '@arkham/util';
+
+/** The investigator counters the screen's +/− steppers change. */
+export type SteppedStat = Extract<InvestigatorStat, 'resources' | 'damage' | 'horror'>;
 
 /** Counts the players confirm when they answer a decision (clues found, damage soaked). */
 export interface DecisionAmounts {
@@ -33,10 +39,29 @@ export interface GameActions {
   /** Begins the turn of `investigator`, whom the players picked. */
   startTurn(investigator: InvestigatorId): Promise<void>;
   endTurn(): Promise<void>;
+  resign(): Promise<void>;
+  /** Changes the actions left this turn. */
+  adjustActions(delta: number): Promise<void>;
+  /** A move action to a connected location. */
+  moveTo(location: InstanceId): Promise<void>;
   /** An investigate action; its test stays open as a decision. */
   investigate(): Promise<void>;
+  /** A fight action; its test stays open as a decision. */
+  fight(enemy: InstanceId): Promise<void>;
+  /** An evade action; its test stays open as a decision. */
+  evade(enemy: InstanceId): Promise<void>;
+  /** An engage action. */
+  engage(enemy: InstanceId): Promise<void>;
   /** Picks `option` of the first open decision, as the decision dialog lists them. */
   answer(option: string, counts?: DecisionAmounts): Promise<void>;
+  /** Enemy step 3.3: each listed enemy attack at its printed damage and horror. */
+  resolveEnemyAttacks(): Promise<void>;
+  /** The investigators spend the clues listed with them to advance the act. */
+  advanceAct(spend: readonly { investigator: InvestigatorId; clues: number }[]): Promise<void>;
+  /** One tap on an investigator's stepper: `delta` more (or, negative, fewer) of `stat`. */
+  adjust(investigator: InvestigatorId, stat: SteppedStat, delta: number): Promise<void>;
+  /** Doom on the current agenda. */
+  placeDoom(amount: number): Promise<void>;
   /** Takes back the last step; never the scenario start. */
   undo(): Promise<void>;
 }
@@ -56,8 +81,17 @@ export function gameActions(
     nextPhase: () => play((table) => void table.nextPhase()),
     startTurn: (investigator) => play((table) => table.startTurn(investigator)),
     endTurn: () => onTurn((table, investigator) => table.endTurn(investigator)),
+    resign: () => onTurn((table, investigator) => table.resign(investigator)),
+    adjustActions: (delta) =>
+      onTurn((table, investigator) => table.adjustActions(investigator, delta)),
+    moveTo: (location) => onTurn((table, investigator) => table.moveTo(investigator, location)),
     investigate: () =>
       onTurn((table, investigator) => table.investigate(investigator, { result: 'open' })),
+    fight: (enemy) =>
+      onTurn((table, investigator) => table.fight(investigator, enemy, { result: 'open' })),
+    evade: (enemy) =>
+      onTurn((table, investigator) => table.evade(investigator, enemy, { result: 'open' })),
+    engage: (enemy) => onTurn((table, investigator) => table.engage(investigator, enemy)),
     answer: (option, counts = {}) =>
       play((table) =>
         table.play({
@@ -67,8 +101,35 @@ export function gameActions(
           ...counts,
         }),
       ),
+    resolveEnemyAttacks: () => play((table) => table.resolveEnemyAttacks()),
+    advanceAct: (spend) =>
+      play((table) =>
+        table.spendCluesToAdvanceAct(spend.map(({ investigator, clues }) => [investigator, clues])),
+      ),
+    adjust: (investigator, stat, delta) =>
+      play((table) => adjustStat(table, investigator, stat, delta)),
+    placeDoom: (amount) => play((table) => table.placeDoom(amount)),
     undo,
   };
+}
+
+/** The `PlayTable` verb behind a stepper; a negative `delta` takes the counter down. */
+function adjustStat(
+  table: PlayTable,
+  investigator: InvestigatorId,
+  stat: SteppedStat,
+  delta: number,
+): void {
+  switch (stat) {
+    case 'resources':
+      return table.gainResources(investigator, delta);
+    case 'damage':
+      return table.takeDamage(investigator, delta);
+    case 'horror':
+      return table.takeHorror(investigator, delta);
+    default:
+      return assertNever(stat);
+  }
 }
 
 /** Whose turn it is; refused like an engine command when no one's is. */

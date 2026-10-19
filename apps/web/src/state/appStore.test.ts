@@ -307,11 +307,46 @@ describe('appStore', () => {
 
           expect(store.getState().current?.rejection).toEqual({ code: 'noPendingDecision' });
         });
+
+        it('changes the actions left of the investigator whose turn it is', async () => {
+          const store = await aldersTurn('actions-adjust-actions-test');
+
+          await store.getState().actions.adjustActions(-1);
+
+          expect(alderIn(store)).toMatchObject({ actions: 2 });
+        });
+
+        it.each([
+          { stat: 'resources', delta: -2, expected: { resources: 3 } },
+          { stat: 'damage', delta: 1, expected: { damage: 1 } },
+          { stat: 'horror', delta: 2, expected: { horror: 2 } },
+        ] as const)(
+          'steps $stat by $delta (from 5 resources, no damage, no horror)',
+          async ({ stat, delta, expected }) => {
+            const store = await aldersTurn(`actions-adjust-${stat}-test`);
+
+            await store.getState().actions.adjust(investigatorId('alder'), stat, delta);
+
+            expect(alderIn(store)).toMatchObject(expected);
+          },
+        );
+
+        it('places doom on the current agenda', async () => {
+          const store = await aldersTurn('actions-doom-test');
+
+          await store.getState().actions.placeDoom(1);
+
+          expect(boardView(start.ctx, store.getState().current!.state).agenda).toMatchObject({
+            doom: 1,
+          });
+        });
       });
 
       it.each([
         ['investigate', (actions: GameActions) => actions.investigate()],
         ['endTurn', (actions: GameActions) => actions.endTurn()],
+        ['resign', (actions: GameActions) => actions.resign()],
+        ['adjustActions', (actions: GameActions) => actions.adjustActions(-1)],
       ])('refuses %s while no one is taking their turn', async (name, action) => {
         const store = createAppStore(new IndexedDbStore(`appstore-no-turn-${name}-test`));
         await store.getState().startScenario(start);
