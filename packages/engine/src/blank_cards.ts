@@ -63,17 +63,22 @@ export function blankAsset(code: string, stats: BlankCardStats = {}): CardStats 
 /**
  * An agenda at stage 1. It takes its doom threshold explicitly: no value is
  * neutral, since a low one advances the agenda at the first doom check and a
- * high one is a number the reader would have to look up.
+ * high one is a number the reader would have to look up. `null` is an agenda
+ * without a printed threshold, which no doom check advances.
  */
 export function blankAgenda(
   code: string,
-  doom: ScaledValue,
+  doom: ScaledValue | null,
   stats: BlankCardStats = {},
 ): CardStats {
-  return blankCard('agenda', code, { stage: { number: 1 }, doom }, stats);
+  return blankCard('agenda', code, { stage: { number: 1 }, ...(doom ? { doom } : {}) }, stats);
 }
 
-/** An act at stage 1 that needs no clues to advance. */
+/**
+ * An act at stage 1 with a clue threshold of 0, so the investigators can
+ * advance it without spending clues. `clues: undefined` in `stats` is an act
+ * without a printed threshold, for which no clues can be spent.
+ */
 export function blankAct(code: string, stats: BlankCardStats = {}): CardStats {
   return blankCard('act', code, { stage: { number: 1 }, clues: fixed(0) }, stats);
 }

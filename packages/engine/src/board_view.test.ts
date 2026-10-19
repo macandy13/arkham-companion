@@ -465,14 +465,12 @@ describe('decisions and attacks', () => {
     );
 
   it('reads an open decision with the card it is about and its default counts', () => {
-    const { context, state } = ghoulOnAlice.start();
-    const investigating = stateAfter(
-      context,
-      state,
-      { type: 'NextPhase' },
-      { type: 'StartTurn', investigatorId: alice },
-      { type: 'Investigate', investigatorId: alice },
-    );
+    const { context, state } = ghoulOnAlice.withTurnOf(alice).start();
+    const investigating = stateAfter(context, state, {
+      type: 'Investigate',
+      investigatorId: alice,
+      asAction: true,
+    });
 
     const { decisions } = boardView(context, investigating);
 

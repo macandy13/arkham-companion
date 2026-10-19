@@ -24,10 +24,10 @@ interface Route {
  * `MoveHunters`: the ready, unengaged hunters in play without an investigator
  * at their location each move one step towards the nearest one (Rules
  * Reference, "Hunter"). Hunters that move at the same time are resolved in an
- * order the lead investigator chooses (Rules Reference, "Lead Investigator":
- * the lead settles a choice between several valid options), one at a time, so
- * a hunter's engagement on arrival is settled before the next hunter is
- * considered. Hence:
+ * order the lead investigator chooses (our reading of Rules Reference,
+ * "Choices": the lead settles a choice between several valid options; no rule
+ * orders hunters explicitly), one at a time, so a hunter's engagement on
+ * arrival and its own choices are settled before the next hunter moves. Hence:
  *
  * - no hunter would move: no events;
  * - exactly one would move: it moves (or raises its own tie decision, see

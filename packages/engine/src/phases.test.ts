@@ -20,7 +20,7 @@ import {
   type GameState,
   type Zone,
 } from './index';
-import { rejectionFrom, runFrom, stateAfter, withScenario } from '../test/utils';
+import { answer, rejectionFrom, runFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -230,11 +230,7 @@ describe('mythos phase', () => {
     const upkeep = stateAfter(context, upkeepOf(context, state), { type: 'PlaceDoom', amount: 1 });
 
     const asked = stateAfter(context, upkeep, next);
-    const answered = stateAfter(context, asked, {
-      type: 'ResolveDecision',
-      decisionId: decisionId('advanceAgenda:first_agenda'),
-      optionId: 'yes',
-    });
+    const answered = stateAfter(context, asked, answer('advanceAgenda:first_agenda', 'yes'));
 
     expect(asked.pending.map((decision) => decision.id)).toEqual(['advanceAgenda:first_agenda']);
     expect(asked.meta.steps).toEqual([
@@ -274,11 +270,7 @@ describe('mythos phase', () => {
     const upkeep = upkeepOf(context, state);
 
     const asked = stateAfter(context, upkeep, next);
-    const answered = stateAfter(context, asked, {
-      type: 'ResolveDecision',
-      decisionId: decisionId('spawn:unreadable_spawner'),
-      optionId: 'attic',
-    });
+    const answered = stateAfter(context, asked, answer('spawn:unreadable_spawner', 'attic'));
 
     expect(asked.pending.map((decision) => decision.id)).toEqual(['spawn:unreadable_spawner']);
     expect(answered.cards[instanceId('unreadable_spawner')]!.zone).toEqual(atLocation(attic));
@@ -338,11 +330,7 @@ describe('enemy phase', () => {
       .start();
 
     const asked = toEnemyPhase(context, state, alice, bob);
-    const answered = stateAfter(context, asked, {
-      type: 'ResolveDecision',
-      decisionId: decisionId('hunter:rat:investigator'),
-      optionId: 'bob',
-    });
+    const answered = stateAfter(context, asked, answer('hunter:rat:investigator', 'bob'));
     const resumed = stateAfter(context, answered, next);
 
     expect(asked.pending.map((decision) => decision.id)).toEqual(['hunter:rat:investigator']);
@@ -545,14 +533,18 @@ describe('upkeep phase', () => {
   });
 
   it('ends the round (4.6): fires onRoundEnd and clears the turns taken', () => {
-    const { context, state } = aliceInHall.start();
-    const cluePerRound = withScenario(context, {
-      hooks: {
+    const { context: cluePerRound, state } = aliceInHall
+      .withHooks({
         onRoundEnd: (_ctx, _state, event) => [
-          { type: 'AdjustInvestigator', investigatorId: alice, stat: 'clues', delta: event.round },
+          {
+            type: 'AdjustInvestigator',
+            investigatorId: alice,
+            stat: 'clues',
+            delta: event.round,
+          },
         ],
-      },
-    });
+      })
+      .start();
     const enemy = runFrom(cluePerRound, state, [next, ...turnsOf(alice), next]).state;
 
     const upkeep = runFrom(cluePerRound, enemy, [next]).state;
