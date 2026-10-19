@@ -1,4 +1,4 @@
-import { decisionId, type ResolveDecision } from '../../src/index';
+import { decisionId, type GameState, type ResolveDecision } from '../../src/index';
 
 /**
  * The players' answer `optionId` to the pending decision with ID `id`,
@@ -12,4 +12,9 @@ export function answer(id: string, optionId: string, amount?: number): ResolveDe
     optionId,
     ...(amount === undefined ? {} : { amount }),
   };
+}
+
+/** The IDs of the open decisions, oldest first. */
+export function pendingIds(state: GameState): string[] {
+  return state.pending.map((decision) => decision.id);
 }

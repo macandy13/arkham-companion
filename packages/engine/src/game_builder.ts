@@ -186,7 +186,11 @@ export class GameBuilder {
     });
   }
 
-  /** The table with a card in `zone`; cards in one zone keep the order they were added in, top first. */
+  /**
+   * The table with a card in `zone`; cards in one zone keep the order they were added in, top first.
+   * TODO(M1V.2 follow-up): the instance id and the card's stats as two leading arguments read
+   * ambiguously at the call site; combine them into one value (see the M1V task file).
+   */
   withCard(id: InstanceId, card: CardStats, zone: Zone, options: CardOptions = {}): GameBuilder {
     return this.with({ cards: [...this.spec.cards, { id, card, zone, options }] });
   }
@@ -275,12 +279,16 @@ export class GameBuilder {
     };
   }
 
-  /** The context and the state after `startCommand`, and after the turn of `withTurnOf` began. */
+  /** The commands after `startCommand` that begin the turn of `withTurnOf`; none without it. */
+  turnCommands(): Command[] {
+    const { turnOf } = this.spec;
+    return turnOf ? beginTurn(turnOf) : [];
+  }
+
+  /** The context and the state after `startCommand` and `turnCommands`. */
   start(): BuiltGame {
     const context = this.context();
-    const { turnOf } = this.spec;
-    const commands = [this.startCommand(), ...(turnOf ? beginTurn(turnOf) : [])];
-    const state = commands.reduce(
+    const state = [this.startCommand(), ...this.turnCommands()].reduce(
       (current, command) => execute(context, current, command).state,
       emptyState(),
     );

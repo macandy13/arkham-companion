@@ -12,10 +12,10 @@ import {
   instanceId,
   investigatorId,
   newGame,
+  zoneOf,
   perInvestigator,
   zoneKey,
   type GameBuilder,
-  type GameState,
   type InstanceId,
   type Zone,
 } from './index';
@@ -72,10 +72,6 @@ function aliceAndBobAt(where: InstanceId, clues: { alice: number; bob: number })
   return hallCellarAttic
     .withInvestigator(alice, { locationId: where, clues: clues.alice })
     .withInvestigator(bob, { locationId: where, clues: clues.bob });
-}
-
-function zoneOf(state: GameState, cardId: InstanceId): Zone | undefined {
-  return state.cards[cardId]?.zone;
 }
 
 describe('SpawnEnemy', () => {

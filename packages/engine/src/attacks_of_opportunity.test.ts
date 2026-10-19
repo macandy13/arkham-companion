@@ -15,7 +15,7 @@ import {
   type GameState,
   type QueuedStep,
 } from './index';
-import { answer, investigatorOf, rejectionFrom, stateAfter } from '../test/utils';
+import { answer, investigatorOf, pendingIds, rejectionFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const hall = instanceId('hall');
@@ -49,10 +49,6 @@ const moveToCellar: Command = {
   asAction: true,
 };
 const ghoulAttack = decisionId(`attackOfOpportunity:${ghoul}`);
-
-function pendingIds(state: GameState): string[] {
-  return state.pending.map((decision) => decision.id);
-}
 
 function wounds(state: GameState): { damage: number; horror: number } {
   const { health, sanity } = investigatorOf(state, alice);
