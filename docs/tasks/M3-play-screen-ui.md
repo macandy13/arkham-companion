@@ -37,8 +37,9 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 - [x] Opening a saved game rebuilds its `EngineContext` (cards and `scenario`) from the catalog entry for `meta.scenarioId` (`findScenario`), so hooks and the reference card apply to its commands
 - [ ] Rejected commands show a toast with the reason
 - [ ] Undo wired to the M1 undo; selectors for derived values (doom total, thresholds)
+- [ ] A busy flag while a step runs, so the screen disables its buttons: actions act on the turn in progress and the first open decision, so a second tap would hit whatever is open next
 
-M3.1a done: the screen calls `GameActions` (the `PlayTable` verbs with screen defaults: skill tests stay open) on the app store, which play them through a `GameSession` that stores each step as one undo group and reloads the stored game when a write fails (another tab). The refusal is kept on `OpenGame.rejection`; the undo button comes with the header.
+M3.1a done: the screen calls `GameActions` (the `PlayTable` verbs with screen defaults: actions are taken by the investigator whose turn it is, answers go to the first open decision, skill tests stay open) on the app store, which play them through a `GameSession` that stores each step as one undo group and reloads the stored game when a write fails (another tab). The refusal is kept on `OpenGame.rejection`; the undo button comes with the header.
 
 ## M3.2 Header (S)
 

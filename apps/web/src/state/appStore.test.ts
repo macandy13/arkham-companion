@@ -17,6 +17,7 @@ import { theGathering, theGatheringCards } from '@arkham/scenarios';
 import { GameImportError } from '../storage/gameExport';
 import { IndexedDbStore } from '../storage/IndexedDbStore';
 import { createAppStore } from './appStore';
+import type { GameActions } from './gameActions';
 
 const started: Event = {
   type: 'ScenarioStarted',
@@ -190,7 +191,7 @@ describe('appStore', () => {
         await store.getState().startScenario(start);
         const before = store.getState().current?.state;
 
-        await store.getState().actions.endTurn(investigatorId('alder'));
+        await store.getState().actions.startTurn(investigatorId('alder'));
 
         expect(store.getState().current?.rejection).toMatchObject({
           code: 'wrongPhase',
@@ -202,7 +203,7 @@ describe('appStore', () => {
       it('clears the refusal once the next action succeeds', async () => {
         const store = createAppStore(new IndexedDbStore('appstore-refused-clear-test'));
         await store.getState().startScenario(start);
-        await store.getState().actions.endTurn(investigatorId('alder'));
+        await store.getState().actions.startTurn(investigatorId('alder'));
 
         await store.getState().actions.nextPhase();
 
@@ -273,35 +274,52 @@ describe('appStore', () => {
             investigatorId('alder'),
           );
 
-        it("leaves an investigation's skill test open for the players to report", async () => {
+        it("leaves an investigation's skill test open for the players to answer", async () => {
           const store = await aldersTurn('actions-investigate-test');
 
-          await store.getState().actions.investigate(investigatorId('alder'));
+          await store.getState().actions.investigate();
 
           expect(store.getState().current?.state.pending).toMatchObject([
-            { kind: 'skillTestResult' },
+            { kind: 'skillTestResult', decider: { investigatorId: 'alder' } },
           ]);
         });
 
-        it('finds a clue once the players report the investigation passed', async () => {
-          const store = await aldersTurn('actions-resolve-test');
-          await store.getState().actions.investigate(investigatorId('alder'));
+        it.each([
+          [1, 'pass'],
+          [0, 'fail'],
+        ])(
+          'finds %i clues once the players answer the investigation with %s',
+          async (clues, option) => {
+            const store = await aldersTurn(`actions-answer-${option}-test`);
+            await store.getState().actions.investigate();
 
-          await store.getState().actions.resolveTest(investigatorId('alder'), 'pass');
+            await store.getState().actions.answer(option);
 
-          expect(alderIn(store)).toMatchObject({ clues: 1 });
+            expect(store.getState().current?.state.pending).toEqual([]);
+            expect(alderIn(store)).toMatchObject({ clues });
+          },
+        );
+
+        it('refuses an answer while no decision is open', async () => {
+          const store = await aldersTurn('actions-answer-none-test');
+
+          await store.getState().actions.answer('pass');
+
+          expect(store.getState().current?.rejection).toEqual({ code: 'noPendingDecision' });
         });
+      });
 
-        it('answers an open decision by its id', async () => {
-          const store = await aldersTurn('actions-answer-test');
-          await store.getState().actions.investigate(investigatorId('alder'));
-          const [test] = store.getState().current!.state.pending;
+      it.each([
+        ['investigate', (actions: GameActions) => actions.investigate()],
+        ['endTurn', (actions: GameActions) => actions.endTurn()],
+      ])('refuses %s while no one is taking their turn', async (name, action) => {
+        const store = createAppStore(new IndexedDbStore(`appstore-no-turn-${name}-test`));
+        await store.getState().startScenario(start);
+        await store.getState().actions.nextPhase();
 
-          await store.getState().actions.answer(test!.id, 'fail');
+        await action(store.getState().actions);
 
-          expect(store.getState().current?.state.pending).toEqual([]);
-          expect(alderIn(store)).toMatchObject({ clues: 0 });
-        });
+        expect(store.getState().current?.rejection).toEqual({ code: 'noTurnInProgress' });
       });
     });
   });

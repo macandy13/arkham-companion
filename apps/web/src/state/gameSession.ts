@@ -7,7 +7,26 @@ import {
   type LoggedEvent,
   type Rejection,
   type ScenarioContext,
+  type SetupOptions,
 } from '@arkham/engine';
+
+/**
+ * Sets `ctx.scenario` up as a new saved game called `title` (`PlayTable.setUp`) and stores the
+ * setup as its first step, which undo never takes back. A refused setup stores nothing.
+ */
+export async function startGame(
+  store: GameStore,
+  title: string,
+  ctx: ScenarioContext,
+  options: SetupOptions,
+): Promise<GameId> {
+  const [first, ...rest] = PlayTable.setUp(ctx, options).entries;
+  const gameId = await store.createGame({ title });
+  if (first === undefined) return gameId;
+  const events = [first, ...rest].map((entry) => entry.event);
+  await store.appendEvents(gameId, events, undefined, first.commandId);
+  return gameId;
+}
 
 /**
  * One step the players take, in the game language of `PlayTable` (`moveTo`, `investigate`,
