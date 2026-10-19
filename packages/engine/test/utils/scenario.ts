@@ -1,11 +1,13 @@
 import {
   scenarioId,
   CommandRejected,
+  apply,
   scenario,
   emptyState,
   execute,
   zoneKey,
   type Command,
+  type Decision,
   type Difficulty,
   type EngineContext,
   type Event,
@@ -111,4 +113,16 @@ export function rejectionOf(fn: () => unknown): Rejection {
     throw e;
   }
   throw new Error('expected CommandRejected');
+}
+
+/**
+ * `state` with `decisions` pending at once, as two attacks of opportunity
+ * are. Built from events, because no command asks two unrelated questions
+ * at once.
+ */
+export function withPendingDecisions(state: GameState, ...decisions: Decision[]): GameState {
+  return decisions.reduce(
+    (built, decision) => apply(built, { type: 'DecisionRequested', decision }),
+    state,
+  );
 }
