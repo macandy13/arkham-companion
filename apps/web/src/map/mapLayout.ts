@@ -7,8 +7,9 @@ export interface Point {
 }
 
 /**
- * Size of a location tile and the gap between tiles, in SVG user units. The drawing scales to
- * its box, so only these proportions matter: a tile is wider than tall like a card on its side.
+ * Size of a location tile and the gap between tiles, in SVG user units. The drawing shrinks to
+ * fit its box but never grows past one unit per CSS pixel, so these are also the largest tile
+ * size: a tile is wider than tall like a card on its side.
  */
 export const TILE = { width: 160, height: 100, gap: 60 } as const;
 
