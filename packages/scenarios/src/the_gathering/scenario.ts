@@ -47,8 +47,9 @@ const ghoulEnemy: EncounterMatch = { trait: trait('Ghoul'), typeCode: 'enemy' };
 
 /**
  * The house as act 1 ("Trapped") reveals it: the Hallway connects to the
- * Attic, the Cellar and the Parlor. The campaign guide draws the Attic above
- * the Hallway, the Cellar below it and the Parlor to its right. Not part of `theGathering.setup`: these
+ * Attic, the Cellar and the Parlor. The campaign guide gives no placement for
+ * this scenario, so the cells are our own: a star around the Hallway, with the
+ * Attic above it, the Cellar below it and the Parlor to its right. Not part of `theGathering.setup`: these
  * locations start set aside, and act 1's reverse side (`trappedReverseSide`)
  * puts them into play with `compileMapStep`.
  */
