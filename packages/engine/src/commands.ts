@@ -8,6 +8,7 @@ import type {
   Difficulty,
   Investigator,
   InvestigatorStat,
+  SkillTest,
   TokenKind,
 } from './state';
 import type { Zone } from './zone';
@@ -17,6 +18,7 @@ export type Command =
   | StartScenario
   | ManualAdjust
   | MoveCard
+  | DiscardCard
   | AddMap
   | AddConnection
   | RemoveConnection
@@ -43,6 +45,7 @@ export type Command =
   | MoveHunters
   | MoveHunter
   | RequestDecision
+  | TestSkill
   | ResolveDecision
   | CheckDoomThreshold
   | NextPhase
@@ -115,6 +118,18 @@ export interface MoveCard {
   to: Zone;
   /** Position in the destination, 0 = top (e.g. the top of the encounter discard); default the bottom. */
   index?: number;
+}
+
+/**
+ * A card effect discards an encounter card ("discard it"): onto the top of
+ * the encounter discard, where "topmost" effects look for it, losing its
+ * tokens and taking its attachments along (`discardEncounterCard`). Produces
+ * `CardMoved`, after `TokensChanged` for any tokens and the attachments'
+ * own events.
+ */
+export interface DiscardCard {
+  type: 'DiscardCard';
+  cardId: InstanceId;
 }
 
 /**
@@ -532,6 +547,22 @@ export type MoveHunter = {
 export interface RequestDecision {
   type: 'RequestDecision';
   decision: Decision;
+}
+
+/**
+ * A card asks an investigator for a skill test ("Test [willpower] (3). If you
+ * succeed, …"): a `skillTestResult` decision about the card (`test:<card>`),
+ * answered by that investigator, whose options run `onPass` or `onFail`.
+ * What a card ability writes as `skillTest(…)`. Produces `DecisionRequested`.
+ */
+export interface TestSkill {
+  type: 'TestSkill';
+  investigatorId: InvestigatorId;
+  /** The card that asks for the test, which the decision is about. */
+  cardId: InstanceId;
+  test: SkillTest;
+  onPass: readonly Command[];
+  onFail: readonly Command[];
 }
 
 /**

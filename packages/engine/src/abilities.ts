@@ -1,9 +1,11 @@
 import { assertNever } from '@arkham/util';
 import { cardStats, type EngineContext } from './cards';
-import type { Command } from './commands';
+import type { Command, TestSkill } from './commands';
+import { isInPlay } from './doom';
 import type { Event } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
-import type { GameState } from './state';
+import { cardsInZone } from './lookup';
+import type { GameState, SkillName } from './state';
 import type { Zone } from './zone';
 
 /**
@@ -13,7 +15,16 @@ import type { Zone } from './zone';
  */
 export type TimingWindow =
   /** The card is turned face up: a location revealed, or a drawn encounter card (its revelation). */
-  { kind: 'revealed' };
+  | { kind: 'revealed' }
+  /**
+   * "At the end of your turn" for a card in an investigator's threat area:
+   * the end of that investigator's turn (`EndTurn`), naming them. A turn cut
+   * short by resignation or defeat opens nothing, as the investigator has
+   * left with the card's reason to fire.
+   */
+  | { kind: 'turnEnds' }
+  /** "At the end of the round", upkeep step 4.6, for every card in play; names no investigator. */
+  | { kind: 'roundEnds' };
 
 /** A card an ability names relative to itself: the card that has the ability. */
 export interface RelativeCard {
@@ -30,8 +41,8 @@ export interface RelativeInvestigator {
  * reference, recursively. Card data is shared by every copy of a card, so it
  * can name no instance; `abilityCommands` fills the IDs in when the ability
  * fires. Map IDs stay as they are: a scenario's maps are fixed by its setup,
- * so card data may name one. No `AbilityCommand` holds a list yet; one that
- * does needs a list case in `resolveRefs`.
+ * so card data may name one. Lists are templated item by item (the
+ * outcomes of a `skillTest`).
  */
 export type Templated<T> = T extends InstanceId
   ? RelativeCard
@@ -46,10 +57,18 @@ export type Templated<T> = T extends InstanceId
  * needs it; setup, corrections and phase flow (`StartScenario`,
  * `ManualAdjust`, `NextPhase`, …) never do, as no card performs them.
  */
-export type AbilityCommand = Extract<
-  Command,
-  { type: 'AdjustInvestigator' | 'PlaceDoom' | 'MoveCard' }
->;
+export type AbilityCommand =
+  | Extract<Command, { type: 'AdjustInvestigator' | 'PlaceDoom' | 'MoveCard' | 'DiscardCard' }>
+  | AbilityTest;
+
+/**
+ * `TestSkill` with outcomes that are ability commands too, so a test in card
+ * data can only lead to what card data may do.
+ */
+export type AbilityTest = Omit<TestSkill, 'onPass' | 'onFail'> & {
+  onPass: readonly AbilityCommand[];
+  onFail: readonly AbilityCommand[];
+};
 
 /**
  * One step of what an ability does: an allowed command written with
@@ -81,11 +100,16 @@ export interface OpenedWindow {
 }
 
 /**
- * The windows `event` opens. `events` is the whole batch it belongs to: a
- * drawn card is turned face up in the same batch as its `EncounterCardDrawn`,
- * which is the only record of who drew it.
+ * The windows `event` opens; `state` is the state right after it. `events`
+ * is the whole batch it belongs to: a drawn card is turned face up in the
+ * same batch as its `EncounterCardDrawn`, which is the only record of who
+ * drew it.
  */
-export function windowsOpenedBy(event: Event, events: readonly Event[]): OpenedWindow[] {
+export function windowsOpenedBy(
+  state: GameState,
+  event: Event,
+  events: readonly Event[],
+): OpenedWindow[] {
   switch (event.type) {
     case 'CardFlipped': {
       if (!event.faceUp) return [];
@@ -102,6 +126,18 @@ export function windowsOpenedBy(event: Event, events: readonly Event[]): OpenedW
         },
       ];
     }
+    case 'TurnEnded': {
+      const { investigatorId } = event;
+      return cardsInZone(state, { kind: 'threatArea', investigatorId }).map((cardId) => ({
+        window: { kind: 'turnEnds' },
+        cardId,
+        investigatorId,
+      }));
+    }
+    case 'RoundEnded':
+      return Object.values(state.cards)
+        .filter((card) => isInPlay(state, card))
+        .map((card) => ({ window: { kind: 'roundEnds' }, cardId: card.id }));
     default:
       return [];
   }
@@ -137,6 +173,10 @@ function effectCommands(effect: AbilityEffect, opened: OpenedWindow): Command[] 
 
 function resolveRefs(value: unknown, opened: OpenedWindow): unknown {
   if (typeof value !== 'object' || value === null) return value;
+  if (Array.isArray(value)) {
+    const items = value.map((item: unknown) => resolveRefs(item, opened));
+    return items.includes(undefined) ? undefined : items;
+  }
   if (isRelative(value)) {
     switch (value.ref) {
       case 'self':
@@ -161,6 +201,43 @@ function isRelative(value: object): value is RelativeCard | RelativeInvestigator
  */
 export function whenRevealed(...effects: AbilityEffect[]): Ability {
   return { window: { kind: 'revealed' }, effects };
+}
+
+/**
+ * A forced ability "at the end of your turn" of a card in a threat area,
+ * written `atEndOfTurn(skillTest('willpower', 3, { onPass: [discardSelf()] }))`.
+ */
+export function atEndOfTurn(...effects: AbilityEffect[]): Ability {
+  return { window: { kind: 'turnEnds' }, effects };
+}
+
+/** A forced ability "at the end of the round", written `atEndOfRound(discardSelf())`. */
+export function atEndOfRound(...effects: AbilityEffect[]): Ability {
+  return { window: { kind: 'roundEnds' }, effects };
+}
+
+/**
+ * "Test [skill] (difficulty)" for the investigator the window names, about
+ * the card with the ability; `onPass` and `onFail` follow the answer.
+ */
+export function skillTest(
+  skill: SkillName,
+  difficulty: number,
+  outcomes: { onPass?: AbilityEffect[]; onFail?: AbilityEffect[] },
+): AbilityEffect {
+  return {
+    type: 'TestSkill',
+    investigatorId: { ref: 'windowInvestigator' },
+    cardId: { ref: 'self' },
+    test: { skill, difficulty },
+    onPass: outcomes.onPass ?? [],
+    onFail: outcomes.onFail ?? [],
+  };
+}
+
+/** "Discard it": the card with the ability, onto the top of the encounter discard (`DiscardCard`). */
+export function discardSelf(): AbilityEffect {
+  return { type: 'DiscardCard', cardId: { ref: 'self' } };
 }
 
 /** "Take N damage": the investigator the window names takes `amount` damage. */

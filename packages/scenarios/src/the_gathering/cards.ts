@@ -1,8 +1,13 @@
 import {
+  atEndOfRound,
+  atEndOfTurn,
   cardCode,
   cardDbFrom,
+  discardSelf,
   encounterSetCode,
+  skillTest,
   trait,
+  type Ability,
   type CardDb,
   type CardStats,
   type LocationAttachment,
@@ -174,7 +179,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     traits: ['Terror'],
     quantity: 2,
     entersThreatArea: true,
-    turnEndTest: { skill: 'willpower', difficulty: 3 },
+    abilities: [atEndOfTurn(skillTest('willpower', 3, { onPass: [discardSelf()] }))],
   }),
   treachery({
     code: '01165',
@@ -183,7 +188,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     traits: ['Terror'],
     quantity: 2,
     entersThreatArea: true,
-    discardAtRoundEnd: true,
+    abilities: [atEndOfRound(discardSelf())],
   }),
   treachery({
     code: '01166',
@@ -311,10 +316,8 @@ interface TreacheryOptions {
   entersThreatArea?: boolean;
   /** The skill test of the card's revelation, if it has one. */
   revelationTest?: SkillTest;
-  /** The test it forces at the end of its holder's turn (Frozen in Fear). */
-  turnEndTest?: SkillTest;
-  /** Set for a treachery discarded at the end of the round (Dissonant Voices). */
-  discardAtRoundEnd?: boolean;
+  /** Its forced abilities (Frozen in Fear's end-of-turn test, Dissonant Voices' discard). */
+  abilities?: readonly Ability[];
   /** What it does attached to the drawer's location (Obscuring Fog). */
   locationAttachment?: LocationAttachment;
 }
@@ -327,8 +330,7 @@ function treachery({
   quantity,
   entersThreatArea,
   revelationTest,
-  turnEndTest,
-  discardAtRoundEnd,
+  abilities,
   locationAttachment,
 }: TreacheryOptions): CardStats {
   return {
@@ -340,8 +342,7 @@ function treachery({
     quantity,
     ...(entersThreatArea ? { entersThreatArea } : {}),
     ...(revelationTest ? { revelationTest } : {}),
-    ...(turnEndTest ? { turnEndTest } : {}),
-    ...(discardAtRoundEnd ? { discardAtRoundEnd } : {}),
+    ...(abilities ? { abilities } : {}),
     ...(locationAttachment ? { locationAttachment } : {}),
   };
 }
