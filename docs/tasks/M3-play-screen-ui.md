@@ -57,12 +57,14 @@ M3.1c done: `OpenGame.board` is the screen's selector object, a `BoardView` buil
 - [x] Agenda: doom x / threshold with +/−; act: clues x / threshold
 - Moved to M3.7: tapping agenda or act opens the card (the card zoom comes with the decision dialog)
 - [x] Undo button
-- [ ] Menu (home, settings, export)
+- [x] Menu (home, settings, export): home and settings are the app header's links on every screen; the game header adds the export
 - [x] Refused actions show a toast with the translated reason (`OpenGame.rejection`, `dismissRejection`); buttons disabled while `OpenGame.busy`
 
 M3.2a done: the header shows round and phase, "Next" and undo (off while only the scenario start is left, `OpenGame.canUndo`); both wait while `busy` and stay off for a game that can only be shown. A refusal shows as a toast with the reason (`rejections.<code>` strings for the refusals a tap can cause, a general text otherwise) until dismissed. Flow: `play_header.spec.ts`.
 
 M3.2b done: the header shows the current agenda with all doom in play against its threshold and +/− for the doom on the agenda (`removeDoom`, a new `PlayTable` verb and action, since no rule removes doom yet), and the current act with the clues the investigators hold against the clues it needs.
+
+M3.2c done: the game header exports the open game (the same file as the home screen's export). Home and settings needed nothing new: the app's own header links to both on every screen, the play screen included.
 
 ## M3.3 Map rendering (O)
 

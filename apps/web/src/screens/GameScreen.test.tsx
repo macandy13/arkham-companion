@@ -2,7 +2,7 @@
 import 'fake-indexeddb/auto';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   cardDbWith,
   investigatorCardStats,
@@ -122,6 +122,22 @@ describe('GameScreen header', () => {
     expect(button('Undo').disabled).toBe(true);
     await screen.findByText('Round 1, Investigation');
     expect(button('Next').disabled).toBe(false);
+  });
+
+  it('downloads an export of the open game under its title', async () => {
+    Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:test'), revokeObjectURL: vi.fn() });
+    const downloaded: string[] = [];
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      downloaded.push(this.download);
+    });
+    await renderTheGathering('game-screen-export-test');
+
+    fireEvent.click(button('Export'));
+
+    await waitFor(() => expect(downloaded).toEqual(['The-Gathering.arkham.json']));
+    click.mockRestore();
   });
 
   it('keeps the buttons off for a game it can only show', async () => {
