@@ -174,6 +174,7 @@ function effectCommands(effect: AbilityEffect, opened: OpenedWindow): Command[] 
 function resolveRefs(value: unknown, opened: OpenedWindow): unknown {
   if (typeof value !== 'object' || value === null) return value;
   if (Array.isArray(value)) {
+    // An outcome that names nobody drops the whole test: half a test's consequences would misstate the card.
     const items = value.map((item: unknown) => resolveRefs(item, opened));
     return items.includes(undefined) ? undefined : items;
   }

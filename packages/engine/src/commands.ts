@@ -553,7 +553,8 @@ export interface RequestDecision {
  * A card asks an investigator for a skill test ("Test [willpower] (3). If you
  * succeed, …"): a `skillTestResult` decision about the card (`test:<card>`),
  * answered by that investigator, whose options run `onPass` or `onFail`.
- * What a card ability writes as `skillTest(…)`. Produces `DecisionRequested`.
+ * What a card ability writes as `skillTest(…)`. The id allows one test per
+ * card at a time, which is all a card asks for. Produces `DecisionRequested`.
  */
 export interface TestSkill {
   type: 'TestSkill';

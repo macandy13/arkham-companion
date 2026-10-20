@@ -40,9 +40,9 @@ import {
   handlePlaceDoom,
 } from './handle_scenario';
 import { handleStartScenario } from './handle_start_scenario';
-import { handleDiscardCard } from './placement';
 import { handleMoveHunter, handleMoveHunters } from './hunters';
 import { handleNextPhase, handleResolveEnemyAttack } from './phases';
+import { handleDiscardCard } from './placement';
 import { handleEvade, handleFight, handleInvestigate, handleTestSkill } from './skill_tests';
 import { handleSpawnEnemy } from './spawn';
 import type { GameState, HeldAction, QueuedStep } from './state';

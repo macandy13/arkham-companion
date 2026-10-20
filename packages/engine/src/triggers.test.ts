@@ -332,6 +332,7 @@ describe('trigger bus', () => {
         );
 
         expect(after.investigators.find((inv) => inv.id === alice)?.sanity.horror).toBe(horror);
+        expect(after.cards[hauntingDread]?.zone).toEqual(threatAreaOf(alice));
       },
     );
 
