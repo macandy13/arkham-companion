@@ -805,7 +805,14 @@ describe('surge after the drawn card has resolved', () => {
     abilities: [
       {
         window: { kind: 'revealed' },
-        effects: [{ kind: 'adjustInvestigator', stat: 'damage', delta: 1 }],
+        effects: [
+          {
+            type: 'AdjustInvestigator',
+            investigatorId: { ref: 'windowInvestigator' },
+            stat: 'damage',
+            delta: 1,
+          },
+        ],
       },
     ],
   });
@@ -818,7 +825,14 @@ describe('surge after the drawn card has resolved', () => {
     abilities: [
       {
         window: { kind: 'revealed' },
-        effects: [{ kind: 'adjustInvestigator', stat: 'damage', delta: 8 }],
+        effects: [
+          {
+            type: 'AdjustInvestigator',
+            investigatorId: { ref: 'windowInvestigator' },
+            stat: 'damage',
+            delta: 8,
+          },
+        ],
       },
     ],
   });
@@ -957,7 +971,14 @@ describe('revelation before the drawn card is placed', () => {
     [
       {
         window: { kind: 'revealed' },
-        effects: [{ kind: 'adjustInvestigator', stat: 'damage', delta: amount }],
+        effects: [
+          {
+            type: 'AdjustInvestigator',
+            investigatorId: { ref: 'windowInvestigator' },
+            stat: 'damage',
+            delta: amount,
+          },
+        ],
       },
     ] as const;
 
@@ -987,7 +1008,10 @@ describe('revelation before the drawn card is placed', () => {
   });
   const vanishingTreachery = blankTreachery('vanishing_treachery', {
     abilities: [
-      { window: { kind: 'revealed' }, effects: [{ kind: 'moveSelf', to: { kind: 'outOfGame' } }] },
+      {
+        window: { kind: 'revealed' },
+        effects: [{ type: 'MoveCard', cardId: { ref: 'self' }, to: { kind: 'outOfGame' } }],
+      },
     ],
   });
 

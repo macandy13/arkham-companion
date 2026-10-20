@@ -2,8 +2,7 @@ import { cardStats, type EngineContext } from './cards';
 import type { Command } from './commands';
 import type { Event } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
-import type { GameState, InvestigatorStat } from './state';
-import type { Zone } from './zone';
+import type { GameState } from './state';
 
 /**
  * The moment a card ability fires (architecture "Triggers and card
@@ -14,40 +13,49 @@ export type TimingWindow =
   /** The card is turned face up: a location revealed, or a drawn encounter card (its revelation). */
   { kind: 'revealed' };
 
+/** A card an ability names relative to itself: the card that has the ability. */
+export interface CardRef {
+  ref: 'self';
+}
+
+/** An investigator an ability names relative to its window: the one the window names (the drawer). */
+export interface InvestigatorRef {
+  ref: 'windowInvestigator';
+}
+
 /**
- * A zone named by its kind alone, without a location, investigator or host
- * (the encounter discard, out of the game, set aside, …): the only zones
- * card data can name, since it holds no instance IDs.
+ * `T` with every instance and investigator ID replaced by a relative
+ * reference, recursively. No `AbilityCommand` holds a list yet; one that
+ * does needs a list case here and in `resolveRefs`. Card data is shared by every copy of a card, so it
+ * can name no instance; `abilityCommands` fills the IDs in when the ability
+ * fires.
  */
-export type UnplacedZone = Exclude<
-  Zone,
-  { mapId: unknown } | { locationId: unknown } | { investigatorId: unknown } | { hostId: unknown }
+export type Templated<T> = T extends InstanceId
+  ? CardRef
+  : T extends InvestigatorId
+    ? InvestigatorRef
+    : T extends object
+      ? { [K in keyof T]: Templated<T[K]> }
+      : T;
+
+/**
+ * The commands card data may use. A command joins when the first card
+ * needs it; setup, corrections and phase flow (`StartScenario`,
+ * `ManualAdjust`, `NextPhase`, …) never do, as no card performs them.
+ */
+export type AbilityCommand = Extract<
+  Command,
+  { type: 'AdjustInvestigator' | 'PlaceDoom' | 'MoveCard' }
 >;
 
 /**
- * One building block of what an ability does, as data. Each mirrors the
- * command it becomes, with a target named relative to the ability (the card
- * itself, the investigator the window names, the current agenda) instead of
- * an instance ID, which card data shared by every copy cannot hold.
- * `abilityCommands` resolves the target and builds the command.
+ * One step of what an ability does: an allowed command written with
+ * relative references instead of IDs ("Revelation – Take 1 horror" is
+ * `AdjustInvestigator` on `{ ref: 'windowInvestigator' }`). Reusing the
+ * command types keeps one vocabulary: a new kind of effect is a command
+ * added to `AbilityCommand`, not a new effect type.
  */
-export type AbilityEffect =
-  /**
-   * `AdjustInvestigator` on the investigator the window names ("Revelation –
-   * Take 1 horror"). Nothing happens in a window that names nobody, such as
-   * a location revealed by a card effect.
-   */
-  | { kind: 'adjustInvestigator'; stat: InvestigatorStat; delta: number }
-  /**
-   * `PlaceDoom` on the card itself or the current agenda ("Place 1 doom on
-   * the current agenda"). Kept apart from investigator stats because doom
-   * carries agenda rules of its own: placing it never advances the agenda
-   * (that waits for the mythos phase's threshold check), and a card that
-   * says otherwise would add its flag here.
-   */
-  | { kind: 'placeDoom'; on: 'self' | 'currentAgenda'; amount: number }
-  /** `MoveCard` of the card itself ("Remove it from the game", "Shuffle it back into the encounter deck"). */
-  | { kind: 'moveSelf'; to: UnplacedZone };
+export type AbilityEffect = Templated<AbilityCommand>;
 
 /**
  * A forced card ability: what it does when its window opens. Card data
@@ -112,28 +120,28 @@ export function abilityCommands(
     .flatMap((ability) => ability.effects.flatMap((effect) => effectCommands(effect, opened)));
 }
 
+/**
+ * The command `effect` stands for, with its references resolved for
+ * `opened`; none when one names nobody, such as `windowInvestigator` in a
+ * window that names no investigator (a location revealed by a card effect).
+ */
 function effectCommands(effect: AbilityEffect, opened: OpenedWindow): Command[] {
-  switch (effect.kind) {
-    case 'adjustInvestigator':
-      return opened.investigatorId === undefined
-        ? []
-        : [
-            {
-              type: 'AdjustInvestigator',
-              investigatorId: opened.investigatorId,
-              stat: effect.stat,
-              delta: effect.delta,
-            },
-          ];
-    case 'placeDoom':
-      return [
-        {
-          type: 'PlaceDoom',
-          amount: effect.amount,
-          ...(effect.on === 'self' && { cardId: opened.cardId }),
-        },
-      ];
-    case 'moveSelf':
-      return [{ type: 'MoveCard', cardId: opened.cardId, to: effect.to }];
+  const resolved = resolveRefs(effect, opened);
+  // The walk keeps every field but the references, which become the IDs the
+  // command type expects, so the result is an `AbilityCommand`.
+  return resolved === undefined ? [] : [resolved as AbilityCommand];
+}
+
+function resolveRefs(value: unknown, opened: OpenedWindow): unknown {
+  if (typeof value !== 'object' || value === null) return value;
+  if ('ref' in value) {
+    switch (value.ref) {
+      case 'self':
+        return opened.cardId;
+      case 'windowInvestigator':
+        return opened.investigatorId;
+    }
   }
+  const entries = Object.entries(value).map(([key, field]) => [key, resolveRefs(field, opened)]);
+  return entries.some(([, field]) => field === undefined) ? undefined : Object.fromEntries(entries);
 }

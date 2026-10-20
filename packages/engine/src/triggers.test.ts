@@ -214,12 +214,20 @@ describe('trigger bus', () => {
      * damage to whoever the window names; dooming_agenda has the same doom
      * ability. Alice stands next to the unrevealed cellar.
      */
-    const placeDoom = { kind: 'placeDoom', on: 'currentAgenda', amount: 1 } as const;
+    const placeDoom = { type: 'PlaceDoom', amount: 1 } as const;
     const doomingCellar = blankLocation('dooming_cellar', {
       abilities: [
         {
           window: { kind: 'revealed' },
-          effects: [placeDoom, { kind: 'adjustInvestigator', stat: 'damage', delta: 1 }],
+          effects: [
+            placeDoom,
+            {
+              type: 'AdjustInvestigator',
+              investigatorId: { ref: 'windowInvestigator' },
+              stat: 'damage',
+              delta: 1,
+            },
+          ],
         },
       ],
     });
@@ -247,7 +255,7 @@ describe('trigger bus', () => {
         abilities: [
           {
             window: { kind: 'revealed' },
-            effects: [{ kind: 'placeDoom', on: 'self', amount: 1 }],
+            effects: [{ type: 'PlaceDoom', cardId: { ref: 'self' }, amount: 1 }],
           },
         ],
       });

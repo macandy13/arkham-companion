@@ -107,7 +107,14 @@ describe('a surge after its card`s revelation', () => {
       abilities: [
         {
           window: { kind: 'revealed' },
-          effects: [{ kind: 'adjustInvestigator', stat: 'damage', delta: 8 }],
+          effects: [
+            {
+              type: 'AdjustInvestigator',
+              investigatorId: { ref: 'windowInvestigator' },
+              stat: 'damage',
+              delta: 8,
+            },
+          ],
         },
       ],
     });

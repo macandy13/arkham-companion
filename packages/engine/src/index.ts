@@ -88,7 +88,15 @@ export { checkInvariants } from './invariants';
 export { PHASE_STEP_TITLES } from './phases';
 export { BASE_ACTIONS_PER_TURN } from './turns';
 export { formatBoard } from './format_board';
-export type { Ability, AbilityEffect, TimingWindow } from './abilities';
+export type {
+  Ability,
+  AbilityCommand,
+  AbilityEffect,
+  CardRef,
+  InvestigatorRef,
+  Templated,
+  TimingWindow,
+} from './abilities';
 export { MAX_TRIGGERED_COMMANDS, type ScenarioHooks, type TriggerHook } from './triggers';
 export * from './store';
 export { undoLastGroup } from './undo';
