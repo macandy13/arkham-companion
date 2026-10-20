@@ -89,12 +89,23 @@ export { PHASE_STEP_TITLES } from './phases';
 export { BASE_ACTIONS_PER_TURN } from './turns';
 export { formatBoard } from './format_board';
 export {
-  MAX_TRIGGERED_COMMANDS,
-  type CardEffect,
-  type EffectsRegistry,
-  type ScenarioHooks,
-  type TriggerHook,
-} from './triggers';
+  moveSelf,
+  placeDoomOnAgenda,
+  placeDoomOnSelf,
+  takeDamage,
+  takeHorror,
+  whenRevealed,
+} from './abilities';
+export type {
+  Ability,
+  AbilityCommand,
+  AbilityEffect,
+  RelativeCard,
+  RelativeInvestigator,
+  Templated,
+  TimingWindow,
+} from './abilities';
+export { MAX_TRIGGERED_COMMANDS, type ScenarioHooks, type TriggerHook } from './triggers';
 export * from './store';
 export { undoLastGroup } from './undo';
 // Campaign functions are reached as `campaign.handleCommand` and so on, so
