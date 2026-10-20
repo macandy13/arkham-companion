@@ -51,11 +51,13 @@ Done after slice 3: `MoveInvestigator`, `Investigate` and `EngageEnemy` carry an
 
 **Benefit:** interactions are covered by tests before real scenarios rely on them.
 
-- [ ] Collect interaction cases from `docs/rules.md` and past review comments (e.g. a defeated investigator during their own turn, an empty encounter deck during a surge, an agenda advancing during the enemy phase)
-- [ ] One table test per case, written so the reader sees the table situation in the test body
+- [x] Collect interaction cases from `docs/rules.md` and past review comments (e.g. a defeated investigator during their own turn, an empty encounter deck during a surge, an agenda advancing during the enemy phase)
+- [x] One table test per case, written so the reader sees the table situation in the test body
 - [x] Put them in one engine suite of their own (`timing.test.ts`), one short named game per corner case on the builder, played through the public commands. Start with the cases slice 3 of M1V.1 fixed: an attack of opportunity holding a move, moves queued behind it, a surge waiting on a revelation's question and after a defeat, a hunter's tie inside the order question, a last act's question before the resolution, a hook asking two questions. Each later corner case adds one entry.
 
-Slice 1 (timing suite): `packages/engine/src/timing.test.ts` plays the six timing cases M1V.1 slice 3 fixed (the queued moves are unit tests only, since no command queues them from outside). The other interaction cases above (a defeat in one's own turn, an agenda advancing in the enemy phase) are still open.
+Slice 1 (timing suite): `packages/engine/src/timing.test.ts` plays the six timing cases M1V.1 slice 3 fixed (the queued moves are unit tests only, since no command queues them from outside). 
+
+Slice 2 (interaction cases): five more games from `docs/rules.md` ("Investigation", "Enemy", "Encounter draws", "Agenda and doom", "Per-investigator values"): a defeat during one's own turn skips the end-of-turn test and passes the turn on; an attack that defeats an investigator drops their remaining attacks and leaves the enemies unengaged at the location; a surge with an empty deck draws from the reshuffled discard pile; doom reaching the threshold in the enemy phase waits for the next mythos check; an eliminated investigator still counts for a per-investigator threshold. Writing the attack case showed that `PlayTable.resolveEnemyAttacks` resolved a snapshot of the step's attacks and failed once a defeat dropped one; it now reads the attacks still due after each.
 
 Follow-ups:
 

@@ -23,6 +23,7 @@ import {
   emptyState,
   type Decision,
   type Difficulty,
+  type DueAttack,
   type GameState,
   type InvestigatorStat,
   type Phase,
@@ -376,16 +377,24 @@ export class PlayTable {
 
   /**
    * Enemy step 3.3: the players resolve each attack the step lists, in its
-   * order, with the printed damage and horror; each enemy exhausts after its attack.
+   * order, with the printed damage and horror; each enemy exhausts after its
+   * attack. An attack that defeats an investigator drops their remaining ones.
    */
   resolveEnemyAttacks(): void {
-    const [step] = this.current.meta.steps;
-    if (step?.id !== 'enemiesAttack' || step.attacks === undefined)
-      throw this.error('no enemy attacks to resolve');
-    const { attacks } = step;
+    if (this.attacksStillDue().length === 0) throw this.error('no enemy attacks to resolve');
     this.atomically(() => {
-      for (const attack of attacks) this.play({ type: 'ResolveEnemyAttack', ...attack });
+      let [next] = this.attacksStillDue();
+      while (next) {
+        this.play({ type: 'ResolveEnemyAttack', ...next });
+        [next] = this.attacksStillDue();
+      }
     });
+  }
+
+  /** The attacks enemy step 3.3 still lists; none outside that step. */
+  private attacksStillDue(): readonly DueAttack[] {
+    const [step] = this.current.meta.steps;
+    return step?.id === 'enemiesAttack' ? (step.attacks ?? []) : [];
   }
 
   /** The investigators pay the act's clue requirement, each the clues listed with them, and advance it. */
