@@ -87,13 +87,11 @@ function ActStatus({ board }: { board: BoardView }) {
   const { t } = useTranslation();
   const { act } = board;
   if (!act) return null;
-  const held = board.investigators.reduce((sum, investigator) => sum + investigator.clues, 0);
-
   return (
     <section aria-label={t('header.act')}>
       <h2>{act.name}</h2>
       {act.clues !== undefined && (
-        <p>{t('header.cluesOf', { clues: held, threshold: act.clues })}</p>
+        <p>{t('header.cluesOf', { clues: board.cluesHeld, threshold: act.clues })}</p>
       )}
     </section>
   );

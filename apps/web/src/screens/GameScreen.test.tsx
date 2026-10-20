@@ -91,6 +91,7 @@ describe('GameScreen header', () => {
 
   it("shows the agenda's doom against its threshold and the act's clues against its need", async () => {
     await renderTheGathering('game-screen-agenda-act-test');
+    // For one investigator, What's Going On?! advances at 3 doom and Trapped needs 2 clues.
 
     const agenda = screen.getByRole('region', { name: 'Agenda' });
     const act = screen.getByRole('region', { name: 'Act' });

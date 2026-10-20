@@ -215,6 +215,14 @@ export class BoardView {
     return doomInPlay(this.state);
   }
 
+  /**
+   * The clues the investigators hold between them, which they may pool to advance the act
+   * (`act.clues`). Eliminated investigators have dropped theirs, so every seat counts.
+   */
+  get cluesHeld(): number {
+    return this.investigators.reduce((sum, investigator) => sum + investigator.clues, 0);
+  }
+
   get act(): ActView | undefined {
     return actView(this.ctx, this.state);
   }

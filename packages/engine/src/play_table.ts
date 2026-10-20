@@ -1,3 +1,4 @@
+import { isPositiveInteger } from '@arkham/util';
 import { BoardView, boardView, TableError } from './board_view';
 import {
   cardMatcher,
@@ -486,6 +487,9 @@ export class PlayTable {
    * miscount. The engine has no command that removes doom by rule yet, so this is a `ManualAdjust`.
    */
   removeDoom(amount: number): void {
+    // A negative amount would turn into placed doom, which only `placeDoom` puts down by rule.
+    if (!isPositiveInteger(amount))
+      throw this.error(`doom to remove must be positive, got ${amount}`);
     const agenda = this.state.agenda.current;
     if (agenda === undefined) throw this.error('no current agenda to remove doom from');
     this.play({

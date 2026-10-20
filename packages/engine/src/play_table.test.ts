@@ -334,6 +334,14 @@ describe('turns, actions and tokens', () => {
     expect(table.board.agenda).toEqual({ name: 'agenda', doom: 1, threshold: 5 });
   });
 
+  it.each([0, -1, 1.5])('refuses to remove %s doom', (amount) => {
+    const table = PlayTable.start(
+      game.withAgenda(instanceId('agenda'), blankAgenda('agenda', fixed(5))),
+    );
+
+    expect(() => table.removeDoom(amount)).toThrow('doom to remove must be positive');
+  });
+
   it('refuses to remove doom when no agenda is in play', () => {
     const table = PlayTable.start(game);
 
