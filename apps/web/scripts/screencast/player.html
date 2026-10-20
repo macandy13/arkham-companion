@@ -65,18 +65,22 @@
       // One recorded step (SCREENCAST_STEP_MS in screencasts.ts), the unit the step buttons seek by.
       const STEP_SECONDS = 0.25;
       const SPEEDS = [0.125, 0.25, 0.5, 1];
+      // Filled in by `playerPage` (screencasts.ts) with this push's flows. The page plays only
+      // a flow named there, so a crafted link can never make it load or link another URL.
+      const RECORDED = /* recorded flows */ { version: '', flows: {} };
       const params = new URLSearchParams(location.search);
-      // Only a slug can name the file, so the page never loads anything but a sibling video.
-      const flow = /^[a-z0-9-]+$/.test(params.get('flow') ?? '') ? params.get('flow') : '';
+      const flow = Object.keys(RECORDED.flows).find((slug) => slug === params.get('flow'));
       const requested = Number(params.get('speed'));
-      const speed = SPEEDS.includes(requested) ? requested : 0.25;
+      const speed = SPEEDS.find((rate) => rate === requested) ?? 0.25;
       const video = document.getElementById('video');
       const toggle = document.getElementById('toggle');
-      const source = `${flow}.webm?v=${encodeURIComponent(params.get('v') ?? '')}`;
 
-      document.getElementById('title').textContent = flow.replaceAll('-', ' ') || 'No flow given';
-      document.getElementById('download').href = source;
-      video.src = flow ? source : '';
+      document.getElementById('title').textContent = flow ? RECORDED.flows[flow] : 'No flow given';
+      if (flow) {
+        const source = `${flow}.webm?v=${RECORDED.version}`;
+        document.getElementById('download').href = source;
+        video.src = source;
+      }
       video.defaultPlaybackRate = speed;
       video.playbackRate = speed;
 

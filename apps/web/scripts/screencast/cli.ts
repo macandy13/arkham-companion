@@ -4,7 +4,7 @@
  *
  *   node cli.ts render <report.json> <outDir> <baseUrl> <version>
  *     Converts every passing flow video into `<outDir>/<slug>.gif` and `.webm`, adds the
- *     player page (`player.html`) and writes the PR description section to `<outDir>/section.md`.
+ *     player page (`player.html`, listing the recorded flows) and writes the PR description section to `<outDir>/section.md`.
  *   node cli.ts splice <body.md> <section.md>
  *     Prints the PR description with the screencast section replaced.
  */
@@ -12,7 +12,7 @@ import { execFileSync } from 'node:child_process';
 import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { flowVideos, gifArgs, renderSection, replaceSection } from './screencasts.ts';
+import { flowVideos, gifArgs, playerPage, renderSection, replaceSection } from './screencasts.ts';
 import type { PlaywrightReport } from './screencasts.ts';
 
 function render(reportPath: string, outDir: string, baseUrl: string, version: string): void {
@@ -27,7 +27,8 @@ function render(reportPath: string, outDir: string, baseUrl: string, version: st
     });
   }
   const here = dirname(fileURLToPath(import.meta.url));
-  copyFileSync(join(here, 'player.html'), join(outDir, 'player.html'));
+  const template = readFileSync(join(here, 'player.html'), 'utf8');
+  writeFileSync(join(outDir, 'player.html'), playerPage(template, { flows, version }));
   writeFileSync(join(outDir, 'section.md'), renderSection({ flows, baseUrl, version }));
 }
 

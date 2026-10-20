@@ -132,6 +132,28 @@ export function renderSection({
   return [SECTION_START, '## Screencasts', intro, ...entries, SECTION_END].join('\n\n');
 }
 
+/** The placeholder in `player.html` that `playerPage` replaces with the recorded flows. */
+export const PLAYER_PLACEHOLDER = "/* recorded flows */ { version: '', flows: {} }";
+
+/**
+ * The player page for one push: `template` (`player.html`) with the recorded flows (slug to
+ * title) and `version` written in. The page plays only a flow listed here, so its query
+ * string selects a known video instead of naming a URL. `<` is escaped so a title can never
+ * close the script element.
+ */
+export function playerPage(
+  template: string,
+  { flows, version }: { flows: readonly FlowVideo[]; version: string },
+): string {
+  if (!template.includes(PLAYER_PLACEHOLDER))
+    throw new Error(`player.html has no placeholder ${PLAYER_PLACEHOLDER}`);
+  const recorded = Object.fromEntries(
+    flows.filter((flow) => flow.videoPath).map((flow) => [flow.slug, flow.title]),
+  );
+  const data = JSON.stringify({ version, flows: recorded }).replaceAll('<', '\\u003c');
+  return template.replace(PLAYER_PLACEHOLDER, () => data);
+}
+
 /**
  * Replaces the marked section in a PR description with `section`, or appends it when the
  * description has no markers yet (e.g. the template section was deleted). Text outside the

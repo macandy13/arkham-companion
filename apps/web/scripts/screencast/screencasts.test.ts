@@ -4,6 +4,8 @@ import {
   SECTION_START,
   flowVideos,
   gifArgs,
+  PLAYER_PLACEHOLDER,
+  playerPage,
   renderSection,
   replaceSection,
   slugify,
@@ -82,6 +84,39 @@ describe('gifArgs', () => {
     expect(args.slice(-3)).toEqual(['-loop', '0', 'out.gif']);
     expect(args[args.indexOf('-i') + 1]).toBe('in.webm');
     expect(args[args.indexOf('-vf') + 1]).toMatch(/^fps=4,setpts=4\*PTS,scale=800:-1/);
+  });
+});
+
+describe('playerPage', () => {
+  const template = `<script>const RECORDED = ${PLAYER_PLACEHOLDER};</script>`;
+
+  it('lists the recorded flows by slug with their titles, and the version', () => {
+    const page = playerPage(template, {
+      flows: [
+        { title: 'Create a game', slug: 'create-a-game', videoPath: '/v.webm' },
+        { title: 'Broken flow', slug: 'broken-flow', videoPath: undefined },
+      ],
+      version: 'abc123',
+    });
+
+    expect(page).toBe(
+      '<script>const RECORDED = {"version":"abc123","flows":{"create-a-game":"Create a game"}};</script>',
+    );
+  });
+
+  it('escapes a title that would close the script element', () => {
+    const page = playerPage(template, {
+      flows: [{ title: '</script> flow', slug: 'script-flow', videoPath: '/v.webm' }],
+      version: 'abc123',
+    });
+
+    expect(page).toContain('"script-flow":"\\u003c/script> flow"');
+  });
+
+  it('fails when the template has no placeholder', () => {
+    expect(() => playerPage('<script></script>', { flows: [], version: 'abc123' })).toThrow(
+      'no placeholder',
+    );
   });
 });
 
