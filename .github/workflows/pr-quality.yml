@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
-      - uses: preactjs/compressed-size-action@v3 # upstream v3 is an unreleased dev branch, not a release
+      - uses: preactjs/compressed-size-action@v2 # upstream v3 is an unreleased dev branch, not a release
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           install-script: pnpm install --frozen-lockfile
