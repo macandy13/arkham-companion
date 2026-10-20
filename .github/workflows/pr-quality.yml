@@ -92,7 +92,7 @@ jobs:
           --diff "$OUT/diff.txt" --numstat "$OUT/numstat.txt"
           --blob-url "${{ github.server_url }}/${{ github.repository }}/blob/${{ github.event.pull_request.head.sha }}"
           > "$OUT/digest.md"
-      - uses: marocchino/sticky-pull-request-comment@v2
+      - uses: marocchino/sticky-pull-request-comment@v3
         with:
           header: review-digest
           path: ${{ runner.temp }}/digest/digest.md
