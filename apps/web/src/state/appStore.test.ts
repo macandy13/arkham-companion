@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import {
   cardCode,
   scenarioId,
-  boardView,
   cardDbWith,
   instanceId,
   investigatorCode,
@@ -282,9 +281,7 @@ describe('appStore', () => {
           return store;
         }
         const alderIn = (store: Awaited<ReturnType<typeof aldersTurn>>) =>
-          boardView(start.ctx, store.getState().current!.state).investigator(
-            investigatorId('alder'),
-          );
+          store.getState().current?.board?.investigator(investigatorId('alder'));
 
         it("leaves an investigation's skill test open for the players to answer", async () => {
           const store = await aldersTurn('actions-investigate-test');
