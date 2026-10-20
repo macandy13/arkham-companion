@@ -1,3 +1,5 @@
+import type { EngineContext } from './cards';
+import { arrivalEngagements } from './engagement';
 import { decisionId } from './ids';
 import { requestDecision } from './decisions';
 import type { Event, InvestigatorDefeated, InvestigatorResigned } from './events';
@@ -18,8 +20,10 @@ const NEW_LEAD_DECISION = decisionId('newLeadInvestigator');
  * 2. Their clues are placed on their location, enemies engaged with them stay
  *    at that location unengaged (keeping damage and exhaustion), and cards in
  *    their threat area are discarded.
- * 3. If they were the lead investigator, the group picks a new one.
- * 4. If nobody is left, the scenario ends without a resolution.
+ * 3. The enemies left unengaged engage another investigator at that location,
+ *    as any ready unengaged enemy does (Rules Reference, "Enemy Engagement").
+ * 4. If they were the lead investigator, the group picks a new one.
+ * 5. If nobody is left, the scenario ends without a resolution.
  *
  * All callers (damage, horror, resign) share this one function, so every way
  * out of the scenario leaves the same board. `state` is the state before
@@ -27,6 +31,7 @@ const NEW_LEAD_DECISION = decisionId('newLeadInvestigator');
  * event that precedes the departure (damage, horror) changes.
  */
 export function investigatorLeavesEvents(
+  ctx: EngineContext,
   state: GameState,
   investigator: Investigator,
   left: InvestigatorDefeated | InvestigatorResigned,
@@ -37,8 +42,13 @@ export function investigatorLeavesEvents(
     ...engagedEnemyEvents(state, investigator),
     ...threatAreaEvents(state, investigator),
   ];
-  const after = replay(events, state);
-  return [...events, ...successionEvents(after, investigator)];
+  const cleared = replay(events, state);
+  const engagements =
+    investigator.locationId === undefined
+      ? []
+      : arrivalEngagements(ctx, cleared, investigator.locationId);
+  const after = replay(engagements, cleared);
+  return [...events, ...engagements, ...successionEvents(after, investigator)];
 }
 
 /** Clues move to the location they were found at, where the remaining investigators can discover them. */

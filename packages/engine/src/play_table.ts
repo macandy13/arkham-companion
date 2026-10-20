@@ -23,13 +23,13 @@ import {
   emptyState,
   type Decision,
   type Difficulty,
-  type DueAttack,
   type GameState,
   type InvestigatorStat,
   type Phase,
   type PhaseStep,
   type PhaseStepId,
 } from './state';
+import { attacksStillDue } from './phases';
 import { undoLastGroup } from './undo';
 import type { GameBuilder } from './game_builder';
 
@@ -381,20 +381,15 @@ export class PlayTable {
    * attack. An attack that defeats an investigator drops their remaining ones.
    */
   resolveEnemyAttacks(): void {
-    if (this.attacksStillDue().length === 0) throw this.error('no enemy attacks to resolve');
+    if (attacksStillDue(this.ctx, this.current).length === 0)
+      throw this.error('no enemy attacks to resolve');
     this.atomically(() => {
-      let [next] = this.attacksStillDue();
+      let [next] = attacksStillDue(this.ctx, this.current);
       while (next) {
         this.play({ type: 'ResolveEnemyAttack', ...next });
-        [next] = this.attacksStillDue();
+        [next] = attacksStillDue(this.ctx, this.current);
       }
     });
-  }
-
-  /** The attacks enemy step 3.3 still lists; none outside that step. */
-  private attacksStillDue(): readonly DueAttack[] {
-    const [step] = this.current.meta.steps;
-    return step?.id === 'enemiesAttack' ? (step.attacks ?? []) : [];
   }
 
   /** The investigators pay the act's clue requirement, each the clues listed with them, and advance it. */

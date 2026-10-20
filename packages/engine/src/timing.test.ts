@@ -339,7 +339,7 @@ describe('enemy attacks after one of them defeated the investigator', () => {
     .withCard(instanceId('ghoul'), blankEnemy('ghoul', { damage: 3 }), engagedWith(alice))
     .withCard(instanceId('rat'), blankEnemy('rat', { damage: 1 }), engagedWith(alice));
 
-  it('drops the remaining attack and leaves both enemies unengaged in the hall', () => {
+  it('drops her remaining attack, and both enemies engage bob in the hall', () => {
     const table = PlayTable.start(game);
     table.nextPhase();
     table.startTurn(alice);
@@ -357,8 +357,8 @@ describe('enemy attacks after one of them defeated the investigator', () => {
     expect(table.board.investigator(alice).status).toBe('defeated');
     expect(table.board.attacksDue).toEqual([]);
     expect(table.board.enemies).toEqual([
-      { name: 'ghoul', at: 'hall', exhausted: true },
-      { name: 'rat', at: 'hall' },
+      { name: 'ghoul', at: 'hall', engagedWith: bob, exhausted: true },
+      { name: 'rat', at: 'hall', engagedWith: bob },
     ]);
   });
 });
@@ -412,8 +412,10 @@ describe('doom reaching the threshold outside the mythos phase', () => {
       agenda: { name: 'first_agenda', doom: 2 },
     });
 
-    table.nextPhase();
+    expect(table.nextPhase()).toEqual({ round: 1, phase: 'upkeep' });
+    expect(table.board.agenda).toEqual({ name: 'first_agenda', doom: 2 });
 
+    // Mythos step 1.2 adds its doom before the check, so the agenda carries 3.
     expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos', step: 'checkDoomThreshold' });
     expect(table.board.decisions).toMatchObject([{ about: 'first_agenda' }]);
   });

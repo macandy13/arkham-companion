@@ -243,7 +243,8 @@ describe('an investigator who leaves', () => {
 
     expect(investigatorOf(defeated, alice).status).toBe('defeated');
     expect(defeated.cards[hall]?.tokens.clue).toBe(2);
-    expect(defeated.cards[secondAliceGhoul]?.zone).toEqual(atLocation(hall));
+    // Ready and left unengaged where bob stands, it engages him at once.
+    expect(defeated.cards[secondAliceGhoul]?.zone).toEqual(engagedWith(bob));
     expect(defeated.meta.steps[0]).toEqual({
       id: 'enemiesAttack',
       attacks: [{ enemyId: bobGhoul, investigatorId: bob }],

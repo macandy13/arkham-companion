@@ -250,10 +250,12 @@ describe('the round', () => {
     expect(table.board.attacksDue).toEqual([]);
   });
 
-  it('fails to resolve attacks when the step lists none', () => {
+  it('fails to resolve attacks when the step lists none, leaving the table as it was', () => {
     const table = PlayTable.start(game);
+    const stateBefore = table.state;
 
     expect(() => table.resolveEnemyAttacks()).toThrow(/no enemy attacks to resolve\nRound 0/);
+    expect(table.state).toBe(stateBefore);
   });
 });
 

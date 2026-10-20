@@ -60,11 +60,11 @@ export function handleEndTurn(ctx: EngineContext, state: GameState, cmd: EndTurn
  * turn rules as `EndTurn` apply; the investigator leaves the scenario and the
  * turn ends with them (see `investigatorLeavesEvents`).
  */
-export function handleResign(state: GameState, cmd: Resign): Event[] {
+export function handleResign(ctx: EngineContext, state: GameState, cmd: Resign): Event[] {
   requirePhase(state, 'investigation');
   const investigator = activeInvestigator(state, cmd.investigatorId);
   requireTurnOf(state, investigator.id);
-  return investigatorLeavesEvents(state, investigator, {
+  return investigatorLeavesEvents(ctx, state, investigator, {
     type: 'InvestigatorResigned',
     investigatorId: investigator.id,
   });
