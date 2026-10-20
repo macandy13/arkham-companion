@@ -225,6 +225,18 @@ describe('appStore', () => {
         });
       });
 
+      it('is busy from the moment an action is sent until it is stored', async () => {
+        const store = createAppStore(new IndexedDbStore('appstore-busy-test'));
+        await store.getState().startScenario(start);
+
+        const sent = store.getState().actions.nextPhase();
+        const busyWhileSent = store.getState().current?.busy;
+        await sent;
+
+        expect(busyWhileSent).toBe(true);
+        expect(store.getState().current?.busy).toBe(false);
+      });
+
       it('undoes the last action in memory and in storage', async () => {
         const db = new IndexedDbStore('appstore-undo-test');
         const store = createAppStore(db);
@@ -258,7 +270,7 @@ describe('appStore', () => {
         await expect(store.getState().actions.nextPhase()).rejects.toThrow(
           'No playable game is open',
         );
-        expect(store.getState().current?.playable).toBe(false);
+        expect(store.getState().current).toMatchObject({ playable: false, board: undefined });
       });
 
       describe("during Alder's turn", () => {
@@ -336,8 +348,9 @@ describe('appStore', () => {
 
           await store.getState().actions.placeDoom(1);
 
-          expect(boardView(start.ctx, store.getState().current!.state).agenda).toMatchObject({
-            doom: 1,
+          expect(store.getState().current?.board).toMatchObject({
+            agenda: { name: "What's Going On?!", doom: 1, threshold: 3 },
+            doomInPlay: 1,
           });
         });
       });

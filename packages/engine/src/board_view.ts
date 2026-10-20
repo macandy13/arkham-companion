@@ -1,7 +1,7 @@
 import { listIfAny } from '@arkham/util';
 import { cardStats, resolveValue, type EngineContext } from './cards';
 import { optionName } from './describe_decision';
-import { isInPlay } from './doom';
+import { doomInPlay, isInPlay } from './doom';
 import { formatBoard } from './format_board';
 import {
   cardMatcher,
@@ -99,10 +99,15 @@ export interface LocationView {
   attachments?: CardName[];
 }
 
-/** The current agenda's name and the doom on the card itself (not the total in play). */
+/**
+ * The current agenda's name, the doom on the card itself and, when it has one, the doom
+ * threshold for the player count. The threshold is compared with all doom in play
+ * (`BoardView.doomInPlay`), not with `doom`.
+ */
 export interface AgendaView {
   name: CardName;
   doom: number;
+  threshold?: number;
 }
 
 /** The current act's name and, when it has one, the clues it needs for the player count. */
@@ -160,6 +165,8 @@ export class BoardView {
   /** Locations on a map, in map order. */
   readonly locations: readonly LocationView[];
   readonly agenda?: AgendaView;
+  /** All doom the agenda's threshold counts: on every card in play and the players' (`doomInPlay`). */
+  readonly doomInPlay: number;
   readonly act?: ActView;
   /** Open decisions, oldest first. */
   readonly decisions: readonly DecisionView[];
@@ -186,6 +193,7 @@ export class BoardView {
       ),
     );
     this.agenda = agendaView(ctx, state);
+    this.doomInPlay = doomInPlay(state);
     this.act = actView(ctx, state);
     this.decisions = state.pending.map((decision) => decisionView(ctx, state, decision));
     this.attacksDue = dueAttacks(ctx, state);
@@ -393,7 +401,13 @@ function mapOf({ zone, id }: CardInstance): MapId {
 
 function agendaView(ctx: EngineContext, state: GameState): AgendaView | undefined {
   const agenda = state.agenda.current === undefined ? undefined : state.cards[state.agenda.current];
-  return agenda && { name: nameOf(ctx, agenda), doom: agenda.tokens.doom ?? 0 };
+  if (!agenda) return undefined;
+  const { doom } = cardStats(ctx.cards, agenda.code);
+  return {
+    name: nameOf(ctx, agenda),
+    doom: agenda.tokens.doom ?? 0,
+    ...(doom === undefined ? {} : { threshold: resolveValue(doom, state.meta.playerCount) }),
+  };
 }
 
 function actView(ctx: EngineContext, state: GameState): ActView | undefined {

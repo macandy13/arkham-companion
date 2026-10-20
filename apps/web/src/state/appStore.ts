@@ -1,5 +1,6 @@
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import type {
+  BoardView,
   Difficulty,
   GameId,
   GameState,
@@ -43,6 +44,18 @@ export interface OpenGame {
    * steps run with. A game not set up yet, or one imported from a newer app, can only be shown.
    */
   playable: boolean;
+  /**
+   * The screen's selectors: `state` read in game language (`BoardView`), e.g. names, the doom in
+   * play against the agenda's threshold, the act's clues. Only a playable game has one, since
+   * reading names and thresholds needs its scenario's cards.
+   */
+  board?: BoardView;
+  /**
+   * True while an action or undo is queued or running. Actions act on the turn in progress and
+   * the first open decision, so the screen disables them meanwhile: a second tap would hit
+   * whatever is open next.
+   */
+  busy: boolean;
   /** Why the last action was refused, until the next action or `dismissRejection`. */
   rejection?: Rejection;
 }
@@ -114,20 +127,30 @@ export function createAppStore(
     let stepQueue = Promise.resolve();
     // The table behind `current`; mutable, so it stays out of the published state.
     let session: GameSession | undefined;
+    // Actions and undos sent but not finished; `current.busy` while any are.
+    let unfinishedSteps = 0;
 
     async function open(gameId: GameId): Promise<void> {
       const loaded = await gameStore.loadGame(gameId);
       const state = loaded?.state ?? emptyState();
       const ctx = loaded && contextFor(state.meta.scenarioId, scenarios);
       session = ctx && (await GameSession.open(gameStore, gameId, ctx));
-      set({ current: { gameId, state: session?.state ?? state, playable: session !== undefined } });
+      set({
+        current: {
+          gameId,
+          state: session?.state ?? state,
+          playable: session !== undefined,
+          board: session?.board,
+          busy: unfinishedSteps > 0,
+        },
+      });
     }
 
     /** Publishes the session's state, unless the player left the game while a write was pending. */
     function publish(played: GameSession, rejection?: Rejection): void {
       const current = get().current;
       if (current?.gameId !== played.gameId) return;
-      set({ current: { ...current, state: played.state, rejection } });
+      set({ current: { ...current, state: played.state, board: played.board, rejection } });
     }
 
     async function playStep(step: PlayStep): Promise<void> {
@@ -150,6 +173,24 @@ export function createAppStore(
       } finally {
         publish(played);
       }
+    }
+
+    /** Queues an action or undo (`enqueue`) and keeps `current.busy` set until it has finished. */
+    async function queueStep(task: () => Promise<void>): Promise<void> {
+      unfinishedSteps += 1;
+      showBusy();
+      try {
+        await enqueue(task);
+      } finally {
+        unfinishedSteps -= 1;
+        showBusy();
+      }
+    }
+
+    function showBusy(): void {
+      const current = get().current;
+      const busy = unfinishedSteps > 0;
+      if (current && current.busy !== busy) set({ current: { ...current, busy } });
     }
 
     /** Puts `task` behind every step and undo sent before it; a failed one doesn't block the rest. */
@@ -182,8 +223,8 @@ export function createAppStore(
         return enqueue(() => open(gameId));
       },
       actions: gameActions(
-        (step) => enqueue(() => playStep(step)),
-        () => enqueue(undoStep),
+        (step) => queueStep(() => playStep(step)),
+        () => queueStep(undoStep),
       ),
       dismissRejection() {
         const open = get().current;

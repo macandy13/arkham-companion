@@ -455,8 +455,20 @@ describe('agenda and act', () => {
 
     const board = boardView(context, stateAfter(context, state, { type: 'PlaceDoom', amount: 2 }));
 
-    expect(board.agenda).toEqual({ name: 'first_agenda', doom: 2 });
+    expect(board.agenda).toEqual({ name: 'first_agenda', doom: 2, threshold: 3 });
+    expect(board.doomInPlay).toBe(2);
     expect(board.act).toEqual({ name: 'first_act', clues: 4 });
+  });
+
+  it('reads an agenda without a doom threshold without one', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withAgenda(instanceId('final_agenda'), blankAgenda('final_agenda', null))
+      .start();
+
+    const board = boardView(context, state);
+
+    expect(board.agenda).toEqual({ name: 'final_agenda', doom: 0 });
   });
 
   it('has neither on a table without them', () => {
