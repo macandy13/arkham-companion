@@ -88,6 +88,14 @@ export { checkInvariants } from './invariants';
 export { PHASE_STEP_TITLES } from './phases';
 export { BASE_ACTIONS_PER_TURN } from './turns';
 export { formatBoard } from './format_board';
+export {
+  moveSelf,
+  placeDoomOnAgenda,
+  placeDoomOnSelf,
+  takeDamage,
+  takeHorror,
+  whenRevealed,
+} from './abilities';
 export type {
   Ability,
   AbilityCommand,

@@ -13,18 +13,21 @@ import {
   execute,
   instanceId,
   investigatorId,
+  moveSelf,
   newGame,
   replay,
   setAside,
+  takeDamage,
   threatAreaOf,
   trait,
+  whenRevealed,
   zoneKey,
   type CardStats,
   type Command,
   type Event,
   type GameState,
-  type Zone,
   type ScenarioHooks,
+  type Zone,
 } from './index';
 import { answer, rejectionFrom, stateAfter } from '../test/utils';
 
@@ -802,19 +805,7 @@ describe('surge after the drawn card has resolved', () => {
    */
   const burningSurge = blankTreachery('burning_surge', {
     keywords: [{ name: 'surge' }],
-    abilities: [
-      {
-        window: { kind: 'revealed' },
-        effects: [
-          {
-            type: 'AdjustInvestigator',
-            investigatorId: { ref: 'windowInvestigator' },
-            stat: 'damage',
-            delta: 1,
-          },
-        ],
-      },
-    ],
+    abilities: [whenRevealed(takeDamage(1))],
   });
   const testingSurge = blankTreachery('testing_surge', {
     keywords: [{ name: 'surge' }],
@@ -822,19 +813,7 @@ describe('surge after the drawn card has resolved', () => {
   });
   const deadlySurge = blankTreachery('deadly_surge', {
     keywords: [{ name: 'surge' }],
-    abilities: [
-      {
-        window: { kind: 'revealed' },
-        effects: [
-          {
-            type: 'AdjustInvestigator',
-            investigatorId: { ref: 'windowInvestigator' },
-            stat: 'damage',
-            delta: 8,
-          },
-        ],
-      },
-    ],
+    abilities: [whenRevealed(takeDamage(8))],
   });
   const choosyFoe = blankEnemy('choosy_foe', {
     keywords: [{ name: 'surge' }, { name: 'spawn', detail: 'the location with the most clues' }],
@@ -967,21 +946,6 @@ describe('surge after the drawn card has resolved', () => {
 });
 
 describe('revelation before the drawn card is placed', () => {
-  const revealedDamage = (amount: number) =>
-    [
-      {
-        window: { kind: 'revealed' },
-        effects: [
-          {
-            type: 'AdjustInvestigator',
-            investigatorId: { ref: 'windowInvestigator' },
-            stat: 'damage',
-            delta: amount,
-          },
-        ],
-      },
-    ] as const;
-
   /**
    * Every card here has a revelation ability. `scorching_*` cards deal the
    * drawer 1 damage; `lethal_*` cards deal 8 (alice's whole health);
@@ -989,30 +953,27 @@ describe('revelation before the drawn card is placed', () => {
    * spawns at the Hall.
    */
   const scorchingTreachery = blankTreachery('scorching_treachery', {
-    abilities: revealedDamage(1),
+    abilities: [whenRevealed(takeDamage(1))],
   });
-  const scorchingFoe = blankEnemy('scorching_foe', { abilities: revealedDamage(1) });
+  const scorchingFoe = blankEnemy('scorching_foe', { abilities: [whenRevealed(takeDamage(1))] });
   const scorchingLingering = blankTreachery('scorching_lingering', {
     entersThreatArea: true,
-    abilities: revealedDamage(1),
+    abilities: [whenRevealed(takeDamage(1))],
   });
   const scorchingAttachment = blankTreachery('scorching_attachment', {
     locationAttachment: { onePerLocation: true },
-    abilities: revealedDamage(1),
+    abilities: [whenRevealed(takeDamage(1))],
   });
-  const lethalTreachery = blankTreachery('lethal_treachery', { abilities: revealedDamage(8) });
-  const lethalFoe = blankEnemy('lethal_foe', { abilities: revealedDamage(8) });
+  const lethalTreachery = blankTreachery('lethal_treachery', {
+    abilities: [whenRevealed(takeDamage(8))],
+  });
+  const lethalFoe = blankEnemy('lethal_foe', { abilities: [whenRevealed(takeDamage(8))] });
   const lethalHallFoe = blankEnemy('lethal_hall_foe', {
     keywords: [{ name: 'spawn', detail: 'hall' }],
-    abilities: revealedDamage(8),
+    abilities: [whenRevealed(takeDamage(8))],
   });
   const vanishingTreachery = blankTreachery('vanishing_treachery', {
-    abilities: [
-      {
-        window: { kind: 'revealed' },
-        effects: [{ type: 'MoveCard', cardId: { ref: 'self' }, to: { kind: 'outOfGame' } }],
-      },
-    ],
+    abilities: [whenRevealed(moveSelf({ kind: 'outOfGame' }))],
   });
 
   /** What happened, in order: draws, damage, and where the drawn card went. */
@@ -1062,16 +1023,9 @@ describe('revelation before the drawn card is placed', () => {
   it('resolves a reference nested in a zone: the revelation puts the card in the drawer`s threat area', () => {
     const clingingTreachery = blankTreachery('clinging_treachery', {
       abilities: [
-        {
-          window: { kind: 'revealed' },
-          effects: [
-            {
-              type: 'MoveCard',
-              cardId: { ref: 'self' },
-              to: { kind: 'threatArea', investigatorId: { ref: 'windowInvestigator' } },
-            },
-          ],
-        },
+        whenRevealed(
+          moveSelf({ kind: 'threatArea', investigatorId: { ref: 'windowInvestigator' } }),
+        ),
       ],
     });
     const { context, state } = aliceInHall

@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest';
 import {
   atLocation,
   blankAct,
+  blankAgenda,
   blankEnemy,
   blankLocation,
   blankTreachery,
@@ -20,14 +21,15 @@ import {
   encounterDeck,
   encounterDiscard,
   engagedWith,
+  fixed,
   instanceId,
   investigatorId,
   newGame,
   perInvestigator,
   PlayTable,
+  takeDamage,
   threatAreaOf,
-  blankAgenda,
-  fixed,
+  whenRevealed,
   type Command,
 } from './index';
 
@@ -104,19 +106,7 @@ describe('a surge after its card`s revelation', () => {
     // The revelation deals the drawer 8 damage, alice's whole health.
     const deadlySurge = blankTreachery('deadly_surge', {
       keywords: [{ name: 'surge' }],
-      abilities: [
-        {
-          window: { kind: 'revealed' },
-          effects: [
-            {
-              type: 'AdjustInvestigator',
-              investigatorId: { ref: 'windowInvestigator' },
-              stat: 'damage',
-              delta: 8,
-            },
-          ],
-        },
-      ],
+      abilities: [whenRevealed(takeDamage(8))],
     });
     const table = PlayTable.start(
       belowTheSurge(

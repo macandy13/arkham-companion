@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  MAX_TRIGGERED_COMMANDS,
   atLocation,
   blankAct,
   blankAgenda,
@@ -12,11 +11,17 @@ import {
   instanceId,
   investigatorId,
   mapId,
+  MAX_TRIGGERED_COMMANDS,
+  moveSelf,
   newGame,
   perInvestigator,
+  placeDoomOnAgenda,
+  placeDoomOnSelf,
+  takeHorror,
+  whenRevealed,
   type Command,
-  type Rejection,
   type EngineContext,
+  type Rejection,
 } from './index';
 import { triggeredCommands } from './triggers';
 import { rejectionFrom, stateAfter } from '../test/utils';
@@ -211,28 +216,14 @@ describe('trigger bus', () => {
   describe('revealed abilities', () => {
     /**
      * The cellar's revealed ability places 1 doom on the agenda and deals 1
-     * damage to whoever the window names; dooming_agenda has the same doom
+     * horror to whoever the window names; dooming_agenda has the same doom
      * ability. Alice stands next to the unrevealed cellar.
      */
-    const placeDoom = { type: 'PlaceDoom', amount: 1 } as const;
     const doomingCellar = blankLocation('dooming_cellar', {
-      abilities: [
-        {
-          window: { kind: 'revealed' },
-          effects: [
-            placeDoom,
-            {
-              type: 'AdjustInvestigator',
-              investigatorId: { ref: 'windowInvestigator' },
-              stat: 'damage',
-              delta: 1,
-            },
-          ],
-        },
-      ],
+      abilities: [whenRevealed(placeDoomOnAgenda(1), takeHorror(1))],
     });
     const doomingAgenda = blankAgenda('dooming_agenda', fixed(3), {
-      abilities: [{ window: { kind: 'revealed' }, effects: [placeDoom] }],
+      abilities: [whenRevealed(placeDoomOnAgenda(1))],
     });
     const revealTable = newGame()
       .withAgenda(instanceId('dooming_agenda'), doomingAgenda)
@@ -252,12 +243,7 @@ describe('trigger bus', () => {
 
     it('places doom on the card itself when the ability names it', () => {
       const cursedCellar = blankLocation('cursed_cellar', {
-        abilities: [
-          {
-            window: { kind: 'revealed' },
-            effects: [{ type: 'PlaceDoom', cardId: { ref: 'self' }, amount: 1 }],
-          },
-        ],
+        abilities: [whenRevealed(placeDoomOnSelf(1))],
       });
       const { context, state: started } = newGame()
         .withAgenda(instanceId('second_agenda'), secondAgendaCard)
@@ -280,23 +266,16 @@ describe('trigger bus', () => {
       });
 
       expect(state.cards[instanceId('dooming_agenda')]?.tokens.doom).toBe(1);
-      expect(state.investigators.find((inv) => inv.id === alice)?.health.damage).toBe(0);
+      expect(state.investigators.find((inv) => inv.id === alice)?.sanity.horror).toBe(0);
       expect(checkInvariants(state)).toEqual([]);
     });
 
     it('drops an effect whose nested reference names nobody', () => {
       const clingingCellar = blankLocation('clinging_cellar', {
         abilities: [
-          {
-            window: { kind: 'revealed' },
-            effects: [
-              {
-                type: 'MoveCard',
-                cardId: { ref: 'self' },
-                to: { kind: 'threatArea', investigatorId: { ref: 'windowInvestigator' } },
-              },
-            ],
-          },
+          whenRevealed(
+            moveSelf({ kind: 'threatArea', investigatorId: { ref: 'windowInvestigator' } }),
+          ),
         ],
       });
       const { context, state: started } = newGame()

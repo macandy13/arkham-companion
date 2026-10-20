@@ -4,6 +4,7 @@ import type { Command } from './commands';
 import type { Event } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
 import type { GameState } from './state';
+import type { Zone } from './zone';
 
 /**
  * The moment a card ability fires (architecture "Triggers and card
@@ -152,4 +153,41 @@ function resolveRefs(value: unknown, opened: OpenedWindow): unknown {
 
 function isRelative(value: object): value is RelativeCard | RelativeInvestigator {
   return 'ref' in value;
+}
+
+/**
+ * A forced ability that fires when the card is revealed: its revelation for
+ * an encounter card. The most common ability, written `whenRevealed(takeHorror(1))`.
+ */
+export function whenRevealed(...effects: AbilityEffect[]): Ability {
+  return { window: { kind: 'revealed' }, effects };
+}
+
+/** "Take N damage": the investigator the window names takes `amount` damage. */
+export function takeDamage(amount: number): AbilityEffect {
+  return adjustWindowInvestigator('damage', amount);
+}
+
+/** "Take N horror": the investigator the window names takes `amount` horror. */
+export function takeHorror(amount: number): AbilityEffect {
+  return adjustWindowInvestigator('horror', amount);
+}
+
+/** "Place N doom on the current agenda". */
+export function placeDoomOnAgenda(amount: number): AbilityEffect {
+  return { type: 'PlaceDoom', amount };
+}
+
+/** "Place N doom on it": doom on the card with the ability. */
+export function placeDoomOnSelf(amount: number): AbilityEffect {
+  return { type: 'PlaceDoom', cardId: { ref: 'self' }, amount };
+}
+
+/** Moves the card with the ability ("Remove it from the game", "Put it into play in your threat area"). */
+export function moveSelf(to: Templated<Zone>): AbilityEffect {
+  return { type: 'MoveCard', cardId: { ref: 'self' }, to };
+}
+
+function adjustWindowInvestigator(stat: 'damage' | 'horror', delta: number): AbilityEffect {
+  return { type: 'AdjustInvestigator', investigatorId: { ref: 'windowInvestigator' }, stat, delta };
 }
