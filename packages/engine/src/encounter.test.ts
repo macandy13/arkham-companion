@@ -1059,6 +1059,30 @@ describe('revelation before the drawn card is placed', () => {
     expect(beforeRevelation.cards[instanceId('drawn_foe')]?.zone).toEqual({ kind: 'resolving' });
   });
 
+  it('resolves a reference nested in a zone: the revelation puts the card in the drawer`s threat area', () => {
+    const clingingTreachery = blankTreachery('clinging_treachery', {
+      abilities: [
+        {
+          window: { kind: 'revealed' },
+          effects: [
+            {
+              type: 'MoveCard',
+              cardId: { ref: 'self' },
+              to: { kind: 'threatArea', investigatorId: { ref: 'windowInvestigator' } },
+            },
+          ],
+        },
+      ],
+    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('clinging_card'), clingingTreachery, encounterDeck)
+      .start();
+
+    const after = stateAfter(context, state, draw);
+
+    expect(after.cards[instanceId('clinging_card')]?.zone).toEqual(threatAreaOf(alice));
+  });
+
   it('does not place a card its revelation has already moved', () => {
     const { context, state } = aliceInHall
       .withCard(instanceId('vanishing_card'), vanishingTreachery, encounterDeck)

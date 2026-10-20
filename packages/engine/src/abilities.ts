@@ -1,3 +1,4 @@
+import { assertNever } from '@arkham/util';
 import { cardStats, type EngineContext } from './cards';
 import type { Command } from './commands';
 import type { Event } from './events';
@@ -25,10 +26,11 @@ export interface RelativeInvestigator {
 
 /**
  * `T` with every instance and investigator ID replaced by a relative
- * reference, recursively. No `AbilityCommand` holds a list yet; one that
- * does needs a list case here and in `resolveRefs`. Card data is shared by every copy of a card, so it
+ * reference, recursively. Card data is shared by every copy of a card, so it
  * can name no instance; `abilityCommands` fills the IDs in when the ability
- * fires.
+ * fires. Map IDs stay as they are: a scenario's maps are fixed by its setup,
+ * so card data may name one. No `AbilityCommand` holds a list yet; one that
+ * does needs a list case in `resolveRefs`.
  */
 export type Templated<T> = T extends InstanceId
   ? RelativeCard
@@ -134,14 +136,20 @@ function effectCommands(effect: AbilityEffect, opened: OpenedWindow): Command[] 
 
 function resolveRefs(value: unknown, opened: OpenedWindow): unknown {
   if (typeof value !== 'object' || value === null) return value;
-  if ('ref' in value) {
+  if (isRelative(value)) {
     switch (value.ref) {
       case 'self':
         return opened.cardId;
       case 'windowInvestigator':
         return opened.investigatorId;
+      default:
+        return assertNever(value);
     }
   }
   const entries = Object.entries(value).map(([key, field]) => [key, resolveRefs(field, opened)]);
   return entries.some(([, field]) => field === undefined) ? undefined : Object.fromEntries(entries);
+}
+
+function isRelative(value: object): value is RelativeCard | RelativeInvestigator {
+  return 'ref' in value;
 }

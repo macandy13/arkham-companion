@@ -284,6 +284,31 @@ describe('trigger bus', () => {
       expect(checkInvariants(state)).toEqual([]);
     });
 
+    it('drops an effect whose nested reference names nobody', () => {
+      const clingingCellar = blankLocation('clinging_cellar', {
+        abilities: [
+          {
+            window: { kind: 'revealed' },
+            effects: [
+              {
+                type: 'MoveCard',
+                cardId: { ref: 'self' },
+                to: { kind: 'threatArea', investigatorId: { ref: 'windowInvestigator' } },
+              },
+            ],
+          },
+        ],
+      });
+      const { context, state: started } = newGame()
+        .withLocation(cellar, clingingCellar)
+        .withInvestigator(alice)
+        .start();
+
+      const { state } = execute(context, started, { type: 'RevealLocation', locationId: cellar });
+
+      expect(state.cards[cellar]?.zone.kind).toBe('location');
+    });
+
     it('does not run them when a card is turned face down', () => {
       const { context, state: started } = revealTable.start();
 
