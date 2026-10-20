@@ -68,10 +68,10 @@ How code in this repo should look, so every task lands in the same style.
 - **Invariants are covered by example-based table tests** (`it.each` over a few named, readable cases), not property-based testing. Unit tests for concrete rules and edge cases.
 - Never use real card text, ArkhamDB JSON or images in fixtures; the hand-written test scenario uses real codes and names with hand-entered stats only (see `CLAUDE.md`).
 
-**E2E flow specs** (`apps/web/e2e/`, tagged `@flow`) are recorded as screencasts for every PR that changes the UI (`docs/automation.md`). Keep them few and stable:
+**E2E flow specs** (`apps/web/e2e/`) walk through user journeys; the ones tagged `@flow` are recorded as screencasts into the PR description (`docs/automation.md`). Keep them few and stable:
 
-- **A UI PR shows its change in a screencast.** Every PR that changes the UI adds or extends a `@flow` spec that walks through the change, so reviewers see it in the PR description. Once the change is reviewed and its recording is no longer of interest, a follow-up PR drops the `@flow` tag (the spec stays as a plain E2E test if it still guards something, otherwise it goes). That way a PR carries only the screencasts that matter for it, not every flow in the app.
-- **One spec per user journey, not per feature.** A UI change extends the flow it belongs to before it adds a new one. Cap: 8 flow specs; past that, merge flows.
+- **A UI PR shows its change, and only its change, in a screencast.** The `@flow` tags belong to the PR at hand, so every PR updates them. A PR that changes the UI tags the flows that walk through its change: a new flow (a new spec, or a new test in its journey's spec) for a new screen or interaction, the existing flow it extends, and every existing flow whose recorded behavior it changes, even if that spec's code stays the same (a reworded button, a moved panel). It removes the tag from every other spec, so the reviewer sees only the new or changed flows, not the whole list. A PR without a visible UI change leaves no spec tagged. Untagged specs keep running as plain E2E tests.
+- **One spec per user journey, not per feature.** A UI change extends the journey it belongs to before it adds a new one. Cap: 8 specs; past that, merge journeys.
 - **They check wiring, not rules.** Game rules are tested in engine unit tests; a flow only asserts that the screen reacts and the journey completes.
 - **Locate by role and accessible name** (`getByRole('button', { name: … })`), never by CSS class or DOM shape – the markup rules make this always possible.
 - **Narrate with steps.** Group the flow into `test.step('Create an empty game', …)` blocks named as what the user does; the names are shown as captions in the screencast.

@@ -96,7 +96,8 @@ export function gifArgs({ input, output }: { input: string; output: string }): s
 
 /**
  * The Markdown section (including its markers) listing every flow with an inline GIF and a
- * link to the full-quality video. `version` (the commit) is appended as a query string
+ * link to the full-quality video; just the markers when no flow is tagged, which empties a
+ * section an earlier push wrote. `version` (the commit) is appended as a query string
  * because file names stay the same across pushes and GitHub's image proxy caches by URL.
  */
 export function renderSection({
@@ -108,6 +109,8 @@ export function renderSection({
   baseUrl: string;
   version: string;
 }): string {
+  // No tagged flow means the PR changed no flow: the markers stay, so a later push can fill them.
+  if (flows.length === 0) return [SECTION_START, SECTION_END].join('\n');
   const base = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
   const entries = flows.map((flow) => {
     const heading = `### ${flow.title}`;

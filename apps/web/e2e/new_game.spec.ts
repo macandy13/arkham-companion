@@ -1,7 +1,7 @@
 import { expect, test } from './fixtures/test';
 
 // Journey: the new game wizard from the entry points to a started game.
-test('start a new game', { tag: '@flow' }, async ({ page }) => {
+test('start a new game', async ({ page }) => {
   const portraits = page.getByRole('list', { name: 'Investigators' });
   const seats = page.getByRole('region', { name: 'Seats' });
   const search = page.getByRole('searchbox', { name: 'Search by name' });

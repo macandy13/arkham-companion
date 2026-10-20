@@ -48,7 +48,7 @@ Each milestone file in `docs/tasks/` lists its tasks in order; do them in that o
    `feat(engine): add hunter movement (M1.8)`, `fix(web): …`, `docs: …`, `test: …`, `refactor: …`, `chore: …`, `ci: …`. Scope = package (`engine`, `carddata`, `scenarios`, `web`, `util`) when it fits.
    **The PR description starts with the motivation** – why the PR exists and what it is trying to accomplish – before any list of changes. State the rationale plainly: never attribute a choice to a person ("Andy asked/chose/wanted …"); say why the change is right instead. The required attribution block at the top of the body stays. Follow `.github/pull_request_template.md` and fill in its **Review map** (read first, rules claims, API changes, decisions for the reviewer, what to skip). Before opening, run the `pr-reviewer` subagent on the branch and fix its blocking findings; then post its summary as a PR comment and its remaining findings as inline comments. Run it again before asking for review after a round of changes.
 5. CI must be green: typecheck, lint, coverage floors, E2E, CodeQL. Check the PR preview link and the bundle-size comment for UI changes.
-   **UI changes extend or add an `@flow` E2E spec** (rules in `docs/coding-guidelines.md` §3); the preview workflow records it and puts the screencast into the PR description.
+   **UI changes tag `@flow` on every E2E flow that shows them, and only those**: the flows they add or extend, and any existing flow whose recorded behavior they change even when its code stays the same. They remove the tag from all others (rules in `docs/coding-guidelines.md` §3); the preview workflow records the tagged flows and puts their screencasts into the PR description, so it shows only what the PR changed.
 
 ## Subagents
 
