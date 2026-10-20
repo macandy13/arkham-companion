@@ -62,6 +62,8 @@ export interface GameActions {
   adjust(investigator: InvestigatorId, stat: SteppedStat, delta: number): Promise<void>;
   /** Doom on the current agenda. */
   placeDoom(amount: number): Promise<void>;
+  /** Doom taken off the current agenda by hand (a card effect, a miscount). */
+  removeDoom(amount: number): Promise<void>;
   /** Takes back the last step; never the scenario start. */
   undo(): Promise<void>;
 }
@@ -109,6 +111,7 @@ export function gameActions(
     adjust: (investigator, stat, delta) =>
       play((table) => adjustStat(table, investigator, stat, delta)),
     placeDoom: (amount) => play((table) => table.placeDoom(amount)),
+    removeDoom: (amount) => play((table) => table.removeDoom(amount)),
     undo,
   };
 }

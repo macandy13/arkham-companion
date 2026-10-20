@@ -89,6 +89,30 @@ describe('GameScreen header', () => {
     await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
   });
 
+  it("shows the agenda's doom against its threshold and the act's clues against its need", async () => {
+    await renderTheGathering('game-screen-agenda-act-test');
+    // For one investigator, What's Going On?! advances at 3 doom and Trapped needs 2 clues.
+
+    const agenda = screen.getByRole('region', { name: 'Agenda' });
+    const act = screen.getByRole('region', { name: 'Act' });
+    expect(agenda.textContent).toContain("What's Going On?!");
+    expect(agenda.textContent).toContain('Doom 0 / 3');
+    expect(act.textContent).toContain('Trapped');
+    expect(act.textContent).toContain('Clues 0 / 2');
+  });
+
+  it('adds doom to the agenda and takes it off again', async () => {
+    await renderTheGathering('game-screen-doom-test');
+    const removeAtZero = button('Remove doom').disabled;
+
+    fireEvent.click(button('Add doom'));
+    await screen.findByText('Doom 1 / 3');
+    fireEvent.click(button('Remove doom'));
+
+    expect(removeAtZero).toBe(true);
+    expect(await screen.findByText('Doom 0 / 3')).toBeTruthy();
+  });
+
   it('turns the buttons off while a step is still being stored', async () => {
     await renderTheGathering('game-screen-busy-test');
 

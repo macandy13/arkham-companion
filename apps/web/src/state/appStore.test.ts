@@ -361,6 +361,15 @@ describe('appStore', () => {
             doomInPlay: 1,
           });
         });
+
+        it('takes doom off the current agenda', async () => {
+          const store = await aldersTurn('actions-remove-doom-test');
+          await store.getState().actions.placeDoom(2);
+
+          await store.getState().actions.removeDoom(1);
+
+          expect(store.getState().current?.board?.agenda).toMatchObject({ doom: 1 });
+        });
       });
 
       it.each([

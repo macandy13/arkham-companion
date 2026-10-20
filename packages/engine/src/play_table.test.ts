@@ -323,6 +323,31 @@ describe('turns, actions and tokens', () => {
     expect(table.board.agenda).toEqual({ name: 'agenda', doom: 2, threshold: 5 });
   });
 
+  it('removes doom from the agenda', () => {
+    const table = PlayTable.start(
+      game.withAgenda(instanceId('agenda'), blankAgenda('agenda', fixed(5))),
+    );
+    table.placeDoom(3);
+
+    table.removeDoom(2);
+
+    expect(table.board.agenda).toEqual({ name: 'agenda', doom: 1, threshold: 5 });
+  });
+
+  it.each([0, -1, 1.5])('refuses to remove %s doom', (amount) => {
+    const table = PlayTable.start(
+      game.withAgenda(instanceId('agenda'), blankAgenda('agenda', fixed(5))),
+    );
+
+    expect(() => table.removeDoom(amount)).toThrow('doom to remove must be positive');
+  });
+
+  it('refuses to remove doom when no agenda is in play', () => {
+    const table = PlayTable.start(game);
+
+    expect(() => table.removeDoom(1)).toThrow('no current agenda to remove doom from');
+  });
+
   it('advances the act by spending the clues of several investigators', () => {
     const table = PlayTable.start(
       newGame()

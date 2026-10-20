@@ -444,11 +444,11 @@ describe('enemies', () => {
 });
 
 describe('agenda and act', () => {
-  it('reads the current agenda with its doom and threshold, the doom in play and the act with its clue requirement', () => {
+  it('reads the current agenda with its doom and threshold, the doom in play, the act with its clue requirement and the clues held', () => {
     const { context, state } = newGame()
       .withLocation(study, blankLocation('study'))
-      .withInvestigator(alice, { locationId: study })
-      .withInvestigator(bob, { locationId: study })
+      .withInvestigator(alice, { locationId: study, clues: 1 })
+      .withInvestigator(bob, { locationId: study, clues: 2 })
       .withAgenda(instanceId('first_agenda'), blankAgenda('first_agenda', fixed(3)))
       .withAct(instanceId('first_act'), blankAct('first_act', { clues: perInvestigator(2) }))
       .withCard(instanceId('doomed_curse'), blankTreachery('doomed_curse'), threatAreaOf(alice), {
@@ -461,6 +461,7 @@ describe('agenda and act', () => {
     expect(board.agenda).toEqual({ name: 'first_agenda', doom: 2, threshold: 3 });
     expect(board.doomInPlay).toBe(3);
     expect(board.act).toEqual({ name: 'first_act', clues: 4 });
+    expect(board.cluesHeld).toBe(3);
   });
 
   it('reads an agenda without a doom threshold without one', () => {
