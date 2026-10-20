@@ -16,10 +16,10 @@ export function RejectionToast({
   const { t } = useTranslation();
 
   return (
-    <aside role="alert" aria-label={t('rejections.label')}>
-      <p>{t(`rejections.${rejection.code}`, { defaultValue: t('rejections.other') })}</p>
+    <aside role="alert" aria-label={t('toast.label')}>
+      <p>{t(`rejections.${rejection.code}`, { defaultValue: t('toast.fallback') })}</p>
       <button type="button" onClick={onDismiss}>
-        {t('rejections.dismiss')}
+        {t('toast.dismiss')}
       </button>
     </aside>
   );

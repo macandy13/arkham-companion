@@ -89,11 +89,23 @@ describe('GameScreen header', () => {
     await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
   });
 
+  it('turns the buttons off while a step is still being stored', async () => {
+    await renderTheGathering('game-screen-busy-test');
+
+    fireEvent.click(button('Next'));
+
+    expect(button('Next').disabled).toBe(true);
+    expect(button('Undo').disabled).toBe(true);
+    await screen.findByText('Round 1, Investigation');
+    expect(button('Next').disabled).toBe(false);
+  });
+
   it('keeps the buttons off for a game it can only show', async () => {
     const store = createAppStore(new IndexedDbStore('game-screen-unplayable-test'));
-    const id = await store.getState().newGame();
+    // An empty game has no scenario, so the catalog has no rules to play it with.
+    const gameWithoutScenario = await store.getState().newGame();
     render(
-      <MemoryRouter initialEntries={[`/game/${id}`]}>
+      <MemoryRouter initialEntries={[`/game/${gameWithoutScenario}`]}>
         <Routes>
           <Route path="game/:id" element={<GameScreen store={store} />} />
         </Routes>

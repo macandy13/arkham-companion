@@ -12,10 +12,8 @@ export const resources = {
         undo: 'Undo',
         noGame: 'No game open',
       },
+      toast: { label: 'Not possible', dismiss: 'OK', fallback: 'That is not possible right now.' },
       rejections: {
-        label: 'Not possible',
-        dismiss: 'OK',
-        other: 'That is not possible right now.',
         decisionPending: 'Answer the open decision first.',
         noPendingDecision: 'There is no open decision to answer.',
         enemyAttackPending: 'Resolve the enemy attacks first.',
@@ -170,10 +168,8 @@ export const resources = {
         undo: 'Rückgängig',
         noGame: 'Kein Spiel geöffnet',
       },
+      toast: { label: 'Nicht möglich', dismiss: 'OK', fallback: 'Das ist gerade nicht möglich.' },
       rejections: {
-        label: 'Nicht möglich',
-        dismiss: 'OK',
-        other: 'Das ist gerade nicht möglich.',
         decisionPending: 'Triff zuerst die offene Entscheidung.',
         noPendingDecision: 'Es gibt keine offene Entscheidung.',
         enemyAttackPending: 'Handle zuerst die Angriffe der Gegner ab.',
