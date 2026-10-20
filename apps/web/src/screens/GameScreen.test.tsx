@@ -54,7 +54,10 @@ describe('GameScreen header', () => {
   beforeAll(async () => {
     await initI18n('en');
   });
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
 
   it('moves on to the next phase with "Next"', async () => {
     await renderTheGathering('game-screen-next-test');
@@ -127,7 +130,7 @@ describe('GameScreen header', () => {
   it('downloads an export of the open game under its title', async () => {
     Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:test'), revokeObjectURL: vi.fn() });
     const downloaded: string[] = [];
-    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
       this: HTMLAnchorElement,
     ) {
       downloaded.push(this.download);
@@ -136,8 +139,8 @@ describe('GameScreen header', () => {
 
     fireEvent.click(button('Export'));
 
+    // `renderTheGathering` saves the game as "The Gathering".
     await waitFor(() => expect(downloaded).toEqual(['The-Gathering.arkham.json']));
-    click.mockRestore();
   });
 
   it('keeps the buttons off for a game it can only show', async () => {

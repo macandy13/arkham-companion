@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import type { StoreApi } from 'zustand/vanilla';
 import type { BoardView } from '@arkham/engine';
 import type { AppState, OpenGame } from '../state/appStore';
-import { downloadTextFile, toFileStem } from './downloadFile';
+import { downloadGameExport } from './downloadFile';
 
 /**
  * The play screen's always-on status: round and phase, the "Next" that runs the phase assistant,
@@ -13,6 +13,13 @@ export function GameHeader({ store, open }: { store: StoreApi<AppState>; open?: 
   const { t } = useTranslation();
   const { actions } = store.getState();
   const blocked = !open?.playable || open.busy;
+
+  /** The title the home screen lists the game under, so both export it under the same name. */
+  function gameTitle({ gameId }: OpenGame): string {
+    const { games } = store.getState();
+    const index = games.findIndex((game) => game.gameId === gameId);
+    return games[index]?.title || t('games.untitled', { n: games.length - index });
+  }
 
   return (
     <header>
@@ -34,22 +41,15 @@ export function GameHeader({ store, open }: { store: StoreApi<AppState>; open?: 
         {t('header.undo')}
       </button>
       {open && (
-        <button type="button" onClick={() => void exportGame(store, open)}>
+        <button
+          type="button"
+          onClick={() => void downloadGameExport(store, open.gameId, gameTitle(open))}
+        >
           {t('games.export')}
         </button>
       )}
     </header>
   );
-}
-
-/**
- * Saves the open game as an export file, the backup the home screen also offers, so the players
- * can back up mid-game without leaving the table. Home and settings are in the app's own header.
- */
-async function exportGame(store: StoreApi<AppState>, open: OpenGame): Promise<void> {
-  const { games, exportGame: exportText } = store.getState();
-  const title = games.find((game) => game.gameId === open.gameId)?.title ?? '';
-  downloadTextFile(`${toFileStem(title)}.arkham.json`, await exportText(open.gameId));
 }
 
 /**
