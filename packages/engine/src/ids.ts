@@ -45,8 +45,6 @@ export type GameId = Brand<string, 'GameId'>;
 export type CampaignId = Brand<string, 'CampaignId'>;
 /** ID of a map in `Board.maps` (a scenario can have several). */
 export type MapId = Brand<string, 'MapId'>;
-/** ID of a layout slot in `Board.slots`. */
-export type SlotId = Brand<string, 'SlotId'>;
 /** ID of a pending `Decision`. */
 export type DecisionId = Brand<string, 'DecisionId'>;
 
@@ -62,5 +60,4 @@ export const campaignDefinitionId = (id: string) => id as CampaignDefinitionId;
 export const gameId = (id: string) => id as GameId;
 export const campaignId = (id: string) => id as CampaignId;
 export const mapId = (id: string) => id as MapId;
-export const slotId = (id: string) => id as SlotId;
 export const decisionId = (id: string) => id as DecisionId;

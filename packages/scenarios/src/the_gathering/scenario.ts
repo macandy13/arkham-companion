@@ -47,7 +47,8 @@ const ghoulEnemy: EncounterMatch = { trait: trait('Ghoul'), typeCode: 'enemy' };
 
 /**
  * The house as act 1 ("Trapped") reveals it: the Hallway connects to the
- * Attic, the Cellar and the Parlor. Not part of `theGathering.setup`: these
+ * Attic, the Cellar and the Parlor. The campaign guide draws the Attic above
+ * the Hallway, the Cellar below it and the Parlor to its right. Not part of `theGathering.setup`: these
  * locations start set aside, and act 1's reverse side (`trappedReverseSide`)
  * puts them into play with `compileMapStep`.
  */
@@ -56,10 +57,10 @@ export const theGatheringHouse: AddMapStep = {
   mapId: mapId('house'),
   name: 'House',
   locations: [
-    { code: codes.hallway },
-    { code: codes.attic },
-    { code: codes.cellar },
-    { code: codes.parlor },
+    { code: codes.hallway, at: { column: 0, row: 1 } },
+    { code: codes.attic, at: { column: 0, row: 0 } },
+    { code: codes.cellar, at: { column: 0, row: 2 } },
+    { code: codes.parlor, at: { column: 1, row: 1 } },
   ],
   connections: [
     { from: codes.hallway, to: codes.attic },
@@ -302,7 +303,12 @@ export const theGathering: ScenarioDefinition = {
   agendaDeck: [codes.whatsGoingOn, codes.riseOfTheGhouls, codes.theyreGettingOut],
   actDeck: [codes.trapped, codes.theBarrier, codes.whatHaveYouDone],
   setup: [
-    { kind: 'addMap', mapId: mapId('study'), name: 'Study', locations: [{ code: codes.study }] },
+    {
+      kind: 'addMap',
+      mapId: mapId('study'),
+      name: 'Study',
+      locations: [{ code: codes.study, at: { column: 0, row: 0 } }],
+    },
     {
       kind: 'setAside',
       codes: [

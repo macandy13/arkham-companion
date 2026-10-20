@@ -44,6 +44,10 @@ export type Rejection =
   | { code: 'setupTargetAmbiguous'; cardCode: CardCode }
   /** No card in the `CardDb` belongs to `encounterCode` (usually a typo in scenario data). */
   | { code: 'unknownEncounterSet'; encounterCode: EncounterSetCode }
+  /** A map's `layout` names a card that is not one of that map's locations. */
+  | { code: 'layoutNotOnMap'; cardId: InstanceId; mapId: MapId }
+  /** A map's `layout` gives a cell that is not two non-negative integers. */
+  | { code: 'invalidGridCell'; cardId: InstanceId; column: number; row: number }
   /** `AddConnection` for an edge that already exists. */
   | { code: 'duplicateConnection'; from: InstanceId; to: InstanceId }
   /** `RemoveConnection` for an edge that does not exist. */
@@ -260,6 +264,10 @@ function describe(r: Rejection): string {
       return `setup refers to ${r.cardCode}, which exists more than once`;
     case 'unknownEncounterSet':
       return `no cards in encounter set ${r.encounterCode}`;
+    case 'layoutNotOnMap':
+      return `the layout of map ${r.mapId} places ${r.cardId}, which is not one of its locations`;
+    case 'invalidGridCell':
+      return `${r.cardId} needs a cell of non-negative integers, got column ${r.column}, row ${r.row}`;
     case 'duplicateConnection':
       return `${r.from} and ${r.to} are already connected`;
     case 'connectionNotFound':

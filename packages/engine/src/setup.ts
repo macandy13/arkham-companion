@@ -20,7 +20,7 @@ import {
   type MapId,
 } from './ids';
 import { investigatorCard } from './investigator_cards';
-import type { Edge, MapSpec } from './map';
+import type { Edge, GridCell, MapSpec } from './map';
 import { CommandRejected } from './rejection';
 import type { ScenarioDefinition } from './scenario';
 import { spawnZone } from './spawn';
@@ -34,10 +34,14 @@ import type { Zone } from './zone';
  */
 export type TokenAmount = number | ScaledValue;
 
-/** A location an `AddMapStep` puts into play, unrevealed unless `faceUp`. */
+/**
+ * A location an `AddMapStep` puts into play, unrevealed unless `faceUp`, drawn in its `at` cell
+ * of the book layout when the scenario guide gives one.
+ */
 export interface MapLocation {
   code: CardCode;
   faceUp?: boolean;
+  at?: GridCell;
 }
 
 /**
@@ -248,6 +252,7 @@ export function compileMapStep(state: GameState, step: AddMapStep): Command[] {
       name: step.name,
       visible: step.visible ?? true,
       connections: (step.connections ?? []).map((connection) => edge(locations, connection)),
+      layout: layoutOf(step.locations, locations),
     },
     locations: locations.map((location) => location.id),
   };
@@ -296,8 +301,22 @@ function withMap(draft: SetupDraft, step: AddMapStep): SetupDraft {
     name: step.name,
     visible: step.visible ?? true,
     connections: (step.connections ?? []).map((connection) => edge(locations, connection)),
+    layout: layoutOf(step.locations, locations),
   };
   return { ...withLocations, maps: { ...draft.maps, [step.mapId]: map } };
+}
+
+/** The cells of a map step's locations, by the instance each location became (same order). */
+function layoutOf(
+  steps: readonly MapLocation[],
+  cards: readonly CodedCard[],
+): Record<InstanceId, GridCell> {
+  return Object.fromEntries(
+    steps.flatMap((location, i) => {
+      const card = cards[i];
+      return location.at && card ? [[card.id, location.at]] : [];
+    }),
+  );
 }
 
 /** A card as far as resolving setup codes is concerned: a draft card or a card in the game. */

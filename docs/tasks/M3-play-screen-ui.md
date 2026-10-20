@@ -18,53 +18,17 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 4. M3.2a: header with round, phase, "Next" and undo, and the toast for refused actions
 5. M3.2b: agenda and act in the header
 6. M3.2c: the menu (home, settings, export)
-7. M3.3a: static SVG map with location tiles and connections
-8. M3.3b: pan/zoom/pinch, pawns, enemy chips, map tabs
-9. M3.4: board interactions
-10. M3.5: investigator bar
-11. M3.6: encounter panel
-12. M3.7: decision dialog and card zoom
-13. M3.8: event log
-14. M3.9: tablet pass and E2E
+7. M3.3a1: each location's book layout cell in the game state (`GameMap.layout`), The Gathering's cells
+8. M3.3a2: static SVG map with location tiles and connections
+9. M3.3b: pan/zoom/pinch, pawns, enemy chips, map tabs
+10. M3.4: board interactions
+11. M3.5: investigator bar
+12. M3.6: encounter panel
+13. M3.7: decision dialog and card zoom
+14. M3.8: event log
+15. M3.9: tablet pass and E2E
 
 ---
-
-## M3.1 Game store and command dispatch (O)
-
-**Why:** A single path from tap → engine → storage → screen enforces "persist before render" (refresh safety) and gives one place for errors and undo.
-
-**Benefit:** Components stay simple, and the screen can never drift from the saved game.
-
-- [x] Zustand store: current `GameState`, `actions.<verb>` → `PlayTable` → persist events via `GameStore` → re-render
-- [x] Opening a saved game rebuilds its `EngineContext` (cards and `scenario`) from the catalog entry for `meta.scenarioId` (`findScenario`), so hooks and the reference card apply to its commands
-- [x] Selectors for derived values (doom in play, agenda and act thresholds): `OpenGame.board`, a `BoardView`
-- [x] A busy flag while a step runs, so the screen disables its buttons: actions act on the turn in progress and the first open decision, so a second tap would hit whatever is open next
-- Moved to M3.2: rejected actions show a toast with the reason; the undo button
-
-M3.1a done: the screen calls `GameActions` (the `PlayTable` verbs with screen defaults: actions are taken by the investigator whose turn it is, answers go to the first open decision, skill tests stay open) on the app store, which play them through a `GameSession` that stores each step as one undo group and reloads the stored game when a write fails (another tab). The refusal is kept on `OpenGame.rejection`; the undo button comes with the header.
-
-M3.1b done: `GameActions` covers the remaining steps the screen needs: move, fight, evade, engage, resign and actions left (on the turn in progress), enemy attacks, act advance, the resource/damage/horror steppers and doom. Fight, evade and engage are not exercised through the app store yet, since The Gathering starts without an enemy in play.
-
-M3.1c done: `OpenGame.board` is the screen's selector object, a `BoardView` built after every step; `AgendaView` gained the doom `threshold` and `BoardView` the `doomInPlay` it is compared with. `OpenGame.busy` is set while an action or undo is queued or running. The toast moved to M3.2, where the header's "Next" is the first button that can be refused.
-
-## M3.2 Header (S)
-
-**Why:** Round, phase, agenda doom and act clues are the scenario's always-on status. They are one important piece among others (map, investigators, encounter cards), so the header keeps them compact and leaves the space to the map.
-
-**Benefit:** The game clock at a glance and one-tap phase progression.
-
-- [x] Round, phase, "Next" button (calls `NextPhase`)
-- [x] Agenda: doom x / threshold with +/−; act: clues x / threshold
-- Moved to M3.7: tapping agenda or act opens the card (the card zoom comes with the decision dialog)
-- [x] Undo button
-- [x] Menu (home, settings, export): home and settings are the app header's links on every screen; the game header adds the export
-- [x] Refused actions show a toast with the translated reason (`OpenGame.rejection`, `dismissRejection`); buttons disabled while `OpenGame.busy`
-
-M3.2a done: the header shows round and phase, "Next" and undo (off while only the scenario start is left, `OpenGame.canUndo`); both wait while `busy` and stay off for a game that can only be shown. A refusal shows as a toast with the reason (`rejections.<code>` strings for the refusals a tap can cause, a general text otherwise) until dismissed. Flow: `play_header.spec.ts`.
-
-M3.2b done: the header shows the current agenda with all doom in play against its threshold and +/− for the doom on the agenda (`removeDoom`, a new `PlayTable` verb and action, since no rule removes doom yet), and the current act with the clues the investigators hold against the clues it needs.
-
-M3.2c done: the game header exports the open game (the same file as the home screen's export). Home and settings needed nothing new: the app's own header links to both on every screen, the play screen included.
 
 ## M3.3 Map rendering (O)
 
@@ -74,10 +38,13 @@ M3.2c done: the game header exports the open game (the same file as the home scr
 
 Ref: architecture "Game state" (connections) and product.md "Board rendering".
 
-- [ ] SVG board with pan/zoom/pinch (react-zoom-pan-pinch); slots from the scenario layout
+- [x] Each location's cell in the book layout, kept on its map in the game state (`GameMap.layout`)
+- [ ] SVG board with pan/zoom/pinch (react-zoom-pan-pinch), tiles placed by the layout
 - [ ] Location tiles: name, revealed/unrevealed, shroud, clues, doom, attachments badge
 - [ ] Connection lines (arrows for one-way), map tabs when several maps exist
 - [ ] Investigator pawns and enemy chips at locations
+
+M3.3a1 done: map steps give each location its book layout cell (`MapLocation.at`), which the map keeps (`GameMap.layout`) and `StartScenario`/`AddMap` validate. The unused `Board.slots`, `placement` and `layoutMode` are gone. The Gathering's Study and house have their cells.
 
 ## M3.4 Board interactions (S)
 
