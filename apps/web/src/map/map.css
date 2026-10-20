@@ -1,0 +1,38 @@
+/* The map drawing (MapBoard); sizes inside the SVG are in its user units, set in mapLayout.ts. */
+/* Two ids, so it beats the home screen's `#app > main section` row. */
+#board > #map {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+}
+
+#map figure {
+  margin: 0;
+}
+
+#map svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+#map svg rect {
+  fill: var(--color-surface);
+  stroke: var(--color-border);
+  rx: var(--radius);
+}
+
+#map svg text {
+  fill: var(--color-text);
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+#map svg line {
+  stroke: var(--color-text-muted);
+  stroke-width: var(--map-line-width);
+}
+
+#map svg marker path {
+  fill: var(--color-text-muted);
+}

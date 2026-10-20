@@ -31,7 +31,13 @@ export const resources = {
         turnsNotTaken: 'Every investigator must take a turn first.',
       },
       nav: { label: 'Main' },
-      map: { title: 'Map' },
+      map: {
+        title: 'Map',
+        clues: 'Clues {{count}}',
+        unrevealed: 'Unrevealed',
+        connection: '{{from}} – {{to}}',
+        oneWay: '{{from}} to {{to}}, one way',
+      },
       investigators: { title: 'Investigators' },
       encounter: { title: 'Encounter' },
       settings: {
@@ -194,7 +200,13 @@ export const resources = {
         turnsNotTaken: 'Jeder Ermittler muss zuerst einen Zug machen.',
       },
       nav: { label: 'Hauptnavigation' },
-      map: { title: 'Karte' },
+      map: {
+        title: 'Karte',
+        clues: 'Hinweise {{count}}',
+        unrevealed: 'Unaufgedeckt',
+        connection: '{{from}} – {{to}}',
+        oneWay: '{{from}} nach {{to}}, nur in eine Richtung',
+      },
       investigators: { title: 'Ermittler' },
       encounter: { title: 'Begegnung' },
       settings: {

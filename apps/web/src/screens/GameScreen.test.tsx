@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import 'fake-indexeddb/auto';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
@@ -158,5 +158,23 @@ describe('GameScreen header', () => {
     await screen.findByText('Round 0, Setup');
     expect(button('Next').disabled).toBe(true);
     expect(button('Undo').disabled).toBe(true);
+  });
+});
+
+describe('GameScreen map', () => {
+  beforeAll(async () => {
+    await initI18n('en');
+  });
+  afterEach(cleanup);
+
+  it('draws the map The Gathering starts on, with the Study as its one location', async () => {
+    await renderTheGathering('screen-map');
+
+    const studyMap = screen.getByRole('figure', { name: 'Study' });
+    expect(
+      within(studyMap)
+        .getAllByRole('group')
+        .map((tile) => tile.getAttribute('aria-label')),
+    ).toEqual(['Study']);
   });
 });

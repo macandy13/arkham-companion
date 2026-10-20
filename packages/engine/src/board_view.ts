@@ -16,7 +16,7 @@ import {
 } from './card_matchers';
 import { cardName, type CardName, type InstanceId, type InvestigatorId, type MapId } from './ids';
 import { cardsInZone, cardsOfType } from './lookup';
-import { mapLocations } from './map';
+import { mapLocations, type Edge, type GameMap, type GridCell } from './map';
 import { attacksStillDue } from './phases';
 import type {
   CardInstance,
@@ -98,6 +98,21 @@ export interface LocationView {
   investigators?: InvestigatorId[];
   cards?: CardName[];
   attachments?: CardName[];
+}
+
+/**
+ * One map as the screen draws it: its locations in map order, the book layout cell of each one
+ * that has a cell (`GameMap.layout`, without cells of locations that have left the map) and its
+ * connections between them. An edge to a location on another map is left out, since one map's
+ * drawing cannot show it.
+ */
+export interface MapView {
+  id: MapId;
+  name: string;
+  visible: boolean;
+  locations: readonly LocationView[];
+  cells: Readonly<Record<InstanceId, GridCell>>;
+  connections: readonly Edge[];
 }
 
 /**
@@ -203,6 +218,13 @@ export class BoardView {
       mapLocations(this.state, id as MapId).map((locationId) =>
         locationView(this.ctx, this.state, requireCard(this.state, locationId)),
       ),
+    );
+  }
+
+  /** The maps of the board, in the order the scenario declared them. */
+  get maps(): readonly MapView[] {
+    return Object.entries(this.state.board.maps).map(([id, map]) =>
+      mapView(this.ctx, this.state, id as MapId, map),
     );
   }
 
@@ -429,6 +451,25 @@ function locationView(ctx: EngineContext, state: GameState, location: CardInstan
     ),
     ...listIfAny('cards', namesIn(ctx, state, { kind: 'atLocation', locationId: location.id })),
     ...listIfAny('attachments', namesIn(ctx, state, { kind: 'attachedTo', hostId: location.id })),
+  };
+}
+
+function mapView(ctx: EngineContext, state: GameState, id: MapId, map: GameMap): MapView {
+  const { name, visible, layout, connections } = map;
+  const onMap = mapLocations(state, id);
+  const isOnMap = (location: InstanceId) => onMap.includes(location);
+  return {
+    id,
+    name,
+    visible,
+    locations: onMap.map((location) => locationView(ctx, state, requireCard(state, location))),
+    cells: Object.fromEntries(
+      onMap.flatMap((location) => {
+        const cell = layout[location];
+        return cell ? [[location, cell]] : [];
+      }),
+    ),
+    connections: connections.filter((edge) => isOnMap(edge.from) && isOnMap(edge.to)),
   };
 }
 
