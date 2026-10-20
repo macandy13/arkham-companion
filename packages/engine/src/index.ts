@@ -92,8 +92,8 @@ export type {
   Ability,
   AbilityCommand,
   AbilityEffect,
-  CardRef,
-  InvestigatorRef,
+  RelativeCard,
+  RelativeInvestigator,
   Templated,
   TimingWindow,
 } from './abilities';

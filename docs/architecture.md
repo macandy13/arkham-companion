@@ -253,7 +253,7 @@ Some events change nothing in the state and exist only to mark a moment for the 
 **Extension points**
 
 - **A new timing window:** add a case to `TimingWindow` in [`abilities.ts`](../packages/engine/src/abilities.ts) and to `windowsOpenedBy`, naming the event that opens it. Test it in [`triggers.test.ts`](../packages/engine/src/triggers.test.ts).
-- **A new kind of effect:** add its command to `AbilityCommand`. A new relative target is a new reference (`CardRef`, `InvestigatorRef`) and a case in `resolveRefs`.
+- **A new kind of effect:** add its command to `AbilityCommand`. A new relative target is a new reference (`RelativeCard`, `RelativeInvestigator`) and a case in `resolveRefs`.
 - **A card with a forced ability:** list it in the card's `abilities`; no code.
 - **A new scenario trigger point:** add a field to `ScenarioHooks` in [`triggers.ts`](../packages/engine/src/triggers.ts) and a case in `matchingTriggers`.
 

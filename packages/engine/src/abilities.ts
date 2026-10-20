@@ -14,12 +14,12 @@ export type TimingWindow =
   { kind: 'revealed' };
 
 /** A card an ability names relative to itself: the card that has the ability. */
-export interface CardRef {
+export interface RelativeCard {
   ref: 'self';
 }
 
 /** An investigator an ability names relative to its window: the one the window names (the drawer). */
-export interface InvestigatorRef {
+export interface RelativeInvestigator {
   ref: 'windowInvestigator';
 }
 
@@ -31,9 +31,9 @@ export interface InvestigatorRef {
  * fires.
  */
 export type Templated<T> = T extends InstanceId
-  ? CardRef
+  ? RelativeCard
   : T extends InvestigatorId
-    ? InvestigatorRef
+    ? RelativeInvestigator
     : T extends object
       ? { [K in keyof T]: Templated<T[K]> }
       : T;
