@@ -16,15 +16,16 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 2. M3.1b: the remaining `GameActions` (move, fight, evade, engage, resign, actions left, enemy attacks, act advance, steppers, doom)
 3. M3.1c: selectors for derived values and the busy flag
 4. M3.2a: header with round, phase, "Next" and undo, and the toast for refused actions
-5. M3.2b: agenda and act in the header, the menu
-6. M3.3a: static SVG map with location tiles and connections
-7. M3.3b: pan/zoom/pinch, pawns, enemy chips, map tabs
-8. M3.4: board interactions
-9. M3.5: investigator bar
-10. M3.6: encounter panel
-11. M3.7: decision dialog and card zoom
-12. M3.8: event log
-13. M3.9: tablet pass and E2E
+5. M3.2b: agenda and act in the header
+6. M3.2c: the menu (home, settings, export)
+7. M3.3a: static SVG map with location tiles and connections
+8. M3.3b: pan/zoom/pinch, pawns, enemy chips, map tabs
+9. M3.4: board interactions
+10. M3.5: investigator bar
+11. M3.6: encounter panel
+12. M3.7: decision dialog and card zoom
+13. M3.8: event log
+14. M3.9: tablet pass and E2E
 
 ---
 
@@ -53,12 +54,15 @@ M3.1c done: `OpenGame.board` is the screen's selector object, a `BoardView` buil
 **Benefit:** The game clock at a glance and one-tap phase progression.
 
 - [x] Round, phase, "Next" button (calls `NextPhase`)
-- [ ] Agenda: doom x / threshold with +/−; act: clues x / threshold; tap opens the card
+- [x] Agenda: doom x / threshold with +/−; act: clues x / threshold
+- Moved to M3.7: tapping agenda or act opens the card (the card zoom comes with the decision dialog)
 - [x] Undo button
 - [ ] Menu (home, settings, export)
 - [x] Refused actions show a toast with the translated reason (`OpenGame.rejection`, `dismissRejection`); buttons disabled while `OpenGame.busy`
 
 M3.2a done: the header shows round and phase, "Next" and undo (off while only the scenario start is left, `OpenGame.canUndo`); both wait while `busy` and stay off for a game that can only be shown. A refusal shows as a toast with the reason (`rejections.<code>` strings for the refusals a tap can cause, a general text otherwise) until dismissed. Flow: `play_header.spec.ts`.
+
+M3.2b done: the header shows the current agenda with all doom in play against its threshold and +/− for the doom on the agenda (`removeDoom`, a new `PlayTable` verb and action, since no rule removes doom yet), and the current act with the clues the investigators hold against the clues it needs.
 
 ## M3.3 Map rendering (O)
 
@@ -110,6 +114,7 @@ Ref: architecture "Game state" (connections) and product.md "Board rendering".
 
 - [ ] Modal for pending `Decision`s with the engine's options, one layout per decision kind (M1.9); the skill test prompt shows skill, difficulty and pass/fail buttons plus "skip, adjust manually"
 - [ ] Card zoom: front/back image, text fallback from card data
+- [ ] Tapping the agenda or act in the header opens its card (moved from M3.2)
 
 ## M3.8 Event log (S)
 

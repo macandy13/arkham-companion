@@ -482,6 +482,19 @@ export class PlayTable {
   }
 
   /**
+   * Doom the players take off the current agenda by hand, e.g. after a card effect or to fix a
+   * miscount. The engine has no command that removes doom by rule yet, so this is a `ManualAdjust`.
+   */
+  removeDoom(amount: number): void {
+    const agenda = this.state.agenda.current;
+    if (agenda === undefined) throw this.error('no current agenda to remove doom from');
+    this.play({
+      type: 'ManualAdjust',
+      adjustment: { kind: 'tokens', cardId: agenda, token: 'doom', delta: -amount },
+    });
+  }
+
+  /**
    * Runs a step made of several commands as one: they share one undo group,
    * and if any throws, the table goes back to how it was before the step, so a
    * failed step never leaves half of itself behind. A nested step joins the
