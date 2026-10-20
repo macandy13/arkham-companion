@@ -17,6 +17,10 @@ updates:
         update-types: [minor, patch]
       major:
         update-types: [major]
+    ignore:
+      # typescript-eslint refuses TypeScript 7 (typescript-eslint#10940); lift once it supports it.
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
 
   - package-ecosystem: github-actions
     directory: /
@@ -27,6 +31,10 @@ updates:
       timezone: Europe/Berlin
     commit-message:
       prefix: ci
+    ignore:
+      # Its v3 is an unreleased dev branch whose inputs differ (build-script fails).
+      - dependency-name: preactjs/compressed-size-action
+        versions: ['3.x']
     groups:
       actions:
         patterns: ['*']
