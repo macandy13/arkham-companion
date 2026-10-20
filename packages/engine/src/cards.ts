@@ -1,10 +1,10 @@
 import { stripTrailingDot } from '@arkham/util';
+import type { Ability } from './abilities';
 import type { Brand, CardCode, EncounterSetCode } from './ids';
 import type { Keyword } from './keywords';
 import type { ScenarioDefinition } from './scenario';
 import type { SkillTest, SkillValues } from './state';
 import { CommandRejected } from './rejection';
-import type { EffectsRegistry } from './triggers';
 
 /**
  * ArkhamDB `type_code` values, covering encounter and player cards.
@@ -159,6 +159,8 @@ export interface CardStats {
    * card with it has no use for (Obscuring Fog has neither).
    */
   locationAttachment?: LocationAttachment;
+  /** The card's forced abilities as data (architecture "Triggers and card effects"); none when absent. */
+  abilities?: readonly Ability[];
 }
 
 /**
@@ -201,7 +203,7 @@ export interface CardDb {
  * Everything `handle` needs besides the state and the command. Passed in
  * rather than stored in `GameState` so the state stays small and serialisable,
  * and so the reducer cannot depend on card data – events already carry the
- * values a rule computed from it. Hooks and effects are code, which is
+ * values a rule computed from it. Scenario hooks are code, which is
  * another reason they live here and not in the serialisable state.
  */
 export interface EngineContext {
@@ -214,8 +216,6 @@ export interface EngineContext {
    * symbol tokens count as unknown in skill test suggestions.
    */
   scenario?: ScenarioDefinition;
-  /** Card scripts by card code; none when absent. */
-  effects?: EffectsRegistry;
 }
 
 /**

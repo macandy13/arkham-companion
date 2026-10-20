@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest';
 import {
   atLocation,
   blankAct,
+  blankAgenda,
   blankEnemy,
   blankLocation,
   blankTreachery,
@@ -20,14 +21,15 @@ import {
   encounterDeck,
   encounterDiscard,
   engagedWith,
+  fixed,
   instanceId,
   investigatorId,
   newGame,
   perInvestigator,
   PlayTable,
+  takeDamage,
   threatAreaOf,
-  blankAgenda,
-  fixed,
+  whenRevealed,
   type Command,
 } from './index';
 
@@ -61,7 +63,7 @@ describe('an attack of opportunity before the move that provoked it', () => {
   });
 });
 
-describe('a surge after a revelation that asks something', () => {
+describe('a surge after its card`s revelation', () => {
   /**
    * The hall with alice. Each test puts a surge card on top of the encounter
    * deck with two plain treacheries below it, so drawing two cards leaves one
@@ -101,7 +103,11 @@ describe('a surge after a revelation that asks something', () => {
 
   it('draws nothing more once the revelation defeated alice, while bob plays on', () => {
     const bob = investigatorId('bob');
-    const deadlySurge = blankTreachery('deadly_surge', { keywords: [{ name: 'surge' }] });
+    // The revelation deals the drawer 8 damage, alice's whole health.
+    const deadlySurge = blankTreachery('deadly_surge', {
+      keywords: [{ name: 'surge' }],
+      abilities: [whenRevealed(takeDamage(8))],
+    });
     const table = PlayTable.start(
       belowTheSurge(
         newGame()
@@ -110,29 +116,10 @@ describe('a surge after a revelation that asks something', () => {
           // Bob keeps the scenario going, so the surge stops because alice is out, not because the game ended.
           .withInvestigator(bob, { locationId: hall })
           .withCard(instanceId('surging_card'), deadlySurge, encounterDeck),
-      ).withEffects({
-        // The revelation asks alice to confirm 8 damage, her whole health.
-        [deadlySurge.code]: {
-          onReveal: () => [
-            {
-              type: 'RequestDecision',
-              decision: {
-                id: decisionId('deadly'),
-                kind: 'confirm',
-                prompt: 'decision.deadly',
-                decider: { kind: 'investigator', investigatorId: alice },
-                options: confirmOptions([
-                  { type: 'AdjustInvestigator', investigatorId: alice, stat: 'damage', delta: 8 },
-                ]),
-              },
-            },
-          ],
-        },
-      }),
+      ),
     );
 
     table.play(draw);
-    table.answerOnly('yes');
 
     expect(table.board.perInvestigator('status')).toEqual({ alice: 'defeated', bob: 'active' });
     expect(table.board.ended).toBe(false);
