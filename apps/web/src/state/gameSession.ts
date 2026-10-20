@@ -66,6 +66,11 @@ export class GameSession {
     return this.table.board;
   }
 
+  /** Whether `undo` has a step to take back; the scenario start never counts. */
+  get canUndo(): boolean {
+    return this.table.canUndo;
+  }
+
   /**
    * Plays `step` as one step (`PlayTable.step`: one undo group, nothing kept if any verb fails)
    * and stores the events it added. Returns the reason if the engine refused it (nothing is

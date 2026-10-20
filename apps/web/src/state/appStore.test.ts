@@ -249,6 +249,17 @@ describe('appStore', () => {
         expect((await db.loadGame(id))?.state).toEqual(atSetup);
       });
 
+      it('can undo once a step was played, never the scenario start', async () => {
+        const store = createAppStore(new IndexedDbStore('appstore-can-undo-test'));
+        await store.getState().startScenario(start);
+        const atStart = store.getState().current?.canUndo;
+
+        await store.getState().actions.nextPhase();
+
+        expect(atStart).toBe(false);
+        expect(store.getState().current?.canUndo).toBe(true);
+      });
+
       it('never undoes the scenario start', async () => {
         const store = createAppStore(new IndexedDbStore('appstore-undo-start-test'));
         await store.getState().startScenario(start);

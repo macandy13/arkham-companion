@@ -5,11 +5,14 @@ import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
 import { gameId as toGameId } from '@arkham/engine';
 import type { AppState } from '../state/appStore';
+import { GameHeader } from './GameHeader';
+import { RejectionToast } from './RejectionToast';
 import './game.css';
 
 /**
  * Route `/game/:id`: loads the game named in the URL (so deep links and reloads work)
- * and shows the board layout of product.md "UI concept" as placeholders.
+ * and shows the board layout of product.md "UI concept": the header, so far placeholders for
+ * the rest, and the reason when an action is refused.
  */
 export function GameScreen({ store }: { store: StoreApi<AppState> }) {
   const { t } = useTranslation();
@@ -24,11 +27,7 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
 
   return (
     <div id="board">
-      <header>
-        <h1>{t('app.title')}</h1>
-        <p>{open ? `${t('header.round')} ${open.state.meta.round}` : t('header.noGame')}</p>
-        <button disabled>{t('header.undo')}</button>
-      </header>
+      <GameHeader store={store} open={open} />
       <section id="map" aria-labelledby="map-title">
         <h2 id="map-title">{t('map.title')}</h2>
       </section>
@@ -38,6 +37,12 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
       <section id="encounter" aria-labelledby="encounter-title">
         <h2 id="encounter-title">{t('encounter.title')}</h2>
       </section>
+      {open?.rejection && (
+        <RejectionToast
+          rejection={open.rejection}
+          onDismiss={() => store.getState().dismissRejection()}
+        />
+      )}
     </div>
   );
 }
