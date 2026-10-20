@@ -100,6 +100,12 @@ describe('renderSection', () => {
     expect(section).toContain('[Full-quality video](https://x.test/s/create-a-game.webm?v=abc123)');
   });
 
+  it('is just the markers when no flow is tagged', () => {
+    const section = renderSection({ flows: [], baseUrl: 'https://x.test/s', version: 'abc123' });
+
+    expect(section).toBe('<!-- screencasts:start -->\n<!-- screencasts:end -->');
+  });
+
   it('notes a failed flow instead of linking a missing file', () => {
     const section = renderSection({
       flows: [failed],
