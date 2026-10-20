@@ -81,7 +81,11 @@ export function handleMoveInvestigator(
  * shows an active investigator with nothing left. A defeat comes with the
  * clean-up of `investigatorLeavesEvents`.
  */
-export function handleAdjustInvestigator(state: GameState, cmd: AdjustInvestigator): Event[] {
+export function handleAdjustInvestigator(
+  ctx: EngineContext,
+  state: GameState,
+  cmd: AdjustInvestigator,
+): Event[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
   if (!Number.isInteger(cmd.delta) || cmd.delta === 0)
     throw new CommandRejected({ code: 'invalidTokenDelta', delta: cmd.delta });
@@ -105,7 +109,7 @@ export function handleAdjustInvestigator(state: GameState, cmd: AdjustInvestigat
   if (cause === undefined) return [changed];
   return [
     changed,
-    ...investigatorLeavesEvents(state, investigator, {
+    ...investigatorLeavesEvents(ctx, state, investigator, {
       type: 'InvestigatorDefeated',
       investigatorId: investigator.id,
       cause,
@@ -114,9 +118,13 @@ export function handleAdjustInvestigator(state: GameState, cmd: AdjustInvestigat
 }
 
 /** `DefeatInvestigator`: a card effect defeats the investigator, with the clean-up of any defeat. */
-export function handleDefeatInvestigator(state: GameState, cmd: DefeatInvestigator): Event[] {
+export function handleDefeatInvestigator(
+  ctx: EngineContext,
+  state: GameState,
+  cmd: DefeatInvestigator,
+): Event[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
-  return investigatorLeavesEvents(state, investigator, {
+  return investigatorLeavesEvents(ctx, state, investigator, {
     type: 'InvestigatorDefeated',
     investigatorId: investigator.id,
     cause: 'cardEffect',

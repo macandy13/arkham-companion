@@ -231,7 +231,7 @@ describe('the round', () => {
     expect(table.board.enemy(byName('ghoul'))).toMatchObject({ exhausted: true });
   });
 
-  it('leaves the table as it was when an attack fails halfway', () => {
+  it('drops the remaining attacks of an investigator the first attack defeats', () => {
     const table = PlayTable.start(
       newGame()
         .withLocation(study, blankLocation('study'))
@@ -243,19 +243,19 @@ describe('the round', () => {
     table.startTurn(alice);
     table.endTurn(alice);
     table.nextPhase();
-    const stateBefore = table.state;
-    const eventsBefore = table.events;
 
-    expect(() => table.resolveEnemyAttacks()).toThrow();
+    table.resolveEnemyAttacks();
 
-    expect(table.state).toBe(stateBefore);
-    expect(table.events).toEqual(eventsBefore);
+    expect(table.board.investigator(alice).status).toBe('defeated');
+    expect(table.board.attacksDue).toEqual([]);
   });
 
-  it('fails to resolve attacks when the step lists none', () => {
+  it('fails to resolve attacks when the step lists none, leaving the table as it was', () => {
     const table = PlayTable.start(game);
+    const stateBefore = table.state;
 
     expect(() => table.resolveEnemyAttacks()).toThrow(/no enemy attacks to resolve\nRound 0/);
+    expect(table.state).toBe(stateBefore);
   });
 });
 

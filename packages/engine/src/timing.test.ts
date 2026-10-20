@@ -25,6 +25,9 @@ import {
   newGame,
   perInvestigator,
   PlayTable,
+  threatAreaOf,
+  blankAgenda,
+  fixed,
   type Command,
 } from './index';
 
@@ -294,5 +297,151 @@ describe('a forced effect that asks two questions', () => {
 
     expect(table.board.decisions).toEqual([]);
     expect(table.board.investigator(alice).resources).toBe(2);
+  });
+});
+
+describe('a defeat during the investigator`s own turn', () => {
+  const bob = investigatorId('bob');
+  const frozen = blankTreachery('frozen', {
+    entersThreatArea: true,
+    turnEndTest: { skill: 'willpower', difficulty: 3 },
+  });
+  /** The hall with alice on her turn, a treachery testing her at the end of her turn, and bob. */
+  const game = newGame()
+    .withLocation(hall, blankLocation('hall'))
+    .withInvestigator(alice, { locationId: hall, health: { max: 3, damage: 0 } })
+    .withInvestigator(bob, { locationId: hall })
+    .withCard(instanceId('frozen'), frozen, threatAreaOf(alice))
+    .withTurnOf(alice);
+
+  it('ends her turn without its end-of-turn test, and bob takes his', () => {
+    const table = PlayTable.start(game);
+
+    table.takeDamage(alice, 3);
+
+    expect(table.board).toMatchObject({ turn: undefined, decisions: [] });
+    expect(table.board.investigator(alice)).toMatchObject({ status: 'defeated' });
+    expect(table.board.namesIn(encounterDiscard)).toEqual(['frozen']);
+
+    table.startTurn(bob);
+
+    expect(table.board.turn).toBe(bob);
+  });
+});
+
+describe('enemy attacks after one of them defeated the investigator', () => {
+  const bob = investigatorId('bob');
+  /** The hall with alice (3 health) engaged with a ghoul dealing 3 damage and a rat; bob keeps the game going. */
+  const game = newGame()
+    .withLocation(hall, blankLocation('hall'))
+    .withInvestigator(alice, { locationId: hall, health: { max: 3, damage: 0 } })
+    .withInvestigator(bob, { locationId: hall })
+    .withCard(instanceId('ghoul'), blankEnemy('ghoul', { damage: 3 }), engagedWith(alice))
+    .withCard(instanceId('rat'), blankEnemy('rat', { damage: 1 }), engagedWith(alice));
+
+  it('drops her remaining attack, and both enemies engage bob in the hall', () => {
+    const table = PlayTable.start(game);
+    table.nextPhase();
+    table.startTurn(alice);
+    table.endTurn(alice);
+    table.startTurn(bob);
+    table.endTurn(bob);
+    table.nextPhase();
+    expect(table.board.attacksDue).toEqual([
+      { enemy: 'ghoul', investigator: alice },
+      { enemy: 'rat', investigator: alice },
+    ]);
+
+    table.resolveEnemyAttacks();
+
+    expect(table.board.investigator(alice).status).toBe('defeated');
+    expect(table.board.attacksDue).toEqual([]);
+    expect(table.board.enemies).toEqual([
+      { name: 'ghoul', at: 'hall', engagedWith: bob, exhausted: true },
+      { name: 'rat', at: 'hall', engagedWith: bob },
+    ]);
+  });
+});
+
+describe('a surge with an empty encounter deck', () => {
+  const surgingRat = blankEnemy('surging_rat', { keywords: [{ name: 'surge' }] });
+  const clinging = blankTreachery('clinging_treachery', { entersThreatArea: true });
+  /**
+   * The hall with alice; the surging rat is the last card of the deck and a
+   * treachery that stays in the drawer's threat area lies in the discard pile.
+   */
+  const game = newGame()
+    .withLocation(hall, blankLocation('hall'))
+    .withInvestigator(alice, { locationId: hall })
+    .withCard(instanceId('surging_rat'), surgingRat, encounterDeck)
+    .withCard(instanceId('clinging_treachery'), clinging, encounterDiscard);
+
+  it('shuffles the discard pile back in and draws the surge card from it', () => {
+    const table = PlayTable.start(game);
+
+    table.play({ type: 'DrawEncounter', investigatorId: alice });
+
+    expect(table.board.enemy(byName('surging_rat')).engagedWith).toBe(alice);
+    expect(table.board.investigator(alice).threatArea).toEqual(['clinging_treachery']);
+    expect(table.board.namesIn(encounterDeck)).toEqual([]);
+  });
+});
+
+describe('doom reaching the threshold outside the mythos phase', () => {
+  /** The hall with alice, an agenda with threshold 2 and 1 doom, and the agenda after it. */
+  const game = newGame()
+    .withLocation(hall, blankLocation('hall'))
+    .withInvestigator(alice, { locationId: hall })
+    .withAgenda(instanceId('first_agenda'), blankAgenda('first_agenda', fixed(2)))
+    .withAgenda(
+      instanceId('second_agenda'),
+      blankAgenda('second_agenda', fixed(9), { stage: { number: 2 } }),
+    );
+
+  it('advances the agenda only at the next mythos phase`s threshold check', () => {
+    const table = PlayTable.start(game);
+    table.nextPhase();
+    table.startTurn(alice);
+    table.endTurn(alice);
+    table.nextPhase();
+
+    table.placeDoom(2);
+
+    expect(table.board).toMatchObject({
+      phase: 'enemy',
+      agenda: { name: 'first_agenda', doom: 2 },
+    });
+
+    expect(table.nextPhase()).toEqual({ round: 1, phase: 'upkeep' });
+    expect(table.board.agenda).toEqual({ name: 'first_agenda', doom: 2 });
+
+    // Mythos step 1.2 adds its doom before the check, so the agenda carries 3.
+    expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos', step: 'checkDoomThreshold' });
+    expect(table.board.decisions).toMatchObject([{ about: 'first_agenda' }]);
+  });
+});
+
+describe('a per-investigator threshold after an investigator is eliminated', () => {
+  const bob = investigatorId('bob');
+  /** The hall with alice (3 health) and bob, who has 4 clues; an act needing 2 clues per investigator, then the next act. */
+  const game = newGame()
+    .withAct(instanceId('first_act'), blankAct('first_act', { clues: perInvestigator(2) }))
+    .withAct(instanceId('next_act'), blankAct('next_act', { stage: { number: 2 } }))
+    .withLocation(hall, blankLocation('hall'))
+    .withInvestigator(alice, { locationId: hall, health: { max: 3, damage: 0 } })
+    .withInvestigator(bob, { locationId: hall, clues: 4 })
+    .withTurnOf(bob);
+
+  it('still counts the defeated investigator', () => {
+    const table = PlayTable.start(game);
+
+    table.takeDamage(alice, 3);
+
+    expect(table.board.investigator(alice).status).toBe('defeated');
+    expect(table.board.act).toEqual({ name: 'first_act', clues: 4 });
+
+    table.spendCluesToAdvanceAct([[bob, 4]]);
+
+    expect(table.board.act?.name).toBe('next_act');
   });
 });

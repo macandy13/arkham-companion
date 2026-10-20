@@ -29,6 +29,7 @@ import {
   type PhaseStep,
   type PhaseStepId,
 } from './state';
+import { attacksStillDue } from './phases';
 import { undoLastGroup } from './undo';
 import type { GameBuilder } from './game_builder';
 
@@ -376,15 +377,18 @@ export class PlayTable {
 
   /**
    * Enemy step 3.3: the players resolve each attack the step lists, in its
-   * order, with the printed damage and horror; each enemy exhausts after its attack.
+   * order, with the printed damage and horror; each enemy exhausts after its
+   * attack. An attack that defeats an investigator drops their remaining ones.
    */
   resolveEnemyAttacks(): void {
-    const [step] = this.current.meta.steps;
-    if (step?.id !== 'enemiesAttack' || step.attacks === undefined)
+    if (attacksStillDue(this.ctx, this.current).length === 0)
       throw this.error('no enemy attacks to resolve');
-    const { attacks } = step;
     this.atomically(() => {
-      for (const attack of attacks) this.play({ type: 'ResolveEnemyAttack', ...attack });
+      let [next] = attacksStillDue(this.ctx, this.current);
+      while (next) {
+        this.play({ type: 'ResolveEnemyAttack', ...next });
+        [next] = attacksStillDue(this.ctx, this.current);
+      }
     });
   }
 

@@ -158,10 +158,10 @@ const COMMAND_SPECS: CommandSpecs = {
     provokes: asAction,
   },
   AdjustInvestigator: {
-    handle: (_ctx, state, command) => handleAdjustInvestigator(state, command),
+    handle: handleAdjustInvestigator,
   },
   DefeatInvestigator: {
-    handle: (_ctx, state, command) => handleDefeatInvestigator(state, command),
+    handle: handleDefeatInvestigator,
   },
   DiscoverClues: { handle: (_ctx, state, command) => handleDiscoverClues(state, command) },
   PlaceDoom: { handle: (_ctx, state, command) => handlePlaceDoom(state, command) },
@@ -210,7 +210,7 @@ const COMMAND_SPECS: CommandSpecs = {
   },
   StartTurn: { handle: (_ctx, state, command) => handleStartTurn(state, command) },
   EndTurn: { handle: handleEndTurn },
-  Resign: { handle: (_ctx, state, command) => handleResign(state, command) },
+  Resign: { handle: handleResign },
   SetLeadInvestigator: {
     handle: (_ctx, state, command) => handleSetLeadInvestigator(state, command),
   },

@@ -17,6 +17,7 @@ import {
 import { cardName, type CardName, type InstanceId, type InvestigatorId, type MapId } from './ids';
 import { cardsInZone, cardsOfType } from './lookup';
 import { mapLocations } from './map';
+import { attacksStillDue } from './phases';
 import type {
   CardInstance,
   Decision,
@@ -431,9 +432,7 @@ function decisionView(ctx: EngineContext, state: GameState, decision: Decision):
 }
 
 function dueAttacks(ctx: EngineContext, state: GameState): DueAttackView[] {
-  const [step] = state.meta.steps;
-  if (step?.id !== 'enemiesAttack') return [];
-  return (step.attacks ?? []).map((attack) => ({
+  return attacksStillDue(ctx, state).map((attack) => ({
     enemy: nameOf(ctx, requireCard(state, attack.enemyId)),
     investigator: attack.investigatorId,
   }));

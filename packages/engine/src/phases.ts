@@ -160,6 +160,7 @@ export function handleResolveEnemyAttack(
       investigatorId: cmd.investigatorId,
     });
   const dealt = enemyAttackEvents(
+    ctx,
     state,
     activeInvestigator(state, cmd.investigatorId),
     cmd.damage ?? attack.damage,
@@ -242,6 +243,16 @@ function attacksDue(ctx: EngineContext, state: GameState): DueAttack[] {
     enemyId,
     investigatorId,
   }));
+}
+
+/**
+ * The attacks enemy step 3.3 still has to resolve when it is the current
+ * step: those it listed whose enemy is still ready and engaged with that
+ * investigator. None outside that step. `PlayTable` and `BoardView` read the
+ * step through this, so they never replay an attack the step dropped.
+ */
+export function attacksStillDue(ctx: EngineContext, state: GameState): DueAttack[] {
+  return dueAttacksOf(ctx, state, state.meta.steps[0]);
 }
 
 /** The attacks a listed step 3.3 still has to resolve; none for any other step. */

@@ -77,6 +77,7 @@ export function readyEngagedEnemies(
  * Rejects an amount that is not a non-negative integer.
  */
 export function enemyAttackEvents(
+  ctx: EngineContext,
   state: GameState,
   investigator: Investigator,
   damage: number,
@@ -103,7 +104,7 @@ export function enemyAttackEvents(
   if (cause === undefined) return changes;
   return [
     ...changes,
-    ...investigatorLeavesEvents(state, investigator, {
+    ...investigatorLeavesEvents(ctx, state, investigator, {
       type: 'InvestigatorDefeated',
       investigatorId: investigator.id,
       cause,
