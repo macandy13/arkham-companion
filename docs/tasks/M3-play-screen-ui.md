@@ -14,8 +14,8 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 
 1. M3.1a: `PlayTable` steps as undo groups and `resume` (engine), then the app store's `GameActions` through a `GameSession`, context rebuilt on open, refusals kept on the open game
 2. M3.1b: the remaining `GameActions` (move, fight, evade, engage, resign, actions left, enemy attacks, act advance, steppers, doom)
-3. M3.1c: toast for refused commands, selectors for derived values
-4. M3.2: header
+3. M3.1c: selectors for derived values and the busy flag
+4. M3.2: header, with the toast for refused actions (its "Next" is the first button that can be refused)
 5. M3.3a: static SVG map with location tiles and connections
 6. M3.3b: pan/zoom/pinch, pawns, enemy chips, map tabs
 7. M3.4: board interactions
@@ -35,13 +35,15 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 
 - [x] Zustand store: current `GameState`, `actions.<verb>` → `PlayTable` → persist events via `GameStore` → re-render
 - [x] Opening a saved game rebuilds its `EngineContext` (cards and `scenario`) from the catalog entry for `meta.scenarioId` (`findScenario`), so hooks and the reference card apply to its commands
-- [ ] Rejected commands show a toast with the reason
-- [ ] Undo wired to the M1 undo; selectors for derived values (doom total, thresholds)
-- [ ] A busy flag while a step runs, so the screen disables its buttons: actions act on the turn in progress and the first open decision, so a second tap would hit whatever is open next
+- [x] Selectors for derived values (doom in play, agenda and act thresholds): `OpenGame.board`, a `BoardView`
+- [x] A busy flag while a step runs, so the screen disables its buttons: actions act on the turn in progress and the first open decision, so a second tap would hit whatever is open next
+- Moved to M3.2: rejected actions show a toast with the reason; the undo button
 
 M3.1a done: the screen calls `GameActions` (the `PlayTable` verbs with screen defaults: actions are taken by the investigator whose turn it is, answers go to the first open decision, skill tests stay open) on the app store, which play them through a `GameSession` that stores each step as one undo group and reloads the stored game when a write fails (another tab). The refusal is kept on `OpenGame.rejection`; the undo button comes with the header.
 
 M3.1b done: `GameActions` covers the remaining steps the screen needs: move, fight, evade, engage, resign and actions left (on the turn in progress), enemy attacks, act advance, the resource/damage/horror steppers and doom. Fight, evade and engage are not exercised through the app store yet, since The Gathering starts without an enemy in play.
+
+M3.1c done: `OpenGame.board` is the screen's selector object, a `BoardView` built after every step; `AgendaView` gained the doom `threshold` and `BoardView` the `doomInPlay` it is compared with. `OpenGame.busy` is set while an action or undo is queued or running. The toast moved to M3.2, where the header's "Next" is the first button that can be refused.
 
 ## M3.2 Header (S)
 
@@ -52,6 +54,7 @@ M3.1b done: `GameActions` covers the remaining steps the screen needs: move, fig
 - [ ] Round, phase, "Next" button (calls `NextPhase`)
 - [ ] Agenda: doom x / threshold with +/−; act: clues x / threshold; tap opens the card
 - [ ] Undo button, menu (home, settings, export)
+- [ ] Refused actions show a toast with the translated reason (`OpenGame.rejection`, `dismissRejection`); buttons disabled while `OpenGame.busy`
 
 ## M3.3 Map rendering (O)
 

@@ -444,19 +444,34 @@ describe('enemies', () => {
 });
 
 describe('agenda and act', () => {
-  it('reads the current agenda with its doom and the current act with its clue requirement', () => {
+  it('reads the current agenda with its doom and threshold, the doom in play and the act with its clue requirement', () => {
     const { context, state } = newGame()
       .withLocation(study, blankLocation('study'))
       .withInvestigator(alice, { locationId: study })
       .withInvestigator(bob, { locationId: study })
       .withAgenda(instanceId('first_agenda'), blankAgenda('first_agenda', fixed(3)))
       .withAct(instanceId('first_act'), blankAct('first_act', { clues: perInvestigator(2) }))
+      .withCard(instanceId('doomed_curse'), blankTreachery('doomed_curse'), threatAreaOf(alice), {
+        tokens: { doom: 1 },
+      })
       .start();
 
     const board = boardView(context, stateAfter(context, state, { type: 'PlaceDoom', amount: 2 }));
 
-    expect(board.agenda).toEqual({ name: 'first_agenda', doom: 2 });
+    expect(board.agenda).toEqual({ name: 'first_agenda', doom: 2, threshold: 3 });
+    expect(board.doomInPlay).toBe(3);
     expect(board.act).toEqual({ name: 'first_act', clues: 4 });
+  });
+
+  it('reads an agenda without a doom threshold without one', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withAgenda(instanceId('final_agenda'), blankAgenda('final_agenda', null))
+      .start();
+
+    const board = boardView(context, state);
+
+    expect(board.agenda).toEqual({ name: 'final_agenda', doom: 0 });
   });
 
   it('has neither on a table without them', () => {
