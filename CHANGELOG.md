@@ -1,5 +1,50 @@
 # Changelog
 
+## [1.5.0](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.4.1...arkham-companion-v1.5.0) (2026-10-20)
+
+
+### Features
+
+* **engine:** accept bare ids and enemy matchers in BoardView finders (M1.14) ([a11d3bd](https://github.com/macandy13/arkham-companion/commit/a11d3bd8d4f6a82572b347b6b96cf04ebdeac1b9))
+* **engine:** add BoardView, structured read-backs of the board (M1.14) ([756d6b6](https://github.com/macandy13/arkham-companion/commit/756d6b6dfececb3549a335d25b0076925a784928))
+* **engine:** add PlayTable, a stateful API to play a built table (M1.14) ([51c9bde](https://github.com/macandy13/arkham-companion/commit/51c9bde2948faf4ae4ec0e5da0e8985cd638194b))
+* **engine:** one undo group per PlayTable step, resume from a stored log (M3.1) ([2ebe3b5](https://github.com/macandy13/arkham-companion/commit/2ebe3b507e7b6245b43a8f54f143b4c05e4885eb))
+* **engine:** PlayTable steps as undo groups, step(), canUndo and resume (M3.1) ([ea079ae](https://github.com/macandy13/arkham-companion/commit/ea079ae4fdd0f9744476ab83705a6ae5546147c7))
+* **engine:** PlayTable takes investigator, card and enemy refs (M1.14) ([666daa6](https://github.com/macandy13/arkham-companion/commit/666daa6f4316ec656ac7075847b37b1de857845d))
+* **engine:** PlayTable.step plays several verbs as one step; canUndo (M3.1) ([d40b2a9](https://github.com/macandy13/arkham-companion/commit/d40b2a91af26a60beb2c014e3f6b69fb6d671d66))
+* **web:** core game actions for the play screen through a GameSession (M3.1a) ([5e9b8cb](https://github.com/macandy13/arkham-companion/commit/5e9b8cb9eb2f267f96b28cafb56d93c5065323eb))
+* **web:** dispatch and undo engine commands through the app store (M3.1) ([c291130](https://github.com/macandy13/arkham-companion/commit/c2911300adc929fd483f66d6aba1674533429fb7))
+* **web:** the remaining play screen actions (M3.1b) ([23d73ba](https://github.com/macandy13/arkham-companion/commit/23d73ba3588fd873047cdd6ae0321bbc24aabb82))
+* **web:** the remaining play screen actions (M3.1b) ([9896889](https://github.com/macandy13/arkham-companion/commit/989688973ebd9675091dfddc821a9ba9c04f66e2))
+
+
+### Bug fixes
+
+* **engine:** start a resumed table's undo groups above every stored id (M3.1) ([70646ff](https://github.com/macandy13/arkham-companion/commit/70646ff9509578e1becee257bd9b53e07f6fdd2e))
+* **web:** play a step atomically and roll back before reloading a failed write (M3.1) ([180aa40](https://github.com/macandy13/arkham-companion/commit/180aa40290540e075e30a2bc179167b1eebde02c))
+
+
+### Refactoring
+
+* **scenarios:** play the end-to-end test on PlayTable, delete TestTable (M1.14) ([28a42b4](https://github.com/macandy13/arkham-companion/commit/28a42b486d29cc52ec8a54b536ead901ec341b8f))
+* **web:** act on the turn in progress and the first open decision ([01acb8a](https://github.com/macandy13/arkham-companion/commit/01acb8af69a89abd2985dee0a03de4fbc072b41f))
+* **web:** hide PlayTable behind GameActions with screen defaults (M3.1) ([beb94bf](https://github.com/macandy13/arkham-companion/commit/beb94bff142b9e14f725c1266a6f95f92c9ce873))
+* **web:** keep the core GameActions in this PR; the rest follow in M3.1b ([444ab79](https://github.com/macandy13/arkham-companion/commit/444ab794a9f4dae23a33a560ca9015a6924b5094))
+* **web:** play PlayTable steps through a GameSession instead of raw commands (M3.1) ([bae2134](https://github.com/macandy13/arkham-companion/commit/bae2134d70c6a12481ed445a9a1bb0951468969a))
+* **web:** simplify startGame and name the no-turn test's state ([8691bd3](https://github.com/macandy13/arkham-companion/commit/8691bd36c1e806242db445f95ecf9f9c8f571b9c))
+
+
+### Documentation
+
+* add the main pieces and the card and identifier types to the architecture overview ([4f92224](https://github.com/macandy13/arkham-companion/commit/4f922244cb92ca142137e0ba7fe756affd41135b))
+* add the main pieces and the card and identifier types to the architecture overview ([74a9804](https://github.com/macandy13/arkham-companion/commit/74a9804d13ab714deea28d005cd1357f7e887c12))
+* correct classes, ids.ts link and setup instance IDs in the overview ([959ef0b](https://github.com/macandy13/arkham-companion/commit/959ef0b45e30cf3b4e10ded25f410c8e8db75d35))
+* **engine:** word enemy refs and the enemy matcher description clearly (M1.14) ([ea6457a](https://github.com/macandy13/arkham-companion/commit/ea6457abbd14c722c757c4f86d4b64dbbdf9ca7a))
+* note that a surge draw is lost when the card eliminates the drawer ([3458cf1](https://github.com/macandy13/arkham-companion/commit/3458cf18d62b8ab795a6e2e0572da38b5bbce0a8))
+* **web:** name OpenGame in the action flow; retitle the dispatch test (M3.1) ([710ae7c](https://github.com/macandy13/arkham-companion/commit/710ae7ce064c7f2dc02dee95b30f3e7861cb96e3))
+* **web:** show the web app's util dependency; tie SteppedStat to InvestigatorStat (M3.1) ([60f0703](https://github.com/macandy13/arkham-companion/commit/60f070365df82c7ca45e83636ac557350b61fde1))
+* weekly docs sync (2026-10-18) ([78ee486](https://github.com/macandy13/arkham-companion/commit/78ee4863c6b98222193a77fd52a14c8fe629dd2e))
+
 ## [1.4.1](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.4.0...arkham-companion-v1.4.1) (2026-10-19)
 
 
