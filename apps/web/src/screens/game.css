@@ -42,3 +42,22 @@
 #investigators {
   grid-area: investigators;
 }
+
+/* Floats over the board, so a refusal never pushes the map aside. */
+#board > aside[role='alert'] {
+  position: fixed;
+  inset-inline: 0;
+  bottom: calc(var(--layout-board-bar-height) + var(--space-3));
+  width: fit-content;
+  max-width: var(--layout-sheet-width);
+  margin-inline: auto;
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+#board > aside[role='alert'] p {
+  margin: 0;
+}

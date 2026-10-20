@@ -56,6 +56,8 @@ export interface OpenGame {
    * whatever is open next.
    */
   busy: boolean;
+  /** Whether `actions.undo` has a step to take back; the scenario start is never taken back. */
+  canUndo: boolean;
   /** Why the last action was refused, until the next action or `dismissRejection`. */
   rejection?: Rejection;
 }
@@ -142,6 +144,7 @@ export function createAppStore(
           playable: session !== undefined,
           board: session?.board,
           busy: unfinishedSteps > 0,
+          canUndo: session?.canUndo ?? false,
         },
       });
     }
@@ -150,7 +153,15 @@ export function createAppStore(
     function publish(played: GameSession, rejection?: Rejection): void {
       const current = get().current;
       if (current?.gameId !== played.gameId) return;
-      set({ current: { ...current, state: played.state, board: played.board, rejection } });
+      set({
+        current: {
+          ...current,
+          state: played.state,
+          board: played.board,
+          canUndo: played.canUndo,
+          rejection,
+        },
+      });
     }
 
     async function playStep(step: PlayStep): Promise<void> {

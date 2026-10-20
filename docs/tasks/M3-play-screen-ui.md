@@ -15,15 +15,16 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 1. M3.1a: `PlayTable` steps as undo groups and `resume` (engine), then the app store's `GameActions` through a `GameSession`, context rebuilt on open, refusals kept on the open game
 2. M3.1b: the remaining `GameActions` (move, fight, evade, engage, resign, actions left, enemy attacks, act advance, steppers, doom)
 3. M3.1c: selectors for derived values and the busy flag
-4. M3.2: header, with the toast for refused actions (its "Next" is the first button that can be refused)
-5. M3.3a: static SVG map with location tiles and connections
-6. M3.3b: pan/zoom/pinch, pawns, enemy chips, map tabs
-7. M3.4: board interactions
-8. M3.5: investigator bar
-9. M3.6: encounter panel
-10. M3.7: decision dialog and card zoom
-11. M3.8: event log
-12. M3.9: tablet pass and E2E
+4. M3.2a: header with round, phase, "Next" and undo, and the toast for refused actions
+5. M3.2b: agenda and act in the header, the menu
+6. M3.3a: static SVG map with location tiles and connections
+7. M3.3b: pan/zoom/pinch, pawns, enemy chips, map tabs
+8. M3.4: board interactions
+9. M3.5: investigator bar
+10. M3.6: encounter panel
+11. M3.7: decision dialog and card zoom
+12. M3.8: event log
+13. M3.9: tablet pass and E2E
 
 ---
 
@@ -51,10 +52,13 @@ M3.1c done: `OpenGame.board` is the screen's selector object, a `BoardView` buil
 
 **Benefit:** The game clock at a glance and one-tap phase progression.
 
-- [ ] Round, phase, "Next" button (calls `NextPhase`)
+- [x] Round, phase, "Next" button (calls `NextPhase`)
 - [ ] Agenda: doom x / threshold with +/−; act: clues x / threshold; tap opens the card
-- [ ] Undo button, menu (home, settings, export)
-- [ ] Refused actions show a toast with the translated reason (`OpenGame.rejection`, `dismissRejection`); buttons disabled while `OpenGame.busy`
+- [x] Undo button
+- [ ] Menu (home, settings, export)
+- [x] Refused actions show a toast with the translated reason (`OpenGame.rejection`, `dismissRejection`); buttons disabled while `OpenGame.busy`
+
+M3.2a done: the header shows round and phase, "Next" and undo (off while only the scenario start is left, `OpenGame.canUndo`); both wait while `busy` and stay off for a game that can only be shown. A refusal shows as a toast with the reason (`rejections.<code>` strings for the refusals a tap can cause, a general text otherwise) until dismissed. Flow: `play_header.spec.ts`.
 
 ## M3.3 Map rendering (O)
 

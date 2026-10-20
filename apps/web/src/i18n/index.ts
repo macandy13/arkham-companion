@@ -6,7 +6,25 @@ export const resources = {
   en: {
     translation: {
       app: { title: 'Arkham Companion' },
-      header: { round: 'Round', phase: 'Phase', undo: 'Undo', noGame: 'No game open' },
+      header: {
+        roundPhase: 'Round {{round}}, {{phase}}',
+        next: 'Next',
+        undo: 'Undo',
+        noGame: 'No game open',
+      },
+      rejections: {
+        label: 'Not possible',
+        dismiss: 'OK',
+        other: 'That is not possible right now.',
+        decisionPending: 'Answer the open decision first.',
+        noPendingDecision: 'There is no open decision to answer.',
+        enemyAttackPending: 'Resolve the enemy attacks first.',
+        attackNotDue: 'That enemy does not attack now.',
+        wrongPhase: 'That is not possible in this phase.',
+        turnInProgress: 'Finish the current turn first.',
+        noTurnInProgress: 'Start an investigator’s turn first.',
+        turnsNotTaken: 'Every investigator must take a turn first.',
+      },
       nav: { label: 'Main' },
       map: { title: 'Map' },
       investigators: { title: 'Investigators' },
@@ -146,7 +164,25 @@ export const resources = {
   de: {
     translation: {
       app: { title: 'Arkham Companion' },
-      header: { round: 'Runde', phase: 'Phase', undo: 'Rückgängig', noGame: 'Kein Spiel geöffnet' },
+      header: {
+        roundPhase: 'Runde {{round}}, {{phase}}',
+        next: 'Weiter',
+        undo: 'Rückgängig',
+        noGame: 'Kein Spiel geöffnet',
+      },
+      rejections: {
+        label: 'Nicht möglich',
+        dismiss: 'OK',
+        other: 'Das ist gerade nicht möglich.',
+        decisionPending: 'Triff zuerst die offene Entscheidung.',
+        noPendingDecision: 'Es gibt keine offene Entscheidung.',
+        enemyAttackPending: 'Handle zuerst die Angriffe der Gegner ab.',
+        attackNotDue: 'Dieser Gegner greift jetzt nicht an.',
+        wrongPhase: 'Das ist in dieser Phase nicht möglich.',
+        turnInProgress: 'Beende zuerst den laufenden Zug.',
+        noTurnInProgress: 'Beginne zuerst den Zug eines Ermittlers.',
+        turnsNotTaken: 'Jeder Ermittler muss zuerst einen Zug machen.',
+      },
       nav: { label: 'Hauptnavigation' },
       map: { title: 'Karte' },
       investigators: { title: 'Ermittler' },

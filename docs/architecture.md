@@ -426,6 +426,8 @@ The React PWA is a thin layer over the engine, which keeps UI problems and rules
 
 The open game (`OpenGame`) is the play screen's single source of truth. Components change it through the store's [`GameActions`](../apps/web/src/state/gameActions.ts) (`actions.moveTo(hallway)`, `actions.investigate()`, `actions.answer('pass')`), in the players' words; they never see commands or the `PlayTable`. The actions mirror the table's verbs with the screen's defaults. An action is taken by the investigator whose turn it is, since the rules allow actions only during one's own turn (refused with `noTurnInProgress` between turns). The decision dialog shows the first pending decision, so `answer` picks an option of that one (`noPendingDecision` when none is open). A skill test is never assumed passed, so an action leaves it open, and the players answer it like any decision. Taking ids out of the actions means a stale tap (a second tap on "pass") would act on whatever is open next, so the screen disables its buttons while `OpenGame.busy` says a step is queued or running. The screen reads derived values (names, doom against the agenda's threshold, the act's clues) from `OpenGame.board`, a `BoardView` the session builds after every step, instead of from raw state. Each action hands one step to a [`GameSession`](../apps/web/src/state/gameSession.ts), the buffer between the pure engine and the screen. The session holds a `PlayTable` resumed from the game's stored log (`PlayTable.resume`), so the UI shares the verbs, the atomic multi-command steps and the invariant checks of the end-to-end tests. It plays the step as one `PlayTable.step` (a step of several verbs is one undo group, kept whole or not at all), writes the events it added with `appendEvents` under the step's undo group (passing the last `seq`, so a second tab cannot interleave), and only then does the app store show the new state. A refused step writes nothing and leaves its `Rejection` on the open game for the screen to explain. If a write fails (another tab wrote first), the session rolls the table back, reloads the stored game, and the step is lost rather than shown. Steps and undos run one after another in the order they were sent, so two quick taps never both build on the same state. `undo()` takes back the last step in the table and the store alike, never the scenario start. The table is mutable, so it lives in the store's closure and only its state is published. Opening a saved game rebuilds its `ScenarioContext` from the [scenario catalog](../apps/web/src/scenarios/scenarioCatalog.ts) entry for `meta.scenarioId`, so its hooks and reference card apply again; the investigator cards are not needed, since after setup the engine reads the investigators from the state. A game whose scenario the catalog lacks has no session and cannot be played (`playable: false`).
 
+The [game screen](../apps/web/src/screens/GameScreen.tsx) lays the board out as product.md "UI concept" draws it. Its [header](../apps/web/src/screens/GameHeader.tsx) shows round and phase, "Next" (`nextPhase`) and undo, which `OpenGame.canUndo` turns off while only the scenario start is left; both buttons are off while `busy` and for a game that is not `playable`. A refusal shows as a [toast](../apps/web/src/screens/RejectionToast.tsx) over the board until the players dismiss it or the next step succeeds. Its text comes from the `rejections.<code>` UI string, falling back to a general one for codes a tap cannot cause, so a new engine rejection never shows a raw key.
+
 ```ts
 interface AppState {
   games: GameSummary[];
@@ -442,6 +444,7 @@ interface OpenGame {
   playable: boolean;             // the catalog has its scenario
   board?: BoardView;             // selectors: the state by card name, with thresholds; playable only
   busy: boolean;                 // an action or undo is queued or running
+  canUndo: boolean;              // a step to take back; never the scenario start
   rejection?: Rejection;         // why the last step was refused
 }
 interface GameActions {         // gameActions.ts; one stored step each
@@ -457,6 +460,7 @@ function startGame(store: GameStore, title: string, ctx: ScenarioContext, option
 class GameSession {             // gameSession.ts
   static open(store: GameStore, gameId: GameId, ctx: ScenarioContext): Promise<GameSession>;
   readonly state: GameState;
+  readonly canUndo: boolean;
   play(step: PlayStep): Promise<Rejection | undefined>;
   undo(): Promise<void>;
 }
@@ -466,6 +470,7 @@ function createAppStore(gameStore: GameStore, scenarios?: ScenarioLookup): Store
 **Extension points**
 
 - **A new screen:** add a route in [`App.tsx`](../apps/web/src/App.tsx) and a component in [`screens/`](../apps/web/src/screens/), add or extend the E2E flow that shows it ([`apps/web/e2e/`](../apps/web/e2e/)) and tag only that flow `@flow`, and add its strings in English and German.
+- **A new refusal the players can cause:** add its text as `rejections.<code>` in English and German ([`i18n`](../apps/web/src/i18n/index.ts)); until then the toast shows the general text.
 - **A new game action:** add it to `GameActions` ([`gameActions.ts`](../apps/web/src/state/gameActions.ts)) as one `PlayTable` verb with the screen's defaults; a verb the table lacks is added to `PlayTable` first (architecture "Tests and debugging"), so tests gain it too. Components call the action; they never build commands or touch the table or the `GameStore`. Only an action outside the open game (like `startScenario`) gets its own `AppState` method in [`appStore.ts`](../apps/web/src/state/appStore.ts).
 
 ### Tests and debugging

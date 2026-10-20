@@ -2,7 +2,7 @@ import { expect, test } from './fixtures/test';
 
 // Journey: change the preferences and see the app react. Pack ownership joins in once the
 // settings screen receives the catalog packs (M2.7).
-test('change the settings', { tag: '@flow' }, async ({ page }) => {
+test('change the settings', async ({ page }) => {
   await test.step('Open the settings', async () => {
     await page.goto('/#/settings');
     await expect(page.getByRole('heading', { level: 1, name: 'Settings' })).toBeVisible();
