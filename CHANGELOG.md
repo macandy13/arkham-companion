@@ -1,5 +1,49 @@
 # Changelog
 
+## [1.6.0](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.5.0...arkham-companion-v1.6.0) (2026-10-20)
+
+
+### Features
+
+* **engine:** card abilities with timing windows replace card scripts (P1 slice 2) ([021c861](https://github.com/macandy13/arkham-companion/commit/021c861b2e7fb53065def7120b04e122b95eef5d))
+* **engine:** card abilities with timing windows replace card scripts (P1 slice 2) ([6efba10](https://github.com/macandy13/arkham-companion/commit/6efba107fa0398672cdf5911d53f795ac9a3a141))
+* **engine:** factories for common ability effects ([e92b8b5](https://github.com/macandy13/arkham-companion/commit/e92b8b5cbad50630725a5ba2649c8cefb654817f))
+* **web:** agenda doom and act clues in the header (M3.2b) ([565f8a0](https://github.com/macandy13/arkham-companion/commit/565f8a02bc4f1fffe31b18f02a54edd9f38e1425))
+* **web:** agenda doom and act clues in the header (M3.2b) ([4e8c5fc](https://github.com/macandy13/arkham-companion/commit/4e8c5fca80790e80ba07e22e356be15c5a3dd002))
+* **web:** board selectors and a busy flag on the open game (M3.1c) ([e59da98](https://github.com/macandy13/arkham-companion/commit/e59da98eb6544570ee6d4b42c8cf0acfcaf31822))
+* **web:** board selectors and a busy flag on the open game (M3.1c) ([aef4094](https://github.com/macandy13/arkham-companion/commit/aef4094ba014216fd9f2c1140cda7e9011e25f83))
+* **web:** export the open game from the header (M3.2c) ([ba47296](https://github.com/macandy13/arkham-companion/commit/ba47296bfc24275c6f11bf78852c4263b1d27c77))
+* **web:** export the open game from the header (M3.2c) ([27f1884](https://github.com/macandy13/arkham-companion/commit/27f188499bdb18a960c8ad9c264551b38b0ba326))
+* **web:** header with Next, undo and a toast for refused steps (M3.2a) ([6698ff1](https://github.com/macandy13/arkham-companion/commit/6698ff1551fd8f84b97094bc12e099f2b0db2797))
+* **web:** header with Next, undo and a toast for refused steps (M3.2a) ([daab772](https://github.com/macandy13/arkham-companion/commit/daab77224346f7cf488568ecae2b21fa40134aec))
+
+
+### Bug fixes
+
+* **engine:** engage freed enemies after an elimination; read attacks still due ([d5965ca](https://github.com/macandy13/arkham-companion/commit/d5965ca379ef26662470d21c3167fd48026d827b))
+* **engine:** finish the timing suite and engage freed enemies after an elimination (M1V.2) ([7a7ba0c](https://github.com/macandy13/arkham-companion/commit/7a7ba0c41f26e792e8c9c34196a79a597d9a6013))
+* get main green after the major dependency upgrade ([5c8b649](https://github.com/macandy13/arkham-companion/commit/5c8b6494d1dd54d1ed98ee9e03087ccf1d222c61))
+* get main green after the major dependency upgrade ([835df93](https://github.com/macandy13/arkham-companion/commit/835df934b568d4b7491c34d23321412e22bb354e))
+* keep TypeScript on 6.x and declare node types (same change as [#152](https://github.com/macandy13/arkham-companion/issues/152)) ([71daf3d](https://github.com/macandy13/arkham-companion/commit/71daf3d0a6f45dd5f1275f67506aa1667d32da8b))
+* **web:** player page plays only flows written into it ([612e62a](https://github.com/macandy13/arkham-companion/commit/612e62a72789eecf48d0b29e9140d76191f23ac3))
+
+
+### Refactoring
+
+* **engine:** ability effects are templated commands ([dd97f9b](https://github.com/macandy13/arkham-companion/commit/dd97f9b204ecc7f0e45710375090d03d8decb5c1))
+* **engine:** ability effects are templated commands (names) ([c79aaaf](https://github.com/macandy13/arkham-companion/commit/c79aaaf1a69640482c4a2adc75e0e76293f2c17b))
+* **engine:** ability effects mirror their commands with a relative target ([76f8bd1](https://github.com/macandy13/arkham-companion/commit/76f8bd1ac79009bb3d64f0348238e3a5a7f1f86c))
+* **engine:** derive BoardView fields when read ([c56841e](https://github.com/macandy13/arkham-companion/commit/c56841ebba25935a95ef4a5726ba517ef1cc12e8))
+* **engine:** read the clues held from BoardView; refuse non-positive doom removal ([7d4ccd9](https://github.com/macandy13/arkham-companion/commit/7d4ccd95930b1c4a3d44ee26ec0a3f1d1dbb2275))
+* **web:** export a game through one helper so both screens name the file alike ([82202a7](https://github.com/macandy13/arkham-companion/commit/82202a75cf0e2f627782e9cae35637a3e4c58597))
+* **web:** keep the toast's own strings apart from the rejection texts ([45b696a](https://github.com/macandy13/arkham-companion/commit/45b696aa20a9cfc34ec6282c82ce371003da2c89))
+
+
+### Documentation
+
+* new screens tag only their own flow ([a112bcb](https://github.com/macandy13/arkham-companion/commit/a112bcb709e125d357859783697463baec03e61c))
+* tag flows whose recorded behavior changes, not only edited specs ([b84a265](https://github.com/macandy13/arkham-companion/commit/b84a265c03b0aa543e80245a9dbadf4950de4bc5))
+
 ## [1.5.0](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.4.1...arkham-companion-v1.5.0) (2026-10-20)
 
 
