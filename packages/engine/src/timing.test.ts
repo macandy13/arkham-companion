@@ -410,7 +410,7 @@ describe('doom reaching the threshold outside the mythos phase', () => {
     });
 
     expect(table.nextPhase()).toEqual({ round: 1, phase: 'upkeep' });
-    expect(table.board.agenda).toEqual({ name: 'first_agenda', doom: 2 });
+    expect(table.board.agenda).toEqual({ name: 'first_agenda', doom: 2, threshold: 2 });
 
     // Mythos step 1.2 adds its doom before the check, so the agenda carries 3.
     expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos', step: 'checkDoomThreshold' });
