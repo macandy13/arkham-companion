@@ -61,7 +61,7 @@ describe('an attack of opportunity before the move that provoked it', () => {
   });
 });
 
-describe('a surge after a revelation that asks something', () => {
+describe('a surge after its card`s revelation', () => {
   /**
    * The hall with alice. Each test puts a surge card on top of the encounter
    * deck with two plain treacheries below it, so drawing two cards leaves one

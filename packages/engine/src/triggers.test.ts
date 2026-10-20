@@ -7,7 +7,6 @@ import {
   blankEnemy,
   blankLocation,
   checkInvariants,
-  doomInPlay,
   execute,
   fixed,
   instanceId,
@@ -212,7 +211,7 @@ describe('trigger bus', () => {
   describe('revealed abilities', () => {
     /**
      * The cellar's revealed ability places 1 doom on the agenda and deals 1
-     * damage to whoever the window names; first_agenda has the same doom
+     * damage to whoever the window names; dooming_agenda has the same doom
      * ability. Alice stands next to the unrevealed cellar.
      */
     const placeDoom = { kind: 'placeDoomOnAgenda', amount: 1 } as const;
@@ -253,16 +252,17 @@ describe('trigger bus', () => {
       });
 
       expect(state.cards[instanceId('dooming_agenda')]?.tokens.doom).toBe(1);
-      expect(state.investigators[0]?.health.damage).toBe(0);
+      expect(state.investigators.find((inv) => inv.id === alice)?.health.damage).toBe(0);
       expect(checkInvariants(state)).toEqual([]);
     });
 
     it('does not run them when a card is turned face down', () => {
       const { context, state: started } = revealTable.start();
 
-      const { state } = execute(context, started, { type: 'AdvanceAgenda' });
+      const { events } = execute(context, started, { type: 'AdvanceAgenda' });
 
-      expect(doomInPlay(state)).toBe(0);
+      // The flipped agenda leaves the game afterwards, so only the events show whether it placed doom.
+      expect(events.filter((e) => e.type === 'TokensChanged' && e.delta > 0)).toEqual([]);
     });
   });
 
