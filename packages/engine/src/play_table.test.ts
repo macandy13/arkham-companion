@@ -176,7 +176,7 @@ describe('rejected and broken steps', () => {
     );
 
     expect(() => table.placeDoom(1)).toThrow(brokenHook);
-    expect(table.board.agenda).toEqual({ name: 'agenda', doom: 0 });
+    expect(table.board.agenda).toEqual({ name: 'agenda', doom: 0, threshold: 5 });
   });
 });
 
@@ -320,7 +320,7 @@ describe('turns, actions and tokens', () => {
 
     table.placeDoom(2);
 
-    expect(table.board.agenda).toEqual({ name: 'agenda', doom: 2 });
+    expect(table.board.agenda).toEqual({ name: 'agenda', doom: 2, threshold: 5 });
   });
 
   it('advances the act by spending the clues of several investigators', () => {

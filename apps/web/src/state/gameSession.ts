@@ -1,5 +1,6 @@
 import {
   CommandRejected,
+  type BoardView,
   PlayTable,
   type GameId,
   type GameState,
@@ -58,6 +59,11 @@ export class GameSession {
   /** The state after the last stored step. */
   get state(): GameState {
     return this.table.state;
+  }
+
+  /** `state` read in game language (`BoardView`), with the names and thresholds of its cards. */
+  get board(): BoardView {
+    return this.table.board;
   }
 
   /**

@@ -1,7 +1,7 @@
 import { listIfAny } from '@arkham/util';
 import { cardStats, resolveValue, type EngineContext } from './cards';
 import { optionName } from './describe_decision';
-import { isInPlay } from './doom';
+import { doomInPlay, isInPlay } from './doom';
 import { formatBoard } from './format_board';
 import {
   cardMatcher,
@@ -100,10 +100,15 @@ export interface LocationView {
   attachments?: CardName[];
 }
 
-/** The current agenda's name and the doom on the card itself (not the total in play). */
+/**
+ * The current agenda's name, the doom on the card itself and, when it has one, the doom
+ * threshold for the player count. The threshold is compared with all doom in play
+ * (`BoardView.doomInPlay`), not with `doom`.
+ */
 export interface AgendaView {
   name: CardName;
   doom: number;
+  threshold?: number;
 }
 
 /** The current act's name and, when it has one, the clues it needs for the player count. */
@@ -142,54 +147,86 @@ export interface DueAttackView {
  * enemies, locations, agenda, act and open decisions, plus finders that fail
  * with a `TableError` instead of returning nothing. Tests assert on these
  * (`expect(board.investigator(alice)).toMatchObject({ clues: 1 })`) rather than
- * on raw state or on `formatBoard` text. A snapshot of one state: build a new
- * one with `boardView` after each command.
+ * on raw state or on `formatBoard` text. It wraps one state and derives each
+ * view when read, so a reader pays only for the parts it asks for and every
+ * view reads from the same sources as the engine (no copy to fall out of
+ * date). Build a new one with `boardView` after each command.
  */
 export class BoardView {
-  readonly round: number;
-  readonly phase: Phase;
-  /** The step the phase assistant is at: the next one still to run. */
-  readonly step?: PhaseStepId;
-  /** The investigator whose turn is in progress; absent between turns. */
-  readonly turn?: InvestigatorId;
-  readonly lead?: InvestigatorId;
-  readonly ended: boolean;
-  readonly resolution?: string;
-  readonly investigators: readonly InvestigatorView[];
-  /** Enemies in play, in card order. */
-  readonly enemies: readonly EnemyView[];
-  /** Locations on a map, in map order. */
-  readonly locations: readonly LocationView[];
-  readonly agenda?: AgendaView;
-  readonly act?: ActView;
-  /** Open decisions, oldest first. */
-  readonly decisions: readonly DecisionView[];
-  /** The attacks step 3.3 lists, in its order; empty outside that step. */
-  readonly attacksDue: readonly DueAttackView[];
-
   constructor(
     private readonly ctx: EngineContext,
     private readonly state: GameState,
-  ) {
-    const { meta } = state;
-    this.round = meta.round;
-    this.phase = meta.phase;
-    this.step = meta.steps[0]?.id;
-    this.turn = meta.turn?.investigatorId;
-    this.lead = meta.leadInvestigator;
-    this.ended = meta.ended === true;
-    this.resolution = meta.resolution;
-    this.investigators = state.investigators.map((inv) => investigatorView(ctx, state, inv));
-    this.enemies = enemiesInPlay(ctx, state).map((card) => enemyView(ctx, state, card));
-    this.locations = Object.keys(state.board.maps).flatMap((id) =>
-      mapLocations(state, id as MapId).map((locationId) =>
-        locationView(ctx, state, requireCard(state, locationId)),
+  ) {}
+
+  get round(): number {
+    return this.state.meta.round;
+  }
+
+  get phase(): Phase {
+    return this.state.meta.phase;
+  }
+
+  /** The step the phase assistant is at: the next one still to run. */
+  get step(): PhaseStepId | undefined {
+    return this.state.meta.steps[0]?.id;
+  }
+
+  /** The investigator whose turn is in progress; absent between turns. */
+  get turn(): InvestigatorId | undefined {
+    return this.state.meta.turn?.investigatorId;
+  }
+
+  get lead(): InvestigatorId | undefined {
+    return this.state.meta.leadInvestigator;
+  }
+
+  get ended(): boolean {
+    return this.state.meta.ended === true;
+  }
+
+  get resolution(): string | undefined {
+    return this.state.meta.resolution;
+  }
+
+  get investigators(): readonly InvestigatorView[] {
+    return this.state.investigators.map((inv) => investigatorView(this.ctx, this.state, inv));
+  }
+
+  /** Enemies in play, in card order. */
+  get enemies(): readonly EnemyView[] {
+    return enemiesInPlay(this.ctx, this.state).map((card) => enemyView(this.ctx, this.state, card));
+  }
+
+  /** Locations on a map, in map order. */
+  get locations(): readonly LocationView[] {
+    return Object.keys(this.state.board.maps).flatMap((id) =>
+      mapLocations(this.state, id as MapId).map((locationId) =>
+        locationView(this.ctx, this.state, requireCard(this.state, locationId)),
       ),
     );
-    this.agenda = agendaView(ctx, state);
-    this.act = actView(ctx, state);
-    this.decisions = state.pending.map((decision) => decisionView(ctx, state, decision));
-    this.attacksDue = dueAttacks(ctx, state);
+  }
+
+  get agenda(): AgendaView | undefined {
+    return agendaView(this.ctx, this.state);
+  }
+
+  /** All doom the agenda's threshold counts: on every card in play and the players' (`doomInPlay`). */
+  get doomInPlay(): number {
+    return doomInPlay(this.state);
+  }
+
+  get act(): ActView | undefined {
+    return actView(this.ctx, this.state);
+  }
+
+  /** Open decisions, oldest first. */
+  get decisions(): readonly DecisionView[] {
+    return this.state.pending.map((decision) => decisionView(this.ctx, this.state, decision));
+  }
+
+  /** The attacks step 3.3 lists, in its order; empty outside that step. */
+  get attacksDue(): readonly DueAttackView[] {
+    return dueAttacks(this.ctx, this.state);
   }
 
   /**
@@ -394,7 +431,13 @@ function mapOf({ zone, id }: CardInstance): MapId {
 
 function agendaView(ctx: EngineContext, state: GameState): AgendaView | undefined {
   const agenda = state.agenda.current === undefined ? undefined : state.cards[state.agenda.current];
-  return agenda && { name: nameOf(ctx, agenda), doom: agenda.tokens.doom ?? 0 };
+  if (!agenda) return undefined;
+  const { doom } = cardStats(ctx.cards, agenda.code);
+  return {
+    name: nameOf(ctx, agenda),
+    doom: agenda.tokens.doom ?? 0,
+    ...(doom === undefined ? {} : { threshold: resolveValue(doom, state.meta.playerCount) }),
+  };
 }
 
 function actView(ctx: EngineContext, state: GameState): ActView | undefined {
