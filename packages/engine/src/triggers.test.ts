@@ -214,12 +214,12 @@ describe('trigger bus', () => {
      * damage to whoever the window names; dooming_agenda has the same doom
      * ability. Alice stands next to the unrevealed cellar.
      */
-    const placeDoom = { kind: 'placeDoomOnAgenda', amount: 1 } as const;
+    const placeDoom = { kind: 'placeDoom', on: 'currentAgenda', amount: 1 } as const;
     const doomingCellar = blankLocation('dooming_cellar', {
       abilities: [
         {
           window: { kind: 'revealed' },
-          effects: [placeDoom, { kind: 'hurt', stat: 'damage', amount: 1 }],
+          effects: [placeDoom, { kind: 'adjustInvestigator', stat: 'damage', delta: 1 }],
         },
       ],
     });
@@ -240,6 +240,26 @@ describe('trigger bus', () => {
       const { state } = execute(context, started, { type: 'RevealLocation', locationId: cellar });
 
       expect(state.cards[instanceId('dooming_agenda')]?.tokens.doom).toBe(1);
+    });
+
+    it('places doom on the card itself when the ability names it', () => {
+      const cursedCellar = blankLocation('cursed_cellar', {
+        abilities: [
+          {
+            window: { kind: 'revealed' },
+            effects: [{ kind: 'placeDoom', on: 'self', amount: 1 }],
+          },
+        ],
+      });
+      const { context, state: started } = newGame()
+        .withAgenda(instanceId('second_agenda'), secondAgendaCard)
+        .withLocation(cellar, cursedCellar)
+        .start();
+
+      const { state } = execute(context, started, { type: 'RevealLocation', locationId: cellar });
+
+      expect(state.cards[cellar]?.tokens.doom).toBe(1);
+      expect(state.cards[instanceId('second_agenda')]?.tokens.doom).toBeUndefined();
     });
 
     it('resolves them within the move that revealed the location, naming no investigator', () => {

@@ -105,7 +105,10 @@ describe('a surge after its card`s revelation', () => {
     const deadlySurge = blankTreachery('deadly_surge', {
       keywords: [{ name: 'surge' }],
       abilities: [
-        { window: { kind: 'revealed' }, effects: [{ kind: 'hurt', stat: 'damage', amount: 8 }] },
+        {
+          window: { kind: 'revealed' },
+          effects: [{ kind: 'adjustInvestigator', stat: 'damage', delta: 8 }],
+        },
       ],
     });
     const table = PlayTable.start(

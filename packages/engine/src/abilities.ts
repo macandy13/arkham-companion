@@ -2,7 +2,8 @@ import { cardStats, type EngineContext } from './cards';
 import type { Command } from './commands';
 import type { Event } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
-import type { GameState } from './state';
+import type { GameState, InvestigatorStat } from './state';
+import type { Zone } from './zone';
 
 /**
  * The moment a card ability fires (architecture "Triggers and card
@@ -14,21 +15,39 @@ export type TimingWindow =
   { kind: 'revealed' };
 
 /**
- * One building block of what an ability does, as data. `abilityCommands`
- * turns it into the commands that resolve it, so card data never holds code
- * or instance IDs.
+ * A zone named by its kind alone, without a location, investigator or host
+ * (the encounter discard, out of the game, set aside, …): the only zones
+ * card data can name, since it holds no instance IDs.
+ */
+export type UnplacedZone = Exclude<
+  Zone,
+  { mapId: unknown } | { locationId: unknown } | { investigatorId: unknown } | { hostId: unknown }
+>;
+
+/**
+ * One building block of what an ability does, as data. Each mirrors the
+ * command it becomes, with a target named relative to the ability (the card
+ * itself, the investigator the window names, the current agenda) instead of
+ * an instance ID, which card data shared by every copy cannot hold.
+ * `abilityCommands` resolves the target and builds the command.
  */
 export type AbilityEffect =
   /**
-   * The investigator the window names takes damage or horror ("Revelation –
+   * `AdjustInvestigator` on the investigator the window names ("Revelation –
    * Take 1 horror"). Nothing happens in a window that names nobody, such as
    * a location revealed by a card effect.
    */
-  | { kind: 'hurt'; stat: 'damage' | 'horror'; amount: number }
-  /** Doom on the current agenda ("Place 1 doom on the current agenda"). */
-  | { kind: 'placeDoomOnAgenda'; amount: number }
-  /** The card with the ability is removed from the game. */
-  | { kind: 'removeFromGame' };
+  | { kind: 'adjustInvestigator'; stat: InvestigatorStat; delta: number }
+  /**
+   * `PlaceDoom` on the card itself or the current agenda ("Place 1 doom on
+   * the current agenda"). Kept apart from investigator stats because doom
+   * carries agenda rules of its own: placing it never advances the agenda
+   * (that waits for the mythos phase's threshold check), and a card that
+   * says otherwise would add its flag here.
+   */
+  | { kind: 'placeDoom'; on: 'self' | 'currentAgenda'; amount: number }
+  /** `MoveCard` of the card itself ("Remove it from the game", "Shuffle it back into the encounter deck"). */
+  | { kind: 'moveSelf'; to: UnplacedZone };
 
 /**
  * A forced card ability: what it does when its window opens. Card data
@@ -95,7 +114,7 @@ export function abilityCommands(
 
 function effectCommands(effect: AbilityEffect, opened: OpenedWindow): Command[] {
   switch (effect.kind) {
-    case 'hurt':
+    case 'adjustInvestigator':
       return opened.investigatorId === undefined
         ? []
         : [
@@ -103,12 +122,18 @@ function effectCommands(effect: AbilityEffect, opened: OpenedWindow): Command[] 
               type: 'AdjustInvestigator',
               investigatorId: opened.investigatorId,
               stat: effect.stat,
-              delta: effect.amount,
+              delta: effect.delta,
             },
           ];
-    case 'placeDoomOnAgenda':
-      return [{ type: 'PlaceDoom', amount: effect.amount }];
-    case 'removeFromGame':
-      return [{ type: 'MoveCard', cardId: opened.cardId, to: { kind: 'outOfGame' } }];
+    case 'placeDoom':
+      return [
+        {
+          type: 'PlaceDoom',
+          amount: effect.amount,
+          ...(effect.on === 'self' && { cardId: opened.cardId }),
+        },
+      ];
+    case 'moveSelf':
+      return [{ type: 'MoveCard', cardId: opened.cardId, to: effect.to }];
   }
 }

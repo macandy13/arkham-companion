@@ -221,16 +221,16 @@ The result is one list of events per player command. The store files them under 
 
 Forced effects react to events in two ways. A card's own forced effects are **abilities**: data on its `CardStats`, so the same encounter card behaves the same in every scenario and card data holds no code. A scenario's own effects are still code, its `ScenarioHooks`, until they move onto the abilities of its agendas and acts (architecture review P1). Both return commands rather than events, so `handle` checks their effect and they can use card data and the RNG like any player command. `ManualAdjust` and `StartScenario` fire nothing, because a correction or the setup is not a game event.
 
-An [`Ability`](../packages/engine/src/abilities.ts) is a timing window plus a list of effects. `windowsOpenedBy` is the one matcher that turns an event into the windows it opens, each naming the card whose abilities fire and the investigator it concerns, if any. A card turned face up opens `revealed`: a location being revealed, or a drawn encounter card, for which it is the revelation (its drawer is the investigator; a location names nobody). `abilityCommands` turns the matching abilities' effects into commands, in the order they are listed. A drawn card waits in `resolving` until they have resolved and is placed afterwards. `triggeredCommands` collects both kinds per event, scenario hooks before card abilities, and evaluates them against the state after the whole command.
+An [`Ability`](../packages/engine/src/abilities.ts) is a timing window plus a list of effects. `windowsOpenedBy` is the one matcher that turns an event into the windows it opens, each naming the card whose abilities fire and the investigator it concerns, if any. A card turned face up opens `revealed`: a location being revealed, or a drawn encounter card, for which it is the revelation (its drawer is the investigator; a location names nobody). `abilityCommands` turns the matching abilities' effects into commands, in the order they are listed. An effect is a command template rather than a command because card data, shared by every copy, can't hold instance IDs: it names its target relative to the ability (the card itself, the investigator the window names, the current agenda), and `abilityCommands` fills in the ID. A drawn card waits in `resolving` until they have resolved and is placed afterwards. `triggeredCommands` collects both kinds per event, scenario hooks before card abilities, and evaluates them against the state after the whole command.
 
 A [`TriggerHook`](../packages/engine/src/triggers.ts) gets the context, the state after the triggering command and the event, and returns commands. The engine reads `ScenarioHooks` from `EngineContext.scenario`: the context carries the whole definition, so its hooks, reference card and modifiers cannot be passed separately or forgotten. `matchingTriggers` decides which event fires which hook.
 
 ```ts
 type TimingWindow = { kind: 'revealed' };                                // grows with each migrated flag
-type AbilityEffect =
-  | { kind: 'hurt'; stat: 'damage' | 'horror'; amount: number }        // the investigator the window names
-  | { kind: 'placeDoomOnAgenda'; amount: number }
-  | { kind: 'removeFromGame' };                                          // the card with the ability
+type AbilityEffect =                                                     // each mirrors one command
+  | { kind: 'adjustInvestigator'; stat: InvestigatorStat; delta: number } // the investigator the window names
+  | { kind: 'placeDoom'; on: 'self' | 'currentAgenda'; amount: number }
+  | { kind: 'moveSelf'; to: UnplacedZone };                              // a zone without location, investigator or host
 interface Ability { window: TimingWindow; effects: readonly AbilityEffect[]; }   // CardStats.abilities
 
 type TriggerHook<E extends Event> = (ctx: EngineContext, state: GameState, event: E) => readonly Command[];
@@ -253,7 +253,7 @@ Some events change nothing in the state and exist only to mark a moment for the 
 **Extension points**
 
 - **A new timing window:** add a case to `TimingWindow` in [`abilities.ts`](../packages/engine/src/abilities.ts) and to `windowsOpenedBy`, naming the event that opens it. Test it in [`triggers.test.ts`](../packages/engine/src/triggers.test.ts).
-- **A new effect building block:** add a case to `AbilityEffect` and to `effectCommands`, which turns it into commands.
+- **A new effect building block:** add a case to `AbilityEffect`, mirroring the command it becomes, and to `effectCommands`, which resolves its target. Prefer widening an existing case's target over a new case.
 - **A card with a forced ability:** list it in the card's `abilities`; no code.
 - **A new scenario trigger point:** add a field to `ScenarioHooks` in [`triggers.ts`](../packages/engine/src/triggers.ts) and a case in `matchingTriggers`.
 

@@ -803,7 +803,10 @@ describe('surge after the drawn card has resolved', () => {
   const burningSurge = blankTreachery('burning_surge', {
     keywords: [{ name: 'surge' }],
     abilities: [
-      { window: { kind: 'revealed' }, effects: [{ kind: 'hurt', stat: 'damage', amount: 1 }] },
+      {
+        window: { kind: 'revealed' },
+        effects: [{ kind: 'adjustInvestigator', stat: 'damage', delta: 1 }],
+      },
     ],
   });
   const testingSurge = blankTreachery('testing_surge', {
@@ -813,7 +816,10 @@ describe('surge after the drawn card has resolved', () => {
   const deadlySurge = blankTreachery('deadly_surge', {
     keywords: [{ name: 'surge' }],
     abilities: [
-      { window: { kind: 'revealed' }, effects: [{ kind: 'hurt', stat: 'damage', amount: 8 }] },
+      {
+        window: { kind: 'revealed' },
+        effects: [{ kind: 'adjustInvestigator', stat: 'damage', delta: 8 }],
+      },
     ],
   });
   const choosyFoe = blankEnemy('choosy_foe', {
@@ -947,9 +953,12 @@ describe('surge after the drawn card has resolved', () => {
 });
 
 describe('revelation before the drawn card is placed', () => {
-  const revealedHurt = (amount: number) =>
+  const revealedDamage = (amount: number) =>
     [
-      { window: { kind: 'revealed' }, effects: [{ kind: 'hurt', stat: 'damage', amount }] },
+      {
+        window: { kind: 'revealed' },
+        effects: [{ kind: 'adjustInvestigator', stat: 'damage', delta: amount }],
+      },
     ] as const;
 
   /**
@@ -958,24 +967,28 @@ describe('revelation before the drawn card is placed', () => {
    * `vanishing_treachery` removes itself from the game. `lethal_hall_foe`
    * spawns at the Hall.
    */
-  const scorchingTreachery = blankTreachery('scorching_treachery', { abilities: revealedHurt(1) });
-  const scorchingFoe = blankEnemy('scorching_foe', { abilities: revealedHurt(1) });
+  const scorchingTreachery = blankTreachery('scorching_treachery', {
+    abilities: revealedDamage(1),
+  });
+  const scorchingFoe = blankEnemy('scorching_foe', { abilities: revealedDamage(1) });
   const scorchingLingering = blankTreachery('scorching_lingering', {
     entersThreatArea: true,
-    abilities: revealedHurt(1),
+    abilities: revealedDamage(1),
   });
   const scorchingAttachment = blankTreachery('scorching_attachment', {
     locationAttachment: { onePerLocation: true },
-    abilities: revealedHurt(1),
+    abilities: revealedDamage(1),
   });
-  const lethalTreachery = blankTreachery('lethal_treachery', { abilities: revealedHurt(8) });
-  const lethalFoe = blankEnemy('lethal_foe', { abilities: revealedHurt(8) });
+  const lethalTreachery = blankTreachery('lethal_treachery', { abilities: revealedDamage(8) });
+  const lethalFoe = blankEnemy('lethal_foe', { abilities: revealedDamage(8) });
   const lethalHallFoe = blankEnemy('lethal_hall_foe', {
     keywords: [{ name: 'spawn', detail: 'hall' }],
-    abilities: revealedHurt(8),
+    abilities: revealedDamage(8),
   });
   const vanishingTreachery = blankTreachery('vanishing_treachery', {
-    abilities: [{ window: { kind: 'revealed' }, effects: [{ kind: 'removeFromGame' }] }],
+    abilities: [
+      { window: { kind: 'revealed' }, effects: [{ kind: 'moveSelf', to: { kind: 'outOfGame' } }] },
+    ],
   });
 
   /** What happened, in order: draws, damage, and where the drawn card went. */
