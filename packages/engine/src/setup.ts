@@ -252,7 +252,7 @@ export function compileMapStep(state: GameState, step: AddMapStep): Command[] {
       name: step.name,
       visible: step.visible ?? true,
       connections: (step.connections ?? []).map((connection) => edge(locations, connection)),
-      layout: layoutOf(step.locations, locations),
+      layout: layoutOf(locations),
     },
     locations: locations.map((location) => location.id),
   };
@@ -301,22 +301,17 @@ function withMap(draft: SetupDraft, step: AddMapStep): SetupDraft {
     name: step.name,
     visible: step.visible ?? true,
     connections: (step.connections ?? []).map((connection) => edge(locations, connection)),
-    layout: layoutOf(step.locations, locations),
+    // `withCard` appended one card per step location, in step order.
+    layout: layoutOf(locations.map(({ id }, i) => ({ id, at: step.locations[i]?.at }))),
   };
   return { ...withLocations, maps: { ...draft.maps, [step.mapId]: map } };
 }
 
-/** The cells of a map step's locations, by the instance each location became (same order). */
+/** The cells of a map step's locations, each under the instance the location became. */
 function layoutOf(
-  steps: readonly MapLocation[],
-  cards: readonly CodedCard[],
+  locations: readonly { readonly id: InstanceId; readonly at?: GridCell }[],
 ): Record<InstanceId, GridCell> {
-  return Object.fromEntries(
-    steps.flatMap((location, i) => {
-      const card = cards[i];
-      return location.at && card ? [[card.id, location.at]] : [];
-    }),
-  );
+  return Object.fromEntries(locations.flatMap(({ id, at }) => (at ? [[id, at]] : [])));
 }
 
 /** A card as far as resolving setup codes is concerned: a draft card or a card in the game. */

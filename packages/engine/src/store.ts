@@ -3,7 +3,7 @@ import type { Event } from './events';
 import type { GameState, Phase } from './state';
 
 /** Version of the persisted `GameState` shape; bump together with a migration when `GameState` changes. */
-export const STATE_VERSION = 1;
+export const STATE_VERSION = 2;
 
 /** Optional metadata given to `GameStore.createGame`. */
 export interface NewGame {
