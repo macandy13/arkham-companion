@@ -3,10 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
 import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
-import type { GameId } from '@arkham/engine';
 import type { AppState } from '../state/appStore';
 import { GameImportError } from '../storage/gameExport';
-import { downloadTextFile, toFileStem } from './downloadFile';
+import { downloadGameExport } from './downloadFile';
 import { GameListItem } from './GameListItem';
 import './home.css';
 
@@ -15,10 +14,6 @@ export function HomeScreen({ store }: { store: StoreApi<AppState> }) {
   const { t } = useTranslation();
   const games = useStore(store, (s) => s.games);
   const [importError, setImportError] = useState<string>();
-
-  async function exportGame(gameId: GameId, title: string) {
-    downloadTextFile(`${toFileStem(title)}.arkham.json`, await store.getState().exportGame(gameId));
-  }
 
   async function importFile(file: File) {
     try {
@@ -75,7 +70,9 @@ export function HomeScreen({ store }: { store: StoreApi<AppState> }) {
                 untitledLabel={untitledLabel}
                 onRename={(title) => void store.getState().renameGame(game.gameId, title)}
                 onDuplicate={() => void store.getState().duplicateGame(game.gameId, copyTitle)}
-                onExport={() => void exportGame(game.gameId, game.title || untitledLabel)}
+                onExport={() =>
+                  void downloadGameExport(store, game.gameId, game.title || untitledLabel)
+                }
                 onDelete={() => void store.getState().deleteGame(game.gameId)}
               />
             );

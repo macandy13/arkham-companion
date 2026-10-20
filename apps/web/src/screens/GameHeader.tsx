@@ -2,16 +2,24 @@ import { useTranslation } from 'react-i18next';
 import type { StoreApi } from 'zustand/vanilla';
 import type { BoardView } from '@arkham/engine';
 import type { AppState, OpenGame } from '../state/appStore';
+import { downloadGameExport } from './downloadFile';
 
 /**
  * The play screen's always-on status: round and phase, the "Next" that runs the phase assistant,
- * the agenda's doom and the act's clues, and the undo. Its buttons wait while a step is queued (`OpenGame.busy`), since a second tap
+ * the agenda's doom and the act's clues, the undo and the export. Its buttons wait while a step is queued (`OpenGame.busy`), since a second tap
  * would act on whatever the first one leaves open, and stay off for a game that can only be shown.
  */
 export function GameHeader({ store, open }: { store: StoreApi<AppState>; open?: OpenGame }) {
   const { t } = useTranslation();
   const { actions } = store.getState();
   const blocked = !open?.playable || open.busy;
+
+  /** The title the home screen lists the game under, so both export it under the same name. */
+  function gameTitle({ gameId }: OpenGame): string {
+    const { games } = store.getState();
+    const index = games.findIndex((game) => game.gameId === gameId);
+    return games[index]?.title || t('games.untitled', { n: games.length - index });
+  }
 
   return (
     <header>
@@ -32,6 +40,14 @@ export function GameHeader({ store, open }: { store: StoreApi<AppState>; open?: 
       <button type="button" disabled={blocked || !open.canUndo} onClick={() => void actions.undo()}>
         {t('header.undo')}
       </button>
+      {open && (
+        <button
+          type="button"
+          onClick={() => void downloadGameExport(store, open.gameId, gameTitle(open))}
+        >
+          {t('games.export')}
+        </button>
+      )}
     </header>
   );
 }
