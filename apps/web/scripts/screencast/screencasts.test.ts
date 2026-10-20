@@ -76,12 +76,12 @@ describe('slugify', () => {
 });
 
 describe('gifArgs', () => {
-  it('samples one frame per 250 ms step and loops forever', () => {
+  it('samples one frame per 250 ms step, holds each 4 times as long and loops forever', () => {
     const args = gifArgs({ input: 'in.webm', output: 'out.gif' });
 
     expect(args.slice(-3)).toEqual(['-loop', '0', 'out.gif']);
     expect(args[args.indexOf('-i') + 1]).toBe('in.webm');
-    expect(args[args.indexOf('-vf') + 1]).toMatch(/^fps=4,scale=800:-1/);
+    expect(args[args.indexOf('-vf') + 1]).toMatch(/^fps=4,setpts=4\*PTS,scale=800:-1/);
   });
 });
 
@@ -89,7 +89,7 @@ describe('renderSection', () => {
   const recorded = { title: 'Create a game', slug: 'create-a-game', videoPath: '/v.webm' };
   const failed = { title: 'Broken flow', slug: 'broken-flow', videoPath: undefined };
 
-  it('embeds a cache-busted GIF and links the video for a recorded flow', () => {
+  it('embeds a cache-busted GIF and links the player for a recorded flow', () => {
     const section = renderSection({
       flows: [recorded],
       baseUrl: 'https://x.test/s',
@@ -97,7 +97,9 @@ describe('renderSection', () => {
     });
 
     expect(section).toContain('![Create a game](https://x.test/s/create-a-game.gif?v=abc123)');
-    expect(section).toContain('[Full-quality video](https://x.test/s/create-a-game.webm?v=abc123)');
+    expect(section).toContain(
+      '[Play with pause and speed controls](https://x.test/s/player.html?flow=create-a-game&v=abc123&speed=0.25)',
+    );
   });
 
   it('is just the markers when no flow is tagged', () => {

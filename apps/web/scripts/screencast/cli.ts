@@ -3,14 +3,15 @@
  * `.github/workflows/preview.yml`:
  *
  *   node cli.ts render <report.json> <outDir> <baseUrl> <version>
- *     Converts every passing flow video into `<outDir>/<slug>.gif` and `.webm` and writes
- *     the PR description section to `<outDir>/section.md`.
+ *     Converts every passing flow video into `<outDir>/<slug>.gif` and `.webm`, adds the
+ *     player page (`player.html`) and writes the PR description section to `<outDir>/section.md`.
  *   node cli.ts splice <body.md> <section.md>
  *     Prints the PR description with the screencast section replaced.
  */
 import { execFileSync } from 'node:child_process';
 import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { flowVideos, gifArgs, renderSection, replaceSection } from './screencasts.ts';
 import type { PlaywrightReport } from './screencasts.ts';
 
@@ -25,6 +26,8 @@ function render(reportPath: string, outDir: string, baseUrl: string, version: st
       stdio: 'inherit',
     });
   }
+  const here = dirname(fileURLToPath(import.meta.url));
+  copyFileSync(join(here, 'player.html'), join(outDir, 'player.html'));
   writeFileSync(join(outDir, 'section.md'), renderSection({ flows, baseUrl, version }));
 }
 

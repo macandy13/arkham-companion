@@ -12,6 +12,13 @@
  */
 export const SCREENCAST_STEP_MS = 250;
 
+/**
+ * How much slower than recorded the screencasts play by default: at recording speed a step
+ * flashes by too fast to read. The GIF holds each frame this many times longer, and the
+ * player page (`player.html`) starts at `1 / SCREENCAST_SLOWDOWN` speed.
+ */
+export const SCREENCAST_SLOWDOWN = 4;
+
 /** Width the GIFs are scaled to; enough to read the UI inline in a PR description. */
 export const GIF_WIDTH = 800;
 
@@ -79,14 +86,16 @@ export function slugify(title: string): string {
 }
 
 /**
- * ffmpeg arguments that convert a recording into a looping GIF at one frame per
- * {@link SCREENCAST_STEP_MS}. A per-video palette keeps the flat UI colours crisp;
+ * ffmpeg arguments that convert a recording into a looping GIF with one frame per
+ * {@link SCREENCAST_STEP_MS}, each held {@link SCREENCAST_SLOWDOWN} times as long. Stretching
+ * the timestamps after sampling slows the GIF without adding frames. A per-video palette keeps the flat UI colours crisp;
  * dithering is off because it only adds noise (and bytes) to flat colours.
  */
 export function gifArgs({ input, output }: { input: string; output: string }): string[] {
   const fps = 1000 / SCREENCAST_STEP_MS;
   const filter = [
     `fps=${fps}`,
+    `setpts=${SCREENCAST_SLOWDOWN}*PTS`,
     `scale=${GIF_WIDTH}:-1:flags=lanczos`,
     `tpad=stop_mode=clone:stop_duration=${GIF_END_HOLD_SECONDS}`,
     'split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=none',
@@ -96,7 +105,7 @@ export function gifArgs({ input, output }: { input: string; output: string }): s
 
 /**
  * The Markdown section (including its markers) listing every flow with an inline GIF and a
- * link to the full-quality video; just the markers when no flow is tagged, which empties a
+ * link to the player page, which plays the full-quality video with pause, seeking and speed; just the markers when no flow is tagged, which empties a
  * section an earlier push wrote. `version` (the commit) is appended as a query string
  * because file names stay the same across pushes and GitHub's image proxy caches by URL.
  */
@@ -116,8 +125,8 @@ export function renderSection({
     const heading = `### ${flow.title}`;
     if (!flow.videoPath) return `${heading}\n\n_Not recorded: the flow failed, see the E2E check._`;
     const gif = `${base}${flow.slug}.gif?v=${version}`;
-    const webm = `${base}${flow.slug}.webm?v=${version}`;
-    return `${heading}\n\n![${flow.title}](${gif})\n\n[Full-quality video](${webm})`;
+    const player = `${base}player.html?flow=${flow.slug}&v=${version}&speed=${1 / SCREENCAST_SLOWDOWN}`;
+    return `${heading}\n\n![${flow.title}](${gif})\n\n[Play with pause and speed controls](${player})`;
   });
   const intro = `_Recorded from ${version} by the PR preview workflow; updated on every push that changes \`apps/web\`._`;
   return [SECTION_START, '## Screencasts', intro, ...entries, SECTION_END].join('\n\n');
