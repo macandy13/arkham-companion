@@ -7,8 +7,6 @@ import {
   blankTreachery,
   checkInvariants,
   CommandRejected,
-  confirmOptions,
-  decisionId,
   encounterDeck,
   encounterDiscard,
   engagedWith,
@@ -23,7 +21,6 @@ import {
   zoneKey,
   type CardStats,
   type Command,
-  type EffectsRegistry,
   type Event,
   type GameState,
   type Zone,
@@ -797,44 +794,31 @@ describe('surge after the drawn card has resolved', () => {
   const aliceDrawsAgain: Command = { type: 'DrawEncounter', investigatorId: alice };
 
   /**
-   * The plain treachery above plus four surge cards: `burning_surge`, whose script
-   * deals alice 1 damage when it is revealed; `testing_surge`, which asks
-   * for a willpower (3) test; `deadly_surge`, whose script asks alice to
-   * confirm 8 damage (her whole health); and `choosy_foe`, an enemy whose
-   * spawn text the engine cannot read, so the players choose its location.
+   * The plain treachery above plus four surge cards: `burning_surge`, whose
+   * revelation deals the drawer 1 damage; `testing_surge`, which asks for a
+   * willpower (3) test; `deadly_surge`, whose revelation deals the drawer 8
+   * damage (alice's whole health); and `choosy_foe`, an enemy whose spawn
+   * text the engine cannot read, so the players choose its location.
    */
-  const burningSurge = blankTreachery('burning_surge', { keywords: [{ name: 'surge' }] });
+  const burningSurge = blankTreachery('burning_surge', {
+    keywords: [{ name: 'surge' }],
+    abilities: [
+      { window: { kind: 'revealed' }, effects: [{ kind: 'hurt', stat: 'damage', amount: 1 }] },
+    ],
+  });
   const testingSurge = blankTreachery('testing_surge', {
     keywords: [{ name: 'surge' }],
     revelationTest: { skill: 'willpower', difficulty: 3 },
   });
-  const deadlySurge = blankTreachery('deadly_surge', { keywords: [{ name: 'surge' }] });
+  const deadlySurge = blankTreachery('deadly_surge', {
+    keywords: [{ name: 'surge' }],
+    abilities: [
+      { window: { kind: 'revealed' }, effects: [{ kind: 'hurt', stat: 'damage', amount: 8 }] },
+    ],
+  });
   const choosyFoe = blankEnemy('choosy_foe', {
     keywords: [{ name: 'surge' }, { name: 'spawn', detail: 'the location with the most clues' }],
   });
-  const surgeEffects: EffectsRegistry = {
-    [burningSurge.code]: {
-      onReveal: () => [
-        { type: 'AdjustInvestigator', investigatorId: alice, stat: 'damage', delta: 1 },
-      ],
-    },
-    [deadlySurge.code]: {
-      onReveal: () => [
-        {
-          type: 'RequestDecision',
-          decision: {
-            id: decisionId('deadly'),
-            kind: 'confirm',
-            prompt: 'decision.deadly',
-            decider: { kind: 'investigator', investigatorId: alice },
-            options: confirmOptions([
-              { type: 'AdjustInvestigator', investigatorId: alice, stat: 'damage', delta: 8 },
-            ]),
-          },
-        },
-      ],
-    },
-  };
 
   /**
    * What happened, in order, as far as these tests look: draws, damage,
@@ -865,7 +849,6 @@ describe('surge after the drawn card has resolved', () => {
     const { context, state } = aliceInHall
       .withCard(instanceId('burning_card'), burningSurge, encounterDeck)
       .withCard(instanceId('after_surge'), plainTreachery, encounterDeck)
-      .withEffects(surgeEffects)
       .start();
 
     const { events } = execute(context, state, draw);
@@ -883,7 +866,6 @@ describe('surge after the drawn card has resolved', () => {
     const { context, state } = aliceInHall
       .withCard(instanceId('testing_card'), testingSurge, encounterDeck)
       .withCard(instanceId('after_surge'), plainTreachery, encounterDeck)
-      .withEffects(surgeEffects)
       .start();
 
     const asked = stateAfter(context, state, draw);
@@ -897,7 +879,6 @@ describe('surge after the drawn card has resolved', () => {
     const { context, state } = aliceInHall
       .withCard(instanceId('testing_card'), testingSurge, encounterDeck)
       .withCard(instanceId('after_surge'), plainTreachery, encounterDeck)
-      .withEffects(surgeEffects)
       .start();
     const asked = stateAfter(context, state, draw);
 
@@ -918,7 +899,6 @@ describe('surge after the drawn card has resolved', () => {
   it('draws nothing more when the surging card was the last one', () => {
     const { context, state } = aliceInHall
       .withCard(instanceId('testing_card'), testingSurge, encounterDeck)
-      .withEffects(surgeEffects)
       .start();
 
     const asked = stateAfter(context, state, draw);
@@ -933,25 +913,25 @@ describe('surge after the drawn card has resolved', () => {
     expect(answered.meta.queue).toBeUndefined();
   });
 
-  it('places the card after its revelation`s question, but draws nothing more once that defeated alice', () => {
+  it('places the card, but draws nothing more once its revelation defeated alice', () => {
     const { context, state } = aliceInHall
       .withCard(instanceId('deadly_card'), deadlySurge, encounterDeck)
       .withCard(instanceId('after_surge'), plainTreachery, encounterDeck)
-      .withEffects(surgeEffects)
       .start();
-    const asked = stateAfter(context, state, draw);
 
-    const { events } = execute(context, asked, answer('deadly', 'yes'));
+    const { events } = execute(context, state, draw);
 
-    expect(idsIn(asked, { kind: 'resolving' })).toEqual(['deadly_card']);
-    expect(resolutionOrder(events)).toEqual(['alice damage +8', 'discards deadly_card']);
+    expect(resolutionOrder(events)).toEqual([
+      'draws deadly_card',
+      'alice damage +8',
+      'discards deadly_card',
+    ]);
   });
 
   it('draws the surge card only after the players chose where the enemy spawns', () => {
     const { context, state } = aliceInHall
       .withCard(instanceId('choosy_card'), choosyFoe, encounterDeck)
       .withCard(instanceId('after_surge'), plainTreachery, encounterDeck)
-      .withEffects(surgeEffects)
       .start();
     const asked = stateAfter(context, state, draw);
 
@@ -967,45 +947,36 @@ describe('surge after the drawn card has resolved', () => {
 });
 
 describe('revelation before the drawn card is placed', () => {
-  const hurtAlice = (delta: number): Command => ({
-    type: 'AdjustInvestigator',
-    investigatorId: alice,
-    stat: 'damage',
-    delta,
-  });
+  const revealedHurt = (amount: number) =>
+    [
+      { window: { kind: 'revealed' }, effects: [{ kind: 'hurt', stat: 'damage', amount }] },
+    ] as const;
 
   /**
-   * Every card here has a revelation script. `scorching_*` cards deal alice 1
-   * damage; `lethal_*` cards deal her 8 (her whole health);
-   * `vanishing_treachery` sets itself aside. `lethal_hall_foe` spawns at
-   * the Hall.
+   * Every card here has a revelation ability. `scorching_*` cards deal the
+   * drawer 1 damage; `lethal_*` cards deal 8 (alice's whole health);
+   * `vanishing_treachery` removes itself from the game. `lethal_hall_foe`
+   * spawns at the Hall.
    */
-  const scorchingTreachery = blankTreachery('scorching_treachery');
-  const scorchingFoe = blankEnemy('scorching_foe');
-  const scorchingLingering = blankTreachery('scorching_lingering', { entersThreatArea: true });
+  const scorchingTreachery = blankTreachery('scorching_treachery', { abilities: revealedHurt(1) });
+  const scorchingFoe = blankEnemy('scorching_foe', { abilities: revealedHurt(1) });
+  const scorchingLingering = blankTreachery('scorching_lingering', {
+    entersThreatArea: true,
+    abilities: revealedHurt(1),
+  });
   const scorchingAttachment = blankTreachery('scorching_attachment', {
     locationAttachment: { onePerLocation: true },
+    abilities: revealedHurt(1),
   });
-  const lethalTreachery = blankTreachery('lethal_treachery');
-  const lethalFoe = blankEnemy('lethal_foe');
+  const lethalTreachery = blankTreachery('lethal_treachery', { abilities: revealedHurt(8) });
+  const lethalFoe = blankEnemy('lethal_foe', { abilities: revealedHurt(8) });
   const lethalHallFoe = blankEnemy('lethal_hall_foe', {
     keywords: [{ name: 'spawn', detail: 'hall' }],
+    abilities: revealedHurt(8),
   });
-  const vanishingTreachery = blankTreachery('vanishing_treachery');
-  const revelationEffects: EffectsRegistry = {
-    [scorchingTreachery.code]: { onReveal: () => [hurtAlice(1)] },
-    [scorchingFoe.code]: { onReveal: () => [hurtAlice(1)] },
-    [scorchingLingering.code]: { onReveal: () => [hurtAlice(1)] },
-    [scorchingAttachment.code]: { onReveal: () => [hurtAlice(1)] },
-    [lethalTreachery.code]: { onReveal: () => [hurtAlice(8)] },
-    [lethalFoe.code]: { onReveal: () => [hurtAlice(8)] },
-    [lethalHallFoe.code]: { onReveal: () => [hurtAlice(8)] },
-    [vanishingTreachery.code]: {
-      onReveal: (_ctx, _state, event) => [
-        { type: 'MoveCard', cardId: event.cardId, to: { kind: 'setAside' } },
-      ],
-    },
-  };
+  const vanishingTreachery = blankTreachery('vanishing_treachery', {
+    abilities: [{ window: { kind: 'revealed' }, effects: [{ kind: 'removeFromGame' }] }],
+  });
 
   /** What happened, in order: draws, damage, and where the drawn card went. */
   function resolutionOrder(events: readonly Event[]): string[] {
@@ -1032,7 +1003,6 @@ describe('revelation before the drawn card is placed', () => {
     const { context, state } = aliceInHall
       .withCard(instanceId('drawn_card'), drawn, encounterDeck)
       .withCard(instanceId('next_card'), scorchingTreachery, encounterDeck)
-      .withEffects(revelationEffects)
       .start();
 
     const { events } = execute(context, state, draw);
@@ -1043,7 +1013,6 @@ describe('revelation before the drawn card is placed', () => {
   it('keeps the card in the resolving zone while its revelation resolves', () => {
     const { context, state } = aliceInHall
       .withCard(instanceId('drawn_foe'), scorchingFoe, encounterDeck)
-      .withEffects(revelationEffects)
       .start();
 
     const { events } = execute(context, state, draw);
@@ -1056,12 +1025,11 @@ describe('revelation before the drawn card is placed', () => {
   it('does not place a card its revelation has already moved', () => {
     const { context, state } = aliceInHall
       .withCard(instanceId('vanishing_card'), vanishingTreachery, encounterDeck)
-      .withEffects(revelationEffects)
       .start();
 
     const after = stateAfter(context, state, draw);
 
-    expect(after.cards[instanceId('vanishing_card')]?.zone).toEqual(setAside);
+    expect(after.cards[instanceId('vanishing_card')]?.zone).toEqual({ kind: 'outOfGame' });
   });
 
   it.each([
@@ -1072,7 +1040,6 @@ describe('revelation before the drawn card is placed', () => {
     const { context, state } = aliceInHall
       .withCard(instanceId('lethal_card'), drawn, encounterDeck)
       .withCard(instanceId('next_foe'), scorchingFoe, encounterDeck)
-      .withEffects(revelationEffects)
       .start();
 
     const { events } = execute(context, state, draw);

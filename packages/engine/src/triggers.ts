@@ -1,10 +1,10 @@
+import { abilityCommands, windowsOpenedBy } from './abilities';
 import type { EngineContext } from './cards';
 import type { Command } from './commands';
 import { isInPlay } from './doom';
 import type {
   ActAdvanced,
   AgendaAdvanced,
-  CardFlipped,
   CardMoved,
   EnemyDefeated,
   Event,
@@ -66,23 +66,6 @@ export interface ScenarioHooks {
 }
 
 /**
- * The script of one card (architecture "Triggers and card effects"). Unlike `ScenarioHooks`
- * it belongs to the card, so the same encounter card behaves the same in every
- * scenario that uses it.
- */
-export interface CardEffect {
-  /**
-   * After the card is turned face up: a location being revealed, or a drawn
-   * encounter card, for which this is its revelation. A drawn card waits in
-   * `resolving` until this has resolved and is placed afterwards.
-   */
-  onReveal?: TriggerHook<CardFlipped>;
-}
-
-/** Card scripts keyed by card code; passed to the engine via `EngineContext.effects`. */
-export type EffectsRegistry = Readonly<Record<string, CardEffect>>;
-
-/**
  * Upper bound on the follow-up commands one player command may cause, counted
  * over the whole chain. Real forced-effect chains are a handful of steps, so
  * reaching it means a hook keeps re-triggering itself.
@@ -93,11 +76,12 @@ export const MAX_TRIGGERED_COMMANDS = 50;
 type PendingTrigger = (state: GameState) => readonly Command[];
 
 /**
- * The follow-up commands the hooks and card effects in `ctx` return for
- * `events`, which a command produced from `before`. Hooks match against the
- * state right before each event (to tell whether a card entered play) but are
- * evaluated against the state after all of them, so every hook sees the
- * command's complete outcome. Order: by event, scenario hooks before card effects.
+ * The follow-up commands the scenario hooks in `ctx` and the card abilities
+ * in its card data return for `events`, which a command produced from
+ * `before`. Hooks match against the state right before each event (to tell
+ * whether a card entered play) but are evaluated against the state after all
+ * of them, so every hook sees the command's complete outcome. Order: by
+ * event, scenario hooks before card abilities.
  */
 export function triggeredCommands(
   ctx: EngineContext,
@@ -109,6 +93,11 @@ export function triggeredCommands(
   for (const event of events) {
     const next = apply(state, event);
     pending.push(...matchingTriggers(ctx, state, next, event));
+    pending.push(
+      ...windowsOpenedBy(event, events).map(
+        (opened) => (after: GameState) => abilityCommands(ctx, after, opened),
+      ),
+    );
     state = next;
   }
   return pending.flatMap((trigger) => trigger(state));
@@ -142,8 +131,6 @@ function matchingTriggers(
       return bind(hooks.onTurnEnd, event);
     case 'EnemyDefeated':
       return bind(hooks.afterEnemyDefeated, event);
-    case 'CardFlipped':
-      return event.faceUp ? bind(forCard(ctx.effects, event.cardId)?.onReveal, event) : [];
     default:
       return [];
   }

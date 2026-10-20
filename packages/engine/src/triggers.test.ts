@@ -7,6 +7,7 @@ import {
   blankEnemy,
   blankLocation,
   checkInvariants,
+  doomInPlay,
   execute,
   fixed,
   instanceId,
@@ -21,7 +22,6 @@ import {
 import { triggeredCommands } from './triggers';
 import { rejectionFrom, stateAfter } from '../test/utils';
 
-const main = mapId('main');
 const hall = instanceId('hall');
 const cellar = instanceId('cellar');
 const crypt = instanceId('crypt');
@@ -209,58 +209,61 @@ describe('trigger bus', () => {
     expect(state.cards[cellar]?.faceUp).toBe(true);
   });
 
-  it('runs the onReveal effect of a card turned face up', () => {
-    const { context, state: started } = table
-      .withEffects({
-        cellar: {
-          onReveal: (_ctx, _state, event) => [
-            { type: 'PlaceDoom', cardId: event.cardId, amount: 1 },
-          ],
+  describe('revealed abilities', () => {
+    /**
+     * The cellar's revealed ability places 1 doom on the agenda and deals 1
+     * damage to whoever the window names; first_agenda has the same doom
+     * ability. Alice stands next to the unrevealed cellar.
+     */
+    const placeDoom = { kind: 'placeDoomOnAgenda', amount: 1 } as const;
+    const doomingCellar = blankLocation('dooming_cellar', {
+      abilities: [
+        {
+          window: { kind: 'revealed' },
+          effects: [placeDoom, { kind: 'hurt', stat: 'damage', amount: 1 }],
         },
-      })
-      .start();
+      ],
+    });
+    const doomingAgenda = blankAgenda('dooming_agenda', fixed(3), {
+      abilities: [{ window: { kind: 'revealed' }, effects: [placeDoom] }],
+    });
+    const revealTable = newGame()
+      .withAgenda(instanceId('dooming_agenda'), doomingAgenda)
+      .withAgenda(instanceId('second_agenda'), secondAgendaCard)
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(cellar, doomingCellar)
+      .withConnection(hall, cellar)
+      .withInvestigator(alice, { locationId: hall });
 
-    const { state } = execute(context, started, { type: 'RevealLocation', locationId: cellar });
+    it('runs the abilities of a card turned face up', () => {
+      const { context, state: started } = revealTable.start();
 
-    expect(state.cards[cellar]?.tokens.doom).toBe(1);
-  });
+      const { state } = execute(context, started, { type: 'RevealLocation', locationId: cellar });
 
-  it('lets a card effect connect a revealed location to a set-aside one', () => {
-    const { context, state: started } = table
-      .withEffects({
-        cellar: {
-          onReveal: (_ctx, _state, event) => [
-            { type: 'AddConnection', mapId: main, from: event.cardId, to: crypt },
-          ],
-        },
-      })
-      .start();
-
-    const { events, state } = execute(context, started, {
-      type: 'MoveInvestigator',
-      investigatorId: alice,
-      to: cellar,
+      expect(state.cards[instanceId('dooming_agenda')]?.tokens.doom).toBe(1);
     });
 
-    expect(events.at(-1)).toEqual({
-      type: 'ConnectionChanged',
-      change: 'added',
-      mapId: main,
-      edge: { from: cellar, to: crypt, oneWay: false },
+    it('resolves them within the move that revealed the location, naming no investigator', () => {
+      const { context, state: started } = revealTable.start();
+
+      const { state } = execute(context, started, {
+        type: 'MoveInvestigator',
+        investigatorId: alice,
+        to: cellar,
+      });
+
+      expect(state.cards[instanceId('dooming_agenda')]?.tokens.doom).toBe(1);
+      expect(state.investigators[0]?.health.damage).toBe(0);
+      expect(checkInvariants(state)).toEqual([]);
     });
-    expect(checkInvariants(state)).toEqual([]);
-  });
 
-  it('does not run onReveal when a card is turned face down', () => {
-    const { context, state: started } = table
-      .withEffects({
-        first_agenda: { onReveal: () => [{ type: 'RevealLocation', locationId: cellar }] },
-      })
-      .start();
+    it('does not run them when a card is turned face down', () => {
+      const { context, state: started } = revealTable.start();
 
-    const { state } = execute(context, started, { type: 'AdvanceAgenda' });
+      const { state } = execute(context, started, { type: 'AdvanceAgenda' });
 
-    expect(state.cards[cellar]?.faceUp).toBe(false);
+      expect(doomInPlay(state)).toBe(0);
+    });
   });
 
   it('resolves the forced effects a follow-up triggers within the same command', () => {

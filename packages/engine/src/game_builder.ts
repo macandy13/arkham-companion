@@ -14,7 +14,7 @@ import { blankInvestigator } from './blank_cards';
 import type { ScenarioDefinition, ScenarioReference } from './scenario';
 import type { SkillModifierRegistry } from './skill_modifiers';
 import { emptyState, type Difficulty, type GameState, type TokenKind } from './state';
-import type { EffectsRegistry, ScenarioHooks } from './triggers';
+import type { ScenarioHooks } from './triggers';
 import type { Zone } from './zone';
 
 /** How `GameBuilder.withLocation` places a location. */
@@ -87,7 +87,6 @@ interface GameSpec {
   readonly difficulty: Difficulty;
   readonly seed: number;
   readonly shuffleEncounterDeck: boolean;
-  readonly effects?: EffectsRegistry;
   /** The investigator whose turn `start` begins; none means the table stays at the start of the scenario. */
   readonly turnOf?: InvestigatorId;
   /** The parts of a scenario the engine reads while it plays; set means the context has a scenario. */
@@ -206,15 +205,6 @@ export class GameBuilder {
   }
 
   /**
-   * The table with these card scripts (`EngineContext.effects`) in its
-   * context, in place of any given before; for tests of cards whose text the
-   * engine only knows from a script.
-   */
-  withEffects(effects: EffectsRegistry): GameBuilder {
-    return this.with({ effects });
-  }
-
-  /**
    * The table started into round 1's investigation phase with `investigator`'s
    * turn begun, for tests of what happens during a turn (actions, attacks of
    * opportunity, turn end). `start` gets there through `NextPhase` and
@@ -249,14 +239,13 @@ export class GameBuilder {
 
   /**
    * A context whose card db holds the definition of every card on the table,
-   * with the card scripts of `withEffects`, and a scenario when `withHooks`,
-   * `withReferenceCard` or `withSkillModifiers` gave one.
+   * and a scenario when `withHooks`, `withReferenceCard` or
+   * `withSkillModifiers` gave one.
    */
   context(): EngineContext {
-    const { effects, rules } = this.spec;
+    const { rules } = this.spec;
     return {
       cards: cardDbFrom(this.definitions()),
-      ...(effects ? { effects } : {}),
       ...(rules ? { scenario: scenarioOf(rules) } : {}),
     };
   }
