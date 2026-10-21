@@ -1,5 +1,5 @@
 import { expect, test } from './fixtures/test';
-import { houseOpenedExport } from './fixtures/saved_games';
+import { houseOpenedExport, resumeImportedGame } from './fixtures/saved_games';
 import { startQuickGame } from './fixtures/wizard';
 
 // Journey: read the map – the one location a new game starts with, then a game further on whose
@@ -17,17 +17,7 @@ test('read the map', async ({ page }) => {
   });
 
   await test.step('Import a game in which act 1 opened the house', async () => {
-    await page.getByRole('link', { name: 'Arkham Companion' }).click();
-    await page.getByLabel('Import game').setInputFiles({
-      name: 'house.arkham.json',
-      mimeType: 'application/json',
-      buffer: houseOpenedExport('The house is open'),
-    });
-    await page
-      .getByRole('listitem')
-      .filter({ has: page.getByRole('link', { name: 'The house is open', exact: true }) })
-      .getByRole('link', { name: 'Resume' })
-      .click();
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
   });
 
   await test.step('Read the house: Alder in the Hallway, which connects to the other rooms', async () => {

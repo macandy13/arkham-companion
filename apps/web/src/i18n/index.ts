@@ -54,6 +54,7 @@ export const resources = {
       },
       map: {
         title: 'Map',
+        tabs: 'Maps',
         revealed: 'Shroud {{shroud}} · Clues {{clues}}',
         unrevealed: 'Unrevealed',
         doom: 'Doom {{count}}',
@@ -249,6 +250,7 @@ export const resources = {
       },
       map: {
         title: 'Karte',
+        tabs: 'Karten',
         revealed: 'Schleier {{shroud}} · Hinweise {{clues}}',
         unrevealed: 'Unaufgedeckt',
         doom: 'Verderben {{count}}',

@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test';
 import {
   cardDbWith,
   gameId,
@@ -5,10 +6,16 @@ import {
   investigatorCode,
   investigatorId,
   PlayTable,
+  scenario,
   type InvestigatorCard,
   type ScenarioDefinition,
 } from '@arkham/engine';
-import { GATHERING_CODES, theGathering, theGatheringCards } from '@arkham/scenarios';
+import {
+  GATHERING_CODES,
+  theGathering,
+  theGatheringCards,
+  theGatheringHouse,
+} from '@arkham/scenarios';
 import { serialiseGameExport } from '../../src/storage/gameExport';
 
 /** An invented investigator: the exported game reads them from its log, never from card data. */
@@ -76,4 +83,44 @@ export function twoGhoulPriestsExport(title: string): Buffer {
   const table = houseOpened(twoPriests);
   table.play({ type: 'AdjustInvestigator', investigatorId: alderId, stat: 'clues', delta: 3 });
   return exportOf(title, table, 'two_ghoul_priests');
+}
+
+/**
+ * An export file of a solo game of The Gathering titled `title` in which the house map is in
+ * play while Alder is still in the Study, so two maps are visible at once. No scenario reaches
+ * this yet (act 1 removes the Study as it opens the house), so the house is added directly; it
+ * shows the map tabs.
+ */
+export function twoMapsExport(title: string): Buffer {
+  const table = PlayTable.setUp(
+    {
+      cards: cardDbWith(theGatheringCards, [investigatorCardStats(alder)]),
+      scenario: theGathering,
+    },
+    { investigators: [{ id: alderId, code: alder.code }], seed: 3 },
+  );
+  table.step(() => {
+    for (const command of scenario.compileMapStep(table.state, theGatheringHouse)) {
+      table.play(command);
+    }
+  });
+  return exportOf(title, table, 'two_maps');
+}
+
+/**
+ * Imports `file` (an export like `houseOpenedExport`) on the home screen and resumes the game
+ * titled `title`, so a spec starts on the game screen of a prepared game.
+ */
+export async function resumeImportedGame(page: Page, title: string, file: Buffer): Promise<void> {
+  await page.goto('/');
+  await page.getByLabel('Import game').setInputFiles({
+    name: 'game.arkham.json',
+    mimeType: 'application/json',
+    buffer: file,
+  });
+  await page
+    .getByRole('listitem')
+    .filter({ has: page.getByRole('link', { name: title, exact: true }) })
+    .getByRole('link', { name: 'Resume' })
+    .click();
 }

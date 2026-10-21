@@ -1,22 +1,12 @@
 import { expect, test } from './fixtures/test';
-import { twoGhoulPriestsExport } from './fixtures/saved_games';
+import { resumeImportedGame, twoGhoulPriestsExport } from './fixtures/saved_games';
 
 // Journey: advance the act once the investigators hold its clues – in a game whose setup put two
 // Ghoul Priests aside, so the act's reverse side cannot tell which one spawns and asks the players
 // to do it by hand.
-test('advance the act', { tag: '@flow' }, async ({ page }) => {
+test('advance the act', async ({ page }) => {
   await test.step('Import a game at act 2 with two Ghoul Priests set aside', async () => {
-    await page.goto('/');
-    await page.getByLabel('Import game').setInputFiles({
-      name: 'priests.arkham.json',
-      mimeType: 'application/json',
-      buffer: twoGhoulPriestsExport('Two Ghoul Priests'),
-    });
-    await page
-      .getByRole('listitem')
-      .filter({ has: page.getByRole('link', { name: 'Two Ghoul Priests', exact: true }) })
-      .getByRole('link', { name: 'Resume' })
-      .click();
+    await resumeImportedGame(page, 'Two Ghoul Priests', twoGhoulPriestsExport('Two Ghoul Priests'));
   });
 
   await test.step('Advance The Barrier with the 3 clues Alder holds', async () => {

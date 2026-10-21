@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import {
   attachedTo,
@@ -84,6 +84,49 @@ describe('MapBoard', () => {
     expect(screen.getByRole('figure', { name: 'House' })).toBeTruthy();
     expect(screen.queryByRole('figure', { name: 'Cellar' })).toBeNull();
     expect(screen.queryByRole('figure', { name: 'Empty study' })).toBeNull();
+  });
+
+  it('shows one map without tabs', () => {
+    render(<MapBoard board={PlayTable.start(house).board} />);
+
+    expect(screen.queryByRole('tablist')).toBeNull();
+  });
+
+  it('gives several visible maps a tab each and shows the chosen one, the first at the start', () => {
+    const table = PlayTable.start(
+      house
+        .withMap(mapId('cellar'), { name: 'Cellar' })
+        .withLocation(instanceId('cellar'), blankLocation('cellar'), { map: mapId('cellar') }),
+    );
+    render(<MapBoard board={table.board} />);
+    const tab = (name: string) => screen.getByRole('tab', { name });
+
+    expect(tab('House').getAttribute('aria-selected')).toBe('true');
+    expect(screen.getByRole('tabpanel', { name: 'House' })).toBeTruthy();
+    expect(screen.queryByRole('figure', { name: 'Cellar' })).toBeNull();
+
+    fireEvent.click(tab('Cellar'));
+
+    expect(tab('Cellar').getAttribute('aria-selected')).toBe('true');
+    expect(tab('House').getAttribute('aria-selected')).toBe('false');
+    expect(screen.getByRole('figure', { name: 'Cellar' })).toBeTruthy();
+    expect(screen.queryByRole('figure', { name: 'House' })).toBeNull();
+  });
+
+  it('shows the first map again once the chosen one has no locations left', () => {
+    const cellar = mapId('cellar');
+    const withCellar = PlayTable.start(
+      house
+        .withMap(cellar, { name: 'Cellar' })
+        .withLocation(instanceId('cellar'), blankLocation('cellar'), { map: cellar }),
+    );
+    const { rerender } = render(<MapBoard board={withCellar.board} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Cellar' }));
+
+    const cellarEmptied = PlayTable.start(house.withMap(cellar, { name: 'Cellar' }));
+    rerender(<MapBoard board={cellarEmptied.board} />);
+
+    expect(screen.getByRole('figure', { name: 'House' })).toBeTruthy();
   });
 
   it('stands a pawn for each investigator and a chip for each enemy on their location', () => {

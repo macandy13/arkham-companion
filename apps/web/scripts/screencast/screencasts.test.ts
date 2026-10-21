@@ -8,6 +8,7 @@ import {
   playerPage,
   renderSection,
   replaceSection,
+  screenshots,
   slugify,
 } from './screencasts.ts';
 import type { PlaywrightReport } from './screencasts.ts';
@@ -21,11 +22,19 @@ describe('flowVideos', () => {
     const report: PlaywrightReport = {
       suites: [
         {
-          specs: [{ title: 'First flow', tests: [{ results: [result('passed', '/a.webm')] }] }],
+          specs: [
+            {
+              title: 'First flow',
+              tests: [{ projectName: 'screencast', results: [result('passed', '/a.webm')] }],
+            },
+          ],
           suites: [
             {
               specs: [
-                { title: 'Second flow', tests: [{ results: [result('passed', '/b.webm')] }] },
+                {
+                  title: 'Second flow',
+                  tests: [{ projectName: 'screencast', results: [result('passed', '/b.webm')] }],
+                },
               ],
             },
           ],
@@ -51,7 +60,7 @@ describe('flowVideos', () => {
     { name: 'the passing run has no video', results: [result('passed')], video: undefined },
   ])('picks the last passing video when $name', ({ results, video }) => {
     const report: PlaywrightReport = {
-      suites: [{ specs: [{ title: 'Flow', tests: [{ results }] }] }],
+      suites: [{ specs: [{ title: 'Flow', tests: [{ projectName: 'screencast', results }] }] }],
     };
 
     const [flow] = flowVideos(report);
@@ -61,6 +70,41 @@ describe('flowVideos', () => {
 
   it('returns nothing for an empty report', () => {
     expect(flowVideos({})).toEqual([]);
+  });
+});
+
+describe('screenshots', () => {
+  it('reads each spec from its own project: screenshots from screenshot, videos from screencast', () => {
+    const report: PlaywrightReport = {
+      suites: [
+        {
+          specs: [
+            {
+              title: 'Read the map',
+              tests: [{ projectName: 'screencast', results: [result('passed', '/map.webm')] }],
+            },
+            {
+              title: 'Map tabs',
+              tests: [
+                {
+                  projectName: 'screenshot',
+                  results: [
+                    { status: 'passed', attachments: [{ name: 'screenshot', path: '/tabs.png' }] },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(screenshots(report)).toEqual([
+      { title: 'Map tabs', slug: 'map-tabs', imagePath: '/tabs.png' },
+    ]);
+    expect(flowVideos(report)).toEqual([
+      { title: 'Read the map', slug: 'read-the-map', videoPath: '/map.webm' },
+    ]);
   });
 });
 
@@ -127,6 +171,7 @@ describe('renderSection', () => {
   it('embeds a cache-busted GIF and links the player for a recorded flow', () => {
     const section = renderSection({
       flows: [recorded],
+      shots: [],
       baseUrl: 'https://x.test/s',
       version: 'abc123',
     });
@@ -137,8 +182,38 @@ describe('renderSection', () => {
     );
   });
 
+  it('embeds a cache-busted screenshot above the screencasts', () => {
+    const section = renderSection({
+      flows: [recorded],
+      shots: [{ title: 'Map tabs', slug: 'map-tabs', imagePath: '/tabs.png' }],
+      baseUrl: 'https://x.test/s',
+      version: 'abc123',
+    });
+
+    expect(section).toContain('![Map tabs](https://x.test/s/map-tabs.png?v=abc123)');
+    expect(section.indexOf('## Screenshots')).toBeLessThan(section.indexOf('## Screencasts'));
+  });
+
+  it('notes a failed screenshot instead of linking a missing file', () => {
+    const section = renderSection({
+      flows: [],
+      shots: [{ title: 'Map tabs', slug: 'map-tabs', imagePath: undefined }],
+      baseUrl: 'https://x.test/s',
+      version: 'abc123',
+    });
+
+    expect(section).toContain('Not taken');
+    expect(section).not.toContain('map-tabs.png');
+    expect(section).not.toContain('## Screencasts');
+  });
+
   it('is just the markers when no flow is tagged', () => {
-    const section = renderSection({ flows: [], baseUrl: 'https://x.test/s', version: 'abc123' });
+    const section = renderSection({
+      flows: [],
+      shots: [],
+      baseUrl: 'https://x.test/s',
+      version: 'abc123',
+    });
 
     expect(section).toBe('<!-- screencasts:start -->\n<!-- screencasts:end -->');
   });
@@ -146,6 +221,7 @@ describe('renderSection', () => {
   it('notes a failed flow instead of linking a missing file', () => {
     const section = renderSection({
       flows: [failed],
+      shots: [],
       baseUrl: 'https://x.test/s/',
       version: 'abc123',
     });
@@ -156,7 +232,12 @@ describe('renderSection', () => {
   });
 
   it('is wrapped in the section markers', () => {
-    const section = renderSection({ flows: [], baseUrl: 'https://x.test/s/', version: 'abc123' });
+    const section = renderSection({
+      flows: [],
+      shots: [],
+      baseUrl: 'https://x.test/s/',
+      version: 'abc123',
+    });
 
     expect(section.startsWith(SECTION_START)).toBe(true);
     expect(section.endsWith(SECTION_END)).toBe(true);

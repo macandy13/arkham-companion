@@ -10,8 +10,29 @@
   gap: var(--space-2);
 }
 
-#map > h2 {
+#map > h2,
+#map > [role='tablist'] {
   align-self: start;
+}
+
+#map > [role='tablist'] {
+  display: flex;
+  gap: var(--space-2);
+}
+
+#map [role='tab'][aria-selected='true'] {
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+}
+
+/* With tabs the shown map sits in the panel, which takes the space left and centres it. */
+#map > [role='tabpanel'] {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  align-self: stretch;
+  align-items: center;
+  min-height: 0;
 }
 
 #map figure {
