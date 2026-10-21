@@ -1,12 +1,21 @@
-/* Play screen board layout (product.md "UI concept"); replaces the page's usual content column. */
+/*
+ * Play screen board layout (product.md "UI concept"); replaces the page's usual content column.
+ * The board fills the screen without scrolling the page, so the map is fitted into its area.
+ */
+#app:has(#board) {
+  height: 100vh;
+}
+
 #app > main:has(#board) {
+  display: grid;
   max-width: none;
   padding: 0;
+  min-height: 0;
 }
 
 #board {
   display: grid;
-  min-height: 100%;
+  min-height: 0;
   grid-template:
     'header header' auto
     'map encounter' 1fr
@@ -15,6 +24,7 @@
 }
 
 #board > * {
+  min-height: 0;
   border: var(--border-width) solid var(--color-border);
   padding: var(--space-2);
   overflow: auto;

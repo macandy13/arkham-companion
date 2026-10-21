@@ -143,7 +143,7 @@ describe('GameScreen header', () => {
     await waitFor(() => expect(downloaded).toEqual(['The-Gathering.arkham.json']));
   });
 
-  it('keeps the buttons off for a game it can only show', async () => {
+  it('warns instead of showing a board for a game it cannot play', async () => {
     const store = createAppStore(new IndexedDbStore('game-screen-unplayable-test'));
     // An empty game has no scenario, so the catalog has no rules to play it with.
     const gameWithoutScenario = await store.getState().newGame();
@@ -155,9 +155,10 @@ describe('GameScreen header', () => {
       </MemoryRouter>,
     );
 
-    await screen.findByText('Round 0, Setup');
-    expect(button('Next').disabled).toBe(true);
-    expect(button('Undo').disabled).toBe(true);
+    expect((await screen.findByRole('alert')).textContent).toBe(
+      "This game can't be played: this version of the app does not have its scenario.",
+    );
+    expect(screen.queryByRole('button', { name: 'Next' })).toBeNull();
   });
 });
 

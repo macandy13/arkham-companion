@@ -9,10 +9,11 @@ export interface Point {
 /**
  * Size of a location tile and the gap between tiles, in SVG user units. The drawing shrinks to
  * fit its box but never grows past one unit per CSS pixel, so these are also the largest tile
- * size: a tile is wider than tall like a card on its side. A tile and a gap divide by
- * `GRID_CELLS_PER_CARD`, so every cell starts on a whole unit.
+ * size. A tile has the proportions of a location card's image (about 300 × 419 on ArkhamDB), at half
+ * that size, so the card art can fill it later. A tile and a gap divide by `GRID_CELLS_PER_CARD`,
+ * so every cell starts on a whole unit.
  */
-export const TILE = { width: 160, height: 100, gap: 50 } as const;
+export const TILE = { width: 150, height: 210, gap: 30 } as const;
 
 /**
  * Where each location of `map` is drawn: its book layout cell, or for a location without one a

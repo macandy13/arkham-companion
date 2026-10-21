@@ -24,8 +24,8 @@ function houseWith(ids: InstanceId[], cells: MapView['cells']): MapView {
   };
 }
 
-// A tile is 160 × 100 with a gap of 50, and the grid is three cells per card: one cell is 70
-// across and 50 down, one card step (3 cells) is 210 across and 150 down.
+// A tile is 150 × 210 with a gap of 30, and the grid is three cells per card: one cell is 60
+// across and 80 down, one card step (3 cells) is 180 across and 240 down.
 describe('tileCells', () => {
   it('keeps the book layout cells', () => {
     const house = houseWith([study, hallway], {
@@ -61,27 +61,27 @@ describe('tileCells', () => {
 
 describe('tile geometry', () => {
   it('draws card-sized tiles whose step divides into whole cells', () => {
-    expect(TILE).toEqual({ width: 160, height: 100, gap: 50 });
+    expect(TILE).toEqual({ width: 150, height: 210, gap: 30 });
   });
 
   it.each([
     { cell: { column: 0, row: 0 }, origin: { x: 0, y: 0 } },
-    { cell: { column: 1, row: 0 }, origin: { x: 70, y: 0 } },
-    { cell: { column: 3, row: 0 }, origin: { x: 210, y: 0 } },
-    { cell: { column: 0, row: 6 }, origin: { x: 0, y: 300 } },
+    { cell: { column: 1, row: 0 }, origin: { x: 60, y: 0 } },
+    { cell: { column: 3, row: 0 }, origin: { x: 180, y: 0 } },
+    { cell: { column: 0, row: 6 }, origin: { x: 0, y: 480 } },
   ])('places the tile in column $cell.column, row $cell.row', ({ cell, origin }) => {
     expect(tileOrigin(cell)).toEqual(origin);
   });
 
   it.each([
     { cells: [], size: { width: 0, height: 0 } },
-    { cells: [{ column: 0, row: 0 }], size: { width: 160, height: 100 } },
+    { cells: [{ column: 0, row: 0 }], size: { width: 150, height: 210 } },
     {
       cells: [
         { column: 0, row: 0 },
         { column: 4, row: 6 },
       ],
-      size: { width: 280 + 160, height: 300 + 100 },
+      size: { width: 240 + 150, height: 480 + 210 },
     },
   ])('fits the drawing around $cells.length tiles', ({ cells, size }) => {
     expect(drawingSize(cells)).toEqual(size);
@@ -96,24 +96,24 @@ describe('connectionEnds', () => {
       to: 'the tile a card step to the right',
       cell: { column: 3, row: 0 },
       ends: [
-        { x: 160, y: 50 },
-        { x: 210, y: 50 },
+        { x: 150, y: 105 },
+        { x: 180, y: 105 },
       ],
     },
     {
       to: 'the tile a card step below',
       cell: { column: 0, row: 3 },
       ends: [
-        { x: 80, y: 100 },
-        { x: 80, y: 150 },
+        { x: 75, y: 210 },
+        { x: 75, y: 240 },
       ],
     },
     {
       to: 'a tile in the same cell',
       cell: left,
       ends: [
-        { x: 80, y: 50 },
-        { x: 80, y: 50 },
+        { x: 75, y: 105 },
+        { x: 75, y: 105 },
       ],
     },
   ])('runs from edge to edge to $to', ({ cell, ends }) => {

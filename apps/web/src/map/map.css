@@ -1,17 +1,42 @@
 /* The map drawing (MapBoard); sizes inside the SVG are in its user units, set in mapLayout.ts. */
-/* Two ids, so it beats the home screen's `#app > main section` row. */
+/*
+ * Two ids, so it beats the home screen's `#app > main section` row. The heading stays at the top
+ * left; the auto margins of the first and last figure centre the maps in the space below it.
+ */
 #board > #map {
-  display: grid;
-  align-content: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: var(--space-2);
 }
 
+#map > h2 {
+  align-self: start;
+}
+
 #map figure {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   margin: 0;
 }
 
+#map figcaption {
+  text-align: center;
+}
+
+#map figure:first-of-type {
+  margin-block-start: auto;
+}
+
+#map figure:last-of-type {
+  margin-block-end: auto;
+}
+
+/* Shrinks to the area left; the drawing keeps its proportions and stays centred in the box. */
 #map svg {
   display: block;
+  min-height: 0;
   max-width: 100%;
   height: auto;
 }

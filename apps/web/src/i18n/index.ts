@@ -31,6 +31,10 @@ export const resources = {
         turnsNotTaken: 'Every investigator must take a turn first.',
       },
       nav: { label: 'Main' },
+      game: {
+        unplayable:
+          "This game can't be played: this version of the app does not have its scenario.",
+      },
       map: {
         title: 'Map',
         clues: 'Clues {{count}}',
@@ -200,6 +204,10 @@ export const resources = {
         turnsNotTaken: 'Jeder Ermittler muss zuerst einen Zug machen.',
       },
       nav: { label: 'Hauptnavigation' },
+      game: {
+        unplayable:
+          'Dieses Spiel kann nicht gespielt werden: Diese App-Version kennt sein Szenario nicht.',
+      },
       map: {
         title: 'Karte',
         clues: 'Hinweise {{count}}',

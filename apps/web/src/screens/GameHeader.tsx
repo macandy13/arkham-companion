@@ -7,12 +7,20 @@ import { downloadGameExport } from './downloadFile';
 /**
  * The play screen's always-on status: round and phase, the "Next" that runs the phase assistant,
  * the agenda's doom and the act's clues, the undo and the export. Its buttons wait while a step is queued (`OpenGame.busy`), since a second tap
- * would act on whatever the first one leaves open, and stay off for a game that can only be shown.
+ * would act on whatever the first one leaves open. `board` is the open game's `OpenGame.board`.
  */
-export function GameHeader({ store, open }: { store: StoreApi<AppState>; open?: OpenGame }) {
+export function GameHeader({
+  store,
+  open,
+  board,
+}: {
+  store: StoreApi<AppState>;
+  open: OpenGame;
+  board: BoardView;
+}) {
   const { t } = useTranslation();
   const { actions } = store.getState();
-  const blocked = !open?.playable || open.busy;
+  const blocked = open.busy;
 
   /** The title the home screen lists the game under, so both export it under the same name. */
   function gameTitle({ gameId }: OpenGame): string {
@@ -25,29 +33,25 @@ export function GameHeader({ store, open }: { store: StoreApi<AppState>; open?: 
     <header>
       <h1>{t('app.title')}</h1>
       <p>
-        {open
-          ? t('header.roundPhase', {
-              round: open.state.meta.round,
-              phase: t(`games.phases.${open.state.meta.phase}`),
-            })
-          : t('header.noGame')}
+        {t('header.roundPhase', {
+          round: board.round,
+          phase: t(`games.phases.${board.phase}`),
+        })}
       </p>
       <button type="button" disabled={blocked} onClick={() => void actions.nextPhase()}>
         {t('header.next')}
       </button>
-      {open?.board && <AgendaStatus store={store} board={open.board} blocked={blocked} />}
-      {open?.board && <ActStatus board={open.board} />}
+      <AgendaStatus store={store} board={board} blocked={blocked} />
+      <ActStatus board={board} />
       <button type="button" disabled={blocked || !open.canUndo} onClick={() => void actions.undo()}>
         {t('header.undo')}
       </button>
-      {open && (
-        <button
-          type="button"
-          onClick={() => void downloadGameExport(store, open.gameId, gameTitle(open))}
-        >
-          {t('games.export')}
-        </button>
-      )}
+      <button
+        type="button"
+        onClick={() => void downloadGameExport(store, open.gameId, gameTitle(open))}
+      >
+        {t('games.export')}
+      </button>
     </header>
   );
 }
