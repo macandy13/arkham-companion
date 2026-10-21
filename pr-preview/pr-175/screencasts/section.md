@@ -1,13 +1,11 @@
 <!-- screencasts:start -->
 
-## Screencasts
+_Recorded from fc9b575 by the PR preview workflow; updated on every push that changes `apps/web`._
 
-_Recorded from 63b4b7d by the PR preview workflow; updated on every push that changes `apps/web`._
+## Screenshots
 
-### advance the act
+### map tabs for the Study and the house, the house chosen
 
-![advance the act](https://macandy13.github.io/arkham-companion/pr-preview/pr-175/screencasts/advance-the-act.gif?v=63b4b7d)
-
-[Play with pause and speed controls](https://macandy13.github.io/arkham-companion/pr-preview/pr-175/screencasts/player.html?flow=advance-the-act&v=63b4b7d&speed=0.25)
+_Not taken: the spec failed, see the E2E check._
 
 <!-- screencasts:end -->
