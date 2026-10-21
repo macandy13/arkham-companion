@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   atEndOfRound,
   atEndOfTurn,
+  advanceAct,
   atLocation,
   blankAct,
   blankAgenda,
@@ -85,7 +86,10 @@ const table = newGame()
   .withInvestigator(alice, { locationId: hall, clues: 2 });
 
 const placeDoomOnGhoul: Command = { type: 'PlaceDoom', cardId: ghoul, amount: 1 };
-const advanceAct: Command = { type: 'AdvanceAct', spend: [{ investigatorId: alice, amount: 2 }] };
+const aliceAdvancesAct: Command = {
+  type: 'AdvanceAct',
+  spend: [{ investigatorId: alice, amount: 2 }],
+};
 
 describe('trigger bus', () => {
   it('appends the events of an afterDoomPlaced follow-up to the originating command', () => {
@@ -225,7 +229,7 @@ describe('trigger bus', () => {
       })
       .start();
 
-    const { state } = execute(ctx, started, advanceAct);
+    const { state } = execute(ctx, started, aliceAdvancesAct);
 
     expect(currentActs).toEqual([act1]);
     expect(state.act.current).toBe(act2);
@@ -694,7 +698,7 @@ describe('trigger bus', () => {
       })
       .start();
 
-    const { state } = execute(ctx, started, advanceAct);
+    const { state } = execute(ctx, started, aliceAdvancesAct);
 
     expect(state.cards[ghoul]?.tokens.doom).toBe(1);
     expect(state.cards[cellar]?.faceUp).toBe(true);
@@ -709,41 +713,43 @@ describe('trigger bus', () => {
       })
       .start();
 
-    const { state } = execute(ctx, started, advanceAct);
+    const { state } = execute(ctx, started, aliceAdvancesAct);
 
     expect(state.pending.map((decision) => decision.kind)).toEqual(['confirm']);
   });
 });
 
 describe('objectives on the current agenda and act', () => {
+  const priest = instanceId('priest');
   const cultist = instanceId('cultist');
-  /** "If a ghoul is defeated, advance." */
-  const ghoulObjectiveAct = blankAct('ghoul_objective_act', {
-    abilities: [whenEnemyDefeated(cardCode('ghoul'), { type: 'AdvanceAct' })],
+  const priestCard = blankEnemy('priest');
+  /** "If the priest is defeated, advance." */
+  const priestObjectiveAct = blankAct('priest_objective_act', {
+    abilities: [whenEnemyDefeated(priestCard.code, advanceAct())],
   });
-  /** "If a ghoul is defeated, place 1 doom on the agenda." */
-  const ghoulObjectiveAgenda = blankAgenda('ghoul_objective_agenda', fixed(3), {
-    abilities: [whenEnemyDefeated(cardCode('ghoul'), placeDoomOnAgenda(1))],
+  /** "If the priest is defeated, place 1 doom on the agenda." */
+  const priestObjectiveAgenda = blankAgenda('priest_objective_agenda', fixed(3), {
+    abilities: [whenEnemyDefeated(priestCard.code, placeDoomOnAgenda(1))],
   });
-  /** Alice in the hall with a ghoul and a cultist; the current act has the ghoul objective. */
+  /** Alice in the hall with the priest and a cultist; the current act has the priest objective. */
   const objectiveTable = newGame()
     .withAgenda(agenda1, firstAgendaCard)
-    .withAct(act1, ghoulObjectiveAct)
+    .withAct(act1, priestObjectiveAct)
     .withAct(act2, secondActCard)
     .withLocation(hall, blankLocation('hall'), { revealed: true })
-    .withCard(ghoul, ghoulCard, atLocation(hall), { faceUp: true })
+    .withCard(priest, priestCard, atLocation(hall), { faceUp: true })
     .withCard(cultist, blankEnemy('cultist'), atLocation(hall), { faceUp: true })
     .withInvestigator(alice, { locationId: hall });
 
-  it('advances the current act when an enemy of the code it names is defeated', () => {
+  it('advances the current act when the enemy it names is defeated', () => {
     const { context, state: started } = objectiveTable.start();
 
-    const { state } = execute(context, started, { type: 'DefeatEnemy', enemyId: ghoul });
+    const { state } = execute(context, started, { type: 'DefeatEnemy', enemyId: priest });
 
     expect(state.act.current).toBe(act2);
   });
 
-  it('does nothing when an enemy of another code is defeated', () => {
+  it('does nothing when another enemy is defeated', () => {
     const { context, state: started } = objectiveTable.start();
 
     const { state } = execute(context, started, { type: 'DefeatEnemy', enemyId: cultist });
@@ -753,14 +759,14 @@ describe('objectives on the current agenda and act', () => {
 
   it('fires for the current agenda too', () => {
     const { context, state: started } = newGame()
-      .withAgenda(agenda1, ghoulObjectiveAgenda)
+      .withAgenda(agenda1, priestObjectiveAgenda)
       .withAct(act1, firstActCard)
       .withLocation(hall, blankLocation('hall'), { revealed: true })
-      .withCard(ghoul, ghoulCard, atLocation(hall), { faceUp: true })
+      .withCard(priest, priestCard, atLocation(hall), { faceUp: true })
       .withInvestigator(alice, { locationId: hall })
       .start();
 
-    const { state } = execute(context, started, { type: 'DefeatEnemy', enemyId: ghoul });
+    const { state } = execute(context, started, { type: 'DefeatEnemy', enemyId: priest });
 
     expect(state.cards[agenda1]?.tokens.doom).toBe(1);
   });
@@ -769,13 +775,13 @@ describe('objectives on the current agenda and act', () => {
     const { context, state: started } = newGame()
       .withAgenda(agenda1, firstAgendaCard)
       .withAct(act1, firstActCard)
-      .withAct(act2, ghoulObjectiveAct)
+      .withAct(act2, priestObjectiveAct)
       .withLocation(hall, blankLocation('hall'), { revealed: true })
-      .withCard(ghoul, ghoulCard, atLocation(hall), { faceUp: true })
+      .withCard(priest, priestCard, atLocation(hall), { faceUp: true })
       .withInvestigator(alice, { locationId: hall })
       .start();
 
-    const { state } = execute(context, started, { type: 'DefeatEnemy', enemyId: ghoul });
+    const { state } = execute(context, started, { type: 'DefeatEnemy', enemyId: priest });
 
     expect(state.act.current).toBe(act1);
   });
@@ -831,7 +837,7 @@ describe('trigger bus failures', () => {
       })
       .start();
 
-    const rejection = rejectionFrom(ctx, started, advanceAct);
+    const rejection = rejectionFrom(ctx, started, aliceAdvancesAct);
 
     expect(rejection).toMatchObject({
       code: 'triggeredCommandRejected',

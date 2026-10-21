@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { listIfAny, withoutKey } from './index';
+import { listIfAny, shallowEqual, withoutKey } from './index';
 
 describe('withoutKey', () => {
   it('removes the key from the copy', () => {
@@ -36,5 +36,42 @@ describe('listIfAny', () => {
     const list = ['study'];
 
     expect(listIfAny('cards', list).cards).not.toBe(list);
+  });
+});
+
+describe('shallowEqual', () => {
+  it.each([
+    {
+      name: 'the same keys and values',
+      a: { kind: 'won', round: 2 },
+      b: { round: 2, kind: 'won' },
+      equal: true,
+    },
+    {
+      name: 'a different value',
+      a: { kind: 'won', round: 2 },
+      b: { kind: 'won', round: 3 },
+      equal: false,
+    },
+    {
+      name: 'a key only one of them has',
+      a: { kind: 'won' },
+      b: { kind: 'won', round: 2 },
+      equal: false,
+    },
+    {
+      name: 'the same number of keys, but different ones',
+      a: { kind: 'won', round: 2 },
+      b: { kind: 'won', turn: 2 },
+      equal: false,
+    },
+    {
+      name: 'equal nested objects that are not the same object',
+      a: { at: { row: 0 } },
+      b: { at: { row: 0 } },
+      equal: false,
+    },
+  ])('compares two objects with $name', ({ a, b, equal }) => {
+    expect(shallowEqual<object>(a, b)).toBe(equal);
   });
 });

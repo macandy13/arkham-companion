@@ -1,4 +1,4 @@
-import { assertNever } from '@arkham/util';
+import { assertNever, shallowEqual } from '@arkham/util';
 import { cardStats, type EngineContext } from './cards';
 import type { Command, TestSkill } from './commands';
 import { isInPlay } from './doom';
@@ -220,16 +220,9 @@ export function abilitySteps(
   const card = state.cards[opened.cardId];
   if (!card) return [];
   return (cardStats(ctx.cards, card.code).abilities ?? [])
-    .filter((ability) => sameWindow(ability.window, opened.window))
+    .filter((ability) => shallowEqual<TimingWindow>(ability.window, opened.window))
     .flatMap((ability) => ability.effects)
     .map((effect) => ({ kind: 'ability', effect, opened, origin: effect.type }));
-}
-
-/** Whether `a` and `b` are the same window, the defeated enemy included. */
-function sameWindow(a: TimingWindow, b: TimingWindow): boolean {
-  if (a.kind === 'enemyDefeated' || b.kind === 'enemyDefeated')
-    return a.kind === b.kind && a.enemy === b.enemy;
-  return a.kind === b.kind;
 }
 
 /** An effect waiting to resolve: the queue step `abilitySteps` produces. */
