@@ -38,18 +38,12 @@ const house = newGame()
   .withConnection(study, hallway)
   .withConnection(hallway, attic, { oneWay: true });
 
-/**
- * The map's props for `table`: its board, actions that play on it as the store's play on the open
- * game, and no step queued.
- */
-const mapPropsOf = (table: PlayTable) => ({
-  board: table.board,
-  actions: gameActions(
+/** Actions that play on `table`, as the store's play on the open game; undo is never used here. */
+const actionsOn = (table: PlayTable) =>
+  gameActions(
     async (step) => step(table),
     async () => {},
-  ),
-  busy: false,
-});
+  );
 
 const tile = (name: string) => screen.getByRole('group', { name });
 
@@ -68,7 +62,7 @@ describe('MapBoard', () => {
       ),
     );
 
-    render(<MapBoard {...mapPropsOf(table)} />);
+    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
     expect(screen.getByRole('figure', { name: 'House' })).toBeTruthy();
     expect(within(tile('study')).getByText('Shroud 4 · Clues 2')).toBeTruthy();
@@ -79,7 +73,8 @@ describe('MapBoard', () => {
   });
 
   it('names each connection after its locations and marks one-way ones', () => {
-    render(<MapBoard {...mapPropsOf(PlayTable.start(house))} />);
+    const table = PlayTable.start(house);
+    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
     const lines = screen.getAllByRole('img').map((line) => line.getAttribute('aria-label'));
     expect(lines).toEqual(['study – hallway', 'hallway to attic, one way']);
@@ -93,7 +88,7 @@ describe('MapBoard', () => {
         .withMap(mapId('empty_study'), { name: 'Empty study' }),
     );
 
-    render(<MapBoard {...mapPropsOf(table)} />);
+    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
     expect(screen.getByRole('figure', { name: 'House' })).toBeTruthy();
     expect(screen.queryByRole('figure', { name: 'Cellar' })).toBeNull();
@@ -101,7 +96,8 @@ describe('MapBoard', () => {
   });
 
   it('offers zoom buttons for the shown map', () => {
-    render(<MapBoard {...mapPropsOf(PlayTable.start(house))} />);
+    const table = PlayTable.start(house);
+    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
     const zoom = within(screen.getByRole('toolbar', { name: 'Zoom' }));
     expect(zoom.getAllByRole('button').map((button) => button.textContent)).toEqual([
@@ -112,7 +108,8 @@ describe('MapBoard', () => {
   });
 
   it('shows one map without tabs', () => {
-    render(<MapBoard {...mapPropsOf(PlayTable.start(house))} />);
+    const table = PlayTable.start(house);
+    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
     expect(screen.queryByRole('tablist')).toBeNull();
   });
@@ -123,7 +120,7 @@ describe('MapBoard', () => {
         .withMap(mapId('cellar'), { name: 'Cellar' })
         .withLocation(instanceId('cellar'), blankLocation('cellar'), { map: mapId('cellar') }),
     );
-    render(<MapBoard {...mapPropsOf(table)} />);
+    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
     const tab = (name: string) => screen.getByRole('tab', { name });
 
     expect(tab('House').getAttribute('aria-selected')).toBe('true');
@@ -145,11 +142,15 @@ describe('MapBoard', () => {
         .withMap(cellar, { name: 'Cellar' })
         .withLocation(instanceId('cellar'), blankLocation('cellar'), { map: cellar }),
     );
-    const { rerender } = render(<MapBoard {...mapPropsOf(withCellar)} />);
+    const { rerender } = render(
+      <MapBoard board={withCellar.board} actions={actionsOn(withCellar)} busy={false} />,
+    );
     fireEvent.click(screen.getByRole('tab', { name: 'Cellar' }));
 
     const cellarEmptied = PlayTable.start(house.withMap(cellar, { name: 'Cellar' }));
-    rerender(<MapBoard {...mapPropsOf(cellarEmptied)} />);
+    rerender(
+      <MapBoard board={cellarEmptied.board} actions={actionsOn(cellarEmptied)} busy={false} />,
+    );
 
     expect(screen.getByRole('figure', { name: 'House' })).toBeTruthy();
   });
@@ -166,7 +167,7 @@ describe('MapBoard', () => {
     );
     table.play({ type: 'ExhaustEnemy', enemyId: ghoul });
 
-    render(<MapBoard {...mapPropsOf(table)} />);
+    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
     expect(within(tile('study')).getByRole('img', { name: 'alder' })).toBeTruthy();
     expect(
@@ -213,7 +214,7 @@ describe('MapBoard', () => {
       const table = PlayTable.start(
         house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
       );
-      render(<MapBoard {...mapPropsOf(table)} />);
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
       await drag('alder', 255, 105);
 
@@ -227,7 +228,7 @@ describe('MapBoard', () => {
       const table = PlayTable.start(
         house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
       );
-      render(<MapBoard {...mapPropsOf(table)} />);
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
       await drag('alder', x, y);
 
@@ -238,7 +239,7 @@ describe('MapBoard', () => {
       const table = PlayTable.start(
         house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
       );
-      render(<MapBoard {...mapPropsOf(table)} busy />);
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy />);
 
       await drag('alder', 255, 105);
 
@@ -252,7 +253,7 @@ describe('MapBoard', () => {
           .withInvestigator(alder, { locationId: study })
           .withTurnOf(alder),
       );
-      render(<MapBoard {...mapPropsOf(table)} />);
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
       await drag('bea', 255, 105);
 
