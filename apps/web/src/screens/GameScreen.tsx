@@ -8,12 +8,13 @@ import type { AppState } from '../state/appStore';
 import { MapBoard } from '../map/MapBoard';
 import { GameHeader } from './GameHeader';
 import { RejectionToast } from './RejectionToast';
+import { SkippedEffectsNotice } from './SkippedEffectsNotice';
 import './game.css';
 
 /**
  * Route `/game/:id`: loads the game named in the URL (so deep links and reloads work)
  * and shows the board layout of product.md "UI concept": the header, the map, so far placeholders
- * for the rest, and the reason when an action is refused. Until the game is open it says so, and
+ * for the rest, the reason when an action is refused, and the card effects it skipped. Until the game is open it says so, and
  * a game it cannot play (its scenario is not in the catalog) gets a warning instead of a board.
  */
 export function GameScreen({ store }: { store: StoreApi<AppState> }) {
@@ -55,6 +56,12 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
         <RejectionToast
           rejection={open.rejection}
           onDismiss={() => store.getState().dismissRejection()}
+        />
+      )}
+      {open.skippedEffects && (
+        <SkippedEffectsNotice
+          skipped={open.skippedEffects}
+          onDismiss={() => store.getState().dismissSkippedEffects()}
         />
       )}
     </div>

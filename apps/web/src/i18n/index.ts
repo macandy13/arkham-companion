@@ -20,6 +20,18 @@ export const resources = {
         noGame: 'No game open',
       },
       toast: { label: 'Not possible', dismiss: 'OK', fallback: 'That is not possible right now.' },
+      skipped: {
+        label: 'Do this by hand',
+        dismiss: 'OK',
+        effect:
+          '{{card}}: {{effect}} was skipped because {{missing}} is not in the game exactly once. Please do it by hand.',
+        anEffect: 'an effect',
+        effects: {
+          RevealLocation: 'revealing the location',
+          FromSetAside: 'putting the set-aside card into play',
+          SpawnEnemy: 'spawning the enemy',
+        },
+      },
       rejections: {
         decisionPending: 'Answer the open decision first.',
         noPendingDecision: 'There is no open decision to answer.',
@@ -193,6 +205,18 @@ export const resources = {
         noGame: 'Kein Spiel geöffnet',
       },
       toast: { label: 'Nicht möglich', dismiss: 'OK', fallback: 'Das ist gerade nicht möglich.' },
+      skipped: {
+        label: 'Von Hand erledigen',
+        dismiss: 'OK',
+        effect:
+          '{{card}}: {{effect}} wurde übersprungen, weil {{missing}} nicht genau einmal im Spiel ist. Bitte von Hand erledigen.',
+        anEffect: 'Ein Effekt',
+        effects: {
+          RevealLocation: 'Das Aufdecken des Ortes',
+          FromSetAside: 'Das Ins-Spiel-Bringen der beiseitegelegten Karte',
+          SpawnEnemy: 'Das Erscheinen des Gegners',
+        },
+      },
       rejections: {
         decisionPending: 'Triff zuerst die offene Entscheidung.',
         noPendingDecision: 'Es gibt keine offene Entscheidung.',

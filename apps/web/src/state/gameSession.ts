@@ -1,6 +1,9 @@
 import {
   CommandRejected,
+  type AbilityEffectSkipped,
+  type CardCode,
   type BoardView,
+  type Event,
   PlayTable,
   type GameId,
   type GameState,
@@ -29,6 +32,40 @@ export async function startGame(
 }
 
 /**
+ * An ability effect the engine skipped because a card it names is not in the game exactly once
+ * (`AbilityEffectSkipped`), in the players' words, so they can resolve it by hand.
+ */
+export interface SkippedEffect {
+  /** The printed name of the card whose ability it is. */
+  card: string;
+  /** What the effect would have done. */
+  effect: AbilityEffectSkipped['effect'];
+  /** The printed names of the cards it could not find. */
+  missing: readonly string[];
+}
+
+/** The effects `events` skipped, named with the cards of `ctx`; `state` holds the cards they name. */
+export function skippedEffects(
+  ctx: ScenarioContext,
+  state: GameState,
+  events: readonly Event[],
+): SkippedEffect[] {
+  // A code the cards don't know (a typo in the scenario data) has no name; the code is all there is.
+  const nameOf = (code: CardCode) => ctx.cards.get(code)?.name ?? code;
+  return events.flatMap((event) => {
+    if (event.type !== 'AbilityEffectSkipped') return [];
+    const card = state.cards[event.cardId];
+    return [
+      {
+        card: card ? nameOf(card.code) : event.cardId,
+        effect: event.effect,
+        missing: event.missing.map(nameOf),
+      },
+    ];
+  });
+}
+
+/**
  * One step the players take, in the game language of `PlayTable` (`moveTo`, `investigate`,
  * `answer`, `nextPhase`, …). Only `GameActions` writes steps, so the table's test defaults never
  * reach the screen.
@@ -50,6 +87,8 @@ export class GameSession {
     private lastSeq: number,
   ) {}
 
+  private skipped: readonly SkippedEffect[] = [];
+
   /** The game `gameId` from its stored log, played with the rules of `ctx`. */
   static async open(store: GameStore, gameId: GameId, ctx: ScenarioContext): Promise<GameSession> {
     const { table, lastSeq } = await loadTable(store, gameId, ctx);
@@ -66,6 +105,11 @@ export class GameSession {
     return this.table.board;
   }
 
+  /** What the last step played skipped for the players to do by hand; none after a refusal or undo. */
+  get skippedEffects(): readonly SkippedEffect[] {
+    return this.skipped;
+  }
+
   /** Whether `undo` has a step to take back; the scenario start never counts. */
   get canUndo(): boolean {
     return this.table.canUndo;
@@ -79,6 +123,7 @@ export class GameSession {
    */
   async play(step: PlayStep): Promise<Rejection | undefined> {
     const before = this.table.entries;
+    this.skipped = [];
     try {
       this.table.step(() => step(this.table));
     } catch (error) {
@@ -98,6 +143,11 @@ export class GameSession {
       );
       this.lastSeq = stored.at(-1)?.seq ?? this.lastSeq;
     });
+    this.skipped = skippedEffects(
+      this.ctx,
+      this.state,
+      added.map((entry) => entry.event),
+    );
     return undefined;
   }
 
@@ -108,6 +158,7 @@ export class GameSession {
   async undo(): Promise<void> {
     if (!this.table.canUndo) return;
     const before = this.table.entries;
+    this.skipped = [];
     this.table.undo();
     await this.storing(before, async () => {
       const loaded = await this.store.undoLast(this.gameId, this.lastSeq);
