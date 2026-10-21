@@ -82,7 +82,8 @@ type PendingTrigger = (state: GameState) => readonly TriggeredStep[];
  * whether a card entered play) but are evaluated against the state after all
  * of them, so every hook sees the command's complete outcome. Order: by
  * event, scenario hooks before card abilities. The lead leaving queues a
- * `succession` step like a forced effect of the departure.
+ * `succession` step like a forced effect of the departure, so a forced
+ * effect of an earlier event of the same command still sees no lead.
  */
 export function triggeredSteps(
   ctx: EngineContext,

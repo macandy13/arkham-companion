@@ -968,6 +968,40 @@ describe('effects on each investigator', () => {
     ]);
   });
 
+  it('tests each investigator in turn, the next one after the answer', () => {
+    /** "Each investigator tests willpower (3)." */
+    const testForAllAgenda = blankAgenda('test_for_all_agenda', fixed(3), {
+      abilities: [
+        whenAdvanced({
+          type: 'TestSkill',
+          investigatorId: { ref: 'eachInvestigator' },
+          cardId: { ref: 'self' },
+          test: { skill: 'willpower', difficulty: 3 },
+          onPass: [],
+          onFail: [],
+        }),
+      ],
+    });
+    const { context, state: started } = hallTable
+      .withAgenda(agenda1, testForAllAgenda)
+      .withAgenda(agenda2, secondAgendaCard)
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: hall })
+      .start();
+
+    const aliceAsked = stateAfter(context, started, { type: 'AdvanceAgenda' });
+    const bobAsked = stateAfter(context, aliceAsked, answer('test:agenda1', 'pass'));
+    const done = stateAfter(context, bobAsked, answer('test:agenda1', 'pass'));
+
+    expect(aliceAsked.pending.map((decision) => decision.decider)).toEqual([
+      { kind: 'investigator', investigatorId: alice },
+    ]);
+    expect(bobAsked.pending.map((decision) => decision.decider)).toEqual([
+      { kind: 'investigator', investigatorId: bob },
+    ]);
+    expect(done.agenda.current).toBe(agenda2);
+  });
+
   it('makes the only investigator left the lead, without a question', () => {
     const { context, state: started } = hallTable
       .withAgenda(agenda1, horrorForAllAgenda)

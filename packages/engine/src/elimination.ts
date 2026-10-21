@@ -87,14 +87,12 @@ function threatAreaEvents(state: GameState, investigator: Investigator): Event[]
  * `succession` step): a single remaining investigator becomes lead without
  * a question; with several, the group chooses (`SetLeadInvestigator`). A
  * decision is used rather than the next in seat order because the rules let
- * the players choose. Nothing while the lead is still in, once nobody is left
- * (the scenario has ended), or while the question is already open, since
- * every departure in one effect queues a step.
+ * the players choose. Nothing while the lead is still in, or once nobody is
+ * left (the scenario has ended).
  */
 export function successionEvents(state: GameState): Event[] {
   const lead = state.investigators.find((inv) => inv.id === state.meta.leadInvestigator);
   if (lead?.status === 'active') return [];
-  if (state.pending.some((decision) => decision.id === NEW_LEAD_DECISION)) return [];
   const remaining = state.investigators.filter((inv) => inv.status === 'active');
   const [only, ...others] = remaining;
   if (only === undefined) return [];

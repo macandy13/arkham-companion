@@ -314,6 +314,9 @@ function resolveCommand(
  * own events first, then the forced effects and continuations of all of
  * them. So "each investigator is defeated" defeats everyone before a new
  * lead is asked for (`succession`), and nobody is asked when nobody is left.
+ * A command that asks something (a test, a drawn card's choice) stops the
+ * batch: the same rule makes each investigator's own choices in player
+ * order, so the rest follow as steps of their own after the answer.
  */
 function resolveAtOnce(
   resolution: Resolution,
@@ -322,17 +325,24 @@ function resolveAtOnce(
   budget: TriggerBudget,
 ): Step[] {
   const before = resolution.state;
-  const triggering: Event[] = [];
-  const continuations = commands.flatMap((command) => {
+  const events: Event[] = [];
+  const continuations: Step[] = [];
+  for (const [index, command] of commands.entries()) {
     spend(budget);
     const spec = commandSpec(command);
     const own = spec.handle(resolution.ctx, resolution.state, command);
     if (surgeDraw(own)) budget.encounterCards ??= encounterCardCount(resolution.state);
     emit(resolution, own);
-    if (!spec.firesNoTriggers) triggering.push(...own);
-    return withOrigin(withinSurgeLimit(spec.continueWith?.(command, own) ?? [], budget), origin);
-  });
-  return [...triggeredSteps(resolution.ctx, before, triggering), ...continuations];
+    events.push(...own);
+    continuations.push(
+      ...withOrigin(withinSurgeLimit(spec.continueWith?.(command, own) ?? [], budget), origin),
+    );
+    if (resolution.state.pending.length > before.pending.length) {
+      const rest = commands.slice(index + 1).map(followUpStep);
+      return [...triggeredSteps(resolution.ctx, before, events), ...continuations, ...rest];
+    }
+  }
+  return [...triggeredSteps(resolution.ctx, before, events), ...continuations];
 }
 
 /** Emits `events` and returns the follow-ups their forced effects trigger. */
