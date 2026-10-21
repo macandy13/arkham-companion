@@ -90,6 +90,7 @@ export { PHASE_STEP_TITLES } from './phases';
 export { BASE_ACTIONS_PER_TURN } from './turns';
 export { formatBoard } from './format_board';
 export {
+  advanceAct,
   atEndOfRound,
   attachToLocation,
   atEndOfTurn,
@@ -110,6 +111,7 @@ export {
   takeDamage,
   takeHorror,
   whenAdvanced,
+  whenEnemyDefeated,
   whenRevealed,
 } from './abilities';
 export type {

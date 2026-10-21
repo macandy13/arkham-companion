@@ -1,5 +1,6 @@
 import {
   GRID_CELLS_PER_CARD,
+  advanceAct,
   atEndOfRound,
   atEndOfTurn,
   attachToLocation,
@@ -20,6 +21,7 @@ import {
   spawnEnemyAt,
   trait,
   whenAdvanced,
+  whenEnemyDefeated,
   whenRevealed,
   type Ability,
   type AddMapStep,
@@ -136,7 +138,13 @@ export const theGatheringCardDefs: readonly CardStats[] = [
       ),
     ],
   }),
-  act({ code: codes.whatHaveYouDone, name: 'What Have You Done?', stage: 3 }),
+  act({
+    code: codes.whatHaveYouDone,
+    name: 'What Have You Done?',
+    stage: 3,
+    // Objective: the act advances by itself once the Ghoul Priest is defeated.
+    abilities: [whenEnemyDefeated(codes.ghoulPriest, advanceAct())],
+  }),
   location({ code: codes.study, name: 'Study', shroud: 2, cluesPerInvestigator: 2 }),
   location({ code: codes.hallway, name: 'Hallway', shroud: 1, cluesPerInvestigator: 0 }),
   location({ code: codes.attic, name: 'Attic', shroud: 1, cluesPerInvestigator: 2, victory: 1 }),

@@ -34,7 +34,14 @@ export type TimingWindow =
    * or `ActAdvanced` for that card while it is still current (`completeAdvance`
    * replaces it afterwards); names no investigator.
    */
-  | { kind: 'advanced' };
+  | { kind: 'advanced' }
+  /**
+   * An enemy of code `enemy` was defeated (`EnemyDefeated`): an objective
+   * of the current agenda or act ("if the Ghoul Priest is defeated,
+   * advance"), opened for both, naming no investigator. Only the current
+   * ones, so a used-up act or agenda never fires again.
+   */
+  | { kind: 'enemyDefeated'; enemy: CardCode };
 
 /**
  * A card an ability names without an instance ID: the card that has the
@@ -103,7 +110,8 @@ export type AbilityCommand =
           | 'FromSetAside'
           | 'SpawnEnemy'
           | 'MoveInvestigator'
-          | 'AddMap';
+          | 'AddMap'
+          | 'AdvanceAct';
       }
     >
   | AbilityTest;
@@ -188,6 +196,12 @@ export function windowsOpenedBy(
     case 'AgendaAdvanced':
     case 'ActAdvanced':
       return [{ window: { kind: 'advanced' }, cardId: event.cardId }];
+    case 'EnemyDefeated': {
+      const enemy = requireCard(state.cards, event.enemyId).code;
+      return [state.agenda.current, state.act.current].flatMap((cardId) =>
+        cardId === undefined ? [] : [{ window: { kind: 'enemyDefeated', enemy }, cardId }],
+      );
+    }
     default:
       return [];
   }
@@ -206,9 +220,16 @@ export function abilitySteps(
   const card = state.cards[opened.cardId];
   if (!card) return [];
   return (cardStats(ctx.cards, card.code).abilities ?? [])
-    .filter((ability) => ability.window.kind === opened.window.kind)
+    .filter((ability) => sameWindow(ability.window, opened.window))
     .flatMap((ability) => ability.effects)
     .map((effect) => ({ kind: 'ability', effect, opened, origin: effect.type }));
+}
+
+/** Whether `a` and `b` are the same window, the defeated enemy included. */
+function sameWindow(a: TimingWindow, b: TimingWindow): boolean {
+  if (a.kind === 'enemyDefeated' || b.kind === 'enemyDefeated')
+    return a.kind === b.kind && a.enemy === b.enemy;
+  return a.kind === b.kind;
 }
 
 /** An effect waiting to resolve: the queue step `abilitySteps` produces. */
@@ -406,6 +427,15 @@ export function atEndOfRound(...effects: AbilityEffect[]): Ability {
 }
 
 /**
+ * An objective of an agenda or act that its current card fulfils when an
+ * enemy of code `enemy` is defeated: "If the Ghoul Priest is defeated,
+ * advance", written `whenEnemyDefeated(codes.ghoulPriest, advanceAct())`.
+ */
+export function whenEnemyDefeated(enemy: CardCode, ...effects: AbilityEffect[]): Ability {
+  return { window: { kind: 'enemyDefeated', enemy }, effects };
+}
+
+/**
  * The reverse side of an agenda or act, written
  * `whenAdvanced(revealLocation(onlyCopy(codes.parlor)))`.
  */
@@ -524,6 +554,11 @@ export function discardEachEnemyAt(location: RelativeCard): AbilityEffect {
 /** "Remove the Study from the game". */
 export function removeFromGame(card: RelativeCard): AbilityEffect {
   return { type: 'MoveCard', cardId: card, to: { kind: 'outOfGame' } };
+}
+
+/** "Advance": the current act advances without spending clues, as an objective does. */
+export function advanceAct(): AbilityEffect {
+  return { type: 'AdvanceAct' };
 }
 
 /** "Reveal the Parlor". */

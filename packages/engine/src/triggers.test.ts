@@ -35,6 +35,7 @@ import {
   takeHorror,
   threatAreaOf,
   whenAdvanced,
+  whenEnemyDefeated,
   whenRevealed,
   type AddMapStep,
   type Command,
@@ -714,56 +715,69 @@ describe('trigger bus', () => {
   });
 });
 
-describe('afterEnemyDefeated', () => {
-  /** Advances the act (first to second) when the hall's ghoul is defeated, as "if this enemy is defeated, advance". */
-  const advanceOnGhoulDefeat = table
-    .withHooks({
-      afterEnemyDefeated: (_ctx, _state, event) =>
-        event.enemyId === ghoul ? [{ type: 'AdvanceAct' }] : [],
-    })
-    .context();
+describe('objectives on the current agenda and act', () => {
+  const cultist = instanceId('cultist');
+  /** "If a ghoul is defeated, advance." */
+  const ghoulObjectiveAct = blankAct('ghoul_objective_act', {
+    abilities: [whenEnemyDefeated(cardCode('ghoul'), { type: 'AdvanceAct' })],
+  });
+  /** "If a ghoul is defeated, place 1 doom on the agenda." */
+  const ghoulObjectiveAgenda = blankAgenda('ghoul_objective_agenda', fixed(3), {
+    abilities: [whenEnemyDefeated(cardCode('ghoul'), placeDoomOnAgenda(1))],
+  });
+  /** Alice in the hall with a ghoul and a cultist; the current act has the ghoul objective. */
+  const objectiveTable = newGame()
+    .withAgenda(agenda1, firstAgendaCard)
+    .withAct(act1, ghoulObjectiveAct)
+    .withAct(act2, secondActCard)
+    .withLocation(hall, blankLocation('hall'), { revealed: true })
+    .withCard(ghoul, ghoulCard, atLocation(hall), { faceUp: true })
+    .withCard(cultist, blankEnemy('cultist'), atLocation(hall), { faceUp: true })
+    .withInvestigator(alice, { locationId: hall });
 
-  it('runs the follow-up when the enemy the hook names is defeated', () => {
-    const { state: started } = table.start();
+  it('advances the current act when an enemy of the code it names is defeated', () => {
+    const { context, state: started } = objectiveTable.start();
 
-    const { state } = execute(advanceOnGhoulDefeat, started, {
-      type: 'DefeatEnemy',
-      enemyId: ghoul,
-    });
+    const { state } = execute(context, started, { type: 'DefeatEnemy', enemyId: ghoul });
 
     expect(state.act.current).toBe(act2);
   });
 
-  it('does nothing when another enemy is defeated', () => {
-    const { state: started } = table.start();
-    const withDeckGhoulInHall = stateAfter(advanceOnGhoulDefeat, started, {
-      type: 'SpawnEnemy',
-      enemyId: deckGhoul,
-      at: hall,
-    });
+  it('does nothing when an enemy of another code is defeated', () => {
+    const { context, state: started } = objectiveTable.start();
 
-    const { state } = execute(advanceOnGhoulDefeat, withDeckGhoulInHall, {
-      type: 'DefeatEnemy',
-      enemyId: deckGhoul,
-    });
+    const { state } = execute(context, started, { type: 'DefeatEnemy', enemyId: cultist });
 
     expect(state.act.current).toBe(act1);
   });
 
-  it('sees the enemy where the defeat put it', () => {
-    const seen: unknown[] = [];
-    const { context: ctx, state: started } = table
-      .withHooks({
-        afterEnemyDefeated: (_ctx, state, event) => {
-          seen.push(state.cards[event.enemyId]?.zone);
-          return [];
-        },
-      })
+  it('fires for the current agenda too', () => {
+    const { context, state: started } = newGame()
+      .withAgenda(agenda1, ghoulObjectiveAgenda)
+      .withAct(act1, firstActCard)
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withCard(ghoul, ghoulCard, atLocation(hall), { faceUp: true })
+      .withInvestigator(alice, { locationId: hall })
       .start();
 
-    execute(ctx, started, { type: 'DefeatEnemy', enemyId: ghoul });
+    const { state } = execute(context, started, { type: 'DefeatEnemy', enemyId: ghoul });
 
-    expect(seen).toEqual([{ kind: 'encounterDiscard' }]);
+    expect(state.cards[agenda1]?.tokens.doom).toBe(1);
+  });
+
+  it('does not fire for an act that is not current yet', () => {
+    const { context, state: started } = newGame()
+      .withAgenda(agenda1, firstAgendaCard)
+      .withAct(act1, firstActCard)
+      .withAct(act2, ghoulObjectiveAct)
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withCard(ghoul, ghoulCard, atLocation(hall), { faceUp: true })
+      .withInvestigator(alice, { locationId: hall })
+      .start();
+
+    const { state } = execute(context, started, { type: 'DefeatEnemy', enemyId: ghoul });
+
+    expect(state.act.current).toBe(act1);
   });
 });
 
