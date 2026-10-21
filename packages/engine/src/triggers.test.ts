@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   atEndOfRound,
   atEndOfTurn,
+  advanceAct,
   atLocation,
   blankAct,
   blankAgenda,
@@ -35,6 +36,7 @@ import {
   takeHorror,
   threatAreaOf,
   whenAdvanced,
+  whenEnemyDefeated,
   whenRevealed,
   type AddMapStep,
   type Command,
@@ -84,7 +86,10 @@ const table = newGame()
   .withInvestigator(alice, { locationId: hall, clues: 2 });
 
 const placeDoomOnGhoul: Command = { type: 'PlaceDoom', cardId: ghoul, amount: 1 };
-const advanceAct: Command = { type: 'AdvanceAct', spend: [{ investigatorId: alice, amount: 2 }] };
+const aliceAdvancesAct: Command = {
+  type: 'AdvanceAct',
+  spend: [{ investigatorId: alice, amount: 2 }],
+};
 
 describe('trigger bus', () => {
   it('appends the events of an afterDoomPlaced follow-up to the originating command', () => {
@@ -224,7 +229,7 @@ describe('trigger bus', () => {
       })
       .start();
 
-    const { state } = execute(ctx, started, advanceAct);
+    const { state } = execute(ctx, started, aliceAdvancesAct);
 
     expect(currentActs).toEqual([act1]);
     expect(state.act.current).toBe(act2);
@@ -693,7 +698,7 @@ describe('trigger bus', () => {
       })
       .start();
 
-    const { state } = execute(ctx, started, advanceAct);
+    const { state } = execute(ctx, started, aliceAdvancesAct);
 
     expect(state.cards[ghoul]?.tokens.doom).toBe(1);
     expect(state.cards[cellar]?.faceUp).toBe(true);
@@ -708,62 +713,77 @@ describe('trigger bus', () => {
       })
       .start();
 
-    const { state } = execute(ctx, started, advanceAct);
+    const { state } = execute(ctx, started, aliceAdvancesAct);
 
     expect(state.pending.map((decision) => decision.kind)).toEqual(['confirm']);
   });
 });
 
-describe('afterEnemyDefeated', () => {
-  /** Advances the act (first to second) when the hall's ghoul is defeated, as "if this enemy is defeated, advance". */
-  const advanceOnGhoulDefeat = table
-    .withHooks({
-      afterEnemyDefeated: (_ctx, _state, event) =>
-        event.enemyId === ghoul ? [{ type: 'AdvanceAct' }] : [],
-    })
-    .context();
+describe('objectives on the current agenda and act', () => {
+  const priest = instanceId('priest');
+  const cultist = instanceId('cultist');
+  const priestCard = blankEnemy('priest');
+  /** "If the priest is defeated, advance." */
+  const priestObjectiveAct = blankAct('priest_objective_act', {
+    abilities: [whenEnemyDefeated(priestCard.code, advanceAct())],
+  });
+  /** "If the priest is defeated, place 1 doom on the agenda." */
+  const priestObjectiveAgenda = blankAgenda('priest_objective_agenda', fixed(3), {
+    abilities: [whenEnemyDefeated(priestCard.code, placeDoomOnAgenda(1))],
+  });
+  /** Alice in the hall with the priest and a cultist; the current act has the priest objective. */
+  const objectiveTable = newGame()
+    .withAgenda(agenda1, firstAgendaCard)
+    .withAct(act1, priestObjectiveAct)
+    .withAct(act2, secondActCard)
+    .withLocation(hall, blankLocation('hall'), { revealed: true })
+    .withCard(priest, priestCard, atLocation(hall), { faceUp: true })
+    .withCard(cultist, blankEnemy('cultist'), atLocation(hall), { faceUp: true })
+    .withInvestigator(alice, { locationId: hall });
 
-  it('runs the follow-up when the enemy the hook names is defeated', () => {
-    const { state: started } = table.start();
+  it('advances the current act when the enemy it names is defeated', () => {
+    const { context, state: started } = objectiveTable.start();
 
-    const { state } = execute(advanceOnGhoulDefeat, started, {
-      type: 'DefeatEnemy',
-      enemyId: ghoul,
-    });
+    const { state } = execute(context, started, { type: 'DefeatEnemy', enemyId: priest });
 
     expect(state.act.current).toBe(act2);
   });
 
   it('does nothing when another enemy is defeated', () => {
-    const { state: started } = table.start();
-    const withDeckGhoulInHall = stateAfter(advanceOnGhoulDefeat, started, {
-      type: 'SpawnEnemy',
-      enemyId: deckGhoul,
-      at: hall,
-    });
+    const { context, state: started } = objectiveTable.start();
 
-    const { state } = execute(advanceOnGhoulDefeat, withDeckGhoulInHall, {
-      type: 'DefeatEnemy',
-      enemyId: deckGhoul,
-    });
+    const { state } = execute(context, started, { type: 'DefeatEnemy', enemyId: cultist });
 
     expect(state.act.current).toBe(act1);
   });
 
-  it('sees the enemy where the defeat put it', () => {
-    const seen: unknown[] = [];
-    const { context: ctx, state: started } = table
-      .withHooks({
-        afterEnemyDefeated: (_ctx, state, event) => {
-          seen.push(state.cards[event.enemyId]?.zone);
-          return [];
-        },
-      })
+  it('fires for the current agenda too', () => {
+    const { context, state: started } = newGame()
+      .withAgenda(agenda1, priestObjectiveAgenda)
+      .withAct(act1, firstActCard)
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withCard(priest, priestCard, atLocation(hall), { faceUp: true })
+      .withInvestigator(alice, { locationId: hall })
       .start();
 
-    execute(ctx, started, { type: 'DefeatEnemy', enemyId: ghoul });
+    const { state } = execute(context, started, { type: 'DefeatEnemy', enemyId: priest });
 
-    expect(seen).toEqual([{ kind: 'encounterDiscard' }]);
+    expect(state.cards[agenda1]?.tokens.doom).toBe(1);
+  });
+
+  it('does not fire for an act that is not current yet', () => {
+    const { context, state: started } = newGame()
+      .withAgenda(agenda1, firstAgendaCard)
+      .withAct(act1, firstActCard)
+      .withAct(act2, priestObjectiveAct)
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withCard(priest, priestCard, atLocation(hall), { faceUp: true })
+      .withInvestigator(alice, { locationId: hall })
+      .start();
+
+    const { state } = execute(context, started, { type: 'DefeatEnemy', enemyId: priest });
+
+    expect(state.act.current).toBe(act1);
   });
 });
 
@@ -817,7 +837,7 @@ describe('trigger bus failures', () => {
       })
       .start();
 
-    const rejection = rejectionFrom(ctx, started, advanceAct);
+    const rejection = rejectionFrom(ctx, started, aliceAdvancesAct);
 
     expect(rejection).toMatchObject({
       code: 'triggeredCommandRejected',

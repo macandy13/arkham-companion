@@ -27,7 +27,7 @@ Ref: architecture "Command handling", "Triggers and card effects"; [rules.md](..
 - **Surge** (high): the surge card was drawn before the first card's revelation, spawn choice, test and forced effects had resolved. A surge enemy waiting for a spawn choice was even drawn again, since it stays on top of the deck.
 - **Revelation of a drawn card** (medium): `CardEffect.onReveal` runs after the card is placed. The rules resolve the revelation first, so an enemy has already spawned and engaged when its revelation runs.
 - **Follow-ups after a decision** (medium, fixed in slice 3c): `handle` ran a hook's later commands while an earlier one waited for an answer. The rules finish a nested sequence, choices included, before going on; the rest of the chain now waits in `GameMeta.queue`.
-- **Order of simultaneous forced effects** (low): the engine uses a fixed order where the lead investigator chooses. Today no two hooks share one event; it shows only between events of one command (turn end hook and turn-end tests, round end hook and round-end discards). Decide together with the timing windows the architecture review proposes.
+- **Order of simultaneous forced effects** (low): the engine uses a fixed order where the lead investigator chooses. Today no two hooks share one event, and only the current agenda's and act's `enemyDefeated` objectives could (agenda first); it shows only between events of one command (turn end hook and turn-end tests, round end hook and round-end discards). Decide together with the timing windows the architecture review proposes.
 - **No "when … would" hooks** (gap): no trigger point can act before its condition resolves. Needed once an M4 scenario has such a forced effect.
 
 **Slices**

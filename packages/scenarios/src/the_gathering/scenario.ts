@@ -9,7 +9,6 @@ import {
   type Command,
   type EncounterMatch,
   type EngineContext,
-  type EnemyDefeated,
   type GameState,
   type ScenarioDefinition,
   type TokenValue,
@@ -39,23 +38,6 @@ const resolutions = GATHERING_RESOLUTIONS;
 export const BURN_THE_HOUSE_DECISION = decisionId('theGathering.burnTheHouse');
 
 const ghoulEnemy: EncounterMatch = { trait: trait('Ghoul'), typeCode: 'enemy' };
-
-/**
- * Act 3 ("What Have You Done?"), objective: once the Ghoul Priest is
- * defeated, the act advances by itself. The Priest only enters play on act
- * 2's reverse side, but the current act is checked anyway, so a Priest
- * defeated by a correction later on cannot advance a used-up act deck.
- */
-function ghoulPriestDefeated(
-  _ctx: EngineContext,
-  state: GameState,
-  event: EnemyDefeated,
-): Command[] {
-  const enemy = state.cards[event.enemyId];
-  const act = state.act.current === undefined ? undefined : state.cards[state.act.current];
-  if (enemy?.code !== codes.ghoulPriest || act?.code !== codes.whatHaveYouDone) return [];
-  return [{ type: 'AdvanceAct' }];
-}
 
 /**
  * Act 3, reverse side: the lead investigator decides whether to burn the
@@ -154,9 +136,9 @@ const ghoulsAtYourLocation: TokenValue = (ctx, state, test) => {
  * rest of the six encounter sets is shuffled into the encounter deck. Card
  * data is hand-entered (`theGatheringCardDefs`); it is the shared test
  * scenario for the generic rules until real scenario data arrives (M4).
- * The reverse sides of acts 1 and 2 are abilities on their card data;
- * `hooks` hold the reverse sides of act 3 and of agendas 2 and 3 and act 3's
- * objective (agenda 1's choice and agenda 3's forced effects are left to the
+ * The reverse sides of acts 1 and 2 and act 3's objective are abilities on
+ * their card data; `hooks` hold the reverse sides of act 3 and of agendas 2
+ * and 3 (agenda 1's choice and agenda 3's forced effects are left to the
  * players). Pass the whole definition as `EngineContext.scenario`, so the
  * engine gets the hooks together with `reference` and `modifiers` (the
  * skull's "-X") for skill test suggestions. The reference
@@ -229,7 +211,6 @@ export const theGathering: ScenarioDefinition = {
       [codes.riseOfTheGhouls]: riseOfTheGhoulsReverseSide,
       [codes.theyreGettingOut]: theyreGettingOutReverseSide,
     },
-    afterEnemyDefeated: ghoulPriestDefeated,
   },
   modifiers: { tokenValues: { skull: ghoulsAtYourLocation } },
 };

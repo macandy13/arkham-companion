@@ -17,3 +17,17 @@ export function withoutKey<T extends object, K extends keyof T>(object: T, key: 
 export function listIfAny<K extends string, T>(key: K, list: readonly T[]): { [P in K]?: T[] } {
   return list.length > 0 ? ({ [key]: [...list] } as { [P in K]: T[] }) : {};
 }
+
+/**
+ * Whether `a` and `b` have the same own keys with the same values (`Object.is`),
+ * one level deep. For small flat records compared as values, such as a timing
+ * window and its parameters.
+ */
+export function shallowEqual<T extends object>(a: T, b: T): boolean {
+  const left = Object.entries(a);
+  const right = new Map(Object.entries(b));
+  return (
+    left.length === right.size &&
+    left.every(([key, value]) => right.has(key) && Object.is(value, right.get(key)))
+  );
+}

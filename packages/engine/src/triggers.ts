@@ -6,7 +6,6 @@ import type {
   ActAdvanced,
   AgendaAdvanced,
   CardMoved,
-  EnemyDefeated,
   Event,
   RoundEnded,
   TokensChanged,
@@ -57,12 +56,6 @@ export interface ScenarioHooks {
   onTurnEnd: TriggerHook<TurnEnded>;
   /** After any card enters play from outside play (deck, set aside, discard, …). */
   onCardEnters: TriggerHook<CardMoved>;
-  /**
-   * After an enemy is defeated (`EnemyDefeated`), e.g. an act whose objective
-   * is "if the Ghoul Priest is defeated, advance". The hook sees the enemy
-   * already in its discard pile or the victory display.
-   */
-  afterEnemyDefeated: TriggerHook<EnemyDefeated>;
 }
 
 /**
@@ -133,8 +126,6 @@ function matchingTriggers(
       return bind(hooks.onRoundEnd, event);
     case 'TurnEnded':
       return bind(hooks.onTurnEnd, event);
-    case 'EnemyDefeated':
-      return bind(hooks.afterEnemyDefeated, event);
     default:
       return [];
   }
