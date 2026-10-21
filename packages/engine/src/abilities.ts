@@ -4,8 +4,9 @@ import type { Command, TestSkill } from './commands';
 import { isInPlay } from './doom';
 import type { Event } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
+import { isActiveInvestigator } from './investigators';
 import { cardsInZone } from './lookup';
-import type { GameState, SkillName } from './state';
+import type { GameState, QueuedStep, SkillName } from './state';
 import type { Zone } from './zone';
 
 /**
@@ -39,7 +40,7 @@ export interface RelativeInvestigator {
 /**
  * `T` with every instance and investigator ID replaced by a relative
  * reference, recursively. Card data is shared by every copy of a card, so it
- * can name no instance; `abilityCommands` fills the IDs in when the ability
+ * can name no instance; `resolveEffect` fills the IDs in when the ability
  * fires. Map IDs stay as they are: a scenario's maps are fixed by its setup,
  * so card data may name one. Lists are templated item by item (the
  * outcomes of a `skillTest`).
@@ -144,31 +145,46 @@ export function windowsOpenedBy(
 }
 
 /**
- * The commands that resolve the abilities of the card `opened` names in its
- * window, read from its card data in `state`; none for a card without one.
+ * The effects of the abilities the card `opened` names has in its window, as
+ * steps that resolve one at a time (`resolveEffect`); none for a card without
+ * one. Read from its card data in `state`.
  */
-export function abilityCommands(
+export function abilitySteps(
   ctx: EngineContext,
   state: GameState,
   opened: OpenedWindow,
-): Command[] {
+): AbilityStep[] {
   const card = state.cards[opened.cardId];
   if (!card) return [];
   return (cardStats(ctx.cards, card.code).abilities ?? [])
     .filter((ability) => ability.window.kind === opened.window.kind)
-    .flatMap((ability) => ability.effects.flatMap((effect) => effectCommands(effect, opened)));
+    .flatMap((ability) => ability.effects)
+    .map((effect) => ({ kind: 'ability', effect, opened, origin: effect.type }));
 }
 
+/** An effect waiting to resolve: the queue step `abilitySteps` produces. */
+export type AbilityStep = Extract<QueuedStep, { kind: 'ability' }>;
+
 /**
- * The command `effect` stands for, with its references resolved for
- * `opened`; none when one names nobody, such as `windowInvestigator` in a
- * window that names no investigator (a location revealed by a card effect).
+ * The command `effect` stands for in `state`, with its references resolved
+ * for `opened`; none when one names nobody, such as `windowInvestigator` in
+ * a window that names no investigator (a location revealed by a card
+ * effect), or one who has left the scenario meanwhile (defeated by an
+ * earlier effect of the same revelation), whose threat area and tests are
+ * gone with them.
  */
-function effectCommands(effect: AbilityEffect, opened: OpenedWindow): Command[] {
-  const resolved = resolveRefs(effect, opened);
+export function resolveEffect(
+  state: GameState,
+  effect: AbilityEffect,
+  opened: OpenedWindow,
+): Command | undefined {
+  const { investigatorId, ...nobody } = opened;
+  const named =
+    investigatorId !== undefined && isActiveInvestigator(state, investigatorId) ? opened : nobody;
+  const resolved = resolveRefs(effect, named);
   // The walk keeps every field but the references, which become the IDs the
   // command type expects, so the result is an `AbilityCommand`.
-  return resolved === undefined ? [] : [resolved as AbilityCommand];
+  return resolved === undefined ? undefined : (resolved as AbilityCommand);
 }
 
 function resolveRefs(value: unknown, opened: OpenedWindow): unknown {
@@ -234,6 +250,14 @@ export function skillTest(
     onPass: outcomes.onPass ?? [],
     onFail: outcomes.onFail ?? [],
   };
+}
+
+/**
+ * "Put it into play in your threat area": the card with the ability moves to
+ * the threat area of the investigator the window names (the drawer).
+ */
+export function putIntoThreatArea(): AbilityEffect {
+  return moveSelf({ kind: 'threatArea', investigatorId: { ref: 'windowInvestigator' } });
 }
 
 /** "Discard it": the card with the ability, onto the top of the encounter discard (`DiscardCard`). */

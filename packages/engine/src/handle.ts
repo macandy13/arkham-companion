@@ -15,7 +15,8 @@ import { nextStepPlan } from './phases';
 import { apply } from './reducer';
 import { CommandRejected, type Rejection } from './rejection';
 import type { GameState, HeldAction, QueuedStep } from './state';
-import { MAX_TRIGGERED_COMMANDS, triggeredCommands } from './triggers';
+import { resolveEffect } from './abilities';
+import { MAX_TRIGGERED_COMMANDS, triggeredSteps } from './triggers';
 
 /**
  * Validates a command against the current state and returns the resulting events.
@@ -207,7 +208,8 @@ function resolveStep(resolution: Resolution, step: Step, budget: TriggerBudget):
       resumeHeldAction(resolution, step.command, budget);
       return [];
     default: {
-      if (step.kind === 'command' && step.origin !== undefined) spend(budget);
+      if ((step.kind === 'command' || step.kind === 'ability') && step.origin !== undefined)
+        spend(budget);
       try {
         return resolveQueuedStep(resolution, step, budget);
       } catch (error) {
@@ -250,6 +252,10 @@ function resolveQueuedStep(
       return emitWithEffects(resolution, placeDrawnCard(ctx, state, step.drawn));
     case 'surge':
       return resolveSurge(resolution, step.draw);
+    case 'ability': {
+      const command = resolveEffect(state, step.effect, step.opened);
+      return command ? resolveCommand(resolution, command, step.origin, budget) : [];
+    }
   }
 }
 
@@ -289,7 +295,7 @@ function resolveCommand(
 function emitWithEffects(resolution: Resolution, events: readonly Event[]): Step[] {
   const before = resolution.state;
   emit(resolution, events);
-  return triggeredCommands(resolution.ctx, before, events).map(followUp);
+  return triggeredSteps(resolution.ctx, before, events);
 }
 
 function followUp(command: Command): Step {
@@ -317,7 +323,7 @@ function resolvePhaseStep(resolution: Resolution, budget: TriggerBudget): Step[]
   emit(resolution, plan.events);
   return [
     ...plan.commands.map(followUp),
-    ...triggeredCommands(resolution.ctx, before, plan.events).map(followUp),
+    ...triggeredSteps(resolution.ctx, before, plan.events),
     { kind: 'phaseStep' },
   ];
 }

@@ -29,7 +29,7 @@ import {
   type EngineContext,
   type Rejection,
 } from './index';
-import { triggeredCommands } from './triggers';
+import { triggeredSteps } from './triggers';
 import { answer, rejectionFrom, stateAfter } from '../test/utils';
 
 const hall = instanceId('hall');
@@ -305,6 +305,9 @@ describe('trigger bus', () => {
   });
 
   describe('turn-end and round-end abilities', () => {
+    const endTurnOfAlice: Command = { type: 'EndTurn', investigatorId: alice };
+    /** From alice's turn, `endTurnOfAlice` and two of these end round 1 (the enemy and upkeep phases). */
+    const nextPhase: Command = { type: 'NextPhase' };
     const hauntingDread = instanceId('haunting_dread');
     /** A threat-area treachery: at the end of its holder's turn, willpower (3); a fail deals 1 horror. */
     const hauntingDreadCard = blankTreachery('haunting_dread', {
@@ -355,14 +358,12 @@ describe('trigger bus', () => {
       });
       const { context, state } = newGame()
         .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withInvestigator(alice, { locationId: hall })
         .withCard(instanceId('fading_omen'), fadingOmen, atLocation(hall), { tokens: { doom: 1 } })
+        .withTurnOf(alice)
         .start();
 
-      const after = stateAfter(
-        context,
-        state,
-        ...triggeredCommands(context, state, [{ type: 'RoundEnded', round: 1 }]),
-      );
+      const after = stateAfter(context, state, endTurnOfAlice, nextPhase, nextPhase);
 
       expect(after.cards[instanceId('fading_omen')]).toMatchObject({
         zone: { kind: 'encounterDiscard' },
@@ -378,9 +379,13 @@ describe('trigger bus', () => {
         .withLocation(hall, blankLocation('hall'), { revealed: true })
         .withInvestigator(alice, { locationId: hall })
         .withCard(instanceId('testing_omen'), testingOmen, atLocation(hall))
+        .withTurnOf(alice)
         .start();
 
-      expect(triggeredCommands(context, state, [{ type: 'RoundEnded', round: 1 }])).toEqual([]);
+      const after = stateAfter(context, state, endTurnOfAlice, nextPhase, nextPhase);
+
+      expect(after.meta.round).toBe(1);
+      expect(after.pending).toEqual([]);
     });
   });
 
@@ -573,7 +578,7 @@ describe('onCardEnters', () => {
       .withHooks({ onCardEnters: () => [{ type: 'RevealLocation', locationId: cellar }] })
       .start();
 
-    const commands = triggeredCommands(ctx, started, [
+    const steps = triggeredSteps(ctx, started, [
       {
         type: 'CardMoved',
         cardId: deckGhoul,
@@ -582,7 +587,13 @@ describe('onCardEnters', () => {
       },
     ]);
 
-    expect(commands).toEqual([{ type: 'RevealLocation', locationId: cellar }]);
+    expect(steps).toEqual([
+      {
+        kind: 'command',
+        command: { type: 'RevealLocation', locationId: cellar },
+        origin: 'RevealLocation',
+      },
+    ]);
   });
 
   it('does not fire when a card moves within play', () => {
@@ -590,7 +601,7 @@ describe('onCardEnters', () => {
       .withHooks({ onCardEnters: () => [{ type: 'RevealLocation', locationId: cellar }] })
       .start();
 
-    const commands = triggeredCommands(ctx, started, [
+    const steps = triggeredSteps(ctx, started, [
       {
         type: 'CardMoved',
         cardId: ghoul,
@@ -599,7 +610,7 @@ describe('onCardEnters', () => {
       },
     ]);
 
-    expect(commands).toEqual([]);
+    expect(steps).toEqual([]);
   });
 });
 

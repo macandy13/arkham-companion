@@ -346,9 +346,8 @@ export interface EndScenario {
  * card effect), or with `match` the first card that matches (see below). The
  * card is revealed and then: an enemy is placed unengaged at
  * the investigator's location (engagement, aloof and spawn instructions are
- * `SpawnEnemy`, M1.8); a treachery goes to the investigator's threat area if
- * its card says so (`CardStats.entersThreatArea`), otherwise to the encounter
- * discard; anything else goes to the discard. As soon as the deck is empty
+ * `SpawnEnemy`, M1.8); any other card goes to the discard unless its
+ * revelation put it somewhere else (`putIntoThreatArea`). As soon as the deck is empty
  * the discard is shuffled back into it; a card with surge makes the
  * investigator draw again. Produces, per card drawn, `EncounterCardDrawn`,
  * `CardFlipped` and `CardMoved`, followed by `CardMoved`s and a `DeckShuffled`

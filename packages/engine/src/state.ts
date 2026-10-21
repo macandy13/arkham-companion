@@ -1,3 +1,4 @@
+import type { AbilityEffect, OpenedWindow } from './abilities';
 import type { CampaignLog } from './campaign/campaign_log';
 import type {
   AdvanceAct,
@@ -451,7 +452,12 @@ export type QueuedStep =
   /** The drawn card is placed once its revelation has resolved (`placeDrawnCard`). */
   | { kind: 'placeDrawnCard'; drawn: EncounterCardDrawn; origin?: CommandType }
   /** The surge draw, once the surging card has been placed (`resolveSurge`). */
-  | { kind: 'surge'; draw: DrawEncounter; origin?: CommandType };
+  | { kind: 'surge'; draw: DrawEncounter; origin?: CommandType }
+  /**
+   * One effect of a card ability, resolved into its command when its turn
+   * comes (`resolveEffect`), so it sees what the effects before it did.
+   */
+  | { kind: 'ability'; effect: AbilityEffect; opened: OpenedWindow; origin?: CommandType };
 
 /**
  * The actions the engine sees that provoke attacks of opportunity

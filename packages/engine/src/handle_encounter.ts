@@ -176,8 +176,9 @@ function drawOne(
  * The rest of a `DrawEncounter` once the drawn card's revelation has
  * resolved: the card is placed (`placement`), and if that left the deck
  * empty the discard is shuffled back in, so a discarded card is in the deck
- * again before the next draw. Nothing when the revelation has already moved
- * the card out of `resolving`. A drawer who has left the scenario meanwhile
+ * again before the next draw. A card the revelation has already moved out of
+ * `resolving` (`putIntoThreatArea`) is not placed, but the deck is still
+ * refilled. A drawer who has left the scenario meanwhile
  * has no location or threat area to take the card (`withoutDrawer`).
  */
 export function placeDrawnCard(
@@ -186,7 +187,7 @@ export function placeDrawnCard(
   drawn: EncounterCardDrawn,
 ): Event[] {
   const card = requireCard(state.cards, drawn.cardId);
-  if (card.zone.kind !== 'resolving') return [];
+  if (card.zone.kind !== 'resolving') return refillIfEmpty(state);
   const drawer = state.investigators.find((inv) => inv.id === drawn.investigatorId);
   const stats = cardStats(ctx.cards, card.code);
   const placed =
@@ -227,8 +228,6 @@ function placement(
   const card = requireCard(state.cards, cardId);
   const host = attachmentHost(ctx, state, stats, investigator);
   if (host) return [cardMoved(state, card, { kind: 'attachedTo', hostId: host.id })];
-  if (stats.typeCode === 'treachery' && stats.entersThreatArea)
-    return [cardMoved(state, card, { kind: 'threatArea', investigatorId: investigator.id })];
   // Index 0 is the top, and the discard's top is what "topmost" effects look for.
   return [cardMoved(state, card, encounterDiscard, 0)];
 }

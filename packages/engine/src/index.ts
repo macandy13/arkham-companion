@@ -95,6 +95,7 @@ export {
   moveSelf,
   placeDoomOnAgenda,
   placeDoomOnSelf,
+  putIntoThreatArea,
   skillTest,
   takeDamage,
   takeHorror,

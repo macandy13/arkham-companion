@@ -15,6 +15,7 @@ import {
   investigatorId,
   moveSelf,
   newGame,
+  putIntoThreatArea,
   replay,
   setAside,
   skillTest,
@@ -46,7 +47,9 @@ const plainTreachery = blankTreachery('plain_treachery');
 const surgeTreachery = blankTreachery('surge_treachery', { keywords: [{ name: 'surge' }] });
 const surgeFoe = blankEnemy('surge_foe', { keywords: [{ name: 'surge' }] });
 const perilTreachery = blankTreachery('peril_treachery', { keywords: [{ name: 'peril' }] });
-const lingeringTreachery = blankTreachery('lingering_treachery', { entersThreatArea: true });
+const lingeringTreachery = blankTreachery('lingering_treachery', {
+  abilities: [whenRevealed(putIntoThreatArea())],
+});
 const onePerLocationAttachment = blankTreachery('one_per_location_attachment', {
   locationAttachment: { onePerLocation: true },
 });
@@ -931,6 +934,23 @@ describe('surge after the drawn card has resolved', () => {
     ]);
   });
 
+  it('discards a card whose revelation defeated alice before putting it into her threat area', () => {
+    const deadlyLingering = blankTreachery('deadly_lingering', {
+      abilities: [whenRevealed(takeDamage(8), putIntoThreatArea())],
+    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('deadly_lingering'), deadlyLingering, encounterDeck)
+      .start();
+
+    const { events } = execute(context, state, draw);
+
+    expect(resolutionOrder(events)).toEqual([
+      'draws deadly_lingering',
+      'alice damage +8',
+      'discards deadly_lingering',
+    ]);
+  });
+
   it('draws the surge card only after the players chose where the enemy spawns', () => {
     const { context, state } = aliceInHall
       .withCard(instanceId('choosy_card'), choosyFoe, encounterDeck)
@@ -961,8 +981,7 @@ describe('revelation before the drawn card is placed', () => {
   });
   const scorchingFoe = blankEnemy('scorching_foe', { abilities: [whenRevealed(takeDamage(1))] });
   const scorchingLingering = blankTreachery('scorching_lingering', {
-    entersThreatArea: true,
-    abilities: [whenRevealed(takeDamage(1))],
+    abilities: [whenRevealed(takeDamage(1), putIntoThreatArea())],
   });
   const scorchingAttachment = blankTreachery('scorching_attachment', {
     locationAttachment: { onePerLocation: true },

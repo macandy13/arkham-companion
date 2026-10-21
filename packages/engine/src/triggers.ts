@@ -1,4 +1,4 @@
-import { abilityCommands, windowsOpenedBy } from './abilities';
+import { abilitySteps, windowsOpenedBy, type AbilityStep } from './abilities';
 import type { EngineContext } from './cards';
 import type { Command } from './commands';
 import { isInPlay } from './doom';
@@ -14,7 +14,7 @@ import type {
 } from './events';
 import type { InstanceId } from './ids';
 import { apply } from './reducer';
-import type { GameState } from './state';
+import type { GameState, QueuedStep } from './state';
 
 /**
  * A forced effect as code: given the state after the triggering command and
@@ -72,22 +72,26 @@ export interface ScenarioHooks {
  */
 export const MAX_TRIGGERED_COMMANDS = 50;
 
-/** A hook that matched an event, not yet evaluated. */
-type PendingTrigger = (state: GameState) => readonly Command[];
+/** A forced effect to resolve: a hook's command, or one effect of a card ability. */
+export type TriggeredStep = Extract<QueuedStep, { kind: 'command' }> | AbilityStep;
+
+/** A hook or ability that matched an event, not yet evaluated. */
+type PendingTrigger = (state: GameState) => readonly TriggeredStep[];
 
 /**
- * The follow-up commands the scenario hooks in `ctx` and the card abilities
- * in its card data return for `events`, which a command produced from
- * `before`. Hooks match against the state right before each event (to tell
+ * The follow-up steps the scenario hooks in `ctx` and the card abilities in
+ * its card data return for `events`, which a command produced from
+ * `before`: a hook's commands, and each ability effect as a step of its own
+ * that resolves when its turn comes (`resolveEffect`). Hooks match against the state right before each event (to tell
  * whether a card entered play) but are evaluated against the state after all
  * of them, so every hook sees the command's complete outcome. Order: by
  * event, scenario hooks before card abilities.
  */
-export function triggeredCommands(
+export function triggeredSteps(
   ctx: EngineContext,
   before: GameState,
   events: readonly Event[],
-): Command[] {
+): TriggeredStep[] {
   const pending: PendingTrigger[] = [];
   let state = before;
   for (const event of events) {
@@ -95,7 +99,7 @@ export function triggeredCommands(
     pending.push(...matchingTriggers(ctx, state, next, event));
     pending.push(
       ...windowsOpenedBy(next, event, events).map(
-        (opened) => (after: GameState) => abilityCommands(ctx, after, opened),
+        (opened) => (after: GameState) => abilitySteps(ctx, after, opened),
       ),
     );
     state = next;
@@ -115,7 +119,7 @@ function matchingTriggers(
     return code === undefined ? undefined : registry?.[code];
   };
   const bind = <E extends Event>(hook: TriggerHook<E> | undefined, e: E): PendingTrigger[] =>
-    hook ? [(state) => hook(ctx, state, e)] : [];
+    hook ? [(state) => hook(ctx, state, e).map(hookStep)] : [];
   switch (event.type) {
     case 'TokensChanged':
       return event.token === 'doom' && event.delta > 0 ? bind(hooks.afterDoomPlaced, event) : [];
@@ -134,6 +138,10 @@ function matchingTriggers(
     default:
       return [];
   }
+}
+
+function hookStep(command: Command): TriggeredStep {
+  return { kind: 'command', command, origin: command.type };
 }
 
 function entersPlay(before: GameState, after: GameState, event: CardMoved): boolean {

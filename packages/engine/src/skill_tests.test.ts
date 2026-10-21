@@ -11,6 +11,7 @@ import {
   instanceId,
   investigatorId,
   newGame,
+  putIntoThreatArea,
   skillTest,
   skillTestDecision,
   whenRevealed,
@@ -51,8 +52,7 @@ const chillingTreachery = blankTreachery('chilling_treachery', {
   abilities: [whenRevealed(skillTest('willpower', 4))],
 });
 const clingingTreachery = blankTreachery('clinging_treachery', {
-  entersThreatArea: true,
-  abilities: [whenRevealed(skillTest('agility', 2))],
+  abilities: [whenRevealed(putIntoThreatArea(), skillTest('agility', 2))],
 });
 const plainTreachery = blankTreachery('plain_treachery');
 
@@ -534,7 +534,7 @@ describe('revelation test', () => {
     expect(failed.investigators[0]).toMatchObject({ health: { damage: 0 }, sanity: { horror: 0 } });
   });
 
-  it('puts a treachery that stays in play into the threat area once its test is answered', () => {
+  it('puts a treachery into the threat area before its test, as its revelation lists them', () => {
     const clinging = instanceId('clinging');
     const { context, state } = aliceInStudy
       .withCard(clinging, clingingTreachery, { kind: 'encounterDeck' })
@@ -543,7 +543,7 @@ describe('revelation test', () => {
     const drawn = stateAfter(context, state, draw);
     const answered = stateAfter(context, drawn, answer('test:clinging', 'fail'));
 
-    expect(drawn.cards[clinging]!.zone).toEqual({ kind: 'resolving' });
+    expect(drawn.cards[clinging]!.zone).toEqual({ kind: 'threatArea', investigatorId: alice });
     expect(answered.cards[clinging]!.zone).toEqual({ kind: 'threatArea', investigatorId: alice });
   });
 

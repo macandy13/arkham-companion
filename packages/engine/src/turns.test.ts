@@ -8,8 +8,10 @@ import {
   instanceId,
   investigatorId,
   newGame,
+  putIntoThreatArea,
   skillTest,
   threatAreaOf,
+  whenRevealed,
   zoneKey,
   type Command,
   type GameState,
@@ -149,11 +151,15 @@ describe('the end of a turn', () => {
   const dissonantVoices = instanceId('dissonant_voices');
   /** A threat-area treachery with a willpower (3) test at the end of its investigator's turn. */
   const frozenInFearCard = blankTreachery('frozen_in_fear', {
-    entersThreatArea: true,
-    abilities: [atEndOfTurn(skillTest('willpower', 3, { onPass: [discardSelf()] }))],
+    abilities: [
+      whenRevealed(putIntoThreatArea()),
+      atEndOfTurn(skillTest('willpower', 3, { onPass: [discardSelf()] })),
+    ],
   });
   /** A threat-area treachery without an end-of-turn test. */
-  const dissonantVoicesCard = blankTreachery('dissonant_voices', { entersThreatArea: true });
+  const dissonantVoicesCard = blankTreachery('dissonant_voices', {
+    abilities: [whenRevealed(putIntoThreatArea())],
+  });
 
   /**
    * Alice and bob in the hall, with Frozen in Fear (an end-of-turn willpower
