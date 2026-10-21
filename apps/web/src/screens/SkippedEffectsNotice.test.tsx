@@ -17,7 +17,7 @@ describe('SkippedEffectsNotice', () => {
     );
 
     expect(screen.getByRole('status', { name: 'Do this by hand' }).textContent).toContain(
-      'The Barrier: spawning the enemy was skipped because Ghoul Priest is not in the game exactly once. Please do it by hand.',
+      'The Barrier: spawning the enemy was skipped, as the game does not hold exactly one copy of Ghoul Priest. Please do it by hand.',
     );
   });
 

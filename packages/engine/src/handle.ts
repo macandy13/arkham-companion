@@ -257,7 +257,8 @@ function resolveQueuedStep(
         spend(budget);
         return resolveCommand(resolution, command, step.origin, budget);
       }
-      // A drawer who has left names nobody by the rules; a missing scenario card is for the players to fix.
+      // A drawer who has left names nobody by the rules; a missing scenario card is for the players to
+      // fix, even when the effect also names such a drawer: they should know the data is off.
       const missing = missingCopies(state, step.effect);
       if (missing.length > 0) {
         const { cardId } = step.opened;

@@ -24,7 +24,7 @@ export const resources = {
         label: 'Do this by hand',
         dismiss: 'OK',
         effect:
-          '{{card}}: {{effect}} was skipped because {{missing}} is not in the game exactly once. Please do it by hand.',
+          '{{card}}: {{effect}} was skipped, as the game does not hold exactly one copy of {{missing}}. Please do it by hand.',
         anEffect: 'an effect',
         effects: {
           RevealLocation: 'revealing the location',
@@ -209,7 +209,7 @@ export const resources = {
         label: 'Von Hand erledigen',
         dismiss: 'OK',
         effect:
-          '{{card}}: {{effect}} wurde übersprungen, weil {{missing}} nicht genau einmal im Spiel ist. Bitte von Hand erledigen.',
+          '{{card}}: {{effect}} wurde übersprungen, da es nicht genau ein Exemplar von {{missing}} im Spiel gibt. Bitte von Hand erledigen.',
         anEffect: 'Ein Effekt',
         effects: {
           RevealLocation: 'Das Aufdecken des Ortes',

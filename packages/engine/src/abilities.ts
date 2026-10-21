@@ -295,8 +295,8 @@ function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
 
 /**
  * The codes `effect` names with `{ ref: 'onlyCopy' }` that are not in the
- * game exactly once in `state`, in the order it names them; the reason an
- * `AbilityEffectSkipped` gives.
+ * game exactly once in `state`, each once, in the order it first names them;
+ * the reason an `AbilityEffectSkipped` gives.
  */
 export function missingCopies(state: GameState, effect: AbilityEffect): CardCode[] {
   const missing: CardCode[] = [];
@@ -305,8 +305,8 @@ export function missingCopies(state: GameState, effect: AbilityEffect): CardCode
     if (Array.isArray(value)) {
       value.forEach(walk);
     } else if (isRelative(value)) {
-      if (value.ref === 'onlyCopy' && theOnlyCopy(state, value.code) === undefined)
-        missing.push(value.code);
+      if (value.ref !== 'onlyCopy' || missing.includes(value.code)) return;
+      if (theOnlyCopy(state, value.code) === undefined) missing.push(value.code);
     } else {
       Object.values(value).forEach(walk);
     }

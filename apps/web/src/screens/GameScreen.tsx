@@ -52,18 +52,20 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
       <section id="encounter" aria-labelledby="encounter-title">
         <h2 id="encounter-title">{t('encounter.title')}</h2>
       </section>
-      {open.rejection && (
-        <RejectionToast
-          rejection={open.rejection}
-          onDismiss={() => store.getState().dismissRejection()}
-        />
-      )}
-      {open.skippedEffects && (
-        <SkippedEffectsNotice
-          skipped={open.skippedEffects}
-          onDismiss={() => store.getState().dismissSkippedEffects()}
-        />
-      )}
+      <div id="notices">
+        {open.skippedEffects && (
+          <SkippedEffectsNotice
+            skipped={open.skippedEffects}
+            onDismiss={() => store.getState().dismissSkippedEffects()}
+          />
+        )}
+        {open.rejection && (
+          <RejectionToast
+            rejection={open.rejection}
+            onDismiss={() => store.getState().dismissRejection()}
+          />
+        )}
+      </div>
     </div>
   );
 }

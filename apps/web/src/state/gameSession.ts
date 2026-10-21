@@ -105,7 +105,7 @@ export class GameSession {
     return this.table.board;
   }
 
-  /** What the last step played skipped for the players to do by hand; none after a refusal or undo. */
+  /** What the last step played skipped for the players to do by hand; none after an undo. */
   get skippedEffects(): readonly SkippedEffect[] {
     return this.skipped;
   }
@@ -123,7 +123,6 @@ export class GameSession {
    */
   async play(step: PlayStep): Promise<Rejection | undefined> {
     const before = this.table.entries;
-    this.skipped = [];
     try {
       this.table.step(() => step(this.table));
     } catch (error) {
@@ -143,6 +142,7 @@ export class GameSession {
       );
       this.lastSeq = stored.at(-1)?.seq ?? this.lastSeq;
     });
+    // Only a step that counts replaces them: a refused tap leaves an unread notice in place.
     this.skipped = skippedEffects(
       this.ctx,
       this.state,
