@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import {
   attachedTo,
   atLocation,
@@ -16,6 +16,7 @@ import {
   PlayTable,
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
+import { gameActions } from '../state/gameActions';
 import { MapBoard } from './MapBoard';
 
 const study = instanceId('study');
@@ -37,6 +38,13 @@ const house = newGame()
   .withConnection(study, hallway)
   .withConnection(hallway, attic, { oneWay: true });
 
+/** Actions that play on `table`, as the store's play on the open game; undo is never used here. */
+const actionsOn = (table: PlayTable) =>
+  gameActions(
+    async (step) => step(table),
+    async () => {},
+  );
+
 const tile = (name: string) => screen.getByRole('group', { name });
 
 describe('MapBoard', () => {
@@ -54,7 +62,7 @@ describe('MapBoard', () => {
       ),
     );
 
-    render(<MapBoard board={table.board} />);
+    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
     expect(screen.getByRole('figure', { name: 'House' })).toBeTruthy();
     expect(within(tile('study')).getByText('Shroud 4 · Clues 2')).toBeTruthy();
@@ -65,7 +73,8 @@ describe('MapBoard', () => {
   });
 
   it('names each connection after its locations and marks one-way ones', () => {
-    render(<MapBoard board={PlayTable.start(house).board} />);
+    const table = PlayTable.start(house);
+    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
     const lines = screen.getAllByRole('img').map((line) => line.getAttribute('aria-label'));
     expect(lines).toEqual(['study – hallway', 'hallway to attic, one way']);
@@ -79,7 +88,7 @@ describe('MapBoard', () => {
         .withMap(mapId('empty_study'), { name: 'Empty study' }),
     );
 
-    render(<MapBoard board={table.board} />);
+    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
     expect(screen.getByRole('figure', { name: 'House' })).toBeTruthy();
     expect(screen.queryByRole('figure', { name: 'Cellar' })).toBeNull();
@@ -87,7 +96,8 @@ describe('MapBoard', () => {
   });
 
   it('offers zoom buttons for the shown map', () => {
-    render(<MapBoard board={PlayTable.start(house).board} />);
+    const table = PlayTable.start(house);
+    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
     const zoom = within(screen.getByRole('toolbar', { name: 'Zoom' }));
     expect(zoom.getAllByRole('button').map((button) => button.textContent)).toEqual([
@@ -98,7 +108,8 @@ describe('MapBoard', () => {
   });
 
   it('shows one map without tabs', () => {
-    render(<MapBoard board={PlayTable.start(house).board} />);
+    const table = PlayTable.start(house);
+    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
     expect(screen.queryByRole('tablist')).toBeNull();
   });
@@ -109,7 +120,7 @@ describe('MapBoard', () => {
         .withMap(mapId('cellar'), { name: 'Cellar' })
         .withLocation(instanceId('cellar'), blankLocation('cellar'), { map: mapId('cellar') }),
     );
-    render(<MapBoard board={table.board} />);
+    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
     const tab = (name: string) => screen.getByRole('tab', { name });
 
     expect(tab('House').getAttribute('aria-selected')).toBe('true');
@@ -131,11 +142,15 @@ describe('MapBoard', () => {
         .withMap(cellar, { name: 'Cellar' })
         .withLocation(instanceId('cellar'), blankLocation('cellar'), { map: cellar }),
     );
-    const { rerender } = render(<MapBoard board={withCellar.board} />);
+    const { rerender } = render(
+      <MapBoard board={withCellar.board} actions={actionsOn(withCellar)} busy={false} />,
+    );
     fireEvent.click(screen.getByRole('tab', { name: 'Cellar' }));
 
     const cellarEmptied = PlayTable.start(house.withMap(cellar, { name: 'Cellar' }));
-    rerender(<MapBoard board={cellarEmptied.board} />);
+    rerender(
+      <MapBoard board={cellarEmptied.board} actions={actionsOn(cellarEmptied)} busy={false} />,
+    );
 
     expect(screen.getByRole('figure', { name: 'House' })).toBeTruthy();
   });
@@ -152,7 +167,7 @@ describe('MapBoard', () => {
     );
     table.play({ type: 'ExhaustEnemy', enemyId: ghoul });
 
-    render(<MapBoard board={table.board} />);
+    render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
     expect(within(tile('study')).getByRole('img', { name: 'alder' })).toBeTruthy();
     expect(
@@ -161,5 +176,88 @@ describe('MapBoard', () => {
       }),
     ).toBeTruthy();
     expect(within(tile('hallway')).getByRole('img', { name: 'rats' })).toBeTruthy();
+  });
+
+  // jsdom lays nothing out, so the drawing's screen matrix is stubbed to the identity: a pointer
+  // at screen (x, y) is at (x, y) in the drawing. The Study's tile spans 0–150 across and 0–210
+  // down, with its first pawn centred on (24, 186); the Hallway's tile starts at x 180.
+  describe('dragging a pawn', () => {
+    const bea = investigatorId('bea');
+    const identity = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
+    beforeAll(() => {
+      Object.assign(SVGSVGElement.prototype, {
+        getScreenCTM: () => ({ inverse: () => identity }),
+      });
+      Object.assign(Element.prototype, {
+        setPointerCapture: () => {},
+        hasPointerCapture: () => true,
+      });
+    });
+    afterAll(() => {
+      const svg: object = SVGSVGElement.prototype;
+      const element: object = Element.prototype;
+      Reflect.deleteProperty(svg, 'getScreenCTM');
+      Reflect.deleteProperty(element, 'setPointerCapture');
+      Reflect.deleteProperty(element, 'hasPointerCapture');
+    });
+
+    /** Drags the pawn named `name` in the Study to screen point (`x`, `y`) and lets go. */
+    async function drag(name: string, x: number, y: number) {
+      const pawn = within(tile('study')).getByRole('img', { name });
+      fireEvent.pointerDown(pawn, { pointerId: 1, clientX: 24, clientY: 186 });
+      fireEvent.pointerMove(pawn, { pointerId: 1, clientX: x, clientY: y });
+      fireEvent.pointerUp(pawn, { pointerId: 1, clientX: x, clientY: y });
+      await act(async () => {});
+    }
+
+    it('moves the investigator whose turn it is to the location they are dropped on', async () => {
+      const table = PlayTable.start(
+        house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
+      );
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+
+      await drag('alder', 255, 105);
+
+      expect(table.board.investigator(alder).at).toBe('hallway');
+    });
+
+    it.each([
+      { where: 'on their own location', x: 75, y: 105 },
+      { where: 'between two tiles', x: 165, y: 105 },
+    ])('leaves the investigator in place when dropped $where', async ({ x, y }) => {
+      const table = PlayTable.start(
+        house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
+      );
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+
+      await drag('alder', x, y);
+
+      expect(table.board.investigator(alder).at).toBe('study');
+    });
+
+    it('leaves the pawn in place while a step is still queued', async () => {
+      const table = PlayTable.start(
+        house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
+      );
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy />);
+
+      await drag('alder', 255, 105);
+
+      expect(table.board.investigator(alder).at).toBe('study');
+    });
+
+    it('leaves the pawns of the other investigators in place', async () => {
+      const table = PlayTable.start(
+        house
+          .withInvestigator(bea, { locationId: study })
+          .withInvestigator(alder, { locationId: study })
+          .withTurnOf(alder),
+      );
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+
+      await drag('bea', 255, 105);
+
+      expect(table.board.investigator(bea).at).toBe('study');
+    });
   });
 });
