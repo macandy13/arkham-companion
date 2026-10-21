@@ -50,7 +50,7 @@ export type RelativeCard =
   /**
    * The one copy of `code` in the game, in whatever zone: for a scenario's
    * unique cards ("the Parlor", "the Ghoul Priest"); none while the game holds
-   * no copy or several.
+   * no copy or several, and the effect is skipped with `AbilityEffectSkipped`.
    */
   | { ref: 'onlyCopy'; code: CardCode };
 
@@ -291,6 +291,28 @@ function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
   }
   const entries = Object.entries(value).map(([key, field]) => [key, resolveRefs(field, refs)]);
   return entries.some(([, field]) => field === undefined) ? undefined : Object.fromEntries(entries);
+}
+
+/**
+ * The codes `effect` names with `{ ref: 'onlyCopy' }` that are not in the
+ * game exactly once in `state`, each once, in the order it first names them;
+ * the reason an `AbilityEffectSkipped` gives.
+ */
+export function missingCopies(state: GameState, effect: AbilityEffect): CardCode[] {
+  const missing: CardCode[] = [];
+  const walk = (value: unknown): void => {
+    if (typeof value !== 'object' || value === null) return;
+    if (Array.isArray(value)) {
+      value.forEach(walk);
+    } else if (isRelative(value)) {
+      if (value.ref !== 'onlyCopy' || missing.includes(value.code)) return;
+      if (theOnlyCopy(state, value.code) === undefined) missing.push(value.code);
+    } else {
+      Object.values(value).forEach(walk);
+    }
+  };
+  walk(effect);
+  return missing;
 }
 
 function isRelative(value: object): value is RelativeCard | RelativeInvestigator {

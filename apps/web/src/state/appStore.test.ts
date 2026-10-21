@@ -2,17 +2,21 @@ import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
 import {
   cardCode,
+  cardStats,
   scenarioId,
   cardDbWith,
   instanceId,
   investigatorCode,
   investigatorCardStats,
   investigatorId,
+  onlyCopy,
   replay,
+  revealLocation,
+  whenAdvanced,
   type Event,
   type InvestigatorCard,
 } from '@arkham/engine';
-import { theGathering, theGatheringCards } from '@arkham/scenarios';
+import { GATHERING_CODES, theGathering, theGatheringCards } from '@arkham/scenarios';
 import { GameImportError } from '../storage/gameExport';
 import { IndexedDbStore } from '../storage/IndexedDbStore';
 import { createAppStore } from './appStore';
@@ -369,6 +373,60 @@ describe('appStore', () => {
           await store.getState().actions.removeDoom(1);
 
           expect(store.getState().current?.board?.agenda).toMatchObject({ doom: 1 });
+        });
+      });
+
+      describe('with an act whose reverse side names a card the game lacks', () => {
+        // Trapped's reverse side also reveals a Secret Room, which The Gathering has no copy of.
+        const trappedWithSecretRoom = {
+          ...cardStats(theGatheringCards, GATHERING_CODES.trapped),
+          abilities: [whenAdvanced(revealLocation(onlyCopy(cardCode('secret_room'))))],
+        };
+        const cards = cardDbWith(start.ctx.cards, [trappedWithSecretRoom]);
+        const secretRoomGathering = { ...start, ctx: { ...start.ctx, cards } };
+
+        /** Alder finds Trapped's 2 clues in the Study and spends them, which skips the reveal. */
+        async function advancedTrapped(db: string) {
+          const store = createAppStore(new IndexedDbStore(db), () => ({
+            id: 'secret-room',
+            nameKey: 'scenario.theGathering.name',
+            definition: theGathering,
+            cards,
+          }));
+          await store.getState().startScenario(secretRoomGathering);
+          await store.getState().actions.nextPhase();
+          await store.getState().actions.startTurn(investigatorId('alder'));
+          await store.getState().actions.investigate();
+          await store.getState().actions.answer('pass');
+          await store.getState().actions.investigate();
+          await store.getState().actions.answer('pass');
+          await store
+            .getState()
+            .actions.advanceAct([{ investigator: investigatorId('alder'), clues: 2 }]);
+          return store;
+        }
+
+        it('shows the skipped effect until the players dismiss it', async () => {
+          const store = await advancedTrapped('actions-skipped-dismiss-test');
+          const shown = store.getState().current?.skippedEffects;
+
+          store.getState().dismissSkippedEffects();
+
+          expect(shown).toEqual([
+            { card: 'Trapped', effect: 'RevealLocation', missing: ['secret_room'] },
+          ]);
+          expect(store.getState().current?.skippedEffects).toBeUndefined();
+        });
+
+        it('keeps the skipped effect through a refused tap, and the next step clears it', async () => {
+          const store = await advancedTrapped('actions-skipped-next-step-test');
+
+          await store.getState().actions.answer('pass');
+          const afterRefusal = store.getState().current?.skippedEffects;
+          await store.getState().actions.adjustActions(-1);
+
+          expect(afterRefusal).toHaveLength(1);
+          expect(store.getState().current?.skippedEffects).toBeUndefined();
         });
       });
 

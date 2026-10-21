@@ -53,8 +53,8 @@
   grid-area: investigators;
 }
 
-/* Floats over the board, so a refusal never pushes the map aside. */
-#board > aside[role='alert'] {
+/* Floats over the board, so a refusal or a skipped effect never pushes the map aside; both stack. */
+#notices {
   position: fixed;
   inset-inline: 0;
   bottom: calc(var(--layout-board-bar-height) + var(--space-3));
@@ -62,14 +62,26 @@
   max-width: var(--layout-sheet-width);
   margin-inline: auto;
   display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+#notices > aside {
+  display: flex;
   gap: var(--space-3);
   align-items: center;
   border-radius: var(--radius);
   background: var(--color-surface);
 }
 
-#board > aside[role='alert'] p {
+#notices p,
+#notices ul {
   margin: 0;
+}
+
+#notices ul {
+  padding-inline-start: 0;
+  list-style: none;
 }
 
 #board > header section {

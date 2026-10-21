@@ -6,8 +6,9 @@ import {
   investigatorId,
   PlayTable,
   type InvestigatorCard,
+  type ScenarioDefinition,
 } from '@arkham/engine';
-import { theGathering, theGatheringCards } from '@arkham/scenarios';
+import { GATHERING_CODES, theGathering, theGatheringCards } from '@arkham/scenarios';
 import { serialiseGameExport } from '../../src/storage/gameExport';
 
 /** An invented investigator: the exported game reads them from its log, never from card data. */
@@ -18,20 +19,15 @@ const alder: InvestigatorCard = {
   sanity: 8,
   skills: { willpower: 3, intellect: 3, combat: 3, agility: 3 },
 };
+const alderId = investigatorId('alder');
 
 /**
- * An export file of a solo game of The Gathering titled `title`, played until act 1 opens the
- * house: Alder takes the Study's two clues and spends them. Played through the engine rather
- * than kept as a file, so it always matches the current event format. The screen has no
- * actions for this yet, so flows that need the house import this game.
+ * A solo game of `scenario` (The Gathering or a variant of it), played until act 1 opens the
+ * house: Alder takes the Study's two clues and spends them.
  */
-export function houseOpenedExport(title: string): Buffer {
-  const alderId = investigatorId('alder');
+function houseOpened(scenario: ScenarioDefinition): PlayTable {
   const table = PlayTable.setUp(
-    {
-      cards: cardDbWith(theGatheringCards, [investigatorCardStats(alder)]),
-      scenario: theGathering,
-    },
+    { cards: cardDbWith(theGatheringCards, [investigatorCardStats(alder)]), scenario },
     { investigators: [{ id: alderId, code: alder.code }], seed: 3 },
   );
   table.nextPhase();
@@ -39,12 +35,45 @@ export function houseOpenedExport(title: string): Buffer {
   table.investigate(alderId);
   table.investigate(alderId);
   table.spendCluesToAdvanceAct([[alderId, 2]]);
+  return table;
+}
+
+/** The export file of `table`'s game, titled `title`, as the home screen's import reads it. */
+function exportOf(title: string, table: PlayTable, commandId: string): Buffer {
   const events = table.events.map((event, seq) => ({
     gameId: gameId('export'),
     seq: seq + 1,
     timestamp: seq,
-    commandId: 'house_opened',
+    commandId,
     event,
   }));
   return Buffer.from(serialiseGameExport(title, 0, events));
+}
+
+/**
+ * An export file of a solo game of The Gathering titled `title`, played until act 1 opens the
+ * house. Played through the engine rather than kept as a file, so it always matches the current
+ * event format. The screen has no actions for this yet, so flows that need the house import it.
+ */
+export function houseOpenedExport(title: string): Buffer {
+  return exportOf(title, houseOpened(theGathering), 'house_opened');
+}
+
+/**
+ * Like `houseOpenedExport`, but the setup set two Ghoul Priests aside, and Alder holds the 3 clues
+ * act 2 (The Barrier) needs, given by hand to keep the script short. Advancing the act then cannot
+ * tell which Ghoul Priest to spawn, so the screen asks the players to do it by hand.
+ */
+export function twoGhoulPriestsExport(title: string): Buffer {
+  const twoPriests: ScenarioDefinition = {
+    ...theGathering,
+    setup: theGathering.setup.map((step) =>
+      step.kind === 'setAside'
+        ? { ...step, codes: [...step.codes, GATHERING_CODES.ghoulPriest] }
+        : step,
+    ),
+  };
+  const table = houseOpened(twoPriests);
+  table.play({ type: 'AdjustInvestigator', investigatorId: alderId, stat: 'clues', delta: 3 });
+  return exportOf(title, table, 'two_ghoul_priests');
 }

@@ -15,11 +15,24 @@ export const resources = {
         doom: 'Doom {{doom}}',
         doomOf: 'Doom {{doom}} / {{threshold}}',
         cluesOf: 'Clues {{clues}} / {{threshold}}',
+        advanceAct: 'Advance',
         addDoom: 'Add doom',
         removeDoom: 'Remove doom',
         noGame: 'No game open',
       },
       toast: { label: 'Not possible', dismiss: 'OK', fallback: 'That is not possible right now.' },
+      skipped: {
+        label: 'Do this by hand',
+        dismiss: 'OK',
+        effect:
+          '{{card}}: {{effect}} was skipped, as the game does not hold exactly one copy of {{missing}}. Please do it by hand.',
+        anEffect: 'an effect',
+        effects: {
+          RevealLocation: 'revealing the location',
+          FromSetAside: 'putting the set-aside card into play',
+          SpawnEnemy: 'spawning the enemy',
+        },
+      },
       rejections: {
         decisionPending: 'Answer the open decision first.',
         noPendingDecision: 'There is no open decision to answer.',
@@ -193,11 +206,24 @@ export const resources = {
         doom: 'Verderben {{doom}}',
         doomOf: 'Verderben {{doom}} / {{threshold}}',
         cluesOf: 'Hinweise {{clues}} / {{threshold}}',
+        advanceAct: 'Vorrücken',
         addDoom: 'Verderben hinzufügen',
         removeDoom: 'Verderben entfernen',
         noGame: 'Kein Spiel geöffnet',
       },
       toast: { label: 'Nicht möglich', dismiss: 'OK', fallback: 'Das ist gerade nicht möglich.' },
+      skipped: {
+        label: 'Von Hand erledigen',
+        dismiss: 'OK',
+        effect:
+          '{{card}}: {{effect}} wurde übersprungen, da es nicht genau ein Exemplar von {{missing}} im Spiel gibt. Bitte von Hand erledigen.',
+        anEffect: 'Ein Effekt',
+        effects: {
+          RevealLocation: 'Das Aufdecken des Ortes',
+          FromSetAside: 'Das Ins-Spiel-Bringen der beiseitegelegten Karte',
+          SpawnEnemy: 'Das Erscheinen des Gegners',
+        },
+      },
       rejections: {
         decisionPending: 'Triff zuerst die offene Entscheidung.',
         noPendingDecision: 'Es gibt keine offene Entscheidung.',

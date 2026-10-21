@@ -10,8 +10,9 @@ import {
   investigatorId,
   scenario,
   type InvestigatorCard,
+  type ScenarioDefinition,
 } from '@arkham/engine';
-import { theGathering, theGatheringCards } from '@arkham/scenarios';
+import { GATHERING_CODES, theGathering, theGatheringCards } from '@arkham/scenarios';
 import { IndexedDbStore } from '../storage/IndexedDbStore';
 import { GameSession } from './gameSession';
 
@@ -79,6 +80,39 @@ describe('GameSession on The Gathering', () => {
 
     expect(session.state).toEqual(atSetup);
     expect((await store.loadGame(gameId))?.state).toEqual(atSetup);
+  });
+
+  it('names the effects a step skipped for a missing card, until the next step', async () => {
+    // With two Ghoul Priests set aside, The Barrier's reverse side cannot tell which one spawns.
+    const twoPriests: ScenarioDefinition = {
+      ...theGathering,
+      setup: theGathering.setup.map((step) =>
+        step.kind === 'setAside'
+          ? { ...step, codes: [...step.codes, GATHERING_CODES.ghoulPriest] }
+          : step,
+      ),
+    };
+    const twoPriestsCtx = { ...ctx, scenario: twoPriests };
+    const store = new IndexedDbStore('session-skipped-effect-test');
+    const gameId = await store.createGame({ title: 'The Gathering' });
+    const twoPriestsSetup = scenario.compileSetup(twoPriestsCtx, {
+      difficulty: 'easy',
+      seed: 3,
+      investigators: [{ id: investigatorId('alder'), code: alder.code }],
+    });
+    await store.appendEvents(gameId, execute(twoPriestsCtx, emptyState(), twoPriestsSetup).events);
+    const session = await GameSession.open(store, gameId, twoPriestsCtx);
+    // Act 1 (Trapped) advances first, without its clues, so that The Barrier is current.
+    await session.play((table) => table.play({ type: 'AdvanceAct' }));
+
+    await session.play((table) => table.play({ type: 'AdvanceAct' }));
+    const afterTheBarrier = session.skippedEffects;
+    await session.play((table) => table.nextPhase());
+
+    expect(afterTheBarrier).toEqual([
+      { card: 'The Barrier', effect: 'SpawnEnemy', missing: ['Ghoul Priest'] },
+    ]);
+    expect(session.skippedEffects).toEqual([]);
   });
 
   it('reloads what another tab stored when its own write is refused', async () => {
