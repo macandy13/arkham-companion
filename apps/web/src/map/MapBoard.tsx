@@ -16,9 +16,18 @@ import './map.css';
  * and show one at a time, since each map is drawn to fill the map area. It takes the whole
  * `board`, since the pieces on the tiles come from all over it (investigators now, more pieces
  * later). The players pan, zoom and pinch each map, and move by dragging a pawn (`MapDrawing`),
- * which plays `actions`.
+ * which plays `actions`; no pawn moves while a step is still queued (`busy`, `OpenGame.busy`),
+ * since the turn it was dragged in may have ended by the time the move would play.
  */
-export function MapBoard({ board, actions }: { board: BoardView; actions: GameActions }) {
+export function MapBoard({
+  board,
+  actions,
+  busy,
+}: {
+  board: BoardView;
+  actions: GameActions;
+  busy: boolean;
+}) {
   const { t } = useTranslation();
   const idPrefix = useId();
   const [chosen, setChosen] = useState<MapId>();
@@ -26,7 +35,8 @@ export function MapBoard({ board, actions }: { board: BoardView; actions: GameAc
   // A chosen map whose locations have all left play is no longer shown, so the first one is.
   const current = shown.find((map) => map.id === chosen) ?? shown[0];
   if (!current) return null;
-  if (shown.length === 1) return <MapDrawing map={current} board={board} actions={actions} />;
+  if (shown.length === 1)
+    return <MapDrawing map={current} board={board} actions={actions} busy={busy} />;
 
   const tabId = (map: MapView) => `${idPrefix}-tab-${map.id}`;
   const panelId = `${idPrefix}-panel`;
@@ -49,7 +59,7 @@ export function MapBoard({ board, actions }: { board: BoardView; actions: GameAc
       </div>
       <div id={panelId} role="tabpanel" aria-labelledby={tabId(current)}>
         {/* Keyed by map, so a newly chosen map starts fitted instead of at the last one's zoom. */}
-        <MapDrawing key={current.id} map={current} board={board} actions={actions} />
+        <MapDrawing key={current.id} map={current} board={board} actions={actions} busy={busy} />
       </div>
     </>
   );
@@ -69,10 +79,12 @@ function MapDrawing({
   map,
   board,
   actions,
+  busy,
 }: {
   map: MapView;
   board: BoardView;
   actions: GameActions;
+  busy: boolean;
 }) {
   const investigators = board.investigators;
   const captionId = useId();
@@ -80,7 +92,7 @@ function MapDrawing({
   const svg = useRef<SVGSVGElement>(null);
   const cells = tileCells(map);
   const drag = usePawnDrag(svg, cells, (location) => void actions.moveTo(location));
-  const mover = investigators.find(({ id }) => id === board.turn);
+  const mover = busy ? undefined : investigators.find(({ id }) => id === board.turn);
   const { width, height } = drawingSize(Object.values(cells));
   return (
     <figure aria-labelledby={captionId}>

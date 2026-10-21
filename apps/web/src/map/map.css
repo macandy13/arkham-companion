@@ -122,6 +122,6 @@
   touch-action: none;
 }
 
-#map svg g[aria-hidden='true'] {
+#map svg [data-ghost] {
   opacity: var(--map-ghost-opacity);
 }

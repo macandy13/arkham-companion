@@ -76,7 +76,7 @@ export function LocationTile({
 /**
  * An investigator's pawn: a circle with their initial, centred on `centre`. With `drag` it can
  * be dragged (`usePawnDrag`), and its `data-drag` keeps the map from panning when a drag starts
- * on it. A `ghost` is the copy that follows the pointer during a drag; it is hidden from
+ * on it. A `ghost` (`data-ghost`) is the copy that follows the pointer during a drag; it is hidden from
  * assistive technology, since the pawn itself stays in place until the move is played.
  */
 export function Pawn({
@@ -92,7 +92,9 @@ export function Pawn({
 }) {
   return (
     <g
-      {...(ghost ? { 'aria-hidden': true } : { role: 'img', 'aria-label': investigator.name })}
+      {...(ghost
+        ? { 'aria-hidden': true, 'data-ghost': true }
+        : { role: 'img', 'aria-label': investigator.name })}
       {...(drag && { 'data-drag': 'pawn', ...drag })}
     >
       <circle cx={x} cy={y} r={CONTENT.pawnRadius} />
