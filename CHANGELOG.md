@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.7.0](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.6.0...arkham-companion-v1.7.0) (2026-10-21)
+
+
+### Features
+
+* **engine:** agenda and act reverse sides as abilities (P1 slice 5a) ([2395403](https://github.com/macandy13/arkham-companion/commit/2395403dc8332d9193aac1c6a0e49aafb16a3b21))
+* **engine:** agenda and act reverse sides as abilities (P1 slice 5a) ([72f590f](https://github.com/macandy13/arkham-companion/commit/72f590fefe9b617ada41f7b9675623a0d2cb67a4))
+* **engine:** keep each location's book layout cell on its map (M3.3a1) ([322be50](https://github.com/macandy13/arkham-companion/commit/322be500b9ba40a57bb7c88c452687ae4c92904d))
+* **engine:** lay maps out on a grid three times finer than a card ([5b49dda](https://github.com/macandy13/arkham-companion/commit/5b49dda8ae38483e0827a2cb6b0316b539446bb5))
+* **engine:** location attachments attach by a revealed ability (P1 slice 4c) ([7601716](https://github.com/macandy13/arkham-companion/commit/76017165960dc3a160f29bb2fa047df688d06496))
+* **engine:** location attachments attach by a revealed ability (P1 slice 4c) ([b3970ae](https://github.com/macandy13/arkham-companion/commit/b3970aef233e4cefb66231a1c663d7b98f1d0cfb))
+* **engine:** revelation tests as card abilities (P1 slice 4a) ([9fb2c12](https://github.com/macandy13/arkham-companion/commit/9fb2c12fe6ef26126ec39dc6150ece2fd113b7b6))
+* **engine:** revelation tests as card abilities (P1 slice 4a) ([a643ec0](https://github.com/macandy13/arkham-companion/commit/a643ec0546eeec387985850106ce07aaada41538))
+* **engine:** threat-area treacheries as revealed abilities (P1 slice 4b) ([927482f](https://github.com/macandy13/arkham-companion/commit/927482f6b5dd4e627e2154be18e7344ee3621e7a))
+* **engine:** threat-area treacheries as revealed abilities (P1 slice 4b) ([a4628fa](https://github.com/macandy13/arkham-companion/commit/a4628fa2ca69183a95e252b7de69b713a70b5099))
+* **engine:** turn-end and round-end card abilities (P1 slice 3) ([dccd163](https://github.com/macandy13/arkham-companion/commit/dccd163eddbc310333eb5ab321444d0d5b76b9d5))
+* **engine:** turn-end and round-end card abilities (P1 slice 3) ([226f583](https://github.com/macandy13/arkham-companion/commit/226f5835125296ffd97c26f4c973169601c9a278))
+* **web:** card-shaped map tiles, centred maps fitted to the screen; check for an open game once ([e6c5041](https://github.com/macandy13/arkham-companion/commit/e6c504186beb754db80251498a6c97dd2864fab5))
+* **web:** draw the visible maps with their location tiles and connections (M3.3a2) ([0918a51](https://github.com/macandy13/arkham-companion/commit/0918a51a624605e39c1ab0b60522768b58791bfe))
+* **web:** draw the visible maps with their location tiles and connections (M3.3a2) ([199f4a2](https://github.com/macandy13/arkham-companion/commit/199f4a2ffec6499bc6ff278e0371b3adeda60ef8))
+* **web:** place map tiles on the finer layout grid ([a0b8ad2](https://github.com/macandy13/arkham-companion/commit/a0b8ad2eef96305e5153bcfb64330004fa034b51))
+
+
+### Documentation
+
+* list BoardView.maps; say the tile size is a maximum ([7f59372](https://github.com/macandy13/arkham-companion/commit/7f5937266e1f03f6f0786ae72c91e2c02649bf35))
+
 ## [1.6.0](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.5.0...arkham-companion-v1.6.0) (2026-10-20)
 
 

@@ -44,7 +44,7 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
       <GameHeader store={store} open={open} board={board} />
       <section id="map" aria-labelledby="map-title">
         <h2 id="map-title">{t('map.title')}</h2>
-        <MapBoard maps={board.maps} />
+        <MapBoard board={board} />
       </section>
       <section id="investigators" aria-labelledby="investigators-title">
         <h2 id="investigators-title">{t('investigators.title')}</h2>

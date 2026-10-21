@@ -30,7 +30,7 @@ test('read the map', async ({ page }) => {
       .click();
   });
 
-  await test.step('Read the house: the Hallway connects to the other rooms', async () => {
+  await test.step('Read the house: Alder in the Hallway, which connects to the other rooms', async () => {
     // Act 1 removed the Study from the game, so its map has nothing left to show.
     await expect(page.getByRole('figure', { name: 'Study' })).toBeHidden();
     const house = page.getByRole('figure', { name: 'House' });
@@ -40,5 +40,8 @@ test('read the map', async ({ page }) => {
     for (const room of ['Attic', 'Cellar', 'Parlor']) {
       await expect(house.getByRole('img', { name: `Hallway – ${room}` })).toBeAttached();
     }
+    const hallway = house.getByRole('group', { name: 'Hallway' });
+    await expect(hallway.getByRole('img', { name: 'Alder' })).toBeVisible();
+    await expect(hallway).toContainText('Shroud 1 · Clues 0');
   });
 });
