@@ -685,8 +685,6 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.answer(byName('Frozen in Fear'), 'fail');
 
     // The Barrier needs 3 clues per investigator, 9 for three: the group holds them now.
-    // Act 2 has no reverse-side hook yet (the Ghoul Priest and Lita Chantler), so the script
-    // stops before advancing it (follow-up in M1.12).
     expect(table.board.perInvestigator('clues')).toEqual({ roland: 5, daisy: 1, wendy: 3 });
     expect(table.board.act?.name).toBe('The Barrier');
 

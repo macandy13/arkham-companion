@@ -6,9 +6,14 @@ import {
   cardDbFrom,
   discardSelf,
   encounterSetCode,
+  onlyCopy,
   putIntoThreatArea,
+  putSetAsideIntoPlay,
+  revealLocation,
   skillTest,
+  spawnEnemyAt,
   trait,
+  whenAdvanced,
   whenRevealed,
   type Ability,
   type CardDb,
@@ -57,8 +62,8 @@ const ghoulTraits = ['Humanoid', 'Monster', 'Ghoul'];
 /**
  * Hand-entered card data for The Gathering, keyed by the real ArkhamDB codes
  * so it lines up with the cached card data later. Only names, codes, numbers,
- * traits, keywords, the threat-area flag and revelation tests (skill and
- * difficulty, checked against ArkhamDB's `core_encounter.json`) – no card text, no ArkhamDB JSON,
+ * traits, keywords and abilities (revelation test skills and difficulties
+ * checked against ArkhamDB's `core_encounter.json`) – no card text, no ArkhamDB JSON,
  * no images – so it may be committed (see CLAUDE.md). It is the test scenario for the generic rules
  * until real scenario data arrives (M4).
  */
@@ -67,7 +72,20 @@ export const theGatheringCardDefs: readonly CardStats[] = [
   agenda({ code: codes.riseOfTheGhouls, name: 'Rise of the Ghouls', stage: 2, doom: 7 }),
   agenda({ code: codes.theyreGettingOut, name: "They're Getting Out!", stage: 3, doom: 10 }),
   act({ code: codes.trapped, name: 'Trapped', stage: 1, cluesPerInvestigator: 2 }),
-  act({ code: codes.theBarrier, name: 'The Barrier', stage: 2, cluesPerInvestigator: 3 }),
+  act({
+    code: codes.theBarrier,
+    name: 'The Barrier',
+    stage: 2,
+    cluesPerInvestigator: 3,
+    // The Parlor has been in play, unrevealed, since act 1 put the house into play.
+    abilities: [
+      whenAdvanced(
+        revealLocation(onlyCopy(codes.parlor)),
+        putSetAsideIntoPlay(codes.litaChantler, onlyCopy(codes.parlor)),
+        spawnEnemyAt(onlyCopy(codes.ghoulPriest), onlyCopy(codes.hallway)),
+      ),
+    ],
+  }),
   act({ code: codes.whatHaveYouDone, name: 'What Have You Done?', stage: 3 }),
   location({ code: codes.study, name: 'Study', shroud: 2, cluesPerInvestigator: 2 }),
   location({ code: codes.hallway, name: 'Hallway', shroud: 1, cluesPerInvestigator: 0 }),
@@ -245,14 +263,17 @@ interface ActOptions {
   name: string;
   stage: number;
   cluesPerInvestigator?: number;
+  /** Its reverse side (`whenAdvanced`). */
+  abilities?: readonly Ability[];
 }
 
-function act({ code, name, stage, cluesPerInvestigator }: ActOptions): CardStats {
+function act({ code, name, stage, cluesPerInvestigator, abilities }: ActOptions): CardStats {
   return {
     ...scenarioCard(code, name),
     typeCode: 'act',
     stage: { number: stage },
     ...(cluesPerInvestigator === undefined ? {} : { clues: perInvestigator(cluesPerInvestigator) }),
+    ...(abilities ? { abilities } : {}),
   };
 }
 
