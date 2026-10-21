@@ -106,8 +106,6 @@ export type Rejection =
   | { code: 'enemyAlreadyInPlay'; cardId: InstanceId }
   /** An enemy command (engage, damage, exhaust, …) for an enemy that is not in play. */
   | { code: 'enemyNotInPlay'; cardId: InstanceId }
-  /** `MoveEnemy` to the location the unengaged enemy is already at. */
-  | { code: 'enemyAlreadyAtLocation'; cardId: InstanceId; locationId: InstanceId }
   /** `MoveEnemy` for an engaged enemy, which moves only with its investigator, unless `forced`. */
   | { code: 'enemyEngaged'; cardId: InstanceId; investigatorId: InvestigatorId }
   /** `SpawnEnemy` without `at`, a unique `spawn` location or a drawing investigator. */
@@ -286,8 +284,6 @@ function describe(r: Rejection): string {
       return `${r.from} is not connected to ${r.to}`;
     case 'alreadyAtLocation':
       return `investigator ${r.investigatorId} is already at ${r.locationId}`;
-    case 'enemyAlreadyAtLocation':
-      return `${r.cardId} is already at ${r.locationId}`;
     case 'enemyEngaged':
       return `${r.cardId} is engaged with ${r.investigatorId} and moves only with them`;
     case 'investigatorNotAtLocation':

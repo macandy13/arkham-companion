@@ -491,6 +491,21 @@ describe('MoveEnemy', () => {
     expect(zoneOf(after, ghoul)).toEqual(zone);
   });
 
+  it.each([
+    { name: 'an unengaged enemy', zone: atLocation(cellar), to: cellar },
+    {
+      name: 'an enemy engaged there, even by a forced instruction',
+      zone: engagedWith(alice),
+      to: hall,
+    },
+  ])('leaves $name where it is when moved to its own location', ({ zone, to }) => {
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, zone).start();
+
+    const after = stateAfter(context, state, { ...moveGhoulTo(to), forced: true });
+
+    expect(zoneOf(after, ghoul)).toEqual(zone);
+  });
+
   it('asks the players whom it engages when two investigators are there', () => {
     const { context, state } = aliceAndBobAt(hall, { alice: 0, bob: 0 })
       .withCard(ghoul, ghoulCard, atLocation(cellar))
@@ -514,12 +529,6 @@ describe('MoveEnemy', () => {
   });
 
   it.each([
-    {
-      name: 'an enemy to the location it is at',
-      zone: atLocation(cellar),
-      to: cellar,
-      rejection: { code: 'enemyAlreadyAtLocation', cardId: ghoul, locationId: cellar },
-    },
     {
       name: 'an engaged enemy, which moves only with its investigator',
       zone: engagedWith(alice),

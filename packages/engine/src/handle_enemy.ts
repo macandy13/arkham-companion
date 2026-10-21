@@ -73,7 +73,9 @@ export function handleDisengageEnemy(
 
 /**
  * `MoveEnemy`: places the enemy unengaged at `to`, then lets it engage there.
- * `to` must be a location; it need not be revealed or connected.
+ * `to` must be a location; it need not be revealed or connected. An enemy
+ * already there stays as it is, engaged or not: the effect has nothing to do,
+ * which is not a mistake worth refusing.
  */
 export function handleMoveEnemy(ctx: EngineContext, state: GameState, cmd: MoveEnemy): Event[] {
   const { enemy } = inPlayEnemyOf(ctx, state, cmd.enemyId);
@@ -84,12 +86,7 @@ export function handleMoveEnemy(ctx: EngineContext, state: GameState, cmd: MoveE
       cardId: enemy.id,
       investigatorId: enemy.zone.investigatorId,
     });
-  if (locationOf(state, enemy) === cmd.to)
-    throw new CommandRejected({
-      code: 'enemyAlreadyAtLocation',
-      cardId: enemy.id,
-      locationId: cmd.to,
-    });
+  if (locationOf(state, enemy) === cmd.to) return [];
   const moved = moveCardEvent(enemy, { kind: 'atLocation', locationId: cmd.to });
   return [moved, ...engageEvents(ctx, replay([moved], state), enemy.id)];
 }

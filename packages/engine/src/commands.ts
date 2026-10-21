@@ -509,8 +509,8 @@ export interface ReadyEnemy {
  * moves only with its investigator, so a plain effect is refused for it
  * (`enemyEngaged`); a forced instruction (`forced`) is followed whatever the
  * engagement, so the enemy disengages and moves. At `to` a ready enemy then
- * engages as when it spawns there (`engageEvents`). An enemy entering an
- * unrevealed location does not reveal it. Produces `CardMoved`, then
+ * engages as when it spawns there (`engageEvents`); an enemy already at `to`
+ * stays as it is. An enemy entering an unrevealed location does not reveal it. Produces `CardMoved`, then
  * `EnemyEngaged` or `DecisionRequested`.
  */
 export interface MoveEnemy {
