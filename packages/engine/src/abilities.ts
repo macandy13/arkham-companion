@@ -3,7 +3,7 @@ import { cardStats, type EngineContext } from './cards';
 import type { Command, TestSkill } from './commands';
 import { isInPlay } from './doom';
 import type { Event } from './events';
-import type { InstanceId, InvestigatorId } from './ids';
+import type { CardCode, InstanceId, InvestigatorId } from './ids';
 import { locationAttachments } from './board';
 import { isActiveInvestigator, requireInvestigator } from './investigators';
 import { cardsInZone, requireCard } from './lookup';
@@ -26,9 +26,18 @@ export type TimingWindow =
    */
   | { kind: 'turnEnds' }
   /** "At the end of the round", upkeep step 4.6, for every card in play; names no investigator. */
-  | { kind: 'roundEnds' };
+  | { kind: 'roundEnds' }
+  /**
+   * The agenda or act advanced: its reverse side, opened by `AgendaAdvanced`
+   * or `ActAdvanced` for that card while it is still current (`completeAdvance`
+   * replaces it afterwards); names no investigator.
+   */
+  | { kind: 'advanced' };
 
-/** A card an ability names relative to itself: the card that has the ability. */
+/**
+ * A card an ability names without an instance ID: the card that has the
+ * ability, one its window names, or a scenario's unique card by code.
+ */
 export type RelativeCard =
   | { ref: 'self' }
   /**
@@ -37,7 +46,13 @@ export type RelativeCard =
    * (`LocationAttachment.onePerLocation`): then none, so a revelation that
    * would attach it there does nothing.
    */
-  | { ref: 'windowLocation' };
+  | { ref: 'windowLocation' }
+  /**
+   * The one copy of `code` in the game, in whatever zone: for a scenario's
+   * unique cards ("the Parlor", "the Ghoul Priest"); none while the game holds
+   * no copy or several.
+   */
+  | { ref: 'onlyCopy'; code: CardCode };
 
 /** An investigator an ability names relative to its window: the one the window names (the drawer). */
 export interface RelativeInvestigator {
@@ -66,7 +81,19 @@ export type Templated<T> = T extends InstanceId
  * `ManualAdjust`, `NextPhase`, …) never do, as no card performs them.
  */
 export type AbilityCommand =
-  | Extract<Command, { type: 'AdjustInvestigator' | 'PlaceDoom' | 'MoveCard' | 'DiscardCard' }>
+  | Extract<
+      Command,
+      {
+        type:
+          | 'AdjustInvestigator'
+          | 'PlaceDoom'
+          | 'MoveCard'
+          | 'DiscardCard'
+          | 'RevealLocation'
+          | 'FromSetAside'
+          | 'SpawnEnemy';
+      }
+    >
   | AbilityTest;
 
 /**
@@ -146,6 +173,9 @@ export function windowsOpenedBy(
       return Object.values(state.cards)
         .filter((card) => isInPlay(state, card))
         .map((card) => ({ window: { kind: 'roundEnds' }, cardId: card.id }));
+    case 'AgendaAdvanced':
+    case 'ActAdvanced':
+      return [{ window: { kind: 'advanced' }, cardId: event.cardId }];
     default:
       return [];
   }
@@ -195,6 +225,7 @@ export function resolveEffect(
     self: opened.cardId,
     windowInvestigator: investigator?.id,
     windowLocation: investigator && attachableLocation(ctx, state, opened.cardId, investigator),
+    onlyCopy: (code) => theOnlyCopy(state, code),
   });
   // The walk keeps every field but the references, which become the IDs the
   // command type expects, so the result is an `AbilityCommand`.
@@ -206,6 +237,12 @@ interface ResolvedRefs {
   self: InstanceId;
   windowInvestigator: InvestigatorId | undefined;
   windowLocation: InstanceId | undefined;
+  onlyCopy: (code: CardCode) => InstanceId | undefined;
+}
+
+function theOnlyCopy(state: GameState, code: CardCode): InstanceId | undefined {
+  const copies = Object.values(state.cards).filter((card) => card.code === code);
+  return copies.length === 1 ? copies[0]?.id : undefined;
 }
 
 /**
@@ -246,6 +283,8 @@ function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
         return refs.windowInvestigator;
       case 'windowLocation':
         return refs.windowLocation;
+      case 'onlyCopy':
+        return refs.onlyCopy(value.code);
       default:
         return assertNever(value);
     }
@@ -277,6 +316,14 @@ export function atEndOfTurn(...effects: AbilityEffect[]): Ability {
 /** A forced ability "at the end of the round", written `atEndOfRound(discardSelf())`. */
 export function atEndOfRound(...effects: AbilityEffect[]): Ability {
   return { window: { kind: 'roundEnds' }, effects };
+}
+
+/**
+ * The reverse side of an agenda or act, written
+ * `whenAdvanced(revealLocation(onlyCopy(codes.parlor)))`.
+ */
+export function whenAdvanced(...effects: AbilityEffect[]): Ability {
+  return { window: { kind: 'advanced' }, effects };
 }
 
 /**
@@ -338,6 +385,29 @@ export function placeDoomOnAgenda(amount: number): AbilityEffect {
 /** "Place N doom on it": doom on the card with the ability. */
 export function placeDoomOnSelf(amount: number): AbilityEffect {
   return { type: 'PlaceDoom', cardId: { ref: 'self' }, amount };
+}
+
+/** The one copy of `code` in the game, for a scenario's unique cards (`{ ref: 'onlyCopy' }`). */
+export function onlyCopy(code: CardCode): RelativeCard {
+  return { ref: 'onlyCopy', code };
+}
+
+/** "Reveal the Parlor". */
+export function revealLocation(location: RelativeCard): AbilityEffect {
+  return { type: 'RevealLocation', locationId: location };
+}
+
+/** "Put the set-aside Lita Chantler into play at the Parlor". */
+export function putSetAsideIntoPlay(code: CardCode, location: RelativeCard): AbilityEffect {
+  return { type: 'FromSetAside', codes: [code], to: { kind: 'atLocation', locationId: location } };
+}
+
+/**
+ * "Spawn the Ghoul Priest in the Hallway": the enemy spawns at the location
+ * named, engaging like any spawn (`SpawnEnemy`).
+ */
+export function spawnEnemyAt(enemy: RelativeCard, location: RelativeCard): AbilityEffect {
+  return { type: 'SpawnEnemy', enemyId: enemy, at: location };
 }
 
 /** Moves the card with the ability ("Remove it from the game", "Put it into play in your threat area"). */

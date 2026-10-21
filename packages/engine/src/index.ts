@@ -95,12 +95,17 @@ export {
   atEndOfTurn,
   discardSelf,
   moveSelf,
+  onlyCopy,
   placeDoomOnAgenda,
   placeDoomOnSelf,
   putIntoThreatArea,
+  putSetAsideIntoPlay,
+  revealLocation,
   skillTest,
+  spawnEnemyAt,
   takeDamage,
   takeHorror,
+  whenAdvanced,
   whenRevealed,
 } from './abilities';
 export type {

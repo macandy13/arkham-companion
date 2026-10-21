@@ -120,29 +120,6 @@ function trappedReverseSide(ctx: EngineContext, state: GameState): Command[] {
 }
 
 /**
- * Act 2 ("The Barrier"), reverse side: the Parlor, in play on the house map
- * since act 1 (`theGatheringHouse`) but unrevealed, is revealed; Lita
- * Chantler is put into play there, and the Ghoul Priest spawns in the
- * Hallway, where it engages per its prey like any spawn.
- */
-function theBarrierReverseSide(_ctx: EngineContext, state: GameState): Command[] {
-  const parlor = onlyCard(state, codes.parlor);
-  return [
-    { type: 'RevealLocation', locationId: parlor.id },
-    {
-      type: 'FromSetAside',
-      codes: [codes.litaChantler],
-      to: { kind: 'atLocation', locationId: parlor.id },
-    },
-    {
-      type: 'SpawnEnemy',
-      enemyId: onlyCard(state, codes.ghoulPriest).id,
-      at: onlyCard(state, codes.hallway).id,
-    },
-  ];
-}
-
-/**
  * Act 3 ("What Have You Done?"), objective: once the Ghoul Priest is
  * defeated, the act advances by itself. The Priest only enters play on act
  * 2's reverse side, but the current act is checked anyway, so a Priest
@@ -262,10 +239,11 @@ function onlyCard(state: GameState, code: CardCode): CardInstance {
  * other locations, the Ghoul Priest and Lita Chantler are set aside, and the
  * rest of the six encounter sets is shuffled into the encounter deck. Card
  * data is hand-entered (`theGatheringCardDefs`); it is the shared test
- * scenario for the generic rules until real scenario data arrives (M4). Its
- * `hooks` hold the reverse sides of the acts and of agendas 2 and 3 and act
- * 3's objective (agenda 1's choice and agenda 3's forced effects are left to
- * the players). Pass the whole definition as `EngineContext.scenario`, so the
+ * scenario for the generic rules until real scenario data arrives (M4).
+ * Act 2's reverse side is an ability on its card data; `hooks` hold the
+ * reverse sides of acts 1 and 3 and of agendas 2 and 3 and act 3's
+ * objective (agenda 1's choice and agenda 3's forced effects are left to the
+ * players). Pass the whole definition as `EngineContext.scenario`, so the
  * engine gets the hooks together with `reference` and `modifiers` (the
  * skull's "-X") for skill test suggestions. The reference
  * card's modifiers are hand-entered from the 2016 Core Set card as known
@@ -332,7 +310,6 @@ export const theGathering: ScenarioDefinition = {
   hooks: {
     onActAdvance: {
       [codes.trapped]: trappedReverseSide,
-      [codes.theBarrier]: theBarrierReverseSide,
       [codes.whatHaveYouDone]: whatHaveYouDoneReverseSide,
     },
     onAgendaAdvance: {

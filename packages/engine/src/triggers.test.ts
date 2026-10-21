@@ -5,9 +5,11 @@ import {
   atLocation,
   blankAct,
   blankAgenda,
+  blankAsset,
   blankEnemy,
   blankLocation,
   blankTreachery,
+  cardCode,
   checkInvariants,
   discardSelf,
   execute,
@@ -18,12 +20,17 @@ import {
   MAX_TRIGGERED_COMMANDS,
   moveSelf,
   newGame,
+  onlyCopy,
   perInvestigator,
   placeDoomOnAgenda,
   placeDoomOnSelf,
+  putSetAsideIntoPlay,
+  revealLocation,
   skillTest,
+  spawnEnemyAt,
   takeHorror,
   threatAreaOf,
+  whenAdvanced,
   whenRevealed,
   type Command,
   type EngineContext,
@@ -386,6 +393,89 @@ describe('trigger bus', () => {
 
       expect(after.meta.round).toBe(1);
       expect(after.pending).toEqual([]);
+    });
+  });
+
+  describe('reverse-side abilities', () => {
+    const priest = instanceId('priest');
+    const priestCard = blankEnemy('priest');
+    const lantern = instanceId('lantern');
+    /** The reverse side of last_stand_act: reveal the cellar, then the set-aside priest spawns there. */
+    const lastStandAct = blankAct('last_stand_act', {
+      abilities: [
+        whenAdvanced(
+          revealLocation(onlyCopy(cardCode('cellar'))),
+          spawnEnemyAt(onlyCopy(cardCode('priest')), onlyCopy(cardCode('cellar'))),
+        ),
+      ],
+    });
+
+    it('places doom on the advancing agenda, which is still current', () => {
+      const doomedAgenda = blankAgenda('doomed_agenda', fixed(3), {
+        abilities: [whenAdvanced(placeDoomOnAgenda(1))],
+      });
+      const { context, state: started } = newGame()
+        .withAgenda(agenda1, doomedAgenda)
+        .withAgenda(agenda2, secondAgendaCard)
+        .start();
+
+      const { state } = execute(context, started, { type: 'AdvanceAgenda' });
+
+      // The advanced agenda has left the game since, keeping the doom it got while current.
+      expect(state.cards[agenda1]?.tokens.doom).toBe(1);
+      expect(state.cards[agenda2]?.tokens.doom).toBeUndefined();
+      expect(state.agenda.current).toBe(agenda2);
+    });
+
+    it('reveals a location and spawns a set-aside enemy there, each named by its code', () => {
+      const { context, state: started } = newGame()
+        .withAct(act1, lastStandAct)
+        .withAct(act2, secondActCard)
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withLocation(cellar, blankLocation('cellar'))
+        .withCard(priest, priestCard, { kind: 'setAside' })
+        .withInvestigator(alice, { locationId: hall })
+        .start();
+
+      const { state } = execute(context, started, { type: 'AdvanceAct' });
+
+      expect(state.cards[cellar]?.faceUp).toBe(true);
+      expect(state.cards[priest]?.zone).toEqual(atLocation(cellar));
+      expect(state.act.current).toBe(act2);
+    });
+
+    it('puts a set-aside card into play at a location', () => {
+      const lanternAct = blankAct('lantern_act', {
+        abilities: [
+          whenAdvanced(putSetAsideIntoPlay(cardCode('lantern'), onlyCopy(cardCode('hall')))),
+        ],
+      });
+      const { context, state: started } = newGame()
+        .withAct(act1, lanternAct)
+        .withAct(act2, secondActCard)
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withCard(lantern, blankAsset('lantern'), { kind: 'setAside' })
+        .start();
+
+      const { state } = execute(context, started, { type: 'AdvanceAct' });
+
+      expect(state.cards[lantern]?.zone).toEqual(atLocation(hall));
+    });
+
+    it('drops an effect naming a code the game holds twice', () => {
+      const { context, state: started } = newGame()
+        .withAct(act1, lastStandAct)
+        .withAct(act2, secondActCard)
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withLocation(cellar, blankLocation('cellar'))
+        .withCard(priest, priestCard, { kind: 'setAside' })
+        .withCard(instanceId('second_priest'), priestCard, { kind: 'setAside' })
+        .start();
+
+      const { state } = execute(context, started, { type: 'AdvanceAct' });
+
+      expect(state.cards[cellar]?.faceUp).toBe(true);
+      expect(state.cards[priest]?.zone).toEqual({ kind: 'setAside' });
     });
   });
 
