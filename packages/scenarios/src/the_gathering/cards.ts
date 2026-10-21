@@ -8,9 +8,12 @@ import {
   attachToLocation,
   cardCode,
   cardDbFrom,
+  defeatEachInvestigator,
   discardEachEnemyAt,
   discardSelf,
+  duringAct,
   encounterSetCode,
+  endScenario,
   mapId,
   moveEachInvestigatorTo,
   onlyCopy,
@@ -64,6 +67,17 @@ export const GATHERING_CODES = {
   parlor: cardCode('01115'),
   ghoulPriest: cardCode('01116'),
   litaChantler: cardCode('01117'),
+} as const;
+
+/**
+ * The Gathering's resolutions, as the campaign guide numbers them: R1 the
+ * house is burned down, R2 it is left standing (both from act 3), R3 the
+ * investigators are trapped in the house (agenda 3 before act 3).
+ */
+export const GATHERING_RESOLUTIONS = {
+  burnedDown: 'R1',
+  leftStanding: 'R2',
+  trapped: 'R3',
 } as const;
 
 const codes = GATHERING_CODES;
@@ -121,7 +135,21 @@ export const theGatheringCardDefs: readonly CardStats[] = [
       ),
     ],
   }),
-  agenda({ code: codes.theyreGettingOut, name: "They're Getting Out!", stage: 3, doom: 10 }),
+  agenda({
+    code: codes.theyreGettingOut,
+    name: "They're Getting Out!",
+    stage: 3,
+    doom: 10,
+    // Before act 3 the investigators are trapped; at act 3 nobody is left, so the scenario ends
+    // without a resolution. The physical trauma the card adds is the campaign's to record (M1C).
+    abilities: [
+      duringAct(
+        [codes.trapped, codes.theBarrier],
+        whenAdvanced(endScenario(GATHERING_RESOLUTIONS.trapped)),
+      ),
+      duringAct([codes.whatHaveYouDone], whenAdvanced(defeatEachInvestigator())),
+    ],
+  }),
   act({
     code: codes.trapped,
     name: 'Trapped',

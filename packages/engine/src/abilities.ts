@@ -115,7 +115,9 @@ export type AbilityCommand =
           | 'AddMap'
           | 'AdvanceAct'
           | 'ShuffleEncounterDiscard'
-          | 'DrawEncounter';
+          | 'DrawEncounter'
+          | 'DefeatInvestigator'
+          | 'EndScenario';
       }
     >
   | AbilityTest;
@@ -139,12 +141,25 @@ export type AbilityTest = Omit<TestSkill, 'onPass' | 'onFail'> & {
 export type AbilityEffect = Templated<AbilityCommand>;
 
 /**
- * A forced card ability: what it does when its window opens. Card data
- * holds a list of them (`CardStats.abilities`); several abilities of one card
- * in one window resolve in the order they are listed.
+ * What must hold when the window opens for an ability to fire ("If it is act
+ * 3, …"). Checked once, as the window opens; the effects then resolve
+ * whatever they change. A new kind of condition is a new case here and in
+ * `conditionHolds`.
+ */
+export type AbilityCondition =
+  /** The current act is one of `acts`, by code. */
+  { kind: 'currentAct'; acts: readonly CardCode[] };
+
+/**
+ * A forced card ability: what it does when its window opens, if its
+ * `condition` holds. Card data holds a list of them (`CardStats.abilities`);
+ * several abilities of one card in one window resolve in the order they are
+ * listed, so two abilities with conditions that exclude each other read as
+ * the "If … Otherwise …" of a card.
  */
 export interface Ability {
   window: TimingWindow;
+  condition?: AbilityCondition;
   effects: readonly AbilityEffect[];
 }
 
@@ -226,8 +241,22 @@ export function abilitySteps(
   if (!card) return [];
   return (cardStats(ctx.cards, card.code).abilities ?? [])
     .filter((ability) => shallowEqual<TimingWindow>(ability.window, opened.window))
+    .filter(
+      (ability) => ability.condition === undefined || conditionHolds(state, ability.condition),
+    )
     .flatMap((ability) => ability.effects)
     .map((effect) => ({ kind: 'ability', effect, opened, origin: effect.type }));
+}
+
+function conditionHolds(state: GameState, condition: AbilityCondition): boolean {
+  switch (condition.kind) {
+    case 'currentAct': {
+      const act = state.act.current === undefined ? undefined : state.cards[state.act.current];
+      return act !== undefined && condition.acts.includes(act.code);
+    }
+    default:
+      return assertNever(condition.kind);
+  }
 }
 
 /** An effect waiting to resolve: the queue step `abilitySteps` produces. */
@@ -583,6 +612,28 @@ export function shuffleEncounterDiscard(): AbilityEffect {
  */
 export function leadDrawsDiscardingUntil(match: EncounterMatch): AbilityEffect {
   return { type: 'DrawEncounter', investigatorId: { ref: 'lead' }, match, discardSkipped: true };
+}
+
+/**
+ * "If it is act 3, …": `ability` fires only while the current act is one of
+ * `acts`, written `duringAct([codes.whatHaveYouDone], whenAdvanced(…))`.
+ */
+export function duringAct(acts: readonly CardCode[], ability: Ability): Ability {
+  return { ...ability, condition: { kind: 'currentAct', acts } };
+}
+
+/** "(→R3)": the scenario ends with that resolution. */
+export function endScenario(resolution: string): AbilityEffect {
+  return { type: 'EndScenario', resolution };
+}
+
+/**
+ * "Each investigator who has not resigned is defeated", in player order.
+ * When the lead is defeated while others remain, the group picks a new
+ * lead before the rest are defeated, as for any defeat.
+ */
+export function defeatEachInvestigator(): AbilityEffect {
+  return { type: 'DefeatInvestigator', investigatorId: { ref: 'eachInvestigator' } };
 }
 
 /** "Reveal the Parlor". */

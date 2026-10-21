@@ -96,8 +96,11 @@ export {
   shuffleEncounterDiscard,
   attachToLocation,
   atEndOfTurn,
+  defeatEachInvestigator,
   discardEachEnemyAt,
   discardSelf,
+  duringAct,
+  endScenario,
   moveEachInvestigatorTo,
   moveSelf,
   onlyCopy,
@@ -118,6 +121,7 @@ export {
 } from './abilities';
 export type {
   Ability,
+  AbilityCondition,
   AbilityCommand,
   AbilityEffect,
   AbilityTest,

@@ -6,29 +6,16 @@ import {
   scenarioId,
   trait,
   type Command,
-  type EngineContext,
-  type GameState,
   type ScenarioDefinition,
   type TokenValue,
 } from '@arkham/engine';
-import { GATHERING_CODES, GATHERING_SETS } from './cards';
+import { GATHERING_CODES, GATHERING_RESOLUTIONS, GATHERING_SETS } from './cards';
 
 const codes = GATHERING_CODES;
 const sets = GATHERING_SETS;
 
 /** Translation key prefix for The Gathering's reference card effects. */
 const reference = 'scenario.theGathering.reference';
-
-/**
- * The Gathering's resolutions, as the campaign guide numbers them: R1 the
- * house is burned down, R2 it is left standing (both from act 3), R3 the
- * investigators are trapped in the house (agenda 3 before act 3).
- */
-export const GATHERING_RESOLUTIONS = {
-  burnedDown: 'R1',
-  leftStanding: 'R2',
-  trapped: 'R3',
-} as const;
 
 const resolutions = GATHERING_RESOLUTIONS;
 
@@ -68,27 +55,6 @@ function whatHaveYouDoneReverseSide(): Command[] {
 }
 
 /**
- * Agenda 3 ("They're Getting Out!"), reverse side. Before act 3 the
- * investigators are trapped in the house (R3). At act 3 each investigator who
- * has not resigned is defeated, which leaves nobody in the scenario, so it
- * ends without a resolution. The lead goes last: defeating them while others
- * remain would ask for a new lead nobody can answer once the scenario is over.
- * The physical trauma the card adds is the campaign's to record (M1C).
- */
-function theyreGettingOutReverseSide(_ctx: EngineContext, state: GameState): Command[] {
-  const act = state.act.current === undefined ? undefined : state.cards[state.act.current];
-  if (act?.code !== codes.whatHaveYouDone)
-    return [{ type: 'EndScenario', resolution: resolutions.trapped }];
-  const lead = state.meta.leadInvestigator;
-  const active = state.investigators.filter((inv) => inv.status === 'active');
-  const leadLast = [
-    ...active.filter((inv) => inv.id !== lead),
-    ...active.filter((inv) => inv.id === lead),
-  ];
-  return leadLast.map((inv): Command => ({ type: 'DefeatInvestigator', investigatorId: inv.id }));
-}
-
-/**
  * The skull token on Easy/Standard: -X, where X is the number of Ghoul
  * enemies at the testing investigator's location (engaged ones included,
  * since they are at that location too). The printed -2 of Hard/Expert comes
@@ -110,10 +76,10 @@ const ghoulsAtYourLocation: TokenValue = (ctx, state, test) => {
  * rest of the six encounter sets is shuffled into the encounter deck. Card
  * data is hand-entered (`theGatheringCardDefs`); it is the shared test
  * scenario for the generic rules until real scenario data arrives (M4).
- * The reverse sides of acts 1 and 2 and of agenda 2, and act 3's objective,
- * are abilities on their card data; `hooks` hold the reverse sides of act 3
- * and agenda 3 (agenda 1's choice and agenda 3's forced effects are left to
- * the players). Pass the whole definition as `EngineContext.scenario`, so the
+ * The reverse sides of acts 1 and 2 and of agendas 2 and 3, and act 3's
+ * objective, are abilities on their card data; `hooks` hold the reverse side
+ * of act 3 (agenda 1's choice and agenda 3's forced effects are left to the
+ * players). Pass the whole definition as `EngineContext.scenario`, so the
  * engine gets the hooks together with `reference` and `modifiers` (the
  * skull's "-X") for skill test suggestions. The reference
  * card's modifiers are hand-entered from the 2016 Core Set card as known
@@ -180,9 +146,6 @@ export const theGathering: ScenarioDefinition = {
   hooks: {
     onActAdvance: {
       [codes.whatHaveYouDone]: whatHaveYouDoneReverseSide,
-    },
-    onAgendaAdvance: {
-      [codes.theyreGettingOut]: theyreGettingOutReverseSide,
     },
   },
   modifiers: { tokenValues: { skull: ghoulsAtYourLocation } },

@@ -12,8 +12,11 @@ import {
   blankTreachery,
   cardCode,
   checkInvariants,
+  defeatEachInvestigator,
   discardEachEnemyAt,
   discardSelf,
+  duringAct,
+  endScenario,
   execute,
   fixed,
   instanceId,
@@ -863,6 +866,72 @@ describe('objectives on the current agenda and act', () => {
     const { state } = execute(context, started, { type: 'DefeatEnemy', enemyId: priest });
 
     expect(state.act.current).toBe(act1);
+  });
+});
+
+describe('abilities with a condition on the current act', () => {
+  const bob = investigatorId('bob');
+  const carol = investigatorId('carol');
+  const trappedAct = blankAct('trapped_act');
+  const finalAct = blankAct('final_act', { stage: { number: 3 } });
+  /** "If it is the trapped act, (→R3). If it is the final act, each investigator is defeated." */
+  const gettingOutAgenda = blankAgenda('getting_out_agenda', fixed(3), {
+    abilities: [
+      duringAct([trappedAct.code], whenAdvanced(endScenario('R3'))),
+      duringAct([finalAct.code], whenAdvanced(defeatEachInvestigator())),
+    ],
+  });
+  /** Alice (the lead) and bob in the hall, with the getting-out agenda current. */
+  const gettingOutTable = newGame()
+    .withAgenda(agenda1, gettingOutAgenda)
+    .withAgenda(agenda2, secondAgendaCard)
+    .withLocation(hall, blankLocation('hall'), { revealed: true })
+    .withInvestigator(alice, { locationId: hall })
+    .withInvestigator(bob, { locationId: hall });
+
+  it('fires the ability whose act is current', () => {
+    const { context, state: started } = gettingOutTable.withAct(act1, trappedAct).start();
+
+    const { state } = execute(context, started, { type: 'AdvanceAgenda' });
+
+    expect(state.meta).toMatchObject({ ended: true, resolution: 'R3' });
+    expect(state.investigators.map((inv) => inv.status)).toEqual(['active', 'active']);
+  });
+
+  it('skips the ability whose act is not current', () => {
+    const { context, state: started } = gettingOutTable.withAct(act1, finalAct).start();
+
+    const { state } = execute(context, started, { type: 'AdvanceAgenda' });
+
+    expect(state.meta.resolution).toBeUndefined();
+  });
+
+  it('defeats each investigator, ending the scenario without a resolution', () => {
+    const { context, state: started } = gettingOutTable.withAct(act1, finalAct).start();
+
+    const { state } = execute(context, started, { type: 'AdvanceAgenda' });
+
+    expect(state.investigators.map((inv) => inv.status)).toEqual(['defeated', 'defeated']);
+    expect(state.meta.ended).toBe(true);
+    expect(state.pending).toEqual([]);
+  });
+
+  it('asks for a new lead before defeating the rest when several remain', () => {
+    const { context, state: started } = gettingOutTable
+      .withAct(act1, finalAct)
+      .withInvestigator(carol, { locationId: hall })
+      .start();
+
+    const asked = execute(context, started, { type: 'AdvanceAgenda' }).state;
+    const { state } = execute(context, asked, answer('newLeadInvestigator', bob));
+
+    expect(asked.investigators.map((inv) => inv.status)).toEqual(['defeated', 'active', 'active']);
+    expect(state.investigators.map((inv) => inv.status)).toEqual([
+      'defeated',
+      'defeated',
+      'defeated',
+    ]);
+    expect(state.meta.ended).toBe(true);
   });
 });
 

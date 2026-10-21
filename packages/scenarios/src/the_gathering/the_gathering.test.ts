@@ -524,9 +524,10 @@ describe('The Gathering agendas 2 and 3', () => {
 
     const { state, events } = runFrom(ctx, priestOnTank, [{ type: 'AdvanceAgenda' }]);
 
+    // Player order, the lead first; with one investigator left, they become lead without a question.
     expect(events.filter((event) => event.type === 'InvestigatorDefeated')).toEqual([
-      { type: 'InvestigatorDefeated', investigatorId: seeker, cause: 'cardEffect' },
       { type: 'InvestigatorDefeated', investigatorId: tank, cause: 'cardEffect' },
+      { type: 'InvestigatorDefeated', investigatorId: seeker, cause: 'cardEffect' },
     ]);
     expect(state.meta.ended).toBe(true);
     expect(state.meta.resolution).toBeUndefined();
