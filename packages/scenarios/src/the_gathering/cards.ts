@@ -1,6 +1,7 @@
 import {
   atEndOfRound,
   atEndOfTurn,
+  attachToLocation,
   cardCode,
   cardDbFrom,
   discardSelf,
@@ -214,6 +215,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     traits: ['Hazard'],
     quantity: 2,
     locationAttachment: { onePerLocation: true, shroud: 2, discardWhenInvestigated: true },
+    abilities: [whenRevealed(attachToLocation())],
   }),
 ];
 

@@ -4,9 +4,10 @@ import type { Command, TestSkill } from './commands';
 import { isInPlay } from './doom';
 import type { Event } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
-import { isActiveInvestigator } from './investigators';
-import { cardsInZone } from './lookup';
-import type { GameState, QueuedStep, SkillName } from './state';
+import { locationAttachments } from './board';
+import { isActiveInvestigator, requireInvestigator } from './investigators';
+import { cardsInZone, requireCard } from './lookup';
+import type { GameState, Investigator, QueuedStep, SkillName } from './state';
 import type { Zone } from './zone';
 
 /**
@@ -28,9 +29,15 @@ export type TimingWindow =
   | { kind: 'roundEnds' };
 
 /** A card an ability names relative to itself: the card that has the ability. */
-export interface RelativeCard {
-  ref: 'self';
-}
+export type RelativeCard =
+  | { ref: 'self' }
+  /**
+   * The location of the investigator the window names (the drawer's
+   * location), unless the card's limit of one per location is reached there
+   * (`LocationAttachment.onePerLocation`): then none, so a revelation that
+   * would attach it there does nothing.
+   */
+  | { ref: 'windowLocation' };
 
 /** An investigator an ability names relative to its window: the one the window names (the drawer). */
 export interface RelativeInvestigator {
@@ -174,37 +181,76 @@ export type AbilityStep = Extract<QueuedStep, { kind: 'ability' }>;
  * gone with them.
  */
 export function resolveEffect(
+  ctx: EngineContext,
   state: GameState,
   effect: AbilityEffect,
   opened: OpenedWindow,
 ): Command | undefined {
-  const { investigatorId, ...nobody } = opened;
-  const named =
-    investigatorId !== undefined && isActiveInvestigator(state, investigatorId) ? opened : nobody;
-  const resolved = resolveRefs(effect, named);
+  const { investigatorId } = opened;
+  const investigator =
+    investigatorId !== undefined && isActiveInvestigator(state, investigatorId)
+      ? requireInvestigator(state, investigatorId)
+      : undefined;
+  const resolved = resolveRefs(effect, {
+    self: opened.cardId,
+    windowInvestigator: investigator?.id,
+    windowLocation: investigator && attachableLocation(ctx, state, opened.cardId, investigator),
+  });
   // The walk keeps every field but the references, which become the IDs the
   // command type expects, so the result is an `AbilityCommand`.
   return resolved === undefined ? undefined : (resolved as AbilityCommand);
 }
 
-function resolveRefs(value: unknown, opened: OpenedWindow): unknown {
+/** What each relative reference stands for when an effect resolves; absent when it names nobody. */
+interface ResolvedRefs {
+  self: InstanceId;
+  windowInvestigator: InvestigatorId | undefined;
+  windowLocation: InstanceId | undefined;
+}
+
+/**
+ * The location `investigator` is at, unless `cardId`'s limit of one per
+ * location is reached there: a card of the same title is attached already
+ * (counted by title, so a reprint with another code counts too).
+ */
+function attachableLocation(
+  ctx: EngineContext,
+  state: GameState,
+  cardId: InstanceId,
+  investigator: Investigator,
+): InstanceId | undefined {
+  const location =
+    investigator.locationId === undefined ? undefined : state.cards[investigator.locationId];
+  if (!location) return undefined;
+  const stats = cardStats(ctx.cards, requireCard(state.cards, cardId).code);
+  const limitReached =
+    stats.locationAttachment?.onePerLocation === true &&
+    locationAttachments(ctx, state, location).some(
+      ({ card }) => cardStats(ctx.cards, card.code).name === stats.name,
+    );
+  return limitReached ? undefined : location.id;
+}
+
+function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
   if (typeof value !== 'object' || value === null) return value;
   if (Array.isArray(value)) {
     // An outcome that names nobody drops the whole test: half a test's consequences would misstate the card.
-    const items = value.map((item: unknown) => resolveRefs(item, opened));
+    const items = value.map((item: unknown) => resolveRefs(item, refs));
     return items.includes(undefined) ? undefined : items;
   }
   if (isRelative(value)) {
     switch (value.ref) {
       case 'self':
-        return opened.cardId;
+        return refs.self;
       case 'windowInvestigator':
-        return opened.investigatorId;
+        return refs.windowInvestigator;
+      case 'windowLocation':
+        return refs.windowLocation;
       default:
         return assertNever(value);
     }
   }
-  const entries = Object.entries(value).map(([key, field]) => [key, resolveRefs(field, opened)]);
+  const entries = Object.entries(value).map(([key, field]) => [key, resolveRefs(field, refs)]);
   return entries.some(([, field]) => field === undefined) ? undefined : Object.fromEntries(entries);
 }
 
@@ -258,6 +304,15 @@ export function skillTest(
  */
 export function putIntoThreatArea(): AbilityEffect {
   return moveSelf({ kind: 'threatArea', investigatorId: { ref: 'windowInvestigator' } });
+}
+
+/**
+ * "Attach it to your location": the card with the ability attaches to the
+ * location of the investigator the window names, within its limit per
+ * location (`{ ref: 'windowLocation' }`).
+ */
+export function attachToLocation(): AbilityEffect {
+  return moveSelf({ kind: 'attachedTo', hostId: { ref: 'windowLocation' } });
 }
 
 /** "Discard it": the card with the ability, onto the top of the encounter discard (`DiscardCard`). */

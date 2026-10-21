@@ -252,7 +252,7 @@ function resolveQueuedStep(
     case 'surge':
       return resolveSurge(resolution, step.draw);
     case 'ability': {
-      const command = resolveEffect(state, step.effect, step.opened);
+      const command = resolveEffect(ctx, state, step.effect, step.opened);
       if (!command) return [];
       spend(budget);
       return resolveCommand(resolution, command, step.origin, budget);
