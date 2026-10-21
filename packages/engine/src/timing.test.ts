@@ -84,7 +84,7 @@ describe('a surge after its card`s revelation', () => {
   it('draws the surge card only once the revelation test is resolved', () => {
     const testingSurge = blankTreachery('testing_surge', {
       keywords: [{ name: 'surge' }],
-      revelationTest: { skill: 'willpower', difficulty: 3 },
+      abilities: [whenRevealed(skillTest('willpower', 3))],
     });
     const table = PlayTable.start(
       belowTheSurge(aliceInHall.withCard(instanceId('surging_card'), testingSurge, encounterDeck)),
@@ -93,7 +93,7 @@ describe('a surge after its card`s revelation', () => {
     table.play(draw);
 
     expect(table.board.decisions).toMatchObject([
-      { prompt: 'decision.revelationTest', about: 'testing_surge' },
+      { prompt: 'decision.cardTest', about: 'testing_surge' },
     ]);
     expect(table.board.namesIn({ kind: 'resolving' })).toEqual(['testing_surge']);
     expect(table.board.namesIn(encounterDeck)).toEqual(['next_card', 'bottom_card']);

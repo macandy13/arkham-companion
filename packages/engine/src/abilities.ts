@@ -224,7 +224,7 @@ export function atEndOfRound(...effects: AbilityEffect[]): Ability {
 export function skillTest(
   skill: SkillName,
   difficulty: number,
-  outcomes: { onPass?: AbilityEffect[]; onFail?: AbilityEffect[] },
+  outcomes: { onPass?: AbilityEffect[]; onFail?: AbilityEffect[] } = {},
 ): AbilityEffect {
   return {
     type: 'TestSkill',

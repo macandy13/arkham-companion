@@ -7,6 +7,7 @@ import {
   encounterSetCode,
   skillTest,
   trait,
+  whenRevealed,
   type Ability,
   type CardDb,
   type CardStats,
@@ -14,7 +15,6 @@ import {
   type EncounterSetCode,
   type Keyword,
   type ScaledValue,
-  type SkillTest,
   type Trait,
 } from '@arkham/engine';
 
@@ -162,7 +162,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     set: sets.ghouls,
     traits: ['Hazard'],
     quantity: 3,
-    revelationTest: { skill: 'agility', difficulty: 3 },
+    abilities: [whenRevealed(skillTest('agility', 3))],
   }),
   treachery({
     code: '01163',
@@ -170,7 +170,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     set: sets.strikingFear,
     traits: ['Terror'],
     quantity: 3,
-    revelationTest: { skill: 'willpower', difficulty: 3 },
+    abilities: [whenRevealed(skillTest('willpower', 3))],
   }),
   treachery({
     code: '01164',
@@ -203,7 +203,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     set: sets.chillingCold,
     traits: ['Hazard'],
     quantity: 2,
-    revelationTest: { skill: 'willpower', difficulty: 4 },
+    abilities: [whenRevealed(skillTest('willpower', 4))],
   }),
   treachery({
     code: '01168',
@@ -314,8 +314,6 @@ interface TreacheryOptions {
   quantity: number;
   /** Set for a treachery that stays in the drawer's threat area. */
   entersThreatArea?: boolean;
-  /** The skill test of the card's revelation, if it has one. */
-  revelationTest?: SkillTest;
   /** Its forced abilities (Frozen in Fear's end-of-turn test, Dissonant Voices' discard). */
   abilities?: readonly Ability[];
   /** What it does attached to the drawer's location (Obscuring Fog). */
@@ -329,7 +327,6 @@ function treachery({
   traits,
   quantity,
   entersThreatArea,
-  revelationTest,
   abilities,
   locationAttachment,
 }: TreacheryOptions): CardStats {
@@ -341,7 +338,6 @@ function treachery({
     encounterCode: set,
     quantity,
     ...(entersThreatArea ? { entersThreatArea } : {}),
-    ...(revelationTest ? { revelationTest } : {}),
     ...(abilities ? { abilities } : {}),
     ...(locationAttachment ? { locationAttachment } : {}),
   };
