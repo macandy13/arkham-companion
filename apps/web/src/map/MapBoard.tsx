@@ -1,6 +1,6 @@
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BoardView, Edge, GridCell, InstanceId, MapView } from '@arkham/engine';
+import type { BoardView, Edge, GridCell, InstanceId, MapId, MapView } from '@arkham/engine';
 import { LocationTile } from './LocationTile';
 import { connectionEnds, drawingSize, tileCells, tileOrigin } from './mapLayout';
 import './map.css';
@@ -9,18 +9,43 @@ import './map.css';
  * The visible maps of the open game, each drawn as an SVG of its location tiles at their book
  * layout cells (`MapView.cells`) and the connections between them. Hidden maps are areas the
  * players cannot see yet, and a map whose locations have all left play (The Gathering's Study
- * once the house opens) has nothing to draw, so both are left out. It takes the whole `board`,
- * since the pieces on the tiles come from all over it (investigators now, more pieces later).
- * Static for now: pan, zoom and map tabs come later.
+ * once the house opens) has nothing to draw, so both are left out. Several maps get a tab each
+ * and show one at a time, since each map is drawn to fill the map area. It takes the whole
+ * `board`, since the pieces on the tiles come from all over it (investigators now, more pieces
+ * later). Pan and zoom come later.
  */
 export function MapBoard({ board }: { board: BoardView }) {
+  const { t } = useTranslation();
+  const idPrefix = useId();
+  const [chosen, setChosen] = useState<MapId>();
+  const shown = board.maps.filter((map) => map.visible && map.locations.length > 0);
+  // A chosen map whose locations have all left play is no longer shown, so the first one is.
+  const current = shown.find((map) => map.id === chosen) ?? shown[0];
+  if (!current) return null;
+  if (shown.length === 1) return <MapDrawing map={current} board={board} />;
+
+  const tabId = (map: MapView) => `${idPrefix}-tab-${map.id}`;
+  const panelId = `${idPrefix}-panel`;
   return (
     <>
-      {board.maps
-        .filter((map) => map.visible && map.locations.length > 0)
-        .map((map) => (
-          <MapDrawing key={map.id} map={map} board={board} />
+      <div role="tablist" aria-label={t('map.tabs')}>
+        {shown.map((map) => (
+          <button
+            key={map.id}
+            id={tabId(map)}
+            type="button"
+            role="tab"
+            aria-selected={map === current}
+            aria-controls={panelId}
+            onClick={() => setChosen(map.id)}
+          >
+            {map.name}
+          </button>
         ))}
+      </div>
+      <div id={panelId} role="tabpanel" aria-labelledby={tabId(current)}>
+        <MapDrawing map={current} board={board} />
+      </div>
     </>
   );
 }
