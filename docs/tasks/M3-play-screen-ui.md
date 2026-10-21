@@ -52,7 +52,7 @@ M3.3a2 done: the play screen draws each visible map as an SVG (`apps/web/src/map
 
 M3.3b1 done: tiles show shroud (with attachments) and clues once revealed, doom and an attachments count; investigators stand as pawns and enemies as chips on their location (`LocationView.shroud`/`doom`, `MapView.enemies`). Follow-ups for the tablet pass: a chip shows only the enemy's name (engagement, damage and exhaustion are in its accessible name), and chips stack without a limit, so a third enemy on a tile with doom and attachments overlaps the pawns.
 
-M3.3b2 done: several visible maps get a tab each (`role="tablist"` above the map) and show one at a time, the first at the start; a chosen map that leaves play falls back to the first. One map shows without tabs. No scenario shows two maps at once yet (The Gathering's Study leaves as the house opens), so no E2E flow shows the tabs. Follow-up for the tablet pass: tabs have no arrow-key navigation (each is its own tab stop).
+M3.3b2 done: several visible maps get a tab each (`role="tablist"` above the map) and show one at a time, the first at the start; a chosen map that leaves play falls back to the first. One map shows without tabs. No scenario shows two maps at once yet (The Gathering's Study leaves as the house opens), so the screenshot spec `map tabs for the Study and the house` adds the house to a fresh game directly (`twoMapsExport`). Follow-up for the tablet pass: tabs have no arrow-key navigation (each is its own tab stop).
 
 ## M3.4 Board interactions (S)
 

@@ -6,9 +6,10 @@ import {
   investigatorCode,
   investigatorId,
   PlayTable,
+  scenario,
   type InvestigatorCard,
 } from '@arkham/engine';
-import { theGathering, theGatheringCards } from '@arkham/scenarios';
+import { theGathering, theGatheringCards, theGatheringHouse } from '@arkham/scenarios';
 import { serialiseGameExport } from '../../src/storage/gameExport';
 
 /** An invented investigator: the exported game reads them from its log, never from card data. */
@@ -40,14 +41,42 @@ export function houseOpenedExport(title: string): Buffer {
   table.investigate(alderId);
   table.investigate(alderId);
   table.spendCluesToAdvanceAct([[alderId, 2]]);
+  return exportOf(title, table);
+}
+
+/** The export file of `table`'s game, titled `title`, its whole log as one step. */
+function exportOf(title: string, table: PlayTable): Buffer {
   const events = table.events.map((event, seq) => ({
     gameId: gameId('export'),
     seq: seq + 1,
     timestamp: seq,
-    commandId: 'house_opened',
+    commandId: 'prepared',
     event,
   }));
   return Buffer.from(serialiseGameExport(title, 0, events));
+}
+
+/**
+ * An export file of a solo game of The Gathering titled `title` in which the house map is in
+ * play while Alder is still in the Study, so two maps are visible at once. No scenario reaches
+ * this yet (act 1 removes the Study as it opens the house), so the house is added directly; it
+ * shows the map tabs.
+ */
+export function twoMapsExport(title: string): Buffer {
+  const alderId = investigatorId('alder');
+  const table = PlayTable.setUp(
+    {
+      cards: cardDbWith(theGatheringCards, [investigatorCardStats(alder)]),
+      scenario: theGathering,
+    },
+    { investigators: [{ id: alderId, code: alder.code }], seed: 3 },
+  );
+  table.step(() => {
+    for (const command of scenario.compileMapStep(table.state, theGatheringHouse)) {
+      table.play(command);
+    }
+  });
+  return exportOf(title, table);
 }
 
 /**
