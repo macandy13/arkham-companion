@@ -50,7 +50,7 @@ M3.3a1 done: map steps give each location its book layout cell (`MapLocation.at`
 
 M3.3a2 done: the play screen draws each visible map as an SVG (`apps/web/src/map/`) from `BoardView.maps`: location tiles at their cells with name and clues (or "Unrevealed"), connection lines with arrowheads for one-way ones. Locations without a cell go in a row below. Left for M3.3b: pan/zoom, map tabs, shroud, doom, attachments, pawns, enemies, and connections between maps. Map names come from the scenario and are not translated yet.
 
-M3.3b1 done: tiles show shroud (with attachments) and clues once revealed, doom and an attachments count; investigators stand as pawns and enemies as chips on their location (`LocationView.shroud`/`doom`, `MapView.enemies`). Follow-up: a chip shows only the enemy's name; engagement, damage and exhaustion are in its accessible name until the tablet pass gives them a look.
+M3.3b1 done: tiles show shroud (with attachments) and clues once revealed, doom and an attachments count; investigators stand as pawns and enemies as chips on their location (`LocationView.shroud`/`doom`, `MapView.enemies`). Follow-ups for the tablet pass: a chip shows only the enemy's name (engagement, damage and exhaustion are in its accessible name), and chips stack without a limit, so a third enemy on a tile with doom and attachments overlaps the pawns.
 
 ## M3.4 Board interactions (S)
 

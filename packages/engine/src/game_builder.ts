@@ -386,10 +386,14 @@ function startingLocation({ id, card, options }: LocationEntry, playerCount: num
     code: card.code,
     zone: { kind: 'location', mapId: options.map ?? MAIN_MAP },
     faceUp: revealed,
-    tokens: {
-      ...(clues > 0 ? { clue: clues } : {}),
-      ...(options.doom ? { doom: options.doom } : {}),
-    },
+    ...(clues > 0 || options.doom
+      ? {
+          tokens: {
+            ...(clues > 0 ? { clue: clues } : {}),
+            ...(options.doom ? { doom: options.doom } : {}),
+          },
+        }
+      : {}),
   };
 }
 
