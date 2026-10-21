@@ -1,4 +1,5 @@
 import { listIfAny } from '@arkham/util';
+import { locationShroud } from './board';
 import { cardStats, resolveValue, type EngineContext } from './cards';
 import { optionName } from './describe_decision';
 import { doomInPlay, isInPlay } from './doom';
@@ -87,14 +88,17 @@ export interface EnemyView {
  * unengaged at it (enemies and story assets; enemies engaged with an
  * investigator are in `enemies` of the `BoardView` only), `attachments` those
  * attached to it, both in play order.
- * Empty lists are left out.
+ * Empty lists are left out, and so is doom while there is none.
  */
 export interface LocationView {
   id: InstanceId;
   name: CardName;
   map: MapId;
   revealed: boolean;
+  /** Its shroud with what its attachments add (`locationShroud`); only a revealed location shows one. */
+  shroud?: number;
   clues: number;
+  doom?: number;
   investigators?: InvestigatorId[];
   cards?: CardName[];
   attachments?: CardName[];
@@ -113,6 +117,12 @@ export interface MapView {
   locations: readonly LocationView[];
   cells: Readonly<Record<InstanceId, GridCell>>;
   connections: readonly Edge[];
+  /**
+   * The enemies at each of its locations that has any, engaged ones included (an engaged enemy is
+   * at its investigator's location), in card order. Keyed by id rather than read from
+   * `EnemyView.at`, since two copies of a location share a name.
+   */
+  enemies: Readonly<Record<InstanceId, readonly EnemyView[]>>;
 }
 
 /**
@@ -444,7 +454,9 @@ function locationView(ctx: EngineContext, state: GameState, location: CardInstan
     name: nameOf(ctx, location),
     map: mapOf(location),
     revealed: location.faceUp,
+    ...(location.faceUp ? { shroud: locationShroud(ctx, state, location) } : {}),
     clues: location.tokens.clue ?? 0,
+    ...(location.tokens.doom ? { doom: location.tokens.doom } : {}),
     ...listIfAny(
       'investigators',
       present.map((inv) => inv.id),
@@ -470,7 +482,22 @@ function mapView(ctx: EngineContext, state: GameState, id: MapId, map: GameMap):
       }),
     ),
     connections: connections.filter((edge) => isOnMap(edge.from) && isOnMap(edge.to)),
+    enemies: enemiesByLocation(ctx, state, onMap),
   };
+}
+
+function enemiesByLocation(
+  ctx: EngineContext,
+  state: GameState,
+  locations: readonly InstanceId[],
+): Record<InstanceId, EnemyView[]> {
+  const byLocation: Record<InstanceId, EnemyView[]> = {};
+  for (const enemy of enemiesInPlay(ctx, state)) {
+    const at = enemyLocation(state, enemy);
+    if (at === undefined || !locations.includes(at)) continue;
+    (byLocation[at] ??= []).push(enemyView(ctx, state, enemy));
+  }
+  return byLocation;
 }
 
 function mapOf({ zone, id }: CardInstance): MapId {

@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Edge, GridCell, InstanceId, LocationView, MapView } from '@arkham/engine';
+import type { Edge, GridCell, InstanceId, InvestigatorView, MapView } from '@arkham/engine';
+import { LocationTile } from './LocationTile';
 import { TILE, connectionEnds, tileCells, tileOrigin, drawingSize } from './mapLayout';
 import './map.css';
 
@@ -8,22 +9,34 @@ import './map.css';
  * The visible maps of the open game, each drawn as an SVG of its location tiles at their book
  * layout cells (`MapView.cells`) and the connections between them. Hidden maps are areas the
  * players cannot see yet, and a map whose locations have all left play (The Gathering's Study
- * once the house opens) has nothing to draw, so both are left out. Static for now: pan, zoom and pieces on the
- * tiles come with M3.3b.
+ * once the house opens) has nothing to draw, so both are left out. `investigators` are the open
+ * game's, whose pawns stand on the tiles. Static for now: pan, zoom and map tabs come later.
  */
-export function MapBoard({ maps }: { maps: readonly MapView[] }) {
+export function MapBoard({
+  maps,
+  investigators,
+}: {
+  maps: readonly MapView[];
+  investigators: readonly InvestigatorView[];
+}) {
   return (
     <>
       {maps
         .filter((map) => map.visible && map.locations.length > 0)
         .map((map) => (
-          <MapDrawing key={map.id} map={map} />
+          <MapDrawing key={map.id} map={map} investigators={investigators} />
         ))}
     </>
   );
 }
 
-function MapDrawing({ map }: { map: MapView }) {
+function MapDrawing({
+  map,
+  investigators,
+}: {
+  map: MapView;
+  investigators: readonly InvestigatorView[];
+}) {
   const captionId = useId();
   const arrowId = useId();
   const cells = tileCells(map);
@@ -50,7 +63,17 @@ function MapDrawing({ map }: { map: MapView }) {
         {map.locations.flatMap((location) => {
           const cell = cells[location.id];
           return cell
-            ? [<LocationTile key={location.id} location={location} {...tileOrigin(cell)} />]
+            ? [
+                <LocationTile
+                  key={location.id}
+                  location={location}
+                  enemies={map.enemies[location.id] ?? []}
+                  investigators={investigators.filter(({ id }) =>
+                    location.investigators?.includes(id),
+                  )}
+                  {...tileOrigin(cell)}
+                />,
+              ]
             : [];
         })}
       </svg>
@@ -95,20 +118,4 @@ function Connection({
 
 function nameOf(map: MapView, id: InstanceId): string {
   return map.locations.find((location) => location.id === id)?.name ?? id;
-}
-
-/** One location as a tile: its name, and its clues once revealed (clues go on a location when it is revealed). */
-function LocationTile({ location, x, y }: { location: LocationView; x: number; y: number }) {
-  const { t } = useTranslation();
-  return (
-    <g role="group" aria-label={location.name} transform={`translate(${x} ${y})`}>
-      <rect width={TILE.width} height={TILE.height} />
-      <text x={TILE.width / 2} y={TILE.height / 3}>
-        {location.name}
-      </text>
-      <text x={TILE.width / 2} y={(TILE.height * 2) / 3}>
-        {location.revealed ? t('map.clues', { count: location.clues }) : t('map.unrevealed')}
-      </text>
-    </g>
-  );
 }
