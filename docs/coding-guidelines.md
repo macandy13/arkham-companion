@@ -77,6 +77,13 @@ How code in this repo should look, so every task lands in the same style.
 - **Narrate with steps.** Group the flow into `test.step('Create an empty game', …)` blocks named as what the user does; the names are shown as captions in the screencast.
 - **Deterministic.** Start from a fixed state (seeded game) so every recording of the same code looks the same.
 
+**E2E screenshot specs** (`apps/web/e2e/shots/`) show situations: one spec per screen, one test per situation, photographed as the test ends (`@shot`). They are the cheap way to show a change that is a look, not a journey:
+
+- **Pick the lighter recording.** A change you can judge from one picture (a new panel, a state of a screen, a layout change) gets a screenshot; a change you have to see happen (an interaction, a sequence of screens) gets a flow. A PR may tag both.
+- **Tagged like flows.** A PR tags the `@shot` tests that show its change, a new one for a new situation and every existing one whose picture it changes, and removes the tag from all others, so the PR description shows only what this PR changed. Untagged shots keep running as plain E2E tests.
+- **Short and still.** A shot test only brings the screen into its situation, with fixtures doing the work (`resumeImportedGame` with a prepared export), and asserts that the situation is shown; the screenshot is taken after the last line, so it ends with the screen settled. Name it after what it shows (`'the house map with Alder in the Hallway'`), since the name is the caption.
+- **Deterministic** like flows: fixed exports and seeds, so the same code gives the same picture.
+
 ## 4. Markup (JSX/HTML)
 
 The DOM is a clearly structured document tree – good structure _is_ accessibility.
