@@ -3,9 +3,9 @@ name: PR preview
 # Builds every PR and publishes it to
 # https://macandy13.github.io/arkham-companion/pr-preview/pr-<number>/
 # The action comments the link on the PR and removes the preview when the PR closes.
-# When apps/web changes, the `@flow` E2E specs are recorded and published next to the
-# preview (pr-<number>/screencasts/), and the PR description's screencast section is
-# rewritten to show them (see docs/automation.md). Living inside the preview directory
+# When apps/web changes, the `@flow` E2E specs are recorded and the `@shot` specs
+# photographed, both published next to the preview (pr-<number>/screencasts/), and the PR
+# description's screencast section is rewritten to show them (see docs/automation.md). Living inside the preview directory
 # means they are removed with it.
 # PRs from forks are skipped (no write token).
 

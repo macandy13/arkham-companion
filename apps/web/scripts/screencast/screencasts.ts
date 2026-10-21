@@ -149,12 +149,12 @@ export function gifArgs({ input, output }: { input: string; output: string }): s
  */
 export function renderSection({
   flows,
-  shots = [],
+  shots,
   baseUrl,
   version,
 }: {
   flows: readonly FlowVideo[];
-  shots?: readonly Screenshot[];
+  shots: readonly Screenshot[];
   baseUrl: string;
   version: string;
 }): string {
@@ -176,8 +176,9 @@ export function renderSection({
   const intro = `_Recorded from ${version} by the PR preview workflow; updated on every push that changes \`apps/web\`._`;
   return [
     SECTION_START,
-    ...(shots.length > 0 ? ['## Screenshots', intro, ...shotEntries] : []),
-    ...(flows.length > 0 ? ['## Screencasts', intro, ...flowEntries] : []),
+    intro,
+    ...(shots.length > 0 ? ['## Screenshots', ...shotEntries] : []),
+    ...(flows.length > 0 ? ['## Screencasts', ...flowEntries] : []),
     SECTION_END,
   ].join('\n\n');
 }

@@ -171,6 +171,7 @@ describe('renderSection', () => {
   it('embeds a cache-busted GIF and links the player for a recorded flow', () => {
     const section = renderSection({
       flows: [recorded],
+      shots: [],
       baseUrl: 'https://x.test/s',
       version: 'abc123',
     });
@@ -207,7 +208,12 @@ describe('renderSection', () => {
   });
 
   it('is just the markers when no flow is tagged', () => {
-    const section = renderSection({ flows: [], baseUrl: 'https://x.test/s', version: 'abc123' });
+    const section = renderSection({
+      flows: [],
+      shots: [],
+      baseUrl: 'https://x.test/s',
+      version: 'abc123',
+    });
 
     expect(section).toBe('<!-- screencasts:start -->\n<!-- screencasts:end -->');
   });
@@ -215,6 +221,7 @@ describe('renderSection', () => {
   it('notes a failed flow instead of linking a missing file', () => {
     const section = renderSection({
       flows: [failed],
+      shots: [],
       baseUrl: 'https://x.test/s/',
       version: 'abc123',
     });
@@ -225,7 +232,12 @@ describe('renderSection', () => {
   });
 
   it('is wrapped in the section markers', () => {
-    const section = renderSection({ flows: [], baseUrl: 'https://x.test/s/', version: 'abc123' });
+    const section = renderSection({
+      flows: [],
+      shots: [],
+      baseUrl: 'https://x.test/s/',
+      version: 'abc123',
+    });
 
     expect(section.startsWith(SECTION_START)).toBe(true);
     expect(section.endsWith(SECTION_END)).toBe(true);
