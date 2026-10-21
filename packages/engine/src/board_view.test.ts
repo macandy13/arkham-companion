@@ -247,6 +247,42 @@ describe('locations', () => {
     expect(names).toEqual(['study', 'hallway', 'attic']);
   });
 
+  it('reads each map with the layout cells and connections of its locations', () => {
+    const attic = instanceId('attic');
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'), { at: { column: 0, row: 0 } })
+      .withLocation(hallway, blankLocation('hallway'))
+      .withLocation(attic, blankLocation('attic'), {
+        map: mapId('upstairs'),
+        at: { column: 2, row: 1 },
+      })
+      .withConnection(study, hallway)
+      .withConnection(hallway, attic, { oneWay: true })
+      .start();
+
+    const maps = boardView(context, state).maps.map(({ id, locations, cells, connections }) => ({
+      id,
+      locations: locations.map((location) => location.name),
+      cells,
+      connections,
+    }));
+
+    expect(maps).toEqual([
+      {
+        id: mapId('main'),
+        locations: ['study', 'hallway'],
+        cells: { [study]: { column: 0, row: 0 } },
+        connections: [{ from: study, to: hallway, oneWay: false }],
+      },
+      {
+        id: mapId('upstairs'),
+        locations: ['attic'],
+        cells: { [attic]: { column: 2, row: 1 } },
+        connections: [],
+      },
+    ]);
+  });
+
   it.each([
     { map: 'main', expected: ['study', 'hallway'] },
     { map: 'upstairs', expected: ['attic'] },

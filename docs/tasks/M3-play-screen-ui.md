@@ -46,6 +46,8 @@ Ref: architecture "Game state" (connections) and product.md "Board rendering".
 
 M3.3a1 done: map steps give each location its book layout cell (`MapLocation.at`, on a grid three times finer than a card, `GRID_CELLS_PER_CARD`), which the map keeps (`GameMap.layout`) and `StartScenario`/`AddMap` validate. The unused `Board.slots`, `placement` and `layoutMode` are gone. The Gathering's Study and house have their cells.
 
+M3.3a2 done: the play screen draws each visible map as an SVG (`apps/web/src/map/`) from `BoardView.maps`: location tiles at their cells with name and clues (or "Unrevealed"), connection lines with arrowheads for one-way ones. Locations without a cell go in a row below. Left for M3.3b: pan/zoom, map tabs, shroud, doom, attachments, pawns, enemies, and connections between maps. Map names come from the scenario and are not translated yet.
+
 ## M3.4 Board interactions (S)
 
 **Why:** Dragging is the fastest interaction on a tablet. Snapping back illegal moves teaches the rules without blocking players (manual adjust still exists).

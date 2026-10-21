@@ -31,6 +31,8 @@
   --layout-board-bar-height: 8rem;
   --layout-portrait-width: 9rem;
   --layout-sheet-width: 22rem;
+  /* Connection lines on the map, in its SVG user units (mapLayout.ts TILE). */
+  --map-line-width: 3px;
 }
 
 :root[data-theme='light'] {

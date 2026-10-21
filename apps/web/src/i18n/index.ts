@@ -31,7 +31,17 @@ export const resources = {
         turnsNotTaken: 'Every investigator must take a turn first.',
       },
       nav: { label: 'Main' },
-      map: { title: 'Map' },
+      game: {
+        unplayable:
+          "This game can't be played: this version of the app does not have its scenario.",
+      },
+      map: {
+        title: 'Map',
+        clues: 'Clues {{count}}',
+        unrevealed: 'Unrevealed',
+        connection: '{{from}} – {{to}}',
+        oneWay: '{{from}} to {{to}}, one way',
+      },
       investigators: { title: 'Investigators' },
       encounter: { title: 'Encounter' },
       settings: {
@@ -194,7 +204,17 @@ export const resources = {
         turnsNotTaken: 'Jeder Ermittler muss zuerst einen Zug machen.',
       },
       nav: { label: 'Hauptnavigation' },
-      map: { title: 'Karte' },
+      game: {
+        unplayable:
+          'Dieses Spiel kann nicht gespielt werden: Diese App-Version kennt sein Szenario nicht.',
+      },
+      map: {
+        title: 'Karte',
+        clues: 'Hinweise {{count}}',
+        unrevealed: 'Unaufgedeckt',
+        connection: '{{from}} – {{to}}',
+        oneWay: '{{from}} nach {{to}}, nur in eine Richtung',
+      },
       investigators: { title: 'Ermittler' },
       encounter: { title: 'Begegnung' },
       settings: {
