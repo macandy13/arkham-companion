@@ -2,7 +2,7 @@ import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Edge, GridCell, InstanceId, InvestigatorView, MapView } from '@arkham/engine';
 import { LocationTile } from './LocationTile';
-import { TILE, connectionEnds, tileCells, tileOrigin, drawingSize } from './mapLayout';
+import { connectionEnds, drawingSize, tileCells, tileOrigin } from './mapLayout';
 import './map.css';
 
 /**
