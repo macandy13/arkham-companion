@@ -45,7 +45,8 @@ export function MapBoard({ board }: { board: BoardView }) {
         ))}
       </div>
       <div id={panelId} role="tabpanel" aria-labelledby={tabId(current)}>
-        <MapDrawing map={current} board={board} />
+        {/* Keyed by map, so a newly chosen map starts fitted instead of at the last one's zoom. */}
+        <MapDrawing key={current.id} map={current} board={board} />
       </div>
     </>
   );
