@@ -516,6 +516,8 @@ describe('trigger bus', () => {
     const atticCard = blankLocation('attic');
     const bob = investigatorId('bob');
     const lantern = instanceId('lantern');
+    const aloofGhoul = instanceId('aloof_ghoul');
+    const hallCard = blankLocation('hall');
     /** Aloof, so it waits in the hall without engaging anyone. */
     const aloofGhoulCard = blankEnemy('aloof_ghoul', { keywords: [{ name: 'aloof' }] });
     /** The attic as a map of its own, the way a scenario declares an area set aside at setup. */
@@ -546,13 +548,13 @@ describe('trigger bus', () => {
     const movingTable = newGame()
       .withAct(act1, movingAct)
       .withAct(act2, secondActCard)
-      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(hall, hallCard, { revealed: true })
       .withLocation(cellar, blankLocation('cellar'), { revealed: true })
       .withConnection(hall, cellar)
       .withCard(attic, atticCard, { kind: 'setAside' })
       .withInvestigator(alice, { locationId: hall })
       .withInvestigator(bob, { locationId: hall })
-      .withCard(ghoul, aloofGhoulCard, atLocation(hall), { faceUp: true })
+      .withCard(aloofGhoul, aloofGhoulCard, atLocation(hall), { faceUp: true })
       .withCard(instanceId('bobs_ghoul'), ghoulCard, { kind: 'engaged', investigatorId: bob })
       .withCard(instanceId('cellar_ghoul'), ghoulCard, atLocation(cellar), { faceUp: true })
       .withCard(lantern, blankAsset('lantern'), atLocation(hall));
@@ -572,7 +574,7 @@ describe('trigger bus', () => {
 
       const { state } = execute(context, started, { type: 'AdvanceAct' });
 
-      expect(state.cards[ghoul]?.zone).toEqual({ kind: 'encounterDiscard' });
+      expect(state.cards[aloofGhoul]?.zone).toEqual({ kind: 'encounterDiscard' });
       expect(state.cards[instanceId('bobs_ghoul')]?.zone).toEqual({ kind: 'encounterDiscard' });
       expect(state.cards[instanceId('cellar_ghoul')]?.zone).toEqual(atLocation(cellar));
       expect(state.cards[lantern]?.zone).toEqual(atLocation(hall));
@@ -588,6 +590,46 @@ describe('trigger bus', () => {
         [bob, attic],
       ]);
       expect(state.cards[hall]?.zone).toEqual({ kind: 'outOfGame' });
+    });
+
+    it('moves each investigator in player order, starting with the lead', () => {
+      const { context, state: started } = movingTable.start();
+      const bobLeads = { ...started, meta: { ...started.meta, leadInvestigator: bob } };
+
+      const { events } = execute(context, bobLeads, { type: 'AdvanceAct' });
+
+      expect(
+        events.flatMap((event) =>
+          event.type === 'InvestigatorMoved' ? [event.investigatorId] : [],
+        ),
+      ).toEqual([bob, alice]);
+    });
+
+    it('leaves a defeated investigator where they were', () => {
+      const carol = investigatorId('carol');
+      const { context, state: started } = movingTable
+        .withInvestigator(carol, { locationId: hall, status: 'defeated' })
+        .start();
+
+      const { state } = execute(context, started, { type: 'AdvanceAct' });
+
+      expect(state.investigators.find((inv) => inv.id === carol)?.locationId).toBe(hall);
+    });
+
+    it('skips discarding the enemies when the location they are at is not there exactly once', () => {
+      const { context, state: started } = movingTable
+        .withCard(instanceId('second_hall'), hallCard, { kind: 'setAside' })
+        .start();
+
+      const { events, state } = execute(context, started, { type: 'AdvanceAct' });
+
+      expect(state.cards[aloofGhoul]?.zone).toEqual(atLocation(hall));
+      expect(events.filter((event) => event.type === 'AbilityEffectSkipped')).toContainEqual({
+        type: 'AbilityEffectSkipped',
+        cardId: act1,
+        effect: 'DiscardCard',
+        missing: [cardCode('hall')],
+      });
     });
 
     it('skips the map when one of its locations is not set aside exactly once', () => {

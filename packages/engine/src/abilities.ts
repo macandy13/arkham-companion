@@ -6,7 +6,7 @@ import type { Event } from './events';
 import type { CardCode, InstanceId, InvestigatorId } from './ids';
 import { locationAttachments } from './board';
 import { enemiesAt } from './handle_enemy';
-import { isActiveInvestigator, requireInvestigator } from './investigators';
+import { isActiveInvestigator, playerOrder, requireInvestigator } from './investigators';
 import { cardsInZone, requireCard } from './lookup';
 import { compileMapStep, type AddMapStep } from './setup';
 import type { GameState, Investigator, QueuedStep, SkillName } from './state';
@@ -65,7 +65,7 @@ export type RelativeCard =
 /**
  * An investigator an ability names relative to its window: the one the
  * window names (the drawer), or each investigator still in the scenario, in
- * seat order, which repeats the command once per investigator.
+ * player order (the lead first), which repeats the command once per investigator.
  */
 export type RelativeInvestigator = { ref: 'windowInvestigator' } | { ref: 'eachInvestigator' };
 
@@ -285,7 +285,10 @@ interface ResolvedRefs {
 /** A reference that repeats the command, as `eachInvestigator` does. */
 type RepeatedRef = Extract<RelativeCard | RelativeInvestigator, { ref: `each${string}` }>;
 
-/** The first reference in `effect` that repeats it; an effect holds at most one. */
+/**
+ * The first reference in `effect` that repeats it. An effect holds at most
+ * one, and a test's outcomes none: one there would repeat the whole test.
+ */
 function repeatedRef(effect: unknown): RepeatedRef | undefined {
   if (typeof effect !== 'object' || effect === null) return undefined;
   if (isRelative(effect) && (effect.ref === 'eachInvestigator' || effect.ref === 'eachEnemyAt'))
@@ -306,7 +309,7 @@ function eachId(
 ): (InstanceId | InvestigatorId)[] {
   switch (each.ref) {
     case 'eachInvestigator':
-      return state.investigators.filter((inv) => inv.status === 'active').map((inv) => inv.id);
+      return playerOrder(state).map((inv) => inv.id);
     case 'eachEnemyAt': {
       const location = resolveRefs(each.location, refs) as InstanceId | undefined;
       if (location === undefined) return [];
@@ -394,6 +397,7 @@ export function missingCopies(state: GameState, effect: AbilityEffect): CardCode
     if (Array.isArray(value)) {
       value.forEach(walk);
     } else if (isRelative(value)) {
+      if (value.ref === 'eachEnemyAt') walk(value.location);
       if (value.ref !== 'onlyCopy' || missing.includes(value.code)) return;
       if (theOnlyCopy(state, value.code) === undefined) missing.push(value.code);
     } else {
