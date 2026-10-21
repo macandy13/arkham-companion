@@ -1,6 +1,6 @@
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Edge, GridCell, InstanceId, InvestigatorView, MapView } from '@arkham/engine';
+import type { BoardView, Edge, GridCell, InstanceId, MapView } from '@arkham/engine';
 import { LocationTile } from './LocationTile';
 import { connectionEnds, drawingSize, tileCells, tileOrigin } from './mapLayout';
 import './map.css';
@@ -9,34 +9,24 @@ import './map.css';
  * The visible maps of the open game, each drawn as an SVG of its location tiles at their book
  * layout cells (`MapView.cells`) and the connections between them. Hidden maps are areas the
  * players cannot see yet, and a map whose locations have all left play (The Gathering's Study
- * once the house opens) has nothing to draw, so both are left out. `investigators` are the open
- * game's, whose pawns stand on the tiles. Static for now: pan, zoom and map tabs come later.
+ * once the house opens) has nothing to draw, so both are left out. It takes the whole `board`,
+ * since the pieces on the tiles come from all over it (investigators now, more pieces later).
+ * Static for now: pan, zoom and map tabs come later.
  */
-export function MapBoard({
-  maps,
-  investigators,
-}: {
-  maps: readonly MapView[];
-  investigators: readonly InvestigatorView[];
-}) {
+export function MapBoard({ board }: { board: BoardView }) {
   return (
     <>
-      {maps
+      {board.maps
         .filter((map) => map.visible && map.locations.length > 0)
         .map((map) => (
-          <MapDrawing key={map.id} map={map} investigators={investigators} />
+          <MapDrawing key={map.id} map={map} board={board} />
         ))}
     </>
   );
 }
 
-function MapDrawing({
-  map,
-  investigators,
-}: {
-  map: MapView;
-  investigators: readonly InvestigatorView[];
-}) {
+function MapDrawing({ map, board }: { map: MapView; board: BoardView }) {
+  const investigators = board.investigators;
   const captionId = useId();
   const arrowId = useId();
   const cells = tileCells(map);
