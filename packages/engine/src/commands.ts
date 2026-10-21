@@ -42,6 +42,7 @@ export type Command =
   | DefeatEnemy
   | ExhaustEnemy
   | ReadyEnemy
+  | MoveEnemy
   | MoveHunters
   | MoveHunter
   | RequestDecision
@@ -499,6 +500,21 @@ export interface ExhaustEnemy {
 export interface ReadyEnemy {
   type: 'ReadyEnemy';
   enemyId: InstanceId;
+}
+
+/**
+ * A card effect moves an enemy in play to the location `to` ("move it to the
+ * Hallway"), or the players carry such an effect out by dragging the enemy
+ * on the map. Unlike a hunter's step it needs no connection. An engaged enemy
+ * leaves its investigator's threat area, since an engaged enemy is where its
+ * investigator is; at `to` a ready enemy then engages as when it spawns there
+ * (`engageEvents`). An enemy entering an unrevealed location does not reveal
+ * it. Produces `CardMoved`, then `EnemyEngaged` or `DecisionRequested`.
+ */
+export interface MoveEnemy {
+  type: 'MoveEnemy';
+  enemyId: InstanceId;
+  to: InstanceId;
 }
 
 /**

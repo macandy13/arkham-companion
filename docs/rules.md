@@ -110,6 +110,7 @@ An ability that shuffles an empty discard pile into a deck does not shuffle the 
 - An enemy is either engaged (in an investigator's threat area, which counts as that investigator's location and moves with them) or unengaged at a location.
 - A **ready, unengaged** enemy engages as soon as it shares a location with an investigator: when it spawns there, moves there, or an investigator moves in. With several investigators present, [prey](#prey) decides, then the lead investigator. There is no limit on enemies engaged with one investigator.
 - An exhausted enemy doesn't engage, but engages the moment it readies if it shares a location with an investigator.
+- A card effect that moves an enemy ("move it to the Hallway") needs no connection unless its text says "connecting location" (Elusive does). Our reading, as the Rules Reference's Move entry could not be checked: an engaged enemy moved away disengages, since an engaged enemy is always at its investigator's location; at the destination it engages by the rule above.
 - [Aloof](https://arkhamdb.com/rules#Aloof): never engages on its own and spawns unengaged. It can only be engaged by the engage action or a card, and can't be attacked while unengaged.
 - [Being at no location](https://arkhamdb.com/rules#Being_at_No_Location): enemies and investigators must always be at a location, and effects that would remove them from one are ignored.
 

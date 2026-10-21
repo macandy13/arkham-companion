@@ -5,6 +5,7 @@ import type {
   DisengageEnemy,
   EngageEnemy,
   ExhaustEnemy,
+  MoveEnemy,
   ReadyEnemy,
 } from './commands';
 import { engageEvents } from './engagement';
@@ -13,6 +14,7 @@ import { activeInvestigator } from './handle_investigator';
 import type { InstanceId } from './ids';
 import { hasKeyword } from './keywords';
 import { requireCard } from './lookup';
+import { moveCardEvent } from './placement';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
@@ -66,6 +68,24 @@ export function handleDisengageEnemy(
       locationId: locationOf(state, enemy),
     },
   ];
+}
+
+/**
+ * `MoveEnemy`: places the enemy unengaged at `to`, then lets it engage there.
+ * `to` must be a location; it need not be revealed or connected.
+ */
+export function handleMoveEnemy(ctx: EngineContext, state: GameState, cmd: MoveEnemy): Event[] {
+  const { enemy } = inPlayEnemyOf(ctx, state, cmd.enemyId);
+  if (requireCard(state.cards, cmd.to).zone.kind !== 'location')
+    throw new CommandRejected({ code: 'notALocation', cardId: cmd.to });
+  if (locationOf(state, enemy) === cmd.to)
+    throw new CommandRejected({
+      code: 'enemyAlreadyAtLocation',
+      cardId: enemy.id,
+      locationId: cmd.to,
+    });
+  const moved = moveCardEvent(enemy, { kind: 'atLocation', locationId: cmd.to });
+  return [moved, ...engageEvents(ctx, replay([moved], state), enemy.id)];
 }
 
 /** `DamageEnemy`: adds damage and defeats the enemy in the same step once it has as much as its health. */

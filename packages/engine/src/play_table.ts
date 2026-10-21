@@ -360,6 +360,18 @@ export class PlayTable {
   }
 
   /**
+   * A card effect moves `enemy` to the location `location` names, connected or
+   * not; it disengages, and engages again there by the usual rules.
+   */
+  moveEnemy(enemy: EnemyRef, location: CardRef): void {
+    this.play({
+      type: 'MoveEnemy',
+      enemyId: this.board.enemyId(enemy),
+      to: this.board.location(location).id,
+    });
+  }
+
+  /**
    * The players resolve the attack of opportunity `enemy` makes: at its
    * printed damage and horror, or at the `damage` and `horror` they lower it
    * to (an asset soaking part of it).
