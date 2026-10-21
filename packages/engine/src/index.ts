@@ -91,6 +91,7 @@ export { BASE_ACTIONS_PER_TURN } from './turns';
 export { formatBoard } from './format_board';
 export {
   atEndOfRound,
+  attachToLocation,
   atEndOfTurn,
   discardSelf,
   moveSelf,

@@ -1,4 +1,3 @@
-import { locationAttachments } from './board';
 import { cardStats, type CardStats, type EngineContext } from './cards';
 import type {
   DrawEncounter,
@@ -210,9 +209,9 @@ function refillIfEmpty(state: GameState): Event[] {
 /**
  * The events that place a drawn card, which waits in the `resolving` zone.
  * An enemy spawns (spawn instruction, engagement) like `SpawnEnemy`, with
- * the drawer as fallback location; every other card goes to the threat area,
- * the drawer's location (see `attachmentHost`) or the top of the discard. It
- * runs once the revelation has resolved, a revelation test's answer
+ * the drawer as fallback location; every other card goes to the top of the
+ * discard, unless its revelation put it somewhere else (`putIntoThreatArea`,
+ * `attachToLocation`). It runs once the revelation has resolved, a revelation test's answer
  * included (Rules Reference: a card is discarded after its revelation
  * resolves).
  */
@@ -226,8 +225,6 @@ function placement(
   if (stats.typeCode === 'enemy')
     return spawnEvents(ctx, state, cardId, { investigatorId: investigator.id });
   const card = requireCard(state.cards, cardId);
-  const host = attachmentHost(ctx, state, stats, investigator);
-  if (host) return [cardMoved(state, card, { kind: 'attachedTo', hostId: host.id })];
   // Index 0 is the top, and the discard's top is what "topmost" effects look for.
   return [cardMoved(state, card, encounterDiscard, 0)];
 }
@@ -251,31 +248,6 @@ function withoutDrawer(
   const instructed = stats.keywords?.some((keyword) => keyword.name === 'spawn') ?? false;
   if (stats.typeCode === 'enemy' && instructed) return spawnEvents(ctx, state, card.id, {});
   return [cardMoved(state, card, encounterDiscard, 0)];
-}
-
-/**
- * The location a treachery with `CardStats.locationAttachment` attaches to:
- * the drawer's. None for any other card, for a drawer without a location, or
- * when the card's limit of one per location is reached (counted by title, so
- * a reprint with another code counts too), so the card is discarded like one
- * without a lasting effect.
- */
-function attachmentHost(
-  ctx: EngineContext,
-  state: GameState,
-  stats: CardStats,
-  investigator: Investigator,
-): CardInstance | undefined {
-  if (stats.typeCode !== 'treachery' || !stats.locationAttachment) return undefined;
-  const location =
-    investigator.locationId === undefined ? undefined : state.cards[investigator.locationId];
-  if (!location) return undefined;
-  const limitReached =
-    stats.locationAttachment.onePerLocation &&
-    locationAttachments(ctx, state, location).some(
-      ({ card }) => cardStats(ctx.cards, card.code).name === stats.name,
-    );
-  return limitReached ? undefined : location;
 }
 
 /**

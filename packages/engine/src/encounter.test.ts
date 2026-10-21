@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   attachedTo,
+  attachToLocation,
   blankAsset,
   blankEnemy,
   blankLocation,
@@ -52,6 +53,7 @@ const lingeringTreachery = blankTreachery('lingering_treachery', {
 });
 const onePerLocationAttachment = blankTreachery('one_per_location_attachment', {
   locationAttachment: { onePerLocation: true },
+  abilities: [whenRevealed(attachToLocation())],
 });
 const relicCard = blankAsset('relic');
 
@@ -968,7 +970,7 @@ describe('revelation before the drawn card is placed', () => {
   });
   const scorchingAttachment = blankTreachery('scorching_attachment', {
     locationAttachment: { onePerLocation: true },
-    abilities: [whenRevealed(takeDamage(1))],
+    abilities: [whenRevealed(takeDamage(1), attachToLocation())],
   });
   const lethalTreachery = blankTreachery('lethal_treachery', {
     abilities: [whenRevealed(takeDamage(8))],
