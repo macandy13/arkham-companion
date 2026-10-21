@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import type { EnemyView, InvestigatorView, LocationView } from '@arkham/engine';
-import { TILE } from './mapLayout';
+import type { EnemyView, InvestigatorId, InvestigatorView, LocationView } from '@arkham/engine';
+import { TILE, type Point } from './mapLayout';
+import type { PawnDragHandlers } from './usePawnDrag';
 
 /**
  * Where a tile's contents sit, in SVG user units from its top left corner: text lines one
@@ -13,18 +14,22 @@ const CONTENT = { inset: 10, line: 24, chip: 28, pawnRadius: 14, pawnGap: 6 } as
  * One location as a tile at (`x`, `y`): its name, its shroud and clues once revealed (both are
  * on the revealed side), its doom and attachments when it has any, a chip per enemy at it and a
  * pawn per investigator there. `enemies` and `investigators` are the open game's pieces at this
- * location.
+ * location; the pawn of `movable`, if it stands here, can be dragged with `drag`'s handlers.
  */
 export function LocationTile({
   location,
   enemies,
   investigators,
+  movable,
+  drag,
   x,
   y,
 }: {
   location: LocationView;
   enemies: readonly EnemyView[];
   investigators: readonly InvestigatorView[];
+  movable?: InvestigatorId;
+  drag: PawnDragHandlers;
   x: number;
   y: number;
 }) {
@@ -57,13 +62,43 @@ export function LocationTile({
         />
       ))}
       {investigators.map((investigator, i) => (
-        <g key={investigator.id} role="img" aria-label={investigator.name}>
-          <circle cx={pawnX(i)} cy={pawnsY} r={CONTENT.pawnRadius} />
-          <text x={pawnX(i)} y={pawnsY}>
-            {investigator.name.charAt(0)}
-          </text>
-        </g>
+        <Pawn
+          key={investigator.id}
+          investigator={investigator}
+          centre={{ x: pawnX(i), y: pawnsY }}
+          drag={investigator.id === movable ? drag : undefined}
+        />
       ))}
+    </g>
+  );
+}
+
+/**
+ * An investigator's pawn: a circle with their initial, centred on `centre`. With `drag` it can
+ * be dragged (`usePawnDrag`), and its `data-drag` keeps the map from panning when a drag starts
+ * on it. A `ghost` is the copy that follows the pointer during a drag; it is hidden from
+ * assistive technology, since the pawn itself stays in place until the move is played.
+ */
+export function Pawn({
+  investigator,
+  centre: { x, y },
+  drag,
+  ghost = false,
+}: {
+  investigator: InvestigatorView;
+  centre: Point;
+  drag?: PawnDragHandlers;
+  ghost?: boolean;
+}) {
+  return (
+    <g
+      {...(ghost ? { 'aria-hidden': true } : { role: 'img', 'aria-label': investigator.name })}
+      {...(drag && { 'data-drag': 'pawn', ...drag })}
+    >
+      <circle cx={x} cy={y} r={CONTENT.pawnRadius} />
+      <text x={x} y={y}>
+        {investigator.name.charAt(0)}
+      </text>
     </g>
   );
 }

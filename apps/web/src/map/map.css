@@ -112,3 +112,16 @@
 #map svg g[role='img'] rect {
   fill: var(--color-background);
 }
+
+/*
+ * The pawn that can move: the browser must not scroll or zoom the page when a touch drags it,
+ * and the copy that follows the pointer lets the tiles below show through.
+ */
+#map svg [data-drag] {
+  cursor: grab;
+  touch-action: none;
+}
+
+#map svg g[aria-hidden='true'] {
+  opacity: var(--map-ghost-opacity);
+}

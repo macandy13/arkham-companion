@@ -46,6 +46,7 @@ export const resources = {
         turnInProgress: 'Finish the current turn first.',
         noTurnInProgress: 'Start an investigator’s turn first.',
         turnsNotTaken: 'Every investigator must take a turn first.',
+        notConnected: 'Those locations are not connected.',
       },
       nav: { label: 'Main' },
       game: {
@@ -246,6 +247,7 @@ export const resources = {
         turnInProgress: 'Beende zuerst den laufenden Zug.',
         noTurnInProgress: 'Beginne zuerst den Zug eines Ermittlers.',
         turnsNotTaken: 'Jeder Ermittler muss zuerst einen Zug machen.',
+        notConnected: 'Diese Orte sind nicht verbunden.',
       },
       nav: { label: 'Hauptnavigation' },
       game: {

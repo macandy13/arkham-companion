@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { cardName, instanceId, mapId, type InstanceId, type MapView } from '@arkham/engine';
-import { TILE, connectionEnds, drawingSize, tileCells, tileOrigin } from './mapLayout';
+import { TILE, connectionEnds, drawingSize, tileAt, tileCells, tileOrigin } from './mapLayout';
 
 const study = instanceId('study');
 const hallway = instanceId('hallway');
@@ -119,5 +119,27 @@ describe('connectionEnds', () => {
     },
   ])('runs from edge to edge to $to', ({ cell, ends }) => {
     expect(connectionEnds(left, cell)).toEqual(ends);
+  });
+});
+
+// The Study's tile spans 0–150 across and 0–210 down; the Hallway's, a card step to the right,
+// spans 180–330 across.
+describe('tileAt', () => {
+  const cells = { [study]: { column: 0, row: 0 }, [hallway]: { column: 3, row: 0 } };
+
+  it.each([
+    { point: { x: 75, y: 105 }, location: study },
+    { point: { x: 150, y: 210 }, location: study },
+    { point: { x: 200, y: 10 }, location: hallway },
+    { point: { x: 165, y: 105 }, location: undefined },
+    { point: { x: 75, y: 230 }, location: undefined },
+  ])('finds $location at ($point.x, $point.y)', ({ point, location }) => {
+    expect(tileAt(cells, point)).toBe(location);
+  });
+
+  it('picks the tile drawn last where two share a cell', () => {
+    const shared = { [study]: { column: 0, row: 0 }, [attic]: { column: 0, row: 0 } };
+
+    expect(tileAt(shared, { x: 75, y: 105 })).toBe(attic);
   });
 });

@@ -81,3 +81,15 @@ function centre(cell: GridCell): Point {
   const { x, y } = tileOrigin(cell);
   return { x: x + TILE.width / 2, y: y + TILE.height / 2 };
 }
+
+/**
+ * The location whose tile holds `point`, if any: where a dragged piece is let go. Where tiles
+ * overlap (two locations given one cell), the one drawn last is on top, so it wins.
+ */
+export function tileAt(cells: Record<InstanceId, GridCell>, point: Point): InstanceId | undefined {
+  const tiles = Object.entries(cells) as [InstanceId, GridCell][];
+  return tiles.reverse().find(([, cell]) => {
+    const { x, y } = tileOrigin(cell);
+    return point.x >= x && point.x <= x + TILE.width && point.y >= y && point.y <= y + TILE.height;
+  })?.[0];
+}
