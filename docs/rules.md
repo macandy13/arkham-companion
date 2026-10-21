@@ -98,6 +98,8 @@ The game rules the engine implements, summarised in our own words so sessions do
 
 An ability that shuffles an empty discard pile into a deck does not shuffle the deck ([discard piles](https://arkhamdb.com/rules#Discard_Piles)).
 
+An effect that searches for a card ("discard cards from the top until a Ghoul enemy is discarded, draw it") and finds none resolves as far as it can: nothing is drawn, and no cards are discarded ([search](https://arkhamdb.com/rules#Search)).
+
 ## Spawn and engagement
 
 [Spawn](https://arkhamdb.com/rules#Spawn), [spawning an enemy](https://arkhamdb.com/rules#Spawning_an_Enemy), [engagement](https://arkhamdb.com/rules#Enemy_Engagement).

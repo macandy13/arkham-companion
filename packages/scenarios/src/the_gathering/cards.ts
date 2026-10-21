@@ -1,6 +1,8 @@
 import {
   GRID_CELLS_PER_CARD,
   advanceAct,
+  leadDrawsDiscardingUntil,
+  shuffleEncounterDiscard,
   atEndOfRound,
   atEndOfTurn,
   attachToLocation,
@@ -107,7 +109,18 @@ export const theGatheringHouse: AddMapStep = {
  */
 export const theGatheringCardDefs: readonly CardStats[] = [
   agenda({ code: codes.whatsGoingOn, name: "What's Going On?!", stage: 1, doom: 3 }),
-  agenda({ code: codes.riseOfTheGhouls, name: 'Rise of the Ghouls', stage: 2, doom: 7 }),
+  agenda({
+    code: codes.riseOfTheGhouls,
+    name: 'Rise of the Ghouls',
+    stage: 2,
+    doom: 7,
+    abilities: [
+      whenAdvanced(
+        shuffleEncounterDiscard(),
+        leadDrawsDiscardingUntil({ trait: trait('Ghoul'), typeCode: 'enemy' }),
+      ),
+    ],
+  }),
   agenda({ code: codes.theyreGettingOut, name: "They're Getting Out!", stage: 3, doom: 10 }),
   act({
     code: codes.trapped,
@@ -304,14 +317,17 @@ interface AgendaOptions {
   name: string;
   stage: number;
   doom: number;
+  /** Its reverse side (`whenAdvanced`). */
+  abilities?: readonly Ability[];
 }
 
-function agenda({ code, name, stage, doom }: AgendaOptions): CardStats {
+function agenda({ code, name, stage, doom, abilities }: AgendaOptions): CardStats {
   return {
     ...scenarioCard(code, name),
     typeCode: 'agenda',
     stage: { number: stage },
     doom: fixed(doom),
+    ...(abilities ? { abilities } : {}),
   };
 }
 

@@ -92,6 +92,8 @@ export { formatBoard } from './format_board';
 export {
   advanceAct,
   atEndOfRound,
+  leadDrawsDiscardingUntil,
+  shuffleEncounterDiscard,
   attachToLocation,
   atEndOfTurn,
   discardEachEnemyAt,

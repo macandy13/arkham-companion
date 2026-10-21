@@ -469,16 +469,14 @@ describe('DrawEncounter with a match', () => {
     expect(idsIn(after, encounterDeck)).toEqual(['ghoul_minion']);
   });
 
-  it('requires every given field to match', () => {
+  it('draws nothing when no card matches every given field', () => {
     const { context, state } = aliceInHall
       .withCard(instanceId('ghoul_treachery_card'), ghoulTreachery, encounterDeck)
       .start();
 
-    expect(rejectionFrom(context, state, drawGhoulEnemy)).toEqual({
-      code: 'noMatchingCard',
-      from: 'deck',
-      match: drawGhoulEnemy.match,
-    });
+    const { events } = execute(context, state, drawGhoulEnemy);
+
+    expect(events).toEqual([]);
   });
 
   it('does not look in the discard unless told to', () => {
@@ -486,18 +484,19 @@ describe('DrawEncounter with a match', () => {
       .withCard(instanceId('ghoul_in_discard'), ghoulFoe, encounterDiscard)
       .start();
 
-    expect(rejectionFrom(context, state, drawGhoulEnemy).code).toBe('noMatchingCard');
+    const after = stateAfter(context, state, drawGhoulEnemy);
+
+    expect(idsIn(after, encounterDiscard)).toEqual(['ghoul_in_discard']);
   });
 
-  it('changes nothing when it rejects, even when asked to discard the cards above', () => {
+  it('discards nothing when no card matches, even when asked to discard the cards above', () => {
     const { context, state } = aliceInHall
       .withCard(instanceId('top_card'), plainTreachery, encounterDeck)
       .start();
 
-    const rejection = rejectionFrom(context, state, { ...drawGhoulEnemy, discardSkipped: true });
+    const after = stateAfter(context, state, { ...drawGhoulEnemy, discardSkipped: true });
 
-    expect(rejection.code).toBe('noMatchingCard');
-    expect(idsIn(state, encounterDeck)).toEqual(['top_card']);
+    expect(idsIn(after, encounterDeck)).toEqual(['top_card']);
   });
 
   it('draws again from the top after a matched card with surge', () => {

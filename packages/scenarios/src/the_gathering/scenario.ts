@@ -3,11 +3,9 @@ import {
   decisionId,
   enemiesAt,
   mapId,
-  matchesEncounter,
   scenarioId,
   trait,
   type Command,
-  type EncounterMatch,
   type EngineContext,
   type GameState,
   type ScenarioDefinition,
@@ -36,8 +34,6 @@ const resolutions = GATHERING_RESOLUTIONS;
 
 /** Id of act 3's question to the lead investigator: burn the house down or not. */
 export const BURN_THE_HOUSE_DECISION = decisionId('theGathering.burnTheHouse');
-
-const ghoulEnemy: EncounterMatch = { trait: trait('Ghoul'), typeCode: 'enemy' };
 
 /**
  * Act 3, reverse side: the lead investigator decides whether to burn the
@@ -68,28 +64,6 @@ function whatHaveYouDoneReverseSide(): Command[] {
         ],
       },
     },
-  ];
-}
-
-/**
- * Agenda 2 ("Rise of the Ghouls"), reverse side: the encounter discard is
- * shuffled into the deck, then cards are discarded from the top until a
- * Ghoul enemy turns up, which the lead investigator draws. Without any Ghoul
- * enemy left among those cards only the shuffle happens; the draw would
- * otherwise reject the whole advance.
- */
-function riseOfTheGhoulsReverseSide(ctx: EngineContext, state: GameState): Command[] {
-  const shuffle: Command = { type: 'ShuffleEncounterDiscard' };
-  const lead = state.meta.leadInvestigator;
-  const ghoulLeft = Object.values(state.cards).some(
-    (card) =>
-      (card.zone.kind === 'encounterDeck' || card.zone.kind === 'encounterDiscard') &&
-      matchesEncounter(cardStats(ctx.cards, card.code), ghoulEnemy),
-  );
-  if (lead === undefined || !ghoulLeft) return [shuffle];
-  return [
-    shuffle,
-    { type: 'DrawEncounter', investigatorId: lead, match: ghoulEnemy, discardSkipped: true },
   ];
 }
 
@@ -136,10 +110,10 @@ const ghoulsAtYourLocation: TokenValue = (ctx, state, test) => {
  * rest of the six encounter sets is shuffled into the encounter deck. Card
  * data is hand-entered (`theGatheringCardDefs`); it is the shared test
  * scenario for the generic rules until real scenario data arrives (M4).
- * The reverse sides of acts 1 and 2 and act 3's objective are abilities on
- * their card data; `hooks` hold the reverse sides of act 3 and of agendas 2
- * and 3 (agenda 1's choice and agenda 3's forced effects are left to the
- * players). Pass the whole definition as `EngineContext.scenario`, so the
+ * The reverse sides of acts 1 and 2 and of agenda 2, and act 3's objective,
+ * are abilities on their card data; `hooks` hold the reverse sides of act 3
+ * and agenda 3 (agenda 1's choice and agenda 3's forced effects are left to
+ * the players). Pass the whole definition as `EngineContext.scenario`, so the
  * engine gets the hooks together with `reference` and `modifiers` (the
  * skull's "-X") for skill test suggestions. The reference
  * card's modifiers are hand-entered from the 2016 Core Set card as known
@@ -208,7 +182,6 @@ export const theGathering: ScenarioDefinition = {
       [codes.whatHaveYouDone]: whatHaveYouDoneReverseSide,
     },
     onAgendaAdvance: {
-      [codes.riseOfTheGhouls]: riseOfTheGhoulsReverseSide,
       [codes.theyreGettingOut]: theyreGettingOutReverseSide,
     },
   },
