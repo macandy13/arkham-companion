@@ -360,8 +360,8 @@ export class PlayTable {
   }
 
   /**
-   * A card effect moves `enemy` to the location `location` names, connected or
-   * not; it disengages, and engages again there by the usual rules.
+   * A card effect moves the unengaged `enemy` to the location `location`
+   * names, connected or not; it engages there by the usual rules.
    */
   moveEnemy(enemy: EnemyRef, location: CardRef): void {
     this.play({

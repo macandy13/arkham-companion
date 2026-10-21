@@ -472,14 +472,6 @@ describe('MoveEnemy', () => {
     expect(after.cards[attic]?.faceUp).toBe(false);
   });
 
-  it('takes an engaged enemy out of its investigator`s threat area', () => {
-    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, engagedWith(alice)).start();
-
-    const after = stateAfter(context, state, moveGhoulTo(cellar));
-
-    expect(zoneOf(after, ghoul)).toEqual(atLocation(cellar));
-  });
-
   it.each([
     { card: ghoulCard, name: 'engages a ready enemy', zone: engagedWith(alice) },
     { card: aloofGhoulCard, name: 'leaves an aloof enemy unengaged', zone: atLocation(hall) },
@@ -521,10 +513,10 @@ describe('MoveEnemy', () => {
       rejection: { code: 'enemyAlreadyAtLocation', cardId: ghoul, locationId: cellar },
     },
     {
-      name: 'an engaged enemy to its investigator`s location',
+      name: 'an engaged enemy, which moves only with its investigator',
       zone: engagedWith(alice),
-      to: hall,
-      rejection: { code: 'enemyAlreadyAtLocation', cardId: ghoul, locationId: hall },
+      to: cellar,
+      rejection: { code: 'enemyEngaged', cardId: ghoul, investigatorId: alice },
     },
     {
       name: 'an enemy that is not in play',
