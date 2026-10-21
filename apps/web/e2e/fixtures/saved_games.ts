@@ -6,7 +6,8 @@ import {
   investigatorCode,
   investigatorId,
   PlayTable,
-  scenario,
+  type CardCode,
+  type InstanceId,
   type InvestigatorCard,
   type ScenarioDefinition,
 } from '@arkham/engine';
@@ -99,11 +100,28 @@ export function twoMapsExport(title: string): Buffer {
     },
     { investigators: [{ id: alderId, code: alder.code }], seed: 3 },
   );
-  table.step(() => {
-    for (const command of scenario.compileMapStep(table.state, theGatheringHouse)) {
-      table.play(command);
-    }
-  });
+  // The house's locations are each set aside once, so a code names its card.
+  const cardOf = (code: CardCode): InstanceId => {
+    const card = Object.values(table.state.cards).find((candidate) => candidate.code === code);
+    if (!card) throw new Error(`no card ${code} in the game`);
+    return card.id;
+  };
+  const house = theGatheringHouse;
+  table.step(() =>
+    table.play({
+      type: 'AddMap',
+      mapId: house.mapId,
+      map: {
+        name: house.name,
+        connections: (house.connections ?? []).map(({ from, to }) => ({
+          from: cardOf(from),
+          to: cardOf(to),
+          oneWay: false,
+        })),
+      },
+      locations: house.locations.map(({ code, at }) => ({ id: cardOf(code), at })),
+    }),
+  );
   return exportOf(title, table, 'two_maps');
 }
 
