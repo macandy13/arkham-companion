@@ -462,7 +462,32 @@ describe('trigger bus', () => {
       expect(state.cards[lantern]?.zone).toEqual(atLocation(hall));
     });
 
-    it('drops an effect naming a code the game holds twice', () => {
+    /** What `lastStandAct` records when the priest it spawns is not in the game exactly once. */
+    const priestSpawnSkipped = {
+      type: 'AbilityEffectSkipped',
+      cardId: act1,
+      effect: 'SpawnEnemy',
+      missing: [cardCode('priest')],
+    };
+
+    it('skips an effect naming a code the game lacks and records it for the players', () => {
+      const { context, state: started } = newGame()
+        .withAct(act1, lastStandAct)
+        .withAct(act2, secondActCard)
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withLocation(cellar, blankLocation('cellar'))
+        .start();
+
+      const { events, state } = execute(context, started, { type: 'AdvanceAct' });
+
+      expect(state.cards[cellar]?.faceUp).toBe(true);
+      expect(events.filter((event) => event.type === 'AbilityEffectSkipped')).toEqual([
+        priestSpawnSkipped,
+      ]);
+      expect(state.act.current).toBe(act2);
+    });
+
+    it('skips an effect naming a code the game holds twice and records it for the players', () => {
       const { context, state: started } = newGame()
         .withAct(act1, lastStandAct)
         .withAct(act2, secondActCard)
@@ -472,10 +497,12 @@ describe('trigger bus', () => {
         .withCard(instanceId('second_priest'), priestCard, { kind: 'setAside' })
         .start();
 
-      const { state } = execute(context, started, { type: 'AdvanceAct' });
+      const { events, state } = execute(context, started, { type: 'AdvanceAct' });
 
-      expect(state.cards[cellar]?.faceUp).toBe(true);
       expect(state.cards[priest]?.zone).toEqual({ kind: 'setAside' });
+      expect(events.filter((event) => event.type === 'AbilityEffectSkipped')).toEqual([
+        priestSpawnSkipped,
+      ]);
     });
   });
 

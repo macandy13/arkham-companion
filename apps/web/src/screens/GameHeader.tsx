@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import type { StoreApi } from 'zustand/vanilla';
 import type { BoardView } from '@arkham/engine';
 import type { AppState, OpenGame } from '../state/appStore';
+import { cluesInSeatOrder } from '../state/gameActions';
 import { downloadGameExport } from './downloadFile';
 
 /**
@@ -42,7 +43,7 @@ export function GameHeader({
         {t('header.next')}
       </button>
       <AgendaStatus store={store} board={board} blocked={blocked} />
-      <ActStatus board={board} />
+      <ActStatus store={store} board={board} blocked={blocked} />
       <button type="button" disabled={blocked || !open.canUndo} onClick={() => void actions.undo()}>
         {t('header.undo')}
       </button>
@@ -102,16 +103,38 @@ function AgendaStatus({
   );
 }
 
-/** The current act with the clues the investigators hold against the clues it needs. */
-function ActStatus({ board }: { board: BoardView }) {
+/**
+ * The current act with the clues the investigators hold against the clues it needs, and its
+ * advance once they hold enough, paid in seat order (`cluesInSeatOrder`).
+ */
+function ActStatus({
+  store,
+  board,
+  blocked,
+}: {
+  store: StoreApi<AppState>;
+  board: BoardView;
+  blocked: boolean;
+}) {
   const { t } = useTranslation();
   const { act } = board;
   if (!act) return null;
+  const { actions } = store.getState();
+  const needed = act.clues;
   return (
     <section aria-label={t('header.act')}>
       <h2>{act.name}</h2>
-      {act.clues !== undefined && (
-        <p>{t('header.cluesOf', { clues: board.cluesHeld, threshold: act.clues })}</p>
+      {needed !== undefined && (
+        <>
+          <p>{t('header.cluesOf', { clues: board.cluesHeld, threshold: needed })}</p>
+          <button
+            type="button"
+            disabled={blocked || board.cluesHeld < needed}
+            onClick={() => void actions.advanceAct(cluesInSeatOrder(board.investigators, needed))}
+          >
+            {t('header.advanceAct')}
+          </button>
+        </>
       )}
     </section>
   );
