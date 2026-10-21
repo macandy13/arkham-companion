@@ -1,5 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
-import { SCREENCAST_STEP_MS } from './scripts/screencast/screencasts';
+import { RECORDING_PROJECTS, SCREENCAST_STEP_MS } from './scripts/screencast/screencasts';
 
 // The app's primary device is a landscape tablet (product.md "UI concept").
 const tablet = {
@@ -13,9 +13,9 @@ const executablePath = process.env.PW_CHROMIUM_PATH;
 
 /**
  * E2E tests run against the production build (`vite preview`), the same bundle users get.
- * `tablet-landscape` runs every spec (`pnpm e2e`). `screencast` re-runs only the specs
- * tagged `@flow`, slowed down and recorded, for the PR description (`pnpm e2e:screencast`,
- * see docs/automation.md).
+ * `tablet-landscape` runs every spec (`pnpm e2e`). For the PR description, `screencast`
+ * re-runs only the specs tagged `@flow`, slowed down and recorded, and `screenshot` only the
+ * specs tagged `@shot`, photographed as they end (`pnpm e2e:screencast`, see docs/automation.md).
  */
 export default defineConfig({
   testDir: './e2e',
@@ -34,7 +34,7 @@ export default defineConfig({
       use: { ...tablet, launchOptions: { executablePath } },
     },
     {
-      name: 'screencast',
+      name: RECORDING_PROJECTS.flows,
       grep: /@flow/,
       outputDir: 'test-results/screencast',
       use: {
@@ -53,6 +53,12 @@ export default defineConfig({
         },
         launchOptions: { executablePath, slowMo: SCREENCAST_STEP_MS },
       },
+    },
+    {
+      name: RECORDING_PROJECTS.shots,
+      grep: /@shot/,
+      outputDir: 'test-results/screenshot',
+      use: { ...tablet, screenshot: 'on', launchOptions: { executablePath } },
     },
   ],
   webServer: {
