@@ -113,6 +113,22 @@ describe('MapBoard', () => {
     expect(screen.queryByRole('figure', { name: 'House' })).toBeNull();
   });
 
+  it('shows the first map again once the chosen one has no locations left', () => {
+    const cellar = mapId('cellar');
+    const withCellar = PlayTable.start(
+      house
+        .withMap(cellar, { name: 'Cellar' })
+        .withLocation(instanceId('cellar'), blankLocation('cellar'), { map: cellar }),
+    );
+    const { rerender } = render(<MapBoard board={withCellar.board} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Cellar' }));
+
+    const cellarEmptied = PlayTable.start(house.withMap(cellar, { name: 'Cellar' }));
+    rerender(<MapBoard board={cellarEmptied.board} />);
+
+    expect(screen.getByRole('figure', { name: 'House' })).toBeTruthy();
+  });
+
   it('stands a pawn for each investigator and a chip for each enemy on their location', () => {
     const ghoul = instanceId('ghoul');
     const table = PlayTable.start(
