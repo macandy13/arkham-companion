@@ -5,8 +5,10 @@ import { isInPlay } from './doom';
 import type { Event } from './events';
 import type { CardCode, InstanceId, InvestigatorId } from './ids';
 import { locationAttachments } from './board';
+import { enemiesAt } from './handle_enemy';
 import { isActiveInvestigator, requireInvestigator } from './investigators';
 import { cardsInZone, requireCard } from './lookup';
+import { compileMapStep, type AddMapStep } from './setup';
 import type { GameState, Investigator, QueuedStep, SkillName } from './state';
 import type { Zone } from './zone';
 
@@ -52,12 +54,20 @@ export type RelativeCard =
    * unique cards ("the Parlor", "the Ghoul Priest"); none while the game holds
    * no copy or several, and the effect is skipped with `AbilityEffectSkipped`.
    */
-  | { ref: 'onlyCopy'; code: CardCode };
+  | { ref: 'onlyCopy'; code: CardCode }
+  /**
+   * Each enemy at the location named, engaged ones included (they are at
+   * their investigator's location): the command repeats once per enemy, in
+   * card order, and none when there is no enemy there.
+   */
+  | { ref: 'eachEnemyAt'; location: RelativeCard };
 
-/** An investigator an ability names relative to its window: the one the window names (the drawer). */
-export interface RelativeInvestigator {
-  ref: 'windowInvestigator';
-}
+/**
+ * An investigator an ability names relative to its window: the one the
+ * window names (the drawer), or each investigator still in the scenario, in
+ * seat order, which repeats the command once per investigator.
+ */
+export type RelativeInvestigator = { ref: 'windowInvestigator' } | { ref: 'eachInvestigator' };
 
 /**
  * `T` with every instance and investigator ID replaced by a relative
@@ -91,7 +101,8 @@ export type AbilityCommand =
           | 'DiscardCard'
           | 'RevealLocation'
           | 'FromSetAside'
-          | 'SpawnEnemy';
+          | 'SpawnEnemy'
+          | 'MoveInvestigator';
       }
     >
   | AbilityTest;
@@ -112,7 +123,21 @@ export type AbilityTest = Omit<TestSkill, 'onPass' | 'onFail'> & {
  * command types keeps one vocabulary: a new kind of effect is a command
  * added to `AbilityCommand`, not a new effect type.
  */
-export type AbilityEffect = Templated<AbilityCommand>;
+export type AbilityEffect = CommandEffect | PutMapIntoPlay;
+
+/** An effect that is one templated command, which is what a test's outcomes may hold. */
+export type CommandEffect = Templated<AbilityCommand>;
+
+/**
+ * "Put the house into play": a map the scenario declares like setup's
+ * `addMap` step, put into play mid-scenario (a reverse side). Not a command:
+ * it resolves to the commands `compileMapStep` makes from the step then,
+ * since only then are the set-aside locations it names known by instance.
+ */
+export interface PutMapIntoPlay {
+  type: 'PutMapIntoPlay';
+  step: AddMapStep;
+}
 
 /**
  * A forced card ability: what it does when its window opens. Card data
@@ -196,40 +221,55 @@ export function abilitySteps(
   return (cardStats(ctx.cards, card.code).abilities ?? [])
     .filter((ability) => ability.window.kind === opened.window.kind)
     .flatMap((ability) => ability.effects)
-    .map((effect) => ({ kind: 'ability', effect, opened, origin: effect.type }));
+    .map((effect) => ({
+      kind: 'ability',
+      effect,
+      opened,
+      origin: effect.type === 'PutMapIntoPlay' ? 'AddMap' : effect.type,
+    }));
 }
 
 /** An effect waiting to resolve: the queue step `abilitySteps` produces. */
 export type AbilityStep = Extract<QueuedStep, { kind: 'ability' }>;
 
 /**
- * The command `effect` stands for in `state`, with its references resolved
- * for `opened`; none when one names nobody, such as `windowInvestigator` in
- * a window that names no investigator (a location revealed by a card
- * effect), or one who has left the scenario meanwhile (defeated by an
- * earlier effect of the same revelation), whose threat area and tests are
- * gone with them.
+ * The commands `effect` stands for in `state`, with its references resolved
+ * for `opened`. Usually one; one per investigator or enemy for an effect on
+ * each of them (`eachInvestigator`, `eachEnemyAt`), and those of the map
+ * step for `PutMapIntoPlay`. None when a reference names nobody, such as
+ * `windowInvestigator` in a window that names no investigator (a location
+ * revealed by a card effect), or one who has left the scenario meanwhile
+ * (defeated by an earlier effect of the same revelation), whose threat area
+ * and tests are gone with them; and none when a card it names by code is not
+ * there exactly once (`missingCopies`).
  */
 export function resolveEffect(
   ctx: EngineContext,
   state: GameState,
   effect: AbilityEffect,
   opened: OpenedWindow,
-): Command | undefined {
+): Command[] {
+  if (effect.type === 'PutMapIntoPlay')
+    return missingCopies(state, effect).length > 0 ? [] : compileMapStep(state, effect.step);
   const { investigatorId } = opened;
   const investigator =
     investigatorId !== undefined && isActiveInvestigator(state, investigatorId)
       ? requireInvestigator(state, investigatorId)
       : undefined;
-  const resolved = resolveRefs(effect, {
+  const refs: ResolvedRefs = {
     self: opened.cardId,
     windowInvestigator: investigator?.id,
     windowLocation: investigator && attachableLocation(ctx, state, opened.cardId, investigator),
     onlyCopy: (code) => theOnlyCopy(state, code),
+  };
+  const each = repeatedRef(effect);
+  const ids = each === undefined ? [undefined] : eachId(ctx, state, each, refs);
+  return ids.flatMap((id) => {
+    const resolved = resolveRefs(effect, { ...refs, each: id });
+    // The walk keeps every field but the references, which become the IDs the
+    // command type expects, so the result is an `AbilityCommand`.
+    return resolved === undefined ? [] : [resolved as AbilityCommand];
   });
-  // The walk keeps every field but the references, which become the IDs the
-  // command type expects, so the result is an `AbilityCommand`.
-  return resolved === undefined ? undefined : (resolved as AbilityCommand);
 }
 
 /** What each relative reference stands for when an effect resolves; absent when it names nobody. */
@@ -238,6 +278,45 @@ interface ResolvedRefs {
   windowInvestigator: InvestigatorId | undefined;
   windowLocation: InstanceId | undefined;
   onlyCopy: (code: CardCode) => InstanceId | undefined;
+  /** The investigator or enemy of this repetition of an effect on each of them. */
+  each?: InstanceId | InvestigatorId;
+}
+
+/** A reference that repeats the command, as `eachInvestigator` does. */
+type RepeatedRef = Extract<RelativeCard | RelativeInvestigator, { ref: `each${string}` }>;
+
+/** The first reference in `effect` that repeats it; an effect holds at most one. */
+function repeatedRef(effect: unknown): RepeatedRef | undefined {
+  if (typeof effect !== 'object' || effect === null) return undefined;
+  if (isRelative(effect) && (effect.ref === 'eachInvestigator' || effect.ref === 'eachEnemyAt'))
+    return effect;
+  for (const field of Object.values(effect)) {
+    const found = repeatedRef(field);
+    if (found) return found;
+  }
+  return undefined;
+}
+
+/** The investigators or enemies `each` repeats the command for. */
+function eachId(
+  ctx: EngineContext,
+  state: GameState,
+  each: RepeatedRef,
+  refs: ResolvedRefs,
+): (InstanceId | InvestigatorId)[] {
+  switch (each.ref) {
+    case 'eachInvestigator':
+      return state.investigators.filter((inv) => inv.status === 'active').map((inv) => inv.id);
+    case 'eachEnemyAt': {
+      const location = resolveRefs(each.location, refs) as InstanceId | undefined;
+      if (location === undefined) return [];
+      return enemiesAt(state, location)
+        .filter((card) => cardStats(ctx.cards, card.code).typeCode === 'enemy')
+        .map((card) => card.id);
+    }
+    default:
+      return assertNever(each);
+  }
 }
 
 function theOnlyCopy(state: GameState, code: CardCode): InstanceId | undefined {
@@ -285,6 +364,9 @@ function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
         return refs.windowLocation;
       case 'onlyCopy':
         return refs.onlyCopy(value.code);
+      case 'eachInvestigator':
+      case 'eachEnemyAt':
+        return refs.each;
       default:
         return assertNever(value);
     }
@@ -299,6 +381,13 @@ function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
  * the reason an `AbilityEffectSkipped` gives.
  */
 export function missingCopies(state: GameState, effect: AbilityEffect): CardCode[] {
+  if (effect.type === 'PutMapIntoPlay') {
+    // The map's locations come from outside play, so only copies there count.
+    const outside = Object.values(state.cards).filter((card) => !isInPlay(state, card));
+    return effect.step.locations
+      .map(({ code }) => code)
+      .filter((code) => outside.filter((card) => card.code === code).length !== 1);
+  }
   const missing: CardCode[] = [];
   const walk = (value: unknown): void => {
     if (typeof value !== 'object' || value === null) return;
@@ -355,8 +444,8 @@ export function whenAdvanced(...effects: AbilityEffect[]): Ability {
 export function skillTest(
   skill: SkillName,
   difficulty: number,
-  outcomes: { onPass?: AbilityEffect[]; onFail?: AbilityEffect[] } = {},
-): AbilityEffect {
+  outcomes: { onPass?: CommandEffect[]; onFail?: CommandEffect[] } = {},
+): CommandEffect {
   return {
     type: 'TestSkill',
     investigatorId: { ref: 'windowInvestigator' },
@@ -371,7 +460,7 @@ export function skillTest(
  * "Put it into play in your threat area": the card with the ability moves to
  * the threat area of the investigator the window names (the drawer).
  */
-export function putIntoThreatArea(): AbilityEffect {
+export function putIntoThreatArea(): CommandEffect {
   return moveSelf({ kind: 'threatArea', investigatorId: { ref: 'windowInvestigator' } });
 }
 
@@ -380,32 +469,32 @@ export function putIntoThreatArea(): AbilityEffect {
  * location of the investigator the window names, within its limit per
  * location (`{ ref: 'windowLocation' }`).
  */
-export function attachToLocation(): AbilityEffect {
+export function attachToLocation(): CommandEffect {
   return moveSelf({ kind: 'attachedTo', hostId: { ref: 'windowLocation' } });
 }
 
 /** "Discard it": the card with the ability, onto the top of the encounter discard (`DiscardCard`). */
-export function discardSelf(): AbilityEffect {
+export function discardSelf(): CommandEffect {
   return { type: 'DiscardCard', cardId: { ref: 'self' } };
 }
 
 /** "Take N damage": the investigator the window names takes `amount` damage. */
-export function takeDamage(amount: number): AbilityEffect {
+export function takeDamage(amount: number): CommandEffect {
   return adjustWindowInvestigator('damage', amount);
 }
 
 /** "Take N horror": the investigator the window names takes `amount` horror. */
-export function takeHorror(amount: number): AbilityEffect {
+export function takeHorror(amount: number): CommandEffect {
   return adjustWindowInvestigator('horror', amount);
 }
 
 /** "Place N doom on the current agenda". */
-export function placeDoomOnAgenda(amount: number): AbilityEffect {
+export function placeDoomOnAgenda(amount: number): CommandEffect {
   return { type: 'PlaceDoom', amount };
 }
 
 /** "Place N doom on it": doom on the card with the ability. */
-export function placeDoomOnSelf(amount: number): AbilityEffect {
+export function placeDoomOnSelf(amount: number): CommandEffect {
   return { type: 'PlaceDoom', cardId: { ref: 'self' }, amount };
 }
 
@@ -414,13 +503,38 @@ export function onlyCopy(code: CardCode): RelativeCard {
   return { ref: 'onlyCopy', code };
 }
 
+/** "Put the house into play": the map `step` declares, from its set-aside locations. */
+export function putMapIntoPlay(step: AddMapStep): AbilityEffect {
+  return { type: 'PutMapIntoPlay', step };
+}
+
+/** "Each investigator moves to the Hallway", ignoring connections as card effects do. */
+export function moveEachInvestigatorTo(location: RelativeCard): CommandEffect {
+  return {
+    type: 'MoveInvestigator',
+    investigatorId: { ref: 'eachInvestigator' },
+    to: location,
+    ignoreConnections: true,
+  };
+}
+
+/** "Discard each enemy in the Study", engaged ones included (`DiscardCard` each). */
+export function discardEachEnemyAt(location: RelativeCard): CommandEffect {
+  return { type: 'DiscardCard', cardId: { ref: 'eachEnemyAt', location } };
+}
+
+/** "Remove the Study from the game". */
+export function removeFromGame(card: RelativeCard): CommandEffect {
+  return { type: 'MoveCard', cardId: card, to: { kind: 'outOfGame' } };
+}
+
 /** "Reveal the Parlor". */
-export function revealLocation(location: RelativeCard): AbilityEffect {
+export function revealLocation(location: RelativeCard): CommandEffect {
   return { type: 'RevealLocation', locationId: location };
 }
 
 /** "Put the set-aside Lita Chantler into play at the Parlor". */
-export function putSetAsideIntoPlay(code: CardCode, location: RelativeCard): AbilityEffect {
+export function putSetAsideIntoPlay(code: CardCode, location: RelativeCard): CommandEffect {
   return { type: 'FromSetAside', codes: [code], to: { kind: 'atLocation', locationId: location } };
 }
 
@@ -428,15 +542,15 @@ export function putSetAsideIntoPlay(code: CardCode, location: RelativeCard): Abi
  * "Spawn the Ghoul Priest in the Hallway": the enemy spawns at the location
  * named, engaging like any spawn (`SpawnEnemy`).
  */
-export function spawnEnemyAt(enemy: RelativeCard, location: RelativeCard): AbilityEffect {
+export function spawnEnemyAt(enemy: RelativeCard, location: RelativeCard): CommandEffect {
   return { type: 'SpawnEnemy', enemyId: enemy, at: location };
 }
 
 /** Moves the card with the ability ("Remove it from the game", "Put it into play in your threat area"). */
-export function moveSelf(to: Templated<Zone>): AbilityEffect {
+export function moveSelf(to: Templated<Zone>): CommandEffect {
   return { type: 'MoveCard', cardId: { ref: 'self' }, to };
 }
 
-function adjustWindowInvestigator(stat: 'damage' | 'horror', delta: number): AbilityEffect {
+function adjustWindowInvestigator(stat: 'damage' | 'horror', delta: number): CommandEffect {
   return { type: 'AdjustInvestigator', investigatorId: { ref: 'windowInvestigator' }, stat, delta };
 }

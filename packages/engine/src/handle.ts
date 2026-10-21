@@ -252,11 +252,14 @@ function resolveQueuedStep(
     case 'surge':
       return resolveSurge(resolution, step.draw);
     case 'ability': {
-      const command = resolveEffect(ctx, state, step.effect, step.opened);
-      if (command) {
+      const commands = resolveEffect(ctx, state, step.effect, step.opened);
+      const [command, ...more] = commands;
+      if (command && more.length === 0) {
         spend(budget);
         return resolveCommand(resolution, command, step.origin, budget);
       }
+      // An effect on each investigator or enemy: one step per command, each counted and reported on its own.
+      if (command) return commands.map(followUpStep);
       // A drawer who has left names nobody by the rules; a missing scenario card is for the players to
       // fix, even when the effect also names such a drawer: they should know the data is off.
       const missing = missingCopies(state, step.effect);

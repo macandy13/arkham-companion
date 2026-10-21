@@ -11,6 +11,7 @@ import {
   blankTreachery,
   cardCode,
   checkInvariants,
+  discardEachEnemyAt,
   discardSelf,
   execute,
   fixed,
@@ -18,13 +19,16 @@ import {
   investigatorId,
   mapId,
   MAX_TRIGGERED_COMMANDS,
+  moveEachInvestigatorTo,
   moveSelf,
   newGame,
   onlyCopy,
   perInvestigator,
   placeDoomOnAgenda,
   placeDoomOnSelf,
+  putMapIntoPlay,
   putSetAsideIntoPlay,
+  removeFromGame,
   revealLocation,
   skillTest,
   spawnEnemyAt,
@@ -32,6 +36,7 @@ import {
   threatAreaOf,
   whenAdvanced,
   whenRevealed,
+  type AddMapStep,
   type Command,
   type EngineContext,
   type Rejection,
@@ -503,6 +508,102 @@ describe('trigger bus', () => {
       expect(events.filter((event) => event.type === 'AbilityEffectSkipped')).toEqual([
         priestSpawnSkipped,
       ]);
+    });
+  });
+
+  describe('reverse sides that open a new area', () => {
+    const attic = instanceId('attic');
+    const atticCard = blankLocation('attic');
+    const bob = investigatorId('bob');
+    const lantern = instanceId('lantern');
+    /** Aloof, so it waits in the hall without engaging anyone. */
+    const aloofGhoulCard = blankEnemy('aloof_ghoul', { keywords: [{ name: 'aloof' }] });
+    /** The attic as a map of its own, the way a scenario declares an area set aside at setup. */
+    const atticStep: AddMapStep = {
+      kind: 'addMap',
+      mapId: mapId('upstairs'),
+      name: 'Upstairs',
+      locations: [{ code: cardCode('attic'), at: { column: 0, row: 0 } }],
+    };
+    /**
+     * The reverse side of moving_act: the attic's map comes into play, the enemies in the hall
+     * are discarded, each investigator moves to the attic, and the hall leaves the game.
+     */
+    const movingAct = blankAct('moving_act', {
+      abilities: [
+        whenAdvanced(
+          putMapIntoPlay(atticStep),
+          discardEachEnemyAt(onlyCopy(cardCode('hall'))),
+          moveEachInvestigatorTo(onlyCopy(cardCode('attic'))),
+          removeFromGame(onlyCopy(cardCode('hall'))),
+        ),
+      ],
+    });
+    /**
+     * Alice and bob in the hall, with an aloof ghoul at the hall, a ghoul engaged with bob and one
+     * in the cellar next door; a lantern lies in the hall. The attic is set aside.
+     */
+    const movingTable = newGame()
+      .withAct(act1, movingAct)
+      .withAct(act2, secondActCard)
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+      .withConnection(hall, cellar)
+      .withCard(attic, atticCard, { kind: 'setAside' })
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: hall })
+      .withCard(ghoul, aloofGhoulCard, atLocation(hall), { faceUp: true })
+      .withCard(instanceId('bobs_ghoul'), ghoulCard, { kind: 'engaged', investigatorId: bob })
+      .withCard(instanceId('cellar_ghoul'), ghoulCard, atLocation(cellar), { faceUp: true })
+      .withCard(lantern, blankAsset('lantern'), atLocation(hall));
+
+    it('puts the set-aside area into play as a map of its own', () => {
+      const { context, state: started } = movingTable.start();
+
+      const { state } = execute(context, started, { type: 'AdvanceAct' });
+
+      expect(state.board.maps[mapId('upstairs')]?.name).toBe('Upstairs');
+      expect(state.cards[attic]?.zone).toEqual({ kind: 'location', mapId: mapId('upstairs') });
+      expect(checkInvariants(state)).toEqual([]);
+    });
+
+    it('discards each enemy in the hall, the engaged one too, but no other card there', () => {
+      const { context, state: started } = movingTable.start();
+
+      const { state } = execute(context, started, { type: 'AdvanceAct' });
+
+      expect(state.cards[ghoul]?.zone).toEqual({ kind: 'encounterDiscard' });
+      expect(state.cards[instanceId('bobs_ghoul')]?.zone).toEqual({ kind: 'encounterDiscard' });
+      expect(state.cards[instanceId('cellar_ghoul')]?.zone).toEqual(atLocation(cellar));
+      expect(state.cards[lantern]?.zone).toEqual(atLocation(hall));
+    });
+
+    it('moves each investigator to the attic and removes the hall from the game', () => {
+      const { context, state: started } = movingTable.start();
+
+      const { state } = execute(context, started, { type: 'AdvanceAct' });
+
+      expect(state.investigators.map((inv) => [inv.id, inv.locationId])).toEqual([
+        [alice, attic],
+        [bob, attic],
+      ]);
+      expect(state.cards[hall]?.zone).toEqual({ kind: 'outOfGame' });
+    });
+
+    it('skips the map when one of its locations is not set aside exactly once', () => {
+      const { context, state: started } = movingTable
+        .withCard(instanceId('second_attic'), atticCard, { kind: 'setAside' })
+        .start();
+
+      const { events, state } = execute(context, started, { type: 'AdvanceAct' });
+
+      expect(state.board.maps[mapId('upstairs')]).toBeUndefined();
+      expect(events.filter((event) => event.type === 'AbilityEffectSkipped')).toContainEqual({
+        type: 'AbilityEffectSkipped',
+        cardId: act1,
+        effect: 'PutMapIntoPlay',
+        missing: [cardCode('attic')],
+      });
     });
   });
 

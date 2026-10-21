@@ -1,17 +1,11 @@
 import {
-  GRID_CELLS_PER_CARD,
-  CommandRejected,
   cardStats,
-  scenario,
   decisionId,
   enemiesAt,
   mapId,
   matchesEncounter,
   scenarioId,
   trait,
-  type AddMapStep,
-  type CardCode,
-  type CardInstance,
   type Command,
   type EncounterMatch,
   type EngineContext,
@@ -45,79 +39,6 @@ const resolutions = GATHERING_RESOLUTIONS;
 export const BURN_THE_HOUSE_DECISION = decisionId('theGathering.burnTheHouse');
 
 const ghoulEnemy: EncounterMatch = { trait: trait('Ghoul'), typeCode: 'enemy' };
-
-/** One card step on the layout grid, which is finer than a card. */
-const oneCard = GRID_CELLS_PER_CARD;
-
-/**
- * The house as act 1 ("Trapped") reveals it: the Hallway connects to the
- * Attic, the Cellar and the Parlor. The campaign guide gives no placement for
- * this scenario, so the cells are our own: a star around the Hallway, with the
- * Attic above it, the Cellar below it and the Parlor to its right, each one card
- * step away. Not part of `theGathering.setup`: these
- * locations start set aside, and act 1's reverse side (`trappedReverseSide`)
- * puts them into play with `compileMapStep`.
- */
-export const theGatheringHouse: AddMapStep = {
-  kind: 'addMap',
-  mapId: mapId('house'),
-  name: 'House',
-  locations: [
-    { code: codes.hallway, at: { column: 0, row: oneCard } },
-    { code: codes.attic, at: { column: 0, row: 0 } },
-    { code: codes.cellar, at: { column: 0, row: 2 * oneCard } },
-    { code: codes.parlor, at: { column: oneCard, row: oneCard } },
-  ],
-  connections: [
-    { from: codes.hallway, to: codes.attic },
-    { from: codes.hallway, to: codes.cellar },
-    { from: codes.hallway, to: codes.parlor },
-  ],
-};
-
-/**
- * Act 1 ("Trapped"), reverse side: the house map (`theGatheringHouse`) is put
- * into play from the set-aside locations, the enemies in the Study are
- * discarded, every investigator moves to the Hallway (ignoring connections,
- * which reveals it), and the Study is removed from the game. Runs while act 1
- * is still current (`onActAdvance`). The commands are computed from one
- * snapshot but handled in order, so the Hallway is in play by the time the
- * investigators move.
- */
-function trappedReverseSide(ctx: EngineContext, state: GameState): Command[] {
-  const study = onlyCard(state, codes.study);
-  const hallway = onlyCard(state, codes.hallway);
-  const atStudy = state.investigators.filter(
-    (inv) => inv.status === 'active' && inv.locationId === study.id,
-  );
-  // Engaged enemies are at their investigator's location, so they are in the Study too.
-  const enemies = Object.values(state.cards).filter((card) => {
-    const zone = card.zone;
-    if (zone.kind === 'engaged') return atStudy.some((inv) => inv.id === zone.investigatorId);
-    return (
-      zone.kind === 'atLocation' &&
-      zone.locationId === study.id &&
-      cardStats(ctx.cards, card.code).typeCode === 'enemy'
-    );
-  });
-  return [
-    ...scenario.compileMapStep(state, theGatheringHouse),
-    ...enemies.map((enemy): Command => ({
-      type: 'MoveCard',
-      cardId: enemy.id,
-      to: { kind: 'encounterDiscard' },
-    })),
-    ...state.investigators
-      .filter((inv) => inv.status === 'active')
-      .map((inv): Command => ({
-        type: 'MoveInvestigator',
-        investigatorId: inv.id,
-        to: hallway.id,
-        ignoreConnections: true,
-      })),
-    { type: 'MoveCard', cardId: study.id, to: { kind: 'outOfGame' } },
-  ];
-}
 
 /**
  * Act 3 ("What Have You Done?"), objective: once the Ghoul Priest is
@@ -226,13 +147,6 @@ const ghoulsAtYourLocation: TokenValue = (ctx, state, test) => {
   return 0 - ghouls.length;
 };
 
-/** The one instance of `code` (the Gathering has a single copy of each location). */
-function onlyCard(state: GameState, code: CardCode): CardInstance {
-  const card = Object.values(state.cards).find((candidate) => candidate.code === code);
-  if (!card) throw new CommandRejected({ code: 'setupTargetNotFound', cardCode: code });
-  return card;
-}
-
 /**
  * The Gathering (Core Set, 2016, scenario I of Night of the Zealot), set up as
  * the campaign guide describes: the Study is the only location in play, the
@@ -240,8 +154,8 @@ function onlyCard(state: GameState, code: CardCode): CardInstance {
  * rest of the six encounter sets is shuffled into the encounter deck. Card
  * data is hand-entered (`theGatheringCardDefs`); it is the shared test
  * scenario for the generic rules until real scenario data arrives (M4).
- * Act 2's reverse side is an ability on its card data; `hooks` hold the
- * reverse sides of acts 1 and 3 and of agendas 2 and 3 and act 3's
+ * The reverse sides of acts 1 and 2 are abilities on their card data;
+ * `hooks` hold the reverse sides of act 3 and of agendas 2 and 3 and act 3's
  * objective (agenda 1's choice and agenda 3's forced effects are left to the
  * players). Pass the whole definition as `EngineContext.scenario`, so the
  * engine gets the hooks together with `reference` and `modifiers` (the
@@ -309,7 +223,6 @@ export const theGathering: ScenarioDefinition = {
   ],
   hooks: {
     onActAdvance: {
-      [codes.trapped]: trappedReverseSide,
       [codes.whatHaveYouDone]: whatHaveYouDoneReverseSide,
     },
     onAgendaAdvance: {
