@@ -3,7 +3,7 @@ import { houseOpenedExport, resumeImportedGame, twoMapsExport } from '../fixture
 
 // Situations on the game screen, each photographed as it ends (`@shot`, coding guidelines §3).
 
-test('the house map with Alder in the Hallway', async ({ page }) => {
+test('the house map with Alder in the Hallway', { tag: '@shot' }, async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   const hallway = page
@@ -23,3 +23,18 @@ test(
     await expect(page.getByRole('tabpanel', { name: 'House' })).toBeVisible();
   },
 );
+
+test('the house map zoomed in on the Hallway', { tag: '@shot' }, async ({ page }) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+  const hallway = page
+    .getByRole('figure', { name: 'House' })
+    .getByRole('group', { name: 'Hallway' });
+  const fittedWidth = (await hallway.boundingBox())?.width ?? 0;
+
+  await page.getByRole('button', { name: 'Zoom in' }).click();
+  await page.getByRole('button', { name: 'Zoom in' }).click();
+
+  await expect
+    .poll(async () => (await hallway.boundingBox())?.width ?? 0)
+    .toBeGreaterThan(1.5 * fittedWidth);
+});

@@ -66,6 +66,11 @@
   gap: var(--space-2);
 }
 
+/* Without a notice the empty stack would still draw its frame over the map. */
+#notices:empty {
+  display: none;
+}
+
 #notices > aside {
   display: flex;
   gap: var(--space-3);

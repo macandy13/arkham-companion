@@ -51,6 +51,10 @@ export const resources = {
       map: {
         title: 'Map',
         tabs: 'Maps',
+        zoom: 'Zoom',
+        zoomIn: 'Zoom in',
+        zoomOut: 'Zoom out',
+        fit: 'Fit map',
         revealed: 'Shroud {{shroud}} · Clues {{clues}}',
         unrevealed: 'Unrevealed',
         doom: 'Doom {{count}}',
@@ -243,6 +247,10 @@ export const resources = {
       map: {
         title: 'Karte',
         tabs: 'Karten',
+        zoom: 'Zoom',
+        zoomIn: 'Vergrößern',
+        zoomOut: 'Verkleinern',
+        fit: 'Ganze Karte',
         revealed: 'Schleier {{shroud}} · Hinweise {{clues}}',
         unrevealed: 'Unaufgedeckt',
         doom: 'Verderben {{count}}',
