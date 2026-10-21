@@ -198,6 +198,7 @@ export function windowsOpenedBy(
       return [{ window: { kind: 'advanced' }, cardId: event.cardId }];
     case 'EnemyDefeated': {
       const enemy = requireCard(state.cards, event.enemyId).code;
+      // Agenda before act is a fixed stand-in: the rules let the lead order simultaneous forced effects (M1V).
       return [state.agenda.current, state.act.current].flatMap((cardId) =>
         cardId === undefined ? [] : [{ window: { kind: 'enemyDefeated', enemy }, cardId }],
       );
