@@ -21,6 +21,7 @@ function houseWith(ids: InstanceId[], cells: MapView['cells']): MapView {
     })),
     cells,
     connections: [],
+    enemies: {},
   };
 }
 

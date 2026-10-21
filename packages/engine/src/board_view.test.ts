@@ -200,7 +200,7 @@ describe('investigators', () => {
 
 describe('locations', () => {
   const house = newGame()
-    .withLocation(study, blankLocation('study', { clues: fixed(2) }), { revealed: true })
+    .withLocation(study, blankLocation('study', { clues: fixed(2), shroud: 3 }), { revealed: true })
     .withLocation(hallway, blankLocation('hallway'))
     .withLocation(instanceId('attic'), blankLocation('attic'), { map: mapId('upstairs') })
     .withInvestigator(alice, { locationId: study })
@@ -221,6 +221,7 @@ describe('locations', () => {
         name: 'study',
         map: mapId('main'),
         revealed: true,
+        shroud: 3,
         clues: 2,
         investigators: [alice, bob],
         cards: ['ghoul', 'old_key'],
@@ -235,6 +236,25 @@ describe('locations', () => {
         clues: 0,
       },
     ]);
+  });
+
+  it('reads the doom on a location and a shroud that its attachments raise', () => {
+    const { context, state } = house
+      .withLocation(instanceId('cellar'), blankLocation('cellar', { shroud: 2 }), {
+        revealed: true,
+        doom: 1,
+      })
+      .withCard(
+        instanceId('obscuring_fog'),
+        blankTreachery('obscuring_fog', { locationAttachment: { shroud: 2 } }),
+        attachedTo(instanceId('cellar')),
+      )
+      .start();
+
+    expect(boardView(context, state).location(byName('cellar'))).toMatchObject({
+      shroud: 4,
+      doom: 1,
+    });
   });
 
   it('leaves out locations that are not on a map', () => {
@@ -281,6 +301,20 @@ describe('locations', () => {
         connections: [],
       },
     ]);
+  });
+
+  it('lists the enemies at each location of a map, the engaged ones at their investigator', () => {
+    const { context, state } = house
+      .withCard(instanceId('ghoul'), blankEnemy('ghoul'), atLocation(hallway))
+      .withCard(instanceId('rat'), blankEnemy('rat'), engagedWith(alice))
+      .start();
+
+    const [main] = boardView(context, state).maps;
+
+    expect(main?.enemies).toEqual({
+      [study]: [{ name: 'rat', at: 'study', engagedWith: alice }],
+      [hallway]: [{ name: 'ghoul', at: 'hallway' }],
+    });
   });
 
   it.each([

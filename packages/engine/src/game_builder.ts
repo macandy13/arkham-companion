@@ -23,6 +23,8 @@ export interface LocationOptions {
   revealed?: boolean;
   /** Clues on the location instead of the printed ones. */
   clues?: number;
+  /** Doom on the location; default none. */
+  doom?: number;
   /** The map it is on; default `main`. */
   map?: MapId;
   /** Its cell in the map's book layout; default none. */
@@ -384,7 +386,14 @@ function startingLocation({ id, card, options }: LocationEntry, playerCount: num
     code: card.code,
     zone: { kind: 'location', mapId: options.map ?? MAIN_MAP },
     faceUp: revealed,
-    ...(clues > 0 ? { tokens: { clue: clues } } : {}),
+    ...(clues > 0 || options.doom
+      ? {
+          tokens: {
+            ...(clues > 0 ? { clue: clues } : {}),
+            ...(options.doom ? { doom: options.doom } : {}),
+          },
+        }
+      : {}),
   };
 }
 

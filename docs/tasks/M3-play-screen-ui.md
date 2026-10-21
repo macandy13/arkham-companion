@@ -20,7 +20,9 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 6. M3.2c: the menu (home, settings, export)
 7. M3.3a1: each location's book layout cell in the game state (`GameMap.layout`), The Gathering's cells
 8. M3.3a2: static SVG map with location tiles and connections
-9. M3.3b: pan/zoom/pinch, pawns, enemy chips, map tabs
+9. M3.3b1: tile details (shroud, doom, attachments), investigator pawns and enemy chips
+   M3.3b2: map tabs when several maps are visible
+   M3.3b3: pan/zoom/pinch
 10. M3.4: board interactions
 11. M3.5: investigator bar
 12. M3.6: encounter panel
@@ -40,13 +42,15 @@ Ref: architecture "Game state" (connections) and product.md "Board rendering".
 
 - [x] Each location's cell in the book layout, kept on its map in the game state (`GameMap.layout`)
 - [ ] SVG board with pan/zoom/pinch (react-zoom-pan-pinch), tiles placed by the layout
-- [ ] Location tiles: name, revealed/unrevealed, shroud, clues, doom, attachments badge
+- [x] Location tiles: name, revealed/unrevealed, shroud, clues, doom, attachments badge
 - [ ] Connection lines (arrows for one-way), map tabs when several maps exist
-- [ ] Investigator pawns and enemy chips at locations
+- [x] Investigator pawns and enemy chips at locations
 
 M3.3a1 done: map steps give each location its book layout cell (`MapLocation.at`, on a grid three times finer than a card, `GRID_CELLS_PER_CARD`), which the map keeps (`GameMap.layout`) and `StartScenario`/`AddMap` validate. The unused `Board.slots`, `placement` and `layoutMode` are gone. The Gathering's Study and house have their cells.
 
 M3.3a2 done: the play screen draws each visible map as an SVG (`apps/web/src/map/`) from `BoardView.maps`: location tiles at their cells with name and clues (or "Unrevealed"), connection lines with arrowheads for one-way ones. Locations without a cell go in a row below. Left for M3.3b: pan/zoom, map tabs, shroud, doom, attachments, pawns, enemies, and connections between maps. Map names come from the scenario and are not translated yet.
+
+M3.3b1 done: tiles show shroud (with attachments) and clues once revealed, doom and an attachments count; investigators stand as pawns and enemies as chips on their location (`LocationView.shroud`/`doom`, `MapView.enemies`). Follow-ups for the tablet pass: a chip shows only the enemy's name (engagement, damage and exhaustion are in its accessible name), and chips stack without a limit, so a third enemy on a tile with doom and attachments overlaps the pawns.
 
 ## M3.4 Board interactions (S)
 
