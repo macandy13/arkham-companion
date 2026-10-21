@@ -126,16 +126,9 @@ export interface CardStats {
   /** Keywords parsed from the card text at load time; none when absent. */
   keywords?: readonly Keyword[];
   /**
-   * A treachery with this stays in the drawing investigator's threat area
-   * instead of being discarded (derived from the card text by `carddata`).
-   */
-  entersThreatArea?: boolean;
-  /**
    * Set for a treachery whose revelation attaches it to the drawing
    * investigator's location (Obscuring Fog), entered with the card data;
    * `DrawEncounter` places it there, and its fields say what it does there.
-   * It takes the place of `entersThreatArea`, which a card with it has no
-   * use for (Obscuring Fog has neither).
    */
   locationAttachment?: LocationAttachment;
   /** The card's forced abilities as data (architecture "Triggers and card effects"); none when absent. */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cardCode } from '@arkham/engine';
+import { cardCode, putIntoThreatArea, whenRevealed } from '@arkham/engine';
 import { theGatheringCards } from './cards';
 
 describe('The Gathering card data', () => {
@@ -28,10 +28,17 @@ describe('The Gathering card data', () => {
   });
 
   it.each([
-    { code: '01164', name: 'Frozen in Fear', staysInPlay: true },
-    { code: '01165', name: 'Dissonant Voices', staysInPlay: true },
-    { code: '01163', name: 'Rotting Remains', staysInPlay: false },
-  ])('flags whether $name stays in the threat area', ({ code, staysInPlay }) => {
-    expect(theGatheringCards.get(cardCode(code))?.entersThreatArea ?? false).toBe(staysInPlay);
+    { code: '01164', name: 'Frozen in Fear' },
+    { code: '01165', name: 'Dissonant Voices' },
+  ])('puts $name into the threat area when revealed', ({ code }) => {
+    expect(theGatheringCards.get(cardCode(code))?.abilities).toContainEqual(
+      whenRevealed(putIntoThreatArea()),
+    );
+  });
+
+  it('leaves Rotting Remains to be discarded after its revelation', () => {
+    expect(theGatheringCards.get(cardCode('01163'))?.abilities).not.toContainEqual(
+      whenRevealed(putIntoThreatArea()),
+    );
   });
 });

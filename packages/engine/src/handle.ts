@@ -1,3 +1,4 @@
+import { resolveEffect } from './abilities';
 import type { EngineContext } from './cards';
 import { commandSpec, type CommandSpec, type Continuation, type Step } from './command_specs';
 import type { Command, DrawEncounter } from './commands';
@@ -15,7 +16,7 @@ import { nextStepPlan } from './phases';
 import { apply } from './reducer';
 import { CommandRejected, type Rejection } from './rejection';
 import type { GameState, HeldAction, QueuedStep } from './state';
-import { MAX_TRIGGERED_COMMANDS, triggeredCommands } from './triggers';
+import { followUpStep, MAX_TRIGGERED_COMMANDS, triggeredSteps } from './triggers';
 
 /**
  * Validates a command against the current state and returns the resulting events.
@@ -250,6 +251,12 @@ function resolveQueuedStep(
       return emitWithEffects(resolution, placeDrawnCard(ctx, state, step.drawn));
     case 'surge':
       return resolveSurge(resolution, step.draw);
+    case 'ability': {
+      const command = resolveEffect(state, step.effect, step.opened);
+      if (!command) return [];
+      spend(budget);
+      return resolveCommand(resolution, command, step.origin, budget);
+    }
   }
 }
 
@@ -282,18 +289,14 @@ function resolveCommand(
     return continuation;
   }
   const triggered = emitWithEffects(resolution, own);
-  return [...triggered, ...answerCommands(before, command).map(followUp), ...continuation];
+  return [...triggered, ...answerCommands(before, command).map(followUpStep), ...continuation];
 }
 
 /** Emits `events` and returns the follow-ups their forced effects trigger. */
 function emitWithEffects(resolution: Resolution, events: readonly Event[]): Step[] {
   const before = resolution.state;
   emit(resolution, events);
-  return triggeredCommands(resolution.ctx, before, events).map(followUp);
-}
-
-function followUp(command: Command): Step {
-  return { kind: 'command', command, origin: command.type };
+  return triggeredSteps(resolution.ctx, before, events);
 }
 
 /** Continuation steps of a follow-up belong to it, so a rejection names it. */
@@ -316,8 +319,8 @@ function resolvePhaseStep(resolution: Resolution, budget: TriggerBudget): Step[]
   const before = resolution.state;
   emit(resolution, plan.events);
   return [
-    ...plan.commands.map(followUp),
-    ...triggeredCommands(resolution.ctx, before, plan.events).map(followUp),
+    ...plan.commands.map(followUpStep),
+    ...triggeredSteps(resolution.ctx, before, plan.events),
     { kind: 'phaseStep' },
   ];
 }
@@ -346,7 +349,7 @@ function withinSurgeLimit(steps: readonly Continuation[], budget: TriggerBudget)
  * or no card is left.
  */
 function resolveSurge(resolution: Resolution, surge: DrawEncounter): Step[] {
-  return canDrawEncounter(resolution.state, surge.investigatorId) ? [followUp(surge)] : [];
+  return canDrawEncounter(resolution.state, surge.investigatorId) ? [followUpStep(surge)] : [];
 }
 
 /**

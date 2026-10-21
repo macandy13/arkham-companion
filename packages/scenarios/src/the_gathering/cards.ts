@@ -5,6 +5,7 @@ import {
   cardDbFrom,
   discardSelf,
   encounterSetCode,
+  putIntoThreatArea,
   skillTest,
   trait,
   whenRevealed,
@@ -178,8 +179,10 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     set: sets.strikingFear,
     traits: ['Terror'],
     quantity: 2,
-    entersThreatArea: true,
-    abilities: [atEndOfTurn(skillTest('willpower', 3, { onPass: [discardSelf()] }))],
+    abilities: [
+      whenRevealed(putIntoThreatArea()),
+      atEndOfTurn(skillTest('willpower', 3, { onPass: [discardSelf()] })),
+    ],
   }),
   treachery({
     code: '01165',
@@ -187,8 +190,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     set: sets.strikingFear,
     traits: ['Terror'],
     quantity: 2,
-    entersThreatArea: true,
-    abilities: [atEndOfRound(discardSelf())],
+    abilities: [whenRevealed(putIntoThreatArea()), atEndOfRound(discardSelf())],
   }),
   treachery({
     code: '01166',
@@ -312,8 +314,6 @@ interface TreacheryOptions {
   set: EncounterSetCode;
   traits: readonly string[];
   quantity: number;
-  /** Set for a treachery that stays in the drawer's threat area. */
-  entersThreatArea?: boolean;
   /** Its forced abilities (Frozen in Fear's end-of-turn test, Dissonant Voices' discard). */
   abilities?: readonly Ability[];
   /** What it does attached to the drawer's location (Obscuring Fog). */
@@ -326,7 +326,6 @@ function treachery({
   set,
   traits,
   quantity,
-  entersThreatArea,
   abilities,
   locationAttachment,
 }: TreacheryOptions): CardStats {
@@ -337,7 +336,6 @@ function treachery({
     traits: traitsOf(traits),
     encounterCode: set,
     quantity,
-    ...(entersThreatArea ? { entersThreatArea } : {}),
     ...(abilities ? { abilities } : {}),
     ...(locationAttachment ? { locationAttachment } : {}),
   };

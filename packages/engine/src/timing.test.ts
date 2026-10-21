@@ -29,6 +29,7 @@ import {
   newGame,
   perInvestigator,
   PlayTable,
+  putIntoThreatArea,
   skillTest,
   takeDamage,
   threatAreaOf,
@@ -293,8 +294,10 @@ describe('a forced effect that asks two questions', () => {
 describe('a defeat during the investigator`s own turn', () => {
   const bob = investigatorId('bob');
   const frozen = blankTreachery('frozen', {
-    entersThreatArea: true,
-    abilities: [atEndOfTurn(skillTest('willpower', 3, { onPass: [discardSelf()] }))],
+    abilities: [
+      whenRevealed(putIntoThreatArea()),
+      atEndOfTurn(skillTest('willpower', 3, { onPass: [discardSelf()] })),
+    ],
   });
   /** The hall with alice on her turn, a treachery testing her at the end of her turn, and bob. */
   const game = newGame()
@@ -355,7 +358,9 @@ describe('enemy attacks after one of them defeated the investigator', () => {
 
 describe('a surge with an empty encounter deck', () => {
   const surgingRat = blankEnemy('surging_rat', { keywords: [{ name: 'surge' }] });
-  const clinging = blankTreachery('clinging_treachery', { entersThreatArea: true });
+  const clinging = blankTreachery('clinging_treachery', {
+    abilities: [whenRevealed(putIntoThreatArea())],
+  });
   /**
    * The hall with alice; the surging rat is the last card of the deck and a
    * treachery that stays in the drawer's threat area lies in the discard pile.

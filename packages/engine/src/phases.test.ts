@@ -16,7 +16,9 @@ import {
   instanceId,
   investigatorId,
   newGame,
+  putIntoThreatArea,
   threatAreaOf,
+  whenRevealed,
   type Command,
   type EngineContext,
   type GameState,
@@ -53,8 +55,7 @@ const unreadableSpawnGhoulCard = blankEnemy('unreadable_spawn_ghoul', {
 const plainTreachery = blankTreachery('plain_treachery');
 /** Dissonant Voices stays in the threat area until the end of the round. */
 const dissonantVoices = blankTreachery('dissonant_voices', {
-  entersThreatArea: true,
-  abilities: [atEndOfRound(discardSelf())],
+  abilities: [whenRevealed(putIntoThreatArea()), atEndOfRound(discardSelf())],
 });
 
 const encounterDeck: Zone = { kind: 'encounterDeck' };
