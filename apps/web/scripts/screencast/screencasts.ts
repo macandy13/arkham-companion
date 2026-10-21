@@ -1,7 +1,8 @@
 /**
- * Pure helpers behind the PR screencasts: pick the flow videos out of a Playwright JSON
- * report, build the ffmpeg arguments that turn them into GIFs, and render the Markdown
- * section the preview workflow writes into the PR description.
+ * Pure helpers behind the PR screencasts and screenshots: pick the flow videos and the
+ * screenshots out of a Playwright JSON report, build the ffmpeg arguments that turn the videos
+ * into GIFs, and render the Markdown section the preview workflow writes into the PR
+ * description.
  * The side effects (ffmpeg, files) live in `cli.ts`.
  */
 
@@ -42,6 +43,7 @@ interface ReportSuite {
 interface ReportSpec {
   readonly title: string;
   readonly tests: readonly {
+    readonly projectName: string;
     readonly results: readonly {
       readonly status: string;
       readonly attachments: readonly { readonly name: string; readonly path?: string }[];
@@ -59,22 +61,57 @@ export interface FlowVideo {
   readonly videoPath: string | undefined;
 }
 
-/** Flattens the report into one entry per spec, in report order, using the last passing attempt. */
+/**
+ * One screenshot spec (tagged `@shot`). `imagePath` is the `.png` Playwright took when the
+ * test ended, or `undefined` when the spec did not pass.
+ */
+export interface Screenshot {
+  readonly title: string;
+  readonly slug: string;
+  readonly imagePath: string | undefined;
+}
+
+/**
+ * The Playwright projects that record for the PR (`playwright.config.ts`): `screencast` films
+ * the `@flow` specs, `screenshot` photographs the `@shot` specs as they end. Both run in one
+ * report, so each spec is read from its own project only.
+ */
+export const RECORDING_PROJECTS = { flows: 'screencast', shots: 'screenshot' } as const;
+
+/** Flattens the report into one entry per flow spec, in report order, using the last passing attempt. */
 export function flowVideos(report: PlaywrightReport): FlowVideo[] {
-  return allSpecs(report.suites ?? []).map((spec) => ({
+  return specsIn(report, RECORDING_PROJECTS.flows).map((spec) => ({
     title: spec.title,
     slug: slugify(spec.title),
-    videoPath: passingVideo(spec),
+    videoPath: passingAttachment(spec, RECORDING_PROJECTS.flows, 'video'),
   }));
+}
+
+/** Flattens the report into one entry per screenshot spec, in report order, using the last passing attempt. */
+export function screenshots(report: PlaywrightReport): Screenshot[] {
+  return specsIn(report, RECORDING_PROJECTS.shots).map((spec) => ({
+    title: spec.title,
+    slug: slugify(spec.title),
+    imagePath: passingAttachment(spec, RECORDING_PROJECTS.shots, 'screenshot'),
+  }));
+}
+
+function specsIn(report: PlaywrightReport, project: string): ReportSpec[] {
+  return allSpecs(report.suites ?? []).filter((spec) =>
+    spec.tests.some((test) => test.projectName === project),
+  );
 }
 
 function allSpecs(suites: readonly ReportSuite[]): ReportSpec[] {
   return suites.flatMap((suite) => [...(suite.specs ?? []), ...allSpecs(suite.suites ?? [])]);
 }
 
-function passingVideo(spec: ReportSpec): string | undefined {
-  const passed = spec.tests.flatMap((test) => test.results).filter((r) => r.status === 'passed');
-  return passed.at(-1)?.attachments.find((a) => a.name === 'video')?.path;
+function passingAttachment(spec: ReportSpec, project: string, name: string): string | undefined {
+  const passed = spec.tests
+    .filter((test) => test.projectName === project)
+    .flatMap((test) => test.results)
+    .filter((r) => r.status === 'passed');
+  return passed.at(-1)?.attachments.find((a) => a.name === name)?.path;
 }
 
 /** Lower-case, dash-separated file name for a test title (`App boots` → `app-boots`). */
@@ -104,24 +141,32 @@ export function gifArgs({ input, output }: { input: string; output: string }): s
 }
 
 /**
- * The Markdown section (including its markers) listing every flow with an inline GIF and a
- * link to the player page, which plays the full-quality video with pause, seeking and speed; just the markers when no flow is tagged, which empties a
+ * The Markdown section (including its markers) listing every screenshot inline, then every
+ * flow with an inline GIF and a link to the player page, which plays the full-quality video
+ * with pause, seeking and speed; just the markers when nothing is tagged, which empties a
  * section an earlier push wrote. `version` (the commit) is appended as a query string
  * because file names stay the same across pushes and GitHub's image proxy caches by URL.
  */
 export function renderSection({
   flows,
+  shots,
   baseUrl,
   version,
 }: {
   flows: readonly FlowVideo[];
+  shots: readonly Screenshot[];
   baseUrl: string;
   version: string;
 }): string {
-  // No tagged flow means the PR changed no flow: the markers stay, so a later push can fill them.
-  if (flows.length === 0) return [SECTION_START, SECTION_END].join('\n');
+  // Nothing tagged means the PR changed no flow or situation: the markers stay, so a later push can fill them.
+  if (flows.length === 0 && shots.length === 0) return [SECTION_START, SECTION_END].join('\n');
   const base = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
-  const entries = flows.map((flow) => {
+  const shotEntries = shots.map((shot) => {
+    const heading = `### ${shot.title}`;
+    if (!shot.imagePath) return `${heading}\n\n_Not taken: the spec failed, see the E2E check._`;
+    return `${heading}\n\n![${shot.title}](${base}${shot.slug}.png?v=${version})`;
+  });
+  const flowEntries = flows.map((flow) => {
     const heading = `### ${flow.title}`;
     if (!flow.videoPath) return `${heading}\n\n_Not recorded: the flow failed, see the E2E check._`;
     const gif = `${base}${flow.slug}.gif?v=${version}`;
@@ -129,7 +174,13 @@ export function renderSection({
     return `${heading}\n\n![${flow.title}](${gif})\n\n[Play with pause and speed controls](${player})`;
   });
   const intro = `_Recorded from ${version} by the PR preview workflow; updated on every push that changes \`apps/web\`._`;
-  return [SECTION_START, '## Screencasts', intro, ...entries, SECTION_END].join('\n\n');
+  return [
+    SECTION_START,
+    intro,
+    ...(shots.length > 0 ? ['## Screenshots', ...shotEntries] : []),
+    ...(flows.length > 0 ? ['## Screencasts', ...flowEntries] : []),
+    SECTION_END,
+  ].join('\n\n');
 }
 
 /** The placeholder in `player.html` that `playerPage` replaces with the recorded flows. */

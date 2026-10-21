@@ -485,7 +485,7 @@ function createAppStore(gameStore: GameStore, scenarios?: ScenarioLookup): Store
 
 **Extension points**
 
-- **A new screen:** add a route in [`App.tsx`](../apps/web/src/App.tsx) and a component in [`screens/`](../apps/web/src/screens/), add or extend the E2E flow that shows it ([`apps/web/e2e/`](../apps/web/e2e/)) and tag only that flow `@flow`, and add its strings in English and German.
+- **A new screen:** add a route in [`App.tsx`](../apps/web/src/App.tsx) and a component in [`screens/`](../apps/web/src/screens/), add or extend the E2E flow that shows it ([`apps/web/e2e/`](../apps/web/e2e/)) and tag only that flow `@flow` (or, for a look rather than a journey, add a screenshot test in [`e2e/shots/`](../apps/web/e2e/shots/) tagged `@shot`), and add its strings in English and German.
 - **A new refusal the players can cause:** add its text as `rejections.<code>` in English and German ([`i18n`](../apps/web/src/i18n/index.ts)); until then the toast shows the general text.
 - **A new ability command the scenarios name cards for:** add its text as `skipped.effects.<type>` in English and German; until then the notice says "an effect".
 - **A new game action:** add it to `GameActions` ([`gameActions.ts`](../apps/web/src/state/gameActions.ts)) as one `PlayTable` verb with the screen's defaults; a verb the table lacks is added to `PlayTable` first (architecture "Tests and debugging"), so tests gain it too. Components call the action; they never build commands or touch the table or the `GameStore`. Only an action outside the open game (like `startScenario`) gets its own `AppState` method in [`appStore.ts`](../apps/web/src/state/appStore.ts).

@@ -1,3 +1,4 @@
+import type { Page } from '@playwright/test';
 import {
   cardDbWith,
   gameId,
@@ -76,4 +77,22 @@ export function twoGhoulPriestsExport(title: string): Buffer {
   const table = houseOpened(twoPriests);
   table.play({ type: 'AdjustInvestigator', investigatorId: alderId, stat: 'clues', delta: 3 });
   return exportOf(title, table, 'two_ghoul_priests');
+}
+
+/**
+ * Imports `file` (an export like `houseOpenedExport`) on the home screen and resumes the game
+ * titled `title`, so a spec starts on the game screen of a prepared game.
+ */
+export async function resumeImportedGame(page: Page, title: string, file: Buffer): Promise<void> {
+  await page.goto('/');
+  await page.getByLabel('Import game').setInputFiles({
+    name: 'game.arkham.json',
+    mimeType: 'application/json',
+    buffer: file,
+  });
+  await page
+    .getByRole('listitem')
+    .filter({ has: page.getByRole('link', { name: title, exact: true }) })
+    .getByRole('link', { name: 'Resume' })
+    .click();
 }
