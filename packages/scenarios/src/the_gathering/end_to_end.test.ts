@@ -443,7 +443,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.endTurn(wendy);
     expect(table.board.decisions).toEqual([
       {
-        prompt: 'decision.turnEndTest',
+        prompt: 'decision.cardTest',
         kind: 'skillTestResult',
         about: 'Frozen in Fear',
         for: wendy,

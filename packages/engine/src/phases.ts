@@ -1,13 +1,11 @@
-import { cardStats, type EngineContext } from './cards';
+import type { EngineContext } from './cards';
 import type { Command, ResolveEnemyAttack } from './commands';
-import { isInPlay as isCardInPlay } from './doom';
 import { enemyAttackEvents, enemyAttackList } from './enemies';
 import type { Event, ExhaustChanged, PhaseChanged, PhaseStepsChanged } from './events';
 import { isInPlay } from './handle_enemy';
 import { activeInvestigator } from './handle_investigator';
 import { playerOrder } from './investigators';
 import { canDrawEncounter } from './handle_encounter';
-import { discardEncounterCard } from './placement';
 import { cardsOfType } from './lookup';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
@@ -99,24 +97,11 @@ export function nextStepPlan(ctx: EngineContext, state: GameState): StepPlan | u
       return { events: [done, ...actionsResetEvents(state)], commands: [] };
     case 'endRound': {
       const ended: Event = { type: 'RoundEnded', round: state.meta.round };
-      return { events: [done, ended, ...roundEndDiscardEvents(ctx, state)], commands: [] };
+      return { events: [done, ended], commands: [] };
     }
     default:
       return { events: [done], commands: stepCommands(ctx, state, step) };
   }
-}
-
-/**
- * Step 4.6: every card in play whose data says it is discarded at the end of
- * the round (`CardStats.discardAtRoundEnd`), in card order. Only encounter
- * cards carry the flag, since player cards are not modelled.
- */
-function roundEndDiscardEvents(ctx: EngineContext, state: GameState): Event[] {
-  return Object.values(state.cards)
-    .filter(
-      (card) => isCardInPlay(state, card) && cardStats(ctx.cards, card.code).discardAtRoundEnd,
-    )
-    .flatMap((card) => discardEncounterCard(state, card.id));
 }
 
 /**

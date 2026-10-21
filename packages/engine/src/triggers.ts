@@ -51,8 +51,8 @@ export interface ScenarioHooks {
    * At the end of an investigator's turn (`TurnEnded`, from `EndTurn`). A
    * turn cut short by resignation or defeat fires nothing: the investigator
    * has left the scenario, and with them what their turn end would affect.
-   * A treachery's own end-of-turn test needs no hook: it is card data
-   * (`CardStats.turnEndTest`).
+   * A treachery's own end-of-turn test needs no hook: it is a card ability
+   * (`atEndOfTurn`).
    */
   onTurnEnd: TriggerHook<TurnEnded>;
   /** After any card enters play from outside play (deck, set aside, discard, …). */
@@ -94,7 +94,7 @@ export function triggeredCommands(
     const next = apply(state, event);
     pending.push(...matchingTriggers(ctx, state, next, event));
     pending.push(
-      ...windowsOpenedBy(event, events).map(
+      ...windowsOpenedBy(next, event, events).map(
         (opened) => (after: GameState) => abilityCommands(ctx, after, opened),
       ),
     );

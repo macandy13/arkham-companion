@@ -74,7 +74,7 @@ Forced effects fire at a fixed moment. Where the effect touches tracked state it
 - **When / after your turn begins or ends (threat area)** – Cards: Mark of Elokoss 12137, Languor 12193, Frenzied Hunger 13094. Effect touches: damage to assets, top card of deck, extra action cost. Tier: display (Frenzied Hunger: assist test)
 - **After you discover clues / after an enemy engages you / after another treachery (threat area)** – Cards: Unspeakable Truths 12125, Voices in the Night 13116, Echoing in Darkness 13065. Effect touches: horror, enemy attack, encounter draw. Tier: auto
 
-The engine has `turnEndTest` and `discardAtRoundEnd` as card data already. Generalising these into a **timing window** list (enter location, end turn at location, turn begins, discover clues, failed test at location, phase ends, round ends, enemy engages, treachery resolved) gives one place to hang both hooks and reminders.
+The engine had `turnEndTest` and `discardAtRoundEnd` as card flags; they are now the `turnEnds` and `roundEnds` windows of card abilities (P1 slice 3). Generalising these into a **timing window** list (enter location, end turn at location, turn begins, discover clues, failed test at location, phase ends, round ends, enemy engages, treachery resolved) gives one place to hang both hooks and reminders.
 
 ### Abilities on scenario cards
 

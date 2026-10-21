@@ -138,20 +138,6 @@ export interface CardStats {
    */
   revelationTest?: SkillTest;
   /**
-   * The skill test a treachery in an investigator's threat area forces at the
-   * end of that investigator's turn ("Forced – At the end of your turn: Test
-   * [willpower] (3). If you succeed, discard …", Frozen in Fear), entered with
-   * the card data; `EndTurn` raises it as a `skillTestResult` decision. A pass
-   * discards the card; anything else the card does stays card text.
-   */
-  turnEndTest?: SkillTest;
-  /**
-   * Set for a card that is discarded when the round ends ("Forced – At the
-   * end of the round: Discard …", Dissonant Voices), entered with the card
-   * data; upkeep step 4.6 discards it wherever it is in play.
-   */
-  discardAtRoundEnd?: boolean;
-  /**
    * Set for a treachery whose revelation attaches it to the drawing
    * investigator's location (Obscuring Fog), entered with the card data;
    * `DrawEncounter` places it there, and its fields say what it does there.
