@@ -8,8 +8,7 @@ import {
   type ScenarioContext,
   type ScaledValue,
 } from './cards';
-import type { Command, StartScenario, StartingCard, StartingInvestigator } from './commands';
-import { isInPlay } from './doom';
+import type { StartScenario, StartingCard, StartingInvestigator } from './commands';
 import {
   instanceId,
   type CardCode,
@@ -20,11 +19,11 @@ import {
   type MapId,
 } from './ids';
 import { investigatorCard } from './investigator_cards';
-import type { Edge, GridCell, MapSpec } from './map';
+import { layoutOf, type Edge, type GridCell, type MapSpec } from './map';
 import { CommandRejected } from './rejection';
 import type { ScenarioDefinition } from './scenario';
 import { spawnZone } from './spawn';
-import type { Difficulty, GameState, TokenKind } from './state';
+import type { Difficulty, TokenKind } from './state';
 import type { Zone } from './zone';
 
 /**
@@ -231,37 +230,6 @@ function startingInvestigator(
   };
 }
 
-/**
- * The commands that apply an `addMap` step to a running scenario (a reverse
- * side or card effect that puts a new area into play): one `AddMap` whose
- * locations are the cards of the step's codes that are outside play (each
- * code must match exactly one, typically set aside), then a `RevealLocation`
- * for each `faceUp` location, since mid-scenario revealing places clues the
- * normal way. Throws `CommandRejected` when a code matches no card or several.
- */
-export function compileMapStep(state: GameState, step: AddMapStep): Command[] {
-  const available = Object.values(state.cards).filter((card) => !isInPlay(state, card));
-  const locations = step.locations.map((location) => ({
-    ...location,
-    id: targetId(available, location.code),
-  }));
-  const addMap: Command = {
-    type: 'AddMap',
-    mapId: step.mapId,
-    map: {
-      name: step.name,
-      visible: step.visible ?? true,
-      connections: (step.connections ?? []).map((connection) => edge(locations, connection)),
-      layout: layoutOf(locations),
-    },
-    locations: locations.map((location) => location.id),
-  };
-  const reveals = locations
-    .filter((location) => location.faceUp)
-    .map((location): Command => ({ type: 'RevealLocation', locationId: location.id }));
-  return [addMap, ...reveals];
-}
-
 /** Starting cards for an agenda or act deck, in deck order. */
 function deckCards(codes: readonly CardCode[], zone: Zone): DraftCard[] {
   // Agendas and acts are double-sided; face up means side "a" is showing.
@@ -305,13 +273,6 @@ function withMap(draft: SetupDraft, step: AddMapStep): SetupDraft {
     layout: layoutOf(locations.map(({ id }, i) => ({ id, at: step.locations[i]?.at }))),
   };
   return { ...withLocations, maps: { ...draft.maps, [step.mapId]: map } };
-}
-
-/** The cells of a map step's locations, each under the instance the location became. */
-function layoutOf(
-  locations: readonly { readonly id: InstanceId; readonly at?: GridCell }[],
-): Record<InstanceId, GridCell> {
-  return Object.fromEntries(locations.flatMap(({ id, at }) => (at ? [[id, at]] : [])));
 }
 
 /** A card as far as resolving setup codes is concerned: a draft card or a card in the game. */

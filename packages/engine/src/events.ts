@@ -1,5 +1,5 @@
 import type { CampaignLog } from './campaign/campaign_log';
-import type { AbilityEffect } from './abilities';
+import type { AbilityCommand } from './abilities';
 import type { CardCode, DecisionId, InstanceId, InvestigatorId, MapId, ScenarioId } from './ids';
 import type { Edge, GameMap } from './map';
 import type { Rejection } from './rejection';
@@ -294,7 +294,7 @@ export interface EncounterCardDrawn {
 export interface AbilityEffectSkipped {
   type: 'AbilityEffectSkipped';
   cardId: InstanceId;
-  effect: AbilityEffect['type'];
+  effect: AbilityCommand['type'];
   missing: readonly CardCode[];
 }
 

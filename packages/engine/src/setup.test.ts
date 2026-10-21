@@ -28,7 +28,6 @@ import {
   makeSetupOptions,
   rejectionOf,
   standardInvestigatorCards,
-  startScenario,
 } from '../test/utils';
 
 const main = mapId('main');
@@ -512,79 +511,5 @@ describe('pickReferenceSide', () => {
     ['expert', 'hardExpert'],
   ] as const)('reads the %s difficulty from the %s side', (difficulty, side) => {
     expect(scenario.pickReferenceSide(difficulty)).toBe(side);
-  });
-});
-
-describe('compileMapStep', () => {
-  const wing = mapId('wing');
-  const ctx = {
-    cards: cardDbFrom([blankLocation('a'), blankLocation('b'), ...standardInvestigatorCards]),
-  };
-
-  /** A started scenario with location `a` on main and one set-aside copy per entry of `setAside`. */
-  function startedWith(setAside: string[]) {
-    const def = makeDefinition({
-      setup: [mainMap('a'), { kind: 'setAside', codes: setAside.map(cardCode) }],
-    });
-    return startScenario({ ...ctx, scenario: def });
-  }
-
-  /** A step for the wing with the given locations and no connections. */
-  function wingMap(...locations: AddMapStep['locations']): AddMapStep {
-    return { kind: 'addMap', mapId: wing, name: 'Wing', locations };
-  }
-
-  it('lays the new locations out in the cells the step gives them', () => {
-    const step = wingMap({ code: cardCode('b'), at: { column: 2, row: 0 } });
-
-    const [addMap] = scenario.compileMapStep(startedWith(['b']), step);
-
-    expect(addMap).toMatchObject({ map: { layout: { 'b#1': { column: 2, row: 0 } } } });
-  });
-
-  it('takes the locations from outside play and resolves the connections among them', () => {
-    const step: AddMapStep = {
-      ...wingMap({ code: cardCode('a') }, { code: cardCode('b') }),
-      connections: [{ from: cardCode('a'), to: cardCode('b') }],
-    };
-
-    const commands = scenario.compileMapStep(startedWith(['a', 'b']), step);
-
-    expect(commands).toEqual([
-      {
-        type: 'AddMap',
-        mapId: wing,
-        map: {
-          name: 'Wing',
-          visible: true,
-          connections: [{ from: 'a#2', to: 'b#1', oneWay: false }],
-          layout: {},
-        },
-        locations: ['a#2', 'b#1'],
-      },
-    ]);
-  });
-
-  it('reveals a face-up location after adding the map', () => {
-    const commands = scenario.compileMapStep(
-      startedWith(['b']),
-      wingMap({ code: cardCode('b'), faceUp: true }),
-    );
-
-    expect(commands.map((command) => command.type)).toEqual(['AddMap', 'RevealLocation']);
-    expect(commands[1]).toEqual({ type: 'RevealLocation', locationId: 'b#1' });
-  });
-
-  it.each([
-    { name: 'only in play', location: 'a', setAside: [], code: 'setupTargetNotFound' },
-    { name: 'set aside twice', location: 'b', setAside: ['b', 'b'], code: 'setupTargetAmbiguous' },
-  ])('rejects a location that is $name', ({ location, setAside, code }) => {
-    const state = startedWith(setAside);
-
-    const rejection = rejectionOf(() =>
-      scenario.compileMapStep(state, wingMap({ code: cardCode(location) })),
-    );
-
-    expect(rejection.code).toBe(code);
   });
 });

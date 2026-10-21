@@ -115,7 +115,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     // The map comes first, so the Hallway is in play when the investigators move there.
     abilities: [
       whenAdvanced(
-        putMapIntoPlay(theGatheringHouse),
+        ...putMapIntoPlay(theGatheringHouse),
         discardEachEnemyAt(onlyCopy(codes.study)),
         moveEachInvestigatorTo(onlyCopy(codes.hallway)),
         removeFromGame(onlyCopy(codes.study)),

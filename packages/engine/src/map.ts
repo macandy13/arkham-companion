@@ -63,6 +63,17 @@ export interface MapSpec {
   layout?: Readonly<Record<InstanceId, GridCell>>;
 }
 
+/** A location placed on a map, in its layout cell when it has one. */
+export interface MapPlacement {
+  id: InstanceId;
+  at?: GridCell;
+}
+
+/** The layout of `placements`: the cell of each location that has one. */
+export function layoutOf(placements: readonly MapPlacement[]): Record<InstanceId, GridCell> {
+  return Object.fromEntries(placements.flatMap(({ id, at }) => (at ? [[id, at]] : [])));
+}
+
 /** The `GameMap` for a spec: visible, unconnected and without a layout unless the spec says otherwise. */
 export function createMap(spec: MapSpec): GameMap {
   return {

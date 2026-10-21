@@ -117,8 +117,6 @@ export type {
   AbilityCommand,
   AbilityEffect,
   AbilityTest,
-  CommandEffect,
-  PutMapIntoPlay,
   RelativeCard,
   RelativeInvestigator,
   Templated,

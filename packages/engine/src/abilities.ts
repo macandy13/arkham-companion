@@ -8,7 +8,7 @@ import { locationAttachments } from './board';
 import { enemiesAt } from './handle_enemy';
 import { isActiveInvestigator, playerOrder, requireInvestigator } from './investigators';
 import { cardsInZone, requireCard } from './lookup';
-import { compileMapStep, type AddMapStep } from './setup';
+import type { AddMapStep } from './setup';
 import type { GameState, Investigator, QueuedStep, SkillName } from './state';
 import type { Zone } from './zone';
 
@@ -102,7 +102,8 @@ export type AbilityCommand =
           | 'RevealLocation'
           | 'FromSetAside'
           | 'SpawnEnemy'
-          | 'MoveInvestigator';
+          | 'MoveInvestigator'
+          | 'AddMap';
       }
     >
   | AbilityTest;
@@ -123,21 +124,7 @@ export type AbilityTest = Omit<TestSkill, 'onPass' | 'onFail'> & {
  * command types keeps one vocabulary: a new kind of effect is a command
  * added to `AbilityCommand`, not a new effect type.
  */
-export type AbilityEffect = CommandEffect | PutMapIntoPlay;
-
-/** An effect that is one templated command, which is what a test's outcomes may hold. */
-export type CommandEffect = Templated<AbilityCommand>;
-
-/**
- * "Put the house into play": a map the scenario declares like setup's
- * `addMap` step, put into play mid-scenario (a reverse side). Not a command:
- * it resolves to the commands `compileMapStep` makes from the step then,
- * since only then are the set-aside locations it names known by instance.
- */
-export interface PutMapIntoPlay {
-  type: 'PutMapIntoPlay';
-  step: AddMapStep;
-}
+export type AbilityEffect = Templated<AbilityCommand>;
 
 /**
  * A forced card ability: what it does when its window opens. Card data
@@ -221,12 +208,7 @@ export function abilitySteps(
   return (cardStats(ctx.cards, card.code).abilities ?? [])
     .filter((ability) => ability.window.kind === opened.window.kind)
     .flatMap((ability) => ability.effects)
-    .map((effect) => ({
-      kind: 'ability',
-      effect,
-      opened,
-      origin: effect.type === 'PutMapIntoPlay' ? 'AddMap' : effect.type,
-    }));
+    .map((effect) => ({ kind: 'ability', effect, opened, origin: effect.type }));
 }
 
 /** An effect waiting to resolve: the queue step `abilitySteps` produces. */
@@ -235,8 +217,7 @@ export type AbilityStep = Extract<QueuedStep, { kind: 'ability' }>;
 /**
  * The commands `effect` stands for in `state`, with its references resolved
  * for `opened`. Usually one; one per investigator or enemy for an effect on
- * each of them (`eachInvestigator`, `eachEnemyAt`), and those of the map
- * step for `PutMapIntoPlay`. None when a reference names nobody, such as
+ * each of them (`eachInvestigator`, `eachEnemyAt`). None when a reference names nobody, such as
  * `windowInvestigator` in a window that names no investigator (a location
  * revealed by a card effect), or one who has left the scenario meanwhile
  * (defeated by an earlier effect of the same revelation), whose threat area
@@ -249,8 +230,6 @@ export function resolveEffect(
   effect: AbilityEffect,
   opened: OpenedWindow,
 ): Command[] {
-  if (effect.type === 'PutMapIntoPlay')
-    return missingCopies(state, effect).length > 0 ? [] : compileMapStep(state, effect.step);
   const { investigatorId } = opened;
   const investigator =
     investigatorId !== undefined && isActiveInvestigator(state, investigatorId)
@@ -384,13 +363,6 @@ function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
  * the reason an `AbilityEffectSkipped` gives.
  */
 export function missingCopies(state: GameState, effect: AbilityEffect): CardCode[] {
-  if (effect.type === 'PutMapIntoPlay') {
-    // The map's locations come from outside play, so only copies there count.
-    const outside = Object.values(state.cards).filter((card) => !isInPlay(state, card));
-    return effect.step.locations
-      .map(({ code }) => code)
-      .filter((code) => outside.filter((card) => card.code === code).length !== 1);
-  }
   const missing: CardCode[] = [];
   const walk = (value: unknown): void => {
     if (typeof value !== 'object' || value === null) return;
@@ -448,8 +420,8 @@ export function whenAdvanced(...effects: AbilityEffect[]): Ability {
 export function skillTest(
   skill: SkillName,
   difficulty: number,
-  outcomes: { onPass?: CommandEffect[]; onFail?: CommandEffect[] } = {},
-): CommandEffect {
+  outcomes: { onPass?: AbilityEffect[]; onFail?: AbilityEffect[] } = {},
+): AbilityEffect {
   return {
     type: 'TestSkill',
     investigatorId: { ref: 'windowInvestigator' },
@@ -464,7 +436,7 @@ export function skillTest(
  * "Put it into play in your threat area": the card with the ability moves to
  * the threat area of the investigator the window names (the drawer).
  */
-export function putIntoThreatArea(): CommandEffect {
+export function putIntoThreatArea(): AbilityEffect {
   return moveSelf({ kind: 'threatArea', investigatorId: { ref: 'windowInvestigator' } });
 }
 
@@ -473,32 +445,32 @@ export function putIntoThreatArea(): CommandEffect {
  * location of the investigator the window names, within its limit per
  * location (`{ ref: 'windowLocation' }`).
  */
-export function attachToLocation(): CommandEffect {
+export function attachToLocation(): AbilityEffect {
   return moveSelf({ kind: 'attachedTo', hostId: { ref: 'windowLocation' } });
 }
 
 /** "Discard it": the card with the ability, onto the top of the encounter discard (`DiscardCard`). */
-export function discardSelf(): CommandEffect {
+export function discardSelf(): AbilityEffect {
   return { type: 'DiscardCard', cardId: { ref: 'self' } };
 }
 
 /** "Take N damage": the investigator the window names takes `amount` damage. */
-export function takeDamage(amount: number): CommandEffect {
+export function takeDamage(amount: number): AbilityEffect {
   return adjustWindowInvestigator('damage', amount);
 }
 
 /** "Take N horror": the investigator the window names takes `amount` horror. */
-export function takeHorror(amount: number): CommandEffect {
+export function takeHorror(amount: number): AbilityEffect {
   return adjustWindowInvestigator('horror', amount);
 }
 
 /** "Place N doom on the current agenda". */
-export function placeDoomOnAgenda(amount: number): CommandEffect {
+export function placeDoomOnAgenda(amount: number): AbilityEffect {
   return { type: 'PlaceDoom', amount };
 }
 
 /** "Place N doom on it": doom on the card with the ability. */
-export function placeDoomOnSelf(amount: number): CommandEffect {
+export function placeDoomOnSelf(amount: number): AbilityEffect {
   return { type: 'PlaceDoom', cardId: { ref: 'self' }, amount };
 }
 
@@ -507,13 +479,35 @@ export function onlyCopy(code: CardCode): RelativeCard {
   return { ref: 'onlyCopy', code };
 }
 
-/** "Put the house into play": the map `step` declares, from its set-aside locations. */
-export function putMapIntoPlay(step: AddMapStep): AbilityEffect {
-  return { type: 'PutMapIntoPlay', step };
+/**
+ * "Put the house into play": the map `step` declares, as setup would, with
+ * each of its locations the only copy of its code (typically set aside),
+ * then a reveal for each face-up one, since revealing places its clues.
+ * Spread it into the ability: `whenAdvanced(...putMapIntoPlay(house), …)`.
+ */
+export function putMapIntoPlay(step: AddMapStep): AbilityEffect[] {
+  const addMap: AbilityEffect = {
+    type: 'AddMap',
+    mapId: step.mapId,
+    map: {
+      name: step.name,
+      visible: step.visible ?? true,
+      connections: (step.connections ?? []).map(({ from, to, oneWay }) => ({
+        from: onlyCopy(from),
+        to: onlyCopy(to),
+        oneWay: oneWay ?? false,
+      })),
+    },
+    locations: step.locations.map(({ code, at }) => ({ id: onlyCopy(code), at })),
+  };
+  const reveals = step.locations
+    .filter(({ faceUp }) => faceUp === true)
+    .map(({ code }) => revealLocation(onlyCopy(code)));
+  return [addMap, ...reveals];
 }
 
 /** "Each investigator moves to the Hallway", ignoring connections as card effects do. */
-export function moveEachInvestigatorTo(location: RelativeCard): CommandEffect {
+export function moveEachInvestigatorTo(location: RelativeCard): AbilityEffect {
   return {
     type: 'MoveInvestigator',
     investigatorId: { ref: 'eachInvestigator' },
@@ -523,22 +517,22 @@ export function moveEachInvestigatorTo(location: RelativeCard): CommandEffect {
 }
 
 /** "Discard each enemy in the Study", engaged ones included (`DiscardCard` each). */
-export function discardEachEnemyAt(location: RelativeCard): CommandEffect {
+export function discardEachEnemyAt(location: RelativeCard): AbilityEffect {
   return { type: 'DiscardCard', cardId: { ref: 'eachEnemyAt', location } };
 }
 
 /** "Remove the Study from the game". */
-export function removeFromGame(card: RelativeCard): CommandEffect {
+export function removeFromGame(card: RelativeCard): AbilityEffect {
   return { type: 'MoveCard', cardId: card, to: { kind: 'outOfGame' } };
 }
 
 /** "Reveal the Parlor". */
-export function revealLocation(location: RelativeCard): CommandEffect {
+export function revealLocation(location: RelativeCard): AbilityEffect {
   return { type: 'RevealLocation', locationId: location };
 }
 
 /** "Put the set-aside Lita Chantler into play at the Parlor". */
-export function putSetAsideIntoPlay(code: CardCode, location: RelativeCard): CommandEffect {
+export function putSetAsideIntoPlay(code: CardCode, location: RelativeCard): AbilityEffect {
   return { type: 'FromSetAside', codes: [code], to: { kind: 'atLocation', locationId: location } };
 }
 
@@ -546,15 +540,15 @@ export function putSetAsideIntoPlay(code: CardCode, location: RelativeCard): Com
  * "Spawn the Ghoul Priest in the Hallway": the enemy spawns at the location
  * named, engaging like any spawn (`SpawnEnemy`).
  */
-export function spawnEnemyAt(enemy: RelativeCard, location: RelativeCard): CommandEffect {
+export function spawnEnemyAt(enemy: RelativeCard, location: RelativeCard): AbilityEffect {
   return { type: 'SpawnEnemy', enemyId: enemy, at: location };
 }
 
 /** Moves the card with the ability ("Remove it from the game", "Put it into play in your threat area"). */
-export function moveSelf(to: Templated<Zone>): CommandEffect {
+export function moveSelf(to: Templated<Zone>): AbilityEffect {
   return { type: 'MoveCard', cardId: { ref: 'self' }, to };
 }
 
-function adjustWindowInvestigator(stat: 'damage' | 'horror', delta: number): CommandEffect {
+function adjustWindowInvestigator(stat: 'damage' | 'horror', delta: number): AbilityEffect {
   return { type: 'AdjustInvestigator', investigatorId: { ref: 'windowInvestigator' }, stat, delta };
 }

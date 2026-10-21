@@ -534,7 +534,7 @@ describe('trigger bus', () => {
     const movingAct = blankAct('moving_act', {
       abilities: [
         whenAdvanced(
-          putMapIntoPlay(atticStep),
+          ...putMapIntoPlay(atticStep),
           discardEachEnemyAt(onlyCopy(cardCode('hall'))),
           moveEachInvestigatorTo(onlyCopy(cardCode('attic'))),
           removeFromGame(onlyCopy(cardCode('hall'))),
@@ -566,7 +566,43 @@ describe('trigger bus', () => {
 
       expect(state.board.maps[mapId('upstairs')]?.name).toBe('Upstairs');
       expect(state.cards[attic]?.zone).toEqual({ kind: 'location', mapId: mapId('upstairs') });
+      expect(state.board.maps[mapId('upstairs')]?.layout).toEqual({
+        [attic]: { column: 0, row: 0 },
+      });
       expect(checkInvariants(state)).toEqual([]);
+    });
+
+    it('writes a map step as an AddMap of the only copies, then a reveal per face-up location', () => {
+      const landing = cardCode('landing');
+      const step: AddMapStep = {
+        kind: 'addMap',
+        mapId: mapId('upstairs'),
+        name: 'Upstairs',
+        locations: [
+          { code: landing, faceUp: true },
+          { code: cardCode('attic'), at: { column: 1, row: 0 } },
+        ],
+        connections: [{ from: landing, to: cardCode('attic') }],
+      };
+
+      expect(putMapIntoPlay(step)).toEqual([
+        {
+          type: 'AddMap',
+          mapId: mapId('upstairs'),
+          map: {
+            name: 'Upstairs',
+            visible: true,
+            connections: [
+              { from: onlyCopy(landing), to: onlyCopy(cardCode('attic')), oneWay: false },
+            ],
+          },
+          locations: [
+            { id: onlyCopy(landing), at: undefined },
+            { id: onlyCopy(cardCode('attic')), at: { column: 1, row: 0 } },
+          ],
+        },
+        { type: 'RevealLocation', locationId: onlyCopy(landing) },
+      ]);
     });
 
     it('discards each enemy in the hall, the engaged one too, but no other card there', () => {
@@ -632,7 +668,7 @@ describe('trigger bus', () => {
       });
     });
 
-    it('skips the map when one of its locations is not set aside exactly once', () => {
+    it('skips the map when the game holds one of its locations twice', () => {
       const { context, state: started } = movingTable
         .withCard(instanceId('second_attic'), atticCard, { kind: 'setAside' })
         .start();
@@ -643,7 +679,7 @@ describe('trigger bus', () => {
       expect(events.filter((event) => event.type === 'AbilityEffectSkipped')).toContainEqual({
         type: 'AbilityEffectSkipped',
         cardId: act1,
-        effect: 'PutMapIntoPlay',
+        effect: 'AddMap',
         missing: [cardCode('attic')],
       });
     });
@@ -827,7 +863,7 @@ describe('onCardEnters', () => {
       type: 'AddMap',
       mapId: mapId('vault'),
       map: { name: 'Vault' },
-      locations: [crypt],
+      locations: [{ id: crypt }],
     });
 
     expect(entered).toEqual([crypt]);

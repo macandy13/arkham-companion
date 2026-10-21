@@ -7,7 +7,7 @@ import type { CardFlipped, CardMoved, ConnectionChanged, MapAdded, TokensChanged
 import { moveCardEvent } from './placement';
 import type { InstanceId, MapId } from './ids';
 import { requireCard } from './lookup';
-import { createMap, type Edge, type GameMap, type GridCell } from './map';
+import { createMap, layoutOf, type Edge, type GameMap, type GridCell } from './map';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
 
@@ -81,9 +81,10 @@ export function handleAddMap(
 ): [MapAdded, ...CardMoved[]] {
   if (state.board.maps[cmd.mapId])
     throw new CommandRejected({ code: 'duplicateMap', mapId: cmd.mapId });
-  const map = createMap(cmd.map);
-  const moves = cmd.locations.map((cardId, i): CardMoved => {
-    if (cmd.locations.indexOf(cardId) !== i)
+  const map = createMap({ ...cmd.map, layout: layoutOf(cmd.locations) });
+  const locationIds = cmd.locations.map(({ id }) => id);
+  const moves = locationIds.map((cardId, i): CardMoved => {
+    if (locationIds.indexOf(cardId) !== i)
       throw new CommandRejected({ code: 'duplicateCard', cardId });
     validateLocationCard(ctx, state.cards, cardId);
     const card = requireCard(state.cards, cardId);
@@ -91,7 +92,7 @@ export function handleAddMap(
     return moveCardEvent(card, { kind: 'location', mapId: cmd.mapId });
   });
   validateConnections(ctx, state.cards, { ...state.board.maps, [cmd.mapId]: map });
-  validateLayout(cmd.mapId, map, new Set(cmd.locations));
+  validateLayout(cmd.mapId, map, new Set(locationIds));
   return [{ type: 'MapAdded', mapId: cmd.mapId, map }, ...moves];
 }
 
