@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
+  atEndOfRound,
+  atEndOfTurn,
   atLocation,
   blankAct,
   blankAgenda,
   blankEnemy,
   blankLocation,
+  blankTreachery,
   checkInvariants,
+  discardSelf,
   execute,
   fixed,
   instanceId,
@@ -17,14 +21,16 @@ import {
   perInvestigator,
   placeDoomOnAgenda,
   placeDoomOnSelf,
+  skillTest,
   takeHorror,
+  threatAreaOf,
   whenRevealed,
   type Command,
   type EngineContext,
   type Rejection,
 } from './index';
 import { triggeredCommands } from './triggers';
-import { rejectionFrom, stateAfter } from '../test/utils';
+import { answer, rejectionFrom, stateAfter } from '../test/utils';
 
 const hall = instanceId('hall');
 const cellar = instanceId('cellar');
@@ -295,6 +301,86 @@ describe('trigger bus', () => {
 
       // The flipped agenda leaves the game afterwards, so only the events show whether it placed doom.
       expect(events.filter((e) => e.type === 'TokensChanged' && e.delta > 0)).toEqual([]);
+    });
+  });
+
+  describe('turn-end and round-end abilities', () => {
+    const hauntingDread = instanceId('haunting_dread');
+    /** A threat-area treachery: at the end of its holder's turn, willpower (3); a fail deals 1 horror. */
+    const hauntingDreadCard = blankTreachery('haunting_dread', {
+      abilities: [atEndOfTurn(skillTest('willpower', 3, { onFail: [takeHorror(1)] }))],
+    });
+
+    it.each([
+      { result: 'pass', horror: 0 },
+      { result: 'fail', horror: 1 },
+    ])(
+      '$result: the test outcome acts on the investigator whose turn ended',
+      ({ result, horror }) => {
+        const { context, state } = newGame()
+          .withLocation(hall, blankLocation('hall'), { revealed: true })
+          .withInvestigator(alice, { locationId: hall })
+          .withCard(hauntingDread, hauntingDreadCard, threatAreaOf(alice))
+          .withTurnOf(alice)
+          .start();
+
+        const after = stateAfter(
+          context,
+          state,
+          { type: 'EndTurn', investigatorId: alice },
+          answer('test:haunting_dread', result),
+        );
+
+        expect(after.investigators.find((inv) => inv.id === alice)?.sanity.horror).toBe(horror);
+        expect(after.cards[hauntingDread]?.zone).toEqual(threatAreaOf(alice));
+      },
+    );
+
+    it('opens no turn-end window for a card outside the threat area', () => {
+      const { context, state } = newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withInvestigator(alice, { locationId: hall })
+        .withCard(hauntingDread, hauntingDreadCard, atLocation(hall))
+        .withTurnOf(alice)
+        .start();
+
+      const after = stateAfter(context, state, { type: 'EndTurn', investigatorId: alice });
+
+      expect(after.pending).toEqual([]);
+    });
+
+    it('discards a card in play at the end of the round, with its tokens', () => {
+      const fadingOmen = blankTreachery('fading_omen', {
+        abilities: [atEndOfRound(discardSelf())],
+      });
+      const { context, state } = newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withCard(instanceId('fading_omen'), fadingOmen, atLocation(hall), { tokens: { doom: 1 } })
+        .start();
+
+      const after = stateAfter(
+        context,
+        state,
+        ...triggeredCommands(context, state, [{ type: 'RoundEnded', round: 1 }]),
+      );
+
+      expect(after.cards[instanceId('fading_omen')]).toMatchObject({
+        zone: { kind: 'encounterDiscard' },
+        tokens: {},
+      });
+    });
+
+    it('drops a test at the end of the round, which names no investigator', () => {
+      const testingOmen = blankTreachery('testing_omen', {
+        abilities: [atEndOfRound(skillTest('willpower', 3, { onFail: [takeHorror(1)] }))],
+      });
+      const { context, state } = newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withInvestigator(alice, { locationId: hall })
+        .withCard(instanceId('testing_omen'), testingOmen, atLocation(hall))
+        .start();
+
+      expect(triggeredCommands(context, state, [{ type: 'RoundEnded', round: 1 }])).toEqual([]);
     });
   });
 

@@ -1,4 +1,4 @@
-import type { MoveCard } from './commands';
+import type { DiscardCard, MoveCard } from './commands';
 import type { CardMoved, Event, TokensChanged } from './events';
 import { requireCard } from './lookup';
 import { CommandRejected } from './rejection';
@@ -132,11 +132,15 @@ export function discardEncounterCard(state: GameState, cardId: InstanceId): Even
   ];
 }
 
+/** `DiscardCard`: discards the card the way a resolved encounter card is (`discardEncounterCard`). */
+export function handleDiscardCard(state: GameState, cmd: DiscardCard): Event[] {
+  return discardEncounterCard(state, requireCard(state.cards, cmd.cardId).id);
+}
+
 /**
  * The command that discards an encounter card onto the top of the encounter
- * discard, where "topmost" effects look for it: a resolved revelation, or a
- * card whose effect discards it (a passed end-of-turn test, an investigated
- * location's attachment).
+ * discard, where "topmost" effects look for it: a resolved revelation, or an
+ * investigated location's attachment. Card abilities use `DiscardCard`.
  */
 export function discardToTop(cardId: InstanceId): MoveCard {
   return { type: 'MoveCard', cardId, to: { kind: 'encounterDiscard' }, index: 0 };

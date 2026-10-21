@@ -5,9 +5,7 @@ import type { ActionsAdjusted, ActionsReset, Event, TurnEnded, TurnStarted } fro
 import { activeInvestigator } from './handle_investigator';
 import type { InvestigatorId } from './ids';
 import { playerOrder } from './investigators';
-import { replay } from './reducer';
 import { CommandRejected } from './rejection';
-import { turnEndTestDecisions } from './skill_tests';
 import type { GameState, Phase } from './state';
 
 /**
@@ -43,16 +41,13 @@ export function handleStartTurn(state: GameState, cmd: StartTurn): TurnStarted[]
 
 /**
  * `EndTurn`: ends the turn in progress, which must be the investigator's.
- * The forced "at the end of your turn" tests of the cards in their threat
- * area follow (`turnEndTestDecisions`); `TurnEnded` also fires the
- * scenario's `onTurnEnd`.
+ * `TurnEnded` fires the scenario's `onTurnEnd` and opens the `turnEnds`
+ * window for the cards in their threat area (Frozen in Fear's test).
  */
-export function handleEndTurn(ctx: EngineContext, state: GameState, cmd: EndTurn): Event[] {
+export function handleEndTurn(state: GameState, cmd: EndTurn): TurnEnded[] {
   requirePhase(state, 'investigation');
   requireTurnOf(state, cmd.investigatorId);
-  const ended: TurnEnded = { type: 'TurnEnded', investigatorId: cmd.investigatorId };
-  const investigator = activeInvestigator(state, cmd.investigatorId);
-  return [ended, ...turnEndTestDecisions(ctx, replay([ended], state), investigator)];
+  return [{ type: 'TurnEnded', investigatorId: cmd.investigatorId }];
 }
 
 /**

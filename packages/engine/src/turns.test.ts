@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
+  atEndOfTurn,
   blankLocation,
   blankTreachery,
   checkInvariants,
+  discardSelf,
   instanceId,
   investigatorId,
   newGame,
+  skillTest,
   threatAreaOf,
   zoneKey,
   type Command,
@@ -147,7 +150,7 @@ describe('the end of a turn', () => {
   /** A threat-area treachery with a willpower (3) test at the end of its investigator's turn. */
   const frozenInFearCard = blankTreachery('frozen_in_fear', {
     entersThreatArea: true,
-    turnEndTest: { skill: 'willpower', difficulty: 3 },
+    abilities: [atEndOfTurn(skillTest('willpower', 3, { onPass: [discardSelf()] }))],
   });
   /** A threat-area treachery without an end-of-turn test. */
   const dissonantVoicesCard = blankTreachery('dissonant_voices', { entersThreatArea: true });
@@ -169,9 +172,9 @@ describe('the end of a turn', () => {
     expect(ended.meta.turnsTaken).toEqual([alice]);
     expect(ended.pending).toMatchObject([
       {
-        id: 'turnEnd:frozen_in_fear',
+        id: 'test:frozen_in_fear',
         kind: 'skillTestResult',
-        prompt: 'decision.turnEndTest',
+        prompt: 'decision.cardTest',
         subject: frozenInFear,
         decider: { kind: 'investigator', investigatorId: alice },
         skillTest: { skill: 'willpower', difficulty: 3 },
@@ -184,12 +187,7 @@ describe('the end of a turn', () => {
     { result: 'fail', threatArea: [frozenInFear, dissonantVoices], discard: undefined },
   ])('$result: Frozen in Fear stays only on a fail', ({ result, threatArea, discard }) => {
     const { context, state } = frozenInFearOnAlice.withTurnOf(alice).start();
-    const ended = stateAfter(
-      context,
-      state,
-      endTurn(alice),
-      answer('turnEnd:frozen_in_fear', result),
-    );
+    const ended = stateAfter(context, state, endTurn(alice), answer('test:frozen_in_fear', result));
 
     expect(ended.pending).toEqual([]);
     expect(aliceThreatArea(ended)).toEqual(threatArea);
@@ -202,7 +200,7 @@ describe('the end of a turn', () => {
       context,
       state,
       endTurn(alice),
-      answer('turnEnd:frozen_in_fear', 'fail'),
+      answer('test:frozen_in_fear', 'fail'),
       startTurn(bob),
     );
 

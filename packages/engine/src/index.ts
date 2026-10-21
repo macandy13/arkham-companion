@@ -90,9 +90,13 @@ export { PHASE_STEP_TITLES } from './phases';
 export { BASE_ACTIONS_PER_TURN } from './turns';
 export { formatBoard } from './format_board';
 export {
+  atEndOfRound,
+  atEndOfTurn,
+  discardSelf,
   moveSelf,
   placeDoomOnAgenda,
   placeDoomOnSelf,
+  skillTest,
   takeDamage,
   takeHorror,
   whenRevealed,
@@ -101,6 +105,7 @@ export type {
   Ability,
   AbilityCommand,
   AbilityEffect,
+  AbilityTest,
   RelativeCard,
   RelativeInvestigator,
   Templated,

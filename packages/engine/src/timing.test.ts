@@ -9,6 +9,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  atEndOfTurn,
   atLocation,
   blankAct,
   blankAgenda,
@@ -18,6 +19,7 @@ import {
   byName,
   confirmOptions,
   decisionId,
+  discardSelf,
   encounterDeck,
   encounterDiscard,
   engagedWith,
@@ -27,6 +29,7 @@ import {
   newGame,
   perInvestigator,
   PlayTable,
+  skillTest,
   takeDamage,
   threatAreaOf,
   whenRevealed,
@@ -291,7 +294,7 @@ describe('a defeat during the investigator`s own turn', () => {
   const bob = investigatorId('bob');
   const frozen = blankTreachery('frozen', {
     entersThreatArea: true,
-    turnEndTest: { skill: 'willpower', difficulty: 3 },
+    abilities: [atEndOfTurn(skillTest('willpower', 3, { onPass: [discardSelf()] }))],
   });
   /** The hall with alice on her turn, a treachery testing her at the end of her turn, and bob. */
   const game = newGame()

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  atEndOfRound,
   atLocation,
   blankAct,
   blankAgenda,
@@ -8,6 +9,7 @@ import {
   blankTreachery,
   checkInvariants,
   decisionId,
+  discardSelf,
   engagedWith,
   execute,
   fixed,
@@ -52,7 +54,7 @@ const plainTreachery = blankTreachery('plain_treachery');
 /** Dissonant Voices stays in the threat area until the end of the round. */
 const dissonantVoices = blankTreachery('dissonant_voices', {
   entersThreatArea: true,
-  discardAtRoundEnd: true,
+  abilities: [atEndOfRound(discardSelf())],
 });
 
 const encounterDeck: Zone = { kind: 'encounterDeck' };

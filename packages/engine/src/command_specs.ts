@@ -42,7 +42,8 @@ import {
 import { handleStartScenario } from './handle_start_scenario';
 import { handleMoveHunter, handleMoveHunters } from './hunters';
 import { handleNextPhase, handleResolveEnemyAttack } from './phases';
-import { handleEvade, handleFight, handleInvestigate } from './skill_tests';
+import { handleDiscardCard } from './placement';
+import { handleEvade, handleFight, handleInvestigate, handleTestSkill } from './skill_tests';
 import { handleSpawnEnemy } from './spawn';
 import type { GameState, HeldAction, QueuedStep } from './state';
 import { handleAdjustActions, handleEndTurn, handleResign, handleStartTurn } from './turns';
@@ -149,6 +150,7 @@ const COMMAND_SPECS: CommandSpecs = {
     allowedAfterEnd: true,
   },
   MoveCard: { handle: (_ctx, state, command) => [handleMoveCard(state, command)] },
+  DiscardCard: { handle: (_ctx, state, command) => handleDiscardCard(state, command) },
   AddMap: { handle: handleAddMap },
   AddConnection: { handle: handleAddConnection },
   RemoveConnection: { handle: handleRemoveConnection },
@@ -199,6 +201,7 @@ const COMMAND_SPECS: CommandSpecs = {
   MoveHunters: { handle: handleMoveHunters },
   MoveHunter: { handle: handleMoveHunter },
   RequestDecision: { handle: handleRequestDecision },
+  TestSkill: { handle: handleTestSkill },
   ResolveDecision: {
     handle: (_ctx, state, command) => handleResolveDecision(state, command),
     allowedWhilePending: true,
@@ -209,7 +212,7 @@ const COMMAND_SPECS: CommandSpecs = {
     continueWith: () => [{ kind: 'phaseStep' }],
   },
   StartTurn: { handle: (_ctx, state, command) => handleStartTurn(state, command) },
-  EndTurn: { handle: handleEndTurn },
+  EndTurn: { handle: (_ctx, state, command) => handleEndTurn(state, command) },
   Resign: { handle: handleResign },
   SetLeadInvestigator: {
     handle: (_ctx, state, command) => handleSetLeadInvestigator(state, command),

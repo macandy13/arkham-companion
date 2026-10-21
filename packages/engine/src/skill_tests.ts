@@ -1,6 +1,6 @@
 import { locationAttachments, locationShroud } from './board';
 import { cardStats, type CardStats, type EngineContext } from './cards';
-import type { Command, Evade, Fight, Investigate } from './commands';
+import type { Command, Evade, Fight, Investigate, TestSkill } from './commands';
 import { requestDecision, skillTestDecision, type SkillTestOutcomes } from './decisions';
 import type { DecisionRequested } from './events';
 import { keywordAttackCommands } from './forced_attacks';
@@ -8,7 +8,7 @@ import { enemyOf, isInPlay, locationOf } from './handle_enemy';
 import { activeInvestigator } from './handle_investigator';
 import { decisionId, type InstanceId } from './ids';
 import { hasKeyword } from './keywords';
-import { cardsInZone, requireCard } from './lookup';
+import { requireCard } from './lookup';
 import { discardToTop } from './placement';
 import { CommandRejected } from './rejection';
 import { withSuggestion } from './skill_modifiers';
@@ -202,29 +202,23 @@ export function revelationTestDecision(
 }
 
 /**
- * The end-of-turn tests of the cards in the investigator's threat area that
- * have one (`CardStats.turnEndTest`): one `skillTestResult` decision
- * (`turnEnd:<card>`) each, for that investigator. A pass discards the card
- * onto the top of the encounter discard; a fail leaves it in play for the
- * next turn.
+ * `TestSkill`: the test a card asks of an investigator, as a decision about
+ * the card (`test:<card>`) for that investigator, who must still be in the
+ * scenario.
  */
-export function turnEndTestDecisions(
+export function handleTestSkill(
   ctx: EngineContext,
   state: GameState,
-  investigator: Investigator,
+  cmd: TestSkill,
 ): DecisionRequested[] {
-  const threatArea = { kind: 'threatArea', investigatorId: investigator.id } as const;
-  return cardsInZone(state, threatArea).flatMap((cardId) => {
-    const test = cardStats(ctx.cards, requireCard(state.cards, cardId).code).turnEndTest;
-    if (!test) return [];
-    return skillTest(ctx, state, {
-      investigator,
-      id: `turnEnd:${cardId}`,
-      prompt: 'decision.turnEndTest',
-      subject: cardId,
-      test,
-      outcomes: { onPass: [discardToTop(cardId)], onFail: [] },
-    });
+  const card = requireCard(state.cards, cmd.cardId);
+  return skillTest(ctx, state, {
+    investigator: activeInvestigator(state, cmd.investigatorId),
+    id: `test:${card.id}`,
+    prompt: 'decision.cardTest',
+    subject: card.id,
+    test: cmd.test,
+    outcomes: { onPass: [...cmd.onPass], onFail: [...cmd.onFail] },
   });
 }
 
