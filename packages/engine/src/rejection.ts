@@ -96,7 +96,6 @@ export type Rejection =
   | { code: 'encounterDeckEmpty' }
   /** `DrawEncounter` brought an enemy for an investigator who is not at a location. */
   | { code: 'investigatorHasNoLocation'; investigatorId: InvestigatorId }
-  /** `DrawEncounter` with a `match` that no card of the searched `from` encounter cards fulfils. */
   /** No card with code `match` is set aside. */
   | { code: 'cardNotInZone'; zone: 'setAside'; match: string }
   /** An enemy command names a card whose type is not `enemy`. */

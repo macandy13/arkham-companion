@@ -696,13 +696,14 @@ describe('trigger bus', () => {
     const bob = investigatorId('bob');
     const topTreachery = instanceId('top_treachery');
     const hiddenGhoul = instanceId('hidden_ghoul');
+    const hiddenGhoulCard = blankEnemy('hidden_ghoul');
     /** "Shuffle the encounter discard pile into the deck, then discard until an enemy is discarded; the lead draws it." */
     const drawingAct = blankAct('drawing_act', {
       abilities: [
         whenAdvanced(shuffleEncounterDiscard(), leadDrawsDiscardingUntil({ typeCode: 'enemy' })),
       ],
     });
-    /** Alice and bob in the hall; bob is made the lead in each test. */
+    /** Alice and bob in the hall; alice leads unless a test makes bob the lead. */
     const drawingTable = newGame()
       .withAct(act1, drawingAct)
       .withAct(act2, secondActCard)
@@ -713,7 +714,7 @@ describe('trigger bus', () => {
     it('makes the lead draw the first enemy, the cards above it discarded', () => {
       const { context, state: started } = drawingTable
         .withCard(topTreachery, blankTreachery('top_treachery'), { kind: 'encounterDeck' })
-        .withCard(hiddenGhoul, ghoulCard, { kind: 'encounterDeck' })
+        .withCard(hiddenGhoul, hiddenGhoulCard, { kind: 'encounterDeck' })
         // A card below keeps the deck from running out, which would shuffle the discard back in.
         .withCard(instanceId('bottom_treachery'), blankTreachery('bottom_treachery'), {
           kind: 'encounterDeck',
@@ -729,13 +730,31 @@ describe('trigger bus', () => {
 
     it('shuffles the discard in first, so an enemy discarded earlier can be drawn', () => {
       const { context, state: started } = drawingTable
-        .withCard(hiddenGhoul, ghoulCard, { kind: 'encounterDiscard' })
+        .withCard(hiddenGhoul, hiddenGhoulCard, { kind: 'encounterDiscard' })
         .start();
       const bobLeads = { ...started, meta: { ...started.meta, leadInvestigator: bob } };
 
       const { state } = execute(context, bobLeads, { type: 'AdvanceAct' });
 
       expect(state.cards[hiddenGhoul]?.zone).toEqual({ kind: 'engaged', investigatorId: bob });
+    });
+
+    it('draws nothing once the lead has left the scenario', () => {
+      const { context, state: started } = drawingTable
+        .withCard(hiddenGhoul, hiddenGhoulCard, { kind: 'encounterDeck' })
+        .withCard(instanceId('bottom_treachery'), blankTreachery('bottom_treachery'), {
+          kind: 'encounterDeck',
+        })
+        .withInvestigator(investigatorId('carol'), { status: 'defeated' })
+        .start();
+      const carolLeftAsLead = {
+        ...started,
+        meta: { ...started.meta, leadInvestigator: investigatorId('carol') },
+      };
+
+      const { state } = execute(context, carolLeftAsLead, { type: 'AdvanceAct' });
+
+      expect(state.cards[hiddenGhoul]?.zone).toEqual({ kind: 'encounterDeck' });
     });
 
     it('draws and discards nothing when no enemy is left', () => {

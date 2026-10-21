@@ -40,7 +40,8 @@ export function handleDrawEncounter(
   const investigator = activeInvestigator(state, cmd.investigatorId);
   if (!cmd.match) return drawOne(ctx, state, investigator) ?? rejectEmptyDeck();
   const target = findMatch(ctx, state, cmd.from ?? 'deck', cmd.match);
-  // A search that finds nothing resolves as far as it can: nothing is drawn or discarded.
+  // Nothing fits: the effect resolves as far as it can (Golden Rules). With the discard just shuffled
+  // in, discarding the whole deck and shuffling it back would end where it started.
   if (target === undefined) return [];
   // Only a deck match has cards above it to discard; a discard match has none.
   const skipped = (cmd.discardSkipped ? cardsAbove(state, target) : []).map((id) =>

@@ -575,9 +575,11 @@ export function shuffleEncounterDiscard(): AbilityEffect {
 }
 
 /**
- * "Discard cards from the top of the encounter deck until a Ghoul enemy is
- * discarded. The lead investigator draws that enemy": nothing happens when no
- * card in the deck matches.
+ * "Discard cards from the top of the encounter deck until a card that fits
+ * `match` is discarded; the lead investigator draws it" (Rise of the Ghouls:
+ * a Ghoul enemy). Nothing happens when no card in the deck fits, which is
+ * what the table ends with when the discard was just shuffled into the deck,
+ * as every such card does first.
  */
 export function leadDrawsDiscardingUntil(match: EncounterMatch): AbilityEffect {
   return { type: 'DrawEncounter', investigatorId: { ref: 'lead' }, match, discardSkipped: true };
