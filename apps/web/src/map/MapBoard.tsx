@@ -7,14 +7,15 @@ import './map.css';
 /**
  * The visible maps of the open game, each drawn as an SVG of its location tiles at their book
  * layout cells (`MapView.cells`) and the connections between them. Hidden maps are areas the
- * players cannot see yet, so they are left out. Static for now: pan, zoom and pieces on the
+ * players cannot see yet, and a map whose locations have all left play (The Gathering's Study
+ * once the house opens) has nothing to draw, so both are left out. Static for now: pan, zoom and pieces on the
  * tiles come with M3.3b.
  */
 export function MapBoard({ maps }: { maps: readonly MapView[] }) {
   return (
     <>
       {maps
-        .filter((map) => map.visible)
+        .filter((map) => map.visible && map.locations.length > 0)
         .map((map) => (
           <MapDrawing key={map.id} map={map} />
         ))}

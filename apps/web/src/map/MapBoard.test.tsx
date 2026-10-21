@@ -49,12 +49,14 @@ describe('MapBoard', () => {
     expect(lines).toEqual(['Study – Hallway', 'Hallway to Attic, one way']);
   });
 
-  it('leaves hidden maps out', () => {
+  it('leaves out hidden maps and maps without locations', () => {
     const cellar: MapView = { ...house, id: mapId('cellar'), name: 'Cellar', visible: false };
+    const emptyStudy: MapView = { ...house, id: mapId('study'), name: 'Study', locations: [] };
 
-    render(<MapBoard maps={[house, cellar]} />);
+    render(<MapBoard maps={[house, cellar, emptyStudy]} />);
 
     expect(screen.getByRole('figure', { name: 'House' })).toBeTruthy();
     expect(screen.queryByRole('figure', { name: 'Cellar' })).toBeNull();
+    expect(screen.queryByRole('figure', { name: 'Study' })).toBeNull();
   });
 });
