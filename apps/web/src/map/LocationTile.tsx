@@ -31,10 +31,9 @@ export function LocationTile({
   const { t } = useTranslation();
   const lines = [
     location.name,
-    // A location has a shroud exactly while it is revealed (`LocationView.shroud`).
-    location.shroud === undefined
-      ? t('map.unrevealed')
-      : t('map.revealed', { shroud: location.shroud, clues: location.clues }),
+    location.revealed
+      ? t('map.revealed', { shroud: location.shroud, clues: location.clues })
+      : t('map.unrevealed'),
     ...(location.doom ? [t('map.doom', { count: location.doom })] : []),
     ...(location.attachments ? [t('map.attachments', { count: location.attachments.length })] : []),
   ];

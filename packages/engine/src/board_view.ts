@@ -88,15 +88,24 @@ export interface EnemyView {
  * unengaged at it (enemies and story assets; enemies engaged with an
  * investigator are in `enemies` of the `BoardView` only), `attachments` those
  * attached to it, both in play order.
- * Empty lists are left out, and so is doom while there is none.
+ * Empty lists are left out, and so is doom while there is none. Only the
+ * revealed side prints a shroud, so `revealed` decides whether it has one.
  */
-export interface LocationView {
+export type LocationView = LocationViewBase &
+  (
+    | {
+        revealed: true;
+        /** Its shroud with what its attachments add (`locationShroud`). */
+        shroud: number;
+      }
+    | { revealed: false }
+  );
+
+/** What a `LocationView` shows on either side of the card. */
+interface LocationViewBase {
   id: InstanceId;
   name: CardName;
   map: MapId;
-  revealed: boolean;
-  /** Its shroud with what its attachments add (`locationShroud`); only a revealed location shows one. */
-  shroud?: number;
   clues: number;
   doom?: number;
   investigators?: InvestigatorId[];
@@ -453,8 +462,9 @@ function locationView(ctx: EngineContext, state: GameState, location: CardInstan
     id: location.id,
     name: nameOf(ctx, location),
     map: mapOf(location),
-    revealed: location.faceUp,
-    ...(location.faceUp ? { shroud: locationShroud(ctx, state, location) } : {}),
+    ...(location.faceUp
+      ? { revealed: true as const, shroud: locationShroud(ctx, state, location) }
+      : { revealed: false as const }),
     clues: location.tokens.clue ?? 0,
     ...(location.tokens.doom ? { doom: location.tokens.doom } : {}),
     ...listIfAny(
