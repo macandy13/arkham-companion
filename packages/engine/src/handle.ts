@@ -1,4 +1,4 @@
-import { resolveEffect } from './abilities';
+import { missingCopies, resolveEffect } from './abilities';
 import type { EngineContext } from './cards';
 import { commandSpec, type CommandSpec, type Continuation, type Step } from './command_specs';
 import type { Command, DrawEncounter } from './commands';
@@ -253,9 +253,20 @@ function resolveQueuedStep(
       return resolveSurge(resolution, step.draw);
     case 'ability': {
       const command = resolveEffect(ctx, state, step.effect, step.opened);
-      if (!command) return [];
-      spend(budget);
-      return resolveCommand(resolution, command, step.origin, budget);
+      if (command) {
+        spend(budget);
+        return resolveCommand(resolution, command, step.origin, budget);
+      }
+      // A drawer who has left names nobody by the rules; a missing scenario card is for the players to
+      // fix, even when the effect also names such a drawer: they should know the data is off.
+      const missing = missingCopies(state, step.effect);
+      if (missing.length > 0) {
+        const { cardId } = step.opened;
+        emit(resolution, [
+          { type: 'AbilityEffectSkipped', cardId, effect: step.effect.type, missing },
+        ]);
+      }
+      return [];
     }
   }
 }

@@ -13,7 +13,7 @@ import type {
 } from '@arkham/engine';
 import { emptyState } from '@arkham/engine';
 import { gameActions, type GameActions } from './gameActions';
-import { GameSession, startGame, type PlayStep } from './gameSession';
+import { GameSession, startGame, type PlayStep, type SkippedEffect } from './gameSession';
 import { findScenario, type ScenarioEntry } from '../scenarios/scenarioCatalog';
 import { parseGameExport, serialiseGameExport } from '../storage/gameExport';
 
@@ -60,6 +60,11 @@ export interface OpenGame {
   canUndo: boolean;
   /** Why the last action was refused, until the next action or `dismissRejection`. */
   rejection?: Rejection;
+  /**
+   * What the last action skipped for the players to do by hand (a card it names is missing), until
+   * the next action or `dismissSkippedEffects`.
+   */
+  skippedEffects?: readonly SkippedEffect[];
 }
 
 /** Looks a scenario up by id; `findScenario` in the app, a stub in tests. */
@@ -89,6 +94,8 @@ export interface AppState {
   actions: GameActions;
   /** Clears `current.rejection` once the screen has shown it. */
   dismissRejection(): void;
+  /** Clears `current.skippedEffects` once the players have read them. */
+  dismissSkippedEffects(): void;
   /** Renames a saved game and reloads the list. */
   renameGame(gameId: GameId, title: string): Promise<void>;
   /** Copies a saved game under `title` and reloads the list; returns the copy's id. */
@@ -160,6 +167,7 @@ export function createAppStore(
           board: played.board,
           canUndo: played.canUndo,
           rejection,
+          skippedEffects: played.skippedEffects.length > 0 ? played.skippedEffects : undefined,
         },
       });
     }
@@ -240,6 +248,10 @@ export function createAppStore(
       dismissRejection() {
         const open = get().current;
         if (open?.rejection) set({ current: { ...open, rejection: undefined } });
+      },
+      dismissSkippedEffects() {
+        const open = get().current;
+        if (open?.skippedEffects) set({ current: { ...open, skippedEffects: undefined } });
       },
       async renameGame(gameId, title) {
         await gameStore.renameGame(gameId, title);
