@@ -1,5 +1,6 @@
 import type { CampaignLog } from './campaign/campaign_log';
-import type { DecisionId, InstanceId, InvestigatorId, MapId, ScenarioId } from './ids';
+import type { Command } from './commands';
+import type { CardCode, DecisionId, InstanceId, InvestigatorId, MapId, ScenarioId } from './ids';
 import type { Edge, GameMap } from './map';
 import type { Rejection } from './rejection';
 import type { RngState } from './rng';
@@ -44,6 +45,7 @@ export type Event =
   | CurrentCardChanged
   | ScenarioEnded
   | EncounterCardDrawn
+  | AbilityEffectSkipped
   | CluesDiscovered
   | SkillTestResolved
   | EnemyEngaged
@@ -279,6 +281,21 @@ export interface EncounterCardDrawn {
   cardId: InstanceId;
   peril: boolean;
   surge: boolean;
+}
+
+/**
+ * An ability effect of `cardId` was skipped because cards it names by code
+ * (`{ ref: 'onlyCopy' }`) are not in the game exactly once: `missing` lists
+ * them, in the order the effect names them. That is a mistake in the scenario
+ * data or a table set up without the card, not a rule, so the players are
+ * told and resolve `effect` by hand. Only a record for the log and the UI;
+ * the reducer ignores this event. Produced by an `ability` step.
+ */
+export interface AbilityEffectSkipped {
+  type: 'AbilityEffectSkipped';
+  cardId: InstanceId;
+  effect: Command['type'];
+  missing: readonly CardCode[];
 }
 
 /**

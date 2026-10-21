@@ -80,6 +80,7 @@ export function apply(state: GameState, event: Event): GameState {
     case 'ScenarioEnded':
       return applyScenarioEnded(state, event);
     case 'EncounterCardDrawn':
+    case 'AbilityEffectSkipped':
     case 'CluesDiscovered':
     case 'SkillTestResolved':
       return state;
