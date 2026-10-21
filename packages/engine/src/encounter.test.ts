@@ -17,6 +17,7 @@ import {
   newGame,
   replay,
   setAside,
+  skillTest,
   takeDamage,
   threatAreaOf,
   trait,
@@ -809,7 +810,7 @@ describe('surge after the drawn card has resolved', () => {
   });
   const testingSurge = blankTreachery('testing_surge', {
     keywords: [{ name: 'surge' }],
-    revelationTest: { skill: 'willpower', difficulty: 3 },
+    abilities: [whenRevealed(skillTest('willpower', 3))],
   });
   const deadlySurge = blankTreachery('deadly_surge', {
     keywords: [{ name: 'surge' }],
@@ -869,8 +870,11 @@ describe('surge after the drawn card has resolved', () => {
 
     const asked = stateAfter(context, state, draw);
 
-    expect(asked.pending.map((decision) => decision.id)).toEqual(['revelation:testing_card']);
-    expect(asked.meta.queue).toEqual([{ kind: 'surge', draw: aliceDrawsAgain }]);
+    expect(asked.pending.map((decision) => decision.id)).toEqual(['test:testing_card']);
+    expect(asked.meta.queue).toEqual([
+      { kind: 'placeDrawnCard', drawn: expect.objectContaining({ cardId: 'testing_card' }) },
+      { kind: 'surge', draw: aliceDrawsAgain },
+    ]);
     expect(idsIn(asked, encounterDeck)).toEqual(['after_surge']);
   });
 
@@ -884,7 +888,7 @@ describe('surge after the drawn card has resolved', () => {
     const { state: answered, events } = execute(
       context,
       asked,
-      answer('revelation:testing_card', 'fail'),
+      answer('test:testing_card', 'fail'),
     );
 
     expect(resolutionOrder(events)).toEqual([
@@ -905,7 +909,7 @@ describe('surge after the drawn card has resolved', () => {
     const { state: answered, events } = execute(
       context,
       asked,
-      answer('revelation:testing_card', 'fail'),
+      answer('test:testing_card', 'fail'),
     );
 
     expect(resolutionOrder(events)).toEqual(['discards testing_card']);

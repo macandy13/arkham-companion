@@ -3,7 +3,7 @@ import type { Ability } from './abilities';
 import type { Brand, CardCode, EncounterSetCode } from './ids';
 import type { Keyword } from './keywords';
 import type { ScenarioDefinition } from './scenario';
-import type { SkillTest, SkillValues } from './state';
+import type { SkillValues } from './state';
 import { CommandRejected } from './rejection';
 
 /**
@@ -131,18 +131,11 @@ export interface CardStats {
    */
   entersThreatArea?: boolean;
   /**
-   * The skill test a treachery's revelation asks of the drawing investigator
-   * ("Revelation – Test [willpower] (3)"), entered with the card data; drawing
-   * the card raises it as a `skillTestResult` decision. Only the test itself:
-   * what failing costs stays card text the players apply.
-   */
-  revelationTest?: SkillTest;
-  /**
    * Set for a treachery whose revelation attaches it to the drawing
    * investigator's location (Obscuring Fog), entered with the card data;
    * `DrawEncounter` places it there, and its fields say what it does there.
-   * It takes the place of `entersThreatArea` and `revelationTest`, which a
-   * card with it has no use for (Obscuring Fog has neither).
+   * It takes the place of `entersThreatArea`, which a card with it has no
+   * use for (Obscuring Fog has neither).
    */
   locationAttachment?: LocationAttachment;
   /** The card's forced abilities as data (architecture "Triggers and card effects"); none when absent. */

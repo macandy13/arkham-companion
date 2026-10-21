@@ -163,7 +163,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.board.enemies).toEqual([{ name: icyGhoul, at: 'Cellar' }]);
     expect(table.board.decisions).toEqual([
       {
-        prompt: 'decision.revelationTest',
+        prompt: 'decision.cardTest',
         kind: 'skillTestResult',
         about: 'Crypt Chill',
         for: daisy,
@@ -332,7 +332,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos', step: 'drawEncounterCard' });
     expect(table.board.decisions).toEqual([
       {
-        prompt: 'decision.revelationTest',
+        prompt: 'decision.cardTest',
         kind: 'skillTestResult',
         about: 'Grasping Hands',
         for: roland,
@@ -405,7 +405,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos', step: 'drawEncounterCard' });
     expect(table.board.decisions).toEqual([
       {
-        prompt: 'decision.revelationTest',
+        prompt: 'decision.cardTest',
         kind: 'skillTestResult',
         about: 'Rotting Remains',
         for: roland,
@@ -495,7 +495,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.nextPhase()).toEqual({ round: 6, phase: 'mythos', step: 'drawEncounterCard' });
     expect(table.board.decisions).toEqual([
       {
-        prompt: 'decision.revelationTest',
+        prompt: 'decision.cardTest',
         kind: 'skillTestResult',
         about: 'Rotting Remains',
         for: roland,
@@ -562,7 +562,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     expect(table.board.decisions).toEqual([
       {
-        prompt: 'decision.revelationTest',
+        prompt: 'decision.cardTest',
         kind: 'skillTestResult',
         about: 'Grasping Hands',
         for: roland,
@@ -582,7 +582,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.board.agenda).toEqual({ name: 'Rise of the Ghouls', doom: 5, threshold: 7 });
     expect(table.board.decisions).toEqual([
       {
-        prompt: 'decision.revelationTest',
+        prompt: 'decision.cardTest',
         kind: 'skillTestResult',
         about: 'Grasping Hands',
         for: roland,
@@ -598,7 +598,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'drawEncounterCard' });
     expect(table.board.decisions).toEqual([
       {
-        prompt: 'decision.revelationTest',
+        prompt: 'decision.cardTest',
         kind: 'skillTestResult',
         about: 'Grasping Hands',
         for: daisy,
@@ -733,7 +733,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.nextPhase()).toEqual({ round: 8, phase: 'mythos', step: 'drawEncounterCard' });
     expect(table.board.decisions).toEqual([
       {
-        prompt: 'decision.revelationTest',
+        prompt: 'decision.cardTest',
         kind: 'skillTestResult',
         about: 'Crypt Chill',
         for: wendy,
@@ -877,7 +877,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.nextPhase()).toEqual({ round: 10, phase: 'mythos', step: 'drawEncounterCard' });
     expect(table.board.decisions).toEqual([
       {
-        prompt: 'decision.revelationTest',
+        prompt: 'decision.cardTest',
         kind: 'skillTestResult',
         about: 'Rotting Remains',
         for: daisy,

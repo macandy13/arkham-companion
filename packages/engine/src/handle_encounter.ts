@@ -13,8 +13,7 @@ import type { CardCode, InstanceId, InvestigatorId } from './ids';
 import { isActiveInvestigator } from './investigators';
 import { hasKeyword } from './keywords';
 import { requireCard } from './lookup';
-import { cardMoved, discardToTop } from './placement';
-import { revelationTestDecision } from './skill_tests';
+import { cardMoved } from './placement';
 import { spawnEvents } from './spawn';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
@@ -211,10 +210,9 @@ function refillIfEmpty(state: GameState): Event[] {
  * The events that place a drawn card, which waits in the `resolving` zone.
  * An enemy spawns (spawn instruction, engagement) like `SpawnEnemy`, with
  * the drawer as fallback location; every other card goes to the threat area,
- * the drawer's location (see `attachmentHost`) or the top of the discard. A
- * treachery with a revelation test asks the drawer for its result; one that
- * does not stay in the threat area stays in `resolving` until the answer
- * discards it (Rules Reference: a card is discarded after its revelation
+ * the drawer's location (see `attachmentHost`) or the top of the discard. It
+ * runs once the revelation has resolved, a revelation test's answer
+ * included (Rules Reference: a card is discarded after its revelation
  * resolves).
  */
 function placement(
@@ -229,12 +227,8 @@ function placement(
   const card = requireCard(state.cards, cardId);
   const host = attachmentHost(ctx, state, stats, investigator);
   if (host) return [cardMoved(state, card, { kind: 'attachedTo', hostId: host.id })];
-  if (stats.typeCode === 'treachery' && stats.entersThreatArea) {
-    const moved = cardMoved(state, card, { kind: 'threatArea', investigatorId: investigator.id });
-    return [moved, ...revelationTestDecision(ctx, replay([moved], state), cardId, investigator)];
-  }
-  if (stats.typeCode === 'treachery' && stats.revelationTest)
-    return revelationTestDecision(ctx, state, cardId, investigator, [discardToTop(cardId)]);
+  if (stats.typeCode === 'treachery' && stats.entersThreatArea)
+    return [cardMoved(state, card, { kind: 'threatArea', investigatorId: investigator.id })];
   // Index 0 is the top, and the discard's top is what "topmost" effects look for.
   return [cardMoved(state, card, encounterDiscard, 0)];
 }

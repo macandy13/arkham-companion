@@ -248,7 +248,7 @@ interface ScenarioHooks {
 }
 ```
 
-Some forced effects are still card flags that one handler reads, waiting to become abilities (P1 slice 4): `revelationTest`, `entersThreatArea` and `locationAttachment`. A treachery that attaches to a location is such card data: `CardStats.locationAttachment` makes `DrawEncounter` attach it to the drawer's location (discarded instead with no location, or when `onePerLocation` finds a copy already there), `locationShroud` (board.ts) adds its `shroud` to the location's printed shroud for `Investigate`, and `discardWhenInvestigated` makes a passed `Investigate` there discard it after the clues (Obscuring Fog).
+Some forced effects are still card flags that one handler reads, waiting to become abilities (P1 slice 4): `entersThreatArea` and `locationAttachment`. A revelation test is an ability already: `whenRevealed(skillTest('willpower', 4))` raises the test while the drawn card waits in `resolving`, and the card is placed once it is answered. A treachery that attaches to a location is such card data: `CardStats.locationAttachment` makes `DrawEncounter` attach it to the drawer's location (discarded instead with no location, or when `onePerLocation` finds a copy already there), `locationShroud` (board.ts) adds its `shroud` to the location's printed shroud for `Investigate`, and `discardWhenInvestigated` makes a passed `Investigate` there discard it after the clues (Obscuring Fog).
 
 Some events change nothing in the state and exist only to mark a moment for the log and for trigger points: `EncounterCardDrawn` (a card was revealed from the encounter deck), `CluesDiscovered` (after the clue tokens moved) and `SkillTestResolved` (a test's outcome, `pass` or `fail` with an optional `failedBy` margin, right after its answer and before the answer's commands apply the results). The reducer ignores them. They give a trigger point a named moment to match ("after you discover clues", "after you fail a test") instead of token deltas or option ids; no hook reads the last two yet. "If this test succeeds" effects are results and stay in the answer's commands. A hook on `SkillTestResolved` would today run after those commands, because `handle` queues an answer's commands before triggered ones, while the rules resolve "after you succeed / fail" abilities before the results; the timing windows will order them first.
 
@@ -397,7 +397,7 @@ interface CardStats {
   shroud?: number; clues?: ScaledValue; fight?: number; evade?: number; health?: ScaledValue;
   damage?: number; horror?: number; doom?: ScaledValue; victory?: number;
   encounterCode?: EncounterSetCode; quantity?: number; keywords?: readonly Keyword[];
-  entersThreatArea?: boolean; revelationTest?: SkillTest; abilities?: readonly Ability[];
+  entersThreatArea?: boolean; abilities?: readonly Ability[];
   locationAttachment?: { onePerLocation?: boolean; shroud?: number; discardWhenInvestigated?: boolean };
   sanity?: number; skills?: SkillValues;   // investigators
 }

@@ -11,7 +11,9 @@ import {
   instanceId,
   investigatorId,
   newGame,
+  skillTest,
   skillTestDecision,
+  whenRevealed,
   zoneKey,
   type CardStats,
   type Command,
@@ -46,11 +48,11 @@ const massiveAloofGhoul = blankEnemy('massive_aloof_ghoul', {
  * in the threat area (agility 2), and one without a test.
  */
 const chillingTreachery = blankTreachery('chilling_treachery', {
-  revelationTest: { skill: 'willpower', difficulty: 4 },
+  abilities: [whenRevealed(skillTest('willpower', 4))],
 });
 const clingingTreachery = blankTreachery('clinging_treachery', {
   entersThreatArea: true,
-  revelationTest: { skill: 'agility', difficulty: 2 },
+  abilities: [whenRevealed(skillTest('agility', 2))],
 });
 const plainTreachery = blankTreachery('plain_treachery');
 
@@ -480,12 +482,6 @@ describe('Evade', () => {
 describe('revelation test', () => {
   const chill = instanceId('chill');
   const draw: Command = { type: 'DrawEncounter', investigatorId: alice };
-  const discardChill: Command = {
-    type: 'MoveCard',
-    cardId: chill,
-    to: { kind: 'encounterDiscard' },
-    index: 0,
-  };
   /** The chilling treachery (willpower 4) on top of the encounter deck, a plain one below it. */
   const chillOnTop = aliceInStudy
     .withCard(chill, chillingTreachery, { kind: 'encounterDeck' })
@@ -498,16 +494,16 @@ describe('revelation test', () => {
 
     expect(drawn.pending).toEqual([
       {
-        id: 'revelation:chill',
+        id: 'test:chill',
         kind: 'skillTestResult',
-        prompt: 'decision.revelationTest',
+        prompt: 'decision.cardTest',
         subject: chill,
         decider: { kind: 'investigator', investigatorId: alice },
         skillTest: { skill: 'willpower', difficulty: 4 },
         suggestion: expect.objectContaining({ skill: 2, difficulty: 4, outcome: 'fail' }),
         options: [
-          { id: 'pass', label: 'decision.pass', commands: [discardChill] },
-          { id: 'fail', label: 'decision.fail', commands: [discardChill] },
+          { id: 'pass', label: 'decision.pass', commands: [] },
+          { id: 'fail', label: 'decision.fail', commands: [] },
         ],
       },
     ]);
@@ -524,7 +520,7 @@ describe('revelation test', () => {
   it.each(['pass', 'fail'])('discards the card on top of the discard on a %s', (optionId) => {
     const { context, state } = chillOnTop.start();
 
-    const resolved = stateAfter(context, state, draw, answer('revelation:chill', optionId));
+    const resolved = stateAfter(context, state, draw, answer('test:chill', optionId));
 
     expect(resolved.order[zoneKey({ kind: 'encounterDiscard' })]).toEqual([chill]);
   });
@@ -532,22 +528,23 @@ describe('revelation test', () => {
   it('leaves what failing costs to the players', () => {
     const { context, state } = chillOnTop.start();
 
-    const failed = stateAfter(context, state, draw, answer('revelation:chill', 'fail'));
+    const failed = stateAfter(context, state, draw, answer('test:chill', 'fail'));
 
     expect(failed.pending).toEqual([]);
     expect(failed.investigators[0]).toMatchObject({ health: { damage: 0 }, sanity: { horror: 0 } });
   });
 
-  it('puts a treachery that stays in play into the threat area right away', () => {
+  it('puts a treachery that stays in play into the threat area once its test is answered', () => {
     const clinging = instanceId('clinging');
     const { context, state } = aliceInStudy
       .withCard(clinging, clingingTreachery, { kind: 'encounterDeck' })
       .start();
 
     const drawn = stateAfter(context, state, draw);
+    const answered = stateAfter(context, drawn, answer('test:clinging', 'fail'));
 
-    expect(drawn.cards[clinging]!.zone).toEqual({ kind: 'threatArea', investigatorId: alice });
-    expect(drawn.pending[0]!.options.map((option) => option.commands)).toEqual([[], []]);
+    expect(drawn.cards[clinging]!.zone).toEqual({ kind: 'resolving' });
+    expect(answered.cards[clinging]!.zone).toEqual({ kind: 'threatArea', investigatorId: alice });
   });
 
   it('asks nothing for a treachery without a test', () => {

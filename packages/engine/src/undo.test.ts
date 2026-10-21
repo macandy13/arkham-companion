@@ -10,7 +10,9 @@ import {
   investigatorId,
   newGame,
   replay,
+  skillTest,
   undoLastGroup,
+  whenRevealed,
   type Command,
   type Decision,
   type Event,
@@ -27,7 +29,7 @@ interface LogEntry {
 
 /** A treachery whose revelation is a willpower 4 test, so drawing it raises a decision. */
 const chillingTreacheryCard = blankTreachery('chilling_treachery', {
-  revelationTest: { skill: 'willpower', difficulty: 4 },
+  abilities: [whenRevealed(skillTest('willpower', 4))],
 });
 const plainTreacheryCard = blankTreachery('plain_treachery');
 const alice = investigatorId('alice');
@@ -78,7 +80,7 @@ const startTurn: Command = { type: 'StartTurn', investigatorId: alice };
 const endTurn: Command = { type: 'EndTurn', investigatorId: alice };
 const moveToCellar: Command = { type: 'MoveInvestigator', investigatorId: alice, to: cellar };
 const spendAction: Command = { type: 'AdjustActions', investigatorId: alice, delta: -1 };
-const passChillTest: Command = answer('revelation:chill', 'pass');
+const passChillTest: Command = answer('test:chill', 'pass');
 const pick: Decision = {
   id: decisionId('pick'),
   kind: 'chooseOption',
@@ -259,7 +261,7 @@ describe('undo and a revelation test', () => {
 
     expect(answered.cards[chill]?.zone).toEqual({ kind: 'encounterDiscard' });
     expect(afterUndo.cards[chill]?.zone).toEqual({ kind: 'resolving' });
-    expect(afterUndo.pending.map((decision) => decision.id)).toEqual(['revelation:chill']);
+    expect(afterUndo.pending.map((decision) => decision.id)).toEqual(['test:chill']);
   });
 
   it('puts the treachery back on the encounter deck when the draw is undone', () => {
