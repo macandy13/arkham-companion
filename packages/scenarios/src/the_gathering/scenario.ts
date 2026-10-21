@@ -1,4 +1,5 @@
 import {
+  GRID_CELLS_PER_CARD,
   CommandRejected,
   cardStats,
   scenario,
@@ -45,9 +46,15 @@ export const BURN_THE_HOUSE_DECISION = decisionId('theGathering.burnTheHouse');
 
 const ghoulEnemy: EncounterMatch = { trait: trait('Ghoul'), typeCode: 'enemy' };
 
+/** One card step on the layout grid, which is finer than a card. */
+const oneCard = GRID_CELLS_PER_CARD;
+
 /**
  * The house as act 1 ("Trapped") reveals it: the Hallway connects to the
- * Attic, the Cellar and the Parlor. Not part of `theGathering.setup`: these
+ * Attic, the Cellar and the Parlor. The campaign guide gives no placement for
+ * this scenario, so the cells are our own: a star around the Hallway, with the
+ * Attic above it, the Cellar below it and the Parlor to its right, each one card
+ * step away. Not part of `theGathering.setup`: these
  * locations start set aside, and act 1's reverse side (`trappedReverseSide`)
  * puts them into play with `compileMapStep`.
  */
@@ -56,10 +63,10 @@ export const theGatheringHouse: AddMapStep = {
   mapId: mapId('house'),
   name: 'House',
   locations: [
-    { code: codes.hallway },
-    { code: codes.attic },
-    { code: codes.cellar },
-    { code: codes.parlor },
+    { code: codes.hallway, at: { column: 0, row: oneCard } },
+    { code: codes.attic, at: { column: 0, row: 0 } },
+    { code: codes.cellar, at: { column: 0, row: 2 * oneCard } },
+    { code: codes.parlor, at: { column: oneCard, row: oneCard } },
   ],
   connections: [
     { from: codes.hallway, to: codes.attic },
@@ -302,7 +309,12 @@ export const theGathering: ScenarioDefinition = {
   agendaDeck: [codes.whatsGoingOn, codes.riseOfTheGhouls, codes.theyreGettingOut],
   actDeck: [codes.trapped, codes.theBarrier, codes.whatHaveYouDone],
   setup: [
-    { kind: 'addMap', mapId: mapId('study'), name: 'Study', locations: [{ code: codes.study }] },
+    {
+      kind: 'addMap',
+      mapId: mapId('study'),
+      name: 'Study',
+      locations: [{ code: codes.study, at: { column: 0, row: 0 } }],
+    },
     {
       kind: 'setAside',
       codes: [

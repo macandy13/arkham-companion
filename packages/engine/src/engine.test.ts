@@ -141,6 +141,7 @@ describe('StartScenario', () => {
       name: 'Main',
       visible: true,
       connections: [{ from: study, to: other, oneWay: true }],
+      layout: {},
     });
     expect(mapLocations(state, main)).toEqual([study, other]);
     expect(state.investigators[0]?.locationId).toBe(study);

@@ -3,6 +3,7 @@ import {
   blankEnemy,
   blankLocation,
   checkInvariants,
+  emptyState,
   fixed,
   instanceId,
   investigatorId,
@@ -214,6 +215,28 @@ describe('connections at start', () => {
     expect(rejection).toEqual({ code: 'duplicateConnection', from: hall, to: study });
   });
 
+  it('keeps the book layout cells of the starting locations, per map', () => {
+    const { state } = newGame()
+      .withLocation(study, studyCard, { at: { column: 0, row: 0 } })
+      .withLocation(cellar, cellarCard, { map: annex, at: { column: 1, row: 2 } })
+      .start();
+
+    expect(state.board.maps[main]?.layout).toEqual({ [study]: { column: 0, row: 0 } });
+    expect(state.board.maps[annex]?.layout).toEqual({ [cellar]: { column: 1, row: 2 } });
+  });
+
+  it('rejects a starting layout cell for a location of another map', () => {
+    const command = table.startCommand();
+    const maps = {
+      ...command.maps,
+      [main]: { name: 'Main', layout: { [cellar]: { column: 0, row: 0 } } },
+    };
+
+    const rejection = rejectionFrom(table.context(), emptyState(), { ...command, maps });
+
+    expect(rejection).toEqual({ code: 'layoutNotOnMap', cardId: cellar, mapId: main });
+  });
+
   it('allows a starting connection to a location on another map', () => {
     const { state } = table.withConnection(hall, cellar).start();
 
@@ -238,10 +261,24 @@ describe('AddMap', () => {
       name: 'Wing',
       visible: true,
       connections: [edge('attic', 'hall')],
+      layout: {},
     });
     expect(next.cards[attic]).toMatchObject({ zone: { kind: 'location', mapId: wing } });
     expect(neighbours(next, hall)).toEqual([attic]);
     expect(checkInvariants(next)).toEqual([]);
+  });
+
+  it('keeps the book layout cells of its locations', () => {
+    const { context, state } = table.start();
+
+    const next = stateAfter(context, state, {
+      type: 'AddMap',
+      mapId: wing,
+      map: { name: 'Wing', layout: { [attic]: { column: 1, row: 0 } } },
+      locations: [attic],
+    });
+
+    expect(next.board.maps[wing]?.layout).toEqual({ [attic]: { column: 1, row: 0 } });
   });
 
   it('keeps the invariants and replays to the same state', () => {
@@ -285,6 +322,26 @@ describe('AddMap', () => {
         locations: [],
       },
       rejection: { code: 'duplicateConnection', from: hall, to: study },
+    },
+    {
+      name: 'a layout cell for a location of another map',
+      command: {
+        type: 'AddMap',
+        mapId: wing,
+        map: { name: 'Wing', layout: { [study]: { column: 0, row: 0 } } },
+        locations: [attic],
+      },
+      rejection: { code: 'layoutNotOnMap', cardId: study, mapId: wing },
+    },
+    {
+      name: 'a layout cell that is not a whole non-negative number',
+      command: {
+        type: 'AddMap',
+        mapId: wing,
+        map: { name: 'Wing', layout: { [attic]: { column: -1, row: 0.5 } } },
+        locations: [attic],
+      },
+      rejection: { code: 'invalidGridCell', cardId: attic, column: -1, row: 0.5 },
     },
   ])('rejects $name', ({ command, rejection }) => {
     const { context, state } = table.withConnection(study, hall).start();

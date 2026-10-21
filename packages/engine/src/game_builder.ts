@@ -9,7 +9,7 @@ import {
   type InvestigatorId,
   type MapId,
 } from './ids';
-import type { Edge, MapSpec } from './map';
+import type { Edge, GridCell, MapSpec } from './map';
 import { blankInvestigator } from './blank_cards';
 import type { ScenarioDefinition, ScenarioReference } from './scenario';
 import type { SkillModifierRegistry } from './skill_modifiers';
@@ -25,6 +25,8 @@ export interface LocationOptions {
   clues?: number;
   /** The map it is on; default `main`. */
   map?: MapId;
+  /** Its cell in the map's book layout; default none. */
+  at?: GridCell;
 }
 
 /** How `GameBuilder.withCard` places a card besides its zone. */
@@ -326,7 +328,12 @@ export class GameBuilder {
       const connections = this.spec.connections
         .filter((entry) => ownerOf(entry) === map)
         .map(({ edge }) => edge);
-      maps[map] = { name, connections, ...(visible === undefined ? {} : { visible }) };
+      const layout = Object.fromEntries(
+        this.spec.locations.flatMap(({ id, options }) =>
+          options.at && mapOf.get(id) === map ? [[id, options.at]] : [],
+        ),
+      );
+      maps[map] = { name, connections, layout, ...(visible === undefined ? {} : { visible }) };
     }
     return maps;
   }

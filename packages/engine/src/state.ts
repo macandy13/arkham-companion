@@ -18,7 +18,6 @@ import {
   type InvestigatorId,
   type MapId,
   type ScenarioId,
-  type SlotId,
 } from './ids';
 import type { EncounterCardDrawn } from './events';
 import type { GameMap } from './map';
@@ -109,15 +108,11 @@ export interface Investigator {
 export type SkillValues = Readonly<Record<SkillName, number>>;
 
 /**
- * Maps and their layout. Each `GameMap` owns its locations and connections
- * (see `map.ts`); the board adds where locations are drawn (`placement` into
- * `slots`).
+ * The maps in play. Each `GameMap` owns its locations, their connections and their book layout
+ * (see `map.ts`), so a map is set up, changed and drawn as one unit.
  */
 export interface Board {
   maps: Record<MapId, GameMap>;
-  slots: Record<SlotId, { mapId: MapId; x: number; y: number }>;
-  placement: Record<InstanceId, SlotId | { x: number; y: number }>;
-  layoutMode: 'book' | 'auto';
 }
 
 /** Scenario difficulty; selects the chaos bag and some setup variants. */
@@ -505,7 +500,7 @@ export function emptyState(): GameState {
     investigators: [],
     cards: {},
     order: {},
-    board: { maps: {}, slots: {}, placement: {}, layoutMode: 'book' },
+    board: { maps: {} },
     chaosBag: [],
     agenda: {},
     act: {},

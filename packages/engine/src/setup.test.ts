@@ -291,9 +291,27 @@ describe('compileSetup addMap', () => {
     );
 
     expect(command.maps).toEqual({
-      main: { name: 'Main', visible: true, connections: [] },
-      dream: { name: 'Dream', visible: false, connections: [] },
+      main: { name: 'Main', visible: true, connections: [], layout: {} },
+      dream: { name: 'Dream', visible: false, connections: [], layout: {} },
     });
+  });
+
+  it('lays the locations out in the cells the step gives them', () => {
+    const ctx = {
+      cards: cardDbFrom([blankLocation('a'), blankLocation('b'), ...standardInvestigatorCards]),
+    };
+    const def = makeDefinition({
+      setup: [
+        {
+          ...mainMap(),
+          locations: [{ code: cardCode('a'), at: { column: 0, row: 1 } }, { code: cardCode('b') }],
+        },
+      ],
+    });
+
+    const command = scenario.compileSetup({ ...ctx, scenario: def }, makeSetupOptions());
+
+    expect(command.maps?.[main]?.layout).toEqual({ 'a#1': { column: 0, row: 1 } });
   });
 
   it('puts its locations onto the map unrevealed unless face up', () => {
@@ -516,6 +534,14 @@ describe('compileMapStep', () => {
     return { kind: 'addMap', mapId: wing, name: 'Wing', locations };
   }
 
+  it('lays the new locations out in the cells the step gives them', () => {
+    const step = wingMap({ code: cardCode('b'), at: { column: 2, row: 0 } });
+
+    const [addMap] = scenario.compileMapStep(startedWith(['b']), step);
+
+    expect(addMap).toMatchObject({ map: { layout: { 'b#1': { column: 2, row: 0 } } } });
+  });
+
   it('takes the locations from outside play and resolves the connections among them', () => {
     const step: AddMapStep = {
       ...wingMap({ code: cardCode('a') }, { code: cardCode('b') }),
@@ -532,6 +558,7 @@ describe('compileMapStep', () => {
           name: 'Wing',
           visible: true,
           connections: [{ from: 'a#2', to: 'b#1', oneWay: false }],
+          layout: {},
         },
         locations: ['a#2', 'b#1'],
       },

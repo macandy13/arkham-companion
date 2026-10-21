@@ -1,3 +1,4 @@
+import { isNonNegativeInteger } from '@arkham/util';
 import { allConnections, sameEdge } from './board';
 import { cardStats, resolveValue, type EngineContext } from './cards';
 import type { AddConnection, AddMap, RemoveConnection, RevealLocation } from './commands';
@@ -6,7 +7,7 @@ import type { CardFlipped, CardMoved, ConnectionChanged, MapAdded, TokensChanged
 import { moveCardEvent } from './placement';
 import type { InstanceId, MapId } from './ids';
 import { requireCard } from './lookup';
-import { createMap, type Edge, type GameMap } from './map';
+import { createMap, type Edge, type GameMap, type GridCell } from './map';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
 
@@ -40,6 +41,18 @@ export function validateConnections(
     if (edges.slice(0, i).some((earlier) => sameEdge(earlier, edge)))
       throw new CommandRejected({ code: 'duplicateConnection', from: edge.from, to: edge.to });
   });
+}
+
+/**
+ * Checks a map's book layout: every cell belongs to one of the map's own locations (`onMap`) and
+ * is a pair of non-negative integers, so a typo in scenario data fails at setup, not on screen.
+ */
+export function validateLayout(mapId: MapId, map: GameMap, onMap: ReadonlySet<InstanceId>): void {
+  for (const [cardId, { column, row }] of Object.entries(map.layout) as [InstanceId, GridCell][]) {
+    if (!onMap.has(cardId)) throw new CommandRejected({ code: 'layoutNotOnMap', cardId, mapId });
+    if (!isNonNegativeInteger(column) || !isNonNegativeInteger(row))
+      throw new CommandRejected({ code: 'invalidGridCell', cardId, column, row });
+  }
 }
 
 /** `AddConnection`: validates the map and both ends, and rejects an edge that already exists. */
@@ -78,6 +91,7 @@ export function handleAddMap(
     return moveCardEvent(card, { kind: 'location', mapId: cmd.mapId });
   });
   validateConnections(ctx, state.cards, { ...state.board.maps, [cmd.mapId]: map });
+  validateLayout(cmd.mapId, map, new Set(cmd.locations));
   return [{ type: 'MapAdded', mapId: cmd.mapId, map }, ...moves];
 }
 

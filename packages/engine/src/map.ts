@@ -11,6 +11,24 @@ export interface Edge {
 }
 
 /**
+ * How many grid cells one card spans across and down. Cells are a fraction of a card so a map
+ * can shift a location by a third of a card and its layout need not look like a strict grid;
+ * a location `GRID_CELLS_PER_CARD` cells to the right of another sits one card step away.
+ */
+export const GRID_CELLS_PER_CARD = 3;
+
+/**
+ * A location's cell in its map's book layout (the scenario guide's placement): the cell of its
+ * top left corner on a grid `GRID_CELLS_PER_CARD` times finer than a card, with columns
+ * counting to the right and rows downwards, both from 0. Only the screen reads it; rules go by
+ * connections.
+ */
+export interface GridCell {
+  column: number;
+  row: number;
+}
+
+/**
  * One map of the board (architecture "Game state"): a set of locations and
  * the connections between them, kept together so a map is set up, changed
  * and drawn as one unit. A scenario can have several (`Board.maps`).
@@ -29,6 +47,11 @@ export interface GameMap {
   visible: boolean;
   /** Connections between locations of this map. */
   connections: Edge[];
+  /**
+   * Where the book layout draws each location of this map. A location without a cell has no
+   * book position (the screen places it itself); a cell whose location has left play is ignored.
+   */
+  layout: Record<InstanceId, GridCell>;
 }
 
 /** A map as `StartScenario` declares it; `createMap` fills in the defaults. */
@@ -37,14 +60,16 @@ export interface MapSpec {
   /** Default true; a hidden map is an area the players cannot see yet. */
   visible?: boolean;
   connections?: readonly Edge[];
+  layout?: Readonly<Record<InstanceId, GridCell>>;
 }
 
-/** The `GameMap` for a spec: visible and unconnected unless the spec says otherwise. */
+/** The `GameMap` for a spec: visible, unconnected and without a layout unless the spec says otherwise. */
 export function createMap(spec: MapSpec): GameMap {
   return {
     name: spec.name,
     visible: spec.visible ?? true,
     connections: [...(spec.connections ?? [])],
+    layout: { ...spec.layout },
   };
 }
 

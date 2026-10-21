@@ -2,7 +2,7 @@ import { cardStats, type EngineContext } from './cards';
 import type { StartScenario, StartingCard, StartingInvestigator } from './commands';
 import { startingEngagements } from './engagement';
 import type { DeckShuffled, Event, ScenarioStarted } from './events';
-import { validateConnections } from './handle_board';
+import { validateConnections, validateLayout } from './handle_board';
 import { instanceId, type InstanceId, type MapId } from './ids';
 import { requireCard } from './lookup';
 import { createMap, type GameMap, type MapSpec } from './map';
@@ -40,6 +40,8 @@ export function handleStartScenario(
   };
   for (const card of cards) validateZone(refs, card.id, card.zone);
   validateConnections(ctx, byId, maps);
+  for (const [mapId, map] of Object.entries(maps) as [MapId, GameMap][])
+    validateLayout(mapId, map, locationsOn(cards, mapId));
   for (const inv of cmd.investigators) {
     if (inv.locationId !== undefined) validateLocation(byId, inv.locationId);
   }
@@ -127,4 +129,13 @@ function encounterDeckShuffle(state: GameState): DeckShuffled[] {
   if (deck.length < 2) return [];
   const [order, rngState] = shuffle(deck, state.meta.rngState);
   return [{ type: 'DeckShuffled', zone, order, rngState }];
+}
+
+/** The starting cards placed on map `mapId`, the locations its layout may give cells to. */
+function locationsOn(cards: readonly CardInstance[], mapId: MapId): ReadonlySet<InstanceId> {
+  return new Set(
+    cards
+      .filter((card) => card.zone.kind === 'location' && card.zone.mapId === mapId)
+      .map((card) => card.id),
+  );
 }
