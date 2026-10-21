@@ -1,4 +1,4 @@
-import type { GridCell, InstanceId, MapView } from '@arkham/engine';
+import { GRID_CELLS_PER_CARD, type GridCell, type InstanceId, type MapView } from '@arkham/engine';
 
 /** A point in the map drawing's coordinates (SVG user units, y downwards). */
 export interface Point {
@@ -9,36 +9,48 @@ export interface Point {
 /**
  * Size of a location tile and the gap between tiles, in SVG user units. The drawing shrinks to
  * fit its box but never grows past one unit per CSS pixel, so these are also the largest tile
- * size: a tile is wider than tall like a card on its side.
+ * size: a tile is wider than tall like a card on its side. A tile and a gap divide by
+ * `GRID_CELLS_PER_CARD`, so every cell starts on a whole unit.
  */
-export const TILE = { width: 160, height: 100, gap: 60 } as const;
+export const TILE = { width: 160, height: 100, gap: 50 } as const;
 
 /**
- * Where each location of `map` is drawn: its book layout cell, or for a location without one
- * the next free cell in a row below the laid-out ones, in map order, so a scenario without a
- * layout still shows every location.
+ * Where each location of `map` is drawn: its book layout cell, or for a location without one a
+ * place in a row one card step below the lowest laid-out tile, one card step apart in map
+ * order, so a scenario without a layout still shows every location.
  */
 export function tileCells(map: MapView): Record<InstanceId, GridCell> {
   const laidOut = Object.values(map.cells);
-  const spareRow = laidOut.length === 0 ? 0 : Math.max(...laidOut.map(({ row }) => row)) + 1;
-  let spareColumn = 0;
+  const spareRow =
+    laidOut.length === 0 ? 0 : Math.max(...laidOut.map(({ row }) => row)) + GRID_CELLS_PER_CARD;
+  let spare = 0;
   return Object.fromEntries(
-    map.locations.map(({ id }) => [id, map.cells[id] ?? { column: spareColumn++, row: spareRow }]),
+    map.locations.map(({ id }) => [
+      id,
+      map.cells[id] ?? { column: GRID_CELLS_PER_CARD * spare++, row: spareRow },
+    ]),
   );
 }
 
-/** The top left corner of the tile in `cell`. */
+/**
+ * The top left corner of the tile in `cell`. A card step (`GRID_CELLS_PER_CARD` cells) is a
+ * tile and a gap, so tiles one card step apart sit side by side with a gap between them.
+ */
 export function tileOrigin({ column, row }: GridCell): Point {
-  return { x: column * (TILE.width + TILE.gap), y: row * (TILE.height + TILE.gap) };
+  return {
+    x: (column * (TILE.width + TILE.gap)) / GRID_CELLS_PER_CARD,
+    y: (row * (TILE.height + TILE.gap)) / GRID_CELLS_PER_CARD,
+  };
 }
 
 /** The size of a drawing that holds every tile in `cells`, from the origin. */
 export function drawingSize(cells: readonly GridCell[]): { width: number; height: number } {
-  const columns = Math.max(0, ...cells.map(({ column }) => column + 1));
-  const rows = Math.max(0, ...cells.map(({ row }) => row + 1));
-  const width = columns * TILE.width + Math.max(0, columns - 1) * TILE.gap;
-  const height = rows * TILE.height + Math.max(0, rows - 1) * TILE.gap;
-  return { width, height };
+  const origins = cells.map(tileOrigin);
+  if (origins.length === 0) return { width: 0, height: 0 };
+  return {
+    width: Math.max(...origins.map(({ x }) => x)) + TILE.width,
+    height: Math.max(...origins.map(({ y }) => y)) + TILE.height,
+  };
 }
 
 /**

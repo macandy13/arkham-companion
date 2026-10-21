@@ -18,7 +18,7 @@ const house: MapView = {
     { id: hallway, name: cardName('Hallway'), map: mapId('house'), revealed: false, clues: 0 },
     { id: attic, name: cardName('Attic'), map: mapId('house'), revealed: false, clues: 0 },
   ],
-  cells: { [study]: { column: 0, row: 0 }, [hallway]: { column: 1, row: 0 } },
+  cells: { [study]: { column: 0, row: 0 }, [hallway]: { column: 3, row: 0 } },
   connections: [
     { from: study, to: hallway, oneWay: false },
     { from: hallway, to: attic, oneWay: true },
