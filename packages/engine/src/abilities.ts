@@ -1,6 +1,6 @@
 import { assertNever, shallowEqual } from '@arkham/util';
 import { cardStats, type EngineContext } from './cards';
-import type { Command, TestSkill } from './commands';
+import type { Command, EncounterMatch, TestSkill } from './commands';
 import { isInPlay } from './doom';
 import type { Event } from './events';
 import type { CardCode, InstanceId, InvestigatorId } from './ids';
@@ -71,10 +71,12 @@ export type RelativeCard =
 
 /**
  * An investigator an ability names relative to its window: the one the
- * window names (the drawer), or each investigator still in the scenario, in
- * player order (the lead first), which repeats the command once per investigator.
+ * window names (the drawer), the lead investigator, or each investigator
+ * still in the scenario, in player order (the lead first), which repeats the
+ * command once per investigator.
  */
-export type RelativeInvestigator = { ref: 'windowInvestigator' } | { ref: 'eachInvestigator' };
+export type RelativeInvestigator =
+  { ref: 'windowInvestigator' } | { ref: 'lead' } | { ref: 'eachInvestigator' };
 
 /**
  * `T` with every instance and investigator ID replaced by a relative
@@ -111,7 +113,9 @@ export type AbilityCommand =
           | 'SpawnEnemy'
           | 'MoveInvestigator'
           | 'AddMap'
-          | 'AdvanceAct';
+          | 'AdvanceAct'
+          | 'ShuffleEncounterDiscard'
+          | 'DrawEncounter';
       }
     >
   | AbilityTest;
@@ -253,6 +257,7 @@ export function resolveEffect(
   const refs: ResolvedRefs = {
     self: opened.cardId,
     windowInvestigator: investigator?.id,
+    lead: activeLead(state),
     windowLocation: investigator && attachableLocation(ctx, state, opened.cardId, investigator),
     onlyCopy: (code) => theOnlyCopy(state, code),
   };
@@ -270,6 +275,7 @@ export function resolveEffect(
 interface ResolvedRefs {
   self: InstanceId;
   windowInvestigator: InvestigatorId | undefined;
+  lead: InvestigatorId | undefined;
   windowLocation: InstanceId | undefined;
   onlyCopy: (code: CardCode) => InstanceId | undefined;
   /** The investigator or enemy of this repetition of an effect on each of them. */
@@ -316,6 +322,12 @@ function eachId(
   }
 }
 
+/** The lead investigator, while they are still in the scenario. */
+function activeLead(state: GameState): InvestigatorId | undefined {
+  const lead = state.meta.leadInvestigator;
+  return lead !== undefined && isActiveInvestigator(state, lead) ? lead : undefined;
+}
+
 function theOnlyCopy(state: GameState, code: CardCode): InstanceId | undefined {
   const copies = Object.values(state.cards).filter((card) => card.code === code);
   return copies.length === 1 ? copies[0]?.id : undefined;
@@ -357,6 +369,8 @@ function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
         return refs.self;
       case 'windowInvestigator':
         return refs.windowInvestigator;
+      case 'lead':
+        return refs.lead;
       case 'windowLocation':
         return refs.windowLocation;
       case 'onlyCopy':
@@ -553,6 +567,22 @@ export function removeFromGame(card: RelativeCard): AbilityEffect {
 /** "Advance": the current act advances without spending clues, as an objective does. */
 export function advanceAct(): AbilityEffect {
   return { type: 'AdvanceAct' };
+}
+
+/** "Shuffle the encounter discard pile into the encounter deck". */
+export function shuffleEncounterDiscard(): AbilityEffect {
+  return { type: 'ShuffleEncounterDiscard' };
+}
+
+/**
+ * "Discard cards from the top of the encounter deck until a card that fits
+ * `match` is discarded; the lead investigator draws it" (Rise of the Ghouls:
+ * a Ghoul enemy). Nothing happens when no card in the deck fits, which is
+ * what the table ends with when the discard was just shuffled into the deck,
+ * as every such card does first.
+ */
+export function leadDrawsDiscardingUntil(match: EncounterMatch): AbilityEffect {
+  return { type: 'DrawEncounter', investigatorId: { ref: 'lead' }, match, discardSkipped: true };
 }
 
 /** "Reveal the Parlor". */

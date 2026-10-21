@@ -1,4 +1,4 @@
-import type { CommandType, EncounterMatch, EncounterSource } from './commands';
+import type { CommandType } from './commands';
 import type {
   CardCode,
   DecisionId,
@@ -96,8 +96,6 @@ export type Rejection =
   | { code: 'encounterDeckEmpty' }
   /** `DrawEncounter` brought an enemy for an investigator who is not at a location. */
   | { code: 'investigatorHasNoLocation'; investigatorId: InvestigatorId }
-  /** `DrawEncounter` with a `match` that no card of the searched `from` encounter cards fulfils. */
-  | { code: 'noMatchingCard'; from: EncounterSource; match: EncounterMatch }
   /** No card with code `match` is set aside. */
   | { code: 'cardNotInZone'; zone: 'setAside'; match: string }
   /** An enemy command names a card whose type is not `enemy`. */
@@ -306,8 +304,6 @@ function describe(r: Rejection): string {
       return 'the encounter deck and its discard are empty';
     case 'investigatorHasNoLocation':
       return `investigator ${r.investigatorId} is not at a location`;
-    case 'noMatchingCard':
-      return `no card matching ${JSON.stringify(r.match)} in ${r.from}`;
     case 'cardNotInZone':
       return `no ${r.match} in ${r.zone}`;
     case 'notAnEnemy':

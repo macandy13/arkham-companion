@@ -40,6 +40,9 @@ export function handleDrawEncounter(
   const investigator = activeInvestigator(state, cmd.investigatorId);
   if (!cmd.match) return drawOne(ctx, state, investigator) ?? rejectEmptyDeck();
   const target = findMatch(ctx, state, cmd.from ?? 'deck', cmd.match);
+  // Nothing fits: the effect resolves as far as it can (Golden Rules). With the discard just shuffled
+  // in, discarding the whole deck and shuffling it back would end where it started.
+  if (target === undefined) return [];
   // Only a deck match has cards above it to discard; a discard match has none.
   const skipped = (cmd.discardSkipped ? cardsAbove(state, target) : []).map((id) =>
     cardMoved(state, requireCard(state.cards, id), encounterDiscard, 0),
@@ -75,23 +78,21 @@ export function canDrawEncounter(state: GameState, investigatorId: InvestigatorI
 
 /**
  * The first card of `from` that fulfils every field of `match`: deck top-down,
- * then discard top-down. Rejects when there is none, before anything changes.
+ * then discard top-down; none when no card matches.
  */
 function findMatch(
   ctx: EngineContext,
   state: GameState,
   from: EncounterSource,
   match: EncounterMatch,
-): InstanceId {
+): InstanceId | undefined {
   const zones =
     from === 'deckOrDiscard'
       ? [encounterDeck, encounterDiscard]
       : [from === 'deck' ? encounterDeck : encounterDiscard];
-  const found = zones
+  return zones
     .flatMap((zone) => cardsIn(state, zone))
     .find((id) => matchesEncounter(cardStats(ctx.cards, requireCard(state.cards, id).code), match));
-  if (found === undefined) throw new CommandRejected({ code: 'noMatchingCard', from, match });
-  return found;
 }
 
 /**
