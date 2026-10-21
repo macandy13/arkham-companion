@@ -1,3 +1,4 @@
+import { requireLocationInPlay } from './board';
 import { cardStats, resolveValue, type CardStats, type EngineContext } from './cards';
 import type {
   DamageEnemy,
@@ -76,8 +77,7 @@ export function handleDisengageEnemy(
  */
 export function handleMoveEnemy(ctx: EngineContext, state: GameState, cmd: MoveEnemy): Event[] {
   const { enemy } = inPlayEnemyOf(ctx, state, cmd.enemyId);
-  if (requireCard(state.cards, cmd.to).zone.kind !== 'location')
-    throw new CommandRejected({ code: 'notALocation', cardId: cmd.to });
+  requireLocationInPlay(state, cmd.to);
   if (locationOf(state, enemy) === cmd.to)
     throw new CommandRejected({
       code: 'enemyAlreadyAtLocation',

@@ -491,6 +491,19 @@ describe('MoveEnemy', () => {
     expect(zoneOf(after, ghoul)).toEqual(zone);
   });
 
+  it('asks the players whom it engages when two investigators are there', () => {
+    const { context, state } = aliceAndBobAt(hall, { alice: 0, bob: 0 })
+      .withCard(ghoul, ghoulCard, atLocation(cellar))
+      .start();
+
+    const after = stateAfter(context, state, moveGhoulTo(hall));
+
+    expect(zoneOf(after, ghoul)).toEqual(atLocation(hall));
+    expect(after.pending.map((decision) => decision.options.map((option) => option.id))).toEqual([
+      [alice, bob],
+    ]);
+  });
+
   it('leaves an exhausted enemy unengaged at the investigator`s location', () => {
     const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, atLocation(cellar)).start();
     const exhausted = stateAfter(context, state, { type: 'ExhaustEnemy', enemyId: ghoul });

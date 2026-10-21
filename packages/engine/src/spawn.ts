@@ -1,4 +1,4 @@
-import { isLocationInPlay, locationsInPlay, locationsNamed } from './board';
+import { locationsInPlay, locationsNamed, requireLocationInPlay } from './board';
 import type { CardStats, EngineContext } from './cards';
 import type { SpawnEnemy } from './commands';
 import { chooseLocation, engageEvents } from './engagement';
@@ -6,7 +6,6 @@ import type { Event } from './events';
 import { enemyOf, isInPlay } from './handle_enemy';
 import { activeInvestigator } from './handle_investigator';
 import type { InstanceId, InvestigatorId } from './ids';
-import { requireCard } from './lookup';
 import { cardMoved } from './placement';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
@@ -93,7 +92,8 @@ function spawnPlan(
   stats: CardStats,
   target: SpawnTarget,
 ): SpawnPlan {
-  if (target.at !== undefined) return { kind: 'at', locationId: locationInPlay(state, target.at) };
+  if (target.at !== undefined)
+    return { kind: 'at', locationId: requireLocationInPlay(state, target.at).id };
   const detail = stats.keywords?.find((keyword) => keyword.name === 'spawn')?.detail;
   if (detail !== undefined) return instructedSpawn(ctx, state, detail);
   if (target.investigatorId === undefined)
@@ -121,11 +121,4 @@ function instructedSpawn(ctx: EngineContext, state: GameState, detail: string): 
   if (inPlay.length > 1) return { kind: 'choose', candidates: inPlay.map((card) => card.id) };
   if (locationsNamed(ctx, state, detail).length > 0) return { kind: 'discard' };
   return { kind: 'choose', candidates: locationsInPlay(ctx, state).map((card) => card.id) };
-}
-
-function locationInPlay(state: GameState, locationId: InstanceId): InstanceId {
-  requireCard(state.cards, locationId);
-  if (!isLocationInPlay(state, locationId))
-    throw new CommandRejected({ code: 'notALocation', cardId: locationId });
-  return locationId;
 }

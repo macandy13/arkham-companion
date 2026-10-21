@@ -2,6 +2,7 @@ import { cardStats, type EngineContext, type LocationAttachment } from './cards'
 import type { InstanceId, MapId } from './ids';
 import { cardsInZone, cardsNamed, cardsOfType, requireCard } from './lookup';
 import type { Edge, GameMap } from './map';
+import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
 
 /**
@@ -56,6 +57,18 @@ export function shortestPaths(state: GameState, from: InstanceId, to: InstanceId
  */
 export function isLocationInPlay(state: GameState, id: InstanceId): boolean {
   return state.cards[id]?.zone.kind === 'location';
+}
+
+/**
+ * The card `id` as a location on a map, for a command that names a
+ * destination; rejects an unknown card (`unknownCard`) and any other card
+ * (`notALocation`).
+ */
+export function requireLocationInPlay(state: GameState, id: InstanceId): CardInstance {
+  const card = requireCard(state.cards, id);
+  if (card.zone.kind !== 'location')
+    throw new CommandRejected({ code: 'notALocation', cardId: id });
+  return card;
 }
 
 /** The location cards currently on a map, in card order. */
