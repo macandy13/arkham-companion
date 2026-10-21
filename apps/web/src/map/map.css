@@ -1,7 +1,7 @@
 /* The map drawing (MapBoard); sizes inside the SVG are in its user units, set in mapLayout.ts. */
 /*
  * Two ids, so it beats the home screen's `#app > main section` row. The heading stays at the top
- * left; the auto margins of the first and last figure centre the maps in the space below it.
+ * left, and the shown map fills the space below it.
  */
 #board > #map {
   display: flex;
@@ -35,30 +35,47 @@
   min-height: 0;
 }
 
+/* The shown map takes all the space left, so the drawing can be panned and zoomed within it. */
 #map figure {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  align-self: stretch;
+  align-items: center;
+  gap: var(--space-2);
   min-height: 0;
   margin: 0;
 }
 
-#map figcaption {
-  text-align: center;
+#map figure [role='toolbar'] {
+  display: flex;
+  gap: var(--space-2);
 }
 
-#map figure:first-of-type {
-  margin-block-start: auto;
+/*
+ * The pan and zoom viewport (react-zoom-pan-pinch's own class names) fills the figure and clips
+ * the zoomed drawing; its content centres the drawing at the fitted size.
+ */
+#map .react-transform-wrapper {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
 }
 
-#map figure:last-of-type {
-  margin-block-end: auto;
+#map .react-transform-component {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Shrinks to the area left; the drawing keeps its proportions and stays centred in the box. */
 #map svg {
   display: block;
-  min-height: 0;
   max-width: 100%;
+  max-height: 100%;
+  width: auto;
   height: auto;
 }
 

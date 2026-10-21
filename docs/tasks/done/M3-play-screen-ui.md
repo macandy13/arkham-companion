@@ -40,3 +40,27 @@ M3.2a done: the header shows round and phase, "Next" and undo (off while only th
 M3.2b done: the header shows the current agenda with all doom in play against its threshold and +/− for the doom on the agenda (`removeDoom`, a new `PlayTable` verb and action, since no rule removes doom yet), and the current act with the clues the investigators hold against the clues it needs.
 
 M3.2c done: the game header exports the open game (the same file as the home screen's export). Home and settings needed nothing new: the app's own header links to both on every screen, the play screen included.
+
+## M3.3 Map rendering (O)
+
+**Why:** The map replaces the physical location layout. SVG stays sharp at any zoom and makes tapping individual pieces easy.
+
+**Benefit:** The whole scenario state is visible at a glance.
+
+Ref: architecture "Game state" (connections) and product.md "Board rendering".
+
+- [x] Each location's cell in the book layout, kept on its map in the game state (`GameMap.layout`)
+- [x] SVG board with pan/zoom/pinch (react-zoom-pan-pinch), tiles placed by the layout
+- [x] Location tiles: name, revealed/unrevealed, shroud, clues, doom, attachments badge
+- [x] Connection lines (arrows for one-way), map tabs when several maps exist
+- [x] Investigator pawns and enemy chips at locations
+
+M3.3a1 done: map steps give each location its book layout cell (`MapLocation.at`, on a grid three times finer than a card, `GRID_CELLS_PER_CARD`), which the map keeps (`GameMap.layout`) and `StartScenario`/`AddMap` validate. The unused `Board.slots`, `placement` and `layoutMode` are gone. The Gathering's Study and house have their cells.
+
+M3.3a2 done: the play screen draws each visible map as an SVG (`apps/web/src/map/`) from `BoardView.maps`: location tiles at their cells with name and clues (or "Unrevealed"), connection lines with arrowheads for one-way ones. Locations without a cell go in a row below. Left for M3.3b: pan/zoom, map tabs, shroud, doom, attachments, pawns, enemies, and connections between maps. Map names come from the scenario and are not translated yet.
+
+M3.3b1 done: tiles show shroud (with attachments) and clues once revealed, doom and an attachments count; investigators stand as pawns and enemies as chips on their location (`LocationView.shroud`/`doom`, `MapView.enemies`). Follow-ups for the tablet pass: a chip shows only the enemy's name (engagement, damage and exhaustion are in its accessible name), and chips stack without a limit, so a third enemy on a tile with doom and attachments overlaps the pawns.
+
+M3.3b2 done: several visible maps get a tab each (`role="tablist"` above the map) and show one at a time, the first at the start; a chosen map that leaves play falls back to the first. One map shows without tabs. No scenario shows two maps at once yet (The Gathering's Study leaves as the house opens), so the screenshot spec `map tabs for the Study and the house` adds the house to a fresh game directly (`twoMapsExport`). Follow-up for the tablet pass: tabs have no arrow-key navigation (each is its own tab stop).
+
+M3.3b3 done: each map pans with a drag, zooms with the wheel or a pinch (react-zoom-pan-pinch, up to 4 times the fitted size) and has "Zoom in", "Zoom out" and "Fit map" buttons; it starts fitted to the map area and never zooms out below that. The empty notice stack no longer draws a frame over the map. Follow-ups for the tablet pass are listed under M3.9.

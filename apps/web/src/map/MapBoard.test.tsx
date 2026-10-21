@@ -86,6 +86,17 @@ describe('MapBoard', () => {
     expect(screen.queryByRole('figure', { name: 'Empty study' })).toBeNull();
   });
 
+  it('offers zoom buttons for the shown map', () => {
+    render(<MapBoard board={PlayTable.start(house).board} />);
+
+    const zoom = within(screen.getByRole('toolbar', { name: 'Zoom' }));
+    expect(zoom.getAllByRole('button').map((button) => button.textContent)).toEqual([
+      'Zoom in',
+      'Zoom out',
+      'Fit map',
+    ]);
+  });
+
   it('shows one map without tabs', () => {
     render(<MapBoard board={PlayTable.start(house).board} />);
 

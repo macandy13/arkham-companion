@@ -1,5 +1,6 @@
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { TransformComponent, TransformWrapper, useControls } from 'react-zoom-pan-pinch';
 import type { BoardView, Edge, GridCell, InstanceId, MapId, MapView } from '@arkham/engine';
 import { LocationTile } from './LocationTile';
 import { connectionEnds, drawingSize, tileCells, tileOrigin } from './mapLayout';
@@ -12,7 +13,7 @@ import './map.css';
  * once the house opens) has nothing to draw, so both are left out. Several maps get a tab each
  * and show one at a time, since each map is drawn to fill the map area. It takes the whole
  * `board`, since the pieces on the tiles come from all over it (investigators now, more pieces
- * later). Pan and zoom come later.
+ * later). The players pan, zoom and pinch each map (`MapDrawing`).
  */
 export function MapBoard({ board }: { board: BoardView }) {
   const { t } = useTranslation();
@@ -44,12 +45,21 @@ export function MapBoard({ board }: { board: BoardView }) {
         ))}
       </div>
       <div id={panelId} role="tabpanel" aria-labelledby={tabId(current)}>
-        <MapDrawing map={current} board={board} />
+        {/* Keyed by map, so a newly chosen map starts fitted instead of at the last one's zoom. */}
+        <MapDrawing key={current.id} map={current} board={board} />
       </div>
     </>
   );
 }
 
+/** Furthest the players can zoom into a map, as a multiple of the drawing fitted to the area. */
+const MAX_ZOOM = 4;
+
+/**
+ * One map as a figure: its name, zoom buttons and the SVG drawing, which the players pan with a
+ * drag, zoom with the wheel or a pinch, and fit back with "Fit map". The drawing starts fitted to
+ * the map area, and zooming out never goes below that, so the whole map is always one tap away.
+ */
 function MapDrawing({ map, board }: { map: MapView; board: BoardView }) {
   const investigators = board.investigators;
   const captionId = useId();
@@ -59,40 +69,70 @@ function MapDrawing({ map, board }: { map: MapView; board: BoardView }) {
   return (
     <figure aria-labelledby={captionId}>
       <figcaption id={captionId}>{map.name}</figcaption>
-      {/* One user unit is one CSS pixel at most, so a small map keeps its tiles card-sized. */}
-      <svg viewBox={`0 0 ${width} ${height}`} width={width} height={height}>
-        <defs>
-          <marker id={arrowId} viewBox="0 0 10 10" refX="10" refY="5" orient="auto-start-reverse">
-            <path d="M 0 0 L 10 5 L 0 10 z" />
-          </marker>
-        </defs>
-        {map.connections.map((edge) => (
-          <Connection
-            key={`${edge.from}-${edge.to}`}
-            edge={edge}
-            map={map}
-            cells={cells}
-            arrowId={arrowId}
-          />
-        ))}
-        {map.locations.flatMap((location) => {
-          const cell = cells[location.id];
-          return cell
-            ? [
-                <LocationTile
-                  key={location.id}
-                  location={location}
-                  enemies={map.enemies[location.id] ?? []}
-                  investigators={investigators.filter(({ id }) =>
-                    location.investigators?.includes(id),
-                  )}
-                  {...tileOrigin(cell)}
-                />,
-              ]
-            : [];
-        })}
-      </svg>
+      <TransformWrapper maxScale={MAX_ZOOM}>
+        <ZoomControls />
+        <TransformComponent>
+          {/* One user unit is one CSS pixel at most, so a small map keeps its tiles card-sized. */}
+          <svg viewBox={`0 0 ${width} ${height}`} width={width} height={height}>
+            <defs>
+              <marker
+                id={arrowId}
+                viewBox="0 0 10 10"
+                refX="10"
+                refY="5"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 0 L 10 5 L 0 10 z" />
+              </marker>
+            </defs>
+            {map.connections.map((edge) => (
+              <Connection
+                key={`${edge.from}-${edge.to}`}
+                edge={edge}
+                map={map}
+                cells={cells}
+                arrowId={arrowId}
+              />
+            ))}
+            {map.locations.flatMap((location) => {
+              const cell = cells[location.id];
+              return cell
+                ? [
+                    <LocationTile
+                      key={location.id}
+                      location={location}
+                      enemies={map.enemies[location.id] ?? []}
+                      investigators={investigators.filter(({ id }) =>
+                        location.investigators?.includes(id),
+                      )}
+                      {...tileOrigin(cell)}
+                    />,
+                  ]
+                : [];
+            })}
+          </svg>
+        </TransformComponent>
+      </TransformWrapper>
     </figure>
+  );
+}
+
+/** The zoom buttons of the map whose `TransformWrapper` they sit in. */
+function ZoomControls() {
+  const { t } = useTranslation();
+  const { zoomIn, zoomOut, resetTransform } = useControls();
+  return (
+    <div role="toolbar" aria-label={t('map.zoom')}>
+      <button type="button" onClick={() => zoomIn()}>
+        {t('map.zoomIn')}
+      </button>
+      <button type="button" onClick={() => zoomOut()}>
+        {t('map.zoomOut')}
+      </button>
+      <button type="button" onClick={() => resetTransform()}>
+        {t('map.fit')}
+      </button>
+    </div>
   );
 }
 
