@@ -1,14 +1,20 @@
 import {
+  GRID_CELLS_PER_CARD,
   atEndOfRound,
   atEndOfTurn,
   attachToLocation,
   cardCode,
   cardDbFrom,
+  discardEachEnemyAt,
   discardSelf,
   encounterSetCode,
+  mapId,
+  moveEachInvestigatorTo,
   onlyCopy,
   putIntoThreatArea,
+  putMapIntoPlay,
   putSetAsideIntoPlay,
+  removeFromGame,
   revealLocation,
   skillTest,
   spawnEnemyAt,
@@ -16,6 +22,7 @@ import {
   whenAdvanced,
   whenRevealed,
   type Ability,
+  type AddMapStep,
   type CardDb,
   type CardStats,
   type LocationAttachment,
@@ -59,6 +66,35 @@ const codes = GATHERING_CODES;
 const sets = GATHERING_SETS;
 const ghoulTraits = ['Humanoid', 'Monster', 'Ghoul'];
 
+/** One card step on the layout grid, which is finer than a card. */
+const oneCard = GRID_CELLS_PER_CARD;
+
+/**
+ * The house as act 1 ("Trapped") reveals it: the Hallway connects to the
+ * Attic, the Cellar and the Parlor. The campaign guide gives no placement for
+ * this scenario, so the cells are our own: a star around the Hallway, with the
+ * Attic above it, the Cellar below it and the Parlor to its right, each one card
+ * step away. Not part of `theGathering.setup`: these
+ * locations start set aside, and act 1's reverse side puts them into play
+ * (`putMapIntoPlay`).
+ */
+export const theGatheringHouse: AddMapStep = {
+  kind: 'addMap',
+  mapId: mapId('house'),
+  name: 'House',
+  locations: [
+    { code: codes.hallway, at: { column: 0, row: oneCard } },
+    { code: codes.attic, at: { column: 0, row: 0 } },
+    { code: codes.cellar, at: { column: 0, row: 2 * oneCard } },
+    { code: codes.parlor, at: { column: oneCard, row: oneCard } },
+  ],
+  connections: [
+    { from: codes.hallway, to: codes.attic },
+    { from: codes.hallway, to: codes.cellar },
+    { from: codes.hallway, to: codes.parlor },
+  ],
+};
+
 /**
  * Hand-entered card data for The Gathering, keyed by the real ArkhamDB codes
  * so it lines up with the cached card data later. Only names, codes, numbers,
@@ -71,7 +107,21 @@ export const theGatheringCardDefs: readonly CardStats[] = [
   agenda({ code: codes.whatsGoingOn, name: "What's Going On?!", stage: 1, doom: 3 }),
   agenda({ code: codes.riseOfTheGhouls, name: 'Rise of the Ghouls', stage: 2, doom: 7 }),
   agenda({ code: codes.theyreGettingOut, name: "They're Getting Out!", stage: 3, doom: 10 }),
-  act({ code: codes.trapped, name: 'Trapped', stage: 1, cluesPerInvestigator: 2 }),
+  act({
+    code: codes.trapped,
+    name: 'Trapped',
+    stage: 1,
+    cluesPerInvestigator: 2,
+    // The map comes first, so the Hallway is in play when the investigators move there.
+    abilities: [
+      whenAdvanced(
+        ...putMapIntoPlay(theGatheringHouse),
+        discardEachEnemyAt(onlyCopy(codes.study)),
+        moveEachInvestigatorTo(onlyCopy(codes.hallway)),
+        removeFromGame(onlyCopy(codes.study)),
+      ),
+    ],
+  }),
   act({
     code: codes.theBarrier,
     name: 'The Barrier',

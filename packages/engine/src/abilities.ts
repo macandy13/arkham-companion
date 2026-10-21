@@ -5,8 +5,10 @@ import { isInPlay } from './doom';
 import type { Event } from './events';
 import type { CardCode, InstanceId, InvestigatorId } from './ids';
 import { locationAttachments } from './board';
-import { isActiveInvestigator, requireInvestigator } from './investigators';
+import { enemiesAt } from './handle_enemy';
+import { isActiveInvestigator, playerOrder, requireInvestigator } from './investigators';
 import { cardsInZone, requireCard } from './lookup';
+import type { AddMapStep } from './setup';
 import type { GameState, Investigator, QueuedStep, SkillName } from './state';
 import type { Zone } from './zone';
 
@@ -52,12 +54,20 @@ export type RelativeCard =
    * unique cards ("the Parlor", "the Ghoul Priest"); none while the game holds
    * no copy or several, and the effect is skipped with `AbilityEffectSkipped`.
    */
-  | { ref: 'onlyCopy'; code: CardCode };
+  | { ref: 'onlyCopy'; code: CardCode }
+  /**
+   * Each enemy at the location named, engaged ones included (they are at
+   * their investigator's location): the command repeats once per enemy, in
+   * card order, and none when there is no enemy there.
+   */
+  | { ref: 'eachEnemyAt'; location: RelativeCard };
 
-/** An investigator an ability names relative to its window: the one the window names (the drawer). */
-export interface RelativeInvestigator {
-  ref: 'windowInvestigator';
-}
+/**
+ * An investigator an ability names relative to its window: the one the
+ * window names (the drawer), or each investigator still in the scenario, in
+ * player order (the lead first), which repeats the command once per investigator.
+ */
+export type RelativeInvestigator = { ref: 'windowInvestigator' } | { ref: 'eachInvestigator' };
 
 /**
  * `T` with every instance and investigator ID replaced by a relative
@@ -91,7 +101,9 @@ export type AbilityCommand =
           | 'DiscardCard'
           | 'RevealLocation'
           | 'FromSetAside'
-          | 'SpawnEnemy';
+          | 'SpawnEnemy'
+          | 'MoveInvestigator'
+          | 'AddMap';
       }
     >
   | AbilityTest;
@@ -203,33 +215,40 @@ export function abilitySteps(
 export type AbilityStep = Extract<QueuedStep, { kind: 'ability' }>;
 
 /**
- * The command `effect` stands for in `state`, with its references resolved
- * for `opened`; none when one names nobody, such as `windowInvestigator` in
- * a window that names no investigator (a location revealed by a card
- * effect), or one who has left the scenario meanwhile (defeated by an
- * earlier effect of the same revelation), whose threat area and tests are
- * gone with them.
+ * The commands `effect` stands for in `state`, with its references resolved
+ * for `opened`. Usually one; one per investigator or enemy for an effect on
+ * each of them (`eachInvestigator`, `eachEnemyAt`). None when a reference names nobody, such as
+ * `windowInvestigator` in a window that names no investigator (a location
+ * revealed by a card effect), or one who has left the scenario meanwhile
+ * (defeated by an earlier effect of the same revelation), whose threat area
+ * and tests are gone with them; and none when a card it names by code is not
+ * there exactly once (`missingCopies`).
  */
 export function resolveEffect(
   ctx: EngineContext,
   state: GameState,
   effect: AbilityEffect,
   opened: OpenedWindow,
-): Command | undefined {
+): Command[] {
   const { investigatorId } = opened;
   const investigator =
     investigatorId !== undefined && isActiveInvestigator(state, investigatorId)
       ? requireInvestigator(state, investigatorId)
       : undefined;
-  const resolved = resolveRefs(effect, {
+  const refs: ResolvedRefs = {
     self: opened.cardId,
     windowInvestigator: investigator?.id,
     windowLocation: investigator && attachableLocation(ctx, state, opened.cardId, investigator),
     onlyCopy: (code) => theOnlyCopy(state, code),
+  };
+  const each = repeatedRef(effect);
+  const ids = each === undefined ? [undefined] : eachId(ctx, state, each, refs);
+  return ids.flatMap((id) => {
+    const resolved = resolveRefs(effect, { ...refs, each: id });
+    // The walk keeps every field but the references, which become the IDs the
+    // command type expects, so the result is an `AbilityCommand`.
+    return resolved === undefined ? [] : [resolved as AbilityCommand];
   });
-  // The walk keeps every field but the references, which become the IDs the
-  // command type expects, so the result is an `AbilityCommand`.
-  return resolved === undefined ? undefined : (resolved as AbilityCommand);
 }
 
 /** What each relative reference stands for when an effect resolves; absent when it names nobody. */
@@ -238,6 +257,48 @@ interface ResolvedRefs {
   windowInvestigator: InvestigatorId | undefined;
   windowLocation: InstanceId | undefined;
   onlyCopy: (code: CardCode) => InstanceId | undefined;
+  /** The investigator or enemy of this repetition of an effect on each of them. */
+  each?: InstanceId | InvestigatorId;
+}
+
+/** A reference that repeats the command, as `eachInvestigator` does. */
+type RepeatedRef = Extract<RelativeCard | RelativeInvestigator, { ref: `each${string}` }>;
+
+/**
+ * The first reference in `effect` that repeats it. An effect holds at most
+ * one, and a test's outcomes none: one there would repeat the whole test.
+ */
+function repeatedRef(effect: unknown): RepeatedRef | undefined {
+  if (typeof effect !== 'object' || effect === null) return undefined;
+  if (isRelative(effect) && (effect.ref === 'eachInvestigator' || effect.ref === 'eachEnemyAt'))
+    return effect;
+  for (const field of Object.values(effect)) {
+    const found = repeatedRef(field);
+    if (found) return found;
+  }
+  return undefined;
+}
+
+/** The investigators or enemies `each` repeats the command for. */
+function eachId(
+  ctx: EngineContext,
+  state: GameState,
+  each: RepeatedRef,
+  refs: ResolvedRefs,
+): (InstanceId | InvestigatorId)[] {
+  switch (each.ref) {
+    case 'eachInvestigator':
+      return playerOrder(state).map((inv) => inv.id);
+    case 'eachEnemyAt': {
+      const location = resolveRefs(each.location, refs) as InstanceId | undefined;
+      if (location === undefined) return [];
+      return enemiesAt(state, location)
+        .filter((card) => cardStats(ctx.cards, card.code).typeCode === 'enemy')
+        .map((card) => card.id);
+    }
+    default:
+      return assertNever(each);
+  }
 }
 
 function theOnlyCopy(state: GameState, code: CardCode): InstanceId | undefined {
@@ -285,6 +346,9 @@ function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
         return refs.windowLocation;
       case 'onlyCopy':
         return refs.onlyCopy(value.code);
+      case 'eachInvestigator':
+      case 'eachEnemyAt':
+        return refs.each;
       default:
         return assertNever(value);
     }
@@ -305,6 +369,7 @@ export function missingCopies(state: GameState, effect: AbilityEffect): CardCode
     if (Array.isArray(value)) {
       value.forEach(walk);
     } else if (isRelative(value)) {
+      if (value.ref === 'eachEnemyAt') walk(value.location);
       if (value.ref !== 'onlyCopy' || missing.includes(value.code)) return;
       if (theOnlyCopy(state, value.code) === undefined) missing.push(value.code);
     } else {
@@ -412,6 +477,53 @@ export function placeDoomOnSelf(amount: number): AbilityEffect {
 /** The one copy of `code` in the game, for a scenario's unique cards (`{ ref: 'onlyCopy' }`). */
 export function onlyCopy(code: CardCode): RelativeCard {
   return { ref: 'onlyCopy', code };
+}
+
+/**
+ * "Put the house into play": the map `step` declares, as setup would, with
+ * each of its locations the only copy of its code (typically set aside),
+ * then a reveal for each face-up one, since revealing places its clues.
+ * Spread it into the ability: `whenAdvanced(...putMapIntoPlay(house), …)`.
+ */
+export function putMapIntoPlay(step: AddMapStep): AbilityEffect[] {
+  const addMap: AbilityEffect = {
+    type: 'AddMap',
+    mapId: step.mapId,
+    map: {
+      name: step.name,
+      visible: step.visible ?? true,
+      connections: (step.connections ?? []).map(({ from, to, oneWay }) => ({
+        from: onlyCopy(from),
+        to: onlyCopy(to),
+        oneWay: oneWay ?? false,
+      })),
+    },
+    locations: step.locations.map(({ code, at }) => ({ id: onlyCopy(code), at })),
+  };
+  const reveals = step.locations
+    .filter(({ faceUp }) => faceUp === true)
+    .map(({ code }) => revealLocation(onlyCopy(code)));
+  return [addMap, ...reveals];
+}
+
+/** "Each investigator moves to the Hallway", ignoring connections as card effects do. */
+export function moveEachInvestigatorTo(location: RelativeCard): AbilityEffect {
+  return {
+    type: 'MoveInvestigator',
+    investigatorId: { ref: 'eachInvestigator' },
+    to: location,
+    ignoreConnections: true,
+  };
+}
+
+/** "Discard each enemy in the Study", engaged ones included (`DiscardCard` each). */
+export function discardEachEnemyAt(location: RelativeCard): AbilityEffect {
+  return { type: 'DiscardCard', cardId: { ref: 'eachEnemyAt', location } };
+}
+
+/** "Remove the Study from the game". */
+export function removeFromGame(card: RelativeCard): AbilityEffect {
+  return { type: 'MoveCard', cardId: card, to: { kind: 'outOfGame' } };
 }
 
 /** "Reveal the Parlor". */

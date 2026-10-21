@@ -1,7 +1,7 @@
 import type { CampaignLog } from './campaign/campaign_log';
 import type { CardType, Trait } from './cards';
 import type { CardCode, DecisionId, InstanceId, InvestigatorId, MapId, ScenarioId } from './ids';
-import type { MapSpec } from './map';
+import type { MapPlacement, MapSpec } from './map';
 import type {
   Decision,
   ChaosToken,
@@ -134,18 +134,20 @@ export interface DiscardCard {
 
 /**
  * Puts a new map into play mid-scenario (a second board, see architecture "Game
- * state" and "Scenarios"), declared as one unit like setup's `addMap` step:
- * `compileMapStep` builds it from such a step. The `locations` are cards
+ * state" and "Scenarios"), declared as one unit like setup's `addMap` step
+ * (`putMapIntoPlay` writes it from such a step). The `locations` are cards
  * outside play (typically set aside) that move onto the map in the given
- * order, as they are (set-aside locations stay unrevealed). The map's
- * connections may also end on other maps. Produces `MapAdded`, then one
- * `CardMoved` per location.
+ * order, as they are (set-aside locations stay unrevealed), each in its
+ * layout cell if it has one. The cells go with the locations rather than in
+ * a layout keyed by ID, so card data can name the locations by reference.
+ * The map's connections may also end on other maps. Produces `MapAdded`,
+ * then one `CardMoved` per location.
  */
 export interface AddMap {
   type: 'AddMap';
   mapId: MapId;
-  map: MapSpec;
-  locations: readonly InstanceId[];
+  map: Omit<MapSpec, 'layout'>;
+  locations: readonly MapPlacement[];
 }
 
 /**

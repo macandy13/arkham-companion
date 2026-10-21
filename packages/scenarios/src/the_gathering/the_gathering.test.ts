@@ -287,7 +287,8 @@ describe('The Gathering act 1 reverse side', () => {
 
     const state = stateAfter(ctx, withEnemies, ...advanceTrapped);
 
-    expect(codesIn(state, { kind: 'encounterDiscard' })).toEqual(['01118', '01119']);
+    // Each discarded enemy lands on top, so the Icy Ghoul, discarded second, is first.
+    expect(codesIn(state, { kind: 'encounterDiscard' })).toEqual(['01119', '01118']);
   });
 
   it('resolves before act 2 becomes current', () => {

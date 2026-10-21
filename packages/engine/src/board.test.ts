@@ -254,7 +254,7 @@ describe('AddMap', () => {
       type: 'AddMap',
       mapId: wing,
       map: { name: 'Wing', connections: [edge('attic', 'hall')] },
-      locations: [attic],
+      locations: [{ id: attic }],
     });
 
     expect(next.board.maps[wing]).toEqual({
@@ -274,8 +274,8 @@ describe('AddMap', () => {
     const next = stateAfter(context, state, {
       type: 'AddMap',
       mapId: wing,
-      map: { name: 'Wing', layout: { [attic]: { column: 1, row: 0 } } },
-      locations: [attic],
+      map: { name: 'Wing' },
+      locations: [{ id: attic, at: { column: 1, row: 0 } }],
     });
 
     expect(next.board.maps[wing]?.layout).toEqual({ [attic]: { column: 1, row: 0 } });
@@ -285,7 +285,7 @@ describe('AddMap', () => {
     const { context, state: initial } = table.start();
 
     const { state, events } = runFrom(context, initial, [
-      { type: 'AddMap', mapId: wing, map: { name: 'Wing' }, locations: [attic] },
+      { type: 'AddMap', mapId: wing, map: { name: 'Wing' }, locations: [{ id: attic }] },
     ]);
 
     expect(events.map((event) => event.type)).toEqual(['MapAdded', 'CardMoved']);
@@ -300,17 +300,22 @@ describe('AddMap', () => {
     },
     {
       name: 'a location that is already in play',
-      command: { type: 'AddMap', mapId: wing, map: { name: 'Wing' }, locations: [study] },
+      command: { type: 'AddMap', mapId: wing, map: { name: 'Wing' }, locations: [{ id: study }] },
       rejection: { code: 'cardAlreadyInPlay', cardId: study },
     },
     {
       name: 'a card that is not a location',
-      command: { type: 'AddMap', mapId: wing, map: { name: 'Wing' }, locations: [ghoul] },
+      command: { type: 'AddMap', mapId: wing, map: { name: 'Wing' }, locations: [{ id: ghoul }] },
       rejection: { code: 'notALocation', cardId: ghoul },
     },
     {
       name: 'a location named twice',
-      command: { type: 'AddMap', mapId: wing, map: { name: 'Wing' }, locations: [attic, attic] },
+      command: {
+        type: 'AddMap',
+        mapId: wing,
+        map: { name: 'Wing' },
+        locations: [{ id: attic }, { id: attic }],
+      },
       rejection: { code: 'duplicateCard', cardId: attic },
     },
     {
@@ -324,22 +329,12 @@ describe('AddMap', () => {
       rejection: { code: 'duplicateConnection', from: hall, to: study },
     },
     {
-      name: 'a layout cell for a location of another map',
-      command: {
-        type: 'AddMap',
-        mapId: wing,
-        map: { name: 'Wing', layout: { [study]: { column: 0, row: 0 } } },
-        locations: [attic],
-      },
-      rejection: { code: 'layoutNotOnMap', cardId: study, mapId: wing },
-    },
-    {
       name: 'a layout cell that is not a whole non-negative number',
       command: {
         type: 'AddMap',
         mapId: wing,
-        map: { name: 'Wing', layout: { [attic]: { column: -1, row: 0.5 } } },
-        locations: [attic],
+        map: { name: 'Wing' },
+        locations: [{ id: attic, at: { column: -1, row: 0.5 } }],
       },
       rejection: { code: 'invalidGridCell', cardId: attic, column: -1, row: 0.5 },
     },
