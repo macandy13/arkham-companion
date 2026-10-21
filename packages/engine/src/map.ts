@@ -11,8 +11,17 @@ export interface Edge {
 }
 
 /**
- * A location's cell in its map's book layout (the scenario guide's grid): columns count to the
- * right and rows downwards, both from 0. Only the screen reads it; rules go by connections.
+ * How many grid cells one card spans across and down. Cells are a fraction of a card so a map
+ * can shift a location by a third of a card and its layout need not look like a strict grid;
+ * a location `GRID_CELLS_PER_CARD` cells to the right of another sits one card step away.
+ */
+export const GRID_CELLS_PER_CARD = 3;
+
+/**
+ * A location's cell in its map's book layout (the scenario guide's placement): the cell of its
+ * top left corner on a grid `GRID_CELLS_PER_CARD` times finer than a card, with columns
+ * counting to the right and rows downwards, both from 0. Only the screen reads it; rules go by
+ * connections.
  */
 export interface GridCell {
   column: number;

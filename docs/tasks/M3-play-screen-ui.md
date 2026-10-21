@@ -44,7 +44,7 @@ Ref: architecture "Game state" (connections) and product.md "Board rendering".
 - [ ] Connection lines (arrows for one-way), map tabs when several maps exist
 - [ ] Investigator pawns and enemy chips at locations
 
-M3.3a1 done: map steps give each location its book layout cell (`MapLocation.at`), which the map keeps (`GameMap.layout`) and `StartScenario`/`AddMap` validate. The unused `Board.slots`, `placement` and `layoutMode` are gone. The Gathering's Study and house have their cells.
+M3.3a1 done: map steps give each location its book layout cell (`MapLocation.at`, on a grid three times finer than a card, `GRID_CELLS_PER_CARD`), which the map keeps (`GameMap.layout`) and `StartScenario`/`AddMap` validate. The unused `Board.slots`, `placement` and `layoutMode` are gone. The Gathering's Study and house have their cells.
 
 ## M3.4 Board interactions (S)
 
