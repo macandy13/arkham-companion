@@ -108,7 +108,7 @@ export type Rejection =
   | { code: 'enemyNotInPlay'; cardId: InstanceId }
   /** `MoveEnemy` to the location the unengaged enemy is already at. */
   | { code: 'enemyAlreadyAtLocation'; cardId: InstanceId; locationId: InstanceId }
-  /** `MoveEnemy` for an engaged enemy, which moves only with its investigator. */
+  /** `MoveEnemy` for an engaged enemy, which moves only with its investigator, unless `forced`. */
   | { code: 'enemyEngaged'; cardId: InstanceId; investigatorId: InvestigatorId }
   /** `SpawnEnemy` without `at`, a unique `spawn` location or a drawing investigator. */
   | { code: 'noSpawnLocation'; cardId: InstanceId }

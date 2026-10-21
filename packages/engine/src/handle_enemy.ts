@@ -72,13 +72,13 @@ export function handleDisengageEnemy(
 }
 
 /**
- * `MoveEnemy`: places the unengaged enemy at `to`, then lets it engage there.
+ * `MoveEnemy`: places the enemy unengaged at `to`, then lets it engage there.
  * `to` must be a location; it need not be revealed or connected.
  */
 export function handleMoveEnemy(ctx: EngineContext, state: GameState, cmd: MoveEnemy): Event[] {
   const { enemy } = inPlayEnemyOf(ctx, state, cmd.enemyId);
   requireLocationInPlay(state, cmd.to);
-  if (enemy.zone.kind === 'engaged')
+  if (enemy.zone.kind === 'engaged' && !cmd.forced)
     throw new CommandRejected({
       code: 'enemyEngaged',
       cardId: enemy.id,

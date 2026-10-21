@@ -542,6 +542,14 @@ describe('fighting and evading', () => {
     });
   });
 
+  it('moves an engaged enemy away by a forced instruction', () => {
+    const table = PlayTable.start(game.withLocation(instanceId('attic'), blankLocation('attic')));
+
+    table.moveEnemy(byName('ghoul'), byName('attic'), { forced: true });
+
+    expect(table.board.enemy(byName('ghoul'))).toEqual({ name: 'ghoul', at: 'attic' });
+  });
+
   describe('with two ghouls', () => {
     const ghoulCard = blankEnemy('ghoul', { health: fixed(3) });
     const twoGhouls = newGame()

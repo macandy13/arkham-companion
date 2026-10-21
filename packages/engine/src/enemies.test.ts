@@ -472,6 +472,14 @@ describe('MoveEnemy', () => {
     expect(after.cards[attic]?.faceUp).toBe(false);
   });
 
+  it('disengages an engaged enemy and moves it by a forced instruction', () => {
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, engagedWith(alice)).start();
+
+    const after = stateAfter(context, state, { ...moveGhoulTo(cellar), forced: true });
+
+    expect(zoneOf(after, ghoul)).toEqual(atLocation(cellar));
+  });
+
   it.each([
     { card: ghoulCard, name: 'engages a ready enemy', zone: engagedWith(alice) },
     { card: aloofGhoulCard, name: 'leaves an aloof enemy unengaged', zone: atLocation(hall) },
