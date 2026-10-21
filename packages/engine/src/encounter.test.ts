@@ -934,23 +934,6 @@ describe('surge after the drawn card has resolved', () => {
     ]);
   });
 
-  it('discards a card whose revelation defeated alice before putting it into her threat area', () => {
-    const deadlyLingering = blankTreachery('deadly_lingering', {
-      abilities: [whenRevealed(takeDamage(8), putIntoThreatArea())],
-    });
-    const { context, state } = aliceInHall
-      .withCard(instanceId('deadly_lingering'), deadlyLingering, encounterDeck)
-      .start();
-
-    const { events } = execute(context, state, draw);
-
-    expect(resolutionOrder(events)).toEqual([
-      'draws deadly_lingering',
-      'alice damage +8',
-      'discards deadly_lingering',
-    ]);
-  });
-
   it('draws the surge card only after the players chose where the enemy spawns', () => {
     const { context, state } = aliceInHall
       .withCard(instanceId('choosy_card'), choosyFoe, encounterDeck)
@@ -1014,6 +997,56 @@ describe('revelation before the drawn card is placed', () => {
       }
     });
   }
+
+  it('discards a card whose revelation defeated alice before putting it into her threat area', () => {
+    const lethalLingering = blankTreachery('lethal_lingering', {
+      abilities: [whenRevealed(takeDamage(8), putIntoThreatArea())],
+    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('drawn_card'), lethalLingering, encounterDeck)
+      .start();
+
+    const { events } = execute(context, state, draw);
+
+    expect(resolutionOrder(events)).toEqual([
+      'draws drawn_card',
+      'alice damage +8',
+      'drawn_card to encounterDiscard',
+    ]);
+  });
+
+  it('drops a test that follows the damage which defeated alice, instead of rejecting the draw', () => {
+    const lethalTesting = blankTreachery('lethal_testing', {
+      abilities: [whenRevealed(takeDamage(8), skillTest('willpower', 3))],
+    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('drawn_card'), lethalTesting, encounterDeck)
+      .start();
+
+    const { state: after, events } = execute(context, state, draw);
+
+    expect(after.pending).toEqual([]);
+    expect(resolutionOrder(events)).toEqual([
+      'draws drawn_card',
+      'alice damage +8',
+      'drawn_card to encounterDiscard',
+    ]);
+  });
+
+  it('resolves the effects after a revelation test once it is answered', () => {
+    const testingScorcher = blankTreachery('testing_scorcher', {
+      abilities: [whenRevealed(skillTest('willpower', 3), takeDamage(1))],
+    });
+    const { context, state } = aliceInHall
+      .withCard(instanceId('drawn_card'), testingScorcher, encounterDeck)
+      .start();
+    const asked = stateAfter(context, state, draw);
+
+    const { events } = execute(context, asked, answer('test:drawn_card', 'pass'));
+
+    expect(asked.meta.queue?.map((step) => step.kind)).toEqual(['ability', 'placeDrawnCard']);
+    expect(resolutionOrder(events)).toEqual(['alice damage +1', 'drawn_card to encounterDiscard']);
+  });
 
   it.each([
     { drawn: scorchingTreachery, placed: 'drawn_card to encounterDiscard' },

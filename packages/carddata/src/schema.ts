@@ -41,7 +41,10 @@ export interface CardDef {
   doom?: number;
   /** Parsed from `text` and `traits` at load time (`parseKeywords`). */
   keywords: Keyword[];
-  /** A drawn treachery with this stays in the drawer's threat area (`entersThreatArea`). */
+  /**
+   * Set for a treachery whose revelation puts it into the drawer's threat area
+   * (`entersThreatArea`); the engine writes this as `whenRevealed(putIntoThreatArea())`.
+   */
   entersThreatArea: boolean;
   imageSrc?: string;
   backImageSrc?: string;

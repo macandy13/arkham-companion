@@ -119,7 +119,7 @@ function matchingTriggers(
     return code === undefined ? undefined : registry?.[code];
   };
   const bind = <E extends Event>(hook: TriggerHook<E> | undefined, e: E): PendingTrigger[] =>
-    hook ? [(state) => hook(ctx, state, e).map(hookStep)] : [];
+    hook ? [(state) => hook(ctx, state, e).map(followUpStep)] : [];
   switch (event.type) {
     case 'TokensChanged':
       return event.token === 'doom' && event.delta > 0 ? bind(hooks.afterDoomPlaced, event) : [];
@@ -140,7 +140,8 @@ function matchingTriggers(
   }
 }
 
-function hookStep(command: Command): TriggeredStep {
+/** A follow-up command as a step of its own, naming its type as the origin a rejection reports. */
+export function followUpStep(command: Command): TriggeredStep {
   return { kind: 'command', command, origin: command.type };
 }
 
