@@ -12,6 +12,7 @@ import {
   surgeDraw,
 } from './handle_encounter';
 import { completeAdvance } from './handle_scenario';
+import { successionEvents } from './elimination';
 import { nextStepPlan } from './phases';
 import { apply } from './reducer';
 import { CommandRejected, type Rejection } from './rejection';
@@ -251,6 +252,8 @@ function resolveQueuedStep(
       return emitWithEffects(resolution, placeDrawnCard(ctx, state, step.drawn));
     case 'surge':
       return resolveSurge(resolution, step.draw);
+    case 'succession':
+      return emitWithEffects(resolution, successionEvents(state));
     case 'ability': {
       const commands = resolveEffect(ctx, state, step.effect, step.opened);
       const [command, ...more] = commands;
@@ -258,8 +261,7 @@ function resolveQueuedStep(
         spend(budget);
         return resolveCommand(resolution, command, step.origin, budget);
       }
-      // An effect on each investigator or enemy: one step per command, each counted and reported on its own.
-      if (command) return commands.map(followUpStep);
+      if (command) return resolveAtOnce(resolution, commands, step.origin, budget);
       // A drawer who has left names nobody by the rules; a missing scenario card is for the players to
       // fix, even when the effect also names such a drawer: they should know the data is off.
       const missing = missingCopies(state, step.effect);
@@ -304,6 +306,33 @@ function resolveCommand(
   }
   const triggered = emitWithEffects(resolution, own);
   return [...triggered, ...answerCommands(before, command).map(followUpStep), ...continuation];
+}
+
+/**
+ * An effect on each investigator or enemy applies to all of them at once
+ * (Rules Reference, "Priority of Simultaneous Resolution"): every command's
+ * own events first, then the forced effects and continuations of all of
+ * them. So "each investigator is defeated" defeats everyone before a new
+ * lead is asked for (`succession`), and nobody is asked when nobody is left.
+ */
+function resolveAtOnce(
+  resolution: Resolution,
+  commands: readonly Command[],
+  origin: Command['type'] | undefined,
+  budget: TriggerBudget,
+): Step[] {
+  const before = resolution.state;
+  const triggering: Event[] = [];
+  const continuations = commands.flatMap((command) => {
+    spend(budget);
+    const spec = commandSpec(command);
+    const own = spec.handle(resolution.ctx, resolution.state, command);
+    if (surgeDraw(own)) budget.encounterCards ??= encounterCardCount(resolution.state);
+    emit(resolution, own);
+    if (!spec.firesNoTriggers) triggering.push(...own);
+    return withOrigin(withinSurgeLimit(spec.continueWith?.(command, own) ?? [], budget), origin);
+  });
+  return [...triggeredSteps(resolution.ctx, before, triggering), ...continuations];
 }
 
 /** Emits `events` and returns the follow-ups their forced effects trigger. */

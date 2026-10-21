@@ -16,7 +16,7 @@ import {
   type InvestigatorRef,
 } from './card_matchers';
 import { cardName, type CardName, type InstanceId, type InvestigatorId, type MapId } from './ids';
-import { cardsInZone, cardsOfType } from './lookup';
+import { cardsInZone, cardsOfType, currentCard } from './lookup';
 import { mapLocations, type Edge, type GameMap, type GridCell } from './map';
 import { attacksStillDue } from './phases';
 import type {
@@ -516,7 +516,7 @@ function mapOf({ zone, id }: CardInstance): MapId {
 }
 
 function agendaView(ctx: EngineContext, state: GameState): AgendaView | undefined {
-  const agenda = state.agenda.current === undefined ? undefined : state.cards[state.agenda.current];
+  const agenda = currentCard(state, 'agenda');
   if (!agenda) return undefined;
   const { doom } = cardStats(ctx.cards, agenda.code);
   return {
@@ -527,7 +527,7 @@ function agendaView(ctx: EngineContext, state: GameState): AgendaView | undefine
 }
 
 function actView(ctx: EngineContext, state: GameState): ActView | undefined {
-  const act = state.act.current === undefined ? undefined : state.cards[state.act.current];
+  const act = currentCard(state, 'act');
   if (!act) return undefined;
   const { clues } = cardStats(ctx.cards, act.code);
   return {

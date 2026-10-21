@@ -7,7 +7,7 @@ import type { CardCode, InstanceId, InvestigatorId } from './ids';
 import { locationAttachments } from './board';
 import { enemiesAt } from './handle_enemy';
 import { isActiveInvestigator, playerOrder, requireInvestigator } from './investigators';
-import { cardsInZone, requireCard } from './lookup';
+import { cardsInZone, currentCard, requireCard } from './lookup';
 import type { AddMapStep } from './setup';
 import type { GameState, Investigator, QueuedStep, SkillName } from './state';
 import type { Zone } from './zone';
@@ -251,7 +251,7 @@ export function abilitySteps(
 function conditionHolds(state: GameState, condition: AbilityCondition): boolean {
   switch (condition.kind) {
     case 'currentAct': {
-      const act = state.act.current === undefined ? undefined : state.cards[state.act.current];
+      const act = currentCard(state, 'act');
       return act !== undefined && condition.acts.includes(act.code);
     }
     default:
@@ -628,9 +628,8 @@ export function endScenario(resolution: string): AbilityEffect {
 }
 
 /**
- * "Each investigator who has not resigned is defeated", in player order.
- * When the lead is defeated while others remain, the group picks a new
- * lead before the rest are defeated, as for any defeat.
+ * "Each investigator who has not resigned is defeated": all at once, so a
+ * new lead is asked for only if somebody is left (`succession`).
  */
 export function defeatEachInvestigator(): AbilityEffect {
   return { type: 'DefeatInvestigator', investigatorId: { ref: 'eachInvestigator' } };

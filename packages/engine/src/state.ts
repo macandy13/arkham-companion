@@ -457,7 +457,14 @@ export type QueuedStep =
    * One effect of a card ability, resolved into its command when its turn
    * comes (`resolveEffect`), so it sees what the effects before it did.
    */
-  | { kind: 'ability'; effect: AbilityEffect; opened: OpenedWindow; origin?: CommandType };
+  | { kind: 'ability'; effect: AbilityEffect; opened: OpenedWindow; origin?: CommandType }
+  /**
+   * A new lead investigator once the lead has left the scenario
+   * (`successionEvents`): a step after the departure's own events rather than
+   * one of them, so an effect that removes several investigators at once
+   * finishes before anyone is asked.
+   */
+  | { kind: 'succession'; origin?: CommandType };
 
 /**
  * The actions the engine sees that provoke attacks of opportunity

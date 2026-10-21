@@ -22,8 +22,11 @@ const NEW_LEAD_DECISION = decisionId('newLeadInvestigator');
  *    their threat area are discarded.
  * 3. The enemies left unengaged engage another investigator at that location,
  *    as any ready unengaged enemy does (Rules Reference, "Enemy Engagement").
- * 4. If they were the lead investigator, the group picks a new one.
- * 5. If nobody is left, the scenario ends without a resolution.
+ * 4. If nobody is left, the scenario ends without a resolution.
+ * 5. If they were the lead investigator, the group picks a new one: not here
+ *    but in a `succession` step (`successionEvents`) that `triggeredSteps`
+ *    queues after the departure, so an effect on several investigators
+ *    ("each investigator … is defeated") applies to all of them first.
  *
  * All callers (damage, horror, resign) share this one function, so every way
  * out of the scenario leaves the same board. `state` is the state before
@@ -48,7 +51,8 @@ export function investigatorLeavesEvents(
       ? []
       : arrivalEngagements(ctx, cleared, investigator.locationId);
   const after = replay(engagements, cleared);
-  return [...events, ...engagements, ...successionEvents(after, investigator)];
+  const nobodyLeft = after.investigators.every((inv) => inv.status !== 'active');
+  return [...events, ...engagements, ...(nobodyLeft ? [{ type: 'ScenarioEnded' as const }] : [])];
 }
 
 /** Clues move to the location they were found at, where the remaining investigators can discover them. */
@@ -79,18 +83,23 @@ function threatAreaEvents(state: GameState, investigator: Investigator): Event[]
 }
 
 /**
- * What the departure of `departed` makes necessary, given the state after the
- * clean-up. A single remaining investigator becomes lead without a question;
- * with several, the group chooses (`SetLeadInvestigator`). A decision is used
- * rather than the next in seat order because the rules let the players choose.
+ * A new lead investigator when the lead has left the scenario (the
+ * `succession` step): a single remaining investigator becomes lead without
+ * a question; with several, the group chooses (`SetLeadInvestigator`). A
+ * decision is used rather than the next in seat order because the rules let
+ * the players choose. Nothing while the lead is still in, once nobody is left
+ * (the scenario has ended), or while the question is already open, since
+ * every departure in one effect queues a step.
  */
-function successionEvents(after: GameState, departed: Investigator): Event[] {
-  const remaining = after.investigators.filter((inv) => inv.status === 'active');
+export function successionEvents(state: GameState): Event[] {
+  const lead = state.investigators.find((inv) => inv.id === state.meta.leadInvestigator);
+  if (lead?.status === 'active') return [];
+  if (state.pending.some((decision) => decision.id === NEW_LEAD_DECISION)) return [];
+  const remaining = state.investigators.filter((inv) => inv.status === 'active');
   const [only, ...others] = remaining;
-  if (only === undefined) return [{ type: 'ScenarioEnded' }];
-  if (after.meta.leadInvestigator !== departed.id) return [];
+  if (only === undefined) return [];
   if (others.length === 0) return [{ type: 'LeadInvestigatorChanged', investigatorId: only.id }];
-  return requestDecision(after, {
+  return requestDecision(state, {
     id: NEW_LEAD_DECISION,
     kind: 'chooseInvestigator',
     prompt: 'decision.chooseLeadInvestigator',

@@ -1,15 +1,25 @@
 import { describe, expect, it } from 'vitest';
 import {
   atLocation,
+  blankAct,
+  blankAgenda,
   blankAsset,
   blankEnemy,
   blankLocation,
   cardCode,
+  fixed,
   instanceId,
   newGame,
 } from './index';
 import { locationsInPlay, locationsNamed } from './board';
-import { cardsAtLocation, cardsNamed, cardsOfType, requireCard, zoneOf } from './lookup';
+import {
+  cardsAtLocation,
+  cardsNamed,
+  cardsOfType,
+  currentCard,
+  requireCard,
+  zoneOf,
+} from './lookup';
 import type { CardInstance } from './state';
 import { rejectionOf } from '../test/utils';
 
@@ -131,5 +141,28 @@ describe('cardsAtLocation', () => {
 
   it('finds nothing at a location no card stands at', () => {
     expect(cardsAtLocation(state, instanceId('nowhere'))).toEqual([]);
+  });
+});
+
+describe('currentCard', () => {
+  const firstAgenda = instanceId('first_agenda');
+  const firstAct = instanceId('first_act');
+  const secondAct = instanceId('second_act');
+
+  it('returns the current agenda and act', () => {
+    const { state } = newGame()
+      .withAgenda(firstAgenda, blankAgenda('first_agenda', fixed(3)))
+      .withAct(firstAct, blankAct('first_act'))
+      .withAct(secondAct, blankAct('second_act'))
+      .start();
+
+    expect(currentCard(state, 'agenda')?.id).toBe(firstAgenda);
+    expect(currentCard(state, 'act')?.id).toBe(firstAct);
+  });
+
+  it('returns nothing for a deck without a current card', () => {
+    const { state } = newGame().start();
+
+    expect(currentCard(state, 'act')).toBeUndefined();
   });
 });

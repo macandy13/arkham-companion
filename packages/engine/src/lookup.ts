@@ -74,3 +74,9 @@ export function cardsNamed(
     );
   });
 }
+
+/** The current card of the agenda or act deck; none before setup or once the deck is used up. */
+export function currentCard(state: GameState, deck: 'agenda' | 'act'): CardInstance | undefined {
+  const id = state[deck].current;
+  return id === undefined ? undefined : state.cards[id];
+}

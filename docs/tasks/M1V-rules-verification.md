@@ -28,7 +28,6 @@ Ref: architecture "Command handling", "Triggers and card effects"; [rules.md](..
 - **Revelation of a drawn card** (medium): `CardEffect.onReveal` runs after the card is placed. The rules resolve the revelation first, so an enemy has already spawned and engaged when its revelation runs.
 - **Follow-ups after a decision** (medium, fixed in slice 3c): `handle` ran a hook's later commands while an earlier one waited for an answer. The rules finish a nested sequence, choices included, before going on; the rest of the chain now waits in `GameMeta.queue`.
 - **Order of simultaneous forced effects** (low): the engine uses a fixed order where the lead investigator chooses. Today no two hooks share one event, and only the current agenda's and act's `enemyDefeated` objectives could (agenda first); it shows only between events of one command (turn end hook and turn-end tests, round end hook and round-end discards). Decide together with the timing windows the architecture review proposes.
-- **"Each investigator" effects resolve one at a time** (low): the rules apply such an effect to everyone at once (RR "Priority of Simultaneous Resolution"), the engine one investigator after another in player order. It shows only when the lead leaves partway: They're Getting Out! at act 3 with three or more investigators asks for a new lead before defeating the rest (two investigators hand over without a question).
 - **No "when … would" hooks** (gap): no trigger point can act before its condition resolves. Needed once an M4 scenario has such a forced effect.
 
 **Slices**

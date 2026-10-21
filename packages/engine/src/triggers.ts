@@ -65,8 +65,11 @@ export interface ScenarioHooks {
  */
 export const MAX_TRIGGERED_COMMANDS = 50;
 
-/** A forced effect to resolve: a hook's command, or one effect of a card ability. */
-export type TriggeredStep = Extract<QueuedStep, { kind: 'command' }> | AbilityStep;
+/**
+ * A forced effect to resolve: a hook's command, or one effect of a card
+ * ability; or the choice of a new lead after the lead left (`succession`).
+ */
+export type TriggeredStep = Extract<QueuedStep, { kind: 'command' | 'succession' }> | AbilityStep;
 
 /** A hook or ability that matched an event, not yet evaluated. */
 type PendingTrigger = (state: GameState) => readonly TriggeredStep[];
@@ -78,7 +81,8 @@ type PendingTrigger = (state: GameState) => readonly TriggeredStep[];
  * that resolves when its turn comes (`resolveEffect`). Hooks match against the state right before each event (to tell
  * whether a card entered play) but are evaluated against the state after all
  * of them, so every hook sees the command's complete outcome. Order: by
- * event, scenario hooks before card abilities.
+ * event, scenario hooks before card abilities. The lead leaving queues a
+ * `succession` step like a forced effect of the departure.
  */
 export function triggeredSteps(
   ctx: EngineContext,
@@ -90,6 +94,7 @@ export function triggeredSteps(
   for (const event of events) {
     const next = apply(state, event);
     pending.push(...matchingTriggers(ctx, state, next, event));
+    if (leadLeft(state, event)) pending.push(() => [{ kind: 'succession' }]);
     pending.push(
       ...windowsOpenedBy(next, event, events).map(
         (opened) => (after: GameState) => abilitySteps(ctx, after, opened),
@@ -129,6 +134,13 @@ function matchingTriggers(
     default:
       return [];
   }
+}
+
+function leadLeft(before: GameState, event: Event): boolean {
+  return (
+    (event.type === 'InvestigatorDefeated' || event.type === 'InvestigatorResigned') &&
+    event.investigatorId === before.meta.leadInvestigator
+  );
 }
 
 /** A follow-up command as a step of its own, naming its type as the origin a rejection reports. */

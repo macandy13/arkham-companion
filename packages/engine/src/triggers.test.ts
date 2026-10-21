@@ -871,67 +871,116 @@ describe('objectives on the current agenda and act', () => {
 
 describe('abilities with a condition on the current act', () => {
   const bob = investigatorId('bob');
-  const carol = investigatorId('carol');
   const trappedAct = blankAct('trapped_act');
-  const finalAct = blankAct('final_act', { stage: { number: 3 } });
-  /** "If it is the trapped act, (→R3). If it is the final act, each investigator is defeated." */
-  const gettingOutAgenda = blankAgenda('getting_out_agenda', fixed(3), {
-    abilities: [
-      duringAct([trappedAct.code], whenAdvanced(endScenario('R3'))),
-      duringAct([finalAct.code], whenAdvanced(defeatEachInvestigator())),
-    ],
+  const finalAct = blankAct('final_act');
+  /** "If it is the trapped act, (→R3)." */
+  const trappedAgenda = blankAgenda('trapped_agenda', fixed(3), {
+    abilities: [duringAct([trappedAct.code], whenAdvanced(endScenario('R3')))],
   });
-  /** Alice (the lead) and bob in the hall, with the getting-out agenda current. */
-  const gettingOutTable = newGame()
-    .withAgenda(agenda1, gettingOutAgenda)
+  /** Alice and bob in the hall, with the trapped agenda current. */
+  const trappedTable = newGame()
+    .withAgenda(agenda1, trappedAgenda)
     .withAgenda(agenda2, secondAgendaCard)
     .withLocation(hall, blankLocation('hall'), { revealed: true })
     .withInvestigator(alice, { locationId: hall })
     .withInvestigator(bob, { locationId: hall });
 
-  it('fires the ability whose act is current', () => {
-    const { context, state: started } = gettingOutTable.withAct(act1, trappedAct).start();
+  it('fires while its act is current', () => {
+    const { context, state: started } = trappedTable.withAct(act1, trappedAct).start();
 
     const { state } = execute(context, started, { type: 'AdvanceAgenda' });
 
     expect(state.meta).toMatchObject({ ended: true, resolution: 'R3' });
-    expect(state.investigators.map((inv) => inv.status)).toEqual(['active', 'active']);
   });
 
-  it('skips the ability whose act is not current', () => {
-    const { context, state: started } = gettingOutTable.withAct(act1, finalAct).start();
+  it('does not fire while another act is current', () => {
+    const { context, state: started } = trappedTable.withAct(act1, finalAct).start();
 
     const { state } = execute(context, started, { type: 'AdvanceAgenda' });
 
-    expect(state.meta.resolution).toBeUndefined();
+    expect(state.meta.ended).toBeUndefined();
+    expect(state.agenda.current).toBe(agenda2);
   });
+});
 
-  it('defeats each investigator, ending the scenario without a resolution', () => {
-    const { context, state: started } = gettingOutTable.withAct(act1, finalAct).start();
-
-    const { state } = execute(context, started, { type: 'AdvanceAgenda' });
-
-    expect(state.investigators.map((inv) => inv.status)).toEqual(['defeated', 'defeated']);
-    expect(state.meta.ended).toBe(true);
-    expect(state.pending).toEqual([]);
+describe('effects on each investigator', () => {
+  const bob = investigatorId('bob');
+  const carol = investigatorId('carol');
+  /** "Each investigator is defeated." */
+  const defeatAllAgenda = blankAgenda('defeat_all_agenda', fixed(3), {
+    abilities: [whenAdvanced(defeatEachInvestigator())],
   });
+  /** "Each investigator takes 1 horror." */
+  const horrorForAllAgenda = blankAgenda('horror_for_all_agenda', fixed(3), {
+    abilities: [
+      whenAdvanced({
+        type: 'AdjustInvestigator',
+        investigatorId: { ref: 'eachInvestigator' },
+        stat: 'horror',
+        delta: 1,
+      }),
+    ],
+  });
+  /** One horror defeats an investigator with this sanity. */
+  const frail = { max: 1, horror: 0 };
+  const sturdy = { max: 5, horror: 0 };
+  /** The hall and the first act; each test adds its agenda first, then alice, the lead. */
+  const hallTable = newGame()
+    .withAct(act1, firstActCard)
+    .withLocation(hall, blankLocation('hall'), { revealed: true });
 
-  it('asks for a new lead before defeating the rest when several remain', () => {
-    const { context, state: started } = gettingOutTable
-      .withAct(act1, finalAct)
+  it('defeats everyone at once: nobody is asked for a new lead, and the scenario ends', () => {
+    const { context, state: started } = hallTable
+      .withAgenda(agenda1, defeatAllAgenda)
+      .withAgenda(agenda2, secondAgendaCard)
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: hall })
       .withInvestigator(carol, { locationId: hall })
       .start();
 
-    const asked = execute(context, started, { type: 'AdvanceAgenda' }).state;
-    const { state } = execute(context, asked, answer('newLeadInvestigator', bob));
+    const { state, events } = execute(context, started, { type: 'AdvanceAgenda' });
 
-    expect(asked.investigators.map((inv) => inv.status)).toEqual(['defeated', 'active', 'active']);
     expect(state.investigators.map((inv) => inv.status)).toEqual([
       'defeated',
       'defeated',
       'defeated',
     ]);
     expect(state.meta.ended).toBe(true);
+    expect(state.meta.resolution).toBeUndefined();
+    expect(state.pending).toEqual([]);
+    expect(events.map((event) => event.type)).not.toContain('LeadInvestigatorChanged');
+  });
+
+  it('asks for a new lead among those left once the effect has hit everyone', () => {
+    const { context, state: started } = hallTable
+      .withAgenda(agenda1, horrorForAllAgenda)
+      .withAgenda(agenda2, secondAgendaCard)
+      .withInvestigator(alice, { locationId: hall, sanity: frail })
+      .withInvestigator(bob, { locationId: hall, sanity: sturdy })
+      .withInvestigator(carol, { locationId: hall, sanity: sturdy })
+      .start();
+
+    const { state } = execute(context, started, { type: 'AdvanceAgenda' });
+
+    expect(state.investigators.map((inv) => inv.sanity.horror)).toEqual([1, 1, 1]);
+    expect(state.pending.map((decision) => decision.options.map((option) => option.id))).toEqual([
+      [bob, carol],
+    ]);
+  });
+
+  it('makes the only investigator left the lead, without a question', () => {
+    const { context, state: started } = hallTable
+      .withAgenda(agenda1, horrorForAllAgenda)
+      .withAgenda(agenda2, secondAgendaCard)
+      .withInvestigator(alice, { locationId: hall, sanity: frail })
+      .withInvestigator(bob, { locationId: hall, sanity: frail })
+      .withInvestigator(carol, { locationId: hall, sanity: sturdy })
+      .start();
+
+    const { state } = execute(context, started, { type: 'AdvanceAgenda' });
+
+    expect(state.meta.leadInvestigator).toBe(carol);
+    expect(state.pending).toEqual([]);
   });
 });
 
