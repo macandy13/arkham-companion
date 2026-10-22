@@ -131,8 +131,14 @@ export interface MapView {
    * at its investigator's location), in card order. Keyed by id rather than read from
    * `EnemyView.at`, since two copies of a location share a name.
    */
-  enemies: Readonly<Record<InstanceId, readonly EnemyView[]>>;
+  enemies: Readonly<Record<InstanceId, readonly MapEnemyView[]>>;
 }
+
+/**
+ * An enemy on a map (`MapView.enemies`): its `EnemyView` with its instance id, since the map is
+ * where the players act on an enemy (drag it to move or engage it), and copies share a name.
+ */
+export type MapEnemyView = EnemyView & { id: InstanceId };
 
 /**
  * The current agenda's name, the doom on the card itself and, when it has one, the doom
@@ -500,12 +506,12 @@ function enemiesByLocation(
   ctx: EngineContext,
   state: GameState,
   locations: readonly InstanceId[],
-): Record<InstanceId, EnemyView[]> {
-  const byLocation: Record<InstanceId, EnemyView[]> = {};
+): Record<InstanceId, MapEnemyView[]> {
+  const byLocation: Record<InstanceId, MapEnemyView[]> = {};
   for (const enemy of enemiesInPlay(ctx, state)) {
     const at = enemyLocation(state, enemy);
     if (at === undefined || !locations.includes(at)) continue;
-    (byLocation[at] ??= []).push(enemyView(ctx, state, enemy));
+    (byLocation[at] ??= []).push({ id: enemy.id, ...enemyView(ctx, state, enemy) });
   }
   return byLocation;
 }

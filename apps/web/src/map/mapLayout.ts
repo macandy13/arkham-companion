@@ -16,6 +16,13 @@ export interface Point {
 export const TILE = { width: 150, height: 210, gap: 30 } as const;
 
 /**
+ * Where a tile's contents sit, in SVG user units from its top left corner: text lines one
+ * `line` apart from the top, enemy chips below them, investigator pawns in a row along the
+ * bottom edge.
+ */
+export const CONTENT = { inset: 10, line: 24, chip: 28, pawnRadius: 14, pawnGap: 6 } as const;
+
+/**
  * Where each location of `map` is drawn: its book layout cell, or for a location without one a
  * place in a row one card step below the lowest laid-out tile, one card step apart in map
  * order, so a scenario without a layout still shows every location.
@@ -92,4 +99,17 @@ export function tileAt(cells: Record<InstanceId, GridCell>, point: Point): Insta
     const { x, y } = tileOrigin(cell);
     return point.x >= x && point.x <= x + TILE.width && point.y >= y && point.y <= y + TILE.height;
   })?.[0];
+}
+
+/** The centre of the `index`th pawn in the row along a tile's bottom edge, from its top left corner. */
+export function pawnOffset(index: number): Point {
+  return {
+    x: CONTENT.inset + CONTENT.pawnRadius + index * (2 * CONTENT.pawnRadius + CONTENT.pawnGap),
+    y: TILE.height - CONTENT.inset - CONTENT.pawnRadius,
+  };
+}
+
+/** Whether `point` lies on the pawn centred on `centre`: where a dragged enemy is let go to engage. */
+export function onPawn(centre: Point, point: Point): boolean {
+  return Math.hypot(point.x - centre.x, point.y - centre.y) <= CONTENT.pawnRadius;
 }

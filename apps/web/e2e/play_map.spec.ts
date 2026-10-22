@@ -1,6 +1,10 @@
 import type { Locator, Page } from '@playwright/test';
 import { expect, test } from './fixtures/test';
-import { houseOpenedExport, resumeImportedGame } from './fixtures/saved_games';
+import {
+  ghoulPriestInCellarExport,
+  houseOpenedExport,
+  resumeImportedGame,
+} from './fixtures/saved_games';
 import { startQuickGame } from './fixtures/wizard';
 
 // Journey: read the map – the one location a new game starts with, then a game further on whose
@@ -55,7 +59,7 @@ test('read the map', async ({ page }) => {
 
 // Journey: move by dragging the pawn of the investigator whose turn it is, to a connected
 // location and then to one that is not, which the game refuses.
-test('move on the map', { tag: '@flow' }, async ({ page }) => {
+test('move on the map', async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
 
@@ -74,6 +78,42 @@ test('move on the map', { tag: '@flow' }, async ({ page }) => {
     await dragTo(page, room('Attic').getByRole('img', { name: 'Alder' }), room('Cellar'));
     await expect(page.getByText('Those locations are not connected.')).toBeVisible();
     await expect(room('Attic').getByRole('img', { name: 'Alder' })).toBeVisible();
+  });
+});
+
+// Journey: move an enemy by dragging it as a card instruction says: to a location with no
+// connection, then to the investigator's, where it engages them, and away again, which
+// disengages it.
+test('move an enemy on the map', { tag: '@flow' }, async ({ page }) => {
+  const house = page.getByRole('figure', { name: 'House' });
+  const room = (name: string) => house.getByRole('group', { name });
+  const priest = (name: string) => room(name).getByRole('img', { name: /^Ghoul Priest/ });
+
+  await test.step('Import a game in which the Ghoul Priest lurks in the Cellar', async () => {
+    await resumeImportedGame(
+      page,
+      'The Ghoul Priest is out',
+      ghoulPriestInCellarExport('The Ghoul Priest is out'),
+    );
+    await expect(priest('Cellar')).toBeVisible();
+  });
+
+  await test.step('Drag it to the Parlor, which the Cellar does not connect to', async () => {
+    await dragTo(page, priest('Cellar'), room('Parlor'));
+    await expect(priest('Parlor')).toBeVisible();
+    await expect(priest('Cellar')).toBeHidden();
+  });
+
+  await test.step('Drag it to the Hallway, where it engages Alder', async () => {
+    await dragTo(page, priest('Parlor'), room('Hallway'));
+    await expect(
+      room('Hallway').getByRole('img', { name: 'Ghoul Priest, engaged with Alder' }),
+    ).toBeVisible();
+  });
+
+  await test.step('Drag it to the Attic, which disengages it', async () => {
+    await dragTo(page, priest('Hallway'), room('Attic'));
+    await expect(room('Attic').getByRole('img', { name: 'Ghoul Priest' })).toBeVisible();
   });
 });
 

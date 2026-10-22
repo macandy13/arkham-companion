@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { cardName, instanceId, mapId, type InstanceId, type MapView } from '@arkham/engine';
-import { TILE, connectionEnds, drawingSize, tileAt, tileCells, tileOrigin } from './mapLayout';
+import {
+  TILE,
+  connectionEnds,
+  drawingSize,
+  onPawn,
+  pawnOffset,
+  tileAt,
+  tileCells,
+  tileOrigin,
+} from './mapLayout';
 
 const study = instanceId('study');
 const hallway = instanceId('hallway');
@@ -141,5 +150,29 @@ describe('tileAt', () => {
     const shared = { [study]: { column: 0, row: 0 }, [attic]: { column: 0, row: 0 } };
 
     expect(tileAt(shared, { x: 75, y: 105 })).toBe(attic);
+  });
+});
+
+// Pawns have a radius of 14 and stand 6 apart, centred 24 above the tile's bottom edge.
+describe('pawnOffset', () => {
+  it.each([
+    { index: 0, centre: { x: 24, y: 186 } },
+    { index: 1, centre: { x: 58, y: 186 } },
+  ])('centres pawn $index on ($centre.x, $centre.y) of its tile', ({ index, centre }) => {
+    expect(pawnOffset(index)).toEqual(centre);
+  });
+});
+
+describe('onPawn', () => {
+  const centre = { x: 24, y: 186 };
+
+  it.each([
+    { point: { x: 24, y: 186 }, on: true },
+    { point: { x: 38, y: 186 }, on: true },
+    { point: { x: 33, y: 195 }, on: true },
+    { point: { x: 39, y: 186 }, on: false },
+    { point: { x: 35, y: 197 }, on: false },
+  ])('says ($point.x, $point.y) is on the pawn: $on', ({ point, on }) => {
+    expect(onPawn(centre, point)).toBe(on);
   });
 });
