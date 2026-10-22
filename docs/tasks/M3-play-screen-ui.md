@@ -65,7 +65,7 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 - [ ] Modal for pending `Decision`s with the engine's options, one layout per decision kind (M1.9); the skill test prompt shows skill, difficulty and pass/fail buttons plus "skip, adjust manually"
 - [ ] Counts on an answer (`DecisionOption.amount` and `amounts`): attack damage to confirm, clues found, and how much a per-point test failed by (Grasping Hands, Rotting Remains). Until then the dialog answers with the defaults (a fail by 1)
 - [ ] Card zoom: front/back image, text fallback from card data
-- [ ] Tapping the agenda or act in the header opens its card (moved from M3.2)
+- [ ] Tapping the agenda or act in the header opens its card (moved from M3.2): the header cards only fit the name and the doom or clue progress, so the full card shows the picture large (the pattern without one), its stage and its text once the card data has text, plus its actions as buttons (placing and removing doom, advancing). The picture view comes with M3.10c2; the text and the actions follow here
 
 ## M3.8 Event log (S)
 
