@@ -4,8 +4,8 @@
     ".": {
       "release-type": "node",
       "package-name": "arkham-companion",
-      "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": false,
+      "versioning": "always-bump-patch",
+      "release-as": "0.1.0",
       "changelog-sections": [
         { "type": "feat", "section": "Features" },
         { "type": "fix", "section": "Bug fixes" },

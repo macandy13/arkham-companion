@@ -32,6 +32,7 @@ UI changes are easier to review as a recording than as a diff. E2E specs tagged 
 
 - **Deploy** (`deploy.yml`): builds and publishes to the root of the `gh-pages` branch → https://macandy13.github.io/arkham-companion/
 - **Release Please** (`release.yml`): keeps a release PR with version bump and `CHANGELOG.md` from the Conventional Commit titles. Merging it tags the release. Release PRs are opened by the Actions bot, so CI does not run on them – merge them with the admin bypass.
+  - **Versions stay below 1.0 until the app is declared ready by hand.** `release-please-config.json` sets `"versioning": "always-bump-patch"`, so every release bumps only the patch number, whatever the commit types (a `feat!` too). A new minor version (0.2.0, 0.3.0 …) and 1.0.0 are chosen by hand when a version step in [product.md](product.md#versions) is reached: add `"release-as": "<version>"` to the config in a PR, merge the release PR it produces, then remove `release-as` again (otherwise every later release keeps that version).
 
 ## Weekly
 
