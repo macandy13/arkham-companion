@@ -21,6 +21,7 @@ import {
   type Command,
   type Zone,
 } from './index';
+import { requireInvestigator } from './investigators';
 import { answer, rejectionFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
@@ -120,7 +121,7 @@ describe('Investigate', () => {
 
     const passed = stateAfter(context, state, investigate, answer('investigate:alice', 'pass'));
 
-    expect(passed.investigators[0]!.clues).toBe(1);
+    expect(requireInvestigator(passed, alice).clues).toBe(1);
     expect(passed.cards[study]!.tokens.clue).toBe(1);
   });
 
@@ -139,7 +140,7 @@ describe('Investigate', () => {
       answer('investigate:alice', 'pass'),
     );
 
-    expect(passed.investigators[0]!.clues).toBe(0);
+    expect(requireInvestigator(passed, alice).clues).toBe(0);
     expect(passed.pending).toEqual([]);
   });
 
@@ -158,7 +159,7 @@ describe('Investigate', () => {
       answer('investigate:alice', 'pass', 2),
     );
 
-    expect(passed.investigators[0]!.clues).toBe(1);
+    expect(requireInvestigator(passed, alice).clues).toBe(1);
   });
 
   it('discovers the number of clues the players confirm', () => {
@@ -166,7 +167,7 @@ describe('Investigate', () => {
 
     const passed = stateAfter(context, state, investigate, answer('investigate:alice', 'pass', 2));
 
-    expect(passed.investigators[0]!.clues).toBe(2);
+    expect(requireInvestigator(passed, alice).clues).toBe(2);
     expect(passed.cards[study]!.tokens.clue ?? 0).toBe(0);
   });
 
@@ -203,7 +204,7 @@ describe('Investigate', () => {
 
     const failed = stateAfter(context, state, investigate, answer('investigate:alice', 'fail'));
 
-    expect(failed.investigators[0]!.clues).toBe(0);
+    expect(requireInvestigator(failed, alice).clues).toBe(0);
     expect(failed.cards[study]!.tokens.clue).toBe(2);
   });
 
@@ -217,7 +218,7 @@ describe('Investigate', () => {
 
     const passed = stateAfter(context, inHallway, investigate, answer('investigate:alice', 'pass'));
 
-    expect(passed.investigators[0]!.clues).toBe(0);
+    expect(requireInvestigator(passed, alice).clues).toBe(0);
     expect(passed.pending).toEqual([]);
   });
 
@@ -256,7 +257,7 @@ describe('Investigate at a location with attachments', () => {
     const asked = stateAfter(context, state, investigate);
 
     const passed = stateAfter(context, asked, answer('investigate:alice', 'pass'));
-    expect(passed.investigators[0]?.clues).toBe(1);
+    expect(requireInvestigator(passed, alice).clues).toBe(1);
     expect(passed.order[zoneKey(attachedTo(study))]).toEqual([lastingFog]);
     expect(passed.order[zoneKey({ kind: 'encounterDiscard' })]).toEqual([fog]);
   });
@@ -410,7 +411,7 @@ describe('failed Fight', () => {
 
     const failed = stateAfter(context, state, fightForTwo, answer('fight:alice:ghoul', 'fail'));
 
-    expect(failed.investigators[1]).toMatchObject({
+    expect(requireInvestigator(failed, bob)).toMatchObject({
       health: { max: 3, damage: 3 },
       status: 'defeated',
     });
@@ -433,7 +434,7 @@ describe('failed Fight', () => {
       answer('fight:alice:ghoul', 'fail'),
     );
 
-    expect(failed.investigators[1]!.health.damage).toBe(1);
+    expect(requireInvestigator(failed, bob).health.damage).toBe(1);
   });
 
   it.each<{ name: string; card: CardStats; zone: Zone; before: Command[] }>([
@@ -604,7 +605,10 @@ describe('revelation test', () => {
     const failed = stateAfter(context, state, draw, answer('test:chill', 'fail'));
 
     expect(failed.pending).toEqual([]);
-    expect(failed.investigators[0]).toMatchObject({ health: { damage: 0 }, sanity: { horror: 0 } });
+    expect(requireInvestigator(failed, alice)).toMatchObject({
+      health: { damage: 0 },
+      sanity: { horror: 0 },
+    });
   });
 
   it('puts a treachery into the threat area before its test, as its revelation lists them', () => {
@@ -652,6 +656,6 @@ describe('card-driven skill test', () => {
 
     const failed = stateAfter(context, state, request, answer('mishap', 'fail'));
 
-    expect(failed.investigators[0]!.sanity.horror).toBe(2);
+    expect(requireInvestigator(failed, alice).sanity.horror).toBe(2);
   });
 });
