@@ -13,10 +13,12 @@
   --color-clue: #3f8fb0;
   --color-doom: #b8433f;
   --color-token-text: #ffffff;
-  /* Card frames by card type: locations on the map, the agenda and act in the header. */
+  /* Card frames by card type: locations on the map; the encounter deck, agenda, act and scenario in the header. */
   --color-card-location: #8c7a55;
   --color-card-agenda: #9a4a3c;
   --color-card-act: #4a6f9a;
+  --color-card-scenario: #6e5a8c;
+  --color-card-encounter: #4f6b52;
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -60,8 +62,10 @@
     var(--color-border) 0 var(--card-pattern-line-width),
     transparent var(--card-pattern-line-width) 14px
   );
-  /* The agenda and act in the header, landscape cards this tall. */
+  /* The cards in the header (encounter deck, agenda, act, scenario) are this tall. */
   --layout-header-card-height: 6.5rem;
+  /* The encounter discard pile's symbol next to the deck: a small card outline this tall. */
+  --layout-pile-symbol-height: 2rem;
   /* A dragged map piece's copy, see-through so the tile under it stays readable. */
   --map-ghost-opacity: 0.6;
 }

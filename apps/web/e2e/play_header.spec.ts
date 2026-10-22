@@ -2,7 +2,7 @@ import { expect, test } from './fixtures/test';
 import { startQuickGame } from './fixtures/wizard';
 
 // Journey: run the game clock from the header – read and correct the agenda's doom, move on a
-// phase, see why a step is refused, and take a step back, then back the game up.
+// phase, see why a step is refused, and take a step back, then back the game up from the title bar.
 test('play the phases from the header', { tag: '@flow' }, async ({ page }) => {
   await test.step('Start a quick game', async () => {
     await page.goto('/#/new');
@@ -44,9 +44,12 @@ test('play the phases from the header', { tag: '@flow' }, async ({ page }) => {
     await expect(page.getByText('Round 0, Setup')).toBeVisible();
   });
 
-  await test.step('Back up the game', async () => {
+  await test.step('Back up the game from the title bar', async () => {
     const download = page.waitForEvent('download');
-    await page.getByRole('button', { name: 'Export' }).click();
+    await page
+      .getByRole('navigation', { name: 'Main' })
+      .getByRole('button', { name: 'Export' })
+      .click();
     expect((await download).suggestedFilename()).toMatch(/\.arkham\.json$/);
   });
 });

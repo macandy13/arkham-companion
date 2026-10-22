@@ -3,12 +3,14 @@ import type { StoreApi } from 'zustand/vanilla';
 import type { BoardView } from '@arkham/engine';
 import type { AppState, OpenGame } from '../state/appStore';
 import { cluesInSeatOrder } from '../state/gameActions';
-import { downloadGameExport } from './downloadFile';
 
 /**
- * The play screen's always-on status: round and phase, the "Next" that runs the phase assistant,
- * the agenda's doom and the act's clues, the undo and the export. Its buttons wait while a step is queued (`OpenGame.busy`), since a second tap
- * would act on whatever the first one leaves open. `board` is the open game's `OpenGame.board`.
+ * The play screen's always-on status, laid out like the scenario's cards on the table: the
+ * encounter deck and its discard pile (placeholders until the encounter phase draws), the agenda,
+ * the act and the scenario card, then "Next", which runs the phase assistant, and undo. The
+ * scenario's name is the screen's heading, since the app title already sits in the title bar. Its
+ * buttons wait while a step is queued (`OpenGame.busy`), since a second tap would act on whatever
+ * the first one leaves open. `board` is the open game's `OpenGame.board`.
  */
 export function GameHeader({
   store,
@@ -23,35 +25,30 @@ export function GameHeader({
   const { actions } = store.getState();
   const blocked = open.busy;
 
-  /** The title the home screen lists the game under, so both export it under the same name. */
-  function gameTitle({ gameId }: OpenGame): string {
-    const { games } = store.getState();
-    const index = games.findIndex((game) => game.gameId === gameId);
-    return games[index]?.title || t('games.untitled', { n: games.length - index });
-  }
-
   return (
     <header>
-      <h1>{t('app.title')}</h1>
-      <p>
-        {t('header.roundPhase', {
-          round: board.round,
-          phase: t(`games.phases.${board.phase}`),
-        })}
-      </p>
+      <section aria-label={t('header.encounterDeck')} data-card="encounter">
+        <h2>{t('header.encounterDeck')}</h2>
+      </section>
+      <div role="img" aria-label={t('header.encounterDiscard')} data-pile="discard" />
+      <AgendaStatus store={store} board={board} blocked={blocked} />
+      <ActStatus store={store} board={board} blocked={blocked} />
+      <section aria-label={t('header.scenario')} data-card="scenario">
+        <h1>{open.scenarioNameKey ? t(open.scenarioNameKey) : t('header.scenario')}</h1>
+        <footer>
+          <p>
+            {t('header.roundPhase', {
+              round: board.round,
+              phase: t(`games.phases.${board.phase}`),
+            })}
+          </p>
+        </footer>
+      </section>
       <button type="button" disabled={blocked} onClick={() => void actions.nextPhase()}>
         {t('header.next')}
       </button>
-      <AgendaStatus store={store} board={board} blocked={blocked} />
-      <ActStatus store={store} board={board} blocked={blocked} />
       <button type="button" disabled={blocked || !open.canUndo} onClick={() => void actions.undo()}>
         {t('header.undo')}
-      </button>
-      <button
-        type="button"
-        onClick={() => void downloadGameExport(store, open.gameId, gameTitle(open))}
-      >
-        {t('games.export')}
       </button>
     </header>
   );

@@ -18,6 +18,12 @@
   font-size: var(--font-size-subtitle);
 }
 
+#app > header > nav {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
 #app > main {
   display: grid;
   align-content: start;

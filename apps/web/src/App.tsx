@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { HashRouter, NavLink, Outlet, Route, Routes } from 'react-router';
 import type { StoreApi } from 'zustand/vanilla';
 import { useCatalog, type CatalogSource } from './catalog/useCatalog';
+import { GameExportButton } from './screens/GameExportButton';
 import { GameScreen } from './screens/GameScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { NewGameScreen } from './screens/NewGameScreen';
@@ -25,7 +26,7 @@ interface AppProps {
 export function AppRoutes({ store, catalog }: AppProps) {
   return (
     <Routes>
-      <Route element={<Layout />}>
+      <Route element={<Layout store={store} />}>
         <Route index element={<HomeScreen store={store} />} />
         <Route path="new" element={<NewGameScreen store={store} catalog={catalog} />} />
         <Route path="game/:id" element={<GameScreen store={store} />} />
@@ -45,8 +46,11 @@ export function App({ store, catalog }: Partial<AppProps>) {
   );
 }
 
-/** Page frame shared by all screens: navigation header plus the active screen. */
-function Layout() {
+/**
+ * Page frame shared by all screens: the title bar (app title, the play screen's export, settings)
+ * plus the active screen.
+ */
+function Layout({ store }: { store: StoreApi<AppState> }) {
   const { t } = useTranslation();
   return (
     <div id="app">
@@ -55,6 +59,7 @@ function Layout() {
           {t('app.title')}
         </NavLink>
         <nav aria-label={t('nav.label')}>
+          <GameExportButton store={store} />
           <NavLink to="/settings">{t('settings.title')}</NavLink>
         </nav>
       </header>

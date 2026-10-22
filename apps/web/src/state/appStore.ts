@@ -50,6 +50,8 @@ export interface OpenGame {
    * reading names and thresholds needs its scenario's cards.
    */
   board?: BoardView;
+  /** i18n key of the scenario's name (`ScenarioEntry.nameKey`); a playable game always has one. */
+  scenarioNameKey?: string;
   /**
    * True while an action or undo is queued or running. Actions act on the turn in progress and
    * the first open decision, so the screen disables them meanwhile: a second tap would hit
@@ -111,14 +113,10 @@ export interface AppState {
   importGame(text: string): Promise<GameId>;
 }
 
-/** The rules a game of `scenarioId` runs with: its catalog entry's definition and cards. */
-function contextFor(
-  scenarioId: ScenarioId,
-  scenarios: ScenarioLookup,
-): ScenarioContext | undefined {
-  const entry = scenarios(scenarioId);
+/** The rules a game of the catalog's scenario `entry` runs with: its definition and cards. */
+function contextFor(entry: ScenarioEntry): ScenarioContext {
   // Investigator cards are not needed: after setup the engine reads investigators from the state.
-  return entry && { cards: entry.cards, scenario: entry.definition };
+  return { cards: entry.cards, scenario: entry.definition };
 }
 
 /**
@@ -142,7 +140,8 @@ export function createAppStore(
     async function open(gameId: GameId): Promise<void> {
       const loaded = await gameStore.loadGame(gameId);
       const state = loaded?.state ?? emptyState();
-      const ctx = loaded && contextFor(state.meta.scenarioId, scenarios);
+      const entry = loaded && scenarios(state.meta.scenarioId);
+      const ctx = entry && contextFor(entry);
       session = ctx && (await GameSession.open(gameStore, gameId, ctx));
       set({
         current: {
@@ -150,6 +149,7 @@ export function createAppStore(
           state: session?.state ?? state,
           playable: session !== undefined,
           board: session?.board,
+          scenarioNameKey: entry?.nameKey,
           busy: unfinishedSteps > 0,
           canUndo: session?.canUndo ?? false,
         },
