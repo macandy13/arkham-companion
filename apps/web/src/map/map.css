@@ -107,6 +107,38 @@
 }
 
 /*
+ * A location tile is a card face (LocationTile): a frame in the location colour, then the art
+ * area, filled with the pattern of the side it shows, and the name band's text, the unrevealed
+ * note (its second line) smaller.
+ */
+#map svg [data-card='location'] > rect:first-of-type {
+  stroke: var(--color-card-location);
+  stroke-width: var(--map-card-border-width);
+}
+
+#map svg [data-card] > rect + rect {
+  stroke: none;
+}
+
+#map svg [data-side='revealed'] > rect + rect {
+  fill: url(#card-art-revealed);
+}
+
+#map svg [data-side='unrevealed'] > rect + rect {
+  fill: url(#card-art-unrevealed);
+}
+
+#map svg pattern path {
+  stroke: var(--color-border);
+  stroke-width: var(--map-pattern-line-width);
+}
+
+#map svg [data-card] > text + text {
+  fill: var(--color-text-muted);
+  font-size: var(--font-size-note);
+}
+
+/*
  * Pieces: investigator pawns (circles) and enemy chips (the rect of a piece's group, which is not
  * a tile, so a dragged chip's copy gets it too).
  */
@@ -120,6 +152,31 @@
 
 #map svg g:not([role='group']) > rect {
   fill: var(--color-background);
+}
+
+/*
+ * Tokens on a tile, coloured like the game's: the shroud badge and attachments plain, clues and
+ * doom in their colours.
+ */
+#map svg [data-token] circle {
+  fill: var(--color-surface);
+  stroke: var(--color-border);
+}
+
+#map svg [data-token] text {
+  fill: var(--color-text);
+}
+
+#map svg [data-token='clue'] circle {
+  fill: var(--color-clue);
+}
+
+#map svg [data-token='doom'] circle {
+  fill: var(--color-doom);
+}
+
+#map svg :is([data-token='clue'], [data-token='doom']) text {
+  fill: var(--color-token-text);
 }
 
 /*

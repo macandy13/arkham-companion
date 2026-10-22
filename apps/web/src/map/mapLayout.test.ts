@@ -7,6 +7,7 @@ import {
   onPawn,
   pawnOffset,
   tileAt,
+  tokenOffset,
   tileCells,
   tileOrigin,
 } from './mapLayout';
@@ -161,6 +162,21 @@ describe('pawnOffset', () => {
   ])('centres pawn $index on ($centre.x, $centre.y) of its tile', ({ index, centre }) => {
     expect(pawnOffset(index)).toEqual(centre);
   });
+});
+
+// Tokens are 28 across with a gap of 6, in the row centred 62 from a tile's top, below the
+// 48-high name band; the first sits 10 in from the right edge of the 150-wide tile.
+describe('tokenOffset', () => {
+  it.each([
+    { index: 0, centre: { x: 126, y: 62 } },
+    { index: 1, centre: { x: 92, y: 62 } },
+    { index: 2, centre: { x: 58, y: 62 } },
+  ])(
+    'centres token $index on ($centre.x, $centre.y) of its tile, from the right',
+    ({ index, centre }) => {
+      expect(tokenOffset(index)).toEqual(centre);
+    },
+  );
 });
 
 describe('onPawn', () => {
