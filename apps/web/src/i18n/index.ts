@@ -104,6 +104,11 @@ export const resources = {
         uiLanguage: 'App language',
         theme: 'Theme',
         themes: { dark: 'Dark', light: 'Light' },
+        about: 'About',
+        unofficial:
+          'Arkham Companion is an unofficial fan project. It is not produced, endorsed or supported by Fantasy Flight Games.',
+        copyright:
+          'Arkham Horror: The Card Game, its cards, card texts and card art are © Fantasy Flight Games. Card data and pictures are loaded from ArkhamDB on your device and are not part of this app.',
         languages: {
           en: 'English',
           de: 'Deutsch',
@@ -329,6 +334,11 @@ export const resources = {
         uiLanguage: 'App-Sprache',
         theme: 'Design',
         themes: { dark: 'Dunkel', light: 'Hell' },
+        about: 'Über die App',
+        unofficial:
+          'Arkham Companion ist ein inoffizielles Fanprojekt. Es wird nicht von Fantasy Flight Games hergestellt, unterstützt oder befürwortet.',
+        copyright:
+          'Arkham Horror: Das Kartenspiel, seine Karten, Kartentexte und Kartenbilder sind © Fantasy Flight Games. Kartendaten und Bilder werden auf dem Gerät von ArkhamDB geladen und sind nicht Teil dieser App.',
         languages: {
           en: 'English',
           de: 'Deutsch',

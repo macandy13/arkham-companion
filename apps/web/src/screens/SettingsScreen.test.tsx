@@ -31,6 +31,14 @@ describe('SettingsScreen', () => {
     ]);
   });
 
+  it('says the app is an unofficial fan project and credits the publisher', () => {
+    render(<SettingsScreen packs={packs} />);
+
+    const about = screen.getByRole('region', { name: 'About' });
+    expect(about.textContent).toContain('unofficial fan project');
+    expect(about.textContent).toContain('© Fantasy Flight Games');
+  });
+
   it('saves the owned packs', () => {
     render(<SettingsScreen packs={packs} />);
 
