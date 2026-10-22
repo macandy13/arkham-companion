@@ -28,7 +28,7 @@ export function GameHeader({
   return (
     <header>
       <section aria-label={t('header.encounterDeck')} data-card="encounter">
-        <h2>{t('header.encounterDeck')}</h2>
+        <p>{t('header.encounterDeck')}</p>
       </section>
       <div role="img" aria-label={t('header.encounterDiscard')} data-pile="discard" />
       <AgendaStatus store={store} board={board} blocked={blocked} />

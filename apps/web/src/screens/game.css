@@ -132,7 +132,7 @@
 }
 
 /* The deck has room for little more than its label until it shows a card back. */
-#board > header [data-card='encounter'] h2 {
+#board > header [data-card='encounter'] p {
   font-size: var(--font-size-note);
 }
 

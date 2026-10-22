@@ -12,10 +12,14 @@ test('the house map with Alder in the Hallway', { tag: '@shot' }, async ({ page 
   await expect(hallway.getByRole('img', { name: 'Alder' })).toBeVisible();
 });
 
-test('map tabs for the Study and the house, the house chosen', async ({ page }) => {
-  await resumeImportedGame(page, 'Two maps', twoMapsExport('Two maps'));
+test(
+  'map tabs for the Study and the house, the house chosen',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'Two maps', twoMapsExport('Two maps'));
 
-  await page.getByRole('tab', { name: 'House' }).click();
+    await page.getByRole('tab', { name: 'House' }).click();
 
-  await expect(page.getByRole('tabpanel', { name: 'House' })).toBeVisible();
-});
+    await expect(page.getByRole('tabpanel', { name: 'House' })).toBeVisible();
+  },
+);

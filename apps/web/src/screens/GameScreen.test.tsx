@@ -128,8 +128,8 @@ describe('GameScreen header', () => {
     await renderTheGathering('game-screen-scenario-test');
 
     const scenario = screen.getByRole('region', { name: 'Scenario' });
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('The Gathering');
-    expect(scenario.textContent).toBe('The GatheringRound 0, Setup');
+    expect(within(scenario).getByRole('heading', { level: 1 }).textContent).toBe('The Gathering');
+    expect(within(scenario).getByText('Round 0, Setup')).toBeTruthy();
   });
 
   it('lays the encounter deck and its discard pile out before the agenda', async () => {

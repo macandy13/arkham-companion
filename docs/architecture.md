@@ -449,6 +449,7 @@ interface OpenGame {
   state: GameState;              // always the replay of its stored log
   playable: boolean;             // the catalog has its scenario
   board?: BoardView;             // selectors: the state by card name, with thresholds; playable only
+  scenarioNameKey?: string;      // i18n key of the scenario's name (catalog entry); playable only
   busy: boolean;                 // an action or undo is queued or running
   canUndo: boolean;              // a step to take back; never the scenario start
   rejection?: Rejection;         // why the last step was refused

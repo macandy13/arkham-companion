@@ -4,6 +4,7 @@ import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
 import type { AppState } from '../state/appStore';
 import { downloadGameExport } from './downloadFile';
+import { untitledLabel } from './GameListItem';
 
 /**
  * The title bar's export of the game on the play screen, so the board's header keeps its room for
@@ -18,7 +19,7 @@ export function GameExportButton({ store }: { store: StoreApi<AppState> }) {
   if (!open || open.gameId !== route?.params.id) return null;
 
   const index = games.findIndex((game) => game.gameId === open.gameId);
-  const title = games[index]?.title || t('games.untitled', { n: games.length - index });
+  const title = games[index]?.title || untitledLabel(t, games, index);
   return (
     <button type="button" onClick={() => void downloadGameExport(store, open.gameId, title)}>
       {t('games.export')}
