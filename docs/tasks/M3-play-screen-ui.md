@@ -83,6 +83,7 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 **Benefit:** Confidence that it works on the real device, plus regression protection in CI.
 
 - [ ] Landscape tablet layout check (1180×820 and 1024×768), touch sizes, no horizontal scroll
+- [ ] Smaller buttons across the play screen (header, map toolbar, location menu), like the compact buttons on the agenda and act cards (`--button-compact`), still easy to tap on a tablet
 - [ ] Playwright: play two full rounds of the sandbox scenario; refresh mid-mythos restores the exact state
 - [ ] Map follow-ups from M3.3: enemy chips show engagement, damage and exhaustion (now only in their accessible name); chips stack without a limit, so a third enemy on a busy tile overlaps the pawns; map tabs get arrow-key navigation
 
@@ -115,7 +116,7 @@ The fan IP policy that covers FFG (Asmodee's community-use guidelines) does not 
 
 Done: M3.10a draws each location tile as a card face: frame, a hatched art area (crossed when unrevealed), the name band with the edit button and, on top, the shroud badge and round clue, doom and attachment tokens. The printed clue value is not in `LocationView` yet, so the clue badge waits for M3.10c, which adds card data to the views. Follow-up: long names (Miskatonic University) run under the edit button; wrap or shrink them in the name band.
 
-Done: M3.10b draws the agenda and act in the header as landscape cards (`data-card`, a frame per card type, the hatched art area as a CSS pattern token, the name band on top and the count on a plate below), with their buttons beside them.
+Done: M3.10b draws the agenda and act in the header as landscape cards (`data-card`, a frame per card type, the hatched art area as a CSS pattern token, the name band on top and a plate below with the count and small buttons: the doom steppers on the agenda, "Advance" on the act).
 
 Done when: a full sandbox game is playable and comfortable on a tablet.
 

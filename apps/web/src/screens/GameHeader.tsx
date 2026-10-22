@@ -58,9 +58,10 @@ export function GameHeader({
 }
 
 /**
- * The current agenda as a landscape card (`data-card`, styled like the map's card faces) with the
- * doom its threshold counts (all doom in play, `doomInPlay`), and beside it steppers for the doom
- * on the agenda itself, which card effects add or the players correct.
+ * The current agenda as a landscape card (`data-card`, styled like the map's card faces): its
+ * name, and on the plate at its foot the doom its threshold counts (all doom in play,
+ * `doomInPlay`) with steppers for the doom on the agenda itself, which card effects add or the
+ * players correct. The buttons sit on the card to keep the header compact.
  */
 function AgendaStatus({
   store,
@@ -77,38 +78,39 @@ function AgendaStatus({
   const { actions } = store.getState();
 
   return (
-    <section aria-label={t('header.agenda')}>
-      <article data-card="agenda">
-        <h2>{agenda.name}</h2>
+    <section aria-label={t('header.agenda')} data-card="agenda">
+      <h2>{agenda.name}</h2>
+      <footer>
         <p>
           {agenda.threshold === undefined
             ? t('header.doom', { doom: board.doomInPlay })
             : t('header.doomOf', { doom: board.doomInPlay, threshold: agenda.threshold })}
         </p>
-      </article>
-      <button
-        type="button"
-        aria-label={t('header.removeDoom')}
-        disabled={blocked || agenda.doom === 0}
-        onClick={() => void actions.removeDoom(1)}
-      >
-        −
-      </button>
-      <button
-        type="button"
-        aria-label={t('header.addDoom')}
-        disabled={blocked}
-        onClick={() => void actions.placeDoom(1)}
-      >
-        +
-      </button>
+        <button
+          type="button"
+          aria-label={t('header.removeDoom')}
+          disabled={blocked || agenda.doom === 0}
+          onClick={() => void actions.removeDoom(1)}
+        >
+          −
+        </button>
+        <button
+          type="button"
+          aria-label={t('header.addDoom')}
+          disabled={blocked}
+          onClick={() => void actions.placeDoom(1)}
+        >
+          +
+        </button>
+      </footer>
     </section>
   );
 }
 
 /**
- * The current act as a landscape card with the clues the investigators hold against the clues it
- * needs, and beside it its advance once they hold enough, paid in seat order (`cluesInSeatOrder`).
+ * The current act as a landscape card: its name, and on the plate at its foot the clues the
+ * investigators hold against the clues it needs, with its advance once they hold enough, paid in
+ * seat order (`cluesInSeatOrder`).
  */
 function ActStatus({
   store,
@@ -125,21 +127,19 @@ function ActStatus({
   const { actions } = store.getState();
   const needed = act.clues;
   return (
-    <section aria-label={t('header.act')}>
-      <article data-card="act">
-        <h2>{act.name}</h2>
-        {needed !== undefined && (
-          <p>{t('header.cluesOf', { clues: board.cluesHeld, threshold: needed })}</p>
-        )}
-      </article>
+    <section aria-label={t('header.act')} data-card="act">
+      <h2>{act.name}</h2>
       {needed !== undefined && (
-        <button
-          type="button"
-          disabled={blocked || board.cluesHeld < needed}
-          onClick={() => void actions.advanceAct(cluesInSeatOrder(board.investigators, needed))}
-        >
-          {t('header.advanceAct')}
-        </button>
+        <footer>
+          <p>{t('header.cluesOf', { clues: board.cluesHeld, threshold: needed })}</p>
+          <button
+            type="button"
+            disabled={blocked || board.cluesHeld < needed}
+            onClick={() => void actions.advanceAct(cluesInSeatOrder(board.investigators, needed))}
+          >
+            {t('header.advanceAct')}
+          </button>
+        </footer>
       )}
     </section>
   );

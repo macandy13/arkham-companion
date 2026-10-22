@@ -34,6 +34,8 @@
   --border-width: 1px;
   /* Minimum size of anything tappable, for use on a shared tablet. */
   --touch-target: 2.75rem;
+  /* Buttons on a card (the agenda's doom steppers, the act's advance), small so the card stays compact. */
+  --button-compact: 1.75rem;
 
   --layout-content-width: 60rem;
   --layout-board-panel-width: 16rem;
@@ -59,7 +61,7 @@
     transparent var(--card-pattern-line-width) 14px
   );
   /* The agenda and act in the header, landscape cards this tall. */
-  --layout-header-card-height: 6rem;
+  --layout-header-card-height: 6.5rem;
   /* A dragged map piece's copy, see-through so the tile under it stays readable. */
   --map-ghost-opacity: 0.6;
 }
