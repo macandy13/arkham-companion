@@ -15,7 +15,7 @@ What the scenario cards ask of the engine beyond the generic rules in [rules.md]
 1. **The plan covers about 60 % of Chapter Two.** 12 of 211 cards (6 %) run fully today; after the plan 130 (62 %) do. Six gaps outside the plan hold back most of the rest (see "Not covered yet").
 2. **Most of the work is generic.** About two dozen generic primitives (below) cover nearly every Chapter Two card. The truly one-off effects are mostly agenda and act reverse sides, which are scenario hooks already.
 3. **Two new keywords, plus Elusive:** _Doomed_ (Core Set (2026)) and _Predator_ (Children of Blood) are new; _Elusive_ comes from Chapter One and is common in Chapter Two. The engine parses none of them yet.
-4. **Skill tests need the margin.** 11 Chapter Two cards (and 125 Chapter One cards) scale with "for each point you fail by" or "succeed by 2 or more", but a skill test answer is only pass or fail.
+4. **Skill tests need the margin.** 11 Chapter Two cards (and about 170 Chapter One cards) scale with "for each point you fail by" or "succeed by 2 or more", but a skill test answer is only pass or fail.
 5. **Locations carry state.** Attachments that change a location (Fire!, Arcane Lock, Flash Flood), extra costs to enter or leave, connections defined in text, and location _versions_ chosen by difficulty or time of day.
 6. **Players' cards stay physical, so many effects are reminders.** Many forced effects hit hands, decks or assets the app does not track. A generic "timing window reminder" covers them all without card scripts.
 7. **Children of Blood adds a chaos bag economy:** blood tokens added to the bag and sealed on investigators (max 3 each, 12 in total), read by prey, test difficulty and the reference card.
@@ -132,32 +132,32 @@ Players' cards stay physical, so these are reminders in every case.
 
 ### Doom, clues and the encounter deck
 
-| Rule                                                             | Ch. 2 | Ch. 1 | Status                           |
-| ---------------------------------------------------------------- | ----- | ----- | -------------------------------- |
-| Place doom on the agenda, the card itself or an enemy            | 14    | 270   | Covered                          |
-| Doom read from the board ("enemy with no doom", "for each doom") | 3     | 71    | Gap                              |
-| Remove doom                                                      | 0     | 47    | Gap                              |
-| Discover clues                                                   | 1     | 38    | Covered                          |
-| Place clues from the pool on locations, enemies or acts          | 10    | 170   | Gap                              |
-| Spend clues, as a group or per investigator                      | 22    | 377   | Plan 6                           |
-| Draw the top encounter card                                      | 15    | 180   | Covered                          |
-| Search the encounter deck or discard for a card                  | 10    | 156   | Draw-until Covered; by name M4.5 |
-| Shuffle into the encounter deck                                  | 6     | 168   | Covered                          |
-| Discard the top N encounter cards                                | 0     | 27    | Gap                              |
-| Set aside, put set-aside cards into play                         | 26    | 477   | Covered                          |
-| Remove from the game                                             | 6     | 160   | Covered                          |
+| Rule                                                             | Ch. 2 | Ch. 1 | Status                                    |
+| ---------------------------------------------------------------- | ----- | ----- | ----------------------------------------- |
+| Place doom on the agenda, the card itself or an enemy            | 14    | 270   | Covered                                   |
+| Doom read from the board ("enemy with no doom", "for each doom") | 3     | 71    | Gap                                       |
+| Remove doom                                                      | 0     | 47    | Gap                                       |
+| Discover clues                                                   | 1     | 38    | Command (`DiscoverClues`)                 |
+| Place clues from the pool on locations, enemies or acts          | 10    | 170   | Gap                                       |
+| Spend clues, as a group or per investigator                      | 22    | 377   | Plan 6                                    |
+| Draw the top encounter card                                      | 15    | 180   | Covered                                   |
+| Search the encounter deck or discard for a card                  | 10    | 156   | Draw-until Covered; by name M4.5          |
+| Shuffle into the encounter deck                                  | 6     | 168   | Discard: Covered; a card in play: Command |
+| Discard the top N encounter cards                                | 0     | 27    | Gap                                       |
+| Set aside, put set-aside cards into play                         | 26    | 477   | Covered                                   |
+| Remove from the game                                             | 6     | 160   | Covered                                   |
 
 ### Enemies
 
 | Rule                                               | Ch. 2 | Ch. 1 | Status                                                 |
 | -------------------------------------------------- | ----- | ----- | ------------------------------------------------------ |
-| Engage, disengage, exhaust, ready                  | 30    | 384   | Covered                                                |
+| Engage, disengage, exhaust, ready                  | 30    | 384   | Rules Covered; as an effect Command                    |
 | Spawn a set-aside or found enemy                   | 12    | 236   | Covered                                                |
 | Attacks outside the enemy phase ("it attacks you") | 8     | 185   | Command (`DealEnemyAttack`)                            |
 | Damage dealt to an enemy by an effect              | 4     | 72    | Command (`DamageEnemy`)                                |
 | Moves toward a target, or one step                 | 16    | 111   | Plan 12                                                |
 | "Nearest" board queries                            | 16    | 244   | Gap                                                    |
-| Values "per investigator" in text                  | 37    | 489   | Plan 2                                                 |
+| Values "per investigator" in text                  | 37    | 489   | Health Plan 2, clue costs Plan 6; the rest a gap       |
 | Effects when the enemy is defeated                 | 14    | 242   | Agenda and act windows Covered; the enemy's own Plan 9 |
 
 ### Locations and movement
@@ -351,7 +351,7 @@ Ordered so each step unlocks the most cards for the scenarios coming next (M4 _S
 ### Before M4 (data and parsing)
 
 1. **Chapter Two packs** – add `cob`, or read the chapter from the data (see "Data gaps").
-2. **New keywords** – parse Elusive, Doomed, Predator; Patrol and Prey details with enemy and trait targets; "+N per investigator" health into `ScaledValue`.
+2. **New keywords** – parse Elusive, Doomed, Predator; Patrol and Prey details with enemy and trait targets; Spawn filters ("any empty [[Arkham]] location"); "+N per investigator" health into `ScaledValue`.
 
 ### M4 – Spreading Flames, and the generic rules it needs
 
@@ -359,7 +359,7 @@ Ordered so each step unlocks the most cards for the scenarios coming next (M4 _S
 4. **Skill test margin** – the answer carries "by how much"; the suggestion computes it; revelation tests use it. Second, so the steps after it can use the margin.
 5. **Doomed and Elusive** – rules with unit tests and an end-to-end step (Bystander in _Spreading Flames_).
 6. **Scenario actions** – cost (actions, resources, clues as a group per investigator), condition, test, effect, ability limits; Parley and Resign on agendas, acts and locations. Generalises the `ScenarioAction` M4.5 plans for Parley.
-7. **Location attachments and modifiers** – Fire! (attach to nearest without Fire!, phase-end damage), shroud and movement costs from attachments.
+7. **Location attachments and modifiers** – Fire! (attach to nearest without Fire!, phase-end damage), shroud and movement costs from attachments; shroud from conditions and enemies (Garrison Street, Factory Worker); surge gained by a condition ("if …, this card gains surge").
 
 ### M5 – Smoke and Mirrors, Queen of Ash
 
@@ -377,4 +377,4 @@ Ordered so each step unlocks the most cards for the scenarios coming next (M4 _S
 16. **Scenario records and snares** – "remember that …" conditions, Manager's Office entry rule, Julia Stern's snares.
 17. **Act deck reset, reference-card tokens, enemy vs enemy damage** – the remaining River of Blood and Blood Money hooks.
 
-Everything in the _display_ tier rides on step 7 and needs no per-card code.
+Everything in the _display_ tier rides on step 3 and needs no per-card code.
