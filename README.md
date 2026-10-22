@@ -1,6 +1,6 @@
 # Arkham Companion
 
-A web companion app for **Arkham Horror: The Card Game** (Chapter Two) that runs the scenario side of the game – agenda, act, doom, encounter deck, map and enemies – so players can focus on their investigators.
+A web companion app for **Arkham Horror: The Card Game** that runs the scenario side of the game – agenda, act, doom, encounter deck, map and enemies – so players can focus on their investigators.
 
 Status: early development (M0). Design: [docs/architecture.md](docs/architecture.md) and [docs/product.md](docs/product.md). Tasks: [docs/tasks/](docs/tasks/).
 

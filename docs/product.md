@@ -21,7 +21,7 @@ The app takes over the **scenario side** of Arkham Horror LCG: setup, agenda/act
 - Map: location graph with explicit connections, multiple maps/regions, locations added or replaced mid-scenario, scenario-book layout plus optional auto-layout, randomised location placement
 - Enemies: spawn, hunter movement, engagement, exhaustion, damage; investigator positions
 - Investigator tracking: health, horror, clues, resources, threat area, engaged enemies
-- Campaign mode: campaign log across the three intro scenarios, chaos bag carried forward
+- Campaign mode: campaign log across a campaign's scenarios, chaos bag carried forward
 - Mid-scenario setup changes (replace locations, set-aside cards into play, cards into discard)
 - Scenario-specific mechanics via scripts
 - Card language configurable (English, German and the other languages ArkhamDB offers)
@@ -29,7 +29,7 @@ The app takes over the **scenario side** of Arkham Horror LCG: setup, agenda/act
 
 **Not in scope v1:** player card logic, skill test resolution, deck building, multi-device sync and cloud storage (both planned, see "Cloud sync" below).
 
-**First content:** Chapter Two starts with the Core Set (2026), ArkhamDB pack code `core_2026`, with an introductory campaign of three scenarios. The first scenario is *Spreading Flames* (encounter code `spreading_flames`).
+**Content order:** full campaigns, one after another: *Night of the Zealot* (the original Core Set, pack `core`; first scenario *The Gathering*), then the Chapter Two campaigns (Core Set (2026), pack `core_2026`, first scenario *Spreading Flames*; Children of Blood, `cob`), *The Dunwich Legacy*, *The Path to Carcosa*, *The Forgotten Age*, *The Innsmouth Conspiracy*, and the rest in release order. *Night of the Zealot* comes first because the engine already plays *The Gathering* in tests and its cards need most of the generic rules ([encounter-card-analysis.md](encounter-card-analysis.md#implementation-plan)).
 
 ## UI concept
 
@@ -64,9 +64,9 @@ Each milestone has a task plan under `docs/tasks/`, one task per Claude Code ses
 
 ```mermaid
 flowchart LR
-  M0[M0 Foundation] --> M1[M1 Engine] --> M1C[M1C Campaign engine] --> M1V[M1V Rules verification] --> M2[M2 Game management] --> M3[M3 Play screen] --> M4[M4 First scenario] --> M5[M5 Core campaign]
+  M0[M0 Foundation] --> M1[M1 Engine] --> M1C[M1C Campaign engine] --> M1V[M1V Rules verification] --> M2[M2 Game management] --> M3[M3 Play screen] --> M4[M4 First scenario] --> M5[M5 Night of the Zealot]
   M5 --> M6[M6 Comfort]
-  M5 --> M7[M7 Expansion]
+  M5 --> M7[M7 More campaigns]
   M5 --> M8[M8 Cloud and sync]
 ```
 
@@ -78,10 +78,10 @@ flowchart LR
 | [M1V Rules verification](tasks/M1V-rules-verification.md) | Check the engine's timing choices (when forced effects resolve) against the Rules Reference; edge case tests for rule interactions | The screens and real scenarios build on the resolution order, so it is cheapest to fix now | Nothing visible yet – fewer subtle rule bugs at the table later |
 | [M2 Game management UI](tasks/M2-game-management-ui.md) | Investigator catalog, home screen with saved games, new-game wizard with investigator picker, resume, export/import | Needs only engine setup, and gives M3 real saved games to work with | Pick investigators, start, leave and resume games on a tablet; back them up |
 | [M3 Play screen UI](tasks/M3-play-screen-ui.md) | Header, map with pan/zoom, investigator bar, encounter panel, decision dialog, card zoom, event log; sandbox scenario playable on a tablet | Built on the proven engine with fake data, so only UI issues remain | A full game loop on a tablet (with the sandbox scenario) |
-| [M4 Scenario data + first scenario](tasks/M4-scenario-data-first-scenario.md) | ArkhamCards layout import, connection symbol extraction, manual connection editor; *Spreading Flames* complete | Engine and UI are proven; now only data and scenario rules can break | The first real scenario, playable at the table; a recipe for every later one |
-| [M5 Core campaign](tasks/M5-core-campaign.md) | Scenarios 2 and 3, campaign screen and resolution confirmation (on the M1C engine) | Reuses the M4 recipe | The complete Core Set campaign, no paper log needed |
+| [M4 Scenario data + first scenario](tasks/M4-scenario-data-first-scenario.md) | ArkhamCards layout import, connection symbol extraction, manual connection editor; the generic rules *Night of the Zealot* needs; *The Gathering* complete | Engine and UI are proven; now only data and scenario rules can break | The first real scenario, playable at the table; a recipe for every later one |
+| [M5 Night of the Zealot](tasks/M5-core-campaign.md) | *The Midnight Masks* and *The Devourer Below*, campaign screen and resolution confirmation (on the M1C engine) | Reuses the M4 recipe | The first complete campaign, no paper log needed |
 | [M6 Comfort](tasks/M6-comfort.md) | Chaos bag module, card and UI languages, auto-layout, offline preload, polish | Nice to have, nothing blocks play | Cards in the group's language, reliable offline play, tidier maps, smoother app |
-| [M7 Expansion](tasks/M7-expansion.md) | More Chapter Two products; more automated card effects | Driven by new releases and playtest findings | New content soon after release, less manual work per round |
+| [M7 More campaigns](tasks/M7-expansion.md) | Chapter Two campaigns, then Dunwich, Carcosa, The Forgotten Age, Innsmouth and the rest in release order; new Chapter Two products; more automated card effects | Each campaign reuses the recipe and the generic rules; playtests show what to automate | One more full campaign at a time, less manual work per round |
 | [M8 Cloud and sync](tasks/M8-cloud-sync.md) | Login, games in the cloud, sync across devices at the table | Adds cost and operations; one tablet covers the core use case | Games backed up online, several devices showing the same live game |
 
 ## Planned designs
@@ -107,7 +107,7 @@ The engine then builds edges from the revealed state. The setup DSL gains `rando
 
 ### Encounter card special cases ([M4](tasks/M4-scenario-data-first-scenario.md), [M5](tasks/M5-core-campaign.md), [M7](tasks/M7-expansion.md))
 
-[encounter-card-analysis.md](encounter-card-analysis.md) lists what every Chapter Two encounter card needs beyond the generic rules (new keywords, location modifiers, scenario actions, skill test margins, timing windows, blood tokens), sorted into auto, assist and display, and orders the primitives into an implementation plan across M4, M5 and M7. Its coverage table counts every encounter card per rule as covered, planned or a gap.
+[encounter-card-analysis.md](encounter-card-analysis.md) lists what the encounter cards need beyond the generic rules (new keywords, location modifiers, scenario actions, skill test margins, timing windows, blood tokens), sorted into auto, assist and display. Its coverage table counts every encounter card per rule as covered or planned. Its implementation plan orders the primitives by campaign: steps 1–12 for Night of the Zealot (M4, M5), the rest per campaign in M7.
 
 ### Board rendering ([M3](tasks/M3-play-screen-ui.md), [M6](tasks/M6-comfort.md))
 
@@ -125,7 +125,8 @@ A second `GameStore` (`CloudStore`) next to `IndexedDbStore`; sync through the a
 - Investigator tracking (health, horror, clues, resources) – removes most physical tokens, and enemy rules (prey) need these values.
 - Encounter automation starts with display + keywords – keywords are generic and cover most rules; individual card scripts are added where playtests show they pay off.
 - Card language configurable – groups want screen text that matches their cards; ArkhamDB offers several languages.
-- Campaign mode in v1 – the Core Set is a campaign; standalone-only would miss its point.
+- Campaign mode in v1 – the game is played in campaigns; standalone-only would miss its point.
+- Night of the Zealot first, then Chapter Two, Dunwich, Carcosa, The Forgotten Age, Innsmouth and the rest in release order – the first campaign's cards need most of the generic rules, so every later campaign mostly adds data.
 - GitHub, possibly public – free CI and hosting; nothing copyrighted is committed, so going public stays possible.
 - Connection data from ArkhamDB → ArkhamCards layouts + image extraction → manual editor – no single source has connections, and hand-typing does not scale.
 - MIT licence – simple and permissive for a fan project.

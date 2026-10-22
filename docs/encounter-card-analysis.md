@@ -7,12 +7,12 @@ What the scenario cards ask of the engine beyond the generic rules in [rules.md]
 - **Data:** [arkhamdb-json-data](https://github.com/Kamalisk/arkhamdb-json-data) at commit `6f4760e` (2026-10-14), the repository ArkhamDB itself is built from. It was cloned and read by a throwaway script for this analysis only; the app keeps fetching from the ArkhamDB API, and nothing from it is committed.
 - **Chapter Two, read card by card:** all 211 encounter cards of the two products marked `chapter: 2` in `packs.json`: the Core Set (2026) (`core_2026`, 92 cards, scenarios _Spreading Flames_, _Smoke and Mirrors_, _Queen of Ash_) and Children of Blood (`cob`, 119 cards, _River of Blood_, _New Horizons_, _Blood Money_). Rules for new Children of Blood mechanics come from its [campaign guide](https://images-cdn.fantasyflightgames.com/filer_public/a8/9c/a89c98b9-9de4-4b6c-8110-80fedbdcdb60/ahc106_campaign_guide-web.pdf).
 - **Chapter One, surveyed:** 3,853 encounter cards from 145 scenarios, counted by regular expressions over the rules text (keywords, trigger windows, effect phrases). The counts rank how often a mechanic recurs; they are not exact.
-- **Coverage, all cards:** "Coverage by rule" re-reads both chapters at commit `5f633d3` (2026-10-19) with one regular expression per rule, and marks each as covered by the engine of 2026-10-22 (after P1 slice 5c2), planned or a gap. Reprints (`duplicate_of`) are left out.
+- **Coverage, all cards:** "Coverage by rule" re-reads both chapters at commit `5f633d3` (2026-10-19) with one regular expression per rule, and marks each as covered by the engine of 2026-10-22 (after P1 slice 5c2) or names its plan step. Reprints (`duplicate_of`) are left out.
 - **Not in the data:** location connection symbols, scenario setup, codex entries and resolutions. These live on the card images and in the campaign guides (see "Data gaps").
 
 ## At a glance
 
-1. **The plan covers about 60 % of Chapter Two.** 12 of 211 cards (6 %) run fully today; after the plan 130 (62 %) do. Six gaps outside the plan hold back most of the rest (see "Not covered yet").
+1. **Every gap now has a plan step, ordered by campaign.** 12 of 211 Chapter Two cards (6 %) run fully today. After the Night of the Zealot steps (1–12), 106 run, and after the Chapter Two steps (13–26), all 211 do. The first version of the plan reached 130 and left out six cases (see "Not covered yet").
 2. **Most of the work is generic.** About two dozen generic primitives (below) cover nearly every Chapter Two card. The truly one-off effects are mostly agenda and act reverse sides, which are scenario hooks already.
 3. **Two new keywords, plus Elusive:** _Doomed_ (Core Set (2026)) and _Predator_ (Children of Blood) are new; _Elusive_ comes from Chapter One and is common in Chapter Two. The engine parses none of them yet.
 4. **Skill tests need the margin.** 11 Chapter Two cards (and about 170 Chapter One cards) scale with "for each point you fail by" or "succeed by 2 or more", but a skill test answer is only pass or fail.
@@ -36,75 +36,78 @@ Every encounter card in the data (4,064: 211 Chapter Two, 3,853 Chapter One) sor
 
 - **Covered** – the rule runs today, or card data can write the effect as an ability ([architecture.md](architecture.md), "Triggers and card effects").
 - **Command** – the engine has the command, but `AbilityCommand` doesn't list it yet, so card data can't use it. Adding it is one line.
-- **Plan N** – step N of the [implementation plan](#implementation-plan) below; **M4.5** is a task in [M4](tasks/M4-scenario-data-first-scenario.md).
-- **Reminder** – display tier: the app shows the text in its timing window (plan step 3), players resolve it.
-- **Gap** – no plan step yet; listed under [Not covered yet](#not-covered-yet).
+- **Plan N** – step N of the [implementation plan](#implementation-plan) below, which orders the steps by campaign.
+- **Reminder** – display tier: the app shows the text in its timing window (plan step 2), players resolve it.
 
-### Cards per scenario card type
+### Cards per campaign
 
-A card is "covered today" when every pattern it matches is covered, "after the plan" when none is a gap.
+A card counts as covered once every pattern it matches is covered. Campaigns are listed in the order the plan adds them. Night of the Zealot and Chapter Two were checked card by card. The other rows show what the generic steps already give each campaign before its own steps.
 
-| Type                   | Ch. 2 cards | Covered today | After the plan | Ch. 1 after the plan  |
-| ---------------------- | ----------- | ------------- | -------------- | --------------------- |
-| Treachery              | 44          | 3             | 16             | 226 of 607            |
-| Enemy                  | 49          | 3             | 32             | 314 of 630            |
-| Location               | 68          | 2             | 50             | 728 of 1,229          |
-| Agenda                 | 20          | 4             | 14             | 149 of 316            |
-| Act                    | 15          | 0             | 4              | 88 of 367             |
-| Scenario reference     | 6           | 0             | 5              | 48 of 146             |
-| Story asset            | 9           | 0             | 9              | 289 of 290            |
-| All (incl. story, key) | 211         | 12 (6 %)      | 130 (62 %)     | 1,949 of 3,853 (51 %) |
+| Campaign                                         | Cards | Today | After steps 1–12 | After steps 1–26 |
+| ------------------------------------------------ | ----- | ----- | ---------------- | ---------------- |
+| Night of the Zealot                              | 80    | 12    | 80               | 80               |
+| Chapter Two (Core Set (2026), Children of Blood) | 211   | 12    | 106              | 211              |
+| The Dunwich Legacy                               | 221   | 22    | 141              | 207              |
+| The Path to Carcosa                              | 268   | 19    | 136              | 215              |
+| The Forgotten Age                                | 254   | 17    | 136              | 209              |
+| The Innsmouth Conspiracy                         | 252   | 11    | 101              | 229              |
+| The Circle Undone                                | 271   | 9     | 107              | 212              |
+| The Dream-Eaters                                 | 283   | 10    | 96               | 179              |
+| Edge of the Earth                                | 266   | 10    | 114              | 211              |
+| The Scarlet Keys                                 | 311   | 5     | 98               | 208              |
+| The Feast of Hemlock Vale                        | 301   | 11    | 127              | 276              |
+| The Drowned City                                 | 295   | 7     | 123              | 280              |
 
-The plan lifts Chapter Two from 6 % to 62 %. Almost every card left over needs one of six gaps: a choice between two costs, "nearest" queries, enemy healing, placing clues, objective conditions and a test difficulty read from the board.
+Night of the Zealot's twelve steps also cover half of Chapter Two and of every later campaign. Those steps are the generic core: timing windows, the test margin, choices, board queries, scenario actions and constant modifiers. The cards that remain after step 26 need their campaign's own mechanics.
 
 ### Keywords
 
 The keyword rules are in [rules.md](rules.md#enemy-keywords).
 
-| Rule                                                            | Ch. 2 | Ch. 1 | Status  |
-| --------------------------------------------------------------- | ----- | ----- | ------- |
-| Hunter                                                          | 26    | 321   | Covered |
-| Retaliate                                                       | 17    | 175   | Covered |
-| Alert                                                           | 5     | 71    | Covered |
-| Aloof                                                           | 8     | 154   | Covered |
-| Massive                                                         | 5     | 97    | Covered |
-| Surge, printed                                                  | 1     | 34    | Covered |
-| Surge gained by a condition                                     | 6     | 108   | Plan 7  |
-| Peril                                                           | 3     | 108   | Covered |
-| Spawn at a named location                                       | 0     | 70    | Covered |
-| Spawn with a filter ("any empty [[Arkham]] location")           | 4     | 104   | Plan 2  |
-| Prey: lowest health or sanity, most clues or resources          | 2     | 12    | Covered |
-| Prey: a skill or another counter ("lowest [agility]")           | 1     | 46    | Plan 2  |
-| Prey: most sealed blood tokens                                  | 5     | 0     | Plan 13 |
-| Prey: anything else (bearer, named investigator, cards in hand) | 0     | 36    | Gap     |
-| Patrol                                                          | 4     | 65    | Plan 12 |
-| Elusive                                                         | 11    | 21    | Plan 5  |
-| Doomed                                                          | 6     | 0     | Plan 5  |
-| Predator                                                        | 13    | 6     | Plan 14 |
-| Victory X                                                       | 58    | 707   | Covered |
-| Health per investigator, printed                                | 3     | 84    | Covered |
-| Health "+N per investigator" on a printed value                 | 14    | 83    | Plan 2  |
-| Vengeance X                                                     | 0     | 20    | Gap     |
-| Swarming, Hidden, Haunted, Concealed, Veiled                    | 0     | 217   | Gap     |
+| Rule                                                            | Ch. 2 | Ch. 1 | Status                |
+| --------------------------------------------------------------- | ----- | ----- | --------------------- |
+| Hunter                                                          | 26    | 321   | Covered               |
+| Retaliate                                                       | 17    | 175   | Covered               |
+| Alert                                                           | 5     | 71    | Covered               |
+| Aloof                                                           | 8     | 154   | Covered               |
+| Massive                                                         | 5     | 97    | Covered               |
+| Surge, printed                                                  | 1     | 34    | Covered               |
+| Surge gained by a condition                                     | 6     | 108   | Plan 5                |
+| Peril                                                           | 3     | 108   | Covered               |
+| Spawn at a named location                                       | 0     | 70    | Covered               |
+| Spawn with a filter ("any empty [[Arkham]] location")           | 4     | 104   | Plan 7                |
+| Prey: lowest health or sanity, most clues or resources          | 2     | 12    | Covered               |
+| Prey: a skill or another counter ("lowest [agility]")           | 1     | 46    | Plan 7                |
+| Prey: most sealed blood tokens                                  | 5     | 0     | Plan 22               |
+| Prey: anything else (bearer, named investigator, cards in hand) | 0     | 36    | Plan 7 (players pick) |
+| Patrol                                                          | 4     | 65    | Plan 19               |
+| Elusive                                                         | 11    | 21    | Plan 13               |
+| Doomed                                                          | 6     | 0     | Plan 13               |
+| Predator                                                        | 13    | 6     | Plan 23               |
+| Victory X                                                       | 58    | 707   | Covered               |
+| Health per investigator, printed                                | 3     | 84    | Covered               |
+| Health "+N per investigator" on a printed value                 | 14    | 83    | Plan 7                |
+| Vengeance X                                                     | 0     | 20    | Plan 29               |
+| Swarming, Hidden, Haunted, Concealed, Veiled                    | 0     | 217   | Plans 28, 31, 32, 34  |
 
 ### Revelations and threat area
 
-| Rule                                                             | Ch. 2 | Ch. 1 | Status                                       |
-| ---------------------------------------------------------------- | ----- | ----- | -------------------------------------------- |
-| Take damage or horror (direct included)                          | 33    | 670   | Covered                                      |
-| Lose or gain resources                                           | 9     | 140   | Covered                                      |
-| Skill test with a printed difficulty                             | 41    | 531   | Covered                                      |
-| Skill test whose difficulty is X or grows with the board         | 8     | 121   | Gap                                          |
-| Test one of two skills ("[willpower] or [intellect]")            | 5     | 83    | Gap                                          |
-| Skill test margin ("for each point you fail by", "by 2 or more") | 11    | 169   | Plan 4                                       |
-| Choose one of two costs ("you must either …")                    | 18    | 393   | Gap                                          |
-| Put into your threat area                                        | 7     | 116   | Covered                                      |
-| At the end of your turn (threat area)                            | 0     | 41    | Covered                                      |
-| At the end of the round                                          | 5     | 147   | Covered                                      |
-| When or after your turn begins                                   | 1     | 28    | Plan 3                                       |
-| Limit 1 per location / per investigator                          | 5     | 22    | Covered per location; per investigator a gap |
-| Lose actions                                                     | 4     | 73    | Command (`AdjustActions`)                    |
-| Heal damage or horror                                            | 11    | 127   | Covered for investigators; enemies a gap     |
+| Rule                                                             | Ch. 2 | Ch. 1 | Status                                         |
+| ---------------------------------------------------------------- | ----- | ----- | ---------------------------------------------- |
+| Take damage or horror (direct included)                          | 33    | 670   | Covered                                        |
+| Lose or gain resources                                           | 9     | 140   | Covered                                        |
+| Skill test with a printed difficulty                             | 41    | 531   | Covered                                        |
+| Skill test whose difficulty is X or grows with the board         | 8     | 121   | Plan 20                                        |
+| Test one of two skills ("[willpower] or [intellect]")            | 5     | 83    | Plan 8                                         |
+| Skill test margin ("for each point you fail by", "by 2 or more") | 11    | 169   | Plan 3                                         |
+| Choose one of two costs ("you must either …")                    | 18    | 393   | Plan 4                                         |
+| Put into your threat area                                        | 7     | 116   | Covered                                        |
+| At the end of your turn (threat area)                            | 0     | 41    | Covered                                        |
+| At the end of the round                                          | 5     | 147   | Covered                                        |
+| When or after your turn begins                                   | 1     | 28    | Plan 2                                         |
+| Limit 1 per location / per investigator                          | 5     | 22    | Covered per location; per investigator Plan 14 |
+| Lose actions                                                     | 4     | 73    | Command (`AdjustActions`); Plan 5              |
+| Heal damage or horror                                            | 11    | 127   | Covered for investigators; enemies Plan 5      |
 
 ### Player cards
 
@@ -121,123 +124,129 @@ Players' cards stay physical, so these are reminders in every case.
 
 ### Modifiers and constant abilities
 
-| Rule                                                       | Ch. 2 | Ch. 1 | Status                                                          |
-| ---------------------------------------------------------- | ----- | ----- | --------------------------------------------------------------- |
-| Shroud modifier                                            | 3     | 118   | Covered from attachments; conditions Plan 7                     |
-| "Cannot" restrictions                                      | 11    | 497   | Enemies Plan 12, entry rules Plan 16; player-side ones Reminder |
-| Enemy stat modifier ("+1 fight", "deals +1 damage")        | 3     | 142   | Gap                                                             |
-| Skill modifier on investigators ("you get -1 [willpower]") | 2     | 44    | Gap                                                             |
-| X from the board in constant text, skill swaps             | 3     | 173   | Gap (reference cards: Covered)                                  |
-| Blank or ignore text, keywords or tokens                   | 0     | 65    | Gap                                                             |
+| Rule                                                       | Ch. 2 | Ch. 1 | Status                                                         |
+| ---------------------------------------------------------- | ----- | ----- | -------------------------------------------------------------- |
+| Shroud modifier                                            | 3     | 118   | Covered from attachments; conditions Plan 14                   |
+| "Cannot" restrictions                                      | 11    | 497   | Plans 9 and 19; entry rules Plan 25; player-side ones Reminder |
+| Enemy stat modifier ("+1 fight", "deals +1 damage")        | 3     | 142   | Plan 9                                                         |
+| Skill modifier on investigators ("you get -1 [willpower]") | 2     | 44    | Plan 9                                                         |
+| X from the board in constant text, skill swaps             | 3     | 173   | Plan 9 (reference cards: Covered)                              |
+| Blank or ignore text, keywords or tokens                   | 0     | 65    | Plan 27                                                        |
 
 ### Doom, clues and the encounter deck
 
-| Rule                                                             | Ch. 2 | Ch. 1 | Status                                    |
-| ---------------------------------------------------------------- | ----- | ----- | ----------------------------------------- |
-| Place doom on the agenda, the card itself or an enemy            | 14    | 270   | Covered                                   |
-| Doom read from the board ("enemy with no doom", "for each doom") | 3     | 71    | Gap                                       |
-| Remove doom                                                      | 0     | 47    | Gap                                       |
-| Discover clues                                                   | 1     | 38    | Command (`DiscoverClues`)                 |
-| Place clues from the pool on locations, enemies or acts          | 10    | 170   | Gap                                       |
-| Spend clues, as a group or per investigator                      | 22    | 377   | Plan 6                                    |
-| Draw the top encounter card                                      | 15    | 180   | Covered                                   |
-| Search the encounter deck or discard for a card                  | 10    | 156   | Draw-until Covered; by name M4.5          |
-| Shuffle into the encounter deck                                  | 6     | 168   | Discard: Covered; a card in play: Command |
-| Discard the top N encounter cards                                | 0     | 27    | Gap                                       |
-| Set aside, put set-aside cards into play                         | 26    | 477   | Covered                                   |
-| Remove from the game                                             | 6     | 160   | Covered                                   |
+| Rule                                                             | Ch. 2 | Ch. 1 | Status                                            |
+| ---------------------------------------------------------------- | ----- | ----- | ------------------------------------------------- |
+| Place doom on the agenda, the card itself or an enemy            | 14    | 270   | Covered                                           |
+| Doom read from the board ("enemy with no doom", "for each doom") | 3     | 71    | Plan 6                                            |
+| Remove doom                                                      | 0     | 47    | Plan 27                                           |
+| Discover clues                                                   | 1     | 38    | Command (`DiscoverClues`); Plan 5                 |
+| Place clues from the pool on locations, enemies or acts          | 10    | 170   | Plan 11                                           |
+| Spend clues, as a group or per investigator                      | 22    | 377   | Plan 8                                            |
+| Draw the top encounter card                                      | 15    | 180   | Covered                                           |
+| Search the encounter deck or discard for a card                  | 10    | 156   | Draw-until Covered; by trait or name Plan 6       |
+| Shuffle into the encounter deck                                  | 6     | 168   | Discard: Covered; a card in play: Command, Plan 5 |
+| Discard the top N encounter cards                                | 0     | 27    | Plan 27                                           |
+| Set aside, put set-aside cards into play                         | 26    | 477   | Covered                                           |
+| Remove from the game                                             | 6     | 160   | Covered                                           |
 
 ### Enemies
 
 | Rule                                               | Ch. 2 | Ch. 1 | Status                                                 |
 | -------------------------------------------------- | ----- | ----- | ------------------------------------------------------ |
-| Engage, disengage, exhaust, ready                  | 30    | 384   | Rules Covered; as an effect Command                    |
+| Engage, disengage, exhaust, ready                  | 30    | 384   | Rules Covered; as an effect Command, Plan 5            |
 | Spawn a set-aside or found enemy                   | 12    | 236   | Covered                                                |
-| Attacks outside the enemy phase ("it attacks you") | 8     | 185   | Command (`DealEnemyAttack`)                            |
-| Damage dealt to an enemy by an effect              | 4     | 72    | Command (`DamageEnemy`)                                |
-| Moves toward a target, or one step                 | 16    | 111   | Plan 12                                                |
-| "Nearest" board queries                            | 16    | 244   | Gap                                                    |
-| Values "per investigator" in text                  | 37    | 489   | Health Plan 2, clue costs Plan 6; the rest a gap       |
-| Effects when the enemy is defeated                 | 14    | 242   | Agenda and act windows Covered; the enemy's own Plan 9 |
+| Attacks outside the enemy phase ("it attacks you") | 8     | 185   | Command (`DealEnemyAttack`); Plan 5                    |
+| Damage dealt to an enemy by an effect              | 4     | 72    | Command (`DamageEnemy`); Plan 5                        |
+| Moves toward a target, or one step                 | 16    | 111   | Plan 6                                                 |
+| "Nearest" board queries                            | 16    | 244   | Plan 6                                                 |
+| Values "per investigator" in text                  | 37    | 489   | Plan 7; clue costs Plan 8                              |
+| Effects when the enemy is defeated                 | 14    | 242   | Agenda and act windows Covered; the enemy's own Plan 2 |
 
 ### Locations and movement
 
-| Rule                                      | Ch. 2 | Ch. 1 | Status                                                |
-| ----------------------------------------- | ----- | ----- | ----------------------------------------------------- |
-| Reveal or flip a location                 | 4     | 417   | Covered                                               |
-| Move investigators by an effect           | 9     | 163   | Covered                                               |
-| Resign                                    | 13    | 143   | Covered                                               |
-| Treachery attached to a location          | 2     | 61    | Your location Covered; nearest Plan 7                 |
-| Attach to an enemy, asset or act          | 2     | 22    | Gap                                                   |
-| Extra cost to enter, leave or investigate | 10    | 94    | Plan 10                                               |
-| Connections written in text               | 5     | 214   | Plan 10                                               |
-| After you enter or leave a location       | 5     | 159   | Plan 3                                                |
-| Several versions of one location          | 5     | 59    | Plan 15                                               |
-| Location leaves play or is replaced       | 4     | 155   | `MoveCard` Covered; with tokens and attachments a gap |
+| Rule                                      | Ch. 2 | Ch. 1 | Status                                                  |
+| ----------------------------------------- | ----- | ----- | ------------------------------------------------------- |
+| Reveal or flip a location                 | 4     | 417   | Covered                                                 |
+| Move investigators by an effect           | 9     | 163   | Covered                                                 |
+| Resign                                    | 13    | 143   | Covered                                                 |
+| Treachery attached to a location          | 2     | 61    | Your location Covered; other targets Plan 10            |
+| Attach to an enemy, asset or act          | 2     | 22    | Plan 21                                                 |
+| Extra cost to enter, leave or investigate | 10    | 94    | Plan 17                                                 |
+| Connections written in text               | 5     | 214   | By trait Plan 12; the rest Plan 17                      |
+| After you enter or leave a location       | 5     | 159   | Plan 2                                                  |
+| Several versions of one location          | 5     | 59    | Random Plan 12; by time of day Plan 24                  |
+| Location leaves play or is replaced       | 4     | 155   | `MoveCard` Covered; with tokens and attachments Plan 12 |
 
 ### Abilities players trigger
 
 | Rule                                           | Ch. 2 | Ch. 1 | Status |
 | ---------------------------------------------- | ----- | ----- | ------ |
-| [action] ability on a scenario card            | 56    | 873   | Plan 6 |
-| [fast] ability                                 | 13    | 257   | Plan 6 |
-| [reaction] ability                             | 11    | 152   | Plan 6 |
-| Parley                                         | 13    | 178   | Plan 6 |
-| Ability limits ("once per round", group limit) | 22    | 333   | Plan 6 |
+| [action] ability on a scenario card            | 56    | 873   | Plan 8 |
+| [fast] ability                                 | 13    | 257   | Plan 8 |
+| [reaction] ability                             | 11    | 152   | Plan 8 |
+| Parley                                         | 13    | 178   | Plan 8 |
+| Ability limits ("once per round", group limit) | 22    | 333   | Plan 8 |
 
 ### Forced effects and timing windows
 
 | Rule                                                          | Ch. 2 | Ch. 1 | Status                                               |
 | ------------------------------------------------------------- | ----- | ----- | ---------------------------------------------------- |
 | When revealed or drawn                                        | 44    | 697   | Covered                                              |
-| At a phase's start or end                                     | 8     | 115   | Plan 3                                               |
-| After clues are discovered                                    | 15    | 74    | Plan 3                                               |
-| After a test, investigation, fight or evade succeeds or fails | 14    | 170   | Plan 3                                               |
-| When doom is placed                                           | 2     | 32    | Covered (`afterDoomPlaced`); "would advance" Plan 11 |
-| Replacement effect ("would … instead")                        | 2     | 64    | Plan 11                                              |
+| At a phase's start or end                                     | 8     | 115   | Plan 2                                               |
+| After clues are discovered                                    | 15    | 74    | Plan 2                                               |
+| After a test, investigation, fight or evade succeeds or fails | 14    | 170   | Plan 2                                               |
+| When doom is placed                                           | 2     | 32    | Covered (`afterDoomPlaced`); "would advance" Plan 18 |
+| Replacement effect ("would … instead")                        | 2     | 64    | Plan 18                                              |
 
 ### Agendas, acts and scenario flow
 
-| Rule                                                   | Ch. 2 | Ch. 1 | Status                            |
-| ------------------------------------------------------ | ----- | ----- | --------------------------------- |
-| Objective: spend clues to advance                      | 3     | 81    | Covered                           |
-| Objective: an enemy is defeated                        | 6     | 83    | Covered                           |
-| Objective: any other condition                         | 10    | 221   | Gap                               |
-| Resolution jump (→R)                                   | 14    | 243   | Covered                           |
-| Victory display read or written                        | 11    | 249   | Covered                           |
-| Codex entry, "check your Campaign Log"                 | 13    | 309   | Plan 9                            |
-| "Remember that …" records                              | 4     | 162   | Plan 16                           |
-| Cards beneath or under other cards                     | 11    | 117   | Plan 8                            |
-| Agenda or act deck changes (flip back, reset, replace) | 1     | 200   | Act reset Plan 17; the rest a gap |
+| Rule                                                   | Ch. 2 | Ch. 1 | Status                                                                |
+| ------------------------------------------------------ | ----- | ----- | --------------------------------------------------------------------- |
+| Objective: spend clues to advance                      | 3     | 81    | Covered                                                               |
+| Objective: an enemy is defeated                        | 6     | 83    | Covered                                                               |
+| Objective: any other condition                         | 10    | 221   | Plan 11                                                               |
+| Resolution jump (→R)                                   | 14    | 243   | Covered                                                               |
+| Victory display read or written                        | 11    | 249   | Covered                                                               |
+| Codex entry, "check your Campaign Log"                 | 13    | 309   | Campaign log Plan 12; codex Plan 16                                   |
+| "Remember that …" records                              | 4     | 162   | Plan 25                                                               |
+| Cards beneath or under other cards                     | 11    | 117   | Plan 15                                                               |
+| Agenda or act deck changes (flip back, reset, replace) | 1     | 200   | Merged act and agenda Plan 12; reset Plan 26; flip back, swap Plan 28 |
 
 ### Chaos bag and tokens
 
-| Rule                                                 | Ch. 2 | Ch. 1 | Status      |
-| ---------------------------------------------------- | ----- | ----- | ----------- |
-| Symbol token values on reference cards               | 6     | 108   | Covered     |
-| Blood tokens                                         | 36    | 0     | Plan 13     |
-| Snares, reference-card damage, "keys" records        | 12    | 0     | Plan 16, 17 |
-| Other scenario tokens (keys, seals, flood, breaches) | 0     | 409   | Gap         |
-| Add, remove or seal other chaos tokens               | 1     | 111   | Gap         |
+| Rule                                                 | Ch. 2 | Ch. 1 | Status                           |
+| ---------------------------------------------------- | ----- | ----- | -------------------------------- |
+| Symbol token values on reference cards               | 6     | 108   | Covered                          |
+| Blood tokens                                         | 36    | 0     | Plan 22                          |
+| Snares, reference-card damage, "keys" records        | 12    | 0     | Plans 25, 26                     |
+| Other scenario tokens (keys, seals, flood, breaches) | 0     | 409   | Plans 30–36, with their campaign |
+| Add, remove or seal other chaos tokens               | 1     | 111   | Plan 30                          |
 
 ## Not covered yet
 
-The gaps from the tables above, ranked by the Chapter Two cards that need them. "Only gap" counts cards that need nothing else outside the plan, so closing the gap finishes them. Most already have a primitive in "Special cases by mechanic"; none has a plan step.
+The engine can't handle these cases yet, and the first version of the plan had no step for them. They are ranked by the Chapter Two cards that need them. "Only gap" counts the cards that needed nothing else outside that plan. Most already have a primitive in "Special cases by mechanic". Each case now has a step, scheduled with the first campaign that needs it.
 
-1. **Choose one of two costs** – 18 Ch. 2 cards (13 only gap), 393 Ch. 1. Cosmic Evils 12124, Unnatural Decay 12191, Ashen Rebirth 12176, Mutated! 12131, Blood Moon 13101, Of the Night 13106, Nowhere to Hide 13107, the margin cards Forbidden Secrets 12126, Wild Compulsion 12128, Downpour 12158, Misinformation 13108; Main Street 13015, Factory Floor 13044/13045, Howard Wilkes 13084. Decisions already carry commands per option; card data needs a `chooseOne(…branches)` effect that raises one. A branch that hits player cards is a reminder option.
-2. **"Nearest" queries** – 16 (11), 244. Fire! 12129, Aerial Pursuit 12163, Raising Suspicions 12160, Dark Magician 12189, Unnatural Strength 13098, Sanguine Rebirth 13092, Morbid Rituals 13114, Main Street 13015, Julia Stern's patrol 13024–13026, agendas 13002, 13004, 13033. A board query "nearest card matching …" with ties as a decision; Fire! (Plan 7) and Patrol (Plan 12) need it first, so it belongs at the start of step 7.
-3. **Enemy healing** – 11 (10), 127. Zburamoarte 13058–13060, Spawn of Zburamoarte 13097, Night Feeder 13110, Herald of Flame 12178, agenda 13003, act 12110. A negative `DamageEnemy` (or `HealEnemy`) as an ability effect, plus an "after it deals damage / attacks" window.
-4. **Place clues from the token pool** – 10 (7), 170. Hidden Laboratory 13052/13055, Locked Chamber 13053/13056, Foyer 13076 ("up to its clue threshold"), Abigail Foreman 12143, Elokoss 12179, Loading Dock 13042, act 13037. A `PlaceClues` command on any card, with an "up to threshold" option.
-5. **Objective conditions** – 10 (5), 221. Enters play (13006), leaves play (13007), an investigator enters a location (12172, 13074), all undefeated investigators at a location (12110), every survivor resigned (13036–13038), a card not in play at round end (13073), a count reached (12136). New timing windows (enter location, enemy enters / leaves play) plus a condition check at round end.
-6. **Test difficulty from the board** – 8 (5), 121. Mutated! 12131, Red Herring 12161, Grisly Compulsion 13100, Abigail Foreman 12143, Secret Chamber 13057, Javier Rivera 13061, Loading Dock 13047, Sgt. Earl Monroe 12142; hand size (Extraplanar Visions 12127) is entered by players. Difficulty as a `ScaledValue`-like expression read when the test is raised.
-7. **Limit 1 per investigator** – 5 (4), 22. Unspeakable Truths 12125, Languor 12193, Echoing in Darkness 13065, The Blood Blight 13118. The per-location check of `LocationAttachment.onePerLocation` applied to threat areas.
-8. **Test one of two skills** – 5 (2), 83. Arcane Lock 12157, Noxious Smoke 12130, Sluice Control 12175, Extraplanar Visions 12127, act 13075. `skillTest` with a list of skills, the investigator picks.
-9. **Constant modifiers** – enemy stats 3 (2), 142: Dining Hall 13077, Unnatural Strength 13098, Zburamoarte's Lair 13051; investigator skills 2 (2), 44: Whippoorwill 12166, Blighted Blood 13099. Feed the skill test suggestion from the board (architecture review P3, constant abilities).
-10. **Location leaves play with its tokens and attachments** – 4 (2), 155. Manager's Office 13041, act 12110, agendas 12170, 13072. `MoveCard` plus moving everyone at it first.
-11. **Doom read from the board** – 3 (1), 71. "Enemy with no doom on it" (Raising Suspicions 12160, Dark Magician 12189, Blasphemous Invocation 12190). A filter on the nearest query (gap 2).
-12. **Attach to an enemy** – 2 (0), 22. Unnatural Strength 13098, Sanguine Rebirth 13092; both also need gaps 2 and 9.
+1. **Choose one of two costs** (step 4) – 18 Ch. 2 cards (13 only gap), 393 Ch. 1. Cosmic Evils 12124, Unnatural Decay 12191, Ashen Rebirth 12176, Mutated! 12131, Blood Moon 13101, Of the Night 13106, Nowhere to Hide 13107, the margin cards Forbidden Secrets 12126, Wild Compulsion 12128, Downpour 12158, Misinformation 13108; Main Street 13015, Factory Floor 13044/13045, Howard Wilkes 13084. Decisions already carry commands per option; card data needs a `chooseOne(…branches)` effect that raises one. A branch that hits player cards is a reminder option.
+2. **"Nearest" queries** (step 6) – 16 (11), 244. Fire! 12129, Aerial Pursuit 12163, Raising Suspicions 12160, Dark Magician 12189, Unnatural Strength 13098, Sanguine Rebirth 13092, Morbid Rituals 13114, Main Street 13015, Julia Stern's patrol 13024–13026, agendas 13002, 13004, 13033. A board query "nearest card matching …" with ties as a decision. Fire! (step 14) and Patrol (step 19) build on it.
+3. **Enemy healing** (step 5) – 11 (10), 127. Zburamoarte 13058–13060, Spawn of Zburamoarte 13097, Night Feeder 13110, Herald of Flame 12178, agenda 13003, act 12110. A negative `DamageEnemy` (or `HealEnemy`) as an ability effect, plus an "after it deals damage / attacks" window.
+4. **Place clues from the token pool** (step 11) – 10 (7), 170. Hidden Laboratory 13052/13055, Locked Chamber 13053/13056, Foyer 13076 ("up to its clue threshold"), Abigail Foreman 12143, Elokoss 12179, Loading Dock 13042, act 13037. A `PlaceClues` command on any card, with an "up to threshold" option.
+5. **Objective conditions** (step 11) – 10 (5), 221. Enters play (13006), leaves play (13007), an investigator enters a location (12172, 13074), all undefeated investigators at a location (12110), every survivor resigned (13036–13038), a card not in play at round end (13073), a count reached (12136). New timing windows (enter location, enemy enters / leaves play) plus a condition check at round end.
+6. **Test difficulty from the board** (step 20) – 8 (5), 121. Mutated! 12131, Red Herring 12161, Grisly Compulsion 13100, Abigail Foreman 12143, Secret Chamber 13057, Javier Rivera 13061, Loading Dock 13047, Sgt. Earl Monroe 12142; hand size (Extraplanar Visions 12127) is entered by players. Difficulty as a `ScaledValue`-like expression read when the test is raised.
+7. **Limit 1 per investigator** (step 14) – 5 (4), 22. Unspeakable Truths 12125, Languor 12193, Echoing in Darkness 13065, The Blood Blight 13118. The per-location check of `LocationAttachment.onePerLocation` applied to threat areas.
+8. **Test one of two skills** (step 8) – 5 (2), 83. Arcane Lock 12157, Noxious Smoke 12130, Sluice Control 12175, Extraplanar Visions 12127, act 13075. `skillTest` with a list of skills, the investigator picks.
+9. **Constant modifiers** (step 9) – enemy stats 3 (2), 142: Dining Hall 13077, Unnatural Strength 13098, Zburamoarte's Lair 13051; investigator skills 2 (2), 44: Whippoorwill 12166, Blighted Blood 13099. Feed the skill test suggestion from the board (architecture review P3, constant abilities).
+10. **Location leaves play with its tokens and attachments** (step 12) – 4 (2), 155. Manager's Office 13041, act 12110, agendas 12170, 13072. `MoveCard` plus moving everyone at it first.
+11. **Doom read from the board** (step 6) – 3 (1), 71. "Enemy with no doom on it" (Raising Suspicions 12160, Dark Magician 12189, Blasphemous Invocation 12190). A filter on the nearest query (case 2).
+12. **Attach to an enemy** (step 21) – 2 (0), 22. Unnatural Strength 13098, Sanguine Rebirth 13092; both also need cases 2 and 9.
 
-Chapter One only, no Chapter Two card yet: the keywords Swarming, Hidden, Haunted, Concealed, Veiled (217), Vengeance (20) and prey on a named investigator or bearer (36); scenario tokens such as keys, seals, flood levels and breaches (409); agenda and act decks that flip back or swap (200); blanking text (65); removing doom (47); discarding the top N encounter cards (27). They wait until a Chapter Two product prints them.
+Some cases appear only in Chapter One:
+
+- prey on a named investigator or bearer (36 cards, step 7)
+- discarding the top N encounter cards, removing doom and blanking text (27, 47 and 65 cards, step 27)
+- agenda and act decks that flip back or swap (200 cards, step 28)
+- the keywords Hidden, Vengeance, Haunted, Swarming and Veiled, and Concealed (steps 28–34)
+- scenario tokens such as keys, seals, flood levels and breaches (409 cards, steps 30–36)
 
 ## Special cases by mechanic
 
@@ -275,7 +284,7 @@ The engine had `turnEndTest` and `discardAtRoundEnd` as card flags; they are now
 
 ### Abilities on scenario cards
 
-Players trigger these with their own actions, so the app needs a way to activate them. M4.5 plans a `ScenarioAction` for Parley; it should be the general shape.
+Players trigger these with their own actions, so the app needs a way to activate them. Plan step 8 builds them as one general `ScenarioAction`.
 
 - **Parley on an agenda or enemy: test, then discard / set aside / codex** – Cards: Agendas 12106–12108; David Renfield to Margaret Liu 12139–12144; Waterfront Civilian 13027; Javier Rivera 13061; Factory Worker 13063; act 13075. Primitive: **scenario action**: cost, condition, skill test, effect commands
 - **Resign on a location, agenda or act; or gained mid-game** – Cards: Blaze of Glory 12112, Arkham Alive 12134, Sewer Culvert 12182, Loading Dock 13042/13047, Foyer 13076. Primitive: `Resign` exists; action availability from card text or a "gains" record
@@ -310,7 +319,7 @@ Players trigger these with their own actions, so the app needs a way to activate
 - **Limit 1 per investigator / per location** – Cards: Unspeakable Truths, Languor, Echoing in Darkness, Arcane Lock. Primitive: placement check; surge or discard if over. Tier: auto
 - **Attach to the nearest enemy of a trait, or search the deck for one first** – Cards: Sanguine Rebirth, Unnatural Strength. Primitive: "nearest … with trait" query + search. Tier: auto
 - **Search the encounter deck and discard for a trait and draw it** – Cards: Blasphemous Invocation, In the Shadows 13115, act 12111 (Fire! ×per investigator), 13069. Primitive: search + shuffle. Tier: auto
-- **Draw the topmost copy of a named card from the discard** – Cards: reference cards 12105/12168, agenda 12108. Primitive: `drawTopmostFromDiscard` (planned in M4.5). Tier: auto
+- **Draw the topmost copy of a named card from the discard** – Cards: reference cards 12105/12168, agenda 12108. Primitive: `drawTopmostFromDiscard` (_Spreading Flames_, M7.1). Tier: auto
 - **Nearest non-Elite enemy moves once toward you and attacks if it engages** – Cards: Aerial Pursuit 12163. Primitive: "move toward" + immediate attack. Tier: auto
 - **Draw a random set-aside enemy of a trait** – Cards: Burning Daylight 13028. Primitive: set-aside query with RNG. Tier: auto
 - **Hand, deck and card-type effects** – Cards: Wild Compulsion, Dissonance 12194, Torment 12195, Languor, Putrid Vapors 12192. Tier: display
@@ -346,35 +355,63 @@ Players trigger these with their own actions, so the app needs a way to activate
 
 ## Implementation plan
 
-Ordered so each step unlocks the most cards for the scenarios coming next (M4 _Spreading Flames_, M5 the rest of the Core Set, M7 Children of Blood). Each line is one task of one or a few small PRs; the task files get them when their milestone starts.
+The plan adds full campaigns in this order: Night of the Zealot, the Chapter Two campaigns, The Dunwich Legacy, The Path to Carcosa, The Forgotten Age, The Innsmouth Conspiracy, and then the rest in release order. Each campaign gets the steps its cards need first, so the generic rules land with the first campaign that plays them. Night of the Zealot comes first because the engine already plays The Gathering in tests, and its 80 cards need most of the generic steps. Each line below is one task of one or a few small PRs. Steps 1–12 are task M4.5, built with _The Gathering_ (M4) before _The Midnight Masks_ and _The Devourer Below_ (M5). Steps 13–36 belong to M7, one section per campaign.
 
-### Before M4 (data and parsing)
+Every campaign after Chapter Two starts with a card-by-card read of its encounter cards, like the Chapter Two read above. The counts in this document come from regular expressions and miss mechanics they don't name.
 
-1. **Chapter Two packs** – add `cob`, or read the chapter from the data (see "Data gaps").
-2. **New keywords** – parse Elusive, Doomed, Predator; Patrol and Prey details with enemy and trait targets; Spawn filters ("any empty [[Arkham]] location"); "+N per investigator" health into `ScaledValue`.
+### Night of the Zealot
 
-### M4 – Spreading Flames, and the generic rules it needs
+1. **Card data for every pack** – read each pack's chapter from the data instead of `CHAPTER_TWO_PACK_CODES`, and load Chapter One packs (`core` first) and `cob` (see "Data gaps").
+2. **Timing windows** – one list of windows, used by card and scenario abilities (data only, replacing the code hooks) and by reminders. It comes first because every later step lands as an ability. The step also migrates `turnEndTest` and `discardAtRoundEnd`. The windows are:
+   - after you enter or leave a location (Attic, Cellar, Graveyard, Arkham Woods)
+   - at a phase's start or end (They're Getting Out!, Wizard of the Order)
+   - after clues are discovered
+   - after a test, investigation, fight or evade succeeds or fails (Obscuring Fog)
+   - after an enemy engages or attacks you (Young Deep One, Yithian Observer)
+   - after you resolve another treachery
+   - when your turn begins, and at the end of each investigator's turn (Umôrdhoth)
+   - when an enemy is defeated (Goat Spawn)
+3. **Skill test margin** – the answer carries "by how much", the suggestion computes it, and revelation tests use it (Grasping Hands, Rotting Remains, False Lead, Umôrdhoth's Wrath).
+4. **Choose one** – a `chooseOne(…branches)` effect raises a decision with one option per branch. A branch that hits player cards becomes a reminder option. Cards: What's Going On?!, What Have You Done?, Hunting Shadow, Offer of Power, Graveyard.
+5. **Card effects for existing commands** – add engage, disengage, ready, discover clues, shuffle into the encounter deck, lose actions, enemy attacks and damage to enemies to `AbilityCommand`. Add healing for investigators and enemies ("Wolf-Man" Drew, Relentless Dark Young), and "this card gains surge" (False Lead).
+6. **Board queries** – "nearest", "with the most clues" and "with no doom" with ties as a decision; an enemy moving toward a target; search the encounter deck and discard by trait or name (Mysterious Chanting, They're Getting Out!, The Gathering's skull token).
+7. **Keyword details** – Prey by a skill (Ghoul Priest) or another counter. Prey the engine can't read, such as fewest cards in hand (Yithian Observer), is picked by the players. Spawn filters ("any empty location", "engaged with prey"). "+N per investigator" values into `ScaledValue` (The Masked Hunter, Umôrdhoth).
+8. **Scenario actions** – cost (actions, resources, cards, clues as a group per investigator), condition, test (one skill or a choice of two: Disrupting the Ritual, Locked Door), effect, and ability limits. Parley and Resign on agendas, acts, locations and enemies (Lita Chantler, Herman Collins, Peter Warren, Victoria Devereux).
+9. **Constant modifiers and restrictions** – enemy stats from agendas and conditions (The Ritual Begins, Screeching Byakhee), investigator skills (Dreams of R'lyeh), skill swaps and token modifiers for the suggestion (Arkham Woods, Hunting Nightgaunt), extra action costs (Frozen in Fear), and "cannot" restrictions (Locked Door, The Masked Hunter, the Parlor's barrier).
+10. **Location attachments with targets** – attach to the location with the most clues and without a copy (Locked Door).
+11. **Objective conditions and clue placement** – objectives as conditions checked after each command: an investigator enters a location (Into the Darkness), a count in the victory display (Uncovering the Conspiracy), clues on the act (Disrupting the Ritual). Also `PlaceClues` on any card, with "up to N per investigator" (Ritual Site).
+12. **Campaign-specific setup and flow** – random location versions (Arkham Woods), connections by trait (Main Path), a merged act and agenda (Vengeance Awaits), locations put into play or replaced with their tokens, and spawning the enemies the campaign log lists (Investigating the Trail).
 
-3. **Timing windows** – one list of windows, used by card and scenario abilities (data only, replacing the code hooks) and by reminders; migrate `turnEndTest` and `discardAtRoundEnd`. First, because every later step lands as an ability.
-4. **Skill test margin** – the answer carries "by how much"; the suggestion computes it; revelation tests use it. Second, so the steps after it can use the margin.
-5. **Doomed and Elusive** – rules with unit tests and an end-to-end step (Bystander in _Spreading Flames_).
-6. **Scenario actions** – cost (actions, resources, clues as a group per investigator), condition, test, effect, ability limits; Parley and Resign on agendas, acts and locations. Generalises the `ScenarioAction` M4.5 plans for Parley.
-7. **Location attachments and modifiers** – Fire! (attach to nearest without Fire!, phase-end damage), shroud and movement costs from attachments; shroud from conditions and enemies (Garrison Street, Factory Worker); surge gained by a condition ("if …, this card gains surge").
+### Chapter Two: Core Set (2026) and Children of Blood
 
-### M5 – Smoke and Mirrors, Queen of Ash
+13. **Elusive and Doomed** – rules with unit tests and an end-to-end step (Bystander in _Spreading Flames_).
+14. **Fire! and location modifiers** – attach to the nearest location without Fire! and deal phase-end damage. Shroud and movement costs from attachments; shroud from conditions and enemies (Garrison Street, Factory Worker); limit 1 per investigator in threat areas.
+15. **Cards beneath cards** – zone `beneath` (locations, act); draw facedown card; count Elite under the act.
+16. **Codex reminders** – card ability or defeat names a codex entry; the app shows the number and lets the players apply the outcome commands.
+17. **Text connections and movement costs** – Sewer Culvert; extra costs to enter (Underground Cistern, Sluice Control), to leave (Unvisited Isle) and to investigate (Waterfront District).
+18. **Replacement hooks** – "would … instead" (Brethren of Ash).
+19. **Patrol movement** and enemy restrictions (cannot move, no attacks of opportunity, cannot be damaged).
+20. **Test difficulty from the board** – difficulty as an expression read when the test is raised (Mutated!, Red Herring, Secret Chamber, Abigail Foreman).
+21. **Attach to an enemy, asset or act** – Unnatural Strength, Sanguine Rebirth.
+22. **Blood tokens** – chaos bag counts in the campaign log, sealed tokens per investigator, limits; prey and difficulty read them.
+23. **Predator** – enemy phase step between hunters and attacks.
+24. **Location versions by time** – setup picks Dawn/Dusk and Day/Night versions.
+25. **Scenario records and snares** – "remember that …" conditions, Manager's Office entry rule, Julia Stern's snares.
+26. **Act deck reset, reference-card tokens, enemy vs enemy damage** – the remaining River of Blood and Blood Money hooks.
 
-8. **Cards beneath cards** – zone `beneath` (locations, act); draw facedown card; count Elite under the act.
-9. **Codex reminders** – card ability or defeat names a codex entry; the app shows the number and lets the players apply the outcome commands.
-10. **Text connections and movement costs** – Sewer Culvert, entering Underground Cistern and Sluice Control.
-11. **Replacement hooks and merged act/agenda** – Brethren of Ash.
-12. **Patrol movement** and enemy restrictions (cannot move, no attacks of opportunity, cannot be damaged).
+### Later campaigns
 
-### M7 – Children of Blood
+The terms in brackets recur in each campaign's encounter text. The card-by-card read at the campaign's start confirms them and adds steps.
 
-13. **Blood tokens** – chaos bag counts in the campaign log, sealed tokens per investigator, limits; prey and difficulty read them.
-14. **Predator** – enemy phase step between hunters and attacks.
-15. **Location versions** – setup picks Dawn/Dusk, Day/Night and random versions.
-16. **Scenario records and snares** – "remember that …" conditions, Manager's Office entry rule, Julia Stern's snares.
-17. **Act deck reset, reference-card tokens, enemy vs enemy damage** – the remaining River of Blood and Blood Money hooks.
+27. **The Dunwich Legacy** – discard the top N encounter cards, remove doom, blank text.
+28. **The Path to Carcosa** – Hidden; agenda and act decks that flip back or swap (34 cards); Conviction and Doubt records.
+29. **The Forgotten Age** – Vengeance, exploration deck and Explore, supplies, poison.
+30. **The Innsmouth Conspiracy** – keys, flood levels, barriers, bless and curse tokens added to the chaos bag.
+31. **The Circle Undone** – Haunted, the spectral realm, breaches.
+32. **The Dream-Eaters** – Swarming, Veiled.
+33. **Edge of the Earth** – the Tekeli-li deck, frost tokens, seals, memories.
+34. **The Scarlet Keys** – Concealed, keys, decoys, shifting.
+35. **The Feast of Hemlock Vale** – day and night, lanterns, traps, decoys.
+36. **The Drowned City** – flood levels, time.
 
-Everything in the _display_ tier rides on step 3 and needs no per-card code.
+Everything in the _display_ tier rides on step 2 and needs no per-card code.

@@ -1,12 +1,15 @@
 # M4 – Scenario data pipeline + first scenario
 
-Goal: a repeatable way to turn a real scenario into data (product.md "Scenario data pipeline"), then _Spreading Flames_ fully playable.
+Goal: a repeatable way to turn a real scenario into data (product.md "Scenario data pipeline"), then _The Gathering_, the first scenario of _Night of the Zealot_, fully playable from real card data.
 
 **Why this milestone**
 
 - **Problem:** The engine is generic, but a real scenario needs its map layout, location connections and special rules. ArkhamDB has no connection or layout data, and typing it by hand for every scenario does not scale.
 - **What the app gains:** A repeatable data pipeline (import → extract → review → fix in-app) plus the first real, table-ready scenario. The pipeline is reused for every later scenario (M5, M7).
+- **Why _Night of the Zealot_ first:** the engine already plays a hand-written _The Gathering_ in tests, and the campaign's 80 encounter cards need most of the generic rules (steps 1–12 of the [encounter card plan](../encounter-card-analysis.md#implementation-plan)). Those rules also cover half of every later campaign. The Chapter Two campaigns follow in M7.
 - **Why at this point:** Engine and UI are already proven with the sandbox, so anything that breaks now is data or scenario rules – much easier to diagnose.
+
+Order: plan step 1 (card data for every pack, from M4.5) comes first, because the pipeline and _The Gathering_ need the `core` pack loaded.
 
 Rule: nothing from ArkhamDB or ArkhamCards is committed except card codes, symbol names and our own layout/override files.
 
@@ -45,31 +48,38 @@ Rule: nothing from ArkhamDB or ArkhamCards is committed except card codes, symbo
 - [ ] Saves a scenario override (IndexedDB) applied on top of imported data
 - [ ] Export overrides as JSON to commit into `packages/scenarios/data/overrides/`
 
-## M4.4 Spreading Flames: definition (O)
+## M4.4 The Gathering: definition (O)
 
 **Why:** Brings the pipeline's outputs together into the first real scenario definition. The setup test against real quantities catches data drift.
 
-**Benefit:** One-tap setup of _Spreading Flames_.
+**Benefit:** One-tap setup of _The Gathering_ from real card data.
 
 Ref: architecture "Scenarios".
 
-- [ ] `ScenarioDefinition` for `core2026-spreading-flames`: encounter sets, agenda/act decks, maps from M4.1, connections from M4.2
+- [ ] `ScenarioDefinition` for _The Gathering_ (`core` pack): encounter sets, agenda/act decks, maps from M4.1, connections from M4.2. under its own ID, apart from the hand-written test scenario in `packages/scenarios/src/the_gathering/`, which stays the only source of test data
 - [ ] Setup steps and set-aside cards; setup test against ArkhamDB quantities (via cached data, skipped offline)
 - [ ] One `CardDb` for every card: map carddata's cached `CardDef`s to engine `CardStats` (investigators included) and build the app's `CardDb` from all of them, so scenario packages only add hand-entered extras on top and the wizard no longer joins two sources with `cardDbWith` (Andy on #77)
 
-## M4.5 Spreading Flames: special mechanics (O)
+## M4.5 Night of the Zealot rules (O, one task per step)
 
-Generic rules this scenario needs (Doomed, Elusive, scenario actions, skill test margin, location attachments, timing windows) are planned in [encounter-card-analysis.md](../encounter-card-analysis.md#implementation-plan), steps 3–7; build them as their own PRs before the scenario-specific parts.
+Steps 1–12 of the [encounter card plan](../encounter-card-analysis.md#implementation-plan), each one task of one or a few small PRs, in plan order. Each step names the _Night of the Zealot_ cards it is built for and adds them to an end-to-end scenario test.
 
-**Why:** Every scenario has rules the generic engine does not cover. Implementing them shows which ones should become engine primitives (architecture "Overview", "generic before specific").
+**Why:** these generic rules are what _Night of the Zealot_'s cards need beyond today's engine. Building them first as engine primitives keeps the three scenarios mostly data (architecture "Overview", "generic before specific").
 
-**Benefit:** The scenario plays correctly, not just its setup.
+**Benefit:** _The Gathering_ plays correctly, not just its setup, and half of every later campaign's encounter cards work too.
 
-- [ ] Skull token value depends on the act number
-- [ ] `drawTopmostFromDiscard('Fire!')` uses; agenda 2 adds set-aside _Fire!_ copies to the discard
-- [ ] Parley action on agendas to discard a bystander enemy at a location (`ScenarioAction`)
-- [ ] Agenda 3 forced effect via `afterDoomPlaced`
-- [ ] Reverse-side hooks and resolutions (record only; campaign log comes in M5)
+- [ ] 1 Card data for every pack (read the chapter from the data; load `core`)
+- [ ] 2 Timing windows
+- [ ] 3 Skill test margin
+- [ ] 4 Choose one
+- [ ] 5 Card effects for existing commands, healing, conditional surge
+- [ ] 6 Board queries (nearest, most clues, no doom; moving toward; search by trait)
+- [ ] 7 Keyword details (prey, spawn filters, per-investigator values)
+- [ ] 8 Scenario actions (costs, tests, Parley, Resign, limits)
+- [ ] 9 Constant modifiers and restrictions
+- [ ] 10 Location attachments with targets
+- [ ] 11 Objective conditions and clue placement
+- [ ] 12 Campaign-specific setup and flow
 
 ## M4.6 Real-card UI pass (S)
 
@@ -86,8 +96,8 @@ Generic rules this scenario needs (Doomed, Elusive, scenario actions, skill test
 
 **Benefit:** Documented known gaps and a regression replay for the first real scenario.
 
-- [ ] Golden replay of a scripted _Spreading Flames_ game
-- [ ] Write `docs/playtests/spreading-flames.md`: what to check at the table, known gaps
+- [ ] Golden replay of a scripted _The Gathering_ game
+- [ ] Write `docs/playtests/the-gathering.md`: what to check at the table, known gaps
 - [ ] Note follow-ups in this file
 
-Done when: _Spreading Flames_ can be played at the table from setup to resolution.
+Done when: _The Gathering_ can be played at the table from setup to resolution.
