@@ -65,7 +65,7 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 - [ ] Modal for pending `Decision`s with the engine's options, one layout per decision kind (M1.9); the skill test prompt shows skill, difficulty and pass/fail buttons plus "skip, adjust manually"
 - [ ] Counts on an answer (`DecisionOption.amount` and `amounts`): attack damage to confirm, clues found, and how much a per-point test failed by (Grasping Hands, Rotting Remains). Until then the dialog answers with the defaults (a fail by 1)
 - [ ] Card zoom: front/back image, text fallback from card data
-- [ ] Tapping the agenda or act in the header opens its card (moved from M3.2)
+- [ ] Tapping the agenda or act in the header opens its card (moved from M3.2): the header cards only fit the name and the doom or clue progress, so the full card shows the picture large (the pattern without one), its stage and its text once the card data has text, plus its actions as buttons (placing and removing doom, advancing). The picture view comes with M3.10c2; the text and the actions follow here
 
 ## M3.8 Event log (S)
 
@@ -83,6 +83,7 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 **Benefit:** Confidence that it works on the real device, plus regression protection in CI.
 
 - [ ] Landscape tablet layout check (1180×820 and 1024×768), touch sizes, no horizontal scroll
+- [ ] Smaller buttons across the play screen (header, map toolbar, location menu), like the compact buttons on the agenda and act cards (`--button-compact`), still easy to tap on a tablet
 - [ ] Playwright: play two full rounds of the sandbox scenario; refresh mid-mythos restores the exact state
 - [ ] Map follow-ups from M3.3: enemy chips show engagement, damage and exhaustion (now only in their accessible name); chips stack without a limit, so a third enemy on a busy tile overlaps the pawns; map tabs get arrow-key navigation
 
@@ -114,6 +115,8 @@ The fan IP policy that covers FFG (Asmodee's community-use guidelines) does not 
 4. M3.10d: the "unofficial fan project" notice
 
 Done: M3.10a draws each location tile as a card face: frame, a hatched art area (crossed when unrevealed), the name band with the edit button and, on top, the shroud badge and round clue, doom and attachment tokens. The printed clue value is not in `LocationView` yet, so the clue badge waits for M3.10c, which adds card data to the views. Follow-up: long names (Miskatonic University) run under the edit button; wrap or shrink them in the name band.
+
+Done: M3.10b draws the agenda and act in the header as landscape cards (`data-card`, a frame per card type, the hatched art area as a CSS pattern token, the name band on top and a plate below with the count and small buttons: the doom steppers on the agenda, "Advance" on the act).
 
 Done when: a full sandbox game is playable and comfortable on a tablet.
 

@@ -13,8 +13,10 @@
   --color-clue: #3f8fb0;
   --color-doom: #b8433f;
   --color-token-text: #ffffff;
-  /* The frame of a location card. */
+  /* Card frames by card type: locations on the map, the agenda and act in the header. */
   --color-card-location: #8c7a55;
+  --color-card-agenda: #9a4a3c;
+  --color-card-act: #4a6f9a;
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -32,6 +34,8 @@
   --border-width: 1px;
   /* Minimum size of anything tappable, for use on a shared tablet. */
   --touch-target: 2.75rem;
+  /* Buttons on a card (the agenda's doom steppers, the act's advance), small so the card stays compact. */
+  --button-compact: 1.75rem;
 
   --layout-content-width: 60rem;
   --layout-board-panel-width: 16rem;
@@ -40,9 +44,24 @@
   --layout-sheet-width: 22rem;
   /* Connection lines on the map, in its SVG user units (mapLayout.ts TILE). */
   --map-line-width: 3px;
-  /* A card frame's border and the lines of the patterns in a card's art area, in the same units. */
-  --map-card-border-width: 3px;
-  --map-pattern-line-width: 1px;
+  /*
+   * A card frame's border and the lines of the hatch in a card's art area: SVG user units on the
+   * map, CSS pixels in the header, which match at the map's full size.
+   */
+  --card-border-width: 3px;
+  --card-pattern-line-width: 1px;
+  /*
+   * The art area of a card drawn in HTML (the agenda and act) without its image: the map's SVG
+   * hatch (LocationTile `CardPatterns`), lines from bottom left to top right in a 20-unit cell,
+   * which puts them 14px apart across the diagonal.
+   */
+  --card-art-pattern: repeating-linear-gradient(
+    -45deg,
+    var(--color-border) 0 var(--card-pattern-line-width),
+    transparent var(--card-pattern-line-width) 14px
+  );
+  /* The agenda and act in the header, landscape cards this tall. */
+  --layout-header-card-height: 6.5rem;
   /* A dragged map piece's copy, see-through so the tile under it stays readable. */
   --map-ghost-opacity: 0.6;
 }
