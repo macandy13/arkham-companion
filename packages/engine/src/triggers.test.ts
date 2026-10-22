@@ -12,6 +12,7 @@ import {
   blankTreachery,
   cardCode,
   checkInvariants,
+  decisionId,
   defeatEachInvestigator,
   discardEachEnemyAt,
   discardSelf,
@@ -21,6 +22,7 @@ import {
   fixed,
   instanceId,
   investigatorId,
+  leadDecides,
   mapId,
   MAX_TRIGGERED_COMMANDS,
   moveEachInvestigatorTo,
@@ -966,6 +968,68 @@ describe('abilities with a condition on the current act', () => {
 
     expect(state.meta.ended).toBeUndefined();
     expect(state.agenda.current).toBe(agenda2);
+  });
+});
+
+describe('a choice for the lead investigator', () => {
+  const bob = investigatorId('bob');
+  /** "The lead investigator must decide: burn the house (→R1), or leave it standing and take 1 horror." */
+  const finalAct = blankAct('final_act', {
+    abilities: [
+      whenAdvanced(
+        leadDecides(decisionId('burn_or_spare'), 'Burn the house?', [
+          { id: 'burn', label: 'Burn it', effects: [endScenario('R1')] },
+          {
+            id: 'spare',
+            label: 'Leave it',
+            effects: [
+              {
+                type: 'AdjustInvestigator',
+                investigatorId: { ref: 'lead' },
+                stat: 'horror',
+                delta: 1,
+              },
+            ],
+          },
+        ]),
+      ),
+    ],
+  });
+  /** Alice, the lead, and bob in the hall, with the final act current. */
+  const finalTable = newGame()
+    .withAct(act1, finalAct)
+    .withAct(act2, secondActCard)
+    .withLocation(hall, blankLocation('hall'), { revealed: true })
+    .withInvestigator(alice, { locationId: hall })
+    .withInvestigator(bob, { locationId: hall });
+
+  it('asks the lead once the card has advanced', () => {
+    const { context, state: started } = finalTable.start();
+
+    const { state } = execute(context, started, { type: 'AdvanceAct' });
+
+    expect(state.pending).toMatchObject([
+      {
+        id: decisionId('burn_or_spare'),
+        prompt: 'Burn the house?',
+        decider: { kind: 'lead' },
+        options: [{ id: 'burn' }, { id: 'spare' }],
+      },
+    ]);
+  });
+
+  it.each([
+    { optionId: 'burn', ended: true, aliceHorror: 0 },
+    { optionId: 'spare', ended: undefined, aliceHorror: 1 },
+  ])('runs the effects of the answer $optionId', ({ optionId, ended, aliceHorror }) => {
+    const { context, state: started } = finalTable.start();
+    const asked = stateAfter(context, started, { type: 'AdvanceAct' });
+
+    const state = stateAfter(context, asked, answer('burn_or_spare', optionId));
+
+    expect(state.meta.ended).toBe(ended);
+    expect(state.investigators.find((inv) => inv.id === alice)?.sanity.horror).toBe(aliceHorror);
+    expect(state.pending).toEqual([]);
   });
 });
 

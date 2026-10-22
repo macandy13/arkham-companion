@@ -3,13 +3,21 @@ import { cardStats, type EngineContext } from './cards';
 import type { Command, EncounterMatch, TestSkill } from './commands';
 import { isInPlay } from './doom';
 import type { Event } from './events';
-import type { CardCode, InstanceId, InvestigatorId } from './ids';
+import type { CardCode, DecisionId, InstanceId, InvestigatorId } from './ids';
 import { locationAttachments } from './board';
 import { enemiesAt } from './handle_enemy';
 import { isActiveInvestigator, playerOrder, requireInvestigator } from './investigators';
 import { cardsInZone, currentCard, requireCard } from './lookup';
 import type { AddMapStep } from './setup';
-import type { GameState, Investigator, PerPointFailed, QueuedStep, SkillName } from './state';
+import type {
+  Decision,
+  DecisionOption,
+  GameState,
+  Investigator,
+  PerPointFailed,
+  QueuedStep,
+  SkillName,
+} from './state';
 import type { Zone } from './zone';
 
 /**
@@ -120,7 +128,8 @@ export type AbilityCommand =
           | 'EndScenario';
       }
     >
-  | AbilityTest;
+  | AbilityTest
+  | AbilityChoice;
 
 /**
  * `TestSkill` with outcomes that are ability commands too, so a test in card
@@ -130,6 +139,25 @@ export type AbilityTest = Omit<TestSkill, 'onPass' | 'onFail'> & {
   onPass: readonly AbilityCommand[];
   onFail: readonly AbilityCommand[];
 };
+
+/**
+ * `RequestDecision` as card data writes it: a choice ("the lead investigator
+ * must decide") whose options lead only to what card data may do. It has no
+ * `subject`: a decision about an agenda or act would be dropped as the card
+ * advances, which is exactly when its reverse side asks. Its lists stay
+ * mutable so that it is a `RequestDecision`. Like a test, the whole choice is
+ * dropped when a reference in one option names nobody (`resolveRefs`).
+ */
+export interface AbilityChoice {
+  type: 'RequestDecision';
+  decision: Pick<Decision, 'id' | 'prompt' | 'decider'> & {
+    kind: 'chooseOption';
+    options: AbilityOption[];
+  };
+}
+
+/** One answer of an `AbilityChoice`: an option whose commands are ability commands. */
+export type AbilityOption = Pick<DecisionOption, 'id' | 'label'> & { commands: AbilityCommand[] };
 
 /**
  * One step of what an ability does: an allowed command written with
@@ -316,7 +344,8 @@ type RepeatedRef = Extract<RelativeCard | RelativeInvestigator, { ref: `each${st
 
 /**
  * The first reference in `effect` that repeats it. An effect holds at most
- * one, and a test's outcomes none: one there would repeat the whole test.
+ * one, and a test's outcomes and a choice's options none: one there would
+ * repeat the whole test or choice.
  */
 function repeatedRef(effect: unknown): RepeatedRef | undefined {
   if (typeof effect !== 'object' || effect === null) return undefined;
@@ -640,6 +669,32 @@ export function endScenario(resolution: string): AbilityEffect {
  */
 export function defeatEachInvestigator(): AbilityEffect {
   return { type: 'DefeatInvestigator', investigatorId: { ref: 'eachInvestigator' } };
+}
+
+/**
+ * "The lead investigator must decide (choose one)": a choice for the lead
+ * with one option per answer, each running its effects once picked, written
+ * `leadDecides(id, prompt, [{ id: 'burn', label, effects: [endScenario('R1')] }, …])`.
+ */
+export function leadDecides(
+  id: DecisionId,
+  prompt: string,
+  options: readonly { id: string; label: string; effects: AbilityEffect[] }[],
+): AbilityEffect {
+  return {
+    type: 'RequestDecision',
+    decision: {
+      id,
+      kind: 'chooseOption',
+      prompt,
+      decider: { kind: 'lead' },
+      options: options.map((option) => ({
+        id: option.id,
+        label: option.label,
+        commands: option.effects,
+      })),
+    },
+  };
 }
 
 /** "Reveal the Parlor". */

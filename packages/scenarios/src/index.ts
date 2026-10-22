@@ -1,7 +1,8 @@
 export const PACKAGE_NAME = '@arkham/scenarios';
 
-export { BURN_THE_HOUSE_DECISION, theGathering } from './the_gathering/scenario';
+export { theGathering } from './the_gathering/scenario';
 export {
+  BURN_THE_HOUSE_DECISION,
   GATHERING_CODES,
   GATHERING_RESOLUTIONS,
   GATHERING_SETS,

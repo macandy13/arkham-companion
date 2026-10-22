@@ -102,6 +102,7 @@ export {
   discardSelf,
   duringAct,
   endScenario,
+  leadDecides,
   moveEachInvestigatorTo,
   moveSelf,
   onlyCopy,
@@ -122,9 +123,11 @@ export {
 } from './abilities';
 export type {
   Ability,
+  AbilityChoice,
   AbilityCondition,
   AbilityCommand,
   AbilityEffect,
+  AbilityOption,
   AbilityTest,
   RelativeCard,
   RelativeInvestigator,

@@ -8,12 +8,14 @@ import {
   attachToLocation,
   cardCode,
   cardDbFrom,
+  decisionId,
   defeatEachInvestigator,
   discardEachEnemyAt,
   discardSelf,
   duringAct,
   encounterSetCode,
   endScenario,
+  leadDecides,
   mapId,
   moveEachInvestigatorTo,
   onlyCopy,
@@ -80,8 +82,12 @@ export const GATHERING_RESOLUTIONS = {
   trapped: 'R3',
 } as const;
 
+/** Id of act 3's question to the lead investigator: burn the house down or not. */
+export const BURN_THE_HOUSE_DECISION = decisionId('theGathering.burnTheHouse');
+
 const codes = GATHERING_CODES;
 const sets = GATHERING_SETS;
+const burnTheHouse = 'scenario.theGathering.burnTheHouse';
 const ghoulTraits = ['Humanoid', 'Monster', 'Ghoul'];
 
 /** One card step on the layout grid, which is finer than a card. */
@@ -184,7 +190,23 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     name: 'What Have You Done?',
     stage: 3,
     // Objective: the act advances by itself once the Ghoul Priest is defeated.
-    abilities: [whenEnemyDefeated(codes.ghoulPriest, advanceAct())],
+    abilities: [
+      whenEnemyDefeated(codes.ghoulPriest, advanceAct()),
+      whenAdvanced(
+        leadDecides(BURN_THE_HOUSE_DECISION, `${burnTheHouse}.prompt`, [
+          {
+            id: 'burn',
+            label: `${burnTheHouse}.burn`,
+            effects: [endScenario(GATHERING_RESOLUTIONS.burnedDown)],
+          },
+          {
+            id: 'spare',
+            label: `${burnTheHouse}.spare`,
+            effects: [endScenario(GATHERING_RESOLUTIONS.leftStanding)],
+          },
+        ]),
+      ),
+    ],
   }),
   location({ code: codes.study, name: 'Study', shroud: 2, cluesPerInvestigator: 2 }),
   location({ code: codes.hallway, name: 'Hallway', shroud: 1, cluesPerInvestigator: 0 }),

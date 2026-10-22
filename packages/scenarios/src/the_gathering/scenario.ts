@@ -1,58 +1,19 @@
 import {
   cardStats,
-  decisionId,
   enemiesAt,
   mapId,
   scenarioId,
   trait,
-  type Command,
   type ScenarioDefinition,
   type TokenValue,
 } from '@arkham/engine';
-import { GATHERING_CODES, GATHERING_RESOLUTIONS, GATHERING_SETS } from './cards';
+import { GATHERING_CODES, GATHERING_SETS } from './cards';
 
 const codes = GATHERING_CODES;
 const sets = GATHERING_SETS;
 
 /** Translation key prefix for The Gathering's reference card effects. */
 const reference = 'scenario.theGathering.reference';
-
-const resolutions = GATHERING_RESOLUTIONS;
-
-/** Id of act 3's question to the lead investigator: burn the house down or not. */
-export const BURN_THE_HOUSE_DECISION = decisionId('theGathering.burnTheHouse');
-
-/**
- * Act 3, reverse side: the lead investigator decides whether to burn the
- * house down (R1) or leave it standing (R2). The decision has no `subject`:
- * one about the act would be dropped as the act leaves play.
- */
-function whatHaveYouDoneReverseSide(): Command[] {
-  const prefix = 'scenario.theGathering.burnTheHouse';
-  return [
-    {
-      type: 'RequestDecision',
-      decision: {
-        id: BURN_THE_HOUSE_DECISION,
-        kind: 'chooseOption',
-        prompt: `${prefix}.prompt`,
-        decider: { kind: 'lead' },
-        options: [
-          {
-            id: 'burn',
-            label: `${prefix}.burn`,
-            commands: [{ type: 'EndScenario', resolution: resolutions.burnedDown }],
-          },
-          {
-            id: 'spare',
-            label: `${prefix}.spare`,
-            commands: [{ type: 'EndScenario', resolution: resolutions.leftStanding }],
-          },
-        ],
-      },
-    },
-  ];
-}
 
 /**
  * The skull token on Easy/Standard: -X, where X is the number of Ghoul
@@ -76,12 +37,10 @@ const ghoulsAtYourLocation: TokenValue = (ctx, state, test) => {
  * rest of the six encounter sets is shuffled into the encounter deck. Card
  * data is hand-entered (`theGatheringCardDefs`); it is the shared test
  * scenario for the generic rules until real scenario data arrives (M4).
- * The reverse sides of acts 1 and 2 and of agendas 2 and 3, and act 3's
- * objective, are abilities on their card data; `hooks` hold the reverse side
- * of act 3 (agenda 1's choice and agenda 3's forced effects are left to the
- * players). Pass the whole definition as `EngineContext.scenario`, so the
- * engine gets the hooks together with `reference` and `modifiers` (the
- * skull's "-X") for skill test suggestions. The reference
+ * Every reverse side but agenda 1's, and act 3's objective, are abilities on
+ * their card data; agenda 1's choice is left to the players. Pass the whole
+ * definition as `EngineContext.scenario`, so the engine gets `reference` and
+ * `modifiers` (the skull's "-X") for skill test suggestions. The reference
  * card's modifiers are hand-entered from the 2016 Core Set card as known
  * (Easy/Standard: skull -X, cultist -1, tablet -2; Hard/Expert: skull -2,
  * cultist reveals another token, tablet -4), not checked against a source.
@@ -143,10 +102,5 @@ export const theGathering: ScenarioDefinition = {
     { kind: 'moveInvestigators', to: codes.study },
     { kind: 'buildEncounterDeck', sets: Object.values(sets) },
   ],
-  hooks: {
-    onActAdvance: {
-      [codes.whatHaveYouDone]: whatHaveYouDoneReverseSide,
-    },
-  },
   modifiers: { tokenValues: { skull: ghoulsAtYourLocation } },
 };
