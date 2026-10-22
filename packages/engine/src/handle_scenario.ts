@@ -72,8 +72,8 @@ export function handleAdvanceAct(ctx: EngineContext, state: GameState, cmd: Adva
  * becomes current, so an effect on "the current agenda/act" must still hit
  * the advancing card, and on the last card it is the reverse side that names
  * the resolution or lets the investigators choose it. The reverse side is
- * the card's `advanced` abilities or the `onAgendaAdvance`/`onActAdvance`
- * hook on the first step's `AgendaAdvanced`/`ActAdvanced`, so `handle` runs
+ * the card's `advanced` abilities, opened by the first step's
+ * `AgendaAdvanced`/`ActAdvanced`, so `handle` runs
  * this as a step after their follow-ups (`QueuedStep` `finishAdvance`). If
  * the reverse side asks something, this waits for the answer and its events
  * go with that answer.

@@ -41,8 +41,8 @@ export function handleStartTurn(state: GameState, cmd: StartTurn): TurnStarted[]
 
 /**
  * `EndTurn`: ends the turn in progress, which must be the investigator's.
- * `TurnEnded` fires the scenario's `onTurnEnd` and opens the `turnEnds`
- * window for the cards in their threat area (Frozen in Fear's test).
+ * `TurnEnded` opens the `turnEnds` window for the cards in their threat
+ * area (Frozen in Fear's test).
  */
 export function handleEndTurn(state: GameState, cmd: EndTurn): TurnEnded[] {
   requirePhase(state, 'investigation');

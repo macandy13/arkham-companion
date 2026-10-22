@@ -154,7 +154,7 @@ export type PhaseStepId =
   | 'readyExhausted'
   /** 4.4 Upkeep: each investigator gains 1 resource; drawing 1 card is left to the players. */
   | 'gainResources'
-  /** 4.6 Upkeep: the upkeep phase and the round end (`RoundEnded`, `onRoundEnd`). */
+  /** 4.6 Upkeep: the upkeep phase and the round end (`RoundEnded`, `roundEnds`). */
   | 'endRound';
 
 /** One enemy attack that step 3.3 still has to resolve (`ResolveEnemyAttack`). */
@@ -307,7 +307,7 @@ export interface SkillTestSuggestion {
  * skill test outcome …). The engine never guesses; the answer comes back as a
  * `ResolveDecision` command, which runs the commands of the chosen option.
  * Created by a `DecisionRequested` event (from a rule module or a
- * `RequestDecision` command, e.g. returned by a scenario hook) and kept in
+ * `RequestDecision` command, e.g. a card ability's `leadDecides`) and kept in
  * `GameState.pending` until it is resolved or the card it is about advances
  * or leaves play. While any decision is pending `handle` rejects every
  * command except `ManualAdjust` and `ResolveDecision`.

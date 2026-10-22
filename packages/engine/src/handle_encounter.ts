@@ -97,8 +97,7 @@ function findMatch(
 
 /**
  * Whether the card fulfils every field `match` sets, as a matched
- * `DrawEncounter` checks it; also for scenario hooks that must know whether a
- * matching card is left before they ask for the draw.
+ * `DrawEncounter` checks it.
  */
 export function matchesEncounter(stats: CardStats, match: EncounterMatch): boolean {
   return (

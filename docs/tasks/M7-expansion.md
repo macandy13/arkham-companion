@@ -21,7 +21,7 @@ This milestone is a repeatable recipe plus one section per campaign. Each campai
 1. **Import (S):** `pnpm carddata:fetch <pack>`; M4.1 ArkhamCards import for the scenario.
 2. **Connections (O):** M4.2 extraction + review for the pack's locations.
 3. **Definition (O):** `ScenarioDefinition`, setup steps, setup test.
-4. **Mechanics (O):** special rules as card abilities and scenario hooks; promote anything a second scenario needs into an engine primitive.
+4. **Mechanics (O):** special rules as card abilities; promote anything a second scenario needs into an engine primitive.
 5. **Playtest (S):** golden replay + playtest checklist.
 
 ## M7.1 Chapter Two: Core Set (2026) and Children of Blood (O)

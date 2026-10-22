@@ -26,7 +26,7 @@ import { followUpStep, MAX_TRIGGERED_COMMANDS, triggeredSteps } from './triggers
  *
  * The command resolves as a queue of steps (`Step`, `run`). A step's own
  * events come first, then the follow-up commands they trigger
- * (`ctx.scenario.hooks`, `ctx.effects`), then whatever continues the step
+ * (card abilities, `triggeredSteps`), then whatever continues the step
  * (`CommandSpec.continueWith`: advancing agenda/act, placing a drawn card,
  * surge, the outstanding phase steps after `NextPhase`). Each follow-up is a
  * step of its own and goes in front of the rest, so a follow-up's chain
@@ -41,7 +41,7 @@ import { followUpStep, MAX_TRIGGERED_COMMANDS, triggeredSteps } from './triggers
  * with the next "Next".
  * One player command yields one list of events, which undo (M1.11) removes
  * as a unit. A rejected follow-up or a chain longer than
- * `MAX_TRIGGERED_COMMANDS` rejects the originating command, so a bad hook
+ * `MAX_TRIGGERED_COMMANDS` rejects the originating command, so bad card data
  * can neither hang the app nor leave half its effect behind.
  * Which commands are accepted once the scenario has ended or while a
  * decision is pending is up to their `CommandSpec`.
@@ -282,8 +282,8 @@ function resolveQueuedStep(
  * an answer, then whatever continues it (`CommandSpec.continueWith`).
  * Triggers on an answer's events coming first is right for a skill test
  * (`SkillTestResolved`: "after you fail" is ST.6, the results ST.7). For a
- * plain choice the chosen option is part of the effect, so an "after" hook
- * on `DecisionResolved` would have to wait for it; no hook reads either
+ * plain choice the chosen option is part of the effect, so an "after" ability
+ * on `DecisionResolved` would have to wait for it; no window opens on either
  * event yet, and the timing windows (P1) decide where each one fires.
  */
 function resolveCommand(
@@ -360,10 +360,10 @@ function withOrigin(steps: readonly Continuation[], origin: Command['type'] | un
 /**
  * The next of the outstanding phase steps after `NextPhase`: a step's
  * commands come first, then the forced effects of its own events
- * (`RoundEnded` -> `onRoundEnd`), then the next phase step. Nothing once
+ * (`RoundEnded` -> `roundEnds`), then the next phase step. Nothing once
  * none is left or an enemy attack waits for the players. Each step gets its
  * own loop budget: a phase has a fixed, small number of steps, and the
- * guard is about hooks re-triggering themselves within one of them.
+ * guard is about abilities re-triggering each other within one of them.
  */
 function resolvePhaseStep(resolution: Resolution, budget: TriggerBudget): Step[] {
   const plan = nextStepPlan(resolution.ctx, resolution.state);

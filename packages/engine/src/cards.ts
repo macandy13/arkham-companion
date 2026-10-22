@@ -78,7 +78,7 @@ export function resolveValue(value: ScaledValue, playerCount: number): number {
  * them apart (`'c'` for "2c"), and is omitted for the usual `a` side. Decks
  * are ordered by `number` only: cards sharing a number are alternatives, and
  * exactly one of them belongs in the deck. Which one is chosen by scenario
- * setup or, for a mid-game branch, by a decision or hook – this type only
+ * setup or, for a mid-game branch, by a decision or card ability – this type only
  * makes the choice expressible.
  */
 export interface CardStage {
@@ -175,15 +175,15 @@ export interface CardDb {
  * Everything `handle` needs besides the state and the command. Passed in
  * rather than stored in `GameState` so the state stays small and serialisable,
  * and so the reducer cannot depend on card data – events already carry the
- * values a rule computed from it. Scenario hooks are code, which is
- * another reason they live here and not in the serialisable state.
+ * values a rule computed from it. A scenario's skill modifiers are code,
+ * which is another reason they live here and not in the serialisable state.
  */
 export interface EngineContext {
   cards: CardDb;
   /**
-   * The running scenario. The engine reads its forced effects (`hooks`), its
-   * reference card and its skill test modifiers from here, so a caller passes
-   * the definition once and cannot leave one of them out. Absent for tests
+   * The running scenario. The engine reads its reference card and its skill
+   * test modifiers from here, so a caller passes the definition once and
+   * cannot leave one of them out. Absent for tests
    * that start from a bare board: then nothing scenario-specific happens and
    * symbol tokens count as unknown in skill test suggestions.
    */

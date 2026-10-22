@@ -19,7 +19,7 @@ import type { GameState, HeldAction } from './state';
  * provoke attacks of opportunity", which the engine cannot read. Nothing for
  * any other command.
  *
- * `handle` calls this for player commands only: follow-ups of hooks and of
+ * `handle` calls this for player commands only: follow-ups of abilities and of
  * decision answers are rule consequences, not actions, so they never
  * provoke (`CommandSpec.provokes` tells which commands do). When it raises any decision, `handle` holds the action
  * (`StepsQueued`) and resolves it only after the last answer

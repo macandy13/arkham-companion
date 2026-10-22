@@ -2,7 +2,6 @@ import type { CardCode, ScenarioId } from './ids';
 import type { SetupStep } from './setup';
 import type { ChaosToken, Difficulty } from './state';
 import type { SkillModifierRegistry } from './skill_modifiers';
-import type { ScenarioHooks } from './triggers';
 
 /**
  * A scenario as data (architecture "Scenarios"): its agendas and acts, chaos bag,
@@ -23,14 +22,9 @@ export interface ScenarioDefinition {
   actDeck: readonly CardCode[];
   setup: readonly SetupStep[];
   /**
-   * The scenario's forced effects. Not read by `compileSetup`: the engine
-   * reads them from `EngineContext.scenario` for the whole scenario.
-   */
-  hooks?: Partial<ScenarioHooks>;
-  /**
    * The scenario's skill test modifiers in code (a "-X" token value, a
-   * scenario-wide rule). Like `hooks` and `reference`, the engine reads them
-   * from `EngineContext.scenario`.
+   * scenario-wide rule). Like `reference`, the engine reads them from
+   * `EngineContext.scenario`; `compileSetup` doesn't.
    */
   modifiers?: SkillModifierRegistry;
 }
