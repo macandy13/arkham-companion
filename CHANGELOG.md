@@ -1,6 +1,8 @@
 # Changelog
 
-## [1.8.0](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.7.0...arkham-companion-v1.8.0) (2026-10-22)
+The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
+
+## 2026-10-22 (was 1.8.0)
 
 
 ### Features
@@ -81,7 +83,7 @@
 * plan the adjust board mode and token drag (M3.11) ([f420a8a](https://github.com/macandy13/arkham-companion/commit/f420a8a70d7161cc1feddba96537f9232dbbf243))
 * re-plan milestones for Night of the Zealot first, then the campaign order ([9880e52](https://github.com/macandy13/arkham-companion/commit/9880e52d6bf7b5110690c0b6b611a5864d6802d0))
 
-## [1.7.0](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.6.0...arkham-companion-v1.7.0) (2026-10-21)
+## 2026-10-21 (was 1.7.0)
 
 
 ### Features
@@ -108,7 +110,7 @@
 
 * list BoardView.maps; say the tile size is a maximum ([7f59372](https://github.com/macandy13/arkham-companion/commit/7f5937266e1f03f6f0786ae72c91e2c02649bf35))
 
-## [1.6.0](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.5.0...arkham-companion-v1.6.0) (2026-10-20)
+## 2026-10-20 (was 1.6.0)
 
 
 ### Features
@@ -152,7 +154,7 @@
 * new screens tag only their own flow ([a112bcb](https://github.com/macandy13/arkham-companion/commit/a112bcb709e125d357859783697463baec03e61c))
 * tag flows whose recorded behavior changes, not only edited specs ([b84a265](https://github.com/macandy13/arkham-companion/commit/b84a265c03b0aa543e80245a9dbadf4950de4bc5))
 
-## [1.5.0](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.4.1...arkham-companion-v1.5.0) (2026-10-20)
+## 2026-10-20 (was 1.5.0)
 
 
 ### Features
@@ -197,14 +199,14 @@
 * **web:** show the web app's util dependency; tie SteppedStat to InvestigatorStat (M3.1) ([60f0703](https://github.com/macandy13/arkham-companion/commit/60f070365df82c7ca45e83636ac557350b61fde1))
 * weekly docs sync (2026-10-18) ([78ee486](https://github.com/macandy13/arkham-companion/commit/78ee4863c6b98222193a77fd52a14c8fe629dd2e))
 
-## [1.4.1](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.4.0...arkham-companion-v1.4.1) (2026-10-19)
+## 2026-10-19 (was 1.4.1)
 
 
 ### Bug fixes
 
 * **engine:** repair the rat engagement test after [#130](https://github.com/macandy13/arkham-companion/issues/130); close M1V.3 ([cc0af2a](https://github.com/macandy13/arkham-companion/commit/cc0af2a8018805acb69037afd3ad644f58bb8251))
 
-## [1.4.0](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.3.1...arkham-companion-v1.4.0) (2026-10-19)
+## 2026-10-19 (was 1.4.0)
 
 
 ### Features
@@ -243,14 +245,14 @@
 * list the next test helper follow-ups ([c55456c](https://github.com/macandy13/arkham-companion/commit/c55456c1a86e3950e7feb8ec53eb966f25bd1009))
 * plan the asAction flag and the timing suite after P8 ([f857f04](https://github.com/macandy13/arkham-companion/commit/f857f04fa7d593a325e58c009af6586a3b89f375))
 
-## [1.3.1](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.3.0...arkham-companion-v1.3.1) (2026-10-18)
+## 2026-10-18 (was 1.3.1)
 
 
 ### Refactoring
 
 * **engine:** grow one resolution per handle call ([867ea13](https://github.com/macandy13/arkham-companion/commit/867ea13552776bcb42f2c0c241c11b5b6ae8faaf))
 
-## [1.3.0](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.2.0...arkham-companion-v1.3.0) (2026-10-18)
+## 2026-10-18 (was 1.3.0)
 
 
 ### Features
@@ -374,7 +376,7 @@
 * record forced-effect timing and the M1V.1 findings ([a18ac2e](https://github.com/macandy13/arkham-companion/commit/a18ac2eabfbc61c31a8e67a7fc530d0202177c0a))
 * use bullet lists in the encounter card analysis ([f9593f8](https://github.com/macandy13/arkham-companion/commit/f9593f8e4a8a47160f29e7088acae9836e71d6c0))
 
-## [1.2.0](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.1.0...arkham-companion-v1.2.0) (2026-10-16)
+## 2026-10-16 (was 1.2.0)
 
 
 ### Features
@@ -401,7 +403,7 @@
 * rules claims table from rules-checker and a playthrough step for every rule ([85a2004](https://github.com/macandy13/arkham-companion/commit/85a200402e0d1d1ce3847d4d0742fc61dd4792db))
 * show functions where explained, add rules verification milestone ([c1b708c](https://github.com/macandy13/arkham-companion/commit/c1b708cb788e97cfba79a44121df303800da3b7d))
 
-## [1.1.0](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.0.0...arkham-companion-v1.1.0) (2026-10-16)
+## 2026-10-16 (was 1.1.0)
 
 
 ### Features
@@ -498,7 +500,7 @@
 * plan M1 follow-up tasks M1.15–M1.18 ([9eb8f86](https://github.com/macandy13/arkham-companion/commit/9eb8f86c93d566a24a140d8ec4851f35e9343524))
 * plan the campaign engine milestone (M1C) ([#44](https://github.com/macandy13/arkham-companion/issues/44)) ([44f8687](https://github.com/macandy13/arkham-companion/commit/44f8687d101e0a7fcd51c156f6c47f139e4adedc))
 
-## 1.0.0 (2026-10-14)
+## 2026-10-14 (was 1.0.0)
 
 
 ### Documentation
