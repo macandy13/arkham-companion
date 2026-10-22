@@ -35,16 +35,6 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 
 ---
 
-## M3.4 Board interactions (S)
-
-**Why:** Dragging is the fastest interaction on a tablet. Snapping back illegal moves teaches the rules without blocking players (manual adjust still exists).
-
-**Benefit:** Moves feel like moving physical pieces, with fewer rules mistakes.
-
-- [x] Drag pawn to a connected location → `MoveInvestigator`; drag enemy → `MoveEnemy`/`EngageEnemy`
-- [ ] Location long-press menu: reveal, add/remove clue or doom, discover clue for investigator
-- [x] Illegal drops snap back with a hint (the rejection toast gives it)
-
 ## M3.5 Investigator bar (S)
 
 **Why:** Replaces each investigator's health/sanity dials and clue/resource piles.

@@ -13,6 +13,7 @@ import type {
   MapView,
 } from '@arkham/engine';
 import type { GameActions } from '../state/gameActions';
+import { LocationMenu } from './LocationMenu';
 import { EnemyChip, LocationTile, Pawn, type TilePiece } from './LocationTile';
 import {
   connectionEnds,
@@ -24,6 +25,7 @@ import {
   tileOrigin,
   type Point,
 } from './mapLayout';
+import { useLongPress } from './useLongPress';
 import { usePieceDrag } from './usePieceDrag';
 import './map.css';
 
@@ -101,6 +103,9 @@ type DraggedPiece = TilePiece & { from: InstanceId };
  * - An enemy dropped on another location moves there as a card instruction says
  *   (`GameActions.moveEnemy`); the players drag it only when a card tells them to, so the map
  *   does not ask which card.
+ *
+ * A long press on a tile opens its menu (`LocationMenu`), where the players reveal it, change its
+ * clues and doom and discover a clue there.
  */
 function MapDrawing({
   map,
@@ -129,6 +134,9 @@ function MapDrawing({
     if (to === undefined || to === piece.from) return;
     void ('enemy' in piece ? actions.moveEnemy(piece.enemy.id, to) : actions.moveTo(to));
   });
+  const [menuFor, setMenuFor] = useState<InstanceId>();
+  const menuLocation = map.locations.find(({ id }) => id === menuFor);
+  const longPress = useLongPress<InstanceId>(setMenuFor);
   const draggable = (piece: TilePiece) =>
     !busy && ('enemy' in piece || piece.investigator.id === mover?.id);
   const { width, height } = drawingSize(Object.values(cells));
@@ -169,6 +177,7 @@ function MapDrawing({
                       location={location}
                       enemies={map.enemies[location.id] ?? []}
                       investigators={pawnsAt(board, location)}
+                      press={longPress.handlers(location.id)}
                       dragOf={(piece) =>
                         draggable(piece)
                           ? drag.handlers({ ...piece, from: location.id })
@@ -186,6 +195,15 @@ function MapDrawing({
           </svg>
         </TransformComponent>
       </TransformWrapper>
+      {menuLocation && (
+        <LocationMenu
+          location={menuLocation}
+          board={board}
+          actions={actions}
+          busy={busy}
+          onClose={() => setMenuFor(undefined)}
+        />
+      )}
     </figure>
   );
 }

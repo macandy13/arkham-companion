@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   attachedTo,
   atLocation,
@@ -49,8 +49,26 @@ const actionsOn = (table: PlayTable) =>
 const tile = (name: string) => screen.getByRole('group', { name });
 
 describe('MapBoard', () => {
+  // jsdom lays nothing out and has no pointer capture: the drawing's screen matrix is stubbed to
+  // the identity, so a pointer at screen (x, y) is at (x, y) in the drawing, and a captured
+  // pointer stays with the piece it went down on.
+  const identity = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
   beforeAll(async () => {
     await initI18n('en');
+    Object.assign(SVGSVGElement.prototype, {
+      getScreenCTM: () => ({ inverse: () => identity }),
+    });
+    Object.assign(Element.prototype, {
+      setPointerCapture: () => {},
+      hasPointerCapture: () => true,
+    });
+  });
+  afterAll(() => {
+    const svg: object = SVGSVGElement.prototype;
+    const element: object = Element.prototype;
+    Reflect.deleteProperty(svg, 'getScreenCTM');
+    Reflect.deleteProperty(element, 'setPointerCapture');
+    Reflect.deleteProperty(element, 'hasPointerCapture');
   });
   afterEach(cleanup);
 
@@ -179,32 +197,14 @@ describe('MapBoard', () => {
     expect(within(tile('hallway')).getByRole('img', { name: 'rats' })).toBeTruthy();
   });
 
-  // jsdom lays nothing out, so the drawing's screen matrix is stubbed to the identity: a pointer
-  // at screen (x, y) is at (x, y) in the drawing. The Study's tile spans 0–150 across and 0–210
-  // down, with its first pawn centred on (24, 186) and, below its three lines of text, its first
-  // enemy chip on (75, 98); the Hallway's tile starts at x 180.
+  // The Study's tile spans 0–150 across and 0–210 down, with its first pawn centred on (24, 186)
+  // and, below its three lines of text, its first enemy chip on (75, 98); the Hallway's tile
+  // starts at x 180.
   describe('dragging pieces', () => {
     const firstPawn = { x: 24, y: 186 };
     const firstChip = { x: 75, y: 98 };
     const bea = investigatorId('bea');
     const rats = instanceId('rats');
-    const identity = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
-    beforeAll(() => {
-      Object.assign(SVGSVGElement.prototype, {
-        getScreenCTM: () => ({ inverse: () => identity }),
-      });
-      Object.assign(Element.prototype, {
-        setPointerCapture: () => {},
-        hasPointerCapture: () => true,
-      });
-    });
-    afterAll(() => {
-      const svg: object = SVGSVGElement.prototype;
-      const element: object = Element.prototype;
-      Reflect.deleteProperty(svg, 'getScreenCTM');
-      Reflect.deleteProperty(element, 'setPointerCapture');
-      Reflect.deleteProperty(element, 'hasPointerCapture');
-    });
 
     /**
      * Drags the piece named `name` on the tile of `location`, pressed at screen point `from`, to
@@ -328,6 +328,134 @@ describe('MapBoard', () => {
       await drag('study', 'rats', firstChip, 255, 105);
 
       expect(table.board.enemy(rats)).toEqual({ name: 'rats', at: 'study' });
+    });
+  });
+
+  describe('the location menu', () => {
+    const menu = (name: string) => screen.getByRole('dialog', { name });
+    const tap = (name: string) => fireEvent.click(screen.getByRole('button', { name }));
+
+    it('opens on a right click on a tile and closes again', () => {
+      const table = PlayTable.start(house);
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+
+      fireEvent.contextMenu(tile('hallway'));
+      expect(menu('hallway')).toBeTruthy();
+
+      tap('Close');
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    describe('by a long press', () => {
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      /** Presses the tile of `location` at (0, 0), moves the pointer to (`x`, `y`) and holds it. */
+      function holdOn(location: string, x: number, y: number) {
+        vi.useFakeTimers();
+        fireEvent.pointerDown(tile(location), { pointerId: 1, clientX: 0, clientY: 0 });
+        fireEvent.pointerMove(tile(location), { pointerId: 1, clientX: x, clientY: y });
+        act(() => vi.advanceTimersByTime(500));
+      }
+
+      it.each([
+        { held: 'still', x: 0, y: 0, opens: true },
+        { held: 'within 10 pixels', x: 6, y: 8, opens: true },
+        { held: 'moving further, as a pan', x: 9, y: 9, opens: false },
+      ])('opens the menu when held $held: $opens', ({ x, y, opens }) => {
+        const table = PlayTable.start(house);
+        render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+
+        holdOn('hallway', x, y);
+
+        expect(screen.queryByRole('dialog', { name: 'hallway' }) !== null).toBe(opens);
+      });
+
+      it('leaves the menu closed when the press starts on a pawn that can be dragged', () => {
+        const table = PlayTable.start(
+          house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
+        );
+        render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+        vi.useFakeTimers();
+
+        fireEvent.pointerDown(within(tile('study')).getByRole('img', { name: 'alder' }));
+        act(() => vi.advanceTimersByTime(500));
+
+        expect(screen.queryByRole('dialog')).toBeNull();
+      });
+    });
+
+    it('reveals an unrevealed location', async () => {
+      const table = PlayTable.start(house);
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      fireEvent.contextMenu(tile('hallway'));
+
+      tap('Reveal');
+      await act(async () => {});
+
+      expect(table.board.location(hallway).revealed).toBe(true);
+    });
+
+    it.each([
+      { button: 'Add a clue', clues: 3, doom: 1 },
+      { button: 'Remove a clue', clues: 1, doom: 1 },
+      { button: 'Add doom', clues: 2, doom: 2 },
+      { button: 'Remove doom', clues: 2, doom: 0 },
+    ])(
+      'changes the study, with 2 clues and 1 doom, by "$button"',
+      async ({ button, clues, doom }) => {
+        const table = PlayTable.start(house);
+        render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+        fireEvent.contextMenu(tile('study'));
+
+        tap(button);
+        await act(async () => {});
+
+        const { clues: cluesLeft, doom: doomLeft = 0 } = table.board.location(study);
+        expect({ clues: cluesLeft, doom: doomLeft }).toEqual({ clues, doom });
+      },
+    );
+
+    it('lets the investigator whose turn it is discover a clue there', async () => {
+      const table = PlayTable.start(
+        house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
+      );
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      fireEvent.contextMenu(tile('study'));
+
+      tap('alder discovers a clue');
+      await act(async () => {});
+
+      expect(table.board.location(study).clues).toBe(1);
+      expect(table.board.investigator(alder).clues).toBe(1);
+    });
+
+    it('turns off removing a token there is none of and discovering where there are no clues', () => {
+      const table = PlayTable.start(
+        house.withInvestigator(alder, { locationId: hallway }).withTurnOf(alder),
+      );
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      fireEvent.contextMenu(tile('hallway'));
+      const disabled = (name: string) =>
+        screen.getByRole('button', { name }).hasAttribute('disabled');
+
+      expect(disabled('Remove a clue')).toBe(true);
+      expect(disabled('Remove doom')).toBe(true);
+      expect(disabled('alder discovers a clue')).toBe(true);
+      expect(disabled('Add a clue')).toBe(false);
+    });
+
+    it('turns every change off while a step is still queued', () => {
+      const table = PlayTable.start(house);
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy />);
+      fireEvent.contextMenu(tile('hallway'));
+
+      const enabled = within(menu('hallway'))
+        .getAllByRole('button')
+        .filter((button) => !button.hasAttribute('disabled'))
+        .map((button) => button.textContent);
+      expect(enabled).toEqual(['Close']);
     });
   });
 });

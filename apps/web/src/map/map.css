@@ -128,3 +128,34 @@
 #map svg [data-ghost] {
   opacity: var(--map-ghost-opacity);
 }
+
+/* The location menu (LocationMenu): one row per token stepper, the actions stacked below. */
+#map dialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+#map dialog:not([open]) {
+  display: none;
+}
+
+#map dialog section {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+#map dialog section p {
+  flex: 1;
+  margin: 0;
+}
+
+#map dialog h2 {
+  margin: 0;
+  font-size: var(--font-size-subtitle);
+}
+
+#map dialog section button {
+  min-width: var(--touch-target);
+}

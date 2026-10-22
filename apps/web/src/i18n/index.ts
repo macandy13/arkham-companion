@@ -50,6 +50,8 @@ export const resources = {
         investigatorNotAtLocation: 'The investigator is not at that location.',
         alreadyEngaged: 'That enemy is already engaged with the investigator.',
         massiveNotEngageable: 'A massive enemy cannot be engaged.',
+        alreadyRevealed: 'That location is already revealed.',
+        notEnoughClues: 'There are not enough clues there.',
       },
       nav: { label: 'Main' },
       game: {
@@ -72,6 +74,23 @@ export const resources = {
         exhausted: 'exhausted',
         connection: '{{from}} – {{to}}',
         oneWay: '{{from}} to {{to}}, one way',
+      },
+      locationMenu: {
+        reveal: 'Reveal',
+        discover: '{{investigator}} discovers a clue',
+        close: 'Close',
+        clue: {
+          label: 'Clues',
+          count: 'Clues {{count}}',
+          add: 'Add a clue',
+          remove: 'Remove a clue',
+        },
+        doom: {
+          label: 'Doom',
+          count: 'Doom {{count}}',
+          add: 'Add doom',
+          remove: 'Remove doom',
+        },
       },
       investigators: { title: 'Investigators' },
       encounter: { title: 'Encounter' },
@@ -255,6 +274,8 @@ export const resources = {
         alreadyEngaged: 'Dieser Gegner ist bereits mit dem Ermittler in einen Kampf verwickelt.',
         massiveNotEngageable:
           'Mit einem massiven Gegner kann man sich nicht in einen Kampf verwickeln.',
+        alreadyRevealed: 'Dieser Ort ist bereits aufgedeckt.',
+        notEnoughClues: 'Dort liegen nicht genug Hinweise.',
       },
       nav: { label: 'Hauptnavigation' },
       game: {
@@ -277,6 +298,23 @@ export const resources = {
         exhausted: 'erschöpft',
         connection: '{{from}} – {{to}}',
         oneWay: '{{from}} nach {{to}}, nur in eine Richtung',
+      },
+      locationMenu: {
+        reveal: 'Aufdecken',
+        discover: '{{investigator}} entdeckt einen Hinweis',
+        close: 'Schließen',
+        clue: {
+          label: 'Hinweise',
+          count: 'Hinweise {{count}}',
+          add: 'Hinweis hinzufügen',
+          remove: 'Hinweis entfernen',
+        },
+        doom: {
+          label: 'Verderben',
+          count: 'Verderben {{count}}',
+          add: 'Verderben hinzufügen',
+          remove: 'Verderben entfernen',
+        },
       },
       investigators: { title: 'Ermittler' },
       encounter: { title: 'Begegnung' },

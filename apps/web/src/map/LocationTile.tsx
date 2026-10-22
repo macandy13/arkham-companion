@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import type { InvestigatorView, LocationView, MapEnemyView } from '@arkham/engine';
 import { CONTENT, pawnOffset, TILE, type Point } from './mapLayout';
+import type { LongPressHandlers } from './useLongPress';
 import type { DragHandlers } from './usePieceDrag';
 
 /** A piece standing on a tile that the players may drag: an investigator's pawn or an enemy. */
@@ -10,13 +11,15 @@ export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyVi
  * One location as a tile at (`x`, `y`): its name, its shroud and clues once revealed (both are
  * on the revealed side), its doom and attachments when it has any, a chip per enemy at it and a
  * pawn per investigator there. `enemies` and `investigators` are the open game's pieces at this
- * location; `dragOf` gives the drag handlers of each piece that can be dragged now.
+ * location; `dragOf` gives the drag handlers of each piece that can be dragged now, and `press`
+ * makes the tile answer a long press.
  */
 export function LocationTile({
   location,
   enemies,
   investigators,
   dragOf,
+  press,
   x,
   y,
 }: {
@@ -24,6 +27,7 @@ export function LocationTile({
   enemies: readonly MapEnemyView[];
   investigators: readonly InvestigatorView[];
   dragOf: (piece: TilePiece) => DragHandlers | undefined;
+  press: LongPressHandlers;
   x: number;
   y: number;
 }) {
@@ -39,7 +43,7 @@ export function LocationTile({
   const chipsTop = CONTENT.line * (lines.length + 0.5);
 
   return (
-    <g role="group" aria-label={location.name} transform={`translate(${x} ${y})`}>
+    <g role="group" aria-label={location.name} transform={`translate(${x} ${y})`} {...press}>
       <rect width={TILE.width} height={TILE.height} />
       {lines.map((line, i) => (
         <text key={i} x={TILE.width / 2} y={CONTENT.line * (i + 1)}>

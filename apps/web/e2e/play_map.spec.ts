@@ -84,7 +84,7 @@ test('move on the map', async ({ page }) => {
 // Journey: move an enemy by dragging it as a card instruction says: to a location with no
 // connection, then to the investigator's, where it engages them, and away again, which
 // disengages it.
-test('move an enemy on the map', { tag: '@flow' }, async ({ page }) => {
+test('move an enemy on the map', async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
   const priest = (name: string) => room(name).getByRole('img', { name: /^Ghoul Priest/ });
@@ -116,6 +116,47 @@ test('move an enemy on the map', { tag: '@flow' }, async ({ page }) => {
     await expect(room('Attic').getByRole('img', { name: 'Ghoul Priest' })).toBeVisible();
   });
 });
+
+// Journey: keep the map in step with the table through a location's menu: reveal a location a
+// card turned over, put doom on it, and have Alder discover a clue a card placed in the Hallway.
+test('change a location by its menu', { tag: '@flow' }, async ({ page }) => {
+  const house = page.getByRole('figure', { name: 'House' });
+  const room = (name: string) => house.getByRole('group', { name });
+  const menu = (name: string) => page.getByRole('dialog', { name });
+
+  await test.step('Import a game in which Alder, on their turn, stands in the Hallway', async () => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    await expect(room('Attic')).toContainText('Unrevealed');
+  });
+
+  await test.step('Hold the Attic to open its menu, reveal it and put a doom on it', async () => {
+    await longPress(page, room('Attic'), menu('Attic'));
+    await menu('Attic').getByRole('button', { name: 'Reveal' }).click();
+    await menu('Attic').getByRole('button', { name: 'Add doom' }).click();
+    await expect(menu('Attic')).toContainText('Doom 1');
+    await menu('Attic').getByRole('button', { name: 'Close' }).click();
+    await expect(room('Attic')).toContainText('Shroud');
+    await expect(room('Attic')).toContainText('Doom 1');
+  });
+
+  await test.step('Hold the Hallway, add a clue and let Alder discover it', async () => {
+    await longPress(page, room('Hallway'), menu('Hallway'));
+    await menu('Hallway').getByRole('button', { name: 'Add a clue' }).click();
+    await expect(menu('Hallway')).toContainText('Clues 1');
+    await menu('Hallway').getByRole('button', { name: 'Alder discovers a clue' }).click();
+    await expect(menu('Hallway')).toContainText('Clues 0');
+  });
+});
+
+/** Presses the middle of `target` with the mouse and holds it until `opened` shows. */
+async function longPress(page: Page, target: Locator, opened: Locator): Promise<void> {
+  const box = await target.boundingBox();
+  if (!box) throw new Error('the target is not on screen');
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await expect(opened).toBeVisible();
+  await page.mouse.up();
+}
 
 /** Drags `piece` with the mouse to the middle of `target`, in steps, as a player's finger would. */
 async function dragTo(page: Page, piece: Locator, target: Locator): Promise<void> {
