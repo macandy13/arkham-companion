@@ -72,11 +72,11 @@ M3.3b3 done: each map pans with a drag, zooms with the wheel or a pinch (react-z
 **Benefit:** Moves feel like moving physical pieces, with fewer rules mistakes.
 
 - [x] Drag pawn to a connected location → `MoveInvestigator`; drag enemy → `MoveEnemy`/`EngageEnemy`
-- [x] Location long-press menu: reveal, add/remove clue or doom, discover clue for investigator
+- [x] Location menu: reveal, add/remove clue or doom (opened by an edit button on the tile; discovering a clue moved to the investigator)
 - [x] Illegal drops snap back with a hint (the rejection toast gives it)
 
 M3.4a done (#178): the pawn of the investigator whose turn it is drags to another tile, a move action; a refused move snaps back with the rejection toast.
 
 M3.4b done (#179, #185): `MoveEnemy` moves an enemy by a card effect (forced moves disengage it first); on the map an enemy dropped on another tile moves there as a forced move, and dropped on the turn investigator's pawn it engages them.
 
-M3.4c done: a long press (or a right click) on a tile opens its menu: reveal, and clue and doom steppers. Discovering a clue moved to the investigator bar (M3.5: an investigate button on the investigator). Follow-up for the tablet pass: tiles cannot be reached by keyboard yet, so the menu has no keyboard way in.
+M3.4c done: an edit button on each tile opens its menu: reveal, and clue and doom steppers. A visible button replaced the planned long press, so the menu is found without knowing a gesture and is reached by keyboard too. It also fixed panning, which the pawn drag's `panning.excluded` entry had stopped since M3.4a. Discovering a clue moved to the investigator bar (M3.5: an investigate button on the investigator).

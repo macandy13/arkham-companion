@@ -8,8 +8,8 @@ import {
 import { startQuickGame } from './fixtures/wizard';
 
 // Journey: read the map – the one location a new game starts with, then a game further on whose
-// map has several locations and the connections between them, zoomed in and fitted again.
-test('read the map', async ({ page }) => {
+// map has several locations and the connections between them, zoomed in, panned and fitted again.
+test('read the map', { tag: '@flow' }, async ({ page }) => {
   await test.step('Start a quick game', async () => {
     await page.goto('/#/new');
     await startQuickGame(page);
@@ -40,7 +40,7 @@ test('read the map', async ({ page }) => {
     await expect(hallway).toContainText('Shroud 1 · Clues 0');
   });
 
-  await test.step('Zoom in on the Hallway, then fit the whole house again', async () => {
+  await test.step('Zoom in on the Hallway, pan it to the right, then fit the whole house again', async () => {
     const hallway = page
       .getByRole('figure', { name: 'House' })
       .getByRole('group', { name: 'Hallway' });
@@ -50,6 +50,17 @@ test('read the map', async ({ page }) => {
     await expect
       .poll(async () => (await hallway.boundingBox())?.width ?? 0)
       .toBeGreaterThan(1.5 * fittedWidth);
+    const zoomed = await hallway.boundingBox();
+    if (!zoomed) throw new Error('the Hallway is not on screen');
+    await page.mouse.move(zoomed.x + zoomed.width / 2, zoomed.y + zoomed.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(zoomed.x + zoomed.width / 2 + 60, zoomed.y + zoomed.height / 2, {
+      steps: 5,
+    });
+    await page.mouse.up();
+    await expect
+      .poll(async () => Math.round((await hallway.boundingBox())?.x ?? 0))
+      .toBeGreaterThan(Math.round(zoomed.x) + 30);
     await page.getByRole('button', { name: 'Fit map' }).click();
     await expect
       .poll(async () => Math.round((await hallway.boundingBox())?.width ?? 0))
@@ -129,8 +140,8 @@ test('change a location by its menu', { tag: '@flow' }, async ({ page }) => {
     await expect(room('Attic')).toContainText('Unrevealed');
   });
 
-  await test.step('Hold the Attic to open its menu, reveal it and put a doom on it', async () => {
-    await longPress(page, room('Attic'), menu('Attic'));
+  await test.step('Open the Attic’s menu, reveal it and put a doom on it', async () => {
+    await room('Attic').getByRole('button', { name: 'Edit Attic' }).click();
     await menu('Attic').getByRole('button', { name: 'Reveal' }).click();
     await menu('Attic').getByRole('button', { name: 'Add doom' }).click();
     await expect(menu('Attic')).toContainText('Doom 1');
@@ -139,24 +150,14 @@ test('change a location by its menu', { tag: '@flow' }, async ({ page }) => {
     await expect(room('Attic')).toContainText('Doom 1');
   });
 
-  await test.step('Hold the Hallway and add a clue', async () => {
-    await longPress(page, room('Hallway'), menu('Hallway'));
+  await test.step('Open the Hallway’s menu and add a clue', async () => {
+    await room('Hallway').getByRole('button', { name: 'Edit Hallway' }).click();
     await menu('Hallway').getByRole('button', { name: 'Add a clue' }).click();
     await expect(menu('Hallway')).toContainText('Clues 1');
     await menu('Hallway').getByRole('button', { name: 'Close' }).click();
     await expect(room('Hallway')).toContainText('Clues 1');
   });
 });
-
-/** Presses the middle of `target` with the mouse and holds it until `opened` shows. */
-async function longPress(page: Page, target: Locator, opened: Locator): Promise<void> {
-  const box = await target.boundingBox();
-  if (!box) throw new Error('the target is not on screen');
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-  await page.mouse.down();
-  await expect(opened).toBeVisible();
-  await page.mouse.up();
-}
 
 /** Drags `piece` with the mouse to the middle of `target`, in steps, as a player's finger would. */
 async function dragTo(page: Page, piece: Locator, target: Locator): Promise<void> {

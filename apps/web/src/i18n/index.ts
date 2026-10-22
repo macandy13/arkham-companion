@@ -74,6 +74,7 @@ export const resources = {
         exhausted: 'exhausted',
         connection: '{{from}} – {{to}}',
         oneWay: '{{from}} to {{to}}, one way',
+        edit: 'Edit {{location}}',
       },
       locationMenu: {
         reveal: 'Reveal',
@@ -297,6 +298,7 @@ export const resources = {
         exhausted: 'erschöpft',
         connection: '{{from}} – {{to}}',
         oneWay: '{{from}} nach {{to}}, nur in eine Richtung',
+        edit: '{{location}} bearbeiten',
       },
       locationMenu: {
         reveal: 'Aufdecken',

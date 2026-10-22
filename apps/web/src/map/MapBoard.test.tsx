@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import {
   attachedTo,
   atLocation,
@@ -338,81 +338,33 @@ describe('MapBoard', () => {
     const menu = (name: string) => screen.getByRole('dialog', { name });
     const tap = (name: string) => fireEvent.click(screen.getByRole('button', { name }));
 
-    it('opens on a right click on a tile and closes again', () => {
+    const editButton = (location: string) =>
+      within(tile(location)).getByRole('button', { name: `Edit ${location}` });
+
+    it('opens from the tile’s edit button and closes again', () => {
       const table = PlayTable.start(house);
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
-      fireEvent.contextMenu(tile('hallway'));
+      fireEvent.click(editButton('hallway'));
       expect(menu('hallway')).toBeTruthy();
 
       tap('Close');
       expect(screen.queryByRole('dialog')).toBeNull();
     });
 
-    describe('by a long press', () => {
-      afterEach(() => {
-        vi.useRealTimers();
-      });
+    it.each(['Enter', ' '])('opens from the edit button by the %j key', (key) => {
+      const table = PlayTable.start(house);
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
-      /** Presses the tile of `location` at (0, 0), moves the pointer to (`x`, `y`) and holds it. */
-      function holdOn(location: string, x: number, y: number) {
-        vi.useFakeTimers();
-        fireEvent.pointerDown(tile(location), {
-          pointerId: 1,
-          isPrimary: true,
-          clientX: 0,
-          clientY: 0,
-        });
-        fireEvent.pointerMove(tile(location), { pointerId: 1, clientX: x, clientY: y });
-        act(() => vi.advanceTimersByTime(500));
-      }
+      fireEvent.keyDown(editButton('hallway'), { key });
 
-      it.each([
-        { held: 'still', x: 0, y: 0, opens: true },
-        { held: 'within 10 pixels', x: 6, y: 8, opens: true },
-        { held: 'moving further, as a pan', x: 9, y: 9, opens: false },
-      ])('opens the menu when held $held: $opens', ({ x, y, opens }) => {
-        const table = PlayTable.start(house);
-        render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
-
-        holdOn('hallway', x, y);
-
-        expect(screen.queryByRole('dialog', { name: 'hallway' }) !== null).toBe(opens);
-      });
-
-      it('leaves the menu closed when a second finger joins the press, as a pinch', () => {
-        const table = PlayTable.start(house);
-        render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
-        vi.useFakeTimers();
-
-        fireEvent.pointerDown(tile('hallway'), { pointerId: 1, isPrimary: true });
-        fireEvent.pointerDown(tile('hallway'), { pointerId: 2, isPrimary: false });
-        act(() => vi.advanceTimersByTime(500));
-
-        expect(screen.queryByRole('dialog')).toBeNull();
-      });
-
-      it('leaves the menu closed when the press starts on a pawn that can be dragged', () => {
-        const table = PlayTable.start(
-          house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
-        );
-        render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
-        vi.useFakeTimers();
-
-        fireEvent.pointerDown(within(tile('study')).getByRole('img', { name: 'alder' }), {
-          pointerId: 1,
-          isPrimary: true,
-        });
-        act(() => vi.advanceTimersByTime(500));
-
-        expect(screen.queryByRole('dialog')).toBeNull();
-      });
+      expect(menu('hallway')).toBeTruthy();
     });
 
     it('reveals an unrevealed location', async () => {
       const table = PlayTable.start(house);
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
-      fireEvent.contextMenu(tile('hallway'));
+      fireEvent.click(editButton('hallway'));
 
       tap('Reveal');
       await act(async () => {});
@@ -430,7 +382,7 @@ describe('MapBoard', () => {
       async ({ button, clues, doom }) => {
         const table = PlayTable.start(house);
         render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
-        fireEvent.contextMenu(tile('study'));
+        fireEvent.click(editButton('study'));
 
         tap(button);
         await act(async () => {});
@@ -443,7 +395,7 @@ describe('MapBoard', () => {
     it('turns off removing tokens at the hallway, which has no clues or doom', () => {
       const table = PlayTable.start(house);
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
-      fireEvent.contextMenu(tile('hallway'));
+      fireEvent.click(editButton('hallway'));
       const disabled = (name: string) =>
         screen.getByRole('button', { name }).hasAttribute('disabled');
 
@@ -455,7 +407,7 @@ describe('MapBoard', () => {
     it('turns every change off while a step is still queued', () => {
       const table = PlayTable.start(house);
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy />);
-      fireEvent.contextMenu(tile('hallway'));
+      fireEvent.click(editButton('hallway'));
 
       const enabled = within(menu('hallway'))
         .getAllByRole('button')

@@ -72,8 +72,8 @@
 
 /* Shrinks to the area left; the drawing keeps its proportions and stays centred in the box. */
 /*
- * Holding a tile opens its menu, so a long press must neither select the tile's text nor open
- * iOS Safari's callout, which fires no context menu event.
+ * Pieces are dragged and the map panned by holding a finger on it, which must neither select the
+ * tiles' text nor open iOS Safari's callout.
  */
 #map svg {
   user-select: none;
@@ -133,6 +133,24 @@
 
 #map svg [data-ghost] {
   opacity: var(--map-ghost-opacity);
+}
+
+/* A tile's edit button: a plain round button, so it does not read as a pawn. */
+#map svg g[role='button'] {
+  cursor: pointer;
+}
+
+#map svg g[role='button'] circle {
+  fill: var(--color-surface);
+  stroke: var(--color-border);
+}
+
+#map svg g[role='button'] circle + text {
+  fill: var(--color-text);
+}
+
+#map svg g[role='button']:focus-visible {
+  outline: var(--border-width) solid var(--color-accent);
 }
 
 /* The location menu (LocationMenu): one row per token stepper, the actions stacked below. */
