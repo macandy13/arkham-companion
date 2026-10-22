@@ -492,16 +492,18 @@ describe('MoveEnemy', () => {
   });
 
   it.each([
-    { name: 'an unengaged enemy', zone: atLocation(cellar), to: cellar },
+    { name: 'an unengaged enemy', zone: atLocation(cellar), to: cellar, forced: false },
+    { name: 'an enemy engaged there', zone: engagedWith(alice), to: hall, forced: false },
     {
-      name: 'an enemy engaged there, even by a forced instruction',
+      name: 'an enemy engaged there, by a forced instruction',
       zone: engagedWith(alice),
       to: hall,
+      forced: true,
     },
-  ])('leaves $name where it is when moved to its own location', ({ zone, to }) => {
+  ])('leaves $name where it is when moved to its own location', ({ zone, to, forced }) => {
     const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, zone).start();
 
-    const after = stateAfter(context, state, { ...moveGhoulTo(to), forced: true });
+    const after = stateAfter(context, state, { ...moveGhoulTo(to), forced });
 
     expect(zoneOf(after, ghoul)).toEqual(zone);
   });

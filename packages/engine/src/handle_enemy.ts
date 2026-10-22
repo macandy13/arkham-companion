@@ -80,13 +80,13 @@ export function handleDisengageEnemy(
 export function handleMoveEnemy(ctx: EngineContext, state: GameState, cmd: MoveEnemy): Event[] {
   const { enemy } = inPlayEnemyOf(ctx, state, cmd.enemyId);
   requireLocationInPlay(state, cmd.to);
+  if (locationOf(state, enemy) === cmd.to) return [];
   if (enemy.zone.kind === 'engaged' && !cmd.forced)
     throw new CommandRejected({
       code: 'enemyEngaged',
       cardId: enemy.id,
       investigatorId: enemy.zone.investigatorId,
     });
-  if (locationOf(state, enemy) === cmd.to) return [];
   const moved = moveCardEvent(enemy, { kind: 'atLocation', locationId: cmd.to });
   return [moved, ...engageEvents(ctx, replay([moved], state), enemy.id)];
 }
