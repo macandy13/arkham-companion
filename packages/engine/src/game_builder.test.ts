@@ -18,7 +18,7 @@ import {
   perInvestigator,
   threatAreaOf,
   zoneKey,
-  type ScenarioHooks,
+  type SkillModifierRegistry,
   type ScenarioReference,
 } from './index';
 import { rejectionOf } from '../test/utils';
@@ -253,19 +253,22 @@ describe('newGame', () => {
     expect(newGame().context().scenario).toBeUndefined();
   });
 
-  it('gives a context playing a scenario with the hooks and reference card given', () => {
-    const onRoundEnd: ScenarioHooks['onRoundEnd'] = () => [];
+  it('gives a context playing a scenario with the reference card and modifiers given', () => {
+    const modifiers: SkillModifierRegistry = { tokenValues: { skull: () => -1 } };
     const reference: ScenarioReference = {
       easyStandard: { skull: { modifier: -1, effectKey: 'test.skull' } },
       hardExpert: {},
     };
 
-    const { scenario } = newGame().withHooks({ onRoundEnd }).withReferenceCard(reference).context();
+    const { scenario } = newGame()
+      .withReferenceCard(reference)
+      .withSkillModifiers(modifiers)
+      .context();
 
     expect(scenario).toMatchObject({
       id: 'custom',
-      hooks: { onRoundEnd },
       reference,
+      modifiers,
       agendaDeck: [],
       actDeck: [],
       setup: [],

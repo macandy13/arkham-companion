@@ -220,7 +220,7 @@ export interface DecisionResolved {
 
 /**
  * The current agenda `cardId` advanced and its reverse side resolves now: it
- * fires the `onAgendaAdvance` hook while the agenda is still current. Follows
+ * opens the `advanced` window while the agenda is still current. Follows
  * the `CardFlipped` that turns it over; drops decisions about the agenda.
  * Produced by `AdvanceAgenda`, which follows it with `CurrentCardChanged` once
  * the reverse side has resolved.
@@ -230,7 +230,7 @@ export interface AgendaAdvanced {
   cardId: InstanceId;
 }
 
-/** Like `AgendaAdvanced`, for the act deck (`onActAdvance`). Produced by `AdvanceAct`. */
+/** Like `AgendaAdvanced`, for the act deck. Produced by `AdvanceAct`. */
 export interface ActAdvanced {
   type: 'ActAdvanced';
   cardId: InstanceId;
@@ -249,8 +249,8 @@ export interface CurrentCardChanged {
 
 /**
  * The scenario is over with the given resolution (`GameMeta.resolution`), which
- * the campaign records. Produced by `EndScenario` (typically returned by a
- * reverse-side hook) and by `AdvanceAgenda`/`AdvanceAct` when the last card of
+ * the campaign records. Produced by `EndScenario` (typically a reverse side's
+ * `endScenario`) and by `AdvanceAgenda`/`AdvanceAct` when the last card of
  * a deck advances without its reverse side ending the scenario.
  *
  * Without a `resolution` no resolution was reached because every investigator
@@ -319,8 +319,8 @@ export interface CluesDiscovered {
  * commands, which apply the test's results (ST.7), "if this test succeeds"
  * effects included. Commands triggered by this event run before those
  * results, because `handle` queues the forced effects of an answer's own
- * events ahead of its option commands; no hook reads it yet (the timing
- * windows add one). `failedBy` is set only when the answer names the margin:
+ * events ahead of its option commands; no window opens on it yet (the
+ * timing windows add one). `failedBy` is set only when the answer names the margin:
  * a `failedBy:<n>` option, or the count of a per-point fail
  * (`Decision.perPointFailed`). Produced by `ResolveDecision`.
  */
@@ -396,7 +396,7 @@ export interface PhaseStepsChanged {
 }
 
 /**
- * Round `round` is over (the last step of upkeep): fires `onRoundEnd` and
+ * Round `round` is over (the last step of upkeep): opens `roundEnds` and
  * clears the per-round flags (`GameMeta.turnsTaken`). Produced by `NextPhase`.
  */
 export interface RoundEnded {
@@ -432,7 +432,7 @@ export interface ActionsReset {
   actions: number;
 }
 
-/** The investigator has taken their turn this round (`GameMeta.turnsTaken`). Produced by `EndTurn`; fires `onTurnEnd`. */
+/** The investigator has taken their turn this round (`GameMeta.turnsTaken`). Produced by `EndTurn`; opens `turnEnds`. */
 export interface TurnEnded {
   type: 'TurnEnded';
   investigatorId: InvestigatorId;

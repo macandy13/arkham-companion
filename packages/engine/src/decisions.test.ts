@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   atLocation,
+  blankAct,
   blankEnemy,
   blankLocation,
   checkInvariants,
@@ -9,8 +10,11 @@ import {
   handle,
   instanceId,
   investigatorId,
+  leadDecides,
   newGame,
   skillTestDecision,
+  whenAdvanced,
+  type AbilityEffect,
   type Command,
   type Decider,
   type Decision,
@@ -409,63 +413,70 @@ describe('skill test outcome record', () => {
   });
 });
 
-describe('decisions raised by hooks', () => {
-  const { state: aliceInHall } = hallWithAlice.start();
-  const offerResourceDecision: Decision = {
-    id: decisionId('offer_resource'),
-    kind: 'confirm',
-    prompt: 'decision.applyForcedEffect',
-    decider: { kind: 'lead' },
-    options: [
-      { id: 'yes', label: 'decision.yes', commands: [gainResource] },
-      { id: 'no', label: 'decision.no', commands: [] },
-    ],
-  };
-  const offerResource: Command = { type: 'RequestDecision', decision: offerResourceDecision };
-  const placeDoomOnHall: Command = { type: 'PlaceDoom', cardId: hall, amount: 1 };
+describe('decisions raised by card abilities', () => {
+  const firstAct = instanceId('first_act');
+  /** "The lead investigator may gain 1 resource", as a yes/no question. */
+  const offerResource = leadDecides(decisionId('offer_resource'), 'decision.applyForcedEffect', [
+    {
+      id: 'yes',
+      label: 'decision.yes',
+      effects: [
+        {
+          type: 'AdjustInvestigator',
+          investigatorId: { ref: 'lead' },
+          stat: 'resources',
+          delta: 1,
+        },
+      ],
+    },
+    { id: 'no', label: 'decision.no', effects: [] },
+  ]);
+  const offerAgain = leadDecides(decisionId('offer_again'), 'decision.applyForcedEffect', [
+    { id: 'yes', label: 'decision.yes', effects: [] },
+  ]);
+  /** Alice in the hall; the first act's reverse side runs `effects`, a second act follows it. */
+  const offeringTable = (...effects: AbilityEffect[]) =>
+    hallWithAlice
+      .withAct(firstAct, blankAct('offering_act', { abilities: [whenAdvanced(...effects)] }))
+      .withAct(instanceId('second_act'), blankAct('second_act'));
 
-  it('lets a scenario hook ask the players after doom is placed', () => {
-    const hooked = hallWithAlice.withHooks({ afterDoomPlaced: () => [offerResource] }).context();
+  it('lets a card ability ask the players', () => {
+    const { context, state } = offeringTable(offerResource).start();
 
-    const asked = stateAfter(hooked, aliceInHall, placeDoomOnHall);
+    const asked = stateAfter(context, state, { type: 'AdvanceAct' });
 
     expect(asked.pending.map((decision) => decision.id)).toEqual(['offer_resource']);
   });
 
-  it('asks the second question of a hook only once the first is answered', () => {
-    const offerAgain: Command = {
-      type: 'RequestDecision',
-      decision: {
-        id: decisionId('offer_again'),
-        kind: 'confirm',
-        prompt: 'decision.applyForcedEffect',
-        decider: { kind: 'lead' },
-        options: [{ id: 'yes', label: 'decision.yes', commands: [] }],
-      },
-    };
-    const hooked = hallWithAlice
-      .withHooks({ afterDoomPlaced: () => [offerResource, offerAgain] })
-      .context();
-    const asked = stateAfter(hooked, aliceInHall, placeDoomOnHall);
+  it('asks the second question of an ability only once the first is answered', () => {
+    const { context, state } = offeringTable(offerResource, offerAgain).start();
+    const asked = stateAfter(context, state, { type: 'AdvanceAct' });
 
-    const answered = stateAfter(hooked, asked, answer('offer_resource', 'no'));
+    const answered = stateAfter(context, asked, answer('offer_resource', 'no'));
 
     expect(asked.pending.map((decision) => decision.id)).toEqual(['offer_resource']);
     expect(answered.pending.map((decision) => decision.id)).toEqual(['offer_again']);
   });
 
-  it('rejects a hook that raises a decision that is already pending', () => {
-    const hooked = hallWithAlice.withHooks({ afterDoomPlaced: () => [offerResource] }).context();
-    const placeDoomFirst: Decision = {
-      id: decisionId('place_doom_first'),
+  it('rejects an ability that raises a decision that is already pending', () => {
+    const { context, state } = offeringTable(offerResource).start();
+    const offerResourceDecision: Decision = {
+      id: decisionId('offer_resource'),
       kind: 'confirm',
       prompt: 'decision.applyForcedEffect',
       decider: { kind: 'lead' },
-      options: [{ id: 'yes', label: 'decision.yes', commands: [placeDoomOnHall] }],
+      options: [{ id: 'yes', label: 'decision.yes', commands: [gainResource] }],
     };
-    const bothAsked = withPendingDecisions(aliceInHall, offerResourceDecision, placeDoomFirst);
+    const advanceFirst: Decision = {
+      id: decisionId('advance_first'),
+      kind: 'confirm',
+      prompt: 'decision.applyForcedEffect',
+      decider: { kind: 'lead' },
+      options: [{ id: 'yes', label: 'decision.yes', commands: [{ type: 'AdvanceAct' }] }],
+    };
+    const bothAsked = withPendingDecisions(state, offerResourceDecision, advanceFirst);
 
-    const rejection = rejectionFrom(hooked, bothAsked, answer('place_doom_first', 'yes'));
+    const rejection = rejectionFrom(context, bothAsked, answer('advance_first', 'yes'));
 
     expect(rejection).toEqual({
       code: 'triggeredCommandRejected',

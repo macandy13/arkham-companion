@@ -24,7 +24,7 @@ export interface ScenarioStart {
   /**
    * The scenario to set up (`scenario`) and its card data. Its `CardDb` must hold the seated
    * investigators' cards, since `compileSetup` takes their stats from it. The same context runs
-   * the game, so the definition is given once and its hooks and reference card come with it.
+   * the game, so the definition is given once and its reference card and modifiers come with it.
    */
   ctx: ScenarioContext;
   difficulty: Difficulty;

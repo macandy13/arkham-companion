@@ -29,7 +29,6 @@ import {
   type Command,
   type Event,
   type GameState,
-  type ScenarioHooks,
   type Zone,
 } from './index';
 import { answer, rejectionFrom, stateAfter } from '../test/utils';
@@ -338,25 +337,6 @@ describe('DrawEncounter', () => {
 
     expect(rejectionFrom(context, state, command).code).toBe('unknownInvestigator');
   });
-
-  it('feeds onCardEnters when an enemy enters play, but not for a discarded treachery', () => {
-    const hooks: Partial<ScenarioHooks> = {
-      onCardEnters: (_ctx, _state, event) => [
-        { type: 'PlaceDoom', cardId: event.cardId, amount: 1 },
-      ],
-    };
-    const hooked = aliceInHall.withHooks(hooks);
-    const enemyDeck = hooked.withCard(instanceId('drawn_foe'), foeCard, encounterDeck).start();
-    const treacheryDeck = hooked
-      .withCard(instanceId('drawn_treachery'), plainTreachery, encounterDeck)
-      .start();
-
-    const enemy = stateAfter(enemyDeck.context, enemyDeck.state, draw);
-    const treachery = stateAfter(treacheryDeck.context, treacheryDeck.state, draw);
-
-    expect(enemy.cards[instanceId('drawn_foe')]?.tokens.doom).toBe(1);
-    expect(treachery.cards[instanceId('drawn_treachery')]?.tokens.doom).toBeUndefined();
-  });
 });
 
 describe('DrawEncounter with a match', () => {
@@ -524,25 +504,6 @@ describe('DrawEncounter with a match', () => {
     expect(idsIn(after, encounterDeck)).toEqual(['discarded_treachery']);
     expect(idsIn(after, encounterDiscard)).toEqual([]);
   });
-
-  it('feeds onCardEnters for an enemy drawn from the discard', () => {
-    const hooks: Partial<ScenarioHooks> = {
-      onCardEnters: (_ctx, _state, event) => [
-        { type: 'PlaceDoom', cardId: event.cardId, amount: 1 },
-      ],
-    };
-    const { context, state } = aliceInHall
-      .withHooks(hooks)
-      .withCard(instanceId('discarded_ghoul'), ghoulFoe, encounterDiscard)
-      .start();
-
-    const after = stateAfter(context, state, {
-      ...drawGhoulEnemy,
-      from: 'discard',
-    });
-
-    expect(after.cards[instanceId('discarded_ghoul')]?.tokens.doom).toBe(1);
-  });
 });
 
 describe('FromSetAside', () => {
@@ -575,26 +536,6 @@ describe('FromSetAside', () => {
         to: { kind: 'outOfGame' },
       }),
     ).toEqual({ code: 'cardNotInZone', zone: 'setAside', match: 'foe' });
-  });
-
-  it('feeds onCardEnters when the card goes into play', () => {
-    const hooks: Partial<ScenarioHooks> = {
-      onCardEnters: (_ctx, _state, event) => [
-        { type: 'PlaceDoom', cardId: event.cardId, amount: 2 },
-      ],
-    };
-    const { context, state } = aliceInHall
-      .withHooks(hooks)
-      .withCard(instanceId('set_aside_foe'), foeCard, setAside)
-      .start();
-
-    const after = stateAfter(context, state, {
-      type: 'FromSetAside',
-      codes: [foeCard.code],
-      to: { kind: 'atLocation', locationId: hall },
-    });
-
-    expect(after.cards[instanceId('set_aside_foe')]?.tokens.doom).toBe(2);
   });
 });
 

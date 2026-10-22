@@ -212,27 +212,6 @@ describe('the end of a turn', () => {
 
     expect(stateAfter(context, bobsTurn, endTurn(bob)).pending).toEqual([]);
   });
-
-  it('fires the scenario hook onTurnEnd with the investigator whose turn ended', () => {
-    const { context: clueAtTurnEnd, state } = aliceAndBobInHall
-      .withHooks({
-        onTurnEnd: (_ctx, _state, event) => [
-          {
-            type: 'AdjustInvestigator',
-            investigatorId: event.investigatorId,
-            stat: 'clues',
-            delta: 1,
-          },
-        ],
-      })
-      .withTurnOf(alice)
-      .start();
-
-    const ended = stateAfter(clueAtTurnEnd, state, endTurn(alice));
-
-    expect(investigatorOf(ended, alice).clues).toBe(1);
-    expect(investigatorOf(ended, bob).clues).toBe(0);
-  });
 });
 
 describe('remaining actions', () => {

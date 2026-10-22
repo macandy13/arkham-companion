@@ -535,26 +535,14 @@ describe('upkeep phase', () => {
     ]);
   });
 
-  it('ends the round (4.6): fires onRoundEnd and clears the turns taken', () => {
-    const { context: cluePerRound, state } = aliceInHall
-      .withHooks({
-        onRoundEnd: (_ctx, _state, event) => [
-          {
-            type: 'AdjustInvestigator',
-            investigatorId: alice,
-            stat: 'clues',
-            delta: event.round,
-          },
-        ],
-      })
-      .start();
-    const enemy = runFrom(cluePerRound, state, [next, ...turnsOf(alice), next]).state;
+  it('ends the round (4.6): clears the turns taken', () => {
+    const { context, state } = aliceInHall.start();
+    const enemy = runFrom(context, state, [next, ...turnsOf(alice), next]).state;
 
-    const upkeep = runFrom(cluePerRound, enemy, [next]).state;
+    const upkeep = runFrom(context, enemy, [next]).state;
 
     expect(enemy.meta.turnsTaken).toEqual([alice]);
     expect(upkeep.meta.turnsTaken).toEqual([]);
-    expect(upkeep.investigators[0]!.clues).toBe(1);
     expect(upkeep.meta).toMatchObject({ round: 1, phase: 'upkeep', steps: [] });
   });
 

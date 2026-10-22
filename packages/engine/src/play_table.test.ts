@@ -23,6 +23,8 @@ import {
   skillTestDecision,
   TableError,
   TableRejected,
+  whenAdvanced,
+  type AbilityEffect,
 } from './index';
 import { makeDefinition, standardInvestigatorCards } from '../test/utils';
 
@@ -166,17 +168,34 @@ describe('rejected and broken steps', () => {
   });
 
   it('passes on an error the engine throws that is not a rejection', () => {
-    const brokenHook = new RangeError('broken doom hook');
+    // Card data read from a file can hold what the types rule out: here a reference the engine does not know.
+    const brokenEffect = {
+      type: 'PlaceDoom',
+      cardId: { ref: 'unknownReference' },
+      amount: 1,
+    } as unknown as AbilityEffect;
     const table = PlayTable.start(
-      game.withAgenda(instanceId('agenda'), blankAgenda('agenda', fixed(5))).withHooks({
-        afterDoomPlaced: () => {
-          throw brokenHook;
-        },
-      }),
+      game
+        .withAgenda(
+          instanceId('broken_agenda'),
+          blankAgenda('broken_agenda', fixed(5), {
+            abilities: [whenAdvanced(brokenEffect)],
+          }),
+        )
+        .withAgenda(instanceId('next_agenda'), blankAgenda('next_agenda', fixed(5))),
     );
 
-    expect(() => table.placeDoom(1)).toThrow(brokenHook);
-    expect(table.board.agenda).toEqual({ name: 'agenda', doom: 0, threshold: 5 });
+    const error: unknown = (() => {
+      try {
+        table.play({ type: 'AdvanceAgenda' });
+      } catch (thrown) {
+        return thrown;
+      }
+    })();
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error).not.toBeInstanceOf(CommandRejected);
+    expect(table.board.agenda).toEqual({ name: 'broken_agenda', doom: 0, threshold: 5 });
   });
 });
 

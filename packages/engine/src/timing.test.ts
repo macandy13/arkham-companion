@@ -17,15 +17,16 @@ import {
   blankLocation,
   blankTreachery,
   byName,
-  confirmOptions,
   decisionId,
   discardSelf,
   encounterDeck,
   encounterDiscard,
+  endScenario,
   engagedWith,
   fixed,
   instanceId,
   investigatorId,
+  leadDecides,
   newGame,
   perInvestigator,
   PlayTable,
@@ -33,6 +34,7 @@ import {
   skillTest,
   takeDamage,
   threatAreaOf,
+  whenAdvanced,
   whenRevealed,
   type Command,
 } from './index';
@@ -190,7 +192,19 @@ describe('hunters moving one at a time', () => {
 });
 
 describe('the last act whose reverse side asks something', () => {
-  const lastAct = blankAct('last_act', { stage: { number: 2 }, clues: perInvestigator(3) });
+  /** The last act's reverse side asks "burn the house?"; each answer ends the scenario. */
+  const lastAct = blankAct('last_act', {
+    stage: { number: 2 },
+    clues: perInvestigator(3),
+    abilities: [
+      whenAdvanced(
+        leadDecides(decisionId('burn_the_house'), 'decision.burnTheHouse', [
+          { id: 'burn', label: 'burn it', effects: [endScenario('R1')] },
+          { id: 'spare', label: 'spare it', effects: [endScenario('R2')] },
+        ]),
+      ),
+    ],
+  });
   /** Two acts and the hall with alice. */
   const game = newGame()
     .withAct(instanceId('first_act'), blankAct('first_act', { clues: perInvestigator(2) }))
@@ -199,36 +213,7 @@ describe('the last act whose reverse side asks something', () => {
     .withInvestigator(alice, { locationId: hall });
 
   it('keeps the last act in play until the lead investigator picks the resolution', () => {
-    /** The last act's reverse side asks "burn the house?"; each answer ends the scenario. */
-    const table = PlayTable.start(
-      game.withHooks({
-        onActAdvance: {
-          [lastAct.code]: (): Command[] => [
-            {
-              type: 'RequestDecision',
-              decision: {
-                id: decisionId('burn_the_house'),
-                kind: 'chooseOption',
-                prompt: 'decision.burnTheHouse',
-                decider: { kind: 'lead' },
-                options: [
-                  {
-                    id: 'burn',
-                    label: 'burn it',
-                    commands: [{ type: 'EndScenario', resolution: 'R1' }],
-                  },
-                  {
-                    id: 'spare',
-                    label: 'spare it',
-                    commands: [{ type: 'EndScenario', resolution: 'R2' }],
-                  },
-                ],
-              },
-            },
-          ],
-        },
-      }),
-    );
+    const table = PlayTable.start(game);
 
     table.play({ type: 'AdvanceAct' });
     table.play({ type: 'AdvanceAct' });
@@ -246,36 +231,39 @@ describe('the last act whose reverse side asks something', () => {
 });
 
 describe('a forced effect that asks two questions', () => {
-  /** The hall with alice, who has no resources. */
+  /** "The lead investigator may gain 1 resource", asked under `offer`. */
+  const offerResource = (offer: string) =>
+    leadDecides(decisionId(offer), `decision.${offer}`, [
+      {
+        id: 'yes',
+        label: 'decision.yes',
+        effects: [
+          {
+            type: 'AdjustInvestigator',
+            investigatorId: { ref: 'lead' },
+            stat: 'resources',
+            delta: 1,
+          },
+        ],
+      },
+      { id: 'no', label: 'decision.no', effects: [] },
+    ]);
+  /** The first act's reverse side offers alice a resource twice; she has none and stands in the hall. */
   const game = newGame()
+    .withAct(
+      instanceId('offering_act'),
+      blankAct('offering_act', {
+        abilities: [whenAdvanced(offerResource('firstOffer'), offerResource('secondOffer'))],
+      }),
+    )
+    .withAct(instanceId('next_act'), blankAct('next_act'))
     .withLocation(hall, blankLocation('hall'))
     .withInvestigator(alice, { locationId: hall, resources: 0 });
 
   it('asks the second question only once the first is answered', () => {
-    const gainResource: Command = {
-      type: 'AdjustInvestigator',
-      investigatorId: alice,
-      stat: 'resources',
-      delta: 1,
-    };
-    /** After doom is placed, the scenario offers alice a resource twice, one question at a time. */
-    const table = PlayTable.start(
-      game.withHooks({
-        afterDoomPlaced: () =>
-          ['firstOffer', 'secondOffer'].map((offer): Command => ({
-            type: 'RequestDecision',
-            decision: {
-              id: decisionId(offer),
-              kind: 'confirm',
-              prompt: `decision.${offer}`,
-              decider: { kind: 'lead' },
-              options: confirmOptions([gainResource]),
-            },
-          })),
-      }),
-    );
+    const table = PlayTable.start(game);
 
-    table.play({ type: 'PlaceDoom', cardId: hall, amount: 1 });
+    table.play({ type: 'AdvanceAct' });
 
     expect(table.board.decisions).toMatchObject([{ prompt: 'decision.firstOffer' }]);
 

@@ -111,8 +111,8 @@ export interface ManualAdjust {
 /**
  * A card effect or reverse side moves a card to another zone ("remove the
  * Study from the game", "discard each enemy there"). Validated like a
- * `ManualAdjust` move, but it is a game event, so forced effects fire (a card
- * entering play triggers `onCardEnters`). Produces `CardMoved`.
+ * `ManualAdjust` move, but it is a game event, so forced effects fire.
+ * Produces `CardMoved`.
  */
 export interface MoveCard {
   type: 'MoveCard';
@@ -289,7 +289,7 @@ export interface PlaceDoom {
 
 /**
  * Advances the current agenda: all doom in play is removed, the agenda is
- * flipped and its reverse side (`onAgendaAdvance` hook) resolves while it is
+ * flipped and its reverse side (its `advanced` abilities) resolves while it is
  * still current; then it leaves the game and the next agenda becomes current.
  * Run by the "yes" answer to the threshold question (see
  * `ResolveDecision`) and by card effects that advance the agenda.
@@ -315,11 +315,11 @@ export interface ClueSpend {
 /**
  * Advances the current act. Paying clues is only one way to advance: other
  * acts need an objective, an action or an event (an enemy defeated or out of
- * play, …), which players or scenario hooks decide, so those advance with no
+ * play, …), which players or card abilities decide, so those advance with no
  * `spend`. With `spend` the investigators choose who pays; the total must
  * equal the act's clue requirement (its `clues`, resolved for the starting
  * player count) and the act must have one. Like `AdvanceAgenda`, the reverse
- * side (`onActAdvance` hook) resolves before the next act becomes current.
+ * side (its `advanced` abilities) resolves before the next act becomes current.
  * Produces `InvestigatorChanged` per payment, `CardFlipped`, `ActAdvanced`,
  * the reverse side's events, `CardMoved`, `CurrentCardChanged` and, for the
  * last act, `ScenarioEnded` unless the reverse side ended the scenario.
@@ -337,7 +337,7 @@ export interface AdvanceAct {
 
 /**
  * Ends the scenario with `resolution` (a resolution id of the scenario).
- * Mostly returned by a reverse-side hook ("(→R1)"), which is how the last
+ * Mostly a reverse side's effect ("(→R1)", `endScenario`), which is how the last
  * agenda/act names its resolution. Produces `ScenarioEnded`.
  */
 export interface EndScenario {
@@ -400,8 +400,7 @@ export interface EncounterMatch {
 
 /**
  * Takes one set-aside copy of each code (a code listed twice takes two copies)
- * and moves it to `to`. A move into play makes the bus fire `onCardEnters`.
- * Produces `CardMoved` per card.
+ * and moves it to `to`. Produces `CardMoved` per card.
  */
 export interface FromSetAside {
   type: 'FromSetAside';
@@ -565,7 +564,7 @@ export type MoveHunter = {
 );
 
 /**
- * Raises a decision, for scenario hooks and card effects ("choose one: …").
+ * Raises a decision, for rule modules and card effects ("choose one: …", `leadDecides`).
  * The id must not be pending, there must be at least one option and option
  * ids must be unique. Produces `DecisionRequested`.
  */
@@ -600,7 +599,7 @@ export interface TestSkill {
 /**
  * The players' answer to a pending decision. Produces `DecisionResolved`
  * (which removes the decision), followed by the events of the chosen option's
- * commands, each handled like a hook's follow-up command (validated, with
+ * commands, each handled like a forced effect's command (validated, with
  * their own forced effects, in the same undo group). If one of them is
  * rejected the whole answer is rejected and the decision stays pending.
  */

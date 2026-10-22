@@ -3,7 +3,7 @@
  * Adams, a fixed seed, eleven rounds to resolution 1. An integration narrative rather than a
  * rules test – it shows the engine features working together in a real
  * scenario (setup, the phase assistant, turns and actions, skill tests,
- * clues, undoing a mis-tapped move, the act 1 hook, doom and the agenda, encounter draws and revelation
+ * clues, undoing a mis-tapped move, act 1's reverse side, doom and the agenda, encounter draws and revelation
  * tests, spawn instructions, engagement, hunters, attacks, attacks of opportunity, upkeep, undoing a whole mythos phase,
  * resigning, the reverse sides of agenda 2 and acts 2 and 3, and the end of the scenario) as one
  * session report: game-language steps on a `PlayTable`, phase by phase and
@@ -119,7 +119,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.investigate(wendy);
     table.investigate(wendy);
     // Still in her turn, the Study's 6 clues pay act 1 (2 per investigator) –
-    // advancing the act is no action. Its hook opens the house.
+    // advancing the act is no action. Its reverse side opens the house.
     table.spendCluesToAdvanceAct([
       [roland, 2],
       [daisy, 2],
@@ -264,7 +264,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     );
 
     // The players answer yes. The reverse side lets the lead investigator choose,
-    // but the agenda has no reverse-side hook yet, so Roland simply takes the 2
+    // but agenda 1 has no reverse-side ability yet, so Roland simply takes the 2
     // horror by hand.
     table.answer(byName("What's Going On?!"), 'yes');
     table.takeHorror(roland, 2);

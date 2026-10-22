@@ -8,14 +8,17 @@ import {
   checkInvariants,
   decisionId,
   doomInPlay,
+  endScenario,
   engagedWith,
   execute,
   apply,
   fixed,
   instanceId,
   investigatorId,
+  leadDecides,
   newGame,
   perInvestigator,
+  whenAdvanced,
   type Command,
   type EngineContext,
   type Event,
@@ -685,28 +688,24 @@ describe('AdvanceAct', () => {
 
 describe('a last act whose reverse side lets the lead investigator choose the resolution', () => {
   const chooseResolution = decisionId('chooseResolution');
-  const endWith = (resolution: string): Command => ({ type: 'EndScenario', resolution });
   /** The last act's reverse side asks "R1 or R2?"; each answer ends the scenario. */
-  const { context: choosingContext, state } = aliceAlone
-    .withHooks({
-      onActAdvance: {
-        [secondActCard.code]: (): Command[] => [
-          {
-            type: 'RequestDecision',
-            decision: {
-              id: chooseResolution,
-              kind: 'chooseOption',
-              prompt: 'burn the house?',
-              decider: { kind: 'lead' },
-              options: [
-                { id: 'burn', label: 'burn it', commands: [endWith('R1')] },
-                { id: 'spare', label: 'spare it', commands: [endWith('R2')] },
-              ],
-            },
-          },
-        ],
-      },
-    })
+  const choosingAct = blankAct('choosing_act', {
+    stage: { number: 2 },
+    abilities: [
+      whenAdvanced(
+        leadDecides(chooseResolution, 'burn the house?', [
+          { id: 'burn', label: 'burn it', effects: [endScenario('R1')] },
+          { id: 'spare', label: 'spare it', effects: [endScenario('R2')] },
+        ]),
+      ),
+    ],
+  });
+  /** Act 1, then the choosing act, with alice in the hall. */
+  const { context: choosingContext, state } = newGame()
+    .withAct(act1, firstActCard)
+    .withAct(act2, choosingAct)
+    .withLocation(hall, hallCard, { revealed: true })
+    .withInvestigator(alice, { locationId: hall })
     .start();
   const lastAct = () =>
     stateAfter(choosingContext, state, {
@@ -742,24 +741,21 @@ describe('a last act whose reverse side lets the lead investigator choose the re
 
 describe('a last act whose reverse side asks something that names no resolution', () => {
   const whoPays = decisionId('who_pays');
-  /** The last act's reverse side only asks who takes a horror; the resolution comes from the command. */
-  const { context: askingContext, state } = aliceAlone
-    .withHooks({
-      onActAdvance: {
-        [secondActCard.code]: (): Command[] => [
-          {
-            type: 'RequestDecision',
-            decision: {
-              id: whoPays,
-              kind: 'confirm',
-              prompt: 'take a horror?',
-              decider: { kind: 'lead' },
-              options: [{ id: 'yes', label: 'yes', commands: [] }],
-            },
-          },
-        ],
-      },
-    })
+  /** The last act's reverse side only asks a question; the resolution comes from the command. */
+  const askingAct = blankAct('asking_act', {
+    stage: { number: 2 },
+    abilities: [
+      whenAdvanced(
+        leadDecides(whoPays, 'take a horror?', [{ id: 'yes', label: 'yes', effects: [] }]),
+      ),
+    ],
+  });
+  /** Act 1, then the asking act, with alice in the hall. */
+  const { context: askingContext, state } = newGame()
+    .withAct(act1, firstActCard)
+    .withAct(act2, askingAct)
+    .withLocation(hall, hallCard, { revealed: true })
+    .withInvestigator(alice, { locationId: hall })
     .start();
 
   it('ends the scenario with the fallback resolution once the question is answered', () => {
