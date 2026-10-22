@@ -92,4 +92,24 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 - [ ] Playwright: play two full rounds of the sandbox scenario; refresh mid-mythos restores the exact state
 - [ ] Map follow-ups from M3.3: enemy chips show engagement, damage and exhaustion (now only in their accessible name); chips stack without a limit, so a third enemy on a busy tile overlaps the pawns; map tabs get arrow-key navigation
 
+## M3.10 Card art and card-format layout (O)
+
+**Why:** The map tiles and the agenda/act panels are plain boxes. The real cards already exist as images, and showing them makes the board look like the table it mirrors.
+
+**Benefit:** Location tiles and the agenda and act look like their cards, and they still work with no network or no image.
+
+The fan IP policy that covers FFG (Asmodee's community-use guidelines) does not allow FFG art inside apps. So the app never commits or bundles card images or FFG icons. It fetches them at runtime from ArkhamDB on the user's device, the same way the investigator picker already does (`imageSrc`/`backImageSrc`, `DEFAULT_IMAGE_HOST`).
+
+- [ ] One shared card size next to `TILE` in `apps/web/src/map/mapLayout.ts`: every card is 63.5 × 88 mm, laid out at 5 : 7 (150 × 210 units). Locations, the scenario reference and encounter cards are portrait; the agenda and act are landscape (210 × 150).
+- [ ] Our own layered card template (CSS/SVG, colours from `tokens.css`):
+  - a frame;
+  - an art area that shows the card image when one loads, and a pattern per card type otherwise;
+  - a name band and stat badges (shroud/clues, doom threshold, clue threshold), hidden when the image shows them;
+  - a live overlay that always shows clues, doom, connection symbols and the avatars.
+- [ ] Location tiles show the unrevealed or revealed face, and the agenda and act show their current side.
+- [ ] Enemies and investigators stay round avatar tokens, never cards, because cards would crowd the map.
+- [ ] The service worker caches fetched card images (runtime caching for the image host), so a started game keeps its art offline.
+- [ ] Tests and E2E use the pattern fallback, because CI and cloud sessions cannot reach arkhamdb.com.
+- [ ] Add an "unofficial fan project" notice with an FFG copyright credit (the About/settings screen).
+
 Done when: a full sandbox game is playable and comfortable on a tablet.
