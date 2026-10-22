@@ -1,25 +1,22 @@
 import { useEffect, useId, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BoardView, LocationView } from '@arkham/engine';
+import type { LocationView } from '@arkham/engine';
 import type { GameActions, LocationToken } from '../state/gameActions';
 
 /**
- * What the players can do to one location by hand, opened by a long press on its tile: reveal it,
- * add or remove its clues and doom, and let the investigator whose turn it is, when they stand
- * there, discover a clue. Each is what a card effect or the table asks for, so the screen keeps up with the
- * physical game. It stays open across taps, since a correction often takes several, and reads the
- * location fresh from `board`, so its counts follow each step. A native modal `<dialog>` brings
+ * What the players can do to one location by hand, opened by a long press on its tile: reveal it
+ * and add or remove its clues and doom, as a card effect or the table asks, so the screen keeps
+ * up with the physical game. Investigating stays with the investigator, not the location. It stays open across taps, since a correction often takes several, and reads the
+ * location fresh from the board, so its counts follow each step. A native modal `<dialog>` brings
  * focus trapping and Escape; nothing is tapped while a step is queued (`busy`).
  */
 export function LocationMenu({
   location,
-  board,
   actions,
   busy,
   onClose,
 }: {
   location: LocationView;
-  board: BoardView;
   actions: GameActions;
   busy: boolean;
   onClose: () => void;
@@ -30,10 +27,6 @@ export function LocationMenu({
   useEffect(() => {
     dialog.current?.showModal();
   }, []);
-  // Clues are discovered at one's own location, so only a turn investigator standing here can.
-  const discoverer = board.investigators.find(
-    ({ id }) => id === board.turn && location.investigators?.includes(id),
-  );
   const doom = location.doom ?? 0;
 
   return (
@@ -60,15 +53,6 @@ export function LocationMenu({
         onStep={(delta) => void actions.adjustLocation(location.id, 'doom', delta)}
         busy={busy}
       />
-      {discoverer && (
-        <button
-          type="button"
-          disabled={busy || location.clues === 0}
-          onClick={() => void actions.discoverClue(location.id)}
-        >
-          {t('locationMenu.discover', { investigator: discoverer.name })}
-        </button>
-      )}
       <footer>
         <button type="button" onClick={onClose}>
           {t('locationMenu.close')}

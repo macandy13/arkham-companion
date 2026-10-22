@@ -44,6 +44,7 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 - [ ] One panel per investigator: portrait, health/horror, clues, resources and doom on player cards with +/− steppers
 - [ ] Threat area and engaged enemies as chips; tap → card zoom
 - [ ] Turn-taken marker, defeated/resigned state
+- [ ] An investigate button on the investigator whose turn it is (clue discovery lives with the investigator, not on the location menu)
 
 ## M3.6 Encounter panel (S)
 

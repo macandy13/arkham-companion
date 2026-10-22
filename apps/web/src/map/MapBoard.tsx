@@ -105,7 +105,7 @@ type DraggedPiece = TilePiece & { from: InstanceId };
  *   does not ask which card.
  *
  * A long press on a tile opens its menu (`LocationMenu`), where the players reveal it, change its
- * clues and doom and discover a clue there.
+ * clues and doom.
  */
 function MapDrawing({
   map,
@@ -198,7 +198,6 @@ function MapDrawing({
       {menuLocation && (
         <LocationMenu
           location={menuLocation}
-          board={board}
           actions={actions}
           busy={busy}
           onClose={() => setMenuFor(undefined)}

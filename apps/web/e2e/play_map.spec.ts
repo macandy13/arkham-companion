@@ -118,7 +118,7 @@ test('move an enemy on the map', async ({ page }) => {
 });
 
 // Journey: keep the map in step with the table through a location's menu: reveal a location a
-// card turned over, put doom on it, and have Alder discover a clue a card placed in the Hallway.
+// card turned over, put doom on it, and place a clue a card adds to the Hallway.
 test('change a location by its menu', { tag: '@flow' }, async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
@@ -139,12 +139,12 @@ test('change a location by its menu', { tag: '@flow' }, async ({ page }) => {
     await expect(room('Attic')).toContainText('Doom 1');
   });
 
-  await test.step('Hold the Hallway, add a clue and let Alder discover it', async () => {
+  await test.step('Hold the Hallway and add a clue', async () => {
     await longPress(page, room('Hallway'), menu('Hallway'));
     await menu('Hallway').getByRole('button', { name: 'Add a clue' }).click();
     await expect(menu('Hallway')).toContainText('Clues 1');
-    await menu('Hallway').getByRole('button', { name: 'Alder discovers a clue' }).click();
-    await expect(menu('Hallway')).toContainText('Clues 0');
+    await menu('Hallway').getByRole('button', { name: 'Close' }).click();
+    await expect(room('Hallway')).toContainText('Clues 1');
   });
 });
 

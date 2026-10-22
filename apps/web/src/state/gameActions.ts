@@ -82,8 +82,6 @@ export interface GameActions {
    * corrections by hand (`ManualAdjust`), like the header's `removeDoom`.
    */
   adjustLocation(location: InstanceId, token: LocationToken, delta: number): Promise<void>;
-  /** The investigator whose turn it is discovers a clue at `location`, as a card effect says. */
-  discoverClue(location: InstanceId): Promise<void>;
   /** Takes back the last step; never the scenario start. */
   undo(): Promise<void>;
 }
@@ -146,15 +144,6 @@ export function gameActions(
                 adjustment: { kind: 'tokens', cardId: location, token, delta },
               },
         ),
-      ),
-    discoverClue: (location) =>
-      onTurn((table, investigator) =>
-        table.play({
-          type: 'DiscoverClues',
-          investigatorId: investigator,
-          locationId: location,
-          amount: 1,
-        }),
       ),
     undo,
   };

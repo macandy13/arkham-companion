@@ -440,34 +440,8 @@ describe('MapBoard', () => {
       },
     );
 
-    it('lets the investigator whose turn it is take one of the study’s 2 clues there', async () => {
-      const table = PlayTable.start(
-        house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
-      );
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
-      fireEvent.contextMenu(tile('study'));
-
-      tap('alder discovers a clue');
-      await act(async () => {});
-
-      expect(table.board.location(study).clues).toBe(1);
-      expect(table.board.investigator(alder).clues).toBe(1);
-    });
-
-    it('offers no discovery at a location the investigator whose turn it is is not at', () => {
-      const table = PlayTable.start(
-        house.withInvestigator(alder, { locationId: hallway }).withTurnOf(alder),
-      );
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
-      fireEvent.contextMenu(tile('study'));
-
-      expect(screen.queryByRole('button', { name: 'alder discovers a clue' })).toBeNull();
-    });
-
-    it('turns off removing tokens and discovering at the hallway, which has no clues or doom', () => {
-      const table = PlayTable.start(
-        house.withInvestigator(alder, { locationId: hallway }).withTurnOf(alder),
-      );
+    it('turns off removing tokens at the hallway, which has no clues or doom', () => {
+      const table = PlayTable.start(house);
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
       fireEvent.contextMenu(tile('hallway'));
       const disabled = (name: string) =>
@@ -475,7 +449,6 @@ describe('MapBoard', () => {
 
       expect(disabled('Remove a clue')).toBe(true);
       expect(disabled('Remove doom')).toBe(true);
-      expect(disabled('alder discovers a clue')).toBe(true);
       expect(disabled('Add a clue')).toBe(false);
     });
 

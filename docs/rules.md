@@ -74,7 +74,7 @@ The game rules the engine implements, summarised in our own words so sessions do
 [Clues](https://arkhamdb.com/rules#Clues), [act deck](https://arkhamdb.com/rules#Act_Deck_and_Agenda_Deck).
 
 - When an investigator first enters an unrevealed location, it is revealed and gets clues equal to its clue value, which is usually per investigator. An enemy moving into an unrevealed location does **not** reveal it.
-- A successful investigate discovers 1 clue: it moves from the location to the investigator. A card effect can also have an investigator discover clues ([Discover](https://arkhamdb.com/rules#Discover)); that is no investigate and spends no action, so it provokes no attack of opportunity.
+- A successful investigate discovers 1 clue: it moves from the location to the investigator.
 - An "Objective –" is active only while its agenda or act is current: the cards below it in the deck are not in play. "If the Ghoul Priest is defeated, advance" fires when the defeat happens while act 3 is current, and advancing by an objective spends no clues: the objective overrides the clue requirement (RR "Act Deck and Agenda Deck").
 - If the act has no "Objective –", the group may spend the required clues from any mix of investigators at any player window during an investigator's turn ([free] ability) to advance it. An "Objective –" replaces or adds to that requirement.
 - Advancing an act removes tokens from it, flips it, follows the back, and makes the next act current (unless the back names one).

@@ -79,4 +79,4 @@ M3.4a done (#178): the pawn of the investigator whose turn it is drags to anothe
 
 M3.4b done (#179, #185): `MoveEnemy` moves an enemy by a card effect (forced moves disengage it first); on the map an enemy dropped on another tile moves there as a forced move, and dropped on the turn investigator's pawn it engages them.
 
-M3.4c done: a long press (or a right click) on a tile opens its menu: reveal, clue and doom steppers, and "<investigator> discovers a clue" for the investigator whose turn it is. Follow-up for the tablet pass: tiles cannot be reached by keyboard yet, so the menu has no keyboard way in.
+M3.4c done: a long press (or a right click) on a tile opens its menu: reveal, and clue and doom steppers. Discovering a clue moved to the investigator bar (M3.5: an investigate button on the investigator). Follow-up for the tablet pass: tiles cannot be reached by keyboard yet, so the menu has no keyboard way in.

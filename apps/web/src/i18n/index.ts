@@ -77,7 +77,6 @@ export const resources = {
       },
       locationMenu: {
         reveal: 'Reveal',
-        discover: '{{investigator}} discovers a clue',
         close: 'Close',
         clue: {
           label: 'Clues',
@@ -301,7 +300,6 @@ export const resources = {
       },
       locationMenu: {
         reveal: 'Aufdecken',
-        discover: '{{investigator}} entdeckt einen Hinweis',
         close: 'Schließen',
         clue: {
           label: 'Hinweise',
