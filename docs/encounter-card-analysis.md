@@ -284,7 +284,7 @@ The engine had `turnEndTest` and `discardAtRoundEnd` as card flags; they are now
 
 ### Abilities on scenario cards
 
-Players trigger these with their own actions, so the app needs a way to activate them. M4.5 plans a `ScenarioAction` for Parley; it should be the general shape.
+Players trigger these with their own actions, so the app needs a way to activate them. Plan step 8 builds them as one general `ScenarioAction`.
 
 - **Parley on an agenda or enemy: test, then discard / set aside / codex** – Cards: Agendas 12106–12108; David Renfield to Margaret Liu 12139–12144; Waterfront Civilian 13027; Javier Rivera 13061; Factory Worker 13063; act 13075. Primitive: **scenario action**: cost, condition, skill test, effect commands
 - **Resign on a location, agenda or act; or gained mid-game** – Cards: Blaze of Glory 12112, Arkham Alive 12134, Sewer Culvert 12182, Loading Dock 13042/13047, Foyer 13076. Primitive: `Resign` exists; action availability from card text or a "gains" record
@@ -319,7 +319,7 @@ Players trigger these with their own actions, so the app needs a way to activate
 - **Limit 1 per investigator / per location** – Cards: Unspeakable Truths, Languor, Echoing in Darkness, Arcane Lock. Primitive: placement check; surge or discard if over. Tier: auto
 - **Attach to the nearest enemy of a trait, or search the deck for one first** – Cards: Sanguine Rebirth, Unnatural Strength. Primitive: "nearest … with trait" query + search. Tier: auto
 - **Search the encounter deck and discard for a trait and draw it** – Cards: Blasphemous Invocation, In the Shadows 13115, act 12111 (Fire! ×per investigator), 13069. Primitive: search + shuffle. Tier: auto
-- **Draw the topmost copy of a named card from the discard** – Cards: reference cards 12105/12168, agenda 12108. Primitive: `drawTopmostFromDiscard` (planned in M4.5). Tier: auto
+- **Draw the topmost copy of a named card from the discard** – Cards: reference cards 12105/12168, agenda 12108. Primitive: `drawTopmostFromDiscard` (_Spreading Flames_, M7.1). Tier: auto
 - **Nearest non-Elite enemy moves once toward you and attacks if it engages** – Cards: Aerial Pursuit 12163. Primitive: "move toward" + immediate attack. Tier: auto
 - **Draw a random set-aside enemy of a trait** – Cards: Burning Daylight 13028. Primitive: set-aside query with RNG. Tier: auto
 - **Hand, deck and card-type effects** – Cards: Wild Compulsion, Dissonance 12194, Torment 12195, Languor, Putrid Vapors 12192. Tier: display
@@ -355,7 +355,7 @@ Players trigger these with their own actions, so the app needs a way to activate
 
 ## Implementation plan
 
-The plan adds full campaigns in this order: Night of the Zealot, the Chapter Two campaigns, The Dunwich Legacy, The Path to Carcosa, The Forgotten Age, The Innsmouth Conspiracy, and then the rest in release order. Each campaign gets the steps its cards need first, so the generic rules land with the first campaign that plays them. Night of the Zealot comes first because the engine already plays The Gathering in tests, and its 80 cards need most of the generic steps. Each line below is one task of one or a few small PRs. The task files get them when their milestone starts.
+The plan adds full campaigns in this order: Night of the Zealot, the Chapter Two campaigns, The Dunwich Legacy, The Path to Carcosa, The Forgotten Age, The Innsmouth Conspiracy, and then the rest in release order. Each campaign gets the steps its cards need first, so the generic rules land with the first campaign that plays them. Night of the Zealot comes first because the engine already plays The Gathering in tests, and its 80 cards need most of the generic steps. Each line below is one task of one or a few small PRs. Steps 1–12 are task M4.5, built with _The Gathering_ (M4) before _The Midnight Masks_ and _The Devourer Below_ (M5). Steps 13–36 belong to M7, one section per campaign.
 
 Every campaign after Chapter Two starts with a card-by-card read of its encounter cards, like the Chapter Two read above. The counts in this document come from regular expressions and miss mechanics they don't name.
 
