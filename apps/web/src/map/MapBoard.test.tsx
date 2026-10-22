@@ -25,7 +25,10 @@ const hallway = instanceId('hallway');
 const attic = instanceId('attic');
 const alder = investigatorId('alder');
 
-/** A house map: the Study revealed and laid out left of the Hallway, the Attic unrevealed without a cell. */
+/**
+ * A house map: the Study revealed with 2 clues and 1 doom, laid out left of the Hallway, which is
+ * unrevealed without clues or doom, like the Attic, which has no cell.
+ */
 const house = newGame()
   .withMap(mapId('main'), { name: 'House' })
   .withLocation(study, blankLocation('study', { shroud: 2 }), {
@@ -49,8 +52,26 @@ const actionsOn = (table: PlayTable) =>
 const tile = (name: string) => screen.getByRole('group', { name });
 
 describe('MapBoard', () => {
+  // jsdom lays nothing out and has no pointer capture: the drawing's screen matrix is stubbed to
+  // the identity, so a pointer at screen (x, y) is at (x, y) in the drawing, and a captured
+  // pointer stays with the piece it went down on.
+  const identity = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
   beforeAll(async () => {
     await initI18n('en');
+    Object.assign(SVGSVGElement.prototype, {
+      getScreenCTM: () => ({ inverse: () => identity }),
+    });
+    Object.assign(Element.prototype, {
+      setPointerCapture: () => {},
+      hasPointerCapture: () => true,
+    });
+  });
+  afterAll(() => {
+    const svg: object = SVGSVGElement.prototype;
+    const element: object = Element.prototype;
+    Reflect.deleteProperty(svg, 'getScreenCTM');
+    Reflect.deleteProperty(element, 'setPointerCapture');
+    Reflect.deleteProperty(element, 'hasPointerCapture');
   });
   afterEach(cleanup);
 
@@ -179,32 +200,14 @@ describe('MapBoard', () => {
     expect(within(tile('hallway')).getByRole('img', { name: 'rats' })).toBeTruthy();
   });
 
-  // jsdom lays nothing out, so the drawing's screen matrix is stubbed to the identity: a pointer
-  // at screen (x, y) is at (x, y) in the drawing. The Study's tile spans 0–150 across and 0–210
-  // down, with its first pawn centred on (24, 186) and, below its three lines of text, its first
-  // enemy chip on (75, 98); the Hallway's tile starts at x 180.
+  // The Study's tile spans 0–150 across and 0–210 down, with its first pawn centred on (24, 186)
+  // and, below its three lines of text, its first enemy chip on (75, 98); the Hallway's tile
+  // starts at x 180.
   describe('dragging pieces', () => {
     const firstPawn = { x: 24, y: 186 };
     const firstChip = { x: 75, y: 98 };
     const bea = investigatorId('bea');
     const rats = instanceId('rats');
-    const identity = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
-    beforeAll(() => {
-      Object.assign(SVGSVGElement.prototype, {
-        getScreenCTM: () => ({ inverse: () => identity }),
-      });
-      Object.assign(Element.prototype, {
-        setPointerCapture: () => {},
-        hasPointerCapture: () => true,
-      });
-    });
-    afterAll(() => {
-      const svg: object = SVGSVGElement.prototype;
-      const element: object = Element.prototype;
-      Reflect.deleteProperty(svg, 'getScreenCTM');
-      Reflect.deleteProperty(element, 'setPointerCapture');
-      Reflect.deleteProperty(element, 'hasPointerCapture');
-    });
 
     /**
      * Drags the piece named `name` on the tile of `location`, pressed at screen point `from`, to
@@ -328,6 +331,89 @@ describe('MapBoard', () => {
       await drag('study', 'rats', firstChip, 255, 105);
 
       expect(table.board.enemy(rats)).toEqual({ name: 'rats', at: 'study' });
+    });
+  });
+
+  describe('the location menu', () => {
+    const menu = (name: string) => screen.getByRole('dialog', { name });
+    const tap = (name: string) => fireEvent.click(screen.getByRole('button', { name }));
+
+    const editButton = (location: string) =>
+      within(tile(location)).getByRole('button', { name: `Edit ${location}` });
+
+    it('opens from the tile’s edit button and closes again', () => {
+      const table = PlayTable.start(house);
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+
+      fireEvent.click(editButton('hallway'));
+      expect(menu('hallway')).toBeTruthy();
+
+      tap('Close');
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it.each(['Enter', ' '])('opens from the edit button by the %j key', (key) => {
+      const table = PlayTable.start(house);
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+
+      fireEvent.keyDown(editButton('hallway'), { key });
+
+      expect(menu('hallway')).toBeTruthy();
+    });
+
+    it('reveals an unrevealed location', async () => {
+      const table = PlayTable.start(house);
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      fireEvent.click(editButton('hallway'));
+
+      tap('Reveal');
+      await act(async () => {});
+
+      expect(table.board.location(hallway).revealed).toBe(true);
+    });
+
+    it.each([
+      { button: 'Add a clue', clues: 3, doom: 1 },
+      { button: 'Remove a clue', clues: 1, doom: 1 },
+      { button: 'Add doom', clues: 2, doom: 2 },
+      { button: 'Remove doom', clues: 2, doom: 0 },
+    ])(
+      'changes the study, with 2 clues and 1 doom, by "$button"',
+      async ({ button, clues, doom }) => {
+        const table = PlayTable.start(house);
+        render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+        fireEvent.click(editButton('study'));
+
+        tap(button);
+        await act(async () => {});
+
+        const { clues: cluesLeft, doom: doomLeft = 0 } = table.board.location(study);
+        expect({ clues: cluesLeft, doom: doomLeft }).toEqual({ clues, doom });
+      },
+    );
+
+    it('turns off removing tokens at the hallway, which has no clues or doom', () => {
+      const table = PlayTable.start(house);
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      fireEvent.click(editButton('hallway'));
+      const disabled = (name: string) =>
+        screen.getByRole('button', { name }).hasAttribute('disabled');
+
+      expect(disabled('Remove a clue')).toBe(true);
+      expect(disabled('Remove doom')).toBe(true);
+      expect(disabled('Add a clue')).toBe(false);
+    });
+
+    it('turns every change off while a step is still queued', () => {
+      const table = PlayTable.start(house);
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy />);
+      fireEvent.click(editButton('hallway'));
+
+      const enabled = within(menu('hallway'))
+        .getAllByRole('button')
+        .filter((button) => !button.hasAttribute('disabled'))
+        .map((button) => button.textContent);
+      expect(enabled).toEqual(['Close']);
     });
   });
 });

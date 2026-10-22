@@ -6,8 +6,12 @@ import {
   type InvestigatorId,
   type InvestigatorStat,
   type PlayTable,
+  type TokenKind,
 } from '@arkham/engine';
 import { assertNever } from '@arkham/util';
+
+/** The tokens on a location that its menu's +/− steppers change. */
+export type LocationToken = Extract<TokenKind, 'clue' | 'doom'>;
 
 /** The investigator counters the screen's +/− steppers change. */
 export type SteppedStat = Extract<InvestigatorStat, 'resources' | 'damage' | 'horror'>;
@@ -69,6 +73,15 @@ export interface GameActions {
   placeDoom(amount: number): Promise<void>;
   /** Doom taken off the current agenda by hand (a card effect, a miscount). */
   removeDoom(amount: number): Promise<void>;
+  /** Turns `location` face up, as a card effect says or the players catch up with the table. */
+  revealLocation(location: InstanceId): Promise<void>;
+  /**
+   * One tap on a location's stepper: `delta` more (or, negative, fewer) of `token` on `location`.
+   * Doom added is placed by rule (`PlaceDoom`), so effects that count placed doom see it; the
+   * engine has no command that places or removes clues or removes doom yet, so the rest are
+   * corrections by hand (`ManualAdjust`), like the header's `removeDoom`.
+   */
+  adjustLocation(location: InstanceId, token: LocationToken, delta: number): Promise<void>;
   /** Takes back the last step; never the scenario start. */
   undo(): Promise<void>;
 }
@@ -119,6 +132,19 @@ export function gameActions(
       play((table) => adjustStat(table, investigator, stat, delta)),
     placeDoom: (amount) => play((table) => table.placeDoom(amount)),
     removeDoom: (amount) => play((table) => table.removeDoom(amount)),
+    revealLocation: (location) =>
+      play((table) => table.play({ type: 'RevealLocation', locationId: location })),
+    adjustLocation: (location, token, delta) =>
+      play((table) =>
+        table.play(
+          token === 'doom' && delta > 0
+            ? { type: 'PlaceDoom', cardId: location, amount: delta }
+            : {
+                type: 'ManualAdjust',
+                adjustment: { kind: 'tokens', cardId: location, token, delta },
+              },
+        ),
+      ),
     undo,
   };
 }

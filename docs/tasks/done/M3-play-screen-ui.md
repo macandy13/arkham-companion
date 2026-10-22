@@ -64,3 +64,19 @@ M3.3b1 done: tiles show shroud (with attachments) and clues once revealed, doom 
 M3.3b2 done: several visible maps get a tab each (`role="tablist"` above the map) and show one at a time, the first at the start; a chosen map that leaves play falls back to the first. One map shows without tabs. No scenario shows two maps at once yet (The Gathering's Study leaves as the house opens), so the screenshot spec `map tabs for the Study and the house` adds the house to a fresh game directly (`twoMapsExport`). Follow-up for the tablet pass: tabs have no arrow-key navigation (each is its own tab stop).
 
 M3.3b3 done: each map pans with a drag, zooms with the wheel or a pinch (react-zoom-pan-pinch, up to 4 times the fitted size) and has "Zoom in", "Zoom out" and "Fit map" buttons; it starts fitted to the map area and never zooms out below that. The empty notice stack no longer draws a frame over the map. Follow-ups for the tablet pass are listed under M3.9.
+
+## M3.4 Board interactions (S)
+
+**Why:** Dragging is the fastest interaction on a tablet. Snapping back illegal moves teaches the rules without blocking players (manual adjust still exists).
+
+**Benefit:** Moves feel like moving physical pieces, with fewer rules mistakes.
+
+- [x] Drag pawn to a connected location → `MoveInvestigator`; drag enemy → `MoveEnemy`/`EngageEnemy`
+- [x] Location menu: reveal, add/remove clue or doom (opened by an edit button on the tile; discovering a clue moved to the investigator)
+- [x] Illegal drops snap back with a hint (the rejection toast gives it)
+
+M3.4a done (#178): the pawn of the investigator whose turn it is drags to another tile, a move action; a refused move snaps back with the rejection toast.
+
+M3.4b done (#179, #185): `MoveEnemy` moves an enemy by a card effect (forced moves disengage it first); on the map an enemy dropped on another tile moves there as a forced move, and dropped on the turn investigator's pawn it engages them.
+
+M3.4c done: an edit button on each tile opens its menu: reveal, and clue and doom steppers. A visible button replaced the planned long press, so the menu is found without knowing a gesture and is reached by keyboard too. It also fixed panning, which the pawn drag's `panning.excluded` entry had stopped since M3.4a. Discovering a clue moved to the investigator bar (M3.5: an investigate button on the investigator).

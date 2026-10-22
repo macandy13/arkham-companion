@@ -1,3 +1,4 @@
+import type { KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { InvestigatorView, LocationView, MapEnemyView } from '@arkham/engine';
 import { CONTENT, pawnOffset, TILE, type Point } from './mapLayout';
@@ -10,13 +11,15 @@ export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyVi
  * One location as a tile at (`x`, `y`): its name, its shroud and clues once revealed (both are
  * on the revealed side), its doom and attachments when it has any, a chip per enemy at it and a
  * pawn per investigator there. `enemies` and `investigators` are the open game's pieces at this
- * location; `dragOf` gives the drag handlers of each piece that can be dragged now.
+ * location; `dragOf` gives the drag handlers of each piece that can be dragged now. Its edit
+ * button in the top right corner calls `onEdit`.
  */
 export function LocationTile({
   location,
   enemies,
   investigators,
   dragOf,
+  onEdit,
   x,
   y,
 }: {
@@ -24,6 +27,7 @@ export function LocationTile({
   enemies: readonly MapEnemyView[];
   investigators: readonly InvestigatorView[];
   dragOf: (piece: TilePiece) => DragHandlers | undefined;
+  onEdit: () => void;
   x: number;
   y: number;
 }) {
@@ -46,6 +50,7 @@ export function LocationTile({
           {line}
         </text>
       ))}
+      <EditButton location={location} onEdit={onEdit} />
       {enemies.map((enemy, i) => (
         <EnemyChip
           key={enemy.id}
@@ -66,6 +71,37 @@ export function LocationTile({
           drag={dragOf({ investigator })}
         />
       ))}
+    </g>
+  );
+}
+
+/**
+ * The tile's edit button, a round button with a pencil in its top right corner, named after the
+ * location. It is an SVG group rather than an HTML button, since it sits inside the drawing, so it
+ * takes the keyboard (Enter, Space) itself.
+ */
+function EditButton({ location, onEdit }: { location: LocationView; onEdit: () => void }) {
+  const { t } = useTranslation();
+  const radius = CONTENT.pawnRadius;
+  const x = TILE.width - CONTENT.inset - radius;
+  const y = CONTENT.inset + radius;
+  const onKeyDown = (event: KeyboardEvent<SVGGElement>) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    onEdit();
+  };
+  return (
+    <g
+      role="button"
+      tabIndex={0}
+      aria-label={t('map.edit', { location: location.name })}
+      onClick={onEdit}
+      onKeyDown={onKeyDown}
+    >
+      <circle cx={x} cy={y} r={radius} />
+      <text x={x} y={y}>
+        ✎
+      </text>
     </g>
   );
 }

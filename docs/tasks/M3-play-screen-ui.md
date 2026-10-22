@@ -28,22 +28,13 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
     M3.4b2: drag enemies to move or engage them
     M3.4c: location long-press menu
 11. M3.5: investigator bar
+    M3.11: adjust board mode and token drag (after the investigator bar, so it covers every counter)
 12. M3.6: encounter panel
 13. M3.7: decision dialog and card zoom
 14. M3.8: event log
 15. M3.9: tablet pass and E2E
 
 ---
-
-## M3.4 Board interactions (S)
-
-**Why:** Dragging is the fastest interaction on a tablet. Snapping back illegal moves teaches the rules without blocking players (manual adjust still exists).
-
-**Benefit:** Moves feel like moving physical pieces, with fewer rules mistakes.
-
-- [x] Drag pawn to a connected location → `MoveInvestigator`; drag enemy → `MoveEnemy`/`EngageEnemy`
-- [ ] Location long-press menu: reveal, add/remove clue or doom, discover clue for investigator
-- [x] Illegal drops snap back with a hint (the rejection toast gives it)
 
 ## M3.5 Investigator bar (S)
 
@@ -54,6 +45,7 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 - [ ] One panel per investigator: portrait, health/horror, clues, resources and doom on player cards with +/− steppers
 - [ ] Threat area and engaged enemies as chips; tap → card zoom
 - [ ] Turn-taken marker, defeated/resigned state
+- [ ] An investigate button on the investigator whose turn it is (clue discovery lives with the investigator, not on the location menu)
 
 ## M3.6 Encounter panel (S)
 
@@ -115,3 +107,12 @@ The fan IP policy that covers FFG (Asmodee's community-use guidelines) does not 
 - [ ] Add an "unofficial fan project" notice with an FFG copyright credit (the About/settings screen).
 
 Done when: a full sandbox game is playable and comfortable on a tablet.
+
+## M3.11 Adjust board mode and token drag (O)
+
+**Why:** Keeping the screen in step with the table takes many small corrections. One tap per undo step makes a correction of several counters slow to make and slow to take back.
+
+**Benefit:** The players fix the board in one go and take the whole fix back with one undo. Later, they move tokens the way they move them on the table.
+
+- [ ] An "Adjust board" mode: while it is on, the location menu's steppers and the investigator bar's steppers change counters, and "Done" plays them all as one step (`PlayTable.step`, one undo group); "Cancel" drops them
+- [ ] Drag and drop tokens (clues, doom, damage, horror, resources) from one element onto another, e.g. a clue from a location onto an investigator, as one step each

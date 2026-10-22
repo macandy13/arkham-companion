@@ -71,7 +71,13 @@
 }
 
 /* Shrinks to the area left; the drawing keeps its proportions and stays centred in the box. */
+/*
+ * Pieces are dragged and the map panned by holding a finger on it, which must neither select the
+ * tiles' text nor open iOS Safari's callout.
+ */
 #map svg {
+  user-select: none;
+  -webkit-touch-callout: none;
   display: block;
   max-width: 100%;
   max-height: 100%;
@@ -127,4 +133,53 @@
 
 #map svg [data-ghost] {
   opacity: var(--map-ghost-opacity);
+}
+
+/* A tile's edit button: a plain round button, so it does not read as a pawn. */
+#map svg g[role='button'] {
+  cursor: pointer;
+}
+
+#map svg g[role='button'] circle {
+  fill: var(--color-surface);
+  stroke: var(--color-border);
+}
+
+#map svg g[role='button'] circle + text {
+  fill: var(--color-text);
+}
+
+#map svg g[role='button']:focus-visible {
+  outline: var(--border-width) solid var(--color-accent);
+}
+
+/* The location menu (LocationMenu): one row per token stepper, the actions stacked below. */
+#map dialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+#map dialog:not([open]) {
+  display: none;
+}
+
+#map dialog section {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+#map dialog section p {
+  flex: 1;
+  margin: 0;
+}
+
+#map dialog h2 {
+  margin: 0;
+  font-size: var(--font-size-subtitle);
+}
+
+#map dialog section button {
+  min-width: var(--touch-target);
 }

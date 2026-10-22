@@ -13,6 +13,7 @@ import type {
   MapView,
 } from '@arkham/engine';
 import type { GameActions } from '../state/gameActions';
+import { LocationMenu } from './LocationMenu';
 import { EnemyChip, LocationTile, Pawn, type TilePiece } from './LocationTile';
 import {
   connectionEnds,
@@ -101,6 +102,9 @@ type DraggedPiece = TilePiece & { from: InstanceId };
  * - An enemy dropped on another location moves there as a card instruction says
  *   (`GameActions.moveEnemy`); the players drag it only when a card tells them to, so the map
  *   does not ask which card.
+ *
+ * A tile's edit button opens its menu (`LocationMenu`), where the players reveal it and change its
+ * clues and doom.
  */
 function MapDrawing({
   map,
@@ -129,13 +133,23 @@ function MapDrawing({
     if (to === undefined || to === piece.from) return;
     void ('enemy' in piece ? actions.moveEnemy(piece.enemy.id, to) : actions.moveTo(to));
   });
+  const [menuFor, setMenuFor] = useState<InstanceId>();
+  const menuLocation = map.locations.find(({ id }) => id === menuFor);
   const draggable = (piece: TilePiece) =>
     !busy && ('enemy' in piece || piece.investigator.id === mover?.id);
   const { width, height } = drawingSize(Object.values(cells));
   return (
     <figure aria-labelledby={captionId}>
       <figcaption id={captionId}>{map.name}</figcaption>
-      <TransformWrapper maxScale={MAX_ZOOM} panning={{ excluded: ['[data-drag]'] }}>
+      {/*
+        The library joins each exclusion to its wrapper class as both `X` and `.X`, so an entry
+        must stay a valid selector after a leading dot: a bare attribute selector would not be,
+        and would stop every pan. Draggable pieces and the edit buttons start no pan.
+      */}
+      <TransformWrapper
+        maxScale={MAX_ZOOM}
+        panning={{ excluded: ['g[data-drag]', 'g[role="button"]'] }}
+      >
         <ZoomControls />
         <TransformComponent>
           {/* One user unit is one CSS pixel at most, so a small map keeps its tiles card-sized. */}
@@ -169,6 +183,7 @@ function MapDrawing({
                       location={location}
                       enemies={map.enemies[location.id] ?? []}
                       investigators={pawnsAt(board, location)}
+                      onEdit={() => setMenuFor(location.id)}
                       dragOf={(piece) =>
                         draggable(piece)
                           ? drag.handlers({ ...piece, from: location.id })
@@ -186,6 +201,14 @@ function MapDrawing({
           </svg>
         </TransformComponent>
       </TransformWrapper>
+      {menuLocation && (
+        <LocationMenu
+          location={menuLocation}
+          actions={actions}
+          busy={busy}
+          onClose={() => setMenuFor(undefined)}
+        />
+      )}
     </figure>
   );
 }

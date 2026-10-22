@@ -8,8 +8,8 @@ import {
 import { startQuickGame } from './fixtures/wizard';
 
 // Journey: read the map – the one location a new game starts with, then a game further on whose
-// map has several locations and the connections between them, zoomed in and fitted again.
-test('read the map', async ({ page }) => {
+// map has several locations and the connections between them, zoomed in, panned and fitted again.
+test('read the map', { tag: '@flow' }, async ({ page }) => {
   await test.step('Start a quick game', async () => {
     await page.goto('/#/new');
     await startQuickGame(page);
@@ -40,7 +40,7 @@ test('read the map', async ({ page }) => {
     await expect(hallway).toContainText('Shroud 1 · Clues 0');
   });
 
-  await test.step('Zoom in on the Hallway, then fit the whole house again', async () => {
+  await test.step('Zoom in on the Hallway, pan it to the right, then fit the whole house again', async () => {
     const hallway = page
       .getByRole('figure', { name: 'House' })
       .getByRole('group', { name: 'Hallway' });
@@ -50,6 +50,17 @@ test('read the map', async ({ page }) => {
     await expect
       .poll(async () => (await hallway.boundingBox())?.width ?? 0)
       .toBeGreaterThan(1.5 * fittedWidth);
+    const zoomed = await hallway.boundingBox();
+    if (!zoomed) throw new Error('the Hallway is not on screen');
+    await page.mouse.move(zoomed.x + zoomed.width / 2, zoomed.y + zoomed.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(zoomed.x + zoomed.width / 2 + 60, zoomed.y + zoomed.height / 2, {
+      steps: 5,
+    });
+    await page.mouse.up();
+    await expect
+      .poll(async () => Math.round((await hallway.boundingBox())?.x ?? 0))
+      .toBeGreaterThan(Math.round(zoomed.x) + 30);
     await page.getByRole('button', { name: 'Fit map' }).click();
     await expect
       .poll(async () => Math.round((await hallway.boundingBox())?.width ?? 0))
@@ -84,7 +95,7 @@ test('move on the map', async ({ page }) => {
 // Journey: move an enemy by dragging it as a card instruction says: to a location with no
 // connection, then to the investigator's, where it engages them, and away again, which
 // disengages it.
-test('move an enemy on the map', { tag: '@flow' }, async ({ page }) => {
+test('move an enemy on the map', async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
   const priest = (name: string) => room(name).getByRole('img', { name: /^Ghoul Priest/ });
@@ -114,6 +125,37 @@ test('move an enemy on the map', { tag: '@flow' }, async ({ page }) => {
   await test.step('Drag it to the Attic, which disengages it', async () => {
     await dragTo(page, priest('Hallway'), room('Attic'));
     await expect(room('Attic').getByRole('img', { name: 'Ghoul Priest' })).toBeVisible();
+  });
+});
+
+// Journey: keep the map in step with the table through a location's menu: reveal a location a
+// card turned over, put doom on it, and place a clue a card adds to the Hallway.
+test('change a location by its menu', { tag: '@flow' }, async ({ page }) => {
+  const house = page.getByRole('figure', { name: 'House' });
+  const room = (name: string) => house.getByRole('group', { name });
+  const menu = (name: string) => page.getByRole('dialog', { name });
+
+  await test.step('Import a game in which Alder, on their turn, stands in the Hallway', async () => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    await expect(room('Attic')).toContainText('Unrevealed');
+  });
+
+  await test.step('Open the Attic’s menu, reveal it and put a doom on it', async () => {
+    await room('Attic').getByRole('button', { name: 'Edit Attic' }).click();
+    await menu('Attic').getByRole('button', { name: 'Reveal' }).click();
+    await menu('Attic').getByRole('button', { name: 'Add doom' }).click();
+    await expect(menu('Attic')).toContainText('Doom 1');
+    await menu('Attic').getByRole('button', { name: 'Close' }).click();
+    await expect(room('Attic')).toContainText('Shroud');
+    await expect(room('Attic')).toContainText('Doom 1');
+  });
+
+  await test.step('Open the Hallway’s menu and add a clue', async () => {
+    await room('Hallway').getByRole('button', { name: 'Edit Hallway' }).click();
+    await menu('Hallway').getByRole('button', { name: 'Add a clue' }).click();
+    await expect(menu('Hallway')).toContainText('Clues 1');
+    await menu('Hallway').getByRole('button', { name: 'Close' }).click();
+    await expect(room('Hallway')).toContainText('Clues 1');
   });
 });
 
