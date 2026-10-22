@@ -312,8 +312,8 @@ describe('locations', () => {
     const [main] = boardView(context, state).maps;
 
     expect(main?.enemies).toEqual({
-      [study]: [{ name: 'rat', at: 'study', engagedWith: alice }],
-      [hallway]: [{ name: 'ghoul', at: 'hallway' }],
+      [study]: [{ id: instanceId('rat'), name: 'rat', at: 'study', engagedWith: alice }],
+      [hallway]: [{ id: instanceId('ghoul'), name: 'ghoul', at: 'hallway' }],
     });
   });
 

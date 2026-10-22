@@ -1,11 +1,30 @@
 import { useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TransformComponent, TransformWrapper, useControls } from 'react-zoom-pan-pinch';
-import type { BoardView, Edge, GridCell, InstanceId, MapId, MapView } from '@arkham/engine';
+import type {
+  BoardView,
+  Edge,
+  GridCell,
+  InstanceId,
+  InvestigatorId,
+  InvestigatorView,
+  LocationView,
+  MapId,
+  MapView,
+} from '@arkham/engine';
 import type { GameActions } from '../state/gameActions';
-import { LocationTile, Pawn } from './LocationTile';
-import { connectionEnds, drawingSize, tileCells, tileOrigin } from './mapLayout';
-import { usePawnDrag } from './usePawnDrag';
+import { EnemyChip, LocationTile, Pawn, type TilePiece } from './LocationTile';
+import {
+  connectionEnds,
+  drawingSize,
+  onPawn,
+  pawnOffset,
+  tileAt,
+  tileCells,
+  tileOrigin,
+  type Point,
+} from './mapLayout';
+import { usePieceDrag } from './usePieceDrag';
 import './map.css';
 
 /**
@@ -15,9 +34,9 @@ import './map.css';
  * once the house opens) has nothing to draw, so both are left out. Several maps get a tab each
  * and show one at a time, since each map is drawn to fill the map area. It takes the whole
  * `board`, since the pieces on the tiles come from all over it (investigators now, more pieces
- * later). The players pan, zoom and pinch each map, and move by dragging a pawn (`MapDrawing`),
- * which plays `actions`; no pawn moves while a step is still queued (`busy`, `OpenGame.busy`),
- * since the turn it was dragged in may have ended by the time the move would play.
+ * later). The players pan, zoom and pinch each map, and move pieces by dragging them
+ * (`MapDrawing`), which plays `actions`; no piece moves while a step is still queued (`busy`,
+ * `OpenGame.busy`), since the turn it was dragged in may have ended by the time the move plays.
  */
 export function MapBoard({
   board,
@@ -68,12 +87,20 @@ export function MapBoard({
 /** Furthest the players can zoom into a map, as a multiple of the drawing fitted to the area. */
 const MAX_ZOOM = 4;
 
+/** A piece being dragged on a map, with the location it is dragged from. */
+type DraggedPiece = TilePiece & { from: InstanceId };
+
 /**
  * One map as a figure: its name, zoom buttons and the SVG drawing, which the players pan with a
  * drag, zoom with the wheel or a pinch, and fit back with "Fit map". The drawing starts fitted to
  * the map area, and zooming out never goes below that, so the whole map is always one tap away.
- * The pawn of the investigator whose turn it is can be dragged to another location, which is a
- * move action (`GameActions.moveTo`); the other pawns stay put, as only that investigator acts.
+ * Pieces are dragged to play what the players do on the table:
+ * - The pawn of the investigator whose turn it is, dropped on another location, is a move action
+ *   (`GameActions.moveTo`); the other pawns stay put, as only that investigator acts.
+ * - An enemy dropped on that pawn is an engage action (`GameActions.engage`).
+ * - An enemy dropped on another location moves there as a card instruction says
+ *   (`GameActions.moveEnemy`); the players drag it only when a card tells them to, so the map
+ *   does not ask which card.
  */
 function MapDrawing({
   map,
@@ -91,8 +118,19 @@ function MapDrawing({
   const arrowId = useId();
   const svg = useRef<SVGSVGElement>(null);
   const cells = tileCells(map);
-  const drag = usePawnDrag(svg, cells, (location) => void actions.moveTo(location));
-  const mover = busy ? undefined : investigators.find(({ id }) => id === board.turn);
+  const mover = investigators.find(({ id }) => id === board.turn);
+  const moverCentre = mover && pawnCentre(map, cells, board, mover.id);
+  const drag = usePieceDrag<DraggedPiece>(svg, (piece, point) => {
+    if ('enemy' in piece && moverCentre && onPawn(moverCentre, point)) {
+      void actions.engage(piece.enemy.id);
+      return;
+    }
+    const to = tileAt(cells, point);
+    if (to === undefined || to === piece.from) return;
+    void ('enemy' in piece ? actions.moveEnemy(piece.enemy.id, to) : actions.moveTo(to));
+  });
+  const draggable = (piece: TilePiece) =>
+    !busy && ('enemy' in piece || piece.investigator.id === mover?.id);
   const { width, height } = drawingSize(Object.values(cells));
   return (
     <figure aria-labelledby={captionId}>
@@ -130,23 +168,59 @@ function MapDrawing({
                       key={location.id}
                       location={location}
                       enemies={map.enemies[location.id] ?? []}
-                      investigators={investigators.filter(({ id }) =>
-                        location.investigators?.includes(id),
-                      )}
-                      movable={mover?.id}
-                      drag={drag.handlers(location.id)}
+                      investigators={pawnsAt(board, location)}
+                      dragOf={(piece) =>
+                        draggable(piece)
+                          ? drag.handlers({ ...piece, from: location.id })
+                          : undefined
+                      }
                       {...tileOrigin(cell)}
                     />,
                   ]
                 : [];
             })}
-            {/* Drawn last, so the dragged pawn passes over the tiles rather than under them. */}
-            {mover && drag.ghost && <Pawn investigator={mover} centre={drag.ghost} ghost />}
+            {/* Drawn last, so the dragged piece passes over the tiles rather than under them. */}
+            {drag.dragged && (
+              <Ghost piece={drag.dragged.piece} at={drag.dragged.at} board={board} />
+            )}
           </svg>
         </TransformComponent>
       </TransformWrapper>
     </figure>
   );
+}
+
+/** The copy of a dragged piece that follows the pointer, centred on `at`. */
+function Ghost({ piece, at, board }: { piece: TilePiece; at: Point; board: BoardView }) {
+  return 'enemy' in piece ? (
+    <EnemyChip enemy={piece.enemy} investigators={board.investigators} centre={at} ghost />
+  ) : (
+    <Pawn investigator={piece.investigator} centre={at} ghost />
+  );
+}
+
+/**
+ * Where the pawn of `investigator` stands on `map`, in the drawing's coordinates: in the row of
+ * pawns on their location's tile (`pawnsAt`).
+ */
+function pawnCentre(
+  map: MapView,
+  cells: Record<InstanceId, GridCell>,
+  board: BoardView,
+  investigator: InvestigatorId,
+): Point | undefined {
+  const location = map.locations.find(({ investigators }) => investigators?.includes(investigator));
+  const cell = location && cells[location.id];
+  if (!cell) return undefined;
+  const index = pawnsAt(board, location).findIndex(({ id }) => id === investigator);
+  const tile = tileOrigin(cell);
+  const offset = pawnOffset(index);
+  return { x: tile.x + offset.x, y: tile.y + offset.y };
+}
+
+/** The investigators at `location`, in the order `LocationTile` draws their pawns: the board's. */
+function pawnsAt(board: BoardView, location: LocationView): InvestigatorView[] {
+  return board.investigators.filter(({ id }) => location.investigators?.includes(id));
 }
 
 /** The zoom buttons of the map whose `TransformWrapper` they sit in. */

@@ -52,6 +52,11 @@ export interface GameActions {
   evade(enemy: InstanceId): Promise<void>;
   /** An engage action. */
   engage(enemy: InstanceId): Promise<void>;
+  /**
+   * Moves `enemy` to `location` as a card instruction says, connected or not. The players follow
+   * the instruction whatever the engagement, so an engaged enemy disengages and moves too.
+   */
+  moveEnemy(enemy: InstanceId, location: InstanceId): Promise<void>;
   /** Picks `option` of the first open decision, as the decision dialog lists them. */
   answer(option: string, counts?: DecisionAmounts): Promise<void>;
   /** Enemy step 3.3: each listed enemy attack at its printed damage and horror. */
@@ -94,6 +99,8 @@ export function gameActions(
     evade: (enemy) =>
       onTurn((table, investigator) => table.evade(investigator, enemy, { result: 'open' })),
     engage: (enemy) => onTurn((table, investigator) => table.engage(investigator, enemy)),
+    moveEnemy: (enemy, location) =>
+      play((table) => table.moveEnemy(enemy, location, { forced: true })),
     answer: (option, counts = {}) =>
       play((table) =>
         table.play({

@@ -24,7 +24,8 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
    M3.3b2: map tabs when several maps are visible
    M3.3b3: pan/zoom/pinch
 10. M3.4a: drag the pawn of the investigator whose turn it is to move
-    M3.4b: drag enemies to move or engage them
+    M3.4b1: `MoveEnemy`, an enemy moved to a location by a card effect (engine)
+    M3.4b2: drag enemies to move or engage them
     M3.4c: location long-press menu
 11. M3.5: investigator bar
 12. M3.6: encounter panel
@@ -40,9 +41,9 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 
 **Benefit:** Moves feel like moving physical pieces, with fewer rules mistakes.
 
-- [ ] Drag pawn to a connected location → `MoveInvestigator`; drag enemy → `MoveEnemy`/`EngageEnemy`
+- [x] Drag pawn to a connected location → `MoveInvestigator`; drag enemy → `MoveEnemy`/`EngageEnemy`
 - [ ] Location long-press menu: reveal, add/remove clue or doom, discover clue for investigator
-- [ ] Illegal drops snap back with a hint
+- [x] Illegal drops snap back with a hint (the rejection toast gives it)
 
 ## M3.5 Investigator bar (S)
 

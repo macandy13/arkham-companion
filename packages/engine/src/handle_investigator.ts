@@ -1,4 +1,4 @@
-import { neighbours } from './board';
+import { neighbours, requireLocationInPlay } from './board';
 import type { EngineContext } from './cards';
 import type {
   AdjustInvestigator,
@@ -45,9 +45,7 @@ export function handleMoveInvestigator(
   cmd: MoveInvestigator,
 ): Event[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
-  const destination = requireCard(state.cards, cmd.to);
-  if (destination.zone.kind !== 'location')
-    throw new CommandRejected({ code: 'notALocation', cardId: cmd.to });
+  const destination = requireLocationInPlay(state, cmd.to);
   if (investigator.locationId === cmd.to)
     throw new CommandRejected({
       code: 'alreadyAtLocation',

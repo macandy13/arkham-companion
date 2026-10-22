@@ -456,6 +456,113 @@ describe('engagement commands', () => {
   });
 });
 
+// Moves by card effects (and by hand on the map): the hall, cellar and attic lie in a line, and
+// the hall and attic are not connected.
+describe('MoveEnemy', () => {
+  const moveGhoulTo = (to: InstanceId) => ({ type: 'MoveEnemy', enemyId: ghoul, to }) as const;
+
+  it('moves an enemy to a location it has no connection to, without revealing it', () => {
+    const { context, state } = aliceInHall
+      .withCard(ghoul, aloofGhoulCard, atLocation(hall))
+      .start();
+
+    const after = stateAfter(context, state, moveGhoulTo(attic));
+
+    expect(zoneOf(after, ghoul)).toEqual(atLocation(attic));
+    expect(after.cards[attic]?.faceUp).toBe(false);
+  });
+
+  it('disengages an engaged enemy and moves it by a forced instruction', () => {
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, engagedWith(alice)).start();
+
+    const after = stateAfter(context, state, { ...moveGhoulTo(cellar), forced: true });
+
+    expect(zoneOf(after, ghoul)).toEqual(atLocation(cellar));
+  });
+
+  it.each([
+    { card: ghoulCard, name: 'engages a ready enemy', zone: engagedWith(alice) },
+    { card: aloofGhoulCard, name: 'leaves an aloof enemy unengaged', zone: atLocation(hall) },
+  ])('$name at the investigator`s location', ({ card, zone }) => {
+    const { context, state } = aliceInHall.withCard(ghoul, card, atLocation(cellar)).start();
+
+    const after = stateAfter(context, state, moveGhoulTo(hall));
+
+    expect(zoneOf(after, ghoul)).toEqual(zone);
+  });
+
+  it.each([
+    { name: 'an unengaged enemy', zone: atLocation(cellar), to: cellar, forced: false },
+    { name: 'an enemy engaged there', zone: engagedWith(alice), to: hall, forced: false },
+    {
+      name: 'an enemy engaged there, by a forced instruction',
+      zone: engagedWith(alice),
+      to: hall,
+      forced: true,
+    },
+  ])('leaves $name where it is when moved to its own location', ({ zone, to, forced }) => {
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, zone).start();
+
+    const after = stateAfter(context, state, { ...moveGhoulTo(to), forced });
+
+    expect(zoneOf(after, ghoul)).toEqual(zone);
+  });
+
+  it('asks the players whom it engages when two investigators are there', () => {
+    const { context, state } = aliceAndBobAt(hall, { alice: 0, bob: 0 })
+      .withCard(ghoul, ghoulCard, atLocation(cellar))
+      .start();
+
+    const after = stateAfter(context, state, moveGhoulTo(hall));
+
+    expect(zoneOf(after, ghoul)).toEqual(atLocation(hall));
+    expect(after.pending.map((decision) => decision.options.map((option) => option.id))).toEqual([
+      [alice, bob],
+    ]);
+  });
+
+  it('leaves an exhausted enemy unengaged at the investigator`s location', () => {
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, atLocation(cellar)).start();
+    const exhausted = stateAfter(context, state, { type: 'ExhaustEnemy', enemyId: ghoul });
+
+    const after = stateAfter(context, exhausted, moveGhoulTo(hall));
+
+    expect(zoneOf(after, ghoul)).toEqual(atLocation(hall));
+  });
+
+  it.each([
+    {
+      name: 'an engaged enemy, which moves only with its investigator',
+      zone: engagedWith(alice),
+      to: cellar,
+      rejection: { code: 'enemyEngaged', cardId: ghoul, investigatorId: alice },
+    },
+    {
+      name: 'an enemy that is not in play',
+      zone: setAside,
+      to: cellar,
+      rejection: { code: 'enemyNotInPlay', cardId: ghoul },
+    },
+  ])('rejects moving $name', ({ zone, to, rejection }) => {
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, zone).start();
+
+    expect(rejectionFrom(context, state, moveGhoulTo(to))).toEqual(rejection);
+  });
+
+  it('rejects moving an enemy onto a card that is not a location', () => {
+    const relic = instanceId('relic');
+    const { context, state } = aliceInHall
+      .withCard(ghoul, ghoulCard, atLocation(cellar))
+      .withCard(relic, relicCard, atLocation(hall))
+      .start();
+
+    expect(rejectionFrom(context, state, moveGhoulTo(relic))).toEqual({
+      code: 'notALocation',
+      cardId: relic,
+    });
+  });
+});
+
 describe('damage and defeat', () => {
   it('puts damage on an enemy without defeating it below its health', () => {
     const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, engagedWith(alice)).start();

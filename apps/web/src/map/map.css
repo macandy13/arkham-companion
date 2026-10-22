@@ -100,7 +100,10 @@
   fill: var(--color-text-muted);
 }
 
-/* Pieces on a tile: investigator pawns (circles) and enemy chips (the rect of a named piece). */
+/*
+ * Pieces: investigator pawns (circles) and enemy chips (the rect of a piece's group, which is not
+ * a tile, so a dragged chip's copy gets it too).
+ */
 #map svg circle {
   fill: var(--color-accent);
 }
@@ -109,12 +112,12 @@
   fill: var(--color-accent-text);
 }
 
-#map svg g[role='img'] rect {
+#map svg g:not([role='group']) > rect {
   fill: var(--color-background);
 }
 
 /*
- * The pawn that can move: the browser must not scroll or zoom the page when a touch drags it,
+ * The pieces that can move: the browser must not scroll or zoom the page when a touch drags one,
  * and the copy that follows the pointer lets the tiles below show through.
  */
 #map svg [data-drag] {

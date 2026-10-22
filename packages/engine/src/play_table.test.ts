@@ -529,6 +529,27 @@ describe('fighting and evading', () => {
     expect(table.board.enemy(byName('ghoul'))).toMatchObject({ engagedWith: bob });
   });
 
+  it('moves an evaded enemy away by a card effect', () => {
+    const table = PlayTable.start(game.withLocation(instanceId('attic'), blankLocation('attic')));
+    table.evade(alice, byName('ghoul'));
+
+    table.moveEnemy(byName('ghoul'), byName('attic'));
+
+    expect(table.board.enemy(byName('ghoul'))).toEqual({
+      name: 'ghoul',
+      at: 'attic',
+      exhausted: true,
+    });
+  });
+
+  it('moves an engaged enemy away by a forced instruction', () => {
+    const table = PlayTable.start(game.withLocation(instanceId('attic'), blankLocation('attic')));
+
+    table.moveEnemy(byName('ghoul'), byName('attic'), { forced: true });
+
+    expect(table.board.enemy(byName('ghoul'))).toEqual({ name: 'ghoul', at: 'attic' });
+  });
+
   describe('with two ghouls', () => {
     const ghoulCard = blankEnemy('ghoul', { health: fixed(3) });
     const twoGhouls = newGame()

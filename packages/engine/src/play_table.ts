@@ -361,6 +361,20 @@ export class PlayTable {
   }
 
   /**
+   * A card effect moves `enemy` to the location `location` names, connected
+   * or not; it engages there by the usual rules. An engaged enemy needs a
+   * `forced` instruction, which disengages it first.
+   */
+  moveEnemy(enemy: EnemyRef, location: CardRef, { forced = false } = {}): void {
+    this.play({
+      type: 'MoveEnemy',
+      enemyId: this.board.enemyId(enemy),
+      to: this.board.location(location).id,
+      ...(forced && { forced }),
+    });
+  }
+
+  /**
    * The players resolve the attack of opportunity `enemy` makes: at its
    * printed damage and horror, or at the `damage` and `horror` they lower it
    * to (an asset soaking part of it).

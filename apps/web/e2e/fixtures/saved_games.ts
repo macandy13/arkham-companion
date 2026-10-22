@@ -100,12 +100,7 @@ export function twoMapsExport(title: string): Buffer {
     },
     { investigators: [{ id: alderId, code: alder.code }], seed: 3 },
   );
-  // The house's locations are each set aside once, so a code names its card.
-  const cardOf = (code: CardCode): InstanceId => {
-    const card = Object.values(table.state.cards).find((candidate) => candidate.code === code);
-    if (!card) throw new Error(`no card ${code} in the game`);
-    return card.id;
-  };
+  const cardOf = (code: CardCode) => cardIn(table, code);
   const house = theGatheringHouse;
   table.step(() =>
     table.play({
@@ -123,6 +118,27 @@ export function twoMapsExport(title: string): Buffer {
     }),
   );
   return exportOf(title, table, 'two_maps');
+}
+
+/**
+ * Like `houseOpenedExport`, but the Ghoul Priest, set aside at setup, has spawned in the Cellar,
+ * given by hand to keep the script short, so a spec has an enemy to drag around the house.
+ */
+export function ghoulPriestInCellarExport(title: string): Buffer {
+  const table = houseOpened(theGathering);
+  table.play({
+    type: 'SpawnEnemy',
+    enemyId: cardIn(table, GATHERING_CODES.ghoulPriest),
+    at: cardIn(table, GATHERING_CODES.cellar),
+  });
+  return exportOf(title, table, 'ghoul_priest_in_cellar');
+}
+
+/** The card of `table`'s game with `code`; only for cards the game has one copy of. */
+function cardIn(table: PlayTable, code: CardCode): InstanceId {
+  const card = Object.values(table.state.cards).find((candidate) => candidate.code === code);
+  if (!card) throw new Error(`no card ${code} in the game`);
+  return card.id;
 }
 
 /**

@@ -43,6 +43,7 @@ export type Command =
   | DefeatEnemy
   | ExhaustEnemy
   | ReadyEnemy
+  | MoveEnemy
   | MoveHunters
   | MoveHunter
   | RequestDecision
@@ -503,6 +504,25 @@ export interface ExhaustEnemy {
 export interface ReadyEnemy {
   type: 'ReadyEnemy';
   enemyId: InstanceId;
+}
+
+/**
+ * A card effect moves an enemy in play to the location `to` ("move it to the
+ * Hallway"), or the players carry such an effect out by dragging the enemy
+ * on the map. Unlike a hunter's step it needs no connection. An engaged enemy
+ * moves only with its investigator, so a plain effect is refused for it
+ * (`enemyEngaged`); a forced instruction (`forced`) is followed whatever the
+ * engagement, so the enemy disengages and moves. At `to` a ready enemy then
+ * engages as when it spawns there (`engageEvents`); an enemy already at `to`
+ * stays as it is. An enemy entering an unrevealed location does not reveal it. Produces `CardMoved`, then
+ * `EnemyEngaged` or `DecisionRequested`.
+ */
+export interface MoveEnemy {
+  type: 'MoveEnemy';
+  enemyId: InstanceId;
+  to: InstanceId;
+  /** A forced instruction, followed even for an engaged enemy. Default false. */
+  forced?: boolean;
 }
 
 /**

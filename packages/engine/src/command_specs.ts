@@ -23,6 +23,7 @@ import {
   handleDisengageEnemy,
   handleEngageEnemy,
   handleExhaustEnemy,
+  handleMoveEnemy,
   handleReadyEnemy,
 } from './handle_enemy';
 import {
@@ -198,6 +199,7 @@ const COMMAND_SPECS: CommandSpecs = {
   DefeatEnemy: { handle: handleDefeatEnemy },
   ExhaustEnemy: { handle: handleExhaustEnemy },
   ReadyEnemy: { handle: handleReadyEnemy },
+  MoveEnemy: { handle: handleMoveEnemy },
   MoveHunters: { handle: handleMoveHunters },
   MoveHunter: { handle: handleMoveHunter },
   RequestDecision: { handle: handleRequestDecision },
