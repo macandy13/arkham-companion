@@ -54,6 +54,7 @@ export {
   type EnemyView,
   type InvestigatorView,
   type LocationView,
+  type MapEnemyView,
   type MapView,
 } from './board_view';
 export {

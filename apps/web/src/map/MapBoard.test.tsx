@@ -18,6 +18,7 @@ import {
 import { initI18n } from '../i18n';
 import { gameActions } from '../state/gameActions';
 import { MapBoard } from './MapBoard';
+import type { Point } from './mapLayout';
 
 const study = instanceId('study');
 const hallway = instanceId('hallway');
@@ -180,9 +181,13 @@ describe('MapBoard', () => {
 
   // jsdom lays nothing out, so the drawing's screen matrix is stubbed to the identity: a pointer
   // at screen (x, y) is at (x, y) in the drawing. The Study's tile spans 0–150 across and 0–210
-  // down, with its first pawn centred on (24, 186); the Hallway's tile starts at x 180.
-  describe('dragging a pawn', () => {
+  // down, with its first pawn centred on (24, 186) and, below its three lines of text, its first
+  // enemy chip on (75, 98); the Hallway's tile starts at x 180.
+  describe('dragging pieces', () => {
+    const firstPawn = { x: 24, y: 186 };
+    const firstChip = { x: 75, y: 98 };
     const bea = investigatorId('bea');
+    const rats = instanceId('rats');
     const identity = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
     beforeAll(() => {
       Object.assign(SVGSVGElement.prototype, {
@@ -201,12 +206,15 @@ describe('MapBoard', () => {
       Reflect.deleteProperty(element, 'hasPointerCapture');
     });
 
-    /** Drags the pawn named `name` in the Study to screen point (`x`, `y`) and lets go. */
-    async function drag(name: string, x: number, y: number) {
-      const pawn = within(tile('study')).getByRole('img', { name });
-      fireEvent.pointerDown(pawn, { pointerId: 1, clientX: 24, clientY: 186 });
-      fireEvent.pointerMove(pawn, { pointerId: 1, clientX: x, clientY: y });
-      fireEvent.pointerUp(pawn, { pointerId: 1, clientX: x, clientY: y });
+    /**
+     * Drags the piece named `name` on the tile of `location`, pressed at screen point `from`, to
+     * screen point (`x`, `y`) and lets go there.
+     */
+    async function drag(location: string, name: string, from: Point, x: number, y: number) {
+      const piece = within(tile(location)).getByRole('img', { name });
+      fireEvent.pointerDown(piece, { pointerId: 1, clientX: from.x, clientY: from.y });
+      fireEvent.pointerMove(piece, { pointerId: 1, clientX: x, clientY: y });
+      fireEvent.pointerUp(piece, { pointerId: 1, clientX: x, clientY: y });
       await act(async () => {});
     }
 
@@ -216,7 +224,7 @@ describe('MapBoard', () => {
       );
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
-      await drag('alder', 255, 105);
+      await drag('study', 'alder', firstPawn, 255, 105);
 
       expect(table.board.investigator(alder).at).toBe('hallway');
     });
@@ -230,7 +238,7 @@ describe('MapBoard', () => {
       );
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
-      await drag('alder', x, y);
+      await drag('study', 'alder', firstPawn, x, y);
 
       expect(table.board.investigator(alder).at).toBe('study');
     });
@@ -241,7 +249,7 @@ describe('MapBoard', () => {
       );
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy />);
 
-      await drag('alder', 255, 105);
+      await drag('study', 'alder', firstPawn, 255, 105);
 
       expect(table.board.investigator(alder).at).toBe('study');
     });
@@ -255,9 +263,71 @@ describe('MapBoard', () => {
       );
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
-      await drag('bea', 255, 105);
+      await drag('study', 'bea', firstPawn, 255, 105);
 
       expect(table.board.investigator(bea).at).toBe('study');
+    });
+
+    it('moves an enemy to the location it is dropped on, connected or not', async () => {
+      const table = PlayTable.start(house.withCard(rats, blankEnemy('rats'), atLocation(study)));
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+
+      await drag('study', 'rats', firstChip, 255, 105);
+
+      expect(table.board.enemy(rats)).toEqual({ name: 'rats', at: 'hallway' });
+    });
+
+    it('disengages an engaged enemy and moves it to the location it is dropped on', async () => {
+      const table = PlayTable.start(
+        house
+          .withInvestigator(alder, { locationId: study })
+          .withCard(rats, blankEnemy('rats'), engagedWith(alder)),
+      );
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+
+      await drag('study', 'rats, engaged with alder', firstChip, 255, 105);
+
+      expect(table.board.enemy(rats)).toEqual({ name: 'rats', at: 'hallway' });
+    });
+
+    it('engages an aloof enemy with the investigator whose turn it is when dropped on their pawn', async () => {
+      const aloofRats = blankEnemy('aloof_rats', { keywords: [{ name: 'aloof' }] });
+      const table = PlayTable.start(
+        house
+          .withInvestigator(alder, { locationId: study })
+          .withCard(rats, aloofRats, atLocation(study))
+          .withTurnOf(alder),
+      );
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+
+      await drag('study', 'aloof_rats', firstChip, 24, 186);
+
+      expect(table.board.enemy(rats)).toEqual({
+        name: 'aloof_rats',
+        at: 'study',
+        engagedWith: alder,
+      });
+    });
+
+    it.each([
+      { where: 'on its own location', x: 75, y: 105 },
+      { where: 'between two tiles', x: 165, y: 105 },
+    ])('leaves an enemy in place when dropped $where', async ({ x, y }) => {
+      const table = PlayTable.start(house.withCard(rats, blankEnemy('rats'), atLocation(study)));
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+
+      await drag('study', 'rats', firstChip, x, y);
+
+      expect(table.board.enemy(rats)).toEqual({ name: 'rats', at: 'study' });
+    });
+
+    it('leaves an enemy in place while a step is still queued', async () => {
+      const table = PlayTable.start(house.withCard(rats, blankEnemy('rats'), atLocation(study)));
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy />);
+
+      await drag('study', 'rats', firstChip, 255, 105);
+
+      expect(table.board.enemy(rats)).toEqual({ name: 'rats', at: 'study' });
     });
   });
 });

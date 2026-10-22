@@ -41,9 +41,9 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 
 **Benefit:** Moves feel like moving physical pieces, with fewer rules mistakes.
 
-- [ ] Drag pawn to a connected location → `MoveInvestigator`; drag enemy → `MoveEnemy`/`EngageEnemy`
+- [x] Drag pawn to a connected location → `MoveInvestigator`; drag enemy → `MoveEnemy`/`EngageEnemy`
 - [ ] Location long-press menu: reveal, add/remove clue or doom, discover clue for investigator
-- [ ] Illegal drops snap back with a hint
+- [x] Illegal drops snap back with a hint (the rejection toast gives it)
 
 ## M3.5 Investigator bar (S)
 
