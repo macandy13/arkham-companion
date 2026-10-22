@@ -59,9 +59,9 @@ export interface CommandSpec<C extends Command> {
   /** The command's own events, without the forced effects they trigger. Throws `CommandRejected`. */
   handle(ctx: EngineContext, state: GameState, command: C): Event[];
   /**
-   * Set for corrections and setup, which are not game events: fixing a
-   * misplaced token must not re-fire "after doom is placed", and cards put
-   * out during setup do not "enter play".
+   * Set for corrections and setup, which are not game events: a location
+   * set up revealed has no revelation to resolve, and fixing the board must
+   * not resolve a card's forced effect again.
    */
   firesNoTriggers?: true;
   /**

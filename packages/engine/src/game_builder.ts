@@ -14,7 +14,6 @@ import { blankInvestigator } from './blank_cards';
 import type { ScenarioDefinition, ScenarioReference } from './scenario';
 import type { SkillModifierRegistry } from './skill_modifiers';
 import { emptyState, type Difficulty, type GameState, type TokenKind } from './state';
-import type { ScenarioHooks } from './triggers';
 import type { Zone } from './zone';
 
 /** How `GameBuilder.withLocation` places a location. */
@@ -98,11 +97,11 @@ interface GameSpec {
 }
 
 /**
- * What `withHooks`, `withReferenceCard` and `withSkillModifiers` set: the
+ * What `withReferenceCard` and `withSkillModifiers` set: the
  * parts of a `ScenarioDefinition` the engine reads while it plays. The setup
  * parts don't apply, since the builder places the table itself.
  */
-type ScenarioRules = Partial<Pick<ScenarioDefinition, 'hooks' | 'reference' | 'modifiers'>>;
+type ScenarioRules = Partial<Pick<ScenarioDefinition, 'reference' | 'modifiers'>>;
 
 const EMPTY_SPEC: GameSpec = {
   locations: [],
@@ -220,15 +219,6 @@ export class GameBuilder {
   }
 
   /**
-   * The table playing a scenario with these forced effects
-   * (`ScenarioDefinition.hooks`) in place of any given before; for tests of
-   * trigger points and of what a scenario's hooks do.
-   */
-  withHooks(hooks: Partial<ScenarioHooks>): GameBuilder {
-    return this.withRules({ hooks });
-  }
-
-  /**
    * The table playing a scenario with this reference card in place of any
    * given before; without one, no symbol token has a printed modifier.
    */
@@ -243,8 +233,8 @@ export class GameBuilder {
 
   /**
    * A context whose card db holds the definition of every card on the table,
-   * and a scenario when `withHooks`, `withReferenceCard` or
-   * `withSkillModifiers` gave one.
+   * and a scenario when `withReferenceCard` or `withSkillModifiers`
+   * gave one.
    */
   context(): EngineContext {
     const { rules } = this.spec;
@@ -364,7 +354,7 @@ function beginTurn(investigator: InvestigatorId): Command[] {
 }
 
 /** A scenario with `rules` and nothing to set up: the builder places the table itself. */
-function scenarioOf({ hooks, reference, modifiers }: ScenarioRules): ScenarioDefinition {
+function scenarioOf({ reference, modifiers }: ScenarioRules): ScenarioDefinition {
   return {
     id: CUSTOM_SCENARIO,
     chaosBag: { easy: [], standard: [], hard: [], expert: [] },
@@ -372,7 +362,6 @@ function scenarioOf({ hooks, reference, modifiers }: ScenarioRules): ScenarioDef
     agendaDeck: [],
     actDeck: [],
     setup: [],
-    ...(hooks ? { hooks } : {}),
     ...(modifiers ? { modifiers } : {}),
   };
 }

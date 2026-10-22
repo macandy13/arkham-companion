@@ -90,7 +90,7 @@ export type Rejection =
   | { code: 'wrongClueTotal'; required: number; spent: number }
   /**
    * The forced effects a command triggered kept triggering each other beyond
-   * `MAX_TRIGGERED_COMMANDS` follow-up commands; usually a hook that re-triggers itself.
+   * `MAX_TRIGGERED_COMMANDS` follow-up commands; usually card abilities that re-trigger each other.
    */
   /** `DrawEncounter` with the encounter deck and its discard both empty. */
   | { code: 'encounterDeckEmpty' }
@@ -197,7 +197,7 @@ export type Rejection =
       max?: number;
     }
   | { code: 'triggerLoop'; limit: number }
-  /** A command returned by a hook or card effect was rejected for `reason`. */
+  /** A follow-up command (a card effect, an answer's command) was rejected for `reason`. */
   | { code: 'triggeredCommandRejected'; command: CommandType; reason: Rejection }
   | {
       code: 'negativeTokens';

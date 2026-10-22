@@ -268,7 +268,7 @@ export interface SkillTestOutcomes {
  * A `skillTestResult` decision: the players resolve `test` at the table and
  * answer with `pass`, `fail` or `failedBy:<n>`; the matching commands are the
  * consequence. Used by the investigate, fight and evade actions, by
- * revelation tests and by scenario hooks returning `RequestDecision`.
+ * revelation tests and by card abilities (`TestSkill`).
  */
 export function skillTestDecision(
   decision: Pick<Decision, 'id' | 'prompt' | 'subject'> & { decider: Decider; test: SkillTest },

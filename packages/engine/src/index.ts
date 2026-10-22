@@ -134,7 +134,7 @@ export type {
   Templated,
   TimingWindow,
 } from './abilities';
-export { MAX_TRIGGERED_COMMANDS, type ScenarioHooks, type TriggerHook } from './triggers';
+export { MAX_TRIGGERED_COMMANDS } from './triggers';
 export * from './store';
 export { undoLastGroup } from './undo';
 // Campaign functions are reached as `campaign.handleCommand` and so on, so

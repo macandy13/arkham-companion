@@ -13,7 +13,7 @@ What the scenario cards ask of the engine beyond the generic rules in [rules.md]
 ## At a glance
 
 1. **Every gap now has a plan step, ordered by campaign.** 12 of 211 Chapter Two cards (6 %) run fully today. After the Night of the Zealot steps (1–12), 106 run, and after the Chapter Two steps (13–26), all 211 do. The first version of the plan reached 130 and left out six cases (see "Not covered yet").
-2. **Most of the work is generic.** About two dozen generic primitives (below) cover nearly every Chapter Two card. The truly one-off effects are mostly agenda and act reverse sides, which are scenario hooks already.
+2. **Most of the work is generic.** About two dozen generic primitives (below) cover nearly every Chapter Two card. The truly one-off effects are mostly agenda and act reverse sides, which are card abilities already.
 3. **Two new keywords, plus Elusive:** _Doomed_ (Core Set (2026)) and _Predator_ (Children of Blood) are new; _Elusive_ comes from Chapter One and is common in Chapter Two. The engine parses none of them yet.
 4. **Skill tests need the margin.** 11 Chapter Two cards (and about 170 Chapter One cards) scale with "for each point you fail by" or "succeed by 2 or more", but a skill test answer is only pass or fail.
 5. **Locations carry state.** Attachments that change a location (Fire!, Arcane Lock, Flash Flood), extra costs to enter or leave, connections defined in text, and location _versions_ chosen by difficulty or time of day.
@@ -190,14 +190,14 @@ Players' cards stay physical, so these are reminders in every case.
 
 ### Forced effects and timing windows
 
-| Rule                                                          | Ch. 2 | Ch. 1 | Status                                               |
-| ------------------------------------------------------------- | ----- | ----- | ---------------------------------------------------- |
-| When revealed or drawn                                        | 44    | 697   | Covered                                              |
-| At a phase's start or end                                     | 8     | 115   | Plan 2                                               |
-| After clues are discovered                                    | 15    | 74    | Plan 2                                               |
-| After a test, investigation, fight or evade succeeds or fails | 14    | 170   | Plan 2                                               |
-| When doom is placed                                           | 2     | 32    | Covered (`afterDoomPlaced`); "would advance" Plan 18 |
-| Replacement effect ("would … instead")                        | 2     | 64    | Plan 18                                              |
+| Rule                                                          | Ch. 2 | Ch. 1 | Status                          |
+| ------------------------------------------------------------- | ----- | ----- | ------------------------------- |
+| When revealed or drawn                                        | 44    | 697   | Covered                         |
+| At a phase's start or end                                     | 8     | 115   | Plan 2                          |
+| After clues are discovered                                    | 15    | 74    | Plan 2                          |
+| After a test, investigation, fight or evade succeeds or fails | 14    | 170   | Plan 2                          |
+| When doom is placed                                           | 2     | 32    | Plan 2; "would advance" Plan 18 |
+| Replacement effect ("would … instead")                        | 2     | 64    | Plan 18                         |
 
 ### Agendas, acts and scenario flow
 
@@ -371,6 +371,7 @@ Every campaign after Chapter Two starts with a card-by-card read of its encounte
    - after you resolve another treachery
    - when your turn begins, and at the end of each investigator's turn (Umôrdhoth)
    - when an enemy is defeated (Goat Spawn)
+   - after doom is placed (a scenario hook covered it until P1 removed the hooks)
 3. **Skill test margin** – the answer carries "by how much", the suggestion computes it, and revelation tests use it (Grasping Hands, Rotting Remains, False Lead, Umôrdhoth's Wrath).
 4. **Choose one** – a `chooseOne(…branches)` effect raises a decision with one option per branch. A branch that hits player cards becomes a reminder option. Cards: What's Going On?!, What Have You Done?, Hunting Shadow, Offer of Power, Graveyard.
 5. **Card effects for existing commands** – add engage, disengage, ready, discover clues, shuffle into the encounter deck, lose actions, enemy attacks and damage to enemies to `AbilityCommand`. Add healing for investigators and enemies ("Wolf-Man" Drew, Relentless Dark Young), and "this card gains surge" (False Lead).
