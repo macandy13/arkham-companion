@@ -189,7 +189,11 @@ export function handleTestSkill(
     prompt: 'decision.cardTest',
     subject: card.id,
     test: cmd.test,
-    outcomes: { onPass: [...cmd.onPass], onFail: [...cmd.onFail] },
+    outcomes: {
+      onPass: [...cmd.onPass],
+      onFail: [...cmd.onFail],
+      ...(cmd.perPointFailed ? { perPointFailed: cmd.perPointFailed } : {}),
+    },
   });
 }
 

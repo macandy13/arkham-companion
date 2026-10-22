@@ -331,11 +331,20 @@ export interface Decision {
    */
   suggestion?: SkillTestSuggestion;
   /**
+   * Only for `skillTestResult`: "for each point you fail by, take 1 damage /
+   * horror". The fail answer confirms the margin (`FAILED_BY_AMOUNT`) and the
+   * deciding investigator takes that much (`answerCommands`).
+   */
+  perPointFailed?: PerPointFailed;
+  /**
    * The answers. Each carries the commands it triggers, so the mapping from
    * answer to consequence is data and any module (or scenario) can raise a decision.
    */
   options: DecisionOption[];
 }
+
+/** What a test deals for each point it fails by (`Decision.perPointFailed`, `TestSkill.perPointFailed`). */
+export type PerPointFailed = 'damage' | 'horror';
 
 /** One answer the players can pick for a `Decision`. */
 export interface DecisionOption {

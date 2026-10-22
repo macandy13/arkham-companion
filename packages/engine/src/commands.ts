@@ -8,6 +8,7 @@ import type {
   Difficulty,
   Investigator,
   InvestigatorStat,
+  PerPointFailed,
   SkillTest,
   TokenKind,
 } from './state';
@@ -568,6 +569,12 @@ export interface TestSkill {
   test: SkillTest;
   onPass: readonly Command[];
   onFail: readonly Command[];
+  /**
+   * "For each point you fail by, take 1 damage" (Grasping Hands) or horror
+   * (Rotting Remains): the fail answer confirms how much the test failed by,
+   * and the investigator takes that much, ahead of `onFail`.
+   */
+  perPointFailed?: PerPointFailed;
 }
 
 /**

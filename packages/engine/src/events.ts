@@ -320,8 +320,9 @@ export interface CluesDiscovered {
  * effects included. Commands triggered by this event run before those
  * results, because `handle` queues the forced effects of an answer's own
  * events ahead of its option commands; no hook reads it yet (the timing
- * windows add one). `failedBy` is set only when the answer names the margin (a
- * `failedBy:<n>` option). Produced by `ResolveDecision`.
+ * windows add one). `failedBy` is set only when the answer names the margin:
+ * a `failedBy:<n>` option, or the count of a per-point fail
+ * (`Decision.perPointFailed`). Produced by `ResolveDecision`.
  */
 export interface SkillTestResolved {
   type: 'SkillTestResolved';

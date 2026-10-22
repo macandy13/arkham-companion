@@ -70,6 +70,7 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 **Benefit:** Choices never get lost; any card can be read full size.
 
 - [ ] Modal for pending `Decision`s with the engine's options, one layout per decision kind (M1.9); the skill test prompt shows skill, difficulty and pass/fail buttons plus "skip, adjust manually"
+- [ ] Counts on an answer (`DecisionOption.amount` and `amounts`): attack damage to confirm, clues found, and how much a per-point test failed by (Grasping Hands, Rotting Remains). Until then the dialog answers with the defaults (a fail by 1)
 - [ ] Card zoom: front/back image, text fallback from card data
 - [ ] Tapping the agenda or act in the header opens its card (moved from M3.2)
 
