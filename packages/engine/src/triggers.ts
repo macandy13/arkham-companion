@@ -9,7 +9,7 @@ import type { GameState, QueuedStep } from './state';
  * Upper bound on the follow-up commands one player command may cause, counted
  * over the whole chain. Real forced-effect chains are a handful of steps, so
  * reaching it means card abilities keep re-triggering each other (a
-mistake in card data).
+ * mistake in card data).
  */
 export const MAX_TRIGGERED_COMMANDS = 50;
 

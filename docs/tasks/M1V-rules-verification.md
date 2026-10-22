@@ -41,7 +41,7 @@ Ref: architecture "Command handling", "Triggers and card effects"; [rules.md](..
    - [x] 3c. Everything as steps: forced effects queued when their events are emitted, `complete` and the phase step loop as continuation steps, and an answer's forced effects before its option commands (ST.6 before ST.7). Carries the intended behaviour changes, with a rules-checker table.
 4. [ ] End-to-end step at the table: The Gathering has no surge card, so add one with slice 2 or 3 where the scenario shows it.
 
-Follow-ups: simultaneous ordering and "when" hooks wait for the decision on the architecture review's timing windows. With the queue, the fixed order of two forced abilities on one timing point is binding: a hook bundling several should raise an ordering decision for the lead. A hook on `DecisionResolved` must fire after the chosen option (only `SkillTestResolved` triggers come before it, ST.6).
+Follow-ups: simultaneous ordering and "when" abilities wait for the decision on the architecture review's timing windows. With the queue, the fixed order of two forced abilities on one timing point is binding: a window that opens several should raise an ordering decision for the lead. An ability on `DecisionResolved` must fire after the chosen option (only `SkillTestResolved` triggers come before it, ST.6).
 
 Done after slice 3: `MoveInvestigator`, `Investigate` and `EngageEnemy` carry an `asAction` flag, and only a command with it provokes attacks of opportunity; before, a card effect moving an investigator to a connecting location provoked too. The web app sends none of these commands yet; its action buttons must set the flag. Next: M1V.2.
 

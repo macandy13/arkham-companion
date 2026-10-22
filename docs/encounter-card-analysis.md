@@ -270,7 +270,7 @@ Cards are named with their code. "Primitive" names the generic building block pr
 
 ### Timing windows on locations and threat-area cards
 
-Forced effects fire at a fixed moment. Where the effect touches tracked state it is a trigger hook; otherwise the same window shows a reminder.
+Forced effects fire at a fixed moment. Where the effect touches tracked state it is a card ability (a timing window); otherwise the same window shows a reminder.
 
 - **After you enter** – Cards: Sewer Tunnels: Infested Pipes 12183 (discard until enemy, draw it), Overgrown Tunnels 12184 (lose 1 action). Effect touches: encounter deck, actions. Tier: auto
 - **When you end your turn here** – Cards: Flooded Crypt 12185 (horror), Toxic Waste Pit 12187 (discard from hand), Smuggler's Cache 12186 (reaction: resource). Effect touches: horror / hand / resources. Tier: auto, display, assist
@@ -280,7 +280,7 @@ Forced effects fire at a fixed moment. Where the effect touches tracked state it
 - **When / after your turn begins or ends (threat area)** – Cards: Mark of Elokoss 12137, Languor 12193, Frenzied Hunger 13094. Effect touches: damage to assets, top card of deck, extra action cost. Tier: display (Frenzied Hunger: assist test)
 - **After you discover clues / after an enemy engages you / after another treachery (threat area)** – Cards: Unspeakable Truths 12125, Voices in the Night 13116, Echoing in Darkness 13065. Effect touches: horror, enemy attack, encounter draw. Tier: auto
 
-The engine had `turnEndTest` and `discardAtRoundEnd` as card flags; they are now the `turnEnds` and `roundEnds` windows of card abilities (P1 slice 3). Generalising these into a **timing window** list (enter location, end turn at location, turn begins, discover clues, failed test at location, phase ends, round ends, enemy engages, treachery resolved) gives one place to hang both hooks and reminders.
+The engine had `turnEndTest` and `discardAtRoundEnd` as card flags; they are now the `turnEnds` and `roundEnds` windows of card abilities (P1 slice 3). Generalising these into a **timing window** list (enter location, end turn at location, turn begins, discover clues, failed test at location, phase ends, round ends, enemy engages, treachery resolved) gives one place to hang both abilities and reminders.
 
 ### Abilities on scenario cards
 
