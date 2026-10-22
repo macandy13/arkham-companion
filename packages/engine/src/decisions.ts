@@ -113,7 +113,11 @@ function perPointCommands(state: GameState, command: ResolveDecision): Command[]
   ];
 }
 
-/** The margin a per-point fail answer confirms, or its default; none for any other answer. */
+/**
+ * The margin a per-point fail answer confirms, or its default; none for any
+ * other answer. Not range-checked here: `optionCommands` rejects an
+ * out-of-range count in the same `handle` call, before anything applies.
+ */
 function confirmedMargin(decision: Decision, command: ResolveDecision): number | undefined {
   const range = decision.options.find((option) => option.id === command.optionId)?.amounts?.[
     FAILED_BY_AMOUNT
@@ -253,7 +257,8 @@ export interface SkillTestOutcomes {
   perPointFailed?: PerPointFailed;
   /**
    * Consequences that depend on how much the test failed by (`failedBy[2]`
-   * for "failed by 2"). Commands are plain data, so each margin the card cares
+   * for "failed by 2"). Not combined with `perPointFailed`, whose margin is a
+   * count on the plain fail option instead. Commands are plain data, so each margin the card cares
    * about gets its own option next to the plain "fail" option.
    */
   failedBy?: Readonly<Record<number, Command[]>>;

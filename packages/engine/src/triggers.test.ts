@@ -428,9 +428,9 @@ describe('trigger bus', () => {
     const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
 
     it.each([
-      { amounts: undefined, failedBy: 1 },
-      { amounts: { failedBy: 3 }, failedBy: 3 },
-    ])('a fail by $failedBy deals $failedBy damage', ({ amounts, failedBy }) => {
+      { case: 'a fail with no count, the default 1,', amounts: undefined, failedBy: 1 },
+      { case: 'a fail by 3', amounts: { failedBy: 3 }, failedBy: 3 },
+    ])('$case deals $failedBy damage', ({ amounts, failedBy }) => {
       const { context, state: started } = treacheryTable.start();
       const drawn = stateAfter(context, started, aliceDraws);
 

@@ -564,6 +564,7 @@ export class PlayTable {
         decisionId: decision.id,
         optionId: 'fail',
         amounts: { [FAILED_BY_AMOUNT]: result.failedBy },
+        ...(amount === undefined ? {} : { amount }),
       });
       return;
     }
