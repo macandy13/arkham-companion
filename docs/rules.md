@@ -165,7 +165,7 @@ Bless (+2), curse (-2), frost (-1) and the blood token (-1) each make the tester
 
 The blood token comes with Children of Blood, not the Core Set (2026) ([campaign guide](https://images-cdn.fantasyflightgames.com/filer_public/a8/9c/a89c98b9-9de4-4b6c-8110-80fedbdcdb60/ahc106_campaign_guide-web.pdf), p. 3): if a test with a blood token fails, 1 blood token revealed during it is sealed on the tester (only for the first blood token of the test). At most 3 are sealed on one investigator, and at most 12 are in the bag and sealed together. Added tokens stay in the bag for the campaign. Some resolutions (River of Blood, New Horizons) release the sealed ones back into the bag. A blood token revealed outside a skill test has no effect unless a card says so. Encounter cards check for, and can release, blood tokens sealed on an investigator.
 
-A test fails by the difficulty minus the modified skill; after an auto-fail, whose skill is 0, that is the whole difficulty. "For each point you fail by" scales with it (Grasping Hands: 1 damage per point). The players confirm the margin with the fail answer.
+A test [fails by](https://arkhamdb.com/rules#Skill_Test_Timing) the difficulty minus the modified skill; after an auto-fail, whose skill is 0, that is the whole difficulty. "For each point you fail by" scales with it (Grasping Hands: 1 damage per point). The players confirm the margin with the fail answer.
 
 If auto-success or auto-failure is known before step 3, skip steps 3 and 4. [Variable difficulty](https://arkhamdb.com/rules#Variable_Difficulty_Skill_Tests) is fixed once step 6 checks it.
 

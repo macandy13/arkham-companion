@@ -192,7 +192,7 @@ export function handleTestSkill(
     outcomes: {
       onPass: [...cmd.onPass],
       onFail: [...cmd.onFail],
-      ...(cmd.perPointFailed ? { perPointFailed: true } : {}),
+      ...(cmd.perPointFailed ? { perPointFailed: cmd.perPointFailed } : {}),
     },
   });
 }

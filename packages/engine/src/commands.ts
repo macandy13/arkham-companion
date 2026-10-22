@@ -8,6 +8,7 @@ import type {
   Difficulty,
   Investigator,
   InvestigatorStat,
+  PerPointFailed,
   SkillTest,
   TokenKind,
 } from './state';
@@ -569,12 +570,11 @@ export interface TestSkill {
   onPass: readonly Command[];
   onFail: readonly Command[];
   /**
-   * "For each point you fail by": the fail answer carries how much the test
-   * failed by (1 or more, `ResolveDecision.amounts.delta`), which becomes the
-   * `delta` of each `AdjustInvestigator` in `onFail` (Grasping Hands: 1
-   * damage per point). `onFail` is written for a fail by 1.
+   * "For each point you fail by, take 1 damage" (Grasping Hands) or horror
+   * (Rotting Remains): the fail answer confirms how much the test failed by,
+   * and the investigator takes that much, ahead of `onFail`.
    */
-  perPointFailed?: true;
+  perPointFailed?: PerPointFailed;
 }
 
 /**

@@ -35,7 +35,6 @@ import {
   revealLocation,
   skillTest,
   spawnEnemyAt,
-  takeDamage,
   takeHorror,
   threatAreaOf,
   whenAdvanced,
@@ -409,43 +408,64 @@ describe('trigger bus', () => {
     });
   });
 
-  describe('tests that deal damage per point failed', () => {
+  describe('tests that deal damage or horror per point failed', () => {
     const graspingHands = instanceId('grasping_hands');
+    const rottingRemains = instanceId('rotting_remains');
     /** "Revelation – Test agility (3). Take 1 damage for each point you fail by." */
     const graspingHandsCard = blankTreachery('grasping_hands', {
-      abilities: [
-        whenRevealed(skillTest('agility', 3, { onFail: [takeDamage(1)], perPointFailed: true })),
-      ],
+      abilities: [whenRevealed(skillTest('agility', 3, { perPointFailed: 'damage' }))],
     });
-    /** Alice in the hall, with Grasping Hands on top of the encounter deck. */
-    const handsTable = newGame()
+    /** "Revelation – Test willpower (3). Take 1 horror for each point you fail by." */
+    const rottingRemainsCard = blankTreachery('rotting_remains', {
+      abilities: [whenRevealed(skillTest('willpower', 3, { perPointFailed: 'horror' }))],
+    });
+    /** Alice in the hall, with Grasping Hands on top of the encounter deck and Rotting Remains below. */
+    const treacheryTable = newGame()
       .withLocation(hall, blankLocation('hall'), { revealed: true })
       .withInvestigator(alice, { locationId: hall })
-      .withCard(graspingHands, graspingHandsCard, { kind: 'encounterDeck' });
+      .withCard(graspingHands, graspingHandsCard, { kind: 'encounterDeck' })
+      .withCard(rottingRemains, rottingRemainsCard, { kind: 'encounterDeck' });
     const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
 
     it.each([
-      { answer: answer('test:grasping_hands', 'fail'), damage: 1, failedBy: 1 },
-      {
-        answer: { ...answer('test:grasping_hands', 'fail'), amounts: { delta: 3 } },
-        damage: 3,
-        failedBy: 3,
-      },
-    ])('a fail by $failedBy deals $damage damage', ({ answer: failed, damage, failedBy }) => {
-      const { context, state: started } = handsTable.start();
+      { amounts: undefined, failedBy: 1 },
+      { amounts: { failedBy: 3 }, failedBy: 3 },
+    ])('a fail by $failedBy deals $failedBy damage', ({ amounts, failedBy }) => {
+      const { context, state: started } = treacheryTable.start();
       const drawn = stateAfter(context, started, aliceDraws);
 
-      const { state, events } = execute(context, drawn, failed);
+      const { state, events } = execute(context, drawn, {
+        ...answer('test:grasping_hands', 'fail'),
+        ...(amounts && { amounts }),
+      });
 
-      expect(state.investigators.find((inv) => inv.id === alice)?.health.damage).toBe(damage);
+      expect(state.investigators.find((inv) => inv.id === alice)?.health.damage).toBe(failedBy);
       expect(events.find((event) => event.type === 'SkillTestResolved')).toMatchObject({
         outcome: 'fail',
         failedBy,
       });
     });
 
+    it('deals horror for a card that names it', () => {
+      const { context, state: started } = treacheryTable.start();
+      const secondDraw = stateAfter(
+        context,
+        started,
+        aliceDraws,
+        answer('test:grasping_hands', 'pass'),
+        aliceDraws,
+      );
+
+      const { state } = execute(context, secondDraw, {
+        ...answer('test:rotting_remains', 'fail'),
+        amounts: { failedBy: 2 },
+      });
+
+      expect(state.investigators.find((inv) => inv.id === alice)?.sanity.horror).toBe(2);
+    });
+
     it('deals nothing on a pass', () => {
-      const { context, state: started } = handsTable.start();
+      const { context, state: started } = treacheryTable.start();
       const drawn = stateAfter(context, started, aliceDraws);
 
       const { state } = execute(context, drawn, answer('test:grasping_hands', 'pass'));
