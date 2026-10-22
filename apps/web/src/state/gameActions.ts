@@ -78,8 +78,8 @@ export interface GameActions {
   /**
    * One tap on a location's stepper: `delta` more (or, negative, fewer) of `token` on `location`.
    * Doom added is placed by rule (`PlaceDoom`), so effects that count placed doom see it; the
-   * rest are corrections by hand (`ManualAdjust`), as nothing in the rules hands clues out to a
-   * location one at a time.
+   * engine has no command that places or removes clues or removes doom yet, so the rest are
+   * corrections by hand (`ManualAdjust`), like the header's `removeDoom`.
    */
   adjustLocation(location: InstanceId, token: LocationToken, delta: number): Promise<void>;
   /** The investigator whose turn it is discovers a clue at `location`, as a card effect says. */

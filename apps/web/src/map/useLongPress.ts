@@ -24,12 +24,17 @@ export interface LongPress<Target> {
 
 /**
  * Calls `onLongPress` with the target that was pressed and held still. A press that moves is a
- * pan of the map, and one that starts on a draggable piece (`data-drag`) is a drag, so neither
- * counts. The context menu (a right click, or the long press of a browser that has one) counts
+ * pan of the map, one joined by a second finger is a pinch, and one that starts on a draggable
+ * piece (`data-drag`) is a drag, so none of them counts. The context menu (a right click, or the long press of a browser that has one) counts
  * at once and replaces the browser's own menu, which has nothing for a map tile.
  */
 export function useLongPress<Target>(onLongPress: (target: Target) => void): LongPress<Target> {
-  const press = useRef<{ timer: ReturnType<typeof setTimeout>; x: number; y: number }>(undefined);
+  const press = useRef<{
+    timer: ReturnType<typeof setTimeout>;
+    pointerId: number;
+    x: number;
+    y: number;
+  }>(undefined);
   const cancel = () => {
     if (press.current) clearTimeout(press.current.timer);
     press.current = undefined;
@@ -39,17 +44,19 @@ export function useLongPress<Target>(onLongPress: (target: Target) => void): Lon
     handlers: (target) => ({
       onPointerDown(event) {
         cancel();
+        // A second finger makes it a pinch, which zooms the map rather than pressing a tile.
+        if (!event.isPrimary) return;
         if (event.target instanceof Element && event.target.closest('[data-drag]')) return;
         const timer = setTimeout(() => {
           press.current = undefined;
           onLongPress(target);
         }, LONG_PRESS_MS);
-        press.current = { timer, x: event.clientX, y: event.clientY };
+        press.current = { timer, pointerId: event.pointerId, x: event.clientX, y: event.clientY };
       },
       onPointerMove(event) {
         const start = press.current;
-        if (start && Math.hypot(event.clientX - start.x, event.clientY - start.y) > PRESS_SLOP)
-          cancel();
+        if (start?.pointerId !== event.pointerId) return;
+        if (Math.hypot(event.clientX - start.x, event.clientY - start.y) > PRESS_SLOP) cancel();
       },
       onPointerUp: cancel,
       onPointerCancel: cancel,

@@ -25,7 +25,10 @@ const hallway = instanceId('hallway');
 const attic = instanceId('attic');
 const alder = investigatorId('alder');
 
-/** A house map: the Study revealed and laid out left of the Hallway, the Attic unrevealed without a cell. */
+/**
+ * A house map: the Study revealed with 2 clues and 1 doom, laid out left of the Hallway, which is
+ * unrevealed without clues or doom, like the Attic, which has no cell.
+ */
 const house = newGame()
   .withMap(mapId('main'), { name: 'House' })
   .withLocation(study, blankLocation('study', { shroud: 2 }), {
@@ -354,7 +357,12 @@ describe('MapBoard', () => {
       /** Presses the tile of `location` at (0, 0), moves the pointer to (`x`, `y`) and holds it. */
       function holdOn(location: string, x: number, y: number) {
         vi.useFakeTimers();
-        fireEvent.pointerDown(tile(location), { pointerId: 1, clientX: 0, clientY: 0 });
+        fireEvent.pointerDown(tile(location), {
+          pointerId: 1,
+          isPrimary: true,
+          clientX: 0,
+          clientY: 0,
+        });
         fireEvent.pointerMove(tile(location), { pointerId: 1, clientX: x, clientY: y });
         act(() => vi.advanceTimersByTime(500));
       }
@@ -372,6 +380,18 @@ describe('MapBoard', () => {
         expect(screen.queryByRole('dialog', { name: 'hallway' }) !== null).toBe(opens);
       });
 
+      it('leaves the menu closed when a second finger joins the press, as a pinch', () => {
+        const table = PlayTable.start(house);
+        render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+        vi.useFakeTimers();
+
+        fireEvent.pointerDown(tile('hallway'), { pointerId: 1, isPrimary: true });
+        fireEvent.pointerDown(tile('hallway'), { pointerId: 2, isPrimary: false });
+        act(() => vi.advanceTimersByTime(500));
+
+        expect(screen.queryByRole('dialog')).toBeNull();
+      });
+
       it('leaves the menu closed when the press starts on a pawn that can be dragged', () => {
         const table = PlayTable.start(
           house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
@@ -379,7 +399,10 @@ describe('MapBoard', () => {
         render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
         vi.useFakeTimers();
 
-        fireEvent.pointerDown(within(tile('study')).getByRole('img', { name: 'alder' }));
+        fireEvent.pointerDown(within(tile('study')).getByRole('img', { name: 'alder' }), {
+          pointerId: 1,
+          isPrimary: true,
+        });
         act(() => vi.advanceTimersByTime(500));
 
         expect(screen.queryByRole('dialog')).toBeNull();
@@ -417,7 +440,7 @@ describe('MapBoard', () => {
       },
     );
 
-    it('lets the investigator whose turn it is discover a clue there', async () => {
+    it('lets the investigator whose turn it is take one of the study’s 2 clues there', async () => {
       const table = PlayTable.start(
         house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
       );
@@ -431,7 +454,17 @@ describe('MapBoard', () => {
       expect(table.board.investigator(alder).clues).toBe(1);
     });
 
-    it('turns off removing a token there is none of and discovering where there are no clues', () => {
+    it('offers no discovery at a location the investigator whose turn it is is not at', () => {
+      const table = PlayTable.start(
+        house.withInvestigator(alder, { locationId: hallway }).withTurnOf(alder),
+      );
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+      fireEvent.contextMenu(tile('study'));
+
+      expect(screen.queryByRole('button', { name: 'alder discovers a clue' })).toBeNull();
+    });
+
+    it('turns off removing tokens and discovering at the hallway, which has no clues or doom', () => {
       const table = PlayTable.start(
         house.withInvestigator(alder, { locationId: hallway }).withTurnOf(alder),
       );
