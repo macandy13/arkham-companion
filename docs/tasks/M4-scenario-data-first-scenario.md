@@ -9,6 +9,8 @@ Goal: a repeatable way to turn a real scenario into data (product.md "Scenario d
 - **Why _Night of the Zealot_ first:** the engine already plays a hand-written _The Gathering_ in tests, and the campaign's 80 encounter cards need most of the generic rules (steps 1–12 of the [encounter card plan](../encounter-card-analysis.md#implementation-plan)). Those rules also cover half of every later campaign. The Chapter Two campaigns follow in M7.
 - **Why at this point:** Engine and UI are already proven with the sandbox, so anything that breaks now is data or scenario rules – much easier to diagnose.
 
+Order: plan step 1 (card data for every pack, from M4.5) comes first, because the pipeline and _The Gathering_ need the `core` pack loaded.
+
 Rule: nothing from ArkhamDB or ArkhamCards is committed except card codes, symbol names and our own layout/override files.
 
 ---
@@ -54,7 +56,7 @@ Rule: nothing from ArkhamDB or ArkhamCards is committed except card codes, symbo
 
 Ref: architecture "Scenarios".
 
-- [ ] `ScenarioDefinition` for _The Gathering_ (`core` pack): encounter sets, agenda/act decks, maps from M4.1, connections from M4.2. The hand-written `packages/scenarios/src/the_gathering/` stays as the test scenario
+- [ ] `ScenarioDefinition` for _The Gathering_ (`core` pack): encounter sets, agenda/act decks, maps from M4.1, connections from M4.2. under its own ID, apart from the hand-written test scenario in `packages/scenarios/src/the_gathering/`, which stays the only source of test data
 - [ ] Setup steps and set-aside cards; setup test against ArkhamDB quantities (via cached data, skipped offline)
 - [ ] One `CardDb` for every card: map carddata's cached `CardDef`s to engine `CardStats` (investigators included) and build the app's `CardDb` from all of them, so scenario packages only add hand-entered extras on top and the wizard no longer joins two sources with `cardDbWith` (Andy on #77)
 

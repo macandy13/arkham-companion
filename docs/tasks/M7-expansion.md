@@ -1,4 +1,4 @@
-# M7 – Expansion
+# M7 – More campaigns
 
 Goal: every campaign, in this order: the Chapter Two campaigns (Core Set (2026), Children of Blood), _The Dunwich Legacy_, _The Path to Carcosa_, _The Forgotten Age_, _The Innsmouth Conspiracy_, then the rest in release order (_The Circle Undone_, _The Dream-Eaters_, _Edge of the Earth_, _The Scarlet Keys_, _The Feast of Hemlock Vale_, _The Drowned City_), plus new Chapter Two products as ArkhamDB lists them; and more automated encounter cards.
 

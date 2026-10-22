@@ -1,4 +1,4 @@
-# M5 – Core campaign: Night of the Zealot
+# M5 – Night of the Zealot
 
 Goal: the full three-scenario _Night of the Zealot_ campaign (_The Gathering_, _The Midnight Masks_, _The Devourer Below_), with campaign log and chaos bag carried between scenarios.
 Ref: product.md "Campaign mode". Builds on the campaign engine (M1C).
