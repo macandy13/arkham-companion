@@ -460,11 +460,11 @@ export type QueuedStep =
   | { kind: 'ability'; effect: AbilityEffect; opened: OpenedWindow; origin?: CommandType }
   /**
    * A new lead investigator once the lead has left the scenario
-   * (`successionEvents`): a step after the departure's own events rather than
+   * (`newLeadInvestigatorEvents`): a step after the departure's own events rather than
    * one of them, so an effect that removes several investigators at once
    * finishes before anyone is asked.
    */
-  | { kind: 'succession'; origin?: CommandType };
+  | { kind: 'newLeadInvestigator'; origin?: CommandType };
 
 /**
  * The actions the engine sees that provoke attacks of opportunity

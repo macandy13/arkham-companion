@@ -7,6 +7,7 @@ import { requestDecision } from './decisions';
 import type { Event } from './events';
 import { moveCardEvent } from './placement';
 import { decisionId, type InstanceId } from './ids';
+import { activeInvestigators } from './investigators';
 import { hasKeyword } from './keywords';
 import { cardsOfType, requireCard } from './lookup';
 import { replay } from './reducer';
@@ -188,8 +189,8 @@ function chooseHunterLocation(
 
 /** The routes to the nearest investigators; empty if no investigator is elsewhere and reachable. */
 function nearestRoutes(state: GameState, from: InstanceId): Route[] {
-  const active = state.investigators.filter(
-    (investigator) => investigator.status === 'active' && investigator.locationId !== undefined,
+  const active = activeInvestigators(state).filter(
+    (investigator) => investigator.locationId !== undefined,
   );
   // A hunter does not move while an investigator is at its location.
   if (active.some((investigator) => investigator.locationId === from)) return [];

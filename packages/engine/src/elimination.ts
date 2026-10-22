@@ -4,7 +4,7 @@ import { decisionId } from './ids';
 import { requestDecision } from './decisions';
 import type { Event, InvestigatorDefeated, InvestigatorResigned } from './events';
 import { replay } from './reducer';
-import { cluesToLocationEvents } from './investigators';
+import { activeInvestigators, cluesToLocationEvents, isActiveInvestigator } from './investigators';
 import { cardsInZone } from './lookup';
 import { discardEncounterCard } from './placement';
 import type { GameState, Investigator } from './state';
@@ -24,7 +24,7 @@ const NEW_LEAD_DECISION = decisionId('newLeadInvestigator');
  *    as any ready unengaged enemy does (Rules Reference, "Enemy Engagement").
  * 4. If nobody is left, the scenario ends without a resolution.
  * 5. If they were the lead investigator, the group picks a new one: not here
- *    but in a `succession` step (`successionEvents`) that `triggeredSteps`
+ *    but in a `newLeadInvestigator` step (`newLeadInvestigatorEvents`) that `triggeredSteps`
  *    queues after the departure, so an effect on several investigators
  *    ("each investigator … is defeated") applies to all of them first.
  *
@@ -51,7 +51,7 @@ export function investigatorLeavesEvents(
       ? []
       : arrivalEngagements(ctx, cleared, investigator.locationId);
   const after = replay(engagements, cleared);
-  const nobodyLeft = after.investigators.every((inv) => inv.status !== 'active');
+  const nobodyLeft = activeInvestigators(after).length === 0;
   return [...events, ...engagements, ...(nobodyLeft ? [{ type: 'ScenarioEnded' as const }] : [])];
 }
 
@@ -84,16 +84,16 @@ function threatAreaEvents(state: GameState, investigator: Investigator): Event[]
 
 /**
  * A new lead investigator when the lead has left the scenario (the
- * `succession` step): a single remaining investigator becomes lead without
+ * `newLeadInvestigator` step): a single remaining investigator becomes lead without
  * a question; with several, the group chooses (`SetLeadInvestigator`). A
  * decision is used rather than the next in seat order because the rules let
  * the players choose. Nothing while the lead is still in, or once nobody is
  * left (the scenario has ended).
  */
-export function successionEvents(state: GameState): Event[] {
-  const lead = state.investigators.find((inv) => inv.id === state.meta.leadInvestigator);
-  if (lead?.status === 'active') return [];
-  const remaining = state.investigators.filter((inv) => inv.status === 'active');
+export function newLeadInvestigatorEvents(state: GameState): Event[] {
+  const lead = state.meta.leadInvestigator;
+  if (lead !== undefined && isActiveInvestigator(state, lead)) return [];
+  const remaining = activeInvestigators(state);
   const [only, ...others] = remaining;
   if (only === undefined) return [];
   if (others.length === 0) return [{ type: 'LeadInvestigatorChanged', investigatorId: only.id }];

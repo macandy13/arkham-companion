@@ -12,7 +12,7 @@ import {
   surgeDraw,
 } from './handle_encounter';
 import { completeAdvance } from './handle_scenario';
-import { successionEvents } from './elimination';
+import { newLeadInvestigatorEvents } from './elimination';
 import { nextStepPlan } from './phases';
 import { apply } from './reducer';
 import { CommandRejected, type Rejection } from './rejection';
@@ -252,8 +252,8 @@ function resolveQueuedStep(
       return emitWithEffects(resolution, placeDrawnCard(ctx, state, step.drawn));
     case 'surge':
       return resolveSurge(resolution, step.draw);
-    case 'succession':
-      return emitWithEffects(resolution, successionEvents(state));
+    case 'newLeadInvestigator':
+      return emitWithEffects(resolution, newLeadInvestigatorEvents(state));
     case 'ability': {
       const commands = resolveEffect(ctx, state, step.effect, step.opened);
       const [command, ...more] = commands;
@@ -313,7 +313,7 @@ function resolveCommand(
  * (Rules Reference, "Priority of Simultaneous Resolution"): every command's
  * own events first, then the forced effects and continuations of all of
  * them. So "each investigator is defeated" defeats everyone before a new
- * lead is asked for (`succession`), and nobody is asked when nobody is left.
+ * lead is asked for (`newLeadInvestigator`), and nobody is asked when nobody is left.
  * A command that asks something (a test, a drawn card's choice) stops the
  * batch: the same rule makes each investigator's own choices in player
  * order, so the rest follow as steps of their own after the answer.

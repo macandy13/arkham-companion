@@ -67,9 +67,10 @@ export const MAX_TRIGGERED_COMMANDS = 50;
 
 /**
  * A forced effect to resolve: a hook's command, or one effect of a card
- * ability; or the choice of a new lead after the lead left (`succession`).
+ * ability; or the choice of a new lead after the lead left (`newLeadInvestigator`).
  */
-export type TriggeredStep = Extract<QueuedStep, { kind: 'command' | 'succession' }> | AbilityStep;
+export type TriggeredStep =
+  Extract<QueuedStep, { kind: 'command' | 'newLeadInvestigator' }> | AbilityStep;
 
 /** A hook or ability that matched an event, not yet evaluated. */
 type PendingTrigger = (state: GameState) => readonly TriggeredStep[];
@@ -82,7 +83,7 @@ type PendingTrigger = (state: GameState) => readonly TriggeredStep[];
  * whether a card entered play) but are evaluated against the state after all
  * of them, so every hook sees the command's complete outcome. Order: by
  * event, scenario hooks before card abilities. The lead leaving queues a
- * `succession` step like a forced effect of the departure, so a forced
+ * `newLeadInvestigator` step like a forced effect of the departure, so a forced
  * effect of an earlier event of the same command still sees no lead.
  */
 export function triggeredSteps(
@@ -95,7 +96,7 @@ export function triggeredSteps(
   for (const event of events) {
     const next = apply(state, event);
     pending.push(...matchingTriggers(ctx, state, next, event));
-    if (leadLeft(state, event)) pending.push(() => [{ kind: 'succession' }]);
+    if (leadLeft(state, event)) pending.push(() => [{ kind: 'newLeadInvestigator' }]);
     pending.push(
       ...windowsOpenedBy(next, event, events).map(
         (opened) => (after: GameState) => abilitySteps(ctx, after, opened),

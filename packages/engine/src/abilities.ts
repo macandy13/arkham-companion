@@ -629,7 +629,7 @@ export function endScenario(resolution: string): AbilityEffect {
 
 /**
  * "Each investigator who has not resigned is defeated": all at once, so a
- * new lead is asked for only if somebody is left (`succession`).
+ * new lead is asked for only if somebody is left (`newLeadInvestigator`).
  */
 export function defeatEachInvestigator(): AbilityEffect {
   return { type: 'DefeatInvestigator', investigatorId: { ref: 'eachInvestigator' } };

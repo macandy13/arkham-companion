@@ -172,6 +172,11 @@ export function findInvestigator(state: GameState, id: InvestigatorId): Investig
   return state.investigators.find((inv) => inv.id === id);
 }
 
+/** The investigators still in the scenario (not defeated or resigned), in seat order. */
+export function activeInvestigators(state: GameState): Investigator[] {
+  return state.investigators.filter((inv) => inv.status === 'active');
+}
+
 /** Whether `id` names an investigator still in the scenario (not defeated or resigned). */
 export function isActiveInvestigator(state: GameState, id: InvestigatorId): boolean {
   return findInvestigator(state, id)?.status === 'active';
