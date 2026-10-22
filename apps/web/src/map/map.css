@@ -130,7 +130,7 @@
 
 #map svg pattern path {
   stroke: var(--color-border);
-  stroke-width: var(--map-pattern-line-width);
+  stroke-width: var(--card-pattern-line-width);
 }
 
 #map svg [data-card] > text + text {

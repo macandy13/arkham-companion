@@ -42,17 +42,21 @@
   --layout-sheet-width: 22rem;
   /* Connection lines on the map, in its SVG user units (mapLayout.ts TILE). */
   --map-line-width: 3px;
-  /* A card frame's border and the lines of the patterns in a card's art area, in the same units. */
-  --card-border-width: 3px;
-  --map-pattern-line-width: 1px;
   /*
-   * The art area of a card drawn in HTML (the agenda and act) without its image: the same
-   * diagonal hatch the map's SVG pattern draws on location tiles.
+   * A card frame's border and the lines of the hatch in a card's art area: SVG user units on the
+   * map, CSS pixels in the header, which match at the map's full size.
+   */
+  --card-border-width: 3px;
+  --card-pattern-line-width: 1px;
+  /*
+   * The art area of a card drawn in HTML (the agenda and act) without its image: the map's SVG
+   * hatch (LocationTile `CardPatterns`), lines from bottom left to top right in a 20-unit cell,
+   * which puts them 14px apart across the diagonal.
    */
   --card-art-pattern: repeating-linear-gradient(
-    45deg,
-    var(--color-border) 0 1px,
-    transparent 1px 14px
+    -45deg,
+    var(--color-border) 0 var(--card-pattern-line-width),
+    transparent var(--card-pattern-line-width) 14px
   );
   /* The agenda and act in the header, landscape cards this tall. */
   --layout-header-card-height: 6rem;
