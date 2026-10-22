@@ -1136,8 +1136,8 @@ describe('trigger bus loop guard', () => {
     { name: 'a short chain', actDoom: 5, cellarDoom: 5, doom: 10 },
     {
       name: 'a chain of exactly the limit',
-      actDoom: MAX_TRIGGERED_COMMANDS / 2 - 1,
-      cellarDoom: MAX_TRIGGERED_COMMANDS / 2,
+      actDoom: MAX_TRIGGERED_COMMANDS - 6,
+      cellarDoom: 5,
       doom: MAX_TRIGGERED_COMMANDS - 1,
     },
   ])('finishes $name within the guard', ({ actDoom, cellarDoom, doom }) => {
@@ -1150,10 +1150,7 @@ describe('trigger bus loop guard', () => {
   });
 
   it('rejects a chain one past the limit, counted over every card it reaches, and leaves the state unchanged', () => {
-    const { context, state } = chainTable(
-      MAX_TRIGGERED_COMMANDS / 2,
-      MAX_TRIGGERED_COMMANDS / 2,
-    ).start();
+    const { context, state } = chainTable(MAX_TRIGGERED_COMMANDS - 5, 5).start();
     const snapshot = structuredClone(state);
 
     const rejection = rejectionFrom(context, state, { type: 'AdvanceAct' });

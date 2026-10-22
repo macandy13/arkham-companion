@@ -264,7 +264,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     );
 
     // The players answer yes. The reverse side lets the lead investigator choose,
-    // but the engine leaves that choice to the players, so Roland simply takes the 2
+    // but agenda 1 has no reverse-side ability yet, so Roland simply takes the 2
     // horror by hand.
     table.answer(byName("What's Going On?!"), 'yes');
     table.takeHorror(roland, 2);

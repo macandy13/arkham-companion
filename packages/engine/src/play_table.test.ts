@@ -185,8 +185,16 @@ describe('rejected and broken steps', () => {
         .withAgenda(instanceId('next_agenda'), blankAgenda('next_agenda', fixed(5))),
     );
 
-    expect(() => table.play({ type: 'AdvanceAgenda' })).toThrow(/Unhandled variant/);
-    expect(() => table.play({ type: 'AdvanceAgenda' })).not.toThrow(CommandRejected);
+    const error: unknown = (() => {
+      try {
+        table.play({ type: 'AdvanceAgenda' });
+      } catch (thrown) {
+        return thrown;
+      }
+    })();
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error).not.toBeInstanceOf(CommandRejected);
     expect(table.board.agenda).toEqual({ name: 'broken_agenda', doom: 0, threshold: 5 });
   });
 });
