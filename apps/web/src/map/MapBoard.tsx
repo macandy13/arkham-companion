@@ -14,7 +14,7 @@ import type {
 } from '@arkham/engine';
 import type { GameActions } from '../state/gameActions';
 import { LocationMenu } from './LocationMenu';
-import { EnemyChip, LocationTile, Pawn, type TilePiece } from './LocationTile';
+import { CardPatterns, EnemyChip, LocationTile, Pawn, type TilePiece } from './LocationTile';
 import {
   connectionEnds,
   drawingSize,
@@ -164,6 +164,7 @@ function MapDrawing({
               >
                 <path d="M 0 0 L 10 5 L 0 10 z" />
               </marker>
+              <CardPatterns />
             </defs>
             {map.connections.map((edge) => (
               <Connection

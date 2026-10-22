@@ -94,7 +94,7 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 
 The fan IP policy that covers FFG (Asmodee's community-use guidelines) does not allow FFG art inside apps. So the app never commits or bundles card images or FFG icons. It fetches them at runtime from ArkhamDB on the user's device, the same way the investigator picker already does (`imageSrc`/`backImageSrc`, `DEFAULT_IMAGE_HOST`).
 
-- [ ] One shared card size next to `TILE` in `apps/web/src/map/mapLayout.ts`: every card is 63.5 × 88 mm, laid out at 5 : 7 (150 × 210 units). Locations, the scenario reference and encounter cards are portrait; the agenda and act are landscape (210 × 150).
+- [x] One shared card size next to `TILE` in `apps/web/src/map/mapLayout.ts`: every card is 63.5 × 88 mm, laid out at 5 : 7 (150 × 210 units). Locations, the scenario reference and encounter cards are portrait; the agenda and act are landscape (210 × 150).
 - [ ] Our own layered card template (CSS/SVG, colours from `tokens.css`):
   - a frame;
   - an art area that shows the card image when one loads, and a pattern per card type otherwise;
@@ -105,6 +105,15 @@ The fan IP policy that covers FFG (Asmodee's community-use guidelines) does not 
 - [ ] The service worker caches fetched card images (runtime caching for the image host), so a started game keeps its art offline.
 - [ ] Tests and E2E use the pattern fallback, because CI and cloud sessions cannot reach arkhamdb.com.
 - [ ] Add an "unofficial fan project" notice with an FFG copyright credit (the About/settings screen).
+
+**Slices** (one PR each, in this order)
+
+1. M3.10a: `CARD` size and the location tile as a layered card face (frame, patterned art area, name band, shroud badge, clue/doom/attachment tokens), without images
+2. M3.10b: the agenda and act as landscape card faces in the header, sharing the face's parts
+3. M3.10c: card images: the views carry each card's code, the face loads its ArkhamDB image and falls back to the pattern, the name band and badges hide under an image, and the service worker caches the images
+4. M3.10d: the "unofficial fan project" notice
+
+Done: M3.10a draws each location tile as a card face: frame, a hatched art area (crossed when unrevealed), the name band with the edit button and, on top, the shroud badge and round clue, doom and attachment tokens. The printed clue value is not in `LocationView` yet, so the clue badge waits for M3.10c, which adds card data to the views. Follow-up: long names (Miskatonic University) run under the edit button; wrap or shrink them in the name band.
 
 Done when: a full sandbox game is playable and comfortable on a tablet.
 

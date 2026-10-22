@@ -9,6 +9,12 @@
   --color-text-muted: #a3a1a8;
   --color-accent: #6fb7a6;
   --color-accent-text: #10201c;
+  /* Tokens on the map, coloured like the game's own: blue-green clues, red doom. */
+  --color-clue: #3f8fb0;
+  --color-doom: #b8433f;
+  --color-token-text: #ffffff;
+  /* The frame of a location card. */
+  --color-card-location: #8c7a55;
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -20,6 +26,7 @@
   --font-size-body: 1rem;
   --font-size-title: 1.5rem;
   --font-size-subtitle: 1.125rem;
+  --font-size-note: 0.75rem;
 
   --radius: 0.5rem;
   --border-width: 1px;
@@ -33,6 +40,9 @@
   --layout-sheet-width: 22rem;
   /* Connection lines on the map, in its SVG user units (mapLayout.ts TILE). */
   --map-line-width: 3px;
+  /* A card frame's border and the lines of the patterns in a card's art area, in the same units. */
+  --map-card-border-width: 3px;
+  --map-pattern-line-width: 1px;
   /* A dragged map piece's copy, see-through so the tile under it stays readable. */
   --map-ghost-opacity: 0.6;
 }
@@ -47,4 +57,6 @@
   --color-text-muted: #5f5c57;
   --color-accent: #2c7a68;
   --color-accent-text: #ffffff;
+  --color-clue: #2f7896;
+  --color-doom: #a33a37;
 }

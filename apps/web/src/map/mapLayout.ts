@@ -7,20 +7,53 @@ export interface Point {
 }
 
 /**
- * Size of a location tile and the gap between tiles, in SVG user units. The drawing shrinks to
- * fit its box but never grows past one unit per CSS pixel, so these are also the largest tile
- * size. A tile has the proportions of a location card's image (about 300 × 419 on ArkhamDB), at half
- * that size, so the card art can fill it later. A tile and a gap divide by `GRID_CELLS_PER_CARD`,
- * so every cell starts on a whole unit.
+ * The size of every card, in SVG user units: all Arkham cards are 63.5 × 88 mm, drawn at 5 : 7,
+ * which is within 1 % of the real card and half the size of an ArkhamDB scan (about 300 × 419),
+ * so card art can fill it. Portrait cards (locations) stand `short` wide; landscape cards (the
+ * agenda and act) lie `long` wide.
  */
-export const TILE = { width: 150, height: 210, gap: 30 } as const;
+export const CARD = { short: 150, long: 210 } as const;
 
 /**
- * Where a tile's contents sit, in SVG user units from its top left corner: text lines one
- * `line` apart from the top, enemy chips below them, investigator pawns in a row along the
- * bottom edge.
+ * Size of a location tile, a portrait card, and the gap between tiles, in SVG user units. The
+ * drawing shrinks to fit its box but never grows past one unit per CSS pixel, so these are also
+ * the largest tile size. A tile and a gap divide by `GRID_CELLS_PER_CARD`, so every cell starts
+ * on a whole unit.
  */
-export const CONTENT = { inset: 10, line: 24, chip: 28, pawnRadius: 14, pawnGap: 6 } as const;
+export const TILE = { width: CARD.short, height: CARD.long, gap: 30 } as const;
+
+/**
+ * Where a tile's contents sit, in SVG user units from its top left corner. The name band runs
+ * along the top, `band` high, with the edit button at its right end. Below it a row of round
+ * badges and tokens (`BADGE_CENTRE`, `tokenOffset`), then enemy chips, and investigator pawns in a
+ * row along the bottom edge (`pawnOffset`). Badges, tokens and pawns share one radius, so every
+ * round thing on a tile is one size.
+ */
+export const CONTENT = { inset: 10, band: 48, chip: 28, pawnRadius: 14, pawnGap: 6 } as const;
+
+/** The centre of the row of badges and tokens below the name band, from a tile's top. */
+const tokenRowY = CONTENT.band + CONTENT.pawnRadius;
+
+/** The centre of a tile's stat badge, the printed value at the left end of the token row. */
+export const BADGE_CENTRE: Point = { x: CONTENT.inset + CONTENT.pawnRadius, y: tokenRowY };
+
+/**
+ * The centre of the `index`th token in the row below the name band, counted from the right
+ * edge, so the tokens a location has line up at the right and leave the badge free.
+ */
+export function tokenOffset(index: number): Point {
+  return {
+    x:
+      TILE.width -
+      CONTENT.inset -
+      CONTENT.pawnRadius -
+      index * (2 * CONTENT.pawnRadius + CONTENT.pawnGap),
+    y: tokenRowY,
+  };
+}
+
+/** The top of the first enemy chip, from a tile's top: one gap below the token row. */
+export const CHIPS_TOP = tokenRowY + CONTENT.pawnRadius + CONTENT.pawnGap;
 
 /**
  * Where each location of `map` is drawn: its book layout cell, or for a location without one a

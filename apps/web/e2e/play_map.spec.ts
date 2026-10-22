@@ -37,7 +37,8 @@ test('read the map', { tag: '@flow' }, async ({ page }) => {
     }
     const hallway = house.getByRole('group', { name: 'Hallway' });
     await expect(hallway.getByRole('img', { name: 'Alder' })).toBeVisible();
-    await expect(hallway).toContainText('Shroud 1 · Clues 0');
+    await expect(hallway.getByRole('img', { name: 'Shroud 1' })).toBeVisible();
+    await expect(hallway.getByRole('img', { name: 'Clues 0' })).toBeVisible();
   });
 
   await test.step('Zoom in on the Hallway, pan it to the right, then fit the whole house again', async () => {
@@ -146,8 +147,8 @@ test('change a location by its menu', { tag: '@flow' }, async ({ page }) => {
     await menu('Attic').getByRole('button', { name: 'Add doom' }).click();
     await expect(menu('Attic')).toContainText('Doom 1');
     await menu('Attic').getByRole('button', { name: 'Close' }).click();
-    await expect(room('Attic')).toContainText('Shroud');
-    await expect(room('Attic')).toContainText('Doom 1');
+    await expect(room('Attic').getByRole('img', { name: /^Shroud/ })).toBeVisible();
+    await expect(room('Attic').getByRole('img', { name: 'Doom 1' })).toBeVisible();
   });
 
   await test.step('Open the Hallway’s menu and add a clue', async () => {
@@ -155,7 +156,7 @@ test('change a location by its menu', { tag: '@flow' }, async ({ page }) => {
     await menu('Hallway').getByRole('button', { name: 'Add a clue' }).click();
     await expect(menu('Hallway')).toContainText('Clues 1');
     await menu('Hallway').getByRole('button', { name: 'Close' }).click();
-    await expect(room('Hallway')).toContainText('Clues 1');
+    await expect(room('Hallway').getByRole('img', { name: 'Clues 1' })).toBeVisible();
   });
 });
 

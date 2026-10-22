@@ -87,9 +87,17 @@ describe('MapBoard', () => {
     render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
     expect(screen.getByRole('figure', { name: 'House' })).toBeTruthy();
-    expect(within(tile('study')).getByText('Shroud 4 · Clues 2')).toBeTruthy();
-    expect(within(tile('study')).getByText('Doom 1')).toBeTruthy();
-    expect(within(tile('study')).getByText('Attachments 1')).toBeTruthy();
+    const tokensOf = (name: string) =>
+      within(tile(name))
+        .queryAllByRole('img')
+        .map((token) => [token.getAttribute('aria-label'), token.textContent]);
+    expect(tokensOf('study')).toEqual([
+      ['Shroud 4', '4'],
+      ['Clues 2', '2'],
+      ['Doom 1', '1'],
+      ['Attachments 1', '1'],
+    ]);
+    expect(tokensOf('hallway')).toEqual([]);
     expect(within(tile('hallway')).getByText('Unrevealed')).toBeTruthy();
     expect(within(tile('attic')).getByText('Unrevealed')).toBeTruthy();
   });
@@ -98,7 +106,10 @@ describe('MapBoard', () => {
     const table = PlayTable.start(house);
     render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
-    const lines = screen.getAllByRole('img').map((line) => line.getAttribute('aria-label'));
+    const lines = screen
+      .getAllByRole('img')
+      .filter((image) => image.tagName === 'line')
+      .map((line) => line.getAttribute('aria-label'));
     expect(lines).toEqual(['study – hallway', 'hallway to attic, one way']);
   });
 
