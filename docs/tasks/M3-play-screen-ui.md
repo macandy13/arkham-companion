@@ -104,7 +104,7 @@ The fan IP policy that covers FFG (Asmodee's community-use guidelines) does not 
 - [ ] Enemies and investigators stay round avatar tokens, never cards, because cards would crowd the map.
 - [ ] The service worker caches fetched card images (runtime caching for the image host), so a started game keeps its art offline.
 - [ ] Tests and E2E use the pattern fallback, because CI and cloud sessions cannot reach arkhamdb.com.
-- [ ] Add an "unofficial fan project" notice with an FFG copyright credit (the About/settings screen).
+- [x] Add an "unofficial fan project" notice with an FFG copyright credit (the About/settings screen).
 
 **Slices** (one PR each, in this order)
 
