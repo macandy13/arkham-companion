@@ -7,6 +7,8 @@ import type {
   GridCell,
   InstanceId,
   InvestigatorId,
+  InvestigatorView,
+  LocationView,
   MapId,
   MapView,
 } from '@arkham/engine';
@@ -166,9 +168,7 @@ function MapDrawing({
                       key={location.id}
                       location={location}
                       enemies={map.enemies[location.id] ?? []}
-                      investigators={investigators.filter(({ id }) =>
-                        location.investigators?.includes(id),
-                      )}
+                      investigators={pawnsAt(board, location)}
                       dragOf={(piece) =>
                         draggable(piece)
                           ? drag.handlers({ ...piece, from: location.id })
@@ -201,7 +201,7 @@ function Ghost({ piece, at, board }: { piece: TilePiece; at: Point; board: Board
 
 /**
  * Where the pawn of `investigator` stands on `map`, in the drawing's coordinates: in the row of
- * pawns on their location's tile, in the board's investigator order as `LocationTile` draws them.
+ * pawns on their location's tile (`pawnsAt`).
  */
 function pawnCentre(
   map: MapView,
@@ -212,12 +212,15 @@ function pawnCentre(
   const location = map.locations.find(({ investigators }) => investigators?.includes(investigator));
   const cell = location && cells[location.id];
   if (!cell) return undefined;
-  const index = board.investigators
-    .filter(({ id }) => location.investigators?.includes(id))
-    .findIndex(({ id }) => id === investigator);
+  const index = pawnsAt(board, location).findIndex(({ id }) => id === investigator);
   const tile = tileOrigin(cell);
   const offset = pawnOffset(index);
   return { x: tile.x + offset.x, y: tile.y + offset.y };
+}
+
+/** The investigators at `location`, in the order `LocationTile` draws their pawns: the board's. */
+function pawnsAt(board: BoardView, location: LocationView): InvestigatorView[] {
+  return board.investigators.filter(({ id }) => location.investigators?.includes(id));
 }
 
 /** The zoom buttons of the map whose `TransformWrapper` they sit in. */

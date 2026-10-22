@@ -47,7 +47,7 @@ export const resources = {
         noTurnInProgress: 'Start an investigator’s turn first.',
         turnsNotTaken: 'Every investigator must take a turn first.',
         notConnected: 'Those locations are not connected.',
-        investigatorNotAtLocation: 'That enemy is not at the investigator’s location.',
+        investigatorNotAtLocation: 'The investigator is not at that location.',
         alreadyEngaged: 'That enemy is already engaged with the investigator.',
         massiveNotEngageable: 'A massive enemy cannot be engaged.',
       },
@@ -251,7 +251,7 @@ export const resources = {
         noTurnInProgress: 'Beginne zuerst den Zug eines Ermittlers.',
         turnsNotTaken: 'Jeder Ermittler muss zuerst einen Zug machen.',
         notConnected: 'Diese Orte sind nicht verbunden.',
-        investigatorNotAtLocation: 'Dieser Gegner ist nicht am Ort des Ermittlers.',
+        investigatorNotAtLocation: 'Der Ermittler ist nicht an diesem Ort.',
         alreadyEngaged: 'Dieser Gegner ist bereits mit dem Ermittler in einen Kampf verwickelt.',
         massiveNotEngageable:
           'Mit einem massiven Gegner kann man sich nicht in einen Kampf verwickeln.',

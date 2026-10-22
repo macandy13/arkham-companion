@@ -100,7 +100,10 @@
   fill: var(--color-text-muted);
 }
 
-/* Pieces on a tile: investigator pawns (circles) and enemy chips (the rect of a named piece). */
+/*
+ * Pieces: investigator pawns (circles) and enemy chips (the rect of a piece's group, which is not
+ * a tile, so a dragged chip's copy gets it too).
+ */
 #map svg circle {
   fill: var(--color-accent);
 }
