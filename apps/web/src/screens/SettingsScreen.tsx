@@ -18,7 +18,12 @@ interface SettingsScreenProps {
   readonly packs?: readonly PackDef[];
 }
 
-/** Route `/settings`: owned packs, card and UI language and theme, saved on every change. */
+/**
+ * Route `/settings`: owned packs, card and UI language and theme, saved on every change, and the
+ * notice that the app is an unofficial fan project, with the publisher's copyright credit. The fan
+ * content policy requires the notice for using the game's names; card art is never bundled, only
+ * fetched from ArkhamDB on the player's device.
+ */
 export function SettingsScreen({ packs = [] }: SettingsScreenProps) {
   const { t, i18n } = useTranslation();
   const [settings, setSettings] = useState<Settings>(loadSettings);
@@ -106,6 +111,11 @@ export function SettingsScreen({ packs = [] }: SettingsScreenProps) {
           </label>
         </section>
       </form>
+      <section aria-labelledby="settings-about">
+        <h2 id="settings-about">{t('settings.about')}</h2>
+        <p>{t('settings.unofficial')}</p>
+        <p>{t('settings.copyright')}</p>
+      </section>
     </>
   );
 }

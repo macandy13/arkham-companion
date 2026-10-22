@@ -84,6 +84,22 @@ flowchart LR
 | [M7 More campaigns](tasks/M7-expansion.md) | Chapter Two campaigns, then Dunwich, Carcosa, The Forgotten Age, Innsmouth and the rest in release order; new Chapter Two products; more automated card effects | Each campaign reuses the recipe and the generic rules; playtests show what to automate | One more full campaign at a time, less manual work per round |
 | [M8 Cloud and sync](tasks/M8-cloud-sync.md) | Login, games in the cloud, sync across devices at the table | Adds cost and operations; one tablet covers the core use case | Games backed up online, several devices showing the same live game |
 
+## Versions
+
+*Why:* a version number should tell players what they can do with the app, not how many features were merged. Release Please would bump the version on every `feat` commit, so it only bumps the patch number (setup in [automation.md](automation.md)); every step below is set by hand.
+
+- **0.1.x – Engine and first screens (now):** start, save, resume and export games; the sandbox scenario's map with draggable investigators and enemies, agenda/act and doom on a tablet. Every merged release PR is a new 0.1.x.
+- **0.2 – Sandbox game loop:** a whole sandbox game played on a tablet without paper: investigator bar, encounter panel, decision dialog, card zoom and event log ([M3](tasks/M3-play-screen-ui.md) done).
+- **0.3 – First real scenario:** *The Gathering* from real card data, playable at the table from setup to resolution ([M4](tasks/M4-scenario-data-first-scenario.md)).
+- **0.4 – First campaign:** *Night of the Zealot* end to end with the campaign screen and campaign log, no paper log needed ([M5](tasks/M5-core-campaign.md)).
+- **1.0 – Ready for the table:** decided by hand once *Night of the Zealot* has been playtested and works reliably; expected to include offline play and the group's card language from [M6](tasks/M6-comfort.md).
+
+After 1.0, a new major version marks a change in what the app can do at the table, and saved games from the previous major version may no longer load:
+
+- **2.0 – Several devices:** games in the cloud and several devices showing the same live game ([M8](tasks/M8-cloud-sync.md)).
+
+New campaigns ([M7](tasks/M7-expansion.md)) and comfort features are minor versions (1.1, 1.2 …); fixes are patch versions.
+
 ## Planned designs
 
 Designs for parts that have a milestone but no code yet. The PR that builds one describes it in [architecture.md](architecture.md) and removes it here.

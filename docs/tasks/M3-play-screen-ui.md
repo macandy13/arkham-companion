@@ -105,7 +105,7 @@ The fan IP policy that covers FFG (Asmodee's community-use guidelines) does not 
 - [ ] The service worker caches fetched card images (runtime caching for the image host), so a started game keeps its art offline.
 - [ ] Tests and E2E use the pattern fallback, because CI and cloud sessions cannot reach arkhamdb.com.
 - [ ] Follow-up from M3.10a: a clue-value badge next to the shroud badge, once `LocationView` carries the printed clue value
-- [ ] Add an "unofficial fan project" notice with an FFG copyright credit (the About/settings screen).
+- [x] Add an "unofficial fan project" notice with an FFG copyright credit (the About/settings screen).
 
 **Slices** (one PR each, in this order)
 
