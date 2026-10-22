@@ -29,6 +29,12 @@ export type InvestigatorCode = CardCode & { readonly __investigatorCode: true };
  * Compared with `comparableName` (case and a trailing full stop do not matter).
  */
 export type CardName = Brand<string, 'CardName'>;
+/**
+ * Where a card side's picture is on ArkhamDB, relative to its host ('/bundles/cards/01111.png');
+ * `CardStats.imageSrc` and `backImageSrc`. The engine only passes it on to the views: the app
+ * fetches the picture on the player's device, so card art is never bundled.
+ */
+export type CardImagePath = Brand<string, 'CardImagePath'>;
 /** ArkhamDB encounter set code, e.g. 'rats'; `CardStats.encounterCode`. */
 export type EncounterSetCode = Brand<string, 'EncounterSetCode'>;
 /** `ScenarioDefinition.id`, e.g. 'the-gathering'; wherever a game or campaign refers to a scenario. */
@@ -54,6 +60,7 @@ export const investigatorId = (id: string) => id as InvestigatorId;
 export const investigatorCode = (code: string) => code as InvestigatorCode;
 export const cardCode = (code: string) => code as CardCode;
 export const cardName = (name: string) => name as CardName;
+export const cardImagePath = (path: string) => path as CardImagePath;
 export const encounterSetCode = (code: string) => code as EncounterSetCode;
 export const scenarioId = (id: string) => id as ScenarioId;
 export const campaignDefinitionId = (id: string) => id as CampaignDefinitionId;

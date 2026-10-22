@@ -110,7 +110,8 @@ The fan IP policy that covers FFG (Asmodee's community-use guidelines) does not 
 
 1. M3.10a: `CARD` size and the location tile as a layered card face (frame, patterned art area, name band, shroud badge, clue/doom/attachment tokens), without images
 2. M3.10b: the agenda and act as landscape card faces in the header, sharing the face's parts
-3. M3.10c: card images: the views carry each card's code, the face loads its ArkhamDB image and falls back to the pattern, the name band and badges hide under an image, and the service worker caches the images
+3. M3.10c1: `CardStats` carries each side's ArkhamDB picture path, and the location, agenda and act views pass on the one for the side in play (`image`)
+   M3.10c2: the card faces load that picture and fall back to the pattern, the name band and badges hide under a picture, and the service worker caches the pictures
 4. M3.10d: the "unofficial fan project" notice
 
 Done: M3.10a draws each location tile as a card face: frame, a hatched art area (crossed when unrevealed), the name band with the edit button and, on top, the shroud badge and round clue, doom and attachment tokens. The printed clue value is not in `LocationView` yet, so the clue badge waits for M3.10c, which adds card data to the views. Follow-up: long names (Miskatonic University) run under the edit button; wrap or shrink them in the name band.

@@ -1,6 +1,6 @@
 import { stripTrailingDot } from '@arkham/util';
 import type { Ability } from './abilities';
-import type { Brand, CardCode, EncounterSetCode } from './ids';
+import type { Brand, CardCode, CardImagePath, EncounterSetCode } from './ids';
 import type { Keyword } from './keywords';
 import type { ScenarioDefinition } from './scenario';
 import type { SkillValues } from './state';
@@ -133,6 +133,12 @@ export interface CardStats {
   locationAttachment?: LocationAttachment;
   /** The card's forced abilities as data (architecture "Triggers and card effects"); none when absent. */
   abilities?: readonly Ability[];
+  /**
+   * The pictures of its front and back on ArkhamDB, only for the views to show; no rule reads
+   * them. A location's front is its revealed side, its back the unrevealed one.
+   */
+  imageSrc?: CardImagePath;
+  backImageSrc?: CardImagePath;
 }
 
 /**

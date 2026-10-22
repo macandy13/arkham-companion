@@ -15,7 +15,14 @@ import {
   type EnemyRef,
   type InvestigatorRef,
 } from './card_matchers';
-import { cardName, type CardName, type InstanceId, type InvestigatorId, type MapId } from './ids';
+import {
+  cardName,
+  type CardImagePath,
+  type CardName,
+  type InstanceId,
+  type InvestigatorId,
+  type MapId,
+} from './ids';
 import { cardsInZone, cardsOfType, currentCard } from './lookup';
 import { mapLocations, type Edge, type GameMap, type GridCell } from './map';
 import { attacksStillDue } from './phases';
@@ -106,6 +113,8 @@ interface LocationViewBase {
   id: InstanceId;
   name: CardName;
   map: MapId;
+  /** The picture of the side it shows (`CardStats.imageSrc` once revealed, else `backImageSrc`), when the card data has one. */
+  image?: CardImagePath;
   clues: number;
   doom?: number;
   investigators?: InvestigatorId[];
@@ -147,6 +156,8 @@ export type MapEnemyView = EnemyView & { id: InstanceId };
  */
 export interface AgendaView {
   name: CardName;
+  /** The picture of its front, the side in play (`CardStats.imageSrc`), when the card data has one. */
+  image?: CardImagePath;
   doom: number;
   threshold?: number;
 }
@@ -154,6 +165,8 @@ export interface AgendaView {
 /** The current act's name and, when it has one, the clues it needs for the player count. */
 export interface ActView {
   name: CardName;
+  /** The picture of its front, the side in play (`CardStats.imageSrc`), when the card data has one. */
+  image?: CardImagePath;
   clues?: number;
 }
 
@@ -464,10 +477,13 @@ function enemyView(ctx: EngineContext, state: GameState, enemy: CardInstance): E
 
 function locationView(ctx: EngineContext, state: GameState, location: CardInstance): LocationView {
   const present = state.investigators.filter((inv) => inv.locationId === location.id);
+  const { imageSrc, backImageSrc } = cardStats(ctx.cards, location.code);
+  const image = location.faceUp ? imageSrc : backImageSrc;
   return {
     id: location.id,
     name: nameOf(ctx, location),
     map: mapOf(location),
+    ...(image === undefined ? {} : { image }),
     ...(location.faceUp
       ? { revealed: true as const, shroud: locationShroud(ctx, state, location) }
       : { revealed: false as const }),
@@ -524,9 +540,10 @@ function mapOf({ zone, id }: CardInstance): MapId {
 function agendaView(ctx: EngineContext, state: GameState): AgendaView | undefined {
   const agenda = currentCard(state, 'agenda');
   if (!agenda) return undefined;
-  const { doom } = cardStats(ctx.cards, agenda.code);
+  const { doom, imageSrc } = cardStats(ctx.cards, agenda.code);
   return {
     name: nameOf(ctx, agenda),
+    ...(imageSrc === undefined ? {} : { image: imageSrc }),
     doom: agenda.tokens.doom ?? 0,
     ...(doom === undefined ? {} : { threshold: resolveValue(doom, state.meta.playerCount) }),
   };
@@ -535,9 +552,10 @@ function agendaView(ctx: EngineContext, state: GameState): AgendaView | undefine
 function actView(ctx: EngineContext, state: GameState): ActView | undefined {
   const act = currentCard(state, 'act');
   if (!act) return undefined;
-  const { clues } = cardStats(ctx.cards, act.code);
+  const { clues, imageSrc } = cardStats(ctx.cards, act.code);
   return {
     name: nameOf(ctx, act),
+    ...(imageSrc === undefined ? {} : { image: imageSrc }),
     ...(clues === undefined ? {} : { clues: resolveValue(clues, state.meta.playerCount) }),
   };
 }
