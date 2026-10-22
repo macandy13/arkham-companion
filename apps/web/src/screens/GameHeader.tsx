@@ -58,8 +58,9 @@ export function GameHeader({
 }
 
 /**
- * The current agenda with the doom its threshold counts (all doom in play, `doomInPlay`) and
- * steppers for the doom on the agenda itself, which card effects add or the players correct.
+ * The current agenda as a landscape card (`data-card`, styled like the map's card faces) with the
+ * doom its threshold counts (all doom in play, `doomInPlay`), and beside it steppers for the doom
+ * on the agenda itself, which card effects add or the players correct.
  */
 function AgendaStatus({
   store,
@@ -77,12 +78,14 @@ function AgendaStatus({
 
   return (
     <section aria-label={t('header.agenda')}>
-      <h2>{agenda.name}</h2>
-      <p>
-        {agenda.threshold === undefined
-          ? t('header.doom', { doom: board.doomInPlay })
-          : t('header.doomOf', { doom: board.doomInPlay, threshold: agenda.threshold })}
-      </p>
+      <article data-card="agenda">
+        <h2>{agenda.name}</h2>
+        <p>
+          {agenda.threshold === undefined
+            ? t('header.doom', { doom: board.doomInPlay })
+            : t('header.doomOf', { doom: board.doomInPlay, threshold: agenda.threshold })}
+        </p>
+      </article>
       <button
         type="button"
         aria-label={t('header.removeDoom')}
@@ -104,8 +107,8 @@ function AgendaStatus({
 }
 
 /**
- * The current act with the clues the investigators hold against the clues it needs, and its
- * advance once they hold enough, paid in seat order (`cluesInSeatOrder`).
+ * The current act as a landscape card with the clues the investigators hold against the clues it
+ * needs, and beside it its advance once they hold enough, paid in seat order (`cluesInSeatOrder`).
  */
 function ActStatus({
   store,
@@ -123,18 +126,20 @@ function ActStatus({
   const needed = act.clues;
   return (
     <section aria-label={t('header.act')}>
-      <h2>{act.name}</h2>
-      {needed !== undefined && (
-        <>
+      <article data-card="act">
+        <h2>{act.name}</h2>
+        {needed !== undefined && (
           <p>{t('header.cluesOf', { clues: board.cluesHeld, threshold: needed })}</p>
-          <button
-            type="button"
-            disabled={blocked || board.cluesHeld < needed}
-            onClick={() => void actions.advanceAct(cluesInSeatOrder(board.investigators, needed))}
-          >
-            {t('header.advanceAct')}
-          </button>
-        </>
+        )}
+      </article>
+      {needed !== undefined && (
+        <button
+          type="button"
+          disabled={blocked || board.cluesHeld < needed}
+          onClick={() => void actions.advanceAct(cluesInSeatOrder(board.investigators, needed))}
+        >
+          {t('header.advanceAct')}
+        </button>
       )}
     </section>
   );

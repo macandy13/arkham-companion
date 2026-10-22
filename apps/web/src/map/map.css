@@ -113,7 +113,7 @@
  */
 #map svg [data-card='location'] > rect:first-of-type {
   stroke: var(--color-card-location);
-  stroke-width: var(--map-card-border-width);
+  stroke-width: var(--card-border-width);
 }
 
 #map svg [data-card] > rect + rect {

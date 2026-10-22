@@ -89,6 +89,11 @@
   list-style: none;
 }
 
+/* Two ids, so the home screen's wrapping `#app > main section` row never breaks a card from its buttons. */
+#app #board > header section {
+  flex-wrap: nowrap;
+}
+
 #board > header section {
   display: flex;
   gap: var(--space-2);
@@ -102,4 +107,35 @@
 
 #board > header section button {
   min-width: var(--touch-target);
+}
+
+/*
+ * The agenda and act are landscape cards (5 : 7 turned, like the map's portrait tiles): a frame in
+ * the card type's colour around the hatched art area, the name band along the top and the count
+ * on a plate at the bottom, so it stays readable once card art fills the card.
+ */
+#board > header article {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+  height: var(--layout-header-card-height);
+  aspect-ratio: 7 / 5;
+  border: var(--card-border-width) solid;
+  border-radius: var(--radius);
+  background: var(--card-art-pattern), var(--color-surface);
+  overflow: hidden;
+}
+
+#board > header [data-card='agenda'] {
+  border-color: var(--color-card-agenda);
+}
+
+#board > header [data-card='act'] {
+  border-color: var(--color-card-act);
+}
+
+#board > header article > * {
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-surface);
 }
