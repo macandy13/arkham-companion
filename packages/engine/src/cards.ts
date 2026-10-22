@@ -134,10 +134,11 @@ export interface CardStats {
   /** The card's forced abilities as data (architecture "Triggers and card effects"); none when absent. */
   abilities?: readonly Ability[];
   /**
-   * The pictures of its front and back on ArkhamDB, only for the views to show; no rule reads
-   * them. A location's front is its revealed side, its back the unrevealed one.
+   * The picture of its front on ArkhamDB, only for the views to show; no rule reads it. A
+   * location's front is its revealed side.
    */
   imageSrc?: CardImagePath;
+  /** The picture of its back on ArkhamDB, for the views only: a location's unrevealed side. */
   backImageSrc?: CardImagePath;
 }
 

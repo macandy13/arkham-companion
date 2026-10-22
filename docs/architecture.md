@@ -400,7 +400,7 @@ interface CardStats {
 
 **Extension points**
 
-- **A new card field:** read it in `RawCardSchema`, normalise it in `normaliseCard` ([`schema.ts`](../packages/carddata/src/schema.ts)) and, only if a rule or a view needs it, add it to `CardStats` (the card pictures are the one view-only field: the board views pass them on, so the screen shows the side in play) ([`cards.ts`](../packages/engine/src/cards.ts)).
+- **A new card field:** read it in `RawCardSchema`, normalise it in `normaliseCard` ([`schema.ts`](../packages/carddata/src/schema.ts)) and, only if a rule or a view needs it, add it to `CardStats` ([`cards.ts`](../packages/engine/src/cards.ts)). The card pictures are the one view-only field: the board views pass them on, so the screen shows the side in play.
 - **A new language:** add its ArkhamDB host in [`fetch.ts`](../packages/carddata/src/fetch.ts) and [`loadCatalog.ts`](../apps/web/src/catalog/loadCatalog.ts), and its UI strings in [`i18n`](../apps/web/src/i18n/).
 
 ### Persistence

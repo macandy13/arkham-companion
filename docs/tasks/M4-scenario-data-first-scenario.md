@@ -58,7 +58,7 @@ Ref: architecture "Scenarios".
 
 - [ ] `ScenarioDefinition` for _The Gathering_ (`core` pack): encounter sets, agenda/act decks, maps from M4.1, connections from M4.2. under its own ID, apart from the hand-written test scenario in `packages/scenarios/src/the_gathering/`, which stays the only source of test data
 - [ ] Setup steps and set-aside cards; setup test against ArkhamDB quantities (via cached data, skipped offline)
-- [ ] One `CardDb` for every card: map carddata's cached `CardDef`s to engine `CardStats` (investigators included) and build the app's `CardDb` from all of them, so scenario packages only add hand-entered extras on top and the wizard no longer joins two sources with `cardDbWith` (Andy on #77)
+- [ ] One `CardDb` for every card: map carddata's cached `CardDef`s to engine `CardStats` (investigators included) and build the app's `CardDb` from all of them, picture paths included (`imageSrc`/`backImageSrc`, which the map and header cards show, M3.10c), so scenario packages only add hand-entered extras on top and the wizard no longer joins two sources with `cardDbWith` (Andy on #77)
 
 ## M4.5 Night of the Zealot rules (O, one task per step)
 
