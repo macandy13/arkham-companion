@@ -35,6 +35,7 @@ import {
   revealLocation,
   skillTest,
   spawnEnemyAt,
+  takeDamage,
   takeHorror,
   threatAreaOf,
   whenAdvanced,
@@ -405,6 +406,51 @@ describe('trigger bus', () => {
 
       expect(after.meta.round).toBe(1);
       expect(after.pending).toEqual([]);
+    });
+  });
+
+  describe('tests that deal damage per point failed', () => {
+    const graspingHands = instanceId('grasping_hands');
+    /** "Revelation – Test agility (3). Take 1 damage for each point you fail by." */
+    const graspingHandsCard = blankTreachery('grasping_hands', {
+      abilities: [
+        whenRevealed(skillTest('agility', 3, { onFail: [takeDamage(1)], perPointFailed: true })),
+      ],
+    });
+    /** Alice in the hall, with Grasping Hands on top of the encounter deck. */
+    const handsTable = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(graspingHands, graspingHandsCard, { kind: 'encounterDeck' });
+    const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
+
+    it.each([
+      { answer: answer('test:grasping_hands', 'fail'), damage: 1, failedBy: 1 },
+      {
+        answer: { ...answer('test:grasping_hands', 'fail'), amounts: { delta: 3 } },
+        damage: 3,
+        failedBy: 3,
+      },
+    ])('a fail by $failedBy deals $damage damage', ({ answer: failed, damage, failedBy }) => {
+      const { context, state: started } = handsTable.start();
+      const drawn = stateAfter(context, started, aliceDraws);
+
+      const { state, events } = execute(context, drawn, failed);
+
+      expect(state.investigators.find((inv) => inv.id === alice)?.health.damage).toBe(damage);
+      expect(events.find((event) => event.type === 'SkillTestResolved')).toMatchObject({
+        outcome: 'fail',
+        failedBy,
+      });
+    });
+
+    it('deals nothing on a pass', () => {
+      const { context, state: started } = handsTable.start();
+      const drawn = stateAfter(context, started, aliceDraws);
+
+      const { state } = execute(context, drawn, answer('test:grasping_hands', 'pass'));
+
+      expect(state.investigators.find((inv) => inv.id === alice)?.health.damage).toBe(0);
     });
   });
 

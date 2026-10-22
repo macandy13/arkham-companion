@@ -453,12 +453,15 @@ export function whenAdvanced(...effects: AbilityEffect[]): Ability {
 
 /**
  * "Test [skill] (difficulty)" for the investigator the window names, about
- * the card with the ability; `onPass` and `onFail` follow the answer.
+ * the card with the ability; `onPass` and `onFail` follow the answer. With
+ * `perPointFailed`, "for each point you fail by": `onFail` is written for a
+ * fail by 1, and the margin the players confirm replaces its damage or
+ * horror (`TestSkill.perPointFailed`).
  */
 export function skillTest(
   skill: SkillName,
   difficulty: number,
-  outcomes: { onPass?: AbilityEffect[]; onFail?: AbilityEffect[] } = {},
+  outcomes: { onPass?: AbilityEffect[]; onFail?: AbilityEffect[]; perPointFailed?: true } = {},
 ): AbilityEffect {
   return {
     type: 'TestSkill',
@@ -467,6 +470,7 @@ export function skillTest(
     test: { skill, difficulty },
     onPass: outcomes.onPass ?? [],
     onFail: outcomes.onFail ?? [],
+    ...(outcomes.perPointFailed ? { perPointFailed: true } : {}),
   };
 }
 

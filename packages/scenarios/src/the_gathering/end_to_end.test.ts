@@ -335,15 +335,17 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         prompt: 'decision.cardTest',
         kind: 'skillTestResult',
         about: 'Grasping Hands',
+        // How much the test failed by, which is also the damage or horror it deals.
+        defaults: { fail: { delta: 1 } },
         for: roland,
         test: { skill: 'agility', difficulty: 3 },
         options: ['pass', 'fail'],
       },
     ]);
 
-    // With agility 2 he fails by 1 and takes 1 damage.
+    // With agility 2 he fails by 1, the margin a fail is confirmed with by default: 1 damage.
     table.answer(byName('Grasping Hands'), 'fail');
-    table.takeDamage(roland, 1);
+    expect(table.board.investigator(roland)).toMatchObject({ damage: 1 });
     // 1.4 continues: Daisy draws a Ghoul Minion, Wendy the Flesh-Eater.
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos' });
 
@@ -408,6 +410,8 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         prompt: 'decision.cardTest',
         kind: 'skillTestResult',
         about: 'Rotting Remains',
+        // How much the test failed by, which is also the damage or horror it deals.
+        defaults: { fail: { delta: 1 } },
         for: roland,
         test: { skill: 'willpower', difficulty: 3 },
         options: ['pass', 'fail'],
@@ -498,6 +502,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         prompt: 'decision.cardTest',
         kind: 'skillTestResult',
         about: 'Rotting Remains',
+        defaults: { fail: { delta: 1 } },
         for: roland,
         test: { skill: 'willpower', difficulty: 3 },
         options: ['pass', 'fail'],
@@ -565,6 +570,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         prompt: 'decision.cardTest',
         kind: 'skillTestResult',
         about: 'Grasping Hands',
+        defaults: { fail: { delta: 1 } },
         for: roland,
         test: { skill: 'agility', difficulty: 3 },
         options: ['pass', 'fail'],
@@ -585,6 +591,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         prompt: 'decision.cardTest',
         kind: 'skillTestResult',
         about: 'Grasping Hands',
+        defaults: { fail: { delta: 1 } },
         for: roland,
         test: { skill: 'agility', difficulty: 3 },
         options: ['pass', 'fail'],
@@ -601,6 +608,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         prompt: 'decision.cardTest',
         kind: 'skillTestResult',
         about: 'Grasping Hands',
+        defaults: { fail: { delta: 1 } },
         for: daisy,
         test: { skill: 'agility', difficulty: 3 },
         options: ['pass', 'fail'],
@@ -878,6 +886,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         prompt: 'decision.cardTest',
         kind: 'skillTestResult',
         about: 'Rotting Remains',
+        defaults: { fail: { delta: 1 } },
         for: daisy,
         test: { skill: 'willpower', difficulty: 3 },
         options: ['pass', 'fail'],

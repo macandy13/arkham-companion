@@ -568,6 +568,13 @@ export interface TestSkill {
   test: SkillTest;
   onPass: readonly Command[];
   onFail: readonly Command[];
+  /**
+   * "For each point you fail by": the fail answer carries how much the test
+   * failed by (1 or more, `ResolveDecision.amounts.delta`), which becomes the
+   * `delta` of each `AdjustInvestigator` in `onFail` (Grasping Hands: 1
+   * damage per point). `onFail` is written for a fail by 1.
+   */
+  perPointFailed?: true;
 }
 
 /**

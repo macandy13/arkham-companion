@@ -54,7 +54,7 @@ export function handleResolveDecision(
   };
   const decision = state.pending.find((pending) => pending.id === command.decisionId);
   return decision?.skillTest
-    ? [resolved, skillTestResolved(decision, decision.skillTest, command.optionId)]
+    ? [resolved, skillTestResolved(decision, decision.skillTest, command)]
     : [resolved];
 }
 
@@ -62,11 +62,14 @@ export function handleResolveDecision(
 function skillTestResolved(
   decision: Decision,
   skillTest: SkillTest,
-  optionId: string,
+  { optionId, amounts }: ResolveDecision,
 ): SkillTestResolved {
+  const perPoint = decision.options.find((option) => option.id === optionId)?.amounts?.[
+    PER_POINT_FAILED
+  ];
   const margin = optionId.startsWith(FAILED_BY)
     ? Number(optionId.slice(FAILED_BY.length))
-    : undefined;
+    : perPoint && (amounts?.[PER_POINT_FAILED] ?? perPoint.default);
   return {
     type: 'SkillTestResolved',
     decisionId: decision.id,
@@ -192,6 +195,15 @@ export function confirmOptions(onYes: Command[], target?: InstanceId): DecisionO
   ];
 }
 
+/**
+ * The command field a per-point fail replaces (`SkillTestOutcomes.perPointFailed`):
+ * the `delta` of `AdjustInvestigator`, the damage or horror the card deals.
+ */
+const PER_POINT_FAILED = 'delta';
+
+/** How much a per-point test failed by: at least 1, by default 1. */
+const FAILED_BY_ONE: AmountRange = { default: 1, min: 1 };
+
 /** Option id prefix of a "failed by <n>" answer (`SkillTestOutcomes.failedBy`). */
 const FAILED_BY = 'failedBy:';
 
@@ -204,6 +216,12 @@ export interface SkillTestOutcomes {
    */
   passAmount?: AmountRange;
   onFail: Command[];
+  /**
+   * Makes the fail a count the players confirm, how much the test failed by
+   * (`PER_POINT_FAILED`): each `AdjustInvestigator` in `onFail` takes it as
+   * its `delta`, and `SkillTestResolved.failedBy` records it.
+   */
+  perPointFailed?: true;
   /**
    * Consequences that depend on how much the test failed by (`failedBy[2]`
    * for "failed by 2"). Commands are plain data, so each margin the card cares
@@ -239,7 +257,12 @@ export function skillTestDecision(
         commands: outcomes.onPass,
         ...(outcomes.passAmount ? { amount: outcomes.passAmount } : {}),
       },
-      { id: 'fail', label: 'decision.fail', commands: outcomes.onFail },
+      {
+        id: 'fail',
+        label: 'decision.fail',
+        commands: outcomes.onFail,
+        ...(outcomes.perPointFailed ? { amounts: { [PER_POINT_FAILED]: FAILED_BY_ONE } } : {}),
+      },
       ...margins,
     ],
   };
