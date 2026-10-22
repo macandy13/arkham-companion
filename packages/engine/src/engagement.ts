@@ -3,6 +3,7 @@ import type { Command } from './commands';
 import type { DecisionRequested, EnemyEngaged, Event } from './events';
 import { decisionId, type InstanceId, type InvestigatorId } from './ids';
 import {
+  activeInvestigators,
   lowestRemainingHealth,
   lowestRemainingSanity,
   mostClues,
@@ -24,9 +25,7 @@ const PREY_CRITERIA: Record<string, (investigators: readonly Investigator[]) => 
 
 /** Active investigators standing at `locationId`, in seat order of `state.investigators`. */
 export function investigatorsAt(state: GameState, locationId: InstanceId): Investigator[] {
-  return state.investigators.filter(
-    (inv) => inv.status === 'active' && inv.locationId === locationId,
-  );
+  return activeInvestigators(state).filter((inv) => inv.locationId === locationId);
 }
 
 /**

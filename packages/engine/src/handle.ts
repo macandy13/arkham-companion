@@ -12,6 +12,7 @@ import {
   surgeDraw,
 } from './handle_encounter';
 import { completeAdvance } from './handle_scenario';
+import { newLeadInvestigatorEvents } from './elimination';
 import { nextStepPlan } from './phases';
 import { apply } from './reducer';
 import { CommandRejected, type Rejection } from './rejection';
@@ -251,6 +252,8 @@ function resolveQueuedStep(
       return emitWithEffects(resolution, placeDrawnCard(ctx, state, step.drawn));
     case 'surge':
       return resolveSurge(resolution, step.draw);
+    case 'newLeadInvestigator':
+      return emitWithEffects(resolution, newLeadInvestigatorEvents(state));
     case 'ability': {
       const commands = resolveEffect(ctx, state, step.effect, step.opened);
       const [command, ...more] = commands;
@@ -258,8 +261,7 @@ function resolveQueuedStep(
         spend(budget);
         return resolveCommand(resolution, command, step.origin, budget);
       }
-      // An effect on each investigator or enemy: one step per command, each counted and reported on its own.
-      if (command) return commands.map(followUpStep);
+      if (command) return resolveAtOnce(resolution, commands, step.origin, budget);
       // A drawer who has left names nobody by the rules; a missing scenario card is for the players to
       // fix, even when the effect also names such a drawer: they should know the data is off.
       const missing = missingCopies(state, step.effect);
@@ -304,6 +306,43 @@ function resolveCommand(
   }
   const triggered = emitWithEffects(resolution, own);
   return [...triggered, ...answerCommands(before, command).map(followUpStep), ...continuation];
+}
+
+/**
+ * An effect on each investigator or enemy applies to all of them at once
+ * (Rules Reference, "Priority of Simultaneous Resolution"): every command's
+ * own events first, then the forced effects and continuations of all of
+ * them. So "each investigator is defeated" defeats everyone before a new
+ * lead is asked for (`newLeadInvestigator`), and nobody is asked when nobody is left.
+ * A command that asks something (a test, a drawn card's choice) stops the
+ * batch: the same rule makes each investigator's own choices in player
+ * order, so the rest follow as steps of their own after the answer.
+ */
+function resolveAtOnce(
+  resolution: Resolution,
+  commands: readonly Command[],
+  origin: Command['type'] | undefined,
+  budget: TriggerBudget,
+): Step[] {
+  const before = resolution.state;
+  const events: Event[] = [];
+  const continuations: Step[] = [];
+  for (const [index, command] of commands.entries()) {
+    spend(budget);
+    const spec = commandSpec(command);
+    const own = spec.handle(resolution.ctx, resolution.state, command);
+    if (surgeDraw(own)) budget.encounterCards ??= encounterCardCount(resolution.state);
+    emit(resolution, own);
+    events.push(...own);
+    continuations.push(
+      ...withOrigin(withinSurgeLimit(spec.continueWith?.(command, own) ?? [], budget), origin),
+    );
+    if (resolution.state.pending.length > before.pending.length) {
+      const rest = commands.slice(index + 1).map(followUpStep);
+      return [...triggeredSteps(resolution.ctx, before, events), ...continuations, ...rest];
+    }
+  }
+  return [...triggeredSteps(resolution.ctx, before, events), ...continuations];
 }
 
 /** Emits `events` and returns the follow-ups their forced effects trigger. */

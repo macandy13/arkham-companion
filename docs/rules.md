@@ -183,7 +183,7 @@ If auto-success or auto-failure is known before step 3, skip steps 3 and 4. [Var
 
 - Defeat or resigning eliminates the investigator. Resigning is not a defeat.
 - On elimination: "when the game ends" effects on their weaknesses in play trigger, then those weaknesses are removed. Cards they control and all their out-of-play cards are removed from the game. Cards they own but don't control stay until they leave play, and are then removed. Their clues go to their location, and their resources return to the pool. Engaged enemies are placed unengaged at that location and otherwise keep their state. Other cards in their threat area go to the appropriate discard pile.
-- A new lead investigator is chosen if needed. If nobody is left, the scenario ends with "no resolution", and the players read the scenario's "if no resolution was reached" entry in the campaign guide (Learn to Play).
+- A new lead investigator is chosen if needed, from those still in the scenario. One effect that eliminates several investigators ("each investigator … is defeated") eliminates them together ([simultaneous resolution](https://arkhamdb.com/rules#Priority_of_Simultaneous_Resolution)), so the new lead comes from those left afterwards. If nobody is left, the scenario ends with "no resolution", and the players read the scenario's "if no resolution was reached" entry in the campaign guide (Learn to Play).
 - A card ability can defeat an investigator outright; what follows from that is only what the ability says ([investigator defeat](https://arkhamdb.com/rules#Investigator_Defeat)).
 - Eliminated investigators still count for per-investigator values.
 

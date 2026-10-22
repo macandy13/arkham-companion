@@ -2,6 +2,8 @@ import { cardStats, resolveValue, type EngineContext } from './cards';
 import type { DecisionRequested } from './events';
 import { confirmOptions, requestDecision } from './decisions';
 import { decisionId } from './ids';
+import { activeInvestigators } from './investigators';
+import { currentCard } from './lookup';
 import type { CardInstance, GameState } from './state';
 
 /**
@@ -46,9 +48,10 @@ export function cardsWithDoom(state: GameState): CardInstance[] {
  */
 export function doomInPlay(state: GameState): number {
   const onCards = cardsWithDoom(state).reduce((sum, card) => sum + (card.tokens.doom ?? 0), 0);
-  const onPlayerCards = state.investigators
-    .filter((inv) => inv.status === 'active')
-    .reduce((sum, inv) => sum + inv.doomOnPlayerCards, 0);
+  const onPlayerCards = activeInvestigators(state).reduce(
+    (sum, inv) => sum + inv.doomOnPlayerCards,
+    0,
+  );
   return onCards + onPlayerCards;
 }
 
@@ -63,7 +66,7 @@ export function doomInPlay(state: GameState): number {
  * agenda is enough, so nothing is emitted while one is open.
  */
 export function agendaThresholdDecision(ctx: EngineContext, state: GameState): DecisionRequested[] {
-  const agenda = state.agenda.current === undefined ? undefined : state.cards[state.agenda.current];
+  const agenda = currentCard(state, 'agenda');
   if (!agenda) return [];
   const threshold = cardStats(ctx.cards, agenda.code).doom;
   if (

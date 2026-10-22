@@ -1,6 +1,7 @@
 import { cardStats, resolveValue, type EngineContext } from './cards';
 import type { AdvanceAct, AdvanceAgenda, ClueSpend, EndScenario, PlaceDoom } from './commands';
 import { cardsWithDoom, isInPlay } from './doom';
+import { activeInvestigators } from './investigators';
 import type {
   ActAdvanced,
   AgendaAdvanced,
@@ -137,8 +138,8 @@ function nextCardId(state: GameState, deck: Deck, cardId: InstanceId): InstanceI
 /** Removes all doom in play: from cards and from the investigators' counters. */
 function doomRemoval(state: GameState): (TokensChanged | InvestigatorChanged)[] {
   const fromCards = cardsWithDoom(state).flatMap((card) => clearTokensEvents(card, ['doom']));
-  const fromPlayerCards: InvestigatorChanged[] = state.investigators
-    .filter((inv) => inv.status === 'active' && inv.doomOnPlayerCards > 0)
+  const fromPlayerCards: InvestigatorChanged[] = activeInvestigators(state)
+    .filter((inv) => inv.doomOnPlayerCards > 0)
     .map((inv) => ({
       type: 'InvestigatorChanged',
       investigatorId: inv.id,
