@@ -281,7 +281,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     set: sets.ghouls,
     traits: ['Hazard'],
     quantity: 3,
-    abilities: [whenRevealed(skillTest('agility', 3))],
+    abilities: [whenRevealed(skillTest('agility', 3, { perPointFailed: 'damage' }))],
   }),
   treachery({
     code: '01163',
@@ -289,7 +289,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     set: sets.strikingFear,
     traits: ['Terror'],
     quantity: 3,
-    abilities: [whenRevealed(skillTest('willpower', 3))],
+    abilities: [whenRevealed(skillTest('willpower', 3, { perPointFailed: 'horror' }))],
   }),
   treachery({
     code: '01164',

@@ -411,6 +411,72 @@ describe('trigger bus', () => {
     });
   });
 
+  describe('tests that deal damage or horror per point failed', () => {
+    const graspingHands = instanceId('grasping_hands');
+    const rottingRemains = instanceId('rotting_remains');
+    /** "Revelation – Test agility (3). Take 1 damage for each point you fail by." */
+    const graspingHandsCard = blankTreachery('grasping_hands', {
+      abilities: [whenRevealed(skillTest('agility', 3, { perPointFailed: 'damage' }))],
+    });
+    /** "Revelation – Test willpower (3). Take 1 horror for each point you fail by." */
+    const rottingRemainsCard = blankTreachery('rotting_remains', {
+      abilities: [whenRevealed(skillTest('willpower', 3, { perPointFailed: 'horror' }))],
+    });
+    /** Alice in the hall, with Grasping Hands on top of the encounter deck and Rotting Remains below. */
+    const treacheryTable = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(graspingHands, graspingHandsCard, { kind: 'encounterDeck' })
+      .withCard(rottingRemains, rottingRemainsCard, { kind: 'encounterDeck' });
+    const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
+
+    it.each([
+      { case: 'a fail with no count, the default 1,', amounts: undefined, failedBy: 1 },
+      { case: 'a fail by 3', amounts: { failedBy: 3 }, failedBy: 3 },
+    ])('$case deals $failedBy damage', ({ amounts, failedBy }) => {
+      const { context, state: started } = treacheryTable.start();
+      const drawn = stateAfter(context, started, aliceDraws);
+
+      const { state, events } = execute(context, drawn, {
+        ...answer('test:grasping_hands', 'fail'),
+        ...(amounts && { amounts }),
+      });
+
+      expect(state.investigators.find((inv) => inv.id === alice)?.health.damage).toBe(failedBy);
+      expect(events.find((event) => event.type === 'SkillTestResolved')).toMatchObject({
+        outcome: 'fail',
+        failedBy,
+      });
+    });
+
+    it('deals horror for a card that names it', () => {
+      const { context, state: started } = treacheryTable.start();
+      const secondDraw = stateAfter(
+        context,
+        started,
+        aliceDraws,
+        answer('test:grasping_hands', 'pass'),
+        aliceDraws,
+      );
+
+      const { state } = execute(context, secondDraw, {
+        ...answer('test:rotting_remains', 'fail'),
+        amounts: { failedBy: 2 },
+      });
+
+      expect(state.investigators.find((inv) => inv.id === alice)?.sanity.horror).toBe(2);
+    });
+
+    it('deals nothing on a pass', () => {
+      const { context, state: started } = treacheryTable.start();
+      const drawn = stateAfter(context, started, aliceDraws);
+
+      const { state } = execute(context, drawn, answer('test:grasping_hands', 'pass'));
+
+      expect(state.investigators.find((inv) => inv.id === alice)?.health.damage).toBe(0);
+    });
+  });
+
   describe('reverse-side abilities', () => {
     const priest = instanceId('priest');
     const priestCard = blankEnemy('priest');

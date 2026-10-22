@@ -9,7 +9,7 @@ import { enemiesAt } from './handle_enemy';
 import { isActiveInvestigator, playerOrder, requireInvestigator } from './investigators';
 import { cardsInZone, currentCard, requireCard } from './lookup';
 import type { AddMapStep } from './setup';
-import type { GameState, Investigator, QueuedStep, SkillName } from './state';
+import type { GameState, Investigator, PerPointFailed, QueuedStep, SkillName } from './state';
 import type { Zone } from './zone';
 
 /**
@@ -482,12 +482,18 @@ export function whenAdvanced(...effects: AbilityEffect[]): Ability {
 
 /**
  * "Test [skill] (difficulty)" for the investigator the window names, about
- * the card with the ability; `onPass` and `onFail` follow the answer.
+ * the card with the ability; `onPass` and `onFail` follow the answer. With
+ * `perPointFailed`, the tester takes 1 damage or horror for each point the
+ * test fails by, as the players confirm it (`TestSkill.perPointFailed`).
  */
 export function skillTest(
   skill: SkillName,
   difficulty: number,
-  outcomes: { onPass?: AbilityEffect[]; onFail?: AbilityEffect[] } = {},
+  outcomes: {
+    onPass?: AbilityEffect[];
+    onFail?: AbilityEffect[];
+    perPointFailed?: PerPointFailed;
+  } = {},
 ): AbilityEffect {
   return {
     type: 'TestSkill',
@@ -496,6 +502,7 @@ export function skillTest(
     test: { skill, difficulty },
     onPass: outcomes.onPass ?? [],
     onFail: outcomes.onFail ?? [],
+    ...(outcomes.perPointFailed ? { perPointFailed: outcomes.perPointFailed } : {}),
   };
 }
 
