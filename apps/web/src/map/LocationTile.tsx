@@ -118,7 +118,9 @@ export function LocationTile({
  * The patterns that fill a tile's art area while it has no card image, one per side of a
  * location card, so a revealed tile reads apart from an unrevealed one at a glance. They are
  * drawn once per map drawing, in its `defs`; the stylesheet fills each art area with the
- * pattern for its tile's side by these ids.
+ * pattern for its tile's side by these ids. The ids are fixed rather than `useId`, since the
+ * stylesheet must name them; two drawings mounted at once would repeat them, which is harmless
+ * because the patterns are the same.
  */
 export function CardPatterns() {
   const size = 2 * CONTENT.inset;
@@ -140,7 +142,8 @@ export function CardPatterns() {
  */
 function NameBand({ location }: { location: LocationView }) {
   const { t } = useTranslation();
-  const x = (TILE.width - 2 * CONTENT.pawnRadius - CONTENT.inset) / 2;
+  const buttonLeft = TILE.width - CONTENT.inset - 2 * CONTENT.pawnRadius;
+  const x = (CONTENT.inset + buttonLeft) / 2;
   if (location.revealed)
     return (
       <text x={x} y={CONTENT.band / 2}>
@@ -183,7 +186,7 @@ function Token({ kind, value, label, centre: { x, y } }: TokenCount & { centre: 
 }
 
 /**
- * The tile's edit button, a round button with a pencil in its top right corner, named after the
+ * The tile's edit button, a round button with a pencil at the right end of its name band, named after the
  * location. It is an SVG group rather than an HTML button, since it sits inside the drawing, so it
  * takes the keyboard (Enter, Space) itself.
  */

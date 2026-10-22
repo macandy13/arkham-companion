@@ -25,7 +25,7 @@ export const TILE = { width: CARD.short, height: CARD.long, gap: 30 } as const;
 /**
  * Where a tile's contents sit, in SVG user units from its top left corner. The name band runs
  * along the top, `band` high, with the edit button at its right end. Below it a row of round
- * badges and tokens (`badgeOffset`, `tokenOffset`), then enemy chips, and investigator pawns in a
+ * badges and tokens (`BADGE_CENTRE`, `tokenOffset`), then enemy chips, and investigator pawns in a
  * row along the bottom edge (`pawnOffset`). Badges, tokens and pawns share one radius, so every
  * round thing on a tile is one size.
  */
