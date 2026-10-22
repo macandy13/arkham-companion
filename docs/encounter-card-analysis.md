@@ -12,7 +12,7 @@ What the scenario cards ask of the engine beyond the generic rules in [rules.md]
 
 ## At a glance
 
-1. **The plan covers about 60 % of Chapter Two.** 12 of 211 cards (6 %) run fully today, and the first version of the plan reached 130 (62 %). Six cases it left out held back most of the rest. The plan now has a step for each of them (see "Not covered yet"), and it orders the steps by campaign, starting with Night of the Zealot.
+1. **Every gap now has a plan step, ordered by campaign.** 12 of 211 Chapter Two cards (6 %) run fully today. After the Night of the Zealot steps (1–12), 106 run, and after the Chapter Two steps (13–26), all 211 do. The first version of the plan reached 130 and left out six cases (see "Not covered yet").
 2. **Most of the work is generic.** About two dozen generic primitives (below) cover nearly every Chapter Two card. The truly one-off effects are mostly agenda and act reverse sides, which are scenario hooks already.
 3. **Two new keywords, plus Elusive:** _Doomed_ (Core Set (2026)) and _Predator_ (Children of Blood) are new; _Elusive_ comes from Chapter One and is common in Chapter Two. The engine parses none of them yet.
 4. **Skill tests need the margin.** 11 Chapter Two cards (and about 170 Chapter One cards) scale with "for each point you fail by" or "succeed by 2 or more", but a skill test answer is only pass or fail.
@@ -237,8 +237,8 @@ The engine can't handle these cases yet, and the first version of the plan had n
 8. **Test one of two skills** (step 8) – 5 (2), 83. Arcane Lock 12157, Noxious Smoke 12130, Sluice Control 12175, Extraplanar Visions 12127, act 13075. `skillTest` with a list of skills, the investigator picks.
 9. **Constant modifiers** (step 9) – enemy stats 3 (2), 142: Dining Hall 13077, Unnatural Strength 13098, Zburamoarte's Lair 13051; investigator skills 2 (2), 44: Whippoorwill 12166, Blighted Blood 13099. Feed the skill test suggestion from the board (architecture review P3, constant abilities).
 10. **Location leaves play with its tokens and attachments** (step 12) – 4 (2), 155. Manager's Office 13041, act 12110, agendas 12170, 13072. `MoveCard` plus moving everyone at it first.
-11. **Doom read from the board** (step 6) – 3 (1), 71. "Enemy with no doom on it" (Raising Suspicions 12160, Dark Magician 12189, Blasphemous Invocation 12190). A filter on the nearest query (gap 2).
-12. **Attach to an enemy** (step 21) – 2 (0), 22. Unnatural Strength 13098, Sanguine Rebirth 13092; both also need gaps 2 and 9.
+11. **Doom read from the board** (step 6) – 3 (1), 71. "Enemy with no doom on it" (Raising Suspicions 12160, Dark Magician 12189, Blasphemous Invocation 12190). A filter on the nearest query (case 2).
+12. **Attach to an enemy** (step 21) – 2 (0), 22. Unnatural Strength 13098, Sanguine Rebirth 13092; both also need cases 2 and 9.
 
 Some cases appear only in Chapter One:
 
@@ -362,7 +362,15 @@ Every campaign after Chapter Two starts with a card-by-card read of its encounte
 ### Night of the Zealot
 
 1. **Card data for every pack** – read each pack's chapter from the data instead of `CHAPTER_TWO_PACK_CODES`, and load Chapter One packs (`core` first) and `cob` (see "Data gaps").
-2. **Timing windows** – one list of windows, used by card and scenario abilities (data only, replacing the code hooks) and by reminders. The windows are: after you enter a location (Attic, Cellar, Graveyard, Arkham Woods); at a phase's end (They're Getting Out!, Wizard of the Order); after a successful investigation (Obscuring Fog); after an enemy engages or attacks you (Young Deep One, Yithian Observer); the end of each investigator's turn (Umôrdhoth); when an enemy is defeated (Goat Spawn); and your turn begins. The step also migrates `turnEndTest` and `discardAtRoundEnd`. It comes first because every later step lands as an ability.
+2. **Timing windows** – one list of windows, used by card and scenario abilities (data only, replacing the code hooks) and by reminders. It comes first because every later step lands as an ability. The step also migrates `turnEndTest` and `discardAtRoundEnd`. The windows are:
+   - after you enter or leave a location (Attic, Cellar, Graveyard, Arkham Woods)
+   - at a phase's start or end (They're Getting Out!, Wizard of the Order)
+   - after clues are discovered
+   - after a test, investigation, fight or evade succeeds or fails (Obscuring Fog)
+   - after an enemy engages or attacks you (Young Deep One, Yithian Observer)
+   - after you resolve another treachery
+   - when your turn begins, and at the end of each investigator's turn (Umôrdhoth)
+   - when an enemy is defeated (Goat Spawn)
 3. **Skill test margin** – the answer carries "by how much", the suggestion computes it, and revelation tests use it (Grasping Hands, Rotting Remains, False Lead, Umôrdhoth's Wrath).
 4. **Choose one** – a `chooseOne(…branches)` effect raises a decision with one option per branch. A branch that hits player cards becomes a reminder option. Cards: What's Going On?!, What Have You Done?, Hunting Shadow, Offer of Power, Graveyard.
 5. **Card effects for existing commands** – add engage, disengage, ready, discover clues, shuffle into the encounter deck, lose actions, enemy attacks and damage to enemies to `AbilityCommand`. Add healing for investigators and enemies ("Wolf-Man" Drew, Relentless Dark Young), and "this card gains surge" (False Lead).
@@ -380,11 +388,11 @@ Every campaign after Chapter Two starts with a card-by-card read of its encounte
 14. **Fire! and location modifiers** – attach to the nearest location without Fire! and deal phase-end damage. Shroud and movement costs from attachments; shroud from conditions and enemies (Garrison Street, Factory Worker); limit 1 per investigator in threat areas.
 15. **Cards beneath cards** – zone `beneath` (locations, act); draw facedown card; count Elite under the act.
 16. **Codex reminders** – card ability or defeat names a codex entry; the app shows the number and lets the players apply the outcome commands.
-17. **Text connections and movement costs** – Sewer Culvert, entering Underground Cistern and Sluice Control.
+17. **Text connections and movement costs** – Sewer Culvert; extra costs to enter (Underground Cistern, Sluice Control), to leave (Unvisited Isle) and to investigate (Waterfront District).
 18. **Replacement hooks** – "would … instead" (Brethren of Ash).
 19. **Patrol movement** and enemy restrictions (cannot move, no attacks of opportunity, cannot be damaged).
 20. **Test difficulty from the board** – difficulty as an expression read when the test is raised (Mutated!, Red Herring, Secret Chamber, Abigail Foreman).
-21. **Attach to an enemy** – Unnatural Strength, Sanguine Rebirth.
+21. **Attach to an enemy, asset or act** – Unnatural Strength, Sanguine Rebirth.
 22. **Blood tokens** – chaos bag counts in the campaign log, sealed tokens per investigator, limits; prey and difficulty read them.
 23. **Predator** – enemy phase step between hunters and attacks.
 24. **Location versions by time** – setup picks Dawn/Dusk and Day/Night versions.
@@ -400,7 +408,7 @@ The terms in brackets recur in each campaign's encounter text. The card-by-card 
 29. **The Forgotten Age** – Vengeance, exploration deck and Explore, supplies, poison.
 30. **The Innsmouth Conspiracy** – keys, flood levels, barriers, bless and curse tokens added to the chaos bag.
 31. **The Circle Undone** – Haunted, the spectral realm, breaches.
-32. **The Dream-Eaters** – Swarming, Hidden, Veiled.
+32. **The Dream-Eaters** – Swarming, Veiled.
 33. **Edge of the Earth** – the Tekeli-li deck, frost tokens, seals, memories.
 34. **The Scarlet Keys** – Concealed, keys, decoys, shifting.
 35. **The Feast of Hemlock Vale** – day and night, lanterns, traps, decoys.
