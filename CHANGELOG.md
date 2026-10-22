@@ -1,5 +1,86 @@
 # Changelog
 
+## [1.8.0](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.7.0...arkham-companion-v1.8.0) (2026-10-22)
+
+
+### Features
+
+* **engine:** a forced instruction moves an engaged enemy too ([0e1d2af](https://github.com/macandy13/arkham-companion/commit/0e1d2afb2bd46c1adb67c3bfd4ddcdad2331cd1d))
+* **engine:** ability conditions on the current act; agenda 3 as an ability (P1 slice 5c3) ([9efa8f7](https://github.com/macandy13/arkham-companion/commit/9efa8f7bc47aa3dda0f4239b15d657da965b1107))
+* **engine:** ability conditions, effects on each investigator at once; agenda 3 as an ability (P1 slice 5c3) ([0fba5a0](https://github.com/macandy13/arkham-companion/commit/0fba5a0ee5b83595644c09703b424592cd7c4c57))
+* **engine:** enemy-defeated window for objectives, act 3's objective as an ability (P1 slice 5c1) ([9cd17d4](https://github.com/macandy13/arkham-companion/commit/9cd17d4ea8586587dfc16a875107de6daa745b57))
+* **engine:** enemy-defeated window for objectives, act 3's objective as an ability (P1 slice 5c1) ([d70d360](https://github.com/macandy13/arkham-companion/commit/d70d360795535ae2140ac57104d12ebb40606ef6))
+* **engine:** lead investigator reference and draw-until effects; agenda 2 as an ability (P1 slice 5c2) ([c9b9826](https://github.com/macandy13/arkham-companion/commit/c9b9826614c7e22bcbf51a6317f35bb95eb285fd))
+* **engine:** lead investigator reference and draw-until effects; agenda 2 as an ability (P1 slice 5c2) ([35e96d5](https://github.com/macandy13/arkham-companion/commit/35e96d5ea195d87df150d4f4c2a2375d1ebcbe09))
+* **engine:** lead investigator's choice as a card ability; act 3's reverse side on its card (P1 slice 5d1) ([8d6da5e](https://github.com/macandy13/arkham-companion/commit/8d6da5ed24c6a3d3b12e87f2bc7953781eb1cf7f))
+* **engine:** lead investigator's choice as an ability; act 3's reverse side on its card (P1 slice 5d1) ([ccffb6f](https://github.com/macandy13/arkham-companion/commit/ccffb6fc5fce65d67027b1d64c469c867f74c77d))
+* **engine:** move an enemy to a location by a card effect (M3.4b1) ([ae83d0a](https://github.com/macandy13/arkham-companion/commit/ae83d0acc807984ad2d6089eaa1e3ede74523dbd))
+* **engine:** skill tests that deal damage or horror per point failed ([9475cc2](https://github.com/macandy13/arkham-companion/commit/9475cc2eae6ff9a8264f1e71ade5abfe3c13f78e))
+* **engine:** skill tests that deal damage or horror per point failed ([547aa9e](https://github.com/macandy13/arkham-companion/commit/547aa9ef36bfdff910b312a08b79459d3d6689cc))
+* move enemies by card effects and drag them on the map (M3.4b) ([c339346](https://github.com/macandy13/arkham-companion/commit/c339346bca2d3787ad194659e3c1ea7af1f60242))
+* **scenarios:** act 1's reverse side as abilities (P1 slice 5b) ([f5ced37](https://github.com/macandy13/arkham-companion/commit/f5ced379e8bd562a324d4d941994a4d6c853dd93))
+* **scenarios:** act 1's reverse side as abilities (P1 slice 5b) ([718e5c6](https://github.com/macandy13/arkham-companion/commit/718e5c64fcc5233e0259425481bdb389ab5cb425))
+* **web:** advance the act from the header, recorded with the skipped-effect notice ([55a47d5](https://github.com/macandy13/arkham-companion/commit/55a47d5ef26e48f1ba7c61204415dfef39342efc))
+* **web:** drag enemies to move or engage them (M3.4b2) ([523ebf5](https://github.com/macandy13/arkham-companion/commit/523ebf5f5bf98a055d7049cacc46b3dd8ea59ade))
+* **web:** drag enemies to move or engage them (M3.4b2) ([3e49180](https://github.com/macandy13/arkham-companion/commit/3e49180ff96377fb2fcccfa21a1c8d32444a78c9))
+* **web:** drag the pawn whose turn it is to move (M3.4a) ([ea260b5](https://github.com/macandy13/arkham-companion/commit/ea260b50bb1e3807e982b8b7db72710266ca4cef))
+* **web:** drag the pawn whose turn it is to move (M3.4a) ([cc5f6c7](https://github.com/macandy13/arkham-companion/commit/cc5f6c7a0738167effb14383abfd18f609b6bafd))
+* **web:** each map starts fitted after a tab switch; zoom shown in the map flow ([d05a3a4](https://github.com/macandy13/arkham-companion/commit/d05a3a4de992c64be5fb5ff1d26c6fa2857f65a1))
+* **web:** location edit menu, and fix map panning (M3.4c) ([7f73aac](https://github.com/macandy13/arkham-companion/commit/7f73aac6e8cf7fb01bdd1b8cd117486a192cdbbf))
+* **web:** location long-press menu (M3.4c) ([7dbb02c](https://github.com/macandy13/arkham-companion/commit/7dbb02cbf70c30c17e21c86a1432715f7217ce35))
+* **web:** map tabs when several maps are visible (M3.3b2) ([a1cdb15](https://github.com/macandy13/arkham-companion/commit/a1cdb15ba3c5985f2582957eab597cdae7277c69))
+* **web:** map tabs when several maps are visible (M3.3b2) ([88f8ee4](https://github.com/macandy13/arkham-companion/commit/88f8ee44caafc0a975d2b764b6e1b5edced753ea))
+* **web:** pan, zoom and pinch the map (M3.3b3) ([5b51f48](https://github.com/macandy13/arkham-companion/commit/5b51f48a9a8a8fe67d360c50675c8363bf13c479))
+* **web:** pan, zoom and pinch the map (M3.3b3) ([7b22a83](https://github.com/macandy13/arkham-companion/commit/7b22a8394f90a47aca985d92aa150116cfef7bfb))
+* **web:** show card effects skipped for a missing card ([4bba6a8](https://github.com/macandy13/arkham-companion/commit/4bba6a8e86064404ba3a90e23571be73a438088d))
+
+
+### Bug fixes
+
+* **engine:** a move to the enemy's own location does nothing, engaged or not ([8f82208](https://github.com/macandy13/arkham-companion/commit/8f8220859327ec25c0cb57c6c50c6a6d9982e0c0))
+* **engine:** apply "each investigator" effects at once; choose a new lead afterwards ([f0380d1](https://github.com/macandy13/arkham-companion/commit/f0380d1a7308c862dead45630fd2bae774237304))
+* **engine:** each investigator in player order, report a missing eachEnemyAt location ([63b4b7d](https://github.com/macandy13/arkham-companion/commit/63b4b7d55a4354db2e18f62cd531e2f58421a147))
+* **engine:** moving an enemy to its own location does nothing ([9cc239f](https://github.com/macandy13/arkham-companion/commit/9cc239f0cf5eb1921253f2c0a73b7b84bbb239f8))
+* **engine:** narrow the no-match draw rule; test the lead reference after the lead left ([e94bd8d](https://github.com/macandy13/arkham-companion/commit/e94bd8d60d4555a7b5a79c993ba72ea9f54402f4))
+* **engine:** refuse to move an engaged enemy by a card effect ([f22055f](https://github.com/macandy13/arkham-companion/commit/f22055f5e97fe801e68cafdcd00c7e4e5c78fb86))
+* **engine:** stop an at-once effect at the first command that asks something ([9b1eb73](https://github.com/macandy13/arkham-companion/commit/9b1eb73e6bdd0f2a405b8b666a546e9148d24eeb))
+* **web:** keep pawns still while a step is queued ([ed653e8](https://github.com/macandy13/arkham-companion/commit/ed653e8c31c4df101f4403861b18621e6cb349b5))
+* **web:** location menu review: discover only where the investigator stands, pinch and iOS callout ([176e5b5](https://github.com/macandy13/arkham-companion/commit/176e5b53e7c025b76644bca41d0eb8168bd65852))
+* **web:** no clue discovery on the location menu; investigating belongs to the investigator ([6b9e04f](https://github.com/macandy13/arkham-companion/commit/6b9e04fb147847b56800c4259619b6547a573cb9))
+* **web:** open the location menu from an edit button on the tile; pan the map again ([9becd47](https://github.com/macandy13/arkham-companion/commit/9becd474a5adca302c5d4cea883afd0f3312b637))
+
+
+### Refactoring
+
+* **engine:** activeInvestigators helper; name the new-lead step after what it does ([9631dfb](https://github.com/macandy13/arkham-companion/commit/9631dfb3c1982b1b943f2786eb21454e9d6fb444))
+* **engine:** compare timing windows as values; local objective test cards ([21a591b](https://github.com/macandy13/arkham-companion/commit/21a591b4567248256ec55f98341f937a1f351cf1))
+* **engine:** one requireLocationInPlay for command destinations ([d529174](https://github.com/macandy13/arkham-companion/commit/d5291745cf1ef36e8c221431763d8dac3a9a1d6e))
+* **engine:** per-point fails deal damage or horror directly; PlayTable answers them with failedBy ([9669012](https://github.com/macandy13/arkham-companion/commit/9669012e45130e57c62f2dd2b8817e1a9b848a77))
+* **engine:** put a map into play as an AddMap effect ([fc9b575](https://github.com/macandy13/arkham-companion/commit/fc9b5751eb8c4f946834f179d251a8736065a57c))
+* **engine:** remove ScenarioHooks; forced effects are card abilities only (P1 slice 5d2, 2/2) ([7a19515](https://github.com/macandy13/arkham-companion/commit/7a195159ed75398aeadd9055d32fe92fc4b85f43))
+* **engine:** remove ScenarioHooks; forced effects are card abilities only (P1 slice 5d2) ([d95f2c3](https://github.com/macandy13/arkham-companion/commit/d95f2c340cee21fb612c115075850b0a4bb1e64e))
+* **engine:** remove ScenarioHooks; forced effects are card abilities only (P1 slice 5d2b) ([e5e8559](https://github.com/macandy13/arkham-companion/commit/e5e8559f9e8e804f7d1cfaa505e59506899f057e))
+* **web:** one pawn order for tiles and the engage target, review nits ([aee8734](https://github.com/macandy13/arkham-companion/commit/aee8734fcfcf16a294881fca1f8dd17276ea59e1))
+
+
+### Documentation
+
+* card data before the pipeline; milestone headings match product.md ([13717fc](https://github.com/macandy13/arkham-companion/commit/13717fcb308627fa799056f489dd4270525e4c8d))
+* drop the last mentions of scenario hooks ([3cbe4f3](https://github.com/macandy13/arkham-companion/commit/3cbe4f3be0a1a88c26202a8142a6f6df8c729c89))
+* encounter card coverage by rule and the gaps outside the plan ([8dad446](https://github.com/macandy13/arkham-companion/commit/8dad446d1615ce0ab84e1fdccb68919c00604911))
+* encounter card coverage by rule and the gaps outside the plan ([2680d52](https://github.com/macandy13/arkham-companion/commit/2680d521e56bd4717e7658538fdded900381db56))
+* **engine:** note how a choice drops and why its lists are mutable ([18f3642](https://github.com/macandy13/arkham-companion/commit/18f3642bb11bcd6afe030982bbb0fab85dfbd323))
+* format the M3 task file ([5228b3b](https://github.com/macandy13/arkham-companion/commit/5228b3b1d568490d81eac06cd5741d28350d664e))
+* list every timing window in step 2; fix review nits ([69aed03](https://github.com/macandy13/arkham-companion/commit/69aed0310cbb054f922177f4b94f464a058d6cf2))
+* mark engine commands card data can't use yet; name conditional surge, spawn filters and shroud conditions in the plan ([6a66d26](https://github.com/macandy13/arkham-companion/commit/6a66d2695875f038e39d8e98e1d3137ae488245f))
+* objective clue rule; note the fixed agenda-before-act order ([08033c3](https://github.com/macandy13/arkham-companion/commit/08033c332845dadc3ba05c631c0d3c77cbdc176e))
+* plan card art and card-format layout (M3.10) ([fe7153f](https://github.com/macandy13/arkham-companion/commit/fe7153f4c31d8904673c8294d78e06d9010d0cb6))
+* plan card art and card-format layout (M3.10) ([e688996](https://github.com/macandy13/arkham-companion/commit/e68899669982e16fb31c4543fe4930f7e6bebb2f))
+* plan every encounter card gap and the milestones by campaign ([813a693](https://github.com/macandy13/arkham-companion/commit/813a69313aeaf0bf0ee25f0968b611b6be4e1a78))
+* plan every encounter card gap, ordered by campaign ([4930b87](https://github.com/macandy13/arkham-companion/commit/4930b87ff9fe6b4ee44b33dc8943ef97cc5ecc68))
+* plan the adjust board mode and token drag (M3.11) ([f420a8a](https://github.com/macandy13/arkham-companion/commit/f420a8a70d7161cc1feddba96537f9232dbbf243))
+* re-plan milestones for Night of the Zealot first, then the campaign order ([9880e52](https://github.com/macandy13/arkham-companion/commit/9880e52d6bf7b5110690c0b6b611a5864d6802d0))
+
 ## [1.7.0](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.6.0...arkham-companion-v1.7.0) (2026-10-21)
 
 
