@@ -1,7 +1,13 @@
+import { assertNever } from '@arkham/util';
 import { locationAttachments, locationShroud } from './board';
 import type { CardStats, EngineContext } from './cards';
 import type { Command, Evade, Fight, Investigate, TestSkill } from './commands';
-import { requestDecision, skillTestDecision, type SkillTestOutcomes } from './decisions';
+import {
+  answerOutcome,
+  requestDecision,
+  skillTestDecision,
+  type SkillTestOutcomes,
+} from './decisions';
 import type { DecisionRequested } from './events';
 import { keywordAttackCommands } from './forced_attacks';
 import { enemyOf, isInPlay, locationOf } from './handle_enemy';
@@ -166,7 +172,7 @@ export function testedActionCommands(
   if (!decision?.testKind || decision.decider.kind !== 'investigator') return [];
   const investigator = activeInvestigator(state, decision.decider.investigatorId);
   const answer: TestAnswer = {
-    outcome: command.optionId === 'pass' ? 'pass' : 'fail',
+    outcome: answerOutcome(command),
     ...(command.amount === undefined ? {} : { amount: command.amount }),
   };
   const kind = decision.testKind;
@@ -177,6 +183,8 @@ export function testedActionCommands(
       return fightCommands(ctx, state, investigator, kind, answer);
     case 'evade':
       return evadeCommands(ctx, state, investigator, kind.enemyId, answer);
+    default:
+      return assertNever(kind);
   }
 }
 
@@ -188,7 +196,8 @@ interface TestAnswer {
 
 /**
  * A passed investigation discovers the confirmed number of clues (1 by
- * default) if the location has any, then discards the attachments that leave
+ * default), at most the clues the location has left as the answer arrives
+ * (a correction may have taken some off since the test started), then discards the attachments that leave
  * after a successful investigation (`LocationAttachment.discardWhenInvestigated`),
  * as their "After … is successfully investigated" says. A fail does nothing.
  */
@@ -201,9 +210,10 @@ function investigateCommands(
 ): Command[] {
   if (outcome === 'fail') return [];
   const location = requireCard(state.cards, locationId);
+  const clues = Math.min(amount, location.tokens.clue ?? 0);
   const discoverClues: Command[] =
-    (location.tokens.clue ?? 0) > 0
-      ? [{ type: 'DiscoverClues', investigatorId: investigator.id, locationId, amount }]
+    clues > 0
+      ? [{ type: 'DiscoverClues', investigatorId: investigator.id, locationId, amount: clues }]
       : [];
   const discardAttachments = locationAttachments(ctx, state, location)
     .filter(({ attachment }) => attachment.discardWhenInvestigated)

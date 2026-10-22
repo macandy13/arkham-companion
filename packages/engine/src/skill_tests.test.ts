@@ -143,6 +143,24 @@ describe('Investigate', () => {
     expect(passed.pending).toEqual([]);
   });
 
+  it('discovers only the clues left when some were taken off while the test was open', () => {
+    const { context, state } = aliceInStudy.start();
+    const removeOneClue: Command = {
+      type: 'ManualAdjust',
+      adjustment: { kind: 'tokens', cardId: study, token: 'clue', delta: -1 },
+    };
+
+    const passed = stateAfter(
+      context,
+      state,
+      investigate,
+      removeOneClue,
+      answer('investigate:alice', 'pass', 2),
+    );
+
+    expect(passed.investigators[0]!.clues).toBe(1);
+  });
+
   it('discovers the number of clues the players confirm', () => {
     const { context, state } = aliceInStudy.start();
 
@@ -396,6 +414,26 @@ describe('failed Fight', () => {
       health: { max: 3, damage: 3 },
       status: 'defeated',
     });
+  });
+
+  it('deals no damage to bob when the enemy was moved onto alice while the test was open', () => {
+    const { context, state } = aliceAndHurtBobInStudy
+      .withCard(ghoul, ghoulCard, engagedWith(bob))
+      .start();
+    const moveOntoAlice: Command = {
+      type: 'ManualAdjust',
+      adjustment: { kind: 'moveCard', cardId: ghoul, to: engagedWith(alice) },
+    };
+
+    const failed = stateAfter(
+      context,
+      state,
+      fightForTwo,
+      moveOntoAlice,
+      answer('fight:alice:ghoul', 'fail'),
+    );
+
+    expect(failed.investigators[1]!.health.damage).toBe(1);
   });
 
   it.each<{ name: string; card: CardStats; zone: Zone; before: Command[] }>([
