@@ -4,6 +4,7 @@ import { commandSpec, type CommandSpec, type Continuation, type Step } from './c
 import type { Command, DrawEncounter } from './commands';
 import { attackOfOpportunityDecisions, isOwnTurnAction } from './attacks_of_opportunity';
 import { answerCommands } from './decisions';
+import { testedActionCommands } from './skill_tests';
 import type { Event } from './events';
 import {
   canDrawEncounter,
@@ -305,7 +306,11 @@ function resolveCommand(
     return continuation;
   }
   const triggered = emitWithEffects(resolution, own);
-  return [...triggered, ...answerCommands(before, command).map(followUpStep), ...continuation];
+  const answered = [
+    ...answerCommands(before, command),
+    ...testedActionCommands(resolution.ctx, before, command),
+  ];
+  return [...triggered, ...answered.map(followUpStep), ...continuation];
 }
 
 /**

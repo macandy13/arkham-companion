@@ -249,6 +249,17 @@ export interface SkillTest {
   difficulty: number;
 }
 
+/**
+ * The basic action a skill test belongs to (`Decision.testKind`), with what
+ * its resolver needs to compute the consequences of the answer
+ * (`testedActionCommands`): the location investigated, or the enemy attacked
+ * with the attack's damage, or the enemy evaded. The tester is the decider.
+ */
+export type SkillTestKind =
+  | { kind: 'investigate'; locationId: InstanceId }
+  | { kind: 'fight'; enemyId: InstanceId; damage: number }
+  | { kind: 'evade'; enemyId: InstanceId };
+
 /** Whether a skill test succeeded or failed (`SkillTestResolved`). */
 export type SkillTestOutcome = 'pass' | 'fail';
 
@@ -324,6 +335,12 @@ export interface Decision {
   /** Only for `skillTestResult`: what the players are testing. */
   skillTest?: SkillTest;
   /**
+   * Only for the `skillTestResult` of a basic action: which action the test
+   * belongs to. Its consequences are not in the options but computed from
+   * the state when the answer arrives (`testedActionCommands`).
+   */
+  testKind?: SkillTestKind;
+  /**
    * Only for `skillTestResult` decided by one investigator: the modified
    * values before the players enter their modifier or reveal a token,
    * computed when the decision is raised. The UI recomputes it with the
@@ -338,7 +355,8 @@ export interface Decision {
   perPointFailed?: PerPointFailed;
   /**
    * The answers. Each carries the commands it triggers, so the mapping from
-   * answer to consequence is data and any module (or scenario) can raise a decision.
+   * answer to consequence is data and any module (or scenario) can raise a
+   * decision. A basic action's test carries none: its `testKind` decides.
    */
   options: DecisionOption[];
 }
