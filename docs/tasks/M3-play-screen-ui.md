@@ -116,4 +116,3 @@ Done when: a full sandbox game is playable and comfortable on a tablet.
 
 - [ ] An "Adjust board" mode: while it is on, the location menu's steppers and the investigator bar's steppers change counters, and "Done" plays them all as one step (`PlayTable.step`, one undo group); "Cancel" drops them
 - [ ] Drag and drop tokens (clues, doom, damage, horror, resources) from one element onto another, e.g. a clue from a location onto an investigator, as one step each
-
