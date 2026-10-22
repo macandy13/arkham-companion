@@ -144,7 +144,9 @@ export type AbilityTest = Omit<TestSkill, 'onPass' | 'onFail'> & {
  * `RequestDecision` as card data writes it: a choice ("the lead investigator
  * must decide") whose options lead only to what card data may do. It has no
  * `subject`: a decision about an agenda or act would be dropped as the card
- * advances, which is exactly when its reverse side asks.
+ * advances, which is exactly when its reverse side asks. Its lists stay
+ * mutable so that it is a `RequestDecision`. Like a test, the whole choice is
+ * dropped when a reference in one option names nobody (`resolveRefs`).
  */
 export interface AbilityChoice {
   type: 'RequestDecision';
