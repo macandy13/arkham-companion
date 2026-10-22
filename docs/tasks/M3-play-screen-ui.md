@@ -28,6 +28,7 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
     M3.4b2: drag enemies to move or engage them
     M3.4c: location long-press menu
 11. M3.5: investigator bar
+    M3.11: adjust board mode and token drag (after the investigator bar, so it covers every counter)
 12. M3.6: encounter panel
 13. M3.7: decision dialog and card zoom
 14. M3.8: event log
@@ -106,3 +107,13 @@ The fan IP policy that covers FFG (Asmodee's community-use guidelines) does not 
 - [ ] Add an "unofficial fan project" notice with an FFG copyright credit (the About/settings screen).
 
 Done when: a full sandbox game is playable and comfortable on a tablet.
+
+## M3.11 Adjust board mode and token drag (O)
+
+**Why:** Keeping the screen in step with the table takes many small corrections. One tap per undo step makes a correction of several counters slow to make and slow to take back.
+
+**Benefit:** The players fix the board in one go and take the whole fix back with one undo. Later, they move tokens the way they move them on the table.
+
+- [ ] An "Adjust board" mode: while it is on, the location menu's steppers and the investigator bar's steppers change counters, and "Done" plays them all as one step (`PlayTable.step`, one undo group); "Cancel" drops them
+- [ ] Drag and drop tokens (clues, doom, damage, horror, resources) from one element onto another, e.g. a clue from a location onto an investigator, as one step each
+
