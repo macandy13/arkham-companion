@@ -7,6 +7,7 @@ import {
   blankEnemy,
   blankLocation,
   blankTreachery,
+  cardImagePath,
   engagedWith,
   fixed,
   instanceId,
@@ -100,6 +101,52 @@ describe('MapBoard', () => {
     expect(tokensOf('hallway')).toEqual([]);
     expect(within(tile('hallway')).getByText('Unrevealed')).toBeTruthy();
     expect(within(tile('attic')).getByText('Unrevealed')).toBeTruthy();
+  });
+
+  describe('a location with a picture of its side', () => {
+    // jsdom loads no images, so each test fires the picture's load or error itself.
+    const withCellar = house.withLocation(
+      instanceId('cellar'),
+      blankLocation('cellar', {
+        shroud: 3,
+        backImageSrc: cardImagePath('/bundles/cards/cellar_back.png'),
+      }),
+    );
+    const pictureOf = (name: string) => tile(name).querySelector('image');
+    const requiredPictureOf = (name: string) => {
+      const picture = pictureOf(name);
+      if (!picture) throw new Error(`${name} has no picture`);
+      return picture;
+    };
+
+    it('fetches the picture from ArkhamDB and keeps the pattern face until it has loaded', () => {
+      const table = PlayTable.start(withCellar);
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+
+      expect(pictureOf('cellar')?.getAttribute('href')).toBe(
+        'https://arkhamdb.com/bundles/cards/cellar_back.png',
+      );
+      expect(tile('cellar').hasAttribute('data-picture')).toBe(false);
+      expect(pictureOf('study')).toBeNull();
+    });
+
+    it('shows the picture once it has loaded', () => {
+      const table = PlayTable.start(withCellar);
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+
+      fireEvent.load(requiredPictureOf('cellar'));
+
+      expect(tile('cellar').getAttribute('data-picture')).toBe('shown');
+    });
+
+    it('keeps the pattern face when the picture fails to load', () => {
+      const table = PlayTable.start(withCellar);
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+
+      fireEvent.error(requiredPictureOf('cellar'));
+
+      expect(tile('cellar').hasAttribute('data-picture')).toBe(false);
+    });
   });
 
   it('names each connection after its locations and marks one-way ones', () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { camelCaseToWords, stripTrailingDot } from './index';
+import { camelCaseToWords, escapeRegExp, stripTrailingDot } from './index';
 
 describe('camelCaseToWords', () => {
   it.each([
@@ -24,5 +24,17 @@ describe('stripTrailingDot', () => {
     { name: 'keeps an empty string', text: '', expected: '' },
   ])('$name', ({ text, expected }) => {
     expect(stripTrailingDot(text)).toEqual(expected);
+  });
+});
+
+describe('escapeRegExp', () => {
+  it.each([
+    ['a host', 'https://arkhamdb.com', 'https://arkhamdbXcom'],
+    ['a base path', '/arkham-companion/', '/arkham-companion'],
+    ['every special character', '.*+?^${}()|[]\\', ''],
+  ])('matches %s literally: %s', (_, text, lookAlike) => {
+    const pattern = new RegExp(`^${escapeRegExp(text)}$`);
+    expect(pattern.test(text)).toBe(true);
+    expect(pattern.test(lookAlike)).toBe(false);
   });
 });

@@ -1,6 +1,8 @@
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StoreApi } from 'zustand/vanilla';
-import type { BoardView } from '@arkham/engine';
+import type { BoardView, CardImagePath } from '@arkham/engine';
+import { useCardPicture } from '../catalog/cardImages';
 import type { AppState, OpenGame } from '../state/appStore';
 
 /**
@@ -97,7 +99,7 @@ function AgendaStatus({
   const { actions } = store.getState();
 
   return (
-    <section aria-label={t('header.agenda')} data-card="agenda">
+    <HeaderCard kind="agenda" label={t('header.agenda')} image={agenda.image}>
       <h2>{agenda.name}</h2>
       <footer>
         <p>
@@ -122,7 +124,7 @@ function AgendaStatus({
           +
         </button>
       </footer>
-    </section>
+    </HeaderCard>
   );
 }
 
@@ -147,7 +149,7 @@ function ActStatus({
   const { actions } = store.getState();
   const { clues, threshold } = act;
   return (
-    <section aria-label={t('header.act')} data-card="act">
+    <HeaderCard kind="act" label={t('header.act')} image={act.image}>
       <h2>{act.name}</h2>
       {threshold !== undefined && (
         <footer>
@@ -177,6 +179,38 @@ function ActStatus({
           </button>
         </footer>
       )}
+    </HeaderCard>
+  );
+}
+
+/**
+ * The landscape card of the agenda or act (`kind`), named `label`, holding its name band and plate
+ * (`children`). When its side has a picture (`image`), the picture fills the card once it has
+ * loaded (`data-picture`), and the stylesheet hides the name band the picture prints; the plate
+ * stays, since its count and buttons are live.
+ */
+function HeaderCard({
+  kind,
+  label,
+  image,
+  children,
+}: {
+  kind: 'agenda' | 'act';
+  label: string;
+  image: CardImagePath | undefined;
+  children: ReactNode;
+}) {
+  const picture = useCardPicture(image);
+  return (
+    <section
+      aria-label={label}
+      data-card={kind}
+      data-picture={picture?.shown ? 'shown' : undefined}
+    >
+      {picture && (
+        <img src={picture.url} alt="" onLoad={picture.onLoad} onError={picture.onError} />
+      )}
+      {children}
     </section>
   );
 }

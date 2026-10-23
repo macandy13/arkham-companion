@@ -139,6 +139,20 @@
 }
 
 /*
+ * A tile's card picture covers the face once it has loaded (`data-picture`); the name band and
+ * shroud badge then give way to the ones the picture prints. They stay transparent rather than
+ * removed, so they keep naming the tile's shroud to assistive technology.
+ */
+#map svg [data-card]:not([data-picture]) > image {
+  visibility: hidden;
+}
+
+#map svg [data-picture] > text,
+#map svg [data-picture] > [data-token='shroud'] {
+  opacity: 0;
+}
+
+/*
  * Pieces: investigator pawns (circles) and enemy chips (the rect of a piece's group, which is not
  * a tile, so a dragged chip's copy gets it too).
  */

@@ -1,3 +1,7 @@
+// `vite.config.ts` loads this module through Node, which cannot load the workspace's TypeScript
+// packages by name, so the helper comes in by path, where Vite bundles it into the config.
+import { escapeRegExp } from '../../../../packages/util/src/string';
+
 /**
  * The page navigations the service worker may answer with the cached `index.html`
  * (Workbox `navigateFallbackAllowlist`, configured in `vite.config.ts`).
@@ -8,6 +12,5 @@
  * at the site root – the PR previews under `pr-preview/`, which all opened the app instead.
  */
 export function appShellNavigation(base: string): RegExp {
-  const escapedBase = base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return new RegExp(`^${escapedBase}(index\\.html)?(\\?.*)?$`);
+  return new RegExp(`^${escapeRegExp(base)}(index\\.html)?(\\?.*)?$`);
 }

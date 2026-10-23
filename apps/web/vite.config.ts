@@ -2,6 +2,7 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { appShellNavigation } from './src/pwa/appShellNavigation';
+import { cardImageCaching } from './src/pwa/cardImageCaching';
 
 const base = process.env.VITE_BASE ?? '/';
 
@@ -10,7 +11,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      workbox: { navigateFallbackAllowlist: [appShellNavigation(base)] },
+      workbox: {
+        navigateFallbackAllowlist: [appShellNavigation(base)],
+        runtimeCaching: [cardImageCaching],
+      },
       manifest: {
         name: 'Arkham Companion',
         short_name: 'Arkham',

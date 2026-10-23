@@ -4,14 +4,18 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-li
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import {
+  cardCode,
   cardDbWith,
+  cardImagePath,
   investigatorCardStats,
   investigatorCode,
   investigatorId,
+  type CardStats,
   type InvestigatorCard,
 } from '@arkham/engine';
 import { theGathering, theGatheringCards } from '@arkham/scenarios';
 import { initI18n } from '../i18n';
+import { findScenario } from '../scenarios/scenarioCatalog';
 import { createAppStore } from '../state/appStore';
 import { IndexedDbStore } from '../storage/IndexedDbStore';
 import { GameScreen } from './GameScreen';
@@ -24,13 +28,20 @@ const alder: InvestigatorCard = {
   skills: { willpower: 3, intellect: 3, combat: 3, agility: 3 },
 };
 
-/** Renders the play screen on a new game of The Gathering with Alder as the only investigator. */
-async function renderTheGathering(db: string) {
-  const store = createAppStore(new IndexedDbStore(db));
+/**
+ * Renders the play screen on a new game of The Gathering with Alder as the only investigator;
+ * `replacedCards` stand in for the scenario's cards of the same code.
+ */
+async function renderTheGathering(db: string, replacedCards: readonly CardStats[] = []) {
+  const cards = cardDbWith(theGatheringCards, replacedCards);
+  const store = createAppStore(new IndexedDbStore(db), (id) => {
+    const entry = findScenario(id);
+    return entry && { ...entry, cards };
+  });
   const id = await store.getState().startScenario({
     title: 'Friday night',
     ctx: {
-      cards: cardDbWith(theGatheringCards, [investigatorCardStats(alder)]),
+      cards: cardDbWith(cards, [investigatorCardStats(alder)]),
       scenario: theGathering,
     },
     difficulty: 'easy',
@@ -140,6 +151,25 @@ describe('GameScreen header', () => {
 
     expect(advanceAtOne).toBe(true);
     expect(await screen.findByText('The Barrier')).toBeTruthy();
+  });
+
+  it('fills the agenda with its picture from ArkhamDB once it has loaded', async () => {
+    const whatsGoingOn = theGatheringCards.get(cardCode('01105'));
+    if (!whatsGoingOn) throw new Error("The Gathering has the agenda What's Going On?!");
+    await renderTheGathering('game-screen-agenda-picture-test', [
+      { ...whatsGoingOn, imageSrc: cardImagePath('/bundles/cards/01105.jpg') },
+    ]);
+    const agenda = screen.getByRole('region', { name: 'Agenda' });
+    // The picture is decorative (`alt=""`), so it has no role to find it by.
+    const picture = agenda.querySelector('img');
+    if (!picture) throw new Error('the agenda has no picture');
+
+    expect(picture.getAttribute('src')).toBe('https://arkhamdb.com/bundles/cards/01105.jpg');
+    expect(agenda.hasAttribute('data-picture')).toBe(false);
+    // jsdom loads no images, so the test fires the load itself.
+    fireEvent.load(picture);
+    expect(agenda.getAttribute('data-picture')).toBe('shown');
+    expect(screen.getByRole('region', { name: 'Act' }).querySelector('img')).toBeNull();
   });
 
   it('turns the buttons off while a step is still being stored', async () => {
