@@ -67,7 +67,8 @@ export function handleAdvanceAct(ctx: EngineContext, state: GameState, cmd: Adva
           cmd.spend,
           required === undefined ? undefined : Math.max(0, required - placed),
         );
-  return [...payments, ...flip];
+  // Advancing removes the act's tokens (RR "Act Deck and Agenda Deck"), the clues on it included.
+  return [...payments, ...clearTokensEvents(act), ...flip];
 }
 
 /**
