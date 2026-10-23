@@ -141,10 +141,15 @@ export interface ConnectionChanged {
   edge: Edge;
 }
 
-/** An investigator is now at location `to`. Produced by `MoveInvestigator`. */
+/**
+ * An investigator is now at location `to`. Produced by `MoveInvestigator`.
+ * `from` is the location they left; absent when they had none and were
+ * placed on the map, which is no entering ("after you enter" stays shut).
+ */
 export interface InvestigatorMoved {
   type: 'InvestigatorMoved';
   investigatorId: InvestigatorId;
+  from?: InstanceId;
   to: InstanceId;
 }
 

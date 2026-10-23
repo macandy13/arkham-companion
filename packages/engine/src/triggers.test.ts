@@ -296,6 +296,22 @@ describe('trigger bus', () => {
       expect(requireInvestigator(state, bob).sanity.horror).toBe(0);
       expect(state.pending).toEqual([]);
     });
+
+    it('opens no window for an investigator without a location placed there', () => {
+      const { context, state: started } = newGame()
+        .withLocation(attic, atticCard, { revealed: true })
+        .withInvestigator(alice)
+        .start();
+
+      const { state } = execute(context, started, {
+        type: 'MoveInvestigator',
+        investigatorId: alice,
+        to: attic,
+      });
+
+      expect(requireInvestigator(state, alice)).toMatchObject({ locationId: attic });
+      expect(requireInvestigator(state, alice).sanity.horror).toBe(0);
+    });
   });
 
   describe('turn-end and round-end abilities', () => {

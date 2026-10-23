@@ -175,7 +175,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.board.namesIn({ kind: 'resolving' })).toEqual(['Crypt Chill']);
     expect(table.board.namesIn({ kind: 'encounterDiscard' })).toEqual([]);
 
-    // Willpower 3 and a +1 token beat the difficulty of 4: Daisy passes.
+    // Willpower 3 and a +1 token reach the difficulty of 4: Daisy passes.
     table.answer(byName('Crypt Chill'), 'pass');
 
     expect(table.board.namesIn({ kind: 'resolving' })).toEqual([]);
@@ -670,7 +670,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     });
 
     table.endTurn(roland);
-    // Daisy, at 3 of 5 health, evades the Ravenous Ghoul rather than risk its
+    // Daisy, at 3 of 5 damage, evades the Ravenous Ghoul rather than risk its
     // next attack, then takes the resource action.
     table.startTurn(daisy);
     table.evade(daisy, byName(ravenousGhoul));

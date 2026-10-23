@@ -37,9 +37,11 @@ export type TimingWindow =
   | { kind: 'turnEnds' }
   /**
    * "After you enter [this location]": an investigator moved into the
-   * location (`InvestigatorMoved`), naming them, before its reveal's
-   * abilities when the move turned it face up. Being placed there at setup
-   * is no move, so it opens nothing.
+   * location (`InvestigatorMoved`), naming them. When the move turned it
+   * face up, it fires before the reveal's abilities: a fixed stand-in, as
+   * the rules let the lead order simultaneous forced effects (M1V). Being
+   * placed there, at setup or on the map by an investigator without a
+   * location, is no move, so it opens nothing.
    */
   | { kind: 'entered' }
   /** "At the end of the round", upkeep step 4.6, for every card in play; names no investigator. */
@@ -236,6 +238,7 @@ export function windowsOpenedBy(
       ];
     }
     case 'InvestigatorMoved':
+      if (event.from === undefined) return [];
       return [
         { window: { kind: 'entered' }, cardId: event.to, investigatorId: event.investigatorId },
       ];
