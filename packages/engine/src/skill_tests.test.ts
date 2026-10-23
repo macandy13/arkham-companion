@@ -8,6 +8,7 @@ import {
   decisionId,
   engagedWith,
   fixed,
+  handle,
   instanceId,
   investigatorId,
   newGame,
@@ -20,6 +21,7 @@ import {
   type Command,
   type Zone,
 } from './index';
+import { requireInvestigator } from './investigators';
 import { answer, rejectionFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
@@ -98,6 +100,7 @@ describe('Investigate', () => {
         subject: study,
         decider: { kind: 'investigator', investigatorId: alice },
         skillTest: { skill: 'intellect', difficulty: 3 },
+        testKind: { kind: 'investigate', locationId: study },
         // The whole suggestion is covered in skill_modifiers.test.ts.
         suggestion: expect.objectContaining({ skill: 4, difficulty: 3, outcome: 'pass' }),
         options: [
@@ -105,9 +108,7 @@ describe('Investigate', () => {
             id: 'pass',
             label: 'decision.pass',
             amount: { default: 1, min: 1, max: 2 },
-            commands: [
-              { type: 'DiscoverClues', investigatorId: alice, locationId: study, amount: 1 },
-            ],
+            commands: [],
           },
           { id: 'fail', label: 'decision.fail', commands: [] },
         ],
@@ -120,8 +121,45 @@ describe('Investigate', () => {
 
     const passed = stateAfter(context, state, investigate, answer('investigate:alice', 'pass'));
 
-    expect(passed.investigators[0]!.clues).toBe(1);
+    expect(requireInvestigator(passed, alice).clues).toBe(1);
     expect(passed.cards[study]!.tokens.clue).toBe(1);
+  });
+
+  it('discovers nothing on a pass when the clues were taken off while the test was open', () => {
+    const { context, state } = aliceInStudy.start();
+    const removeBothClues: Command = {
+      type: 'ManualAdjust',
+      adjustment: { kind: 'tokens', cardId: study, token: 'clue', delta: -2 },
+    };
+
+    const passed = stateAfter(
+      context,
+      state,
+      investigate,
+      removeBothClues,
+      answer('investigate:alice', 'pass'),
+    );
+
+    expect(requireInvestigator(passed, alice).clues).toBe(0);
+    expect(passed.pending).toEqual([]);
+  });
+
+  it('discovers only the clues left when some were taken off while the test was open', () => {
+    const { context, state } = aliceInStudy.start();
+    const removeOneClue: Command = {
+      type: 'ManualAdjust',
+      adjustment: { kind: 'tokens', cardId: study, token: 'clue', delta: -1 },
+    };
+
+    const passed = stateAfter(
+      context,
+      state,
+      investigate,
+      removeOneClue,
+      answer('investigate:alice', 'pass', 2),
+    );
+
+    expect(requireInvestigator(passed, alice).clues).toBe(1);
   });
 
   it('discovers the number of clues the players confirm', () => {
@@ -129,7 +167,7 @@ describe('Investigate', () => {
 
     const passed = stateAfter(context, state, investigate, answer('investigate:alice', 'pass', 2));
 
-    expect(passed.investigators[0]!.clues).toBe(2);
+    expect(requireInvestigator(passed, alice).clues).toBe(2);
     expect(passed.cards[study]!.tokens.clue ?? 0).toBe(0);
   });
 
@@ -166,7 +204,7 @@ describe('Investigate', () => {
 
     const failed = stateAfter(context, state, investigate, answer('investigate:alice', 'fail'));
 
-    expect(failed.investigators[0]!.clues).toBe(0);
+    expect(requireInvestigator(failed, alice).clues).toBe(0);
     expect(failed.cards[study]!.tokens.clue).toBe(2);
   });
 
@@ -180,7 +218,7 @@ describe('Investigate', () => {
 
     const passed = stateAfter(context, inHallway, investigate, answer('investigate:alice', 'pass'));
 
-    expect(passed.investigators[0]!.clues).toBe(0);
+    expect(requireInvestigator(passed, alice).clues).toBe(0);
     expect(passed.pending).toEqual([]);
   });
 
@@ -218,11 +256,8 @@ describe('Investigate at a location with attachments', () => {
 
     const asked = stateAfter(context, state, investigate);
 
-    expect(asked.pending[0]?.options[0]?.commands).toEqual([
-      { type: 'DiscoverClues', investigatorId: alice, locationId: study, amount: 1 },
-      { type: 'MoveCard', cardId: fog, to: { kind: 'encounterDiscard' }, index: 0 },
-    ]);
     const passed = stateAfter(context, asked, answer('investigate:alice', 'pass'));
+    expect(requireInvestigator(passed, alice).clues).toBe(1);
     expect(passed.order[zoneKey(attachedTo(study))]).toEqual([lastingFog]);
     expect(passed.order[zoneKey({ kind: 'encounterDiscard' })]).toEqual([fog]);
   });
@@ -249,12 +284,9 @@ describe('Fight', () => {
       prompt: 'decision.fight',
       subject: ghoul,
       skillTest: { skill: 'combat', difficulty: 4 },
+      testKind: { kind: 'fight', enemyId: ghoul, damage: 1 },
       options: [
-        {
-          id: 'pass',
-          amount: { default: 1, min: 1 },
-          commands: [{ type: 'DamageEnemy', enemyId: ghoul, amount: 1 }],
-        },
+        { id: 'pass', amount: { default: 1, min: 1 }, commands: [] },
         { id: 'fail', commands: [] },
       ],
     });
@@ -379,10 +411,30 @@ describe('failed Fight', () => {
 
     const failed = stateAfter(context, state, fightForTwo, answer('fight:alice:ghoul', 'fail'));
 
-    expect(failed.investigators[1]).toMatchObject({
+    expect(requireInvestigator(failed, bob)).toMatchObject({
       health: { max: 3, damage: 3 },
       status: 'defeated',
     });
+  });
+
+  it('deals no damage to bob when the enemy was moved onto alice while the test was open', () => {
+    const { context, state } = aliceAndHurtBobInStudy
+      .withCard(ghoul, ghoulCard, engagedWith(bob))
+      .start();
+    const moveOntoAlice: Command = {
+      type: 'ManualAdjust',
+      adjustment: { kind: 'moveCard', cardId: ghoul, to: engagedWith(alice) },
+    };
+
+    const failed = stateAfter(
+      context,
+      state,
+      fightForTwo,
+      moveOntoAlice,
+      answer('fight:alice:ghoul', 'fail'),
+    );
+
+    expect(requireInvestigator(failed, bob).health.damage).toBe(1);
   });
 
   it.each<{ name: string; card: CardStats; zone: Zone; before: Command[] }>([
@@ -441,9 +493,31 @@ describe('Evade', () => {
 
     const asked = stateAfter(context, state, { type: 'ExhaustEnemy', enemyId: ghoul }, evade);
 
-    expect(asked.pending[0]!.options[0]!.commands).toEqual([
-      { type: 'DisengageEnemy', enemyId: ghoul },
+    const events = handle(context, asked, answer('evade:alice:ghoul', 'pass'));
+
+    expect(events.map((event) => event.type)).toEqual([
+      'DecisionResolved',
+      'SkillTestResolved',
+      'EnemyDisengaged',
     ]);
+  });
+
+  it('only exhausts an enemy moved off alice while the test was open', () => {
+    const { context, state } = aliceInStudy.withCard(ghoul, ghoulCard, engagedWith(alice)).start();
+    const moveToHallway: Command = {
+      type: 'ManualAdjust',
+      adjustment: { kind: 'moveCard', cardId: ghoul, to: atLocation(hallway) },
+    };
+
+    const passed = stateAfter(
+      context,
+      state,
+      evade,
+      moveToHallway,
+      answer('evade:alice:ghoul', 'pass'),
+    );
+
+    expect(passed.cards[ghoul]).toMatchObject({ exhausted: true, zone: atLocation(hallway) });
   });
 
   it('only exhausts a massive enemy, which stays engaged with everyone at its location', () => {
@@ -531,7 +605,10 @@ describe('revelation test', () => {
     const failed = stateAfter(context, state, draw, answer('test:chill', 'fail'));
 
     expect(failed.pending).toEqual([]);
-    expect(failed.investigators[0]).toMatchObject({ health: { damage: 0 }, sanity: { horror: 0 } });
+    expect(requireInvestigator(failed, alice)).toMatchObject({
+      health: { damage: 0 },
+      sanity: { horror: 0 },
+    });
   });
 
   it('puts a treachery into the threat area before its test, as its revelation lists them', () => {
@@ -579,6 +656,6 @@ describe('card-driven skill test', () => {
 
     const failed = stateAfter(context, state, request, answer('mishap', 'fail'));
 
-    expect(failed.investigators[0]!.sanity.horror).toBe(2);
+    expect(requireInvestigator(failed, alice).sanity.horror).toBe(2);
   });
 });

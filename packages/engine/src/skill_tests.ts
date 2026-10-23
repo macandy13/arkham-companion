@@ -1,7 +1,13 @@
+import { assertNever } from '@arkham/util';
 import { locationAttachments, locationShroud } from './board';
 import type { CardStats, EngineContext } from './cards';
 import type { Command, Evade, Fight, Investigate, TestSkill } from './commands';
-import { requestDecision, skillTestDecision, type SkillTestOutcomes } from './decisions';
+import {
+  answerOutcome,
+  requestDecision,
+  skillTestDecision,
+  type SkillTestOutcomes,
+} from './decisions';
 import type { DecisionRequested } from './events';
 import { keywordAttackCommands } from './forced_attacks';
 import { enemyOf, isInPlay, locationOf } from './handle_enemy';
@@ -12,17 +18,21 @@ import { requireCard } from './lookup';
 import { discardToTop } from './placement';
 import { CommandRejected } from './rejection';
 import { withSuggestion } from './skill_modifiers';
-import type { CardInstance, GameState, Investigator, SkillTest } from './state';
+import type {
+  CardInstance,
+  GameState,
+  Investigator,
+  SkillTest,
+  SkillTestKind,
+  SkillTestOutcome,
+} from './state';
 
 /**
  * `Investigate`: an intellect test against the shroud of the investigator's
- * location (`locationShroud`, attachments included). A pass discovers 1 clue
- * unless the players confirm another count (cards that discover more, or more
- * on a good result), up to the clues on the location. A location without
- * clues left makes the pass do nothing rather than fail the answer. A pass
- * also discards the attachments that leave after a successful investigation
- * (`LocationAttachment.discardWhenInvestigated`), after the clues, as their
- * "After … is successfully investigated" says.
+ * location (`locationShroud`, attachments included). Its consequences follow
+ * the answer (`investigateCommands`); a pass discovers 1 clue unless the
+ * players confirm another count, up to the clues on the location when the
+ * test starts. A location without clues makes the count not adjustable.
  */
 export function handleInvestigate(
   ctx: EngineContext,
@@ -32,32 +42,16 @@ export function handleInvestigate(
   const investigator = activeInvestigator(state, cmd.investigatorId);
   const location = investigatorLocation(state, investigator);
   const clues = location.tokens.clue ?? 0;
-  const discoverClues: Pick<SkillTestOutcomes, 'onPass' | 'passAmount'> =
-    clues > 0
-      ? {
-          onPass: [
-            {
-              type: 'DiscoverClues',
-              investigatorId: investigator.id,
-              locationId: location.id,
-              amount: 1,
-            },
-          ],
-          passAmount: { default: 1, min: 1, max: clues },
-        }
-      : { onPass: [] };
-  const discardAttachments: Command[] = locationAttachments(ctx, state, location)
-    .filter(({ attachment }) => attachment.discardWhenInvestigated)
-    .map(({ card }) => discardToTop(card.id));
   return skillTest(ctx, state, {
     investigator,
     id: `investigate:${investigator.id}`,
     prompt: 'decision.investigate',
     subject: location.id,
     test: { skill: 'intellect', difficulty: locationShroud(ctx, state, location) },
+    testKind: { kind: 'investigate', locationId: location.id },
     outcomes: {
-      ...discoverClues,
-      onPass: [...discoverClues.onPass, ...discardAttachments],
+      onPass: [],
+      ...(clues > 0 ? { passAmount: { default: 1, min: 1, max: clues } } : {}),
       onFail: [],
     },
   });
@@ -65,11 +59,9 @@ export function handleInvestigate(
 
 /**
  * `Fight`: a combat test against the fight value of an enemy at the
- * investigator's location. A pass deals the attack's damage (`DamageEnemy`):
- * `damage` (1 for the basic attack) unless the players confirm another
- * amount. A fail deals that damage to the other investigator the enemy is
- * engaged with, if any (see `failedFightCommands`), and then lets a ready
- * retaliate enemy attack the fighter (`keywordAttackCommands`).
+ * investigator's location. Its consequences follow the answer
+ * (`fightCommands`); a pass deals `damage` (1 for the basic attack) unless
+ * the players confirm another amount.
  */
 export function handleFight(ctx: EngineContext, state: GameState, cmd: Fight): DecisionRequested[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
@@ -93,14 +85,8 @@ export function handleFight(ctx: EngineContext, state: GameState, cmd: Fight): D
     prompt: 'decision.fight',
     subject: enemy.id,
     test: { skill: 'combat', difficulty: stats.fight ?? 0 },
-    outcomes: {
-      onPass: [{ type: 'DamageEnemy', enemyId: enemy.id, amount: damage }],
-      passAmount: { default: damage, min: 1 },
-      onFail: [
-        ...failedFightCommands(state, investigator, enemy, damage),
-        ...keywordAttackCommands(ctx, state, 'retaliate', enemy, stats, investigator.id),
-      ],
-    },
+    testKind: { kind: 'fight', enemyId: enemy.id, damage },
+    outcomes: { onPass: [], passAmount: { default: damage, min: 1 }, onFail: [] },
   });
 }
 
@@ -142,34 +128,139 @@ function failedFightCommands(
 /**
  * `Evade`: an agility test against the evade value of an enemy engaged with
  * the investigator (a massive enemy at their location counts, see
- * `enemyAttackList`). A pass exhausts and disengages it; a massive enemy only
- * exhausts, since it is never in the `engaged` zone. A fail lets an alert
- * enemy attack the evader (`keywordAttackCommands`).
+ * `enemyAttackList`). Its consequences follow the answer (`evadeCommands`).
  */
 export function handleEvade(ctx: EngineContext, state: GameState, cmd: Evade): DecisionRequested[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
   const { enemy, stats } = enemyOf(ctx, state, cmd.enemyId);
-  const engaged = enemy.zone.kind === 'engaged' && enemy.zone.investigatorId === investigator.id;
   const massiveHere =
     enemy.zone.kind === 'atLocation' &&
     enemy.zone.locationId === investigator.locationId &&
     hasKeyword(stats, 'massive');
-  if (!engaged && !massiveHere) throw new CommandRejected({ code: 'notEngaged', cardId: enemy.id });
-  const onPass: Command[] = [
-    ...(enemy.exhausted ? [] : [{ type: 'ExhaustEnemy', enemyId: enemy.id } as const]),
-    ...(engaged ? [{ type: 'DisengageEnemy', enemyId: enemy.id } as const] : []),
-  ];
+  if (!isEngagedWith(enemy, investigator) && !massiveHere)
+    throw new CommandRejected({ code: 'notEngaged', cardId: enemy.id });
   return skillTest(ctx, state, {
     investigator,
     id: `evade:${investigator.id}:${enemy.id}`,
     prompt: 'decision.evade',
     subject: enemy.id,
     test: { skill: 'agility', difficulty: stats.evade ?? 0 },
-    outcomes: {
-      onPass,
-      onFail: keywordAttackCommands(ctx, state, 'alert', enemy, stats, investigator.id),
-    },
+    testKind: { kind: 'evade', enemyId: enemy.id },
+    outcomes: { onPass: [], onFail: [] },
   });
+}
+
+function isEngagedWith(enemy: CardInstance, investigator: Investigator): boolean {
+  return enemy.zone.kind === 'engaged' && enemy.zone.investigatorId === investigator.id;
+}
+
+/**
+ * The commands that follow the answer `command` to the skill test of a basic
+ * action (`Decision.testKind`), computed from `state` as the answer arrives
+ * rather than when the test started, so they act on the table as it is then.
+ * Nothing for any other command or decision: their options carry their
+ * commands (`answerCommands`). The amount was checked against the option's
+ * range by `handleResolveDecision` before this runs.
+ */
+export function testedActionCommands(
+  ctx: EngineContext,
+  state: GameState,
+  command: Command,
+): Command[] {
+  if (command.type !== 'ResolveDecision') return [];
+  const decision = state.pending.find((pending) => pending.id === command.decisionId);
+  if (!decision?.testKind || decision.decider.kind !== 'investigator') return [];
+  const investigator = activeInvestigator(state, decision.decider.investigatorId);
+  const answer: TestAnswer = {
+    outcome: answerOutcome(command),
+    ...(command.amount === undefined ? {} : { amount: command.amount }),
+  };
+  const kind = decision.testKind;
+  switch (kind.kind) {
+    case 'investigate':
+      return investigateCommands(ctx, state, investigator, kind.locationId, answer);
+    case 'fight':
+      return fightCommands(ctx, state, investigator, kind, answer);
+    case 'evade':
+      return evadeCommands(ctx, state, investigator, kind.enemyId, answer);
+    default:
+      return assertNever(kind);
+  }
+}
+
+/** The outcome of an action's skill test and the count the players confirmed for a pass, if any. */
+interface TestAnswer {
+  outcome: SkillTestOutcome;
+  amount?: number;
+}
+
+/**
+ * A passed investigation discovers the confirmed number of clues (1 by
+ * default), at most the clues the location has left as the answer arrives
+ * (a correction may have taken some off since the test started), then discards the attachments that leave
+ * after a successful investigation (`LocationAttachment.discardWhenInvestigated`),
+ * as their "After … is successfully investigated" says. A fail does nothing.
+ */
+function investigateCommands(
+  ctx: EngineContext,
+  state: GameState,
+  investigator: Investigator,
+  locationId: InstanceId,
+  { outcome, amount = 1 }: TestAnswer,
+): Command[] {
+  if (outcome === 'fail') return [];
+  const location = requireCard(state.cards, locationId);
+  const clues = Math.min(amount, location.tokens.clue ?? 0);
+  const discoverClues: Command[] =
+    clues > 0
+      ? [{ type: 'DiscoverClues', investigatorId: investigator.id, locationId, amount: clues }]
+      : [];
+  const discardAttachments = locationAttachments(ctx, state, location)
+    .filter(({ attachment }) => attachment.discardWhenInvestigated)
+    .map(({ card }) => discardToTop(card.id));
+  return [...discoverClues, ...discardAttachments];
+}
+
+/**
+ * A passed attack deals the confirmed damage (the attack's by default). A
+ * failed one deals the attack's damage to the other investigator the enemy is
+ * engaged with, if any (see `failedFightCommands`), and then lets a ready
+ * retaliate enemy attack the fighter (`keywordAttackCommands`).
+ */
+function fightCommands(
+  ctx: EngineContext,
+  state: GameState,
+  investigator: Investigator,
+  { enemyId, damage }: { enemyId: InstanceId; damage: number },
+  { outcome, amount = damage }: TestAnswer,
+): Command[] {
+  if (outcome === 'pass') return [{ type: 'DamageEnemy', enemyId, amount }];
+  const { enemy, stats } = enemyOf(ctx, state, enemyId);
+  return [
+    ...failedFightCommands(state, investigator, enemy, damage),
+    ...keywordAttackCommands(ctx, state, 'retaliate', enemy, stats, investigator.id),
+  ];
+}
+
+/**
+ * A passed evasion exhausts the enemy and disengages it; a massive enemy only
+ * exhausts, since it is never in the `engaged` zone. A failed one lets an
+ * alert enemy attack the evader (`keywordAttackCommands`).
+ */
+function evadeCommands(
+  ctx: EngineContext,
+  state: GameState,
+  investigator: Investigator,
+  enemyId: InstanceId,
+  { outcome }: TestAnswer,
+): Command[] {
+  const { enemy, stats } = enemyOf(ctx, state, enemyId);
+  if (outcome === 'fail')
+    return keywordAttackCommands(ctx, state, 'alert', enemy, stats, investigator.id);
+  return [
+    ...(enemy.exhausted ? [] : [{ type: 'ExhaustEnemy', enemyId } as const]),
+    ...(isEngagedWith(enemy, investigator) ? [{ type: 'DisengageEnemy', enemyId } as const] : []),
+  ];
 }
 
 /**
@@ -205,6 +296,8 @@ interface SkillTestRequest {
   prompt: string;
   subject: InstanceId;
   test: SkillTest;
+  /** Set for a basic action, whose consequences follow the answer (`testedActionCommands`). */
+  testKind?: SkillTestKind;
   outcomes: SkillTestOutcomes;
 }
 
@@ -215,7 +308,7 @@ interface SkillTestRequest {
 function skillTest(
   ctx: EngineContext,
   state: GameState,
-  { investigator, id, prompt, subject, test, outcomes }: SkillTestRequest,
+  { investigator, id, prompt, subject, test, testKind, outcomes }: SkillTestRequest,
 ): DecisionRequested[] {
   const decision = skillTestDecision(
     {
@@ -227,7 +320,10 @@ function skillTest(
     },
     outcomes,
   );
-  return requestDecision(state, withSuggestion(ctx, state, decision));
+  return requestDecision(
+    state,
+    withSuggestion(ctx, state, testKind ? { ...decision, testKind } : decision),
+  );
 }
 
 function investigatorLocation(state: GameState, investigator: Investigator): CardInstance {

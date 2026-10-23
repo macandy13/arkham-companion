@@ -13,6 +13,7 @@ import type {
   GameState,
   PerPointFailed,
   SkillTest,
+  SkillTestOutcome,
 } from './state';
 
 /**
@@ -83,9 +84,14 @@ function skillTestResolved(
       : {}),
     ...(decision.subject ? { subject: decision.subject } : {}),
     skillTest,
-    outcome: command.optionId === 'pass' ? 'pass' : 'fail',
+    outcome: answerOutcome(command),
     ...(margin === undefined ? {} : { failedBy: margin }),
   };
+}
+
+/** The outcome an answer to a `skillTestResult` decision reports: anything but `pass` is a fail. */
+export function answerOutcome(command: ResolveDecision): SkillTestOutcome {
+  return command.optionId === 'pass' ? 'pass' : 'fail';
 }
 
 /**

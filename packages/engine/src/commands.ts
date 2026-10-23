@@ -773,8 +773,9 @@ export interface DealEnemyAttack {
  * engine raises a `skillTestResult` decision whose pass discovers clues: 1
  * by default, or the count the players confirm in `ResolveDecision.amount`
  * (cards that discover more, up to the clues on the location). A location
- * without clues makes the pass do nothing. Skipping the test and using
- * `DiscoverClues` directly is equally valid. Produces `DecisionRequested`.
+ * without clues when the answer arrives makes the pass discover nothing.
+ * Skipping the test and using `DiscoverClues` directly is equally valid.
+ * Produces `DecisionRequested`.
  */
 export interface Investigate extends ActionCommand {
   type: 'Investigate';
