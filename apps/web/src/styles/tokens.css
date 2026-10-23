@@ -49,6 +49,8 @@
    * themes, like printed cards.
    */
   --color-parchment: #ebdfc2;
+  /* The text box of a printed card, a shade lighter than its paper. */
+  --color-parchment-light: rgb(250 244 228 / 55%);
   --color-parchment-shade: #d3bf93;
   --color-parchment-back: #dfe0c3;
   --color-parchment-back-shade: #b9bd93;
@@ -97,6 +99,8 @@
    */
   --card-border-width: 3px;
   --card-pattern-line-width: 1px;
+  /* The rules of the ornament drawn on card faces in the printed cards' style (cardOrnament.tsx). */
+  --card-ornament-line-width: 1px;
   /*
    * The art area of a card drawn in HTML (the agenda and act) without its image: the map's SVG
    * hatch (LocationTile `CardPatterns`), lines from bottom left to top right in a 20-unit cell,

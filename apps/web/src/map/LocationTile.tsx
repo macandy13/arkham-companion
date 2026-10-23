@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { InvestigatorView, LocationView, MapEnemyView } from '@arkham/engine';
 import { LOCATION_ART, PORTRAIT_SCAN, portraitArtViewBox } from '../catalog/cardArt';
 import { useCardPicture } from '../catalog/cardImages';
+import { LocationOrnament } from './cardOrnament';
 import {
   ART_WINDOW,
   ATTACHMENT,
@@ -22,8 +23,8 @@ export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyVi
 
 /**
  * One location as a tile at (`x`, `y`), drawn as a card face in layers, laid out like the printed
- * card: a frame, an art area with a pattern for the side the location shows (revealed or not), a
- * name band along the top. When the side has a picture (`LocationView.image`), it shows once it
+ * card: a frame, an art area with a pattern for the side the location shows (revealed or not),
+ * the ornament of the printed cards (`LocationOrnament`) and the name on its banner along the top. When the side has a picture (`LocationView.image`), it shows once it
  * has loaded (`data-picture`), in the look the players chose (`Settings.cardLook`): the card's art
  * cut out into the art window (`ART_WINDOW`, the nested `svg`), or the whole card over the face
  * (the `image`), with the name band and shroud the picture prints hidden. Both load the same
@@ -91,7 +92,7 @@ export function LocationTile({
           />
         </>
       )}
-      <path d={NAME_ORNAMENT} />
+      <LocationOrnament />
       <NameBand location={location} />
       <EditButton location={location} onEdit={onEdit} />
       {location.attachments?.map((name, i) => (
@@ -141,17 +142,6 @@ export function LocationTile({
     </g>
   );
 }
-
-/**
- * The chevron that hangs from the name band into the art at the tile's centre, as on the printed
- * location cards: our own drawing of their ornament, in the tile's ink.
- */
-const NAME_ORNAMENT = (() => {
-  const centre = TILE.width / 2;
-  const half = CONTENT.pawnRadius;
-  const top = CONTENT.band;
-  return `M ${centre - half} ${top} L ${centre} ${top + half} L ${centre + half} ${top} Z`;
-})();
 
 /**
  * The fills of a tile drawn in the printed cards' style, one set per side of a location card, so

@@ -111,7 +111,8 @@
  * A location tile is a card face in the printed cards' style (LocationTile): parchment with a
  * sepia edge, tan on the revealed side and sage on the unrevealed one, the name in ink in the
  * display type with the unrevealed note (its second line) smaller, the art window ruled in ink and
- * filled with the side's hatch until a picture shows, and the chevron hanging from the name band.
+ * filled with the side's hatch until a picture shows, and the ornament (`LocationOrnament`) in ink:
+ * rules, the name banner in the side's darker shade, and jewels.
  */
 #map svg [data-card='location'] > rect:first-of-type {
   stroke: var(--color-card-edge);
@@ -166,7 +167,30 @@
   stroke-width: var(--card-pattern-line-width);
 }
 
-#map svg [data-card] > path {
+#map svg [data-ornament] path {
+  stroke: var(--color-ink);
+  stroke-width: var(--card-ornament-line-width);
+  stroke-linejoin: round;
+}
+
+#map svg [data-ornament] [data-part='rule'] {
+  fill: none;
+}
+
+#map svg [data-side='revealed'] [data-ornament] [data-part='banner'] {
+  fill: var(--color-parchment-shade);
+}
+
+#map svg [data-side='unrevealed'] [data-ornament] [data-part='banner'] {
+  fill: var(--color-parchment-back-shade);
+}
+
+#map svg [data-ornament] [data-part='box'] {
+  fill: var(--color-parchment-light);
+  stroke-width: var(--card-pattern-line-width);
+}
+
+#map svg [data-ornament] [data-part='jewel'] {
   fill: var(--color-ink);
 }
 
@@ -199,7 +223,7 @@
   visibility: visible;
 }
 
-:root[data-card-look='faces'] #map svg [data-picture] > :is(text, path),
+:root[data-card-look='faces'] #map svg [data-picture] > :is(text, [data-ornament]),
 :root[data-card-look='faces'] #map svg [data-picture] > [data-token='shroud'] {
   opacity: 0;
 }
@@ -281,12 +305,13 @@
 }
 
 #map svg g[role='button'] circle {
-  fill: var(--color-card-face);
-  stroke: var(--color-card-line);
+  fill: var(--color-parchment);
+  stroke: var(--color-ink);
+  stroke-width: var(--card-ornament-line-width);
 }
 
 #map svg g[role='button'] circle + text {
-  fill: var(--color-card-text);
+  fill: var(--color-ink);
 }
 
 #map svg g[role='button']:focus-visible {
