@@ -89,15 +89,22 @@
   list-style: none;
 }
 
+/* The turn buttons sit at the right end, apart from the cards. */
+#board > header > button:first-of-type {
+  margin-inline-start: auto;
+}
+
+#board > header h1,
 #board > header h2 {
   margin: 0;
   font-size: var(--font-size-subtitle);
 }
 
 /*
- * The agenda and act are landscape cards (5 : 7 turned, like the map's portrait tiles): a frame in
- * the card type's colour around the hatched art area, the name band along the top and a plate at
- * the foot with the count and the card's buttons, so it stays readable once card art fills it.
+ * The agenda, act and scenario are landscape cards (5 : 7 turned, like the map's portrait tiles):
+ * a frame in the card type's colour around the hatched art area, the name band along the top and
+ * a plate at the foot with the count and the card's buttons, so it stays readable once card art
+ * fills it. The encounter deck stands upright, like the card backs on the table.
  */
 #board > header [data-card] {
   display: flex;
@@ -113,6 +120,29 @@
   border-radius: var(--radius);
   background: var(--card-art-pattern), var(--color-surface);
   overflow: hidden;
+}
+
+#board > header [data-card='encounter'] {
+  aspect-ratio: 5 / 7;
+  border-color: var(--color-card-encounter);
+}
+
+#board > header [data-card='scenario'] {
+  border-color: var(--color-card-scenario);
+}
+
+/* The deck has room for little more than its label until it shows a card back. */
+#board > header [data-card='encounter'] p {
+  font-size: var(--font-size-note);
+}
+
+/* The encounter discard pile is only a small, empty card outline beside the deck for now. */
+#board > header [data-pile='discard'] {
+  align-self: end;
+  height: var(--layout-pile-symbol-height);
+  aspect-ratio: 5 / 7;
+  border: var(--border-width) dashed var(--color-card-encounter);
+  border-radius: var(--radius);
 }
 
 #board > header [data-card='agenda'] {

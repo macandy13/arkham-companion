@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
@@ -12,6 +13,15 @@ interface GameListItemProps {
   readonly onDuplicate: () => void;
   readonly onExport: () => void;
   readonly onDelete: () => void;
+}
+
+/**
+ * The name the home screen lists the game at `index` of `games` under when it has no title, numbered
+ * from the oldest since the list is newest first. The title bar's export names its file with it too,
+ * so a game is saved under the same name from both.
+ */
+export function untitledLabel(t: TFunction, games: readonly GameSummary[], index: number): string {
+  return t('games.untitled', { n: games.length - index });
 }
 
 /** One saved game on the home screen: progress summary plus resume, rename, duplicate, export and delete. */

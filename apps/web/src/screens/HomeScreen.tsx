@@ -6,7 +6,7 @@ import type { StoreApi } from 'zustand/vanilla';
 import type { AppState } from '../state/appStore';
 import { GameImportError } from '../storage/gameExport';
 import { downloadGameExport } from './downloadFile';
-import { GameListItem } from './GameListItem';
+import { GameListItem, untitledLabel } from './GameListItem';
 import './home.css';
 
 /** Route `/`: saved games with resume, rename, duplicate, export and delete, plus import of an export file; an empty state points to the wizard. */
@@ -61,18 +61,16 @@ export function HomeScreen({ store }: { store: StoreApi<AppState> }) {
       ) : (
         <ul aria-label={t('games.title')}>
           {games.map((game, i) => {
-            const untitledLabel = t('games.untitled', { n: games.length - i });
-            const copyTitle = t('games.copyTitle', { title: game.title || untitledLabel });
+            const untitled = untitledLabel(t, games, i);
+            const copyTitle = t('games.copyTitle', { title: game.title || untitled });
             return (
               <GameListItem
                 key={game.gameId}
                 game={game}
-                untitledLabel={untitledLabel}
+                untitledLabel={untitled}
                 onRename={(title) => void store.getState().renameGame(game.gameId, title)}
                 onDuplicate={() => void store.getState().duplicateGame(game.gameId, copyTitle)}
-                onExport={() =>
-                  void downloadGameExport(store, game.gameId, game.title || untitledLabel)
-                }
+                onExport={() => void downloadGameExport(store, game.gameId, game.title || untitled)}
                 onDelete={() => void store.getState().deleteGame(game.gameId)}
               />
             );

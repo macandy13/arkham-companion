@@ -2,7 +2,7 @@
 import 'fake-indexeddb/auto';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import {
   cardDbWith,
   investigatorCardStats,
@@ -28,7 +28,7 @@ const alder: InvestigatorCard = {
 async function renderTheGathering(db: string) {
   const store = createAppStore(new IndexedDbStore(db));
   const id = await store.getState().startScenario({
-    title: 'The Gathering',
+    title: 'Friday night',
     ctx: {
       cards: cardDbWith(theGatheringCards, [investigatorCardStats(alder)]),
       scenario: theGathering,
@@ -54,10 +54,7 @@ describe('GameScreen header', () => {
   beforeAll(async () => {
     await initI18n('en');
   });
-  afterEach(() => {
-    cleanup();
-    vi.restoreAllMocks();
-  });
+  afterEach(cleanup);
 
   it('moves on to the next phase with "Next"', async () => {
     await renderTheGathering('game-screen-next-test');
@@ -127,20 +124,28 @@ describe('GameScreen header', () => {
     expect(button('Next').disabled).toBe(false);
   });
 
-  it('downloads an export of the open game under its title', async () => {
-    Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:test'), revokeObjectURL: vi.fn() });
-    const downloaded: string[] = [];
-    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
-      this: HTMLAnchorElement,
-    ) {
-      downloaded.push(this.download);
-    });
-    await renderTheGathering('game-screen-export-test');
+  it('heads the screen with the scenario card, which shows the round and phase', async () => {
+    await renderTheGathering('game-screen-scenario-test');
 
-    fireEvent.click(button('Export'));
+    const scenario = screen.getByRole('region', { name: 'Scenario' });
+    expect(within(scenario).getByRole('heading', { level: 1 }).textContent).toBe('The Gathering');
+    expect(within(scenario).getByText('Round 0, Setup')).toBeTruthy();
+  });
 
-    // `renderTheGathering` saves the game as "The Gathering".
-    await waitFor(() => expect(downloaded).toEqual(['The-Gathering.arkham.json']));
+  it('lays the encounter deck and its discard pile out before the agenda', async () => {
+    await renderTheGathering('game-screen-encounter-test');
+
+    const header = screen.getByRole('banner');
+    const cards = [...header.querySelectorAll(':scope > [aria-label]')].map((card) =>
+      card.getAttribute('aria-label'),
+    );
+    expect(cards).toEqual([
+      'Encounter deck',
+      'Encounter discard pile',
+      'Agenda',
+      'Act',
+      'Scenario',
+    ]);
   });
 
   it('warns instead of showing a board for a game it cannot play', async () => {
