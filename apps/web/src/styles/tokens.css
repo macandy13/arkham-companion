@@ -73,8 +73,7 @@
 
   --layout-content-width: 60rem;
   --layout-board-panel-width: 16rem;
-  /* Tall enough for an investigator card with its threat area standing above it. */
-  --layout-board-bar-height: 9.5rem;
+  --layout-board-bar-height: 8rem;
   --layout-portrait-width: 9rem;
   --layout-sheet-width: 22rem;
   /* Connection lines on the map, in its SVG user units (mapLayout.ts TILE). */

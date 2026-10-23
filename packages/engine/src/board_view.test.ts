@@ -448,6 +448,21 @@ describe('enemies', () => {
     ]);
   });
 
+  it('lists the enemies engaged with an investigator', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withInvestigator(alice, { locationId: study })
+      .withInvestigator(bob, { locationId: study })
+      .withCard(instanceId('lurker'), blankEnemy('lurker'), atLocation(study))
+      .withCard(instanceId('ghoul'), blankEnemy('ghoul'), engagedWith(alice))
+      .withCard(instanceId('rat'), blankEnemy('rat'), engagedWith(bob))
+      .start();
+
+    const board = boardView(context, state);
+
+    expect(board.enemiesEngagedWith(alice).map(({ name }) => name)).toEqual(['ghoul']);
+  });
+
   it('marks an exhausted enemy', () => {
     const { context, state } = newGame()
       .withLocation(study, blankLocation('study'))

@@ -273,7 +273,7 @@ describe('InvestigatorBar', () => {
   });
 
   describe('the threat area', () => {
-    it('lays the treacheries and the enemies engaged with alder along the top of the card', () => {
+    it("lists alder's treacheries, then the enemies engaged with alder, not brook's", () => {
       const table = PlayTable.start(
         newGame()
           .withLocation(study, blankLocation('study'))
@@ -289,12 +289,9 @@ describe('InvestigatorBar', () => {
       render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />);
 
       const threatArea = within(panel('alder')).getByRole('list', { name: 'Threat area' });
-      const items = within(threatArea)
-        .getAllByRole('listitem')
-        .map(
-          (item) => within(item).queryByRole('img')?.getAttribute('aria-label') ?? item.textContent,
-        );
-      expect(items).toEqual(['dissonant_voices', 'ghoul_minion, 2 damage']);
+      expect(within(threatArea).getAllByRole('listitem')).toHaveLength(2);
+      expect(within(threatArea).getAllByRole('listitem')[0]?.textContent).toBe('dissonant_voices');
+      expect(within(threatArea).getByRole('img', { name: 'ghoul_minion, 2 damage' })).toBeTruthy();
     });
 
     it('leaves the card whole while the threat area is empty', () => {

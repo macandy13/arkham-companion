@@ -30,7 +30,7 @@ export function InvestigatorBar({
           key={investigator.id}
           investigator={investigator}
           onTurn={board.turn === investigator.id}
-          engaged={board.enemies.filter(({ engagedWith }) => engagedWith === investigator.id)}
+          engaged={board.enemiesEngagedWith(investigator.id)}
           canStart={
             picking && investigator.status === 'active' && investigator.turnTaken === undefined
           }

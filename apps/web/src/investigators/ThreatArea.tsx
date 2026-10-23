@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import type { CardName, EnemyView } from '@arkham/engine';
+import { enemyConditions } from '../map/LocationTile';
 
 /**
  * An investigator's threat area laid along the top edge of their card, like cards placed over it
@@ -25,20 +26,11 @@ export function ThreatArea({
       ))}
       {enemies.map((enemy, index) => (
         <li key={`${enemy.name}-${index}`} data-threat="enemy" data-exhausted={enemy.exhausted}>
-          <span role="img" aria-label={enemyLabel(enemy, t)}>
+          <span role="img" aria-label={[enemy.name, ...enemyConditions(enemy, t)].join(', ')}>
             {enemy.name.charAt(0)}
           </span>
         </li>
       ))}
     </ul>
   );
-}
-
-/** The enemy's name with its damage and whether it is exhausted, as the map names its tokens. */
-function enemyLabel(enemy: EnemyView, t: ReturnType<typeof useTranslation>['t']): string {
-  return [
-    enemy.name,
-    ...(enemy.damage ? [t('map.damage', { count: enemy.damage })] : []),
-    ...(enemy.exhausted ? [t('map.exhausted')] : []),
-  ].join(', ');
 }

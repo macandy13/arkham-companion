@@ -265,6 +265,11 @@ export class BoardView {
     return enemiesInPlay(this.ctx, this.state).map((card) => enemyView(this.ctx, this.state, card));
   }
 
+  /** The enemies engaged with `investigator`, in card order: those in their threat area. */
+  enemiesEngagedWith(investigator: InvestigatorId): readonly EnemyView[] {
+    return this.enemies.filter(({ engagedWith }) => engagedWith === investigator);
+  }
+
   /** Locations on a map, in map order. */
   get locations(): readonly LocationView[] {
     return Object.keys(this.state.board.maps).flatMap((id) =>

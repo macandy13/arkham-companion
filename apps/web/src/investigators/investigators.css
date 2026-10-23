@@ -191,6 +191,8 @@
   inset-inline: var(--space-1);
   bottom: calc(100% - var(--threat-overlap));
   display: flex;
+  /* More than fit on the card stack upwards, away from it, rather than into the next panel. */
+  flex-wrap: wrap-reverse;
   gap: var(--space-1);
   align-items: end;
   margin: 0;
