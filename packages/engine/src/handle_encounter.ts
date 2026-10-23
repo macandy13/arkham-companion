@@ -7,9 +7,8 @@ import type {
   ShuffleInto,
 } from './commands';
 import type { CardFlipped, CardMoved, DeckShuffled, EncounterCardDrawn, Event } from './events';
-import { activeInvestigator } from './investigators';
 import type { CardCode, InstanceId, InvestigatorId } from './ids';
-import { isActiveInvestigator } from './investigators';
+import { activeInvestigator, isActiveInvestigator } from './investigators';
 import { hasKeyword } from './keywords';
 import { cardsInZone, requireCard } from './lookup';
 import { cardMoved } from './placement';

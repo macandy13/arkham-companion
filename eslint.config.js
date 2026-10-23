@@ -66,7 +66,7 @@ export default tseslint.config(
   },
   // A command handler never imports another one: what two handlers share is a query or an
   // event builder, and it lives next to its entity (board.ts, enemies.ts, investigators.ts).
-  // Repeats the purity pattern because a later block replaces the rule's options.
+  // Repeats the purity pattern because this block replaces the purity block's options for handlers.
   {
     files: ['packages/engine/src/handle_*.ts'],
     ignores: ['**/*.test.ts'],

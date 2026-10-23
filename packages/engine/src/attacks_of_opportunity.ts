@@ -4,7 +4,7 @@ import { requestDecision } from './decisions';
 import { enemyAttackEvents, readyEngagedEnemies } from './enemies';
 import type { DecisionRequested, Event } from './events';
 import { forcedAttackDecision } from './forced_attacks';
-import { enemyOf, isOnTable } from './enemies';
+import { enemyOf, isEnemyOnTable } from './enemies';
 import { CommandRejected } from './rejection';
 import type { GameState, HeldAction } from './state';
 
@@ -66,5 +66,5 @@ export function handleDealEnemyAttack(
   if (!investigator)
     throw new CommandRejected({ code: 'unknownInvestigator', investigatorId: cmd.investigatorId });
   const dealt = enemyAttackEvents(ctx, state, investigator, cmd.damage, cmd.horror);
-  return investigator.status === 'active' && isOnTable(enemy) ? dealt : [];
+  return investigator.status === 'active' && isEnemyOnTable(enemy) ? dealt : [];
 }

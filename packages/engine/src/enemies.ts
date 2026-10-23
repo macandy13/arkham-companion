@@ -2,12 +2,11 @@ import { cardStats, type CardStats, type EngineContext } from './cards';
 import { investigatorLeavesEvents } from './elimination';
 import type { Event, InvestigatorChanged } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
-import { requireCard } from './lookup';
+import { cardsInZone, requireCard } from './lookup';
 import { defeatCause, playerOrder, withStatDelta } from './investigators';
 import { hasKeyword } from './keywords';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState, Investigator } from './state';
-import { zoneKey } from './zone';
 
 /** One enemy attack of the enemy phase: who attacks whom, and for how much. */
 export interface EnemyAttack {
@@ -55,11 +54,9 @@ export function readyEngagedEnemies(
   state: GameState,
   { id: investigatorId, locationId }: Pick<Investigator, 'id' | 'locationId'>,
 ): InstanceId[] {
-  const engaged = state.order[zoneKey({ kind: 'engaged', investigatorId })] ?? [];
+  const engaged = cardsInZone(state, { kind: 'engaged', investigatorId });
   const unengaged =
-    locationId === undefined
-      ? []
-      : (state.order[zoneKey({ kind: 'atLocation', locationId })] ?? []);
+    locationId === undefined ? [] : cardsInZone(state, { kind: 'atLocation', locationId });
   const massive = unengaged.filter((id) => {
     const code = state.cards[id]?.code;
     const stats = code === undefined ? undefined : ctx.cards.get(code);
@@ -136,7 +133,7 @@ export function enemyOf(
  * an investigator. Narrower than `isInPlay` (`doom.ts`), which also counts
  * cards in threat areas and attached to cards in play.
  */
-export function isOnTable(enemy: CardInstance): boolean {
+export function isEnemyOnTable(enemy: CardInstance): boolean {
   return enemy.zone.kind === 'atLocation' || enemy.zone.kind === 'engaged';
 }
 

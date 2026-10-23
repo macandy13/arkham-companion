@@ -7,7 +7,7 @@ import { cardsInZone } from './lookup';
 import { mapLocations } from './map';
 import { PHASE_STEP_TITLES } from './phases';
 import type { CardInstance, Decision, GameState, Investigator, PhaseStep } from './state';
-import { zoneKey, type Zone } from './zone';
+import type { Zone } from './zone';
 
 /**
  * The board as plain text, for debugging and test failure messages: round and
@@ -222,7 +222,7 @@ function namesIn(ctx: EngineContext, state: GameState, zone: Zone): string[] {
 }
 
 function countIn(state: GameState, zone: Zone): number {
-  return state.order[zoneKey(zone)]?.length ?? 0;
+  return cardsInZone(state, zone).length;
 }
 
 function listOrNone(names: readonly string[]): string {

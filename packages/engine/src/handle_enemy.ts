@@ -11,7 +11,7 @@ import type {
 } from './commands';
 import { engageEvents } from './engagement';
 import type { EnemyDefeated, EnemyEngaged, Event, ExhaustChanged } from './events';
-import { enemyOf, isOnTable, locationOf } from './enemies';
+import { enemyOf, isEnemyOnTable, locationOf } from './enemies';
 import { activeInvestigator } from './investigators';
 import type { InstanceId } from './ids';
 import { hasKeyword } from './keywords';
@@ -139,7 +139,7 @@ export function handleReadyEnemy(ctx: EngineContext, state: GameState, cmd: Read
 
 function onTableEnemyOf(ctx: EngineContext, state: GameState, enemyId: InstanceId) {
   const found = enemyOf(ctx, state, enemyId);
-  if (!isOnTable(found.enemy))
+  if (!isEnemyOnTable(found.enemy))
     throw new CommandRejected({ code: 'enemyNotInPlay', cardId: enemyId });
   return found;
 }

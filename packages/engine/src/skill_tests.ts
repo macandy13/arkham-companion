@@ -11,7 +11,7 @@ import {
 } from './decisions';
 import type { DecisionRequested } from './events';
 import { keywordAttackCommands } from './forced_attacks';
-import { enemyOf, isOnTable, locationOf } from './enemies';
+import { enemyOf, isEnemyOnTable, locationOf } from './enemies';
 import { activeInvestigator } from './investigators';
 import { decisionId, type InstanceId } from './ids';
 import { hasKeyword } from './keywords';
@@ -66,7 +66,8 @@ export function handleInvestigate(
 export function handleFight(ctx: EngineContext, state: GameState, cmd: Fight): DecisionRequested[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
   const { enemy, stats } = enemyOf(ctx, state, cmd.enemyId);
-  if (!isOnTable(enemy)) throw new CommandRejected({ code: 'enemyNotInPlay', cardId: enemy.id });
+  if (!isEnemyOnTable(enemy))
+    throw new CommandRejected({ code: 'enemyNotInPlay', cardId: enemy.id });
   const enemyLocation = locationOf(state, enemy);
   if (enemyLocation !== investigator.locationId)
     throw new CommandRejected({
