@@ -1,8 +1,9 @@
 import { expect, test } from './fixtures/test';
 import { startQuickGame } from './fixtures/wizard';
 
-// Journey: run the game clock from the header – read and correct the agenda's doom, move on a
-// phase, see why a step is refused, and take a step back, then back the game up from the title bar.
+// Journey: run the game clock from the header – read and correct the agenda's doom and the act's
+// clues, move on a phase, see why a step is refused, and take a step back, then back the game up
+// from the title bar.
 test('play the phases from the header', { tag: '@flow' }, async ({ page }) => {
   await test.step('Start a quick game', async () => {
     await page.goto('/#/new');
@@ -20,6 +21,13 @@ test('play the phases from the header', { tag: '@flow' }, async ({ page }) => {
     await expect(page.getByText('Doom 1 / 3')).toBeVisible();
     await page.getByRole('button', { name: 'Remove doom' }).click();
     await expect(page.getByText('Doom 0 / 3')).toBeVisible();
+  });
+
+  await test.step('Correct the clues on the act and take the clue back', async () => {
+    await page.getByRole('button', { name: 'Add a clue' }).click();
+    await expect(page.getByText('Clues 1 / 2')).toBeVisible();
+    await page.getByRole('button', { name: 'Remove a clue' }).click();
+    await expect(page.getByText('Clues 0 / 2')).toBeVisible();
   });
 
   await test.step('Move on to the investigation phase', async () => {

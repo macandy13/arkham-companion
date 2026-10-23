@@ -13,8 +13,8 @@ import { assertNever } from '@arkham/util';
 /** The tokens on a location that its menu's +/− steppers change. */
 export type LocationToken = Extract<TokenKind, 'clue' | 'doom'>;
 
-/** The investigator counters the screen's +/− steppers change. */
-export type SteppedStat = Extract<InvestigatorStat, 'resources' | 'damage' | 'horror'>;
+/** The investigator counters the screen's +/− steppers change (clues from the act card's). */
+export type SteppedStat = Extract<InvestigatorStat, 'resources' | 'damage' | 'horror' | 'clues'>;
 
 /** Counts the players confirm when they answer a decision (clues found, damage soaked). */
 export interface DecisionAmounts {
@@ -163,6 +163,9 @@ function adjustStat(
       return table.takeDamage(investigator, delta);
     case 'horror':
       return table.takeHorror(investigator, delta);
+    case 'clues':
+      // `PlayTable` gains clues only by discovering them at a location; a stepper corrects the count.
+      return table.play({ type: 'AdjustInvestigator', investigatorId: investigator, stat, delta });
     default:
       return assertNever(stat);
   }

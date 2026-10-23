@@ -113,6 +113,19 @@ describe('GameScreen header', () => {
     expect(await screen.findByText('Doom 0 / 3')).toBeTruthy();
   });
 
+  it('adds a clue to the lead investigator between turns from the act, and takes it off', async () => {
+    await renderTheGathering('game-screen-act-clues-test');
+    // At setup no one's turn has started, so the steppers change the clues of Alder, the lead.
+    const removeAtZero = button('Remove a clue').disabled;
+
+    fireEvent.click(button('Add a clue'));
+    await screen.findByText('Clues 1 / 2');
+    fireEvent.click(button('Remove a clue'));
+
+    expect(removeAtZero).toBe(true);
+    expect(await screen.findByText('Clues 0 / 2')).toBeTruthy();
+  });
+
   it('turns the buttons off while a step is still being stored', async () => {
     await renderTheGathering('game-screen-busy-test');
 

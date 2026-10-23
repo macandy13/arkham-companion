@@ -170,6 +170,16 @@
   white-space: nowrap;
 }
 
+/* The act's plate holds three buttons, so its count gets a line of its own above them. */
+#board > header [data-card='act'] > footer {
+  flex-wrap: wrap;
+  padding-inline: var(--space-1);
+}
+
+#board > header [data-card='act'] footer p {
+  flex-basis: 100%;
+}
+
 /* Small buttons on the card's plate, so the card stays compact. */
 #board > header [data-card] button {
   min-width: var(--button-compact);

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import type { StoreApi } from 'zustand/vanilla';
-import type { BoardView } from '@arkham/engine';
+import type { BoardView, InvestigatorView } from '@arkham/engine';
 import type { AppState, OpenGame } from '../state/appStore';
 import { cluesInSeatOrder } from '../state/gameActions';
 
@@ -131,7 +131,9 @@ function AgendaStatus({
 /**
  * The current act as a landscape card: its name, and on the plate at its foot the clues the
  * investigators hold against the clues it needs, with its advance once they hold enough, paid in
- * seat order (`cluesInSeatOrder`).
+ * seat order (`cluesInSeatOrder`). Its steppers correct the clues of the investigator whose turn it
+ * is, or of the lead investigator between turns (`clueHolder`), until a dialog lets the players pick
+ * whose clues change.
  */
 function ActStatus({
   store,
@@ -147,12 +149,29 @@ function ActStatus({
   if (!act) return null;
   const { actions } = store.getState();
   const needed = act.clues;
+  const holder = clueHolder(board);
   return (
     <section aria-label={t('header.act')} data-card="act">
       <h2>{act.name}</h2>
       {needed !== undefined && (
         <footer>
           <p>{t('header.cluesOf', { clues: board.cluesHeld, threshold: needed })}</p>
+          <button
+            type="button"
+            aria-label={t('header.removeClue')}
+            disabled={blocked || !holder || holder.clues === 0}
+            onClick={() => holder && void actions.adjust(holder.id, 'clues', -1)}
+          >
+            −
+          </button>
+          <button
+            type="button"
+            aria-label={t('header.addClue')}
+            disabled={blocked || !holder}
+            onClick={() => holder && void actions.adjust(holder.id, 'clues', 1)}
+          >
+            +
+          </button>
           <button
             type="button"
             disabled={blocked || board.cluesHeld < needed}
@@ -164,4 +183,10 @@ function ActStatus({
       )}
     </section>
   );
+}
+
+/** Whose clues the act's steppers change: the investigator whose turn it is, else the lead. */
+function clueHolder(board: BoardView): InvestigatorView | undefined {
+  const id = board.turn ?? board.lead;
+  return board.investigators.find((investigator) => investigator.id === id);
 }
