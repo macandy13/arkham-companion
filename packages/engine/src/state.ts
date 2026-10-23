@@ -348,6 +348,11 @@ export interface Decision {
    */
   testKind?: SkillTestKind;
   /**
+   * Only for a forced enemy attack (`forcedAttackDecision`): the attack, whose
+   * `attack` answer `forcedAttackCommands` deals with the counts it confirms.
+   */
+  forcedAttack?: ForcedAttack;
+  /**
    * Only for `skillTestResult` decided by one investigator: the modified
    * values before the players enter their modifier or reveal a token,
    * computed when the decision is raised. The UI recomputes it with the
@@ -394,11 +399,29 @@ export interface DecisionOption {
    */
   amount?: AmountRange;
   /**
-   * For an option with several counts the players confirm or adjust (an
-   * attack's damage and horror): each range is keyed by the command field
-   * it replaces, and `ResolveDecision.amounts` sets them.
+   * For an option with several counts the players confirm or adjust (a
+   * forced attack's damage and horror, less what assets soak): a
+   * `ResolveDecision.amounts` count must lie in its range, and the
+   * decision's resolver reads it (`Decision.forcedAttack`).
    */
-  amounts?: Readonly<Record<string, AmountRange>>;
+  amounts?: Readonly<Partial<Record<NamedAmount, AmountRange>>>;
+}
+
+/** The counts an option may name (`DecisionOption.amounts`, `ResolveDecision.amounts`). */
+export const NAMED_AMOUNTS = ['damage', 'horror'] as const;
+
+/** One of `NAMED_AMOUNTS`. */
+export type NamedAmount = (typeof NAMED_AMOUNTS)[number];
+
+/**
+ * The attack a forced-attack decision is about (`Decision.forcedAttack`):
+ * the enemy and its printed damage and horror, the defaults of the `attack`
+ * option. The attacked investigator is the decider.
+ */
+export interface ForcedAttack {
+  enemyId: InstanceId;
+  damage: number;
+  horror: number;
 }
 
 /** The counts an option with an adjustable amount accepts; no `max` means no upper bound. */

@@ -1,6 +1,12 @@
 import { camelCaseToWords } from '@arkham/util';
 import type { EngineContext } from './cards';
-import type { AmountRange, Decision, DecisionOption, GameState } from './state';
+import {
+  NAMED_AMOUNTS,
+  type AmountRange,
+  type Decision,
+  type DecisionOption,
+  type GameState,
+} from './state';
 
 const PROMPT_PREFIX = 'decision.';
 
@@ -47,9 +53,10 @@ export function describeDecision(ctx: EngineContext, state: GameState, decision:
 }
 
 function optionWithAmount(option: DecisionOption): string {
-  const named = Object.entries(option.amounts ?? {}).map(
-    ([name, range]) => `${name} ${amountText(range)}`,
-  );
+  const named = NAMED_AMOUNTS.flatMap((name) => {
+    const range = option.amounts?.[name];
+    return range ? [`${name} ${amountText(range)}`] : [];
+  });
   const counts = [...(option.amount ? [amountText(option.amount)] : []), ...named];
   return [optionName(option), ...counts].join(' ');
 }

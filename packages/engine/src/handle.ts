@@ -4,6 +4,7 @@ import { commandSpec, type CommandSpec, type Continuation, type Step } from './c
 import type { Command, DrawEncounter } from './commands';
 import { attackOfOpportunityDecisions, isOwnTurnAction } from './attacks_of_opportunity';
 import { answerCommands } from './decisions';
+import { forcedAttackCommands } from './forced_attacks';
 import { testedActionCommands } from './skill_tests';
 import type { Event } from './events';
 import {
@@ -309,6 +310,7 @@ function resolveCommand(
   const answered = [
     ...answerCommands(before, command),
     ...testedActionCommands(resolution.ctx, before, command),
+    ...forcedAttackCommands(before, command),
   ];
   return [...triggered, ...answered.map(followUpStep), ...continuation];
 }

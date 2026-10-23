@@ -8,7 +8,7 @@ import type {
   MapId,
   EncounterSetCode,
 } from './ids';
-import type { Decider, InvestigatorStat, Phase, TokenKind } from './state';
+import type { Decider, InvestigatorStat, NamedAmount, Phase, TokenKind } from './state';
 
 /**
  * Structured reason why `handle` refused a command. The UI can switch on
@@ -185,7 +185,7 @@ export type Rejection =
    * `ResolveDecision` with an `amount` (or a named one in `amounts`, then
    * `name`) for an option that has no such adjustable count.
    */
-  | { code: 'amountNotAdjustable'; decisionId: DecisionId; optionId: string; name?: string }
+  | { code: 'amountNotAdjustable'; decisionId: DecisionId; optionId: string; name?: NamedAmount }
   /** `ResolveDecision` with a `margin` for a decision that is not a skill test. */
   | { code: 'marginNotApplicable'; decisionId: DecisionId }
   /** `ResolveDecision` with a `margin` that is not a whole number of 0 or more. */
@@ -195,7 +195,7 @@ export type Rejection =
       code: 'amountOutOfRange';
       decisionId: DecisionId;
       optionId: string;
-      name?: string;
+      name?: NamedAmount;
       amount: number;
       min: number;
       max?: number;

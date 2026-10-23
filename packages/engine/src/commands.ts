@@ -8,6 +8,7 @@ import type {
   Difficulty,
   Investigator,
   InvestigatorStat,
+  NamedAmount,
   PerPointFailed,
   SkillTest,
   TokenKind,
@@ -616,11 +617,11 @@ export interface ResolveDecision {
   amount?: number;
   /**
    * The counts the players confirmed for an option with named `amounts`
-   * (an attack's damage and horror); each replaces the field of that name in
-   * the option's commands. Counts left out keep their default. Rejected for
+   * (an attack's damage and horror), which the decision's resolver reads
+   * (`forcedAttackCommands`). Counts left out keep their default. Rejected for
    * a name the option has no range for, or outside its range.
    */
-  amounts?: Readonly<Record<string, number>>;
+  amounts?: Readonly<Partial<Record<NamedAmount, number>>>;
   /**
    * Only for a `skillTestResult` decision: how much the test succeeded or
    * failed by, a whole number of 0 or more (the suggestion's `margin`, or
@@ -756,7 +757,8 @@ export interface ResolveEnemyAttack {
 
 /**
  * An enemy attack outside enemy step 3.3: an attack of opportunity (raised by
- * `attackOfOpportunityDecisions`, whose confirm option runs this) or a card
+ * `attackOfOpportunityDecisions`, whose `attack` answer runs this through
+ * `forcedAttackCommands`) or a card
  * that says the enemy attacks. Deals `damage` and `horror` at once with one
  * defeat check, like `ResolveEnemyAttack`, but the enemy does not exhaust
  * (Rules Reference, "Attack of Opportunity"). The amounts are the ones the

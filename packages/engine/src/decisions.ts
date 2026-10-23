@@ -5,12 +5,14 @@ import type { InstanceId, InvestigatorId } from './ids';
 import { isActiveInvestigator } from './investigators';
 import { CommandRejected } from './rejection';
 import { withSuggestion } from './skill_modifiers';
+import { NAMED_AMOUNTS } from './state';
 import type {
   AmountRange,
   Decider,
   Decision,
   DecisionOption,
   GameState,
+  NamedAmount,
   PerPointFailed,
   SkillTest,
   SkillTestOutcome,
@@ -146,29 +148,18 @@ function perPointMargin(decision: Decision, command: ResolveDecision): number | 
 }
 
 /**
- * The chosen option's commands, with the named amounts the answer gives. The
- * plain `amount` is only checked here: the decision's resolver reads it
- * (`testedActionCommands`).
+ * The chosen option's commands. The counts the answer confirms (`amount`,
+ * `amounts`) are only checked here against the option's ranges: the
+ * decision's resolver reads them (`testedActionCommands`, `forcedAttackCommands`).
  */
 function optionCommands(state: GameState, command: ResolveDecision): readonly Command[] {
   const option = chosenOption(state, command);
   if (command.amount !== undefined) checkAmount(command, option.amount, command.amount);
-  return Object.entries(command.amounts ?? {}).reduce(
-    (commands, [name, amount]) =>
-      replaceField(commands, name, confirmedAmount(command, option.amounts?.[name], amount, name)),
-    option.commands,
-  );
-}
-
-/** A named amount (`DecisionOption.amounts`), checked like the plain one (`checkAmount`). */
-function confirmedAmount(
-  command: ResolveDecision,
-  range: AmountRange | undefined,
-  amount: number,
-  name: string,
-): number {
-  checkAmount(command, range, amount, name);
-  return amount;
+  for (const name of NAMED_AMOUNTS) {
+    const amount = command.amounts?.[name];
+    if (amount !== undefined) checkAmount(command, option.amounts?.[name], amount, name);
+  }
+  return option.commands;
 }
 
 /**
@@ -179,7 +170,7 @@ function checkAmount(
   command: ResolveDecision,
   range: AmountRange | undefined,
   amount: number,
-  name?: string,
+  name?: NamedAmount,
 ): void {
   const where = {
     decisionId: command.decisionId,
@@ -195,11 +186,6 @@ function checkAmount(
       min: range.min,
       ...(range.max === undefined ? {} : { max: range.max }),
     });
-}
-
-/** `commands` with `field` set to `value` in each command that has such a field. */
-function replaceField(commands: readonly Command[], field: string, value: number): Command[] {
-  return commands.map((cmd) => (field in cmd ? { ...cmd, [field]: value } : cmd));
 }
 
 function inRange(amount: number, range: AmountRange): boolean {
