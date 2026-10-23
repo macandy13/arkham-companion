@@ -48,7 +48,7 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 - [ ] Threat area and engaged enemies as chips; tap → card zoom
 - [ ] Turn-taken marker, defeated/resigned state
 - [ ] An investigate button on the investigator whose turn it is (clue discovery lives with the investigator, not on the location menu)
-- [ ] Built in the UX prototype's form (M3.12): the investigator card with the threat area on top of it (treacheries as small cards, engaged enemies as avatar tokens), and actions as icon buttons next to the action pips and End; the steppers show only in adjust mode once M3.11 lands
+- [ ] Built in the UX prototype's form (M3.12): the investigator card with its threat area (treacheries as small cards, engaged enemies as avatar tokens) along the top edge of the whole card or below it, never over the middle of it, and actions as icon buttons next to the action pips and End; the steppers show only in adjust mode once M3.11 lands
 
 ## M3.6 Encounter panel (S)
 
@@ -160,7 +160,7 @@ Decisions from the prototype review:
   - The act keeps a compact "Advance" on the card.
   - Header labels follow the playmat: Encounter, Agenda n, Act n, Scenario.
 - **Investigators:**
-  - The investigator card has the threat area on top of it: treacheries as small cards, engaged enemies as avatar tokens.
+  - The investigator card carries its threat area along the top edge of the whole card or below it, never over its middle: treacheries as small cards, engaged enemies as avatar tokens.
   - Actions are icon buttons next to the action pips and End.
 - **Dialogs:** a small X at the top right closes them, with no Close buttons. A dialog in the middle of a flow has no X.
 - **Skill tests:**
@@ -179,7 +179,6 @@ Decisions from the prototype review:
 - [ ] M3.12e: dialog style (the X close), with the skill-test sum and chaos-token drawings, inside M3.7
 - The investigator panel in the prototype's form is part of M3.5.
 
-Done: M3.12a maps the dark theme to the playmat palette (night, brass, bone, see-through panels), lays our own playmat drawing (`styles/playmat.svg`) behind every screen as a fixed layer, sets headings in the display type, and gives every dialog one brass-framed shell over a dimmed table; the header row is shaded over the playmat. Follow-ups:
+Done: M3.12a maps the dark theme to the playmat palette (night, brass, bone, see-through panels), lays our own playmat drawing (`styles/playmat.svg`) behind every screen as a fixed layer, sets headings in the display type, and gives every dialog one brass-framed shell over a dimmed table; the header row is shaded over the playmat. The light theme stays, as the same playmat by day (parchment, dark brass, ink, `styles/playmat_light.svg`). Follow-ups:
 
 - [ ] Self-host IM Fell English SC and Alegreya Sans (`@fontsource`, OFL) so the PWA has them offline; until then the type falls back to Georgia and the system sans-serif
-- [ ] Keep a light theme with a mapped palette, or go dark only (open with the owner; the light theme keeps its plain palette without the playmat for now)

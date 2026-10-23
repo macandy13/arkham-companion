@@ -91,16 +91,17 @@
 :root[data-theme='light'] {
   color-scheme: light;
 
-  --color-background: #f6f4f0;
-  --color-surface: #ffffff;
-  --color-border: #c9c5bd;
-  --color-text: #1f1e1c;
-  --color-text-muted: #5f5c57;
-  --color-accent: #2c7a68;
-  --color-accent-text: #ffffff;
+  /* The playmat by day: parchment, dark brass for lines and accents, ink for text. */
+  --color-background: #e8dcbf;
+  --color-surface: rgb(250 245 232 / 85%);
+  --color-border: rgb(138 106 44 / 40%);
+  --color-text: #2a2114;
+  --color-text-muted: #6b5a3c;
+  --color-accent: #8a6a2c;
+  --color-accent-text: #fffaf0;
   --color-clue: #2f7896;
   --color-doom: #a33a37;
-  --color-scrim: rgb(0 0 0 / 40%);
-  --playmat: none;
-  --header-shade: none;
+  --color-scrim: rgb(40 30 15 / 45%);
+  --playmat: url('./playmat_light.svg');
+  --header-shade: linear-gradient(to bottom, rgb(250 245 232 / 90%), rgb(250 245 232 / 35%));
 }
