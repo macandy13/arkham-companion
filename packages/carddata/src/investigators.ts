@@ -63,12 +63,16 @@ export function filterInvestigators(rawCards: unknown): unknown[] {
   );
 }
 
-/** Convert one raw investigator card. Chapter and cycle come from the pack list. */
+/**
+ * Convert one raw investigator card. Chapter and cycle come from the pack list; a pack it
+ * leaves out falls back to the chapter its code implies.
+ */
 export function normaliseInvestigator(
   raw: unknown,
   packs: readonly PackDef[] = [],
 ): InvestigatorDef {
   const r = RawInvestigatorSchema.parse(raw);
+  const pack = packs.find((p) => p.code === r.pack_code);
   return {
     code: r.code,
     name: r.name,
@@ -83,13 +87,13 @@ export function normaliseInvestigator(
       agility: r.skill_agility,
     },
     packCode: r.pack_code,
-    cyclePosition: packs.find((p) => p.code === r.pack_code)?.cyclePosition ?? 0,
+    cyclePosition: pack?.cyclePosition ?? 0,
     imageSrc: r.imagesrc,
     backImageSrc: r.backimagesrc,
     duplicateOfCode: r.duplicate_of_code,
     parallel: r.alternate_of_code !== undefined,
     parallelOfCode: r.alternate_of_code,
-    chapter: chapterOfPack(r.pack_code),
+    chapter: pack?.chapter ?? chapterOfPack(r.pack_code),
   };
 }
 

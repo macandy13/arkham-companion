@@ -2,10 +2,11 @@ import { z } from 'zod';
 
 /**
  * Pack codes that belong to Chapter Two (the revised Arkham Horror LCG line, starting with
- * `core_2026`). ArkhamDB has no chapter field, so this list is the single place to extend when
- * further Chapter Two products appear; every other pack counts as Chapter One.
+ * `core_2026`), for pack data without a `chapter` field. The ArkhamDB data repository marks
+ * every pack with its chapter; this list only covers a response that leaves it out, so every
+ * other pack without one counts as Chapter One.
  */
-export const CHAPTER_TWO_PACK_CODES: readonly string[] = ['core_2026'];
+export const CHAPTER_TWO_PACK_CODES: readonly string[] = ['core_2026', 'cob'];
 
 /** Rules edition a pack belongs to; Chapter One and Chapter Two cards are different for play. */
 export type Chapter = 1 | 2;
@@ -27,14 +28,18 @@ const RawPackSchema = z.object({
   name: z.string(),
   position: z.number().int(),
   cycle_position: z.number().int(),
+  chapter: z.union([z.literal(1), z.literal(2)]).optional(),
 });
 
-/** Chapter of a pack, derived from its code (see `CHAPTER_TWO_PACK_CODES`). */
+/** Chapter of a pack known only by its code (see `CHAPTER_TWO_PACK_CODES`). */
 export function chapterOfPack(packCode: string): Chapter {
   return CHAPTER_TWO_PACK_CODES.includes(packCode) ? 2 : 1;
 }
 
-/** Convert the raw `/api/public/packs/` response into `PackDef`s. Throws on malformed input. */
+/**
+ * Convert the raw `/api/public/packs/` response into `PackDef`s, with the chapter the data
+ * gives or else the one its code implies. Throws on malformed input.
+ */
 export function normalisePacks(raw: unknown): PackDef[] {
   if (!Array.isArray(raw)) throw new Error('Expected an array of packs');
   return raw.map((entry) => {
@@ -44,7 +49,7 @@ export function normalisePacks(raw: unknown): PackDef[] {
       name: r.name,
       position: r.position,
       cyclePosition: r.cycle_position,
-      chapter: chapterOfPack(r.code),
+      chapter: r.chapter ?? chapterOfPack(r.code),
     };
   });
 }
