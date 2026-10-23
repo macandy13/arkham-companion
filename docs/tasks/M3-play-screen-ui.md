@@ -92,7 +92,7 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 - [ ] Replace the act's clue steppers with a dialog that moves clues onto the act from the investigators the players pick
 - [ ] Smaller buttons across the play screen (header, map toolbar, location menu), like the compact buttons on the agenda and act cards (`--button-compact`), still easy to tap on a tablet
 - [ ] Playwright: play two full rounds of the sandbox scenario; refresh mid-mythos restores the exact state
-- [ ] Map follow-ups from M3.3: enemy chips show engagement, damage and exhaustion (now only in their accessible name); chips stack without a limit, so a third enemy on a busy tile overlaps the pawns; map tabs get arrow-key navigation
+- [ ] Map follow-ups from M3.3: enemy tokens show engagement, damage and exhaustion (now only in their accessible name); map tabs get arrow-key navigation
 
 ## M3.10 Card art and card-format layout (O)
 
@@ -173,8 +173,8 @@ Decisions from the prototype review:
 **Slices** (one small PR each)
 
 - [x] M3.12a: style tokens (night, brass and bone, plus the clue, doom, health and sanity colours), fonts and the playmat background; the base, header, buttons and dialog shell restyled
-- [ ] Cards (location tiles, header cards) stay dark in both themes, like printed cards; done with M3.12b–d
-- [ ] M3.12b: location tiles in the frame look: mid-height shroud and clues, doom under the clues, attachments as peeking cards
+- [ ] Cards (location tiles, header cards) stay dark in both themes, like printed cards; done with M3.12b–d (the map's tiles and attachments since M3.12b)
+- [x] M3.12b: location tiles in the frame look: mid-height shroud and clues, doom under the clues, attachments as peeking cards
 - [ ] M3.12c: card art in frames (art crops per card type) and the "Full card faces" setting, on the M3.10c2 pictures. Slices:
   - [ ] M3.12c1: The Gathering's hand-written cards name their ArkhamDB pictures, so the app shows real art before M4.4; the E2E guard turns pictures down, so tests and screenshots keep the pattern
   - [ ] M3.12c2: art crops per card type in the frame look (location, agenda, act; treachery and enemy for later card faces), and the "Full card faces" setting
@@ -186,6 +186,8 @@ Decisions from the prototype review:
 - [ ] M3.12e: dialog style (the X close), with the skill-test sum and chaos-token drawings, inside M3.7
 - The investigator panel in the prototype's form is part of M3.5.
 
-Done: M3.12a maps the dark theme to the playmat palette (night, brass, bone, see-through panels), lays our own playmat drawing (`styles/playmat.svg`) behind every screen as a fixed layer, sets headings in the display type, and gives every dialog one brass-framed shell over a dimmed table; the header row is shaded over the playmat. The light theme stays, as the same playmat by day (parchment, dark brass, ink, `styles/playmat_light.svg`). Follow-ups:
+Done: M3.12a maps the dark theme to the playmat palette (night, brass, bone, see-through panels), lays our own playmat drawing (`styles/playmat.svg`) behind every screen as a fixed layer, sets headings in the display type, and gives every dialog one brass-framed shell over a dimmed table; the header row is shaded over the playmat. The light theme stays, as the same playmat by day (parchment, dark brass, ink, `styles/playmat_light.svg`). Follow-up:
 
 - [x] Self-host IM Fell English SC and Alegreya Sans (`@fontsource`, OFL, Latin subsets) and precache them with the playmat drawings, so the PWA looks the same offline
+
+Done: M3.12b lays the location tile out like the printed card: the shroud (a dark disc with a bone rim) at mid height on the left, the clues on the right (faded at none), doom under the clues, attachments as small cards peeking out at the right edge, each named for screen readers. Enemies became round tokens ringed in the doom colour, standing after the pawns in rows of four along the bottom edge, so they no longer cover the tokens; the map's cards stay dark in both themes.

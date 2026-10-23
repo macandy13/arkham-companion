@@ -23,37 +23,55 @@ export const CARD = { short: 150, long: 210 } as const;
 export const TILE = { width: CARD.short, height: CARD.long, gap: 30 } as const;
 
 /**
- * Where a tile's contents sit, in SVG user units from its top left corner. The name band runs
- * along the top, `band` high, with the edit button at its right end. Below it a row of round
- * badges and tokens (`BADGE_CENTRE`, `tokenOffset`), then enemy chips, and investigator pawns in a
- * row along the bottom edge (`pawnOffset`). Badges, tokens and pawns share one radius, so every
- * round thing on a tile is one size.
+ * Where a tile's contents sit, in SVG user units from its top left corner, laid out like the
+ * printed card: the name band runs along the top, `band` high, with the edit button at its right
+ * end; the shroud and the clues sit at mid height on the left and right edges (`SHROUD_CENTRE`,
+ * `CLUES_CENTRE`), doom under the clues; attachments peek out at the right edge as small cards
+ * (`attachmentOrigin`), and pawns and enemies stand in rows along the bottom edge (`pawnOffset`).
+ * Tokens and pieces share one radius, so every round thing on a tile is one size.
  */
-export const CONTENT = { inset: 10, band: 48, chip: 28, pawnRadius: 14, pawnGap: 6 } as const;
+export const CONTENT = { inset: 10, band: 48, pawnRadius: 14, pawnGap: 6 } as const;
 
-/** The centre of the row of badges and tokens below the name band, from a tile's top. */
-const tokenRowY = CONTENT.band + CONTENT.pawnRadius;
+/** The centre of a tile's shroud token, at mid height on its left edge as on the printed card. */
+export const SHROUD_CENTRE: Point = {
+  x: CONTENT.inset + CONTENT.pawnRadius,
+  y: TILE.height / 2,
+};
 
-/** The centre of a tile's stat badge, the printed value at the left end of the token row. */
-export const BADGE_CENTRE: Point = { x: CONTENT.inset + CONTENT.pawnRadius, y: tokenRowY };
+/** The centre of a tile's clue token, at mid height on its right edge as on the printed card. */
+export const CLUES_CENTRE: Point = {
+  x: TILE.width - CONTENT.inset - CONTENT.pawnRadius,
+  y: TILE.height / 2,
+};
+
+/** The centre of a tile's doom token, right under its clues. */
+export const DOOM_CENTRE: Point = {
+  x: CLUES_CENTRE.x,
+  y: CLUES_CENTRE.y + 2 * CONTENT.pawnRadius + CONTENT.pawnGap,
+};
 
 /**
- * The centre of the `index`th token in the row below the name band, counted from the right
- * edge, so the tokens a location has line up at the right and leave the badge free.
+ * A card attached to a location, drawn small (a fifth of a card's size, rounded to whole units)
+ * and turned a little, peeking out past the tile's right edge below the name band.
  */
-export function tokenOffset(index: number): Point {
+export const ATTACHMENT = { width: 30, height: 42, turn: 8, step: 14 } as const;
+
+/**
+ * How far past a tile's right edge the drawing reaches, so the attachments of a tile in the last
+ * column are not cut off: half an attachment plus its turn, rounded up to a whole card width.
+ */
+const ATTACHMENT_OVERHANG = ATTACHMENT.width;
+
+/**
+ * The top left corner of the `index`th attachment on a tile: half of it past the right edge, each
+ * one a `step` lower than the one before, so a few stay told apart.
+ */
+export function attachmentOrigin(index: number): Point {
   return {
-    x:
-      TILE.width -
-      CONTENT.inset -
-      CONTENT.pawnRadius -
-      index * (2 * CONTENT.pawnRadius + CONTENT.pawnGap),
-    y: tokenRowY,
+    x: TILE.width - ATTACHMENT.width / 2,
+    y: CONTENT.band + CONTENT.pawnGap + index * ATTACHMENT.step,
   };
 }
-
-/** The top of the first enemy chip, from a tile's top: one gap below the token row. */
-export const CHIPS_TOP = tokenRowY + CONTENT.pawnRadius + CONTENT.pawnGap;
 
 /**
  * Where each location of `map` is drawn: its book layout cell, or for a location without one a
@@ -89,7 +107,7 @@ export function drawingSize(cells: readonly GridCell[]): { width: number; height
   const origins = cells.map(tileOrigin);
   if (origins.length === 0) return { width: 0, height: 0 };
   return {
-    width: Math.max(...origins.map(({ x }) => x)) + TILE.width,
+    width: Math.max(...origins.map(({ x }) => x)) + TILE.width + ATTACHMENT_OVERHANG,
     height: Math.max(...origins.map(({ y }) => y)) + TILE.height,
   };
 }
@@ -134,11 +152,21 @@ export function tileAt(cells: Record<InstanceId, GridCell>, point: Point): Insta
   })?.[0];
 }
 
-/** The centre of the `index`th pawn in the row along a tile's bottom edge, from its top left corner. */
+/** How many pieces stand side by side in a row along a tile's bottom edge. */
+const PIECES_PER_ROW = 4;
+
+/**
+ * The centre of the `index`th piece standing on a tile, from its top left corner: investigators
+ * first, then enemies, in rows of `PIECES_PER_ROW` along the bottom edge, each further row above
+ * the one before.
+ */
 export function pawnOffset(index: number): Point {
+  const column = index % PIECES_PER_ROW;
+  const row = Math.floor(index / PIECES_PER_ROW);
+  const step = 2 * CONTENT.pawnRadius + CONTENT.pawnGap;
   return {
-    x: CONTENT.inset + CONTENT.pawnRadius + index * (2 * CONTENT.pawnRadius + CONTENT.pawnGap),
-    y: TILE.height - CONTENT.inset - CONTENT.pawnRadius,
+    x: CONTENT.inset + CONTENT.pawnRadius + column * step,
+    y: TILE.height - CONTENT.inset - CONTENT.pawnRadius - row * step,
   };
 }
 
