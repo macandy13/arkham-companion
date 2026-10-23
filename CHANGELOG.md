@@ -2,6 +2,21 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.0](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.8.1...arkham-companion-v0.1.0) (2026-10-23)
+
+
+### Features
+
+* **engine:** carry the margin in a skill test answer and its suggestion (P2 slice 2) ([22d3e58](https://github.com/macandy13/arkham-companion/commit/22d3e5866fae6f66fa1784bf246b6648386bf015))
+* **web:** lay the game header out like the table and move export to the title bar ([a71a764](https://github.com/macandy13/arkham-companion/commit/a71a764ebc9643545e4f3b9ecd1a741d1e205645))
+* **web:** stand the scenario card upright and move the round next to Next ([f7392c1](https://github.com/macandy13/arkham-companion/commit/f7392c148fab4112fce8c4e4505d19362c510667))
+* **web:** stand the scenario card upright and move the round next to Next ([ba81090](https://github.com/macandy13/arkham-companion/commit/ba81090118c3551dab6536b92edf974190c12c59))
+
+
+### Bug fixes
+
+* **web:** let long scenario names wrap on the upright card, test where the round sits ([0297089](https://github.com/macandy13/arkham-companion/commit/0297089d8d1fe7181dfa1c9313bcefbd52e5d533))
+
 ## [1.8.1](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.8.0...arkham-companion-v1.8.1) (2026-10-23)
 
 
