@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import type { StoreApi } from 'zustand/vanilla';
-import type { BoardView, InvestigatorView } from '@arkham/engine';
+import type { BoardView } from '@arkham/engine';
 import type { AppState, OpenGame } from '../state/appStore';
 import { cluesInSeatOrder } from '../state/gameActions';
 
@@ -128,10 +128,11 @@ function AgendaStatus({
 }
 
 /**
- * The current act as a landscape card: its name, and on the plate at its foot the clues the
- * investigators hold against the clues it needs, with its advance once they hold enough, paid in
- * seat order (`cluesInSeatOrder`). Its steppers correct the clues of the investigator whose turn it
- * is, or of the lead investigator between turns (`clueHolder`).
+ * The current act as a landscape card: its name, and on the plate at its foot the clues towards it
+ * (those on the act plus those the investigators hold) against the clues it needs, with steppers
+ * for the clues on the act and its advance once there are enough. The steppers are a correction by
+ * hand that leaves the investigators alone; advancing counts the clues on the act and takes the
+ * rest from the investigators in seat order (`cluesInSeatOrder`).
  */
 function ActStatus({
   store,
@@ -146,34 +147,38 @@ function ActStatus({
   const { act } = board;
   if (!act) return null;
   const { actions } = store.getState();
-  const needed = act.clues;
-  const holder = clueHolder(board);
+  const { threshold } = act;
+  const clues = act.clues + board.cluesHeld;
   return (
     <section aria-label={t('header.act')} data-card="act">
       <h2>{act.name}</h2>
-      {needed !== undefined && (
+      {threshold !== undefined && (
         <footer>
-          <p>{t('header.cluesOf', { clues: board.cluesHeld, threshold: needed })}</p>
+          <p>{t('header.cluesOf', { clues, threshold })}</p>
           <button
             type="button"
             aria-label={t('header.removeClue')}
-            disabled={blocked || !holder || holder.clues === 0}
-            onClick={() => holder && void actions.adjust(holder.id, 'clues', -1)}
+            disabled={blocked || act.clues === 0}
+            onClick={() => void actions.adjustActClues(-1)}
           >
             −
           </button>
           <button
             type="button"
             aria-label={t('header.addClue')}
-            disabled={blocked || !holder}
-            onClick={() => holder && void actions.adjust(holder.id, 'clues', 1)}
+            disabled={blocked}
+            onClick={() => void actions.adjustActClues(1)}
           >
             +
           </button>
           <button
             type="button"
-            disabled={blocked || board.cluesHeld < needed}
-            onClick={() => void actions.advanceAct(cluesInSeatOrder(board.investigators, needed))}
+            disabled={blocked || clues < threshold}
+            onClick={() =>
+              void actions.advanceAct(
+                cluesInSeatOrder(board.investigators, Math.max(0, threshold - act.clues)),
+              )
+            }
           >
             {t('header.advanceAct')}
           </button>
@@ -181,10 +186,4 @@ function ActStatus({
       )}
     </section>
   );
-}
-
-/** Whose clues the act's steppers change: the investigator whose turn it is, else the lead. */
-function clueHolder(board: BoardView): InvestigatorView | undefined {
-  const id = board.turn ?? board.lead;
-  return id === undefined ? undefined : board.investigator(id);
 }

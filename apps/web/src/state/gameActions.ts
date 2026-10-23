@@ -13,8 +13,8 @@ import { assertNever } from '@arkham/util';
 /** The tokens on a location that its menu's +/− steppers change. */
 export type LocationToken = Extract<TokenKind, 'clue' | 'doom'>;
 
-/** The investigator counters the screen's +/− steppers change (clues from the act card's). */
-export type SteppedStat = Extract<InvestigatorStat, 'resources' | 'damage' | 'horror' | 'clues'>;
+/** The investigator counters the screen's +/− steppers change. */
+export type SteppedStat = Extract<InvestigatorStat, 'resources' | 'damage' | 'horror'>;
 
 /** Counts the players confirm when they answer a decision (clues found, damage soaked). */
 export interface DecisionAmounts {
@@ -65,8 +65,16 @@ export interface GameActions {
   answer(option: string, counts?: DecisionAmounts): Promise<void>;
   /** Enemy step 3.3: each listed enemy attack at its printed damage and horror. */
   resolveEnemyAttacks(): Promise<void>;
-  /** The investigators spend the clues listed with them to advance the act. */
+  /**
+   * The investigators spend the clues listed with them to advance the act; the clues on the act
+   * (`adjustActClues`) count towards it, so `spend` covers only the rest.
+   */
   advanceAct(spend: readonly ClueSpend[]): Promise<void>;
+  /**
+   * The act card's +/− steppers: `delta` more (or, negative, fewer) clues on the current act, a
+   * correction by hand that leaves the investigators' clues alone.
+   */
+  adjustActClues(delta: number): Promise<void>;
   /** One tap on an investigator's stepper: `delta` more (or, negative, fewer) of `stat`. */
   adjust(investigator: InvestigatorId, stat: SteppedStat, delta: number): Promise<void>;
   /** Doom on the current agenda. */
@@ -128,6 +136,13 @@ export function gameActions(
       play((table) =>
         table.spendCluesToAdvanceAct(spend.map(({ investigator, clues }) => [investigator, clues])),
       ),
+    adjustActClues: (delta) =>
+      play((table) =>
+        table.play({
+          type: 'ManualAdjust',
+          adjustment: { kind: 'tokens', cardId: currentAct(table.state), token: 'clue', delta },
+        }),
+      ),
     adjust: (investigator, stat, delta) =>
       play((table) => adjustStat(table, investigator, stat, delta)),
     placeDoom: (amount) => play((table) => table.placeDoom(amount)),
@@ -163,9 +178,6 @@ function adjustStat(
       return table.takeDamage(investigator, delta);
     case 'horror':
       return table.takeHorror(investigator, delta);
-    case 'clues':
-      // `PlayTable` gains clues only by discovering them at a location; a stepper corrects the count.
-      return table.play({ type: 'AdjustInvestigator', investigatorId: investigator, stat, delta });
     default:
       return assertNever(stat);
   }
@@ -176,6 +188,13 @@ function turnInvestigator(state: GameState): InvestigatorId {
   const investigator = state.meta.turn?.investigatorId;
   if (investigator === undefined) throw new CommandRejected({ code: 'noTurnInProgress' });
   return investigator;
+}
+
+/** The act the act card shows; refused like an engine command when the act deck is done. */
+function currentAct(state: GameState): InstanceId {
+  const act = state.act.current;
+  if (act === undefined) throw new CommandRejected({ code: 'noCurrentCard', deck: 'act' });
+  return act;
 }
 
 /** The decision the dialog shows; refused like an engine command when none is open. */

@@ -421,7 +421,7 @@ describe('a per-investigator threshold after an investigator is eliminated', () 
     table.takeDamage(alice, 3);
 
     expect(table.board.investigator(alice).status).toBe('defeated');
-    expect(table.board.act).toEqual({ name: 'first_act', clues: 4 });
+    expect(table.board.act).toEqual({ name: 'first_act', clues: 0, threshold: 4 });
 
     table.spendCluesToAdvanceAct([[bob, 4]]);
 

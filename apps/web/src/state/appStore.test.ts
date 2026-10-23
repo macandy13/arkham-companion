@@ -344,9 +344,8 @@ describe('appStore', () => {
           { stat: 'resources', delta: -2, expected: { resources: 3 } },
           { stat: 'damage', delta: 1, expected: { damage: 1 } },
           { stat: 'horror', delta: 2, expected: { horror: 2 } },
-          { stat: 'clues', delta: 1, expected: { clues: 1 } },
         ] as const)(
-          'steps $stat by $delta (from 5 resources, no damage, no horror, no clues)',
+          'steps $stat by $delta (from 5 resources, no damage, no horror)',
           async ({ stat, delta, expected }) => {
             const store = await aldersTurn(`actions-adjust-${stat}-test`);
 

@@ -24,20 +24,18 @@ const alder: InvestigatorCard = {
   skills: { willpower: 3, intellect: 3, combat: 3, agility: 3 },
 };
 
-const beth: InvestigatorCard = { ...alder, code: investigatorCode('beth'), name: 'Beth' };
-
-/** Renders the play screen on a new game of The Gathering with `seated` in seat order. */
-async function renderTheGathering(db: string, seated: readonly InvestigatorCard[] = [alder]) {
+/** Renders the play screen on a new game of The Gathering with Alder as the only investigator. */
+async function renderTheGathering(db: string) {
   const store = createAppStore(new IndexedDbStore(db));
   const id = await store.getState().startScenario({
     title: 'Friday night',
     ctx: {
-      cards: cardDbWith(theGatheringCards, seated.map(investigatorCardStats)),
+      cards: cardDbWith(theGatheringCards, [investigatorCardStats(alder)]),
       scenario: theGathering,
     },
     difficulty: 'easy',
     seed: 3,
-    investigators: seated.map(({ code }) => ({ id: investigatorId(code), code })),
+    investigators: [{ id: investigatorId('alder'), code: alder.code }],
   });
   render(
     <MemoryRouter initialEntries={[`/game/${id}`]}>
@@ -115,30 +113,33 @@ describe('GameScreen header', () => {
     expect(await screen.findByText('Doom 0 / 3')).toBeTruthy();
   });
 
-  it('adds a clue to the lead investigator between turns from the act, and takes it off', async () => {
-    await renderTheGathering('game-screen-act-clues-test');
-    // At setup no one's turn has started, so the steppers change the clues of Alder, the lead.
+  it("puts a clue on the act and takes it off again, leaving Alder's clues alone", async () => {
+    const store = await renderTheGathering('game-screen-act-clues-test');
     const removeAtZero = button('Remove a clue').disabled;
 
     fireEvent.click(button('Add a clue'));
     await screen.findByText('Clues 1 / 2');
+    const alderAfterAdding = store.getState().current?.board?.investigator(investigatorId('alder'));
     fireEvent.click(button('Remove a clue'));
 
     expect(removeAtZero).toBe(true);
+    expect(alderAfterAdding?.clues).toBe(0);
     expect(await screen.findByText('Clues 0 / 2')).toBeTruthy();
   });
 
-  it("adds the act's clue to the investigator whose turn it is, not to the lead", async () => {
-    const store = await renderTheGathering('game-screen-turn-clues-test', [alder, beth]);
-    await store.getState().actions.nextPhase();
-    await store.getState().actions.startTurn(investigatorId('beth'));
-
+  it('advances the act once the clues on it reach what it needs', async () => {
+    await renderTheGathering('game-screen-act-advance-test');
+    // Trapped needs 2 clues for one investigator.
     fireEvent.click(button('Add a clue'));
+    await screen.findByText('Clues 1 / 2');
+    const advanceAtOne = button('Advance').disabled;
+    fireEvent.click(button('Add a clue'));
+    await screen.findByText('Clues 2 / 2');
 
-    await waitFor(() => expect(store.getState().current?.board?.cluesHeld).toBe(1));
-    const board = store.getState().current?.board;
-    expect(board?.investigator(investigatorId('beth')).clues).toBe(1);
-    expect(board?.investigator(investigatorId('alder')).clues).toBe(0);
+    fireEvent.click(button('Advance'));
+
+    expect(advanceAtOne).toBe(true);
+    expect(await screen.findByText('The Barrier')).toBeTruthy();
   });
 
   it('turns the buttons off while a step is still being stored', async () => {
