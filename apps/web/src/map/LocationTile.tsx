@@ -1,6 +1,7 @@
 import type { KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { InvestigatorView, LocationView, MapEnemyView } from '@arkham/engine';
+import { useCardPicture } from '../catalog/cardImages';
 import {
   BADGE_CENTRE,
   CHIPS_TOP,
@@ -18,6 +19,8 @@ export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyVi
 /**
  * One location as a tile at (`x`, `y`), drawn as a card face in layers: a frame, an art area with
  * a pattern for the side the location shows (revealed or not), and a name band along the top.
+ * When the side has a picture (`LocationView.image`), it covers the face once it has loaded
+ * (`data-picture`), and the stylesheet hides the name band and shroud badge the picture prints.
  * Over them lies what the game tracks: the shroud badge once revealed (shroud is on the revealed
  * side), a token each for its clues once revealed, its doom and its attachments when it has
  * any, a chip per enemy at it and a pawn per investigator there. `enemies` and `investigators`
@@ -42,6 +45,7 @@ export function LocationTile({
   y: number;
 }) {
   const { t } = useTranslation();
+  const picture = useCardPicture(location.image);
   const tokens: TokenCount[] = [];
   if (location.revealed)
     tokens.push({
@@ -68,6 +72,7 @@ export function LocationTile({
       aria-label={location.name}
       data-card="location"
       data-side={location.revealed ? 'revealed' : 'unrevealed'}
+      data-picture={picture?.shown ? 'shown' : undefined}
       transform={`translate(${x} ${y})`}
     >
       <rect width={TILE.width} height={TILE.height} />
@@ -77,6 +82,16 @@ export function LocationTile({
         width={TILE.width - 2 * CONTENT.inset}
         height={TILE.height - CONTENT.band - CONTENT.inset}
       />
+      {picture && (
+        <image
+          href={picture.url}
+          width={TILE.width}
+          height={TILE.height}
+          preserveAspectRatio="xMidYMid slice"
+          onLoad={picture.onLoad}
+          onError={picture.onError}
+        />
+      )}
       <NameBand location={location} />
       <EditButton location={location} onEdit={onEdit} />
       {location.revealed && (

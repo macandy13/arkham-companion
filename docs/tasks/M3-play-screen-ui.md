@@ -65,7 +65,7 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 - [ ] Modal for pending `Decision`s with the engine's options, one layout per decision kind (M1.9); the skill test prompt shows skill, difficulty and pass/fail buttons plus "skip, adjust manually"
 - [ ] Counts on an answer (`DecisionOption.amount` and `amounts`): attack damage to confirm, clues found, and how much a per-point test failed by (Grasping Hands, Rotting Remains). Until then the dialog answers with the defaults (a fail by 1)
 - [ ] Card zoom: front/back image, text fallback from card data
-- [ ] Tapping the agenda or act in the header opens its card (moved from M3.2): the header cards only fit the name and the doom or clue progress, so the full card shows the picture large (the pattern without one), its stage and its text once the card data has text, plus its actions as buttons (placing and removing doom, advancing). The picture view comes with M3.10c2; the text and the actions follow here
+- [ ] Tapping the agenda or act in the header opens its card (moved from M3.2): the header cards only fit the name and the doom or clue progress, so the full card shows the picture large (the pattern without one), its stage and its text once the card data has text, plus its actions as buttons (placing and removing doom, advancing). The picture view comes with M3.10c3; the text and the actions follow here
 
 ## M3.8 Event log (S)
 
@@ -107,8 +107,8 @@ The fan IP policy that covers FFG (Asmodee's community-use guidelines) does not 
   - a live overlay that always shows clues, doom, connection symbols and the avatars.
 - [ ] Location tiles show the unrevealed or revealed face, and the agenda and act show their current side.
 - [ ] Enemies and investigators stay round avatar tokens, never cards, because cards would crowd the map.
-- [ ] The service worker caches fetched card images (runtime caching for the image host), so a started game keeps its art offline.
-- [ ] Tests and E2E use the pattern fallback, because CI and cloud sessions cannot reach arkhamdb.com.
+- [x] The service worker caches fetched card images (runtime caching for the image host), so a started game keeps its art offline.
+- [x] Tests and E2E use the pattern fallback, because CI and cloud sessions cannot reach arkhamdb.com.
 - [ ] Follow-up from M3.10a: a clue-value badge next to the shroud badge, once `LocationView` carries the printed clue value
 - [x] Add an "unofficial fan project" notice with an FFG copyright credit (the About/settings screen).
 
@@ -118,10 +118,13 @@ The fan IP policy that covers FFG (Asmodee's community-use guidelines) does not 
 2. M3.10b: the agenda and act as landscape card faces in the header, sharing the face's parts
 3. M3.10c1: `CardStats` carries each side's ArkhamDB picture path, and the location, agenda and act views pass on the one for the side in play (`image`)
    M3.10c2: the card faces load that picture and fall back to the pattern, the name band and badges hide under a picture, and the service worker caches the pictures
+   M3.10c3: tapping the agenda or act in the header opens its full card, with the picture large (the pattern without one)
    The paths come with the real card data: M4.4 maps carddata's `CardDef`s (which carry `imageSrc`/`backImageSrc`) to `CardStats`; until then the hand-written cards have none and the faces show the pattern.
 4. M3.10d: the "unofficial fan project" notice
 
 Done: M3.10a draws each location tile as a card face: frame, a hatched art area (crossed when unrevealed), the name band with the edit button and, on top, the shroud badge and round clue, doom and attachment tokens. The printed clue value is not in `LocationView` yet, so there is no clue badge (follow-up below). Follow-up: long names (Miskatonic University) run under the edit button; wrap or shrink them in the name band.
+
+Done: M3.10c2 loads the side's picture from ArkhamDB on the location tiles and the header's agenda and act (`useCardPicture`) and lays it over the face once it has loaded, with the name band and shroud badge made transparent under it; until then, and when it fails, the face keeps its pattern. The service worker caches the pictures cache-first (`cardImageCaching`). The hand-written cards have no pictures, so nothing changes on screen until M4.4 maps the real card data. Follow-ups: the scenario card and the encounter deck get their pictures once the views carry them; the picture covers the location frame, so check the look with real scans in M4.4; ArkhamDB's CORS headers for images are unverified (no network here), and with them the pictures could load with `crossorigin` and cache as plain rather than padded opaque responses.
 
 Done: M3.10b draws the agenda and act in the header as landscape cards (`data-card`, a frame per card type, the hatched art area as a CSS pattern token, the name band on top and a plate below with the count and small buttons: the doom steppers on the agenda, "Advance" on the act).
 

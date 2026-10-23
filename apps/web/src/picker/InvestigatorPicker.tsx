@@ -1,14 +1,12 @@
 import type { CardCatalog } from '@arkham/carddata';
 import { Fragment, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { CARD_IMAGE_HOST } from '../catalog/cardImages';
 import { InvestigatorSheet } from './InvestigatorSheet';
 import { PickerFilterBar } from './PickerFilterBar';
 import { applyPickerFilters, type PickerFilters } from './pickerLogic';
 import { SeatList } from './SeatList';
 import './picker.css';
-
-/** ArkhamDB serves card images for every language from the English host. */
-const DEFAULT_IMAGE_HOST = 'https://arkhamdb.com';
 
 /** Seats at the table; the core game supports up to four investigators. */
 const DEFAULT_MAX_SEATS = 4;
@@ -39,7 +37,7 @@ export function InvestigatorPicker({
   onSeatsChange,
   ownedPacks,
   maxSeats = DEFAULT_MAX_SEATS,
-  imageHost = DEFAULT_IMAGE_HOST,
+  imageHost = CARD_IMAGE_HOST,
 }: InvestigatorPickerProps) {
   const { t } = useTranslation();
   const [filters, setFilters] = useState(NO_FILTERS);
