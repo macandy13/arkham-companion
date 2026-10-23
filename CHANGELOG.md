@@ -2,6 +2,14 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.1](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.0...arkham-companion-v0.1.1) (2026-10-23)
+
+
+### Refactoring
+
+* **engine:** drop failedBy options; the margin is the one way to say it (P2 slice 3a) ([7ad6639](https://github.com/macandy13/arkham-companion/commit/7ad6639ffe1626e0080b1a94839363b36e4edc0d))
+* **engine:** pass amounts belong to action tests only; checkAmount ([8914e71](https://github.com/macandy13/arkham-companion/commit/8914e71c1f398918d98cd0500fdcb5114545a85c))
+
 ## [0.1.0](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.8.1...arkham-companion-v0.1.0) (2026-10-23)
 
 
