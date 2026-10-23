@@ -139,6 +139,18 @@ describe('MapBoard', () => {
       expect(tile('cellar').getAttribute('data-picture')).toBe('shown');
     });
 
+    it('cuts the art out of the picture into the art window for the frames look', () => {
+      const table = PlayTable.start(withCellar);
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+
+      // The art window is the tile's nested svg: the scan's art area, from 7 % to 47 % of its height.
+      const artWindow = tile('cellar').querySelector('svg');
+      expect(artWindow?.getAttribute('viewBox')).toBe('0 29 300 168');
+      expect(artWindow?.querySelector('image')?.getAttribute('href')).toBe(
+        'https://arkhamdb.com/bundles/cards/cellar_back.png',
+      );
+    });
+
     it('keeps the pattern face when the picture fails to load', () => {
       const table = PlayTable.start(withCellar);
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);

@@ -5,6 +5,7 @@ import { cyclePositions, sortedPacks } from '../picker/pickerLogic';
 import { applySettings } from '../settings/applySettings';
 import {
   CARD_LANGUAGES,
+  CARD_LOOKS,
   loadSettings,
   saveSettings,
   THEMES,
@@ -105,6 +106,19 @@ export function SettingsScreen({ packs = [] }: SettingsScreenProps) {
               {THEMES.map((theme) => (
                 <option key={theme} value={theme}>
                   {t(`settings.themes.${theme}`)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            {t('settings.cardLook')}
+            <select
+              value={settings.cardLook}
+              onChange={(e) => update({ cardLook: e.target.value as Settings['cardLook'] })}
+            >
+              {CARD_LOOKS.map((look) => (
+                <option key={look} value={look}>
+                  {t(`settings.cardLooks.${look}`)}
                 </option>
               ))}
             </select>

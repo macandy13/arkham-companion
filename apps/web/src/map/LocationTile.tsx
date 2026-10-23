@@ -1,8 +1,10 @@
 import type { KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { InvestigatorView, LocationView, MapEnemyView } from '@arkham/engine';
+import { LOCATION_ART, PORTRAIT_SCAN, portraitArtViewBox } from '../catalog/cardArt';
 import { useCardPicture } from '../catalog/cardImages';
 import {
+  ART_WINDOW,
   ATTACHMENT,
   attachmentOrigin,
   CLUES_CENTRE,
@@ -21,9 +23,11 @@ export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyVi
 /**
  * One location as a tile at (`x`, `y`), drawn as a card face in layers, laid out like the printed
  * card: a frame, an art area with a pattern for the side the location shows (revealed or not), a
- * name band along the top. When the side has a picture (`LocationView.image`), it covers the face
- * once it has loaded (`data-picture`), and the stylesheet hides the name band and shroud the
- * picture prints. Over them lies what the game tracks: its attachments peeking out at the right
+ * name band along the top. When the side has a picture (`LocationView.image`), it shows once it
+ * has loaded (`data-picture`), in the look the players chose (`Settings.cardLook`): the card's art
+ * cut out into the art window (`ART_WINDOW`, the nested `svg`), or the whole card over the face
+ * (the `image`), with the name band and shroud the picture prints hidden. Both load the same
+ * address, so the browser fetches it once; the stylesheet shows the one for the look. Over them lies what the game tracks: its attachments peeking out at the right
  * edge as small cards, and once revealed the shroud (with what attachments add) at mid height on
  * the left and the clues on the right, doom under the clues when it has any; then a pawn per
  * investigator there and a round token per enemy at it, in rows along the bottom edge.
@@ -68,14 +72,29 @@ export function LocationTile({
         height={TILE.height - CONTENT.band - CONTENT.inset}
       />
       {picture && (
-        <image
-          href={picture.url}
-          width={TILE.width}
-          height={TILE.height}
-          preserveAspectRatio="xMidYMid slice"
-          onLoad={picture.onLoad}
-          onError={picture.onError}
-        />
+        <>
+          <svg
+            {...ART_WINDOW}
+            viewBox={portraitArtViewBox(LOCATION_ART)}
+            preserveAspectRatio="xMidYMid slice"
+          >
+            <image
+              href={picture.url}
+              {...PORTRAIT_SCAN}
+              preserveAspectRatio="none"
+              onLoad={picture.onLoad}
+              onError={picture.onError}
+            />
+          </svg>
+          <image
+            href={picture.url}
+            width={TILE.width}
+            height={TILE.height}
+            preserveAspectRatio="xMidYMid slice"
+            onLoad={picture.onLoad}
+            onError={picture.onError}
+          />
+        </>
       )}
       <NameBand location={location} />
       <EditButton location={location} onEdit={onEdit} />

@@ -51,6 +51,18 @@ export const DOOM_CENTRE: Point = {
 };
 
 /**
+ * Where the "frames" look shows a location's art on its tile: across the art area from the name
+ * band down to the doom token, so the shroud and clue tokens sit on the art and the pieces' rows
+ * below it stay on the plain face. The window is wider than tall, as the art is on the card.
+ */
+export const ART_WINDOW = {
+  x: CONTENT.inset,
+  y: CONTENT.band,
+  width: TILE.width - 2 * CONTENT.inset,
+  height: DOOM_CENTRE.y - CONTENT.band,
+} as const;
+
+/**
  * A card attached to a location, drawn small (a fifth of a card's size, rounded to whole units)
  * and turned a little, peeking out past the tile's right edge below the name band.
  */
