@@ -80,7 +80,7 @@ describe('MapBoard', () => {
     const table = PlayTable.start(
       house.withCard(
         instanceId('obscuring_fog'),
-        blankTreachery('obscuring_fog', { locationAttachment: { shroud: 2 } }),
+        blankTreachery('obscuring_fog', { modifiers: [{ stat: 'shroud', of: 'host', by: 2 }] }),
         attachedTo(study),
       ),
     );
@@ -137,6 +137,18 @@ describe('MapBoard', () => {
       fireEvent.load(requiredPictureOf('cellar'));
 
       expect(tile('cellar').getAttribute('data-picture')).toBe('shown');
+    });
+
+    it('cuts the art out of the picture into the art window of the tile', () => {
+      const table = PlayTable.start(withCellar);
+      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
+
+      // The art window is the tile's nested svg: the scan's art area, from 12.5 % to 45.5 % of its height, in from its edges.
+      const artWindow = tile('cellar').querySelector('svg');
+      expect(artWindow?.getAttribute('viewBox')).toBe('6 52 288 138');
+      expect(artWindow?.querySelector('image')?.getAttribute('href')).toBe(
+        'https://arkhamdb.com/bundles/cards/cellar_back.png',
+      );
     });
 
     it('keeps the pattern face when the picture fails to load', () => {

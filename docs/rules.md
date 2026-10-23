@@ -150,11 +150,20 @@ An ability that shuffles an empty discard pile into a deck does not shuffle the 
 - [Engage](https://arkhamdb.com/rules#Engage_Action): take an enemy at your location into your threat area, even if it's exhausted, aloof or engaged with someone else (it disengages from them). Engaging and being engaged are the same event.
 - [Move](https://arkhamdb.com/rules#Move): to a connecting location unless the effect says otherwise. Leaving and entering happen together, and "moved to X" goes straight there. A move to the current location, or one with no valid destination, can't happen.
 
+## Card abilities and modifiers
+
+[Constant abilities](https://arkhamdb.com/rules#Constant_Abilities), [in play and out of play](https://arkhamdb.com/rules#In_Play_and_Out_of_Play), [modifiers](https://arkhamdb.com/rules#Modifiers); wording from [The Arkham Grimoire v1.1](https://images-cdn.fantasyflightgames.com/filer_public/4e/da/4eda7782-c983-47cc-8d9f-ae372a44d87b/arkham_grimoire_v11.pdf).
+
+- A constant ability applies only while its card is in play. Set-aside, removed, in-deck, in-hand, discarded and victory-display cards are out of play, so their abilities do nothing. An attachment is in play while its host is.
+- An unrevealed location has only its unrevealed side's text. Its revealed side's abilities ("each enemy at this location gets +1 fight") apply once it is revealed. This is our reading of "do not read the revealed side" (Grimoire, Location Cards); no rule says it in one sentence.
+- A modified value is the printed value plus all active modifiers, applied together and recalculated whenever one starts or stops. A result below zero counts as zero.
+- An engaged enemy is at its investigator's location, so "each enemy at X" includes enemies engaged with investigators at X.
+
 ## Skill tests
 
 [Skill test timing](https://arkhamdb.com/rules#Skill_Test_Timing), [difficulty](https://arkhamdb.com/rules#Difficulty_skill_tests), [chaos tokens](https://arkhamdb.com/rules#Chaos_Tokens), [automatic failure/success](https://arkhamdb.com/rules#Automatic_Failure_Success).
 
-1. Determine the skill (willpower, intellect, combat or agility). Difficulty is the fight value, shroud, evade value, or the number in parentheses on the card.
+1. Determine the skill (willpower, intellect, combat or agility). Difficulty is the fight value, shroud, evade value, or the number in parentheses on the card, each with its active modifiers (Obscuring Fog's +2 shroud).
 2. Commit cards: the tester commits any number, and each other investigator at the same location commits up to one. Each matching or wild icon gives +1.
 3. Reveal a chaos token.
 4. Resolve its symbol: skull, cultist, tablet and elder thing use the scenario reference card, elder sign uses the tester's investigator card, and auto-fail fails the test.

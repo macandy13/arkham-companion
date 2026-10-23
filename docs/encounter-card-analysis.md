@@ -350,7 +350,7 @@ Players trigger these with their own actions, so the app needs a way to activate
 
 - **Connections:** no ArkhamDB field; planned in M4.2 (symbol extraction) and M4.3 (editor).
 - **Setup and codex:** campaign guide only; M4.1 imports ArkhamCards campaign data for setup. Codex texts stay with the players' book; the app names the entry.
-- **Chapter of a pack:** the code hard-codes `CHAPTER_TWO_PACK_CODES = ['core_2026']`, which misses Children of Blood (`cob`). The data repository's `packs.json` marks both as chapter 2; check whether the ArkhamDB packs API returns that field before reading it instead of the list.
+- **Chapter of a pack:** resolved in plan step 1. The data repository's `packs.json` marks each pack's chapter, and `normalisePacks` reads that field. The ArkhamDB packs API passes it on for all 115 packs (checked 2026-10-23); `CHAPTER_TWO_PACK_CODES` (`core_2026`, `cob`) is only the fallback for a response without it.
 - **Location versions:** same-named cards (Downtown, Sewer Tunnels, Dawn/Dusk) differ only by subname or trait; setup must name the code, not the name.
 
 ## Implementation plan
