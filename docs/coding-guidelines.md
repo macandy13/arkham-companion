@@ -131,3 +131,13 @@ A PR is reviewed on a phone, in one sitting. Its size and shape decide whether t
 - **Stacked PRs** each target the previous PR's branch, are green on their own, and carry their position in the title (`feat(engine): add skill modifiers (M1.13, 2/3)`). Merge them in order.
 - **Review fixes stay in the reviewed PR.** Answer every review thread in the PR it was raised on; never merge with open threads, and don't push the fix into a later PR of the stack. If a point is out of scope, the reply names the task it was moved to.
 - **Commits in reading order** inside a PR: types and API first, then logic, then tests, then wiring, so "review by commit" tells the story.
+
+### Writing the description
+
+The description is read on a phone before the diff. It points the reviewer at the change; the code and docs explain it. Use `.github/pull_request_template.md`.
+
+- **Show, don't describe.** Put the 1–3 most important API or code changes in as short snippets (≤ ~10 lines each): a new command or event type, a changed signature, the core of a rule. Show the new shape; show before/after only when the change itself is the point. Cut bodies and imports down to what the reviewer needs.
+- **Link instead of explaining.** Every snippet, claim and "read first" item links to its code, test or doc section. Use permalinks to the head commit (`https://github.com/macandy13/arkham-companion/blob/<sha>/path#L10-L20`), so links survive the branch; refresh them after a push that moves the lines. Don't restate what a linked doc section already says.
+- **Short and plain.** Short sentences, everyday words, no filler ("This PR …", "In order to …"). One line per bullet. If a section has nothing to say, drop it.
+- **Why first, without names.** Open with why the PR exists. Give the reason itself; never attribute it to a person ("Andy asked/chose/wanted …"). The required attribution block stays above everything.
+- **Weight by what the owner reviews.** Rules, API and architecture, tests and coverage get a line each; plumbing gets one "Skim or skip" line in total.

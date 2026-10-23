@@ -28,6 +28,7 @@ For the `pr-reviewer` subagent, which Claude sessions run on their branch before
 - A new dispatch over a closed union (discriminant or literal union) that is not an exhaustive `switch` with an `assertNever` default (coding guidelines §1).
 - A comment that narrates what the code does instead of why.
 - Dashes in file names, German identifiers, presentational markup, raw CSS values.
+- A PR description that explains in prose what a snippet or a link would show, or misses a snippet of its key API change (coding guidelines §7 "Writing the description").
 
 ## Don't comment on
 
