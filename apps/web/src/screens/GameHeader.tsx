@@ -131,8 +131,7 @@ function AgendaStatus({
  * The current act as a landscape card: its name, and on the plate at its foot the clues the
  * investigators hold against the clues it needs, with its advance once they hold enough, paid in
  * seat order (`cluesInSeatOrder`). Its steppers correct the clues of the investigator whose turn it
- * is, or of the lead investigator between turns (`clueHolder`), until a dialog lets the players pick
- * whose clues change.
+ * is, or of the lead investigator between turns (`clueHolder`).
  */
 function ActStatus({
   store,
