@@ -18,7 +18,7 @@ export interface PieceDrag<Piece> {
 }
 
 /**
- * Dragging pieces (pawns, enemy chips) across the map drawing `svg`. While the pointer is down on
+ * Dragging pieces (pawns, enemy tokens) across the map drawing `svg`. While the pointer is down on
  * a piece, `dragged` follows it; letting go calls `onDrop` with the piece and the point, and the
  * caller decides what a drop there means. A drop that means nothing, or a refused one, leaves the
  * piece where it was, since the board still shows it where the game has it; the screen's

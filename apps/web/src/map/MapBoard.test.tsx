@@ -93,10 +93,10 @@ describe('MapBoard', () => {
         .queryAllByRole('img')
         .map((token) => [token.getAttribute('aria-label'), token.textContent]);
     expect(tokensOf('study')).toEqual([
+      ['Attached: obscuring_fog', ''],
       ['Shroud 4', '4'],
       ['Clues 2', '2'],
       ['Doom 1', '1'],
-      ['Attachments 1', '1'],
     ]);
     expect(tokensOf('hallway')).toEqual([]);
     expect(within(tile('hallway')).getByText('Unrevealed')).toBeTruthy();
@@ -235,7 +235,7 @@ describe('MapBoard', () => {
     expect(screen.getByRole('figure', { name: 'House' })).toBeTruthy();
   });
 
-  it('stands a pawn for each investigator and a chip for each enemy on their location', () => {
+  it('stands a pawn for each investigator and a token for each enemy on their location', () => {
     const ghoul = instanceId('ghoul');
     const table = PlayTable.start(
       house
@@ -258,12 +258,13 @@ describe('MapBoard', () => {
     expect(within(tile('hallway')).getByRole('img', { name: 'rats' })).toBeTruthy();
   });
 
-  // The Study's tile spans 0–150 across and 0–210 down, with its first pawn centred on (24, 186)
-  // and, below its three lines of text, its first enemy chip on (75, 98); the Hallway's tile
-  // starts at x 180.
+  // The Study's tile spans 0–150 across and 0–210 down. Pieces stand in a row along its bottom
+  // edge, investigators first: the first centred on (24, 186), the next on (58, 186). The
+  // Hallway's tile starts at x 180.
   describe('dragging pieces', () => {
     const firstPawn = { x: 24, y: 186 };
-    const firstChip = { x: 75, y: 98 };
+    const enemyAlone = { x: 24, y: 186 };
+    const enemyBesideAlder = { x: 58, y: 186 };
     const bea = investigatorId('bea');
     const rats = instanceId('rats');
 
@@ -333,7 +334,7 @@ describe('MapBoard', () => {
       const table = PlayTable.start(house.withCard(rats, blankEnemy('rats'), atLocation(study)));
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
-      await drag('study', 'rats', firstChip, 255, 105);
+      await drag('study', 'rats', enemyAlone, 255, 105);
 
       expect(table.board.enemy(rats)).toEqual({ name: 'rats', at: 'hallway' });
     });
@@ -346,7 +347,7 @@ describe('MapBoard', () => {
       );
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
-      await drag('study', 'rats, engaged with alder', firstChip, 255, 105);
+      await drag('study', 'rats, engaged with alder', enemyBesideAlder, 255, 105);
 
       expect(table.board.enemy(rats)).toEqual({ name: 'rats', at: 'hallway' });
     });
@@ -361,7 +362,7 @@ describe('MapBoard', () => {
       );
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
-      await drag('study', 'aloof_rats', firstChip, 24, 186);
+      await drag('study', 'aloof_rats', enemyBesideAlder, 24, 186);
 
       expect(table.board.enemy(rats)).toEqual({
         name: 'aloof_rats',
@@ -377,7 +378,7 @@ describe('MapBoard', () => {
       const table = PlayTable.start(house.withCard(rats, blankEnemy('rats'), atLocation(study)));
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
-      await drag('study', 'rats', firstChip, x, y);
+      await drag('study', 'rats', enemyAlone, x, y);
 
       expect(table.board.enemy(rats)).toEqual({ name: 'rats', at: 'study' });
     });
@@ -386,7 +387,7 @@ describe('MapBoard', () => {
       const table = PlayTable.start(house.withCard(rats, blankEnemy('rats'), atLocation(study)));
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy />);
 
-      await drag('study', 'rats', firstChip, 255, 105);
+      await drag('study', 'rats', enemyAlone, 255, 105);
 
       expect(table.board.enemy(rats)).toEqual({ name: 'rats', at: 'study' });
     });

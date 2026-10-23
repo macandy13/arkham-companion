@@ -85,14 +85,15 @@
   height: auto;
 }
 
+/* Cards on the map (tiles and attachments) stay dark in both themes, like printed cards. */
 #map svg rect {
-  fill: var(--color-surface);
-  stroke: var(--color-border);
+  fill: var(--color-card-face);
+  stroke: var(--color-card-line);
   rx: var(--radius);
 }
 
 #map svg text {
-  fill: var(--color-text);
+  fill: var(--color-card-text);
   text-anchor: middle;
   dominant-baseline: middle;
 }
@@ -129,12 +130,12 @@
 }
 
 #map svg pattern path {
-  stroke: var(--color-border);
+  stroke: var(--color-card-line);
   stroke-width: var(--card-pattern-line-width);
 }
 
 #map svg [data-card] > text + text {
-  fill: var(--color-text-muted);
+  fill: var(--color-card-text-muted);
   font-size: var(--font-size-note);
 }
 
@@ -153,8 +154,8 @@
 }
 
 /*
- * Pieces: investigator pawns (circles) and enemy chips (the rect of a piece's group, which is not
- * a tile, so a dragged chip's copy gets it too).
+ * Pieces: investigator pawns in the accent colour, enemies as dark tokens ringed in the doom
+ * colour (a dragged piece's copy gets the same look).
  */
 #map svg circle {
   fill: var(--color-accent);
@@ -164,21 +165,38 @@
   fill: var(--color-accent-text);
 }
 
-#map svg g:not([role='group']) > rect {
-  fill: var(--color-background);
+#map svg [data-enemy] circle {
+  fill: var(--color-card-face);
+  stroke: var(--color-doom);
+  stroke-width: var(--piece-ring-width);
+}
+
+#map svg [data-enemy] circle + text {
+  fill: var(--color-card-text);
+}
+
+/* An attached card peeks out at the tile's edge in the treachery frame colour. */
+#map svg [data-attachment] rect {
+  stroke: var(--color-card-treachery);
+  stroke-width: var(--card-border-width);
 }
 
 /*
- * Tokens on a tile, coloured like the game's: the shroud badge and attachments plain, clues and
- * doom in their colours.
+ * Tokens on a tile, coloured like the game's: the shroud a dark disc with a bone rim, clues and
+ * doom in their colours; a token with none on it fades.
  */
 #map svg [data-token] circle {
-  fill: var(--color-surface);
-  stroke: var(--color-border);
+  fill: var(--color-token-shroud);
+  stroke: var(--color-card-text-muted);
+  stroke-width: var(--piece-ring-width);
 }
 
 #map svg [data-token] text {
-  fill: var(--color-text);
+  fill: var(--color-token-text);
+}
+
+#map svg [data-token][data-empty] {
+  opacity: var(--token-empty-opacity);
 }
 
 #map svg [data-token='clue'] circle {
@@ -189,8 +207,8 @@
   fill: var(--color-doom);
 }
 
-#map svg :is([data-token='clue'], [data-token='doom']) text {
-  fill: var(--color-token-text);
+#map svg :is([data-token='clue'], [data-token='doom']) circle {
+  stroke: none;
 }
 
 /*
@@ -212,12 +230,12 @@
 }
 
 #map svg g[role='button'] circle {
-  fill: var(--color-surface);
-  stroke: var(--color-border);
+  fill: var(--color-card-face);
+  stroke: var(--color-card-line);
 }
 
 #map svg g[role='button'] circle + text {
-  fill: var(--color-text);
+  fill: var(--color-card-text);
 }
 
 #map svg g[role='button']:focus-visible {
