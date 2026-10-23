@@ -172,11 +172,14 @@ Decisions from the prototype review:
 
 **Slices** (one small PR each)
 
-- [ ] M3.12a: style tokens (night, brass and bone, plus the clue, doom, health and sanity colours), fonts and the playmat background; the base, header, buttons and dialog shell restyled
+- [x] M3.12a: style tokens (night, brass and bone, plus the clue, doom, health and sanity colours), fonts and the playmat background; the base, header, buttons and dialog shell restyled
 - [ ] M3.12b: location tiles in the frame look: mid-height shroud and clues, doom under the clues, attachments as peeking cards
 - [ ] M3.12c: card art in frames (art crops per card type) and the "Full card faces" setting, on the M3.10c2 pictures
 - [ ] M3.12d: header cards: big doom and clue tokens, playmat labels, steppers only in adjust mode (after M3.11)
 - [ ] M3.12e: dialog style (the X close), with the skill-test sum and chaos-token drawings, inside M3.7
 - The investigator panel in the prototype's form is part of M3.5.
 
-Open: keep a light theme with a mapped palette, or go dark only (decided before M3.12a).
+Done: M3.12a maps the dark theme to the playmat palette (night, brass, bone, see-through panels), lays our own playmat drawing (`styles/playmat.svg`) behind every screen as a fixed layer, sets headings in the display type, and gives every dialog one brass-framed shell over a dimmed table; the header row is shaded over the playmat. Follow-ups:
+
+- [ ] Self-host IM Fell English SC and Alegreya Sans (`@fontsource`, OFL) so the PWA has them offline; until then the type falls back to Georgia and the system sans-serif
+- [ ] Keep a light theme with a mapped palette, or go dark only (open with the owner; the light theme keeps its plain palette without the playmat for now)

@@ -17,15 +17,11 @@
   --color-scrim: rgb(3 8 7 / 78%);
   /* The play screen's header row darkens the playmat towards the top of the screen. */
   --header-shade: linear-gradient(to bottom, rgb(5 12 10 / 90%), rgb(5 12 10 / 35%));
-  /* The playmat behind the play screen, our own drawing (styles/playmat.svg). */
+  /* The playmat behind every screen, our own drawing (styles/playmat.svg). */
   --playmat: url('./playmat.svg');
   /* Tokens on the map, coloured like the game's own: blue-green clues, red doom. */
   --color-clue: #3f9bb5;
   --color-doom: #b8433f;
-  /* Damage and horror, and resources, coloured like the game's tokens for the investigator panel. */
-  --color-health: #c0504a;
-  --color-sanity: #4f78c4;
-  --color-resource: #b98a3c;
   --color-token-text: #ffffff;
   /* Card frames by card type: locations on the map; the encounter deck, agenda, act and scenario in the header. */
   --color-card-location: #8c7a55;
@@ -60,8 +56,6 @@
   --button-compact: 1.75rem;
   /* The keyboard focus ring, in the accent colour. */
   --focus-ring-width: 2px;
-  /* A turned-off button fades, so the ones that act now stand out. */
-  --disabled-opacity: 0.55;
 
   --layout-content-width: 60rem;
   --layout-board-panel-width: 16rem;

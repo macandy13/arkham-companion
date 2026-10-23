@@ -1,13 +1,23 @@
 /* Element defaults shared by every screen. */
-/* The playmat lies still under every screen, so panels and cards sit on the table. */
+/*
+ * The playmat lies still under every screen, so panels and cards sit on the table. It is a fixed
+ * layer the size of the viewport rather than a fixed body background, which iOS Safari ignores
+ * and would stretch over a long page.
+ */
 body {
   margin: 0;
-  background:
-    var(--playmat) center / cover no-repeat fixed,
-    var(--color-background);
+  background: var(--color-background);
   color: var(--color-text);
   font-family: var(--font-family);
   font-size: var(--font-size-body);
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--playmat) center / cover no-repeat;
 }
 
 /* Headings and names in the playmat's display type, like the printed cards. */
@@ -51,7 +61,6 @@ button {
 
 button:disabled {
   color: var(--color-text-muted);
-  opacity: var(--disabled-opacity);
 }
 
 button:not(:disabled):hover {
@@ -65,6 +74,8 @@ button:not(:disabled):hover {
 
 /* Dialogs share one shell: a panel framed in brass over a dimmed table. */
 dialog {
+  max-width: var(--layout-sheet-width);
+  padding: var(--space-3);
   border: var(--border-width) solid var(--color-accent);
   border-radius: var(--radius);
   background: var(--color-background);
