@@ -35,6 +35,13 @@ export type TimingWindow =
    * left with the card's reason to fire.
    */
   | { kind: 'turnEnds' }
+  /**
+   * "After you enter [this location]": an investigator moved into the
+   * location (`InvestigatorMoved`), naming them, before its reveal's
+   * abilities when the move turned it face up. Being placed there at setup
+   * is no move, so it opens nothing.
+   */
+  | { kind: 'entered' }
   /** "At the end of the round", upkeep step 4.6, for every card in play; names no investigator. */
   | { kind: 'roundEnds' }
   /**
@@ -228,6 +235,10 @@ export function windowsOpenedBy(
         },
       ];
     }
+    case 'InvestigatorMoved':
+      return [
+        { window: { kind: 'entered' }, cardId: event.to, investigatorId: event.investigatorId },
+      ];
     case 'TurnEnded': {
       const { investigatorId } = event;
       return cardsInZone(state, { kind: 'threatArea', investigatorId }).map((cardId) => ({
@@ -485,6 +496,14 @@ export function whenRevealed(...effects: AbilityEffect[]): Ability {
  */
 export function atEndOfTurn(...effects: AbilityEffect[]): Ability {
   return { window: { kind: 'turnEnds' }, effects };
+}
+
+/**
+ * A forced ability "after you enter" a location, for the investigator who
+ * entered, written `afterEntering(takeHorror(1))` (the Attic).
+ */
+export function afterEntering(...effects: AbilityEffect[]): Ability {
+  return { window: { kind: 'entered' }, effects };
 }
 
 /** A forced ability "at the end of the round", written `atEndOfRound(discardSelf())`. */

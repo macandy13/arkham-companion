@@ -148,7 +148,7 @@ An ability that shuffles an empty discard pile into a deck does not shuffle the 
 - [Fight](https://arkhamdb.com/rules#Fight_Action): combat test against the enemy's fight value, which can target any enemy at the location. Success deals 1 damage by default. On failure against an enemy engaged with exactly one _other_ investigator, the damage goes to that investigator instead.
 - [Evade](https://arkhamdb.com/rules#Evade_Action): only against an enemy engaged with you; agility test against its evade value. Success (or any "evade" effect) exhausts the enemy if it is ready and moves it unengaged to your location. "Automatically evade" makes no test and isn't a successful evasion.
 - [Engage](https://arkhamdb.com/rules#Engage_Action): take an enemy at your location into your threat area, even if it's exhausted, aloof or engaged with someone else (it disengages from them). Engaging and being engaged are the same event.
-- [Move](https://arkhamdb.com/rules#Move): to a connecting location unless the effect says otherwise. Leaving and entering happen together, and "moved to X" goes straight there. A move to the current location, or one with no valid destination, can't happen.
+- [Move](https://arkhamdb.com/rules#Move): to a connecting location unless the effect says otherwise. Leaving and entering happen together, and "moved to X" goes straight there. A move to the current location, or one with no valid destination, can't happen. A location's "after you enter" ability fires for every move into it, by an action or a card effect, after the move has resolved (a reveal and engagements included). Being placed at a starting location during setup is not a move, so it fires nothing (our reading; no rule says so).
 
 ## Card abilities and modifiers
 

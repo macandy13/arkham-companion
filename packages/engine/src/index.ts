@@ -93,6 +93,7 @@ export { BASE_ACTIONS_PER_TURN } from './turns';
 export { formatBoard } from './format_board';
 export {
   advanceAct,
+  afterEntering,
   atEndOfRound,
   leadDrawsDiscardingUntil,
   shuffleEncounterDiscard,
