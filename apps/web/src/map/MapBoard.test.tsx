@@ -143,9 +143,9 @@ describe('MapBoard', () => {
       const table = PlayTable.start(withCellar);
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
-      // The art window is the tile's nested svg: the scan's art area, from 7 % to 47 % of its height.
+      // The art window is the tile's nested svg: the scan's art area, from 12.5 % to 45.5 % of its height, in from its edges.
       const artWindow = tile('cellar').querySelector('svg');
-      expect(artWindow?.getAttribute('viewBox')).toBe('0 29 300 168');
+      expect(artWindow?.getAttribute('viewBox')).toBe('6 52 288 138');
       expect(artWindow?.querySelector('image')?.getAttribute('href')).toBe(
         'https://arkhamdb.com/bundles/cards/cellar_back.png',
       );
