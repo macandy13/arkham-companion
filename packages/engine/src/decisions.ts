@@ -152,7 +152,7 @@ function perPointMargin(decision: Decision, command: ResolveDecision): number | 
  */
 function optionCommands(state: GameState, command: ResolveDecision): readonly Command[] {
   const option = chosenOption(state, command);
-  if (command.amount !== undefined) confirmedAmount(command, option.amount, command.amount);
+  if (command.amount !== undefined) checkAmount(command, option.amount, command.amount);
   return Object.entries(command.amounts ?? {}).reduce(
     (commands, [name, amount]) =>
       replaceField(commands, name, confirmedAmount(command, option.amounts?.[name], amount, name)),
@@ -160,16 +160,27 @@ function optionCommands(state: GameState, command: ResolveDecision): readonly Co
   );
 }
 
-/**
- * `amount`, checked against the option's `range` for it; `name` is set for a
- * named amount (`DecisionOption.amounts`) and absent for the plain `amount`.
- */
+/** A named amount (`DecisionOption.amounts`), checked like the plain one (`checkAmount`). */
 function confirmedAmount(
   command: ResolveDecision,
   range: AmountRange | undefined,
   amount: number,
-  name?: string,
+  name: string,
 ): number {
+  checkAmount(command, range, amount, name);
+  return amount;
+}
+
+/**
+ * Rejects `amount` unless the option has a `range` for it that holds it;
+ * `name` is set for a named amount and absent for the plain `amount`.
+ */
+function checkAmount(
+  command: ResolveDecision,
+  range: AmountRange | undefined,
+  amount: number,
+  name?: string,
+): void {
   const where = {
     decisionId: command.decisionId,
     optionId: command.optionId,
@@ -184,7 +195,6 @@ function confirmedAmount(
       min: range.min,
       ...(range.max === undefined ? {} : { max: range.max }),
     });
-  return amount;
 }
 
 /** `commands` with `field` set to `value` in each command that has such a field. */
@@ -247,11 +257,6 @@ export function confirmOptions(onYes: Command[], target?: InstanceId): DecisionO
 /** What follows each outcome of a skill test. */
 export interface SkillTestOutcomes {
   onPass: Command[];
-  /**
-   * Makes the pass a count the players confirm (clues discovered, damage
-   * dealt), which the decision's resolver reads (`DecisionOption.amount`).
-   */
-  passAmount?: AmountRange;
   onFail: Command[];
   /**
    * "For each point you fail by": the tester takes 1 damage or horror per
@@ -277,12 +282,7 @@ export function skillTestDecision(
     kind: 'skillTestResult',
     skillTest: test,
     options: [
-      {
-        id: 'pass',
-        label: 'decision.pass',
-        commands: outcomes.onPass,
-        ...(outcomes.passAmount ? { amount: outcomes.passAmount } : {}),
-      },
+      { id: 'pass', label: 'decision.pass', commands: outcomes.onPass },
       { id: 'fail', label: 'decision.fail', commands: outcomes.onFail },
     ],
     ...(outcomes.perPointFailed ? { perPointFailed: outcomes.perPointFailed } : {}),

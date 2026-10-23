@@ -88,7 +88,7 @@ Slices: (1) `BoardView`, structured read-backs of the board in the engine; (2) `
 
 Done (slices 1-3): `BoardView` and `PlayTable` live in the engine; the end-to-end test plays on `PlayTable` (`PlayTable.setUp(ctx, { investigators, seed })`) and reads the board back through `BoardView`, its `formatBoard` snapshots unchanged; `test_table.ts` is deleted. The test reads through `table.board` directly, with no local helpers.
 
-Follow-ups (from QA): the ambiguous-enemy message suggests `{ name, engagedWith }` even when the selector already has it; two identical pending decisions (two ghouls' attacks of opportunity) print as identical lines in `formatBoard`; some `TableError` messages name internal decision ids (`investigate:alice`, `failedBy:2`).
+Follow-ups (from QA): the ambiguous-enemy message suggests `{ name, engagedWith }` even when the selector already has it; two identical pending decisions (two ghouls' attacks of opportunity) print as identical lines in `formatBoard`; some `TableError` messages name internal decision ids (`investigate:alice`).
 
 - [ ] Review the engine test helpers in `packages/engine/test/utils` (`stateAfter`/`rejectionFrom`, `startScenario`) and list what makes tests hard to read; M1V.3 replaced `startBoard`, `makeInvestigator`, `makeCard` and the per-file `startedWith` variants with `newGame()` and blank cards
 - [ ] Design a clearer, game-language way to set up and assert non-flow tests (who stands where, which enemies and tokens are in play; "Alice investigates", "rejected because …"), keeping the values an assertion depends on visible in the test

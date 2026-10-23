@@ -19,7 +19,9 @@ import { discardToTop } from './placement';
 import { CommandRejected } from './rejection';
 import { withSuggestion } from './skill_modifiers';
 import type {
+  AmountRange,
   CardInstance,
+  Decision,
   GameState,
   Investigator,
   SkillTest,
@@ -49,11 +51,8 @@ export function handleInvestigate(
     subject: location.id,
     test: { skill: 'intellect', difficulty: locationShroud(ctx, state, location) },
     testKind: { kind: 'investigate', locationId: location.id },
-    outcomes: {
-      onPass: [],
-      ...(clues > 0 ? { passAmount: { default: 1, min: 1, max: clues } } : {}),
-      onFail: [],
-    },
+    ...(clues > 0 ? { passAmount: { default: 1, min: 1, max: clues } } : {}),
+    outcomes: { onPass: [], onFail: [] },
   });
 }
 
@@ -86,7 +85,8 @@ export function handleFight(ctx: EngineContext, state: GameState, cmd: Fight): D
     subject: enemy.id,
     test: { skill: 'combat', difficulty: stats.fight ?? 0 },
     testKind: { kind: 'fight', enemyId: enemy.id, damage },
-    outcomes: { onPass: [], passAmount: { default: damage, min: 1 }, onFail: [] },
+    passAmount: { default: damage, min: 1 },
+    outcomes: { onPass: [], onFail: [] },
   });
 }
 
@@ -298,6 +298,11 @@ interface SkillTestRequest {
   test: SkillTest;
   /** Set for a basic action, whose consequences follow the answer (`testedActionCommands`). */
   testKind?: SkillTestKind;
+  /**
+   * Makes the pass of an action's test a count the players confirm (clues
+   * discovered, damage dealt), which its resolver reads (`DecisionOption.amount`).
+   */
+  passAmount?: AmountRange;
   outcomes: SkillTestOutcomes;
 }
 
@@ -308,9 +313,9 @@ interface SkillTestRequest {
 function skillTest(
   ctx: EngineContext,
   state: GameState,
-  { investigator, id, prompt, subject, test, testKind, outcomes }: SkillTestRequest,
+  { investigator, id, prompt, subject, test, testKind, passAmount, outcomes }: SkillTestRequest,
 ): DecisionRequested[] {
-  const decision = skillTestDecision(
+  const asked = skillTestDecision(
     {
       id: decisionId(id),
       prompt,
@@ -320,10 +325,14 @@ function skillTest(
     },
     outcomes,
   );
-  return requestDecision(
-    state,
-    withSuggestion(ctx, state, testKind ? { ...decision, testKind } : decision),
-  );
+  const decision: Decision = {
+    ...asked,
+    ...(testKind ? { testKind } : {}),
+    options: asked.options.map((option) =>
+      passAmount && option.id === 'pass' ? { ...option, amount: passAmount } : option,
+    ),
+  };
+  return requestDecision(state, withSuggestion(ctx, state, decision));
 }
 
 function investigatorLocation(state: GameState, investigator: Investigator): CardInstance {
