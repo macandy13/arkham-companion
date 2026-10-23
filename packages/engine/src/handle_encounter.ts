@@ -7,18 +7,18 @@ import type {
   ShuffleInto,
 } from './commands';
 import type { CardFlipped, CardMoved, DeckShuffled, EncounterCardDrawn, Event } from './events';
-import { activeInvestigator } from './handle_investigator';
+import { activeInvestigator } from './investigators';
 import type { CardCode, InstanceId, InvestigatorId } from './ids';
 import { isActiveInvestigator } from './investigators';
 import { hasKeyword } from './keywords';
-import { requireCard } from './lookup';
+import { cardsInZone, requireCard } from './lookup';
 import { cardMoved } from './placement';
 import { spawnEvents } from './spawn';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
 import { shuffle } from './rng';
 import type { CardInstance, GameState, Investigator } from './state';
-import { encounterDeck, encounterDiscard, setAside, zoneKey, type Zone } from './zone';
+import { encounterDeck, encounterDiscard, setAside, type Zone } from './zone';
 
 const RESOLVING: Zone = { kind: 'resolving' };
 
@@ -91,7 +91,7 @@ function findMatch(
       ? [encounterDeck, encounterDiscard]
       : [from === 'deck' ? encounterDeck : encounterDiscard];
   return zones
-    .flatMap((zone) => cardsIn(state, zone))
+    .flatMap((zone) => cardsInZone(state, zone))
     .find((id) => matchesEncounter(cardStats(ctx.cards, requireCard(state.cards, id).code), match));
 }
 
@@ -109,7 +109,7 @@ export function matchesEncounter(stats: CardStats, match: EncounterMatch): boole
 
 /** The deck cards above `cardId`, top first; none when it is not in the deck. */
 function cardsAbove(state: GameState, cardId: InstanceId): readonly InstanceId[] {
-  const deck = cardsIn(state, encounterDeck);
+  const deck = cardsInZone(state, encounterDeck);
   const index = deck.indexOf(cardId);
   return index < 0 ? [] : deck.slice(0, index);
 }
@@ -133,12 +133,12 @@ export function handleShuffleInto(state: GameState, cmd: ShuffleInto): Event[] {
  * discard pile into a deck does not shuffle the deck, so that yields nothing.
  */
 export function handleShuffleEncounterDiscard(state: GameState): Event[] {
-  return shuffleInto(state, cardsIn(state, encounterDiscard), encounterDeck);
+  return shuffleInto(state, cardsInZone(state, encounterDiscard), encounterDeck);
 }
 
 /** Cards in the encounter deck and its discard, i.e. how many cards could still be drawn. */
 export function encounterCardCount(state: GameState): number {
-  return cardsIn(state, encounterDeck).length + cardsIn(state, encounterDiscard).length;
+  return cardsInZone(state, encounterDeck).length + cardsInZone(state, encounterDiscard).length;
 }
 
 /**
@@ -155,7 +155,7 @@ function drawOne(
   // Draws keep the deck refilled themselves; an empty deck with a discard can
   // still come from a manual correction or a setup, and the rule applies then too.
   const refill = refillIfEmpty(state);
-  const cardId = target ?? cardsIn(replay(refill, state), encounterDeck)[0];
+  const cardId = target ?? cardsInZone(replay(refill, state), encounterDeck)[0];
   if (cardId === undefined) return undefined;
 
   const stats = cardStats(ctx.cards, requireCard(state.cards, cardId).code);
@@ -202,8 +202,8 @@ export function placeDrawnCard(
  * or the discard is empty.
  */
 function refillIfEmpty(state: GameState): Event[] {
-  if (cardsIn(state, encounterDeck).length > 0) return [];
-  return shuffleInto(state, cardsIn(state, encounterDiscard), encounterDeck);
+  if (cardsInZone(state, encounterDeck).length > 0) return [];
+  return shuffleInto(state, cardsInZone(state, encounterDiscard), encounterDeck);
 }
 
 /**
@@ -258,7 +258,7 @@ function withoutDrawer(
 function shuffleInto(state: GameState, cardIds: readonly InstanceId[], zone: Zone): Event[] {
   if (cardIds.length === 0) return [];
   const moves = cardIds.map((cardId) => cardMoved(state, requireCard(state.cards, cardId), zone));
-  const remaining = cardsIn(state, zone).filter((id) => !cardIds.includes(id));
+  const remaining = cardsInZone(state, zone).filter((id) => !cardIds.includes(id));
   const [order, rngState] = shuffle([...remaining, ...cardIds], state.meta.rngState);
   const shuffled: DeckShuffled = { type: 'DeckShuffled', zone, order, rngState };
   return [...moves, shuffled];
@@ -276,12 +276,7 @@ function takeFromSetAside(state: GameState, codes: readonly CardCode[]): Instanc
         available: acc.available.filter((id) => id !== cardId),
       };
     },
-    { taken: [] as InstanceId[], available: cardsIn(state, setAside) },
+    { taken: [] as InstanceId[], available: cardsInZone(state, setAside) },
   );
   return taken;
-}
-
-/** The cards of a zone, top first. */
-function cardsIn(state: GameState, zone: Zone): readonly InstanceId[] {
-  return state.order[zoneKey(zone)] ?? [];
 }

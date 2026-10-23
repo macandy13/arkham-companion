@@ -3,6 +3,12 @@ import globals from 'globals';
 import reactHooks from 'eslint-plugin-react-hooks';
 import tseslint from 'typescript-eslint';
 
+/** CLAUDE.md ground rule: the engine and the scenarios import no UI, storage, i18n or Node APIs. */
+const pureImports = {
+  group: ['react', 'react-*', 'dexie', 'i18next', 'zustand', '@arkham/web', 'node:*'],
+  message: 'The engine is pure: no UI, storage, i18n or Node APIs (CLAUDE.md).',
+};
+
 export default tseslint.config(
   { ignores: ['**/dist/**', '**/.cache/**', '**/node_modules/**'] },
   js.configs.recommended,
@@ -30,12 +36,7 @@ export default tseslint.config(
       'no-restricted-imports': [
         'error',
         {
-          patterns: [
-            {
-              group: ['react', 'react-*', 'dexie', 'i18next', 'zustand', '@arkham/web', 'node:*'],
-              message: 'The engine is pure: no UI, storage, i18n or Node APIs (CLAUDE.md).',
-            },
-          ],
+          patterns: [pureImports],
         },
       ],
       'no-restricted-properties': [
@@ -59,6 +60,28 @@ export default tseslint.config(
         {
           selector: 'NewExpression[callee.name="Date"]',
           message: 'Time comes from the app, not the engine.',
+        },
+      ],
+    },
+  },
+  // A command handler never imports another one: what two handlers share is a query or an
+  // event builder, and it lives next to its entity (board.ts, enemies.ts, investigators.ts).
+  // Repeats the purity pattern because a later block replaces the rule's options.
+  {
+    files: ['packages/engine/src/handle_*.ts'],
+    ignores: ['**/*.test.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            pureImports,
+            {
+              group: ['./handle_*'],
+              message:
+                'Handlers never import handlers: move the shared query or event builder next to its entity.',
+            },
+          ],
         },
       ],
     },

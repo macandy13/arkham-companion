@@ -2,7 +2,7 @@ import { cardStats, type EngineContext } from './cards';
 import type { StartScenario, StartingCard, StartingInvestigator } from './commands';
 import { startingEngagements } from './engagement';
 import type { DeckShuffled, Event, ScenarioStarted } from './events';
-import { validateConnections, validateLayout } from './handle_board';
+import { validateConnections, validateLayout } from './board';
 import { instanceId, type InstanceId, type MapId } from './ids';
 import { requireCard } from './lookup';
 import { createMap, type GameMap, type MapSpec } from './map';

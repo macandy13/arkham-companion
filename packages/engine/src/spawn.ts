@@ -3,8 +3,8 @@ import type { CardStats, EngineContext } from './cards';
 import type { SpawnEnemy } from './commands';
 import { chooseLocation, engageEvents } from './engagement';
 import type { Event } from './events';
-import { enemyOf, isInPlay } from './handle_enemy';
-import { activeInvestigator } from './handle_investigator';
+import { enemyOf, isOnTable } from './enemies';
+import { activeInvestigator } from './investigators';
 import type { InstanceId, InvestigatorId } from './ids';
 import { cardMoved } from './placement';
 import { replay } from './reducer';
@@ -58,7 +58,7 @@ export function spawnEvents(
   target: SpawnTarget,
 ): Event[] {
   const { enemy, stats } = enemyOf(ctx, state, enemyId);
-  if (isInPlay(enemy)) throw new CommandRejected({ code: 'enemyAlreadyInPlay', cardId: enemyId });
+  if (isOnTable(enemy)) throw new CommandRejected({ code: 'enemyAlreadyInPlay', cardId: enemyId });
   const plan = spawnPlan(ctx, state, enemy, stats, target);
   if (plan.kind === 'choose')
     return chooseLocation(

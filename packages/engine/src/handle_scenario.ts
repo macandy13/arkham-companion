@@ -13,7 +13,7 @@ import type {
   ScenarioEnded,
   TokensChanged,
 } from './events';
-import { activeInvestigator } from './handle_investigator';
+import { activeInvestigator } from './investigators';
 import type { InstanceId } from './ids';
 import { requireCard } from './lookup';
 import { clearTokensEvents, moveCardEvent } from './placement';

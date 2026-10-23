@@ -1,4 +1,4 @@
-import { neighbours, requireLocationInPlay } from './board';
+import { neighbours, requireLocationInPlay, revealEvents } from './board';
 import type { EngineContext } from './cards';
 import type {
   AdjustInvestigator,
@@ -17,23 +17,21 @@ import type {
   LeadInvestigatorChanged,
   TokensChanged,
 } from './events';
-import { handleRevealLocation } from './handle_board';
-import type { InvestigatorId } from './ids';
 import {
+  activeInvestigator,
   defeatCause,
   discoverCluesEvents,
-  requireInvestigator,
   statValue,
   withStatDelta,
 } from './investigators';
 import { requireCard } from './lookup';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
-import type { GameState, Investigator } from './state';
+import type { GameState } from './state';
 
 /**
  * `MoveInvestigator`: moves to a connected location (or any location in play
- * with `ignoreConnections`). The reveal goes through `handleRevealLocation`, so
+ * with `ignoreConnections`). The reveal goes through `revealEvents`, so
  * clues are placed exactly as for an explicit `RevealLocation`. Ready,
  * unengaged enemies at the destination then engage (`arrivalEngagements`),
  * whether the move is an action or a card effect, unless the effect avoids
@@ -65,9 +63,7 @@ export function handleMoveInvestigator(
     investigatorId: investigator.id,
     to: cmd.to,
   };
-  const reveal = destination.faceUp
-    ? []
-    : handleRevealLocation(ctx, state, { type: 'RevealLocation', locationId: cmd.to });
+  const reveal = destination.faceUp ? [] : revealEvents(ctx, state, cmd.to);
   const arrived = [moved, ...reveal];
   if (cmd.avoidEngagement) return arrived;
   return [...arrived, ...arrivalEngagements(ctx, replay(arrived, state), cmd.to)];
@@ -168,12 +164,4 @@ export function handleDiscoverClues(
     });
 
   return discoverCluesEvents(investigator.id, location.id, cmd.amount);
-}
-
-/** The investigator, rejecting unknown IDs and those who are no longer in the scenario. */
-export function activeInvestigator(state: GameState, id: InvestigatorId): Investigator {
-  const investigator = requireInvestigator(state, id);
-  if (investigator.status !== 'active')
-    throw new CommandRejected({ code: 'investigatorNotActive', investigatorId: id });
-  return investigator;
 }

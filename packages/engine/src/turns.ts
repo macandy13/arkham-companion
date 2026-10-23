@@ -2,7 +2,7 @@ import type { EngineContext } from './cards';
 import type { AdjustActions, EndTurn, Resign, StartTurn } from './commands';
 import { investigatorLeavesEvents } from './elimination';
 import type { ActionsAdjusted, ActionsReset, Event, TurnEnded, TurnStarted } from './events';
-import { activeInvestigator } from './handle_investigator';
+import { activeInvestigator } from './investigators';
 import type { InvestigatorId } from './ids';
 import { playerOrder } from './investigators';
 import { CommandRejected } from './rejection';
