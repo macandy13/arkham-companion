@@ -173,6 +173,7 @@ Decisions from the prototype review:
 **Slices** (one small PR each)
 
 - [x] M3.12a: style tokens (night, brass and bone, plus the clue, doom, health and sanity colours), fonts and the playmat background; the base, header, buttons and dialog shell restyled
+- [ ] Cards (location tiles, header cards) stay dark in both themes, like printed cards; done with M3.12b–d
 - [ ] M3.12b: location tiles in the frame look: mid-height shroud and clues, doom under the clues, attachments as peeking cards
 - [ ] M3.12c: card art in frames (art crops per card type) and the "Full card faces" setting, on the M3.10c2 pictures
 - [ ] M3.12d: header cards: big doom and clue tokens, playmat labels, steppers only in adjust mode (after M3.11)
