@@ -52,8 +52,8 @@ export const DOOM_CENTRE: Point = {
 
 /**
  * Where the "frames" look shows a location's art on its tile: across the art area from the name
- * band down to the doom token, so the shroud and clue tokens sit on the art and the pieces' rows
- * below it stay on the plain face. The window is wider than tall, as the art is on the card.
+ * band down to the doom token's centre, so the shroud and clue tokens sit on the art, doom on its
+ * edge, and the pieces' rows below it stay on the plain face. The window is wider than tall, as the art is on the card.
  */
 export const ART_WINDOW = {
   x: CONTENT.inset,

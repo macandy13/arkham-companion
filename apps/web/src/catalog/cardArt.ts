@@ -18,7 +18,8 @@ export const PORTRAIT_SCAN = { width: 300, height: 419 } as const;
 
 /**
  * Where a location card's art is, on either side: the full width from below the name band to
- * just above the location icon over the shroud and clue circles. It sits there on every location of every cycle
+ * just above the location icon over the shroud and clue circles (the art runs on behind them
+ * to about 52 %, but the icon would show in the window). It sits there on every location of every cycle
  * (checked on real scans, M3.12c in the M3 task file); the "frames" look cuts it out.
  */
 export const LOCATION_ART: ScanArea = { x: 0, y: 0.07, width: 1, height: 0.4 };

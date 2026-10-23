@@ -139,7 +139,7 @@ describe('MapBoard', () => {
       expect(tile('cellar').getAttribute('data-picture')).toBe('shown');
     });
 
-    it('cuts the art out of the picture into the art window for the frames look', () => {
+    it('cuts the art out of the picture into the art window of the tile', () => {
       const table = PlayTable.start(withCellar);
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
