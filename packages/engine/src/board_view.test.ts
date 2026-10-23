@@ -88,6 +88,7 @@ describe('investigators', () => {
         resources: 5,
         health: { max: 7, damage: 3 },
         sanity: { max: 6, horror: 1 },
+        doomOnPlayerCards: 2,
       })
       .withInvestigator(bob)
       .withCard(instanceId('frozen_in_fear'), blankTreachery('frozen_in_fear'), threatAreaOf(alice))
@@ -103,8 +104,11 @@ describe('investigators', () => {
         at: 'study',
         clues: 2,
         resources: 5,
+        health: 7,
         damage: 3,
+        sanity: 6,
         horror: 1,
+        doom: 2,
         actions: 3,
         threatArea: ['frozen_in_fear'],
       },
@@ -112,6 +116,27 @@ describe('investigators', () => {
     ]);
     expect(investigators[1]).not.toHaveProperty('at');
     expect(investigators[1]).not.toHaveProperty('threatArea');
+    expect(investigators[1]).not.toHaveProperty('doom');
+  });
+
+  it('marks the investigators who have taken their turn this round', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withInvestigator(alice, { locationId: study })
+      .withInvestigator(bob, { locationId: study })
+      .start();
+    const afterAlice = stateAfter(
+      context,
+      state,
+      { type: 'NextPhase' },
+      { type: 'StartTurn', investigatorId: alice },
+      { type: 'EndTurn', investigatorId: alice },
+    );
+
+    const board = boardView(context, afterAlice);
+
+    expect(board.investigator(alice).turnTaken).toBe(true);
+    expect(board.investigator(bob)).not.toHaveProperty('turnTaken');
   });
 
   it('shows the actions an investigator has left', () => {

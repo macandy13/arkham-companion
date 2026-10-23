@@ -23,13 +23,17 @@
   --color-clue: #3f9bb5;
   --color-doom: #b8433f;
   --color-token-text: #ffffff;
-  /* Card frames by card type: locations on the map; the encounter deck, agenda, act and scenario in the header. */
+  /*
+   * Card frames by card type: locations on the map; the encounter deck, agenda, act and scenario
+   * in the header; investigators in the investigator bar.
+   */
   --color-card-location: #8c7a55;
   --color-card-agenda: #9a4a3c;
   --color-card-act: #4a6f9a;
   --color-card-scenario: #6e5a8c;
   --color-card-encounter: #4f6b52;
   --color-card-treachery: #6e5a8c;
+  --color-card-investigator: #8a6a2c;
   /*
    * The face of a card drawn by the app (map tiles, attachments): dark in both themes, like the
    * printed cards, so these are not redefined for the light theme.
@@ -92,12 +96,16 @@
   );
   /* The cards in the header (encounter deck, agenda, act, scenario) are this tall. */
   --layout-header-card-height: 6.5rem;
+  /* The investigator card in each panel of the investigator bar is this tall. */
+  --layout-investigator-card-height: 5rem;
   /* The encounter discard pile's symbol next to the deck: a small card outline this tall. */
   --layout-pile-symbol-height: 2rem;
   /* A dragged map piece's copy, see-through so the tile under it stays readable. */
   --map-ghost-opacity: 0.6;
   /* A token with nothing on it (a location's clues once found) fades, so it reads as empty. */
   --token-empty-opacity: 0.45;
+  /* The panel of an investigator who has left the game (defeated or resigned) steps back. */
+  --eliminated-opacity: 0.55;
   /* The rim of a round piece or token: the enemy ring, the shroud's bone edge. */
   --piece-ring-width: 3px;
 }

@@ -50,6 +50,13 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 - [ ] An investigate button on the investigator whose turn it is (clue discovery lives with the investigator, not on the location menu)
 - [ ] Built in the UX prototype's form (M3.12): the investigator card with its threat area (treacheries as small cards, engaged enemies as avatar tokens) along the top edge of the whole card or below it, never over the middle of it, and actions as icon buttons next to the action pips and End; the steppers show only in adjust mode once M3.11 lands
 
+Slices, one PR each:
+
+- [x] M3.5a: a panel per investigator: the card with the name band, the line on their round (turn, turn taken, defeated, resigned), health and sanity left with take/heal steppers, clues, resources with steppers, doom on player cards when any (`InvestigatorView` gains `health`, `sanity`, `doom`, `turnTaken`)
+- [ ] M3.5b: the turn row on the panel of the investigator whose turn it is: action pips, End, and icon buttons for investigate and resign
+- [ ] M3.5c: the threat area along the top edge of the card: treacheries as small cards, engaged enemies as avatar tokens that fight and evade on a tap
+- [ ] Follow-ups: the investigator card's picture once the view has one; clue and doom steppers need an investigator-counter correction in the engine (`ManualAdjust` has none yet), so they come with M3.11's adjust mode
+
 ## M3.6 Encounter panel (S)
 
 **Why:** The encounter deck is what the app takes over from the players, and this panel is where that becomes visible.
@@ -187,6 +194,7 @@ Decisions from the prototype review:
 
 - [ ] M3.12d: header cards: big doom and clue tokens, playmat labels, steppers only in adjust mode (after M3.11)
 - [ ] M3.12e: dialog style (the X close), with the skill-test sum and chaos-token drawings, inside M3.7
+- [ ] M3.12f: the rule and campaign books' look across the app (screens, panels, dialogs): parchment, brass and ink ornaments, the books' typography, all our own SVG and CSS, no FFG art; the card faces follow it in M3.12c
 - The investigator panel in the prototype's form is part of M3.5.
 
 Done: M3.12a maps the dark theme to the playmat palette (night, brass, bone, see-through panels), lays our own playmat drawing (`styles/playmat.svg`) behind every screen as a fixed layer, sets headings in the display type, and gives every dialog one brass-framed shell over a dimmed table; the header row is shaded over the playmat. The light theme stays, as the same playmat by day (parchment, dark brass, ink, `styles/playmat_light.svg`). Follow-up:

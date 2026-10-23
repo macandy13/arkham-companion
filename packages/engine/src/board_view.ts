@@ -55,8 +55,9 @@ export class TableError extends Error {
 /**
  * One investigator as a player reads them off the table. `at` is the printed
  * name of their location and `threatArea` the printed names of the cards in
- * their threat area, in play order; both are left out when empty, so an
- * expectation lists only what is there. Names, not instance ids, keep an
+ * their threat area, in play order; both are left out when empty, and so are
+ * `doom` while there is none and `turnTaken` before their turn this round, so
+ * an expectation lists only what is there. Names, not instance ids, keep an
  * expectation readable; the location's id is `BoardView.location(byName(at)).id`.
  */
 export interface InvestigatorView {
@@ -67,10 +68,18 @@ export interface InvestigatorView {
   at?: CardName;
   clues: number;
   resources: number;
+  /** The printed health, which `damage` counts down from. */
+  health: number;
   damage: number;
+  /** The printed sanity, which `horror` counts down from. */
+  sanity: number;
   horror: number;
+  /** Doom on their player cards (`Investigator.doomOnPlayerCards`). */
+  doom?: number;
   /** Actions left this round (`Investigator.actionsRemaining`). */
   actions: number;
+  /** They have taken their turn this round (`GameMeta.turnsTaken`). */
+  turnTaken?: true;
   threatArea?: CardName[];
 }
 
@@ -448,9 +457,13 @@ function investigatorView(
     ...(at === undefined ? {} : { at }),
     clues: investigator.clues,
     resources: investigator.resources,
+    health: investigator.health.max,
     damage: investigator.health.damage,
+    sanity: investigator.sanity.max,
     horror: investigator.sanity.horror,
+    ...(investigator.doomOnPlayerCards > 0 ? { doom: investigator.doomOnPlayerCards } : {}),
     actions: investigator.actionsRemaining,
+    ...(state.meta.turnsTaken.includes(investigator.id) ? { turnTaken: true as const } : {}),
     ...listIfAny(
       'threatArea',
       namesIn(ctx, state, { kind: 'threatArea', investigatorId: investigator.id }),
