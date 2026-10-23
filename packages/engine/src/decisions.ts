@@ -1,7 +1,7 @@
 import type { EngineContext } from './cards';
 import type { Command, RequestDecision, ResolveDecision } from './commands';
 import type { DecisionRequested, DecisionResolved, SkillTestResolved } from './events';
-import type { InstanceId, InvestigatorId } from './ids';
+import type { DecisionId, InstanceId, InvestigatorId } from './ids';
 import { isActiveInvestigator } from './investigators';
 import { CommandRejected } from './rejection';
 import { withSuggestion } from './skill_modifiers';
@@ -17,6 +17,11 @@ import type {
   SkillTest,
   SkillTestOutcome,
 } from './state';
+
+/** The pending decision with `id`, if it is still open (`GameState.pending`). */
+export function pendingDecision(state: GameState, id: DecisionId): Decision | undefined {
+  return state.pending.find((pending) => pending.id === id);
+}
 
 /**
  * A `DecisionRequested` for `decision`, unless one with this id is already open.
@@ -64,7 +69,7 @@ export function handleResolveDecision(
     decisionId: command.decisionId,
     optionId: command.optionId,
   };
-  const decision = state.pending.find((pending) => pending.id === command.decisionId);
+  const decision = pendingDecision(state, command.decisionId);
   return decision?.skillTest
     ? [resolved, skillTestResolved(decision, decision.skillTest, command)]
     : [resolved];
@@ -97,7 +102,7 @@ function skillTestResolved(
  */
 function checkMargin(state: GameState, command: ResolveDecision): void {
   if (command.margin === undefined) return;
-  const decision = state.pending.find((pending) => pending.id === command.decisionId);
+  const decision = pendingDecision(state, command.decisionId);
   if (!decision?.skillTest)
     throw new CommandRejected({ code: 'marginNotApplicable', decisionId: command.decisionId });
   if (!Number.isInteger(command.margin) || command.margin < 0)
@@ -128,7 +133,7 @@ export function answerCommands(state: GameState, command: Command): readonly Com
  * answer confirms, as damage or horror on the tested investigator.
  */
 function perPointCommands(state: GameState, command: ResolveDecision): Command[] {
-  const decision = state.pending.find((pending) => pending.id === command.decisionId);
+  const decision = pendingDecision(state, command.decisionId);
   const margin = decision && perPointMargin(decision, command);
   if (!decision?.perPointFailed || !margin || decision.decider.kind !== 'investigator') return [];
   const { investigatorId } = decision.decider;
@@ -197,7 +202,7 @@ function inRange(amount: number, range: AmountRange): boolean {
 }
 
 function chosenOption(state: GameState, command: ResolveDecision): DecisionOption {
-  const decision = state.pending.find((pending) => pending.id === command.decisionId);
+  const decision = pendingDecision(state, command.decisionId);
   if (!decision)
     throw new CommandRejected({ code: 'unknownDecision', decisionId: command.decisionId });
   if (command.answeredBy !== undefined && !mayAnswer(state, decision.decider, command.answeredBy))

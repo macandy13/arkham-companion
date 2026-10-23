@@ -1,5 +1,6 @@
 import { cardStats, type CardStats, type EngineContext } from './cards';
 import type { Command, DealEnemyAttack, RequestDecision } from './commands';
+import { pendingDecision } from './decisions';
 import { decisionId, type InstanceId, type InvestigatorId } from './ids';
 import { requireCard } from './lookup';
 import { hasKeyword } from './keywords';
@@ -69,7 +70,7 @@ export function forcedAttackDecision(
  */
 export function forcedAttackCommands(state: GameState, command: Command): DealEnemyAttack[] {
   if (command.type !== 'ResolveDecision' || command.optionId !== 'attack') return [];
-  const decision = state.pending.find((pending) => pending.id === command.decisionId);
+  const decision = pendingDecision(state, command.decisionId);
   if (!decision?.forcedAttack || decision.decider.kind !== 'investigator') return [];
   const { enemyId, damage, horror } = decision.forcedAttack;
   return [

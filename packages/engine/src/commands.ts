@@ -619,7 +619,8 @@ export interface ResolveDecision {
    * The counts the players confirmed for an option with named `amounts`
    * (an attack's damage and horror), which the decision's resolver reads
    * (`forcedAttackCommands`). Counts left out keep their default. Rejected for
-   * a name the option has no range for, or outside its range.
+   * `damage` or `horror` when the option has no range for it, or outside its
+   * range; the type allows no other name.
    */
   amounts?: Readonly<Partial<Record<NamedAmount, number>>>;
   /**
