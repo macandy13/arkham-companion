@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next';
 import type { StoreApi } from 'zustand/vanilla';
 import type { BoardView } from '@arkham/engine';
 import type { AppState, OpenGame } from '../state/appStore';
-import { cluesInSeatOrder } from '../state/gameActions';
 
 /**
  * The play screen's always-on status, laid out like the scenario's cards on the table: the
@@ -128,11 +127,10 @@ function AgendaStatus({
 }
 
 /**
- * The current act as a landscape card: its name, and on the plate at its foot the clues towards it
- * (those on the act plus those the investigators hold) against the clues it needs, with steppers
- * for the clues on the act and its advance once there are enough. The steppers are a correction by
- * hand that leaves the investigators alone; advancing counts the clues on the act and takes the
- * rest from the investigators in seat order (`cluesInSeatOrder`).
+ * The current act as a landscape card: its name, and on the plate at its foot the clues on the act
+ * against the clues it needs, with steppers for them and its advance once there are enough, paid
+ * by the clues on the act. The steppers are a correction by hand that leaves the investigators
+ * alone, until a dialog moves clues onto the act from the investigators the players pick.
  */
 function ActStatus({
   store,
@@ -147,8 +145,7 @@ function ActStatus({
   const { act } = board;
   if (!act) return null;
   const { actions } = store.getState();
-  const { threshold } = act;
-  const clues = act.clues + board.cluesHeld;
+  const { clues, threshold } = act;
   return (
     <section aria-label={t('header.act')} data-card="act">
       <h2>{act.name}</h2>
@@ -158,7 +155,7 @@ function ActStatus({
           <button
             type="button"
             aria-label={t('header.removeClue')}
-            disabled={blocked || act.clues === 0}
+            disabled={blocked || clues === 0}
             onClick={() => void actions.adjustActClues(-1)}
           >
             −
@@ -174,11 +171,7 @@ function ActStatus({
           <button
             type="button"
             disabled={blocked || clues < threshold}
-            onClick={() =>
-              void actions.advanceAct(
-                cluesInSeatOrder(board.investigators, Math.max(0, threshold - act.clues)),
-              )
-            }
+            onClick={() => void actions.advanceAct([])}
           >
             {t('header.advanceAct')}
           </button>

@@ -209,22 +209,3 @@ export interface ClueSpend {
   investigator: InvestigatorId;
   clues: number;
 }
-
-/**
- * The clues to pay for an act that needs `needed`, taken from the investigators in seat order
- * until enough are in. The header's one-tap advance uses it until the players can split the
- * payment themselves; any split is legal, as the group pools its clues.
- */
-export function cluesInSeatOrder(
-  investigators: readonly { id: InvestigatorId; clues: number }[],
-  needed: number,
-): ClueSpend[] {
-  const spend: ClueSpend[] = [];
-  let missing = needed;
-  for (const { id, clues } of investigators) {
-    const paid = Math.min(clues, missing);
-    if (paid > 0) spend.push({ investigator: id, clues: paid });
-    missing -= paid;
-  }
-  return spend;
-}
