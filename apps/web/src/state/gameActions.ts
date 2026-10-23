@@ -65,8 +65,16 @@ export interface GameActions {
   answer(option: string, counts?: DecisionAmounts): Promise<void>;
   /** Enemy step 3.3: each listed enemy attack at its printed damage and horror. */
   resolveEnemyAttacks(): Promise<void>;
-  /** The investigators spend the clues listed with them to advance the act. */
+  /**
+   * The investigators spend the clues listed with them to advance the act; the clues on the act
+   * (`adjustActClues`) count towards it, so `spend` covers only the rest.
+   */
   advanceAct(spend: readonly ClueSpend[]): Promise<void>;
+  /**
+   * The act card's +/− steppers: `delta` more (or, negative, fewer) clues on the current act, a
+   * correction by hand that leaves the investigators' clues alone.
+   */
+  adjustActClues(delta: number): Promise<void>;
   /** One tap on an investigator's stepper: `delta` more (or, negative, fewer) of `stat`. */
   adjust(investigator: InvestigatorId, stat: SteppedStat, delta: number): Promise<void>;
   /** Doom on the current agenda. */
@@ -128,6 +136,13 @@ export function gameActions(
       play((table) =>
         table.spendCluesToAdvanceAct(spend.map(({ investigator, clues }) => [investigator, clues])),
       ),
+    adjustActClues: (delta) =>
+      play((table) =>
+        table.play({
+          type: 'ManualAdjust',
+          adjustment: { kind: 'tokens', cardId: currentAct(table.state), token: 'clue', delta },
+        }),
+      ),
     adjust: (investigator, stat, delta) =>
       play((table) => adjustStat(table, investigator, stat, delta)),
     placeDoom: (amount) => play((table) => table.placeDoom(amount)),
@@ -175,6 +190,13 @@ function turnInvestigator(state: GameState): InvestigatorId {
   return investigator;
 }
 
+/** The act the act card shows; refused like an engine command when the act deck is done. */
+function currentAct(state: GameState): InstanceId {
+  const act = state.act.current;
+  if (act === undefined) throw new CommandRejected({ code: 'noCurrentCard', deck: 'act' });
+  return act;
+}
+
 /** The decision the dialog shows; refused like an engine command when none is open. */
 function firstDecision(state: GameState): DecisionId {
   const [decision] = state.pending;
@@ -186,23 +208,4 @@ function firstDecision(state: GameState): DecisionId {
 export interface ClueSpend {
   investigator: InvestigatorId;
   clues: number;
-}
-
-/**
- * The clues to pay for an act that needs `needed`, taken from the investigators in seat order
- * until enough are in. The header's one-tap advance uses it until the players can split the
- * payment themselves; any split is legal, as the group pools its clues.
- */
-export function cluesInSeatOrder(
-  investigators: readonly { id: InvestigatorId; clues: number }[],
-  needed: number,
-): ClueSpend[] {
-  const spend: ClueSpend[] = [];
-  let missing = needed;
-  for (const { id, clues } of investigators) {
-    const paid = Math.min(clues, missing);
-    if (paid > 0) spend.push({ investigator: id, clues: paid });
-    missing -= paid;
-  }
-  return spend;
 }

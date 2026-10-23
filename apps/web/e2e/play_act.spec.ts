@@ -1,17 +1,21 @@
 import { expect, test } from './fixtures/test';
 import { resumeImportedGame, twoGhoulPriestsExport } from './fixtures/saved_games';
 
-// Journey: advance the act once the investigators hold its clues – in a game whose setup put two
+// Journey: advance the act once its clues are on it – in a game whose setup put two
 // Ghoul Priests aside, so the act's reverse side cannot tell which one spawns and asks the players
 // to do it by hand.
-test('advance the act', async ({ page }) => {
+test('advance the act', { tag: '@flow' }, async ({ page }) => {
   await test.step('Import a game at act 2 with two Ghoul Priests set aside', async () => {
     await resumeImportedGame(page, 'Two Ghoul Priests', twoGhoulPriestsExport('Two Ghoul Priests'));
   });
 
-  await test.step('Advance The Barrier with the 3 clues Alder holds', async () => {
+  await test.step('Put 3 clues on The Barrier and advance it', async () => {
     const act = page.getByRole('region', { name: 'Act' });
     await expect(act.getByText('The Barrier')).toBeVisible();
+    const addClue = act.getByRole('button', { name: 'Add a clue' });
+    await addClue.click();
+    await addClue.click();
+    await addClue.click();
     await expect(act.getByText('Clues 3 / 3')).toBeVisible();
     await act.getByRole('button', { name: 'Advance' }).click();
     await expect(act.getByText('What Have You Done?')).toBeVisible();

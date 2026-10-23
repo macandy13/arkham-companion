@@ -552,8 +552,26 @@ describe('agenda and act', () => {
 
     expect(board.agenda).toEqual({ name: 'first_agenda', doom: 2, threshold: 3 });
     expect(board.doomInPlay).toBe(3);
-    expect(board.act).toEqual({ name: 'first_act', clues: 4 });
+    expect(board.act).toEqual({ name: 'first_act', clues: 0, threshold: 4 });
     expect(board.cluesHeld).toBe(3);
+  });
+
+  it('counts the clues the players put on the act', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withInvestigator(alice, { locationId: study })
+      .withAct(instanceId('first_act'), blankAct('first_act', { clues: fixed(3) }))
+      .start();
+
+    const board = boardView(
+      context,
+      stateAfter(context, state, {
+        type: 'ManualAdjust',
+        adjustment: { kind: 'tokens', cardId: instanceId('first_act'), token: 'clue', delta: 2 },
+      }),
+    );
+
+    expect(board.act).toEqual({ name: 'first_act', clues: 2, threshold: 3 });
   });
 
   it('reads an agenda without a doom threshold without one', () => {

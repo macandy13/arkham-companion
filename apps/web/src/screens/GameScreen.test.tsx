@@ -113,6 +113,35 @@ describe('GameScreen header', () => {
     expect(await screen.findByText('Doom 0 / 3')).toBeTruthy();
   });
 
+  it("puts a clue on the act and takes it off again, leaving Alder's clues alone", async () => {
+    const store = await renderTheGathering('game-screen-act-clues-test');
+    const removeAtZero = button('Remove a clue').disabled;
+
+    fireEvent.click(button('Add a clue'));
+    await screen.findByText('Clues 1 / 2');
+    const alderAfterAdding = store.getState().current?.board?.investigator(investigatorId('alder'));
+    fireEvent.click(button('Remove a clue'));
+
+    expect(removeAtZero).toBe(true);
+    expect(alderAfterAdding?.clues).toBe(0);
+    expect(await screen.findByText('Clues 0 / 2')).toBeTruthy();
+  });
+
+  it('advances the act once the clues on it reach what it needs', async () => {
+    await renderTheGathering('game-screen-act-advance-test');
+    // Trapped needs 2 clues for one investigator.
+    fireEvent.click(button('Add a clue'));
+    await screen.findByText('Clues 1 / 2');
+    const advanceAtOne = button('Advance').disabled;
+    fireEvent.click(button('Add a clue'));
+    await screen.findByText('Clues 2 / 2');
+
+    fireEvent.click(button('Advance'));
+
+    expect(advanceAtOne).toBe(true);
+    expect(await screen.findByText('The Barrier')).toBeTruthy();
+  });
+
   it('turns the buttons off while a step is still being stored', async () => {
     await renderTheGathering('game-screen-busy-test');
 

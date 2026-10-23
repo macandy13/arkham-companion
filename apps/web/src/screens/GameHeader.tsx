@@ -2,7 +2,6 @@ import { useTranslation } from 'react-i18next';
 import type { StoreApi } from 'zustand/vanilla';
 import type { BoardView } from '@arkham/engine';
 import type { AppState, OpenGame } from '../state/appStore';
-import { cluesInSeatOrder } from '../state/gameActions';
 
 /**
  * The play screen's always-on status, laid out like the scenario's cards on the table: the
@@ -128,9 +127,10 @@ function AgendaStatus({
 }
 
 /**
- * The current act as a landscape card: its name, and on the plate at its foot the clues the
- * investigators hold against the clues it needs, with its advance once they hold enough, paid in
- * seat order (`cluesInSeatOrder`).
+ * The current act as a landscape card: its name, and on the plate at its foot the clues on the act
+ * against the clues it needs, with steppers for them and its advance once there are enough, paid
+ * by the clues on the act. The steppers are a correction by hand that leaves the investigators
+ * alone, until a dialog moves clues onto the act from the investigators the players pick.
  */
 function ActStatus({
   store,
@@ -145,17 +145,33 @@ function ActStatus({
   const { act } = board;
   if (!act) return null;
   const { actions } = store.getState();
-  const needed = act.clues;
+  const { clues, threshold } = act;
   return (
     <section aria-label={t('header.act')} data-card="act">
       <h2>{act.name}</h2>
-      {needed !== undefined && (
+      {threshold !== undefined && (
         <footer>
-          <p>{t('header.cluesOf', { clues: board.cluesHeld, threshold: needed })}</p>
+          <p>{t('header.cluesOf', { clues, threshold })}</p>
           <button
             type="button"
-            disabled={blocked || board.cluesHeld < needed}
-            onClick={() => void actions.advanceAct(cluesInSeatOrder(board.investigators, needed))}
+            aria-label={t('header.removeClue')}
+            disabled={blocked || clues === 0}
+            onClick={() => void actions.adjustActClues(-1)}
+          >
+            −
+          </button>
+          <button
+            type="button"
+            aria-label={t('header.addClue')}
+            disabled={blocked}
+            onClick={() => void actions.adjustActClues(1)}
+          >
+            +
+          </button>
+          <button
+            type="button"
+            disabled={blocked || clues < threshold}
+            onClick={() => void actions.advanceAct([])}
           >
             {t('header.advanceAct')}
           </button>

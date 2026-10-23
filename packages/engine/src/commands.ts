@@ -318,9 +318,10 @@ export interface ClueSpend {
  * play, …), which players or card abilities decide, so those advance with no
  * `spend`. With `spend` the investigators choose who pays; the total must
  * equal the act's clue requirement (its `clues`, resolved for the starting
- * player count) and the act must have one. Like `AdvanceAgenda`, the reverse
- * side (its `advanced` abilities) resolves before the next act becomes current.
- * Produces `InvestigatorChanged` per payment, `CardFlipped`, `ActAdvanced`,
+ * player count) less the clue tokens on the act, and the act must have one.
+ * Like `AdvanceAgenda`, the reverse side (its `advanced` abilities) resolves
+ * before the next act becomes current. Produces `InvestigatorChanged` per
+ * payment, `TokensChanged` for the tokens on the act, `CardFlipped`, `ActAdvanced`,
  * the reverse side's events, `CardMoved`, `CurrentCardChanged` and, for the
  * last act, `ScenarioEnded` unless the reverse side ended the scenario.
  */

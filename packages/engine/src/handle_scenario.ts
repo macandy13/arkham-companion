@@ -48,17 +48,27 @@ export function handleAdvanceAgenda(state: GameState, cmd: AdvanceAgenda): Event
  * when the command carries `spend` (paying clues is only one way to advance an
  * act; others are an objective met, an action taken or an enemy defeated, and
  * those advance with no `spend`), and the act turns to its reverse side;
- * `completeAdvance` replaces it.
+ * `completeAdvance` replaces it. Clues already on the act lower what `spend` must add up to.
  * Payments are validated up front so a rejected command pays nothing.
  */
 export function handleAdvanceAct(ctx: EngineContext, state: GameState, cmd: AdvanceAct): Event[] {
   const act = currentCard(state, 'act');
   const flip = reverseSide(state, 'act', cmd.resolution);
+  const required = clueRequirement(ctx, state, act);
+  // Clues the players put on the act by hand stand for clues the group already spent towards it
+  // (our convention, docs/rules.md "Act and clues"), so the investigators pay only the rest.
+  const placed = act.tokens.clue ?? 0;
   const payments =
     cmd.spend === undefined
       ? []
-      : cluePayments(state, act, cmd.spend, clueRequirement(ctx, state, act));
-  return [...payments, ...flip];
+      : cluePayments(
+          state,
+          act,
+          cmd.spend,
+          required === undefined ? undefined : Math.max(0, required - placed),
+        );
+  // Advancing removes the act's tokens (RR "Act Deck and Agenda Deck"), the clues on it included.
+  return [...payments, ...clearTokensEvents(act), ...flip];
 }
 
 /**

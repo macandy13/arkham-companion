@@ -162,12 +162,17 @@ export interface AgendaView {
   threshold?: number;
 }
 
-/** The current act's name and, when it has one, the clues it needs for the player count. */
+/**
+ * The current act like `AgendaView`: its name, the clue tokens on it (the players' correction, which
+ * counts towards advancing it, see `AdvanceAct`) and, when it has one, the clues it needs for the
+ * player count.
+ */
 export interface ActView {
   name: CardName;
   /** The picture of its front, the side in play (`CardStats.imageSrc`), when the card data has one. */
   image?: CardImagePath;
-  clues?: number;
+  clues: number;
+  threshold?: number;
 }
 
 /**
@@ -277,7 +282,7 @@ export class BoardView {
 
   /**
    * The clues the investigators hold between them, which they may pool to advance the act
-   * (`act.clues`). Eliminated investigators have dropped theirs, so every seat counts.
+   * (`act.threshold`). Eliminated investigators have dropped theirs, so every seat counts.
    */
   get cluesHeld(): number {
     return this.investigators.reduce((sum, investigator) => sum + investigator.clues, 0);
@@ -556,7 +561,8 @@ function actView(ctx: EngineContext, state: GameState): ActView | undefined {
   return {
     name: nameOf(ctx, act),
     ...(imageSrc === undefined ? {} : { image: imageSrc }),
-    ...(clues === undefined ? {} : { clues: resolveValue(clues, state.meta.playerCount) }),
+    clues: act.tokens.clue ?? 0,
+    ...(clues === undefined ? {} : { threshold: resolveValue(clues, state.meta.playerCount) }),
   };
 }
 

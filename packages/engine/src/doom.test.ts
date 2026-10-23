@@ -527,6 +527,50 @@ describe('AdvanceAct', () => {
     expect(doomInPlay(next)).toBe(1);
   });
 
+  it('counts clues on the act towards its requirement, so the investigators pay the rest', () => {
+    const oneOnTheAct = stateAfter(context, state, {
+      type: 'ManualAdjust',
+      adjustment: { kind: 'tokens', cardId: act1, token: 'clue', delta: 1 },
+    });
+
+    const next = stateAfter(context, oneOnTheAct, {
+      type: 'AdvanceAct',
+      spend: [{ investigatorId: alice, amount: 3 }],
+    });
+
+    expect(next.investigators.map((inv) => inv.clues)).toEqual([0, 2]);
+    expect(next.act.current).toBe(act2);
+    expect(next.cards[act1]!.tokens.clue).toBeUndefined();
+    expect(checkInvariants(next)).toEqual([]);
+  });
+
+  it('advances with no payment once the act holds all the clues it needs', () => {
+    const allOnTheAct = stateAfter(context, state, {
+      type: 'ManualAdjust',
+      adjustment: { kind: 'tokens', cardId: act1, token: 'clue', delta: 4 },
+    });
+
+    const next = stateAfter(context, allOnTheAct, { type: 'AdvanceAct', spend: [] });
+
+    expect(next.investigators.map((inv) => inv.clues)).toEqual([3, 2]);
+    expect(next.act.current).toBe(act2);
+    expect(next.cards[act1]!.tokens.clue).toBeUndefined();
+  });
+
+  it('rejects a payment once the act holds more clues than it needs', () => {
+    const fiveOnTheAct = stateAfter(context, state, {
+      type: 'ManualAdjust',
+      adjustment: { kind: 'tokens', cardId: act1, token: 'clue', delta: 5 },
+    });
+
+    expect(
+      rejectionFrom(context, fiveOnTheAct, {
+        type: 'AdvanceAct',
+        spend: [{ investigatorId: alice, amount: 1 }],
+      }),
+    ).toEqual({ code: 'wrongClueTotal', required: 0, spent: 1 });
+  });
+
   it('rejects a total that differs from the requirement', () => {
     expect(
       rejectionFrom(context, state, {
