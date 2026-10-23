@@ -188,5 +188,5 @@ function ActStatus({
 /** Whose clues the act's steppers change: the investigator whose turn it is, else the lead. */
 function clueHolder(board: BoardView): InvestigatorView | undefined {
   const id = board.turn ?? board.lead;
-  return board.investigators.find((investigator) => investigator.id === id);
+  return id === undefined ? undefined : board.investigator(id);
 }

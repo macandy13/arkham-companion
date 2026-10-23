@@ -24,18 +24,20 @@ const alder: InvestigatorCard = {
   skills: { willpower: 3, intellect: 3, combat: 3, agility: 3 },
 };
 
-/** Renders the play screen on a new game of The Gathering with Alder as the only investigator. */
-async function renderTheGathering(db: string) {
+const beth: InvestigatorCard = { ...alder, code: investigatorCode('beth'), name: 'Beth' };
+
+/** Renders the play screen on a new game of The Gathering with `seated` in seat order. */
+async function renderTheGathering(db: string, seated: readonly InvestigatorCard[] = [alder]) {
   const store = createAppStore(new IndexedDbStore(db));
   const id = await store.getState().startScenario({
     title: 'Friday night',
     ctx: {
-      cards: cardDbWith(theGatheringCards, [investigatorCardStats(alder)]),
+      cards: cardDbWith(theGatheringCards, seated.map(investigatorCardStats)),
       scenario: theGathering,
     },
     difficulty: 'easy',
     seed: 3,
-    investigators: [{ id: investigatorId('alder'), code: alder.code }],
+    investigators: seated.map(({ code }) => ({ id: investigatorId(code), code })),
   });
   render(
     <MemoryRouter initialEntries={[`/game/${id}`]}>
@@ -124,6 +126,19 @@ describe('GameScreen header', () => {
 
     expect(removeAtZero).toBe(true);
     expect(await screen.findByText('Clues 0 / 2')).toBeTruthy();
+  });
+
+  it("adds the act's clue to the investigator whose turn it is, not to the lead", async () => {
+    const store = await renderTheGathering('game-screen-turn-clues-test', [alder, beth]);
+    await store.getState().actions.nextPhase();
+    await store.getState().actions.startTurn(investigatorId('beth'));
+
+    fireEvent.click(button('Add a clue'));
+
+    await waitFor(() => expect(store.getState().current?.board?.cluesHeld).toBe(1));
+    const board = store.getState().current?.board;
+    expect(board?.investigator(investigatorId('beth')).clues).toBe(1);
+    expect(board?.investigator(investigatorId('alder')).clues).toBe(0);
   });
 
   it('turns the buttons off while a step is still being stored', async () => {
