@@ -53,6 +53,12 @@ importers:
       '@arkham/util':
         specifier: workspace:*
         version: link:../../packages/util
+      '@fontsource/alegreya-sans':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/im-fell-english-sc':
+        specifier: ^5.3.0
+        version: 5.3.0
       dexie:
         specifier: ^4.4.6
         version: 4.4.6
@@ -915,6 +921,12 @@ packages:
     peerDependenciesMeta:
       '@noble/hashes':
         optional: true
+
+  '@fontsource/alegreya-sans@5.3.0':
+    resolution: {integrity: sha512-Uf0RbuwzhSS3NQrBFcRzEUm7TxDQW3qdAbQ6JIOhsIW6V+YN2dqlR99lhfEE38R3GHgMCMJBzqSp7aJxhNXSOw==}
+
+  '@fontsource/im-fell-english-sc@5.3.0':
+    resolution: {integrity: sha512-jKnCJ22tgVwxWVs1YQ/GCWmP60ulVq49IJZ7c0wgv0MXHe8T8LPbl0sOteYLOkCURW5+ZKwFiLNU2h/l9fHgrg==}
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -3933,6 +3945,10 @@ snapshots:
       levn: 0.4.1
 
   '@exodus/bytes@1.16.0': {}
+
+  '@fontsource/alegreya-sans@5.3.0': {}
+
+  '@fontsource/im-fell-english-sc@5.3.0': {}
 
   '@humanfs/core@0.19.2':
     dependencies:

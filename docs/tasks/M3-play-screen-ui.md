@@ -182,4 +182,4 @@ Decisions from the prototype review:
 
 Done: M3.12a maps the dark theme to the playmat palette (night, brass, bone, see-through panels), lays our own playmat drawing (`styles/playmat.svg`) behind every screen as a fixed layer, sets headings in the display type, and gives every dialog one brass-framed shell over a dimmed table; the header row is shaded over the playmat. The light theme stays, as the same playmat by day (parchment, dark brass, ink, `styles/playmat_light.svg`). Follow-ups:
 
-- [ ] Self-host IM Fell English SC and Alegreya Sans (`@fontsource`, OFL) so the PWA has them offline; until then the type falls back to Georgia and the system sans-serif
+- [x] Self-host IM Fell English SC and Alegreya Sans (`@fontsource`, OFL, Latin subsets) and precache them with the playmat drawings, so the PWA looks the same offline
