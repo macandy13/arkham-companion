@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 16">
+<!-- The ornament under a book page's title (base.css), drawn for this app in the style of the rule and campaign books: two rules thinning outwards with a diamond and two dots between them. Used as a mask, so it takes the colour of the CSS that shows it. -->
+<path d="M 0 8 L 98 7 L 98 9 Z M 240 8 L 142 7 L 142 9 Z"/>
+<path d="M 120 1 L 127 8 L 120 15 L 113 8 Z"/>
+<circle cx="105" cy="8" r="2.5"/>
+<circle cx="135" cy="8" r="2.5"/>
+</svg>

@@ -72,14 +72,48 @@ button:not(:disabled):hover {
   outline-offset: var(--focus-ring-width);
 }
 
-/* Dialogs share one shell: a panel framed in brass over a dimmed table. */
+/*
+ * A book page (M3.12f): every screen outside play and every dialog lies on the playmat like a page
+ * of the rule and campaign books, paper inside a double ink rule. It turns the colour tokens to
+ * ink on paper for everything inside it, so the buttons, lists and fields on it need no rules of
+ * their own.
+ */
+#app > main:not(:has(#board)),
+dialog {
+  /* Native controls (checkboxes, selects, the file picker) drawn light, to sit on the paper. */
+  color-scheme: light;
+  --color-text: var(--color-page-ink);
+  --color-text-muted: var(--color-page-ink-muted);
+  --color-border: var(--color-page-line);
+  --color-accent: var(--color-page-rule);
+  --color-accent-text: var(--color-page);
+  --color-surface: var(--color-page-surface);
+
+  border: var(--page-frame-width) solid;
+  border-image: var(--page-frame) 24 / var(--page-frame-width) stretch;
+  background: var(--page-paper);
+  color: var(--color-text);
+}
+
+/* A page's title stands over an ink ornament, as in the books. */
+#app > main:not(:has(#board)) > h1::after {
+  content: '';
+  display: block;
+  width: var(--page-ornament-width);
+  height: var(--page-ornament-height);
+  margin: var(--space-2) auto 0;
+  background: var(--color-page-rule);
+  mask: var(--page-ornament) center / contain no-repeat;
+}
+
+#app > main:not(:has(#board)) > h1 {
+  text-align: center;
+}
+
+/* Dialogs share the page's shell, laid over a dimmed table. */
 dialog {
   max-width: var(--layout-sheet-width);
   padding: var(--space-3);
-  border: var(--border-width) solid var(--color-accent);
-  border-radius: var(--radius);
-  background: var(--color-background);
-  color: var(--color-text);
 }
 
 dialog::backdrop {

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+<!-- The frame of a book page (base.css `border-image`, sliced 24 units in from each side): a double ink rule with notched corners and a small diamond in each notch, drawn for this app in the style of the rule and campaign books. Its colour is the page rule of tokens.css; an image cannot read the tokens. -->
+<defs>
+<g id="corner" fill="none" stroke="#6b4f1f" stroke-width="1.5">
+<path d="M 2 48 V 2 H 48"/>
+<path d="M 6 48 V 19 A 13 13 0 0 0 19 6 H 48"/>
+<path d="M 10 6.5 L 13.5 10 L 10 13.5 L 6.5 10 Z" fill="#6b4f1f" stroke="none"/>
+</g>
+</defs>
+<use href="#corner"/>
+<use href="#corner" transform="rotate(90 48 48)"/>
+<use href="#corner" transform="rotate(180 48 48)"/>
+<use href="#corner" transform="rotate(270 48 48)"/>
+</svg>

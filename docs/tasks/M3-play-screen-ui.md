@@ -196,6 +196,11 @@ Decisions from the prototype review:
 - [ ] M3.12d: header cards: big doom and clue tokens, playmat labels, steppers only in adjust mode (after M3.11)
 - [ ] M3.12e: dialog style (the X close), with the skill-test sum and chaos-token drawings, inside M3.7
 - [ ] M3.12f: the rule and campaign books' look across the app (screens, panels, dialogs): parchment, brass and ink ornaments, the books' typography, all our own SVG and CSS, no FFG art; the card faces follow it in M3.12c
+  - [x] M3.12f1: the screens outside play (home, new game, settings) and every dialog as a book page: parchment with ink text, a double ink rule with notched corners around it, an ink ornament under its title; the same in both themes, like a printed book on the playmat
+  - [ ] M3.12f2: the play screen's chrome in the book look: the app bar, the side panel and the investigator panels framed with ink rules and brass ornaments, while the table stays the playmat
+
+  Done: M3.12f1 makes `#app > main` (outside the board) and `dialog` a book page: `--page-paper`, a `border-image` frame (`page_frame.svg`) and the title's ornament (`ornament_rule.svg`); inside it the colour tokens are turned to ink on paper, so no screen needs rules of its own.
+
 - The investigator panel in the prototype's form is part of M3.5.
 
 Done: M3.12a maps the dark theme to the playmat palette (night, brass, bone, see-through panels), lays our own playmat drawing (`styles/playmat.svg`) behind every screen as a fixed layer, sets headings in the display type, and gives every dialog one brass-framed shell over a dimmed table; the header row is shaded over the playmat. The light theme stays, as the same playmat by day (parchment, dark brass, ink, `styles/playmat_light.svg`). Follow-up:

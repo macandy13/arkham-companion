@@ -42,6 +42,29 @@
   --color-card-text: #ece3cf;
   --color-card-text-muted: #b5ab95;
   --color-card-line: rgb(201 164 92 / 40%);
+  /*
+   * A book page (M3.12f): the screens outside play and every dialog look like a page of the rule
+   * and campaign books lying on the playmat, paper with ink text and dark brass rules. The same in
+   * both themes, like a printed book, so these are not redefined for the light theme.
+   */
+  --color-page: #f1e6cc;
+  --color-page-shade: #dcc9a0;
+  --color-page-ink: #2b1e12;
+  --color-page-ink-muted: #6a5536;
+  /* The page's rules and ornaments; page_frame.svg draws its frame in this colour too. */
+  --color-page-rule: #6b4f1f;
+  --color-page-line: rgb(107 79 31 / 35%);
+  /* A box or button on the page: the paper a shade lighter. */
+  --color-page-surface: rgb(255 251 240 / 55%);
+  /* The paper darkens a little towards its edges, like an old page. */
+  --page-paper: radial-gradient(ellipse at center, var(--color-page) 55%, var(--color-page-shade));
+  /* The page's frame (page_frame.svg): a double rule with notched corners. */
+  --page-frame: url('./page_frame.svg');
+  --page-frame-width: 1.5rem;
+  /* The ornament under a page's title (ornament_rule.svg). */
+  --page-ornament: url('./ornament_rule.svg');
+  --page-ornament-width: 12rem;
+  --page-ornament-height: 0.8rem;
   /* The shroud token, a dark disc like the printed shroud icon's. */
   --color-token-shroud: #2c2c33;
 
