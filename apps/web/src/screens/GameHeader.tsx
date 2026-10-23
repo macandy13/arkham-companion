@@ -8,10 +8,9 @@ import { cluesInSeatOrder } from '../state/gameActions';
  * The play screen's always-on status, laid out like the scenario's cards on the table: the
  * encounter deck and its discard pile (placeholders until the encounter phase draws), the agenda,
  * the act and the scenario card, then the round and phase, "Next", which runs the phase assistant,
- * and undo. The
- * scenario's name is the screen's heading, since the app title already sits in the title bar. Its
- * buttons wait while a step is queued (`OpenGame.busy`), since a second tap would act on whatever
- * the first one leaves open. `board` is the open game's `OpenGame.board`.
+ * and undo. The scenario's name is the screen's heading, since the app title already sits in the
+ * title bar. Its buttons wait while a step is queued (`OpenGame.busy`), since a second tap would
+ * act on whatever the first one leaves open. `board` is the open game's `OpenGame.board`.
  */
 export function GameHeader({
   store,

@@ -92,6 +92,7 @@
 /* The round and the turn buttons sit at the right end, apart from the cards. */
 #board > header > p {
   margin-inline-start: auto;
+  white-space: nowrap;
 }
 
 #board > header h1,
@@ -183,4 +184,7 @@
 #board > header [data-card='scenario'] > h1 {
   padding-inline: var(--space-1);
   font-size: var(--font-size-note);
+  /* A long word in a scenario name (more so in German) would otherwise be cut off by the frame. */
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
