@@ -1,0 +1,121 @@
+/*
+ * The investigator bar (InvestigatorBar) along the foot of the board: a panel per investigator,
+ * side by side after the heading, scrolling sideways when they do not fit. Two ids here and on
+ * the panels, so they beat the home screen's `#app > main section` row.
+ */
+#board > #investigators {
+  display: flex;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+/*
+ * A panel lays the investigator's card on the left, beside the line on their round and their
+ * counters, as in the prototype.
+ */
+#board > #investigators > section {
+  display: grid;
+  grid-template:
+    'card status' auto
+    'card stats' 1fr /
+    auto auto;
+  gap: var(--space-1) var(--space-2);
+  flex: none;
+  flex-wrap: nowrap;
+  align-items: start;
+  padding: var(--space-1);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+/* The investigator whose turn it is stands out in the accent colour. */
+#board > #investigators > section[data-turn] {
+  border-color: var(--color-accent);
+}
+
+/* A defeated or resigned investigator has left the game, so their panel steps back. */
+#board > #investigators > section:not([data-status='active']) {
+  opacity: var(--token-empty-opacity);
+}
+
+/*
+ * The investigator card, landscape like the printed one and drawn like the header's cards: a
+ * frame around the hatched art area with the name band along the top.
+ */
+#investigators [data-card='investigator'] {
+  grid-area: card;
+  box-sizing: border-box;
+  height: var(--layout-investigator-card-height);
+  aspect-ratio: 7 / 5;
+  margin: 0;
+  border: var(--card-border-width) solid var(--color-card-investigator);
+  border-radius: var(--radius);
+  background: var(--card-art-pattern), var(--color-card-face);
+  overflow: hidden;
+}
+
+#investigators [data-card='investigator'] h3 {
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-card-face);
+  color: var(--color-card-text);
+  font-size: var(--font-size-subtitle);
+}
+
+#board > #investigators > section > p {
+  grid-area: status;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-note);
+  white-space: nowrap;
+}
+
+#investigators dl {
+  grid-area: stats;
+  display: flex;
+  gap: var(--space-1);
+  margin: 0;
+}
+
+/* Each counter is a small well: its name, then its value between its steppers. */
+#investigators dl > div {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+
+#investigators dt {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-note);
+  white-space: nowrap;
+}
+
+#investigators dd {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+  margin: 0;
+}
+
+#investigators dd > data {
+  order: 1;
+  min-width: var(--button-compact);
+  font-size: var(--font-size-subtitle);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* The − stepper sits left of the value and the + stepper right of it. */
+#investigators dd > button:last-child {
+  order: 2;
+}
+
+#investigators dd > button {
+  min-width: var(--button-compact);
+  min-height: var(--button-compact);
+  padding: 0;
+}
