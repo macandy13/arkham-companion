@@ -1,6 +1,5 @@
 import { cardStats, type CardStats, type EngineContext } from './cards';
-import type { Command, DealEnemyAttack, RequestDecision } from './commands';
-import { pendingDecision } from './decisions';
+import type { RequestDecision } from './commands';
 import { decisionId, type InstanceId, type InvestigatorId } from './ids';
 import { requireCard } from './lookup';
 import { hasKeyword } from './keywords';
@@ -30,9 +29,9 @@ const SKIP_LABELS: Readonly<Record<ForcedAttackKind, string>> = {
 
 /**
  * The decision for one forced attack of the enemy on the investigator. Its
- * `attack` answer deals the enemy's printed damage and horror, which the
+ * `attack` option deals the enemy's printed damage and horror, which the
  * players may lower (assets soak part of it) through
- * `ResolveDecision.amounts` (`forcedAttackCommands`); `skip` deals nothing.
+ * `ResolveDecision.amounts`; `skip` deals nothing.
  */
 export function forcedAttackDecision(
   ctx: EngineContext,
@@ -48,40 +47,24 @@ export function forcedAttackDecision(
     subject: enemyId,
     prompt: `decision.${kind}`,
     decider: { kind: 'investigator', investigatorId },
-    forcedAttack: { enemyId, damage, horror },
     options: [
       {
         id: 'attack',
         label: 'decision.attack',
-        commands: [],
+        commands: [
+          {
+            type: 'DealEnemyAttack',
+            enemyId,
+            investigatorId,
+            damage: { answer: 'damage' },
+            horror: { answer: 'horror' },
+          },
+        ],
         amounts: { damage: { default: damage, min: 0 }, horror: { default: horror, min: 0 } },
       },
       { id: 'skip', label: SKIP_LABELS[kind], commands: [] },
     ],
   };
-}
-
-/**
- * What the answer `command` to a forced attack (`Decision.forcedAttack`)
- * deals: for `attack`, the confirmed damage and horror, the printed ones by
- * default, as one `DealEnemyAttack` on the decider; nothing for `skip` or for
- * any other command or decision. The counts were checked against the
- * option's ranges by `handleResolveDecision` before this runs.
- */
-export function forcedAttackCommands(state: GameState, command: Command): DealEnemyAttack[] {
-  if (command.type !== 'ResolveDecision' || command.optionId !== 'attack') return [];
-  const decision = pendingDecision(state, command.decisionId);
-  if (!decision?.forcedAttack || decision.decider.kind !== 'investigator') return [];
-  const { enemyId, damage, horror } = decision.forcedAttack;
-  return [
-    {
-      type: 'DealEnemyAttack',
-      enemyId,
-      investigatorId: decision.decider.investigatorId,
-      damage: command.amounts?.damage ?? damage,
-      horror: command.amounts?.horror ?? horror,
-    },
-  ];
 }
 
 /** The forced attacks a keyword triggers after a failed test; the kind is also the keyword's name. */

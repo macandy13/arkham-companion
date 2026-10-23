@@ -617,8 +617,8 @@ export interface ResolveDecision {
   amount?: number;
   /**
    * The counts the players confirmed for an option with named `amounts`
-   * (an attack's damage and horror), which the decision's resolver reads
-   * (`forcedAttackCommands`). Counts left out keep their default. Rejected for
+   * (an attack's damage and horror), filled into the option's commands where
+   * they name it (`AnsweredAmount`). Counts left out keep their default. Rejected for
    * `damage` or `horror` when the option has no range for it, or outside its
    * range; the type allows no other name.
    */
@@ -758,8 +758,7 @@ export interface ResolveEnemyAttack {
 
 /**
  * An enemy attack outside enemy step 3.3: an attack of opportunity (raised by
- * `attackOfOpportunityDecisions`, whose `attack` answer runs this through
- * `forcedAttackCommands`) or a card
+ * `attackOfOpportunityDecisions`, whose `attack` option runs this) or a card
  * that says the enemy attacks. Deals `damage` and `horror` at once with one
  * defeat check, like `ResolveEnemyAttack`, but the enemy does not exhaust
  * (Rules Reference, "Attack of Opportunity"). The amounts are the ones the

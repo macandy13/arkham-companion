@@ -68,12 +68,19 @@ describe('attacks of opportunity', () => {
         subject: ghoul,
         prompt: 'decision.attackOfOpportunity',
         decider: { kind: 'investigator', investigatorId: alice },
-        forcedAttack: { enemyId: ghoul, damage: 1, horror: 2 },
         options: [
           {
             id: 'attack',
             label: 'decision.attack',
-            commands: [],
+            commands: [
+              {
+                type: 'DealEnemyAttack',
+                enemyId: ghoul,
+                investigatorId: alice,
+                damage: { answer: 'damage' },
+                horror: { answer: 'horror' },
+              },
+            ],
             amounts: { damage: { default: 1, min: 0 }, horror: { default: 2, min: 0 } },
           },
           { id: 'skip', label: 'decision.doesNotProvoke', commands: [] },

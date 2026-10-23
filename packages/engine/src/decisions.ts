@@ -8,6 +8,8 @@ import { withSuggestion } from './skill_modifiers';
 import { NAMED_AMOUNTS } from './state';
 import type {
   AmountRange,
+  AnswerableCommand,
+  AnsweredAmount,
   Decider,
   Decision,
   DecisionOption,
@@ -153,18 +155,62 @@ function perPointMargin(decision: Decision, command: ResolveDecision): number | 
 }
 
 /**
- * The chosen option's commands. The counts the answer confirms (`amount`,
- * `amounts`) are only checked here against the option's ranges: the
- * decision's resolver reads them (`testedActionCommands`, `forcedAttackCommands`).
+ * The chosen option's commands, with the counts the answer confirms filled
+ * in (`AnsweredAmount`). The plain `amount` is only checked here: the
+ * decision's resolver reads it (`testedActionCommands`).
  */
-function optionCommands(state: GameState, command: ResolveDecision): readonly Command[] {
+function optionCommands(state: GameState, command: ResolveDecision): Command[] {
   const option = chosenOption(state, command);
   if (command.amount !== undefined) checkAmount(command, option.amount, command.amount);
   for (const name of NAMED_AMOUNTS) {
     const amount = command.amounts?.[name];
     if (amount !== undefined) checkAmount(command, option.amounts?.[name], amount, name);
   }
-  return option.commands;
+  return option.commands.map((cmd) => withAnsweredAmounts(cmd, option, command));
+}
+
+/**
+ * `cmd` with each `AnsweredAmount` replaced by the answer's count of that
+ * name, or the option's default for it.
+ */
+function withAnsweredAmounts(
+  cmd: AnswerableCommand,
+  option: DecisionOption,
+  command: ResolveDecision,
+): Command {
+  const filled = Object.fromEntries(
+    Object.entries(cmd).map(([field, value]) => [
+      field,
+      isAnsweredAmount(value) ? answeredAmount(value.answer, option, command) : value,
+    ]),
+  );
+  // Only `AnsweredAmount` values were replaced, each by a number, so `filled` is the command without them.
+  return filled as Command;
+}
+
+function isAnsweredAmount(value: unknown): value is AnsweredAmount {
+  return typeof value === 'object' && value !== null && 'answer' in value;
+}
+
+/**
+ * The count `name` the answer confirms, or the option's default for it. An
+ * option that names a count without a range for it cannot be answered
+ * (`amountNotAdjustable`).
+ */
+function answeredAmount(
+  name: NamedAmount,
+  option: DecisionOption,
+  command: ResolveDecision,
+): number {
+  const amount = command.amounts?.[name] ?? option.amounts?.[name]?.default;
+  if (amount === undefined)
+    throw new CommandRejected({
+      code: 'amountNotAdjustable',
+      decisionId: command.decisionId,
+      optionId: option.id,
+      name,
+    });
+  return amount;
 }
 
 /**

@@ -61,12 +61,19 @@ function attackOnAlice(kind: 'retaliate' | 'alert', skipLabel: string) {
     subject: enemy,
     prompt: `decision.${kind}`,
     decider: { kind: 'investigator', investigatorId: alice },
-    forcedAttack: { enemyId: enemy, damage: 1, horror: 2 },
     options: [
       {
         id: 'attack',
         label: 'decision.attack',
-        commands: [],
+        commands: [
+          {
+            type: 'DealEnemyAttack',
+            enemyId: enemy,
+            investigatorId: alice,
+            damage: { answer: 'damage' },
+            horror: { answer: 'horror' },
+          },
+        ],
         amounts: { damage: { default: 1, min: 0 }, horror: { default: 2, min: 0 } },
       },
       { id: 'skip', label: skipLabel, commands: [] },
