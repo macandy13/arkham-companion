@@ -60,6 +60,8 @@
   --page-paper: radial-gradient(ellipse at center, var(--color-page) 55%, var(--color-page-shade));
   /* The page's frame (page_frame.svg): a double rule with notched corners. */
   --page-frame: url('./page_frame.svg');
+  /* Where the frame's corners end in page_frame.svg's 96-unit drawing, for `border-image-slice`. */
+  --page-frame-slice: 24;
   --page-frame-width: 1.5rem;
   /* The ornament under a page's title (ornament_rule.svg). */
   --page-ornament: url('./ornament_rule.svg');

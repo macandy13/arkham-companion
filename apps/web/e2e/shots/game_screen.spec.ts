@@ -19,3 +19,15 @@ test('map tabs for the Study and the house, the house chosen', async ({ page }) 
 
   await expect(page.getByRole('tabpanel', { name: 'House' })).toBeVisible();
 });
+
+test('the Hallway’s menu open over the board', { tag: '@shot' }, async ({ page }) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+
+  await page
+    .getByRole('figure', { name: 'House' })
+    .getByRole('group', { name: 'Hallway' })
+    .getByRole('button', { name: 'Edit Hallway' })
+    .click();
+
+  await expect(page.getByRole('dialog', { name: 'Hallway' })).toBeVisible();
+});

@@ -90,12 +90,16 @@ dialog {
   --color-surface: var(--color-page-surface);
 
   border: var(--page-frame-width) solid;
-  border-image: var(--page-frame) 24 / var(--page-frame-width) stretch;
+  border-image: var(--page-frame) var(--page-frame-slice) / var(--page-frame-width) stretch;
   background: var(--page-paper);
   color: var(--color-text);
 }
 
-/* A page's title stands over an ink ornament, as in the books. */
+/* A page's title stands centred over an ink ornament, as in the books. */
+#app > main:not(:has(#board)) > h1 {
+  text-align: center;
+}
+
 #app > main:not(:has(#board)) > h1::after {
   content: '';
   display: block;
@@ -104,10 +108,6 @@ dialog {
   margin: var(--space-2) auto 0;
   background: var(--color-page-rule);
   mask: var(--page-ornament) center / contain no-repeat;
-}
-
-#app > main:not(:has(#board)) > h1 {
-  text-align: center;
 }
 
 /* Dialogs share the page's shell, laid over a dimmed table. */
