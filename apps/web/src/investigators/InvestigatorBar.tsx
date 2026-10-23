@@ -73,61 +73,39 @@ function InvestigatorPanel({
       <dl>
         <Stat
           label={t('investigators.health')}
-          value={t('investigators.left', { left: health - damage, max: health })}
+          value={health - damage}
+          shown={t('investigators.left', { left: health - damage, max: health })}
         >
-          <Stepper
-            label={t('investigators.takeDamage')}
-            disabled={off}
-            onClick={() => adjust('damage', 1)}
-          >
-            −
-          </Stepper>
-          <Stepper
-            label={t('investigators.healDamage')}
-            disabled={off || damage === 0}
-            onClick={() => adjust('damage', -1)}
-          >
-            +
-          </Stepper>
+          <Steppers
+            lower={{ label: t('investigators.takeDamage'), disabled: off }}
+            raise={{ label: t('investigators.healDamage'), disabled: off || damage === 0 }}
+            onStep={(delta) => adjust('damage', -delta)}
+          />
         </Stat>
         <Stat
           label={t('investigators.sanity')}
-          value={t('investigators.left', { left: sanity - horror, max: sanity })}
+          value={sanity - horror}
+          shown={t('investigators.left', { left: sanity - horror, max: sanity })}
         >
-          <Stepper
-            label={t('investigators.takeHorror')}
-            disabled={off}
-            onClick={() => adjust('horror', 1)}
-          >
-            −
-          </Stepper>
-          <Stepper
-            label={t('investigators.healHorror')}
-            disabled={off || horror === 0}
-            onClick={() => adjust('horror', -1)}
-          >
-            +
-          </Stepper>
+          <Steppers
+            lower={{ label: t('investigators.takeHorror'), disabled: off }}
+            raise={{ label: t('investigators.healHorror'), disabled: off || horror === 0 }}
+            onStep={(delta) => adjust('horror', -delta)}
+          />
         </Stat>
-        <Stat label={t('investigators.clues')} value={String(investigator.clues)} />
-        <Stat label={t('investigators.resources')} value={String(investigator.resources)}>
-          <Stepper
-            label={t('investigators.spendResource')}
-            disabled={off || investigator.resources === 0}
-            onClick={() => adjust('resources', -1)}
-          >
-            −
-          </Stepper>
-          <Stepper
-            label={t('investigators.gainResource')}
-            disabled={off}
-            onClick={() => adjust('resources', 1)}
-          >
-            +
-          </Stepper>
+        <Stat label={t('investigators.clues')} value={investigator.clues} />
+        <Stat label={t('investigators.resources')} value={investigator.resources}>
+          <Steppers
+            lower={{
+              label: t('investigators.spendResource'),
+              disabled: off || investigator.resources === 0,
+            }}
+            raise={{ label: t('investigators.gainResource'), disabled: off }}
+            onStep={(delta) => adjust('resources', delta)}
+          />
         </Stat>
         {investigator.doom !== undefined && (
-          <Stat label={t('investigators.doom')} value={String(investigator.doom)} />
+          <Stat label={t('investigators.doom')} value={investigator.doom} />
         )}
       </dl>
     </section>
@@ -150,34 +128,69 @@ function statusLine(
   return location;
 }
 
-/** One counter of the panel: its name, its value and the steppers that change it (`children`). */
-function Stat({ label, value, children }: { label: string; value: string; children?: ReactNode }) {
+/**
+ * One counter of the panel: its name, its `value` (written as `shown` where the panel says more,
+ * such as health against its maximum) and its steppers (`children`).
+ */
+function Stat({
+  label,
+  value,
+  shown = String(value),
+  children,
+}: {
+  label: string;
+  value: number;
+  shown?: string;
+  children?: ReactNode;
+}) {
   return (
     <div>
       <dt>{label}</dt>
       <dd>
-        <data value={value}>{value}</data>
+        <data value={value}>{shown}</data>
         {children}
       </dd>
     </div>
   );
 }
 
-/** A small − or + button of a counter, named for what it does (`label`), since its sign alone does not say. */
-function Stepper({
-  label,
-  disabled,
-  onClick,
-  children,
-}: {
+/** What one stepper of a counter says it does (`label`), since its sign alone does not say. */
+interface StepperSide {
   label: string;
   disabled: boolean;
-  onClick: () => void;
-  children: string;
+}
+
+/**
+ * The − and + buttons of a counter. `onStep` gets −1 or +1 for the counter as shown, so health and
+ * sanity turn it around into damage and horror.
+ */
+function Steppers({
+  lower,
+  raise,
+  onStep,
+}: {
+  lower: StepperSide;
+  raise: StepperSide;
+  onStep: (delta: -1 | 1) => void;
 }) {
   return (
-    <button type="button" aria-label={label} disabled={disabled} onClick={onClick}>
-      {children}
-    </button>
+    <>
+      <button
+        type="button"
+        aria-label={lower.label}
+        disabled={lower.disabled}
+        onClick={() => onStep(-1)}
+      >
+        −
+      </button>
+      <button
+        type="button"
+        aria-label={raise.label}
+        disabled={raise.disabled}
+        onClick={() => onStep(1)}
+      >
+        +
+      </button>
+    </>
   );
 }

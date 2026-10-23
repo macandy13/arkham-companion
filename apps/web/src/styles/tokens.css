@@ -104,6 +104,8 @@
   --map-ghost-opacity: 0.6;
   /* A token with nothing on it (a location's clues once found) fades, so it reads as empty. */
   --token-empty-opacity: 0.45;
+  /* The panel of an investigator who has left the game (defeated or resigned) steps back. */
+  --eliminated-opacity: 0.55;
   /* The rim of a round piece or token: the enemy ring, the shroud's bone edge. */
   --piece-ring-width: 3px;
 }
