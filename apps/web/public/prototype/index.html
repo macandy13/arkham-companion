@@ -180,6 +180,40 @@
         font-weight: 700;
         font-variant-numeric: tabular-nums;
       }
+      .bigtok {
+        position: absolute;
+        top: 60%;
+        transform: translate(-50%, -50%);
+        width: calc(var(--hc-h) * 0.56);
+        aspect-ratio: 1;
+        border-radius: 50%;
+        display: grid;
+        place-content: center;
+        text-align: center;
+        line-height: 0.95;
+        z-index: 2;
+        pointer-events: none;
+        font-family: var(--font-display);
+        font-size: calc(var(--hc-h) * 0.3);
+        color: #fff;
+        box-shadow:
+          0 3px 10px rgba(0, 0, 0, 0.75),
+          inset 0 0 0 2px rgba(255, 255, 255, 0.35);
+      }
+      .bigtok small {
+        font-family: var(--font-ui);
+        font-size: max(9px, calc(var(--hc-h) * 0.1));
+        font-weight: 700;
+        opacity: 0.9;
+      }
+      .bigtok.doom {
+        left: 75%;
+        background: radial-gradient(circle at 35% 30%, #d9625c, var(--doom) 60%, #6e1f1c);
+      }
+      .bigtok.clue {
+        left: 25%;
+        background: radial-gradient(circle at 35% 30%, #6cc3dc, var(--clue) 60%, #1d5566);
+      }
       .plate .count {
         display: flex;
         align-items: center;
@@ -849,6 +883,116 @@
       }
       .inv.defeated {
         opacity: 0.55;
+      }
+      .inv-top {
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+        gap: 10px;
+        align-items: start;
+      }
+      /* The investigator card with its threat area laid on top, like cards placed over it on the table. */
+      .invcard {
+        position: relative;
+        aspect-ratio: 7 / 5;
+        border-radius: 8px;
+        margin-bottom: 14px;
+      }
+      .invface {
+        position: absolute;
+        inset: 0;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow:
+          0 0 0 1px var(--brass-dim),
+          0 6px 14px rgba(0, 0, 0, 0.6);
+      }
+      .invcard > .hit {
+        position: absolute;
+        inset: 0;
+        border: 0;
+        padding: 0;
+        background: none;
+        cursor: zoom-in;
+      }
+      .overlay {
+        position: absolute;
+        left: 6px;
+        right: 6px;
+        bottom: -14px;
+        display: flex;
+        align-items: flex-end;
+        gap: 0;
+        z-index: 2;
+        pointer-events: none;
+      }
+      .overlay > * {
+        pointer-events: auto;
+        margin-right: -8px;
+      }
+      .overlay .mini {
+        width: 34%;
+        max-width: 64px;
+        transform: rotate(-4deg);
+      }
+      .overlay .mini:nth-child(even) {
+        transform: rotate(5deg);
+      }
+      .overlay .pawn {
+        width: 30%;
+        max-width: 46px;
+        margin-left: auto;
+      }
+      .overlay .mini + .pawn {
+        margin-left: auto;
+      }
+      .inv-side {
+        display: grid;
+        gap: 6px;
+        align-content: start;
+        min-width: 0;
+      }
+      .turnrow {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+      }
+      .actrow {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 4px;
+      }
+      .act {
+        height: 38px;
+        border-radius: 8px;
+        border: 1px solid var(--brass-dim);
+        background: rgba(16, 30, 26, 0.9);
+        cursor: pointer;
+        display: grid;
+        place-items: center;
+        padding: 0;
+      }
+      .act svg {
+        width: 20px;
+        height: 20px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .act:disabled {
+        opacity: 0.35;
+        cursor: default;
+      }
+      .act.end {
+        height: 28px;
+        padding: 0 10px;
+        font-size: 13px;
+        font-weight: 700;
+        background: var(--brass);
+        color: var(--ink);
+        border-color: var(--brass);
       }
       .inv-head {
         display: grid;
@@ -1880,6 +2024,13 @@
 
       /* ================= Rendering ================= */
       const ICON = {
+        investigate:
+          '<svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="M14.5 14.5L20 20"/></svg>',
+        move: '<svg viewBox="0 0 24 24"><path d="M4 12h14M13 6l6 6-6 6"/></svg>',
+        fight:
+          '<svg viewBox="0 0 24 24"><path d="M5 19L17 7M17 7V3h4v4h-4M8 13l3 3M4 20l2-2"/></svg>',
+        evade:
+          '<svg viewBox="0 0 24 24"><path d="M3 8h9a3 3 0 1 0-3-3M3 13h14a3 3 0 1 1-3 3M3 18h6"/></svg>',
         pencil:
           '<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>',
         undo: '<svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>',
@@ -1919,16 +2070,17 @@
     <div class="slot"><span class="slot-label">Agenda ${ag.stage}</span>
       <div class="hcard landscape">${face(S.agenda.code, false, { small: true })}
         <button class="hit" data-zoom="agenda" aria-label="Agenda: ${esc(ag.name)}"></button>
-        <div class="plate"><button class="cbtn adj" data-act="doom-" aria-label="Remove doom">−</button>
-          <span class="count"><span class="tok doom">${S.agenda.doom}</span>/ ${ag.doom}</span>
-          <button class="cbtn adj" data-act="doom+" aria-label="Add doom">+</button></div></div></div>
+        <span class="bigtok doom" aria-label="${S.agenda.doom} of ${ag.doom} doom">${S.agenda.doom}<small>of ${ag.doom}</small></span>
+        ${ui.edit ? `<div class="plate"><button class="cbtn" data-act="doom-" aria-label="Remove doom">−</button><button class="cbtn" data-act="doom+" aria-label="Add doom">+</button></div>` : ''}</div></div>
     <div class="slot"><span class="slot-label">Act ${ac.stage}</span>
       <div class="hcard landscape">${face(S.act.code, false, { small: true })}
         <button class="hit" data-zoom="act" aria-label="Act: ${esc(ac.name)}"></button>
-        <div class="plate"><button class="cbtn adj" data-act="actclue-" aria-label="Remove a clue from the act">−</button>
-          <span class="count"><span class="tok clue">${S.act.clues}</span>${need == null ? '' : '/ ' + need}</span>
-          <button class="cbtn adj" data-act="actclue+" aria-label="Add a clue to the act">+</button>
-          ${ui.edit ? '' : `<button class="cbtn go" data-act="advance-act" ${need != null && S.act.clues >= need ? '' : 'disabled'}>Advance</button>`}</div></div></div>
+        <span class="bigtok clue" aria-label="${S.act.clues}${need == null ? '' : ` of ${need}`} clues">${S.act.clues}${need == null ? '' : `<small>of ${need}</small>`}</span>
+        <div class="plate">${
+          ui.edit
+            ? `<button class="cbtn" data-act="actclue-" aria-label="Remove a clue from the act">−</button><button class="cbtn" data-act="actclue+" aria-label="Add a clue to the act">+</button>`
+            : `<span></span><button class="cbtn go" data-act="advance-act" ${need != null && S.act.clues >= need ? '' : 'disabled'}>Advance</button>`
+        }</div></div></div>
     <div class="slot"><span class="slot-label">Scenario</span>
       <div class="hcard portrait">${face('01104', false, { small: true })}
         <button class="hit" data-zoom="scenario" aria-label="Scenario reference card"></button></div></div>`;
@@ -2031,35 +2183,35 @@
                 : i.done
                   ? `Turn done · ${where}`
                   : where;
+            const action = (kind, label, enabled) =>
+              `<button class="act" data-do="${kind}" data-inv="${i.id}" aria-label="${label}" title="${label}" ${enabled ? '' : 'disabled'}>${ICON[kind]}</button>`;
             return `<section class="inv ${isTurn ? 'turn' : ''} ${i.defeated ? 'defeated' : ''}" aria-label="${esc(i.name)}">
-      <div class="inv-head">${pawnHtml('inv', i.code, `data-zoom-inv="${i.id}"`)}
-        <div><div class="inv-name">${esc(i.name)}</div><div class="inv-sub">${esc(status)}</div></div>
-        ${isTurn ? `<div class="pips" aria-label="${i.actions} actions left">${[0, 1, 2].map((n) => `<i class="${n < i.actions ? 'on' : ''}"></i>`).join('')}</div>` : '<span></span>'}</div>
+      <div class="inv-top">
+        <div class="invcard"><div class="invface">${face(i.code, false, { small: true })}</div>
+          <button class="hit" data-zoom-inv="${i.id}" aria-label="${esc(i.name)}"></button>
+          ${
+            engaged.length || i.threat.length
+              ? `<div class="overlay" aria-label="Threat area">
+            ${i.threat.map((t) => `<button class="mini" data-card="${t}" aria-label="${esc(C[t].name)}">${face(t, false, { small: true })}</button>`).join('')}
+            ${engaged.map((e) => pawnHtml('enemy', e.code, `data-enemy="${e.uid}"`, e.exhausted ? 'exhausted' : '')).join('')}</div>`
+              : ''
+          }</div>
+        <div class="inv-side">
+          <div class="inv-name">${esc(i.name)}</div><div class="inv-sub">${esc(status)}</div>
+          ${
+            isTurn
+              ? `<div class="turnrow"><div class="pips" aria-label="${i.actions} actions left">${[0, 1, 2].map((n) => `<i class="${n < i.actions ? 'on' : ''}"></i>`).join('')}</div>
+            <button class="act end" data-do="end" data-inv="${i.id}" aria-label="End turn" title="End turn">End</button></div>
+            <div class="actrow">${action('investigate', 'Investigate', can && S.locations[i.loc].clues)}${action('move', 'Move', can)}${action('fight', 'Fight', can && here.length)}${action('evade', 'Evade', can && engaged.length)}</div>`
+              : `<p class="waiting">${ui.edit ? 'Adjusting: change any counter, then Done.' : S.phase === 'investigation' ? (i.done ? 'Waiting for the round to end.' : 'Up after the current investigator.') : `${PHASE_NAME[S.phase]} phase.`}</p>`
+          }
+        </div></div>
       <div class="stats">
         ${stat(i, 'health', 'Health', i.health - i.damage, i.health, 'damage')}
         ${stat(i, 'sanity', 'Sanity', i.sanity - i.horror, i.sanity, 'horror')}
         ${stat(i, 'clue', 'Clues', i.clues, null, 'clues')}
         ${stat(i, 'res', 'Res.', i.resources, null, 'resources')}
       </div>
-      ${
-        engaged.length || i.threat.length
-          ? `<span class="zone-label">Threat area</span><div class="threat">
-        ${engaged.map((e) => `<span class="threat-item">${pawnHtml('enemy', e.code, `data-enemy="${e.uid}"`, e.exhausted ? 'exhausted' : '')}${esc(C[e.code].name)}</span>`).join('')}
-        ${i.threat.map((t) => `<span class="threat-item"><button class="mini" data-card="${t}" aria-label="${esc(C[t].name)}">${face(t, false, { small: true })}</button>${esc(C[t].name)}</span>`).join('')}</div>`
-          : ''
-      }
-      ${
-        i.defeated
-          ? ''
-          : isTurn
-            ? `<div class="acts">
-        <button class="btn" data-do="investigate" data-inv="${i.id}" ${can && S.locations[i.loc].clues ? '' : 'disabled'}>Investigate</button>
-        <button class="btn" data-do="move" data-inv="${i.id}" ${can ? '' : 'disabled'}>Move</button>
-        <button class="btn" data-do="fight" data-inv="${i.id}" ${can && here.length ? '' : 'disabled'}>Fight</button>
-        <button class="btn" data-do="evade" data-inv="${i.id}" ${can && engaged.length ? '' : 'disabled'}>Evade</button>
-        <button class="btn end" data-do="end" data-inv="${i.id}">End turn</button></div>`
-            : `<p class="waiting">${ui.edit ? 'Adjusting: change any counter, then Done.' : S.phase === 'investigation' ? (i.done ? 'Waiting for the round to end.' : 'Up after the current investigator.') : `${PHASE_NAME[S.phase]} phase: the app handles the encounter side.`}</p>`
-      }
     </section>`;
           })
           .join('');
