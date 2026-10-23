@@ -13,6 +13,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       workbox: {
         navigateFallbackAllowlist: [appShellNavigation(base)],
+        // Fonts and the playmat drawings are part of the app shell, so the PWA looks the same offline.
+        globPatterns: ['**/*.{js,css,html,woff2,svg}'],
         runtimeCaching: [cardImageCaching],
       },
       manifest: {

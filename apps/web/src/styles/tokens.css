@@ -37,9 +37,8 @@
   --space-5: 2.5rem;
 
   /*
-   * Display type for names and labels, and the UI type for everything else. IM Fell English SC
-   * and Alegreya Sans are the playmat's fonts; until they are self-hosted, a device without them
-   * falls back to the serif and sans-serif after them.
+   * Display type for names and labels, and the UI type for everything else: the playmat's fonts,
+   * IM Fell English SC and Alegreya Sans (OFL), self-hosted through `@fontsource` (App.tsx).
    */
   --font-family: 'Alegreya Sans', 'Segoe UI', system-ui, sans-serif;
   --font-family-display: 'IM Fell English SC', 'IM Fell English', Georgia, serif;
