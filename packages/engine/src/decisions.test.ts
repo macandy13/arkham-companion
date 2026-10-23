@@ -22,6 +22,7 @@ import {
   type InvestigatorId,
   type Zone,
 } from './index';
+import { requireInvestigator } from './investigators';
 import { answer, rejectionFrom, stateAfter, withPendingDecisions } from '../test/utils';
 
 const alice = investigatorId('alice');
@@ -237,6 +238,70 @@ describe('pending decisions', () => {
     });
 
     expect(rejection).toEqual({ code: 'invalidDecisionOptions', decisionId: 'pick_reward' });
+  });
+});
+
+describe('counts the answer confirms', () => {
+  const { context, state: aliceInHall } = hallWithAlice.start();
+  /** "Take 2 horror", which the players may lower; the option's command takes the answered horror. */
+  const takeHorror: Decision = {
+    id: decisionId('take_horror'),
+    kind: 'confirm',
+    prompt: 'decision.takeHorror',
+    decider: { kind: 'investigator', investigatorId: alice },
+    options: [
+      {
+        id: 'take',
+        label: 'Take horror',
+        commands: [
+          {
+            type: 'AdjustInvestigator',
+            investigatorId: alice,
+            stat: 'horror',
+            delta: { answer: 'horror' },
+          },
+        ],
+        amounts: { horror: { default: 2, min: 0 } },
+      },
+      {
+        id: 'take_unranged',
+        label: 'Take horror without a range',
+        commands: [
+          {
+            type: 'AdjustInvestigator',
+            investigatorId: alice,
+            stat: 'horror',
+            delta: { answer: 'horror' },
+          },
+        ],
+      },
+    ],
+  };
+  const asked = stateAfter(context, aliceInHall, { type: 'RequestDecision', decision: takeHorror });
+
+  it.each([
+    { name: 'the answered count', amounts: { horror: 1 }, horror: 1 },
+    { name: 'the default when the answer leaves it out', amounts: undefined, horror: 2 },
+  ])('fills in $name', ({ amounts, horror }) => {
+    const after = stateAfter(context, asked, {
+      type: 'ResolveDecision',
+      decisionId: decisionId('take_horror'),
+      optionId: 'take',
+      ...(amounts ? { amounts } : {}),
+    });
+
+    expect(requireInvestigator(after, alice).sanity.horror).toBe(horror);
+  });
+
+  it('rejects an option that names a count without a range for it', () => {
+    const rejection = rejectionFrom(context, asked, answer('take_horror', 'take_unranged'));
+
+    expect(rejection).toEqual({
+      code: 'amountNotAdjustable',
+      decisionId: 'take_horror',
+      optionId: 'take_unranged',
+      name: 'horror',
+    });
   });
 });
 

@@ -1,20 +1,29 @@
 import type { EngineContext } from './cards';
 import type { Command, RequestDecision, ResolveDecision } from './commands';
 import type { DecisionRequested, DecisionResolved, SkillTestResolved } from './events';
-import type { InstanceId, InvestigatorId } from './ids';
+import type { DecisionId, InstanceId, InvestigatorId } from './ids';
 import { isActiveInvestigator } from './investigators';
 import { CommandRejected } from './rejection';
 import { withSuggestion } from './skill_modifiers';
+import { NAMED_AMOUNTS } from './state';
 import type {
   AmountRange,
+  AnswerableCommand,
+  AnsweredAmount,
   Decider,
   Decision,
   DecisionOption,
   GameState,
+  NamedAmount,
   PerPointFailed,
   SkillTest,
   SkillTestOutcome,
 } from './state';
+
+/** The pending decision with `id`, if it is still open (`GameState.pending`). */
+export function pendingDecision(state: GameState, id: DecisionId): Decision | undefined {
+  return state.pending.find((pending) => pending.id === id);
+}
 
 /**
  * A `DecisionRequested` for `decision`, unless one with this id is already open.
@@ -62,7 +71,7 @@ export function handleResolveDecision(
     decisionId: command.decisionId,
     optionId: command.optionId,
   };
-  const decision = state.pending.find((pending) => pending.id === command.decisionId);
+  const decision = pendingDecision(state, command.decisionId);
   return decision?.skillTest
     ? [resolved, skillTestResolved(decision, decision.skillTest, command)]
     : [resolved];
@@ -95,7 +104,7 @@ function skillTestResolved(
  */
 function checkMargin(state: GameState, command: ResolveDecision): void {
   if (command.margin === undefined) return;
-  const decision = state.pending.find((pending) => pending.id === command.decisionId);
+  const decision = pendingDecision(state, command.decisionId);
   if (!decision?.skillTest)
     throw new CommandRejected({ code: 'marginNotApplicable', decisionId: command.decisionId });
   if (!Number.isInteger(command.margin) || command.margin < 0)
@@ -126,7 +135,7 @@ export function answerCommands(state: GameState, command: Command): readonly Com
  * answer confirms, as damage or horror on the tested investigator.
  */
 function perPointCommands(state: GameState, command: ResolveDecision): Command[] {
-  const decision = state.pending.find((pending) => pending.id === command.decisionId);
+  const decision = pendingDecision(state, command.decisionId);
   const margin = decision && perPointMargin(decision, command);
   if (!decision?.perPointFailed || !margin || decision.decider.kind !== 'investigator') return [];
   const { investigatorId } = decision.decider;
@@ -146,28 +155,61 @@ function perPointMargin(decision: Decision, command: ResolveDecision): number | 
 }
 
 /**
- * The chosen option's commands, with the named amounts the answer gives. The
- * plain `amount` is only checked here: the decision's resolver reads it
- * (`testedActionCommands`).
+ * The chosen option's commands, with the counts the answer confirms filled
+ * in (`AnsweredAmount`). The plain `amount` is only checked here: the
+ * decision's resolver reads it (`testedActionCommands`).
  */
-function optionCommands(state: GameState, command: ResolveDecision): readonly Command[] {
+function optionCommands(state: GameState, command: ResolveDecision): Command[] {
   const option = chosenOption(state, command);
   if (command.amount !== undefined) checkAmount(command, option.amount, command.amount);
-  return Object.entries(command.amounts ?? {}).reduce(
-    (commands, [name, amount]) =>
-      replaceField(commands, name, confirmedAmount(command, option.amounts?.[name], amount, name)),
-    option.commands,
-  );
+  for (const name of NAMED_AMOUNTS) {
+    const amount = command.amounts?.[name];
+    if (amount !== undefined) checkAmount(command, option.amounts?.[name], amount, name);
+  }
+  return option.commands.map((cmd) => withAnsweredAmounts(cmd, option, command));
 }
 
-/** A named amount (`DecisionOption.amounts`), checked like the plain one (`checkAmount`). */
-function confirmedAmount(
+/**
+ * `cmd` with each `AnsweredAmount` replaced by the answer's count of that
+ * name, or the option's default for it.
+ */
+function withAnsweredAmounts(
+  cmd: AnswerableCommand,
+  option: DecisionOption,
   command: ResolveDecision,
-  range: AmountRange | undefined,
-  amount: number,
-  name: string,
+): Command {
+  const filled = Object.fromEntries(
+    Object.entries(cmd).map(([field, value]) => [
+      field,
+      isAnsweredAmount(value) ? answeredAmount(value.answer, option, command) : value,
+    ]),
+  );
+  // Only `AnsweredAmount` values were replaced, each by a number, so `filled` is the command without them.
+  return filled as Command;
+}
+
+function isAnsweredAmount(value: unknown): value is AnsweredAmount {
+  return typeof value === 'object' && value !== null && 'answer' in value;
+}
+
+/**
+ * The count `name` the answer confirms, or the option's default for it. An
+ * option that names a count without a range for it cannot be answered
+ * (`amountNotAdjustable`).
+ */
+function answeredAmount(
+  name: NamedAmount,
+  option: DecisionOption,
+  command: ResolveDecision,
 ): number {
-  checkAmount(command, range, amount, name);
+  const amount = command.amounts?.[name] ?? option.amounts?.[name]?.default;
+  if (amount === undefined)
+    throw new CommandRejected({
+      code: 'amountNotAdjustable',
+      decisionId: command.decisionId,
+      optionId: option.id,
+      name,
+    });
   return amount;
 }
 
@@ -179,7 +221,7 @@ function checkAmount(
   command: ResolveDecision,
   range: AmountRange | undefined,
   amount: number,
-  name?: string,
+  name?: NamedAmount,
 ): void {
   const where = {
     decisionId: command.decisionId,
@@ -197,11 +239,6 @@ function checkAmount(
     });
 }
 
-/** `commands` with `field` set to `value` in each command that has such a field. */
-function replaceField(commands: readonly Command[], field: string, value: number): Command[] {
-  return commands.map((cmd) => (field in cmd ? { ...cmd, [field]: value } : cmd));
-}
-
 function inRange(amount: number, range: AmountRange): boolean {
   return (
     Number.isInteger(amount) &&
@@ -211,7 +248,7 @@ function inRange(amount: number, range: AmountRange): boolean {
 }
 
 function chosenOption(state: GameState, command: ResolveDecision): DecisionOption {
-  const decision = state.pending.find((pending) => pending.id === command.decisionId);
+  const decision = pendingDecision(state, command.decisionId);
   if (!decision)
     throw new CommandRejected({ code: 'unknownDecision', decisionId: command.decisionId });
   if (command.answeredBy !== undefined && !mayAnswer(state, decision.decider, command.answeredBy))

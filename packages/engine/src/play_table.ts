@@ -10,6 +10,7 @@ import {
 } from './card_matchers';
 import { type EngineContext, type ScenarioContext } from './cards';
 import type { Command } from './commands';
+import { pendingDecision } from './decisions';
 import { describeDecision, optionNamed } from './describe_decision';
 import type { Event } from './events';
 import { formatBoard } from './format_board';
@@ -559,7 +560,7 @@ export class PlayTable {
       if (amount !== undefined) throw this.error('an open test has no count to confirm yet');
       return;
     }
-    const decision = this.current.pending.find((pending) => pending.id === id);
+    const decision = pendingDecision(this.current, decisionId(id));
     if (!decision)
       throw this.error(
         `no skill test ${id} is open; attacks of opportunity come first: take them with takeAttackOfOpportunity, then resolveTest`,

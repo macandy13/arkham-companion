@@ -77,8 +77,8 @@ describe('attacks of opportunity', () => {
                 type: 'DealEnemyAttack',
                 enemyId: ghoul,
                 investigatorId: alice,
-                damage: 1,
-                horror: 2,
+                damage: { answer: 'damage' },
+                horror: { answer: 'horror' },
               },
             ],
             amounts: { damage: { default: 1, min: 0 }, horror: { default: 2, min: 0 } },
@@ -130,6 +130,25 @@ describe('attacks of opportunity', () => {
       name: 'damage',
       amount: -1,
       min: 0,
+    });
+  });
+
+  it('rejects counts for the skip answer, which deals nothing to lower', () => {
+    const { context, state: started } = ghoulOnAlice.withTurnOf(alice).start();
+    const state = stateAfter(context, started, moveToCellar);
+
+    expect(
+      rejectionFrom(context, state, {
+        type: 'ResolveDecision',
+        decisionId: ghoulAttack,
+        optionId: 'skip',
+        amounts: { horror: 0 },
+      }),
+    ).toEqual({
+      code: 'amountNotAdjustable',
+      decisionId: ghoulAttack,
+      optionId: 'skip',
+      name: 'horror',
     });
   });
 

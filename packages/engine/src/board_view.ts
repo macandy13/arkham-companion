@@ -26,6 +26,7 @@ import {
 import { cardsInZone, cardsOfType, currentCard } from './lookup';
 import { mapLocations, type Edge, type GameMap, type GridCell } from './map';
 import { attacksStillDue } from './phases';
+import { NAMED_AMOUNTS } from './state';
 import type {
   CardInstance,
   Decision,
@@ -572,7 +573,10 @@ function decisionView(ctx: EngineContext, state: GameState, decision: Decision):
       const counts = {
         ...(option.amount ? { amount: option.amount.default } : {}),
         ...Object.fromEntries(
-          Object.entries(option.amounts ?? {}).map(([name, range]) => [name, range.default]),
+          NAMED_AMOUNTS.flatMap((name) => {
+            const range = option.amounts?.[name];
+            return range ? [[name, range.default]] : [];
+          }),
         ),
       };
       return Object.keys(counts).length > 0 ? [[optionName(option), counts]] : [];

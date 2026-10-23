@@ -4,6 +4,7 @@ import type { CardStats, EngineContext } from './cards';
 import type { Command, Evade, Fight, Investigate, TestSkill } from './commands';
 import {
   answerOutcome,
+  pendingDecision,
   requestDecision,
   skillTestDecision,
   type SkillTestOutcomes,
@@ -168,7 +169,7 @@ export function testedActionCommands(
   command: Command,
 ): Command[] {
   if (command.type !== 'ResolveDecision') return [];
-  const decision = state.pending.find((pending) => pending.id === command.decisionId);
+  const decision = pendingDecision(state, command.decisionId);
   if (!decision?.testKind || decision.decider.kind !== 'investigator') return [];
   const investigator = activeInvestigator(state, decision.decider.investigatorId);
   const answer: TestAnswer = {

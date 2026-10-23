@@ -1,5 +1,5 @@
 import { cardStats, type CardStats, type EngineContext } from './cards';
-import type { DealEnemyAttack, RequestDecision } from './commands';
+import type { RequestDecision } from './commands';
 import { decisionId, type InstanceId, type InvestigatorId } from './ids';
 import { requireCard } from './lookup';
 import { hasKeyword } from './keywords';
@@ -41,13 +41,6 @@ export function forcedAttackDecision(
   investigatorId: InvestigatorId,
 ): Decision {
   const { damage = 0, horror = 0 } = cardStats(ctx.cards, requireCard(state.cards, enemyId).code);
-  const attack: DealEnemyAttack = {
-    type: 'DealEnemyAttack',
-    enemyId,
-    investigatorId,
-    damage,
-    horror,
-  };
   return {
     id: decisionId(`${kind}:${enemyId}`),
     kind: 'confirm',
@@ -58,7 +51,15 @@ export function forcedAttackDecision(
       {
         id: 'attack',
         label: 'decision.attack',
-        commands: [attack],
+        commands: [
+          {
+            type: 'DealEnemyAttack',
+            enemyId,
+            investigatorId,
+            damage: { answer: 'damage' },
+            horror: { answer: 'horror' },
+          },
+        ],
         amounts: { damage: { default: damage, min: 0 }, horror: { default: horror, min: 0 } },
       },
       { id: 'skip', label: SKIP_LABELS[kind], commands: [] },

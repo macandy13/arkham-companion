@@ -6,6 +6,7 @@ import {
   type InvestigatorId,
   type InvestigatorStat,
   type PlayTable,
+  type ResolveDecision,
   type TokenKind,
 } from '@arkham/engine';
 import { assertNever } from '@arkham/util';
@@ -21,7 +22,7 @@ export interface DecisionAmounts {
   /** For an option with one `amount` range. */
   amount?: number;
   /** For an option with named ranges, such as an attack's `damage` and `horror`. */
-  amounts?: Readonly<Record<string, number>>;
+  amounts?: ResolveDecision['amounts'];
 }
 
 /**
