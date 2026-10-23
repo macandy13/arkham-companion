@@ -36,7 +36,8 @@ import type { GameBuilder } from './game_builder';
 
 /**
  * How the players report a skill test they resolve at the table: it passes,
- * fails, or fails by `failedBy` (the margin a card such as a treachery reads).
+ * fails, or fails by `failedBy` (sent as the fail answer's `margin`, which a
+ * per-point test deals).
  */
 export type SkillTestResult = 'pass' | 'fail' | { failedBy: number };
 
@@ -567,14 +568,12 @@ export class PlayTable {
   }
 
   /**
-   * `result` as the answer to a test: a margin is its own `failedBy:<n>`
-   * option on a test that has such options (an unknown margin is then an
-   * error), otherwise the fail answer's `margin`.
+   * `result` as the answer to a test: `pass`, `fail`, or a fail with the
+   * `margin` it failed by.
    */
   private resolveTestDecision(decision: Decision, result: SkillTestResult, amount?: number): void {
-    const hasMarginOptions = decision.options.some((option) => option.id.startsWith('failedBy:'));
-    if (typeof result === 'string' || hasMarginOptions) {
-      this.resolve(decision, testOptionId(result), amount);
+    if (typeof result === 'string') {
+      this.resolve(decision, result, amount);
       return;
     }
     this.play({
@@ -623,11 +622,6 @@ export class PlayTable {
   private error(message: string): TableError {
     return new TableError(message, this.formatted());
   }
-}
-
-/** The id of the option of a `skillTestResult` decision that reports `result` (see `skillTestDecision`). */
-function testOptionId(result: SkillTestResult): string {
-  return typeof result === 'string' ? result : `failedBy:${result.failedBy}`;
 }
 
 /**

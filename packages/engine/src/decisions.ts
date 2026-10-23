@@ -74,11 +74,7 @@ function skillTestResolved(
   skillTest: SkillTest,
   command: ResolveDecision,
 ): SkillTestResolved {
-  // A `failedBy:<n>` option names its own margin and wins over the answer's; slice 3 of the
-  // skill test rework replaces those options by the margin alone.
-  const margin = command.optionId.startsWith(FAILED_BY)
-    ? Number(command.optionId.slice(FAILED_BY.length))
-    : (command.margin ?? perPointMargin(decision, command));
+  const margin = command.margin ?? perPointMargin(decision, command);
   return {
     type: 'SkillTestResolved',
     decisionId: decision.id,
@@ -149,34 +145,42 @@ function perPointMargin(decision: Decision, command: ResolveDecision): number | 
   return command.margin ?? 1;
 }
 
-/** The chosen option's commands, with the confirmed amount and named amounts if the answer gives them. */
+/**
+ * The chosen option's commands, with the named amounts the answer gives. The
+ * plain `amount` is only checked here: the decision's resolver reads it
+ * (`testedActionCommands`).
+ */
 function optionCommands(state: GameState, command: ResolveDecision): readonly Command[] {
   const option = chosenOption(state, command);
-  const withAmount =
-    command.amount === undefined
-      ? option.commands
-      : replaceField(
-          option.commands,
-          'amount',
-          confirmedAmount(command, option.amount, command.amount),
-        );
+  if (command.amount !== undefined) checkAmount(command, option.amount, command.amount);
   return Object.entries(command.amounts ?? {}).reduce(
     (commands, [name, amount]) =>
       replaceField(commands, name, confirmedAmount(command, option.amounts?.[name], amount, name)),
-    withAmount,
+    option.commands,
   );
 }
 
-/**
- * `amount`, checked against the option's `range` for it; `name` is set for a
- * named amount (`DecisionOption.amounts`) and absent for the plain `amount`.
- */
+/** A named amount (`DecisionOption.amounts`), checked like the plain one (`checkAmount`). */
 function confirmedAmount(
   command: ResolveDecision,
   range: AmountRange | undefined,
   amount: number,
-  name?: string,
+  name: string,
 ): number {
+  checkAmount(command, range, amount, name);
+  return amount;
+}
+
+/**
+ * Rejects `amount` unless the option has a `range` for it that holds it;
+ * `name` is set for a named amount and absent for the plain `amount`.
+ */
+function checkAmount(
+  command: ResolveDecision,
+  range: AmountRange | undefined,
+  amount: number,
+  name?: string,
+): void {
   const where = {
     decisionId: command.decisionId,
     optionId: command.optionId,
@@ -191,7 +195,6 @@ function confirmedAmount(
       min: range.min,
       ...(range.max === undefined ? {} : { max: range.max }),
     });
-  return amount;
 }
 
 /** `commands` with `field` set to `value` in each command that has such a field. */
@@ -251,17 +254,9 @@ export function confirmOptions(onYes: Command[], target?: InstanceId): DecisionO
   ];
 }
 
-/** Option id prefix of a "failed by <n>" answer (`SkillTestOutcomes.failedBy`). */
-const FAILED_BY = 'failedBy:';
-
 /** What follows each outcome of a skill test. */
 export interface SkillTestOutcomes {
   onPass: Command[];
-  /**
-   * Makes the pass a count the players confirm (clues discovered, damage
-   * dealt): `onPass` is written for its default (see `DecisionOption.amount`).
-   */
-  passAmount?: AmountRange;
   onFail: Command[];
   /**
    * "For each point you fail by": the tester takes 1 damage or horror per
@@ -269,19 +264,12 @@ export interface SkillTestOutcomes {
    * `SkillTestResolved.margin` records it.
    */
   perPointFailed?: PerPointFailed;
-  /**
-   * Consequences that depend on how much the test failed by (`failedBy[2]`
-   * for "failed by 2"). Not combined with `perPointFailed`, whose margin is a
-   * count on the plain fail option instead. Commands are plain data, so each margin the card cares
-   * about gets its own option next to the plain "fail" option.
-   */
-  failedBy?: Readonly<Record<number, Command[]>>;
 }
 
 /**
  * A `skillTestResult` decision: the players resolve `test` at the table and
- * answer with `pass`, `fail` or `failedBy:<n>`; the matching commands are the
- * consequence. Used by the investigate, fight and evade actions, by
+ * answer with `pass` or `fail`, and how much by (`ResolveDecision.margin`);
+ * the matching commands are the consequence. Used by the investigate, fight and evade actions, by
  * revelation tests and by card abilities (`TestSkill`).
  */
 export function skillTestDecision(
@@ -289,28 +277,13 @@ export function skillTestDecision(
   outcomes: SkillTestOutcomes,
 ): Decision {
   const { test, ...rest } = decision;
-  const margins = Object.entries(outcomes.failedBy ?? {}).map(([margin, commands]) => ({
-    id: `${FAILED_BY}${margin}`,
-    label: 'decision.failedBy',
-    commands,
-  }));
   return {
     ...rest,
     kind: 'skillTestResult',
     skillTest: test,
     options: [
-      {
-        id: 'pass',
-        label: 'decision.pass',
-        commands: outcomes.onPass,
-        ...(outcomes.passAmount ? { amount: outcomes.passAmount } : {}),
-      },
-      {
-        id: 'fail',
-        label: 'decision.fail',
-        commands: outcomes.onFail,
-      },
-      ...margins,
+      { id: 'pass', label: 'decision.pass', commands: outcomes.onPass },
+      { id: 'fail', label: 'decision.fail', commands: outcomes.onFail },
     ],
     ...(outcomes.perPointFailed ? { perPointFailed: outcomes.perPointFailed } : {}),
   };

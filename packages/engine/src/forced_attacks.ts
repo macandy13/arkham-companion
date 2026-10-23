@@ -75,9 +75,8 @@ export type KeywordAttackKind = Extract<ForcedAttackKind, 'retaliate' | 'alert'>
  * keyword, and after the test's other results, the enemy attacks that
  * investigator, engaged with them or not. The 2026 Core rulebook requires a
  * ready enemy for both; the older Rules Reference text leaves it out for
- * alert. Belongs at the end of the test's fail commands. Readiness is read
- * when the test starts: nothing but a `ManualAdjust` can change it while the
- * test is pending.
+ * alert. Belongs at the end of the test's fail commands, which are computed
+ * as the answer arrives (`testedActionCommands`), so readiness is read then.
  */
 export function keywordAttackCommands(
   ctx: EngineContext,

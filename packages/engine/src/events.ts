@@ -333,7 +333,7 @@ export interface SkillTestResolved {
   outcome: SkillTestOutcome;
   /**
    * How much the test succeeded or failed by, when the answer says: its
-   * `margin`, a `failedBy:<n>` option, or the 1 a per-point fail
+   * `margin`, or the 1 a per-point fail
    * (`Decision.perPointFailed`) deals without one.
    */
   margin?: number;
