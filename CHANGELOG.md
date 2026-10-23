@@ -2,6 +2,39 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [1.8.1](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v1.8.0...arkham-companion-v1.8.1) (2026-10-23)
+
+
+### Features
+
+* **engine:** pass each card side's picture path to the board views (M3.10c1) ([be3fde9](https://github.com/macandy13/arkham-companion/commit/be3fde97ff7a2b54dff736360a8fcf065e22f5aa))
+* **engine:** pass each card side's picture path to the board views (M3.10c1) ([28c45e4](https://github.com/macandy13/arkham-companion/commit/28c45e4e2edcbadb9858c1f3bb6a8ce4b1e2854c))
+* **web:** add the unofficial fan project notice to the settings (M3.10d) ([2c829aa](https://github.com/macandy13/arkham-companion/commit/2c829aab1a8effbc531c02d0aabc9a1d5f413b36))
+* **web:** add the unofficial fan project notice to the settings (M3.10d) ([ef9135d](https://github.com/macandy13/arkham-companion/commit/ef9135dbe138d8ca47d6f550347807a76b0442a7))
+* **web:** draw location tiles as card faces with tokens (M3.10a) ([9c17ed5](https://github.com/macandy13/arkham-companion/commit/9c17ed593b69c53eb8f7a157ed5d21f49701cc1b))
+* **web:** put the doom steppers and advance on the agenda and act cards, as small buttons ([5c7e262](https://github.com/macandy13/arkham-companion/commit/5c7e262280f6370ab5035de6e5c49e2e094b16fc))
+* **web:** show the agenda and act as landscape cards in the header (M3.10b) ([1ea2b07](https://github.com/macandy13/arkham-companion/commit/1ea2b07ce27c1d733793d6f659331512332308ad))
+* **web:** show the agenda and act as landscape cards in the header (M3.10b) ([857dc69](https://github.com/macandy13/arkham-companion/commit/857dc698205b45f487cf4c4e7c7573ca3089b8cc))
+
+
+### Bug fixes
+
+* **engine:** cap clues at what is left, cover fight corrections, share answerOutcome ([fc01c65](https://github.com/macandy13/arkham-companion/commit/fc01c65842cd53b810fb74d5e46a715a794333fc))
+* **engine:** compute an action's skill test results when the answer arrives (P2 slice 1) ([145ee34](https://github.com/macandy13/arkham-companion/commit/145ee348aebaaf9271b1a74ef646419118210723))
+* **web:** credit only the card pictures as loaded from ArkhamDB ([1c8b5a5](https://github.com/macandy13/arkham-companion/commit/1c8b5a51e1001ec90da85ed59c6b6a0bcbb3a810))
+* **web:** match the header cards' hatch to the map's; card tokens named for both uses ([bdfd7a2](https://github.com/macandy13/arkham-companion/commit/bdfd7a294b4eb599e1723ca5b1e0198e1425086b))
+
+
+### Refactoring
+
+* **engine:** compute an action's skill test results from the answer (P2 slice 1) ([75fa1b2](https://github.com/macandy13/arkham-companion/commit/75fa1b2c43bee4f8861f31fd22b1492f1a465ff7))
+
+
+### Documentation
+
+* plan the full agenda and act card behind the header cards ([1b619da](https://github.com/macandy13/arkham-companion/commit/1b619daecfe242aa8d8679ae7b1ab034d36d87df))
+* say where card picture paths come from; doc fixes ([3232d34](https://github.com/macandy13/arkham-companion/commit/3232d34c9058c257598b189306b28c74803a01ed))
+
 ## 2026-10-22 (was 1.8.0)
 
 
