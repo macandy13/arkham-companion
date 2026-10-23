@@ -384,10 +384,12 @@ export interface ExhaustChanged {
 
 /**
  * The game is now in `phase` of `round` with `steps` outstanding (`GameMeta`).
- * Produced by `NextPhase` when the previous phase has no steps left.
+ * Produced by `NextPhase` when the previous phase, `ended`, has no steps
+ * left; it opens `phaseEnds` for `ended`.
  */
 export interface PhaseChanged {
   type: 'PhaseChanged';
+  ended: Phase;
   phase: Phase;
   round: number;
   steps: PhaseStep[];

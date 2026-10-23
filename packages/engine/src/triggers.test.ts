@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  atEndOfPhase,
   atEndOfRound,
   atEndOfTurn,
   advanceAct,
@@ -46,6 +47,7 @@ import {
   whenAdvanced,
   whenEnemyDefeated,
   whenRevealed,
+  whenTurnBegins,
   type AbilityEffect,
   type AddMapStep,
   type Command,
@@ -397,6 +399,61 @@ describe('trigger bus', () => {
       expect(after.meta.round).toBe(1);
       expect(after.pending).toEqual([]);
     });
+  });
+
+  describe('turn-start and phase-end abilities', () => {
+    const nextPhase: Command = { type: 'NextPhase' };
+    const omen = instanceId('omen');
+
+    it.each([
+      { zone: threatAreaOf(alice), where: 'in her threat area', horror: 1 },
+      { zone: atLocation(hall), where: 'at her location', horror: 0 },
+    ])('deals 1 horror when alice starts her turn with the card $where', ({ zone, horror }) => {
+      const gnawingDread = blankTreachery('gnawing_dread', {
+        abilities: [whenTurnBegins(takeHorror(1))],
+      });
+      const { context, state } = newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withInvestigator(alice, { locationId: hall })
+        .withCard(instanceId('gnawing_dread'), gnawingDread, zone)
+        .start();
+
+      const after = stateAfter(context, state, nextPhase, {
+        type: 'StartTurn',
+        investigatorId: alice,
+      });
+
+      expect(requireInvestigator(after, alice).sanity.horror).toBe(horror);
+    });
+
+    // From alice's turn in round 1, each Next ends one phase: investigation, enemy, upkeep (the
+    // round, which opens no phase end), then round 2's mythos phase.
+    it.each([
+      { phase: 'investigation', endsAtNext: 1 },
+      { phase: 'enemy', endsAtNext: 2 },
+      { phase: 'mythos', endsAtNext: 4 },
+    ] as const)(
+      'places doom on the card at the end of the $phase phase, Next $endsAtNext',
+      ({ phase, endsAtNext }) => {
+        const omenCard = blankTreachery('omen', {
+          abilities: [atEndOfPhase(phase, placeDoomOnSelf(1))],
+        });
+        const { context, state } = newGame()
+          .withLocation(hall, blankLocation('hall'), { revealed: true })
+          .withInvestigator(alice, { locationId: hall })
+          .withCard(omen, omenCard, atLocation(hall))
+          .withTurnOf(alice)
+          .start();
+        const endedTurn = stateAfter(context, state, { type: 'EndTurn', investigatorId: alice });
+        const nexts = (count: number) => Array.from({ length: count }, () => nextPhase);
+
+        const before = stateAfter(context, endedTurn, ...nexts(endsAtNext - 1));
+        const after = stateAfter(context, before, nextPhase);
+
+        expect(before.cards[omen]?.tokens.doom).toBeUndefined();
+        expect(after.cards[omen]?.tokens.doom).toBe(1);
+      },
+    );
   });
 
   describe('tests that deal damage or horror per point failed', () => {

@@ -72,6 +72,7 @@ export function handleNextPhase(ctx: EngineContext, state: GameState): PhaseChan
   return [
     {
       type: 'PhaseChanged',
+      ended: current,
       phase,
       round: newRound ? round + 1 : round,
       steps: stepsOf(state, phase),
