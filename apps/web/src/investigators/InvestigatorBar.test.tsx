@@ -206,6 +206,25 @@ describe('InvestigatorBar', () => {
       expect(within(panel('brook')).queryByRole('button', { name: 'Start turn' })).toBeNull();
     });
 
+    it.each([
+      {
+        situation: 'resigned',
+        table: () => {
+          const table = beforeTurns();
+          table.startTurn(alder);
+          table.resign(alder);
+          return table;
+        },
+      },
+      { situation: 'outside the investigation phase', table: () => PlayTable.start(twoAtStudy) },
+    ])('offers no turn start to alder $situation', ({ table }) => {
+      const played = table();
+
+      render(<InvestigatorBar board={played.board} actions={actionsOn(played)} busy={false} />);
+
+      expect(within(panel('alder')).queryByRole('button', { name: 'Start turn' })).toBeNull();
+    });
+
     it('starts the turn of the investigator the players pick', async () => {
       const table = beforeTurns();
       render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />);

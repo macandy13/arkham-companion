@@ -33,3 +33,8 @@ export function withRunningTotals<T extends object>(
     return { ...item, total };
   });
 }
+
+/** The whole numbers from 0 up to `count`, excluding it: `range(3)` is `[0, 1, 2]`. Empty for 0. */
+export function range(count: number): number[] {
+  return Array.from({ length: count }, (_, index) => index);
+}

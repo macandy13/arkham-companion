@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { BASE_ACTIONS_PER_TURN, type InvestigatorView } from '@arkham/engine';
+import { range } from '@arkham/util';
 import type { GameActions } from '../state/gameActions';
 
 /**
@@ -32,7 +33,7 @@ export function TurnControls({
   if (!onTurn) return null;
   const left = investigator.actions;
   // Cards can grant more actions than the usual three, so the row grows to show every one.
-  const slots = Array.from({ length: Math.max(BASE_ACTIONS_PER_TURN, left) }, (_, slot) => slot);
+  const slots = range(Math.max(BASE_ACTIONS_PER_TURN, left));
   return (
     <div role="group" aria-label={t('investigators.turn')}>
       <ul aria-label={t('investigators.actionsLeft', { count: left })}>
