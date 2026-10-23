@@ -2,8 +2,8 @@ import { z } from 'zod';
 
 /**
  * Pack codes that belong to Chapter Two (the revised Arkham Horror LCG line, starting with
- * `core_2026`), for pack data without a `chapter` field. The ArkhamDB data repository marks
- * every pack with its chapter; this list only covers a response that leaves it out, so every
+ * `core_2026`), for pack data without a `chapter` field. ArkhamDB marks every pack with its
+ * chapter; this list only covers a response that leaves it out, so every
  * other pack without one counts as Chapter One.
  */
 export const CHAPTER_TWO_PACK_CODES: readonly string[] = ['core_2026', 'cob'];
@@ -28,8 +28,8 @@ const RawPackSchema = z.object({
   name: z.string(),
   position: z.number().int(),
   cycle_position: z.number().int(),
-  // Not confirmed for the API, so a missing or unexpected value falls back to the code instead of
-  // failing the whole catalog.
+  // The API sends it for every pack (checked 2026-10-23); a missing or unexpected value still falls
+  // back to the code instead of failing the whole catalog.
   chapter: z
     .union([z.literal(1), z.literal(2)])
     .optional()
