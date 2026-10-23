@@ -64,11 +64,12 @@ const plainTreachery = blankTreachery('plain_treachery');
  */
 const fogCard = blankTreachery('fog', {
   name: 'Fog',
-  locationAttachment: { shroud: 2, discardWhenInvestigated: true },
+  locationAttachment: { discardWhenInvestigated: true },
+  modifiers: [{ stat: 'shroud', of: 'host', by: 2 }],
 });
 const lastingFogCard = blankTreachery('lasting_fog', {
   name: 'Lasting Fog',
-  locationAttachment: { shroud: 1 },
+  modifiers: [{ stat: 'shroud', of: 'host', by: 1 }],
 });
 
 /**

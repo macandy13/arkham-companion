@@ -1,5 +1,6 @@
 import { assertNever } from '@arkham/util';
-import { locationAttachments, locationShroud } from './board';
+import { locationAttachments } from './board';
+import { effectiveValue } from './card_values';
 import type { CardStats, EngineContext } from './cards';
 import type { Command, Evade, Fight, Investigate, TestSkill } from './commands';
 import {
@@ -32,7 +33,7 @@ import type {
 
 /**
  * `Investigate`: an intellect test against the shroud of the investigator's
- * location (`locationShroud`, attachments included). Its consequences follow
+ * location (`effectiveValue`, constant abilities included). Its consequences follow
  * the answer (`investigateCommands`); a pass discovers 1 clue unless the
  * players confirm another count, up to the clues on the location when the
  * test starts. A location without clues makes the count not adjustable.
@@ -50,7 +51,7 @@ export function handleInvestigate(
     id: `investigate:${investigator.id}`,
     prompt: 'decision.investigate',
     subject: location.id,
-    test: { skill: 'intellect', difficulty: locationShroud(ctx, state, location) },
+    test: { skill: 'intellect', difficulty: effectiveValue(ctx, state, location, 'shroud') },
     testKind: { kind: 'investigate', locationId: location.id },
     ...(clues > 0 ? { passAmount: { default: 1, min: 1, max: clues } } : {}),
     outcomes: { onPass: [], onFail: [] },
@@ -85,7 +86,7 @@ export function handleFight(ctx: EngineContext, state: GameState, cmd: Fight): D
     id: `fight:${investigator.id}:${enemy.id}`,
     prompt: 'decision.fight',
     subject: enemy.id,
-    test: { skill: 'combat', difficulty: stats.fight ?? 0 },
+    test: { skill: 'combat', difficulty: effectiveValue(ctx, state, enemy, 'fight') },
     testKind: { kind: 'fight', enemyId: enemy.id, damage },
     passAmount: { default: damage, min: 1 },
     outcomes: { onPass: [], onFail: [] },
@@ -146,7 +147,7 @@ export function handleEvade(ctx: EngineContext, state: GameState, cmd: Evade): D
     id: `evade:${investigator.id}:${enemy.id}`,
     prompt: 'decision.evade',
     subject: enemy.id,
-    test: { skill: 'agility', difficulty: stats.evade ?? 0 },
+    test: { skill: 'agility', difficulty: effectiveValue(ctx, state, enemy, 'evade') },
     testKind: { kind: 'evade', enemyId: enemy.id },
     outcomes: { onPass: [], onFail: [] },
   });
