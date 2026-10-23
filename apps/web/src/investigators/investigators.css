@@ -10,15 +10,15 @@
 }
 
 /*
- * A panel lays the investigator's card on the left, beside the line on their round and their
- * counters, as in the prototype.
+ * A panel lays the investigator's card on the left, beside the line on their round with their turn
+ * controls at its end, and their counters below, as in the prototype.
  */
 #board > #investigators > section {
   display: grid;
   grid-template:
-    'card status' auto
-    'card stats' 1fr /
-    auto auto;
+    'card status turn' auto
+    'card stats stats' 1fr /
+    auto 1fr auto;
   gap: var(--space-1) var(--space-2);
   flex: none;
   align-items: start;
@@ -70,6 +70,14 @@
   white-space: nowrap;
 }
 
+/* Small buttons, so the panel stays compact. */
+#investigators section button {
+  min-width: var(--button-compact);
+  min-height: var(--button-compact);
+  padding: 0 var(--space-1);
+  font-size: var(--font-size-note);
+}
+
 #investigators dl {
   grid-area: stats;
   display: flex;
@@ -114,7 +122,55 @@
 }
 
 #investigators dd > button {
-  min-width: var(--button-compact);
-  min-height: var(--button-compact);
   padding: 0;
+}
+
+/* The turn controls: "Start turn", or the action pips, resign and End while it is their turn. */
+#board > #investigators > section > :is(button, [role='group']) {
+  grid-area: turn;
+}
+
+#investigators [role='group'] {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+}
+
+/* A pip per action, filled for each one left, like the prototype's. */
+#investigators [role='group'] ul {
+  display: flex;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Two ids, so it beats the home screen's padded `#app > main ul > li` cards. */
+#board > #investigators [role='group'] li {
+  padding: 0;
+  background: none;
+  width: var(--action-pip-size);
+  height: var(--action-pip-size);
+  box-sizing: border-box;
+  border: var(--piece-ring-width) solid var(--color-accent);
+  border-radius: 50%;
+}
+
+#board > #investigators [role='group'] li[data-left] {
+  background: var(--color-accent);
+}
+
+/* An icon button draws its icon (a line drawing in icons/) in the text colour. */
+#investigators button[data-icon]::before {
+  content: '';
+  display: block;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  margin: auto;
+  background: currentcolor;
+  mask: center / contain no-repeat;
+}
+
+#investigators button[data-icon='resign']::before {
+  mask-image: url('./icons/resign.svg');
 }
