@@ -176,7 +176,7 @@ Decisions from the prototype review:
 - [ ] Cards (location tiles, header cards) stay dark in both themes, like printed cards; done with M3.12b–d (the map's tiles and attachments since M3.12b)
 - [x] M3.12b: location tiles in the frame look: mid-height shroud and clues, doom under the clues, attachments as peeking cards
 - [ ] M3.12c: card art in frames (art crops per card type) and the "Full card faces" setting, on the M3.10c2 pictures. Slices:
-  - [ ] M3.12c1: The Gathering's hand-written cards name their ArkhamDB pictures, so the app shows real art before M4.4; the E2E guard turns pictures down, so tests and screenshots keep the pattern
+  - [x] M3.12c1: The Gathering's hand-written cards name their ArkhamDB pictures, so the app shows real art before M4.4; the E2E guard turns pictures down, so tests and screenshots keep the pattern
   - [x] M3.12c2: the "Card pictures" setting (frames with card art, or full card faces) and the location tiles' art crop
   - [ ] M3.12c2b: the header's agenda and act in both looks, after M3.12d (art crops: agenda front left 40 %, act front right 40 %, backs show the pattern; check the scan's orientation first)
   - [ ] M3.12c3: avatar crops for investigator pawns and enemy tokens, once their views carry a picture
