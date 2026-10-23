@@ -1,19 +1,28 @@
 /* Element defaults shared by every screen. */
+/* The playmat lies still under every screen, so panels and cards sit on the table. */
 body {
   margin: 0;
-  background: var(--color-background);
+  background:
+    var(--playmat) center / cover no-repeat fixed,
+    var(--color-background);
   color: var(--color-text);
   font-family: var(--font-family);
   font-size: var(--font-size-body);
 }
 
-h1 {
+/* Headings and names in the playmat's display type, like the printed cards. */
+h1,
+h2 {
   margin: 0;
+  font-family: var(--font-family-display);
+  font-weight: normal;
+}
+
+h1 {
   font-size: var(--font-size-title);
 }
 
 h2 {
-  margin: 0;
   font-size: var(--font-size-subtitle);
 }
 
@@ -42,6 +51,28 @@ button {
 
 button:disabled {
   color: var(--color-text-muted);
+  opacity: var(--disabled-opacity);
+}
+
+button:not(:disabled):hover {
+  border-color: var(--color-accent);
+}
+
+:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-accent);
+  outline-offset: var(--focus-ring-width);
+}
+
+/* Dialogs share one shell: a panel framed in brass over a dimmed table. */
+dialog {
+  border: var(--border-width) solid var(--color-accent);
+  border-radius: var(--radius);
+  background: var(--color-background);
+  color: var(--color-text);
+}
+
+dialog::backdrop {
+  background: var(--color-scrim);
 }
 
 [aria-current='page'] {

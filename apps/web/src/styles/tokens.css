@@ -2,16 +2,30 @@
 :root {
   color-scheme: dark;
 
-  --color-background: #1b1b1f;
-  --color-surface: #26262c;
-  --color-border: #44444c;
-  --color-text: #e8e6e3;
-  --color-text-muted: #a3a1a8;
-  --color-accent: #6fb7a6;
-  --color-accent-text: #10201c;
+  /*
+   * The playmat palette (M3.12): a night-green table, brass for lines and accents, bone for text.
+   * Panels are see-through so the playmat shows behind them.
+   */
+  --color-background: #0b1614;
+  --color-surface: rgb(14 26 23 / 88%);
+  --color-border: rgb(201 164 92 / 32%);
+  --color-text: #ece3cf;
+  --color-text-muted: #b5ab95;
+  --color-accent: #c9a45c;
+  --color-accent-text: #1b1408;
+  /* Behind an open dialog. */
+  --color-scrim: rgb(3 8 7 / 78%);
+  /* The play screen's header row darkens the playmat towards the top of the screen. */
+  --header-shade: linear-gradient(to bottom, rgb(5 12 10 / 90%), rgb(5 12 10 / 35%));
+  /* The playmat behind the play screen, our own drawing (styles/playmat.svg). */
+  --playmat: url('./playmat.svg');
   /* Tokens on the map, coloured like the game's own: blue-green clues, red doom. */
-  --color-clue: #3f8fb0;
+  --color-clue: #3f9bb5;
   --color-doom: #b8433f;
+  /* Damage and horror, and resources, coloured like the game's tokens for the investigator panel. */
+  --color-health: #c0504a;
+  --color-sanity: #4f78c4;
+  --color-resource: #b98a3c;
   --color-token-text: #ffffff;
   /* Card frames by card type: locations on the map; the encounter deck, agenda, act and scenario in the header. */
   --color-card-location: #8c7a55;
@@ -26,7 +40,13 @@
   --space-4: 1.5rem;
   --space-5: 2.5rem;
 
-  --font-family: system-ui, sans-serif;
+  /*
+   * Display type for names and labels, and the UI type for everything else. IM Fell English SC
+   * and Alegreya Sans are the playmat's fonts; until they are self-hosted, a device without them
+   * falls back to the serif and sans-serif after them.
+   */
+  --font-family: 'Alegreya Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-family-display: 'IM Fell English SC', 'IM Fell English', Georgia, serif;
   --font-size-body: 1rem;
   --font-size-title: 1.5rem;
   --font-size-subtitle: 1.125rem;
@@ -38,6 +58,10 @@
   --touch-target: 2.75rem;
   /* Buttons on a card (the agenda's doom steppers, the act's advance), small so the card stays compact. */
   --button-compact: 1.75rem;
+  /* The keyboard focus ring, in the accent colour. */
+  --focus-ring-width: 2px;
+  /* A turned-off button fades, so the ones that act now stand out. */
+  --disabled-opacity: 0.55;
 
   --layout-content-width: 60rem;
   --layout-board-panel-width: 16rem;
@@ -82,4 +106,7 @@
   --color-accent-text: #ffffff;
   --color-clue: #2f7896;
   --color-doom: #a33a37;
+  --color-scrim: rgb(0 0 0 / 40%);
+  --playmat: none;
+  --header-shade: none;
 }

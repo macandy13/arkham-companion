@@ -35,10 +35,6 @@
 dialog {
   max-width: var(--layout-sheet-width);
   padding: var(--space-3);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
-  color: var(--color-text);
 }
 
 dialog footer {
