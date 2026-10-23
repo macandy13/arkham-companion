@@ -39,6 +39,18 @@
         --frame-scenario: #6e5a8c;
         --token-black: #121212;
         --token-ring: #e6dcc3;
+        /* Chrome around the cards: these change with the theme; the cards themselves stay dark like printed ones. */
+        --text: var(--bone);
+        --text-dim: var(--bone-dim);
+        --accent: var(--brass);
+        --bar-a: rgba(5, 12, 10, 0.92);
+        --bar-b: rgba(5, 12, 10, 0.4);
+        --surface: rgba(16, 30, 26, 0.92);
+        --well: rgba(0, 0, 0, 0.25);
+        --sheet: #0f1d19;
+        --invert-bg: var(--bone);
+        --invert-fg: var(--ink);
+        --shadow: rgba(0, 0, 0, 0.6);
 
         --font-display: 'IM Fell English SC', 'IM Fell English', Georgia, serif;
         --font-story: 'IM Fell English', Georgia, serif;
@@ -50,6 +62,50 @@
         --touch: 44px;
         --radius: 6px;
       }
+      @media (prefers-color-scheme: light) {
+        :root:not([data-theme='dark']) {
+          color-scheme: light;
+          --night: #e8dcc0;
+          --brass: #9a7433;
+          --brass-dim: #b39a6a;
+          --ink: #1b1408;
+          --text: #2a2216;
+          --text-dim: #6a5d47;
+          --accent: #7d5a1e;
+          --panel: rgba(250, 244, 230, 0.9);
+          --panel-line: rgba(125, 90, 30, 0.35);
+          --bar-a: rgba(246, 238, 220, 0.94);
+          --bar-b: rgba(246, 238, 220, 0.5);
+          --surface: rgba(255, 250, 238, 0.95);
+          --well: rgba(125, 90, 30, 0.1);
+          --sheet: #f6eedb;
+          --invert-bg: #2a2216;
+          --invert-fg: #f6eedb;
+          --scrim: rgba(40, 30, 15, 0.45);
+          --shadow: rgba(60, 40, 10, 0.35);
+        }
+      }
+      :root[data-theme='light'] {
+        color-scheme: light;
+        --night: #e8dcc0;
+        --brass: #9a7433;
+        --brass-dim: #b39a6a;
+        --ink: #1b1408;
+        --text: #2a2216;
+        --text-dim: #6a5d47;
+        --accent: #7d5a1e;
+        --panel: rgba(250, 244, 230, 0.9);
+        --panel-line: rgba(125, 90, 30, 0.35);
+        --bar-a: rgba(246, 238, 220, 0.94);
+        --bar-b: rgba(246, 238, 220, 0.5);
+        --surface: rgba(255, 250, 238, 0.95);
+        --well: rgba(125, 90, 30, 0.1);
+        --sheet: #f6eedb;
+        --invert-bg: #2a2216;
+        --invert-fg: #f6eedb;
+        --scrim: rgba(40, 30, 15, 0.45);
+        --shadow: rgba(60, 40, 10, 0.35);
+      }
       html,
       body {
         height: 100%;
@@ -57,7 +113,7 @@
       body {
         margin: 0;
         background: var(--night);
-        color: var(--bone);
+        color: var(--text);
         font-family: var(--font-ui);
         font-size: 15px;
         overflow: hidden;
@@ -111,7 +167,7 @@
         padding-right: max(16px, env(safe-area-inset-right, 0px));
         overflow-x: auto;
         scrollbar-width: none;
-        background: linear-gradient(to bottom, rgba(5, 12, 10, 0.9), rgba(5, 12, 10, 0.35));
+        background: linear-gradient(to bottom, var(--bar-a), var(--bar-b));
         border-bottom: 1px solid var(--panel-line);
       }
       #head::-webkit-scrollbar {
@@ -127,7 +183,7 @@
         font-family: var(--font-display);
         font-size: 9px;
         letter-spacing: 0.04em;
-        color: var(--brass);
+        color: var(--accent);
         text-transform: uppercase;
         white-space: nowrap;
         opacity: 0.85;
@@ -175,6 +231,7 @@
         justify-content: space-between;
         gap: 3px;
         padding: 3px 4px;
+        color: var(--bone);
         background: linear-gradient(to top, rgba(6, 10, 9, 0.94), rgba(6, 10, 9, 0.6));
         font-size: 12px;
         font-weight: 700;
@@ -234,7 +291,8 @@
         height: var(--compact);
         border-radius: 4px;
         border: 1px solid var(--brass-dim);
-        background: rgba(20, 34, 30, 0.95);
+        background: var(--surface);
+        color: var(--text);
         font-weight: 700;
         font-size: 13px;
         padding: 0 6px;
@@ -272,6 +330,7 @@
           radial-gradient(circle at 50% 45%, #1f3a30, #0b1714 70%);
       }
       .deckback span {
+        color: var(--bone);
         font-family: var(--font-display);
         font-size: calc(var(--hc-h) * 0.26);
       }
@@ -310,6 +369,7 @@
         font-family: var(--font-display);
         font-size: 12px;
         line-height: 1.1;
+        color: var(--bone);
         background:
           repeating-linear-gradient(-45deg, rgba(201, 164, 92, 0.16) 0 1px, transparent 1px 10px),
           #172621;
@@ -474,7 +534,7 @@
       .round small {
         font-family: var(--font-ui);
         font-size: 12px;
-        color: var(--brass);
+        color: var(--accent);
         letter-spacing: 0.04em;
       }
       .phases {
@@ -498,7 +558,7 @@
       .phases span.on {
         flex: 1;
         width: auto;
-        color: var(--bone);
+        color: var(--text);
         border-bottom-color: var(--brass);
         font-weight: 700;
       }
@@ -512,7 +572,7 @@
         padding: 0 14px;
         border-radius: 18px;
         border: 1px solid var(--brass-dim);
-        background: rgba(16, 30, 26, 0.9);
+        background: var(--surface);
         cursor: pointer;
         font-weight: 500;
       }
@@ -523,9 +583,9 @@
         font-weight: 700;
       }
       .btn.on {
-        background: var(--bone);
-        color: var(--ink);
-        border-color: var(--bone);
+        background: var(--invert-bg);
+        color: var(--invert-fg);
+        border-color: var(--invert-bg);
       }
       .btn:disabled {
         opacity: 0.4;
@@ -551,8 +611,8 @@
         gap: 8px;
         padding: 6px 10px;
         border-radius: 10px;
-        background: var(--bone);
-        color: var(--ink);
+        background: var(--invert-bg);
+        color: var(--invert-fg);
         width: 100%;
       }
       #editbar span {
@@ -563,11 +623,12 @@
       #editbar .btn {
         min-height: 32px;
         background: transparent;
-        border-color: var(--ink);
+        color: inherit;
+        border-color: currentColor;
       }
       #editbar .btn.primary {
-        background: var(--ink);
-        color: var(--bone);
+        background: var(--invert-fg);
+        color: var(--invert-bg);
       }
 
       /* ---------- Map ---------- */
@@ -779,6 +840,7 @@
         cursor: grab;
       }
       .pawn .ini {
+        color: var(--bone);
         position: absolute;
         inset: 0;
         display: grid;
@@ -842,7 +904,7 @@
         padding-block: 8px calc(8px + env(safe-area-inset-bottom, 0px));
         padding-left: max(16px, env(safe-area-inset-left, 0px));
         padding-right: max(16px, env(safe-area-inset-right, 0px));
-        background: linear-gradient(to top, rgba(5, 12, 10, 0.96), rgba(5, 12, 10, 0.72));
+        background: linear-gradient(to top, var(--bar-a), var(--bar-b));
         border-top: 1px solid var(--panel-line);
         scrollbar-width: none;
       }
@@ -895,7 +957,9 @@
         position: relative;
         aspect-ratio: 7 / 5;
         border-radius: 8px;
-        margin-bottom: 14px;
+      }
+      .invcard.has-threat {
+        margin-top: 22px;
       }
       .invface {
         position: absolute;
@@ -918,7 +982,7 @@
         position: absolute;
         left: 6px;
         right: 6px;
-        bottom: -14px;
+        top: -22px;
         display: flex;
         align-items: flex-end;
         gap: 0;
@@ -929,13 +993,16 @@
         pointer-events: auto;
         margin-right: -8px;
       }
+      .overlay {
+        align-items: flex-start;
+      }
       .overlay .mini {
-        width: 34%;
-        max-width: 64px;
-        transform: rotate(-4deg);
+        width: 26%;
+        max-width: 54px;
+        transform: rotate(-3deg);
       }
       .overlay .mini:nth-child(even) {
-        transform: rotate(5deg);
+        transform: rotate(4deg);
       }
       .overlay .pawn {
         width: 30%;
@@ -966,7 +1033,8 @@
         height: 38px;
         border-radius: 8px;
         border: 1px solid var(--brass-dim);
-        background: rgba(16, 30, 26, 0.9);
+        background: var(--surface);
+        color: var(--text);
         cursor: pointer;
         display: grid;
         place-items: center;
@@ -1010,7 +1078,7 @@
       }
       .inv-sub {
         font-size: 12px;
-        color: var(--bone-dim);
+        color: var(--text-dim);
       }
       .pips {
         display: flex;
@@ -1036,14 +1104,14 @@
         gap: 2px;
         padding: 5px 2px;
         border-radius: 6px;
-        background: rgba(0, 0, 0, 0.25);
+        background: var(--well);
         font-variant-numeric: tabular-nums;
       }
       .stat .lbl {
         font-size: 10px;
         letter-spacing: 0.06em;
         text-transform: uppercase;
-        color: var(--bone-dim);
+        color: var(--text-dim);
         display: flex;
         gap: 3px;
         align-items: center;
@@ -1059,7 +1127,7 @@
       }
       .stat .val small {
         font-size: 11px;
-        color: var(--bone-dim);
+        color: var(--text-dim);
         font-weight: 500;
       }
       .stat .row {
@@ -1075,7 +1143,7 @@
         font-size: 10px;
         letter-spacing: 0.08em;
         text-transform: uppercase;
-        color: var(--bone-dim);
+        color: var(--text-dim);
       }
       .threat {
         display: flex;
@@ -1109,7 +1177,7 @@
         justify-items: center;
         gap: 2px;
         font-size: 10px;
-        color: var(--bone-dim);
+        color: var(--text-dim);
         max-width: 64px;
         text-align: center;
         line-height: 1.1;
@@ -1134,7 +1202,7 @@
       }
       .waiting {
         font-size: 13px;
-        color: var(--bone-dim);
+        color: var(--text-dim);
         font-style: italic;
         margin: 0;
       }
@@ -1160,7 +1228,8 @@
         width: min(100%, 30rem);
         max-height: 92%;
         overflow: auto;
-        background: #0f1d19;
+        background: var(--sheet);
+        color: var(--text);
         border: 1px solid var(--brass-dim);
         border-radius: 16px 16px 0 0;
         display: grid;
@@ -1187,7 +1256,7 @@
         font-size: 11px;
         letter-spacing: 0.1em;
         text-transform: uppercase;
-        color: var(--brass);
+        color: var(--accent);
         padding-right: 36px;
       }
       .sheet p {
@@ -1197,7 +1266,7 @@
       .sheet .story {
         font-family: var(--font-story);
         font-style: italic;
-        color: var(--bone-dim);
+        color: var(--text-dim);
       }
       .x {
         position: absolute;
@@ -1207,7 +1276,7 @@
         height: 32px;
         border-radius: 50%;
         border: 1px solid var(--brass-dim);
-        background: rgba(0, 0, 0, 0.35);
+        background: var(--well);
         display: grid;
         place-items: center;
         cursor: pointer;
@@ -1216,7 +1285,7 @@
       .x svg {
         width: 14px;
         height: 14px;
-        stroke: var(--bone);
+        stroke: var(--text);
         stroke-width: 2.4;
         fill: none;
       }
@@ -1274,7 +1343,7 @@
         gap: 10px;
         padding: 6px 10px;
         border-radius: 8px;
-        background: rgba(0, 0, 0, 0.25);
+        background: var(--well);
       }
       .stepper .v {
         font-size: 20px;
@@ -1296,7 +1365,7 @@
       .facts div {
         padding: 6px;
         border-radius: 6px;
-        background: rgba(0, 0, 0, 0.25);
+        background: var(--well);
         text-align: center;
       }
       .facts b {
@@ -1305,7 +1374,7 @@
       }
       .facts span {
         font-size: 11px;
-        color: var(--bone-dim);
+        color: var(--text-dim);
         text-transform: uppercase;
         letter-spacing: 0.06em;
       }
@@ -1315,13 +1384,16 @@
         border-left: 3px solid var(--brass);
         background: rgba(201, 164, 92, 0.08);
       }
+      .seg.three {
+        grid-template-columns: repeat(3, 1fr);
+      }
       .seg {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 4px;
         padding: 4px;
         border-radius: 12px;
-        background: rgba(0, 0, 0, 0.3);
+        background: var(--well);
       }
       .seg button {
         min-height: 40px;
@@ -1349,7 +1421,7 @@
         padding: 0;
         cursor: pointer;
         font-size: 10px;
-        color: var(--bone-dim);
+        color: var(--text-dim);
         text-align: center;
       }
       .pickgrid .mini {
@@ -1376,7 +1448,7 @@
       }
       .term span {
         font-size: 10px;
-        color: var(--bone-dim);
+        color: var(--text-dim);
         text-transform: uppercase;
         letter-spacing: 0.04em;
         white-space: nowrap;
@@ -1387,10 +1459,10 @@
       }
       .op {
         font-size: 20px;
-        color: var(--bone-dim);
+        color: var(--text-dim);
       }
       .term.total b {
-        color: var(--brass);
+        color: var(--accent);
       }
       .bag {
         display: grid;
@@ -1460,30 +1532,30 @@
       .log li {
         padding: 6px 8px;
         border-radius: 6px;
-        background: rgba(0, 0, 0, 0.25);
+        background: var(--well);
         display: grid;
         grid-template-columns: auto minmax(0, 1fr);
         gap: 8px;
       }
       .log li span {
-        color: var(--brass);
+        color: var(--accent);
         font-variant-numeric: tabular-nums;
         font-size: 12px;
       }
       .fan {
         font-size: 12px;
-        color: var(--bone-dim);
+        color: var(--text-dim);
         line-height: 1.4;
       }
       .fan a {
-        color: var(--brass);
+        color: var(--accent);
       }
       .sheet h3 {
         margin: 4px 0 0;
         font-family: var(--font-display);
         font-weight: 400;
         font-size: 17px;
-        color: var(--brass);
+        color: var(--accent);
       }
 
       @media (max-width: 600px) {
@@ -1712,6 +1784,17 @@
       ];
 
       /* ================= Look: frames (own frame + card art) or full card faces ================= */
+      let theme = 'system';
+      try {
+        theme = localStorage.getItem('theme') || 'system';
+      } catch (e) {
+        console.warn('No stored theme', e);
+      }
+      function applyTheme() {
+        if (theme === 'system') delete document.documentElement.dataset.theme;
+        else document.documentElement.dataset.theme = theme;
+        paintMat();
+      }
       let look = 'frames';
       try {
         look = localStorage.getItem('look') || 'frames';
@@ -2187,7 +2270,7 @@
               `<button class="act" data-do="${kind}" data-inv="${i.id}" aria-label="${label}" title="${label}" ${enabled ? '' : 'disabled'}>${ICON[kind]}</button>`;
             return `<section class="inv ${isTurn ? 'turn' : ''} ${i.defeated ? 'defeated' : ''}" aria-label="${esc(i.name)}">
       <div class="inv-top">
-        <div class="invcard"><div class="invface">${face(i.code, false, { small: true })}</div>
+        <div class="invcard ${engaged.length || i.threat.length ? 'has-threat' : ''}"><div class="invface">${face(i.code, false, { small: true })}</div>
           <button class="hit" data-zoom-inv="${i.id}" aria-label="${esc(i.name)}"></button>
           ${
             engaged.length || i.threat.length
@@ -2373,6 +2456,8 @@
     <div class="seg" role="radiogroup" aria-label="Card look">
       <button role="radio" aria-checked="${look === 'frames'}" class="${look === 'frames' ? 'on' : ''}" data-look="frames">Frames with card art</button>
       <button role="radio" aria-checked="${look === 'cards'}" class="${look === 'cards' ? 'on' : ''}" data-look="cards">Full card faces</button></div>
+    <h3>Theme</h3>
+    <div class="seg three" role="radiogroup" aria-label="Theme">${['system', 'dark', 'light'].map((t) => `<button role="radio" aria-checked="${theme === t}" class="${theme === t ? 'on' : ''}" data-theme-pick="${t}">${t[0].toUpperCase() + t.slice(1)}</button>`).join('')}</div>
     <h3>Previews</h3>
     <div class="row"><button class="btn" data-act="preview-draw">Draw an encounter card…</button></div>
     <h3>Game log</h3>
@@ -2948,6 +3033,16 @@
           ui.sheet && ui.sheet();
           return;
         }
+        if (d.themePick) {
+          theme = d.themePick;
+          try {
+            localStorage.setItem('theme', theme);
+          } catch (e) {
+            console.warn('Could not store the theme', e);
+          }
+          applyTheme();
+          return ui.sheet && ui.sheet();
+        }
         if (d.look) {
           look = d.look;
           try {
@@ -3222,7 +3317,31 @@
         cv.height = h * dpr;
         const g = cv.getContext('2d');
         g.scale(dpr, dpr);
-        const brass = getComputedStyle(document.documentElement).getPropertyValue('--brass').trim();
+        const css = getComputedStyle(document.documentElement);
+        const brass = css.getPropertyValue('--brass').trim();
+        /* Light theme: the same playmat on parchment, with sepia ink instead of night and starlight. */
+        const light = css.colorScheme.includes('light');
+        const P = light
+          ? {
+              sky: ['#f6eedb', '#ead9b5', '#c4a978'],
+              fog: '255, 255, 255, 0.28',
+              star: '90, 60, 20',
+              starA: 0.35,
+              ring: 0.32,
+              tentacle: '#5a3f1a',
+              tentacleA: 0.08,
+              vignette: 'rgba(110, 75, 25, 0.35)',
+            }
+          : {
+              sky: ['#1d3a32', '#10241f', '#050b0a'],
+              fog: '110, 160, 130, 0.07',
+              star: '236, 227, 207',
+              starA: 1,
+              ring: 0.22,
+              tentacle: '#020605',
+              tentacleA: 0.16,
+              vignette: 'rgba(0, 0, 0, 0.65)',
+            };
         let seed = 7;
         const rnd = () => {
           seed = (seed * 16807) % 2147483647;
@@ -3236,9 +3355,9 @@
           h * 0.55,
           Math.max(w, h) * 0.8,
         );
-        sky.addColorStop(0, '#1d3a32');
-        sky.addColorStop(0.45, '#10241f');
-        sky.addColorStop(1, '#050b0a');
+        sky.addColorStop(0, P.sky[0]);
+        sky.addColorStop(0.45, P.sky[1]);
+        sky.addColorStop(1, P.sky[2]);
         g.fillStyle = sky;
         g.fillRect(0, 0, w, h);
         for (let n = 0; n < 6; n++) {
@@ -3246,13 +3365,13 @@
             y = rnd() * h,
             r = 120 + rnd() * 260;
           const fog = g.createRadialGradient(x, y, 0, x, y, r);
-          fog.addColorStop(0, 'rgba(110, 160, 130, 0.07)');
-          fog.addColorStop(1, 'rgba(110, 160, 130, 0)');
+          fog.addColorStop(0, `rgba(${P.fog})`);
+          fog.addColorStop(1, 'rgba(0, 0, 0, 0)');
           g.fillStyle = fog;
           g.fillRect(0, 0, w, h);
         }
         for (let n = 0; n < 160; n++) {
-          g.fillStyle = `rgba(236, 227, 207, ${0.15 + rnd() * 0.5})`;
+          g.fillStyle = `rgba(${P.star}, ${(0.15 + rnd() * 0.5) * P.starA})`;
           g.beginPath();
           g.arc(rnd() * w, rnd() * h, rnd() * 1.2 + 0.2, 0, Math.PI * 2);
           g.fill();
@@ -3261,7 +3380,7 @@
           cy = h * 0.56,
           R = Math.max(w, h) * 0.46;
         g.strokeStyle = brass;
-        g.globalAlpha = 0.22;
+        g.globalAlpha = P.ring;
         [
           [R, 2],
           [R * 0.9, 1],
@@ -3298,8 +3417,8 @@
           );
           g.stroke();
         }
-        g.globalAlpha = 0.16;
-        g.fillStyle = '#020605';
+        g.globalAlpha = P.tentacleA;
+        g.fillStyle = P.tentacle;
         for (let k = 0; k < 5; k++) {
           const side = k % 2 ? 1 : -1;
           let x = side > 0 ? w + 20 : -20,
@@ -3325,14 +3444,15 @@
         g.globalAlpha = 1;
         const vig = g.createRadialGradient(cx, cy, R * 0.5, cx, cy, Math.max(w, h));
         vig.addColorStop(0, 'rgba(0,0,0,0)');
-        vig.addColorStop(1, 'rgba(0,0,0,0.65)');
+        vig.addColorStop(1, P.vignette);
         g.fillStyle = vig;
         g.fillRect(0, 0, w, h);
       }
       window.addEventListener('resize', paintMat);
+      window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', paintMat);
 
       const boot = () => {
-        paintMat();
+        applyTheme();
         render();
       };
       window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot();
