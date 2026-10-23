@@ -149,18 +149,6 @@ export function locationAttachments(
   });
 }
 
-/** The shroud of `location`: the printed value plus what its attachments add (`LocationAttachment.shroud`). */
-export function locationShroud(
-  ctx: EngineContext,
-  state: GameState,
-  location: CardInstance,
-): number {
-  return locationAttachments(ctx, state, location).reduce(
-    (shroud, { attachment }) => shroud + (attachment.shroud ?? 0),
-    cardStats(ctx.cards, location.code).shroud ?? 0,
-  );
-}
-
 /**
  * Rejects `cardId` unless it is a known location card. Where it currently is
  * does not matter: connections may name locations that are still set aside.

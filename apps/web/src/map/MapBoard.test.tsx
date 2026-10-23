@@ -80,7 +80,7 @@ describe('MapBoard', () => {
     const table = PlayTable.start(
       house.withCard(
         instanceId('obscuring_fog'),
-        blankTreachery('obscuring_fog', { locationAttachment: { shroud: 2 } }),
+        blankTreachery('obscuring_fog', { modifiers: [{ stat: 'shroud', of: 'host', by: 2 }] }),
         attachedTo(study),
       ),
     );

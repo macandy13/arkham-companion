@@ -34,6 +34,7 @@ import {
   type AddMapStep,
   type CardDb,
   type CardStats,
+  type CardModifier,
   type LocationAttachment,
   type EncounterSetCode,
   type Keyword,
@@ -353,7 +354,8 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     set: sets.chillingCold,
     traits: ['Hazard'],
     quantity: 2,
-    locationAttachment: { onePerLocation: true, shroud: 2, discardWhenInvestigated: true },
+    locationAttachment: { onePerLocation: true, discardWhenInvestigated: true },
+    modifiers: [{ stat: 'shroud', of: 'host', by: 2 }],
     abilities: [whenRevealed(attachToLocation())],
   }),
 ];
@@ -465,6 +467,8 @@ interface TreacheryOptions {
   abilities?: readonly Ability[];
   /** What it does attached to the drawer's location (Obscuring Fog). */
   locationAttachment?: LocationAttachment;
+  /** Its constant abilities (Obscuring Fog's +2 shroud on its location). */
+  modifiers?: readonly CardModifier[];
 }
 
 function treachery({
@@ -475,6 +479,7 @@ function treachery({
   quantity,
   abilities,
   locationAttachment,
+  modifiers,
 }: TreacheryOptions): CardStats {
   return {
     code: cardCode(code),
@@ -485,6 +490,7 @@ function treachery({
     quantity,
     ...(abilities ? { abilities } : {}),
     ...(locationAttachment ? { locationAttachment } : {}),
+    ...(modifiers ? { modifiers } : {}),
   };
 }
 
