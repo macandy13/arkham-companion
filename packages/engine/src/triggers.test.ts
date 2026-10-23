@@ -342,6 +342,7 @@ describe('trigger bus', () => {
     it.each([
       { case: 'a fail with no margin, the default 1,', answered: undefined, damage: 1 },
       { case: 'a fail by 3', answered: 3, damage: 3 },
+      { case: 'a fail by 0', answered: 0, damage: 0 },
     ])('$case deals $damage damage', ({ answered, damage }) => {
       const { context, state: started } = treacheryTable.start();
       const drawn = stateAfter(context, started, aliceDraws);

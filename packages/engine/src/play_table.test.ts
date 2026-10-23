@@ -692,7 +692,7 @@ describe('answering decisions', () => {
     });
   });
 
-  it('reports the margin of a test without a consequence for it as the fail answer`s margin', () => {
+  it('answers a test without failedBy options by a fail with that margin', () => {
     const table = PlayTable.start(game);
     table.play({
       type: 'RequestDecision',

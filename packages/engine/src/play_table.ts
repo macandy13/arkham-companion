@@ -568,12 +568,13 @@ export class PlayTable {
 
   /**
    * `result` as the answer to a test: a margin is its own `failedBy:<n>`
-   * option where the test has one, otherwise the fail answer's `margin`.
+   * option on a test that has such options (an unknown margin is then an
+   * error), otherwise the fail answer's `margin`.
    */
   private resolveTestDecision(decision: Decision, result: SkillTestResult, amount?: number): void {
-    const optionId = testOptionId(result);
-    if (typeof result === 'string' || decision.options.some((option) => option.id === optionId)) {
-      this.resolve(decision, optionId, amount);
+    const hasMarginOptions = decision.options.some((option) => option.id.startsWith('failedBy:'));
+    if (typeof result === 'string' || hasMarginOptions) {
+      this.resolve(decision, testOptionId(result), amount);
       return;
     }
     this.play({

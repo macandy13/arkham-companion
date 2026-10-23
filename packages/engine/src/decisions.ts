@@ -74,6 +74,8 @@ function skillTestResolved(
   skillTest: SkillTest,
   command: ResolveDecision,
 ): SkillTestResolved {
+  // A `failedBy:<n>` option names its own margin and wins over the answer's; slice 3 of the
+  // skill test rework replaces those options by the margin alone.
   const margin = command.optionId.startsWith(FAILED_BY)
     ? Number(command.optionId.slice(FAILED_BY.length))
     : (command.margin ?? perPointMargin(decision, command));

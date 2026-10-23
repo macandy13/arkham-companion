@@ -335,7 +335,6 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         prompt: 'decision.cardTest',
         kind: 'skillTestResult',
         about: 'Grasping Hands',
-        // How much the test failed by, which is also the damage or horror it deals.
         for: roland,
         test: { skill: 'agility', difficulty: 3 },
         options: ['pass', 'fail'],
@@ -409,7 +408,6 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         prompt: 'decision.cardTest',
         kind: 'skillTestResult',
         about: 'Rotting Remains',
-        // How much the test failed by, which is also the damage or horror it deals.
         for: roland,
         test: { skill: 'willpower', difficulty: 3 },
         options: ['pass', 'fail'],
