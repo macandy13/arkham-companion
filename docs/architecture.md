@@ -70,6 +70,7 @@ interface GameState {
   board: Board;                          // maps with connections and layout
   chaosBag: ChaosToken[];
   agenda: { current?: InstanceId }; act: { current?: InstanceId };
+  scenario: unknown;                     // per-scenario state
   pending: Decision[];                   // open questions for the players
 }
 ```
@@ -77,7 +78,7 @@ interface GameState {
 **Extension points**
 
 - **A new field:** add it in `state.ts`, give it a value in `emptyState()` and the reducer case that creates it, and an invariant if it can become inconsistent.
-- **A new zone:** add a `Zone` kind with its `zoneKey` and its check in `validateZone` ([`placement.ts`](../packages/engine/src/placement.ts)).
+- **A new zone:** add a `Zone` kind with its `zoneKey` and its check in `validateZone` ([`placement.ts`](../packages/engine/src/placement.ts)); if cards there count as in play, add it to `isInPlay` ([`doom.ts`](../packages/engine/src/doom.ts)), which the compiler won't flag.
 - **Moving cards or tokens:** use the shared event builders in `placement.ts` and [`investigators.ts`](../packages/engine/src/investigators.ts), not hand-built events.
 
 ### Command handling
@@ -90,13 +91,13 @@ function apply(state: GameState, event: Event): GameState;
 interface EngineContext { cards: CardDb; scenario?: ScenarioDefinition; }  // code and lookup data, never saved
 ```
 
-Inside one call a command resolves as a queue of steps, depth first: the command's own events, then the forced effects its events trigger (see "Triggers and card effects"), then its continuations (an agenda's reverse side before the next agenda; a drawn card's revelation before its placement; surge). A step that raises a decision stops the queue and stores the rest in `GameMeta.queue`; the answer resumes it. An action that provokes attacks of opportunity is held until those are answered. A refused follow-up refuses the whole command, and a trigger loop is cut off, so bad card data cannot hang the app or leave half an effect behind.
+Inside one call a command resolves as a queue of steps, depth first: the command's own events, then the forced effects its events trigger (see "Triggers and card effects"), then its continuations (an agenda's reverse side before the next agenda; a drawn card's revelation before its placement; surge). A step that raises a decision stops the queue and stores the rest in `GameMeta.queue`; the answer resumes it. An action that provokes attacks of opportunity is held until those are answered. A refused follow-up refuses the whole command, and so does a trigger loop, so bad card data cannot hang the app or leave half an effect behind.
 
-Every command type has one entry in [`COMMAND_SPECS`](../packages/engine/src/command_specs.ts): its handler (in a `handle_<area>.ts` file or a rule module) plus its policies (fires triggers, allowed while a decision is pending, provokes, continues). Handlers never import each other; shared queries live with their entity. All events of one player command share a `commandId`, so [undo](../packages/engine/src/undo.ts) removes a command with its whole chain.
+Every command type has one entry in [`COMMAND_SPECS`](../packages/engine/src/command_specs.ts): its handler (in a `handle_<area>.ts` file or a rule module) plus its policies (fires no triggers, allowed while a decision is pending or after the end, provokes, continues). Once the scenario has ended, only `ManualAdjust` is allowed. Handlers never import each other; shared queries live with their entity. All events of one player command share a `commandId`, so [undo](../packages/engine/src/undo.ts) removes a command with its whole chain.
 
 **Extension points**
 
-- **A new command:** add it to the `Command` union in [`commands.ts`](../packages/engine/src/commands.ts), its handler in a `handle_<area>.ts` and its `COMMAND_SPECS` entry. An action command extends `ActionCommand` with `provokes: asAction`.
+- **A new command:** add it to the `Command` union in [`commands.ts`](../packages/engine/src/commands.ts), its handler in a `handle_<area>.ts` and its `COMMAND_SPECS` entry. An action command extends `ActionCommand`, and its spec uses `provokes: asAction`.
 - **A new event:** reuse one if you can; otherwise add it in [`events.ts`](../packages/engine/src/events.ts) with a non-validating case in `apply`.
 - **A new refusal:** add a `RejectionCode` in [`rejection.ts`](../packages/engine/src/rejection.ts).
 
@@ -127,6 +128,7 @@ Where the players must choose, or the engine needs an answer it cannot know (a s
 **Extension points**
 
 - **Ask the players something:** return a `RequestDecision`; helpers for common shapes are in [`decisions.ts`](../packages/engine/src/decisions.ts).
+- **A new kind of question:** a `DecisionKind`, plus its debug sentence in [`describe_decision.ts`](../packages/engine/src/describe_decision.ts). A new adjustable count is a name in `NAMED_AMOUNTS`.
 - **A new skill-tested action:** a `SkillTestKind` and its resolver in `testedActionCommands`.
 - **A board-dependent token value ("-X"):** a `tokenValues` entry in the scenario's `modifiers`.
 
@@ -162,7 +164,8 @@ A campaign is its own event-sourced aggregate in [`campaign/`](../packages/engin
 **Extension points**
 
 - **A new campaign:** a `CampaignDefinition` next to its scenarios.
-- **A new command, correction or record:** add it in `campaign/` with its events, reducer case and invariant.
+- **A new command or record:** add it in `campaign/` with its events, reducer case and invariant.
+- **A new correction:** a `CampaignAdjustment` case in `handle_campaign_adjustment.ts` that produces the regular event.
 
 ### Card data
 
@@ -204,7 +207,7 @@ The [game screen](../apps/web/src/screens/GameScreen.tsx) has a header with the 
 
 Engine modules have unit tests; invariants have table tests. Each scenario has an end-to-end test ([`end_to_end.test.ts`](../packages/scenarios/src/the_gathering/end_to_end.test.ts)) that plays rounds through a `PlayTable`, checking invariants after every command and replaying the log at the end. [`formatBoard`](../packages/engine/src/format_board.ts) renders the board as stable text for snapshots and errors. The three test tools live in the engine's source, so the app uses them too:
 
-- **`newGame()`** ([`game_builder.ts`](../packages/engine/src/game_builder.ts)) builds a table from locations, maps, investigators and cards in zones, each placed with its [blank card](../packages/engine/src/blank_cards.ts) definition carrying only the stats the test is about, and starts it through `StartScenario`. Tests use only this builder: no file-local setup helpers, and every card and ID an assertion checks is named in the test.
+- **`newGame()`** ([`game_builder.ts`](../packages/engine/src/game_builder.ts)) builds a table from locations, maps, investigators and cards in zones, each placed with its [blank card](../packages/engine/src/blank_cards.ts) definition carrying only the stats the test is about, and starts it through `StartScenario`. Unit tests build their tables with it instead of file-local setup helpers, and every card and ID an assertion checks is named in the test ([coding guidelines](coding-guidelines.md) §3).
 - **`PlayTable`** ([`play_table.ts`](../packages/engine/src/play_table.ts)) plays a table in game language (`nextPhase()`, `moveTo(byName('Roland Banks'), byName('Hallway'))`, `answer(…, 'fail')`). Each method is one atomic undo group; a refusal throws `TableRejected` with the board attached.
 - **`BoardView`** ([`board_view.ts`](../packages/engine/src/board_view.ts)) reads the state back by card name, derived when read. Finders take matchers from [`card_matchers.ts`](../packages/engine/src/card_matchers.ts) (`byName`, `byId`, `byCode`) and throw when nothing or several cards match, so a test never acts on the wrong copy.
 
@@ -212,5 +215,5 @@ Engine modules have unit tests; invariants have table tests. Each scenario has a
 
 - **A new table piece:** a `with*` method on `GameBuilder` that adds to the `StartScenario`; never set state directly.
 - **A new player step or read-back:** a `PlayTable` method, or a field or view in `board_view.ts`.
-- **A new way to find a card:** a `CardMatcher` variant with its cases in `matchingCards` and `describeMatcher`.
+- **A new way to find a card:** a `CardMatcher` variant with its cases in `matchingCards`, `matchingInvestigators` and `describeMatcher`.
 - **A rule change:** a step in the end-to-end test where it shows at the table.
