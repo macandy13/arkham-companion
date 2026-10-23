@@ -3,6 +3,7 @@ import {
   atEndOfRound,
   atEndOfTurn,
   advanceAct,
+  afterEntering,
   atLocation,
   blankAct,
   blankAgenda,
@@ -49,6 +50,7 @@ import {
   type AddMapStep,
   type Command,
 } from './index';
+import { requireInvestigator } from './investigators';
 import { answer, rejectionFrom, stateAfter } from '../test/utils';
 
 const hall = instanceId('hall');
@@ -232,6 +234,83 @@ describe('trigger bus', () => {
 
       // The flipped agenda leaves the game afterwards, so only the events show whether it placed doom.
       expect(events.filter((e) => e.type === 'TokensChanged' && e.delta > 0)).toEqual([]);
+    });
+  });
+
+  describe('abilities after entering a location', () => {
+    const bob = investigatorId('bob');
+    const attic = instanceId('attic');
+    /** The attic deals 1 horror to whoever enters it. */
+    const atticCard = blankLocation('attic', { abilities: [afterEntering(takeHorror(1))] });
+    /** Alice in the hall, bob already in the revealed attic next to it. */
+    const atticTable = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(attic, atticCard, { revealed: true })
+      .withConnection(hall, attic)
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: attic });
+
+    it.each<{ name: string; move: Command }>([
+      {
+        name: 'moving there',
+        move: { type: 'MoveInvestigator', investigatorId: alice, to: attic },
+      },
+      {
+        name: 'being moved there by an effect',
+        move: {
+          type: 'MoveInvestigator',
+          investigatorId: alice,
+          to: attic,
+          ignoreConnections: true,
+        },
+      },
+    ])('deals the horror to alice for $name, not to bob who was there', ({ move }) => {
+      const { context, state: started } = atticTable.start();
+
+      const { state } = execute(context, started, move);
+
+      expect(requireInvestigator(state, alice).sanity.horror).toBe(1);
+      expect(requireInvestigator(state, bob).sanity.horror).toBe(0);
+    });
+
+    it('fires when the move reveals the location too', () => {
+      const { context, state: started } = newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withLocation(attic, atticCard)
+        .withConnection(hall, attic)
+        .withInvestigator(alice, { locationId: hall })
+        .start();
+
+      const { state } = execute(context, started, {
+        type: 'MoveInvestigator',
+        investigatorId: alice,
+        to: attic,
+      });
+
+      expect(requireInvestigator(state, alice).sanity.horror).toBe(1);
+    });
+
+    it('opens no window for an investigator who starts there', () => {
+      const { state } = atticTable.start();
+
+      expect(requireInvestigator(state, bob).sanity.horror).toBe(0);
+      expect(state.pending).toEqual([]);
+    });
+
+    it('opens no window for an investigator without a location placed there', () => {
+      const { context, state: started } = newGame()
+        .withLocation(attic, atticCard, { revealed: true })
+        .withInvestigator(alice)
+        .start();
+
+      const { state } = execute(context, started, {
+        type: 'MoveInvestigator',
+        investigatorId: alice,
+        to: attic,
+      });
+
+      expect(requireInvestigator(state, alice)).toMatchObject({ locationId: attic });
+      expect(requireInvestigator(state, alice).sanity.horror).toBe(0);
     });
   });
 

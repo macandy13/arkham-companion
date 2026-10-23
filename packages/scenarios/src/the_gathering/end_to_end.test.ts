@@ -175,9 +175,8 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.board.namesIn({ kind: 'resolving' })).toEqual(['Crypt Chill']);
     expect(table.board.namesIn({ kind: 'encounterDiscard' })).toEqual([]);
 
-    // With willpower 3 Daisy fails and, having no asset to discard, takes 2 damage.
-    table.answer(byName('Crypt Chill'), 'fail');
-    table.takeDamage(daisy, 2);
+    // Willpower 3 and a +1 token reach the difficulty of 4: Daisy passes.
+    table.answer(byName('Crypt Chill'), 'pass');
 
     expect(table.board.namesIn({ kind: 'resolving' })).toEqual([]);
     expect(table.board.namesIn({ kind: 'encounterDiscard' })).toEqual(['Crypt Chill']);
@@ -205,15 +204,19 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     expect(table.board.perInvestigator('at')).toMatchObject({ roland: 'Hallway' });
 
+    // Entering the Attic costs him 1 horror.
     table.moveTo(roland, byName('Attic'));
+    expect(table.board.investigator(roland)).toMatchObject({ horror: 1 });
     table.investigate(roland);
     table.investigate(roland);
     table.endTurn(roland);
 
     // Round 2 – investigation: Wendy's turn (the group lets her go before Daisy)
     table.startTurn(wendy);
-    // Entering the Cellar engages the ready Icy Ghoul waiting there, which is no action.
+    // Entering the Cellar costs her 1 damage and engages the ready Icy Ghoul
+    // waiting there, which is no action.
     table.moveTo(wendy, byName('Cellar'));
+    expect(table.board.investigator(wendy)).toMatchObject({ damage: 1 });
     expect(table.board.enemy(byName(icyGhoul))).toMatchObject({ at: 'Cellar', engagedWith: wendy });
     table.endTurn(wendy);
 
@@ -238,7 +241,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     table.resolveEnemyAttacks();
 
-    expect(table.board.investigator(wendy)).toMatchObject({ damage: 2, horror: 1 });
+    expect(table.board.investigator(wendy)).toMatchObject({ damage: 3, horror: 1 });
 
     // Round 2 – upkeep
     expect(table.nextPhase()).toEqual({ round: 2, phase: 'upkeep' });
@@ -264,10 +267,9 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     );
 
     // The players answer yes. The reverse side lets the lead investigator choose,
-    // but agenda 1 has no reverse-side ability yet, so Roland simply takes the 2
-    // horror by hand.
+    // but agenda 1 has no reverse-side ability yet: Roland, already shaken by
+    // the Attic, picks the random discard from each hand, done at the table.
     table.answer(byName("What's Going On?!"), 'yes');
-    table.takeHorror(roland, 2);
 
     expect(table.board.agenda).toMatchObject({ name: 'Rise of the Ghouls', doom: 0, threshold: 7 });
     expect(table.board.decisions).toEqual([]);
@@ -288,6 +290,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.evade(roland, byName(swarmOfRats));
     table.moveTo(roland, byName('Hallway'));
     table.moveTo(roland, byName('Cellar'));
+    expect(table.board.investigator(roland)).toMatchObject({ damage: 1, horror: 1 });
     table.adjustActions(roland, -3);
 
     // The counter tells the players that a fourth action is beyond Roland's three.
@@ -318,7 +321,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.nextPhase()).toEqual({ round: 3, phase: 'enemy', step: 'enemiesAttack' });
     table.resolveEnemyAttacks();
 
-    expect(table.board.investigator(wendy)).toMatchObject({ damage: 4, horror: 2 });
+    expect(table.board.investigator(wendy)).toMatchObject({ damage: 5, horror: 2 });
 
     // Round 3 – upkeep: 4.3 readies the rats; nobody is in the Attic, so they stay unengaged.
     expect(table.nextPhase()).toEqual({ round: 3, phase: 'upkeep' });
@@ -343,7 +346,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     // With agility 2 he fails by 1, so he takes 1 damage.
     table.resolveTest({ failedBy: 1 });
-    expect(table.board.investigator(roland)).toMatchObject({ damage: 1 });
+    expect(table.board.investigator(roland)).toMatchObject({ damage: 2 });
     // 1.4 continues: Daisy draws a Ghoul Minion, Wendy the Flesh-Eater.
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos' });
 
@@ -482,8 +485,8 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     table.resolveEnemyAttacks();
 
-    expect(table.board.investigator(roland)).toMatchObject({ damage: 2, horror: 2 });
-    expect(table.board.investigator(daisy)).toMatchObject({ damage: 3, horror: 1 });
+    expect(table.board.investigator(roland)).toMatchObject({ damage: 3, horror: 1 });
+    expect(table.board.investigator(daisy)).toMatchObject({ damage: 2, horror: 1 });
 
     // Round 5 – upkeep
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'upkeep' });
@@ -659,7 +662,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.resolveTest('pass', { for: roland });
 
     // The attack does not exhaust the Flesh-Eater, so it attacks again in the enemy phase.
-    expect(table.board.investigator(roland)).toMatchObject({ damage: 3, horror: 2 });
+    expect(table.board.investigator(roland)).toMatchObject({ damage: 4, horror: 2 });
     expect(table.board.enemy(byName('Flesh-Eater'))).toEqual({
       name: 'Flesh-Eater',
       at: 'Attic',
@@ -667,7 +670,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     });
 
     table.endTurn(roland);
-    // Daisy, at 4 of 5 health, evades the Ravenous Ghoul rather than risk its
+    // Daisy, at 3 of 5 damage, evades the Ravenous Ghoul rather than risk its
     // next attack, then takes the resource action.
     table.startTurn(daisy);
     table.evade(daisy, byName(ravenousGhoul));
@@ -694,6 +697,19 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.board.attacksDue).toEqual([{ enemy: 'Flesh-Eater', investigator: roland }]);
 
     table.resolveEnemyAttacks();
+    // Upkeep readies the Ravenous Ghoul in the Cellar. Its prey is the lowest
+    // remaining health, and Daisy and Wendy both have 2 left, so the players
+    // choose: it goes back to Daisy.
+    expect(table.nextPhase()).toEqual({ round: 7, phase: 'upkeep', step: 'readyExhausted' });
+    expect(table.board.decisions).toEqual([
+      {
+        prompt: 'decision.chooseEngagement',
+        kind: 'chooseInvestigator',
+        about: ravenousGhoul,
+        options: ['Daisy Walker', 'Wendy Adams'],
+      },
+    ]);
+    table.answer(byName(ravenousGhoul), 'Daisy Walker');
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'upkeep' });
 
     // The round has ended, and with it Dissonant Voices: it is back on top of the discard.
@@ -717,9 +733,9 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         Parlor [01115#1] – unrevealed
           connects to: Hallway
       Investigators:
-        Roland Banks – Attic; damage 4/9, horror 4/5, 5 clues, 13 resources, actions left 3; threat area: none
-        Daisy Walker – Cellar; damage 4/5, horror 2/9, 1 clues, 13 resources, actions left 3; threat area: none
-        Wendy Adams – Cellar; damage 4/7, horror 2/7, 3 clues, 12 resources, actions left 3; threat area: Frozen in Fear
+        Roland Banks – Attic; damage 5/9, horror 4/5, 5 clues, 13 resources, actions left 3; threat area: none
+        Daisy Walker – Cellar; damage 3/5, horror 2/9, 1 clues, 13 resources, actions left 3; threat area: none
+        Wendy Adams – Cellar; damage 5/7, horror 2/7, 3 clues, 12 resources, actions left 3; threat area: Frozen in Fear
       Encounter deck: 8 cards; discard: 14 cards, top: Dissonant Voices
       Set aside: 2 cards
       Victory display: Icy Ghoul
@@ -760,7 +776,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.fight(roland, byName('Flesh-Eater'), { damage: 2 });
     table.investigate(roland);
     table.endTurn(roland);
-    // Daisy, one damage from defeat, slips away from both ghouls and searches the Cellar.
+    // Daisy, two damage from defeat, slips away from both ghouls and searches the Cellar.
     table.startTurn(daisy);
     table.evade(daisy, byName(ravenousGhoul));
     table.evade(daisy, byName(ghoulMinion));
@@ -960,7 +976,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.endTurn(roland);
 
     // Daisy misses her first blow. The Priest is ready, so it retaliates: its
-    // attack (2 damage, 2 horror) would defeat her at 4 of 5 damage. Roland,
+    // attack (2 damage, 2 horror) would defeat her at 3 of 5 damage. Roland,
     // in the Hallway with her, plays Dodge (1 resource) and cancels it.
     table.startTurn(daisy);
     table.fight(daisy, byName('Ghoul Priest'), { result: 'fail' });
@@ -977,7 +993,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.answer(byName('Ghoul Priest'), 'attack cancelled');
     // The open attack blocks every other command, so the cost is noted after it.
     table.spendResources(roland, 1);
-    expect(table.board.investigator(daisy)).toMatchObject({ damage: 4, horror: 2 });
+    expect(table.board.investigator(daisy)).toMatchObject({ damage: 3, horror: 2 });
 
     // Her next blow is the Priest's fifteenth damage. It goes to the victory
     // display, which meets act 3's objective: the act advances by itself and

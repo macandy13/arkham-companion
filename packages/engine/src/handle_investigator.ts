@@ -61,6 +61,7 @@ export function handleMoveInvestigator(
   const moved: InvestigatorMoved = {
     type: 'InvestigatorMoved',
     investigatorId: investigator.id,
+    ...(investigator.locationId !== undefined && { from: investigator.locationId }),
     to: cmd.to,
   };
   const reveal = destination.faceUp ? [] : revealEvents(ctx, state, cmd.to);
