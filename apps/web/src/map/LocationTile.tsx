@@ -65,12 +65,7 @@ export function LocationTile({
       transform={`translate(${x} ${y})`}
     >
       <rect width={TILE.width} height={TILE.height} />
-      <rect
-        x={CONTENT.inset}
-        y={CONTENT.band}
-        width={TILE.width - 2 * CONTENT.inset}
-        height={TILE.height - CONTENT.band - CONTENT.inset}
-      />
+      <rect {...ART_WINDOW} />
       {picture && (
         <>
           <svg
@@ -96,6 +91,7 @@ export function LocationTile({
           />
         </>
       )}
+      <path d={NAME_ORNAMENT} />
       <NameBand location={location} />
       <EditButton location={location} onEdit={onEdit} />
       {location.attachments?.map((name, i) => (
@@ -147,10 +143,23 @@ export function LocationTile({
 }
 
 /**
- * The patterns that fill a tile's art area while it has no card image, one per side of a
- * location card, so a revealed tile reads apart from an unrevealed one at a glance. They are
- * drawn once per map drawing, in its `defs`; the stylesheet fills each art area with the
- * pattern for its tile's side by these ids. The ids are fixed rather than `useId`, since the
+ * The chevron that hangs from the name band into the art at the tile's centre, as on the printed
+ * location cards: our own drawing of their ornament, in the tile's ink.
+ */
+const NAME_ORNAMENT = (() => {
+  const centre = TILE.width / 2;
+  const half = CONTENT.pawnRadius;
+  const top = CONTENT.band;
+  return `M ${centre - half} ${top} L ${centre} ${top + half} L ${centre + half} ${top} Z`;
+})();
+
+/**
+ * The fills of a tile drawn in the printed cards' style, one set per side of a location card, so
+ * a revealed tile reads apart from an unrevealed one at a glance: a parchment gradient for the
+ * face (tan on the revealed side, sage on the unrevealed one, like the printed cards) and a hatch
+ * for the art area while it has no card image. They are drawn once per map drawing, in its
+ * `defs`; the stylesheet fills each tile with the ones for its side by these ids and colours the
+ * gradients' stops. The ids are fixed rather than `useId`, since the
  * stylesheet must name them; two drawings mounted at once would repeat them, which is harmless
  * because the patterns are the same.
  */
@@ -159,11 +168,19 @@ export function CardPatterns() {
   return (
     <>
       <pattern id="card-art-revealed" width={size} height={size} patternUnits="userSpaceOnUse">
+        <rect width={size} height={size} />
         <path d={`M 0 ${size} L ${size} 0`} />
       </pattern>
       <pattern id="card-art-unrevealed" width={size} height={size} patternUnits="userSpaceOnUse">
+        <rect width={size} height={size} />
         <path d={`M 0 ${size} L ${size} 0 M 0 0 L ${size} ${size}`} />
       </pattern>
+      {(['revealed', 'unrevealed'] as const).map((side) => (
+        <linearGradient key={side} id={`card-face-${side}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" />
+          <stop offset="1" />
+        </linearGradient>
+      ))}
     </>
   );
 }

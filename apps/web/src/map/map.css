@@ -108,17 +108,44 @@
 }
 
 /*
- * A location tile is a card face (LocationTile): a frame in the location colour, then the art
- * area, filled with the pattern of the side it shows, and the name band's text, the unrevealed
- * note (its second line) smaller.
+ * A location tile is a card face in the printed cards' style (LocationTile): parchment with a
+ * sepia edge, tan on the revealed side and sage on the unrevealed one, the name in ink in the
+ * display type with the unrevealed note (its second line) smaller, the art window ruled in ink and
+ * filled with the side's hatch until a picture shows, and the chevron hanging from the name band.
  */
 #map svg [data-card='location'] > rect:first-of-type {
-  stroke: var(--color-card-location);
+  stroke: var(--color-card-edge);
   stroke-width: var(--card-border-width);
 }
 
+#map svg [data-side='revealed'] > rect:first-of-type {
+  fill: url(#card-face-revealed);
+}
+
+#map svg [data-side='unrevealed'] > rect:first-of-type {
+  fill: url(#card-face-unrevealed);
+}
+
+#card-face-revealed stop:first-child {
+  stop-color: var(--color-parchment);
+}
+
+#card-face-revealed stop:last-child {
+  stop-color: var(--color-parchment-shade);
+}
+
+#card-face-unrevealed stop:first-child {
+  stop-color: var(--color-parchment-back);
+}
+
+#card-face-unrevealed stop:last-child {
+  stop-color: var(--color-parchment-back-shade);
+}
+
 #map svg [data-card] > rect + rect {
-  stroke: none;
+  stroke: var(--color-ink);
+  stroke-width: var(--card-pattern-line-width);
+  rx: 0;
 }
 
 #map svg [data-side='revealed'] > rect + rect {
@@ -129,13 +156,28 @@
   fill: url(#card-art-unrevealed);
 }
 
+#map svg pattern rect {
+  stroke: none;
+  rx: 0;
+}
+
 #map svg pattern path {
   stroke: var(--color-card-line);
   stroke-width: var(--card-pattern-line-width);
 }
 
+#map svg [data-card] > path {
+  fill: var(--color-ink);
+}
+
+#map svg [data-card] > text {
+  fill: var(--color-ink);
+  font-family: var(--font-family-display);
+}
+
 #map svg [data-card] > text + text {
-  fill: var(--color-card-text-muted);
+  fill: var(--color-ink-muted);
+  font-family: var(--font-family);
   font-size: var(--font-size-note);
 }
 
@@ -157,7 +199,7 @@
   visibility: visible;
 }
 
-:root[data-card-look='faces'] #map svg [data-picture] > text,
+:root[data-card-look='faces'] #map svg [data-picture] > :is(text, path),
 :root[data-card-look='faces'] #map svg [data-picture] > [data-token='shroud'] {
   opacity: 0;
 }

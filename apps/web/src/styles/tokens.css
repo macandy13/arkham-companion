@@ -42,6 +42,19 @@
   --color-card-text: #ece3cf;
   --color-card-text-muted: #b5ab95;
   --color-card-line: rgb(201 164 92 / 40%);
+  /*
+   * The printed cards' paper and ink, for card faces drawn in their style (our own drawing, no FFG
+   * art): tan parchment for a card's front, sage for a location's unrevealed side, each a shade
+   * darker towards the foot, brown ink for text and rules, and a dark sepia edge. The same in both
+   * themes, like printed cards.
+   */
+  --color-parchment: #ebdfc2;
+  --color-parchment-shade: #d3bf93;
+  --color-parchment-back: #dfe0c3;
+  --color-parchment-back-shade: #b9bd93;
+  --color-ink: #2b1e12;
+  --color-ink-muted: #6a5536;
+  --color-card-edge: #3d2b19;
   /* The shroud token, a dark disc like the printed shroud icon's. */
   --color-token-shroud: #2c2c33;
 
