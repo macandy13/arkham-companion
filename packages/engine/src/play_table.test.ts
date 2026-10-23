@@ -692,29 +692,7 @@ describe('answering decisions', () => {
     });
   });
 
-  it('answers a test without failedBy options by a fail with that margin', () => {
-    const table = PlayTable.start(game);
-    table.play({
-      type: 'RequestDecision',
-      decision: skillTestDecision(
-        {
-          id: decisionId('plain_test'),
-          prompt: 'decision.cardTest',
-          decider: { kind: 'investigator', investigatorId: alice },
-          test: { skill: 'willpower', difficulty: 4 },
-        },
-        { onPass: [], onFail: [] },
-      ),
-    });
-
-    table.resolveTest({ failedBy: 3 });
-
-    expect(table.events).toContainEqual(
-      expect.objectContaining({ type: 'SkillTestResolved', outcome: 'fail', margin: 3 }),
-    );
-  });
-
-  it('reports a test failed by a margin', () => {
+  it('reports a test failed by a margin as the margin a per-point test deals', () => {
     const table = PlayTable.start(game);
     table.play({
       type: 'RequestDecision',
@@ -725,13 +703,7 @@ describe('answering decisions', () => {
           decider: { kind: 'investigator', investigatorId: alice },
           test: { skill: 'willpower', difficulty: 4 },
         },
-        {
-          onPass: [],
-          onFail: [],
-          failedBy: {
-            2: [{ type: 'AdjustInvestigator', investigatorId: alice, stat: 'horror', delta: 2 }],
-          },
-        },
+        { onPass: [], onFail: [], perPointFailed: 'horror' },
       ),
     });
 

@@ -47,18 +47,6 @@ describe('describeDecision', () => {
     );
   });
 
-  it('words a failed-by margin with its number', () => {
-    const test: Decision = {
-      ...engage,
-      prompt: 'decision.skillTest',
-      options: [{ id: 'failedBy:2', label: 'decision.failedBy', commands: [] }],
-    };
-
-    expect(describeDecision(context, state, test)).toEqual(
-      'decision.skillTest failed by 2 [chooseInvestigator]',
-    );
-  });
-
   it('names the test of a skill test and the adjustable count of an option', () => {
     const fight: Decision = {
       ...engage,

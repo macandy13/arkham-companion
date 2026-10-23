@@ -74,11 +74,7 @@ function skillTestResolved(
   skillTest: SkillTest,
   command: ResolveDecision,
 ): SkillTestResolved {
-  // A `failedBy:<n>` option names its own margin and wins over the answer's; slice 3 of the
-  // skill test rework replaces those options by the margin alone.
-  const margin = command.optionId.startsWith(FAILED_BY)
-    ? Number(command.optionId.slice(FAILED_BY.length))
-    : (command.margin ?? perPointMargin(decision, command));
+  const margin = command.margin ?? perPointMargin(decision, command);
   return {
     type: 'SkillTestResolved',
     decisionId: decision.id,
@@ -149,21 +145,18 @@ function perPointMargin(decision: Decision, command: ResolveDecision): number | 
   return command.margin ?? 1;
 }
 
-/** The chosen option's commands, with the confirmed amount and named amounts if the answer gives them. */
+/**
+ * The chosen option's commands, with the named amounts the answer gives. The
+ * plain `amount` is only checked here: the decision's resolver reads it
+ * (`testedActionCommands`).
+ */
 function optionCommands(state: GameState, command: ResolveDecision): readonly Command[] {
   const option = chosenOption(state, command);
-  const withAmount =
-    command.amount === undefined
-      ? option.commands
-      : replaceField(
-          option.commands,
-          'amount',
-          confirmedAmount(command, option.amount, command.amount),
-        );
+  if (command.amount !== undefined) confirmedAmount(command, option.amount, command.amount);
   return Object.entries(command.amounts ?? {}).reduce(
     (commands, [name, amount]) =>
       replaceField(commands, name, confirmedAmount(command, option.amounts?.[name], amount, name)),
-    withAmount,
+    option.commands,
   );
 }
 
@@ -251,15 +244,12 @@ export function confirmOptions(onYes: Command[], target?: InstanceId): DecisionO
   ];
 }
 
-/** Option id prefix of a "failed by <n>" answer (`SkillTestOutcomes.failedBy`). */
-const FAILED_BY = 'failedBy:';
-
 /** What follows each outcome of a skill test. */
 export interface SkillTestOutcomes {
   onPass: Command[];
   /**
    * Makes the pass a count the players confirm (clues discovered, damage
-   * dealt): `onPass` is written for its default (see `DecisionOption.amount`).
+   * dealt), which the decision's resolver reads (`DecisionOption.amount`).
    */
   passAmount?: AmountRange;
   onFail: Command[];
@@ -269,19 +259,12 @@ export interface SkillTestOutcomes {
    * `SkillTestResolved.margin` records it.
    */
   perPointFailed?: PerPointFailed;
-  /**
-   * Consequences that depend on how much the test failed by (`failedBy[2]`
-   * for "failed by 2"). Not combined with `perPointFailed`, whose margin is a
-   * count on the plain fail option instead. Commands are plain data, so each margin the card cares
-   * about gets its own option next to the plain "fail" option.
-   */
-  failedBy?: Readonly<Record<number, Command[]>>;
 }
 
 /**
  * A `skillTestResult` decision: the players resolve `test` at the table and
- * answer with `pass`, `fail` or `failedBy:<n>`; the matching commands are the
- * consequence. Used by the investigate, fight and evade actions, by
+ * answer with `pass` or `fail`, and how much by (`ResolveDecision.margin`);
+ * the matching commands are the consequence. Used by the investigate, fight and evade actions, by
  * revelation tests and by card abilities (`TestSkill`).
  */
 export function skillTestDecision(
@@ -289,11 +272,6 @@ export function skillTestDecision(
   outcomes: SkillTestOutcomes,
 ): Decision {
   const { test, ...rest } = decision;
-  const margins = Object.entries(outcomes.failedBy ?? {}).map(([margin, commands]) => ({
-    id: `${FAILED_BY}${margin}`,
-    label: 'decision.failedBy',
-    commands,
-  }));
   return {
     ...rest,
     kind: 'skillTestResult',
@@ -305,12 +283,7 @@ export function skillTestDecision(
         commands: outcomes.onPass,
         ...(outcomes.passAmount ? { amount: outcomes.passAmount } : {}),
       },
-      {
-        id: 'fail',
-        label: 'decision.fail',
-        commands: outcomes.onFail,
-      },
-      ...margins,
+      { id: 'fail', label: 'decision.fail', commands: outcomes.onFail },
     ],
     ...(outcomes.perPointFailed ? { perPointFailed: outcomes.perPointFailed } : {}),
   };

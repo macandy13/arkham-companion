@@ -253,7 +253,6 @@ describe('skill test result', () => {
     {
       onPass: [{ type: 'DiscoverClues', investigatorId: alice, locationId: hall, amount: 1 }],
       onFail: [gainHorror(1)],
-      failedBy: { 2: [gainHorror(2)] },
     },
   );
   let asked: GameState;
@@ -282,12 +281,6 @@ describe('skill test result', () => {
     expect(after.investigators[0]?.sanity.horror).toBe(1);
     expect(after.investigators[0]?.clues).toBe(0);
   });
-
-  it('adds two horror when the test is failed by 2', () => {
-    const after = stateAfter(context, asked, answer('investigate_hall', 'failedBy:2'));
-
-    expect(after.investigators[0]?.sanity.horror).toBe(2);
-  });
 });
 
 describe('skill test outcome record', () => {
@@ -304,7 +297,6 @@ describe('skill test outcome record', () => {
     {
       onPass: [{ type: 'DiscoverClues', investigatorId: alice, locationId: hall, amount: 1 }],
       onFail: [gainHorror(1)],
-      failedBy: { 2: [gainHorror(2)] },
     },
   );
   let asked: GameState;
@@ -337,18 +329,6 @@ describe('skill test outcome record', () => {
         subject: hall,
         skillTest: test,
         outcome: 'fail',
-      },
-    },
-    {
-      option: 'failedBy:2',
-      recorded: {
-        type: 'SkillTestResolved',
-        decisionId: 'investigate_hall',
-        investigatorId: alice,
-        subject: hall,
-        skillTest: test,
-        outcome: 'fail',
-        margin: 2,
       },
     },
   ])('records "$option" right after the answer', ({ option, recorded }) => {

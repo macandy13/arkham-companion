@@ -388,15 +388,15 @@ export interface DecisionOption {
   commands: Command[];
   /**
    * Set when the option's consequence is a count the players confirm or
-   * adjust (clues discovered, damage dealt): `commands` are written for
-   * `default`, and a `ResolveDecision.amount` in the range replaces the
-   * `amount` of each of them.
+   * adjust (clues discovered, damage dealt by an action's test): a
+   * `ResolveDecision.amount` must lie in the range, and the decision's
+   * resolver reads it (`Decision.testKind`), `default` when it is left out.
    */
   amount?: AmountRange;
   /**
-   * Like `amount`, for an option with several counts the players confirm or
-   * adjust (an attack's damage and horror): each range is keyed by the
-   * command field it replaces, and `ResolveDecision.amounts` sets them.
+   * For an option with several counts the players confirm or adjust (an
+   * attack's damage and horror): each range is keyed by the command field
+   * it replaces, and `ResolveDecision.amounts` sets them.
    */
   amounts?: Readonly<Record<string, AmountRange>>;
 }

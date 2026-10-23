@@ -63,14 +63,12 @@ function amountText(amount: AmountRange): string {
 /**
  * The readable name of `option`: its label when that is already a name
  * (investigator, card, location), otherwise the words of its i18n key
- * (`decision.yes` is `yes`, `failedBy:2` is `failed by 2`). Never the id
+ * (`decision.yes` is `yes`, `decision.doesNotProvoke` is `does not provoke`). Never the id
  * itself; `optionNamed` maps a name back to the option.
  */
 export function optionName(option: DecisionOption): string {
   if (!option.label.startsWith(PROMPT_PREFIX)) return option.label;
-  const words = camelCaseToWords(option.label.slice(PROMPT_PREFIX.length));
-  const [, margin] = option.id.split(':');
-  return margin === undefined ? words : `${words} ${margin}`;
+  return camelCaseToWords(option.label.slice(PROMPT_PREFIX.length));
 }
 
 /** The option of `decision` whose readable name is `name`, if exactly one has it. */
