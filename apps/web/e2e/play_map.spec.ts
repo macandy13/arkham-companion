@@ -96,7 +96,7 @@ test('move on the map', async ({ page }) => {
 // Journey: move an enemy by dragging it as a card instruction says: to a location with no
 // connection, then to the investigator's, where it engages them, and away again, which
 // disengages it.
-test('move an enemy on the map', async ({ page }) => {
+test('move an enemy on the map', { tag: '@flow' }, async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
   const priest = (name: string) => room(name).getByRole('img', { name: /^Ghoul Priest/ });
@@ -131,7 +131,7 @@ test('move an enemy on the map', async ({ page }) => {
 
 // Journey: keep the map in step with the table through a location's menu: reveal a location a
 // card turned over, put doom on it, and place a clue a card adds to the Hallway.
-test('change a location by its menu', async ({ page }) => {
+test('change a location by its menu', { tag: '@flow' }, async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
   const menu = (name: string) => page.getByRole('dialog', { name });

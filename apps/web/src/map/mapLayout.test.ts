@@ -4,10 +4,10 @@ import {
   TILE,
   connectionEnds,
   drawingSize,
+  attachmentOrigin,
   onPawn,
   pawnOffset,
   tileAt,
-  tokenOffset,
   tileCells,
   tileOrigin,
 } from './mapLayout';
@@ -154,29 +154,28 @@ describe('tileAt', () => {
   });
 });
 
-// Pawns have a radius of 14 and stand 6 apart, centred 24 above the tile's bottom edge.
+// Pieces have a radius of 14 and stand 6 apart, four to a row; the first row is centred 24 above
+// the tile's bottom edge, the next one 34 higher.
 describe('pawnOffset', () => {
   it.each([
     { index: 0, centre: { x: 24, y: 186 } },
     { index: 1, centre: { x: 58, y: 186 } },
-  ])('centres pawn $index on ($centre.x, $centre.y) of its tile', ({ index, centre }) => {
+    { index: 3, centre: { x: 126, y: 186 } },
+    { index: 4, centre: { x: 24, y: 152 } },
+  ])('centres piece $index on ($centre.x, $centre.y) of its tile', ({ index, centre }) => {
     expect(pawnOffset(index)).toEqual(centre);
   });
 });
 
-// Tokens are 28 across with a gap of 6, in the row centred 62 from a tile's top, below the
-// 48-high name band; the first sits 10 in from the right edge of the 150-wide tile.
-describe('tokenOffset', () => {
+// An attachment is 30 wide, half of it past the 150-wide tile's right edge; the first sits 6 below
+// the 48-high name band, each further one 14 lower.
+describe('attachmentOrigin', () => {
   it.each([
-    { index: 0, centre: { x: 126, y: 62 } },
-    { index: 1, centre: { x: 92, y: 62 } },
-    { index: 2, centre: { x: 58, y: 62 } },
-  ])(
-    'centres token $index on ($centre.x, $centre.y) of its tile, from the right',
-    ({ index, centre }) => {
-      expect(tokenOffset(index)).toEqual(centre);
-    },
-  );
+    { index: 0, origin: { x: 135, y: 54 } },
+    { index: 1, origin: { x: 135, y: 68 } },
+  ])('puts attachment $index at ($origin.x, $origin.y) of its tile', ({ index, origin }) => {
+    expect(attachmentOrigin(index)).toEqual(origin);
+  });
 });
 
 describe('onPawn', () => {

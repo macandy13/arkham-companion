@@ -3,12 +3,14 @@ import { useTranslation } from 'react-i18next';
 import type { InvestigatorView, LocationView, MapEnemyView } from '@arkham/engine';
 import { useCardPicture } from '../catalog/cardImages';
 import {
-  BADGE_CENTRE,
-  CHIPS_TOP,
+  ATTACHMENT,
+  attachmentOrigin,
+  CLUES_CENTRE,
   CONTENT,
+  DOOM_CENTRE,
   pawnOffset,
+  SHROUD_CENTRE,
   TILE,
-  tokenOffset,
   type Point,
 } from './mapLayout';
 import type { DragHandlers } from './usePieceDrag';
@@ -17,15 +19,17 @@ import type { DragHandlers } from './usePieceDrag';
 export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyView };
 
 /**
- * One location as a tile at (`x`, `y`), drawn as a card face in layers: a frame, an art area with
- * a pattern for the side the location shows (revealed or not), and a name band along the top.
- * When the side has a picture (`LocationView.image`), it covers the face once it has loaded
- * (`data-picture`), and the stylesheet hides the name band and shroud badge the picture prints.
- * Over them lies what the game tracks: the shroud badge once revealed (shroud is on the revealed
- * side), a token each for its clues once revealed, its doom and its attachments when it has
- * any, a chip per enemy at it and a pawn per investigator there. `enemies` and `investigators`
- * are the open game's pieces at this location; `dragOf` gives the drag handlers of each piece
- * that can be dragged now. Its edit button at the right end of the name band calls `onEdit`.
+ * One location as a tile at (`x`, `y`), drawn as a card face in layers, laid out like the printed
+ * card: a frame, an art area with a pattern for the side the location shows (revealed or not), a
+ * name band along the top. When the side has a picture (`LocationView.image`), it covers the face
+ * once it has loaded (`data-picture`), and the stylesheet hides the name band and shroud the
+ * picture prints. Over them lies what the game tracks: its attachments peeking out at the right
+ * edge as small cards, and once revealed the shroud (with what attachments add) at mid height on
+ * the left and the clues on the right, doom under the clues when it has any; then a pawn per
+ * investigator there and a round token per enemy at it, in rows along the bottom edge.
+ * `enemies` and `investigators` are the open game's pieces at this location; `dragOf` gives the
+ * drag handlers of each piece that can be dragged now. Its edit button at the right end of the
+ * name band calls `onEdit`.
  */
 export function LocationTile({
   location,
@@ -46,25 +50,6 @@ export function LocationTile({
 }) {
   const { t } = useTranslation();
   const picture = useCardPicture(location.image);
-  const tokens: TokenCount[] = [];
-  if (location.revealed)
-    tokens.push({
-      kind: 'clue',
-      value: location.clues,
-      label: t('map.clues', { count: location.clues }),
-    });
-  if (location.doom)
-    tokens.push({
-      kind: 'doom',
-      value: location.doom,
-      label: t('map.doom', { count: location.doom }),
-    });
-  if (location.attachments)
-    tokens.push({
-      kind: 'attachments',
-      value: location.attachments.length,
-      label: t('map.attachments', { count: location.attachments.length }),
-    });
 
   return (
     <g
@@ -94,35 +79,48 @@ export function LocationTile({
       )}
       <NameBand location={location} />
       <EditButton location={location} onEdit={onEdit} />
+      {location.attachments?.map((name, i) => (
+        <Attachment key={`${name}-${i}`} name={name} origin={attachmentOrigin(i)} />
+      ))}
       {location.revealed && (
-        <Token
-          kind="shroud"
-          value={location.shroud}
-          label={t('map.shroud', { shroud: location.shroud })}
-          centre={BADGE_CENTRE}
-        />
+        <>
+          <Token
+            kind="shroud"
+            value={location.shroud}
+            label={t('map.shroud', { shroud: location.shroud })}
+            centre={SHROUD_CENTRE}
+          />
+          <Token
+            kind="clue"
+            value={location.clues}
+            label={t('map.clues', { count: location.clues })}
+            centre={CLUES_CENTRE}
+          />
+        </>
       )}
-      {tokens.map((token, i) => (
-        <Token key={token.kind} {...token} centre={tokenOffset(i)} />
-      ))}
-      {enemies.map((enemy, i) => (
-        <EnemyChip
-          key={enemy.id}
-          enemy={enemy}
-          investigators={investigators}
-          centre={{
-            x: TILE.width / 2,
-            y: CHIPS_TOP + i * (CONTENT.chip + CONTENT.pawnGap) + CONTENT.chip / 2,
-          }}
-          drag={dragOf({ enemy })}
+      {location.doom ? (
+        <Token
+          kind="doom"
+          value={location.doom}
+          label={t('map.doom', { count: location.doom })}
+          centre={DOOM_CENTRE}
         />
-      ))}
+      ) : null}
       {investigators.map((investigator, i) => (
         <Pawn
           key={investigator.id}
           investigator={investigator}
           centre={pawnOffset(i)}
           drag={dragOf({ investigator })}
+        />
+      ))}
+      {enemies.map((enemy, i) => (
+        <EnemyToken
+          key={enemy.id}
+          enemy={enemy}
+          investigators={investigators}
+          centre={pawnOffset(investigators.length + i)}
+          drag={dragOf({ enemy })}
         />
       ))}
     </g>
@@ -179,23 +177,42 @@ function NameBand({ location }: { location: LocationView }) {
 
 /** What a tile shows as a round token: the kind it counts, its value and its accessible name. */
 interface TokenCount {
-  kind: 'shroud' | 'clue' | 'doom' | 'attachments';
+  kind: 'shroud' | 'clue' | 'doom';
   value: number;
   label: string;
 }
 
 /**
- * A round token or badge with its count, centred on `centre`: the shroud badge or a clue, doom or
- * attachment token. `kind` (`data-token`) lets the stylesheet colour each like its token on the
- * table.
+ * A round token with its count, centred on `centre`: the shroud, clues or doom. `kind`
+ * (`data-token`) lets the stylesheet colour each like its token on the table, and a count of
+ * none is marked (`data-empty`), so a location without clues reads as empty at a glance.
  */
 function Token({ kind, value, label, centre: { x, y } }: TokenCount & { centre: Point }) {
   return (
-    <g role="img" aria-label={label} data-token={kind}>
+    <g role="img" aria-label={label} data-token={kind} data-empty={value === 0 || undefined}>
       <circle cx={x} cy={y} r={CONTENT.pawnRadius} />
       <text x={x} y={y}>
         {value}
       </text>
+    </g>
+  );
+}
+
+/**
+ * A card attached to the location, `name` its printed name, drawn as a small card turned a little and
+ * peeking out past the tile's right edge, its top left corner at `origin`.
+ */
+function Attachment({ name, origin: { x, y } }: { name: string; origin: Point }) {
+  const { t } = useTranslation();
+  const centre = { x: x + ATTACHMENT.width / 2, y: y + ATTACHMENT.height / 2 };
+  return (
+    <g
+      role="img"
+      aria-label={t('map.attached', { card: name })}
+      data-attachment
+      transform={`rotate(${ATTACHMENT.turn} ${centre.x} ${centre.y})`}
+    >
+      <rect x={x} y={y} width={ATTACHMENT.width} height={ATTACHMENT.height} />
     </g>
   );
 }
@@ -280,15 +297,15 @@ export function Pawn({
 }
 
 /**
- * An enemy as a chip across a tile with its name, centred on `centre`. Its accessible name also
- * says whom of `investigators` it is engaged with, its damage and whether it is exhausted; the
- * chip does not show those yet. With `drag` it can be dragged; a `ghost` is the copy that
- * follows the pointer.
+ * An enemy as a round token with its initial, centred on `centre`, like an investigator's pawn but
+ * ringed in the doom colour (`data-enemy`). Its accessible name also says whom of
+ * `investigators` it is engaged with, its damage and whether it is exhausted; the token does not
+ * show those yet. With `drag` it can be dragged; a `ghost` is the copy that follows the pointer.
  */
-export function EnemyChip({
+export function EnemyToken({
   enemy,
   investigators,
-  centre,
+  centre: { x, y },
   drag,
   ghost = false,
 }: {
@@ -305,19 +322,14 @@ export function EnemyChip({
     ...(enemy.damage ? [t('map.damage', { count: enemy.damage })] : []),
     ...(enemy.exhausted ? [t('map.exhausted')] : []),
   ];
-  const width = TILE.width - 2 * CONTENT.inset;
   return (
     <g
+      data-enemy
       {...dragAttributes({ name: [enemy.name, ...states].join(', '), kind: 'enemy', drag, ghost })}
     >
-      <rect
-        x={centre.x - width / 2}
-        y={centre.y - CONTENT.chip / 2}
-        width={width}
-        height={CONTENT.chip}
-      />
-      <text x={centre.x} y={centre.y}>
-        {enemy.name}
+      <circle cx={x} cy={y} r={CONTENT.pawnRadius} />
+      <text x={x} y={y}>
+        {enemy.name.charAt(0)}
       </text>
     </g>
   );

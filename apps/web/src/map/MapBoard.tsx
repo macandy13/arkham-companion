@@ -14,7 +14,7 @@ import type {
 } from '@arkham/engine';
 import type { GameActions } from '../state/gameActions';
 import { LocationMenu } from './LocationMenu';
-import { CardPatterns, EnemyChip, LocationTile, Pawn, type TilePiece } from './LocationTile';
+import { CardPatterns, EnemyToken, LocationTile, Pawn, type TilePiece } from './LocationTile';
 import {
   connectionEnds,
   drawingSize,
@@ -217,7 +217,7 @@ function MapDrawing({
 /** The copy of a dragged piece that follows the pointer, centred on `at`. */
 function Ghost({ piece, at, board }: { piece: TilePiece; at: Point; board: BoardView }) {
   return 'enemy' in piece ? (
-    <EnemyChip enemy={piece.enemy} investigators={board.investigators} centre={at} ghost />
+    <EnemyToken enemy={piece.enemy} investigators={board.investigators} centre={at} ghost />
   ) : (
     <Pawn investigator={piece.investigator} centre={at} ghost />
   );

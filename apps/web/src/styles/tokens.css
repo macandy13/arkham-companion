@@ -29,6 +29,17 @@
   --color-card-act: #4a6f9a;
   --color-card-scenario: #6e5a8c;
   --color-card-encounter: #4f6b52;
+  --color-card-treachery: #6e5a8c;
+  /*
+   * The face of a card drawn by the app (map tiles, attachments): dark in both themes, like the
+   * printed cards, so these are not redefined for the light theme.
+   */
+  --color-card-face: #14201c;
+  --color-card-text: #ece3cf;
+  --color-card-text-muted: #b5ab95;
+  --color-card-line: rgb(201 164 92 / 40%);
+  /* The shroud token, a dark disc like the printed shroud icon's. */
+  --color-token-shroud: #2c2c33;
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -85,6 +96,10 @@
   --layout-pile-symbol-height: 2rem;
   /* A dragged map piece's copy, see-through so the tile under it stays readable. */
   --map-ghost-opacity: 0.6;
+  /* A token with nothing on it (a location's clues once found) fades, so it reads as empty. */
+  --token-empty-opacity: 0.45;
+  /* The rim of a round piece or token: the enemy ring, the shroud's bone edge. */
+  --piece-ring-width: 3px;
 }
 
 :root[data-theme='light'] {
