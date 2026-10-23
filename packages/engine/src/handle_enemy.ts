@@ -1,5 +1,5 @@
 import { requireLocationInPlay } from './board';
-import { cardStats, resolveValue, type CardStats, type EngineContext } from './cards';
+import { resolveValue, type CardStats, type EngineContext } from './cards';
 import type {
   DamageEnemy,
   DefeatEnemy,
@@ -11,10 +11,10 @@ import type {
 } from './commands';
 import { engageEvents } from './engagement';
 import type { EnemyDefeated, EnemyEngaged, Event, ExhaustChanged } from './events';
-import { activeInvestigator } from './handle_investigator';
+import { enemyOf, isEnemyOnTable, locationOf } from './enemies';
+import { activeInvestigator } from './investigators';
 import type { InstanceId } from './ids';
 import { hasKeyword } from './keywords';
-import { requireCard } from './lookup';
 import { moveCardEvent } from './placement';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
@@ -33,7 +33,7 @@ export function handleEngageEnemy(
   state: GameState,
   cmd: EngageEnemy,
 ): EnemyEngaged[] {
-  const { enemy, stats } = inPlayEnemyOf(ctx, state, cmd.enemyId);
+  const { enemy, stats } = onTableEnemyOf(ctx, state, cmd.enemyId);
   if (hasKeyword(stats, 'massive'))
     throw new CommandRejected({ code: 'massiveNotEngageable', cardId: enemy.id });
   const investigator = activeInvestigator(state, cmd.investigatorId);
@@ -59,7 +59,7 @@ export function handleDisengageEnemy(
   state: GameState,
   cmd: DisengageEnemy,
 ): Event[] {
-  const { enemy } = inPlayEnemyOf(ctx, state, cmd.enemyId);
+  const { enemy } = onTableEnemyOf(ctx, state, cmd.enemyId);
   if (enemy.zone.kind !== 'engaged')
     throw new CommandRejected({ code: 'notEngaged', cardId: enemy.id });
   return [
@@ -78,7 +78,7 @@ export function handleDisengageEnemy(
  * which is not a mistake worth refusing.
  */
 export function handleMoveEnemy(ctx: EngineContext, state: GameState, cmd: MoveEnemy): Event[] {
-  const { enemy } = inPlayEnemyOf(ctx, state, cmd.enemyId);
+  const { enemy } = onTableEnemyOf(ctx, state, cmd.enemyId);
   requireLocationInPlay(state, cmd.to);
   if (locationOf(state, enemy) === cmd.to) return [];
   if (enemy.zone.kind === 'engaged' && !cmd.forced)
@@ -93,7 +93,7 @@ export function handleMoveEnemy(ctx: EngineContext, state: GameState, cmd: MoveE
 
 /** `DamageEnemy`: adds damage and defeats the enemy in the same step once it has as much as its health. */
 export function handleDamageEnemy(ctx: EngineContext, state: GameState, cmd: DamageEnemy): Event[] {
-  const { enemy, stats } = inPlayEnemyOf(ctx, state, cmd.enemyId);
+  const { enemy, stats } = onTableEnemyOf(ctx, state, cmd.enemyId);
   if (!Number.isInteger(cmd.amount) || cmd.amount <= 0)
     throw new CommandRejected({ code: 'invalidTokenDelta', delta: cmd.amount });
   const damaged: Event = {
@@ -115,7 +115,7 @@ export function handleDefeatEnemy(
   state: GameState,
   cmd: DefeatEnemy,
 ): EnemyDefeated[] {
-  const { enemy, stats } = inPlayEnemyOf(ctx, state, cmd.enemyId);
+  const { enemy, stats } = onTableEnemyOf(ctx, state, cmd.enemyId);
   return [defeated(enemy.id, stats)];
 }
 
@@ -125,7 +125,7 @@ export function handleExhaustEnemy(
   state: GameState,
   cmd: ExhaustEnemy,
 ): ExhaustChanged[] {
-  return [exhaustChange(inPlayEnemyOf(ctx, state, cmd.enemyId).enemy, true)];
+  return [exhaustChange(onTableEnemyOf(ctx, state, cmd.enemyId).enemy, true)];
 }
 
 /**
@@ -133,60 +133,15 @@ export function handleExhaustEnemy(
  * investigator at its location (Rules Reference, "Engaged").
  */
 export function handleReadyEnemy(ctx: EngineContext, state: GameState, cmd: ReadyEnemy): Event[] {
-  const change = exhaustChange(inPlayEnemyOf(ctx, state, cmd.enemyId).enemy, false);
+  const change = exhaustChange(onTableEnemyOf(ctx, state, cmd.enemyId).enemy, false);
   return [change, ...engageEvents(ctx, replay([change], state), cmd.enemyId)];
 }
 
-/** A card that is an enemy by type, with its stats; rejects anything else. */
-export function enemyOf(
-  ctx: EngineContext,
-  state: GameState,
-  enemyId: InstanceId,
-): { enemy: CardInstance; stats: CardStats } {
-  const enemy = requireCard(state.cards, enemyId);
-  const stats = cardStats(ctx.cards, enemy.code);
-  if (stats.typeCode !== 'enemy')
-    throw new CommandRejected({ code: 'notAnEnemy', cardId: enemyId });
-  return { enemy, stats };
-}
-
-/** Whether the enemy is on the table: unengaged at a location or engaged with an investigator. */
-export function isInPlay(enemy: CardInstance): boolean {
-  return enemy.zone.kind === 'atLocation' || enemy.zone.kind === 'engaged';
-}
-
-function inPlayEnemyOf(ctx: EngineContext, state: GameState, enemyId: InstanceId) {
+function onTableEnemyOf(ctx: EngineContext, state: GameState, enemyId: InstanceId) {
   const found = enemyOf(ctx, state, enemyId);
-  if (!isInPlay(found.enemy))
+  if (!isEnemyOnTable(found.enemy))
     throw new CommandRejected({ code: 'enemyNotInPlay', cardId: enemyId });
   return found;
-}
-
-/** The location an enemy in play is at; an engaged enemy is where its investigator is. */
-export function locationOf(state: GameState, enemy: CardInstance): InstanceId {
-  if (enemy.zone.kind === 'atLocation') return enemy.zone.locationId;
-  if (enemy.zone.kind === 'engaged') {
-    const { investigatorId } = enemy.zone;
-    const location = state.investigators.find((inv) => inv.id === investigatorId)?.locationId;
-    if (location !== undefined) return location;
-    throw new CommandRejected({ code: 'investigatorHasNoLocation', investigatorId });
-  }
-  throw new CommandRejected({ code: 'enemyNotInPlay', cardId: enemy.id });
-}
-
-/**
- * The enemies in play at `locationId`, unengaged there or engaged with an
- * investigator standing there, in card order. Used for "enemies at your
- * location" (e.g. The Gathering's skull token).
- */
-export function enemiesAt(state: GameState, locationId: InstanceId): CardInstance[] {
-  return Object.values(state.cards).filter((card) => {
-    const zone = card.zone;
-    if (zone.kind === 'atLocation') return zone.locationId === locationId;
-    if (zone.kind !== 'engaged') return false;
-    const engaged = state.investigators.find((inv) => inv.id === zone.investigatorId);
-    return engaged?.locationId === locationId;
-  });
 }
 
 function defeated(enemyId: InstanceId, stats: CardStats): EnemyDefeated {

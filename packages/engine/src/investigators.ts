@@ -188,3 +188,11 @@ export function requireInvestigator(state: GameState, id: InvestigatorId): Inves
   if (!investigator) throw new CommandRejected({ code: 'unknownInvestigator', investigatorId: id });
   return investigator;
 }
+
+/** The investigator, rejecting unknown IDs and those who are no longer in the scenario. */
+export function activeInvestigator(state: GameState, id: InvestigatorId): Investigator {
+  const investigator = requireInvestigator(state, id);
+  if (investigator.status !== 'active')
+    throw new CommandRejected({ code: 'investigatorNotActive', investigatorId: id });
+  return investigator;
+}

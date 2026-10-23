@@ -2,9 +2,8 @@ import type { EngineContext } from './cards';
 import type { Command, ResolveEnemyAttack } from './commands';
 import { enemyAttackEvents, enemyAttackList } from './enemies';
 import type { Event, ExhaustChanged, PhaseChanged, PhaseStepsChanged } from './events';
-import { isInPlay } from './handle_enemy';
-import { activeInvestigator } from './handle_investigator';
-import { playerOrder } from './investigators';
+import { isEnemyOnTable } from './enemies';
+import { activeInvestigator, playerOrder } from './investigators';
 import { canDrawEncounter } from './handle_encounter';
 import { cardsOfType } from './lookup';
 import { replay } from './reducer';
@@ -210,7 +209,7 @@ function stepCommands(
       return [{ type: 'MoveHunters' }];
     case 'readyExhausted':
       return cardsOfType(ctx, state, 'enemy')
-        .filter((card) => card.exhausted && isInPlay(card))
+        .filter((card) => card.exhausted && isEnemyOnTable(card))
         .map((card) => ({ type: 'ReadyEnemy', enemyId: card.id }));
     case 'gainResources':
       return playerOrder(state).map((inv) => ({

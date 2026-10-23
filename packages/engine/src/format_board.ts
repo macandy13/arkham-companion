@@ -3,10 +3,11 @@ import { resolveValue, type EngineContext } from './cards';
 import { describeDecision } from './describe_decision';
 import { doomInPlay } from './doom';
 import type { InstanceId, MapId } from './ids';
+import { cardsInZone } from './lookup';
 import { mapLocations } from './map';
 import { PHASE_STEP_TITLES } from './phases';
 import type { CardInstance, Decision, GameState, Investigator, PhaseStep } from './state';
-import { zoneKey, type Zone } from './zone';
+import type { Zone } from './zone';
 
 /**
  * The board as plain text, for debugging and test failure messages: round and
@@ -213,7 +214,7 @@ function investigatorName(state: GameState, id: string): string {
 }
 
 function cardsIn(state: GameState, zone: Zone): CardInstance[] {
-  return (state.order[zoneKey(zone)] ?? []).flatMap((id) => state.cards[id] ?? []);
+  return cardsInZone(state, zone).flatMap((id) => state.cards[id] ?? []);
 }
 
 function namesIn(ctx: EngineContext, state: GameState, zone: Zone): string[] {
@@ -221,7 +222,7 @@ function namesIn(ctx: EngineContext, state: GameState, zone: Zone): string[] {
 }
 
 function countIn(state: GameState, zone: Zone): number {
-  return state.order[zoneKey(zone)]?.length ?? 0;
+  return cardsInZone(state, zone).length;
 }
 
 function listOrNone(names: readonly string[]): string {

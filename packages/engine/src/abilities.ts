@@ -5,7 +5,7 @@ import { isInPlay } from './doom';
 import type { Event } from './events';
 import type { CardCode, DecisionId, InstanceId, InvestigatorId } from './ids';
 import { locationAttachments } from './board';
-import { enemiesAt } from './handle_enemy';
+import { enemiesAt } from './enemies';
 import { isActiveInvestigator, playerOrder, requireInvestigator } from './investigators';
 import { cardsInZone, currentCard, requireCard } from './lookup';
 import type { AddMapStep } from './setup';

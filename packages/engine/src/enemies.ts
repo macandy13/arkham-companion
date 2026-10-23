@@ -1,13 +1,12 @@
-import { cardStats, type EngineContext } from './cards';
+import { cardStats, type CardStats, type EngineContext } from './cards';
 import { investigatorLeavesEvents } from './elimination';
 import type { Event, InvestigatorChanged } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
-import { requireCard } from './lookup';
+import { cardsInZone, requireCard } from './lookup';
 import { defeatCause, playerOrder, withStatDelta } from './investigators';
 import { hasKeyword } from './keywords';
 import { CommandRejected } from './rejection';
-import type { GameState, Investigator } from './state';
-import { zoneKey } from './zone';
+import type { CardInstance, GameState, Investigator } from './state';
 
 /** One enemy attack of the enemy phase: who attacks whom, and for how much. */
 export interface EnemyAttack {
@@ -55,11 +54,9 @@ export function readyEngagedEnemies(
   state: GameState,
   { id: investigatorId, locationId }: Pick<Investigator, 'id' | 'locationId'>,
 ): InstanceId[] {
-  const engaged = state.order[zoneKey({ kind: 'engaged', investigatorId })] ?? [];
+  const engaged = cardsInZone(state, { kind: 'engaged', investigatorId });
   const unengaged =
-    locationId === undefined
-      ? []
-      : (state.order[zoneKey({ kind: 'atLocation', locationId })] ?? []);
+    locationId === undefined ? [] : cardsInZone(state, { kind: 'atLocation', locationId });
   const massive = unengaged.filter((id) => {
     const code = state.cards[id]?.code;
     const stats = code === undefined ? undefined : ctx.cards.get(code);
@@ -116,4 +113,53 @@ function attackAmount(amount: number): number {
   if (!Number.isInteger(amount) || amount < 0)
     throw new CommandRejected({ code: 'invalidAttackAmount', amount });
   return amount;
+}
+
+/** A card that is an enemy by type, with its stats; rejects anything else. */
+export function enemyOf(
+  ctx: EngineContext,
+  state: GameState,
+  enemyId: InstanceId,
+): { enemy: CardInstance; stats: CardStats } {
+  const enemy = requireCard(state.cards, enemyId);
+  const stats = cardStats(ctx.cards, enemy.code);
+  if (stats.typeCode !== 'enemy')
+    throw new CommandRejected({ code: 'notAnEnemy', cardId: enemyId });
+  return { enemy, stats };
+}
+
+/**
+ * Whether the enemy is on the table: unengaged at a location or engaged with
+ * an investigator. Narrower than `isInPlay` (`doom.ts`), which also counts
+ * cards in threat areas and attached to cards in play.
+ */
+export function isEnemyOnTable(enemy: CardInstance): boolean {
+  return enemy.zone.kind === 'atLocation' || enemy.zone.kind === 'engaged';
+}
+
+/** The location an enemy on the table is at; an engaged enemy is where its investigator is. */
+export function locationOf(state: GameState, enemy: CardInstance): InstanceId {
+  if (enemy.zone.kind === 'atLocation') return enemy.zone.locationId;
+  if (enemy.zone.kind === 'engaged') {
+    const { investigatorId } = enemy.zone;
+    const location = state.investigators.find((inv) => inv.id === investigatorId)?.locationId;
+    if (location !== undefined) return location;
+    throw new CommandRejected({ code: 'investigatorHasNoLocation', investigatorId });
+  }
+  throw new CommandRejected({ code: 'enemyNotInPlay', cardId: enemy.id });
+}
+
+/**
+ * The enemies in play at `locationId`, unengaged there or engaged with an
+ * investigator standing there, in card order. Used for "enemies at your
+ * location" (e.g. The Gathering's skull token).
+ */
+export function enemiesAt(state: GameState, locationId: InstanceId): CardInstance[] {
+  return Object.values(state.cards).filter((card) => {
+    const zone = card.zone;
+    if (zone.kind === 'atLocation') return zone.locationId === locationId;
+    if (zone.kind !== 'engaged') return false;
+    const engaged = state.investigators.find((inv) => inv.id === zone.investigatorId);
+    return engaged?.locationId === locationId;
+  });
 }
