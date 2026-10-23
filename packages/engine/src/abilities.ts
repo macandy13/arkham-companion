@@ -1,7 +1,7 @@
 import { assertNever, shallowEqual } from '@arkham/util';
 import { cardStats, type EngineContext } from './cards';
 import type { Command, EncounterMatch, TestSkill } from './commands';
-import { isInPlay } from './doom';
+import { cardsInPlay } from './doom';
 import type { Event } from './events';
 import type { CardCode, DecisionId, InstanceId, InvestigatorId } from './ids';
 import { locationAttachments } from './board';
@@ -74,6 +74,10 @@ export type TimingWindow =
 
 /** The phases whose end opens `phaseEnds`: all but setup and upkeep. */
 export type EndingPhase = Exclude<Phase, 'setup' | 'upkeep'>;
+
+function isEndingPhase(phase: Phase): phase is EndingPhase {
+  return phase !== 'setup' && phase !== 'upkeep';
+}
 
 /**
  * A card an ability names without an instance ID: the card that has the
@@ -275,11 +279,14 @@ export function windowsOpenedBy(
     }
     case 'PhaseChanged': {
       const phase = event.ended;
-      if (phase === 'setup' || phase === 'upkeep') return [];
-      return cardsInPlay(state).map((cardId) => ({ window: { kind: 'phaseEnds', phase }, cardId }));
+      if (!isEndingPhase(phase)) return [];
+      return cardsInPlay(state).map((card) => ({
+        window: { kind: 'phaseEnds', phase },
+        cardId: card.id,
+      }));
     }
     case 'RoundEnded':
-      return cardsInPlay(state).map((cardId) => ({ window: { kind: 'roundEnds' }, cardId }));
+      return cardsInPlay(state).map((card) => ({ window: { kind: 'roundEnds' }, cardId: card.id }));
     case 'AgendaAdvanced':
     case 'ActAdvanced':
       return [{ window: { kind: 'advanced' }, cardId: event.cardId }];
@@ -293,12 +300,6 @@ export function windowsOpenedBy(
     default:
       return [];
   }
-}
-
-function cardsInPlay(state: GameState): InstanceId[] {
-  return Object.values(state.cards)
-    .filter((card) => isInPlay(state, card))
-    .map((card) => card.id);
 }
 
 /**

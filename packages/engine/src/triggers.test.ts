@@ -426,15 +426,9 @@ describe('trigger bus', () => {
       expect(requireInvestigator(after, alice).sanity.horror).toBe(horror);
     });
 
-    // From alice's turn in round 1, each Next ends one phase: investigation, enemy, upkeep (the
-    // round, which opens no phase end), then round 2's mythos phase.
-    it.each([
-      { phase: 'investigation', endsAtNext: 1 },
-      { phase: 'enemy', endsAtNext: 2 },
-      { phase: 'mythos', endsAtNext: 4 },
-    ] as const)(
-      'places doom on the card at the end of the $phase phase, Next $endsAtNext',
-      ({ phase, endsAtNext }) => {
+    it.each(['investigation', 'enemy', 'mythos'] as const)(
+      'places doom on the card when the $0 phase ends',
+      (phase) => {
         const omenCard = blankTreachery('omen', {
           abilities: [atEndOfPhase(phase, placeDoomOnSelf(1))],
         });
@@ -444,13 +438,12 @@ describe('trigger bus', () => {
           .withCard(omen, omenCard, atLocation(hall))
           .withTurnOf(alice)
           .start();
-        const endedTurn = stateAfter(context, state, { type: 'EndTurn', investigatorId: alice });
-        const nexts = (count: number) => Array.from({ length: count }, () => nextPhase);
+        let during = stateAfter(context, state, { type: 'EndTurn', investigatorId: alice });
+        while (during.meta.phase !== phase) during = stateAfter(context, during, nextPhase);
 
-        const before = stateAfter(context, endedTurn, ...nexts(endsAtNext - 1));
-        const after = stateAfter(context, before, nextPhase);
+        const after = stateAfter(context, during, nextPhase);
 
-        expect(before.cards[omen]?.tokens.doom).toBeUndefined();
+        expect(during.cards[omen]?.tokens.doom).toBeUndefined();
         expect(after.cards[omen]?.tokens.doom).toBe(1);
       },
     );
