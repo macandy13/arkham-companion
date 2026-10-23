@@ -27,12 +27,14 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
     M3.4b1: `MoveEnemy`, an enemy moved to a location by a card effect (engine)
     M3.4b2: drag enemies to move or engage them
     M3.4c: location long-press menu
-11. M3.5: investigator bar
+11. M3.12a–c: restyle after the UX prototype (style tokens, location tiles, card art in frames)
+12. M3.5: investigator bar, built in the prototype's form (M3.12)
     M3.11: adjust board mode and token drag (after the investigator bar, so it covers every counter)
-12. M3.6: encounter panel
-13. M3.7: decision dialog and card zoom
-14. M3.8: event log
-15. M3.9: tablet pass and E2E
+    M3.12d: header cards in the prototype's form, steppers only in adjust mode
+13. M3.6: encounter panel
+14. M3.7: decision dialog and card zoom, in the prototype's dialog style (M3.12e); it takes over M3.10c3
+15. M3.8: event log
+16. M3.9: tablet pass and E2E
 
 ---
 
@@ -46,6 +48,7 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 - [ ] Threat area and engaged enemies as chips; tap → card zoom
 - [ ] Turn-taken marker, defeated/resigned state
 - [ ] An investigate button on the investigator whose turn it is (clue discovery lives with the investigator, not on the location menu)
+- [ ] Built in the UX prototype's form (M3.12): the investigator card with the threat area on top of it (treacheries as small cards, engaged enemies as avatar tokens), and actions as icon buttons next to the action pips and End; the steppers show only in adjust mode once M3.11 lands
 
 ## M3.6 Encounter panel (S)
 
@@ -118,7 +121,7 @@ The fan IP policy that covers FFG (Asmodee's community-use guidelines) does not 
 2. M3.10b: the agenda and act as landscape card faces in the header, sharing the face's parts
 3. M3.10c1: `CardStats` carries each side's ArkhamDB picture path, and the location, agenda and act views pass on the one for the side in play (`image`)
    M3.10c2: the card faces load that picture and fall back to the pattern, the name band and badges hide under a picture, and the service worker caches the pictures
-   M3.10c3: tapping the agenda or act in the header opens its full card, with the picture large (the pattern without one)
+   M3.10c3: tapping the agenda or act in the header opens its full card, with the picture large (the pattern without one); done with M3.7 in the prototype's dialog style
    The paths come with the real card data: M4.4 maps carddata's `CardDef`s (which carry `imageSrc`/`backImageSrc`) to `CardStats`; until then the hand-written cards have none and the faces show the pattern.
 4. M3.10d: the "unofficial fan project" notice
 
@@ -138,3 +141,42 @@ Done when: a full sandbox game is playable and comfortable on a tablet.
 
 - [ ] An "Adjust board" mode: while it is on, the location menu's steppers and the investigator bar's steppers change counters, and "Done" plays them all as one step (`PlayTable.step`, one undo group); "Cancel" drops them
 - [ ] Drag and drop tokens (clues, doom, damage, horror, resources) from one element onto another, e.g. a clue from a location onto an investigator, as one step each
+
+## M3.12 Restyle after the UX prototype (O)
+
+**Why:** The play screen works but looks like a plain form. The clickable UX prototype (draft PR #214, `apps/web/public/prototype/index.html` on branch `claude/project-thread-vs8ujm`, copy at `/mnt/project-files/design/ux_prototype.html`) showed a look the players want: the table's playmat, cards that read like the printed ones, and controls that only show when needed.
+
+**Benefit:** The screen looks like the table it mirrors, and it stays calm during play because corrections hide until the players ask for them.
+
+Decisions from the prototype review:
+
+- **Two looks**, switched in settings:
+  - "Frames with card art": our own frame and name band around the card's art, cut out of the ArkhamDB picture. It is also the look without pictures, with the pattern in place of the art.
+  - "Full card faces": the whole scanned card.
+- **Adjust mode (M3.11):** the −/+ steppers and the location pencil show only in adjust mode. "Done" keeps every change as one undo step, and "Cancel" drops them.
+- **Locations:** shroud on the left and clues on the right, at mid height like the printed card. Doom goes under the clues, and attachments peek out at the top right as small cards.
+- **Agenda and act:**
+  - Doom and clue counts are big round tokens on the card ("2 of 7").
+  - The act keeps a compact "Advance" on the card.
+  - Header labels follow the playmat: Encounter, Agenda n, Act n, Scenario.
+- **Investigators:**
+  - The investigator card has the threat area on top of it: treacheries as small cards, engaged enemies as avatar tokens.
+  - Actions are icon buttons next to the action pips and End.
+- **Dialogs:** a small X at the top right closes them, with no Close buttons. A dialog in the middle of a flow has no X.
+- **Skill tests:**
+  - They show the full sum (skill + committed + token(s) = total vs difficulty), then the result.
+  - Chaos tokens look like the printed ones: a dark disc with an ivory rim, showing numbers or our own symbols.
+- **Look and feel:**
+  - A playmat-style night background (sea-green, a brass zodiac ring, tentacles), drawn by us as a static SVG.
+  - Display font IM Fell English SC and UI font Alegreya Sans, both OFL and self-hosted (`@fontsource`) so the PWA works offline.
+
+**Slices** (one small PR each)
+
+- [ ] M3.12a: style tokens (night, brass and bone, plus the clue, doom, health and sanity colours), fonts and the playmat background; the base, header, buttons and dialog shell restyled
+- [ ] M3.12b: location tiles in the frame look: mid-height shroud and clues, doom under the clues, attachments as peeking cards
+- [ ] M3.12c: card art in frames (art crops per card type) and the "Full card faces" setting, on the M3.10c2 pictures
+- [ ] M3.12d: header cards: big doom and clue tokens, playmat labels, steppers only in adjust mode (after M3.11)
+- [ ] M3.12e: dialog style (the X close), with the skill-test sum and chaos-token drawings, inside M3.7
+- The investigator panel in the prototype's form is part of M3.5.
+
+Open: keep a light theme with a mapped palette, or go dark only (decided before M3.12a).
