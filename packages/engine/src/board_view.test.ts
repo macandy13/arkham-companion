@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  cardImagePath,
   atLocation,
   attachedTo,
   blankAct,
@@ -256,6 +257,27 @@ describe('locations', () => {
       doom: 1,
     });
   });
+
+  it.each([
+    { revealed: true, image: '/cards/cellar_revealed.png' },
+    { revealed: false, image: '/cards/cellar_unrevealed.png' },
+  ])(
+    'shows the picture of the side a location shows, revealed: $revealed',
+    ({ revealed, image }) => {
+      const { context, state } = house
+        .withLocation(
+          instanceId('cellar'),
+          blankLocation('cellar', {
+            imageSrc: cardImagePath('/cards/cellar_revealed.png'),
+            backImageSrc: cardImagePath('/cards/cellar_unrevealed.png'),
+          }),
+          { revealed },
+        )
+        .start();
+
+      expect(boardView(context, state).location(byName('cellar')).image).toBe(image);
+    },
+  );
 
   it('leaves out locations that are not on a map', () => {
     const { context, state } = house
@@ -543,6 +565,27 @@ describe('agenda and act', () => {
     const board = boardView(context, state);
 
     expect(board.agenda).toEqual({ name: 'final_agenda', doom: 0 });
+  });
+
+  it('shows the pictures of the agenda and act fronts', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withAgenda(
+        instanceId('first_agenda'),
+        blankAgenda('first_agenda', fixed(3), {
+          imageSrc: cardImagePath('/cards/first_agenda.png'),
+        }),
+      )
+      .withAct(
+        instanceId('first_act'),
+        blankAct('first_act', { imageSrc: cardImagePath('/cards/first_act.png') }),
+      )
+      .start();
+
+    const board = boardView(context, state);
+
+    expect(board.agenda?.image).toBe('/cards/first_agenda.png');
+    expect(board.act?.image).toBe('/cards/first_act.png');
   });
 
   it('has neither on a table without them', () => {
