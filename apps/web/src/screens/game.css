@@ -30,8 +30,10 @@
   overflow: auto;
 }
 
+/* The header is the playmat's top row, shaded so its cards read over the table. */
 #board > header {
   grid-area: header;
+  background: var(--header-shade);
   display: flex;
   gap: var(--space-3);
   align-items: center;

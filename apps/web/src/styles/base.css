@@ -1,4 +1,9 @@
 /* Element defaults shared by every screen. */
+/*
+ * The playmat lies still under every screen, so panels and cards sit on the table. It is a fixed
+ * layer the size of the viewport rather than a fixed body background, which iOS Safari ignores
+ * and would stretch over a long page.
+ */
 body {
   margin: 0;
   background: var(--color-background);
@@ -7,13 +12,27 @@ body {
   font-size: var(--font-size-body);
 }
 
-h1 {
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: var(--playmat) center / cover no-repeat;
+}
+
+/* Headings and names in the playmat's display type, like the printed cards. */
+h1,
+h2 {
   margin: 0;
+  font-family: var(--font-family-display);
+  font-weight: normal;
+}
+
+h1 {
   font-size: var(--font-size-title);
 }
 
 h2 {
-  margin: 0;
   font-size: var(--font-size-subtitle);
 }
 
@@ -42,6 +61,29 @@ button {
 
 button:disabled {
   color: var(--color-text-muted);
+}
+
+button:not(:disabled):hover {
+  border-color: var(--color-accent);
+}
+
+:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-accent);
+  outline-offset: var(--focus-ring-width);
+}
+
+/* Dialogs share one shell: a panel framed in brass over a dimmed table. */
+dialog {
+  max-width: var(--layout-sheet-width);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-accent);
+  border-radius: var(--radius);
+  background: var(--color-background);
+  color: var(--color-text);
+}
+
+dialog::backdrop {
+  background: var(--color-scrim);
 }
 
 [aria-current='page'] {
