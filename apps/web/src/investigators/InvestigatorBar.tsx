@@ -2,6 +2,7 @@ import { useId, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BoardView, InvestigatorView } from '@arkham/engine';
 import type { GameActions, SteppedStat } from '../state/gameActions';
+import { TurnControls } from './TurnControls';
 import './investigators.css';
 
 /**
@@ -19,6 +20,8 @@ export function InvestigatorBar({
   actions: GameActions;
   busy: boolean;
 }) {
+  // The players pick who goes next in the investigation phase, once no turn is in progress.
+  const picking = board.phase === 'investigation' && board.turn === undefined;
   return (
     <>
       {board.investigators.map((investigator) => (
@@ -26,6 +29,9 @@ export function InvestigatorBar({
           key={investigator.id}
           investigator={investigator}
           onTurn={board.turn === investigator.id}
+          canStart={
+            picking && investigator.status === 'active' && investigator.turnTaken === undefined
+          }
           actions={actions}
           busy={busy}
         />
@@ -36,19 +42,22 @@ export function InvestigatorBar({
 
 /**
  * One investigator, laid out like the prototype's panel: their card with the name band, a line
- * saying where they are and how their round goes, and their counters. Health and sanity show what
- * is left of the printed value, like the dials, while their steppers place and heal damage and
- * horror, like the tokens on the card. Clues show without steppers: they are found by
+ * saying where they are and how their round goes, their turn controls and their counters. Health
+ * and sanity show what is left of the printed value, like the dials, while their steppers place
+ * and heal damage and horror, like the tokens on the card. Clues show without steppers: they are found by
  * investigating and spent on the act.
  */
 function InvestigatorPanel({
   investigator,
   onTurn,
+  canStart,
   actions,
   busy,
 }: {
   investigator: InvestigatorView;
   onTurn: boolean;
+  /** The players may start this investigator's turn now (`TurnControls`). */
+  canStart: boolean;
   actions: GameActions;
   busy: boolean;
 }) {
@@ -70,6 +79,13 @@ function InvestigatorPanel({
         </figcaption>
       </figure>
       <p>{statusLine(investigator, onTurn, t)}</p>
+      <TurnControls
+        investigator={investigator}
+        onTurn={onTurn}
+        canStart={canStart}
+        actions={actions}
+        busy={busy}
+      />
       <dl>
         <Stat
           label={t('investigators.health')}
