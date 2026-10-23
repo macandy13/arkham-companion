@@ -89,9 +89,10 @@
   list-style: none;
 }
 
-/* The turn buttons sit at the right end, apart from the cards. */
-#board > header > button:first-of-type {
+/* The round and the turn buttons sit at the right end, apart from the cards. */
+#board > header > p {
   margin-inline-start: auto;
+  white-space: nowrap;
 }
 
 #board > header h1,
@@ -101,10 +102,10 @@
 }
 
 /*
- * The agenda, act and scenario are landscape cards (5 : 7 turned, like the map's portrait tiles):
- * a frame in the card type's colour around the hatched art area, the name band along the top and
- * a plate at the foot with the count and the card's buttons, so it stays readable once card art
- * fills it. The encounter deck stands upright, like the card backs on the table.
+ * The agenda and act are landscape cards (5 : 7 turned, like the map's portrait tiles): a frame in
+ * the card type's colour around the hatched art area, the name band along the top and a plate at
+ * the foot with the count and the card's buttons, so it stays readable once card art fills it.
+ * The encounter deck and the scenario card stand upright, as on the table.
  */
 #board > header [data-card] {
   display: flex;
@@ -128,6 +129,7 @@
 }
 
 #board > header [data-card='scenario'] {
+  aspect-ratio: 5 / 7;
   border-color: var(--color-card-scenario);
 }
 
@@ -176,4 +178,13 @@
   min-height: var(--button-compact);
   padding: 0 var(--space-1);
   font-size: var(--font-size-note);
+}
+
+/* The upright scenario card is narrow, so its name gets small type and less padding. */
+#board > header [data-card='scenario'] > h1 {
+  padding-inline: var(--space-1);
+  font-size: var(--font-size-note);
+  /* A long word in a scenario name (more so in German) would otherwise be cut off by the frame. */
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
