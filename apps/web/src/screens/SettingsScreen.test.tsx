@@ -88,6 +88,17 @@ describe('SettingsScreen', () => {
     expect(loadSettings().theme).toBe('light');
   });
 
+  it('applies and saves the card look', () => {
+    render(<SettingsScreen packs={packs} />);
+
+    fireEvent.change(screen.getByRole('combobox', { name: 'Card pictures' }), {
+      target: { value: 'faces' },
+    });
+
+    expect(document.documentElement.dataset.cardLook).toBe('faces');
+    expect(loadSettings().cardLook).toBe('faces');
+  });
+
   it('explains that the pack list is missing without catalog packs', () => {
     render(<SettingsScreen />);
 

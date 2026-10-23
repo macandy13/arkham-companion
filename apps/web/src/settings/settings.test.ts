@@ -20,6 +20,7 @@ describe('settings storage', () => {
       cardLanguage: 'de',
       uiLanguage: 'de',
       theme: 'light',
+      cardLook: 'faces',
     } as const;
 
     saveSettings(settings);
@@ -47,7 +48,13 @@ describe('settings storage', () => {
   it('replaces invalid fields but keeps valid ones', () => {
     localStorage.setItem(
       KEY,
-      JSON.stringify({ ownedPacks: [1], cardLanguage: 'xx', uiLanguage: 'fr', theme: 'light' }),
+      JSON.stringify({
+        ownedPacks: [1],
+        cardLanguage: 'xx',
+        uiLanguage: 'fr',
+        theme: 'light',
+        cardLook: 'scans',
+      }),
     );
 
     expect(loadSettings()).toEqual({ ...DEFAULT_SETTINGS, theme: 'light' });
