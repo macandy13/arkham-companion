@@ -1,7 +1,7 @@
 import type { CardCatalog } from '@arkham/carddata';
 import { Fragment, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CARD_IMAGE_HOST } from '../catalog/cardImages';
+import { CARD_IMAGE_HOST } from '../catalog/cardImageUrl';
 import { InvestigatorSheet } from './InvestigatorSheet';
 import { PickerFilterBar } from './PickerFilterBar';
 import { applyPickerFilters, type PickerFilters } from './pickerLogic';

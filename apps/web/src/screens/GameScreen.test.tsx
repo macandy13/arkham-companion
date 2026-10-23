@@ -162,11 +162,12 @@ describe('GameScreen header', () => {
     const agenda = screen.getByRole('region', { name: 'Agenda' });
     // The picture is decorative (`alt=""`), so it has no role to find it by.
     const picture = agenda.querySelector('img');
+    if (!picture) throw new Error('the agenda has no picture');
 
-    expect(picture?.getAttribute('src')).toBe('https://arkhamdb.com/bundles/cards/01105.jpg');
+    expect(picture.getAttribute('src')).toBe('https://arkhamdb.com/bundles/cards/01105.jpg');
     expect(agenda.hasAttribute('data-picture')).toBe(false);
     // jsdom loads no images, so the test fires the load itself.
-    if (picture) fireEvent.load(picture);
+    fireEvent.load(picture);
     expect(agenda.getAttribute('data-picture')).toBe('shown');
     expect(screen.getByRole('region', { name: 'Act' }).querySelector('img')).toBeNull();
   });

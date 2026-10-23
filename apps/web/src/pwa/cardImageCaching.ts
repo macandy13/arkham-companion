@@ -1,5 +1,8 @@
 import type { VitePWAOptions } from 'vite-plugin-pwa';
-import { CARD_IMAGE_HOST } from '../catalog/cardImages';
+// `vite.config.ts` loads this module through Node, which cannot load the workspace's TypeScript
+// packages by name, so the helper comes in by path, where Vite bundles it into the config.
+import { escapeRegExp } from '../../../../packages/util/src/string';
+import { CARD_IMAGE_HOST } from '../catalog/cardImageUrl';
 
 /** One of Workbox's runtime caching rules, as `vite.config.ts` passes them to the plugin. */
 type RuntimeCaching = NonNullable<VitePWAOptions['workbox']['runtimeCaching']>[number];
@@ -13,7 +16,7 @@ type RuntimeCaching = NonNullable<VitePWAOptions['workbox']['runtimeCaching']>[n
  * cache is capped and dropped first when the quota runs out.
  */
 export const cardImageCaching: RuntimeCaching = {
-  urlPattern: new RegExp(`^${CARD_IMAGE_HOST.replace(/[.]/g, '\\.')}/bundles/cards/`),
+  urlPattern: new RegExp(`^${escapeRegExp(CARD_IMAGE_HOST)}/bundles/cards/`),
   handler: 'CacheFirst',
   options: {
     cacheName: 'card-images',

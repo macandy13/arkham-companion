@@ -7,3 +7,8 @@ export function stripTrailingDot(text: string): string {
 export function camelCaseToWords(text: string): string {
   return text.replace(/([a-z0-9])([A-Z])/g, '$1 $2').toLowerCase();
 }
+
+/** `text` with every RegExp special character escaped, so `new RegExp(escapeRegExp(text))` matches it literally. */
+export function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
