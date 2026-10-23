@@ -1,3 +1,4 @@
+import { assertNever } from '@arkham/util';
 import { cardStats, type EngineContext } from './cards';
 import { isInPlay } from './doom';
 import { enemiesAt } from './enemies';
@@ -8,12 +9,11 @@ export type ModifiedStat = 'shroud' | 'fight' | 'evade';
 
 /**
  * The cards a constant ability changes, relative to the card that has it:
- * - `self`: the card itself.
  * - `host`: the card it is attached to ("Attached location gets +2 shroud").
  * - `enemiesHere`: for a location, each enemy at it, engaged ones included
  *   ("Each enemy at Dining Hall gets +1 fight").
  */
-export type ModifiedCards = 'self' | 'host' | 'enemiesHere';
+export type ModifiedCards = 'host' | 'enemiesHere';
 
 /**
  * A constant ability that changes a value while its card is in play
@@ -29,8 +29,9 @@ export interface CardModifier {
 
 /**
  * The value `stat` of `card` now: the printed value (0 when the card has
- * none) plus every active constant ability that names the card. A location's
- * abilities count only once it is revealed, as its unrevealed side has none.
+ * none) plus every active constant ability that names the card, never below
+ * 0 (Rules Reference, "Modifiers"). A location's abilities count only once it
+ * is revealed, as its unrevealed side has none.
  */
 export function effectiveValue(
   ctx: EngineContext,
@@ -38,7 +39,7 @@ export function effectiveValue(
   card: CardInstance,
   stat: ModifiedStat,
 ): number {
-  return Object.values(state.cards).reduce(
+  const modified = Object.values(state.cards).reduce(
     (value, source) =>
       value +
       activeModifiers(ctx, state, source)
@@ -46,6 +47,7 @@ export function effectiveValue(
         .reduce((sum, modifier) => sum + modifier.by, 0),
     cardStats(ctx.cards, card.code)[stat] ?? 0,
   );
+  return Math.max(0, modified);
 }
 
 function activeModifiers(
@@ -67,11 +69,11 @@ function names(
   card: CardInstance,
 ): boolean {
   switch (of) {
-    case 'self':
-      return source.id === card.id;
     case 'host':
       return source.zone.kind === 'attachedTo' && source.zone.hostId === card.id;
     case 'enemiesHere':
       return enemiesAt(state, source.id).some((enemy) => enemy.id === card.id);
+    default:
+      return assertNever(of);
   }
 }

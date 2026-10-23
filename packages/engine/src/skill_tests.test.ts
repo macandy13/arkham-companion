@@ -554,6 +554,40 @@ describe('Evade', () => {
   });
 });
 
+describe('Fight and Evade against values a location changes', () => {
+  /** A revealed location whose enemies get +1 fight and +2 evade, where alice is engaged with the ghoul (fight 4, evade 2). */
+  const ghoulOnAliceInDarkHall = newGame()
+    .withLocation(
+      hallway,
+      blankLocation('dark_hall', {
+        modifiers: [
+          { stat: 'fight', of: 'enemiesHere', by: 1 },
+          { stat: 'evade', of: 'enemiesHere', by: 2 },
+        ],
+      }),
+      { revealed: true },
+    )
+    .withInvestigator(alice, { locationId: hallway })
+    .withCard(ghoul, ghoulCard, engagedWith(alice));
+
+  it.each<{ action: Command; skillTest: object }>([
+    {
+      action: { type: 'Fight', investigatorId: alice, enemyId: ghoul },
+      skillTest: { skill: 'combat', difficulty: 5 },
+    },
+    {
+      action: { type: 'Evade', investigatorId: alice, enemyId: ghoul },
+      skillTest: { skill: 'agility', difficulty: 4 },
+    },
+  ])('raises $action.type against the changed value', ({ action, skillTest }) => {
+    const { context, state } = ghoulOnAliceInDarkHall.start();
+
+    const asked = stateAfter(context, state, action);
+
+    expect(asked.pending[0]?.skillTest).toEqual(skillTest);
+  });
+});
+
 describe('revelation test', () => {
   const chill = instanceId('chill');
   const draw: Command = { type: 'DrawEncounter', investigatorId: alice };
