@@ -86,17 +86,20 @@ describe('tile geometry', () => {
 
   it.each([
     { cells: [], size: { width: 0, height: 0 } },
-    { cells: [{ column: 0, row: 0 }], size: { width: 150, height: 210 } },
+    { cells: [{ column: 0, row: 0 }], size: { width: 150 + 30, height: 210 } },
     {
       cells: [
         { column: 0, row: 0 },
         { column: 4, row: 6 },
       ],
-      size: { width: 240 + 150, height: 480 + 210 },
+      size: { width: 240 + 150 + 30, height: 480 + 210 },
     },
-  ])('fits the drawing around $cells.length tiles', ({ cells, size }) => {
-    expect(drawingSize(cells)).toEqual(size);
-  });
+  ])(
+    'fits the drawing around $cells.length tiles and 30 for attachments past the right edge',
+    ({ cells, size }) => {
+      expect(drawingSize(cells)).toEqual(size);
+    },
+  );
 });
 
 describe('connectionEnds', () => {

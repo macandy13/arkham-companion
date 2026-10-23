@@ -57,6 +57,12 @@ export const DOOM_CENTRE: Point = {
 export const ATTACHMENT = { width: 30, height: 42, turn: 8, step: 14 } as const;
 
 /**
+ * How far past a tile's right edge the drawing reaches, so the attachments of a tile in the last
+ * column are not cut off: half an attachment plus its turn, rounded up to a whole card width.
+ */
+const ATTACHMENT_OVERHANG = ATTACHMENT.width;
+
+/**
  * The top left corner of the `index`th attachment on a tile: half of it past the right edge, each
  * one a `step` lower than the one before, so a few stay told apart.
  */
@@ -101,7 +107,7 @@ export function drawingSize(cells: readonly GridCell[]): { width: number; height
   const origins = cells.map(tileOrigin);
   if (origins.length === 0) return { width: 0, height: 0 };
   return {
-    width: Math.max(...origins.map(({ x }) => x)) + TILE.width,
+    width: Math.max(...origins.map(({ x }) => x)) + TILE.width + ATTACHMENT_OVERHANG,
     height: Math.max(...origins.map(({ y }) => y)) + TILE.height,
   };
 }

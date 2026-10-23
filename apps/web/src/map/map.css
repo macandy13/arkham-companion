@@ -183,7 +183,7 @@
 
 /*
  * Tokens on a tile, coloured like the game's: the shroud a dark disc with a bone rim, clues and
- * doom in their colours; a clue token with none on it fades.
+ * doom in their colours; a token with none on it fades.
  */
 #map svg [data-token] circle {
   fill: var(--color-token-shroud);
