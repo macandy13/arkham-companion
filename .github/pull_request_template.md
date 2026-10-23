@@ -1,22 +1,26 @@
-## Motivation
+## Why
 
-<!-- Why does this PR exist? What problem does it solve or what is it trying to accomplish? Link the task in docs/tasks/ if there is one. If it is part of a stack, say which slice it is and what comes next. State the rationale itself, never who asked for or chose something. -->
+<!-- 1–3 short sentences: the problem and what this PR does about it. Link the task in docs/tasks/; if it is a slice of a stack, say which one and what comes next. Plain words, no attribution to a person. -->
+
+## Key changes
+
+<!-- 1–3 snippets of the API or code that carries the change (new command, event, type, signature, or the heart of a rule), each ≤ ~10 lines, each under a one-line heading that links to the code. Show the new shape, or before/after when the change is the point. Style rules: docs/coding-guidelines.md §7 "Writing the description". -->
 
 ## Review map
 
-<!-- The reviewer reads this on a phone before the diff. Keep each line short. Leave out a heading that has nothing under it. -->
+<!-- One short line per item: a link plus why it matters. Leave out a heading with nothing under it. -->
 
 **Read first**
 
-<!-- 2–5 links to the hunks that carry the change, most important first, each with one line on why it matters. -->
+<!-- 2–4 links to the code that matters most, beyond the snippets above. -->
 
 **Rules claims**
 
-<!-- Each game rule this PR implements or changes, in table terms, with its docs/rules.md section or Rules Reference entry. -->
+<!-- Each game rule this PR implements or changes, in table terms, linking its docs/rules.md section. -->
 
-**API and architecture**
+**Architecture**
 
-<!-- New or changed commands, events, state shape and exported types; new dependencies or patterns, and why not the standard alternative. Link the docs/architecture.md section this PR updates, or say no component changed. -->
+<!-- Link the docs/architecture.md section this PR updates, or "no component changed". New dependencies or patterns: one line on why. -->
 
 **Decisions for you**
 
@@ -24,15 +28,11 @@
 
 **Skim or skip**
 
-<!-- Plumbing, grouped: wiring, helper moves, i18n strings, task checklist, lockfile. -->
+<!-- Plumbing in one line: wiring, helper moves, i18n strings, task checklist, lockfile. -->
 
-## Changes
+## Tests
 
-<!-- What changed, briefly. -->
-
-## Testing
-
-<!-- How it was verified (unit tests, E2E, manual check on the preview). Name the end-to-end scenario test step that shows a new rule at the table. -->
+<!-- One line per kind, with links: the unit tests, the end-to-end scenario step that shows a new rule at the table, coverage if it moved. -->
 
 <!-- Screencasts: filled in by the PR preview workflow when apps/web changes. Keep the markers; text between them is overwritten. -->
 <!-- screencasts:start -->
