@@ -27,23 +27,10 @@ export function GameHeader({
 
   return (
     <header>
-      <section aria-label={t('header.encounterDeck')} data-card="encounter">
-        <p>{t('header.encounterDeck')}</p>
-      </section>
-      <div role="img" aria-label={t('header.encounterDiscard')} data-pile="discard" />
+      <EncounterDeck />
       <AgendaStatus store={store} board={board} blocked={blocked} />
       <ActStatus store={store} board={board} blocked={blocked} />
-      <section aria-label={t('header.scenario')} data-card="scenario">
-        <h1>{open.scenarioNameKey ? t(open.scenarioNameKey) : t('header.scenario')}</h1>
-        <footer>
-          <p>
-            {t('header.roundPhase', {
-              round: board.round,
-              phase: t(`games.phases.${board.phase}`),
-            })}
-          </p>
-        </footer>
-      </section>
+      <ScenarioCard open={open} board={board} />
       <button type="button" disabled={blocked} onClick={() => void actions.nextPhase()}>
         {t('header.next')}
       </button>
@@ -51,6 +38,43 @@ export function GameHeader({
         {t('header.undo')}
       </button>
     </header>
+  );
+}
+
+/**
+ * The encounter deck as an upright card back and its discard pile as a small card outline beside
+ * it. Both are placeholders until the encounter phase draws cards, so they show no counts yet.
+ */
+function EncounterDeck() {
+  const { t } = useTranslation();
+  return (
+    <>
+      <section aria-label={t('header.encounterDeck')} data-card="encounter">
+        <p>{t('header.encounterDeck')}</p>
+      </section>
+      <div role="img" aria-label={t('header.encounterDiscard')} data-pile="discard" />
+    </>
+  );
+}
+
+/**
+ * The scenario as a landscape card: its name (`OpenGame.scenarioNameKey`) is the screen's heading,
+ * since the app title already sits in the title bar, and its plate shows the round and phase.
+ */
+function ScenarioCard({ open, board }: { open: OpenGame; board: BoardView }) {
+  const { t } = useTranslation();
+  return (
+    <section aria-label={t('header.scenario')} data-card="scenario">
+      <h1>{open.scenarioNameKey ? t(open.scenarioNameKey) : t('header.scenario')}</h1>
+      <footer>
+        <p>
+          {t('header.roundPhase', {
+            round: board.round,
+            phase: t(`games.phases.${board.phase}`),
+          })}
+        </p>
+      </footer>
+    </section>
   );
 }
 
