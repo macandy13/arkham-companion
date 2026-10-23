@@ -51,11 +51,18 @@
   border: var(--card-border-width) solid var(--color-card-investigator);
   border-radius: var(--radius);
   background: var(--card-art-pattern), var(--color-card-face);
-  overflow: hidden;
+  /* Not clipped, so the threat area can stand out above the card. */
+  position: relative;
+}
+
+/* The threat area stands above the card, so the card moves down to make room for it. */
+#investigators [data-card='investigator']:has(> ul) {
+  margin-top: calc(var(--threat-card-height) - var(--threat-overlap));
 }
 
 #investigators [data-card='investigator'] h3 {
   margin: 0;
+  border-radius: var(--radius) var(--radius) 0 0;
   padding: var(--space-1) var(--space-2);
   background: var(--color-card-face);
   color: var(--color-card-text);
@@ -173,4 +180,60 @@
 
 #investigators button[data-icon='resign']::before {
   mask-image: url('./icons/resign.svg');
+}
+
+/*
+ * The threat area: its cards and enemy tokens stand on the card's top edge, overlapping it only a
+ * little, so the name band stays readable and nothing covers the middle of the card.
+ */
+#investigators [data-card='investigator'] > ul {
+  position: absolute;
+  inset-inline: var(--space-1);
+  bottom: calc(100% - var(--threat-overlap));
+  display: flex;
+  gap: var(--space-1);
+  align-items: end;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Two ids, so they beat the home screen's padded `#app > main ul > li` cards. */
+#board > #investigators [data-card='investigator'] li {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 0;
+  border: var(--card-border-width) solid;
+  color: var(--color-card-text);
+  font-size: var(--font-size-note);
+  overflow: hidden;
+}
+
+/* A treachery is a small upright card in the treachery colour, its name across it. */
+#board > #investigators [data-card='investigator'] li[data-threat='treachery'] {
+  width: var(--threat-card-width);
+  height: var(--threat-card-height);
+  border-color: var(--color-card-treachery);
+  border-radius: var(--radius);
+  background: var(--color-card-face);
+  line-height: 1;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* An engaged enemy is a round token ringed in the doom colour, like on the map. */
+#board > #investigators [data-card='investigator'] li[data-threat='enemy'] {
+  width: var(--threat-token-size);
+  height: var(--threat-token-size);
+  border-width: var(--piece-ring-width);
+  border-color: var(--color-doom);
+  border-radius: 50%;
+  background: var(--color-card-face);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-body);
+}
+
+#board > #investigators [data-card='investigator'] li[data-exhausted] {
+  opacity: var(--eliminated-opacity);
 }

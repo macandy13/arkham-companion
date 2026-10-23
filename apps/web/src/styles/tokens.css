@@ -73,7 +73,8 @@
 
   --layout-content-width: 60rem;
   --layout-board-panel-width: 16rem;
-  --layout-board-bar-height: 8rem;
+  /* Tall enough for an investigator card with its threat area standing above it. */
+  --layout-board-bar-height: 9.5rem;
   --layout-portrait-width: 9rem;
   --layout-sheet-width: 22rem;
   /* Connection lines on the map, in its SVG user units (mapLayout.ts TILE). */
@@ -108,6 +109,14 @@
   --action-pip-size: 0.75rem;
   /* An icon on a button (the investigator panel's turn controls). */
   --icon-size: 1.25rem;
+  /*
+   * The threat area along the top of an investigator's card: treacheries as small upright cards,
+   * engaged enemies as round tokens, overlapping the card's top edge only this much.
+   */
+  --threat-card-width: 2rem;
+  --threat-card-height: 2.8rem;
+  --threat-token-size: 2rem;
+  --threat-overlap: 0.5rem;
   /* The panel of an investigator who has left the game (defeated or resigned) steps back. */
   --eliminated-opacity: 0.55;
   /* The rim of a round piece or token: the enemy ring, the shroud's bone edge. */

@@ -1,7 +1,17 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { blankLocation, instanceId, investigatorId, newGame, PlayTable } from '@arkham/engine';
+import {
+  blankEnemy,
+  blankLocation,
+  blankTreachery,
+  engagedWith,
+  instanceId,
+  investigatorId,
+  newGame,
+  PlayTable,
+  threatAreaOf,
+} from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { gameActions } from '../state/gameActions';
 import { InvestigatorBar } from './InvestigatorBar';
@@ -259,6 +269,44 @@ describe('InvestigatorBar', () => {
       fireEvent.click(within(panel('alder')).getByRole('button', { name: button }));
 
       await expect.poll(() => table.board.investigator(alder)).toMatchObject(after);
+    });
+  });
+
+  describe('the threat area', () => {
+    it('lays the treacheries and the enemies engaged with alder along the top of the card', () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'))
+          .withInvestigator(alder, { locationId: study })
+          .withInvestigator(brook, { locationId: study })
+          .withCard(instanceId('voices'), blankTreachery('dissonant_voices'), threatAreaOf(alder))
+          .withCard(instanceId('ghoul'), blankEnemy('ghoul_minion'), engagedWith(alder), {
+            tokens: { damage: 2 },
+          })
+          .withCard(instanceId('rat'), blankEnemy('swarm_of_rats'), engagedWith(brook)),
+      );
+
+      render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />);
+
+      const threatArea = within(panel('alder')).getByRole('list', { name: 'Threat area' });
+      const items = within(threatArea)
+        .getAllByRole('listitem')
+        .map(
+          (item) => within(item).queryByRole('img')?.getAttribute('aria-label') ?? item.textContent,
+        );
+      expect(items).toEqual(['dissonant_voices', 'ghoul_minion, 2 damage']);
+    });
+
+    it('leaves the card whole while the threat area is empty', () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'))
+          .withInvestigator(alder, { locationId: study }),
+      );
+
+      render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />);
+
+      expect(within(panel('alder')).queryByRole('list', { name: 'Threat area' })).toBeNull();
     });
   });
 });

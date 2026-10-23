@@ -54,7 +54,7 @@ Slices, one PR each:
 
 - [x] M3.5a: a panel per investigator: the card with the name band, the line on their round (turn, turn taken, defeated, resigned), health and sanity left with take/heal steppers, clues, resources with steppers, doom on player cards when any (`InvestigatorView` gains `health`, `sanity`, `doom`, `turnTaken`)
 - [x] M3.5b: "Start turn" on each investigator the players may pick next; on the one whose turn it is, the turn row: action pips, resign as an icon button, End
-- [ ] M3.5c: the threat area along the top edge of the card: treacheries as small cards, engaged enemies as avatar tokens that fight and evade on a tap
+- [x] M3.5c: the threat area along the top edge of the card: treacheries as small cards, engaged enemies as avatar tokens (fighting and evading them on a tap, and tapping a card to zoom it, come with M3.7)
 - [ ] Investigate, fight and evade as icon buttons in the turn row come with M3.7: each leaves a skill test open, and only the decision dialog lets the players report its result
 - [ ] Follow-ups: the investigator card's picture once the view has one; clue and doom steppers need an investigator-counter correction in the engine (`ManualAdjust` has none yet), so they come with M3.11's adjust mode
 

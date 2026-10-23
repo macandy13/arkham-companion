@@ -1,9 +1,14 @@
 import { expect, test } from '../fixtures/test';
-import { houseOpenedExport, resumeImportedGame, twoMapsExport } from '../fixtures/saved_games';
+import {
+  alderThreatenedExport,
+  houseOpenedExport,
+  resumeImportedGame,
+  twoMapsExport,
+} from '../fixtures/saved_games';
 
 // Situations on the game screen, each photographed as it ends (`@shot`, coding guidelines §3).
 
-test('the house map with Alder in the Hallway', { tag: '@shot' }, async ({ page }) => {
+test('the house map with Alder in the Hallway', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   const hallway = page
@@ -19,3 +24,17 @@ test('map tabs for the Study and the house, the house chosen', async ({ page }) 
 
   await expect(page.getByRole('tabpanel', { name: 'House' })).toBeVisible();
 });
+
+test(
+  'Alder with a treachery and an engaged enemy in the threat area',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'Alder threatened', alderThreatenedExport('Alder threatened'));
+
+    const threatArea = page
+      .getByRole('region', { name: 'Alder' })
+      .getByRole('list', { name: 'Threat area' });
+    await expect(threatArea).toContainText('Dissonant Voices');
+    await expect(threatArea.getByRole('img', { name: 'Ghoul Priest' })).toBeVisible();
+  },
+);

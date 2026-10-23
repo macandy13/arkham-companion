@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import {
+  cardCode,
   cardDbWith,
   gameId,
   investigatorCardStats,
@@ -133,6 +134,37 @@ export function ghoulPriestInCellarExport(title: string): Buffer {
   });
   return exportOf(title, table, 'ghoul_priest_in_cellar');
 }
+
+/**
+ * Like `houseOpenedExport`, but with Alder threatened: the Ghoul Priest has spawned in the Hallway
+ * and engaged Alder, and a Dissonant Voices sits in Alder's threat area, both given by hand to keep
+ * the script short, so a spec shows a threat area.
+ */
+export function alderThreatenedExport(title: string): Buffer {
+  const table = houseOpened(theGathering);
+  table.play({
+    type: 'SpawnEnemy',
+    enemyId: cardIn(table, GATHERING_CODES.ghoulPriest),
+    at: cardIn(table, GATHERING_CODES.hallway),
+  });
+  // Dissonant Voices has two copies; either one shows the same.
+  const dissonantVoices = Object.values(table.state.cards).find(
+    ({ code }) => code === DISSONANT_VOICES,
+  );
+  if (!dissonantVoices) throw new Error('no Dissonant Voices in the game');
+  table.play({
+    type: 'ManualAdjust',
+    adjustment: {
+      kind: 'moveCard',
+      cardId: dissonantVoices.id,
+      to: { kind: 'threatArea', investigatorId: alderId },
+    },
+  });
+  return exportOf(title, table, 'alder_threatened');
+}
+
+/** The Gathering's Dissonant Voices, a treachery that goes into the threat area. */
+const DISSONANT_VOICES = cardCode('01165');
 
 /** The card of `table`'s game with `code`; only for cards the game has one copy of. */
 function cardIn(table: PlayTable, code: CardCode): InstanceId {
