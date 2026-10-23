@@ -7,7 +7,8 @@ import { cluesInSeatOrder } from '../state/gameActions';
 /**
  * The play screen's always-on status, laid out like the scenario's cards on the table: the
  * encounter deck and its discard pile (placeholders until the encounter phase draws), the agenda,
- * the act and the scenario card, then "Next", which runs the phase assistant, and undo. The
+ * the act and the scenario card, then the round and phase, "Next", which runs the phase assistant,
+ * and undo. The
  * scenario's name is the screen's heading, since the app title already sits in the title bar. Its
  * buttons wait while a step is queued (`OpenGame.busy`), since a second tap would act on whatever
  * the first one leaves open. `board` is the open game's `OpenGame.board`.
@@ -30,7 +31,13 @@ export function GameHeader({
       <EncounterDeck />
       <AgendaStatus store={store} board={board} blocked={blocked} />
       <ActStatus store={store} board={board} blocked={blocked} />
-      <ScenarioCard open={open} board={board} />
+      <ScenarioCard open={open} />
+      <p>
+        {t('header.roundPhase', {
+          round: board.round,
+          phase: t(`games.phases.${board.phase}`),
+        })}
+      </p>
       <button type="button" disabled={blocked} onClick={() => void actions.nextPhase()}>
         {t('header.next')}
       </button>
@@ -58,22 +65,15 @@ function EncounterDeck() {
 }
 
 /**
- * The scenario as a landscape card: its name (`OpenGame.scenarioNameKey`) is the screen's heading,
- * since the app title already sits in the title bar, and its plate shows the round and phase.
+ * The scenario as an upright card, like the reference card on the table. Its name
+ * (`OpenGame.scenarioNameKey`) is the screen's heading, since the app title already sits in the
+ * title bar.
  */
-function ScenarioCard({ open, board }: { open: OpenGame; board: BoardView }) {
+function ScenarioCard({ open }: { open: OpenGame }) {
   const { t } = useTranslation();
   return (
     <section aria-label={t('header.scenario')} data-card="scenario">
       <h1>{open.scenarioNameKey ? t(open.scenarioNameKey) : t('header.scenario')}</h1>
-      <footer>
-        <p>
-          {t('header.roundPhase', {
-            round: board.round,
-            phase: t(`games.phases.${board.phase}`),
-          })}
-        </p>
-      </footer>
     </section>
   );
 }

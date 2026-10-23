@@ -124,12 +124,11 @@ describe('GameScreen header', () => {
     expect(button('Next').disabled).toBe(false);
   });
 
-  it('heads the screen with the scenario card, which shows the round and phase', async () => {
+  it('heads the screen with the scenario card', async () => {
     await renderTheGathering('game-screen-scenario-test');
 
     const scenario = screen.getByRole('region', { name: 'Scenario' });
     expect(within(scenario).getByRole('heading', { level: 1 }).textContent).toBe('The Gathering');
-    expect(within(scenario).getByText('Round 0, Setup')).toBeTruthy();
   });
 
   it('lays the encounter deck and its discard pile out before the agenda', async () => {
