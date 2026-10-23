@@ -1,0 +1,2757 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex" />
+    <title>Arkham Companion Table</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&family=Alegreya+Sans:wght@400;500;700&display=swap"
+    />
+    <style>
+      /* Layout: one full-height table. The playmat's header row (encounter deck, discard, agenda, act,
+   scenario) on top, the map in the middle, the investigators docked below (beside it on wide screens). */
+      :root {
+        color-scheme: dark;
+        --night: #0b1614; /* table background, deep sea-green night */
+        --night-2: #12241f;
+        --brass: #c9a45c; /* zodiac ring, frames, highlights */
+        --brass-dim: #8a7140;
+        --bone: #ece3cf; /* text */
+        --bone-dim: #b5ab95;
+        --panel: rgba(14, 26, 23, 0.86);
+        --panel-line: rgba(201, 164, 92, 0.32);
+        --clue: #3f9bb5;
+        --doom: #b8433f;
+        --health: #c0504a;
+        --sanity: #4f78c4;
+        --resource: #b98a3c;
+        --good: #6fb98a;
+        --guardian: #2f6fb3;
+        --survivor: #b33a3a;
+        --scrim: rgba(3, 8, 7, 0.78);
+
+        --font-display: 'IM Fell English SC', 'IM Fell English', Georgia, serif;
+        --font-story: 'IM Fell English', Georgia, serif;
+        --font-ui: 'Alegreya Sans', 'Segoe UI', system-ui, sans-serif;
+
+        --hc-h: clamp(
+          60px,
+          calc((100vw - 70px) / 4.85),
+          128px
+        ); /* header card height: the whole row fits a phone */
+        --tile-w: clamp(116px, 33vw, 168px);
+        --compact: 24px;
+        --touch: 44px;
+        --radius: 6px;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--night);
+        color: var(--bone);
+        font-family: var(--font-ui);
+        font-size: 15px;
+        overflow: hidden;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+      }
+      button:focus-visible,
+      [tabindex]:focus-visible {
+        outline: 2px solid var(--brass);
+        outline-offset: 2px;
+      }
+
+      /* ---------- Background: own drawing in the playmat's spirit ---------- */
+      #mat {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+      }
+      #mat canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      /* ---------- App frame ---------- */
+      #app {
+        position: relative;
+        z-index: 1;
+        height: 100%;
+        display: grid;
+        grid-template-rows: auto auto minmax(0, 1fr) auto;
+        grid-template-areas: 'head' 'status' 'map' 'dock';
+      }
+      @media (min-width: 900px) {
+        #app {
+          grid-template-columns: minmax(0, 1fr) 23rem;
+          grid-template-rows: auto auto minmax(0, 1fr);
+          grid-template-areas: 'head head' 'status status' 'map dock';
+        }
+      }
+
+      /* ---------- Header: the playmat's top row ---------- */
+      #head {
+        grid-area: head;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        gap: clamp(5px, 1.6vw, 18px);
+        padding-block: 10px 6px;
+        padding-left: max(16px, env(safe-area-inset-left, 0px));
+        padding-right: max(16px, env(safe-area-inset-right, 0px));
+        overflow-x: auto;
+        scrollbar-width: none;
+        background: linear-gradient(to bottom, rgba(5, 12, 10, 0.9), rgba(5, 12, 10, 0.35));
+        border-bottom: 1px solid var(--panel-line);
+      }
+      #head::-webkit-scrollbar {
+        display: none;
+      }
+      .slot {
+        display: grid;
+        gap: 3px;
+        justify-items: center;
+        flex: none;
+      }
+      .slot-label {
+        font-family: var(--font-display);
+        font-size: 9px;
+        letter-spacing: 0.04em;
+        color: var(--brass);
+        text-transform: uppercase;
+        white-space: nowrap;
+        opacity: 0.85;
+      }
+      .slot-pair {
+        display: flex;
+        gap: 4px;
+        align-items: flex-end;
+      }
+      .hcard {
+        position: relative;
+        height: var(--hc-h);
+        border-radius: var(--radius);
+        box-shadow:
+          0 0 0 1px var(--brass-dim),
+          0 6px 14px rgba(0, 0, 0, 0.55);
+        overflow: hidden;
+        background: #1a2a25;
+      }
+      .hcard.portrait {
+        width: calc(var(--hc-h) * 5 / 7);
+      }
+      .hcard.landscape {
+        width: calc(var(--hc-h) * 7 / 5);
+      }
+      .hcard.small {
+        height: calc(var(--hc-h) * 0.6);
+        width: calc(var(--hc-h) * 0.6 * 5 / 7);
+      }
+      .hcard > .hit {
+        position: absolute;
+        inset: 0;
+        border: 0;
+        padding: 0;
+        background: none;
+        cursor: zoom-in;
+      }
+      .plate {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 3px;
+        padding: 3px 4px;
+        background: linear-gradient(to top, rgba(6, 10, 9, 0.92), rgba(6, 10, 9, 0.55));
+        font-size: 12px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+      .plate .count {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        white-space: nowrap;
+      }
+      .plate .cbtn.go {
+        font-size: 10px;
+        padding: 0 3px;
+      }
+      .plate .tok {
+        min-width: 20px;
+        height: 20px;
+        font-size: 12px;
+      }
+      .cbtn {
+        min-width: var(--compact);
+        height: var(--compact);
+        border-radius: 4px;
+        border: 1px solid var(--brass-dim);
+        background: rgba(20, 34, 30, 0.95);
+        font-weight: 700;
+        font-size: 13px;
+        padding: 0 6px;
+        cursor: pointer;
+      }
+      .cbtn:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      .cbtn.go {
+        background: var(--brass);
+        color: #1b1408;
+        border-color: var(--brass);
+      }
+      .deckback {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: radial-gradient(
+            circle at 50% 45%,
+            transparent 0 28%,
+            var(--brass-dim) 28.5% 30%,
+            transparent 30.5%
+          ),
+          radial-gradient(circle at 50% 45%, #1f3a30, #0b1714 70%);
+      }
+      .deckback span {
+        font-family: var(--font-display);
+        font-size: calc(var(--hc-h) * 0.26);
+        color: var(--bone);
+      }
+      .pile-empty {
+        position: absolute;
+        inset: 0;
+        border: 1px dashed var(--brass-dim);
+        border-radius: var(--radius);
+      }
+
+      /* ---------- Card faces (shared) ---------- */
+      .face {
+        position: absolute;
+        inset: 0;
+      }
+      .face img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .face.loaded img {
+        opacity: 1;
+      }
+      .face .fb {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        align-content: center;
+        justify-items: center;
+        text-align: center;
+        padding: 4px;
+        font-family: var(--font-display);
+        font-size: 12px;
+        line-height: 1.1;
+        background: repeating-linear-gradient(
+            -45deg,
+            rgba(201, 164, 92, 0.16) 0 1px,
+            transparent 1px 10px
+          ),
+          #172621;
+      }
+      .face .fb small {
+        font-family: var(--font-ui);
+        font-size: 10px;
+        color: var(--bone-dim);
+      }
+      .face.loaded .fb {
+        display: none;
+      }
+      .face.t-agenda .fb {
+        background-color: #3a1a16;
+      }
+      .face.t-act .fb {
+        background-color: #172a3e;
+      }
+      .face.t-scenario .fb {
+        background-color: #2a2236;
+      }
+      .face.t-enemy .fb {
+        background-color: #3a1716;
+      }
+      .face.t-treachery .fb {
+        background-color: #2c2236;
+      }
+
+      /* ---------- Status row ---------- */
+      #status {
+        grid-area: status;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding-block: 6px;
+        padding-left: max(16px, env(safe-area-inset-left, 0px));
+        padding-right: max(16px, env(safe-area-inset-right, 0px));
+      }
+      .round {
+        font-family: var(--font-display);
+        font-size: 17px;
+        white-space: nowrap;
+        display: grid;
+        line-height: 1.05;
+        margin-right: auto;
+      }
+      .round small {
+        font-family: var(--font-ui);
+        font-size: 12px;
+        color: var(--brass);
+        letter-spacing: 0.04em;
+      }
+      @media (min-width: 601px) {
+        .round small {
+          display: none;
+        }
+      }
+      .phases {
+        display: flex;
+        gap: 3px;
+        flex: 1;
+        min-width: 0;
+        max-width: 16rem;
+      }
+      .phases span {
+        flex: none;
+        width: 14px;
+        color: transparent;
+        text-align: center;
+        font-size: 11px;
+        padding: 3px 2px;
+        border-radius: 3px;
+        border-bottom: 2px solid rgba(201, 164, 92, 0.25);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: clip;
+      }
+      .phases span.on {
+        flex: 1;
+        width: auto;
+        color: var(--bone);
+        border-bottom-color: var(--brass);
+        font-weight: 700;
+      }
+      .btn {
+        min-height: 36px;
+        padding: 0 14px;
+        border-radius: 18px;
+        border: 1px solid var(--brass-dim);
+        background: rgba(16, 30, 26, 0.9);
+        cursor: pointer;
+        font-weight: 500;
+      }
+      .btn.primary {
+        background: var(--brass);
+        color: #1b1408;
+        border-color: var(--brass);
+        font-weight: 700;
+      }
+      .btn:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      .iconbtn {
+        width: 36px;
+        padding: 0;
+        display: grid;
+        place-items: center;
+      }
+      .iconbtn svg {
+        width: 18px;
+        height: 18px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+      }
+
+      /* ---------- Map ---------- */
+      #mapwrap {
+        grid-area: map;
+        overflow: auto;
+        position: relative;
+      }
+      #map {
+        position: relative;
+        margin: 0 auto;
+        width: max-content;
+        display: grid;
+        grid-template-columns: repeat(2, var(--tile-w));
+        column-gap: clamp(38px, 11vw, 96px);
+        row-gap: 34px;
+        padding: 18px 16px 28px;
+      }
+      #lines {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        overflow: visible;
+      }
+      #lines line {
+        stroke: var(--brass);
+        stroke-width: 3;
+        stroke-dasharray: 2 7;
+        stroke-linecap: round;
+        opacity: 0.7;
+      }
+      .loc {
+        position: relative;
+        width: var(--tile-w);
+        aspect-ratio: 5 / 7;
+        max-width: 100%;
+        border-radius: 8px;
+        box-shadow:
+          0 0 0 1.5px var(--brass-dim),
+          0 10px 22px rgba(0, 0, 0, 0.6);
+        background: #172621;
+        transition:
+          box-shadow 0.2s,
+          transform 0.2s;
+      }
+      .loc .faceclip {
+        position: absolute;
+        inset: 0;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .loc > .hit {
+        position: absolute;
+        inset: 0;
+        border: 0;
+        background: none;
+        padding: 0;
+        cursor: zoom-in;
+        border-radius: 8px;
+      }
+      .loc.target {
+        box-shadow:
+          0 0 0 3px var(--good),
+          0 0 22px rgba(111, 185, 138, 0.55);
+        cursor: pointer;
+      }
+      .loc.target > .hit {
+        cursor: pointer;
+      }
+      .loc.blocked::after {
+        content: 'Blocked';
+        position: absolute;
+        left: 50%;
+        top: 38%;
+        transform: translate(-50%, -50%) rotate(-12deg);
+        font-family: var(--font-display);
+        font-size: 15px;
+        padding: 2px 8px;
+        border: 2px solid var(--doom);
+        color: #f0c9c5;
+        background: rgba(30, 6, 6, 0.75);
+        pointer-events: none;
+      }
+      .pencil {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: var(--compact);
+        height: var(--compact);
+        border-radius: 50%;
+        border: 1px solid var(--brass-dim);
+        background: rgba(10, 18, 16, 0.85);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        z-index: 2;
+      }
+      .pencil svg {
+        width: 14px;
+        height: 14px;
+        fill: none;
+        stroke: var(--bone);
+        stroke-width: 2;
+      }
+      .badges {
+        position: absolute;
+        top: 4px;
+        left: 4px;
+        display: flex;
+        gap: 3px;
+        z-index: 2;
+        pointer-events: none;
+      }
+      .tok {
+        min-width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-size: 13px;
+        font-weight: 700;
+        color: #fff;
+        box-shadow:
+          0 2px 4px rgba(0, 0, 0, 0.6),
+          inset 0 0 0 2px rgba(255, 255, 255, 0.25);
+        padding: 0 4px;
+      }
+      .tok.clue {
+        background: var(--clue);
+      }
+      .tok.doom {
+        background: var(--doom);
+      }
+      .tok.shroud {
+        background: #3b3b44;
+        border-radius: 4px;
+      }
+      .attach {
+        position: absolute;
+        left: 4px;
+        top: 32px;
+        font-size: 10px;
+        padding: 1px 5px;
+        border-radius: 3px;
+        background: rgba(60, 40, 80, 0.9);
+        z-index: 2;
+        pointer-events: none;
+      }
+      .pawns {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 6px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 4px;
+        padding: 0 4px;
+        z-index: 3;
+        pointer-events: none;
+      }
+      .pawn {
+        pointer-events: auto;
+        position: relative;
+        width: calc(var(--tile-w) * 0.3);
+        aspect-ratio: 1;
+        border-radius: 50%;
+        border: 3px solid var(--brass);
+        background-color: #22332d;
+        background-size: cover;
+        cursor: pointer;
+        padding: 0;
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.7);
+        touch-action: none;
+      }
+      .pawn.enemy {
+        border-color: var(--doom);
+      }
+      .pawn.enemy.exhausted {
+        transform: rotate(90deg);
+        filter: saturate(0.4) brightness(0.7);
+      }
+      .pawn.active {
+        box-shadow:
+          0 0 0 3px rgba(201, 164, 92, 0.45),
+          0 0 16px rgba(201, 164, 92, 0.8);
+        cursor: grab;
+      }
+      .pawn .ini {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        font-family: var(--font-display);
+        font-size: 14px;
+        color: var(--bone);
+        border-radius: 50%;
+      }
+      .pawn.has-img .ini {
+        display: none;
+      }
+      .pawn .hp {
+        position: absolute;
+        right: -5px;
+        bottom: -5px;
+        min-width: 17px;
+        height: 17px;
+        border-radius: 9px;
+        font-size: 10px;
+        font-weight: 700;
+        background: var(--doom);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        padding: 0 3px;
+      }
+      .ghost {
+        position: fixed;
+        z-index: 50;
+        pointer-events: none;
+        opacity: 0.8;
+        transform: translate(-50%, -50%) scale(1.1);
+      }
+      #movehint {
+        position: sticky;
+        left: 0;
+        top: 0;
+        z-index: 5;
+        margin: 0 auto;
+        width: fit-content;
+        padding: 6px 14px;
+        border-radius: 16px;
+        background: var(--good);
+        color: #0b1a12;
+        font-weight: 700;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      #movehint button {
+        border: 0;
+        background: rgba(0, 0, 0, 0.15);
+        border-radius: 10px;
+        padding: 2px 8px;
+        cursor: pointer;
+      }
+
+      /* ---------- Investigator dock ---------- */
+      #dock {
+        grid-area: dock;
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        gap: 10px;
+        padding-block: 8px calc(8px + env(safe-area-inset-bottom, 0px));
+        padding-left: max(16px, env(safe-area-inset-left, 0px));
+        padding-right: max(16px, env(safe-area-inset-right, 0px));
+        background: linear-gradient(to top, rgba(5, 12, 10, 0.95), rgba(5, 12, 10, 0.7));
+        border-top: 1px solid var(--panel-line);
+        scrollbar-width: none;
+      }
+      #dock::-webkit-scrollbar {
+        display: none;
+      }
+      @media (min-width: 900px) {
+        #dock {
+          flex-direction: column;
+          overflow-y: auto;
+          overflow-x: hidden;
+          scroll-snap-type: none;
+          border-top: 0;
+          border-left: 1px solid var(--panel-line);
+          padding-block: 12px;
+        }
+      }
+      .inv {
+        flex: none;
+        width: calc(100% - 22px);
+        scroll-snap-align: center;
+        display: grid;
+        gap: 8px;
+        padding: 10px;
+        border-radius: 10px;
+        background: var(--panel);
+        border: 1px solid var(--panel-line);
+      }
+      @media (min-width: 900px) {
+        .inv {
+          width: auto;
+        }
+      }
+      .inv.turn {
+        border-color: var(--brass);
+        box-shadow: 0 0 18px rgba(201, 164, 92, 0.18);
+      }
+      .inv.defeated {
+        opacity: 0.55;
+      }
+      .inv-head {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+      }
+      .inv-head .pawn {
+        width: 48px;
+      }
+      .inv-name {
+        font-family: var(--font-display);
+        font-size: 18px;
+        line-height: 1.1;
+      }
+      .inv-sub {
+        font-size: 12px;
+        color: var(--bone-dim);
+      }
+      .pips {
+        display: flex;
+        gap: 4px;
+      }
+      .pips i {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        border: 1.5px solid var(--brass);
+      }
+      .pips i.on {
+        background: var(--brass);
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px;
+      }
+      .stat {
+        display: grid;
+        justify-items: center;
+        gap: 2px;
+        padding: 5px 2px;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.25);
+        font-variant-numeric: tabular-nums;
+      }
+      .stat .lbl {
+        font-size: 10px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--bone-dim);
+        display: flex;
+        gap: 3px;
+        align-items: center;
+      }
+      .stat .lbl svg {
+        width: 12px;
+        height: 12px;
+      }
+      .stat .val {
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1;
+      }
+      .stat .val small {
+        font-size: 11px;
+        color: var(--bone-dim);
+        font-weight: 500;
+      }
+      .stat .row {
+        display: flex;
+        gap: 4px;
+      }
+      .stat .cbtn {
+        min-width: 24px;
+        height: 24px;
+        padding: 0;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+      }
+      .chip {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 2px 8px 2px 2px;
+        border-radius: 14px;
+        font-size: 12px;
+        background: rgba(184, 67, 63, 0.18);
+        border: 1px solid rgba(184, 67, 63, 0.6);
+        cursor: pointer;
+      }
+      .chip.threat {
+        background: rgba(110, 90, 140, 0.22);
+        border-color: rgba(150, 120, 190, 0.6);
+        padding-left: 8px;
+      }
+      .chip .pawn {
+        width: 22px;
+        border-width: 2px;
+      }
+      .acts {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 6px;
+      }
+      .acts .btn {
+        padding: 0 4px;
+        border-radius: 8px;
+        min-height: var(--touch);
+        font-size: 14px;
+      }
+      .acts .end {
+        grid-column: 1 / -1;
+        min-height: 34px;
+      }
+      .waiting {
+        font-size: 13px;
+        color: var(--bone-dim);
+        font-style: italic;
+      }
+
+      /* ---------- Sheets / dialogs ---------- */
+      .scrim {
+        position: fixed;
+        inset: 0;
+        z-index: 40;
+        background: var(--scrim);
+        display: grid;
+        place-items: end center;
+        padding-top: env(safe-area-inset-top, 0px);
+        animation: fade 0.18s ease-out;
+      }
+      @media (min-width: 700px) {
+        .scrim {
+          place-items: center;
+        }
+      }
+      .sheet {
+        width: min(100%, 30rem);
+        max-height: 92%;
+        overflow: auto;
+        background: #0f1d19;
+        border: 1px solid var(--brass-dim);
+        border-radius: 16px 16px 0 0;
+        display: grid;
+        gap: 12px;
+        padding-block: 16px calc(16px + env(safe-area-inset-bottom, 0px));
+        padding-left: max(16px, env(safe-area-inset-left, 0px));
+        padding-right: max(16px, env(safe-area-inset-right, 0px));
+        animation: rise 0.22s ease-out;
+      }
+      @media (min-width: 700px) {
+        .sheet {
+          border-radius: 16px;
+        }
+      }
+      .sheet h2 {
+        margin: 0;
+        font-family: var(--font-display);
+        font-weight: 400;
+        font-size: 24px;
+        text-wrap: balance;
+      }
+      .sheet .kicker {
+        font-size: 11px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--brass);
+      }
+      .sheet p {
+        margin: 0;
+        line-height: 1.45;
+      }
+      .sheet .story {
+        font-family: var(--font-story);
+        font-style: italic;
+        color: var(--bone-dim);
+      }
+      .bigcard {
+        position: relative;
+        margin: 0 auto;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow:
+          0 0 0 1px var(--brass-dim),
+          0 14px 30px rgba(0, 0, 0, 0.6);
+      }
+      .bigcard.portrait {
+        width: min(70vw, 300px);
+        aspect-ratio: 5 / 7;
+      }
+      .bigcard.landscape {
+        width: min(88vw, 420px);
+        aspect-ratio: 7 / 5;
+      }
+      .bigcard .face .fb {
+        font-size: 22px;
+      }
+      .flipbtn {
+        position: absolute;
+        right: 8px;
+        bottom: 8px;
+        z-index: 2;
+      }
+      .sheet .row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .sheet .row .btn {
+        flex: 1;
+        min-height: var(--touch);
+      }
+      .stepper {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 6px 10px;
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.25);
+      }
+      .stepper .v {
+        font-size: 20px;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        min-width: 2ch;
+        text-align: center;
+      }
+      .stepper .cbtn {
+        width: 38px;
+        height: 38px;
+        font-size: 18px;
+      }
+      .facts {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(5.5rem, 1fr));
+        gap: 6px;
+      }
+      .facts div {
+        padding: 6px;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.25);
+        text-align: center;
+      }
+      .facts b {
+        display: block;
+        font-size: 18px;
+      }
+      .facts span {
+        font-size: 11px;
+        color: var(--bone-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .note {
+        font-size: 13px;
+        padding: 8px 10px;
+        border-left: 3px solid var(--brass);
+        background: rgba(201, 164, 92, 0.08);
+      }
+
+      /* Skill test */
+      .test-eq {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        font-variant-numeric: tabular-nums;
+      }
+      .test-eq div {
+        display: grid;
+        justify-items: center;
+      }
+      .test-eq b {
+        font-size: 30px;
+        line-height: 1;
+      }
+      .test-eq span {
+        font-size: 11px;
+        color: var(--bone-dim);
+        text-transform: uppercase;
+      }
+      .bag {
+        display: grid;
+        place-items: center;
+        min-height: 120px;
+      }
+      .ctoken {
+        width: 96px;
+        height: 96px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        font-family: var(--font-display);
+        font-size: 30px;
+        color: #1b1408;
+        line-height: 1;
+        background: radial-gradient(circle at 35% 30%, #fff7e6, #d8c7a0 60%, #9d8a5f);
+        box-shadow:
+          0 0 0 4px #2a2014,
+          0 10px 24px rgba(0, 0, 0, 0.6);
+      }
+      .ctoken small {
+        display: block;
+        font-family: var(--font-ui);
+        font-size: 11px;
+        font-weight: 700;
+        margin-top: 3px;
+      }
+      .ctoken.skull {
+        background: radial-gradient(circle at 35% 30%, #a88, #5a2622 70%);
+        color: #fde;
+      }
+      .ctoken.cultist {
+        background: radial-gradient(circle at 35% 30%, #9c9, #234a2b 70%);
+        color: #efe;
+      }
+      .ctoken.tablet {
+        background: radial-gradient(circle at 35% 30%, #9bd, #1f3a5c 70%);
+        color: #eef;
+      }
+      .ctoken.elder {
+        background: radial-gradient(circle at 35% 30%, #bfe, #1d6b6b 70%);
+        color: #eff;
+      }
+      .ctoken.fail {
+        background: radial-gradient(circle at 35% 30%, #f99, #7d1010 70%);
+        color: #fee;
+      }
+      .ctoken.spin {
+        animation: spin 0.7s ease-out;
+      }
+      .verdict {
+        text-align: center;
+        font-family: var(--font-display);
+        font-size: 26px;
+      }
+      .verdict.pass {
+        color: var(--good);
+      }
+      .verdict.failv {
+        color: #e27d77;
+      }
+
+      /* Log + toasts */
+      #toasts {
+        position: fixed;
+        left: 50%;
+        transform: translateX(-50%);
+        top: calc(env(safe-area-inset-top, 0px) + 8px);
+        z-index: 60;
+        display: grid;
+        gap: 6px;
+        width: min(92vw, 26rem);
+        pointer-events: none;
+      }
+      .toast {
+        padding: 10px 14px;
+        border-radius: 10px;
+        background: #e9dfc6;
+        color: #1c160c;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+        animation: rise 0.2s ease-out;
+        font-size: 14px;
+      }
+      .log {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 6px;
+        font-size: 14px;
+      }
+      .log li {
+        padding: 6px 8px;
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.25);
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 8px;
+      }
+      .log li span {
+        color: var(--brass);
+        font-variant-numeric: tabular-nums;
+        font-size: 12px;
+      }
+      .fan {
+        font-size: 12px;
+        color: var(--bone-dim);
+        line-height: 1.4;
+      }
+      .fan a {
+        color: var(--brass);
+      }
+
+      @media (max-width: 600px) {
+        .phases {
+          display: none;
+        }
+      }
+      @keyframes fade {
+        from {
+          opacity: 0;
+        }
+      }
+      @keyframes rise {
+        from {
+          transform: translateY(24px);
+          opacity: 0;
+        }
+      }
+      .toast {
+        animation-name: fade;
+      }
+      @keyframes spin {
+        from {
+          transform: rotateY(540deg) scale(0.4);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="mat"><canvas id="matcanvas" aria-hidden="true"></canvas></div>
+    <div id="app">
+      <header id="head" aria-label="Scenario area"></header>
+      <div id="status"></div>
+      <main id="mapwrap"><div id="map"></div></main>
+      <aside id="dock" aria-label="Investigators"></aside>
+    </div>
+    <div id="modal"></div>
+    <div id="toasts" aria-live="polite"></div>
+
+    <script>
+      'use strict';
+      /* ================= Card data (hand-entered stats, The Gathering) ================= */
+      const C = {
+        '01104': { name: 'The Gathering', type: 'scenario', back: true },
+        '01105': { name: "What's Going On?!", type: 'agenda', stage: 1, doom: 3, back: true },
+        '01106': { name: 'Rise of the Ghouls', type: 'agenda', stage: 2, doom: 7, back: true },
+        '01107': { name: "They're Getting Out!", type: 'agenda', stage: 3, doom: 10, back: true },
+        '01108': { name: 'Trapped', type: 'act', stage: 1, clues: 2, back: true },
+        '01109': { name: 'The Barrier', type: 'act', stage: 2, clues: 3, back: true },
+        '01110': { name: 'What Have You Done?', type: 'act', stage: 3, clues: null, back: true },
+        '01111': { name: 'Study', type: 'location', shroud: 2, clues: 2 },
+        '01112': { name: 'Hallway', type: 'location', shroud: 1, clues: 0 },
+        '01113': { name: 'Attic', type: 'location', shroud: 1, clues: 2 },
+        '01114': { name: 'Cellar', type: 'location', shroud: 4, clues: 2 },
+        '01115': { name: 'Parlor', type: 'location', shroud: 2, clues: 0 },
+        '01116': {
+          name: 'Ghoul Priest',
+          type: 'enemy',
+          fight: 4,
+          health: 10,
+          evade: 4,
+          dmg: 2,
+          hor: 2,
+          hunter: true,
+          ghoul: true,
+          elite: true,
+        },
+        '01117': { name: 'Lita Chantler', type: 'asset' },
+        '01118': {
+          name: 'Flesh-Eater',
+          type: 'enemy',
+          fight: 4,
+          health: 4,
+          evade: 1,
+          dmg: 1,
+          hor: 2,
+          ghoul: true,
+          spawn: 'attic',
+        },
+        '01119': {
+          name: 'Icy Ghoul',
+          type: 'enemy',
+          fight: 3,
+          health: 4,
+          evade: 4,
+          dmg: 2,
+          hor: 1,
+          ghoul: true,
+          spawn: 'cellar',
+        },
+        '01159': {
+          name: 'Swarm of Rats',
+          type: 'enemy',
+          fight: 1,
+          health: 1,
+          evade: 3,
+          dmg: 1,
+          hor: 0,
+          hunter: true,
+        },
+        '01160': {
+          name: 'Ghoul Minion',
+          type: 'enemy',
+          fight: 2,
+          health: 2,
+          evade: 2,
+          dmg: 1,
+          hor: 1,
+          ghoul: true,
+        },
+        '01161': {
+          name: 'Ravenous Ghoul',
+          type: 'enemy',
+          fight: 3,
+          health: 3,
+          evade: 3,
+          dmg: 1,
+          hor: 1,
+          ghoul: true,
+        },
+        '01162': {
+          name: 'Grasping Hands',
+          type: 'treachery',
+          test: ['agility', 3],
+          perPoint: 'damage',
+        },
+        '01163': {
+          name: 'Rotting Remains',
+          type: 'treachery',
+          test: ['willpower', 3],
+          perPoint: 'horror',
+        },
+        '01164': { name: 'Frozen in Fear', type: 'treachery', threat: true },
+        '01165': { name: 'Dissonant Voices', type: 'treachery', threat: true },
+        '01166': { name: 'Ancient Evils', type: 'treachery', doom: 1 },
+        '01167': {
+          name: 'Crypt Chill',
+          type: 'treachery',
+          test: ['willpower', 4],
+          byHand: 'Discard an asset you control, or take 2 damage if you cannot.',
+        },
+        '01168': { name: 'Obscuring Fog', type: 'treachery', attach: '+2 shroud' },
+        '01001': { name: 'Roland Banks', type: 'investigator', back: true },
+        '01005': { name: 'Wendy Adams', type: 'investigator', back: true },
+      };
+      const LANDSCAPE = new Set(['agenda', 'act', 'investigator']);
+      const CONNECT = [
+        ['hallway', 'attic'],
+        ['hallway', 'cellar'],
+        ['hallway', 'parlor'],
+      ];
+      const GRID = { attic: [1, 1], hallway: [1, 2], cellar: [1, 3], parlor: [2, 2] };
+      const PHASES = ['mythos', 'investigation', 'enemy', 'upkeep'];
+      const PHASE_NAME = {
+        mythos: 'Mythos',
+        investigation: 'Investigation',
+        enemy: 'Enemy',
+        upkeep: 'Upkeep',
+      };
+      /* Standard difficulty bag of The Gathering. */
+      const BAG = [
+        '+1',
+        '0',
+        '0',
+        '-1',
+        '-1',
+        '-1',
+        '-2',
+        '-2',
+        '-3',
+        '-4',
+        'skull',
+        'skull',
+        'cultist',
+        'tablet',
+        'fail',
+        'elder',
+      ];
+
+      /* ================= Card pictures: fetched from ArkhamDB on the device, never bundled ================= */
+      const imgCache = new Map();
+      function cardUrl(code, back) {
+        const base = `https://arkhamdb.com/bundles/cards/${code}${back ? 'b' : ''}`;
+        return [base + '.png', base + '.jpg'];
+      }
+      function resolveImage(code, back) {
+        const key = code + (back ? 'b' : '');
+        if (!imgCache.has(key)) {
+          imgCache.set(
+            key,
+            new Promise((resolve) => {
+              const urls = cardUrl(code, back);
+              const tryNext = (i) => {
+                if (i >= urls.length) {
+                  resolve(null);
+                  return;
+                }
+                const img = new Image();
+                img.onload = () => resolve(urls[i]);
+                img.onerror = () => tryNext(i + 1);
+                img.src = urls[i];
+              };
+              tryNext(0);
+            }),
+          );
+        }
+        return imgCache.get(key);
+      }
+      function hydrateImages(root) {
+        root.querySelectorAll('[data-img]').forEach((el) => {
+          const [code, side] = el.dataset.img.split(':');
+          resolveImage(code, side === 'b').then((url) => {
+            if (!url) return;
+            if (el.classList.contains('face')) {
+              const img = el.querySelector('img');
+              if (img.getAttribute('src') !== url) img.src = url;
+              el.classList.add('loaded');
+            } else {
+              el.style.backgroundImage = `url("${url}")`;
+              el.classList.add('has-img');
+            }
+          });
+        });
+      }
+      function face(code, back, extraClass = '') {
+        const c = C[code];
+        const sub = back && c.type === 'location' ? 'Unrevealed' : back ? 'Back' : c.type;
+        return `<div class="face t-${c.type} ${extraClass}" data-img="${code}:${back ? 'b' : 'f'}">
+    <img alt="${esc(c.name)}${back ? ' (back)' : ''}">
+    <div class="fb">${esc(c.name)}<small>${esc(sub)}</small></div></div>`;
+      }
+      /* Avatar tokens crop the card's art: investigators from their landscape card, enemies from the top of theirs. */
+      function pawnHtml(kind, code, attrs = '', cls = '', badge = '') {
+        const c = C[code];
+        const pos =
+          kind === 'inv'
+            ? 'background-size: 330%; background-position: 4% 42%;'
+            : 'background-size: 210%; background-position: 50% 24%;';
+        const initials = c.name
+          .split(' ')
+          .map((w) => w[0])
+          .join('')
+          .slice(0, 2);
+        return `<button type="button" class="pawn ${kind === 'enemy' ? 'enemy' : ''} ${cls}" style="${pos}" data-img="${code}:f" aria-label="${esc(c.name)}" ${attrs}><span class="ini">${initials}</span>${badge}</button>`;
+      }
+      function esc(s) {
+        return String(s).replace(
+          /[&<>"']/g,
+          (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch],
+        );
+      }
+
+      /* ================= Game state ================= */
+      let uid = 10;
+      function initialState() {
+        return {
+          round: 2,
+          phase: 'investigation',
+          turn: 0,
+          investigators: [
+            {
+              id: 'roland',
+              code: '01001',
+              name: 'Roland Banks',
+              cls: 'guardian',
+              skills: { willpower: 3, intellect: 3, combat: 4, agility: 2 },
+              health: 9,
+              sanity: 5,
+              damage: 0,
+              horror: 1,
+              clues: 1,
+              resources: 5,
+              actions: 3,
+              loc: 'hallway',
+              elder: 1,
+              done: false,
+              threat: [],
+              defeated: false,
+            },
+            {
+              id: 'wendy',
+              code: '01005',
+              name: 'Wendy Adams',
+              cls: 'survivor',
+              skills: { willpower: 4, intellect: 3, combat: 1, agility: 4 },
+              health: 7,
+              sanity: 7,
+              damage: 1,
+              horror: 0,
+              clues: 2,
+              resources: 3,
+              actions: 3,
+              loc: 'attic',
+              elder: 0,
+              done: false,
+              threat: [],
+              defeated: false,
+            },
+          ],
+          locations: {
+            attic: { code: '01113', revealed: true, clues: 3, doom: 0, attach: [] },
+            hallway: { code: '01112', revealed: true, clues: 0, doom: 0, attach: [] },
+            cellar: { code: '01114', revealed: false, clues: 0, doom: 0, attach: [] },
+            parlor: {
+              code: '01115',
+              revealed: false,
+              clues: 0,
+              doom: 0,
+              attach: [],
+              blocked: true,
+            },
+          },
+          enemies: [
+            {
+              uid: 'e1',
+              code: '01118',
+              loc: 'attic',
+              engaged: 'wendy',
+              damage: 1,
+              exhausted: false,
+            },
+          ],
+          agenda: { code: '01106', doom: 2 },
+          act: { code: '01109', clues: 2 },
+          deck: shuffle([
+            '01159',
+            '01159',
+            '01160',
+            '01160',
+            '01160',
+            '01161',
+            '01162',
+            '01163',
+            '01163',
+            '01164',
+            '01165',
+            '01165',
+            '01166',
+            '01167',
+            '01167',
+            '01168',
+            '01168',
+            '01119',
+          ]),
+          discard: ['01162'],
+          victory: [],
+          log: [
+            { r: 1, t: 'Setup: Study in play, Roland and Wendy start there.' },
+            {
+              r: 1,
+              t: 'Act 1 advanced: the Study is gone. Hallway, Attic, Cellar and Parlor put into play.',
+            },
+            { r: 2, t: 'Mythos: 1 doom on Rise of the Ghouls.' },
+            { r: 2, t: 'Wendy drew Flesh-Eater: it spawns in the Attic.' },
+          ],
+        };
+      }
+      function shuffle(a) {
+        const b = a.slice();
+        for (let i = b.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [b[i], b[j]] = [b[j], b[i]];
+        }
+        return b;
+      }
+
+      let S = initialState();
+      const undoStack = [];
+      let ui = { moving: null, sheet: null };
+
+      function step(label, fn) {
+        undoStack.push(JSON.stringify(S));
+        if (undoStack.length > 60) undoStack.shift();
+        fn();
+        if (label) log(label);
+        render();
+      }
+      function undo() {
+        if (!undoStack.length) return;
+        S = JSON.parse(undoStack.pop());
+        closeSheet();
+        toast('Undone');
+        render();
+      }
+      function log(t) {
+        S.log.push({ r: S.round, t });
+      }
+
+      const players = () => S.investigators.length;
+      const inv = (id) => S.investigators.find((i) => i.id === id);
+      const turnInv = () => (S.phase === 'investigation' ? S.investigators[S.turn] : null);
+      const enemiesAt = (loc) => S.enemies.filter((e) => e.loc === loc);
+      const connected = (a, b) =>
+        CONNECT.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
+      const shroud = (loc) =>
+        C[S.locations[loc].code].shroud + (S.locations[loc].attach.includes('01168') ? 2 : 0);
+      const totalDoom = () =>
+        S.agenda.doom + Object.values(S.locations).reduce((n, l) => n + l.doom, 0);
+      const actNeed = () => (C[S.act.code].clues == null ? null : C[S.act.code].clues * players());
+
+      /* ================= Rendering ================= */
+      const ICON = {
+        pencil:
+          '<svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>',
+        undo: '<svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>',
+        log: '<svg viewBox="0 0 24 24"><path d="M5 5h14M5 12h14M5 19h9"/></svg>',
+        health:
+          '<svg viewBox="0 0 24 24"><path fill="var(--health)" d="M12 21s-7.5-4.6-9.6-9.2A5.3 5.3 0 0 1 12 6.3a5.3 5.3 0 0 1 9.6 5.5C19.5 16.4 12 21 12 21z"/></svg>',
+        sanity:
+          '<svg viewBox="0 0 24 24"><path fill="var(--sanity)" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3.2" fill="#0b1614"/></svg>',
+        clue: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="var(--clue)"/></svg>',
+        res: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="var(--resource)"/><circle cx="12" cy="12" r="5" fill="none" stroke="#3b2a10" stroke-width="2"/></svg>',
+      };
+
+      function render() {
+        renderHead();
+        renderStatus();
+        renderMap();
+        renderDock();
+        if (ui.sheet) ui.sheet();
+        hydrateImages(document.body);
+      }
+
+      function renderHead() {
+        const ag = C[S.agenda.code],
+          ac = C[S.act.code];
+        const need = actNeed();
+        const top = S.discard[S.discard.length - 1];
+        document.getElementById('head').innerHTML = `
+    <div class="slot"><span class="slot-label">Encounter</span>
+      <div class="slot-pair">
+        <div class="hcard portrait"><div class="deckback"><span>${S.deck.length}</span></div>
+          <button class="hit" data-act="deck" aria-label="Encounter deck, ${S.deck.length} cards"></button></div>
+        <div class="hcard small">${top ? face(top, false) : '<div class="pile-empty"></div>'}
+          <button class="hit" data-act="discard" aria-label="Encounter discard pile"></button></div>
+      </div></div>
+    <div class="slot"><span class="slot-label">Agenda ${ag.stage}</span>
+      <div class="hcard landscape">${face(S.agenda.code, false)}
+        <button class="hit" data-zoom="agenda" aria-label="Agenda: ${esc(ag.name)}"></button>
+        <div class="plate"><button class="cbtn" data-act="doom-" aria-label="Remove doom">−</button>
+          <span class="count"><span class="tok doom">${S.agenda.doom}</span>/ ${ag.doom}</span>
+          <button class="cbtn" data-act="doom+" aria-label="Add doom">+</button></div></div></div>
+    <div class="slot"><span class="slot-label">Act ${ac.stage}</span>
+      <div class="hcard landscape">${face(S.act.code, false)}
+        <button class="hit" data-zoom="act" aria-label="Act: ${esc(ac.name)}"></button>
+        <div class="plate"><span class="count"><span class="tok clue">${S.act.clues}</span>${need == null ? '' : '/ ' + need}</span>
+          <button class="cbtn go" data-act="advance-act" ${need != null && S.act.clues >= need ? '' : 'disabled'}>Advance</button></div></div></div>
+    <div class="slot"><span class="slot-label">Scenario</span>
+      <div class="hcard portrait">${face('01104', false)}
+        <button class="hit" data-zoom="scenario" aria-label="Scenario reference card"></button></div></div>`;
+      }
+
+      function renderStatus() {
+        const canNext =
+          S.phase !== 'investigation' || S.investigators.every((i) => i.done || i.defeated);
+        document.getElementById('status').innerHTML = `
+    <span class="round">Round ${S.round}<small>${PHASE_NAME[S.phase]} phase</small></span>
+    <div class="phases" role="list" aria-label="Phase">${PHASES.map((p) => `<span role="listitem" class="${p === S.phase ? 'on' : ''}">${PHASE_NAME[p]}</span>`).join('')}</div>
+    <button class="btn primary" data-act="next" ${canNext ? '' : 'disabled'} title="${canNext ? '' : 'Every investigator ends their turn first'}">${nextLabel()}</button>
+    <button class="btn iconbtn" data-act="undo" aria-label="Undo" ${undoStack.length ? '' : 'disabled'}>${ICON.undo}</button>
+    <button class="btn iconbtn" data-act="log" aria-label="Game log">${ICON.log}</button>`;
+      }
+      function nextLabel() {
+        return {
+          mythos: 'Investigate',
+          investigation: 'Enemy phase',
+          enemy: 'Upkeep',
+          upkeep: 'Next round',
+        }[S.phase];
+      }
+
+      function renderMap() {
+        const map = document.getElementById('map');
+        const moving = ui.moving ? inv(ui.moving) : null;
+        let html = '<svg id="lines" aria-hidden="true"></svg>';
+        if (moving)
+          html += `<div id="movehint" style="grid-column: 1 / -1">Move ${esc(moving.name.split(' ')[0])}: tap a lit location <button data-act="cancel-move">Cancel</button></div>`;
+        for (const [key, l] of Object.entries(S.locations)) {
+          const c = C[l.code];
+          const [col, row] = GRID[key];
+          const target = moving && connected(moving.loc, key) && !l.blocked;
+          const pawns =
+            S.investigators
+              .filter((i) => i.loc === key && !i.defeated)
+              .map((i) => {
+                const active = turnInv() && turnInv().id === i.id && i.actions > 0;
+                return pawnHtml('inv', i.code, `data-pawn="${i.id}"`, active ? 'active' : '');
+              })
+              .join('') +
+            enemiesAt(key)
+              .map((e) => {
+                const left = C[e.code].health * (C[e.code].elite ? players() / 2 : 1) - e.damage;
+                return pawnHtml(
+                  'enemy',
+                  e.code,
+                  `data-enemy="${e.uid}"`,
+                  e.exhausted ? 'exhausted' : '',
+                  `<span class="hp">${left}</span>`,
+                );
+              })
+              .join('');
+          html += `<div class="loc ${target ? 'target' : ''} ${l.blocked ? 'blocked' : ''}" data-loc="${key}" style="grid-column:${col};grid-row:${row + (moving ? 1 : 0)}">
+      <div class="faceclip">${face(l.code, !l.revealed)}</div>
+      <button class="hit" data-loc-hit="${key}" aria-label="${esc(c.name)}"></button>
+      <div class="badges">${l.revealed ? `<span class="tok shroud" title="Shroud">${shroud(key)}</span>` : ''}${l.clues ? `<span class="tok clue">${l.clues}</span>` : ''}${l.doom ? `<span class="tok doom">${l.doom}</span>` : ''}</div>
+      ${l.attach.length ? `<span class="attach">${l.attach.map((a) => esc(C[a].name)).join(', ')}</span>` : ''}
+      <button class="pencil" data-edit="${key}" aria-label="Edit ${esc(c.name)}">${ICON.pencil}</button>
+      <div class="pawns">${pawns}</div></div>`;
+        }
+        map.innerHTML = html;
+        requestAnimationFrame(drawLines);
+      }
+      function drawLines() {
+        const svg = document.getElementById('lines');
+        if (!svg) return;
+        const box = (k) => {
+          const el = document.querySelector(`[data-loc="${k}"]`);
+          return (
+            el && { x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop + el.offsetHeight / 2 }
+          );
+        };
+        svg.innerHTML = CONNECT.map(([a, b]) => {
+          const p = box(a),
+            q = box(b);
+          return p && q ? `<line x1="${p.x}" y1="${p.y}" x2="${q.x}" y2="${q.y}"/>` : '';
+        }).join('');
+      }
+
+      function renderDock() {
+        const ti = turnInv();
+        document.getElementById('dock').innerHTML = S.investigators
+          .map((i) => {
+            const isTurn = ti && ti.id === i.id;
+            const engaged = S.enemies.filter((e) => e.engaged === i.id);
+            const here = enemiesAt(i.loc);
+            const can = isTurn && i.actions > 0 && !i.defeated;
+            const status = i.defeated
+              ? 'Defeated'
+              : isTurn
+                ? `Turn · ${C[S.locations[i.loc].code].name}`
+                : i.done
+                  ? `Turn done · ${C[S.locations[i.loc].code].name}`
+                  : C[S.locations[i.loc].code].name;
+            return `<section class="inv ${isTurn ? 'turn' : ''} ${i.defeated ? 'defeated' : ''}" aria-label="${esc(i.name)}">
+      <div class="inv-head">${pawnHtml('inv', i.code, `data-zoom-inv="${i.id}"`)}
+        <div><div class="inv-name">${esc(i.name)}</div><div class="inv-sub">${esc(status)}</div></div>
+        ${isTurn ? `<div class="pips" aria-label="${i.actions} actions left">${[0, 1, 2].map((n) => `<i class="${n < i.actions ? 'on' : ''}"></i>`).join('')}</div>` : '<span></span>'}</div>
+      <div class="stats">
+        ${stat(i, 'health', 'Health', i.health - i.damage, i.health, 'damage')}
+        ${stat(i, 'sanity', 'Sanity', i.sanity - i.horror, i.sanity, 'horror')}
+        ${stat(i, 'clue', 'Clues', i.clues, null, 'clues')}
+        ${stat(i, 'res', 'Res.', i.resources, null, 'resources')}
+      </div>
+      ${engaged.length || i.threat.length ? `<div class="chips">${engaged.map((e) => `<span class="chip" data-enemy="${e.uid}">${pawnHtml('enemy', e.code, `tabindex="-1" data-enemy="${e.uid}"`)}${esc(C[e.code].name)}</span>`).join('')}${i.threat.map((t) => `<span class="chip threat" data-card="${t}">${esc(C[t].name)}</span>`).join('')}</div>` : ''}
+      ${
+        i.defeated
+          ? ''
+          : isTurn
+            ? `<div class="acts">
+        <button class="btn" data-do="investigate" data-inv="${i.id}" ${can && S.locations[i.loc].clues ? '' : 'disabled'}>Investigate</button>
+        <button class="btn" data-do="move" data-inv="${i.id}" ${can ? '' : 'disabled'}>Move</button>
+        <button class="btn" data-do="fight" data-inv="${i.id}" ${can && here.length ? '' : 'disabled'}>Fight</button>
+        <button class="btn" data-do="evade" data-inv="${i.id}" ${can && engaged.length ? '' : 'disabled'}>Evade</button>
+        <button class="btn end" data-do="end" data-inv="${i.id}">End turn</button></div>`
+            : `<p class="waiting">${S.phase === 'investigation' ? (i.done ? 'Waiting for the round to end.' : 'Up after the current investigator.') : `${PHASE_NAME[S.phase]} phase: the app handles the encounter side.`}</p>`
+      }
+    </section>`;
+          })
+          .join('');
+      }
+      function stat(i, icon, label, value, max, field) {
+        /* Health and sanity show what is left; the steppers change damage and horror, like the tokens on the card. */
+        const down = field === 'damage' || field === 'horror' ? '+' : '-';
+        const up = down === '+' ? '-' : '+';
+        return `<div class="stat"><span class="lbl">${ICON[icon]}${label}</span>
+    <span class="val">${value}${max ? `<small>/${max}</small>` : ''}</span>
+    <div class="row"><button class="cbtn" data-adj="${i.id}:${field}:${down}" aria-label="${label} down">−</button>
+    <button class="cbtn" data-adj="${i.id}:${field}:${up}" aria-label="${label} up">+</button></div></div>`;
+      }
+
+      /* ================= Sheets ================= */
+      function openSheet(fn) {
+        ui.sheet = fn;
+        fn();
+        hydrateImages(document.getElementById('modal'));
+      }
+      function closeSheet() {
+        ui.sheet = null;
+        document.getElementById('modal').innerHTML = '';
+      }
+      function sheet(html, opts = {}) {
+        const m = document.getElementById('modal');
+        m.innerHTML = `<div class="scrim" data-scrim="${opts.locked ? 'locked' : 'close'}"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;
+        hydrateImages(m);
+      }
+
+      let flipState = {};
+      function zoomCard(code, opts = {}) {
+        const c = C[code];
+        const key = opts.key || code;
+        const back = flipState[key] ?? !!opts.back;
+        const shape = LANDSCAPE.has(c.type) && !(c.type === 'location') ? 'landscape' : 'portrait';
+        return `<div class="bigcard ${shape}">${face(code, back)}${c.back || c.type === 'location' ? `<button class="btn flipbtn" data-flip="${key}">Flip</button>` : ''}</div>`;
+      }
+
+      function showAgenda() {
+        openSheet(() => {
+          const ag = C[S.agenda.code];
+          sheet(`<span class="kicker">Agenda ${ag.stage} · ${S.agenda.doom} of ${ag.doom} doom</span><h2>${esc(ag.name)}</h2>
+      ${zoomCard(S.agenda.code, { key: 'agenda' })}
+      <div class="stepper"><span>Doom on the agenda</span><button class="cbtn" data-act="doom-">−</button><span class="v">${S.agenda.doom}</span><button class="cbtn" data-act="doom+">+</button></div>
+      <p class="note">Doom in play counts toward the threshold too (doom on locations: ${totalDoom() - S.agenda.doom}). When it reaches ${ag.doom}, the agenda advances at the end of the Mythos step.</p>
+      <div class="row"><button class="btn" data-close>Close</button><button class="btn primary" data-act="advance-agenda">Advance agenda</button></div>`);
+        });
+      }
+      function showAct() {
+        openSheet(() => {
+          const ac = C[S.act.code],
+            need = actNeed();
+          sheet(`<span class="kicker">Act ${ac.stage}${need == null ? '' : ` · ${S.act.clues} of ${need} clues`}</span><h2>${esc(ac.name)}</h2>
+      ${zoomCard(S.act.code, { key: 'act' })}
+      ${
+        need == null
+          ? '<p class="note">Objective: defeat the Ghoul Priest, then this act advances and the scenario resolves.</p>'
+          : `
+      <p>Move clues from investigators onto the act. Advancing spends the clues on the act.</p>
+      <div class="row">${S.investigators.map((i) => `<button class="btn" data-give="${i.id}" ${i.clues ? '' : 'disabled'}>From ${esc(i.name.split(' ')[0])} (${i.clues})</button>`).join('')}</div>
+      <div class="stepper"><span>Clues on the act (correction)</span><button class="cbtn" data-act="actclue-">−</button><span class="v">${S.act.clues}</span><button class="cbtn" data-act="actclue+">+</button></div>`
+      }
+      <div class="row"><button class="btn" data-close>Close</button><button class="btn primary" data-act="advance-act" ${need != null && S.act.clues >= need ? '' : 'disabled'}>Advance</button></div>`);
+        });
+      }
+      function showScenario() {
+        openSheet(() =>
+          sheet(`<span class="kicker">Scenario reference · Standard</span><h2>The Gathering</h2>
+    ${zoomCard('01104', { key: 'scenario' })}
+    <div class="facts"><div><b>−X</b><span>Skull</span></div><div><b>−1</b><span>Cultist</span></div><div><b>−2</b><span>Tablet</span></div></div>
+    <p class="note">The app applies these when it draws a chaos token: X is the number of Ghoul enemies at your location; Cultist reveals another token; Tablet adds 1 horror if a Ghoul is at your location.</p>
+    <div class="row"><button class="btn" data-close>Close</button></div>`),
+        );
+      }
+      function showLocation(key, edit) {
+        openSheet(() => {
+          const l = S.locations[key],
+            c = C[l.code];
+          const ti = turnInv();
+          const canMove = ti && ti.actions > 0 && connected(ti.loc, key) && !l.blocked;
+          sheet(`<span class="kicker">Location${l.revealed ? ` · shroud ${shroud(key)}` : ' · unrevealed'}</span><h2>${esc(c.name)}</h2>
+      ${edit ? '' : zoomCard(l.code, { key: 'loc-' + key, back: !l.revealed })}
+      ${l.blocked ? '<p class="note">The Parlor is barred until act 2 advances.</p>' : ''}
+      <div class="stepper"><span>Clues</span><button class="cbtn" data-locadj="${key}:clues:-">−</button><span class="v">${l.clues}</span><button class="cbtn" data-locadj="${key}:clues:+">+</button></div>
+      <div class="stepper"><span>Doom</span><button class="cbtn" data-locadj="${key}:doom:-">−</button><span class="v">${l.doom}</span><button class="cbtn" data-locadj="${key}:doom:+">+</button></div>
+      <div class="row">${l.revealed ? '' : `<button class="btn" data-reveal="${key}">Reveal</button>`}
+        ${canMove ? `<button class="btn primary" data-moveto="${key}">Move ${esc(ti.name.split(' ')[0])} here</button>` : ''}
+        <button class="btn" data-close>Close</button></div>`);
+        });
+      }
+      function showEnemy(id) {
+        openSheet(() => {
+          const e = S.enemies.find((x) => x.uid === id);
+          if (!e) {
+            closeSheet();
+            return;
+          }
+          const c = C[e.code];
+          const hp = c.health * (c.elite ? players() / 2 : 1);
+          const ti = turnInv();
+          const can = ti && ti.actions > 0 && ti.loc === e.loc;
+          sheet(`<span class="kicker">Enemy · ${e.engaged ? 'engaged with ' + esc(inv(e.engaged).name) : 'unengaged'}${e.exhausted ? ' · exhausted' : ''}</span><h2>${esc(c.name)}</h2>
+      ${zoomCard(e.code)}
+      <div class="facts"><div><b>${c.fight}</b><span>Fight</span></div><div><b>${hp - e.damage}/${hp}</b><span>Health</span></div><div><b>${c.evade}</b><span>Evade</span></div><div><b>${c.dmg}·${c.hor}</b><span>Dmg · Hor</span></div></div>
+      <div class="stepper"><span>Damage on it</span><button class="cbtn" data-edmg="${id}:-">−</button><span class="v">${e.damage}</span><button class="cbtn" data-edmg="${id}:+">+</button></div>
+      <div class="row">${can ? `<button class="btn" data-fight="${id}">Fight</button>` : ''}${can && e.engaged === ti.id ? `<button class="btn" data-evade="${id}">Evade</button>` : ''}${can && e.engaged !== ti.id ? `<button class="btn" data-engage="${id}">Engage</button>` : ''}</div>
+      <div class="row"><button class="btn" data-defeat="${id}">Defeated</button><button class="btn" data-close>Close</button></div>`);
+        });
+      }
+      function showInvestigator(id) {
+        openSheet(() => {
+          const i = inv(id);
+          sheet(`<span class="kicker">${i.cls}</span><h2>${esc(i.name)}</h2>${zoomCard(i.code, { key: 'inv-' + id })}
+      <div class="facts">${Object.entries(i.skills)
+        .map(([k, v]) => `<div><b>${v}</b><span>${k}</span></div>`)
+        .join('')}</div>
+      <p class="note">Player cards stay on the table. The app tracks what the scenario needs: damage, horror, clues, resources, and the enemies and treacheries that are on you.</p>
+      <div class="row"><button class="btn" data-close>Close</button></div>`);
+        });
+      }
+      function showCard(code) {
+        openSheet(() =>
+          sheet(
+            `<span class="kicker">${C[code].type}</span><h2>${esc(C[code].name)}</h2>${zoomCard(code)}<div class="row"><button class="btn" data-close>Close</button></div>`,
+          ),
+        );
+      }
+      function showDiscard() {
+        openSheet(() =>
+          sheet(`<span class="kicker">Encounter discard · ${S.discard.length}</span><h2>Discard pile</h2>
+    <div class="chips">${
+      S.discard
+        .slice()
+        .reverse()
+        .map((c) => `<span class="chip threat" data-card="${c}">${esc(C[c].name)}</span>`)
+        .join('') || '<p>Empty.</p>'
+    }</div>
+    <p class="note">Victory display: ${S.victory.length ? S.victory.map((c) => esc(C[c].name)).join(', ') : 'empty'}.</p>
+    <div class="row"><button class="btn" data-close>Close</button></div>`),
+        );
+      }
+      function showLog() {
+        openSheet(() =>
+          sheet(`<span class="kicker">Round ${S.round}</span><h2>Game log</h2>
+    <ul class="log">${S.log
+      .slice()
+      .reverse()
+      .map((e) => `<li><span>R${e.r}</span>${esc(e.t)}</li>`)
+      .join('')}</ul>
+    <p class="fan">Unofficial fan project, not produced or endorsed by Fantasy Flight Games. Arkham Horror: The Card Game and its card images are © Fantasy Flight Games; the pictures are loaded from <a href="https://arkhamdb.com" target="_blank" rel="noopener">ArkhamDB</a> on your device and never shipped with the app.</p>
+    <div class="row"><button class="btn" data-close>Close</button></div>`),
+        );
+      }
+
+      /* ================= Skill tests and the chaos bag ================= */
+      function startTest(t) {
+        let commit = 0,
+          token = null,
+          revealing = false;
+        const i = inv(t.inv);
+        const tokenMod = (tok) => {
+          const ghouls = S.enemies.filter((e) => e.loc === i.loc && C[e.code].ghoul).length;
+          if (tok === 'skull')
+            return {
+              mod: -ghouls,
+              label: 'Skull',
+              note: `−1 per Ghoul at your location (${ghouls})`,
+            };
+          if (tok === 'cultist')
+            return {
+              mod: -1,
+              label: 'Cultist',
+              note: 'Reveal another token (drawn below)',
+              again: true,
+            };
+          if (tok === 'tablet')
+            return {
+              mod: -2,
+              label: 'Tablet',
+              note: ghouls ? 'A Ghoul is here: take 1 horror' : 'No Ghoul here',
+              horror: ghouls ? 1 : 0,
+            };
+          if (tok === 'fail')
+            return { mod: -99, label: 'Fail', note: 'Automatic failure', fail: true };
+          if (tok === 'elder')
+            return {
+              mod: i.elder,
+              label: 'Elder',
+              note: `${i.name.split(' ')[0]}'s elder sign: +${i.elder}`,
+            };
+          return { mod: Number(tok), label: tok.replace('-', '−'), note: '' };
+        };
+        const draw = () => {
+          const first = BAG[Math.floor(Math.random() * BAG.length)];
+          const r = tokenMod(first);
+          if (r.again) {
+            const second = tokenMod(
+              BAG.filter((x) => x !== 'cultist')[Math.floor(Math.random() * (BAG.length - 1))],
+            );
+            return {
+              ...second,
+              mod: second.mod - 1,
+              label: second.label,
+              note: `Cultist (−1), then ${second.label}${second.note ? ': ' + second.note : ''}`,
+              cls: second.label.toLowerCase(),
+              extra: 'Cultist + ',
+            };
+          }
+          return { ...r, cls: r.label.toLowerCase() };
+        };
+        openSheet(function paint() {
+          const base = i.skills[t.skill];
+          let result = '';
+          if (token) {
+            const total = token.fail ? 0 : Math.max(0, base + commit + token.mod);
+            const pass = !token.fail && total >= t.difficulty;
+            const by = pass ? 0 : Math.max(1, t.difficulty - total);
+            result = `<div class="verdict ${pass ? 'pass' : 'failv'}">${pass ? 'Success' : `Failed by ${token.fail ? 'auto-fail' : by}`}</div>
+        <p class="note">${esc(token.note || 'No token effect.')} Total ${token.fail ? '—' : total} against ${t.difficulty}.</p>
+        <div class="row"><button class="btn primary" data-test-done="${pass ? 'pass' : 'fail'}:${by}:${token.horror || 0}">${pass ? esc(t.passLabel || 'Apply') : esc(t.failLabel || 'Apply')}</button></div>`;
+          }
+          const tokCls = token
+            ? {
+                skull: 'skull',
+                cultist: 'cultist',
+                tablet: 'tablet',
+                fail: 'fail',
+                elder: 'elder',
+              }[token.cls] || ''
+            : '';
+          sheet(
+            `<span class="kicker">Skill test · ${esc(i.name)}</span><h2>${esc(t.title)}</h2>
+      <div class="test-eq"><div><b>${base}</b><span>${t.skill}</span></div><b>+</b><div><b>${commit}</b><span>committed</span></div><b>vs</b><div><b>${t.difficulty}</b><span>${esc(t.against)}</span></div></div>
+      ${token ? '' : `<div class="stepper"><span>Skill icons on committed cards</span><button class="cbtn" data-commit="-">−</button><span class="v">${commit}</span><button class="cbtn" data-commit="+">+</button></div>`}
+      <div class="bag">${token ? `<div class="ctoken ${tokCls} ${revealing ? 'spin' : ''}">${token.extra ? '' : ''}${esc(token.label)}<small>${token.mod <= -99 ? 'auto-fail' : (token.mod >= 0 ? '+' : '−') + Math.abs(token.mod)}</small></div>` : '<button class="btn primary" data-reveal-token style="min-height:56px;padding:0 28px">Reveal chaos token</button>'}</div>
+      ${result}
+      ${token ? '' : '<div class="row"><button class="btn" data-close>Cancel</button></div>'}`,
+            { locked: !!token },
+          );
+          const m = document.getElementById('modal');
+          m.querySelectorAll('[data-commit]').forEach(
+            (b) =>
+              (b.onclick = () => {
+                commit = Math.max(0, commit + (b.dataset.commit === '+' ? 1 : -1));
+                paint();
+              }),
+          );
+          const rv = m.querySelector('[data-reveal-token]');
+          if (rv)
+            rv.onclick = () => {
+              token = draw();
+              revealing = true;
+              paint();
+              revealing = false;
+            };
+          const done = m.querySelector('[data-test-done]');
+          if (done)
+            done.onclick = () => {
+              const [res, by, hor] = done.dataset.testDone.split(':');
+              closeSheet();
+              step(null, () => {
+                if (Number(hor)) {
+                  i.horror += Number(hor);
+                  log(`${i.name} takes 1 horror from the Tablet.`);
+                }
+                res === 'pass' ? t.onPass() : t.onFail(Number(by));
+                checkDefeat(i);
+              });
+              afterStep();
+            };
+        });
+      }
+
+      /* ================= Actions ================= */
+      function spendAction(i) {
+        i.actions -= 1;
+      }
+      function investigate(i) {
+        const loc = i.loc,
+          c = C[S.locations[loc].code];
+        startTest({
+          inv: i.id,
+          skill: 'intellect',
+          difficulty: shroud(loc),
+          against: 'shroud',
+          title: `Investigate the ${c.name}`,
+          passLabel: 'Discover 1 clue',
+          failLabel: 'Done',
+          onPass: () => {
+            spendAction(i);
+            S.locations[loc].clues -= 1;
+            i.clues += 1;
+            log(`${i.name} investigates the ${c.name} and discovers 1 clue.`);
+          },
+          onFail: () => {
+            spendAction(i);
+            log(`${i.name} investigates the ${c.name} and finds nothing.`);
+          },
+        });
+      }
+      function fight(i, e) {
+        const c = C[e.code];
+        startTest({
+          inv: i.id,
+          skill: 'combat',
+          difficulty: c.fight,
+          against: 'fight',
+          title: `Fight the ${c.name}`,
+          passLabel: 'Deal 1 damage',
+          failLabel: 'Done',
+          onPass: () => {
+            spendAction(i);
+            e.damage += 1;
+            log(`${i.name} hits the ${c.name} for 1 damage.`);
+            checkEnemy(e);
+          },
+          onFail: () => {
+            spendAction(i);
+            log(`${i.name} misses the ${c.name}.`);
+          },
+        });
+      }
+      function evade(i, e) {
+        const c = C[e.code];
+        startTest({
+          inv: i.id,
+          skill: 'agility',
+          difficulty: c.evade,
+          against: 'evade',
+          title: `Evade the ${c.name}`,
+          passLabel: 'Exhaust and disengage',
+          failLabel: 'Done',
+          onPass: () => {
+            spendAction(i);
+            e.exhausted = true;
+            e.engaged = null;
+            log(`${i.name} evades the ${c.name}.`);
+          },
+          onFail: () => {
+            spendAction(i);
+            log(`${i.name} fails to evade the ${c.name}.`);
+          },
+        });
+      }
+      function checkEnemy(e) {
+        const c = C[e.code];
+        if (e.damage >= c.health * (c.elite ? players() / 2 : 1)) {
+          S.enemies = S.enemies.filter((x) => x !== e);
+          if (c.elite) S.victory.push(e.code);
+          else S.discard.push(e.code);
+          log(`The ${c.name} is defeated.`);
+          toast(`${c.name} defeated`);
+        }
+      }
+      function checkDefeat(i) {
+        if (!i.defeated && (i.damage >= i.health || i.horror >= i.sanity)) {
+          i.defeated = true;
+          S.enemies.forEach((e) => {
+            if (e.engaged === i.id) e.engaged = null;
+          });
+          log(`${i.name} is defeated.`);
+          toast(`${i.name} is defeated`);
+        }
+      }
+      /* Moving away from a ready engaged enemy provokes its attack of opportunity; engaged enemies follow. */
+      function moveTo(i, key) {
+        const l = S.locations[key];
+        if (!connected(i.loc, key) || l.blocked || i.actions < 1) return;
+        step(null, () => {
+          spendAction(i);
+          S.enemies
+            .filter((e) => e.engaged === i.id && !e.exhausted)
+            .forEach((e) => {
+              i.damage += C[e.code].dmg;
+              i.horror += C[e.code].hor;
+              log(
+                `Attack of opportunity: the ${C[e.code].name} deals ${C[e.code].dmg} damage and ${C[e.code].hor} horror to ${i.name}.`,
+              );
+              toast(`${C[e.code].name} attacks as ${i.name.split(' ')[0]} leaves`);
+            });
+          S.enemies.forEach((e) => {
+            if (e.engaged === i.id) e.loc = key;
+          });
+          i.loc = key;
+          log(`${i.name} moves to the ${C[l.code].name}.`);
+          if (!l.revealed) reveal(key);
+          S.enemies.forEach((e) => {
+            if (e.loc === key && !e.engaged && !e.exhausted) {
+              e.engaged = i.id;
+              log(`The ${C[e.code].name} engages ${i.name}.`);
+            }
+          });
+          checkDefeat(i);
+        });
+        ui.moving = null;
+        render();
+      }
+      function reveal(key) {
+        const l = S.locations[key];
+        l.revealed = true;
+        l.clues += C[l.code].clues * players();
+        log(`The ${C[l.code].name} is revealed: ${C[l.code].clues * players()} clues placed.`);
+      }
+      function endTurn(i) {
+        step(`${i.name} ends their turn.`, () => {
+          i.done = true;
+          i.actions = 0;
+          const next = S.investigators.findIndex((x, n) => n > S.turn && !x.done && !x.defeated);
+          if (next >= 0) S.turn = next;
+        });
+      }
+      function afterStep() {
+        if (S.phase === 'investigation') {
+          const ti = turnInv();
+          if (ti && ti.actions === 0 && !ti.done)
+            toast(`${ti.name.split(' ')[0]} has no actions left: end the turn`);
+        }
+        if (totalDoom() >= C[S.agenda.code].doom && S.phase !== 'mythos')
+          toast('Doom reached the threshold: the agenda advances in the Mythos phase');
+      }
+
+      function advanceAct() {
+        const ac = S.act.code;
+        const need = actNeed();
+        if (need == null || S.act.clues < need) return;
+        step(null, () => {
+          S.act.clues = 0;
+          if (ac === '01108') {
+            S.act.code = '01109';
+            log('Act 1 advances.');
+          } else if (ac === '01109') {
+            S.act.code = '01110';
+            S.locations.parlor.blocked = false;
+            reveal('parlor');
+            S.enemies.push({
+              uid: 'e' + uid++,
+              code: '01116',
+              loc: 'hallway',
+              engaged: null,
+              damage: 0,
+              exhausted: false,
+            });
+            S.investigators.forEach((i) => {
+              if (i.loc === 'hallway') {
+                S.enemies[S.enemies.length - 1].engaged = i.id;
+              }
+            });
+            log(
+              'Act 2 advances: the Parlor is revealed with Lita Chantler in it, and the Ghoul Priest spawns in the Hallway.',
+            );
+          }
+        });
+        flipState = {};
+        openSheet(() =>
+          sheet(
+            `<span class="kicker">Act advanced</span><h2>${esc(C[ac].name)}</h2>${zoomCard(ac, { key: 'adv', back: true })}
+    <p class="story">Read the story on the back of the card aloud.</p>
+    <p class="note">${ac === '01109' ? 'Done by the app: Parlor revealed, Lita Chantler put into play there, Ghoul Priest spawned in the Hallway. Hand Lita to whoever takes control of her.' : 'Done by the app.'}</p>
+    <div class="row"><button class="btn primary" data-close>Continue</button></div>`,
+            { locked: true },
+          ),
+        );
+      }
+      function advanceAgenda() {
+        const ag = S.agenda.code;
+        const next = { '01105': '01106', '01106': '01107' }[ag];
+        step(null, () => {
+          S.agenda.doom = 0;
+          Object.values(S.locations).forEach((l) => {
+            l.doom = 0;
+          });
+          if (next) S.agenda.code = next;
+          log(
+            `Agenda ${C[ag].stage} advances${next ? '' : ': the investigators are defeated (resolution)'}.`,
+          );
+          if (ag === '01106') {
+            log(
+              'Rise of the Ghouls: discard encounter cards until a Ghoul is discarded, and draw it.',
+            );
+          }
+        });
+        flipState = {};
+        openSheet(() =>
+          sheet(
+            `<span class="kicker">Agenda advanced</span><h2>${esc(C[ag].name)}</h2>${zoomCard(ag, { key: 'adv', back: true })}
+    <p class="story">Read the story on the back of the card aloud.</p>
+    ${ag === '01106' ? '<p class="note">Do this by hand: each investigator discards cards from the encounter deck until a Ghoul enemy is discarded, then draws it. The app draws for you next.</p><div class="row"><button class="btn primary" data-ghoul-search>Find a Ghoul for each</button></div>' : '<div class="row"><button class="btn primary" data-after-agenda>Continue</button></div>'}`,
+            { locked: true },
+          ),
+        );
+      }
+
+      /* ================= Phases ================= */
+      function nextPhase() {
+        if (S.phase === 'investigation') {
+          step('Enemy phase.', () => {
+            S.phase = 'enemy';
+          });
+          enemyPhase();
+        } else if (S.phase === 'enemy') {
+          step(
+            'Upkeep: investigators and enemies ready, each investigator gains 1 resource and draws 1 card.',
+            () => {
+              S.phase = 'upkeep';
+              S.enemies.forEach((e) => {
+                e.exhausted = false;
+              });
+              S.investigators.forEach((i) => {
+                if (!i.defeated) i.resources += 1;
+              });
+            },
+          );
+          toast('Each investigator draws 1 card from their own deck');
+        } else if (S.phase === 'upkeep') {
+          step(null, () => {
+            S.round += 1;
+            S.phase = 'mythos';
+            S.agenda.doom += 1;
+            log(`Round ${S.round}. Mythos: 1 doom on ${C[S.agenda.code].name}.`);
+          });
+          if (totalDoom() >= C[S.agenda.code].doom) advanceAgenda();
+          else mythosDraws();
+        } else if (S.phase === 'mythos') {
+          step('Investigation phase.', () => {
+            S.phase = 'investigation';
+            S.investigators.forEach((i) => {
+              i.done = i.defeated;
+              i.actions = i.defeated ? 0 : 3;
+            });
+            S.turn = S.investigators.findIndex((i) => !i.defeated);
+          });
+        }
+      }
+      function mythosDraws() {
+        const queue = S.investigators.filter((i) => !i.defeated).map((i) => i.id);
+        const drawNext = () => {
+          const id = queue.shift();
+          if (!id) {
+            closeSheet();
+            toast('Mythos done: tap Investigate to start the turns');
+            return;
+          }
+          let code;
+          step(null, () => {
+            if (!S.deck.length) {
+              S.deck = shuffle(S.discard);
+              S.discard = [];
+              log('The encounter deck is reshuffled.');
+            }
+            code = S.deck.pop();
+          });
+          revealEncounter(inv(id), code, drawNext);
+        };
+        drawNext();
+      }
+      function revealEncounter(i, code, then) {
+        flipState = {};
+        const c = C[code];
+        const lines = {
+          enemy: () =>
+            `Spawns ${c.spawn ? `in the ${C[S.locations[c.spawn].code].name}` : `engaged with ${esc(i.name)}`}.${c.hunter ? ' Hunter.' : ''}`,
+          treachery: () =>
+            c.test
+              ? `Test ${c.test[0]} (${c.test[1]}).`
+              : c.threat
+                ? `Goes into ${esc(i.name)}'s threat area.`
+                : c.doom
+                  ? 'Place 1 doom on the agenda.'
+                  : c.attach
+                    ? `Attaches to ${esc(i.name)}'s location: ${c.attach}.`
+                    : '',
+        };
+        openSheet(() =>
+          sheet(
+            `<span class="kicker">Encounter card · drawn by ${esc(i.name)}</span><h2>${esc(c.name)}</h2>
+    ${zoomCard(code)}<p class="note">${lines[c.type]()}</p>
+    <div class="row"><button class="btn primary" data-resolve>${c.type === 'enemy' ? 'Spawn' : c.test ? 'Start the test' : 'Resolve'}</button></div>`,
+            { locked: true },
+          ),
+        );
+        document.querySelector('[data-resolve]').onclick = () => {
+          if (c.type === 'enemy') {
+            step(null, () => {
+              const loc =
+                c.spawn && S.locations[c.spawn] && S.locations[c.spawn].revealed ? c.spawn : i.loc;
+              const here = S.investigators.find((x) => x.loc === loc && !x.defeated);
+              S.enemies.push({
+                uid: 'e' + uid++,
+                code,
+                loc,
+                engaged: here ? here.id : null,
+                damage: 0,
+                exhausted: false,
+              });
+              log(
+                `${i.name} draws the ${c.name}: it spawns in the ${C[S.locations[loc].code].name}${here ? `, engaged with ${here.name}` : ''}.`,
+              );
+            });
+            then();
+          } else if (c.test) {
+            startTest({
+              inv: i.id,
+              skill: c.test[0],
+              difficulty: c.test[1],
+              against: c.name,
+              title: c.name,
+              passLabel: 'No effect',
+              failLabel: c.perPoint ? `Take ${c.perPoint}` : 'Apply',
+              onPass: () => {
+                S.discard.push(code);
+                log(`${i.name} passes ${c.name}.`);
+              },
+              onFail: (by) => {
+                S.discard.push(code);
+                if (c.perPoint) {
+                  i[c.perPoint] += by;
+                  log(`${i.name} fails ${c.name} by ${by} and takes ${by} ${c.perPoint}.`);
+                } else {
+                  log(`${i.name} fails ${c.name}. By hand: ${c.byHand}`);
+                  toast(`Do this by hand: ${c.byHand}`);
+                }
+              },
+            });
+            const wait = setInterval(() => {
+              if (!ui.sheet) {
+                clearInterval(wait);
+                then();
+              }
+            }, 200);
+          } else {
+            step(null, () => {
+              if (c.threat) {
+                i.threat.push(code);
+                log(`${c.name} goes into ${i.name}'s threat area.`);
+              } else if (c.doom) {
+                S.agenda.doom += 1;
+                S.discard.push(code);
+                log(`${c.name}: 1 doom on the agenda.`);
+              } else if (c.attach) {
+                S.locations[i.loc].attach.push(code);
+                log(`${c.name} attaches to the ${C[S.locations[i.loc].code].name}.`);
+              }
+            });
+            then();
+          }
+        };
+      }
+      function enemyPhase() {
+        const hunters = [];
+        step(null, () => {
+          S.enemies.forEach((e) => {
+            if (!C[e.code].hunter || e.engaged || e.exhausted) return;
+            const target = S.investigators.find((i) => !i.defeated && connected(e.loc, i.loc));
+            if (target) {
+              e.loc = target.loc;
+              e.engaged = target.id;
+              hunters.push(
+                `${C[e.code].name} hunts ${target.name} into the ${C[S.locations[target.loc].code].name}`,
+              );
+              log(
+                `Hunter: the ${C[e.code].name} moves to the ${C[S.locations[target.loc].code].name} and engages ${target.name}.`,
+              );
+            }
+          });
+        });
+        const attacks = S.enemies.filter((e) => e.engaged && !e.exhausted);
+        openSheet(() =>
+          sheet(
+            `<span class="kicker">Enemy phase</span><h2>${attacks.length ? 'Enemies attack' : 'No attacks'}</h2>
+    ${hunters.length ? `<p class="note">${hunters.map(esc).join('<br>')}</p>` : ''}
+    ${attacks.map((e) => `<div class="stepper"><span>${pawnHtml('enemy', e.code, 'tabindex="-1" style="width:34px"')}</span><span style="flex:1">${esc(C[e.code].name)} → ${esc(inv(e.engaged).name)}</span><b>${C[e.code].dmg} dmg · ${C[e.code].hor} hor</b></div>`).join('')}
+    <p class="story">${attacks.length ? "Each attacking enemy exhausts after its attack. Soak damage on your assets by hand, then lower the app's numbers if you did." : 'Nothing is engaged with an investigator.'}</p>
+    <div class="row"><button class="btn primary" data-apply-attacks>${attacks.length ? 'Apply attacks' : 'Continue'}</button></div>`,
+            { locked: true },
+          ),
+        );
+        document.querySelector('[data-apply-attacks]').onclick = () => {
+          closeSheet();
+          step(null, () => {
+            attacks.forEach((e) => {
+              const i = inv(e.engaged);
+              i.damage += C[e.code].dmg;
+              i.horror += C[e.code].hor;
+              e.exhausted = true;
+              log(
+                `The ${C[e.code].name} attacks ${i.name}: ${C[e.code].dmg} damage, ${C[e.code].hor} horror.`,
+              );
+              checkDefeat(i);
+            });
+          });
+        };
+      }
+
+      /* ================= Toasts ================= */
+      function toast(msg) {
+        const el = document.createElement('div');
+        el.className = 'toast';
+        el.textContent = msg;
+        document.getElementById('toasts').appendChild(el);
+        setTimeout(() => el.remove(), 3200);
+      }
+
+      /* ================= Input ================= */
+      document.addEventListener('click', (ev) => {
+        const t = ev.target.closest('button, [data-enemy], [data-card], [data-scrim]');
+        if (!t) return;
+        const d = t.dataset;
+        if (d.scrim === 'close' && ev.target === t) {
+          closeSheet();
+          return;
+        }
+        if (d.scrim) return;
+        if ('close' in d) {
+          closeSheet();
+          flipState = {};
+          render();
+          return;
+        }
+        if (d.flip) {
+          flipState[d.flip] = !(
+            flipState[d.flip] ??
+            (d.flip.startsWith('loc-') ? !S.locations[d.flip.slice(4)].revealed : d.flip === 'adv')
+          );
+          ui.sheet && ui.sheet();
+          hydrateImages(document.getElementById('modal'));
+          return;
+        }
+        if (d.zoom === 'agenda') return showAgenda();
+        if (d.zoom === 'act') return showAct();
+        if (d.zoom === 'scenario') return showScenario();
+        if (d.zoomInv) return showInvestigator(d.zoomInv);
+        if (d.locHit) {
+          if (ui.moving) {
+            const i = inv(ui.moving);
+            if (connected(i.loc, d.locHit) && !S.locations[d.locHit].blocked)
+              return moveTo(i, d.locHit);
+          }
+          return showLocation(d.locHit, false);
+        }
+        if (d.edit) return showLocation(d.edit, true);
+        if (d.enemy && !d.pawn) return showEnemy(d.enemy);
+        if (d.card) return showCard(d.card);
+        if (d.pawn) return showInvestigator(d.pawn);
+        switch (d.act) {
+          case 'doom+':
+            return step(`1 doom placed on ${C[S.agenda.code].name} (correction).`, () => {
+              S.agenda.doom += 1;
+            });
+          case 'doom-':
+            return (
+              S.agenda.doom > 0 &&
+              step(`1 doom removed from ${C[S.agenda.code].name} (correction).`, () => {
+                S.agenda.doom -= 1;
+              })
+            );
+          case 'actclue+':
+            return step('Correction: 1 clue added to the act.', () => {
+              S.act.clues += 1;
+            });
+          case 'actclue-':
+            return (
+              S.act.clues > 0 &&
+              step('Correction: 1 clue removed from the act.', () => {
+                S.act.clues -= 1;
+              })
+            );
+          case 'advance-act':
+            return advanceAct();
+          case 'advance-agenda':
+            return advanceAgenda();
+          case 'deck':
+            return toast(
+              `${S.deck.length} cards in the encounter deck. The app draws them in the Mythos phase.`,
+            );
+          case 'discard':
+            return showDiscard();
+          case 'next':
+            return nextPhase();
+          case 'undo':
+            return undo();
+          case 'log':
+            return showLog();
+          case 'cancel-move':
+            ui.moving = null;
+            return render();
+        }
+        if (d.adj) {
+          const [id, field, dir] = d.adj.split(':');
+          const i = inv(id);
+          if (dir === '-' && i[field] <= 0) return;
+          return step(`${i.name}: ${field} ${dir === '+' ? '+1' : '−1'}.`, () => {
+            i[field] += dir === '+' ? 1 : -1;
+            checkDefeat(i);
+          });
+        }
+        if (d.locadj) {
+          const [key, field, dir] = d.locadj.split(':');
+          const l = S.locations[key];
+          if (dir === '-' && l[field] <= 0) return;
+          return step(
+            `${C[l.code].name}: ${field} ${dir === '+' ? '+1' : '−1'} (correction).`,
+            () => {
+              l[field] += dir === '+' ? 1 : -1;
+            },
+          );
+        }
+        if (d.reveal) {
+          step(null, () => reveal(d.reveal));
+          return;
+        }
+        if (d.moveto) {
+          closeSheet();
+          return moveTo(turnInv(), d.moveto);
+        }
+        if (d.give) {
+          const i = inv(d.give);
+          return (
+            i.clues &&
+            step(`${i.name} places 1 clue on the act.`, () => {
+              i.clues -= 1;
+              S.act.clues += 1;
+            })
+          );
+        }
+        if (d.edmg) {
+          const [id, dir] = d.edmg.split(':');
+          const e = S.enemies.find((x) => x.uid === id);
+          if (dir === '-' && !e.damage) return;
+          return step(`${C[e.code].name}: damage ${dir}1 (correction).`, () => {
+            e.damage += dir === '+' ? 1 : -1;
+            checkEnemy(e);
+          });
+        }
+        if (d.defeat) {
+          const e = S.enemies.find((x) => x.uid === d.defeat);
+          closeSheet();
+          return step(null, () => {
+            e.damage = 99;
+            checkEnemy(e);
+          });
+        }
+        if (d.fight) {
+          const e = S.enemies.find((x) => x.uid === d.fight);
+          return fight(turnInv(), e);
+        }
+        if (d.evade) {
+          const e = S.enemies.find((x) => x.uid === d.evade);
+          return evade(turnInv(), e);
+        }
+        if (d.engage) {
+          const e = S.enemies.find((x) => x.uid === d.engage);
+          closeSheet();
+          return step(`${turnInv().name} engages the ${C[e.code].name}.`, () => {
+            spendAction(turnInv());
+            e.engaged = turnInv().id;
+          });
+        }
+        if ('afterAgenda' in d) {
+          closeSheet();
+          flipState = {};
+          if (S.phase === 'mythos') return mythosDraws();
+          return render();
+        }
+        if ('ghoulSearch' in d) {
+          closeSheet();
+          step(null, () => {
+            S.investigators
+              .filter((i) => !i.defeated)
+              .forEach((i) => {
+                const idx = S.deck.findIndex((c) => C[c].ghoul);
+                if (idx < 0) return;
+                const [code] = S.deck.splice(idx, 1);
+                S.enemies.push({
+                  uid: 'e' + uid++,
+                  code,
+                  loc: C[code].spawn && S.locations[C[code].spawn].revealed ? C[code].spawn : i.loc,
+                  engaged: null,
+                  damage: 0,
+                  exhausted: false,
+                });
+                const e = S.enemies[S.enemies.length - 1];
+                if (e.loc === i.loc) e.engaged = i.id;
+                log(`${i.name} finds the ${C[code].name}.`);
+              });
+          });
+          return mythosDraws();
+        }
+        if (d.do) {
+          const i = inv(d.inv);
+          if (d.do === 'investigate') return investigate(i);
+          if (d.do === 'move') {
+            ui.moving = ui.moving ? null : i.id;
+            render();
+            if (ui.moving) toast('Tap a lit location, or drag the token');
+            return;
+          }
+          if (d.do === 'end') return endTurn(i);
+          const here =
+            d.do === 'fight' ? enemiesAt(i.loc) : S.enemies.filter((e) => e.engaged === i.id);
+          if (here.length === 1) return d.do === 'fight' ? fight(i, here[0]) : evade(i, here[0]);
+          return openSheet(() =>
+            sheet(`<span class="kicker">${d.do === 'fight' ? 'Fight' : 'Evade'}</span><h2>Which enemy?</h2>
+      <div class="chips">${here.map((e) => `<span class="chip" data-enemy="${e.uid}">${pawnHtml('enemy', e.code, `tabindex="-1" data-enemy="${e.uid}"`)}${esc(C[e.code].name)}</span>`).join('')}</div>
+      <div class="row"><button class="btn" data-close>Cancel</button></div>`),
+          );
+        }
+      });
+
+      /* Drag the investigator whose turn it is onto a connected location, like moving the token on the table. */
+      document.addEventListener('pointerdown', (ev) => {
+        const p = ev.target.closest('.pawn.active[data-pawn]');
+        if (!p) return;
+        const i = inv(p.dataset.pawn);
+        const start = { x: ev.clientX, y: ev.clientY };
+        let ghost = null;
+        const onMove = (e) => {
+          if (!ghost && Math.hypot(e.clientX - start.x, e.clientY - start.y) < 8) return;
+          if (!ghost) {
+            ghost = p.cloneNode(true);
+            ghost.classList.add('ghost');
+            ghost.style.width = p.offsetWidth + 'px';
+            document.body.appendChild(ghost);
+            ui.moving = i.id;
+            document
+              .querySelectorAll('.loc')
+              .forEach((l) =>
+                l.classList.toggle(
+                  'target',
+                  connected(i.loc, l.dataset.loc) && !S.locations[l.dataset.loc].blocked,
+                ),
+              );
+          }
+          ghost.style.left = e.clientX + 'px';
+          ghost.style.top = e.clientY + 'px';
+        };
+        const onUp = (e) => {
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onUp);
+          if (!ghost) return;
+          ghost.remove();
+          const loc = document
+            .elementsFromPoint(e.clientX, e.clientY)
+            .map((el) => el.closest('.loc'))
+            .find(Boolean);
+          ui.moving = null;
+          suppressClick = true;
+          setTimeout(() => {
+            suppressClick = false;
+          }, 50);
+          if (loc && connected(i.loc, loc.dataset.loc)) moveTo(i, loc.dataset.loc);
+          else render();
+        };
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+      });
+      let suppressClick = false;
+      document.addEventListener(
+        'click',
+        (e) => {
+          if (suppressClick) {
+            e.stopPropagation();
+            e.preventDefault();
+          }
+        },
+        true,
+      );
+      window.addEventListener('resize', () => requestAnimationFrame(drawLines));
+
+      /* ================= Background: night sky, brass zodiac ring, a few tentacles ================= */
+      function paintMat() {
+        const cv = document.getElementById('matcanvas');
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const w = cv.clientWidth,
+          h = cv.clientHeight;
+        cv.width = w * dpr;
+        cv.height = h * dpr;
+        const g = cv.getContext('2d');
+        g.scale(dpr, dpr);
+        const cs = getComputedStyle(document.documentElement);
+        const brass = cs.getPropertyValue('--brass').trim();
+        let seed = 7;
+        const rnd = () => {
+          seed = (seed * 16807) % 2147483647;
+          return seed / 2147483647;
+        };
+        const sky = g.createRadialGradient(
+          w * 0.5,
+          h * 0.55,
+          0,
+          w * 0.5,
+          h * 0.55,
+          Math.max(w, h) * 0.8,
+        );
+        sky.addColorStop(0, '#1d3a32');
+        sky.addColorStop(0.45, '#10241f');
+        sky.addColorStop(1, '#050b0a');
+        g.fillStyle = sky;
+        g.fillRect(0, 0, w, h);
+        for (let n = 0; n < 6; n++) {
+          const x = rnd() * w,
+            y = rnd() * h,
+            r = 120 + rnd() * 260;
+          const fog = g.createRadialGradient(x, y, 0, x, y, r);
+          fog.addColorStop(0, 'rgba(110, 160, 130, 0.07)');
+          fog.addColorStop(1, 'rgba(110, 160, 130, 0)');
+          g.fillStyle = fog;
+          g.fillRect(0, 0, w, h);
+        }
+        for (let n = 0; n < 160; n++) {
+          g.fillStyle = `rgba(236, 227, 207, ${0.15 + rnd() * 0.5})`;
+          g.beginPath();
+          g.arc(rnd() * w, rnd() * h, rnd() * 1.2 + 0.2, 0, Math.PI * 2);
+          g.fill();
+        }
+        const cx = w * 0.5,
+          cy = h * 0.56,
+          R = Math.max(w, h) * 0.46;
+        g.strokeStyle = brass;
+        g.globalAlpha = 0.22;
+        [
+          [R, 2],
+          [R * 0.9, 1],
+          [R * 0.62, 1.5],
+          [R * 0.58, 0.8],
+        ].forEach(([r, lw]) => {
+          g.lineWidth = lw;
+          g.beginPath();
+          g.arc(cx, cy, r, 0, Math.PI * 2);
+          g.stroke();
+        });
+        const signs = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'];
+        g.fillStyle = brass;
+        g.textAlign = 'center';
+        g.textBaseline = 'middle';
+        g.font = `${Math.round(R * 0.07)}px Georgia, serif`;
+        for (let k = 0; k < 12; k++) {
+          const a = (k / 12) * Math.PI * 2 - Math.PI / 2;
+          g.lineWidth = 1;
+          g.beginPath();
+          g.moveTo(cx + Math.cos(a) * R * 0.62, cy + Math.sin(a) * R * 0.62);
+          g.lineTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R);
+          g.stroke();
+          const b = a + Math.PI / 12;
+          g.fillText(signs[k] + '︎', cx + Math.cos(b) * R * 0.76, cy + Math.sin(b) * R * 0.76);
+        }
+        for (let k = 0; k < 72; k++) {
+          const a = (k / 72) * Math.PI * 2;
+          g.beginPath();
+          g.moveTo(cx + Math.cos(a) * R * 0.9, cy + Math.sin(a) * R * 0.9);
+          g.lineTo(
+            cx + Math.cos(a) * R * (k % 6 ? 0.93 : 0.96),
+            cy + Math.sin(a) * R * (k % 6 ? 0.93 : 0.96),
+          );
+          g.stroke();
+        }
+        g.globalAlpha = 0.16;
+        g.fillStyle = '#020605';
+        for (let k = 0; k < 5; k++) {
+          const side = k % 2 ? 1 : -1;
+          let x = side > 0 ? w + 20 : -20,
+            y = h * (0.2 + rnd() * 0.7),
+            width = 26 + rnd() * 18;
+          const pts = [];
+          for (let s = 0; s < 40; s++) {
+            x -= side * (w * 0.012);
+            y += Math.sin(s / 5 + k) * 9;
+            pts.push([x, y, width * (1 - s / 40)]);
+          }
+          g.beginPath();
+          pts.forEach(([px, py, pw], n) =>
+            n ? g.lineTo(px, py - pw / 2) : g.moveTo(px, py - pw / 2),
+          );
+          pts
+            .slice()
+            .reverse()
+            .forEach(([px, py, pw]) => g.lineTo(px, py + pw / 2));
+          g.closePath();
+          g.fill();
+        }
+        g.globalAlpha = 1;
+        const vig = g.createRadialGradient(cx, cy, R * 0.5, cx, cy, Math.max(w, h));
+        vig.addColorStop(0, 'rgba(0,0,0,0)');
+        vig.addColorStop(1, 'rgba(0,0,0,0.65)');
+        g.fillStyle = vig;
+        g.fillRect(0, 0, w, h);
+      }
+      window.addEventListener('resize', paintMat);
+
+      const boot = () => {
+        paintMat();
+        render();
+      };
+      window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot();
+    </script>
+  </body>
+</html>
