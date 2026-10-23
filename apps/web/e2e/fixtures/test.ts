@@ -23,10 +23,12 @@ const CARD_PICTURES = /^\/bundles\/cards\//;
  */
 export const test = base.extend<{ externalRequests: string[] }>({
   externalRequests: [
-    async ({ page, baseURL }, use) => {
+    async ({ context, baseURL }, use) => {
       const localOrigin = new URL(baseURL ?? 'http://localhost').origin;
       const unexpected: string[] = [];
-      await page.route(
+      // On the context rather than the page, so it also sees what the service worker fetches
+      // (it serves card pictures cache-first), which a page route never does.
+      await context.route(
         (url) => url.origin !== localOrigin && url.protocol.startsWith('http'),
         (route) => {
           const url = new URL(route.request().url());

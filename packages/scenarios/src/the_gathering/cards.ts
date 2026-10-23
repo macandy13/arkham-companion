@@ -235,6 +235,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     traits: [trait('Ally')],
     encounterCode: sets.theGathering,
     quantity: 1,
+    ...picturesOf(codes.litaChantler, 'front'),
   },
   enemy({
     code: '01118',
