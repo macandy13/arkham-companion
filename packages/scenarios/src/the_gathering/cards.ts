@@ -7,6 +7,7 @@ import {
   atEndOfTurn,
   attachToLocation,
   cardCode,
+  cardImagePath,
   cardDbFrom,
   decisionId,
   defeatEachInvestigator,
@@ -34,6 +35,7 @@ import {
   type AddMapStep,
   type CardDb,
   type CardStats,
+  type CardModifier,
   type LocationAttachment,
   type EncounterSetCode,
   type Keyword,
@@ -123,8 +125,9 @@ export const theGatheringHouse: AddMapStep = {
  * Hand-entered card data for The Gathering, keyed by the real ArkhamDB codes
  * so it lines up with the cached card data later. Only names, codes, numbers,
  * traits, keywords and abilities (revelation test skills and difficulties
- * checked against ArkhamDB's `core_encounter.json`) – no card text, no ArkhamDB JSON,
- * no images – so it may be committed (see CLAUDE.md). It is the test scenario for the generic rules
+ * checked against ArkhamDB's `core_encounter.json`) and where each side's picture
+ * is on ArkhamDB – no card text, no ArkhamDB JSON, no images – so it may be
+ * committed (see CLAUDE.md). It is the test scenario for the generic rules
  * until real scenario data arrives (M4).
  */
 export const theGatheringCardDefs: readonly CardStats[] = [
@@ -233,6 +236,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     traits: [trait('Ally')],
     encounterCode: sets.theGathering,
     quantity: 1,
+    ...picturesOf(codes.litaChantler, 'front'),
   },
   enemy({
     code: '01118',
@@ -353,7 +357,8 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     set: sets.chillingCold,
     traits: ['Hazard'],
     quantity: 2,
-    locationAttachment: { onePerLocation: true, shroud: 2, discardWhenInvestigated: true },
+    locationAttachment: { onePerLocation: true, discardWhenInvestigated: true },
+    modifiers: [{ stat: 'shroud', of: 'host', by: 2 }],
     abilities: [whenRevealed(attachToLocation())],
   }),
 ];
@@ -447,6 +452,7 @@ function enemy({ code, set, traits, quantity = 1, victory, ...stats }: EnemyOpti
     ...stats,
     code: cardCode(code),
     typeCode: 'enemy',
+    ...picturesOf(code, 'front'),
     traits: traitsOf(traits),
     encounterCode: set,
     quantity,
@@ -465,6 +471,8 @@ interface TreacheryOptions {
   abilities?: readonly Ability[];
   /** What it does attached to the drawer's location (Obscuring Fog). */
   locationAttachment?: LocationAttachment;
+  /** Its constant abilities (Obscuring Fog's +2 shroud on its location). */
+  modifiers?: readonly CardModifier[];
 }
 
 function treachery({
@@ -475,22 +483,47 @@ function treachery({
   quantity,
   abilities,
   locationAttachment,
+  modifiers,
 }: TreacheryOptions): CardStats {
   return {
     code: cardCode(code),
     name,
     typeCode: 'treachery',
+    ...picturesOf(code, 'front'),
     traits: traitsOf(traits),
     encounterCode: set,
     quantity,
     ...(abilities ? { abilities } : {}),
     ...(locationAttachment ? { locationAttachment } : {}),
+    ...(modifiers ? { modifiers } : {}),
   };
 }
 
 /** A single-copy, trait-less card of The Gathering's own encounter set. */
 function scenarioCard(code: string, name: string): Omit<CardStats, 'typeCode'> {
-  return { code: cardCode(code), name, traits: [], encounterCode: sets.theGathering, quantity: 1 };
+  return {
+    code: cardCode(code),
+    name,
+    traits: [],
+    encounterCode: sets.theGathering,
+    quantity: 1,
+    ...picturesOf(code, 'both'),
+  };
+}
+
+/**
+ * Where the pictures of card `code` are on ArkhamDB: its front, and its back when the card has
+ * `both` printed sides of its own (agendas, acts, locations; an encounter card's back is the
+ * shared encounter back). The app loads them on the player's device; they are never bundled.
+ */
+function picturesOf(
+  code: string,
+  sides: 'front' | 'both',
+): Pick<CardStats, 'imageSrc' | 'backImageSrc'> {
+  return {
+    imageSrc: cardImagePath(`/bundles/cards/${code}.png`),
+    ...(sides === 'both' ? { backImageSrc: cardImagePath(`/bundles/cards/${code}b.png`) } : {}),
+  };
 }
 
 function traitsOf(names: readonly string[]): Trait[] {

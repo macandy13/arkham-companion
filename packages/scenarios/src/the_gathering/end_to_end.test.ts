@@ -187,7 +187,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos' });
     table.placeDoom(1);
 
-    expect(table.board.agenda).toEqual({ name: "What's Going On?!", doom: 2, threshold: 3 });
+    expect(table.board.agenda).toMatchObject({ name: "What's Going On?!", doom: 2, threshold: 3 });
     expect(table.board.namesIn({ kind: 'encounterDiscard' })).toEqual([
       'Ancient Evils',
       'Crypt Chill',
@@ -247,7 +247,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // question comes at 1.3, the only regular moment the agenda can advance.
     expect(table.nextPhase()).toEqual({ round: 3, phase: 'mythos', step: 'checkDoomThreshold' });
 
-    expect(table.board.agenda).toEqual({ name: "What's Going On?!", doom: 3, threshold: 3 });
+    expect(table.board.agenda).toMatchObject({ name: "What's Going On?!", doom: 3, threshold: 3 });
     expect(table.board.decisions).toEqual([
       {
         prompt: 'decision.advanceAgenda',
@@ -269,7 +269,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.answer(byName("What's Going On?!"), 'yes');
     table.takeHorror(roland, 2);
 
-    expect(table.board.agenda).toEqual({ name: 'Rise of the Ghouls', doom: 0, threshold: 7 });
+    expect(table.board.agenda).toMatchObject({ name: 'Rise of the Ghouls', doom: 0, threshold: 7 });
     expect(table.board.decisions).toEqual([]);
 
     // 1.4: Roland draws the Swarm of Rats, Daisy a Ghoul Minion, Wendy Ancient Evils.
@@ -392,7 +392,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'enemy' });
 
     expect(table.board.attacksDue).toEqual([]);
-    expect(table.board.agenda).toEqual({ name: 'Rise of the Ghouls', doom: 2, threshold: 7 });
+    expect(table.board.agenda).toMatchObject({ name: 'Rise of the Ghouls', doom: 2, threshold: 7 });
     expect(table.board.enemies).toEqual([
       { name: 'Flesh-Eater', at: 'Attic' },
       { name: swarmOfRats, at: 'Hallway' },
@@ -419,7 +419,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // 1.4 continues: Daisy draws the Ravenous Ghoul, Wendy Frozen in Fear.
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos' });
 
-    expect(table.board.agenda).toEqual({ name: 'Rise of the Ghouls', doom: 3, threshold: 7 });
+    expect(table.board.agenda).toMatchObject({ name: 'Rise of the Ghouls', doom: 3, threshold: 7 });
     expect(table.board.namesIn({ kind: 'threatArea', investigatorId: wendy })).toEqual([
       'Frozen in Fear',
     ]);
@@ -510,7 +510,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // before the investigation phase begins.
     expect(table.nextPhase()).toEqual({ round: 6, phase: 'mythos' });
 
-    expect(table.board.agenda).toEqual({ name: 'Rise of the Ghouls', doom: 4, threshold: 7 });
+    expect(table.board.agenda).toMatchObject({ name: 'Rise of the Ghouls', doom: 4, threshold: 7 });
     expect(table.board.enemies).toEqual([
       { name: 'Flesh-Eater', at: 'Attic' },
       { name: swarmOfRats, at: 'Cellar', engagedWith: daisy },
@@ -579,7 +579,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'drawEncounterCard' });
 
     expect(table.events.slice(eventsBefore)).toEqual(drawn);
-    expect(table.board.agenda).toEqual({ name: 'Rise of the Ghouls', doom: 5, threshold: 7 });
+    expect(table.board.agenda).toMatchObject({ name: 'Rise of the Ghouls', doom: 5, threshold: 7 });
     expect(table.board.decisions).toEqual([
       {
         prompt: 'decision.cardTest',
@@ -790,7 +790,11 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     ]);
     table.answer(byName('Rise of the Ghouls'), 'yes');
 
-    expect(table.board.agenda).toEqual({ name: "They're Getting Out!", doom: 0, threshold: 10 });
+    expect(table.board.agenda).toMatchObject({
+      name: "They're Getting Out!",
+      doom: 0,
+      threshold: 10,
+    });
     expect(table.board.namesIn({ kind: 'encounterDiscard' })).toEqual([
       'Grasping Hands',
       'Swarm of Rats',
@@ -936,7 +940,11 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // Rotting Remains (willpower 3 against 3), Daisy Crypt Chill (willpower 3
     // against 4, and a +1 token): both pass.
     expect(table.nextPhase()).toEqual({ round: 11, phase: 'mythos', step: 'drawEncounterCard' });
-    expect(table.board.agenda).toEqual({ name: "They're Getting Out!", doom: 2, threshold: 10 });
+    expect(table.board.agenda).toMatchObject({
+      name: "They're Getting Out!",
+      doom: 2,
+      threshold: 10,
+    });
     table.answer(byName('Rotting Remains'), 'pass');
     expect(table.nextPhase()).toEqual({ round: 11, phase: 'mythos', step: 'drawEncounterCard' });
     table.answer(byName('Crypt Chill'), 'pass');

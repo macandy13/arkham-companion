@@ -1,5 +1,6 @@
 import { stripTrailingDot } from '@arkham/util';
 import type { Ability } from './abilities';
+import type { CardModifier } from './card_values';
 import type { Brand, CardCode, CardImagePath, EncounterSetCode } from './ids';
 import type { Keyword } from './keywords';
 import type { ScenarioDefinition } from './scenario';
@@ -131,6 +132,12 @@ export interface CardStats {
    * `DrawEncounter` places it there, and its fields say what it does there.
    */
   locationAttachment?: LocationAttachment;
+  /**
+   * Its constant abilities that change a value of cards while it is in play
+   * ("Attached location gets +2 shroud"); `effectiveValue` reads them. None
+   * when absent.
+   */
+  modifiers?: readonly CardModifier[];
   /** The card's forced abilities as data (architecture "Triggers and card effects"); none when absent. */
   abilities?: readonly Ability[];
   /**
@@ -153,8 +160,6 @@ export interface LocationAttachment {
    * there, it is discarded instead, since its revelation cannot attach it.
    */
   onePerLocation?: boolean;
-  /** Added to the location's shroud while attached ("Attached location gets +2 shroud"). */
-  shroud?: number;
   /**
    * "Forced – After attached location is successfully investigated: Discard
    * …": a passed `Investigate` there discards the card after its clues.

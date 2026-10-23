@@ -25,7 +25,29 @@ const rawInvestigator = (overrides: Record<string, unknown> = {}) => ({
 });
 
 describe('normalisePacks', () => {
-  it('derives the chapter from the pack code', () => {
+  it.each([
+    { name: 'a Chapter Two pack the data marks', raw: { code: 'new_box', chapter: 2 }, chapter: 2 },
+    { name: 'a pack the data marks Chapter One', raw: { code: 'cob', chapter: 1 }, chapter: 1 },
+    { name: 'Children of Blood without a chapter', raw: { code: 'cob' }, chapter: 2 },
+    { name: 'an unknown pack without a chapter', raw: { code: 'old_box' }, chapter: 1 },
+  ])('reads the chapter of $name', ({ raw, chapter }) => {
+    const [pack] = normalisePacks([{ name: 'Box', position: 1, cycle_position: 1, ...raw }]);
+
+    expect(pack?.chapter).toBe(chapter);
+  });
+
+  it.each([{ chapter: 3 }, { chapter: null }, { chapter: '2' }])(
+    'falls back to the code for an unexpected chapter $chapter',
+    ({ chapter }) => {
+      const [pack] = normalisePacks([
+        { code: 'core_2026', name: 'Box', position: 1, cycle_position: 1, chapter },
+      ]);
+
+      expect(pack?.chapter).toBe(2);
+    },
+  );
+
+  it('derives the chapter from the pack code when the data gives none', () => {
     expect(packs.map((p) => [p.code, p.chapter])).toEqual([
       ['old_core', 1],
       ['old_cycle', 1],
@@ -56,6 +78,19 @@ describe('buildInvestigatorCatalog', () => {
         parallel: false,
       }),
     ]);
+  });
+
+  it('takes the chapter the pack data gives', () => {
+    const markedPacks = normalisePacks([
+      { code: 'new_box', name: 'New Box', position: 1, cycle_position: 9, chapter: 2 },
+    ]);
+
+    const [investigator] = buildInvestigatorCatalog(
+      [rawInvestigator({ pack_code: 'new_box' })],
+      markedPacks,
+    );
+
+    expect(investigator?.chapter).toBe(2);
   });
 
   it('removes a reprint of the same chapter', () => {

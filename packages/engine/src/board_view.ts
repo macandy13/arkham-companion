@@ -1,5 +1,5 @@
 import { listIfAny } from '@arkham/util';
-import { locationShroud } from './board';
+import { effectiveValue } from './card_values';
 import { cardStats, resolveValue, type EngineContext } from './cards';
 import { optionName } from './describe_decision';
 import { doomInPlay, isInPlay } from './doom';
@@ -112,7 +112,7 @@ export type LocationView = LocationViewBase &
   (
     | {
         revealed: true;
-        /** Its shroud with what its attachments add (`locationShroud`). */
+        /** Its shroud now, constant abilities included (`effectiveValue`). */
         shroud: number;
       }
     | { revealed: false }
@@ -504,7 +504,7 @@ function locationView(ctx: EngineContext, state: GameState, location: CardInstan
     map: mapOf(location),
     ...(image === undefined ? {} : { image }),
     ...(location.faceUp
-      ? { revealed: true as const, shroud: locationShroud(ctx, state, location) }
+      ? { revealed: true as const, shroud: effectiveValue(ctx, state, location, 'shroud') }
       : { revealed: false as const }),
     clues: location.tokens.clue ?? 0,
     ...(location.tokens.doom ? { doom: location.tokens.doom } : {}),
