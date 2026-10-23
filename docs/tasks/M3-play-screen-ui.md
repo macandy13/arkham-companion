@@ -83,7 +83,7 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 **Benefit:** Confidence that it works on the real device, plus regression protection in CI.
 
 - [ ] Landscape tablet layout check (1180×820 and 1024×768), touch sizes, no horizontal scroll
-- [x] Header laid out like the table, without the duplicated app title: the encounter deck (a placeholder card) and a small discard pile symbol on the left, then the agenda, act and scenario card (its name as the screen heading, round and phase on its plate), then "Next" and undo; the game's export moved into the title bar next to Settings
+- [x] Header laid out like the table, without the duplicated app title: the encounter deck (a placeholder card) and a small discard pile symbol on the left, then the agenda, act and the upright scenario card (its name as the screen heading), then round and phase, "Next" and undo; the game's export moved into the title bar next to Settings
 - [ ] Encounter deck and discard pile show their counts and the top discard once the encounter phase draws cards
 - [x] Act clue steppers for acts with a clue threshold: they correct the turn investigator's clues (the lead's between turns)
 - [ ] Replace the act's clue steppers with a dialog that picks whose clues change
