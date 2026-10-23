@@ -122,7 +122,7 @@ The fan IP policy that covers FFG (Asmodee's community-use guidelines) does not 
 3. M3.10c1: `CardStats` carries each side's ArkhamDB picture path, and the location, agenda and act views pass on the one for the side in play (`image`)
    M3.10c2: the card faces load that picture and fall back to the pattern, the name band and badges hide under a picture, and the service worker caches the pictures
    M3.10c3: tapping the agenda or act in the header opens its full card, with the picture large (the pattern without one); done with M3.7 in the prototype's dialog style
-   The paths come with the real card data: M4.4 maps carddata's `CardDef`s (which carry `imageSrc`/`backImageSrc`) to `CardStats`; until then the hand-written cards have none and the faces show the pattern.
+   The paths come with the real card data: M4.4 maps carddata's `CardDef`s (which carry `imageSrc`/`backImageSrc`) to `CardStats`. Until then the hand-written The Gathering cards name their ArkhamDB pictures themselves (M3.12c).
 4. M3.10d: the "unofficial fan project" notice
 
 Done: M3.10a draws each location tile as a card face: frame, a hatched art area (crossed when unrevealed), the name band with the edit button and, on top, the shroud badge and round clue, doom and attachment tokens. The printed clue value is not in `LocationView` yet, so there is no clue badge (follow-up below). Follow-up: long names (Miskatonic University) run under the edit button; wrap or shrink them in the name band.
@@ -175,7 +175,13 @@ Decisions from the prototype review:
 - [x] M3.12a: style tokens (night, brass and bone, plus the clue, doom, health and sanity colours), fonts and the playmat background; the base, header, buttons and dialog shell restyled
 - [ ] Cards (location tiles, header cards) stay dark in both themes, like printed cards; done with M3.12b–d (the map's tiles and attachments since M3.12b)
 - [x] M3.12b: location tiles in the frame look: mid-height shroud and clues, doom under the clues, attachments as peeking cards
-- [ ] M3.12c: card art in frames (art crops per card type) and the "Full card faces" setting, on the M3.10c2 pictures
+- [ ] M3.12c: card art in frames (art crops per card type) and the "Full card faces" setting, on the M3.10c2 pictures. Slices:
+  - [ ] M3.12c1: The Gathering's hand-written cards name their ArkhamDB pictures, so the app shows real art before M4.4; the E2E guard turns pictures down, so tests and screenshots keep the pattern
+  - [ ] M3.12c2: art crops per card type in the frame look (location, agenda, act; treachery and enemy for later card faces), and the "Full card faces" setting
+  - [ ] M3.12c3: avatar crops for investigator pawns and enemy tokens, once their views carry a picture
+
+  Findings from the real scans (2026-10-23): ArkhamDB serves them at about 300 × 419 (some 750 × 1050), JPEG or PNG whatever the extension, with no CORS header, so crops are CSS or SVG (`object-position`, `viewBox`), never canvas. The art sits in the same place on every card of a type across the cycles: a location's on both sides from about 7 % to 52 % of the height, full width; an enemy's in the bottom 40 %; a treachery's in the top half, inside the keyhole; an agenda's front in the left 40 %, an act's front in the right 40 %, and their backs have none; an investigator's front in the left half, the face near (25 %, 33 %). The scenario reference card has no art. About 1 in 50 agenda, act and investigator scans is turned on its side, so a crop checks the picture's orientation and falls back to the pattern when it is wrong.
+
 - [ ] M3.12d: header cards: big doom and clue tokens, playmat labels, steppers only in adjust mode (after M3.11)
 - [ ] M3.12e: dialog style (the X close), with the skill-test sum and chaos-token drawings, inside M3.7
 - The investigator panel in the prototype's form is part of M3.5.
