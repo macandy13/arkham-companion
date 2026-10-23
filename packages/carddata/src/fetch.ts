@@ -11,7 +11,12 @@ export const HOSTS: Record<Lang, string> = {
   de: 'https://de.arkhamdb.com',
 };
 
-export const DEFAULT_PACKS = ['core_2026'];
+/**
+ * The packs `pnpm carddata:fetch` loads without arguments: the Chapter One core set first,
+ * since Night of the Zealot is the first campaign, then the Chapter Two core set and Children
+ * of Blood.
+ */
+export const DEFAULT_PACKS = ['core', 'core_2026', 'cob'];
 
 export function packUrl(lang: Lang, pack: string): string {
   return `${HOSTS[lang]}/api/public/cards/${pack}.json?encounter=1`;

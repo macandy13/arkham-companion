@@ -68,9 +68,9 @@ Steps 1–12 of the [encounter card plan](../encounter-card-analysis.md#implemen
 
 **Benefit:** _The Gathering_ plays correctly, not just its setup, and half of every later campaign's encounter cards work too.
 
-- [ ] 1 Card data for every pack (read the chapter from the data; load `core`)
-- [ ] 2 Timing windows
-- [ ] 3 Skill test margin
+- [x] 1 Card data for every pack (read the chapter from the data; load `core`). Done: packs take the data's `chapter` field, with `CHAPTER_TWO_PACK_CODES` (now with `cob`) as the fallback; `carddata:fetch` loads `core`, `core_2026` and `cob`.
+- [x] 2 Timing windows. Done by architecture review P1: card and scenario abilities in `CardStats.abilities` with `TimingWindow`s; the code hooks are gone.
+- [x] 3 Skill test margin. Done by P2: `ResolveDecision.margin`, the suggestion's `margin`, `SkillTestResolved.margin` and per-point fails (#201).
 - [ ] 4 Choose one
 - [ ] 5 Card effects for existing commands, healing, conditional surge
 - [ ] 6 Board queries (nearest, most clues, no doom; moving toward; search by trait)
