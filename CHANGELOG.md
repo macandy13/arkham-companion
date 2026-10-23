@@ -2,6 +2,14 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.2](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.1...arkham-companion-v0.1.2) (2026-10-23)
+
+
+### Features
+
+* add clue steppers to the act card that correct the clues on the act ([8ad3113](https://github.com/macandy13/arkham-companion/commit/8ad3113c5b396d013d67c248732f3b625cc26a3a))
+* **web:** the act shows one clue counter, the clues on it, and advances with them ([e701f8e](https://github.com/macandy13/arkham-companion/commit/e701f8e6b94daae7eb7a39ed6802fcd400c2f3a0))
+
 ## [0.1.1](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.0...arkham-companion-v0.1.1) (2026-10-23)
 
 
