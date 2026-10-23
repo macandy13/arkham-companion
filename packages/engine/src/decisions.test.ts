@@ -348,7 +348,7 @@ describe('skill test outcome record', () => {
         subject: hall,
         skillTest: test,
         outcome: 'fail',
-        failedBy: 2,
+        margin: 2,
       },
     },
   ])('records "$option" right after the answer', ({ option, recorded }) => {
@@ -381,6 +381,23 @@ describe('skill test outcome record', () => {
     ]);
   });
 
+  it('records the margin the answer gives', () => {
+    const events = handle(context, asked, { ...answer('investigate_hall', 'pass'), margin: 2 });
+
+    expect(events).toContainEqual(
+      expect.objectContaining({ type: 'SkillTestResolved', outcome: 'pass', margin: 2 }),
+    );
+  });
+
+  it.each([-1, 1.5])('rejects a margin of %s', (margin) => {
+    const rejection = rejectionFrom(context, asked, {
+      ...answer('investigate_hall', 'fail'),
+      margin,
+    });
+
+    expect(rejection).toEqual({ code: 'invalidMargin', decisionId: 'investigate_hall', margin });
+  });
+
   it('records the clues the pass discovers', () => {
     const events = handle(context, asked, answer('investigate_hall', 'pass'));
 
@@ -410,6 +427,27 @@ describe('skill test outcome record', () => {
     );
 
     expect(events.map((event) => event.type)).toEqual(['DecisionResolved']);
+  });
+
+  it('rejects a margin for a decision that is not a skill test', () => {
+    const question: Decision = {
+      id: decisionId('open_the_door'),
+      kind: 'confirm',
+      prompt: 'decision.confirm',
+      decider: { kind: 'lead' },
+      options: [{ id: 'yes', label: 'decision.yes', commands: [] }],
+    };
+    const doorAsked = stateAfter(context, aliceInHall, {
+      type: 'RequestDecision',
+      decision: question,
+    });
+
+    const rejection = rejectionFrom(context, doorAsked, {
+      ...answer('open_the_door', 'yes'),
+      margin: 1,
+    });
+
+    expect(rejection).toEqual({ code: 'marginNotApplicable', decisionId: 'open_the_door' });
   });
 });
 

@@ -340,21 +340,21 @@ describe('trigger bus', () => {
     const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
 
     it.each([
-      { case: 'a fail with no count, the default 1,', amounts: undefined, failedBy: 1 },
-      { case: 'a fail by 3', amounts: { failedBy: 3 }, failedBy: 3 },
-    ])('$case deals $failedBy damage', ({ amounts, failedBy }) => {
+      { case: 'a fail with no margin, the default 1,', answered: undefined, damage: 1 },
+      { case: 'a fail by 3', answered: 3, damage: 3 },
+    ])('$case deals $damage damage', ({ answered, damage }) => {
       const { context, state: started } = treacheryTable.start();
       const drawn = stateAfter(context, started, aliceDraws);
 
       const { state, events } = execute(context, drawn, {
         ...answer('test:grasping_hands', 'fail'),
-        ...(amounts && { amounts }),
+        ...(answered === undefined ? {} : { margin: answered }),
       });
 
-      expect(state.investigators.find((inv) => inv.id === alice)?.health.damage).toBe(failedBy);
+      expect(state.investigators.find((inv) => inv.id === alice)?.health.damage).toBe(damage);
       expect(events.find((event) => event.type === 'SkillTestResolved')).toMatchObject({
         outcome: 'fail',
-        failedBy,
+        margin: damage,
       });
     });
 
@@ -370,7 +370,7 @@ describe('trigger bus', () => {
 
       const { state } = execute(context, secondDraw, {
         ...answer('test:rotting_remains', 'fail'),
-        amounts: { failedBy: 2 },
+        margin: 2,
       });
 
       expect(state.investigators.find((inv) => inv.id === alice)?.sanity.horror).toBe(2);

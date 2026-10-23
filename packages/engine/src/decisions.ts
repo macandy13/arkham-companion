@@ -56,6 +56,7 @@ export function handleResolveDecision(
   command: ResolveDecision,
 ): (DecisionResolved | SkillTestResolved)[] {
   optionCommands(state, command);
+  checkMargin(state, command);
   const resolved: DecisionResolved = {
     type: 'DecisionResolved',
     decisionId: command.decisionId,
@@ -75,7 +76,7 @@ function skillTestResolved(
 ): SkillTestResolved {
   const margin = command.optionId.startsWith(FAILED_BY)
     ? Number(command.optionId.slice(FAILED_BY.length))
-    : confirmedMargin(decision, command);
+    : (command.margin ?? perPointMargin(decision, command));
   return {
     type: 'SkillTestResolved',
     decisionId: decision.id,
@@ -85,8 +86,26 @@ function skillTestResolved(
     ...(decision.subject ? { subject: decision.subject } : {}),
     skillTest,
     outcome: answerOutcome(command),
-    ...(margin === undefined ? {} : { failedBy: margin }),
+    ...(margin === undefined ? {} : { margin }),
   };
+}
+
+/**
+ * Rejects a `margin` on an answer to anything but a skill test
+ * (`marginNotApplicable`), and one that is not a whole number of 0 or more
+ * (`invalidMargin`).
+ */
+function checkMargin(state: GameState, command: ResolveDecision): void {
+  if (command.margin === undefined) return;
+  const decision = state.pending.find((pending) => pending.id === command.decisionId);
+  if (!decision?.skillTest)
+    throw new CommandRejected({ code: 'marginNotApplicable', decisionId: command.decisionId });
+  if (!Number.isInteger(command.margin) || command.margin < 0)
+    throw new CommandRejected({
+      code: 'invalidMargin',
+      decisionId: command.decisionId,
+      margin: command.margin,
+    });
 }
 
 /** The outcome an answer to a `skillTestResult` decision reports: anything but `pass` is a fail. */
@@ -110,9 +129,8 @@ export function answerCommands(state: GameState, command: Command): readonly Com
  */
 function perPointCommands(state: GameState, command: ResolveDecision): Command[] {
   const decision = state.pending.find((pending) => pending.id === command.decisionId);
-  const margin = decision && confirmedMargin(decision, command);
-  if (!decision?.perPointFailed || margin === undefined || decision.decider.kind !== 'investigator')
-    return [];
+  const margin = decision && perPointMargin(decision, command);
+  if (!decision?.perPointFailed || !margin || decision.decider.kind !== 'investigator') return [];
   const { investigatorId } = decision.decider;
   return [
     { type: 'AdjustInvestigator', investigatorId, stat: decision.perPointFailed, delta: margin },
@@ -120,15 +138,13 @@ function perPointCommands(state: GameState, command: ResolveDecision): Command[]
 }
 
 /**
- * The margin a per-point fail answer confirms, or its default; none for any
- * other answer. Not range-checked here: `optionCommands` rejects an
- * out-of-range count in the same `handle` call, before anything applies.
+ * How much a per-point fail failed by (`Decision.perPointFailed`): the
+ * answer's `margin`, or 1 when it gives none. None for a pass or any other
+ * decision. A fail by 0 (an auto-fail against difficulty 0) deals nothing.
  */
-function confirmedMargin(decision: Decision, command: ResolveDecision): number | undefined {
-  const range = decision.options.find((option) => option.id === command.optionId)?.amounts?.[
-    FAILED_BY_AMOUNT
-  ];
-  return range && (command.amounts?.[FAILED_BY_AMOUNT] ?? range.default);
+function perPointMargin(decision: Decision, command: ResolveDecision): number | undefined {
+  if (!decision.perPointFailed || command.optionId !== 'fail') return undefined;
+  return command.margin ?? 1;
 }
 
 /** The chosen option's commands, with the confirmed amount and named amounts if the answer gives them. */
@@ -233,16 +249,6 @@ export function confirmOptions(onYes: Command[], target?: InstanceId): DecisionO
   ];
 }
 
-/**
- * The named amount of a per-point fail answer: how much the test failed by
- * (`ResolveDecision.amounts.failedBy`). No command has a field of that name,
- * so the count changes no option command; `perPointCommands` reads it.
- */
-export const FAILED_BY_AMOUNT = 'failedBy';
-
-/** How much a per-point test failed by: at least 1, by default 1. */
-const FAILED_BY_ONE: AmountRange = { default: 1, min: 1 };
-
 /** Option id prefix of a "failed by <n>" answer (`SkillTestOutcomes.failedBy`). */
 const FAILED_BY = 'failedBy:';
 
@@ -256,9 +262,9 @@ export interface SkillTestOutcomes {
   passAmount?: AmountRange;
   onFail: Command[];
   /**
-   * Makes the fail a count the players confirm, how much the test failed by
-   * (`FAILED_BY_AMOUNT`): the tester takes that much damage or horror, and
-   * `SkillTestResolved.failedBy` records it.
+   * "For each point you fail by": the tester takes 1 damage or horror per
+   * point of the fail answer's `margin` (1 when it gives none), and
+   * `SkillTestResolved.margin` records it.
    */
   perPointFailed?: PerPointFailed;
   /**
@@ -301,7 +307,6 @@ export function skillTestDecision(
         id: 'fail',
         label: 'decision.fail',
         commands: outcomes.onFail,
-        ...(outcomes.perPointFailed ? { amounts: { [FAILED_BY_AMOUNT]: FAILED_BY_ONE } } : {}),
       },
       ...margins,
     ],

@@ -10,7 +10,6 @@ import {
 } from './card_matchers';
 import { type EngineContext, type ScenarioContext } from './cards';
 import type { Command } from './commands';
-import { FAILED_BY_AMOUNT } from './decisions';
 import { describeDecision, optionNamed } from './describe_decision';
 import type { Event } from './events';
 import { formatBoard } from './format_board';
@@ -564,25 +563,26 @@ export class PlayTable {
       throw this.error(
         `no skill test ${id} is open; attacks of opportunity come first: take them with takeAttackOfOpportunity, then resolveTest`,
       );
-    this.resolve(decision, testOptionId(result), amount);
+    this.resolveTestDecision(decision, result, amount);
   }
 
   /**
    * `result` as the answer to a test: a margin is its own `failedBy:<n>`
-   * option, or the count of a per-point fail (`Decision.perPointFailed`).
+   * option where the test has one, otherwise the fail answer's `margin`.
    */
   private resolveTestDecision(decision: Decision, result: SkillTestResult, amount?: number): void {
-    if (typeof result !== 'string' && decision.perPointFailed !== undefined) {
-      this.play({
-        type: 'ResolveDecision',
-        decisionId: decision.id,
-        optionId: 'fail',
-        amounts: { [FAILED_BY_AMOUNT]: result.failedBy },
-        ...(amount === undefined ? {} : { amount }),
-      });
+    const optionId = testOptionId(result);
+    if (typeof result === 'string' || decision.options.some((option) => option.id === optionId)) {
+      this.resolve(decision, optionId, amount);
       return;
     }
-    this.resolve(decision, testOptionId(result), amount);
+    this.play({
+      type: 'ResolveDecision',
+      decisionId: decision.id,
+      optionId: 'fail',
+      margin: result.failedBy,
+      ...(amount === undefined ? {} : { amount }),
+    });
   }
 
   private answerWith(decision: Decision, option: string, amount?: number): void {

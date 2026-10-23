@@ -186,6 +186,10 @@ export type Rejection =
    * `name`) for an option that has no such adjustable count.
    */
   | { code: 'amountNotAdjustable'; decisionId: DecisionId; optionId: string; name?: string }
+  /** `ResolveDecision` with a `margin` for a decision that is not a skill test. */
+  | { code: 'marginNotApplicable'; decisionId: DecisionId }
+  /** `ResolveDecision` with a `margin` that is not a whole number of 0 or more. */
+  | { code: 'invalidMargin'; decisionId: DecisionId; margin: number }
   /** `ResolveDecision` with an `amount` (or the named one `name`) outside the option's range. */
   | {
       code: 'amountOutOfRange';
@@ -378,6 +382,10 @@ function describe(r: Rejection): string {
       return `option ${r.optionId} of decision ${r.decisionId} has no adjustable ${r.name ?? 'amount'}`;
     case 'amountOutOfRange':
       return `${r.name ?? 'amount'} of option ${r.optionId} of decision ${r.decisionId} takes ${r.min}${r.max === undefined ? ' or more' : `–${r.max}`}, got ${r.amount}`;
+    case 'marginNotApplicable':
+      return `decision ${r.decisionId} is not a skill test and takes no margin`;
+    case 'invalidMargin':
+      return `the margin of decision ${r.decisionId} must be a whole number of 0 or more, got ${r.margin}`;
     case 'triggerLoop':
       return `forced effects triggered more than ${r.limit} follow-up commands`;
     case 'triggeredCommandRejected':

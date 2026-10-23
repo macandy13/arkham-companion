@@ -15,6 +15,7 @@ import {
   trait,
   type ScenarioReference,
   type SkillTestContext,
+  type SkillTestInput,
 } from './index';
 import { stateAfter } from '../test/utils';
 
@@ -53,6 +54,7 @@ describe("skillTestSuggestion: base values, the players' modifier and tokens", (
       skill: 4,
       difficulty: 3,
       outcome: 'pass',
+      margin: 1,
       unknownTokens: [],
       trace: [
         { target: 'skill', source: { kind: 'baseSkill' }, change: 4, total: 4 },
@@ -121,6 +123,32 @@ describe("skillTestSuggestion: base values, the players' modifier and tokens", (
       change: -6,
       total: 0,
     });
+  });
+
+  it.each<{ name: string; input: SkillTestInput; outcome: 'pass' | 'fail'; margin: number }>([
+    { name: 'a pass at intellect 4 against 3', input: {}, outcome: 'pass', margin: 1 },
+    {
+      name: 'a pass exactly at the difficulty',
+      input: { modifier: -1 },
+      outcome: 'pass',
+      margin: 0,
+    },
+    {
+      name: 'a fail at intellect 1 against 3',
+      input: { modifier: -3 },
+      outcome: 'fail',
+      margin: 2,
+    },
+    {
+      name: 'an auto-fail, by the whole difficulty',
+      input: { modifier: 2, tokens: ['autoFail'] },
+      outcome: 'fail',
+      margin: 3,
+    },
+  ])('suggests the margin of $name', ({ input, outcome, margin }) => {
+    const suggestion = skillTestSuggestion(context, state, investigateStudy, input);
+
+    expect(suggestion).toMatchObject({ outcome, margin });
   });
 
   it('never lowers the skill below 0, as a step of the trace', () => {

@@ -622,6 +622,13 @@ export interface ResolveDecision {
    */
   amounts?: Readonly<Record<string, number>>;
   /**
+   * Only for a `skillTestResult` decision: how much the test succeeded or
+   * failed by, a whole number of 0 or more (the suggestion's `margin`, or
+   * what the players worked out). A per-point fail deals that much
+   * (`Decision.perPointFailed`), and `SkillTestResolved.margin` records it.
+   */
+  margin?: number;
+  /**
    * The investigator giving the answer, when the app knows who it is (one
    * device per player). The answer is then rejected unless they may give it
    * (`Decision.decider`). Omitted when the table shares one device, which is

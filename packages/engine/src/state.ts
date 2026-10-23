@@ -304,6 +304,13 @@ export interface SkillTestSuggestion {
   /** `pass` when the skill value reaches the difficulty and no auto-fail was revealed. */
   outcome: 'pass' | 'fail';
   /**
+   * How much the test succeeds or fails by (Rules Reference, "Skill Test
+   * Timing"): the skill above the difficulty for a pass, the difficulty above
+   * the skill for a fail (all of it after an auto-fail, whose skill is 0).
+   * What the UI pre-fills as the answer's `margin`.
+   */
+  margin: number;
+  /**
    * Revealed tokens whose modifier the engine cannot tell (the elder sign,
    * which is the investigator's ability, or a symbol whose reference card
    * effect has no number): the players add those themselves.
@@ -349,8 +356,8 @@ export interface Decision {
   suggestion?: SkillTestSuggestion;
   /**
    * Only for `skillTestResult`: "for each point you fail by, take 1 damage /
-   * horror". The fail answer confirms the margin (`FAILED_BY_AMOUNT`) and the
-   * deciding investigator takes that much (`answerCommands`).
+   * horror". The deciding investigator takes as much as the fail answer's
+   * `margin` says, 1 without one (`answerCommands`).
    */
   perPointFailed?: PerPointFailed;
   /**

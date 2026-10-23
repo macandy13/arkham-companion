@@ -184,10 +184,12 @@ export function skillTestSuggestion(
   const autoFail = tokens.includes('autoFail');
   const skill = targetTrace('skill', investigator.skills[test.skill], changes, autoFail);
   const difficulty = targetTrace('difficulty', test.difficulty, changes, false);
+  const passes = !autoFail && skill.total >= difficulty.total;
   return {
     skill: skill.total,
     difficulty: difficulty.total,
-    outcome: !autoFail && skill.total >= difficulty.total ? 'pass' : 'fail',
+    outcome: passes ? 'pass' : 'fail',
+    margin: Math.abs(skill.total - difficulty.total),
     unknownTokens: tokenChanges
       .filter(({ token, change }) => token !== 'autoFail' && change === undefined)
       .map(({ token }) => token),

@@ -692,6 +692,28 @@ describe('answering decisions', () => {
     });
   });
 
+  it('reports the margin of a test without a consequence for it as the fail answer`s margin', () => {
+    const table = PlayTable.start(game);
+    table.play({
+      type: 'RequestDecision',
+      decision: skillTestDecision(
+        {
+          id: decisionId('plain_test'),
+          prompt: 'decision.cardTest',
+          decider: { kind: 'investigator', investigatorId: alice },
+          test: { skill: 'willpower', difficulty: 4 },
+        },
+        { onPass: [], onFail: [] },
+      ),
+    });
+
+    table.resolveTest({ failedBy: 3 });
+
+    expect(table.events).toContainEqual(
+      expect.objectContaining({ type: 'SkillTestResolved', outcome: 'fail', margin: 3 }),
+    );
+  });
+
   it('reports a test failed by a margin', () => {
     const table = PlayTable.start(game);
     table.play({
@@ -717,7 +739,7 @@ describe('answering decisions', () => {
 
     expect(table.board.investigator(alice).horror).toBe(2);
     expect(table.events).toContainEqual(
-      expect.objectContaining({ type: 'SkillTestResolved', outcome: 'fail', failedBy: 2 }),
+      expect.objectContaining({ type: 'SkillTestResolved', outcome: 'fail', margin: 2 }),
     );
   });
 });
