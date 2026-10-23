@@ -9,9 +9,17 @@ const catalogFixtures = new Map<string, unknown>([
 ]);
 
 /**
+ * Where ArkhamDB serves card pictures. The hand-written test scenario names its cards' pictures,
+ * so the app asks for them; the guard turns them down, as when the player is offline, and the
+ * card faces keep their pattern, so screenshots never show real card art.
+ */
+const CARD_PICTURES = /^\/bundles\/cards\//;
+
+/**
  * `test` with a network guard: the ArkhamDB catalog (on any language host) is answered from the
- * invented fixtures in this folder, and every other non-local request is aborted and recorded, so
- * a test fails instead of silently reaching the network (CI has none) or real card data/images.
+ * invented fixtures in this folder, card pictures are aborted, and every other non-local request
+ * is aborted and recorded, so a test fails instead of silently reaching the network (CI has none)
+ * or real card data.
  */
 export const test = base.extend<{ externalRequests: string[] }>({
   externalRequests: [
@@ -28,7 +36,7 @@ export const test = base.extend<{ externalRequests: string[] }>({
               headers: { 'Access-Control-Allow-Origin': '*' },
             });
           }
-          unexpected.push(url.href);
+          if (!CARD_PICTURES.test(url.pathname)) unexpected.push(url.href);
           return route.abort();
         },
       );

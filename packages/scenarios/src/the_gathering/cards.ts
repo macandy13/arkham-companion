@@ -7,6 +7,7 @@ import {
   atEndOfTurn,
   attachToLocation,
   cardCode,
+  cardImagePath,
   cardDbFrom,
   decisionId,
   defeatEachInvestigator,
@@ -123,8 +124,9 @@ export const theGatheringHouse: AddMapStep = {
  * Hand-entered card data for The Gathering, keyed by the real ArkhamDB codes
  * so it lines up with the cached card data later. Only names, codes, numbers,
  * traits, keywords and abilities (revelation test skills and difficulties
- * checked against ArkhamDB's `core_encounter.json`) – no card text, no ArkhamDB JSON,
- * no images – so it may be committed (see CLAUDE.md). It is the test scenario for the generic rules
+ * checked against ArkhamDB's `core_encounter.json`) and where each side's picture
+ * is on ArkhamDB – no card text, no ArkhamDB JSON, no images – so it may be
+ * committed (see CLAUDE.md). It is the test scenario for the generic rules
  * until real scenario data arrives (M4).
  */
 export const theGatheringCardDefs: readonly CardStats[] = [
@@ -447,6 +449,7 @@ function enemy({ code, set, traits, quantity = 1, victory, ...stats }: EnemyOpti
     ...stats,
     code: cardCode(code),
     typeCode: 'enemy',
+    ...picturesOf(code, 'front'),
     traits: traitsOf(traits),
     encounterCode: set,
     quantity,
@@ -480,6 +483,7 @@ function treachery({
     code: cardCode(code),
     name,
     typeCode: 'treachery',
+    ...picturesOf(code, 'front'),
     traits: traitsOf(traits),
     encounterCode: set,
     quantity,
@@ -490,7 +494,29 @@ function treachery({
 
 /** A single-copy, trait-less card of The Gathering's own encounter set. */
 function scenarioCard(code: string, name: string): Omit<CardStats, 'typeCode'> {
-  return { code: cardCode(code), name, traits: [], encounterCode: sets.theGathering, quantity: 1 };
+  return {
+    code: cardCode(code),
+    name,
+    traits: [],
+    encounterCode: sets.theGathering,
+    quantity: 1,
+    ...picturesOf(code, 'both'),
+  };
+}
+
+/**
+ * Where the pictures of card `code` are on ArkhamDB: its front, and its back when the card has
+ * `both` printed sides of its own (agendas, acts, locations; an encounter card's back is the
+ * shared encounter back). The app loads them on the player's device; they are never bundled.
+ */
+function picturesOf(
+  code: string,
+  sides: 'front' | 'both',
+): Pick<CardStats, 'imageSrc' | 'backImageSrc'> {
+  return {
+    imageSrc: cardImagePath(`/bundles/cards/${code}.png`),
+    ...(sides === 'both' ? { backImageSrc: cardImagePath(`/bundles/cards/${code}b.png`) } : {}),
+  };
 }
 
 function traitsOf(names: readonly string[]): Trait[] {
