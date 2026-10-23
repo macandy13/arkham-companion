@@ -2,6 +2,25 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.3](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.2...arkham-companion-v0.1.3) (2026-10-23)
+
+
+### Features
+
+* **web:** card faces show their ArkhamDB picture once it loads (M3.10c2) ([fac535e](https://github.com/macandy13/arkham-companion/commit/fac535e963b69f2d6bcad682b66a21e9f350af34))
+* **web:** card faces show their ArkhamDB picture once it loads (M3.10c2) ([2ea93a3](https://github.com/macandy13/arkham-companion/commit/2ea93a375c5092ed66d4139d704b3c35cbcc51bb))
+
+
+### Refactoring
+
+* **web:** share escapeRegExp from util, keep the host out of the hook module ([0afea35](https://github.com/macandy13/arkham-companion/commit/0afea354e73ac1876e79e350421a14b2c07a975b))
+
+
+### Documentation
+
+* shorter PR descriptions with key-change snippets and links ([5330cf5](https://github.com/macandy13/arkham-companion/commit/5330cf5fe3a6f5836692034e0f62076e233929df))
+* shorter PR descriptions with key-change snippets and links ([bffa40b](https://github.com/macandy13/arkham-companion/commit/bffa40b02394eae1f3c0a245ae2c3a798dc2f83e))
+
 ## [0.1.2](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.1...arkham-companion-v0.1.2) (2026-10-23)
 
 
