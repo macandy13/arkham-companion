@@ -28,7 +28,12 @@ const RawPackSchema = z.object({
   name: z.string(),
   position: z.number().int(),
   cycle_position: z.number().int(),
-  chapter: z.union([z.literal(1), z.literal(2)]).optional(),
+  // Not confirmed for the API, so a missing or unexpected value falls back to the code instead of
+  // failing the whole catalog.
+  chapter: z
+    .union([z.literal(1), z.literal(2)])
+    .optional()
+    .catch(undefined),
 });
 
 /** Chapter of a pack known only by its code (see `CHAPTER_TWO_PACK_CODES`). */

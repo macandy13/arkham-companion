@@ -27,7 +27,7 @@ const rawInvestigator = (overrides: Record<string, unknown> = {}) => ({
 describe('normalisePacks', () => {
   it.each([
     { name: 'a Chapter Two pack the data marks', raw: { code: 'new_box', chapter: 2 }, chapter: 2 },
-    { name: 'a Chapter One pack the data marks', raw: { code: 'old_box', chapter: 1 }, chapter: 1 },
+    { name: 'a pack the data marks Chapter One', raw: { code: 'cob', chapter: 1 }, chapter: 1 },
     { name: 'Children of Blood without a chapter', raw: { code: 'cob' }, chapter: 2 },
     { name: 'an unknown pack without a chapter', raw: { code: 'old_box' }, chapter: 1 },
   ])('reads the chapter of $name', ({ raw, chapter }) => {
@@ -36,11 +36,16 @@ describe('normalisePacks', () => {
     expect(pack?.chapter).toBe(chapter);
   });
 
-  it('rejects a chapter other than 1 or 2', () => {
-    expect(() =>
-      normalisePacks([{ code: 'box', name: 'Box', position: 1, cycle_position: 1, chapter: 3 }]),
-    ).toThrow();
-  });
+  it.each([{ chapter: 3 }, { chapter: null }, { chapter: '2' }])(
+    'falls back to the code for an unexpected chapter $chapter',
+    ({ chapter }) => {
+      const [pack] = normalisePacks([
+        { code: 'core_2026', name: 'Box', position: 1, cycle_position: 1, chapter },
+      ]);
+
+      expect(pack?.chapter).toBe(2);
+    },
+  );
 
   it('derives the chapter from the pack code when the data gives none', () => {
     expect(packs.map((p) => [p.code, p.chapter])).toEqual([
