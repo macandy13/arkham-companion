@@ -55,8 +55,8 @@ export function handleAdvanceAct(ctx: EngineContext, state: GameState, cmd: Adva
   const act = currentCard(state, 'act');
   const flip = reverseSide(state, 'act', cmd.resolution);
   const required = clueRequirement(ctx, state, act);
-  // Clues the players put on the act by hand (a correction until they pick who pays) count
-  // towards its requirement, so the investigators pay only the rest.
+  // Clues the players put on the act by hand stand for clues the group already spent towards it
+  // (our convention, docs/rules.md "Act and clues"), so the investigators pay only the rest.
   const placed = act.tokens.clue ?? 0;
   const payments =
     cmd.spend === undefined
