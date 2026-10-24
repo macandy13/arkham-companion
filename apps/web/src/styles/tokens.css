@@ -142,5 +142,10 @@
   --color-scrim: rgb(40 30 15 / 45%);
   --playmat: url('./playmat_light.svg');
   --panel-frame: url('./panel_frame_light.svg');
+  /*
+   * By day the panels and dialogs are parchment, a shade darker towards their edges like an old
+   * page; by night they stay the see-through night.
+   */
+  --panel-paper: radial-gradient(ellipse at center, #f6eedb 55%, #dfcda6);
   --header-shade: linear-gradient(to bottom, rgb(250 245 232 / 90%), rgb(250 245 232 / 35%));
 }

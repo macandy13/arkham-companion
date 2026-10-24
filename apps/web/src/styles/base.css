@@ -87,6 +87,11 @@ dialog {
   background: var(--color-surface);
 }
 
+/* In the light theme the panels are parchment (`--panel-paper`), the playmat by day's paper. */
+:root[data-theme='light'] :is(#app > main:not(:has(#board)), dialog) {
+  background: var(--panel-paper);
+}
+
 /* A screen's title stands centred over a small zodiac ring between two rules. */
 #app > main:not(:has(#board)) > h1 {
   text-align: center;

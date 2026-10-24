@@ -7,3 +7,11 @@ test('the settings with the unofficial fan project notice', { tag: '@shot' }, as
 
   await expect(page.getByRole('region', { name: 'About' })).toContainText('unofficial fan project');
 });
+
+test('the settings by day, on parchment', { tag: '@shot' }, async ({ page }) => {
+  await page.goto('/#/settings');
+
+  await page.getByLabel('Theme').selectOption('Light');
+
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+});
