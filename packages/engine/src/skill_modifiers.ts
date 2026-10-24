@@ -105,6 +105,17 @@ const FIXED_TOKEN_VALUES: Partial<Record<ChaosToken, number>> = {
   blood: -1,
 };
 
+/** The tokens that make the tester reveal another token, whose modifier also applies. */
+const REVEALS_ANOTHER: ReadonlySet<ChaosToken> = new Set(['bless', 'curse', 'frost', 'blood']);
+
+/**
+ * Whether revealing `token` makes the tester reveal another one (bless, curse, frost, blood), so
+ * a test that has revealed it is not finished yet.
+ */
+export function revealsAnotherToken(token: ChaosToken): boolean {
+  return REVEALS_ANOTHER.has(token);
+}
+
 /**
  * The skill test behind a `skillTestResult` decision, as token values
  * see it; `undefined` for any other decision and for a test decided by the

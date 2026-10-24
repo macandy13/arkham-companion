@@ -9,6 +9,7 @@ import {
   instanceId,
   investigatorId,
   newGame,
+  revealsAnotherToken,
   skillTestDecision,
   skillTestSuggestion,
   suggestSkillTest,
@@ -169,6 +170,20 @@ describe("skillTestSuggestion: base values, the players' modifier and tokens", (
     expect(() => skillTestSuggestion(context, state, investigateStudy, { modifier: 1.5 })).toThrow(
       CommandRejected,
     );
+  });
+});
+
+describe('revealsAnotherToken', () => {
+  it.each([
+    { token: 'bless', reveals: true },
+    { token: 'curse', reveals: true },
+    { token: 'frost', reveals: true },
+    { token: 'blood', reveals: true },
+    { token: '-2', reveals: false },
+    { token: 'skull', reveals: false },
+    { token: 'autoFail', reveals: false },
+  ] as const)('$token makes the tester reveal another: $reveals', ({ token, reveals }) => {
+    expect(revealsAnotherToken(token)).toBe(reveals);
   });
 });
 

@@ -6,8 +6,10 @@ import type {
   InvestigatorView,
   ModifierStep,
   SkillName,
+  SkillTestSuggestion,
 } from '@arkham/engine';
-import { unique } from '@arkham/util';
+import { assertNever, unique } from '@arkham/util';
+import { drawTokens, revealToken, testFinished } from './drawTokens';
 
 /** The difficulty a test starts at: the most common printed one ("Test [willpower] (3)"). */
 const DEFAULT_DIFFICULTY = 3;
@@ -15,8 +17,8 @@ const DEFAULT_DIFFICULTY = 3;
 /**
  * A skill test the players take at the table outside any decision, such as one a player card
  * asks for, against the investigator's `skill`: they set the difficulty and their modifier
- * (committed icons, cards in play), then pick the chaos token they drew or let the app draw one
- * from the bag. The dialog shows the calculation (`BoardView.skillTest`) and whether the test
+ * (committed icons, cards in play), then pick the chaos tokens they drew or let the app draw
+ * from the bag (`TokenPicker`). The dialog shows the calculation (`BoardView.skillTest`) and whether the test
  * passes. It is a calculator: nothing is played, so the game does not change. A native modal
  * `<dialog>` brings focus trapping and Escape.
  */
@@ -39,12 +41,11 @@ export function SkillTestDialog({
   }, []);
   const [difficulty, setDifficulty] = useState(DEFAULT_DIFFICULTY);
   const [modifier, setModifier] = useState(0);
-  const [token, setToken] = useState<ChaosToken>();
-  const bag = board.chaosBag;
+  const [revealed, setRevealed] = useState<readonly ChaosToken[]>([]);
   const result =
-    token === undefined
+    revealed.length === 0
       ? undefined
-      : board.skillTest(investigator.id, { skill, difficulty }, { modifier, tokens: [token] });
+      : board.skillTest(investigator.id, { skill, difficulty }, { modifier, tokens: revealed });
 
   return (
     <dialog ref={dialog} aria-labelledby={titleId} onCancel={onClose} data-dialog="skill-test">
@@ -64,58 +65,100 @@ export function SkillTestDialog({
         shown={signed(modifier)}
         onChange={setModifier}
       />
-      <section aria-label={t('skillTest.token')}>
-        <p>{t('skillTest.token')}</p>
-        <ul>
-          {unique(bag).map((each) => (
-            <li key={each}>
-              <button
-                type="button"
-                aria-pressed={each === token}
-                data-token={each}
-                onClick={() => setToken(each)}
-              >
-                {t(`chaosToken.${each}`)}
-              </button>
-            </li>
-          ))}
-        </ul>
-        <button
-          type="button"
-          disabled={bag.length === 0}
-          // The engine draws nothing itself, so the draw happens here, at the edge.
-          onClick={() => setToken(bag[Math.floor(Math.random() * bag.length)])}
-        >
-          {t('skillTest.draw')}
-        </button>
-      </section>
-      {result && (
-        <section aria-label={t('skillTest.result')}>
-          <ol>
-            {result.trace.map((step, index) => (
-              <li key={index}>{stepLine(step, skill, t)}</li>
-            ))}
-          </ol>
-          {result.unknownTokens.map((unknown) => (
-            <p key={unknown}>
-              {t('skillTest.unknownToken', { token: t(`chaosToken.${unknown}`) })}
-            </p>
-          ))}
-          <output data-outcome={result.outcome}>
-            {t(`skillTest.${result.outcome}`, {
-              skill: result.skill,
-              difficulty: result.difficulty,
-              margin: result.margin,
-            })}
-          </output>
-        </section>
-      )}
+      <TokenPicker
+        bag={board.chaosBag}
+        revealed={revealed}
+        onReveal={(token) => setRevealed(revealToken(revealed, token))}
+        // The engine draws nothing itself, so the draw happens here, at the edge.
+        onDraw={() => setRevealed(drawTokens(board.chaosBag, revealed, Math.random))}
+      />
+      {result && <TestResult result={result} skill={skill} finished={testFinished(revealed)} />}
       <footer>
         <button type="button" onClick={onClose}>
           {t('skillTest.close')}
         </button>
       </footer>
     </dialog>
+  );
+}
+
+/**
+ * The bag's tokens, each kind once, to pick the one drawn at the table, pressed while revealed,
+ * and "Draw a token" to let the app draw from the bag instead. A token that makes the tester
+ * reveal another (`revealToken`) keeps the test open for the next pick or draw.
+ */
+function TokenPicker({
+  bag,
+  revealed,
+  onReveal,
+  onDraw,
+}: {
+  bag: readonly ChaosToken[];
+  revealed: readonly ChaosToken[];
+  onReveal: (token: ChaosToken) => void;
+  onDraw: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <section aria-label={t('skillTest.token')}>
+      <p>{t('skillTest.token')}</p>
+      <ul>
+        {unique(bag).map((token) => (
+          <li key={token}>
+            <button
+              type="button"
+              aria-pressed={revealed.includes(token)}
+              data-token={token}
+              onClick={() => onReveal(token)}
+            >
+              {t(`chaosToken.${token}`)}
+            </button>
+          </li>
+        ))}
+      </ul>
+      <button type="button" disabled={bag.length === 0} onClick={onDraw}>
+        {t('skillTest.draw')}
+      </button>
+    </section>
+  );
+}
+
+/**
+ * The calculation step by step, the tokens whose effect the app does not know, and the outcome
+ * once the test is `finished`; until then, a reminder to reveal another token.
+ */
+function TestResult({
+  result,
+  skill,
+  finished,
+}: {
+  result: SkillTestSuggestion;
+  skill: SkillName;
+  finished: boolean;
+}) {
+  const { t } = useTranslation();
+  return (
+    <section aria-label={t('skillTest.result')}>
+      <ol>
+        {result.trace.map((step, index) => (
+          <li key={index}>{stepLine(step, skill, t)}</li>
+        ))}
+      </ol>
+      {result.unknownTokens.map((unknown) => (
+        <p key={unknown}>{t('skillTest.unknownToken', { token: t(`chaosToken.${unknown}`) })}</p>
+      ))}
+      {finished ? (
+        <output data-outcome={result.outcome}>
+          {t(`skillTest.${result.outcome}`, {
+            skill: result.skill,
+            difficulty: result.difficulty,
+            margin: result.margin,
+          })}
+        </output>
+      ) : (
+        <output>{t('skillTest.revealAnother')}</output>
+      )}
+    </section>
   );
 }
 
@@ -173,8 +216,13 @@ function stepLine(
         ...values,
         token: t(`chaosToken.${source.token}`),
       });
-    default:
+    case 'baseDifficulty':
+    case 'playerModifier':
+    case 'autoFail':
+    case 'minimumZero':
       return t(`skillTest.step.${source.kind}`, values);
+    default:
+      return assertNever(source);
   }
 }
 

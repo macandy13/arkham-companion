@@ -17,15 +17,16 @@ describe('SkillTestDialog', () => {
   });
   afterEach(cleanup);
 
-  // Alder tests willpower 3; the bag holds +1, −2 twice and the auto-fail.
+  // Alder tests willpower 3; the bag holds +1, −2 twice, a bless and the auto-fail.
   const table = PlayTable.start(
     newGame()
       .withLocation(study, blankLocation('study'))
       .withInvestigator(alder, {
+        name: 'Alder',
         locationId: study,
         skills: { willpower: 3, intellect: 2, combat: 1, agility: 4 },
       })
-      .withChaosBag(['+1', '-2', '-2', 'autoFail']),
+      .withChaosBag(['+1', '-2', '-2', 'bless', 'autoFail']),
   );
   const alderView = () => {
     const view = table.board.investigator(alder);
@@ -48,8 +49,8 @@ describe('SkillTestDialog', () => {
     const tokens = within(screen.getByRole('region', { name: 'Chaos token' }))
       .getAllByRole('button', { pressed: false })
       .map((token) => token.textContent);
-    expect(screen.getByRole('heading').textContent).toBe('Willpower test · alder');
-    expect(tokens).toEqual(['+1', '−2', 'Auto-fail']);
+    expect(screen.getByRole('heading').textContent).toBe('Willpower test · Alder');
+    expect(tokens).toEqual(['+1', '−2', 'Bless', 'Auto-fail']);
     expect(result()).toBeNull();
   });
 
@@ -84,6 +85,17 @@ describe('SkillTestDialog', () => {
     expect(steps).toEqual(['Willpower 3', 'Modifier +2: 5', 'Token −2 (−2): 3', 'Difficulty 3']);
   });
 
+  it('waits for another token after a bless, then adds both', () => {
+    renderDialog();
+
+    fireEvent.click(button('Bless'));
+    const waiting = within(result()!).getByRole('status').textContent;
+    fireEvent.click(button('−2'));
+
+    expect(waiting).toBe('Reveal another token.');
+    expect(within(result()!).getByRole('status').textContent).toBe('Pass: 3 against 3, by 0');
+  });
+
   it('cannot lower the difficulty below 0', () => {
     renderDialog();
 
@@ -97,7 +109,7 @@ describe('SkillTestDialog', () => {
 
     fireEvent.click(button('Draw a token'));
 
-    expect(screen.getAllByRole('button', { pressed: true })).toHaveLength(1);
-    expect(result()).not.toBeNull();
+    expect(screen.getAllByRole('button', { pressed: true }).length).toBeGreaterThan(0);
+    expect(within(result()!).getByRole('status').textContent).not.toBe('Reveal another token.');
   });
 });

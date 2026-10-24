@@ -124,6 +124,7 @@ export const resources = {
         pass: 'Pass: {{skill}} against {{difficulty}}, by {{margin}}',
         fail: 'Fail: {{skill}} against {{difficulty}}, by {{margin}}',
         unknownToken: 'Add the effect of {{token}} yourself.',
+        revealAnother: 'Reveal another token.',
         close: 'Close',
         step: {
           baseSkill: '{{skill}} {{total}}',
@@ -445,6 +446,7 @@ export const resources = {
         pass: 'Bestanden: {{skill}} gegen {{difficulty}}, um {{margin}}',
         fail: 'Misslungen: {{skill}} gegen {{difficulty}}, um {{margin}}',
         unknownToken: 'Den Effekt von {{token}} bitte selbst anwenden.',
+        revealAnother: 'Noch einen Marker ziehen.',
         close: 'Schließen',
         step: {
           baseSkill: '{{skill}} {{total}}',
