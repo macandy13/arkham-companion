@@ -626,7 +626,7 @@ export function afterEngaging(...effects: AbilityEffect[]): Ability {
   return { window: { kind: 'engaged' }, effects };
 }
 
-/** A forced ability "after you discover clues at [this location]". */
+/** A forced ability "after you discover clues at [this location]", written `afterDiscoveringClues(placeDoomOnSelf(1))`. */
 export function afterDiscoveringClues(...effects: AbilityEffect[]): Ability {
   return { window: { kind: 'cluesDiscovered' }, effects };
 }
