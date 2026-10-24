@@ -43,8 +43,8 @@ export function InvestigatorBar({
 }
 
 /**
- * One investigator, laid out like the prototype's panel: their card with the name band and their
- * threat area along its top edge, a line saying where they are and how their round goes, their
+ * One investigator, laid out like the prototype's panel: their threat area along the top edge of
+ * their card, the card with the name band, a line saying where they are and how their round goes, their
  * turn controls and their counters. Health and sanity show what is left of the printed value,
  * like the dials, while their steppers place and heal damage and horror, like the tokens on the
  * card. Clues show without steppers: they are found by investigating and spent on the act.
@@ -78,11 +78,11 @@ function InvestigatorPanel({
       data-status={investigator.status}
       data-turn={onTurn || undefined}
     >
+      <ThreatArea treacheries={investigator.threatArea ?? []} enemies={engaged} />
       <figure data-card="investigator">
         <figcaption>
           <h3 id={nameId}>{investigator.name}</h3>
         </figcaption>
-        <ThreatArea treacheries={investigator.threatArea ?? []} enemies={engaged} />
       </figure>
       <p>{statusLine(investigator, onTurn, t)}</p>
       <TurnControls

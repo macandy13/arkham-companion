@@ -1,4 +1,4 @@
-import { cardStats, type CardStats, type EngineContext } from './cards';
+import { cardStats, resolveValue, type CardStats, type EngineContext } from './cards';
 import { investigatorLeavesEvents } from './elimination';
 import type { Event, InvestigatorChanged } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
@@ -126,6 +126,14 @@ export function enemyOf(
   if (stats.typeCode !== 'enemy')
     throw new CommandRejected({ code: 'notAnEnemy', cardId: enemyId });
   return { enemy, stats };
+}
+
+/**
+ * The health of an enemy with `stats` in this game, scaled by the player count, or undefined when
+ * it prints none: such an enemy cannot be defeated by damage (`handleDamageEnemy`).
+ */
+export function enemyHealth(stats: CardStats, state: GameState): number | undefined {
+  return stats.health && resolveValue(stats.health, state.meta.playerCount);
 }
 
 /**
