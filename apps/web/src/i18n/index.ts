@@ -7,7 +7,10 @@ export const resources = {
     translation: {
       app: { title: 'Arkham Companion' },
       header: {
-        roundPhase: 'Round {{round}}, {{phase}}',
+        round: 'Round {{round}}',
+        phases: 'Phases',
+        menu: 'Menu',
+        allGames: 'All games',
         next: 'Next',
         undo: 'Undo',
         adjust: 'Adjust board',
@@ -276,7 +279,10 @@ export const resources = {
     translation: {
       app: { title: 'Arkham Companion' },
       header: {
-        roundPhase: 'Runde {{round}}, {{phase}}',
+        round: 'Runde {{round}}',
+        phases: 'Phasen',
+        menu: 'Menü',
+        allGames: 'Alle Spiele',
         next: 'Weiter',
         undo: 'Rückgängig',
         adjust: 'Spielfeld anpassen',

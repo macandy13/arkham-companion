@@ -129,6 +129,13 @@ export interface Board {
 export type Difficulty = 'easy' | 'standard' | 'hard' | 'expert';
 /** Current game phase; `setup` before the first mythos phase. */
 export type Phase = 'setup' | 'mythos' | 'investigation' | 'enemy' | 'upkeep';
+/** The phases of a round, every phase but `setup`. */
+export type RoundPhase = Exclude<Phase, 'setup'>;
+/**
+ * The phases of a round in the order they are played (Rules Reference "Phase sequence"), for a
+ * phase track; `NextPhase` moves along the same order.
+ */
+export const ROUND_PHASES: readonly RoundPhase[] = ['mythos', 'investigation', 'enemy', 'upkeep'];
 
 /**
  * The steps of the round the phase assistant runs itself, named for what they

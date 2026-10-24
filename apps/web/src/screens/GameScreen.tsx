@@ -8,13 +8,14 @@ import type { AppState } from '../state/appStore';
 import { InvestigatorBar } from '../investigators/InvestigatorBar';
 import { MapBoard } from '../map/MapBoard';
 import { GameHeader } from './GameHeader';
+import { GameStatus } from './GameStatus';
 import { RejectionToast } from './RejectionToast';
 import { SkippedEffectsNotice } from './SkippedEffectsNotice';
 import './game.css';
 
 /**
  * Route `/game/:id`: loads the game named in the URL (so deep links and reloads work)
- * and shows the board layout of product.md "UI concept": the header, the map, the investigator bar,
+ * and shows the board layout of product.md "UI concept": the header, the status row, the map, the investigator bar,
  * the reason when an action is refused, and the card effects it skipped. Until the game is open it says so, and
  * a game it cannot play (its scenario is not in the catalog) gets a warning instead of a board.
  */
@@ -43,6 +44,7 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
   return (
     <div id="board" data-adjusting={open.adjusting || undefined}>
       <GameHeader store={store} open={open} board={board} />
+      <GameStatus store={store} open={open} board={board} />
       <section id="map" aria-labelledby="map-title">
         <h2 id="map-title">{t('map.title')}</h2>
         <MapBoard

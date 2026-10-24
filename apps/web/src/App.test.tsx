@@ -43,7 +43,7 @@ describe('AppRoutes', () => {
     expect(screen.getByRole('navigation', { name: 'Main' })).toBeTruthy();
   });
 
-  it("offers the open game's export in the title bar, under the game's title", async () => {
+  it("offers the open game's export in the play screen's menu, under the game's title", async () => {
     Object.assign(URL, { createObjectURL: vi.fn(() => 'blob:test'), revokeObjectURL: vi.fn() });
     const downloaded: string[] = [];
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
@@ -60,11 +60,27 @@ describe('AppRoutes', () => {
       investigators: [],
     });
     renderAt(`/game/${id}`, store);
-    const nav = screen.getByRole('navigation', { name: 'Main' });
+    fireEvent.click(await screen.findByRole('button', { name: 'Menu' }));
+    const menu = screen.getByRole('navigation', { name: 'Main' });
 
-    fireEvent.click(await within(nav).findByRole('button', { name: 'Export' }));
+    fireEvent.click(await within(menu).findByRole('button', { name: 'Export' }));
 
     await waitFor(() => expect(downloaded).toEqual(['Friday-night.arkham.json']));
+  });
+
+  it('hides the title bar on the play screen', async () => {
+    const store = createAppStore(new IndexedDbStore('app-routes-title-test'));
+    const id = await store.getState().startScenario({
+      title: 'Friday night',
+      ctx: { cards: theGatheringCards, scenario: theGathering },
+      difficulty: 'easy',
+      seed: 3,
+      investigators: [],
+    });
+    renderAt(`/game/${id}`, store);
+
+    await screen.findByRole('button', { name: 'Menu' });
+    expect(screen.queryByRole('link', { name: 'Arkham Companion' })).toBeNull();
   });
 
   it('offers no export in the title bar away from a game', () => {

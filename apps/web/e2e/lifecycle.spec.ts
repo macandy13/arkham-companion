@@ -4,7 +4,7 @@ import { startQuickGame } from './fixtures/wizard';
 // Journey: the whole life of a saved game on a tablet – start it, close the tab, resume it, keep it
 // tidy (rename, duplicate, delete with confirmation) and back it up (export, import). It doubles as
 // the smoke test: it boots the production build and resolves the hash routes.
-test('a game is started, resumed, managed and backed up', async ({ page }) => {
+test('a game is started, resumed, managed and backed up', { tag: '@flow' }, async ({ page }) => {
   const games = page.getByRole('list', { name: 'Games' });
   const items = games.getByRole('listitem');
   const named = (title: string) =>
@@ -32,7 +32,8 @@ test('a game is started, resumed, managed and backed up', async ({ page }) => {
   });
 
   await test.step('The game is listed with its investigators', async () => {
-    await page.getByRole('link', { name: 'Arkham Companion' }).click();
+    await page.getByRole('button', { name: 'Menu' }).click();
+    await page.getByRole('link', { name: 'All games' }).click();
     await expect(items).toHaveCount(1);
     await expect(items).toContainText('Fake Guardian, Fake Seeker');
   });
@@ -40,7 +41,8 @@ test('a game is started, resumed, managed and backed up', async ({ page }) => {
   await test.step('Resume the game from the list', async () => {
     await items.getByRole('link', { name: 'Resume' }).click();
     await expect(page).toHaveURL(gameUrl);
-    await page.getByRole('link', { name: 'Arkham Companion' }).click();
+    await page.getByRole('button', { name: 'Menu' }).click();
+    await page.getByRole('link', { name: 'All games' }).click();
   });
 
   await test.step('Rename the game', async () => {

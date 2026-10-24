@@ -13,7 +13,7 @@ test('read the map', { tag: '@flow' }, async ({ page }) => {
   await test.step('Start a quick game', async () => {
     await page.goto('/#/new');
     await startQuickGame(page);
-    await expect(page.getByText('Round 0, Setup')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Setup' })).toBeVisible();
   });
 
   await test.step('Find the Study on its map', async () => {
