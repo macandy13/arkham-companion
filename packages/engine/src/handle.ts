@@ -284,8 +284,8 @@ function resolveQueuedStep(
  * Triggers on an answer's events coming first is right for a skill test
  * (`SkillTestResolved`: "after you fail" is ST.6, the results ST.7). For a
  * plain choice the chosen option is part of the effect, so an "after" ability
- * on `DecisionResolved` would have to wait for it; no window opens on either
- * event yet, and the timing windows (P1) decide where each one fires.
+ * on `DecisionResolved` would have to wait for it; no window opens on that
+ * event yet.
  */
 function resolveCommand(
   resolution: Resolution,

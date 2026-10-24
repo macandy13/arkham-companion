@@ -94,6 +94,7 @@ export { formatBoard } from './format_board';
 export {
   advanceAct,
   afterEntering,
+  afterTest,
   atEndOfPhase,
   atEndOfRound,
   whenTurnBegins,
@@ -138,6 +139,7 @@ export type {
   Templated,
   TimingWindow,
   EndingPhase,
+  TestedAction,
 } from './abilities';
 export { MAX_TRIGGERED_COMMANDS } from './triggers';
 export * from './store';

@@ -2,6 +2,7 @@ import {
   GRID_CELLS_PER_CARD,
   advanceAct,
   afterEntering,
+  afterTest,
   leadDrawsDiscardingUntil,
   shuffleEncounterDiscard,
   atEndOfRound,
@@ -374,9 +375,9 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     set: sets.chillingCold,
     traits: ['Hazard'],
     quantity: 2,
-    locationAttachment: { onePerLocation: true, discardWhenInvestigated: true },
+    locationAttachment: { onePerLocation: true },
     modifiers: [{ stat: 'shroud', of: 'host', by: 2 }],
-    abilities: [whenRevealed(attachToLocation())],
+    abilities: [whenRevealed(attachToLocation()), afterTest('investigate', 'pass', discardSelf())],
   }),
 ];
 

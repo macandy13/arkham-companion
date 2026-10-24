@@ -16,6 +16,8 @@ import type {
   Investigator,
   PerPointFailed,
   Phase,
+  SkillTestKind,
+  SkillTestOutcome,
   QueuedStep,
   SkillName,
 } from './state';
@@ -48,6 +50,18 @@ export type TimingWindow =
    */
   | { kind: 'phaseEnds'; phase: EndingPhase }
   /**
+   * "After [this location / attached location] is successfully
+   * investigated", "after you fail to evade [this enemy]": the investigator
+   * passed or failed the test of a basic action (`SkillTestResolved.action`)
+   * against the location or enemy. Opened for that card and each card
+   * attached to it, naming the tester, at ST.6: before the test's results
+   * (the clue discovered), as the Rules Reference times "after you
+   * successfully investigate". A test that is no investigation, attack or
+   * evasion (a revelation's) opens none; a player card's "Investigate." is
+   * an `Investigate` command, so it opens it like the basic action.
+   */
+  | { kind: 'tested'; action: TestedAction; outcome: SkillTestOutcome }
+  /**
    * "After you enter [this location]": an investigator moved into the
    * location (`InvestigatorMoved`), naming them. When the move turned it
    * face up, it fires before the reveal's abilities: a fixed stand-in, as
@@ -71,6 +85,9 @@ export type TimingWindow =
    * ones, so a used-up act or agenda never fires again.
    */
   | { kind: 'enemyDefeated'; enemy: CardCode };
+
+/** The basic actions whose test opens `tested`: investigate, fight and evade. */
+export type TestedAction = SkillTestKind['kind'];
 
 /** The phases whose end opens `phaseEnds`: all but setup and upkeep. */
 export type EndingPhase = Exclude<Phase, 'setup' | 'upkeep'>;
@@ -284,6 +301,14 @@ export function windowsOpenedBy(
         window: { kind: 'phaseEnds', phase },
         cardId: card.id,
       }));
+    }
+    case 'SkillTestResolved': {
+      const { action, subject, outcome, investigatorId } = event;
+      if (action === undefined || subject === undefined) return [];
+      const window: TimingWindow = { kind: 'tested', action, outcome };
+      return [subject, ...cardsInZone(state, { kind: 'attachedTo', hostId: subject })].map(
+        (cardId) => ({ window, cardId, ...(investigatorId && { investigatorId }) }),
+      );
     }
     case 'RoundEnded':
       return cardsInPlay(state).map((card) => ({ window: { kind: 'roundEnds' }, cardId: card.id }));
@@ -553,6 +578,19 @@ export function whenTurnBegins(...effects: AbilityEffect[]): Ability {
  */
 export function atEndOfPhase(phase: EndingPhase, ...effects: AbilityEffect[]): Ability {
   return { window: { kind: 'phaseEnds', phase }, effects };
+}
+
+/**
+ * A forced ability after a basic action's test against the card or its
+ * host: "After attached location is successfully investigated: Discard
+ * Obscuring Fog" is `afterTest('investigate', 'pass', discardSelf())`.
+ */
+export function afterTest(
+  action: TestedAction,
+  outcome: SkillTestOutcome,
+  ...effects: AbilityEffect[]
+): Ability {
+  return { window: { kind: 'tested', action, outcome }, effects };
 }
 
 /** A forced ability "at the end of the round", written `atEndOfRound(discardSelf())`. */
