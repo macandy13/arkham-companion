@@ -1,5 +1,5 @@
 import { requireLocationInPlay } from './board';
-import { resolveValue, type CardStats, type EngineContext } from './cards';
+import type { CardStats, EngineContext } from './cards';
 import type {
   DamageEnemy,
   DefeatEnemy,
@@ -11,7 +11,7 @@ import type {
 } from './commands';
 import { engageEvents } from './engagement';
 import type { EnemyDefeated, EnemyEngaged, Event, ExhaustChanged } from './events';
-import { enemyOf, isEnemyOnTable, locationOf } from './enemies';
+import { enemyHealth, enemyOf, isEnemyOnTable, locationOf } from './enemies';
 import { activeInvestigator } from './investigators';
 import type { InstanceId } from './ids';
 import { hasKeyword } from './keywords';
@@ -103,9 +103,8 @@ export function handleDamageEnemy(ctx: EngineContext, state: GameState, cmd: Dam
     delta: cmd.amount,
   };
   const total = (enemy.tokens.damage ?? 0) + cmd.amount;
-  // An enemy without printed health cannot be defeated by damage.
-  if (stats.health === undefined || total < resolveValue(stats.health, state.meta.playerCount))
-    return [damaged];
+  const health = enemyHealth(stats, state);
+  if (health === undefined || total < health) return [damaged];
   return [damaged, defeated(state, enemy, stats)];
 }
 

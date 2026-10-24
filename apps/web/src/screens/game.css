@@ -13,13 +13,14 @@
   min-height: 0;
 }
 
+/* The investigator bar grows only while a threat area stands above an investigator's card. */
 #board {
   display: grid;
   min-height: 0;
   grid-template:
     'header header' auto
     'map encounter' 1fr
-    'investigators investigators' var(--layout-board-bar-height) /
+    'investigators investigators' minmax(var(--layout-board-bar-height), auto) /
     1fr var(--layout-board-panel-width);
 }
 

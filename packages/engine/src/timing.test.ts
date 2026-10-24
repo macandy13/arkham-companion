@@ -139,7 +139,7 @@ describe('hunters moving one at a time', () => {
   const leftPath = instanceId('left_path');
   const rightPath = instanceId('right_path');
   const den = instanceId('den');
-  const hunter = { keywords: [{ name: 'hunter' as const }] };
+  const hunter = { health: fixed(2), keywords: [{ name: 'hunter' as const }] };
   /**
    * Two routes from the crossroads to alice's den, one by the left path and
    * one by the right: the forked hunter at the crossroads has two equally
@@ -185,8 +185,8 @@ describe('hunters moving one at a time', () => {
     table.answer(byName('forked_hunter'), 'right_path');
 
     expect(table.board.enemies).toEqual([
-      { name: 'forked_hunter', at: 'right_path' },
-      { name: 'second_hunter', at: 'den', engagedWith: alice },
+      { name: 'forked_hunter', at: 'right_path', health: 2 },
+      { name: 'second_hunter', at: 'den', engagedWith: alice, health: 2 },
     ]);
   });
 });
@@ -317,8 +317,16 @@ describe('enemy attacks after one of them defeated the investigator', () => {
     .withLocation(hall, blankLocation('hall'))
     .withInvestigator(alice, { locationId: hall, health: { max: 3, damage: 0 } })
     .withInvestigator(bob, { locationId: hall })
-    .withCard(instanceId('ghoul'), blankEnemy('ghoul', { damage: 3 }), engagedWith(alice))
-    .withCard(instanceId('rat'), blankEnemy('rat', { damage: 1 }), engagedWith(alice));
+    .withCard(
+      instanceId('ghoul'),
+      blankEnemy('ghoul', { damage: 3, health: fixed(3) }),
+      engagedWith(alice),
+    )
+    .withCard(
+      instanceId('rat'),
+      blankEnemy('rat', { damage: 1, health: fixed(1) }),
+      engagedWith(alice),
+    );
 
   it('drops her remaining attack, and both enemies engage bob in the hall', () => {
     const table = PlayTable.start(game);
@@ -338,8 +346,8 @@ describe('enemy attacks after one of them defeated the investigator', () => {
     expect(table.board.investigator(alice).status).toBe('defeated');
     expect(table.board.attacksDue).toEqual([]);
     expect(table.board.enemies).toEqual([
-      { name: 'ghoul', at: 'hall', engagedWith: bob, exhausted: true },
-      { name: 'rat', at: 'hall', engagedWith: bob },
+      { name: 'ghoul', at: 'hall', engagedWith: bob, health: 3, exhausted: true },
+      { name: 'rat', at: 'hall', engagedWith: bob, health: 1 },
     ]);
   });
 });

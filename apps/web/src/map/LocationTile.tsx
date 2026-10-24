@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { InvestigatorView, LocationView, MapEnemyView } from '@arkham/engine';
+import type { EnemyView, InvestigatorView, LocationView, MapEnemyView } from '@arkham/engine';
 import { LOCATION_ART, PORTRAIT_SCAN, portraitArtViewBox } from '../catalog/cardArt';
 import { useCardPicture } from '../catalog/cardImages';
 import { LocationOrnament, TYPE_PLATE_CENTRE } from './cardOrnament';
@@ -389,8 +389,7 @@ export function EnemyToken({
   const engagedWith = investigators.find(({ id }) => id === enemy.engagedWith)?.name;
   const states = [
     ...(engagedWith ? [t('map.engagedWith', { investigator: engagedWith })] : []),
-    ...(enemy.damage ? [t('map.damage', { count: enemy.damage })] : []),
-    ...(enemy.exhausted ? [t('map.exhausted')] : []),
+    ...enemyConditions(enemy, t),
   ];
   return (
     <g
@@ -403,4 +402,18 @@ export function EnemyToken({
       </text>
     </g>
   );
+}
+
+/**
+ * What an enemy token's accessible name says about the enemy besides where it is: its damage and
+ * whether it is exhausted. Shared by the map's tokens and the threat area's, so both read alike.
+ */
+export function enemyConditions(
+  enemy: EnemyView,
+  t: ReturnType<typeof useTranslation>['t'],
+): string[] {
+  return [
+    ...(enemy.damage ? [t('map.damage', { count: enemy.damage })] : []),
+    ...(enemy.exhausted ? [t('map.exhausted')] : []),
+  ];
 }

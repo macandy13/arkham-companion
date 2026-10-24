@@ -3,6 +3,7 @@ import { effectiveValue } from './card_values';
 import { cardStats, resolveValue, type EngineContext } from './cards';
 import { optionName } from './describe_decision';
 import { doomInPlay, isInPlay } from './doom';
+import { enemyHealth } from './enemies';
 import { formatBoard } from './format_board';
 import {
   cardMatcher,
@@ -96,6 +97,8 @@ export interface EnemyView {
   /** The printed name of the location it is at. */
   at?: CardName;
   engagedWith?: InvestigatorId;
+  /** Its health for this game's player count (`enemyHealth`); left out when it prints none. */
+  health?: number;
   damage?: number;
   exhausted?: true;
 }
@@ -263,6 +266,11 @@ export class BoardView {
   /** Enemies in play, in card order. */
   get enemies(): readonly EnemyView[] {
     return enemiesInPlay(this.ctx, this.state).map((card) => enemyView(this.ctx, this.state, card));
+  }
+
+  /** The enemies engaged with `investigator`, in card order: those in their threat area. */
+  enemiesEngagedWith(investigator: InvestigatorId): readonly EnemyView[] {
+    return this.enemies.filter(({ engagedWith }) => engagedWith === investigator);
   }
 
   /** Locations on a map, in map order. */
@@ -485,10 +493,12 @@ function enemyLocation(state: GameState, enemy: CardInstance): InstanceId | unde
 
 function enemyView(ctx: EngineContext, state: GameState, enemy: CardInstance): EnemyView {
   const at = nameOfId(ctx, state, enemyLocation(state, enemy));
+  const health = enemyHealth(cardStats(ctx.cards, enemy.code), state);
   return {
     name: nameOf(ctx, enemy),
     ...(at === undefined ? {} : { at }),
     ...(enemy.zone.kind === 'engaged' ? { engagedWith: enemy.zone.investigatorId } : {}),
+    ...(health === undefined ? {} : { health }),
     ...(enemy.tokens.damage ? { damage: enemy.tokens.damage } : {}),
     ...(enemy.exhausted ? { exhausted: true as const } : {}),
   };

@@ -527,6 +527,7 @@ describe('fighting and evading', () => {
     expect(table.board.enemy(byName('ghoul'))).toEqual({
       name: 'ghoul',
       at: 'study',
+      health: 4,
       exhausted: true,
     });
   });
@@ -557,6 +558,7 @@ describe('fighting and evading', () => {
     expect(table.board.enemy(byName('ghoul'))).toEqual({
       name: 'ghoul',
       at: 'attic',
+      health: 4,
       exhausted: true,
     });
   });
@@ -566,7 +568,7 @@ describe('fighting and evading', () => {
 
     table.moveEnemy(byName('ghoul'), byName('attic'), { forced: true });
 
-    expect(table.board.enemy(byName('ghoul'))).toEqual({ name: 'ghoul', at: 'attic' });
+    expect(table.board.enemy(byName('ghoul'))).toEqual({ name: 'ghoul', at: 'attic', health: 4 });
   });
 
   describe('with two ghouls', () => {
@@ -593,8 +595,8 @@ describe('fighting and evading', () => {
       table.fight(bob, instanceId('ghoul_b'));
 
       expect(table.board.enemies).toEqual([
-        { name: 'ghoul', at: 'study', engagedWith: alice, damage: 1 },
-        { name: 'ghoul', at: 'study', engagedWith: bob, damage: 1 },
+        { name: 'ghoul', at: 'study', engagedWith: alice, health: 3, damage: 1 },
+        { name: 'ghoul', at: 'study', engagedWith: bob, health: 3, damage: 1 },
       ]);
     });
   });

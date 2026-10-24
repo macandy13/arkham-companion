@@ -153,6 +153,13 @@
   --action-pip-size: 0.75rem;
   /* An icon on a button (the investigator panel's turn controls). */
   --icon-size: 1.25rem;
+  /*
+   * The threat area along the top of an investigator's card: its treacheries and engaged enemies
+   * as small upright cards, this many side by side before the row scrolls (`THREAT_CARDS_SHOWN`).
+   */
+  --threat-card-width: 3rem;
+  --threat-card-height: 4.2rem;
+  --threat-cards-shown: 4;
   /* The panel of an investigator who has left the game (defeated or resigned) steps back. */
   --eliminated-opacity: 0.55;
   /* The rim of a round piece or token: the enemy ring, the shroud's bone edge. */
