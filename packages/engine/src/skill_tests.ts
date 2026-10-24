@@ -1,5 +1,4 @@
 import { assertNever } from '@arkham/util';
-import { locationAttachments } from './board';
 import { effectiveValue } from './card_values';
 import type { CardStats, EngineContext } from './cards';
 import type { Command, Evade, Fight, Investigate, TestSkill } from './commands';
@@ -17,7 +16,6 @@ import { activeInvestigator } from './investigators';
 import { decisionId, type InstanceId } from './ids';
 import { hasKeyword } from './keywords';
 import { requireCard } from './lookup';
-import { discardToTop } from './placement';
 import { CommandRejected } from './rejection';
 import { withSuggestion } from './skill_modifiers';
 import type {
@@ -181,7 +179,7 @@ export function testedActionCommands(
   const kind = decision.testKind;
   switch (kind.kind) {
     case 'investigate':
-      return investigateCommands(ctx, state, investigator, kind.locationId, answer);
+      return investigateCommands(state, investigator, kind.locationId, answer);
     case 'fight':
       return fightCommands(ctx, state, investigator, kind, answer);
     case 'evade':
@@ -200,12 +198,10 @@ interface TestAnswer {
 /**
  * A passed investigation discovers the confirmed number of clues (1 by
  * default), at most the clues the location has left as the answer arrives
- * (a correction may have taken some off since the test started), then discards the attachments that leave
- * after a successful investigation (`LocationAttachment.discardWhenInvestigated`),
- * as their "After … is successfully investigated" says. A fail does nothing.
+ * (a correction may have taken some off since the test started). A fail
+ * does nothing.
  */
 function investigateCommands(
-  ctx: EngineContext,
   state: GameState,
   investigator: Investigator,
   locationId: InstanceId,
@@ -214,14 +210,9 @@ function investigateCommands(
   if (outcome === 'fail') return [];
   const location = requireCard(state.cards, locationId);
   const clues = Math.min(amount, location.tokens.clue ?? 0);
-  const discoverClues: Command[] =
-    clues > 0
-      ? [{ type: 'DiscoverClues', investigatorId: investigator.id, locationId, amount: clues }]
-      : [];
-  const discardAttachments = locationAttachments(ctx, state, location)
-    .filter(({ attachment }) => attachment.discardWhenInvestigated)
-    .map(({ card }) => discardToTop(card.id));
-  return [...discoverClues, ...discardAttachments];
+  return clues > 0
+    ? [{ type: 'DiscoverClues', investigatorId: investigator.id, locationId, amount: clues }]
+    : [];
 }
 
 /**
