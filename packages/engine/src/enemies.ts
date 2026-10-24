@@ -1,4 +1,5 @@
-import { cardStats, resolveValue, type CardStats, type EngineContext } from './cards';
+import { shortestPaths } from './board';
+import { cardStats, resolveValue, type CardStats, type EngineContext, type Trait } from './cards';
 import { investigatorLeavesEvents } from './elimination';
 import type { EnemyAttacked, Event, InvestigatorChanged } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
@@ -178,4 +179,27 @@ export function enemiesAt(state: GameState, locationId: InstanceId): CardInstanc
     const engaged = state.investigators.find((inv) => inv.id === zone.investigatorId);
     return engaged?.locationId === locationId;
   });
+}
+
+/**
+ * The enemies on the table with `trait` (any enemy without one) nearest to
+ * `from`, counted in connections, engaged ones where their investigator is
+ * ("the nearest [[Cultist]] enemy"). Several when they are equally near, in
+ * card order; none when no such enemy can be reached.
+ */
+export function nearestEnemies(
+  ctx: EngineContext,
+  state: GameState,
+  from: InstanceId,
+  trait?: Trait,
+): CardInstance[] {
+  const reachable = Object.values(state.cards).flatMap((card) => {
+    const stats = cardStats(ctx.cards, card.code);
+    if (!isEnemyOnTable(card) || stats.typeCode !== 'enemy') return [];
+    if (trait !== undefined && !stats.traits.includes(trait)) return [];
+    const [path] = shortestPaths(state, from, locationOf(state, card));
+    return path ? [{ card, distance: path.length - 1 }] : [];
+  });
+  const nearest = Math.min(...reachable.map(({ distance }) => distance));
+  return reachable.filter(({ distance }) => distance === nearest).map(({ card }) => card);
 }
