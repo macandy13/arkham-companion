@@ -110,6 +110,8 @@ export {
   atEndOfTurn,
   defeatEachInvestigator,
   discardEachEnemyAt,
+  eachEnemy,
+  moveEnemyTowards,
   discardSelf,
   duringAct,
   endScenario,

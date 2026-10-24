@@ -53,6 +53,11 @@ export function shortestPaths(state: GameState, from: InstanceId, to: InstanceId
   return pathsBack(shortestPathPredecessors(state, from, to), from, to);
 }
 
+/** The distinct locations `paths` (from `shortestPaths`) go to first: where a one-step move along them can go. */
+export function firstSteps(paths: readonly (readonly InstanceId[])[]): InstanceId[] {
+  return [...new Set(paths.flatMap((path) => path.slice(1, 2)))];
+}
+
 /**
  * Whether the card is a location currently on a map. Named for locations
  * because "in play" is a broader game-rule notion (any card in a play area).
