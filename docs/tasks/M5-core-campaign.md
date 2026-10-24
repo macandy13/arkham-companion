@@ -11,6 +11,17 @@ Ref: product.md "Campaign mode". Builds on the campaign engine (M1C).
 
 ---
 
+Order (planned 2026-10-24), one task at a time:
+
+1. M1C.4 resolutions write the log (slices in `M1C-campaign-engine.md`)
+2. M1C.5 starting a scenario from the log
+3. M5.3 The Midnight Masks
+4. M5.4 The Devourer Below and the campaign end
+5. M1C.6 campaign storage, then M5.2 campaign UI
+6. M5.5 export and the replay test across the campaign
+
+Rules the scenarios need that the engine lacks (encounter plan steps 4–12, M4.5) don't block them: such an effect is entered as an ability the engine skips, so the players get a "Do this by hand" notice until its plan step automates it.
+
 ## M5.1 Campaign model – moved to M1C
 
 The campaign model, chaos bag, resolutions, campaign setup and storage are engine work and moved to `docs/tasks/M1C-campaign-engine.md`, so the play screen and the wizard are built with campaigns in mind. M5 keeps the campaign UI and the real scenarios.

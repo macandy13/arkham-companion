@@ -39,6 +39,12 @@ export type CardImagePath = Brand<string, 'CardImagePath'>;
 export type EncounterSetCode = Brand<string, 'EncounterSetCode'>;
 /** `ScenarioDefinition.id`, e.g. 'the-gathering'; wherever a game or campaign refers to a scenario. */
 export type ScenarioId = Brand<string, 'ScenarioId'>;
+/**
+ * A scenario's resolution as its campaign guide numbers it, e.g. 'R1': what
+ * `ScenarioEnded` records in `GameMeta.resolution`, and the key of its steps
+ * in `ScenarioResolutions.byId`.
+ */
+export type ResolutionId = Brand<string, 'ResolutionId'>;
 /** `CampaignDefinition.id`, e.g. 'night-of-the-zealot'; `CampaignLog.definitionId`. */
 export type CampaignDefinitionId = Brand<string, 'CampaignDefinitionId'>;
 /** UUID (v4) identifying one game; never device-bound so it stays valid for later cloud sync (architecture "Persistence"). */
@@ -63,6 +69,7 @@ export const cardName = (name: string) => name as CardName;
 export const cardImagePath = (path: string) => path as CardImagePath;
 export const encounterSetCode = (code: string) => code as EncounterSetCode;
 export const scenarioId = (id: string) => id as ScenarioId;
+export const resolutionId = (id: string) => id as ResolutionId;
 export const campaignDefinitionId = (id: string) => id as CampaignDefinitionId;
 export const gameId = (id: string) => id as GameId;
 export const campaignId = (id: string) => id as CampaignId;

@@ -6,6 +6,7 @@ export * from './campaign_log';
 export * from './campaign_commands';
 export * from './campaign_events';
 export * from './campaign_definition';
+export * from './resolution';
 export {
   CampaignCommandRejected,
   type CampaignRejection,

@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  resolutionId,
   atEndOfPhase,
+  atEndOfEachTurn,
   atEndOfRound,
+  healSelf,
+  readySelf,
   atEndOfTurn,
   advanceAct,
   afterAttacking,
@@ -132,7 +136,7 @@ describe('trigger bus', () => {
     /** "(→R2)" on the back of the last agenda, after the first one. */
     const endingAgenda = blankAgenda('ending_agenda', fixed(5), {
       stage: { number: 2 },
-      abilities: [whenAdvanced(endScenario('R2'))],
+      abilities: [whenAdvanced(endScenario(resolutionId('R2')))],
     });
     const lastAgendaTable = newGame()
       .withAgenda(agenda1, firstAgendaCard)
@@ -159,11 +163,11 @@ describe('trigger bus', () => {
 
       const { events, state } = execute(ctx, lastAgenda, {
         type: 'AdvanceAgenda',
-        resolution: 'R1',
+        resolution: resolutionId('R1'),
       });
 
       expect(events.filter((event) => event.type === 'ScenarioEnded')).toEqual([
-        { type: 'ScenarioEnded', resolution: 'R2' },
+        { type: 'ScenarioEnded', resolution: resolutionId('R2') },
       ]);
       expect(state.meta.resolution).toBe('R2');
     });
@@ -1276,7 +1280,7 @@ describe('abilities with a condition on the current act', () => {
   const finalAct = blankAct('final_act');
   /** "If it is the trapped act, (→R3)." */
   const trappedAgenda = blankAgenda('trapped_agenda', fixed(3), {
-    abilities: [duringAct([trappedAct.code], whenAdvanced(endScenario('R3')))],
+    abilities: [duringAct([trappedAct.code], whenAdvanced(endScenario(resolutionId('R3'))))],
   });
   /** Alice and bob in the hall, with the trapped agenda current. */
   const trappedTable = newGame()
@@ -1291,7 +1295,7 @@ describe('abilities with a condition on the current act', () => {
 
     const { state } = execute(context, started, { type: 'AdvanceAgenda' });
 
-    expect(state.meta).toMatchObject({ ended: true, resolution: 'R3' });
+    expect(state.meta).toMatchObject({ ended: true, resolution: resolutionId('R3') });
   });
 
   it('does not fire while another act is current', () => {
@@ -1311,7 +1315,7 @@ describe('a choice for the lead investigator', () => {
     abilities: [
       whenAdvanced(
         leadDecides(decisionId('burn_or_spare'), 'Burn the house?', [
-          { id: 'burn', label: 'Burn it', effects: [endScenario('R1')] },
+          { id: 'burn', label: 'Burn it', effects: [endScenario(resolutionId('R1'))] },
           {
             id: 'spare',
             label: 'Leave it',
@@ -1546,6 +1550,94 @@ describe('a choice without the options that cannot be resolved', () => {
       sanity: { horror: 0 },
     });
   });
+});
+
+describe('enemies that heal or ready themselves', () => {
+  const bob = investigatorId('bob');
+  const nextPhase: Command = { type: 'NextPhase' };
+
+  it('heals 2 damage from an enemy at the end of the round, as the Relentless Dark Young does', () => {
+    const regrowing = instanceId('regrowing_horror');
+    /** "At the end of the round: heal 2 damage from it." */
+    const regrowingCard = blankEnemy('regrowing_horror', {
+      health: fixed(5),
+      abilities: [atEndOfRound(healSelf(2))],
+    });
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(regrowing, regrowingCard, atLocation(cellar), { tokens: { damage: 3 } })
+      .withTurnOf(alice)
+      .start();
+
+    const after = stateAfter(
+      context,
+      state,
+      { type: 'EndTurn', investigatorId: alice },
+      nextPhase,
+      nextPhase,
+    );
+
+    expect(after.cards[regrowing]?.tokens).toEqual({ damage: 1 });
+  });
+
+  it('heals 1 damage from an enemy after it attacks, as "Wolf-Man" Drew does', () => {
+    const howling = instanceId('howling_brute');
+    /** "When it attacks: heal 1 damage from it." */
+    const howlingCard = blankEnemy('howling_brute', {
+      health: fixed(4),
+      damage: 1,
+      abilities: [afterAttacking(healSelf(1))],
+    });
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(howling, howlingCard, engagedWith(alice), { tokens: { damage: 2 } })
+      .withTurnOf(alice)
+      .start();
+
+    const after = stateAfter(context, state, {
+      type: 'DealEnemyAttack',
+      enemyId: howling,
+      investigatorId: alice,
+      damage: 1,
+      horror: 0,
+    });
+
+    expect(after.cards[howling]?.tokens).toEqual({ damage: 1 });
+  });
+
+  it.each([
+    { turnOf: alice, exhaustedBefore: true },
+    { turnOf: bob, exhaustedBefore: true },
+    { turnOf: alice, exhaustedBefore: false },
+  ])(
+    'readies an enemy at the end of $turnOf’s turn (exhausted before: $exhaustedBefore), as Umôrdhoth does',
+    ({ turnOf, exhaustedBefore }) => {
+      const restless = instanceId('restless_titan');
+      /** "At the end of each investigator's turn: ready it." */
+      const restlessCard = blankEnemy('restless_titan', {
+        abilities: [atEndOfEachTurn(readySelf())],
+      });
+      const { context, state } = newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+        .withInvestigator(alice, { locationId: hall })
+        .withInvestigator(bob, { locationId: hall })
+        .withCard(restless, restlessCard, atLocation(cellar))
+        .withTurnOf(turnOf)
+        .start();
+      const before = exhaustedBefore
+        ? stateAfter(context, state, { type: 'ExhaustEnemy', enemyId: restless })
+        : state;
+
+      const after = stateAfter(context, before, { type: 'EndTurn', investigatorId: turnOf });
+
+      expect(before.cards[restless]?.exhausted).toBe(exhaustedBefore);
+      expect(after.cards[restless]?.exhausted).toBe(false);
+    },
+  );
 });
 
 describe('effects on each investigator', () => {

@@ -3,7 +3,7 @@ import { cardStats, type EngineContext } from './cards';
 import type { Command, EncounterMatch, TestSkill } from './commands';
 import { cardsInPlay } from './doom';
 import type { Event } from './events';
-import type { CardCode, DecisionId, InstanceId, InvestigatorId } from './ids';
+import type { CardCode, DecisionId, InstanceId, InvestigatorId, ResolutionId } from './ids';
 import { locationAttachments } from './board';
 import { enemiesAt } from './enemies';
 import { isActiveInvestigator, playerOrder, requireInvestigator } from './investigators';
@@ -38,6 +38,12 @@ export type TimingWindow =
    * left with the card's reason to fire.
    */
   | { kind: 'turnEnds' }
+  /**
+   * "At the end of each investigator's turn" for a card in play (Umôrdhoth):
+   * the end of any investigator's turn (`EndTurn`), naming them. Like
+   * `turnEnds`, a turn cut short by resignation or defeat opens nothing.
+   */
+  | { kind: 'eachTurnEnds' }
   /**
    * "When your turn begins" for a card in an investigator's threat area: the
    * start of that investigator's turn (`StartTurn`), naming them.
@@ -196,6 +202,8 @@ export type AbilityCommand =
           | 'RevealLocation'
           | 'FromSetAside'
           | 'SpawnEnemy'
+          | 'HealEnemy'
+          | 'ReadyEnemy'
           | 'MoveInvestigator'
           | 'AddMap'
           | 'AdvanceAct'
@@ -314,11 +322,18 @@ export function windowsOpenedBy(
       ];
     case 'TurnEnded': {
       const { investigatorId } = event;
-      return cardsInZone(state, { kind: 'threatArea', investigatorId }).map((cardId) => ({
-        window: { kind: 'turnEnds' },
-        cardId,
-        investigatorId,
-      }));
+      return [
+        ...cardsInZone(state, { kind: 'threatArea', investigatorId }).map((cardId) => ({
+          window: { kind: 'turnEnds' } as const,
+          cardId,
+          investigatorId,
+        })),
+        ...cardsInPlay(state).map((card) => ({
+          window: { kind: 'eachTurnEnds' } as const,
+          cardId: card.id,
+          investigatorId,
+        })),
+      ];
     }
     case 'TurnStarted': {
       const { investigatorId } = event;
@@ -651,6 +666,14 @@ export function afterEntering(...effects: AbilityEffect[]): Ability {
   return { window: { kind: 'entered' }, effects };
 }
 
+/**
+ * A forced ability "at the end of each investigator's turn" of a card in play,
+ * written `atEndOfEachTurn(readySelf())` (Umôrdhoth).
+ */
+export function atEndOfEachTurn(...effects: AbilityEffect[]): Ability {
+  return { window: { kind: 'eachTurnEnds' }, effects };
+}
+
 /** A forced ability "when your turn begins" of a card in a threat area. */
 export function whenTurnBegins(...effects: AbilityEffect[]): Ability {
   return { window: { kind: 'turnBegins' }, effects };
@@ -826,6 +849,16 @@ export function placeDoomOnSelf(amount: number): AbilityEffect {
   return { type: 'PlaceDoom', cardId: { ref: 'self' }, amount };
 }
 
+/** Heals up to `amount` damage from the enemy that has the ability ("heal 2 damage from it"). */
+export function healSelf(amount: number): AbilityEffect {
+  return { type: 'HealEnemy', enemyId: { ref: 'self' }, amount };
+}
+
+/** Readies the enemy that has the ability ("ready Umôrdhoth"). */
+export function readySelf(): AbilityEffect {
+  return { type: 'ReadyEnemy', enemyId: { ref: 'self' } };
+}
+
 /** The one copy of `code` in the game, for a scenario's unique cards (`{ ref: 'onlyCopy' }`). */
 export function onlyCopy(code: CardCode): RelativeCard {
   return { ref: 'onlyCopy', code };
@@ -908,7 +941,7 @@ export function duringAct(acts: readonly CardCode[], ability: Ability): Ability 
 }
 
 /** "(→R3)": the scenario ends with that resolution. */
-export function endScenario(resolution: string): AbilityEffect {
+export function endScenario(resolution: ResolutionId): AbilityEffect {
   return { type: 'EndScenario', resolution };
 }
 
