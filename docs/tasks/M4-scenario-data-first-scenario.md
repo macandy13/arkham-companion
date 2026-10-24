@@ -73,7 +73,8 @@ Steps 1–12 of the [encounter card plan](../encounter-card-analysis.md#implemen
   - [x] 2a "After you enter" a location (`afterEntering`): the Attic's horror and the Cellar's damage. "When you would leave" (Arkham Woods: Twisting Paths) cancels the move, so it waits for a cancellable window.
   - [x] 2b A phase's end (`atEndOfPhase`: Wizard of the Order, They're Getting Out!) and an investigator's turn start (`whenTurnBegins`). No Night of the Zealot card names a phase's start, so that window waits for one. "At the end of each investigator's turn" for cards outside a threat area waits for step 7 with Umôrdhoth.
   - [x] 2c1 After an investigation, fight or evade succeeds or fails (`afterTest`): Obscuring Fog's discard becomes an ability and `LocationAttachment.discardWhenInvestigated` is gone. A card's own test ("after you fail a test by 2 or more") waits for a card that needs it.
-  - [ ] 2c2 After an enemy engages or attacks you; after clues are discovered; after doom is placed; after you resolve another treachery; any enemy defeated (Young Deep One, Yithian Observer, Goat Spawn)
+  - [x] 2c2 After an enemy engages you (`afterEngaging`, either way round) and after you discover clues at a location (`afterDiscoveringClues`).
+  - [ ] 2c3 After an enemy attacks you (needs an attack event: `enemyAttackEvents` names no enemy), after doom is placed, after you resolve another treachery, and "when [this enemy] is defeated" while it is still at its location (Yithian Observer, Goat Spawn)
 - [x] 3 Skill test margin. Done by P2: `ResolveDecision.margin`, the suggestion's `margin`, `SkillTestResolved.margin` and per-point fails (#201).
 - [ ] 4 Choose one
 - [ ] 5 Card effects for existing commands, healing, conditional surge
