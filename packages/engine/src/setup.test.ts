@@ -486,6 +486,24 @@ describe('compileSetup buildEncounterDeck', () => {
     expect(codes).toEqual(['rat']);
   });
 
+  it('shuffles in a card of a set it does not gather', () => {
+    const codes = deckCodes([
+      { kind: 'buildEncounterDeck', sets: [encounterSetCode('set1')] },
+      { kind: 'shuffleIntoEncounterDeck', codes: [cardCode('rat')] },
+    ]);
+
+    expect(codes).toEqual(['ghoul', 'ghoul', 'ghoul', 'curse', 'curse', 'rat']);
+  });
+
+  it('adds no extra copy for a shuffled-in card of a gathered set: still 3 ghouls', () => {
+    const codes = deckCodes([
+      { kind: 'buildEncounterDeck', sets: [encounterSetCode('set1')] },
+      { kind: 'shuffleIntoEncounterDeck', codes: [cardCode('ghoul')] },
+    ]);
+
+    expect(codes.filter((code) => code === 'ghoul')).toHaveLength(3);
+  });
+
   it('rejects an encounter set without cards', () => {
     const def = makeDefinition({
       setup: [{ kind: 'buildEncounterDeck', sets: [encounterSetCode('typo')] }],
@@ -716,6 +734,98 @@ describe('compileSetup whenStory', () => {
       key: 'houseStillStanding',
       condition: 'flag',
     });
+  });
+});
+
+describe('compileSetup location versions', () => {
+  const rivertown = cardCode('rivertown');
+  const downtownBank = cardCode('downtown_bank');
+  const downtownAsylum = cardCode('downtown_asylum');
+  const ctx = {
+    cards: cardDbFrom([
+      blankLocation('rivertown'),
+      blankLocation('downtown_bank'),
+      blankLocation('downtown_asylum'),
+      blankEnemy('acolyte'),
+      ...standardInvestigatorCards,
+    ]),
+  };
+  /**
+   * Rivertown next to Downtown, one of its two versions; an Acolyte spawns at Downtown, which
+   * gets 1 doom, and the investigators start there.
+   */
+  const def = makeDefinition({
+    setup: [
+      {
+        ...mainMap(),
+        locations: [
+          { code: rivertown },
+          { code: downtownBank, versions: [downtownAsylum], at: { column: 1, row: 0 } },
+        ],
+        connections: [{ from: rivertown, to: downtownBank }],
+      },
+      { kind: 'spawn', code: cardCode('acolyte'), at: downtownBank },
+      { kind: 'placeTokens', target: downtownBank, token: 'doom', amount: 1 },
+      { kind: 'moveInvestigators', to: downtownBank },
+    ],
+  });
+
+  it.each([
+    { seed: 1, downtown: 'downtown_bank#1' },
+    { seed: 3, downtown: 'downtown_asylum#1' },
+  ])('puts $downtown into play with seed $seed, in its place on the map', ({ seed, downtown }) => {
+    const command = scenario.compileSetup({ ...ctx, scenario: def }, makeSetupOptions({ seed }));
+
+    expect(command.cards.map((card) => card.id)).toEqual(['rivertown#1', downtown, 'acolyte#1']);
+    expect(command.maps?.[main]).toMatchObject({
+      connections: [{ from: 'rivertown#1', to: downtown }],
+      layout: { [downtown]: { column: 1, row: 0 } },
+    });
+    expect(command.cards[2]?.zone).toEqual({ kind: 'atLocation', locationId: downtown });
+    expect(command.cards[1]?.tokens).toEqual({ doom: 1 });
+    expect(command.investigators[0]?.locationId).toBe(downtown);
+  });
+});
+
+describe('compileSetup whenPlayers', () => {
+  const ctx = {
+    cards: cardDbFrom([
+      blankLocation('southside'),
+      blankLocation('graveyard'),
+      blankEnemy('acolyte', { quantity: 3 }),
+      ...standardInvestigatorCards,
+    ]),
+  };
+  /** One Acolyte at Southside with 2 or more investigators, another at the Graveyard with 3 or more. */
+  const def = makeDefinition({
+    setup: [
+      mainMap('southside', 'graveyard'),
+      {
+        kind: 'whenPlayers',
+        atLeast: 2,
+        then: [{ kind: 'spawn', code: cardCode('acolyte'), at: cardCode('southside') }],
+      },
+      {
+        kind: 'whenPlayers',
+        atLeast: 3,
+        then: [{ kind: 'spawn', code: cardCode('acolyte'), at: cardCode('graveyard') }],
+      },
+    ],
+  });
+
+  it.each([
+    { players: 1, acolytes: [] },
+    { players: 2, acolytes: ['southside#1'] },
+    { players: 3, acolytes: ['southside#1', 'graveyard#1'] },
+  ])('spawns Acolytes at $acolytes with $players investigators', ({ players, acolytes }) => {
+    const command = scenario.compileSetup(
+      { ...ctx, scenario: def },
+      makeSetupOptions({ investigators: investigatorSeats(players) }),
+    );
+
+    expect(
+      command.cards.filter((card) => card.code === 'acolyte').map((card) => card.zone),
+    ).toEqual(acolytes.map((locationId) => ({ kind: 'atLocation', locationId })));
   });
 });
 
