@@ -677,10 +677,16 @@ describe('compileSetup whenStory', () => {
       const setup: SetupStep[] = [
         {
           kind: 'whenStory',
-          condition: { kind: 'flag', key: 'ghoulPriestStillAlive', value: false },
-          then: [{ kind: 'setAside', codes: [cardCode('ghoul_priest')] }],
+          condition: { kind: 'flag', key: 'ghoulPriestStillAlive', value: true },
+          then: [{ kind: 'buildEncounterDeck', sets: [encounterSetCode('ghouls')] }],
+          otherwise: [
+            {
+              kind: 'buildEncounterDeck',
+              sets: [encounterSetCode('ghouls')],
+              exclude: [cardCode('ghoul_priest')],
+            },
+          ],
         },
-        { kind: 'buildEncounterDeck', sets: [encounterSetCode('ghouls')] },
       ];
 
       const command = scenario.compileSetup(masksWith(setup), {
@@ -689,9 +695,7 @@ describe('compileSetup whenStory', () => {
         campaign: logWith({ ghoulPriestStillAlive: { kind: 'flag', value: alive } }),
       });
 
-      expect(
-        command.cards.filter((card) => card.zone.kind === 'encounterDeck').map((card) => card.code),
-      ).toEqual(deck);
+      expect(command.cards.map((card) => card.code)).toEqual(deck);
     },
   );
 

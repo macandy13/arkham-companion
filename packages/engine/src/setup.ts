@@ -218,6 +218,7 @@ const ENCOUNTER_DECK_TYPES: ReadonlySet<CardType> = new Set<CardType>(['enemy', 
 export function compileSetup(ctx: ScenarioContext, options: SetupOptions): StartScenario {
   const def = ctx.scenario;
   const log = options.campaign;
+  if (log) checkCampaignSeats(log, def.id, options.investigators);
   const steps = placingSteps(def.setup, log?.story ?? {});
   const env: SetupEnv = {
     ctx,
@@ -231,7 +232,6 @@ export function compileSetup(ctx: ScenarioContext, options: SetupOptions): Start
       ...deckCards(def.actDeck, { kind: 'actDeck' }),
     ],
   };
-  if (log) checkCampaignSeats(log, def.id, options.investigators);
   const difficulty = log ? log.difficulty : options.difficulty;
   const draft = steps.reduce((state, step) => applyStep(state, step, env), initial);
   const location = draft.investigatorLocation;

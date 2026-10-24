@@ -107,7 +107,7 @@ Designs for parts that have a milestone but no code yet. The PR that builds one 
 ### Campaign mode ([M1C](tasks/M1C-campaign-engine.md), [M5](tasks/M5-core-campaign.md))
 
 - **Campaign log:** investigators, trauma, XP, killed or insane, story records, chaos bag. `GameState.campaign` is a stub until then.
-- **Chaos bag:** standalone uses the scenario default per difficulty; a campaign uses the log, modified by resolutions. Scenarios that build on earlier ones read the log in `campaignSetup`.
+- **Chaos bag:** standalone uses the scenario default per difficulty; a campaign uses the log, modified by resolutions. Scenarios that build on earlier ones read the log in their setup (`whenStory` steps).
 - **Resolutions:** declarative steps (`record`, `addChaosToken`, `removeChaosToken`, `awardXp`, `addTrauma`), confirmed by the players. Deck upgrades stay with the players.
 
 ### Continuous play tester ([M1V.4](tasks/M1V-rules-verification.md))

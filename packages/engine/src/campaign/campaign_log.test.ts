@@ -112,6 +112,10 @@ describe('storyHolds', () => {
     expect(storyHolds(story, { kind: 'flag', key: 'houseStillStanding', value: true })).toBe(holds);
   });
 
+  it('reads a flag never written as false', () => {
+    expect(storyHolds({}, { kind: 'flag', key: 'houseStillStanding', value: false })).toBe(true);
+  });
+
   it.each([
     [2, true],
     [3, false],
@@ -125,10 +129,11 @@ describe('storyHolds', () => {
   });
 
   it.each([
-    ['a plain list', { cultistsWhoGotAway: { kind: 'list', entries: ['Wolf-Man Drew'] } }, true],
-    ['a list never written', {}, false],
-  ] as const)('counts the names of %s', (_, story, holds) => {
-    expect(storyHolds(story, { kind: 'atLeastNames', key: 'cultistsWhoGotAway', count: 1 })).toBe(
+    ['a plain list', { cultistsWhoGotAway: { kind: 'list', entries: ['Wolf-Man Drew'] } }, 1, true],
+    ['a list never written', {}, 1, false],
+    ['a list never written, asked for none', {}, 0, true],
+  ] as const)('counts the names of %s', (_, story, count, holds) => {
+    expect(storyHolds(story, { kind: 'atLeastNames', key: 'cultistsWhoGotAway', count })).toBe(
       holds,
     );
   });

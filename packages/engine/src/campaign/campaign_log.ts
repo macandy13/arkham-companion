@@ -1,3 +1,4 @@
+import { assertNever } from '@arkham/util';
 import {
   campaignDefinitionId,
   campaignId,
@@ -57,7 +58,7 @@ export interface CrossableEntry {
 /**
  * The value of a story record in the campaign log ("The investigators
  * burned the house", "cultists who got away"). Typed instead of a loose
- * `unknown`, so `campaignSetup` and resolutions (M1C.3/M1C.4) can read it
+ * `unknown`, so setup steps (`whenStory`) and resolutions (M1C.3/M1C.4) can read it
  * safely and the UI knows how to show it.
  */
 export type StoryValue =
@@ -225,11 +226,26 @@ export function storyHolds(
     case 'flag':
       if (!record) return condition.value === false;
       return record.kind === 'flag' ? record.value === condition.value : undefined;
-    case 'atLeastNames':
-      if (!record) return condition.count <= 0;
-      if (record.kind === 'list') return record.entries.length >= condition.count;
-      if (record.kind === 'crossableList')
-        return record.entries.filter((entry) => !entry.crossedOut).length >= condition.count;
+    case 'atLeastNames': {
+      const names = record ? namesListed(record) : 0;
+      return names === undefined ? undefined : names >= condition.count;
+    }
+    default:
+      return assertNever(condition);
+  }
+}
+
+/** How many names a list record holds that are not crossed out; `undefined` for a record that is no list. */
+function namesListed(record: StoryValue): number | undefined {
+  switch (record.kind) {
+    case 'list':
+      return record.entries.length;
+    case 'crossableList':
+      return record.entries.filter((entry) => !entry.crossedOut).length;
+    case 'flag':
+    case 'count':
       return undefined;
+    default:
+      return assertNever(record);
   }
 }
