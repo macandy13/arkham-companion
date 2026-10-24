@@ -6,7 +6,6 @@ import {
   blankEnemy,
   blankLocation,
   checkInvariants,
-  describeDecision,
   enemyAttackList,
   engagedWith,
   execute,
@@ -600,9 +599,11 @@ describe('MoveEnemyTowards', () => {
   it.each([
     { name: 'it is already there', towards: cellar },
     { name: 'there is no path there', towards: instanceId('shed') },
+    { name: 'the target is set aside, not in play', towards: instanceId('set_aside_parlor') },
   ])('leaves the enemy in the cellar when $name', ({ towards }) => {
     const { context, state } = hallCellarAttic
       .withLocation(instanceId('shed'), blankLocation('shed'))
+      .withCard(instanceId('set_aside_parlor'), blankLocation('parlor'), setAside)
       .withCard(ghoul, ghoulCard, atLocation(cellar))
       .start();
 
@@ -623,8 +624,13 @@ describe('MoveEnemyTowards', () => {
 
     const after = stateAfter(context, asked, answer(`towards:${ghoul}`, garden));
 
-    expect(asked.pending.map((decision) => describeDecision(context, asked, decision))).toEqual([
-      'Which way does aloof_ghoul move? cellar / garden [chooseLocation]',
+    expect(asked.pending).toMatchObject([
+      {
+        kind: 'chooseLocation',
+        subject: ghoul,
+        prompt: 'decision.chooseEnemyDestination',
+        options: [{ id: cellar }, { id: garden }],
+      },
     ]);
     expect(zoneOf(after, ghoul)).toEqual(atLocation(garden));
   });

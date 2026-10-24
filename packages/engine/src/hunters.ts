@@ -181,7 +181,7 @@ function chooseHunterLocation(
     state,
     hunter.id,
     `hunter:${hunter.id}:location`,
-    'decision.chooseHunterDestination',
+    'decision.chooseEnemyDestination',
     steps,
     (chosen) => ({ type: 'MoveHunter', enemyId: hunter.id, to: chosen }),
   );

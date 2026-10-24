@@ -168,7 +168,9 @@ export type RelativeCard =
   /**
    * Each enemy on the table with `trait` (any enemy without one), only the
    * unengaged ones with `unengaged` ("each unengaged [[Ghoul]] enemy"): the
-   * command repeats once per enemy, in card order.
+   * command repeats once per enemy, in card order. Unlike hunters, nobody
+   * picks the order: one enemy's step towards a fixed location changes no
+   * other enemy's path.
    */
   | { ref: 'eachEnemy'; trait?: Trait; unengaged?: true }
   /**

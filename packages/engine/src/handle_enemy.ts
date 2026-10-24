@@ -1,4 +1,4 @@
-import { firstSteps, requireLocationInPlay, shortestPaths } from './board';
+import { firstSteps, isLocationInPlay, requireLocationInPlay, shortestPaths } from './board';
 import type { CardStats, EngineContext } from './cards';
 import type {
   DamageEnemy,
@@ -104,13 +104,14 @@ export function handleMoveEnemyTowards(
   cmd: MoveEnemyTowards,
 ): Event[] {
   const { enemy } = onTableEnemyOf(ctx, state, cmd.enemyId);
-  requireLocationInPlay(state, cmd.towards);
   if (enemy.zone.kind === 'engaged')
     throw new CommandRejected({
       code: 'enemyEngaged',
       cardId: enemy.id,
       investigatorId: enemy.zone.investigatorId,
     });
+  // A target not in play yet (the Parlor while act 1 holds it set aside) has no path to it.
+  if (!isLocationInPlay(state, cmd.towards)) return [];
   const steps = firstSteps(shortestPaths(state, locationOf(state, enemy), cmd.towards));
   const [only] = steps;
   if (only === undefined) return [];

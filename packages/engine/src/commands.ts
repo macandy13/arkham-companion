@@ -589,7 +589,7 @@ export interface MoveEnemy {
  * A card effect moves an unengaged enemy one connection towards the location
  * `towards` along a shortest path ("each unengaged Ghoul enemy moves 1
  * location towards the Parlor"), exhausted or not. It stays when it is
- * there already or has no path; equally short first steps become a
+ * there already or has no path (also while `towards` is out of play); equally short first steps become a
  * `chooseLocation` decision for the lead investigator (`towards:<enemy>`),
  * answered with `MoveEnemy`. An engaged enemy moves only with its
  * investigator, so it is refused (`enemyEngaged`). Produces what `MoveEnemy`
