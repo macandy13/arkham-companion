@@ -27,7 +27,6 @@
    * Card frames by card type: locations on the map; the encounter deck, agenda, act and scenario
    * in the header; investigators in the investigator bar.
    */
-  --color-card-location: #8c7a55;
   --color-card-agenda: #9a4a3c;
   --color-card-act: #4a6f9a;
   --color-card-scenario: #6e5a8c;
@@ -115,6 +114,8 @@
   /* A location's name on its name plate and its type on the type plate, in SVG user units. */
   --card-name-size: 13px;
   --card-type-size: 6.5px;
+  /* The numbers on a tile's shroud, clue and doom tokens. */
+  --card-token-size: 13px;
   --card-type-spacing: 0.08em;
   /*
    * The art area of a card drawn in HTML (the agenda and act) without its image: the map's SVG

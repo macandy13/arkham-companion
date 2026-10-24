@@ -174,7 +174,6 @@
 }
 
 #card-paper rect {
-  fill: var(--color-ink);
   filter: url(#card-paper-grain);
 }
 
@@ -337,7 +336,7 @@
 
 #map svg [data-token] text {
   fill: var(--color-token-text);
-  font-size: var(--card-name-size);
+  font-size: var(--card-token-size);
   font-weight: bold;
 }
 
@@ -379,7 +378,7 @@
 
 #map svg g[role='button'] circle {
   fill: var(--color-parchment);
-  stroke: var(--color-card-band);
+  stroke: var(--card-band);
   stroke-width: var(--piece-ring-width);
 }
 

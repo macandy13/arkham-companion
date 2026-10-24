@@ -149,7 +149,9 @@ export function LocationTile({
  * The fills of a tile drawn in the printed cards' style, one set per side of a location card, so
  * a revealed tile reads apart from an unrevealed one at a glance: a parchment gradient for the
  * face (tan on the revealed side, sage on the unrevealed one, like the printed cards) and a hatch
- * for the art area while it has no card image. They are drawn once per map drawing, in its
+ * for the art area while it has no card image, and the paper's grain (`card-paper`, a pattern
+ * the size of a tile filled by the `card-paper-grain` noise filter: large faint foxing and a fine
+ * grain), which the frame lays over its plates and text box. They are drawn once per map drawing, in its
  * `defs`; the stylesheet fills each tile with the ones for its side by these ids and colours the
  * gradients' stops. The ids are fixed rather than `useId`, since the
  * stylesheet must name them; two drawings mounted at once would repeat them, which is harmless
@@ -167,6 +169,7 @@ export function CardPatterns() {
         <rect width={size} height={size} />
         <path d={`M 0 ${size} L ${size} 0 M 0 0 L ${size} ${size}`} />
       </pattern>
+      {/* The grain's sepia sits in the colour matrices, since filter matrices take no CSS colours. */}
       <filter id="card-paper-grain">
         <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="7" />
         <feColorMatrix

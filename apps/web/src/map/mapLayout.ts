@@ -40,7 +40,10 @@ export const CONTENT = { inset: 10, band: 19, pawnRadius: 14, pawnGap: 6 } as co
  */
 const TOKEN_LINE = (TILE.height * 8) / 15;
 
-/** The centre of a tile's shroud token, on its left edge where the art ends, as on the printed card. */
+/**
+ * The centre of a tile's shroud token, on its left edge where the art ends, as on the printed card.
+ * Its ring reaches a little past the edge, as the printed circle does.
+ */
 export const SHROUD_CENTRE: Point = { x: CONTENT.pawnRadius, y: TOKEN_LINE };
 
 /** The centre of a tile's clue token, on its right edge where the art ends, as on the printed card. */
@@ -52,6 +55,9 @@ export const DOOM_CENTRE: Point = {
   y: CLUES_CENTRE.y + 2 * CONTENT.pawnRadius + CONTENT.pawnGap,
 };
 
+/** The top of the art window: just under the top edge, about 6 % of the card, as on the printed card. */
+const ART_TOP = 12;
+
 /**
  * Where the "frames" look shows a location's art on its tile: the printed card's art area, the
  * whole width from just under the top edge to a little below the shroud and clues. The name plate
@@ -59,9 +65,9 @@ export const DOOM_CENTRE: Point = {
  */
 export const ART_WINDOW = {
   x: 0,
-  y: CONTENT.inset + 2,
+  y: ART_TOP,
   width: TILE.width,
-  height: TOKEN_LINE + CONTENT.pawnGap - (CONTENT.inset + 2),
+  height: TOKEN_LINE + CONTENT.pawnGap - ART_TOP,
 } as const;
 
 /**

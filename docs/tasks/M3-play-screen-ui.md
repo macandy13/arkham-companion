@@ -186,7 +186,7 @@ Decisions from the prototype review:
 - [ ] M3.12c: card art in frames (art crops per card type) and the "Full card faces" setting, on the M3.10c2 pictures. Slices:
   - [x] M3.12c1: The Gathering's hand-written cards name their ArkhamDB pictures, so the app shows real art before M4.4; the E2E guard turns pictures down, so tests and screenshots keep the pattern
   - [x] M3.12c2: the "Card pictures" setting (frames with card art, or full card faces) and the location tiles' art crop
-  - [x] M3.12c2c: the location tiles drawn like the printed location cards (our own SVG frame over full-width art), after the prototype's ornament drafts looked too plain
+  - [x] M3.12c2c: the location tiles drawn like the printed location cards (our own SVG frame over full-width art), after the prototype's ornament drafts looked too plain; one PR over the size budget, since either half alone looks broken (the frame without the new layout leaves the printed template in the art, the layout without the frame shows it)
   - [ ] M3.12c2b: the header's agenda and act in both looks, after M3.12d (art crops: agenda front left 40 %, act front right 40 %, backs show the pattern; check the scan's orientation first)
   - [ ] M3.12c3: avatar crops for investigator pawns and enemy tokens, once their views carry a picture
 
