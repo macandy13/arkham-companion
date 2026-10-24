@@ -62,6 +62,18 @@ export type TimingWindow =
    */
   | { kind: 'tested'; action: TestedAction; outcome: SkillTestOutcome }
   /**
+   * "After [this enemy] engages you": the enemy became engaged with an
+   * investigator (`EnemyEngaged`), whether it engaged them or they engaged
+   * it, as the rules treat both alike. Opened for the enemy, naming the
+   * investigator.
+   */
+  | { kind: 'engaged' }
+  /**
+   * "After you discover clues at [this location]": opened by
+   * `CluesDiscovered` for the location, naming the investigator.
+   */
+  | { kind: 'cluesDiscovered' }
+  /**
    * "After you enter [this location]": an investigator moved into the
    * location (`InvestigatorMoved`), naming them. When the move turned it
    * face up, it fires before the reveal's abilities: a fixed stand-in, as
@@ -302,6 +314,22 @@ export function windowsOpenedBy(
         cardId: card.id,
       }));
     }
+    case 'EnemyEngaged':
+      return [
+        {
+          window: { kind: 'engaged' },
+          cardId: event.enemyId,
+          investigatorId: event.investigatorId,
+        },
+      ];
+    case 'CluesDiscovered':
+      return [
+        {
+          window: { kind: 'cluesDiscovered' },
+          cardId: event.locationId,
+          investigatorId: event.investigatorId,
+        },
+      ];
     case 'SkillTestResolved': {
       const { action, subject, outcome, investigatorId } = event;
       if (action === undefined || subject === undefined) return [];
@@ -591,6 +619,16 @@ export function afterTest(
   ...effects: AbilityEffect[]
 ): Ability {
   return { window: { kind: 'tested', action, outcome }, effects };
+}
+
+/** A forced ability "after [this enemy] engages you", written `afterEngaging(takeHorror(1))`. */
+export function afterEngaging(...effects: AbilityEffect[]): Ability {
+  return { window: { kind: 'engaged' }, effects };
+}
+
+/** A forced ability "after you discover clues at [this location]", written `afterDiscoveringClues(placeDoomOnSelf(1))`. */
+export function afterDiscoveringClues(...effects: AbilityEffect[]): Ability {
+  return { window: { kind: 'cluesDiscovered' }, effects };
 }
 
 /** A forced ability "at the end of the round", written `atEndOfRound(discardSelf())`. */

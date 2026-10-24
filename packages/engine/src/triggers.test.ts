@@ -4,6 +4,8 @@ import {
   atEndOfRound,
   atEndOfTurn,
   advanceAct,
+  afterDiscoveringClues,
+  afterEngaging,
   afterEntering,
   afterTest,
   atLocation,
@@ -33,6 +35,7 @@ import {
   moveEachInvestigatorTo,
   moveSelf,
   newGame,
+  setAside,
   shuffleEncounterDiscard,
   leadDrawsDiscardingUntil,
   onlyCopy,
@@ -54,6 +57,7 @@ import {
   type AbilityEffect,
   type AddMapStep,
   type Command,
+  type Zone,
 } from './index';
 import { requireInvestigator } from './investigators';
 import { answer, rejectionFrom, stateAfter } from '../test/utils';
@@ -528,6 +532,76 @@ describe('trigger bus', () => {
       const discarded = events.findIndex((e) => e.type === 'CardMoved' && e.cardId === fog);
       const discovered = events.findIndex((e) => e.type === 'CluesDiscovered');
       expect(discarded).toBeLessThan(discovered);
+    });
+  });
+
+  describe('abilities after an engagement or a clue discovery', () => {
+    const lurker = instanceId('lurker');
+    const bob = investigatorId('bob');
+    /** An enemy that deals 1 horror to whoever it becomes engaged with. */
+    const lurkerCard = blankEnemy('lurker', { abilities: [afterEngaging(takeHorror(1))] });
+
+    // Bob is in the hall only when the lurker starts engaged with him, so the spawn needs no choice.
+    it.each<{ name: string; zone: Zone; bobInHall: boolean; command: Command }>([
+      {
+        name: 'spawns engaged with her',
+        zone: setAside,
+        bobInHall: false,
+        command: { type: 'SpawnEnemy', enemyId: lurker, at: hall },
+      },
+      {
+        name: 'is taken over from bob by her',
+        zone: engagedWith(bob),
+        bobInHall: true,
+        command: { type: 'EngageEnemy', enemyId: lurker, investigatorId: alice },
+      },
+    ])('deals alice 1 horror when the lurker $name', ({ zone, bobInHall, command }) => {
+      const { context, state } = newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withInvestigator(alice, { locationId: hall })
+        .withInvestigator(bob, bobInHall ? { locationId: hall } : {})
+        .withCard(lurker, lurkerCard, zone)
+        .withTurnOf(alice)
+        .start();
+
+      const after = stateAfter(context, state, command);
+
+      expect(requireInvestigator(after, alice).sanity.horror).toBe(1);
+      expect(requireInvestigator(after, bob).sanity.horror).toBe(0);
+    });
+
+    it('opens no window for an enemy engaged at setup', () => {
+      const { state } = newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withInvestigator(alice, { locationId: hall })
+        .withCard(lurker, lurkerCard, atLocation(hall))
+        .start();
+
+      expect(state.cards[lurker]?.zone).toEqual(engagedWith(alice));
+      expect(requireInvestigator(state, alice).sanity.horror).toBe(0);
+    });
+
+    it('places 1 doom on the location alice discovers a clue at', () => {
+      const shrine = instanceId('shrine');
+      /** A shrine with 2 clues; after a clue is discovered there, 1 doom goes on it. */
+      const shrineCard = blankLocation('shrine', {
+        clues: fixed(2),
+        abilities: [afterDiscoveringClues(placeDoomOnSelf(1))],
+      });
+      const { context, state } = newGame()
+        .withLocation(shrine, shrineCard, { revealed: true })
+        .withInvestigator(alice, { locationId: shrine })
+        .withTurnOf(alice)
+        .start();
+
+      const after = stateAfter(
+        context,
+        state,
+        { type: 'Investigate', investigatorId: alice },
+        answer('investigate:alice', 'pass'),
+      );
+
+      expect(after.cards[shrine]?.tokens).toEqual({ clue: 1, doom: 1 });
     });
   });
 
