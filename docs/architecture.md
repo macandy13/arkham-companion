@@ -172,6 +172,7 @@ A scenario's resolutions are data on `ScenarioDefinition.resolutions` ([`resolut
 - **A new command or record:** add it in `campaign/` with its events, reducer case and invariant.
 - **A new correction:** a `CampaignAdjustment` case in `handle_campaign_adjustment.ts` that produces the regular event.
 - **A new kind of resolution step:** a `ResolutionStep` case and its command in `proposeStep`; a new target is a `ResolutionTarget` case.
+- **A new question about the ended game:** a `GameCondition` case in `gameHolds`, or a `CardPlace` case in `isAt`.
 
 ### Card data
 

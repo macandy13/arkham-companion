@@ -334,10 +334,10 @@ describe('proposeResolution with steps that read the game', () => {
       },
       false,
     ],
-    ['the current agenda is agenda 1', { kind: 'currentAgenda', code: firstAgenda }, true],
+    ['the current agenda is agenda 1', { kind: 'currentAgenda', agendas: [firstAgenda] }, true],
     [
       'the current agenda is agenda 2',
-      { kind: 'currentAgenda', code: cardCode('time_grows_short') },
+      { kind: 'currentAgenda', agendas: [cardCode('time_grows_short')] },
       false,
     ],
     [
@@ -345,7 +345,7 @@ describe('proposeResolution with steps that read the game', () => {
       {
         kind: 'anyOf',
         conditions: [
-          { kind: 'currentAgenda', code: cardCode('time_grows_short') },
+          { kind: 'currentAgenda', agendas: [cardCode('time_grows_short')] },
           { kind: 'cardIn', code: drew, places: ['victoryDisplay'] },
         ],
       },
@@ -371,6 +371,16 @@ describe('proposeResolution with steps that read the game', () => {
           }
         : { kind: 'command', command: { type: 'AddChaosToken', token: 'cultist' } },
     ]);
+  });
+
+  it('proposes nothing for a condition that fails without "otherwise" steps', () => {
+    const proposal = proposalFor({
+      kind: 'when',
+      condition: { kind: 'cardIn', code: herman, places: ['victoryDisplay'] },
+      then: [flagGhoulPriestDead],
+    });
+
+    expect(proposal).toEqual([]);
   });
 
   it('records the names of the cards whose condition holds, in step order', () => {

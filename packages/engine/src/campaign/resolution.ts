@@ -1,6 +1,7 @@
 import { assertNever } from '@arkham/util';
 import { cardStats, type EngineContext } from '../cards';
 import { isInPlay } from '../doom';
+import { currentCard } from '../lookup';
 import type { CardCode, InvestigatorCode, ResolutionId } from '../ids';
 import type { CardInstance, ChaosToken, GameState, Investigator } from '../state';
 import { victoryPoints } from '../victory';
@@ -82,15 +83,19 @@ export type ResolutionStep =
       readonly names: readonly { readonly code: CardCode; readonly when: GameCondition }[];
     };
 
-/** Where a card is when the game ends, as resolutions ask about it. */
+/**
+ * Where a card is when the game ends, as resolutions ask about it. A
+ * scenario's own deck (The Midnight Masks' Cultist deck) is set aside, so
+ * cards left out of it must go out of the game, not set aside.
+ */
 export type CardPlace = 'inPlay' | 'setAside' | 'victoryDisplay';
 
 /** A question about the ended game that a `when` or `recordNames` step asks. */
 export type GameCondition =
   /** Some copy of `code` is in one of `places`; false when the game has none. */
   | { readonly kind: 'cardIn'; readonly code: CardCode; readonly places: readonly CardPlace[] }
-  /** The current agenda is `code`, as in "if it is Agenda 1". */
-  | { readonly kind: 'currentAgenda'; readonly code: CardCode }
+  /** The current agenda is one of `agendas`, as in "if it is Agenda 1" (like `AbilityCondition.currentAct`). */
+  | { readonly kind: 'currentAgenda'; readonly agendas: readonly CardCode[] }
   | { readonly kind: 'anyOf'; readonly conditions: readonly GameCondition[] };
 
 /** A scenario's resolutions, on `ScenarioDefinition.resolutions`. */
@@ -238,8 +243,8 @@ function gameHolds(game: GameState, condition: GameCondition): boolean {
           card.code === condition.code && condition.places.some((place) => isAt(game, card, place)),
       );
     case 'currentAgenda': {
-      const current = game.agenda.current;
-      return current !== undefined && game.cards[current]?.code === condition.code;
+      const agenda = currentCard(game, 'agenda');
+      return agenda !== undefined && condition.agendas.includes(agenda.code);
     }
     case 'anyOf':
       return condition.conditions.some((inner) => gameHolds(game, inner));
