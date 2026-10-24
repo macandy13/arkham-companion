@@ -57,7 +57,9 @@ describe('proposeResolution', () => {
         R1: [
           { kind: 'record', key: 'houseStillStanding', value: { kind: 'flag', value: false } },
           { kind: 'addChaosToken', token: 'cultist' },
+          { kind: 'removeChaosToken', token: '-1' },
           { kind: 'addTrauma', to: 'lead', trauma: 'mental', amount: 1 },
+          { kind: 'markInsane', to: 'lead' },
         ],
       },
       none: [],
@@ -80,10 +82,12 @@ describe('proposeResolution', () => {
         },
       },
       { kind: 'command', command: { type: 'AddChaosToken', token: 'cultist' } },
+      { kind: 'command', command: { type: 'RemoveChaosToken', token: '-1' } },
       {
         kind: 'command',
         command: { type: 'AddTrauma', code: aliceCode, kind: 'mental', amount: 1 },
       },
+      { kind: 'command', command: { type: 'MarkInsane', code: aliceCode } },
     ]);
   });
 
