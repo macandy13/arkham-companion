@@ -121,6 +121,22 @@ describe('describeDecision', () => {
     );
   });
 
+  it('asks where an enemy moves, for a hunter or a card that moves it', () => {
+    const destination: Decision = {
+      ...engage,
+      kind: 'chooseLocation',
+      prompt: 'decision.chooseEnemyDestination',
+      options: [
+        { id: 'cellar', label: 'Cellar', commands: [] },
+        { id: 'attic', label: 'Attic', commands: [] },
+      ],
+    };
+
+    expect(describeDecision(context, state, destination)).toEqual(
+      'Where does Swarm of Rats move? Cellar / Attic [chooseLocation]',
+    );
+  });
+
   it('shows the key of a prompt without a sentence', () => {
     const custom: Decision = { ...engage, subject: undefined, prompt: 'decision.chooseCellar' };
 
