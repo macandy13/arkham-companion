@@ -22,11 +22,15 @@ const study = instanceId('study');
 const alder = investigatorId('alder');
 const brook = investigatorId('brook');
 
-/** Actions that play on `table`, as the store's play on the open game; undo is never used here. */
+/**
+ * Actions that play on `table`, as the store's play on the open game; undo and adjusting are never
+ * used here.
+ */
 const actionsOn = (table: PlayTable) =>
   gameActions(
     async (step) => step(table),
     async () => {},
+    { start: async () => {}, finish: async () => {}, cancel: async () => {} },
   );
 
 const panel = (name: string) => screen.getByRole('region', { name });

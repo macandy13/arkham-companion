@@ -43,11 +43,15 @@ const house = newGame()
   .withConnection(study, hallway)
   .withConnection(hallway, attic, { oneWay: true });
 
-/** Actions that play on `table`, as the store's play on the open game; undo is never used here. */
+/**
+ * Actions that play on `table`, as the store's play on the open game; undo and adjusting are never
+ * used here.
+ */
 const actionsOn = (table: PlayTable) =>
   gameActions(
     async (step) => step(table),
     async () => {},
+    { start: async () => {}, finish: async () => {}, cancel: async () => {} },
   );
 
 const tile = (name: string) => screen.getByRole('group', { name });
