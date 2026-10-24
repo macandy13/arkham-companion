@@ -201,17 +201,6 @@
   background: var(--color-accent);
 }
 
-/* An icon button draws its icon (a line drawing in icons/) in the text colour. */
-#investigators button[data-icon]::before {
-  content: '';
-  display: block;
-  width: var(--icon-size);
-  height: var(--icon-size);
-  margin: auto;
-  background: currentcolor;
-  mask: center / contain no-repeat;
-}
-
 #investigators button[data-icon='resign']::before {
   mask-image: url('./icons/resign.svg');
 }

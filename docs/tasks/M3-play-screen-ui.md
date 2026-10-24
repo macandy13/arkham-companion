@@ -209,6 +209,8 @@ Decisions from the prototype review:
 
   Done: M3.12f1 frames `#app > main` (outside the board) and `dialog` with a `border-image` (`panel_frame.svg`, a light-theme copy in its accent colour, since an image cannot read the tokens) and puts the title's ornament (`ornament_rule.svg`, a mask in the accent colour) under the screen's `h1`. M3.12f2 lays the board out like the prototype (investigators beside the map in landscape, below it in portrait, the counters under the card in the column; the notices float over the foot of the map) and gives the investigator panels and the notices the same frame at half width (`--panel-frame-width-compact`), parchment by day, and marks the investigator whose turn it is with a brass glow (`--turn-glow`) instead of a border; the table stays open, with a brass rule above the investigator bar.
 
+- [x] M3.12g: the map's controls take no room of it: the zoom buttons are small round icons and the map tabs small pills, both floating over its top corners; the area heading and the map's name are for screen readers only, since the map shows what it is and the tabs name several
+
 - The investigator panel in the prototype's form is part of M3.5.
 
 Done: M3.12a maps the dark theme to the playmat palette (night, brass, bone, see-through panels), lays our own playmat drawing (`styles/playmat.svg`) behind every screen as a fixed layer, sets headings in the display type, and gives every dialog one brass-framed shell over a dimmed table; the header row is shaded over the playmat. The light theme stays, as the same playmat by day (parchment, dark brass, ink, `styles/playmat_light.svg`). Follow-up:

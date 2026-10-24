@@ -62,6 +62,6 @@ test('start a new game', async ({ page }) => {
   await test.step('Start the game', async () => {
     await page.getByRole('button', { name: 'Start game' }).click();
     await expect(page).toHaveURL(/#\/game\/.+/);
-    await expect(page.getByRole('heading', { level: 2, name: 'Map' })).toBeVisible();
+    await expect(page.getByRole('toolbar', { name: 'Zoom' })).toBeVisible();
   });
 });
