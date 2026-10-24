@@ -80,7 +80,7 @@ Steps 1–12 of the [encounter card plan](../encounter-card-analysis.md#implemen
 - [x] 3 Skill test margin. Done by P2: `ResolveDecision.margin`, the suggestion's `margin`, `SkillTestResolved.margin` and per-point fails (#201).
 - [ ] 4 Choose one, in two PRs:
   - [x] 4a `youMustEither` (the drawer chooses) next to `leadDecides`; an option's player-card part is only in its label. Agenda 1 (What's Going On?!) asks the lead: each investigator discards a random card at the table, or the lead takes 2 horror. Offer of Power fits as is once its card data lands.
-  - [ ] 4b Options that need something ("spend 1 clue; if you cannot, take 2 damage": Hunting Shadow), and Graveyard's "if you fail, you must either take 2 horror or move to Rivertown" (a test whose fail outcome is a choice).
+  - [ ] 4b Options that need something (Hunting Shadow: "you must either spend 1 clue or take 2 damage"; check the Rules Reference on choosing an option you cannot resolve first), and Graveyard's "if you fail, you must either take 2 horror or move to Rivertown" (a test whose fail outcome is a choice).
 - [ ] 5 Card effects for existing commands, healing, conditional surge
 - [ ] 6 Board queries (nearest, most clues, no doom; moving toward; search by trait)
 - [ ] 7 Keyword details (prey, spawn filters, per-investigator values)

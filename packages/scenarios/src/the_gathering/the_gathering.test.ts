@@ -446,6 +446,43 @@ describe('The Gathering acts 2 and 3', () => {
   });
 });
 
+describe('The Gathering agenda 1', () => {
+  const tank = investigatorId('tank');
+  const seeker = investigatorId('seeker');
+  const horrorOf = (state: GameState, investigator: typeof tank) =>
+    state.investigators.find((inv) => inv.id === investigator)?.sanity.horror;
+
+  it('asks the lead, tank, to choose once agenda 1 advances', () => {
+    const asked = stateAfter(ctx, startScenario(ctx, { playerCount: 2 }), {
+      type: 'AdvanceAgenda',
+    });
+
+    expect(asked.pending).toMatchObject([
+      {
+        id: WHATS_GOING_ON_DECISION,
+        kind: 'chooseOption',
+        decider: { kind: 'lead' },
+        options: [{ id: 'discard' }, { id: 'horror' }],
+      },
+    ]);
+  });
+
+  it.each([
+    { optionId: 'discard', tankHorror: 0 },
+    { optionId: 'horror', tankHorror: 2 },
+  ])('gives tank $tankHorror horror and seeker none for $optionId', ({ optionId, tankHorror }) => {
+    const asked = stateAfter(ctx, startScenario(ctx, { playerCount: 2 }), {
+      type: 'AdvanceAgenda',
+    });
+
+    const state = stateAfter(ctx, asked, answer(WHATS_GOING_ON_DECISION, optionId));
+
+    expect(horrorOf(state, tank)).toBe(tankHorror);
+    expect(horrorOf(state, seeker)).toBe(0);
+    expect(state.pending).toEqual([]);
+  });
+});
+
 describe('The Gathering agendas 2 and 3', () => {
   const tank = investigatorId('tank');
   const seeker = investigatorId('seeker');

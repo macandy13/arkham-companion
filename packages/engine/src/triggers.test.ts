@@ -1367,8 +1367,8 @@ describe('a choice for the investigator who drew the card', () => {
   const bob = investigatorId('bob');
   const offer = instanceId('offer');
   /**
-   * "Revelation – You must either draw 2 cards and place 2 doom on the agenda, or take 2 horror."
-   * The draw is done at the table, so its option only places the doom.
+   * The drawer chooses: draw 2 and 2 doom, or 2 horror (like Offer of Power). The draw is done at
+   * the table, so its option only places the doom.
    */
   const offerCard = blankTreachery('offer', {
     abilities: [
