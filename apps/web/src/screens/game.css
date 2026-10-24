@@ -421,3 +421,51 @@
   border-radius: var(--radius);
   background: var(--color-background);
 }
+
+/*
+ * The decision dialog (DecisionDialog): the question as its title, who decides and the test under
+ * it, then the options as a column of full-width buttons and Undo at its foot.
+ */
+#board dialog[data-dialog='decision'] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+#board dialog[data-dialog='decision']:not([open]) {
+  display: none;
+}
+
+#board dialog[data-dialog='decision'] h2 {
+  margin: 0;
+  font-size: var(--font-size-subtitle);
+}
+
+#board dialog[data-dialog='decision'] p {
+  margin: 0;
+}
+
+#board dialog[data-dialog='decision'] ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* An attribute selector, so it beats the home screen's padded `#app > main ul > li` cards. */
+#board dialog[data-dialog='decision'] li {
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+#board dialog[data-dialog='decision'] ul button {
+  width: 100%;
+}
+
+#board dialog[data-dialog='decision'] footer {
+  display: flex;
+  justify-content: flex-end;
+}

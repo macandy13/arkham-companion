@@ -179,6 +179,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         for: daisy,
         test: { skill: 'willpower', difficulty: 4 },
         options: ['pass', 'fail'],
+        labels: { pass: 'decision.pass', fail: 'decision.fail' },
       },
     ]);
     // Crypt Chill is discarded only once its revelation has resolved.
@@ -267,6 +268,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         kind: 'confirm',
         about: "What's Going On?!",
         options: ['yes', 'no'],
+        labels: { yes: 'decision.yes', no: 'decision.no' },
       },
     ]);
     expect(table.board.enemies).toEqual([
@@ -367,6 +369,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         for: roland,
         test: { skill: 'agility', difficulty: 3 },
         options: ['pass', 'fail'],
+        labels: { pass: 'decision.pass', fail: 'decision.fail' },
       },
     ]);
 
@@ -440,6 +443,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         for: roland,
         test: { skill: 'willpower', difficulty: 3 },
         options: ['pass', 'fail'],
+        labels: { pass: 'decision.pass', fail: 'decision.fail' },
       },
     ]);
 
@@ -478,6 +482,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         for: wendy,
         test: { skill: 'willpower', difficulty: 3 },
         options: ['pass', 'fail'],
+        labels: { pass: 'decision.pass', fail: 'decision.fail' },
       },
     ]);
     table.answer(byName('Frozen in Fear'), 'fail');
@@ -530,6 +535,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         for: roland,
         test: { skill: 'willpower', difficulty: 3 },
         options: ['pass', 'fail'],
+        labels: { pass: 'decision.pass', fail: 'decision.fail' },
       },
     ]);
     table.answer(byName('Rotting Remains'), 'pass');
@@ -597,6 +603,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         for: roland,
         test: { skill: 'agility', difficulty: 3 },
         options: ['pass', 'fail'],
+        labels: { pass: 'decision.pass', fail: 'decision.fail' },
       },
     ]);
 
@@ -617,6 +624,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         for: roland,
         test: { skill: 'agility', difficulty: 3 },
         options: ['pass', 'fail'],
+        labels: { pass: 'decision.pass', fail: 'decision.fail' },
       },
     ]);
 
@@ -633,6 +641,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         for: daisy,
         test: { skill: 'agility', difficulty: 3 },
         options: ['pass', 'fail'],
+        labels: { pass: 'decision.pass', fail: 'decision.fail' },
       },
     ]);
     table.answer(byName('Grasping Hands'), 'pass');
@@ -664,6 +673,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         about: 'Flesh-Eater',
         for: roland,
         options: ['attack', 'does not provoke'],
+        labels: { attack: 'decision.attack', 'does not provoke': 'decision.doesNotProvoke' },
         defaults: { attack: { damage: 1, horror: 2 } },
       },
     ]);
@@ -681,6 +691,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         for: roland,
         test: { skill: 'intellect', difficulty: 1 },
         options: ['pass', 'fail'],
+        labels: { pass: 'decision.pass', fail: 'decision.fail' },
         defaults: { pass: { amount: 1 } },
       },
     ]);
@@ -781,6 +792,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         for: wendy,
         test: { skill: 'willpower', difficulty: 4 },
         options: ['pass', 'fail'],
+        labels: { pass: 'decision.pass', fail: 'decision.fail' },
       },
     ]);
     table.answer(byName('Crypt Chill'), 'pass');
@@ -830,6 +842,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         kind: 'confirm',
         about: 'Rise of the Ghouls',
         options: ['yes', 'no'],
+        labels: { yes: 'decision.yes', no: 'decision.no' },
       },
     ]);
     table.answer(byName('Rise of the Ghouls'), 'yes');
@@ -931,6 +944,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         for: daisy,
         test: { skill: 'willpower', difficulty: 3 },
         options: ['pass', 'fail'],
+        labels: { pass: 'decision.pass', fail: 'decision.fail' },
       },
     ]);
     table.answer(byName('Rotting Remains'), 'pass');
@@ -1018,6 +1032,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         about: 'Ghoul Priest',
         for: daisy,
         options: ['attack', 'attack cancelled'],
+        labels: { attack: 'decision.attack', 'attack cancelled': 'decision.attackCancelled' },
         defaults: { attack: { damage: 2, horror: 2 } },
       },
     ]);

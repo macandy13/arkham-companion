@@ -7,6 +7,7 @@ import { gameId as toGameId } from '@arkham/engine';
 import type { AppState } from '../state/appStore';
 import { InvestigatorBar } from '../investigators/InvestigatorBar';
 import { MapBoard } from '../map/MapBoard';
+import { DecisionDialog } from './DecisionDialog';
 import { GameHeader } from './GameHeader';
 import { GameStatus } from './GameStatus';
 import { RejectionToast } from './RejectionToast';
@@ -16,7 +17,7 @@ import './game.css';
 /**
  * Route `/game/:id`: loads the game named in the URL (so deep links and reloads work)
  * and shows the board layout of product.md "UI concept": the header, the status row, the map, the investigator bar,
- * the reason when an action is refused, and the card effects it skipped. Until the game is open it says so, and
+ * the first open decision as a dialog, the reason when an action is refused, and the card effects it skipped. Until the game is open it says so, and
  * a game it cannot play (its scenario is not in the catalog) gets a warning instead of a board.
  */
 export function GameScreen({ store }: { store: StoreApi<AppState> }) {
@@ -40,6 +41,7 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
     );
   }
   const { board } = open;
+  const [decision] = board.decisions;
 
   return (
     <div id="board" data-adjusting={open.adjusting || undefined}>
@@ -63,6 +65,15 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
           adjusting={open.adjusting}
         />
       </section>
+      {/* Adjusting the board is allowed with a decision open, so the dialog steps aside meanwhile. */}
+      {decision && !open.adjusting && (
+        <DecisionDialog
+          board={board}
+          decision={decision}
+          actions={store.getState().actions}
+          busy={open.busy}
+        />
+      )}
       <div id="notices">
         {open.skippedEffects && (
           <SkippedEffectsNotice

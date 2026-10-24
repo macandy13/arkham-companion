@@ -1,6 +1,7 @@
 import {
   CommandRejected,
-  type DecisionId,
+  optionNamed,
+  type Decision,
   type GameState,
   type InstanceId,
   type InvestigatorId,
@@ -62,7 +63,10 @@ export interface GameActions {
    * the instruction whatever the engagement, so an engaged enemy disengages and moves too.
    */
   moveEnemy(enemy: InstanceId, location: InstanceId): Promise<void>;
-  /** Picks `option` of the first open decision, as the decision dialog lists them. */
+  /**
+   * Picks `option` of the first open decision by its readable name (`DecisionView.options`), as the
+   * decision dialog lists them.
+   */
   answer(option: string, counts?: DecisionAmounts): Promise<void>;
   /** Enemy step 3.3: each listed enemy attack at its printed damage and horror. */
   resolveEnemyAttacks(): Promise<void>;
@@ -143,14 +147,16 @@ export function gameActions(
     moveEnemy: (enemy, location) =>
       play((table) => table.moveEnemy(enemy, location, { forced: true })),
     answer: (option, counts = {}) =>
-      play((table) =>
+      play((table) => {
+        const decision = firstDecision(table.state);
         table.play({
           type: 'ResolveDecision',
-          decisionId: firstDecision(table.state),
-          optionId: option,
+          decisionId: decision.id,
+          // A name no option has goes on as an id, so the engine refuses it as `unknownOption`.
+          optionId: optionNamed(decision, option)?.id ?? option,
           ...counts,
-        }),
-      ),
+        });
+      }),
     resolveEnemyAttacks: () => play((table) => table.resolveEnemyAttacks()),
     advanceAct: (spend) =>
       play((table) =>
@@ -221,10 +227,10 @@ function currentAct(state: GameState): InstanceId {
 }
 
 /** The decision the dialog shows; refused like an engine command when none is open. */
-function firstDecision(state: GameState): DecisionId {
+function firstDecision(state: GameState): Decision {
   const [decision] = state.pending;
   if (decision === undefined) throw new CommandRejected({ code: 'noPendingDecision' });
-  return decision.id;
+  return decision;
 }
 
 /** Clues one investigator pays towards the act (`GameActions.advanceAct`). */
