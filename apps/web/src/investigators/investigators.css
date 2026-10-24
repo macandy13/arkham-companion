@@ -124,14 +124,14 @@
 }
 
 /*
- * The skills two by two beside the art, each a parchment plate with its value after its icon,
+ * The skills in one row beside the art, each a small parchment plate with its value after its icon,
  * opening a skill test. Two ids' worth, so they beat the home screen's padded
  * `#app > main ul > li` cards.
  */
 #investigators [data-card='investigator'] > ul {
   grid-area: skills;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-1);
   align-content: center;
   margin: 0;
@@ -152,19 +152,21 @@
   align-items: center;
   justify-content: center;
   width: 100%;
+  min-width: 0;
+  padding: 0;
   border: var(--border-width) solid var(--color-ink-muted);
   background: var(--color-parchment-light);
   color: var(--color-ink);
   font-family: var(--font-family);
-  font-size: var(--font-size-body);
+  font-size: var(--font-size-note);
   font-weight: bold;
   font-variant-numeric: lining-nums;
 }
 
 #investigators [data-card='investigator'] > ul > li > button::before {
   content: '';
-  width: var(--icon-size);
-  height: var(--icon-size);
+  width: var(--stat-icon-size);
+  height: var(--stat-icon-size);
   background: var(--color-ink);
   mask: var(--skill-icon) center / contain no-repeat;
 }
