@@ -4,6 +4,7 @@ import {
   atEndOfRound,
   atEndOfTurn,
   advanceAct,
+  afterAttacking,
   afterDiscoveringClues,
   afterEngaging,
   afterEntering,
@@ -602,6 +603,93 @@ describe('trigger bus', () => {
       );
 
       expect(after.cards[shrine]?.tokens).toEqual({ clue: 1, doom: 1 });
+    });
+  });
+
+  describe('abilities after an enemy attack', () => {
+    const ghast = instanceId('ghast');
+    /** An enemy whose attack deals 1 damage, and 1 horror after it. */
+    const ghastCard = blankEnemy('ghast', {
+      damage: 1,
+      abilities: [afterAttacking(takeHorror(1))],
+    });
+
+    it.each<{ name: string; commands: Command[] }>([
+      {
+        name: 'in the enemy phase',
+        commands: [
+          { type: 'EndTurn', investigatorId: alice },
+          { type: 'NextPhase' },
+          { type: 'ResolveEnemyAttack', enemyId: ghast, investigatorId: alice },
+        ],
+      },
+      {
+        name: 'outside it (an attack of opportunity)',
+        commands: [
+          { type: 'DealEnemyAttack', enemyId: ghast, investigatorId: alice, damage: 1, horror: 0 },
+        ],
+      },
+    ])('deals alice 1 horror after the ghast attacks her $name', ({ commands }) => {
+      const { context, state } = newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withInvestigator(alice, { locationId: hall })
+        .withCard(ghast, ghastCard, engagedWith(alice))
+        .withTurnOf(alice)
+        .start();
+
+      const after = stateAfter(context, state, ...commands);
+
+      expect(requireInvestigator(after, alice).health.damage).toBe(1);
+      expect(requireInvestigator(after, alice).sanity.horror).toBe(1);
+    });
+
+    it('exhausts the ghast in the enemy phase only after its ability has resolved', () => {
+      const { context, state } = newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withInvestigator(alice, { locationId: hall })
+        .withCard(ghast, ghastCard, engagedWith(alice))
+        .withTurnOf(alice)
+        .start();
+      const enemyPhase = stateAfter(
+        context,
+        state,
+        { type: 'EndTurn', investigatorId: alice },
+        { type: 'NextPhase' },
+      );
+
+      const { events } = execute(context, enemyPhase, {
+        type: 'ResolveEnemyAttack',
+        enemyId: ghast,
+        investigatorId: alice,
+      });
+
+      expect(events.map((event) => event.type)).toEqual([
+        'PhaseStepsChanged',
+        'InvestigatorChanged', // the attack's damage
+        'EnemyAttacked',
+        'InvestigatorChanged', // the ability's horror
+        'ExhaustChanged',
+      ]);
+    });
+
+    it('drops the ability for an investigator the attack defeated', () => {
+      const { context, state } = newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withInvestigator(alice, { locationId: hall, health: { max: 1, damage: 0 } })
+        .withCard(ghast, ghastCard, engagedWith(alice))
+        .withTurnOf(alice)
+        .start();
+
+      const after = stateAfter(context, state, {
+        type: 'DealEnemyAttack',
+        enemyId: ghast,
+        investigatorId: alice,
+        damage: 1,
+        horror: 0,
+      });
+
+      expect(requireInvestigator(after, alice).status).not.toBe('active');
+      expect(requireInvestigator(after, alice).sanity.horror).toBe(0);
     });
   });
 

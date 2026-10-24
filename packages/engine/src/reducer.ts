@@ -83,6 +83,7 @@ export function apply(state: GameState, event: Event): GameState {
     case 'AbilityEffectSkipped':
     case 'CluesDiscovered':
     case 'SkillTestResolved':
+    case 'EnemyAttacked':
       return state;
     case 'EnemyEngaged':
       return applyEnemyMoved(state, event, {

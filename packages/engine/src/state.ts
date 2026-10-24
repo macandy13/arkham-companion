@@ -526,7 +526,9 @@ export type QueuedStep =
    * one of them, so an effect that removes several investigators at once
    * finishes before anyone is asked.
    */
-  | { kind: 'newLeadInvestigator'; origin?: CommandType };
+  | { kind: 'newLeadInvestigator'; origin?: CommandType }
+  /** The enemy exhausts after its enemy-phase attack and the abilities it triggered (`exhaustAfterAttack`). */
+  | { kind: 'exhaustAfterAttack'; enemyId: InstanceId; origin?: CommandType };
 
 /**
  * The actions the engine sees that provoke attacks of opportunity

@@ -745,7 +745,7 @@ export interface AdjustActions {
  * step). `damage`/`horror` default to the enemy's printed values; the players
  * pass less when assets soak part of it. The enemy exhausts after its last
  * due attack (a massive enemy attacks everyone at its location first).
- * Produces `PhaseStepsChanged`, `InvestigatorChanged` (damage, horror; with
+ * Produces `PhaseStepsChanged`, `EnemyAttacked`, `InvestigatorChanged` (damage, horror; with
  * `InvestigatorDefeated` as usual, horror is skipped for an investigator the
  * damage defeated) and `ExhaustChanged`.
  */
@@ -766,7 +766,7 @@ export interface ResolveEnemyAttack {
  * players confirmed (printed values, less what assets soak). An attack whose
  * enemy has left play or whose investigator is no longer active does nothing,
  * so a second attack of opportunity on an investigator the first one defeated
- * can still be answered. Produces `InvestigatorChanged` and, as usual,
+ * can still be answered. Produces `EnemyAttacked`, `InvestigatorChanged` and, as usual,
  * `InvestigatorDefeated`.
  */
 export interface DealEnemyAttack {

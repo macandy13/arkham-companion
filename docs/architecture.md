@@ -103,7 +103,7 @@ Every command type has one entry in [`COMMAND_SPECS`](../packages/engine/src/com
 
 ### Triggers and card effects
 
-Forced effects are **abilities**: data on a card's `CardStats`, so card data holds no code and the same card behaves the same in every scenario. A scenario's own rules are abilities of its agendas and acts. An [`Ability`](../packages/engine/src/abilities.ts) is a timing window (`revealed`, `entered`, `turnBegins`, `turnEnds`, `phaseEnds`, `roundEnds`, `advanced`, `enemyDefeated`, `tested` after a basic action's test, `engaged` either way round, `cluesDiscovered`; setup opens none), an optional condition, and a list of effects. `windowsOpenedBy` maps an event to the windows it opens.
+Forced effects are **abilities**: data on a card's `CardStats`, so card data holds no code and the same card behaves the same in every scenario. A scenario's own rules are abilities of its agendas and acts. An [`Ability`](../packages/engine/src/abilities.ts) is a timing window (`revealed`, `entered`, `turnBegins`, `turnEnds`, `phaseEnds`, `roundEnds`, `advanced`, `enemyDefeated`, `tested` after a basic action's test, `engaged` either way round, `attacked` (attacks of opportunity included), `cluesDiscovered`; setup opens none), an optional condition, and a list of effects. `windowsOpenedBy` maps an event to the windows it opens.
 
 Effects are **templated commands**: a command card data may use (`AbilityCommand`) with every ID replaced by a reference relative to the ability (`self`, `windowInvestigator`, `lead`, `onlyCopy(code)`, `eachInvestigator`, …). When its turn comes, `resolveEffect` fills in the IDs from the current state, so handlers and the log only see plain commands. A reference that names nobody drops the command; a missing `onlyCopy` card records `AbilityEffectSkipped` and the players do it by hand. Factories write effects the way the card reads:
 
@@ -135,7 +135,7 @@ Where the players must choose, or the engine needs an answer it cannot know (a s
 
 ### Rounds, phases and turns
 
-`GameMeta.steps` lists the outstanding automated steps of the current phase ([`phases.ts`](../packages/engine/src/phases.ts)): mythos doom, threshold check and encounter draws; enemy hunters and attacks; upkeep resets and resources. `NextPhase` runs them in order and stops at a decision, so the assistant resumes after any answer. Turns ([`turns.ts`](../packages/engine/src/turns.ts)) record who acts and the actions left.
+`GameMeta.steps` lists the outstanding automated steps of the current phase ([`phases.ts`](../packages/engine/src/phases.ts)): mythos doom, threshold check and encounter draws; enemy hunters and attacks; upkeep resets and resources. `NextPhase` runs them in order and stops at a decision, so the assistant resumes after any answer. An enemy-phase attack exhausts its enemy as `ResolveEnemyAttack`'s continuation (`exhaustAfterAttack`), after the abilities the attack triggered. Turns ([`turns.ts`](../packages/engine/src/turns.ts)) record who acts and the actions left.
 
 **Extension points**
 
