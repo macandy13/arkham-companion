@@ -28,6 +28,7 @@ import {
 import { investigatorCard } from './investigator_cards';
 import { layoutOf, type Edge, type GridCell, type MapSpec } from './map';
 import { CommandRejected } from './rejection';
+import { nextInt, seedRng } from './rng';
 import type { ScenarioDefinition } from './scenario';
 import { spawnZone } from './spawn';
 import type { Difficulty, TokenKind } from './state';
@@ -46,6 +47,12 @@ export type TokenAmount = number | ScaledValue;
  */
 export interface MapLocation {
   code: CardCode;
+  /**
+   * Other versions of the location ("choose one of the two Downtown locations at random"): setup
+   * puts one of `code` and `versions` into play, picked with the setup's seed, and leaves the
+   * rest out of the game. Connections and later steps still name the location by `code`.
+   */
+  versions?: readonly CardCode[];
   faceUp?: boolean;
   at?: GridCell;
 }
@@ -91,6 +98,12 @@ export interface BuildEncounterDeckStep {
   exclude?: readonly CardCode[];
 }
 
+/** Shuffles one copy of each code into the encounter deck, whatever its encounter set. */
+export interface ShuffleIntoEncounterDeckStep {
+  kind: 'shuffleIntoEncounterDeck';
+  codes: readonly CardCode[];
+}
+
 /** Places tokens on the one instance of the card with code `target`. */
 export interface PlaceTokensStep {
   kind: 'placeTokens';
@@ -125,19 +138,30 @@ export interface WhenStoryStep {
   otherwise?: readonly SetupStep[];
 }
 
+/** Steps that apply only with at least `atLeast` investigators ("if there are 3 or more"). */
+export interface WhenPlayersStep {
+  kind: 'whenPlayers';
+  atLeast: number;
+  then: readonly SetupStep[];
+}
+
 /**
  * One declarative setup instruction (architecture "Scenarios"). Cards are
  * referred to by card code; a step that targets an existing card
  * (`placeTokens`, `spawn.at`, `moveInvestigators`) needs exactly one instance
  * of that code created by an earlier step.
  */
-export type SetupStep = PlacingStep | WhenStoryStep;
+export type SetupStep = PlacingStep | WhenStoryStep | WhenPlayersStep;
 
-/** A setup step that changes the table; `WhenStoryStep`s resolve to these before any is applied. */
+/**
+ * A setup step that changes the table; `WhenStoryStep`s and `WhenPlayersStep`s resolve to these,
+ * and locations to one of their versions, before any is applied.
+ */
 type PlacingStep =
   | AddMapStep
   | SetAsideStep
   | BuildEncounterDeckStep
+  | ShuffleIntoEncounterDeckStep
   | PlaceTokensStep
   | SpawnStep
   | MoveInvestigatorsStep;
@@ -219,10 +243,14 @@ export function compileSetup(ctx: ScenarioContext, options: SetupOptions): Start
   const def = ctx.scenario;
   const log = options.campaign;
   if (log) checkCampaignSeats(log, def.id, options.investigators);
-  const steps = placingSteps(def.setup, log?.story ?? {});
+  const playerCount = options.investigators.length;
+  const steps = withPickedVersions(
+    placingSteps(def.setup, log?.story ?? {}, playerCount),
+    options.seed,
+  );
   const env: SetupEnv = {
     ctx,
-    playerCount: options.investigators.length,
+    playerCount,
     usedCopies: usedCopies(def, steps),
   };
   const initial: SetupDraft = {
@@ -325,12 +353,18 @@ function deckCards(codes: readonly CardCode[], zone: Zone): DraftCard[] {
   return codes.map((code, i) => ({ id: newId(code, codes.slice(0, i)), code, zone, faceUp: true }));
 }
 
-/** The steps that apply for `story`, in order, with each `WhenStoryStep` replaced by its branch. */
+/**
+ * The steps that apply for `story` and `playerCount`, in order, with each `WhenStoryStep` and
+ * `WhenPlayersStep` replaced by the steps it picks.
+ */
 function placingSteps(
   steps: readonly SetupStep[],
   story: CampaignLog['story'],
+  playerCount: number,
 ): readonly PlacingStep[] {
   return steps.flatMap((step) => {
+    if (step.kind === 'whenPlayers')
+      return playerCount >= step.atLeast ? placingSteps(step.then, story, playerCount) : [];
     if (step.kind !== 'whenStory') return [step];
     const holds = storyHolds(story, step.condition);
     if (holds === undefined)
@@ -339,8 +373,54 @@ function placingSteps(
         key: step.condition.key,
         condition: step.condition.kind,
       });
-    return placingSteps(holds ? step.then : (step.otherwise ?? []), story);
+    return placingSteps(holds ? step.then : (step.otherwise ?? []), story, playerCount);
   });
+}
+
+/**
+ * The steps with one version of each location that has `versions`, picked with `seed`, and every
+ * step that names the location by its `code` naming the picked version instead.
+ */
+function withPickedVersions(steps: readonly PlacingStep[], seed: number): readonly PlacingStep[] {
+  let rng = seedRng(seed);
+  const picks = new Map<CardCode, CardCode>();
+  for (const location of steps.flatMap((step) => (step.kind === 'addMap' ? step.locations : []))) {
+    if (!location.versions) continue;
+    const choices = [location.code, ...location.versions];
+    const [index, next] = nextInt(rng, choices.length);
+    rng = next;
+    picks.set(location.code, choices[index] ?? location.code);
+  }
+  const picked = (code: CardCode) => picks.get(code) ?? code;
+  return steps.map((step) => renamed(step, picked));
+}
+
+/** The step with every location it names by code renamed by `picked`. */
+function renamed(step: PlacingStep, picked: (code: CardCode) => CardCode): PlacingStep {
+  switch (step.kind) {
+    case 'addMap':
+      return {
+        ...step,
+        locations: step.locations.map((location) => ({ ...location, code: picked(location.code) })),
+        ...(step.connections && {
+          connections: step.connections.map((connection) => ({
+            ...connection,
+            from: picked(connection.from),
+            to: picked(connection.to),
+          })),
+        }),
+      };
+    case 'placeTokens':
+      return { ...step, target: picked(step.target) };
+    case 'spawn':
+      return { ...step, at: picked(step.at) };
+    case 'moveInvestigators':
+      return { ...step, to: picked(step.to) };
+    case 'setAside':
+    case 'buildEncounterDeck':
+    case 'shuffleIntoEncounterDeck':
+      return step;
+  }
 }
 
 /** The draft after one setup step. */
@@ -350,6 +430,11 @@ function applyStep(draft: SetupDraft, step: PlacingStep, env: SetupEnv): SetupDr
       return withMap(draft, step);
     case 'setAside':
       return step.codes.reduce((state, code) => withCard(state, code, { kind: 'setAside' }), draft);
+    case 'shuffleIntoEncounterDeck':
+      return step.codes.reduce(
+        (state, code) => withCard(state, code, { kind: 'encounterDeck' }),
+        draft,
+      );
     case 'buildEncounterDeck':
       return encounterDeckCards(step.sets, step.exclude ?? [], env).reduce(
         (state, code) => withCard(state, code, { kind: 'encounterDeck' }),
@@ -509,6 +594,7 @@ function stepCodes(step: PlacingStep): readonly CardCode[] {
     case 'spawn':
       return [step.code];
     case 'setAside':
+    case 'shuffleIntoEncounterDeck':
       return step.codes;
     default:
       return [];
