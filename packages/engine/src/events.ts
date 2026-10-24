@@ -49,6 +49,7 @@ export type Event =
   | CluesDiscovered
   | SkillTestResolved
   | EnemyEngaged
+  | EnemyAttacked
   | EnemyDisengaged
   | EnemyDefeated
   | ExhaustChanged
@@ -355,6 +356,18 @@ export interface SkillTestResolved {
  */
 export interface EnemyEngaged {
   type: 'EnemyEngaged';
+  enemyId: InstanceId;
+  investigatorId: InvestigatorId;
+}
+
+/**
+ * Enemy `enemyId` attacked the investigator; follows the attack's damage and
+ * horror (`InvestigatorChanged`). Changes no state: it marks the attack for
+ * `windowsOpenedBy` (`attacked`), since the damage alone names no enemy.
+ * Produced by `ResolveEnemyAttack` and `DealEnemyAttack` (`enemyAttackEvents`).
+ */
+export interface EnemyAttacked {
+  type: 'EnemyAttacked';
   enemyId: InstanceId;
   investigatorId: InvestigatorId;
 }

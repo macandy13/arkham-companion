@@ -406,6 +406,7 @@ describe('enemy phase', () => {
       'PhaseStepsChanged',
       'InvestigatorChanged',
       'InvestigatorChanged',
+      'EnemyAttacked',
       'InvestigatorDefeated',
       'EnemyDisengaged',
       'ScenarioEnded',

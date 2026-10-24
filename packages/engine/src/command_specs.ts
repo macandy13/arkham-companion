@@ -220,7 +220,11 @@ const COMMAND_SPECS: CommandSpecs = {
     handle: (_ctx, state, command) => handleSetLeadInvestigator(state, command),
   },
   AdjustActions: { handle: (_ctx, state, command) => handleAdjustActions(state, command) },
-  ResolveEnemyAttack: { handle: handleResolveEnemyAttack },
+  ResolveEnemyAttack: {
+    handle: handleResolveEnemyAttack,
+    // The enemy exhausts once the abilities its attack triggered have resolved.
+    continueWith: (command) => [{ kind: 'exhaustAfterAttack', enemyId: command.enemyId }],
+  },
   DealEnemyAttack: { handle: handleDealEnemyAttack },
   Investigate: { handle: handleInvestigate, provokes: asAction },
   Fight: { handle: handleFight },

@@ -69,6 +69,13 @@ export type TimingWindow =
    */
   | { kind: 'engaged' }
   /**
+   * "After [this enemy] attacks you": opened by `EnemyAttacked` for the enemy,
+   * naming the investigator, after the attack's damage and horror. An attack
+   * of opportunity opens it too, being an attack; an investigator the attack
+   * defeated is nobody by then.
+   */
+  | { kind: 'attacked' }
+  /**
    * "After you discover clues at [this location]": opened by
    * `CluesDiscovered` for the location, naming the investigator.
    */
@@ -318,6 +325,14 @@ export function windowsOpenedBy(
       return [
         {
           window: { kind: 'engaged' },
+          cardId: event.enemyId,
+          investigatorId: event.investigatorId,
+        },
+      ];
+    case 'EnemyAttacked':
+      return [
+        {
+          window: { kind: 'attacked' },
           cardId: event.enemyId,
           investigatorId: event.investigatorId,
         },
@@ -624,6 +639,11 @@ export function afterTest(
 /** A forced ability "after [this enemy] engages you", written `afterEngaging(takeHorror(1))`. */
 export function afterEngaging(...effects: AbilityEffect[]): Ability {
   return { window: { kind: 'engaged' }, effects };
+}
+
+/** A forced ability "after [this enemy] attacks you", written `afterAttacking(takeHorror(1))`. */
+export function afterAttacking(...effects: AbilityEffect[]): Ability {
+  return { window: { kind: 'attacked' }, effects };
 }
 
 /** A forced ability "after you discover clues at [this location]", written `afterDiscoveringClues(placeDoomOnSelf(1))`. */

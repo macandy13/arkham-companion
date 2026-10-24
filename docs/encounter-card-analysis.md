@@ -367,7 +367,7 @@ Every campaign after Chapter Two starts with a card-by-card read of its encounte
    - at a phase's start or end (They're Getting Out!, Wizard of the Order)
    - after clues are discovered
    - after a test, investigation, fight or evade succeeds or fails (Obscuring Fog)
-   - after an enemy engages or attacks you (Young Deep One, Yithian Observer)
+   - after an enemy engages or attacks you (Young Deep One); when an enemy attacks you, before its damage (Yithian Observer)
    - after you resolve another treachery
    - when your turn begins, and at the end of each investigator's turn (Umôrdhoth)
    - when an enemy is defeated (Goat Spawn)
