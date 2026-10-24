@@ -74,8 +74,12 @@
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
+  /*
+   * A width, not an aspect ratio: with its overflow hidden the card's grid column takes no size
+   * from an aspect ratio, so the card would spill over the name beside it.
+   */
+  width: calc(var(--layout-investigator-card-height) * 7 / 5);
   height: var(--layout-investigator-card-height);
-  aspect-ratio: 7 / 5;
   margin: 0;
   border: var(--card-border-width) solid var(--color-card-investigator);
   border-radius: var(--radius);
