@@ -1,5 +1,7 @@
 # M5 – Night of the Zealot
 
+Archived on 2026-10-24, when the plan moved to GitHub issues (see `docs/tasks/README.md`); the live state is in the issues.
+
 Goal: the full three-scenario _Night of the Zealot_ campaign (_The Gathering_, _The Midnight Masks_, _The Devourer Below_), with campaign log and chaos bag carried between scenarios.
 Ref: product.md "Campaign mode". Builds on the campaign engine (M1C).
 
@@ -44,7 +46,8 @@ The campaign model, chaos bag, resolutions, campaign setup and storage are engin
 **Benefit:** More playable content; anything it shares with _The Gathering_ gets promoted to an engine primitive.
 
 - [ ] Data via the M4 pipeline (layout, connections), definition, special mechanics, setup test
-- [ ] Reads earlier log entries in `campaignSetup`
+- [ ] Reads earlier log entries with `whenStory` setup steps (M1C.5b)
+- [ ] Resolutions with `when`/`recordNames` (M1C.4c); the Cultist deck is set aside and the cultists left out of it go out of the game, so `cardIn … setAside` means "still in the Cultist deck"
 
 ## M5.4 The Devourer Below (O)
 

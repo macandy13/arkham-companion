@@ -1,5 +1,7 @@
 # M4 – Scenario data pipeline + first scenario
 
+Archived on 2026-10-24, when the plan moved to GitHub issues (see `docs/tasks/README.md`); the live state is in the issues.
+
 Goal: a repeatable way to turn a real scenario into data (product.md "Scenario data pipeline"), then _The Gathering_, the first scenario of _Night of the Zealot_, fully playable from real card data.
 
 **Why this milestone**
@@ -86,7 +88,11 @@ Steps 1–12 of the [encounter card plan](../encounter-card-analysis.md#implemen
   - [x] 5b False Lead, in two PRs. On Wings of Darkness moves to step 6 with its move to a Central location: its "disengage with each non-Nightgaunt enemy" sits in a test's outcome, where effects on each enemy are not resolved yet, and the damage before it can defeat the drawer.
     - [x] 5b1 "If you have no clues, False Lead gains surge": the `investigatorHas` condition (`ifYouHave`) and `GainSurge` (`gainSurge`). The end-to-end step lands with the Midnight Masks scenario test (False Lead is in its set). Follow-up: `GainSurge` is rejected once the revelation has moved the card out of `resolving` ("put it into play, it gains surge"); no Night of the Zealot card does that.
     - [x] 5b2 "For each point you fail by, place 1 of your clues on your location": `perPointFailed: 'clues'` and the `PlaceClues` command, which places as many clues as the investigator has. The end-to-end step lands with the Midnight Masks scenario test.
-- [ ] 6 Board queries (nearest, most clues, no doom; moving toward; search by trait), and On Wings of Darkness (disengage from each non-Nightgaunt enemy, move to a Central location) after a failed test
+- [ ] 6 Board queries (nearest, most clues, no doom; moving toward; search by trait), and On Wings of Darkness (disengage from each non-Nightgaunt enemy, move to a Central location) after a failed test. "With the most clues" goes to step 10 with Locked Door, its only Night of the Zealot card; "with no doom" waits for Chapter Two (no Night of the Zealot card). In four PRs:
+  - [x] 6a1 "The nearest Cultist enemy" (Mysterious Chanting's 2 doom): the `nearestEnemy(trait)` reference (`nearestEnemies` in enemies.ts), counted from the drawer's location, with a tie as the lead investigator's `chooseCard` decision; `placeDoomOn`. Follow-up: a `nearestEnemy` inside a test's outcome or a choice's option resolves when the test or choice is raised, so a tie there is asked first, and no enemy at all drops the whole test or choice (no Night of the Zealot card does that). Concealed enemies (Chapter Two) count as nearest only when no enemy is at a location (RR "Concealed X"). The end-to-end step lands with the Midnight Masks scenario test (Mysterious Chanting is in the Dark Cult set).
+  - [ ] 6a2 "If there are no Cultist enemies in play, search the encounter deck and discard pile for a Cultist enemy and draw it. Shuffle the encounter deck": a condition on the cards in play, the drawer's matched draw and a deck shuffle.
+  - [ ] 6b They're Getting Out!: each unengaged Ghoul enemy moves 1 location towards the Parlor; 1 doom for each Ghoul enemy in the Hallway or Parlor.
+  - [ ] 6c On Wings of Darkness: after a failed test, disengage from each non-Nightgaunt enemy engaged with you and move to a Central location (the drawer picks one).
 - [ ] 7 Keyword details (prey, spawn filters, per-investigator values)
 - [ ] 8 Scenario actions (costs, tests, Parley, Resign, limits)
 - [ ] 9 Constant modifiers and restrictions

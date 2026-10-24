@@ -11,7 +11,7 @@
  * where they happen.
  *
  * Each later engine PR extends this story with its feature (see M1.E in
- * docs/tasks/M1-engine.md). Rules rest in the unit tests; this test keeps
+ * docs/tasks/done/M1-engine.md). Rules rest in the unit tests; this test keeps
  * them honest together.
  *
  * The phase assistant (`nextPhase`) runs the steps of each phase, numbered as

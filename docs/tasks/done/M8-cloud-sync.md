@@ -1,5 +1,7 @@
 # M8 – Cloud and sync
 
+Archived on 2026-10-24, when the plan moved to GitHub issues (see `docs/tasks/README.md`); the live state is in the issues.
+
 Goal: games stored in the cloud and shared between several devices at the table.
 Ref: product.md "Cloud sync".
 
