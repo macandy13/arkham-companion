@@ -486,13 +486,22 @@ describe('compileSetup buildEncounterDeck', () => {
     expect(codes).toEqual(['rat']);
   });
 
-  it('shuffles in a card of another set, counting it among the copies of a gathered set', () => {
+  it('shuffles in a card of a set it does not gather', () => {
     const codes = deckCodes([
       { kind: 'buildEncounterDeck', sets: [encounterSetCode('set1')] },
-      { kind: 'shuffleIntoEncounterDeck', codes: [cardCode('ghoul'), cardCode('rat')] },
+      { kind: 'shuffleIntoEncounterDeck', codes: [cardCode('rat')] },
     ]);
 
-    expect(codes).toEqual(['ghoul', 'ghoul', 'curse', 'curse', 'ghoul', 'rat']);
+    expect(codes).toEqual(['ghoul', 'ghoul', 'ghoul', 'curse', 'curse', 'rat']);
+  });
+
+  it('adds no extra copy for a shuffled-in card of a gathered set: still 3 ghouls', () => {
+    const codes = deckCodes([
+      { kind: 'buildEncounterDeck', sets: [encounterSetCode('set1')] },
+      { kind: 'shuffleIntoEncounterDeck', codes: [cardCode('ghoul')] },
+    ]);
+
+    expect(codes.filter((code) => code === 'ghoul')).toHaveLength(3);
   });
 
   it('rejects an encounter set without cards', () => {
@@ -741,7 +750,10 @@ describe('compileSetup location versions', () => {
       ...standardInvestigatorCards,
     ]),
   };
-  /** Rivertown next to Downtown, one of its two versions; an Acolyte spawns at Downtown. */
+  /**
+   * Rivertown next to Downtown, one of its two versions; an Acolyte spawns at Downtown, which
+   * gets 1 doom, and the investigators start there.
+   */
   const def = makeDefinition({
     setup: [
       {
@@ -753,12 +765,14 @@ describe('compileSetup location versions', () => {
         connections: [{ from: rivertown, to: downtownBank }],
       },
       { kind: 'spawn', code: cardCode('acolyte'), at: downtownBank },
+      { kind: 'placeTokens', target: downtownBank, token: 'doom', amount: 1 },
+      { kind: 'moveInvestigators', to: downtownBank },
     ],
   });
 
   it.each([
     { seed: 1, downtown: 'downtown_bank#1' },
-    { seed: 2, downtown: 'downtown_asylum#1' },
+    { seed: 3, downtown: 'downtown_asylum#1' },
   ])('puts $downtown into play with seed $seed, in its place on the map', ({ seed, downtown }) => {
     const command = scenario.compileSetup({ ...ctx, scenario: def }, makeSetupOptions({ seed }));
 
@@ -768,6 +782,8 @@ describe('compileSetup location versions', () => {
       layout: { [downtown]: { column: 1, row: 0 } },
     });
     expect(command.cards[2]?.zone).toEqual({ kind: 'atLocation', locationId: downtown });
+    expect(command.cards[1]?.tokens).toEqual({ doom: 1 });
+    expect(command.investigators[0]?.locationId).toBe(downtown);
   });
 });
 
@@ -808,10 +824,8 @@ describe('compileSetup whenPlayers', () => {
     );
 
     expect(
-      command.cards
-        .filter((card) => card.code === 'acolyte')
-        .map((card) => card.zone.kind === 'atLocation' && card.zone.locationId),
-    ).toEqual(acolytes);
+      command.cards.filter((card) => card.code === 'acolyte').map((card) => card.zone),
+    ).toEqual(acolytes.map((locationId) => ({ kind: 'atLocation', locationId })));
   });
 });
 

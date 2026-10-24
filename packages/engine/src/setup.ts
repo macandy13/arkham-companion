@@ -166,6 +166,9 @@ type PlacingStep =
   | SpawnStep
   | MoveInvestigatorsStep;
 
+/** Mixed into the setup seed for the location version picks (`withPickedVersions`). */
+const VERSION_PICK_STREAM = 0x5e7c9;
+
 /** Resources every investigator starts a scenario with (rules reference, "Setup"). */
 const STARTING_RESOURCES = 5;
 
@@ -363,17 +366,22 @@ function placingSteps(
   playerCount: number,
 ): readonly PlacingStep[] {
   return steps.flatMap((step) => {
-    if (step.kind === 'whenPlayers')
-      return playerCount >= step.atLeast ? placingSteps(step.then, story, playerCount) : [];
-    if (step.kind !== 'whenStory') return [step];
-    const holds = storyHolds(story, step.condition);
-    if (holds === undefined)
-      throw new CommandRejected({
-        code: 'storyConditionMismatch',
-        key: step.condition.key,
-        condition: step.condition.kind,
-      });
-    return placingSteps(holds ? step.then : (step.otherwise ?? []), story, playerCount);
+    switch (step.kind) {
+      case 'whenPlayers':
+        return playerCount >= step.atLeast ? placingSteps(step.then, story, playerCount) : [];
+      case 'whenStory': {
+        const holds = storyHolds(story, step.condition);
+        if (holds === undefined)
+          throw new CommandRejected({
+            code: 'storyConditionMismatch',
+            key: step.condition.key,
+            condition: step.condition.kind,
+          });
+        return placingSteps(holds ? step.then : (step.otherwise ?? []), story, playerCount);
+      }
+      default:
+        return [step];
+    }
   });
 }
 
@@ -382,7 +390,9 @@ function placingSteps(
  * step that names the location by its `code` naming the picked version instead.
  */
 function withPickedVersions(steps: readonly PlacingStep[], seed: number): readonly PlacingStep[] {
-  let rng = seedRng(seed);
+  // A stream of its own, so the picks don't repeat the first draws of the game's RNG, which
+  // `StartScenario` seeds with the same seed to shuffle the encounter deck.
+  let rng = seedRng(seed ^ VERSION_PICK_STREAM);
   const picks = new Map<CardCode, CardCode>();
   for (const location of steps.flatMap((step) => (step.kind === 'addMap' ? step.locations : []))) {
     if (!location.versions) continue;
