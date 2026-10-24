@@ -49,6 +49,10 @@
   --panel-frame: url('./panel_frame.svg');
   --panel-frame-slice: 24;
   --panel-frame-width: 2rem;
+  /* The same frame round the play screen's smaller panels (investigators, encounter, notices). */
+  --panel-frame-width-compact: 1rem;
+  /* The investigator whose turn it is: their panel glows in the accent colour inside its frame. */
+  --turn-glow: inset 0 0 var(--space-3) var(--color-accent);
   /* The ornament under a screen's title (ornament_rule.svg), a small zodiac ring between rules. */
   --title-ornament: url('./ornament_rule.svg');
   --title-ornament-width: 12rem;
@@ -106,8 +110,8 @@
   --focus-ring-width: 2px;
 
   --layout-content-width: 60rem;
-  --layout-board-panel-width: 16rem;
-  --layout-board-bar-height: 8rem;
+  /* The investigators' column beside the map in landscape, as wide as the prototype's. */
+  --layout-board-panel-width: 23rem;
   --layout-portrait-width: 9rem;
   --layout-sheet-width: 22rem;
   /* Connection lines on the map, in its SVG user units (mapLayout.ts TILE). */
