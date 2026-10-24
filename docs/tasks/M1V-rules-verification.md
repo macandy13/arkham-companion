@@ -76,11 +76,11 @@ Ref: product.md "Continuous play tester" (the design); architecture "Tests and d
 
 Slices (one PR each, in this order):
 
-1. [ ] `packages/play_tester`: a run (scenario, difficulty, seats, game and bot seed), the _random_ bot on The Gathering, records with steps and event log, step replay, `pnpm playtest`. Checks: crash, refusals (expected or never), `checkInvariants`, replay after every step, same run twice gives the same events.
-2. [ ] Chaos bag draws and skill test answers through `suggestion`; the _goal_ and _chaos_ bots; blank investigators with random stats; liveness checks (always a next step, every offered option accepted, round cap).
+1. [ ] `packages/play_tester`: a run (scenario, difficulty, seats, game and bot seed), the _random_ bot on The Gathering, records with steps and event log, step replay, `pnpm playtest`. Checks: crash, refusals (expected or never), `checkInvariants`, replay after every step, same run twice gives the same events. Unit tests for the tester's own parts (record format, refusal table) and its place in the coverage floors.
+2. [ ] Chaos bag draws and skill test answers through `suggestSkillTest`; the _goal_ and _chaos_ bots; blank investigators with random stats; liveness checks (always a next step, every offered option accepted, round cap).
 3. [ ] Rule oracles from `docs/rules.md` (round structure, mythos, agenda, upkeep, hunter, defeat, act), read through `BoardView` only. Ask `rules-checker` to check each oracle against the Rules Reference and post its table on the PR.
-4. [ ] Differential checks: undo right after a step, resume at any step, `GameSession` against `PlayTable`, export and import round trip.
-5. [ ] Shrinking a failing record, the finding report (`formatBoard` before and after), and opening a record in the app with Load.
+4. [ ] Differential checks: undo right after a step, resume at any step; in `apps/web`, a test that replays the corpus through `GameSession` against `PlayTable` and through export and import.
+5. [ ] Shrinking a failing record, the finding report (`formatBoard` before and after), and opening a scenario record in the app with "Import game".
 6. [ ] CI: PR smoke run and corpus replay with an event diff comment; nightly scheduled run with artifacts and one issue per finding signature.
 7. [ ] Random boards built with `newGame()` and blank cards; statistics report (wins, rounds, draw frequencies, abilities that never fired).
 

@@ -118,31 +118,30 @@ Designs for parts that have a milestone but no code yet. The PR that builds one 
 
 - A **run** is one game: scenario, difficulty, 1–4 investigators in seat order, a game seed (the engine's shuffles) and a bot seed (the bot's choices and chaos tokens). The same run always plays the same game.
 - **Scenarios:** every scenario the scenarios package exports (The Gathering today). Later also **random boards** built with `newGame()` and blank cards (random maps, enemies with random keywords), which hit the generic rules no scenario uses yet.
-- **Investigators:** the real ones, plus blank investigators with random stats (sanity 1, agility 0), so defeat and elimination happen often.
-- **Bots** drive a `PlayTable` through its game-language verbs (`nextPhase`, `moveTo`, `investigate`, `fight`, `answer`, `spendCluesToAdvanceAct`, `resign`, `undo`), like players at the table. Each bot is a weighting of these verbs: *random* (any verb), *goal* (go for clues, advance the act, fight what is engaged) and *chaos* (undo, `ManualAdjust`, resign early).
-- **Chaos tokens:** the bot keeps its own bag (the scenario's or campaign's bag for the difficulty), draws a token, feeds it into the test's `suggestion` and answers pass, fail or `failedBy` from that. Tokens the engine can't value (elder sign) get a random modifier. Once the chaos bag module exists ([M6.1](tasks/M6-comfort.md)), the bot draws through it instead.
+- **Investigators:** the real ones, plus blank investigators with random stats (down to sanity 1 and agility 0), so defeat and elimination happen often.
+- **Bots** drive a `PlayTable` through its game-language verbs (`nextPhase`, `moveTo`, `investigate`, `fight`, `answer`/`answerOnly`, `spendCluesToAdvanceAct`, `resign`, `undo`), like players at the table; corrections go through its `adjust*`/`placeDoom` verbs or `play(ManualAdjust)`. Each bot is a weighting of these verbs: *random* (any verb), *goal* (go for clues, advance the act, fight what is engaged) and *chaos* (undo, corrections, resign early).
+- **Chaos tokens:** the bot keeps its own bag (the scenario's or campaign's bag for the difficulty), draws a token, computes the result with `suggestSkillTest(ctx, state, decision, { tokens })` and answers pass, fail or `failedBy` from that. Tokens the engine can't value (elder sign) get a random modifier; a test decided by the lead or the group has no suggestion, so the bot answers it at random. Once the chaos bag module exists ([M6.1](tasks/M6-comfort.md)), the bot draws through it instead.
 - A game ends at a resolution, when every investigator is out, or at a round cap (a "stuck" finding, see below).
 
 **How it judges a game** (the main part). Each check has an id and, where it is a rule, the `docs/rules.md` section it comes from. A failed check is a *finding*.
 
-1. **Crash:** any error other than `CommandRejected` (a `TypeError`, a broken reducer case).
-2. **Refusals:** each rejection code is marked *expected* (the bot tried a move that isn't connected) or *never* (`unknownCard`, `invalidDecisionOptions`, a decision whose offered option is refused). A *never* refusal is a finding; the share of expected ones is only reported.
-3. **Invariants after every command:** `checkInvariants` (already run by `PlayTable`), plus new ones that hold in every state: cards are conserved (only setup and set-aside cards add any), an engaged enemy is at its investigator's location, the current agenda and act are in play.
+1. **Crash:** any error other than `CommandRejected` and `TableError` (a `TypeError`, a broken reducer case). `PlayTable` also throws `TableError` when the bot misuses it (undo at the start, a name that matches nothing); the bot only offers steps the board allows, and an invariant break is told apart by its own error type (check 3), which slice 1 adds.
+2. **Refusals:** each rejection code is marked *expected* (the bot tried a move that isn't connected) or *never* (`unknownCard`, `invalidDecisionOptions`, a decision whose offered option is refused). A *never* refusal is a finding; the share of expected ones is only reported. The table is an exhaustive `switch` over the `Rejection` codes, so a new code fails typecheck until it is marked.
+3. **Invariants after every command:** `checkInvariants` (already run by `PlayTable`), plus new ones that hold in every state, added to `checkInvariants` itself so unit tests and the app get them too: cards are conserved (only setup and set-aside cards add any), an engaged enemy is at its investigator's location, the current agenda and act are in play (stricter than "a known card" today).
 4. **Rule oracles per step:** small checks that compare the board before and after one step against a rule, written from `docs/rules.md` and read only through `BoardView`, never through the engine's rule helpers (otherwise a bug passes its own check). Examples:
    - Round structure: phases go mythos, investigation, enemy, upkeep; round 1 has no mythos; the round number only grows by 1.
-   - Mythos: 1 doom on the agenda, then one encounter draw per active investigator (plus surges).
-   - Agenda: it advances at the threshold check exactly when doom is at or above its threshold.
+   - Mythos: 1 doom on the agenda, the threshold check, then one encounter draw per active investigator (plus surges).
+   - Agenda: it advances at the threshold check exactly when doom in play (on the agenda and every other card) is at or above its threshold, flat or per investigator, and the agenda has no "Objective –".
    - Upkeep: actions back to 3, each active investigator gets 1 resource, enemies and investigators ready.
-   - Hunter: a hunter that moves ends 1 step closer to its target, along a shortest path.
-   - Defeat: damage at or above health (or horror at or above sanity) means the investigator is defeated.
-   - Act: an advance spends exactly its clues and clears the clues on the act.
+   - Hunter: a ready, unengaged hunter with no investigator at its location moves 1 step along a shortest path towards the nearest investigator (prey, then the lead, picks between equally near ones), and stays when that step is blocked; a hunter that should have moved and didn't is a finding too.
+   - Act: a clue advance takes the requirement minus the clues already on the act from the investigators; an objective advance takes none; either clears the act's tokens.
+   - Defeat is already an invariant (`investigatorErrors`), so it needs no oracle.
 5. **Replay and undo (differential checks):**
    - `replay(events)` equals the live state (the end-to-end test checks this once at the end; the tester checks it after every step).
-   - Running the same run twice gives the same events, byte for byte.
+   - Running the same run twice gives the same events (`commandId` and event; the clock's timestamps are left out).
    - Undo right after a step gives back exactly the state before it.
    - `PlayTable.resume` from the log at any step, then playing on, gives the same game as playing straight through.
-   - The same steps through the web app's `GameSession` (on `IndexedDbStore` over fake-indexeddb, as the web tests do) give the same events and undo groups as through `PlayTable`.
-   - The event log survives the export and import round trip (`serialiseGameExport`, `parseGameExport`).
+   - The same steps through the web app's `GameSession` (on `IndexedDbStore` over fake-indexeddb, as the web tests do) give the same events and undo groups as through `PlayTable`, and the log survives the export and import round trip (`serialiseGameExport`, `parseGameExport`). These live in `apps/web`, and a package must not depend on the app, so this check is a web test that replays the corpus records.
 6. **Liveness:** there is always a next step (an answer or "Next"), every offered option of a pending decision is accepted, "Next" never leaves the board unchanged, and the game ends before the round cap.
 7. **Statistics (reported, never a failure):** wins per scenario and difficulty, rounds per game, how often each encounter card is drawn compared with its share of the deck (a shuffle bias shows here), and which card abilities and decisions never fired (untested paths).
 
@@ -150,7 +149,7 @@ Designs for parts that have a milestone but no code yet. The PR that builds one 
 
 - Each game is saved as a **record** (`*.arkham-run.json`): tester version and git commit, the run (scenario, difficulty, seats, both seeds, bot), the steps as `PlayTable` calls with arguments by name (`moveTo('Daisy Walker', 'Attic')`), and the event log in the export format.
 - **Replay** a record two ways: the steps through a fresh `PlayTable` (works on a newer engine, shows what it does now), or the event log through `replay` (shows what happened then). Comparing the two shows how the engine's behaviour changed.
-- The event log is the app's export format, so a record **opens in the app** with Load and can be clicked through on the board.
+- The event log is the app's export format, so a scenario record **opens in the app** with "Import game" and can be clicked through on the board (a random board has no scenario in the catalog, so it can't).
 - A finding saves its record with the failed check, the step, and `formatBoard` before and after.
 - **Shrinking:** the tester cuts the record down (drop steps, drop investigators, end earlier) while the same check still fails, so the report shows the shortest game that breaks.
 - **From finding to test:** the fix PR adds the shrunk game as an example-based test (in `timing.test.ts` or a scenario's end-to-end test) with named cards. Random play stays in the tester and never runs in `pnpm test`, so the rule "no property-based testing" in unit tests still holds.
