@@ -24,25 +24,30 @@ export const TILE = { width: CARD.short, height: CARD.long, gap: 30 } as const;
 
 /**
  * Where a tile's contents sit, in SVG user units from its top left corner, laid out like the
- * printed card: the name band runs along the top, `band` high, with the edit button at its right
- * end; the shroud and the clues sit at mid height on the left and right edges (`SHROUD_CENTRE`,
- * `CLUES_CENTRE`), doom under the clues; attachments peek out at the right edge as small cards
- * (`attachmentOrigin`), and pawns and enemies stand in rows along the bottom edge (`pawnOffset`).
- * Tokens and pieces share one radius, so every round thing on a tile is one size.
+ * printed card (a tile is half an ArkhamDB scan, so the card's parts keep their places): the name
+ * plate runs along the top, `band` deep, with the edit button at its left end where the card
+ * prints its connection icon; the shroud and the clues sit on the left and right edges where the
+ * art ends (`SHROUD_CENTRE`, `CLUES_CENTRE`), doom under the clues; attachments peek out at the
+ * right edge as small cards (`attachmentOrigin`), and pawns and enemies stand in rows along the
+ * bottom edge where the card prints its connection circles (`pawnOffset`). Tokens and pieces
+ * share one radius, so every round thing on a tile is one size.
  */
-export const CONTENT = { inset: 10, band: 48, pawnRadius: 14, pawnGap: 6 } as const;
+export const CONTENT = { inset: 10, band: 19, pawnRadius: 14, pawnGap: 6 } as const;
 
-/** The centre of a tile's shroud token, at mid height on its left edge as on the printed card. */
-export const SHROUD_CENTRE: Point = {
-  x: CONTENT.inset + CONTENT.pawnRadius,
-  y: TILE.height / 2,
-};
+/**
+ * The height of the line the shroud and clues sit on, where the art ends: 8/15 of the tile's
+ * height, as on the printed card.
+ */
+const TOKEN_LINE = (TILE.height * 8) / 15;
 
-/** The centre of a tile's clue token, at mid height on its right edge as on the printed card. */
-export const CLUES_CENTRE: Point = {
-  x: TILE.width - CONTENT.inset - CONTENT.pawnRadius,
-  y: TILE.height / 2,
-};
+/**
+ * The centre of a tile's shroud token, on its left edge where the art ends, as on the printed card.
+ * Its ring reaches a little past the edge, as the printed circle does.
+ */
+export const SHROUD_CENTRE: Point = { x: CONTENT.pawnRadius, y: TOKEN_LINE };
+
+/** The centre of a tile's clue token, on its right edge where the art ends, as on the printed card. */
+export const CLUES_CENTRE: Point = { x: TILE.width - CONTENT.pawnRadius, y: TOKEN_LINE };
 
 /** The centre of a tile's doom token, right under its clues. */
 export const DOOM_CENTRE: Point = {
@@ -50,17 +55,34 @@ export const DOOM_CENTRE: Point = {
   y: CLUES_CENTRE.y + 2 * CONTENT.pawnRadius + CONTENT.pawnGap,
 };
 
+/** The top of the art window: just under the top edge, about 6 % of the card, as on the printed card. */
+const ART_TOP = 12;
+
 /**
- * Where the "frames" look shows a location's art on its tile: across the art area from the name
- * band down to the doom token's centre, so the shroud and clue tokens sit on the art, doom on its
- * edge, and the pieces' rows below it stay on the plain face. The window is wider than tall, as the art is on the card.
+ * Where the "frames" look shows a location's art on its tile: the printed card's art area, the
+ * whole width from just under the top edge to a little below the shroud and clues. The name plate
+ * and the type line (`LocationOrnament`) lie over its top and bottom edge, as they do on the card.
  */
 export const ART_WINDOW = {
-  x: CONTENT.inset,
-  y: CONTENT.band,
-  width: TILE.width - 2 * CONTENT.inset,
-  height: DOOM_CENTRE.y - CONTENT.band,
+  x: 0,
+  y: ART_TOP,
+  width: TILE.width,
+  height: TOKEN_LINE + CONTENT.pawnGap - ART_TOP,
 } as const;
+
+/**
+ * How wide a location's name may run on its name plate: centred, clear of the edit button in the
+ * top left corner by a gap on each side, and as far from the right edge.
+ */
+export const NAME_WIDTH = TILE.width - 2 * (2 * CONTENT.pawnRadius + CONTENT.pawnGap);
+
+/**
+ * How much a name `width` units wide at its normal size must shrink to fit `room` units: 1 when it
+ * fits, so short names keep their size and only long ones get smaller.
+ */
+export function shrinkToFit(width: number, room: number): number {
+  return width > room ? room / width : 1;
+}
 
 /**
  * A card attached to a location, drawn small (a fifth of a card's size, rounded to whole units)

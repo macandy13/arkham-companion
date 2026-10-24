@@ -27,7 +27,6 @@
    * Card frames by card type: locations on the map; the encounter deck, agenda, act and scenario
    * in the header; investigators in the investigator bar.
    */
-  --color-card-location: #8c7a55;
   --color-card-agenda: #9a4a3c;
   --color-card-act: #4a6f9a;
   --color-card-scenario: #6e5a8c;
@@ -54,6 +53,29 @@
   --title-ornament: url('./ornament_rule.svg');
   --title-ornament-width: 12rem;
   --title-ornament-height: 0.8rem;
+  /*
+   * The printed cards' paper and ink, for card faces drawn in their style (our own drawing, no FFG
+   * art): tan parchment for a card's front, sage for a location's unrevealed side, each a shade
+   * darker towards the foot, brown ink for text and rules, and a dark sepia edge. The same in both
+   * themes, like printed cards.
+   */
+  --color-parchment: #ebdfc2;
+  /* The text box of a printed card, a shade lighter than its paper. */
+  --color-parchment-light: rgb(250 244 228 / 55%);
+  --color-parchment-shade: #d3bf93;
+  --color-parchment-back: #dfe0c3;
+  --color-parchment-back-shade: #b9bd93;
+  --color-ink: #2b1e12;
+  --color-ink-muted: #6a5536;
+  --color-card-edge: #3d2b19;
+  /*
+   * The dark bands of a printed location's frame (under its name, across the foot of its art and
+   * along its foot): dark wood on the revealed side, deep green on the unrevealed one, and the thin
+   * gilt rules engraved on them.
+   */
+  --color-card-band: #4a3222;
+  --color-card-band-back: #3c5638;
+  --color-card-gilt: #d8c48e;
   /* The shroud token, a dark disc like the printed shroud icon's. */
   --color-token-shroud: #2c2c33;
 
@@ -96,6 +118,17 @@
    */
   --card-border-width: 3px;
   --card-pattern-line-width: 1px;
+  /* The rules of the ornament drawn on card faces in the printed cards' style (cardOrnament.tsx). */
+  --card-ornament-line-width: 1px;
+  --card-gilt-line-width: 0.75px;
+  /* The magnifier's handle on a location's clue circle. */
+  --card-handle-width: 4px;
+  /* A location's name on its name plate and its type on the type plate, in SVG user units. */
+  --card-name-size: 13px;
+  --card-type-size: 6.5px;
+  /* The numbers on a tile's shroud, clue and doom tokens. */
+  --card-token-size: 13px;
+  --card-type-spacing: 0.08em;
   /*
    * The art area of a card drawn in HTML (the agenda and act) without its image: the map's SVG
    * hatch (LocationTile `CardPatterns`), lines from bottom left to top right in a 20-unit cell,
@@ -124,6 +157,8 @@
   --eliminated-opacity: 0.55;
   /* The rim of a round piece or token: the enemy ring, the shroud's bone edge. */
   --piece-ring-width: 3px;
+  /* Lifts the pieces off the card they stand on. */
+  --piece-shadow: drop-shadow(0 1px 1.5px rgb(0 0 0 / 60%));
 }
 
 :root[data-theme='light'] {
@@ -146,6 +181,10 @@
    * By day the panels and dialogs are parchment, a shade darker towards their edges like an old
    * page; by night they stay the see-through night.
    */
-  --panel-paper: radial-gradient(ellipse at center, #f6eedb 55%, #dfcda6);
+  --panel-paper: radial-gradient(
+    ellipse at center,
+    var(--color-parchment) 55%,
+    var(--color-parchment-shade)
+  );
   --header-shade: linear-gradient(to bottom, rgb(250 245 232 / 90%), rgb(250 245 232 / 35%));
 }

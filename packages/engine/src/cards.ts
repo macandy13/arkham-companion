@@ -160,11 +160,6 @@ export interface LocationAttachment {
    * there, it is discarded instead, since its revelation cannot attach it.
    */
   onePerLocation?: boolean;
-  /**
-   * "Forced – After attached location is successfully investigated: Discard
-   * …": a passed `Investigate` there discards the card after its clues.
-   */
-  discardWhenInvestigated?: boolean;
 }
 
 /**

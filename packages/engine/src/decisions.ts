@@ -92,6 +92,7 @@ function skillTestResolved(
       : {}),
     ...(decision.subject ? { subject: decision.subject } : {}),
     skillTest,
+    ...(decision.testKind ? { action: decision.testKind.kind } : {}),
     outcome: answerOutcome(command),
     ...(margin === undefined ? {} : { margin }),
   };
