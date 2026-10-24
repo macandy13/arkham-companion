@@ -112,6 +112,10 @@ const cultist = ['Humanoid', 'Cultist'];
  * - the Masked Hunter's and Hunting Nightgaunt's constant abilities
  * - Locked Door, and what On Wings of Darkness and Mysterious Chanting do
  *   after their automated part
+ *
+ * The Masked Hunter is entered as an enemy of the scenario's own set, so the
+ * setup must leave it out of the encounter deck: it enters play only as
+ * agenda 1's reverse side.
  */
 export const theMidnightMasksCardDefs: readonly CardStats[] = [
   {
@@ -299,6 +303,8 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     horror: 0,
     victory: 1,
     keywords: [spawn('Downtown')],
+    // The card heals "when" Drew attacks; after the attack is the nearest window, and the heal
+    // lands the same unless a player card (Guard Dog) damages him during his attack.
     abilities: [afterAttacking(healSelf(1))],
   }),
   enemy({
