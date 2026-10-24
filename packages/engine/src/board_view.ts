@@ -29,8 +29,11 @@ import { cardsInZone, cardsOfType, currentCard } from './lookup';
 import { mapLocations, type Edge, type GameMap, type GridCell } from './map';
 import { attacksStillDue } from './phases';
 import { NAMED_AMOUNTS } from './state';
+import { requireInvestigator } from './investigators';
+import { skillTestSuggestion, type SkillTestInput } from './skill_modifiers';
 import type {
   CardInstance,
+  ChaosToken,
   Decision,
   GameState,
   Investigator,
@@ -38,6 +41,7 @@ import type {
   Phase,
   PhaseStepId,
   SkillTest,
+  SkillTestSuggestion,
   SkillValues,
 } from './state';
 import type { Zone } from './zone';
@@ -314,6 +318,35 @@ export class BoardView {
 
   get act(): ActView | undefined {
     return actView(this.ctx, this.state);
+  }
+
+  /** The chaos tokens in the bag for this scenario and difficulty, the players' to draw from. */
+  get chaosBag(): readonly ChaosToken[] {
+    return this.state.chaosBag;
+  }
+
+  /**
+   * A skill test the players take at the table outside any decision, such as one a player card
+   * asks for: the investigator's skill against the `test`'s difficulty, with the players'
+   * `input` (their modifier and the tokens they drew), as `skillTestSuggestion` computes it at
+   * their location. Nothing is played: the game does not change.
+   */
+  skillTest(
+    investigator: InvestigatorId,
+    test: SkillTest,
+    input: SkillTestInput = {},
+  ): SkillTestSuggestion {
+    const { locationId } = requireInvestigator(this.state, investigator);
+    return skillTestSuggestion(
+      this.ctx,
+      this.state,
+      {
+        investigatorId: investigator,
+        ...test,
+        ...(locationId === undefined ? {} : { locationId }),
+      },
+      input,
+    );
   }
 
   /** Open decisions, oldest first. */
