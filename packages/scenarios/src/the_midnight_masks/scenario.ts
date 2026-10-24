@@ -15,6 +15,7 @@ import { GATHERING_CODES, GATHERING_SETS } from '../the_gathering/cards';
 import { theGathering } from '../the_gathering/scenario';
 import { ZEALOT_STORY } from '../night_of_the_zealot/story';
 import { MIDNIGHT_MASKS_CODES, MIDNIGHT_MASKS_SETS } from './cards';
+import { theMidnightMasksResolutions } from './resolutions';
 
 const codes = MIDNIGHT_MASKS_CODES;
 const sets = MIDNIGHT_MASKS_SETS;
@@ -184,4 +185,5 @@ export const theMidnightMasks: ScenarioDefinition = {
     },
   ],
   modifiers: { tokenValues: { skull: doomOfTheCult } },
+  resolutions: theMidnightMasksResolutions,
 };
