@@ -91,8 +91,26 @@ export interface GameActions {
    * corrections by hand (`ManualAdjust`), like the header's `removeDoom`.
    */
   adjustLocation(location: InstanceId, token: LocationToken, delta: number): Promise<void>;
-  /** Takes back the last step; never the scenario start. */
+  /** Takes back the last step; never the scenario start. While adjusting, the last tap. */
   undo(): Promise<void>;
+  /**
+   * "Adjust board": the actions after it change the screen only, until `finishAdjusting` stores
+   * them all as one step, so one undo takes the whole correction back, or `cancelAdjusting` drops
+   * them (`OpenGame.adjusting` meanwhile). Every action joins the adjustment, so the screen offers
+   * only corrections while it lasts.
+   */
+  startAdjusting(): Promise<void>;
+  /** "Done": stores the adjustment as one step. */
+  finishAdjusting(): Promise<void>;
+  /** "Cancel": drops the adjustment; the board is as it was before `startAdjusting`. */
+  cancelAdjusting(): Promise<void>;
+}
+
+/** How the open game starts, stores and drops an adjustment (`GameSession`'s adjusting verbs). */
+export interface Adjusting {
+  start(): Promise<void>;
+  finish(): Promise<void>;
+  cancel(): Promise<void>;
 }
 
 /**
@@ -103,6 +121,7 @@ export interface GameActions {
 export function gameActions(
   play: (step: (table: PlayTable) => void) => Promise<void>,
   undo: () => Promise<void>,
+  adjusting: Adjusting,
 ): GameActions {
   const onTurn = (action: (table: PlayTable, investigator: InvestigatorId) => void) =>
     play((table) => action(table, turnInvestigator(table.state)));
@@ -162,6 +181,9 @@ export function gameActions(
         ),
       ),
     undo,
+    startAdjusting: adjusting.start,
+    finishAdjusting: adjusting.finish,
+    cancelAdjusting: adjusting.cancel,
   };
 }
 

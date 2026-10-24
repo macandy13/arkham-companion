@@ -355,6 +355,30 @@ describe('appStore', () => {
           },
         );
 
+        it('shows the board as adjusting from "Adjust board" until "Done"', async () => {
+          const store = await aldersTurn('actions-adjusting-test');
+
+          await store.getState().actions.startAdjusting();
+          await store.getState().actions.adjust(investigatorId('alder'), 'damage', 1);
+          const whileAdjusting = store.getState().current;
+          await store.getState().actions.finishAdjusting();
+
+          expect(whileAdjusting).toMatchObject({ adjusting: true, canUndo: true });
+          expect(store.getState().current?.adjusting).toBe(false);
+          expect(alderIn(store)).toMatchObject({ damage: 1 });
+        });
+
+        it('shows the board as it was once an adjustment is cancelled', async () => {
+          const store = await aldersTurn('actions-adjust-cancel-test');
+          await store.getState().actions.startAdjusting();
+          await store.getState().actions.adjust(investigatorId('alder'), 'damage', 1);
+
+          await store.getState().actions.cancelAdjusting();
+
+          expect(store.getState().current?.adjusting).toBe(false);
+          expect(alderIn(store)).toMatchObject({ damage: 0 });
+        });
+
         it('places doom on the current agenda', async () => {
           const store = await aldersTurn('actions-doom-test');
 

@@ -151,6 +151,12 @@ Done when: a full sandbox game is playable and comfortable on a tablet.
 - [ ] An "Adjust board" mode: while it is on, the location menu's steppers and the investigator bar's steppers change counters, and "Done" plays them all as one step (`PlayTable.step`, one undo group); "Cancel" drops them
 - [ ] Drag and drop tokens (clues, doom, damage, horror, resources) from one element onto another, e.g. a clue from a location onto an investigator, as one step each
 
+Slices:
+
+- [x] M3.11a: adjusting in the session: `GameSession` plays the taps of an adjustment on the table in memory only, stores them as one step on "Done" (one undo group) and drops them on "Cancel"; undo while adjusting takes back the last tap. `OpenGame.adjusting` and `GameActions.startAdjusting`/`finishAdjusting`/`cancelAdjusting`
+- [ ] M3.11b: the "Adjust board" button with "Done" and "Cancel"; the steppers (investigators, header cards) and the location pencil show only while adjusting
+- [ ] M3.11c: token drag
+
 ## M3.12 Restyle after the UX prototype (O)
 
 **Why:** The play screen works but looks like a plain form. The clickable UX prototype (draft PR #214, `apps/web/public/prototype/index.html` on branch `claude/project-thread-vs8ujm`, copy at `/mnt/project-files/design/ux_prototype.html`) showed a look the players want: the table's playmat, cards that read like the printed ones, and controls that only show when needed.
