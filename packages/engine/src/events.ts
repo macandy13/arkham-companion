@@ -1,5 +1,5 @@
 import type { CampaignLog } from './campaign/campaign_log';
-import type { AbilityCommand } from './abilities';
+import type { AbilityCommand, TestedAction } from './abilities';
 import type { CardCode, DecisionId, InstanceId, InvestigatorId, MapId, ScenarioId } from './ids';
 import type { Edge, GameMap } from './map';
 import type { Rejection } from './rejection';
@@ -141,10 +141,15 @@ export interface ConnectionChanged {
   edge: Edge;
 }
 
-/** An investigator is now at location `to`. Produced by `MoveInvestigator`. */
+/**
+ * An investigator is now at location `to`. Produced by `MoveInvestigator`.
+ * `from` is the location they left; absent when they had none and were
+ * placed on the map, which is no entering ("after you enter" stays shut).
+ */
 export interface InvestigatorMoved {
   type: 'InvestigatorMoved';
   investigatorId: InvestigatorId;
+  from?: InstanceId;
   to: InstanceId;
 }
 
@@ -319,8 +324,8 @@ export interface CluesDiscovered {
  * commands, which apply the test's results (ST.7), "if this test succeeds"
  * effects included. Commands triggered by this event run before those
  * results, because `handle` queues the forced effects of an answer's own
- * events ahead of its option commands; no window opens on it yet (the
- * timing windows add one). Produced by `ResolveDecision`.
+ * events ahead of its option commands: a basic action's test opens `tested`
+ * at ST.6. Produced by `ResolveDecision`.
  */
 export interface SkillTestResolved {
   type: 'SkillTestResolved';
@@ -330,6 +335,8 @@ export interface SkillTestResolved {
   /** The decision's subject: the location, enemy or card the test is about. */
   subject?: InstanceId;
   skillTest: SkillTest;
+  /** The basic action the test belongs to (`Decision.testKind`); absent for a card's test. */
+  action?: TestedAction;
   outcome: SkillTestOutcome;
   /**
    * How much the test succeeded or failed by, when the answer says: its
@@ -379,10 +386,12 @@ export interface ExhaustChanged {
 
 /**
  * The game is now in `phase` of `round` with `steps` outstanding (`GameMeta`).
- * Produced by `NextPhase` when the previous phase has no steps left.
+ * Produced by `NextPhase` when the previous phase, `ended`, has no steps
+ * left; it opens `phaseEnds` for `ended`.
  */
 export interface PhaseChanged {
   type: 'PhaseChanged';
+  ended: Phase;
   phase: Phase;
   round: number;
   steps: PhaseStep[];

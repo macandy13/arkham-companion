@@ -1,6 +1,8 @@
 import {
   GRID_CELLS_PER_CARD,
   advanceAct,
+  afterEntering,
+  afterTest,
   leadDrawsDiscardingUntil,
   shuffleEncounterDiscard,
   atEndOfRound,
@@ -27,6 +29,8 @@ import {
   revealLocation,
   skillTest,
   spawnEnemyAt,
+  takeDamage,
+  takeHorror,
   trait,
   whenAdvanced,
   whenEnemyDefeated,
@@ -213,8 +217,22 @@ export const theGatheringCardDefs: readonly CardStats[] = [
   }),
   location({ code: codes.study, name: 'Study', shroud: 2, cluesPerInvestigator: 2 }),
   location({ code: codes.hallway, name: 'Hallway', shroud: 1, cluesPerInvestigator: 0 }),
-  location({ code: codes.attic, name: 'Attic', shroud: 1, cluesPerInvestigator: 2, victory: 1 }),
-  location({ code: codes.cellar, name: 'Cellar', shroud: 4, cluesPerInvestigator: 2, victory: 1 }),
+  location({
+    code: codes.attic,
+    name: 'Attic',
+    shroud: 1,
+    cluesPerInvestigator: 2,
+    victory: 1,
+    abilities: [afterEntering(takeHorror(1))],
+  }),
+  location({
+    code: codes.cellar,
+    name: 'Cellar',
+    shroud: 4,
+    cluesPerInvestigator: 2,
+    victory: 1,
+    abilities: [afterEntering(takeDamage(1))],
+  }),
   location({ code: codes.parlor, name: 'Parlor', shroud: 2, cluesPerInvestigator: 0 }),
   enemy({
     code: codes.ghoulPriest,
@@ -357,9 +375,9 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     set: sets.chillingCold,
     traits: ['Hazard'],
     quantity: 2,
-    locationAttachment: { onePerLocation: true, discardWhenInvestigated: true },
+    locationAttachment: { onePerLocation: true },
     modifiers: [{ stat: 'shroud', of: 'host', by: 2 }],
-    abilities: [whenRevealed(attachToLocation())],
+    abilities: [whenRevealed(attachToLocation()), afterTest('investigate', 'pass', discardSelf())],
   }),
 ];
 
@@ -413,6 +431,7 @@ interface LocationOptions {
   shroud: number;
   cluesPerInvestigator: number;
   victory?: number;
+  abilities?: Ability[];
 }
 
 function location({
@@ -421,6 +440,7 @@ function location({
   shroud,
   cluesPerInvestigator,
   victory,
+  abilities,
 }: LocationOptions): CardStats {
   return {
     ...scenarioCard(code, name),
@@ -428,6 +448,7 @@ function location({
     shroud,
     clues: perInvestigator(cluesPerInvestigator),
     ...(victory === undefined ? {} : { victory }),
+    ...(abilities === undefined ? {} : { abilities }),
   };
 }
 

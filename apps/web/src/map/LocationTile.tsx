@@ -1,8 +1,9 @@
-import type { KeyboardEvent } from 'react';
+import { useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { EnemyView, InvestigatorView, LocationView, MapEnemyView } from '@arkham/engine';
 import { LOCATION_ART, PORTRAIT_SCAN, portraitArtViewBox } from '../catalog/cardArt';
 import { useCardPicture } from '../catalog/cardImages';
+import { LocationOrnament, TYPE_PLATE_CENTRE } from './cardOrnament';
 import {
   ART_WINDOW,
   ATTACHMENT,
@@ -10,8 +11,10 @@ import {
   CLUES_CENTRE,
   CONTENT,
   DOOM_CENTRE,
+  NAME_WIDTH,
   pawnOffset,
   SHROUD_CENTRE,
+  shrinkToFit,
   TILE,
   type Point,
 } from './mapLayout';
@@ -22,18 +25,20 @@ export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyVi
 
 /**
  * One location as a tile at (`x`, `y`), drawn as a card face in layers, laid out like the printed
- * card: a frame, an art area with a pattern for the side the location shows (revealed or not), a
- * name band along the top. When the side has a picture (`LocationView.image`), it shows once it
- * has loaded (`data-picture`), in the look the players chose (`Settings.cardLook`): the card's art
- * cut out into the art window (`ART_WINDOW`, the nested `svg`), or the whole card over the face
- * (the `image`), with the name band and shroud the picture prints hidden. Both load the same
- * address, so the browser fetches it once; the stylesheet shows the one for the look. Over them lies what the game tracks: its attachments peeking out at the right
- * edge as small cards, and once revealed the shroud (with what attachments add) at mid height on
- * the left and the clues on the right, doom under the clues when it has any; then a pawn per
- * investigator there and a round token per enemy at it, in rows along the bottom edge.
- * `enemies` and `investigators` are the open game's pieces at this location; `dragOf` gives the
- * drag handlers of each piece that can be dragged now. Its edit button at the right end of the
- * name band calls `onEdit`.
+ * location card: a face for the side the location shows (revealed or not), the art area across
+ * its width with that side's pattern, the frame of the printed cards (`LocationOrnament`) over
+ * it, the name on the name plate and the type on the type plate. When the side has a picture
+ * (`LocationView.image`), it shows once it has loaded (`data-picture`), in the look the players
+ * chose (`Settings.cardLook`): the card's art cut out into the art window (`ART_WINDOW`, the
+ * nested `svg`), or the whole card over the face (the `image`), with the frame, the texts and the
+ * shroud the picture prints hidden. Both load the same address, so the browser fetches it once;
+ * the stylesheet shows the one for the look. Over them lies what the game tracks: its
+ * attachments peeking out at the right edge as small cards, and once revealed the shroud (with
+ * what attachments add) on the left edge where the art ends and the clues on the right, doom
+ * under the clues when it has any; then a pawn per investigator there and a round token per enemy
+ * at it, in rows along the bottom edge. `enemies` and `investigators` are the open game's pieces
+ * at this location; `dragOf` gives the drag handlers of each piece that can be dragged now. Its
+ * edit button in the top left corner calls `onEdit`.
  */
 export function LocationTile({
   location,
@@ -65,12 +70,7 @@ export function LocationTile({
       transform={`translate(${x} ${y})`}
     >
       <rect width={TILE.width} height={TILE.height} />
-      <rect
-        x={CONTENT.inset}
-        y={CONTENT.band}
-        width={TILE.width - 2 * CONTENT.inset}
-        height={TILE.height - CONTENT.band - CONTENT.inset}
-      />
+      <rect {...ART_WINDOW} />
       {picture && (
         <>
           <svg
@@ -96,6 +96,7 @@ export function LocationTile({
           />
         </>
       )}
+      <LocationOrnament />
       <NameBand location={location} />
       <EditButton location={location} onEdit={onEdit} />
       {location.attachments?.map((name, i) => (
@@ -147,10 +148,14 @@ export function LocationTile({
 }
 
 /**
- * The patterns that fill a tile's art area while it has no card image, one per side of a
- * location card, so a revealed tile reads apart from an unrevealed one at a glance. They are
- * drawn once per map drawing, in its `defs`; the stylesheet fills each art area with the
- * pattern for its tile's side by these ids. The ids are fixed rather than `useId`, since the
+ * The fills of a tile drawn in the printed cards' style, one set per side of a location card, so
+ * a revealed tile reads apart from an unrevealed one at a glance: a parchment gradient for the
+ * face (tan on the revealed side, sage on the unrevealed one, like the printed cards) and a hatch
+ * for the art area while it has no card image, and the paper's grain (`card-paper`, a pattern
+ * the size of a tile filled by the `card-paper-grain` noise filter: large faint foxing and a fine
+ * grain), which the frame lays over its plates and text box. They are drawn once per map drawing, in its
+ * `defs`; the stylesheet fills each tile with the ones for its side by these ids and colours the
+ * gradients' stops. The ids are fixed rather than `useId`, since the
  * stylesheet must name them; two drawings mounted at once would repeat them, which is harmless
  * because the patterns are the same.
  */
@@ -159,37 +164,83 @@ export function CardPatterns() {
   return (
     <>
       <pattern id="card-art-revealed" width={size} height={size} patternUnits="userSpaceOnUse">
+        <rect width={size} height={size} />
         <path d={`M 0 ${size} L ${size} 0`} />
       </pattern>
       <pattern id="card-art-unrevealed" width={size} height={size} patternUnits="userSpaceOnUse">
+        <rect width={size} height={size} />
         <path d={`M 0 ${size} L ${size} 0 M 0 0 L ${size} ${size}`} />
       </pattern>
+      {/* The grain's sepia sits in the colour matrices, since filter matrices take no CSS colours. */}
+      <filter id="card-paper-grain">
+        <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="7" />
+        <feColorMatrix
+          type="matrix"
+          values="0 0 0 0 0.36  0 0 0 0 0.25  0 0 0 0 0.12  0 0 0 -1.2 0.6"
+          result="foxing"
+        />
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed="3" />
+        <feColorMatrix
+          type="matrix"
+          values="0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 0 0.1  0 0 0 0.5 -0.15"
+        />
+        <feMerge>
+          <feMergeNode in="foxing" />
+          <feMergeNode />
+        </feMerge>
+      </filter>
+      <pattern
+        id="card-paper"
+        width={TILE.width}
+        height={TILE.height}
+        patternUnits="userSpaceOnUse"
+      >
+        <rect width={TILE.width} height={TILE.height} />
+      </pattern>
+      {(['revealed', 'unrevealed'] as const).map((side) => (
+        <linearGradient key={side} id={`card-face-${side}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" />
+          <stop offset="1" />
+        </linearGradient>
+      ))}
     </>
   );
 }
 
 /**
- * The tile's name band: the location's name, left of the edit button, and on an unrevealed tile a
- * second line saying so, since the unrevealed side shows no shroud or clues.
+ * The tile's name and type: the location's name on the name plate, centred like the printed name
+ * and shrunk to fit `NAME_WIDTH` when it is long, so it never reaches the edit button, and on the
+ * type plate "Location", or on an unrevealed tile "Unrevealed", since that side shows
+ * no shroud or clues.
  */
 function NameBand({ location }: { location: LocationView }) {
   const { t } = useTranslation();
-  const buttonLeft = TILE.width - CONTENT.inset - 2 * CONTENT.pawnRadius;
-  const x = (CONTENT.inset + buttonLeft) / 2;
-  if (location.revealed)
-    return (
-      <text x={x} y={CONTENT.band / 2}>
-        {location.name}
-      </text>
-    );
+  const name = useRef<SVGTextElement>(null);
+  const [scale, setScale] = useState(1);
+  const centre = { x: TILE.width / 2, y: CONTENT.band / 2 };
+  useLayoutEffect(() => {
+    const text = name.current;
+    // jsdom lays out no text, so tests keep the normal size.
+    if (!text?.getComputedTextLength) return;
+    const fit = () => setScale(shrinkToFit(text.getComputedTextLength(), NAME_WIDTH));
+    fit();
+    // The display font may still be loading, and it sets the name's width.
+    void document.fonts?.ready.then(fit);
+  }, [location.name]);
   return (
     <>
-      <text x={x} y={CONTENT.band / 3}>
+      <text
+        ref={name}
+        {...centre}
+        transform={
+          scale === 1
+            ? undefined
+            : `translate(${centre.x} ${centre.y}) scale(${scale}) translate(${-centre.x} ${-centre.y})`
+        }
+      >
         {location.name}
       </text>
-      <text x={x} y={(2 * CONTENT.band) / 3}>
-        {t('map.unrevealed')}
-      </text>
+      <text {...TYPE_PLATE_CENTRE}>{t(location.revealed ? 'map.location' : 'map.unrevealed')}</text>
     </>
   );
 }
@@ -237,15 +288,15 @@ function Attachment({ name, origin: { x, y } }: { name: string; origin: Point })
 }
 
 /**
- * The tile's edit button, a round button with a pencil at the right end of its name band, named after the
- * location. It is an SVG group rather than an HTML button, since it sits inside the drawing, so it
+ * The tile's edit button, a round button with a pencil in its top left corner, where the printed
+ * card shows its connection icon, named after the location. It is an SVG group rather than an HTML button, since it sits inside the drawing, so it
  * takes the keyboard (Enter, Space) itself.
  */
 function EditButton({ location, onEdit }: { location: LocationView; onEdit: () => void }) {
   const { t } = useTranslation();
   const radius = CONTENT.pawnRadius;
-  const x = TILE.width - CONTENT.inset - radius;
-  const y = CONTENT.inset + radius;
+  const x = radius;
+  const y = radius;
   const onKeyDown = (event: KeyboardEvent<SVGGElement>) => {
     if (event.key !== 'Enter' && event.key !== ' ') return;
     event.preventDefault();
@@ -291,7 +342,7 @@ function dragAttributes({
 }
 
 /**
- * An investigator's pawn: a circle with their initial, centred on `centre`. With `drag` it can
+ * An investigator's pawn (`data-pawn`): a circle with their initial, centred on `centre`. With `drag` it can
  * be dragged (`usePieceDrag`); a `ghost` is the copy that follows the pointer.
  */
 export function Pawn({
@@ -306,7 +357,7 @@ export function Pawn({
   ghost?: boolean;
 }) {
   return (
-    <g {...dragAttributes({ name: investigator.name, kind: 'pawn', drag, ghost })}>
+    <g data-pawn {...dragAttributes({ name: investigator.name, kind: 'pawn', drag, ghost })}>
       <circle cx={x} cy={y} r={CONTENT.pawnRadius} />
       <text x={x} y={y}>
         {investigator.name.charAt(0)}

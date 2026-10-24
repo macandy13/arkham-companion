@@ -4,7 +4,9 @@ import {
   attachedTo,
   blankEnemy,
   blankLocation,
+  afterTest,
   blankTreachery,
+  discardSelf,
   decisionId,
   engagedWith,
   fixed,
@@ -64,7 +66,7 @@ const plainTreachery = blankTreachery('plain_treachery');
  */
 const fogCard = blankTreachery('fog', {
   name: 'Fog',
-  locationAttachment: { discardWhenInvestigated: true },
+  abilities: [afterTest('investigate', 'pass', discardSelf())],
   modifiers: [{ stat: 'shroud', of: 'host', by: 2 }],
 });
 const lastingFogCard = blankTreachery('lasting_fog', {
@@ -252,7 +254,7 @@ describe('Investigate at a location with attachments', () => {
     expect(asked.pending[0]?.skillTest).toEqual({ skill: 'intellect', difficulty: 6 });
   });
 
-  it('discards the fog after the clue on a pass and keeps the lasting fog', () => {
+  it('discards the fog on a pass and keeps the lasting fog', () => {
     const { context, state } = bothFogsInStudy.start();
 
     const asked = stateAfter(context, state, investigate);

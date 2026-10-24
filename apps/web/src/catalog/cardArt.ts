@@ -17,13 +17,15 @@ export interface ScanArea {
 export const PORTRAIT_SCAN = { width: 300, height: 419 } as const;
 
 /**
- * Where a location card's art is, on either side, without the printed template around it: below
- * the name band's ornament, above the location icon over the shroud and clue circles, and in from
- * the card's edge (the art runs on behind them from about 7 % to 52 % of the height). It sits there
- * on every location of every cycle (checked on real scans, M3.12c in the M3 task file); the
- * "frames" look cuts it out. Rings some cards draw across their art stay, as they are part of it.
+ * Where a location card's art is, on either side: the whole width from just under the top edge
+ * to a little below the shroud and clue circles (about 6 % to 56 % of the height), the same area
+ * of the card the tile's art window covers (`ART_WINDOW`, a tile being half a scan), so the parts
+ * of the printed template inside it (the pendant under the name, the location icon and the
+ * circles) fall under the tile's own ornament. It sits there on every location of every cycle
+ * (checked on real scans, M3.12c in the M3 task file). Rings some cards draw across their art
+ * stay, as they are part of it.
  */
-export const LOCATION_ART: ScanArea = { x: 0.02, y: 0.125, width: 0.96, height: 0.33 };
+export const LOCATION_ART: ScanArea = { x: 0, y: 0.057, width: 1, height: 0.506 };
 
 /**
  * The SVG `viewBox` that shows `area` of a portrait scan drawn at `PORTRAIT_SCAN` size; with
