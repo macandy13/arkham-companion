@@ -112,6 +112,8 @@ export type Rejection =
   | { code: 'alreadyEngaged'; cardId: InstanceId; investigatorId: InvestigatorId }
   /** `DisengageEnemy` for an enemy that is not engaged. */
   | { code: 'notEngaged'; cardId: InstanceId }
+  /** `GainSurge` for a card that is not a drawn card resolving. */
+  | { code: 'notResolving'; cardId: InstanceId }
   /**
    * `Fight` against an aloof enemy nobody is engaged with (Rules Reference,
    * "Aloof"); it has to be engaged first, e.g. with the Engage action.
@@ -326,6 +328,8 @@ function describe(r: Rejection): string {
       return `${r.cardId} is already engaged with ${r.investigatorId}`;
     case 'notEngaged':
       return `${r.cardId} is not engaged`;
+    case 'notResolving':
+      return `${r.cardId} is not a drawn card resolving`;
     case 'aloofNotEngaged':
       return `${r.cardId} is aloof and must be engaged before it can be attacked`;
     case 'massiveNotEngageable':

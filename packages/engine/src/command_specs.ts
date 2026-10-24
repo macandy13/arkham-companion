@@ -12,6 +12,7 @@ import {
 } from './handle_board';
 import {
   handleDrawEncounter,
+  handleGainSurge,
   handleFromSetAside,
   handleShuffleEncounterDiscard,
   handleShuffleInto,
@@ -184,6 +185,7 @@ const COMMAND_SPECS: CommandSpecs = {
     // The card's revelation resolves before the card is placed.
     continueWith: placeDrawnCard,
   },
+  GainSurge: { handle: (_ctx, state, command) => handleGainSurge(state, command) },
   FromSetAside: { handle: (_ctx, state, command) => handleFromSetAside(state, command) },
   ShuffleInto: { handle: (_ctx, state, command) => handleShuffleInto(state, command) },
   ShuffleEncounterDiscard: { handle: (_ctx, state) => handleShuffleEncounterDiscard(state) },

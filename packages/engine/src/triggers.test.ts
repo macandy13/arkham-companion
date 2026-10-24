@@ -4,6 +4,8 @@ import {
   atEndOfEachTurn,
   atEndOfRound,
   healSelf,
+  gainSurge,
+  ifYouHave,
   readySelf,
   atEndOfTurn,
   advanceAct,
@@ -65,6 +67,7 @@ import {
   whenRevealed,
   whenTurnBegins,
   youMustEither,
+  zoneKey,
   type AbilityEffect,
   type AddMapStep,
   type Command,
@@ -1547,6 +1550,87 @@ describe('a choice without the options that cannot be resolved', () => {
     expect(requireInvestigator(state, alice)).toMatchObject({
       locationId: rivertown,
       sanity: { horror: 0 },
+    });
+  });
+});
+
+describe('a card that gains surge without clues', () => {
+  const falseTrail = instanceId('false_trail');
+  const nextCard = instanceId('next_card');
+  /** "If you have no clues, it gains surge. If you have 1 or more clues, test intellect (4)." */
+  const falseTrailCard = blankTreachery('false_trail', {
+    abilities: [
+      ifYouHave('clues', { max: 0 }, whenRevealed(gainSurge())),
+      ifYouHave('clues', { min: 1 }, whenRevealed(skillTest('intellect', 4))),
+    ],
+  });
+
+  it.each([
+    { clues: 0, drawn: [falseTrail, nextCard], pending: [] },
+    { clues: 1, drawn: [falseTrail], pending: [{ id: decisionId('test:false_trail') }] },
+  ])('draws $drawn for alice with $clues clues', ({ clues, drawn, pending }) => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall, clues })
+      .withCard(falseTrail, falseTrailCard, { kind: 'encounterDeck' })
+      .withCard(nextCard, blankTreachery('next_card'), { kind: 'encounterDeck' })
+      .start();
+
+    const { state: after, events } = execute(context, state, {
+      type: 'DrawEncounter',
+      investigatorId: alice,
+    });
+
+    const draws = events.filter((event) => event.type === 'EncounterCardDrawn');
+    expect(draws.map((event) => event.cardId)).toEqual(drawn);
+    expect(after.pending).toMatchObject(pending);
+  });
+
+  it('places the card before the surge draw, and keeps no surge for its next draw', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall, clues: 0 })
+      .withCard(falseTrail, falseTrailCard, { kind: 'encounterDeck' })
+      .withCard(nextCard, blankTreachery('next_card'), { kind: 'encounterDeck' })
+      .withCard(instanceId('untouched'), blankTreachery('untouched'), { kind: 'encounterDeck' })
+      .start();
+
+    const after = stateAfter(context, state, { type: 'DrawEncounter', investigatorId: alice });
+
+    expect(after.order[zoneKey({ kind: 'encounterDiscard' })]).toEqual([nextCard, falseTrail]);
+    expect(after.cards[falseTrail]?.gainedSurge).toBeUndefined();
+  });
+
+  it('draws only once more for a card with printed surge that also gains it', () => {
+    const doubled = instanceId('doubled_trail');
+    const doubledCard = blankTreachery('doubled_trail', {
+      keywords: [{ name: 'surge' }],
+      abilities: [whenRevealed(gainSurge())],
+    });
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(doubled, doubledCard, { kind: 'encounterDeck' })
+      .withCard(nextCard, blankTreachery('next_card'), { kind: 'encounterDeck' })
+      .withCard(instanceId('untouched'), blankTreachery('untouched'), { kind: 'encounterDeck' })
+      .start();
+
+    const { events } = execute(context, state, { type: 'DrawEncounter', investigatorId: alice });
+
+    const draws = events.filter((event) => event.type === 'EncounterCardDrawn');
+    expect(draws.map((event) => event.cardId)).toEqual([doubled, nextCard]);
+  });
+
+  it('rejects surge for a card that is not resolving', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(falseTrail, falseTrailCard, { kind: 'encounterDeck' })
+      .start();
+
+    expect(rejectionFrom(context, state, { type: 'GainSurge', cardId: falseTrail })).toEqual({
+      code: 'notResolving',
+      cardId: falseTrail,
     });
   });
 });

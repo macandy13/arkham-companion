@@ -249,8 +249,20 @@ function resolveQueuedStep(
       const events = completeAdvance(state, deck, step.cardId, resolutionName, step.asked === true);
       return emitWithEffects(resolution, events);
     }
-    case 'placeDrawnCard':
-      return emitWithEffects(resolution, placeDrawnCard(ctx, state, step.drawn));
+    case 'placeDrawnCard': {
+      const { drawn } = step;
+      // A printed surge is queued with the draw already (`surgeDraw`); placing the card clears a gained one.
+      const gained = !drawn.surge && state.cards[drawn.cardId]?.gainedSurge === true;
+      const placed = emitWithEffects(resolution, placeDrawnCard(ctx, state, drawn));
+      if (!gained) return placed;
+      // Counted as before the draw, like a printed surge: the drawn card is still resolving.
+      budget.encounterCards ??= encounterCardCount(state) + 1;
+      const surge: Continuation = {
+        kind: 'surge',
+        draw: { type: 'DrawEncounter', investigatorId: drawn.investigatorId },
+      };
+      return [...placed, ...withOrigin(withinSurgeLimit([surge], budget), step.origin)];
+    }
     case 'surge':
       return resolveSurge(resolution, step.draw);
     case 'newLeadInvestigator':

@@ -42,6 +42,7 @@ export type Command =
   | DisengageEnemy
   | DamageEnemy
   | HealEnemy
+  | GainSurge
   | DefeatEnemy
   | ExhaustEnemy
   | ReadyEnemy
@@ -480,6 +481,17 @@ export interface DamageEnemy {
   type: 'DamageEnemy';
   enemyId: InstanceId;
   amount: number;
+}
+
+/**
+ * "This card gains surge": the drawn card that is resolving draws another
+ * encounter card for its drawer once it has been placed, as a card with
+ * printed surge does. Rejected for a card that is not resolving
+ * (`notResolving`). Produces `SurgeGained`.
+ */
+export interface GainSurge {
+  type: 'GainSurge';
+  cardId: InstanceId;
 }
 
 /**

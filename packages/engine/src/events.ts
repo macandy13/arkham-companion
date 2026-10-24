@@ -45,6 +45,7 @@ export type Event =
   | CurrentCardChanged
   | ScenarioEnded
   | EncounterCardDrawn
+  | SurgeGained
   | AbilityEffectSkipped
   | CluesDiscovered
   | SkillTestResolved
@@ -287,6 +288,15 @@ export interface EncounterCardDrawn {
   cardId: InstanceId;
   peril: boolean;
   surge: boolean;
+}
+
+/**
+ * The drawn card `cardId` gained surge while it resolved
+ * (`CardInstance.gainedSurge`). Produced by `GainSurge`.
+ */
+export interface SurgeGained {
+  type: 'SurgeGained';
+  cardId: InstanceId;
 }
 
 /**

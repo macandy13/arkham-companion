@@ -6,7 +6,7 @@ import type { Event } from './events';
 import type { CardCode, DecisionId, InstanceId, InvestigatorId } from './ids';
 import { locationAttachments } from './board';
 import { enemiesAt } from './enemies';
-import { isActiveInvestigator, playerOrder, requireInvestigator } from './investigators';
+import { isActiveInvestigator, playerOrder, requireInvestigator, statValue } from './investigators';
 import { cardsInZone, currentCard, requireCard } from './lookup';
 import type { AddMapStep } from './setup';
 import type {
@@ -14,6 +14,7 @@ import type {
   DecisionOption,
   GameState,
   Investigator,
+  InvestigatorStat,
   PerPointFailed,
   Phase,
   SkillTestKind,
@@ -204,6 +205,7 @@ export type AbilityCommand =
           | 'SpawnEnemy'
           | 'HealEnemy'
           | 'ReadyEnemy'
+          | 'GainSurge'
           | 'MoveInvestigator'
           | 'AddMap'
           | 'AdvanceAct'
@@ -261,7 +263,13 @@ export type AbilityEffect = Templated<AbilityCommand>;
  */
 export type AbilityCondition =
   /** The current act is one of `acts`, by code. */
-  { kind: 'currentAct'; acts: readonly CardCode[] };
+  | { kind: 'currentAct'; acts: readonly CardCode[] }
+  /**
+   * The investigator the window names has between `min` and `max` of
+   * `stat`, both included where given ("if you have no clues"). False in a
+   * window that names nobody.
+   */
+  | { kind: 'investigatorHas'; stat: InvestigatorStat; min?: number; max?: number };
 
 /**
  * A forced card ability: what it does when its window opens, if its
@@ -426,20 +434,32 @@ export function abilitySteps(
   return (cardStats(ctx.cards, card.code).abilities ?? [])
     .filter((ability) => shallowEqual<TimingWindow>(ability.window, opened.window))
     .filter(
-      (ability) => ability.condition === undefined || conditionHolds(state, ability.condition),
+      (ability) =>
+        ability.condition === undefined || conditionHolds(state, ability.condition, opened),
     )
     .flatMap((ability) => ability.effects)
     .map((effect) => ({ kind: 'ability', effect, opened, origin: effect.type }));
 }
 
-function conditionHolds(state: GameState, condition: AbilityCondition): boolean {
+function conditionHolds(
+  state: GameState,
+  condition: AbilityCondition,
+  opened: OpenedWindow,
+): boolean {
   switch (condition.kind) {
     case 'currentAct': {
       const act = currentCard(state, 'act');
       return act !== undefined && condition.acts.includes(act.code);
     }
+    case 'investigatorHas': {
+      const { investigatorId } = opened;
+      if (investigatorId === undefined || !isActiveInvestigator(state, investigatorId))
+        return false;
+      const value = statValue(requireInvestigator(state, investigatorId), condition.stat);
+      return value >= (condition.min ?? 0) && value <= (condition.max ?? Infinity);
+    }
     default:
-      return assertNever(condition.kind);
+      return assertNever(condition);
   }
 }
 
@@ -938,6 +958,24 @@ export function leadDrawsDiscardingUntil(match: EncounterMatch): AbilityEffect {
  */
 export function duringAct(acts: readonly CardCode[], ability: Ability): Ability {
   return { ...ability, condition: { kind: 'currentAct', acts } };
+}
+
+/**
+ * "If you have no clues, …": `ability` fires only while the investigator its
+ * window names has `stat` within `range`, written
+ * `ifYouHave('clues', { max: 0 }, whenRevealed(gainSurge()))` (False Lead).
+ */
+export function ifYouHave(
+  stat: InvestigatorStat,
+  range: { min?: number; max?: number },
+  ability: Ability,
+): Ability {
+  return { ...ability, condition: { kind: 'investigatorHas', stat, ...range } };
+}
+
+/** "[This card] gains surge": the drawn card with the ability draws again once placed. */
+export function gainSurge(): AbilityEffect {
+  return { type: 'GainSurge', cardId: { ref: 'self' } };
 }
 
 /** "(→R3)": the scenario ends with that resolution. */

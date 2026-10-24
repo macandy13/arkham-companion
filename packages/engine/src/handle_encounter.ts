@@ -4,9 +4,17 @@ import type {
   EncounterMatch,
   EncounterSource,
   FromSetAside,
+  GainSurge,
   ShuffleInto,
 } from './commands';
-import type { CardFlipped, CardMoved, DeckShuffled, EncounterCardDrawn, Event } from './events';
+import type {
+  CardFlipped,
+  CardMoved,
+  DeckShuffled,
+  EncounterCardDrawn,
+  Event,
+  SurgeGained,
+} from './events';
 import type { CardCode, InstanceId, InvestigatorId } from './ids';
 import { activeInvestigator, isActiveInvestigator } from './investigators';
 import { hasKeyword } from './keywords';
@@ -64,6 +72,13 @@ function rejectEmptyDeck(): never {
 export function surgeDraw(events: readonly Event[]): DrawEncounter | undefined {
   const drawn = events.find((event) => event.type === 'EncounterCardDrawn');
   return drawn?.surge ? { type: 'DrawEncounter', investigatorId: drawn.investigatorId } : undefined;
+}
+
+/** `GainSurge`: the resolving card draws again once placed (`CardInstance.gainedSurge`). */
+export function handleGainSurge(state: GameState, cmd: GainSurge): SurgeGained[] {
+  if (requireCard(state.cards, cmd.cardId).zone.kind !== 'resolving')
+    throw new CommandRejected({ code: 'notResolving', cardId: cmd.cardId });
+  return [{ type: 'SurgeGained', cardId: cmd.cardId }];
 }
 
 /**
