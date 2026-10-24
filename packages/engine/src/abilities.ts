@@ -289,11 +289,10 @@ export type AbilityCondition =
    */
   | ({ kind: 'investigatorHas'; stat: InvestigatorStat } & StatRange)
   /**
-   * The number of enemies with `trait` (any enemy without one) on the table
-   * is within the range ("If there are no [[Cultist]] enemies in play",
-   * `enemiesOnTable`).
+   * The number of enemies with `trait` on the table is within the range
+   * ("If there are no [[Cultist]] enemies in play", `enemiesOnTable`).
    */
-  | ({ kind: 'enemiesInPlay'; trait?: Trait } & StatRange);
+  | ({ kind: 'enemiesInPlay'; trait: Trait } & StatRange);
 
 /** Bounds on a value, both included; at least one is given, so the range always says something. */
 export type StatRange = { min: number; max?: number } | { min?: number; max: number };
@@ -1081,6 +1080,7 @@ export function ifEnemiesInPlay(trait: Trait, range: StatRange, ability: Ability
  * "Search the encounter deck and discard pile for a [[Cultist]] enemy and
  * draw it": the investigator the window names draws the first card that
  * matches, deck first (`DrawEncounter` with `match`); nothing when none does.
+ * The players would pick among the matches; the engine does not ask yet (#346).
  */
 export function searchAndDraw(match: EncounterMatch): AbilityEffect {
   return {
