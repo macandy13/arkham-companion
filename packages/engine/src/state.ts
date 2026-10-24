@@ -47,6 +47,13 @@ export interface CardInstance {
   tokens: Partial<Record<TokenKind, number>>;
   /** Scenario-specific markers. */
   flags: Record<string, unknown>;
+  /**
+   * The drawn card gained surge while it resolved ("False Lead gains
+   * surge", `SurgeGained`). It stays when the revelation moves the card
+   * (into a threat area, say) and is cleared when the card is drawn again,
+   * so it always belongs to the card's latest draw.
+   */
+  gainedSurge?: true;
 }
 
 /**

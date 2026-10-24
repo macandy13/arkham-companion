@@ -120,6 +120,8 @@ export {
   placeDoomOnAgenda,
   placeDoomOnSelf,
   healSelf,
+  gainSurge,
+  ifYouHave,
   readySelf,
   putIntoThreatArea,
   putMapIntoPlay,

@@ -59,6 +59,8 @@ export function apply(state: GameState, event: Event): GameState {
       return applyDeckShuffled(state, event);
     case 'CardMoved':
       return applyCardMoved(state, event);
+    case 'SurgeGained':
+      return updateCard(state, event.cardId, (card) => ({ ...card, gainedSurge: true }));
     case 'TokensChanged':
       return applyTokensChanged(state, event);
     case 'CardFlipped':
@@ -212,11 +214,9 @@ function moveCard(state: GameState, cardId: InstanceId, to: Zone, index?: number
   const toKey = zoneKey(to);
   let order = withZoneOrder(state.order, fromKey, without(state.order[fromKey] ?? [], cardId));
   order = withZoneOrder(order, toKey, insertedAt(order[toKey] ?? [], cardId, index));
-  return {
-    ...state,
-    cards: { ...state.cards, [cardId]: { ...card, zone: to } },
-    order,
-  };
+  // A gained surge belongs to one draw of the card, wherever its revelation puts it; drawing it again starts afresh.
+  const kept = to.kind === 'resolving' ? withoutKey(card, 'gainedSurge') : card;
+  return { ...state, cards: { ...state.cards, [cardId]: { ...kept, zone: to } }, order };
 }
 
 /** Engagement changes: the enemy moves and any open question about it is answered. */
