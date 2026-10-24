@@ -1,5 +1,7 @@
 # M2 – Game management UI
 
+Archived on 2026-10-24, when the plan moved to GitHub issues (see `docs/tasks/README.md`); the live state is in the issues.
+
 Goal: everything before and around a game – browse investigators, start a new game, resume or delete saved games, export and import.
 Ref: product.md "UI concept" ("Game management", "Investigator picker"). Builds on the M0.6 app shell; the play screen itself is M3 (here it can be a placeholder that shows the game state as text).
 

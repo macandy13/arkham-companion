@@ -18,7 +18,7 @@ For the `pr-reviewer` subagent, which Claude sessions run on their branch before
   - A generic string, array or object operation inlined instead of living in `@arkham/util`.
 - **Architecture doc out of date.** A change that adds or alters a component (a new kind of command, trigger, decision, setup step, store method, package or dependency direction) without updating that component's section in `docs/architecture.md`.
 - **Silent `catch`**, `any` without a comment, an exported type or function without a doc comment.
-- **PR shape** (coding guidelines §7): more than one reviewable idea, or over the size budget without a stack plan in the task file; a review thread from an earlier round left unanswered.
+- **PR shape** (coding guidelines §7): more than one reviewable idea, or over the size budget without a stack plan (slice sub-issues) on the task issue; a review thread from an earlier round left unanswered.
 
 ## Nits: flag as optional
 
@@ -33,7 +33,7 @@ For the `pr-reviewer` subagent, which Claude sessions run on their branch before
 ## Don't comment on
 
 - Formatting and import order (Prettier and ESLint own them).
-- Lockfile, changelog, release manifest, task checklist ticks and `docs/tasks/done/` moves.
+- Lockfile, changelog, release manifest, and `docs/tasks/done/` archive edits.
 - Bundle size and Lighthouse numbers (their own jobs report them).
 - Test details that don't affect readability, such as the exact choice of example values.
 

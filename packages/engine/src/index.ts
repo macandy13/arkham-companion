@@ -76,6 +76,7 @@ export { enemyAttackList, type EnemyAttack } from './enemies';
 export { describeDecision, optionName, optionNamed } from './describe_decision';
 export { confirmOptions, skillTestDecision, type SkillTestOutcomes } from './decisions';
 export {
+  revealsAnotherToken,
   skillTestContext,
   skillTestSuggestion,
   suggestSkillTest,
@@ -124,6 +125,9 @@ export {
   healSelf,
   gainSurge,
   ifYouHave,
+  ifEnemiesInPlay,
+  searchAndDraw,
+  shuffleEncounterDeck,
   readySelf,
   putIntoThreatArea,
   putMapIntoPlay,

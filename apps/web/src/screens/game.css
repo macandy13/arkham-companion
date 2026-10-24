@@ -46,18 +46,17 @@
 }
 
 /*
- * The play screen's panels (the investigator panels and the notices) wear the same frame, drawn
- * smaller so the board keeps its room.
+ * The play screen's notices wear the same frame, drawn smaller so the board keeps its room. The
+ * investigator panels have their card instead (investigators.css).
  */
-#board > #investigators > section,
 #notices > aside {
   border: var(--panel-frame-width-compact) solid;
   border-image: var(--panel-frame) var(--panel-frame-slice) / var(--panel-frame-width-compact)
     stretch;
 }
 
-/* By day these panels are parchment too, like the screens outside play (base.css). */
-:root[data-theme='light'] :is(#board > #investigators > section, #notices > aside) {
+/* By day the notices are parchment too, like the screens outside play (base.css). */
+:root[data-theme='light'] #notices > aside {
   background: var(--panel-paper);
 }
 

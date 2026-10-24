@@ -18,45 +18,24 @@
 }
 
 /*
- * A panel lays the investigator's card on the left, beside their name, the line on their round and
- * their turn controls, and their counters below, as in the prototype.
+ * A panel holds the investigator's threat area, their card and under it their turn controls. The
+ * card carries the look, so the panel has no frame of its own. Below the map a panel is as wide
+ * as the column beside it in landscape, or the screen when that is narrower, so a phone shows one
+ * whole card at a time.
  */
 #board > #investigators > section {
-  display: grid;
-  grid-template:
-    'threat threat threat' auto
-    'card name turn' auto
-    'card status turn' auto
-    'card skills turn' auto
-    'card stats stats' 1fr /
-    auto 1fr auto;
-  gap: var(--space-1) var(--space-2);
+  display: flex;
   flex: none;
-  align-items: start;
+  width: min(var(--layout-board-panel-width), 100%);
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: var(--space-1);
+  align-items: stretch;
   padding: 0;
-  background: var(--color-surface);
 }
 
-/* In the column beside the map the counters move under the card, so all four fit. */
-@media (orientation: landscape) {
-  #board > #investigators > section {
-    grid-template:
-      'threat threat' auto
-      'card name' auto
-      'card status' auto
-      'card skills' auto
-      'card turn' 1fr
-      'stats stats' auto /
-      auto 1fr;
-  }
-
-  #board > #investigators > section > :is(button, [role='group']) {
-    justify-self: start;
-  }
-}
-
-/* The investigator whose turn it is stands out, glowing in the accent colour inside its frame. */
-#board > #investigators > section[data-turn] {
+/* The investigator whose turn it is stands out, their card glowing in the accent colour. */
+#board > #investigators > section[data-turn] > article {
   box-shadow: var(--turn-glow);
 }
 
@@ -66,66 +45,129 @@
 }
 
 /*
- * The investigator card, landscape like the printed one and drawn like the header's cards: a
- * frame around the hatched art area, which the card's picture covers once it has loaded.
+ * The investigator card, drawn like the map's location cards after the printed ones: parchment
+ * with a dark edge, the name on a parchment plate in a dark band with a gilt rule, the art window
+ * (hatched until the picture shows) beside the skills, and the counters as round tokens along its
+ * foot. Parchment and ink in both themes, like printed cards.
  */
 #investigators [data-card='investigator'] {
-  grid-area: card;
-  position: relative;
+  display: grid;
+  grid-template:
+    'name name' auto
+    'art skills' auto
+    'stats stats' auto /
+    var(--layout-investigator-art-width) 1fr;
+  gap: var(--space-2);
+  padding-bottom: var(--space-2);
+  border: var(--card-border-width) solid var(--color-card-edge);
+  border-radius: var(--radius);
+  background: linear-gradient(var(--color-parchment), var(--color-parchment-shade));
+  color: var(--color-ink);
   overflow: hidden;
-  box-sizing: border-box;
-  /*
-   * A width, not an aspect ratio: with its overflow hidden the card's grid column takes no size
-   * from an aspect ratio, so the card would spill over the name beside it.
-   */
-  width: calc(var(--layout-investigator-card-height) * 7 / 5);
-  height: var(--layout-investigator-card-height);
+}
+
+#investigators [data-card='investigator'] > header {
+  grid-area: name;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
+  align-items: baseline;
+  padding: var(--space-1) var(--space-2);
+  border-bottom: var(--border-width) solid var(--color-card-gilt);
+  background: var(--color-card-band);
+  color: var(--color-card-gilt);
+}
+
+#investigators [data-card='investigator'] > header > h3 {
   margin: 0;
-  border: var(--card-border-width) solid var(--color-card-investigator);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius);
+  background: var(--color-parchment);
+  color: var(--color-ink);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-subtitle);
+}
+
+#investigators [data-card='investigator'] > header > p {
+  margin: 0;
+  font-size: var(--font-size-note);
+  white-space: nowrap;
+}
+
+/*
+ * The art window: the scan of the card's front scaled so that its art area (`--investigator-art-*`)
+ * fills the window, and moved so that area sits in it. It shows only once it has loaded
+ * (`data-picture`); until then the window shows the hatched art area.
+ */
+#investigators [data-card='investigator'] > picture {
+  grid-area: art;
+  position: relative;
+  display: block;
+  margin-inline-start: var(--space-2);
+  aspect-ratio: var(--investigator-art-ratio);
+  border: var(--border-width) solid var(--color-card-edge);
   border-radius: var(--radius);
   background: var(--card-art-pattern), var(--color-card-face);
+  overflow: hidden;
 }
 
-/* The card's picture fills its frame, and shows only once it has loaded (`data-picture`). */
-#investigators [data-card='investigator'] > img {
+#investigators [data-card='investigator'] > picture > img {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  width: calc(100% / var(--investigator-art-width));
+  max-width: none;
+  left: calc(var(--investigator-art-x) / var(--investigator-art-width) * -100%);
+  top: calc(var(--investigator-art-y) / var(--investigator-art-height) * -100%);
 }
 
-#investigators [data-card='investigator']:not([data-picture]) > img {
+#investigators [data-card='investigator'] > picture:not([data-picture]) > img {
   visibility: hidden;
 }
 
 /*
- * The skills in a row like the card prints them, each value after its icon. Two ids, so they beat
- * the home screen's padded `#app > main ul > li` cards.
+ * The skills in one row beside the art, each a small parchment plate with its value after its icon,
+ * opening a skill test. Two ids' worth, so they beat the home screen's padded
+ * `#app > main ul > li` cards.
  */
-#board > #investigators > section > ul {
+#investigators [data-card='investigator'] > ul {
   grid-area: skills;
-  display: flex;
-  gap: var(--space-2);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-1);
+  align-content: center;
   margin: 0;
+  margin-inline-end: var(--space-2);
   padding: 0;
   list-style: none;
 }
 
-#board > #investigators > section > ul > li {
+#investigators [data-card='investigator'] > ul > li {
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+#investigators [data-card='investigator'] > ul > li > button {
   display: flex;
   gap: var(--space-1);
   align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
   padding: 0;
-  background: none;
+  border: var(--border-width) solid var(--color-ink-muted);
+  background: var(--color-parchment-light);
+  color: var(--color-ink);
+  font-family: var(--font-family);
+  font-size: var(--font-size-note);
+  font-weight: bold;
   font-variant-numeric: lining-nums;
 }
 
-#board > #investigators > section > ul > li::before {
+#investigators [data-card='investigator'] > ul > li > button::before {
   content: '';
   width: var(--stat-icon-size);
   height: var(--stat-icon-size);
-  background: var(--color-text-muted);
+  background: var(--color-ink);
   mask: var(--skill-icon) center / contain no-repeat;
 }
 
@@ -145,23 +187,6 @@
   --skill-icon: url('./icons/agility.svg');
 }
 
-/* The name stands large beside the card, in the playmat's display type. */
-#board > #investigators > section > h3 {
-  grid-area: name;
-  margin: 0;
-  font-family: var(--font-family-display);
-  font-size: var(--font-size-title);
-  line-height: 1;
-}
-
-#board > #investigators > section > p {
-  grid-area: status;
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-note);
-  white-space: nowrap;
-}
-
 /* Small buttons, so the panel stays compact. */
 #investigators section button {
   min-width: var(--button-compact);
@@ -179,32 +204,38 @@
   color: var(--color-accent-text);
 }
 
-/* The counters share the panel's full width in a row, each value above its steppers. */
-#investigators dl {
+/*
+ * The counters along the card's foot, side by side: each a round token in its colour with the
+ * value on it, like the tokens on the table, and its name under it after its icon.
+ */
+#investigators [data-card='investigator'] > dl {
   grid-area: stats;
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: minmax(0, 1fr);
   gap: var(--space-1);
-  margin: 0;
+  margin: 0 var(--space-2);
 }
 
-/* Each counter is a small well: its name, then its value between its steppers. */
-#investigators dl > div {
+/* The tokens line up along the top, the names along the foot, steppers or not. */
+#investigators [data-card='investigator'] > dl > div {
   display: grid;
+  grid-template-rows: 1fr auto;
   justify-items: center;
   gap: var(--space-1);
-  padding: var(--space-1);
-  border-radius: var(--radius);
-  background: var(--color-surface);
 }
 
-/* The counter's name in small spaced capitals after its icon, like the prototype's. */
+#investigators [data-card='investigator'] > dl > div > dd {
+  grid-row: 1;
+  align-self: start;
+}
+
+/* The counter's name in small spaced capitals after its icon. */
 #investigators dt {
   display: flex;
   gap: var(--space-1);
   align-items: center;
-  color: var(--color-text-muted);
+  color: var(--color-ink-muted);
   font-size: var(--font-size-note);
   letter-spacing: var(--card-type-spacing);
   text-transform: uppercase;
@@ -220,59 +251,71 @@
   content: '';
   width: var(--stat-icon-size);
   height: var(--stat-icon-size);
+  background: var(--stat-colour);
   mask: var(--stat-icon) center / contain no-repeat;
 }
 
-#investigators [data-stat='health'] dt::before {
+#investigators [data-stat='health'] {
   --stat-icon: url('./icons/health.svg');
-  background: var(--color-health);
+  --stat-colour: var(--color-health);
 }
 
-#investigators [data-stat='sanity'] dt::before {
+#investigators [data-stat='sanity'] {
   --stat-icon: url('./icons/sanity.svg');
-  background: var(--color-sanity);
+  --stat-colour: var(--color-sanity);
 }
 
-#investigators [data-stat='clues'] dt::before {
+#investigators [data-stat='clues'] {
   --stat-icon: url('./icons/token.svg');
-  background: var(--color-clue);
+  --stat-colour: var(--color-clue);
 }
 
-#investigators [data-stat='resources'] dt::before {
+#investigators [data-stat='resources'] {
   --stat-icon: url('./icons/token.svg');
-  background: var(--color-accent);
+  --stat-colour: var(--color-accent);
 }
 
-#investigators [data-stat='doom'] dt::before {
+#investigators [data-stat='doom'] {
   --stat-icon: url('./icons/token.svg');
-  background: var(--color-doom);
+  --stat-colour: var(--color-doom);
 }
 
-/* The value, then the − and + steppers under it while adjusting. */
+/* The token, then the − and + steppers side by side under it while adjusting. */
 #investigators dd {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, auto);
   justify-content: center;
   gap: var(--space-1);
-  align-items: center;
   margin: 0;
 }
 
 #investigators dd > data {
-  flex-basis: 100%;
-  font-size: var(--font-size-subtitle);
+  grid-column: 1 / -1;
+  justify-self: center;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: var(--stat-token-size);
+  height: var(--stat-token-size);
+  border: var(--piece-ring-width) solid var(--color-parchment-light);
+  border-radius: var(--radius-round);
+  background: var(--stat-colour);
+  box-shadow: var(--header-token-shadow);
+  color: var(--header-token-text);
+  font-size: var(--font-size-note);
+  font-weight: bold;
   /* The UI face's old-style figures make a 0 read as an o. */
   font-variant-numeric: lining-nums tabular-nums;
-  text-align: center;
+  white-space: nowrap;
 }
 
 #investigators dd > button {
   padding: 0;
 }
 
-/* The turn controls: "Start turn", or the action pips, resign and End while it is their turn. */
+/* The turn controls under the card: "Start turn", or the action pips, resign and End. */
 #board > #investigators > section > :is(button, [role='group']) {
-  grid-area: turn;
+  align-self: start;
 }
 
 #investigators [role='group'] {
@@ -315,7 +358,6 @@
  * scrolls sideways and snaps to whole cards, so a swipe or an arrow always shows full cards.
  */
 #board > #investigators > section > div {
-  grid-area: threat;
   display: flex;
   gap: var(--space-1);
   align-items: center;
@@ -371,4 +413,123 @@
 
 #board > #investigators > section > div li[data-exhausted] {
   opacity: var(--eliminated-opacity);
+}
+
+/*
+ * The skill test (SkillTestDialog): the title with the × in its corner, the skills as a row of
+ * toggles, the difficulty and the modifier as stepper rows, the draw, then the calculation and
+ * the outcome, coloured like a pass or a fail. The `#investigators` id lets these beat the home screen's `#app > main` rows and
+ * padded list cards.
+ */
+#investigators dialog[data-dialog='skill-test'] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+#investigators dialog[data-dialog='skill-test']:not([open]) {
+  display: none;
+}
+
+#investigators dialog[data-dialog='skill-test'] > header {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: space-between;
+}
+
+#investigators dialog[data-dialog='skill-test'] h2 {
+  margin: 0;
+  font-size: var(--font-size-subtitle);
+}
+
+#investigators dialog[data-dialog='skill-test'] button[data-icon='close'] {
+  border-radius: var(--radius-round);
+}
+
+#investigators button[data-icon='close']::before {
+  mask-image: url('./icons/close.svg');
+}
+
+/* A skill toggle: its icon, then its value, like on the card. */
+#investigators dialog[data-dialog='skill-test'] button[data-skill] {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+}
+
+#investigators dialog[data-dialog='skill-test'] button[data-skill]::before {
+  content: '';
+  width: var(--stat-icon-size);
+  height: var(--stat-icon-size);
+  background: currentcolor;
+  mask: var(--skill-icon) center / contain no-repeat;
+}
+
+#investigators dialog[data-dialog='skill-test'] button[data-skill] > data {
+  min-width: 0;
+  font-size: var(--font-size-body);
+}
+
+#investigators dialog[data-dialog='skill-test'] section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+#investigators dialog[data-dialog='skill-test'] section > p {
+  flex: 1;
+  margin: 0;
+}
+
+#investigators dialog[data-dialog='skill-test'] data {
+  min-width: var(--button-compact);
+  font-size: var(--font-size-subtitle);
+  font-variant-numeric: lining-nums tabular-nums;
+  text-align: center;
+}
+
+#investigators dialog[data-dialog='skill-test'] ul,
+#investigators dialog[data-dialog='skill-test'] ol {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#investigators dialog[data-dialog='skill-test'] li {
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+#investigators dialog[data-dialog='skill-test'] ol {
+  flex-direction: column;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-note);
+}
+
+#investigators dialog[data-dialog='skill-test'] [aria-pressed='true'] {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+}
+
+#investigators dialog[data-dialog='skill-test'] output {
+  flex-basis: 100%;
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-subtitle);
+}
+
+#investigators dialog[data-dialog='skill-test'] output[data-outcome='pass'] {
+  color: var(--color-clue);
+}
+
+#investigators dialog[data-dialog='skill-test'] output[data-outcome='fail'] {
+  color: var(--color-doom);
 }

@@ -196,13 +196,29 @@ export function nearestEnemies(
   from: InstanceId,
   trait?: Trait,
 ): CardInstance[] {
-  const candidates = Object.values(state.cards).flatMap((card) => {
-    const stats = cardStats(ctx.cards, card.code);
-    if (!isEnemyOnTable(card) || stats.typeCode !== 'enemy') return [];
-    if (trait !== undefined && !stats.traits.includes(trait)) return [];
+  const candidates = enemiesOnTable(ctx, state, trait).map((card) => {
     const [path] = shortestPaths(state, locationOf(state, card), from);
-    return [{ card, distance: path ? path.length - 1 : Infinity }];
+    return { card, distance: path ? path.length - 1 : Infinity };
   });
   const nearest = Math.min(...candidates.map(({ distance }) => distance));
   return candidates.filter(({ distance }) => distance === nearest).map(({ card }) => card);
+}
+
+/**
+ * The enemies on the table with `trait`, or every enemy without one, in card
+ * order: "[[Cultist]] enemies in play" (`isEnemyOnTable`).
+ */
+export function enemiesOnTable(
+  ctx: EngineContext,
+  state: GameState,
+  trait?: Trait,
+): CardInstance[] {
+  return Object.values(state.cards).filter((card) => {
+    const stats = cardStats(ctx.cards, card.code);
+    return (
+      isEnemyOnTable(card) &&
+      stats.typeCode === 'enemy' &&
+      (trait === undefined || stats.traits.includes(trait))
+    );
+  });
 }

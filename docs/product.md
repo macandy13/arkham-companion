@@ -58,7 +58,7 @@ Private GitHub repo, possibly public later. Before going public: no card text/im
 
 ## Plan
 
-Each milestone has a task plan under `docs/tasks/`, one task per Claude Code session. Every milestone file opens with *Why this milestone* (problem, gain, timing) and every task has a *Why* and a *Benefit* line.
+Each milestone is a parent issue on GitHub with its tasks as sub-issues, one task per Claude Code session (`docs/tasks/README.md`). Every milestone issue opens with *Why this milestone* (problem, gain, timing) and every task has a *Why* and a *Benefit* line.
 
 **Ordering logic:** foundations → rules → screens → real content → polish → cloud. Rules come before screens because the screens only display engine state and send commands. Screens are built against a fake sandbox scenario so UI problems and real-data problems never have to be debugged at the same time. Comfort features and the cloud come last because none of them blocks playing.
 
@@ -73,44 +73,44 @@ flowchart LR
 | Milestone | Content | Why at this point | What players get at the end |
 | --- | --- | --- | --- |
 | [M0 Foundation](tasks/done/M0-foundation.md) | Monorepo, CI, card import, domain model, `GameStore`, app shell | Everything builds on it; these are the expensive decisions to change later | An installable app that keeps a (still empty) game across refreshes |
-| [M1 Generic engine](tasks/M1-engine.md) | Agenda/act/doom, encounter deck, map graph, enemies, investigators, threat area, undo, phase assistant; sandbox scenario; no UI | The UI is defined by the engine's commands and state | Nothing visible yet – a rules core that plays a whole fake scenario in tests |
-| [M1C Campaign engine](tasks/M1C-campaign-engine.md) | Campaign log aggregate, change notices, chaos bag, resolutions, scenario start from the log, campaign storage; tested with *Night of the Zealot*; no UI | The screens (M2 wizard, M3 board, M5 campaign screen) display campaign state, so it must exist first | Nothing visible yet – The Gathering into The Midnight Masks runs in tests |
-| [M1V Rules verification](tasks/M1V-rules-verification.md) | Check the engine's timing choices (when forced effects resolve) against the Rules Reference; edge case tests for rule interactions | The screens and real scenarios build on the resolution order, so it is cheapest to fix now | Nothing visible yet – fewer subtle rule bugs at the table later |
-| [M2 Game management UI](tasks/M2-game-management-ui.md) | Investigator catalog, home screen with saved games, new-game wizard with investigator picker, resume, export/import | Needs only engine setup, and gives M3 real saved games to work with | Pick investigators, start, leave and resume games on a tablet; back them up |
-| [M3 Play screen UI](tasks/M3-play-screen-ui.md) | Header, map with pan/zoom, investigator bar, encounter panel, decision dialog, card zoom, event log; sandbox scenario playable on a tablet | Built on the proven engine with fake data, so only UI issues remain | A full game loop on a tablet (with the sandbox scenario) |
-| [M4 Scenario data + first scenario](tasks/M4-scenario-data-first-scenario.md) | ArkhamCards layout import, connection symbol extraction, manual connection editor; the generic rules *Night of the Zealot* needs; *The Gathering* complete | Engine and UI are proven; now only data and scenario rules can break | The first real scenario, playable at the table; a recipe for every later one |
-| [M5 Night of the Zealot](tasks/M5-core-campaign.md) | *The Midnight Masks* and *The Devourer Below*, campaign screen and resolution confirmation (on the M1C engine) | Reuses the M4 recipe | The first complete campaign, no paper log needed |
-| [M6 Comfort](tasks/M6-comfort.md) | Chaos bag module, card and UI languages, auto-layout, offline preload, polish | Nice to have, nothing blocks play | Cards in the group's language, reliable offline play, tidier maps, smoother app |
-| [M7 More campaigns](tasks/M7-expansion.md) | Chapter Two campaigns, then Dunwich, Carcosa, The Forgotten Age, Innsmouth and the rest in release order; new Chapter Two products; more automated card effects | Each campaign reuses the recipe and the generic rules; playtests show what to automate | One more full campaign at a time, less manual work per round |
-| [M8 Cloud and sync](tasks/M8-cloud-sync.md) | Login, games in the cloud, sync across devices at the table | Adds cost and operations; one tablet covers the core use case | Games backed up online, several devices showing the same live game |
+| [M1 Generic engine](https://github.com/macandy13/arkham-companion/issues/261) | Agenda/act/doom, encounter deck, map graph, enemies, investigators, threat area, undo, phase assistant; sandbox scenario; no UI | The UI is defined by the engine's commands and state | Nothing visible yet – a rules core that plays a whole fake scenario in tests |
+| [M1C Campaign engine](https://github.com/macandy13/arkham-companion/issues/262) | Campaign log aggregate, change notices, chaos bag, resolutions, scenario start from the log, campaign storage; tested with *Night of the Zealot*; no UI | The screens (M2 wizard, M3 board, M5 campaign screen) display campaign state, so it must exist first | Nothing visible yet – The Gathering into The Midnight Masks runs in tests |
+| [M1V Rules verification](https://github.com/macandy13/arkham-companion/issues/263) | Check the engine's timing choices (when forced effects resolve) against the Rules Reference; edge case tests for rule interactions | The screens and real scenarios build on the resolution order, so it is cheapest to fix now | Nothing visible yet – fewer subtle rule bugs at the table later |
+| [M2 Game management UI](https://github.com/macandy13/arkham-companion/issues/264) | Investigator catalog, home screen with saved games, new-game wizard with investigator picker, resume, export/import | Needs only engine setup, and gives M3 real saved games to work with | Pick investigators, start, leave and resume games on a tablet; back them up |
+| [M3 Play screen UI](https://github.com/macandy13/arkham-companion/issues/265) | Header, map with pan/zoom, investigator bar, encounter panel, decision dialog, card zoom, event log; sandbox scenario playable on a tablet | Built on the proven engine with fake data, so only UI issues remain | A full game loop on a tablet (with the sandbox scenario) |
+| [M4 Scenario data + first scenario](https://github.com/macandy13/arkham-companion/issues/266) | ArkhamCards layout import, connection symbol extraction, manual connection editor; the generic rules *Night of the Zealot* needs; *The Gathering* complete | Engine and UI are proven; now only data and scenario rules can break | The first real scenario, playable at the table; a recipe for every later one |
+| [M5 Night of the Zealot](https://github.com/macandy13/arkham-companion/issues/267) | *The Midnight Masks* and *The Devourer Below*, campaign screen and resolution confirmation (on the M1C engine) | Reuses the M4 recipe | The first complete campaign, no paper log needed |
+| [M6 Comfort](https://github.com/macandy13/arkham-companion/issues/268) | Chaos bag module, card and UI languages, auto-layout, offline preload, polish | Nice to have, nothing blocks play | Cards in the group's language, reliable offline play, tidier maps, smoother app |
+| [M7 More campaigns](https://github.com/macandy13/arkham-companion/issues/270) | Chapter Two campaigns, then Dunwich, Carcosa, The Forgotten Age, Innsmouth and the rest in release order; new Chapter Two products; more automated card effects | Each campaign reuses the recipe and the generic rules; playtests show what to automate | One more full campaign at a time, less manual work per round |
+| [M8 Cloud and sync](https://github.com/macandy13/arkham-companion/issues/271) | Login, games in the cloud, sync across devices at the table | Adds cost and operations; one tablet covers the core use case | Games backed up online, several devices showing the same live game |
 
 ## Versions
 
 *Why:* a version number should tell players what they can do with the app, not how many features were merged. Release Please would bump the version on every `feat` commit, so it only bumps the patch number (setup in [automation.md](automation.md)); every step below is set by hand.
 
 - **0.1.x – Engine and first screens (now):** start, save, resume and export games; the sandbox scenario's map with draggable investigators and enemies, agenda/act and doom on a tablet. Every merged release PR is a new 0.1.x.
-- **0.2 – Sandbox game loop:** a whole sandbox game played on a tablet without paper: investigator bar, encounter panel, decision dialog, card zoom and event log ([M3](tasks/M3-play-screen-ui.md) done).
-- **0.3 – First real scenario:** *The Gathering* from real card data, playable at the table from setup to resolution ([M4](tasks/M4-scenario-data-first-scenario.md)).
-- **0.4 – First campaign:** *Night of the Zealot* end to end with the campaign screen and campaign log, no paper log needed ([M5](tasks/M5-core-campaign.md)).
-- **1.0 – Ready for the table:** decided by hand once *Night of the Zealot* has been playtested and works reliably; expected to include offline play and the group's card language from [M6](tasks/M6-comfort.md).
+- **0.2 – Sandbox game loop:** a whole sandbox game played on a tablet without paper: investigator bar, encounter panel, decision dialog, card zoom and event log ([M3](https://github.com/macandy13/arkham-companion/issues/265) done).
+- **0.3 – First real scenario:** *The Gathering* from real card data, playable at the table from setup to resolution ([M4](https://github.com/macandy13/arkham-companion/issues/266)).
+- **0.4 – First campaign:** *Night of the Zealot* end to end with the campaign screen and campaign log, no paper log needed ([M5](https://github.com/macandy13/arkham-companion/issues/267)).
+- **1.0 – Ready for the table:** decided by hand once *Night of the Zealot* has been playtested and works reliably; expected to include offline play and the group's card language from [M6](https://github.com/macandy13/arkham-companion/issues/268).
 
 After 1.0, a new major version marks a change in what the app can do at the table, and saved games from the previous major version may no longer load:
 
-- **2.0 – Several devices:** games in the cloud and several devices showing the same live game ([M8](tasks/M8-cloud-sync.md)).
+- **2.0 – Several devices:** games in the cloud and several devices showing the same live game ([M8](https://github.com/macandy13/arkham-companion/issues/271)).
 
-New campaigns ([M7](tasks/M7-expansion.md)) and comfort features are minor versions (1.1, 1.2 …); fixes are patch versions.
+New campaigns ([M7](https://github.com/macandy13/arkham-companion/issues/270)) and comfort features are minor versions (1.1, 1.2 …); fixes are patch versions.
 
 ## Planned designs
 
 Designs for parts that have a milestone but no code yet. The PR that builds one describes it in [architecture.md](architecture.md) and removes it here.
 
-### Campaign mode ([M1C](tasks/M1C-campaign-engine.md), [M5](tasks/M5-core-campaign.md))
+### Campaign mode ([M1C](https://github.com/macandy13/arkham-companion/issues/262), [M5](https://github.com/macandy13/arkham-companion/issues/267))
 
 - **Campaign log:** investigators, trauma, XP, killed or insane, story records, chaos bag. `GameState.campaign` is a stub until then.
 - **Chaos bag:** standalone uses the scenario default per difficulty; a campaign uses the log, modified by resolutions. Scenarios that build on earlier ones read the log in their setup (`whenStory` steps).
 - **Resolutions:** declarative steps (`record`, `addChaosToken`, `removeChaosToken`, `awardXp`, `addTrauma`), confirmed by the players. Deck upgrades stay with the players.
 
-### Continuous play tester ([M1V.4](tasks/M1V-rules-verification.md))
+### Continuous play tester ([M1V.4](https://github.com/macandy13/arkham-companion/issues/281))
 
 *Why:* unit tests and the scripted end-to-end games check the paths we thought of. Bots playing thousands of games of the real scenarios find the paths we didn't: rare token draws, unusual orders of play, rule interactions. Every failing game is recorded, so the bug can be replayed step by step.
 
@@ -120,7 +120,7 @@ Designs for parts that have a milestone but no code yet. The PR that builds one 
 - **Scenarios:** only the real ones, every scenario the scenarios package exports (The Gathering today, each new one as it lands). No made-up boards: a finding then always happens in a game someone could play.
 - **Investigators:** the real ones, plus blank investigators with random stats (down to sanity 1 and agility 0), so defeat and elimination happen often.
 - **Bots** drive a `PlayTable` through its game-language verbs (`nextPhase`, `moveTo`, `investigate`, `fight`, `answer`/`answerOnly`, `spendCluesToAdvanceAct`, `resign`, `undo`), like players at the table; corrections go through its `adjust*`/`placeDoom` verbs or `play(ManualAdjust)`. Each bot is a weighting of these verbs: *random* (any verb), *goal* (go for clues, advance the act, fight what is engaged) and *chaos* (undo, corrections, resign early).
-- **Chaos tokens:** the bot keeps its own bag (the scenario's or campaign's bag for the difficulty), draws a token, computes the result with `suggestSkillTest(ctx, state, decision, { tokens })` and answers pass, fail or `failedBy` from that. Tokens the engine can't value (elder sign) get a random modifier; a test decided by the lead or the group has no suggestion, so the bot answers it at random. Once the chaos bag module exists ([M6.1](tasks/M6-comfort.md)), the bot draws through it instead.
+- **Chaos tokens:** the bot keeps its own bag (the scenario's or campaign's bag for the difficulty), draws a token, computes the result with `suggestSkillTest(ctx, state, decision, { tokens })` and answers pass, fail or `failedBy` from that. Tokens the engine can't value (elder sign) get a random modifier; a test decided by the lead or the group has no suggestion, so the bot answers it at random. Once the chaos bag module exists ([M6.1](https://github.com/macandy13/arkham-companion/issues/302)), the bot draws through it instead.
 - A game ends at a resolution, when every investigator is out, or at a round cap (a "stuck" finding, see below).
 
 **How it judges a game** (the main part). Each check has an id and, where it is a rule, the `docs/rules.md` section it comes from. A failed check is a *finding*.
@@ -166,7 +166,7 @@ The tester is a Node script in a new package, `packages/play_tester` (CI tooling
 
 A session fixing an issue downloads the record, replays it, adds the test, and commits the record to `findings/` so the nightly run keeps checking it.
 
-### Scenario data pipeline ([M4](tasks/M4-scenario-data-first-scenario.md))
+### Scenario data pipeline ([M4](https://github.com/macandy13/arkham-companion/issues/266))
 
 No single source has everything, so each field comes from the first source that has it, with a manual override on top:
 
@@ -177,15 +177,15 @@ No single source has everything, so each field comes from the first source that 
 
 The engine then builds edges from the revealed state. The setup DSL gains `randomLocations(pool, slots)` (seeded RNG) and `replaceLocation`.
 
-### Encounter card special cases ([M4](tasks/M4-scenario-data-first-scenario.md), [M5](tasks/M5-core-campaign.md), [M7](tasks/M7-expansion.md))
+### Encounter card special cases ([M4](https://github.com/macandy13/arkham-companion/issues/266), [M5](https://github.com/macandy13/arkham-companion/issues/267), [M7](https://github.com/macandy13/arkham-companion/issues/270))
 
 [encounter-card-analysis.md](encounter-card-analysis.md) lists what the encounter cards need beyond the generic rules (new keywords, location modifiers, scenario actions, skill test margins, timing windows, blood tokens), sorted into auto, assist and display. Its coverage table counts every encounter card per rule as covered or planned. Its implementation plan orders the primitives by campaign: steps 1–12 for Night of the Zealot (M4, M5), the rest per campaign in M7.
 
-### Board rendering ([M3](tasks/M3-play-screen-ui.md), [M6](tasks/M6-comfort.md))
+### Board rendering ([M3](https://github.com/macandy13/arkham-companion/issues/265), [M6](https://github.com/macandy13/arkham-companion/issues/268))
 
 The book layout is stored as slots (a grid or free positions); the map is SVG with pan and zoom, several maps as tabs or side by side; elkjs auto-layout for maps without a book layout; dnd-kit for dragging locations on a tablet.
 
-### Cloud sync ([M8](tasks/M8-cloud-sync.md))
+### Cloud sync ([M8](https://github.com/macandy13/arkham-companion/issues/271))
 
 A second `GameStore` (`CloudStore`) next to `IndexedDbStore`; sync through the append-only event log with optimistic concurrency (`expectedSeq`); login; backend to be decided (Supabase, Firebase or Cloudflare). Already prepared: UUID game IDs, timestamped events, no device-bound IDs.
 

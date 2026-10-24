@@ -14,6 +14,7 @@ import {
   handleDrawEncounter,
   handleGainSurge,
   handleFromSetAside,
+  handleShuffleEncounterDeck,
   handleShuffleEncounterDiscard,
   handleShuffleInto,
   surgeDraw,
@@ -191,6 +192,7 @@ const COMMAND_SPECS: CommandSpecs = {
   FromSetAside: { handle: (_ctx, state, command) => handleFromSetAside(state, command) },
   ShuffleInto: { handle: (_ctx, state, command) => handleShuffleInto(state, command) },
   ShuffleEncounterDiscard: { handle: (_ctx, state) => handleShuffleEncounterDiscard(state) },
+  ShuffleEncounterDeck: { handle: (_ctx, state) => handleShuffleEncounterDeck(state) },
   SpawnEnemy: { handle: handleSpawnEnemy },
   EngageEnemy: {
     handle: handleEngageEnemy,

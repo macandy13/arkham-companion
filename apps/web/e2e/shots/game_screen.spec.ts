@@ -62,11 +62,25 @@ test('the Hallway’s menu open over the board', { tag: '@shot' }, async ({ page
   await expect(page.getByRole('dialog', { name: 'Hallway' })).toBeVisible();
 });
 
-test('the house map by day, the panels on parchment', { tag: '@shot' }, async ({ page }) => {
+test('the house map by day', { tag: '@shot' }, async ({ page }) => {
   await page.goto('/#/settings');
   await page.getByLabel('Theme').selectOption('Light');
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   await expect(page.getByRole('region', { name: 'Alder' })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+});
+
+test('Alder’s willpower and agility test, a token drawn', { tag: '@shot' }, async ({ page }) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+
+  await page
+    .getByRole('region', { name: 'Alder' })
+    .getByRole('button', { name: /^Willpower/ })
+    .click();
+  const test = page.getByRole('dialog', { name: /^Skill test/ });
+  await test.getByRole('button', { name: /^Agility/ }).click();
+  await test.getByRole('button', { name: 'Draw a token' }).click();
+
+  await expect(test.getByRole('status')).toBeVisible();
 });

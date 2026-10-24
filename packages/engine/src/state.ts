@@ -300,7 +300,8 @@ export type ModifierTarget = 'skill' | 'difficulty';
 /**
  * Where one step of a skill test's explanation trace comes from
  * (`ModifierStep`), so the UI can name it: the investigator's printed skill,
- * the test's printed difficulty, the one modifier the players enter
+ * the test's printed difficulty, a second skill a card adds to the test
+ * (`SkillTestInput.addedSkill`), the one modifier the players enter
  * (`SkillTestInput.modifier`), a revealed chaos token (with the reference
  * card's effect text, if it has one), or the rules that cap the result
  * (auto-fail, nothing below 0).
@@ -308,6 +309,7 @@ export type ModifierTarget = 'skill' | 'difficulty';
 export type ModifierSource =
   | { kind: 'baseSkill' }
   | { kind: 'baseDifficulty' }
+  | { kind: 'addedSkill'; skill: SkillName }
   | { kind: 'playerModifier' }
   | { kind: 'chaosToken'; token: ChaosToken; effectKey?: string }
   | { kind: 'autoFail' }
