@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  campaign,
   cardDbWith,
   checkInvariants,
   scenario,
   instanceId,
+  investigatorCode,
   investigatorId,
   mapId,
   neighbours,
@@ -35,6 +37,8 @@ import {
   theGathering,
   theGatheringCards,
   theGatheringHouse,
+  theGatheringResolutions,
+  ZEALOT_STORY,
 } from '../index';
 
 const ctx: ScenarioContext = {
@@ -568,11 +572,56 @@ describe('The Gathering agendas 2 and 3', () => {
 
     // All at once, in player order (the lead first): nobody is left to become lead.
     expect(events.filter((event) => event.type === 'InvestigatorDefeated')).toEqual([
-      { type: 'InvestigatorDefeated', investigatorId: tank, cause: 'cardEffect' },
-      { type: 'InvestigatorDefeated', investigatorId: seeker, cause: 'cardEffect' },
+      {
+        type: 'InvestigatorDefeated',
+        investigatorId: tank,
+        cause: 'cardEffect',
+        trauma: 'physical',
+      },
+      {
+        type: 'InvestigatorDefeated',
+        investigatorId: seeker,
+        cause: 'cardEffect',
+        trauma: 'physical',
+      },
     ]);
     expect(state.meta.ended).toBe(true);
     expect(state.meta.resolution).toBeUndefined();
     expect(state.pending).toEqual([]);
+  });
+
+  it('proposes the 1 physical trauma agenda 3 adds at act 3 after the no-resolution steps', () => {
+    const yes = { kind: 'flag', value: true } as const;
+    const tankCode = investigatorCode('tank');
+    const seekerCode = investigatorCode('seeker');
+    const atAct3 = stateAfter(ctx, atAgenda2(), { type: 'AdvanceAgenda' }, { type: 'AdvanceAct' });
+    const preyQuestion = atAct3.pending.find((decision) => decision.subject === priest);
+    const priestOnTank = stateAfter(ctx, atAct3, answer(preyQuestion!.id, tank));
+
+    const everyoneDefeated = stateAfter(ctx, priestOnTank, { type: 'AdvanceAgenda' });
+
+    // No victory points, so each earns the 2 bonus experience; the trauma comes last.
+    expect(campaign.proposeResolution(ctx, everyoneDefeated, theGatheringResolutions)).toEqual([
+      {
+        kind: 'command',
+        command: { type: 'RecordStory', key: ZEALOT_STORY.houseStillStanding, value: yes },
+      },
+      {
+        kind: 'command',
+        command: { type: 'RecordStory', key: ZEALOT_STORY.ghoulPriestStillAlive, value: yes },
+      },
+      { kind: 'byHand', textKey: 'scenario.theGathering.resolution.earnLita' },
+      { kind: 'command', command: { type: 'AwardXp', code: tankCode, amount: 2 } },
+      { kind: 'command', command: { type: 'AwardXp', code: seekerCode, amount: 2 } },
+      { kind: 'byHand', textKey: 'scenario.theGathering.resolution.upgradeDecks' },
+      {
+        kind: 'command',
+        command: { type: 'AddTrauma', code: tankCode, kind: 'physical', amount: 1 },
+      },
+      {
+        kind: 'command',
+        command: { type: 'AddTrauma', code: seekerCode, kind: 'physical', amount: 1 },
+      },
+    ]);
   });
 });

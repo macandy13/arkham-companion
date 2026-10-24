@@ -71,8 +71,9 @@ export type ProposedChange =
 /**
  * The campaign log changes for an ended game: the steps of the resolution it
  * ended with (or of "no resolution"), then 1 physical trauma for each
- * investigator defeated by damage and 1 mental trauma for each defeated by
- * horror (Rules Reference, "Trauma"). The defeat trauma comes last so that a
+ * investigator defeated by damage, 1 mental trauma for each defeated by
+ * horror, and the trauma a card effect named for its defeat (Rules
+ * Reference, "Trauma"). The defeat trauma comes last so that a
  * defeat which kills an investigator doesn't block the experience the
  * resolution awards them first; someone the resolution kills or drives insane
  * gets none. A defeat that reached both health and sanity at once proposes
@@ -156,19 +157,17 @@ function defeatTrauma(investigator: Investigator): ProposedChange[] {
 }
 
 function defeatTraumaKind(investigator: Investigator): TraumaKind | undefined {
-  if (investigator.status !== 'defeated') return undefined;
-  switch (investigator.defeatedBy) {
+  const { defeat } = investigator;
+  if (investigator.status !== 'defeated' || defeat === undefined) return undefined;
+  switch (defeat.cause) {
     case 'damage':
       return 'physical';
     case 'horror':
       return 'mental';
-    // A card effect gives only the trauma the card names, which the game
-    // doesn't record yet (M1C.4 follow-up).
     case 'cardEffect':
-    case undefined:
-      return undefined;
+      return defeat.trauma;
     default:
-      return assertNever(investigator.defeatedBy);
+      return assertNever(defeat);
   }
 }
 

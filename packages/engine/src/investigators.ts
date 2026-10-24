@@ -1,4 +1,4 @@
-import type { CluesDiscovered, InvestigatorChanged, TokensChanged } from './events';
+import type { CluesDiscovered, DefeatCause, InvestigatorChanged, TokensChanged } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
 import { CommandRejected } from './rejection';
 import type { GameState, Investigator, InvestigatorStat } from './state';
@@ -14,7 +14,9 @@ export function remainingSanity(investigator: Investigator): number {
 }
 
 /** What defeats the investigator right now, or `undefined` while they still have health and sanity. */
-export function defeatCause(investigator: Investigator): 'damage' | 'horror' | undefined {
+export function defeatCause(
+  investigator: Investigator,
+): Exclude<DefeatCause, 'cardEffect'> | undefined {
   if (remainingHealth(investigator) <= 0) return 'damage';
   if (remainingSanity(investigator) <= 0) return 'horror';
   return undefined;

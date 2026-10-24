@@ -3,6 +3,7 @@ import { cardStats, type EngineContext } from './cards';
 import type { Command, EncounterMatch, TestSkill } from './commands';
 import { cardsInPlay } from './doom';
 import type { Event } from './events';
+import type { TraumaKind } from './campaign/campaign_log';
 import type { CardCode, DecisionId, InstanceId, InvestigatorId, ResolutionId } from './ids';
 import { locationAttachments } from './board';
 import { enemiesAt } from './enemies';
@@ -948,9 +949,15 @@ export function endScenario(resolution: ResolutionId): AbilityEffect {
 /**
  * "Each investigator who has not resigned is defeated": all at once, so a
  * new lead is asked for only if somebody is left (`newLeadInvestigator`).
+ * With `trauma`, "… and suffers 1 physical trauma": the campaign log gets it
+ * with the resolution (`campaign.proposeResolution`).
  */
-export function defeatEachInvestigator(): AbilityEffect {
-  return { type: 'DefeatInvestigator', investigatorId: { ref: 'eachInvestigator' } };
+export function defeatEachInvestigator({ trauma }: { trauma?: TraumaKind } = {}): AbilityEffect {
+  return {
+    type: 'DefeatInvestigator',
+    investigatorId: { ref: 'eachInvestigator' },
+    ...(trauma === undefined ? {} : { trauma }),
+  };
 }
 
 /** One answer of a choice in card data: its label and what it does once picked. */
