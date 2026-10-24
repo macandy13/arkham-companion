@@ -42,6 +42,7 @@ import {
 import { answer } from '@arkham/engine/test/utils';
 import {
   BURN_THE_HOUSE_DECISION,
+  WHATS_GOING_ON_DECISION,
   theGathering,
   theGatheringCards,
   theGatheringResolutions,
@@ -274,11 +275,25 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       expect.objectContaining({ rejection: expect.objectContaining({ code: 'decisionPending' }) }),
     );
 
-    // The players answer yes. The reverse side lets the lead investigator choose,
-    // but agenda 1 has no reverse-side ability yet: Roland, already shaken by
-    // the Attic, picks the random discard from each hand, done at the table.
+    // The players answer yes. The reverse side lets the lead investigator choose.
     table.answer(byName("What's Going On?!"), 'yes');
 
+    expect(table.board.decisions).toEqual([
+      {
+        prompt: 'scenario.theGathering.whatsGoingOn.prompt',
+        kind: 'chooseOption',
+        options: [
+          'scenario.theGathering.whatsGoingOn.discard',
+          'scenario.theGathering.whatsGoingOn.horror',
+        ],
+      },
+    ]);
+
+    // Roland, already shaken by the Attic, picks the random discard from each
+    // hand, done at the table; nobody takes horror.
+    table.play(answer(WHATS_GOING_ON_DECISION, 'discard'));
+
+    expect(table.board.investigator(roland)).toMatchObject({ horror: 1 });
     expect(table.board.agenda).toMatchObject({ name: 'Rise of the Ghouls', doom: 0, threshold: 7 });
     expect(table.board.decisions).toEqual([]);
 

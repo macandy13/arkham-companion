@@ -89,11 +89,15 @@ export const GATHERING_RESOLUTIONS = {
   trapped: resolutionId('R3'),
 } as const;
 
+/** Id of agenda 1's question to the lead investigator: each investigator discards a random card, or the lead takes 2 horror. */
+export const WHATS_GOING_ON_DECISION = decisionId('theGathering.whatsGoingOn');
+
 /** Id of act 3's question to the lead investigator: burn the house down or not. */
 export const BURN_THE_HOUSE_DECISION = decisionId('theGathering.burnTheHouse');
 
 const codes = GATHERING_CODES;
 const sets = GATHERING_SETS;
+const whatsGoingOn = 'scenario.theGathering.whatsGoingOn';
 const burnTheHouse = 'scenario.theGathering.burnTheHouse';
 const ghoulTraits = ['Humanoid', 'Monster', 'Ghoul'];
 
@@ -136,7 +140,25 @@ export const theGatheringHouse: AddMapStep = {
  * until real scenario data arrives (M4).
  */
 export const theGatheringCardDefs: readonly CardStats[] = [
-  agenda({ code: codes.whatsGoingOn, name: "What's Going On?!", stage: 1, doom: 3 }),
+  agenda({
+    code: codes.whatsGoingOn,
+    name: "What's Going On?!",
+    stage: 1,
+    doom: 3,
+    abilities: [
+      // The random discard from each hand is done at the table: the app does not track hands.
+      whenAdvanced(
+        leadDecides(WHATS_GOING_ON_DECISION, `${whatsGoingOn}.prompt`, [
+          { id: 'discard', label: `${whatsGoingOn}.discard`, effects: [] },
+          {
+            id: 'horror',
+            label: `${whatsGoingOn}.horror`,
+            effects: [takeHorror(2, { ref: 'lead' })],
+          },
+        ]),
+      ),
+    ],
+  }),
   agenda({
     code: codes.riseOfTheGhouls,
     name: 'Rise of the Ghouls',

@@ -2,6 +2,101 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.4](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.3...arkham-companion-v0.1.4) (2026-10-24)
+
+
+### Features
+
+* **carddata:** read each pack's chapter from the data; load core, core_2026 and cob (M4.5 step 1) ([c742ea2](https://github.com/macandy13/arkham-companion/commit/c742ea2c15c0a7cc20c4a9093a343610b5b166a4))
+* **carddata:** read each pack's chapter from the data; load core, core_2026 and cob (M4.5 step 1) ([7c4bfc7](https://github.com/macandy13/arkham-companion/commit/7c4bfc70b4075248ca2fc36a9dc2759f1ccd99dc))
+* **engine:** add the "after you enter" timing window; Attic and Cellar fire it (M4.5 step 2a) ([ff9d0ce](https://github.com/macandy13/arkham-companion/commit/ff9d0ce9b5d92e43c648bce24ad8b5a0ef2bb4cc))
+* **engine:** add the "after you enter" timing window; Attic and Cellar fire it (M4.5 step 2a) ([8c0b690](https://github.com/macandy13/arkham-companion/commit/8c0b6905b930dfcdef9584dff5a233ff2245fb32))
+* **engine:** add the after-a-test timing window; Obscuring Fog's discard becomes an ability (M4.5 step 2c1) ([b0c7898](https://github.com/macandy13/arkham-companion/commit/b0c78985fac855f0911a1b331b2356323d7116b8))
+* **engine:** add the after-a-test timing window; Obscuring Fog's discard becomes an ability (M4.5 step 2c1) ([668557c](https://github.com/macandy13/arkham-companion/commit/668557c52c29ebb89e99f36edec0c639f234b3ab))
+* **engine:** add the after-an-attack timing window (M4.5 step 2c3a) ([94e7e41](https://github.com/macandy13/arkham-companion/commit/94e7e41e933bca9eca0b62e43feef3eee791d059))
+* **engine:** add the after-an-attack timing window (M4.5 step 2c3a) ([c7571af](https://github.com/macandy13/arkham-companion/commit/c7571af74cf6cbc561f128b54465038e2267690c))
+* **engine:** add the engaged and clues-discovered timing windows (M4.5 step 2c2) ([a060350](https://github.com/macandy13/arkham-companion/commit/a0603507bb1e7d8ba6e192fd5617c9de5e87f32a))
+* **engine:** add the engaged and clues-discovered timing windows (M4.5 step 2c2) ([24c606e](https://github.com/macandy13/arkham-companion/commit/24c606e4a550e35cda9e469bec6562718b351005))
+* **engine:** add the phase-end and turn-start timing windows (M4.5 step 2b) ([c1c16eb](https://github.com/macandy13/arkham-companion/commit/c1c16ebc7fb669e74433043f9a48f21f257fcf87))
+* **engine:** add the phase-end and turn-start timing windows (M4.5 step 2b) ([70b50a9](https://github.com/macandy13/arkham-companion/commit/70b50a925b8a463035fe355dc556d9b9aac93976))
+* **engine:** add the when-defeated timing window (M4.5 step 2c3b) ([fda3ba3](https://github.com/macandy13/arkham-companion/commit/fda3ba3dab2974bfc51eefd119024584eae20763))
+* **engine:** add the when-defeated timing window (M4.5 step 2c3b) ([f168ae1](https://github.com/macandy13/arkham-companion/commit/f168ae11b43831eb2338ecbcf093f36c28373869))
+* **engine:** constant modifiers as card data, read through effectiveValue (P3 slice 1) ([7a102cc](https://github.com/macandy13/arkham-companion/commit/7a102cc902f92dcc730f18f451a30f64f942790d))
+* **engine:** constant modifiers as card data, read through effectiveValue (P3 slice 1) ([a91088a](https://github.com/macandy13/arkham-companion/commit/a91088a9a2a1ee43a65ba87cd5650fdf9a22c749))
+* **scenarios:** The Gathering's cards name their ArkhamDB pictures (M3.12c1) ([94f7419](https://github.com/macandy13/arkham-companion/commit/94f74199f95ba3d227c0df6f3bb11c9f225521fe))
+* **scenarios:** The Gathering's cards name their ArkhamDB pictures (M3.12c1) ([c0e5f58](https://github.com/macandy13/arkham-companion/commit/c0e5f58c2678df1e4d972e4fa29c9870897fcc12))
+* **web:** draw location tiles like the printed location cards (M3.12c2c) ([e6ea250](https://github.com/macandy13/arkham-companion/commit/e6ea2502c5a03041275b359747e146477ab47e4e))
+* **web:** frame screens and dialogs in the playmat's line style (M3.12f1) ([c4a5e61](https://github.com/macandy13/arkham-companion/commit/c4a5e6162707959c27290daf353b155a65238880))
+* **web:** frame screens and dialogs in the playmat's line style instead of a book page ([ba9495a](https://github.com/macandy13/arkham-companion/commit/ba9495a87fc1103d4727b0948eae2528f427870b))
+* **web:** frame the play screen's panels in the playmat's line style (M3.12f2) ([e5afb02](https://github.com/macandy13/arkham-companion/commit/e5afb029170c313ea5c7f4542097d1b0bd1630e6))
+* **web:** investigator panels with health, sanity and counters (M3.5a) ([bb5feab](https://github.com/macandy13/arkham-companion/commit/bb5feab21bf0153903cd888aad13c400fcf28515))
+* **web:** investigator panels with health, sanity and counters (M3.5a) ([7b88b92](https://github.com/macandy13/arkham-companion/commit/7b88b92af27e317ee5cd399eb1e7aac4f68a60a2))
+* **web:** lay out and frame the play screen like the prototype (M3.12f2) ([b179b99](https://github.com/macandy13/arkham-companion/commit/b179b99efe6d22d601510966353ac4b6f0cd89ce))
+* **web:** lay the play screen out like the prototype (M3.12f2) ([5e8d1d7](https://github.com/macandy13/arkham-companion/commit/5e8d1d7cfebf083df99273f5596d15e8589d2dd5))
+* **web:** light theme as the playmat by day ([8479d75](https://github.com/macandy13/arkham-companion/commit/8479d759b348477686166906734aadb7611dc2f2))
+* **web:** location art in our frames, and a card pictures setting (M3.12c2) ([b1e4b3d](https://github.com/macandy13/arkham-companion/commit/b1e4b3dc9d3570cde9fef9d7fc78fd1234a400fc))
+* **web:** location art in our frames, and a card pictures setting (M3.12c2) ([b97c328](https://github.com/macandy13/arkham-companion/commit/b97c328d54fd54c88c4a1b0dabf04566fe8e0510))
+* **web:** location tiles laid out like the printed card (M3.12b) ([6b5bb18](https://github.com/macandy13/arkham-companion/commit/6b5bb1861364dd241de9f11701516a4041ebdecc))
+* **web:** location tiles laid out like the printed card (M3.12b) ([c99b360](https://github.com/macandy13/arkham-companion/commit/c99b36047587ae81ae4f8afcf60d6cb9eb721485))
+* **web:** parchment panels and dialogs in the light theme ([1ad1ea0](https://github.com/macandy13/arkham-companion/commit/1ad1ea06de96768c0ad1017fcf98f4d12a8fae55))
+* **web:** playmat look with night palette, brass dialogs and display type (M3.12a) ([094303c](https://github.com/macandy13/arkham-companion/commit/094303cd4e994d0a671a02ef92b1e7a32c89a73d))
+* **web:** playmat look with night palette, brass dialogs and display type (M3.12a) ([9d93046](https://github.com/macandy13/arkham-companion/commit/9d9304623785b543859c6c2eb18b71d5f80dbe64))
+* **web:** screens outside play and dialogs as book pages (M3.12f1) ([5211b18](https://github.com/macandy13/arkham-companion/commit/5211b18776942df7b11e05861544aca13cc38ca2))
+* **web:** self-host the playmat fonts and precache them (M3.12a) ([37b8638](https://github.com/macandy13/arkham-companion/commit/37b8638dc29683a50c0ce69995444420aaa53ab0))
+* **web:** self-host the playmat fonts and precache them (M3.12a) ([634ec6b](https://github.com/macandy13/arkham-companion/commit/634ec6b7e18c72afa8af8b9003b5ef6e25a710ff))
+* **web:** show the play screen's dialog and the wizard as book pages in the PR ([432399c](https://github.com/macandy13/arkham-companion/commit/432399caa4fe90ec8644c0901e4be17ff465ee11))
+* **web:** shrink long location names to fit the name plate ([1eaceb8](https://github.com/macandy13/arkham-companion/commit/1eaceb80c35e8329918a56d14ddcd69fb5987165))
+* **web:** start, end and resign turns from the investigator panel (M3.5b) ([7b1ffe5](https://github.com/macandy13/arkham-companion/commit/7b1ffe5ddcc70ab0d7a3bc6ccc5974302bca8b0c))
+* **web:** start, end and resign turns from the investigator panel (M3.5b) ([4309c4b](https://github.com/macandy13/arkham-companion/commit/4309c4b348dd491c9b88eee52a1232747377989b))
+* **web:** threat area along the top of the investigator card (M3.5c) ([1ac7921](https://github.com/macandy13/arkham-companion/commit/1ac7921dc8fcd3110e65acdc48e4c075200e4211))
+* **web:** threat area along the top of the investigator card (M3.5c) ([499db9e](https://github.com/macandy13/arkham-companion/commit/499db9ed5874f5ae2949b495be66ad5a51ace282))
+* **web:** threat area as a row of cards, four in view, enemies with their health left ([986ba5d](https://github.com/macandy13/arkham-companion/commit/986ba5d9a6ed607f85b4335ada37d92961eb43ba))
+
+
+### Bug fixes
+
+* **carddata:** an unexpected pack chapter falls back to the code instead of failing the catalog ([8c36186](https://github.com/macandy13/arkham-companion/commit/8c36186c523b791fe4bce5553e4306b319da09b3))
+* **engine:** exhaust the attacker after its attack's abilities; Yithian Observer needs a when window ([277e509](https://github.com/macandy13/arkham-companion/commit/277e5091035e6fb2e302a44bb09fabdf83c04d7f))
+* **engine:** modified values never go below 0; rules for constant abilities; review fixes ([57d358c](https://github.com/macandy13/arkham-companion/commit/57d358c6cd43d7f52299fac2a86592ed3645a879))
+* **engine:** placing an investigator without a location enters nothing ([676a4a8](https://github.com/macandy13/arkham-companion/commit/676a4a8833b281fcb943fa349035c0e7ae955870))
+* **web:** crop location art clear of the printed template ([931f42d](https://github.com/macandy13/arkham-companion/commit/931f42dccdb25c286572d2e238d79d8c4337fb40))
+* **web:** leave room for attachments past the last map column ([de87662](https://github.com/macandy13/arkham-companion/commit/de8766221e9b6855e294b5e023e1b9b33a385fb0))
+* **web:** playmat as a fixed layer, one dialog shell, M3.12a ticked ([c33d99b](https://github.com/macandy13/arkham-companion/commit/c33d99bc683eaaa6255db0d19284c787789fc9e1))
+
+
+### Refactoring
+
+* **engine:** address review: isEnemyOnTable, cardsInZone, merged imports ([f3caaa6](https://github.com/macandy13/arkham-companion/commit/f3caaa68b5dc33b30f0eee3b6e814e76c6aedcfe))
+* **engine:** cardsInPlay next to isInPlay; phase-end timing in rules.md ([7aff8e2](https://github.com/macandy13/arkham-companion/commit/7aff8e201cbfa22c73832c00e19bda02f407772d))
+* **engine:** forced attacks take their answer's typed counts; no fields patched by name (P2 slice 3b) ([7544004](https://github.com/macandy13/arkham-companion/commit/75440041d26e1a3be6734d9628a86a1460cdf8c6))
+* **engine:** shared queries live next to their entity; handlers never import handlers (P4 slice 1) ([3b98772](https://github.com/macandy13/arkham-companion/commit/3b9877264a9921e9a207a4522e1286cff4761ce5))
+* **engine:** shared queries live next to their entity; handlers never import handlers (P4 slice 1) ([e37773e](https://github.com/macandy13/arkham-companion/commit/e37773e6f12d9e182f045df67ff6d88337d2fb6a))
+* **web:** engaged enemies from the board view, shared enemy conditions, bar grows with the threat area ([5ccbed2](https://github.com/macandy13/arkham-companion/commit/5ccbed2ca5c01926287a94a7f15b4201d803e388))
+* **web:** range helper, turn start cases, a flow of the turn only ([c3f485c](https://github.com/macandy13/arkham-companion/commit/c3f485ccc5ce2cb327d1a3ffddf8eb8797e72382))
+* **web:** share the counter steppers and own token for left investigators ([818e7ff](https://github.com/macandy13/arkham-companion/commit/818e7fff194ff1a083ce992579a17f00cd689fdb))
+
+
+### Documentation
+
+* **carddata:** the ArkhamDB packs API sends the chapter field ([15105c2](https://github.com/macandy13/arkham-companion/commit/15105c243a94c665516f9d29ff9c6725d224b878))
+* cards stay dark in both themes (M3.12) ([c13f7f7](https://github.com/macandy13/arkham-companion/commit/c13f7f7ec88f0106e54f945587c5187018a3092e))
+* clickable prototype of the target play screen ([35c92f2](https://github.com/macandy13/arkham-companion/commit/35c92f200e94cf1138db4f648725b64c93ef732f))
+* clickable prototype of the target play screen ([84f709d](https://github.com/macandy13/arkham-companion/commit/84f709d13131fcc1cf6ecb2916866e1baaf359cb))
+* format the prototype with the repo's prettier version ([9916f96](https://github.com/macandy13/arkham-companion/commit/9916f96c11b8edae855e7b8a0fb2fbc4a0451df4))
+* Goat Spawn's wording; invented test enemy; windowLocation limit applies to the drawer's location ([489739c](https://github.com/macandy13/arkham-companion/commit/489739c15754df988d86249533a116a711b85829))
+* link the setup reading from architecture ([329f616](https://github.com/macandy13/arkham-companion/commit/329f616660e559c823c1580b25a085eb96ea0ce7))
+* note setup fires no after abilities; usage example for afterDiscoveringClues ([d382a67](https://github.com/macandy13/arkham-companion/commit/d382a6765317f743b612c68257d51e329be9f1a2))
+* plan the books' look across the app (M3.12f) ([86319ba](https://github.com/macandy13/arkham-companion/commit/86319ba63d53dfd7e0f825999f09b99fc7667cc5))
+* plan the restyle after the UX prototype (M3.12) ([1be6314](https://github.com/macandy13/arkham-companion/commit/1be631494c1c26c9789290ebf8c0cdd5ee5496c5))
+* prototype round 2: two looks, adjust mode, threat area, chaos tokens ([031743e](https://github.com/macandy13/arkham-companion/commit/031743e8909251c150e4c465cb6cf1cb1f8c80ca))
+* prototype round 3: threat area on the investigator card, icon actions, big agenda/act counters ([89ad15a](https://github.com/macandy13/arkham-companion/commit/89ad15a06897b9984163b9d91822dbd52e8f1df2))
+* prototype round 4: light playmat theme, threat area along the top of the investigator card ([e1af8f0](https://github.com/macandy13/arkham-companion/commit/e1af8f08093903399ed23241356d6cd0b2384fb3))
+* restore extension points the review flagged ([bc36532](https://github.com/macandy13/arkham-companion/commit/bc365329bf4b897be3f7500be1436c871f673854))
+* shorten architecture.md to the key components and concepts ([a89422c](https://github.com/macandy13/arkham-companion/commit/a89422c5da5d07f9888f0b67eb547419294736e5))
+* shorten architecture.md to the key components and concepts ([e9dfdfa](https://github.com/macandy13/arkham-companion/commit/e9dfdfa8692756e782f0c1288c72a5258acd9993))
+* tick M3.12c1 ([b4204ad](https://github.com/macandy13/arkham-companion/commit/b4204adf3b53fc9fb74f13b3faaa7211de57e085))
+* **web:** say where the art window and the location art stop ([bc16ed3](https://github.com/macandy13/arkham-companion/commit/bc16ed3f6cd3bc1995c904e8930cd54a2968d165))
+
 ## [0.1.3](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.2...arkham-companion-v0.1.3) (2026-10-23)
 
 

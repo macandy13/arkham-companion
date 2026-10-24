@@ -105,7 +105,7 @@ export function handleDamageEnemy(ctx: EngineContext, state: GameState, cmd: Dam
   const total = (enemy.tokens.damage ?? 0) + cmd.amount;
   const health = enemyHealth(stats, state);
   if (health === undefined || total < health) return [damaged];
-  return [damaged, defeated(enemy.id, stats)];
+  return [damaged, defeated(state, enemy, stats)];
 }
 
 /** `DefeatEnemy`: to the victory display if the card has victory, else to the encounter discard. */
@@ -115,7 +115,7 @@ export function handleDefeatEnemy(
   cmd: DefeatEnemy,
 ): EnemyDefeated[] {
   const { enemy, stats } = onTableEnemyOf(ctx, state, cmd.enemyId);
-  return [defeated(enemy.id, stats)];
+  return [defeated(state, enemy, stats)];
 }
 
 /** `ExhaustEnemy`. */
@@ -143,9 +143,14 @@ function onTableEnemyOf(ctx: EngineContext, state: GameState, enemyId: InstanceI
   return found;
 }
 
-function defeated(enemyId: InstanceId, stats: CardStats): EnemyDefeated {
+function defeated(state: GameState, enemy: CardInstance, stats: CardStats): EnemyDefeated {
   const hasVictory = (stats.victory ?? 0) > 0;
-  return { type: 'EnemyDefeated', enemyId, to: hasVictory ? VICTORY_DISPLAY : encounterDiscard };
+  return {
+    type: 'EnemyDefeated',
+    enemyId: enemy.id,
+    to: hasVictory ? VICTORY_DISPLAY : encounterDiscard,
+    locationId: locationOf(state, enemy),
+  };
 }
 
 function exhaustChange(enemy: CardInstance, exhausted: boolean): ExhaustChanged {

@@ -632,6 +632,7 @@ describe('damage and defeat', () => {
       type: 'EnemyDefeated',
       enemyId: ghoul,
       to: { kind: 'encounterDiscard' },
+      locationId: hall,
     });
 
     expect(asked.pending).toHaveLength(1);

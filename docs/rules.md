@@ -160,6 +160,7 @@ An ability that shuffles an empty discard pile into a deck does not shuffle the 
 - An unrevealed location has only its unrevealed side's text. Its revealed side's abilities ("each enemy at this location gets +1 fight") apply once it is revealed. This is our reading of "do not read the revealed side" (Grimoire, Location Cards); no rule says it in one sentence.
 - A modified value is the printed value plus all active modifiers, applied together and recalculated whenever one starts or stops. A result below zero counts as zero.
 - An engaged enemy is at its investigator's location, so "each enemy at X" includes enemies engaged with investigators at X.
+- "You must either A or B" (and "the lead investigator must decide") offers only the options that can change the game state ([Must](https://arkhamdb.com/rules#Must)): with no clues, "spend 1 clue or take 2 damage" leaves only the damage. With neither possible, nothing happens ([Effects](https://arkhamdb.com/rules#Effects): resolve as much as you are able). An option that resolves only in part is still allowed by the rule; the engine drops it for now (no Night of the Zealot card has one).
 
 ## Skill tests
 
@@ -187,7 +188,7 @@ If auto-success or auto-failure is known before step 3, skip steps 3 and 4. [Var
 [Dealing damage/horror](https://arkhamdb.com/rules#Dealing_Damage_Horror), [defeat](https://arkhamdb.com/rules#Defeat).
 
 - When an investigator is dealt damage or horror, they may assign it to their assets that have health or sanity (no more than would defeat each asset), and the rest goes on the investigator. Prevention happens between assigning and applying, and everything is applied at once.
-- An investigator with damage ≥ health or horror ≥ sanity is defeated and [eliminated](#elimination-and-resign). An enemy with damage ≥ health goes to the encounter discard, or to the victory display if it has Victory X, or to its owner's discard if it is a weakness. A defeated asset goes to its owner's discard.
+- An investigator with damage ≥ health or horror ≥ sanity is defeated and [eliminated](#elimination-and-resign). An enemy with damage ≥ health goes to the encounter discard, or to the victory display if it has Victory X, or to its owner's discard if it is a weakness. A defeated asset goes to its owner's discard. A "when [this enemy] is defeated" forced ability ([When](https://arkhamdb.com/rules#Ability): before the defeat's impact) resolves after the enemy has gone, and "this location" is where it was (Goat Spawn: "each investigator at this location takes 1 horror"). Our stand-in for "when" changes nothing while such an ability only acts on its location; Doomed must not use it, as its doom can advance the agenda while the enemy is still in play.
 
 ## Elimination and resign
 

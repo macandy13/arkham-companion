@@ -396,6 +396,12 @@ export interface EnemyDefeated {
   type: 'EnemyDefeated';
   enemyId: InstanceId;
   to: Zone;
+  /**
+   * Where it was (an engaged enemy is at its investigator's location): once
+   * it has moved away, the only record of "its location" for a "when [this
+   * enemy] is defeated" ability.
+   */
+  locationId: InstanceId;
 }
 
 /** A card was exhausted or readied. Produced by `ExhaustEnemy` and `ReadyEnemy`. */
