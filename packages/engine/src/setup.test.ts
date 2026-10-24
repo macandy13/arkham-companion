@@ -18,6 +18,7 @@ import {
   perInvestigator,
   spawnZone,
   type AddMapStep,
+  type CampaignLog,
   type SetupStep,
 } from './index';
 import {
@@ -595,6 +596,123 @@ describe('compileSetup in a campaign', () => {
         scenario.compileSetup(midnightMasks, { seed: 1, investigators: seats, campaign: log }),
       ),
     ).toEqual(rejection);
+  });
+});
+
+describe('compileSetup whenStory', () => {
+  const theMidnightMasks = scenarioId('the_midnight_masks');
+  const rolandSeat = { id: investigatorId('roland'), code: roland.code };
+  const yourHouse = blankLocation('your_house');
+  const rivertown = blankLocation('rivertown');
+  const ghoulPriest = blankEnemy('ghoul_priest', { encounterCode: encounterSetCode('ghouls') });
+  const ghoul = blankEnemy('ghoul', { encounterCode: encounterSetCode('ghouls') });
+  const cards = cardDbFrom([
+    yourHouse,
+    rivertown,
+    ghoulPriest,
+    ghoul,
+    ...[roland].map(investigatorCardStats),
+  ]);
+  /** Roland alone before The Midnight Masks, with `story` in the log. */
+  const logWith = (story: CampaignLog['story']) =>
+    makeCampaignLog({
+      investigators: [rolandMember],
+      story,
+      scenarioIds: [theMidnightMasks],
+      position: 0,
+    });
+  /** Investigators start at their house if it still stands, else in Rivertown. */
+  const startAtHouseIfStanding: SetupStep[] = [
+    mainMap('your_house', 'rivertown'),
+    {
+      kind: 'whenStory',
+      condition: { kind: 'flag', key: 'houseStillStanding', value: true },
+      then: [{ kind: 'moveInvestigators', to: cardCode('your_house') }],
+      otherwise: [{ kind: 'moveInvestigators', to: cardCode('rivertown') }],
+    },
+  ];
+  const masksWith = (setup: SetupStep[]) => ({
+    cards,
+    scenario: makeDefinition({ id: theMidnightMasks, setup }),
+  });
+
+  it.each([
+    [
+      'the house still stands',
+      { houseStillStanding: { kind: 'flag', value: true } },
+      'your_house#1',
+    ],
+    [
+      'the house burned down',
+      { houseStillStanding: { kind: 'flag', value: false } },
+      'rivertown#1',
+    ],
+    ['the log never mentions the house', {}, 'rivertown#1'],
+  ] as const)('places the investigators by the log when %s', (_, story, start) => {
+    const command = scenario.compileSetup(masksWith(startAtHouseIfStanding), {
+      seed: 1,
+      investigators: [rolandSeat],
+      campaign: logWith(story),
+    });
+
+    expect(command.investigators[0]?.locationId).toBe(start);
+  });
+
+  it('takes the otherwise steps in a standalone game', () => {
+    const command = scenario.compileSetup(masksWith(startAtHouseIfStanding), {
+      difficulty: 'standard',
+      seed: 1,
+      investigators: [rolandSeat],
+    });
+
+    expect(command.investigators[0]?.locationId).toBe('rivertown#1');
+  });
+
+  it.each([
+    ['still alive', true, ['ghoul_priest', 'ghoul']],
+    ['defeated', false, ['ghoul']],
+  ] as const)(
+    'shuffles the Ghoul Priest into the encounter deck only while he is %s',
+    (_, alive, deck) => {
+      const setup: SetupStep[] = [
+        {
+          kind: 'whenStory',
+          condition: { kind: 'flag', key: 'ghoulPriestStillAlive', value: true },
+          then: [{ kind: 'buildEncounterDeck', sets: [encounterSetCode('ghouls')] }],
+          otherwise: [
+            {
+              kind: 'buildEncounterDeck',
+              sets: [encounterSetCode('ghouls')],
+              exclude: [cardCode('ghoul_priest')],
+            },
+          ],
+        },
+      ];
+
+      const command = scenario.compileSetup(masksWith(setup), {
+        seed: 1,
+        investigators: [rolandSeat],
+        campaign: logWith({ ghoulPriestStillAlive: { kind: 'flag', value: alive } }),
+      });
+
+      expect(command.cards.map((card) => card.code)).toEqual(deck);
+    },
+  );
+
+  it('rejects a condition on a record of another kind', () => {
+    const rejection = rejectionOf(() =>
+      scenario.compileSetup(masksWith(startAtHouseIfStanding), {
+        seed: 1,
+        investigators: [rolandSeat],
+        campaign: logWith({ houseStillStanding: { kind: 'count', value: 1 } }),
+      }),
+    );
+
+    expect(rejection).toEqual({
+      code: 'storyConditionMismatch',
+      key: 'houseStillStanding',
+      condition: 'flag',
+    });
   });
 });
 
