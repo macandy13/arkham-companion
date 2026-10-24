@@ -13,7 +13,13 @@ import type { Edge, GridCell, MapSpec } from './map';
 import { blankInvestigator } from './blank_cards';
 import type { ScenarioDefinition, ScenarioReference } from './scenario';
 import type { SkillModifierRegistry } from './skill_modifiers';
-import { emptyState, type Difficulty, type GameState, type TokenKind } from './state';
+import {
+  emptyState,
+  type ChaosToken,
+  type Difficulty,
+  type GameState,
+  type TokenKind,
+} from './state';
 import type { Zone } from './zone';
 
 /** How `GameBuilder.withLocation` places a location. */
@@ -93,6 +99,7 @@ interface GameSpec {
   readonly difficulty: Difficulty;
   readonly seed: number;
   readonly shuffleEncounterDeck: boolean;
+  readonly chaosBag: readonly ChaosToken[];
   /** The investigator whose turn `start` begins; none means the table stays at the start of the scenario. */
   readonly turnOf?: InvestigatorId;
   /** The parts of a scenario the engine reads while it plays; set means the context has a scenario. */
@@ -115,6 +122,7 @@ const EMPTY_SPEC: GameSpec = {
   difficulty: 'standard',
   seed: 1,
   shuffleEncounterDeck: false,
+  chaosBag: [],
 };
 
 /**
@@ -176,6 +184,11 @@ export class GameBuilder {
   /** The table started with `seed` instead of 1, for tests about what the RNG decides. */
   withSeed(seed: number): GameBuilder {
     return this.with({ seed });
+  }
+
+  /** The table with `tokens` in its chaos bag, which is empty unless set. */
+  withChaosBag(tokens: readonly ChaosToken[]): GameBuilder {
+    return this.with({ chaosBag: tokens });
   }
 
   /** The table with its encounter deck shuffled at the start instead of kept in the order added. */
@@ -256,6 +269,7 @@ export class GameBuilder {
       difficulty: this.spec.difficulty,
       seed: this.spec.seed,
       shuffleEncounterDeck: this.spec.shuffleEncounterDeck,
+      chaosBag: [...this.spec.chaosBag],
       investigators: [...this.spec.investigators],
       maps: this.maps(),
       cards: [

@@ -9,6 +9,7 @@ import {
   instanceId,
   investigatorId,
   newGame,
+  revealsAnotherToken,
   skillTestDecision,
   skillTestSuggestion,
   suggestSkillTest,
@@ -76,6 +77,20 @@ describe("skillTestSuggestion: base values, the players' modifier and tokens", (
       { target: 'difficulty', source: { kind: 'baseDifficulty' }, change: 3, total: 3 },
     ]);
     expect(suggestion).toMatchObject({ skill: 2, difficulty: 3, outcome: 'fail' });
+  });
+
+  it("adds a second skill's printed value when a card tests two skills together", () => {
+    const suggestion = skillTestSuggestion(context, state, investigateStudy, {
+      addedSkill: 'willpower',
+      tokens: ['-1'],
+    });
+
+    expect(suggestion.trace).toEqual([
+      { target: 'skill', source: { kind: 'baseSkill' }, change: 4, total: 4 },
+      { target: 'skill', source: { kind: 'addedSkill', skill: 'willpower' }, change: 2, total: 6 },
+      { target: 'skill', source: { kind: 'chaosToken', token: '-1' }, change: -1, total: 5 },
+      { target: 'difficulty', source: { kind: 'baseDifficulty' }, change: 3, total: 3 },
+    ]);
   });
 
   it('takes a negative modifier, e.g. a card that raises the difficulty by 2', () => {
@@ -169,6 +184,20 @@ describe("skillTestSuggestion: base values, the players' modifier and tokens", (
     expect(() => skillTestSuggestion(context, state, investigateStudy, { modifier: 1.5 })).toThrow(
       CommandRejected,
     );
+  });
+});
+
+describe('revealsAnotherToken', () => {
+  it.each([
+    { token: 'bless', reveals: true },
+    { token: 'curse', reveals: true },
+    { token: 'frost', reveals: true },
+    { token: 'blood', reveals: true },
+    { token: '-2', reveals: false },
+    { token: 'skull', reveals: false },
+    { token: 'autoFail', reveals: false },
+  ] as const)('$token makes the tester reveal another: $reveals', ({ token, reveals }) => {
+    expect(revealsAnotherToken(token)).toBe(reveals);
   });
 });
 

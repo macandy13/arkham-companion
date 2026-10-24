@@ -1,5 +1,7 @@
 # M6 – Comfort
 
+Archived on 2026-10-24, when the plan moved to GitHub issues (see `docs/tasks/README.md`); the live state is in the issues.
+
 Goal: quality-of-life features that make the app nicer at the table.
 
 **Why this milestone**

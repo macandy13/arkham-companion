@@ -8,6 +8,14 @@ export function duplicates<T>(items: readonly T[]): T[] {
 }
 
 /**
+ * Each item of `items` once, in the order of its first occurrence, like the
+ * distinct tokens of a bag. Compares like a `Set` (`SameValueZero`).
+ */
+export function unique<T>(items: readonly T[]): T[] {
+  return [...new Set(items)];
+}
+
+/**
  * A copy of `items` without the first occurrence of `item` (compared with
  * `===`). Removes one copy, unlike `filter`, so it suits multisets such as a
  * bag of tokens. Total: an absent item leaves an equal copy.

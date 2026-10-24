@@ -36,7 +36,7 @@ How code in this repo should look, so every task lands in the same style.
 
 - Write one when the motivation is not obvious from the code: a rule from the game, a workaround, a deliberate trade-off, a non-obvious invariant, why the simpler-looking alternative is wrong. These comments matter – keep them accurate when the code changes.
 - Don't write comments that restate the code, narrate steps, or label sections. If you feel the need, rename or extract a function instead.
-- No commented-out code and no `TODO`s without a task reference – follow-ups go into the task file.
+- No commented-out code and no `TODO`s without a task reference – follow-ups become sub-issues of the task issue.
 
 ## 3. Tests
 
@@ -122,7 +122,7 @@ A PR is reviewed on a phone, in one sitting. Its size and shape decide whether t
 
 - **One reviewable idea per PR:** one rule, one API change (commands, events, state shape), one screen or one refactor. A task that needs several of these becomes several PRs.
 - **Size budget.** Aim for at most ~400 changed lines of production code and ~1000 changed lines in total (tests included; lockfile, generated files and `docs/tasks/` excluded). Past that, split, unless the extra lines are one mechanical change (a rename, a moved file) that reads at a glance.
-- **Plan the slices before coding.** When a task will exceed the budget, list its PRs in the task file first (`M1.13a – modifier types and events`, `M1.13b – …`), so each session knows its slice and the reviewer knows what comes next.
+- **Plan the slices before coding.** When a task will exceed the budget, open its PRs as sub-issues of the task issue first (`M1.13a – modifier types and events`, `M1.13b – …`), so each session knows its slice and the reviewer knows what comes next.
 - **Split in reading order:**
   1. preparatory `refactor:` PRs that change no behaviour: helper moves, test-util changes, renames. The description says "no behaviour change", so they can be approved by skimming;
   2. types and API: new commands, events and state, with the reducer cases and invariants;
