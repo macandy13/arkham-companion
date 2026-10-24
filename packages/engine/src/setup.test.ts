@@ -4,12 +4,10 @@ import {
   blankEnemy,
   blankLocation,
   blankTreachery,
-  campaignId,
   cardCode,
   cardDbFrom,
   encounterSetCode,
   scenarioId,
-  campaign,
   scenario,
   instanceId,
   investigatorCode,
@@ -23,11 +21,18 @@ import {
   type SetupStep,
 } from './index';
 import {
+  campaignContext,
+  daisy,
+  daisyMember,
   investigatorSeats,
+  makeCampaignLog,
   makeDefinition,
   makeSetupOptions,
   rejectionOf,
+  roland,
+  rolandMember,
   standardInvestigatorCards,
+  wendy,
 } from '../test/utils';
 
 const main = mapId('main');
@@ -490,16 +495,106 @@ describe('compileSetup buildEncounterDeck', () => {
   });
 });
 
-describe('compileSetup campaign', () => {
-  it('passes the campaign log through', () => {
-    const log = { ...campaign.createEmptyLog(), campaignId: campaignId('night_of_the_zealot_1') };
+describe('compileSetup in a campaign', () => {
+  const theGathering = scenarioId('the_gathering');
+  const theMidnightMasks = scenarioId('the_midnight_masks');
+  const rolandSeat = { id: investigatorId('roland'), code: roland.code };
+  const daisySeat = { id: investigatorId('daisy'), code: daisy.code };
+  /** The Midnight Masks, whose own bag the campaign's bag replaces. */
+  const midnightMasks = {
+    cards: campaignContext.cards,
+    scenario: makeDefinition({
+      id: theMidnightMasks,
+      chaosBag: { easy: ['+1'], standard: ['0'], hard: ['-2'], expert: ['-3'] },
+    }),
+  };
+  /** Roland and Daisy before The Midnight Masks, on hard, with a bag the first scenario changed. */
+  const beforeMidnightMasks = makeCampaignLog({
+    difficulty: 'hard',
+    investigators: [rolandMember, daisyMember],
+    chaosBag: ['-1', 'skull', 'cultist'],
+    scenarioIds: [theGathering, theMidnightMasks],
+    position: 1,
+  });
 
-    const command = scenario.compileSetup(
-      { cards: investigatorCards, scenario: makeDefinition() },
-      makeSetupOptions({ campaign: log }),
-    );
+  it('takes the difficulty and the chaos bag from the log and passes the log on', () => {
+    const command = scenario.compileSetup(midnightMasks, {
+      seed: 1,
+      investigators: [rolandSeat, daisySeat],
+      campaign: beforeMidnightMasks,
+    });
 
-    expect(command.campaign).toBe(log);
+    expect(command).toMatchObject({
+      difficulty: 'hard',
+      chaosBag: ['-1', 'skull', 'cultist'],
+      campaign: beforeMidnightMasks,
+    });
+  });
+
+  it('starts each investigator with damage for physical and horror for mental trauma', () => {
+    const log = {
+      ...beforeMidnightMasks,
+      investigators: [
+        { ...rolandMember, physicalTrauma: 2 },
+        { ...daisyMember, mentalTrauma: 1 },
+      ],
+    };
+
+    const command = scenario.compileSetup(midnightMasks, {
+      seed: 1,
+      investigators: [daisySeat, rolandSeat],
+      campaign: log,
+    });
+
+    expect(command.investigators).toMatchObject([
+      { code: daisy.code, health: { damage: 0 }, sanity: { horror: 1 } },
+      { code: roland.code, health: { damage: 2 }, sanity: { horror: 0 } },
+    ]);
+  });
+
+  it.each([
+    [
+      'a scenario other than the next one',
+      { ...beforeMidnightMasks, position: 0 },
+      [rolandSeat, daisySeat],
+      { code: 'notNextCampaignScenario', scenarioId: theMidnightMasks, next: theGathering },
+    ],
+    [
+      'a finished campaign',
+      { ...beforeMidnightMasks, position: 2 },
+      [rolandSeat, daisySeat],
+      { code: 'notNextCampaignScenario', scenarioId: theMidnightMasks, next: undefined },
+    ],
+    [
+      'an investigator who is not on the team',
+      beforeMidnightMasks,
+      [rolandSeat, daisySeat, { id: investigatorId('wendy'), code: wendy.code }],
+      { code: 'notOnCampaignTeam', investigatorCode: wendy.code },
+    ],
+    [
+      'a killed investigator',
+      { ...beforeMidnightMasks, investigators: [rolandMember, { ...daisyMember, fate: 'killed' }] },
+      [rolandSeat, daisySeat],
+      { code: 'investigatorNeedsReplacement', investigatorCode: daisy.code, fate: 'killed' },
+    ],
+    [
+      'an insane investigator',
+      { ...beforeMidnightMasks, investigators: [{ ...rolandMember, fate: 'insane' }, daisyMember] },
+      [rolandSeat, daisySeat],
+      { code: 'investigatorNeedsReplacement', investigatorCode: roland.code, fate: 'insane' },
+    ],
+    [
+      'a team without one of its members',
+      beforeMidnightMasks,
+      [rolandSeat],
+      { code: 'campaignMemberNotSeated', investigatorCode: daisy.code },
+    ],
+  ] as const)('rejects %s', (_, log, seats, rejection) => {
+    expect(
+      rejectionOf(() =>
+        scenario.compileSetup(midnightMasks, { seed: 1, investigators: seats, campaign: log }),
+      ),
+    ).toEqual(rejection);
   });
 });
 
