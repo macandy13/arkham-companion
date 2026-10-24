@@ -1,7 +1,9 @@
 import { assertNever } from '@arkham/util';
-import type { EngineContext } from '../cards';
-import type { InvestigatorCode, ResolutionId } from '../ids';
-import type { ChaosToken, GameState, Investigator } from '../state';
+import { cardStats, type EngineContext } from '../cards';
+import { isInPlay } from '../doom';
+import { currentCard } from '../lookup';
+import type { CardCode, InvestigatorCode, ResolutionId } from '../ids';
+import type { CardInstance, ChaosToken, GameState, Investigator } from '../state';
 import { victoryPoints } from '../victory';
 import type { CampaignCommand } from './campaign_commands';
 import {
@@ -61,7 +63,40 @@ export type ResolutionStep =
    * a story asset, upgrading decks): shown for the players to do by hand.
    * `textKey` is the translation key of what to do.
    */
-  | { readonly kind: 'byHand'; readonly textKey: string };
+  | { readonly kind: 'byHand'; readonly textKey: string }
+  /** `then` when the ended game answers `condition` with yes, else `otherwise`. */
+  | {
+      readonly kind: 'when';
+      readonly condition: GameCondition;
+      readonly then: readonly ResolutionStep[];
+      readonly otherwise?: readonly ResolutionStep[];
+    }
+  /**
+   * Writes the printed names of the `names` cards whose condition holds as
+   * the list record `key`, as in "record the name of each unique Cultist
+   * enemy in the victory display under 'Cultists We Interrogated'". Records
+   * nothing when no condition holds.
+   */
+  | {
+      readonly kind: 'recordNames';
+      readonly key: string;
+      readonly names: readonly { readonly code: CardCode; readonly when: GameCondition }[];
+    };
+
+/**
+ * Where a card is when the game ends, as resolutions ask about it. A
+ * scenario's own deck (The Midnight Masks' Cultist deck) is set aside, so
+ * cards left out of it must go out of the game, not set aside.
+ */
+export type CardPlace = 'inPlay' | 'setAside' | 'victoryDisplay';
+
+/** A question about the ended game that a `when` or `recordNames` step asks. */
+export type GameCondition =
+  /** Some copy of `code` is in one of `places`; false when the game has none. */
+  | { readonly kind: 'cardIn'; readonly code: CardCode; readonly places: readonly CardPlace[] }
+  /** The current agenda is one of `agendas`, as in "if it is Agenda 1" (like `AbilityCondition.currentAct`). */
+  | { readonly kind: 'currentAgenda'; readonly agendas: readonly CardCode[] }
+  | { readonly kind: 'anyOf'; readonly conditions: readonly GameCondition[] };
 
 /** A scenario's resolutions, on `ScenarioDefinition.resolutions`. */
 export interface ScenarioResolutions {
@@ -183,8 +218,51 @@ function proposeStep(ctx: EngineContext, game: GameState, step: ResolutionStep):
       return targetCodes(game, step.to).map((code) => command({ type: 'MarkInsane', code }));
     case 'byHand':
       return [{ kind: 'byHand', textKey: step.textKey }];
+    case 'when': {
+      const steps = gameHolds(game, step.condition) ? step.then : (step.otherwise ?? []);
+      return steps.flatMap((inner) => proposeStep(ctx, game, inner));
+    }
+    case 'recordNames': {
+      const entries = step.names
+        .filter(({ when }) => gameHolds(game, when))
+        .map(({ code }) => cardStats(ctx.cards, code).name);
+      if (entries.length === 0) return [];
+      return [command({ type: 'RecordStory', key: step.key, value: { kind: 'list', entries } })];
+    }
     default:
       return assertNever(step);
+  }
+}
+
+/** Whether the ended `game` answers `condition` with yes. */
+function gameHolds(game: GameState, condition: GameCondition): boolean {
+  switch (condition.kind) {
+    case 'cardIn':
+      return Object.values(game.cards).some(
+        (card) =>
+          card.code === condition.code && condition.places.some((place) => isAt(game, card, place)),
+      );
+    case 'currentAgenda': {
+      const agenda = currentCard(game, 'agenda');
+      return agenda !== undefined && condition.agendas.includes(agenda.code);
+    }
+    case 'anyOf':
+      return condition.conditions.some((inner) => gameHolds(game, inner));
+    default:
+      return assertNever(condition);
+  }
+}
+
+function isAt(game: GameState, card: CardInstance, place: CardPlace): boolean {
+  switch (place) {
+    case 'inPlay':
+      return isInPlay(game, card);
+    case 'setAside':
+      return card.zone.kind === 'setAside';
+    case 'victoryDisplay':
+      return card.zone.kind === 'victoryDisplay';
+    default:
+      return assertNever(place);
   }
 }
 

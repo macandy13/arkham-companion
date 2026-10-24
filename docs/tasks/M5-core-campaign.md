@@ -44,7 +44,8 @@ The campaign model, chaos bag, resolutions, campaign setup and storage are engin
 **Benefit:** More playable content; anything it shares with _The Gathering_ gets promoted to an engine primitive.
 
 - [ ] Data via the M4 pipeline (layout, connections), definition, special mechanics, setup test
-- [ ] Reads earlier log entries in `campaignSetup`
+- [ ] Reads earlier log entries with `whenStory` setup steps (M1C.5b)
+- [ ] Resolutions with `when`/`recordNames` (M1C.4c); the Cultist deck is set aside and the cultists left out of it go out of the game, so `cardIn … setAside` means "still in the Cultist deck"
 
 ## M5.4 The Devourer Below (O)
 

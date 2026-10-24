@@ -7,7 +7,9 @@ import {
   stateAfter,
 } from '../../test/utils';
 import {
+  blankAgenda,
   blankEnemy,
+  cardCode,
   blankLocation,
   campaign,
   CUSTOM_SCENARIO,
@@ -20,6 +22,7 @@ import {
   type Command,
   type InvestigatorId,
   type ResolutionId,
+  type ResolutionStep,
   type ScenarioResolutions,
 } from '../index';
 
@@ -269,6 +272,149 @@ describe('proposeResolution', () => {
     );
 
     expect(proposal).toBeUndefined();
+  });
+});
+
+describe('proposeResolution with steps that read the game', () => {
+  const drew = cardCode('wolf_man_drew');
+  const herman = cardCode('herman_collins');
+  const maskedHunter = cardCode('the_masked_hunter');
+  const firstAgenda = cardCode('predator_or_prey');
+  /** At the first agenda: Drew was defeated, Herman is engaged with alice, the Masked Hunter is set aside. */
+  const masksTable = table
+    .withAgenda(instanceId('agenda_1'), blankAgenda('predator_or_prey', null))
+    .withCard(instanceId('drew'), blankEnemy('wolf_man_drew', { name: 'Wolf-Man Drew' }), {
+      kind: 'victoryDisplay',
+    })
+    .withCard(instanceId('herman'), blankEnemy('herman_collins', { name: 'Herman Collins' }), {
+      kind: 'engaged',
+      investigatorId: alice,
+    })
+    .withCard(
+      instanceId('masked_hunter'),
+      blankEnemy('the_masked_hunter', { name: 'The Masked Hunter' }),
+      { kind: 'setAside' },
+    );
+  const proposalFor = (...steps: ResolutionStep[]) => {
+    const { context, state } = masksTable.start();
+    return campaign.proposeResolution(context, stateAfter(context, state, endWith(r1)), {
+      byId: { [r1]: steps },
+      none: [],
+    });
+  };
+  const flagGhoulPriestDead = {
+    kind: 'record',
+    key: 'ghoulPriestStillAlive',
+    value: { kind: 'flag', value: false },
+  } as const;
+
+  it.each([
+    [
+      'Drew is in the victory display',
+      { kind: 'cardIn', code: drew, places: ['victoryDisplay'] },
+      true,
+    ],
+    [
+      'Herman, in play, is in the victory display',
+      { kind: 'cardIn', code: herman, places: ['victoryDisplay'] },
+      false,
+    ],
+    ['Herman is in play', { kind: 'cardIn', code: herman, places: ['inPlay'] }, true],
+    [
+      'the Masked Hunter is set aside',
+      { kind: 'cardIn', code: maskedHunter, places: ['setAside'] },
+      true,
+    ],
+    [
+      'the Ghoul Priest, not in the game, is anywhere',
+      {
+        kind: 'cardIn',
+        code: cardCode('ghoul_priest'),
+        places: ['victoryDisplay', 'inPlay', 'setAside'],
+      },
+      false,
+    ],
+    ['the current agenda is agenda 1', { kind: 'currentAgenda', agendas: [firstAgenda] }, true],
+    [
+      'the current agenda is agenda 2',
+      { kind: 'currentAgenda', agendas: [cardCode('time_grows_short')] },
+      false,
+    ],
+    [
+      'agenda 2 is current or Drew is in the victory display',
+      {
+        kind: 'anyOf',
+        conditions: [
+          { kind: 'currentAgenda', agendas: [cardCode('time_grows_short')] },
+          { kind: 'cardIn', code: drew, places: ['victoryDisplay'] },
+        ],
+      },
+      true,
+    ],
+  ] as const)('takes the "then" steps only when %s', (_, condition, holds) => {
+    const proposal = proposalFor({
+      kind: 'when',
+      condition,
+      then: [flagGhoulPriestDead],
+      otherwise: [{ kind: 'addChaosToken', token: 'cultist' }],
+    });
+
+    expect(proposal).toEqual([
+      holds
+        ? {
+            kind: 'command',
+            command: {
+              type: 'RecordStory',
+              key: 'ghoulPriestStillAlive',
+              value: { kind: 'flag', value: false },
+            },
+          }
+        : { kind: 'command', command: { type: 'AddChaosToken', token: 'cultist' } },
+    ]);
+  });
+
+  it('proposes nothing for a condition that fails without "otherwise" steps', () => {
+    const proposal = proposalFor({
+      kind: 'when',
+      condition: { kind: 'cardIn', code: herman, places: ['victoryDisplay'] },
+      then: [flagGhoulPriestDead],
+    });
+
+    expect(proposal).toEqual([]);
+  });
+
+  it('records the names of the cards whose condition holds, in step order', () => {
+    const gotAway = [drew, herman, maskedHunter].map((code) => ({
+      code,
+      when: { kind: 'cardIn', code, places: ['inPlay', 'setAside'] } as const,
+    }));
+
+    const proposal = proposalFor({
+      kind: 'recordNames',
+      key: 'cultistsWhoGotAway',
+      names: gotAway,
+    });
+
+    expect(proposal).toEqual([
+      {
+        kind: 'command',
+        command: {
+          type: 'RecordStory',
+          key: 'cultistsWhoGotAway',
+          value: { kind: 'list', entries: ['Herman Collins', 'The Masked Hunter'] },
+        },
+      },
+    ]);
+  });
+
+  it('records nothing when no name qualifies', () => {
+    const proposal = proposalFor({
+      kind: 'recordNames',
+      key: 'cultistsWeInterrogated',
+      names: [{ code: herman, when: { kind: 'cardIn', code: herman, places: ['victoryDisplay'] } }],
+    });
+
+    expect(proposal).toEqual([]);
   });
 });
 
