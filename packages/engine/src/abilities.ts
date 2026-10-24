@@ -536,13 +536,7 @@ export function resolveEffect(
 
 /** The `nearestEnemy` reference in `effect`, if it holds one. */
 function nearestRef(effect: unknown): Extract<RelativeCard, { ref: 'nearestEnemy' }> | undefined {
-  if (typeof effect !== 'object' || effect === null) return undefined;
-  if (isRelative(effect) && effect.ref === 'nearestEnemy') return effect;
-  for (const field of Object.values(effect)) {
-    const found = nearestRef(field);
-    if (found) return found;
-  }
-  return undefined;
+  return findRef(effect, (ref) => (ref.ref === 'nearestEnemy' ? ref : undefined));
 }
 
 /**
@@ -561,7 +555,7 @@ function nearestTie(
       id: decisionId(`nearest:${cardId}`),
       kind: 'chooseCard',
       subject: cardId,
-      prompt: 'Choose the nearest enemy',
+      prompt: 'decision.chooseNearestEnemy',
       decider: { kind: 'lead' },
       options: enemies.map((enemy) => ({
         id: enemy.id,
@@ -595,17 +589,26 @@ type RepeatedRef = Extract<RelativeCard | RelativeInvestigator, { ref: `each${st
  * repeat the whole test or choice.
  */
 function repeatedRef(effect: unknown): RepeatedRef | undefined {
+  return findRef(effect, (ref) =>
+    ref.ref === 'eachInvestigator' || ref.ref === 'eachInvestigatorAt' || ref.ref === 'eachEnemyAt'
+      ? ref
+      : undefined,
+  );
+}
+
+/** The first reference in `effect`, depth first, that `pick` returns something for. */
+function findRef<R>(
+  effect: unknown,
+  pick: (ref: RelativeCard | RelativeInvestigator) => R | undefined,
+): R | undefined {
   if (typeof effect !== 'object' || effect === null) return undefined;
-  if (
-    isRelative(effect) &&
-    (effect.ref === 'eachInvestigator' ||
-      effect.ref === 'eachInvestigatorAt' ||
-      effect.ref === 'eachEnemyAt')
-  )
-    return effect;
+  if (isRelative(effect)) {
+    const picked = pick(effect);
+    if (picked !== undefined) return picked;
+  }
   for (const field of Object.values(effect)) {
-    const found = repeatedRef(field);
-    if (found) return found;
+    const found = findRef(field, pick);
+    if (found !== undefined) return found;
   }
   return undefined;
 }

@@ -183,9 +183,12 @@ export function enemiesAt(state: GameState, locationId: InstanceId): CardInstanc
 
 /**
  * The enemies on the table with `trait` (any enemy without one) nearest to
- * `from`, counted in connections, engaged ones where their investigator is
- * ("the nearest [[Cultist]] enemy"). Several when they are equally near, in
- * card order; none when no such enemy can be reached.
+ * `from`, counted in connections along each enemy's path there, engaged ones
+ * where their investigator is ("the nearest [[Cultist]] enemy"). Several when
+ * they are equally near, in card order; none when there is no such enemy. An
+ * enemy with no path counts as farther than every enemy with one (FAQ:
+ * "Even if it has no valid path to an investigator, an enemy can still
+ * qualify as the 'nearest' enemy").
  */
 export function nearestEnemies(
   ctx: EngineContext,
@@ -193,13 +196,13 @@ export function nearestEnemies(
   from: InstanceId,
   trait?: Trait,
 ): CardInstance[] {
-  const reachable = Object.values(state.cards).flatMap((card) => {
+  const candidates = Object.values(state.cards).flatMap((card) => {
     const stats = cardStats(ctx.cards, card.code);
     if (!isEnemyOnTable(card) || stats.typeCode !== 'enemy') return [];
     if (trait !== undefined && !stats.traits.includes(trait)) return [];
-    const [path] = shortestPaths(state, from, locationOf(state, card));
-    return path ? [{ card, distance: path.length - 1 }] : [];
+    const [path] = shortestPaths(state, locationOf(state, card), from);
+    return [{ card, distance: path ? path.length - 1 : Infinity }];
   });
-  const nearest = Math.min(...reachable.map(({ distance }) => distance));
-  return reachable.filter(({ distance }) => distance === nearest).map(({ card }) => card);
+  const nearest = Math.min(...candidates.map(({ distance }) => distance));
+  return candidates.filter(({ distance }) => distance === nearest).map(({ card }) => card);
 }

@@ -1654,18 +1654,40 @@ describe('doom on the nearest Cultist enemy', () => {
     expect(after.cards[instanceId('cellar_cultist')]?.tokens.doom).toBeUndefined();
   });
 
-  it('places no doom without a cultist alice can reach', () => {
+  it('places the doom on a cultist with no path to alice when no other cultist is in play', () => {
     const shed = instanceId('shed');
     const { context, state } = houseTable
       .withLocation(shed, blankLocation('shed'), { revealed: true })
-      .withCard(instanceId('monster'), monsterCard, atLocation(cellar))
       .withCard(instanceId('shed_cultist'), cultistCard, atLocation(shed))
       .start();
 
     const after = stateAfter(context, state, aliceDraws);
 
-    expect(after.cards[instanceId('monster')]?.tokens.doom).toBeUndefined();
+    expect(after.cards[instanceId('shed_cultist')]?.tokens.doom).toBe(2);
+  });
+
+  it('prefers a cultist alice can reach over one with no path to her', () => {
+    const shed = instanceId('shed');
+    const { context, state } = houseTable
+      .withLocation(shed, blankLocation('shed'), { revealed: true })
+      .withCard(instanceId('shed_cultist'), cultistCard, atLocation(shed))
+      .withCard(instanceId('attic_cultist'), cultistCard, atLocation(attic))
+      .start();
+
+    const after = stateAfter(context, state, aliceDraws);
+
+    expect(after.cards[instanceId('attic_cultist')]?.tokens.doom).toBe(2);
     expect(after.cards[instanceId('shed_cultist')]?.tokens.doom).toBeUndefined();
+  });
+
+  it('places no doom without a cultist on the table', () => {
+    const { context, state } = houseTable
+      .withCard(instanceId('monster'), monsterCard, atLocation(cellar))
+      .start();
+
+    const after = stateAfter(context, state, aliceDraws);
+
+    expect(after.cards[instanceId('monster')]?.tokens.doom).toBeUndefined();
     expect(after.pending).toEqual([]);
   });
 });
