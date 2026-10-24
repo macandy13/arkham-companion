@@ -1,6 +1,6 @@
 ## Why
 
-<!-- 1–3 short sentences: the problem and what this PR does about it. Link the task in docs/tasks/; if it is a slice of a stack, say which one and what comes next. Plain words, no attribution to a person. -->
+<!-- 1–3 short sentences: the problem and what this PR does about it. Close the task or slice issue (`Closes #n`); if it is a slice of a stack, say which one and what comes next. Plain words, no attribution to a person. -->
 
 ## Key changes
 

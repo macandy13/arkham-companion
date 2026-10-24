@@ -1,5 +1,7 @@
 # M4 – Scenario data pipeline + first scenario
 
+Archived on 2026-10-24, when the plan moved to GitHub issues (see `docs/tasks/README.md`); the live state is in the issues.
+
 Goal: a repeatable way to turn a real scenario into data (product.md "Scenario data pipeline"), then _The Gathering_, the first scenario of _Night of the Zealot_, fully playable from real card data.
 
 **Why this milestone**
