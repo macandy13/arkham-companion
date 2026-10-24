@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  atEndOfPhase,
   atEndOfRound,
   atEndOfTurn,
   advanceAct,
@@ -46,6 +47,7 @@ import {
   whenAdvanced,
   whenEnemyDefeated,
   whenRevealed,
+  whenTurnBegins,
   type AbilityEffect,
   type AddMapStep,
   type Command,
@@ -397,6 +399,54 @@ describe('trigger bus', () => {
       expect(after.meta.round).toBe(1);
       expect(after.pending).toEqual([]);
     });
+  });
+
+  describe('turn-start and phase-end abilities', () => {
+    const nextPhase: Command = { type: 'NextPhase' };
+    const omen = instanceId('omen');
+
+    it.each([
+      { zone: threatAreaOf(alice), where: 'in her threat area', horror: 1 },
+      { zone: atLocation(hall), where: 'at her location', horror: 0 },
+    ])('deals 1 horror when alice starts her turn with the card $where', ({ zone, horror }) => {
+      const gnawingDread = blankTreachery('gnawing_dread', {
+        abilities: [whenTurnBegins(takeHorror(1))],
+      });
+      const { context, state } = newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withInvestigator(alice, { locationId: hall })
+        .withCard(instanceId('gnawing_dread'), gnawingDread, zone)
+        .start();
+
+      const after = stateAfter(context, state, nextPhase, {
+        type: 'StartTurn',
+        investigatorId: alice,
+      });
+
+      expect(requireInvestigator(after, alice).sanity.horror).toBe(horror);
+    });
+
+    it.each(['investigation', 'enemy', 'mythos'] as const)(
+      'places doom on the card when the $0 phase ends',
+      (phase) => {
+        const omenCard = blankTreachery('omen', {
+          abilities: [atEndOfPhase(phase, placeDoomOnSelf(1))],
+        });
+        const { context, state } = newGame()
+          .withLocation(hall, blankLocation('hall'), { revealed: true })
+          .withInvestigator(alice, { locationId: hall })
+          .withCard(omen, omenCard, atLocation(hall))
+          .withTurnOf(alice)
+          .start();
+        let during = stateAfter(context, state, { type: 'EndTurn', investigatorId: alice });
+        while (during.meta.phase !== phase) during = stateAfter(context, during, nextPhase);
+
+        const after = stateAfter(context, during, nextPhase);
+
+        expect(during.cards[omen]?.tokens.doom).toBeUndefined();
+        expect(after.cards[omen]?.tokens.doom).toBe(1);
+      },
+    );
   });
 
   describe('tests that deal damage or horror per point failed', () => {

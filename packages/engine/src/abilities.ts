@@ -1,7 +1,7 @@
 import { assertNever, shallowEqual } from '@arkham/util';
 import { cardStats, type EngineContext } from './cards';
 import type { Command, EncounterMatch, TestSkill } from './commands';
-import { isInPlay } from './doom';
+import { cardsInPlay } from './doom';
 import type { Event } from './events';
 import type { CardCode, DecisionId, InstanceId, InvestigatorId } from './ids';
 import { locationAttachments } from './board';
@@ -15,6 +15,7 @@ import type {
   GameState,
   Investigator,
   PerPointFailed,
+  Phase,
   QueuedStep,
   SkillName,
 } from './state';
@@ -35,6 +36,17 @@ export type TimingWindow =
    * left with the card's reason to fire.
    */
   | { kind: 'turnEnds' }
+  /**
+   * "When your turn begins" for a card in an investigator's threat area: the
+   * start of that investigator's turn (`StartTurn`), naming them.
+   */
+  | { kind: 'turnBegins' }
+  /**
+   * "At the end of the [mythos / investigation / enemy] phase", for every card
+   * in play, naming no investigator: opened by the `PhaseChanged` that leaves
+   * the phase. The upkeep phase ends with the round, so its end is `roundEnds`.
+   */
+  | { kind: 'phaseEnds'; phase: EndingPhase }
   /**
    * "After you enter [this location]": an investigator moved into the
    * location (`InvestigatorMoved`), naming them. When the move turned it
@@ -59,6 +71,13 @@ export type TimingWindow =
    * ones, so a used-up act or agenda never fires again.
    */
   | { kind: 'enemyDefeated'; enemy: CardCode };
+
+/** The phases whose end opens `phaseEnds`: all but setup and upkeep. */
+export type EndingPhase = Exclude<Phase, 'setup' | 'upkeep'>;
+
+function isEndingPhase(phase: Phase): phase is EndingPhase {
+  return phase !== 'setup' && phase !== 'upkeep';
+}
 
 /**
  * A card an ability names without an instance ID: the card that has the
@@ -250,10 +269,24 @@ export function windowsOpenedBy(
         investigatorId,
       }));
     }
+    case 'TurnStarted': {
+      const { investigatorId } = event;
+      return cardsInZone(state, { kind: 'threatArea', investigatorId }).map((cardId) => ({
+        window: { kind: 'turnBegins' },
+        cardId,
+        investigatorId,
+      }));
+    }
+    case 'PhaseChanged': {
+      const phase = event.ended;
+      if (!isEndingPhase(phase)) return [];
+      return cardsInPlay(state).map((card) => ({
+        window: { kind: 'phaseEnds', phase },
+        cardId: card.id,
+      }));
+    }
     case 'RoundEnded':
-      return Object.values(state.cards)
-        .filter((card) => isInPlay(state, card))
-        .map((card) => ({ window: { kind: 'roundEnds' }, cardId: card.id }));
+      return cardsInPlay(state).map((card) => ({ window: { kind: 'roundEnds' }, cardId: card.id }));
     case 'AgendaAdvanced':
     case 'ActAdvanced':
       return [{ window: { kind: 'advanced' }, cardId: event.cardId }];
@@ -507,6 +540,19 @@ export function atEndOfTurn(...effects: AbilityEffect[]): Ability {
  */
 export function afterEntering(...effects: AbilityEffect[]): Ability {
   return { window: { kind: 'entered' }, effects };
+}
+
+/** A forced ability "when your turn begins" of a card in a threat area. */
+export function whenTurnBegins(...effects: AbilityEffect[]): Ability {
+  return { window: { kind: 'turnBegins' }, effects };
+}
+
+/**
+ * A forced ability "at the end of the mythos phase" (or the investigation or
+ * enemy phase), written `atEndOfPhase('mythos', placeDoomOnSelf(1))` (Wizard of the Order).
+ */
+export function atEndOfPhase(phase: EndingPhase, ...effects: AbilityEffect[]): Ability {
+  return { window: { kind: 'phaseEnds', phase }, effects };
 }
 
 /** A forced ability "at the end of the round", written `atEndOfRound(discardSelf())`. */
