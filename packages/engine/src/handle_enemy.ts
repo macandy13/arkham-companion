@@ -2,6 +2,7 @@ import { requireLocationInPlay } from './board';
 import type { CardStats, EngineContext } from './cards';
 import type {
   DamageEnemy,
+  HealEnemy,
   DefeatEnemy,
   DisengageEnemy,
   EngageEnemy,
@@ -106,6 +107,16 @@ export function handleDamageEnemy(ctx: EngineContext, state: GameState, cmd: Dam
   const health = enemyHealth(stats, state);
   if (health === undefined || total < health) return [damaged];
   return [damaged, defeated(state, enemy, stats)];
+}
+
+/** `HealEnemy`: removes as much of the damage as the enemy has, up to the amount. */
+export function handleHealEnemy(ctx: EngineContext, state: GameState, cmd: HealEnemy): Event[] {
+  const { enemy } = onTableEnemyOf(ctx, state, cmd.enemyId);
+  if (!Number.isInteger(cmd.amount) || cmd.amount <= 0)
+    throw new CommandRejected({ code: 'invalidTokenDelta', delta: cmd.amount });
+  const healed = Math.min(cmd.amount, enemy.tokens.damage ?? 0);
+  if (healed === 0) return [];
+  return [{ type: 'TokensChanged', cardId: enemy.id, token: 'damage', delta: -healed }];
 }
 
 /** `DefeatEnemy`: to the victory display if the card has victory, else to the encounter discard. */

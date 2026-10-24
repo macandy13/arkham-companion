@@ -661,6 +661,50 @@ describe('damage and defeat', () => {
   });
 });
 
+describe('healing', () => {
+  it.each([
+    { damage: 2, heal: 1, left: { damage: 1 } },
+    { damage: 1, heal: 2, left: {} },
+  ])('heals $heal of $damage damage from an enemy', ({ damage, heal, left }) => {
+    const { context, state } = aliceInHall
+      .withCard(ghoul, ghoulCard, engagedWith(alice), { tokens: { damage } })
+      .start();
+
+    const after = stateAfter(context, state, { type: 'HealEnemy', enemyId: ghoul, amount: heal });
+
+    expect(after.cards[ghoul]?.tokens).toEqual(left);
+  });
+
+  it('heals nothing from an undamaged enemy', () => {
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, engagedWith(alice)).start();
+
+    const { events } = execute(context, state, { type: 'HealEnemy', enemyId: ghoul, amount: 1 });
+
+    expect(events).toEqual([]);
+  });
+
+  it.each([
+    {
+      name: 'healing that is not a positive integer',
+      zone: engagedWith(alice),
+      amount: 0,
+      rejection: { code: 'invalidTokenDelta', delta: 0 },
+    },
+    {
+      name: 'healing an enemy that is not in play',
+      zone: setAside,
+      amount: 1,
+      rejection: { code: 'enemyNotInPlay', cardId: ghoul },
+    },
+  ])('rejects $name', ({ zone, amount, rejection }) => {
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, zone).start();
+
+    expect(rejectionFrom(context, state, { type: 'HealEnemy', enemyId: ghoul, amount })).toEqual(
+      rejection,
+    );
+  });
+});
+
 describe('exhaust and ready', () => {
   it('exhausts and readies an enemy', () => {
     const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, engagedWith(alice)).start();

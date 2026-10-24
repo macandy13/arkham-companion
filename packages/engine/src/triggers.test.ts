@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   atEndOfPhase,
+  atEndOfEachTurn,
   atEndOfRound,
+  healSelf,
+  readySelf,
   atEndOfTurn,
   advanceAct,
   afterAttacking,
@@ -1546,6 +1549,88 @@ describe('a choice without the options that cannot be resolved', () => {
       sanity: { horror: 0 },
     });
   });
+});
+
+describe('enemies that heal or ready themselves', () => {
+  const bob = investigatorId('bob');
+  const nextPhase: Command = { type: 'NextPhase' };
+
+  it('heals 2 damage from an enemy at the end of the round, as the Relentless Dark Young does', () => {
+    const regrowing = instanceId('regrowing_horror');
+    /** "At the end of the round: heal 2 damage from it." */
+    const regrowingCard = blankEnemy('regrowing_horror', {
+      health: fixed(5),
+      abilities: [atEndOfRound(healSelf(2))],
+    });
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(regrowing, regrowingCard, atLocation(cellar), { tokens: { damage: 3 } })
+      .withTurnOf(alice)
+      .start();
+
+    const after = stateAfter(
+      context,
+      state,
+      { type: 'EndTurn', investigatorId: alice },
+      nextPhase,
+      nextPhase,
+    );
+
+    expect(after.cards[regrowing]?.tokens).toEqual({ damage: 1 });
+  });
+
+  it('heals 1 damage from an enemy after it attacks, as "Wolf-Man" Drew does', () => {
+    const howling = instanceId('howling_brute');
+    /** "When it attacks: heal 1 damage from it." */
+    const howlingCard = blankEnemy('howling_brute', {
+      health: fixed(4),
+      damage: 1,
+      abilities: [afterAttacking(healSelf(1))],
+    });
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(howling, howlingCard, engagedWith(alice), { tokens: { damage: 2 } })
+      .withTurnOf(alice)
+      .start();
+
+    const after = stateAfter(context, state, {
+      type: 'DealEnemyAttack',
+      enemyId: howling,
+      investigatorId: alice,
+      damage: 1,
+      horror: 0,
+    });
+
+    expect(after.cards[howling]?.tokens).toEqual({ damage: 1 });
+  });
+
+  it.each([{ turnOf: alice }, { turnOf: bob }])(
+    'readies an enemy at the end of $turnOf’s turn, as Umôrdhoth does',
+    ({ turnOf }) => {
+      const restless = instanceId('restless_titan');
+      /** "At the end of each investigator's turn: ready it." */
+      const restlessCard = blankEnemy('restless_titan', {
+        abilities: [atEndOfEachTurn(readySelf())],
+      });
+      const { context, state } = newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+        .withInvestigator(alice, { locationId: hall })
+        .withInvestigator(bob, { locationId: hall })
+        .withCard(restless, restlessCard, atLocation(cellar))
+        .withTurnOf(turnOf)
+        .start();
+      const exhausted = stateAfter(context, state, { type: 'ExhaustEnemy', enemyId: restless });
+
+      const after = stateAfter(context, exhausted, { type: 'EndTurn', investigatorId: turnOf });
+
+      expect(exhausted.cards[restless]?.exhausted).toBe(true);
+      expect(after.cards[restless]?.exhausted).toBe(false);
+    },
+  );
 });
 
 describe('effects on each investigator', () => {

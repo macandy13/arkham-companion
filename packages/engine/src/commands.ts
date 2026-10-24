@@ -41,6 +41,7 @@ export type Command =
   | EngageEnemy
   | DisengageEnemy
   | DamageEnemy
+  | HealEnemy
   | DefeatEnemy
   | ExhaustEnemy
   | ReadyEnemy
@@ -477,6 +478,17 @@ export interface DisengageEnemy {
  */
 export interface DamageEnemy {
   type: 'DamageEnemy';
+  enemyId: InstanceId;
+  amount: number;
+}
+
+/**
+ * Removes up to `amount` (positive) damage from an enemy in play ("heal 2
+ * damage from it"), as much as it has: healing an undamaged enemy does
+ * nothing. Produces `TokensChanged`.
+ */
+export interface HealEnemy {
+  type: 'HealEnemy';
   enemyId: InstanceId;
   amount: number;
 }
