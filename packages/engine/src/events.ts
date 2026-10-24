@@ -1,5 +1,5 @@
 import type { CampaignLog } from './campaign/campaign_log';
-import type { AbilityCommand } from './abilities';
+import type { AbilityCommand, TestedAction } from './abilities';
 import type { CardCode, DecisionId, InstanceId, InvestigatorId, MapId, ScenarioId } from './ids';
 import type { Edge, GameMap } from './map';
 import type { Rejection } from './rejection';
@@ -16,7 +16,6 @@ import type {
   Phase,
   PhaseStep,
   SkillTest,
-  SkillTestKind,
   SkillTestOutcome,
   TokenKind,
 } from './state';
@@ -337,7 +336,7 @@ export interface SkillTestResolved {
   subject?: InstanceId;
   skillTest: SkillTest;
   /** The basic action the test belongs to (`Decision.testKind`); absent for a card's test. */
-  action?: SkillTestKind['kind'];
+  action?: TestedAction;
   outcome: SkillTestOutcome;
   /**
    * How much the test succeeded or failed by, when the answer says: its

@@ -56,7 +56,9 @@ export type TimingWindow =
    * against the location or enemy. Opened for that card and each card
    * attached to it, naming the tester, at ST.6: before the test's results
    * (the clue discovered), as the Rules Reference times "after you
-   * successfully investigate". A card's own test opens none.
+   * successfully investigate". A test that is no investigation, attack or
+   * evasion (a revelation's) opens none; a player card's "Investigate." is
+   * an `Investigate` command, so it opens it like the basic action.
    */
   | { kind: 'tested'; action: TestedAction; outcome: SkillTestOutcome }
   /**

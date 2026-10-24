@@ -454,10 +454,16 @@ describe('trigger bus', () => {
 
   describe("abilities after a basic action's test", () => {
     const ghoul = instanceId('ghoul');
-    /** The ghoul has 3 health; after a successful attack on it, 1 doom goes on it. */
+    /**
+     * The ghoul has 3 health; after a successful attack on it, 1 doom goes on
+     * it, and after a failed one its attacker takes 1 horror.
+     */
     const markedGhoulCard = blankEnemy('marked_ghoul', {
       health: fixed(3),
-      abilities: [afterTest('fight', 'pass', placeDoomOnSelf(1))],
+      abilities: [
+        afterTest('fight', 'pass', placeDoomOnSelf(1)),
+        afterTest('fight', 'fail', takeHorror(1)),
+      ],
     });
     /** Alice in the hall, engaged with the marked ghoul, on her turn. */
     const engagedTable = newGame()
@@ -467,9 +473,9 @@ describe('trigger bus', () => {
       .withTurnOf(alice);
 
     it.each([
-      { name: 'a hit places 1 doom on the enemy', result: 'pass', doom: 1 },
-      { name: 'a miss places none', result: 'fail', doom: undefined },
-    ])('$name', ({ result, doom }) => {
+      { name: 'a hit places 1 doom on the enemy', result: 'pass', doom: 1, horror: 0 },
+      { name: 'a miss deals alice 1 horror', result: 'fail', doom: undefined, horror: 1 },
+    ])('$name', ({ result, doom, horror }) => {
       const { context, state } = engagedTable.start();
 
       const after = stateAfter(
@@ -480,6 +486,7 @@ describe('trigger bus', () => {
       );
 
       expect(after.cards[ghoul]?.tokens.doom).toBe(doom);
+      expect(requireInvestigator(after, alice).sanity.horror).toBe(horror);
     });
 
     it('opens no fight window for an evade', () => {
@@ -497,7 +504,8 @@ describe('trigger bus', () => {
 
     it('fires for the investigated location and its attachment, before the clue', () => {
       const fog = instanceId('fog');
-      /** A study with 1 clue that takes 1 horror from its investigator once investigated. */
+      const study = instanceId('haunted_study');
+      /** A study with 1 clue that deals 1 horror to whoever investigates it successfully. */
       const hauntedStudy = blankLocation('haunted_study', {
         clues: fixed(1),
         abilities: [afterTest('investigate', 'pass', takeHorror(1))],
@@ -506,9 +514,9 @@ describe('trigger bus', () => {
         abilities: [afterTest('investigate', 'pass', discardSelf())],
       });
       const { context, state } = newGame()
-        .withLocation(hall, hauntedStudy, { revealed: true })
-        .withInvestigator(alice, { locationId: hall })
-        .withCard(fog, fogCard, attachedTo(hall))
+        .withLocation(study, hauntedStudy, { revealed: true })
+        .withInvestigator(alice, { locationId: study })
+        .withCard(fog, fogCard, attachedTo(study))
         .withTurnOf(alice)
         .start();
       const asked = stateAfter(context, state, { type: 'Investigate', investigatorId: alice });
