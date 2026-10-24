@@ -1,4 +1,4 @@
-import type { CampaignLog } from './campaign/campaign_log';
+import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
 import type { CardType, Trait } from './cards';
 import type {
   CardCode,
@@ -270,6 +270,8 @@ export interface AdjustInvestigator {
 export interface DefeatInvestigator {
   type: 'DefeatInvestigator';
   investigatorId: InvestigatorId;
+  /** The 1 trauma the card adds, as in "is defeated and suffers 1 physical trauma". */
+  trauma?: TraumaKind;
 }
 
 /**

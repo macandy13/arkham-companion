@@ -21,7 +21,7 @@ import {
   type ScenarioId,
   type ResolutionId,
 } from './ids';
-import type { DefeatCause, EncounterCardDrawn } from './events';
+import type { Defeat, EncounterCardDrawn } from './events';
 import type { GameMap } from './map';
 import type { RngState } from './rng';
 import type { Zone, ZoneKey } from './zone';
@@ -105,13 +105,12 @@ export interface Investigator {
   skills: SkillValues;
   status: InvestigatorStatus;
   /**
-   * What defeated the investigator (`InvestigatorDefeated.cause`), set together
+   * What defeated the investigator (`InvestigatorDefeated`), set together
    * with status `defeated`. Kept after the scenario ends because the
-   * resolution gives trauma for a defeat by damage or horror
-   * (`campaign.proposeResolution`), and damage or horror alone can't tell
-   * which came first or whether a card effect did it.
+   * resolution gives trauma for it (`campaign.proposeResolution`), and damage
+   * or horror alone can't tell which came first or whether a card effect did it.
    */
-  defeatedBy?: DefeatCause;
+  defeat?: Defeat;
 }
 
 /** One value per skill, e.g. an investigator's printed skills. */

@@ -6,9 +6,11 @@ import type {
   ConnectionChanged,
   DeckShuffled,
   DecisionRequested,
+  Defeat,
   EnemyDefeated,
   EnemyDisengaged,
   EnemyEngaged,
+  InvestigatorDefeated,
   Event,
   MapAdded,
   ScenarioEnded,
@@ -30,12 +32,17 @@ import { zoneKey, type Zone, type ZoneKey } from './zone';
 function applyInvestigatorLeft(
   state: GameState,
   investigatorId: Investigator['id'],
-  left: Pick<Investigator, 'status' | 'defeatedBy'>,
+  left: Pick<Investigator, 'status' | 'defeat'>,
 ): GameState {
   const after = applyInvestigator(state, { investigatorId }, (inv) => ({ ...inv, ...left }));
   return state.meta.turn?.investigatorId === investigatorId
     ? endTurn(after, investigatorId)
     : after;
+}
+
+function defeatOf(event: InvestigatorDefeated): Defeat {
+  if (event.cause !== 'cardEffect') return { cause: event.cause };
+  return { cause: 'cardEffect', ...(event.trauma === undefined ? {} : { trauma: event.trauma }) };
 }
 
 function endTurn(state: GameState, investigatorId: Investigator['id']): GameState {
@@ -67,7 +74,7 @@ export function apply(state: GameState, event: Event): GameState {
     case 'InvestigatorDefeated':
       return applyInvestigatorLeft(state, event.investigatorId, {
         status: 'defeated',
-        defeatedBy: event.cause,
+        defeat: defeatOf(event),
       });
     case 'InvestigatorResigned':
       return applyInvestigatorLeft(state, event.investigatorId, { status: 'resigned' });
