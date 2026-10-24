@@ -1,4 +1,4 @@
-import type { KeyboardEvent } from 'react';
+import { useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { InvestigatorView, LocationView, MapEnemyView } from '@arkham/engine';
 import { LOCATION_ART, PORTRAIT_SCAN, portraitArtViewBox } from '../catalog/cardArt';
@@ -11,8 +11,10 @@ import {
   CLUES_CENTRE,
   CONTENT,
   DOOM_CENTRE,
+  NAME_WIDTH,
   pawnOffset,
   SHROUD_CENTRE,
+  shrinkToFit,
   TILE,
   type Point,
 } from './mapLayout';
@@ -206,15 +208,36 @@ export function CardPatterns() {
 }
 
 /**
- * The tile's name and type: the location's name on the name plate, centred like the printed name,
- * and on the type plate "Location", or on an unrevealed tile "Unrevealed", since that side shows
+ * The tile's name and type: the location's name on the name plate, centred like the printed name
+ * and shrunk to fit `NAME_WIDTH` when it is long, so it never reaches the edit button, and on the
+ * type plate "Location", or on an unrevealed tile "Unrevealed", since that side shows
  * no shroud or clues.
  */
 function NameBand({ location }: { location: LocationView }) {
   const { t } = useTranslation();
+  const name = useRef<SVGTextElement>(null);
+  const [scale, setScale] = useState(1);
+  const centre = { x: TILE.width / 2, y: CONTENT.band / 2 };
+  useLayoutEffect(() => {
+    const text = name.current;
+    // jsdom lays out no text, so tests keep the normal size.
+    if (!text?.getComputedTextLength) return;
+    const fit = () => setScale(shrinkToFit(text.getComputedTextLength(), NAME_WIDTH));
+    fit();
+    // The display font may still be loading, and it sets the name's width.
+    void document.fonts?.ready.then(fit);
+  }, [location.name]);
   return (
     <>
-      <text x={TILE.width / 2} y={CONTENT.band / 2}>
+      <text
+        ref={name}
+        {...centre}
+        transform={
+          scale === 1
+            ? undefined
+            : `translate(${centre.x} ${centre.y}) scale(${scale}) translate(${-centre.x} ${-centre.y})`
+        }
+      >
         {location.name}
       </text>
       <text {...TYPE_PLATE_CENTRE}>{t(location.revealed ? 'map.location' : 'map.unrevealed')}</text>

@@ -71,6 +71,20 @@ export const ART_WINDOW = {
 } as const;
 
 /**
+ * How wide a location's name may run on its name plate: centred, clear of the edit button in the
+ * top left corner by a gap on each side, and as far from the right edge.
+ */
+export const NAME_WIDTH = TILE.width - 2 * (2 * CONTENT.pawnRadius + CONTENT.pawnGap);
+
+/**
+ * How much a name `width` units wide at its normal size must shrink to fit `room` units: 1 when it
+ * fits, so short names keep their size and only long ones get smaller.
+ */
+export function shrinkToFit(width: number, room: number): number {
+  return width > room ? room / width : 1;
+}
+
+/**
  * A card attached to a location, drawn small (a fifth of a card's size, rounded to whole units)
  * and turned a little, peeking out past the tile's right edge below the name band.
  */

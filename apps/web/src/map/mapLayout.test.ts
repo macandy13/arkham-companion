@@ -7,6 +7,7 @@ import {
   attachmentOrigin,
   onPawn,
   pawnOffset,
+  shrinkToFit,
   tileAt,
   tileCells,
   tileOrigin,
@@ -192,5 +193,15 @@ describe('onPawn', () => {
     { point: { x: 35, y: 197 }, on: false },
   ])('says ($point.x, $point.y) is on the pawn: $on', ({ point, on }) => {
     expect(onPawn(centre, point)).toBe(on);
+  });
+});
+
+describe('shrinkToFit', () => {
+  it.each([
+    { width: 60, room: 90, scale: 1 },
+    { width: 90, room: 90, scale: 1 },
+    { width: 180, room: 90, scale: 0.5 },
+  ])('shrinks a name $width wide by $scale to fit $room', ({ width, room, scale }) => {
+    expect(shrinkToFit(width, room)).toBe(scale);
   });
 });
