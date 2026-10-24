@@ -34,6 +34,7 @@ import {
   campaignId,
   cardDbWith,
   enemyMatching,
+  instanceId,
   investigatorId,
   mapId,
   PlayTable,
@@ -49,6 +50,7 @@ import {
   theGatheringCards,
   nightOfTheZealot,
   theGatheringResolutions,
+  MIDNIGHT_MASKS_CODES,
   theMidnightMasks,
   theMidnightMasksCardDefs,
 } from '../index';
@@ -1127,6 +1129,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       { cards: cardDbWith(ctx.cards, theMidnightMasksCardDefs), scenario: theMidnightMasks },
       { seed: 24, investigators: zealotSeats, campaign: log },
     );
+    const rivertown = instanceId(`${MIDNIGHT_MASKS_CODES.rivertown}#1`);
     expect(
       masks.investigators.map(({ id, locationId, sanity }) => ({
         id,
@@ -1134,9 +1137,9 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         horror: sanity.horror,
       })),
     ).toEqual([
-      { id: roland, locationId: '01125#1', horror: 1 },
-      { id: daisy, locationId: '01125#1', horror: 0 },
-      { id: wendy, locationId: '01125#1', horror: 0 },
+      { id: roland, locationId: rivertown, horror: 1 },
+      { id: daisy, locationId: rivertown, horror: 0 },
+      { id: wendy, locationId: rivertown, horror: 0 },
     ]);
 
     // The whole event log, setup included, replays to the live state.

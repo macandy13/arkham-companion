@@ -1,7 +1,6 @@
 import {
-  cardStats,
   doomInPlay,
-  isInPlay,
+  enemiesOnTable,
   mapId,
   scenario,
   scenarioId,
@@ -20,6 +19,9 @@ import { MIDNIGHT_MASKS_CODES, MIDNIGHT_MASKS_SETS } from './cards';
 const codes = MIDNIGHT_MASKS_CODES;
 const sets = MIDNIGHT_MASKS_SETS;
 
+/** Acolyte's "after it enters play: place 1 doom on it" triggers during setup too (FAQ). */
+const acolyteDoom = { doom: 1 };
+
 /** Translation key prefix for The Midnight Masks' reference card effects. */
 const reference = 'scenario.theMidnightMasks.reference';
 
@@ -31,16 +33,9 @@ const reference = 'scenario.theMidnightMasks.reference';
 const doomOfTheCult: TokenValue = (ctx, state) => {
   if (scenario.pickReferenceSide(state.meta.difficulty) === 'hardExpert')
     return 0 - doomInPlay(state);
-  const cultistDoom = Object.values(state.cards)
-    .filter((card) => {
-      const stats = cardStats(ctx.cards, card.code);
-      return (
-        stats.typeCode === 'enemy' &&
-        stats.traits.includes(trait('Cultist')) &&
-        isInPlay(state, card)
-      );
-    })
-    .map((card) => card.tokens.doom ?? 0);
+  const cultistDoom = enemiesOnTable(ctx, state, trait('Cultist')).map(
+    (card) => card.tokens.doom ?? 0,
+  );
   // Subtracting from 0 rather than negating keeps "no doom" a plain 0, not -0, in the trace.
   return 0 - Math.max(0, ...cultistDoom);
 };
@@ -48,7 +43,8 @@ const doomOfTheCult: TokenValue = (ctx, state) => {
 /**
  * Arkham's 3×3 grid as the campaign guide lays it out, Downtown and
  * Southside each one of their two versions. The connections are the symbols
- * printed on the location cards; Rivertown is the hub. Without Your House
+ * printed on the location cards' revealed sides (read from the ArkhamDB
+ * pictures; no card data has them); Rivertown is the hub. Without Your House
  * (burned down in The Gathering) the bottom right cell stays empty.
  */
 function arkham(withYourHouse: boolean): AddMapStep {
@@ -101,9 +97,10 @@ function arkham(withYourHouse: boolean): AddMapStep {
  * Your House is in play and the investigators start there (else in
  * Rivertown) and whether the Ghoul Priest, still alive, is shuffled into the
  * encounter deck; a standalone game reads as an empty log, so the house has
- * burned and the priest is dead, as the standalone setup says. The Cult of
+ * burned and the priest is dead, as the campaign guide's standalone setup
+ * says ("your house has burned to the ground", no Ghoul Priest). The Cult of
  * Umôrdhoth is set aside as the Cultist deck, drawn by hand with the act's
- * action. The Masked Hunter is set aside too: it stands for agenda 1's
+ * action; shuffling it waits for that draw to be automated. The Masked Hunter is set aside too: it stands for agenda 1's
  * reverse side, which the players flip into play by hand. Pass the whole
  * definition as `EngineContext.scenario` with The Gathering's cards joined
  * in (Chilling Cold, the Ghoul Priest). The bags are the campaign guide's,
@@ -149,17 +146,26 @@ export const theMidnightMasks: ScenarioDefinition = {
     {
       kind: 'whenPlayers',
       atLeast: 2,
-      then: [{ kind: 'spawn', code: codes.acolyte, at: codes.southsideHistoricalSociety }],
+      then: [
+        {
+          kind: 'spawn',
+          code: codes.acolyte,
+          at: codes.southsideHistoricalSociety,
+          tokens: acolyteDoom,
+        },
+      ],
     },
     {
       kind: 'whenPlayers',
       atLeast: 3,
-      then: [{ kind: 'spawn', code: codes.acolyte, at: codes.downtownFirstBank }],
+      then: [
+        { kind: 'spawn', code: codes.acolyte, at: codes.downtownFirstBank, tokens: acolyteDoom },
+      ],
     },
     {
       kind: 'whenPlayers',
       atLeast: 4,
-      then: [{ kind: 'spawn', code: codes.acolyte, at: codes.graveyard }],
+      then: [{ kind: 'spawn', code: codes.acolyte, at: codes.graveyard, tokens: acolyteDoom }],
     },
     {
       kind: 'whenStory',
