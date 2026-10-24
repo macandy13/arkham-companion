@@ -314,6 +314,7 @@ function startingInvestigator(
     resources: STARTING_RESOURCES,
     doomOnPlayerCards: 0,
     skills: card.skills,
+    ...(card.imageSrc === undefined ? {} : { imageSrc: card.imageSrc }),
     status: 'active',
   };
 }

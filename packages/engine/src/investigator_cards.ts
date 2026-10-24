@@ -1,5 +1,5 @@
 import type { CardDb, CardStats } from './cards';
-import type { InvestigatorCode } from './ids';
+import type { CardImagePath, InvestigatorCode } from './ids';
 import type { SkillValues } from './state';
 
 /**
@@ -14,6 +14,8 @@ export interface InvestigatorCard {
   readonly health: number;
   readonly sanity: number;
   readonly skills: SkillValues;
+  /** The picture of the card's front (ArkhamDB `imagesrc`), when the card data has one. */
+  readonly imageSrc?: CardImagePath;
 }
 
 /** The `CardStats` that put `card` into a `CardDb`. */
@@ -26,6 +28,7 @@ export function investigatorCardStats(card: InvestigatorCard): CardStats {
     health: { fixed: card.health, perInvestigator: 0 },
     sanity: card.sanity,
     skills: card.skills,
+    ...(card.imageSrc === undefined ? {} : { imageSrc: card.imageSrc }),
   };
 }
 
@@ -39,7 +42,14 @@ export function investigatorCard(
 ): InvestigatorCard | undefined {
   const stats = cards.get(code);
   if (stats?.typeCode !== 'investigator') return undefined;
-  const { name, health, sanity, skills } = stats;
+  const { name, health, sanity, skills, imageSrc } = stats;
   if (health === undefined || sanity === undefined || skills === undefined) return undefined;
-  return { code, name, health: health.fixed, sanity, skills };
+  return {
+    code,
+    name,
+    health: health.fixed,
+    sanity,
+    skills,
+    ...(imageSrc === undefined ? {} : { imageSrc }),
+  };
 }

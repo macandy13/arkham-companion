@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { cardDbFrom } from './cards';
-import { cardCode, investigatorCode } from './ids';
+import { cardCode, cardImagePath, investigatorCode } from './ids';
 import {
   investigatorCard,
   investigatorCardStats,
@@ -14,12 +14,26 @@ describe('investigatorCard', () => {
     health: 9,
     sanity: 5,
     skills: { willpower: 3, intellect: 3, combat: 4, agility: 2 },
+    imageSrc: cardImagePath('/bundles/cards/01001.png'),
   };
 
-  it('reads back an investigator put into the card db', () => {
+  it('reads back an investigator put into the card db, picture included', () => {
     const cards = cardDbFrom([investigatorCardStats(roland)]);
 
     expect(investigatorCard(cards, roland.code)).toEqual(roland);
+  });
+
+  it('reads back an investigator without a picture without one', () => {
+    const withoutPicture: InvestigatorCard = {
+      code: investigatorCode('01002'),
+      name: 'Daisy Walker',
+      health: 5,
+      sanity: 9,
+      skills: { willpower: 3, intellect: 5, combat: 2, agility: 2 },
+    };
+    const cards = cardDbFrom([investigatorCardStats(withoutPicture)]);
+
+    expect(investigatorCard(cards, withoutPicture.code)).not.toHaveProperty('imageSrc');
   });
 
   it('returns undefined for a code the card db lacks', () => {

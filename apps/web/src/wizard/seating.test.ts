@@ -35,6 +35,15 @@ describe('chosenInvestigators', () => {
 
     expect(chosen.map((card) => card.code)).toEqual(['a']);
   });
+
+  it("keeps the picture of the card's front, when the catalog has one", () => {
+    const withPicture = { ...makeDef('c', 'Cedar', 7, 7), imageSrc: '/bundles/cards/c.png' };
+
+    const [cedar, alder] = chosenInvestigators([withPicture, ...catalog], ['c', 'a']);
+
+    expect(cedar?.imageSrc).toBe('/bundles/cards/c.png');
+    expect(alder).not.toHaveProperty('imageSrc');
+  });
 });
 
 describe('seatsFor', () => {
