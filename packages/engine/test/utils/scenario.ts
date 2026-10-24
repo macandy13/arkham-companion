@@ -15,7 +15,7 @@ import {
   type Rejection,
   type ScenarioContext,
   type ScenarioDefinition,
-  type SetupOptions,
+  type StandaloneSetupOptions,
   type Zone,
 } from '../../src/index';
 import { investigatorSeats } from './investigators';
@@ -37,7 +37,9 @@ export function makeDefinition(overrides: Partial<ScenarioDefinition> = {}): Sce
 }
 
 /** Setup options seating the first standard investigator, on standard difficulty with seed 1. */
-export function makeSetupOptions(overrides: Partial<SetupOptions> = {}): SetupOptions {
+export function makeSetupOptions(
+  overrides: Partial<StandaloneSetupOptions> = {},
+): StandaloneSetupOptions {
   return { difficulty: 'standard', seed: 1, investigators: investigatorSeats(1), ...overrides };
 }
 

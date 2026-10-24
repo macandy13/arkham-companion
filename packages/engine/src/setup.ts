@@ -17,6 +17,7 @@ import {
   type InvestigatorCode,
   type InvestigatorId,
   type MapId,
+  type ScenarioId,
 } from './ids';
 import { investigatorCard } from './investigator_cards';
 import { layoutOf, type Edge, type GridCell, type MapSpec } from './map';
@@ -131,17 +132,34 @@ export interface InvestigatorSeat {
   readonly code: InvestigatorCode;
 }
 
-/** What the players choose when starting a scenario; input to `compileSetup`. */
-export interface SetupOptions {
-  difficulty: Difficulty;
+/** The choices every setup takes, standalone or in a campaign. */
+interface SeatedSetupOptions {
   seed: number;
   /**
    * In seat order; the first one is the lead investigator. `compileSetup`
    * takes their printed stats from the `EngineContext`'s `CardDb`.
    */
   investigators: readonly InvestigatorSeat[];
-  campaign?: CampaignLog;
 }
+
+/** A standalone scenario: the players pick the difficulty, and the bag is the scenario's for it. */
+export interface StandaloneSetupOptions extends SeatedSetupOptions {
+  difficulty: Difficulty;
+  campaign?: undefined;
+}
+
+/**
+ * A scenario of a campaign: the difficulty, the chaos bag and each
+ * investigator's trauma come from the log, and the seats must be its team.
+ */
+export interface CampaignSetupOptions extends SeatedSetupOptions {
+  campaign: CampaignLog;
+  // Absent so a caller cannot pick a difficulty the log disagrees with.
+  difficulty?: undefined;
+}
+
+/** What the players choose when starting a scenario; input to `compileSetup`. */
+export type SetupOptions = StandaloneSetupOptions | CampaignSetupOptions;
 
 /** A starting card with the ID setup gave it, so later steps can refer to it. */
 type DraftCard = StartingCard & { id: InstanceId };
@@ -189,21 +207,68 @@ export function compileSetup(ctx: ScenarioContext, options: SetupOptions): Start
       ...deckCards(def.actDeck, { kind: 'actDeck' }),
     ],
   };
+  const log = options.campaign;
+  if (log) checkCampaignSeats(log, def.id, options.investigators);
+  const difficulty = log ? log.difficulty : options.difficulty;
   const draft = def.setup.reduce((state, step) => applyStep(state, step, env), initial);
   const location = draft.investigatorLocation;
   return {
     type: 'StartScenario',
     scenarioId: def.id,
-    difficulty: options.difficulty,
+    difficulty,
     seed: options.seed,
     investigators: options.investigators.map((seat, index) => ({
-      ...startingInvestigator(ctx, seat, index),
+      ...withTrauma(startingInvestigator(ctx, seat, index), log),
       ...(location === undefined ? {} : { locationId: location }),
     })),
     maps: draft.maps,
     cards: draft.cards.map((card) => withRevealClues(card, env)),
-    chaosBag: [...def.chaosBag[options.difficulty]],
-    ...(options.campaign ? { campaign: options.campaign } : {}),
+    chaosBag: [...(log ? log.chaosBag : def.chaosBag[difficulty])],
+    ...(log ? { campaign: log } : {}),
+  };
+}
+
+/**
+ * Rejects a campaign setup for another scenario than the log's next one, or
+ * whose seats are not exactly the log's team, or that seats a killed or
+ * insane investigator, who must be replaced first (`ReplaceInvestigator`).
+ * Every team member plays: a player who sits out leaves the campaign
+ * between scenarios (Rules Reference, "Joining or Leaving a Campaign").
+ */
+function checkCampaignSeats(
+  log: CampaignLog,
+  scenarioId: ScenarioId,
+  seats: readonly InvestigatorSeat[],
+): void {
+  const next = log.scenarioIds[log.position];
+  if (scenarioId !== next)
+    throw new CommandRejected({ code: 'notNextCampaignScenario', scenarioId, next });
+  for (const { code } of seats) {
+    const member = log.investigators.find((investigator) => investigator.code === code);
+    if (!member) throw new CommandRejected({ code: 'notOnCampaignTeam', investigatorCode: code });
+    if (member.fate !== 'alive')
+      throw new CommandRejected({
+        code: 'investigatorNeedsReplacement',
+        investigatorCode: code,
+        fate: member.fate,
+      });
+  }
+  const unseated = log.investigators.find(({ code }) => !seats.some((seat) => seat.code === code));
+  if (unseated)
+    throw new CommandRejected({ code: 'campaignMemberNotSeated', investigatorCode: unseated.code });
+}
+
+/** The investigator starting with damage for their physical trauma and horror for their mental trauma. */
+function withTrauma(
+  investigator: StartingInvestigator,
+  log: CampaignLog | undefined,
+): StartingInvestigator {
+  const member = log?.investigators.find(({ code }) => code === investigator.code);
+  if (!member) return investigator;
+  return {
+    ...investigator,
+    health: { ...investigator.health, damage: member.physicalTrauma },
+    sanity: { ...investigator.sanity, horror: member.mentalTrauma },
   };
 }
 

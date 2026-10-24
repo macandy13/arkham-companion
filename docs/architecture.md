@@ -151,7 +151,7 @@ Generic rules are small modules per subject, called by the handlers: board ([`bo
 
 ### Scenarios
 
-A scenario is a [`ScenarioDefinition`](../packages/engine/src/scenario.ts): agenda and act decks, chaos bags, reference card, setup steps and token modifiers. [`compileSetup`](../packages/engine/src/setup.ts) turns it plus the players' choices into one `StartScenario` command, reading investigator stats from the cards. The only scenario so far is the hand-entered test scenario [`the_gathering/`](../packages/scenarios/src/the_gathering/) (real codes and names, no card text). The app lists playable scenarios in its [scenario catalog](../apps/web/src/scenarios/scenarioCatalog.ts).
+A scenario is a [`ScenarioDefinition`](../packages/engine/src/scenario.ts): agenda and act decks, chaos bags, reference card, setup steps and token modifiers. [`compileSetup`](../packages/engine/src/setup.ts) turns it plus the players' choices into one `StartScenario` command, reading investigator stats from the cards. Its `SetupOptions` are standalone (the players pick the difficulty) or a campaign's: then the log gives the difficulty and the chaos bag, each investigator starts with damage and horror for their trauma, and setup is refused unless it is the log's next scenario and the seats are exactly its living team. The only scenario so far is the hand-entered test scenario [`the_gathering/`](../packages/scenarios/src/the_gathering/) (real codes and names, no card text). The app lists playable scenarios in its [scenario catalog](../apps/web/src/scenarios/scenarioCatalog.ts).
 
 **Extension points**
 
