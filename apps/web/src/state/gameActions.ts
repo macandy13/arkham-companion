@@ -30,7 +30,9 @@ export interface DecisionAmounts {
  * What the play screen can do to the open game, in the players' words. It mirrors `PlayTable`'s
  * verbs, but with the screen's defaults:
  * - An action is taken by the investigator whose turn it is, since the rules allow actions only
- *   during one's own turn; without a turn it is refused with `noTurnInProgress`.
+ *   during one's own turn; without a turn it is refused with `noTurnInProgress`. The action verbs
+ *   (move, investigate, fight, evade, engage) count off one of their actions, which the engine
+ *   leaves to the players; with none left they are refused, and `adjustActions` grants more.
  * - The decision dialog shows the first open decision, so an answer picks an option of that one;
  *   without one it is refused with `noPendingDecision`.
  * - A skill test is never assumed passed (the chaos bag is on the table): an action leaves it
@@ -129,6 +131,12 @@ export function gameActions(
 ): GameActions {
   const onTurn = (action: (table: PlayTable, investigator: InvestigatorId) => void) =>
     play((table) => action(table, turnInvestigator(table.state)));
+  // The engine leaves counting actions to the players, so the screen counts off the one it takes.
+  const asAction = (action: (table: PlayTable, investigator: InvestigatorId) => void) =>
+    onTurn((table, investigator) => {
+      table.spendAction(investigator);
+      action(table, investigator);
+    });
   return {
     nextPhase: () => play((table) => void table.nextPhase()),
     startTurn: (investigator) => play((table) => table.startTurn(investigator)),
@@ -136,14 +144,14 @@ export function gameActions(
     resign: () => onTurn((table, investigator) => table.resign(investigator)),
     adjustActions: (delta) =>
       onTurn((table, investigator) => table.adjustActions(investigator, delta)),
-    moveTo: (location) => onTurn((table, investigator) => table.moveTo(investigator, location)),
+    moveTo: (location) => asAction((table, investigator) => table.moveTo(investigator, location)),
     investigate: () =>
-      onTurn((table, investigator) => table.investigate(investigator, { result: 'open' })),
+      asAction((table, investigator) => table.investigate(investigator, { result: 'open' })),
     fight: (enemy) =>
-      onTurn((table, investigator) => table.fight(investigator, enemy, { result: 'open' })),
+      asAction((table, investigator) => table.fight(investigator, enemy, { result: 'open' })),
     evade: (enemy) =>
-      onTurn((table, investigator) => table.evade(investigator, enemy, { result: 'open' })),
-    engage: (enemy) => onTurn((table, investigator) => table.engage(investigator, enemy)),
+      asAction((table, investigator) => table.evade(investigator, enemy, { result: 'open' })),
+    engage: (enemy) => asAction((table, investigator) => table.engage(investigator, enemy)),
     moveEnemy: (enemy, location) =>
       play((table) => table.moveEnemy(enemy, location, { forced: true })),
     answer: (option, counts = {}) =>
