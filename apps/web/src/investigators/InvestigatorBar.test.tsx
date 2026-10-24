@@ -5,6 +5,7 @@ import {
   blankEnemy,
   blankLocation,
   blankTreachery,
+  cardImagePath,
   engagedWith,
   fixed,
   instanceId,
@@ -82,6 +83,67 @@ describe('InvestigatorBar', () => {
     ]);
     expect(countersOf('brook').map(([label]) => label)).not.toContain('Doom');
     expect(within(panel('alder')).getByTitle('Resources').textContent).toBe('Res.');
+  });
+
+  it('shows the four skills in the printed order, each named for screen readers', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withInvestigator(alder, {
+          locationId: study,
+          skills: { willpower: 4, intellect: 3, combat: 1, agility: 2 },
+        }),
+    );
+
+    render(
+      <InvestigatorBar
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+      />,
+    );
+
+    const skills = within(within(panel('alder')).getByRole('list', { name: 'Skills' }))
+      .getAllByRole('listitem')
+      .map((skill) => [skill.getAttribute('aria-label'), skill.textContent]);
+    expect(skills).toEqual([
+      ['Willpower 4', '4'],
+      ['Intellect 3', '3'],
+      ['Combat 1', '1'],
+      ['Agility 2', '2'],
+    ]);
+  });
+
+  it('fills the card with the picture of its front once it has loaded', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withInvestigator(alder, {
+          locationId: study,
+          imageSrc: cardImagePath('/bundles/cards/alder.png'),
+        }),
+    );
+    render(
+      <InvestigatorBar
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+      />,
+    );
+    const card = within(panel('alder')).getByRole('figure');
+    // The picture is decorative (`alt=""`), so it has no role to find it by.
+    const picture = card.querySelector('img');
+    if (!picture) throw new Error("alder's card has no picture");
+    const beforeLoading = card.hasAttribute('data-picture');
+
+    // jsdom loads no images, so the test fires the load itself.
+    fireEvent.load(picture);
+
+    expect(picture.getAttribute('src')).toBe('https://arkhamdb.com/bundles/cards/alder.png');
+    expect(beforeLoading).toBe(false);
+    expect(card.getAttribute('data-picture')).toBe('shown');
   });
 
   describe('the line on their round', () => {

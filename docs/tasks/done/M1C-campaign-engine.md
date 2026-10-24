@@ -85,7 +85,7 @@ Slices, each its own PR:
 4. Leaving and joining a campaign stays last; the campaign UI (M5.2) needs it only for replacing killed or insane investigators, which already works
 
 - [x] Declarative resolution steps on the scenario definition (`record`, `addChaosToken`, `removeChaosToken`, `awardXp` (victory display + fixed bonus), `addTrauma`, `markKilled`/`markInsane`, plus `byHand` for the players' cards). Done in M1C.4a: `ScenarioDefinition.resolutions`, steps target `each`, `lead` or `notResigned`
-- [ ] Conditional steps that read game state (e.g. "if the Ghoul Priest is in the victory display"): M1C.4c
+- [x] Conditional steps that read game state (e.g. "if the Ghoul Priest is in the victory display"). Done in M1C.4c: `when` with a `GameCondition` (`cardIn` places, `currentAgenda`, `anyOf`) and `recordNames` for "record the name of each unique Cultist …"; The Midnight Masks' resolutions use them in M5.3
 - [x] `ScenarioEnded { resolution }` → a pure function computes the proposed campaign commands (`campaign.proposeResolution`, M1C.4a)
 - [x] Players confirm or edit them; applying them writes the campaign log in one step (M1C.4b2: `campaign.applyResolution`)
 - [ ] Applying them produces notices (M1C.2)

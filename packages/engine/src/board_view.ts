@@ -38,6 +38,7 @@ import type {
   Phase,
   PhaseStepId,
   SkillTest,
+  SkillValues,
 } from './state';
 import type { Zone } from './zone';
 
@@ -78,6 +79,10 @@ export interface InvestigatorView {
   horror: number;
   /** Doom on their player cards (`Investigator.doomOnPlayerCards`). */
   doom?: number;
+  /** The printed willpower, intellect, combat and agility, the base of their skill tests. */
+  skills: SkillValues;
+  /** The picture of their investigator card (`Investigator.imageSrc`), when the card data has one. */
+  image?: CardImagePath;
   /** Actions left this round (`Investigator.actionsRemaining`). */
   actions: number;
   /** They have taken their turn this round (`GameMeta.turnsTaken`). */
@@ -471,6 +476,8 @@ function investigatorView(
     sanity: investigator.sanity.max,
     horror: investigator.sanity.horror,
     ...(investigator.doomOnPlayerCards > 0 ? { doom: investigator.doomOnPlayerCards } : {}),
+    skills: investigator.skills,
+    ...(investigator.imageSrc === undefined ? {} : { image: investigator.imageSrc }),
     actions: investigator.actionsRemaining,
     ...(state.meta.turnsTaken.includes(investigator.id) ? { turnTaken: true as const } : {}),
     ...listIfAny(

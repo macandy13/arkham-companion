@@ -1,6 +1,14 @@
 import { useId, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BoardView, EnemyView, InvestigatorView } from '@arkham/engine';
+import {
+  SKILL_NAMES,
+  type BoardView,
+  type CardImagePath,
+  type EnemyView,
+  type InvestigatorView,
+  type SkillValues,
+} from '@arkham/engine';
+import { useCardPicture } from '../catalog/cardImages';
 import type { GameActions, SteppedStat } from '../state/gameActions';
 import { ThreatArea } from './ThreatArea';
 import { TurnControls } from './TurnControls';
@@ -50,7 +58,8 @@ export function InvestigatorBar({
 /**
  * One investigator, laid out like the prototype's panel: their threat area along the top edge of
  * their card, the card, and beside it their name, a line saying where they are and how their
- * round goes and their turn controls, then their counters in a row, each name after its icon. Health and sanity show what is left of the printed value,
+ * round goes, their skills and their turn controls, then their counters in a row, each name after
+ * its icon. Health and sanity show what is left of the printed value,
  * like the dials, while their steppers place and heal damage and horror, like the tokens on the
  * card. Clues show without steppers: they are found by investigating and spent on the act.
  */
@@ -86,10 +95,10 @@ function InvestigatorPanel({
       data-turn={onTurn || undefined}
     >
       <ThreatArea treacheries={investigator.threatArea ?? []} enemies={engaged} />
-      {/* Only the card's frame until its picture fills it (M3.10). */}
-      <figure data-card="investigator" />
+      <InvestigatorCardFace image={investigator.image} />
       <h3 id={nameId}>{investigator.name}</h3>
       <p>{statusLine(investigator, onTurn, t)}</p>
+      <Skills skills={investigator.skills} />
       <TurnControls
         investigator={investigator}
         onTurn={onTurn}
@@ -149,6 +158,46 @@ function InvestigatorPanel({
         )}
       </dl>
     </section>
+  );
+}
+
+/**
+ * The investigator card, like ArkhamDB shows it: the picture of its front fills the frame once it
+ * has loaded (`data-picture`); until then, and for good when it fails, the frame shows the hatched
+ * art area.
+ */
+function InvestigatorCardFace({ image }: { image: CardImagePath | undefined }) {
+  const picture = useCardPicture(image);
+  return (
+    <figure data-card="investigator" data-picture={picture?.shown ? 'shown' : undefined}>
+      {picture && (
+        <img src={picture.url} alt="" onLoad={picture.onLoad} onError={picture.onError} />
+      )}
+    </figure>
+  );
+}
+
+/**
+ * The four skills in the order the card prints them, each its value under its icon. The icon
+ * alone does not say which skill it is, so each one is named for screen readers.
+ */
+function Skills({ skills }: { skills: SkillValues }) {
+  const { t } = useTranslation();
+  return (
+    <ul aria-label={t('investigators.skills')}>
+      {SKILL_NAMES.map((skill) => (
+        <li
+          key={skill}
+          data-skill={skill}
+          aria-label={t('investigators.skillValue', {
+            skill: t(`skill.${skill}`),
+            value: skills[skill],
+          })}
+        >
+          <data value={skills[skill]}>{skills[skill]}</data>
+        </li>
+      ))}
+    </ul>
   );
 }
 

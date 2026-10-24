@@ -10,6 +10,7 @@ import {
   scenarioId,
   scenario,
   instanceId,
+  cardImagePath,
   investigatorCode,
   investigatorCardStats,
   investigatorId,
@@ -124,7 +125,7 @@ describe('compileSetup', () => {
     });
   });
 
-  it('seats investigators in the given order with the printed stats of their card', () => {
+  it('seats investigators in the given order with the printed stats and picture of their card', () => {
     const roland = {
       code: investigatorCode('01001'),
       name: 'Roland Banks',
@@ -138,6 +139,7 @@ describe('compileSetup', () => {
       health: 5,
       sanity: 9,
       skills: { willpower: 3, intellect: 5, combat: 2, agility: 2 },
+      imageSrc: cardImagePath('/bundles/cards/01002.png'),
     };
     const ctx = {
       cards: cardDbFrom([
@@ -168,6 +170,7 @@ describe('compileSetup', () => {
         resources: 5,
         doomOnPlayerCards: 0,
         skills: daisy.skills,
+        imageSrc: '/bundles/cards/01002.png',
         status: 'active',
       },
       expect.objectContaining({ id: 'roland', name: 'Roland Banks', seat: 1 }),
