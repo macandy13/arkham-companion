@@ -2,6 +2,63 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.8](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.7...arkham-companion-v0.1.8) (2026-10-24)
+
+
+### Features
+
+* **engine:** location versions, player-count and shuffle-in setup steps (M5.3b) ([fcc2849](https://github.com/macandy13/arkham-companion/commit/fcc2849286b25d141bd7beb1e457c227754ecbce))
+* **engine:** location versions, player-count and shuffle-in setup steps (M5.3b) ([dc05434](https://github.com/macandy13/arkham-companion/commit/dc05434642be048af832889880da13623dc7b6a9))
+* **engine:** move each unengaged Ghoul towards the Parlor (M4.5 step 6b1) ([6386852](https://github.com/macandy13/arkham-companion/commit/638685255e80a8fee24771dfc717ba62387f3a7e))
+* **engine:** move each unengaged Ghoul towards the Parlor (M4.5 step 6b1) ([7929222](https://github.com/macandy13/arkham-companion/commit/7929222e0a611598d52241fae7146acc8b1c4648))
+* **engine:** place doom on the nearest Cultist enemy (M4.5 step 6a1) ([69875fe](https://github.com/macandy13/arkham-companion/commit/69875fea3fe1e82afa9c3f4b5165716c6f1d6f87))
+* **engine:** place doom on the nearest Cultist enemy (M4.5 step 6a1) ([f1b4ac3](https://github.com/macandy13/arkham-companion/commit/f1b4ac31b12df1e36413440514e29bc6a1cb67e1))
+* **engine:** resolution steps that read the ended game (M1C.4c) ([f02c222](https://github.com/macandy13/arkham-companion/commit/f02c2221f4294fd13616bd5e7c9552faf6a34273))
+* **engine:** resolution steps that read the ended game (M1C.4c) ([5c47f35](https://github.com/macandy13/arkham-companion/commit/5c47f35495bb0b8dfb00a0f595ee6fc3666f4b62))
+* **engine:** search for a Cultist when none is in play (M4.5 step 6a2) ([0ce080d](https://github.com/macandy13/arkham-companion/commit/0ce080d6916752d119b44eac13bc44b0439ec774))
+* **engine:** search for a Cultist when none is in play (M4.5 step 6a2) ([5a38c8d](https://github.com/macandy13/arkham-companion/commit/5a38c8de32f5d68a0e319075599fe82727ec4ed5))
+* **engine:** setup steps that read the campaign log's story (M1C.5b) ([7f8852e](https://github.com/macandy13/arkham-companion/commit/7f8852e3c8a72d1e3443459d43d2500130b08860))
+* **scenarios:** The Midnight Masks' cards (M5.3a) ([123aaf0](https://github.com/macandy13/arkham-companion/commit/123aaf06375d6edfbe8adfc01c1061643879d6c9))
+* **scenarios:** The Midnight Masks' cards (M5.3a) ([5dc300f](https://github.com/macandy13/arkham-companion/commit/5dc300f5cea401f6229b00a069034fcb39bc8f6f))
+* **scenarios:** The Midnight Masks' setup (M5.3b) ([32ef511](https://github.com/macandy13/arkham-companion/commit/32ef511a076885b152584b3a509b2647dd23cc92))
+* **scenarios:** The Midnight Masks' setup (M5.3b) ([70db715](https://github.com/macandy13/arkham-companion/commit/70db715915771ba931ec1fdc9fc77f9fce4b6a19))
+* **web:** decision dialog for open decisions (M3.7a) ([3e2a004](https://github.com/macandy13/arkham-companion/commit/3e2a0048123fa60c27900a4a0612e101408de15a))
+* **web:** decision dialog for open decisions (M3.7a) ([7b1e61f](https://github.com/macandy13/arkham-companion/commit/7b1e61f8f1cb0b1c06ce46b744d6b90cac04692f))
+* **web:** draw the investigator card like the location cards (M3.5f) ([b0537a2](https://github.com/macandy13/arkham-companion/commit/b0537a2771983c08e8ddddf74babfab3942a524a))
+* **web:** draw the investigator card like the location cards (M3.5f) ([92f1944](https://github.com/macandy13/arkham-companion/commit/92f19449ea88b1b4f055bb1cfe5a96a611ebffd9))
+* **web:** investigator card picture and skills on the panel (M3.5d) ([36e34d5](https://github.com/macandy13/arkham-companion/commit/36e34d51323f2e744e6dfefd754e3cd531bcfbe4))
+* **web:** pick or combine skills in the skill test, draw only, × to close ([7e029c7](https://github.com/macandy13/arkham-companion/commit/7e029c7438946b1d86b7caee0afdca37bef7d62d))
+* **web:** skill test from the investigator card, drawn like the location cards (M3.5e, M3.5f) ([c62144a](https://github.com/macandy13/arkham-companion/commit/c62144a85cee1283886e77c87ee689dd3f698475))
+* **web:** tap a skill to run a skill test against it (M3.5e) ([9c90548](https://github.com/macandy13/arkham-companion/commit/9c905484c52567283f68314fe3e61de002137cd6))
+
+
+### Bug fixes
+
+* **engine:** an enemy moving towards a location out of play stays ([62620c5](https://github.com/macandy13/arkham-companion/commit/62620c503722e73d8e773ce9491fa0195d47c9fa))
+* **engine:** an unreachable enemy can still be the nearest ([6956c69](https://github.com/macandy13/arkham-companion/commit/6956c69d382d00e6416aa60ef1dd0116deacd58b))
+* **engine:** shuffle the encounter deck whatever the search found ([418f0e8](https://github.com/macandy13/arkham-companion/commit/418f0e8d6fccf7002a566533c7e7ef6257e8162c))
+* **scenarios:** Acolytes spawn with doom at setup; readable Masks setup tests ([c50cc5f](https://github.com/macandy13/arkham-companion/commit/c50cc5f18d0407367db01ff7f6b07ece6b6005ae))
+* **web:** a bless, curse, frost or blood reveals another token in the skill test ([0986757](https://github.com/macandy13/arkham-companion/commit/098675745c1151cf82ce1b6ebe88b3470c57a8be))
+* **web:** adjust from the decision dialog, review fixes ([6ae9b01](https://github.com/macandy13/arkham-companion/commit/6ae9b013478b649dd6c36d8b4e734e8de81e433a))
+* **web:** review nits on the investigator card face ([53953e7](https://github.com/macandy13/arkham-companion/commit/53953e74b1a2635f64f1bc7a713d5d6d9b4150c7))
+* **web:** skill buttons small, in one row ([444d24d](https://github.com/macandy13/arkham-companion/commit/444d24db7ad8ba946cfd5fe25bdcdd3551032709))
+* **web:** skill icons in the Arkham style: head, book, fist and foot ([de36d14](https://github.com/macandy13/arkham-companion/commit/de36d14c57c00a7f6adb189ea4019b056494144c))
+
+
+### Refactoring
+
+* **engine:** game condition review fixes ([a6a8608](https://github.com/macandy13/arkham-companion/commit/a6a86082bade19c4f95d40e3a9e3d415f84f0208))
+* **engine:** story condition review fixes ([e534811](https://github.com/macandy13/arkham-companion/commit/e5348119501ab0d3b797cd423d8898947e599170))
+* **scenarios:** card builder review fixes ([d09e440](https://github.com/macandy13/arkham-companion/commit/d09e44027605c83e2e8add4795a9293f1dc1b666))
+* **scenarios:** share the hand-entered card builders ([d9b1a8a](https://github.com/macandy13/arkham-companion/commit/d9b1a8a5d96673e7fd29b77cf05ad3c6bd4527fa))
+* **scenarios:** share the hand-entered card builders ([3b4abe8](https://github.com/macandy13/arkham-companion/commit/3b4abe85052f79019cd95b61bb9d9f8a4ca7cc8f))
+
+
+### Documentation
+
+* move the task plan to GitHub issues ([b4ae392](https://github.com/macandy13/arkham-companion/commit/b4ae392c46c51a45618dfaea9c41c128b404dd26))
+* move the task plan to GitHub issues ([c0f7758](https://github.com/macandy13/arkham-companion/commit/c0f7758e53daac6f87176c3c05c48656926985af))
+
 ## [0.1.7](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.6...arkham-companion-v0.1.7) (2026-10-24)
 
 
