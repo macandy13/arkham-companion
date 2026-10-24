@@ -31,6 +31,7 @@ import { describe, expect, it } from 'vitest';
 import {
   byName,
   campaign,
+  campaignId,
   cardDbWith,
   enemyMatching,
   investigatorId,
@@ -45,6 +46,7 @@ import {
   WHATS_GOING_ON_DECISION,
   theGathering,
   theGatheringCards,
+  nightOfTheZealot,
   theGatheringResolutions,
 } from '../index';
 import { daisyWalker, rolandBanks, wendyAdams, zealotInvestigatorCards } from '../investigators';
@@ -1056,7 +1058,8 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // What resolution 1 writes to the campaign log: the house burned down, Roland as the lead earns
     // Lita and suffers 1 mental trauma, and everyone earns the 4 victory points plus 2, Wendy too
     // although she resigned. Nobody was defeated, so there is no other trauma.
-    expect(campaign.proposeResolution(ctx, table.state, theGatheringResolutions)).toEqual([
+    const proposal = campaign.proposeResolution(ctx, table.state, theGatheringResolutions);
+    expect(proposal).toEqual([
       {
         kind: 'command',
         command: {
@@ -1075,6 +1078,32 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       { kind: 'command', command: { type: 'AwardXp', code: wendyAdams.code, amount: 6 } },
       { kind: 'byHand', textKey: 'scenario.theGathering.resolution.upgradeDecks' },
     ]);
+
+    // The players confirm it as proposed, and the campaign log moves on to The Midnight Masks.
+    const campaignCtx = { cards: ctx.cards };
+    const zealotCampaign = campaign.executeCommand(
+      campaignCtx,
+      campaign.createEmptyLog(),
+      campaign.compileStart(nightOfTheZealot, {
+        campaignId: campaignId('zealot_campaign'),
+        difficulty: 'standard',
+        investigators: [rolandBanks.code, daisyWalker.code, wendyAdams.code],
+      }),
+    ).log;
+    const confirmed = campaign.proposedCommands(proposal ?? []);
+
+    const { log } = campaign.applyResolution(campaignCtx, zealotCampaign, table.state, confirmed);
+
+    expect(log.story).toEqual({ houseStillStanding: { kind: 'flag', value: false } });
+    expect(log.investigators).toMatchObject([
+      { code: rolandBanks.code, mentalTrauma: 1, xpEarned: 6 },
+      { code: daisyWalker.code, mentalTrauma: 0, xpEarned: 6 },
+      { code: wendyAdams.code, mentalTrauma: 0, xpEarned: 6 },
+    ]);
+    expect(log.playedScenarios).toEqual([
+      { scenarioId: 'the-gathering', outcome: { kind: 'resolution', id: 'R1' } },
+    ]);
+    expect(campaign.findCurrentScenarioId(log)).toBe('the-midnight-masks');
 
     // The whole event log, setup included, replays to the live state.
     expect(replay(table.events)).toEqual(table.state);

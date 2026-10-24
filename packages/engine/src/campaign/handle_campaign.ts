@@ -1,6 +1,7 @@
 import { duplicates } from '@arkham/util';
 import type { CardDb } from '../cards';
 import type {
+  AdvanceScenario,
   CampaignCommand,
   RecordStory,
   RemoveChaosToken,
@@ -8,7 +9,7 @@ import type {
 } from './campaign_commands';
 import type { CampaignEvent } from './campaign_events';
 import { MAX_TEAM_SIZE, isValidStoryValue } from './campaign_invariants';
-import { isStarted, type CampaignLog } from './campaign_log';
+import { findCurrentScenarioId, isStarted, type CampaignLog } from './campaign_log';
 import { replayEvents } from './campaign_reducer';
 import { CampaignCommandRejected } from './campaign_rejection';
 import {
@@ -64,7 +65,7 @@ export function handleCommand(
     case 'ReplaceInvestigator':
       return handleReplaceInvestigator(ctx, log, command);
     case 'AdvanceScenario':
-      return handleAdvanceScenario(log);
+      return handleAdvanceScenario(log, command);
     case 'AdjustCampaign':
       return handleAdjustCampaign(log, command);
   }
@@ -142,8 +143,11 @@ function handleRemoveChaosToken(log: CampaignLog, command: RemoveChaosToken): Ca
   return [{ type: 'ChaosTokenRemoved', token: command.token }];
 }
 
-function handleAdvanceScenario(log: CampaignLog): CampaignEvent[] {
-  if (log.position >= log.scenarioIds.length)
-    throw new CampaignCommandRejected({ code: 'campaignComplete' });
-  return [{ type: 'ScenarioPositionChanged', position: log.position + 1 }];
+function handleAdvanceScenario(log: CampaignLog, command: AdvanceScenario): CampaignEvent[] {
+  const scenarioId = findCurrentScenarioId(log);
+  if (scenarioId === undefined) throw new CampaignCommandRejected({ code: 'campaignComplete' });
+  return [
+    { type: 'ScenarioPlayed', scenarioId, outcome: command.outcome },
+    { type: 'ScenarioPositionChanged', position: log.position + 1 },
+  ];
 }

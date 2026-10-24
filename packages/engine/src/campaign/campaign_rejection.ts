@@ -1,4 +1,4 @@
-import type { InvestigatorCode } from '../ids';
+import type { InvestigatorCode, ScenarioId } from '../ids';
 import type { ChaosToken } from '../state';
 import type { InvestigatorFate, StoryKind } from './campaign_log';
 
@@ -53,6 +53,10 @@ export type CampaignRejection =
   | { code: 'chaosTokenNotInBag'; token: ChaosToken }
   /** `AdvanceScenario` after the last scenario. */
   | { code: 'campaignComplete' }
+  /** `applyResolution` for a game that is still running. */
+  | { code: 'scenarioNotEnded' }
+  /** `applyResolution` for a game of another scenario than the campaign's current one. */
+  | { code: 'notCurrentScenario'; scenarioId: ScenarioId; current: ScenarioId | undefined }
   /** `AdjustCampaign` delta that is zero or not an integer. */
   | { code: 'invalidDelta'; delta: number }
   /** `AdjustCampaign` `fate` to the fate the investigator already has. */
@@ -115,6 +119,10 @@ function describeCampaignRejection(r: CampaignRejection): string {
       return `no ${r.token} token in the chaos bag`;
     case 'campaignComplete':
       return 'the campaign has no further scenario';
+    case 'scenarioNotEnded':
+      return 'the scenario has not ended yet';
+    case 'notCurrentScenario':
+      return `scenario ${r.scenarioId} is not the campaign's current scenario (${r.current ?? 'none'})`;
     case 'invalidDelta':
       return `delta must be a non-zero integer, got ${r.delta}`;
     case 'fateUnchanged':

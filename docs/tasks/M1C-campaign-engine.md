@@ -61,14 +61,15 @@ Slices, each its own PR:
 - [x] Declarative resolution steps on the scenario definition (`record`, `addChaosToken`, `removeChaosToken`, `awardXp` (victory display + fixed bonus), `addTrauma`, `markKilled`/`markInsane`, plus `byHand` for the players' cards). Done in M1C.4a: `ScenarioDefinition.resolutions`, steps target `each`, `lead` or `notResigned`
 - [ ] Conditional steps that read game state (e.g. "if the Ghoul Priest is in the victory display"): M1C.4c
 - [x] `ScenarioEnded { resolution }` → a pure function computes the proposed campaign commands (`campaign.proposeResolution`, M1C.4a)
-- [ ] Players confirm or edit them; applying them writes the campaign log (M1C.4b) and produces notices (M1C.2)
+- [x] Players confirm or edit them; applying them writes the campaign log in one step (M1C.4b2: `campaign.applyResolution`)
+- [ ] Applying them produces notices (M1C.2)
 - [x] Defeat trauma: an investigator defeated by damage gets 1 physical trauma, by horror 1 mental trauma; resigning gives none (M1C.4a: the reducer keeps `Investigator.defeat`)
 - [ ] A defeat that reaches health and sanity at once: the players pick the trauma (Rules Reference, "Trauma"); today the proposal says physical (`defeatCause` prefers damage) and the players edit it (M1C.4b, with the confirmation step)
 - [x] A defeat by a card effect (`cause: 'cardEffect'`, M1.17) gives only the trauma the card names, e.g. The Gathering's agenda 3 at act 3 ("is defeated and suffers 1 physical trauma"). Done in M1C.4b1: `DefeatInvestigator.trauma`, kept as `Investigator.defeat`; agenda 3 uses `defeatEachInvestigator({ trauma: 'physical' })`
 - [x] "No resolution was reached" handled per scenario (`ScenarioResolutions.none`)
 - [x] The Gathering's resolutions entered by hand (M1C.4a, `the_gathering/resolutions.ts`); The Midnight Masks' come with M5.3
 - [ ] Leaving and joining a campaign (review of #62): a player may leave between scenarios (their living investigator moves to the former investigators and may rejoin), and a joining player picks an investigator not used before; today `ReplaceInvestigator` only replaces a killed or insane one. Also the 2026 Core Set's third fate, devoured
-- [ ] Played scenarios with their resolution in the campaign log (Andy, review of #62), e.g. `playedScenarios: { scenarioId, resolution }[]`, written when the resolution is confirmed. It also prepares for non-linear campaigns: the definition then picks the next scenario from the log instead of advancing `position` through a fixed `scenarioIds` order
+- [x] Played scenarios with their resolution in the campaign log (Andy, review of #62), e.g. `playedScenarios: { scenarioId, resolution }[]`, written when the resolution is confirmed. It also prepares for non-linear campaigns: the definition then picks the next scenario from the log instead of advancing `position` through a fixed `scenarioIds` order. Done in M1C.4b2: `CampaignLog.playedScenarios`, written by `AdvanceScenario { outcome }`
 
 ## M1C.5 Starting a scenario from the campaign (S)
 

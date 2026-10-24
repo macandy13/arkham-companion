@@ -38,6 +38,14 @@ export function applyEvent(log: CampaignLog, event: CampaignEvent): CampaignLog 
       }));
     case 'InvestigatorReplaced':
       return applyInvestigatorReplaced(log, event);
+    case 'ScenarioPlayed':
+      return {
+        ...log,
+        playedScenarios: [
+          ...log.playedScenarios,
+          { scenarioId: event.scenarioId, outcome: event.outcome },
+        ],
+      };
     case 'ScenarioPositionChanged':
       return { ...log, position: event.position };
   }
