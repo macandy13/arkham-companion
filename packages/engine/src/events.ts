@@ -16,6 +16,7 @@ import type {
   Phase,
   PhaseStep,
   SkillTest,
+  SkillTestKind,
   SkillTestOutcome,
   TokenKind,
 } from './state';
@@ -324,8 +325,8 @@ export interface CluesDiscovered {
  * commands, which apply the test's results (ST.7), "if this test succeeds"
  * effects included. Commands triggered by this event run before those
  * results, because `handle` queues the forced effects of an answer's own
- * events ahead of its option commands; no window opens on it yet (the
- * timing windows add one). Produced by `ResolveDecision`.
+ * events ahead of its option commands: a basic action's test opens `tested`
+ * at ST.6. Produced by `ResolveDecision`.
  */
 export interface SkillTestResolved {
   type: 'SkillTestResolved';
@@ -335,6 +336,8 @@ export interface SkillTestResolved {
   /** The decision's subject: the location, enemy or card the test is about. */
   subject?: InstanceId;
   skillTest: SkillTest;
+  /** The basic action the test belongs to (`Decision.testKind`); absent for a card's test. */
+  action?: SkillTestKind['kind'];
   outcome: SkillTestOutcome;
   /**
    * How much the test succeeded or failed by, when the answer says: its

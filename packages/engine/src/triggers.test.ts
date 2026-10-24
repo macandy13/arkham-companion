@@ -5,7 +5,9 @@ import {
   atEndOfTurn,
   advanceAct,
   afterEntering,
+  afterTest,
   atLocation,
+  attachedTo,
   blankAct,
   blankAgenda,
   blankAsset,
@@ -18,6 +20,7 @@ import {
   defeatEachInvestigator,
   discardEachEnemyAt,
   discardSelf,
+  engagedWith,
   duringAct,
   endScenario,
   execute,
@@ -447,6 +450,77 @@ describe('trigger bus', () => {
         expect(after.cards[omen]?.tokens.doom).toBe(1);
       },
     );
+  });
+
+  describe("abilities after a basic action's test", () => {
+    const ghoul = instanceId('ghoul');
+    /** The ghoul has 3 health; after a successful attack on it, 1 doom goes on it. */
+    const markedGhoulCard = blankEnemy('marked_ghoul', {
+      health: fixed(3),
+      abilities: [afterTest('fight', 'pass', placeDoomOnSelf(1))],
+    });
+    /** Alice in the hall, engaged with the marked ghoul, on her turn. */
+    const engagedTable = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(ghoul, markedGhoulCard, engagedWith(alice))
+      .withTurnOf(alice);
+
+    it.each([
+      { name: 'a hit places 1 doom on the enemy', result: 'pass', doom: 1 },
+      { name: 'a miss places none', result: 'fail', doom: undefined },
+    ])('$name', ({ result, doom }) => {
+      const { context, state } = engagedTable.start();
+
+      const after = stateAfter(
+        context,
+        state,
+        { type: 'Fight', investigatorId: alice, enemyId: ghoul },
+        answer('fight:alice:ghoul', result),
+      );
+
+      expect(after.cards[ghoul]?.tokens.doom).toBe(doom);
+    });
+
+    it('opens no fight window for an evade', () => {
+      const { context, state } = engagedTable.start();
+
+      const after = stateAfter(
+        context,
+        state,
+        { type: 'Evade', investigatorId: alice, enemyId: ghoul },
+        answer('evade:alice:ghoul', 'pass'),
+      );
+
+      expect(after.cards[ghoul]?.tokens.doom).toBeUndefined();
+    });
+
+    it('fires for the investigated location and its attachment, before the clue', () => {
+      const fog = instanceId('fog');
+      /** A study with 1 clue that takes 1 horror from its investigator once investigated. */
+      const hauntedStudy = blankLocation('haunted_study', {
+        clues: fixed(1),
+        abilities: [afterTest('investigate', 'pass', takeHorror(1))],
+      });
+      const fogCard = blankTreachery('fog', {
+        abilities: [afterTest('investigate', 'pass', discardSelf())],
+      });
+      const { context, state } = newGame()
+        .withLocation(hall, hauntedStudy, { revealed: true })
+        .withInvestigator(alice, { locationId: hall })
+        .withCard(fog, fogCard, attachedTo(hall))
+        .withTurnOf(alice)
+        .start();
+      const asked = stateAfter(context, state, { type: 'Investigate', investigatorId: alice });
+
+      const { state: after, events } = execute(context, asked, answer('investigate:alice', 'pass'));
+
+      expect(requireInvestigator(after, alice)).toMatchObject({ clues: 1, sanity: { horror: 1 } });
+      expect(after.cards[fog]?.zone).toEqual({ kind: 'encounterDiscard' });
+      const discarded = events.findIndex((e) => e.type === 'CardMoved' && e.cardId === fog);
+      const discovered = events.findIndex((e) => e.type === 'CluesDiscovered');
+      expect(discarded).toBeLessThan(discovered);
+    });
   });
 
   describe('tests that deal damage or horror per point failed', () => {
