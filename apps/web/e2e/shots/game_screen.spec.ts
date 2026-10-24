@@ -70,3 +70,16 @@ test('the house map by day, the panels on parchment', { tag: '@shot' }, async ({
   await expect(page.getByRole('region', { name: 'Alder' })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
+
+test('Alder’s willpower test, a −1 drawn', { tag: '@shot' }, async ({ page }) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+
+  await page
+    .getByRole('region', { name: 'Alder' })
+    .getByRole('button', { name: /^Willpower/ })
+    .click();
+  const test = page.getByRole('dialog', { name: /^Willpower test/ });
+  await test.getByRole('button', { name: '−1' }).click();
+
+  await expect(test.getByRole('status')).toBeVisible();
+});

@@ -230,6 +230,42 @@ describe('investigators', () => {
   });
 });
 
+describe('a skill test outside any decision', () => {
+  const { context, state } = newGame()
+    .withLocation(study, blankLocation('study'))
+    .withInvestigator(alice, {
+      locationId: study,
+      skills: { willpower: 3, intellect: 2, combat: 1, agility: 4 },
+    })
+    .start();
+
+  it.each([
+    { input: {}, skill: 3, outcome: 'pass', margin: 0 },
+    { input: { modifier: 2 }, skill: 5, outcome: 'pass', margin: 2 },
+    { input: { modifier: 1, tokens: ['-2' as const] }, skill: 2, outcome: 'fail', margin: 1 },
+    { input: { tokens: ['autoFail' as const] }, skill: 0, outcome: 'fail', margin: 3 },
+  ])(
+    "takes alice's willpower 3 against 3 with $input to $skill, a $outcome by $margin",
+    ({ input, skill, outcome, margin }) => {
+      const result = boardView(context, state).skillTest(
+        alice,
+        { skill: 'willpower', difficulty: 3 },
+        input,
+      );
+
+      expect(result).toMatchObject({ skill, difficulty: 3, outcome, margin });
+    },
+  );
+
+  it('lists the chaos bag the players draw from', () => {
+    const { context: bagContext, state: bagState } = newGame()
+      .withChaosBag(['+1', '-1', 'skull', 'autoFail'])
+      .start();
+
+    expect(boardView(bagContext, bagState).chaosBag).toEqual(['+1', '-1', 'skull', 'autoFail']);
+  });
+});
+
 describe('locations', () => {
   const house = newGame()
     .withLocation(study, blankLocation('study', { clues: fixed(2), shroud: 3 }), { revealed: true })

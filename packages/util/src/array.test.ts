@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { duplicates, range, withoutFirst, withRunningTotals } from './index';
+import { duplicates, range, unique, withoutFirst, withRunningTotals } from './index';
 
 describe('duplicates', () => {
   it('lists each repeated item once', () => {
@@ -14,6 +14,18 @@ describe('duplicates', () => {
 
   it('is empty for an empty list', () => {
     expect(duplicates([])).toEqual([]);
+  });
+});
+
+describe('unique', () => {
+  it('keeps each item once, in the order it first occurs', () => {
+    const bag = ['-1', 'skull', '-1', '0', 'skull'];
+
+    expect(unique(bag)).toEqual(['-1', 'skull', '0']);
+  });
+
+  it('is empty for an empty list', () => {
+    expect(unique([])).toEqual([]);
   });
 });
 

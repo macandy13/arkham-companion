@@ -100,8 +100,9 @@
 }
 
 /*
- * The skills in a row like the card prints them, each value after its icon. Two ids, so they beat
- * the home screen's padded `#app > main ul > li` cards.
+ * The skills in a row like the card prints them, each a small button with its value after its
+ * icon, opening a skill test. Two ids, so they beat the home screen's padded `#app > main ul > li`
+ * cards.
  */
 #board > #investigators > section > ul {
   grid-area: skills;
@@ -113,15 +114,19 @@
 }
 
 #board > #investigators > section > ul > li {
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+#board > #investigators > section > ul > li > button {
   display: flex;
   gap: var(--space-1);
   align-items: center;
-  padding: 0;
-  background: none;
   font-variant-numeric: lining-nums;
 }
 
-#board > #investigators > section > ul > li::before {
+#board > #investigators > section > ul > li > button::before {
   content: '';
   width: var(--stat-icon-size);
   height: var(--stat-icon-size);
@@ -371,4 +376,88 @@
 
 #board > #investigators > section > div li[data-exhausted] {
   opacity: var(--eliminated-opacity);
+}
+
+/*
+ * The skill test (SkillTestDialog): the difficulty and the modifier as stepper rows, the bag's
+ * tokens as a wrapping row of toggles, then the calculation and the outcome, coloured like a pass
+ * or a fail. The `#investigators` id lets these beat the home screen's `#app > main` rows and
+ * padded list cards.
+ */
+#investigators dialog[data-dialog='skill-test'] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+#investigators dialog[data-dialog='skill-test']:not([open]) {
+  display: none;
+}
+
+#investigators dialog[data-dialog='skill-test'] h2 {
+  margin: 0;
+  font-size: var(--font-size-subtitle);
+}
+
+#investigators dialog[data-dialog='skill-test'] section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+#investigators dialog[data-dialog='skill-test'] section > p {
+  flex: 1;
+  margin: 0;
+}
+
+#investigators dialog[data-dialog='skill-test'] data {
+  min-width: var(--button-compact);
+  font-size: var(--font-size-subtitle);
+  font-variant-numeric: lining-nums tabular-nums;
+  text-align: center;
+}
+
+#investigators dialog[data-dialog='skill-test'] ul,
+#investigators dialog[data-dialog='skill-test'] ol {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#investigators dialog[data-dialog='skill-test'] li {
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+#investigators dialog[data-dialog='skill-test'] ol {
+  flex-direction: column;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-note);
+}
+
+#investigators dialog[data-dialog='skill-test'] [aria-pressed='true'] {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+}
+
+#investigators dialog[data-dialog='skill-test'] output {
+  flex-basis: 100%;
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-subtitle);
+}
+
+#investigators dialog[data-dialog='skill-test'] output[data-outcome='pass'] {
+  color: var(--color-clue);
+}
+
+#investigators dialog[data-dialog='skill-test'] output[data-outcome='fail'] {
+  color: var(--color-doom);
 }

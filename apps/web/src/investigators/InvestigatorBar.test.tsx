@@ -105,7 +105,7 @@ describe('InvestigatorBar', () => {
     );
 
     const skills = within(within(panel('alder')).getByRole('list', { name: 'Skills' }))
-      .getAllByRole('listitem')
+      .getAllByRole('button')
       .map((skill) => [skill.getAttribute('aria-label'), skill.textContent]);
     expect(skills).toEqual([
       ['Willpower 4', '4'],
@@ -285,8 +285,11 @@ describe('InvestigatorBar', () => {
 
       render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy adjusting />);
 
+      // The skills open a skill test, which changes nothing, so they need not wait.
+      const skills = within(panel('alder')).getByRole('list', { name: 'Skills' });
       const on = within(panel('alder'))
         .getAllByRole('button')
+        .filter((button) => !skills.contains(button))
         .filter((button) => !(button as HTMLButtonElement).disabled);
       expect(on).toEqual([]);
     });

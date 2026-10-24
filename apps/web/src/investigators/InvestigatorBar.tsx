@@ -1,4 +1,4 @@
-import { useId, type ReactNode } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   SKILL_NAMES,
@@ -6,10 +6,11 @@ import {
   type CardImagePath,
   type EnemyView,
   type InvestigatorView,
-  type SkillValues,
+  type SkillName,
 } from '@arkham/engine';
 import { useCardPicture } from '../catalog/cardImages';
 import type { GameActions, SteppedStat } from '../state/gameActions';
+import { SkillTestDialog } from './SkillTestDialog';
 import { ThreatArea } from './ThreatArea';
 import { TurnControls } from './TurnControls';
 import './investigators.css';
@@ -40,6 +41,7 @@ export function InvestigatorBar({
       {board.investigators.map((investigator) => (
         <InvestigatorPanel
           key={investigator.id}
+          board={board}
           investigator={investigator}
           onTurn={board.turn === investigator.id}
           engaged={board.enemiesEngagedWith(investigator.id)}
@@ -64,6 +66,7 @@ export function InvestigatorBar({
  * card. Clues show without steppers: they are found by investigating and spent on the act.
  */
 function InvestigatorPanel({
+  board,
   investigator,
   onTurn,
   engaged,
@@ -72,6 +75,8 @@ function InvestigatorPanel({
   busy,
   adjusting,
 }: {
+  /** The board the skill tests read (`SkillTestDialog`). */
+  board: BoardView;
   investigator: InvestigatorView;
   onTurn: boolean;
   /** The enemies engaged with the investigator, shown in their threat area. */
@@ -98,7 +103,7 @@ function InvestigatorPanel({
       <InvestigatorCardFace image={investigator.image} />
       <h3 id={nameId}>{investigator.name}</h3>
       <p>{statusLine(investigator, onTurn, t)}</p>
-      <Skills skills={investigator.skills} />
+      <Skills board={board} investigator={investigator} />
       <TurnControls
         investigator={investigator}
         onTurn={onTurn}
@@ -178,26 +183,41 @@ function InvestigatorCardFace({ image }: { image: CardImagePath | undefined }) {
 }
 
 /**
- * The four skills in the order the card prints them, each its value under its icon. The icon
- * alone does not say which skill it is, so each one is named for screen readers.
+ * The four skills in the order the card prints them, each its value after its icon. The icon
+ * alone does not say which skill it is, so each one is named for screen readers. Tapping one
+ * opens a skill test against it (`SkillTestDialog`), a calculator that changes nothing.
  */
-function Skills({ skills }: { skills: SkillValues }) {
+function Skills({ board, investigator }: { board: BoardView; investigator: InvestigatorView }) {
   const { t } = useTranslation();
+  const [testing, setTesting] = useState<SkillName>();
+  const { skills } = investigator;
   return (
-    <ul aria-label={t('investigators.skills')}>
-      {SKILL_NAMES.map((skill) => (
-        <li
-          key={skill}
-          data-skill={skill}
-          aria-label={t('investigators.skillValue', {
-            skill: t(`skill.${skill}`),
-            value: skills[skill],
-          })}
-        >
-          <data value={skills[skill]}>{skills[skill]}</data>
-        </li>
-      ))}
-    </ul>
+    <>
+      <ul aria-label={t('investigators.skills')}>
+        {SKILL_NAMES.map((skill) => (
+          <li key={skill} data-skill={skill}>
+            <button
+              type="button"
+              aria-label={t('investigators.skillValue', {
+                skill: t(`skill.${skill}`),
+                value: skills[skill],
+              })}
+              onClick={() => setTesting(skill)}
+            >
+              <data value={skills[skill]}>{skills[skill]}</data>
+            </button>
+          </li>
+        ))}
+      </ul>
+      {testing && (
+        <SkillTestDialog
+          board={board}
+          investigator={investigator}
+          skill={testing}
+          onClose={() => setTesting(undefined)}
+        />
+      )}
+    </>
   );
 }
 
