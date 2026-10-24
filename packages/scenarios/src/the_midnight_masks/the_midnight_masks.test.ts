@@ -16,6 +16,7 @@ import {
   type Command,
   type Difficulty,
   type GameState,
+  type CardCode,
   type InstanceId,
   type ResolutionId,
   type ScenarioContext,
@@ -252,7 +253,7 @@ describe('The Midnight Masks skull token', () => {
 
 describe('The Midnight Masks resolutions', () => {
   const tank = investigatorCode('tank');
-  const toVictoryDisplay = (code: string): Command => ({
+  const toVictoryDisplay = (code: CardCode): Command => ({
     type: 'ManualAdjust',
     adjustment: {
       kind: 'moveCard',
@@ -296,7 +297,7 @@ describe('The Midnight Masks resolutions', () => {
     ]);
   });
 
-  it('records R2 as past midnight, The Masked Hunter only got away when in play', () => {
+  it('records R2 as past midnight, The Masked Hunter not got away while still set aside', () => {
     const ended = twoInterrogated(MIDNIGHT_MASKS_RESOLUTIONS.pastMidnight);
 
     expect(campaign.proposeResolution(ctx, ended, theMidnightMasksResolutions)).toEqual([
@@ -327,6 +328,40 @@ describe('The Midnight Masks resolutions', () => {
       { kind: 'command', command: { type: 'AwardXp', code: tank, amount: 2 } },
       { kind: 'byHand', textKey: 'scenario.theMidnightMasks.resolution.upgradeDecks' },
     ]);
+  });
+
+  it.each([
+    {
+      place: 'in play',
+      to: { kind: 'atLocation', locationId: rivertown },
+      key: 'cultistsWhoGotAway',
+    },
+    {
+      place: 'in the victory display',
+      to: { kind: 'victoryDisplay' },
+      key: 'cultistsWeInterrogated',
+    },
+  ] as const)('lists The Masked Hunter $place at R2 under $key', ({ to, key }) => {
+    const ended = stateAfter(
+      ctx,
+      startScenario(ctx),
+      {
+        type: 'ManualAdjust',
+        adjustment: { kind: 'moveCard', cardId: instanceId(`${codes.theMaskedHunter}#1`), to },
+      },
+      { type: 'EndScenario', resolution: MIDNIGHT_MASKS_RESOLUTIONS.pastMidnight },
+    );
+
+    const recorded = campaign
+      .proposeResolution(ctx, ended, theMidnightMasksResolutions)
+      ?.flatMap((change) =>
+        change.kind === 'command' && change.command.type === 'RecordStory' ? [change.command] : [],
+      )
+      .find((command) => command.key === ZEALOT_STORY[key]);
+
+    expect(recorded?.value).toMatchObject({
+      entries: expect.arrayContaining(['The Masked Hunter']),
+    });
   });
 
   it('reads no resolution as R1', () => {

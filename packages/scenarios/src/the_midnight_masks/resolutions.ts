@@ -36,10 +36,10 @@ const cultistsWeInterrogated: ResolutionStep = {
  * "Record the name of each unique enemy still remaining in the Cultist deck
  * or in play": a cultist still set aside is still in the Cultist deck. The
  * Masked Hunter is set aside only as agenda 1's reverse side, so it got away
- * when in play or, with `atAgenda1`, while agenda 1 is current (R1: "If it is
- * Agenda 1, record The Masked Hunter as well").
+ * when in play or, with `hunterAtAgenda1`, while agenda 1 is current (R1: "If
+ * it is Agenda 1, record The Masked Hunter as well").
  */
-function cultistsWhoGotAway(atAgenda1: boolean): ResolutionStep {
+function cultistsWhoGotAway({ hunterAtAgenda1 }: { hunterAtAgenda1: boolean }): ResolutionStep {
   const hunterInPlay: GameCondition = {
     kind: 'cardIn',
     code: codes.theMaskedHunter,
@@ -55,7 +55,7 @@ function cultistsWhoGotAway(atAgenda1: boolean): ResolutionStep {
       })),
       {
         code: codes.theMaskedHunter,
-        when: atAgenda1
+        when: hunterAtAgenda1
           ? {
               kind: 'anyOf',
               conditions: [
@@ -84,7 +84,7 @@ const upgradeDecks: ResolutionStep = {
 
 const conspiracyUncovered: readonly ResolutionStep[] = [
   cultistsWeInterrogated,
-  cultistsWhoGotAway(true),
+  cultistsWhoGotAway({ hunterAtAgenda1: true }),
   ghoulPriestDefeated,
   victoryXp,
   upgradeDecks,
@@ -101,7 +101,7 @@ export const theMidnightMasksResolutions: ScenarioResolutions = {
     [MIDNIGHT_MASKS_RESOLUTIONS.conspiracyUncovered]: conspiracyUncovered,
     [MIDNIGHT_MASKS_RESOLUTIONS.pastMidnight]: [
       cultistsWeInterrogated,
-      cultistsWhoGotAway(false),
+      cultistsWhoGotAway({ hunterAtAgenda1: false }),
       { kind: 'record', key: ZEALOT_STORY.itIsPastMidnight, value: yes },
       ghoulPriestDefeated,
       victoryXp,
