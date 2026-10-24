@@ -378,8 +378,9 @@ export interface Decision {
   suggestion?: SkillTestSuggestion;
   /**
    * Only for `skillTestResult`: "for each point you fail by, take 1 damage /
-   * horror". The deciding investigator takes as much as the fail answer's
-   * `margin` says, 1 without one (`answerCommands`).
+   * horror / place 1 of your clues on your location". The deciding
+   * investigator pays as much as the fail answer's `margin` says, 1 without
+   * one (`answerCommands`).
    */
   perPointFailed?: PerPointFailed;
   /**
@@ -390,8 +391,12 @@ export interface Decision {
   options: DecisionOption[];
 }
 
-/** What a test deals for each point it fails by (`Decision.perPointFailed`, `TestSkill.perPointFailed`). */
-export type PerPointFailed = 'damage' | 'horror';
+/**
+ * What a test costs the tester for each point it fails by
+ * (`Decision.perPointFailed`, `TestSkill.perPointFailed`): 1 damage, 1
+ * horror, or 1 of their clues placed on their location (`PlaceClues`).
+ */
+export type PerPointFailed = 'damage' | 'horror' | 'clues';
 
 /** One answer the players can pick for a `Decision`. */
 export interface DecisionOption {

@@ -1,3 +1,4 @@
+import { assertNever } from '@arkham/util';
 import type { EngineContext } from './cards';
 import type { Command, RequestDecision, ResolveDecision } from './commands';
 import type { DecisionRequested, DecisionResolved, SkillTestResolved } from './events';
@@ -132,17 +133,31 @@ export function answerCommands(state: GameState, command: Command): readonly Com
 }
 
 /**
- * What a per-point fail deals (`Decision.perPointFailed`): the margin the
- * answer confirms, as damage or horror on the tested investigator.
+ * What a per-point fail costs (`Decision.perPointFailed`): the margin the
+ * answer confirms, as damage or horror on the tested investigator or as
+ * their clues placed on their location.
  */
 function perPointCommands(state: GameState, command: ResolveDecision): Command[] {
   const decision = pendingDecision(state, command.decisionId);
   const margin = decision && perPointMargin(decision, command);
   if (!decision?.perPointFailed || !margin || decision.decider.kind !== 'investigator') return [];
   const { investigatorId } = decision.decider;
-  return [
-    { type: 'AdjustInvestigator', investigatorId, stat: decision.perPointFailed, delta: margin },
-  ];
+  switch (decision.perPointFailed) {
+    case 'damage':
+    case 'horror':
+      return [
+        {
+          type: 'AdjustInvestigator',
+          investigatorId,
+          stat: decision.perPointFailed,
+          delta: margin,
+        },
+      ];
+    case 'clues':
+      return [{ type: 'PlaceClues', investigatorId, amount: margin }];
+    default:
+      return assertNever(decision.perPointFailed);
+  }
 }
 
 /**

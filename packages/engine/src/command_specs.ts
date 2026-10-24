@@ -33,6 +33,7 @@ import {
   handleDefeatInvestigator,
   handleDiscoverClues,
   handleMoveInvestigator,
+  handlePlaceClues,
   handleSetLeadInvestigator,
 } from './handle_investigator';
 import { handleManualAdjust, handleMoveCard } from './handle_manual_adjust';
@@ -169,6 +170,7 @@ const COMMAND_SPECS: CommandSpecs = {
     handle: handleDefeatInvestigator,
   },
   DiscoverClues: { handle: (_ctx, state, command) => handleDiscoverClues(state, command) },
+  PlaceClues: { handle: (_ctx, state, command) => handlePlaceClues(state, command) },
   PlaceDoom: { handle: (_ctx, state, command) => handlePlaceDoom(state, command) },
   AdvanceAgenda: {
     handle: (_ctx, state, command) => handleAdvanceAgenda(state, command),

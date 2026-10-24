@@ -114,6 +114,8 @@ afterTest('investigate', 'pass', discardSelf())   // Obscuring Fog
 whenAdvanced(revealLocation(onlyCopy(codes.parlor)), …)
 ```
 
+A card's test can cost the tester for each point it fails by (`skillTest(…, { perPointFailed })`: 1 damage, 1 horror, or 1 of their clues placed on their location by `PlaceClues`); the fail answer's `margin` is the count.
+
 Constant abilities are data too (`CardStats.modifiers`); [`effectiveValue`](../packages/engine/src/card_values.ts) is the one place that answers "what is this value now".
 
 **Extension points**
