@@ -79,6 +79,8 @@ export interface LocationOptions {
   set: EncounterSetCode;
   shroud: number;
   cluesPerInvestigator: number;
+  /** Printed traits such as Arkham or Central; none by default. */
+  traits?: readonly string[];
   victory?: number;
   abilities?: Ability[];
 }
@@ -90,12 +92,14 @@ export function location({
   set,
   shroud,
   cluesPerInvestigator,
+  traits = [],
   victory,
   abilities,
 }: LocationOptions): CardStats {
   return {
     ...scenarioCard(code, name, set),
     typeCode: 'location',
+    traits: traitsOf(traits),
     shroud,
     clues: perInvestigator(cluesPerInvestigator),
     ...(victory === undefined ? {} : { victory }),
@@ -117,6 +121,8 @@ export interface EnemyOptions {
   victory?: number;
   quantity?: number;
   keywords?: readonly Keyword[];
+  /** Its forced abilities ("Wolf-Man" Drew's heal). */
+  abilities?: readonly Ability[];
 }
 
 /** Card stats for a hand-entered enemy, with its front picture (its back is the encounter back). */
@@ -126,6 +132,7 @@ export function enemy({
   traits,
   quantity = 1,
   victory,
+  abilities,
   ...stats
 }: EnemyOptions): CardStats {
   return {
@@ -137,6 +144,7 @@ export function enemy({
     encounterCode: set,
     quantity,
     ...(victory === undefined ? {} : { victory }),
+    ...(abilities ? { abilities } : {}),
   };
 }
 
@@ -147,6 +155,8 @@ export interface TreacheryOptions {
   set: EncounterSetCode;
   traits: readonly string[];
   quantity: number;
+  /** Keywords such as peril (Hunting Shadow). */
+  keywords?: readonly Keyword[];
   /** Its revelation and forced abilities (Frozen in Fear's end-of-turn test). */
   abilities?: readonly Ability[];
   /** What it does attached to the drawer's location (Obscuring Fog). */
@@ -162,6 +172,7 @@ export function treachery({
   set,
   traits,
   quantity,
+  keywords,
   abilities,
   locationAttachment,
   modifiers,
@@ -174,6 +185,7 @@ export function treachery({
     traits: traitsOf(traits),
     encounterCode: set,
     quantity,
+    ...(keywords ? { keywords } : {}),
     ...(abilities ? { abilities } : {}),
     ...(locationAttachment ? { locationAttachment } : {}),
     ...(modifiers ? { modifiers } : {}),
