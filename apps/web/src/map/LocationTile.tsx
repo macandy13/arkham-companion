@@ -23,18 +23,20 @@ export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyVi
 
 /**
  * One location as a tile at (`x`, `y`), drawn as a card face in layers, laid out like the printed
- * card: a frame, an art area with a pattern for the side the location shows (revealed or not),
- * the ornament of the printed cards (`LocationOrnament`) and the name on its banner along the top. When the side has a picture (`LocationView.image`), it shows once it
- * has loaded (`data-picture`), in the look the players chose (`Settings.cardLook`): the card's art
- * cut out into the art window (`ART_WINDOW`, the nested `svg`), or the whole card over the face
- * (the `image`), with the name band and shroud the picture prints hidden. Both load the same
- * address, so the browser fetches it once; the stylesheet shows the one for the look. Over them lies what the game tracks: its attachments peeking out at the right
- * edge as small cards, and once revealed the shroud (with what attachments add) at mid height on
- * the left and the clues on the right, doom under the clues when it has any; then a pawn per
- * investigator there and a round token per enemy at it, in rows along the bottom edge.
- * `enemies` and `investigators` are the open game's pieces at this location; `dragOf` gives the
- * drag handlers of each piece that can be dragged now. Its edit button at the right end of the
- * name band calls `onEdit`.
+ * location card: a face for the side the location shows (revealed or not), the art area across
+ * its width with that side's pattern, the frame of the printed cards (`LocationOrnament`) over
+ * it, the name on the name plate and the type on the type plate. When the side has a picture
+ * (`LocationView.image`), it shows once it has loaded (`data-picture`), in the look the players
+ * chose (`Settings.cardLook`): the card's art cut out into the art window (`ART_WINDOW`, the
+ * nested `svg`), or the whole card over the face (the `image`), with the frame, the texts and the
+ * shroud the picture prints hidden. Both load the same address, so the browser fetches it once;
+ * the stylesheet shows the one for the look. Over them lies what the game tracks: its
+ * attachments peeking out at the right edge as small cards, and once revealed the shroud (with
+ * what attachments add) on the left edge where the art ends and the clues on the right, doom
+ * under the clues when it has any; then a pawn per investigator there and a round token per enemy
+ * at it, in rows along the bottom edge. `enemies` and `investigators` are the open game's pieces
+ * at this location; `dragOf` gives the drag handlers of each piece that can be dragged now. Its
+ * edit button in the top left corner calls `onEdit`.
  */
 export function LocationTile({
   location,
@@ -173,13 +175,21 @@ export function CardPatterns() {
           result="foxing"
         />
         <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed="3" />
-        <feColorMatrix type="matrix" values="0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 0 0.1  0 0 0 0.5 -0.15" />
+        <feColorMatrix
+          type="matrix"
+          values="0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 0 0.1  0 0 0 0.5 -0.15"
+        />
         <feMerge>
           <feMergeNode in="foxing" />
           <feMergeNode />
         </feMerge>
       </filter>
-      <pattern id="card-paper" width={TILE.width} height={TILE.height} patternUnits="userSpaceOnUse">
+      <pattern
+        id="card-paper"
+        width={TILE.width}
+        height={TILE.height}
+        patternUnits="userSpaceOnUse"
+      >
         <rect width={TILE.width} height={TILE.height} />
       </pattern>
       {(['revealed', 'unrevealed'] as const).map((side) => (
@@ -306,7 +316,7 @@ function dragAttributes({
 }
 
 /**
- * An investigator's pawn: a circle with their initial, centred on `centre`. With `drag` it can
+ * An investigator's pawn (`data-pawn`): a circle with their initial, centred on `centre`. With `drag` it can
  * be dragged (`usePieceDrag`); a `ghost` is the copy that follows the pointer.
  */
 export function Pawn({
@@ -321,7 +331,7 @@ export function Pawn({
   ghost?: boolean;
 }) {
   return (
-    <g {...dragAttributes({ name: investigator.name, kind: 'pawn', drag, ghost })}>
+    <g data-pawn {...dragAttributes({ name: investigator.name, kind: 'pawn', drag, ghost })}>
       <circle cx={x} cy={y} r={CONTENT.pawnRadius} />
       <text x={x} y={y}>
         {investigator.name.charAt(0)}

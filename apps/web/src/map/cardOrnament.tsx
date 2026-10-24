@@ -1,11 +1,11 @@
-import { ART_WINDOW, CLUES_CENTRE, CONTENT, pawnOffset, TILE } from './mapLayout';
+import { ART_WINDOW, CLUES_CENTRE, CONTENT, TILE } from './mapLayout';
 
 /**
  * The parts of a location card's frame, in SVG user units on a tile, placed where the printed
  * card has them (a tile is half a scan): the rounded corner the frame follows, the name plate's
  * lowest edge, the dark band under it, the pendant hanging from that band, the arched type line
  * across the foot of the art with its medallion and type plate, and the arched band at the foot
- * that holds the pieces.
+ * that the pieces stand on.
  */
 const FRAME = {
   corner: 8,
@@ -67,11 +67,9 @@ const TOP_BAND = `${TOP_EDGE} V ${FRAME.bandBottom} H 0 Z`;
 const NAME_PLATE = `${TOP_EDGE} ${plateEdgeLeftwards(0)} Z`;
 
 /** The gilt rules of the top band: along the plate's edge, engraved across the band, and its foot. */
-const TOP_GILT = [
-  plateEdge(0),
-  plateEdge(FRAME.gilt),
-  `M 0 ${FRAME.bandBottom} H ${width}`,
-].join(' ');
+const TOP_GILT = [plateEdge(0), plateEdge(FRAME.gilt), `M 0 ${FRAME.bandBottom} H ${width}`].join(
+  ' ',
+);
 
 /** The double rule under the name, as the printed plate underlines it. */
 const NAME_RULE = (() => {
@@ -139,7 +137,11 @@ const MEDALLION_CENTRE = {
   y: artBottom - FRAME.typeLine.plateHeight - 3 - FRAME.typeLine.rise,
 };
 const MEDALLION = circle(MEDALLION_CENTRE.x, MEDALLION_CENTRE.y, FRAME.typeLine.medallion);
-const MEDALLION_RING = circle(MEDALLION_CENTRE.x, MEDALLION_CENTRE.y, FRAME.typeLine.medallion - 2.5);
+const MEDALLION_RING = circle(
+  MEDALLION_CENTRE.x,
+  MEDALLION_CENTRE.y,
+  FRAME.typeLine.medallion - 2.5,
+);
 const MEDALLION_JEWEL = diamond(MEDALLION_CENTRE.x, MEDALLION_CENTRE.y, 3.5);
 
 /** The plate on the type line that names the card's type, notched at both ends. */
@@ -195,19 +197,13 @@ const FOOT = (() => {
 })();
 const FOOT_GILT = [footArch(0), footArch(FRAME.gilt)].join(' ');
 
-/** A socket in the foot for each piece of the first row, like the printed connection circles. */
-const SOCKETS = [0, 1, 2, 3]
-  .map((index) => pawnOffset(index))
-  .map(({ x, y }) => circle(x, y, CONTENT.pawnRadius))
-  .join(' ');
-
 /**
  * The frame of a location tile drawn after the printed location cards, our own drawing (no FFG
  * art): the name plate sweeping up into the top corners over a dark band with gilt rules, a
  * pendant hanging into the art (with a keyhole on the unrevealed side), thin gilt arcs over the
  * unrevealed side's art, the arched type line across the foot of the art with its medallion and
  * type plate, the magnifier handle of the clue circle, the text box with a faint engraving, and
- * the arched foot whose sockets the pieces stand in, and the card's dark edge over all of it. It is decoration only (`aria-hidden`);
+ * the arched foot the pieces stand on, and the card's dark edge over all of it. It is decoration only (`aria-hidden`);
  * `data-ornament` lets the stylesheet colour it for the tile's side and hide it under a whole card
  * scan. Each part is a `path` named by `data-part`, so the stylesheet fills the plates and bands
  * and only strokes the rules.
@@ -235,7 +231,6 @@ export function LocationOrnament() {
       <path data-part="handle" d={HANDLE} />
       <path data-part="band" d={FOOT} />
       <path data-part="gilt" d={FOOT_GILT} />
-      <path data-part="socket" d={SOCKETS} />
       <path data-part="edge" d={EDGE} />
     </g>
   );

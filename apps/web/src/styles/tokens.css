@@ -144,6 +144,8 @@
   --eliminated-opacity: 0.55;
   /* The rim of a round piece or token: the enemy ring, the shroud's bone edge. */
   --piece-ring-width: 3px;
+  /* Lifts the pieces off the card they stand on. */
+  --piece-shadow: drop-shadow(0 1px 1.5px rgb(0 0 0 / 60%));
 }
 
 :root[data-theme='light'] {

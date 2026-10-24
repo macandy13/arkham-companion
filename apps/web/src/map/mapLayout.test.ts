@@ -171,11 +171,11 @@ describe('pawnOffset', () => {
 });
 
 // An attachment is 30 wide, half of it past the 150-wide tile's right edge; the first sits 6 below
-// the 48-high name band, each further one 14 lower.
+// the 19-high name plate, each further one 14 lower.
 describe('attachmentOrigin', () => {
   it.each([
-    { index: 0, origin: { x: 135, y: 54 } },
-    { index: 1, origin: { x: 135, y: 68 } },
+    { index: 0, origin: { x: 135, y: 25 } },
+    { index: 1, origin: { x: 135, y: 39 } },
   ])('puts attachment $index at ($origin.x, $origin.y) of its tile', ({ index, origin }) => {
     expect(attachmentOrigin(index)).toEqual(origin);
   });

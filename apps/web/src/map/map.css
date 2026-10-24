@@ -111,21 +111,19 @@
  * A location tile is a card face drawn after the printed location cards (LocationTile): parchment
  * with a dark edge, tan on the revealed side and sage on the unrevealed one, the art filling the
  * width (its hatch until a picture shows), and the frame (`LocationOrnament`) over it: the plates
- * and the pendant in the side's parchment, the bands in its dark colour with gilt rules, sockets
- * for the pieces, and the side's own marks (the clue circle's handle on the revealed side, the
+ * and the pendant in the side's parchment, the bands in its dark colour with gilt rules, and
+ * the side's own marks (the clue circle's handle on the revealed side, the
  * keyhole and the arcs over the art on the unrevealed one). The name is in the display type, the
  * type plate's word in small spaced capitals.
  */
 #map svg [data-card='location'] {
   --card-band: var(--color-card-band);
   --card-plate: var(--color-parchment);
-  --card-socket: var(--color-parchment-shade);
 }
 
 #map svg [data-card='location'][data-side='unrevealed'] {
   --card-band: var(--color-card-band-back);
   --card-plate: var(--color-parchment-back);
-  --card-socket: var(--color-parchment-back-shade);
 }
 
 #map svg [data-card='location'] > rect:first-of-type {
@@ -234,12 +232,6 @@
   fill: var(--color-card-gilt);
 }
 
-#map svg [data-ornament] [data-part='socket'] {
-  fill: var(--card-socket);
-  stroke: var(--color-card-gilt);
-  stroke-width: var(--card-ornament-line-width);
-}
-
 #map svg [data-ornament] [data-part='edge'] {
   stroke: var(--color-card-edge);
   stroke-width: var(--card-border-width);
@@ -295,9 +287,19 @@
 }
 
 /*
- * Pieces: investigator pawns in the accent colour, enemies as dark tokens ringed in the doom
- * colour (a dragged piece's copy gets the same look).
+ * Pieces: investigator pawns in the accent colour ringed in parchment, enemies as dark tokens
+ * ringed in the doom colour, both with a shadow, so they stand out on the art, the parchment and
+ * the dark foot alike (a dragged piece's copy gets the same look).
  */
+#map svg :is([data-pawn], [data-enemy]) {
+  filter: var(--piece-shadow);
+}
+
+#map svg [data-pawn] circle {
+  stroke: var(--color-parchment);
+  stroke-width: var(--piece-ring-width);
+}
+
 #map svg circle {
   fill: var(--color-accent);
 }
