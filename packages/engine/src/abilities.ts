@@ -131,10 +131,10 @@ export type RelativeCard =
   | { ref: 'self' }
   /**
    * The location the window names (where a defeated enemy was), or else the
-   * location of the investigator the window names (the drawer's location),
-   * unless the card's limit of one per location is reached there
-   * (`LocationAttachment.onePerLocation`): then none, so a revelation that
-   * would attach it there does nothing.
+   * location of the investigator the window names (the drawer's location).
+   * For the drawer's location only: none once the card's limit of one per
+   * location is reached there (`LocationAttachment.onePerLocation`), so a
+   * revelation that would attach it there does nothing.
    */
   | { ref: 'windowLocation' }
   /**

@@ -697,30 +697,30 @@ describe('trigger bus', () => {
   });
 
   describe('abilities when an enemy is defeated', () => {
-    const goatSpawn = instanceId('goat_spawn');
+    const wailingSpawn = instanceId('wailing_spawn');
     const bob = investigatorId('bob');
     const carol = investigatorId('carol');
     const cellar = instanceId('cellar');
     /**
-     * "When Goat Spawn is defeated: each investigator at its location takes 1 horror." Aloof, so it
-     * can start unengaged in the hall.
+     * "When this enemy is defeated: each investigator at this location takes 1 horror" (like Goat
+     * Spawn). Aloof, so it can start unengaged in the hall.
      */
-    const goatSpawnCard = blankEnemy('goat_spawn', {
+    const wailingSpawnCard = blankEnemy('wailing_spawn', {
       keywords: [{ name: 'aloof' }],
       abilities: [whenDefeated(takeHorror(1, eachInvestigatorAt(itsLocation())))],
     });
 
-    // Alice and bob are in the hall with the goat spawn, carol is in the cellar.
+    // Alice and bob are in the hall with the wailing spawn, carol is in the cellar.
     it.each<{ name: string; zone: Zone; command: Command }>([
       {
         name: 'unengaged, by a card effect',
         zone: atLocation(hall),
-        command: { type: 'DefeatEnemy', enemyId: goatSpawn },
+        command: { type: 'DefeatEnemy', enemyId: wailingSpawn },
       },
       {
         name: 'engaged with alice, by damage',
         zone: engagedWith(alice),
-        command: { type: 'DamageEnemy', enemyId: goatSpawn, amount: 1 },
+        command: { type: 'DamageEnemy', enemyId: wailingSpawn, amount: 1 },
       },
     ])(
       'deals 1 horror to each investigator in the hall when it is defeated $name',
@@ -731,13 +731,13 @@ describe('trigger bus', () => {
           .withInvestigator(alice, { locationId: hall })
           .withInvestigator(bob, { locationId: hall })
           .withInvestigator(carol, { locationId: cellar })
-          .withCard(goatSpawn, goatSpawnCard, zone)
+          .withCard(wailingSpawn, wailingSpawnCard, zone)
           .withTurnOf(alice)
           .start();
 
         const after = stateAfter(context, state, command);
 
-        expect(after.cards[goatSpawn]?.zone).toEqual({ kind: 'encounterDiscard' });
+        expect(after.cards[wailingSpawn]?.zone).toEqual({ kind: 'encounterDiscard' });
         expect(requireInvestigator(after, alice).sanity.horror).toBe(1);
         expect(requireInvestigator(after, bob).sanity.horror).toBe(1);
         expect(requireInvestigator(after, carol).sanity.horror).toBe(0);
