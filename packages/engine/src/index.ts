@@ -126,6 +126,8 @@ export {
   spawnEnemyAt,
   takeDamage,
   takeHorror,
+  spendClues,
+  moveTo,
   eachInvestigatorAt,
   itsLocation,
   whenAdvanced,

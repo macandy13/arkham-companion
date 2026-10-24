@@ -160,6 +160,7 @@ An ability that shuffles an empty discard pile into a deck does not shuffle the 
 - An unrevealed location has only its unrevealed side's text. Its revealed side's abilities ("each enemy at this location gets +1 fight") apply once it is revealed. This is our reading of "do not read the revealed side" (Grimoire, Location Cards); no rule says it in one sentence.
 - A modified value is the printed value plus all active modifiers, applied together and recalculated whenever one starts or stops. A result below zero counts as zero.
 - An engaged enemy is at its investigator's location, so "each enemy at X" includes enemies engaged with investigators at X.
+- "You must either A or B" (and "the lead investigator must decide") offers only the options that can be resolved: with no clues, "spend 1 clue or take 2 damage" leaves only the damage. With neither possible, nothing happens. This is our reading of [Effects](https://arkhamdb.com/rules#Effects) (resolve as much as you are able) and [Additional Costs](https://arkhamdb.com/rules#Additional_Costs) (an aspect whose cost cannot be paid fails to resolve); no rule speaks of choosing an option you cannot resolve.
 
 ## Skill tests
 
