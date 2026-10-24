@@ -18,13 +18,14 @@
 }
 
 /*
- * A panel lays the investigator's card on the left, beside the line on their round with their turn
- * controls at its end, and their counters below, as in the prototype.
+ * A panel lays the investigator's card on the left, beside their name, the line on their round and
+ * their turn controls, and their counters below, as in the prototype.
  */
 #board > #investigators > section {
   display: grid;
   grid-template:
     'threat threat threat' auto
+    'card name turn' auto
     'card status turn' auto
     'card stats stats' 1fr /
     auto 1fr auto;
@@ -40,6 +41,7 @@
   #board > #investigators > section {
     grid-template:
       'threat threat' auto
+      'card name' auto
       'card status' auto
       'card turn' 1fr
       'stats stats' auto /
@@ -63,7 +65,7 @@
 
 /*
  * The investigator card, landscape like the printed one and drawn like the header's cards: a
- * frame around the hatched art area with the name band along the top.
+ * frame around the hatched art area, which the card's picture fills later (M3.10).
  */
 #investigators [data-card='investigator'] {
   grid-area: card;
@@ -76,13 +78,13 @@
   background: var(--card-art-pattern), var(--color-card-face);
 }
 
-#investigators [data-card='investigator'] h3 {
+/* The name stands large beside the card, in the playmat's display type. */
+#board > #investigators > section > h3 {
+  grid-area: name;
   margin: 0;
-  border-radius: var(--radius) var(--radius) 0 0;
-  padding: var(--space-1) var(--space-2);
-  background: var(--color-card-face);
-  color: var(--color-card-text);
-  font-size: var(--font-size-subtitle);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-title);
+  line-height: 1;
 }
 
 #board > #investigators > section > p {
@@ -101,9 +103,21 @@
   font-size: var(--font-size-note);
 }
 
+/* "Start turn" and "End" are the panel's primary buttons, filled in brass like "Next". */
+#board > #investigators > section > button,
+#investigators [role='group'] > button:not([data-icon]) {
+  padding-inline: var(--space-2);
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+}
+
+/* The counters share the panel's full width in a row, each value above its steppers. */
 #investigators dl {
   grid-area: stats;
-  display: flex;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   gap: var(--space-1);
   margin: 0;
 }
@@ -118,52 +132,75 @@
   background: var(--color-surface);
 }
 
+/* The counter's name in small spaced capitals after its icon, like the prototype's. */
 #investigators dt {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
   color: var(--color-text-muted);
   font-size: var(--font-size-note);
+  letter-spacing: var(--card-type-spacing);
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
+/* A shortened name keeps the plain look of the others; its title still gives the full one. */
+#investigators dt > abbr {
+  text-decoration: none;
+}
+
+#investigators dt::before {
+  content: '';
+  width: var(--stat-icon-size);
+  height: var(--stat-icon-size);
+  mask: var(--stat-icon) center / contain no-repeat;
+}
+
+#investigators [data-stat='health'] dt::before {
+  --stat-icon: url('./icons/health.svg');
+  background: var(--color-health);
+}
+
+#investigators [data-stat='sanity'] dt::before {
+  --stat-icon: url('./icons/sanity.svg');
+  background: var(--color-sanity);
+}
+
+#investigators [data-stat='clues'] dt::before {
+  --stat-icon: url('./icons/token.svg');
+  background: var(--color-clue);
+}
+
+#investigators [data-stat='resources'] dt::before {
+  --stat-icon: url('./icons/token.svg');
+  background: var(--color-accent);
+}
+
+#investigators [data-stat='doom'] dt::before {
+  --stat-icon: url('./icons/token.svg');
+  background: var(--color-doom);
+}
+
+/* The value, then the − and + steppers under it while adjusting. */
 #investigators dd {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: var(--space-1);
   align-items: center;
   margin: 0;
 }
 
 #investigators dd > data {
-  order: 1;
-  min-width: var(--button-compact);
+  flex-basis: 100%;
   font-size: var(--font-size-subtitle);
-  font-variant-numeric: tabular-nums;
+  /* The UI face's old-style figures make a 0 read as an o. */
+  font-variant-numeric: lining-nums tabular-nums;
   text-align: center;
-}
-
-/* The − stepper sits left of the value and the + stepper right of it. */
-#investigators dd > button:last-child {
-  order: 2;
 }
 
 #investigators dd > button {
   padding: 0;
-}
-
-/* Beside the map the counters share the panel's width, each value above its steppers. */
-@media (orientation: landscape) {
-  #investigators dl {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  #investigators dd {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  #investigators dd > data {
-    order: 0;
-    flex-basis: 100%;
-  }
 }
 
 /* The turn controls: "Start turn", or the action pips, resign and End while it is their turn. */

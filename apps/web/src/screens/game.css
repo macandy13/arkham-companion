@@ -113,6 +113,22 @@
   grid-area: map;
 }
 
+/*
+ * The map's and the investigators' headings and the map's caption name them for screen readers
+ * only: the map shows what it is (with several maps the tabs name them), and the investigator
+ * panels show whose they are, as in the prototype.
+ */
+#map > h2,
+#map figcaption,
+#investigators > h2 {
+  position: absolute;
+  width: var(--hidden-size);
+  height: var(--hidden-size);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 #investigators {
   grid-area: investigators;
 }
@@ -274,11 +290,12 @@
   line-height: 1;
 }
 
-/* The display face's figures read as letters at this size, so the count takes the UI face. */
+/* The display face's figures read as letters at this size, so the count takes the UI face's lining ones. */
 #board > header [data-token] > data {
   font-family: var(--font-family);
   font-size: var(--font-size-token-count);
   font-weight: bold;
+  font-variant-numeric: lining-nums;
 }
 
 #board > header [data-token='doom'] {

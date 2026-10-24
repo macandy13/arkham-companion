@@ -4,7 +4,7 @@ import { resumeImportedGame, twoGhoulPriestsExport } from './fixtures/saved_game
 // Journey: advance the act once its clues are on it – in a game whose setup put two
 // Ghoul Priests aside, so the act's reverse side cannot tell which one spawns and asks the players
 // to do it by hand.
-test('advance the act', { tag: '@flow' }, async ({ page }) => {
+test('advance the act', async ({ page }) => {
   await test.step('Import a game at act 2 with two Ghoul Priests set aside', async () => {
     await resumeImportedGame(page, 'Two Ghoul Priests', twoGhoulPriestsExport('Two Ghoul Priests'));
   });

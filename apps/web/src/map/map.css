@@ -10,20 +10,6 @@
   align-items: center;
 }
 
-/*
- * The area's heading and the map's caption name the map for screen readers only: the map shows
- * what it is, and with several maps the tabs name them.
- */
-#map > h2,
-#map figcaption {
-  position: absolute;
-  width: var(--hidden-size);
-  height: var(--hidden-size);
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
 #map > [role='tablist'],
 #map figure [role='toolbar'] {
   position: absolute;
