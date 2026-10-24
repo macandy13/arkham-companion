@@ -52,10 +52,10 @@
   --panel-frame: url('./panel_frame.svg');
   --panel-frame-slice: 24;
   --panel-frame-width: 2rem;
-  /* The same frame round the play screen's smaller panels (investigators, encounter, notices). */
+  /* The same frame round the play screen's smaller panels (encounter, notices). */
   --panel-frame-width-compact: 1rem;
-  /* The investigator whose turn it is: their panel glows in the accent colour inside its frame. */
-  --turn-glow: inset 0 0 var(--space-3) var(--color-accent);
+  /* The investigator whose turn it is: their card glows in the accent colour around its edge. */
+  --turn-glow: 0 0 var(--space-3) var(--color-accent);
   /* The ornament under a screen's title (ornament_rule.svg), a small zodiac ring between rules. */
   --title-ornament: url('./ornament_rule.svg');
   --title-ornament-width: 12rem;
@@ -162,8 +162,20 @@
   --header-token-rim: var(--color-card-text);
   --header-token-text: #fff;
   --header-token-shadow: 0 2px 6px rgb(0 0 0 / 0.45);
-  /* The investigator card in each panel of the investigator bar is this tall. */
-  --layout-investigator-card-height: 5rem;
+  /* The art window on the investigator card in each panel of the investigator bar. */
+  --layout-investigator-art-width: 7.5rem;
+  --investigator-art-ratio: 4 / 3;
+  /*
+   * Where the art is on the scan of an investigator card's front (landscape, 419 × 300), in
+   * fractions of its width and height, as `LOCATION_ART` gives it for locations: the right half,
+   * under the top edge. The same 4 : 3 shape as the art window, so the art keeps its proportions.
+   */
+  --investigator-art-x: 0.48;
+  --investigator-art-y: 0.04;
+  --investigator-art-width: 0.52;
+  --investigator-art-height: 0.545;
+  /* The round counters along the foot of an investigator card. */
+  --stat-token-size: 2.25rem;
   /* The encounter discard pile's symbol next to the deck: a small card outline this tall. */
   --layout-pile-symbol-height: 2rem;
   /* A dragged map piece's copy, see-through so the tile under it stays readable. */

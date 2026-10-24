@@ -59,7 +59,8 @@ Slices, one PR each:
 - [x] M3.5d: the investigator card like ArkhamDB shows it: the picture of its front fills the card (`InvestigatorView.image`), and the four skills show beside it (`InvestigatorView.skills`)
 - [x] M3.5e: tapping a skill opens a skill test against it: difficulty, the players' modifier and the chaos token drawn, with the calculation and the result (`skillTestSuggestion`); a free test changes nothing in the game
       Done: [`SkillTestDialog`](../../apps/web/src/investigators/SkillTestDialog.tsx) over `BoardView.skillTest` and `BoardView.chaosBag`; tokens are picked or drawn in the app, and after a bless, curse, frost or blood the test waits for another (`revealsAnotherToken`).
-- [ ] M3.5f: the investigator card drawn like the location cards: a name header, the picture, the skills with the Arkham icons (head, book, fist, foot) and the counters as tokens
+- [x] M3.5f: the investigator card drawn like the location cards: a name header, the picture, the skills with the Arkham icons (head, book, fist, foot) and the counters as tokens
+      Done: the panel's card in [`investigators.css`](../../apps/web/src/investigators/investigators.css); the art window cuts the art out of the scan by `--investigator-art-*`. Follow-up: check that area on real investigator scans (estimated without network access, as M3.12c did for locations).
 - [ ] Follow-ups: the investigator card's class colour (the engine has no faction yet); clue and doom steppers need an investigator-counter correction in the engine (`ManualAdjust` has none yet), so they come with M3.11's adjust mode
 
 ## M3.6 Encounter panel (S)

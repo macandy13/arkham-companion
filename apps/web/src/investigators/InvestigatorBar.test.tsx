@@ -115,7 +115,7 @@ describe('InvestigatorBar', () => {
     ]);
   });
 
-  it('fills the card with the picture of its front once it has loaded', () => {
+  it('shows the art of the card picture once it has loaded', () => {
     const table = PlayTable.start(
       newGame()
         .withLocation(study, blankLocation('study'))
@@ -132,18 +132,18 @@ describe('InvestigatorBar', () => {
         adjusting={false}
       />,
     );
-    const card = within(panel('alder')).getByRole('figure');
     // The picture is decorative (`alt=""`), so it has no role to find it by.
-    const picture = card.querySelector('img');
-    if (!picture) throw new Error("alder's card has no picture");
-    const beforeLoading = card.hasAttribute('data-picture');
+    const art = within(panel('alder')).getByRole('article').querySelector('picture');
+    const picture = art?.querySelector('img');
+    if (!art || !picture) throw new Error("alder's card has no picture");
+    const beforeLoading = art.hasAttribute('data-picture');
 
     // jsdom loads no images, so the test fires the load itself.
     fireEvent.load(picture);
 
     expect(picture.getAttribute('src')).toBe('https://arkhamdb.com/bundles/cards/alder.png');
     expect(beforeLoading).toBe(false);
-    expect(card.getAttribute('data-picture')).toBe('shown');
+    expect(art.getAttribute('data-picture')).toBe('shown');
   });
 
   describe('the line on their round', () => {
