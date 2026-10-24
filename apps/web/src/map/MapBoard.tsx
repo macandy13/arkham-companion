@@ -247,21 +247,33 @@ function pawnsAt(board: BoardView, location: LocationView): InvestigatorView[] {
   return board.investigators.filter(({ id }) => location.investigators?.includes(id));
 }
 
-/** The zoom buttons of the map whose `TransformWrapper` they sit in. */
+/**
+ * The zoom buttons of the map whose `TransformWrapper` they sit in: icons named for screen
+ * readers, small so they float over the map instead of taking a row of it.
+ */
 function ZoomControls() {
   const { t } = useTranslation();
   const { zoomIn, zoomOut, resetTransform } = useControls();
   return (
     <div role="toolbar" aria-label={t('map.zoom')}>
-      <button type="button" onClick={() => zoomIn()}>
-        {t('map.zoomIn')}
-      </button>
-      <button type="button" onClick={() => zoomOut()}>
-        {t('map.zoomOut')}
-      </button>
-      <button type="button" onClick={() => resetTransform()}>
-        {t('map.fit')}
-      </button>
+      <button
+        type="button"
+        data-icon="zoom_in"
+        aria-label={t('map.zoomIn')}
+        onClick={() => zoomIn()}
+      />
+      <button
+        type="button"
+        data-icon="zoom_out"
+        aria-label={t('map.zoomOut')}
+        onClick={() => zoomOut()}
+      />
+      <button
+        type="button"
+        data-icon="fit"
+        aria-label={t('map.fit')}
+        onClick={() => resetTransform()}
+      />
     </div>
   );
 }

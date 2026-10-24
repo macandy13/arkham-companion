@@ -189,12 +189,12 @@ describe('MapBoard', () => {
     expect(screen.queryByRole('figure', { name: 'Empty study' })).toBeNull();
   });
 
-  it('offers zoom buttons for the shown map', () => {
+  it('offers zoom icons named for screen readers', () => {
     const table = PlayTable.start(house);
     render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
     const zoom = within(screen.getByRole('toolbar', { name: 'Zoom' }));
-    expect(zoom.getAllByRole('button').map((button) => button.textContent)).toEqual([
+    expect(zoom.getAllByRole('button').map((button) => button.getAttribute('aria-label'))).toEqual([
       'Zoom in',
       'Zoom out',
       'Fit map',

@@ -59,6 +59,17 @@ button {
   font: inherit;
 }
 
+/* An icon button draws its icon (a line drawing named by `data-icon`) in the text colour. */
+button[data-icon]::before {
+  content: '';
+  display: block;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  margin: auto;
+  background: currentcolor;
+  mask: center / contain no-repeat;
+}
+
 button:disabled {
   color: var(--color-text-muted);
 }
