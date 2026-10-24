@@ -202,9 +202,11 @@ export interface ActView {
  * One open decision as the players see it: the question (`prompt`, the
  * engine's i18n key), the card it is `about`, the investigator it is `for`
  * (the one tested or attacked, who answers it), the dialog `kind`, the test of
- * a skill test, the options by readable name (`optionName`) and, for options
- * whose counts the players confirm or adjust, the default counts by option
- * name (e.g. `{ attack: { damage: 1, horror: 2 } }`).
+ * a skill test, the options by readable name (`optionName`), the `labels` the
+ * UI translates for the names that are not their own label (`does not provoke`
+ * is `decision.doesNotProvoke`, while an investigator's name or a scenario's
+ * key is), and, for options whose counts the players confirm or adjust, the
+ * default counts by option name (e.g. `{ attack: { damage: 1, horror: 2 } }`).
  */
 export interface DecisionView {
   prompt: string;
@@ -214,6 +216,7 @@ export interface DecisionView {
   for?: InvestigatorId;
   test?: SkillTest;
   options: string[];
+  labels?: Record<string, string>;
   defaults?: Record<string, Record<string, number>>;
 }
 
@@ -646,6 +649,12 @@ function decisionView(ctx: EngineContext, state: GameState, decision: Decision):
       return Object.keys(counts).length > 0 ? [[optionName(option), counts]] : [];
     }),
   );
+  const labels = Object.fromEntries(
+    decision.options.flatMap((option) => {
+      const name = optionName(option);
+      return name === option.label ? [] : [[name, option.label]];
+    }),
+  );
   const about = nameOfId(ctx, state, decision.subject);
   return {
     prompt: decision.prompt,
@@ -654,6 +663,7 @@ function decisionView(ctx: EngineContext, state: GameState, decision: Decision):
     ...(decision.decider.kind === 'investigator' ? { for: decision.decider.investigatorId } : {}),
     ...(decision.skillTest ? { test: decision.skillTest } : {}),
     options: decision.options.map(optionName),
+    ...(Object.keys(labels).length > 0 ? { labels } : {}),
     ...(Object.keys(defaults).length > 0 ? { defaults } : {}),
   };
 }

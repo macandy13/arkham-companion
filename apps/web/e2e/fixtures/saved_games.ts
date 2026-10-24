@@ -122,6 +122,17 @@ export function twoMapsExport(title: string): Buffer {
 }
 
 /**
+ * Like `houseOpenedExport`, but Alder spends their last action investigating the Hallway and the
+ * players have not reported the test yet, so the screen opens with the decision dialog asking
+ * for its result.
+ */
+export function investigationOpenExport(title: string): Buffer {
+  const table = houseOpened(theGathering);
+  table.investigate(alderId, { result: 'open' });
+  return exportOf(title, table, 'investigation_open');
+}
+
+/**
  * Like `houseOpenedExport`, but the Ghoul Priest, set aside at setup, has spawned in the Cellar,
  * given by hand to keep the script short, so a spec has an enemy to drag around the house.
  */

@@ -747,6 +747,7 @@ describe('decisions and attacks', () => {
         about: 'ghoul',
         for: alice,
         options: ['attack', 'does not provoke'],
+        labels: { attack: 'decision.attack', 'does not provoke': 'decision.doesNotProvoke' },
         defaults: { attack: { damage: 1, horror: 2 } },
       },
     ]);
