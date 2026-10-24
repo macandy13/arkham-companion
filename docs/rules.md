@@ -187,7 +187,7 @@ If auto-success or auto-failure is known before step 3, skip steps 3 and 4. [Var
 [Dealing damage/horror](https://arkhamdb.com/rules#Dealing_Damage_Horror), [defeat](https://arkhamdb.com/rules#Defeat).
 
 - When an investigator is dealt damage or horror, they may assign it to their assets that have health or sanity (no more than would defeat each asset), and the rest goes on the investigator. Prevention happens between assigning and applying, and everything is applied at once.
-- An investigator with damage ≥ health or horror ≥ sanity is defeated and [eliminated](#elimination-and-resign). An enemy with damage ≥ health goes to the encounter discard, or to the victory display if it has Victory X, or to its owner's discard if it is a weakness. A defeated asset goes to its owner's discard.
+- An investigator with damage ≥ health or horror ≥ sanity is defeated and [eliminated](#elimination-and-resign). An enemy with damage ≥ health goes to the encounter discard, or to the victory display if it has Victory X, or to its owner's discard if it is a weakness. A defeated asset goes to its owner's discard. A "when [this enemy] is defeated" forced ability (Goat Spawn) resolves after the enemy has gone, and "its location" is where it was: our stand-in for "when", which changes nothing while such an ability only acts on its location.
 
 ## Elimination and resign
 
