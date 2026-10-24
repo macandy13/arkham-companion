@@ -227,6 +227,19 @@ describe('InvestigatorBar', () => {
       expect(on).toEqual([]);
     });
 
+    it('keeps the turn controls waiting while a step is queued', () => {
+      const table = PlayTable.start(hurtAlder.withTurnOf(alder));
+
+      render(
+        <InvestigatorBar board={table.board} actions={actionsOn(table)} busy adjusting={false} />,
+      );
+
+      expect(within(panel('alder')).getByRole('button', { name: 'End turn' })).toHaveProperty(
+        'disabled',
+        true,
+      );
+    });
+
     it('keeps the turn controls waiting, since a turn step is no correction', () => {
       const table = PlayTable.start(hurtAlder.withTurnOf(alder));
 

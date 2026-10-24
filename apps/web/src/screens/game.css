@@ -263,6 +263,6 @@
 
 /* While the players adjust the board, a dashed brass line round the map says it is open for corrections. */
 #board[data-adjusting] > #map {
-  outline: var(--focus-ring-width) dashed var(--color-accent);
+  outline: var(--adjust-outline-width) dashed var(--color-accent);
   outline-offset: calc(-1 * var(--space-1));
 }

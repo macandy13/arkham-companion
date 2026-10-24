@@ -108,6 +108,8 @@
   --button-compact: 1.75rem;
   /* The keyboard focus ring, in the accent colour. */
   --focus-ring-width: 2px;
+  /* The dashed line round the map while the players adjust the board. */
+  --adjust-outline-width: 2px;
 
   --layout-content-width: 60rem;
   /* The investigators' column beside the map in landscape, as wide as the prototype's. */
