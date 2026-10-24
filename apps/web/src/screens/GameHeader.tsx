@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StoreApi } from 'zustand/vanilla';
 import type { BoardView, CardImagePath } from '@arkham/engine';
@@ -6,9 +6,10 @@ import { useCardPicture } from '../catalog/cardImages';
 import type { AppState, OpenGame } from '../state/appStore';
 
 /**
- * The play screen's header, laid out like the scenario's cards on the table: the encounter deck
- * and its discard pile (placeholders until the encounter phase draws), the agenda, the act and the
- * scenario card. The scenario's name is the screen's heading. The cards' buttons wait while a step
+ * The play screen's header, laid out like the scenario's cards on the table, centred and each under
+ * its label like the playmat's: the encounter deck and its discard pile (placeholders until the
+ * encounter phase draws), the agenda, the act and the scenario card. The scenario's name is the
+ * screen's heading. The cards' buttons wait while a step
  * is queued (`OpenGame.busy`), since a second tap would act on whatever the first one leaves open;
  * the agenda's and act's steppers show only while the players adjust the board
  * (`OpenGame.adjusting`). The round, the phase and the buttons that run the game sit in the status
@@ -43,12 +44,10 @@ export function GameHeader({
 function EncounterDeck() {
   const { t } = useTranslation();
   return (
-    <>
-      <section aria-label={t('header.encounterDeck')} data-card="encounter">
-        <p>{t('header.encounterDeck')}</p>
-      </section>
+    <HeaderSlot label={t('header.encounterDeck')}>
+      <div data-card="encounter" />
       <div role="img" aria-label={t('header.encounterDiscard')} data-pile="discard" />
-    </>
+    </HeaderSlot>
   );
 }
 
@@ -60,16 +59,18 @@ function EncounterDeck() {
 function ScenarioCard({ open }: { open: OpenGame }) {
   const { t } = useTranslation();
   return (
-    <section aria-label={t('header.scenario')} data-card="scenario">
-      <h1>{open.scenarioNameKey ? t(open.scenarioNameKey) : t('header.scenario')}</h1>
-    </section>
+    <HeaderSlot label={t('header.scenario')}>
+      <div data-card="scenario">
+        <h1>{open.scenarioNameKey ? t(open.scenarioNameKey) : t('header.scenario')}</h1>
+      </div>
+    </HeaderSlot>
   );
 }
 
 /**
  * The current agenda as a landscape card (`data-card`, styled like the map's card faces): its
- * name, and on the plate at its foot the doom its threshold counts (all doom in play,
- * `doomInPlay`) and, while adjusting, steppers for the doom on the agenda itself, which card
+ * name, a big doom token with the doom its threshold counts (all doom in play, `doomInPlay`) and,
+ * while adjusting, steppers on the plate at its foot for the doom on the agenda itself, which card
  * effects add or the players correct. The buttons sit on the card to keep the header compact.
  */
 function AgendaStatus({
@@ -91,41 +92,44 @@ function AgendaStatus({
   return (
     <HeaderCard kind="agenda" label={t('header.agenda')} image={agenda.image}>
       <h2>{agenda.name}</h2>
-      <footer>
-        <p>
-          {agenda.threshold === undefined
+      <Token
+        kind="doom"
+        count={board.doomInPlay}
+        threshold={agenda.threshold}
+        label={
+          agenda.threshold === undefined
             ? t('header.doom', { doom: board.doomInPlay })
-            : t('header.doomOf', { doom: board.doomInPlay, threshold: agenda.threshold })}
-        </p>
-        {adjusting && (
-          <>
-            <button
-              type="button"
-              aria-label={t('header.removeDoom')}
-              disabled={blocked || agenda.doom === 0}
-              onClick={() => void actions.removeDoom(1)}
-            >
-              −
-            </button>
-            <button
-              type="button"
-              aria-label={t('header.addDoom')}
-              disabled={blocked}
-              onClick={() => void actions.placeDoom(1)}
-            >
-              +
-            </button>
-          </>
-        )}
-      </footer>
+            : t('header.doomOf', { doom: board.doomInPlay, threshold: agenda.threshold })
+        }
+      />
+      {adjusting && (
+        <footer>
+          <button
+            type="button"
+            aria-label={t('header.removeDoom')}
+            disabled={blocked || agenda.doom === 0}
+            onClick={() => void actions.removeDoom(1)}
+          >
+            −
+          </button>
+          <button
+            type="button"
+            aria-label={t('header.addDoom')}
+            disabled={blocked}
+            onClick={() => void actions.placeDoom(1)}
+          >
+            +
+          </button>
+        </footer>
+      )}
     </HeaderCard>
   );
 }
 
 /**
- * The current act as a landscape card: its name, and on the plate at its foot the clues on the act
- * against the clues it needs, with steppers for them while adjusting and its advance once there
- * are enough, paid by the clues on the act. The steppers are a correction by hand that leaves the
+ * The current act as a landscape card: its name, a big clue token with the clues on the act against
+ * the clues it needs, and on the plate at its foot steppers for them while adjusting and its
+ * advance once there are enough, paid by the clues on the act. The steppers are a correction by hand that leaves the
  * investigators alone, until a dialog moves clues onto the act from the investigators the players
  * pick. Advancing is play, not a correction, so it waits while the players adjust.
  */
@@ -149,8 +153,15 @@ function ActStatus({
     <HeaderCard kind="act" label={t('header.act')} image={act.image}>
       <h2>{act.name}</h2>
       {threshold !== undefined && (
+        <Token
+          kind="clue"
+          count={clues}
+          threshold={threshold}
+          label={t('header.cluesOf', { clues, threshold })}
+        />
+      )}
+      {threshold !== undefined && (
         <footer>
-          <p>{t('header.cluesOf', { clues, threshold })}</p>
           {adjusting && (
             <>
               <button
@@ -185,10 +196,49 @@ function ActStatus({
 }
 
 /**
- * The landscape card of the agenda or act (`kind`), named `label`, holding its name band and plate
- * (`children`). When its side has a picture (`image`), the picture fills the card once it has
- * loaded (`data-picture`), and the stylesheet hides the name band the picture prints; the plate
- * stays, since its count and buttons are live.
+ * A big round token on the agenda or act, like the doom and clue tokens on the table: the `count`
+ * and, when the card has one, its `threshold` under it ("2 of 7"). `label` says it in words for
+ * screen readers, since the token's colour alone says what it counts.
+ */
+function Token({
+  kind,
+  count,
+  threshold,
+  label,
+}: {
+  kind: 'doom' | 'clue';
+  count: number;
+  threshold: number | undefined;
+  label: string;
+}) {
+  const { t } = useTranslation();
+  return (
+    <p role="img" aria-label={label} data-token={kind}>
+      <data value={count}>{count}</data>
+      {threshold !== undefined && <span>{t('header.of', { threshold })}</span>}
+    </p>
+  );
+}
+
+/**
+ * One place of the header: the playmat's `label` over the card or cards (`children`) that lie
+ * there. The label names the place for screen readers too.
+ */
+function HeaderSlot({ label, children }: { label: string; children: ReactNode }) {
+  const id = useId();
+  return (
+    <section aria-labelledby={id}>
+      <p id={id}>{label}</p>
+      {children}
+    </section>
+  );
+}
+
+/**
+ * The landscape card of the agenda or act (`kind`) under its `label`, holding its name band, token
+ * and plate (`children`). When its side has a picture (`image`), the picture fills the card once
+ * it has loaded (`data-picture`), and the stylesheet hides the name band the picture prints; the
+ * token and plate stay, since their count and buttons are live.
  */
 function HeaderCard({
   kind,
@@ -203,15 +253,13 @@ function HeaderCard({
 }) {
   const picture = useCardPicture(image);
   return (
-    <section
-      aria-label={label}
-      data-card={kind}
-      data-picture={picture?.shown ? 'shown' : undefined}
-    >
-      {picture && (
-        <img src={picture.url} alt="" onLoad={picture.onLoad} onError={picture.onError} />
-      )}
-      {children}
-    </section>
+    <HeaderSlot label={label}>
+      <div data-card={kind} data-picture={picture?.shown ? 'shown' : undefined}>
+        {picture && (
+          <img src={picture.url} alt="" onLoad={picture.onLoad} onError={picture.onError} />
+        )}
+        {children}
+      </div>
+    </HeaderSlot>
   );
 }

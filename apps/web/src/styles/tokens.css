@@ -99,6 +99,8 @@
   --font-size-title: 1.5rem;
   --font-size-subtitle: 1.125rem;
   --font-size-note: 0.75rem;
+  /* The count on a big header token. */
+  --font-size-token-count: 1.75rem;
 
   --radius: 0.5rem;
   /* A circle: round buttons, pips and tokens. */
@@ -150,7 +152,13 @@
     transparent var(--card-pattern-line-width) 14px
   );
   /* The cards in the header (encounter deck, agenda, act, scenario) are this tall. */
-  --layout-header-card-height: 6.5rem;
+  --layout-header-card-height: 8rem;
+  /* The big doom and clue tokens on the agenda and act, with a light rim like the printed tokens. */
+  --header-token-size: 4.5rem;
+  --header-token-border-width: 3px;
+  --header-token-rim: #ece3cf;
+  --header-token-text: #fff;
+  --header-token-shadow: 0 2px 6px rgb(0 0 0 / 0.45);
   /* The investigator card in each panel of the investigator bar is this tall. */
   --layout-investigator-card-height: 5rem;
   /* The encounter discard pile's symbol next to the deck: a small card outline this tall. */

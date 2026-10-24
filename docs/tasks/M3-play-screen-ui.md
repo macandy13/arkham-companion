@@ -205,10 +205,10 @@ Decisions from the prototype review:
 
 - [ ] M3.12d: the header and status row in the prototype's form. Slices:
   - [x] M3.12d1: the status row: the round, the phase track, Next (Done and Cancel while adjusting) and round icon buttons for adjust, undo and a ☰ menu; the app's title bar folds into that menu on the play screen (all games, export, settings)
-  - [ ] M3.12d2: header cards: centred, big doom and clue tokens ("2 of 7"), playmat labels, the encounter deck's count
+  - [x] M3.12d2: header cards: centred, big doom and clue tokens ("2 of 7"), playmat labels; the encounter deck's count waits for the engine's encounter deck (M3.6)
   - [ ] M3.12d3: the investigator panel: the name large beside the card, End in brass, the counters as icons in a full-width row, no "Investigators" heading
 
-  Done: M3.12d1 adds `GameStatus` (`screens/GameStatus.tsx`) below the header cards. Next keeps its label rather than naming the coming phase, since a tap may only run the steps within the current phase.
+  Done: M3.12d1 adds `GameStatus` (`screens/GameStatus.tsx`) below the header cards. Next keeps its label rather than naming the coming phase, since a tap may only run the steps within the current phase. M3.12d2 puts each header place (`HeaderSlot`) under its label and the agenda's doom and the act's clues on a big round `Token` at the card's right, which stays over the card's picture; the plate at the foot keeps only the buttons.
 
 - [ ] M3.12e: dialog style (the X close), with the skill-test sum and chaos-token drawings, inside M3.7
 - [ ] M3.12f: ornaments and frames across the app (screens, panels, dialogs) in the playmat's line style: brass rules, quarters of its zodiac ring, stars, all our own SVG and CSS, no FFG art (a parchment book look was tried first, but it did not fit the playmat's modern look, #230 review)

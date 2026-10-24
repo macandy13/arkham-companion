@@ -73,13 +73,36 @@
   }
 }
 
-/* The header is the playmat's top row, shaded so its cards read over the table. */
+/* The header is the playmat's top row, shaded so its cards read over the table, centred like it. */
 #board > header {
   grid-area: header;
   background: var(--header-shade);
   display: flex;
-  gap: var(--space-3);
-  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-4);
+  align-items: end;
+  padding-block: var(--space-2);
+}
+
+/* Each place of the header: its label over the cards that lie there, side by side. */
+#board > header > section {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-1) var(--space-2);
+  align-items: end;
+}
+
+/* The playmat prints a label over each place, in small spaced capitals. */
+#board > header > section > p {
+  flex-basis: 100%;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-note);
+  letter-spacing: var(--card-type-spacing);
+  text-transform: uppercase;
 }
 
 #board > header p {
@@ -171,14 +194,8 @@
   border-color: var(--color-card-scenario);
 }
 
-/* The deck has room for little more than its label until it shows a card back. */
-#board > header [data-card='encounter'] p {
-  font-size: var(--font-size-note);
-}
-
 /* The encounter discard pile is only a small, empty card outline beside the deck for now. */
 #board > header [data-pile='discard'] {
-  align-self: end;
   height: var(--layout-pile-symbol-height);
   aspect-ratio: 5 / 7;
   border: var(--border-width) dashed var(--color-card-encounter);
@@ -193,7 +210,7 @@
   border-color: var(--color-card-act);
 }
 
-#board > header [data-card] > * {
+#board > header [data-card] > :is(h1, h2, footer) {
   position: relative;
   padding: var(--space-1) var(--space-2);
   background: var(--color-surface);
@@ -220,26 +237,54 @@
   opacity: 0;
 }
 
+/* The plate holds the card's buttons at its foot, clear of the token at the right. */
 #board > header [data-card] > footer {
   display: flex;
   gap: var(--space-1);
   align-items: center;
+  align-self: start;
+  margin: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius);
+}
+
+/*
+ * The doom or clue token, big and round like the tokens on the table, at the card's right over its
+ * art (and over its picture once that shows): the count, and the threshold under it.
+ */
+#board > header [data-token] {
+  position: absolute;
+  inset-inline-end: var(--space-2);
+  bottom: var(--space-2);
+  box-sizing: border-box;
+  width: var(--header-token-size);
+  height: var(--header-token-size);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: var(--header-token-border-width) solid var(--header-token-rim);
+  border-radius: var(--radius-round);
+  box-shadow: var(--header-token-shadow);
+  color: var(--header-token-text);
+  font-family: var(--font-family-display);
   font-size: var(--font-size-note);
+  line-height: 1;
 }
 
-#board > header [data-card] footer p {
-  flex: 1;
-  white-space: nowrap;
+/* The display face's figures read as letters at this size, so the count takes the UI face. */
+#board > header [data-token] > data {
+  font-family: var(--font-family);
+  font-size: var(--font-size-token-count);
+  font-weight: bold;
 }
 
-/* The act's plate holds three buttons, so its count gets a line of its own above them. */
-#board > header [data-card='act'] > footer {
-  flex-wrap: wrap;
-  padding-inline: var(--space-1);
+#board > header [data-token='doom'] {
+  background: var(--color-doom);
 }
 
-#board > header [data-card='act'] footer p {
-  flex-basis: 100%;
+#board > header [data-token='clue'] {
+  background: var(--color-clue);
 }
 
 /* Small buttons on the card's plate, so the card stays compact. */

@@ -112,9 +112,11 @@ describe('GameScreen header', () => {
     const agenda = screen.getByRole('region', { name: 'Agenda' });
     const act = screen.getByRole('region', { name: 'Act' });
     expect(agenda.textContent).toContain("What's Going On?!");
-    expect(agenda.textContent).toContain('Doom 0 / 3');
+    const doom = within(agenda).getByRole('img', { name: 'Doom 0 / 3' });
+    expect(within(doom).getByText('of 3')).toBeTruthy();
     expect(act.textContent).toContain('Trapped');
-    expect(act.textContent).toContain('Clues 0 / 2');
+    const clues = within(act).getByRole('img', { name: 'Clues 0 / 2' });
+    expect(within(clues).getByText('of 2')).toBeTruthy();
   });
 
   it('shows the steppers only while adjusting, with "Done" and "Cancel" in place of "Next"', async () => {
@@ -134,28 +136,28 @@ describe('GameScreen header', () => {
     await renderTheGathering('game-screen-adjust-done-test');
     fireEvent.click(button('Adjust board'));
     fireEvent.click(await screen.findByRole('button', { name: 'Add doom' }));
-    await screen.findByText('Doom 1 / 3');
+    await screen.findByRole('img', { name: 'Doom 1 / 3' });
     fireEvent.click(button('Add doom'));
-    await screen.findByText('Doom 2 / 3');
+    await screen.findByRole('img', { name: 'Doom 2 / 3' });
 
     fireEvent.click(button('Done'));
     await screen.findByRole('button', { name: 'Next' });
-    const kept = screen.getByRole('region', { name: 'Agenda' }).textContent;
+    const kept = screen.queryByRole('img', { name: 'Doom 2 / 3' });
     fireEvent.click(button('Undo'));
 
-    expect(kept).toContain('Doom 2 / 3');
-    expect(await screen.findByText('Doom 0 / 3')).toBeTruthy();
+    expect(kept).toBeTruthy();
+    expect(await screen.findByRole('img', { name: 'Doom 0 / 3' })).toBeTruthy();
   });
 
   it('drops the adjustment on "Cancel"', async () => {
     await renderTheGathering('game-screen-adjust-cancel-test');
     fireEvent.click(button('Adjust board'));
     fireEvent.click(await screen.findByRole('button', { name: 'Add doom' }));
-    await screen.findByText('Doom 1 / 3');
+    await screen.findByRole('img', { name: 'Doom 1 / 3' });
 
     fireEvent.click(button('Cancel'));
 
-    expect(await screen.findByText('Doom 0 / 3')).toBeTruthy();
+    expect(await screen.findByRole('img', { name: 'Doom 0 / 3' })).toBeTruthy();
     expect(button('Undo').disabled).toBe(true);
   });
 
@@ -166,11 +168,11 @@ describe('GameScreen header', () => {
     const removeAtZero = button('Remove doom').disabled;
 
     fireEvent.click(button('Add doom'));
-    await screen.findByText('Doom 1 / 3');
+    await screen.findByRole('img', { name: 'Doom 1 / 3' });
     fireEvent.click(button('Remove doom'));
 
     expect(removeAtZero).toBe(true);
-    expect(await screen.findByText('Doom 0 / 3')).toBeTruthy();
+    expect(await screen.findByRole('img', { name: 'Doom 0 / 3' })).toBeTruthy();
   });
 
   it("puts a clue on the act and takes it off again, leaving Alder's clues alone", async () => {
@@ -180,13 +182,13 @@ describe('GameScreen header', () => {
     const removeAtZero = button('Remove a clue').disabled;
 
     fireEvent.click(button('Add a clue'));
-    await screen.findByText('Clues 1 / 2');
+    await screen.findByRole('img', { name: 'Clues 1 / 2' });
     const alderAfterAdding = store.getState().current?.board?.investigator(investigatorId('alder'));
     fireEvent.click(button('Remove a clue'));
 
     expect(removeAtZero).toBe(true);
     expect(alderAfterAdding?.clues).toBe(0);
-    expect(await screen.findByText('Clues 0 / 2')).toBeTruthy();
+    expect(await screen.findByRole('img', { name: 'Clues 0 / 2' })).toBeTruthy();
   });
 
   it('advances the act once the clues on it reach what it needs', async () => {
@@ -194,13 +196,13 @@ describe('GameScreen header', () => {
     // Trapped needs 2 clues for one investigator.
     fireEvent.click(button('Adjust board'));
     fireEvent.click(await screen.findByRole('button', { name: 'Add a clue' }));
-    await screen.findByText('Clues 1 / 2');
+    await screen.findByRole('img', { name: 'Clues 1 / 2' });
     fireEvent.click(button('Done'));
     await screen.findByRole('button', { name: 'Next' });
     const advanceAtOne = button('Advance').disabled;
     fireEvent.click(button('Adjust board'));
     fireEvent.click(await screen.findByRole('button', { name: 'Add a clue' }));
-    await screen.findByText('Clues 2 / 2');
+    await screen.findByRole('img', { name: 'Clues 2 / 2' });
     const advanceWhileAdjusting = button('Advance').disabled;
     fireEvent.click(button('Done'));
     await screen.findByRole('button', { name: 'Next' });
@@ -218,10 +220,11 @@ describe('GameScreen header', () => {
     await renderTheGathering('game-screen-agenda-picture-test', [
       { ...whatsGoingOn, imageSrc: cardImagePath('/bundles/cards/whats_going_on.jpg') },
     ]);
-    const agenda = screen.getByRole('region', { name: 'Agenda' });
+    const agenda = screen.getByRole('region', { name: 'Agenda' }).querySelector('[data-card]');
+    const act = screen.getByRole('region', { name: 'Act' }).querySelector('[data-card]');
     // The picture is decorative (`alt=""`), so it has no role to find it by.
-    const picture = agenda.querySelector('img');
-    if (!picture) throw new Error('the agenda has no picture');
+    const picture = agenda?.querySelector('img');
+    if (!agenda || !picture) throw new Error('the agenda has no card with a picture');
 
     expect(picture.getAttribute('src')).toBe(
       'https://arkhamdb.com/bundles/cards/whats_going_on.jpg',
@@ -230,7 +233,7 @@ describe('GameScreen header', () => {
     // jsdom loads no images, so the test fires the load itself.
     fireEvent.load(picture);
     expect(agenda.getAttribute('data-picture')).toBe('shown');
-    expect(screen.getByRole('region', { name: 'Act' }).hasAttribute('data-picture')).toBe(false);
+    expect(act?.hasAttribute('data-picture')).toBe(false);
   });
 
   it('turns the buttons off while a step is still being stored', async () => {
@@ -273,20 +276,15 @@ describe('GameScreen header', () => {
     ]);
   });
 
-  it('lays the encounter deck and its discard pile out before the agenda', async () => {
+  it('lays the encounter deck with its discard pile, agenda, act and scenario out under their labels', async () => {
     await renderTheGathering('game-screen-encounter-test');
 
-    const header = screen.getByRole('banner');
-    const cards = [...header.querySelectorAll(':scope > [aria-label]')].map((card) =>
-      card.getAttribute('aria-label'),
-    );
-    expect(cards).toEqual([
-      'Encounter deck',
-      'Encounter discard pile',
-      'Agenda',
-      'Act',
-      'Scenario',
-    ]);
+    const header = within(screen.getByRole('banner'));
+    const labels = header.getAllByRole('region').map((place) => place.firstChild?.textContent);
+    const deck = within(header.getByRole('region', { name: 'Encounter deck' }));
+
+    expect(labels).toEqual(['Encounter deck', 'Agenda', 'Act', 'Scenario']);
+    expect(deck.getByRole('img', { name: 'Encounter discard pile' })).toBeTruthy();
   });
 
   it('warns instead of showing a board for a game it cannot play', async () => {

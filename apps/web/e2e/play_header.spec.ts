@@ -12,24 +12,28 @@ test('play the phases from the header', { tag: '@flow' }, async ({ page }) => {
   });
 
   await test.step('Read the agenda and the act', async () => {
-    await expect(page.getByRole('region', { name: 'Agenda' })).toContainText('Doom 0 / 3');
-    await expect(page.getByRole('region', { name: 'Act' })).toContainText('Clues 0 / 2');
+    await expect(
+      page.getByRole('region', { name: 'Agenda' }).getByRole('img', { name: 'Doom 0 / 3' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('region', { name: 'Act' }).getByRole('img', { name: 'Clues 0 / 2' }),
+    ).toBeVisible();
   });
 
   await test.step('Adjust the board: add doom to the agenda and take it off again', async () => {
     await page.getByRole('button', { name: 'Adjust board' }).click();
     await page.getByRole('button', { name: 'Add doom' }).click();
-    await expect(page.getByText('Doom 1 / 3')).toBeVisible();
+    await expect(page.getByRole('img', { name: 'Doom 1 / 3' })).toBeVisible();
     await page.getByRole('button', { name: 'Remove doom' }).click();
-    await expect(page.getByText('Doom 0 / 3')).toBeVisible();
+    await expect(page.getByRole('img', { name: 'Doom 0 / 3' })).toBeVisible();
   });
 
   await test.step('Put a clue on the act and keep the correction with "Done"', async () => {
     await page.getByRole('button', { name: 'Add a clue' }).click();
-    await expect(page.getByText('Clues 1 / 2')).toBeVisible();
+    await expect(page.getByRole('img', { name: 'Clues 1 / 2' })).toBeVisible();
     await page.getByRole('button', { name: 'Done' }).click();
     await expect(page.getByRole('button', { name: 'Add a clue' })).toBeHidden();
-    await expect(page.getByText('Clues 1 / 2')).toBeVisible();
+    await expect(page.getByRole('img', { name: 'Clues 1 / 2' })).toBeVisible();
   });
 
   await test.step('Move on to the investigation phase', async () => {
@@ -56,7 +60,7 @@ test('play the phases from the header', { tag: '@flow' }, async ({ page }) => {
     await page.getByRole('button', { name: 'Undo' }).click();
     await expect(page.getByRole('heading', { name: 'Setup' })).toBeVisible();
     await page.getByRole('button', { name: 'Undo' }).click();
-    await expect(page.getByText('Clues 0 / 2')).toBeVisible();
+    await expect(page.getByRole('img', { name: 'Clues 0 / 2' })).toBeVisible();
   });
 
   await test.step('Back up the game from the menu', async () => {
