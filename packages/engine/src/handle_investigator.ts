@@ -123,6 +123,7 @@ export function handleDefeatInvestigator(
     type: 'InvestigatorDefeated',
     investigatorId: investigator.id,
     cause: 'cardEffect',
+    ...(cmd.trauma === undefined ? {} : { trauma: cmd.trauma }),
   });
 }
 
