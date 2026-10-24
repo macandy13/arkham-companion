@@ -113,12 +113,11 @@ export const resources = {
         agility: 'Agility',
       },
       skillTest: {
-        title: '{{skill}} test · {{name}}',
+        title: 'Skill test · {{name}}',
         difficulty: 'Difficulty',
         modifier: 'Modifier',
         lower: 'Lower the {{what}}',
         raise: 'Raise the {{what}}',
-        token: 'Chaos token',
         draw: 'Draw a token',
         result: 'Result',
         pass: 'Pass: {{skill}} against {{difficulty}}, by {{margin}}',
@@ -129,6 +128,7 @@ export const resources = {
         step: {
           baseSkill: '{{skill}} {{total}}',
           baseDifficulty: 'Difficulty {{total}}',
+          addedSkill: '+ {{skill}} {{change}}: {{total}}',
           playerModifier: 'Modifier {{change}}: {{total}}',
           chaosToken: 'Token {{token}} ({{change}}): {{total}}',
           autoFail: 'Auto-fail: {{total}}',
@@ -435,12 +435,11 @@ export const resources = {
         agility: 'Geschick',
       },
       skillTest: {
-        title: 'Probe auf {{skill}} · {{name}}',
+        title: 'Fertigkeitsprobe · {{name}}',
         difficulty: 'Schwierigkeit',
         modifier: 'Modifikator',
         lower: '{{what}} senken',
         raise: '{{what}} erhöhen',
-        token: 'Chaosmarker',
         draw: 'Marker ziehen',
         result: 'Ergebnis',
         pass: 'Bestanden: {{skill}} gegen {{difficulty}}, um {{margin}}',
@@ -451,6 +450,7 @@ export const resources = {
         step: {
           baseSkill: '{{skill}} {{total}}',
           baseDifficulty: 'Schwierigkeit {{total}}',
+          addedSkill: '+ {{skill}} {{change}}: {{total}}',
           playerModifier: 'Modifikator {{change}}: {{total}}',
           chaosToken: 'Marker {{token}} ({{change}}): {{total}}',
           autoFail: 'Automatischer Fehlschlag: {{total}}',

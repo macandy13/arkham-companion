@@ -416,9 +416,9 @@
 }
 
 /*
- * The skill test (SkillTestDialog): the difficulty and the modifier as stepper rows, the bag's
- * tokens as a wrapping row of toggles, then the calculation and the outcome, coloured like a pass
- * or a fail. The `#investigators` id lets these beat the home screen's `#app > main` rows and
+ * The skill test (SkillTestDialog): the title with the × in its corner, the skills as a row of
+ * toggles, the difficulty and the modifier as stepper rows, the draw, then the calculation and
+ * the outcome, coloured like a pass or a fail. The `#investigators` id lets these beat the home screen's `#app > main` rows and
  * padded list cards.
  */
 #investigators dialog[data-dialog='skill-test'] {
@@ -431,9 +431,44 @@
   display: none;
 }
 
+#investigators dialog[data-dialog='skill-test'] > header {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: space-between;
+}
+
 #investigators dialog[data-dialog='skill-test'] h2 {
   margin: 0;
   font-size: var(--font-size-subtitle);
+}
+
+#investigators dialog[data-dialog='skill-test'] button[data-icon='close'] {
+  border-radius: var(--radius-round);
+}
+
+#investigators button[data-icon='close']::before {
+  mask-image: url('./icons/close.svg');
+}
+
+/* A skill toggle: its icon, then its value, like on the card. */
+#investigators dialog[data-dialog='skill-test'] button[data-skill] {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+}
+
+#investigators dialog[data-dialog='skill-test'] button[data-skill]::before {
+  content: '';
+  width: var(--stat-icon-size);
+  height: var(--stat-icon-size);
+  background: currentcolor;
+  mask: var(--skill-icon) center / contain no-repeat;
+}
+
+#investigators dialog[data-dialog='skill-test'] button[data-skill] > data {
+  min-width: 0;
+  font-size: var(--font-size-body);
 }
 
 #investigators dialog[data-dialog='skill-test'] section {

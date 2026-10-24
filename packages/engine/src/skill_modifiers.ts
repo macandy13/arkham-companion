@@ -12,6 +12,7 @@ import type {
   ModifierStep,
   ModifierTarget,
   SkillName,
+  SkillValues,
   SkillTestSuggestion,
 } from './state';
 
@@ -40,6 +41,8 @@ export interface SkillTestContext {
  *   cards) are where cards are committed and fast effects add to the test.
  * - `tokens`: the chaos tokens revealed in ST.3 (several when an effect says
  *   "reveal another token").
+ * - `addedSkill`: a second skill whose printed value a card adds to the
+ *   tested one ("test [willpower] + [intellect]").
  *
  * There is no player window after ST.2, but abilities that trigger on the
  * reveal (ST.3/ST.4, e.g. "after you reveal a chaos token") or on the
@@ -53,6 +56,7 @@ export interface SkillTestContext {
 export interface SkillTestInput {
   modifier?: number;
   tokens?: readonly ChaosToken[];
+  addedSkill?: SkillName;
 }
 
 /**
@@ -188,6 +192,7 @@ export function skillTestSuggestion(
     change: tokenChange(ctx, state, test, token),
   }));
   const changes = [
+    ...addedSkillChanges(investigator.skills, input.addedSkill),
     ...playerChanges(input.modifier ?? 0),
     ...tokenChanges.flatMap(({ change }) => change ?? []),
   ];
@@ -237,6 +242,11 @@ function targetTrace(
     steps: withRunningTotals([baseStep, ...own, ...caps], (step) => step.change),
     total: autoFail ? 0 : floored,
   };
+}
+
+function addedSkillChanges(skills: SkillValues, added: SkillName | undefined): Change[] {
+  if (added === undefined) return [];
+  return [{ target: 'skill', source: { kind: 'addedSkill', skill: added }, change: skills[added] }];
 }
 
 function playerChanges(modifier: number): Change[] {

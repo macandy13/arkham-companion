@@ -1,21 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { ChaosToken } from '@arkham/engine';
-import { drawTokens, revealToken, testFinished } from './drawTokens';
+import { drawTokens, testFinished } from './drawTokens';
 
 /** A `random` that picks the bag's tokens in turn: the first left, then the first left again. */
 const firstLeft = () => 0;
-
-describe('revealToken', () => {
-  it.each<{ revealed: ChaosToken[]; token: ChaosToken; after: ChaosToken[] }>([
-    { revealed: [], token: '-1', after: ['-1'] },
-    { revealed: ['-1'], token: 'skull', after: ['skull'] },
-    { revealed: ['bless'], token: '-2', after: ['bless', '-2'] },
-    { revealed: ['bless', 'curse'], token: '0', after: ['bless', 'curse', '0'] },
-    { revealed: ['bless', '0'], token: 'curse', after: ['curse'] },
-  ])('revealing $token after $revealed gives $after', ({ revealed, token, after }) => {
-    expect(revealToken(revealed, token)).toEqual(after);
-  });
-});
 
 describe('testFinished', () => {
   it.each<{ revealed: ChaosToken[]; finished: boolean }>([

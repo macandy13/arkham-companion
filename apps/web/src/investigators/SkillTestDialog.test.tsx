@@ -1,7 +1,14 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { blankLocation, instanceId, investigatorId, newGame, PlayTable } from '@arkham/engine';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import {
+  blankLocation,
+  instanceId,
+  investigatorId,
+  newGame,
+  PlayTable,
+  type ChaosToken,
+} from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { SkillTestDialog } from './SkillTestDialog';
 
@@ -10,6 +17,11 @@ const alder = investigatorId('alder');
 
 const button = (name: string) => screen.getByRole<HTMLButtonElement>('button', { name });
 const result = () => screen.queryByRole('region', { name: 'Result' });
+const outcome = () => within(result()!).getByRole('status').textContent;
+const pressedSkills = () =>
+  within(screen.getByRole('region', { name: 'Skills' }))
+    .getAllByRole('button', { pressed: true })
+    .map((skill) => skill.getAttribute('aria-label'));
 
 describe('SkillTestDialog', () => {
   beforeAll(async () => {
@@ -17,99 +29,115 @@ describe('SkillTestDialog', () => {
   });
   afterEach(cleanup);
 
-  // Alder tests willpower 3; the bag holds +1, −2 twice, a bless and the auto-fail.
-  const table = PlayTable.start(
-    newGame()
-      .withLocation(study, blankLocation('study'))
-      .withInvestigator(alder, {
-        name: 'Alder',
-        locationId: study,
-        skills: { willpower: 3, intellect: 2, combat: 1, agility: 4 },
-      })
-      .withChaosBag(['+1', '-2', '-2', 'bless', 'autoFail']),
-  );
-  const alderView = () => {
+  /**
+   * Opens Alder's willpower test (willpower 3, agility 4) with `bag` as the chaos bag, so a draw
+   * from a bag of one token kind is known in advance.
+   */
+  const renderWillpowerTest = (bag: ChaosToken[], onClose = () => {}) => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withInvestigator(alder, {
+          name: 'Alder',
+          locationId: study,
+          skills: { willpower: 3, intellect: 2, combat: 1, agility: 4 },
+        })
+        .withChaosBag(bag),
+    );
     const view = table.board.investigator(alder);
     if (!view) throw new Error('alder is at the table');
-    return view;
-  };
-  const renderDialog = () =>
     render(
       <SkillTestDialog
         board={table.board}
-        investigator={alderView()}
+        investigator={view}
         skill="willpower"
-        onClose={() => {}}
+        onClose={onClose}
       />,
     );
+  };
 
-  it('offers each token of the bag once and shows no result before one is picked', () => {
-    renderDialog();
+  it('tests the tapped skill and shows no result before a token is drawn', () => {
+    renderWillpowerTest(['-1']);
 
-    const tokens = within(screen.getByRole('region', { name: 'Chaos token' }))
-      .getAllByRole('button', { pressed: false })
-      .map((token) => token.textContent);
-    expect(screen.getByRole('heading').textContent).toBe('Willpower test · Alder');
-    expect(tokens).toEqual(['+1', '−2', 'Bless', 'Auto-fail']);
+    expect(screen.getByRole('heading').textContent).toBe('Skill test · Alder');
+    expect(pressedSkills()).toEqual(['Willpower 3']);
     expect(result()).toBeNull();
   });
 
-  it.each([
-    { raises: 0, token: '+1', outcome: 'Pass: 4 against 3, by 1' },
-    { raises: 1, token: '+1', outcome: 'Pass: 4 against 4, by 0' },
-    { raises: 0, token: '−2', outcome: 'Fail: 1 against 3, by 2' },
-    { raises: 0, token: 'Auto-fail', outcome: 'Fail: 0 against 3, by 3' },
+  it.each<{ bag: ChaosToken[]; raises: number; shown: string }>([
+    { bag: ['+1'], raises: 0, shown: 'Pass: 4 against 3, by 1' },
+    { bag: ['+1'], raises: 1, shown: 'Pass: 4 against 4, by 0' },
+    { bag: ['-2'], raises: 0, shown: 'Fail: 1 against 3, by 2' },
+    { bag: ['autoFail'], raises: 0, shown: 'Fail: 0 against 3, by 3' },
   ])(
-    'with the difficulty raised $raises times from 3 and $token drawn: "$outcome"',
-    ({ raises, token, outcome }) => {
-      renderDialog();
+    'drawing from $bag with the difficulty raised $raises times from 3 shows "$shown"',
+    ({ bag, raises, shown }) => {
+      renderWillpowerTest(bag);
 
       for (let i = 0; i < raises; i++) fireEvent.click(button('Raise the Difficulty'));
-      fireEvent.click(button(token));
+      fireEvent.click(button('Draw a token'));
 
-      expect(within(result()!).getByRole('status').textContent).toBe(outcome);
+      expect(outcome()).toBe(shown);
     },
   );
 
-  it('shows the calculation step by step, the modifier included', () => {
-    renderDialog();
+  it('adds a second skill tapped to the tested one', () => {
+    renderWillpowerTest(['-2']);
 
-    fireEvent.click(button('Raise the Modifier'));
-    fireEvent.click(button('Raise the Modifier'));
-    fireEvent.click(button('−2'));
+    fireEvent.click(button('Agility 4'));
+    fireEvent.click(button('Draw a token'));
 
     const steps = within(result()!)
       .getAllByRole('listitem')
       .map((step) => step.textContent);
+    expect(pressedSkills()).toEqual(['Willpower 3', 'Agility 4']);
     // The skill's steps come first, then the difficulty's.
-    expect(steps).toEqual(['Willpower 3', 'Modifier +2: 5', 'Token −2 (−2): 3', 'Difficulty 3']);
+    expect(steps).toEqual(['Willpower 3', '+ Agility +4: 7', 'Token −2 (−2): 5', 'Difficulty 3']);
   });
 
-  it('waits for another token after a bless, then adds both', () => {
-    renderDialog();
+  it('tests another skill once the tapped one is dropped', () => {
+    renderWillpowerTest(['0']);
 
-    fireEvent.click(button('Bless'));
-    const waiting = within(result()!).getByRole('status').textContent;
-    fireEvent.click(button('−2'));
+    fireEvent.click(button('Agility 4'));
+    fireEvent.click(button('Willpower 3'));
+    fireEvent.click(button('Draw a token'));
 
-    expect(waiting).toBe('Reveal another token.');
-    expect(within(result()!).getByRole('status').textContent).toBe('Pass: 3 against 3, by 0');
+    expect(pressedSkills()).toEqual(['Agility 4']);
+    expect(outcome()).toBe('Pass: 4 against 3, by 1');
+  });
+
+  it("adds the players' modifier", () => {
+    renderWillpowerTest(['0']);
+
+    fireEvent.click(button('Raise the Modifier'));
+    fireEvent.click(button('Raise the Modifier'));
+    fireEvent.click(button('Draw a token'));
+
+    expect(within(result()!).getByText('Modifier +2: 5')).toBeTruthy();
+  });
+
+  it('asks for another token when the bag runs out after a bless', () => {
+    renderWillpowerTest(['bless']);
+
+    fireEvent.click(button('Draw a token'));
+
+    expect(outcome()).toBe('Reveal another token.');
   });
 
   it('cannot lower the difficulty below 0', () => {
-    renderDialog();
+    renderWillpowerTest(['0']);
 
     for (let i = 0; i < 3; i++) fireEvent.click(button('Lower the Difficulty'));
 
     expect(button('Lower the Difficulty').disabled).toBe(true);
   });
 
-  it('draws a token from the bag', () => {
-    renderDialog();
+  it('closes with the × in its corner', () => {
+    const onClose = vi.fn();
+    renderWillpowerTest(['0'], onClose);
 
-    fireEvent.click(button('Draw a token'));
+    fireEvent.click(button('Close'));
 
-    expect(screen.getAllByRole('button', { pressed: true }).length).toBeGreaterThan(0);
-    expect(within(result()!).getByRole('status').textContent).not.toBe('Reveal another token.');
+    expect(onClose).toHaveBeenCalledOnce();
   });
 });

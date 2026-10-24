@@ -1,14 +1,5 @@
 import { revealsAnotherToken, type ChaosToken } from '@arkham/engine';
 
-/**
- * The tokens a skill test has revealed once one more is revealed: `token` joins `revealed` while
- * the last one there makes the tester reveal another (bless, curse, frost, blood); otherwise it
- * starts a new test of its own.
- */
-export function revealToken(revealed: readonly ChaosToken[], token: ChaosToken): ChaosToken[] {
-  return testFinished(revealed) || revealed.length === 0 ? [token] : [...revealed, token];
-}
-
 /** Whether `revealed` ends the test: the last token revealed makes the tester reveal no other. */
 export function testFinished(revealed: readonly ChaosToken[]): boolean {
   const last = revealed.at(-1);
