@@ -332,6 +332,27 @@ describe('appStore', () => {
           expect(store.getState().current?.rejection).toEqual({ code: 'noPendingDecision' });
         });
 
+        it('counts off one action for the investigation', async () => {
+          const store = await aldersTurn('actions-investigate-spends-test');
+
+          await store.getState().actions.investigate();
+
+          expect(alderIn(store)).toMatchObject({ actions: 2 });
+        });
+
+        it('refuses an investigation with no action left and changes nothing', async () => {
+          const store = await aldersTurn('actions-investigate-none-left-test');
+          await store.getState().actions.adjustActions(-3);
+
+          await store.getState().actions.investigate();
+
+          expect(store.getState().current?.rejection).toMatchObject({
+            code: 'invalidActionAdjustment',
+          });
+          expect(store.getState().current?.state.pending).toEqual([]);
+          expect(alderIn(store)).toMatchObject({ actions: 0 });
+        });
+
         it('changes the actions left of the investigator whose turn it is', async () => {
           const store = await aldersTurn('actions-adjust-actions-test');
 
