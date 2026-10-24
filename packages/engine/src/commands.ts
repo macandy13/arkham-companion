@@ -1,6 +1,14 @@
 import type { CampaignLog } from './campaign/campaign_log';
 import type { CardType, Trait } from './cards';
-import type { CardCode, DecisionId, InstanceId, InvestigatorId, MapId, ScenarioId } from './ids';
+import type {
+  CardCode,
+  DecisionId,
+  InstanceId,
+  InvestigatorId,
+  MapId,
+  ResolutionId,
+  ScenarioId,
+} from './ids';
 import type { MapPlacement, MapSpec } from './map';
 import type {
   Decision,
@@ -304,7 +312,7 @@ export interface AdvanceAgenda {
    * Fallback resolution for the last agenda when its reverse side does not end
    * the scenario itself; rejected while further agendas follow.
    */
-  resolution?: string;
+  resolution?: ResolutionId;
 }
 
 /** Clues one investigator pays towards advancing the act. */
@@ -334,7 +342,7 @@ export interface AdvanceAct {
    * Fallback resolution for the last act when its reverse side does not end
    * the scenario itself; rejected while further acts follow.
    */
-  resolution?: string;
+  resolution?: ResolutionId;
 }
 
 /**
@@ -344,7 +352,7 @@ export interface AdvanceAct {
  */
 export interface EndScenario {
   type: 'EndScenario';
-  resolution: string;
+  resolution: ResolutionId;
 }
 
 /**

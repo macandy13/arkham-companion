@@ -1,6 +1,6 @@
 import { assertNever } from '@arkham/util';
 import type { EngineContext } from '../cards';
-import type { InvestigatorCode } from '../ids';
+import type { InvestigatorCode, ResolutionId } from '../ids';
 import type { ChaosToken, GameState, Investigator } from '../state';
 import { victoryPoints } from '../victory';
 import type { CampaignCommand } from './campaign_commands';
@@ -54,7 +54,7 @@ export type ResolutionStep =
 /** A scenario's resolutions, on `ScenarioDefinition.resolutions`. */
 export interface ScenarioResolutions {
   /** The steps of each resolution, by the id `ScenarioEnded` records (`GameMeta.resolution`), e.g. `R1`. */
-  readonly byId: Readonly<Record<string, readonly ResolutionStep[]>>;
+  readonly byId: Readonly<Partial<Record<ResolutionId, readonly ResolutionStep[]>>>;
   /** "If no resolution was reached": every investigator resigned or was defeated. */
   readonly none: readonly ResolutionStep[];
 }

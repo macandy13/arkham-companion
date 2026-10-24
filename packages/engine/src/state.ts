@@ -19,6 +19,7 @@ import {
   type InvestigatorId,
   type MapId,
   type ScenarioId,
+  type ResolutionId,
 } from './ids';
 import type { DefeatCause, EncounterCardDrawn } from './events';
 import type { GameMap } from './map';
@@ -456,7 +457,7 @@ export interface GameMeta {
    */
   playerCount: number;
   /** Resolution id the scenario ended with (`ScenarioEnded`); absent while it is still running. */
-  resolution?: string;
+  resolution?: ResolutionId;
   /**
    * Set by `ScenarioEnded`, with or without a resolution. Kept apart from
    * `resolution` because a scenario in which every investigator was

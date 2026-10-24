@@ -26,6 +26,7 @@ import {
   putMapIntoPlay,
   putSetAsideIntoPlay,
   removeFromGame,
+  resolutionId,
   revealLocation,
   skillTest,
   spawnEnemyAt,
@@ -83,9 +84,9 @@ export const GATHERING_CODES = {
  * investigators are trapped in the house (agenda 3 before act 3).
  */
 export const GATHERING_RESOLUTIONS = {
-  burnedDown: 'R1',
-  leftStanding: 'R2',
-  trapped: 'R3',
+  burnedDown: resolutionId('R1'),
+  leftStanding: resolutionId('R2'),
+  trapped: resolutionId('R3'),
 } as const;
 
 /** Id of act 3's question to the lead investigator: burn the house down or not. */

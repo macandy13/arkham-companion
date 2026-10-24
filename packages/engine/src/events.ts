@@ -1,6 +1,14 @@
 import type { CampaignLog } from './campaign/campaign_log';
 import type { AbilityCommand, TestedAction } from './abilities';
-import type { CardCode, DecisionId, InstanceId, InvestigatorId, MapId, ScenarioId } from './ids';
+import type {
+  CardCode,
+  DecisionId,
+  InstanceId,
+  InvestigatorId,
+  MapId,
+  ResolutionId,
+  ScenarioId,
+} from './ids';
 import type { Edge, GameMap } from './map';
 import type { Rejection } from './rejection';
 import type { RngState } from './rng';
@@ -266,7 +274,7 @@ export interface CurrentCardChanged {
  */
 export interface ScenarioEnded {
   type: 'ScenarioEnded';
-  resolution?: string;
+  resolution?: ResolutionId;
 }
 
 /** String literal of every event type. */

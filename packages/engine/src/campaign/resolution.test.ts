@@ -8,8 +8,10 @@ import {
   investigatorCode,
   investigatorId,
   newGame,
+  resolutionId,
   type Command,
   type InvestigatorId,
+  type ResolutionId,
   type ScenarioResolutions,
 } from '../index';
 
@@ -20,7 +22,12 @@ const study = instanceId('study');
 const aliceCode = investigatorCode('alice');
 const bobCode = investigatorCode('bob');
 
-const endWith = (resolution: string): Command => ({ type: 'EndScenario', resolution });
+/** The resolutions the scenarios below end with. */
+const r1 = resolutionId('R1');
+const r3 = resolutionId('R3');
+const r9 = resolutionId('R9');
+
+const endWith = (resolution: ResolutionId): Command => ({ type: 'EndScenario', resolution });
 const resign = (investigator: InvestigatorId): Command => ({
   type: 'Resign',
   investigatorId: investigator,
@@ -54,7 +61,7 @@ describe('proposeResolution', () => {
   it('turns the steps of the resolution the game ended with into campaign commands', () => {
     const resolutions: ScenarioResolutions = {
       byId: {
-        R1: [
+        [r1]: [
           { kind: 'record', key: 'houseStillStanding', value: { kind: 'flag', value: false } },
           { kind: 'addChaosToken', token: 'cultist' },
           { kind: 'removeChaosToken', token: '-1' },
@@ -68,7 +75,7 @@ describe('proposeResolution', () => {
 
     const proposal = campaign.proposeResolution(
       context,
-      stateAfter(context, state, endWith('R1')),
+      stateAfter(context, state, endWith(r1)),
       resolutions,
     );
 
@@ -93,7 +100,7 @@ describe('proposeResolution', () => {
 
   it('awards each investigator the victory points plus the bonus', () => {
     const resolutions: ScenarioResolutions = {
-      byId: { R1: [{ kind: 'awardXp', to: 'each', bonus: 2, victoryDisplay: true }] },
+      byId: { [r1]: [{ kind: 'awardXp', to: 'each', bonus: 2, victoryDisplay: true }] },
       none: [],
     };
     const { context, state } = table
@@ -104,7 +111,7 @@ describe('proposeResolution', () => {
 
     const proposal = campaign.proposeResolution(
       context,
-      stateAfter(context, state, endWith('R1')),
+      stateAfter(context, state, endWith(r1)),
       resolutions,
     );
 
@@ -116,14 +123,14 @@ describe('proposeResolution', () => {
 
   it('proposes no experience when there is nothing to earn', () => {
     const resolutions: ScenarioResolutions = {
-      byId: { R1: [{ kind: 'awardXp', to: 'each', bonus: 0, victoryDisplay: true }] },
+      byId: { [r1]: [{ kind: 'awardXp', to: 'each', bonus: 0, victoryDisplay: true }] },
       none: [],
     };
     const { context, state } = table.start();
 
     const proposal = campaign.proposeResolution(
       context,
-      stateAfter(context, state, endWith('R1')),
+      stateAfter(context, state, endWith(r1)),
       resolutions,
     );
 
@@ -132,14 +139,14 @@ describe('proposeResolution', () => {
 
   it('kills only the investigators who did not resign', () => {
     const resolutions: ScenarioResolutions = {
-      byId: { R3: [{ kind: 'markKilled', to: 'notResigned' }] },
+      byId: { [r3]: [{ kind: 'markKilled', to: 'notResigned' }] },
       none: [],
     };
     const { context, state } = table.withTurnOf(bob).start();
 
     const proposal = campaign.proposeResolution(
       context,
-      stateAfter(context, state, resign(bob), endWith('R3')),
+      stateAfter(context, state, resign(bob), endWith(r3)),
       resolutions,
     );
 
@@ -150,14 +157,14 @@ describe('proposeResolution', () => {
 
   it('gives no defeat trauma to an investigator the resolution kills', () => {
     const resolutions: ScenarioResolutions = {
-      byId: { R3: [{ kind: 'markKilled', to: 'notResigned' }] },
+      byId: { [r3]: [{ kind: 'markKilled', to: 'notResigned' }] },
       none: [],
     };
     const { context, state } = table.start();
 
     const proposal = campaign.proposeResolution(
       context,
-      stateAfter(context, state, takeDamage(bob, 8), endWith('R3')),
+      stateAfter(context, state, takeDamage(bob, 8), endWith(r3)),
       resolutions,
     );
 
@@ -185,14 +192,14 @@ describe('proposeResolution', () => {
 
   it('adds 1 physical trauma for a defeat by damage after the resolution steps', () => {
     const resolutions: ScenarioResolutions = {
-      byId: { R1: [{ kind: 'awardXp', to: 'lead', bonus: 1, victoryDisplay: false }] },
+      byId: { [r1]: [{ kind: 'awardXp', to: 'lead', bonus: 1, victoryDisplay: false }] },
       none: [],
     };
     const { context, state } = table.start();
 
     const proposal = campaign.proposeResolution(
       context,
-      stateAfter(context, state, takeDamage(bob, 8), endWith('R1')),
+      stateAfter(context, state, takeDamage(bob, 8), endWith(r1)),
       resolutions,
     );
 
@@ -218,12 +225,12 @@ describe('proposeResolution', () => {
     ],
     ['by a card effect', { type: 'DefeatInvestigator', investigatorId: alice }, []],
   ] as const)('gives the trauma of a defeat %s', (_, defeat, trauma) => {
-    const resolutions: ScenarioResolutions = { byId: { R1: [] }, none: [] };
+    const resolutions: ScenarioResolutions = { byId: { [r1]: [] }, none: [] };
     const { context, state } = table.start();
 
     const proposal = campaign.proposeResolution(
       context,
-      stateAfter(context, state, defeat, endWith('R1')),
+      stateAfter(context, state, defeat, endWith(r1)),
       resolutions,
     );
 
@@ -232,9 +239,9 @@ describe('proposeResolution', () => {
 
   it.each([
     ['the game is still running', [] as Command[]],
-    ['the scenario does not define the resolution', [endWith('R9')]],
+    ['the scenario does not define the resolution', [endWith(r9)]],
   ])('proposes nothing while %s', (_, commands) => {
-    const resolutions: ScenarioResolutions = { byId: { R1: [] }, none: [] };
+    const resolutions: ScenarioResolutions = { byId: { [r1]: [] }, none: [] };
     const { context, state } = table.start();
 
     const proposal = campaign.proposeResolution(
