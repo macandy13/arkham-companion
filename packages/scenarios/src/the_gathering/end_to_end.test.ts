@@ -49,6 +49,8 @@ import {
   theGatheringCards,
   nightOfTheZealot,
   theGatheringResolutions,
+  theMidnightMasks,
+  theMidnightMasksCardDefs,
 } from '../index';
 import { daisyWalker, rolandBanks, wendyAdams, zealotInvestigatorCards } from '../investigators';
 
@@ -1118,6 +1120,24 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         },
       }),
     );
+
+    // The Midnight Masks sets up from the same log: the house burned down, so the investigators
+    // start in Rivertown, and Roland starts with 1 horror for his mental trauma.
+    const masks = scenario.compileSetup(
+      { cards: cardDbWith(ctx.cards, theMidnightMasksCardDefs), scenario: theMidnightMasks },
+      { seed: 24, investigators: zealotSeats, campaign: log },
+    );
+    expect(
+      masks.investigators.map(({ id, locationId, sanity }) => ({
+        id,
+        locationId,
+        horror: sanity.horror,
+      })),
+    ).toEqual([
+      { id: roland, locationId: '01125#1', horror: 1 },
+      { id: daisy, locationId: '01125#1', horror: 0 },
+      { id: wendy, locationId: '01125#1', horror: 0 },
+    ]);
 
     // The whole event log, setup included, replays to the live state.
     expect(replay(table.events)).toEqual(table.state);
