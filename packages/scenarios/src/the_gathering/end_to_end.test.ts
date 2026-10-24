@@ -38,6 +38,7 @@ import {
   mapId,
   PlayTable,
   replay,
+  scenario,
   type ScenarioContext,
 } from '@arkham/engine';
 import { answer } from '@arkham/engine/test/utils';
@@ -1104,6 +1105,19 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       { scenarioId: 'the-gathering', outcome: { kind: 'resolution', id: 'R1' } },
     ]);
     expect(campaign.findCurrentScenarioId(log)).toBe('the-midnight-masks');
+
+    // The log now plays The Midnight Masks, so setting up The Gathering from it again is refused.
+    expect(() =>
+      scenario.compileSetup(ctx, { seed: 24, investigators: zealotSeats, campaign: log }),
+    ).toThrow(
+      expect.objectContaining({
+        rejection: {
+          code: 'notNextCampaignScenario',
+          scenarioId: 'the-gathering',
+          next: 'the-midnight-masks',
+        },
+      }),
+    );
 
     // The whole event log, setup included, replays to the live state.
     expect(replay(table.events)).toEqual(table.state);

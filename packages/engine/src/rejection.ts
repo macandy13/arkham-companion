@@ -1,3 +1,4 @@
+import type { InvestigatorFate, StoryCondition } from './campaign/campaign_log';
 import type { CommandType } from './commands';
 import type {
   CardCode,
@@ -7,6 +8,7 @@ import type {
   InvestigatorId,
   MapId,
   EncounterSetCode,
+  ScenarioId,
 } from './ids';
 import type { Decider, InvestigatorStat, NamedAmount, Phase, TokenKind } from './state';
 
@@ -25,6 +27,20 @@ export type Rejection =
   | { code: 'unknownInvestigator'; investigatorId: InvestigatorId }
   /** A seat in `SetupOptions` names a code that is not an investigator card in the `EngineContext`'s `CardDb`. */
   | { code: 'unknownInvestigatorCard'; investigatorCode: InvestigatorCode }
+  /** A campaign setup for `scenarioId`, but the campaign log plays `next` (undefined once it is complete). */
+  | { code: 'notNextCampaignScenario'; scenarioId: ScenarioId; next: ScenarioId | undefined }
+  /** A campaign setup seats an investigator who is not on the log's team. */
+  | { code: 'notOnCampaignTeam'; investigatorCode: InvestigatorCode }
+  /** A campaign setup seats a killed or insane investigator, who must be replaced first. */
+  | {
+      code: 'investigatorNeedsReplacement';
+      investigatorCode: InvestigatorCode;
+      fate: Exclude<InvestigatorFate, 'alive'>;
+    }
+  /** A setup step asks about story record `key` as a `condition`, but the log holds another kind of record there. */
+  | { code: 'storyConditionMismatch'; key: string; condition: StoryCondition['kind'] }
+  /** A campaign setup leaves a member of the log's team without a seat. */
+  | { code: 'campaignMemberNotSeated'; investigatorCode: InvestigatorCode }
   | { code: 'unknownMap'; mapId: MapId }
   /** `AddMap` names a map that is already on the board. */
   | { code: 'duplicateMap'; mapId: MapId }
@@ -248,6 +264,16 @@ function describe(r: Rejection): string {
       return `unknown investigator ${r.investigatorId}`;
     case 'unknownInvestigatorCard':
       return `no investigator card ${r.investigatorCode}`;
+    case 'notNextCampaignScenario':
+      return `the campaign plays ${r.next ?? 'no more scenarios'}, not ${r.scenarioId}`;
+    case 'notOnCampaignTeam':
+      return `investigator ${r.investigatorCode} is not on the campaign's team`;
+    case 'investigatorNeedsReplacement':
+      return `investigator ${r.investigatorCode} is ${r.fate} and must be replaced first`;
+    case 'storyConditionMismatch':
+      return `setup asks story record ${r.key} as a ${r.condition}, but the log holds another kind`;
+    case 'campaignMemberNotSeated':
+      return `investigator ${r.investigatorCode} of the campaign's team has no seat`;
     case 'unknownMap':
       return `unknown map ${r.mapId}`;
     case 'duplicateMap':

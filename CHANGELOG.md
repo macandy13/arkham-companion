@@ -2,6 +2,22 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.7](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.6...arkham-companion-v0.1.7) (2026-10-24)
+
+
+### Features
+
+* **engine:** place your clues for each point you fail by (M4.5 step 5b2) ([0f56453](https://github.com/macandy13/arkham-companion/commit/0f56453870529d84e947e39cd0df6feca6632cf3))
+* **engine:** place your clues for each point you fail by (M4.5 step 5b2) ([fda4eea](https://github.com/macandy13/arkham-companion/commit/fda4eea25247ada7b0d91c88870da081cd5fd845))
+* **engine:** start a campaign scenario from the log (M1C.5a) ([caaaa90](https://github.com/macandy13/arkham-companion/commit/caaaa909c349674d52697c0114fa787b9cb48ce6))
+* **engine:** start a campaign scenario from the log (M1C.5a) ([e4152c2](https://github.com/macandy13/arkham-companion/commit/e4152c20739b74b12f44e6486f5740f747318b07))
+
+
+### Refactoring
+
+* **engine:** reuse campaign log lookups, end-to-end campaign setup step ([1f90a34](https://github.com/macandy13/arkham-companion/commit/1f90a34c3b41fdd873e6a6e8633fe89ea2da4e3e))
+* **engine:** reuse cluesToLocationEvents for PlaceClues ([35b3c84](https://github.com/macandy13/arkham-companion/commit/35b3c8484fea67d13d9a3e4944907ac3541380ce))
+
 ## [0.1.6](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.5...arkham-companion-v0.1.6) (2026-10-24)
 
 

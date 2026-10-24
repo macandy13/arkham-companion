@@ -757,7 +757,7 @@ describe('trigger bus', () => {
     );
   });
 
-  describe('tests that deal damage or horror per point failed', () => {
+  describe('tests that cost something for each point failed', () => {
     const graspingHands = instanceId('grasping_hands');
     const rottingRemains = instanceId('rotting_remains');
     /** "Revelation – Test agility (3). Take 1 damage for each point you fail by." */
@@ -822,6 +822,33 @@ describe('trigger bus', () => {
 
       expect(state.investigators.find((inv) => inv.id === alice)?.health.damage).toBe(0);
     });
+
+    it.each([
+      { clues: 3, margin: 2, kept: 1, placed: 2 },
+      { clues: 1, margin: 3, kept: 0, placed: 1 },
+    ])(
+      "places $placed of alice's $clues clues on the hall for a fail by $margin",
+      ({ clues, margin, kept, placed }) => {
+        /** "Revelation – Test intellect (4). For each point you fail by, place 1 of your clues on your location." */
+        const losingTrailCard = blankTreachery('losing_trail', {
+          abilities: [whenRevealed(skillTest('intellect', 4, { perPointFailed: 'clues' }))],
+        });
+        const { context, state: started } = newGame()
+          .withLocation(hall, blankLocation('hall'), { revealed: true, clues: 0 })
+          .withInvestigator(alice, { locationId: hall, clues })
+          .withCard(instanceId('losing_trail'), losingTrailCard, { kind: 'encounterDeck' })
+          .start();
+        const drawn = stateAfter(context, started, aliceDraws);
+
+        const { state } = execute(context, drawn, {
+          ...answer('test:losing_trail', 'fail'),
+          margin,
+        });
+
+        expect(requireInvestigator(state, alice).clues).toBe(kept);
+        expect(state.cards[hall]?.tokens.clue).toBe(placed);
+      },
+    );
   });
 
   describe('reverse-side abilities', () => {

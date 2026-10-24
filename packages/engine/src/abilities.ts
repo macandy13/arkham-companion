@@ -769,8 +769,9 @@ export function whenAdvanced(...effects: AbilityEffect[]): Ability {
 /**
  * "Test [skill] (difficulty)" for the investigator the window names, about
  * the card with the ability; `onPass` and `onFail` follow the answer. With
- * `perPointFailed`, the tester takes 1 damage or horror for each point the
- * test fails by, as the players confirm it (`TestSkill.perPointFailed`).
+ * `perPointFailed`, the tester takes 1 damage or horror, or places 1 of their
+ * clues on their location, for each point the test fails by, as the players
+ * confirm it (`TestSkill.perPointFailed`).
  */
 export function skillTest(
   skill: SkillName,

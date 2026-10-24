@@ -1,4 +1,10 @@
-import type { CampaignLog } from './campaign/campaign_log';
+import {
+  findCurrentScenarioId,
+  findInvestigator,
+  storyHolds,
+  type CampaignLog,
+  type StoryCondition,
+} from './campaign/campaign_log';
 import {
   cardStats,
   resolveValue,
@@ -17,6 +23,7 @@ import {
   type InvestigatorCode,
   type InvestigatorId,
   type MapId,
+  type ScenarioId,
 } from './ids';
 import { investigatorCard } from './investigator_cards';
 import { layoutOf, type Edge, type GridCell, type MapSpec } from './map';
@@ -106,12 +113,28 @@ export interface MoveInvestigatorsStep {
 }
 
 /**
+ * Steps that apply only when the campaign log's story answers `condition`
+ * with yes, `otherwise` steps when it answers no ("If the Ghoul Priest is
+ * still alive, shuffle him into the encounter deck"). A standalone game has
+ * no log and answers as an empty one (`storyHolds`).
+ */
+export interface WhenStoryStep {
+  kind: 'whenStory';
+  condition: StoryCondition;
+  then: readonly SetupStep[];
+  otherwise?: readonly SetupStep[];
+}
+
+/**
  * One declarative setup instruction (architecture "Scenarios"). Cards are
  * referred to by card code; a step that targets an existing card
  * (`placeTokens`, `spawn.at`, `moveInvestigators`) needs exactly one instance
  * of that code created by an earlier step.
  */
-export type SetupStep =
+export type SetupStep = PlacingStep | WhenStoryStep;
+
+/** A setup step that changes the table; `WhenStoryStep`s resolve to these before any is applied. */
+type PlacingStep =
   | AddMapStep
   | SetAsideStep
   | BuildEncounterDeckStep
@@ -131,17 +154,34 @@ export interface InvestigatorSeat {
   readonly code: InvestigatorCode;
 }
 
-/** What the players choose when starting a scenario; input to `compileSetup`. */
-export interface SetupOptions {
-  difficulty: Difficulty;
+/** The choices every setup takes, standalone or in a campaign. */
+interface SeatedSetupOptions {
   seed: number;
   /**
    * In seat order; the first one is the lead investigator. `compileSetup`
    * takes their printed stats from the `EngineContext`'s `CardDb`.
    */
   investigators: readonly InvestigatorSeat[];
-  campaign?: CampaignLog;
 }
+
+/** A standalone scenario: the players pick the difficulty, and the bag is the scenario's for it. */
+export interface StandaloneSetupOptions extends SeatedSetupOptions {
+  difficulty: Difficulty;
+  campaign?: undefined;
+}
+
+/**
+ * A scenario of a campaign: the difficulty, the chaos bag and each
+ * investigator's trauma come from the log, and the seats must be its team.
+ */
+export interface CampaignSetupOptions extends SeatedSetupOptions {
+  campaign: CampaignLog;
+  // Absent so a caller cannot pick a difficulty the log disagrees with.
+  difficulty?: undefined;
+}
+
+/** What the players choose when starting a scenario; input to `compileSetup`. */
+export type SetupOptions = StandaloneSetupOptions | CampaignSetupOptions;
 
 /** A starting card with the ID setup gave it, so later steps can refer to it. */
 type DraftCard = StartingCard & { id: InstanceId };
@@ -177,10 +217,13 @@ const ENCOUNTER_DECK_TYPES: ReadonlySet<CardType> = new Set<CardType>(['enemy', 
  */
 export function compileSetup(ctx: ScenarioContext, options: SetupOptions): StartScenario {
   const def = ctx.scenario;
+  const log = options.campaign;
+  if (log) checkCampaignSeats(log, def.id, options.investigators);
+  const steps = placingSteps(def.setup, log?.story ?? {});
   const env: SetupEnv = {
     ctx,
     playerCount: options.investigators.length,
-    usedCopies: usedCopies(def),
+    usedCopies: usedCopies(def, steps),
   };
   const initial: SetupDraft = {
     maps: {},
@@ -189,21 +232,66 @@ export function compileSetup(ctx: ScenarioContext, options: SetupOptions): Start
       ...deckCards(def.actDeck, { kind: 'actDeck' }),
     ],
   };
-  const draft = def.setup.reduce((state, step) => applyStep(state, step, env), initial);
+  const difficulty = log ? log.difficulty : options.difficulty;
+  const draft = steps.reduce((state, step) => applyStep(state, step, env), initial);
   const location = draft.investigatorLocation;
   return {
     type: 'StartScenario',
     scenarioId: def.id,
-    difficulty: options.difficulty,
+    difficulty,
     seed: options.seed,
     investigators: options.investigators.map((seat, index) => ({
-      ...startingInvestigator(ctx, seat, index),
+      ...withTrauma(startingInvestigator(ctx, seat, index), log),
       ...(location === undefined ? {} : { locationId: location }),
     })),
     maps: draft.maps,
     cards: draft.cards.map((card) => withRevealClues(card, env)),
-    chaosBag: [...def.chaosBag[options.difficulty]],
-    ...(options.campaign ? { campaign: options.campaign } : {}),
+    chaosBag: [...(log ? log.chaosBag : def.chaosBag[difficulty])],
+    ...(log ? { campaign: log } : {}),
+  };
+}
+
+/**
+ * Rejects a campaign setup for another scenario than the log's next one, or
+ * whose seats are not exactly the log's team, or that seats a killed or
+ * insane investigator, who must be replaced first (`ReplaceInvestigator`).
+ * Every team member plays: a player who sits out leaves the campaign
+ * between scenarios (Rules Reference, "Joining or Leaving a Campaign").
+ */
+function checkCampaignSeats(
+  log: CampaignLog,
+  scenarioId: ScenarioId,
+  seats: readonly InvestigatorSeat[],
+): void {
+  const next = findCurrentScenarioId(log);
+  if (scenarioId !== next)
+    throw new CommandRejected({ code: 'notNextCampaignScenario', scenarioId, next });
+  for (const { code } of seats) {
+    const member = findInvestigator(log, code);
+    if (!member) throw new CommandRejected({ code: 'notOnCampaignTeam', investigatorCode: code });
+    if (member.fate !== 'alive')
+      throw new CommandRejected({
+        code: 'investigatorNeedsReplacement',
+        investigatorCode: code,
+        fate: member.fate,
+      });
+  }
+  const unseated = log.investigators.find(({ code }) => !seats.some((seat) => seat.code === code));
+  if (unseated)
+    throw new CommandRejected({ code: 'campaignMemberNotSeated', investigatorCode: unseated.code });
+}
+
+/** The investigator starting with damage for their physical trauma and horror for their mental trauma. */
+function withTrauma(
+  investigator: StartingInvestigator,
+  log: CampaignLog | undefined,
+): StartingInvestigator {
+  const member = log && findInvestigator(log, investigator.code);
+  if (!member) return investigator;
+  return {
+    ...investigator,
+    health: { ...investigator.health, damage: member.physicalTrauma },
+    sanity: { ...investigator.sanity, horror: member.mentalTrauma },
   };
 }
 
@@ -237,8 +325,26 @@ function deckCards(codes: readonly CardCode[], zone: Zone): DraftCard[] {
   return codes.map((code, i) => ({ id: newId(code, codes.slice(0, i)), code, zone, faceUp: true }));
 }
 
+/** The steps that apply for `story`, in order, with each `WhenStoryStep` replaced by its branch. */
+function placingSteps(
+  steps: readonly SetupStep[],
+  story: CampaignLog['story'],
+): readonly PlacingStep[] {
+  return steps.flatMap((step) => {
+    if (step.kind !== 'whenStory') return [step];
+    const holds = storyHolds(story, step.condition);
+    if (holds === undefined)
+      throw new CommandRejected({
+        code: 'storyConditionMismatch',
+        key: step.condition.key,
+        condition: step.condition.kind,
+      });
+    return placingSteps(holds ? step.then : (step.otherwise ?? []), story);
+  });
+}
+
 /** The draft after one setup step. */
-function applyStep(draft: SetupDraft, step: SetupStep, env: SetupEnv): SetupDraft {
+function applyStep(draft: SetupDraft, step: PlacingStep, env: SetupEnv): SetupDraft {
   switch (step.kind) {
     case 'addMap':
       return withMap(draft, step);
@@ -388,15 +494,15 @@ function encounterSetCards(ctx: EngineContext, set: EncounterSetCode): readonly 
  * encounter deck. Counted over all steps, so the deck excludes a set-aside
  * enemy whether it is set aside before or after the deck is built.
  */
-function usedCopies(def: ScenarioDefinition): Map<CardCode, number> {
-  const codes = [...def.agendaDeck, ...def.actDeck, ...def.setup.flatMap(stepCodes)];
+function usedCopies(def: ScenarioDefinition, steps: readonly PlacingStep[]): Map<CardCode, number> {
+  const codes = [...def.agendaDeck, ...def.actDeck, ...steps.flatMap(stepCodes)];
   const counts = new Map<CardCode, number>();
   for (const code of codes) counts.set(code, (counts.get(code) ?? 0) + 1);
   return counts;
 }
 
 /** Codes of the cards a step creates (other than encounter deck cards). */
-function stepCodes(step: SetupStep): readonly CardCode[] {
+function stepCodes(step: PlacingStep): readonly CardCode[] {
   switch (step.kind) {
     case 'addMap':
       return step.locations.map((location) => location.code);

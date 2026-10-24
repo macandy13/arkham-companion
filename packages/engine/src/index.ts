@@ -173,6 +173,7 @@ export type {
   InvestigatorFate,
   PlayedScenario,
   ScenarioOutcome,
+  StoryCondition,
   StoryKind,
   StoryValue,
   TraumaKind,
