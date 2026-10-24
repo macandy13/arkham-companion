@@ -1,16 +1,24 @@
 import { assertNever, shallowEqual } from '@arkham/util';
-import { cardStats, type EngineContext } from './cards';
+import { cardStats, type EngineContext, type Trait } from './cards';
 import type { Command, EncounterMatch, TestSkill } from './commands';
 import { cardsInPlay } from './doom';
 import type { Event } from './events';
 import type { TraumaKind } from './campaign/campaign_log';
-import type { CardCode, DecisionId, InstanceId, InvestigatorId, ResolutionId } from './ids';
+import {
+  decisionId,
+  type CardCode,
+  type DecisionId,
+  type InstanceId,
+  type InvestigatorId,
+  type ResolutionId,
+} from './ids';
 import { locationAttachments } from './board';
-import { enemiesAt } from './enemies';
+import { enemiesAt, nearestEnemies } from './enemies';
 import { isActiveInvestigator, playerOrder, requireInvestigator, statValue } from './investigators';
 import { cardsInZone, currentCard, requireCard } from './lookup';
 import type { AddMapStep } from './setup';
 import type {
+  CardInstance,
   Decision,
   DecisionOption,
   GameState,
@@ -156,7 +164,15 @@ export type RelativeCard =
    * their investigator's location): the command repeats once per enemy, in
    * card order, and none when there is no enemy there.
    */
-  | { ref: 'eachEnemyAt'; location: RelativeCard };
+  | { ref: 'eachEnemyAt'; location: RelativeCard }
+  /**
+   * The enemy with `trait` (any enemy without one) nearest to the location of
+   * the investigator the window names ("the nearest [[Cultist]] enemy",
+   * `nearestEnemies`); none when there is no such enemy. When several are
+   * equally near, the lead investigator picks one (Rules Reference, "Choices"):
+   * the effect becomes a decision with an option per enemy.
+   */
+  | { ref: 'nearestEnemy'; trait?: Trait };
 
 /**
  * An investigator an ability names relative to its window: the one the
@@ -502,12 +518,53 @@ export function resolveEffect(
   };
   const each = repeatedRef(effect);
   const ids = each === undefined ? [undefined] : eachId(ctx, state, each, refs);
-  return ids.flatMap((id) => {
-    const resolved = resolveRefs(effect, { ...refs, each: id });
-    // The walk keeps every field but the references, which become the IDs the
-    // command type expects, so the result is an `AbilityCommand`.
-    return resolved === undefined ? [] : [resolved as AbilityCommand];
-  });
+  const commandsFor = (nearestEnemy?: InstanceId): AbilityCommand[] =>
+    ids.flatMap((id) => {
+      const resolved = resolveRefs(effect, { ...refs, each: id, nearestEnemy });
+      // The walk keeps every field but the references, which become the IDs the
+      // command type expects, so the result is an `AbilityCommand`.
+      return resolved === undefined ? [] : [resolved as AbilityCommand];
+    });
+  const nearest = nearestRef(effect);
+  if (nearest === undefined) return commandsFor();
+  if (investigator?.locationId === undefined) return [];
+  const [first, ...tied] = nearestEnemies(ctx, state, investigator.locationId, nearest.trait);
+  if (first === undefined) return [];
+  if (tied.length === 0) return commandsFor(first.id);
+  return [nearestTie(ctx, opened.cardId, [first, ...tied], commandsFor)];
+}
+
+/** The `nearestEnemy` reference in `effect`, if it holds one. */
+function nearestRef(effect: unknown): Extract<RelativeCard, { ref: 'nearestEnemy' }> | undefined {
+  return findRef(effect, (ref) => (ref.ref === 'nearestEnemy' ? ref : undefined));
+}
+
+/**
+ * Equally near enemies for a `nearestEnemy` reference: the lead investigator
+ * picks one, and the option runs the effect for it.
+ */
+function nearestTie(
+  ctx: EngineContext,
+  cardId: InstanceId,
+  enemies: readonly CardInstance[],
+  commandsFor: (enemyId: InstanceId) => AbilityCommand[],
+): Command {
+  return {
+    type: 'RequestDecision',
+    decision: {
+      id: decisionId(`nearest:${cardId}`),
+      kind: 'chooseCard',
+      subject: cardId,
+      prompt: 'decision.chooseNearestEnemy',
+      decider: { kind: 'lead' },
+      options: enemies.map((enemy) => ({
+        id: enemy.id,
+        label: cardStats(ctx.cards, enemy.code).name,
+        target: enemy.id,
+        commands: commandsFor(enemy.id),
+      })),
+    },
+  };
 }
 
 /** What each relative reference stands for when an effect resolves; absent when it names nobody. */
@@ -519,6 +576,8 @@ interface ResolvedRefs {
   onlyCopy: (code: CardCode) => InstanceId | undefined;
   /** The investigator or enemy of this repetition of an effect on each of them. */
   each?: InstanceId | InvestigatorId;
+  /** The enemy a `nearestEnemy` reference stands for: the nearest, or the one picked among equals. */
+  nearestEnemy?: InstanceId;
 }
 
 /** A reference that repeats the command, as `eachInvestigator` does. */
@@ -530,17 +589,26 @@ type RepeatedRef = Extract<RelativeCard | RelativeInvestigator, { ref: `each${st
  * repeat the whole test or choice.
  */
 function repeatedRef(effect: unknown): RepeatedRef | undefined {
+  return findRef(effect, (ref) =>
+    ref.ref === 'eachInvestigator' || ref.ref === 'eachInvestigatorAt' || ref.ref === 'eachEnemyAt'
+      ? ref
+      : undefined,
+  );
+}
+
+/** The first reference in `effect`, depth first, that `pick` returns something for. */
+function findRef<R>(
+  effect: unknown,
+  pick: (ref: RelativeCard | RelativeInvestigator) => R | undefined,
+): R | undefined {
   if (typeof effect !== 'object' || effect === null) return undefined;
-  if (
-    isRelative(effect) &&
-    (effect.ref === 'eachInvestigator' ||
-      effect.ref === 'eachInvestigatorAt' ||
-      effect.ref === 'eachEnemyAt')
-  )
-    return effect;
+  if (isRelative(effect)) {
+    const picked = pick(effect);
+    if (picked !== undefined) return picked;
+  }
   for (const field of Object.values(effect)) {
-    const found = repeatedRef(field);
-    if (found) return found;
+    const found = findRef(field, pick);
+    if (found !== undefined) return found;
   }
   return undefined;
 }
@@ -631,6 +699,8 @@ function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
       case 'eachInvestigatorAt':
       case 'eachEnemyAt':
         return refs.each;
+      case 'nearestEnemy':
+        return refs.nearestEnemy;
       default:
         return assertNever(value);
     }
@@ -867,6 +937,16 @@ export function moveTo(location: RelativeCard): AbilityEffect {
 /** "Place N doom on the current agenda". */
 export function placeDoomOnAgenda(amount: number): AbilityEffect {
   return { type: 'PlaceDoom', amount };
+}
+
+/** "Place N doom on [card]", such as `placeDoomOn(nearestEnemy(trait('Cultist')), 2)`. */
+export function placeDoomOn(card: RelativeCard, amount: number): AbilityEffect {
+  return { type: 'PlaceDoom', cardId: card, amount };
+}
+
+/** "The nearest [[trait]] enemy", or the nearest enemy without a trait (`{ ref: 'nearestEnemy' }`). */
+export function nearestEnemy(trait?: Trait): RelativeCard {
+  return trait === undefined ? { ref: 'nearestEnemy' } : { ref: 'nearestEnemy', trait };
 }
 
 /** "Place N doom on it": doom on the card with the ability. */

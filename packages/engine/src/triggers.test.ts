@@ -26,6 +26,7 @@ import {
   cardCode,
   checkInvariants,
   decisionId,
+  describeDecision,
   defeatEachInvestigator,
   discardEachEnemyAt,
   discardSelf,
@@ -49,6 +50,8 @@ import {
   leadDrawsDiscardingUntil,
   onlyCopy,
   perInvestigator,
+  nearestEnemy,
+  placeDoomOn,
   placeDoomOnAgenda,
   placeDoomOnSelf,
   putMapIntoPlay,
@@ -63,6 +66,7 @@ import {
   takeDamage,
   takeHorror,
   threatAreaOf,
+  trait,
   whenAdvanced,
   whenDefeated,
   whenEnemyDefeated,
@@ -1580,6 +1584,115 @@ describe('a choice without the options that cannot be resolved', () => {
       locationId: rivertown,
       sanity: { horror: 0 },
     });
+  });
+});
+
+describe('doom on the nearest Cultist enemy', () => {
+  const attic = instanceId('attic');
+  const chanting = instanceId('chanting');
+  /** "Revelation – Place 2 doom on the nearest Cultist enemy." */
+  const chantingCard = blankTreachery('chanting', {
+    abilities: [whenRevealed(placeDoomOn(nearestEnemy(trait('Cultist')), 2))],
+  });
+  const cultistCard = blankEnemy('cultist', { name: 'Cultist', traits: [trait('Cultist')] });
+  const monsterCard = blankEnemy('monster', { name: 'Monster', traits: [trait('Monster')] });
+  /** Alice in the hall; the cellar is 1 connection away, the attic 2 (hall – cellar – attic). */
+  const houseTable = newGame()
+    .withLocation(hall, blankLocation('hall'), { revealed: true })
+    .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+    .withLocation(attic, blankLocation('attic'), { revealed: true })
+    .withConnection(hall, cellar)
+    .withConnection(cellar, attic)
+    .withInvestigator(alice, { locationId: hall })
+    .withCard(chanting, chantingCard, { kind: 'encounterDeck' });
+  const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
+
+  it('places 2 doom on the cultist in the cellar, not on the one in the attic or the nearer monster', () => {
+    const { context, state } = houseTable
+      .withCard(instanceId('far_cultist'), cultistCard, atLocation(attic))
+      .withCard(instanceId('near_cultist'), cultistCard, atLocation(cellar))
+      .withCard(instanceId('monster'), monsterCard, atLocation(hall))
+      .start();
+
+    const after = stateAfter(context, state, aliceDraws);
+
+    expect(after.cards[instanceId('near_cultist')]?.tokens.doom).toBe(2);
+    expect(after.cards[instanceId('far_cultist')]?.tokens.doom).toBeUndefined();
+    expect(after.cards[instanceId('monster')]?.tokens.doom).toBeUndefined();
+  });
+
+  it('counts a cultist engaged with alice as at her location', () => {
+    const { context, state } = houseTable
+      .withCard(instanceId('near_cultist'), cultistCard, atLocation(cellar))
+      .withCard(instanceId('engaged_cultist'), cultistCard, engagedWith(alice))
+      .start();
+
+    const after = stateAfter(context, state, aliceDraws);
+
+    expect(after.cards[instanceId('engaged_cultist')]?.tokens.doom).toBe(2);
+    expect(after.cards[instanceId('near_cultist')]?.tokens.doom).toBeUndefined();
+  });
+
+  it('lets the lead investigator pick between two cultists equally near', () => {
+    const { context, state } = houseTable
+      .withLocation(instanceId('garden'), blankLocation('garden'), { revealed: true })
+      .withConnection(hall, instanceId('garden'))
+      .withCard(instanceId('cellar_cultist'), cultistCard, atLocation(cellar))
+      .withCard(instanceId('garden_cultist'), cultistCard, atLocation(instanceId('garden')))
+      .start();
+    const asked = stateAfter(context, state, aliceDraws);
+
+    const after = stateAfter(context, asked, answer('nearest:chanting', 'garden_cultist'));
+
+    expect(asked.pending).toMatchObject([
+      {
+        kind: 'chooseCard',
+        decider: { kind: 'lead' },
+        options: [{ id: 'cellar_cultist' }, { id: 'garden_cultist' }],
+      },
+    ]);
+    expect(asked.pending.map((decision) => describeDecision(context, asked, decision))).toEqual([
+      'Which of the nearest enemies? Cultist / Cultist [chooseCard]',
+    ]);
+    expect(after.cards[instanceId('garden_cultist')]?.tokens.doom).toBe(2);
+    expect(after.cards[instanceId('cellar_cultist')]?.tokens.doom).toBeUndefined();
+  });
+
+  it('places the doom on a cultist with no path to alice when no other cultist is in play', () => {
+    const shed = instanceId('shed');
+    const { context, state } = houseTable
+      .withLocation(shed, blankLocation('shed'), { revealed: true })
+      .withCard(instanceId('shed_cultist'), cultistCard, atLocation(shed))
+      .start();
+
+    const after = stateAfter(context, state, aliceDraws);
+
+    expect(after.cards[instanceId('shed_cultist')]?.tokens.doom).toBe(2);
+  });
+
+  it('prefers a cultist alice can reach over one with no path to her', () => {
+    const shed = instanceId('shed');
+    const { context, state } = houseTable
+      .withLocation(shed, blankLocation('shed'), { revealed: true })
+      .withCard(instanceId('shed_cultist'), cultistCard, atLocation(shed))
+      .withCard(instanceId('attic_cultist'), cultistCard, atLocation(attic))
+      .start();
+
+    const after = stateAfter(context, state, aliceDraws);
+
+    expect(after.cards[instanceId('attic_cultist')]?.tokens.doom).toBe(2);
+    expect(after.cards[instanceId('shed_cultist')]?.tokens.doom).toBeUndefined();
+  });
+
+  it('places no doom without a cultist on the table', () => {
+    const { context, state } = houseTable
+      .withCard(instanceId('monster'), monsterCard, atLocation(cellar))
+      .start();
+
+    const after = stateAfter(context, state, aliceDraws);
+
+    expect(after.cards[instanceId('monster')]?.tokens.doom).toBeUndefined();
+    expect(after.pending).toEqual([]);
   });
 });
 
