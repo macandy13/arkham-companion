@@ -1,5 +1,6 @@
 import type { InvestigatorDef } from '@arkham/carddata';
 import {
+  cardImagePath,
   investigatorCode,
   investigatorId,
   type InvestigatorCard,
@@ -24,6 +25,7 @@ export function chosenInvestigators(
       health: def.health,
       sanity: def.sanity,
       skills: def.skills,
+      ...(def.imageSrc === undefined ? {} : { imageSrc: cardImagePath(def.imageSrc) }),
     }));
 }
 

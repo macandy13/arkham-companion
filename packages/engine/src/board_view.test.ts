@@ -90,6 +90,8 @@ describe('investigators', () => {
         health: { max: 7, damage: 3 },
         sanity: { max: 6, horror: 1 },
         doomOnPlayerCards: 2,
+        skills: { willpower: 1, intellect: 2, combat: 3, agility: 4 },
+        imageSrc: cardImagePath('/bundles/cards/alice.png'),
       })
       .withInvestigator(bob)
       .withCard(instanceId('frozen_in_fear'), blankTreachery('frozen_in_fear'), threatAreaOf(alice))
@@ -110,6 +112,8 @@ describe('investigators', () => {
         sanity: 6,
         horror: 1,
         doom: 2,
+        skills: { willpower: 1, intellect: 2, combat: 3, agility: 4 },
+        image: '/bundles/cards/alice.png',
         actions: 3,
         threatArea: ['frozen_in_fear'],
       },
@@ -118,6 +122,7 @@ describe('investigators', () => {
     expect(investigators[1]).not.toHaveProperty('at');
     expect(investigators[1]).not.toHaveProperty('threatArea');
     expect(investigators[1]).not.toHaveProperty('doom');
+    expect(investigators[1]).not.toHaveProperty('image');
   });
 
   it('marks the investigators who have taken their turn this round', () => {

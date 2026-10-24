@@ -1,4 +1,5 @@
 import type { InvestigatorDef } from '@arkham/carddata';
+import { SKILL_NAMES } from '@arkham/engine';
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -14,8 +15,6 @@ interface InvestigatorSheetProps {
   readonly onShowOtherChapter: () => void;
   readonly onClose: () => void;
 }
-
-const SKILLS = ['willpower', 'intellect', 'combat', 'agility'] as const;
 
 /** Detail sheet: both card faces, health, sanity, skills and the select action. */
 export function InvestigatorSheet({
@@ -59,9 +58,9 @@ export function InvestigatorSheet({
         <dd>{investigator.health}</dd>
         <dt>{t('picker.sanity')}</dt>
         <dd>{investigator.sanity}</dd>
-        {SKILLS.map((skill) => (
+        {SKILL_NAMES.map((skill) => (
           <Fragment key={skill}>
-            <dt>{t(`picker.skill.${skill}`)}</dt>
+            <dt>{t(`skill.${skill}`)}</dt>
             <dd>{investigator.skills[skill]}</dd>
           </Fragment>
         ))}

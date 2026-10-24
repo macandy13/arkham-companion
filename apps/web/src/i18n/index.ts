@@ -106,6 +106,12 @@ export const resources = {
           remove: 'Remove doom',
         },
       },
+      skill: {
+        willpower: 'Willpower',
+        intellect: 'Intellect',
+        combat: 'Combat',
+        agility: 'Agility',
+      },
       investigators: {
         title: 'Investigators',
         health: 'Health',
@@ -113,6 +119,8 @@ export const resources = {
         clues: 'Clues',
         resources: 'Resources',
         resourcesShort: 'Res.',
+        skills: 'Skills',
+        skillValue: '{{skill}} {{value}}',
         doom: 'Doom',
         left: '{{left}}/{{max}}',
         takeDamage: 'Take damage',
@@ -227,12 +235,6 @@ export const resources = {
         back: 'Back',
         health: 'Health',
         sanity: 'Sanity',
-        skill: {
-          willpower: 'Willpower',
-          intellect: 'Intellect',
-          combat: 'Combat',
-          agility: 'Agility',
-        },
         otherChapter: 'Show Chapter {{n}} version',
       },
       games: {
@@ -381,6 +383,12 @@ export const resources = {
           remove: 'Verderben entfernen',
         },
       },
+      skill: {
+        willpower: 'Willenskraft',
+        intellect: 'Intellekt',
+        combat: 'Kampfkraft',
+        agility: 'Geschick',
+      },
       investigators: {
         title: 'Ermittler',
         health: 'Ausdauer',
@@ -388,6 +396,8 @@ export const resources = {
         clues: 'Hinweise',
         resources: 'Ressourcen',
         resourcesShort: 'Ress.',
+        skills: 'Fertigkeiten',
+        skillValue: '{{skill}} {{value}}',
         doom: 'Verderben',
         left: '{{left}}/{{max}}',
         takeDamage: 'Schaden nehmen',
@@ -503,12 +513,6 @@ export const resources = {
         back: 'Rückseite',
         health: 'Leben',
         sanity: 'Verstand',
-        skill: {
-          willpower: 'Willenskraft',
-          intellect: 'Intellekt',
-          combat: 'Kampfkraft',
-          agility: 'Geschick',
-        },
         otherChapter: 'Version aus Kapitel {{n}} zeigen',
       },
       games: {

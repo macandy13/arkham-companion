@@ -13,6 +13,7 @@ import type {
 import {
   scenarioId,
   type CardCode,
+  type CardImagePath,
   type DecisionId,
   type InstanceId,
   type InvestigatorCode,
@@ -110,6 +111,11 @@ export interface Investigator {
    * changes by cards are modifiers, not edits of these values.
    */
   skills: SkillValues;
+  /**
+   * The picture of their investigator card (`InvestigatorCard.imageSrc`), copied at setup because
+   * the investigator cards are not in the card data a resumed game runs with.
+   */
+  imageSrc?: CardImagePath;
   status: InvestigatorStatus;
   /**
    * What defeated the investigator (`InvestigatorDefeated`), set together
@@ -263,6 +269,9 @@ export type Decider =
 
 /** The investigator skills a skill test can use. */
 export type SkillName = 'willpower' | 'intellect' | 'combat' | 'agility';
+
+/** The skills in the order the cards print them. */
+export const SKILL_NAMES: readonly SkillName[] = ['willpower', 'intellect', 'combat', 'agility'];
 
 /** The test the players resolve at the table for a `skillTestResult` decision. */
 export interface SkillTest {

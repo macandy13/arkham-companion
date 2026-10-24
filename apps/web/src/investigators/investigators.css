@@ -27,6 +27,7 @@
     'threat threat threat' auto
     'card name turn' auto
     'card status turn' auto
+    'card skills turn' auto
     'card stats stats' 1fr /
     auto 1fr auto;
   gap: var(--space-1) var(--space-2);
@@ -43,6 +44,7 @@
       'threat threat' auto
       'card name' auto
       'card status' auto
+      'card skills' auto
       'card turn' 1fr
       'stats stats' auto /
       auto 1fr;
@@ -69,6 +71,8 @@
  */
 #investigators [data-card='investigator'] {
   grid-area: card;
+  position: relative;
+  overflow: hidden;
   box-sizing: border-box;
   height: var(--layout-investigator-card-height);
   aspect-ratio: 7 / 5;
@@ -76,6 +80,65 @@
   border: var(--card-border-width) solid var(--color-card-investigator);
   border-radius: var(--radius);
   background: var(--card-art-pattern), var(--color-card-face);
+}
+
+/* The card's picture fills its frame, and shows only once it has loaded (`data-picture`). */
+#investigators [data-card='investigator'] > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#investigators [data-card='investigator']:not([data-picture]) > img {
+  visibility: hidden;
+}
+
+/*
+ * The skills in a row like the card prints them, each value after its icon. Two ids, so they beat
+ * the home screen's padded `#app > main ul > li` cards.
+ */
+#board > #investigators > section > ul {
+  grid-area: skills;
+  display: flex;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#board > #investigators > section > ul > li {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+  padding: 0;
+  background: none;
+  font-variant-numeric: lining-nums;
+}
+
+#board > #investigators > section > ul > li::before {
+  content: '';
+  width: var(--stat-icon-size);
+  height: var(--stat-icon-size);
+  background: var(--color-text-muted);
+  mask: var(--skill-icon) center / contain no-repeat;
+}
+
+#investigators [data-skill='willpower'] {
+  --skill-icon: url('./icons/willpower.svg');
+}
+
+#investigators [data-skill='intellect'] {
+  --skill-icon: url('./icons/intellect.svg');
+}
+
+#investigators [data-skill='combat'] {
+  --skill-icon: url('./icons/combat.svg');
+}
+
+#investigators [data-skill='agility'] {
+  --skill-icon: url('./icons/agility.svg');
 }
 
 /* The name stands large beside the card, in the playmat's display type. */
