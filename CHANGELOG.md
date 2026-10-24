@@ -2,6 +2,22 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.6](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.5...arkham-companion-v0.1.6) (2026-10-24)
+
+
+### Features
+
+* **engine:** a card gains surge when you have no clues (M4.5 step 5b1) ([9157cfc](https://github.com/macandy13/arkham-companion/commit/9157cfc0aa3cda340fc4e966cbcdfa2f3c3f4f68))
+* **web:** header cards under playmat labels with big doom and clue tokens (M3.12d2) ([48e7b65](https://github.com/macandy13/arkham-companion/commit/48e7b655df695d8ff11a6764c2cf71fcd6e7932d))
+* **web:** investigator panel in the prototype's form (M3.12d3) ([3f925f4](https://github.com/macandy13/arkham-companion/commit/3f925f432dc0f3501c361cfebdd730b42b2b18ee))
+* **web:** investigator panel in the prototype's form (M3.12d3) ([d7bcf20](https://github.com/macandy13/arkham-companion/commit/d7bcf204144e3f00fcb786360b90581bf1e808d0))
+
+
+### Bug fixes
+
+* **web:** review nits on the header tokens ([0bc0351](https://github.com/macandy13/arkham-companion/commit/0bc0351fbab5e8ec2d49cd92c77dead216272dc8))
+* **web:** review nits on the investigator panel ([9cc4c06](https://github.com/macandy13/arkham-companion/commit/9cc4c06504e07ee095f4ac1dd345b24d67bd61ab))
+
 ## [0.1.5](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.4...arkham-companion-v0.1.5) (2026-10-24)
 
 
