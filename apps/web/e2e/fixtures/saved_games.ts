@@ -141,17 +141,22 @@ function cardIn(table: PlayTable, code: CardCode): InstanceId {
   return card.id;
 }
 
-/**
- * Imports `file` (an export like `houseOpenedExport`) on the home screen and resumes the game
- * titled `title`, so a spec starts on the game screen of a prepared game.
- */
-export async function resumeImportedGame(page: Page, title: string, file: Buffer): Promise<void> {
+/** Imports `file` (an export like `houseOpenedExport`) on the home screen, which lists it there. */
+export async function importGame(page: Page, file: Buffer): Promise<void> {
   await page.goto('/');
   await page.getByLabel('Import game').setInputFiles({
     name: 'game.arkham.json',
     mimeType: 'application/json',
     buffer: file,
   });
+}
+
+/**
+ * Imports `file` (an export like `houseOpenedExport`) on the home screen and resumes the game
+ * titled `title`, so a spec starts on the game screen of a prepared game.
+ */
+export async function resumeImportedGame(page: Page, title: string, file: Buffer): Promise<void> {
+  await importGame(page, file);
   await page
     .getByRole('listitem')
     .filter({ has: page.getByRole('link', { name: title, exact: true }) })

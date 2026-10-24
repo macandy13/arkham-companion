@@ -42,6 +42,18 @@
   --color-card-text-muted: #b5ab95;
   --color-card-line: rgb(201 164 92 / 40%);
   /*
+   * The frame of a screen's panel and of every dialog (M3.12f), in the playmat's line style: brass
+   * rules with a quarter of the zodiac ring in each corner (panel_frame.svg, a `border-image`
+   * sliced where the corners end in its 96-unit drawing).
+   */
+  --panel-frame: url('./panel_frame.svg');
+  --panel-frame-slice: 24;
+  --panel-frame-width: 2rem;
+  /* The ornament under a screen's title (ornament_rule.svg), a small zodiac ring between rules. */
+  --title-ornament: url('./ornament_rule.svg');
+  --title-ornament-width: 12rem;
+  --title-ornament-height: 0.8rem;
+  /*
    * The printed cards' paper and ink, for card faces drawn in their style (our own drawing, no FFG
    * art): tan parchment for a card's front, sage for a location's unrevealed side, each a shade
    * darker towards the foot, brown ink for text and rules, and a dark sepia edge. The same in both
@@ -164,5 +176,15 @@
   --color-doom: #a33a37;
   --color-scrim: rgb(40 30 15 / 45%);
   --playmat: url('./playmat_light.svg');
+  --panel-frame: url('./panel_frame_light.svg');
+  /*
+   * By day the panels and dialogs are parchment, a shade darker towards their edges like an old
+   * page; by night they stay the see-through night.
+   */
+  --panel-paper: radial-gradient(
+    ellipse at center,
+    var(--color-parchment) 55%,
+    var(--color-parchment-shade)
+  );
   --header-shade: linear-gradient(to bottom, rgb(250 245 232 / 90%), rgb(250 245 232 / 35%));
 }
