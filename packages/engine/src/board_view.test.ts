@@ -352,15 +352,15 @@ describe('locations', () => {
 
   it('lists the enemies at each location of a map, the engaged ones at their investigator', () => {
     const { context, state } = house
-      .withCard(instanceId('ghoul'), blankEnemy('ghoul'), atLocation(hallway))
-      .withCard(instanceId('rat'), blankEnemy('rat'), engagedWith(alice))
+      .withCard(instanceId('ghoul'), blankEnemy('ghoul', { health: fixed(3) }), atLocation(hallway))
+      .withCard(instanceId('rat'), blankEnemy('rat', { health: fixed(1) }), engagedWith(alice))
       .start();
 
     const [main] = boardView(context, state).maps;
 
     expect(main?.enemies).toEqual({
-      [study]: [{ id: instanceId('rat'), name: 'rat', at: 'study', engagedWith: alice }],
-      [hallway]: [{ id: instanceId('ghoul'), name: 'ghoul', at: 'hallway' }],
+      [study]: [{ id: instanceId('rat'), name: 'rat', at: 'study', engagedWith: alice, health: 1 }],
+      [hallway]: [{ id: instanceId('ghoul'), name: 'ghoul', at: 'hallway', health: 3 }],
     });
   });
 
@@ -430,12 +430,16 @@ describe('locations', () => {
 
 describe('enemies', () => {
   it('reads each enemy in play with where it is and what is on it', () => {
-    const ghoul = blankEnemy('ghoul');
+    const ghoul = blankEnemy('ghoul', { health: fixed(4) });
     const { context, state } = newGame()
       .withLocation(study, blankLocation('study'))
       .withLocation(hallway, blankLocation('hallway'))
       .withInvestigator(alice, { locationId: study })
-      .withCard(instanceId('lurker'), blankEnemy('lurker'), atLocation(hallway))
+      .withCard(
+        instanceId('lurker'),
+        blankEnemy('lurker', { health: fixed(3) }),
+        atLocation(hallway),
+      )
       .withCard(instanceId('ghoul'), ghoul, engagedWith(alice), { tokens: { damage: 2 } })
       .withCard(instanceId('set_aside_ghoul'), ghoul, { kind: 'setAside' })
       .start();
@@ -443,9 +447,41 @@ describe('enemies', () => {
     const { enemies } = boardView(context, state);
 
     expect(enemies).toEqual([
-      { name: 'lurker', at: 'hallway' },
-      { name: 'ghoul', at: 'study', engagedWith: alice, damage: 2 },
+      { name: 'lurker', at: 'hallway', health: 3 },
+      { name: 'ghoul', at: 'study', engagedWith: alice, health: 4, damage: 2 },
     ]);
+  });
+
+  it("reads an enemy's health for the number of investigators", () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withInvestigator(alice, { locationId: study })
+      .withInvestigator(bob, { locationId: study })
+      .withCard(
+        instanceId('ghoul_priest'),
+        blankEnemy('ghoul_priest', { health: perInvestigator(5) }),
+        atLocation(study),
+      )
+      .start();
+
+    const [ghoulPriest] = boardView(context, state).enemies;
+
+    expect(ghoulPriest?.health).toBe(10);
+  });
+
+  it('lists the enemies engaged with an investigator', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withInvestigator(alice, { locationId: study })
+      .withInvestigator(bob, { locationId: study })
+      .withCard(instanceId('lurker'), blankEnemy('lurker'), atLocation(study))
+      .withCard(instanceId('ghoul'), blankEnemy('ghoul'), engagedWith(alice))
+      .withCard(instanceId('rat'), blankEnemy('rat'), engagedWith(bob))
+      .start();
+
+    const board = boardView(context, state);
+
+    expect(board.enemiesEngagedWith(alice).map(({ name }) => name)).toEqual(['ghoul']);
   });
 
   it('marks an exhausted enemy', () => {
@@ -470,8 +506,8 @@ describe('enemies', () => {
   });
 
   describe('with three rats around', () => {
-    const rat = blankEnemy('rat');
-    const ghoul = blankEnemy('ghoul');
+    const rat = blankEnemy('rat', { health: fixed(1) });
+    const ghoul = blankEnemy('ghoul', { health: fixed(3) });
     const rats = newGame()
       .withLocation(study, blankLocation('study'))
       .withLocation(hallway, blankLocation('hallway'))
@@ -482,15 +518,16 @@ describe('enemies', () => {
       .withCard(instanceId('rat_in_hallway'), rat, atLocation(hallway))
       .withCard(instanceId('ghoul'), ghoul, atLocation(study));
 
-    const inHallway = { name: 'rat', at: 'hallway' };
-    const onAlice = { name: 'rat', at: 'study', engagedWith: alice };
+    const inHallway = { name: 'rat', at: 'hallway', health: 1 };
+    const onAlice = { name: 'rat', at: 'study', engagedWith: alice, health: 1 };
+    const ghoulInStudy = { name: 'ghoul', at: 'study', health: 3 };
     const any_rat = byName('rat');
 
     it.each([
-      { selector: byName('ghoul'), found: { name: 'ghoul', at: 'study' } },
-      { selector: byName('Ghoul'), found: { name: 'ghoul', at: 'study' } },
+      { selector: byName('ghoul'), found: ghoulInStudy },
+      { selector: byName('Ghoul'), found: ghoulInStudy },
       { selector: byAny('rat_in_hallway'), found: inHallway },
-      { selector: byAny('GHOUL'), found: { name: 'ghoul', at: 'study' } },
+      { selector: byAny('GHOUL'), found: ghoulInStudy },
       { selector: byId(instanceId('rat_in_hallway')), found: inHallway },
       { selector: enemyMatching(any_rat, { engagedWith: alice }), found: onAlice },
       {

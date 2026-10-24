@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import {
+  cardCode,
   cardDbWith,
   gameId,
   investigatorCardStats,
@@ -133,6 +134,41 @@ export function ghoulPriestInCellarExport(title: string): Buffer {
   });
   return exportOf(title, table, 'ghoul_priest_in_cellar');
 }
+
+/**
+ * Like `houseOpenedExport`, but with Alder threatened: the Ghoul Priest has spawned in the Hallway,
+ * engaged Alder and taken 2 damage, and both Dissonant Voices and both Frozen in Fear sit in
+ * Alder's threat area, all given by hand to keep the script short. That is five cards, one more
+ * than the threat area shows, so a spec shows it full and scrolling.
+ */
+export function alderThreatenedExport(title: string): Buffer {
+  const table = houseOpened(theGathering);
+  const ghoulPriest = cardIn(table, GATHERING_CODES.ghoulPriest);
+  table.play({
+    type: 'SpawnEnemy',
+    enemyId: ghoulPriest,
+    at: cardIn(table, GATHERING_CODES.hallway),
+  });
+  table.play({
+    type: 'ManualAdjust',
+    adjustment: { kind: 'tokens', cardId: ghoulPriest, token: 'damage', delta: 2 },
+  });
+  for (const treachery of Object.values(table.state.cards).filter(({ code }) =>
+    THREAT_AREA_TREACHERIES.includes(code),
+  ))
+    table.play({
+      type: 'ManualAdjust',
+      adjustment: {
+        kind: 'moveCard',
+        cardId: treachery.id,
+        to: { kind: 'threatArea', investigatorId: alderId },
+      },
+    });
+  return exportOf(title, table, 'alder_threatened');
+}
+
+/** The Gathering's Dissonant Voices and Frozen in Fear, treacheries that go into the threat area; two copies each. */
+const THREAT_AREA_TREACHERIES: readonly CardCode[] = [cardCode('01165'), cardCode('01164')];
 
 /** The card of `table`'s game with `code`; only for cards the game has one copy of. */
 function cardIn(table: PlayTable, code: CardCode): InstanceId {

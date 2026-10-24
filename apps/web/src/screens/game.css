@@ -15,6 +15,7 @@
   min-height: 0;
 }
 
+/* The investigator bar grows only while a threat area stands above an investigator's card. */
 #board {
   display: grid;
   min-height: 0;
