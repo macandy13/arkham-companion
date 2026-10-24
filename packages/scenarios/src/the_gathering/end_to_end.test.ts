@@ -883,7 +883,21 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.moveTo(daisy, byName('Hallway'));
     table.endTurn(daisy);
     expect(table.nextPhase()).toEqual({ round: 9, phase: 'enemy' });
+
+    // At the end of the enemy phase They're Getting Out! moves both evaded
+    // ghouls from the Cellar towards the Parlor, into the Hallway. Readied in
+    // upkeep 4.3, they engage: the players pick Roland for the Ghoul Minion, and
+    // the Ravenous Ghoul takes its prey, Daisy (lowest remaining health).
+    expect(table.nextPhase()).toEqual({ round: 9, phase: 'upkeep', step: 'readyExhausted' });
+    expect(table.board.decisions).toMatchObject([
+      { prompt: 'decision.chooseEngagement', about: ghoulMinion },
+    ]);
+    table.answer(byName(ghoulMinion), 'Roland Banks');
     expect(table.nextPhase()).toEqual({ round: 9, phase: 'upkeep' });
+    expect(table.board.enemies).toEqual([
+      { name: ghoulMinion, at: 'Hallway', health: 2, engagedWith: roland },
+      { name: ravenousGhoul, at: 'Hallway', health: 3, engagedWith: daisy },
+    ]);
 
     // The round has ended with both in the Hallway holding 9 clues, the 3 per
     // investigator act 2 asks for (Wendy still counts). Its reverse side
@@ -938,49 +952,52 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       'Dissonant Voices',
     ]);
 
-    // Round 10 – investigation: the Ghoul Priest has 5 health per investigator,
-    // 15. Roland fights once with his .45 Automatic and Vicious Blow (3
-    // damage), then evades the Priest so it cannot attack him at 4 of 5
-    // horror. Dissonant Voices keeps him from playing assets and events this round,
-    // so his last action is a resource. Daisy hits it three times (combat 2 against
-    // 4: she commits her two combat icons and the tokens are kind).
+    // Round 10 – investigation: at 4 of 5 horror Roland cannot take another
+    // attack. Daisy goes first and hits the Ghoul Minion engaged with him twice
+    // (combat 2 against 2: she commits her two combat icons and the tokens are
+    // kind), which defeats it, then hits the Ghoul Priest once (it has 5 health
+    // per investigator, 15).
     expect(table.nextPhase()).toEqual({ round: 10, phase: 'investigation' });
+    table.startTurn(daisy);
+    table.fight(daisy, byName(ghoulMinion));
+    table.fight(daisy, byName(ghoulMinion));
+    table.fight(daisy, byName('Ghoul Priest'));
+    table.endTurn(daisy);
+    expect(table.board.namesIn({ kind: 'encounterDiscard' })).toContain(ghoulMinion);
+
+    // Roland fights the Priest once with his .45 Automatic and Vicious Blow (3
+    // damage), then evades it, so it cannot attack him, and engages it again,
+    // so that it is not an unengaged Ghoul They're Getting Out! would move to
+    // the Parlor. Dissonant Voices keeps him from playing assets and events.
     table.startTurn(roland);
     table.fight(roland, byName('Ghoul Priest'), { damage: 3 });
     table.evade(roland, byName('Ghoul Priest'));
-    table.gainResources(roland, 1);
+    table.engage(roland, byName('Ghoul Priest'));
     table.endTurn(roland);
-    table.startTurn(daisy);
-    table.fight(daisy, byName('Ghoul Priest'));
-    table.fight(daisy, byName('Ghoul Priest'));
-    table.fight(daisy, byName('Ghoul Priest'));
-    table.endTurn(daisy);
 
     expect(table.board.enemy(byName('Ghoul Priest'))).toEqual({
       name: 'Ghoul Priest',
       at: 'Hallway',
       health: 15,
-      damage: 6,
+      damage: 4,
+      engagedWith: roland,
       exhausted: true,
     });
 
-    // Round 10 – enemy phase and upkeep: the exhausted Priest does not attack;
-    // readied in 4.3, it engages its prey again, highest combat: Roland.
-    expect(table.nextPhase()).toEqual({ round: 10, phase: 'enemy' });
-    expect(table.nextPhase()).toEqual({ round: 10, phase: 'upkeep', step: 'readyExhausted' });
-    expect(table.board.decisions).toEqual([
-      {
-        prompt: 'decision.chooseEngagement',
-        kind: 'chooseInvestigator',
-        about: 'Ghoul Priest',
-        options: ['Roland Banks', 'Daisy Walker'],
-      },
-    ]);
-    table.answer(byName('Ghoul Priest'), 'Roland Banks');
+    // Round 10 – enemy phase: the exhausted Priest does not attack; the
+    // Ravenous Ghoul attacks Daisy (1 damage, 1 horror). Both are engaged, so
+    // neither moves at the end of the phase.
+    expect(table.nextPhase()).toEqual({ round: 10, phase: 'enemy', step: 'enemiesAttack' });
+    expect(table.board.attacksDue).toEqual([{ enemy: ravenousGhoul, investigator: daisy }]);
+    table.resolveEnemyAttacks();
+    expect(table.board.investigator(daisy)).toMatchObject({ damage: 4, horror: 3 });
     expect(table.nextPhase()).toEqual({ round: 10, phase: 'upkeep' });
+    expect(table.board.enemies).toEqual([
+      { name: 'Ghoul Priest', at: 'Hallway', health: 15, damage: 4, engagedWith: roland },
+      { name: ravenousGhoul, at: 'Hallway', health: 3, engagedWith: daisy },
+    ]);
 
     // The round has ended, so Dissonant Voices has left Roland's threat area.
-    expect(table.board.enemy(byName('Ghoul Priest'))).toMatchObject({ engagedWith: roland });
     expect(table.board.namesIn({ kind: 'threatArea', investigatorId: roland })).toEqual([]);
 
     // Round 11 – mythos: 1.2 places the agenda's second doom. Roland draws
@@ -996,18 +1013,17 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.nextPhase()).toEqual({ round: 11, phase: 'mythos', step: 'drawEncounterCard' });
     table.answer(byName('Crypt Chill'), 'pass');
 
-    // Round 11 – investigation: Roland shoots the Priest three times, the first
-    // two with a Vicious Blow (3, 3 and 2 damage, his .45 Automatic's last
-    // ammo): 14 of 15.
+    // Round 11 – investigation: Roland shoots the Priest three times, each with
+    // a Vicious Blow (3 damage each, his .45 Automatic's last ammo): 13 of 15.
     expect(table.nextPhase()).toEqual({ round: 11, phase: 'investigation' });
     table.startTurn(roland);
     table.fight(roland, byName('Ghoul Priest'), { damage: 3 });
     table.fight(roland, byName('Ghoul Priest'), { damage: 3 });
-    table.fight(roland, byName('Ghoul Priest'), { damage: 2 });
+    table.fight(roland, byName('Ghoul Priest'), { damage: 3 });
     table.endTurn(roland);
 
     // Daisy misses her first blow. The Priest is ready, so it retaliates: its
-    // attack (2 damage, 2 horror) would defeat her at 3 of 5 damage. Roland,
+    // attack (2 damage, 2 horror) would defeat her at 4 of 5 damage. Roland,
     // in the Hallway with her, plays Dodge (1 resource) and cancels it.
     table.startTurn(daisy);
     table.fight(daisy, byName('Ghoul Priest'), { result: 'fail' });
@@ -1024,11 +1040,12 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.answer(byName('Ghoul Priest'), 'attack cancelled');
     // The open attack blocks every other command, so the cost is noted after it.
     table.spendResources(roland, 1);
-    expect(table.board.investigator(daisy)).toMatchObject({ damage: 3, horror: 2 });
+    expect(table.board.investigator(daisy)).toMatchObject({ damage: 4, horror: 3 });
 
-    // Her next blow is the Priest's fifteenth damage. It goes to the victory
-    // display, which meets act 3's objective: the act advances by itself and
-    // asks Roland, the lead, whether to burn the house.
+    // Her next two blows deal the Priest's fourteenth and fifteenth damage. It
+    // goes to the victory display, which meets act 3's objective: the act
+    // advances by itself and asks Roland, the lead, whether to burn the house.
+    table.fight(daisy, byName('Ghoul Priest'));
     table.fight(daisy, byName('Ghoul Priest'));
 
     expect(table.board.namesIn({ kind: 'victoryDisplay' })).toEqual([

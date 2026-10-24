@@ -22,6 +22,7 @@ const QUESTIONS: Readonly<Record<string, (subject: string) => string>> = {
   'decision.chooseHunterOrder': () => 'Which hunter moves first?',
   'decision.chooseHunterTarget': (subject) => `Whom does ${subject} hunt?`,
   'decision.chooseHunterDestination': (subject) => `Where does ${subject} move?`,
+  'decision.chooseEnemyDestination': (subject) => `Which way does ${subject} move?`,
   'decision.chooseLeadInvestigator': () => 'Who becomes the lead investigator?',
   'decision.chooseNearestEnemy': () => 'Which of the nearest enemies?',
   'decision.chooseSpawnLocation': (subject) => `Where does ${subject} spawn?`,

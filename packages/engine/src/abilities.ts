@@ -166,6 +166,12 @@ export type RelativeCard =
    */
   | { ref: 'eachEnemyAt'; location: RelativeCard }
   /**
+   * Each enemy on the table with `trait` (any enemy without one), only the
+   * unengaged ones with `unengaged` ("each unengaged [[Ghoul]] enemy"): the
+   * command repeats once per enemy, in card order.
+   */
+  | { ref: 'eachEnemy'; trait?: Trait; unengaged?: true }
+  /**
    * The enemy with `trait` (any enemy without one) nearest to the location of
    * the investigator the window names ("the nearest [[Cultist]] enemy",
    * `nearestEnemies`); none when there is no such enemy. When several are
@@ -221,6 +227,7 @@ export type AbilityCommand =
           | 'FromSetAside'
           | 'SpawnEnemy'
           | 'HealEnemy'
+          | 'MoveEnemyTowards'
           | 'ReadyEnemy'
           | 'GainSurge'
           | 'MoveInvestigator'
@@ -603,7 +610,10 @@ type RepeatedRef = Extract<RelativeCard | RelativeInvestigator, { ref: `each${st
  */
 function repeatedRef(effect: unknown): RepeatedRef | undefined {
   return findRef(effect, (ref) =>
-    ref.ref === 'eachInvestigator' || ref.ref === 'eachInvestigatorAt' || ref.ref === 'eachEnemyAt'
+    ref.ref === 'eachInvestigator' ||
+    ref.ref === 'eachInvestigatorAt' ||
+    ref.ref === 'eachEnemyAt' ||
+    ref.ref === 'eachEnemy'
       ? ref
       : undefined,
   );
@@ -650,6 +660,10 @@ function eachId(
         .filter((card) => cardStats(ctx.cards, card.code).typeCode === 'enemy')
         .map((card) => card.id);
     }
+    case 'eachEnemy':
+      return enemiesOnTable(ctx, state, each.trait)
+        .filter((card) => each.unengaged === undefined || card.zone.kind === 'atLocation')
+        .map((card) => card.id);
     default:
       return assertNever(each);
   }
@@ -711,6 +725,7 @@ function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
       case 'eachInvestigator':
       case 'eachInvestigatorAt':
       case 'eachEnemyAt':
+      case 'eachEnemy':
         return refs.each;
       case 'nearestEnemy':
         return refs.nearestEnemy;
@@ -915,6 +930,22 @@ export function takeHorror(
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
   return { type: 'AdjustInvestigator', investigatorId: who, stat: 'horror', delta: amount };
+}
+
+/**
+ * "Each [unengaged] [[trait]] enemy" (`eachEnemy`), which repeats the effect
+ * for each, written `eachEnemy({ trait: trait('Ghoul'), unengaged: true })`.
+ */
+export function eachEnemy(filter: { trait?: Trait; unengaged?: true } = {}): RelativeCard {
+  return { ref: 'eachEnemy', ...filter };
+}
+
+/**
+ * "[Enemy] moves 1 location towards [location]" (`MoveEnemyTowards`), written
+ * `moveEnemyTowards(eachEnemy({ trait: trait('Ghoul'), unengaged: true }), onlyCopy(codes.parlor))`.
+ */
+export function moveEnemyTowards(enemy: RelativeCard, location: RelativeCard): AbilityEffect {
+  return { type: 'MoveEnemyTowards', enemyId: enemy, towards: location };
 }
 
 /** "Each investigator at [location]" (`eachInvestigatorAt`), which repeats the effect for each. */

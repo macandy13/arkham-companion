@@ -3,6 +3,7 @@ import {
   advanceAct,
   afterEntering,
   afterTest,
+  atEndOfPhase,
   leadDrawsDiscardingUntil,
   shuffleEncounterDiscard,
   atEndOfRound,
@@ -14,6 +15,7 @@ import {
   defeatEachInvestigator,
   discardEachEnemyAt,
   discardSelf,
+  eachEnemy,
   duringAct,
   encounterSetCode,
   fixed,
@@ -21,6 +23,7 @@ import {
   leadDecides,
   mapId,
   moveEachInvestigatorTo,
+  moveEnemyTowards,
   onlyCopy,
   perInvestigator,
   putIntoThreatArea,
@@ -177,6 +180,13 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     // Before act 3 the investigators are trapped; at act 3 nobody is left, so the scenario ends
     // without a resolution, and the resolution proposal carries the card's physical trauma.
     abilities: [
+      atEndOfPhase(
+        'enemy',
+        moveEnemyTowards(
+          eachEnemy({ trait: trait('Ghoul'), unengaged: true }),
+          onlyCopy(codes.parlor),
+        ),
+      ),
       duringAct(
         [codes.trapped, codes.theBarrier],
         whenAdvanced(endScenario(GATHERING_RESOLUTIONS.trapped)),
