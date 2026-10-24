@@ -1804,7 +1804,7 @@ describe('each unengaged Ghoul enemy moving towards a location', () => {
   });
 });
 
-describe('an effect repeated for each Ghoul enemy in the hall or parlor', () => {
+describe('an effect repeated for each Ghoul enemy in the Hall or Parlor', () => {
   const parlor = instanceId('parlor');
   const omen = instanceId('omen');
   /** "Place 1 doom on the agenda for each Ghoul enemy in the Hall or Parlor", here as a revelation. */
