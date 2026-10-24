@@ -9,7 +9,6 @@ import {
   atEndOfTurn,
   attachToLocation,
   cardCode,
-  cardImagePath,
   cardDbFrom,
   decisionId,
   defeatEachInvestigator,
@@ -17,11 +16,13 @@ import {
   discardSelf,
   duringAct,
   encounterSetCode,
+  fixed,
   endScenario,
   leadDecides,
   mapId,
   moveEachInvestigatorTo,
   onlyCopy,
+  perInvestigator,
   putIntoThreatArea,
   putMapIntoPlay,
   putSetAsideIntoPlay,
@@ -36,17 +37,11 @@ import {
   whenAdvanced,
   whenEnemyDefeated,
   whenRevealed,
-  type Ability,
   type AddMapStep,
   type CardDb,
   type CardStats,
-  type CardModifier,
-  type LocationAttachment,
-  type EncounterSetCode,
-  type Keyword,
-  type ScaledValue,
-  type Trait,
 } from '@arkham/engine';
+import { act, agenda, enemy, location, picturesOf, prey, spawn, treachery } from '../card_builders';
 
 /**
  * ArkhamDB encounter set codes of The Gathering (Core Set, 2016): the
@@ -142,6 +137,7 @@ export const theGatheringHouse: AddMapStep = {
 export const theGatheringCardDefs: readonly CardStats[] = [
   agenda({
     code: codes.whatsGoingOn,
+    set: sets.theGathering,
     name: "What's Going On?!",
     stage: 1,
     doom: 3,
@@ -161,6 +157,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
   }),
   agenda({
     code: codes.riseOfTheGhouls,
+    set: sets.theGathering,
     name: 'Rise of the Ghouls',
     stage: 2,
     doom: 7,
@@ -173,6 +170,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
   }),
   agenda({
     code: codes.theyreGettingOut,
+    set: sets.theGathering,
     name: "They're Getting Out!",
     stage: 3,
     doom: 10,
@@ -191,6 +189,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
   }),
   act({
     code: codes.trapped,
+    set: sets.theGathering,
     name: 'Trapped',
     stage: 1,
     cluesPerInvestigator: 2,
@@ -206,6 +205,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
   }),
   act({
     code: codes.theBarrier,
+    set: sets.theGathering,
     name: 'The Barrier',
     stage: 2,
     cluesPerInvestigator: 3,
@@ -220,6 +220,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
   }),
   act({
     code: codes.whatHaveYouDone,
+    set: sets.theGathering,
     name: 'What Have You Done?',
     stage: 3,
     // Objective: the act advances by itself once the Ghoul Priest is defeated.
@@ -241,10 +242,23 @@ export const theGatheringCardDefs: readonly CardStats[] = [
       ),
     ],
   }),
-  location({ code: codes.study, name: 'Study', shroud: 2, cluesPerInvestigator: 2 }),
-  location({ code: codes.hallway, name: 'Hallway', shroud: 1, cluesPerInvestigator: 0 }),
+  location({
+    code: codes.study,
+    set: sets.theGathering,
+    name: 'Study',
+    shroud: 2,
+    cluesPerInvestigator: 2,
+  }),
+  location({
+    code: codes.hallway,
+    set: sets.theGathering,
+    name: 'Hallway',
+    shroud: 1,
+    cluesPerInvestigator: 0,
+  }),
   location({
     code: codes.attic,
+    set: sets.theGathering,
     name: 'Attic',
     shroud: 1,
     cluesPerInvestigator: 2,
@@ -253,13 +267,20 @@ export const theGatheringCardDefs: readonly CardStats[] = [
   }),
   location({
     code: codes.cellar,
+    set: sets.theGathering,
     name: 'Cellar',
     shroud: 4,
     cluesPerInvestigator: 2,
     victory: 1,
     abilities: [afterEntering(takeDamage(1))],
   }),
-  location({ code: codes.parlor, name: 'Parlor', shroud: 2, cluesPerInvestigator: 0 }),
+  location({
+    code: codes.parlor,
+    set: sets.theGathering,
+    name: 'Parlor',
+    shroud: 2,
+    cluesPerInvestigator: 0,
+  }),
   enemy({
     code: codes.ghoulPriest,
     name: 'Ghoul Priest',
@@ -409,190 +430,3 @@ export const theGatheringCardDefs: readonly CardStats[] = [
 
 /** Card data for The Gathering; put it in the `EngineContext` to play it. */
 export const theGatheringCards: CardDb = cardDbFrom(theGatheringCardDefs);
-
-/** Printed values of an agenda: its stage and doom threshold. */
-interface AgendaOptions {
-  code: string;
-  name: string;
-  stage: number;
-  doom: number;
-  /** Its reverse side (`whenAdvanced`). */
-  abilities?: readonly Ability[];
-}
-
-function agenda({ code, name, stage, doom, abilities }: AgendaOptions): CardStats {
-  return {
-    ...scenarioCard(code, name),
-    typeCode: 'agenda',
-    stage: { number: stage },
-    doom: fixed(doom),
-    ...(abilities ? { abilities } : {}),
-  };
-}
-
-/** Printed values of an act; an act without a clue threshold omits `cluesPerInvestigator`. */
-interface ActOptions {
-  code: string;
-  name: string;
-  stage: number;
-  cluesPerInvestigator?: number;
-  /** Its reverse side (`whenAdvanced`). */
-  abilities?: readonly Ability[];
-}
-
-function act({ code, name, stage, cluesPerInvestigator, abilities }: ActOptions): CardStats {
-  return {
-    ...scenarioCard(code, name),
-    typeCode: 'act',
-    stage: { number: stage },
-    ...(cluesPerInvestigator === undefined ? {} : { clues: perInvestigator(cluesPerInvestigator) }),
-    ...(abilities ? { abilities } : {}),
-  };
-}
-
-/** Printed values of a location (all of The Gathering's scale their clues per investigator). */
-interface LocationOptions {
-  code: string;
-  name: string;
-  shroud: number;
-  cluesPerInvestigator: number;
-  victory?: number;
-  abilities?: Ability[];
-}
-
-function location({
-  code,
-  name,
-  shroud,
-  cluesPerInvestigator,
-  victory,
-  abilities,
-}: LocationOptions): CardStats {
-  return {
-    ...scenarioCard(code, name),
-    typeCode: 'location',
-    shroud,
-    clues: perInvestigator(cluesPerInvestigator),
-    ...(victory === undefined ? {} : { victory }),
-    ...(abilities === undefined ? {} : { abilities }),
-  };
-}
-
-/** Printed values of an enemy; `quantity` defaults to 1. */
-interface EnemyOptions {
-  code: string;
-  name: string;
-  set: EncounterSetCode;
-  traits: readonly string[];
-  fight: number;
-  evade: number;
-  health: ScaledValue;
-  damage: number;
-  horror: number;
-  victory?: number;
-  quantity?: number;
-  keywords?: readonly Keyword[];
-}
-
-function enemy({ code, set, traits, quantity = 1, victory, ...stats }: EnemyOptions): CardStats {
-  return {
-    ...stats,
-    code: cardCode(code),
-    typeCode: 'enemy',
-    ...picturesOf(code, 'front'),
-    traits: traitsOf(traits),
-    encounterCode: set,
-    quantity,
-    ...(victory === undefined ? {} : { victory }),
-  };
-}
-
-/** Identity of a treachery and its number of copies. */
-interface TreacheryOptions {
-  code: string;
-  name: string;
-  set: EncounterSetCode;
-  traits: readonly string[];
-  quantity: number;
-  /** Its forced abilities (Frozen in Fear's end-of-turn test, Dissonant Voices' discard). */
-  abilities?: readonly Ability[];
-  /** What it does attached to the drawer's location (Obscuring Fog). */
-  locationAttachment?: LocationAttachment;
-  /** Its constant abilities (Obscuring Fog's +2 shroud on its location). */
-  modifiers?: readonly CardModifier[];
-}
-
-function treachery({
-  code,
-  name,
-  set,
-  traits,
-  quantity,
-  abilities,
-  locationAttachment,
-  modifiers,
-}: TreacheryOptions): CardStats {
-  return {
-    code: cardCode(code),
-    name,
-    typeCode: 'treachery',
-    ...picturesOf(code, 'front'),
-    traits: traitsOf(traits),
-    encounterCode: set,
-    quantity,
-    ...(abilities ? { abilities } : {}),
-    ...(locationAttachment ? { locationAttachment } : {}),
-    ...(modifiers ? { modifiers } : {}),
-  };
-}
-
-/** A single-copy, trait-less card of The Gathering's own encounter set. */
-function scenarioCard(code: string, name: string): Omit<CardStats, 'typeCode'> {
-  return {
-    code: cardCode(code),
-    name,
-    traits: [],
-    encounterCode: sets.theGathering,
-    quantity: 1,
-    ...picturesOf(code, 'both'),
-  };
-}
-
-/**
- * Where the pictures of card `code` are on ArkhamDB: its front, and its back when the card has
- * `both` printed sides of its own (agendas, acts, locations; an encounter card's back is the
- * shared encounter back). The app loads them on the player's device; they are never bundled.
- */
-function picturesOf(
-  code: string,
-  sides: 'front' | 'both',
-): Pick<CardStats, 'imageSrc' | 'backImageSrc'> {
-  return {
-    imageSrc: cardImagePath(`/bundles/cards/${code}.png`),
-    ...(sides === 'both' ? { backImageSrc: cardImagePath(`/bundles/cards/${code}b.png`) } : {}),
-  };
-}
-
-function traitsOf(names: readonly string[]): Trait[] {
-  return names.map(trait);
-}
-
-/** The `prey` keyword with its printed instruction. */
-function prey(detail: string): Keyword {
-  return { name: 'prey', detail };
-}
-
-/** The `spawn` keyword with the location it names. */
-function spawn(detail: string): Keyword {
-  return { name: 'spawn', detail };
-}
-
-/** A printed value that does not scale with the player count. */
-function fixed(value: number): ScaledValue {
-  return { fixed: value, perInvestigator: 0 };
-}
-
-/** A printed "n per investigator" value. */
-function perInvestigator(value: number): ScaledValue {
-  return { fixed: 0, perInvestigator: value };
-}
