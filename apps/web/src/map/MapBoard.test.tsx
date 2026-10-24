@@ -345,29 +345,34 @@ describe('MapBoard', () => {
     });
 
     it('moves an enemy to the location it is dropped on, connected or not', async () => {
-      const table = PlayTable.start(house.withCard(rats, blankEnemy('rats'), atLocation(study)));
+      const table = PlayTable.start(
+        house.withCard(rats, blankEnemy('rats', { health: fixed(1) }), atLocation(study)),
+      );
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
       await drag('study', 'rats', enemyAlone, 255, 105);
 
-      expect(table.board.enemy(rats)).toEqual({ name: 'rats', at: 'hallway' });
+      expect(table.board.enemy(rats)).toEqual({ name: 'rats', at: 'hallway', health: 1 });
     });
 
     it('disengages an engaged enemy and moves it to the location it is dropped on', async () => {
       const table = PlayTable.start(
         house
           .withInvestigator(alder, { locationId: study })
-          .withCard(rats, blankEnemy('rats'), engagedWith(alder)),
+          .withCard(rats, blankEnemy('rats', { health: fixed(1) }), engagedWith(alder)),
       );
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
       await drag('study', 'rats, engaged with alder', enemyBesideAlder, 255, 105);
 
-      expect(table.board.enemy(rats)).toEqual({ name: 'rats', at: 'hallway' });
+      expect(table.board.enemy(rats)).toEqual({ name: 'rats', at: 'hallway', health: 1 });
     });
 
     it('engages an aloof enemy with the investigator whose turn it is when dropped on their pawn', async () => {
-      const aloofRats = blankEnemy('aloof_rats', { keywords: [{ name: 'aloof' }] });
+      const aloofRats = blankEnemy('aloof_rats', {
+        health: fixed(1),
+        keywords: [{ name: 'aloof' }],
+      });
       const table = PlayTable.start(
         house
           .withInvestigator(alder, { locationId: study })
@@ -382,6 +387,7 @@ describe('MapBoard', () => {
         name: 'aloof_rats',
         at: 'study',
         engagedWith: alder,
+        health: 1,
       });
     });
 
@@ -389,21 +395,25 @@ describe('MapBoard', () => {
       { where: 'on its own location', x: 75, y: 105 },
       { where: 'between two tiles', x: 165, y: 105 },
     ])('leaves an enemy in place when dropped $where', async ({ x, y }) => {
-      const table = PlayTable.start(house.withCard(rats, blankEnemy('rats'), atLocation(study)));
+      const table = PlayTable.start(
+        house.withCard(rats, blankEnemy('rats', { health: fixed(1) }), atLocation(study)),
+      );
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} />);
 
       await drag('study', 'rats', enemyAlone, x, y);
 
-      expect(table.board.enemy(rats)).toEqual({ name: 'rats', at: 'study' });
+      expect(table.board.enemy(rats)).toEqual({ name: 'rats', at: 'study', health: 1 });
     });
 
     it('leaves an enemy in place while a step is still queued', async () => {
-      const table = PlayTable.start(house.withCard(rats, blankEnemy('rats'), atLocation(study)));
+      const table = PlayTable.start(
+        house.withCard(rats, blankEnemy('rats', { health: fixed(1) }), atLocation(study)),
+      );
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy />);
 
       await drag('study', 'rats', enemyAlone, 255, 105);
 
-      expect(table.board.enemy(rats)).toEqual({ name: 'rats', at: 'study' });
+      expect(table.board.enemy(rats)).toEqual({ name: 'rats', at: 'study', health: 1 });
     });
   });
 

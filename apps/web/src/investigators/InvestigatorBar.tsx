@@ -1,7 +1,8 @@
 import { useId, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BoardView, InvestigatorView } from '@arkham/engine';
+import type { BoardView, EnemyView, InvestigatorView } from '@arkham/engine';
 import type { GameActions, SteppedStat } from '../state/gameActions';
+import { ThreatArea } from './ThreatArea';
 import { TurnControls } from './TurnControls';
 import './investigators.css';
 
@@ -29,6 +30,7 @@ export function InvestigatorBar({
           key={investigator.id}
           investigator={investigator}
           onTurn={board.turn === investigator.id}
+          engaged={board.enemiesEngagedWith(investigator.id)}
           canStart={
             picking && investigator.status === 'active' && investigator.turnTaken === undefined
           }
@@ -41,21 +43,24 @@ export function InvestigatorBar({
 }
 
 /**
- * One investigator, laid out like the prototype's panel: their card with the name band, a line
- * saying where they are and how their round goes, their turn controls and their counters. Health
- * and sanity show what is left of the printed value, like the dials, while their steppers place
- * and heal damage and horror, like the tokens on the card. Clues show without steppers: they are found by
- * investigating and spent on the act.
+ * One investigator, laid out like the prototype's panel: their threat area along the top edge of
+ * their card, the card with the name band, a line saying where they are and how their round goes, their
+ * turn controls and their counters. Health and sanity show what is left of the printed value,
+ * like the dials, while their steppers place and heal damage and horror, like the tokens on the
+ * card. Clues show without steppers: they are found by investigating and spent on the act.
  */
 function InvestigatorPanel({
   investigator,
   onTurn,
+  engaged,
   canStart,
   actions,
   busy,
 }: {
   investigator: InvestigatorView;
   onTurn: boolean;
+  /** The enemies engaged with the investigator, shown in their threat area. */
+  engaged: readonly EnemyView[];
   /** The players may start this investigator's turn now (`TurnControls`). */
   canStart: boolean;
   actions: GameActions;
@@ -73,6 +78,7 @@ function InvestigatorPanel({
       data-status={investigator.status}
       data-turn={onTurn || undefined}
     >
+      <ThreatArea treacheries={investigator.threatArea ?? []} enemies={engaged} />
       <figure data-card="investigator">
         <figcaption>
           <h3 id={nameId}>{investigator.name}</h3>

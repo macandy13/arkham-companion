@@ -1,5 +1,10 @@
 import { expect, test } from '../fixtures/test';
-import { houseOpenedExport, resumeImportedGame, twoMapsExport } from '../fixtures/saved_games';
+import {
+  alderThreatenedExport,
+  houseOpenedExport,
+  resumeImportedGame,
+  twoMapsExport,
+} from '../fixtures/saved_games';
 
 // Situations on the game screen, each photographed as it ends (`@shot`, coding guidelines §3).
 
@@ -20,7 +25,27 @@ test('map tabs for the Study and the house, the house chosen', async ({ page }) 
   await expect(page.getByRole('tabpanel', { name: 'House' })).toBeVisible();
 });
 
-test('the Hallway’s menu open over the board', { tag: '@shot' }, async ({ page }) => {
+test(
+  'Alder with four treacheries and the Ghoul Priest, scrolled on to the Ghoul Priest',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'Alder threatened', alderThreatenedExport('Alder threatened'));
+
+    const alder = page.getByRole('region', { name: 'Alder' });
+    const threatArea = alder.getByRole('list', { name: 'Threat area' });
+    const ghoulPriest = threatArea.getByRole('listitem', {
+      name: 'Ghoul Priest, 3 of 5 health left, 2 damage',
+    });
+    await expect(threatArea.getByRole('listitem')).toHaveCount(5);
+    await expect(ghoulPriest).not.toBeInViewport({ ratio: 1 });
+
+    await alder.getByRole('button', { name: 'Later cards in the threat area' }).click();
+
+    await expect(ghoulPriest).toBeInViewport({ ratio: 1 });
+  },
+);
+
+test('the Hallway’s menu open over the board', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   await page

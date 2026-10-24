@@ -1,7 +1,19 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { blankLocation, instanceId, investigatorId, newGame, PlayTable } from '@arkham/engine';
+import {
+  blankEnemy,
+  blankLocation,
+  blankTreachery,
+  engagedWith,
+  fixed,
+  instanceId,
+  investigatorId,
+  newGame,
+  PlayTable,
+  threatAreaOf,
+} from '@arkham/engine';
+import { range } from '@arkham/util';
 import { initI18n } from '../i18n';
 import { gameActions } from '../state/gameActions';
 import { InvestigatorBar } from './InvestigatorBar';
@@ -259,6 +271,80 @@ describe('InvestigatorBar', () => {
       fireEvent.click(within(panel('alder')).getByRole('button', { name: button }));
 
       await expect.poll(() => table.board.investigator(alder)).toMatchObject(after);
+    });
+  });
+
+  describe('the threat area', () => {
+    it("lists alder's treacheries, then the enemies engaged with alder with their health left", () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'))
+          .withInvestigator(alder, { locationId: study })
+          .withInvestigator(brook, { locationId: study })
+          .withCard(instanceId('voices'), blankTreachery('dissonant_voices'), threatAreaOf(alder))
+          .withCard(
+            instanceId('ghoul'),
+            blankEnemy('ghoul_minion', { health: fixed(3) }),
+            engagedWith(alder),
+            { tokens: { damage: 2 } },
+          )
+          .withCard(instanceId('rat'), blankEnemy('swarm_of_rats'), engagedWith(brook)),
+      );
+
+      render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />);
+
+      const threatArea = within(panel('alder')).getByRole('list', { name: 'Threat area' });
+      const cards = within(threatArea).getAllByRole('listitem');
+      expect(cards.map((card) => card.textContent)).toEqual([
+        'dissonant_voices',
+        'ghoul_minion1/3',
+      ]);
+      expect(cards[1]?.getAttribute('aria-label')).toBe(
+        'ghoul_minion, 1 of 3 health left, 2 damage',
+      );
+    });
+
+    it('leaves the card whole while the threat area is empty', () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'))
+          .withInvestigator(alder, { locationId: study }),
+      );
+
+      render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />);
+
+      expect(within(panel('alder')).queryByRole('list', { name: 'Threat area' })).toBeNull();
+    });
+
+    it.each([
+      { treacheries: 4, arrows: [] },
+      {
+        treacheries: 5,
+        arrows: ['Earlier cards in the threat area', 'Later cards in the threat area'],
+      },
+    ])('offers scroll arrows with $treacheries cards only past four', ({ treacheries, arrows }) => {
+      const frozenInFear = blankTreachery('frozen_in_fear');
+      const game = newGame()
+        .withLocation(study, blankLocation('study'))
+        .withInvestigator(alder, { locationId: study });
+      const table = PlayTable.start(
+        range(treacheries).reduce(
+          (withCards, index) =>
+            withCards.withCard(
+              instanceId(`frozen_in_fear_${index}`),
+              frozenInFear,
+              threatAreaOf(alder),
+            ),
+          game,
+        ),
+      );
+
+      render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />);
+
+      const shown = within(panel('alder'))
+        .queryAllByRole('button', { name: /threat area/ })
+        .map((button) => button.getAttribute('aria-label'));
+      expect(shown).toEqual(arrows);
     });
   });
 });

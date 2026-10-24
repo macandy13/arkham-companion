@@ -160,7 +160,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // revelation test stops the phase at Daisy's step 1.4 until the players enter the result.
     expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos', step: 'drawEncounterCard' });
 
-    expect(table.board.enemies).toEqual([{ name: icyGhoul, at: 'Cellar' }]);
+    expect(table.board.enemies).toEqual([{ name: icyGhoul, at: 'Cellar', health: 4 }]);
     expect(table.board.decisions).toEqual([
       {
         prompt: 'decision.cardTest',
@@ -259,7 +259,9 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         options: ['yes', 'no'],
       },
     ]);
-    expect(table.board.enemies).toEqual([{ name: icyGhoul, at: 'Cellar', engagedWith: wendy }]);
+    expect(table.board.enemies).toEqual([
+      { name: icyGhoul, at: 'Cellar', health: 4, engagedWith: wendy },
+    ]);
 
     // Nothing else can happen while the question is open.
     expect(() => table.nextPhase()).toThrow(
@@ -279,9 +281,9 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.placeDoom(1);
 
     expect(table.board.enemies).toEqual([
-      { name: icyGhoul, at: 'Cellar', engagedWith: wendy },
-      { name: swarmOfRats, at: 'Attic', engagedWith: roland },
-      { name: ghoulMinion, at: 'Cellar', engagedWith: daisy },
+      { name: icyGhoul, at: 'Cellar', health: 4, engagedWith: wendy },
+      { name: swarmOfRats, at: 'Attic', health: 1, engagedWith: roland },
+      { name: ghoulMinion, at: 'Cellar', health: 2, engagedWith: daisy },
     ]);
 
     // Round 3 – investigation: Roland's turn (agility 2 plus a good chaos token against the rats' evade 3)
@@ -327,8 +329,8 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.nextPhase()).toEqual({ round: 3, phase: 'upkeep' });
 
     expect(table.board.enemies).toEqual([
-      { name: icyGhoul, at: 'Cellar', engagedWith: wendy, damage: 2 },
-      { name: swarmOfRats, at: 'Attic' },
+      { name: icyGhoul, at: 'Cellar', health: 4, engagedWith: wendy, damage: 2 },
+      { name: swarmOfRats, at: 'Attic', health: 1 },
     ]);
 
     // Round 4 – mythos: Roland draws Grasping Hands, an agility (3) test
@@ -351,10 +353,10 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos' });
 
     expect(table.board.enemies).toEqual([
-      { name: 'Flesh-Eater', at: 'Attic' },
-      { name: icyGhoul, at: 'Cellar', engagedWith: wendy, damage: 2 },
-      { name: swarmOfRats, at: 'Attic' },
-      { name: ghoulMinion, at: 'Cellar', engagedWith: daisy },
+      { name: 'Flesh-Eater', at: 'Attic', health: 4 },
+      { name: icyGhoul, at: 'Cellar', health: 4, engagedWith: wendy, damage: 2 },
+      { name: swarmOfRats, at: 'Attic', health: 1 },
+      { name: ghoulMinion, at: 'Cellar', health: 2, engagedWith: daisy },
     ]);
 
     // Round 4 – investigation: Roland's turn. He takes the Icy Ghoul over and
@@ -397,8 +399,8 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.board.attacksDue).toEqual([]);
     expect(table.board.agenda).toMatchObject({ name: 'Rise of the Ghouls', doom: 2, threshold: 7 });
     expect(table.board.enemies).toEqual([
-      { name: 'Flesh-Eater', at: 'Attic' },
-      { name: swarmOfRats, at: 'Hallway' },
+      { name: 'Flesh-Eater', at: 'Attic', health: 4 },
+      { name: swarmOfRats, at: 'Hallway', health: 1 },
     ]);
 
     // Round 4 – upkeep
@@ -469,9 +471,9 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       },
     ]);
     expect(table.board.enemies).toEqual([
-      { name: 'Flesh-Eater', at: 'Attic' },
-      { name: swarmOfRats, at: 'Cellar' },
-      { name: ravenousGhoul, at: 'Cellar', engagedWith: daisy },
+      { name: 'Flesh-Eater', at: 'Attic', health: 4 },
+      { name: swarmOfRats, at: 'Cellar', health: 1 },
+      { name: ravenousGhoul, at: 'Cellar', health: 3, engagedWith: daisy },
     ]);
 
     // The players choose Roland; 3.3 then lists both attacks in player order.
@@ -515,11 +517,11 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     expect(table.board.agenda).toMatchObject({ name: 'Rise of the Ghouls', doom: 4, threshold: 7 });
     expect(table.board.enemies).toEqual([
-      { name: 'Flesh-Eater', at: 'Attic' },
-      { name: swarmOfRats, at: 'Cellar', engagedWith: daisy },
-      { name: swarmOfRats, at: 'Cellar', engagedWith: roland },
-      { name: swarmOfRats, at: 'Cellar', engagedWith: wendy },
-      { name: ravenousGhoul, at: 'Cellar', engagedWith: daisy },
+      { name: 'Flesh-Eater', at: 'Attic', health: 4 },
+      { name: swarmOfRats, at: 'Cellar', health: 1, engagedWith: daisy },
+      { name: swarmOfRats, at: 'Cellar', health: 1, engagedWith: roland },
+      { name: swarmOfRats, at: 'Cellar', health: 1, engagedWith: wendy },
+      { name: ravenousGhoul, at: 'Cellar', health: 3, engagedWith: daisy },
     ]);
 
     // Round 6 – investigation: each investigator defeats the rats engaged with them
@@ -666,6 +668,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.board.enemy(byName('Flesh-Eater'))).toEqual({
       name: 'Flesh-Eater',
       at: 'Attic',
+      health: 4,
       engagedWith: roland,
     });
 
@@ -678,6 +681,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.board.enemy(byName(ravenousGhoul))).toEqual({
       name: ravenousGhoul,
       at: 'Cellar',
+      health: 3,
       exhausted: true,
     });
 
@@ -822,6 +826,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.board.enemy(enemyMatching(byName(ghoulMinion), { engagedWith: roland }))).toEqual({
       name: ghoulMinion,
       at: 'Attic',
+      health: 2,
       engagedWith: roland,
     });
 
@@ -887,6 +892,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.board.enemy(byName('Ghoul Priest'))).toEqual({
       name: 'Ghoul Priest',
       at: 'Hallway',
+      health: 15,
       engagedWith: roland,
     });
 
@@ -929,6 +935,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.board.enemy(byName('Ghoul Priest'))).toEqual({
       name: 'Ghoul Priest',
       at: 'Hallway',
+      health: 15,
       damage: 6,
       exhausted: true,
     });

@@ -48,13 +48,13 @@ All UI actions go through the Zustand store's `GameActions`, which play `PlayTab
 - [ ] Threat area and engaged enemies as chips; tap → card zoom
 - [ ] Turn-taken marker, defeated/resigned state
 - [ ] An investigate button on the investigator whose turn it is (clue discovery lives with the investigator, not on the location menu)
-- [ ] Built in the UX prototype's form (M3.12): the investigator card with its threat area (treacheries as small cards, engaged enemies as avatar tokens) along the top edge of the whole card or below it, never over the middle of it, and actions as icon buttons next to the action pips and End; the steppers show only in adjust mode once M3.11 lands
+- [ ] Built in the UX prototype's form (M3.12): the investigator card with its threat area (treacheries as small cards, engaged enemies as small cards) along the top edge of the whole card or below it, never over the middle of it, and actions as icon buttons next to the action pips and End; the steppers show only in adjust mode once M3.11 lands
 
 Slices, one PR each:
 
 - [x] M3.5a: a panel per investigator: the card with the name band, the line on their round (turn, turn taken, defeated, resigned), health and sanity left with take/heal steppers, clues, resources with steppers, doom on player cards when any (`InvestigatorView` gains `health`, `sanity`, `doom`, `turnTaken`)
 - [x] M3.5b: "Start turn" on each investigator the players may pick next; on the one whose turn it is, the turn row: action pips, resign as an icon button, End
-- [ ] M3.5c: the threat area along the top edge of the card: treacheries as small cards, engaged enemies as avatar tokens that fight and evade on a tap
+- [x] M3.5c: the threat area along the top edge of the card: treacheries and engaged enemies as small cards, the enemies with their health left, at most four in view and the rest a swipe or an arrow away, a whole card at a time (fighting and evading them on a tap, and tapping a card to zoom it, come with M3.7)
 - [ ] Investigate, fight and evade as icon buttons in the turn row come with M3.7: each leaves a skill test open, and only the decision dialog lets the players report its result
 - [ ] Follow-ups: the investigator card's picture once the view has one; clue and doom steppers need an investigator-counter correction in the engine (`ManualAdjust` has none yet), so they come with M3.11's adjust mode
 
@@ -168,7 +168,7 @@ Decisions from the prototype review:
   - The act keeps a compact "Advance" on the card.
   - Header labels follow the playmat: Encounter, Agenda n, Act n, Scenario.
 - **Investigators:**
-  - The investigator card carries its threat area along the top edge of the whole card or below it, never over its middle: treacheries as small cards, engaged enemies as avatar tokens.
+  - The investigator card carries its threat area along the top edge of the whole card or below it, never over its middle: treacheries and engaged enemies as small cards (enemies with their health left, PR #228 review), at most four in view, the rest a swipe or an arrow away.
   - Actions are icon buttons next to the action pips and End.
 - **Dialogs:** a small X at the top right closes them, with no Close buttons. A dialog in the middle of a flow has no X.
 - **Skill tests:**
