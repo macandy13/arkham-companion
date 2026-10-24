@@ -85,10 +85,11 @@ Slices, each its own PR:
 2. M1C.5b – setup steps that read the log (`campaignSetup`), with the conditions M1C.4c needs, so The Midnight Masks (M5.3) can use them
 
 - [ ] `compileSetup` takes the campaign log: `campaignSetup(log)` adds or replaces setup steps (M1C.5b)
-- [x] Investigators start with physical trauma as damage and mental trauma as horror; killed/insane ones need a replacement first (rejection otherwise). Done in M1C.5a: `investigatorNeedsReplacement`, plus `notOnCampaignTeam`, `campaignMemberNotSeated` and `notNextCampaignScenario`
+- [x] Investigators start with physical trauma as damage and mental trauma as horror; killed/insane ones need a replacement first (rejection otherwise). Done in M1C.5a: `investigatorNeedsReplacement`, plus `notOnCampaignTeam`, `campaignMemberNotSeated` and `notNextCampaignScenario`. A player who wants to sit out has to leave the campaign, which needs the leaving command in M1C.4
 - [x] The chaos bag comes from the log (M1C.5a; the log's difficulty too, so `CampaignSetupOptions` has no `difficulty`)
 - [x] Standalone play is unchanged (no log): `StandaloneSetupOptions`
 - [ ] `PlayTable.setUp` and the app's `startGame` take campaign options (with the campaign UI, M5.2)
+- [ ] End to end: The Midnight Masks set up from the log after The Gathering's R1 shows Roland's trauma as 1 horror (with M5.3; until then the end-to-end test only checks that the log refuses The Gathering again)
 
 ## M1C.6 Campaign storage (S)
 

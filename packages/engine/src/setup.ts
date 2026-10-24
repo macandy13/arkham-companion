@@ -1,4 +1,4 @@
-import type { CampaignLog } from './campaign/campaign_log';
+import { findCurrentScenarioId, findInvestigator, type CampaignLog } from './campaign/campaign_log';
 import {
   cardStats,
   resolveValue,
@@ -240,11 +240,11 @@ function checkCampaignSeats(
   scenarioId: ScenarioId,
   seats: readonly InvestigatorSeat[],
 ): void {
-  const next = log.scenarioIds[log.position];
+  const next = findCurrentScenarioId(log);
   if (scenarioId !== next)
     throw new CommandRejected({ code: 'notNextCampaignScenario', scenarioId, next });
   for (const { code } of seats) {
-    const member = log.investigators.find((investigator) => investigator.code === code);
+    const member = findInvestigator(log, code);
     if (!member) throw new CommandRejected({ code: 'notOnCampaignTeam', investigatorCode: code });
     if (member.fate !== 'alive')
       throw new CommandRejected({
@@ -263,7 +263,7 @@ function withTrauma(
   investigator: StartingInvestigator,
   log: CampaignLog | undefined,
 ): StartingInvestigator {
-  const member = log?.investigators.find(({ code }) => code === investigator.code);
+  const member = log && findInvestigator(log, investigator.code);
   if (!member) return investigator;
   return {
     ...investigator,

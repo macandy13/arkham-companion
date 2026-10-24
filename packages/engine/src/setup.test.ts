@@ -547,8 +547,8 @@ describe('compileSetup in a campaign', () => {
     });
 
     expect(command.investigators).toMatchObject([
-      { code: daisy.code, health: { max: 5, damage: 0 }, sanity: { max: 9, horror: 1 } },
-      { code: roland.code, health: { max: 9, damage: 2 }, sanity: { max: 5, horror: 0 } },
+      { code: daisy.code, health: { damage: 0 }, sanity: { horror: 1 } },
+      { code: roland.code, health: { damage: 2 }, sanity: { horror: 0 } },
     ]);
   });
 
@@ -576,6 +576,12 @@ describe('compileSetup in a campaign', () => {
       { ...beforeMidnightMasks, investigators: [rolandMember, { ...daisyMember, fate: 'killed' }] },
       [rolandSeat, daisySeat],
       { code: 'investigatorNeedsReplacement', investigatorCode: daisy.code, fate: 'killed' },
+    ],
+    [
+      'an insane investigator',
+      { ...beforeMidnightMasks, investigators: [{ ...rolandMember, fate: 'insane' }, daisyMember] },
+      [rolandSeat, daisySeat],
+      { code: 'investigatorNeedsReplacement', investigatorCode: roland.code, fate: 'insane' },
     ],
     [
       'a team without one of its members',
