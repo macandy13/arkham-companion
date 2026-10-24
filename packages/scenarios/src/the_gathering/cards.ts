@@ -16,6 +16,7 @@ import {
   discardEachEnemyAt,
   discardSelf,
   eachEnemy,
+  forEachEnemy,
   duringAct,
   encounterSetCode,
   fixed,
@@ -26,6 +27,7 @@ import {
   moveEnemyTowards,
   onlyCopy,
   perInvestigator,
+  placeDoomOnSelf,
   putIntoThreatArea,
   putMapIntoPlay,
   putSetAsideIntoPlay,
@@ -186,6 +188,10 @@ export const theGatheringCardDefs: readonly CardStats[] = [
           eachEnemy({ trait: trait('Ghoul'), unengaged: true }),
           onlyCopy(codes.parlor),
         ),
+      ),
+      forEachEnemy(
+        { trait: trait('Ghoul'), at: [codes.hallway, codes.parlor] },
+        atEndOfRound(placeDoomOnSelf(1)),
       ),
       duringAct(
         [codes.trapped, codes.theBarrier],

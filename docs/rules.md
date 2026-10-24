@@ -69,6 +69,7 @@ The game rules the engine implements, summarised in our own words so sessions do
 - Doom in play counts doom on the agenda **and on every other card in play** (enemies, locations, assets).
 - The agenda advances at the mythos "check doom threshold" step when doom in play is at or above its threshold and the agenda has no "Objective –". Outside that step it only advances when a card says so.
 - Thresholds may be flat or [per investigator](#per-investigator-values).
+- Doom "for each [[Ghoul]] enemy in the Hallway or Parlor" (They're Getting Out!, at the end of the round) counts the matching enemies there as the ability starts, engaged ones included (an engaged enemy is at its investigator's location). Placed outside the mythos phase, it can only advance the agenda at the next threshold check.
 - Advancing the agenda removes **all doom from all cards in play**, then flips the agenda and follows its back side. Unless the back names a different next card, the next agenda in sequence becomes current and the old one is removed from the game.
 
 ## Act and clues

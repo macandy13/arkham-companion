@@ -1,4 +1,4 @@
-import { assertNever, shallowEqual } from '@arkham/util';
+import { assertNever, range, shallowEqual } from '@arkham/util';
 import { cardStats, type EngineContext, type Trait } from './cards';
 import type { Command, EncounterMatch, TestSkill } from './commands';
 import { cardsInPlay } from './doom';
@@ -13,7 +13,13 @@ import {
   type ResolutionId,
 } from './ids';
 import { locationAttachments } from './board';
-import { enemiesAt, enemiesOnTable, nearestEnemies } from './enemies';
+import {
+  enemiesAt,
+  enemiesMatching,
+  enemiesOnTable,
+  nearestEnemies,
+  type EnemyFilter,
+} from './enemies';
 import { isActiveInvestigator, playerOrder, requireInvestigator, statValue } from './investigators';
 import { cardsInZone, currentCard, requireCard } from './lookup';
 import type { AddMapStep } from './setup';
@@ -166,13 +172,12 @@ export type RelativeCard =
    */
   | { ref: 'eachEnemyAt'; location: RelativeCard }
   /**
-   * Each enemy on the table with `trait` (any enemy without one), only the
-   * unengaged ones with `unengaged` ("each unengaged [[Ghoul]] enemy"): the
-   * command repeats once per enemy, in card order. Unlike hunters, nobody
-   * picks the order: one enemy's step towards a fixed location changes no
-   * other enemy's path.
+   * Each enemy on the table `filter` matches ("each unengaged [[Ghoul]]
+   * enemy", `enemiesMatching`): the command repeats once per enemy, in card
+   * order. Unlike hunters, nobody picks the order: one enemy's step towards a
+   * fixed location changes no other enemy's path.
    */
-  | { ref: 'eachEnemy'; trait?: Trait; unengaged?: true }
+  | ({ ref: 'eachEnemy' } & EnemyFilter)
   /**
    * The enemy with `trait` (any enemy without one) nearest to the location of
    * the investigator the window names ("the nearest [[Cultist]] enemy",
@@ -320,6 +325,12 @@ function inRange(value: number, range: StatRange): boolean {
 export interface Ability {
   window: TimingWindow;
   condition?: AbilityCondition;
+  /**
+   * "For each [[Ghoul]] enemy in the Hallway or Parlor": the effects resolve
+   * once per enemy `perEnemy` matches, counted as the window opens like the
+   * condition; not at all when none does.
+   */
+  perEnemy?: EnemyFilter;
   effects: readonly AbilityEffect[];
 }
 
@@ -476,8 +487,13 @@ export function abilitySteps(
       (ability) =>
         ability.condition === undefined || conditionHolds(ctx, state, ability.condition, opened),
     )
-    .flatMap((ability) => ability.effects)
+    .flatMap((ability) => range(timesFor(ctx, state, ability)).flatMap(() => ability.effects))
     .map((effect) => ({ kind: 'ability', effect, opened, origin: effect.type }));
+}
+
+/** How often `ability`'s effects resolve: once, or once per enemy its `perEnemy` matches. */
+function timesFor(ctx: EngineContext, state: GameState, ability: Ability): number {
+  return ability.perEnemy === undefined ? 1 : enemiesMatching(ctx, state, ability.perEnemy).length;
 }
 
 function conditionHolds(
@@ -663,9 +679,7 @@ function eachId(
         .map((card) => card.id);
     }
     case 'eachEnemy':
-      return enemiesOnTable(ctx, state, each.trait)
-        .filter((card) => each.unengaged === undefined || card.zone.kind === 'atLocation')
-        .map((card) => card.id);
+      return enemiesMatching(ctx, state, each).map((card) => card.id);
     default:
       return assertNever(each);
   }
@@ -938,7 +952,7 @@ export function takeHorror(
  * "Each [unengaged] [[trait]] enemy" (`eachEnemy`), which repeats the effect
  * for each, written `eachEnemy({ trait: trait('Ghoul'), unengaged: true })`.
  */
-export function eachEnemy(filter: { trait?: Trait; unengaged?: true } = {}): RelativeCard {
+export function eachEnemy(filter: EnemyFilter = {}): RelativeCard {
   return { ref: 'eachEnemy', ...filter };
 }
 
@@ -1107,6 +1121,16 @@ export function ifYouHave(stat: InvestigatorStat, range: StatRange, ability: Abi
  */
 export function ifEnemiesInPlay(trait: Trait, range: StatRange, ability: Ability): Ability {
   return { ...ability, condition: { kind: 'enemiesInPlay', trait, ...range } };
+}
+
+/**
+ * "For each [[Ghoul]] enemy in the Hallway or Parlor, …": `ability`'s effects
+ * resolve once per enemy `filter` matches as its window opens, written
+ * `forEachEnemy({ trait: trait('Ghoul'), at: [codes.hallway, codes.parlor] }, atEndOfRound(placeDoomOnSelf(1)))`
+ * (They're Getting Out!).
+ */
+export function forEachEnemy(filter: EnemyFilter, ability: Ability): Ability {
+  return { ...ability, perEnemy: filter };
 }
 
 /**
