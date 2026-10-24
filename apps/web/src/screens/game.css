@@ -25,9 +25,31 @@
 
 #board > * {
   min-height: 0;
-  border: var(--border-width) solid var(--color-border);
   padding: var(--space-2);
   overflow: auto;
+}
+
+/*
+ * The play screen's panels (the investigator panels, the encounter panel and the notices) wear the
+ * same frame, drawn smaller so the board keeps its room.
+ */
+#board > #encounter,
+#board > #investigators > section,
+#notices > aside {
+  border: var(--panel-frame-width-compact) solid;
+  border-image: var(--panel-frame) var(--panel-frame-slice) / var(--panel-frame-width-compact)
+    stretch;
+}
+
+/* By day these panels are parchment too, like the screens outside play (base.css). */
+:root[data-theme='light']
+  :is(#board > #encounter, #board > #investigators > section, #notices > aside) {
+  background: var(--panel-paper);
+}
+
+/* The table is open: only a brass rule parts the investigator bar from the map above it. */
+#investigators {
+  border-top: var(--border-width) solid var(--color-border);
 }
 
 /* The header is the playmat's top row, shaded so its cards read over the table. */
@@ -77,8 +99,7 @@
   display: flex;
   gap: var(--space-3);
   align-items: center;
-  border-radius: var(--radius);
-  background: var(--color-surface);
+  background: var(--color-background);
 }
 
 #notices p,

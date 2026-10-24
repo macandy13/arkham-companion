@@ -2,13 +2,13 @@ import { expect, test } from '../fixtures/test';
 
 // Situations on the settings screen, each photographed as it ends (`@shot`, coding guidelines §3).
 
-test('the settings with the unofficial fan project notice', { tag: '@shot' }, async ({ page }) => {
+test('the settings with the unofficial fan project notice', async ({ page }) => {
   await page.goto('/#/settings');
 
   await expect(page.getByRole('region', { name: 'About' })).toContainText('unofficial fan project');
 });
 
-test('the settings by day, on parchment', { tag: '@shot' }, async ({ page }) => {
+test('the settings by day, on parchment', async ({ page }) => {
   await page.goto('/#/settings');
 
   await page.getByLabel('Theme').selectOption('Light');

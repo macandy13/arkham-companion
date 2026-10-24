@@ -198,9 +198,9 @@ Decisions from the prototype review:
 - [ ] M3.12e: dialog style (the X close), with the skill-test sum and chaos-token drawings, inside M3.7
 - [ ] M3.12f: ornaments and frames across the app (screens, panels, dialogs) in the playmat's line style: brass rules, quarters of its zodiac ring, stars, all our own SVG and CSS, no FFG art (a parchment book look was tried first, but it did not fit the playmat's modern look, #230 review)
   - [x] M3.12f1: the screens outside play (home, new game, settings) and every dialog framed like the playmat: a brass rule with a finer one inside, a quarter of the zodiac ring with its ticks and a star in each corner, a small ring between rules under the title; parchment panels in the light theme, see-through night in the dark one
-  - [ ] M3.12f2: the play screen's chrome in the same style: the app bar, the side panel and the investigator panels, while the table stays the playmat
+  - [x] M3.12f2: the play screen's chrome in the same style: the app bar, the side panel and the investigator panels, while the table stays the playmat
 
-  Done: M3.12f1 frames `#app > main` (outside the board) and `dialog` with a `border-image` (`panel_frame.svg`, a light-theme copy in its accent colour, since an image cannot read the tokens) and puts the title's ornament (`ornament_rule.svg`, a mask in the accent colour) under the screen's `h1`.
+  Done: M3.12f1 frames `#app > main` (outside the board) and `dialog` with a `border-image` (`panel_frame.svg`, a light-theme copy in its accent colour, since an image cannot read the tokens) and puts the title's ornament (`ornament_rule.svg`, a mask in the accent colour) under the screen's `h1`. M3.12f2 gives the play screen's panels (encounter panel, investigator panels, notices) the same frame at half width (`--panel-frame-width-compact`), parchment by day, and marks the investigator whose turn it is with a brass glow (`--turn-glow`) instead of a border; the table stays open, with a brass rule above the investigator bar.
 
 - The investigator panel in the prototype's form is part of M3.5.
 

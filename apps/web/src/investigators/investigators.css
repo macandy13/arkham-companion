@@ -22,15 +22,13 @@
   gap: var(--space-1) var(--space-2);
   flex: none;
   align-items: start;
-  padding: var(--space-1);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius);
+  padding: 0;
   background: var(--color-surface);
 }
 
-/* The investigator whose turn it is stands out in the accent colour. */
+/* The investigator whose turn it is stands out, glowing in the accent colour inside its frame. */
 #board > #investigators > section[data-turn] {
-  border-color: var(--color-accent);
+  box-shadow: var(--turn-glow);
 }
 
 /* A defeated or resigned investigator has left the game, so their panel steps back. */

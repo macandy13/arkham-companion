@@ -3,7 +3,7 @@ import { houseOpenedExport, resumeImportedGame, twoMapsExport } from '../fixture
 
 // Situations on the game screen, each photographed as it ends (`@shot`, coding guidelines §3).
 
-test('the house map with Alder in the Hallway', async ({ page }) => {
+test('the house map with Alder in the Hallway', { tag: '@shot' }, async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   const hallway = page
@@ -20,7 +20,7 @@ test('map tabs for the Study and the house, the house chosen', async ({ page }) 
   await expect(page.getByRole('tabpanel', { name: 'House' })).toBeVisible();
 });
 
-test('the Hallway’s menu open over the board', { tag: '@shot' }, async ({ page }) => {
+test('the Hallway’s menu open over the board', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   await page
@@ -30,4 +30,13 @@ test('the Hallway’s menu open over the board', { tag: '@shot' }, async ({ page
     .click();
 
   await expect(page.getByRole('dialog', { name: 'Hallway' })).toBeVisible();
+});
+
+test('the house map by day, the panels on parchment', { tag: '@shot' }, async ({ page }) => {
+  await page.goto('/#/settings');
+  await page.getByLabel('Theme').selectOption('Light');
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+
+  await expect(page.getByRole('region', { name: 'Alder' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
