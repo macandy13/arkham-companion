@@ -37,6 +37,7 @@ export type Command =
   | AdjustInvestigator
   | DefeatInvestigator
   | DiscoverClues
+  | PlaceClues
   | PlaceDoom
   | AdvanceAgenda
   | AdvanceAct
@@ -284,6 +285,18 @@ export interface DiscoverClues {
   type: 'DiscoverClues';
   investigatorId: InvestigatorId;
   locationId: InstanceId;
+  amount: number;
+}
+
+/**
+ * An active investigator places up to `amount` of their clues on the location
+ * they are at ("place 1 of your clues on your location" for each point a test
+ * fails by): as many as they have, so none at all with no clues. Produces
+ * `InvestigatorChanged` (clues leave) and `TokensChanged` (clues arrive).
+ */
+export interface PlaceClues {
+  type: 'PlaceClues';
+  investigatorId: InvestigatorId;
   amount: number;
 }
 
@@ -626,9 +639,10 @@ export interface TestSkill {
   onPass: readonly Command[];
   onFail: readonly Command[];
   /**
-   * "For each point you fail by, take 1 damage" (Grasping Hands) or horror
-   * (Rotting Remains): the fail answer confirms how much the test failed by,
-   * and the investigator takes that much, ahead of `onFail`.
+   * "For each point you fail by, take 1 damage" (Grasping Hands), horror
+   * (Rotting Remains) or "place 1 of your clues on your location" (False
+   * Lead): the fail answer confirms how much the test failed by, and the
+   * investigator pays that much, ahead of `onFail`.
    */
   perPointFailed?: PerPointFailed;
 }

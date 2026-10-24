@@ -352,6 +352,58 @@ describe('DiscoverClues', () => {
   });
 });
 
+describe('PlaceClues', () => {
+  it.each([
+    { clues: 2, amount: 1, kept: 1, onHall: 1 },
+    { clues: 1, amount: 3, kept: 0, onHall: 1 },
+    { clues: 0, amount: 2, kept: 0, onHall: 0 },
+  ])(
+    "places $amount of alice's $clues clues on the hall: she keeps $kept",
+    ({ clues, amount, kept, onHall }) => {
+      const { context, state } = newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true, clues: 0 })
+        .withInvestigator(alice, { locationId: hall, clues })
+        .start();
+
+      const placed = stateAfter(context, state, {
+        type: 'PlaceClues',
+        investigatorId: alice,
+        amount,
+      });
+
+      expect(investigatorOf(placed, alice).clues).toBe(kept);
+      expect(placed.cards[hall]?.tokens.clue ?? 0).toBe(onHall);
+      expect(checkInvariants(placed)).toEqual([]);
+    },
+  );
+
+  it('places nothing for an investigator who is not on the map', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(bob, { clues: 1 })
+      .start();
+
+    const placed = stateAfter(context, state, {
+      type: 'PlaceClues',
+      investigatorId: bob,
+      amount: 1,
+    });
+
+    expect(investigatorOf(placed, bob).clues).toBe(1);
+  });
+
+  it('rejects a negative amount', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall, clues: 1 })
+      .start();
+
+    expect(
+      rejectionFrom(context, state, { type: 'PlaceClues', investigatorId: alice, amount: -1 }),
+    ).toEqual({ code: 'invalidTokenDelta', delta: -1 });
+  });
+});
+
 describe('prey helpers', () => {
   const hurt = blankInvestigator(alice, {
     health: { max: 7, damage: 4 },
