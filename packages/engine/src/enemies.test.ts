@@ -716,13 +716,22 @@ describe('exhaust and ready', () => {
     expect(readied.cards[ghoul]?.exhausted).toBe(false);
   });
 
-  it('rejects readying a ready enemy', () => {
+  it('readies nothing on a ready enemy', () => {
     const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, engagedWith(alice)).start();
 
-    expect(rejectionFrom(context, state, { type: 'ReadyEnemy', enemyId: ghoul })).toEqual({
+    const { events } = execute(context, state, { type: 'ReadyEnemy', enemyId: ghoul });
+
+    expect(events).toEqual([]);
+  });
+
+  it('rejects exhausting an exhausted enemy', () => {
+    const { context, state } = aliceInHall.withCard(ghoul, ghoulCard, engagedWith(alice)).start();
+    const exhausted = stateAfter(context, state, { type: 'ExhaustEnemy', enemyId: ghoul });
+
+    expect(rejectionFrom(context, exhausted, { type: 'ExhaustEnemy', enemyId: ghoul })).toEqual({
       code: 'exhaustUnchanged',
       cardId: ghoul,
-      exhausted: false,
+      exhausted: true,
     });
   });
 

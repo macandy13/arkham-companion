@@ -1607,9 +1607,13 @@ describe('enemies that heal or ready themselves', () => {
     expect(after.cards[howling]?.tokens).toEqual({ damage: 1 });
   });
 
-  it.each([{ turnOf: alice }, { turnOf: bob }])(
-    'readies an enemy at the end of $turnOf’s turn, as Umôrdhoth does',
-    ({ turnOf }) => {
+  it.each([
+    { turnOf: alice, exhaustedBefore: true },
+    { turnOf: bob, exhaustedBefore: true },
+    { turnOf: alice, exhaustedBefore: false },
+  ])(
+    'readies an enemy at the end of $turnOf’s turn (exhausted before: $exhaustedBefore), as Umôrdhoth does',
+    ({ turnOf, exhaustedBefore }) => {
       const restless = instanceId('restless_titan');
       /** "At the end of each investigator's turn: ready it." */
       const restlessCard = blankEnemy('restless_titan', {
@@ -1623,11 +1627,13 @@ describe('enemies that heal or ready themselves', () => {
         .withCard(restless, restlessCard, atLocation(cellar))
         .withTurnOf(turnOf)
         .start();
-      const exhausted = stateAfter(context, state, { type: 'ExhaustEnemy', enemyId: restless });
+      const before = exhaustedBefore
+        ? stateAfter(context, state, { type: 'ExhaustEnemy', enemyId: restless })
+        : state;
 
-      const after = stateAfter(context, exhausted, { type: 'EndTurn', investigatorId: turnOf });
+      const after = stateAfter(context, before, { type: 'EndTurn', investigatorId: turnOf });
 
-      expect(exhausted.cards[restless]?.exhausted).toBe(true);
+      expect(before.cards[restless]?.exhausted).toBe(exhaustedBefore);
       expect(after.cards[restless]?.exhausted).toBe(false);
     },
   );

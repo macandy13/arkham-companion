@@ -512,7 +512,8 @@ export interface ExhaustEnemy {
 /**
  * Readies an exhausted enemy in play (upkeep, or a card effect). A readied,
  * unengaged enemy with an investigator at its location engages, as the rules
- * demand. Produces `ExhaustChanged`, then `EnemyEngaged` or `DecisionRequested`.
+ * demand. Readying a ready enemy does nothing, so "at the end of each turn:
+ * ready it" (Umôrdhoth) resolves whether or not it is exhausted. Produces `ExhaustChanged`, then `EnemyEngaged` or `DecisionRequested`.
  */
 export interface ReadyEnemy {
   type: 'ReadyEnemy';

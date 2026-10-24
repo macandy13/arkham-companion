@@ -140,10 +140,13 @@ export function handleExhaustEnemy(
 
 /**
  * `ReadyEnemy`: readies the enemy; one that is unengaged then engages an
- * investigator at its location (Rules Reference, "Engaged").
+ * investigator at its location (Rules Reference, "Engaged"). A ready enemy
+ * stays as it is.
  */
 export function handleReadyEnemy(ctx: EngineContext, state: GameState, cmd: ReadyEnemy): Event[] {
-  const change = exhaustChange(onTableEnemyOf(ctx, state, cmd.enemyId).enemy, false);
+  const { enemy } = onTableEnemyOf(ctx, state, cmd.enemyId);
+  if (!enemy.exhausted) return [];
+  const change = exhaustChange(enemy, false);
   return [change, ...engageEvents(ctx, replay([change], state), cmd.enemyId)];
 }
 
