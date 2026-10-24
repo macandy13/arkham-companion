@@ -8,7 +8,8 @@ import type { GameActions } from '../state/gameActions';
  * the players' words with the card it is about, the investigator who answers it, the test of a
  * skill test, and one button per option, answered through `GameActions.answer` with the default
  * counts. The game cannot go on before it is answered, so Escape does not close it; Undo takes back
- * the step that raised it instead. The engine's labels are i18n keys or names already readable
+ * the step that raised it instead, and "Adjust board" lets the players correct the board first
+ * (the dialog steps aside while they adjust, since the modal makes the board inert). The engine's labels are i18n keys or names already readable
  * (investigators, locations); a key the strings lack shows as the option's readable name.
  */
 export function DecisionDialog({
@@ -49,8 +50,9 @@ export function DecisionDialog({
         </p>
       )}
       <ul>
-        {decision.options.map((option) => (
-          <li key={option}>
+        {/* Two options can share a name (two enemies of one card), so the position is the key. */}
+        {decision.options.map((option, index) => (
+          <li key={index}>
             <button type="button" disabled={busy} onClick={() => void actions.answer(option)}>
               {t(decision.labels?.[option] ?? option, { defaultValue: option })}
             </button>
@@ -58,6 +60,9 @@ export function DecisionDialog({
         ))}
       </ul>
       <footer>
+        <button type="button" disabled={busy} onClick={() => void actions.startAdjusting()}>
+          {t('header.adjust')}
+        </button>
         <button type="button" disabled={busy} onClick={() => void actions.undo()}>
           {t('header.undo')}
         </button>

@@ -18,13 +18,17 @@ const study = instanceId('study');
 const ghoul = instanceId('ghoul');
 const alder = investigatorId('alder');
 
-/** Actions that play on `table`, as the store's play on the open game; adjusting is never used here. */
-const actionsOn = (table: PlayTable, undo = async () => {}) =>
-  gameActions(async (step) => step(table), undo, {
-    start: async () => {},
-    finish: async () => {},
-    cancel: async () => {},
-  });
+/** Actions that play on `table`, as the store's play on the open game; undo and adjusting do nothing. */
+const actionsOn = (table: PlayTable) =>
+  gameActions(
+    async (step) => step(table),
+    async () => {},
+    {
+      start: async () => {},
+      finish: async () => {},
+      cancel: async () => {},
+    },
+  );
 
 /** Shows the first open decision of `table` in the dialog. */
 const renderFirstDecision = (table: PlayTable, actions = actionsOn(table)) => {
@@ -94,27 +98,34 @@ describe('DecisionDialog', () => {
     );
     table.investigate(alder, { result: 'open' });
     renderFirstDecision(table);
-    expect(screen.getByRole('heading').textContent).toBe('Attack of opportunity by Ghoul');
 
     fireEvent.click(screen.getByRole('button', { name: 'Does not provoke' }));
 
     expect(table.board.investigator(alder)).toMatchObject({ damage: 0, horror: 0 });
     expect(table.board.decisions).toMatchObject([{ prompt: 'decision.investigate' }]);
+    expect(screen.getByRole('heading').textContent).toBe('Attack of opportunity by Ghoul');
   });
 
-  it('takes back the step that raised the decision with Undo', () => {
+  it.each([
+    { button: 'Undo', calls: 'undo' },
+    { button: 'Adjust board', calls: 'start adjusting' },
+  ])('calls $calls from its $button button', ({ button, calls }) => {
     const table = aldersTurnInTheStudy();
     table.investigate(alder, { result: 'open' });
-    let undone = false;
-    renderFirstDecision(
-      table,
-      actionsOn(table, async () => {
-        undone = true;
-      }),
+    const called: string[] = [];
+    const actions = gameActions(
+      async (step) => step(table),
+      async () => void called.push('undo'),
+      {
+        start: async () => void called.push('start adjusting'),
+        finish: async () => {},
+        cancel: async () => {},
+      },
     );
+    renderFirstDecision(table, actions);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    fireEvent.click(screen.getByRole('button', { name: button }));
 
-    expect(undone).toBe(true);
+    expect(called).toEqual([calls]);
   });
 });
