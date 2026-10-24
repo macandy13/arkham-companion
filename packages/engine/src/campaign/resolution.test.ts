@@ -10,6 +10,7 @@ import {
   blankEnemy,
   blankLocation,
   campaign,
+  CUSTOM_SCENARIO,
   instanceId,
   investigatorCode,
   investigatorId,
@@ -265,7 +266,7 @@ describe('applyResolution', () => {
   /** Roland's campaign, at the scenario `newGame()` tables play, before the next one. */
   const atTheTablesScenario = startedCampaign({
     investigators: [roland.code],
-    scenarioIds: [scenarioId('custom'), scenarioId('next_scenario')],
+    scenarioIds: [CUSTOM_SCENARIO, scenarioId('next_scenario')],
   });
   const awardRoland = { type: 'AwardXp', code: roland.code, amount: 3 } as const;
 
@@ -279,7 +280,7 @@ describe('applyResolution', () => {
 
     expect(log.investigators[0]).toMatchObject({ code: roland.code, xpEarned: 3 });
     expect(log.playedScenarios).toEqual([
-      { scenarioId: 'custom', outcome: { kind: 'resolution', id: 'R1' } },
+      { scenarioId: CUSTOM_SCENARIO, outcome: { kind: 'resolution', id: 'R1' } },
     ]);
     expect(log.position).toBe(1);
   });
@@ -291,7 +292,7 @@ describe('applyResolution', () => {
     const { log } = campaign.applyResolution(campaignContext, atTheTablesScenario, ended, []);
 
     expect(log.playedScenarios).toEqual([
-      { scenarioId: 'custom', outcome: { kind: 'noResolution' } },
+      { scenarioId: CUSTOM_SCENARIO, outcome: { kind: 'noResolution' } },
     ]);
   });
 
@@ -310,14 +311,14 @@ describe('applyResolution', () => {
     const ended = stateAfter(context, state, endWith(r1));
     const atNextScenario = startedCampaign({
       investigators: [roland.code],
-      scenarioIds: [scenarioId('first'), scenarioId('custom')],
+      scenarioIds: [scenarioId('first'), CUSTOM_SCENARIO],
     });
 
     expect(
       campaignRejectionOf(() =>
         campaign.applyResolution(campaignContext, atNextScenario, ended, []),
       ),
-    ).toEqual({ code: 'notCurrentScenario', scenarioId: 'custom', current: 'first' });
+    ).toEqual({ code: 'notCurrentScenario', scenarioId: CUSTOM_SCENARIO, current: 'first' });
   });
 
   it('rejects the whole resolution when one confirmed command is invalid', () => {
@@ -332,5 +333,20 @@ describe('applyResolution', () => {
         ]),
       ),
     ).toEqual({ code: 'chaosTokenNotInBag', token: 'elderSign' });
+  });
+});
+
+describe('proposedCommands', () => {
+  it('keeps the commands of a proposal in order and drops its by-hand steps', () => {
+    const changes = [
+      { kind: 'command', command: { type: 'AddChaosToken', token: 'cultist' } },
+      { kind: 'byHand', textKey: 'scenario.test.upgradeDecks' },
+      { kind: 'command', command: { type: 'AwardXp', code: aliceCode, amount: 2 } },
+    ] as const;
+
+    expect(campaign.proposedCommands(changes)).toEqual([
+      { type: 'AddChaosToken', token: 'cultist' },
+      { type: 'AwardXp', code: aliceCode, amount: 2 },
+    ]);
   });
 });

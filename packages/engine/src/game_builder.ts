@@ -51,8 +51,11 @@ export interface BuiltGame {
 /** The map every location is on unless `LocationOptions.map` names another. */
 const MAIN_MAP = mapId('main');
 
-/** The scenario ID of every built table, stored as `GameMeta.scenarioId`. */
-const CUSTOM_SCENARIO = scenarioId('custom');
+/**
+ * The scenario ID of every built table, stored as `GameMeta.scenarioId`; a
+ * test campaign plays it to link a built game to its log.
+ */
+export const CUSTOM_SCENARIO = scenarioId('custom');
 
 interface LocationEntry {
   id: InstanceId;

@@ -131,8 +131,8 @@ export interface ReplaceInvestigator {
 
 /**
  * The current scenario is resolved with `outcome`: it joins the played
- * scenarios, and the campaign moves on to the next one. The last step of a
- * confirmed resolution (`proposeResolution`); the handler only refuses it
+ * scenarios, and the campaign moves on to the next one. `applyResolution`
+ * sends it as the last step of a confirmed resolution; the handler only refuses it
  * past the last scenario. Produces `ScenarioPlayed` and
  * `ScenarioPositionChanged`.
  */

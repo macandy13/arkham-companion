@@ -54,7 +54,7 @@ Ref: product.md "Campaign mode" (resolutions).
 Slices, each its own PR:
 
 1. M1C.4a – resolution steps as data, `campaign.proposeResolution` (steps, victory points, defeat trauma by damage or horror) and The Gathering's resolutions
-2. M1C.4b – trauma named by a card effect's defeat (The Gathering's agenda 3), played scenarios with their resolution in the log, and applying a confirmed proposal in one step
+2. M1C.4b1 – trauma named by a card effect's defeat (The Gathering's agenda 3). M1C.4b2 – played scenarios with their resolution in the log, and applying a confirmed proposal in one step
 3. M1C.4c – conditional steps that read the game (The Midnight Masks' cultists), with The Midnight Masks' resolutions in M5.3
 4. Leaving and joining a campaign stays last; the campaign UI (M5.2) needs it only for replacing killed or insane investigators, which already works
 
