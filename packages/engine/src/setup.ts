@@ -1,4 +1,10 @@
-import { findCurrentScenarioId, findInvestigator, type CampaignLog } from './campaign/campaign_log';
+import {
+  findCurrentScenarioId,
+  findInvestigator,
+  storyHolds,
+  type CampaignLog,
+  type StoryCondition,
+} from './campaign/campaign_log';
 import {
   cardStats,
   resolveValue,
@@ -107,12 +113,28 @@ export interface MoveInvestigatorsStep {
 }
 
 /**
+ * Steps that apply only when the campaign log's story answers `condition`
+ * with yes, `otherwise` steps when it answers no ("If the Ghoul Priest is
+ * still alive, shuffle him into the encounter deck"). A standalone game has
+ * no log and answers as an empty one (`storyHolds`).
+ */
+export interface WhenStoryStep {
+  kind: 'whenStory';
+  condition: StoryCondition;
+  then: readonly SetupStep[];
+  otherwise?: readonly SetupStep[];
+}
+
+/**
  * One declarative setup instruction (architecture "Scenarios"). Cards are
  * referred to by card code; a step that targets an existing card
  * (`placeTokens`, `spawn.at`, `moveInvestigators`) needs exactly one instance
  * of that code created by an earlier step.
  */
-export type SetupStep =
+export type SetupStep = PlacingStep | WhenStoryStep;
+
+/** A setup step that changes the table; `WhenStoryStep`s resolve to these before any is applied. */
+type PlacingStep =
   | AddMapStep
   | SetAsideStep
   | BuildEncounterDeckStep
@@ -195,10 +217,12 @@ const ENCOUNTER_DECK_TYPES: ReadonlySet<CardType> = new Set<CardType>(['enemy', 
  */
 export function compileSetup(ctx: ScenarioContext, options: SetupOptions): StartScenario {
   const def = ctx.scenario;
+  const log = options.campaign;
+  const steps = placingSteps(def.setup, log?.story ?? {});
   const env: SetupEnv = {
     ctx,
     playerCount: options.investigators.length,
-    usedCopies: usedCopies(def),
+    usedCopies: usedCopies(def, steps),
   };
   const initial: SetupDraft = {
     maps: {},
@@ -207,10 +231,9 @@ export function compileSetup(ctx: ScenarioContext, options: SetupOptions): Start
       ...deckCards(def.actDeck, { kind: 'actDeck' }),
     ],
   };
-  const log = options.campaign;
   if (log) checkCampaignSeats(log, def.id, options.investigators);
   const difficulty = log ? log.difficulty : options.difficulty;
-  const draft = def.setup.reduce((state, step) => applyStep(state, step, env), initial);
+  const draft = steps.reduce((state, step) => applyStep(state, step, env), initial);
   const location = draft.investigatorLocation;
   return {
     type: 'StartScenario',
@@ -301,8 +324,26 @@ function deckCards(codes: readonly CardCode[], zone: Zone): DraftCard[] {
   return codes.map((code, i) => ({ id: newId(code, codes.slice(0, i)), code, zone, faceUp: true }));
 }
 
+/** The steps that apply for `story`, in order, with each `WhenStoryStep` replaced by its branch. */
+function placingSteps(
+  steps: readonly SetupStep[],
+  story: CampaignLog['story'],
+): readonly PlacingStep[] {
+  return steps.flatMap((step) => {
+    if (step.kind !== 'whenStory') return [step];
+    const holds = storyHolds(story, step.condition);
+    if (holds === undefined)
+      throw new CommandRejected({
+        code: 'storyConditionMismatch',
+        key: step.condition.key,
+        condition: step.condition.kind,
+      });
+    return placingSteps(holds ? step.then : (step.otherwise ?? []), story);
+  });
+}
+
 /** The draft after one setup step. */
-function applyStep(draft: SetupDraft, step: SetupStep, env: SetupEnv): SetupDraft {
+function applyStep(draft: SetupDraft, step: PlacingStep, env: SetupEnv): SetupDraft {
   switch (step.kind) {
     case 'addMap':
       return withMap(draft, step);
@@ -452,15 +493,15 @@ function encounterSetCards(ctx: EngineContext, set: EncounterSetCode): readonly 
  * encounter deck. Counted over all steps, so the deck excludes a set-aside
  * enemy whether it is set aside before or after the deck is built.
  */
-function usedCopies(def: ScenarioDefinition): Map<CardCode, number> {
-  const codes = [...def.agendaDeck, ...def.actDeck, ...def.setup.flatMap(stepCodes)];
+function usedCopies(def: ScenarioDefinition, steps: readonly PlacingStep[]): Map<CardCode, number> {
+  const codes = [...def.agendaDeck, ...def.actDeck, ...steps.flatMap(stepCodes)];
   const counts = new Map<CardCode, number>();
   for (const code of codes) counts.set(code, (counts.get(code) ?? 0) + 1);
   return counts;
 }
 
 /** Codes of the cards a step creates (other than encounter deck cards). */
-function stepCodes(step: SetupStep): readonly CardCode[] {
+function stepCodes(step: PlacingStep): readonly CardCode[] {
   switch (step.kind) {
     case 'addMap':
       return step.locations.map((location) => location.code);

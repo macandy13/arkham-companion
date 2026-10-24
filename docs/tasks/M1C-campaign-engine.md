@@ -82,9 +82,9 @@ Ref: product.md "Campaign mode" (`campaignSetup`); product.md "UI concept" (pick
 Slices, each its own PR:
 
 1. M1C.5a – `CampaignSetupOptions`: difficulty, bag and trauma from the log; the seats must be the log's living team, for its next scenario
-2. M1C.5b – setup steps that read the log (`campaignSetup`), with the conditions M1C.4c needs, so The Midnight Masks (M5.3) can use them
+2. M1C.5b – setup steps that read the log's story (`whenStory` with a `StoryCondition`), so The Midnight Masks and The Devourer Below (M5.3, M5.4) can use them; M1C.4c reuses the conditions for resolutions
 
-- [ ] `compileSetup` takes the campaign log: `campaignSetup(log)` adds or replaces setup steps (M1C.5b)
+- [x] `compileSetup` takes the campaign log: setup steps read it. Done in M1C.5b as a `whenStory` step in the scenario's own `setup` rather than a separate `campaignSetup(log)`, so the setup stays data and standalone play takes the `otherwise` steps
 - [x] Investigators start with physical trauma as damage and mental trauma as horror; killed/insane ones need a replacement first (rejection otherwise). Done in M1C.5a: `investigatorNeedsReplacement`, plus `notOnCampaignTeam`, `campaignMemberNotSeated` and `notNextCampaignScenario`. A player who wants to sit out has to leave the campaign, which needs the leaving command in M1C.4
 - [x] The chaos bag comes from the log (M1C.5a; the log's difficulty too, so `CampaignSetupOptions` has no `difficulty`)
 - [x] Standalone play is unchanged (no log): `StandaloneSetupOptions`

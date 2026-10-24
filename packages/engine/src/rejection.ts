@@ -1,4 +1,4 @@
-import type { InvestigatorFate } from './campaign/campaign_log';
+import type { InvestigatorFate, StoryCondition } from './campaign/campaign_log';
 import type { CommandType } from './commands';
 import type {
   CardCode,
@@ -37,6 +37,8 @@ export type Rejection =
       investigatorCode: InvestigatorCode;
       fate: Exclude<InvestigatorFate, 'alive'>;
     }
+  /** A setup step asks about story record `key` as a `condition`, but the log holds another kind of record there. */
+  | { code: 'storyConditionMismatch'; key: string; condition: StoryCondition['kind'] }
   /** A campaign setup leaves a member of the log's team without a seat. */
   | { code: 'campaignMemberNotSeated'; investigatorCode: InvestigatorCode }
   | { code: 'unknownMap'; mapId: MapId }
@@ -268,6 +270,8 @@ function describe(r: Rejection): string {
       return `investigator ${r.investigatorCode} is not on the campaign's team`;
     case 'investigatorNeedsReplacement':
       return `investigator ${r.investigatorCode} is ${r.fate} and must be replaced first`;
+    case 'storyConditionMismatch':
+      return `setup asks story record ${r.key} as a ${r.condition}, but the log holds another kind`;
     case 'campaignMemberNotSeated':
       return `investigator ${r.investigatorCode} of the campaign's team has no seat`;
     case 'unknownMap':

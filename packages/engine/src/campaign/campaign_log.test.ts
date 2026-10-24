@@ -10,6 +10,7 @@ import {
   findTraumaFate,
   countTrauma,
   changeTrauma,
+  storyHolds,
   type CampaignInvestigator,
 } from './campaign_log';
 
@@ -90,5 +91,54 @@ describe('campaign log queries', () => {
     });
     expect(findCurrentScenarioId(log)).toBe('the-gathering');
     expect(findCurrentScenarioId({ ...log, position: 2 })).toBeUndefined();
+  });
+});
+
+describe('storyHolds', () => {
+  const cultistsWhoGotAway = {
+    kind: 'crossableList',
+    entries: [
+      { name: 'Wolf-Man Drew', crossedOut: false },
+      { name: 'Herman Collins', crossedOut: true },
+      { name: 'Peter Warren', crossedOut: false },
+    ],
+  } as const;
+
+  it.each([
+    ['a flag that matches', { houseStillStanding: { kind: 'flag', value: true } }, true],
+    ['a flag that does not match', { houseStillStanding: { kind: 'flag', value: false } }, false],
+    ['a flag never written', {}, false],
+  ] as const)('answers "the house still stands" for %s', (_, story, holds) => {
+    expect(storyHolds(story, { kind: 'flag', key: 'houseStillStanding', value: true })).toBe(holds);
+  });
+
+  it.each([
+    [2, true],
+    [3, false],
+  ])('counts only names not crossed out: at least %i is %s', (count, holds) => {
+    expect(
+      storyHolds(
+        { cultistsWhoGotAway },
+        { kind: 'atLeastNames', key: 'cultistsWhoGotAway', count },
+      ),
+    ).toBe(holds);
+  });
+
+  it.each([
+    ['a plain list', { cultistsWhoGotAway: { kind: 'list', entries: ['Wolf-Man Drew'] } }, true],
+    ['a list never written', {}, false],
+  ] as const)('counts the names of %s', (_, story, holds) => {
+    expect(storyHolds(story, { kind: 'atLeastNames', key: 'cultistsWhoGotAway', count: 1 })).toBe(
+      holds,
+    );
+  });
+
+  it('has no answer for a record of another kind than the condition asks about', () => {
+    expect(
+      storyHolds(
+        { cultistsWhoGotAway: { kind: 'flag', value: true } },
+        { kind: 'atLeastNames', key: 'cultistsWhoGotAway', count: 1 },
+      ),
+    ).toBeUndefined();
   });
 });

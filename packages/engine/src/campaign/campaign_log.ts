@@ -70,6 +70,18 @@ export type StoryValue =
   /** Names written under a heading that later scenarios may cross out again. */
   | { readonly kind: 'crossableList'; readonly entries: readonly CrossableEntry[] };
 
+/**
+ * A question about the story records of the campaign log, asked by a
+ * scenario's setup (`WhenStoryStep`), e.g. "if the Ghoul Priest is still
+ * alive". A record never written answers as if empty: a flag reads false and
+ * a list has no names, which is also how a standalone game (no log) answers.
+ */
+export type StoryCondition =
+  /** The flag record `key` is `value`. */
+  | { readonly kind: 'flag'; readonly key: string; readonly value: boolean }
+  /** The list record `key` holds at least `count` names that are not crossed out. */
+  | { readonly kind: 'atLeastNames'; readonly key: string; readonly count: number };
+
 /** How a scenario ended, as `ScenarioEnded` recorded it. */
 export type ScenarioOutcome =
   | { readonly kind: 'resolution'; readonly id: ResolutionId }
@@ -197,4 +209,27 @@ export function findTraumaFate(
 /** The ID of the scenario to play next, or `undefined` once the campaign is complete. */
 export function findCurrentScenarioId(log: CampaignLog): ScenarioId | undefined {
   return log.scenarioIds[log.position];
+}
+
+/**
+ * Whether `story` answers `condition` with yes. `undefined` when the record
+ * has another kind than the condition asks about, a mistake in the scenario
+ * data the caller rejects.
+ */
+export function storyHolds(
+  story: CampaignLog['story'],
+  condition: StoryCondition,
+): boolean | undefined {
+  const record = story[condition.key];
+  switch (condition.kind) {
+    case 'flag':
+      if (!record) return condition.value === false;
+      return record.kind === 'flag' ? record.value === condition.value : undefined;
+    case 'atLeastNames':
+      if (!record) return condition.count <= 0;
+      if (record.kind === 'list') return record.entries.length >= condition.count;
+      if (record.kind === 'crossableList')
+        return record.entries.filter((entry) => !entry.crossedOut).length >= condition.count;
+      return undefined;
+  }
 }
