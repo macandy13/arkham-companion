@@ -2,6 +2,46 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.5](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.4...arkham-companion-v0.1.5) (2026-10-24)
+
+
+### Features
+
+* **engine:** enemies heal and ready themselves (M4.5 step 5a) ([3746f07](https://github.com/macandy13/arkham-companion/commit/3746f07639928fd00dcdb9d8d6ab90b0e4f6079d))
+* **engine:** enemies heal and ready themselves (M4.5 step 5a) ([2681608](https://github.com/macandy13/arkham-companion/commit/268160876e06d704dd93561cb3181b1da106c757))
+* **engine:** let the drawer choose one; agenda 1 asks the lead (M4.5 step 4a) ([126051c](https://github.com/macandy13/arkham-companion/commit/126051c5159aeaf73ac99d95ab775af33ab09ed7))
+* **engine:** offer only the choice options that can be resolved (M4.5 step 4b) ([493ab13](https://github.com/macandy13/arkham-companion/commit/493ab13cc65d4c3eb49513f4fdffbfa91fe5e36f))
+* **engine:** offer only the choice options that can be resolved (M4.5 step 4b) ([fc45f68](https://github.com/macandy13/arkham-companion/commit/fc45f689507d195e2a1e74512a5a05eec4558c84))
+* **engine:** propose campaign log changes from a scenario's resolution (M1C.4a) ([92fb151](https://github.com/macandy13/arkham-companion/commit/92fb15130ec11d4fd632c205ab901995f28bc9a1))
+* **web:** adjust the board as one undo step in the session (M3.11a) ([3ccb955](https://github.com/macandy13/arkham-companion/commit/3ccb955ddbec3568402de9d1649710ba1ecd87e7))
+* **web:** adjust the board as one undo step in the session (M3.11a) ([4a6123c](https://github.com/macandy13/arkham-companion/commit/4a6123c789a2b50d21be62134f7fc579e2976788))
+* **web:** adjust the board from the header, steppers only while adjusting (M3.11b) ([a35c264](https://github.com/macandy13/arkham-companion/commit/a35c264fa4f11f6aa77f3d5eedfe478912adb2cc))
+* **web:** adjust the board from the header, steppers only while adjusting (M3.11b) ([8c0be25](https://github.com/macandy13/arkham-companion/commit/8c0be25e5ae521b6c8c360502ac7ac61cbd34714))
+* **web:** float small map controls over the map (M3.12g) ([63fad6f](https://github.com/macandy13/arkham-companion/commit/63fad6f9ef21ae74899f3a02392b2468824b9f75))
+* **web:** float small map controls over the map (M3.12g) ([93f8e7c](https://github.com/macandy13/arkham-companion/commit/93f8e7c12d1d3deb0d1a3f3d4b8e793fada44a0c))
+* **web:** status row with phase track and menu on the play screen (M3.12d1) ([13f7700](https://github.com/macandy13/arkham-companion/commit/13f7700bcd2be6024d38b135aaf701d08fec632c))
+* **web:** status row with phase track and menu on the play screen (M3.12d1) ([5c107c7](https://github.com/macandy13/arkham-companion/commit/5c107c70aaaf38710ff89660c2dafa8324af66a5))
+
+
+### Bug fixes
+
+* **engine:** cite RR Must for choice options; test a choice with no option left ([ebd2963](https://github.com/macandy13/arkham-companion/commit/ebd29630173d0725cfd00bb9d298b2733e21a3d7))
+* **engine:** readying a ready enemy does nothing, so Umôrdhoth no longer blocks the turn end ([df58966](https://github.com/macandy13/arkham-companion/commit/df58966f5700509f6910b49407b01ce5ea7bf090))
+* **web:** leave empty taps out of an adjustment's undo; document what adjusting buffers ([7dfdc27](https://github.com/macandy13/arkham-companion/commit/7dfdc27ae1bddc010771969531f535fb1cf9e0bb))
+
+
+### Refactoring
+
+* **engine:** branded ResolutionId for resolution ids ([2cb3d53](https://github.com/macandy13/arkham-companion/commit/2cb3d53e48b7493770604e00328d7a99785bbddb))
+* **web:** take the round's phases from the engine, review fixes ([7ab2b66](https://github.com/macandy13/arkham-companion/commit/7ab2b669de0cfedf7b530f0d6e084528c8ba80ec))
+
+
+### Documentation
+
+* design a continuous play tester (M1V.4) ([eb18117](https://github.com/macandy13/arkham-companion/commit/eb181175a8c36aa32520a2f53c2de5a8cd87178a))
+* play tester plays real scenarios only, records failing games, says who runs it and where it writes ([54bfbd9](https://github.com/macandy13/arkham-companion/commit/54bfbd96952f426cd76d2b947abf12d38e9b6d22))
+* play tester runs nightly only, no PR job ([0d78c59](https://github.com/macandy13/arkham-companion/commit/0d78c59644022667c9bf851ee1dbee19cafe9568))
+
 ## [0.1.4](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.3...arkham-companion-v0.1.4) (2026-10-24)
 
 
