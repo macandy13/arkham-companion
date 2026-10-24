@@ -1,7 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 16">
-<!-- The ornament under a book page's title (base.css), drawn for this app in the style of the rule and campaign books: two rules thinning outwards with a diamond and two dots between them. Used as a mask, so it takes the colour of the CSS that shows it. -->
-<path d="M 0 8 L 98 7 L 98 9 Z M 240 8 L 142 7 L 142 9 Z"/>
-<path d="M 120 1 L 127 8 L 120 15 L 113 8 Z"/>
-<circle cx="105" cy="8" r="2.5"/>
-<circle cx="135" cy="8" r="2.5"/>
+<!-- The ornament under a screen's title (base.css), drawn for this app in the playmat's line style: two fine rules meeting a small ring with ticks round it and a star at its centre, like the playmat's zodiac ring. Used as a mask, so it takes the colour of the CSS that shows it. -->
+<g fill="none" stroke="#000">
+<path stroke-width="1" d="M0 8H104M136 8H240"/>
+<circle cx="120" cy="8" r="6" stroke-width="1.2"/>
+<path stroke-width="0.8" d="M120 0V1.5M120 14.5V16M112 8H113.5M126.5 8H128M114.3 2.3L115.4 3.4M124.6 12.6L125.7 13.7M125.7 2.3L124.6 3.4M115.4 12.6L114.3 13.7"/>
+</g>
+<path d="M120 5L120.8 7.2L123 8L120.8 8.8L120 11L119.2 8.8L117 8L119.2 7.2Z"/>
+<circle cx="96" cy="8" r="1.2"/>
+<circle cx="144" cy="8" r="1.2"/>
 </svg>

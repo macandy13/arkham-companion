@@ -73,29 +73,21 @@ button:not(:disabled):hover {
 }
 
 /*
- * A book page (M3.12f): every screen outside play and every dialog lies on the playmat like a page
- * of the rule and campaign books, paper inside a double ink rule. It turns the colour tokens to
- * ink on paper for everything inside it, so the buttons, lists and fields on it need no rules of
- * their own.
+ * Every screen outside play and every dialog is a panel framed like the playmat (M3.12f): brass
+ * rules with a quarter of its zodiac ring in each corner, over the see-through night (or, in the
+ * light theme, the playmat by day).
  */
 #app > main:not(:has(#board)),
 dialog {
-  /* Native controls (checkboxes, selects, the file picker) drawn light, to sit on the paper. */
-  color-scheme: light;
-  --color-text: var(--color-page-ink);
-  --color-text-muted: var(--color-page-ink-muted);
-  --color-border: var(--color-page-line);
-  --color-accent: var(--color-page-rule);
-  --color-accent-text: var(--color-page);
-  --color-surface: var(--color-page-surface);
-
-  border: var(--page-frame-width) solid;
-  border-image: var(--page-frame) var(--page-frame-slice) / var(--page-frame-width) stretch;
-  background: var(--page-paper);
-  color: var(--color-text);
+  border: var(--panel-frame-width) solid;
+  border-image: var(--panel-frame) var(--panel-frame-slice) / var(--panel-frame-width) stretch;
 }
 
-/* A page's title stands centred over an ink ornament, as in the books. */
+#app > main:not(:has(#board)) {
+  background: var(--color-surface);
+}
+
+/* A screen's title stands centred over a small zodiac ring between two rules. */
 #app > main:not(:has(#board)) > h1 {
   text-align: center;
 }
@@ -103,17 +95,19 @@ dialog {
 #app > main:not(:has(#board)) > h1::after {
   content: '';
   display: block;
-  width: var(--page-ornament-width);
-  height: var(--page-ornament-height);
+  width: var(--title-ornament-width);
+  height: var(--title-ornament-height);
   margin: var(--space-2) auto 0;
-  background: var(--color-page-rule);
-  mask: var(--page-ornament) center / contain no-repeat;
+  background: var(--color-accent);
+  mask: var(--title-ornament) center / contain no-repeat;
 }
 
-/* Dialogs share the page's shell, laid over a dimmed table. */
+/* Dialogs share the panel's frame, laid over a dimmed table. */
 dialog {
   max-width: var(--layout-sheet-width);
   padding: var(--space-3);
+  background: var(--color-background);
+  color: var(--color-text);
 }
 
 dialog::backdrop {
