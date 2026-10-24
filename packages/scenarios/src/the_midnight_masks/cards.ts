@@ -108,7 +108,7 @@ const cultist = ['Humanoid', 'Cultist'];
  * - Your House's hold on the Ghoul Priest and Easttown's cost reduction
  * - Ruth Turner going to the victory display once evaded: the `afterTest`
  *   window opens before the evade exhausts and disengages her
- * - Acolyte's doom as it enters play
+ * - Acolyte's doom as it enters play during the game (setup places it)
  * - the Masked Hunter's and Hunting Nightgaunt's constant abilities
  * - Locked Door, and what On Wings of Darkness and Mysterious Chanting do
  *   after their automated part

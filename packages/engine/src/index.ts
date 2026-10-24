@@ -85,7 +85,7 @@ export {
   type SkillTestInput,
   type TokenValue,
 } from './skill_modifiers';
-export { enemiesAt } from './enemies';
+export { enemiesAt, enemiesOnTable } from './enemies';
 export { matchesEncounter } from './handle_encounter';
 export { doomInPlay, isInPlay } from './doom';
 export { checkInvariants } from './invariants';
