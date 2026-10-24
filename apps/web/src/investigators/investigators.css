@@ -1,12 +1,20 @@
 /*
- * The investigator bar (InvestigatorBar) along the foot of the board: a panel per investigator,
- * side by side after the heading, scrolling sideways when they do not fit. Two ids here and on
- * the panels, so they beat the home screen's `#app > main section` row.
+ * The investigators (InvestigatorBar): a panel per investigator, side by side along the foot of the
+ * board, scrolling sideways when they do not fit; in landscape stacked in the column beside the map,
+ * scrolling down, as in the prototype. Two ids here and on the panels, so they beat the home
+ * screen's `#app > main section` row.
  */
 #board > #investigators {
   display: flex;
   gap: var(--space-3);
   align-items: start;
+}
+
+@media (orientation: landscape) {
+  #board > #investigators {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 /*
@@ -24,6 +32,21 @@
   align-items: start;
   padding: 0;
   background: var(--color-surface);
+}
+
+/* In the column beside the map the counters move under the card, so all four fit. */
+@media (orientation: landscape) {
+  #board > #investigators > section {
+    grid-template:
+      'card status' auto
+      'card turn' 1fr
+      'stats stats' auto /
+      auto 1fr;
+  }
+
+  #board > #investigators > section > :is(button, [role='group']) {
+    justify-self: start;
+  }
 }
 
 /* The investigator whose turn it is stands out, glowing in the accent colour inside its frame. */
@@ -121,6 +144,24 @@
 
 #investigators dd > button {
   padding: 0;
+}
+
+/* Beside the map the counters share the panel's width, each value above its steppers. */
+@media (orientation: landscape) {
+  #investigators dl {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  #investigators dd {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  #investigators dd > data {
+    order: 0;
+    flex-basis: 100%;
+  }
 }
 
 /* The turn controls: "Start turn", or the action pips, resign and End while it is their turn. */

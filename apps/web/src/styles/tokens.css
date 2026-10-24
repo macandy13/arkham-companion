@@ -110,8 +110,8 @@
   --focus-ring-width: 2px;
 
   --layout-content-width: 60rem;
-  --layout-board-panel-width: 16rem;
-  --layout-board-bar-height: 8rem;
+  /* The investigators' column beside the map in landscape, as wide as the prototype's. */
+  --layout-board-panel-width: 23rem;
   --layout-portrait-width: 9rem;
   --layout-sheet-width: 22rem;
   /* Connection lines on the map, in its SVG user units (mapLayout.ts TILE). */

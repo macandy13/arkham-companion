@@ -1,6 +1,8 @@
 /*
- * Play screen board layout (product.md "UI concept"); replaces the page's usual content column.
- * The board fills the screen without scrolling the page, so the map is fitted into its area.
+ * Play screen board layout (product.md "UI concept", the prototype's layout); replaces the page's
+ * usual content column. The board fills the screen without scrolling the page, so the map is fitted
+ * into its area. The investigators dock below the map, or beside it in landscape, where a tablet has
+ * width to spare and the map keeps its height.
  */
 #app:has(#board) {
   height: 100vh;
@@ -17,10 +19,19 @@
   display: grid;
   min-height: 0;
   grid-template:
-    'header header' auto
-    'map encounter' 1fr
-    'investigators investigators' var(--layout-board-bar-height) /
-    1fr var(--layout-board-panel-width);
+    'header' auto
+    'map' 1fr
+    'investigators' auto /
+    1fr;
+}
+
+@media (orientation: landscape) {
+  #board {
+    grid-template:
+      'header header' auto
+      'map investigators' 1fr /
+      1fr var(--layout-board-panel-width);
+  }
 }
 
 #board > * {
@@ -30,10 +41,9 @@
 }
 
 /*
- * The play screen's panels (the investigator panels, the encounter panel and the notices) wear the
- * same frame, drawn smaller so the board keeps its room.
+ * The play screen's panels (the investigator panels and the notices) wear the same frame, drawn
+ * smaller so the board keeps its room.
  */
-#board > #encounter,
 #board > #investigators > section,
 #notices > aside {
   border: var(--panel-frame-width-compact) solid;
@@ -42,14 +52,20 @@
 }
 
 /* By day these panels are parchment too, like the screens outside play (base.css). */
-:root[data-theme='light']
-  :is(#board > #encounter, #board > #investigators > section, #notices > aside) {
+:root[data-theme='light'] :is(#board > #investigators > section, #notices > aside) {
   background: var(--panel-paper);
 }
 
-/* The table is open: only a brass rule parts the investigator bar from the map above it. */
+/* The table is open: only a brass rule parts the investigators from the map. */
 #investigators {
   border-top: var(--border-width) solid var(--color-border);
+}
+
+@media (orientation: landscape) {
+  #investigators {
+    border-top: 0;
+    border-inline-start: var(--border-width) solid var(--color-border);
+  }
 }
 
 /* The header is the playmat's top row, shaded so its cards read over the table. */
@@ -69,22 +85,21 @@
   grid-area: map;
 }
 
-#encounter {
-  grid-area: encounter;
-}
-
 #investigators {
   grid-area: investigators;
 }
 
-/* Floats over the board, so a refusal or a skipped effect never pushes the map aside; both stack. */
+/*
+ * Floats over the foot of the map, so a refusal or a skipped effect never pushes the map aside;
+ * both stack. Positioned, so it paints over the map's panned layer, which comes before it.
+ */
 #notices {
-  position: fixed;
-  inset-inline: 0;
-  bottom: calc(var(--layout-board-bar-height) + var(--space-3));
-  width: fit-content;
+  position: relative;
+  grid-area: map;
+  align-self: end;
+  justify-self: center;
   max-width: var(--layout-sheet-width);
-  margin-inline: auto;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);

@@ -126,7 +126,6 @@ export const resources = {
         endTurn: 'End turn',
         end: 'End',
       },
-      encounter: { title: 'Encounter' },
       settings: {
         title: 'Settings',
         collection: 'Collection',
@@ -390,7 +389,6 @@ export const resources = {
         endTurn: 'Zug beenden',
         end: 'Ende',
       },
-      encounter: { title: 'Begegnung' },
       settings: {
         title: 'Einstellungen',
         collection: 'Sammlung',
