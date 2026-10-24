@@ -72,12 +72,45 @@ button:not(:disabled):hover {
   outline-offset: var(--focus-ring-width);
 }
 
-/* Dialogs share one shell: a panel framed in brass over a dimmed table. */
+/*
+ * Every screen outside play and every dialog is a panel framed like the playmat (M3.12f): brass
+ * rules with a quarter of its zodiac ring in each corner, over the see-through night (or, in the
+ * light theme, the playmat by day).
+ */
+#app > main:not(:has(#board)),
+dialog {
+  border: var(--panel-frame-width) solid;
+  border-image: var(--panel-frame) var(--panel-frame-slice) / var(--panel-frame-width) stretch;
+}
+
+#app > main:not(:has(#board)) {
+  background: var(--color-surface);
+}
+
+/* In the light theme the panels are parchment (`--panel-paper`), the playmat by day's paper. */
+:root[data-theme='light'] :is(#app > main:not(:has(#board)), dialog) {
+  background: var(--panel-paper);
+}
+
+/* A screen's title stands centred over a small zodiac ring between two rules. */
+#app > main:not(:has(#board)) > h1 {
+  text-align: center;
+}
+
+#app > main:not(:has(#board)) > h1::after {
+  content: '';
+  display: block;
+  width: var(--title-ornament-width);
+  height: var(--title-ornament-height);
+  margin: var(--space-2) auto 0;
+  background: var(--color-accent);
+  mask: var(--title-ornament) center / contain no-repeat;
+}
+
+/* Dialogs share the panel's frame, laid over a dimmed table. */
 dialog {
   max-width: var(--layout-sheet-width);
   padding: var(--space-3);
-  border: var(--border-width) solid var(--color-accent);
-  border-radius: var(--radius);
   background: var(--color-background);
   color: var(--color-text);
 }

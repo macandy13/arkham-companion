@@ -44,3 +44,15 @@ test(
     await expect(ghoulPriest).toBeInViewport({ ratio: 1 });
   },
 );
+
+test('the Hallway’s menu open over the board', async ({ page }) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+
+  await page
+    .getByRole('figure', { name: 'House' })
+    .getByRole('group', { name: 'Hallway' })
+    .getByRole('button', { name: 'Edit Hallway' })
+    .click();
+
+  await expect(page.getByRole('dialog', { name: 'Hallway' })).toBeVisible();
+});

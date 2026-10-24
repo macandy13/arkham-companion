@@ -1,6 +1,6 @@
 import { cardStats, resolveValue, type CardStats, type EngineContext } from './cards';
 import { investigatorLeavesEvents } from './elimination';
-import type { Event, InvestigatorChanged } from './events';
+import type { EnemyAttacked, Event, InvestigatorChanged } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
 import { cardsInZone, requireCard } from './lookup';
 import { defeatCause, playerOrder, withStatDelta } from './investigators';
@@ -66,9 +66,10 @@ export function readyEngagedEnemies(
 }
 
 /**
- * Damage and horror of one enemy attack, followed by a single defeat check
- * over both, as the rules deal them simultaneously, and on a defeat the
- * clean-up (`investigatorLeavesEvents`). Shared by the enemy phase
+ * One attack of `enemyId`: its damage and horror, then `EnemyAttacked`
+ * (so the log reads in rule order), then a single defeat check over both, as
+ * the rules deal them simultaneously, and on a defeat the clean-up
+ * (`investigatorLeavesEvents`). Shared by the enemy phase
  * (`ResolveEnemyAttack`) and attacks outside it (`DealEnemyAttack`), so an
  * attack of opportunity that defeats leaves the same board.
  * Rejects an amount that is not a non-negative integer.
@@ -76,10 +77,16 @@ export function readyEngagedEnemies(
 export function enemyAttackEvents(
   ctx: EngineContext,
   state: GameState,
+  enemyId: InstanceId,
   investigator: Investigator,
   damage: number,
   horror: number,
 ): Event[] {
+  const attacked: EnemyAttacked = {
+    type: 'EnemyAttacked',
+    enemyId,
+    investigatorId: investigator.id,
+  };
   const changes: InvestigatorChanged[] = (
     [
       ['damage', attackAmount(damage)],
@@ -98,9 +105,10 @@ export function enemyAttackEvents(
     investigator,
   );
   const cause = defeatCause(after);
-  if (cause === undefined) return changes;
+  if (cause === undefined) return [...changes, attacked];
   return [
     ...changes,
+    attacked,
     ...investigatorLeavesEvents(ctx, state, investigator, {
       type: 'InvestigatorDefeated',
       investigatorId: investigator.id,
