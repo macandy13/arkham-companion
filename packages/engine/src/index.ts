@@ -94,6 +94,7 @@ export { formatBoard } from './format_board';
 export {
   advanceAct,
   afterDiscoveringClues,
+  afterAttacking,
   afterEngaging,
   afterEntering,
   afterTest,

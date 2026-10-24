@@ -404,6 +404,7 @@ describe('enemy phase', () => {
 
     expect(events.map((event) => event.type)).toEqual([
       'PhaseStepsChanged',
+      'EnemyAttacked',
       'InvestigatorChanged',
       'InvestigatorChanged',
       'InvestigatorDefeated',
