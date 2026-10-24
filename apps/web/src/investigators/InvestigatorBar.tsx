@@ -58,12 +58,12 @@ export function InvestigatorBar({
 }
 
 /**
- * One investigator, laid out like the prototype's panel: their threat area along the top edge of
- * their card, the card, and beside it their name, a line saying where they are and how their
- * round goes, their skills and their turn controls, then their counters in a row, each name after
- * its icon. Health and sanity show what is left of the printed value,
- * like the dials, while their steppers place and heal damage and horror, like the tokens on the
- * card. Clues show without steppers: they are found by investigating and spent on the act.
+ * One investigator: their threat area along the top edge of their card, the card drawn like the
+ * printed investigator cards and the map's location cards (a name band with where they are and how
+ * their round goes, the art window, the four skills and the counters as round tokens along its
+ * foot), then their turn controls. Health and sanity show what is left of the printed value, like
+ * the dials, while their steppers place and heal damage and horror, like the tokens on the card.
+ * Clues show without steppers: they are found by investigating and spent on the act.
  */
 function InvestigatorPanel({
   board,
@@ -89,10 +89,6 @@ function InvestigatorPanel({
 }) {
   const { t } = useTranslation();
   const nameId = useId();
-  const { id, health, damage, sanity, horror } = investigator;
-  const adjust = (stat: SteppedStat, delta: number) => void actions.adjust(id, stat, delta);
-  // A defeated or resigned investigator has left the game, so their counters no longer change.
-  const off = busy || investigator.status !== 'active';
   return (
     <section
       aria-labelledby={nameId}
@@ -100,10 +96,15 @@ function InvestigatorPanel({
       data-turn={onTurn || undefined}
     >
       <ThreatArea treacheries={investigator.threatArea ?? []} enemies={engaged} />
-      <InvestigatorCardFace image={investigator.image} />
-      <h3 id={nameId}>{investigator.name}</h3>
-      <p>{statusLine(investigator, onTurn, t)}</p>
-      <Skills board={board} investigator={investigator} />
+      <article data-card="investigator">
+        <header>
+          <h3 id={nameId}>{investigator.name}</h3>
+          <p>{statusLine(investigator, onTurn, t)}</p>
+        </header>
+        <CardArt image={investigator.image} />
+        <Skills board={board} investigator={investigator} />
+        <Counters investigator={investigator} adjusting={adjusting} busy={busy} actions={actions} />
+      </article>
       <TurnControls
         investigator={investigator}
         onTurn={onTurn}
@@ -111,74 +112,23 @@ function InvestigatorPanel({
         actions={actions}
         busy={busy || adjusting}
       />
-      <dl>
-        <Stat
-          kind="health"
-          label={t('investigators.health')}
-          value={health - damage}
-          shown={t('investigators.left', { left: health - damage, max: health })}
-        >
-          {adjusting && (
-            <Steppers
-              lower={{ label: t('investigators.takeDamage'), disabled: off }}
-              raise={{ label: t('investigators.healDamage'), disabled: off || damage === 0 }}
-              onStep={(delta) => adjust('damage', -delta)}
-            />
-          )}
-        </Stat>
-        <Stat
-          kind="sanity"
-          label={t('investigators.sanity')}
-          value={sanity - horror}
-          shown={t('investigators.left', { left: sanity - horror, max: sanity })}
-        >
-          {adjusting && (
-            <Steppers
-              lower={{ label: t('investigators.takeHorror'), disabled: off }}
-              raise={{ label: t('investigators.healHorror'), disabled: off || horror === 0 }}
-              onStep={(delta) => adjust('horror', -delta)}
-            />
-          )}
-        </Stat>
-        <Stat kind="clues" label={t('investigators.clues')} value={investigator.clues} />
-        <Stat
-          kind="resources"
-          label={t('investigators.resources')}
-          short={t('investigators.resourcesShort')}
-          value={investigator.resources}
-        >
-          {adjusting && (
-            <Steppers
-              lower={{
-                label: t('investigators.spendResource'),
-                disabled: off || investigator.resources === 0,
-              }}
-              raise={{ label: t('investigators.gainResource'), disabled: off }}
-              onStep={(delta) => adjust('resources', delta)}
-            />
-          )}
-        </Stat>
-        {investigator.doom !== undefined && (
-          <Stat kind="doom" label={t('investigators.doom')} value={investigator.doom} />
-        )}
-      </dl>
     </section>
   );
 }
 
 /**
- * The investigator card, like ArkhamDB shows it: the picture of its front fills the frame once it
- * has loaded (`data-picture`); until then, and for good when it fails, the frame shows the hatched
- * art area.
+ * The art of the investigator card in the card's art window: the part of the picture of its
+ * front where the printed card has its art, cut out by the stylesheet once the picture has loaded
+ * (`data-picture`); until then, and for good when it fails, the window shows the hatched art area.
  */
-function InvestigatorCardFace({ image }: { image: CardImagePath | undefined }) {
+function CardArt({ image }: { image: CardImagePath | undefined }) {
   const picture = useCardPicture(image);
   return (
-    <figure data-card="investigator" data-picture={picture?.shown ? 'shown' : undefined}>
+    <picture data-picture={picture?.shown ? 'shown' : undefined}>
       {picture && (
         <img src={picture.url} alt="" onLoad={picture.onLoad} onError={picture.onError} />
       )}
-    </figure>
+    </picture>
   );
 }
 
@@ -218,6 +168,81 @@ function Skills({ board, investigator }: { board: BoardView; investigator: Inves
         />
       )}
     </>
+  );
+}
+
+/**
+ * The counters along the foot of the card, each a round token, with their steppers while the
+ * players adjust the board (`adjusting`); a step plays `actions` unless one is queued (`busy`).
+ */
+function Counters({
+  investigator,
+  adjusting,
+  busy,
+  actions,
+}: {
+  investigator: InvestigatorView;
+  adjusting: boolean;
+  busy: boolean;
+  actions: GameActions;
+}) {
+  const { t } = useTranslation();
+  const { id, health, damage, sanity, horror } = investigator;
+  const adjust = (stat: SteppedStat, delta: number) => void actions.adjust(id, stat, delta);
+  // A defeated or resigned investigator has left the game, so their counters no longer change.
+  const off = busy || investigator.status !== 'active';
+  return (
+    <dl>
+      <Stat
+        kind="health"
+        label={t('investigators.health')}
+        value={health - damage}
+        shown={t('investigators.left', { left: health - damage, max: health })}
+      >
+        {adjusting && (
+          <Steppers
+            lower={{ label: t('investigators.takeDamage'), disabled: off }}
+            raise={{ label: t('investigators.healDamage'), disabled: off || damage === 0 }}
+            onStep={(delta) => adjust('damage', -delta)}
+          />
+        )}
+      </Stat>
+      <Stat
+        kind="sanity"
+        label={t('investigators.sanity')}
+        value={sanity - horror}
+        shown={t('investigators.left', { left: sanity - horror, max: sanity })}
+      >
+        {adjusting && (
+          <Steppers
+            lower={{ label: t('investigators.takeHorror'), disabled: off }}
+            raise={{ label: t('investigators.healHorror'), disabled: off || horror === 0 }}
+            onStep={(delta) => adjust('horror', -delta)}
+          />
+        )}
+      </Stat>
+      <Stat kind="clues" label={t('investigators.clues')} value={investigator.clues} />
+      <Stat
+        kind="resources"
+        label={t('investigators.resources')}
+        short={t('investigators.resourcesShort')}
+        value={investigator.resources}
+      >
+        {adjusting && (
+          <Steppers
+            lower={{
+              label: t('investigators.spendResource'),
+              disabled: off || investigator.resources === 0,
+            }}
+            raise={{ label: t('investigators.gainResource'), disabled: off }}
+            onStep={(delta) => adjust('resources', delta)}
+          />
+        )}
+      </Stat>
+      {investigator.doom !== undefined && (
+        <Stat kind="doom" label={t('investigators.doom')} value={investigator.doom} />
+      )}
+    </dl>
   );
 }
 

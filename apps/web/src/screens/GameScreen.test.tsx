@@ -279,9 +279,14 @@ describe('GameScreen header', () => {
   it('lays the encounter deck with its discard pile, agenda, act and scenario out under their labels', async () => {
     await renderTheGathering('game-screen-encounter-test');
 
-    const header = within(screen.getByRole('banner'));
-    const labels = header.getAllByRole('region').map((place) => place.firstChild?.textContent);
-    const deck = within(header.getByRole('region', { name: 'Encounter deck' }));
+    // The investigator cards have headers too, so the board's header is the one holding the deck.
+    const deckPlace = screen.getByRole('region', { name: 'Encounter deck' });
+    const boardHeader = deckPlace.closest('header');
+    if (!boardHeader) throw new Error('the encounter deck is not in the board header');
+    const labels = within(boardHeader)
+      .getAllByRole('region')
+      .map((place) => place.firstChild?.textContent);
+    const deck = within(deckPlace);
 
     expect(labels).toEqual(['Encounter deck', 'Agenda', 'Act', 'Scenario']);
     expect(deck.getByRole('img', { name: 'Encounter discard pile' })).toBeTruthy();
