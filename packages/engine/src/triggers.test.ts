@@ -1728,6 +1728,30 @@ describe('a card that gains surge without clues', () => {
     expect(draws.map((event) => event.cardId)).toEqual([doubled, nextCard]);
   });
 
+  it('fires no "if you have" ability in a window that names no investigator', () => {
+    const omen = instanceId('clueless_omen');
+    const omenCard = blankTreachery('clueless_omen', {
+      abilities: [ifYouHave('clues', { max: 0 }, atEndOfRound(discardSelf()))],
+    });
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall, clues: 0 })
+      .withCard(omen, omenCard, atLocation(hall))
+      .withTurnOf(alice)
+      .start();
+
+    // The enemy and upkeep phases end round 1.
+    const after = stateAfter(
+      context,
+      state,
+      { type: 'EndTurn', investigatorId: alice },
+      { type: 'NextPhase' },
+      { type: 'NextPhase' },
+    );
+
+    expect(after.cards[omen]?.zone).toEqual(atLocation(hall));
+  });
+
   it('rejects surge for a card that is not resolving', () => {
     const { context, state } = newGame()
       .withLocation(hall, blankLocation('hall'), { revealed: true })
