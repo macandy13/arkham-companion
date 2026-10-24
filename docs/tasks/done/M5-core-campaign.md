@@ -1,5 +1,7 @@
 # M5 – Night of the Zealot
 
+Archived on 2026-10-24, when the plan moved to GitHub issues (see `docs/tasks/README.md`); the live state is in the issues.
+
 Goal: the full three-scenario _Night of the Zealot_ campaign (_The Gathering_, _The Midnight Masks_, _The Devourer Below_), with campaign log and chaos bag carried between scenarios.
 Ref: product.md "Campaign mode". Builds on the campaign engine (M1C).
 
