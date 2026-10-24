@@ -91,6 +91,7 @@ export { checkInvariants } from './invariants';
 export { PHASE_STEP_TITLES } from './phases';
 export { BASE_ACTIONS_PER_TURN } from './turns';
 export { formatBoard } from './format_board';
+export { victoryPoints } from './victory';
 export {
   advanceAct,
   afterDiscoveringClues,
@@ -178,6 +179,12 @@ export type {
   InterludeDefinition,
 } from './campaign/campaign_definition';
 export type { CampaignContext, CampaignExecuteResult } from './campaign/handle_campaign';
+export type {
+  ProposedChange,
+  ResolutionStep,
+  ResolutionTarget,
+  ScenarioResolutions,
+} from './campaign/resolution';
 export {
   CampaignCommandRejected,
   type CampaignRejection,

@@ -14,7 +14,7 @@ import type {
   TokensChanged,
 } from './events';
 import { activeInvestigator } from './investigators';
-import type { InstanceId } from './ids';
+import type { InstanceId, ResolutionId } from './ids';
 import { requireCard } from './lookup';
 import { clearTokensEvents, moveCardEvent } from './placement';
 import { CommandRejected } from './rejection';
@@ -94,7 +94,7 @@ export function completeAdvance(
   state: GameState,
   deck: Deck,
   cardId: InstanceId,
-  resolution: string | undefined,
+  resolution: ResolutionId | undefined,
   asked: boolean,
 ): (CardMoved | CurrentCardChanged | ScenarioEnded)[] {
   const card = requireCard(state.cards, cardId);
@@ -128,7 +128,7 @@ export function handleEndScenario(cmd: EndScenario): ScenarioEnded[] {
 function reverseSide(
   state: GameState,
   deck: Deck,
-  resolution: string | undefined,
+  resolution: ResolutionId | undefined,
 ): (CardFlipped | AgendaAdvanced | ActAdvanced)[] {
   const card = currentCard(state, deck);
   if (resolution !== undefined && nextCardId(state, deck, card.id) !== undefined)

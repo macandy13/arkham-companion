@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  resolutionId,
   cardImagePath,
   atLocation,
   attachedTo,
@@ -70,11 +71,11 @@ describe('the phase and turn', () => {
 
     const board = boardView(
       context,
-      stateAfter(context, state, { type: 'EndScenario', resolution: 'r1' }),
+      stateAfter(context, state, { type: 'EndScenario', resolution: resolutionId('r1') }),
     );
 
     expect(boardView(context, state).ended).toBe(false);
-    expect(board).toMatchObject({ ended: true, resolution: 'r1' });
+    expect(board).toMatchObject({ ended: true, resolution: resolutionId('r1') });
   });
 });
 

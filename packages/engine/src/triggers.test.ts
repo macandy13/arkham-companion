@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  resolutionId,
   atEndOfPhase,
   atEndOfEachTurn,
   atEndOfRound,
@@ -135,7 +136,7 @@ describe('trigger bus', () => {
     /** "(→R2)" on the back of the last agenda, after the first one. */
     const endingAgenda = blankAgenda('ending_agenda', fixed(5), {
       stage: { number: 2 },
-      abilities: [whenAdvanced(endScenario('R2'))],
+      abilities: [whenAdvanced(endScenario(resolutionId('R2')))],
     });
     const lastAgendaTable = newGame()
       .withAgenda(agenda1, firstAgendaCard)
@@ -162,11 +163,11 @@ describe('trigger bus', () => {
 
       const { events, state } = execute(ctx, lastAgenda, {
         type: 'AdvanceAgenda',
-        resolution: 'R1',
+        resolution: resolutionId('R1'),
       });
 
       expect(events.filter((event) => event.type === 'ScenarioEnded')).toEqual([
-        { type: 'ScenarioEnded', resolution: 'R2' },
+        { type: 'ScenarioEnded', resolution: resolutionId('R2') },
       ]);
       expect(state.meta.resolution).toBe('R2');
     });
@@ -1279,7 +1280,7 @@ describe('abilities with a condition on the current act', () => {
   const finalAct = blankAct('final_act');
   /** "If it is the trapped act, (→R3)." */
   const trappedAgenda = blankAgenda('trapped_agenda', fixed(3), {
-    abilities: [duringAct([trappedAct.code], whenAdvanced(endScenario('R3')))],
+    abilities: [duringAct([trappedAct.code], whenAdvanced(endScenario(resolutionId('R3'))))],
   });
   /** Alice and bob in the hall, with the trapped agenda current. */
   const trappedTable = newGame()
@@ -1294,7 +1295,7 @@ describe('abilities with a condition on the current act', () => {
 
     const { state } = execute(context, started, { type: 'AdvanceAgenda' });
 
-    expect(state.meta).toMatchObject({ ended: true, resolution: 'R3' });
+    expect(state.meta).toMatchObject({ ended: true, resolution: resolutionId('R3') });
   });
 
   it('does not fire while another act is current', () => {
@@ -1314,7 +1315,7 @@ describe('a choice for the lead investigator', () => {
     abilities: [
       whenAdvanced(
         leadDecides(decisionId('burn_or_spare'), 'Burn the house?', [
-          { id: 'burn', label: 'Burn it', effects: [endScenario('R1')] },
+          { id: 'burn', label: 'Burn it', effects: [endScenario(resolutionId('R1'))] },
           {
             id: 'spare',
             label: 'Leave it',

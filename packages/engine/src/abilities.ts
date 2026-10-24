@@ -3,7 +3,7 @@ import { cardStats, type EngineContext } from './cards';
 import type { Command, EncounterMatch, TestSkill } from './commands';
 import { cardsInPlay } from './doom';
 import type { Event } from './events';
-import type { CardCode, DecisionId, InstanceId, InvestigatorId } from './ids';
+import type { CardCode, DecisionId, InstanceId, InvestigatorId, ResolutionId } from './ids';
 import { locationAttachments } from './board';
 import { enemiesAt } from './enemies';
 import { isActiveInvestigator, playerOrder, requireInvestigator } from './investigators';
@@ -941,7 +941,7 @@ export function duringAct(acts: readonly CardCode[], ability: Ability): Ability 
 }
 
 /** "(→R3)": the scenario ends with that resolution. */
-export function endScenario(resolution: string): AbilityEffect {
+export function endScenario(resolution: ResolutionId): AbilityEffect {
   return { type: 'EndScenario', resolution };
 }
 

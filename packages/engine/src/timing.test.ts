@@ -9,6 +9,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  resolutionId,
   atEndOfTurn,
   atLocation,
   blankAct,
@@ -199,8 +200,8 @@ describe('the last act whose reverse side asks something', () => {
     abilities: [
       whenAdvanced(
         leadDecides(decisionId('burn_the_house'), 'decision.burnTheHouse', [
-          { id: 'burn', label: 'burn it', effects: [endScenario('R1')] },
-          { id: 'spare', label: 'spare it', effects: [endScenario('R2')] },
+          { id: 'burn', label: 'burn it', effects: [endScenario(resolutionId('R1'))] },
+          { id: 'spare', label: 'spare it', effects: [endScenario(resolutionId('R2'))] },
         ]),
       ),
     ],
@@ -226,7 +227,11 @@ describe('the last act whose reverse side asks something', () => {
 
     table.answerOnly('spare it');
 
-    expect(table.board).toMatchObject({ act: undefined, ended: true, resolution: 'R2' });
+    expect(table.board).toMatchObject({
+      act: undefined,
+      ended: true,
+      resolution: resolutionId('R2'),
+    });
   });
 });
 

@@ -8,6 +8,7 @@ import {
   type TokenValue,
 } from '@arkham/engine';
 import { GATHERING_CODES, GATHERING_SETS } from './cards';
+import { theGatheringResolutions } from './resolutions';
 
 const codes = GATHERING_CODES;
 const sets = GATHERING_SETS;
@@ -103,4 +104,5 @@ export const theGathering: ScenarioDefinition = {
     { kind: 'buildEncounterDeck', sets: Object.values(sets) },
   ],
   modifiers: { tokenValues: { skull: ghoulsAtYourLocation } },
+  resolutions: theGatheringResolutions,
 };

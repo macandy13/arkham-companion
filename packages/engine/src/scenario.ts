@@ -1,3 +1,4 @@
+import type { ScenarioResolutions } from './campaign/resolution';
 import type { CardCode, ScenarioId } from './ids';
 import type { SetupStep } from './setup';
 import type { ChaosToken, Difficulty } from './state';
@@ -6,8 +7,8 @@ import type { SkillModifierRegistry } from './skill_modifiers';
 /**
  * A scenario as data (architecture "Scenarios"): its agendas and acts, chaos bag,
  * reference card and setup steps. `compileSetup` turns it into a
- * `StartScenario`. Resolutions and campaign variants join this type with the
- * tasks that need them.
+ * `StartScenario`. Campaign variants of the setup join this type with the
+ * task that needs them (M1C.5).
  */
 export interface ScenarioDefinition {
   /** Stored as `GameMeta.scenarioId`. */
@@ -27,6 +28,12 @@ export interface ScenarioDefinition {
    * `EngineContext.scenario`; `compileSetup` doesn't.
    */
   modifiers?: SkillModifierRegistry;
+  /**
+   * What each resolution writes to the campaign log, which
+   * `campaign.proposeResolution` reads once the game has ended. Absent for a
+   * scenario that is only played standalone so far.
+   */
+  resolutions?: ScenarioResolutions;
 }
 
 /** The chaos tokens whose effect each scenario defines on its reference card. */

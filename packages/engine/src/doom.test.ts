@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  resolutionId,
   blankAct,
   blankAgenda,
   blankEnemy,
@@ -139,7 +140,7 @@ describe('PlaceDoom', () => {
       context,
       state,
       { type: 'AdvanceAgenda' },
-      { type: 'AdvanceAgenda', resolution: 'R1' },
+      { type: 'AdvanceAgenda', resolution: resolutionId('R1') },
     );
 
     expect(rejectionFrom(context, ended, { type: 'PlaceDoom', amount: 1 })).toEqual({
@@ -467,9 +468,12 @@ describe('AdvanceAgenda', () => {
   it('ends the scenario with the resolution when the last agenda advances', () => {
     const lastAgenda = stateAfter(context, state, { type: 'AdvanceAgenda' });
 
-    const ended = execute(context, lastAgenda, { type: 'AdvanceAgenda', resolution: 'R1' });
+    const ended = execute(context, lastAgenda, {
+      type: 'AdvanceAgenda',
+      resolution: resolutionId('R1'),
+    });
 
-    expect(ended.events.at(-1)).toEqual({ type: 'ScenarioEnded', resolution: 'R1' });
+    expect(ended.events.at(-1)).toEqual({ type: 'ScenarioEnded', resolution: resolutionId('R1') });
     expect(ended.state.meta.resolution).toBe('R1');
     expect(ended.state.agenda.current).toBeUndefined();
   });
@@ -484,7 +488,9 @@ describe('AdvanceAgenda', () => {
   });
 
   it('rejects a resolution while another agenda follows', () => {
-    expect(rejectionFrom(context, state, { type: 'AdvanceAgenda', resolution: 'R1' })).toEqual({
+    expect(
+      rejectionFrom(context, state, { type: 'AdvanceAgenda', resolution: resolutionId('R1') }),
+    ).toEqual({
       code: 'unexpectedResolution',
       deck: 'agenda',
     });
@@ -666,10 +672,10 @@ describe('AdvanceAct', () => {
     const ended = execute(context, rich, {
       type: 'AdvanceAct',
       spend: [{ investigatorId: bob, amount: 6 }],
-      resolution: 'R2',
+      resolution: resolutionId('R2'),
     });
 
-    expect(ended.events.at(-1)).toEqual({ type: 'ScenarioEnded', resolution: 'R2' });
+    expect(ended.events.at(-1)).toEqual({ type: 'ScenarioEnded', resolution: resolutionId('R2') });
     expect(ended.state.act.current).toBeUndefined();
   });
 
@@ -703,7 +709,7 @@ describe('AdvanceAct', () => {
           { investigatorId: alice, amount: 3 },
           { investigatorId: bob, amount: 1 },
         ],
-        resolution: 'R2',
+        resolution: resolutionId('R2'),
       }),
     ).toEqual({ code: 'unexpectedResolution', deck: 'act' });
   });
@@ -720,7 +726,11 @@ describe('AdvanceAct', () => {
         ],
       },
       { type: 'AdjustInvestigator', investigatorId: bob, stat: 'clues', delta: 5 },
-      { type: 'AdvanceAct', spend: [{ investigatorId: bob, amount: 6 }], resolution: 'R2' },
+      {
+        type: 'AdvanceAct',
+        spend: [{ investigatorId: bob, amount: 6 }],
+        resolution: resolutionId('R2'),
+      },
     );
 
     expect(rejectionFrom(context, ended, { type: 'AdvanceAct', spend: [] })).toEqual({
@@ -738,8 +748,8 @@ describe('a last act whose reverse side lets the lead investigator choose the re
     abilities: [
       whenAdvanced(
         leadDecides(chooseResolution, 'burn the house?', [
-          { id: 'burn', label: 'burn it', effects: [endScenario('R1')] },
-          { id: 'spare', label: 'spare it', effects: [endScenario('R2')] },
+          { id: 'burn', label: 'burn it', effects: [endScenario(resolutionId('R1'))] },
+          { id: 'spare', label: 'spare it', effects: [endScenario(resolutionId('R2'))] },
         ]),
       ),
     ],
@@ -769,14 +779,14 @@ describe('a last act whose reverse side lets the lead investigator choose the re
 
     const ended = stateAfter(choosingContext, asked, answer(chooseResolution, 'spare'));
 
-    expect(ended.meta).toMatchObject({ ended: true, resolution: 'R2' });
+    expect(ended.meta).toMatchObject({ ended: true, resolution: resolutionId('R2') });
     expect(ended.act.current).toBeUndefined();
   });
 
   it('ignores a fallback resolution while the question is open', () => {
     const { events } = execute(choosingContext, lastAct(), {
       type: 'AdvanceAct',
-      resolution: 'R3',
+      resolution: resolutionId('R3'),
     });
 
     expect(events.map((event) => event.type)).not.toContain('ScenarioEnded');
@@ -804,12 +814,15 @@ describe('a last act whose reverse side asks something that names no resolution'
 
   it('ends the scenario with the fallback resolution once the question is answered', () => {
     const lastAct = stateAfter(askingContext, state, { type: 'AdvanceAct' });
-    const asked = stateAfter(askingContext, lastAct, { type: 'AdvanceAct', resolution: 'R3' });
+    const asked = stateAfter(askingContext, lastAct, {
+      type: 'AdvanceAct',
+      resolution: resolutionId('R3'),
+    });
 
     const answered = stateAfter(askingContext, asked, answer(whoPays, 'yes'));
 
     expect(asked.meta.ended).toBeUndefined();
-    expect(answered.meta).toMatchObject({ ended: true, resolution: 'R3' });
+    expect(answered.meta).toMatchObject({ ended: true, resolution: resolutionId('R3') });
   });
 });
 
@@ -904,7 +917,10 @@ describe('manual doom corrections', () => {
   });
 
   it('do not ask once the scenario has ended', () => {
-    const ended = stateAfter(context, aliceAloneState, { type: 'EndScenario', resolution: 'R1' });
+    const ended = stateAfter(context, aliceAloneState, {
+      type: 'EndScenario',
+      resolution: resolutionId('R1'),
+    });
 
     expect(stateAfter(context, ended, manualDoom(ghoul, 3)).pending).toEqual([]);
   });
