@@ -1453,6 +1453,42 @@ describe('a choice without the options that cannot be resolved', () => {
     },
   );
 
+  it('asks nothing when alice can resolve no option', () => {
+    const drained = instanceId('drained');
+    /** "You must either spend 1 clue or spend 1 resource." */
+    const drainedCard = blankTreachery('drained', {
+      abilities: [
+        whenRevealed(
+          youMustEither(decisionId('drained'), 'Spend a clue or a resource?', [
+            { id: 'clue', label: 'Spend 1 clue', effects: [spendClues(1)] },
+            {
+              id: 'resource',
+              label: 'Spend 1 resource',
+              effects: [
+                {
+                  type: 'AdjustInvestigator',
+                  investigatorId: { ref: 'windowInvestigator' },
+                  stat: 'resources',
+                  delta: -1,
+                },
+              ],
+            },
+          ]),
+        ),
+      ],
+    });
+    const { context, state: started } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall, clues: 0, resources: 0 })
+      .withCard(drained, drainedCard, { kind: 'encounterDeck' })
+      .start();
+
+    const state = stateAfter(context, started, { type: 'DrawEncounter', investigatorId: alice });
+
+    expect(state.pending).toEqual([]);
+    expect(requireInvestigator(state, alice)).toMatchObject({ clues: 0, resources: 0 });
+  });
+
   it('spends the clue alice chose to spend', () => {
     const { context, state: started } = newGame()
       .withLocation(hall, blankLocation('hall'), { revealed: true })
@@ -1466,7 +1502,7 @@ describe('a choice without the options that cannot be resolved', () => {
     expect(requireInvestigator(state, alice)).toMatchObject({ clues: 0, health: { damage: 0 } });
   });
 
-  it('asks after a failed test on entering, as the graveyard does', () => {
+  it('asks with all options after a failed test on entering, as the graveyard does', () => {
     const graveyard = instanceId('graveyard');
     const rivertown = instanceId('rivertown');
     /** "After you enter: test willpower (3); if you fail, you must either take 2 horror or move to Rivertown." */

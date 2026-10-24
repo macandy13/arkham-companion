@@ -447,11 +447,14 @@ function resumeHeldAction(resolution: Resolution, held: HeldAction, budget: Trig
 
 /**
  * An ability's choice ("you must either …") with only the options that can be
- * resolved now: players resolve as much of an effect as they are able (RR
- * "Effects"), so "spend 1 clue" is no option without a clue. Each option's
- * commands get a dry run on the current state; a choice with no option left
- * is dropped. A choice inside a test's outcome is raised by the answer, not
- * here, so it keeps all its options.
+ * resolved now: a player who must choose picks an option that can change the
+ * game state (RR "Must"), so "spend 1 clue" is no option without a clue. Each
+ * option's commands, with the reactions they trigger, get a dry run on the
+ * state before the ability's other commands run; one rejection drops the
+ * option, although the rule would still allow an option that resolves in part
+ * (no Night of the Zealot card has one). A choice with no option left is
+ * dropped. A choice inside a test's outcome is raised by the answer, not here,
+ * so it keeps all its options.
  */
 function withResolvableOptions(resolution: Resolution, command: Command): Command[] {
   if (command.type !== 'RequestDecision' || command.decision.kind !== 'chooseOption')
