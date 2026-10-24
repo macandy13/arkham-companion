@@ -1,4 +1,5 @@
 import type { EngineContext } from './cards';
+import type { InstanceId } from './ids';
 import type { Command, ResolveEnemyAttack } from './commands';
 import { enemyAttackEvents, enemyAttackList } from './enemies';
 import type { Event, ExhaustChanged, PhaseChanged, PhaseStepsChanged } from './events';
@@ -124,10 +125,10 @@ function attackStepPlan(
 }
 
 /**
- * `ResolveEnemyAttack`: removes the attack from step 3.3, deals its damage and
- * horror at once (one defeat check, as the rules deal them simultaneously) and
- * exhausts the enemy once it has no other due attack. The step ends with its
- * last due attack.
+ * `ResolveEnemyAttack`: removes the attack from step 3.3 and deals its damage
+ * and horror at once (one defeat check, as the rules deal them
+ * simultaneously). The enemy exhausts afterwards (`exhaustAfterAttack`). The
+ * step ends with its last due attack.
  */
 export function handleResolveEnemyAttack(
   ctx: EngineContext,
@@ -156,10 +157,26 @@ export function handleResolveEnemyAttack(
   const remaining = dueAttacksOf(ctx, after, step).filter((due) => !isThisAttack(due));
   const steps: PhaseStep[] =
     remaining.length > 0 ? [{ id: 'enemiesAttack', attacks: remaining }, ...rest] : rest;
-  const exhausted: ExhaustChanged[] = remaining.some((due) => due.enemyId === cmd.enemyId)
-    ? []
-    : [{ type: 'ExhaustChanged', cardId: cmd.enemyId, exhausted: true }];
-  return [{ type: 'PhaseStepsChanged', steps }, ...dealt, ...exhausted];
+  return [{ type: 'PhaseStepsChanged', steps }, ...dealt];
+}
+
+/**
+ * The attacking enemy exhausts "upon completion of dealing the attack (and
+ * all abilities triggered by the attack)" (framework step 3.3), so this runs
+ * as `ResolveEnemyAttack`'s continuation, after its "after attacks you"
+ * abilities. Nothing while the enemy has another due attack (a massive one
+ * attacks everyone first), or once it has left the table or is exhausted.
+ */
+export function exhaustAfterAttack(
+  ctx: EngineContext,
+  state: GameState,
+  enemyId: InstanceId,
+): ExhaustChanged[] {
+  const enemy = state.cards[enemyId];
+  if (!enemy || !isEnemyOnTable(enemy) || enemy.exhausted) return [];
+  const [step] = state.meta.steps;
+  if (dueAttacksOf(ctx, state, step).some((due) => due.enemyId === enemyId)) return [];
+  return [{ type: 'ExhaustChanged', cardId: enemyId, exhausted: true }];
 }
 
 function stepsOf(state: GameState, phase: Phase): PhaseStep[] {

@@ -14,7 +14,7 @@ import {
 } from './handle_encounter';
 import { completeAdvance } from './handle_scenario';
 import { newLeadInvestigatorEvents } from './elimination';
-import { nextStepPlan } from './phases';
+import { exhaustAfterAttack, nextStepPlan } from './phases';
 import { apply } from './reducer';
 import { CommandRejected, type Rejection } from './rejection';
 import type { GameState, HeldAction, QueuedStep } from './state';
@@ -255,6 +255,8 @@ function resolveQueuedStep(
       return resolveSurge(resolution, step.draw);
     case 'newLeadInvestigator':
       return emitWithEffects(resolution, newLeadInvestigatorEvents(state));
+    case 'exhaustAfterAttack':
+      return emitWithEffects(resolution, exhaustAfterAttack(ctx, state, step.enemyId));
     case 'ability': {
       const commands = resolveEffect(ctx, state, step.effect, step.opened);
       const [command, ...more] = commands;

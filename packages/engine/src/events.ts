@@ -361,8 +361,8 @@ export interface EnemyEngaged {
 }
 
 /**
- * Enemy `enemyId` attacked the investigator; the attack's damage and horror
- * follow as `InvestigatorChanged`. Changes no state: it marks the attack for
+ * Enemy `enemyId` attacked the investigator; follows the attack's damage and
+ * horror (`InvestigatorChanged`). Changes no state: it marks the attack for
  * `windowsOpenedBy` (`attacked`), since the damage alone names no enemy.
  * Produced by `ResolveEnemyAttack` and `DealEnemyAttack` (`enemyAttackEvents`).
  */

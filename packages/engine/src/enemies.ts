@@ -66,9 +66,10 @@ export function readyEngagedEnemies(
 }
 
 /**
- * One attack of `enemyId`: `EnemyAttacked`, then its damage and horror,
- * followed by a single defeat check over both, as the rules deal them simultaneously, and on a defeat the
- * clean-up (`investigatorLeavesEvents`). Shared by the enemy phase
+ * One attack of `enemyId`: its damage and horror, then `EnemyAttacked`
+ * (so the log reads in rule order), then a single defeat check over both, as
+ * the rules deal them simultaneously, and on a defeat the clean-up
+ * (`investigatorLeavesEvents`). Shared by the enemy phase
  * (`ResolveEnemyAttack`) and attacks outside it (`DealEnemyAttack`), so an
  * attack of opportunity that defeats leaves the same board.
  * Rejects an amount that is not a non-negative integer.
@@ -104,10 +105,10 @@ export function enemyAttackEvents(
     investigator,
   );
   const cause = defeatCause(after);
-  if (cause === undefined) return [attacked, ...changes];
+  if (cause === undefined) return [...changes, attacked];
   return [
-    attacked,
     ...changes,
+    attacked,
     ...investigatorLeavesEvents(ctx, state, investigator, {
       type: 'InvestigatorDefeated',
       investigatorId: investigator.id,
