@@ -11,3 +11,5 @@ export {
   theGatheringHouse,
 } from './the_gathering/cards';
 export { nightOfTheZealot } from './night_of_the_zealot/campaign';
+export { ZEALOT_STORY } from './night_of_the_zealot/story';
+export { theGatheringResolutions } from './the_gathering/resolutions';
