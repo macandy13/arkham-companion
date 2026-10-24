@@ -48,8 +48,9 @@ export interface CardInstance {
   flags: Record<string, unknown>;
   /**
    * The drawn card gained surge while it resolved ("False Lead gains
-   * surge", `SurgeGained`); cleared when it moves, so the next draw of the
-   * card starts without it.
+   * surge", `SurgeGained`). It stays when the revelation moves the card
+   * (into a threat area, say) and is cleared when the card is drawn again,
+   * so it always belongs to the card's latest draw.
    */
   gainedSurge?: true;
 }

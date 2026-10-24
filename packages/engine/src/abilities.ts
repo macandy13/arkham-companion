@@ -269,7 +269,10 @@ export type AbilityCondition =
    * `stat`, both included where given ("if you have no clues"). False in a
    * window that names nobody.
    */
-  | { kind: 'investigatorHas'; stat: InvestigatorStat; min?: number; max?: number };
+  | ({ kind: 'investigatorHas'; stat: InvestigatorStat } & StatRange);
+
+/** Bounds on a value, both included; at least one is given, so the range always says something. */
+export type StatRange = { min: number; max?: number } | { min?: number; max: number };
 
 /**
  * A forced card ability: what it does when its window opens, if its
@@ -965,11 +968,7 @@ export function duringAct(acts: readonly CardCode[], ability: Ability): Ability 
  * window names has `stat` within `range`, written
  * `ifYouHave('clues', { max: 0 }, whenRevealed(gainSurge()))` (False Lead).
  */
-export function ifYouHave(
-  stat: InvestigatorStat,
-  range: { min?: number; max?: number },
-  ability: Ability,
-): Ability {
+export function ifYouHave(stat: InvestigatorStat, range: StatRange, ability: Ability): Ability {
   return { ...ability, condition: { kind: 'investigatorHas', stat, ...range } };
 }
 

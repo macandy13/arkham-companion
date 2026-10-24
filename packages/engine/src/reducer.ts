@@ -202,12 +202,9 @@ function moveCard(state: GameState, cardId: InstanceId, to: Zone, index?: number
   const toKey = zoneKey(to);
   let order = withZoneOrder(state.order, fromKey, without(state.order[fromKey] ?? [], cardId));
   order = withZoneOrder(order, toKey, insertedAt(order[toKey] ?? [], cardId, index));
-  // A gained surge belongs to one draw of the card.
-  return {
-    ...state,
-    cards: { ...state.cards, [cardId]: { ...withoutKey(card, 'gainedSurge'), zone: to } },
-    order,
-  };
+  // A gained surge belongs to one draw of the card, wherever its revelation puts it; drawing it again starts afresh.
+  const kept = to.kind === 'resolving' ? withoutKey(card, 'gainedSurge') : card;
+  return { ...state, cards: { ...state.cards, [cardId]: { ...kept, zone: to } }, order };
 }
 
 /** Engagement changes: the enemy moves and any open question about it is answered. */

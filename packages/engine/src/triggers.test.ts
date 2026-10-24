@@ -58,6 +58,7 @@ import {
   spawnEnemyAt,
   spendClues,
   moveTo,
+  putIntoThreatArea,
   takeDamage,
   takeHorror,
   threatAreaOf,
@@ -1586,7 +1587,7 @@ describe('a card that gains surge without clues', () => {
     expect(after.pending).toMatchObject(pending);
   });
 
-  it('places the card before the surge draw, and keeps no surge for its next draw', () => {
+  it('places the card before the surge draw', () => {
     const { context, state } = newGame()
       .withLocation(hall, blankLocation('hall'), { revealed: true })
       .withInvestigator(alice, { locationId: hall, clues: 0 })
@@ -1598,7 +1599,113 @@ describe('a card that gains surge without clues', () => {
     const after = stateAfter(context, state, { type: 'DrawEncounter', investigatorId: alice });
 
     expect(after.order[zoneKey({ kind: 'encounterDiscard' })]).toEqual([nextCard, falseTrail]);
-    expect(after.cards[falseTrail]?.gainedSurge).toBeUndefined();
+  });
+
+  it('keeps no surge for the next draw of the card', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall, clues: 0 })
+      .withCard(falseTrail, falseTrailCard, { kind: 'encounterDeck' })
+      .withCard(nextCard, blankTreachery('next_card'), { kind: 'encounterDeck' })
+      .withCard(instanceId('untouched'), blankTreachery('untouched'), { kind: 'encounterDeck' })
+      .start();
+    const surged = stateAfter(
+      context,
+      state,
+      { type: 'DrawEncounter', investigatorId: alice },
+      { type: 'MoveCard', cardId: falseTrail, to: { kind: 'encounterDeck' }, index: 0 },
+      { type: 'AdjustInvestigator', investigatorId: alice, stat: 'clues', delta: 1 },
+    );
+
+    const { events } = execute(context, surged, { type: 'DrawEncounter', investigatorId: alice });
+
+    const draws = events.filter((event) => event.type === 'EncounterCardDrawn');
+    expect(draws.map((event) => event.cardId)).toEqual([falseTrail]);
+  });
+
+  it('surges once the test that follows the gained surge is answered', () => {
+    const asking = instanceId('asking_trail');
+    const askingCard = blankTreachery('asking_trail', {
+      abilities: [whenRevealed(gainSurge(), skillTest('intellect', 4))],
+    });
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(asking, askingCard, { kind: 'encounterDeck' })
+      .withCard(nextCard, blankTreachery('next_card'), { kind: 'encounterDeck' })
+      .withCard(instanceId('untouched'), blankTreachery('untouched'), { kind: 'encounterDeck' })
+      .start();
+    const asked = stateAfter(context, state, { type: 'DrawEncounter', investigatorId: alice });
+
+    const { events } = execute(context, asked, answer('test:asking_trail', 'pass'));
+
+    const draws = events.filter((event) => event.type === 'EncounterCardDrawn');
+    expect(draws.map((event) => event.cardId)).toEqual([nextCard]);
+  });
+
+  it('surges when the revelation puts the card into a threat area after gaining surge', () => {
+    const clinging = instanceId('clinging_trail');
+    const clingingCard = blankTreachery('clinging_trail', {
+      abilities: [whenRevealed(gainSurge(), putIntoThreatArea())],
+    });
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(clinging, clingingCard, { kind: 'encounterDeck' })
+      .withCard(nextCard, blankTreachery('next_card'), { kind: 'encounterDeck' })
+      .withCard(instanceId('untouched'), blankTreachery('untouched'), { kind: 'encounterDeck' })
+      .start();
+
+    const { state: after, events } = execute(context, state, {
+      type: 'DrawEncounter',
+      investigatorId: alice,
+    });
+
+    const draws = events.filter((event) => event.type === 'EncounterCardDrawn');
+    expect(draws.map((event) => event.cardId)).toEqual([clinging, nextCard]);
+    expect(after.cards[clinging]?.zone).toEqual(threatAreaOf(alice));
+  });
+
+  it('draws nothing more for a drawer the card defeated', () => {
+    const deadly = instanceId('deadly_trail');
+    const deadlyCard = blankTreachery('deadly_trail', {
+      abilities: [whenRevealed(gainSurge(), takeDamage(1))],
+    });
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall, health: { max: 1, damage: 0 } })
+      .withInvestigator(investigatorId('bob'), { locationId: hall })
+      .withCard(deadly, deadlyCard, { kind: 'encounterDeck' })
+      .withCard(nextCard, blankTreachery('next_card'), { kind: 'encounterDeck' })
+      .start();
+
+    const { events } = execute(context, state, { type: 'DrawEncounter', investigatorId: alice });
+
+    const draws = events.filter((event) => event.type === 'EncounterCardDrawn');
+    expect(draws.map((event) => event.cardId)).toEqual([deadly]);
+  });
+
+  it.each([
+    { deck: ['first_gainer'], drawn: ['first_gainer'] },
+    { deck: ['first_gainer', 'second_gainer'], drawn: ['first_gainer', 'second_gainer'] },
+    {
+      deck: ['first_gainer', 'second_gainer', 'third_gainer'],
+      drawn: ['first_gainer', 'second_gainer', 'third_gainer'],
+    },
+  ])('draws $drawn from a deck of only $deck, like printed surge', ({ deck, drawn }) => {
+    let game = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall });
+    for (const code of deck) {
+      const gainer = blankTreachery(code, { abilities: [whenRevealed(gainSurge())] });
+      game = game.withCard(instanceId(code), gainer, { kind: 'encounterDeck' });
+    }
+    const { context, state } = game.start();
+
+    const { events } = execute(context, state, { type: 'DrawEncounter', investigatorId: alice });
+
+    const draws = events.filter((event) => event.type === 'EncounterCardDrawn');
+    expect(draws.map((event) => event.cardId)).toEqual(drawn.map((code) => instanceId(code)));
   });
 
   it('draws only once more for a card with printed surge that also gains it', () => {
