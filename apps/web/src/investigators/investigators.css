@@ -67,7 +67,7 @@
 
 /*
  * The investigator card, landscape like the printed one and drawn like the header's cards: a
- * frame around the hatched art area, which the card's picture fills later (M3.10).
+ * frame around the hatched art area, which the card's picture covers once it has loaded.
  */
 #investigators [data-card='investigator'] {
   grid-area: card;
