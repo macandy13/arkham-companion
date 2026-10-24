@@ -93,7 +93,11 @@ export { BASE_ACTIONS_PER_TURN } from './turns';
 export { formatBoard } from './format_board';
 export {
   advanceAct,
+  afterEntering,
+  afterTest,
+  atEndOfPhase,
   atEndOfRound,
+  whenTurnBegins,
   leadDrawsDiscardingUntil,
   shuffleEncounterDiscard,
   attachToLocation,
@@ -134,6 +138,8 @@ export type {
   RelativeInvestigator,
   Templated,
   TimingWindow,
+  EndingPhase,
+  TestedAction,
 } from './abilities';
 export { MAX_TRIGGERED_COMMANDS } from './triggers';
 export * from './store';

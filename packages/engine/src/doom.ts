@@ -34,6 +34,11 @@ export function isInPlay(state: GameState, card: CardInstance): boolean {
   }
 }
 
+/** Every card in play (`isInPlay`), in card order: the cards a window for "each card in play" opens for. */
+export function cardsInPlay(state: GameState): CardInstance[] {
+  return Object.values(state.cards).filter((card) => isInPlay(state, card));
+}
+
 /** Cards in play that carry doom, including the current agenda. */
 export function cardsWithDoom(state: GameState): CardInstance[] {
   return Object.values(state.cards).filter(

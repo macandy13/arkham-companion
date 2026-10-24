@@ -69,7 +69,11 @@ Steps 1–12 of the [encounter card plan](../encounter-card-analysis.md#implemen
 **Benefit:** _The Gathering_ plays correctly, not just its setup, and half of every later campaign's encounter cards work too.
 
 - [x] 1 Card data for every pack (read the chapter from the data; load `core`). Done: packs take the data's `chapter` field, with `CHAPTER_TWO_PACK_CODES` (now with `cob`) as the fallback; `carddata:fetch` loads `core`, `core_2026` and `cob`.
-- [x] 2 Timing windows. Done by architecture review P1: card and scenario abilities in `CardStats.abilities` with `TimingWindow`s; the code hooks are gone.
+- [ ] 2 Timing windows. Architecture review P1 built the frame: card and scenario abilities in `CardStats.abilities` with `TimingWindow`s (revealed, end of your turn, end of round, advanced, enemy defeated as an objective); the code hooks are gone. The plan's other windows are still open, in three PRs:
+  - [x] 2a "After you enter" a location (`afterEntering`): the Attic's horror and the Cellar's damage. "When you would leave" (Arkham Woods: Twisting Paths) cancels the move, so it waits for a cancellable window.
+  - [x] 2b A phase's end (`atEndOfPhase`: Wizard of the Order, They're Getting Out!) and an investigator's turn start (`whenTurnBegins`). No Night of the Zealot card names a phase's start, so that window waits for one. "At the end of each investigator's turn" for cards outside a threat area waits for step 7 with Umôrdhoth.
+  - [x] 2c1 After an investigation, fight or evade succeeds or fails (`afterTest`): Obscuring Fog's discard becomes an ability and `LocationAttachment.discardWhenInvestigated` is gone. A card's own test ("after you fail a test by 2 or more") waits for a card that needs it.
+  - [ ] 2c2 After an enemy engages or attacks you; after clues are discovered; after doom is placed; after you resolve another treachery; any enemy defeated (Young Deep One, Yithian Observer, Goat Spawn)
 - [x] 3 Skill test margin. Done by P2: `ResolveDecision.margin`, the suggestion's `margin`, `SkillTestResolved.margin` and per-point fails (#201).
 - [ ] 4 Choose one
 - [ ] 5 Card effects for existing commands, healing, conditional surge

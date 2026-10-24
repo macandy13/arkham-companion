@@ -170,8 +170,8 @@ describe('InvestigatorBar', () => {
       expect(off).toEqual(['Heal damage', 'Heal horror', 'Spend a resource']);
     });
 
-    it('waits while a step is queued', () => {
-      const table = PlayTable.start(hurtAlder);
+    it('waits while a step is queued, turn controls too', () => {
+      const table = PlayTable.start(hurtAlder.withTurnOf(alder));
 
       render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy />);
 
@@ -179,6 +179,86 @@ describe('InvestigatorBar', () => {
         .getAllByRole('button')
         .filter((button) => !(button as HTMLButtonElement).disabled);
       expect(on).toEqual([]);
+    });
+  });
+
+  describe('the turn controls', () => {
+    const twoAtStudy = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withInvestigator(alder, { locationId: study })
+      .withInvestigator(brook, { locationId: study });
+
+    /** The table in round 1's investigation phase, before anyone's turn. */
+    const beforeTurns = () => {
+      const table = PlayTable.start(twoAtStudy);
+      table.nextPhase();
+      return table;
+    };
+
+    it('offers to start the turn of each investigator who has not taken one', () => {
+      const table = beforeTurns();
+      table.startTurn(brook);
+      table.endTurn(brook);
+
+      render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />);
+
+      expect(within(panel('alder')).getByRole('button', { name: 'Start turn' })).toBeTruthy();
+      expect(within(panel('brook')).queryByRole('button', { name: 'Start turn' })).toBeNull();
+    });
+
+    it.each([
+      {
+        situation: 'resigned',
+        table: () => {
+          const table = beforeTurns();
+          table.startTurn(alder);
+          table.resign(alder);
+          return table;
+        },
+      },
+      { situation: 'outside the investigation phase', table: () => PlayTable.start(twoAtStudy) },
+    ])('offers no turn start to alder $situation', ({ table }) => {
+      const played = table();
+
+      render(<InvestigatorBar board={played.board} actions={actionsOn(played)} busy={false} />);
+
+      expect(within(panel('alder')).queryByRole('button', { name: 'Start turn' })).toBeNull();
+    });
+
+    it('starts the turn of the investigator the players pick', async () => {
+      const table = beforeTurns();
+      render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />);
+
+      fireEvent.click(within(panel('brook')).getByRole('button', { name: 'Start turn' }));
+
+      await expect.poll(() => table.board.turn).toBe(brook);
+    });
+
+    it('shows a pip per action on the investigator whose turn it is, filled for each one left', () => {
+      const table = PlayTable.start(twoAtStudy.withTurnOf(alder));
+      table.adjustActions(alder, -1);
+
+      render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />);
+
+      const pips = within(panel('alder')).getByRole('list', { name: '2 actions left' });
+      const filled = within(pips)
+        .getAllByRole('listitem')
+        .map((pip) => pip.hasAttribute('data-left'));
+      expect(filled).toEqual([true, true, false]);
+      expect(within(panel('brook')).queryByRole('group', { name: 'Turn' })).toBeNull();
+      expect(within(panel('brook')).queryByRole('button', { name: 'Start turn' })).toBeNull();
+    });
+
+    it.each([
+      { button: 'End turn', after: { turnTaken: true } },
+      { button: 'Resign', after: { status: 'resigned' } },
+    ])('"$button" plays it for the investigator whose turn it is', async ({ button, after }) => {
+      const table = PlayTable.start(twoAtStudy.withTurnOf(alder));
+      render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />);
+
+      fireEvent.click(within(panel('alder')).getByRole('button', { name: button }));
+
+      await expect.poll(() => table.board.investigator(alder)).toMatchObject(after);
     });
   });
 });

@@ -103,13 +103,14 @@ Every command type has one entry in [`COMMAND_SPECS`](../packages/engine/src/com
 
 ### Triggers and card effects
 
-Forced effects are **abilities**: data on a card's `CardStats`, so card data holds no code and the same card behaves the same in every scenario. A scenario's own rules are abilities of its agendas and acts. An [`Ability`](../packages/engine/src/abilities.ts) is a timing window (`revealed`, `turnEnds`, `roundEnds`, `advanced`, `enemyDefeated`), an optional condition, and a list of effects. `windowsOpenedBy` maps an event to the windows it opens.
+Forced effects are **abilities**: data on a card's `CardStats`, so card data holds no code and the same card behaves the same in every scenario. A scenario's own rules are abilities of its agendas and acts. An [`Ability`](../packages/engine/src/abilities.ts) is a timing window (`revealed`, `entered`, `turnBegins`, `turnEnds`, `phaseEnds`, `roundEnds`, `advanced`, `enemyDefeated`, `tested` after a basic action's test), an optional condition, and a list of effects. `windowsOpenedBy` maps an event to the windows it opens.
 
 Effects are **templated commands**: a command card data may use (`AbilityCommand`) with every ID replaced by a reference relative to the ability (`self`, `windowInvestigator`, `lead`, `onlyCopy(code)`, `eachInvestigator`, …). When its turn comes, `resolveEffect` fills in the IDs from the current state, so handlers and the log only see plain commands. A reference that names nobody drops the command; a missing `onlyCopy` card records `AbilityEffectSkipped` and the players do it by hand. Factories write effects the way the card reads:
 
 ```ts
 whenRevealed(takeHorror(1))
 atEndOfTurn(skillTest('willpower', 3, { onPass: [discardSelf()] }))
+afterTest('investigate', 'pass', discardSelf())   // Obscuring Fog
 whenAdvanced(revealLocation(onlyCopy(codes.parlor)), …)
 ```
 
@@ -195,7 +196,7 @@ The open game (`OpenGame`) is the play screen's single source of truth:
 - **`GameSession`** ([`gameSession.ts`](../apps/web/src/state/gameSession.ts)) holds a `PlayTable` resumed from the stored log, plays each action as one undo group, writes it, then publishes the state. A refused step stores nothing and shows its `Rejection` as a toast; a failed write reloads the stored game. Steps run strictly in order.
 - **`BoardView`** (`OpenGame.board`) is what the screen reads: names, thresholds and derived values, never raw state.
 
-The [game screen](../apps/web/src/screens/GameScreen.tsx) has a header with the encounter deck, agenda, act and scenario laid out as cards, the [map](../apps/web/src/map/MapBoard.tsx) as an SVG of location tiles at their layout cells with pan, zoom and drag-to-play pieces, and the [investigator bar](../apps/web/src/investigators/InvestigatorBar.tsx). Card pictures are fetched from ArkhamDB on the device and cached by the service worker, never bundled. Markup is structure only; the playmat look lives in CSS on [`tokens.css`](../apps/web/src/styles/tokens.css), with a dark and a light theme.
+The [game screen](../apps/web/src/screens/GameScreen.tsx) has a header with the encounter deck, agenda, act and scenario laid out as cards, the [map](../apps/web/src/map/MapBoard.tsx) as an SVG of location tiles at their layout cells with pan, zoom and drag-to-play pieces, and the [investigator bar](../apps/web/src/investigators/InvestigatorBar.tsx) with each investigator's counters and turn controls (start turn, actions left, resign, end). Card pictures are fetched from ArkhamDB on the device and cached by the service worker, never bundled. Markup is structure only; the playmat look lives in CSS on [`tokens.css`](../apps/web/src/styles/tokens.css), with a dark and a light theme.
 
 **Extension points**
 

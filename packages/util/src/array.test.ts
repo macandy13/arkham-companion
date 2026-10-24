@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { duplicates, withoutFirst, withRunningTotals } from './index';
+import { duplicates, range, withoutFirst, withRunningTotals } from './index';
 
 describe('duplicates', () => {
   it('lists each repeated item once', () => {
@@ -69,5 +69,15 @@ describe('withRunningTotals', () => {
 
   it('is empty for an empty list', () => {
     expect(withRunningTotals([], () => 1, 4)).toEqual([]);
+  });
+});
+
+describe('range', () => {
+  it.each([
+    { count: 3, numbers: [0, 1, 2] },
+    { count: 1, numbers: [0] },
+    { count: 0, numbers: [] },
+  ])('counts $count numbers from 0', ({ count, numbers }) => {
+    expect(range(count)).toEqual(numbers);
   });
 });
