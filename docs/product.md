@@ -112,12 +112,12 @@ Designs for parts that have a milestone but no code yet. The PR that builds one 
 
 ### Continuous play tester ([M1V.4](tasks/M1V-rules-verification.md))
 
-*Why:* unit tests and the scripted end-to-end games check the paths we thought of. Bots playing thousands of random games find the paths we didn't: odd board states, rare token draws, rule interactions. Every game is recorded, so a bug it finds can be replayed step by step.
+*Why:* unit tests and the scripted end-to-end games check the paths we thought of. Bots playing thousands of games of the real scenarios find the paths we didn't: rare token draws, unusual orders of play, rule interactions. Every failing game is recorded, so the bug can be replayed step by step.
 
 **What it plays**
 
 - A **run** is one game: scenario, difficulty, 1–4 investigators in seat order, a game seed (the engine's shuffles) and a bot seed (the bot's choices and chaos tokens). The same run always plays the same game.
-- **Scenarios:** every scenario the scenarios package exports (The Gathering today). Later also **random boards** built with `newGame()` and blank cards (random maps, enemies with random keywords), which hit the generic rules no scenario uses yet.
+- **Scenarios:** only the real ones, every scenario the scenarios package exports (The Gathering today, each new one as it lands). No made-up boards: a finding then always happens in a game someone could play.
 - **Investigators:** the real ones, plus blank investigators with random stats (down to sanity 1 and agility 0), so defeat and elimination happen often.
 - **Bots** drive a `PlayTable` through its game-language verbs (`nextPhase`, `moveTo`, `investigate`, `fight`, `answer`/`answerOnly`, `spendCluesToAdvanceAct`, `resign`, `undo`), like players at the table; corrections go through its `adjust*`/`placeDoom` verbs or `play(ManualAdjust)`. Each bot is a weighting of these verbs: *random* (any verb), *goal* (go for clues, advance the act, fight what is engaged) and *chaos* (undo, corrections, resign early).
 - **Chaos tokens:** the bot keeps its own bag (the scenario's or campaign's bag for the difficulty), draws a token, computes the result with `suggestSkillTest(ctx, state, decision, { tokens })` and answers pass, fail or `failedBy` from that. Tokens the engine can't value (elder sign) get a random modifier; a test decided by the lead or the group has no suggestion, so the bot answers it at random. Once the chaos bag module exists ([M6.1](tasks/M6-comfort.md)), the bot draws through it instead.
@@ -141,25 +141,31 @@ Designs for parts that have a milestone but no code yet. The PR that builds one 
    - Running the same run twice gives the same events (`commandId` and event; the clock's timestamps are left out).
    - Undo right after a step gives back exactly the state before it.
    - `PlayTable.resume` from the log at any step, then playing on, gives the same game as playing straight through.
-   - The same steps through the web app's `GameSession` (on `IndexedDbStore` over fake-indexeddb, as the web tests do) give the same events and undo groups as through `PlayTable`, and the log survives the export and import round trip (`serialiseGameExport`, `parseGameExport`). These live in `apps/web`, and a package must not depend on the app, so this check is a web test that replays the corpus records.
+   - The same steps through the web app's `GameSession` (on `IndexedDbStore` over fake-indexeddb, as the web tests do) give the same events and undo groups as through `PlayTable`, and the log survives the export and import round trip (`serialiseGameExport`, `parseGameExport`). These live in `apps/web`, and a package must not depend on the app, so this check is a web test that replays a few fixed runs and the `findings/` records.
 6. **Liveness:** there is always a next step (an answer or "Next"), every offered option of a pending decision is accepted, "Next" never leaves the board unchanged, and the game ends before the round cap.
 7. **Statistics (reported, never a failure):** wins per scenario and difficulty, rounds per game, how often each encounter card is drawn compared with its share of the deck (a shuffle bias shows here), and which card abilities and decisions never fired (untested paths).
 
 **Recording and replay**
 
-- Each game is saved as a **record** (`*.arkham-run.json`): tester version and git commit, the run (scenario, difficulty, seats, both seeds, bot), the steps as `PlayTable` calls with arguments by name (`moveTo('Daisy Walker', 'Attic')`), and the event log in the export format.
+- Only **failing games are recorded.** A passing game needs no file: its run (scenario, difficulty, seats, both seeds, bot) plays it again, and every run's report lists its runs.
+- A **record** (`*.arkham-run.json`) holds the tester version and git commit, the run, the failed check with its step and `formatBoard` before and after, the steps as `PlayTable` calls with arguments by name (`moveTo('Daisy Walker', 'Attic')`), and the event log in the export format.
 - **Replay** a record two ways: the steps through a fresh `PlayTable` (works on a newer engine, shows what it does now), or the event log through `replay` (shows what happened then). Comparing the two shows how the engine's behaviour changed.
-- The event log is the app's export format, so a scenario record **opens in the app** with "Import game" and can be clicked through on the board (a random board has no scenario in the catalog, so it can't).
-- A finding saves its record with the failed check, the step, and `formatBoard` before and after.
-- **Shrinking:** the tester cuts the record down (drop steps, drop investigators, end earlier) while the same check still fails, so the report shows the shortest game that breaks.
+- The event log is the app's export format, so a record **opens in the app** with "Import game" and can be clicked through on the board.
+- **Shrinking:** before saving, the tester cuts the game down (drop steps, drop investigators, end earlier) while the same check still fails, so the record is the shortest game that breaks.
 - **From finding to test:** the fix PR adds the shrunk game as an example-based test (in `timing.test.ts` or a scenario's end-to-end test) with named cards. Random play stays in the tester and never runs in `pnpm test`, so the rule "no property-based testing" in unit tests still holds.
-- **Corpus:** short records worth keeping (each found a bug or reaches a rare path) are committed under the tester's `corpus/`. They hold steps, names and card codes only, never card text.
 
-**Where it runs**
+**Who runs it and where it writes**
 
-- Locally: `pnpm playtest --games 500 --seed 7` (a package `packages/play_tester`, CI tooling like `review_digest`; it may use the clock and the file system, the engine stays pure).
-- On every PR: a smoke run of ~20 fixed runs (under a minute), plus the corpus replayed and its event logs compared with the stored ones. A rule PR is expected to change some; the job lists them in a comment instead of failing.
-- Nightly (scheduled GitHub Action, ~15 minutes, about 450 of the 2,000 free minutes a month): fresh seeds, records of findings as workflow artifacts, and one GitHub issue per new finding signature (check id plus step kind), so the same bug is not reported twice.
+The tester is a Node script in a new package, `packages/play_tester` (CI tooling like `review_digest`; it may use the clock and the file system, the engine stays pure). Three ways to start it:
+
+- **A developer or a Claude session**, on their machine: `pnpm playtest --games 500 --seed 7`. It prints a summary (games, wins, findings per check) and writes failing records to `packages/play_tester/.runs/` (gitignored). `pnpm playtest --replay <record>` replays one and stops at its failing step.
+- **CI on every PR** (a job in `ci.yml` on the GitHub runner): ~20 runs with fixed seeds, under a minute, plus every record in `packages/play_tester/findings/` (the committed shrunk records of fixed bugs, steps and card codes only, never card text) replayed. It fails on a crash, a *never* refusal, a broken invariant or a replay mismatch; an oracle finding only adds a line to the job summary until the oracles have settled. Failing records go up as a workflow artifact.
+- **A nightly GitHub Action** (`play_tester.yml`, scheduled, ~15 minutes, about 450 of the 2,000 free minutes a month): fresh seeds from the date, so each night plays new games. It writes:
+  - the summary to the job summary page,
+  - the failing records as a workflow artifact (kept 90 days),
+  - one GitHub issue per new finding signature (check id plus step kind), labelled `play-tester`, opened with the workflow's `GITHUB_TOKEN` (`issues: write`). The issue names the check, its `docs/rules.md` section, the run, the shrunk steps and the replay command, and links the artifact. A signature that already has an open issue gets a comment with the night's count instead, so the same bug is not reported twice.
+
+A session fixing an issue downloads the record, replays it, adds the test, and commits the record to `findings/` so the PR job keeps checking it.
 
 ### Scenario data pipeline ([M4](tasks/M4-scenario-data-first-scenario.md))
 
