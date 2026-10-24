@@ -319,7 +319,7 @@
   min-width: var(--button-compact);
   min-height: var(--button-compact);
   padding: 0;
-  border-radius: 50%;
+  border-radius: var(--radius-round);
 }
 
 #status button[aria-pressed='true'] {

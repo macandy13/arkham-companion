@@ -2,17 +2,9 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NavLink } from 'react-router';
 import type { StoreApi } from 'zustand/vanilla';
-import type { BoardView, Phase } from '@arkham/engine';
+import { ROUND_PHASES, type BoardView } from '@arkham/engine';
 import type { AppState, OpenGame } from '../state/appStore';
 import { GameExportButton } from './GameExportButton';
-
-/** The phases of a round, in the order the phase track shows them; setup comes before round 1. */
-const ROUND_PHASES: readonly Exclude<Phase, 'setup'>[] = [
-  'mythos',
-  'investigation',
-  'enemy',
-  'upkeep',
-];
 
 /**
  * The play screen's status row under the header, as in the prototype: the round as its heading,

@@ -101,6 +101,8 @@
   --font-size-note: 0.75rem;
 
   --radius: 0.5rem;
+  /* A circle: round buttons, pips and tokens. */
+  --radius-round: 50%;
   --border-width: 1px;
   /* Minimum size of anything tappable, for use on a shared tablet. */
   --touch-target: 2.75rem;

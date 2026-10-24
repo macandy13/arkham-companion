@@ -66,6 +66,20 @@ describe('AppRoutes', () => {
     fireEvent.click(await within(menu).findByRole('button', { name: 'Export' }));
 
     await waitFor(() => expect(downloaded).toEqual(['Friday-night.arkham.json']));
+  });
+
+  it('hides the title bar on the play screen', async () => {
+    const store = createAppStore(new IndexedDbStore('app-routes-title-test'));
+    const id = await store.getState().startScenario({
+      title: 'Friday night',
+      ctx: { cards: theGatheringCards, scenario: theGathering },
+      difficulty: 'easy',
+      seed: 3,
+      investigators: [],
+    });
+    renderAt(`/game/${id}`, store);
+
+    await screen.findByRole('button', { name: 'Menu' });
     expect(screen.queryByRole('link', { name: 'Arkham Companion' })).toBeNull();
   });
 

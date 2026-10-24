@@ -131,7 +131,7 @@ test('move an enemy on the map', async ({ page }) => {
 
 // Journey: keep the map in step with the table through a location's menu while adjusting the board:
 // reveal a location a card turned over, put doom on it, and place a clue a card adds to the Hallway.
-test('change a location by its menu', async ({ page }) => {
+test('change a location by its menu', { tag: '@flow' }, async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
   const menu = (name: string) => page.getByRole('dialog', { name });

@@ -54,8 +54,8 @@ function EncounterDeck() {
 
 /**
  * The scenario as an upright card, like the reference card on the table. Its name
- * (`OpenGame.scenarioNameKey`) is the screen's heading, since the app title already sits in the
- * title bar.
+ * (`OpenGame.scenarioNameKey`) is the screen's heading, since the play screen shows no app title:
+ * the scenario is what the players are playing.
  */
 function ScenarioCard({ open }: { open: OpenGame }) {
   const { t } = useTranslation();
