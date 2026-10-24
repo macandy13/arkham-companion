@@ -30,6 +30,7 @@ import {
 } from '@arkham/engine/test/utils';
 import {
   BURN_THE_HOUSE_DECISION,
+  WHATS_GOING_ON_DECISION,
   GATHERING_CODES as codes,
   theGathering,
   theGatheringCards,
@@ -460,7 +461,10 @@ describe('The Gathering agendas 2 and 3', () => {
     adjustment: { kind: 'moveCard', cardId, to: { kind: 'encounterDiscard' } },
   });
 
-  /** Two investigators (seed 1), the Flesh-Eater and a Swarm of Rats in the discard, agenda 1 advanced. */
+  /**
+   * Two investigators (seed 1), the Flesh-Eater and a Swarm of Rats in the discard, agenda 1
+   * advanced with the lead choosing the random discards, done at the table.
+   */
   function atAgenda2(): GameState {
     return stateAfter(
       ctx,
@@ -469,6 +473,7 @@ describe('The Gathering agendas 2 and 3', () => {
       toDiscard(fleshEater),
       toDiscard(ratSwarm),
       { type: 'AdvanceAgenda' },
+      answer(WHATS_GOING_ON_DECISION, 'discard'),
     );
   }
 

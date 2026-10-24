@@ -58,6 +58,7 @@ import {
   whenEnemyDefeated,
   whenRevealed,
   whenTurnBegins,
+  youMustEither,
   type AbilityEffect,
   type AddMapStep,
   type Command,
@@ -1359,6 +1360,61 @@ describe('a choice for the lead investigator', () => {
     expect(state.meta.ended).toBe(ended);
     expect(state.investigators.find((inv) => inv.id === alice)?.sanity.horror).toBe(aliceHorror);
     expect(state.pending).toEqual([]);
+  });
+});
+
+describe('a choice for the investigator who drew the card', () => {
+  const bob = investigatorId('bob');
+  const offer = instanceId('offer');
+  /**
+   * "Revelation – You must either draw 2 cards and place 2 doom on the agenda, or take 2 horror."
+   * The draw is done at the table, so its option only places the doom.
+   */
+  const offerCard = blankTreachery('offer', {
+    abilities: [
+      whenRevealed(
+        youMustEither(decisionId('offer'), 'Draw or take horror?', [
+          { id: 'draw', label: 'Draw 2 cards, 2 doom', effects: [placeDoomOnAgenda(2)] },
+          { id: 'horror', label: 'Take 2 horror', effects: [takeHorror(2)] },
+        ]),
+      ),
+    ],
+  });
+  /** Alice, the lead, and bob in the hall; bob draws the offer. */
+  const offerTable = newGame()
+    .withAgenda(agenda1, firstAgendaCard)
+    .withLocation(hall, blankLocation('hall'), { revealed: true })
+    .withInvestigator(alice, { locationId: hall })
+    .withInvestigator(bob, { locationId: hall })
+    .withCard(offer, offerCard, { kind: 'encounterDeck' });
+  const bobDraws: Command = { type: 'DrawEncounter', investigatorId: bob };
+
+  it('asks the drawer, not the lead', () => {
+    const { context, state: started } = offerTable.start();
+
+    const { state } = execute(context, started, bobDraws);
+
+    expect(state.pending).toMatchObject([
+      {
+        id: decisionId('offer'),
+        decider: { kind: 'investigator', investigatorId: bob },
+        options: [{ id: 'draw' }, { id: 'horror' }],
+      },
+    ]);
+  });
+
+  it.each([
+    { optionId: 'draw', agendaDoom: 2, bobHorror: 0 },
+    { optionId: 'horror', agendaDoom: undefined, bobHorror: 2 },
+  ])('runs the effects of the answer $optionId', ({ optionId, agendaDoom, bobHorror }) => {
+    const { context, state: started } = offerTable.start();
+    const asked = stateAfter(context, started, bobDraws);
+
+    const state = stateAfter(context, asked, answer('offer', optionId));
+
+    expect(state.cards[agenda1]?.tokens.doom).toBe(agendaDoom);
+    expect(requireInvestigator(state, bob).sanity.horror).toBe(bobHorror);
+    expect(requireInvestigator(state, alice).sanity.horror).toBe(0);
   });
 });
 
