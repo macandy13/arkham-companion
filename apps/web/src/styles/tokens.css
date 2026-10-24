@@ -155,7 +155,7 @@
   --token-empty-opacity: 0.45;
   /* An action pip on the investigator whose turn it is. */
   --action-pip-size: 0.75rem;
-  /* An icon on a button (the investigator panel's turn controls). */
+  /* An icon on an icon button (`button[data-icon]` in base.css). */
   --icon-size: 1.25rem;
   /* What is left of a name kept only for screen readers: a dot, clipped away. */
   --hidden-size: 1px;
