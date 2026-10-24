@@ -51,6 +51,9 @@ import {
   revealLocation,
   skillTest,
   spawnEnemyAt,
+  spendClues,
+  moveTo,
+  takeDamage,
   takeHorror,
   threatAreaOf,
   whenAdvanced,
@@ -1415,6 +1418,133 @@ describe('a choice for the investigator who drew the card', () => {
     expect(state.cards[agenda1]?.tokens.doom).toBe(agendaDoom);
     expect(requireInvestigator(state, bob).sanity.horror).toBe(bobHorror);
     expect(requireInvestigator(state, alice).sanity.horror).toBe(0);
+  });
+});
+
+describe('a choice without the options that cannot be resolved', () => {
+  const shadow = instanceId('shadow');
+  /** The drawer must either spend 1 clue or take 2 damage (like Hunting Shadow). */
+  const shadowCard = blankTreachery('shadow', {
+    abilities: [
+      whenRevealed(
+        youMustEither(decisionId('shadow'), 'Spend a clue or take damage?', [
+          { id: 'clue', label: 'Spend 1 clue', effects: [spendClues(1)] },
+          { id: 'damage', label: 'Take 2 damage', effects: [takeDamage(2)] },
+        ]),
+      ),
+    ],
+  });
+
+  it.each([
+    { clues: 1, options: [{ id: 'clue' }, { id: 'damage' }] },
+    { clues: 0, options: [{ id: 'damage' }] },
+  ])(
+    'offers alice with $clues clues only the options that can be resolved',
+    ({ clues, options }) => {
+      const { context, state: started } = newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withInvestigator(alice, { locationId: hall, clues })
+        .withCard(shadow, shadowCard, { kind: 'encounterDeck' })
+        .start();
+
+      const { state } = execute(context, started, { type: 'DrawEncounter', investigatorId: alice });
+
+      expect(state.pending).toMatchObject([{ id: decisionId('shadow'), options }]);
+    },
+  );
+
+  it('asks nothing when alice can resolve no option', () => {
+    const drained = instanceId('drained');
+    /** "You must either spend 1 clue or spend 1 resource." */
+    const drainedCard = blankTreachery('drained', {
+      abilities: [
+        whenRevealed(
+          youMustEither(decisionId('drained'), 'Spend a clue or a resource?', [
+            { id: 'clue', label: 'Spend 1 clue', effects: [spendClues(1)] },
+            {
+              id: 'resource',
+              label: 'Spend 1 resource',
+              effects: [
+                {
+                  type: 'AdjustInvestigator',
+                  investigatorId: { ref: 'windowInvestigator' },
+                  stat: 'resources',
+                  delta: -1,
+                },
+              ],
+            },
+          ]),
+        ),
+      ],
+    });
+    const { context, state: started } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall, clues: 0, resources: 0 })
+      .withCard(drained, drainedCard, { kind: 'encounterDeck' })
+      .start();
+
+    const state = stateAfter(context, started, { type: 'DrawEncounter', investigatorId: alice });
+
+    expect(state.pending).toEqual([]);
+    expect(requireInvestigator(state, alice)).toMatchObject({ clues: 0, resources: 0 });
+  });
+
+  it('spends the clue alice chose to spend', () => {
+    const { context, state: started } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall, clues: 1 })
+      .withCard(shadow, shadowCard, { kind: 'encounterDeck' })
+      .start();
+    const asked = stateAfter(context, started, { type: 'DrawEncounter', investigatorId: alice });
+
+    const state = stateAfter(context, asked, answer('shadow', 'clue'));
+
+    expect(requireInvestigator(state, alice)).toMatchObject({ clues: 0, health: { damage: 0 } });
+  });
+
+  it('asks with all options after a failed test on entering, as the graveyard does', () => {
+    const graveyard = instanceId('graveyard');
+    const rivertown = instanceId('rivertown');
+    /** "After you enter: test willpower (3); if you fail, you must either take 2 horror or move to Rivertown." */
+    const graveyardCard = blankLocation('graveyard', {
+      abilities: [
+        afterEntering(
+          skillTest('willpower', 3, {
+            onFail: [
+              youMustEither(decisionId('graveyard'), 'Horror or Rivertown?', [
+                { id: 'horror', label: 'Take 2 horror', effects: [takeHorror(2)] },
+                {
+                  id: 'move',
+                  label: 'Move to Rivertown',
+                  effects: [moveTo(onlyCopy(cardCode('rivertown')))],
+                },
+              ]),
+            ],
+          }),
+        ),
+      ],
+    });
+    const { context, state: started } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(graveyard, graveyardCard, { revealed: true })
+      .withLocation(rivertown, blankLocation('rivertown'), { revealed: true })
+      .withConnection(hall, graveyard)
+      .withInvestigator(alice, { locationId: hall })
+      .withTurnOf(alice)
+      .start();
+    const failed = stateAfter(
+      context,
+      started,
+      { type: 'MoveInvestigator', investigatorId: alice, to: graveyard },
+      answer('test:graveyard', 'fail'),
+    );
+
+    const state = stateAfter(context, failed, answer('graveyard', 'move'));
+
+    expect(requireInvestigator(state, alice)).toMatchObject({
+      locationId: rivertown,
+      sanity: { horror: 0 },
+    });
   });
 });
 

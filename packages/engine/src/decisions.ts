@@ -189,6 +189,16 @@ function withAnsweredAmounts(
   return filled as Command;
 }
 
+/**
+ * The option's commands as they will run, when no count waits for the answer
+ * (an ability's choice); undefined when one holds an `AnsweredAmount`.
+ */
+export function plainOptionCommands(option: DecisionOption): Command[] | undefined {
+  const answered = option.commands.some((cmd) => Object.values(cmd).some(isAnsweredAmount));
+  // Without an `AnsweredAmount` field, each command is a plain `Command`.
+  return answered ? undefined : (option.commands as Command[]);
+}
+
 function isAnsweredAmount(value: unknown): value is AnsweredAmount {
   return typeof value === 'object' && value !== null && 'answer' in value;
 }

@@ -796,6 +796,26 @@ export function itsLocation(): RelativeCard {
   return { ref: 'windowLocation' };
 }
 
+/** "Spend N clues": the investigator the window names returns `amount` clues to the token bank. */
+export function spendClues(amount: number): AbilityEffect {
+  return {
+    type: 'AdjustInvestigator',
+    investigatorId: { ref: 'windowInvestigator' },
+    stat: 'clues',
+    delta: -amount,
+  };
+}
+
+/** "Move to Rivertown": the investigator the window names goes straight there, as card effects move. */
+export function moveTo(location: RelativeCard): AbilityEffect {
+  return {
+    type: 'MoveInvestigator',
+    investigatorId: { ref: 'windowInvestigator' },
+    to: location,
+    ignoreConnections: true,
+  };
+}
+
 /** "Place N doom on the current agenda". */
 export function placeDoomOnAgenda(amount: number): AbilityEffect {
   return { type: 'PlaceDoom', amount };

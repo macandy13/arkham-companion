@@ -3,7 +3,7 @@ import type { EngineContext } from './cards';
 import { commandSpec, type CommandSpec, type Continuation, type Step } from './command_specs';
 import type { Command, DrawEncounter } from './commands';
 import { attackOfOpportunityDecisions, isOwnTurnAction } from './attacks_of_opportunity';
-import { answerCommands } from './decisions';
+import { answerCommands, plainOptionCommands } from './decisions';
 import { testedActionCommands } from './skill_tests';
 import type { Event } from './events';
 import {
@@ -258,7 +258,9 @@ function resolveQueuedStep(
     case 'exhaustAfterAttack':
       return emitWithEffects(resolution, exhaustAfterAttack(ctx, state, step.enemyId));
     case 'ability': {
-      const commands = resolveEffect(ctx, state, step.effect, step.opened);
+      const commands = resolveEffect(ctx, state, step.effect, step.opened).flatMap((command) =>
+        withResolvableOptions(resolution, command),
+      );
       const [command, ...more] = commands;
       if (command && more.length === 0) {
         spend(budget);
@@ -440,6 +442,43 @@ function resumeHeldAction(resolution: Resolution, held: HeldAction, budget: Trig
     if (!(error instanceof CommandRejected)) throw error;
     restore();
     emit(resolution, [{ type: 'ActionDropped', command: held, reason: error.rejection }]);
+  }
+}
+
+/**
+ * An ability's choice ("you must either …") with only the options that can be
+ * resolved now: a player who must choose picks an option that can change the
+ * game state (RR "Must"), so "spend 1 clue" is no option without a clue. Each
+ * option's commands, with the reactions they trigger, get a dry run on the
+ * state before the ability's other commands run; one rejection drops the
+ * option, although the rule would still allow an option that resolves in part
+ * (no Night of the Zealot card has one). A choice with no option left is
+ * dropped. A choice inside a test's outcome is raised by the answer, not here,
+ * so it keeps all its options.
+ */
+function withResolvableOptions(resolution: Resolution, command: Command): Command[] {
+  if (command.type !== 'RequestDecision' || command.decision.kind !== 'chooseOption')
+    return [command];
+  const options = command.decision.options.filter((option) => {
+    const commands = plainOptionCommands(option);
+    return commands === undefined || canResolve(resolution, commands);
+  });
+  if (options.length === 0) return [];
+  return [{ ...command, decision: { ...command.decision, options } }];
+}
+
+/** Whether `commands` would be accepted now: a dry run on a resolution of its own that is dropped. */
+function canResolve(resolution: Resolution, commands: readonly Command[]): boolean {
+  const { ctx, state } = resolution;
+  try {
+    run({ ctx, state, events: [] }, commands.map(followUpStep), newBudget(), {
+      resumesStored: false,
+    });
+    return true;
+  } catch (error) {
+    // A rejection is the answer here: the option cannot be resolved.
+    if (!(error instanceof CommandRejected)) throw error;
+    return false;
   }
 }
 
