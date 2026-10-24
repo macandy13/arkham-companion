@@ -110,6 +110,8 @@
   --focus-ring-width: 2px;
   /* The dashed line round the map while the players adjust the board. */
   --adjust-outline-width: 2px;
+  /* The play screen's menu, above the map and its floating controls. */
+  --layer-menu: 2;
 
   --layout-content-width: 60rem;
   /* The investigators' column beside the map in landscape, as wide as the prototype's. */

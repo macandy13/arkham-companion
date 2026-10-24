@@ -6,14 +6,13 @@ import { useCardPicture } from '../catalog/cardImages';
 import type { AppState, OpenGame } from '../state/appStore';
 
 /**
- * The play screen's always-on status, laid out like the scenario's cards on the table: the
- * encounter deck and its discard pile (placeholders until the encounter phase draws), the agenda,
- * the act and the scenario card, then the round and phase, "Next", which runs the phase assistant,
- * "Adjust board" and undo. The scenario's name is the screen's heading, since the app title already
- * sits in the title bar. Its buttons wait while a step is queued (`OpenGame.busy`), since a second
- * tap would act on whatever the first one leaves open. While the players adjust the board
- * (`OpenGame.adjusting`), "Done" and "Cancel" take the place of "Next" and "Adjust board", and the
- * agenda's and act's steppers show. `board` is the open game's `OpenGame.board`.
+ * The play screen's header, laid out like the scenario's cards on the table: the encounter deck
+ * and its discard pile (placeholders until the encounter phase draws), the agenda, the act and the
+ * scenario card. The scenario's name is the screen's heading. The cards' buttons wait while a step
+ * is queued (`OpenGame.busy`), since a second tap would act on whatever the first one leaves open;
+ * the agenda's and act's steppers show only while the players adjust the board
+ * (`OpenGame.adjusting`). The round, the phase and the buttons that run the game sit in the status
+ * row below (`GameStatus`). `board` is the open game's `OpenGame.board`.
  */
 export function GameHeader({
   store,
@@ -24,8 +23,6 @@ export function GameHeader({
   open: OpenGame;
   board: BoardView;
 }) {
-  const { t } = useTranslation();
-  const { actions } = store.getState();
   const blocked = open.busy;
   const { adjusting } = open;
 
@@ -35,34 +32,6 @@ export function GameHeader({
       <AgendaStatus store={store} board={board} blocked={blocked} adjusting={adjusting} />
       <ActStatus store={store} board={board} blocked={blocked} adjusting={adjusting} />
       <ScenarioCard open={open} />
-      <p>
-        {t('header.roundPhase', {
-          round: board.round,
-          phase: t(`games.phases.${board.phase}`),
-        })}
-      </p>
-      {adjusting ? (
-        <>
-          <button type="button" disabled={blocked} onClick={() => void actions.finishAdjusting()}>
-            {t('header.done')}
-          </button>
-          <button type="button" disabled={blocked} onClick={() => void actions.cancelAdjusting()}>
-            {t('header.cancel')}
-          </button>
-        </>
-      ) : (
-        <>
-          <button type="button" disabled={blocked} onClick={() => void actions.nextPhase()}>
-            {t('header.next')}
-          </button>
-          <button type="button" disabled={blocked} onClick={() => void actions.startAdjusting()}>
-            {t('header.adjust')}
-          </button>
-        </>
-      )}
-      <button type="button" disabled={blocked || !open.canUndo} onClick={() => void actions.undo()}>
-        {t('header.undo')}
-      </button>
     </header>
   );
 }

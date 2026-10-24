@@ -10,7 +10,7 @@ test('take a turn from the investigator panel', async ({ page }) => {
     await page.goto('/#/new');
     await startQuickGame(page);
     await page.getByRole('button', { name: 'Next' }).click();
-    await expect(page.getByText('Round 1, Investigation')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Round 1' })).toBeVisible();
   });
 
   await test.step('Start the turn', async () => {

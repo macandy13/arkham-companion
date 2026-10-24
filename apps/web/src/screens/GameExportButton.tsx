@@ -7,9 +7,9 @@ import { downloadGameExport } from './downloadFile';
 import { untitledLabel } from './GameListItem';
 
 /**
- * The title bar's export of the game on the play screen, so the board's header keeps its room for
- * the scenario's cards. It shows only on `/game/:id` once that game is open, and saves the game
- * under the title the home screen lists it with, so both exports get the same file name.
+ * The play screen menu's export of the open game (`GameStatus`). It shows only on `/game/:id` once
+ * that game is open, and saves the game under the title the home screen lists it with, so both
+ * exports get the same file name.
  */
 export function GameExportButton({ store }: { store: StoreApi<AppState> }) {
   const { t } = useTranslation();

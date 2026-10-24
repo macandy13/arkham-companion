@@ -13,7 +13,7 @@ test('read the map', async ({ page }) => {
   await test.step('Start a quick game', async () => {
     await page.goto('/#/new');
     await startQuickGame(page);
-    await expect(page.getByText('Round 0, Setup')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Setup' })).toBeVisible();
   });
 
   await test.step('Find the Study on its map', async () => {
@@ -131,7 +131,7 @@ test('move an enemy on the map', async ({ page }) => {
 
 // Journey: keep the map in step with the table through a location's menu while adjusting the board:
 // reveal a location a card turned over, put doom on it, and place a clue a card adds to the Hallway.
-test('change a location by its menu', { tag: '@flow' }, async ({ page }) => {
+test('change a location by its menu', async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
   const menu = (name: string) => page.getByRole('dialog', { name });
