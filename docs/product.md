@@ -141,7 +141,7 @@ Designs for parts that have a milestone but no code yet. The PR that builds one 
    - Running the same run twice gives the same events (`commandId` and event; the clock's timestamps are left out).
    - Undo right after a step gives back exactly the state before it.
    - `PlayTable.resume` from the log at any step, then playing on, gives the same game as playing straight through.
-   - The same steps through the web app's `GameSession` (on `IndexedDbStore` over fake-indexeddb, as the web tests do) give the same events and undo groups as through `PlayTable`, and the log survives the export and import round trip (`serialiseGameExport`, `parseGameExport`). These live in `apps/web`, and a package must not depend on the app, so this check is a web test that replays a few fixed runs and the `findings/` records.
+   - The same steps through the web app's `GameSession` (on `IndexedDbStore` over fake-indexeddb, as the web tests do) give the same events and undo groups as through `PlayTable`, and the log survives the export and import round trip (`serialiseGameExport`, `parseGameExport`). These live in `apps/web`, and a package must not depend on the app, so this check is a script in `apps/web` (`pnpm --filter @arkham/web playtest`) that the nightly run calls on a few of the night's runs and the `findings/` records. It is not part of `pnpm test`.
 6. **Liveness:** there is always a next step (an answer or "Next"), every offered option of a pending decision is accepted, "Next" never leaves the board unchanged, and the game ends before the round cap.
 7. **Statistics (reported, never a failure):** wins per scenario and difficulty, rounds per game, how often each encounter card is drawn compared with its share of the deck (a shuffle bias shows here), and which card abilities and decisions never fired (untested paths).
 
@@ -156,16 +156,15 @@ Designs for parts that have a milestone but no code yet. The PR that builds one 
 
 **Who runs it and where it writes**
 
-The tester is a Node script in a new package, `packages/play_tester` (CI tooling like `review_digest`; it may use the clock and the file system, the engine stays pure). Three ways to start it:
+The tester is a Node script in a new package, `packages/play_tester` (CI tooling like `review_digest`; it may use the clock and the file system, the engine stays pure). It never runs on PRs, only in two ways:
 
 - **A developer or a Claude session**, on their machine: `pnpm playtest --games 500 --seed 7`. It prints a summary (games, wins, findings per check) and writes failing records to `packages/play_tester/.runs/` (gitignored). `pnpm playtest --replay <record>` replays one and stops at its failing step.
-- **CI on every PR** (a job in `ci.yml` on the GitHub runner): ~20 runs with fixed seeds, under a minute, plus every record in `packages/play_tester/findings/` (the committed shrunk records of fixed bugs, steps and card codes only, never card text) replayed. It fails on a crash, a *never* refusal, a broken invariant or a replay mismatch; an oracle finding only adds a line to the job summary until the oracles have settled. Failing records go up as a workflow artifact.
-- **A nightly GitHub Action** (`play_tester.yml`, scheduled, ~15 minutes, about 450 of the 2,000 free minutes a month): fresh seeds from the date, so each night plays new games. It writes:
+- **A nightly GitHub Action** (`play_tester.yml`, scheduled, ~15 minutes, about 450 of the 2,000 free minutes a month): fresh seeds from the date, so each night plays new games. It also replays every record in `packages/play_tester/findings/` (the committed shrunk records of fixed bugs, steps and card codes only, never card text), so a fixed bug that comes back is found the next night. It writes:
   - the summary to the job summary page,
   - the failing records as a workflow artifact (kept 90 days),
   - one GitHub issue per new finding signature (check id plus step kind), labelled `play-tester`, opened with the workflow's `GITHUB_TOKEN` (`issues: write`). The issue names the check, its `docs/rules.md` section, the run, the shrunk steps and the replay command, and links the artifact. A signature that already has an open issue gets a comment with the night's count instead, so the same bug is not reported twice.
 
-A session fixing an issue downloads the record, replays it, adds the test, and commits the record to `findings/` so the PR job keeps checking it.
+A session fixing an issue downloads the record, replays it, adds the test, and commits the record to `findings/` so the nightly run keeps checking it.
 
 ### Scenario data pipeline ([M4](tasks/M4-scenario-data-first-scenario.md))
 

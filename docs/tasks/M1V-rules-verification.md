@@ -70,7 +70,7 @@ Follow-ups:
 
 **Why:** unit tests and the scripted end-to-end games only check the paths we thought of. Rule interactions and rare token draws slip through until a game night.
 
-**Benefit:** bots play many random games every night and on every PR; each broken rule, crash or stuck game comes back as a GitHub issue with a short recorded game that replays step by step and becomes a regression test.
+**Benefit:** bots play many random games every night; each broken rule, crash or stuck game comes back as a GitHub issue with a short recorded game that replays step by step and becomes a regression test.
 
 Ref: product.md "Continuous play tester" (the design); architecture "Tests and debugging"; [rules.md](../rules.md).
 
@@ -79,14 +79,13 @@ Slices (one PR each, in this order):
 1. [ ] `packages/play_tester`: a run (scenario, difficulty, seats, game and bot seed), the _random_ bot on The Gathering, records of failing games with steps and event log, step replay, `pnpm playtest` writing to `.runs/`. Checks: crash, refusals (expected or never), `checkInvariants`, replay after every step, same run twice gives the same events. Unit tests for the tester's own parts (record format, refusal table) and its place in the coverage floors.
 2. [ ] Chaos bag draws and skill test answers through `suggestSkillTest`; the _goal_ and _chaos_ bots; blank investigators with random stats; liveness checks (always a next step, every offered option accepted, round cap).
 3. [ ] Rule oracles from `docs/rules.md` (round structure, mythos, agenda, upkeep, hunter, defeat, act), read through `BoardView` only. Ask `rules-checker` to check each oracle against the Rules Reference and post its table on the PR.
-4. [ ] Differential checks: undo right after a step, resume at any step; in `apps/web`, a test that replays fixed runs and the `findings/` records through `GameSession` against `PlayTable` and through export and import.
+4. [ ] Differential checks: undo right after a step, resume at any step; in `apps/web`, a `playtest` script that replays runs and the `findings/` records through `GameSession` against `PlayTable` and through export and import.
 5. [ ] Shrinking a failing record, the finding report (`formatBoard` before and after), and opening a scenario record in the app with "Import game".
-6. [ ] CI: PR smoke run with fixed seeds and the `findings/` records; nightly `play_tester.yml` with the job summary, record artifacts and one `play-tester` issue per finding signature.
+6. [ ] Nightly `play_tester.yml` (no PR job): fresh seeds, the `findings/` records, with the job summary, record artifacts and one `play-tester` issue per finding signature.
 7. [ ] Statistics report (wins, rounds, draw frequencies, abilities that never fired) in the summary.
 
-Decided: real scenarios only, no random boards; only failing games are recorded; the nightly run opens GitHub issues itself.
+Decided: real scenarios only, no random boards; only failing games are recorded; the nightly run opens GitHub issues itself; no CI job on PRs, the nightly run is enough.
 
-Open questions:
+Note:
 
-- Does the PR smoke run fail on a finding, or only report it? Proposed: fail on crash, _never_ refusals, invariants and replay; report oracle findings in the job summary until the oracles have settled.
-- Real card data (M4 on) is fetched, not committed: the CI jobs need the card data fetch step `carddata-check.yml` already runs.
+- Real card data (M4 on) is fetched, not committed: the nightly run needs the card data fetch step `carddata-check.yml` already runs.
