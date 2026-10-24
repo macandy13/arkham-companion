@@ -185,6 +185,8 @@ export type {
 } from './campaign/campaign_definition';
 export type { CampaignContext, CampaignExecuteResult } from './campaign/handle_campaign';
 export type {
+  CardPlace,
+  GameCondition,
   ProposedChange,
   ResolutionStep,
   ResolutionTarget,
