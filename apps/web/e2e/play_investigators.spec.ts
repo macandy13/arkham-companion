@@ -3,7 +3,7 @@ import { startQuickGame } from './fixtures/wizard';
 
 // Journey: take an investigator's turn from their panel – start it, see their actions, and end it,
 // as the players do on the table.
-test('take a turn from the investigator panel', async ({ page }) => {
+test('take a turn from the investigator panel', { tag: '@flow' }, async ({ page }) => {
   const bar = page.getByRole('region', { name: 'Investigators' });
 
   await test.step('Start a quick game in the investigation phase', async () => {

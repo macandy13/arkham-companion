@@ -76,10 +76,12 @@ describe('InvestigatorBar', () => {
       ['Health', '4/7'],
       ['Sanity', '5/6'],
       ['Clues', '2'],
-      ['Resources', '4'],
+      // Resources are shortened to fit their column, the full name as the title.
+      ['Res.', '4'],
       ['Doom', '1'],
     ]);
     expect(countersOf('brook').map(([label]) => label)).not.toContain('Doom');
+    expect(within(panel('alder')).getByTitle('Resources').textContent).toBe('Res.');
   });
 
   describe('the line on their round', () => {

@@ -21,6 +21,9 @@
   --playmat: url('./playmat.svg');
   /* Tokens on the map, coloured like the game's own: blue-green clues, red doom. */
   --color-clue: #3f9bb5;
+  /* The health and sanity icons on an investigator's counters, red and blue like the printed ones. */
+  --color-health: #c4524b;
+  --color-sanity: #4f78b8;
   --color-doom: #b8433f;
   --color-token-text: #ffffff;
   /*
@@ -169,6 +172,8 @@
   --token-empty-opacity: 0.45;
   /* An action pip on the investigator whose turn it is. */
   --action-pip-size: 0.75rem;
+  /* The icon before the name of an investigator's counter. */
+  --stat-icon-size: 0.875rem;
   /* An icon on an icon button (`button[data-icon]` in base.css). */
   --icon-size: 1.25rem;
   /* What is left of a name kept only for screen readers: a dot, clipped away. */

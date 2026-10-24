@@ -49,8 +49,8 @@ export function InvestigatorBar({
 
 /**
  * One investigator, laid out like the prototype's panel: their threat area along the top edge of
- * their card, the card with the name band, a line saying where they are and how their round goes, their
- * turn controls and their counters. Health and sanity show what is left of the printed value,
+ * their card, the card, and beside it their name, a line saying where they are and how their
+ * round goes and their turn controls, then their counters in a row, each under its icon. Health and sanity show what is left of the printed value,
  * like the dials, while their steppers place and heal damage and horror, like the tokens on the
  * card. Clues show without steppers: they are found by investigating and spent on the act.
  */
@@ -86,11 +86,8 @@ function InvestigatorPanel({
       data-turn={onTurn || undefined}
     >
       <ThreatArea treacheries={investigator.threatArea ?? []} enemies={engaged} />
-      <figure data-card="investigator">
-        <figcaption>
-          <h3 id={nameId}>{investigator.name}</h3>
-        </figcaption>
-      </figure>
+      <figure data-card="investigator" />
+      <h3 id={nameId}>{investigator.name}</h3>
       <p>{statusLine(investigator, onTurn, t)}</p>
       <TurnControls
         investigator={investigator}
@@ -101,6 +98,7 @@ function InvestigatorPanel({
       />
       <dl>
         <Stat
+          kind="health"
           label={t('investigators.health')}
           value={health - damage}
           shown={t('investigators.left', { left: health - damage, max: health })}
@@ -114,6 +112,7 @@ function InvestigatorPanel({
           )}
         </Stat>
         <Stat
+          kind="sanity"
           label={t('investigators.sanity')}
           value={sanity - horror}
           shown={t('investigators.left', { left: sanity - horror, max: sanity })}
@@ -126,8 +125,13 @@ function InvestigatorPanel({
             />
           )}
         </Stat>
-        <Stat label={t('investigators.clues')} value={investigator.clues} />
-        <Stat label={t('investigators.resources')} value={investigator.resources}>
+        <Stat kind="clues" label={t('investigators.clues')} value={investigator.clues} />
+        <Stat
+          kind="resources"
+          label={t('investigators.resources')}
+          short={t('investigators.resourcesShort')}
+          value={investigator.resources}
+        >
           {adjusting && (
             <Steppers
               lower={{
@@ -140,7 +144,7 @@ function InvestigatorPanel({
           )}
         </Stat>
         {investigator.doom !== undefined && (
-          <Stat label={t('investigators.doom')} value={investigator.doom} />
+          <Stat kind="doom" label={t('investigators.doom')} value={investigator.doom} />
         )}
       </dl>
     </section>
@@ -163,24 +167,32 @@ function statusLine(
   return location;
 }
 
+/** The counters of an investigator's panel, which the stylesheet gives their icons by. */
+type StatKind = 'health' | 'sanity' | 'clues' | 'resources' | 'doom';
+
 /**
- * One counter of the panel: its name, its `value` (written as `shown` where the panel says more,
- * such as health against its maximum) and its steppers (`children`).
+ * One counter of the panel (`kind`): its name (`short` where the full one does not fit its column,
+ * with the full one as its title), its `value` (written as `shown` where the panel says more, such
+ * as health against its maximum) and its steppers (`children`).
  */
 function Stat({
+  kind,
   label,
+  short,
   value,
   shown = String(value),
   children,
 }: {
+  kind: StatKind;
   label: string;
+  short?: string;
   value: number;
   shown?: string;
   children?: ReactNode;
 }) {
   return (
-    <div>
-      <dt>{label}</dt>
+    <div data-stat={kind}>
+      <dt>{short ? <abbr title={label}>{short}</abbr> : label}</dt>
       <dd>
         <data value={value}>{shown}</data>
         {children}
