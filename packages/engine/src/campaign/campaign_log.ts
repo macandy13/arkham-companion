@@ -4,6 +4,7 @@ import {
   type CampaignDefinitionId,
   type CampaignId,
   type InvestigatorCode,
+  type ResolutionId,
   type ScenarioId,
 } from '../ids';
 import type { ChaosToken, Difficulty } from '../state';
@@ -69,6 +70,22 @@ export type StoryValue =
   /** Names written under a heading that later scenarios may cross out again. */
   | { readonly kind: 'crossableList'; readonly entries: readonly CrossableEntry[] };
 
+/** How a scenario ended, as `ScenarioEnded` recorded it. */
+export type ScenarioOutcome =
+  | { readonly kind: 'resolution'; readonly id: ResolutionId }
+  /** Every investigator resigned or was defeated. */
+  | { readonly kind: 'noResolution' };
+
+/**
+ * A scenario the campaign has played and how it ended, written when its
+ * resolution is confirmed (`AdvanceScenario`). Later scenarios and
+ * campaigns whose order depends on earlier results read it.
+ */
+export interface PlayedScenario {
+  readonly scenarioId: ScenarioId;
+  readonly outcome: ScenarioOutcome;
+}
+
 /** The kinds of `StoryValue`; a record keeps its kind once written. */
 export type StoryKind = StoryValue['kind'];
 
@@ -98,6 +115,8 @@ export interface CampaignLog {
   readonly story: Readonly<Record<string, StoryValue>>;
   /** The campaign's chaos bag; a multiset, so order carries no meaning. */
   readonly chaosBag: readonly ChaosToken[];
+  /** The scenarios played so far with how each ended, in the order they were played. */
+  readonly playedScenarios: readonly PlayedScenario[];
   /** `ScenarioDefinition.id`s in campaign order. Empty only before `CampaignStarted`. */
   readonly scenarioIds: readonly ScenarioId[];
   /**
@@ -117,6 +136,7 @@ export function createEmptyLog(): CampaignLog {
     formerInvestigators: [],
     story: {},
     chaosBag: [],
+    playedScenarios: [],
     scenarioIds: [],
     position: 0,
   };

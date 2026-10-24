@@ -168,6 +168,8 @@ export type {
   CampaignLog,
   CrossableEntry,
   InvestigatorFate,
+  PlayedScenario,
+  ScenarioOutcome,
   StoryKind,
   StoryValue,
   TraumaKind,

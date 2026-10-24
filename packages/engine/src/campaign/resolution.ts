@@ -4,7 +4,19 @@ import type { InvestigatorCode, ResolutionId } from '../ids';
 import type { ChaosToken, GameState, Investigator } from '../state';
 import { victoryPoints } from '../victory';
 import type { CampaignCommand } from './campaign_commands';
-import type { StoryValue, TraumaKind } from './campaign_log';
+import {
+  findCurrentScenarioId,
+  type CampaignLog,
+  type ScenarioOutcome,
+  type StoryValue,
+  type TraumaKind,
+} from './campaign_log';
+import { CampaignCommandRejected } from './campaign_rejection';
+import {
+  executeCommand,
+  type CampaignContext,
+  type CampaignExecuteResult,
+} from './handle_campaign';
 
 /** Whose campaign log entry a resolution step changes, read from the game that just ended. */
 export type ResolutionTarget =
@@ -101,6 +113,49 @@ function eliminatedCode(change: ProposedChange): InvestigatorCode[] {
   if (change.kind !== 'command') return [];
   const { command } = change;
   return command.type === 'MarkKilled' || command.type === 'MarkInsane' ? [command.code] : [];
+}
+
+/**
+ * Writes a confirmed resolution to the campaign log in one step: the
+ * commands the players confirmed (`proposeResolution`, edited as they
+ * like), then `AdvanceScenario` with the game's outcome. Either every command
+ * applies or the first rejection is thrown and the log stays as it was. Also
+ * rejects a game that is still running (`scenarioNotEnded`) or that belongs
+ * to another scenario than the campaign's current one (`notCurrentScenario`).
+ */
+export function applyResolution(
+  ctx: CampaignContext,
+  log: CampaignLog,
+  game: GameState,
+  confirmed: readonly CampaignCommand[],
+): CampaignExecuteResult {
+  if (game.meta.ended !== true) throw new CampaignCommandRejected({ code: 'scenarioNotEnded' });
+  const current = findCurrentScenarioId(log);
+  if (game.meta.scenarioId !== current)
+    throw new CampaignCommandRejected({
+      code: 'notCurrentScenario',
+      scenarioId: game.meta.scenarioId,
+      current,
+    });
+  const advance: CampaignCommand = { type: 'AdvanceScenario', outcome: outcomeOf(game) };
+  return [...confirmed, advance].reduce<CampaignExecuteResult>(
+    (result, command) => {
+      const next = executeCommand(ctx, result.log, command);
+      return { log: next.log, events: [...result.events, ...next.events] };
+    },
+    { log, events: [] },
+  );
+}
+
+/** The campaign commands of a proposal, without its by-hand steps: what `applyResolution` takes when the players confirm it unchanged. */
+export function proposedCommands(changes: readonly ProposedChange[]): CampaignCommand[] {
+  return changes.flatMap((change) => (change.kind === 'command' ? [change.command] : []));
+}
+
+function outcomeOf(game: GameState): ScenarioOutcome {
+  return game.meta.resolution === undefined
+    ? { kind: 'noResolution' }
+    : { kind: 'resolution', id: game.meta.resolution };
 }
 
 function proposeStep(ctx: EngineContext, game: GameState, step: ResolutionStep): ProposedChange[] {

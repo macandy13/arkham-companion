@@ -183,7 +183,7 @@ describe('campaign replay of commands', () => {
     { type: 'RecordStory', key: 'doubt', value: { kind: 'count', value: 1 } },
     { type: 'AddTrauma', code: daisy.code, kind: 'physical', amount: 5 },
     { type: 'ReplaceInvestigator', code: daisy.code, by: agnes.code },
-    { type: 'AdvanceScenario' },
+    { type: 'AdvanceScenario', outcome: { kind: 'noResolution' } },
   ];
 
   const play = () => {

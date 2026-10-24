@@ -1,6 +1,12 @@
 import type { CampaignDefinitionId, CampaignId, InvestigatorCode, ScenarioId } from '../ids';
 import type { ChaosToken, Difficulty } from '../state';
-import type { InvestigatorFate, StoryValue, TraumaKind, XpAccount } from './campaign_log';
+import type {
+  InvestigatorFate,
+  ScenarioOutcome,
+  StoryValue,
+  TraumaKind,
+  XpAccount,
+} from './campaign_log';
 
 /**
  * Intents for the campaign aggregate, kept apart from the game's `Command`:
@@ -124,12 +130,15 @@ export interface ReplaceInvestigator {
 }
 
 /**
- * Moves on to the next scenario of the campaign. The caller sends it once the
- * current scenario is resolved; the handler only refuses it past the last
- * scenario. Produces `ScenarioPositionChanged`.
+ * The current scenario is resolved with `outcome`: it joins the played
+ * scenarios, and the campaign moves on to the next one. The last step of a
+ * confirmed resolution (`proposeResolution`); the handler only refuses it
+ * past the last scenario. Produces `ScenarioPlayed` and
+ * `ScenarioPositionChanged`.
  */
 export interface AdvanceScenario {
   readonly type: 'AdvanceScenario';
+  readonly outcome: ScenarioOutcome;
 }
 
 /**

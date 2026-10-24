@@ -10,7 +10,13 @@ import {
   startedCampaign,
   wendy,
 } from '../../test/utils';
-import { campaignId, campaignDefinitionId, scenarioId, investigatorCode } from '../ids';
+import {
+  campaignId,
+  campaignDefinitionId,
+  scenarioId,
+  investigatorCode,
+  resolutionId,
+} from '../ids';
 import { cardDbFrom } from '../cards';
 import { investigatorCardStats } from '../investigator_cards';
 import type { CampaignCommand } from './campaign_commands';
@@ -65,6 +71,7 @@ describe('StartCampaign', () => {
       formerInvestigators: [],
       story: {},
       chaosBag: ['0', 'skull'],
+      playedScenarios: [],
       scenarioIds: ['the-gathering', 'the-midnight-masks'],
       position: 0,
     });
@@ -162,7 +169,7 @@ describe('commands before the campaign started', () => {
     { type: 'MarkKilled', code: roland.code },
     { type: 'MarkInsane', code: roland.code },
     { type: 'ReplaceInvestigator', code: roland.code, by: agnes.code },
-    { type: 'AdvanceScenario' },
+    { type: 'AdvanceScenario', outcome: { kind: 'noResolution' } },
     { type: 'AdjustCampaign', adjustment: { kind: 'position', position: 0 } },
   ])('rejects $type with campaignNotStarted', (command) => {
     expect(
@@ -282,7 +289,7 @@ describe('chaos bag', () => {
 });
 
 describe('AdvanceScenario', () => {
-  const advance: CampaignCommand = { type: 'AdvanceScenario' };
+  const advance: CampaignCommand = { type: 'AdvanceScenario', outcome: { kind: 'noResolution' } };
 
   it('moves through the scenarios until the campaign is complete, then rejects', () => {
     const start = {
@@ -298,5 +305,20 @@ describe('AdvanceScenario', () => {
     ).toEqual({
       code: 'campaignComplete',
     });
+  });
+
+  it('records each scenario it leaves with how it ended', () => {
+    const start = { scenarioIds: ['the-gathering', 'the-midnight-masks'].map(scenarioId) };
+
+    const log = startedCampaign(
+      start,
+      { type: 'AdvanceScenario', outcome: { kind: 'resolution', id: resolutionId('R1') } },
+      { type: 'AdvanceScenario', outcome: { kind: 'noResolution' } },
+    );
+
+    expect(log.playedScenarios).toEqual([
+      { scenarioId: 'the-gathering', outcome: { kind: 'resolution', id: 'R1' } },
+      { scenarioId: 'the-midnight-masks', outcome: { kind: 'noResolution' } },
+    ]);
   });
 });

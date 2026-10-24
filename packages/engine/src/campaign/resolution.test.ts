@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { stateAfter } from '../../test/utils';
+import {
+  campaignContext,
+  campaignRejectionOf,
+  roland,
+  startedCampaign,
+  stateAfter,
+} from '../../test/utils';
 import {
   blankEnemy,
   blankLocation,
@@ -9,6 +15,7 @@ import {
   investigatorId,
   newGame,
   resolutionId,
+  scenarioId,
   type Command,
   type InvestigatorId,
   type ResolutionId,
@@ -251,5 +258,79 @@ describe('proposeResolution', () => {
     );
 
     expect(proposal).toBeUndefined();
+  });
+});
+
+describe('applyResolution', () => {
+  /** Roland's campaign, at the scenario `newGame()` tables play, before the next one. */
+  const atTheTablesScenario = startedCampaign({
+    investigators: [roland.code],
+    scenarioIds: [scenarioId('custom'), scenarioId('next_scenario')],
+  });
+  const awardRoland = { type: 'AwardXp', code: roland.code, amount: 3 } as const;
+
+  it('applies the confirmed commands, records the played scenario and moves on', () => {
+    const { context, state } = table.start();
+    const ended = stateAfter(context, state, endWith(r1));
+
+    const { log } = campaign.applyResolution(campaignContext, atTheTablesScenario, ended, [
+      awardRoland,
+    ]);
+
+    expect(log.investigators[0]).toMatchObject({ code: roland.code, xpEarned: 3 });
+    expect(log.playedScenarios).toEqual([
+      { scenarioId: 'custom', outcome: { kind: 'resolution', id: 'R1' } },
+    ]);
+    expect(log.position).toBe(1);
+  });
+
+  it('records "no resolution" when every investigator left', () => {
+    const { context, state } = table.withTurnOf(alice).start();
+    const ended = stateAfter(context, state, resign(alice), startTurn(bob), resign(bob));
+
+    const { log } = campaign.applyResolution(campaignContext, atTheTablesScenario, ended, []);
+
+    expect(log.playedScenarios).toEqual([
+      { scenarioId: 'custom', outcome: { kind: 'noResolution' } },
+    ]);
+  });
+
+  it('rejects a game that is still running', () => {
+    const { state } = table.start();
+
+    expect(
+      campaignRejectionOf(() =>
+        campaign.applyResolution(campaignContext, atTheTablesScenario, state, [awardRoland]),
+      ),
+    ).toEqual({ code: 'scenarioNotEnded' });
+  });
+
+  it("rejects a game of another scenario than the campaign's current one", () => {
+    const { context, state } = table.start();
+    const ended = stateAfter(context, state, endWith(r1));
+    const atNextScenario = startedCampaign({
+      investigators: [roland.code],
+      scenarioIds: [scenarioId('first'), scenarioId('custom')],
+    });
+
+    expect(
+      campaignRejectionOf(() =>
+        campaign.applyResolution(campaignContext, atNextScenario, ended, []),
+      ),
+    ).toEqual({ code: 'notCurrentScenario', scenarioId: 'custom', current: 'first' });
+  });
+
+  it('rejects the whole resolution when one confirmed command is invalid', () => {
+    const { context, state } = table.start();
+    const ended = stateAfter(context, state, endWith(r1));
+
+    expect(
+      campaignRejectionOf(() =>
+        campaign.applyResolution(campaignContext, atTheTablesScenario, ended, [
+          awardRoland,
+          { type: 'RemoveChaosToken', token: 'elderSign' },
+        ]),
+      ),
+    ).toEqual({ code: 'chaosTokenNotInBag', token: 'elderSign' });
   });
 });
