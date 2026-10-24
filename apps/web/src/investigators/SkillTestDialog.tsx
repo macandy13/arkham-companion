@@ -1,26 +1,28 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type {
-  BoardView,
-  ChaosToken,
-  InvestigatorView,
-  ModifierStep,
-  SkillName,
-  SkillTestSuggestion,
+import {
+  SKILL_NAMES,
+  type BoardView,
+  type ChaosToken,
+  type InvestigatorView,
+  type ModifierStep,
+  type SkillName,
+  type SkillTestSuggestion,
 } from '@arkham/engine';
-import { assertNever, unique } from '@arkham/util';
-import { drawTokens, revealToken, testFinished } from './drawTokens';
+import { assertNever } from '@arkham/util';
+import { drawTokens, testFinished } from './drawTokens';
 
 /** The difficulty a test starts at: the most common printed one ("Test [willpower] (3)"). */
 const DEFAULT_DIFFICULTY = 3;
 
 /**
  * A skill test the players take at the table outside any decision, such as one a player card
- * asks for, against the investigator's `skill`: they set the difficulty and their modifier
- * (committed icons, cards in play), then pick the chaos tokens they drew or let the app draw
- * from the bag (`TokenPicker`). The dialog shows the calculation (`BoardView.skillTest`) and whether the test
- * passes. It is a calculator: nothing is played, so the game does not change. A native modal
- * `<dialog>` brings focus trapping and Escape.
+ * asks for: they pick the skill tested (the one tapped to open it, or another) and, for a card
+ * that tests two skills together, a second one (`pickSkill`), set the difficulty and their
+ * modifier (committed icons, cards in play), then let the app draw from the bag. The dialog shows
+ * the calculation (`BoardView.skillTest`) and whether the test passes. It is a calculator: nothing
+ * is played, so the game does not change. A native modal `<dialog>` brings focus trapping and
+ * Escape; the × in its corner closes it, like Escape.
  */
 export function SkillTestDialog({
   board,
@@ -39,19 +41,52 @@ export function SkillTestDialog({
   useEffect(() => {
     dialog.current?.showModal();
   }, []);
+  const [skills, setSkills] = useState<readonly [SkillName, SkillName?]>([skill]);
   const [difficulty, setDifficulty] = useState(DEFAULT_DIFFICULTY);
   const [modifier, setModifier] = useState(0);
   const [revealed, setRevealed] = useState<readonly ChaosToken[]>([]);
+  const [tested, added] = skills;
   const result =
     revealed.length === 0
       ? undefined
-      : board.skillTest(investigator.id, { skill, difficulty }, { modifier, tokens: revealed });
+      : board.skillTest(
+          investigator.id,
+          { skill: tested, difficulty },
+          { modifier, tokens: revealed, ...(added === undefined ? {} : { addedSkill: added }) },
+        );
 
   return (
     <dialog ref={dialog} aria-labelledby={titleId} onCancel={onClose} data-dialog="skill-test">
-      <h2 id={titleId}>
-        {t('skillTest.title', { skill: t(`skill.${skill}`), name: investigator.name })}
-      </h2>
+      <header>
+        <h2 id={titleId}>{t('skillTest.title', { name: investigator.name })}</h2>
+        <button
+          type="button"
+          data-icon="close"
+          aria-label={t('skillTest.close')}
+          title={t('skillTest.close')}
+          onClick={onClose}
+        />
+      </header>
+      <section aria-label={t('investigators.skills')}>
+        <ul>
+          {SKILL_NAMES.map((each) => (
+            <li key={each}>
+              <button
+                type="button"
+                aria-pressed={skills.includes(each)}
+                aria-label={t('investigators.skillValue', {
+                  skill: t(`skill.${each}`),
+                  value: investigator.skills[each],
+                })}
+                data-skill={each}
+                onClick={() => setSkills(pickSkill(skills, each))}
+              >
+                <data value={investigator.skills[each]}>{investigator.skills[each]}</data>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </section>
       <Stepper
         label={t('skillTest.difficulty')}
         value={difficulty}
@@ -65,67 +100,38 @@ export function SkillTestDialog({
         shown={signed(modifier)}
         onChange={setModifier}
       />
-      <TokenPicker
-        bag={board.chaosBag}
-        revealed={revealed}
-        onReveal={(token) => setRevealed(revealToken(revealed, token))}
+      <button
+        type="button"
+        disabled={board.chaosBag.length === 0}
         // The engine draws nothing itself, so the draw happens here, at the edge.
-        onDraw={() => setRevealed(drawTokens(board.chaosBag, revealed, Math.random))}
-      />
-      {result && <TestResult result={result} skill={skill} finished={testFinished(revealed)} />}
-      <footer>
-        <button type="button" onClick={onClose}>
-          {t('skillTest.close')}
-        </button>
-      </footer>
+        onClick={() => setRevealed(drawTokens(board.chaosBag, revealed, Math.random))}
+      >
+        {t('skillTest.draw')}
+      </button>
+      {result && <TestResult result={result} skill={tested} finished={testFinished(revealed)} />}
     </dialog>
   );
 }
 
 /**
- * The bag's tokens, each kind once, to pick the one drawn at the table, pressed while revealed,
- * and "Draw a token" to let the app draw from the bag instead. A token that makes the tester
- * reveal another (`revealToken`) keeps the test open for the next pick or draw.
+ * The skills tested after tapping `skill`: the tested one first, then the one a card adds to it.
+ * Tapping another skill adds it as the second (or replaces the second); tapping a chosen one
+ * drops it, unless it is the only one, since a test always has a skill.
  */
-function TokenPicker({
-  bag,
-  revealed,
-  onReveal,
-  onDraw,
-}: {
-  bag: readonly ChaosToken[];
-  revealed: readonly ChaosToken[];
-  onReveal: (token: ChaosToken) => void;
-  onDraw: () => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <section aria-label={t('skillTest.token')}>
-      <p>{t('skillTest.token')}</p>
-      <ul>
-        {unique(bag).map((token) => (
-          <li key={token}>
-            <button
-              type="button"
-              aria-pressed={revealed.includes(token)}
-              data-token={token}
-              onClick={() => onReveal(token)}
-            >
-              {t(`chaosToken.${token}`)}
-            </button>
-          </li>
-        ))}
-      </ul>
-      <button type="button" disabled={bag.length === 0} onClick={onDraw}>
-        {t('skillTest.draw')}
-      </button>
-    </section>
-  );
+function pickSkill(
+  skills: readonly [SkillName, SkillName?],
+  skill: SkillName,
+): readonly [SkillName, SkillName?] {
+  const [tested, added] = skills;
+  if (skill === tested) return added === undefined ? skills : [added];
+  if (skill === added) return [tested];
+  return [tested, skill];
 }
 
 /**
- * The calculation step by step, the tokens whose effect the app does not know, and the outcome
- * once the test is `finished`; until then, a reminder to reveal another token.
+ * The calculation step by step (`skill` names the tested one), the tokens whose effect the app does not know, and the outcome
+ * once the test is `finished`; until then (the bag ran out after a token that reveals another),
+ * a reminder to reveal another token.
  */
 function TestResult({
   result,
@@ -211,6 +217,8 @@ function stepLine(
   switch (source.kind) {
     case 'baseSkill':
       return t('skillTest.step.baseSkill', { skill: t(`skill.${skill}`), total });
+    case 'addedSkill':
+      return t('skillTest.step.addedSkill', { ...values, skill: t(`skill.${source.skill}`) });
     case 'chaosToken':
       return t('skillTest.step.chaosToken', {
         ...values,

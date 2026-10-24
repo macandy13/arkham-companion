@@ -71,15 +71,16 @@ test('the house map by day, the panels on parchment', { tag: '@shot' }, async ({
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
 
-test('Alder’s willpower test, a −1 drawn', { tag: '@shot' }, async ({ page }) => {
+test('Alder’s willpower and agility test, a token drawn', { tag: '@shot' }, async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   await page
     .getByRole('region', { name: 'Alder' })
     .getByRole('button', { name: /^Willpower/ })
     .click();
-  const test = page.getByRole('dialog', { name: /^Willpower test/ });
-  await test.getByRole('button', { name: '−1' }).click();
+  const test = page.getByRole('dialog', { name: /^Skill test/ });
+  await test.getByRole('button', { name: /^Agility/ }).click();
+  await test.getByRole('button', { name: 'Draw a token' }).click();
 
   await expect(test.getByRole('status')).toBeVisible();
 });
