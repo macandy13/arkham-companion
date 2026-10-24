@@ -62,7 +62,7 @@ test('the Hallway’s menu open over the board', { tag: '@shot' }, async ({ page
   await expect(page.getByRole('dialog', { name: 'Hallway' })).toBeVisible();
 });
 
-test('the house map by day, the panels on parchment', { tag: '@shot' }, async ({ page }) => {
+test('the house map by day', { tag: '@shot' }, async ({ page }) => {
   await page.goto('/#/settings');
   await page.getByLabel('Theme').selectOption('Light');
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
