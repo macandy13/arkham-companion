@@ -101,7 +101,7 @@ export class GameSession {
     return new GameSession(store, gameId, ctx, table, lastSeq);
   }
 
-  /** The state after the last stored step. */
+  /** The state after the last stored step, and while adjusting, after the adjustment's taps. */
   get state(): GameState {
     return this.table.state;
   }
@@ -132,7 +132,9 @@ export class GameSession {
   /**
    * Starts an adjustment: from now on `play` changes the table in memory only, until
    * `finishAdjusting` stores every tap as one step or `cancelAdjusting` drops them. One undo then
-   * takes a whole correction back, however many counters it changed.
+   * takes a whole correction back, however many counters it changed. Every step joins it, not only
+   * corrections, so the screen offers only corrections meanwhile; effects a tap skipped show once
+   * the adjustment is stored.
    */
   startAdjusting(): void {
     this.adjustment ??= { base: this.table.entries, taps: [] };
@@ -140,7 +142,9 @@ export class GameSession {
 
   /**
    * Stores the adjustment's taps as one step (one undo group) and ends it. The taps are played
-   * again from where the adjustment started, so they land in the log as if played in one go.
+   * again from where the adjustment started, so they land in the log as if played in one go. Like
+   * any step, a refused replay or a failed write keeps nothing of it: the whole correction is lost
+   * then, and the board shows what is stored.
    */
   async finishAdjusting(): Promise<Rejection | undefined> {
     const adjustment = this.adjustment;
@@ -173,11 +177,12 @@ export class GameSession {
       if (error instanceof CommandRejected) return error.rejection;
       throw error;
     }
+    const added = this.table.entries.slice(before.length);
     if (this.adjustment) {
-      this.adjustment.taps.push(step);
+      // A tap that changed nothing has no undo group of its own, so undo must not count it.
+      if (added.length > 0) this.adjustment.taps.push(step);
       return undefined;
     }
-    const added = this.table.entries.slice(before.length);
     const [first] = added;
     if (first === undefined) return undefined;
     await this.storing(before, async () => {

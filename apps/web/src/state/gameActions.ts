@@ -96,7 +96,8 @@ export interface GameActions {
   /**
    * "Adjust board": the actions after it change the screen only, until `finishAdjusting` stores
    * them all as one step, so one undo takes the whole correction back, or `cancelAdjusting` drops
-   * them (`OpenGame.adjusting` meanwhile).
+   * them (`OpenGame.adjusting` meanwhile). Every action joins the adjustment, so the screen offers
+   * only corrections while it lasts.
    */
   startAdjusting(): Promise<void>;
   /** "Done": stores the adjustment as one step. */

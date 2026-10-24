@@ -203,12 +203,12 @@ export function createAppStore(
 
     /** Runs `change` on the open game's adjustment (`GameSession`) and shows the result. */
     async function adjustStep(
-      change: (played: GameSession) => Promise<Rejection | undefined> | void,
+      change: (played: GameSession) => Promise<Rejection | undefined>,
     ): Promise<void> {
       const played = session;
       if (!played) throw new Error('No playable game is open');
       try {
-        publish(played, (await change(played)) ?? undefined);
+        publish(played, await change(played));
       } catch (error) {
         publish(played);
         throw error;
@@ -266,9 +266,21 @@ export function createAppStore(
         (step) => queueStep(() => playStep(step)),
         () => queueStep(undoStep),
         {
-          start: () => queueStep(() => adjustStep((played) => played.startAdjusting())),
+          start: () =>
+            queueStep(() =>
+              adjustStep(async (played) => {
+                played.startAdjusting();
+                return undefined;
+              }),
+            ),
           finish: () => queueStep(() => adjustStep((played) => played.finishAdjusting())),
-          cancel: () => queueStep(() => adjustStep((played) => played.cancelAdjusting())),
+          cancel: () =>
+            queueStep(() =>
+              adjustStep(async (played) => {
+                played.cancelAdjusting();
+                return undefined;
+              }),
+            ),
         },
       ),
       dismissRejection() {

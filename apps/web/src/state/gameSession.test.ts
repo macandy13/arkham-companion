@@ -149,6 +149,19 @@ describe('GameSession on The Gathering', () => {
       expect(alderOn(session)).toMatchObject({ resources: 6, damage: 0 });
       expect(session.canUndo).toBe(false);
     });
+
+    it('leaves a tap that changed nothing out of what undo takes back', async () => {
+      const { store, gameId } = await storedGame('session-adjust-empty-tap-test');
+      const session = await GameSession.open(store, gameId, ctx);
+      await session.play((table) => table.gainResources(alderId, 1));
+      session.startAdjusting();
+
+      await session.play(() => {});
+      await session.undo();
+
+      expect(session.canUndo).toBe(false);
+      expect(alderOn(session)).toMatchObject({ resources: 6 });
+    });
   });
 
   it('names the effects a step skipped for a missing card, until the next step', async () => {
