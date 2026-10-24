@@ -108,17 +108,56 @@
 }
 
 /*
- * A location tile is a card face (LocationTile): a frame in the location colour, then the art
- * area, filled with the pattern of the side it shows, and the name band's text, the unrevealed
- * note (its second line) smaller.
+ * A location tile is a card face drawn after the printed location cards (LocationTile): parchment
+ * with a dark edge, tan on the revealed side and sage on the unrevealed one, the art filling the
+ * width (its hatch until a picture shows), and the frame (`LocationOrnament`) over it: the plates
+ * and the pendant in the side's parchment, the bands in its dark colour with gilt rules, and
+ * the side's own marks (the clue circle's handle on the revealed side, the
+ * keyhole and the arcs over the art on the unrevealed one). The name is in the display type, the
+ * type plate's word in small spaced capitals.
  */
+#map svg [data-card='location'] {
+  --card-band: var(--color-card-band);
+  --card-plate: var(--color-parchment);
+}
+
+#map svg [data-card='location'][data-side='unrevealed'] {
+  --card-band: var(--color-card-band-back);
+  --card-plate: var(--color-parchment-back);
+}
+
 #map svg [data-card='location'] > rect:first-of-type {
-  stroke: var(--color-card-location);
+  stroke: var(--color-card-edge);
   stroke-width: var(--card-border-width);
+}
+
+#map svg [data-side='revealed'] > rect:first-of-type {
+  fill: url(#card-face-revealed);
+}
+
+#map svg [data-side='unrevealed'] > rect:first-of-type {
+  fill: url(#card-face-unrevealed);
+}
+
+#card-face-revealed stop:first-child {
+  stop-color: var(--color-parchment);
+}
+
+#card-face-revealed stop:last-child {
+  stop-color: var(--color-parchment-shade);
+}
+
+#card-face-unrevealed stop:first-child {
+  stop-color: var(--color-parchment-back);
+}
+
+#card-face-unrevealed stop:last-child {
+  stop-color: var(--color-parchment-back-shade);
 }
 
 #map svg [data-card] > rect + rect {
   stroke: none;
+  rx: 0;
 }
 
 #map svg [data-side='revealed'] > rect + rect {
@@ -129,14 +168,98 @@
   fill: url(#card-art-unrevealed);
 }
 
+#map svg pattern rect {
+  stroke: none;
+  rx: 0;
+}
+
+#card-paper rect {
+  filter: url(#card-paper-grain);
+}
+
+#map svg [data-ornament] [data-part='paper'] {
+  fill: url(#card-paper);
+}
+
 #map svg pattern path {
   stroke: var(--color-card-line);
   stroke-width: var(--card-pattern-line-width);
 }
 
+#map svg [data-ornament] path {
+  fill: none;
+  stroke: none;
+  stroke-linejoin: round;
+}
+
+#map svg [data-ornament] [data-part='band'] {
+  fill: var(--card-band);
+}
+
+#map svg [data-ornament] :is([data-part='plate'], [data-part='pendant'], [data-part='medallion']) {
+  fill: var(--card-plate);
+}
+
+#map svg [data-ornament] :is([data-part='pendant'], [data-part='medallion']) {
+  stroke: var(--color-card-gilt);
+  stroke-width: var(--card-ornament-line-width);
+}
+
+#map svg [data-ornament] :is([data-part='gilt'], [data-part='veil']) {
+  stroke: var(--color-card-gilt);
+  stroke-width: var(--card-gilt-line-width);
+}
+
+#map svg [data-ornament] :is([data-part='rule'], [data-part='watermark']) {
+  stroke: var(--color-ink-muted);
+  stroke-width: var(--card-gilt-line-width);
+}
+
+#map svg [data-ornament] [data-part='watermark'] {
+  opacity: var(--token-empty-opacity);
+}
+
+#map svg [data-ornament] [data-part='box'] {
+  fill: var(--color-parchment-light);
+}
+
+#map svg [data-ornament] :is([data-part='inlay'], [data-part='jewel']) {
+  fill: var(--card-band);
+}
+
+#map svg [data-ornament] [data-part='keyhole'] {
+  fill: var(--color-card-gilt);
+}
+
+#map svg [data-ornament] [data-part='edge'] {
+  stroke: var(--color-card-edge);
+  stroke-width: var(--card-border-width);
+}
+
+#map svg [data-ornament] [data-part='handle'] {
+  stroke: var(--color-card-edge);
+  stroke-width: var(--card-handle-width);
+  stroke-linecap: round;
+}
+
+/* Each side's own marks, and the arcs only while no picture brings the art's own. */
+#map svg [data-side='revealed'] [data-part='keyhole'],
+#map svg [data-side='revealed'] [data-part='veil'],
+#map svg [data-picture] [data-part='veil'],
+#map svg [data-side='unrevealed'] [data-part='handle'] {
+  display: none;
+}
+
+#map svg [data-card] > text {
+  fill: var(--color-ink);
+  font-family: var(--font-family-display);
+  font-size: var(--card-name-size);
+}
+
 #map svg [data-card] > text + text {
-  fill: var(--color-card-text-muted);
-  font-size: var(--font-size-note);
+  font-size: var(--card-type-size);
+  letter-spacing: var(--card-type-spacing);
+  text-transform: uppercase;
 }
 
 /*
@@ -157,15 +280,25 @@
   visibility: visible;
 }
 
-:root[data-card-look='faces'] #map svg [data-picture] > text,
+:root[data-card-look='faces'] #map svg [data-picture] > :is(text, [data-ornament]),
 :root[data-card-look='faces'] #map svg [data-picture] > [data-token='shroud'] {
   opacity: 0;
 }
 
 /*
- * Pieces: investigator pawns in the accent colour, enemies as dark tokens ringed in the doom
- * colour (a dragged piece's copy gets the same look).
+ * Pieces: investigator pawns in the accent colour ringed in parchment, enemies as dark tokens
+ * ringed in the doom colour, both with a shadow, so they stand out on the art, the parchment and
+ * the dark foot alike (a dragged piece's copy gets the same look).
  */
+#map svg :is([data-pawn], [data-enemy]) {
+  filter: var(--piece-shadow);
+}
+
+#map svg [data-pawn] circle {
+  stroke: var(--color-parchment);
+  stroke-width: var(--piece-ring-width);
+}
+
 #map svg circle {
   fill: var(--color-accent);
 }
@@ -191,17 +324,20 @@
 }
 
 /*
- * Tokens on a tile, coloured like the game's: the shroud a dark disc with a bone rim, clues and
- * doom in their colours; a token with none on it fades.
+ * Tokens on a tile, drawn like the printed card's circles: the shroud a dark disc with a
+ * parchment rim, the clues a parchment disc ringed in the frame's dark edge, both numbered in bold;
+ * doom in its colour. A token with none on it fades.
  */
 #map svg [data-token] circle {
   fill: var(--color-token-shroud);
-  stroke: var(--color-card-text-muted);
+  stroke: var(--color-parchment);
   stroke-width: var(--piece-ring-width);
 }
 
 #map svg [data-token] text {
   fill: var(--color-token-text);
+  font-size: var(--card-token-size);
+  font-weight: bold;
 }
 
 #map svg [data-token][data-empty] {
@@ -209,14 +345,16 @@
 }
 
 #map svg [data-token='clue'] circle {
-  fill: var(--color-clue);
+  fill: var(--color-parchment);
+  stroke: var(--color-card-edge);
+}
+
+#map svg [data-token='clue'] text {
+  fill: var(--color-ink);
 }
 
 #map svg [data-token='doom'] circle {
   fill: var(--color-doom);
-}
-
-#map svg :is([data-token='clue'], [data-token='doom']) circle {
   stroke: none;
 }
 
@@ -239,12 +377,13 @@
 }
 
 #map svg g[role='button'] circle {
-  fill: var(--color-card-face);
-  stroke: var(--color-card-line);
+  fill: var(--color-parchment);
+  stroke: var(--card-band);
+  stroke-width: var(--piece-ring-width);
 }
 
 #map svg g[role='button'] circle + text {
-  fill: var(--color-card-text);
+  fill: var(--color-ink);
 }
 
 #map svg g[role='button']:focus-visible {

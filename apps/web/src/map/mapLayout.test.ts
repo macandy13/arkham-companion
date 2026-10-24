@@ -7,6 +7,7 @@ import {
   attachmentOrigin,
   onPawn,
   pawnOffset,
+  shrinkToFit,
   tileAt,
   tileCells,
   tileOrigin,
@@ -171,11 +172,11 @@ describe('pawnOffset', () => {
 });
 
 // An attachment is 30 wide, half of it past the 150-wide tile's right edge; the first sits 6 below
-// the 48-high name band, each further one 14 lower.
+// the 19-high name plate, each further one 14 lower.
 describe('attachmentOrigin', () => {
   it.each([
-    { index: 0, origin: { x: 135, y: 54 } },
-    { index: 1, origin: { x: 135, y: 68 } },
+    { index: 0, origin: { x: 135, y: 25 } },
+    { index: 1, origin: { x: 135, y: 39 } },
   ])('puts attachment $index at ($origin.x, $origin.y) of its tile', ({ index, origin }) => {
     expect(attachmentOrigin(index)).toEqual(origin);
   });
@@ -192,5 +193,15 @@ describe('onPawn', () => {
     { point: { x: 35, y: 197 }, on: false },
   ])('says ($point.x, $point.y) is on the pawn: $on', ({ point, on }) => {
     expect(onPawn(centre, point)).toBe(on);
+  });
+});
+
+describe('shrinkToFit', () => {
+  it.each([
+    { width: 60, room: 90, scale: 1 },
+    { width: 90, room: 90, scale: 1 },
+    { width: 180, room: 90, scale: 0.5 },
+  ])('shrinks a name $width wide by $scale to fit $room', ({ width, room, scale }) => {
+    expect(shrinkToFit(width, room)).toBe(scale);
   });
 });
