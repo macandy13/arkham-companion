@@ -103,7 +103,15 @@ export type TimingWindow =
    * advance"), opened for both, naming no investigator. Only the current
    * ones, so a used-up act or agenda never fires again.
    */
-  | { kind: 'enemyDefeated'; enemy: CardCode };
+  | { kind: 'enemyDefeated'; enemy: CardCode }
+  /**
+   * "When [this enemy] is defeated": opened by `EnemyDefeated` for the enemy,
+   * naming the location it was at and no investigator. It resolves once the
+   * enemy has left play, a stand-in for "when" (before the defeat) that
+   * changes nothing while the effect only needs "its location", which the
+   * event records.
+   */
+  | { kind: 'defeated' };
 
 /** The basic actions whose test opens `tested`: investigate, fight and evade. */
 export type TestedAction = SkillTestKind['kind'];
@@ -122,10 +130,11 @@ function isEndingPhase(phase: Phase): phase is EndingPhase {
 export type RelativeCard =
   | { ref: 'self' }
   /**
-   * The location of the investigator the window names (the drawer's
-   * location), unless the card's limit of one per location is reached there
-   * (`LocationAttachment.onePerLocation`): then none, so a revelation that
-   * would attach it there does nothing.
+   * The location the window names (where a defeated enemy was), or else the
+   * location of the investigator the window names (the drawer's location).
+   * For the drawer's location only: none once the card's limit of one per
+   * location is reached there (`LocationAttachment.onePerLocation`), so a
+   * revelation that would attach it there does nothing.
    */
   | { ref: 'windowLocation' }
   /**
@@ -148,7 +157,11 @@ export type RelativeCard =
  * command once per investigator.
  */
 export type RelativeInvestigator =
-  { ref: 'windowInvestigator' } | { ref: 'lead' } | { ref: 'eachInvestigator' };
+  | { ref: 'windowInvestigator' }
+  | { ref: 'lead' }
+  | { ref: 'eachInvestigator' }
+  /** Each investigator still in the scenario at the location named, in player order. */
+  | { ref: 'eachInvestigatorAt'; location: RelativeCard };
 
 /**
  * `T` with every instance and investigator ID replaced by a relative
@@ -263,6 +276,8 @@ export interface OpenedWindow {
   window: TimingWindow;
   cardId: InstanceId;
   investigatorId?: InvestigatorId;
+  /** The location it names itself, if any (where a defeated enemy was); see `windowLocation`. */
+  locationId?: InstanceId;
 }
 
 /**
@@ -360,10 +375,21 @@ export function windowsOpenedBy(
       return [{ window: { kind: 'advanced' }, cardId: event.cardId }];
     case 'EnemyDefeated': {
       const enemy = requireCard(state.cards, event.enemyId).code;
-      // Agenda before act is a fixed stand-in: the rules let the lead order simultaneous forced effects (M1V).
-      return [state.agenda.current, state.act.current].flatMap((cardId) =>
-        cardId === undefined ? [] : [{ window: { kind: 'enemyDefeated', enemy }, cardId }],
-      );
+      const self: OpenedWindow = {
+        window: { kind: 'defeated' },
+        cardId: event.enemyId,
+        locationId: event.locationId,
+      };
+      // The enemy's own ability, then agenda before act: a fixed stand-in, as the rules let the
+      // lead order simultaneous forced effects (M1V).
+      return [
+        self,
+        ...[state.agenda.current, state.act.current].flatMap((cardId) =>
+          cardId === undefined
+            ? []
+            : [{ window: { kind: 'enemyDefeated' as const, enemy }, cardId }],
+        ),
+      ];
     }
     default:
       return [];
@@ -430,7 +456,9 @@ export function resolveEffect(
     self: opened.cardId,
     windowInvestigator: investigator?.id,
     lead: activeLead(state),
-    windowLocation: investigator && attachableLocation(ctx, state, opened.cardId, investigator),
+    windowLocation:
+      opened.locationId ??
+      (investigator && attachableLocation(ctx, state, opened.cardId, investigator)),
     onlyCopy: (code) => theOnlyCopy(state, code),
   };
   const each = repeatedRef(effect);
@@ -464,7 +492,12 @@ type RepeatedRef = Extract<RelativeCard | RelativeInvestigator, { ref: `each${st
  */
 function repeatedRef(effect: unknown): RepeatedRef | undefined {
   if (typeof effect !== 'object' || effect === null) return undefined;
-  if (isRelative(effect) && (effect.ref === 'eachInvestigator' || effect.ref === 'eachEnemyAt'))
+  if (
+    isRelative(effect) &&
+    (effect.ref === 'eachInvestigator' ||
+      effect.ref === 'eachInvestigatorAt' ||
+      effect.ref === 'eachEnemyAt')
+  )
     return effect;
   for (const field of Object.values(effect)) {
     const found = repeatedRef(field);
@@ -483,6 +516,13 @@ function eachId(
   switch (each.ref) {
     case 'eachInvestigator':
       return playerOrder(state).map((inv) => inv.id);
+    case 'eachInvestigatorAt': {
+      const location = resolveRefs(each.location, refs) as InstanceId | undefined;
+      if (location === undefined) return [];
+      return playerOrder(state)
+        .filter((inv) => inv.locationId === location)
+        .map((inv) => inv.id);
+    }
     case 'eachEnemyAt': {
       const location = resolveRefs(each.location, refs) as InstanceId | undefined;
       if (location === undefined) return [];
@@ -549,6 +589,7 @@ function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
       case 'onlyCopy':
         return refs.onlyCopy(value.code);
       case 'eachInvestigator':
+      case 'eachInvestigatorAt':
       case 'eachEnemyAt':
         return refs.each;
       default:
@@ -571,7 +612,7 @@ export function missingCopies(state: GameState, effect: AbilityEffect): CardCode
     if (Array.isArray(value)) {
       value.forEach(walk);
     } else if (isRelative(value)) {
-      if (value.ref === 'eachEnemyAt') walk(value.location);
+      if (value.ref === 'eachEnemyAt' || value.ref === 'eachInvestigatorAt') walk(value.location);
       if (value.ref !== 'onlyCopy' || missing.includes(value.code)) return;
       if (theOnlyCopy(state, value.code) === undefined) missing.push(value.code);
     } else {
@@ -639,6 +680,11 @@ export function afterTest(
 /** A forced ability "after [this enemy] engages you", written `afterEngaging(takeHorror(1))`. */
 export function afterEngaging(...effects: AbilityEffect[]): Ability {
   return { window: { kind: 'engaged' }, effects };
+}
+
+/** A forced ability "when [this enemy] is defeated", written `whenDefeated(takeHorror(1, eachInvestigatorAt(itsLocation())))`. */
+export function whenDefeated(...effects: AbilityEffect[]): Ability {
+  return { window: { kind: 'defeated' }, effects };
 }
 
 /** A forced ability "after [this enemy] attacks you", written `afterAttacking(takeHorror(1))`. */
@@ -721,14 +767,33 @@ export function discardSelf(): AbilityEffect {
   return { type: 'DiscardCard', cardId: { ref: 'self' } };
 }
 
-/** "Take N damage": the investigator the window names takes `amount` damage. */
-export function takeDamage(amount: number): AbilityEffect {
-  return adjustWindowInvestigator('damage', amount);
+/**
+ * "Take N damage": the investigator the window names takes `amount` damage,
+ * or `who` does ("each investigator at its location takes 1 damage").
+ */
+export function takeDamage(
+  amount: number,
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'AdjustInvestigator', investigatorId: who, stat: 'damage', delta: amount };
 }
 
-/** "Take N horror": the investigator the window names takes `amount` horror. */
-export function takeHorror(amount: number): AbilityEffect {
-  return adjustWindowInvestigator('horror', amount);
+/** "Take N horror", like `takeDamage`: Goat Spawn is `whenDefeated(takeHorror(1, eachInvestigatorAt(itsLocation())))`. */
+export function takeHorror(
+  amount: number,
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'AdjustInvestigator', investigatorId: who, stat: 'horror', delta: amount };
+}
+
+/** "Each investigator at [location]" (`eachInvestigatorAt`), which repeats the effect for each. */
+export function eachInvestigatorAt(location: RelativeCard): RelativeInvestigator {
+  return { ref: 'eachInvestigatorAt', location };
+}
+
+/** "Its location": the location the window names (`windowLocation`), such as where a defeated enemy was. */
+export function itsLocation(): RelativeCard {
+  return { ref: 'windowLocation' };
 }
 
 /** "Place N doom on the current agenda". */
@@ -882,8 +947,4 @@ export function spawnEnemyAt(enemy: RelativeCard, location: RelativeCard): Abili
 /** Moves the card with the ability ("Remove it from the game", "Put it into play in your threat area"). */
 export function moveSelf(to: Templated<Zone>): AbilityEffect {
   return { type: 'MoveCard', cardId: { ref: 'self' }, to };
-}
-
-function adjustWindowInvestigator(stat: 'damage' | 'horror', delta: number): AbilityEffect {
-  return { type: 'AdjustInvestigator', investigatorId: { ref: 'windowInvestigator' }, stat, delta };
 }

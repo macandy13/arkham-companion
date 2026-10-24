@@ -125,7 +125,10 @@ export {
   spawnEnemyAt,
   takeDamage,
   takeHorror,
+  eachInvestigatorAt,
+  itsLocation,
   whenAdvanced,
+  whenDefeated,
   whenEnemyDefeated,
   whenRevealed,
 } from './abilities';

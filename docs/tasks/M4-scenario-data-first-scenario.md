@@ -75,7 +75,8 @@ Steps 1–12 of the [encounter card plan](../encounter-card-analysis.md#implemen
   - [x] 2c1 After an investigation, fight or evade succeeds or fails (`afterTest`): Obscuring Fog's discard becomes an ability and `LocationAttachment.discardWhenInvestigated` is gone. A card's own test ("after you fail a test by 2 or more") waits for a card that needs it.
   - [x] 2c2 After an enemy engages you (`afterEngaging`, either way round) and after you discover clues at a location (`afterDiscoveringClues`).
   - [x] 2c3a After an enemy attacks you (`afterAttacking`): attacks now record `EnemyAttacked`, naming the enemy; attacks of opportunity count, and in the enemy phase the enemy exhausts only after those abilities (`exhaustAfterAttack`). No Night of the Zealot card uses it yet: Yithian Observer's "when it attacks you" changes the attack itself and waits for a "when" window before damage.
-  - [ ] 2c3b After doom is placed, after you resolve another treachery, and "when [this enemy] is defeated" while it is still at its location (Goat Spawn)
+  - [x] 2c3b "When [this enemy] is defeated" (`whenDefeated`): `EnemyDefeated` records where the enemy was, and `eachInvestigatorAt(itsLocation())` names each investigator there (Goat Spawn).
+  - [ ] 2c3c After doom is placed and after you resolve another treachery. No Night of the Zealot card uses either, so both wait for the Chapter Two step that adds the cards needing them (Echoing in Darkness, "would advance" in step 18).
 - [x] 3 Skill test margin. Done by P2: `ResolveDecision.margin`, the suggestion's `margin`, `SkillTestResolved.margin` and per-point fails (#201).
 - [ ] 4 Choose one
 - [ ] 5 Card effects for existing commands, healing, conditional surge

@@ -23,6 +23,7 @@ import {
   defeatEachInvestigator,
   discardEachEnemyAt,
   discardSelf,
+  eachInvestigatorAt,
   engagedWith,
   duringAct,
   endScenario,
@@ -30,6 +31,7 @@ import {
   fixed,
   instanceId,
   investigatorId,
+  itsLocation,
   leadDecides,
   mapId,
   MAX_TRIGGERED_COMMANDS,
@@ -52,6 +54,7 @@ import {
   takeHorror,
   threatAreaOf,
   whenAdvanced,
+  whenDefeated,
   whenEnemyDefeated,
   whenRevealed,
   whenTurnBegins,
@@ -691,6 +694,55 @@ describe('trigger bus', () => {
       expect(requireInvestigator(after, alice).status).not.toBe('active');
       expect(requireInvestigator(after, alice).sanity.horror).toBe(0);
     });
+  });
+
+  describe('abilities when an enemy is defeated', () => {
+    const wailingSpawn = instanceId('wailing_spawn');
+    const bob = investigatorId('bob');
+    const carol = investigatorId('carol');
+    const cellar = instanceId('cellar');
+    /**
+     * "When this enemy is defeated: each investigator at this location takes 1 horror" (like Goat
+     * Spawn). Aloof, so it can start unengaged in the hall.
+     */
+    const wailingSpawnCard = blankEnemy('wailing_spawn', {
+      keywords: [{ name: 'aloof' }],
+      abilities: [whenDefeated(takeHorror(1, eachInvestigatorAt(itsLocation())))],
+    });
+
+    // Alice and bob are in the hall with the wailing spawn, carol is in the cellar.
+    it.each<{ name: string; zone: Zone; command: Command }>([
+      {
+        name: 'unengaged, by a card effect',
+        zone: atLocation(hall),
+        command: { type: 'DefeatEnemy', enemyId: wailingSpawn },
+      },
+      {
+        name: 'engaged with alice, by damage',
+        zone: engagedWith(alice),
+        command: { type: 'DamageEnemy', enemyId: wailingSpawn, amount: 1 },
+      },
+    ])(
+      'deals 1 horror to each investigator in the hall when it is defeated $name',
+      ({ zone, command }) => {
+        const { context, state } = newGame()
+          .withLocation(hall, blankLocation('hall'), { revealed: true })
+          .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+          .withInvestigator(alice, { locationId: hall })
+          .withInvestigator(bob, { locationId: hall })
+          .withInvestigator(carol, { locationId: cellar })
+          .withCard(wailingSpawn, wailingSpawnCard, zone)
+          .withTurnOf(alice)
+          .start();
+
+        const after = stateAfter(context, state, command);
+
+        expect(after.cards[wailingSpawn]?.zone).toEqual({ kind: 'encounterDiscard' });
+        expect(requireInvestigator(after, alice).sanity.horror).toBe(1);
+        expect(requireInvestigator(after, bob).sanity.horror).toBe(1);
+        expect(requireInvestigator(after, carol).sanity.horror).toBe(0);
+      },
+    );
   });
 
   describe('tests that deal damage or horror per point failed', () => {
