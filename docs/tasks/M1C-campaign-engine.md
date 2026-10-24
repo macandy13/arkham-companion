@@ -63,6 +63,7 @@ Slices, each its own PR:
 - [x] `ScenarioEnded { resolution }` → a pure function computes the proposed campaign commands (`campaign.proposeResolution`, M1C.4a)
 - [ ] Players confirm or edit them; applying them writes the campaign log (M1C.4b) and produces notices (M1C.2)
 - [x] Defeat trauma: an investigator defeated by damage gets 1 physical trauma, by horror 1 mental trauma; resigning gives none (M1C.4a: the reducer keeps `Investigator.defeatedBy`)
+- [ ] A defeat that reaches health and sanity at once: the players pick the trauma (Rules Reference, "Trauma"); today the proposal says physical (`defeatCause` prefers damage) and the players edit it (M1C.4b, with the confirmation step)
 - [ ] A defeat by a card effect (`cause: 'cardEffect'`, M1.17) gives only the trauma the card names, e.g. The Gathering's agenda 3 at act 3 ("is defeated and suffers 1 physical trauma"), which nothing in the game log records yet
 - [x] "No resolution was reached" handled per scenario (`ScenarioResolutions.none`)
 - [x] The Gathering's resolutions entered by hand (M1C.4a, `the_gathering/resolutions.ts`); The Midnight Masks' come with M5.3

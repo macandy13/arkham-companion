@@ -74,7 +74,10 @@ export type ProposedChange =
  * investigator defeated by damage and 1 mental trauma for each defeated by
  * horror (Rules Reference, "Trauma"). The defeat trauma comes last so that a
  * defeat which kills an investigator doesn't block the experience the
- * resolution awards them first. Undefined while the game is still running,
+ * resolution awards them first; someone the resolution kills or drives insane
+ * gets none. A defeat that reached both health and sanity at once proposes
+ * physical trauma, which the players change if they pick mental (Rules
+ * Reference, "Trauma"). Undefined while the game is still running,
  * or for a resolution id the scenario doesn't define.
  */
 export function proposeResolution(
@@ -86,10 +89,18 @@ export function proposeResolution(
   const steps =
     game.meta.resolution === undefined ? resolutions.none : resolutions.byId[game.meta.resolution];
   if (steps === undefined) return undefined;
-  return [
-    ...steps.flatMap((step) => proposeStep(ctx, game, step)),
-    ...game.investigators.flatMap(defeatTrauma),
-  ];
+  const changes = steps.flatMap((step) => proposeStep(ctx, game, step));
+  const eliminated = new Set(changes.flatMap(eliminatedCode));
+  // A killed or insane investigator takes no more trauma (`AddTrauma` would be rejected), and
+  // being killed by the resolution already outweighs it.
+  const traumaFor = game.investigators.filter((inv) => !eliminated.has(inv.code));
+  return [...changes, ...traumaFor.flatMap(defeatTrauma)];
+}
+
+function eliminatedCode(change: ProposedChange): InvestigatorCode[] {
+  if (change.kind !== 'command') return [];
+  const { command } = change;
+  return command.type === 'MarkKilled' || command.type === 'MarkInsane' ? [command.code] : [];
 }
 
 function proposeStep(ctx: EngineContext, game: GameState, step: ResolutionStep): ProposedChange[] {
@@ -103,7 +114,7 @@ function proposeStep(ctx: EngineContext, game: GameState, step: ResolutionStep):
     case 'awardXp': {
       const amount = step.bonus + (step.victoryDisplay ? victoryPoints(ctx, game) : 0);
       // `AwardXp` takes only positive amounts; earning nothing is no change to confirm.
-      if (amount === 0) return [];
+      if (amount <= 0) return [];
       return targetCodes(game, step.to).map((code) => command({ type: 'AwardXp', code, amount }));
     }
     case 'addTrauma':
@@ -139,12 +150,12 @@ function targetInvestigators(game: GameState, target: ResolutionTarget): Investi
 }
 
 function defeatTrauma(investigator: Investigator): ProposedChange[] {
-  const kind = traumaFor(investigator);
+  const kind = defeatTraumaKind(investigator);
   if (kind === undefined) return [];
   return [command({ type: 'AddTrauma', code: investigator.code, kind, amount: 1 })];
 }
 
-function traumaFor(investigator: Investigator): TraumaKind | undefined {
+function defeatTraumaKind(investigator: Investigator): TraumaKind | undefined {
   if (investigator.status !== 'defeated') return undefined;
   switch (investigator.defeatedBy) {
     case 'damage':

@@ -36,11 +36,19 @@ const takeDamage = (investigator: InvestigatorId, delta: number): Command => ({
   delta,
 });
 
-/** Alice (the lead, 8 health, 6 sanity) and bob in the study. */
+/** Alice (the lead) and bob in the study, each with 8 health and 6 sanity. */
 const table = newGame()
   .withLocation(study, blankLocation('study'))
-  .withInvestigator(alice, { locationId: study })
-  .withInvestigator(bob, { locationId: study });
+  .withInvestigator(alice, {
+    locationId: study,
+    health: { max: 8, damage: 0 },
+    sanity: { max: 6, horror: 0 },
+  })
+  .withInvestigator(bob, {
+    locationId: study,
+    health: { max: 8, damage: 0 },
+    sanity: { max: 6, horror: 0 },
+  });
 
 describe('proposeResolution', () => {
   it('turns the steps of the resolution the game ended with into campaign commands', () => {
@@ -133,6 +141,25 @@ describe('proposeResolution', () => {
 
     expect(proposal).toEqual([
       { kind: 'command', command: { type: 'MarkKilled', code: aliceCode } },
+    ]);
+  });
+
+  it('gives no defeat trauma to an investigator the resolution kills', () => {
+    const resolutions: ScenarioResolutions = {
+      byId: { R3: [{ kind: 'markKilled', to: 'notResigned' }] },
+      none: [],
+    };
+    const { context, state } = table.start();
+
+    const proposal = campaign.proposeResolution(
+      context,
+      stateAfter(context, state, takeDamage(bob, 8), endWith('R3')),
+      resolutions,
+    );
+
+    expect(proposal).toEqual([
+      { kind: 'command', command: { type: 'MarkKilled', code: aliceCode } },
+      { kind: 'command', command: { type: 'MarkKilled', code: bobCode } },
     ]);
   });
 

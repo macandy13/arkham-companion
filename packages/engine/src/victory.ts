@@ -1,4 +1,4 @@
-import { isLocationInPlay } from './board';
+import { locationsInPlay } from './board';
 import type { EngineContext } from './cards';
 import { cardsInZone, requireCard } from './lookup';
 import type { CardInstance, GameState } from './state';
@@ -14,8 +14,8 @@ export function victoryPoints(ctx: EngineContext, state: GameState): number {
   const inDisplay = cardsInZone(state, { kind: 'victoryDisplay' }).map((id) =>
     requireCard(state.cards, id),
   );
-  const clearedLocations = Object.values(state.cards).filter(
-    (card) => isLocationInPlay(state, card.id) && card.faceUp && (card.tokens.clue ?? 0) === 0,
+  const clearedLocations = locationsInPlay(ctx, state).filter(
+    (card) => card.faceUp && (card.tokens.clue ?? 0) === 0,
   );
   return [...inDisplay, ...clearedLocations].reduce(
     (total, card) => total + printedVictory(ctx, card),
