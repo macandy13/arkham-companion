@@ -4,7 +4,7 @@ import { startQuickGame } from './fixtures/wizard';
 // Journey: the whole life of a saved game on a tablet – start it, close the tab, resume it, keep it
 // tidy (rename, duplicate, delete with confirmation) and back it up (export, import). It doubles as
 // the smoke test: it boots the production build and resolves the hash routes.
-test('a game is started, resumed, managed and backed up', { tag: '@flow' }, async ({ page }) => {
+test('a game is started, resumed, managed and backed up', async ({ page }) => {
   const games = page.getByRole('list', { name: 'Games' });
   const items = games.getByRole('listitem');
   const named = (title: string) =>
