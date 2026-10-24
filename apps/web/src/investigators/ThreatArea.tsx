@@ -158,7 +158,7 @@ function EnemyMenu({
       ))}
       <footer>
         <button type="button" onClick={onClose}>
-          {t('locationMenu.close')}
+          {t('investigators.closeEnemyActions')}
         </button>
       </footer>
     </dialog>

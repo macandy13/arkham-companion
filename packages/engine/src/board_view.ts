@@ -288,7 +288,7 @@ export class BoardView {
    */
   enemiesEngagedWith(investigator: InvestigatorId): readonly MapEnemyView[] {
     return enemiesInPlay(this.ctx, this.state)
-      .map((enemy) => ({ id: enemy.id, ...enemyView(this.ctx, this.state, enemy) }))
+      .map((enemy) => mapEnemyView(this.ctx, this.state, enemy))
       .filter(({ engagedWith }) => engagedWith === investigator);
   }
 
@@ -541,6 +541,10 @@ function enemyLocation(state: GameState, enemy: CardInstance): InstanceId | unde
   return state.investigators.find((inv) => inv.id === zone.investigatorId)?.locationId;
 }
 
+function mapEnemyView(ctx: EngineContext, state: GameState, enemy: CardInstance): MapEnemyView {
+  return { id: enemy.id, ...enemyView(ctx, state, enemy) };
+}
+
 function enemyView(ctx: EngineContext, state: GameState, enemy: CardInstance): EnemyView {
   const at = nameOfId(ctx, state, enemyLocation(state, enemy));
   const health = enemyHealth(cardStats(ctx.cards, enemy.code), state);
@@ -606,7 +610,7 @@ function enemiesByLocation(
   for (const enemy of enemiesInPlay(ctx, state)) {
     const at = enemyLocation(state, enemy);
     if (at === undefined || !locations.includes(at)) continue;
-    (byLocation[at] ??= []).push({ id: enemy.id, ...enemyView(ctx, state, enemy) });
+    (byLocation[at] ??= []).push(mapEnemyView(ctx, state, enemy));
   }
   return byLocation;
 }

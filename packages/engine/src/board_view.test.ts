@@ -523,7 +523,9 @@ describe('enemies', () => {
 
     const board = boardView(context, state);
 
-    expect(board.enemiesEngagedWith(alice).map(({ name }) => name)).toEqual(['ghoul']);
+    expect(board.enemiesEngagedWith(alice)).toEqual([
+      { id: instanceId('ghoul'), name: 'ghoul', at: 'study', engagedWith: alice, health: 1 },
+    ]);
   });
 
   it('marks an exhausted enemy', () => {
