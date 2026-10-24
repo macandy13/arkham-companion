@@ -20,6 +20,7 @@ import type {
 } from './events';
 import {
   activeInvestigator,
+  cluesToLocationEvents,
   defeatCause,
   discoverCluesEvents,
   statValue,
@@ -175,14 +176,11 @@ export function handlePlaceClues(
   cmd: PlaceClues,
 ): (InvestigatorChanged | TokensChanged)[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
-  if (!Number.isInteger(cmd.amount) || cmd.amount < 0)
+  if (!Number.isInteger(cmd.amount) || cmd.amount <= 0)
     throw new CommandRejected({ code: 'invalidTokenDelta', delta: cmd.amount });
   // "Place 1 of your clues" for each point: an investigator who runs out places what they have,
   // and one not on the map yet has no location to place them on.
   const placed = Math.min(cmd.amount, investigator.clues);
   if (placed === 0 || investigator.locationId === undefined) return [];
-  return [
-    { type: 'InvestigatorChanged', investigatorId: investigator.id, stat: 'clues', delta: -placed },
-    { type: 'TokensChanged', cardId: investigator.locationId, token: 'clue', delta: placed },
-  ];
+  return cluesToLocationEvents(investigator.id, investigator.locationId, placed);
 }

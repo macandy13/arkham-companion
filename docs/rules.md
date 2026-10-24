@@ -101,7 +101,7 @@ The game rules the engine implements, summarised in our own words so sessions do
 
 An ability that shuffles an empty discard pile into a deck does not shuffle the deck ([discard piles](https://arkhamdb.com/rules#Discard_Piles)).
 
-"Discard cards from the top until a Ghoul enemy is discarded, draw it" with no such card left: the players would discard the whole deck, shuffle the discard back in when the deck runs out ([encounter deck](https://arkhamdb.com/rules#Encounter_Deck)) and stop when no progress is possible ([golden rules](https://arkhamdb.com/rules#Golden_Rules): resolve as much as possible). When the discard was just shuffled into the deck, as Rise of the Ghouls does first, that ends where it started, so the engine draws and discards nothing.
+"Discard cards from the top until a Ghoul enemy is discarded, draw it" with no such card left: the players would discard the whole deck, shuffle the discard back in when the deck runs out ([encounter deck](https://arkhamdb.com/rules#Encounter_Deck)) and stop when no progress is possible ([effects](https://arkhamdb.com/rules#Effects): resolve as much as possible). When the discard was just shuffled into the deck, as Rise of the Ghouls does first, that ends where it started, so the engine draws and discards nothing.
 
 ## Spawn and engagement
 

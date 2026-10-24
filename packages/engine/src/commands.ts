@@ -291,7 +291,8 @@ export interface DiscoverClues {
 /**
  * An active investigator places up to `amount` of their clues on the location
  * they are at ("place 1 of your clues on your location" for each point a test
- * fails by): as many as they have, so none at all with no clues. Produces
+ * fails by): as many as they have, so none at all with no clues or with no
+ * location (not on the map yet). `amount` is positive. Produces
  * `InvestigatorChanged` (clues leave) and `TokensChanged` (clues arrive).
  */
 export interface PlaceClues {

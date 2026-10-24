@@ -757,7 +757,7 @@ describe('trigger bus', () => {
     );
   });
 
-  describe('tests that deal damage or horror per point failed', () => {
+  describe('tests that cost something for each point failed', () => {
     const graspingHands = instanceId('grasping_hands');
     const rottingRemains = instanceId('rotting_remains');
     /** "Revelation – Test agility (3). Take 1 damage for each point you fail by." */

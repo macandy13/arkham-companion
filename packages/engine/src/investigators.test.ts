@@ -392,15 +392,15 @@ describe('PlaceClues', () => {
     expect(investigatorOf(placed, bob).clues).toBe(1);
   });
 
-  it('rejects a negative amount', () => {
+  it('rejects an amount that is not positive', () => {
     const { context, state } = newGame()
       .withLocation(hall, blankLocation('hall'), { revealed: true })
       .withInvestigator(alice, { locationId: hall, clues: 1 })
       .start();
 
     expect(
-      rejectionFrom(context, state, { type: 'PlaceClues', investigatorId: alice, amount: -1 }),
-    ).toEqual({ code: 'invalidTokenDelta', delta: -1 });
+      rejectionFrom(context, state, { type: 'PlaceClues', investigatorId: alice, amount: 0 }),
+    ).toEqual({ code: 'invalidTokenDelta', delta: 0 });
   });
 });
 
