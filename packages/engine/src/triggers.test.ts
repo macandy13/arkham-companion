@@ -26,6 +26,7 @@ import {
   cardCode,
   checkInvariants,
   decisionId,
+  describeDecision,
   defeatEachInvestigator,
   discardEachEnemyAt,
   discardSelf,
@@ -1649,6 +1650,9 @@ describe('doom on the nearest Cultist enemy', () => {
         decider: { kind: 'lead' },
         options: [{ id: 'cellar_cultist' }, { id: 'garden_cultist' }],
       },
+    ]);
+    expect(asked.pending.map((decision) => describeDecision(context, asked, decision))).toEqual([
+      'Which of the nearest enemies? Cultist / Cultist [chooseCard]',
     ]);
     expect(after.cards[instanceId('garden_cultist')]?.tokens.doom).toBe(2);
     expect(after.cards[instanceId('cellar_cultist')]?.tokens.doom).toBeUndefined();
