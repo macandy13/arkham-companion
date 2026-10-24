@@ -62,7 +62,14 @@ describe('InvestigatorBar', () => {
         .withInvestigator(brook, { locationId: study }),
     );
 
-    render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />);
+    render(
+      <InvestigatorBar
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+      />,
+    );
 
     expect(within(panel('alder')).getByRole('heading', { name: 'alder' })).toBeTruthy();
     expect(countersOf('alder')).toEqual([
@@ -104,7 +111,14 @@ describe('InvestigatorBar', () => {
     ])('says where alder is on $situation', ({ table, line }) => {
       const played = table();
 
-      render(<InvestigatorBar board={played.board} actions={actionsOn(played)} busy={false} />);
+      render(
+        <InvestigatorBar
+          board={played.board}
+          actions={actionsOn(played)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
 
       expect(within(panel('alder')).getByText(line)).toBeTruthy();
     });
@@ -112,30 +126,42 @@ describe('InvestigatorBar', () => {
     it.each([
       { status: 'defeated' as const, line: 'Defeated' },
       { status: 'resigned' as const, line: 'Resigned' },
-    ])('says alder is $status instead of where', ({ status, line }) => {
-      const table = PlayTable.start(
-        newGame().withLocation(study, blankLocation('study')).withInvestigator(alder, { status }),
-      );
+    ])(
+      'says alder is $status instead of where, and keeps their counters still',
+      ({ status, line }) => {
+        const table = PlayTable.start(
+          newGame().withLocation(study, blankLocation('study')).withInvestigator(alder, { status }),
+        );
 
-      render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />);
+        render(
+          <InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} adjusting />,
+        );
 
-      expect(within(panel('alder')).getByText(line)).toBeTruthy();
-      expect(within(panel('alder')).getByRole('button', { name: 'Take damage' })).toHaveProperty(
-        'disabled',
-        true,
-      );
-    });
+        expect(within(panel('alder')).getByText(line)).toBeTruthy();
+        expect(within(panel('alder')).getByRole('button', { name: 'Take damage' })).toHaveProperty(
+          'disabled',
+          true,
+        );
+      },
+    );
 
     it('says when alder is at no location', () => {
       const table = PlayTable.start(newGame().withInvestigator(alder));
 
-      render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
 
       expect(within(panel('alder')).getByText('Not at a location')).toBeTruthy();
     });
   });
 
-  describe('the steppers', () => {
+  describe('the steppers, while adjusting', () => {
     // Alder has 2 damage of 7 health, 2 horror of 6 sanity and 3 resources.
     const hurtAlder = newGame()
       .withLocation(study, blankLocation('study'))
@@ -157,7 +183,9 @@ describe('InvestigatorBar', () => {
       '"$button" leaves alder with $after $counter',
       async ({ button, counter, after }) => {
         const table = PlayTable.start(hurtAlder);
-        render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />);
+        render(
+          <InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} adjusting />,
+        );
 
         fireEvent.click(within(panel('alder')).getByRole('button', { name: button }));
 
@@ -177,7 +205,9 @@ describe('InvestigatorBar', () => {
           }),
       );
 
-      render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} adjusting />,
+      );
 
       const off = within(panel('alder'))
         .getAllByRole('button')
@@ -189,13 +219,41 @@ describe('InvestigatorBar', () => {
     it('waits while a step is queued, turn controls too', () => {
       const table = PlayTable.start(hurtAlder.withTurnOf(alder));
 
-      render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy />);
+      render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy adjusting />);
 
       const on = within(panel('alder'))
         .getAllByRole('button')
         .filter((button) => !(button as HTMLButtonElement).disabled);
       expect(on).toEqual([]);
     });
+
+    it('keeps the turn controls waiting, since a turn step is no correction', () => {
+      const table = PlayTable.start(hurtAlder.withTurnOf(alder));
+
+      render(
+        <InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} adjusting />,
+      );
+
+      expect(within(panel('alder')).getByRole('button', { name: 'End turn' })).toHaveProperty(
+        'disabled',
+        true,
+      );
+    });
+  });
+
+  it('shows no steppers outside adjust mode', () => {
+    const table = PlayTable.start(newGame().withInvestigator(alder));
+
+    render(
+      <InvestigatorBar
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+      />,
+    );
+
+    expect(within(panel('alder')).queryByRole('button', { name: 'Take damage' })).toBeNull();
   });
 
   describe('the turn controls', () => {
@@ -216,7 +274,14 @@ describe('InvestigatorBar', () => {
       table.startTurn(brook);
       table.endTurn(brook);
 
-      render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
 
       expect(within(panel('alder')).getByRole('button', { name: 'Start turn' })).toBeTruthy();
       expect(within(panel('brook')).queryByRole('button', { name: 'Start turn' })).toBeNull();
@@ -236,14 +301,28 @@ describe('InvestigatorBar', () => {
     ])('offers no turn start to alder $situation', ({ table }) => {
       const played = table();
 
-      render(<InvestigatorBar board={played.board} actions={actionsOn(played)} busy={false} />);
+      render(
+        <InvestigatorBar
+          board={played.board}
+          actions={actionsOn(played)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
 
       expect(within(panel('alder')).queryByRole('button', { name: 'Start turn' })).toBeNull();
     });
 
     it('starts the turn of the investigator the players pick', async () => {
       const table = beforeTurns();
-      render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
 
       fireEvent.click(within(panel('brook')).getByRole('button', { name: 'Start turn' }));
 
@@ -254,7 +333,14 @@ describe('InvestigatorBar', () => {
       const table = PlayTable.start(twoAtStudy.withTurnOf(alder));
       table.adjustActions(alder, -1);
 
-      render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
 
       const pips = within(panel('alder')).getByRole('list', { name: '2 actions left' });
       const filled = within(pips)
@@ -270,7 +356,14 @@ describe('InvestigatorBar', () => {
       { button: 'Resign', after: { status: 'resigned' } },
     ])('"$button" plays it for the investigator whose turn it is', async ({ button, after }) => {
       const table = PlayTable.start(twoAtStudy.withTurnOf(alder));
-      render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
 
       fireEvent.click(within(panel('alder')).getByRole('button', { name: button }));
 
@@ -295,7 +388,14 @@ describe('InvestigatorBar', () => {
           .withCard(instanceId('rat'), blankEnemy('swarm_of_rats'), engagedWith(brook)),
       );
 
-      render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
 
       const threatArea = within(panel('alder')).getByRole('list', { name: 'Threat area' });
       const cards = within(threatArea).getAllByRole('listitem');
@@ -315,7 +415,14 @@ describe('InvestigatorBar', () => {
           .withInvestigator(alder, { locationId: study }),
       );
 
-      render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
 
       expect(within(panel('alder')).queryByRole('list', { name: 'Threat area' })).toBeNull();
     });
@@ -343,7 +450,14 @@ describe('InvestigatorBar', () => {
         ),
       );
 
-      render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} />);
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
 
       const shown = within(panel('alder'))
         .queryAllByRole('button', { name: /threat area/ })

@@ -9,14 +9,16 @@ test('advance the act', { tag: '@flow' }, async ({ page }) => {
     await resumeImportedGame(page, 'Two Ghoul Priests', twoGhoulPriestsExport('Two Ghoul Priests'));
   });
 
-  await test.step('Put 3 clues on The Barrier and advance it', async () => {
+  await test.step('Put 3 clues on The Barrier while adjusting the board, then advance it', async () => {
     const act = page.getByRole('region', { name: 'Act' });
     await expect(act.getByText('The Barrier')).toBeVisible();
+    await page.getByRole('button', { name: 'Adjust board' }).click();
     const addClue = act.getByRole('button', { name: 'Add a clue' });
     await addClue.click();
     await addClue.click();
     await addClue.click();
     await expect(act.getByText('Clues 3 / 3')).toBeVisible();
+    await page.getByRole('button', { name: 'Done' }).click();
     await act.getByRole('button', { name: 'Advance' }).click();
     await expect(act.getByText('What Have You Done?')).toBeVisible();
   });

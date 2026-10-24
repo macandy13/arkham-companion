@@ -41,15 +41,25 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
   const { board } = open;
 
   return (
-    <div id="board">
+    <div id="board" data-adjusting={open.adjusting || undefined}>
       <GameHeader store={store} open={open} board={board} />
       <section id="map" aria-labelledby="map-title">
         <h2 id="map-title">{t('map.title')}</h2>
-        <MapBoard board={board} actions={store.getState().actions} busy={open.busy} />
+        <MapBoard
+          board={board}
+          actions={store.getState().actions}
+          busy={open.busy}
+          adjusting={open.adjusting}
+        />
       </section>
       <section id="investigators" aria-labelledby="investigators-title">
         <h2 id="investigators-title">{t('investigators.title')}</h2>
-        <InvestigatorBar board={board} actions={store.getState().actions} busy={open.busy} />
+        <InvestigatorBar
+          board={board}
+          actions={store.getState().actions}
+          busy={open.busy}
+          adjusting={open.adjusting}
+        />
       </section>
       <div id="notices">
         {open.skippedEffects && (
