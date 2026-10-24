@@ -17,7 +17,7 @@ interface GameListItemProps {
 
 /**
  * The name the home screen lists the game at `index` of `games` under when it has no title, numbered
- * from the oldest since the list is newest first. The title bar's export names its file with it too,
+ * from the oldest since the list is newest first. The play screen menu's export names its file with it too,
  * so a game is saved under the same name from both.
  */
 export function untitledLabel(t: TFunction, games: readonly GameSummary[], index: number): string {

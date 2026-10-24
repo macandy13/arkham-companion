@@ -55,11 +55,15 @@ async function renderTheGathering(db: string, replacedCards: readonly CardStats[
       </Routes>
     </MemoryRouter>,
   );
-  await screen.findByText('Round 0, Setup');
+  await screen.findByRole('heading', { name: 'Setup' });
   return store;
 }
 
 const button = (name: string) => screen.getByRole<HTMLButtonElement>('button', { name });
+
+/** The phase the status row's phase track marks as the current one. */
+const currentPhase = () =>
+  screen.getByRole('list', { name: 'Phases' }).querySelector('[aria-current="step"]')?.textContent;
 
 describe('GameScreen header', () => {
   beforeAll(async () => {
@@ -72,25 +76,26 @@ describe('GameScreen header', () => {
 
     fireEvent.click(button('Next'));
 
-    expect(await screen.findByText('Round 1, Investigation')).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Round 1' })).toBeTruthy();
+    expect(currentPhase()).toBe('Investigation');
   });
 
   it('offers undo only once a step was played, and undo takes it back', async () => {
     await renderTheGathering('game-screen-undo-test');
     const undoAtStart = button('Undo').disabled;
     fireEvent.click(button('Next'));
-    await screen.findByText('Round 1, Investigation');
+    await screen.findByRole('heading', { name: 'Round 1' });
 
     fireEvent.click(button('Undo'));
 
     expect(undoAtStart).toBe(true);
-    expect(await screen.findByText('Round 0, Setup')).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Setup' })).toBeTruthy();
   });
 
   it('says why "Next" was refused until the players dismiss it', async () => {
     await renderTheGathering('game-screen-refused-test');
     fireEvent.click(button('Next'));
-    await screen.findByText('Round 1, Investigation');
+    await screen.findByRole('heading', { name: 'Round 1' });
 
     fireEvent.click(button('Next'));
 
@@ -112,8 +117,52 @@ describe('GameScreen header', () => {
     expect(act.textContent).toContain('Clues 0 / 2');
   });
 
+  it('shows the steppers only while adjusting, with "Done" and "Cancel" in place of "Next"', async () => {
+    await renderTheGathering('game-screen-adjust-mode-test');
+    const before = screen.queryByRole('button', { name: 'Add doom' });
+
+    fireEvent.click(button('Adjust board'));
+    await screen.findByRole('button', { name: 'Done' });
+
+    expect(before).toBeNull();
+    expect(button('Add doom')).toBeTruthy();
+    expect(button('Cancel')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Next' })).toBeNull();
+  });
+
+  it('keeps an adjustment of several taps on "Done" and takes it all back with one undo', async () => {
+    await renderTheGathering('game-screen-adjust-done-test');
+    fireEvent.click(button('Adjust board'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Add doom' }));
+    await screen.findByText('Doom 1 / 3');
+    fireEvent.click(button('Add doom'));
+    await screen.findByText('Doom 2 / 3');
+
+    fireEvent.click(button('Done'));
+    await screen.findByRole('button', { name: 'Next' });
+    const kept = screen.getByRole('region', { name: 'Agenda' }).textContent;
+    fireEvent.click(button('Undo'));
+
+    expect(kept).toContain('Doom 2 / 3');
+    expect(await screen.findByText('Doom 0 / 3')).toBeTruthy();
+  });
+
+  it('drops the adjustment on "Cancel"', async () => {
+    await renderTheGathering('game-screen-adjust-cancel-test');
+    fireEvent.click(button('Adjust board'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Add doom' }));
+    await screen.findByText('Doom 1 / 3');
+
+    fireEvent.click(button('Cancel'));
+
+    expect(await screen.findByText('Doom 0 / 3')).toBeTruthy();
+    expect(button('Undo').disabled).toBe(true);
+  });
+
   it('adds doom to the agenda and takes it off again', async () => {
     await renderTheGathering('game-screen-doom-test');
+    fireEvent.click(button('Adjust board'));
+    await screen.findByRole('button', { name: 'Done' });
     const removeAtZero = button('Remove doom').disabled;
 
     fireEvent.click(button('Add doom'));
@@ -126,6 +175,8 @@ describe('GameScreen header', () => {
 
   it("puts a clue on the act and takes it off again, leaving Alder's clues alone", async () => {
     const store = await renderTheGathering('game-screen-act-clues-test');
+    fireEvent.click(button('Adjust board'));
+    await screen.findByRole('button', { name: 'Done' });
     const removeAtZero = button('Remove a clue').disabled;
 
     fireEvent.click(button('Add a clue'));
@@ -141,15 +192,23 @@ describe('GameScreen header', () => {
   it('advances the act once the clues on it reach what it needs', async () => {
     await renderTheGathering('game-screen-act-advance-test');
     // Trapped needs 2 clues for one investigator.
-    fireEvent.click(button('Add a clue'));
+    fireEvent.click(button('Adjust board'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Add a clue' }));
     await screen.findByText('Clues 1 / 2');
+    fireEvent.click(button('Done'));
+    await screen.findByRole('button', { name: 'Next' });
     const advanceAtOne = button('Advance').disabled;
-    fireEvent.click(button('Add a clue'));
+    fireEvent.click(button('Adjust board'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Add a clue' }));
     await screen.findByText('Clues 2 / 2');
+    const advanceWhileAdjusting = button('Advance').disabled;
+    fireEvent.click(button('Done'));
+    await screen.findByRole('button', { name: 'Next' });
 
     fireEvent.click(button('Advance'));
 
     expect(advanceAtOne).toBe(true);
+    expect(advanceWhileAdjusting).toBe(true);
     expect(await screen.findByText('The Barrier')).toBeTruthy();
   });
 
@@ -181,7 +240,7 @@ describe('GameScreen header', () => {
 
     expect(button('Next').disabled).toBe(true);
     expect(button('Undo').disabled).toBe(true);
-    await screen.findByText('Round 1, Investigation');
+    await screen.findByRole('heading', { name: 'Round 1' });
     expect(button('Next').disabled).toBe(false);
   });
 
@@ -192,10 +251,26 @@ describe('GameScreen header', () => {
     expect(within(scenario).getByRole('heading', { level: 1 }).textContent).toBe('The Gathering');
   });
 
-  it('shows the round and phase right before "Next", not on the scenario card', async () => {
+  it('shows the round and the phases of a round in a status row, setup marking none', async () => {
     await renderTheGathering('game-screen-round-test');
 
-    expect(screen.getByText('Round 0, Setup').nextElementSibling).toBe(button('Next'));
+    const phases = within(screen.getByRole('list', { name: 'Phases' }))
+      .getAllByRole('listitem')
+      .map((phase) => phase.textContent);
+    expect(phases).toEqual(['Mythos', 'Investigation', 'Enemy', 'Upkeep']);
+    expect(currentPhase()).toBeUndefined();
+  });
+
+  it('opens the menu with the way back to the game list and the settings', async () => {
+    await renderTheGathering('game-screen-menu-test');
+
+    fireEvent.click(button('Menu'));
+
+    const menu = within(screen.getByRole('navigation', { name: 'Main' }));
+    expect(menu.getAllByRole('link').map((link) => link.textContent)).toEqual([
+      'All games',
+      'Settings',
+    ]);
   });
 
   it('lays the encounter deck and its discard pile out before the agenda', async () => {

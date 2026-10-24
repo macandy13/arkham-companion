@@ -1,4 +1,4 @@
-import type { CampaignLog } from './campaign/campaign_log';
+import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
 import type { AbilityCommand, TestedAction } from './abilities';
 import type {
   CardCode,
@@ -179,17 +179,30 @@ export interface InvestigatorChanged {
  * becomes `defeated`, and a turn in progress ends with them. Produced by
  * `AdjustInvestigator` and `ResolveEnemyAttack` right after the
  * `InvestigatorChanged` that caused it, and by `DefeatInvestigator`, followed
- * by the clean-up events (`investigatorLeavesEvents`). The cause matters to the
- * campaign: only a defeat by damage or horror earns trauma by itself.
+ * by the clean-up events (`investigatorLeavesEvents`). The defeat matters to
+ * the campaign: a defeat by damage or horror earns trauma by itself, one by a
+ * card effect only the trauma the card names.
  */
-export interface InvestigatorDefeated {
+export type InvestigatorDefeated = {
   type: 'InvestigatorDefeated';
   investigatorId: InvestigatorId;
-  cause: DefeatCause;
-}
+} & Defeat;
 
-/** Why an investigator was defeated (`InvestigatorDefeated`). */
-export type DefeatCause = 'damage' | 'horror' | 'cardEffect';
+/**
+ * Why an investigator was defeated (`InvestigatorDefeated`, kept as
+ * `Investigator.defeat`). Only a card effect names its trauma, as in "is
+ * defeated and suffers 1 physical trauma"; damage and horror imply theirs.
+ */
+export type Defeat =
+  | { readonly cause: 'damage' | 'horror' }
+  | {
+      readonly cause: 'cardEffect';
+      /** The 1 trauma the card names; absent when it names none. */
+      readonly trauma?: TraumaKind;
+    };
+
+/** Why an investigator was defeated. */
+export type DefeatCause = Defeat['cause'];
 
 /**
  * The investigator left the scenario by resigning; their status becomes

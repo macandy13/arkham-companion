@@ -231,7 +231,17 @@ describe('proposeResolution', () => {
         },
       ],
     ],
-    ['by a card effect', { type: 'DefeatInvestigator', investigatorId: alice }, []],
+    ['by a card effect that names none', { type: 'DefeatInvestigator', investigatorId: alice }, []],
+    [
+      'by a card effect that names physical trauma',
+      { type: 'DefeatInvestigator', investigatorId: alice, trauma: 'physical' },
+      [
+        {
+          kind: 'command',
+          command: { type: 'AddTrauma', code: aliceCode, kind: 'physical', amount: 1 },
+        },
+      ],
+    ],
   ] as const)('gives the trauma of a defeat %s', (_, defeat, trauma) => {
     const resolutions: ScenarioResolutions = { byId: { [r1]: [] }, none: [] };
     const { context, state } = table.start();

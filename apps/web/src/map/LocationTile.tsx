@@ -38,7 +38,8 @@ export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyVi
  * under the clues when it has any; then a pawn per investigator there and a round token per enemy
  * at it, in rows along the bottom edge. `enemies` and `investigators` are the open game's pieces
  * at this location; `dragOf` gives the drag handlers of each piece that can be dragged now. Its
- * edit button in the top left corner calls `onEdit`.
+ * edit button in the top left corner calls `onEdit`; without `onEdit` (outside adjust mode) the
+ * tile has none.
  */
 export function LocationTile({
   location,
@@ -53,7 +54,7 @@ export function LocationTile({
   enemies: readonly MapEnemyView[];
   investigators: readonly InvestigatorView[];
   dragOf: (piece: TilePiece) => DragHandlers | undefined;
-  onEdit: () => void;
+  onEdit?: () => void;
   x: number;
   y: number;
 }) {
@@ -98,7 +99,7 @@ export function LocationTile({
       )}
       <LocationOrnament />
       <NameBand location={location} />
-      <EditButton location={location} onEdit={onEdit} />
+      {onEdit && <EditButton location={location} onEdit={onEdit} />}
       {location.attachments?.map((name, i) => (
         <Attachment key={`${name}-${i}`} name={name} origin={attachmentOrigin(i)} />
       ))}

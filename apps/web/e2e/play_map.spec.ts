@@ -13,7 +13,7 @@ test('read the map', { tag: '@flow' }, async ({ page }) => {
   await test.step('Start a quick game', async () => {
     await page.goto('/#/new');
     await startQuickGame(page);
-    await expect(page.getByText('Round 0, Setup')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Setup' })).toBeVisible();
   });
 
   await test.step('Find the Study on its map', async () => {
@@ -129,9 +129,9 @@ test('move an enemy on the map', async ({ page }) => {
   });
 });
 
-// Journey: keep the map in step with the table through a location's menu: reveal a location a
-// card turned over, put doom on it, and place a clue a card adds to the Hallway.
-test('change a location by its menu', async ({ page }) => {
+// Journey: keep the map in step with the table through a location's menu while adjusting the board:
+// reveal a location a card turned over, put doom on it, and place a clue a card adds to the Hallway.
+test('change a location by its menu', { tag: '@flow' }, async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
   const menu = (name: string) => page.getByRole('dialog', { name });
@@ -141,7 +141,8 @@ test('change a location by its menu', async ({ page }) => {
     await expect(room('Attic')).toContainText('Unrevealed');
   });
 
-  await test.step('Open the Attic’s menu, reveal it and put a doom on it', async () => {
+  await test.step('Adjust the board, open the Attic’s menu, reveal it and put a doom on it', async () => {
+    await page.getByRole('button', { name: 'Adjust board' }).click();
     await room('Attic').getByRole('button', { name: 'Edit Attic' }).click();
     await menu('Attic').getByRole('button', { name: 'Reveal' }).click();
     await menu('Attic').getByRole('button', { name: 'Add doom' }).click();
@@ -156,6 +157,12 @@ test('change a location by its menu', async ({ page }) => {
     await menu('Hallway').getByRole('button', { name: 'Add a clue' }).click();
     await expect(menu('Hallway')).toContainText('Clues 1');
     await menu('Hallway').getByRole('button', { name: 'Close' }).click();
+    await expect(room('Hallway').getByRole('img', { name: 'Clues 1' })).toBeVisible();
+  });
+
+  await test.step('Keep the corrections with "Done"', async () => {
+    await page.getByRole('button', { name: 'Done' }).click();
+    await expect(room('Hallway').getByRole('button', { name: 'Edit Hallway' })).toBeHidden();
     await expect(room('Hallway').getByRole('img', { name: 'Clues 1' })).toBeVisible();
   });
 });

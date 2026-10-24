@@ -194,7 +194,7 @@
   height: var(--action-pip-size);
   box-sizing: border-box;
   border: var(--piece-ring-width) solid var(--color-accent);
-  border-radius: 50%;
+  border-radius: var(--radius-round);
 }
 
 #board > #investigators [role='group'] li[data-left] {

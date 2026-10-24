@@ -6,12 +6,13 @@ import { useCardPicture } from '../catalog/cardImages';
 import type { AppState, OpenGame } from '../state/appStore';
 
 /**
- * The play screen's always-on status, laid out like the scenario's cards on the table: the
- * encounter deck and its discard pile (placeholders until the encounter phase draws), the agenda,
- * the act and the scenario card, then the round and phase, "Next", which runs the phase assistant,
- * and undo. The scenario's name is the screen's heading, since the app title already sits in the
- * title bar. Its buttons wait while a step is queued (`OpenGame.busy`), since a second tap would
- * act on whatever the first one leaves open. `board` is the open game's `OpenGame.board`.
+ * The play screen's header, laid out like the scenario's cards on the table: the encounter deck
+ * and its discard pile (placeholders until the encounter phase draws), the agenda, the act and the
+ * scenario card. The scenario's name is the screen's heading. The cards' buttons wait while a step
+ * is queued (`OpenGame.busy`), since a second tap would act on whatever the first one leaves open;
+ * the agenda's and act's steppers show only while the players adjust the board
+ * (`OpenGame.adjusting`). The round, the phase and the buttons that run the game sit in the status
+ * row below (`GameStatus`). `board` is the open game's `OpenGame.board`.
  */
 export function GameHeader({
   store,
@@ -22,28 +23,15 @@ export function GameHeader({
   open: OpenGame;
   board: BoardView;
 }) {
-  const { t } = useTranslation();
-  const { actions } = store.getState();
   const blocked = open.busy;
+  const { adjusting } = open;
 
   return (
     <header>
       <EncounterDeck />
-      <AgendaStatus store={store} board={board} blocked={blocked} />
-      <ActStatus store={store} board={board} blocked={blocked} />
+      <AgendaStatus store={store} board={board} blocked={blocked} adjusting={adjusting} />
+      <ActStatus store={store} board={board} blocked={blocked} adjusting={adjusting} />
       <ScenarioCard open={open} />
-      <p>
-        {t('header.roundPhase', {
-          round: board.round,
-          phase: t(`games.phases.${board.phase}`),
-        })}
-      </p>
-      <button type="button" disabled={blocked} onClick={() => void actions.nextPhase()}>
-        {t('header.next')}
-      </button>
-      <button type="button" disabled={blocked || !open.canUndo} onClick={() => void actions.undo()}>
-        {t('header.undo')}
-      </button>
     </header>
   );
 }
@@ -66,8 +54,8 @@ function EncounterDeck() {
 
 /**
  * The scenario as an upright card, like the reference card on the table. Its name
- * (`OpenGame.scenarioNameKey`) is the screen's heading, since the app title already sits in the
- * title bar.
+ * (`OpenGame.scenarioNameKey`) is the screen's heading, since the play screen shows no app title:
+ * the scenario is what the players are playing.
  */
 function ScenarioCard({ open }: { open: OpenGame }) {
   const { t } = useTranslation();
@@ -81,17 +69,19 @@ function ScenarioCard({ open }: { open: OpenGame }) {
 /**
  * The current agenda as a landscape card (`data-card`, styled like the map's card faces): its
  * name, and on the plate at its foot the doom its threshold counts (all doom in play,
- * `doomInPlay`) with steppers for the doom on the agenda itself, which card effects add or the
- * players correct. The buttons sit on the card to keep the header compact.
+ * `doomInPlay`) and, while adjusting, steppers for the doom on the agenda itself, which card
+ * effects add or the players correct. The buttons sit on the card to keep the header compact.
  */
 function AgendaStatus({
   store,
   board,
   blocked,
+  adjusting,
 }: {
   store: StoreApi<AppState>;
   board: BoardView;
   blocked: boolean;
+  adjusting: boolean;
 }) {
   const { t } = useTranslation();
   const { agenda } = board;
@@ -107,22 +97,26 @@ function AgendaStatus({
             ? t('header.doom', { doom: board.doomInPlay })
             : t('header.doomOf', { doom: board.doomInPlay, threshold: agenda.threshold })}
         </p>
-        <button
-          type="button"
-          aria-label={t('header.removeDoom')}
-          disabled={blocked || agenda.doom === 0}
-          onClick={() => void actions.removeDoom(1)}
-        >
-          −
-        </button>
-        <button
-          type="button"
-          aria-label={t('header.addDoom')}
-          disabled={blocked}
-          onClick={() => void actions.placeDoom(1)}
-        >
-          +
-        </button>
+        {adjusting && (
+          <>
+            <button
+              type="button"
+              aria-label={t('header.removeDoom')}
+              disabled={blocked || agenda.doom === 0}
+              onClick={() => void actions.removeDoom(1)}
+            >
+              −
+            </button>
+            <button
+              type="button"
+              aria-label={t('header.addDoom')}
+              disabled={blocked}
+              onClick={() => void actions.placeDoom(1)}
+            >
+              +
+            </button>
+          </>
+        )}
       </footer>
     </HeaderCard>
   );
@@ -130,18 +124,21 @@ function AgendaStatus({
 
 /**
  * The current act as a landscape card: its name, and on the plate at its foot the clues on the act
- * against the clues it needs, with steppers for them and its advance once there are enough, paid
- * by the clues on the act. The steppers are a correction by hand that leaves the investigators
- * alone, until a dialog moves clues onto the act from the investigators the players pick.
+ * against the clues it needs, with steppers for them while adjusting and its advance once there
+ * are enough, paid by the clues on the act. The steppers are a correction by hand that leaves the
+ * investigators alone, until a dialog moves clues onto the act from the investigators the players
+ * pick. Advancing is play, not a correction, so it waits while the players adjust.
  */
 function ActStatus({
   store,
   board,
   blocked,
+  adjusting,
 }: {
   store: StoreApi<AppState>;
   board: BoardView;
   blocked: boolean;
+  adjusting: boolean;
 }) {
   const { t } = useTranslation();
   const { act } = board;
@@ -154,25 +151,29 @@ function ActStatus({
       {threshold !== undefined && (
         <footer>
           <p>{t('header.cluesOf', { clues, threshold })}</p>
+          {adjusting && (
+            <>
+              <button
+                type="button"
+                aria-label={t('header.removeClue')}
+                disabled={blocked || clues === 0}
+                onClick={() => void actions.adjustActClues(-1)}
+              >
+                −
+              </button>
+              <button
+                type="button"
+                aria-label={t('header.addClue')}
+                disabled={blocked}
+                onClick={() => void actions.adjustActClues(1)}
+              >
+                +
+              </button>
+            </>
+          )}
           <button
             type="button"
-            aria-label={t('header.removeClue')}
-            disabled={blocked || clues === 0}
-            onClick={() => void actions.adjustActClues(-1)}
-          >
-            −
-          </button>
-          <button
-            type="button"
-            aria-label={t('header.addClue')}
-            disabled={blocked}
-            onClick={() => void actions.adjustActClues(1)}
-          >
-            +
-          </button>
-          <button
-            type="button"
-            disabled={blocked || clues < threshold}
+            disabled={blocked || adjusting || clues < threshold}
             onClick={() => void actions.advanceAct([])}
           >
             {t('header.advanceAct')}

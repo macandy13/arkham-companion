@@ -6,6 +6,8 @@
  */
 #app:has(#board) {
   height: 100vh;
+  /* The play screen has no title bar, so the board takes the one row. */
+  grid-template-rows: 1fr;
 }
 
 #app > main:has(#board) {
@@ -21,6 +23,7 @@
   min-height: 0;
   grid-template:
     'header' auto
+    'status' auto
     'map' 1fr
     'investigators' auto /
     1fr;
@@ -30,6 +33,7 @@
   #board {
     grid-template:
       'header header' auto
+      'status status' auto
       'map investigators' 1fr /
       1fr var(--layout-board-panel-width);
   }
@@ -126,12 +130,6 @@
 #notices ul {
   padding-inline-start: 0;
   list-style: none;
-}
-
-/* The round and the turn buttons sit at the right end, apart from the cards. */
-#board > header > p {
-  margin-inline-start: auto;
-  white-space: nowrap;
 }
 
 #board > header h1,
@@ -259,4 +257,104 @@
   /* A long word in a scenario name (more so in German) would otherwise be cut off by the frame. */
   overflow-wrap: anywhere;
   hyphens: auto;
+}
+
+/* While the players adjust the board, a dashed brass line round the map says it is open for corrections. */
+#board[data-adjusting] > #map {
+  outline: var(--adjust-outline-width) dashed var(--color-accent);
+  outline-offset: calc(-1 * var(--space-1));
+}
+
+/*
+ * The status row under the header: the round at the left, the phase track in the middle, the
+ * buttons that run the game at the right, as round icons but for "Next".
+ */
+#board > #status {
+  grid-area: status;
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  padding-block: var(--space-1);
+  overflow: visible;
+}
+
+#status h2 {
+  margin: 0;
+  font-size: var(--font-size-subtitle);
+  white-space: nowrap;
+}
+
+/* The phase track: every phase of the round on one rule, the current one named in the accent. */
+#status ol {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-note);
+}
+
+#status ol > li {
+  padding-block-end: var(--space-1);
+  border-block-end: var(--border-width) solid var(--color-border);
+}
+
+#status ol > li[aria-current] {
+  color: var(--color-text);
+  border-block-end: var(--focus-ring-width) solid var(--color-accent);
+}
+
+/* "Next" is the row's one primary button, filled in brass. */
+#status > button:not([data-icon]) {
+  min-height: var(--button-compact);
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+}
+
+#status button[data-icon] {
+  min-width: var(--button-compact);
+  min-height: var(--button-compact);
+  padding: 0;
+  border-radius: var(--radius-round);
+}
+
+#status button[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+#status button[data-icon='adjust']::before {
+  mask-image: url('./icons/adjust.svg');
+}
+
+#status button[data-icon='undo']::before {
+  mask-image: url('./icons/undo.svg');
+}
+
+#status button[data-icon='menu']::before {
+  mask-image: url('./icons/menu.svg');
+}
+
+/* The menu opens under its button, over the table. */
+#status nav {
+  position: relative;
+}
+
+#status nav ul {
+  position: absolute;
+  z-index: var(--layer-menu);
+  inset-inline-end: 0;
+  display: grid;
+  gap: var(--space-1);
+  min-width: max-content;
+  margin: var(--space-1) 0 0;
+  padding: var(--space-2);
+  list-style: none;
+  border: var(--border-width) solid var(--color-accent);
+  border-radius: var(--radius);
+  background: var(--color-background);
 }

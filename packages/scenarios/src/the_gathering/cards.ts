@@ -177,13 +177,16 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     stage: 3,
     doom: 10,
     // Before act 3 the investigators are trapped; at act 3 nobody is left, so the scenario ends
-    // without a resolution. The physical trauma the card adds is the campaign's to record (M1C).
+    // without a resolution, and the resolution proposal carries the card's physical trauma.
     abilities: [
       duringAct(
         [codes.trapped, codes.theBarrier],
         whenAdvanced(endScenario(GATHERING_RESOLUTIONS.trapped)),
       ),
-      duringAct([codes.whatHaveYouDone], whenAdvanced(defeatEachInvestigator())),
+      duringAct(
+        [codes.whatHaveYouDone],
+        whenAdvanced(defeatEachInvestigator({ trauma: 'physical' })),
+      ),
     ],
   }),
   act({

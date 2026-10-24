@@ -101,6 +101,8 @@
   --font-size-note: 0.75rem;
 
   --radius: 0.5rem;
+  /* A circle: round buttons, pips and tokens. */
+  --radius-round: 50%;
   --border-width: 1px;
   /* Minimum size of anything tappable, for use on a shared tablet. */
   --touch-target: 2.75rem;
@@ -108,6 +110,10 @@
   --button-compact: 1.75rem;
   /* The keyboard focus ring, in the accent colour. */
   --focus-ring-width: 2px;
+  /* The dashed line round the map while the players adjust the board. */
+  --adjust-outline-width: 2px;
+  /* The play screen's menu, above the map and its floating controls. */
+  --layer-menu: 2;
 
   --layout-content-width: 60rem;
   /* The investigators' column beside the map in landscape, as wide as the prototype's. */
