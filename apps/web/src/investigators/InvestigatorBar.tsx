@@ -10,16 +10,20 @@ import './investigators.css';
  * The bar of investigator panels along the foot of the play screen, one per investigator in seat
  * order (`BoardView.investigators`), so everyone's status is in view at once. It replaces the
  * health and sanity dials and the clue and resource piles on the table: each change is a tap on a
- * stepper, which plays `actions`; nothing is tapped while a step is queued (`busy`).
+ * stepper, which plays `actions`; nothing is tapped while a step is queued (`busy`). The steppers
+ * show only while the players adjust the board (`adjusting`, `OpenGame.adjusting`), and the turn
+ * controls wait meanwhile, since a turn step is play, not a correction.
  */
 export function InvestigatorBar({
   board,
   actions,
   busy,
+  adjusting,
 }: {
   board: BoardView;
   actions: GameActions;
   busy: boolean;
+  adjusting: boolean;
 }) {
   // The players pick who goes next in the investigation phase, once no turn is in progress.
   const picking = board.phase === 'investigation' && board.turn === undefined;
@@ -36,6 +40,7 @@ export function InvestigatorBar({
           }
           actions={actions}
           busy={busy}
+          adjusting={adjusting}
         />
       ))}
     </>
@@ -56,6 +61,7 @@ function InvestigatorPanel({
   canStart,
   actions,
   busy,
+  adjusting,
 }: {
   investigator: InvestigatorView;
   onTurn: boolean;
@@ -65,6 +71,7 @@ function InvestigatorPanel({
   canStart: boolean;
   actions: GameActions;
   busy: boolean;
+  adjusting: boolean;
 }) {
   const { t } = useTranslation();
   const nameId = useId();
@@ -90,7 +97,7 @@ function InvestigatorPanel({
         onTurn={onTurn}
         canStart={canStart}
         actions={actions}
-        busy={busy}
+        busy={busy || adjusting}
       />
       <dl>
         <Stat
@@ -98,33 +105,39 @@ function InvestigatorPanel({
           value={health - damage}
           shown={t('investigators.left', { left: health - damage, max: health })}
         >
-          <Steppers
-            lower={{ label: t('investigators.takeDamage'), disabled: off }}
-            raise={{ label: t('investigators.healDamage'), disabled: off || damage === 0 }}
-            onStep={(delta) => adjust('damage', -delta)}
-          />
+          {adjusting && (
+            <Steppers
+              lower={{ label: t('investigators.takeDamage'), disabled: off }}
+              raise={{ label: t('investigators.healDamage'), disabled: off || damage === 0 }}
+              onStep={(delta) => adjust('damage', -delta)}
+            />
+          )}
         </Stat>
         <Stat
           label={t('investigators.sanity')}
           value={sanity - horror}
           shown={t('investigators.left', { left: sanity - horror, max: sanity })}
         >
-          <Steppers
-            lower={{ label: t('investigators.takeHorror'), disabled: off }}
-            raise={{ label: t('investigators.healHorror'), disabled: off || horror === 0 }}
-            onStep={(delta) => adjust('horror', -delta)}
-          />
+          {adjusting && (
+            <Steppers
+              lower={{ label: t('investigators.takeHorror'), disabled: off }}
+              raise={{ label: t('investigators.healHorror'), disabled: off || horror === 0 }}
+              onStep={(delta) => adjust('horror', -delta)}
+            />
+          )}
         </Stat>
         <Stat label={t('investigators.clues')} value={investigator.clues} />
         <Stat label={t('investigators.resources')} value={investigator.resources}>
-          <Steppers
-            lower={{
-              label: t('investigators.spendResource'),
-              disabled: off || investigator.resources === 0,
-            }}
-            raise={{ label: t('investigators.gainResource'), disabled: off }}
-            onStep={(delta) => adjust('resources', delta)}
-          />
+          {adjusting && (
+            <Steppers
+              lower={{
+                label: t('investigators.spendResource'),
+                disabled: off || investigator.resources === 0,
+              }}
+              raise={{ label: t('investigators.gainResource'), disabled: off }}
+              onStep={(delta) => adjust('resources', delta)}
+            />
+          )}
         </Stat>
         {investigator.doom !== undefined && (
           <Stat label={t('investigators.doom')} value={investigator.doom} />

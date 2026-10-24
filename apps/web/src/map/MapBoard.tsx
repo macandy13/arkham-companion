@@ -38,15 +38,19 @@ import './map.css';
  * later). The players pan, zoom and pinch each map, and move pieces by dragging them
  * (`MapDrawing`), which plays `actions`; no piece moves while a step is still queued (`busy`,
  * `OpenGame.busy`), since the turn it was dragged in may have ended by the time the move plays.
+ * While the players adjust the board (`adjusting`, `OpenGame.adjusting`), the tiles' edit buttons
+ * show and the pieces stay put, since a move is a step of play, not a correction.
  */
 export function MapBoard({
   board,
   actions,
   busy,
+  adjusting,
 }: {
   board: BoardView;
   actions: GameActions;
   busy: boolean;
+  adjusting: boolean;
 }) {
   const { t } = useTranslation();
   const idPrefix = useId();
@@ -56,7 +60,9 @@ export function MapBoard({
   const current = shown.find((map) => map.id === chosen) ?? shown[0];
   if (!current) return null;
   if (shown.length === 1)
-    return <MapDrawing map={current} board={board} actions={actions} busy={busy} />;
+    return (
+      <MapDrawing map={current} board={board} actions={actions} busy={busy} adjusting={adjusting} />
+    );
 
   const tabId = (map: MapView) => `${idPrefix}-tab-${map.id}`;
   const panelId = `${idPrefix}-panel`;
@@ -79,7 +85,14 @@ export function MapBoard({
       </div>
       <div id={panelId} role="tabpanel" aria-labelledby={tabId(current)}>
         {/* Keyed by map, so a newly chosen map starts fitted instead of at the last one's zoom. */}
-        <MapDrawing key={current.id} map={current} board={board} actions={actions} busy={busy} />
+        <MapDrawing
+          key={current.id}
+          map={current}
+          board={board}
+          actions={actions}
+          busy={busy}
+          adjusting={adjusting}
+        />
       </div>
     </>
   );
@@ -103,19 +116,21 @@ type DraggedPiece = TilePiece & { from: InstanceId };
  *   (`GameActions.moveEnemy`); the players drag it only when a card tells them to, so the map
  *   does not ask which card.
  *
- * A tile's edit button opens its menu (`LocationMenu`), where the players reveal it and change its
- * clues and doom.
+ * While adjusting, a tile's edit button opens its menu (`LocationMenu`), where the players reveal
+ * it and change its clues and doom; no piece is dragged meanwhile.
  */
 function MapDrawing({
   map,
   board,
   actions,
   busy,
+  adjusting,
 }: {
   map: MapView;
   board: BoardView;
   actions: GameActions;
   busy: boolean;
+  adjusting: boolean;
 }) {
   const investigators = board.investigators;
   const captionId = useId();
@@ -136,7 +151,7 @@ function MapDrawing({
   const [menuFor, setMenuFor] = useState<InstanceId>();
   const menuLocation = map.locations.find(({ id }) => id === menuFor);
   const draggable = (piece: TilePiece) =>
-    !busy && ('enemy' in piece || piece.investigator.id === mover?.id);
+    !busy && !adjusting && ('enemy' in piece || piece.investigator.id === mover?.id);
   const { width, height } = drawingSize(Object.values(cells));
   return (
     <figure aria-labelledby={captionId}>
@@ -184,7 +199,7 @@ function MapDrawing({
                       location={location}
                       enemies={map.enemies[location.id] ?? []}
                       investigators={pawnsAt(board, location)}
-                      onEdit={() => setMenuFor(location.id)}
+                      onEdit={adjusting ? () => setMenuFor(location.id) : undefined}
                       dragOf={(piece) =>
                         draggable(piece)
                           ? drag.handlers({ ...piece, from: location.id })
@@ -202,7 +217,7 @@ function MapDrawing({
           </svg>
         </TransformComponent>
       </TransformWrapper>
-      {menuLocation && (
+      {adjusting && menuLocation && (
         <LocationMenu
           location={menuLocation}
           actions={actions}

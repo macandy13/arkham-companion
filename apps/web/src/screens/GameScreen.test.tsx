@@ -112,8 +112,52 @@ describe('GameScreen header', () => {
     expect(act.textContent).toContain('Clues 0 / 2');
   });
 
+  it('shows the steppers only while adjusting, with "Done" and "Cancel" in place of "Next"', async () => {
+    await renderTheGathering('game-screen-adjust-mode-test');
+    const before = screen.queryByRole('button', { name: 'Add doom' });
+
+    fireEvent.click(button('Adjust board'));
+    await screen.findByRole('button', { name: 'Done' });
+
+    expect(before).toBeNull();
+    expect(button('Add doom')).toBeTruthy();
+    expect(button('Cancel')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Next' })).toBeNull();
+  });
+
+  it('keeps an adjustment of several taps on "Done" and takes it all back with one undo', async () => {
+    await renderTheGathering('game-screen-adjust-done-test');
+    fireEvent.click(button('Adjust board'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Add doom' }));
+    await screen.findByText('Doom 1 / 3');
+    fireEvent.click(button('Add doom'));
+    await screen.findByText('Doom 2 / 3');
+
+    fireEvent.click(button('Done'));
+    await screen.findByRole('button', { name: 'Next' });
+    const kept = screen.getByRole('region', { name: 'Agenda' }).textContent;
+    fireEvent.click(button('Undo'));
+
+    expect(kept).toContain('Doom 2 / 3');
+    expect(await screen.findByText('Doom 0 / 3')).toBeTruthy();
+  });
+
+  it('drops the adjustment on "Cancel"', async () => {
+    await renderTheGathering('game-screen-adjust-cancel-test');
+    fireEvent.click(button('Adjust board'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Add doom' }));
+    await screen.findByText('Doom 1 / 3');
+
+    fireEvent.click(button('Cancel'));
+
+    expect(await screen.findByText('Doom 0 / 3')).toBeTruthy();
+    expect(button('Undo').disabled).toBe(true);
+  });
+
   it('adds doom to the agenda and takes it off again', async () => {
     await renderTheGathering('game-screen-doom-test');
+    fireEvent.click(button('Adjust board'));
+    await screen.findByRole('button', { name: 'Done' });
     const removeAtZero = button('Remove doom').disabled;
 
     fireEvent.click(button('Add doom'));
@@ -126,6 +170,8 @@ describe('GameScreen header', () => {
 
   it("puts a clue on the act and takes it off again, leaving Alder's clues alone", async () => {
     const store = await renderTheGathering('game-screen-act-clues-test');
+    fireEvent.click(button('Adjust board'));
+    await screen.findByRole('button', { name: 'Done' });
     const removeAtZero = button('Remove a clue').disabled;
 
     fireEvent.click(button('Add a clue'));
@@ -141,15 +187,23 @@ describe('GameScreen header', () => {
   it('advances the act once the clues on it reach what it needs', async () => {
     await renderTheGathering('game-screen-act-advance-test');
     // Trapped needs 2 clues for one investigator.
-    fireEvent.click(button('Add a clue'));
+    fireEvent.click(button('Adjust board'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Add a clue' }));
     await screen.findByText('Clues 1 / 2');
+    fireEvent.click(button('Done'));
+    await screen.findByRole('button', { name: 'Next' });
     const advanceAtOne = button('Advance').disabled;
-    fireEvent.click(button('Add a clue'));
+    fireEvent.click(button('Adjust board'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Add a clue' }));
     await screen.findByText('Clues 2 / 2');
+    const advanceWhileAdjusting = button('Advance').disabled;
+    fireEvent.click(button('Done'));
+    await screen.findByRole('button', { name: 'Next' });
 
     fireEvent.click(button('Advance'));
 
     expect(advanceAtOne).toBe(true);
+    expect(advanceWhileAdjusting).toBe(true);
     expect(await screen.findByText('The Barrier')).toBeTruthy();
   });
 

@@ -51,6 +51,7 @@ test(
 
 test('the Hallway’s menu open over the board', { tag: '@shot' }, async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+  await page.getByRole('button', { name: 'Adjust board' }).click();
 
   await page
     .getByRole('figure', { name: 'House' })
