@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { InvestigatorView, LocationView, MapEnemyView } from '@arkham/engine';
 import { LOCATION_ART, PORTRAIT_SCAN, portraitArtViewBox } from '../catalog/cardArt';
 import { useCardPicture } from '../catalog/cardImages';
-import { LocationOrnament } from './cardOrnament';
+import { LocationOrnament, TYPE_PLATE_CENTRE } from './cardOrnament';
 import {
   ART_WINDOW,
   ATTACHMENT,
@@ -165,6 +165,23 @@ export function CardPatterns() {
         <rect width={size} height={size} />
         <path d={`M 0 ${size} L ${size} 0 M 0 0 L ${size} ${size}`} />
       </pattern>
+      <filter id="card-paper-grain">
+        <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="7" />
+        <feColorMatrix
+          type="matrix"
+          values="0 0 0 0 0.36  0 0 0 0 0.25  0 0 0 0 0.12  0 0 0 -1.2 0.6"
+          result="foxing"
+        />
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed="3" />
+        <feColorMatrix type="matrix" values="0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 0 0.1  0 0 0 0.5 -0.15" />
+        <feMerge>
+          <feMergeNode in="foxing" />
+          <feMergeNode />
+        </feMerge>
+      </filter>
+      <pattern id="card-paper" width={TILE.width} height={TILE.height} patternUnits="userSpaceOnUse">
+        <rect width={TILE.width} height={TILE.height} />
+      </pattern>
       {(['revealed', 'unrevealed'] as const).map((side) => (
         <linearGradient key={side} id={`card-face-${side}`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" />
@@ -176,27 +193,18 @@ export function CardPatterns() {
 }
 
 /**
- * The tile's name band: the location's name, left of the edit button, and on an unrevealed tile a
- * second line saying so, since the unrevealed side shows no shroud or clues.
+ * The tile's name and type: the location's name on the name plate, centred like the printed name,
+ * and on the type plate "Location", or on an unrevealed tile "Unrevealed", since that side shows
+ * no shroud or clues.
  */
 function NameBand({ location }: { location: LocationView }) {
   const { t } = useTranslation();
-  const buttonLeft = TILE.width - CONTENT.inset - 2 * CONTENT.pawnRadius;
-  const x = (CONTENT.inset + buttonLeft) / 2;
-  if (location.revealed)
-    return (
-      <text x={x} y={CONTENT.band / 2}>
-        {location.name}
-      </text>
-    );
   return (
     <>
-      <text x={x} y={CONTENT.band / 3}>
+      <text x={TILE.width / 2} y={CONTENT.band / 2}>
         {location.name}
       </text>
-      <text x={x} y={(2 * CONTENT.band) / 3}>
-        {t('map.unrevealed')}
-      </text>
+      <text {...TYPE_PLATE_CENTRE}>{t(location.revealed ? 'map.location' : 'map.unrevealed')}</text>
     </>
   );
 }
@@ -244,15 +252,15 @@ function Attachment({ name, origin: { x, y } }: { name: string; origin: Point })
 }
 
 /**
- * The tile's edit button, a round button with a pencil at the right end of its name band, named after the
- * location. It is an SVG group rather than an HTML button, since it sits inside the drawing, so it
+ * The tile's edit button, a round button with a pencil in its top left corner, where the printed
+ * card shows its connection icon, named after the location. It is an SVG group rather than an HTML button, since it sits inside the drawing, so it
  * takes the keyboard (Enter, Space) itself.
  */
 function EditButton({ location, onEdit }: { location: LocationView; onEdit: () => void }) {
   const { t } = useTranslation();
   const radius = CONTENT.pawnRadius;
-  const x = TILE.width - CONTENT.inset - radius;
-  const y = CONTENT.inset + radius;
+  const x = radius;
+  const y = radius;
   const onKeyDown = (event: KeyboardEvent<SVGGElement>) => {
     if (event.key !== 'Enter' && event.key !== ' ') return;
     event.preventDefault();

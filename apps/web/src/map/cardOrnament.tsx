@@ -1,169 +1,242 @@
-import { ART_WINDOW, CONTENT, TILE } from './mapLayout';
+import { ART_WINDOW, CLUES_CENTRE, CONTENT, pawnOffset, TILE } from './mapLayout';
 
-/** How far the ornament's rules sit inside the tile's edge and outside the art window. */
-const RULE = { edge: 5, art: 3, corner: 4, bracket: 10, diamond: 3 } as const;
+/**
+ * The parts of a location card's frame, in SVG user units on a tile, placed where the printed
+ * card has them (a tile is half a scan): the rounded corner the frame follows, the name plate's
+ * lowest edge, the dark band under it, the pendant hanging from that band, the arched type line
+ * across the foot of the art with its medallion and type plate, and the arched band at the foot
+ * that holds the pieces.
+ */
+const FRAME = {
+  corner: 8,
+  plateEdge: CONTENT.band,
+  plateRise: 8,
+  plateSwoop: 38,
+  bandBottom: CONTENT.band + 6,
+  pendant: { half: 24, inlayHalf: 14, depth: 12, inlayDepth: 7, wing: 9 },
+  typeLine: { rise: 6, medallion: 10, plateHalf: 34, plateHeight: 9, notch: 3 },
+  footRise: 38,
+  footEnd: 16,
+  gilt: 2.5,
+} as const;
 
-const centre = TILE.width / 2;
-const artRight = ART_WINDOW.x + ART_WINDOW.width;
+const width = TILE.width;
+const height = TILE.height;
+const middle = width / 2;
 const artBottom = ART_WINDOW.y + ART_WINDOW.height;
 
-/** A small diamond centred on (`x`, `y`), the ornament's recurring jewel. */
-function diamond(x: number, y: number, size: number = RULE.diamond): string {
+/** A small diamond centred on (`x`, `y`), the frame's jewel. */
+function diamond(x: number, y: number, size: number): string {
   return `M ${x} ${y - size} L ${x + size} ${y} L ${x} ${y + size} L ${x - size} ${y} Z`;
 }
 
-/** The outline of the rectangle (`x`, `y`, `width`, `height`) with its corners cut by `cut`. */
-function cutRectangle(x: number, y: number, width: number, height: number, cut: number): string {
-  const right = x + width;
-  const bottom = y + height;
-  return [
-    `M ${x + cut} ${y} H ${right - cut} L ${right} ${y + cut} V ${bottom - cut}`,
-    `L ${right - cut} ${bottom} H ${x + cut} L ${x} ${bottom - cut} V ${y + cut} Z`,
-  ].join(' ');
+/** A circle centred on (`x`, `y`) as a path, so every part of the frame is a `path`. */
+function circle(x: number, y: number, r: number): string {
+  return `M ${x - r} ${y} A ${r} ${r} 0 1 1 ${x + r} ${y} A ${r} ${r} 0 1 1 ${x - r} ${y} Z`;
 }
 
-/** The inner rule along the tile's edge, with cut corners and a jewel in each. */
-const EDGE_RULE = cutRectangle(
-  RULE.edge,
-  RULE.edge,
-  TILE.width - 2 * RULE.edge,
-  TILE.height - 2 * RULE.edge,
-  RULE.corner,
-);
-const EDGE_JEWELS = (() => {
-  const near = RULE.edge + RULE.corner;
-  const right = TILE.width - near;
-  const bottom = TILE.height - near;
-  const size = RULE.diamond - 1;
-  return [
-    diamond(near, near, size),
-    diamond(right, near, size),
-    diamond(near, bottom, size),
-    diamond(right, bottom, size),
-  ].join(' ');
+/** The top edge of the card, round at both corners, from its left edge to its right one. */
+const TOP_EDGE = (() => {
+  const c = FRAME.corner;
+  return `M 0 ${c} A ${c} ${c} 0 0 1 ${c} 0 H ${width - c} A ${c} ${c} 0 0 1 ${width} ${c}`;
 })();
 
 /**
- * A swirl in each corner inside the edge rule: two quarter arcs, a large and a small one, bowed
- * towards the corner, like the filigree in the corners of the game's book pages.
+ * The name plate's lower edge `drop` units lower, drawn on from its right end to its left one:
+ * flat under the name, sweeping up into both top corners like the printed plate.
  */
-const CORNER_SWIRLS = (() => {
-  const near = RULE.edge + RULE.art;
-  const far = { x: TILE.width - near, y: TILE.height - near };
-  return [RULE.bracket, RULE.bracket / 2 + 1]
-    .flatMap((r) => [
-      `M ${near} ${near + r} A ${r} ${r} 0 0 1 ${near + r} ${near}`,
-      `M ${far.x - r} ${near} A ${r} ${r} 0 0 1 ${far.x} ${near + r}`,
-      `M ${near} ${far.y - r} A ${r} ${r} 0 0 0 ${near + r} ${far.y}`,
-      `M ${far.x - r} ${far.y} A ${r} ${r} 0 0 0 ${far.x} ${far.y - r}`,
-    ])
-    .join(' ');
+function plateEdgeLeftwards(drop: number): string {
+  const y = FRAME.plateEdge + drop;
+  const end = FRAME.plateRise + drop;
+  const swoop = FRAME.plateSwoop;
+  return [
+    `C ${width - 10} ${y} ${width - 20} ${y} ${width - swoop} ${y}`,
+    `H ${swoop} C 20 ${y} 10 ${y} 0 ${end}`,
+  ].join(' ');
+}
+
+/** The name plate's lower edge `drop` units lower, as a line of its own. */
+function plateEdge(drop: number): string {
+  return `M ${width} ${FRAME.plateRise + drop} ${plateEdgeLeftwards(drop)}`;
+}
+
+/** The dark band along the top that the name plate lies on. */
+const TOP_BAND = `${TOP_EDGE} V ${FRAME.bandBottom} H 0 Z`;
+
+/** The name plate: parchment from the top edge down to its sweeping lower edge. */
+const NAME_PLATE = `${TOP_EDGE} ${plateEdgeLeftwards(0)} Z`;
+
+/** The gilt rules of the top band: along the plate's edge, engraved across the band, and its foot. */
+const TOP_GILT = [
+  plateEdge(0),
+  plateEdge(FRAME.gilt),
+  `M 0 ${FRAME.bandBottom} H ${width}`,
+].join(' ');
+
+/** The double rule under the name, as the printed plate underlines it. */
+const NAME_RULE = (() => {
+  const y = FRAME.plateEdge - FRAME.gilt;
+  const reach = middle - FRAME.plateSwoop;
+  return `M ${middle - reach} ${y} H ${middle + reach} M ${middle - reach / 2} ${y - 1.5} H ${middle + reach / 2}`;
 })();
 
 /**
- * The name banner: a ribbon across the top with notched ends, behind the name and the edit
- * button, like the banner a printed location card carries its name on.
+ * The pendant hanging from the top band into the art: a wide chevron with small wings and an
+ * inlaid chevron in the band's colour, where an unrevealed card shows a keyhole (`KEYHOLE`).
  */
-function banner(inset: number): string {
-  const left = CONTENT.inset + inset;
-  const right = TILE.width - CONTENT.inset - inset;
-  const top = RULE.edge + RULE.art + inset;
-  const bottom = CONTENT.band - RULE.art - inset;
-  const middle = (top + bottom) / 2;
-  const notch = RULE.bracket / 2;
-  return [
-    `M ${left} ${top} H ${right} L ${right - notch} ${middle} L ${right} ${bottom}`,
-    `H ${left} L ${left + notch} ${middle} Z`,
-  ].join(' ');
-}
-const BANNER = banner(0);
-/** A second rule just inside the banner's edge, so the ribbon reads as embossed. */
-const BANNER_RULE = banner(2);
-
-/** A second rule around the art window, and an L-shaped bracket on each of its corners. */
-const ART_RULE = cutRectangle(
-  ART_WINDOW.x - RULE.art,
-  ART_WINDOW.y - RULE.art,
-  ART_WINDOW.width + 2 * RULE.art,
-  ART_WINDOW.height + 2 * RULE.art,
-  RULE.art,
-);
-const ART_BRACKETS = (() => {
-  const b = RULE.bracket;
-  const left = ART_WINDOW.x - RULE.art;
-  const right = artRight + RULE.art;
-  const top = ART_WINDOW.y - RULE.art;
-  const bottom = artBottom + RULE.art;
-  return [
-    `M ${left} ${top + b} V ${top} H ${left + b}`,
-    `M ${right - b} ${top} H ${right} V ${top + b}`,
-    `M ${left} ${bottom - b} V ${bottom} H ${left + b}`,
-    `M ${right - b} ${bottom} H ${right} V ${bottom - b}`,
-  ].join(' ');
-})();
-
-/** The pendant hanging from the banner into the art: a chevron with a jewel under it. */
 const PENDANT = (() => {
-  const half = CONTENT.pawnRadius;
-  const top = CONTENT.band - RULE.art;
-  return `M ${centre - half} ${top} L ${centre} ${top + half} L ${centre + half} ${top} Z`;
-})();
-const PENDANT_JEWEL = diamond(centre, CONTENT.band - RULE.art + CONTENT.pawnRadius + RULE.diamond);
-
-/**
- * The divider under the art, like a book's chapter rule: two rules running out from a jewel to
- * small curls, between the art and the pieces' rows.
- */
-const DIVIDER_Y = artBottom + RULE.art + 2 * RULE.diamond + 2;
-const DIVIDER = (() => {
-  const gap = 2 * RULE.diamond;
-  const reach = ART_WINDOW.width / 2 - RULE.bracket;
-  const curl = RULE.diamond;
-  const y = DIVIDER_Y;
+  const { half, depth, wing } = FRAME.pendant;
+  const top = FRAME.bandBottom;
   return [
-    `M ${centre - gap} ${y} H ${centre - reach}`,
-    `q ${-curl} 0 ${-curl} ${-curl} q 0 ${-curl} ${curl} ${-curl} q ${curl / 2} 0 ${curl / 2} ${curl / 2}`,
-    `M ${centre + gap} ${y} H ${centre + reach}`,
-    `q ${curl} 0 ${curl} ${-curl} q 0 ${-curl} ${-curl} ${-curl} q ${-curl / 2} 0 ${-curl / 2} ${curl / 2}`,
+    `M ${middle - half} ${top} H ${middle + half} L ${middle} ${top + depth} Z`,
+    `M ${middle - half - wing} ${top} H ${middle - half} L ${middle - half - wing / 2} ${top + wing / 2} Z`,
+    `M ${middle + half + wing} ${top} H ${middle + half} L ${middle + half + wing / 2} ${top + wing / 2} Z`,
   ].join(' ');
 })();
-const DIVIDER_JEWEL = diamond(centre, DIVIDER_Y);
+const PENDANT_INLAY = (() => {
+  const { inlayHalf, inlayDepth } = FRAME.pendant;
+  const top = FRAME.bandBottom;
+  return `M ${middle - inlayHalf} ${top} H ${middle + inlayHalf} L ${middle} ${top + inlayDepth} Z`;
+})();
+const KEYHOLE = (() => {
+  const y = FRAME.bandBottom + 2;
+  return `${circle(middle, y, 1.3)} M ${middle - 0.6} ${y + 0.8} H ${middle + 0.6} L ${middle + 1} ${y + 3} H ${middle - 1} Z`;
+})();
 
 /**
- * The text box under the divider, where the pieces stand: a rule with rounded upper corners, like
- * the box a printed card's text sits in.
+ * The thin gilt arcs a location's unrevealed side draws across its art: two great circles
+ * crossing under the pendant and a rule near each edge. They stand in for the art's own arcs,
+ * which a picture of the card already carries.
  */
-const TEXT_BOX = (() => {
-  const left = CONTENT.inset;
-  const right = TILE.width - CONTENT.inset;
-  const top = DIVIDER_Y + 2 * RULE.diamond;
-  const bottom = TILE.height - CONTENT.inset;
-  const r = RULE.bracket;
+const VEIL = (() => {
+  const r = 78;
+  const shift = 7;
+  const reach = Math.sqrt(r * r - (width - middle - shift) ** 2);
+  const foot = artBottom - 14;
+  const top = FRAME.bandBottom;
   return [
-    `M ${left} ${bottom} V ${top + r} A ${r} ${r} 0 0 1 ${left + r} ${top}`,
-    `H ${right - r} A ${r} ${r} 0 0 1 ${right} ${top + r} V ${bottom} Z`,
+    `M 4 ${foot} A ${r} ${r} 0 0 1 ${width} ${foot - reach}`,
+    `M ${width - 4} ${foot} A ${r} ${r} 0 0 0 0 ${foot - reach}`,
+    `M 7 ${top} V ${foot} M ${width - 7} ${top} V ${foot}`,
   ].join(' ');
 })();
 
+/** The top edge of the type line: an arch across the foot of the art, highest in the middle. */
+function typeLineArch(drop: number): string {
+  const end = artBottom - FRAME.typeLine.plateHeight - 3 + drop;
+  return `M 0 ${end} Q ${middle} ${end - 2 * FRAME.typeLine.rise} ${width} ${end}`;
+}
+
+/** The type line: the arched band across the foot of the art, under the shroud and clues. */
+const TYPE_LINE = `${typeLineArch(0)} V ${artBottom} H 0 Z`;
+const TYPE_GILT = [typeLineArch(0), typeLineArch(FRAME.gilt), `M 0 ${artBottom} H ${width}`].join(
+  ' ',
+);
+
+/** The type line's medallion, where a printed card shows its encounter set's icon. */
+const MEDALLION_CENTRE = {
+  x: middle,
+  y: artBottom - FRAME.typeLine.plateHeight - 3 - FRAME.typeLine.rise,
+};
+const MEDALLION = circle(MEDALLION_CENTRE.x, MEDALLION_CENTRE.y, FRAME.typeLine.medallion);
+const MEDALLION_RING = circle(MEDALLION_CENTRE.x, MEDALLION_CENTRE.y, FRAME.typeLine.medallion - 2.5);
+const MEDALLION_JEWEL = diamond(MEDALLION_CENTRE.x, MEDALLION_CENTRE.y, 3.5);
+
+/** The plate on the type line that names the card's type, notched at both ends. */
+const TYPE_PLATE = (() => {
+  const { plateHalf, plateHeight, notch } = FRAME.typeLine;
+  const bottom = artBottom - 1;
+  const top = bottom - plateHeight;
+  const y = (top + bottom) / 2;
+  const left = middle - plateHalf;
+  const right = middle + plateHalf;
+  return `M ${left} ${top} H ${right} L ${right - notch} ${y} L ${right} ${bottom} H ${left} L ${left + notch} ${y} Z`;
+})();
+
+/** Where the type plate's text sits: its middle. */
+export const TYPE_PLATE_CENTRE = {
+  x: middle,
+  y: artBottom - 1 - FRAME.typeLine.plateHeight / 2,
+} as const;
+
+/** The magnifier's handle on the clue circle, pointing down to the right as on the printed card. */
+const HANDLE = (() => {
+  const reach = CONTENT.pawnRadius * Math.SQRT1_2;
+  const x = CLUES_CENTRE.x + reach;
+  const y = CLUES_CENTRE.y + reach;
+  return `M ${x} ${y} L ${width - 1} ${y + 6}`;
+})();
+
+/** Faint rings in the text box, like the engraved pattern behind a printed card's text. */
+const WATERMARK = (() => {
+  const y = (artBottom + height - FRAME.footRise) / 2 + 4;
+  return [circle(middle, y, 24), circle(middle, y, 20), diamond(middle, y, 12)].join(' ');
+})();
+
+/** The card's edge, drawn over the bands and the art so it stays whole, as on the printed card. */
+const EDGE = (() => {
+  const c = FRAME.corner;
+  return `${TOP_EDGE} V ${height - c} A ${c} ${c} 0 0 1 ${width - c} ${height} H ${c} A ${c} ${c} 0 0 1 0 ${height - c} Z`;
+})();
+
+/** The text box: the lighter parchment from the type line to the foot. */
+const TEXT_BOX = `M 0 ${artBottom} H ${width} V ${height - FRAME.corner} H 0 Z`;
+
+/** The foot's arch, `drop` units lower: from both edges up to its top in the middle. */
+function footArch(drop: number): string {
+  const end = height - FRAME.footEnd + drop;
+  return `M 0 ${end} Q ${middle} ${end - 2 * (FRAME.footRise - FRAME.footEnd)} ${width} ${end}`;
+}
+
+/** The foot: the arched dark band along the bottom where the pieces stand. */
+const FOOT = (() => {
+  const c = FRAME.corner;
+  return `${footArch(0)} V ${height - c} A ${c} ${c} 0 0 1 ${width - c} ${height} H ${c} A ${c} ${c} 0 0 1 0 ${height - c} Z`;
+})();
+const FOOT_GILT = [footArch(0), footArch(FRAME.gilt)].join(' ');
+
+/** A socket in the foot for each piece of the first row, like the printed connection circles. */
+const SOCKETS = [0, 1, 2, 3]
+  .map((index) => pawnOffset(index))
+  .map(({ x, y }) => circle(x, y, CONTENT.pawnRadius))
+  .join(' ');
+
 /**
- * The ornament of a location tile drawn in the style of the printed cards and the game's books,
- * our own drawing (no FFG art): an inner rule along the edge with jewelled and swirled corners,
- * the embossed name banner, a bracketed second rule around the art window, a pendant hanging from
- * the banner, a chapter-rule divider under the art and the text box below it. It is decoration only (`aria-hidden`); `data-ornament` lets
- * the stylesheet ink it and hide it under a whole card scan. Each part is a `path` with
- * `data-part`, so the stylesheet can fill the banner, the box and the jewels and only stroke the rules.
+ * The frame of a location tile drawn after the printed location cards, our own drawing (no FFG
+ * art): the name plate sweeping up into the top corners over a dark band with gilt rules, a
+ * pendant hanging into the art (with a keyhole on the unrevealed side), thin gilt arcs over the
+ * unrevealed side's art, the arched type line across the foot of the art with its medallion and
+ * type plate, the magnifier handle of the clue circle, the text box with a faint engraving, and
+ * the arched foot whose sockets the pieces stand in, and the card's dark edge over all of it. It is decoration only (`aria-hidden`);
+ * `data-ornament` lets the stylesheet colour it for the tile's side and hide it under a whole card
+ * scan. Each part is a `path` named by `data-part`, so the stylesheet fills the plates and bands
+ * and only strokes the rules.
  */
 export function LocationOrnament() {
   return (
     <g aria-hidden="true" data-ornament="">
       <path data-part="box" d={TEXT_BOX} />
-      <path
-        data-part="rule"
-        d={`${EDGE_RULE} ${CORNER_SWIRLS} ${ART_RULE} ${ART_BRACKETS} ${DIVIDER}`}
-      />
-      <path data-part="banner" d={BANNER} />
-      <path data-part="rule" d={BANNER_RULE} />
-      <path data-part="jewel" d={`${EDGE_JEWELS} ${PENDANT} ${PENDANT_JEWEL} ${DIVIDER_JEWEL}`} />
+      <path data-part="watermark" d={WATERMARK} />
+      <path data-part="veil" d={VEIL} />
+      <path data-part="band" d={TOP_BAND} />
+      <path data-part="plate" d={NAME_PLATE} />
+      <path data-part="paper" d={`${NAME_PLATE} ${TEXT_BOX}`} />
+      <path data-part="gilt" d={TOP_GILT} />
+      <path data-part="rule" d={NAME_RULE} />
+      <path data-part="pendant" d={PENDANT} />
+      <path data-part="inlay" d={PENDANT_INLAY} />
+      <path data-part="keyhole" d={KEYHOLE} />
+      <path data-part="band" d={TYPE_LINE} />
+      <path data-part="gilt" d={TYPE_GILT} />
+      <path data-part="medallion" d={MEDALLION} />
+      <path data-part="gilt" d={MEDALLION_RING} />
+      <path data-part="jewel" d={MEDALLION_JEWEL} />
+      <path data-part="pendant" d={TYPE_PLATE} />
+      <path data-part="handle" d={HANDLE} />
+      <path data-part="band" d={FOOT} />
+      <path data-part="gilt" d={FOOT_GILT} />
+      <path data-part="socket" d={SOCKETS} />
+      <path data-part="edge" d={EDGE} />
     </g>
   );
 }

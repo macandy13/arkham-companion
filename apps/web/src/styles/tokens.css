@@ -57,6 +57,14 @@
   --color-ink: #2b1e12;
   --color-ink-muted: #6a5536;
   --color-card-edge: #3d2b19;
+  /*
+   * The dark bands of a printed location's frame (under its name, across the foot of its art and
+   * along its foot): dark wood on the revealed side, deep green on the unrevealed one, and the thin
+   * gilt rules engraved on them.
+   */
+  --color-card-band: #4a3222;
+  --color-card-band-back: #3c5638;
+  --color-card-gilt: #d8c48e;
   /* The shroud token, a dark disc like the printed shroud icon's. */
   --color-token-shroud: #2c2c33;
 
@@ -101,6 +109,13 @@
   --card-pattern-line-width: 1px;
   /* The rules of the ornament drawn on card faces in the printed cards' style (cardOrnament.tsx). */
   --card-ornament-line-width: 1px;
+  --card-gilt-line-width: 0.75px;
+  /* The magnifier's handle on a location's clue circle. */
+  --card-handle-width: 4px;
+  /* A location's name on its name plate and its type on the type plate, in SVG user units. */
+  --card-name-size: 13px;
+  --card-type-size: 6.5px;
+  --card-type-spacing: 0.08em;
   /*
    * The art area of a card drawn in HTML (the agenda and act) without its image: the map's SVG
    * hatch (LocationTile `CardPatterns`), lines from bottom left to top right in a 20-unit cell,
