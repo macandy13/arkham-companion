@@ -900,6 +900,14 @@ export function defeatEachInvestigator(): AbilityEffect {
   return { type: 'DefeatInvestigator', investigatorId: { ref: 'eachInvestigator' } };
 }
 
+/** One answer of a choice in card data: its label and what it does once picked. */
+export interface ChoiceOption {
+  id: string;
+  /** i18n key. A part the engine does not track (player cards) is in the label only, for the players. */
+  label: string;
+  effects: AbilityEffect[];
+}
+
 /**
  * "The lead investigator must decide (choose one)": a choice for the lead
  * with one option per answer, each running its effects once picked, written
@@ -908,7 +916,36 @@ export function defeatEachInvestigator(): AbilityEffect {
 export function leadDecides(
   id: DecisionId,
   prompt: string,
-  options: readonly { id: string; label: string; effects: AbilityEffect[] }[],
+  options: readonly ChoiceOption[],
+): AbilityEffect {
+  return choice(id, prompt, { kind: 'lead' }, options);
+}
+
+/**
+ * "You must either …": the same choice for the investigator the window names
+ * (the drawer of a revelation), written
+ * `youMustEither(id, prompt, [{ id: 'horror', label, effects: [takeHorror(2)] }, …])`.
+ * An option that hits player cards ("draw 2 cards") runs only the rest of its
+ * effects; the players do the player-card part at the table, as its label says.
+ */
+export function youMustEither(
+  id: DecisionId,
+  prompt: string,
+  options: readonly ChoiceOption[],
+): AbilityEffect {
+  return choice(
+    id,
+    prompt,
+    { kind: 'investigator', investigatorId: { ref: 'windowInvestigator' } },
+    options,
+  );
+}
+
+function choice(
+  id: DecisionId,
+  prompt: string,
+  decider: Templated<AbilityChoice['decision']['decider']>,
+  options: readonly ChoiceOption[],
 ): AbilityEffect {
   return {
     type: 'RequestDecision',
@@ -916,7 +953,7 @@ export function leadDecides(
       id,
       kind: 'chooseOption',
       prompt,
-      decider: { kind: 'lead' },
+      decider,
       options: options.map((option) => ({
         id: option.id,
         label: option.label,
