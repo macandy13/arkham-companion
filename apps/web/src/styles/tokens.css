@@ -156,7 +156,7 @@
   /* The big doom and clue tokens on the agenda and act, with a light rim like the printed tokens. */
   --header-token-size: 4.5rem;
   --header-token-border-width: 3px;
-  --header-token-rim: #ece3cf;
+  --header-token-rim: var(--color-card-text);
   --header-token-text: #fff;
   --header-token-shadow: 0 2px 6px rgb(0 0 0 / 0.45);
   /* The investigator card in each panel of the investigator bar is this tall. */

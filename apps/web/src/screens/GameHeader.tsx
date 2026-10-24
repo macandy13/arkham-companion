@@ -9,11 +9,11 @@ import type { AppState, OpenGame } from '../state/appStore';
  * The play screen's header, laid out like the scenario's cards on the table, centred and each under
  * its label like the playmat's: the encounter deck and its discard pile (placeholders until the
  * encounter phase draws), the agenda, the act and the scenario card. The scenario's name is the
- * screen's heading. The cards' buttons wait while a step
- * is queued (`OpenGame.busy`), since a second tap would act on whatever the first one leaves open;
- * the agenda's and act's steppers show only while the players adjust the board
- * (`OpenGame.adjusting`). The round, the phase and the buttons that run the game sit in the status
- * row below (`GameStatus`). `board` is the open game's `OpenGame.board`.
+ * screen's heading. The cards' buttons wait while a step is queued (`OpenGame.busy`), since a
+ * second tap would act on whatever the first one leaves open; the agenda's and act's steppers show
+ * only while the players adjust the board (`OpenGame.adjusting`). The round, the phase and the
+ * buttons that run the game sit in the status row below (`GameStatus`). `board` is the open game's
+ * `OpenGame.board`.
  */
 export function GameHeader({
   store,
@@ -129,9 +129,10 @@ function AgendaStatus({
 /**
  * The current act as a landscape card: its name, a big clue token with the clues on the act against
  * the clues it needs, and on the plate at its foot steppers for them while adjusting and its
- * advance once there are enough, paid by the clues on the act. The steppers are a correction by hand that leaves the
- * investigators alone, until a dialog moves clues onto the act from the investigators the players
- * pick. Advancing is play, not a correction, so it waits while the players adjust.
+ * advance once there are enough, paid by the clues on the act. The steppers are a correction by
+ * hand that leaves the investigators alone, until a dialog moves clues onto the act from the
+ * investigators the players pick. Advancing is play, not a correction, so it waits while the
+ * players adjust.
  */
 function ActStatus({
   store,
@@ -215,7 +216,7 @@ function Token({
   return (
     <p role="img" aria-label={label} data-token={kind}>
       <data value={count}>{count}</data>
-      {threshold !== undefined && <span>{t('header.of', { threshold })}</span>}
+      {threshold !== undefined && <span>{t('header.tokenThreshold', { threshold })}</span>}
     </p>
   );
 }

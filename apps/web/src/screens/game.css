@@ -163,8 +163,8 @@
 
 /*
  * The agenda and act are landscape cards (5 : 7 turned, like the map's portrait tiles): a frame in
- * the card type's colour around the hatched art area, the name band along the top and a plate at
- * the foot with the count and the card's buttons, so it stays readable once card art fills it.
+ * the card type's colour around the hatched art area, the name band along the top, a big token with
+ * its count and a plate at the foot with its buttons, so both stay readable once card art fills it.
  * The encounter deck and the scenario card stand upright, as on the table.
  */
 #board > header [data-card] {
@@ -242,7 +242,9 @@
   display: flex;
   gap: var(--space-1);
   align-items: center;
+  flex-wrap: wrap;
   align-self: start;
+  max-width: calc(100% - var(--header-token-size) - var(--space-4));
   margin: var(--space-1);
   padding: var(--space-1);
   border-radius: var(--radius);
@@ -255,7 +257,7 @@
 #board > header [data-token] {
   position: absolute;
   inset-inline-end: var(--space-2);
-  bottom: var(--space-2);
+  inset-block-end: var(--space-2);
   box-sizing: border-box;
   width: var(--header-token-size);
   height: var(--header-token-size);
