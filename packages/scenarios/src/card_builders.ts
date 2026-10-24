@@ -11,14 +11,14 @@ import {
   type Keyword,
   type LocationAttachment,
   type ScaledValue,
+  type Trait,
 } from '@arkham/engine';
 
 /**
  * Builders for hand-entered scenario card data: each takes the printed
  * values of one card type, so a scenario's card list reads like the cards
- * and only names what is printed on them. Shared by every scenario package
- * (The Gathering, The Midnight Masks), so the shape of `CardStats` they
- * produce stays the same.
+ * and only names what is printed on them. Shared by every hand-entered
+ * scenario, so the shape of `CardStats` they produce stays the same.
  */
 
 /** Printed values of an agenda: its stage and doom threshold. */
@@ -32,6 +32,7 @@ export interface AgendaOptions {
   abilities?: readonly Ability[];
 }
 
+/** Card stats for a hand-entered agenda of `set`, with both printed sides. */
 export function agenda({ code, name, set, stage, doom, abilities }: AgendaOptions): CardStats {
   return {
     ...scenarioCard(code, name, set),
@@ -53,6 +54,7 @@ export interface ActOptions {
   abilities?: readonly Ability[];
 }
 
+/** Card stats for a hand-entered act of `set`, with both printed sides. */
 export function act({
   code,
   name,
@@ -70,32 +72,30 @@ export function act({
   };
 }
 
-/** Printed values of a location whose clues scale per investigator, as every Night of the Zealot location's do. */
+/** Printed values of a location whose clues scale per investigator. */
 export interface LocationOptions {
   code: string;
   name: string;
   set: EncounterSetCode;
   shroud: number;
   cluesPerInvestigator: number;
-  traits?: readonly string[];
   victory?: number;
   abilities?: Ability[];
 }
 
+/** Card stats for a hand-entered location of `set`, with both printed sides. */
 export function location({
   code,
   name,
   set,
   shroud,
   cluesPerInvestigator,
-  traits = [],
   victory,
   abilities,
 }: LocationOptions): CardStats {
   return {
     ...scenarioCard(code, name, set),
     typeCode: 'location',
-    traits: traitsOf(traits),
     shroud,
     clues: perInvestigator(cluesPerInvestigator),
     ...(victory === undefined ? {} : { victory }),
@@ -117,17 +117,15 @@ export interface EnemyOptions {
   victory?: number;
   quantity?: number;
   keywords?: readonly Keyword[];
-  /** Its forced abilities ("Wolf-Man" Drew's heal). */
-  abilities?: readonly Ability[];
 }
 
+/** Card stats for a hand-entered enemy, with its front picture (its back is the encounter back). */
 export function enemy({
   code,
   set,
   traits,
   quantity = 1,
   victory,
-  abilities,
   ...stats
 }: EnemyOptions): CardStats {
   return {
@@ -139,7 +137,6 @@ export function enemy({
     encounterCode: set,
     quantity,
     ...(victory === undefined ? {} : { victory }),
-    ...(abilities ? { abilities } : {}),
   };
 }
 
@@ -158,6 +155,7 @@ export interface TreacheryOptions {
   modifiers?: readonly CardModifier[];
 }
 
+/** Card stats for a hand-entered treachery, with its front picture. */
 export function treachery({
   code,
   name,
@@ -213,7 +211,7 @@ export function picturesOf(
   };
 }
 
-function traitsOf(names: readonly string[]) {
+function traitsOf(names: readonly string[]): Trait[] {
   return names.map(trait);
 }
 
