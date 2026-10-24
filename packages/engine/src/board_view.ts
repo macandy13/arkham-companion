@@ -23,6 +23,7 @@ import {
   type InstanceId,
   type InvestigatorId,
   type MapId,
+  type ResolutionId,
 } from './ids';
 import { cardsInZone, cardsOfType, currentCard } from './lookup';
 import { mapLocations, type Edge, type GameMap, type GridCell } from './map';
@@ -255,7 +256,7 @@ export class BoardView {
     return this.state.meta.ended === true;
   }
 
-  get resolution(): string | undefined {
+  get resolution(): ResolutionId | undefined {
     return this.state.meta.resolution;
   }
 

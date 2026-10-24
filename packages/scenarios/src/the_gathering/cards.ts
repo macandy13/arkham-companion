@@ -26,6 +26,7 @@ import {
   putMapIntoPlay,
   putSetAsideIntoPlay,
   removeFromGame,
+  resolutionId,
   revealLocation,
   skillTest,
   spawnEnemyAt,
@@ -83,9 +84,9 @@ export const GATHERING_CODES = {
  * investigators are trapped in the house (agenda 3 before act 3).
  */
 export const GATHERING_RESOLUTIONS = {
-  burnedDown: 'R1',
-  leftStanding: 'R2',
-  trapped: 'R3',
+  burnedDown: resolutionId('R1'),
+  leftStanding: resolutionId('R2'),
+  trapped: resolutionId('R3'),
 } as const;
 
 /** Id of agenda 1's question to the lead investigator: each investigator discards a random card, or the lead takes 2 horror. */

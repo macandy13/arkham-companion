@@ -30,10 +30,12 @@ import { zoneKey, type Zone, type ZoneKey } from './zone';
 function applyInvestigatorLeft(
   state: GameState,
   investigatorId: Investigator['id'],
-  status: 'defeated' | 'resigned',
+  left: Pick<Investigator, 'status' | 'defeatedBy'>,
 ): GameState {
-  const left = applyInvestigator(state, { investigatorId }, (inv) => ({ ...inv, status }));
-  return state.meta.turn?.investigatorId === investigatorId ? endTurn(left, investigatorId) : left;
+  const after = applyInvestigator(state, { investigatorId }, (inv) => ({ ...inv, ...left }));
+  return state.meta.turn?.investigatorId === investigatorId
+    ? endTurn(after, investigatorId)
+    : after;
 }
 
 function endTurn(state: GameState, investigatorId: Investigator['id']): GameState {
@@ -63,9 +65,12 @@ export function apply(state: GameState, event: Event): GameState {
     case 'InvestigatorChanged':
       return applyInvestigator(state, event, (inv) => withStatDelta(inv, event.stat, event.delta));
     case 'InvestigatorDefeated':
-      return applyInvestigatorLeft(state, event.investigatorId, 'defeated');
+      return applyInvestigatorLeft(state, event.investigatorId, {
+        status: 'defeated',
+        defeatedBy: event.cause,
+      });
     case 'InvestigatorResigned':
-      return applyInvestigatorLeft(state, event.investigatorId, 'resigned');
+      return applyInvestigatorLeft(state, event.investigatorId, { status: 'resigned' });
     case 'LeadInvestigatorChanged':
       return { ...state, meta: { ...state.meta, leadInvestigator: event.investigatorId } };
     case 'DecisionRequested':

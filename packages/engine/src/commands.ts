@@ -1,6 +1,14 @@
 import type { CampaignLog } from './campaign/campaign_log';
 import type { CardType, Trait } from './cards';
-import type { CardCode, DecisionId, InstanceId, InvestigatorId, MapId, ScenarioId } from './ids';
+import type {
+  CardCode,
+  DecisionId,
+  InstanceId,
+  InvestigatorId,
+  MapId,
+  ResolutionId,
+  ScenarioId,
+} from './ids';
 import type { MapPlacement, MapSpec } from './map';
 import type {
   Decision,
@@ -41,6 +49,7 @@ export type Command =
   | EngageEnemy
   | DisengageEnemy
   | DamageEnemy
+  | HealEnemy
   | DefeatEnemy
   | ExhaustEnemy
   | ReadyEnemy
@@ -304,7 +313,7 @@ export interface AdvanceAgenda {
    * Fallback resolution for the last agenda when its reverse side does not end
    * the scenario itself; rejected while further agendas follow.
    */
-  resolution?: string;
+  resolution?: ResolutionId;
 }
 
 /** Clues one investigator pays towards advancing the act. */
@@ -334,7 +343,7 @@ export interface AdvanceAct {
    * Fallback resolution for the last act when its reverse side does not end
    * the scenario itself; rejected while further acts follow.
    */
-  resolution?: string;
+  resolution?: ResolutionId;
 }
 
 /**
@@ -344,7 +353,7 @@ export interface AdvanceAct {
  */
 export interface EndScenario {
   type: 'EndScenario';
-  resolution: string;
+  resolution: ResolutionId;
 }
 
 /**
@@ -482,6 +491,17 @@ export interface DamageEnemy {
 }
 
 /**
+ * Removes up to `amount` (positive) damage from an enemy in play ("heal 2
+ * damage from it"), as much as it has: healing an undamaged enemy does
+ * nothing. Produces `TokensChanged`.
+ */
+export interface HealEnemy {
+  type: 'HealEnemy';
+  enemyId: InstanceId;
+  amount: number;
+}
+
+/**
  * Defeats an enemy in play: it goes to the victory display if the card has
  * victory, otherwise to the top of the encounter discard, and loses its
  * tokens. Produces `EnemyDefeated`.
@@ -500,7 +520,8 @@ export interface ExhaustEnemy {
 /**
  * Readies an exhausted enemy in play (upkeep, or a card effect). A readied,
  * unengaged enemy with an investigator at its location engages, as the rules
- * demand. Produces `ExhaustChanged`, then `EnemyEngaged` or `DecisionRequested`.
+ * demand. Readying a ready enemy does nothing, so "at the end of each turn:
+ * ready it" (Umôrdhoth) resolves whether or not it is exhausted. Produces `ExhaustChanged`, then `EnemyEngaged` or `DecisionRequested`.
  */
 export interface ReadyEnemy {
   type: 'ReadyEnemy';

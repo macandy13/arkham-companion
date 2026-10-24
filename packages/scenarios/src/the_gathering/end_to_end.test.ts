@@ -30,6 +30,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   byName,
+  campaign,
   cardDbWith,
   enemyMatching,
   investigatorId,
@@ -44,6 +45,7 @@ import {
   WHATS_GOING_ON_DECISION,
   theGathering,
   theGatheringCards,
+  theGatheringResolutions,
 } from '../index';
 import { daisyWalker, rolandBanks, wendyAdams, zealotInvestigatorCards } from '../investigators';
 
@@ -1050,6 +1052,29 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(() => table.endTurn(daisy)).toThrow(
       expect.objectContaining({ rejection: expect.objectContaining({ code: 'scenarioEnded' }) }),
     );
+
+    // What resolution 1 writes to the campaign log: the house burned down, Roland as the lead earns
+    // Lita and suffers 1 mental trauma, and everyone earns the 4 victory points plus 2, Wendy too
+    // although she resigned. Nobody was defeated, so there is no other trauma.
+    expect(campaign.proposeResolution(ctx, table.state, theGatheringResolutions)).toEqual([
+      {
+        kind: 'command',
+        command: {
+          type: 'RecordStory',
+          key: 'houseStillStanding',
+          value: { kind: 'flag', value: false },
+        },
+      },
+      { kind: 'byHand', textKey: 'scenario.theGathering.resolution.earnLita' },
+      {
+        kind: 'command',
+        command: { type: 'AddTrauma', code: rolandBanks.code, kind: 'mental', amount: 1 },
+      },
+      { kind: 'command', command: { type: 'AwardXp', code: rolandBanks.code, amount: 6 } },
+      { kind: 'command', command: { type: 'AwardXp', code: daisyWalker.code, amount: 6 } },
+      { kind: 'command', command: { type: 'AwardXp', code: wendyAdams.code, amount: 6 } },
+      { kind: 'byHand', textKey: 'scenario.theGathering.resolution.upgradeDecks' },
+    ]);
 
     // The whole event log, setup included, replays to the live state.
     expect(replay(table.events)).toEqual(table.state);

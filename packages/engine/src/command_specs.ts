@@ -19,6 +19,7 @@ import {
 } from './handle_encounter';
 import {
   handleDamageEnemy,
+  handleHealEnemy,
   handleDefeatEnemy,
   handleDisengageEnemy,
   handleEngageEnemy,
@@ -196,6 +197,7 @@ const COMMAND_SPECS: CommandSpecs = {
   },
   DisengageEnemy: { handle: handleDisengageEnemy },
   DamageEnemy: { handle: handleDamageEnemy },
+  HealEnemy: { handle: handleHealEnemy },
   DefeatEnemy: { handle: handleDefeatEnemy },
   ExhaustEnemy: { handle: handleExhaustEnemy },
   ReadyEnemy: { handle: handleReadyEnemy },

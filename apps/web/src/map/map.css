@@ -1,23 +1,69 @@
 /* The map drawing (MapBoard); sizes inside the SVG are in its user units, set in mapLayout.ts. */
 /*
- * Two ids, so it beats the home screen's `#app > main section` row. The heading stays at the top
- * left, and the shown map fills the space below it.
+ * Two ids, so it beats the home screen's `#app > main section` row. The shown map fills the area;
+ * its tabs and zoom buttons float over its top corners, so they take none of its room.
  */
 #board > #map {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-2);
 }
 
+/*
+ * The area's heading and the map's caption name the map for screen readers only: the map shows
+ * what it is, and with several maps the tabs name them.
+ */
 #map > h2,
-#map > [role='tablist'] {
-  align-self: start;
+#map figcaption {
+  position: absolute;
+  width: var(--hidden-size);
+  height: var(--hidden-size);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+#map > [role='tablist'],
+#map figure [role='toolbar'] {
+  position: absolute;
+  z-index: var(--layer-map-controls);
+  inset-block-start: var(--space-2);
+  display: flex;
+  gap: var(--space-1);
 }
 
 #map > [role='tablist'] {
-  display: flex;
-  gap: var(--space-2);
+  inset-inline-start: var(--space-2);
+}
+
+#map figure [role='toolbar'] {
+  inset-inline-end: var(--space-2);
+}
+
+#map > [role='tablist'] > button,
+#map figure [role='toolbar'] > button {
+  min-width: var(--button-compact);
+  min-height: var(--button-compact);
+  padding: 0 var(--space-2);
+  font-size: var(--font-size-note);
+}
+
+#map figure [role='toolbar'] > button {
+  padding: 0;
+  border-radius: 50%;
+}
+
+#map button[data-icon='zoom_in']::before {
+  mask-image: url('./icons/zoom_in.svg');
+}
+
+#map button[data-icon='zoom_out']::before {
+  mask-image: url('./icons/zoom_out.svg');
+}
+
+#map button[data-icon='fit']::before {
+  mask-image: url('./icons/fit.svg');
 }
 
 #map [role='tab'][aria-selected='true'] {
@@ -45,11 +91,6 @@
   gap: var(--space-2);
   min-height: 0;
   margin: 0;
-}
-
-#map figure [role='toolbar'] {
-  display: flex;
-  gap: var(--space-2);
 }
 
 /*

@@ -9,7 +9,7 @@ import { startQuickGame } from './fixtures/wizard';
 
 // Journey: read the map – the one location a new game starts with, then a game further on whose
 // map has several locations and the connections between them, zoomed in, panned and fitted again.
-test('read the map', async ({ page }) => {
+test('read the map', { tag: '@flow' }, async ({ page }) => {
   await test.step('Start a quick game', async () => {
     await page.goto('/#/new');
     await startQuickGame(page);
