@@ -614,6 +614,32 @@ describe('ShuffleEncounterDiscard', () => {
   });
 });
 
+describe('ShuffleEncounterDeck', () => {
+  const shuffleDeck: Command = { type: 'ShuffleEncounterDeck' };
+
+  it('shuffles the deck and leaves the discard alone', () => {
+    const { context, state } = aliceInHall
+      .withCard(instanceId('deck_card_a'), plainTreachery, encounterDeck)
+      .withCard(instanceId('deck_card_b'), foeCard, encounterDeck)
+      .withCard(instanceId('discarded_treachery'), plainTreachery, encounterDiscard)
+      .start();
+
+    const { state: after, events } = execute(context, state, shuffleDeck);
+
+    expect(events.map((event) => event.type)).toEqual(['DeckShuffled']);
+    expect([...idsIn(after, encounterDeck)].sort()).toEqual(['deck_card_a', 'deck_card_b']);
+    expect(idsIn(after, encounterDiscard)).toEqual(['discarded_treachery']);
+  });
+
+  it('does nothing to an empty deck', () => {
+    const { context, state } = aliceInHall
+      .withCard(instanceId('discarded_treachery'), plainTreachery, encounterDiscard)
+      .start();
+
+    expect(execute(context, state, shuffleDeck).events).toEqual([]);
+  });
+});
+
 describe('encounter deck invariants', () => {
   const shuffleIn = (shuffled: CardStats): Command => ({
     type: 'ShuffleInto',

@@ -7,6 +7,9 @@ import {
   healSelf,
   gainSurge,
   ifYouHave,
+  ifEnemiesInPlay,
+  searchAndDraw,
+  shuffleEncounterDeck,
   readySelf,
   atEndOfTurn,
   advanceAct,
@@ -1587,12 +1590,26 @@ describe('a choice without the options that cannot be resolved', () => {
   });
 });
 
-describe('doom on the nearest Cultist enemy', () => {
+describe('doom on the nearest Cultist enemy, or a search for one', () => {
   const attic = instanceId('attic');
   const chanting = instanceId('chanting');
-  /** "Revelation – Place 2 doom on the nearest Cultist enemy." */
+  /**
+   * "Revelation – Place 2 doom on the nearest Cultist enemy. If there are no Cultist enemies in
+   * play, search the encounter deck and discard pile for a Cultist enemy and draw it. Shuffle the
+   * encounter deck."
+   */
   const chantingCard = blankTreachery('chanting', {
-    abilities: [whenRevealed(placeDoomOn(nearestEnemy(trait('Cultist')), 2))],
+    abilities: [
+      whenRevealed(placeDoomOn(nearestEnemy(trait('Cultist')), 2)),
+      ifEnemiesInPlay(
+        trait('Cultist'),
+        { max: 0 },
+        whenRevealed(
+          searchAndDraw({ trait: trait('Cultist'), typeCode: 'enemy' }),
+          shuffleEncounterDeck(),
+        ),
+      ),
+    ],
   });
   const cultistCard = blankEnemy('cultist', { name: 'Cultist', traits: [trait('Cultist')] });
   const monsterCard = blankEnemy('monster', { name: 'Monster', traits: [trait('Monster')] });
@@ -1684,15 +1701,48 @@ describe('doom on the nearest Cultist enemy', () => {
     expect(after.cards[instanceId('shed_cultist')]?.tokens.doom).toBeUndefined();
   });
 
-  it('places no doom without a cultist on the table', () => {
+  it('places no doom and finds nothing without a cultist in the game', () => {
     const { context, state } = houseTable
       .withCard(instanceId('monster'), monsterCard, atLocation(cellar))
       .start();
 
-    const after = stateAfter(context, state, aliceDraws);
+    const { state: after, events } = execute(context, state, aliceDraws);
 
     expect(after.cards[instanceId('monster')]?.tokens.doom).toBeUndefined();
+    expect(events.filter((event) => event.type === 'EncounterCardDrawn')).toHaveLength(1);
     expect(after.pending).toEqual([]);
+  });
+
+  it.each([
+    { where: 'the encounter discard', zone: { kind: 'encounterDiscard' } as const },
+    { where: 'the encounter deck', zone: { kind: 'encounterDeck' } as const },
+  ])('draws a cultist from $where when none is in play, then shuffles the deck', ({ zone }) => {
+    const { context, state } = houseTable
+      .withCard(instanceId('top_card'), blankTreachery('top_card'), { kind: 'encounterDeck' })
+      .withCard(instanceId('hidden_cultist'), cultistCard, zone)
+      .start();
+
+    const { state: after, events } = execute(context, state, aliceDraws);
+
+    const draws = events.filter((event) => event.type === 'EncounterCardDrawn');
+    expect(draws.map((event) => event.cardId)).toEqual([chanting, instanceId('hidden_cultist')]);
+    expect(after.cards[instanceId('hidden_cultist')]?.zone).toEqual(engagedWith(alice));
+    expect(events).toContainEqual(
+      expect.objectContaining({ type: 'DeckShuffled', zone: { kind: 'encounterDeck' } }),
+    );
+  });
+
+  it('searches for nothing while a cultist is in play', () => {
+    const { context, state } = houseTable
+      .withCard(instanceId('far_cultist'), cultistCard, atLocation(attic))
+      .withCard(instanceId('hidden_cultist'), cultistCard, { kind: 'encounterDeck' })
+      .start();
+
+    const { state: after, events } = execute(context, state, aliceDraws);
+
+    expect(events.filter((event) => event.type === 'EncounterCardDrawn')).toHaveLength(1);
+    expect(after.cards[instanceId('hidden_cultist')]?.zone).toEqual({ kind: 'encounterDeck' });
+    expect(after.cards[instanceId('far_cultist')]?.tokens.doom).toBe(2);
   });
 });
 

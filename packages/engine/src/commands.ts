@@ -46,6 +46,7 @@ export type Command =
   | FromSetAside
   | ShuffleInto
   | ShuffleEncounterDiscard
+  | ShuffleEncounterDeck
   | SpawnEnemy
   | EngageEnemy
   | DisengageEnemy
@@ -455,6 +456,14 @@ export interface ShuffleInto {
  */
 export interface ShuffleEncounterDiscard {
   type: 'ShuffleEncounterDiscard';
+}
+
+/**
+ * Shuffles the encounter deck ("Shuffle the encounter deck" after a search,
+ * Mysterious Chanting). Produces `DeckShuffled`; nothing for an empty deck.
+ */
+export interface ShuffleEncounterDeck {
+  type: 'ShuffleEncounterDeck';
 }
 
 /**

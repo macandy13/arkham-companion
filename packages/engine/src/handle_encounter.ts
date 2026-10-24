@@ -141,6 +141,14 @@ export function handleShuffleInto(state: GameState, cmd: ShuffleInto): Event[] {
   return shuffleInto(state, cardIds, cmd.zone);
 }
 
+/** `ShuffleEncounterDeck`: the deck in a new order; an empty deck stays as it is. */
+export function handleShuffleEncounterDeck(state: GameState): DeckShuffled[] {
+  const deck = cardsInZone(state, encounterDeck);
+  if (deck.length === 0) return [];
+  const [order, rngState] = shuffle(deck, state.meta.rngState);
+  return [{ type: 'DeckShuffled', zone: encounterDeck, order, rngState }];
+}
+
 /**
  * `ShuffleEncounterDiscard`: the whole discard goes into the encounter deck,
  * which is then shuffled. Rules Reference, "Discard Piles": shuffling an empty

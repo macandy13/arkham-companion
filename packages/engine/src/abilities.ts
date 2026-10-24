@@ -13,7 +13,7 @@ import {
   type ResolutionId,
 } from './ids';
 import { locationAttachments } from './board';
-import { enemiesAt, nearestEnemies } from './enemies';
+import { enemiesAt, enemiesOnTable, nearestEnemies } from './enemies';
 import { isActiveInvestigator, playerOrder, requireInvestigator, statValue } from './investigators';
 import { cardsInZone, currentCard, requireCard } from './lookup';
 import type { AddMapStep } from './setup';
@@ -227,6 +227,7 @@ export type AbilityCommand =
           | 'AddMap'
           | 'AdvanceAct'
           | 'ShuffleEncounterDiscard'
+          | 'ShuffleEncounterDeck'
           | 'DrawEncounter'
           | 'DefeatInvestigator'
           | 'EndScenario';
@@ -286,10 +287,20 @@ export type AbilityCondition =
    * `stat`, both included where given ("if you have no clues"). False in a
    * window that names nobody.
    */
-  | ({ kind: 'investigatorHas'; stat: InvestigatorStat } & StatRange);
+  | ({ kind: 'investigatorHas'; stat: InvestigatorStat } & StatRange)
+  /**
+   * The number of enemies with `trait` (any enemy without one) on the table
+   * is within the range ("If there are no [[Cultist]] enemies in play",
+   * `enemiesOnTable`).
+   */
+  | ({ kind: 'enemiesInPlay'; trait?: Trait } & StatRange);
 
 /** Bounds on a value, both included; at least one is given, so the range always says something. */
 export type StatRange = { min: number; max?: number } | { min?: number; max: number };
+
+function inRange(value: number, range: StatRange): boolean {
+  return value >= (range.min ?? 0) && value <= (range.max ?? Infinity);
+}
 
 /**
  * A forced card ability: what it does when its window opens, if its
@@ -455,13 +466,14 @@ export function abilitySteps(
     .filter((ability) => shallowEqual<TimingWindow>(ability.window, opened.window))
     .filter(
       (ability) =>
-        ability.condition === undefined || conditionHolds(state, ability.condition, opened),
+        ability.condition === undefined || conditionHolds(ctx, state, ability.condition, opened),
     )
     .flatMap((ability) => ability.effects)
     .map((effect) => ({ kind: 'ability', effect, opened, origin: effect.type }));
 }
 
 function conditionHolds(
+  ctx: EngineContext,
   state: GameState,
   condition: AbilityCondition,
   opened: OpenedWindow,
@@ -476,8 +488,10 @@ function conditionHolds(
       if (investigatorId === undefined || !isActiveInvestigator(state, investigatorId))
         return false;
       const value = statValue(requireInvestigator(state, investigatorId), condition.stat);
-      return value >= (condition.min ?? 0) && value <= (condition.max ?? Infinity);
+      return inRange(value, condition);
     }
+    case 'enemiesInPlay':
+      return inRange(enemiesOnTable(ctx, state, condition.trait).length, condition);
     default:
       return assertNever(condition);
   }
@@ -1052,6 +1066,34 @@ export function duringAct(acts: readonly CardCode[], ability: Ability): Ability 
  */
 export function ifYouHave(stat: InvestigatorStat, range: StatRange, ability: Ability): Ability {
   return { ...ability, condition: { kind: 'investigatorHas', stat, ...range } };
+}
+
+/**
+ * "If there are no [[Cultist]] enemies in play, …": `ability` fires only while
+ * the number of enemies with `trait` on the table is within `range`, written
+ * `ifEnemiesInPlay(trait('Cultist'), { max: 0 }, whenRevealed(…))` (Mysterious Chanting).
+ */
+export function ifEnemiesInPlay(trait: Trait, range: StatRange, ability: Ability): Ability {
+  return { ...ability, condition: { kind: 'enemiesInPlay', trait, ...range } };
+}
+
+/**
+ * "Search the encounter deck and discard pile for a [[Cultist]] enemy and
+ * draw it": the investigator the window names draws the first card that
+ * matches, deck first (`DrawEncounter` with `match`); nothing when none does.
+ */
+export function searchAndDraw(match: EncounterMatch): AbilityEffect {
+  return {
+    type: 'DrawEncounter',
+    investigatorId: { ref: 'windowInvestigator' },
+    from: 'deckOrDiscard',
+    match,
+  };
+}
+
+/** "Shuffle the encounter deck." */
+export function shuffleEncounterDeck(): AbilityEffect {
+  return { type: 'ShuffleEncounterDeck' };
 }
 
 /** "[This card] gains surge": the drawn card with the ability draws again once placed. */
