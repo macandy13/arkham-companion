@@ -65,3 +65,27 @@ Follow-ups:
 
 - [x] `GameBuilder.withCard(id, card, zone)`: considered combining the instance id and the card's stats into one value. Kept as it is: no engine type pairs them and most tests name the instance after its card. The card and identifier types are now summarised in architecture "Key design decisions".
 - [x] Play the timing suite on `PlayTable` and read it back with `BoardView` (M1.14, #131/#136). Done in #138; `PlayTable.start` now begins the turn of `withTurnOf` too.
+
+## M1V.4 Continuous play tester (O)
+
+**Why:** unit tests and the scripted end-to-end games only check the paths we thought of. Rule interactions on odd boards and rare token draws slip through until a game night.
+
+**Benefit:** bots play many random games every night and on every PR; each broken rule, crash or stuck game comes back as a short recorded game that replays step by step and becomes a regression test.
+
+Ref: product.md "Continuous play tester" (the design); architecture "Tests and debugging"; [rules.md](../rules.md).
+
+Slices (one PR each, in this order):
+
+1. [ ] `packages/play_tester`: a run (scenario, difficulty, seats, game and bot seed), the _random_ bot on The Gathering, records with steps and event log, step replay, `pnpm playtest`. Checks: crash, refusals (expected or never), `checkInvariants`, replay after every step, same run twice gives the same events.
+2. [ ] Chaos bag draws and skill test answers through `suggestion`; the _goal_ and _chaos_ bots; blank investigators with random stats; liveness checks (always a next step, every offered option accepted, round cap).
+3. [ ] Rule oracles from `docs/rules.md` (round structure, mythos, agenda, upkeep, hunter, defeat, act), read through `BoardView` only. Ask `rules-checker` to check each oracle against the Rules Reference and post its table on the PR.
+4. [ ] Differential checks: undo right after a step, resume at any step, `GameSession` against `PlayTable`, export and import round trip.
+5. [ ] Shrinking a failing record, the finding report (`formatBoard` before and after), and opening a record in the app with Load.
+6. [ ] CI: PR smoke run and corpus replay with an event diff comment; nightly scheduled run with artifacts and one issue per finding signature.
+7. [ ] Random boards built with `newGame()` and blank cards; statistics report (wins, rounds, draw frequencies, abilities that never fired).
+
+Open questions:
+
+- Should the nightly run open GitHub issues on its own, or only upload records for a session to triage?
+- Does the PR smoke run fail on a finding, or only comment? Proposed: fail on crash, _never_ refusals, invariants and replay; comment on oracle findings until the oracles have settled.
+- Real card data (M4 on) is fetched, not committed: the CI jobs need the card data fetch step `carddata-check.yml` already runs.
