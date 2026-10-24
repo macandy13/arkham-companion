@@ -208,6 +208,8 @@
   --color-accent-text: #fffaf0;
   --color-clue: #2f7896;
   --color-doom: #a33a37;
+  --color-health: #a8413b;
+  --color-sanity: #3d63a0;
   --color-scrim: rgb(40 30 15 / 45%);
   --playmat: url('./playmat_light.svg');
   --panel-frame: url('./panel_frame_light.svg');
