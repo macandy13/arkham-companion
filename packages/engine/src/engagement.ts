@@ -81,11 +81,14 @@ export function engageEvents(
 }
 
 /**
- * Engagement for every enemy that starts the scenario at a location, so a
- * setup `spawn` next to the investigators behaves like a spawn during play.
- * `state` is the state right after `ScenarioStarted`.
+ * Rules Reference, "Enemy Engagement": every ready, unengaged enemy at a
+ * location with an investigator engages one (`engageEvents`). For the enemies
+ * that start the scenario at a location, so a setup `spawn` next to the
+ * investigators behaves like a spawn during play (`state` right after
+ * `ScenarioStarted`), and after an effect that leaves an enemy unengaged
+ * next to an investigator (`EngageReadyEnemies`).
  */
-export function startingEngagements(ctx: EngineContext, state: GameState): Event[] {
+export function readyEnemyEngagements(ctx: EngineContext, state: GameState): Event[] {
   const enemies = cardsOfType(ctx, state, 'enemy').filter(
     (card) => card.zone.kind === 'atLocation',
   );

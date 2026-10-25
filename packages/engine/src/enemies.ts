@@ -206,12 +206,14 @@ export function nearestEnemies(
 
 /**
  * Which enemies on the table a card means: those with `trait` (any enemy
- * without one), only the unengaged ones with `unengaged`, and only those at
- * a location of one of the codes in `at` when it is given ("each Ghoul enemy
- * in the Hallway or Parlor").
+ * without one) and without `withoutTrait` ("each non-Nightgaunt enemy"), only
+ * the unengaged ones with `unengaged`, and only those at a location of one of
+ * the codes in `at` when it is given ("each Ghoul enemy in the Hallway or
+ * Parlor").
  */
 export interface EnemyFilter {
   trait?: Trait;
+  withoutTrait?: Trait;
   unengaged?: true;
   at?: readonly CardCode[];
 }
@@ -224,6 +226,8 @@ export function enemiesMatching(
 ): CardInstance[] {
   return enemiesOnTable(ctx, state, filter.trait).filter(
     (card) =>
+      (filter.withoutTrait === undefined ||
+        !cardStats(ctx.cards, card.code).traits.includes(filter.withoutTrait)) &&
       (filter.unengaged === undefined || card.zone.kind === 'atLocation') &&
       (filter.at === undefined ||
         filter.at.includes(requireCard(state.cards, locationOf(state, card)).code)),

@@ -121,11 +121,14 @@ describe('describeDecision', () => {
     );
   });
 
-  it('asks where an enemy moves, for a hunter or a card that moves it', () => {
+  it.each([
+    { prompt: 'decision.chooseEnemyDestination', question: 'Where does Swarm of Rats move?' },
+    { prompt: 'decision.chooseLocationToMove', question: 'Where do you move for Swarm of Rats?' },
+  ])('asks where to move for $prompt', ({ prompt, question }) => {
     const destination: Decision = {
       ...engage,
       kind: 'chooseLocation',
-      prompt: 'decision.chooseEnemyDestination',
+      prompt,
       options: [
         { id: 'cellar', label: 'Cellar', commands: [] },
         { id: 'attic', label: 'Attic', commands: [] },
@@ -133,7 +136,7 @@ describe('describeDecision', () => {
     };
 
     expect(describeDecision(context, state, destination)).toEqual(
-      'Where does Swarm of Rats move? Cellar / Attic [chooseLocation]',
+      `${question} Cellar / Attic [chooseLocation]`,
     );
   });
 

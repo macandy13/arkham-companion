@@ -1,6 +1,6 @@
 import { cardStats, type EngineContext } from './cards';
 import type { StartScenario, StartingCard, StartingInvestigator } from './commands';
-import { startingEngagements } from './engagement';
+import { readyEnemyEngagements } from './engagement';
 import type { DeckShuffled, Event, ScenarioStarted } from './events';
 import { validateConnections, validateLayout } from './board';
 import { instanceId, type InstanceId, type MapId } from './ids';
@@ -64,7 +64,7 @@ export function handleStartScenario(
     (cmd.shuffleEncounterDeck ?? true)
       ? [started, ...encounterDeckShuffle(apply(state, started))]
       : [started];
-  return [...shuffled, ...startingEngagements(ctx, replay(shuffled, state))];
+  return [...shuffled, ...readyEnemyEngagements(ctx, replay(shuffled, state))];
 }
 
 /** The investigators' IDs; rejects a duplicate. */
