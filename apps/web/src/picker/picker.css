@@ -143,8 +143,7 @@
   color: var(--color-accent-text);
 }
 
-#investigator-picker ol,
-#investigator-picker > ul {
+#investigator-picker ol {
   margin: 0;
   padding: 0;
   list-style: none;
@@ -163,27 +162,182 @@
   margin-right: auto;
 }
 
-#investigator-picker > ul {
-  grid-template-columns: repeat(auto-fill, minmax(var(--layout-portrait-width), 1fr));
-  /* Portraits after the opened one fill up its row, so the sheet starts on the next row. */
-  grid-auto-flow: row dense;
-}
-
-#investigator-picker > ul > li:has(> aside) {
-  grid-column: 1 / -1;
-}
-
-#investigator-picker > ul > li > button {
+/*
+ * The portrait pages between their arrows. Upright screens are narrow, so there the arrows go under
+ * the pages, which keep the whole width.
+ */
+#investigator-picker > div {
   display: grid;
-  width: 100%;
-  height: 100%;
-  padding: var(--space-2);
+  grid-template: 'previous pages next' auto / auto minmax(0, 1fr) auto;
+  align-items: center;
   gap: var(--space-1);
-  align-content: start;
 }
 
-#investigator-picker img {
-  max-width: 100%;
+@media (orientation: portrait) {
+  #investigator-picker > div {
+    grid-template:
+      'pages pages' auto
+      'previous next' auto / 1fr 1fr;
+  }
+}
+
+#investigator-picker > div > button:first-child {
+  grid-area: previous;
+  justify-self: start;
+}
+
+#investigator-picker > div > button:last-child {
+  grid-area: next;
+  justify-self: end;
+}
+
+#investigator-picker > div > button[data-icon='previous']::before {
+  mask-image: url('./icons/previous.svg');
+}
+
+#investigator-picker > div > button[data-icon='next']::before {
+  mask-image: url('./icons/next.svg');
+}
+
+#investigator-picker > div > button,
+#investigator-picker dialog button[data-icon='close'] {
+  min-width: var(--button-compact);
+  min-height: var(--button-compact);
+  padding: 0;
+  border-radius: var(--radius-round);
+}
+
+/*
+ * Pages of two rows of five portraits (`PORTRAITS_PER_PAGE`), side by side. The first five of
+ * every ten go to the top row and the next five to the bottom one; the grid places each row's
+ * portraits one after the other, so the eleventh starts the next page's top row beside the first
+ * page. Five columns (`--picker-columns`) fill the strip's width, which scrolls and snaps a page at a time.
+ */
+#app #investigator-picker > div > ul {
+  grid-area: pages;
+  display: grid;
+  grid-template-rows: auto auto;
+  grid-auto-columns: calc(
+    (100% - (var(--picker-columns) - 1) * var(--space-2)) / var(--picker-columns)
+  );
+  gap: var(--space-2);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+/* Two ids, so they beat the home screen's padded `#app > main ul > li` cards. */
+#app #investigator-picker > div > ul > li {
+  grid-row: 1;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+#app
+  #investigator-picker
+  > div
+  > ul
+  > li:is(
+    :nth-child(10n + 6),
+    :nth-child(10n + 7),
+    :nth-child(10n + 8),
+    :nth-child(10n + 9),
+    :nth-child(10n + 10)
+  ) {
+  grid-row: 2;
+}
+
+#app #investigator-picker > div > ul > li:nth-child(10n + 1) {
+  scroll-snap-align: start;
+}
+
+/*
+ * A portrait: the investigator's figure on parchment over their name, like a small investigator
+ * card. Two ids, so it beats the plain buttons' look.
+ */
+#app #investigator-picker > div > ul > li > button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: var(--space-1);
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  padding: var(--space-1);
+  border: var(--card-border-width) solid var(--picker-class-colour, var(--color-card-edge));
+  background: linear-gradient(var(--color-parchment), var(--color-parchment-shade));
+  color: var(--color-ink);
+  font-size: var(--font-size-note);
+  text-align: center;
+}
+
+/* Each class in its colour, on the portrait's edge and its class line, as the cards print it. */
+#investigator-picker [data-faction='guardian'] {
+  --picker-class-colour: var(--color-class-guardian);
+}
+
+#investigator-picker [data-faction='seeker'] {
+  --picker-class-colour: var(--color-class-seeker);
+}
+
+#investigator-picker [data-faction='rogue'] {
+  --picker-class-colour: var(--color-class-rogue);
+}
+
+#investigator-picker [data-faction='mystic'] {
+  --picker-class-colour: var(--color-class-mystic);
+}
+
+#investigator-picker [data-faction='survivor'] {
+  --picker-class-colour: var(--color-class-survivor);
+}
+
+#investigator-picker [data-faction='neutral'] {
+  --picker-class-colour: var(--color-class-neutral);
+}
+
+#app #investigator-picker > div > ul > li > button:hover {
+  border-color: var(--color-accent);
+}
+
+#investigator-picker > div > ul > li > button > span {
+  overflow: hidden;
+  font-family: var(--font-family-display);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * The portrait window: the scan of the card's front scaled so that the figure
+ * (`--picker-portrait-*`) fills the window, and moved so that it sits in it. It shows only once it
+ * has loaded (`data-picture`); until then, and for good when it fails, the window shows the
+ * hatched art area.
+ */
+#investigator-picker picture {
+  position: relative;
+  display: block;
+  aspect-ratio: var(--picker-portrait-ratio);
+  border: var(--border-width) solid var(--color-card-edge);
+  border-radius: var(--radius);
+  background: var(--card-art-pattern), var(--color-card-face);
+  overflow: hidden;
+}
+
+#investigator-picker picture > img {
+  position: absolute;
+  width: calc(100% / var(--picker-portrait-width));
+  max-width: none;
+  left: calc(var(--picker-portrait-x) / var(--picker-portrait-width) * -100%);
+  top: calc(var(--picker-portrait-y) / var(--picker-portrait-height) * -100%);
+}
+
+#investigator-picker picture:not([data-picture]) > img {
+  visibility: hidden;
 }
 
 #investigator-picker small {
@@ -194,39 +348,123 @@
   color: var(--color-accent);
 }
 
-#investigator-picker aside {
-  display: grid;
-  gap: var(--space-2);
-  max-width: var(--layout-sheet-width);
-  padding: var(--space-3);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
+#investigator-picker > div small {
+  color: var(--color-ink);
 }
 
-#investigator-picker aside > header {
+/* The class line under the name, in the class's colour. */
+#investigator-picker > div button > span + small {
+  color: var(--picker-class-colour);
+  font-weight: bold;
+  letter-spacing: var(--card-type-spacing);
+  text-transform: uppercase;
+}
+
+/* The skills, then health and sanity: each a value after its icon, its name for screen readers. */
+#investigator-picker > div small:has(> [data-skill], > [data-stat]) {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0 var(--space-2);
+  font-weight: bold;
+  font-variant-numeric: lining-nums;
+}
+
+/* Positioned, so the hidden names stay inside the scrolling pages. */
+#investigator-picker > div small > span {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--space-1) / 2);
+}
+
+#investigator-picker > div small > span > span {
+  position: absolute;
+  width: var(--hidden-size);
+  height: var(--hidden-size);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+#investigator-picker > div small > span::before {
+  content: '';
+  width: var(--stat-icon-size);
+  height: var(--stat-icon-size);
+  background: var(--picker-stat-colour, var(--color-ink));
+  mask: var(--picker-stat-icon) center / contain no-repeat;
+}
+
+#investigator-picker [data-skill='willpower'] {
+  --picker-stat-icon: url('../symbols/willpower.svg');
+}
+
+#investigator-picker [data-skill='intellect'] {
+  --picker-stat-icon: url('../symbols/intellect.svg');
+}
+
+#investigator-picker [data-skill='combat'] {
+  --picker-stat-icon: url('../symbols/combat.svg');
+}
+
+#investigator-picker [data-skill='agility'] {
+  --picker-stat-icon: url('../symbols/agility.svg');
+}
+
+#investigator-picker [data-stat='health'] {
+  --picker-stat-icon: url('../investigators/icons/health.svg');
+  --picker-stat-colour: var(--color-health);
+}
+
+#investigator-picker [data-stat='sanity'] {
+  --picker-stat-icon: url('../investigators/icons/sanity.svg');
+  --picker-stat-colour: var(--color-sanity);
+}
+
+/* The detail sheet, a dialog over the picker. */
+#investigator-picker dialog {
+  gap: var(--space-2);
+}
+
+#investigator-picker dialog[open] {
+  display: grid;
+}
+
+#investigator-picker dialog > header {
   display: flex;
   align-items: center;
   gap: var(--space-2);
 }
 
-#investigator-picker aside h3 {
-  margin-right: auto;
+#investigator-picker dialog h3 {
+  margin: 0 auto 0 0;
 }
 
-#investigator-picker aside dl {
+#investigator-picker dialog button[data-icon='close']::before {
+  mask-image: url('../investigators/icons/close.svg');
+}
+
+#investigator-picker dialog p {
+  margin: 0;
+}
+
+#investigator-picker dialog dl {
   display: grid;
   grid-template-columns: auto auto;
   gap: var(--space-1) var(--space-3);
   margin: 0;
 }
 
-#investigator-picker aside dd {
+#investigator-picker dialog dd {
   margin: 0;
 }
 
-#investigator-picker aside figure {
+#investigator-picker dialog figure {
   display: grid;
   gap: var(--space-2);
   margin: 0;
+}
+
+#investigator-picker dialog img {
+  max-width: 100%;
 }

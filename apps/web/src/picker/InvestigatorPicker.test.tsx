@@ -119,12 +119,36 @@ describe('InvestigatorPicker', () => {
   });
   afterEach(cleanup);
 
-  it('lists every investigator with its chapter badge', () => {
+  it('lists every investigator', () => {
     render(<Harness />);
 
     expect(portraitNames()).toEqual(['Alder', 'Alder', 'Birch', 'Cedar', 'Dogwood', 'Elm']);
-    const grid = screen.getByRole('list', { name: 'Investigators' });
-    expect(within(grid).getAllByText('Ch. 2')).toHaveLength(1);
+  });
+
+  it.each([
+    ['willpower', '[data-skill="willpower"]', 'Willpower 1'],
+    ['intellect', '[data-skill="intellect"]', 'Intellect 4'],
+    ['combat', '[data-skill="combat"]', 'Combat 2'],
+    ['agility', '[data-skill="agility"]', 'Agility 3'],
+    ['health', '[data-stat="health"]', 'Health 6'],
+    ['sanity', '[data-stat="sanity"]', 'Sanity 8'],
+  ])("shows Alder's %s on the portrait", (_, selector, text) => {
+    render(<Harness />);
+
+    const [alder] = within(screen.getByRole('list', { name: 'Investigators' })).getAllByRole(
+      'button',
+      { name: /Alder/ },
+    );
+
+    expect(alder!.querySelector(selector)?.textContent).toBe(text);
+  });
+
+  it("shows the investigator's class on the portrait", () => {
+    render(<Harness />);
+
+    const birch = screen.getByRole('button', { name: /Birch/ });
+
+    expect(within(birch).getByText('Rogue')).toBeTruthy();
   });
 
   it('lazy-loads portrait images from the ArkhamDB host', () => {
@@ -204,6 +228,20 @@ describe('InvestigatorPicker', () => {
     expect(screen.getByText('No investigators match the filters.')).toBeTruthy();
   });
 
+  it('shows health, sanity, skills and both card faces in the detail sheet', () => {
+    render(<Harness />);
+
+    openPortrait('Alder');
+    const sheet = screen.getByRole('dialog', { name: 'Alder' });
+
+    expect(within(sheet).getByText('Health').nextElementSibling?.textContent).toBe('6');
+    expect(within(sheet).getByText('Sanity').nextElementSibling?.textContent).toBe('8');
+    expect(within(sheet).getByText('Intellect').nextElementSibling?.textContent).toBe('4');
+    expect(within(sheet).getByText('Ch. 1')).toBeTruthy();
+    expect(within(sheet).getByAltText('Front')).toBeTruthy();
+    expect(within(sheet).getByAltText('Back')).toBeTruthy();
+  });
+
   it('counts the filters set on the filter button', () => {
     render(<Harness />);
     openFilters();
@@ -223,39 +261,38 @@ describe('InvestigatorPicker', () => {
     expect(screen.queryByLabelText('Chapter')).toBeNull();
   });
 
-  it('shows health, sanity, skills and both card faces in the detail sheet', () => {
+  it('shows no page arrows for ten investigators or fewer', () => {
     render(<Harness />);
 
-    openPortrait('Alder');
-    const sheet = screen.getByRole('complementary', { name: 'Alder' });
-
-    expect(within(sheet).getByText('Health').nextElementSibling?.textContent).toBe('6');
-    expect(within(sheet).getByText('Sanity').nextElementSibling?.textContent).toBe('8');
-    expect(within(sheet).getByText('Intellect').nextElementSibling?.textContent).toBe('4');
-    expect(within(sheet).getByText('Ch. 1')).toBeTruthy();
-    expect(within(sheet).getByAltText('Front')).toBeTruthy();
-    expect(within(sheet).getByAltText('Back')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Next page' })).toBeNull();
   });
 
-  it('opens the detail sheet right after the tapped portrait', () => {
-    render(<Harness />);
+  it('shows page arrows for more than ten investigators', () => {
+    const eleven = [
+      'Ash',
+      'Beech',
+      'Cherry',
+      'Fir',
+      'Hazel',
+      'Larch',
+      'Maple',
+      'Oak',
+      'Pine',
+      'Rowan',
+      'Willow',
+    ];
+    const trees = eleven.map((name) => makeInvestigator({ code: name, name }));
+    render(
+      <InvestigatorPicker
+        catalog={{ packs: catalog.packs, investigators: trees }}
+        seats={[]}
+        onSeatsChange={() => {}}
+      />,
+    );
 
-    openPortrait('Birch');
-
-    const birchPortrait = screen.getByRole('button', { name: /Birch/ }).closest('li');
-    const sheet = screen.getByRole('complementary', { name: 'Birch' });
-    expect(birchPortrait?.nextElementSibling?.firstElementChild).toBe(sheet);
-  });
-
-  it('keeps the detail sheet open below the list when a filter hides its portrait', () => {
-    render(<Harness />);
-
-    openPortrait('Birch');
-    fireEvent.change(screen.getByLabelText('Search by name'), { target: { value: 'cedar' } });
-
-    const portraits = screen.getByRole('list', { name: 'Investigators' });
-    const sheet = screen.getByRole('complementary', { name: 'Birch' });
-    expect(portraits.contains(sheet)).toBe(false);
+    expect(portraitNames()).toHaveLength(11);
+    expect(screen.getByRole('button', { name: 'Previous page' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Next page' })).toBeTruthy();
   });
 
   it('links the detail sheet to the other chapter version', () => {
@@ -264,7 +301,7 @@ describe('InvestigatorPicker', () => {
     openPortrait('Alder');
     fireEvent.click(screen.getByRole('button', { name: 'Show Chapter 2 version' }));
 
-    const sheet = screen.getByRole('complementary', { name: 'Alder' });
+    const sheet = screen.getByRole('dialog', { name: 'Alder' });
     expect(within(sheet).getByText('Ch. 2')).toBeTruthy();
   });
 
@@ -274,7 +311,7 @@ describe('InvestigatorPicker', () => {
     openPortrait('Alder');
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
 
-    expect(screen.queryByRole('complementary')).toBeNull();
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('assigns selected investigators to the next seats in order', () => {
@@ -292,7 +329,7 @@ describe('InvestigatorPicker', () => {
 
     openPortrait('Birch');
 
-    const sheet = screen.getByRole('complementary', { name: 'Birch' });
+    const sheet = screen.getByRole('dialog', { name: 'Birch' });
     expect(within(sheet).getByRole('button', { name: 'Seat 1' })).toHaveProperty('disabled', true);
   });
 

@@ -47,8 +47,8 @@ Tablet landscape first. Header (round, phase, agenda/act, undo), map centre (pan
 **Investigator picker** (inspired by the Mansions of Madness app)
 
 - Catalog of all investigators from ArkhamDB (`type_code = investigator`, all packs), deduplicated across true reprints (`duplicate_of_code`), parallel versions grouped with the original. Investigators revised for Chapter Two are **not** merged with their Chapter One version: both are listed, each with a chapter badge, and can be filtered by chapter.
-- Grid of portraits; a search box and one round filter button (like the play screen's menu) whose menu filters by class, cycle/pack, chapter and "my collection" (owned packs, set once in settings).
-- Tap shows front and back with health, sanity, skills and ability; select assigns the next seat, drag reorders seats, remove frees one.
+- Pages of ten portraits (two rows of five, the art cut from the card's front, with class, skills, health and sanity under the name), alphabetical, turned by swipe or arrows; a search box and one round filter button (like the play screen's menu) whose menu filters by class, cycle/pack, chapter and "my collection" (owned packs, set once in settings).
+- Tap opens a dialog with front and back, health, sanity, skills and ability; select assigns the next seat, drag reorders seats, remove frees one.
 - In campaign play investigators come from the campaign log; the picker only opens to replace killed or insane ones.
 - The catalog is fetched with the card data and cached in IndexedDB, so it works offline.
 
