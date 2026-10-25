@@ -1,7 +1,6 @@
 import {
   cardStats,
   enemiesOnTable,
-  GRID_CELLS_PER_CARD,
   scenarioId,
   trait,
   type AddMapStep,
@@ -19,13 +18,17 @@ import {
   theMidnightMasksCards,
 } from '../the_midnight_masks/cards';
 import { ZEALOT_STORY } from '../night_of_the_zealot/story';
-import { DEVOURER_BELOW_CODES, DEVOURER_BELOW_SETS, MAIN_PATH_CELL, WOODS_MAP } from './cards';
+import {
+  DEVOURER_BELOW_CODES,
+  DEVOURER_BELOW_SETS,
+  MAIN_PATH_CELL,
+  WOODS_CORNER_CELLS,
+  WOODS_MAP,
+} from './cards';
 import { theDevourerBelowResolutions } from './resolutions';
 
 const codes = DEVOURER_BELOW_CODES;
 const sets = DEVOURER_BELOW_SETS;
-/** One card step on the layout grid, which is finer than a card. */
-const oneCard = GRID_CELLS_PER_CARD;
 
 /** Translation key prefix for The Devourer Below's reference card effects. */
 const reference = 'scenario.theDevourerBelow.reference';
@@ -62,12 +65,7 @@ const theWoods: AddMapStep = {
   locations: [{ code: codes.mainPath, at: MAIN_PATH_CELL }],
   atRandom: {
     codes: woodsRing,
-    cells: [
-      { column: 0, row: 0 },
-      { column: 2 * oneCard, row: 0 },
-      { column: 0, row: 2 * oneCard },
-      { column: 2 * oneCard, row: 2 * oneCard },
-    ],
+    cells: WOODS_CORNER_CELLS,
   },
   connections: [
     ...woodsRing.map((woods): MapConnection => ({ from: codes.mainPath, to: woods })),
@@ -120,7 +118,7 @@ const setAsideCultistsWhoGotAway: readonly SetupStep[] = [
  * hand. The elder thing token joins this scenario's bag only; as the campaign's last scenario,
  * that is all of "the remainder of the campaign". Pass the whole definition as
  * `EngineContext.scenario` with The Gathering's (Ghouls, Striking Fear, Ancient Evils, the
- * Ghoul Priest) and The Midnight Masks' (Dark Cult) cards joined in. The reference card's
+ * Ghoul Priest) and The Midnight Masks' (Dark Cult, the cultists who got away) cards joined in. The reference card's
  * values are entered by hand from the 2016 Core Set card (Easy/Standard: skull -X, cultist
  * -2, tablet -3, elder thing -5; Hard/Expert: skull -3, cultist -4, tablet -5, elder thing -7).
  */

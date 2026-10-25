@@ -88,6 +88,14 @@ const oneCard = GRID_CELLS_PER_CARD;
 /** The layout cell of the Main Path, in the middle of the Woods around it. */
 export const MAIN_PATH_CELL: GridCell = { column: oneCard, row: oneCard };
 
+/** The four corners around the Main Path, which setup fills with Arkham Woods at random. */
+export const WOODS_CORNER_CELLS: readonly GridCell[] = [
+  { column: 0, row: 0 },
+  { column: 2 * oneCard, row: 0 },
+  { column: 0, row: 2 * oneCard },
+  { column: 2 * oneCard, row: 2 * oneCard },
+];
+
 /** The Ritual Site's cell: above the Main Path, between the two upper Woods. */
 const RITUAL_SITE_CELL: GridCell = { column: oneCard, row: 0 };
 
@@ -135,7 +143,9 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
     stage: 1,
     cluesPerInvestigator: 3,
     // Setup sets aside exactly the enemies recorded under "Cultists Who Got Away", all of them
-    // Cultists; the only other set-aside enemy, Umôrdhoth, is none.
+    // Cultists; the only other set-aside enemy, Umôrdhoth, is none. "If it is not already in
+    // play" needs no check yet: only agenda 3, which the players resolve by hand, puts the
+    // Ritual Site into play before act 1 advances.
     abilities: [
       whenAdvanced(
         ...putLocationIntoPlay(codes.ritualSite, WOODS_MAP, {

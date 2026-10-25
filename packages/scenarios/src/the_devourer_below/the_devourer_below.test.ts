@@ -272,6 +272,23 @@ describe('The Devourer Below setup in the campaign', () => {
     expect(namesIn(state, { kind: 'setAside' })).toEqual(['Umôrdhoth']);
   });
 
+  it('puts only the Ritual Site into play at act 1 when nobody got away', () => {
+    const started = execute(
+      ctx,
+      emptyState(),
+      scenario.compileSetup(ctx, { seed: 1, investigators: [rolandSeat], campaign: logWith({}) }),
+    ).state;
+
+    const state = stateAfter(ctx, started, { type: 'AdvanceAct' });
+
+    expect(state.cards[instanceId(`${codes.ritualSite}#1`)]?.zone).toEqual({
+      kind: 'location',
+      mapId: woods,
+    });
+    expect(namesIn(state, { kind: 'engaged', investigatorId: rolandSeat.id })).toEqual([]);
+    expect(namesIn(state, { kind: 'setAside' })).toEqual(['Umôrdhoth']);
+  });
+
   it('sets up from The Midnight Masks R2: 3 Cultists got away, the Ghoul Priest lives', () => {
     const campaignCtx = { cards: ctx.cards };
     const yes = { kind: 'flag', value: true } as const;
