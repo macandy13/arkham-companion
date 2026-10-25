@@ -8,6 +8,7 @@ import type { Event } from './events';
 import {
   handleAddConnection,
   handleAddMap,
+  handlePutLocationIntoPlay,
   handleRemoveConnection,
   handleRevealLocation,
 } from './handle_board';
@@ -160,6 +161,7 @@ const COMMAND_SPECS: CommandSpecs = {
   MoveCard: { handle: (_ctx, state, command) => [handleMoveCard(state, command)] },
   DiscardCard: { handle: (_ctx, state, command) => handleDiscardCard(state, command) },
   AddMap: { handle: handleAddMap },
+  PutLocationIntoPlay: { handle: handlePutLocationIntoPlay },
   AddConnection: { handle: handleAddConnection },
   RemoveConnection: { handle: handleRemoveConnection },
   RevealLocation: { handle: handleRevealLocation },

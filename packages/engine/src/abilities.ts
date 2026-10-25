@@ -10,8 +10,10 @@ import {
   type DecisionId,
   type InstanceId,
   type InvestigatorId,
+  type MapId,
   type ResolutionId,
 } from './ids';
+import type { GridCell } from './map';
 import { locationAttachments, locationsInPlay } from './board';
 import {
   enemiesAt,
@@ -181,6 +183,12 @@ export type RelativeCard =
    */
   | ({ ref: 'eachEnemy'; engagedWith?: RelativeInvestigator } & EnemyFilter)
   /**
+   * Each set-aside enemy with `trait` ("spawn each set-aside [[Cultist]] enemy"):
+   * the command repeats once per enemy, in card order, and none when no such
+   * enemy is set aside.
+   */
+  | { ref: 'eachSetAside'; trait: Trait }
+  /**
    * The enemy with `trait` (any enemy without one) nearest to the location of
    * the investigator the window names ("the nearest [[Cultist]] enemy",
    * `nearestEnemies`); none when there is no such enemy. When several are
@@ -252,6 +260,8 @@ export type AbilityCommand =
           | 'GainSurge'
           | 'MoveInvestigator'
           | 'AddMap'
+          | 'PutLocationIntoPlay'
+          | 'AddConnection'
           | 'AdvanceAct'
           | 'ShuffleEncounterDiscard'
           | 'ShuffleEncounterDeck'
@@ -720,7 +730,8 @@ function repeatedRef(effect: unknown): RepeatedRef | undefined {
     ref.ref === 'eachInvestigator' ||
     ref.ref === 'eachInvestigatorAt' ||
     ref.ref === 'eachEnemyAt' ||
-    ref.ref === 'eachEnemy'
+    ref.ref === 'eachEnemy' ||
+    ref.ref === 'eachSetAside'
       ? ref
       : undefined,
   );
@@ -779,6 +790,11 @@ function eachId(
         )
         .map((card) => card.id);
     }
+    case 'eachSetAside':
+      return cardsInZone(state, { kind: 'setAside' }).filter((id) => {
+        const stats = cardStats(ctx.cards, requireCard(state.cards, id).code);
+        return stats.typeCode === 'enemy' && stats.traits.includes(each.trait);
+      });
     default:
       return assertNever(each);
   }
@@ -841,6 +857,7 @@ function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
       case 'eachInvestigatorAt':
       case 'eachEnemyAt':
       case 'eachEnemy':
+      case 'eachSetAside':
         return refs.each;
       case 'nearestEnemy':
       case 'locationWith':
@@ -1388,6 +1405,38 @@ function choice(
 /** "Reveal the Parlor". */
 export function revealLocation(location: RelativeCard): AbilityEffect {
   return { type: 'RevealLocation', locationId: location };
+}
+
+/**
+ * "Put the set-aside Ritual Site into play": the only copy of `code` joins the
+ * map `mapId` already on the board, in layout cell `at`, connected to the only
+ * copy of each of `connectedTo`. Spread it into the ability:
+ * `whenAdvanced(...putLocationIntoPlay(ritualSite, woods, { at, connectedTo: [mainPath] }))`.
+ */
+export function putLocationIntoPlay(
+  code: CardCode,
+  mapId: MapId,
+  { at, connectedTo = [] }: { at?: GridCell; connectedTo?: readonly CardCode[] } = {},
+): AbilityEffect[] {
+  const location = onlyCopy(code);
+  return [
+    { type: 'PutLocationIntoPlay', locationId: location, mapId, ...(at && { at }) },
+    ...connectedTo.map((other): AbilityEffect => ({
+      type: 'AddConnection',
+      mapId,
+      from: onlyCopy(other),
+      to: location,
+    })),
+  ];
+}
+
+/**
+ * "Spawn each set-aside [[Cultist]] enemy at the Main Path": each set-aside
+ * card with `trait` spawns at `location` (`SpawnEnemy`); nothing when none is
+ * set aside.
+ */
+export function spawnEachSetAsideAt(trait: Trait, location: RelativeCard): AbilityEffect {
+  return { type: 'SpawnEnemy', enemyId: { ref: 'eachSetAside', trait }, at: location };
 }
 
 /** "Put the set-aside Lita Chantler into play at the Parlor". */
