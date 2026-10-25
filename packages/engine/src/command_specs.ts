@@ -38,6 +38,7 @@ import {
   handleMoveInvestigator,
   handlePlaceClues,
   handleSetLeadInvestigator,
+  handleTakeDamageAndHorror,
 } from './handle_investigator';
 import { handleManualAdjust, handleMoveCard } from './handle_manual_adjust';
 import {
@@ -169,6 +170,7 @@ const COMMAND_SPECS: CommandSpecs = {
   AdjustInvestigator: {
     handle: handleAdjustInvestigator,
   },
+  TakeDamageAndHorror: { handle: handleTakeDamageAndHorror },
   DefeatInvestigator: {
     handle: handleDefeatInvestigator,
   },

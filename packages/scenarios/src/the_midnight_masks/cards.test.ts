@@ -293,6 +293,27 @@ describe('The Midnight Masks card abilities', () => {
     expect(state.cards[wizard]?.zone).toEqual(atLocation(graveyard));
   });
 
+  it('deals the damage of a failed On Wings of Darkness too when its horror defeats alice', () => {
+    const { context, state: started } = newGame()
+      .withLocation(rivertown, cardOf('01125'), { revealed: true })
+      .withInvestigator(alice, {
+        locationId: rivertown,
+        health: { max: 8, damage: 0 },
+        sanity: { max: 6, horror: 5 },
+      })
+      .withCard(instanceId('on_wings'), cardOf('01173'), { kind: 'encounterDeck' })
+      .start();
+    const drawn = stateAfter(context, started, aliceDraws);
+
+    const state = stateAfter(context, drawn, answer('test:on_wings', 'fail'));
+
+    expect(requireInvestigator(state, alice)).toMatchObject({
+      status: 'defeated',
+      health: { damage: 1 },
+      sanity: { horror: 6 },
+    });
+  });
+
   it('deals 1 horror and 1 damage for a failed On Wings of Darkness, then moves alice to Rivertown without the Wizard but with the Nightgaunt', () => {
     const wizard = instanceId('wizard_of_the_order');
     const nightgaunt = instanceId('hunting_nightgaunt');

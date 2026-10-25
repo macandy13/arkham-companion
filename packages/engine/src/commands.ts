@@ -36,6 +36,7 @@ export type Command =
   | RevealLocation
   | MoveInvestigator
   | AdjustInvestigator
+  | TakeDamageAndHorror
   | DefeatInvestigator
   | DiscoverClues
   | PlaceClues
@@ -266,6 +267,20 @@ export interface AdjustInvestigator {
   investigatorId: InvestigatorId;
   stat: InvestigatorStat;
   delta: number;
+}
+
+/**
+ * An active investigator takes `damage` and `horror` from one effect ("take 1
+ * horror and 1 damage"), placed at once like an attack's: neither is lost to a
+ * defeat the other causes. Amounts are whole numbers, at least one above 0.
+ * Produces an `InvestigatorChanged` per amount above 0, then
+ * `InvestigatorDefeated` if damage reached health or horror reached sanity.
+ */
+export interface TakeDamageAndHorror {
+  type: 'TakeDamageAndHorror';
+  investigatorId: InvestigatorId;
+  damage: number;
+  horror: number;
 }
 
 /**
