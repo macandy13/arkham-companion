@@ -34,6 +34,7 @@ import {
   discardEachEnemyAt,
   discardSelf,
   eachEnemy,
+  forEachEnemy,
   eachInvestigatorAt,
   engagedWith,
   duringAct,
@@ -1800,6 +1801,56 @@ describe('each unengaged Ghoul enemy moving towards a location', () => {
     expect(after.cards[cellarGhoul]?.zone).toEqual(engagedWith(alice));
     expect(after.cards[engagedGhoul]?.zone).toEqual(engagedWith(alice));
     expect(after.cards[cellarRat]?.zone).toEqual(atLocation(cellar));
+  });
+});
+
+describe('an effect repeated for each Ghoul enemy in the Hall or Parlor', () => {
+  const parlor = instanceId('parlor');
+  const omen = instanceId('omen');
+  /** "Place 1 doom on the agenda for each Ghoul enemy in the Hall or Parlor", here as a revelation. */
+  const omenCard = blankTreachery('omen', {
+    abilities: [
+      forEachEnemy(
+        { trait: trait('Ghoul'), at: [cardCode('hall'), cardCode('parlor')] },
+        whenRevealed(placeDoomOnAgenda(1)),
+      ),
+    ],
+  });
+  const ghoulTraitCard = blankEnemy('trait_ghoul', { traits: [trait('Ghoul')] });
+  const ratCard = blankEnemy('rat', { traits: [trait('Creature')] });
+  /** Alice in the hall, with the parlor and the cellar next to it; the first agenda without doom. */
+  const house = newGame()
+    .withAgenda(agenda1, firstAgendaCard)
+    .withLocation(hall, blankLocation('hall'), { revealed: true })
+    .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+    .withLocation(parlor, blankLocation('parlor'), { revealed: true })
+    .withConnection(cellar, hall)
+    .withConnection(hall, parlor)
+    .withInvestigator(alice, { locationId: hall })
+    .withCard(omen, omenCard, { kind: 'encounterDeck' });
+  const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
+
+  it('places 2 doom for the ghoul engaged with alice in the hall and the one in the parlor', () => {
+    const { context, state } = house
+      .withCard(instanceId('engaged_ghoul'), ghoulTraitCard, engagedWith(alice))
+      .withCard(instanceId('parlor_ghoul'), ghoulTraitCard, atLocation(parlor))
+      .withCard(instanceId('cellar_ghoul'), ghoulTraitCard, atLocation(cellar))
+      .withCard(instanceId('parlor_rat'), ratCard, atLocation(parlor))
+      .start();
+
+    const after = stateAfter(context, state, aliceDraws);
+
+    expect(after.cards[agenda1]?.tokens.doom).toBe(2);
+  });
+
+  it('places no doom when the only ghoul is in the cellar', () => {
+    const { context, state } = house
+      .withCard(instanceId('cellar_ghoul'), ghoulTraitCard, atLocation(cellar))
+      .start();
+
+    const after = stateAfter(context, state, aliceDraws);
+
+    expect(after.cards[agenda1]?.tokens.doom).toBeUndefined();
   });
 });
 

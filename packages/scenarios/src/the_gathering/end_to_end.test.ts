@@ -915,6 +915,9 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       { name: ghoulMinion, at: 'Hallway', health: 2, engagedWith: roland },
       { name: ravenousGhoul, at: 'Hallway', health: 3, engagedWith: daisy },
     ]);
+    // At the end of the round They're Getting Out! places 1 doom for each
+    // Ghoul enemy in the Hallway or Parlor: the two ghouls.
+    expect(table.board.agenda).toMatchObject({ name: "They're Getting Out!", doom: 2 });
 
     // The round has ended with both in the Hallway holding 9 clues, the 3 per
     // investigator act 2 asks for (Wendy still counts). Its reverse side
@@ -1015,16 +1018,18 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       { name: ravenousGhoul, at: 'Hallway', health: 3, engagedWith: daisy },
     ]);
 
-    // The round has ended, so Dissonant Voices has left Roland's threat area.
+    // The round has ended: the Priest and the Ravenous Ghoul in the Hallway
+    // add 2 doom, and Dissonant Voices has left Roland's threat area.
+    expect(table.board.agenda).toMatchObject({ doom: 5 });
     expect(table.board.namesIn({ kind: 'threatArea', investigatorId: roland })).toEqual([]);
 
-    // Round 11 – mythos: 1.2 places the agenda's second doom. Roland draws
+    // Round 11 – mythos: 1.2 places the agenda's sixth doom, 4 short of its threshold. Roland draws
     // Rotting Remains (willpower 3 against 3), Daisy Crypt Chill (willpower 3
     // against 4, and a +1 token): both pass.
     expect(table.nextPhase()).toEqual({ round: 11, phase: 'mythos', step: 'drawEncounterCard' });
     expect(table.board.agenda).toMatchObject({
       name: "They're Getting Out!",
-      doom: 2,
+      doom: 6,
       threshold: 10,
     });
     table.answer(byName('Rotting Remains'), 'pass');

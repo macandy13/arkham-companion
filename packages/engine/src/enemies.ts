@@ -2,7 +2,7 @@ import { shortestPaths } from './board';
 import { cardStats, resolveValue, type CardStats, type EngineContext, type Trait } from './cards';
 import { investigatorLeavesEvents } from './elimination';
 import type { EnemyAttacked, Event, InvestigatorChanged } from './events';
-import type { InstanceId, InvestigatorId } from './ids';
+import type { CardCode, InstanceId, InvestigatorId } from './ids';
 import { cardsInZone, requireCard } from './lookup';
 import { defeatCause, playerOrder, withStatDelta } from './investigators';
 import { hasKeyword } from './keywords';
@@ -202,6 +202,32 @@ export function nearestEnemies(
   });
   const nearest = Math.min(...candidates.map(({ distance }) => distance));
   return candidates.filter(({ distance }) => distance === nearest).map(({ card }) => card);
+}
+
+/**
+ * Which enemies on the table a card means: those with `trait` (any enemy
+ * without one), only the unengaged ones with `unengaged`, and only those at
+ * a location of one of the codes in `at` when it is given ("each Ghoul enemy
+ * in the Hallway or Parlor").
+ */
+export interface EnemyFilter {
+  trait?: Trait;
+  unengaged?: true;
+  at?: readonly CardCode[];
+}
+
+/** The enemies on the table that `filter` matches, in card order. */
+export function enemiesMatching(
+  ctx: EngineContext,
+  state: GameState,
+  filter: EnemyFilter,
+): CardInstance[] {
+  return enemiesOnTable(ctx, state, filter.trait).filter(
+    (card) =>
+      (filter.unengaged === undefined || card.zone.kind === 'atLocation') &&
+      (filter.at === undefined ||
+        filter.at.includes(requireCard(state.cards, locationOf(state, card)).code)),
+  );
 }
 
 /**
