@@ -105,18 +105,20 @@ export function TestResult({
   );
 }
 
-/** One number of the test with − and + buttons, the − off at `min` when it has one. */
+/** One number with − and + buttons, the − off at `min` and the + at `max` when it has them. */
 export function Stepper({
   label,
   value,
   shown,
   min,
+  max,
   onChange,
 }: {
   label: string;
   value: number;
   shown: string;
   min?: number;
+  max?: number;
   onChange: (value: number) => void;
 }) {
   const { t } = useTranslation();
@@ -135,6 +137,7 @@ export function Stepper({
       <button
         type="button"
         aria-label={t('skillTest.raise', { what: label })}
+        disabled={max !== undefined && value >= max}
         onClick={() => onChange(value + 1)}
       >
         +

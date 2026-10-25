@@ -3,12 +3,14 @@ import { useTranslation } from 'react-i18next';
 import type {
   BoardView,
   ChaosToken,
+  DecisionCounts,
   DecisionView,
   InvestigatorId,
   SkillName,
   SkillTest,
   SkillTestSuggestion,
 } from '@arkham/engine';
+import { assertNever } from '@arkham/util';
 import { drawTokens, testFinished } from '../investigators/drawTokens';
 import {
   DrawnTokens,
@@ -17,7 +19,7 @@ import {
   Stepper,
   TestResult,
 } from '../investigators/TestCalculation';
-import type { GameActions } from '../state/gameActions';
+import type { DecisionAmounts, GameActions } from '../state/gameActions';
 
 /**
  * The first open decision (`BoardView.decisions[0]`) as a modal over the board: the question in
@@ -55,6 +57,12 @@ export function DecisionDialog({
   const tested = decision.kind === 'skillTestResult' ? decision.for : undefined;
   const draw = useChaosDraw(board, tested, test);
   const suggested = draw.result && testFinished(draw.revealed) ? draw.result : undefined;
+  const [counts, setCounts] = useState(() => defaultCounts(decision.counts));
+  const answer = (option: string) =>
+    void actions.answer(option, {
+      ...countsOf(counts[option]),
+      ...(option === suggested?.outcome ? { margin: suggested.margin } : {}),
+    });
 
   return (
     <dialog
@@ -85,15 +93,16 @@ export function DecisionDialog({
               type="button"
               disabled={busy}
               data-suggested={option === suggested?.outcome || undefined}
-              onClick={() =>
-                void actions.answer(
-                  option,
-                  option === suggested?.outcome ? { margin: suggested.margin } : {},
-                )
-              }
+              onClick={() => answer(option)}
             >
               {t(decision.labels?.[option] ?? option, { defaultValue: option })}
             </button>
+            <CountSteppers
+              decision={decision}
+              option={option}
+              counts={counts}
+              onChange={setCounts}
+            />
           </li>
         ))}
       </ul>
@@ -188,4 +197,93 @@ function TestDraw({
       {result && <TestResult result={result} skill={skill} finished={testFinished(revealed)} />}
     </>
   );
+}
+
+/** The counts an option can carry, in the order the dialog shows their steppers. */
+const COUNT_NAMES = ['amount', 'damage', 'horror'] as const;
+
+/** One of `COUNT_NAMES`. */
+type CountName = (typeof COUNT_NAMES)[number];
+
+/** The counts the players set, by option name, each starting at the engine's default. */
+type Counts = Record<string, Partial<Record<CountName, number>>>;
+
+function defaultCounts(ranges: Record<string, DecisionCounts> = {}): Counts {
+  return Object.fromEntries(
+    Object.entries(ranges).map(([option, counts]) => [
+      option,
+      Object.fromEntries(
+        COUNT_NAMES.flatMap((name) => {
+          const range = counts[name];
+          return range ? [[name, range.default]] : [];
+        }),
+      ),
+    ]),
+  );
+}
+
+/** An option's counts as the answer carries them: `amount`, and damage and horror as `amounts`. */
+function countsOf(counts: Counts[string] = {}): DecisionAmounts {
+  const { amount, damage, horror } = counts;
+  const named = {
+    ...(damage === undefined ? {} : { damage }),
+    ...(horror === undefined ? {} : { horror }),
+  };
+  return {
+    ...(amount === undefined ? {} : { amount }),
+    ...(Object.keys(named).length > 0 ? { amounts: named } : {}),
+  };
+}
+
+/** A stepper per count of `option`, within the count's limits, next to the option's button. */
+function CountSteppers({
+  decision,
+  option,
+  counts,
+  onChange,
+}: {
+  decision: DecisionView;
+  option: string;
+  counts: Counts;
+  onChange: (counts: Counts) => void;
+}) {
+  const { t } = useTranslation();
+  const ranges = decision.counts?.[option] ?? {};
+  return COUNT_NAMES.flatMap((name) => {
+    const range = ranges[name];
+    const value = counts[option]?.[name];
+    if (!range || value === undefined) return [];
+    return [
+      <Stepper
+        key={name}
+        label={t(countLabel(name, decision.action))}
+        value={value}
+        shown={String(value)}
+        min={range.min}
+        {...(range.max === undefined ? {} : { max: range.max })}
+        onChange={(changed) =>
+          onChange({ ...counts, [option]: { ...counts[option], [name]: changed } })
+        }
+      />,
+    ];
+  });
+}
+
+/**
+ * The i18n key naming a count: a skill test's `amount` by the action it belongs to (clues an
+ * investigation discovers, damage a fight deals), a plain count otherwise.
+ */
+function countLabel(name: CountName, action: DecisionView['action']): string {
+  if (name !== 'amount') return `decision.count.${name}`;
+  switch (action) {
+    case 'investigate':
+      return 'decision.count.clues';
+    case 'fight':
+      return 'decision.count.dealt';
+    case 'evade':
+    case undefined:
+      return 'decision.count.amount';
+    default:
+      return assertNever(action);
+  }
 }
