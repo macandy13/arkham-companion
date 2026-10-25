@@ -19,7 +19,7 @@ const ENCOUNTER_DISCARD: Zone = { kind: 'encounterDiscard' };
  * Every place that spawns an enemy (setup's `spawn` step, `SpawnEnemy` and
  * encounter draws) goes through this module, so the spawn rule lives in one
  * place. Setup only needs the zone (engagement follows once the scenario has
- * started, see `startingEngagements`); during play `spawnEvents` adds the
+ * started, see `readyEnemyEngagements`); during play `spawnEvents` adds the
  * spawn instruction, the discard and the engagement.
  */
 export function spawnZone(locationId: InstanceId): Zone {

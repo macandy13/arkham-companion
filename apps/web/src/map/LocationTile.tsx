@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
+import { useRef, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { EnemyView, InvestigatorView, LocationView, MapEnemyView } from '@arkham/engine';
 import { LOCATION_ART, PORTRAIT_SCAN, portraitArtViewBox } from '../catalog/cardArt';
@@ -14,11 +14,11 @@ import {
   NAME_WIDTH,
   pawnOffset,
   SHROUD_CENTRE,
-  shrinkToFit,
   TILE,
   type Point,
 } from './mapLayout';
 import type { DragHandlers } from './usePieceDrag';
+import { shrinkAround, useShrinkToFit } from './useShrinkToFit';
 
 /** A piece standing on a tile that the players may drag: an investigator's pawn or an enemy. */
 export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyView };
@@ -217,28 +217,11 @@ export function CardPatterns() {
 function NameBand({ location }: { location: LocationView }) {
   const { t } = useTranslation();
   const name = useRef<SVGTextElement>(null);
-  const [scale, setScale] = useState(1);
+  const scale = useShrinkToFit(name, NAME_WIDTH, location.name);
   const centre = { x: TILE.width / 2, y: CONTENT.band / 2 };
-  useLayoutEffect(() => {
-    const text = name.current;
-    // jsdom lays out no text, so tests keep the normal size.
-    if (!text?.getComputedTextLength) return;
-    const fit = () => setScale(shrinkToFit(text.getComputedTextLength(), NAME_WIDTH));
-    fit();
-    // The display font may still be loading, and it sets the name's width.
-    void document.fonts?.ready.then(fit);
-  }, [location.name]);
   return (
     <>
-      <text
-        ref={name}
-        {...centre}
-        transform={
-          scale === 1
-            ? undefined
-            : `translate(${centre.x} ${centre.y}) scale(${scale}) translate(${-centre.x} ${-centre.y})`
-        }
-      >
+      <text ref={name} {...centre} transform={shrinkAround(centre, scale)}>
         {location.name}
       </text>
       <text {...TYPE_PLATE_CENTRE}>{t(location.revealed ? 'map.location' : 'map.unrevealed')}</text>

@@ -28,6 +28,13 @@ export const PORTRAIT_SCAN = { width: 300, height: 419 } as const;
 export const LOCATION_ART: ScanArea = { x: 0, y: 0.057, width: 1, height: 0.506 };
 
 /**
+ * Where an enemy card's art is: the whole width from under its type line (about 64 % of the
+ * height) to above the artist's credit at the foot, so the printed type plate and attack icons
+ * stay under the enemy card's own frame (`ENEMY_CARD.artTop`) and the credit is cut off.
+ */
+export const ENEMY_ART: ScanArea = { x: 0, y: 0.635, width: 1, height: 0.32 };
+
+/**
  * The SVG `viewBox` that shows `area` of a portrait scan drawn at `PORTRAIT_SCAN` size; with
  * `preserveAspectRatio="xMidYMid slice"` the art fills its window and keeps its proportions.
  * Whole units are close enough for a crop and keep the attribute short.

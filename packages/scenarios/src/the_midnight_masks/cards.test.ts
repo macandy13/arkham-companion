@@ -252,20 +252,69 @@ describe('The Midnight Masks card abilities', () => {
     expect(state.cards[nightgaunt]?.tokens.doom).toBeUndefined();
   });
 
-  it('deals 1 horror and 1 damage for a failed On Wings of Darkness', () => {
+  it('draws nothing for Mysterious Chanting with a Cultist in play, and shuffles the encounter deck', () => {
+    const wizard = instanceId('wizard_of_the_order');
+    const acolyte = instanceId('acolyte');
     const { context, state: started } = newGame()
       .withLocation(rivertown, cardOf('01125'), { revealed: true })
+      .withLocation(graveyard, cardOf('01133'), { revealed: true })
+      .withConnection(rivertown, graveyard)
       .withInvestigator(alice, { locationId: rivertown })
+      .withCard(wizard, cardOf('01170'), atLocation(graveyard))
+      .withCard(instanceId('mysterious_chanting'), cardOf('01171'), { kind: 'encounterDeck' })
+      .withCard(acolyte, cardOf('01169'), { kind: 'encounterDeck' })
+      .start();
+
+    const { state, events } = execute(context, started, aliceDraws);
+
+    expect(state.cards[acolyte]?.zone.kind).toBe('encounterDeck');
+    expect(events).toContainEqual(
+      expect.objectContaining({ type: 'DeckShuffled', zone: { kind: 'encounterDeck' } }),
+    );
+  });
+
+  it('draws Wizard of the Order for Mysterious Chanting with no Cultist in play', () => {
+    const wizard = instanceId('wizard_of_the_order');
+    const { context, state: started } = newGame()
+      .withLocation(rivertown, cardOf('01125'), { revealed: true })
+      .withLocation(graveyard, cardOf('01133'), { revealed: true })
+      .withConnection(rivertown, graveyard)
+      .withInvestigator(alice, { locationId: rivertown })
+      .withCard(instanceId('mysterious_chanting'), cardOf('01171'), { kind: 'encounterDeck' })
+      .withCard(instanceId('hunting_nightgaunt'), cardOf('01172'), { kind: 'encounterDeck' })
+      .withCard(wizard, cardOf('01170'), { kind: 'encounterDeck' })
+      .start();
+
+    const drawn = stateAfter(context, started, aliceDraws);
+    expect(drawn.pending).toMatchObject([{ id: 'spawn:wizard_of_the_order' }]);
+
+    const state = stateAfter(context, drawn, answer('spawn:wizard_of_the_order', graveyard));
+
+    expect(state.cards[wizard]?.zone).toEqual(atLocation(graveyard));
+  });
+
+  it('deals 1 horror and 1 damage for a failed On Wings of Darkness, then moves alice to Rivertown without the Wizard but with the Nightgaunt', () => {
+    const wizard = instanceId('wizard_of_the_order');
+    const nightgaunt = instanceId('hunting_nightgaunt');
+    const { context, state: started } = newGame()
+      .withLocation(rivertown, cardOf('01125'), { revealed: true })
+      .withLocation(graveyard, cardOf('01133'), { revealed: true })
+      .withInvestigator(alice, { locationId: graveyard })
+      .withCard(wizard, cardOf('01170'), engagedWith(alice))
+      .withCard(nightgaunt, cardOf('01172'), engagedWith(alice))
       .withCard(instanceId('on_wings'), cardOf('01173'), { kind: 'encounterDeck' })
       .start();
     const drawn = stateAfter(context, started, aliceDraws);
+    expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'agility', difficulty: 4 } }]);
 
     const state = stateAfter(context, drawn, answer('test:on_wings', 'fail'));
 
-    expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'agility', difficulty: 4 } }]);
     expect(requireInvestigator(state, alice)).toMatchObject({
+      locationId: rivertown,
       health: { damage: 1 },
       sanity: { horror: 1 },
     });
+    expect(state.cards[wizard]?.zone).toEqual(atLocation(graveyard));
+    expect(state.cards[nightgaunt]?.zone).toEqual(engagedWith(alice));
   });
 });

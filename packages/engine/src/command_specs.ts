@@ -3,6 +3,7 @@ import type { AdvanceAct, AdvanceAgenda, Command, CommandType, DrawEncounter } f
 import { handleDealEnemyAttack } from './attacks_of_opportunity';
 import { handleRequestDecision, handleResolveDecision } from './decisions';
 import { agendaThresholdDecision } from './doom';
+import { readyEnemyEngagements } from './engagement';
 import type { Event } from './events';
 import {
   handleAddConnection,
@@ -194,6 +195,7 @@ const COMMAND_SPECS: CommandSpecs = {
   ShuffleInto: { handle: (_ctx, state, command) => handleShuffleInto(state, command) },
   ShuffleEncounterDiscard: { handle: (_ctx, state) => handleShuffleEncounterDiscard(state) },
   ShuffleEncounterDeck: { handle: (_ctx, state) => handleShuffleEncounterDeck(state) },
+  EngageReadyEnemies: { handle: readyEnemyEngagements },
   // `handle` turns it into an `ability` step before any handler would see it.
   ResolveEffect: { handle: () => [] },
   SpawnEnemy: { handle: handleSpawnEnemy },

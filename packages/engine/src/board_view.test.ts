@@ -28,6 +28,7 @@ import {
   perInvestigator,
   TableError,
   threatAreaOf,
+  trait,
 } from './index';
 import { stateAfter } from '../test/utils';
 
@@ -542,7 +543,46 @@ describe('enemies', () => {
 
     const board = boardView(context, state);
 
-    expect(board.enemiesEngagedWith(alice).map(({ name }) => name)).toEqual(['ghoul']);
+    expect(board.enemiesEngagedWith(alice)).toEqual([
+      { id: instanceId('ghoul'), name: 'ghoul', at: 'study', engagedWith: alice, health: 1 },
+    ]);
+  });
+
+  it("reads an enemy's fight and evade as modified where it stands, its card's print and picture", () => {
+    const { context, state } = newGame()
+      .withLocation(
+        study,
+        blankLocation('dining_hall', { modifiers: [{ stat: 'fight', of: 'enemiesHere', by: 1 }] }),
+        { revealed: true },
+      )
+      .withInvestigator(alice, { locationId: study })
+      .withCard(
+        instanceId('ghoul'),
+        blankEnemy('ghoul', {
+          fight: 3,
+          evade: 2,
+          damage: 1,
+          horror: 2,
+          imageSrc: cardImagePath('/cards/ghoul.png'),
+          traits: [trait('Ghoul')],
+          keywords: [{ name: 'hunter' }, { name: 'prey', detail: 'Highest [combat]' }],
+          victory: 1,
+        }),
+        engagedWith(alice),
+      )
+      .start();
+
+    const stats = boardView(context, state).enemyStats(instanceId('ghoul'));
+
+    expect(stats).toEqual({
+      image: '/cards/ghoul.png',
+      fight: 4,
+      evade: 2,
+      attack: { damage: 1, horror: 2 },
+      traits: ['Ghoul'],
+      keywords: [{ name: 'hunter' }, { name: 'prey', detail: 'Highest [combat]' }],
+      victory: 1,
+    });
   });
 
   it('marks an exhausted enemy', () => {

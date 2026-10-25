@@ -18,6 +18,9 @@ export type LocationToken = Extract<TokenKind, 'clue' | 'doom'>;
 /** The investigator counters the screen's +/− steppers change. */
 export type SteppedStat = Extract<InvestigatorStat, 'resources' | 'damage' | 'horror'>;
 
+/** Whether a step on the turn spends one of the investigator's actions or is free (a card allows it). */
+export type ActionCost = 'action' | 'free';
+
 /** Counts the players confirm when they answer a decision (clues found, damage soaked). */
 export interface DecisionAmounts {
   /** For an option with one `amount` range. */
@@ -30,7 +33,9 @@ export interface DecisionAmounts {
  * What the play screen can do to the open game, in the players' words. It mirrors `PlayTable`'s
  * verbs, but with the screen's defaults:
  * - An action is taken by the investigator whose turn it is, since the rules allow actions only
- *   during one's own turn; without a turn it is refused with `noTurnInProgress`.
+ *   during one's own turn; without a turn it is refused with `noTurnInProgress`. Investigate,
+ *   engage, and fight and evade unless free, count off one of their actions, which the engine
+ *   leaves to the players; with none left they are refused, and `adjustActions` grants more.
  * - The decision dialog shows the first open decision, so an answer picks an option of that one;
  *   without one it is refused with `noPendingDecision`.
  * - A skill test is never assumed passed (the chaos bag is on the table): an action leaves it
@@ -48,14 +53,20 @@ export interface GameActions {
   resign(): Promise<void>;
   /** Changes the actions left this turn. */
   adjustActions(delta: number): Promise<void>;
-  /** A move action to a connected location. */
+  /**
+   * A move to a connected location, as the pawn's drag plays it. It counts off no action: the drag
+   * also catches the screen up with a move made at the table.
+   */
   moveTo(location: InstanceId): Promise<void>;
   /** An investigate action; its test stays open as a decision. */
   investigate(): Promise<void>;
-  /** A fight action; its test stays open as a decision. */
-  fight(enemy: InstanceId): Promise<void>;
-  /** An evade action; its test stays open as a decision. */
-  evade(enemy: InstanceId): Promise<void>;
+  /**
+   * A fight; its test stays open as a decision. It is an action unless `cost` says `free`, as a
+   * card can let an investigator fight without spending one.
+   */
+  fight(enemy: InstanceId, cost?: ActionCost): Promise<void>;
+  /** An evade; its test stays open as a decision. An action unless `cost` says `free`, like `fight`. */
+  evade(enemy: InstanceId, cost?: ActionCost): Promise<void>;
   /** An engage action. */
   engage(enemy: InstanceId): Promise<void>;
   /**
@@ -63,6 +74,12 @@ export interface GameActions {
    * the instruction whatever the engagement, so an engaged enemy disengages and moves too.
    */
   moveEnemy(enemy: InstanceId, location: InstanceId): Promise<void>;
+  /** `amount` damage on `enemy`, as a card effect deals it; enough of it defeats the enemy. */
+  damageEnemy(enemy: InstanceId, amount: number): Promise<void>;
+  /** A card effect disengages `enemy`; it stays where it is. */
+  disengageEnemy(enemy: InstanceId): Promise<void>;
+  /** A card effect defeats `enemy` outright. */
+  defeatEnemy(enemy: InstanceId): Promise<void>;
   /**
    * Picks `option` of the first open decision by its readable name (`DecisionView.options`), as the
    * decision dialog lists them.
@@ -129,6 +146,13 @@ export function gameActions(
 ): GameActions {
   const onTurn = (action: (table: PlayTable, investigator: InvestigatorId) => void) =>
     play((table) => action(table, turnInvestigator(table.state)));
+  // The engine leaves counting actions to the players, so the screen counts off the one it takes.
+  const asAction = (action: (table: PlayTable, investigator: InvestigatorId) => void) =>
+    onTurn((table, investigator) => {
+      table.spendAction(investigator);
+      action(table, investigator);
+    });
+  const costing = (cost: ActionCost) => (cost === 'action' ? asAction : onTurn);
   return {
     nextPhase: () => play((table) => void table.nextPhase()),
     startTurn: (investigator) => play((table) => table.startTurn(investigator)),
@@ -138,14 +162,19 @@ export function gameActions(
       onTurn((table, investigator) => table.adjustActions(investigator, delta)),
     moveTo: (location) => onTurn((table, investigator) => table.moveTo(investigator, location)),
     investigate: () =>
-      onTurn((table, investigator) => table.investigate(investigator, { result: 'open' })),
-    fight: (enemy) =>
-      onTurn((table, investigator) => table.fight(investigator, enemy, { result: 'open' })),
-    evade: (enemy) =>
-      onTurn((table, investigator) => table.evade(investigator, enemy, { result: 'open' })),
-    engage: (enemy) => onTurn((table, investigator) => table.engage(investigator, enemy)),
+      asAction((table, investigator) => table.investigate(investigator, { result: 'open' })),
+    fight: (enemy, cost = 'action') =>
+      costing(cost)((table, investigator) => table.fight(investigator, enemy, { result: 'open' })),
+    evade: (enemy, cost = 'action') =>
+      costing(cost)((table, investigator) => table.evade(investigator, enemy, { result: 'open' })),
+    engage: (enemy) => asAction((table, investigator) => table.engage(investigator, enemy)),
     moveEnemy: (enemy, location) =>
       play((table) => table.moveEnemy(enemy, location, { forced: true })),
+    damageEnemy: (enemy, amount) =>
+      play((table) => table.play({ type: 'DamageEnemy', enemyId: enemy, amount })),
+    disengageEnemy: (enemy) =>
+      play((table) => table.play({ type: 'DisengageEnemy', enemyId: enemy })),
+    defeatEnemy: (enemy) => play((table) => table.play({ type: 'DefeatEnemy', enemyId: enemy })),
     answer: (option, counts = {}) =>
       play((table) => {
         const decision = firstDecision(table.state);

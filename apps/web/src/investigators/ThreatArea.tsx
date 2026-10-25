@@ -1,7 +1,9 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { CardName, EnemyView } from '@arkham/engine';
+import type { BoardView, CardName, MapEnemyView } from '@arkham/engine';
+import { EnemyDetails } from '../enemies/EnemyDetails';
 import { enemyConditions } from '../map/LocationTile';
+import type { GameActions } from '../state/gameActions';
 
 /**
  * How many threat area cards show side by side; more scroll, a whole card at a time. The
@@ -13,15 +15,26 @@ export const THREAT_CARDS_SHOWN = 4;
  * An investigator's threat area, laid as a row of small cards along the top edge of their card:
  * the treacheries in it (`InvestigatorView.threatArea`), then the enemies engaged with them, each
  * with the health it has left, like the damage tokens on the card. Past `THREAT_CARDS_SHOWN` cards
- * the row scrolls by whole cards, with a swipe or its arrows. Nothing while the area is empty, so
- * the card keeps its place.
+ * the row scrolls by whole cards, with a swipe or its arrows. A tap on an enemy card opens its
+ * details with what the players can do to it (`EnemyDetails`). Nothing while the area is empty,
+ * so the card keeps its place.
  */
 export function ThreatArea({
+  board,
   treacheries,
   enemies,
+  actions,
+  onTurn,
+  busy,
 }: {
+  /** The board the enemy details read their numbers from (`BoardView.enemyStats`). */
+  board: BoardView;
   treacheries: readonly CardName[];
-  enemies: readonly EnemyView[];
+  enemies: readonly MapEnemyView[];
+  actions: GameActions;
+  /** It is the turn of the investigator whose threat area this is, so they may fight and evade. */
+  onTurn: boolean;
+  busy: boolean;
 }) {
   const { t } = useTranslation();
   const strip = useRef<HTMLUListElement>(null);
@@ -51,8 +64,15 @@ export function ThreatArea({
             {name}
           </li>
         ))}
-        {enemies.map((enemy, index) => (
-          <EnemyCard key={`${enemy.name}-${index}`} enemy={enemy} />
+        {enemies.map((enemy) => (
+          <EnemyCard
+            key={enemy.id}
+            board={board}
+            enemy={enemy}
+            actions={actions}
+            onTurn={onTurn}
+            busy={busy}
+          />
         ))}
       </ul>
       {overflowing && (
@@ -71,10 +91,24 @@ export function ThreatArea({
 /**
  * An engaged enemy as a small card: its name and the health it has left of its health
  * (`EnemyView.health` less `damage`), named for screen readers with that, its damage and whether
- * it is exhausted, as on the map.
+ * it is exhausted, as on the map. A tap on the card opens its details (`EnemyDetails`), with what
+ * the players can do to it; the button lies over the whole card, which is too small for more.
  */
-function EnemyCard({ enemy }: { enemy: EnemyView }) {
+function EnemyCard({
+  board,
+  enemy,
+  actions,
+  onTurn,
+  busy,
+}: {
+  board: BoardView;
+  enemy: MapEnemyView;
+  actions: GameActions;
+  onTurn: boolean;
+  busy: boolean;
+}) {
   const { t } = useTranslation();
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const left = enemy.health === undefined ? undefined : enemy.health - (enemy.damage ?? 0);
   return (
     <li
@@ -89,6 +123,22 @@ function EnemyCard({ enemy }: { enemy: EnemyView }) {
       {enemy.name}
       {left !== undefined && (
         <data value={left}>{t('investigators.left', { left, max: enemy.health })}</data>
+      )}
+      <button
+        type="button"
+        aria-haspopup="dialog"
+        aria-label={t('enemy.open', { name: enemy.name })}
+        onClick={() => setDetailsOpen(true)}
+      />
+      {detailsOpen && (
+        <EnemyDetails
+          board={board}
+          enemy={enemy}
+          actions={actions}
+          onTurn={onTurn}
+          busy={busy}
+          onClose={() => setDetailsOpen(false)}
+        />
       )}
     </li>
   );

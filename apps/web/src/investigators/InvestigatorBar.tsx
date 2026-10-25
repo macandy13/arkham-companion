@@ -4,8 +4,8 @@ import {
   SKILL_NAMES,
   type BoardView,
   type CardImagePath,
-  type EnemyView,
   type InvestigatorView,
+  type MapEnemyView,
   type SkillName,
 } from '@arkham/engine';
 import { useCardPicture } from '../catalog/cardImages';
@@ -80,7 +80,7 @@ function InvestigatorPanel({
   investigator: InvestigatorView;
   onTurn: boolean;
   /** The enemies engaged with the investigator, shown in their threat area. */
-  engaged: readonly EnemyView[];
+  engaged: readonly MapEnemyView[];
   /** The players may start this investigator's turn now (`TurnControls`). */
   canStart: boolean;
   actions: GameActions;
@@ -95,7 +95,15 @@ function InvestigatorPanel({
       data-status={investigator.status}
       data-turn={onTurn || undefined}
     >
-      <ThreatArea treacheries={investigator.threatArea ?? []} enemies={engaged} />
+      <ThreatArea
+        board={board}
+        treacheries={investigator.threatArea ?? []}
+        enemies={engaged}
+        actions={actions}
+        onTurn={onTurn}
+        // Fighting and evading are play, so they wait while the players adjust, like the turn's.
+        busy={busy || adjusting}
+      />
       <article data-card="investigator">
         <header>
           <h3 id={nameId}>{investigator.name}</h3>

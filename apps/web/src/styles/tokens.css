@@ -83,6 +83,10 @@
   --color-card-band: #4a3222;
   --color-card-band-back: #3c5638;
   --color-card-gilt: #d8c48e;
+  /* The shields on an enemy card: fight in dark red, health in blood red, evade in dark green. */
+  --color-card-fight: #5a2e24;
+  --color-card-health: #8c2f2b;
+  --color-card-evade: #2f4a33;
   /* The shroud token, a dark disc like the printed shroud icon's. */
   --color-token-shroud: #2c2c33;
 
@@ -125,6 +129,8 @@
   --layout-board-panel-width: 23rem;
   --layout-portrait-width: 9rem;
   --layout-sheet-width: 22rem;
+  /* A card drawn in full in a dialog (the enemy details), like the prototype's zoomed card. */
+  --layout-zoom-card-width: 15rem;
   /* Connection lines on the map, in its SVG user units (mapLayout.ts TILE). */
   --map-line-width: 3px;
   /*
@@ -143,6 +149,19 @@
   --card-type-size: 6.5px;
   /* The numbers on a tile's shroud, clue and doom tokens. */
   --card-token-size: 13px;
+  /*
+   * An enemy card's text in SVG user units (EnemyCard): the numbers on its shields, the "of 5"
+   * under its health, the icon under fight and evade, its traits, keywords and victory points,
+   * and its attack's damage and horror icons.
+   */
+  --card-stat-size: 13px;
+  --card-stat-note-size: 5px;
+  --card-stat-icon-size: 6px;
+  --card-text-size: 8px;
+  --card-attack-icon-size: 7px;
+  /* Between the lines of an enemy card's text and its attack icons, and the icons' inset from its edges. */
+  --card-text-gap: 1px;
+  --card-attack-inset: 8px;
   --card-type-spacing: 0.08em;
   /*
    * The art area of a card drawn in HTML (the agenda and act) without its image: the map's SVG
@@ -183,8 +202,10 @@
   --map-ghost-opacity: 0.6;
   /* A token with nothing on it (a location's clues once found) fades, so it reads as empty. */
   --token-empty-opacity: 0.45;
-  /* An action pip on the investigator whose turn it is. */
-  --action-pip-size: 0.75rem;
+  /* The game's action arrow: one per action left on the turn row, and after a button that costs one. */
+  --action-pip-size: 0.875rem;
+  /* An action already spent on the turn row: its arrow stays, faded. */
+  --action-spent-opacity: 0.3;
   /* The icon before the name of an investigator's counter. */
   --stat-icon-size: 0.875rem;
   /* An icon on an icon button (`button[data-icon]` in base.css). */
