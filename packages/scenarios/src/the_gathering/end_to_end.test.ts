@@ -922,8 +922,8 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // The round has ended with both in the Hallway holding 9 clues, the 3 per
     // investigator act 2 asks for (Wendy still counts). Its reverse side
     // reveals the Parlor (on the house map, unrevealed, since act 1), puts Lita
-    // Chantler there and spawns the Ghoul Priest in the Hallway. The players
-    // pick whom it engages by its prey (highest combat): Roland.
+    // Chantler there and spawns the Ghoul Priest in the Hallway. Its prey
+    // (highest combat) picks Roland (combat 4) over Daisy (combat 2).
     expect(table.board.perInvestigator('at')).toEqual({
       roland: 'Hallway',
       daisy: 'Hallway',
@@ -933,17 +933,6 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       [roland, 7],
       [daisy, 2],
     ]);
-    expect(table.board.decisions).toEqual([
-      {
-        prompt: 'decision.chooseEngagement',
-        kind: 'chooseInvestigator',
-        about: 'Ghoul Priest',
-        options: ['Roland Banks', 'Daisy Walker'],
-      },
-    ]);
-    // The act's reverse side is still resolving, so it stays current until the answer.
-    expect(table.board.act?.name).toBe('The Barrier');
-    table.answer(byName('Ghoul Priest'), 'Roland Banks');
 
     expect(table.board.act?.name).toBe('What Have You Done?');
     expect(table.board.location(byName('Parlor')).cards).toEqual(['Lita Chantler']);

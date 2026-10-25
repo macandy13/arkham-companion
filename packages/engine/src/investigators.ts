@@ -1,7 +1,7 @@
 import type { CluesDiscovered, DefeatCause, InvestigatorChanged, TokensChanged } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
 import { CommandRejected } from './rejection';
-import type { GameState, Investigator, InvestigatorStat } from './state';
+import type { GameState, Investigator, InvestigatorStat, SkillName } from './state';
 
 /** Health the investigator has left; 0 or less means they are defeated. */
 export function remainingHealth(investigator: Investigator): number {
@@ -124,6 +124,18 @@ export function mostClues(investigators: readonly Investigator[]): Investigator[
 /** Prey "most resources"; see `lowestRemainingHealth` for tie handling. */
 export function mostResources(investigators: readonly Investigator[]): Investigator[] {
   return tiedFor(investigators, (inv) => inv.resources, 'highest');
+}
+
+/**
+ * Prey "Highest [skill]" or "Lowest [skill]" (Ghoul Priest: "Highest [combat]"); see
+ * `lowestRemainingHealth` for tie handling. Compares the printed skill: the engine tracks no
+ * constant skill modifiers yet.
+ */
+export function bySkill(
+  skill: SkillName,
+  extreme: 'lowest' | 'highest',
+): (investigators: readonly Investigator[]) => Investigator[] {
+  return (investigators) => tiedFor(investigators, (inv) => inv.skills[skill], extreme);
 }
 
 function tiedFor(

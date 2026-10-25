@@ -1,7 +1,6 @@
 import { expect, test } from './fixtures/test';
 
-// Journey: change the preferences and see the app react. Pack ownership joins in once the
-// settings screen receives the catalog packs (M2.7).
+// Journey: change the preferences and see the app react.
 test('change the settings', async ({ page }) => {
   await test.step('Open the settings', async () => {
     await page.goto('/#/settings');

@@ -1,14 +1,13 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  SKILL_NAMES,
   type BoardView,
   type ChaosToken,
   type InvestigatorView,
   type SkillName,
 } from '@arkham/engine';
 import { drawTokens, testFinished } from './drawTokens';
-import { DrawnTokens, signed, Stepper, TestResult } from './TestCalculation';
+import { DrawnTokens, signed, SkillToggles, Stepper, TestResult } from './TestCalculation';
 
 /** The difficulty a test starts at: the most common printed one ("Test [willpower] (3)"). */
 const DEFAULT_DIFFICULTY = 3;
@@ -65,26 +64,11 @@ export function SkillTestDialog({
           onClick={onClose}
         />
       </header>
-      <section aria-label={t('investigators.skills')}>
-        <ul>
-          {SKILL_NAMES.map((each) => (
-            <li key={each}>
-              <button
-                type="button"
-                aria-pressed={skills.includes(each)}
-                aria-label={t('investigators.skillValue', {
-                  skill: t(`skill.${each}`),
-                  value: investigator.skills[each],
-                })}
-                data-skill={each}
-                onClick={() => setSkills(pickSkill(skills, each))}
-              >
-                <data value={investigator.skills[each]}>{investigator.skills[each]}</data>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </section>
+      <SkillToggles
+        investigator={investigator}
+        chosen={added === undefined ? [tested] : [tested, added]}
+        onPick={(each) => setSkills(pickSkill(skills, each))}
+      />
       <Stepper
         label={t('skillTest.difficulty')}
         value={difficulty}

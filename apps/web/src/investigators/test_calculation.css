@@ -1,6 +1,6 @@
 /*
  * The parts of a skill test calculation (TestCalculation) that the skill test dialog and the
- * decision dialog of a skill test share: the stepper rows, the calculation and the outcome,
+ * decision dialog of a skill test share: the skill toggles, the stepper rows, the calculation and the outcome,
  * coloured like a pass or a fail, and the tokens drawn, and both dialogs' plain list items. The
  * `#board` id lets these beat the home screen's `#app > main` rows and padded list cards.
  */
@@ -177,4 +177,47 @@
   :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
   li[data-token='frost'] {
   --token-symbol: url('../symbols/frost.svg');
+}
+
+/* A skill toggle: its icon, then its value, like on the card. */
+#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) button[data-skill] {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+}
+
+#board
+  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
+  button[data-skill]::before {
+  content: '';
+  width: var(--stat-icon-size);
+  height: var(--stat-icon-size);
+  background: currentcolor;
+  mask: var(--skill-icon) center / contain no-repeat;
+}
+
+#board
+  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
+  button[data-skill]
+  > data {
+  min-width: 0;
+  font-size: var(--font-size-body);
+}
+
+#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) section > ul {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#board
+  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
+  button[data-skill][aria-pressed='true'] {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-accent-text);
 }
