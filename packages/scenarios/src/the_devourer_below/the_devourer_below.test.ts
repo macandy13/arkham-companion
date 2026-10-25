@@ -93,19 +93,21 @@ describe('The Devourer Below setup', () => {
     },
   );
 
-  it('connects the 4 Woods picked with seed 1 along the ring their revealed sides print', () => {
+  it('connects the 4 Woods picked with seed 1 along their ring, once both ends are revealed', () => {
     const state = startScenario(ctx, { seed: 1 });
-    const name = (id: InstanceId) =>
-      Object.entries(codes).find(([, code]) => code === state.cards[id]?.code)?.[0];
 
     const betweenWoods = (state.board.maps[woods]?.connections ?? [])
       .filter((edge) => edge.from !== mainPath)
-      .map((edge) => [name(edge.from), name(edge.to)]);
+      .map((edge) => ({
+        from: state.cards[edge.from]?.code,
+        to: state.cards[edge.to]?.code,
+        revealedOnly: edge.revealedOnly,
+      }));
 
     // Unhallowed Ground and Tangled Thicket are left out, and with them their four connections.
     expect(betweenWoods).toEqual([
-      ['arkhamWoodsOldHouse', 'arkhamWoodsTwistingPaths'],
-      ['arkhamWoodsQuietGlade', 'arkhamWoodsCliffside'],
+      { from: codes.arkhamWoodsOldHouse, to: codes.arkhamWoodsTwistingPaths, revealedOnly: true },
+      { from: codes.arkhamWoodsQuietGlade, to: codes.arkhamWoodsCliffside, revealedOnly: true },
     ]);
   });
 
@@ -270,8 +272,6 @@ describe('The Devourer Below skull token', () => {
     const suggestion = skillTestSuggestion(ctx, state, test, { tokens: ['skull'] });
     return suggestion.trace.find((step) => step.source.kind === 'chaosToken')?.change ?? 0;
   }
-  /** Ghoul Minion's ArkhamDB code; 3 copies are in the Ghouls set. */
-  const ghoulMinion = '01160';
   const spawnedAtMainPath = (enemyId: InstanceId): Command => ({
     type: 'SpawnEnemy',
     enemyId,
@@ -286,8 +286,8 @@ describe('The Devourer Below skull token', () => {
       skullWith(
         difficulty,
         spawnedAtMainPath(instanceId(`${codes.umordhoth}#1`)),
-        spawnedAtMainPath(instanceId(`${ghoulMinion}#1`)),
-        spawnedAtMainPath(instanceId(`${ghoulMinion}#2`)),
+        spawnedAtMainPath(instanceId(`${GATHERING_CODES.ghoulMinion}#1`)),
+        spawnedAtMainPath(instanceId(`${GATHERING_CODES.ghoulMinion}#2`)),
       ),
     ).toBe(skull);
   });

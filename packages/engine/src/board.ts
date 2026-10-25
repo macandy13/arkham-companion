@@ -28,18 +28,32 @@ export function allConnections(state: GameState): { mapId: MapId; edge: Edge }[]
  * Locations an investigator or enemy at `locationId` can move to in one step,
  * in the order the edges were added. An edge only counts while both of its
  * locations are on a map (zone `location`): scenario data may connect locations
- * that are still set aside, and these connections wake up once both are in play.
+ * that are still set aside, and these connections wake up once both are in play;
+ * a `revealedOnly` edge waits until both are revealed too.
  * Edges may cross maps: every map's edges count, wherever their ends are.
  */
 export function neighbours(state: GameState, locationId: InstanceId): InstanceId[] {
   if (!isLocationInPlay(state, locationId)) return [];
   const result = new Set<InstanceId>();
   for (const { edge } of allConnections(state)) {
-    if (!isLocationInPlay(state, edge.from) || !isLocationInPlay(state, edge.to)) continue;
+    if (!isConnectionOpen(state, edge)) continue;
     if (edge.from === locationId) result.add(edge.to);
     else if (!edge.oneWay && edge.to === locationId) result.add(edge.from);
   }
   return [...result];
+}
+
+/**
+ * True while the edge connects its locations: both are on a map, and both are revealed if it is
+ * a `revealedOnly` edge.
+ */
+export function isConnectionOpen(state: GameState, edge: Edge): boolean {
+  if (!isLocationInPlay(state, edge.from) || !isLocationInPlay(state, edge.to)) return false;
+  return !edge.revealedOnly || (isRevealed(state, edge.from) && isRevealed(state, edge.to));
+}
+
+function isRevealed(state: GameState, id: InstanceId): boolean {
+  return state.cards[id]?.faceUp === true;
 }
 
 /**

@@ -1,4 +1,5 @@
 import { listIfAny } from '@arkham/util';
+import { isConnectionOpen } from './board';
 import { effectiveValue } from './card_values';
 import { cardStats, resolveValue, type EngineContext } from './cards';
 import { optionName } from './describe_decision';
@@ -149,7 +150,7 @@ interface LocationViewBase {
  * One map as the screen draws it: its locations in map order, the book layout cell of each one
  * that has a cell (`GameMap.layout`, without cells of locations that have left the map) and its
  * connections between them. An edge to a location on another map is left out, since one map's
- * drawing cannot show it.
+ * drawing cannot show it, and so is a `revealedOnly` edge until both its locations are revealed.
  */
 export interface MapView {
   id: MapId;
@@ -586,7 +587,9 @@ function mapView(ctx: EngineContext, state: GameState, id: MapId, map: GameMap):
         return cell ? [[location, cell]] : [];
       }),
     ),
-    connections: connections.filter((edge) => isOnMap(edge.from) && isOnMap(edge.to)),
+    connections: connections.filter(
+      (edge) => isOnMap(edge.from) && isOnMap(edge.to) && isConnectionOpen(state, edge),
+    ),
     enemies: enemiesByLocation(ctx, state, onMap),
   };
 }

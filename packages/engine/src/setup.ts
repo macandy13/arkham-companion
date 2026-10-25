@@ -65,6 +65,8 @@ export interface MapConnection {
   from: CardCode;
   to: CardCode;
   oneWay?: boolean;
+  /** Printed on the revealed sides only (`Edge.revealedOnly`). */
+  revealedOnly?: boolean;
 }
 
 /**
@@ -88,7 +90,8 @@ export interface AddMapStep {
  * choose 4 of them at random and put them into play"): one of `codes` in each of `cells`,
  * picked with the setup's seed and unrevealed; the others leave the game. The step's
  * connections may name every one of `codes`; those to a location left out are dropped, so a
- * scenario declares the printed connections once for whichever locations come up.
+ * scenario declares the printed connections once for whichever locations come up. There are at
+ * least as many `codes` as `cells`.
  */
 export interface RandomMapLocations {
   codes: readonly CardCode[];
@@ -588,6 +591,7 @@ function edge(locations: readonly CodedCard[], connection: MapConnection): Edge 
     from: targetId(locations, connection.from),
     to: targetId(locations, connection.to),
     oneWay: connection.oneWay ?? false,
+    ...(connection.revealedOnly && { revealedOnly: true }),
   };
 }
 

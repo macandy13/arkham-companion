@@ -387,6 +387,27 @@ describe('neighbours', () => {
   });
 });
 
+describe('neighbours along a connection printed on revealed sides only', () => {
+  const revealed = (cardId: InstanceId): Command => ({
+    type: 'RevealLocation',
+    locationId: cardId,
+  });
+
+  it.each([
+    { revealing: [], fromStudy: [] },
+    { revealing: [study], fromStudy: [] },
+    { revealing: [study, hall], fromStudy: [hall] },
+  ])('leads from the study to $fromStudy with $revealing revealed', ({ revealing, fromStudy }) => {
+    const { context, state: started } = table
+      .withConnection(study, hall, { revealedOnly: true })
+      .start();
+
+    const state = stateAfter(context, started, ...revealing.map(revealed));
+
+    expect(neighbours(state, study)).toEqual(fromStudy);
+  });
+});
+
 describe('shortestPaths', () => {
   const den = instanceId('den');
   const { state: ringBoard } = newGame()

@@ -75,6 +75,7 @@ export const GATHERING_CODES = {
   cellar: cardCode('01114'),
   parlor: cardCode('01115'),
   ghoulPriest: cardCode('01116'),
+  ghoulMinion: cardCode('01160'),
   litaChantler: cardCode('01117'),
 } as const;
 

@@ -44,9 +44,8 @@ const woodsRing: readonly CardCode[] = [
 /**
  * The Main Path with 4 of the 6 Arkham Woods at random in the corners around it. The Main Path
  * "is connected to each other Woods location"; the Woods connect to each other along
- * `woodsRing`. Setup drops the connections to the 2 Woods left out of the game. The printed
- * Woods-to-Woods connections only show on revealed sides, so the map lets the players move
- * between two unrevealed neighbours too; they keep to the printed rule by hand.
+ * `woodsRing`, but only on their revealed sides, so those connections count once both
+ * neighbours are revealed. Setup drops the connections to the 2 Woods left out of the game.
  */
 const theWoods: AddMapStep = {
   kind: 'addMap',
@@ -67,6 +66,7 @@ const theWoods: AddMapStep = {
     ...woodsRing.map((woods, i): MapConnection => ({
       from: woods,
       to: woodsRing[(i + 1) % woodsRing.length] ?? woods,
+      revealedOnly: true,
     })),
   ],
 };

@@ -8,6 +8,11 @@ export interface Edge {
   to: InstanceId;
   /** One-way edges only allow movement from `from` to `to`. */
   oneWay: boolean;
+  /**
+   * The connection counts only while both locations are revealed: it is printed on their
+   * revealed sides only, as the Arkham Woods' connections to each other.
+   */
+  revealedOnly?: boolean;
 }
 
 /**
