@@ -194,7 +194,7 @@ The engine reads card stats only through a [`CardDb`](../packages/engine/src/car
 
 ### Web app
 
-The React PWA is a thin layer over the engine. [`App.tsx`](../apps/web/src/App.tsx) defines the hash routes; screens are in [`screens/`](../apps/web/src/screens/) (home, new game wizard, game screen, settings with the unofficial fan project notice). Components read the [app store](../apps/web/src/state/appStore.ts) and call its methods; they never change game state or touch storage.
+The React PWA is a thin layer over the engine. [`App.tsx`](../apps/web/src/App.tsx) defines the hash routes; screens are in [`screens/`](../apps/web/src/screens/) (home, new game wizard, game screen, settings with the owned packs of the campaigns the app plays (`CampaignEntry.packCodes`) and the unofficial fan project notice). Components read the [app store](../apps/web/src/state/appStore.ts) and call its methods; they never change game state or touch storage.
 
 The open game (`OpenGame`) is the play screen's single source of truth:
 

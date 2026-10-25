@@ -7,9 +7,9 @@ import { loadSettings } from '../settings/settings';
 import { SettingsScreen } from './SettingsScreen';
 
 const packs: PackDef[] = [
-  { code: 'aaa', name: 'Pack A', position: 1, cyclePosition: 1, chapter: 1 },
-  { code: 'bbb', name: 'Pack B', position: 2, cyclePosition: 1, chapter: 1 },
-  { code: 'ccc', name: 'Pack C', position: 1, cyclePosition: 2, chapter: 1 },
+  { code: 'core', name: 'Core Set', position: 1, cyclePosition: 1, chapter: 1 },
+  { code: 'rcore', name: 'Revised Core Set', position: 2, cyclePosition: 1, chapter: 1 },
+  { code: 'dwl', name: 'The Dunwich Legacy', position: 1, cyclePosition: 2, chapter: 1 },
 ];
 
 describe('SettingsScreen', () => {
@@ -22,12 +22,11 @@ describe('SettingsScreen', () => {
     await i18next.changeLanguage('en');
   });
 
-  it('groups the packs by cycle', () => {
+  it('lists only the packs of campaigns the app plays, grouped by campaign', () => {
     render(<SettingsScreen packs={packs} />);
 
     expect(screen.getAllByRole('group').map((g) => g.textContent)).toEqual([
-      'Cycle 1Pack APack B',
-      'Cycle 2Pack C',
+      'Night of the ZealotCore SetRevised Core Set',
     ]);
   });
 
@@ -42,16 +41,16 @@ describe('SettingsScreen', () => {
   it('saves the owned packs', () => {
     render(<SettingsScreen packs={packs} />);
 
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Pack B' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Revised Core Set' }));
 
-    expect(loadSettings().ownedPacks).toEqual(['bbb']);
+    expect(loadSettings().ownedPacks).toEqual(['rcore']);
   });
 
   it('removes a pack that is unchecked again', () => {
     render(<SettingsScreen packs={packs} />);
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Pack B' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Revised Core Set' }));
 
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Pack B' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Revised Core Set' }));
 
     expect(loadSettings().ownedPacks).toEqual([]);
   });
