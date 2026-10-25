@@ -1,0 +1,92 @@
+/*
+ * The enemy details (EnemyDetails): its name, its numbers as a two-column list, then each group
+ * of buttons under its small title, the action ones marked with the game's action arrow. It lies in the top
+ * layer but inherits from the small card it opens from, so it resets the text.
+ */
+#board dialog[data-dialog='enemy'] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  font-size: var(--font-size-body);
+  line-height: normal;
+  text-align: start;
+  hyphens: manual;
+}
+
+#board dialog[data-dialog='enemy']:not([open]) {
+  display: none;
+}
+
+#board dialog[data-dialog='enemy'] h2 {
+  margin: 0;
+  font-size: var(--font-size-subtitle);
+}
+
+/* The card's picture repeats the name and numbers, so it is decoration and waits until loaded. */
+#board dialog[data-dialog='enemy'] > img {
+  align-self: center;
+  width: var(--layout-zoom-card-width);
+  max-width: 100%;
+  aspect-ratio: 5 / 7;
+  border-radius: var(--radius);
+}
+
+#board dialog[data-dialog='enemy'] > img:not([data-shown]) {
+  display: none;
+}
+
+#board dialog[data-dialog='enemy'] dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+}
+
+#board dialog[data-dialog='enemy'] dd {
+  margin: 0;
+  font-family: var(--font-family-display);
+}
+
+#board dialog[data-dialog='enemy'] section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+#board dialog[data-dialog='enemy'] h3 {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: var(--font-size-note);
+  color: var(--color-text-muted);
+}
+
+#board dialog[data-dialog='enemy'] button {
+  gap: var(--space-2);
+}
+
+#board dialog[data-dialog='enemy'] button[data-icon]::before {
+  margin: 0;
+}
+
+#board dialog[data-dialog='enemy'] button[data-icon='fight']::before {
+  mask-image: url('./icons/fight.svg');
+}
+
+#board dialog[data-dialog='enemy'] button[data-icon='evade']::before {
+  mask-image: url('./icons/evade.svg');
+}
+
+/* The game's action arrow after the word, as on the turn row, marks what counts off an action. */
+#board dialog[data-dialog='enemy'] button[data-cost='action']::after {
+  content: '';
+  width: var(--action-pip-size);
+  height: var(--action-pip-size);
+  background: var(--color-accent);
+  mask: url('../symbols/action.svg') center / contain no-repeat;
+}
+
+#board dialog[data-dialog='enemy'] footer {
+  display: flex;
+  justify-content: flex-end;
+}

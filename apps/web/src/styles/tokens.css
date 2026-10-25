@@ -125,6 +125,8 @@
   --layout-board-panel-width: 23rem;
   --layout-portrait-width: 9rem;
   --layout-sheet-width: 22rem;
+  /* A card's picture shown in full in a dialog (the enemy details), like the prototype's zoomed card. */
+  --layout-zoom-card-width: 12rem;
   /* Connection lines on the map, in its SVG user units (mapLayout.ts TILE). */
   --map-line-width: 3px;
   /*
@@ -183,8 +185,10 @@
   --map-ghost-opacity: 0.6;
   /* A token with nothing on it (a location's clues once found) fades, so it reads as empty. */
   --token-empty-opacity: 0.45;
-  /* An action pip on the investigator whose turn it is. */
-  --action-pip-size: 0.75rem;
+  /* The game's action arrow: one per action left on the turn row, and after a button that costs one. */
+  --action-pip-size: 0.875rem;
+  /* An action already spent on the turn row: its arrow stays, faded. */
+  --action-spent-opacity: 0.3;
   /* The icon before the name of an investigator's counter. */
   --stat-icon-size: 0.875rem;
   /* An icon on an icon button (`button[data-icon]` in base.css). */

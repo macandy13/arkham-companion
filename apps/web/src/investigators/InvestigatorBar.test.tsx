@@ -449,6 +449,24 @@ describe('InvestigatorBar', () => {
 
       await expect.poll(() => table.board.investigator(alder)).toMatchObject(after);
     });
+
+    it('"Investigate" leaves the test of the investigation to the decision dialog', async () => {
+      const table = PlayTable.start(twoAtStudy.withTurnOf(alder));
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      fireEvent.click(within(panel('alder')).getByRole('button', { name: 'Investigate' }));
+
+      await expect
+        .poll(() => table.board.decisions)
+        .toMatchObject([{ prompt: 'decision.investigate', for: alder }]);
+    });
   });
 
   describe('the threat area', () => {
@@ -486,6 +504,29 @@ describe('InvestigatorBar', () => {
       expect(cards[1]?.getAttribute('aria-label')).toBe(
         'ghoul_minion, 1 of 3 health left, 2 damage',
       );
+    });
+
+    it("opens an enemy's details from its card", () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'))
+          .withInvestigator(alder, { locationId: study })
+          .withCard(instanceId('ghoul'), blankEnemy('ghoul_minion'), engagedWith(alder)),
+      );
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      fireEvent.click(
+        within(panel('alder')).getByRole('button', { name: 'Details of ghoul_minion' }),
+      );
+
+      expect(screen.getByRole('dialog', { name: 'ghoul_minion' })).toBeTruthy();
     });
 
     it('leaves the card whole while the threat area is empty', () => {

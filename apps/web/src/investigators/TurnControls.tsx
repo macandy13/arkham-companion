@@ -5,8 +5,8 @@ import type { GameActions } from '../state/gameActions';
 
 /**
  * The turn controls on an investigator's panel. While it is their turn: a pip per action, filled
- * for each one left (`InvestigatorView.actions`), then resign and End, as in the prototype's turn
- * row. Before it, when the players may pick them next (`canStart`: the investigation phase, no
+ * for each one left (`InvestigatorView.actions`), then investigate (its test goes to the decision
+ * dialog), resign and End, as in the prototype's turn row. Before it, when the players may pick them next (`canStart`: the investigation phase, no
  * turn in progress, not taken this round), "Start turn", since the players choose the order.
  * Nothing otherwise. The buttons wait while a step is queued (`busy`).
  */
@@ -41,6 +41,14 @@ export function TurnControls({
           <li key={slot} data-left={slot < left || undefined} />
         ))}
       </ul>
+      <button
+        type="button"
+        aria-label={t('investigators.investigate')}
+        title={t('investigators.investigate')}
+        data-icon="investigate"
+        disabled={busy}
+        onClick={() => void actions.investigate()}
+      />
       <button
         type="button"
         aria-label={t('investigators.resign')}

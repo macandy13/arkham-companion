@@ -166,9 +166,19 @@ export interface MapView {
   enemies: Readonly<Record<InstanceId, readonly MapEnemyView[]>>;
 }
 
+/** An enemy's fight and evade now, its attack and its card's picture (`BoardView.enemyStats`). */
+export interface EnemyStatsView {
+  /** The picture of its card (`CardStats.imageSrc`), when the card data has one. */
+  image?: CardImagePath;
+  fight: number;
+  evade: number;
+  attack: { damage: number; horror: number };
+}
+
 /**
- * An enemy on a map (`MapView.enemies`): its `EnemyView` with its instance id, since the map is
- * where the players act on an enemy (drag it to move or engage it), and copies share a name.
+ * An enemy on a map (`MapView.enemies`) or in a threat area (`BoardView.enemiesEngagedWith`): its
+ * `EnemyView` with its instance id, since those are where the players act on an enemy (drag it to
+ * move or engage it, fight or evade it), and copies share a name.
  */
 export type MapEnemyView = EnemyView & { id: InstanceId };
 
@@ -281,9 +291,14 @@ export class BoardView {
     return enemiesInPlay(this.ctx, this.state).map((card) => enemyView(this.ctx, this.state, card));
   }
 
-  /** The enemies engaged with `investigator`, in card order: those in their threat area. */
-  enemiesEngagedWith(investigator: InvestigatorId): readonly EnemyView[] {
-    return this.enemies.filter(({ engagedWith }) => engagedWith === investigator);
+  /**
+   * The enemies engaged with `investigator`, in card order: those in their threat area, with their
+   * ids, since the threat area fights and evades them.
+   */
+  enemiesEngagedWith(investigator: InvestigatorId): readonly MapEnemyView[] {
+    return enemiesInPlay(this.ctx, this.state)
+      .map((enemy) => mapEnemyView(this.ctx, this.state, enemy))
+      .filter(({ engagedWith }) => engagedWith === investigator);
   }
 
   /** Locations on a map, in map order. */
@@ -350,6 +365,23 @@ export class BoardView {
       },
       input,
     );
+  }
+
+  /**
+   * The printed numbers of the enemy with id `enemy` that its details show: fight and evade as
+   * they are now (constant abilities included, `effectiveValue`) and the damage and horror of its
+   * attack. Kept apart from `EnemyView`, which every board read lists, since only the details
+   * window needs them.
+   */
+  enemyStats(enemy: InstanceId): EnemyStatsView {
+    const card = requireCard(this.state, enemy);
+    const { damage = 0, horror = 0, imageSrc } = cardStats(this.ctx.cards, card.code);
+    return {
+      ...(imageSrc === undefined ? {} : { image: imageSrc }),
+      fight: effectiveValue(this.ctx, this.state, card, 'fight'),
+      evade: effectiveValue(this.ctx, this.state, card, 'evade'),
+      attack: { damage, horror },
+    };
   }
 
   /** Open decisions, oldest first. */
@@ -535,6 +567,10 @@ function enemyLocation(state: GameState, enemy: CardInstance): InstanceId | unde
   return state.investigators.find((inv) => inv.id === zone.investigatorId)?.locationId;
 }
 
+function mapEnemyView(ctx: EngineContext, state: GameState, enemy: CardInstance): MapEnemyView {
+  return { id: enemy.id, ...enemyView(ctx, state, enemy) };
+}
+
 function enemyView(ctx: EngineContext, state: GameState, enemy: CardInstance): EnemyView {
   const at = nameOfId(ctx, state, enemyLocation(state, enemy));
   const health = enemyHealth(cardStats(ctx.cards, enemy.code), state);
@@ -600,7 +636,7 @@ function enemiesByLocation(
   for (const enemy of enemiesInPlay(ctx, state)) {
     const at = enemyLocation(state, enemy);
     if (at === undefined || !locations.includes(at)) continue;
-    (byLocation[at] ??= []).push({ id: enemy.id, ...enemyView(ctx, state, enemy) });
+    (byLocation[at] ??= []).push(mapEnemyView(ctx, state, enemy));
   }
   return byLocation;
 }

@@ -66,7 +66,7 @@ test('the house map by day', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
 
-test('Alder’s willpower and agility test, a token drawn', { tag: '@shot' }, async ({ page }) => {
+test('Alder’s willpower and agility test, a token drawn', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   await page
@@ -85,3 +85,17 @@ test('the decision dialog asking for the result of an investigation', async ({ p
 
   await expect(page.getByRole('dialog', { name: 'Investigate Hallway' })).toBeVisible();
 });
+
+test(
+  "the Ghoul Priest's details opened from its card on Alder's turn",
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'Alder threatened', alderThreatenedExport('Alder threatened'));
+    const alder = page.getByRole('region', { name: 'Alder' });
+    await alder.getByRole('button', { name: 'Later cards in the threat area' }).click();
+
+    await alder.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
+
+    await expect(page.getByRole('dialog', { name: 'Ghoul Priest' })).toBeVisible();
+  },
+);
