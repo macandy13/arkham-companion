@@ -1,25 +1,15 @@
 <!-- screencasts:start -->
 
-_Recorded from db77704 by the PR preview workflow; updated on every push that changes `apps/web`._
+_Recorded from e3d1703 by the PR preview workflow; updated on every push that changes `apps/web`._
 
 ## Screenshots
 
 ### Alder's fight against the Ghoul Priest, the damage raised to 2
 
-![Alder's fight against the Ghoul Priest, the damage raised to 2](https://macandy13.github.io/arkham-companion/pr-preview/pr-416/screencasts/alder-s-fight-against-the-ghoul-priest-the-damage-raised-to-2.png?v=db77704)
+![Alder's fight against the Ghoul Priest, the damage raised to 2](https://macandy13.github.io/arkham-companion/pr-preview/pr-416/screencasts/alder-s-fight-against-the-ghoul-priest-the-damage-raised-to-2.png?v=e3d1703)
 
-## Screencasts
+### the settings with the unofficial fan project notice
 
-### answer a decision in its dialog
-
-![answer a decision in its dialog](https://macandy13.github.io/arkham-companion/pr-preview/pr-416/screencasts/answer-a-decision-in-its-dialog.gif?v=db77704)
-
-[Play with pause and speed controls](https://macandy13.github.io/arkham-companion/pr-preview/pr-416/screencasts/player.html?flow=answer-a-decision-in-its-dialog&v=db77704&speed=0.25)
-
-### take a turn from the investigator panel
-
-![take a turn from the investigator panel](https://macandy13.github.io/arkham-companion/pr-preview/pr-416/screencasts/take-a-turn-from-the-investigator-panel.gif?v=db77704)
-
-[Play with pause and speed controls](https://macandy13.github.io/arkham-companion/pr-preview/pr-416/screencasts/player.html?flow=take-a-turn-from-the-investigator-panel&v=db77704&speed=0.25)
+![the settings with the unofficial fan project notice](https://macandy13.github.io/arkham-companion/pr-preview/pr-416/screencasts/the-settings-with-the-unofficial-fan-project-notice.png?v=e3d1703)
 
 <!-- screencasts:end -->
