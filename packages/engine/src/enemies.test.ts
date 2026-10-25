@@ -250,6 +250,30 @@ describe('SpawnEnemy', () => {
     });
   });
 
+  it.each([
+    { prey: 'Highest [combat]', engaged: bob },
+    { prey: 'Lowest [combat]', engaged: alice },
+  ])('engages by its prey "$prey" read from the card', ({ prey, engaged }) => {
+    const skillPreyGhoulCard = blankEnemy('skill_prey_ghoul', {
+      keywords: [{ name: 'prey', detail: prey }],
+    });
+    const { context, state } = hallCellarAttic
+      .withInvestigator(alice, {
+        locationId: hall,
+        skills: { willpower: 3, intellect: 3, combat: 2, agility: 3 },
+      })
+      .withInvestigator(bob, {
+        locationId: hall,
+        skills: { willpower: 3, intellect: 3, combat: 5, agility: 3 },
+      })
+      .withCard(ghoul, skillPreyGhoulCard, setAside)
+      .start();
+
+    const after = stateAfter(context, state, { type: 'SpawnEnemy', enemyId: ghoul, at: hall });
+
+    expect(zoneOf(after, ghoul)).toEqual(engagedWith(engaged));
+  });
+
   it('asks the players when prey is tied, and engaging answers the question', () => {
     const { context, state } = aliceAndBobAt(hall, { alice: 2, bob: 2 })
       .withCard(ghoul, mostCluesPreyGhoulCard, setAside)

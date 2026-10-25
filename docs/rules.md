@@ -138,6 +138,9 @@ An ability that shuffles an empty discard pile into a deck does not shuffle the 
 
 [Prey](https://arkhamdb.com/rules#Prey): used to pick between several investigators when the enemy auto-engages or when a hunter has equidistant targets. Ties go to the lead investigator. "Only" in the prey text makes the enemy ignore everyone else for moving and engaging, though others can still engage it with an action or a card.
 
+- "Highest [combat]" or "Lowest [agility]" compares the investigators' skill values (Ghoul Priest, Young Deep One, Relentless Dark Young). The app reads the printed skill: it tracks no constant skill modifiers yet.
+- Prey the app can't read from the board (Yithian Observer's "Fewest cards in hand") goes to the lead investigator, like a tie.
+
 ## Enemy keywords
 
 - [Massive](https://arkhamdb.com/rules#Massive): when ready it counts as engaged with every investigator at its location, but it never sits in a threat area and doesn't follow investigators who move away. When exhausted it is engaged with nobody. In the enemy phase it attacks each of them in an order the lead investigator picks, and exhausts after the last attack. Its attack of opportunity only hits the investigator who provoked it. A failed attack against it hits no other investigator. Investigators who become engaged mid-attack are added to its targets, and if it exhausts early its remaining attacks are skipped.

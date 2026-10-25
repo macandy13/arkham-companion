@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   blankInvestigator,
   blankLocation,
+  bySkill,
   checkInvariants,
   execute,
   instanceId,
@@ -501,6 +502,21 @@ describe('prey helpers', () => {
 
   it('finds the most resources', () => {
     expect(mostResources([hurt, shaken])).toEqual([shaken]);
+  });
+
+  it.each([
+    { prey: 'highest combat', skill: 'combat', extreme: 'highest', expected: [bob] },
+    { prey: 'lowest combat', skill: 'combat', extreme: 'lowest', expected: [alice] },
+    { prey: 'lowest agility, tied', skill: 'agility', extreme: 'lowest', expected: [alice, bob] },
+  ] as const)('finds the $prey', ({ skill, extreme, expected }) => {
+    const fighter = blankInvestigator(alice, {
+      skills: { willpower: 3, intellect: 3, combat: 2, agility: 2 },
+    });
+    const brawler = blankInvestigator(bob, {
+      skills: { willpower: 3, intellect: 3, combat: 5, agility: 2 },
+    });
+
+    expect(bySkill(skill, extreme)([fighter, brawler]).map((inv) => inv.id)).toEqual(expected);
   });
 
   it('ignores defeated and resigned investigators', () => {
