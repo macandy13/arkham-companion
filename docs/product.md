@@ -54,7 +54,7 @@ Tablet landscape first. Header (round, phase, agenda/act, undo), map centre (pan
 
 ## Repository and publishing
 
-Private GitHub repo, possibly public later. Before going public: no card text/images committed, MIT licence (`LICENSE`), an unofficial-fan-project notice. Hosting via GitHub Pages or Cloudflare Pages.
+Private GitHub repo, possibly public later. Before going public: no card text/images committed, MIT licence (`LICENSE`), an unofficial-fan-project notice, and the copyright checks of [M9](https://github.com/macandy13/arkham-companion/issues/372) (the bundled game symbols are traced from Fantasy Flight Games' icons). Hosting via GitHub Pages or Cloudflare Pages.
 
 ## Plan
 
@@ -68,6 +68,7 @@ flowchart LR
   M5 --> M6[M6 Comfort]
   M5 --> M7[M7 More campaigns]
   M5 --> M8[M8 Cloud and sync]
+  M5 --> M9[M9 Publication]
 ```
 
 | Milestone | Content | Why at this point | What players get at the end |
@@ -83,6 +84,7 @@ flowchart LR
 | [M6 Comfort](https://github.com/macandy13/arkham-companion/issues/268) | Chaos bag module, card and UI languages, auto-layout, offline preload, polish | Nice to have, nothing blocks play | Cards in the group's language, reliable offline play, tidier maps, smoother app |
 | [M7 More campaigns](https://github.com/macandy13/arkham-companion/issues/270) | Chapter Two campaigns, then Dunwich, Carcosa, The Forgotten Age, Innsmouth and the rest in release order; new Chapter Two products; more automated card effects | Each campaign reuses the recipe and the generic rules; playtests show what to automate | One more full campaign at a time, less manual work per round |
 | [M8 Cloud and sync](https://github.com/macandy13/arkham-companion/issues/271) | Login, games in the cloud, sync across devices at the table | Adds cost and operations; one tablet covers the core use case | Games backed up online, several devices showing the same live game |
+| [M9 Publication](https://github.com/macandy13/arkham-companion/issues/372) | Copyright and licence checks of everything bundled or committed (game symbols, fonts, icons), then hosting and a public repo | The app bundles the game's symbols and the fan policy rules out apps, so it stays private until this is cleared | An app and repo that can be shared publicly |
 
 ## Versions
 

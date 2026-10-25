@@ -9,7 +9,7 @@ import {
 
 // Situations on the game screen, each photographed as it ends (`@shot`, coding guidelines §3).
 
-test('the house map with Alder in the Hallway', async ({ page }) => {
+test('the house map with Alder in the Hallway', { tag: '@shot' }, async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   const hallway = page
@@ -26,23 +26,25 @@ test('map tabs for the Study and the house, the house chosen', async ({ page }) 
   await expect(page.getByRole('tabpanel', { name: 'House' })).toBeVisible();
 });
 
-test('Alder with four treacheries and the Ghoul Priest, scrolled on to the Ghoul Priest', async ({
-  page,
-}) => {
-  await resumeImportedGame(page, 'Alder threatened', alderThreatenedExport('Alder threatened'));
+test(
+  'Alder with four treacheries and the Ghoul Priest, scrolled on to the Ghoul Priest',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'Alder threatened', alderThreatenedExport('Alder threatened'));
 
-  const alder = page.getByRole('region', { name: 'Alder' });
-  const threatArea = alder.getByRole('list', { name: 'Threat area' });
-  const ghoulPriest = threatArea.getByRole('listitem', {
-    name: 'Ghoul Priest, 3 of 5 health left, 2 damage',
-  });
-  await expect(threatArea.getByRole('listitem')).toHaveCount(5);
-  await expect(ghoulPriest).not.toBeInViewport({ ratio: 1 });
+    const alder = page.getByRole('region', { name: 'Alder' });
+    const threatArea = alder.getByRole('list', { name: 'Threat area' });
+    const ghoulPriest = threatArea.getByRole('listitem', {
+      name: 'Ghoul Priest, 3 of 5 health left, 2 damage',
+    });
+    await expect(threatArea.getByRole('listitem')).toHaveCount(5);
+    await expect(ghoulPriest).not.toBeInViewport({ ratio: 1 });
 
-  await alder.getByRole('button', { name: 'Later cards in the threat area' }).click();
+    await alder.getByRole('button', { name: 'Later cards in the threat area' }).click();
 
-  await expect(ghoulPriest).toBeInViewport({ ratio: 1 });
-});
+    await expect(ghoulPriest).toBeInViewport({ ratio: 1 });
+  },
+);
 
 test('the Hallway’s menu open over the board', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
@@ -57,7 +59,7 @@ test('the Hallway’s menu open over the board', async ({ page }) => {
   await expect(page.getByRole('dialog', { name: 'Hallway' })).toBeVisible();
 });
 
-test('the house map by day', async ({ page }) => {
+test('the house map by day', { tag: '@shot' }, async ({ page }) => {
   await page.goto('/#/settings');
   await page.getByLabel('Theme').selectOption('Light');
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
@@ -66,7 +68,7 @@ test('the house map by day', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
 
-test('Alder’s willpower and agility test, a token drawn', async ({ page }) => {
+test('Alder’s willpower and agility test, a token drawn', { tag: '@shot' }, async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   await page
@@ -80,12 +82,8 @@ test('Alder’s willpower and agility test, a token drawn', async ({ page }) => 
   await expect(test.getByRole('status')).toBeVisible();
 });
 
-test(
-  'the decision dialog asking for the result of an investigation',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'Investigating', investigationOpenExport('Investigating'));
+test('the decision dialog asking for the result of an investigation', async ({ page }) => {
+  await resumeImportedGame(page, 'Investigating', investigationOpenExport('Investigating'));
 
-    await expect(page.getByRole('dialog', { name: 'Investigate Hallway' })).toBeVisible();
-  },
-);
+  await expect(page.getByRole('dialog', { name: 'Investigate Hallway' })).toBeVisible();
+});
