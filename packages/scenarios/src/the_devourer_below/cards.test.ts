@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   atLocation,
-  cardCode,
   encounterSetCode,
   engagedWith,
   execute,
@@ -9,19 +8,21 @@ import {
   investigatorId,
   newGame,
   requireInvestigator,
+  threatAreaOf,
   resolveValue,
   type CardStats,
   type Command,
 } from '@arkham/engine';
-import { answer, stateAfter } from '@arkham/engine/test/utils';
-import { OFFER_OF_POWER_DECISION, theDevourerBelowCardDefs, theDevourerBelowCards } from './cards';
+import { answer, cardIn, stateAfter } from '@arkham/engine/test/utils';
+import {
+  DEVOURER_BELOW_RESOLUTIONS,
+  OFFER_OF_POWER_DECISION,
+  theDevourerBelowCardDefs,
+  theDevourerBelowCards,
+} from './cards';
 
-/** The card with `code`, failing the test if the data has none. */
-function cardOf(code: string): CardStats {
-  const card = theDevourerBelowCards.get(cardCode(code));
-  if (!card) throw new Error(`no card ${code}`);
-  return card;
-}
+/** The card with `code` in the scenario's card data. */
+const cardOf = (code: string): CardStats => cardIn(theDevourerBelowCards, code);
 
 describe('The Devourer Below card data', () => {
   it.each([
@@ -158,6 +159,50 @@ describe('The Devourer Below card abilities', () => {
     });
   });
 
+  describe('The Yellow Sign', () => {
+    it.each([
+      { result: 'pass', horror: 0 },
+      { result: 'fail', horror: 2 },
+    ])('tests willpower (4); a $result costs alice $horror horror', ({ result, horror }) => {
+      const { context, state: started } = newGame()
+        .withLocation(mainPath, cardOf('01149'), { revealed: true })
+        .withInvestigator(alice, { locationId: mainPath })
+        .withCard(instanceId('yellow_sign'), cardOf('01176'), { kind: 'encounterDeck' })
+        .start();
+      const drawn = stateAfter(context, started, aliceDraws('The Yellow Sign'));
+
+      const state = stateAfter(context, drawn, answer('test:yellow_sign', result));
+
+      expect(drawn.pending).toMatchObject([{ skillTest: { skill: 'willpower', difficulty: 4 } }]);
+      expect(requireInvestigator(state, alice).sanity.horror).toBe(horror);
+    });
+  });
+
+  it("puts Dreams of R'lyeh into alice's threat area", () => {
+    const dreams = instanceId('dreams_of_rlyeh');
+    const { context, state: started } = newGame()
+      .withLocation(mainPath, cardOf('01149'), { revealed: true })
+      .withInvestigator(alice, { locationId: mainPath })
+      .withCard(dreams, cardOf('01182'), { kind: 'encounterDeck' })
+      .start();
+
+    const { state } = execute(context, started, aliceDraws("Dreams of R'lyeh"));
+
+    expect(state.cards[dreams]?.zone).toEqual(threatAreaOf(alice));
+  });
+
+  it('ends the scenario with R1 (the ritual is broken) when Disrupting the Ritual advances', () => {
+    const { context, state: started } = newGame()
+      .withLocation(mainPath, cardOf('01149'), { revealed: true })
+      .withInvestigator(alice, { locationId: mainPath })
+      .withAct(instanceId('disrupting_the_ritual'), cardOf('01148'))
+      .start();
+
+    const { state } = execute(context, started, { type: 'AdvanceAct' });
+
+    expect(state.meta.resolution).toBe(DEVOURER_BELOW_RESOLUTIONS.ritualBroken);
+  });
+
   describe('Goat Spawn', () => {
     const goatSpawn = instanceId('goat_spawn');
     const bob = investigatorId('bob');
@@ -210,7 +255,6 @@ describe('The Devourer Below card abilities', () => {
         .start();
       let state = stateAfter(context, started, { type: 'EndTurn', investigatorId: alice });
       const roundBefore = state.meta.round;
-      // The upkeep phase runs to the round's end in one step.
       while (state.meta.round === roundBefore) state = stateAfter(context, state, nextPhase);
 
       expect(state.cards[darkYoung]?.tokens.damage).toBe(1);

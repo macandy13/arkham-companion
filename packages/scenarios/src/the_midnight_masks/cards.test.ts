@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   atLocation,
-  cardCode,
   encounterSetCode,
   engagedWith,
   execute,
@@ -13,7 +12,7 @@ import {
   type CardStats,
   type Command,
 } from '@arkham/engine';
-import { answer, stateAfter } from '@arkham/engine/test/utils';
+import { answer, cardIn, stateAfter } from '@arkham/engine/test/utils';
 import {
   GRAVEYARD_DECISION,
   HUNTING_SHADOW_DECISION,
@@ -21,12 +20,8 @@ import {
   theMidnightMasksCards,
 } from './cards';
 
-/** The card with `code`, failing the test if the data has none. */
-function cardOf(code: string): CardStats {
-  const card = theMidnightMasksCards.get(cardCode(code));
-  if (!card) throw new Error(`no card ${code}`);
-  return card;
-}
+/** The card with `code` in the scenario's card data. */
+const cardOf = (code: string): CardStats => cardIn(theMidnightMasksCards, code);
 
 describe('The Midnight Masks card data', () => {
   it.each([

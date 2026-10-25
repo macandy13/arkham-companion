@@ -86,8 +86,9 @@ const woods = ['Woods'];
  * keywords and abilities (test skills and difficulties checked against
  * ArkhamDB's core set data), no card text, JSON or images. The six Arkham
  * Woods share their name, so their keys in `DEVOURER_BELOW_CODES` add the
- * subtitle printed on each one (Unhallowed Ground, Twisting Paths, …). Effects the engine has no rule for
- * yet are left out, so the players resolve them from the card:
+ * subtitle printed on each one (Unhallowed Ground, Twisting Paths, …).
+ * Effects the engine has no rule for yet are left out, so the players resolve
+ * them from the card:
  *
  * - the agendas' reverse sides (agenda 1's Monster spawn, agenda 2's
  *   willpower (6) tests and madness, agenda 3's Umôrdhoth and The Devourer
