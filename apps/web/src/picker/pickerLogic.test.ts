@@ -5,6 +5,7 @@ import {
   applyPickerFilters,
   cyclePositions,
   moveSeat,
+  seatNumber,
   sortedPacks,
 } from './pickerLogic';
 
@@ -49,6 +50,16 @@ describe('applyPickerFilters', () => {
 
   it('sorts by name, then chapter', () => {
     expect(applyPickerFilters(all, none).map((i) => i.code)).toEqual(['a', 'a2', 'b']);
+  });
+
+  it('sorts names in quotes by their letters', () => {
+    const ashcan = makeInvestigator({ code: 'ashcan', name: '"Ashcan" Pete' });
+    const agnes = makeInvestigator({ code: 'agnes', name: 'Agnes Baker' });
+    const bob = makeInvestigator({ code: 'bob', name: 'Bob Jenkins' });
+
+    const sorted = applyPickerFilters([bob, ashcan, agnes], none).map((i) => i.code);
+
+    expect(sorted).toEqual(['agnes', 'ashcan', 'bob']);
   });
 
   it('searches the name case-insensitively', () => {
@@ -122,5 +133,15 @@ describe('activeFilterCount', () => {
     ['a chapter and the collection', { ...none, chapter: 2 as const, onlyOwned: true }, 2],
   ])('counts %s as %i', (_, filters, count) => {
     expect(activeFilterCount(filters)).toBe(count);
+  });
+});
+
+describe('seatNumber', () => {
+  it.each([
+    ['the lead', 'roland', 1],
+    ['the second seat', 'daisy', 2],
+    ['no one not seated', 'skids', undefined],
+  ])('gives %s', (_, code, seat) => {
+    expect(seatNumber(['roland', 'daisy'], code)).toBe(seat);
   });
 });

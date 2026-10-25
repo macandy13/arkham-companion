@@ -23,7 +23,8 @@ export interface PickerFilters {
 
 /**
  * Applies the picker filters and sorts by name, then chapter, so both chapter versions of an
- * investigator sit next to each other. Without `ownedPacks` (settings arrive in M2.4) the
+ * investigator sit next to each other; quotes and other punctuation do not count, so "Ashcan" Pete
+ * sorts under A. Without `ownedPacks` (settings arrive in M2.4) the
  * collection filter has nothing to compare against and keeps everything.
  */
 export function applyPickerFilters(
@@ -42,7 +43,11 @@ export function applyPickerFilters(
         (filters.chapter === undefined || i.chapter === filters.chapter) &&
         (!filters.onlyOwned || ownedPacks === undefined || ownedPacks.has(i.packCode)),
     )
-    .sort((a, b) => a.name.localeCompare(b.name) || a.chapter - b.chapter);
+    .sort(
+      (a, b) =>
+        a.name.localeCompare(b.name, undefined, { ignorePunctuation: true }) ||
+        a.chapter - b.chapter,
+    );
 }
 
 /** How many of the filters other than the search are set, as the filter button counts them. */
@@ -64,6 +69,12 @@ export function cyclePositions(packs: readonly PackDef[]): number[] {
 /** Packs ordered by cycle, then by position within the cycle. */
 export function sortedPacks(packs: readonly PackDef[]): PackDef[] {
   return [...packs].sort((a, b) => a.cyclePosition - b.cyclePosition || a.position - b.position);
+}
+
+/** The seat (1-based) that `code` holds in `seats`, or nothing when it is not seated. */
+export function seatNumber(seats: readonly string[], code: string): number | undefined {
+  const index = seats.indexOf(code);
+  return index < 0 ? undefined : index + 1;
 }
 
 /** Returns `seats` with the entry at `from` moved to index `to`; out-of-range moves change nothing. */

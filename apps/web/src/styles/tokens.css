@@ -196,6 +196,26 @@
   --investigator-art-y: 0.04;
   --investigator-art-width: 0.52;
   --investigator-art-height: 0.545;
+  /* The class colours, on the picker's portraits, close to the printed cards' frames. */
+  --color-class-guardian: #2b6cb0;
+  --color-class-seeker: #c76d12;
+  --color-class-rogue: #1f7a35;
+  --color-class-mystic: #5b3fb0;
+  --color-class-survivor: #b3282f;
+  --color-class-neutral: #6b6259;
+  /* Portraits side by side on one of the picker's pages (`PORTRAITS_PER_PAGE` is twice this). */
+  --picker-columns: 5;
+  /*
+   * The portrait on each of the picker's investigators: where it is on the scan of their card's
+   * front (landscape, 419 × 300), in fractions of its width and height: the figure at the left,
+   * under the name plate, down to the foot. The same shape as the portrait window
+   * (`--picker-portrait-ratio`), so the art keeps its proportions: change them together.
+   */
+  --picker-portrait-ratio: 4 / 5;
+  --picker-portrait-x: 0.04;
+  --picker-portrait-y: 0.17;
+  --picker-portrait-width: 0.44;
+  --picker-portrait-height: 0.8;
   /* The disc on the picker's filter button that counts the filters set. */
   --picker-count-size: 1.125rem;
   /* The round counters along the foot of an investigator card. */
