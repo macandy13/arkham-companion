@@ -68,6 +68,7 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
       {/* Adjusting the board is allowed with a decision open, so the dialog steps aside meanwhile. */}
       {decision && !open.adjusting && (
         <DecisionDialog
+          key={open.state.pending[0]?.id}
           board={board}
           decision={decision}
           actions={store.getState().actions}

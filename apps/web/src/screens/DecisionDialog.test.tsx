@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   blankEnemy,
   blankLocation,
@@ -104,6 +104,84 @@ describe('DecisionDialog', () => {
     expect(table.board.investigator(alder)).toMatchObject({ damage: 0, horror: 0 });
     expect(table.board.decisions).toMatchObject([{ prompt: 'decision.investigate' }]);
     expect(screen.getByRole('heading').textContent).toBe('Attack of opportunity by Ghoul');
+  });
+
+  describe('with the chaos draw', () => {
+    /** Alder (intellect 3) investigating the Study (shroud 2) with a bag of one -2 token. */
+    const aldersInvestigationWithAMinusTwo = () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study', { name: 'Study', shroud: 2 }), {
+            revealed: true,
+            clues: 1,
+          })
+          .withInvestigator(alder, {
+            name: 'Alder',
+            locationId: study,
+            skills: { willpower: 1, intellect: 3, combat: 1, agility: 1 },
+          })
+          .withChaosBag(['-2'])
+          .withTurnOf(alder),
+      );
+      table.investigate(alder, { result: 'open' });
+      return table;
+    };
+    const suggestedOptions = () =>
+      screen
+        .getAllByRole('listitem')
+        .flatMap((item) =>
+          item.querySelectorAll('button[data-suggested]').length > 0 ? [item.textContent] : [],
+        );
+
+    it('marks the answer the calculation works out after the draw', () => {
+      renderFirstDecision(aldersInvestigationWithAMinusTwo());
+      expect(suggestedOptions()).toEqual([]);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Draw a token' }));
+
+      const result = screen.getByRole('region', { name: 'Result' });
+      expect(within(result).getByRole('status').textContent).toBe('Fail: 1 against 2, by 1');
+      expect(suggestedOptions()).toEqual(['Failed']);
+    });
+
+    it("counts the players' modifier in", () => {
+      renderFirstDecision(aldersInvestigationWithAMinusTwo());
+
+      fireEvent.click(screen.getByRole('button', { name: 'Raise the Modifier' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Draw a token' }));
+
+      expect(suggestedOptions()).toEqual(['Passed']);
+    });
+
+    it.each([
+      { answer: 'Failed', sends: ['fail', { margin: 1 }] },
+      { answer: 'Passed', sends: ['pass', {}] },
+    ])('answering "$answer" after the draw sends $sends', ({ answer, sends }) => {
+      const table = aldersInvestigationWithAMinusTwo();
+      const answered = vi.fn(async () => {});
+      renderFirstDecision(table, { ...actionsOn(table), answer: answered });
+
+      fireEvent.click(screen.getByRole('button', { name: 'Draw a token' }));
+      fireEvent.click(screen.getByRole('button', { name: answer }));
+
+      expect(answered).toHaveBeenCalledWith(...sends);
+    });
+
+    it('offers no draw for a decision that is not a skill test', () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'), { revealed: true })
+          .withInvestigator(alder, { locationId: study })
+          .withCard(ghoul, blankEnemy('ghoul', { name: 'Ghoul' }), engagedWith(alder))
+          .withChaosBag(['-2'])
+          .withTurnOf(alder),
+      );
+      table.investigate(alder, { result: 'open' });
+
+      renderFirstDecision(table);
+
+      expect(screen.queryByRole('button', { name: 'Draw a token' })).toBeNull();
+    });
   });
 
   it.each([

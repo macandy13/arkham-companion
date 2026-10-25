@@ -1,0 +1,180 @@
+/*
+ * The parts of a skill test calculation (TestCalculation) that the skill test dialog and the
+ * decision dialog of a skill test share: the stepper rows, the calculation and the outcome,
+ * coloured like a pass or a fail, and the tokens drawn. The `#board` id lets these beat the home
+ * screen's `#app > main` rows and padded list cards.
+ */
+#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) section > p {
+  flex: 1;
+  margin: 0;
+}
+
+#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) data {
+  min-width: var(--button-compact);
+  font-size: var(--font-size-subtitle);
+  font-variant-numeric: lining-nums tabular-nums;
+  text-align: center;
+}
+
+#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) ol {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) li {
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) ol {
+  flex-direction: column;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-note);
+}
+
+#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) output {
+  flex-basis: 100%;
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-subtitle);
+}
+
+#board
+  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
+  output[data-outcome='pass'] {
+  color: var(--color-clue);
+}
+
+#board
+  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
+  output[data-outcome='fail'] {
+  color: var(--color-doom);
+}
+
+/*
+ * The tokens drawn, in a row as round chaos tokens like the cardboard ones: a number token shows
+ * its number, a symbol token the game's symbol, with its name kept for screen readers only.
+ */
+#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) > ol {
+  flex-direction: row;
+}
+
+#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) > ol > li {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: var(--stat-token-size);
+  height: var(--stat-token-size);
+  border: var(--piece-ring-width) solid var(--color-parchment-light);
+  border-radius: var(--radius-round);
+  background: var(--color-token-shroud);
+  box-shadow: var(--header-token-shadow);
+  color: var(--header-token-text);
+  font-size: var(--font-size-note);
+  font-weight: bold;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* A symbol token shows its symbol (`--token-symbol`, set per token below) in place of its name. */
+#board
+  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
+  li:is(
+    [data-token='skull'],
+    [data-token='cultist'],
+    [data-token='tablet'],
+    [data-token='elderThing'],
+    [data-token='autoFail'],
+    [data-token='elderSign'],
+    [data-token='bless'],
+    [data-token='curse'],
+    [data-token='frost']
+  ) {
+  font-size: 0;
+}
+
+#board
+  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
+  li:is(
+    [data-token='skull'],
+    [data-token='cultist'],
+    [data-token='tablet'],
+    [data-token='elderThing'],
+    [data-token='autoFail'],
+    [data-token='elderSign'],
+    [data-token='bless'],
+    [data-token='curse'],
+    [data-token='frost']
+  )::before {
+  content: '';
+  width: var(--icon-size);
+  height: var(--icon-size);
+  background: currentcolor;
+  mask: var(--token-symbol) center / contain no-repeat;
+}
+
+#board
+  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
+  li[data-token='skull'] {
+  --token-symbol: url('../symbols/skull.svg');
+}
+
+#board
+  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
+  li[data-token='cultist'] {
+  --token-symbol: url('../symbols/cultist.svg');
+}
+
+#board
+  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
+  li[data-token='tablet'] {
+  --token-symbol: url('../symbols/tablet.svg');
+}
+
+#board
+  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
+  li[data-token='elderThing'] {
+  --token-symbol: url('../symbols/elder_thing.svg');
+}
+
+#board
+  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
+  li[data-token='autoFail'] {
+  --token-symbol: url('../symbols/auto_fail.svg');
+}
+
+#board
+  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
+  li[data-token='elderSign'] {
+  --token-symbol: url('../symbols/elder_sign.svg');
+}
+
+#board
+  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
+  li[data-token='bless'] {
+  --token-symbol: url('../symbols/bless.svg');
+}
+
+#board
+  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
+  li[data-token='curse'] {
+  --token-symbol: url('../symbols/curse.svg');
+}
+
+#board
+  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
+  li[data-token='frost'] {
+  --token-symbol: url('../symbols/frost.svg');
+}

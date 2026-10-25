@@ -1,13 +1,19 @@
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BoardView, DecisionView } from '@arkham/engine';
+import type { BoardView, ChaosToken, DecisionView } from '@arkham/engine';
+import { drawTokens, testFinished } from '../investigators/drawTokens';
+import { DrawnTokens, signed, Stepper, TestResult } from '../investigators/TestCalculation';
 import type { GameActions } from '../state/gameActions';
 
 /**
  * The first open decision (`BoardView.decisions[0]`) as a modal over the board: the question in
  * the players' words with the card it is about, the investigator who answers it, the test of a
  * skill test, and one button per option, answered through `GameActions.answer` with the default
- * counts. The game cannot go on before it is answered, so Escape does not close it; Undo takes back
+ * counts. A skill test one investigator takes also brings the chaos bag draw of the skill test
+ * dialog: the players set their modifier and let the app draw, and the calculation
+ * (`BoardView.skillTest`) marks the option it suggests, which then answers with its margin; the
+ * other option overrides it without one. The screen mounts one dialog per decision, so a draw
+ * never carries over to the next. The game cannot go on before it is answered, so Escape does not close it; Undo takes back
  * the step that raised it instead, and "Adjust board" lets the players correct the board first
  * (the dialog steps aside while they adjust, since the modal makes the board inert). The engine's labels are i18n keys or names already readable
  * (investigators, locations); a key the strings lack shows as the option's readable name.
@@ -29,7 +35,15 @@ export function DecisionDialog({
   useEffect(() => {
     dialog.current?.showModal();
   }, []);
+  const [modifier, setModifier] = useState(0);
+  const [revealed, setRevealed] = useState<readonly ChaosToken[]>([]);
   const { test } = decision;
+  const tested = decision.kind === 'skillTestResult' ? decision.for : undefined;
+  const result =
+    test && tested !== undefined && revealed.length > 0
+      ? board.skillTest(tested, test, { modifier, tokens: revealed })
+      : undefined;
+  const suggested = result && testFinished(revealed) ? result : undefined;
 
   return (
     <dialog
@@ -49,11 +63,43 @@ export function DecisionDialog({
           {t('decision.test', { skill: t(`skill.${test.skill}`), difficulty: test.difficulty })}
         </p>
       )}
+      {test && tested !== undefined && (
+        <>
+          <Stepper
+            label={t('skillTest.modifier')}
+            value={modifier}
+            shown={signed(modifier)}
+            onChange={setModifier}
+          />
+          <button
+            type="button"
+            disabled={board.chaosBag.length === 0}
+            // The engine draws nothing itself, so the draw happens here, at the edge.
+            onClick={() => setRevealed(drawTokens(board.chaosBag, revealed, Math.random))}
+          >
+            {t('skillTest.draw')}
+          </button>
+          {revealed.length > 0 && <DrawnTokens tokens={revealed} />}
+          {result && (
+            <TestResult result={result} skill={test.skill} finished={testFinished(revealed)} />
+          )}
+        </>
+      )}
       <ul>
         {/* Two options can share a name (two enemies of one card), so the position is the key. */}
         {decision.options.map((option, index) => (
           <li key={index}>
-            <button type="button" disabled={busy} onClick={() => void actions.answer(option)}>
+            <button
+              type="button"
+              disabled={busy}
+              data-suggested={option === suggested?.outcome || undefined}
+              onClick={() =>
+                void actions.answer(
+                  option,
+                  option === suggested?.outcome ? { margin: suggested.margin } : {},
+                )
+              }
+            >
               {t(decision.labels?.[option] ?? option, { defaultValue: option })}
             </button>
           </li>

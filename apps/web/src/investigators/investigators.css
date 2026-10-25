@@ -492,27 +492,7 @@
   font-size: var(--font-size-body);
 }
 
-#investigators dialog[data-dialog='skill-test'] section {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  align-items: center;
-}
-
-#investigators dialog[data-dialog='skill-test'] section > p {
-  flex: 1;
-  margin: 0;
-}
-
-#investigators dialog[data-dialog='skill-test'] data {
-  min-width: var(--button-compact);
-  font-size: var(--font-size-subtitle);
-  font-variant-numeric: lining-nums tabular-nums;
-  text-align: center;
-}
-
-#investigators dialog[data-dialog='skill-test'] ul,
-#investigators dialog[data-dialog='skill-test'] ol {
+#investigators dialog[data-dialog='skill-test'] ul {
   display: flex;
   flex-basis: 100%;
   flex-wrap: wrap;
@@ -522,132 +502,8 @@
   list-style: none;
 }
 
-#investigators dialog[data-dialog='skill-test'] li {
-  display: block;
-  padding: 0;
-  border: none;
-  background: none;
-}
-
-#investigators dialog[data-dialog='skill-test'] ol {
-  flex-direction: column;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-note);
-}
-
 #investigators dialog[data-dialog='skill-test'] [aria-pressed='true'] {
   border-color: var(--color-accent);
   background: var(--color-accent);
   color: var(--color-accent-text);
-}
-
-#investigators dialog[data-dialog='skill-test'] output {
-  flex-basis: 100%;
-  font-family: var(--font-family-display);
-  font-size: var(--font-size-subtitle);
-}
-
-#investigators dialog[data-dialog='skill-test'] output[data-outcome='pass'] {
-  color: var(--color-clue);
-}
-
-#investigators dialog[data-dialog='skill-test'] output[data-outcome='fail'] {
-  color: var(--color-doom);
-}
-
-/*
- * The tokens drawn, in a row as round chaos tokens like the cardboard ones: a number token shows
- * its number, a symbol token the game's symbol, with its name kept for screen readers only.
- */
-#investigators dialog[data-dialog='skill-test'] > ol {
-  flex-direction: row;
-}
-
-#investigators dialog[data-dialog='skill-test'] > ol > li {
-  display: grid;
-  place-items: center;
-  box-sizing: border-box;
-  width: var(--stat-token-size);
-  height: var(--stat-token-size);
-  border: var(--piece-ring-width) solid var(--color-parchment-light);
-  border-radius: var(--radius-round);
-  background: var(--color-token-shroud);
-  box-shadow: var(--header-token-shadow);
-  color: var(--header-token-text);
-  font-size: var(--font-size-note);
-  font-weight: bold;
-  font-variant-numeric: lining-nums tabular-nums;
-}
-
-/* A symbol token shows its symbol (`--token-symbol`, set per token below) in place of its name. */
-#investigators
-  dialog[data-dialog='skill-test']
-  li:is(
-    [data-token='skull'],
-    [data-token='cultist'],
-    [data-token='tablet'],
-    [data-token='elderThing'],
-    [data-token='autoFail'],
-    [data-token='elderSign'],
-    [data-token='bless'],
-    [data-token='curse'],
-    [data-token='frost']
-  ) {
-  font-size: 0;
-}
-
-#investigators
-  dialog[data-dialog='skill-test']
-  li:is(
-    [data-token='skull'],
-    [data-token='cultist'],
-    [data-token='tablet'],
-    [data-token='elderThing'],
-    [data-token='autoFail'],
-    [data-token='elderSign'],
-    [data-token='bless'],
-    [data-token='curse'],
-    [data-token='frost']
-  )::before {
-  content: '';
-  width: var(--icon-size);
-  height: var(--icon-size);
-  background: currentcolor;
-  mask: var(--token-symbol) center / contain no-repeat;
-}
-
-#investigators dialog[data-dialog='skill-test'] li[data-token='skull'] {
-  --token-symbol: url('../symbols/skull.svg');
-}
-
-#investigators dialog[data-dialog='skill-test'] li[data-token='cultist'] {
-  --token-symbol: url('../symbols/cultist.svg');
-}
-
-#investigators dialog[data-dialog='skill-test'] li[data-token='tablet'] {
-  --token-symbol: url('../symbols/tablet.svg');
-}
-
-#investigators dialog[data-dialog='skill-test'] li[data-token='elderThing'] {
-  --token-symbol: url('../symbols/elder_thing.svg');
-}
-
-#investigators dialog[data-dialog='skill-test'] li[data-token='autoFail'] {
-  --token-symbol: url('../symbols/auto_fail.svg');
-}
-
-#investigators dialog[data-dialog='skill-test'] li[data-token='elderSign'] {
-  --token-symbol: url('../symbols/elder_sign.svg');
-}
-
-#investigators dialog[data-dialog='skill-test'] li[data-token='bless'] {
-  --token-symbol: url('../symbols/bless.svg');
-}
-
-#investigators dialog[data-dialog='skill-test'] li[data-token='curse'] {
-  --token-symbol: url('../symbols/curse.svg');
-}
-
-#investigators dialog[data-dialog='skill-test'] li[data-token='frost'] {
-  --token-symbol: url('../symbols/frost.svg');
 }
