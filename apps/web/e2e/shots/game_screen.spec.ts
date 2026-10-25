@@ -44,18 +44,21 @@ test('Alder with four treacheries and the Ghoul Priest, scrolled on to the Ghoul
   await expect(ghoulPriest).toBeInViewport({ ratio: 1 });
 });
 
-test('the Hallway’s menu open over the board', async ({ page }) => {
-  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
-  await page.getByRole('button', { name: 'Adjust board' }).click();
+test(
+  'the Attic’s details, one move from Alder in the Hallway',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-  await page
-    .getByRole('figure', { name: 'House' })
-    .getByRole('group', { name: 'Hallway' })
-    .getByRole('button', { name: 'Edit Hallway' })
-    .click();
+    await page.getByRole('figure', { name: 'House' }).getByRole('group', { name: 'Attic' }).click();
 
-  await expect(page.getByRole('dialog', { name: 'Hallway' })).toBeVisible();
-});
+    await expect(
+      page
+        .getByRole('dialog', { name: 'Attic' })
+        .getByRole('button', { name: 'Move here · 1 action' }),
+    ).toBeVisible();
+  },
+);
 
 test('the house map by day', async ({ page }) => {
   await page.goto('/#/settings');
@@ -91,22 +94,18 @@ test('the decision dialog asking for the result of an investigation, a token dra
   await expect(decision.getByRole('status')).toBeVisible();
 });
 
-test(
-  "Alder's fight against the Ghoul Priest, the damage raised to 2",
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'Alder threatened', alderThreatenedExport('Alder threatened'));
-    const alder = page.getByRole('region', { name: 'Alder' });
-    await alder.getByRole('button', { name: 'Later cards in the threat area' }).click();
-    await alder.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
-    await page.getByRole('button', { name: 'Fight · 1 action' }).click();
-    const decision = page.getByRole('dialog', { name: 'Fight Ghoul Priest' });
+test("Alder's fight against the Ghoul Priest, the damage raised to 2", async ({ page }) => {
+  await resumeImportedGame(page, 'Alder threatened', alderThreatenedExport('Alder threatened'));
+  const alder = page.getByRole('region', { name: 'Alder' });
+  await alder.getByRole('button', { name: 'Later cards in the threat area' }).click();
+  await alder.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
+  await page.getByRole('button', { name: 'Fight · 1 action' }).click();
+  const decision = page.getByRole('dialog', { name: 'Fight Ghoul Priest' });
 
-    await decision.getByRole('button', { name: 'Raise the Damage dealt' }).click();
+  await decision.getByRole('button', { name: 'Raise the Damage dealt' }).click();
 
-    await expect(decision.getByRole('region', { name: 'Damage dealt' })).toContainText('2');
-  },
-);
+  await expect(decision.getByRole('region', { name: 'Damage dealt' })).toContainText('2');
+});
 
 test("the Ghoul Priest's details opened from its card on Alder's turn", async ({ page }) => {
   await resumeImportedGame(page, 'Alder threatened', alderThreatenedExport('Alder threatened'));

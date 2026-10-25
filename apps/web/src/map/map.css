@@ -417,33 +417,85 @@
   outline: var(--border-width) solid var(--color-accent);
 }
 
-/* The location menu (LocationMenu): one row per token stepper, the actions stacked below. */
-#map dialog {
+/*
+ * The location details (LocationDetails): the × in the corner, the name with its shroud and
+ * clues, who is there, then the corrections while adjusting (one row per token stepper) or the
+ * action row (action_row.css). It lies in the top layer, so it resets what the map sets.
+ */
+#map dialog[data-dialog='location'] {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  min-inline-size: min(var(--layout-zoom-card-width), 100%);
+  padding-inline: var(--space-2);
+  font-size: var(--font-size-body);
 }
 
-#map dialog:not([open]) {
+#map dialog[data-dialog='location']:not([open]) {
   display: none;
 }
 
-#map dialog section {
+#map dialog[data-dialog='location'] > button[data-icon='close'] {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  border-radius: var(--radius-round);
+}
+
+#map dialog[data-dialog='location'] > button[data-icon='close']::before {
+  mask-image: url('../investigators/icons/close.svg');
+}
+
+#map dialog[data-dialog='location'] h2 {
+  margin: 0;
+  padding-right: var(--touch-target);
+  font-size: var(--font-size-subtitle);
+}
+
+#map dialog[data-dialog='location'] > p,
+#map dialog[data-dialog='location'] > section > p {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+/* Who is there and the corrections: each a column under its small title. */
+#map dialog[data-dialog='location'] > section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+#map dialog[data-dialog='location'] > section > h3 {
+  margin: 0;
+  font-size: var(--font-size-caption);
+  font-weight: normal;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+}
+
+#map dialog[data-dialog='location'] > section > ul {
+  margin: 0;
+  padding-left: var(--space-3);
+}
+
+/* A token stepper of the corrections: its count, then − and +. */
+#map dialog[data-dialog='location'] section section {
   display: flex;
   align-items: center;
   gap: var(--space-2);
 }
 
-#map dialog section p {
+#map dialog[data-dialog='location'] section section p {
   flex: 1;
   margin: 0;
 }
 
-#map dialog h2 {
-  margin: 0;
-  font-size: var(--font-size-subtitle);
+#map dialog[data-dialog='location'] section section button {
+  min-width: var(--touch-target);
 }
 
-#map dialog section button {
-  min-width: var(--touch-target);
+/* A tap on a tile opens its details. */
+#map svg g[data-card='location'] {
+  cursor: pointer;
 }
