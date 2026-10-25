@@ -10,6 +10,7 @@ import type {
   SkillTest,
   SkillTestSuggestion,
 } from '@arkham/engine';
+import { assertNever } from '@arkham/util';
 import { drawTokens, testFinished } from '../investigators/drawTokens';
 import {
   DrawnTokens,
@@ -84,26 +85,7 @@ export function DecisionDialog({
       {draw.skill && tested !== undefined && (
         <TestDraw board={board} tested={tested} skill={draw.skill} draw={draw} />
       )}
-      {Object.entries(decision.counts ?? {}).flatMap(([option, ranges]) =>
-        COUNT_NAMES.flatMap((name) => {
-          const range = ranges[name];
-          const value = counts[option]?.[name];
-          if (!range || value === undefined) return [];
-          return [
-            <Stepper
-              key={`${option}-${name}`}
-              label={t(countLabel(name, decision.action))}
-              value={value}
-              shown={String(value)}
-              min={range.min}
-              {...(range.max === undefined ? {} : { max: range.max })}
-              onChange={(changed) =>
-                setCounts({ ...counts, [option]: { ...counts[option], [name]: changed } })
-              }
-            />,
-          ];
-        }),
-      )}
+      <CountSteppers decision={decision} counts={counts} onChange={setCounts} />
       <ul>
         {/* Two options can share a name (two enemies of one card), so the position is the key. */}
         {decision.options.map((option, index) => (
@@ -248,13 +230,54 @@ function countsOf(counts: Counts[string] = {}): DecisionAmounts {
   };
 }
 
+/** A stepper per count of each option of `decision`, within the count's limits. */
+function CountSteppers({
+  decision,
+  counts,
+  onChange,
+}: {
+  decision: DecisionView;
+  counts: Counts;
+  onChange: (counts: Counts) => void;
+}) {
+  const { t } = useTranslation();
+  return Object.entries(decision.counts ?? {}).flatMap(([option, ranges]) =>
+    COUNT_NAMES.flatMap((name) => {
+      const range = ranges[name];
+      const value = counts[option]?.[name];
+      if (!range || value === undefined) return [];
+      return [
+        <Stepper
+          key={`${option}-${name}`}
+          label={t(countLabel(name, decision.action))}
+          value={value}
+          shown={String(value)}
+          min={range.min}
+          {...(range.max === undefined ? {} : { max: range.max })}
+          onChange={(changed) =>
+            onChange({ ...counts, [option]: { ...counts[option], [name]: changed } })
+          }
+        />,
+      ];
+    }),
+  );
+}
+
 /**
  * The i18n key naming a count: a skill test's `amount` by the action it belongs to (clues an
  * investigation discovers, damage a fight deals), a plain count otherwise.
  */
 function countLabel(name: CountName, action: DecisionView['action']): string {
   if (name !== 'amount') return `decision.count.${name}`;
-  if (action === 'investigate') return 'decision.count.clues';
-  if (action === 'fight') return 'decision.count.dealt';
-  return 'decision.count.amount';
+  switch (action) {
+    case 'investigate':
+      return 'decision.count.clues';
+    case 'fight':
+      return 'decision.count.dealt';
+    case 'evade':
+    case undefined:
+      return 'decision.count.amount';
+    default:
+      return assertNever(action);
+  }
 }

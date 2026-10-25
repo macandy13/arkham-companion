@@ -789,6 +789,20 @@ describe('decisions and attacks', () => {
       engagedWith(alice),
     );
 
+  it.each([
+    { action: 'investigate', play: { type: 'Investigate', investigatorId: alice } },
+    {
+      action: 'fight',
+      play: { type: 'Fight', investigatorId: alice, enemyId: instanceId('ghoul') },
+    },
+  ] as const)('reads the $action action a skill test belongs to', ({ action, play }) => {
+    const { context, state } = ghoulOnAlice.withTurnOf(alice).start();
+
+    const { decisions } = boardView(context, stateAfter(context, state, play));
+
+    expect(decisions).toEqual([expect.objectContaining({ kind: 'skillTestResult', action })]);
+  });
+
   it('reads an open decision with the card it is about and its default counts', () => {
     const { context, state } = ghoulOnAlice.withTurnOf(alice).start();
     const investigating = stateAfter(context, state, {

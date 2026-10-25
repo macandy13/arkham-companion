@@ -269,10 +269,11 @@ describe('DecisionDialog', () => {
       table.investigate(alder, { result: 'open' });
       renderFirstDecision(table);
 
+      fireEvent.click(screen.getByRole('button', { name: 'Lower the Damage' }));
       fireEvent.click(screen.getByRole('button', { name: 'Lower the Horror' }));
       fireEvent.click(screen.getByRole('button', { name: 'Take the attack' }));
 
-      expect(table.board.investigator(alder)).toMatchObject({ damage: 1, horror: 1 });
+      expect(table.board.investigator(alder)).toMatchObject({ damage: 0, horror: 1 });
     });
   });
 
