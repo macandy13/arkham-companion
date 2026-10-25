@@ -9,7 +9,7 @@ import type {
   ResolutionId,
   ScenarioId,
 } from './ids';
-import type { Edge, GameMap } from './map';
+import type { Edge, GameMap, GridCell } from './map';
 import type { Rejection } from './rejection';
 import type { RngState } from './rng';
 import type {
@@ -41,6 +41,7 @@ export type Event =
   | CardFlipped
   | ConnectionChanged
   | MapAdded
+  | LayoutCellSet
   | InvestigatorMoved
   | InvestigatorChanged
   | InvestigatorDefeated
@@ -136,6 +137,17 @@ export interface MapAdded {
   type: 'MapAdded';
   mapId: MapId;
   map: GameMap;
+}
+
+/**
+ * The location `cardId` is drawn in cell `at` of map `mapId` (`GameMap.layout`).
+ * Produced by `PutLocationIntoPlay`, after the location's `CardMoved`.
+ */
+export interface LayoutCellSet {
+  type: 'LayoutCellSet';
+  mapId: MapId;
+  cardId: InstanceId;
+  at: GridCell;
 }
 
 /**

@@ -453,14 +453,6 @@
   list-style: none;
 }
 
-/* An attribute selector, so it beats the home screen's padded `#app > main ul > li` cards. */
-#board dialog[data-dialog='decision'] li {
-  display: block;
-  padding: 0;
-  border: none;
-  background: none;
-}
-
 #board dialog[data-dialog='decision'] ul button {
   width: 100%;
 }
@@ -468,4 +460,11 @@
 #board dialog[data-dialog='decision'] footer {
   display: flex;
   justify-content: flex-end;
+}
+
+/* The answer the chaos draw works out, ready to confirm; the other one still overrides it. */
+#board dialog[data-dialog='decision'] ul button[data-suggested] {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-accent-text);
 }

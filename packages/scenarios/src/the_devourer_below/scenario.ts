@@ -1,6 +1,6 @@
 import {
+  cardStats,
   enemiesOnTable,
-  mapId,
   scenarioId,
   trait,
   type AddMapStep,
@@ -12,9 +12,20 @@ import {
 } from '@arkham/engine';
 import { GATHERING_CODES, GATHERING_SETS } from '../the_gathering/cards';
 import { theGathering } from '../the_gathering/scenario';
-import { MIDNIGHT_MASKS_SETS } from '../the_midnight_masks/cards';
+import {
+  MIDNIGHT_MASKS_CODES,
+  MIDNIGHT_MASKS_SETS,
+  theMidnightMasksCards,
+} from '../the_midnight_masks/cards';
 import { ZEALOT_STORY } from '../night_of_the_zealot/story';
-import { DEVOURER_BELOW_CODES, DEVOURER_BELOW_SETS } from './cards';
+import {
+  DEVOURER_BELOW_CODES,
+  DEVOURER_BELOW_SETS,
+  MAIN_PATH_CELL,
+  WOODS_CORNER_CELLS,
+  WOODS_MAP,
+} from './cards';
+import { theDevourerBelowResolutions } from './resolutions';
 
 const codes = DEVOURER_BELOW_CODES;
 const sets = DEVOURER_BELOW_SETS;
@@ -49,17 +60,12 @@ const woodsRing: readonly CardCode[] = [
  */
 const theWoods: AddMapStep = {
   kind: 'addMap',
-  mapId: mapId('woods'),
+  mapId: WOODS_MAP,
   name: 'Arkham Woods',
-  locations: [{ code: codes.mainPath, at: { column: 1, row: 1 } }],
+  locations: [{ code: codes.mainPath, at: MAIN_PATH_CELL }],
   atRandom: {
     codes: woodsRing,
-    cells: [
-      { column: 0, row: 0 },
-      { column: 2, row: 0 },
-      { column: 0, row: 2 },
-      { column: 2, row: 2 },
-    ],
+    cells: WOODS_CORNER_CELLS,
   },
   connections: [
     ...woodsRing.map((woods): MapConnection => ({ from: codes.mainPath, to: woods })),
@@ -79,9 +85,32 @@ const doomForCultistsWhoGotAway: readonly SetupStep[] = [1, 3, 5].map((count) =>
 }));
 
 /**
+ * The unique enemies The Midnight Masks records under "Cultists Who Got Away": its five
+ * cultists and The Masked Hunter. Setup sets aside each one recorded, by its name on the
+ * list, so that act 1's reverse side ("search the collection for each enemy recorded …")
+ * spawns them at the Main Path.
+ */
+const setAsideCultistsWhoGotAway: readonly SetupStep[] = [
+  MIDNIGHT_MASKS_CODES.wolfManDrew,
+  MIDNIGHT_MASKS_CODES.hermanCollins,
+  MIDNIGHT_MASKS_CODES.peterWarren,
+  MIDNIGHT_MASKS_CODES.victoriaDevereux,
+  MIDNIGHT_MASKS_CODES.ruthTurner,
+  MIDNIGHT_MASKS_CODES.theMaskedHunter,
+].map((code) => ({
+  kind: 'whenStory',
+  condition: {
+    kind: 'listsName',
+    key: ZEALOT_STORY.cultistsWhoGotAway,
+    name: cardStats(theMidnightMasksCards, code).name,
+  },
+  then: [{ kind: 'setAside', codes: [code] }],
+}));
+
+/**
  * The Devourer Below (Core Set, 2016, scenario III of Night of the Zealot), set up as the
  * campaign guide describes: the Main Path and 4 random Arkham Woods, the investigators on the
- * Main Path, the Ritual Site and Umôrdhoth set aside, one Agents set at random in the
+ * Main Path, the Ritual Site, Umôrdhoth and the cultists who got away set aside, one Agents set at random in the
  * encounter deck, doom on agenda 1 for the Cultists who got away in The Midnight Masks, an
  * elder thing token in the bag, and the Ghoul Priest shuffled in while he is still alive. A
  * standalone game reads as an empty log: no doom and no Ghoul Priest. "It is past midnight"
@@ -89,7 +118,7 @@ const doomForCultistsWhoGotAway: readonly SetupStep[] = [1, 3, 5].map((count) =>
  * hand. The elder thing token joins this scenario's bag only; as the campaign's last scenario,
  * that is all of "the remainder of the campaign". Pass the whole definition as
  * `EngineContext.scenario` with The Gathering's (Ghouls, Striking Fear, Ancient Evils, the
- * Ghoul Priest) and The Midnight Masks' (Dark Cult) cards joined in. The reference card's
+ * Ghoul Priest) and The Midnight Masks' (Dark Cult, the cultists who got away) cards joined in. The reference card's
  * values are entered by hand from the 2016 Core Set card (Easy/Standard: skull -X, cultist
  * -2, tablet -3, elder thing -5; Hard/Expert: skull -3, cultist -4, tablet -5, elder thing -7).
  */
@@ -116,6 +145,7 @@ export const theDevourerBelow: ScenarioDefinition = {
     theWoods,
     { kind: 'moveInvestigators', to: codes.mainPath },
     { kind: 'setAside', codes: [codes.ritualSite, codes.umordhoth] },
+    ...setAsideCultistsWhoGotAway,
     {
       kind: 'buildEncounterDeck',
       sets: [
@@ -144,4 +174,5 @@ export const theDevourerBelow: ScenarioDefinition = {
     },
   ],
   modifiers: { tokenValues: { skull: monstersInPlay } },
+  resolutions: theDevourerBelowResolutions,
 };

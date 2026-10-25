@@ -7,8 +7,11 @@ import type { CardInstance, ChaosToken, GameState, Investigator } from '../state
 import { victoryPoints } from '../victory';
 import type { CampaignCommand } from './campaign_commands';
 import {
+  changeTrauma,
   findCurrentScenarioId,
+  findTraumaFate,
   type CampaignLog,
+  type CampaignResult,
   type ScenarioOutcome,
   type StoryValue,
   type TraumaKind,
@@ -58,6 +61,8 @@ export type ResolutionStep =
     }
   | { readonly kind: 'markKilled'; readonly to: ResolutionTarget }
   | { readonly kind: 'markInsane'; readonly to: ResolutionTarget }
+  /** "The investigators win!": the campaign ends with `result` (`EndCampaign`). */
+  | { readonly kind: 'endCampaign'; readonly result: CampaignResult }
   /**
    * A step about the players' own cards, which the app doesn't track (earning
    * a story asset, upgrading decks): shown for the players to do by hand.
@@ -125,10 +130,11 @@ export type ProposedChange =
  * horror, and the trauma a card effect named for its defeat (Rules
  * Reference, "Trauma"). The defeat trauma comes last so that a
  * defeat which kills an investigator doesn't block the experience the
- * resolution awards them first; someone the resolution kills or drives insane
- * gets none. A defeat that reached both health and sanity at once proposes
- * a choice between 1 physical and 1 mental trauma, which the player makes
- * (Rules Reference, "Trauma"). Undefined while the game is still running,
+ * resolution awards them first. Someone the resolution kills, drives insane or
+ * gives trauma up to their limit gets no further change. A defeat that reached
+ * both health and sanity at once proposes a choice between 1 physical and 1
+ * mental trauma, which the player makes (Rules Reference, "Trauma"). Undefined
+ * while the game is still running,
  * or for a resolution id the scenario doesn't define.
  */
 export function proposeResolution(
@@ -141,17 +147,42 @@ export function proposeResolution(
     game.meta.resolution === undefined ? resolutions.none : resolutions.byId[game.meta.resolution];
   if (steps === undefined) return undefined;
   const changes = steps.flatMap((step) => proposeStep(ctx, game, step));
-  const eliminated = new Set(changes.flatMap(eliminatedCode));
-  // A killed or insane investigator takes no more trauma (`AddTrauma` would be rejected), and
-  // being killed by the resolution already outweighs it.
-  const traumaFor = game.investigators.filter((inv) => !eliminated.has(inv.code));
-  return [...changes, ...traumaFor.flatMap(defeatTrauma)];
+  return withoutChangesForEliminated(game.campaign, [
+    ...changes,
+    ...game.investigators.flatMap(defeatTrauma),
+  ]);
 }
 
-function eliminatedCode(change: ProposedChange): InvestigatorCode[] {
-  if (change.kind !== 'command') return [];
-  const { command } = change;
-  return command.type === 'MarkKilled' || command.type === 'MarkInsane' ? [command.code] : [];
+/**
+ * `changes` without those for an investigator after the change that eliminates them: being
+ * killed or driven insane by the resolution, or trauma that reaches their health or sanity on
+ * the campaign log (Rules Reference, "Trauma"). The campaign rejects any later command for
+ * them, so the proposal confirmed unchanged would fail as a whole; and being eliminated
+ * outweighs the defeat trauma that follows. A standalone game has no log, so only its
+ * resolution's `MarkKilled`/`MarkInsane` eliminate.
+ */
+function withoutChangesForEliminated(
+  log: CampaignLog | undefined,
+  changes: readonly ProposedChange[],
+): ProposedChange[] {
+  const team = new Map(log?.investigators.map((investigator) => [investigator.code, investigator]));
+  const eliminated = new Set<InvestigatorCode>();
+  return changes.filter((change) => {
+    if (change.kind === 'choice')
+      return !change.options.some((option) => 'code' in option && eliminated.has(option.code));
+    if (change.kind !== 'command' || !('code' in change.command)) return true;
+    const { command } = change;
+    if (eliminated.has(command.code)) return false;
+    if (command.type === 'MarkKilled' || command.type === 'MarkInsane')
+      eliminated.add(command.code);
+    const investigator = team.get(command.code);
+    if (command.type === 'AddTrauma' && investigator !== undefined) {
+      const traumatised = changeTrauma(investigator, command.kind, command.amount);
+      team.set(command.code, traumatised);
+      if (findTraumaFate(traumatised, command.kind) !== undefined) eliminated.add(command.code);
+    }
+    return true;
+  });
 }
 
 /**
@@ -235,6 +266,8 @@ function proposeStep(ctx: EngineContext, game: GameState, step: ResolutionStep):
       return targetCodes(game, step.to).map((code) => command({ type: 'MarkKilled', code }));
     case 'markInsane':
       return targetCodes(game, step.to).map((code) => command({ type: 'MarkInsane', code }));
+    case 'endCampaign':
+      return [command({ type: 'EndCampaign', result: step.result })];
     case 'byHand':
       return [{ kind: 'byHand', textKey: step.textKey }];
     case 'when': {

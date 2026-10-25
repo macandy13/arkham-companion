@@ -81,7 +81,15 @@ export type StoryCondition =
   /** The flag record `key` is `value`. */
   | { readonly kind: 'flag'; readonly key: string; readonly value: boolean }
   /** The list record `key` holds at least `count` names that are not crossed out. */
-  | { readonly kind: 'atLeastNames'; readonly key: string; readonly count: number };
+  | { readonly kind: 'atLeastNames'; readonly key: string; readonly count: number }
+  /** The list record `key` holds `name`, not crossed out ("if Ruth Turner got away"). */
+  | { readonly kind: 'listsName'; readonly key: string; readonly name: string };
+
+/**
+ * How the whole campaign ended, as its last resolution says: "The investigators win!", "The
+ * investigators lose." or "The investigators have survived" (Night of the Zealot's R3).
+ */
+export type CampaignResult = 'won' | 'lost' | 'survived';
 
 /** How a scenario ended, as `ScenarioEnded` recorded it. */
 export type ScenarioOutcome =
@@ -137,6 +145,8 @@ export interface CampaignLog {
    * length once the campaign is complete.
    */
   readonly position: number;
+  /** How the campaign ended (`EndCampaign`); absent while it goes on. */
+  readonly result?: CampaignResult;
 }
 
 /** Log before any `CampaignStarted` event. */
@@ -227,21 +237,25 @@ export function storyHolds(
       if (!record) return condition.value === false;
       return record.kind === 'flag' ? record.value === condition.value : undefined;
     case 'atLeastNames': {
-      const names = record ? namesListed(record) : 0;
-      return names === undefined ? undefined : names >= condition.count;
+      const names = record ? namesListed(record) : [];
+      return names === undefined ? undefined : names.length >= condition.count;
+    }
+    case 'listsName': {
+      const names = record ? namesListed(record) : [];
+      return names === undefined ? undefined : names.includes(condition.name);
     }
     default:
       return assertNever(condition);
   }
 }
 
-/** How many names a list record holds that are not crossed out; `undefined` for a record that is no list. */
-function namesListed(record: StoryValue): number | undefined {
+/** The names a list record holds that are not crossed out; `undefined` for a record that is no list. */
+function namesListed(record: StoryValue): readonly string[] | undefined {
   switch (record.kind) {
     case 'list':
-      return record.entries.length;
+      return record.entries;
     case 'crossableList':
-      return record.entries.filter((entry) => !entry.crossedOut).length;
+      return record.entries.filter((entry) => !entry.crossedOut).map((entry) => entry.name);
     case 'flag':
     case 'count':
       return undefined;

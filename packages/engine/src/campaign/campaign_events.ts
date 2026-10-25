@@ -2,6 +2,7 @@ import type { CampaignDefinitionId, CampaignId, InvestigatorCode, ScenarioId } f
 import type { ChaosToken, Difficulty } from '../state';
 import type {
   CampaignInvestigator,
+  CampaignResult,
   InvestigatorFate,
   ScenarioOutcome,
   StoryValue,
@@ -26,7 +27,8 @@ export type CampaignEvent =
   | InvestigatorFateChanged
   | InvestigatorReplaced
   | ScenarioPlayed
-  | ScenarioPositionChanged;
+  | ScenarioPositionChanged
+  | CampaignEnded;
 
 /** A campaign began; replaces the whole log. Produced by `StartCampaign`. */
 export interface CampaignStarted {
@@ -108,6 +110,12 @@ export interface ScenarioPlayed {
   readonly type: 'ScenarioPlayed';
   readonly scenarioId: ScenarioId;
   readonly outcome: ScenarioOutcome;
+}
+
+/** The campaign ended with `result` (`CampaignLog.result`). Produced by `EndCampaign`. */
+export interface CampaignEnded {
+  readonly type: 'CampaignEnded';
+  readonly result: CampaignResult;
 }
 
 /** The scenario position moved. Produced by `AdvanceScenario` and `AdjustCampaign` `position`. */

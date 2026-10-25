@@ -4,13 +4,27 @@ import {
   sameEdge,
   validateConnections,
   validateEnds,
+  validateGridCell,
   validateLayout,
   validateLocationCard,
 } from './board';
 import type { EngineContext } from './cards';
-import type { AddConnection, AddMap, RemoveConnection, RevealLocation } from './commands';
+import type {
+  AddConnection,
+  AddMap,
+  PutLocationIntoPlay,
+  RemoveConnection,
+  RevealLocation,
+} from './commands';
 import { isInPlay } from './doom';
-import type { CardFlipped, CardMoved, ConnectionChanged, MapAdded, TokensChanged } from './events';
+import type {
+  CardFlipped,
+  CardMoved,
+  ConnectionChanged,
+  LayoutCellSet,
+  MapAdded,
+  TokensChanged,
+} from './events';
 import { moveCardEvent } from './placement';
 import { requireCard } from './lookup';
 import { createMap, layoutOf, type Edge } from './map';
@@ -56,6 +70,28 @@ export function handleAddMap(
   validateConnections(ctx, state.cards, { ...state.board.maps, [cmd.mapId]: map });
   validateLayout(cmd.mapId, map, new Set(locationIds));
   return [{ type: 'MapAdded', mapId: cmd.mapId, map }, ...moves];
+}
+
+/**
+ * `PutLocationIntoPlay`: the map must be on the board and the card a location
+ * card outside play. It stays unrevealed, as a location put into play is
+ * unless the card says otherwise.
+ */
+export function handlePutLocationIntoPlay(
+  ctx: EngineContext,
+  state: GameState,
+  cmd: PutLocationIntoPlay,
+): [CardMoved] | [CardMoved, LayoutCellSet] {
+  if (!state.board.maps[cmd.mapId])
+    throw new CommandRejected({ code: 'unknownMap', mapId: cmd.mapId });
+  validateLocationCard(ctx, state.cards, cmd.locationId);
+  const card = requireCard(state.cards, cmd.locationId);
+  if (isInPlay(state, card))
+    throw new CommandRejected({ code: 'cardAlreadyInPlay', cardId: card.id });
+  const moved = moveCardEvent(card, { kind: 'location', mapId: cmd.mapId });
+  if (cmd.at === undefined) return [moved];
+  validateGridCell(card.id, cmd.at);
+  return [moved, { type: 'LayoutCellSet', mapId: cmd.mapId, cardId: card.id, at: cmd.at }];
 }
 
 /** `RemoveConnection`: finds the map that owns the edge; rejects an edge that is not on the board. */

@@ -12,19 +12,26 @@ import {
   fixed,
   healSelf,
   itsLocation,
+  mapId,
+  onlyCopy,
   placeDoomOnAgenda,
   putIntoThreatArea,
+  putLocationIntoPlay,
   readySelf,
   resolutionId,
   skillTest,
+  spawnEachSetAsideAt,
   takeDamageAndHorror,
   takeHorror,
+  trait,
   whenAdvanced,
   whenDefeated,
   whenRevealed,
   youMustEither,
+  GRID_CELLS_PER_CARD,
   type CardDb,
   type CardStats,
+  type GridCell,
 } from '@arkham/engine';
 import { act, agenda, enemy, location, prey, treachery } from '../card_builders';
 
@@ -72,10 +79,31 @@ export const DEVOURER_BELOW_RESOLUTIONS = {
   litaSacrificed: resolutionId('R3'),
 } as const;
 
+/** The map of the Main Path and the Arkham Woods, which the Ritual Site joins. */
+export const WOODS_MAP = mapId('woods');
+
+/** One card step on the layout grid, which is finer than a card. */
+const oneCard = GRID_CELLS_PER_CARD;
+
+/** The layout cell of the Main Path, in the middle of the Woods around it. */
+export const MAIN_PATH_CELL: GridCell = { column: oneCard, row: oneCard };
+
+/** The four corners around the Main Path, which setup fills with Arkham Woods at random. */
+export const WOODS_CORNER_CELLS: readonly GridCell[] = [
+  { column: 0, row: 0 },
+  { column: 2 * oneCard, row: 0 },
+  { column: 0, row: 2 * oneCard },
+  { column: 2 * oneCard, row: 2 * oneCard },
+];
+
+/** The Ritual Site's cell: above the Main Path, between the two upper Woods. */
+const RITUAL_SITE_CELL: GridCell = { column: oneCard, row: 0 };
+
 /** Id of Offer of Power's question to its drawer: draw 2 cards and place 2 doom, or take 2 horror. */
 export const OFFER_OF_POWER_DECISION = decisionId('theDevourerBelow.offerOfPower');
 
 const sets = DEVOURER_BELOW_SETS;
+const codes = DEVOURER_BELOW_CODES;
 const own = sets.theDevourerBelow;
 const offerOfPower = 'scenario.theDevourerBelow.offerOfPower';
 const woods = ['Woods'];
@@ -94,9 +122,8 @@ const woods = ['Woods'];
  *   willpower (6) tests and madness, agenda 3's Umôrdhoth and The Devourer
  *   Below, which becomes act and agenda at once) and agenda 2's +1 fight and
  *   evade for each enemy
- * - acts 1 and 2's reverse sides (the Ritual Site, the cultists who got away,
- *   the enemies at the Ritual Site), act 2's objective, act 3's action and
- *   objective (its R1 is automated once the players advance it)
+ * - act 2's objective and reverse side (the enemies at the Ritual Site), act
+ *   3's action and objective (its R1 is automated once the players advance it)
  * - the Main Path's resign action and its connection to each Woods location,
  *   the Arkham Woods' moving-out test, skill swaps and heal action, and the
  *   Ritual Site's clues at the end of the round
@@ -115,6 +142,19 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
     set: own,
     stage: 1,
     cluesPerInvestigator: 3,
+    // Setup sets aside exactly the enemies recorded under "Cultists Who Got Away", all of them
+    // Cultists; the only other set-aside enemy, Umôrdhoth, is none. "If it is not already in
+    // play" needs no check yet: only agenda 3, which the players resolve by hand, puts the
+    // Ritual Site into play before act 1 advances.
+    abilities: [
+      whenAdvanced(
+        ...putLocationIntoPlay(codes.ritualSite, WOODS_MAP, {
+          at: RITUAL_SITE_CELL,
+          connectedTo: [codes.mainPath],
+        }),
+        spawnEachSetAsideAt(trait('Cultist'), onlyCopy(codes.mainPath)),
+      ),
+    ],
   }),
   act({ code: '01147', name: 'Into the Darkness', set: own, stage: 2 }),
   act({

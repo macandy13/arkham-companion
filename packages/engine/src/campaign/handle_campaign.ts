@@ -66,6 +66,8 @@ export function handleCommand(
       return handleReplaceInvestigator(ctx, log, command);
     case 'AdvanceScenario':
       return handleAdvanceScenario(log, command);
+    case 'EndCampaign':
+      return [{ type: 'CampaignEnded', result: command.result }];
     case 'AdjustCampaign':
       return handleAdjustCampaign(log, command);
   }

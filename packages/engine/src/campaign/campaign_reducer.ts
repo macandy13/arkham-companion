@@ -48,6 +48,8 @@ export function applyEvent(log: CampaignLog, event: CampaignEvent): CampaignLog 
       };
     case 'ScenarioPositionChanged':
       return { ...log, position: event.position };
+    case 'CampaignEnded':
+      return { ...log, result: event.result };
   }
 }
 

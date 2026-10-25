@@ -4,9 +4,13 @@ import {
   campaignId,
   cardDbWith,
   cardStats,
+  emptyState,
+  execute,
   instanceId,
+  investigatorCode,
   investigatorId,
   mapId,
+  neighbours,
   scenario,
   skillTestSuggestion,
   zoneKey,
@@ -16,6 +20,7 @@ import {
   type Difficulty,
   type GameState,
   type InstanceId,
+  type ResolutionId,
   type ScenarioContext,
   type Zone,
 } from '@arkham/engine';
@@ -28,12 +33,14 @@ import {
 } from '@arkham/engine/test/utils';
 import {
   DEVOURER_BELOW_CODES as codes,
+  DEVOURER_BELOW_RESOLUTIONS,
   GATHERING_CODES,
   MIDNIGHT_MASKS_RESOLUTIONS,
   ZEALOT_STORY,
   nightOfTheZealot,
   theDevourerBelow,
   theDevourerBelowCardDefs,
+  theDevourerBelowResolutions,
   theGatheringCards,
   theMidnightMasksCardDefs,
 } from '../index';
@@ -211,6 +218,77 @@ describe('The Devourer Below setup in the campaign', () => {
     expect(command.cards.find((card) => card.id === agenda)?.tokens?.doom).toBe(doom);
   });
 
+  /** Peter Warren and The Masked Hunter got away; the others were interrogated. */
+  const peterAndTheHunter: CampaignLog['story'] = {
+    [ZEALOT_STORY.cultistsWhoGotAway]: {
+      kind: 'list',
+      entries: ['Peter Warren', 'The Masked Hunter'],
+    },
+  };
+
+  it('sets aside each enemy recorded under the Cultists who got away, by name', () => {
+    const state = execute(
+      ctx,
+      emptyState(),
+      scenario.compileSetup(ctx, {
+        seed: 1,
+        investigators: [rolandSeat],
+        campaign: logWith(peterAndTheHunter),
+      }),
+    ).state;
+
+    expect(namesIn(state, { kind: 'setAside' }).sort()).toEqual([
+      'Peter Warren',
+      'Ritual Site',
+      'The Masked Hunter',
+      'Umôrdhoth',
+    ]);
+  });
+
+  it('puts the Ritual Site above the Main Path at act 1 and spawns the Cultists who got away on Roland there', () => {
+    const started = execute(
+      ctx,
+      emptyState(),
+      scenario.compileSetup(ctx, {
+        seed: 1,
+        investigators: [rolandSeat],
+        campaign: logWith(peterAndTheHunter),
+      }),
+    ).state;
+
+    const state = stateAfter(ctx, started, { type: 'AdvanceAct' });
+
+    const ritualSite = instanceId(`${codes.ritualSite}#1`);
+    expect(state.cards[ritualSite]).toMatchObject({
+      zone: { kind: 'location', mapId: woods },
+      faceUp: false,
+    });
+    expect(state.board.maps[woods]?.layout[ritualSite]).toEqual({ column: 3, row: 0 });
+    expect(neighbours(state, mainPath)).toContain(ritualSite);
+    expect(namesIn(state, { kind: 'engaged', investigatorId: rolandSeat.id }).sort()).toEqual([
+      'Peter Warren',
+      'The Masked Hunter',
+    ]);
+    expect(namesIn(state, { kind: 'setAside' })).toEqual(['Umôrdhoth']);
+  });
+
+  it('puts only the Ritual Site into play at act 1 when nobody got away', () => {
+    const started = execute(
+      ctx,
+      emptyState(),
+      scenario.compileSetup(ctx, { seed: 1, investigators: [rolandSeat], campaign: logWith({}) }),
+    ).state;
+
+    const state = stateAfter(ctx, started, { type: 'AdvanceAct' });
+
+    expect(state.cards[instanceId(`${codes.ritualSite}#1`)]?.zone).toEqual({
+      kind: 'location',
+      mapId: woods,
+    });
+    expect(namesIn(state, { kind: 'engaged', investigatorId: rolandSeat.id })).toEqual([]);
+    expect(namesIn(state, { kind: 'setAside' })).toEqual(['Umôrdhoth']);
+  });
+
   it('sets up from The Midnight Masks R2: 3 Cultists got away, the Ghoul Priest lives', () => {
     const campaignCtx = { cards: ctx.cards };
     const yes = { kind: 'flag', value: true } as const;
@@ -290,5 +368,96 @@ describe('The Devourer Below skull token', () => {
         spawnedAtMainPath(instanceId(`${GATHERING_CODES.ghoulMinion}#2`)),
       ),
     ).toBe(skull);
+  });
+});
+
+describe('The Devourer Below resolutions', () => {
+  const tank = investigatorCode('tank');
+  const yes = { kind: 'flag', value: true } as const;
+  /** A standalone game with the first standard investigator, ended in `resolution`. */
+  const endedIn = (resolution: ResolutionId) =>
+    stateAfter(ctx, startScenario(ctx), { type: 'EndScenario', resolution });
+  const byHand = (key: string) => ({
+    kind: 'byHand',
+    textKey: `scenario.theDevourerBelow.resolution.${key}`,
+  });
+
+  it('records R1: the ritual broken, 2 mental trauma, 5 XP, and the campaign won', () => {
+    const ended = endedIn(DEVOURER_BELOW_RESOLUTIONS.ritualBroken);
+
+    expect(campaign.proposeResolution(ctx, ended, theDevourerBelowResolutions)).toEqual([
+      {
+        kind: 'command',
+        command: { type: 'RecordStory', key: ZEALOT_STORY.ritualBroken, value: yes },
+      },
+      {
+        kind: 'command',
+        command: { type: 'AddTrauma', code: tank, kind: 'mental', amount: 2 },
+      },
+      { kind: 'command', command: { type: 'AwardXp', code: tank, amount: 5 } },
+      byHand('upgradeDecks'),
+      { kind: 'command', command: { type: 'EndCampaign', result: 'won' } },
+    ]);
+  });
+
+  it('records R2: Umôrdhoth repelled, 2 physical and 2 mental trauma, 10 XP, and the campaign won', () => {
+    const ended = endedIn(DEVOURER_BELOW_RESOLUTIONS.umordhothRepelled);
+
+    expect(campaign.proposeResolution(ctx, ended, theDevourerBelowResolutions)).toEqual([
+      {
+        kind: 'command',
+        command: { type: 'RecordStory', key: ZEALOT_STORY.umordhothRepelled, value: yes },
+      },
+      {
+        kind: 'command',
+        command: { type: 'AddTrauma', code: tank, kind: 'physical', amount: 2 },
+      },
+      {
+        kind: 'command',
+        command: { type: 'AddTrauma', code: tank, kind: 'mental', amount: 2 },
+      },
+      { kind: 'command', command: { type: 'AwardXp', code: tank, amount: 10 } },
+      byHand('upgradeDecks'),
+      { kind: 'command', command: { type: 'EndCampaign', result: 'won' } },
+    ]);
+  });
+
+  it('records R3: Lita sacrificed, trauma, a Madness weakness by hand, no XP without victory points, and the campaign survived', () => {
+    const ended = endedIn(DEVOURER_BELOW_RESOLUTIONS.litaSacrificed);
+
+    expect(campaign.proposeResolution(ctx, ended, theDevourerBelowResolutions)).toEqual([
+      {
+        kind: 'command',
+        command: { type: 'RecordStory', key: ZEALOT_STORY.litaSacrificed, value: yes },
+      },
+      byHand('removeLita'),
+      {
+        kind: 'command',
+        command: { type: 'AddTrauma', code: tank, kind: 'physical', amount: 2 },
+      },
+      {
+        kind: 'command',
+        command: { type: 'AddTrauma', code: tank, kind: 'mental', amount: 2 },
+      },
+      byHand('madnessWeakness'),
+      byHand('upgradeDecks'),
+      { kind: 'command', command: { type: 'EndCampaign', result: 'survived' } },
+    ]);
+  });
+
+  it('records no resolution: Arkham succumbed, each investigator killed, and the campaign lost', () => {
+    const ended = stateAfter(ctx, startScenario(ctx), {
+      type: 'DefeatInvestigator',
+      investigatorId: investigatorId('tank'),
+    });
+
+    expect(campaign.proposeResolution(ctx, ended, theDevourerBelowResolutions)).toEqual([
+      {
+        kind: 'command',
+        command: { type: 'RecordStory', key: ZEALOT_STORY.arkhamSuccumbed, value: yes },
+      },
+      { kind: 'command', command: { type: 'MarkKilled', code: tank } },
+      { kind: 'command', command: { type: 'EndCampaign', result: 'lost' } },
+    ]);
   });
 });

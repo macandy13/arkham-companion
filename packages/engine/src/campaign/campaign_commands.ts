@@ -1,6 +1,7 @@
 import type { CampaignDefinitionId, CampaignId, InvestigatorCode, ScenarioId } from '../ids';
 import type { ChaosToken, Difficulty } from '../state';
 import type {
+  CampaignResult,
   InvestigatorFate,
   ScenarioOutcome,
   StoryValue,
@@ -25,6 +26,7 @@ export type CampaignCommand =
   | MarkInsane
   | ReplaceInvestigator
   | AdvanceScenario
+  | EndCampaign
   | AdjustCampaign;
 
 /** The `type` of every campaign command. */
@@ -139,6 +141,15 @@ export interface ReplaceInvestigator {
 export interface AdvanceScenario {
   readonly type: 'AdvanceScenario';
   readonly outcome: ScenarioOutcome;
+}
+
+/**
+ * The campaign ends with `result`, as the last scenario's resolution says. Sent before that
+ * scenario's `AdvanceScenario`, like every resolution step. Produces `CampaignEnded`.
+ */
+export interface EndCampaign {
+  readonly type: 'EndCampaign';
+  readonly result: CampaignResult;
 }
 
 /**

@@ -27,6 +27,8 @@ export interface DecisionAmounts {
   amount?: number;
   /** For an option with named ranges, such as an attack's `damage` and `horror`. */
   amounts?: ResolveDecision['amounts'];
+  /** For a skill test: how much it passed or failed by, as the chaos draw worked it out. */
+  margin?: number;
 }
 
 /**

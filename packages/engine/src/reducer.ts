@@ -12,6 +12,7 @@ import type {
   EnemyEngaged,
   InvestigatorDefeated,
   Event,
+  LayoutCellSet,
   MapAdded,
   ScenarioEnded,
   ScenarioStarted,
@@ -69,6 +70,8 @@ export function apply(state: GameState, event: Event): GameState {
       return applyConnectionChanged(state, event);
     case 'MapAdded':
       return applyMapAdded(state, event);
+    case 'LayoutCellSet':
+      return applyLayoutCellSet(state, event);
     case 'InvestigatorMoved':
       return applyInvestigator(state, event, (inv) => ({ ...inv, locationId: event.to }));
     case 'InvestigatorChanged':
@@ -286,6 +289,16 @@ function applyDecisionRequested(state: GameState, e: DecisionRequested): GameSta
 
 function applyMapAdded(state: GameState, e: MapAdded): GameState {
   return { ...state, board: { ...state.board, maps: { ...state.board.maps, [e.mapId]: e.map } } };
+}
+
+function applyLayoutCellSet(state: GameState, e: LayoutCellSet): GameState {
+  const map = state.board.maps[e.mapId];
+  if (!map) return state;
+  const layout = { ...map.layout, [e.cardId]: e.at };
+  return {
+    ...state,
+    board: { ...state.board, maps: { ...state.board.maps, [e.mapId]: { ...map, layout } } },
+  };
 }
 
 function applyScenarioEnded(state: GameState, e: ScenarioEnded): GameState {

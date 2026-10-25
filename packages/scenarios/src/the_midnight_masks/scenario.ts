@@ -1,4 +1,5 @@
 import {
+  GRID_CELLS_PER_CARD,
   doomInPlay,
   enemiesOnTable,
   mapId,
@@ -19,6 +20,8 @@ import { theMidnightMasksResolutions } from './resolutions';
 
 const codes = MIDNIGHT_MASKS_CODES;
 const sets = MIDNIGHT_MASKS_SETS;
+/** One card step on the layout grid, which is finer than a card. */
+const oneCard = GRID_CELLS_PER_CARD;
 
 /** Acolyte's "after it enters play: place 1 doom on it" triggers during setup too (FAQ). */
 const acolyteDoom = { doom: 1 };
@@ -54,17 +57,17 @@ function arkham(withYourHouse: boolean): AddMapStep {
     {
       code: codes.downtownFirstBank,
       versions: [codes.downtownArkhamAsylum],
-      at: { column: 1, row: 0 },
+      at: { column: oneCard, row: 0 },
     },
-    { code: codes.easttown, at: { column: 2, row: 0 } },
-    { code: codes.miskatonicUniversity, at: { column: 0, row: 1 } },
-    { code: codes.rivertown, at: { column: 1, row: 1 } },
-    { code: codes.graveyard, at: { column: 2, row: 1 } },
-    { code: codes.stMarysHospital, at: { column: 0, row: 2 } },
+    { code: codes.easttown, at: { column: 2 * oneCard, row: 0 } },
+    { code: codes.miskatonicUniversity, at: { column: 0, row: oneCard } },
+    { code: codes.rivertown, at: { column: oneCard, row: oneCard } },
+    { code: codes.graveyard, at: { column: 2 * oneCard, row: oneCard } },
+    { code: codes.stMarysHospital, at: { column: 0, row: 2 * oneCard } },
     {
       code: codes.southsideHistoricalSociety,
       versions: [codes.southsideMasBoardingHouse],
-      at: { column: 1, row: 2 },
+      at: { column: oneCard, row: 2 * oneCard },
     },
   ];
   const connections: MapConnection[] = [
@@ -84,7 +87,7 @@ function arkham(withYourHouse: boolean): AddMapStep {
     mapId: mapId('arkham'),
     name: 'Arkham',
     locations: withYourHouse
-      ? [...locations, { code: codes.yourHouse, at: { column: 2, row: 2 } }]
+      ? [...locations, { code: codes.yourHouse, at: { column: 2 * oneCard, row: 2 * oneCard } }]
       : locations,
     connections: withYourHouse
       ? [...connections, { from: codes.rivertown, to: codes.yourHouse }]

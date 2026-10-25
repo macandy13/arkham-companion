@@ -49,6 +49,7 @@ import {
   leadDecides,
   locationWith,
   mapId,
+  neighbours,
   MAX_TRIGGERED_COMMANDS,
   moveEachInvestigatorTo,
   moveEnemyTowards,
@@ -63,11 +64,13 @@ import {
   placeDoomOn,
   placeDoomOnAgenda,
   placeDoomOnSelf,
+  putLocationIntoPlay,
   putMapIntoPlay,
   putSetAsideIntoPlay,
   removeFromGame,
   revealLocation,
   skillTest,
+  spawnEachSetAsideAt,
   spawnEnemyAt,
   spendClues,
   moveTo,
@@ -910,6 +913,75 @@ describe('trigger bus', () => {
       expect(state.cards[cellar]?.faceUp).toBe(true);
       expect(state.cards[priest]?.zone).toEqual(atLocation(cellar));
       expect(state.act.current).toBe(act2);
+    });
+
+    it('puts a set-aside location onto the map, next to the hall, and spawns each set-aside Cultist there', () => {
+      const shrine = instanceId('shrine');
+      const cultist = instanceId('cultist');
+      const fanatic = instanceId('fanatic');
+      const elder = instanceId('elder');
+      const main = mapId('main');
+      const shrineAct = blankAct('shrine_act', {
+        abilities: [
+          whenAdvanced(
+            ...putLocationIntoPlay(cardCode('shrine'), main, {
+              at: { column: 3, row: 0 },
+              connectedTo: [cardCode('hall')],
+            }),
+            spawnEachSetAsideAt(trait('Cultist'), onlyCopy(cardCode('shrine'))),
+          ),
+        ],
+      });
+      const cultistTrait = { traits: [trait('Cultist')] };
+      const { context, state: started } = newGame()
+        .withAct(act1, shrineAct)
+        .withAct(act2, secondActCard)
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withCard(shrine, blankLocation('shrine'), { kind: 'setAside' })
+        .withCard(cultist, blankEnemy('cultist', cultistTrait), { kind: 'setAside' })
+        .withCard(fanatic, blankEnemy('fanatic', cultistTrait), { kind: 'setAside' })
+        .withCard(elder, blankEnemy('elder', { traits: [trait('Ancient One')] }), {
+          kind: 'setAside',
+        })
+        .withInvestigator(alice, { locationId: hall })
+        .start();
+
+      const { state } = execute(context, started, { type: 'AdvanceAct' });
+
+      expect(state.cards[shrine]).toMatchObject({
+        zone: { kind: 'location', mapId: main },
+        faceUp: false,
+      });
+      expect(state.board.maps[main]?.layout[shrine]).toEqual({ column: 3, row: 0 });
+      expect(neighbours(state, hall)).toEqual([shrine]);
+      expect(state.cards[cultist]?.zone).toEqual(atLocation(shrine));
+      expect(state.cards[fanatic]?.zone).toEqual(atLocation(shrine));
+      expect(state.cards[elder]?.zone).toEqual({ kind: 'setAside' });
+    });
+
+    it('spawns nobody when no Cultist enemy is set aside', () => {
+      const emptyAct = blankAct('empty_act', {
+        abilities: [
+          whenAdvanced(spawnEachSetAsideAt(trait('Cultist'), onlyCopy(cardCode('hall')))),
+        ],
+      });
+      const { context, state: started } = newGame()
+        .withAct(act1, emptyAct)
+        .withAct(act2, secondActCard)
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withCard(instanceId('shrine'), blankLocation('shrine', { traits: [trait('Cultist')] }), {
+          kind: 'setAside',
+        })
+        .withCard(instanceId('elder'), blankEnemy('elder', { traits: [trait('Ancient One')] }), {
+          kind: 'setAside',
+        })
+        .start();
+
+      const { state } = execute(context, started, { type: 'AdvanceAct' });
+
+      expect(state.act.current).toBe(act2);
+      expect(state.cards[instanceId('shrine')]?.zone).toEqual({ kind: 'setAside' });
+      expect(state.cards[instanceId('elder')]?.zone).toEqual({ kind: 'setAside' });
     });
 
     it('puts a set-aside card into play at a location', () => {

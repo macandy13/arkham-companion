@@ -322,3 +322,24 @@ describe('AdvanceScenario', () => {
     ]);
   });
 });
+
+describe('EndCampaign', () => {
+  it.each(['won', 'lost', 'survived'] as const)(
+    'records that the investigators %s after the last scenario',
+    (result) => {
+      const log = startedCampaign(
+        { scenarioIds: [scenarioId('the-devourer-below')] },
+        { type: 'EndCampaign', result },
+        { type: 'AdvanceScenario', outcome: { kind: 'noResolution' } },
+      );
+
+      expect(log).toMatchObject({ result, position: 1 });
+    },
+  );
+
+  it('leaves no result on a campaign that goes on', () => {
+    const log = startedCampaign({ scenarioIds: [scenarioId('the-gathering')] });
+
+    expect(log.result).toBeUndefined();
+  });
+});
