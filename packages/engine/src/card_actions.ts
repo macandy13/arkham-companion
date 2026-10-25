@@ -37,8 +37,9 @@ export function resignAction(): CardAction {
 
 /**
  * Whether `investigator` may take the action abilities of `card` (Rules Reference, "Abilities"):
- * a location's at that location, an enemy's at its location (engaged with them or not), a card's
- * in a threat area only its owner, and the current agenda's and act's anyone.
+ * a revealed location's at that location, an enemy's at its location (engaged with them or not),
+ * a card's in a threat area at its owner's location, and the current agenda's and act's anyone.
+ * An unrevealed location has only its unrevealed side's text, so it offers none.
  */
 export function offersActionsTo(
   state: GameState,
@@ -49,13 +50,15 @@ export function offersActionsTo(
   const here = investigator.locationId;
   switch (zone.kind) {
     case 'location':
-      return isLocationInPlay(state, card.id) && here === card.id;
+      return isLocationInPlay(state, card.id) && card.faceUp && here === card.id;
     case 'atLocation':
       return here === zone.locationId;
     case 'engaged':
       return here === locationOf(state, card);
-    case 'threatArea':
-      return zone.investigatorId === investigator.id;
+    case 'threatArea': {
+      const ownerId = zone.investigatorId;
+      return here === state.investigators.find((inv) => inv.id === ownerId)?.locationId;
+    }
     default:
       return (
         currentCard(state, 'agenda')?.id === card.id || currentCard(state, 'act')?.id === card.id

@@ -138,7 +138,8 @@ export type TimingWindow =
   | { kind: 'defeated' }
   /**
    * An action ability of the card (`CardStats.actions`), taken with `UseCardAction`, naming the
-   * investigator who took it. No event opens it: the command queues the action's effects itself.
+   * investigator who took it and, as every window, the card. No event opens it: the command
+   * queues the action's effects itself, so an `Ability` listing this window never fires.
    */
   | { kind: 'action' };
 

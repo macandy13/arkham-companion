@@ -17,7 +17,7 @@ import {
   type InstanceId,
   type InvestigatorId,
 } from './index';
-import { investigatorOf, rejectionFrom, stateAfter } from '../test/utils';
+import { answer, investigatorOf, rejectionFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -41,31 +41,34 @@ const aliceInHallBobInCellar = newGame()
   .withInvestigator(alice, { locationId: hall })
   .withInvestigator(bob, { locationId: cellar });
 
-function useAction(investigator: InvestigatorId, cardId: InstanceId, action = 0): Command {
+/** `investigator` takes action number `action` of the card `cardId`, spending an action on it. */
+function useAsAction(investigator: InvestigatorId, cardId: InstanceId, action = 0): Command {
   return { type: 'UseCardAction', investigatorId: investigator, cardId, action, asAction: true };
 }
 
 describe('UseCardAction', () => {
   it('resolves the effects of the action for the investigator who takes it', () => {
     const { context, state } = newGame()
-      .withLocation(hall, blankLocation('hall', { actions: [scareAction] }))
+      .withLocation(hall, blankLocation('hall', { actions: [scareAction] }), { revealed: true })
       .withInvestigator(alice, { locationId: hall })
       .withTurnOf(alice)
       .start();
 
-    const after = stateAfter(context, state, useAction(alice, hall));
+    const after = stateAfter(context, state, useAsAction(alice, hall));
 
     expect(investigatorOf(after, alice).sanity.horror).toBe(1);
   });
 
   it('resigns the investigator who takes a Resign action', () => {
     const { context, state } = newGame()
-      .withLocation(hall, blankLocation('parlor', { actions: [resignAction()] }))
+      .withLocation(hall, blankLocation('parlor', { actions: [resignAction()] }), {
+        revealed: true,
+      })
       .withInvestigator(alice, { locationId: hall })
       .withTurnOf(alice)
       .start();
 
-    const after = stateAfter(context, state, useAction(alice, hall));
+    const after = stateAfter(context, state, useAsAction(alice, hall));
 
     expect(investigatorOf(after, alice).status).toBe('resigned');
   });
@@ -110,10 +113,24 @@ describe('UseCardAction', () => {
         ),
       cardId: instanceId('curse'),
     },
+    {
+      name: 'a treachery in the threat area of alice, at his location',
+      setup: () =>
+        newGame()
+          .withLocation(hall, blankLocation('hall'))
+          .withInvestigator(alice, { locationId: hall })
+          .withInvestigator(bob, { locationId: hall })
+          .withCard(
+            instanceId('curse'),
+            blankTreachery('scary_curse', { actions: [scareAction] }),
+            threatAreaOf(alice),
+          ),
+      cardId: instanceId('curse'),
+    },
   ])('lets bob take the action of $name', ({ setup, cardId }) => {
     const { context, state } = setup().withTurnOf(bob).start();
 
-    const after = stateAfter(context, state, useAction(bob, cardId));
+    const after = stateAfter(context, state, useAsAction(bob, cardId));
 
     expect(investigatorOf(after, bob).sanity.horror).toBe(1);
   });
@@ -123,9 +140,17 @@ describe('UseCardAction', () => {
       name: 'a location bob is not at',
       setup: () =>
         newGame()
-          .withLocation(hall, blankLocation('hall', { actions: [scareAction] }))
+          .withLocation(hall, blankLocation('hall', { actions: [scareAction] }), { revealed: true })
           .withLocation(cellar, blankLocation('cellar'))
           .withInvestigator(bob, { locationId: cellar }),
+      cardId: hall,
+    },
+    {
+      name: 'the unrevealed location he is at',
+      setup: () =>
+        newGame()
+          .withLocation(hall, blankLocation('hall', { actions: [scareAction] }))
+          .withInvestigator(bob, { locationId: hall }),
       cardId: hall,
     },
     {
@@ -139,7 +164,7 @@ describe('UseCardAction', () => {
       cardId: ghoul,
     },
     {
-      name: 'a treachery in alice`s threat area',
+      name: 'a treachery in the threat area of alice, at another location',
       setup: () =>
         aliceInHallBobInCellar.withCard(
           instanceId('curse'),
@@ -151,7 +176,7 @@ describe('UseCardAction', () => {
   ])('rejects bob taking the action of $name', ({ setup, cardId }) => {
     const { context, state } = setup().withTurnOf(bob).start();
 
-    expect(rejectionFrom(context, state, useAction(bob, cardId))).toEqual({
+    expect(rejectionFrom(context, state, useAsAction(bob, cardId))).toEqual({
       code: 'cardActionUnavailable',
       cardId,
       investigatorId: bob,
@@ -160,13 +185,13 @@ describe('UseCardAction', () => {
 
   it('rejects an action outside the investigator`s turn', () => {
     const { context, state } = newGame()
-      .withLocation(hall, blankLocation('hall', { actions: [scareAction] }))
+      .withLocation(hall, blankLocation('hall', { actions: [scareAction] }), { revealed: true })
       .withInvestigator(alice, { locationId: hall })
       .withInvestigator(bob, { locationId: hall })
       .withTurnOf(bob)
       .start();
 
-    expect(rejectionFrom(context, state, useAction(alice, hall))).toMatchObject({
+    expect(rejectionFrom(context, state, useAsAction(alice, hall))).toMatchObject({
       code: 'turnNotInProgress',
       investigatorId: alice,
     });
@@ -174,12 +199,12 @@ describe('UseCardAction', () => {
 
   it('rejects an action the card does not print', () => {
     const { context, state } = newGame()
-      .withLocation(hall, blankLocation('hall', { actions: [scareAction] }))
+      .withLocation(hall, blankLocation('hall', { actions: [scareAction] }), { revealed: true })
       .withInvestigator(alice, { locationId: hall })
       .withTurnOf(alice)
       .start();
 
-    expect(rejectionFrom(context, state, useAction(alice, hall, 1))).toEqual({
+    expect(rejectionFrom(context, state, useAsAction(alice, hall, 1))).toEqual({
       code: 'unknownCardAction',
       cardId: hall,
       action: 1,
@@ -191,7 +216,7 @@ describe('UseCardAction', () => {
       actions: [scareAction, resignAction()],
     });
     const ghoulOnAlice = newGame()
-      .withLocation(hall, scaryHallCard)
+      .withLocation(hall, scaryHallCard, { revealed: true })
       .withInvestigator(alice, { locationId: hall })
       .withCard(ghoul, blankEnemy('ghoul', { damage: 1 }), engagedWith(alice))
       .withTurnOf(alice);
@@ -199,16 +224,33 @@ describe('UseCardAction', () => {
     it('provokes an attack of opportunity for a plain action', () => {
       const { context, state } = ghoulOnAlice.start();
 
-      const after = stateAfter(context, state, useAction(alice, hall, 0));
+      const after = stateAfter(context, state, useAsAction(alice, hall, 0));
 
       expect(after.pending).toMatchObject([{ id: `attackOfOpportunity:${ghoul}` }]);
       expect(investigatorOf(after, alice).sanity.horror).toBe(0);
     });
 
+    it('resolves the action once the attack of opportunity is answered', () => {
+      const { context, state } = ghoulOnAlice.start();
+
+      const after = stateAfter(
+        context,
+        state,
+        useAsAction(alice, hall, 0),
+        answer(`attackOfOpportunity:${ghoul}`, 'attack'),
+      );
+
+      expect(after.pending).toEqual([]);
+      expect(investigatorOf(after, alice)).toMatchObject({
+        health: { damage: 1 },
+        sanity: { horror: 1 },
+      });
+    });
+
     it('provokes none for Resign', () => {
       const { context, state } = ghoulOnAlice.start();
 
-      const after = stateAfter(context, state, useAction(alice, hall, 1));
+      const after = stateAfter(context, state, useAsAction(alice, hall, 1));
 
       expect(after.pending).toEqual([]);
       expect(investigatorOf(after, alice).status).toBe('resigned');
