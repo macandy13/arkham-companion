@@ -86,11 +86,11 @@
 }
 
 #board dialog[data-dialog='enemy'] button[data-icon='fight']::before {
-  mask-image: url('./icons/fight.svg');
+  mask-image: url('../symbols/combat.svg');
 }
 
 #board dialog[data-dialog='enemy'] button[data-icon='evade']::before {
-  mask-image: url('./icons/evade.svg');
+  mask-image: url('../symbols/agility.svg');
 }
 
 #board dialog[data-dialog='enemy'] button[data-icon='damage']::before {
