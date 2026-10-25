@@ -324,7 +324,7 @@
   align-items: center;
 }
 
-/* A pip per action, filled for each one left, like the prototype's. */
+/* The game's action arrow per action, faded for each one spent. */
 #investigators [role='group'] ul {
   display: flex;
   gap: var(--space-1);
@@ -336,16 +336,15 @@
 /* Two ids, so it beats the home screen's padded `#app > main ul > li` cards. */
 #board > #investigators [role='group'] li {
   padding: 0;
-  background: none;
   width: var(--action-pip-size);
   height: var(--action-pip-size);
-  box-sizing: border-box;
-  border: var(--piece-ring-width) solid var(--color-accent);
-  border-radius: var(--radius-round);
+  background: var(--color-accent);
+  mask: url('../styles/action.svg') center / contain no-repeat;
+  opacity: var(--action-spent-opacity);
 }
 
 #board > #investigators [role='group'] li[data-left] {
-  background: var(--color-accent);
+  opacity: 1;
 }
 
 #investigators button[data-icon='resign']::before {

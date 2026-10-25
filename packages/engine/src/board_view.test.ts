@@ -528,7 +528,7 @@ describe('enemies', () => {
     ]);
   });
 
-  it("reads an enemy's fight and evade as modified where it stands, and its attack", () => {
+  it("reads an enemy's fight and evade as modified where it stands, its attack and its picture", () => {
     const { context, state } = newGame()
       .withLocation(
         study,
@@ -538,14 +538,25 @@ describe('enemies', () => {
       .withInvestigator(alice, { locationId: study })
       .withCard(
         instanceId('ghoul'),
-        blankEnemy('ghoul', { fight: 3, evade: 2, damage: 1, horror: 2 }),
+        blankEnemy('ghoul', {
+          fight: 3,
+          evade: 2,
+          damage: 1,
+          horror: 2,
+          imageSrc: cardImagePath('/cards/ghoul.png'),
+        }),
         engagedWith(alice),
       )
       .start();
 
     const stats = boardView(context, state).enemyStats(instanceId('ghoul'));
 
-    expect(stats).toEqual({ fight: 4, evade: 2, attack: { damage: 1, horror: 2 } });
+    expect(stats).toEqual({
+      image: '/cards/ghoul.png',
+      fight: 4,
+      evade: 2,
+      attack: { damage: 1, horror: 2 },
+    });
   });
 
   it('marks an exhausted enemy', () => {

@@ -1,12 +1,14 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BoardView, MapEnemyView } from '@arkham/engine';
+import { useCardPicture } from '../catalog/cardImages';
 import type { GameActions } from '../state/gameActions';
 import './enemies.css';
 
 /**
- * One enemy in full, opened by a tap on its card: its fight, evade, health left and attack
- * (`BoardView.enemyStats`), then what the players can do to it. On the turn of the investigator
+ * One enemy in full, opened by a tap on its card: the picture of its card, as the prototype zooms a
+ * card (loaded from ArkhamDB, left out until it has loaded and for good when it fails), its fight,
+ * evade, health left and attack (`BoardView.enemyStats`), then what the players can do to it. On the turn of the investigator
  * it is engaged with (`onTurn`), fight and evade as actions, which count off one, and the same
  * without an action, as some cards allow. At any time, what card effects do to an enemy: deal 1
  * damage, disengage it, defeat it. Fight and evade close it, so the decision dialog that asks for
@@ -35,7 +37,8 @@ export function EnemyDetails({
   useEffect(() => {
     dialog.current?.showModal();
   }, []);
-  const { fight, evade, attack } = board.enemyStats(enemy.id);
+  const { image, fight, evade, attack } = board.enemyStats(enemy.id);
+  const picture = useCardPicture(image);
   const left = enemy.health === undefined ? undefined : enemy.health - (enemy.damage ?? 0);
   const step = (play: () => Promise<void>, close: boolean) => () => {
     if (close) onClose();
@@ -45,6 +48,15 @@ export function EnemyDetails({
   return (
     <dialog ref={dialog} aria-labelledby={titleId} onCancel={onClose} data-dialog="enemy">
       <h2 id={titleId}>{enemy.name}</h2>
+      {picture && (
+        <img
+          src={picture.url}
+          alt=""
+          data-shown={picture.shown ? '' : undefined}
+          onLoad={picture.onLoad}
+          onError={picture.onError}
+        />
+      )}
       <dl>
         <dt>{t('enemy.fight')}</dt>
         <dd>{fight}</dd>

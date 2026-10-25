@@ -166,8 +166,10 @@ export interface MapView {
   enemies: Readonly<Record<InstanceId, readonly MapEnemyView[]>>;
 }
 
-/** An enemy's fight and evade now and its attack (`BoardView.enemyStats`). */
+/** An enemy's fight and evade now, its attack and its card's picture (`BoardView.enemyStats`). */
 export interface EnemyStatsView {
+  /** The picture of its card (`CardStats.imageSrc`), when the card data has one. */
+  image?: CardImagePath;
   fight: number;
   evade: number;
   attack: { damage: number; horror: number };
@@ -373,8 +375,9 @@ export class BoardView {
    */
   enemyStats(enemy: InstanceId): EnemyStatsView {
     const card = requireCard(this.state, enemy);
-    const { damage = 0, horror = 0 } = cardStats(this.ctx.cards, card.code);
+    const { damage = 0, horror = 0, imageSrc } = cardStats(this.ctx.cards, card.code);
     return {
+      ...(imageSrc === undefined ? {} : { image: imageSrc }),
       fight: effectiveValue(this.ctx, this.state, card, 'fight'),
       evade: effectiveValue(this.ctx, this.state, card, 'evade'),
       attack: { damage, horror },

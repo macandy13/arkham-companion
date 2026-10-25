@@ -4,6 +4,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   blankEnemy,
   blankLocation,
+  cardImagePath,
   engagedWith,
   fixed,
   instanceId,
@@ -81,6 +82,31 @@ describe('EnemyDetails', () => {
       ['Health', '2/3'],
       ['Attack', '1 damage, 2 horror'],
     ]);
+  });
+
+  it("shows the picture of the ghoul's card once it has loaded", () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withInvestigator(alder, { locationId: study })
+        .withCard(
+          ghoul,
+          blankEnemy('ghoul', { imageSrc: cardImagePath('/bundles/cards/ghoul.png') }),
+          engagedWith(alder),
+        ),
+    );
+    renderGhoulDetails(table, false);
+    // The picture is decorative (`alt=""`), so it has no role to find it by.
+    const picture = screen.getByRole('dialog', { hidden: true }).querySelector('img');
+    if (!picture) throw new Error("the ghoul's details have no picture");
+    const beforeLoading = picture.hasAttribute('data-shown');
+
+    // jsdom loads no images, so the test fires the load itself.
+    fireEvent.load(picture);
+
+    expect(picture.getAttribute('src')).toBe('https://arkhamdb.com/bundles/cards/ghoul.png');
+    expect(beforeLoading).toBe(false);
+    expect(picture.hasAttribute('data-shown')).toBe(true);
   });
 
   it.each([
