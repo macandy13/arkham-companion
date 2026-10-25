@@ -453,8 +453,27 @@
   list-style: none;
 }
 
-#board dialog[data-dialog='decision'] ul button {
-  width: 100%;
+/*
+ * An answer with its counts on one row: the button takes the room the steppers leave, and an
+ * answer with two counts (an attack's damage and horror) wraps them under it on a phone.
+ */
+#board dialog[data-dialog='decision'] > ul > li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+#board dialog[data-dialog='decision'] > ul > li > button {
+  flex: 1;
+}
+
+#board dialog[data-dialog='decision'] > ul > li > section {
+  flex-wrap: nowrap;
+}
+
+#board dialog[data-dialog='decision'] > ul > li > section > p {
+  flex: none;
 }
 
 #board dialog[data-dialog='decision'] footer {

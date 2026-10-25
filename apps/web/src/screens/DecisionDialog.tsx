@@ -85,7 +85,6 @@ export function DecisionDialog({
       {draw.skill && tested !== undefined && (
         <TestDraw board={board} tested={tested} skill={draw.skill} draw={draw} />
       )}
-      <CountSteppers decision={decision} counts={counts} onChange={setCounts} />
       <ul>
         {/* Two options can share a name (two enemies of one card), so the position is the key. */}
         {decision.options.map((option, index) => (
@@ -98,6 +97,12 @@ export function DecisionDialog({
             >
               {t(decision.labels?.[option] ?? option, { defaultValue: option })}
             </button>
+            <CountSteppers
+              decision={decision}
+              option={option}
+              counts={counts}
+              onChange={setCounts}
+            />
           </li>
         ))}
       </ul>
@@ -230,37 +235,38 @@ function countsOf(counts: Counts[string] = {}): DecisionAmounts {
   };
 }
 
-/** A stepper per count of each option of `decision`, within the count's limits. */
+/** A stepper per count of `option`, within the count's limits, next to the option's button. */
 function CountSteppers({
   decision,
+  option,
   counts,
   onChange,
 }: {
   decision: DecisionView;
+  option: string;
   counts: Counts;
   onChange: (counts: Counts) => void;
 }) {
   const { t } = useTranslation();
-  return Object.entries(decision.counts ?? {}).flatMap(([option, ranges]) =>
-    COUNT_NAMES.flatMap((name) => {
-      const range = ranges[name];
-      const value = counts[option]?.[name];
-      if (!range || value === undefined) return [];
-      return [
-        <Stepper
-          key={`${option}-${name}`}
-          label={t(countLabel(name, decision.action))}
-          value={value}
-          shown={String(value)}
-          min={range.min}
-          {...(range.max === undefined ? {} : { max: range.max })}
-          onChange={(changed) =>
-            onChange({ ...counts, [option]: { ...counts[option], [name]: changed } })
-          }
-        />,
-      ];
-    }),
-  );
+  const ranges = decision.counts?.[option] ?? {};
+  return COUNT_NAMES.flatMap((name) => {
+    const range = ranges[name];
+    const value = counts[option]?.[name];
+    if (!range || value === undefined) return [];
+    return [
+      <Stepper
+        key={name}
+        label={t(countLabel(name, decision.action))}
+        value={value}
+        shown={String(value)}
+        min={range.min}
+        {...(range.max === undefined ? {} : { max: range.max })}
+        onChange={(changed) =>
+          onChange({ ...counts, [option]: { ...counts[option], [name]: changed } })
+        }
+      />,
+    ];
+  });
 }
 
 /**

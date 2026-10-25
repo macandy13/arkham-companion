@@ -132,11 +132,10 @@ describe('DecisionDialog', () => {
       return table;
     };
     const suggestedOptions = () =>
-      screen
-        .getAllByRole('listitem')
-        .flatMap((item) =>
-          item.querySelectorAll('button[data-suggested]').length > 0 ? [item.textContent] : [],
-        );
+      screen.getAllByRole('listitem').flatMap((item) => {
+        const suggested = item.querySelector(':scope > button[data-suggested]');
+        return suggested ? [suggested.textContent] : [];
+      });
 
     it('marks the answer the calculation works out after the draw', () => {
       renderFirstDecision(aldersInvestigationWithAMinusTwo());
