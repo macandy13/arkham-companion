@@ -505,18 +505,23 @@ describe('prey helpers', () => {
   });
 
   it.each([
-    { prey: 'highest combat', skill: 'combat', extreme: 'highest', expected: [bob] },
-    { prey: 'lowest combat', skill: 'combat', extreme: 'lowest', expected: [alice] },
-    { prey: 'lowest agility, tied', skill: 'agility', extreme: 'lowest', expected: [alice, bob] },
+    { prey: 'highest combat (bob 5)', skill: 'combat', extreme: 'highest', expected: [bob] },
+    { prey: 'lowest combat (alice 2)', skill: 'combat', extreme: 'lowest', expected: [alice] },
+    {
+      prey: 'lowest agility, tied at 2',
+      skill: 'agility',
+      extreme: 'lowest',
+      expected: [alice, bob],
+    },
   ] as const)('finds the $prey', ({ skill, extreme, expected }) => {
-    const fighter = blankInvestigator(alice, {
+    const weakAlice = blankInvestigator(alice, {
       skills: { willpower: 3, intellect: 3, combat: 2, agility: 2 },
     });
-    const brawler = blankInvestigator(bob, {
+    const strongBob = blankInvestigator(bob, {
       skills: { willpower: 3, intellect: 3, combat: 5, agility: 2 },
     });
 
-    expect(bySkill(skill, extreme)([fighter, brawler]).map((inv) => inv.id)).toEqual(expected);
+    expect(bySkill(skill, extreme)([weakAlice, strongBob]).map((inv) => inv.id)).toEqual(expected);
   });
 
   it('ignores defeated and resigned investigators', () => {

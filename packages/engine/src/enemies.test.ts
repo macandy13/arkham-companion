@@ -274,6 +274,22 @@ describe('SpawnEnemy', () => {
     expect(zoneOf(after, ghoul)).toEqual(engagedWith(engaged));
   });
 
+  it('asks the players when its prey is text the engine cannot read', () => {
+    const unreadablePreyGhoulCard = blankEnemy('unreadable_prey_ghoul', {
+      keywords: [{ name: 'prey', detail: 'Fewest cards in hand' }],
+    });
+    const { context, state } = aliceAndBobAt(hall, { alice: 1, bob: 3 })
+      .withCard(ghoul, unreadablePreyGhoulCard, setAside)
+      .start();
+
+    const after = stateAfter(context, state, { type: 'SpawnEnemy', enemyId: ghoul, at: hall });
+
+    expect(zoneOf(after, ghoul)).toEqual(atLocation(hall));
+    expect(after.pending).toMatchObject([
+      { kind: 'chooseInvestigator', subject: ghoul, options: [{ target: alice }, { target: bob }] },
+    ]);
+  });
+
   it('asks the players when prey is tied, and engaging answers the question', () => {
     const { context, state } = aliceAndBobAt(hall, { alice: 2, bob: 2 })
       .withCard(ghoul, mostCluesPreyGhoulCard, setAside)
