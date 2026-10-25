@@ -959,7 +959,7 @@ describe('trigger bus', () => {
       expect(state.cards[elder]?.zone).toEqual({ kind: 'setAside' });
     });
 
-    it('spawns nobody when no Cultist is set aside', () => {
+    it('spawns nobody when no Cultist enemy is set aside', () => {
       const emptyAct = blankAct('empty_act', {
         abilities: [
           whenAdvanced(spawnEachSetAsideAt(trait('Cultist'), onlyCopy(cardCode('hall')))),
@@ -969,12 +969,19 @@ describe('trigger bus', () => {
         .withAct(act1, emptyAct)
         .withAct(act2, secondActCard)
         .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withCard(instanceId('shrine'), blankLocation('shrine', { traits: [trait('Cultist')] }), {
+          kind: 'setAside',
+        })
+        .withCard(instanceId('elder'), blankEnemy('elder', { traits: [trait('Ancient One')] }), {
+          kind: 'setAside',
+        })
         .start();
 
       const { state } = execute(context, started, { type: 'AdvanceAct' });
 
       expect(state.act.current).toBe(act2);
-      expect(state.order[zoneKey(atLocation(hall))]).toBeUndefined();
+      expect(state.cards[instanceId('shrine')]?.zone).toEqual({ kind: 'setAside' });
+      expect(state.cards[instanceId('elder')]?.zone).toEqual({ kind: 'setAside' });
     });
 
     it('puts a set-aside card into play at a location', () => {

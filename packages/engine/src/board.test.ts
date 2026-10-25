@@ -15,6 +15,7 @@ import {
   shortestPaths,
   type Command,
   type InstanceId,
+  type Rejection,
   type Zone,
 } from './index';
 import { edge, rejectionFrom, rejectionOf, runFrom, stateAfter } from '../test/utils';
@@ -262,7 +263,7 @@ describe('PutLocationIntoPlay', () => {
     expect(replay(events, initial)).toEqual(state);
   });
 
-  it.each<{ name: string; command: Command; rejection: object }>([
+  it.each<{ name: string; command: Command; rejection: Rejection }>([
     {
       name: 'a map that is not on the board',
       command: { type: 'PutLocationIntoPlay', locationId: attic, mapId: mapId('wing') },
@@ -343,7 +344,7 @@ describe('AddMap', () => {
     expect(replay(events, initial)).toEqual(state);
   });
 
-  it.each<{ name: string; command: Command; rejection: object }>([
+  it.each<{ name: string; command: Command; rejection: Rejection }>([
     {
       name: 'a map that is already on the board',
       command: { type: 'AddMap', mapId: main, map: { name: 'Main' }, locations: [] },

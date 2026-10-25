@@ -207,9 +207,14 @@ export function validateConnections(
 export function validateLayout(mapId: MapId, map: GameMap, onMap: ReadonlySet<InstanceId>): void {
   for (const [cardId, { column, row }] of Object.entries(map.layout) as [InstanceId, GridCell][]) {
     if (!onMap.has(cardId)) throw new CommandRejected({ code: 'layoutNotOnMap', cardId, mapId });
-    if (!isNonNegativeInteger(column) || !isNonNegativeInteger(row))
-      throw new CommandRejected({ code: 'invalidGridCell', cardId, column, row });
+    validateGridCell(cardId, { column, row });
   }
+}
+
+/** Rejects a layout cell for `cardId` that is not a pair of non-negative integers. */
+export function validateGridCell(cardId: InstanceId, { column, row }: GridCell): void {
+  if (!isNonNegativeInteger(column) || !isNonNegativeInteger(row))
+    throw new CommandRejected({ code: 'invalidGridCell', cardId, column, row });
 }
 
 /** Rejects an edge whose ends are not known location cards, or are the same card. */

@@ -1,10 +1,10 @@
-import { isNonNegativeInteger } from '@arkham/util';
 import {
   allConnections,
   revealEvents,
   sameEdge,
   validateConnections,
   validateEnds,
+  validateGridCell,
   validateLayout,
   validateLocationCard,
 } from './board';
@@ -90,9 +90,7 @@ export function handlePutLocationIntoPlay(
     throw new CommandRejected({ code: 'cardAlreadyInPlay', cardId: card.id });
   const moved = moveCardEvent(card, { kind: 'location', mapId: cmd.mapId });
   if (cmd.at === undefined) return [moved];
-  const { column, row } = cmd.at;
-  if (!isNonNegativeInteger(column) || !isNonNegativeInteger(row))
-    throw new CommandRejected({ code: 'invalidGridCell', cardId: card.id, column, row });
+  validateGridCell(card.id, cmd.at);
   return [moved, { type: 'LayoutCellSet', mapId: cmd.mapId, cardId: card.id, at: cmd.at }];
 }
 

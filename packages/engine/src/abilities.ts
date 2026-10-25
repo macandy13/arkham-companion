@@ -183,9 +183,9 @@ export type RelativeCard =
    */
   | ({ ref: 'eachEnemy'; engagedWith?: RelativeInvestigator } & EnemyFilter)
   /**
-   * Each set-aside card with `trait` ("spawn each set-aside [[Cultist]] enemy"):
-   * the command repeats once per card, in card order, and none when no such
-   * card is set aside.
+   * Each set-aside enemy with `trait` ("spawn each set-aside [[Cultist]] enemy"):
+   * the command repeats once per enemy, in card order, and none when no such
+   * enemy is set aside.
    */
   | { ref: 'eachSetAside'; trait: Trait }
   /**
@@ -790,9 +790,10 @@ function eachId(
         .map((card) => card.id);
     }
     case 'eachSetAside':
-      return cardsInZone(state, { kind: 'setAside' }).filter((id) =>
-        cardStats(ctx.cards, requireCard(state.cards, id).code).traits.includes(each.trait),
-      );
+      return cardsInZone(state, { kind: 'setAside' }).filter((id) => {
+        const stats = cardStats(ctx.cards, requireCard(state.cards, id).code);
+        return stats.typeCode === 'enemy' && stats.traits.includes(each.trait);
+      });
     default:
       return assertNever(each);
   }
