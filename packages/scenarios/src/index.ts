@@ -34,3 +34,4 @@ export {
   theDevourerBelowCards,
 } from './the_devourer_below/cards';
 export { theDevourerBelow } from './the_devourer_below/scenario';
+export { theDevourerBelowResolutions } from './the_devourer_below/resolutions';

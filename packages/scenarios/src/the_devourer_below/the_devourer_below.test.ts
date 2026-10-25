@@ -5,6 +5,7 @@ import {
   cardDbWith,
   cardStats,
   instanceId,
+  investigatorCode,
   investigatorId,
   mapId,
   scenario,
@@ -16,6 +17,7 @@ import {
   type Difficulty,
   type GameState,
   type InstanceId,
+  type ResolutionId,
   type ScenarioContext,
   type Zone,
 } from '@arkham/engine';
@@ -28,12 +30,14 @@ import {
 } from '@arkham/engine/test/utils';
 import {
   DEVOURER_BELOW_CODES as codes,
+  DEVOURER_BELOW_RESOLUTIONS,
   GATHERING_CODES,
   MIDNIGHT_MASKS_RESOLUTIONS,
   ZEALOT_STORY,
   nightOfTheZealot,
   theDevourerBelow,
   theDevourerBelowCardDefs,
+  theDevourerBelowResolutions,
   theGatheringCards,
   theMidnightMasksCardDefs,
 } from '../index';
@@ -290,5 +294,96 @@ describe('The Devourer Below skull token', () => {
         spawnedAtMainPath(instanceId(`${GATHERING_CODES.ghoulMinion}#2`)),
       ),
     ).toBe(skull);
+  });
+});
+
+describe('The Devourer Below resolutions', () => {
+  const tank = investigatorCode('tank');
+  const yes = { kind: 'flag', value: true } as const;
+  /** A standalone game with the first standard investigator, ended in `resolution`. */
+  const endedIn = (resolution: ResolutionId) =>
+    stateAfter(ctx, startScenario(ctx), { type: 'EndScenario', resolution });
+  const byHand = (key: string) => ({
+    kind: 'byHand',
+    textKey: `scenario.theDevourerBelow.resolution.${key}`,
+  });
+
+  it('records R1: the ritual broken, 2 mental trauma, 5 XP, and the campaign won', () => {
+    const ended = endedIn(DEVOURER_BELOW_RESOLUTIONS.ritualBroken);
+
+    expect(campaign.proposeResolution(ctx, ended, theDevourerBelowResolutions)).toEqual([
+      {
+        kind: 'command',
+        command: { type: 'RecordStory', key: ZEALOT_STORY.ritualBroken, value: yes },
+      },
+      {
+        kind: 'command',
+        command: { type: 'AddTrauma', code: tank, kind: 'mental', amount: 2 },
+      },
+      { kind: 'command', command: { type: 'AwardXp', code: tank, amount: 5 } },
+      byHand('upgradeDecks'),
+      { kind: 'command', command: { type: 'EndCampaign', result: 'won' } },
+    ]);
+  });
+
+  it('records R2: Umôrdhoth repelled, 2 physical and 2 mental trauma, 10 XP, and the campaign won', () => {
+    const ended = endedIn(DEVOURER_BELOW_RESOLUTIONS.umordhothRepelled);
+
+    expect(campaign.proposeResolution(ctx, ended, theDevourerBelowResolutions)).toEqual([
+      {
+        kind: 'command',
+        command: { type: 'RecordStory', key: ZEALOT_STORY.umordhothRepelled, value: yes },
+      },
+      {
+        kind: 'command',
+        command: { type: 'AddTrauma', code: tank, kind: 'physical', amount: 2 },
+      },
+      {
+        kind: 'command',
+        command: { type: 'AddTrauma', code: tank, kind: 'mental', amount: 2 },
+      },
+      { kind: 'command', command: { type: 'AwardXp', code: tank, amount: 10 } },
+      byHand('upgradeDecks'),
+      { kind: 'command', command: { type: 'EndCampaign', result: 'won' } },
+    ]);
+  });
+
+  it('records R3: Lita sacrificed, trauma, a Madness weakness by hand, no XP without victory points, and the campaign survived', () => {
+    const ended = endedIn(DEVOURER_BELOW_RESOLUTIONS.litaSacrificed);
+
+    expect(campaign.proposeResolution(ctx, ended, theDevourerBelowResolutions)).toEqual([
+      {
+        kind: 'command',
+        command: { type: 'RecordStory', key: ZEALOT_STORY.litaSacrificed, value: yes },
+      },
+      byHand('removeLita'),
+      {
+        kind: 'command',
+        command: { type: 'AddTrauma', code: tank, kind: 'physical', amount: 2 },
+      },
+      {
+        kind: 'command',
+        command: { type: 'AddTrauma', code: tank, kind: 'mental', amount: 2 },
+      },
+      byHand('madnessWeakness'),
+      byHand('upgradeDecks'),
+      { kind: 'command', command: { type: 'EndCampaign', result: 'survived' } },
+    ]);
+  });
+
+  it('records no resolution: Arkham succumbed, each investigator killed, and the campaign lost', () => {
+    const ended = stateAfter(ctx, startScenario(ctx), {
+      type: 'DefeatInvestigator',
+      investigatorId: investigatorId('tank'),
+    });
+
+    expect(campaign.proposeResolution(ctx, ended, theDevourerBelowResolutions)).toEqual([
+      {
+        kind: 'command',
+        command: { type: 'RecordStory', key: ZEALOT_STORY.arkhamSuccumbed, value: yes },
+      },
+      { kind: 'command', command: { type: 'MarkKilled', code: tank } },
+      { kind: 'command', command: { type: 'EndCampaign', result: 'lost' } },
+    ]);
   });
 });

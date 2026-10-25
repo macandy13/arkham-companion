@@ -1,4 +1,5 @@
 import { cardDbFrom, resolveValue, type CardStats, type EngineContext } from './cards';
+import type { CampaignLog } from './campaign/campaign_log';
 import type { Command, StartScenario, StartingCard, StartingInvestigator } from './commands';
 import { execute } from './execute';
 import {
@@ -104,6 +105,8 @@ interface GameSpec {
   readonly turnOf?: InvestigatorId;
   /** The parts of a scenario the engine reads while it plays; set means the context has a scenario. */
   readonly rules?: ScenarioRules;
+  /** The campaign log the game is played in; none means a standalone game. */
+  readonly campaign?: CampaignLog;
 }
 
 /**
@@ -196,6 +199,11 @@ export class GameBuilder {
     return this.with({ chaosBag: tokens });
   }
 
+  /** The table played in the campaign `log` (`GameState.campaign`) instead of standalone. */
+  withCampaign(log: CampaignLog): GameBuilder {
+    return this.with({ campaign: log });
+  }
+
   /** The table with its encounter deck shuffled at the start instead of kept in the order added. */
   withShuffledEncounterDeck(): GameBuilder {
     return this.with({ shuffleEncounterDeck: true });
@@ -281,6 +289,7 @@ export class GameBuilder {
         ...this.spec.locations.map((location) => startingLocation(location, playerCount)),
         ...this.spec.cards.map(startingCard),
       ],
+      ...(this.spec.campaign ? { campaign: this.spec.campaign } : {}),
     };
   }
 

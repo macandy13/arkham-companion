@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   campaignContext,
+  campaignMember,
   campaignRejectionOf,
+  makeCampaignLog,
   roland,
   startedCampaign,
   stateAfter,
@@ -182,6 +184,59 @@ describe('proposeResolution', () => {
     expect(proposal).toEqual([
       { kind: 'command', command: { type: 'MarkKilled', code: aliceCode } },
       { kind: 'command', command: { type: 'MarkKilled', code: bobCode } },
+    ]);
+  });
+
+  it('proposes nothing more for an investigator whose trauma reaches their limit', () => {
+    const resolutions: ScenarioResolutions = {
+      byId: {
+        [r1]: [
+          { kind: 'addTrauma', to: 'each', trauma: 'mental', amount: 2 },
+          { kind: 'awardXp', to: 'each', bonus: 5, victoryDisplay: false },
+        ],
+      },
+      none: [],
+    };
+    // Alice has 6 sanity on the log and 4 mental trauma already, so 2 more drive her insane.
+    const log = makeCampaignLog({
+      investigators: [
+        { ...campaignMember('alice', 'Alice', 8, 6), mentalTrauma: 4 },
+        campaignMember('bob', 'Bob', 8, 6),
+      ],
+    });
+    const { context, state } = table.withCampaign(log).start();
+
+    const proposal = campaign.proposeResolution(
+      context,
+      stateAfter(context, state, endWith(r1)),
+      resolutions,
+    );
+
+    expect(proposal).toEqual([
+      {
+        kind: 'command',
+        command: { type: 'AddTrauma', code: aliceCode, kind: 'mental', amount: 2 },
+      },
+      { kind: 'command', command: { type: 'AddTrauma', code: bobCode, kind: 'mental', amount: 2 } },
+      { kind: 'command', command: { type: 'AwardXp', code: bobCode, amount: 5 } },
+    ]);
+  });
+
+  it('proposes ending the campaign as the resolution says', () => {
+    const resolutions: ScenarioResolutions = {
+      byId: {},
+      none: [{ kind: 'endCampaign', result: 'lost' }],
+    };
+    const { context, state } = table.withTurnOf(alice).start();
+
+    const proposal = campaign.proposeResolution(
+      context,
+      stateAfter(context, state, resign(alice), startTurn(bob), resign(bob)),
+      resolutions,
+    );
+
+    expect(proposal).toEqual([
+      { kind: 'command', command: { type: 'EndCampaign', result: 'lost' } },
     ]);
   });
 
