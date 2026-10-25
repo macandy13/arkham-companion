@@ -187,6 +187,31 @@ describe('proposeResolution', () => {
     ]);
   });
 
+  it('offers no trauma choice to an investigator the resolution kills', () => {
+    const resolutions: ScenarioResolutions = {
+      byId: { [r3]: [{ kind: 'markKilled', to: 'notResigned' }] },
+      none: [],
+    };
+    const { context, state } = table.start();
+    const defeatedByBoth: Command = {
+      type: 'TakeDamageAndHorror',
+      investigatorId: alice,
+      damage: 8,
+      horror: 6,
+    };
+
+    const proposal = campaign.proposeResolution(
+      context,
+      stateAfter(context, state, defeatedByBoth, endWith(r3)),
+      resolutions,
+    );
+
+    expect(proposal).toEqual([
+      { kind: 'command', command: { type: 'MarkKilled', code: aliceCode } },
+      { kind: 'command', command: { type: 'MarkKilled', code: bobCode } },
+    ]);
+  });
+
   it('proposes nothing more for an investigator whose trauma reaches their limit', () => {
     const resolutions: ScenarioResolutions = {
       byId: {
@@ -286,6 +311,19 @@ describe('proposeResolution', () => {
         {
           kind: 'command',
           command: { type: 'AddTrauma', code: aliceCode, kind: 'mental', amount: 1 },
+        },
+      ],
+    ],
+    [
+      'by damage and horror at once, a choice for the player',
+      { type: 'TakeDamageAndHorror', investigatorId: alice, damage: 8, horror: 6 },
+      [
+        {
+          kind: 'choice',
+          options: [
+            { type: 'AddTrauma', code: aliceCode, kind: 'physical', amount: 1 },
+            { type: 'AddTrauma', code: aliceCode, kind: 'mental', amount: 1 },
+          ],
         },
       ],
     ],
@@ -558,6 +596,22 @@ describe('proposedCommands', () => {
     expect(campaign.proposedCommands(changes)).toEqual([
       { type: 'AddChaosToken', token: 'cultist' },
       { type: 'AwardXp', code: aliceCode, amount: 2 },
+    ]);
+  });
+
+  it('takes the first option of a choice left unchanged', () => {
+    const changes = [
+      {
+        kind: 'choice',
+        options: [
+          { type: 'AddTrauma', code: aliceCode, kind: 'physical', amount: 1 },
+          { type: 'AddTrauma', code: aliceCode, kind: 'mental', amount: 1 },
+        ],
+      },
+    ] as const;
+
+    expect(campaign.proposedCommands(changes)).toEqual([
+      { type: 'AddTrauma', code: aliceCode, kind: 'physical', amount: 1 },
     ]);
   });
 });

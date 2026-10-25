@@ -324,8 +324,7 @@ describe('TakeDamageAndHorror', () => {
     expect(result.events.slice(0, 3)).toMatchObject([
       { type: 'InvestigatorChanged', stat: 'damage', delta: 1 },
       { type: 'InvestigatorChanged', stat: 'horror', delta: 1 },
-      // Both at once lets the player choose the trauma; until #391 the defeat counts as by damage.
-      { type: 'InvestigatorDefeated', cause: 'damage' },
+      { type: 'InvestigatorDefeated', cause: 'damageAndHorror' },
     ]);
     expect(investigatorOf(result.state, alice)).toMatchObject({
       status: 'defeated',
@@ -333,6 +332,21 @@ describe('TakeDamageAndHorror', () => {
       sanity: { horror: 2 },
     });
   });
+
+  it.each([
+    { damage: 1, horror: 0, cause: 'damage' },
+    { damage: 0, horror: 1, cause: 'horror' },
+    { damage: 1, horror: 1, cause: 'damageAndHorror' },
+  ])(
+    'defeats alice by $cause with $damage damage and $horror horror',
+    ({ damage, horror, cause }) => {
+      const result = execute(context, state, aliceTakes(damage, horror));
+
+      expect(result.events).toContainEqual(
+        expect.objectContaining({ type: 'InvestigatorDefeated', cause }),
+      );
+    },
+  );
 
   it('places no horror when the horror is 0', () => {
     const result = execute(context, state, aliceTakes(1, 0));
