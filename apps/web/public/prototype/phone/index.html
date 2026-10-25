@@ -821,49 +821,72 @@
         background: var(--brass);
       }
 
-      /* ---------- Full-screen map ---------- */
-      #map .bar {
+      /* ---------- Map row: only its top and bottom strips swipe, the map itself pans ---------- */
+      .maprow .mapbox {
+        touch-action: none;
+      }
+      .maprow .edge {
+        min-height: 3.4rem;
+        padding: 6px 0 calc(env(safe-area-inset-bottom) + 6px);
+        background: rgb(5 12 10 / 88%);
+        border-top: 1px solid var(--line);
+      }
+      .maprow .edge.up {
+        padding: calc(env(safe-area-inset-top) + 6px) 48px 6px;
+        border-top: 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .maprow .edge::before {
+        content: '';
+        display: block;
+        width: 2.5rem;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--line);
+        margin: 0 auto 6px;
+      }
+      .maprow .edge small {
+        display: block;
+        color: var(--muted);
+      }
+
+      /* ---------- Location sheet lists ---------- */
+      .sheet h3 {
+        margin: 4px 0 0;
+        font-size: 0.75rem;
+        font-weight: 400;
+        color: var(--muted);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .people {
         display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: calc(env(safe-area-inset-top) + 6px) 8px 6px;
-        background: linear-gradient(to bottom, rgb(5 12 10 / 92%), rgb(5 12 10 / 50%));
+        flex-wrap: wrap;
+        gap: 8px;
       }
-      #map .bar .phase {
-        flex: 1;
-      }
-      #map .dock {
-        position: absolute;
-        left: 8px;
-        right: 8px;
-        bottom: calc(env(safe-area-inset-bottom) + 8px);
+      .person {
         display: flex;
         align-items: center;
         gap: 8px;
-        padding: 6px 8px;
+        padding: 4px 12px 4px 4px;
         border-radius: 999px;
-        background: var(--surface);
-        border: 1px solid var(--brass);
-        z-index: 3;
-      }
-      #map .dock .who {
-        flex: 1;
-        min-width: 0;
-        border: 0;
-        background: none;
+        border: 1px solid var(--line);
+        background: rgb(5 12 10 / 70%);
         text-align: left;
-        padding: 0;
+        line-height: 1.15;
       }
-      #map .dock .who b {
-        font-family: var(--display);
-        font-weight: 400;
+      .person small {
         display: block;
-      }
-      #map .dock .who small {
         color: var(--muted);
       }
-      #map .mapbox {
-        touch-action: none;
+      .sheetrow {
+        display: grid;
+        grid-template-columns: 7rem 1fr;
+        gap: 12px;
+        align-items: start;
+      }
+      .sheetrow .bigcard.portrait {
+        width: 100%;
       }
 
       /* ---------- Bottom sheet and toast ---------- */
@@ -918,7 +941,6 @@
       <div class="phone" id="phone">
         <section class="screen" id="overview" aria-label="Overview"></section>
         <section class="screen" id="detail" aria-label="Card details" hidden></section>
-        <section class="screen" id="map" aria-label="Map" hidden></section>
         <div class="toast" id="toast" hidden></div>
       </div>
       <aside class="notes">
@@ -931,20 +953,23 @@
         <p>
           A compact row of header cards (encounter deck, agenda, act, scenario), the round and phase
           row, the map shrunk to fit the space left, and the investigator whose turn it is. Tap a
-          header card or the investigator to open its details. Tap a location for its sheet; the
-          expand button (or tapping an empty part of the map) shows the map full screen.
+          header card or the investigator to open it full screen. Tap a location for its sheet; the
+          expand button (or tapping an empty part of the map) opens the map full screen.
         </p>
-        <h2>Details</h2>
+        <h2>Full screen</h2>
         <p>
-          Two rows: the scenario cards on top, the investigators below. Swipe up and down to switch
-          between the rows, left and right to switch cards within a row. With a mouse: wheel or the
-          arrows at the edges, or <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>.
-          <kbd>Esc</kbd> or the X goes back to the overview.
+          Three rows: the scenario cards, the map and the investigators. Swipe up and down to switch
+          rows, left and right to switch cards within the scenario cards or the investigators. On
+          the map, a vertical swipe only counts when it starts on the strip at the top or bottom
+          edge; anywhere else dragging pans and pinching zooms the map. With a mouse: the strips,
+          the wheel, or <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>. <kbd>Esc</kbd> or the X
+          goes back to the overview.
         </p>
-        <h2>Full-screen map</h2>
+        <h2>Locations</h2>
         <p>
-          Pinch or the +/− buttons zoom, dragging pans. Tap a location to move there or investigate.
-          The turn investigator stays docked at the bottom; tap it for details.
+          Tapping a location (on the preview or the full map) opens its sheet: the card, shroud and
+          clues, the investigators and enemies there, and Investigate or Move for the investigator
+          whose turn it is.
         </p>
       </aside>
     </div>
@@ -1270,19 +1295,28 @@
           ${icon('close', 'Back to the overview', 'data-do="overview"').replace('class="icon"', 'class="icon close"')}
           <nav class="vdots" aria-label="Rows">
             <button type="button" data-row="0" aria-label="Scenario cards"></button>
-            <button type="button" data-row="1" aria-label="Investigators"></button>
+            <button type="button" data-row="1" aria-label="Map"></button>
+            <button type="button" data-row="2" aria-label="Investigators"></button>
           </nav>
           <div class="pager" id="pager">
             <section class="row" aria-label="Scenario cards">
               <div class="rowhead">Scenario cards · swipe ← → for more</div>
-              <div class="carousel" data-row-carousel="0">${headSlides}</div>
+              <div class="carousel">${headSlides}</div>
               <nav class="dots" aria-label="Scenario cards">${HEAD_SLIDES.map((s, n) => `<button type="button" data-goto="0,${n}" aria-label="${s}"></button>`).join('')}</nav>
-              <button type="button" class="edge" data-row="1">▼ ${esc(turnInv().name)} (turn) · swipe up</button>
+              <button type="button" class="edge" data-row="1">▼ Map · swipe up</button>
+            </section>
+            <section class="row maprow" aria-label="Map">
+              <button type="button" class="edge up" data-row="0">▲ Scenario cards<small>Round ${S.round} · ${S.phase} · swipe down from here</small></button>
+              <div class="mapbox" id="fullbox">
+                <div class="tools">${icon('minus', 'Zoom out', 'data-do="zoom-"')}${icon('plus', 'Zoom in', 'data-do="zoom+"')}</div>
+                ${board()}
+              </div>
+              <button type="button" class="edge" data-row="2">▼ ${esc(turnInv().name)} (turn) · ${turnInv().actions} actions left<small>swipe up from here</small></button>
             </section>
             <section class="row" aria-label="Investigators">
-              <button type="button" class="edge up" data-row="0">▲ Agenda, act and encounter deck · swipe down</button>
-              <div class="carousel" data-row-carousel="1">${invSlides}</div>
-              <nav class="dots" aria-label="Investigators">${order.map((n, k) => `<button type="button" data-goto="1,${k}" aria-label="${esc(S.investigators[n].name)}"></button>`).join('')}</nav>
+              <button type="button" class="edge up" data-row="1">▲ Map · swipe down</button>
+              <div class="carousel">${invSlides}</div>
+              <nav class="dots" aria-label="Investigators">${order.map((n, k) => `<button type="button" data-goto="2,${k}" aria-label="${esc(S.investigators[n].name)}"></button>`).join('')}</nav>
             </section>
           </div>`;
         hydrate(el);
@@ -1291,6 +1325,9 @@
         el.querySelectorAll('.carousel').forEach((c) =>
           c.addEventListener('scroll', syncDots, { passive: true }),
         );
+        const box = el.querySelector('#fullbox');
+        fitBoard(box, zoom, pan);
+        wirePanZoom(box);
         requestAnimationFrame(() => goTo(pos.row, pos.slide, 'instant'));
       }
       function headSlide(kind) {
@@ -1365,8 +1402,8 @@
         const rows = pager.querySelectorAll('.row');
         row = Math.max(0, Math.min(rows.length - 1, row));
         pager.scrollTo({ top: rows[row].offsetTop, behavior });
-        if (slide != null) {
-          const car = rows[row].querySelector('.carousel');
+        const car = rows[row].querySelector('.carousel');
+        if (slide != null && car) {
           const n = car.children.length;
           slide = Math.max(0, Math.min(n - 1, slide));
           car.scrollTo({ left: slide * car.clientWidth, behavior });
@@ -1375,8 +1412,8 @@
       function current() {
         const pager = document.getElementById('pager');
         const row = Math.round(pager.scrollTop / pager.clientHeight);
-        const car = pager.querySelectorAll('.carousel')[row];
-        return { row, slide: Math.round(car.scrollLeft / car.clientWidth) };
+        const car = pager.querySelectorAll('.row')[row]?.querySelector('.carousel');
+        return { row, slide: car ? Math.round(car.scrollLeft / car.clientWidth) : 0 };
       }
       function syncDots() {
         const pager = document.getElementById('pager');
@@ -1385,8 +1422,9 @@
         document
           .querySelectorAll('.vdots button')
           .forEach((b) => b.setAttribute('aria-current', String(+b.dataset.row === row)));
-        pager.querySelectorAll('.row').forEach((r, n) => {
+        pager.querySelectorAll('.row').forEach((r) => {
           const car = r.querySelector('.carousel');
+          if (!car) return;
           const s = Math.round(car.scrollLeft / car.clientWidth);
           r.querySelectorAll('.dots button').forEach((b, k) =>
             b.setAttribute('aria-current', String(k === s)),
@@ -1395,29 +1433,7 @@
         pos = current();
       }
 
-      /* ================= Full-screen map ================= */
-      function renderMap() {
-        const i = turnInv();
-        const el = document.getElementById('map');
-        el.innerHTML = `
-          <div class="bar">
-            <span class="round" style="font-family: var(--display)">Round ${S.round}</span>
-            <span class="phase" style="color: var(--brass)">${S.phase}</span>
-            ${icon('minus', 'Zoom out', 'data-do="zoom-"')}
-            ${icon('plus', 'Zoom in', 'data-do="zoom+"')}
-            ${icon('shrink', 'Back to the overview', 'data-do="overview"')}
-          </div>
-          <div class="mapbox" id="fullbox">${board()}</div>
-          <div class="dock">
-            ${pawn(i, 'turn')}
-            <button type="button" class="who" data-open-inv="${i.id}"><b>${esc(i.name)}</b><small>Turn · ${esc(S.locations[i.loc].name)} · details</small></button>
-            ${pips(i)}
-            <button type="button" class="btn primary" data-do="end">End turn</button>
-          </div>`;
-        hydrate(el);
-        fitBoard(el.querySelector('.mapbox'), zoom, pan);
-        wirePanZoom(el.querySelector('.mapbox'));
-      }
+      /* ================= Map row ================= */
       /* Drag pans, two fingers (or ctrl + wheel) zoom. */
       function wirePanZoom(box) {
         const pts = new Map();
@@ -1493,22 +1509,43 @@
       function locationSheet(key) {
         const l = S.locations[key];
         const i = turnInv();
+        const first = i.name.split(' ')[0];
         const here = i.loc === key;
         const linked = S.links.some(
           ([a, b]) => (a === i.loc && b === key) || (b === i.loc && a === key),
         );
-        const who = [
-          ...S.investigators.filter((x) => x.loc === key).map((x) => x.name),
-          ...S.enemies.filter((e) => e.loc === key).map((e) => e.name),
-        ];
+        const invs = S.investigators.filter((x) => x.loc === key);
+        const enemies = S.enemies.filter((e) => e.loc === key);
+        const investigate = here
+          ? `<button type="button" class="btn primary" data-do="investigate" ${canInvestigate(i) ? '' : 'disabled'}>Investigate: ${esc(first)} tests intellect ${i.skills.intellect} vs shroud ${l.shroud}</button>`
+          : `<button type="button" class="btn primary" data-move="${key}" ${linked && !l.blocked && i.actions ? '' : 'disabled'}>Move ${esc(first)} here</button>`;
+        const why = here
+          ? l.clues
+            ? ''
+            : 'No clues left here to investigate.'
+          : `${esc(first)} is in the ${esc(S.locations[i.loc].name)}${linked ? '' : ', not next to it'}.`;
         sheet(`<h2>${esc(l.name)}</h2>
-          <div class="bigcard portrait" style="--c: var(--encounter)"><img data-img="${l.code}${l.revealed ? '' : 'b'}" alt="${esc(l.name)}"></div>
-          <p class="text">${l.revealed ? `Shroud ${l.shroud} · ${l.clues} clues` : 'Unrevealed.'}${who.length ? ` Here: ${who.map(esc).join(', ')}.` : ''}${l.blocked ? ' Barricaded: nobody can move in.' : ''}</p>
-          <div class="actions">
-            ${here ? `<button type="button" class="btn primary" data-do="investigate" ${canInvestigate(i) ? '' : 'disabled'}>Investigate (${esc(i.name.split(' ')[0])})</button>` : ''}
-            ${!here ? `<button type="button" class="btn primary" data-move="${key}" ${linked && !l.blocked && i.actions ? '' : 'disabled'}>Move ${esc(i.name.split(' ')[0])} here</button>` : ''}
-            <button type="button" class="btn" data-do="edit-loc">Edit…</button>
-          </div>`);
+          <div class="sheetrow">
+            <div class="bigcard portrait" style="--c: var(--encounter)"><img data-img="${l.code}${l.revealed ? '' : 'b'}" alt="${esc(l.name)}"></div>
+            <div>
+              <p class="text">${l.revealed ? `Shroud ${l.shroud} · ${l.clues} clues left` : 'Unrevealed: revealed when someone enters.'}${l.blocked ? ' Barricaded: nobody can move in.' : ''}</p>
+              <h3>Investigators here</h3>
+              ${invs.length ? `<div class="people">${invs.map((x) => `<button type="button" class="person" data-open-inv="${x.id}">${pawn(x, x === i ? 'turn' : '')}<span>${esc(x.name)}<small>${x === i ? 'Turn · ' : ''}${x.clues} clues</small></span></button>`).join('')}</div>` : '<p class="text">Nobody.</p>'}
+              <h3>Enemies here</h3>
+              ${
+                enemies.length
+                  ? `<div class="people">${enemies
+                      .map((e) => {
+                        const with_ = S.investigators.find((x) => x.id === e.engaged);
+                        return `<button type="button" class="person" data-enemy="${e.id}">${pawn(e)}<span>${esc(e.name)}<small>${e.health - e.damage}/${e.health} health · ${with_ ? `engaged with ${esc(with_.name.split(' ')[0])}` : 'unengaged'}</small></span></button>`;
+                      })
+                      .join('')}</div>`
+                  : '<p class="text">None.</p>'
+              }
+            </div>
+          </div>
+          <div class="actions">${investigate}<button type="button" class="btn" data-do="edit-loc">Edit…</button></div>
+          ${why ? `<p class="text">${why}</p>` : ''}`);
       }
       function enemySheet(id) {
         const e = S.enemies.find((x) => x.id === id);
@@ -1542,7 +1579,8 @@
         fullmap() {
           zoom = 1;
           pan = { x: 0, y: 0 };
-          show('map');
+          pos = { row: 1, slide: 0 };
+          show('detail');
         },
         overview: () => show('overview'),
         'close-sheet': closeSheet,
@@ -1562,7 +1600,7 @@
           S.turn = (S.turn + 1) % S.investigators.length;
           closeSheet();
           toast(`${was.name} ends the turn. ${turnInv().name}'s turn.`);
-          if (view === 'detail') pos = { row: 1, slide: 0 };
+          if (view === 'detail' && pos.row === 2) pos = { row: 2, slide: 0 };
         },
         'doom+': () => (S.agenda.doom += 1),
         'doom-': () => (S.agenda.doom = Math.max(0, S.agenda.doom - 1)),
@@ -1620,14 +1658,12 @@
       function show(next) {
         if (view === 'detail' && document.getElementById('pager')) pos = current();
         view = next;
-        for (const id of ['overview', 'detail', 'map'])
-          document.getElementById(id).hidden = id !== view;
+        for (const id of ['overview', 'detail']) document.getElementById(id).hidden = id !== view;
         render();
       }
       function render() {
         if (view === 'overview') renderOverview();
         if (view === 'detail') renderDetail();
-        if (view === 'map') renderMap();
       }
       let toastTimer;
       function toast(msg) {
@@ -1656,7 +1692,7 @@
           show('detail');
         } else if (d.openInv) {
           pos = {
-            row: 1,
+            row: 2,
             slide: invOrder().indexOf(S.investigators.findIndex((i) => i.id === d.openInv)),
           };
           closeSheet();
@@ -1713,7 +1749,7 @@
       });
       window.addEventListener('resize', () => {
         if (view === 'overview') fitBoard(document.getElementById('previewbox'), 1, { x: 0, y: 0 });
-        if (view === 'map') fitBoard(document.getElementById('fullbox'), zoom, pan);
+        if (view === 'detail') fitBoard(document.getElementById('fullbox'), zoom, pan);
       });
       render();
     </script>
