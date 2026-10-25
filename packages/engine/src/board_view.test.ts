@@ -393,6 +393,25 @@ describe('locations', () => {
     ]);
   });
 
+  it.each([
+    { revealed: false, connections: [] },
+    {
+      revealed: true,
+      connections: [{ from: study, to: hallway, oneWay: false, revealedOnly: true }],
+    },
+  ])(
+    'draws a connection printed on revealed sides only when both are revealed: $revealed',
+    ({ revealed, connections }) => {
+      const { context, state } = newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withLocation(hallway, blankLocation('hallway'), { revealed })
+        .withConnection(study, hallway, { revealedOnly: true })
+        .start();
+
+      expect(boardView(context, state).maps[0]?.connections).toEqual(connections);
+    },
+  );
+
   it('lists the enemies at each location of a map, the engaged ones at their investigator', () => {
     const { context, state } = house
       .withCard(instanceId('ghoul'), blankEnemy('ghoul', { health: fixed(3) }), atLocation(hallway))

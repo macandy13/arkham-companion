@@ -33,3 +33,4 @@ export {
   theDevourerBelowCardDefs,
   theDevourerBelowCards,
 } from './the_devourer_below/cards';
+export { theDevourerBelow } from './the_devourer_below/scenario';

@@ -803,6 +803,116 @@ describe('compileSetup location versions', () => {
   });
 });
 
+describe('compileSetup random locations', () => {
+  const path = cardCode('path');
+  const glade = cardCode('glade');
+  const cliff = cardCode('cliff');
+  const thicket = cardCode('thicket');
+  const house = cardCode('house');
+  const ctx = {
+    cards: cardDbFrom([
+      blankLocation('path'),
+      blankLocation('glade'),
+      blankLocation('cliff'),
+      blankLocation('thicket'),
+      blankLocation('house'),
+      ...standardInvestigatorCards,
+    ]),
+  };
+  /** The path, with 2 of 4 woods in two cells beside it; the path leads to each, glade to cliff. */
+  const def = makeDefinition({
+    setup: [
+      {
+        ...mainMap(),
+        locations: [{ code: path, at: { column: 0, row: 0 } }],
+        atRandom: {
+          codes: [glade, cliff, thicket, house],
+          cells: [
+            { column: 1, row: 0 },
+            { column: 2, row: 0 },
+          ],
+        },
+        connections: [
+          { from: path, to: glade },
+          { from: path, to: cliff },
+          { from: path, to: thicket },
+          { from: path, to: house },
+          { from: glade, to: cliff },
+        ],
+      },
+      { kind: 'moveInvestigators', to: path },
+    ],
+  });
+
+  it.each([
+    { seed: 1, woods: ['thicket#1', 'house#1'], betweenWoods: [] },
+    { seed: 5, woods: ['glade#1', 'cliff#1'], betweenWoods: [{ from: 'glade#1', to: 'cliff#1' }] },
+  ])(
+    'puts $woods into play with seed $seed, with the connections between them',
+    ({ seed, woods, betweenWoods }) => {
+      const command = scenario.compileSetup({ ...ctx, scenario: def }, makeSetupOptions({ seed }));
+
+      expect(command.cards.map((card) => [card.id, card.faceUp])).toEqual([
+        ['path#1', true],
+        [woods[0], false],
+        [woods[1], false],
+      ]);
+      expect(command.maps?.[main]?.connections).toEqual(
+        [...woods.map((wood) => ({ from: 'path#1', to: wood })), ...betweenWoods].map(
+          (connection) => ({ ...connection, oneWay: false }),
+        ),
+      );
+      expect(command.maps?.[main]?.layout).toMatchObject({
+        [woods[0] ?? '']: { column: 1, row: 0 },
+        [woods[1] ?? '']: { column: 2, row: 0 },
+      });
+    },
+  );
+});
+
+describe('compileSetup oneAtRandom', () => {
+  const ghoul = blankEnemy('ghoul', { encounterCode: encounterSetCode('ghouls') });
+  const rat = blankEnemy('rat', { encounterCode: encounterSetCode('rats') });
+  const ctx = { cards: cardDbFrom([ghoul, rat, ...standardInvestigatorCards]) };
+  /** The encounter deck is the ghouls set or the rats set, never both. */
+  const def = makeDefinition({
+    setup: [
+      {
+        kind: 'oneAtRandom',
+        options: [
+          [{ kind: 'buildEncounterDeck', sets: [encounterSetCode('ghouls')] }],
+          [{ kind: 'buildEncounterDeck', sets: [encounterSetCode('rats')] }],
+        ],
+      },
+    ],
+  });
+
+  it.each([
+    { seed: 1, deck: ['rat'] },
+    { seed: 3, deck: ['ghoul'] },
+  ])('builds the encounter deck from $deck with seed $seed', ({ seed, deck }) => {
+    const command = scenario.compileSetup({ ...ctx, scenario: def }, makeSetupOptions({ seed }));
+
+    expect(command.cards.map((card) => card.code)).toEqual(deck);
+  });
+});
+
+describe('compileSetup addChaosTokens', () => {
+  it('adds the tokens to the bag the scenario starts with', () => {
+    const def = makeDefinition({
+      chaosBag: { easy: [], standard: ['skull', 'autoFail'], hard: [], expert: [] },
+      setup: [{ kind: 'addChaosTokens', tokens: ['elderThing'] }],
+    });
+
+    const command = scenario.compileSetup(
+      { cards: investigatorCards, scenario: def },
+      makeSetupOptions({ difficulty: 'standard' }),
+    );
+
+    expect(command.chaosBag).toEqual(['skull', 'autoFail', 'elderThing']);
+  });
+});
+
 describe('compileSetup whenPlayers', () => {
   const ctx = {
     cards: cardDbFrom([
