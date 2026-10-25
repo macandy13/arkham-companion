@@ -15,6 +15,7 @@ import { theGathering } from '../the_gathering/scenario';
 import { MIDNIGHT_MASKS_SETS } from '../the_midnight_masks/cards';
 import { ZEALOT_STORY } from '../night_of_the_zealot/story';
 import { DEVOURER_BELOW_CODES, DEVOURER_BELOW_SETS } from './cards';
+import { theDevourerBelowResolutions } from './resolutions';
 
 const codes = DEVOURER_BELOW_CODES;
 const sets = DEVOURER_BELOW_SETS;
@@ -144,4 +145,5 @@ export const theDevourerBelow: ScenarioDefinition = {
     },
   ],
   modifiers: { tokenValues: { skull: monstersInPlay } },
+  resolutions: theDevourerBelowResolutions,
 };

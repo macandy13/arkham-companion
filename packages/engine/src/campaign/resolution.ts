@@ -9,6 +9,7 @@ import type { CampaignCommand } from './campaign_commands';
 import {
   findCurrentScenarioId,
   type CampaignLog,
+  type CampaignResult,
   type ScenarioOutcome,
   type StoryValue,
   type TraumaKind,
@@ -58,6 +59,8 @@ export type ResolutionStep =
     }
   | { readonly kind: 'markKilled'; readonly to: ResolutionTarget }
   | { readonly kind: 'markInsane'; readonly to: ResolutionTarget }
+  /** "The investigators win!": the campaign ends with `result` (`EndCampaign`). */
+  | { readonly kind: 'endCampaign'; readonly result: CampaignResult }
   /**
    * A step about the players' own cards, which the app doesn't track (earning
    * a story asset, upgrading decks): shown for the players to do by hand.
@@ -216,6 +219,8 @@ function proposeStep(ctx: EngineContext, game: GameState, step: ResolutionStep):
       return targetCodes(game, step.to).map((code) => command({ type: 'MarkKilled', code }));
     case 'markInsane':
       return targetCodes(game, step.to).map((code) => command({ type: 'MarkInsane', code }));
+    case 'endCampaign':
+      return [command({ type: 'EndCampaign', result: step.result })];
     case 'byHand':
       return [{ kind: 'byHand', textKey: step.textKey }];
     case 'when': {

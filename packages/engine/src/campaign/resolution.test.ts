@@ -185,6 +185,24 @@ describe('proposeResolution', () => {
     ]);
   });
 
+  it('proposes ending the campaign as the resolution says', () => {
+    const resolutions: ScenarioResolutions = {
+      byId: {},
+      none: [{ kind: 'endCampaign', result: 'lost' }],
+    };
+    const { context, state } = table.withTurnOf(alice).start();
+
+    const proposal = campaign.proposeResolution(
+      context,
+      stateAfter(context, state, resign(alice), startTurn(bob), resign(bob)),
+      resolutions,
+    );
+
+    expect(proposal).toEqual([
+      { kind: 'command', command: { type: 'EndCampaign', result: 'lost' } },
+    ]);
+  });
+
   it('runs the no-resolution steps once every investigator has left', () => {
     const resolutions: ScenarioResolutions = {
       byId: {},

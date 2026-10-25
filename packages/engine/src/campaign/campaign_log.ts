@@ -83,6 +83,12 @@ export type StoryCondition =
   /** The list record `key` holds at least `count` names that are not crossed out. */
   | { readonly kind: 'atLeastNames'; readonly key: string; readonly count: number };
 
+/**
+ * How the whole campaign ended, as its last resolution says: "The investigators win!", "The
+ * investigators lose." or "The investigators have survived" (Night of the Zealot's R3).
+ */
+export type CampaignResult = 'won' | 'lost' | 'survived';
+
 /** How a scenario ended, as `ScenarioEnded` recorded it. */
 export type ScenarioOutcome =
   | { readonly kind: 'resolution'; readonly id: ResolutionId }
@@ -137,6 +143,8 @@ export interface CampaignLog {
    * length once the campaign is complete.
    */
   readonly position: number;
+  /** How the campaign ended (`EndCampaign`); absent while it goes on. */
+  readonly result?: CampaignResult;
 }
 
 /** Log before any `CampaignStarted` event. */

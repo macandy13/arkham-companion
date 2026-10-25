@@ -17,4 +17,12 @@ export const ZEALOT_STORY = {
   cultistsWhoGotAway: 'cultistsWhoGotAway',
   /** "It is past midnight." (The Midnight Masks' R2). */
   itIsPastMidnight: 'itIsPastMidnight',
+  /** "Arkham succumbed to Umôrdhoth's terrible vengeance." (The Devourer Below, no resolution). */
+  arkhamSuccumbed: 'arkhamSuccumbed',
+  /** "The ritual to summon Umôrdhoth was broken." (The Devourer Below's R1). */
+  ritualBroken: 'ritualBroken',
+  /** "The investigators repelled Umôrdhoth." (The Devourer Below's R2). */
+  umordhothRepelled: 'umordhothRepelled',
+  /** "The investigators sacrificed Lita Chantler to Umôrdhoth." (The Devourer Below's R3). */
+  litaSacrificed: 'litaSacrificed',
 } as const;
