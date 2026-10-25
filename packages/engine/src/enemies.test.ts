@@ -939,3 +939,136 @@ describe('enemyAttackList', () => {
     expect(enemyAttackList(context, state)).toEqual([]);
   });
 });
+
+describe('SpawnEnemy with "Spawn - Any empty location"', () => {
+  const emptySpawnAcolyteCard = blankEnemy('empty_spawn_acolyte', {
+    keywords: [{ name: 'spawn', detail: 'Any empty location' }],
+  });
+  const acolyte = instanceId('acolyte');
+
+  it('spawns at the only location without investigators and enemies', () => {
+    const { context, state } = aliceInHall
+      .withCard(ghoul, ghoulCard, atLocation(cellar))
+      .withCard(acolyte, emptySpawnAcolyteCard, setAside)
+      .start();
+
+    const after = stateAfter(context, state, {
+      type: 'SpawnEnemy',
+      enemyId: acolyte,
+      investigatorId: alice,
+    });
+
+    expect(zoneOf(after, acolyte)).toEqual(atLocation(attic));
+  });
+
+  it('counts a location with only a story asset as empty', () => {
+    const relic = instanceId('relic');
+    const { context, state } = aliceInHall
+      .withCard(ghoul, ghoulCard, atLocation(cellar))
+      .withCard(relic, relicCard, atLocation(attic))
+      .withCard(acolyte, emptySpawnAcolyteCard, setAside)
+      .start();
+
+    const after = stateAfter(context, state, {
+      type: 'SpawnEnemy',
+      enemyId: acolyte,
+      investigatorId: alice,
+    });
+
+    expect(zoneOf(after, acolyte)).toEqual(atLocation(attic));
+  });
+
+  it('asks the players when several locations are empty', () => {
+    const { context, state } = aliceInHall
+      .withCard(acolyte, emptySpawnAcolyteCard, setAside)
+      .start();
+
+    const after = stateAfter(context, state, {
+      type: 'SpawnEnemy',
+      enemyId: acolyte,
+      investigatorId: alice,
+    });
+
+    expect(zoneOf(after, acolyte)).toEqual(setAside);
+    expect(after.pending).toMatchObject([
+      {
+        kind: 'chooseLocation',
+        subject: acolyte,
+        options: [{ target: cellar }, { target: attic }],
+      },
+    ]);
+  });
+
+  it('discards the enemy when no location is empty', () => {
+    const { context, state } = aliceInHall
+      .withCard(ghoul, ghoulCard, atLocation(cellar))
+      .withCard(instanceId('second_ghoul'), ghoulCard, atLocation(attic))
+      .withCard(acolyte, emptySpawnAcolyteCard, setAside)
+      .start();
+
+    const after = stateAfter(context, state, {
+      type: 'SpawnEnemy',
+      enemyId: acolyte,
+      investigatorId: alice,
+    });
+
+    expect(zoneOf(after, acolyte)).toEqual(encounterDiscard);
+    expect(after.pending).toEqual([]);
+  });
+});
+
+describe('SpawnEnemy with "Spawn - Engaged with prey" and prey "Most clues"', () => {
+  const preySpawnHunterCard = blankEnemy('prey_spawn_hunter', {
+    keywords: [
+      { name: 'spawn', detail: 'Engaged with prey' },
+      { name: 'prey', detail: 'Most clues' },
+    ],
+  });
+  const hunter = instanceId('hunter');
+
+  /** Alice in the hall and bob in the attic, with the given clues. */
+  function aliceInHallBobInAttic(clues: { alice: number; bob: number }): GameBuilder {
+    return hallCellarAttic
+      .withInvestigator(alice, { locationId: hall, clues: clues.alice })
+      .withInvestigator(bob, { locationId: attic, clues: clues.bob });
+  }
+
+  it('spawns engaged with the investigator its prey picks, wherever they are, not the drawer', () => {
+    const { context, state } = aliceInHallBobInAttic({ alice: 1, bob: 3 })
+      .withCard(hunter, preySpawnHunterCard, setAside)
+      .start();
+
+    const after = stateAfter(context, state, {
+      type: 'SpawnEnemy',
+      enemyId: hunter,
+      investigatorId: alice,
+    });
+
+    expect(zoneOf(after, hunter)).toEqual(engagedWith(bob));
+    expect(checkInvariants(after)).toEqual([]);
+  });
+
+  it('asks the lead investigator on a tie, and the answer spawns it engaged with the chosen one', () => {
+    const { context, state } = aliceInHallBobInAttic({ alice: 2, bob: 2 })
+      .withCard(hunter, preySpawnHunterCard, setAside)
+      .start();
+    const asked = stateAfter(context, state, {
+      type: 'SpawnEnemy',
+      enemyId: hunter,
+      investigatorId: alice,
+    });
+
+    const after = stateAfter(context, asked, answer('spawn:hunter', bob));
+
+    expect(asked.pending).toMatchObject([
+      {
+        kind: 'chooseInvestigator',
+        subject: hunter,
+        decider: { kind: 'lead' },
+        options: [{ target: alice }, { target: bob }],
+      },
+    ]);
+    expect(zoneOf(asked, hunter)).toEqual(setAside);
+    expect(zoneOf(after, hunter)).toEqual(engagedWith(bob));
+  });
+});
