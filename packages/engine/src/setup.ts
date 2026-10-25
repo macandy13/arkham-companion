@@ -31,7 +31,7 @@ import { CommandRejected } from './rejection';
 import { nextInt, seedRng } from './rng';
 import type { ScenarioDefinition } from './scenario';
 import { spawnZone } from './spawn';
-import type { Difficulty, TokenKind } from './state';
+import type { ChaosToken, Difficulty, TokenKind } from './state';
 import type { Zone } from './zone';
 
 /**
@@ -78,7 +78,21 @@ export interface AddMapStep {
   /** Default true. */
   visible?: boolean;
   locations: readonly MapLocation[];
+  /** Locations picked at random from a larger group, put into play beside `locations`. */
+  atRandom?: RandomMapLocations;
   connections?: readonly MapConnection[];
+}
+
+/**
+ * Locations an `AddMapStep` puts into play at random ("shuffle the 6 copies of Arkham Woods,
+ * choose 4 of them at random and put them into play"): one of `codes` in each of `cells`,
+ * picked with the setup's seed and unrevealed; the others leave the game. The step's
+ * connections may name every one of `codes`; those to a location left out are dropped, so a
+ * scenario declares the printed connections once for whichever locations come up.
+ */
+export interface RandomMapLocations {
+  codes: readonly CardCode[];
+  cells: readonly GridCell[];
 }
 
 /** Puts one copy of each code into the set-aside zone. */
@@ -143,6 +157,21 @@ export interface WhenStoryStep {
   otherwise?: readonly SetupStep[];
 }
 
+/**
+ * The steps of one of `options`, picked with the setup's seed ("randomly choose one of the
+ * 4 Agents encounter sets"); the cards of the others stay out of the game.
+ */
+export interface OneAtRandomStep {
+  kind: 'oneAtRandom';
+  options: readonly (readonly SetupStep[])[];
+}
+
+/** Adds chaos tokens to the scenario's chaos bag ("add 1 elder thing token to the chaos bag"). */
+export interface AddChaosTokensStep {
+  kind: 'addChaosTokens';
+  tokens: readonly ChaosToken[];
+}
+
 /** Steps that apply only with at least `atLeast` investigators ("if there are 3 or more"). */
 export interface WhenPlayersStep {
   kind: 'whenPlayers';
@@ -156,11 +185,12 @@ export interface WhenPlayersStep {
  * (`placeTokens`, `spawn.at`, `moveInvestigators`) needs exactly one instance
  * of that code created by an earlier step.
  */
-export type SetupStep = PlacingStep | WhenStoryStep | WhenPlayersStep;
+export type SetupStep = PlacingStep | WhenStoryStep | WhenPlayersStep | OneAtRandomStep;
 
 /**
- * A setup step that changes the table; `WhenStoryStep`s and `WhenPlayersStep`s resolve to these,
- * and locations to one of their versions, before any is applied.
+ * A setup step that changes the table; `WhenStoryStep`s, `WhenPlayersStep`s and
+ * `OneAtRandomStep`s resolve to these, and locations to one of their versions, before any is
+ * applied.
  */
 type PlacingStep =
   | AddMapStep
@@ -169,10 +199,14 @@ type PlacingStep =
   | ShuffleIntoEncounterDeckStep
   | PlaceTokensStep
   | SpawnStep
-  | MoveInvestigatorsStep;
+  | MoveInvestigatorsStep
+  | AddChaosTokensStep;
 
-/** Mixed into the setup seed for the location version picks (`withPickedVersions`). */
+/** Mixed into the setup seed for the location picks (`withPickedLocations`). */
 const VERSION_PICK_STREAM = 0x5e7c9;
+
+/** Mixed into the setup seed for the `OneAtRandomStep` picks. */
+const STEP_PICK_STREAM = 0x0a7e5;
 
 /** Resources every investigator starts a scenario with (rules reference, "Setup"). */
 const STARTING_RESOURCES = 5;
@@ -223,6 +257,8 @@ interface SetupDraft {
   readonly maps: Readonly<Record<MapId, MapSpec>>;
   readonly cards: readonly DraftCard[];
   readonly investigatorLocation?: InstanceId;
+  /** Tokens `addChaosTokens` steps add to the bag. */
+  readonly chaosTokens: readonly ChaosToken[];
 }
 
 /** Read-only inputs every step needs. */
@@ -252,8 +288,12 @@ export function compileSetup(ctx: ScenarioContext, options: SetupOptions): Start
   const log = options.campaign;
   if (log) checkCampaignSeats(log, def.id, options.investigators);
   const playerCount = options.investigators.length;
-  const steps = withPickedVersions(
-    placingSteps(def.setup, log?.story ?? {}, playerCount),
+  const steps = withPickedLocations(
+    placingSteps(def.setup, {
+      story: log?.story ?? {},
+      playerCount,
+      pick: seededPicker(options.seed ^ STEP_PICK_STREAM),
+    }),
     options.seed,
   );
   const env: SetupEnv = {
@@ -267,6 +307,7 @@ export function compileSetup(ctx: ScenarioContext, options: SetupOptions): Start
       ...deckCards(def.agendaDeck, { kind: 'agendaDeck' }),
       ...deckCards(def.actDeck, { kind: 'actDeck' }),
     ],
+    chaosTokens: [],
   };
   const difficulty = log ? log.difficulty : options.difficulty;
   const draft = steps.reduce((state, step) => applyStep(state, step, env), initial);
@@ -282,7 +323,7 @@ export function compileSetup(ctx: ScenarioContext, options: SetupOptions): Start
     })),
     maps: draft.maps,
     cards: draft.cards.map((card) => withRevealClues(card, env)),
-    chaosBag: [...(log ? log.chaosBag : def.chaosBag[difficulty])],
+    chaosBag: [...(log ? log.chaosBag : def.chaosBag[difficulty]), ...draft.chaosTokens],
     ...(log ? { campaign: log } : {}),
   };
 }
@@ -361,19 +402,40 @@ function deckCards(codes: readonly CardCode[], zone: Zone): DraftCard[] {
   return codes.map((code, i) => ({ id: newId(code, codes.slice(0, i)), code, zone, faceUp: true }));
 }
 
+/** What decides which conditional and random steps apply. */
+interface StepPicks {
+  readonly story: CampaignLog['story'];
+  readonly playerCount: number;
+  /** A random whole number below `bound`, from the setup's seed. */
+  readonly pick: (bound: number) => number;
+}
+
 /**
- * The steps that apply for `story` and `playerCount`, in order, with each `WhenStoryStep` and
- * `WhenPlayersStep` replaced by the steps it picks.
+ * Draws whole numbers below a bound from one seeded RNG stream, one after another. Each setup
+ * pick takes a stream of its own, so the picks don't repeat the first draws of the game's RNG,
+ * which `StartScenario` seeds with the same seed to shuffle the encounter deck.
  */
-function placingSteps(
-  steps: readonly SetupStep[],
-  story: CampaignLog['story'],
-  playerCount: number,
-): readonly PlacingStep[] {
+function seededPicker(seed: number): (bound: number) => number {
+  let rng = seedRng(seed);
+  return (bound) => {
+    const [value, next] = nextInt(rng, bound);
+    rng = next;
+    return value;
+  };
+}
+
+/**
+ * The steps that apply, in order, with each `WhenStoryStep`, `WhenPlayersStep` and
+ * `OneAtRandomStep` replaced by the steps it picks.
+ */
+function placingSteps(steps: readonly SetupStep[], picks: StepPicks): readonly PlacingStep[] {
+  const { story, playerCount } = picks;
   return steps.flatMap((step) => {
     switch (step.kind) {
       case 'whenPlayers':
-        return playerCount >= step.atLeast ? placingSteps(step.then, story, playerCount) : [];
+        return playerCount >= step.atLeast ? placingSteps(step.then, picks) : [];
+      case 'oneAtRandom':
+        return placingSteps(step.options[picks.pick(step.options.length)] ?? [], picks);
       case 'whenStory': {
         const holds = storyHolds(story, step.condition);
         if (holds === undefined)
@@ -382,7 +444,7 @@ function placingSteps(
             key: step.condition.key,
             condition: step.condition.kind,
           });
-        return placingSteps(holds ? step.then : (step.otherwise ?? []), story, playerCount);
+        return placingSteps(holds ? step.then : (step.otherwise ?? []), picks);
       }
       default:
         return [step];
@@ -391,23 +453,46 @@ function placingSteps(
 }
 
 /**
- * The steps with one version of each location that has `versions`, picked with `seed`, and every
- * step that names the location by its `code` naming the picked version instead.
+ * The steps with their random locations picked with `seed`: one version of each location that
+ * has `versions`, every step that names the location by its `code` naming the picked version
+ * instead, and each map's `atRandom` locations put among its locations.
  */
-function withPickedVersions(steps: readonly PlacingStep[], seed: number): readonly PlacingStep[] {
-  // A stream of its own, so the picks don't repeat the first draws of the game's RNG, which
-  // `StartScenario` seeds with the same seed to shuffle the encounter deck.
-  let rng = seedRng(seed ^ VERSION_PICK_STREAM);
+function withPickedLocations(steps: readonly PlacingStep[], seed: number): readonly PlacingStep[] {
+  const pick = seededPicker(seed ^ VERSION_PICK_STREAM);
   const picks = new Map<CardCode, CardCode>();
   for (const location of steps.flatMap((step) => (step.kind === 'addMap' ? step.locations : []))) {
     if (!location.versions) continue;
     const choices = [location.code, ...location.versions];
-    const [index, next] = nextInt(rng, choices.length);
-    rng = next;
-    picks.set(location.code, choices[index] ?? location.code);
+    picks.set(location.code, choices[pick(choices.length)] ?? location.code);
   }
   const picked = (code: CardCode) => picks.get(code) ?? code;
-  return steps.map((step) => renamed(step, picked));
+  return steps.map((step) =>
+    renamed(step.kind === 'addMap' ? withRandomLocations(step, pick) : step, picked),
+  );
+}
+
+/**
+ * The map step with its `atRandom` locations picked and placed in their cells, and without the
+ * connections to the ones left out.
+ */
+function withRandomLocations(step: AddMapStep, pick: (bound: number) => number): AddMapStep {
+  const { atRandom, ...map } = step;
+  if (!atRandom) return step;
+  const remaining = [...atRandom.codes];
+  const placed: MapLocation[] = atRandom.cells.flatMap((at) => {
+    const [code] = remaining.splice(pick(remaining.length), 1);
+    return code === undefined ? [] : [{ code, at }];
+  });
+  const leftOut = new Set(remaining);
+  return {
+    ...map,
+    locations: [...step.locations, ...placed],
+    ...(step.connections && {
+      connections: step.connections.filter(
+        (connection) => !leftOut.has(connection.from) && !leftOut.has(connection.to),
+      ),
+    }),
+  };
 }
 
 /** The step with every location it names by code renamed by `picked`. */
@@ -434,6 +519,7 @@ function renamed(step: PlacingStep, picked: (code: CardCode) => CardCode): Placi
     case 'setAside':
     case 'buildEncounterDeck':
     case 'shuffleIntoEncounterDeck':
+    case 'addChaosTokens':
       return step;
   }
 }
@@ -467,6 +553,8 @@ function applyStep(draft: SetupDraft, step: PlacingStep, env: SetupEnv): SetupDr
       );
     case 'moveInvestigators':
       return moveInvestigators(draft, targetId(draft.cards, step.to));
+    case 'addChaosTokens':
+      return { ...draft, chaosTokens: [...draft.chaosTokens, ...step.tokens] };
   }
 }
 
