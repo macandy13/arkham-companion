@@ -25,3 +25,11 @@ export {
 } from './the_midnight_masks/cards';
 export { theMidnightMasks } from './the_midnight_masks/scenario';
 export { theMidnightMasksResolutions } from './the_midnight_masks/resolutions';
+export {
+  DEVOURER_BELOW_CODES,
+  DEVOURER_BELOW_RESOLUTIONS,
+  DEVOURER_BELOW_SETS,
+  OFFER_OF_POWER_DECISION,
+  theDevourerBelowCardDefs,
+  theDevourerBelowCards,
+} from './the_devourer_below/cards';
