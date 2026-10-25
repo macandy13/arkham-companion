@@ -45,6 +45,17 @@ export function applyPickerFilters(
     .sort((a, b) => a.name.localeCompare(b.name) || a.chapter - b.chapter);
 }
 
+/** How many of the filters other than the search are set, as the filter button counts them. */
+export function activeFilterCount(filters: PickerFilters): number {
+  return [
+    filters.factions.length > 0,
+    filters.cyclePosition !== undefined,
+    filters.packCode !== undefined,
+    filters.chapter !== undefined,
+    filters.onlyOwned,
+  ].filter(Boolean).length;
+}
+
 /** Distinct cycle positions of the packs, ascending. */
 export function cyclePositions(packs: readonly PackDef[]): number[] {
   return [...new Set(packs.map((p) => p.cyclePosition))].sort((a, b) => a - b);

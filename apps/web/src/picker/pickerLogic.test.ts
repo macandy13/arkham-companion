@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { InvestigatorDef, PackDef } from '@arkham/carddata';
-import { applyPickerFilters, cyclePositions, moveSeat, sortedPacks } from './pickerLogic';
+import {
+  activeFilterCount,
+  applyPickerFilters,
+  cyclePositions,
+  moveSeat,
+  sortedPacks,
+} from './pickerLogic';
 
 function makeInvestigator(overrides: Partial<InvestigatorDef>): InvestigatorDef {
   return {
@@ -102,5 +108,19 @@ describe('moveSeat', () => {
   it('ignores out-of-range moves', () => {
     expect(moveSeat(['a', 'b'], 0, -1)).toEqual(['a', 'b']);
     expect(moveSeat(['a', 'b'], 5, 0)).toEqual(['a', 'b']);
+  });
+});
+
+describe('activeFilterCount', () => {
+  const none = { search: '', factions: [], onlyOwned: false };
+
+  it.each([
+    ['no filters', none, 0],
+    ['only a search', { ...none, search: 'alder' }, 0],
+    ['two classes', { ...none, factions: ['seeker', 'rogue'] }, 1],
+    ['a cycle and a pack', { ...none, cyclePosition: 2, packCode: 'p1' }, 2],
+    ['a chapter and the collection', { ...none, chapter: 2 as const, onlyOwned: true }, 2],
+  ])('counts %s as %i', (_, filters, count) => {
+    expect(activeFilterCount(filters)).toBe(count);
   });
 });

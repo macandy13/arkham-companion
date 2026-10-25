@@ -1,11 +1,51 @@
 /* Investigator picker (product.md "UI concept"). Styled by structure inside #investigator-picker. */
-#investigator-picker {
+/* Two ids, so it beats the home screen's wrapping `#app > main section` row. */
+#app #investigator-picker {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
 }
 
-#investigator-picker form,
-#investigator-picker fieldset,
+/*
+ * The filter control: one row of the search box and the round filter button, whose menu holds the
+ * other filters (its look is in base.css, like the play screen's menu).
+ */
+#investigator-picker form {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+#investigator-picker form > input {
+  flex: 1;
+  min-width: 0;
+}
+
+#investigator-picker button[data-icon='filter']::before {
+  mask-image: url('./icons/filter.svg');
+}
+
+#investigator-picker button[data-icon='filter'][data-count] {
+  position: relative;
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* The number of filters set, on a small brass disc at the button's top right. */
+#investigator-picker button[data-icon='filter'][data-count]::after {
+  content: attr(data-count);
+  position: absolute;
+  top: calc(-1 * var(--space-1));
+  right: calc(-1 * var(--space-1));
+  min-width: var(--picker-count-size);
+  border-radius: var(--radius-round);
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+  font-size: var(--font-size-note);
+  line-height: var(--picker-count-size);
+}
+
 #investigator-picker ol > li {
   display: flex;
   flex-wrap: wrap;
@@ -13,25 +53,52 @@
   gap: var(--space-2);
 }
 
-#investigator-picker fieldset {
+/*
+ * The filter menu: the class chips in wrapping rows, then each other filter's name beside its
+ * choice. It keeps to the screen's width rather than its content's. Two ids, so its rules beat the
+ * wizard's framed fieldsets and tall labels.
+ */
+#app #picker-filter-menu {
+  box-sizing: border-box;
+  grid-template-columns: minmax(0, 1fr);
+  width: min(var(--layout-sheet-width), 100%);
+  min-width: 0;
+}
+
+#app #investigator-picker fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
   margin: 0;
   padding: 0;
   border: 0;
 }
 
-#investigator-picker label {
-  display: grid;
-  gap: var(--space-1);
+#app #investigator-picker fieldset > button {
+  min-height: var(--button-compact);
+  padding-block: 0;
 }
 
-#investigator-picker label:has(input[type='checkbox']) {
+#app #investigator-picker label {
   display: flex;
+  justify-content: space-between;
   align-items: center;
+  gap: var(--space-2);
+  min-height: 0;
+}
+
+#app #investigator-picker label > select {
+  flex: 1;
+  min-width: 0;
+}
+
+#app #investigator-picker label:has(input[type='checkbox']) {
+  justify-content: start;
 }
 
 #investigator-picker input,
 #investigator-picker select {
-  min-height: var(--touch-target);
+  min-height: var(--button-compact);
   box-sizing: border-box;
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius);

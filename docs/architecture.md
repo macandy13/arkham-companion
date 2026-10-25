@@ -196,6 +196,8 @@ The engine reads card stats only through a [`CardDb`](../packages/engine/src/car
 
 The React PWA is a thin layer over the engine. [`App.tsx`](../apps/web/src/App.tsx) defines the hash routes; screens are in [`screens/`](../apps/web/src/screens/) (home, new game wizard, game screen, settings with the unofficial fan project notice). Components read the [app store](../apps/web/src/state/appStore.ts) and call its methods; they never change game state or touch storage.
 
+The new game wizard's [investigator picker](../apps/web/src/picker/InvestigatorPicker.tsx) keeps its filters behind one round button ([`PickerFilterBar.tsx`](../apps/web/src/picker/PickerFilterBar.tsx)) that opens a menu drawn like the play screen's ☰ menu (`button[data-icon][aria-expanded] + *` in base.css); the button counts the filters set.
+
 The open game (`OpenGame`) is the play screen's single source of truth:
 
 - **`GameActions`** ([`gameActions.ts`](../apps/web/src/state/gameActions.ts)) are the players' verbs (`moveTo`, `investigate`, `answer('pass')`). They act for the investigator whose turn it is and answer the first pending decision, so they take no ids; investigate, engage, and fight and evade unless `free`, also count off one of that investigator's actions, which the engine leaves to the players (the pawn's drag does not, as it also catches up with a move made at the table), and leave a skill test open for the decision dialog; buttons are disabled while `OpenGame.busy`.

@@ -359,6 +359,8 @@ export const resources = {
       picker: {
         title: 'Choose investigators',
         filters: 'Investigator filters',
+        filterMenu: 'Filters',
+        filtersSet: 'Filters ({{count}} set)',
         search: 'Search by name',
         classes: 'Class',
         faction: {
@@ -796,6 +798,8 @@ export const resources = {
       picker: {
         title: 'Ermittler wählen',
         filters: 'Ermittlerfilter',
+        filterMenu: 'Filter',
+        filtersSet: 'Filter ({{count}} gesetzt)',
         search: 'Nach Namen suchen',
         classes: 'Klasse',
         faction: {

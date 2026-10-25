@@ -104,6 +104,10 @@ function openPortrait(name: string) {
   );
 }
 
+function openFilters() {
+  fireEvent.click(screen.getByRole('button', { name: 'Filters' }));
+}
+
 function selectInvestigator(name: string) {
   openPortrait(name);
   fireEvent.click(screen.getByRole('button', { name: 'Select' }));
@@ -142,6 +146,7 @@ describe('InvestigatorPicker', () => {
 
   it('filters by class chip', () => {
     render(<Harness />);
+    openFilters();
 
     fireEvent.click(screen.getByRole('button', { name: 'Mystic' }));
 
@@ -150,6 +155,7 @@ describe('InvestigatorPicker', () => {
 
   it('filters by chapter', () => {
     render(<Harness />);
+    openFilters();
 
     fireEvent.change(screen.getByLabelText('Chapter'), { target: { value: '2' } });
 
@@ -158,6 +164,7 @@ describe('InvestigatorPicker', () => {
 
   it('filters by cycle', () => {
     render(<Harness />);
+    openFilters();
 
     fireEvent.change(screen.getByLabelText('Cycle'), { target: { value: '2' } });
 
@@ -166,6 +173,7 @@ describe('InvestigatorPicker', () => {
 
   it('filters by pack', () => {
     render(<Harness />);
+    openFilters();
 
     fireEvent.change(screen.getByLabelText('Pack'), { target: { value: 'pack1' } });
 
@@ -174,12 +182,14 @@ describe('InvestigatorPicker', () => {
 
   it('hides the collection filter without owned packs', () => {
     render(<Harness />);
+    openFilters();
 
     expect(screen.queryByLabelText('My collection')).toBeNull();
   });
 
   it('filters by owned packs when they are given', () => {
     render(<Harness ownedPacks={new Set(['pack2'])} />);
+    openFilters();
 
     fireEvent.click(screen.getByLabelText('My collection'));
 
@@ -192,6 +202,25 @@ describe('InvestigatorPicker', () => {
     fireEvent.change(screen.getByLabelText('Search by name'), { target: { value: 'zzz' } });
 
     expect(screen.getByText('No investigators match the filters.')).toBeTruthy();
+  });
+
+  it('counts the filters set on the filter button', () => {
+    render(<Harness />);
+    openFilters();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mystic' }));
+    fireEvent.change(screen.getByLabelText('Chapter'), { target: { value: '1' } });
+
+    expect(screen.getByRole('button', { name: 'Filters (2 set)' })).toBeTruthy();
+  });
+
+  it('closes the filter menu with its button', () => {
+    render(<Harness />);
+    openFilters();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Filters' }));
+
+    expect(screen.queryByLabelText('Chapter')).toBeNull();
   });
 
   it('shows health, sanity, skills and both card faces in the detail sheet', () => {
