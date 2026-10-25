@@ -1854,6 +1854,66 @@ describe('an effect repeated for each Ghoul enemy in the Hall or Parlor', () => 
   });
 });
 
+describe("a card test's outcomes, resolved after the answer", () => {
+  const bob = investigatorId('bob');
+  const swoop = instanceId('swoop');
+  /** "Test agility (4). If you fail, take 1 horror. Then each investigator takes 1 horror." */
+  const swoopCard = blankTreachery('swoop', {
+    abilities: [
+      whenRevealed(
+        skillTest('agility', 4, {
+          onFail: [takeHorror(1), takeHorror(1, { ref: 'eachInvestigator' })],
+        }),
+      ),
+    ],
+  });
+  /** "Test willpower (3). If you fail, each investigator takes 1 horror." */
+  const screamCard = blankTreachery('scream', {
+    abilities: [
+      whenRevealed(
+        skillTest('willpower', 3, { onFail: [takeHorror(1, { ref: 'eachInvestigator' })] }),
+      ),
+    ],
+  });
+  /** Alice and Bob in the hall. */
+  const hallTable = newGame()
+    .withLocation(hall, blankLocation('hall'), { revealed: true })
+    .withInvestigator(alice, { locationId: hall })
+    .withInvestigator(bob, { locationId: hall });
+  const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
+
+  it('accepts the fail when its first horror defeats alice, and still gives bob 1 horror', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall, sanity: { max: 6, horror: 5 } })
+      .withInvestigator(bob, { locationId: hall, sanity: { max: 6, horror: 0 } })
+      .withCard(swoop, swoopCard, { kind: 'encounterDeck' })
+      .start();
+    const asked = stateAfter(context, state, aliceDraws);
+
+    const after = stateAfter(context, asked, answer('test:swoop', 'fail'));
+
+    expect(requireInvestigator(after, alice)).toMatchObject({
+      status: 'defeated',
+      sanity: { horror: 6 },
+    });
+    expect(requireInvestigator(after, bob).sanity.horror).toBe(1);
+  });
+
+  it('repeats an outcome on each investigator for that outcome only', () => {
+    const { context, state } = hallTable
+      .withCard(instanceId('scream'), screamCard, { kind: 'encounterDeck' })
+      .start();
+    const asked = stateAfter(context, state, aliceDraws);
+    expect(asked.pending.map((decision) => decision.id)).toEqual(['test:scream']);
+
+    const after = stateAfter(context, asked, answer('test:scream', 'fail'));
+
+    expect(requireInvestigator(after, alice).sanity.horror).toBe(1);
+    expect(requireInvestigator(after, bob).sanity.horror).toBe(1);
+  });
+});
+
 describe('a card that gains surge without clues', () => {
   const falseTrail = instanceId('false_trail');
   const nextCard = instanceId('next_card');
