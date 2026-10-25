@@ -558,60 +558,75 @@
   font-variant-numeric: lining-nums tabular-nums;
 }
 
-/*
- * A symbol token hides its name's text under its symbol (`--token-symbol`, set per token below);
- * a number token has none, and the see-through mask leaves its number alone.
- */
-#investigators dialog[data-dialog='skill-test'] > ol > li::before {
+/* A symbol token shows its symbol (`--token-symbol`, set per token below) in place of its name. */
+#investigators
+  dialog[data-dialog='skill-test']
+  li:is(
+    [data-token='skull'],
+    [data-token='cultist'],
+    [data-token='tablet'],
+    [data-token='elderThing'],
+    [data-token='autoFail'],
+    [data-token='elderSign'],
+    [data-token='bless'],
+    [data-token='curse'],
+    [data-token='frost']
+  ) {
+  font-size: 0;
+}
+
+#investigators
+  dialog[data-dialog='skill-test']
+  li:is(
+    [data-token='skull'],
+    [data-token='cultist'],
+    [data-token='tablet'],
+    [data-token='elderThing'],
+    [data-token='autoFail'],
+    [data-token='elderSign'],
+    [data-token='bless'],
+    [data-token='curse'],
+    [data-token='frost']
+  )::before {
   content: '';
-  grid-area: 1 / 1;
   width: var(--icon-size);
   height: var(--icon-size);
   background: currentcolor;
-  mask: var(--token-symbol, linear-gradient(transparent, transparent)) center / contain no-repeat;
+  mask: var(--token-symbol) center / contain no-repeat;
 }
 
 #investigators dialog[data-dialog='skill-test'] li[data-token='skull'] {
   --token-symbol: url('../symbols/skull.svg');
-  font-size: 0;
 }
 
 #investigators dialog[data-dialog='skill-test'] li[data-token='cultist'] {
   --token-symbol: url('../symbols/cultist.svg');
-  font-size: 0;
 }
 
 #investigators dialog[data-dialog='skill-test'] li[data-token='tablet'] {
   --token-symbol: url('../symbols/tablet.svg');
-  font-size: 0;
 }
 
 #investigators dialog[data-dialog='skill-test'] li[data-token='elderThing'] {
   --token-symbol: url('../symbols/elder_thing.svg');
-  font-size: 0;
 }
 
 #investigators dialog[data-dialog='skill-test'] li[data-token='autoFail'] {
   --token-symbol: url('../symbols/auto_fail.svg');
-  font-size: 0;
 }
 
 #investigators dialog[data-dialog='skill-test'] li[data-token='elderSign'] {
   --token-symbol: url('../symbols/elder_sign.svg');
-  font-size: 0;
 }
 
 #investigators dialog[data-dialog='skill-test'] li[data-token='bless'] {
   --token-symbol: url('../symbols/bless.svg');
-  font-size: 0;
 }
 
 #investigators dialog[data-dialog='skill-test'] li[data-token='curse'] {
   --token-symbol: url('../symbols/curse.svg');
-  font-size: 0;
 }
 
 #investigators dialog[data-dialog='skill-test'] li[data-token='frost'] {
   --token-symbol: url('../symbols/frost.svg');
-  font-size: 0;
 }
