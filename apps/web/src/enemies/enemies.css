@@ -1,16 +1,19 @@
 /*
- * The enemy details (EnemyDetails): whom the enemy is engaged with, the enemy drawn as its card,
- * then each group of buttons under its small title, the action ones marked with the game's
- * action arrow. It lies in the top layer but inherits from the small card it opens from, so it
- * resets the text.
+ * The enemy details (EnemyDetails): the × in the corner, whom the enemy is engaged with, the enemy
+ * drawn as its card, and one row of buttons under it in titled groups, the action ones marked with
+ * the game's action arrow. It lies in the top layer but inherits from the small card it opens
+ * from, so it resets the text.
  */
 #board dialog[data-dialog='enemy'] {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  align-items: center;
+  padding-inline: var(--space-2);
   font-size: var(--font-size-body);
   line-height: normal;
-  text-align: start;
+  text-align: center;
   hyphens: manual;
 }
 
@@ -18,33 +21,68 @@
   display: none;
 }
 
+#board dialog[data-dialog='enemy'] > button[data-icon='close'] {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  border-radius: var(--radius-round);
+}
+
+#board dialog[data-dialog='enemy'] > button[data-icon='close']::before {
+  mask-image: url('../investigators/icons/close.svg');
+}
+
 #board dialog[data-dialog='enemy'] > p {
   margin: 0;
   font-family: var(--font-family-display);
   color: var(--color-text-muted);
-  text-align: center;
 }
 
-#board dialog[data-dialog='enemy'] section {
+/* The action row: the groups side by side, each its small title over its buttons; a group too wide for a narrow screen moves to a second line. */
+#board dialog[data-dialog='enemy'] > footer {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
-  align-items: center;
+  gap: var(--space-1);
+  justify-content: center;
+  align-self: stretch;
+  padding-top: var(--space-2);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+/* A group's title over its buttons, the buttons side by side so the whole row stays one line. */
+#board dialog[data-dialog='enemy'] section {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: auto auto;
+  gap: var(--space-1);
+  justify-content: center;
+}
+
+#board dialog[data-dialog='enemy'] section + section {
+  padding-left: var(--space-1);
+  border-left: var(--border-width) solid var(--color-border);
 }
 
 #board dialog[data-dialog='enemy'] h3 {
-  flex-basis: 100%;
+  grid-column: 1 / -1;
   margin: 0;
-  font-size: var(--font-size-note);
+  font-size: var(--font-size-caption);
+  font-weight: normal;
   color: var(--color-text-muted);
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
-#board dialog[data-dialog='enemy'] button {
-  gap: var(--space-2);
-}
-
-#board dialog[data-dialog='enemy'] button[data-icon]::before {
-  margin: 0;
+#board dialog[data-dialog='enemy'] section > button {
+  grid-row: 2;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  align-items: center;
+  padding: var(--space-1);
+  font-size: var(--font-size-caption);
+  white-space: nowrap;
 }
 
 #board dialog[data-dialog='enemy'] button[data-icon='fight']::before {
@@ -55,18 +93,28 @@
   mask-image: url('./icons/evade.svg');
 }
 
-/* The game's action arrow after the word, as on the turn row, marks what counts off an action. */
-#board dialog[data-dialog='enemy'] button[data-cost='action']::after {
-  content: '';
-  width: var(--action-pip-size);
-  height: var(--action-pip-size);
-  background: var(--color-accent);
-  mask: url('../symbols/action.svg') center / contain no-repeat;
+#board dialog[data-dialog='enemy'] button[data-icon='damage']::before {
+  mask-image: url('./icons/damage.svg');
 }
 
-#board dialog[data-dialog='enemy'] footer {
-  display: flex;
-  justify-content: flex-end;
+#board dialog[data-dialog='enemy'] button[data-icon='disengage']::before {
+  mask-image: url('./icons/disengage.svg');
+}
+
+#board dialog[data-dialog='enemy'] button[data-icon='defeat']::before {
+  mask-image: url('./icons/defeat.svg');
+}
+
+/* The game's action arrow in the button's corner, as on the turn row, marks what counts off an action. */
+#board dialog[data-dialog='enemy'] button[data-cost='action']::after {
+  content: '';
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  width: var(--action-mark-size);
+  height: var(--action-mark-size);
+  background: var(--color-accent);
+  mask: url('../symbols/action.svg') center / contain no-repeat;
 }
 
 /*
@@ -75,7 +123,6 @@
  * the art's hatch until the picture has loaded. Its text is in SVG user units.
  */
 #board svg[data-card='enemy'] {
-  align-self: center;
   width: var(--layout-zoom-card-width);
   max-width: 100%;
   filter: var(--piece-shadow);
