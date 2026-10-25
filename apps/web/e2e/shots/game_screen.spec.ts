@@ -80,18 +80,16 @@ test('Alder’s willpower and agility test, a token drawn', async ({ page }) => 
   await expect(test.getByRole('status')).toBeVisible();
 });
 
-test(
-  'the decision dialog asking for the result of an investigation, a token drawn',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'Investigating', investigationOpenExport('Investigating'));
-    const decision = page.getByRole('dialog', { name: 'Investigate Hallway' });
+test('the decision dialog asking for the result of an investigation, a token drawn', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'Investigating', investigationOpenExport('Investigating'));
+  const decision = page.getByRole('dialog', { name: 'Investigate Hallway' });
 
-    await decision.getByRole('button', { name: 'Draw a token' }).click();
+  await decision.getByRole('button', { name: 'Draw a token' }).click();
 
-    await expect(decision.getByRole('status')).toBeVisible();
-  },
-);
+  await expect(decision.getByRole('status')).toBeVisible();
+});
 
 test("the Ghoul Priest's details opened from its card on Alder's turn", async ({ page }) => {
   await resumeImportedGame(page, 'Alder threatened', alderThreatenedExport('Alder threatened'));

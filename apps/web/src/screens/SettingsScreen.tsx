@@ -1,7 +1,8 @@
 import type { PackDef } from '@arkham/carddata';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { cyclePositions, sortedPacks } from '../picker/pickerLogic';
+import { sortedPacks } from '../picker/pickerLogic';
+import { campaignCatalog } from '../scenarios/scenarioCatalog';
 import { applySettings } from '../settings/applySettings';
 import {
   CARD_LANGUAGES,
@@ -15,12 +16,15 @@ import {
 import './settings.css';
 
 interface SettingsScreenProps {
-  /** Packs of the card catalog; empty until the catalog is loaded (not wired up before M2.7). */
+  /**
+   * Packs of the card catalog; empty until the catalog is loaded. Only the packs of campaigns the
+   * app plays (`CampaignEntry.packCodes`) are listed.
+   */
   readonly packs?: readonly PackDef[];
 }
 
 /**
- * Route `/settings`: owned packs, card and UI language and theme, saved on every change, and the
+ * Route `/settings`: owned packs of the campaigns the app plays, card and UI language and theme, saved on every change, and the
  * notice that the app is an unofficial fan project, with the publisher's copyright credit. The fan
  * content policy requires the notice for using the game's names; card art is never bundled, only
  * fetched from ArkhamDB on the player's device.
@@ -50,11 +54,11 @@ export function SettingsScreen({ packs = [] }: SettingsScreenProps) {
           {packs.length === 0 ? (
             <p>{t('settings.noPacks')}</p>
           ) : (
-            cyclePositions(packs).map((cycle) => (
-              <fieldset key={cycle}>
-                <legend>{t('picker.cycleNumber', { n: cycle })}</legend>
+            campaignCatalog.map((campaign) => (
+              <fieldset key={campaign.id}>
+                <legend>{t(campaign.nameKey)}</legend>
                 {sortedPacks(packs)
-                  .filter((pack) => pack.cyclePosition === cycle)
+                  .filter((pack) => campaign.packCodes.includes(pack.code))
                   .map((pack) => (
                     <label key={pack.code}>
                       <input
