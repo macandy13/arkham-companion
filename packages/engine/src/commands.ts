@@ -57,6 +57,7 @@ export type Command =
   | ExhaustEnemy
   | ReadyEnemy
   | MoveEnemy
+  | MoveEnemyTowards
   | MoveHunters
   | MoveHunter
   | RequestDecision
@@ -582,6 +583,22 @@ export interface MoveEnemy {
   to: InstanceId;
   /** A forced instruction, followed even for an engaged enemy. Default false. */
   forced?: boolean;
+}
+
+/**
+ * A card effect moves an unengaged enemy one connection towards the location
+ * `towards` along a shortest path ("each unengaged Ghoul enemy moves 1
+ * location towards the Parlor"), exhausted or not. It stays when it is
+ * there already or has no path (also while `towards` is out of play); equally short first steps become a
+ * `chooseLocation` decision for the lead investigator (`towards:<enemy>`),
+ * answered with `MoveEnemy`. An engaged enemy moves only with its
+ * investigator, so it is refused (`enemyEngaged`). Produces what `MoveEnemy`
+ * produces, or the `DecisionRequested`.
+ */
+export interface MoveEnemyTowards {
+  type: 'MoveEnemyTowards';
+  enemyId: InstanceId;
+  towards: InstanceId;
 }
 
 /**

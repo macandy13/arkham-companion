@@ -125,6 +125,22 @@ describe('compileSetup', () => {
     });
   });
 
+  it('spawns an enemy with the doom its "after it enters play" ability places', () => {
+    const def = makeDefinition({
+      setup: [
+        mainMap('loc'),
+        { kind: 'spawn', code: cardCode('acolyte'), at: cardCode('loc'), tokens: { doom: 1 } },
+      ],
+    });
+
+    const command = scenario.compileSetup(
+      { cards: investigatorCards, scenario: def },
+      makeSetupOptions(),
+    );
+
+    expect(command.cards[1]).toMatchObject({ id: 'acolyte#1', tokens: { doom: 1 } });
+  });
+
   it('seats investigators in the given order with the printed stats and picture of their card', () => {
     const roland = {
       code: investigatorCode('01001'),

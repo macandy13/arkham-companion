@@ -1,4 +1,4 @@
-import { neighbours, shortestPaths } from './board';
+import { firstSteps, neighbours, shortestPaths } from './board';
 import type { MoveHunter, MoveHunters } from './commands';
 import { CommandRejected } from './rejection';
 import { cardStats, type EngineContext } from './cards';
@@ -181,7 +181,7 @@ function chooseHunterLocation(
     state,
     hunter.id,
     `hunter:${hunter.id}:location`,
-    'decision.chooseHunterDestination',
+    'decision.chooseEnemyDestination',
     steps,
     (chosen) => ({ type: 'MoveHunter', enemyId: hunter.id, to: chosen }),
   );
@@ -204,8 +204,7 @@ function routeTo(state: GameState, from: InstanceId, investigator: Investigator)
   const paths = shortestPaths(state, from, investigator.locationId);
   const [first] = paths;
   if (first === undefined) return [];
-  const steps = [...new Set(paths.flatMap((path) => path.slice(1, 2)))];
-  return [{ investigator, distance: first.length - 1, steps }];
+  return [{ investigator, distance: first.length - 1, steps: firstSteps(paths) }];
 }
 
 function distinctSteps(routes: readonly Route[]): InstanceId[] {

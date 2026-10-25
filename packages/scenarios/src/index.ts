@@ -23,3 +23,5 @@ export {
   theMidnightMasksCardDefs,
   theMidnightMasksCards,
 } from './the_midnight_masks/cards';
+export { theMidnightMasks } from './the_midnight_masks/scenario';
+export { theMidnightMasksResolutions } from './the_midnight_masks/resolutions';

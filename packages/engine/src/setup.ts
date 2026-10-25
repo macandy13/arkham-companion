@@ -112,11 +112,16 @@ export interface PlaceTokensStep {
   amount: TokenAmount;
 }
 
-/** Spawns an enemy at the location with code `at` (see `spawnZone`). */
+/**
+ * Spawns an enemy at the location with code `at` (see `spawnZone`), with `tokens` on it: a
+ * forced "after it enters play" ability still triggers during setup (Acolyte's doom, FAQ), and
+ * setup places what it would.
+ */
 export interface SpawnStep {
   kind: 'spawn';
   code: CardCode;
   at: CardCode;
+  tokens?: Partial<Record<TokenKind, number>>;
 }
 
 /** Places every investigator at the location with code `to`, revealing it. */
@@ -453,7 +458,13 @@ function applyStep(draft: SetupDraft, step: PlacingStep, env: SetupEnv): SetupDr
     case 'placeTokens':
       return withTokens(draft, step, env.playerCount);
     case 'spawn':
-      return withCard(draft, step.code, spawnZone(targetId(draft.cards, step.at)), true);
+      return withCard(
+        draft,
+        step.code,
+        spawnZone(targetId(draft.cards, step.at)),
+        true,
+        step.tokens,
+      );
     case 'moveInvestigators':
       return moveInvestigators(draft, targetId(draft.cards, step.to));
   }
@@ -492,13 +503,22 @@ function edge(locations: readonly CodedCard[], connection: MapConnection): Edge 
   };
 }
 
-/** The draft with one new instance of `code` appended in `zone`. */
-function withCard(draft: SetupDraft, code: CardCode, zone: Zone, faceUp = false): SetupDraft {
+/** The draft with one new instance of `code` appended in `zone`, carrying `tokens` if given. */
+function withCard(
+  draft: SetupDraft,
+  code: CardCode,
+  zone: Zone,
+  faceUp = false,
+  tokens?: StartingCard['tokens'],
+): SetupDraft {
   const id = newId(
     code,
     draft.cards.map((card) => card.code),
   );
-  return { ...draft, cards: [...draft.cards, { id, code, zone, faceUp }] };
+  return {
+    ...draft,
+    cards: [...draft.cards, { id, code, zone, faceUp, ...(tokens && { tokens }) }],
+  };
 }
 
 /**

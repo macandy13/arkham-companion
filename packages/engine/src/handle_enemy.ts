@@ -1,4 +1,4 @@
-import { requireLocationInPlay } from './board';
+import { firstSteps, isLocationInPlay, requireLocationInPlay, shortestPaths } from './board';
 import type { CardStats, EngineContext } from './cards';
 import type {
   DamageEnemy,
@@ -8,9 +8,10 @@ import type {
   EngageEnemy,
   ExhaustEnemy,
   MoveEnemy,
+  MoveEnemyTowards,
   ReadyEnemy,
 } from './commands';
-import { engageEvents } from './engagement';
+import { chooseLocation, engageEvents } from './engagement';
 import type { EnemyDefeated, EnemyEngaged, Event, ExhaustChanged } from './events';
 import { enemyHealth, enemyOf, isEnemyOnTable, locationOf } from './enemies';
 import { activeInvestigator } from './investigators';
@@ -90,6 +91,41 @@ export function handleMoveEnemy(ctx: EngineContext, state: GameState, cmd: MoveE
     });
   const moved = moveCardEvent(enemy, { kind: 'atLocation', locationId: cmd.to });
   return [moved, ...engageEvents(ctx, replay([moved], state), enemy.id)];
+}
+
+/**
+ * `MoveEnemyTowards`: one connection along the shortest paths to `towards`.
+ * Ties between first steps go to the lead investigator (Rules Reference,
+ * "Choices"), whose answer is a plain `MoveEnemy` to a neighbour.
+ */
+export function handleMoveEnemyTowards(
+  ctx: EngineContext,
+  state: GameState,
+  cmd: MoveEnemyTowards,
+): Event[] {
+  const { enemy } = onTableEnemyOf(ctx, state, cmd.enemyId);
+  if (enemy.zone.kind === 'engaged')
+    throw new CommandRejected({
+      code: 'enemyEngaged',
+      cardId: enemy.id,
+      investigatorId: enemy.zone.investigatorId,
+    });
+  // A target not in play yet (the Parlor while act 1 holds it set aside) has no path to it.
+  if (!isLocationInPlay(state, cmd.towards)) return [];
+  const steps = firstSteps(shortestPaths(state, locationOf(state, enemy), cmd.towards));
+  const [only] = steps;
+  if (only === undefined) return [];
+  const moveTo = (to: InstanceId): MoveEnemy => ({ type: 'MoveEnemy', enemyId: enemy.id, to });
+  if (steps.length === 1) return handleMoveEnemy(ctx, state, moveTo(only));
+  return chooseLocation(
+    ctx,
+    state,
+    enemy.id,
+    `towards:${enemy.id}`,
+    'decision.chooseEnemyDestination',
+    steps,
+    moveTo,
+  );
 }
 
 /** `DamageEnemy`: adds damage and defeats the enemy in the same step once it has as much as its health. */
