@@ -32,6 +32,7 @@ import {
   type CardDb,
   type CardStats,
   type GridCell,
+  resignAction,
 } from '@arkham/engine';
 import { act, agenda, enemy, location, prey, treachery } from '../card_builders';
 
@@ -124,7 +125,7 @@ const woods = ['Woods'];
  *   evade for each enemy
  * - act 2's objective and reverse side (the enemies at the Ritual Site), act
  *   3's action and objective (its R1 is automated once the players advance it)
- * - the Main Path's resign action and its connection to each Woods location,
+ * - the Main Path's connection to each Woods location,
  *   the Arkham Woods' moving-out test, skill swaps and heal action, and the
  *   Ritual Site's clues at the end of the round
  * - Umôrdhoth's Lita action (R3) and Umôrdhoth's Wrath
@@ -171,6 +172,7 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
     shroud: 2,
     cluesPerInvestigator: 0,
     traits: woods,
+    actions: [resignAction()],
   }),
   location({
     code: '01150',

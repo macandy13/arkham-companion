@@ -6,7 +6,8 @@
  * Hunting Shadow, Mysterious Chanting, On Wings of Darkness carrying Daisy off
  * to a Central location, the Ghoul Priest from The Gathering, the Wizard of
  * the Order's doom, "Wolf-Man" Drew's heal, two hunters chasing the
- * investigators, both agendas advancing on doom) and ends in a resolution
+ * investigators, Daisy resigning through agenda 2's action, both agendas
+ * advancing on doom) and ends in a resolution
  * applied to the campaign log: two cultists interrogated, three still in the
  * Cultist deck and The Masked Hunter in play got away.
  *
@@ -526,14 +527,14 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     });
 
     // Round 7 – investigation: the Wizard's doom makes 8. With the hunters
-    // next door, Daisy walks back to Your House; Roland stays put.
+    // next door, Daisy takes the agenda's action and resigns; Roland stays put.
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'investigation' });
     expect(table.board.doomInPlay).toBe(8);
     table.startTurn(roland);
     table.endTurn(roland);
     table.startTurn(daisy);
-    table.moveTo(daisy, byName('Your House'));
-    table.endTurn(daisy);
+    table.useCardAction(daisy, byName('Time Is Running Short'));
+    expect(table.board.investigator(daisy).status).toBe('resigned');
 
     // Round 7 – enemy phase: the hunters reach Rivertown, still a step short.
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'enemy', step: 'huntersMove' });

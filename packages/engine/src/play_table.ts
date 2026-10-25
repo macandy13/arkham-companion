@@ -271,6 +271,25 @@ export class PlayTable {
   }
 
   /**
+   * The investigator takes the action ability number `action` (default the first) printed on the
+   * one card in the game `card` picks (a location, the agenda, an enemy, …).
+   */
+  useCardAction(investigator: InvestigatorRef, card: CardRef, action = 0): void {
+    const matcher = cardMatcher(card);
+    const { id } = this.onlyOne(
+      matchingCards(this.ctx, Object.values(this.current.cards), matcher),
+      `card ${describeMatcher(matcher)}`,
+    );
+    this.play({
+      type: 'UseCardAction',
+      investigatorId: this.seat(investigator),
+      cardId: id,
+      action,
+      asAction: true,
+    });
+  }
+
+  /**
    * The players change the investigator's remaining actions by `delta`: -1 per
    * action they count off in the turn, or what a card grants or takes away.
    */

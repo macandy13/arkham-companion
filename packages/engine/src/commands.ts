@@ -73,6 +73,7 @@ export type Command =
   | StartTurn
   | EndTurn
   | Resign
+  | UseCardAction
   | SetLeadInvestigator
   | AdjustActions
   | ResolveEnemyAttack
@@ -851,6 +852,19 @@ export interface EndTurn {
 export interface Resign {
   type: 'Resign';
   investigatorId: InvestigatorId;
+}
+
+/**
+ * The investigator takes the action ability number `action` (index into `CardStats.actions`) of
+ * the card `cardId`, in their own turn and where the card offers it (`offersActionsTo`). Taken
+ * as an action it provokes attacks of opportunity, unless it is a Resign or Parley. Produces no
+ * events of its own: the action's effects follow (`cardActionSteps`).
+ */
+export interface UseCardAction extends ActionCommand {
+  type: 'UseCardAction';
+  investigatorId: InvestigatorId;
+  cardId: InstanceId;
+  action: number;
 }
 
 /**

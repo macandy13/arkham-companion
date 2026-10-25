@@ -116,11 +116,13 @@ whenAdvanced(revealLocation(onlyCopy(codes.parlor)), …)
 
 A card's test can cost the tester for each point it fails by (`skillTest(…, { perPointFailed })`: 1 damage, 1 horror, or 1 of their clues placed on their location by `PlaceClues`); the fail answer's `margin` is the count.
 
+Action abilities ("[action]: …") are data too: `CardStats.actions` lists [`CardAction`](../packages/engine/src/card_actions.ts)s, each a list of effects and an optional designator (`resign`, `parley`). `UseCardAction` takes one in the investigator's own turn where the card offers it (`offersActionsTo`: a location's at it, an enemy's at its location, a threat area's for its owner, the current agenda's and act's for anyone) and continues with its effects as ability steps in an `action` window naming the investigator. Taken as an action it provokes attacks of opportunity unless it is a Resign or Parley, which is why `CommandSpec.provokes` and `continueWith` see the context and state. `resignAction()` is the Resign of the Parlor, the Main Path and The Midnight Masks' agendas.
+
 Constant abilities are data too (`CardStats.modifiers`); [`effectiveValue`](../packages/engine/src/card_values.ts) is the one place that answers "what is this value now".
 
 **Extension points**
 
-- **A card's ability or modifier:** list it in the card's data; no code.
+- **A card's ability, action or modifier:** list it in the card's data; no code.
 - **A new window or condition:** a case in `TimingWindow` / `windowsOpenedBy` or `AbilityCondition` / `conditionHolds`.
 - **A new kind of effect:** add its command to `AbilityCommand` (and a factory); a new reference is a case in `resolveRefs`.
 
