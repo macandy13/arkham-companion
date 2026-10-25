@@ -166,6 +166,13 @@ export interface MapView {
   enemies: Readonly<Record<InstanceId, readonly MapEnemyView[]>>;
 }
 
+/** An enemy's fight and evade now and its attack (`BoardView.enemyStats`). */
+export interface EnemyStatsView {
+  fight: number;
+  evade: number;
+  attack: { damage: number; horror: number };
+}
+
 /**
  * An enemy on a map (`MapView.enemies`) or in a threat area (`BoardView.enemiesEngagedWith`): its
  * `EnemyView` with its instance id, since those are where the players act on an enemy (drag it to
@@ -356,6 +363,22 @@ export class BoardView {
       },
       input,
     );
+  }
+
+  /**
+   * The printed numbers of the enemy with id `enemy` that its details show: fight and evade as
+   * they are now (constant abilities included, `effectiveValue`) and the damage and horror of its
+   * attack. Kept apart from `EnemyView`, which every board read lists, since only the details
+   * window needs them.
+   */
+  enemyStats(enemy: InstanceId): EnemyStatsView {
+    const card = requireCard(this.state, enemy);
+    const { damage = 0, horror = 0 } = cardStats(this.ctx.cards, card.code);
+    return {
+      fight: effectiveValue(this.ctx, this.state, card, 'fight'),
+      evade: effectiveValue(this.ctx, this.state, card, 'evade'),
+      attack: { damage, horror },
+    };
   }
 
   /** Open decisions, oldest first. */

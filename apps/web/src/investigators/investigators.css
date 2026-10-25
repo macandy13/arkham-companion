@@ -356,14 +356,6 @@
   mask-image: url('./icons/investigate.svg');
 }
 
-#investigators button[data-icon='fight']::before {
-  mask-image: url('./icons/fight.svg');
-}
-
-#investigators button[data-icon='evade']::before {
-  mask-image: url('./icons/evade.svg');
-}
-
 /*
  * The threat area: a row of small cards standing on the investigator card's top edge, starting at
  * its left, as cards laid along the card on the table. Past `--threat-cards-shown` cards the row
@@ -424,8 +416,8 @@
 }
 
 /*
- * On the investigator's turn an engaged enemy's card is one big button that opens its actions:
- * the button lies over the whole card, so the card still shows its name and health.
+ * An engaged enemy's card is one big button that opens its details: the button lies over the
+ * whole card, so the card still shows its name and health.
  */
 #board > #investigators > section > div li[data-threat='enemy'] {
   position: relative;
@@ -439,40 +431,6 @@
   padding: 0;
   border: none;
   background: none;
-}
-
-/* The enemy's actions (EnemyMenu): its name, then fight and evade as icon-and-word buttons. */
-/* It lies in the top layer but inherits from the small card it opens from, so it resets the text. */
-#investigators dialog[data-dialog='enemy'] {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  font-size: var(--font-size-body);
-  line-height: normal;
-  text-align: start;
-  hyphens: manual;
-}
-
-#investigators dialog[data-dialog='enemy']:not([open]) {
-  display: none;
-}
-
-#investigators dialog[data-dialog='enemy'] h2 {
-  margin: 0;
-  font-size: var(--font-size-subtitle);
-}
-
-#investigators dialog[data-dialog='enemy'] button[data-icon] {
-  gap: var(--space-2);
-}
-
-#investigators dialog[data-dialog='enemy'] button[data-icon]::before {
-  margin: 0;
-}
-
-#investigators dialog[data-dialog='enemy'] footer {
-  display: flex;
-  justify-content: flex-end;
 }
 
 #board > #investigators > section > div li[data-exhausted] {

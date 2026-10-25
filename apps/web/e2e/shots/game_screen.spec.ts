@@ -87,14 +87,14 @@ test('the decision dialog asking for the result of an investigation', async ({ p
 });
 
 test(
-  "the Ghoul Priest's actions opened from its card in Alder's threat area",
+  "the Ghoul Priest's details opened from its card on Alder's turn",
   { tag: '@shot' },
   async ({ page }) => {
     await resumeImportedGame(page, 'Alder threatened', alderThreatenedExport('Alder threatened'));
     const alder = page.getByRole('region', { name: 'Alder' });
     await alder.getByRole('button', { name: 'Later cards in the threat area' }).click();
 
-    await alder.getByRole('button', { name: 'Actions against Ghoul Priest' }).click();
+    await alder.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
 
     await expect(page.getByRole('dialog', { name: 'Ghoul Priest' })).toBeVisible();
   },

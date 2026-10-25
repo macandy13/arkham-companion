@@ -96,10 +96,13 @@ function InvestigatorPanel({
       data-turn={onTurn || undefined}
     >
       <ThreatArea
+        board={board}
         treacheries={investigator.threatArea ?? []}
         enemies={engaged}
+        actions={actions}
+        onTurn={onTurn}
         // Fighting and evading are play, so they wait while the players adjust, like the turn's.
-        turn={onTurn ? { actions, busy: busy || adjusting } : undefined}
+        busy={busy || adjusting}
       />
       <article data-card="investigator">
         <header>

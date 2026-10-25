@@ -506,58 +506,27 @@ describe('InvestigatorBar', () => {
       );
     });
 
-    describe('fighting and evading', () => {
-      const ghoulOnAlder = newGame()
-        .withLocation(study, blankLocation('study'))
-        .withInvestigator(alder, { locationId: study })
-        .withInvestigator(brook, { locationId: study })
-        .withCard(instanceId('ghoul'), blankEnemy('ghoul_minion'), engagedWith(alder));
-
-      it.each([
-        { button: 'Fight', prompt: 'decision.fight' },
-        { button: 'Evade', prompt: 'decision.evade' },
-      ])(
-        '"$button" from the ghoul\'s card on alder\'s turn leaves its test to the decision dialog',
-        async ({ button, prompt }) => {
-          const table = PlayTable.start(ghoulOnAlder.withTurnOf(alder));
-          render(
-            <InvestigatorBar
-              board={table.board}
-              actions={actionsOn(table)}
-              busy={false}
-              adjusting={false}
-            />,
-          );
-
-          fireEvent.click(
-            within(panel('alder')).getByRole('button', { name: 'Actions against ghoul_minion' }),
-          );
-          fireEvent.click(
-            within(screen.getByRole('dialog', { name: 'ghoul_minion' })).getByRole('button', {
-              name: button,
-            }),
-          );
-
-          await expect
-            .poll(() => table.board.decisions)
-            .toMatchObject([{ prompt, about: 'ghoul_minion', for: alder }]);
-        },
+    it("opens an enemy's details from its card", () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'))
+          .withInvestigator(alder, { locationId: study })
+          .withCard(instanceId('ghoul'), blankEnemy('ghoul_minion'), engagedWith(alder)),
+      );
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
       );
 
-      it("offers no fight or evade outside alder's turn", () => {
-        const table = PlayTable.start(ghoulOnAlder.withTurnOf(brook));
+      fireEvent.click(
+        within(panel('alder')).getByRole('button', { name: 'Details of ghoul_minion' }),
+      );
 
-        render(
-          <InvestigatorBar
-            board={table.board}
-            actions={actionsOn(table)}
-            busy={false}
-            adjusting={false}
-          />,
-        );
-
-        expect(within(panel('alder')).queryByRole('button', { name: /ghoul_minion/ })).toBeNull();
-      });
+      expect(screen.getByRole('dialog', { name: 'ghoul_minion' })).toBeTruthy();
     });
 
     it('leaves the card whole while the threat area is empty', () => {

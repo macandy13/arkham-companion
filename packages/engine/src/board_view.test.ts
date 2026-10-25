@@ -528,6 +528,26 @@ describe('enemies', () => {
     ]);
   });
 
+  it("reads an enemy's fight and evade as modified where it stands, and its attack", () => {
+    const { context, state } = newGame()
+      .withLocation(
+        study,
+        blankLocation('dining_hall', { modifiers: [{ stat: 'fight', of: 'enemiesHere', by: 1 }] }),
+        { revealed: true },
+      )
+      .withInvestigator(alice, { locationId: study })
+      .withCard(
+        instanceId('ghoul'),
+        blankEnemy('ghoul', { fight: 3, evade: 2, damage: 1, horror: 2 }),
+        engagedWith(alice),
+      )
+      .start();
+
+    const stats = boardView(context, state).enemyStats(instanceId('ghoul'));
+
+    expect(stats).toEqual({ fight: 4, evade: 2, attack: { damage: 1, horror: 2 } });
+  });
+
   it('marks an exhausted enemy', () => {
     const { context, state } = newGame()
       .withLocation(study, blankLocation('study'))

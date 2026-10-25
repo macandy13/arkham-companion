@@ -52,6 +52,7 @@ export {
   type AgendaView,
   type DecisionView,
   type DueAttackView,
+  type EnemyStatsView,
   type EnemyView,
   type InvestigatorView,
   type LocationView,

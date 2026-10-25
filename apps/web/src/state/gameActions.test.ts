@@ -3,6 +3,7 @@ import {
   blankEnemy,
   blankLocation,
   engagedWith,
+  fixed,
   instanceId,
   investigatorId,
   newGame,
@@ -31,7 +32,7 @@ const actionsOn = (table: PlayTable) =>
 
 describe('gameActions', () => {
   /**
-   * Alder's turn in the Study, next to the Hall, with a ghoul engaged with Alder and a lurker
+   * Alder's turn in the Study, next to the Hall, with a ghoul (3 health) engaged with Alder and a lurker
    * engaged with Brook there, for Alder to engage.
    */
   const aldersTurn = () =>
@@ -41,23 +42,56 @@ describe('gameActions', () => {
         .withLocation(hall, blankLocation('hall'), { revealed: true })
         .withConnection(study, hall)
         .withInvestigator(alder, { locationId: study })
-        .withCard(ghoul, blankEnemy('ghoul'), engagedWith(alder))
+        .withCard(ghoul, blankEnemy('ghoul', { health: fixed(3) }), engagedWith(alder))
         .withInvestigator(brook, { locationId: study })
         .withCard(lurker, blankEnemy('lurker'), engagedWith(brook))
         .withTurnOf(alder),
     );
 
-  it.each<{ verb: string; act: (actions: GameActions) => Promise<void> }>([
-    { verb: 'moveTo', act: (actions) => actions.moveTo(hall) },
-    { verb: 'investigate', act: (actions) => actions.investigate() },
-    { verb: 'fight', act: (actions) => actions.fight(ghoul) },
-    { verb: 'evade', act: (actions) => actions.evade(ghoul) },
-    { verb: 'engage', act: (actions) => actions.engage(lurker) },
-  ])('$verb counts off one of alder’s three actions', async ({ act }) => {
+  it.each<{ verb: string; act: (actions: GameActions) => Promise<void>; left: number }>([
+    { verb: 'investigate', act: (actions) => actions.investigate(), left: 2 },
+    { verb: 'fight', act: (actions) => actions.fight(ghoul), left: 2 },
+    { verb: 'evade', act: (actions) => actions.evade(ghoul), left: 2 },
+    { verb: 'engage', act: (actions) => actions.engage(lurker), left: 2 },
+    { verb: 'a free fight', act: (actions) => actions.fight(ghoul, 'free'), left: 3 },
+    { verb: 'a free evade', act: (actions) => actions.evade(ghoul, 'free'), left: 3 },
+    { verb: 'moveTo (the pawn drag)', act: (actions) => actions.moveTo(hall), left: 3 },
+  ])('$verb leaves alder $left of three actions', async ({ act, left }) => {
     const table = aldersTurn();
 
     await act(actionsOn(table));
 
-    expect(table.board.investigator(alder)).toMatchObject({ actions: 2 });
+    expect(table.board.investigator(alder)).toMatchObject({ actions: left });
+  });
+
+  it.each<{ effect: string; act: (actions: GameActions) => Promise<void>; ghoul: object }>([
+    {
+      effect: 'damage',
+      act: (actions) => actions.damageEnemy(ghoul, 1),
+      ghoul: { at: 'study', engagedWith: alder, damage: 1 },
+    },
+    {
+      effect: 'disengage',
+      act: (actions) => actions.disengageEnemy(ghoul),
+      ghoul: { at: 'study' },
+    },
+  ])('a card effect can $effect the ghoul', async ({ act, ghoul: expected }) => {
+    const table = aldersTurn();
+
+    await act(actionsOn(table));
+
+    expect(table.board.enemies.find(({ name }) => name === 'ghoul')).toEqual({
+      name: 'ghoul',
+      health: 3,
+      ...expected,
+    });
+  });
+
+  it('a card effect can defeat the ghoul', async () => {
+    const table = aldersTurn();
+
+    await actionsOn(table).defeatEnemy(ghoul);
+
+    expect(table.board.enemies.map(({ name }) => name)).toEqual(['lurker']);
   });
 });
