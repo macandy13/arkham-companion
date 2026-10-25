@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   blankEnemy,
+  fixed,
   blankLocation,
   engagedWith,
   instanceId,
@@ -178,7 +179,7 @@ describe('DecisionDialog', () => {
 
     it.each([
       { answer: 'Failed', sends: ['fail', { margin: 1 }] },
-      { answer: 'Passed', sends: ['pass', {}] },
+      { answer: 'Passed', sends: ['pass', { amount: 1 }] },
     ])('answering "$answer" after the draw sends $sends', ({ answer, sends }) => {
       const table = aldersInvestigationWithAMinusTwo();
       const answered = vi.fn(async () => {});
@@ -205,6 +206,73 @@ describe('DecisionDialog', () => {
 
       expect(screen.getByRole('heading').textContent).toBe('Attack of opportunity by Ghoul');
       expect(screen.queryByRole('button', { name: 'Draw a token' })).toBeNull();
+    });
+  });
+
+  describe('with counts', () => {
+    it('discovers as many clues as the players raise the count to, up to those on the location', () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study', { name: 'Study', shroud: 2 }), {
+            revealed: true,
+            clues: 2,
+          })
+          .withInvestigator(alder, { name: 'Alder', locationId: study })
+          .withTurnOf(alder),
+      );
+      table.investigate(alder, { result: 'open' });
+      renderFirstDecision(table);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Raise the Clues discovered' }));
+      const raise = screen.getByRole<HTMLButtonElement>('button', {
+        name: 'Raise the Clues discovered',
+      });
+      expect(raise.disabled).toBe(true);
+      fireEvent.click(screen.getByRole('button', { name: 'Passed' }));
+
+      expect(table.board.investigator(alder)).toMatchObject({ clues: 2 });
+    });
+
+    it('deals the damage the players set for a passed fight', () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'), { revealed: true })
+          .withInvestigator(alder, { name: 'Alder', locationId: study })
+          .withCard(
+            ghoul,
+            blankEnemy('ghoul', { name: 'Ghoul', health: fixed(3) }),
+            engagedWith(alder),
+          )
+          .withTurnOf(alder),
+      );
+      table.fight(alder, ghoul, { result: 'open' });
+      renderFirstDecision(table);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Raise the Damage dealt' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Passed' }));
+
+      expect(table.board.enemy(ghoul)).toMatchObject({ damage: 2 });
+    });
+
+    it("takes an attack of opportunity's damage and horror as the players lower them", () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'), { revealed: true })
+          .withInvestigator(alder, { locationId: study })
+          .withCard(
+            ghoul,
+            blankEnemy('ghoul', { name: 'Ghoul', damage: 1, horror: 2 }),
+            engagedWith(alder),
+          )
+          .withTurnOf(alder),
+      );
+      table.investigate(alder, { result: 'open' });
+      renderFirstDecision(table);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Lower the Horror' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Take the attack' }));
+
+      expect(table.board.investigator(alder)).toMatchObject({ damage: 1, horror: 1 });
     });
   });
 

@@ -34,15 +34,18 @@ import { NAMED_AMOUNTS } from './state';
 import { requireInvestigator } from './investigators';
 import { skillTestSuggestion, type SkillTestInput } from './skill_modifiers';
 import type {
+  AmountRange,
   CardInstance,
   ChaosToken,
   Decision,
   GameState,
   Investigator,
   InvestigatorStatus,
+  NamedAmount,
   Phase,
   PhaseStepId,
   SkillTest,
+  SkillTestKind,
   SkillTestSuggestion,
   SkillValues,
 } from './state';
@@ -225,7 +228,7 @@ export interface ActView {
  * UI translates for the names that are not their own label (`does not provoke`
  * is `decision.doesNotProvoke`, while an investigator's name or a scenario's
  * key is), and, for options whose counts the players confirm or adjust, the
- * default counts by option name (e.g. `{ attack: { damage: 1, horror: 2 } }`).
+ * range of each count by option name (`counts`).
  */
 export interface DecisionView {
   prompt: string;
@@ -234,10 +237,21 @@ export interface DecisionView {
   about?: CardName;
   for?: InvestigatorId;
   test?: SkillTest;
+  /** The basic action a skill test belongs to (`Decision.testKind`), which says what its pass `amount` counts. */
+  action?: SkillTestKind['kind'];
   options: string[];
   labels?: Record<string, string>;
-  defaults?: Record<string, Record<string, number>>;
+  /**
+   * The counts the players confirm or adjust by option name, each with its default and limits:
+   * `amount` (the clues a passed investigation discovers, the damage a passed fight deals) and
+   * the named ones (`{ attack: { damage: { default: 1, min: 0 }, horror: … } }`). The answer
+   * carries them as `ResolveDecision.amount` and `amounts`.
+   */
+  counts?: Record<string, DecisionCounts>;
 }
+
+/** The counts of one option of a `DecisionView`: its `amount` and its named amounts. */
+export type DecisionCounts = Partial<Record<'amount' | NamedAmount, AmountRange>>;
 
 /** One enemy attack enemy step 3.3 lists: the enemy by printed name and the investigator it attacks. */
 export interface DueAttackView {
@@ -686,18 +700,18 @@ function actView(ctx: EngineContext, state: GameState): ActView | undefined {
 }
 
 function decisionView(ctx: EngineContext, state: GameState, decision: Decision): DecisionView {
-  const defaults = Object.fromEntries(
+  const counts = Object.fromEntries(
     decision.options.flatMap((option) => {
-      const counts = {
-        ...(option.amount ? { amount: option.amount.default } : {}),
+      const ranges: DecisionCounts = {
+        ...(option.amount ? { amount: option.amount } : {}),
         ...Object.fromEntries(
           NAMED_AMOUNTS.flatMap((name) => {
             const range = option.amounts?.[name];
-            return range ? [[name, range.default]] : [];
+            return range ? [[name, range]] : [];
           }),
         ),
       };
-      return Object.keys(counts).length > 0 ? [[optionName(option), counts]] : [];
+      return Object.keys(ranges).length > 0 ? [[optionName(option), ranges]] : [];
     }),
   );
   const labels = Object.fromEntries(
@@ -713,9 +727,10 @@ function decisionView(ctx: EngineContext, state: GameState, decision: Decision):
     ...(about === undefined ? {} : { about }),
     ...(decision.decider.kind === 'investigator' ? { for: decision.decider.investigatorId } : {}),
     ...(decision.skillTest ? { test: decision.skillTest } : {}),
+    ...(decision.testKind ? { action: decision.testKind.kind } : {}),
     options: decision.options.map(optionName),
     ...(Object.keys(labels).length > 0 ? { labels } : {}),
-    ...(Object.keys(defaults).length > 0 ? { defaults } : {}),
+    ...(Object.keys(counts).length > 0 ? { counts } : {}),
   };
 }
 

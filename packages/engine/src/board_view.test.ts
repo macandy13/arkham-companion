@@ -807,7 +807,7 @@ describe('decisions and attacks', () => {
         for: alice,
         options: ['attack', 'does not provoke'],
         labels: { attack: 'decision.attack', 'does not provoke': 'decision.doesNotProvoke' },
-        defaults: { attack: { damage: 1, horror: 2 } },
+        counts: { attack: { damage: { default: 1, min: 0 }, horror: { default: 2, min: 0 } } },
       },
     ]);
   });
@@ -860,7 +860,9 @@ describe('a decision with one adjustable amount', () => {
       },
     });
 
-    expect(boardView(context, asked).decisions[0]?.defaults).toEqual({ discover: { amount: 2 } });
+    expect(boardView(context, asked).decisions[0]?.counts).toEqual({
+      discover: { amount: { default: 2, min: 0, max: 3 } },
+    });
   });
 });
 

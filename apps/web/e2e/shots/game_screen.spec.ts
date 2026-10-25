@@ -80,16 +80,31 @@ test('Alder’s willpower and agility test, a token drawn', async ({ page }) => 
   await expect(test.getByRole('status')).toBeVisible();
 });
 
+test('the decision dialog asking for the result of an investigation, a token drawn', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'Investigating', investigationOpenExport('Investigating'));
+  const decision = page.getByRole('dialog', { name: 'Investigate Hallway' });
+
+  await decision.getByRole('button', { name: 'Draw a token' }).click();
+
+  await expect(decision.getByRole('status')).toBeVisible();
+});
+
 test(
-  'the decision dialog asking for the result of an investigation, a token drawn',
+  "Alder's fight against the Ghoul Priest, the damage raised to 2",
   { tag: '@shot' },
   async ({ page }) => {
-    await resumeImportedGame(page, 'Investigating', investigationOpenExport('Investigating'));
-    const decision = page.getByRole('dialog', { name: 'Investigate Hallway' });
+    await resumeImportedGame(page, 'Alder threatened', alderThreatenedExport('Alder threatened'));
+    const alder = page.getByRole('region', { name: 'Alder' });
+    await alder.getByRole('button', { name: 'Later cards in the threat area' }).click();
+    await alder.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
+    await page.getByRole('button', { name: 'Fight · 1 action' }).click();
+    const decision = page.getByRole('dialog', { name: 'Fight Ghoul Priest' });
 
-    await decision.getByRole('button', { name: 'Draw a token' }).click();
+    await decision.getByRole('button', { name: 'Raise the Damage dealt' }).click();
 
-    await expect(decision.getByRole('status')).toBeVisible();
+    await expect(decision.getByRole('region', { name: 'Damage dealt' })).toContainText('2');
   },
 );
 

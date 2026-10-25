@@ -678,7 +678,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         for: roland,
         options: ['attack', 'does not provoke'],
         labels: { attack: 'decision.attack', 'does not provoke': 'decision.doesNotProvoke' },
-        defaults: { attack: { damage: 1, horror: 2 } },
+        counts: { attack: { damage: { default: 1, min: 0 }, horror: { default: 2, min: 0 } } },
       },
     ]);
 
@@ -694,9 +694,11 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         about: 'Attic',
         for: roland,
         test: { skill: 'intellect', difficulty: 1 },
+        action: 'investigate',
         options: ['pass', 'fail'],
         labels: { pass: 'decision.pass', fail: 'decision.fail' },
-        defaults: { pass: { amount: 1 } },
+        // A pass discovers 1 clue unless a card finds more, up to the 4 clues on the Attic.
+        counts: { pass: { amount: { default: 1, min: 1, max: 4 } } },
       },
     ]);
 
@@ -1058,7 +1060,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         for: daisy,
         options: ['attack', 'attack cancelled'],
         labels: { attack: 'decision.attack', 'attack cancelled': 'decision.attackCancelled' },
-        defaults: { attack: { damage: 2, horror: 2 } },
+        counts: { attack: { damage: { default: 2, min: 0 }, horror: { default: 2, min: 0 } } },
       },
     ]);
     table.answer(byName('Ghoul Priest'), 'attack cancelled');

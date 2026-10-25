@@ -301,6 +301,13 @@ export const resources = {
         attack: 'Take the attack',
         doesNotProvoke: 'Does not provoke',
         attackCancelled: 'The attack is cancelled',
+        count: {
+          clues: 'Clues discovered',
+          dealt: 'Damage dealt',
+          amount: 'Count',
+          damage: 'Damage',
+          horror: 'Horror',
+        },
       },
       scenario: {
         theGathering: {
@@ -737,6 +744,13 @@ export const resources = {
         attack: 'Angriff hinnehmen',
         doesNotProvoke: 'Provoziert keinen Angriff',
         attackCancelled: 'Der Angriff wird verhindert',
+        count: {
+          clues: 'Entdeckte Hinweise',
+          dealt: 'Zugefügter Schaden',
+          amount: 'Anzahl',
+          damage: 'Schaden',
+          horror: 'Horror',
+        },
       },
       scenario: {
         theGathering: {
