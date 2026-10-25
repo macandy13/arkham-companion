@@ -273,6 +273,13 @@ export const resources = {
             damage: 'Take 2 damage',
           },
         },
+        theDevourerBelow: {
+          offerOfPower: {
+            prompt: '{{card}}: you must either',
+            doom: 'Draw 2 cards and place 2 doom on the current agenda',
+            horror: 'Take 2 horror',
+          },
+        },
       },
       scenarios: { theGathering: 'The Gathering' },
       campaigns: { nightOfTheZealot: 'Night of the Zealot' },
@@ -646,6 +653,13 @@ export const resources = {
             prompt: '{{card}}: Du musst entweder',
             clue: '1 Hinweis ausgeben',
             damage: '2 Schaden erleiden',
+          },
+        },
+        theDevourerBelow: {
+          offerOfPower: {
+            prompt: '{{card}}: Du musst entweder',
+            doom: '2 Karten ziehen und 2 Verderben auf die aktuelle Agenda legen',
+            horror: '2 Horror erleiden',
           },
         },
       },
