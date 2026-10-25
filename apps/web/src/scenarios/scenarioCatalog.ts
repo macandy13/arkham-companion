@@ -15,6 +15,11 @@ export interface CampaignEntry {
   id: string;
   nameKey: string;
   firstScenarioId: string;
+  /**
+   * ArkhamDB codes of the packs that contain the campaign (`PackDef.code`); the settings offer
+   * only these packs for the collection, since the app plays no other campaign yet.
+   */
+  packCodes: readonly string[];
 }
 
 /**
@@ -36,6 +41,8 @@ export const campaignCatalog: readonly CampaignEntry[] = [
     id: 'night-of-the-zealot',
     nameKey: 'campaigns.nightOfTheZealot',
     firstScenarioId: theGathering.id,
+    // The Revised Core Set reprints the Core Set with the same campaign.
+    packCodes: ['core', 'rcore'],
   },
 ];
 
