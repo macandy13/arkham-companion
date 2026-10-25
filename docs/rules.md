@@ -114,7 +114,8 @@ An ability that shuffles an empty discard pile into a deck does not shuffle the 
 - No spawn instruction: the enemy spawns engaged with the investigator who drew it.
 - No legal location: the enemy is discarded instead.
 - Several valid locations: the investigator spawning it chooses.
-- Prey never affects where an enemy spawns.
+- Prey never affects where an enemy spawns, except where the instruction names it: "Spawn – Engaged with prey" (The Masked Hunter) spawns the enemy engaged with the investigator its prey picks among all investigators, wherever they are, not the one who drew it. A tie goes to the lead investigator.
+- "Spawn – Any empty location" (Acolyte, Wizard of the Order): an [empty location](https://arkhamdb.com/rules#Empty_Location) has no enemies and no investigators at it. Other cards there, such as a story asset, don't count. With none, the enemy is discarded.
 - An enemy is either engaged (in an investigator's threat area, which counts as that investigator's location and moves with them) or unengaged at a location.
 - A **ready, unengaged** enemy engages as soon as it shares a location with an investigator: when it spawns there, moves there, or an investigator moves in. With several investigators present, [prey](#prey) decides, then the lead investigator. There is no limit on enemies engaged with one investigator.
 - An exhausted enemy doesn't engage, but engages the moment it readies if it shares a location with an investigator.

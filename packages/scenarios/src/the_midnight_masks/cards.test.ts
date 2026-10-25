@@ -285,12 +285,11 @@ describe('The Midnight Masks card abilities', () => {
       .withCard(wizard, cardOf('01170'), { kind: 'encounterDeck' })
       .start();
 
-    const drawn = stateAfter(context, started, aliceDraws);
-    expect(drawn.pending).toMatchObject([{ id: 'spawn:wizard_of_the_order' }]);
+    const state = stateAfter(context, started, aliceDraws);
 
-    const state = stateAfter(context, drawn, answer('spawn:wizard_of_the_order', graveyard));
-
+    // "Spawn - Any empty location": alice stands in Rivertown, so only the Graveyard is empty.
     expect(state.cards[wizard]?.zone).toEqual(atLocation(graveyard));
+    expect(state.pending).toEqual([]);
   });
 
   it('deals the damage of a failed On Wings of Darkness too when its horror defeats alice', () => {

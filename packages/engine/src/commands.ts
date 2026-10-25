@@ -528,6 +528,12 @@ export interface SpawnEnemy {
   investigatorId?: InvestigatorId;
   /** Explicit spawn location (a card effect or scenario step); overrides the keyword. */
   at?: InstanceId;
+  /**
+   * The investigator the enemy spawns engaged with, at their location; overrides the keyword.
+   * Set by the answer to the tie of a "Spawn - Engaged with prey" instruction. `at` wins when
+   * both are set.
+   */
+  engagedWith?: InvestigatorId;
 }
 
 /**
