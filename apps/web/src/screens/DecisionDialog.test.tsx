@@ -167,7 +167,7 @@ describe('DecisionDialog', () => {
       expect(answered).toHaveBeenCalledWith(...sends);
     });
 
-    it('offers no draw for a decision that is not a skill test', () => {
+    it('offers no draw for the attack of opportunity an investigation provokes first', () => {
       const table = PlayTable.start(
         newGame()
           .withLocation(study, blankLocation('study'), { revealed: true })
@@ -180,6 +180,7 @@ describe('DecisionDialog', () => {
 
       renderFirstDecision(table);
 
+      expect(screen.getByRole('heading').textContent).toBe('Attack of opportunity by Ghoul');
       expect(screen.queryByRole('button', { name: 'Draw a token' })).toBeNull();
     });
   });

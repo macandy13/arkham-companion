@@ -1,8 +1,8 @@
 /*
  * The parts of a skill test calculation (TestCalculation) that the skill test dialog and the
  * decision dialog of a skill test share: the stepper rows, the calculation and the outcome,
- * coloured like a pass or a fail, and the tokens drawn. The `#board` id lets these beat the home
- * screen's `#app > main` rows and padded list cards.
+ * coloured like a pass or a fail, and the tokens drawn, and both dialogs' plain list items. The
+ * `#board` id lets these beat the home screen's `#app > main` rows and padded list cards.
  */
 #board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) section {
   display: flex;

@@ -1,6 +1,13 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BoardView, ChaosToken, DecisionView } from '@arkham/engine';
+import type {
+  BoardView,
+  ChaosToken,
+  DecisionView,
+  InvestigatorId,
+  SkillTest,
+  SkillTestSuggestion,
+} from '@arkham/engine';
 import { drawTokens, testFinished } from '../investigators/drawTokens';
 import { DrawnTokens, signed, Stepper, TestResult } from '../investigators/TestCalculation';
 import type { GameActions } from '../state/gameActions';
@@ -13,7 +20,8 @@ import type { GameActions } from '../state/gameActions';
  * dialog: the players set their modifier and let the app draw, and the calculation
  * (`BoardView.skillTest`) marks the option it suggests, which then answers with its margin; the
  * other option overrides it without one. The screen mounts one dialog per decision, so a draw
- * never carries over to the next. The game cannot go on before it is answered, so Escape does not close it; Undo takes back
+ * never carries over to the next; adjusting the board, which unmounts it, starts the draw over.
+ * The game cannot go on before it is answered, so Escape does not close it; Undo takes back
  * the step that raised it instead, and "Adjust board" lets the players correct the board first
  * (the dialog steps aside while they adjust, since the modal makes the board inert). The engine's labels are i18n keys or names already readable
  * (investigators, locations); a key the strings lack shows as the option's readable name.
@@ -35,15 +43,10 @@ export function DecisionDialog({
   useEffect(() => {
     dialog.current?.showModal();
   }, []);
-  const [modifier, setModifier] = useState(0);
-  const [revealed, setRevealed] = useState<readonly ChaosToken[]>([]);
   const { test } = decision;
   const tested = decision.kind === 'skillTestResult' ? decision.for : undefined;
-  const result =
-    test && tested !== undefined && revealed.length > 0
-      ? board.skillTest(tested, test, { modifier, tokens: revealed })
-      : undefined;
-  const suggested = result && testFinished(revealed) ? result : undefined;
+  const draw = useChaosDraw(board, tested, test);
+  const suggested = draw.result && testFinished(draw.revealed) ? draw.result : undefined;
 
   return (
     <dialog
@@ -63,28 +66,7 @@ export function DecisionDialog({
           {t('decision.test', { skill: t(`skill.${test.skill}`), difficulty: test.difficulty })}
         </p>
       )}
-      {test && tested !== undefined && (
-        <>
-          <Stepper
-            label={t('skillTest.modifier')}
-            value={modifier}
-            shown={signed(modifier)}
-            onChange={setModifier}
-          />
-          <button
-            type="button"
-            disabled={board.chaosBag.length === 0}
-            // The engine draws nothing itself, so the draw happens here, at the edge.
-            onClick={() => setRevealed(drawTokens(board.chaosBag, revealed, Math.random))}
-          >
-            {t('skillTest.draw')}
-          </button>
-          {revealed.length > 0 && <DrawnTokens tokens={revealed} />}
-          {result && (
-            <TestResult result={result} skill={test.skill} finished={testFinished(revealed)} />
-          )}
-        </>
-      )}
+      {test && tested !== undefined && <TestDraw board={board} test={test} draw={draw} />}
       <ul>
         {/* Two options can share a name (two enemies of one card), so the position is the key. */}
         {decision.options.map((option, index) => (
@@ -114,5 +96,58 @@ export function DecisionDialog({
         </button>
       </footer>
     </dialog>
+  );
+}
+
+/** The players' modifier and the tokens drawn for a decision's skill test, and what they make. */
+interface ChaosDraw {
+  modifier: number;
+  setModifier: (modifier: number) => void;
+  revealed: readonly ChaosToken[];
+  setRevealed: (revealed: readonly ChaosToken[]) => void;
+  /** The calculation once a token is drawn (`BoardView.skillTest`); none for other decisions. */
+  result?: SkillTestSuggestion;
+}
+
+/** The draw for the test `tested` takes, kept in the dialog so its answer can use the result. */
+function useChaosDraw(
+  board: BoardView,
+  tested: InvestigatorId | undefined,
+  test: SkillTest | undefined,
+): ChaosDraw {
+  const [modifier, setModifier] = useState(0);
+  const [revealed, setRevealed] = useState<readonly ChaosToken[]>([]);
+  const result =
+    test && tested !== undefined && revealed.length > 0
+      ? board.skillTest(tested, test, { modifier, tokens: revealed })
+      : undefined;
+  return { modifier, setModifier, revealed, setRevealed, ...(result ? { result } : {}) };
+}
+
+/** The modifier, the draw button, the tokens drawn and the calculation of a decision's test. */
+function TestDraw({ board, test, draw }: { board: BoardView; test: SkillTest; draw: ChaosDraw }) {
+  const { t } = useTranslation();
+  const { modifier, setModifier, revealed, setRevealed, result } = draw;
+  return (
+    <>
+      <Stepper
+        label={t('skillTest.modifier')}
+        value={modifier}
+        shown={signed(modifier)}
+        onChange={setModifier}
+      />
+      <button
+        type="button"
+        disabled={board.chaosBag.length === 0}
+        // The engine draws nothing itself, so the draw happens here, at the edge.
+        onClick={() => setRevealed(drawTokens(board.chaosBag, revealed, Math.random))}
+      >
+        {t('skillTest.draw')}
+      </button>
+      {revealed.length > 0 && <DrawnTokens tokens={revealed} />}
+      {result && (
+        <TestResult result={result} skill={test.skill} finished={testFinished(revealed)} />
+      )}
+    </>
   );
 }
