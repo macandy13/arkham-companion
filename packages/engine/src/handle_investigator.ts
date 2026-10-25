@@ -7,8 +7,9 @@ import type {
   MoveInvestigator,
   PlaceClues,
   SetLeadInvestigator,
+  TakeDamageAndHorror,
 } from './commands';
-import { investigatorLeavesEvents } from './elimination';
+import { investigatorLeavesEvents, woundEvents } from './elimination';
 import { arrivalEngagements } from './engagement';
 import type {
   CluesDiscovered,
@@ -112,6 +113,20 @@ export function handleAdjustInvestigator(
       cause,
     }),
   ];
+}
+
+/** `TakeDamageAndHorror`: both placed at once, then the defeat they cause together (`woundEvents`). */
+export function handleTakeDamageAndHorror(
+  ctx: EngineContext,
+  state: GameState,
+  cmd: TakeDamageAndHorror,
+): Event[] {
+  const investigator = activeInvestigator(state, cmd.investigatorId);
+  const amounts = { damage: cmd.damage, horror: cmd.horror };
+  const valid = Object.values(amounts).every((amount) => Number.isInteger(amount) && amount >= 0);
+  if (!valid || amounts.damage + amounts.horror === 0)
+    throw new CommandRejected({ code: 'invalidWounds', ...amounts });
+  return woundEvents(ctx, state, investigator, amounts);
 }
 
 /** `DefeatInvestigator`: a card effect defeats the investigator, with the clean-up of any defeat. */

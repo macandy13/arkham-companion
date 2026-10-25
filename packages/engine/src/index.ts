@@ -146,6 +146,7 @@ export {
   spawnEachSetAsideAt,
   spawnEnemyAt,
   takeDamage,
+  takeDamageAndHorror,
   takeHorror,
   spendClues,
   moveTo,

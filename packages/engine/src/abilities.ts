@@ -245,6 +245,7 @@ export type AbilityCommand =
       {
         type:
           | 'AdjustInvestigator'
+          | 'TakeDamageAndHorror'
           | 'PlaceDoom'
           | 'MoveCard'
           | 'DiscardCard'
@@ -1059,6 +1060,18 @@ export function takeDamage(
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
   return { type: 'AdjustInvestigator', investigatorId: who, stat: 'damage', delta: amount };
+}
+
+/**
+ * "Take 1 horror and 1 damage": both at once (`TakeDamageAndHorror`), so a
+ * defeat by one does not lose the other, written
+ * `takeDamageAndHorror({ damage: 1, horror: 1 })` (On Wings of Darkness).
+ */
+export function takeDamageAndHorror(
+  amounts: { damage: number; horror: number },
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'TakeDamageAndHorror', investigatorId: who, ...amounts };
 }
 
 /** "Take N horror", like `takeDamage`: Goat Spawn is `whenDefeated(takeHorror(1, eachInvestigatorAt(itsLocation())))`. */

@@ -171,6 +171,8 @@ export type Rejection =
   | { code: 'attackNotDue'; enemyId: InstanceId; investigatorId: InvestigatorId }
   /** `ResolveEnemyAttack` with damage or horror that is not a non-negative integer. */
   | { code: 'invalidAttackAmount'; amount: number }
+  /** `TakeDamageAndHorror` with an amount that is not a non-negative integer, or nothing to take. */
+  | { code: 'invalidWounds'; damage: number; horror: number }
   /** A command that belongs to another phase (e.g. `EndTurn` outside investigation). */
   | { code: 'wrongPhase'; expected: Phase; actual: Phase }
   /** `EndTurn` for an investigator who has already taken their turn this round. */
@@ -390,6 +392,8 @@ function describe(r: Rejection): string {
       return `${r.enemyId} has no attack on ${r.investigatorId} to resolve`;
     case 'invalidAttackAmount':
       return `attack damage and horror must be non-negative integers, got ${r.amount}`;
+    case 'invalidWounds':
+      return `damage and horror must be non-negative integers, not both 0, got ${r.damage} and ${r.horror}`;
     case 'wrongPhase':
       return `only allowed in the ${r.expected} phase, not in ${r.actual}`;
     case 'turnAlreadyTaken':
