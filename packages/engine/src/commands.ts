@@ -48,6 +48,7 @@ export type Command =
   | ShuffleInto
   | ShuffleEncounterDiscard
   | ShuffleEncounterDeck
+  | EngageReadyEnemies
   | SpawnEnemy
   | EngageEnemy
   | DisengageEnemy
@@ -459,6 +460,17 @@ export interface ShuffleInto {
  */
 export interface ShuffleEncounterDiscard {
   type: 'ShuffleEncounterDiscard';
+}
+
+/**
+ * Lets every ready, unengaged enemy at a location with an investigator
+ * engage (Rules Reference, "Enemy Engagement"), after an effect that leaves
+ * one there: On Wings of Darkness disengages enemies, then moves the drawer
+ * away, and an enemy left with another investigator engages them. Produces
+ * `EnemyEngaged`s, or a `chooseEngagement` decision per enemy with a choice.
+ */
+export interface EngageReadyEnemies {
+  type: 'EngageReadyEnemies';
 }
 
 /**

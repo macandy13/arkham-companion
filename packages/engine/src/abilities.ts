@@ -246,6 +246,7 @@ export type AbilityCommand =
           | 'HealEnemy'
           | 'MoveEnemyTowards'
           | 'DisengageEnemy'
+          | 'EngageReadyEnemies'
           | 'ReadyEnemy'
           | 'GainSurge'
           | 'MoveInvestigator'
@@ -603,6 +604,31 @@ function withDeferredOutcomes(effect: AbilityEffect, opened: OpenedWindow): unkn
   return { ...effect, onPass: defer(effect.onPass), onFail: defer(effect.onFail) };
 }
 
+/** Who picks a candidate for `picked`, and how the decision asks. */
+function pickQuestion(
+  picked: PickedRef,
+  investigatorId: InvestigatorId,
+): Pick<Decision, 'kind' | 'prompt' | 'decider'> & { key: string } {
+  switch (picked.ref) {
+    case 'nearestEnemy':
+      return {
+        key: 'nearest',
+        kind: 'chooseCard',
+        prompt: 'decision.chooseNearestEnemy',
+        decider: { kind: 'lead' },
+      };
+    case 'locationWith':
+      return {
+        key: 'location',
+        kind: 'chooseLocation',
+        prompt: 'decision.chooseLocationToMove',
+        decider: { kind: 'investigator', investigatorId },
+      };
+    default:
+      return assertNever(picked);
+  }
+}
+
 /** A reference that stands for one of several candidates, which someone may have to pick. */
 type PickedRef = Extract<RelativeCard, { ref: 'nearestEnemy' | 'locationWith' }>;
 
@@ -646,15 +672,13 @@ function pickDecision(
   candidates: readonly CardInstance[],
   commandsFor: (pickedId: InstanceId) => AbilityCommand[],
 ): Command {
-  const nearest = picked.ref === 'nearestEnemy';
+  const { key, ...asked } = pickQuestion(picked, investigatorId);
   return {
     type: 'RequestDecision',
     decision: {
-      id: decisionId(`${nearest ? 'nearest' : 'location'}:${cardId}`),
-      kind: nearest ? 'chooseCard' : 'chooseLocation',
+      ...asked,
+      id: decisionId(`${key}:${cardId}`),
       subject: cardId,
-      prompt: nearest ? 'decision.chooseNearestEnemy' : 'decision.chooseLocationToMove',
-      decider: nearest ? { kind: 'lead' } : { kind: 'investigator', investigatorId },
       options: candidates.map((card) => ({
         id: card.id,
         label: cardStats(ctx.cards, card.code).name,
@@ -1047,6 +1071,16 @@ export function disengageFromEachEnemy(filter: EnemyFilter = {}): AbilityEffect 
     type: 'DisengageEnemy',
     enemyId: { ref: 'eachEnemy', ...filter, engagedWith: { ref: 'windowInvestigator' } },
   };
+}
+
+/**
+ * The rule that a ready, unengaged enemy at an investigator's location engages
+ * them (`EngageReadyEnemies`), checked once the effects before it are done:
+ * an enemy On Wings of Darkness disengages engages whoever is still there
+ * after the drawer moved away.
+ */
+export function engageReadyEnemies(): AbilityEffect {
+  return { type: 'EngageReadyEnemies' };
 }
 
 /** "A [[Central]] location" (`locationWith`), picked by the investigator the window names: `moveTo(locationWith(trait('Central')))`. */

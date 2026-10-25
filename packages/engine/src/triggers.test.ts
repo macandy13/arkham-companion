@@ -34,6 +34,7 @@ import {
   discardEachEnemyAt,
   discardSelf,
   disengageFromEachEnemy,
+  engageReadyEnemies,
   eachEnemy,
   forEachEnemy,
   eachInvestigatorAt,
@@ -1925,7 +1926,8 @@ describe("disengaging and moving after a card's test", () => {
   const bob = investigatorId('bob');
   /**
    * "Test agility (4). If you fail, take 1 horror. Then, disengage with each non-Nightgaunt enemy
-   * engaged with you and move to a Central location."
+   * engaged with you and move to a Central location." A disengaged enemy engages whoever is still
+   * at its location once the move is done.
    */
   const wingsCard = blankTreachery('wings', {
     abilities: [
@@ -1933,6 +1935,7 @@ describe("disengaging and moving after a card's test", () => {
         skillTest('agility', 4, { onFail: [takeHorror(1)] }),
         disengageFromEachEnemy({ withoutTrait: trait('Nightgaunt') }),
         moveTo(locationWith(trait('Central'))),
+        engageReadyEnemies(),
       ),
     ],
   });
@@ -1941,16 +1944,13 @@ describe("disengaging and moving after a card's test", () => {
   const nightgauntCard = blankEnemy('nightgaunt', { traits: [trait('Nightgaunt')] });
   const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
 
-  it("disengages the monster from alice after the answer, keeps the nightgaunt and bob's monster engaged", () => {
-    const bobsMonster = instanceId('bobs_monster');
+  it('leaves the monster in the hall after the answer, and the nightgaunt moves with alice', () => {
     const { context, state } = newGame()
       .withLocation(hall, blankLocation('hall'), { revealed: true })
       .withLocation(square, centralCard('square'), { revealed: true })
       .withInvestigator(alice, { locationId: hall })
-      .withInvestigator(bob, { locationId: hall })
       .withCard(monster, monsterCard, engagedWith(alice))
       .withCard(nightgaunt, nightgauntCard, engagedWith(alice))
-      .withCard(bobsMonster, monsterCard, engagedWith(bob))
       .withCard(wings, wingsCard, { kind: 'encounterDeck' })
       .start();
     const asked = stateAfter(context, state, aliceDraws);
@@ -1960,8 +1960,45 @@ describe("disengaging and moving after a card's test", () => {
 
     expect(after.cards[monster]?.zone).toEqual(atLocation(hall));
     expect(after.cards[nightgaunt]?.zone).toEqual(engagedWith(alice));
+    expect(requireInvestigator(after, alice).locationId).toBe(square);
+  });
+
+  it("hands alice's monster to bob, who stays in the hall, and keeps bob's own monster on him", () => {
+    const bobsMonster = instanceId('bobs_monster');
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(square, centralCard('square'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: hall })
+      .withCard(monster, monsterCard, engagedWith(alice))
+      .withCard(bobsMonster, monsterCard, engagedWith(bob))
+      .withCard(wings, wingsCard, { kind: 'encounterDeck' })
+      .start();
+
+    const after = stateAfter(context, state, aliceDraws, answer('test:wings', 'pass'));
+
+    expect(after.cards[monster]?.zone).toEqual(engagedWith(bob));
     expect(after.cards[bobsMonster]?.zone).toEqual(engagedWith(bob));
     expect(requireInvestigator(after, alice).locationId).toBe(square);
+  });
+
+  it('does nothing after the test for alice when its horror defeats her', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(square, centralCard('square'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall, sanity: { max: 6, horror: 5 } })
+      .withCard(monster, monsterCard, engagedWith(alice))
+      .withCard(wings, wingsCard, { kind: 'encounterDeck' })
+      .start();
+
+    const after = stateAfter(context, state, aliceDraws, answer('test:wings', 'fail'));
+
+    expect(requireInvestigator(after, alice)).toMatchObject({
+      status: 'defeated',
+      locationId: hall,
+    });
+    expect(after.cards[monster]?.zone).toEqual(atLocation(hall));
+    expect(after.pending).toEqual([]);
   });
 
   it('lets alice pick between two Central locations', () => {
@@ -2001,10 +2038,11 @@ describe("disengaging and moving after a card's test", () => {
     expect(requireInvestigator(after, alice).locationId).toBe(square);
   });
 
-  it('leaves alice in her Central hall when there is no other Central location', () => {
+  it('leaves alice in her Central hall when there is no other, and the monster engages her again', () => {
     const { context, state } = newGame()
       .withLocation(hall, centralCard('hall'), { revealed: true })
       .withInvestigator(alice, { locationId: hall })
+      .withCard(monster, monsterCard, engagedWith(alice))
       .withCard(wings, wingsCard, { kind: 'encounterDeck' })
       .start();
 
@@ -2012,6 +2050,7 @@ describe("disengaging and moving after a card's test", () => {
 
     expect(after.pending).toEqual([]);
     expect(requireInvestigator(after, alice).locationId).toBe(hall);
+    expect(after.cards[monster]?.zone).toEqual(engagedWith(alice));
   });
 });
 

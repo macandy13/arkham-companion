@@ -132,6 +132,7 @@ export {
   searchAndDraw,
   shuffleEncounterDeck,
   disengageFromEachEnemy,
+  engageReadyEnemies,
   locationWith,
   readySelf,
   putIntoThreatArea,
