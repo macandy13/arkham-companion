@@ -238,11 +238,36 @@
   min-width: 0;
   height: 100%;
   padding: var(--space-1);
-  border: var(--card-border-width) solid var(--color-card-edge);
+  border: var(--card-border-width) solid var(--picker-class-colour, var(--color-card-edge));
   background: linear-gradient(var(--color-parchment), var(--color-parchment-shade));
   color: var(--color-ink);
   font-size: var(--font-size-note);
   text-align: center;
+}
+
+/* Each class in its colour, on the portrait's edge and its class line, as the cards print it. */
+#investigator-picker [data-faction='guardian'] {
+  --picker-class-colour: var(--color-class-guardian);
+}
+
+#investigator-picker [data-faction='seeker'] {
+  --picker-class-colour: var(--color-class-seeker);
+}
+
+#investigator-picker [data-faction='rogue'] {
+  --picker-class-colour: var(--color-class-rogue);
+}
+
+#investigator-picker [data-faction='mystic'] {
+  --picker-class-colour: var(--color-class-mystic);
+}
+
+#investigator-picker [data-faction='survivor'] {
+  --picker-class-colour: var(--color-class-survivor);
+}
+
+#investigator-picker [data-faction='neutral'] {
+  --picker-class-colour: var(--color-class-neutral);
 }
 
 #app #investigator-picker > div > ul > li > button:hover {
@@ -288,12 +313,81 @@
   color: var(--color-text-muted);
 }
 
+#investigator-picker small[data-chapter='2'] {
+  color: var(--color-accent);
+}
+
 #investigator-picker > div small {
   color: var(--color-ink);
 }
 
-#investigator-picker small[data-chapter='2'] {
-  color: var(--color-accent);
+/* The class line under the name, in the class's colour. */
+#investigator-picker > div button > span + small {
+  color: var(--picker-class-colour);
+  font-weight: bold;
+  letter-spacing: var(--card-type-spacing);
+  text-transform: uppercase;
+}
+
+/* The skills, then health and sanity: each a value after its icon, its name for screen readers. */
+#investigator-picker > div small:has(> [data-skill], > [data-stat]) {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0 var(--space-2);
+  font-weight: bold;
+  font-variant-numeric: lining-nums;
+}
+
+/* Positioned, so the hidden names stay inside the scrolling pages. */
+#investigator-picker > div small > span {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--space-1) / 2);
+}
+
+#investigator-picker > div small > span > span {
+  position: absolute;
+  width: var(--hidden-size);
+  height: var(--hidden-size);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+#investigator-picker > div small > span::before {
+  content: '';
+  width: var(--stat-icon-size);
+  height: var(--stat-icon-size);
+  background: var(--picker-stat-colour, var(--color-ink));
+  mask: var(--picker-stat-icon) center / contain no-repeat;
+}
+
+#investigator-picker [data-skill='willpower'] {
+  --picker-stat-icon: url('../symbols/willpower.svg');
+}
+
+#investigator-picker [data-skill='intellect'] {
+  --picker-stat-icon: url('../symbols/intellect.svg');
+}
+
+#investigator-picker [data-skill='combat'] {
+  --picker-stat-icon: url('../symbols/combat.svg');
+}
+
+#investigator-picker [data-skill='agility'] {
+  --picker-stat-icon: url('../symbols/agility.svg');
+}
+
+#investigator-picker [data-stat='health'] {
+  --picker-stat-icon: url('../investigators/icons/health.svg');
+  --picker-stat-colour: var(--color-health);
+}
+
+#investigator-picker [data-stat='sanity'] {
+  --picker-stat-icon: url('../investigators/icons/sanity.svg');
+  --picker-stat-colour: var(--color-sanity);
 }
 
 /* The detail sheet, a dialog over the picker. */

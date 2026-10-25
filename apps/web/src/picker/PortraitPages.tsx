@@ -1,4 +1,5 @@
 import type { InvestigatorDef } from '@arkham/carddata';
+import { SKILL_NAMES } from '@arkham/engine';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { seatNumber } from './pickerLogic';
@@ -46,12 +47,15 @@ export function PortraitPages({ investigators, seats, imageUrl, onOpen }: Portra
       <ul ref={pages} aria-label={t('picker.portraits')}>
         {investigators.map((investigator) => (
           <li key={investigator.code}>
-            <button type="button" onClick={() => onOpen(investigator.code)}>
+            <button
+              type="button"
+              data-faction={investigator.factionCode}
+              onClick={() => onOpen(investigator.code)}
+            >
               <Portrait src={investigator.imageSrc && imageUrl(investigator.imageSrc)} />
               <span>{investigator.name}</span>
-              <small data-chapter={investigator.chapter}>
-                {t('picker.chapterBadge', { n: investigator.chapter })}
-              </small>
+              <small>{t(`picker.faction.${investigator.factionCode}`)}</small>
+              <Stats investigator={investigator} />
               <SeatBadge n={seatNumber(seats, investigator.code)} />
             </button>
           </li>
@@ -66,6 +70,34 @@ export function PortraitPages({ investigators, seats, imageUrl, onOpen }: Portra
         />
       )}
     </div>
+  );
+}
+
+/**
+ * What a portrait tells about its investigator besides name and class, as on the card: the four skills in the order the
+ * card prints them, then health and sanity, each a value after its icon. The stylesheet draws the
+ * icons and keeps each value's name for screen readers only, so the portrait's button names them.
+ */
+function Stats({ investigator }: { investigator: InvestigatorDef }) {
+  const { t } = useTranslation();
+  return (
+    <>
+      <small>
+        {SKILL_NAMES.map((skill) => (
+          <span key={skill} data-skill={skill}>
+            <span>{t(`skill.${skill}`)}</span> {investigator.skills[skill]}
+          </span>
+        ))}
+      </small>
+      <small>
+        <span data-stat="health">
+          <span>{t('picker.health')}</span> {investigator.health}
+        </span>
+        <span data-stat="sanity">
+          <span>{t('picker.sanity')}</span> {investigator.sanity}
+        </span>
+      </small>
+    </>
   );
 }
 

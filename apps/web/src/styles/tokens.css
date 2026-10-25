@@ -196,6 +196,13 @@
   --investigator-art-y: 0.04;
   --investigator-art-width: 0.52;
   --investigator-art-height: 0.545;
+  /* The class colours, on the picker's portraits, close to the printed cards' frames. */
+  --color-class-guardian: #2b6cb0;
+  --color-class-seeker: #c76d12;
+  --color-class-rogue: #1f7a35;
+  --color-class-mystic: #5b3fb0;
+  --color-class-survivor: #b3282f;
+  --color-class-neutral: #6b6259;
   /* Portraits side by side on one of the picker's pages (`PORTRAITS_PER_PAGE` is twice this). */
   --picker-columns: 5;
   /*

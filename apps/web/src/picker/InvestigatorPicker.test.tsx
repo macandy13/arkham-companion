@@ -119,12 +119,36 @@ describe('InvestigatorPicker', () => {
   });
   afterEach(cleanup);
 
-  it('lists every investigator with its chapter badge', () => {
+  it('lists every investigator', () => {
     render(<Harness />);
 
     expect(portraitNames()).toEqual(['Alder', 'Alder', 'Birch', 'Cedar', 'Dogwood', 'Elm']);
-    const grid = screen.getByRole('list', { name: 'Investigators' });
-    expect(within(grid).getAllByText('Ch. 2')).toHaveLength(1);
+  });
+
+  it.each([
+    ['willpower', '[data-skill="willpower"]', 'Willpower 1'],
+    ['intellect', '[data-skill="intellect"]', 'Intellect 4'],
+    ['combat', '[data-skill="combat"]', 'Combat 2'],
+    ['agility', '[data-skill="agility"]', 'Agility 3'],
+    ['health', '[data-stat="health"]', 'Health 6'],
+    ['sanity', '[data-stat="sanity"]', 'Sanity 8'],
+  ])("shows Alder's %s on the portrait", (_, selector, text) => {
+    render(<Harness />);
+
+    const [alder] = within(screen.getByRole('list', { name: 'Investigators' })).getAllByRole(
+      'button',
+      { name: /Alder/ },
+    );
+
+    expect(alder!.querySelector(selector)?.textContent).toBe(text);
+  });
+
+  it("shows the investigator's class on the portrait", () => {
+    render(<Harness />);
+
+    const birch = screen.getByRole('button', { name: /Birch/ });
+
+    expect(within(birch).getByText('Rogue')).toBeTruthy();
   });
 
   it('lazy-loads portrait images from the ArkhamDB host', () => {
