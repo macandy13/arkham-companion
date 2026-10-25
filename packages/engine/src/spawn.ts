@@ -1,5 +1,5 @@
 import { locationsInPlay, locationsNamed, requireLocationInPlay } from './board';
-import { cardStats, comparableName, type CardStats, type EngineContext } from './cards';
+import { comparableName, type CardStats, type EngineContext } from './cards';
 import type { SpawnEnemy } from './commands';
 import {
   chooseInvestigator,
@@ -93,15 +93,16 @@ export function spawnEvents(
   // Index 0 is the top, and the discard's top is what "topmost" effects look for.
   if (plan.kind === 'discard') return [cardMoved(state, enemy, ENCOUNTER_DISCARD, 0)];
   const placed = cardMoved(state, enemy, spawnZone(plan.locationId));
-  return [placed, ...engageEvents(ctx, replay([placed], state), enemyId, plan.drawerId)];
+  return [placed, ...engageEvents(ctx, replay([placed], state), enemyId, plan.engageId)];
 }
 
 /**
- * Where the enemy spawns: `target.at`; else its `spawn` instruction; else the
- * drawer's location, where the drawer (`drawerId`) is engaged regardless of prey.
+ * Where the enemy spawns: `target.at`; else engaged with `target.engagedWith`; else its `spawn`
+ * instruction; else the drawer's location. `engageId` is the investigator it engages there
+ * regardless of prey: the drawer, or the one "Engaged with prey" settled on.
  */
 type SpawnPlan =
-  | { kind: 'at'; locationId: InstanceId; drawerId?: InvestigatorId }
+  | { kind: 'at'; locationId: InstanceId; engageId?: InvestigatorId }
   | { kind: 'choose'; candidates: InstanceId[] }
   | { kind: 'chooseInvestigator'; candidates: Investigator[] }
   | { kind: 'discard' };
@@ -126,15 +127,18 @@ function spawnPlan(
       code: 'investigatorHasNoLocation',
       investigatorId: drawer.id,
     });
-  return { kind: 'at', locationId: drawer.locationId, drawerId: drawer.id };
+  return { kind: 'at', locationId: drawer.locationId, engageId: drawer.id };
 }
 
-/** At the investigator's location, engaged with them whatever the prey. */
+/**
+ * At the investigator's location, engaged with them whatever the prey: the target "Engaged with
+ * prey" resolved to, or the answer to its tie.
+ */
 function engagedSpawn(state: GameState, investigatorId: InvestigatorId): SpawnPlan {
   const investigator = activeInvestigator(state, investigatorId);
   if (investigator.locationId === undefined)
     throw new CommandRejected({ code: 'investigatorHasNoLocation', investigatorId });
-  return { kind: 'at', locationId: investigator.locationId, drawerId: investigator.id };
+  return { kind: 'at', locationId: investigator.locationId, engageId: investigator.id };
 }
 
 /**
@@ -177,9 +181,7 @@ function emptyLocations(ctx: EngineContext, state: GameState): InstanceId[] {
   return locationsInPlay(ctx, state)
     .map((card) => card.id)
     .filter(
-      (id) =>
-        investigatorsAt(state, id).length === 0 &&
-        !enemiesAt(state, id).some((card) => cardStats(ctx.cards, card.code).typeCode === 'enemy'),
+      (id) => investigatorsAt(state, id).length === 0 && enemiesAt(ctx, state, id).length === 0,
     );
 }
 

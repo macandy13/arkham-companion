@@ -24,7 +24,7 @@ const reference = 'scenario.theGathering.reference';
  */
 const ghoulsAtYourLocation: TokenValue = (ctx, state, test) => {
   if (test.locationId === undefined) return 0;
-  const ghouls = enemiesAt(state, test.locationId).filter((enemy) =>
+  const ghouls = enemiesAt(ctx, state, test.locationId).filter((enemy) =>
     cardStats(ctx.cards, enemy.code).traits.includes(trait('Ghoul')),
   );
   // Subtracting from 0 rather than negating keeps "no Ghouls" a plain 0, not -0, in the trace.

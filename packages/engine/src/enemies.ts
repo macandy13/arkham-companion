@@ -143,12 +143,18 @@ export function locationOf(state: GameState, enemy: CardInstance): InstanceId {
 /**
  * The enemies in play at `locationId`, unengaged there or engaged with an
  * investigator standing there, in card order. Used for "enemies at your
- * location" (e.g. The Gathering's skull token).
+ * location" (e.g. The Gathering's skull token). Other cards at the location,
+ * such as a story asset, are left out.
  */
-export function enemiesAt(state: GameState, locationId: InstanceId): CardInstance[] {
+export function enemiesAt(
+  ctx: EngineContext,
+  state: GameState,
+  locationId: InstanceId,
+): CardInstance[] {
   return Object.values(state.cards).filter((card) => {
     const zone = card.zone;
-    if (zone.kind === 'atLocation') return zone.locationId === locationId;
+    if (zone.kind === 'atLocation')
+      return zone.locationId === locationId && cardStats(ctx.cards, card.code).typeCode === 'enemy';
     if (zone.kind !== 'engaged') return false;
     const engaged = state.investigators.find((inv) => inv.id === zone.investigatorId);
     return engaged?.locationId === locationId;

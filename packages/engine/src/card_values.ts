@@ -43,7 +43,9 @@ export function effectiveValue(
     (value, source) =>
       value +
       activeModifiers(ctx, state, source)
-        .filter((modifier) => modifier.stat === stat && names(state, source, modifier.of, card))
+        .filter(
+          (modifier) => modifier.stat === stat && names(ctx, state, source, modifier.of, card),
+        )
         .reduce((sum, modifier) => sum + modifier.by, 0),
     cardStats(ctx.cards, card.code)[stat] ?? 0,
   );
@@ -63,6 +65,7 @@ function activeModifiers(
 
 /** Whether `of`, read from `source`, names `card`. */
 function names(
+  ctx: EngineContext,
   state: GameState,
   source: CardInstance,
   of: ModifiedCards,
@@ -72,7 +75,7 @@ function names(
     case 'host':
       return source.zone.kind === 'attachedTo' && source.zone.hostId === card.id;
     case 'enemiesHere':
-      return enemiesAt(state, source.id).some((enemy) => enemy.id === card.id);
+      return enemiesAt(ctx, state, source.id).some((enemy) => enemy.id === card.id);
     default:
       return assertNever(of);
   }

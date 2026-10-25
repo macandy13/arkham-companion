@@ -201,8 +201,25 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     expect(table.nextPhase()).toEqual({ round: 1, phase: 'upkeep' });
 
     // Round 2 – mythos: Roland draws the Wizard of the Order, which spawns at
-    // any empty location: the players pick Northside, far away.
+    // any empty location: not Rivertown, where both investigators stand, nor
+    // Southside with its Acolyte. The players pick Northside, far away.
     expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos', step: 'drawEncounterCard' });
+    expect(table.board.decisions).toEqual([
+      {
+        prompt: 'decision.chooseSpawnLocation',
+        kind: 'chooseLocation',
+        about: wizard,
+        options: [
+          'Northside',
+          'Downtown',
+          'Easttown',
+          'Miskatonic University',
+          'Graveyard',
+          "St. Mary's Hospital",
+          'Your House',
+        ],
+      },
+    ]);
     table.answer(byName(wizard), 'Northside');
 
     // Daisy draws Hunting Shadow: she spends a clue rather than take 2 damage.
