@@ -172,19 +172,19 @@
 }
 
 #investigators [data-skill='willpower'] {
-  --skill-icon: url('./icons/willpower.svg');
+  --skill-icon: url('../symbols/willpower.svg');
 }
 
 #investigators [data-skill='intellect'] {
-  --skill-icon: url('./icons/intellect.svg');
+  --skill-icon: url('../symbols/intellect.svg');
 }
 
 #investigators [data-skill='combat'] {
-  --skill-icon: url('./icons/combat.svg');
+  --skill-icon: url('../symbols/combat.svg');
 }
 
 #investigators [data-skill='agility'] {
-  --skill-icon: url('./icons/agility.svg');
+  --skill-icon: url('../symbols/agility.svg');
 }
 
 /* Small buttons, so the panel stays compact. */

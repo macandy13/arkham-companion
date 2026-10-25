@@ -9,7 +9,7 @@ import {
 
 // Situations on the game screen, each photographed as it ends (`@shot`, coding guidelines §3).
 
-test('the house map with Alder in the Hallway', async ({ page }) => {
+test('the house map with Alder in the Hallway', { tag: '@shot' }, async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   const hallway = page
@@ -66,7 +66,7 @@ test('the house map by day', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
 
-test('Alder’s willpower and agility test, a token drawn', async ({ page }) => {
+test('Alder’s willpower and agility test, a token drawn', { tag: '@shot' }, async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   await page
@@ -80,12 +80,8 @@ test('Alder’s willpower and agility test, a token drawn', async ({ page }) => 
   await expect(test.getByRole('status')).toBeVisible();
 });
 
-test(
-  'the decision dialog asking for the result of an investigation',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'Investigating', investigationOpenExport('Investigating'));
+test('the decision dialog asking for the result of an investigation', async ({ page }) => {
+  await resumeImportedGame(page, 'Investigating', investigationOpenExport('Investigating'));
 
-    await expect(page.getByRole('dialog', { name: 'Investigate Hallway' })).toBeVisible();
-  },
-);
+  await expect(page.getByRole('dialog', { name: 'Investigate Hallway' })).toBeVisible();
+});
