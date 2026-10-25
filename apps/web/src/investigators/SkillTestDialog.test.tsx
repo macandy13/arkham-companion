@@ -27,7 +27,10 @@ describe('SkillTestDialog', () => {
   beforeAll(async () => {
     await initI18n('en');
   });
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
 
   /**
    * Opens Alder's willpower test (willpower 3, agility 4) with `bag` as the chaos bag, so a draw
@@ -114,6 +117,19 @@ describe('SkillTestDialog', () => {
     fireEvent.click(button('Draw a token'));
 
     expect(within(result()!).getByText('Modifier +2: 5')).toBeTruthy();
+  });
+
+  it('lists the tokens drawn by name, in the order they came out', () => {
+    // Always the first token left, so the bless comes out first and reveals the skull.
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    renderWillpowerTest(['bless', 'skull']);
+
+    fireEvent.click(button('Draw a token'));
+
+    const drawn = within(screen.getByRole('list', { name: 'Tokens drawn' }))
+      .getAllByRole('listitem')
+      .map((token) => token.textContent);
+    expect(drawn).toEqual(['Bless', 'Skull']);
   });
 
   it('asks for another token when the bag runs out after a bless', () => {
