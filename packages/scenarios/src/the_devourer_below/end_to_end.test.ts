@@ -18,7 +18,9 @@
  * act 3's action (spend 1 clue and test to place it on the act, which provokes
  * attacks of opportunity), the Ritual Site's clues at the end of the round,
  * Frozen in Fear's extra action, agenda 2's +1 fight and evade, Ancient
- * Evils' doom, Umôrdhoth's Wrath and Dissonant Voices. The players count actions themselves.
+ * Evils' doom, Umôrdhoth's Wrath, Twisting Paths' test to leave it (Daisy
+ * passes) and the 2 random cards "it is past midnight" discards from each
+ * opening hand. The players count actions themselves.
  */
 import { describe, expect, it } from 'vitest';
 import {
@@ -76,6 +78,8 @@ const twistingPaths = instanceId(`${codes.arkhamWoodsTwistingPaths}#1`);
 const oldHouse = instanceId(`${codes.arkhamWoodsOldHouse}#1`);
 const tangledThicket = instanceId(`${codes.arkhamWoodsTangledThicket}#1`);
 const yithian = 'Yithian Observer';
+/** The Agents of Yog-Sothoth's Yithian Observer: agenda 1's reverse side spawns it by hand, by ID. */
+const yithianObserver = instanceId('01177#1');
 const priest = 'Ghoul Priest';
 const hunter = 'The Masked Hunter';
 const gotAway = ['Peter Warren', 'Victoria Devereux', 'Ruth Turner', hunter];
@@ -160,7 +164,8 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
       Victory display: none
       Pending decisions: none"
     `);
-    // The seed fixes the encounter deck; the draws below follow this order.
+    // The seed fixes the encounter deck. Round 2 draws its first two cards;
+    // agenda 1's reverse side shuffles the discard back in, which reorders the rest.
     expect(table.board.namesIn({ kind: 'encounterDeck' }).slice(0, 8)).toEqual([
       ...['Offer of Power', 'Frozen in Fear'],
       ...['Wizard of the Order', 'Ancient Evils'],
@@ -228,8 +233,9 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
 
     // Round 2 – the unrevealed Woods connect only to the Main Path. Roland walks
     // round to Unhallowed Ground, fails its willpower test (1 horror, 1 damage)
-    // and takes a clue; Daisy, slowed by Frozen in Fear, reaches the Tangled
-    // Thicket and fails to shake off her fear.
+    // and takes a clue; Daisy passes Twisting Paths' test to leave it (by
+    // hand), is slowed by Frozen in Fear, reaches the Tangled Thicket and fails
+    // to shake off her fear.
     expect(table.nextPhase()).toEqual({ round: 2, phase: 'investigation' });
     table.startTurn(roland);
     table.moveTo(roland, mainPath);
@@ -263,12 +269,12 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
       'Grasping Hands',
     ]);
     table.step(() => {
-      table.play({ type: 'SpawnEnemy', enemyId: instanceId('01177#1'), at: mainPath });
-      table.play({ type: 'PlaceDoom', amount: 1, cardId: instanceId('01177#1') });
+      table.play({ type: 'SpawnEnemy', enemyId: yithianObserver, at: mainPath });
+      table.play({ type: 'PlaceDoom', amount: 1, cardId: yithianObserver });
     });
 
     // Round 3 – mythos: Roland draws the Ghoul Priest, still alive from The
-    // Gathering, who engages him (the highest combat); Daisy fails against
+    // Gathering, who spawns engaged with him as the one who drew him; Daisy fails against
     // Grasping Hands and takes 1 damage.
     expect(table.nextPhase()).toEqual({ round: 3, phase: 'mythos', step: 'drawEncounterCard' });
     expect(table.board.enemy(byName(priest))).toMatchObject({ engagedWith: roland });
@@ -276,7 +282,7 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
     expect(table.board.investigator(daisy)).toMatchObject({ damage: 1 });
 
     // Round 3 – Roland slips away from the Priest and takes Unhallowed Ground's
-    // last clue; Daisy takes the Thicket's two. With 7 clues the group spends
+    // last clue; Daisy takes the Thicket's two. With 8 clues the group spends
     // 6 on act 1: the Ritual Site joins the Woods above the Main Path, and the
     // Cultists who got away in The Midnight Masks spawn there.
     expect(table.nextPhase()).toEqual({ round: 3, phase: 'investigation' });
@@ -329,7 +335,8 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
     // away from The Masked Hunter, crosses the Main Path behind him and enters
     // the Ritual Site: act 2's objective, advanced by hand. Its reverse side,
     // by hand: the discard is shuffled back and the first enemy from the top,
-    // a Ghoul Minion, spawns at the Ritual Site, on Daisy, who slips it too.
+    // a Ghoul Minion, spawns at the Ritual Site, engaged with Daisy, who has no
+    // action left.
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'investigation' });
     table.startTurn(roland);
     table.evade(roland, byName(priest));
@@ -358,17 +365,18 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
         discardSkipped: true,
       });
     });
-    table.evade(daisy, byName('Ghoul Minion'));
     table.endTurn(daisy);
 
     expect(table.board.act).toMatchObject({ name: 'Disrupting the Ritual' });
     expect(table.board.location(ritualSite)).toMatchObject({ revealed: true, clues: 4 });
 
-    // Round 4 – enemy phase: the four engaged enemies attack Roland for 4
-    // damage and the Yithian Observer's 1 horror.
+    // Round 4 – enemy phase: the four enemies engaged with Roland attack him
+    // for 4 damage and the Yithian Observer's 1 horror; the Ghoul Minion
+    // attacks Daisy.
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'enemy', step: 'enemiesAttack' });
     table.resolveEnemyAttacks();
     expect(table.board.investigator(roland)).toMatchObject({ damage: 5, horror: 4 });
+    expect(table.board.investigator(daisy)).toMatchObject({ damage: 4, horror: 2 });
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'upkeep' });
 
     // Round 5 – mythos: Roland draws Mysterious Chanting; Peter Warren, Victoria
@@ -411,7 +419,8 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
     expect(table.board.investigator(daisy)).toMatchObject({ clues: 3 });
 
     // Round 5 – enemy phase: both hunters close in on the Main Path and engage
-    // Roland. With Victoria's and Ruth's attacks his ninth damage defeats him.
+    // Roland; the lead moves The Masked Hunter first. With Victoria's and
+    // Ruth's attacks his ninth damage defeats him.
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'enemy', step: 'huntersMove' });
     table.answerOnly(hunter);
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'enemy', step: 'enemiesAttack' });
@@ -424,7 +433,7 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
     table.resolveEnemyAttacks();
     expect(table.board.investigator(roland)).toMatchObject({ status: 'defeated', damage: 9 });
 
-    // The Ritual Site fills up to 4 clues again at the end of the round, by hand.
+    // As the round ends in upkeep, the Ritual Site fills up to 4 clues again, by hand.
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'upkeep' });
     table.play({
       type: 'ManualAdjust',
