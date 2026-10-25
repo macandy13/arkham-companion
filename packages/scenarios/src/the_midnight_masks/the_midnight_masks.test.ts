@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  campaign,
   cardDbWith,
   cardStats,
+  emptyState,
+  execute,
+  investigatorCode,
   instanceId,
   zoneKey,
   investigatorId,
@@ -12,7 +16,9 @@ import {
   type Command,
   type Difficulty,
   type GameState,
+  type CardCode,
   type InstanceId,
+  type ResolutionId,
   type ScenarioContext,
   type Zone,
 } from '@arkham/engine';
@@ -26,6 +32,9 @@ import {
 import {
   GATHERING_CODES,
   MIDNIGHT_MASKS_CODES as codes,
+  MIDNIGHT_MASKS_RESOLUTIONS,
+  ZEALOT_STORY,
+  theMidnightMasksResolutions,
   theGatheringCards,
   theMidnightMasks,
   theMidnightMasksCardDefs,
@@ -239,5 +248,163 @@ describe('The Midnight Masks skull token', () => {
 
   it('is 0 on Standard with one investigator, so no Acolyte, and doom only on the agenda', () => {
     expect(skullWith(1, 'standard', doom(agenda, 1))).toBe(0);
+  });
+});
+
+describe('The Midnight Masks resolutions', () => {
+  const tank = investigatorCode('tank');
+  const toVictoryDisplay = (code: CardCode): Command => ({
+    type: 'ManualAdjust',
+    adjustment: {
+      kind: 'moveCard',
+      cardId: instanceId(`${code}#1`),
+      to: { kind: 'victoryDisplay' },
+    },
+  });
+  /** Drew and Herman (Victory 1 each) interrogated, the other three cultists still in the Cultist deck. */
+  const twoInterrogated = (resolution: ResolutionId) =>
+    stateAfter(
+      ctx,
+      startScenario(ctx),
+      toVictoryDisplay(codes.wolfManDrew),
+      toVictoryDisplay(codes.hermanCollins),
+      { type: 'EndScenario', resolution },
+    );
+  const list = (...entries: string[]) => ({ kind: 'list', entries }) as const;
+
+  it('records R1 at agenda 1: the interrogated cultists, the rest and The Masked Hunter got away', () => {
+    const ended = twoInterrogated(MIDNIGHT_MASKS_RESOLUTIONS.conspiracyUncovered);
+
+    expect(campaign.proposeResolution(ctx, ended, theMidnightMasksResolutions)).toEqual([
+      {
+        kind: 'command',
+        command: {
+          type: 'RecordStory',
+          key: ZEALOT_STORY.cultistsWeInterrogated,
+          value: list('"Wolf-Man" Drew', 'Herman Collins'),
+        },
+      },
+      {
+        kind: 'command',
+        command: {
+          type: 'RecordStory',
+          key: ZEALOT_STORY.cultistsWhoGotAway,
+          value: list('Peter Warren', 'Victoria Devereux', 'Ruth Turner', 'The Masked Hunter'),
+        },
+      },
+      { kind: 'command', command: { type: 'AwardXp', code: tank, amount: 2 } },
+      { kind: 'byHand', textKey: 'scenario.theMidnightMasks.resolution.upgradeDecks' },
+    ]);
+  });
+
+  it('records R2 as past midnight, The Masked Hunter not got away while still set aside', () => {
+    const ended = twoInterrogated(MIDNIGHT_MASKS_RESOLUTIONS.pastMidnight);
+
+    expect(campaign.proposeResolution(ctx, ended, theMidnightMasksResolutions)).toEqual([
+      {
+        kind: 'command',
+        command: {
+          type: 'RecordStory',
+          key: ZEALOT_STORY.cultistsWeInterrogated,
+          value: list('"Wolf-Man" Drew', 'Herman Collins'),
+        },
+      },
+      {
+        kind: 'command',
+        command: {
+          type: 'RecordStory',
+          key: ZEALOT_STORY.cultistsWhoGotAway,
+          value: list('Peter Warren', 'Victoria Devereux', 'Ruth Turner'),
+        },
+      },
+      {
+        kind: 'command',
+        command: {
+          type: 'RecordStory',
+          key: ZEALOT_STORY.itIsPastMidnight,
+          value: { kind: 'flag', value: true },
+        },
+      },
+      { kind: 'command', command: { type: 'AwardXp', code: tank, amount: 2 } },
+      { kind: 'byHand', textKey: 'scenario.theMidnightMasks.resolution.upgradeDecks' },
+    ]);
+  });
+
+  it.each([
+    {
+      place: 'in play',
+      to: { kind: 'atLocation', locationId: rivertown },
+      key: 'cultistsWhoGotAway',
+    },
+    {
+      place: 'in the victory display',
+      to: { kind: 'victoryDisplay' },
+      key: 'cultistsWeInterrogated',
+    },
+  ] as const)('lists The Masked Hunter $place at R2 under $key', ({ to, key }) => {
+    const ended = stateAfter(
+      ctx,
+      startScenario(ctx),
+      {
+        type: 'ManualAdjust',
+        adjustment: { kind: 'moveCard', cardId: instanceId(`${codes.theMaskedHunter}#1`), to },
+      },
+      { type: 'EndScenario', resolution: MIDNIGHT_MASKS_RESOLUTIONS.pastMidnight },
+    );
+
+    const recorded = campaign
+      .proposeResolution(ctx, ended, theMidnightMasksResolutions)
+      ?.flatMap((change) =>
+        change.kind === 'command' && change.command.type === 'RecordStory' ? [change.command] : [],
+      )
+      .find((command) => command.key === ZEALOT_STORY[key]);
+
+    expect(recorded?.value).toMatchObject({
+      entries: expect.arrayContaining(['The Masked Hunter']),
+    });
+  });
+
+  it('reads no resolution as R1', () => {
+    expect(theMidnightMasksResolutions.none).toBe(
+      theMidnightMasksResolutions.byId[MIDNIGHT_MASKS_RESOLUTIONS.conspiracyUncovered],
+    );
+  });
+
+  it('crosses out "the Ghoul Priest is still alive" once he is in the victory display', () => {
+    const zealotCtx = { ...ctx, cards: cardDbWith(ctx.cards, zealotInvestigatorCards) };
+    const started = execute(
+      zealotCtx,
+      emptyState(),
+      scenario.compileSetup(zealotCtx, {
+        seed: 1,
+        investigators: [{ id: investigatorId('roland'), code: rolandBanks.code }],
+        campaign: makeCampaignLog({
+          investigators: [rolandMember],
+          story: { ghoulPriestStillAlive: { kind: 'flag', value: true } },
+          scenarioIds: [theMidnightMasks.id],
+          position: 0,
+        }),
+      }),
+    ).state;
+    const ended = stateAfter(zealotCtx, started, toVictoryDisplay(GATHERING_CODES.ghoulPriest), {
+      type: 'EndScenario',
+      resolution: MIDNIGHT_MASKS_RESOLUTIONS.conspiracyUncovered,
+    });
+
+    const proposal = campaign.proposeResolution(zealotCtx, ended, theMidnightMasksResolutions);
+
+    // The Ghoul Priest's Victory 2 is the only experience.
+    expect(proposal).toContainEqual({
+      kind: 'command',
+      command: {
+        type: 'RecordStory',
+        key: ZEALOT_STORY.ghoulPriestStillAlive,
+        value: { kind: 'flag', value: false },
+      },
+    });
+    expect(proposal).toContainEqual({
+      kind: 'command',
+      command: { type: 'AwardXp', code: rolandBanks.code, amount: 2 },
+    });
   });
 });
