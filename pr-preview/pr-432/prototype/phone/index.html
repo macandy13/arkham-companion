@@ -1,0 +1,1721 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Phone Play Screen</title>
+    <!--
+      Clickable prototype of the play screen on a phone in portrait, for discussion only: not app
+      code. Three places: an overview (compact header, map preview, turn investigator), a details
+      view (swipe up/down between the scenario cards and the investigators, left/right between the
+      cards of a row) and a full-screen map. Card pictures are loaded from ArkhamDB on the device,
+      never shipped; without them every card falls back to a pattern.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Alegreya+Sans:wght@400;700&family=IM+Fell+English+SC&display=swap"
+    />
+    <style>
+      :root {
+        --bg: #0b1614;
+        --surface: rgb(14 26 23 / 90%);
+        --surface-solid: #101d1a;
+        --line: rgb(201 164 92 / 32%);
+        --text: #ece3cf;
+        --muted: #b5ab95;
+        --brass: #c9a45c;
+        --brass-text: #1b1408;
+        --scrim: rgb(3 8 7 / 78%);
+        --clue: #3f9bb5;
+        --health: #c4524b;
+        --sanity: #4f78b8;
+        --doom: #b8433f;
+        --resource: #c39a4a;
+        --agenda: #9a4a3c;
+        --act: #4a6f9a;
+        --scenario: #6e5a8c;
+        --encounter: #4f6b52;
+        --investigator: #8a6a2c;
+        --treachery: #6e5a8c;
+        --enemy: #5a2e24;
+        --parchment: #ebdfc2;
+        --ink: #2b1e12;
+        --ink-muted: #6a5536;
+        --card-edge: #3d2b19;
+        --band: #4a3222;
+        --band-back: #3c5638;
+        --pattern: repeating-linear-gradient(
+          45deg,
+          transparent 0 9px,
+          rgb(201 164 92 / 22%) 9px 10px
+        );
+        --display: 'IM Fell English SC', Georgia, serif;
+        --body: 'Alegreya Sans', 'Segoe UI', system-ui, sans-serif;
+        --r: 0.5rem;
+        --touch: 2.75rem;
+        --compact: 1.9rem;
+        --glow: 0 0 1rem var(--brass);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #050b0a;
+        color: var(--text);
+        font-family: var(--body);
+        -webkit-tap-highlight-color: transparent;
+      }
+      button {
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+      }
+      [hidden] {
+        display: none !important;
+      }
+
+      /* The phone. On a wider screen the prototype sits in a phone-sized frame next to the notes. */
+      .stage {
+        min-height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        gap: 2rem;
+      }
+      .phone {
+        position: relative;
+        width: 100vw;
+        height: 100dvh;
+        overflow: hidden;
+        background: var(--bg) url('./playmat.svg') center / cover;
+      }
+      .notes {
+        display: none;
+      }
+      @media (min-width: 760px) {
+        .stage {
+          padding: 1.5rem;
+        }
+        .phone {
+          width: 390px;
+          height: min(844px, calc(100dvh - 3rem));
+          border-radius: 2.2rem;
+          border: 10px solid #1b1b1b;
+          box-shadow:
+            0 0 0 2px #333,
+            0 20px 60px rgb(0 0 0 / 60%);
+          flex: none;
+        }
+        .notes {
+          display: block;
+          max-width: 26rem;
+          color: var(--muted);
+          line-height: 1.45;
+        }
+        .notes h1 {
+          font-family: var(--display);
+          font-weight: 400;
+          color: var(--text);
+          margin-top: 0;
+        }
+        .notes h2 {
+          font-size: 1rem;
+          color: var(--brass);
+          margin: 1.2rem 0 0.3rem;
+        }
+        .notes kbd {
+          border: 1px solid var(--line);
+          border-radius: 4px;
+          padding: 0 4px;
+        }
+      }
+      .screen {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* ---------- Card pictures: a pattern until the ArkhamDB picture loads ---------- */
+      .art {
+        background: var(--pattern), #14201c;
+        background-size: cover;
+        background-position: center;
+      }
+      .art.has-img {
+        background-color: transparent;
+      }
+
+      /* ---------- Overview: compact header ---------- */
+      .head {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        padding: calc(env(safe-area-inset-top) + 8px) 8px 6px;
+        background: linear-gradient(to bottom, rgb(5 12 10 / 92%), rgb(5 12 10 / 40%));
+      }
+      .mini {
+        position: relative;
+        height: 4.6rem;
+        border-radius: 6px;
+        border: 2px solid var(--c);
+        overflow: hidden;
+        padding: 0;
+        background: #14201c;
+        text-align: left;
+      }
+      .mini .art {
+        position: absolute;
+        inset: 0;
+        opacity: 0.55;
+      }
+      .mini .t {
+        position: absolute;
+        left: 4px;
+        right: 4px;
+        top: 3px;
+        padding-right: 2rem;
+        font-size: 0.62rem;
+        line-height: 1.1;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        text-shadow: 0 1px 2px #000;
+      }
+      .mini .n {
+        position: absolute;
+        left: 4px;
+        right: 4px;
+        bottom: 3px;
+        font-family: var(--display);
+        font-size: 0.72rem;
+        line-height: 1.05;
+        text-shadow: 0 1px 3px #000;
+      }
+      .mini .tok {
+        position: absolute;
+        right: 4px;
+        top: 16px;
+      }
+      .tok {
+        display: inline-grid;
+        place-items: center;
+        width: 1.9rem;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background: var(--c);
+        border: 2px solid var(--text);
+        font-weight: 700;
+        font-size: 0.85rem;
+        line-height: 1;
+        color: #fff;
+        box-shadow: 0 2px 5px rgb(0 0 0 / 50%);
+      }
+      .tok small {
+        display: block;
+        font-size: 0.5rem;
+        font-weight: 400;
+      }
+      .tok.big {
+        width: 3.4rem;
+        font-size: 1.4rem;
+      }
+      .tok.big small {
+        font-size: 0.6rem;
+      }
+
+      /* ---------- Overview: status row ---------- */
+      .status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        background: rgb(5 12 10 / 60%);
+        border-bottom: 1px solid var(--line);
+      }
+      .status .round {
+        font-family: var(--display);
+        font-size: 1.05rem;
+        white-space: nowrap;
+      }
+      .status .phase {
+        color: var(--brass);
+        font-size: 0.85rem;
+        flex: 1;
+        min-width: 0;
+      }
+      .btn {
+        min-height: var(--compact);
+        padding: 0 0.7rem;
+        border-radius: var(--r);
+        border: 1px solid var(--line);
+        background: rgb(5 12 10 / 70%);
+      }
+      .btn.primary {
+        background: var(--brass);
+        color: var(--brass-text);
+        border-color: var(--brass);
+        font-weight: 700;
+      }
+      .btn:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      .icon {
+        width: var(--compact);
+        height: var(--compact);
+        border-radius: 50%;
+        border: 1px solid var(--line);
+        background: rgb(5 12 10 / 70%);
+        display: inline-grid;
+        place-items: center;
+        padding: 0;
+        flex: none;
+      }
+      .icon svg {
+        width: 60%;
+        height: 60%;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      /* ---------- Map (preview and full screen share the board) ---------- */
+      .mapbox {
+        position: relative;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+      }
+      .mapbox .board {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform-origin: 0 0;
+      }
+      .mapbox .tools {
+        position: absolute;
+        right: 8px;
+        top: 8px;
+        display: flex;
+        gap: 6px;
+        z-index: 2;
+      }
+      .mapbox .label {
+        position: absolute;
+        left: 10px;
+        top: 8px;
+        font-size: 0.7rem;
+        color: var(--muted);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        z-index: 2;
+      }
+      .board svg.lines {
+        position: absolute;
+        inset: 0;
+        overflow: visible;
+      }
+      .board svg.lines line {
+        stroke: var(--brass);
+        stroke-width: 4;
+        opacity: 0.6;
+      }
+      .tile {
+        position: absolute;
+        width: 120px;
+        height: 168px;
+        border-radius: 8px;
+        border: 3px solid var(--card-edge);
+        background: var(--parchment);
+        color: var(--ink);
+        padding: 0;
+        overflow: visible;
+        box-shadow: 0 6px 14px rgb(0 0 0 / 55%);
+      }
+      .tile .art {
+        position: absolute;
+        inset: 22px 0 46px;
+      }
+      .tile .name {
+        position: absolute;
+        inset: 0 0 auto;
+        height: 22px;
+        background: var(--band);
+        color: var(--parchment);
+        font-family: var(--display);
+        font-size: 14px;
+        line-height: 22px;
+        text-align: center;
+        border-radius: 4px 4px 0 0;
+      }
+      .tile.back .name {
+        background: var(--band-back);
+      }
+      .tile .foot {
+        position: absolute;
+        inset: auto 0 0;
+        height: 46px;
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--ink-muted);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      .tile .shroud,
+      .tile .clues {
+        position: absolute;
+        top: 66px;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        font-size: 15px;
+        color: #fff;
+        border: 2px solid var(--parchment);
+      }
+      .tile .shroud {
+        left: -12px;
+        background: #2c2c33;
+      }
+      .tile .clues {
+        right: -12px;
+        background: var(--clue);
+      }
+      .tile .pieces {
+        position: absolute;
+        left: 4px;
+        right: 4px;
+        bottom: 6px;
+        display: flex;
+        gap: 4px;
+        justify-content: center;
+      }
+      .tile.here {
+        box-shadow:
+          0 0 0 3px var(--brass),
+          0 6px 14px rgb(0 0 0 / 55%);
+      }
+      .tile.blocked::after {
+        content: 'Barricade';
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%) rotate(-12deg);
+        padding: 2px 8px;
+        background: var(--doom);
+        color: #fff;
+        font-size: 12px;
+        border-radius: 3px;
+      }
+      .pawn {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        border: 3px solid var(--brass);
+        background-color: #22332d;
+        background-size: 330%;
+        background-position: 4% 42%;
+        box-shadow: 0 3px 8px rgb(0 0 0 / 70%);
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text);
+        flex: none;
+      }
+      .pawn.has-img span {
+        visibility: hidden;
+      }
+      .pawn.enemy {
+        border-color: var(--doom);
+        background-size: 210%;
+        background-position: 50% 24%;
+      }
+      .pawn.turn {
+        box-shadow: var(--glow);
+      }
+
+      /* ---------- Overview: turn investigator ---------- */
+      .invpanel {
+        margin: 0 8px calc(env(safe-area-inset-bottom) + 8px);
+        border-radius: 10px;
+        background: var(--parchment);
+        color: var(--ink);
+        border: 2px solid var(--investigator);
+        box-shadow: var(--glow);
+        overflow: hidden;
+      }
+      .invpanel .top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 8px;
+        background: var(--band);
+        color: var(--parchment);
+        width: 100%;
+        border: 0;
+        text-align: left;
+      }
+      .invpanel .top .who {
+        flex: 1;
+        min-width: 0;
+        border: 0;
+        background: none;
+        padding: 0;
+        text-align: left;
+        color: inherit;
+      }
+      .invpanel .top .who b {
+        font-family: var(--display);
+        font-weight: 400;
+        font-size: 1.05rem;
+        display: block;
+      }
+      .invpanel .top .who small {
+        color: #d8c48e;
+      }
+      .invpanel .others {
+        display: flex;
+        gap: 4px;
+      }
+      .invpanel .others .pawn {
+        width: 30px;
+        height: 30px;
+        border-width: 2px;
+        font-size: 10px;
+      }
+      .invpanel .body {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 6px 10px;
+        padding: 8px;
+        align-items: center;
+      }
+      .invpanel .portrait {
+        width: 4.4rem;
+        height: 4.4rem;
+        border-radius: 6px;
+        border: 2px solid var(--card-edge);
+        background-size: 330%;
+        background-position: 4% 42%;
+        grid-row: span 2;
+        padding: 0;
+      }
+      .stats {
+        display: flex;
+        justify-content: space-between;
+        gap: 4px;
+      }
+      .stat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-size: 0.6rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--ink-muted);
+        gap: 2px;
+        background: none;
+        border: 0;
+        padding: 0;
+      }
+      .acts {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .pips {
+        display: flex;
+        gap: 2px;
+        margin-right: auto;
+      }
+      .pip {
+        width: 14px;
+        height: 14px;
+        clip-path: polygon(0 0, 55% 0, 100% 50%, 55% 100%, 0 100%, 45% 50%);
+        background: var(--brass);
+      }
+      .pip.spent {
+        background: rgb(43 30 18 / 20%);
+      }
+      .invpanel .btn {
+        background: #fff6e2;
+        color: var(--ink);
+        border-color: var(--card-edge);
+      }
+      .invpanel .btn.primary {
+        background: var(--brass);
+      }
+      .threat {
+        display: flex;
+        gap: 4px;
+        grid-column: 1 / -1;
+        flex-wrap: wrap;
+        align-items: center;
+        font-size: 0.75rem;
+        color: var(--ink-muted);
+      }
+      .chip {
+        border-radius: 999px;
+        border: 1px solid var(--c, var(--card-edge));
+        background: color-mix(in srgb, var(--c, var(--card-edge)) 18%, white);
+        color: var(--ink);
+        font-size: 0.72rem;
+        padding: 2px 8px;
+      }
+
+      /* ---------- Details view: rows (swipe up/down) of slides (swipe left/right) ---------- */
+      #detail {
+        background: rgb(5 12 10 / 55%);
+      }
+      .pager {
+        flex: 1;
+        overflow-y: auto;
+        scroll-snap-type: y mandatory;
+        overscroll-behavior: contain;
+        scrollbar-width: none;
+      }
+      .pager::-webkit-scrollbar,
+      .carousel::-webkit-scrollbar {
+        display: none;
+      }
+      .row {
+        height: 100%;
+        scroll-snap-align: start;
+        scroll-snap-stop: always;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+      .rowhead {
+        padding: calc(env(safe-area-inset-top) + 10px) 56px 4px 12px;
+        font-size: 0.7rem;
+        color: var(--muted);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .carousel {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+      }
+      .slide {
+        flex: 0 0 100%;
+        scroll-snap-align: center;
+        scroll-snap-stop: always;
+        overflow-y: auto;
+        padding: 4px 26px 12px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .slide h2 {
+        font-family: var(--display);
+        font-weight: 400;
+        font-size: 1.5rem;
+        margin: 0;
+      }
+      .slide h2 small {
+        display: block;
+        font-family: var(--body);
+        font-size: 0.75rem;
+        color: var(--muted);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .bigcard {
+        position: relative;
+        align-self: center;
+        width: 100%;
+        border-radius: 12px;
+        border: 3px solid var(--c);
+        overflow: hidden;
+        background: var(--pattern), #14201c;
+      }
+      .bigcard.landscape {
+        aspect-ratio: 88 / 63;
+      }
+      .bigcard.portrait {
+        width: min(100%, 15rem);
+        aspect-ratio: 63 / 88;
+      }
+      .bigcard img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .bigcard img:not([src]) {
+        visibility: hidden;
+      }
+      .bigcard .tok {
+        position: absolute;
+        right: 10px;
+        bottom: 10px;
+      }
+      .counter {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px;
+        border-radius: var(--r);
+        background: var(--surface);
+        border: 1px solid var(--line);
+      }
+      .counter span {
+        flex: 1;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .actions .btn {
+        min-height: var(--touch);
+        flex: 1 1 auto;
+      }
+      .text {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+        line-height: 1.4;
+      }
+      .skills {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+      }
+      .skills .btn {
+        min-height: var(--touch);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        line-height: 1.1;
+        font-size: 0.7rem;
+        color: var(--muted);
+      }
+      .skills .btn b {
+        font-size: 1.15rem;
+        color: var(--text);
+      }
+      .stats.wide {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 8px;
+      }
+      .stats.wide .stat {
+        color: var(--muted);
+      }
+      .threatlist {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+      }
+      .threatcard {
+        flex: none;
+        width: 6.2rem;
+        border-radius: 8px;
+        border: 2px solid var(--c);
+        background: #14201c;
+        padding: 0;
+        overflow: hidden;
+        text-align: left;
+      }
+      .threatcard .art {
+        height: 5rem;
+      }
+      .threatcard span {
+        display: block;
+        padding: 3px 5px;
+        font-size: 0.72rem;
+        line-height: 1.1;
+      }
+      .close {
+        position: absolute;
+        top: calc(env(safe-area-inset-top) + 6px);
+        right: 8px;
+        z-index: 5;
+      }
+      .edge {
+        display: block;
+        width: 100%;
+        border: 0;
+        background: linear-gradient(to top, rgb(5 12 10 / 95%), rgb(5 12 10 / 0%));
+        color: var(--brass);
+        font-size: 0.8rem;
+        padding: 10px 0 calc(env(safe-area-inset-bottom) + 8px);
+      }
+      .edge.up {
+        background: linear-gradient(to bottom, rgb(5 12 10 / 95%), rgb(5 12 10 / 0%));
+        padding: 6px 0 8px;
+      }
+      .dots {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        padding: 2px 0 4px;
+      }
+      .dots button {
+        width: 22px;
+        height: 22px;
+        border: 0;
+        background: none;
+        padding: 0;
+        display: grid;
+        place-items: center;
+      }
+      .dots button::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--line);
+      }
+      .dots button[aria-current='true']::before {
+        background: var(--brass);
+      }
+      .vdots {
+        position: absolute;
+        right: 4px;
+        top: 50%;
+        transform: translateY(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        z-index: 4;
+      }
+      .vdots button {
+        width: 18px;
+        height: 30px;
+        border: 0;
+        padding: 0;
+        background: none;
+        display: grid;
+        place-items: center;
+      }
+      .vdots button::before {
+        content: '';
+        width: 6px;
+        height: 22px;
+        border-radius: 3px;
+        background: var(--line);
+      }
+      .vdots button[aria-current='true']::before {
+        background: var(--brass);
+      }
+
+      /* ---------- Full-screen map ---------- */
+      #map .bar {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: calc(env(safe-area-inset-top) + 6px) 8px 6px;
+        background: linear-gradient(to bottom, rgb(5 12 10 / 92%), rgb(5 12 10 / 50%));
+      }
+      #map .bar .phase {
+        flex: 1;
+      }
+      #map .dock {
+        position: absolute;
+        left: 8px;
+        right: 8px;
+        bottom: calc(env(safe-area-inset-bottom) + 8px);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 8px;
+        border-radius: 999px;
+        background: var(--surface);
+        border: 1px solid var(--brass);
+        z-index: 3;
+      }
+      #map .dock .who {
+        flex: 1;
+        min-width: 0;
+        border: 0;
+        background: none;
+        text-align: left;
+        padding: 0;
+      }
+      #map .dock .who b {
+        font-family: var(--display);
+        font-weight: 400;
+        display: block;
+      }
+      #map .dock .who small {
+        color: var(--muted);
+      }
+      #map .mapbox {
+        touch-action: none;
+      }
+
+      /* ---------- Bottom sheet and toast ---------- */
+      .scrim {
+        position: absolute;
+        inset: 0;
+        background: var(--scrim);
+        z-index: 10;
+        display: flex;
+        align-items: flex-end;
+      }
+      .sheet {
+        width: 100%;
+        max-height: 85%;
+        overflow-y: auto;
+        background: var(--surface-solid);
+        border-top: 2px solid var(--brass);
+        border-radius: 16px 16px 0 0;
+        padding: 14px 14px calc(env(safe-area-inset-bottom) + 14px);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        position: relative;
+      }
+      .sheet h2 {
+        font-family: var(--display);
+        font-weight: 400;
+        margin: 0 40px 0 0;
+      }
+      .sheet .close {
+        top: 10px;
+      }
+      .toast {
+        position: absolute;
+        left: 50%;
+        top: 40%;
+        transform: translateX(-50%);
+        z-index: 20;
+        background: var(--surface-solid);
+        border: 1px solid var(--brass);
+        border-radius: var(--r);
+        padding: 8px 14px;
+        max-width: 85%;
+        text-align: center;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage">
+      <div class="phone" id="phone">
+        <section class="screen" id="overview" aria-label="Overview"></section>
+        <section class="screen" id="detail" aria-label="Card details" hidden></section>
+        <section class="screen" id="map" aria-label="Map" hidden></section>
+        <div class="toast" id="toast" hidden></div>
+      </div>
+      <aside class="notes">
+        <h1>Phone play screen</h1>
+        <p>
+          A clickable prototype to discuss how the play screen works on a phone held upright. The
+          Gathering, round 2, Roland's turn. Everything is clickable; nothing is saved.
+        </p>
+        <h2>Overview</h2>
+        <p>
+          A compact row of header cards (encounter deck, agenda, act, scenario), the round and phase
+          row, the map shrunk to fit the space left, and the investigator whose turn it is. Tap a
+          header card or the investigator to open its details. Tap a location for its sheet; the
+          expand button (or tapping an empty part of the map) shows the map full screen.
+        </p>
+        <h2>Details</h2>
+        <p>
+          Two rows: the scenario cards on top, the investigators below. Swipe up and down to switch
+          between the rows, left and right to switch cards within a row. With a mouse: wheel or the
+          arrows at the edges, or <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>.
+          <kbd>Esc</kbd> or the X goes back to the overview.
+        </p>
+        <h2>Full-screen map</h2>
+        <p>
+          Pinch or the +/− buttons zoom, dragging pans. Tap a location to move there or investigate.
+          The turn investigator stays docked at the bottom; tap it for details.
+        </p>
+      </aside>
+    </div>
+    <script>
+      'use strict';
+
+      /* ================= State: The Gathering, round 2, hand-entered stats ================= */
+      const S = {
+        round: 2,
+        phase: 'Investigation',
+        turn: 0,
+        investigators: [
+          {
+            id: 'roland',
+            code: '01001',
+            name: 'Roland Banks',
+            cls: 'Guardian',
+            skills: { willpower: 3, intellect: 3, combat: 4, agility: 2 },
+            health: 9,
+            sanity: 5,
+            damage: 0,
+            horror: 1,
+            clues: 1,
+            resources: 5,
+            actions: 3,
+            loc: 'hallway',
+            threat: [{ code: '01164', name: 'Frozen in Fear', type: 'treachery' }],
+          },
+          {
+            id: 'wendy',
+            code: '01005',
+            name: 'Wendy Adams',
+            cls: 'Survivor',
+            skills: { willpower: 4, intellect: 3, combat: 1, agility: 4 },
+            health: 7,
+            sanity: 7,
+            damage: 1,
+            horror: 0,
+            clues: 2,
+            resources: 3,
+            actions: 3,
+            loc: 'attic',
+            threat: [{ code: '01165', name: 'Dissonant Voices', type: 'treachery' }],
+          },
+        ],
+        locations: {
+          attic: { code: '01113', name: 'Attic', x: 0, y: 0, revealed: true, shroud: 1, clues: 3 },
+          hallway: {
+            code: '01112',
+            name: 'Hallway',
+            x: 0,
+            y: 1,
+            revealed: true,
+            shroud: 1,
+            clues: 0,
+          },
+          parlor: {
+            code: '01115',
+            name: 'Parlor',
+            x: 1,
+            y: 1,
+            revealed: false,
+            shroud: 2,
+            clues: 0,
+            blocked: true,
+          },
+          cellar: {
+            code: '01114',
+            name: 'Cellar',
+            x: 0,
+            y: 2,
+            revealed: false,
+            shroud: 4,
+            clues: 2,
+          },
+        },
+        links: [
+          ['attic', 'hallway'],
+          ['hallway', 'parlor'],
+          ['hallway', 'cellar'],
+        ],
+        enemies: [
+          {
+            id: 'e1',
+            code: '01118',
+            name: 'Flesh-Eater',
+            loc: 'attic',
+            engaged: 'wendy',
+            damage: 1,
+            health: 4,
+            fight: 4,
+            evade: 1,
+          },
+        ],
+        agenda: { code: '01106', name: 'Rise of the Ghouls', stage: 2, doom: 2, max: 7 },
+        act: { code: '01109', name: 'The Barrier', stage: 2, clues: 2, max: 3 },
+        deck: 15,
+        discard: { code: '01162', name: 'Grasping Hands' },
+      };
+      const PHASES = ['Mythos', 'Investigation', 'Enemy', 'Upkeep'];
+      const SKILLS = [
+        ['willpower', 'Will'],
+        ['intellect', 'Int'],
+        ['combat', 'Com'],
+        ['agility', 'Agi'],
+      ];
+
+      /* The details view's rows and slides; `pos` is where it opens. */
+      const HEAD_SLIDES = ['agenda', 'act', 'encounter', 'scenario'];
+      let pos = { row: 0, slide: 0 };
+      let view = 'overview';
+      let zoom = 1;
+      let pan = { x: 0, y: 0 };
+
+      const turnInv = () => S.investigators[S.turn];
+      const invOrder = () => S.investigators.map((_, i) => (S.turn + i) % S.investigators.length);
+      const esc = (s) =>
+        String(s).replace(
+          /[&<>"']/g,
+          (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
+        );
+      const initials = (n) =>
+        n
+          .split(' ')
+          .map((w) => w[0])
+          .join('')
+          .slice(0, 2);
+
+      /* ================= Card pictures from ArkhamDB, a pattern when they don't load ================= */
+      const imgCache = new Map();
+      function resolveImage(key) {
+        if (!imgCache.has(key))
+          imgCache.set(
+            key,
+            new Promise((resolve) => {
+              const urls = ['.png', '.jpg'].map(
+                (e) => `https://arkhamdb.com/bundles/cards/${key}${e}`,
+              );
+              const next = (i) => {
+                if (i >= urls.length) return resolve(null);
+                const img = new Image();
+                img.onload = () => resolve(urls[i]);
+                img.onerror = () => next(i + 1);
+                img.src = urls[i];
+              };
+              next(0);
+            }),
+          );
+        return imgCache.get(key);
+      }
+      function hydrate(root) {
+        root.querySelectorAll('[data-img]').forEach((el) =>
+          resolveImage(el.dataset.img).then((url) => {
+            if (!url) return;
+            if (el.tagName === 'IMG') el.src = url;
+            else {
+              el.style.backgroundImage = `url("${url}")`;
+              el.classList.add('has-img');
+            }
+          }),
+        );
+      }
+
+      /* ================= Small pieces ================= */
+      const ICON = {
+        back: '<path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>',
+        menu: '<path d="M4 6h16M4 12h16M4 18h16"/>',
+        expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+        close: '<path d="M6 6l12 12M18 6 6 18"/>',
+        plus: '<path d="M12 5v14M5 12h14"/>',
+        minus: '<path d="M5 12h14"/>',
+        shrink: '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>',
+        up: '<path d="m6 15 6-6 6 6"/>',
+      };
+      const icon = (name, label, attrs = '') =>
+        `<button type="button" class="icon" aria-label="${label}" title="${label}" ${attrs}><svg viewBox="0 0 24 24">${ICON[name]}</svg></button>`;
+      const tok = (c, value, of, cls = '') =>
+        `<span class="tok ${cls}" style="--c: var(--${c})">${value}${of != null ? `<small>of ${of}</small>` : ''}</span>`;
+      const pawn = (who, cls = '') => {
+        const enemy = !!who.fight;
+        return `<span class="pawn ${enemy ? 'enemy' : ''} ${cls}" data-img="${who.code}" role="img" aria-label="${esc(who.name)}"><span>${initials(who.name)}</span></span>`;
+      };
+      const pips = (i) =>
+        `<span class="pips" role="img" aria-label="${i.actions} of 3 actions left">${[0, 1, 2]
+          .map((n) => `<span class="pip ${n < i.actions ? '' : 'spent'}"></span>`)
+          .join('')}</span>`;
+      function stats(i) {
+        return `<div class="stats">
+          <span class="stat">${tok('health', i.health - i.damage, i.health)}Health</span>
+          <span class="stat">${tok('sanity', i.sanity - i.horror, i.sanity)}Sanity</span>
+          <span class="stat">${tok('clue', i.clues)}Clues</span>
+          <span class="stat">${tok('resource', i.resources)}Res.</span></div>`;
+      }
+      const enemiesEngaged = (i) => S.enemies.filter((e) => e.engaged === i.id);
+
+      /* ================= Overview ================= */
+      function renderOverview() {
+        const i = turnInv();
+        const here = S.locations[i.loc];
+        const threats = [
+          ...enemiesEngaged(i).map(
+            (e) =>
+              `<span class="chip" style="--c: var(--doom)">${esc(e.name)} ${e.health - e.damage}/${e.health}</span>`,
+          ),
+          ...i.threat.map(
+            (t) => `<span class="chip" style="--c: var(--treachery)">${esc(t.name)}</span>`,
+          ),
+        ];
+        const others = invOrder()
+          .slice(1)
+          .map((n) => S.investigators[n])
+          .map(
+            (o) =>
+              `<button type="button" class="pawn" data-img="${o.code}" data-open-inv="${o.id}" aria-label="${esc(o.name)}: details" title="${esc(o.name)}"><span>${initials(o.name)}</span></button>`,
+          )
+          .join('');
+        document.getElementById('overview').innerHTML = `
+          <header class="head" aria-label="Scenario cards">
+            ${mini('encounter', 'Encounter', `${S.deck} cards`, tok('encounter', S.deck), null)}
+            ${mini('agenda', `Agenda ${S.agenda.stage}`, S.agenda.name, tok('doom', S.agenda.doom, S.agenda.max), S.agenda.code)}
+            ${mini('act', `Act ${S.act.stage}`, S.act.name, tok('clue', S.act.clues, S.act.max), S.act.code)}
+            ${mini('scenario', 'Scenario', 'The Gathering', '', '01104')}
+          </header>
+          <div class="status">
+            <span class="round">Round ${S.round}</span>
+            <span class="phase">${S.phase}</span>
+            ${icon('back', 'Undo', 'data-do="undo"')}
+            ${icon('menu', 'Menu', 'data-do="menu"')}
+            <button type="button" class="btn primary" data-do="next">Next</button>
+          </div>
+          <div class="mapbox" id="previewbox">
+            <span class="label">Map · tap a location</span>
+            <div class="tools">${icon('expand', 'Show the map full screen', 'data-do="fullmap"')}</div>
+            ${board()}
+          </div>
+          <section class="invpanel" aria-label="${esc(i.name)}, turn">
+            <div class="top">
+              <button type="button" class="who" data-open-inv="${i.id}"><b>${esc(i.name)}</b><small>Turn · ${esc(here.name)} · tap for details</small></button>
+              <span class="others" aria-label="Other investigators">${others}</span>
+            </div>
+            <div class="body">
+              <button type="button" class="portrait art" data-img="${i.code}" data-open-inv="${i.id}" aria-label="${esc(i.name)}: details"></button>
+              ${stats(i)}
+              <div class="acts">
+                ${pips(i)}
+                <button type="button" class="btn" data-do="investigate" ${canInvestigate(i) ? '' : 'disabled'}>Investigate</button>
+                <button type="button" class="btn primary" data-do="end">End turn</button>
+              </div>
+              ${threats.length ? `<div class="threat">Threat: ${threats.join('')}</div>` : ''}
+            </div>
+          </section>`;
+        const el = document.getElementById('overview');
+        hydrate(el);
+        fitBoard(el.querySelector('.mapbox'), 1, { x: 0, y: 0 });
+      }
+      function mini(slide, type, name, token, img) {
+        const colour = slide === 'encounter' ? 'encounter' : slide;
+        return `<button type="button" class="mini" style="--c: var(--${colour})" data-open-head="${slide}" aria-label="${esc(type)}: ${esc(name)}, details">
+          <span class="art" ${img ? `data-img="${img}"` : ''}></span>
+          <span class="t">${esc(type)}</span>
+          ${token}
+          <span class="n">${esc(name)}</span></button>`;
+      }
+
+      /* ================= Map board, shared by preview and full screen ================= */
+      const TILE = { w: 120, h: 168, gx: 50, gy: 40 };
+      function boardSize() {
+        const ls = Object.values(S.locations);
+        const cols = Math.max(...ls.map((l) => l.x)) + 1;
+        const rows = Math.max(...ls.map((l) => l.y)) + 1;
+        return { w: cols * TILE.w + (cols - 1) * TILE.gx, h: rows * TILE.h + (rows - 1) * TILE.gy };
+      }
+      const tilePos = (l) => ({ x: l.x * (TILE.w + TILE.gx), y: l.y * (TILE.h + TILE.gy) });
+      function board() {
+        const size = boardSize();
+        const lines = S.links
+          .map(([a, b]) => {
+            const p = tilePos(S.locations[a]);
+            const q = tilePos(S.locations[b]);
+            return `<line x1="${p.x + TILE.w / 2}" y1="${p.y + TILE.h / 2}" x2="${q.x + TILE.w / 2}" y2="${q.y + TILE.h / 2}"/>`;
+          })
+          .join('');
+        const tiles = Object.entries(S.locations)
+          .map(([key, l]) => {
+            const p = tilePos(l);
+            const pieces = [
+              ...S.investigators
+                .filter((i) => i.loc === key)
+                .map((i) => pawn(i, i === turnInv() ? 'turn' : '')),
+              ...S.enemies.filter((e) => e.loc === key).map((e) => pawn(e)),
+            ].join('');
+            const here = turnInv().loc === key;
+            return `<button type="button" class="tile ${l.revealed ? '' : 'back'} ${here ? 'here' : ''} ${l.blocked ? 'blocked' : ''}" style="left:${p.x}px;top:${p.y}px" data-loc="${key}" aria-label="${esc(l.name)}${l.revealed ? '' : ', unrevealed'}">
+              <span class="name">${esc(l.name)}</span>
+              <span class="art" data-img="${l.code}${l.revealed ? '' : 'b'}"></span>
+              ${l.revealed ? `<span class="shroud" title="Shroud">${l.shroud}</span><span class="clues" title="Clues">${l.clues}</span>` : ''}
+              <span class="foot">${l.revealed ? '' : 'Unrevealed'}</span>
+              <span class="pieces">${pieces}</span></button>`;
+          })
+          .join('');
+        return `<div class="board" style="width:${size.w}px;height:${size.h}px"><svg class="lines" width="${size.w}" height="${size.h}">${lines}</svg>${tiles}</div>`;
+      }
+      /* Scales the board to fit its box (times `z`), centred and shifted by `offset`. */
+      function fitBoard(box, z, offset) {
+        const b = box.querySelector('.board');
+        const size = boardSize();
+        const pad = 28;
+        const fit = Math.min(
+          (box.clientWidth - pad * 2) / size.w,
+          (box.clientHeight - pad * 2) / size.h,
+        );
+        const s = fit * z;
+        b.style.transform = `translate(${offset.x - (size.w * s) / 2}px, ${offset.y - (size.h * s) / 2}px) scale(${s})`;
+      }
+
+      /* ================= Details view ================= */
+      function renderDetail() {
+        const order = invOrder();
+        const headSlides = HEAD_SLIDES.map(headSlide).join('');
+        const invSlides = order.map((n) => invSlide(S.investigators[n])).join('');
+        const el = document.getElementById('detail');
+        el.innerHTML = `
+          ${icon('close', 'Back to the overview', 'data-do="overview"').replace('class="icon"', 'class="icon close"')}
+          <nav class="vdots" aria-label="Rows">
+            <button type="button" data-row="0" aria-label="Scenario cards"></button>
+            <button type="button" data-row="1" aria-label="Investigators"></button>
+          </nav>
+          <div class="pager" id="pager">
+            <section class="row" aria-label="Scenario cards">
+              <div class="rowhead">Scenario cards · swipe ← → for more</div>
+              <div class="carousel" data-row-carousel="0">${headSlides}</div>
+              <nav class="dots" aria-label="Scenario cards">${HEAD_SLIDES.map((s, n) => `<button type="button" data-goto="0,${n}" aria-label="${s}"></button>`).join('')}</nav>
+              <button type="button" class="edge" data-row="1">▼ ${esc(turnInv().name)} (turn) · swipe up</button>
+            </section>
+            <section class="row" aria-label="Investigators">
+              <button type="button" class="edge up" data-row="0">▲ Agenda, act and encounter deck · swipe down</button>
+              <div class="carousel" data-row-carousel="1">${invSlides}</div>
+              <nav class="dots" aria-label="Investigators">${order.map((n, k) => `<button type="button" data-goto="1,${k}" aria-label="${esc(S.investigators[n].name)}"></button>`).join('')}</nav>
+            </section>
+          </div>`;
+        hydrate(el);
+        const pager = el.querySelector('#pager');
+        pager.addEventListener('scroll', syncDots, { passive: true });
+        el.querySelectorAll('.carousel').forEach((c) =>
+          c.addEventListener('scroll', syncDots, { passive: true }),
+        );
+        requestAnimationFrame(() => goTo(pos.row, pos.slide, 'instant'));
+      }
+      function headSlide(kind) {
+        if (kind === 'agenda') {
+          const a = S.agenda;
+          return `<article class="slide" aria-label="Agenda">
+            <h2><small>Agenda ${a.stage}</small>${esc(a.name)}</h2>
+            <div class="bigcard landscape" style="--c: var(--agenda)"><img data-img="${a.code}" alt="${esc(a.name)}">${tok('doom', a.doom, a.max, 'big')}</div>
+            <div class="counter"><span>Doom on the agenda</span>${icon('minus', 'Remove doom', 'data-do="doom-"')}<b>${a.doom}</b>${icon('plus', 'Add doom', 'data-do="doom+"')}</div>
+            <p class="text">Doom in play counts toward the threshold (${a.max}). The agenda advances in the Mythos phase when it is reached.</p>
+            <div class="actions"><button type="button" class="btn" data-do="flip" data-card="${a.code}">Show the back</button></div></article>`;
+        }
+        if (kind === 'act') {
+          const a = S.act;
+          return `<article class="slide" aria-label="Act">
+            <h2><small>Act ${a.stage}</small>${esc(a.name)}</h2>
+            <div class="bigcard landscape" style="--c: var(--act)"><img data-img="${a.code}" alt="${esc(a.name)}">${tok('clue', a.clues, a.max, 'big')}</div>
+            <div class="actions">
+              <button type="button" class="btn" data-do="spend">Spend clues…</button>
+              <button type="button" class="btn primary" data-do="advance" ${a.clues >= a.max ? '' : 'disabled'}>Advance</button></div>
+            <p class="text">The investigators spend ${a.max} clues, as a group, to advance.</p></article>`;
+        }
+        if (kind === 'encounter') {
+          return `<article class="slide" aria-label="Encounter deck">
+            <h2><small>Encounter deck</small>${S.deck} cards left</h2>
+            <div class="bigcard portrait" style="--c: var(--encounter)"><img data-img="${S.discard.code}" alt="Top of the discard pile: ${esc(S.discard.name)}"></div>
+            <p class="text">Top of the discard pile: ${esc(S.discard.name)}.</p>
+            <div class="actions"><button type="button" class="btn primary" data-do="draw">Draw an encounter card</button><button type="button" class="btn" data-do="discard">Discard pile</button></div></article>`;
+        }
+        return `<article class="slide" aria-label="Scenario">
+          <h2><small>Scenario</small>The Gathering</h2>
+          <div class="bigcard portrait" style="--c: var(--scenario)"><img data-img="01104" alt="The Gathering, scenario reference card"></div>
+          <p class="text">Chaos token values (Easy/Standard): skull −X, cultist −1, tablet −2.</p>
+          <div class="actions"><button type="button" class="btn" data-do="log">Log</button><button type="button" class="btn" data-do="export">Export</button></div></article>`;
+      }
+      function invSlide(i) {
+        const isTurn = i === turnInv();
+        const engaged = enemiesEngaged(i);
+        const threats = [
+          ...engaged.map(
+            (e) =>
+              `<button type="button" class="threatcard" style="--c: var(--doom)" data-enemy="${e.id}"><span class="art" data-img="${e.code}"></span><span>${esc(e.name)} · ${e.health - e.damage}/${e.health}</span></button>`,
+          ),
+          ...i.threat.map(
+            (t) =>
+              `<button type="button" class="threatcard" style="--c: var(--treachery)" data-card-zoom="${t.code}" data-name="${esc(t.name)}"><span class="art" data-img="${t.code}"></span><span>${esc(t.name)}</span></button>`,
+          ),
+        ].join('');
+        return `<article class="slide" aria-label="${esc(i.name)}">
+          <h2><small>${esc(i.cls)} · ${esc(S.locations[i.loc].name)}${isTurn ? ' · turn' : ''}</small>${esc(i.name)}</h2>
+          <div class="bigcard landscape" style="--c: var(--investigator)"><img data-img="${i.code}" alt="${esc(i.name)}"></div>
+          <div class="stats wide">${stats(i)
+            .replace('<div class="stats">', '')
+            .replace(/<\/div>$/, '')}</div>
+          <div class="skills">${SKILLS.map(([k, l]) => `<button type="button" class="btn" data-test="${i.id},${k}"><b>${i.skills[k]}</b>${l}</button>`).join('')}</div>
+          ${
+            isTurn
+              ? `<div class="actions" style="align-items:center">${pips(i)}
+                  <button type="button" class="btn" data-do="investigate" ${canInvestigate(i) ? '' : 'disabled'}>Investigate</button>
+                  <button type="button" class="btn" data-do="draw-card">Draw</button>
+                  <button type="button" class="btn" data-do="resource">Resource</button>
+                  <button type="button" class="btn primary" data-do="end">End turn</button></div>`
+              : `<p class="text">Not this investigator's turn.</p>`
+          }
+          <h2><small>Threat area</small></h2>
+          ${threats ? `<div class="threatlist">${threats}</div>` : '<p class="text">Empty.</p>'}
+        </article>`;
+      }
+      function goTo(row, slide, behavior = 'smooth') {
+        const pager = document.getElementById('pager');
+        if (!pager) return;
+        const rows = pager.querySelectorAll('.row');
+        row = Math.max(0, Math.min(rows.length - 1, row));
+        pager.scrollTo({ top: rows[row].offsetTop, behavior });
+        if (slide != null) {
+          const car = rows[row].querySelector('.carousel');
+          const n = car.children.length;
+          slide = Math.max(0, Math.min(n - 1, slide));
+          car.scrollTo({ left: slide * car.clientWidth, behavior });
+        }
+      }
+      function current() {
+        const pager = document.getElementById('pager');
+        const row = Math.round(pager.scrollTop / pager.clientHeight);
+        const car = pager.querySelectorAll('.carousel')[row];
+        return { row, slide: Math.round(car.scrollLeft / car.clientWidth) };
+      }
+      function syncDots() {
+        const pager = document.getElementById('pager');
+        if (!pager) return;
+        const { row } = current();
+        document
+          .querySelectorAll('.vdots button')
+          .forEach((b) => b.setAttribute('aria-current', String(+b.dataset.row === row)));
+        pager.querySelectorAll('.row').forEach((r, n) => {
+          const car = r.querySelector('.carousel');
+          const s = Math.round(car.scrollLeft / car.clientWidth);
+          r.querySelectorAll('.dots button').forEach((b, k) =>
+            b.setAttribute('aria-current', String(k === s)),
+          );
+        });
+        pos = current();
+      }
+
+      /* ================= Full-screen map ================= */
+      function renderMap() {
+        const i = turnInv();
+        const el = document.getElementById('map');
+        el.innerHTML = `
+          <div class="bar">
+            <span class="round" style="font-family: var(--display)">Round ${S.round}</span>
+            <span class="phase" style="color: var(--brass)">${S.phase}</span>
+            ${icon('minus', 'Zoom out', 'data-do="zoom-"')}
+            ${icon('plus', 'Zoom in', 'data-do="zoom+"')}
+            ${icon('shrink', 'Back to the overview', 'data-do="overview"')}
+          </div>
+          <div class="mapbox" id="fullbox">${board()}</div>
+          <div class="dock">
+            ${pawn(i, 'turn')}
+            <button type="button" class="who" data-open-inv="${i.id}"><b>${esc(i.name)}</b><small>Turn · ${esc(S.locations[i.loc].name)} · details</small></button>
+            ${pips(i)}
+            <button type="button" class="btn primary" data-do="end">End turn</button>
+          </div>`;
+        hydrate(el);
+        fitBoard(el.querySelector('.mapbox'), zoom, pan);
+        wirePanZoom(el.querySelector('.mapbox'));
+      }
+      /* Drag pans, two fingers (or ctrl + wheel) zoom. */
+      function wirePanZoom(box) {
+        const pts = new Map();
+        let start = null;
+        let moved = false;
+        box.addEventListener('pointerdown', (e) => {
+          pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          start = { pan: { ...pan }, zoom, pts: new Map(pts) };
+          moved = false;
+        });
+        box.addEventListener('pointermove', (e) => {
+          if (!pts.has(e.pointerId) || !start) return;
+          pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          const [a, b] = [...pts.values()];
+          const [a0, b0] = [...start.pts.values()];
+          if (pts.size === 1 && a0) {
+            const dx = a.x - a0.x;
+            const dy = a.y - a0.y;
+            if (Math.hypot(dx, dy) > 6) moved = true;
+            if (moved) pan = { x: start.pan.x + dx, y: start.pan.y + dy };
+          } else if (b && b0) {
+            moved = true;
+            zoom = clampZoom(
+              (start.zoom * Math.hypot(a.x - b.x, a.y - b.y)) /
+                Math.hypot(a0.x - b0.x, a0.y - b0.y),
+            );
+          }
+          fitBoard(box, zoom, pan);
+        });
+        const end = (e) => {
+          pts.delete(e.pointerId);
+          start = pts.size ? { pan: { ...pan }, zoom, pts: new Map(pts) } : null;
+        };
+        box.addEventListener('pointerup', end);
+        box.addEventListener('pointercancel', end);
+        box.addEventListener(
+          'click',
+          (e) => {
+            if (moved) {
+              e.stopPropagation();
+              e.preventDefault();
+            }
+          },
+          true,
+        );
+        box.addEventListener(
+          'wheel',
+          (e) => {
+            e.preventDefault();
+            zoom = clampZoom(zoom * (e.deltaY < 0 ? 1.1 : 0.9));
+            fitBoard(box, zoom, pan);
+          },
+          { passive: false },
+        );
+      }
+      const clampZoom = (z) => Math.max(0.6, Math.min(3, z));
+
+      /* ================= Sheets ================= */
+      function sheet(html) {
+        closeSheet();
+        const scrim = document.createElement('div');
+        scrim.className = 'scrim';
+        scrim.innerHTML = `<div class="sheet" role="dialog">${icon('close', 'Close', 'data-do="close-sheet"').replace('class="icon"', 'class="icon close"')}${html}</div>`;
+        scrim.addEventListener('click', (e) => {
+          if (e.target === scrim) closeSheet();
+        });
+        document.getElementById('phone').appendChild(scrim);
+        hydrate(scrim);
+      }
+      function closeSheet() {
+        document.querySelectorAll('.scrim').forEach((s) => s.remove());
+      }
+      function locationSheet(key) {
+        const l = S.locations[key];
+        const i = turnInv();
+        const here = i.loc === key;
+        const linked = S.links.some(
+          ([a, b]) => (a === i.loc && b === key) || (b === i.loc && a === key),
+        );
+        const who = [
+          ...S.investigators.filter((x) => x.loc === key).map((x) => x.name),
+          ...S.enemies.filter((e) => e.loc === key).map((e) => e.name),
+        ];
+        sheet(`<h2>${esc(l.name)}</h2>
+          <div class="bigcard portrait" style="--c: var(--encounter)"><img data-img="${l.code}${l.revealed ? '' : 'b'}" alt="${esc(l.name)}"></div>
+          <p class="text">${l.revealed ? `Shroud ${l.shroud} · ${l.clues} clues` : 'Unrevealed.'}${who.length ? ` Here: ${who.map(esc).join(', ')}.` : ''}${l.blocked ? ' Barricaded: nobody can move in.' : ''}</p>
+          <div class="actions">
+            ${here ? `<button type="button" class="btn primary" data-do="investigate" ${canInvestigate(i) ? '' : 'disabled'}>Investigate (${esc(i.name.split(' ')[0])})</button>` : ''}
+            ${!here ? `<button type="button" class="btn primary" data-move="${key}" ${linked && !l.blocked && i.actions ? '' : 'disabled'}>Move ${esc(i.name.split(' ')[0])} here</button>` : ''}
+            <button type="button" class="btn" data-do="edit-loc">Edit…</button>
+          </div>`);
+      }
+      function enemySheet(id) {
+        const e = S.enemies.find((x) => x.id === id);
+        const engagedWith = S.investigators.find((x) => x.id === e.engaged);
+        sheet(`<h2>${esc(e.name)}</h2>
+          <div class="bigcard portrait" style="--c: var(--doom)"><img data-img="${e.code}" alt="${esc(e.name)}"></div>
+          <p class="text">Fight ${e.fight} · Health ${e.health - e.damage}/${e.health} · Evade ${e.evade}. Engaged with ${esc(engagedWith?.name ?? 'nobody')}.</p>
+          <div class="actions"><button type="button" class="btn" data-do="soon">Fight</button><button type="button" class="btn" data-do="soon">Evade</button></div>`);
+      }
+
+      /* ================= Actions (just enough to feel the flow) ================= */
+      function canInvestigate(i) {
+        return i.actions > 0 && S.locations[i.loc].revealed && S.locations[i.loc].clues > 0;
+      }
+      function spend(i) {
+        i.actions = Math.max(0, i.actions - 1);
+      }
+      const DO = {
+        next() {
+          const n = PHASES.indexOf(S.phase);
+          S.phase = PHASES[(n + 1) % 4];
+          if (S.phase === 'Mythos') {
+            S.round += 1;
+            S.agenda.doom += 1;
+            toast(`Round ${S.round}: 1 doom on the agenda.`);
+          } else toast(`${S.phase} phase.`);
+          if (S.phase === 'Investigation') S.investigators.forEach((i) => (i.actions = 3));
+        },
+        undo: () => toast('Undo (not in the prototype).'),
+        menu: () => toast('Menu: home, settings, export.'),
+        fullmap() {
+          zoom = 1;
+          pan = { x: 0, y: 0 };
+          show('map');
+        },
+        overview: () => show('overview'),
+        'close-sheet': closeSheet,
+        investigate() {
+          const i = turnInv();
+          if (!canInvestigate(i)) return;
+          spend(i);
+          const l = S.locations[i.loc];
+          l.clues -= 1;
+          i.clues += 1;
+          closeSheet();
+          toast(`${i.name} investigates the ${l.name}: success, 1 clue.`);
+        },
+        end() {
+          const was = turnInv();
+          was.actions = 0;
+          S.turn = (S.turn + 1) % S.investigators.length;
+          closeSheet();
+          toast(`${was.name} ends the turn. ${turnInv().name}'s turn.`);
+          if (view === 'detail') pos = { row: 1, slide: 0 };
+        },
+        'doom+': () => (S.agenda.doom += 1),
+        'doom-': () => (S.agenda.doom = Math.max(0, S.agenda.doom - 1)),
+        spend() {
+          const giver = S.investigators.find((i) => i.clues > 0);
+          if (!giver || S.act.clues >= S.act.max) return toast('No clues to spend.');
+          giver.clues -= 1;
+          S.act.clues += 1;
+          toast(`${giver.name} puts 1 clue on the act.`);
+        },
+        advance: () => toast('Act 3 (What Have You Done?) would come out now.'),
+        draw: () => toast('Draws the top encounter card (a card dialog opens in the app).'),
+        discard: () => toast('Shows the discard pile.'),
+        log: () => toast('Shows the game log.'),
+        export: () => toast('Exports the game.'),
+        flip: () => toast('Shows the back of the card.'),
+        'draw-card'() {
+          spend(turnInv());
+          toast('Draw 1 card (physical deck).');
+        },
+        resource() {
+          const i = turnInv();
+          spend(i);
+          i.resources += 1;
+        },
+        'zoom+'() {
+          zoom = clampZoom(zoom * 1.25);
+          fitBoard(document.getElementById('fullbox'), zoom, pan);
+        },
+        'zoom-'() {
+          zoom = clampZoom(zoom / 1.25);
+          fitBoard(document.getElementById('fullbox'), zoom, pan);
+        },
+        'edit-loc': () => toast('Adjust clues, doom and attachments.'),
+        soon: () => toast('Opens the skill test.'),
+      };
+      const NO_RERENDER = new Set([
+        'zoom+',
+        'zoom-',
+        'close-sheet',
+        'fullmap',
+        'overview',
+        'undo',
+        'menu',
+        'draw',
+        'discard',
+        'log',
+        'export',
+        'flip',
+        'advance',
+        'edit-loc',
+        'soon',
+      ]);
+
+      function show(next) {
+        if (view === 'detail' && document.getElementById('pager')) pos = current();
+        view = next;
+        for (const id of ['overview', 'detail', 'map'])
+          document.getElementById(id).hidden = id !== view;
+        render();
+      }
+      function render() {
+        if (view === 'overview') renderOverview();
+        if (view === 'detail') renderDetail();
+        if (view === 'map') renderMap();
+      }
+      let toastTimer;
+      function toast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.hidden = false;
+        t.style.opacity = 1;
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          t.style.opacity = 0;
+          setTimeout(() => (t.hidden = true), 300);
+        }, 1800);
+      }
+
+      /* ================= One click handler for every screen ================= */
+      document.getElementById('phone').addEventListener('click', (e) => {
+        const t = e.target.closest('button, .mapbox');
+        if (!t) return;
+        const d = t.dataset;
+        if (d.do) {
+          if (view === 'detail' && document.getElementById('pager')) pos = current();
+          DO[d.do]?.();
+          if (!NO_RERENDER.has(d.do)) render();
+        } else if (d.openHead) {
+          pos = { row: 0, slide: HEAD_SLIDES.indexOf(d.openHead) };
+          show('detail');
+        } else if (d.openInv) {
+          pos = {
+            row: 1,
+            slide: invOrder().indexOf(S.investigators.findIndex((i) => i.id === d.openInv)),
+          };
+          closeSheet();
+          show('detail');
+        } else if (d.loc) {
+          locationSheet(d.loc);
+        } else if (d.move) {
+          const i = turnInv();
+          const l = S.locations[d.move];
+          spend(i);
+          i.loc = d.move;
+          const revealed = !l.revealed;
+          l.revealed = true;
+          closeSheet();
+          toast(`${i.name} moves to the ${l.name}${revealed ? ' and reveals it' : ''}.`);
+          render();
+        } else if (d.row != null) {
+          goTo(+d.row, null);
+        } else if (d.goto) {
+          const [r, s] = d.goto.split(',').map(Number);
+          goTo(r, s);
+        } else if (d.enemy) {
+          enemySheet(d.enemy);
+        } else if (d.cardZoom) {
+          sheet(
+            `<h2>${esc(d.name)}</h2><div class="bigcard portrait" style="--c: var(--treachery)"><img data-img="${d.cardZoom}" alt="${esc(d.name)}"></div><div class="actions"><button type="button" class="btn" data-do="soon">Resolve</button><button type="button" class="btn" data-do="close-sheet">Discard</button></div>`,
+          );
+        } else if (d.test) {
+          const [id, skill] = d.test.split(',');
+          const i = S.investigators.find((x) => x.id === id);
+          toast(`${i.name} tests ${skill} (${i.skills[skill]}): opens the skill test dialog.`);
+        } else if (t.id === 'previewbox') {
+          DO.fullmap();
+        }
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          if (document.querySelector('.scrim')) closeSheet();
+          else if (view !== 'overview') show('overview');
+          return;
+        }
+        if (view !== 'detail') return;
+        const c = current();
+        const moves = {
+          ArrowUp: [c.row - 1, null],
+          ArrowDown: [c.row + 1, null],
+          ArrowLeft: [c.row, c.slide - 1],
+          ArrowRight: [c.row, c.slide + 1],
+        };
+        if (moves[e.key]) {
+          e.preventDefault();
+          goTo(...moves[e.key]);
+        }
+      });
+      window.addEventListener('resize', () => {
+        if (view === 'overview') fitBoard(document.getElementById('previewbox'), 1, { x: 0, y: 0 });
+        if (view === 'map') fitBoard(document.getElementById('fullbox'), zoom, pan);
+      });
+      render();
+    </script>
+  </body>
+</html>
