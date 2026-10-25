@@ -1,13 +1,14 @@
 /**
  * The Midnight Masks, played end to end: Roland Banks and Daisy Walker, a
- * fixed seed, seven rounds until midnight strikes (resolution 2). An
+ * fixed seed, eight rounds until midnight strikes (resolution 2). An
  * integration narrative like The Gathering's: it shows the scenario's
  * automated rules at the table (setup from the campaign log, the Graveyard,
- * Hunting Shadow, False Lead's surge, Mysterious Chanting, the Wizard of the
- * Order's doom, "Wolf-Man" Drew's heal, both agendas advancing on doom) and
- * ends in a resolution applied to the campaign log: two cultists
- * interrogated, three still in the Cultist deck and The Masked Hunter in play
- * got away.
+ * Hunting Shadow, Mysterious Chanting, On Wings of Darkness carrying Daisy off
+ * to a Central location, the Ghoul Priest from The Gathering, the Wizard of
+ * the Order's doom, "Wolf-Man" Drew's heal, two hunters chasing the
+ * investigators, both agendas advancing on doom) and ends in a resolution
+ * applied to the campaign log: two cultists interrogated, three still in the
+ * Cultist deck and The Masked Hunter in play got away.
  *
  * What the engine leaves to the players is done by hand, as at the table:
  * the act's action (spend clues as a group, take the top card of the Cultist
@@ -68,6 +69,7 @@ const seats = [
 const drew = '"Wolf-Man" Drew';
 const herman = 'Herman Collins';
 const hunter = 'The Masked Hunter';
+const priest = 'Ghoul Priest';
 const wizard = 'Wizard of the Order';
 const yes = { kind: 'flag', value: true } as const;
 
@@ -339,37 +341,43 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
       health: 8,
     });
 
-    // Roland draws an Acolyte, which the players spawn at St. Mary's Hospital
-    // with its 1 doom. Daisy draws False Lead with no clues: surge, twice, and
-    // then Mysterious Chanting's 2 doom lands on Herman, the cultist at her side.
+    // Round 4 – mythos: Roland draws the Ghoul Priest, still alive from The
+    // Gathering; he spawns engaged with Roland, who has the highest combat. Daisy
+    // draws On Wings of Darkness: she passes the agility test, but the card still
+    // pulls her loose from Herman Collins and carries her to Rivertown, the
+    // Central location next to the Graveyard.
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos', step: 'drawEncounterCard' });
-    table.answer(byName('Acolyte'), "St. Mary's Hospital");
-    acolyteDoomAt(byName("St. Mary's Hospital"));
-    expect(table.nextPhase()).toEqual({ round: 4, phase: 'mythos' });
+    expect(table.board.enemy(byName(priest))).toMatchObject({
+      at: 'Downtown',
+      engagedWith: roland,
+    });
+    table.answer(byName('On Wings of Darkness'), 'pass');
+    expect(table.board.investigator(daisy)).toMatchObject({
+      at: 'Rivertown',
+      damage: 1,
+      horror: 3,
+    });
+    expect(table.board.enemy(byName(herman))).toEqual({ name: herman, at: 'Graveyard', health: 4 });
 
-    expect(table.board.namesIn({ kind: 'encounterDiscard' }).slice(0, 3)).toEqual([
-      'Mysterious Chanting',
-      'False Lead',
-      'False Lead',
-    ]);
-    // The Acolyte's 1 and Herman's 2.
-    expect(table.board.doomInPlay).toBe(3);
-
-    // Round 4 – investigation (the Wizard's doom makes 4 of 8): Roland finishes
+    // Round 4 – investigation (the Wizard's doom makes 1 of 8): Roland finishes
     // Drew, who goes to the victory display: his second Vicious Blow deals 2,
-    // a plain hit the last 1. Then he hits the Hunter once.
+    // a plain hit the last 1. Then he slips away from the Ghoul Priest.
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'investigation' });
-    expect(table.board.doomInPlay).toBe(4);
+    expect(table.board.doomInPlay).toBe(1);
     table.startTurn(roland);
     table.fight(roland, byName(drew), { damage: 2 });
     table.fight(roland, byName(drew));
-    table.fight(roland, byName(hunter));
+    table.evade(roland, byName(priest));
     table.endTurn(roland);
 
-    // Round 4 – Daisy parleys with Herman Collins: she discards 4 cards from her
-    // hand and he goes to the victory display, his doom with him. Then she
-    // walks to Easttown.
+    // Round 4 – Daisy goes back into the Graveyard, passes its willpower test
+    // this time and parleys with Herman Collins, who engages her there: she
+    // discards 4 cards from her hand and he goes to the victory display. Then
+    // she returns to Rivertown.
     table.startTurn(daisy);
+    table.moveTo(daisy, byName('Graveyard'));
+    table.answer(byName('Graveyard'), 'pass');
+    expect(table.board.enemy(byName(herman))).toMatchObject({ engagedWith: daisy });
     table.play({
       type: 'ManualAdjust',
       adjustment: {
@@ -379,24 +387,24 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
       },
     });
     table.moveTo(daisy, byName('Rivertown'));
-    table.moveTo(daisy, byName('Easttown'));
     table.endTurn(daisy);
 
     expect(table.board.namesIn({ kind: 'victoryDisplay' })).toEqual([drew, herman]);
-    expect(table.board.doomInPlay).toBe(2);
 
-    // Round 4 – enemy phase: the Hunter attacks Roland for 2 damage and 1 horror.
+    // Round 4 – enemy phase: the evaded, exhausted Priest holds back; the Hunter
+    // attacks Roland for 2 damage and 1 horror.
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'enemy', step: 'enemiesAttack' });
+    expect(table.board.attacksDue).toEqual([{ enemy: hunter, investigator: roland }]);
     table.resolveEnemyAttacks();
     expect(table.board.investigator(roland)).toMatchObject({ damage: 4, horror: 1 });
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'upkeep' });
 
-    // Round 5 – mythos: another Acolyte, at Miskatonic University with its 1
-    // doom. Daisy draws Locked Door, which the players attach to the location
-    // with the most clues, Downtown.
+    // Round 5 – mythos: another Acolyte, at St. Mary's Hospital with its 1 doom.
+    // Daisy draws Locked Door, which the players attach to the location with
+    // the most clues, Downtown.
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos', step: 'drawEncounterCard' });
-    table.answer(byName('Acolyte'), 'Miskatonic University');
-    acolyteDoomAt(byName('Miskatonic University'));
+    table.answer(byName('Acolyte'), "St. Mary's Hospital");
+    acolyteDoomAt(byName("St. Mary's Hospital"));
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos' });
     expect(table.board.namesIn({ kind: 'encounterDiscard' })[0]).toBe('Locked Door');
     const lockedDoor = table.state.order[zoneKey({ kind: 'encounterDiscard' })]?.[0];
@@ -415,64 +423,102 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
       attachments: ['Locked Door'],
     });
 
-    // Round 5 – investigation (5 of 8): Roland, held by the Hunter, hits it
-    // three times; Daisy heads for Southside, where the first Acolyte engages
-    // her, and investigating there provokes its attack of opportunity.
+    // Round 5 – investigation (4 of 8): the Priest has readied and engaged
+    // Roland again. Two enemies at 2 damage each are too much for him: he
+    // evades both and falls back to Easttown. Daisy takes Easttown's clue and
+    // goes back to Rivertown.
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'investigation' });
-    expect(table.board.doomInPlay).toBe(5);
+    expect(table.board.doomInPlay).toBe(4);
+    expect(table.board.enemy(byName(priest))).toMatchObject({ engagedWith: roland });
     table.startTurn(roland);
-    table.fight(roland, byName(hunter));
-    table.fight(roland, byName(hunter));
-    table.fight(roland, byName(hunter));
-    table.endTurn(roland);
-    table.startTurn(daisy);
-    table.moveTo(daisy, byName('Rivertown'));
-    table.moveTo(daisy, byName('Southside'));
-    table.investigate(daisy, { result: 'open' });
-    table.takeAttackOfOpportunity(enemyMatching(byName('Acolyte'), { engagedWith: daisy }));
-    table.resolveTest('pass');
-    table.endTurn(daisy);
-
-    expect(table.board.enemy(byName(hunter))).toMatchObject({ damage: 4 });
-    expect(table.board.investigator(daisy)).toMatchObject({ damage: 2, clues: 1 });
-
-    // Round 5 – enemy phase: the Hunter and the Acolyte attack.
-    expect(table.nextPhase()).toEqual({ round: 5, phase: 'enemy', step: 'enemiesAttack' });
-    table.resolveEnemyAttacks();
-    expect(table.board.investigator(roland)).toMatchObject({ damage: 6, horror: 2 });
-    expect(table.board.investigator(daisy)).toMatchObject({ damage: 3 });
-    expect(table.nextPhase()).toEqual({ round: 5, phase: 'upkeep' });
-
-    // Round 6 – mythos: Obscuring Fog settles on Downtown. Daisy draws Hunting
-    // Shadow again; 2 more damage would defeat her, so she spends a clue.
-    expect(table.nextPhase()).toEqual({ round: 6, phase: 'mythos', step: 'drawEncounterCard' });
-    table.play(answer(HUNTING_SHADOW_DECISION, 'clue'));
-    expect(table.board.location(byName('Downtown'))).toMatchObject({
-      attachments: ['Locked Door', 'Obscuring Fog'],
-    });
-
-    // Round 6 – investigation (7 of 8): they give up on the Hunter and save
-    // themselves. Roland evades it and falls back through Easttown to Rivertown; Daisy evades
-    // her Acolyte and takes Southside's last clue.
-    expect(table.nextPhase()).toEqual({ round: 6, phase: 'investigation' });
-    expect(table.board.doomInPlay).toBe(7);
-    table.startTurn(roland);
+    table.evade(roland, byName(priest));
     table.evade(roland, byName(hunter));
     table.moveTo(roland, byName('Easttown'));
-    table.moveTo(roland, byName('Rivertown'));
     table.endTurn(roland);
     table.startTurn(daisy);
-    table.evade(daisy, enemyMatching(byName('Acolyte'), { engagedWith: daisy }));
+    table.moveTo(daisy, byName('Easttown'));
     table.investigate(daisy);
+    table.moveTo(daisy, byName('Rivertown'));
     table.endTurn(daisy);
 
-    // Round 6 – the exhausted enemies neither hunt nor attack.
+    // Round 5 – the exhausted enemies neither hunt nor attack.
+    expect(table.nextPhase()).toEqual({ round: 5, phase: 'enemy' });
+    expect(table.nextPhase()).toEqual({ round: 5, phase: 'upkeep' });
+
+    // Round 6 – mythos: Roland draws Hunting Shadow with no clue to spend, so he
+    // takes the 2 damage; Daisy passes Crypt Chill.
+    expect(table.nextPhase()).toEqual({ round: 6, phase: 'mythos', step: 'drawEncounterCard' });
+    expect(table.board.decisions).toMatchObject([
+      { for: roland, options: ['scenario.theMidnightMasks.huntingShadow.damage'] },
+    ]);
+    table.play(answer(HUNTING_SHADOW_DECISION, 'damage'));
+    expect(table.nextPhase()).toEqual({ round: 6, phase: 'mythos', step: 'drawEncounterCard' });
+    table.answer(byName('Crypt Chill'), 'pass');
+    expect(table.board.investigator(roland)).toMatchObject({ damage: 6 });
+
+    // Round 6 – investigation (6 of 8): the Priest and the Hunter wait in
+    // Downtown, one step from Roland. They run: both to Your House, three steps away.
+    expect(table.nextPhase()).toEqual({ round: 6, phase: 'investigation' });
+    expect(table.board.doomInPlay).toBe(6);
+    table.startTurn(roland);
+    table.moveTo(roland, byName('Rivertown'));
+    table.moveTo(roland, byName('Your House'));
+    table.endTurn(roland);
+    table.startTurn(daisy);
+    table.moveTo(daisy, byName('Your House'));
+    table.endTurn(daisy);
+
+    // Round 6 – enemy phase: both hunters move one step, into Easttown; the lead
+    // investigator picks the order. No one is in reach to attack.
+    expect(table.nextPhase()).toEqual({ round: 6, phase: 'enemy', step: 'huntersMove' });
+    table.answerOnly(hunter);
+    expect(table.board.enemy(byName(hunter))).toMatchObject({ at: 'Easttown' });
+    expect(table.board.enemy(byName(priest))).toMatchObject({ at: 'Easttown' });
     expect(table.nextPhase()).toEqual({ round: 6, phase: 'enemy' });
     expect(table.nextPhase()).toEqual({ round: 6, phase: 'upkeep' });
 
-    // Round 7 – mythos: the doom reaches 8 and midnight strikes. Agenda 2's
+    // Round 7 – mythos: the agenda's doom makes 7 of 8, one short. Roland draws
+    // the second Locked Door; no location without one has a clue, so the
+    // players pick Rivertown. Daisy draws On Wings of Darkness again, fails,
+    // takes 1 damage and 1 horror and is carried back to Rivertown.
+    expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'drawEncounterCard' });
+    expect(table.board.doomInPlay).toBe(7);
+    const secondDoor = table.state.order[zoneKey({ kind: 'encounterDiscard' })]?.[0];
+    if (secondDoor === undefined) throw new Error('Locked Door is not on the encounter discard');
+    table.play({
+      type: 'ManualAdjust',
+      adjustment: {
+        kind: 'moveCard',
+        cardId: secondDoor,
+        to: { kind: 'attachedTo', hostId: table.board.location(byName('Rivertown')).id },
+      },
+    });
+    table.answer(byName('On Wings of Darkness'), 'fail');
+    expect(table.board.investigator(daisy)).toMatchObject({
+      at: 'Rivertown',
+      damage: 2,
+      horror: 4,
+    });
+
+    // Round 7 – investigation: the Wizard's doom makes 8. With the hunters
+    // next door, Daisy walks back to Your House; Roland stays put.
+    expect(table.nextPhase()).toEqual({ round: 7, phase: 'investigation' });
+    expect(table.board.doomInPlay).toBe(8);
+    table.startTurn(roland);
+    table.endTurn(roland);
+    table.startTurn(daisy);
+    table.moveTo(daisy, byName('Your House'));
+    table.endTurn(daisy);
+
+    // Round 7 – enemy phase: the hunters reach Rivertown, still a step short.
+    expect(table.nextPhase()).toEqual({ round: 7, phase: 'enemy', step: 'huntersMove' });
+    table.answerOnly(hunter);
+    expect(table.nextPhase()).toEqual({ round: 7, phase: 'enemy' });
+    expect(table.nextPhase()).toEqual({ round: 7, phase: 'upkeep' });
+
+    // Round 8 – mythos: the doom passes 8 and midnight strikes. Agenda 2's
     // reverse side ends the scenario in resolution 2.
-    expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'checkDoomThreshold' });
+    expect(table.nextPhase()).toEqual({ round: 8, phase: 'mythos', step: 'checkDoomThreshold' });
     table.answer(byName('Time Is Running Short'), 'yes');
 
     expect(table.board.ended).toBe(true);
@@ -481,7 +527,7 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     // Resolution 2: Drew and Herman were interrogated. Peter Warren, Victoria
     // Devereux and Ruth Turner, still in the Cultist deck, got away, and so did
     // The Masked Hunter, still in play. It is past midnight. The Ghoul Priest
-    // never came out of the encounter deck, so he lives on. Experience: Drew's
+    // was never defeated, so he lives on. Experience: Drew's
     // and Herman's Victory 1 and the cleared Graveyard's Victory 1.
     const proposal = campaign.proposeResolution(ctx, table.state, theMidnightMasksResolutions);
     expect(proposal).toEqual([

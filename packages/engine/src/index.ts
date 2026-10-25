@@ -144,6 +144,7 @@ export {
   skillTest,
   spawnEnemyAt,
   takeDamage,
+  takeDamageAndHorror,
   takeHorror,
   spendClues,
   moveTo,

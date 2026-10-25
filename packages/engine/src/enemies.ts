@@ -1,10 +1,10 @@
 import { shortestPaths } from './board';
 import { cardStats, resolveValue, type CardStats, type EngineContext, type Trait } from './cards';
-import { investigatorLeavesEvents } from './elimination';
-import type { EnemyAttacked, Event, InvestigatorChanged } from './events';
+import { woundEvents } from './elimination';
+import type { EnemyAttacked, Event } from './events';
 import type { CardCode, InstanceId, InvestigatorId } from './ids';
 import { cardsInZone, requireCard } from './lookup';
-import { defeatCause, playerOrder, withStatDelta } from './investigators';
+import { playerOrder } from './investigators';
 import { hasKeyword } from './keywords';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState, Investigator } from './state';
@@ -88,34 +88,8 @@ export function enemyAttackEvents(
     enemyId,
     investigatorId: investigator.id,
   };
-  const changes: InvestigatorChanged[] = (
-    [
-      ['damage', attackAmount(damage)],
-      ['horror', attackAmount(horror)],
-    ] as const
-  )
-    .filter(([, amount]) => amount > 0)
-    .map(([stat, delta]) => ({
-      type: 'InvestigatorChanged',
-      investigatorId: investigator.id,
-      stat,
-      delta,
-    }));
-  const after = changes.reduce(
-    (inv, change) => withStatDelta(inv, change.stat, change.delta),
-    investigator,
-  );
-  const cause = defeatCause(after);
-  if (cause === undefined) return [...changes, attacked];
-  return [
-    ...changes,
-    attacked,
-    ...investigatorLeavesEvents(ctx, state, investigator, {
-      type: 'InvestigatorDefeated',
-      investigatorId: investigator.id,
-      cause,
-    }),
-  ];
+  const amounts = { damage: attackAmount(damage), horror: attackAmount(horror) };
+  return woundEvents(ctx, state, investigator, amounts, [attacked]);
 }
 
 function attackAmount(amount: number): number {
