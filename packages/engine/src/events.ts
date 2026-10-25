@@ -192,10 +192,12 @@ export type InvestigatorDefeated = {
 /**
  * Why an investigator was defeated (`InvestigatorDefeated`, kept as
  * `Investigator.defeat`). Only a card effect names its trauma, as in "is
- * defeated and suffers 1 physical trauma"; damage and horror imply theirs.
+ * defeated and suffers 1 physical trauma"; damage and horror imply theirs,
+ * and `damageAndHorror` (health and sanity both ran out at once, as from an
+ * attack) leaves the choice to the player (Rules Reference, "Trauma").
  */
 export type Defeat =
-  | { readonly cause: 'damage' | 'horror' }
+  | { readonly cause: 'damage' | 'horror' | 'damageAndHorror' }
   | {
       readonly cause: 'cardEffect';
       /** The 1 trauma the card names; absent when it names none. */

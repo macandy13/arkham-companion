@@ -324,8 +324,7 @@ describe('TakeDamageAndHorror', () => {
     expect(result.events.slice(0, 3)).toMatchObject([
       { type: 'InvestigatorChanged', stat: 'damage', delta: 1 },
       { type: 'InvestigatorChanged', stat: 'horror', delta: 1 },
-      // Both at once lets the player choose the trauma; until #391 the defeat counts as by damage.
-      { type: 'InvestigatorDefeated', cause: 'damage' },
+      { type: 'InvestigatorDefeated', cause: 'damageAndHorror' },
     ]);
     expect(investigatorOf(result.state, alice)).toMatchObject({
       status: 'defeated',

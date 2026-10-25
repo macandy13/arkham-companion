@@ -234,6 +234,19 @@ describe('proposeResolution', () => {
         },
       ],
     ],
+    [
+      'by damage and horror at once, a choice for the player',
+      { type: 'TakeDamageAndHorror', investigatorId: alice, damage: 8, horror: 6 },
+      [
+        {
+          kind: 'choice',
+          options: [
+            { type: 'AddTrauma', code: aliceCode, kind: 'physical', amount: 1 },
+            { type: 'AddTrauma', code: aliceCode, kind: 'mental', amount: 1 },
+          ],
+        },
+      ],
+    ],
     ['by a card effect that names none', { type: 'DefeatInvestigator', investigatorId: alice }, []],
     [
       'by a card effect that names physical trauma',

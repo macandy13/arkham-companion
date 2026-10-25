@@ -107,12 +107,15 @@ export interface ScenarioResolutions {
 }
 
 /**
- * One change `proposeResolution` proposes: a campaign command, or a step the
- * players do by hand. The players confirm or edit the list before the
- * commands go to `handleCommand`.
+ * One change `proposeResolution` proposes: a campaign command, a choice of
+ * one command among `options` (the trauma of a defeat by damage and horror at
+ * once), or a step the players do by hand. The players confirm or edit the
+ * list, picking an option for each choice, before the commands go to
+ * `handleCommand`.
  */
 export type ProposedChange =
   | { readonly kind: 'command'; readonly command: CampaignCommand }
+  | { readonly kind: 'choice'; readonly options: readonly CampaignCommand[] }
   | { readonly kind: 'byHand'; readonly textKey: string };
 
 /**
@@ -124,8 +127,8 @@ export type ProposedChange =
  * defeat which kills an investigator doesn't block the experience the
  * resolution awards them first; someone the resolution kills or drives insane
  * gets none. A defeat that reached both health and sanity at once proposes
- * physical trauma, which the players change if they pick mental (Rules
- * Reference, "Trauma"). Undefined while the game is still running,
+ * a choice between 1 physical and 1 mental trauma, which the player makes
+ * (Rules Reference, "Trauma"). Undefined while the game is still running,
  * or for a resolution id the scenario doesn't define.
  */
 export function proposeResolution(
@@ -284,21 +287,31 @@ function targetInvestigators(game: GameState, target: ResolutionTarget): Investi
 }
 
 function defeatTrauma(investigator: Investigator): ProposedChange[] {
-  const kind = defeatTraumaKind(investigator);
-  if (kind === undefined) return [];
-  return [command({ type: 'AddTrauma', code: investigator.code, kind, amount: 1 })];
+  const kinds = defeatTraumaKinds(investigator);
+  const options = kinds.map((kind): CampaignCommand => ({
+    type: 'AddTrauma',
+    code: investigator.code,
+    kind,
+    amount: 1,
+  }));
+  const [only] = options;
+  if (only === undefined) return [];
+  return options.length === 1 ? [command(only)] : [{ kind: 'choice', options }];
 }
 
-function defeatTraumaKind(investigator: Investigator): TraumaKind | undefined {
+/** The trauma kinds a defeat may cost; the player picks one when there are several. */
+function defeatTraumaKinds(investigator: Investigator): TraumaKind[] {
   const { defeat } = investigator;
-  if (investigator.status !== 'defeated' || defeat === undefined) return undefined;
+  if (investigator.status !== 'defeated' || defeat === undefined) return [];
   switch (defeat.cause) {
     case 'damage':
-      return 'physical';
+      return ['physical'];
     case 'horror':
-      return 'mental';
+      return ['mental'];
+    case 'damageAndHorror':
+      return ['physical', 'mental'];
     case 'cardEffect':
-      return defeat.trauma;
+      return defeat.trauma === undefined ? [] : [defeat.trauma];
     default:
       return assertNever(defeat);
   }
