@@ -7,8 +7,6 @@ import type {
   GridCell,
   InstanceId,
   InvestigatorId,
-  InvestigatorView,
-  LocationView,
   MapId,
   MapView,
 } from '@arkham/engine';
@@ -198,7 +196,7 @@ function MapDrawing({
                       key={location.id}
                       location={location}
                       enemies={map.enemies[location.id] ?? []}
-                      investigators={pawnsAt(board, location)}
+                      investigators={board.investigatorsAt(location.id)}
                       onEdit={adjusting ? () => setMenuFor(location.id) : undefined}
                       dragOf={(piece) =>
                         draggable(piece)
@@ -240,7 +238,7 @@ function Ghost({ piece, at, board }: { piece: TilePiece; at: Point; board: Board
 
 /**
  * Where the pawn of `investigator` stands on `map`, in the drawing's coordinates: in the row of
- * pawns on their location's tile (`pawnsAt`).
+ * pawns on their location's tile (`BoardView.investigatorsAt`).
  */
 function pawnCentre(
   map: MapView,
@@ -251,15 +249,10 @@ function pawnCentre(
   const location = map.locations.find(({ investigators }) => investigators?.includes(investigator));
   const cell = location && cells[location.id];
   if (!cell) return undefined;
-  const index = pawnsAt(board, location).findIndex(({ id }) => id === investigator);
+  const index = board.investigatorsAt(location.id).findIndex(({ id }) => id === investigator);
   const tile = tileOrigin(cell);
   const offset = pawnOffset(index);
   return { x: tile.x + offset.x, y: tile.y + offset.y };
-}
-
-/** The investigators at `location`, in the order `LocationTile` draws their pawns: the board's. */
-function pawnsAt(board: BoardView, location: LocationView): InvestigatorView[] {
-  return board.investigators.filter(({ id }) => location.investigators?.includes(id));
 }
 
 /**

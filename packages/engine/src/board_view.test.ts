@@ -412,6 +412,37 @@ describe('locations', () => {
     },
   );
 
+  it.each([
+    { from: 'study', to: ['hallway'] },
+    { from: 'hallway', to: ['study', 'attic'] },
+    { from: 'attic', to: [] },
+  ])('moves from the $from to $to, the attic only reached one way', ({ from, to }) => {
+    const attic = instanceId('attic');
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withLocation(hallway, blankLocation('hallway'))
+      .withLocation(attic, blankLocation('attic'))
+      .withConnection(study, hallway)
+      .withConnection(hallway, attic, { oneWay: true })
+      .start();
+
+    expect(boardView(context, state).connectedTo(instanceId(from))).toEqual(to.map(instanceId));
+  });
+
+  it('finds alice and bob in the study and nobody in the hallway', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withLocation(hallway, blankLocation('hallway'))
+      .withInvestigator(alice, { locationId: study })
+      .withInvestigator(bob, { locationId: study })
+      .start();
+    const board = boardView(context, state);
+
+    expect(board.investigatorsAt(study).map(({ id }) => id)).toEqual([alice, bob]);
+    expect(board.investigatorsAt(hallway)).toEqual([]);
+    expect(board.locationOf(bob)).toBe(study);
+  });
+
   it('lists the enemies at each location of a map, the engaged ones at their investigator', () => {
     const { context, state } = house
       .withCard(instanceId('ghoul'), blankEnemy('ghoul', { health: fixed(3) }), atLocation(hallway))
