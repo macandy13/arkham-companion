@@ -37,8 +37,12 @@ const renderFirstDecision = (table: PlayTable, actions = actionsOn(table)) => {
   render(<DecisionDialog board={table.board} decision={decision} actions={actions} busy={false} />);
 };
 
+/** The answers' buttons, leaving out the skill toggles, whose list sits in a section. */
 const optionButtons = () =>
-  screen.getAllByRole('listitem').map((item) => item.querySelector('button')?.textContent);
+  screen
+    .getAllByRole('listitem')
+    .filter((item) => item.closest('section') === null)
+    .map((item) => item.querySelector('button')?.textContent);
 
 describe('DecisionDialog', () => {
   beforeAll(async () => {
@@ -151,6 +155,25 @@ describe('DecisionDialog', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Draw a token' }));
 
       expect(suggestedOptions()).toEqual(['Passed']);
+    });
+
+    it("tests the decision's skill until the players switch to another", () => {
+      const table = aldersInvestigationWithAMinusTwo();
+      const answered = vi.fn(async () => {});
+      renderFirstDecision(table, { ...actionsOn(table), answer: answered });
+      const pressed = () =>
+        within(screen.getByRole('region', { name: 'Skills' }))
+          .getAllByRole('button', { pressed: true })
+          .map((skill) => skill.getAttribute('aria-label'));
+      expect(pressed()).toEqual(['Intellect 3']);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Willpower 1' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Draw a token' }));
+
+      expect(pressed()).toEqual(['Willpower 1']);
+      // Willpower 1 with the -2 is 0 against the shroud of 2, where intellect would fail by 1.
+      fireEvent.click(screen.getByRole('button', { name: 'Failed' }));
+      expect(answered).toHaveBeenCalledWith('fail', { margin: 2 });
     });
 
     it.each([

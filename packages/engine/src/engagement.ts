@@ -4,6 +4,7 @@ import type { DecisionRequested, EnemyEngaged, Event } from './events';
 import { decisionId, type InstanceId, type InvestigatorId } from './ids';
 import {
   activeInvestigators,
+  bySkill,
   lowestRemainingHealth,
   lowestRemainingSanity,
   mostClues,
@@ -13,10 +14,13 @@ import { requestDecision } from './decisions';
 import { hasKeyword } from './keywords';
 import { cardsAtLocation, cardsOfType } from './lookup';
 import { replay } from './reducer';
-import type { CardInstance, GameState, Investigator } from './state';
+import { SKILL_NAMES, type CardInstance, type GameState, type Investigator } from './state';
 
-/** Prey criteria the engine can evaluate from investigator counters; each returns the tied best. */
-const PREY_CRITERIA: Record<string, (investigators: readonly Investigator[]) => Investigator[]> = {
+/** A prey criterion: the tied best among the investigators given. */
+type PreyCriterion = (investigators: readonly Investigator[]) => Investigator[];
+
+/** Prey criteria the engine can evaluate from investigator counters. */
+const PREY_CRITERIA: Record<string, PreyCriterion> = {
   'lowest remaining health': lowestRemainingHealth,
   'lowest remaining sanity': lowestRemainingSanity,
   'most clues': mostClues,
@@ -31,8 +35,8 @@ export function investigatorsAt(state: GameState, locationId: InstanceId): Inves
 /**
  * The investigators the enemy prefers among `candidates` according to its
  * `prey` keyword: the tied best. Without a prey keyword, or with a criterion
- * the engine cannot evaluate yet (skill based prey needs investigator card
- * data), all active candidates stay, so the players decide.
+ * the engine cannot read (Yithian Observer's "Fewest cards in hand"), all
+ * active candidates stay, so the players decide.
  */
 export function preferredByPrey(
   stats: CardStats,
@@ -40,8 +44,19 @@ export function preferredByPrey(
 ): Investigator[] {
   const active = candidates.filter((inv) => inv.status === 'active');
   const detail = stats.keywords?.find((keyword) => keyword.name === 'prey')?.detail;
-  const criterion = detail === undefined ? undefined : PREY_CRITERIA[comparableName(detail)];
+  const criterion = detail === undefined ? undefined : preyCriterion(comparableName(detail));
   return criterion ? criterion(active) : active;
+}
+
+/** The criterion of a prey text in `comparableName` form, e.g. "highest [combat]". */
+function preyCriterion(text: string): PreyCriterion | undefined {
+  const named = PREY_CRITERIA[text];
+  if (named) return named;
+  for (const extreme of ['highest', 'lowest'] as const) {
+    const skill = SKILL_NAMES.find((name) => text === `${extreme} [${name}]`);
+    if (skill) return bySkill(skill, extreme);
+  }
+  return undefined;
 }
 
 /**

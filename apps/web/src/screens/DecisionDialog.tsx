@@ -5,11 +5,18 @@ import type {
   ChaosToken,
   DecisionView,
   InvestigatorId,
+  SkillName,
   SkillTest,
   SkillTestSuggestion,
 } from '@arkham/engine';
 import { drawTokens, testFinished } from '../investigators/drawTokens';
-import { DrawnTokens, signed, Stepper, TestResult } from '../investigators/TestCalculation';
+import {
+  DrawnTokens,
+  signed,
+  SkillToggles,
+  Stepper,
+  TestResult,
+} from '../investigators/TestCalculation';
 import type { GameActions } from '../state/gameActions';
 
 /**
@@ -17,7 +24,8 @@ import type { GameActions } from '../state/gameActions';
  * the players' words with the card it is about, the investigator who answers it, the test of a
  * skill test, and one button per option, answered through `GameActions.answer` with the default
  * counts. A skill test one investigator takes also brings the chaos bag draw of the skill test
- * dialog: the players set their modifier and let the app draw, and the calculation
+ * dialog: the players keep the test's skill or switch to another (a card can test a different
+ * one), set their modifier and let the app draw, and the calculation
  * (`BoardView.skillTest`) marks the option it suggests, which then answers with its margin; the
  * other option overrides it without one. The screen mounts one dialog per decision, so a draw
  * never carries over to the next; adjusting the board, which unmounts it, starts the draw over.
@@ -66,7 +74,9 @@ export function DecisionDialog({
           {t('decision.test', { skill: t(`skill.${test.skill}`), difficulty: test.difficulty })}
         </p>
       )}
-      {test && tested !== undefined && <TestDraw board={board} test={test} draw={draw} />}
+      {draw.skill && tested !== undefined && (
+        <TestDraw board={board} tested={tested} skill={draw.skill} draw={draw} />
+      )}
       <ul>
         {/* Two options can share a name (two enemies of one card), so the position is the key. */}
         {decision.options.map((option, index) => (
@@ -99,8 +109,14 @@ export function DecisionDialog({
   );
 }
 
-/** The players' modifier and the tokens drawn for a decision's skill test, and what they make. */
+/**
+ * The skill tested (the decision's own until the players switch), their modifier and the tokens
+ * drawn for a decision's skill test, and what they make.
+ */
 interface ChaosDraw {
+  /** None only for a decision that is not a skill test. */
+  skill?: SkillName;
+  setSkill: (skill: SkillName) => void;
   modifier: number;
   setModifier: (modifier: number) => void;
   revealed: readonly ChaosToken[];
@@ -115,21 +131,45 @@ function useChaosDraw(
   tested: InvestigatorId | undefined,
   test: SkillTest | undefined,
 ): ChaosDraw {
+  const [switched, setSkill] = useState<SkillName>();
+  const skill = switched ?? test?.skill;
   const [modifier, setModifier] = useState(0);
   const [revealed, setRevealed] = useState<readonly ChaosToken[]>([]);
   const result =
-    test && tested !== undefined && revealed.length > 0
-      ? board.skillTest(tested, test, { modifier, tokens: revealed })
+    test && skill && tested !== undefined && revealed.length > 0
+      ? board.skillTest(tested, { ...test, skill }, { modifier, tokens: revealed })
       : undefined;
-  return { modifier, setModifier, revealed, setRevealed, ...(result ? { result } : {}) };
+  return {
+    ...(skill ? { skill } : {}),
+    setSkill,
+    modifier,
+    setModifier,
+    revealed,
+    setRevealed,
+    ...(result ? { result } : {}),
+  };
 }
 
-/** The modifier, the draw button, the tokens drawn and the calculation of a decision's test. */
-function TestDraw({ board, test, draw }: { board: BoardView; test: SkillTest; draw: ChaosDraw }) {
+/**
+ * The skill toggles (`skill` pressed), the modifier, the draw button, the tokens drawn and the
+ * calculation of the test `tested` takes for a decision.
+ */
+function TestDraw({
+  board,
+  tested,
+  skill,
+  draw,
+}: {
+  board: BoardView;
+  tested: InvestigatorId;
+  skill: SkillName;
+  draw: ChaosDraw;
+}) {
   const { t } = useTranslation();
-  const { modifier, setModifier, revealed, setRevealed, result } = draw;
+  const { setSkill, modifier, setModifier, revealed, setRevealed, result } = draw;
   return (
     <>
+      <SkillToggles investigator={board.investigator(tested)} chosen={[skill]} onPick={setSkill} />
       <Stepper
         label={t('skillTest.modifier')}
         value={modifier}
@@ -145,9 +185,7 @@ function TestDraw({ board, test, draw }: { board: BoardView; test: SkillTest; dr
         {t('skillTest.draw')}
       </button>
       {revealed.length > 0 && <DrawnTokens tokens={revealed} />}
-      {result && (
-        <TestResult result={result} skill={test.skill} finished={testFinished(revealed)} />
-      )}
+      {result && <TestResult result={result} skill={skill} finished={testFinished(revealed)} />}
     </>
   );
 }
