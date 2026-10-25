@@ -372,10 +372,9 @@ describe('The Devourer Below resolutions', () => {
   });
 
   it('records no resolution: Arkham succumbed, each investigator killed, and the campaign lost', () => {
-    const started = startScenario(ctx);
-    const ended = stateAfter(ctx, started, {
+    const ended = stateAfter(ctx, startScenario(ctx), {
       type: 'DefeatInvestigator',
-      investigatorId: started.investigators[0]!.id,
+      investigatorId: investigatorId('tank'),
     });
 
     expect(campaign.proposeResolution(ctx, ended, theDevourerBelowResolutions)).toEqual([
