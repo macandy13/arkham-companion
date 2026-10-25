@@ -27,6 +27,7 @@ import {
   skillTest,
   spendClues,
   takeDamage,
+  takeDamageAndHorror,
   takeHorror,
   trait,
   whenAdvanced,
@@ -429,7 +430,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     quantity: 2,
     abilities: [
       whenRevealed(
-        skillTest('agility', 4, { onFail: [takeHorror(1), takeDamage(1)] }),
+        skillTest('agility', 4, { onFail: [takeDamageAndHorror({ damage: 1, horror: 1 })] }),
         disengageFromEachEnemy({ withoutTrait: trait('Nightgaunt') }),
         moveTo(locationWith(trait('Central'))),
         engageReadyEnemies(),

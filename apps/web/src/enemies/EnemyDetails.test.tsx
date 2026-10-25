@@ -149,16 +149,16 @@ describe('EnemyDetails', () => {
   });
 
   it.each([
-    { group: 'Actions', button: 'Fight · 1 action', prompt: 'decision.fight', left: 2 },
-    { group: 'Actions', button: 'Evade · 1 action', prompt: 'decision.evade', left: 2 },
+    { group: 'Action', button: 'Fight · 1 action', prompt: 'decision.fight', left: 2 },
+    { group: 'Action', button: 'Evade · 1 action', prompt: 'decision.evade', left: 2 },
     {
-      group: 'Without an action (a card allows it)',
+      group: 'Free',
       button: 'Fight, no action',
       prompt: 'decision.fight',
       left: 3,
     },
     {
-      group: 'Without an action (a card allows it)',
+      group: 'Free',
       button: 'Evade, no action',
       prompt: 'decision.evade',
       left: 3,
@@ -181,7 +181,15 @@ describe('EnemyDetails', () => {
     renderGhoulDetails(PlayTable.start(ghoulOnAlder.withTurnOf(brook)), false);
 
     const groups = screen.getAllByRole('heading', { level: 3 }).map((title) => title.textContent);
-    expect(groups).toEqual(['Card effects']);
+    expect(groups).toEqual(['Card effect']);
+  });
+
+  it('closes from its × button', () => {
+    const onClose = renderGhoulDetails(PlayTable.start(ghoulOnAlder), false);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+
+    expect(onClose).toHaveBeenCalled();
   });
 
   it('deals 1 damage and stays open for the next point', () => {

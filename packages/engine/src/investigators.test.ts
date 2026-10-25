@@ -302,6 +302,60 @@ describe('AdjustInvestigator', () => {
   });
 });
 
+describe('TakeDamageAndHorror', () => {
+  /** Alice is 1 damage and 1 horror from defeat: health 3 with 2 damage, sanity 2 with 1 horror. */
+  const { context, state } = hallCellarAttic
+    .withInvestigator(alice, {
+      locationId: hall,
+      health: { max: 3, damage: 2 },
+      sanity: { max: 2, horror: 1 },
+    })
+    .start();
+  const aliceTakes = (damage: number, horror: number): Command => ({
+    type: 'TakeDamageAndHorror',
+    investigatorId: alice,
+    damage,
+    horror,
+  });
+
+  it('places both on alice before the defeat either causes, so neither is lost', () => {
+    const result = execute(context, state, aliceTakes(1, 1));
+
+    expect(result.events.slice(0, 3)).toMatchObject([
+      { type: 'InvestigatorChanged', stat: 'damage', delta: 1 },
+      { type: 'InvestigatorChanged', stat: 'horror', delta: 1 },
+      // Both at once lets the player choose the trauma; until #391 the defeat counts as by damage.
+      { type: 'InvestigatorDefeated', cause: 'damage' },
+    ]);
+    expect(investigatorOf(result.state, alice)).toMatchObject({
+      status: 'defeated',
+      health: { damage: 3 },
+      sanity: { horror: 2 },
+    });
+  });
+
+  it('places no horror when the horror is 0', () => {
+    const result = execute(context, state, aliceTakes(1, 0));
+
+    expect(result.events.filter((event) => event.type === 'InvestigatorChanged')).toEqual([
+      { type: 'InvestigatorChanged', investigatorId: alice, stat: 'damage', delta: 1 },
+    ]);
+    expect(investigatorOf(result.state, alice).sanity.horror).toBe(1);
+  });
+
+  it.each([
+    { damage: 0, horror: 0 },
+    { damage: -1, horror: 1 },
+    { damage: 1, horror: 0.5 },
+  ])('rejects $damage damage and $horror horror', ({ damage, horror }) => {
+    expect(rejectionFrom(context, state, aliceTakes(damage, horror))).toEqual({
+      code: 'invalidWounds',
+      damage,
+      horror,
+    });
+  });
+});
+
 describe('DiscoverClues', () => {
   const { context, state } = aliceInHallBobNowhere.start();
 

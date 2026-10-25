@@ -17,7 +17,7 @@ import {
   readySelf,
   resolutionId,
   skillTest,
-  takeDamage,
+  takeDamageAndHorror,
   takeHorror,
   whenAdvanced,
   whenDefeated,
@@ -140,7 +140,9 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
     cluesPerInvestigator: 1,
     traits: woods,
     abilities: [
-      afterEntering(skillTest('willpower', 4, { onFail: [takeHorror(1), takeDamage(1)] })),
+      afterEntering(
+        skillTest('willpower', 4, { onFail: [takeDamageAndHorror({ damage: 1, horror: 1 })] }),
+      ),
     ],
   }),
   location({

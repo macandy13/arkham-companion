@@ -2,9 +2,20 @@ import type { EngineContext } from './cards';
 import { arrivalEngagements } from './engagement';
 import { decisionId } from './ids';
 import { requestDecision } from './decisions';
-import type { Event, InvestigatorDefeated, InvestigatorResigned } from './events';
+import type {
+  Event,
+  InvestigatorChanged,
+  InvestigatorDefeated,
+  InvestigatorResigned,
+} from './events';
 import { replay } from './reducer';
-import { activeInvestigators, cluesToLocationEvents, isActiveInvestigator } from './investigators';
+import {
+  activeInvestigators,
+  cluesToLocationEvents,
+  defeatCause,
+  isActiveInvestigator,
+  withStatDelta,
+} from './investigators';
 import { cardsInZone } from './lookup';
 import { discardEncounterCard } from './placement';
 import type { GameState, Investigator } from './state';
@@ -53,6 +64,45 @@ export function investigatorLeavesEvents(
   const after = replay(engagements, cleared);
   const nobodyLeft = activeInvestigators(after).length === 0;
   return [...events, ...engagements, ...(nobodyLeft ? [{ type: 'ScenarioEnded' as const }] : [])];
+}
+
+/**
+ * `damage` and `horror` placed on an investigator at once (Rules Reference,
+ * "Dealing Damage/Horror": placed simultaneously): an `InvestigatorChanged`
+ * per amount above 0, then `beforeDefeat` (an attack's `EnemyAttacked`), then the
+ * defeat both together cause, if any. Neither amount is lost to a defeat the
+ * other causes, unlike two effects in a row. Amounts are checked by callers.
+ */
+export function woundEvents(
+  ctx: EngineContext,
+  state: GameState,
+  investigator: Investigator,
+  amounts: { damage: number; horror: number },
+  beforeDefeat: readonly Event[] = [],
+): Event[] {
+  const changes: InvestigatorChanged[] = (['damage', 'horror'] as const)
+    .filter((stat) => amounts[stat] > 0)
+    .map((stat) => ({
+      type: 'InvestigatorChanged',
+      investigatorId: investigator.id,
+      stat,
+      delta: amounts[stat],
+    }));
+  const after = changes.reduce(
+    (inv, change) => withStatDelta(inv, change.stat, change.delta),
+    investigator,
+  );
+  const cause = defeatCause(after);
+  if (cause === undefined) return [...changes, ...beforeDefeat];
+  return [
+    ...changes,
+    ...beforeDefeat,
+    ...investigatorLeavesEvents(ctx, state, investigator, {
+      type: 'InvestigatorDefeated',
+      investigatorId: investigator.id,
+      cause,
+    }),
+  ];
 }
 
 /** Clues move to the location they were found at, where the remaining investigators can discover them. */
