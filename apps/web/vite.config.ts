@@ -29,4 +29,9 @@ export default defineConfig({
     }),
   ],
   base,
+  build: {
+    // The game's symbols stay files of their own: inlined as base64 into the stylesheet they
+    // barely compress, and the service worker precaches them for offline play anyway.
+    assetsInlineLimit: (file) => (file.includes('/src/symbols/') ? false : undefined),
+  },
 });
