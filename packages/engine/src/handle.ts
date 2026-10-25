@@ -242,6 +242,10 @@ function resolveQueuedStep(
   const { ctx, state } = resolution;
   switch (step.kind) {
     case 'command':
+      if (step.command.type === 'ResolveEffect') {
+        const { effect, opened } = step.command;
+        return [{ kind: 'ability', effect, opened, origin: effect.type }];
+      }
       return resolveCommand(resolution, step.command, step.origin, budget);
     case 'finishAdvance': {
       const deck = step.command.type === 'AdvanceAgenda' ? 'agenda' : 'act';

@@ -194,6 +194,8 @@ const COMMAND_SPECS: CommandSpecs = {
   ShuffleInto: { handle: (_ctx, state, command) => handleShuffleInto(state, command) },
   ShuffleEncounterDiscard: { handle: (_ctx, state) => handleShuffleEncounterDiscard(state) },
   ShuffleEncounterDeck: { handle: (_ctx, state) => handleShuffleEncounterDeck(state) },
+  // `handle` turns it into an `ability` step before any handler would see it.
+  ResolveEffect: { handle: () => [] },
   SpawnEnemy: { handle: handleSpawnEnemy },
   EngageEnemy: {
     handle: handleEngageEnemy,

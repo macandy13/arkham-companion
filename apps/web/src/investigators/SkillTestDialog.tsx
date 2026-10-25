@@ -108,6 +108,7 @@ export function SkillTestDialog({
       >
         {t('skillTest.draw')}
       </button>
+      {revealed.length > 0 && <DrawnTokens tokens={revealed} />}
       {result && <TestResult result={result} skill={tested} finished={testFinished(revealed)} />}
     </dialog>
   );
@@ -126,6 +127,23 @@ function pickSkill(
   if (skill === tested) return added === undefined ? skills : [added];
   if (skill === added) return [tested];
   return [tested, skill];
+}
+
+/**
+ * The tokens drawn so far, in the order they came out of the bag, each as its name: the styles
+ * draw a symbol token as the game's symbol and keep its name for screen readers only.
+ */
+function DrawnTokens({ tokens }: { tokens: readonly ChaosToken[] }) {
+  const { t } = useTranslation();
+  return (
+    <ol aria-label={t('skillTest.drawn')}>
+      {tokens.map((token, index) => (
+        <li key={index} data-token={token}>
+          {t(`chaosToken.${token}`)}
+        </li>
+      ))}
+    </ol>
+  );
 }
 
 /**
