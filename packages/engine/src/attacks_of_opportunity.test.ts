@@ -178,7 +178,7 @@ describe('attacks of opportunity', () => {
     );
 
     expect(events.filter((event) => event.type === 'InvestigatorDefeated')).toEqual([
-      { type: 'InvestigatorDefeated', investigatorId: alice, cause: 'damage' },
+      { type: 'InvestigatorDefeated', investigatorId: alice, cause: 'damageAndHorror' },
     ]);
   });
 

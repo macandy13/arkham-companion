@@ -13,12 +13,19 @@ export function remainingSanity(investigator: Investigator): number {
   return investigator.sanity.max - investigator.sanity.horror;
 }
 
-/** What defeats the investigator right now, or `undefined` while they still have health and sanity. */
+/**
+ * What defeats the investigator right now, or `undefined` while they still
+ * have health and sanity; `damageAndHorror` when both ran out, which only
+ * damage and horror placed at once can do (`woundEvents`).
+ */
 export function defeatCause(
   investigator: Investigator,
 ): Exclude<DefeatCause, 'cardEffect'> | undefined {
-  if (remainingHealth(investigator) <= 0) return 'damage';
-  if (remainingSanity(investigator) <= 0) return 'horror';
+  const outOfHealth = remainingHealth(investigator) <= 0;
+  const outOfSanity = remainingSanity(investigator) <= 0;
+  if (outOfHealth && outOfSanity) return 'damageAndHorror';
+  if (outOfHealth) return 'damage';
+  if (outOfSanity) return 'horror';
   return undefined;
 }
 
