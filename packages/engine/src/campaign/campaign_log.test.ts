@@ -138,6 +138,16 @@ describe('storyHolds', () => {
     );
   });
 
+  it.each([
+    ['Peter Warren', true],
+    ['Herman Collins', false],
+    ['Ruth Turner', false],
+  ])('finds %s on the list only while not crossed out: %s', (name, holds) => {
+    expect(
+      storyHolds({ cultistsWhoGotAway }, { kind: 'listsName', key: 'cultistsWhoGotAway', name }),
+    ).toBe(holds);
+  });
+
   it('has no answer for a record of another kind than the condition asks about', () => {
     expect(
       storyHolds(

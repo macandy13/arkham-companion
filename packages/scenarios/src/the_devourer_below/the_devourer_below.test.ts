@@ -4,10 +4,13 @@ import {
   campaignId,
   cardDbWith,
   cardStats,
+  emptyState,
+  execute,
   instanceId,
   investigatorCode,
   investigatorId,
   mapId,
+  neighbours,
   scenario,
   skillTestSuggestion,
   zoneKey,
@@ -213,6 +216,60 @@ describe('The Devourer Below setup in the campaign', () => {
     });
 
     expect(command.cards.find((card) => card.id === agenda)?.tokens?.doom).toBe(doom);
+  });
+
+  /** Peter Warren and The Masked Hunter got away; the others were interrogated. */
+  const peterAndTheHunter: CampaignLog['story'] = {
+    [ZEALOT_STORY.cultistsWhoGotAway]: {
+      kind: 'list',
+      entries: ['Peter Warren', 'The Masked Hunter'],
+    },
+  };
+
+  it('sets aside each enemy recorded under the Cultists who got away, by name', () => {
+    const state = execute(
+      ctx,
+      emptyState(),
+      scenario.compileSetup(ctx, {
+        seed: 1,
+        investigators: [rolandSeat],
+        campaign: logWith(peterAndTheHunter),
+      }),
+    ).state;
+
+    expect(namesIn(state, { kind: 'setAside' }).sort()).toEqual([
+      'Peter Warren',
+      'Ritual Site',
+      'The Masked Hunter',
+      'Umôrdhoth',
+    ]);
+  });
+
+  it('puts the Ritual Site above the Main Path at act 1 and spawns the Cultists who got away on Roland there', () => {
+    const started = execute(
+      ctx,
+      emptyState(),
+      scenario.compileSetup(ctx, {
+        seed: 1,
+        investigators: [rolandSeat],
+        campaign: logWith(peterAndTheHunter),
+      }),
+    ).state;
+
+    const state = stateAfter(ctx, started, { type: 'AdvanceAct' });
+
+    const ritualSite = instanceId(`${codes.ritualSite}#1`);
+    expect(state.cards[ritualSite]).toMatchObject({
+      zone: { kind: 'location', mapId: woods },
+      faceUp: false,
+    });
+    expect(state.board.maps[woods]?.layout[ritualSite]).toEqual({ column: 3, row: 0 });
+    expect(neighbours(state, mainPath)).toContain(ritualSite);
+    expect(namesIn(state, { kind: 'engaged', investigatorId: rolandSeat.id }).sort()).toEqual([
+      'Peter Warren',
+      'The Masked Hunter',
+    ]);
+    expect(namesIn(state, { kind: 'setAside' })).toEqual(['Umôrdhoth']);
   });
 
   it('sets up from The Midnight Masks R2: 3 Cultists got away, the Ghoul Priest lives', () => {
