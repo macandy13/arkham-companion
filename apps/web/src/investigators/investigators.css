@@ -171,19 +171,19 @@
   mask: var(--skill-icon) center / contain no-repeat;
 }
 
-#investigators [data-skill='willpower'] {
+#board [data-skill='willpower'] {
   --skill-icon: url('../symbols/willpower.svg');
 }
 
-#investigators [data-skill='intellect'] {
+#board [data-skill='intellect'] {
   --skill-icon: url('../symbols/intellect.svg');
 }
 
-#investigators [data-skill='combat'] {
+#board [data-skill='combat'] {
   --skill-icon: url('../symbols/combat.svg');
 }
 
-#investigators [data-skill='agility'] {
+#board [data-skill='agility'] {
   --skill-icon: url('../symbols/agility.svg');
 }
 
@@ -470,40 +470,4 @@
 
 #investigators button[data-icon='close']::before {
   mask-image: url('./icons/close.svg');
-}
-
-/* A skill toggle: its icon, then its value, like on the card. */
-#investigators dialog[data-dialog='skill-test'] button[data-skill] {
-  display: flex;
-  gap: var(--space-1);
-  align-items: center;
-}
-
-#investigators dialog[data-dialog='skill-test'] button[data-skill]::before {
-  content: '';
-  width: var(--stat-icon-size);
-  height: var(--stat-icon-size);
-  background: currentcolor;
-  mask: var(--skill-icon) center / contain no-repeat;
-}
-
-#investigators dialog[data-dialog='skill-test'] button[data-skill] > data {
-  min-width: 0;
-  font-size: var(--font-size-body);
-}
-
-#investigators dialog[data-dialog='skill-test'] ul {
-  display: flex;
-  flex-basis: 100%;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-#investigators dialog[data-dialog='skill-test'] [aria-pressed='true'] {
-  border-color: var(--color-accent);
-  background: var(--color-accent);
-  color: var(--color-accent-text);
 }

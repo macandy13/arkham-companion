@@ -1,7 +1,52 @@
 import { useTranslation } from 'react-i18next';
-import type { ChaosToken, ModifierStep, SkillName, SkillTestSuggestion } from '@arkham/engine';
+import {
+  SKILL_NAMES,
+  type ChaosToken,
+  type InvestigatorView,
+  type ModifierStep,
+  type SkillName,
+  type SkillTestSuggestion,
+} from '@arkham/engine';
 import { assertNever } from '@arkham/util';
 import './test_calculation.css';
+
+/**
+ * The investigator's four skills as toggles, each with its value, the `chosen` ones pressed;
+ * `onPick` gets the one tapped, and the dialog decides what that changes.
+ */
+export function SkillToggles({
+  investigator,
+  chosen,
+  onPick,
+}: {
+  investigator: InvestigatorView;
+  chosen: readonly (SkillName | undefined)[];
+  onPick: (skill: SkillName) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <section aria-label={t('investigators.skills')}>
+      <ul>
+        {SKILL_NAMES.map((each) => (
+          <li key={each}>
+            <button
+              type="button"
+              aria-pressed={chosen.includes(each)}
+              aria-label={t('investigators.skillValue', {
+                skill: t(`skill.${each}`),
+                value: investigator.skills[each],
+              })}
+              data-skill={each}
+              onClick={() => onPick(each)}
+            >
+              <data value={investigator.skills[each]}>{investigator.skills[each]}</data>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 /**
  * The tokens drawn so far, in the order they came out of the bag, each as its name: the styles
