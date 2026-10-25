@@ -1,6 +1,6 @@
 import { assertNever, range, shallowEqual } from '@arkham/util';
 import { cardStats, type EngineContext, type Trait } from './cards';
-import type { Command, EncounterMatch, TestSkill } from './commands';
+import type { Command, EncounterMatch, ResolveEffect, TestSkill } from './commands';
 import { cardsInPlay } from './doom';
 import type { Event } from './events';
 import type { TraumaKind } from './campaign/campaign_log';
@@ -252,7 +252,10 @@ export type AbilityCommand =
 
 /**
  * `TestSkill` with outcomes that are ability commands too, so a test in card
- * data can only lead to what card data may do.
+ * data can only lead to what card data may do. The outcomes stay templated
+ * until the answer: each resolves in its own turn then (`ResolveEffect`), so
+ * it sees what the effects before it did, an `each…` reference in one
+ * repeats only that effect, and one that names nobody is dropped alone.
  */
 export type AbilityTest = Omit<TestSkill, 'onPass' | 'onFail'> & {
   onPass: readonly AbilityCommand[];
@@ -264,8 +267,10 @@ export type AbilityTest = Omit<TestSkill, 'onPass' | 'onFail'> & {
  * must decide") whose options lead only to what card data may do. It has no
  * `subject`: a decision about an agenda or act would be dropped as the card
  * advances, which is exactly when its reverse side asks. Its lists stay
- * mutable so that it is a `RequestDecision`. Like a test, the whole choice is
- * dropped when a reference in one option names nobody (`resolveRefs`).
+ * mutable so that it is a `RequestDecision`. Unlike a test's outcomes, its
+ * options resolve as the choice is raised, so they can be dry-run
+ * (`withResolvableOptions`); the whole choice is dropped when a reference in
+ * one option names nobody (`resolveRefs`).
  */
 export interface AbilityChoice {
   type: 'RequestDecision';
@@ -554,22 +559,36 @@ export function resolveEffect(
       (investigator && attachableLocation(ctx, state, opened.cardId, investigator)),
     onlyCopy: (code) => theOnlyCopy(state, code),
   };
-  const each = repeatedRef(effect);
+  const deferred = withDeferredOutcomes(effect, opened);
+  const each = repeatedRef(deferred);
   const ids = each === undefined ? [undefined] : eachId(ctx, state, each, refs);
   const commandsFor = (nearestEnemy?: InstanceId): AbilityCommand[] =>
     ids.flatMap((id) => {
-      const resolved = resolveRefs(effect, { ...refs, each: id, nearestEnemy });
+      const resolved = resolveRefs(deferred, { ...refs, each: id, nearestEnemy });
       // The walk keeps every field but the references, which become the IDs the
       // command type expects, so the result is an `AbilityCommand`.
       return resolved === undefined ? [] : [resolved as AbilityCommand];
     });
-  const nearest = nearestRef(effect);
+  const nearest = nearestRef(deferred);
   if (nearest === undefined) return commandsFor();
   if (investigator?.locationId === undefined) return [];
   const [first, ...tied] = nearestEnemies(ctx, state, investigator.locationId, nearest.trait);
   if (first === undefined) return [];
   if (tied.length === 0) return commandsFor(first.id);
   return [nearestTie(ctx, opened.cardId, [first, ...tied], commandsFor)];
+}
+
+/**
+ * `effect` with a test's outcomes as `ResolveEffect` commands, so each
+ * outcome effect resolves after the answer against the state then, in turn:
+ * a drawer the fail's damage defeated names nobody for the rest. The walks
+ * over references (`findRef`, `resolveRefs`) leave them as they are.
+ */
+function withDeferredOutcomes(effect: AbilityEffect, opened: OpenedWindow): unknown {
+  if (effect.type !== 'TestSkill') return effect;
+  const defer = (effects: readonly AbilityEffect[]): ResolveEffect[] =>
+    effects.map((outcome) => ({ type: 'ResolveEffect', effect: outcome, opened }));
+  return { ...effect, onPass: defer(effect.onPass), onFail: defer(effect.onFail) };
 }
 
 /** The `nearestEnemy` reference in `effect`, if it holds one. */
@@ -623,8 +642,9 @@ type RepeatedRef = Extract<RelativeCard | RelativeInvestigator, { ref: `each${st
 
 /**
  * The first reference in `effect` that repeats it. An effect holds at most
- * one, and a test's outcomes and a choice's options none: one there would
- * repeat the whole test or choice.
+ * one, and a choice's options none: one there would repeat the whole choice.
+ * A test's outcomes are deferred (`withDeferredOutcomes`), so one there
+ * repeats only its own outcome effect.
  */
 function repeatedRef(effect: unknown): RepeatedRef | undefined {
   return findRef(effect, (ref) =>
@@ -642,7 +662,7 @@ function findRef<R>(
   effect: unknown,
   pick: (ref: RelativeCard | RelativeInvestigator) => R | undefined,
 ): R | undefined {
-  if (typeof effect !== 'object' || effect === null) return undefined;
+  if (typeof effect !== 'object' || effect === null || isDeferred(effect)) return undefined;
   if (isRelative(effect)) {
     const picked = pick(effect);
     if (picked !== undefined) return picked;
@@ -720,9 +740,9 @@ function attachableLocation(
 }
 
 function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
-  if (typeof value !== 'object' || value === null) return value;
+  if (typeof value !== 'object' || value === null || isDeferred(value)) return value;
   if (Array.isArray(value)) {
-    // An outcome that names nobody drops the whole test: half a test's consequences would misstate the card.
+    // An option that names nobody drops the whole choice: half its consequences would misstate the card.
     const items = value.map((item: unknown) => resolveRefs(item, refs));
     return items.includes(undefined) ? undefined : items;
   }
@@ -778,6 +798,11 @@ export function missingCopies(state: GameState, effect: AbilityEffect): CardCode
 
 function isRelative(value: object): value is RelativeCard | RelativeInvestigator {
   return 'ref' in value;
+}
+
+/** A test outcome left for later (`withDeferredOutcomes`), whose references resolve in its own turn. */
+function isDeferred(value: object): value is ResolveEffect {
+  return 'type' in value && value.type === 'ResolveEffect';
 }
 
 /**

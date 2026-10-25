@@ -1,3 +1,4 @@
+import type { AbilityEffect, OpenedWindow } from './abilities';
 import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
 import type { CardType, Trait } from './cards';
 import type {
@@ -62,6 +63,7 @@ export type Command =
   | MoveHunter
   | RequestDecision
   | TestSkill
+  | ResolveEffect
   | ResolveDecision
   | CheckDoomThreshold
   | NextPhase
@@ -672,6 +674,20 @@ export interface TestSkill {
    * investigator pays that much, ahead of `onFail`.
    */
   perPointFailed?: PerPointFailed;
+}
+
+/**
+ * One effect of a card ability, resolved when its turn comes (`resolveEffect`)
+ * against the state then: a card test's outcome, run after the answer. So an
+ * effect on a drawer whom the outcome's own damage defeated names nobody and
+ * is dropped, rather than rejecting the answer (Rules Reference: resolve as
+ * much as possible). Produced by the engine (`abilities.ts`), never by the
+ * players; it becomes an `ability` step instead of reaching a handler.
+ */
+export interface ResolveEffect {
+  type: 'ResolveEffect';
+  effect: AbilityEffect;
+  opened: OpenedWindow;
 }
 
 /**
