@@ -201,8 +201,25 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     expect(table.nextPhase()).toEqual({ round: 1, phase: 'upkeep' });
 
     // Round 2 – mythos: Roland draws the Wizard of the Order, which spawns at
-    // any empty location: the players pick Northside, far away.
+    // any empty location: not Rivertown, where both investigators stand, nor
+    // Southside with its Acolyte. The players pick Northside, far away.
     expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos', step: 'drawEncounterCard' });
+    expect(table.board.decisions).toEqual([
+      {
+        prompt: 'decision.chooseSpawnLocation',
+        kind: 'chooseLocation',
+        about: wizard,
+        options: [
+          'Northside',
+          'Downtown',
+          'Easttown',
+          'Miskatonic University',
+          'Graveyard',
+          "St. Mary's Hospital",
+          'Your House',
+        ],
+      },
+    ]);
     table.answer(byName(wizard), 'Northside');
 
     // Daisy draws Hunting Shadow: she spends a clue rather than take 2 damage.
@@ -324,14 +341,22 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     expect(table.board.agenda).toMatchObject({ name: 'Time Is Running Short', doom: 0 });
     expect(table.board.doomInPlay).toBe(0);
 
-    // Agenda 1's reverse side puts The Masked Hunter into play, engaged with the
-    // investigator with the most clues; with none on either, Roland as the lead
-    // takes it on in Downtown.
+    // Agenda 1's reverse side puts The Masked Hunter into play, engaged with its
+    // prey, the investigator with the most clues. Neither has any, so the lead
+    // investigator picks: Roland takes it on in Downtown.
     table.play({
       type: 'SpawnEnemy',
       enemyId: instanceId(`${MIDNIGHT_MASKS_CODES.theMaskedHunter}#1`),
     });
-    table.answer(byName(hunter), 'Downtown');
+    expect(table.board.decisions).toEqual([
+      {
+        prompt: 'decision.chooseEngagement',
+        kind: 'chooseInvestigator',
+        about: hunter,
+        options: ['Roland Banks', 'Daisy Walker'],
+      },
+    ]);
+    table.answer(byName(hunter), 'Roland Banks');
 
     // "+2 health per investigator" on a printed 4.
     expect(table.board.enemy(byName(hunter))).toEqual({

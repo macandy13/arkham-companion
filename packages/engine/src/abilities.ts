@@ -774,9 +774,7 @@ function eachId(
     case 'eachEnemyAt': {
       const location = resolveRefs(each.location, refs) as InstanceId | undefined;
       if (location === undefined) return [];
-      return enemiesAt(state, location)
-        .filter((card) => cardStats(ctx.cards, card.code).typeCode === 'enemy')
-        .map((card) => card.id);
+      return enemiesAt(ctx, state, location).map((card) => card.id);
     }
     case 'eachEnemy': {
       const engagedWith =
