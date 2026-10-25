@@ -12,7 +12,7 @@ import {
   type InvestigatorId,
   type ResolutionId,
 } from './ids';
-import { locationAttachments } from './board';
+import { locationAttachments, locationsInPlay } from './board';
 import {
   enemiesAt,
   enemiesMatching,
@@ -173,11 +173,13 @@ export type RelativeCard =
   | { ref: 'eachEnemyAt'; location: RelativeCard }
   /**
    * Each enemy on the table `filter` matches ("each unengaged [[Ghoul]]
-   * enemy", `enemiesMatching`): the command repeats once per enemy, in card
-   * order. Unlike hunters, nobody picks the order: one enemy's step towards a
-   * fixed location changes no other enemy's path.
+   * enemy", `enemiesMatching`), and only those engaged with `engagedWith`
+   * when it is given ("each enemy engaged with you"; none when it names
+   * nobody): the command repeats once per enemy, in card order. Unlike
+   * hunters, nobody picks the order: one enemy's step towards a fixed
+   * location changes no other enemy's path.
    */
-  | ({ ref: 'eachEnemy' } & EnemyFilter)
+  | ({ ref: 'eachEnemy'; engagedWith?: RelativeInvestigator } & EnemyFilter)
   /**
    * The enemy with `trait` (any enemy without one) nearest to the location of
    * the investigator the window names ("the nearest [[Cultist]] enemy",
@@ -185,7 +187,15 @@ export type RelativeCard =
    * equally near, the lead investigator picks one (Rules Reference, "Choices"):
    * the effect becomes a decision with an option per enemy.
    */
-  | { ref: 'nearestEnemy'; trait?: Trait };
+  | { ref: 'nearestEnemy'; trait?: Trait }
+  /**
+   * A location in play with `trait` ("move to a [[Central]] location"), other
+   * than the one the investigator the window names is at, since moving there
+   * would be no move; none when there is no other. When there are several,
+   * that investigator picks one: the effect becomes a decision with an option
+   * per location.
+   */
+  | { ref: 'locationWith'; trait: Trait };
 
 /**
  * An investigator an ability names relative to its window: the one the
@@ -235,6 +245,7 @@ export type AbilityCommand =
           | 'SpawnEnemy'
           | 'HealEnemy'
           | 'MoveEnemyTowards'
+          | 'DisengageEnemy'
           | 'ReadyEnemy'
           | 'GainSurge'
           | 'MoveInvestigator'
@@ -562,20 +573,21 @@ export function resolveEffect(
   const deferred = withDeferredOutcomes(effect, opened);
   const each = repeatedRef(deferred);
   const ids = each === undefined ? [undefined] : eachId(ctx, state, each, refs);
-  const commandsFor = (nearestEnemy?: InstanceId): AbilityCommand[] =>
+  const commandsFor = (picked?: InstanceId): AbilityCommand[] =>
     ids.flatMap((id) => {
-      const resolved = resolveRefs(deferred, { ...refs, each: id, nearestEnemy });
+      const resolved = resolveRefs(deferred, { ...refs, each: id, picked });
       // The walk keeps every field but the references, which become the IDs the
       // command type expects, so the result is an `AbilityCommand`.
       return resolved === undefined ? [] : [resolved as AbilityCommand];
     });
-  const nearest = nearestRef(deferred);
-  if (nearest === undefined) return commandsFor();
+  const picked = pickedRef(deferred);
+  if (picked === undefined) return commandsFor();
   if (investigator?.locationId === undefined) return [];
-  const [first, ...tied] = nearestEnemies(ctx, state, investigator.locationId, nearest.trait);
+  const candidates = candidatesFor(ctx, state, picked, investigator.locationId);
+  const [first, ...others] = candidates;
   if (first === undefined) return [];
-  if (tied.length === 0) return commandsFor(first.id);
-  return [nearestTie(ctx, opened.cardId, [first, ...tied], commandsFor)];
+  if (others.length === 0) return commandsFor(first.id);
+  return [pickDecision(ctx, opened.cardId, picked, investigator.id, candidates, commandsFor)];
 }
 
 /**
@@ -591,34 +603,63 @@ function withDeferredOutcomes(effect: AbilityEffect, opened: OpenedWindow): unkn
   return { ...effect, onPass: defer(effect.onPass), onFail: defer(effect.onFail) };
 }
 
-/** The `nearestEnemy` reference in `effect`, if it holds one. */
-function nearestRef(effect: unknown): Extract<RelativeCard, { ref: 'nearestEnemy' }> | undefined {
-  return findRef(effect, (ref) => (ref.ref === 'nearestEnemy' ? ref : undefined));
+/** A reference that stands for one of several candidates, which someone may have to pick. */
+type PickedRef = Extract<RelativeCard, { ref: 'nearestEnemy' | 'locationWith' }>;
+
+/** The first reference in `effect` with candidates (`nearestEnemy`, `locationWith`), if it holds one. */
+function pickedRef(effect: unknown): PickedRef | undefined {
+  return findRef(effect, (ref) =>
+    ref.ref === 'nearestEnemy' || ref.ref === 'locationWith' ? ref : undefined,
+  );
+}
+
+/** The cards `picked` may stand for, counted from `from`, the location of the investigator the window names. */
+function candidatesFor(
+  ctx: EngineContext,
+  state: GameState,
+  picked: PickedRef,
+  from: InstanceId,
+): CardInstance[] {
+  switch (picked.ref) {
+    case 'nearestEnemy':
+      return nearestEnemies(ctx, state, from, picked.trait);
+    case 'locationWith':
+      return locationsInPlay(ctx, state).filter(
+        (location) =>
+          location.id !== from && cardStats(ctx.cards, location.code).traits.includes(picked.trait),
+      );
+    default:
+      return assertNever(picked);
+  }
 }
 
 /**
- * Equally near enemies for a `nearestEnemy` reference: the lead investigator
- * picks one, and the option runs the effect for it.
+ * Several candidates for `picked`: equally near enemies are the lead
+ * investigator's pick (Rules Reference, "Choices"), a location to move to is
+ * the moving investigator's own. Each option runs the effect for its card.
  */
-function nearestTie(
+function pickDecision(
   ctx: EngineContext,
   cardId: InstanceId,
-  enemies: readonly CardInstance[],
-  commandsFor: (enemyId: InstanceId) => AbilityCommand[],
+  picked: PickedRef,
+  investigatorId: InvestigatorId,
+  candidates: readonly CardInstance[],
+  commandsFor: (pickedId: InstanceId) => AbilityCommand[],
 ): Command {
+  const nearest = picked.ref === 'nearestEnemy';
   return {
     type: 'RequestDecision',
     decision: {
-      id: decisionId(`nearest:${cardId}`),
-      kind: 'chooseCard',
+      id: decisionId(`${nearest ? 'nearest' : 'location'}:${cardId}`),
+      kind: nearest ? 'chooseCard' : 'chooseLocation',
       subject: cardId,
-      prompt: 'decision.chooseNearestEnemy',
-      decider: { kind: 'lead' },
-      options: enemies.map((enemy) => ({
-        id: enemy.id,
-        label: cardStats(ctx.cards, enemy.code).name,
-        target: enemy.id,
-        commands: commandsFor(enemy.id),
+      prompt: nearest ? 'decision.chooseNearestEnemy' : 'decision.chooseLocationToMove',
+      decider: nearest ? { kind: 'lead' } : { kind: 'investigator', investigatorId },
+      options: candidates.map((card) => ({
+        id: card.id,
+        label: cardStats(ctx.cards, card.code).name,
+        target: card.id,
+        commands: commandsFor(card.id),
       })),
     },
   };
@@ -633,8 +674,11 @@ interface ResolvedRefs {
   onlyCopy: (code: CardCode) => InstanceId | undefined;
   /** The investigator or enemy of this repetition of an effect on each of them. */
   each?: InstanceId | InvestigatorId;
-  /** The enemy a `nearestEnemy` reference stands for: the nearest, or the one picked among equals. */
-  nearestEnemy?: InstanceId;
+  /**
+   * The card a reference with candidates stands for (`pickedRef`): the only
+   * candidate, or the one picked among them.
+   */
+  picked?: InstanceId;
 }
 
 /** A reference that repeats the command, as `eachInvestigator` does. */
@@ -698,8 +742,18 @@ function eachId(
         .filter((card) => cardStats(ctx.cards, card.code).typeCode === 'enemy')
         .map((card) => card.id);
     }
-    case 'eachEnemy':
-      return enemiesMatching(ctx, state, each).map((card) => card.id);
+    case 'eachEnemy': {
+      const engagedWith =
+        each.engagedWith === undefined ? undefined : resolveRefs(each.engagedWith, refs);
+      if (each.engagedWith !== undefined && engagedWith === undefined) return [];
+      return enemiesMatching(ctx, state, each)
+        .filter(
+          (card) =>
+            engagedWith === undefined ||
+            (card.zone.kind === 'engaged' && card.zone.investigatorId === engagedWith),
+        )
+        .map((card) => card.id);
+    }
     default:
       return assertNever(each);
   }
@@ -764,7 +818,8 @@ function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
       case 'eachEnemy':
         return refs.each;
       case 'nearestEnemy':
-        return refs.nearestEnemy;
+      case 'locationWith':
+        return refs.picked;
       default:
         return assertNever(value);
     }
@@ -979,6 +1034,24 @@ export function takeHorror(
  */
 export function eachEnemy(filter: EnemyFilter = {}): RelativeCard {
   return { ref: 'eachEnemy', ...filter };
+}
+
+/**
+ * "Disengage from each non-[[Nightgaunt]] enemy engaged with you": each enemy
+ * `filter` matches that is engaged with the investigator the window names
+ * disengages (`DisengageEnemy`), written
+ * `disengageFromEachEnemy({ withoutTrait: trait('Nightgaunt') })`.
+ */
+export function disengageFromEachEnemy(filter: EnemyFilter = {}): AbilityEffect {
+  return {
+    type: 'DisengageEnemy',
+    enemyId: { ref: 'eachEnemy', ...filter, engagedWith: { ref: 'windowInvestigator' } },
+  };
+}
+
+/** "A [[Central]] location" (`locationWith`), picked by the investigator the window names: `moveTo(locationWith(trait('Central')))`. */
+export function locationWith(trait: Trait): RelativeCard {
+  return { ref: 'locationWith', trait };
 }
 
 /**

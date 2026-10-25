@@ -5,19 +5,24 @@ import {
   cardCode,
   cardDbFrom,
   cardImagePath,
+  disengageFromEachEnemy,
   decisionId,
   encounterSetCode,
   endScenario,
   fixed,
   gainSurge,
   healSelf,
+  ifEnemiesInPlay,
   ifYouHave,
+  locationWith,
   moveTo,
   nearestEnemy,
   onlyCopy,
   placeDoomOn,
   placeDoomOnSelf,
   resolutionId,
+  searchAndDraw,
+  shuffleEncounterDeck,
   skillTest,
   spendClues,
   takeDamage,
@@ -110,8 +115,9 @@ const cultist = ['Humanoid', 'Cultist'];
  *   window opens before the evade exhausts and disengages her
  * - Acolyte's doom as it enters play during the game (setup places it)
  * - the Masked Hunter's and Hunting Nightgaunt's constant abilities
- * - Locked Door, and what On Wings of Darkness and Mysterious Chanting do
- *   after their automated part
+ * - Locked Door
+ * - the players' pick among several Cultist enemies for Mysterious Chanting's
+ *   search: the engine draws the first match (#346)
  *
  * The Masked Hunter is entered as an enemy of the scenario's own set, so the
  * setup must leave it out of the encounter deck: it enters play only as
@@ -391,7 +397,15 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     set: sets.darkCult,
     traits: ['Hex'],
     quantity: 2,
-    abilities: [whenRevealed(placeDoomOn(nearestEnemy(trait('Cultist')), 2))],
+    abilities: [
+      whenRevealed(placeDoomOn(nearestEnemy(trait('Cultist')), 2)),
+      ifEnemiesInPlay(
+        trait('Cultist'),
+        { max: 0 },
+        whenRevealed(searchAndDraw({ trait: trait('Cultist'), typeCode: 'enemy' })),
+      ),
+      whenRevealed(shuffleEncounterDeck()),
+    ],
   }),
   enemy({
     code: '01172',
@@ -412,7 +426,13 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     set: sets.nightgaunts,
     traits: [],
     quantity: 2,
-    abilities: [whenRevealed(skillTest('agility', 4, { onFail: [takeHorror(1), takeDamage(1)] }))],
+    abilities: [
+      whenRevealed(
+        skillTest('agility', 4, { onFail: [takeHorror(1), takeDamage(1)] }),
+        disengageFromEachEnemy({ withoutTrait: trait('Nightgaunt') }),
+        moveTo(locationWith(trait('Central'))),
+      ),
+    ],
   }),
   treachery({
     code: '01174',

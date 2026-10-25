@@ -33,6 +33,7 @@ import {
   defeatEachInvestigator,
   discardEachEnemyAt,
   discardSelf,
+  disengageFromEachEnemy,
   eachEnemy,
   forEachEnemy,
   eachInvestigatorAt,
@@ -45,6 +46,7 @@ import {
   investigatorId,
   itsLocation,
   leadDecides,
+  locationWith,
   mapId,
   MAX_TRIGGERED_COMMANDS,
   moveEachInvestigatorTo,
@@ -1911,6 +1913,105 @@ describe("a card test's outcomes, resolved after the answer", () => {
 
     expect(requireInvestigator(after, alice).sanity.horror).toBe(1);
     expect(requireInvestigator(after, bob).sanity.horror).toBe(1);
+  });
+});
+
+describe("disengaging and moving after a card's test", () => {
+  const wings = instanceId('wings');
+  const square = instanceId('square');
+  const market = instanceId('market');
+  const monster = instanceId('monster');
+  const nightgaunt = instanceId('nightgaunt');
+  const bob = investigatorId('bob');
+  /**
+   * "Test agility (4). If you fail, take 1 horror. Then, disengage with each non-Nightgaunt enemy
+   * engaged with you and move to a Central location."
+   */
+  const wingsCard = blankTreachery('wings', {
+    abilities: [
+      whenRevealed(
+        skillTest('agility', 4, { onFail: [takeHorror(1)] }),
+        disengageFromEachEnemy({ withoutTrait: trait('Nightgaunt') }),
+        moveTo(locationWith(trait('Central'))),
+      ),
+    ],
+  });
+  const centralCard = (code: string) => blankLocation(code, { traits: [trait('Central')] });
+  const monsterCard = blankEnemy('monster', { traits: [trait('Monster')] });
+  const nightgauntCard = blankEnemy('nightgaunt', { traits: [trait('Nightgaunt')] });
+  const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
+
+  it("disengages the monster from alice after the answer, keeps the nightgaunt and bob's monster engaged", () => {
+    const bobsMonster = instanceId('bobs_monster');
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(square, centralCard('square'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withInvestigator(bob, { locationId: hall })
+      .withCard(monster, monsterCard, engagedWith(alice))
+      .withCard(nightgaunt, nightgauntCard, engagedWith(alice))
+      .withCard(bobsMonster, monsterCard, engagedWith(bob))
+      .withCard(wings, wingsCard, { kind: 'encounterDeck' })
+      .start();
+    const asked = stateAfter(context, state, aliceDraws);
+    expect(asked.cards[monster]?.zone).toEqual(engagedWith(alice));
+
+    const after = stateAfter(context, asked, answer('test:wings', 'pass'));
+
+    expect(after.cards[monster]?.zone).toEqual(atLocation(hall));
+    expect(after.cards[nightgaunt]?.zone).toEqual(engagedWith(alice));
+    expect(after.cards[bobsMonster]?.zone).toEqual(engagedWith(bob));
+    expect(requireInvestigator(after, alice).locationId).toBe(square);
+  });
+
+  it('lets alice pick between two Central locations', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(square, centralCard('square'), { revealed: true })
+      .withLocation(market, centralCard('market'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(wings, wingsCard, { kind: 'encounterDeck' })
+      .start();
+    const asked = stateAfter(context, state, aliceDraws, answer('test:wings', 'pass'));
+    expect(asked.pending).toMatchObject([
+      {
+        id: decisionId('location:wings'),
+        kind: 'chooseLocation',
+        decider: { kind: 'investigator', investigatorId: alice },
+        options: [{ id: square }, { id: market }],
+      },
+    ]);
+
+    const after = stateAfter(context, asked, answer('location:wings', market));
+
+    expect(requireInvestigator(after, alice).locationId).toBe(market);
+  });
+
+  it('moves alice from her Central hall to the square, leaving out her own location', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, centralCard('hall'), { revealed: true })
+      .withLocation(square, centralCard('square'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(wings, wingsCard, { kind: 'encounterDeck' })
+      .start();
+
+    const after = stateAfter(context, state, aliceDraws, answer('test:wings', 'pass'));
+
+    expect(after.pending).toEqual([]);
+    expect(requireInvestigator(after, alice).locationId).toBe(square);
+  });
+
+  it('leaves alice in her Central hall when there is no other Central location', () => {
+    const { context, state } = newGame()
+      .withLocation(hall, centralCard('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(wings, wingsCard, { kind: 'encounterDeck' })
+      .start();
+
+    const after = stateAfter(context, state, aliceDraws, answer('test:wings', 'pass'));
+
+    expect(after.pending).toEqual([]);
+    expect(requireInvestigator(after, alice).locationId).toBe(hall);
   });
 });
 

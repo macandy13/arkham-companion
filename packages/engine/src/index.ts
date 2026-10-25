@@ -131,6 +131,8 @@ export {
   forEachEnemy,
   searchAndDraw,
   shuffleEncounterDeck,
+  disengageFromEachEnemy,
+  locationWith,
   readySelf,
   putIntoThreatArea,
   putMapIntoPlay,
