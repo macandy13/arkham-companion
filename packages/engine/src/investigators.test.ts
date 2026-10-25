@@ -333,6 +333,21 @@ describe('TakeDamageAndHorror', () => {
     });
   });
 
+  it.each([
+    { damage: 1, horror: 0, cause: 'damage' },
+    { damage: 0, horror: 1, cause: 'horror' },
+    { damage: 1, horror: 1, cause: 'damageAndHorror' },
+  ])(
+    'defeats alice by $cause with $damage damage and $horror horror',
+    ({ damage, horror, cause }) => {
+      const result = execute(context, state, aliceTakes(damage, horror));
+
+      expect(result.events).toContainEqual(
+        expect.objectContaining({ type: 'InvestigatorDefeated', cause }),
+      );
+    },
+  );
+
   it('places no horror when the horror is 0', () => {
     const result = execute(context, state, aliceTakes(1, 0));
 

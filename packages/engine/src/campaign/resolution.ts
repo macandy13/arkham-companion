@@ -186,9 +186,25 @@ export function applyResolution(
   );
 }
 
-/** The campaign commands of a proposal, without its by-hand steps: what `applyResolution` takes when the players confirm it unchanged. */
+/**
+ * The campaign commands of a proposal, without its by-hand steps: what
+ * `applyResolution` takes when the players confirm it unchanged. A choice
+ * they leave unchanged takes its first option (physical trauma for a defeat
+ * by both), so no proposed trauma is lost.
+ */
 export function proposedCommands(changes: readonly ProposedChange[]): CampaignCommand[] {
-  return changes.flatMap((change) => (change.kind === 'command' ? [change.command] : []));
+  return changes.flatMap((change) => {
+    switch (change.kind) {
+      case 'command':
+        return [change.command];
+      case 'choice':
+        return change.options.slice(0, 1);
+      case 'byHand':
+        return [];
+      default:
+        return assertNever(change);
+    }
+  });
 }
 
 function outcomeOf(game: GameState): ScenarioOutcome {
@@ -294,9 +310,8 @@ function defeatTrauma(investigator: Investigator): ProposedChange[] {
     kind,
     amount: 1,
   }));
-  const [only] = options;
-  if (only === undefined) return [];
-  return options.length === 1 ? [command(only)] : [{ kind: 'choice', options }];
+  if (options.length > 1) return [{ kind: 'choice', options }];
+  return options.map(command);
 }
 
 /** The trauma kinds a defeat may cost; the player picks one when there are several. */

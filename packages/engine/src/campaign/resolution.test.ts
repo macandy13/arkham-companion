@@ -518,4 +518,20 @@ describe('proposedCommands', () => {
       { type: 'AwardXp', code: aliceCode, amount: 2 },
     ]);
   });
+
+  it('takes the first option of a choice left unchanged', () => {
+    const changes = [
+      {
+        kind: 'choice',
+        options: [
+          { type: 'AddTrauma', code: aliceCode, kind: 'physical', amount: 1 },
+          { type: 'AddTrauma', code: aliceCode, kind: 'mental', amount: 1 },
+        ],
+      },
+    ] as const;
+
+    expect(campaign.proposedCommands(changes)).toEqual([
+      { type: 'AddTrauma', code: aliceCode, kind: 'physical', amount: 1 },
+    ]);
+  });
 });
