@@ -66,7 +66,7 @@ export function SkillTestDialog({
       </header>
       <SkillToggles
         investigator={investigator}
-        chosen={skills}
+        chosen={added === undefined ? [tested] : [tested, added]}
         onPick={(each) => setSkills(pickSkill(skills, each))}
       />
       <Stepper

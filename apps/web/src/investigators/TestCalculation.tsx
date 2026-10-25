@@ -20,7 +20,7 @@ export function SkillToggles({
   onPick,
 }: {
   investigator: InvestigatorView;
-  chosen: readonly (SkillName | undefined)[];
+  chosen: readonly SkillName[];
   onPick: (skill: SkillName) => void;
 }) {
   const { t } = useTranslation();

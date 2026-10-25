@@ -74,8 +74,8 @@ export function DecisionDialog({
           {t('decision.test', { skill: t(`skill.${test.skill}`), difficulty: test.difficulty })}
         </p>
       )}
-      {test && tested !== undefined && (
-        <TestDraw board={board} tested={tested} test={test} draw={draw} />
+      {draw.skill && tested !== undefined && (
+        <TestDraw board={board} tested={tested} skill={draw.skill} draw={draw} />
       )}
       <ul>
         {/* Two options can share a name (two enemies of one card), so the position is the key. */}
@@ -114,6 +114,7 @@ export function DecisionDialog({
  * drawn for a decision's skill test, and what they make.
  */
 interface ChaosDraw {
+  /** None only for a decision that is not a skill test. */
   skill?: SkillName;
   setSkill: (skill: SkillName) => void;
   modifier: number;
@@ -130,7 +131,8 @@ function useChaosDraw(
   tested: InvestigatorId | undefined,
   test: SkillTest | undefined,
 ): ChaosDraw {
-  const [skill, setSkill] = useState(test?.skill);
+  const [switched, setSkill] = useState<SkillName>();
+  const skill = switched ?? test?.skill;
   const [modifier, setModifier] = useState(0);
   const [revealed, setRevealed] = useState<readonly ChaosToken[]>([]);
   const result =
@@ -149,30 +151,22 @@ function useChaosDraw(
 }
 
 /**
- * The skill toggles, the modifier, the draw button, the tokens drawn and the calculation of the
- * test `tested` takes for a decision.
+ * The skill toggles (`skill` pressed), the modifier, the draw button, the tokens drawn and the
+ * calculation of the test `tested` takes for a decision.
  */
 function TestDraw({
   board,
   tested,
-  test,
+  skill,
   draw,
 }: {
   board: BoardView;
   tested: InvestigatorId;
-  test: SkillTest;
+  skill: SkillName;
   draw: ChaosDraw;
 }) {
   const { t } = useTranslation();
-  const {
-    skill = test.skill,
-    setSkill,
-    modifier,
-    setModifier,
-    revealed,
-    setRevealed,
-    result,
-  } = draw;
+  const { setSkill, modifier, setModifier, revealed, setRevealed, result } = draw;
   return (
     <>
       <SkillToggles investigator={board.investigator(tested)} chosen={[skill]} onPick={setSkill} />
