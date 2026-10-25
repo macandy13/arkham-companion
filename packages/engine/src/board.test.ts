@@ -244,6 +244,57 @@ describe('connections at start', () => {
   });
 });
 
+describe('PutLocationIntoPlay', () => {
+  it('puts a set-aside location onto a map on the board, unrevealed, in its layout cell', () => {
+    const { context, state: initial } = table.start();
+
+    const { state, events } = runFrom(context, initial, [
+      { type: 'PutLocationIntoPlay', locationId: attic, mapId: main, at: { column: 3, row: 0 } },
+    ]);
+
+    expect(state.cards[attic]).toMatchObject({
+      zone: { kind: 'location', mapId: main },
+      faceUp: false,
+    });
+    expect(state.board.maps[main]?.layout[attic]).toEqual({ column: 3, row: 0 });
+    expect(events.map((event) => event.type)).toEqual(['CardMoved', 'LayoutCellSet']);
+    expect(checkInvariants(state)).toEqual([]);
+    expect(replay(events, initial)).toEqual(state);
+  });
+
+  it.each<{ name: string; command: Command; rejection: object }>([
+    {
+      name: 'a map that is not on the board',
+      command: { type: 'PutLocationIntoPlay', locationId: attic, mapId: mapId('wing') },
+      rejection: { code: 'unknownMap', mapId: mapId('wing') },
+    },
+    {
+      name: 'a location that is already in play',
+      command: { type: 'PutLocationIntoPlay', locationId: study, mapId: main },
+      rejection: { code: 'cardAlreadyInPlay', cardId: study },
+    },
+    {
+      name: 'a card that is not a location',
+      command: { type: 'PutLocationIntoPlay', locationId: ghoul, mapId: main },
+      rejection: { code: 'notALocation', cardId: ghoul },
+    },
+    {
+      name: 'a cell off the grid',
+      command: {
+        type: 'PutLocationIntoPlay',
+        locationId: attic,
+        mapId: main,
+        at: { column: -1, row: 0 },
+      },
+      rejection: { code: 'invalidGridCell', cardId: attic, column: -1, row: 0 },
+    },
+  ])('rejects $name', ({ command, rejection }) => {
+    const { context, state } = table.start();
+
+    expect(rejectionFrom(context, state, command)).toEqual(rejection);
+  });
+});
+
 describe('AddMap', () => {
   const wing = mapId('wing');
 

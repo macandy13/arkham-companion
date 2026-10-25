@@ -10,7 +10,7 @@ import type {
   ResolutionId,
   ScenarioId,
 } from './ids';
-import type { MapPlacement, MapSpec } from './map';
+import type { GridCell, MapPlacement, MapSpec } from './map';
 import type {
   Decision,
   ChaosToken,
@@ -31,6 +31,7 @@ export type Command =
   | MoveCard
   | DiscardCard
   | AddMap
+  | PutLocationIntoPlay
   | AddConnection
   | RemoveConnection
   | RevealLocation
@@ -177,6 +178,20 @@ export type Adjustment =
   | { kind: 'moveCard'; cardId: InstanceId; to: Zone; index?: number }
   | { kind: 'tokens'; cardId: InstanceId; token: TokenKind; delta: number }
   | { kind: 'actions'; investigatorId: InvestigatorId; delta: number };
+
+/**
+ * Puts one location that is out of play (typically set aside) onto the map
+ * `mapId` that is already on the board, unrevealed, in layout cell `at` when
+ * given ("put the set-aside Ritual Site into play"). `AddMap` adds a whole
+ * new map instead; connections follow as `AddConnection`. Produces
+ * `CardMoved`, then `LayoutCellSet` with a cell.
+ */
+export interface PutLocationIntoPlay {
+  type: 'PutLocationIntoPlay';
+  locationId: InstanceId;
+  mapId: MapId;
+  at?: GridCell;
+}
 
 /**
  * Connects two location cards (a card effect or scenario step). The cards may
