@@ -1,9 +1,10 @@
 import { listIfAny } from '@arkham/util';
 import { effectiveValue } from './card_values';
-import { cardStats, resolveValue, type EngineContext } from './cards';
+import { cardStats, resolveValue, type EngineContext, type Trait } from './cards';
 import { optionName } from './describe_decision';
 import { doomInPlay, isInPlay } from './doom';
 import { enemyHealth } from './enemies';
+import type { Keyword } from './keywords';
 import { formatBoard } from './format_board';
 import {
   cardMatcher,
@@ -166,13 +167,20 @@ export interface MapView {
   enemies: Readonly<Record<InstanceId, readonly MapEnemyView[]>>;
 }
 
-/** An enemy's fight and evade now, its attack and its card's picture (`BoardView.enemyStats`). */
+/**
+ * What an enemy's card prints, for drawing it in full (`BoardView.enemyStats`): its fight and evade
+ * now (constant abilities included), its attack, traits, keywords and victory points, and the
+ * picture of its card. Its health and damage are on its `EnemyView`.
+ */
 export interface EnemyStatsView {
   /** The picture of its card (`CardStats.imageSrc`), when the card data has one. */
   image?: CardImagePath;
   fight: number;
   evade: number;
   attack: { damage: number; horror: number };
+  traits: readonly Trait[];
+  keywords: readonly Keyword[];
+  victory?: number;
 }
 
 /**
@@ -368,19 +376,23 @@ export class BoardView {
   }
 
   /**
-   * The printed numbers of the enemy with id `enemy` that its details show: fight and evade as
-   * they are now (constant abilities included, `effectiveValue`) and the damage and horror of its
-   * attack. Kept apart from `EnemyView`, which every board read lists, since only the details
+   * What the card of the enemy with id `enemy` prints, for its details: fight and evade as they
+   * are now (constant abilities included, `effectiveValue`), the damage and horror of its attack,
+   * its traits, keywords and victory points, and its picture. Kept apart from `EnemyView`, which every board read lists, since only the details
    * window needs them.
    */
   enemyStats(enemy: InstanceId): EnemyStatsView {
     const card = requireCard(this.state, enemy);
-    const { damage = 0, horror = 0, imageSrc } = cardStats(this.ctx.cards, card.code);
+    const stats = cardStats(this.ctx.cards, card.code);
+    const { damage = 0, horror = 0, imageSrc, victory } = stats;
     return {
       ...(imageSrc === undefined ? {} : { image: imageSrc }),
       fight: effectiveValue(this.ctx, this.state, card, 'fight'),
       evade: effectiveValue(this.ctx, this.state, card, 'evade'),
       attack: { damage, horror },
+      traits: stats.traits,
+      keywords: stats.keywords ?? [],
+      ...(victory === undefined ? {} : { victory }),
     };
   }
 

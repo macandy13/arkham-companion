@@ -1,7 +1,8 @@
 /*
- * The enemy details (EnemyDetails): its name, its numbers as a two-column list, then each group
- * of buttons under its small title, the action ones marked with the game's action arrow. It lies in the top
- * layer but inherits from the small card it opens from, so it resets the text.
+ * The enemy details (EnemyDetails): whom the enemy is engaged with, the enemy drawn as its card,
+ * then each group of buttons under its small title, the action ones marked with the game's
+ * action arrow. It lies in the top layer but inherits from the small card it opens from, so it
+ * resets the text.
  */
 #board dialog[data-dialog='enemy'] {
   display: flex;
@@ -17,34 +18,11 @@
   display: none;
 }
 
-#board dialog[data-dialog='enemy'] h2 {
-  margin: 0;
-  font-size: var(--font-size-subtitle);
-}
-
-/* The card's picture repeats the name and numbers, so it is decoration and waits until loaded. */
-#board dialog[data-dialog='enemy'] > img {
-  align-self: center;
-  width: var(--layout-zoom-card-width);
-  max-width: 100%;
-  aspect-ratio: 5 / 7;
-  border-radius: var(--radius);
-}
-
-#board dialog[data-dialog='enemy'] > img:not([data-shown]) {
-  display: none;
-}
-
-#board dialog[data-dialog='enemy'] dl {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: var(--space-1) var(--space-3);
-  margin: 0;
-}
-
-#board dialog[data-dialog='enemy'] dd {
+#board dialog[data-dialog='enemy'] > p {
   margin: 0;
   font-family: var(--font-family-display);
+  color: var(--color-text-muted);
+  text-align: center;
 }
 
 #board dialog[data-dialog='enemy'] section {
@@ -89,4 +67,250 @@
 #board dialog[data-dialog='enemy'] footer {
   display: flex;
   justify-content: flex-end;
+}
+
+/*
+ * The enemy card (EnemyCard), drawn like a location tile in the printed cards' paper and ink:
+ * parchment with a darker text box, dark bands with gilt rules, the shields in their colours, and
+ * the art's hatch until the picture has loaded. Its text is in SVG user units.
+ */
+#board svg[data-card='enemy'] {
+  align-self: center;
+  width: var(--layout-zoom-card-width);
+  max-width: 100%;
+  filter: var(--piece-shadow);
+}
+
+#board svg[data-card='enemy'] stop:first-child {
+  stop-color: var(--color-parchment);
+}
+
+#board svg[data-card='enemy'] stop:last-child {
+  stop-color: var(--color-parchment-shade);
+}
+
+#board svg[data-card='enemy'] pattern rect {
+  fill: var(--color-card-face);
+}
+
+#board svg[data-card='enemy'] pattern path {
+  stroke: var(--color-card-line);
+  stroke-width: var(--card-pattern-line-width);
+}
+
+#board svg[data-card='enemy'] [data-part='box'] {
+  fill: var(--color-parchment-light);
+}
+
+#board svg[data-card='enemy'] [data-part='watermark'] {
+  fill: none;
+  stroke: var(--color-card-line);
+  stroke-width: var(--card-pattern-line-width);
+}
+
+#board svg[data-card='enemy'] :is([data-part='band'], [data-part='medallion']) {
+  fill: var(--color-card-band);
+}
+
+#board svg[data-card='enemy'] :is([data-part='gilt'], [data-part='medallion']) {
+  stroke: var(--color-card-gilt);
+  stroke-width: var(--card-ornament-line-width);
+}
+
+#board svg[data-card='enemy'] [data-part='gilt'] {
+  fill: none;
+}
+
+#board svg[data-card='enemy'] [data-part='jewel'] {
+  fill: var(--color-card-gilt);
+}
+
+#board svg[data-card='enemy'] [data-part='type'] {
+  fill: var(--color-parchment);
+  stroke: var(--color-card-edge);
+  stroke-width: var(--card-gilt-line-width);
+}
+
+#board svg[data-card='enemy'] :is([data-part='fight'], [data-part='health'], [data-part='evade']) {
+  stroke: var(--color-card-gilt);
+  stroke-width: var(--card-ornament-line-width);
+}
+
+#board svg[data-card='enemy'] [data-part='fight'] {
+  fill: var(--color-card-fight);
+}
+
+#board svg[data-card='enemy'] [data-part='health'] {
+  fill: var(--color-card-health);
+}
+
+#board svg[data-card='enemy'] [data-part='evade'] {
+  fill: var(--color-card-evade);
+}
+
+#board svg[data-card='enemy'] [data-part='edge'] {
+  fill: none;
+  stroke: var(--color-card-edge);
+  stroke-width: var(--card-border-width);
+}
+
+#board svg[data-card='enemy']:not([data-picture]) image {
+  visibility: hidden;
+}
+
+#board svg[data-card='enemy'] > text {
+  fill: var(--color-ink);
+  font-family: var(--font-family-display);
+  font-size: var(--card-name-size);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+#board svg[data-card='enemy'] > text + text {
+  font-size: var(--card-type-size);
+  letter-spacing: var(--card-type-spacing);
+  text-transform: uppercase;
+}
+
+/* The numbers on the shields, in three equal columns over them, each word kept for screen readers. */
+#board svg[data-card='enemy'] dl {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  height: 100%;
+  margin: 0;
+}
+
+#board svg[data-card='enemy'] dl > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#board svg[data-card='enemy'] dt {
+  position: absolute;
+  width: var(--hidden-size);
+  height: var(--hidden-size);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+#board svg[data-card='enemy'] dd {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0;
+  color: var(--color-card-text);
+  font-family: var(--font-family-display);
+  font-size: var(--card-stat-size);
+  line-height: 1;
+}
+
+#board svg[data-card='enemy'] dd > span {
+  font-family: var(--font-family);
+  font-size: var(--card-stat-note-size);
+}
+
+/* The skill each is tested against, under fight and evade, as the printed card hints at it. */
+#board svg[data-card='enemy'] :is([data-stat='fight'], [data-stat='evade'])::after {
+  content: '';
+  width: var(--card-stat-icon-size);
+  height: var(--card-stat-icon-size);
+  background: var(--color-card-gilt);
+  mask: var(--stat-symbol) center / contain no-repeat;
+}
+
+#board svg[data-card='enemy'] [data-stat='fight'] {
+  --stat-symbol: url('../symbols/combat.svg');
+}
+
+#board svg[data-card='enemy'] [data-stat='evade'] {
+  --stat-symbol: url('../symbols/agility.svg');
+}
+
+#board svg[data-card='enemy'] [data-part='text'] {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--card-text-gap);
+  height: 100%;
+  color: var(--color-ink);
+  font-size: var(--card-text-size);
+  line-height: normal;
+  text-align: center;
+}
+
+#board svg[data-card='enemy'] [data-part='text'] > p {
+  margin: 0;
+}
+
+#board svg[data-card='enemy'] [data-part='traits'] {
+  font-style: italic;
+  color: var(--color-ink-muted);
+}
+
+#board svg[data-card='enemy'] :is([data-part='keywords'], [data-part='victory']) {
+  font-weight: bold;
+}
+
+/* The attack's damage icons left of the type plate and its horror icons right of it. */
+#board svg[data-card='enemy'] [data-part='attack'] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  margin: 0;
+  padding-inline: var(--card-attack-inset);
+}
+
+#board svg[data-card='enemy'] [data-part='attack'] > span {
+  display: flex;
+  gap: var(--card-text-gap);
+}
+
+#board svg[data-card='enemy'] [data-symbol] {
+  display: inline-block;
+  width: var(--card-attack-icon-size);
+  height: var(--card-attack-icon-size);
+  vertical-align: middle;
+  background: currentcolor;
+  mask: var(--symbol) center / contain no-repeat;
+}
+
+#board svg[data-card='enemy'] [data-symbol='damage'] {
+  --symbol: url('../investigators/icons/health.svg');
+
+  background: var(--color-health);
+}
+
+#board svg[data-card='enemy'] [data-symbol='horror'] {
+  --symbol: url('../investigators/icons/sanity.svg');
+
+  background: var(--color-sanity);
+}
+
+#board svg[data-card='enemy'] [data-symbol='willpower'] {
+  --symbol: url('../symbols/willpower.svg');
+}
+
+#board svg[data-card='enemy'] [data-symbol='intellect'] {
+  --symbol: url('../symbols/intellect.svg');
+}
+
+#board svg[data-card='enemy'] [data-symbol='combat'] {
+  --symbol: url('../symbols/combat.svg');
+}
+
+#board svg[data-card='enemy'] [data-symbol='agility'] {
+  --symbol: url('../symbols/agility.svg');
+}
+
+#board svg[data-card='enemy'] [data-symbol='wild'] {
+  --symbol: url('../symbols/wild.svg');
+}
+
+#board svg[data-card='enemy'] [data-symbol='per_investigator'] {
+  --symbol: url('../symbols/per_investigator.svg');
 }

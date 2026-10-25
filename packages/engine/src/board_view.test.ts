@@ -28,6 +28,7 @@ import {
   perInvestigator,
   TableError,
   threatAreaOf,
+  trait,
 } from './index';
 import { stateAfter } from '../test/utils';
 
@@ -528,7 +529,7 @@ describe('enemies', () => {
     ]);
   });
 
-  it("reads an enemy's fight and evade as modified where it stands, its attack and its picture", () => {
+  it("reads an enemy's fight and evade as modified where it stands, its card's print and picture", () => {
     const { context, state } = newGame()
       .withLocation(
         study,
@@ -544,6 +545,9 @@ describe('enemies', () => {
           damage: 1,
           horror: 2,
           imageSrc: cardImagePath('/cards/ghoul.png'),
+          traits: [trait('Ghoul')],
+          keywords: [{ name: 'hunter' }, { name: 'prey', detail: 'Highest [combat]' }],
+          victory: 1,
         }),
         engagedWith(alice),
       )
@@ -556,6 +560,9 @@ describe('enemies', () => {
       fight: 4,
       evade: 2,
       attack: { damage: 1, horror: 2 },
+      traits: ['Ghoul'],
+      keywords: [{ name: 'hunter' }, { name: 'prey', detail: 'Highest [combat]' }],
+      victory: 1,
     });
   });
 

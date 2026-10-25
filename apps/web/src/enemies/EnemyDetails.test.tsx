@@ -11,6 +11,7 @@ import {
   investigatorId,
   newGame,
   PlayTable,
+  trait,
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { gameActions } from '../state/gameActions';
@@ -70,21 +71,58 @@ describe('EnemyDetails', () => {
       { tokens: { damage: 1 } },
     );
 
-  it("shows the ghoul's fight, evade, health left and attack", () => {
+  it("shows the ghoul's card named after it, with its fight, health left, evade and attack", () => {
     renderGhoulDetails(PlayTable.start(ghoulOnAlder), false);
 
     const numbers = screen
       .getAllByRole('term')
       .map((term) => [term.textContent, term.nextElementSibling?.textContent]);
+    expect(screen.getByRole('dialog', { hidden: true, name: 'ghoul' })).toBeDefined();
+    expect(screen.getByText('Engaged with alder')).toBeDefined();
     expect(numbers).toEqual([
       ['Fight', '3'],
+      ['Health', '2 of 3'],
       ['Evade', '2'],
-      ['Health', '2/3'],
-      ['Attack', '1 damage, 2 horror'],
     ]);
+    expect(screen.getByLabelText('Attack: 1 damage, 2 horror')).toBeDefined();
   });
 
-  it("shows the picture of the ghoul's card once it has loaded", () => {
+  it("writes the ghoul's traits, keywords and victory points in the text box", () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withInvestigator(alder, { locationId: study })
+        .withCard(
+          ghoul,
+          blankEnemy('ghoul', {
+            traits: [trait('Monster'), trait('Ghoul')],
+            keywords: [
+              { name: 'hunter' },
+              { name: 'retaliate' },
+              { name: 'prey', detail: 'Highest [combat]' },
+            ],
+            victory: 1,
+          }),
+          engagedWith(alder),
+        ),
+    );
+    renderGhoulDetails(table, false);
+
+    // The text box's lines are paragraphs, which have no role to find them by; the combat icon
+    // in the prey line has no text, so it is checked by its name below.
+    const text = screen
+      .getByRole('dialog', { hidden: true })
+      .querySelectorAll('[data-part="text"] > p');
+    expect(Array.from(text, (line) => line.textContent)).toEqual([
+      'Monster. Ghoul.',
+      'Hunter. Retaliate.',
+      'Prey – Highest .',
+      'Victory 1.',
+    ]);
+    expect(screen.getByRole('img', { hidden: true, name: 'Combat' })).toBeDefined();
+  });
+
+  it("shows the art of the ghoul's card once its picture has loaded", () => {
     const table = PlayTable.start(
       newGame()
         .withLocation(study, blankLocation('study'))
@@ -96,17 +134,18 @@ describe('EnemyDetails', () => {
         ),
     );
     renderGhoulDetails(table, false);
-    // The picture is decorative (`alt=""`), so it has no role to find it by.
-    const picture = screen.getByRole('dialog', { hidden: true }).querySelector('img');
-    if (!picture) throw new Error("the ghoul's details have no picture");
-    const beforeLoading = picture.hasAttribute('data-shown');
+    // The art is decoration, so it has no role to find it by.
+    const card = screen.getByRole('dialog', { hidden: true }).querySelector('[data-card="enemy"]');
+    const picture = card?.querySelector('image');
+    if (!card || !picture) throw new Error("the ghoul's card has no picture");
+    const beforeLoading = card.hasAttribute('data-picture');
 
     // jsdom loads no images, so the test fires the load itself.
     fireEvent.load(picture);
 
-    expect(picture.getAttribute('src')).toBe('https://arkhamdb.com/bundles/cards/ghoul.png');
+    expect(picture.getAttribute('href')).toBe('https://arkhamdb.com/bundles/cards/ghoul.png');
     expect(beforeLoading).toBe(false);
-    expect(picture.hasAttribute('data-shown')).toBe(true);
+    expect(card.getAttribute('data-picture')).toBe('shown');
   });
 
   it.each([
