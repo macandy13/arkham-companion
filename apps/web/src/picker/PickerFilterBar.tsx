@@ -19,7 +19,7 @@ interface PickerFilterBarProps {
 
 /**
  * The picker's small filter control, drawn like the play screen's menu (`GameMenu`): the search box
- * and a round filter button that opens the class chips and the cycle, pack, chapter and collection
+ * and a round filter button that opens the class icons and the cycle, pack, chapter and collection
  * filters under it. The button counts the filters set (`data-count`), so they are not forgotten
  * while it is closed.
  */
@@ -66,11 +66,11 @@ export function PickerFilterBar({
               <button
                 key={code}
                 type="button"
+                data-icon={code}
+                aria-label={t(`picker.faction.${code}`)}
                 aria-pressed={filters.factions.includes(code)}
                 onClick={() => toggleFaction(code)}
-              >
-                {t(`picker.faction.${code}`)}
-              </button>
+              />
             ))}
           </fieldset>
           <label>

@@ -196,6 +196,8 @@
   --investigator-art-y: 0.04;
   --investigator-art-width: 0.52;
   --investigator-art-height: 0.545;
+  /* A class icon on the picker's class filter. */
+  --picker-class-icon-size: 1.5rem;
   /* The disc on the picker's filter button that counts the filters set. */
   --picker-count-size: 1.125rem;
   /* The round counters along the foot of an investigator card. */

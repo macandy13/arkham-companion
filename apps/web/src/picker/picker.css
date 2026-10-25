@@ -54,7 +54,7 @@
 }
 
 /*
- * The filter menu: the class chips in wrapping rows, then each other filter's name beside its
+ * The filter menu: the class icons in wrapping rows, then each other filter's name beside its
  * choice. It keeps to the screen's width rather than its content's. Two ids, so its rules beat the
  * wizard's framed fieldsets and tall labels.
  */
@@ -74,9 +74,40 @@
   border: 0;
 }
 
+/* The classes as their game icons, each named for screen readers. */
 #app #investigator-picker fieldset > button {
-  min-height: var(--button-compact);
-  padding-block: 0;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  padding: 0;
+}
+
+#investigator-picker fieldset > button::before {
+  width: var(--picker-class-icon-size);
+  height: var(--picker-class-icon-size);
+}
+
+#investigator-picker button[data-icon='guardian']::before {
+  mask-image: url('../symbols/guardian.svg');
+}
+
+#investigator-picker button[data-icon='seeker']::before {
+  mask-image: url('../symbols/seeker.svg');
+}
+
+#investigator-picker button[data-icon='rogue']::before {
+  mask-image: url('../symbols/rogue.svg');
+}
+
+#investigator-picker button[data-icon='mystic']::before {
+  mask-image: url('../symbols/mystic.svg');
+}
+
+#investigator-picker button[data-icon='survivor']::before {
+  mask-image: url('../symbols/survivor.svg');
+}
+
+#investigator-picker button[data-icon='neutral']::before {
+  mask-image: url('../symbols/neutral.svg');
 }
 
 #app #investigator-picker label {
