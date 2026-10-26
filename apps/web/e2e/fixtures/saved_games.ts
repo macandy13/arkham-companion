@@ -19,31 +19,37 @@ import {
   theGatheringHouse,
 } from '@arkham/scenarios';
 import { serialiseGameExport } from '../../src/storage/gameExport';
+import { ROLAND_PICTURE } from './card_pictures';
 
-/** An invented investigator: the exported game reads them from its log, never from card data. */
-const alder: InvestigatorCard = {
-  code: investigatorCode('alder'),
-  name: 'Alder',
-  health: 6,
-  sanity: 8,
-  skills: { willpower: 3, intellect: 3, combat: 3, agility: 3 },
+/**
+ * Roland Banks with his printed stats, entered by hand: the exported game reads him from its log,
+ * never from card data. His picture is the real scan (`ROLAND_PICTURE`), so the shots show the
+ * investigator card's art crop.
+ */
+const roland: InvestigatorCard = {
+  code: investigatorCode('01001'),
+  name: 'Roland Banks',
+  imageSrc: ROLAND_PICTURE,
+  health: 9,
+  sanity: 5,
+  skills: { willpower: 3, intellect: 3, combat: 4, agility: 2 },
 };
-const alderId = investigatorId('alder');
+const rolandId = investigatorId('roland');
 
 /**
  * A solo game of `scenario` (The Gathering or a variant of it), played until act 1 opens the
- * house: Alder takes the Study's two clues and spends them.
+ * house: Roland Banks takes the Study's two clues and spends them.
  */
 function houseOpened(scenario: ScenarioDefinition): PlayTable {
   const table = PlayTable.setUp(
-    { cards: cardDbWith(theGatheringCards, [investigatorCardStats(alder)]), scenario },
-    { investigators: [{ id: alderId, code: alder.code }], seed: 3 },
+    { cards: cardDbWith(theGatheringCards, [investigatorCardStats(roland)]), scenario },
+    { investigators: [{ id: rolandId, code: roland.code }], seed: 3 },
   );
   table.nextPhase();
-  table.startTurn(alderId);
-  table.investigate(alderId);
-  table.investigate(alderId);
-  table.spendCluesToAdvanceAct([[alderId, 2]]);
+  table.startTurn(rolandId);
+  table.investigate(rolandId);
+  table.investigate(rolandId);
+  table.spendCluesToAdvanceAct([[rolandId, 2]]);
   return table;
 }
 
@@ -69,7 +75,7 @@ export function houseOpenedExport(title: string): Buffer {
 }
 
 /**
- * Like `houseOpenedExport`, but the setup set two Ghoul Priests aside, and Alder holds the 3 clues
+ * Like `houseOpenedExport`, but the setup set two Ghoul Priests aside, and Roland Banks holds the 3 clues
  * act 2 (The Barrier) needs, given by hand to keep the script short. Advancing the act then cannot
  * tell which Ghoul Priest to spawn, so the screen asks the players to do it by hand.
  */
@@ -83,23 +89,23 @@ export function twoGhoulPriestsExport(title: string): Buffer {
     ),
   };
   const table = houseOpened(twoPriests);
-  table.play({ type: 'AdjustInvestigator', investigatorId: alderId, stat: 'clues', delta: 3 });
+  table.play({ type: 'AdjustInvestigator', investigatorId: rolandId, stat: 'clues', delta: 3 });
   return exportOf(title, table, 'two_ghoul_priests');
 }
 
 /**
  * An export file of a solo game of The Gathering titled `title` in which the house map is in
- * play while Alder is still in the Study, so two maps are visible at once. No scenario reaches
+ * play while Roland Banks is still in the Study, so two maps are visible at once. No scenario reaches
  * this yet (act 1 removes the Study as it opens the house), so the house is added directly; it
  * shows the map tabs.
  */
 export function twoMapsExport(title: string): Buffer {
   const table = PlayTable.setUp(
     {
-      cards: cardDbWith(theGatheringCards, [investigatorCardStats(alder)]),
+      cards: cardDbWith(theGatheringCards, [investigatorCardStats(roland)]),
       scenario: theGathering,
     },
-    { investigators: [{ id: alderId, code: alder.code }], seed: 3 },
+    { investigators: [{ id: rolandId, code: roland.code }], seed: 3 },
   );
   const cardOf = (code: CardCode) => cardIn(table, code);
   const house = theGatheringHouse;
@@ -122,26 +128,26 @@ export function twoMapsExport(title: string): Buffer {
 }
 
 /**
- * Like `houseOpenedExport`, but Alder spends their last action investigating the Hallway and the
+ * Like `houseOpenedExport`, but Roland Banks spends their last action investigating the Hallway and the
  * players have not reported the test yet, so the screen opens with the decision dialog asking
  * for its result.
  */
 export function investigationOpenExport(title: string): Buffer {
   const table = houseOpened(theGathering);
-  table.investigate(alderId, { result: 'open' });
+  table.investigate(rolandId, { result: 'open' });
   return exportOf(title, table, 'investigation_open');
 }
 
 /**
  * Like `houseOpenedExport`, but the Parlor is revealed, by hand to keep the script short (act 2
- * reveals it), and Alder spends their last action moving into it, so their turn row offers the
+ * reveals it), and Roland Banks spends their last action moving into it, so their turn row offers the
  * Parlor's Resign.
  */
 export function inTheParlorExport(title: string): Buffer {
   const table = houseOpened(theGathering);
   const parlor = cardIn(table, GATHERING_CODES.parlor);
   table.play({ type: 'RevealLocation', locationId: parlor });
-  table.moveTo(alderId, parlor);
+  table.moveTo(rolandId, parlor);
   return exportOf(title, table, 'in_the_parlor');
 }
 
@@ -160,12 +166,12 @@ export function ghoulPriestInCellarExport(title: string): Buffer {
 }
 
 /**
- * Like `houseOpenedExport`, but with Alder threatened: the Ghoul Priest has spawned in the Hallway,
- * engaged Alder and taken 2 damage, and both Dissonant Voices and both Frozen in Fear sit in
- * Alder's threat area, all given by hand to keep the script short. That is five cards, one more
+ * Like `houseOpenedExport`, but with Roland Banks threatened: the Ghoul Priest has spawned in the Hallway,
+ * engaged Roland Banks and taken 2 damage, and both Dissonant Voices and both Frozen in Fear sit in
+ * Roland Banks' threat area, all given by hand to keep the script short. That is five cards, one more
  * than the threat area shows, so a spec shows it full and scrolling.
  */
-export function alderThreatenedExport(title: string): Buffer {
+export function rolandThreatenedExport(title: string): Buffer {
   const table = houseOpened(theGathering);
   const ghoulPriest = cardIn(table, GATHERING_CODES.ghoulPriest);
   table.play({
@@ -185,10 +191,10 @@ export function alderThreatenedExport(title: string): Buffer {
       adjustment: {
         kind: 'moveCard',
         cardId: treachery.id,
-        to: { kind: 'threatArea', investigatorId: alderId },
+        to: { kind: 'threatArea', investigatorId: rolandId },
       },
     });
-  return exportOf(title, table, 'alder_threatened');
+  return exportOf(title, table, 'roland_threatened');
 }
 
 /** The Gathering's Dissonant Voices and Frozen in Fear, treacheries that go into the threat area; two copies each. */

@@ -1,7 +1,7 @@
 import { expect, test } from './fixtures/test';
 import { investigationOpenExport, resumeImportedGame } from './fixtures/saved_games';
 
-// Journey: the game asks the players something (here the result of Alder's investigation), they
+// Journey: the game asks the players something (here the result of Roland Banks' investigation), they
 // draw a chaos token for the test in the decision dialog and answer it, which gives the board back.
 test('answer a decision in its dialog', async ({ page }) => {
   const decision = page.getByRole('dialog', { name: 'Investigate Hallway' });
