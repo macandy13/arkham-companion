@@ -34,8 +34,8 @@ export async function startGame(
 
 /**
  * A card effect the players resolve by hand, in their words: one the engine skipped because a card
- * it names is not in the game exactly once (`AbilityEffectSkipped`), or a command on an
- * investigator's own cards, which the game doesn't hold (`CommandDeferred`).
+ * it names is not in the game exactly once (`AbilityEffectSkipped`), or a card effect on an
+ * investigator's own cards, which the game doesn't hold (`CommandDeferred` without `asAction`).
  */
 export type SkippedEffect =
   | {
@@ -77,6 +77,8 @@ export function skippedEffects(
       }
       case 'CommandDeferred': {
         const { command } = event;
+        // The players took it as an action at the table themselves, so there is nothing to remind them of.
+        if ('asAction' in command && command.asAction) return [];
         const investigator = state.investigators.find((inv) => inv.id === command.investigatorId);
         return [
           { kind: 'deferred', investigator: investigator?.name ?? command.investigatorId, command },
