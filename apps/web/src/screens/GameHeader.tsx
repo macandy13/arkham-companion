@@ -10,11 +10,11 @@ import { Token } from './Token';
 /**
  * The play screen's header, laid out like the scenario's cards on the table, centred and each under
  * its label like the playmat's: the encounter deck and its discard pile, the agenda, the act and
- * the scenario card. The scenario's name is the screen's heading. The cards' buttons wait while a step is queued (`OpenGame.busy`), since a
- * second tap would act on whatever the first one leaves open; the agenda's and act's steppers show
- * only while the players adjust the board (`OpenGame.adjusting`). The round, the phase and the
- * buttons that run the game sit in the status row below (`GameStatus`). `board` is the open game's
- * `OpenGame.board`.
+ * the scenario card. The scenario's name is the screen's heading. The cards' buttons wait while a
+ * step is queued (`OpenGame.busy`), since a second tap would act on whatever the first one leaves
+ * open; the agenda's and act's steppers show only while the players adjust the board
+ * (`OpenGame.adjusting`). The round, the phase and the buttons that run the game sit in the status
+ * row below (`GameStatus`). `board` is the open game's `OpenGame.board`.
  */
 export function GameHeader({
   store,

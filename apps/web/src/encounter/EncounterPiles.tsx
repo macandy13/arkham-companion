@@ -16,7 +16,6 @@ export function EncounterPiles({ board }: { board: BoardView }) {
         <Token
           kind="cards"
           count={deckCount}
-          threshold={undefined}
           label={t('header.encounterDeckCount', { count: deckCount })}
         />
       </div>

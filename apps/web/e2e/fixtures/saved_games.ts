@@ -94,23 +94,24 @@ export function twoGhoulPriestsExport(title: string): Buffer {
 }
 
 /**
- * Like `houseOpenedExport`, but played on to the investigation phase of round 3, so two mythos
- * phases have drawn from the encounter deck: Dissonant Voices, drawn in round 2, lies on the
- * discard pile, and round 3's card is in play.
+ * Like `houseOpenedExport`, but played on to the investigation phase of round 3, so the mythos
+ * phases of rounds 2 and 3 have drawn from the encounter deck (each "Next" runs one phase:
+ * enemy, upkeep, mythos, investigation): Dissonant Voices, drawn in round 2, lies on the discard
+ * pile.
  */
 export function mythosDrawnExport(title: string): Buffer {
   const table = houseOpened(theGathering);
   table.endTurn(rolandId);
-  for (let round = 2; round <= 3; round++) {
-    table.nextPhase();
-    table.nextPhase();
-    table.nextPhase();
-    table.nextPhase();
-    if (round < 3) {
-      table.startTurn(rolandId);
-      table.endTurn(rolandId);
-    }
-  }
+  table.nextPhase();
+  table.nextPhase();
+  table.nextPhase();
+  table.nextPhase();
+  table.startTurn(rolandId);
+  table.endTurn(rolandId);
+  table.nextPhase();
+  table.nextPhase();
+  table.nextPhase();
+  table.nextPhase();
   return exportOf(title, table, 'mythos_drawn');
 }
 
