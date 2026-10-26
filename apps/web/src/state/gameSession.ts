@@ -13,6 +13,7 @@ import {
   type Rejection,
   type ScenarioContext,
   type SetupOptions,
+  takenAsAction,
 } from '@arkham/engine';
 
 /**
@@ -78,7 +79,7 @@ export function skippedEffects(
       case 'CommandDeferred': {
         const { command } = event;
         // The players took it as an action at the table themselves, so there is nothing to remind them of.
-        if ('asAction' in command && command.asAction) return [];
+        if (takenAsAction(command)) return [];
         const investigator = state.investigators.find((inv) => inv.id === command.investigatorId);
         return [
           { kind: 'deferred', investigator: investigator?.name ?? command.investigatorId, command },

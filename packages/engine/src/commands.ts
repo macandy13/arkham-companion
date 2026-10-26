@@ -353,6 +353,20 @@ export interface PlayCard extends ActionCommand {
 export type PlayerCardCommand = DrawCards | SearchDeck | PlayCard;
 
 /**
+ * Whether the players took `command` as an action at the table (the draw or play action), rather
+ * than a card effect asking them to do it.
+ */
+export function takenAsAction(command: PlayerCardCommand): boolean {
+  switch (command.type) {
+    case 'DrawCards':
+    case 'PlayCard':
+      return command.asAction === true;
+    case 'SearchDeck':
+      return false;
+  }
+}
+
+/**
  * An active investigator takes `damage` and `horror` from one effect ("take 1
  * horror and 1 damage"), placed at once like an attack's: neither is lost to a
  * defeat the other causes. Amounts are whole numbers, at least one above 0.

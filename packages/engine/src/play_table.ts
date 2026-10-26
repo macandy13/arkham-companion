@@ -513,7 +513,7 @@ export class PlayTable {
     this.play({ type: 'PlayCard', investigatorId: this.seat(investigator), asAction: true });
   }
 
-  /** Resources a card gives, or the players' correction of the count. */
+  /** The players' correction of the resource count. */
   gainResources(investigator: InvestigatorRef, amount: number): void {
     this.adjust(investigator, 'resources', amount);
   }
