@@ -39,6 +39,8 @@ export type Command =
   | MoveInvestigator
   | AdjustInvestigator
   | HealInvestigator
+  | DrawCards
+  | SearchDeck
   | TakeDamageAndHorror
   | DefeatInvestigator
   | DiscoverClues
@@ -298,6 +300,30 @@ export interface HealInvestigator {
   stat: WoundKind;
   amount: number;
 }
+
+/**
+ * "Draw N cards": the investigator draws from their own deck. The game holds no player cards, so
+ * `handleDrawCards` leaves it to the players (`CommandDeferred`).
+ */
+export interface DrawCards {
+  type: 'DrawCards';
+  investigatorId: InvestigatorId;
+  amount: number;
+}
+
+/**
+ * "Search (the top `top` cards of) your deck for a card with one of `traits`, add it to your hand
+ * and shuffle your deck." Left to the players like `DrawCards`.
+ */
+export interface SearchDeck {
+  type: 'SearchDeck';
+  investigatorId: InvestigatorId;
+  traits: readonly Trait[];
+  top?: number;
+}
+
+/** The commands on player cards, which the engine defers to the players (`CommandDeferred`). */
+export type PlayerCardCommand = DrawCards | SearchDeck;
 
 /**
  * An active investigator takes `damage` and `horror` from one effect ("take 1

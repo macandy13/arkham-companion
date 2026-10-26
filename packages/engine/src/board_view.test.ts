@@ -31,6 +31,8 @@ import {
   threatAreaOf,
   trait,
   type CardAction,
+  type CardStats,
+  type Zone,
 } from './index';
 import { stateAfter } from '../test/utils';
 
@@ -932,6 +934,56 @@ describe('card actions', () => {
       { cardId: instanceId('agenda'), card: 'agenda', action: 0, designator: 'parley' },
       { cardId: instanceId('agenda'), card: 'agenda', action: 1, designator: 'parley' },
     ]);
+  });
+});
+
+describe('enemy actions', () => {
+  const ghoul = instanceId('ghoul');
+  /** Alice and Bob in the Study, the Hallway next door, and the ghoul (`card`) at `zone`. */
+  const studyWith = (card: CardStats, zone: Zone) =>
+    newGame()
+      .withLocation(study, blankLocation('study'), { revealed: true })
+      .withLocation(hallway, blankLocation('hallway'), { revealed: true })
+      .withInvestigator(alice, { locationId: study })
+      .withInvestigator(bob, { locationId: study })
+      .withCard(ghoul, card, zone)
+      .start();
+
+  it.each([
+    {
+      name: 'fights and evades an enemy engaged with them',
+      card: blankEnemy('ghoul'),
+      zone: engagedWith(alice),
+      expected: ['fight', 'evade'],
+    },
+    {
+      name: 'fights and engages an enemy engaged with someone else there, but cannot evade it',
+      card: blankEnemy('ghoul'),
+      zone: engagedWith(bob),
+      expected: ['fight', 'engage'],
+    },
+    {
+      name: 'only engages an unengaged aloof enemy there',
+      card: blankEnemy('aloof_ghoul', { keywords: [{ name: 'aloof' }] }),
+      zone: atLocation(study),
+      expected: ['engage'],
+    },
+    {
+      name: 'fights and evades a massive enemy there but cannot engage it',
+      card: blankEnemy('massive_ghoul', { keywords: [{ name: 'massive' }] }),
+      zone: atLocation(study),
+      expected: ['fight', 'evade'],
+    },
+    {
+      name: 'does nothing to an enemy at another location',
+      card: blankEnemy('aloof_ghoul', { keywords: [{ name: 'aloof' }] }),
+      zone: atLocation(hallway),
+      expected: [],
+    },
+  ])('$name', ({ card, zone, expected }) => {
+    const { context, state } = studyWith(card, zone);
+
+    expect(boardView(context, state).enemyActions(alice, ghoul)).toEqual(expected);
   });
 });
 
