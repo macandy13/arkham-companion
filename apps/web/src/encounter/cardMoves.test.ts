@@ -31,12 +31,43 @@ describe('cardMoves', () => {
         .withTurnOf(brook),
     );
 
-  it('spawns an enemy at each location, engaged with Brook in the Study, or discards or sets it aside', () => {
+  it('spawns an enemy from the discard pile at each location, unengaged or engaged with Brook or Alder there, or sets it aside', () => {
     const table = brooksTurnWith(blankEnemy('ghoul'), { kind: 'encounterDiscard' });
 
     expect(cardMoves(table.board, table.board.encounterCard(drawn))).toEqual([
+      { to: 'location', location: study },
       { to: 'location', location: study, engagedWith: brook },
+      { to: 'location', location: study, engagedWith: alder },
       { to: 'location', location: hallway },
+      { to: 'setAside' },
+    ]);
+  });
+
+  it.each([
+    {
+      where: 'unengaged in the Hallway',
+      zone: { kind: 'atLocation', locationId: hallway } as const,
+      spawns: [
+        { to: 'location', location: study },
+        { to: 'location', location: study, engagedWith: brook },
+        { to: 'location', location: study, engagedWith: alder },
+      ],
+    },
+    {
+      where: 'engaged with Brook in the Study',
+      zone: { kind: 'engaged', investigatorId: brook } as const,
+      spawns: [
+        { to: 'location', location: study },
+        { to: 'location', location: study, engagedWith: alder },
+        { to: 'location', location: hallway },
+      ],
+    },
+  ])('leaves out the spawn where an enemy $where already is', ({ zone, spawns }) => {
+    const table = brooksTurnWith(blankEnemy('ghoul'), zone);
+
+    expect(cardMoves(table.board, table.board.encounterCard(drawn))).toEqual([
+      ...spawns,
+      { to: 'discard' },
       { to: 'setAside' },
     ]);
   });

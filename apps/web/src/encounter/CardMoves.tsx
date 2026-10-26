@@ -47,7 +47,7 @@ export function CardMoves({
       {cardMoves(board, card).map((move) => {
         const text = label(move);
         return (
-          <li key={text}>
+          <li key={JSON.stringify(move)}>
             <button
               type="button"
               disabled={busy}
