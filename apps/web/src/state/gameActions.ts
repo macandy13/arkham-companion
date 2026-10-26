@@ -68,6 +68,12 @@ export interface GameActions {
   moveTo(location: InstanceId, cost?: ActionCost): Promise<void>;
   /** An investigate action; its test stays open as a decision. */
   investigate(): Promise<void>;
+  /** The resource action: one action for one resource. */
+  takeResource(): Promise<void>;
+  /** The draw action; the card is drawn at the table. */
+  drawCard(): Promise<void>;
+  /** The play action; the card is played, and paid for, at the table. */
+  playCard(): Promise<void>;
   /** One clue from `location`, the investigator's own, without a test, as a card grants it. */
   takeClue(location: InstanceId): Promise<void>;
   /**
@@ -184,6 +190,9 @@ export function gameActions(
           ),
     investigate: () =>
       asAction((table, investigator) => table.investigate(investigator, { result: 'open' })),
+    takeResource: () => asAction((table, investigator) => table.takeResource(investigator)),
+    drawCard: () => asAction((table, investigator) => table.drawCard(investigator)),
+    playCard: () => asAction((table, investigator) => table.playCard(investigator)),
     takeClue: (location) =>
       onTurn((table, investigator) =>
         table.play({
