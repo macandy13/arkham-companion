@@ -5,6 +5,7 @@ import {
   perInvestigator,
   trait,
   type Ability,
+  type CardAction,
   type CardModifier,
   type CardStats,
   type EncounterSetCode,
@@ -28,18 +29,29 @@ export interface AgendaOptions {
   set: EncounterSetCode;
   stage: number;
   doom: number;
-  /** Its reverse side (`whenAdvanced`) and its actions. */
+  /** Its reverse side (`whenAdvanced`). */
   abilities?: readonly Ability[];
+  /** Its action abilities, such as `resignAction()`. */
+  actions?: readonly CardAction[];
 }
 
 /** Card stats for a hand-entered agenda of `set`, with both printed sides. */
-export function agenda({ code, name, set, stage, doom, abilities }: AgendaOptions): CardStats {
+export function agenda({
+  code,
+  name,
+  set,
+  stage,
+  doom,
+  abilities,
+  actions,
+}: AgendaOptions): CardStats {
   return {
     ...scenarioCard(code, name, set),
     typeCode: 'agenda',
     stage: { number: stage },
     doom: fixed(doom),
     ...(abilities ? { abilities } : {}),
+    ...(actions ? { actions } : {}),
   };
 }
 
@@ -83,6 +95,8 @@ export interface LocationOptions {
   traits?: readonly string[];
   victory?: number;
   abilities?: Ability[];
+  /** Its action abilities, such as `resignAction()`. */
+  actions?: readonly CardAction[];
 }
 
 /** Card stats for a hand-entered location of `set`, with both printed sides. */
@@ -95,6 +109,7 @@ export function location({
   traits = [],
   victory,
   abilities,
+  actions,
 }: LocationOptions): CardStats {
   return {
     ...scenarioCard(code, name, set),
@@ -104,6 +119,7 @@ export function location({
     clues: perInvestigator(cluesPerInvestigator),
     ...(victory === undefined ? {} : { victory }),
     ...(abilities === undefined ? {} : { abilities }),
+    ...(actions === undefined ? {} : { actions }),
   };
 }
 

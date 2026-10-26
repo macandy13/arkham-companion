@@ -12,6 +12,7 @@ import {
   investigatorId,
   newGame,
   PlayTable,
+  resignAction,
   threatAreaOf,
 } from '@arkham/engine';
 import { range } from '@arkham/util';
@@ -371,9 +372,17 @@ describe('InvestigatorBar', () => {
       {
         situation: 'resigned',
         table: () => {
-          const table = beforeTurns();
+          const table = PlayTable.start(
+            newGame()
+              .withLocation(study, blankLocation('study', { actions: [resignAction()] }), {
+                revealed: true,
+              })
+              .withInvestigator(alder, { locationId: study })
+              .withInvestigator(brook, { locationId: study }),
+          );
+          table.nextPhase();
           table.startTurn(alder);
-          table.resign(alder);
+          table.useCardAction(alder, study);
           return table;
         },
       },
@@ -431,24 +440,24 @@ describe('InvestigatorBar', () => {
       expect(within(panel('brook')).queryByRole('button', { name: 'Start turn' })).toBeNull();
     });
 
-    it.each([
-      { button: 'End turn', after: { turnTaken: true } },
-      { button: 'Resign', after: { status: 'resigned' } },
-    ])('"$button" plays it for the investigator whose turn it is', async ({ button, after }) => {
-      const table = PlayTable.start(twoAtStudy.withTurnOf(alder));
-      render(
-        <InvestigatorBar
-          board={table.board}
-          actions={actionsOn(table)}
-          busy={false}
-          adjusting={false}
-        />,
-      );
+    it.each([{ button: 'End turn', after: { turnTaken: true } }])(
+      '"$button" plays it for the investigator whose turn it is',
+      async ({ button, after }) => {
+        const table = PlayTable.start(twoAtStudy.withTurnOf(alder));
+        render(
+          <InvestigatorBar
+            board={table.board}
+            actions={actionsOn(table)}
+            busy={false}
+            adjusting={false}
+          />,
+        );
 
-      fireEvent.click(within(panel('alder')).getByRole('button', { name: button }));
+        fireEvent.click(within(panel('alder')).getByRole('button', { name: button }));
 
-      await expect.poll(() => table.board.investigator(alder)).toMatchObject(after);
-    });
+        await expect.poll(() => table.board.investigator(alder)).toMatchObject(after);
+      },
+    );
 
     it('"Investigate" leaves the test of the investigation to the decision dialog', async () => {
       const table = PlayTable.start(twoAtStudy.withTurnOf(alder));

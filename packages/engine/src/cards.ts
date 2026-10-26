@@ -1,5 +1,6 @@
 import { stripTrailingDot } from '@arkham/util';
 import type { Ability } from './abilities';
+import type { CardAction } from './card_actions';
 import type { CardModifier } from './card_values';
 import type { Brand, CardCode, CardImagePath, EncounterSetCode } from './ids';
 import type { Keyword } from './keywords';
@@ -140,6 +141,8 @@ export interface CardStats {
   modifiers?: readonly CardModifier[];
   /** The card's forced abilities as data (architecture "Triggers and card effects"); none when absent. */
   abilities?: readonly Ability[];
+  /** The card's action abilities ("[action]: …"), taken with `UseCardAction`; none when absent. */
+  actions?: readonly CardAction[];
   /**
    * The picture of its front on ArkhamDB, only for the views to show; no rule reads it. A
    * location's front is its revealed side.

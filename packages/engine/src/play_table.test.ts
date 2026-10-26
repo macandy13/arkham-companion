@@ -307,16 +307,6 @@ describe('turns, actions and tokens', () => {
     expect(table.board.turn).toBeUndefined();
   });
 
-  it('lets an investigator resign', () => {
-    const table = PlayTable.start(game);
-    table.nextPhase();
-    table.startTurn(alice);
-
-    table.resign(alice);
-
-    expect(table.board.investigator(alice).status).toBe('resigned');
-  });
-
   it('gains and spends resources and takes damage and horror', () => {
     const table = PlayTable.start(game);
 

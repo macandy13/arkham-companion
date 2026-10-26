@@ -73,6 +73,7 @@ export type Command =
   | StartTurn
   | EndTurn
   | Resign
+  | UseCardAction
   | SetLeadInvestigator
   | AdjustActions
   | ResolveEnemyAttack
@@ -839,7 +840,8 @@ export interface EndTurn {
 /**
  * Rules Reference, "Resign": an investigator resigns as an action in their
  * own turn, so only in the investigation phase while their turn is in
- * progress. They leave the scenario with status `resigned`, their turn ends
+ * progress, and only through a card that offers it: this is the effect of
+ * `resignAction()`, taken with `UseCardAction`. They leave the scenario with status `resigned`, their turn ends
  * and the same clean-up as for a defeat follows: their clues stay on their
  * location, enemies engaged with them stay there unengaged, treacheries in
  * their threat area are discarded, and a new lead investigator is chosen if
@@ -851,6 +853,19 @@ export interface EndTurn {
 export interface Resign {
   type: 'Resign';
   investigatorId: InvestigatorId;
+}
+
+/**
+ * The investigator takes the action ability number `action` (index into `CardStats.actions`) of
+ * the card `cardId`, in their own turn and where the card offers it (`offersActionsTo`). Taken
+ * as an action it provokes attacks of opportunity, unless it is a Resign or Parley. Produces no
+ * events of its own: the action's effects follow (`cardActionSteps`).
+ */
+export interface UseCardAction extends ActionCommand {
+  type: 'UseCardAction';
+  investigatorId: InvestigatorId;
+  cardId: InstanceId;
+  action: number;
 }
 
 /**

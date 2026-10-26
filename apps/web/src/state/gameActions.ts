@@ -52,7 +52,6 @@ export interface GameActions {
   /** Begins the turn of `investigator`, whom the players picked. */
   startTurn(investigator: InvestigatorId): Promise<void>;
   endTurn(): Promise<void>;
-  resign(): Promise<void>;
   /** Changes the actions left this turn. */
   adjustActions(delta: number): Promise<void>;
   /**
@@ -162,7 +161,6 @@ export function gameActions(
     nextPhase: () => play((table) => void table.nextPhase()),
     startTurn: (investigator) => play((table) => table.startTurn(investigator)),
     endTurn: () => onTurn((table, investigator) => table.endTurn(investigator)),
-    resign: () => onTurn((table, investigator) => table.resign(investigator)),
     adjustActions: (delta) =>
       onTurn((table, investigator) => table.adjustActions(investigator, delta)),
     moveTo: (location, cost = 'free') =>

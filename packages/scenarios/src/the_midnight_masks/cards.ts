@@ -35,6 +35,7 @@ import {
   youMustEither,
   type CardDb,
   type CardStats,
+  resignAction,
 } from '@arkham/engine';
 import { act, agenda, enemy, location, prey, spawn, treachery } from '../card_builders';
 
@@ -108,8 +109,8 @@ const cultist = ['Humanoid', 'Cultist'];
  * core set data), no card text, JSON or images. Effects the engine has no
  * rule for yet are left out, so the players resolve them from the card:
  *
- * - the agendas' and the act's actions (Resign, spending clues to draw from
- *   the Cultist deck) and the act's objective (the players advance it)
+ * - the act's action (spending clues to draw from the Cultist deck) and its
+ *   objective (the players advance it)
  * - agenda 1 turning into The Masked Hunter
  * - the Parley actions and the locations' actions
  * - Your House's hold on the Ghoul Priest and Easttown's cost reduction
@@ -127,7 +128,14 @@ const cultist = ['Humanoid', 'Cultist'];
  */
 export const theMidnightMasksCardDefs: readonly CardStats[] = [
   {
-    ...agenda({ code: '01121a', name: 'Predator or Prey?', set: own, stage: 1, doom: 6 }),
+    ...agenda({
+      code: '01121a',
+      name: 'Predator or Prey?',
+      set: own,
+      stage: 1,
+      doom: 6,
+      actions: [resignAction()],
+    }),
     // Agenda 1's reverse side is The Masked Hunter (01121b), not an agenda back of its own.
     backImageSrc: cardImagePath('/bundles/cards/01121b.png'),
   },
@@ -138,6 +146,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     stage: 2,
     doom: 8,
     abilities: [whenAdvanced(endScenario(MIDNIGHT_MASKS_RESOLUTIONS.pastMidnight))],
+    actions: [resignAction()],
   }),
   act({
     code: '01123',
