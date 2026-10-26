@@ -13,8 +13,9 @@
  * Cultist deck and The Masked Hunter in play got away.
  *
  * What the engine leaves to the players is done by hand, as at the table:
- * the act's action (spend clues as a group, take the top card of the Cultist
- * deck, which stays unshuffled until #359), agenda 1's reverse side putting
+ * the act's clue payment (spend clues as a group; the draw from the Cultist
+ * deck is the engine's, and seed 40 puts "Wolf-Man" Drew, then Herman
+ * Collins on top of it), agenda 1's reverse side putting
  * The Masked Hunter into play, an Acolyte's doom as it enters play, Locked
  * Door, and Herman Collins' parley. The players count actions themselves,
  * so the script keeps each turn to 3 without touching the counter.
@@ -34,7 +35,6 @@ import {
   zoneKey,
   type CampaignCommand,
   type CampaignLog,
-  type CardCode,
   type InvestigatorId,
   type CardRef,
   type ScenarioContext,
@@ -141,7 +141,8 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
         Roland Banks – Your House; damage 0/9, horror 0/5, 0 clues, 5 resources, actions left 3; threat area: none
         Daisy Walker – Your House; damage 0/5, horror 0/9, 0 clues, 5 resources, actions left 3; threat area: none
       Encounter deck: 21 cards; discard: 0 cards
-      Set aside: 6 cards
+      Cultist deck: 5 cards
+      Set aside: 1 cards
       Victory display: none
       Pending decisions: none"
     `);
@@ -158,12 +159,12 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
 
     /**
      * The act's action, by hand: the group spends 2 clues per investigator,
-     * as `paid` says, and puts the cultist the players take from the top of
-     * the Cultist deck into play by its spawn keyword.
+     * as `paid` says, and `drawer` draws the top card of the Cultist deck,
+     * which spawns by its spawn keyword.
      */
     const drawFromTheCultistDeck = (
       paid: ReadonlyArray<readonly [InvestigatorId, number]>,
-      cultist: CardCode,
+      drawer: InvestigatorId,
     ) =>
       table.step(() => {
         for (const [investigator, clues] of paid)
@@ -173,7 +174,7 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
             stat: 'clues',
             delta: -clues,
           });
-        table.play({ type: 'SpawnEnemy', enemyId: instanceId(`${cultist}#1`) });
+        table.play({ type: 'DrawFromScenarioDeck', investigatorId: drawer, deck: 'cultist' });
       });
     /** An Acolyte entering play during the game places 1 doom on itself; the players do it. */
     const acolyteDoomAt = (location: CardRef) =>
@@ -255,7 +256,7 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
         [roland, 3],
         [daisy, 1],
       ],
-      MIDNIGHT_MASKS_CODES.wolfManDrew,
+      roland,
     );
     table.endTurn(roland);
 
@@ -312,7 +313,7 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     table.startTurn(daisy);
     table.investigate(daisy);
     table.investigate(daisy);
-    drawFromTheCultistDeck([[daisy, 4]], MIDNIGHT_MASKS_CODES.hermanCollins);
+    drawFromTheCultistDeck([[daisy, 4]], daisy);
     table.endTurn(daisy);
 
     expect(table.board.location(byName('Graveyard'))).toMatchObject({ clues: 0 });

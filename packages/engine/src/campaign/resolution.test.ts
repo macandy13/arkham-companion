@@ -419,6 +419,11 @@ describe('proposeResolution with steps that read the game', () => {
       true,
     ],
     [
+      'the Masked Hunter, set aside, is in a scenario deck',
+      { kind: 'cardIn', code: maskedHunter, places: ['scenarioDeck'] },
+      false,
+    ],
+    [
       'the Ghoul Priest, not in the game, is anywhere',
       {
         kind: 'cardIn',

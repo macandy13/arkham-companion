@@ -4,6 +4,7 @@ import {
   enemiesOnTable,
   mapId,
   scenario,
+  scenarioDeck,
   scenarioId,
   trait,
   type AddMapStep,
@@ -103,9 +104,10 @@ function arkham(withYourHouse: boolean): AddMapStep {
  * encounter deck; a standalone game reads as an empty log, so the house has
  * burned and the priest is dead, as the campaign guide's standalone setup
  * says ("your house has burned to the ground", no Ghoul Priest). The Cult of
- * Umôrdhoth is set aside as the Cultist deck, drawn by hand with the act's
- * action; shuffling it waits for that draw to be automated. The Masked Hunter is set aside too: it stands for agenda 1's
- * reverse side, which the players flip into play by hand. Pass the whole
+ * Umôrdhoth's five unique cultists form the Cultist deck, shuffled, drawn
+ * with `DrawFromScenarioDeck` (the act's action, by hand until #468). The
+ * Masked Hunter is set aside: it stands for agenda 1's reverse side, which
+ * the players flip into play by hand. Pass the whole
  * definition as `EngineContext.scenario` with The Gathering's cards joined
  * in (Chilling Cold, the Ghoul Priest). The bags are the campaign guide's,
  * the same as The Gathering's. The reference card's values are entered by
@@ -137,16 +139,18 @@ export const theMidnightMasks: ScenarioDefinition = {
       otherwise: [arkham(false), { kind: 'moveInvestigators', to: codes.rivertown }],
     },
     {
-      kind: 'setAside',
+      kind: 'scenarioDeck',
+      deck: 'cultist',
       codes: [
         codes.wolfManDrew,
         codes.hermanCollins,
         codes.peterWarren,
         codes.victoriaDevereux,
         codes.ruthTurner,
-        codes.theMaskedHunter,
       ],
     },
+    { kind: 'shuffle', zone: scenarioDeck('cultist') },
+    { kind: 'setAside', codes: [codes.theMaskedHunter] },
     {
       kind: 'whenPlayers',
       atLeast: 2,

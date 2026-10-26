@@ -13,7 +13,7 @@ const codes = MIDNIGHT_MASKS_CODES;
 const yes: StoryValue = { kind: 'flag', value: true };
 const no: StoryValue = { kind: 'flag', value: false };
 
-/** The five unique Cultists of the Cultist deck, which is set aside during the game. */
+/** The five unique Cultists of the Cultist deck. */
 const cultistDeck: readonly CardCode[] = [
   codes.wolfManDrew,
   codes.hermanCollins,
@@ -34,10 +34,9 @@ const cultistsWeInterrogated: ResolutionStep = {
 
 /**
  * "Record the name of each unique enemy still remaining in the Cultist deck
- * or in play": a cultist still set aside is still in the Cultist deck. The
- * Masked Hunter is set aside only as agenda 1's reverse side, so it got away
- * when in play or, with `hunterAtAgenda1`, while agenda 1 is current (R1: "If
- * it is Agenda 1, record The Masked Hunter as well").
+ * or in play". The Masked Hunter is set aside only as agenda 1's reverse
+ * side, so it got away when in play or, with `hunterAtAgenda1`, while agenda
+ * 1 is current (R1: "If it is Agenda 1, record The Masked Hunter as well").
  */
 function cultistsWhoGotAway({ hunterAtAgenda1 }: { hunterAtAgenda1: boolean }): ResolutionStep {
   const hunterInPlay: GameCondition = {
@@ -51,7 +50,7 @@ function cultistsWhoGotAway({ hunterAtAgenda1 }: { hunterAtAgenda1: boolean }): 
     names: [
       ...cultistDeck.map((code) => ({
         code,
-        when: { kind: 'cardIn', code, places: ['inPlay', 'setAside'] } as const,
+        when: { kind: 'cardIn', code, places: ['inPlay', 'scenarioDeck'] } as const,
       })),
       {
         code: codes.theMaskedHunter,

@@ -14,6 +14,7 @@ import {
 } from './handle_board';
 import {
   handleDrawEncounter,
+  handleDrawFromScenarioDeck,
   handleGainSurge,
   handleFromSetAside,
   handleShuffleEncounterDeck,
@@ -214,6 +215,7 @@ const COMMAND_SPECS: CommandSpecs = {
   // `handle` turns it into an `ability` step before any handler would see it.
   ResolveEffect: { handle: () => [] },
   SpawnEnemy: { handle: handleSpawnEnemy },
+  DrawFromScenarioDeck: { handle: handleDrawFromScenarioDeck },
   EngageEnemy: {
     handle: handleEngageEnemy,
     // The other engaged enemies attack: the one being engaged is not engaged yet, and a massive

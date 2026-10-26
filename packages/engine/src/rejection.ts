@@ -11,6 +11,7 @@ import type {
   ScenarioId,
 } from './ids';
 import type { Decider, InvestigatorStat, NamedAmount, Phase, TokenKind } from './state';
+import type { ScenarioDeck } from './zone';
 
 /**
  * Structured reason why `handle` refused a command. The UI can switch on
@@ -110,6 +111,8 @@ export type Rejection =
    */
   /** `DrawEncounter` with the encounter deck and its discard both empty. */
   | { code: 'encounterDeckEmpty' }
+  /** `DrawFromScenarioDeck` on a deck with no cards left. */
+  | { code: 'scenarioDeckEmpty'; deck: ScenarioDeck }
   /** `DrawEncounter` brought an enemy for an investigator who is not at a location. */
   | { code: 'investigatorHasNoLocation'; investigatorId: InvestigatorId }
   /** No card with code `match` is set aside. */
@@ -358,6 +361,8 @@ function describe(r: Rejection): string {
       return `${r.required} clues are required, ${r.spent} spent`;
     case 'encounterDeckEmpty':
       return 'the encounter deck and its discard are empty';
+    case 'scenarioDeckEmpty':
+      return `the ${r.deck} deck is empty`;
     case 'investigatorHasNoLocation':
       return `investigator ${r.investigatorId} is not at a location`;
     case 'cardNotInZone':

@@ -32,7 +32,7 @@ import { nextInt, seedRng } from './rng';
 import type { ScenarioDefinition } from './scenario';
 import { spawnZone } from './spawn';
 import type { ChaosToken, Difficulty, TokenKind } from './state';
-import type { Zone } from './zone';
+import { sameZone, scenarioDeck, type ScenarioDeck, type Zone } from './zone';
 
 /**
  * A number of tokens as printed in setup instructions: a plain amount or a
@@ -113,6 +113,23 @@ export interface BuildEncounterDeckStep {
   kind: 'buildEncounterDeck';
   sets: readonly EncounterSetCode[];
   exclude?: readonly CardCode[];
+}
+
+/** Puts one copy of each code into a scenario deck of its own, in the order given. */
+export interface ScenarioDeckStep {
+  kind: 'scenarioDeck';
+  deck: ScenarioDeck;
+  codes: readonly CardCode[];
+}
+
+/**
+ * Shuffles the cards earlier steps put into `zone` ("shuffle them to form the Cultist deck"),
+ * with the setup's seed on a stream of its own, so the game's RNG and every later random result
+ * stay the same. The encounter deck needs none: `StartScenario` shuffles it.
+ */
+export interface ShuffleStep {
+  kind: 'shuffle';
+  zone: Zone;
 }
 
 /** Shuffles one copy of each code into the encounter deck, whatever its encounter set. */
@@ -200,6 +217,8 @@ type PlacingStep =
   | SetAsideStep
   | BuildEncounterDeckStep
   | ShuffleIntoEncounterDeckStep
+  | ScenarioDeckStep
+  | ShuffleStep
   | PlaceTokensStep
   | SpawnStep
   | MoveInvestigatorsStep
@@ -207,6 +226,9 @@ type PlacingStep =
 
 /** Mixed into the setup seed for the location picks (`withPickedLocations`). */
 const VERSION_PICK_STREAM = 0x5e7c9;
+
+/** Mixed into the setup seed for the `ShuffleStep`s. */
+const SHUFFLE_STREAM = 0x5a007;
 
 /** Mixed into the setup seed for the `OneAtRandomStep` picks. */
 const STEP_PICK_STREAM = 0x0a7e5;
@@ -270,6 +292,8 @@ interface SetupEnv {
   readonly playerCount: number;
   /** Copies of each code that steps other than `buildEncounterDeck` put on the table. */
   readonly usedCopies: ReadonlyMap<CardCode, number>;
+  /** A random whole number below `bound`, from the setup's stream for `ShuffleStep`s. */
+  readonly pick: (bound: number) => number;
 }
 
 /**
@@ -303,6 +327,7 @@ export function compileSetup(ctx: ScenarioContext, options: SetupOptions): Start
     ctx,
     playerCount,
     usedCopies: usedCopies(def, steps),
+    pick: seededPicker(options.seed ^ SHUFFLE_STREAM),
   };
   const initial: SetupDraft = {
     maps: {},
@@ -522,6 +547,8 @@ function renamed(step: PlacingStep, picked: (code: CardCode) => CardCode): Placi
     case 'setAside':
     case 'buildEncounterDeck':
     case 'shuffleIntoEncounterDeck':
+    case 'scenarioDeck':
+    case 'shuffle':
     case 'addChaosTokens':
       return step;
   }
@@ -539,6 +566,13 @@ function applyStep(draft: SetupDraft, step: PlacingStep, env: SetupEnv): SetupDr
         (state, code) => withCard(state, code, { kind: 'encounterDeck' }),
         draft,
       );
+    case 'scenarioDeck':
+      return step.codes.reduce(
+        (state, code) => withCard(state, code, scenarioDeck(step.deck)),
+        draft,
+      );
+    case 'shuffle':
+      return withShuffled(draft, step.zone, env.pick);
     case 'buildEncounterDeck':
       return encounterDeckCards(step.sets, step.exclude ?? [], env).reduce(
         (state, code) => withCard(state, code, { kind: 'encounterDeck' }),
@@ -610,6 +644,17 @@ function withCard(
   return {
     ...draft,
     cards: [...draft.cards, { id, code, zone, faceUp, ...(tokens && { tokens }) }],
+  };
+}
+
+/** The draft with the cards in `zone` in a random order; every other card keeps its place. */
+function withShuffled(draft: SetupDraft, zone: Zone, pick: (bound: number) => number): SetupDraft {
+  const remaining = draft.cards.filter((card) => sameZone(card.zone, zone));
+  return {
+    ...draft,
+    cards: draft.cards.map((card) =>
+      sameZone(card.zone, zone) ? (remaining.splice(pick(remaining.length), 1)[0] ?? card) : card,
+    ),
   };
 }
 
@@ -717,6 +762,7 @@ function stepCodes(step: PlacingStep): readonly CardCode[] {
       return [step.code];
     case 'setAside':
     case 'shuffleIntoEncounterDeck':
+    case 'scenarioDeck':
       return step.codes;
     default:
       return [];

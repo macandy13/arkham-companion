@@ -98,17 +98,17 @@ describe('The Midnight Masks setup', () => {
     expect(state.cards[rivertown]).toMatchObject({ faceUp: true, tokens: { clue: 2 } });
   });
 
-  it('sets aside the five cultists of the Cultist deck and The Masked Hunter', () => {
+  it('shuffles the five cultists into the Cultist deck and sets aside The Masked Hunter', () => {
     const state = startScenario(ctx);
 
-    expect(namesIn(state, { kind: 'setAside' }).sort()).toEqual([
+    expect(namesIn(state, { kind: 'scenarioDeck', deck: 'cultist' }).sort()).toEqual([
       '"Wolf-Man" Drew',
       'Herman Collins',
       'Peter Warren',
       'Ruth Turner',
-      'The Masked Hunter',
       'Victoria Devereux',
     ]);
+    expect(namesIn(state, { kind: 'setAside' })).toEqual(['The Masked Hunter']);
   });
 
   it.each([
