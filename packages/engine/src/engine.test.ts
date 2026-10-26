@@ -19,6 +19,7 @@ import {
   type StartScenario,
   type Zone,
 } from './index';
+import { requireInvestigator } from './investigators';
 import { rejectionFrom, rejectionOf, run } from '../test/utils';
 
 const main = mapId('main');
@@ -144,7 +145,7 @@ describe('StartScenario', () => {
       layout: {},
     });
     expect(mapLocations(state, main)).toEqual([study, other]);
-    expect(state.investigators[0]?.locationId).toBe(study);
+    expect(requireInvestigator(state, alice).locationId).toBe(study);
   });
 
   it('lists no locations for an unknown map', () => {

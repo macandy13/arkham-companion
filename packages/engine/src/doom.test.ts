@@ -26,6 +26,7 @@ import {
   type GameState,
   type InstanceId,
 } from './index';
+import { requireInvestigator } from './investigators';
 import { answer, rejectionFrom, stateAfter } from '../test/utils';
 
 const hall = instanceId('hall');
@@ -447,7 +448,7 @@ describe('AdvanceAgenda', () => {
 
     expect(doomInPlay(next)).toBe(0);
     expect(next.cards[ghoul]!.tokens.doom).toBeUndefined();
-    expect(next.investigators[0]!.doomOnPlayerCards).toBe(0);
+    expect(requireInvestigator(next, alice).doomOnPlayerCards).toBe(0);
   });
 
   it('drops the pending question about the old agenda', () => {
@@ -835,7 +836,7 @@ describe('advancing an act without paying clues', () => {
     const next = stateAfter(context, state, { type: 'AdvanceAct' });
 
     expect(next.act.current).toBe(act2);
-    expect(next.investigators[0]!.clues).toBe(3);
+    expect(requireInvestigator(next, alice).clues).toBe(3);
   });
 
   it('emits no payment events when no clues are paid', () => {

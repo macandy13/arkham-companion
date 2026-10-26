@@ -24,6 +24,7 @@ import {
   type GameState,
   type Zone,
 } from './index';
+import { requireInvestigator } from './investigators';
 import { answer, rejectionFrom, runFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
@@ -364,7 +365,10 @@ describe('enemy phase', () => {
       investigatorId: alice,
     });
 
-    expect(after.investigators[0]).toMatchObject({ health: { damage: 2 }, sanity: { horror: 1 } });
+    expect(requireInvestigator(after, alice)).toMatchObject({
+      health: { damage: 2 },
+      sanity: { horror: 1 },
+    });
     expect(after.cards[instanceId('ghoul')]!.exhausted).toBe(true);
     expect(after.meta.steps).toEqual([]);
   });
@@ -381,7 +385,10 @@ describe('enemy phase', () => {
       horror: 0,
     });
 
-    expect(after.investigators[0]).toMatchObject({ health: { damage: 0 }, sanity: { horror: 0 } });
+    expect(requireInvestigator(after, alice)).toMatchObject({
+      health: { damage: 0 },
+      sanity: { horror: 0 },
+    });
     expect(after.cards[instanceId('ghoul')]!.exhausted).toBe(true);
   });
 

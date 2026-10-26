@@ -51,6 +51,9 @@ const hallAndCellars = newGame()
   .withConnection(hall, cellarSouth);
 const hallWithAlice = hallAndCellars.withInvestigator(alice, { locationId: hall });
 const hallWithAliceAndBob = hallWithAlice.withInvestigator(bob, { locationId: hall });
+const aliceInHallWithTwoClues = newGame()
+  .withLocation(hall, blankLocation('hall'), { clues: 2 })
+  .withInvestigator(alice, { locationId: hall });
 
 const setAside: Zone = { kind: 'setAside' };
 
@@ -169,7 +172,7 @@ describe('pending decisions', () => {
     const { state, events } = execute(context, asked, answer('pick_reward', 'gain_resource'));
 
     expect(events.map((e) => e.type)).toEqual(['DecisionResolved', 'InvestigatorChanged']);
-    expect(state.investigators[0]?.resources).toBe(6);
+    expect(requireInvestigator(state, alice).resources).toBe(6);
     expect(state.pending).toEqual([]);
   });
 
@@ -308,7 +311,7 @@ describe('counts the answer confirms', () => {
 });
 
 describe('skill test result', () => {
-  const { context, state: aliceInHall } = hallWithAlice.start();
+  const { context, state: aliceInHall } = aliceInHallWithTwoClues.start();
   const test = { skill: 'intellect', difficulty: 3 } as const;
   const decision = skillTestDecision(
     {
@@ -322,14 +325,7 @@ describe('skill test result', () => {
       onFail: [gainHorror(1)],
     },
   );
-  let asked: GameState;
-  beforeEach(() => {
-    const hallWithTwoClues = stateAfter(context, aliceInHall, {
-      type: 'ManualAdjust',
-      adjustment: { kind: 'tokens', cardId: hall, token: 'clue', delta: 2 },
-    });
-    asked = stateAfter(context, hallWithTwoClues, { type: 'RequestDecision', decision });
-  });
+  const asked = stateAfter(context, aliceInHall, { type: 'RequestDecision', decision });
 
   it('describes the test to resolve', () => {
     expect(asked.pending).toMatchObject([{ kind: 'skillTestResult', skillTest: test }]);
@@ -338,20 +334,20 @@ describe('skill test result', () => {
   it('discovers a clue when the test is passed', () => {
     const after = stateAfter(context, asked, answer('investigate_hall', 'pass'));
 
-    expect(after.investigators[0]?.clues).toBe(1);
+    expect(requireInvestigator(after, alice).clues).toBe(1);
     expect(after.cards[hall]?.tokens.clue).toBe(1);
   });
 
   it('adds one horror when the test is failed', () => {
     const after = stateAfter(context, asked, answer('investigate_hall', 'fail'));
 
-    expect(after.investigators[0]?.sanity.horror).toBe(1);
-    expect(after.investigators[0]?.clues).toBe(0);
+    expect(requireInvestigator(after, alice).sanity.horror).toBe(1);
+    expect(requireInvestigator(after, alice).clues).toBe(0);
   });
 });
 
 describe('skill test outcome record', () => {
-  const { context, state: aliceInHall } = hallWithAlice.start();
+  const { context, state: aliceInHall } = aliceInHallWithTwoClues.start();
   const test = { skill: 'intellect', difficulty: 3 } as const;
   const decision = skillTestDecision(
     {
@@ -366,14 +362,7 @@ describe('skill test outcome record', () => {
       onFail: [gainHorror(1)],
     },
   );
-  let asked: GameState;
-  beforeEach(() => {
-    const hallWithTwoClues = stateAfter(context, aliceInHall, {
-      type: 'ManualAdjust',
-      adjustment: { kind: 'tokens', cardId: hall, token: 'clue', delta: 2 },
-    });
-    asked = stateAfter(context, hallWithTwoClues, { type: 'RequestDecision', decision });
-  });
+  const asked = stateAfter(context, aliceInHall, { type: 'RequestDecision', decision });
 
   it.each([
     {
