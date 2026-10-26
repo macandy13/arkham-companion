@@ -57,7 +57,7 @@ import { followUpStep, MAX_TRIGGERED_COMMANDS, triggeredSteps } from './triggers
 export function handle(ctx: EngineContext, state: GameState, command: Command): Event[] {
   const spec = commandSpec(command);
   assertAccepted(state, command, spec);
-  const provoking = spec.provokes?.(command);
+  const provoking = spec.provokes?.(command, ctx, state);
   const action = provoking && isOwnTurnAction(state, provoking) ? provoking : undefined;
   const attacks = action ? attackOfOpportunityDecisions(ctx, state, action) : [];
   if (action && attacks.length > 0) {
@@ -318,7 +318,7 @@ function resolveCommand(
   const own = spec.handle(resolution.ctx, before, command);
   if (surgeDraw(own)) budget.encounterCards ??= encounterCardCount(before);
   const continuation = withOrigin(
-    withinSurgeLimit(spec.continueWith?.(command, own) ?? [], budget),
+    withinSurgeLimit(spec.continueWith?.(command, own, resolution.ctx, before) ?? [], budget),
     origin,
   );
   if (spec.firesNoTriggers) {
@@ -355,12 +355,19 @@ function resolveAtOnce(
   for (const [index, command] of commands.entries()) {
     spend(budget);
     const spec = commandSpec(command);
-    const own = spec.handle(resolution.ctx, resolution.state, command);
-    if (surgeDraw(own)) budget.encounterCards ??= encounterCardCount(resolution.state);
+    const handledIn = resolution.state;
+    const own = spec.handle(resolution.ctx, handledIn, command);
+    if (surgeDraw(own)) budget.encounterCards ??= encounterCardCount(handledIn);
     emit(resolution, own);
     events.push(...own);
     continuations.push(
-      ...withOrigin(withinSurgeLimit(spec.continueWith?.(command, own) ?? [], budget), origin),
+      ...withOrigin(
+        withinSurgeLimit(
+          spec.continueWith?.(command, own, resolution.ctx, handledIn) ?? [],
+          budget,
+        ),
+        origin,
+      ),
     );
     if (resolution.state.pending.length > before.pending.length) {
       const rest = commands.slice(index + 1).map(followUpStep);

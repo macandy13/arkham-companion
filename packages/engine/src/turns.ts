@@ -64,7 +64,8 @@ export function handleResign(ctx: EngineContext, state: GameState, cmd: Resign):
   });
 }
 
-function requireTurnOf(state: GameState, investigatorId: InvestigatorId): void {
+/** Rejects (`turnNotInProgress`) unless it is `investigatorId`'s turn. */
+export function requireTurnOf(state: GameState, investigatorId: InvestigatorId): void {
   const { turn } = state.meta;
   if (turn?.investigatorId !== investigatorId)
     throw new CommandRejected({

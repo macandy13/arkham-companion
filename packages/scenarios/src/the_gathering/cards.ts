@@ -45,6 +45,7 @@ import {
   type AddMapStep,
   type CardDb,
   type CardStats,
+  resignAction,
 } from '@arkham/engine';
 import { act, agenda, enemy, location, picturesOf, prey, spawn, treachery } from '../card_builders';
 
@@ -297,6 +298,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     name: 'Parlor',
     shroud: 2,
     cluesPerInvestigator: 0,
+    actions: [resignAction()],
   }),
   enemy({
     code: codes.ghoulPriest,

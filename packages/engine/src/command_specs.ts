@@ -56,6 +56,7 @@ import { handleEvade, handleFight, handleInvestigate, handleTestSkill } from './
 import { handleSpawnEnemy } from './spawn';
 import type { GameState, HeldAction, QueuedStep } from './state';
 import { handleAdjustActions, handleEndTurn, handleResign, handleStartTurn } from './turns';
+import { cardActionOf, cardActionSteps, handleUseCardAction } from './card_actions';
 
 /**
  * Everything `handle` needs to know about one kind of command, in one place:
@@ -97,14 +98,19 @@ export interface CommandSpec<C extends Command> {
    * treating every -1 as an action would ask twice for the same action, and
    * actions the engine cannot see are left to the players (M1.12 follow-up).
    */
-  provokes?(command: C): HeldAction | undefined;
+  provokes?(command: C, ctx: EngineContext, state: GameState): HeldAction | undefined;
   /**
    * The rest of a command whose rules continue only after the forced effects
    * of its own events (`own`) have resolved. `handle` runs these steps after
    * those effects, and stores them while one of the effects asks the players
-   * something.
+   * something. `state` is the state the command was handled in.
    */
-  continueWith?(command: C, own: readonly Event[]): Continuation[];
+  continueWith?(
+    command: C,
+    own: readonly Event[],
+    ctx: EngineContext,
+    state: GameState,
+  ): Continuation[];
 }
 
 /**
@@ -234,6 +240,14 @@ const COMMAND_SPECS: CommandSpecs = {
   StartTurn: { handle: (_ctx, state, command) => handleStartTurn(state, command) },
   EndTurn: { handle: (_ctx, state, command) => handleEndTurn(state, command) },
   Resign: { handle: handleResign },
+  UseCardAction: {
+    handle: handleUseCardAction,
+    provokes: (command, ctx, state) =>
+      command.asAction && cardActionOf(ctx, state, command).designator === undefined
+        ? command
+        : undefined,
+    continueWith: (command, _own, ctx, state) => cardActionSteps(ctx, state, command),
+  },
   SetLeadInvestigator: {
     handle: (_ctx, state, command) => handleSetLeadInvestigator(state, command),
   },

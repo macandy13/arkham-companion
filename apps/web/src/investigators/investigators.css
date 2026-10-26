@@ -313,7 +313,7 @@
   padding: 0;
 }
 
-/* The turn controls under the card: "Start turn", or the action pips, resign and End. */
+/* The turn controls under the card: "Start turn", or the action pips, investigate and End. */
 #board > #investigators > section > :is(button, [role='group']) {
   align-self: start;
 }
@@ -345,10 +345,6 @@
 
 #board > #investigators [role='group'] li[data-left] {
   opacity: 1;
-}
-
-#investigators button[data-icon='resign']::before {
-  mask-image: url('./icons/resign.svg');
 }
 
 #investigators button[data-icon='investigate']::before {

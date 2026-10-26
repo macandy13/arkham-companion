@@ -173,6 +173,10 @@ export type Rejection =
   | { code: 'invalidAttackAmount'; amount: number }
   /** `TakeDamageAndHorror` with an amount that is not a non-negative integer, or nothing to take. */
   | { code: 'invalidWounds'; damage: number; horror: number }
+  /** `UseCardAction` with an index the card prints no action for. */
+  | { code: 'unknownCardAction'; cardId: InstanceId; action: number }
+  /** `UseCardAction` on a card that offers its actions elsewhere or to someone else. */
+  | { code: 'cardActionUnavailable'; cardId: InstanceId; investigatorId: InvestigatorId }
   /** A command that belongs to another phase (e.g. `EndTurn` outside investigation). */
   | { code: 'wrongPhase'; expected: Phase; actual: Phase }
   /** `EndTurn` for an investigator who has already taken their turn this round. */
@@ -394,6 +398,10 @@ function describe(r: Rejection): string {
       return `attack damage and horror must be non-negative integers, got ${r.amount}`;
     case 'invalidWounds':
       return `damage and horror must be non-negative integers, not both 0, got ${r.damage} and ${r.horror}`;
+    case 'unknownCardAction':
+      return `${r.cardId} has no action ${r.action}`;
+    case 'cardActionUnavailable':
+      return `${r.investigatorId} cannot take the actions of ${r.cardId} now`;
     case 'wrongPhase':
       return `only allowed in the ${r.expected} phase, not in ${r.actual}`;
     case 'turnAlreadyTaken':

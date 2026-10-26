@@ -175,6 +175,7 @@ export type {
   TestedAction,
 } from './abilities';
 export { MAX_TRIGGERED_COMMANDS } from './triggers';
+export { offersActionsTo, resignAction, type CardAction } from './card_actions';
 export * from './store';
 export { undoLastGroup } from './undo';
 // Campaign functions are reached as `campaign.handleCommand` and so on, so
