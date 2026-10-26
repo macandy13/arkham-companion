@@ -89,7 +89,7 @@ function AgendaStatus({
   const { agenda } = board;
   if (!agenda) return null;
   const { actions } = store.getState();
-  const parts = (
+  const tokenAndPlate = (
     <>
       <Token
         kind="doom"
@@ -132,7 +132,7 @@ function AgendaStatus({
         image={agenda.image}
         onOpen={() => setZoomed(true)}
       >
-        {parts}
+        {tokenAndPlate}
       </HeaderCard>
       {zoomed && (
         <CardDetails
@@ -141,7 +141,7 @@ function AgendaStatus({
           image={agenda.image}
           onClose={() => setZoomed(false)}
         >
-          {parts}
+          {tokenAndPlate}
         </CardDetails>
       )}
     </HeaderSlot>
@@ -173,7 +173,7 @@ function ActStatus({
   if (!act) return null;
   const { actions } = store.getState();
   const { clues, threshold } = act;
-  const parts = (onAdvance?: () => void) => (
+  const tokenAndPlate = (onAdvance?: () => void) => (
     <>
       {threshold !== undefined && (
         <Token
@@ -225,11 +225,11 @@ function ActStatus({
   return (
     <HeaderSlot label={t('header.act')}>
       <HeaderCard kind="act" name={act.name} image={act.image} onOpen={() => setZoomed(true)}>
-        {parts()}
+        {tokenAndPlate()}
       </HeaderCard>
       {zoomed && (
         <CardDetails kind="act" name={act.name} image={act.image} onClose={close}>
-          {parts(close)}
+          {tokenAndPlate(close)}
         </CardDetails>
       )}
     </HeaderSlot>

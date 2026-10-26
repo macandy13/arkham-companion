@@ -226,17 +226,19 @@ describe('GameScreen header', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it('opens the act on a tap on its card but not on its Advance button', async () => {
+  it("opens the act on a tap on its card but not on its plate's Add a clue button", async () => {
     await renderTheGathering('game-screen-act-tap-test');
     const act = screen.getByRole('region', { name: 'Act' });
     const face = act.querySelector('[data-card]');
     if (!face) throw new Error('the act has no card');
+    fireEvent.click(button('Adjust board'));
 
-    fireEvent.click(within(act).getByRole('button', { name: 'Advance' }));
-    const openAfterAdvance = screen.queryByRole('dialog');
+    fireEvent.click(await within(act).findByRole('button', { name: 'Add a clue' }));
+    await within(act).findByRole('img', { name: 'Clues 1 / 2' });
+    const openAfterAddingAClue = screen.queryByRole('dialog');
     fireEvent.click(face);
 
-    expect(openAfterAdvance).toBeNull();
+    expect(openAfterAddingAClue).toBeNull();
     expect(await screen.findByRole('dialog', { name: 'Trapped' })).toBeTruthy();
   });
 

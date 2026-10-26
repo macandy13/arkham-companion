@@ -252,6 +252,11 @@
   opacity: 0;
 }
 
+/* The name is the keyboard's way into the full card, so its focus ring shows over the picture. */
+#board > header [data-picture] > h2:has(:focus-visible) {
+  opacity: 1;
+}
+
 /* The plate holds the card's buttons at its foot, clear of the token at the right. */
 #board > header [data-card] > footer {
   display: flex;
