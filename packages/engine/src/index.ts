@@ -54,6 +54,8 @@ export {
   type DecisionCounts,
   type DecisionView,
   type DueAttackView,
+  type EncounterCardView,
+  type EncounterPilesView,
   type EnemyAction,
   type EnemyStatsView,
   type EnemyView,
