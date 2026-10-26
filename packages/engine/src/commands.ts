@@ -840,7 +840,8 @@ export interface EndTurn {
 /**
  * Rules Reference, "Resign": an investigator resigns as an action in their
  * own turn, so only in the investigation phase while their turn is in
- * progress. They leave the scenario with status `resigned`, their turn ends
+ * progress, and only through a card that offers it: this is the effect of
+ * `resignAction()`, taken with `UseCardAction`. They leave the scenario with status `resigned`, their turn ends
  * and the same clean-up as for a defeat follows: their clues stay on their
  * location, enemies engaged with them stay there unengaged, treacheries in
  * their threat area are discarded, and a new lead investigator is chosen if

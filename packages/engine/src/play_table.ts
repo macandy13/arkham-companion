@@ -265,11 +265,6 @@ export class PlayTable {
     this.play({ type: 'EndTurn', investigatorId: this.seat(investigator) });
   }
 
-  /** The investigator resigns as the action of their turn, which ends it. */
-  resign(investigator: InvestigatorRef): void {
-    this.play({ type: 'Resign', investigatorId: this.seat(investigator) });
-  }
-
   /**
    * The investigator takes the action ability number `action` (default the first) printed on the
    * one card in the game `card` picks (a location, the agenda, an enemy, …).

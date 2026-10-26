@@ -478,7 +478,6 @@ describe('appStore', () => {
       it.each([
         ['investigate', (actions: GameActions) => actions.investigate()],
         ['endTurn', (actions: GameActions) => actions.endTurn()],
-        ['resign', (actions: GameActions) => actions.resign()],
         ['adjustActions', (actions: GameActions) => actions.adjustActions(-1)],
       ])('refuses %s while no one is taking their turn', async (name, action) => {
         const store = createAppStore(new IndexedDbStore(`appstore-no-turn-${name}-test`));
