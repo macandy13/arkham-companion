@@ -6,6 +6,7 @@ import {
   blankLocation,
   blankTreachery,
   engagedWith,
+  execute,
   instanceId,
   investigatorId,
   newGame,
@@ -373,6 +374,30 @@ describe('action costs', () => {
       action: 0,
       investigatorId: alice,
     });
+  });
+});
+
+describe('hand card costs', () => {
+  it('leaves alice’s discard of 4 cards to the players and still scares her', () => {
+    const { context, state } = newGame()
+      .withLocation(
+        hall,
+        blankLocation('hall', {
+          actions: [{ ...scareAction, cost: { spend: 'handCards', amount: 4 } }],
+        }),
+        { revealed: true },
+      )
+      .withInvestigator(alice, { locationId: hall })
+      .withTurnOf(alice)
+      .start();
+
+    const { state: after, events } = execute(context, state, useAsAction(alice, hall));
+
+    expect(events).toContainEqual({
+      type: 'CommandDeferred',
+      command: { type: 'DiscardFromHand', investigatorId: alice, amount: 4 },
+    });
+    expect(investigatorOf(after, alice)).toMatchObject({ sanity: { horror: 1 } });
   });
 });
 

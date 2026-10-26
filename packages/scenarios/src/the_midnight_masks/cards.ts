@@ -112,7 +112,10 @@ const graveyard = 'scenario.theMidnightMasks.graveyard';
 const arkham = ['Arkham'];
 const cultist = ['Humanoid', 'Cultist'];
 
-/** "[action] Spend …: Parley. Add <the cultist> to the victory display." (Peter Warren, Victoria Devereux). */
+/**
+ * "[action] Parley. <cost>: Add <the cultist> to the victory display." (Peter Warren, Victoria
+ * Devereux, Herman Collins).
+ */
 function parleyIntoVictoryDisplay(cost: ActionCost): CardAction {
   return { designator: 'parley', cost, effects: [moveSelf({ kind: 'victoryDisplay' })] };
 }
@@ -126,7 +129,6 @@ function parleyIntoVictoryDisplay(cost: ActionCost): CardAction {
  *
  * - the act's objective (the players advance it)
  * - agenda 1 turning into The Masked Hunter
- * - Herman Collins' Parley (discarding cards from the hand)
  * - Your House's hold on the Ghoul Priest and Easttown's cost reduction
  * - Ruth Turner going to the victory display once evaded: the `afterTest`
  *   window opens before the evade exhausts and disengages her
@@ -374,6 +376,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     horror: 1,
     victory: 1,
     keywords: [spawn('Graveyard')],
+    actions: [parleyIntoVictoryDisplay({ spend: 'handCards', amount: 4 })],
   }),
   enemy({
     code: '01139',

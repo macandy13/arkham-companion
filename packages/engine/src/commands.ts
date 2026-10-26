@@ -42,6 +42,7 @@ export type Command =
   | HealInvestigator
   | DrawCards
   | SearchDeck
+  | DiscardFromHand
   | TakeDamageAndHorror
   | DefeatInvestigator
   | DiscoverClues
@@ -326,8 +327,18 @@ export interface SearchDeck {
   top?: number;
 }
 
+/**
+ * "Choose and discard N cards from your hand" (Herman Collins' Parley cost): the investigator
+ * discards from their own hand. Left to the players like `DrawCards`.
+ */
+export interface DiscardFromHand {
+  type: 'DiscardFromHand';
+  investigatorId: InvestigatorId;
+  amount: number;
+}
+
 /** The commands on player cards, which the engine defers to the players (`CommandDeferred`). */
-export type PlayerCardCommand = DrawCards | SearchDeck;
+export type PlayerCardCommand = DrawCards | SearchDeck | DiscardFromHand;
 
 /**
  * An active investigator takes `damage` and `horror` from one effect ("take 1

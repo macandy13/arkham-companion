@@ -17,7 +17,8 @@
  * What the engine leaves to the players is done by hand, as at the table:
  * agenda 1's reverse side putting
  * The Masked Hunter into play, an Acolyte's doom as it enters play, Locked
- * Door, and Herman Collins' parley. The players count actions themselves,
+ * Door, and the 4 cards Daisy discards from her hand for Herman Collins'
+ * parley. The players count actions themselves,
  * so the script keeps each turn to 3 without touching the counter.
  */
 import { describe, expect, it } from 'vitest';
@@ -382,13 +383,10 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     table.moveTo(daisy, byName('Graveyard'));
     table.answer(byName('Graveyard'), 'pass');
     expect(table.board.enemy(byName(herman))).toMatchObject({ engagedWith: daisy });
-    table.play({
-      type: 'ManualAdjust',
-      adjustment: {
-        kind: 'moveCard',
-        cardId: table.board.enemyId(byName(herman)),
-        to: { kind: 'victoryDisplay' },
-      },
+    table.useCardAction(daisy, byName(herman));
+    expect(table.events).toContainEqual({
+      type: 'CommandDeferred',
+      command: { type: 'DiscardFromHand', investigatorId: daisy, amount: 4 },
     });
     table.moveTo(daisy, byName('Rivertown'));
     table.endTurn(daisy);

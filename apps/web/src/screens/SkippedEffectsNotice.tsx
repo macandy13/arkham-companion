@@ -33,6 +33,8 @@ export function SkippedEffectsNotice({
     switch (command.type) {
       case 'DrawCards':
         return t('skipped.deferred.draw', { count: command.amount });
+      case 'DiscardFromHand':
+        return t('skipped.deferred.discard', { count: command.amount });
       case 'SearchDeck':
         return t(
           command.top === undefined ? 'skipped.deferred.search' : 'skipped.deferred.searchTop',

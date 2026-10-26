@@ -181,6 +181,7 @@ const COMMAND_SPECS: CommandSpecs = {
   HealInvestigator: { handle: handleHealInvestigator },
   DrawCards: { handle: deferToPlayers },
   SearchDeck: { handle: deferToPlayers },
+  DiscardFromHand: { handle: deferToPlayers },
   AdjustInvestigator: {
     handle: handleAdjustInvestigator,
   },
