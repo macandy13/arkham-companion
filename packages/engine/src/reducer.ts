@@ -22,7 +22,13 @@ import type { InstanceId } from './ids';
 import type { Edge } from './map';
 import { seedRng } from './rng';
 import { withStatDelta } from './investigators';
-import { emptyState, type CardInstance, type GameState, type Investigator } from './state';
+import {
+  emptyState,
+  type CardInstance,
+  type GameState,
+  type Investigator,
+  type SkillName,
+} from './state';
 import { zoneKey, type Zone, type ZoneKey } from './zone';
 
 /**
@@ -135,6 +141,10 @@ export function apply(state: GameState, event: Event): GameState {
         ...inv,
         actionsRemaining: inv.actionsRemaining + event.delta,
       }));
+    case 'SkillBoostChanged':
+      return applyInvestigator(state, event, (inv) =>
+        withSkillBoost(inv, event.skill, event.delta),
+      );
     case 'ActionsReset':
       return applyInvestigator(state, event, (inv) => ({
         ...inv,
@@ -347,4 +357,13 @@ function insertedAt(ids: readonly InstanceId[], id: InstanceId, index?: number):
   const next = ids.slice();
   next.splice(index ?? next.length, 0, id);
   return next;
+}
+
+/** `inv` with the boost of `skill` changed by `delta`; a boost back at 0 is left out. */
+function withSkillBoost(inv: Investigator, skill: SkillName, delta: number): Investigator {
+  const boost = (inv.skillBoosts?.[skill] ?? 0) + delta;
+  const others = withoutKey(inv.skillBoosts ?? {}, skill);
+  const skillBoosts = boost === 0 ? others : { ...others, [skill]: boost };
+  if (Object.keys(skillBoosts).length > 0) return { ...inv, skillBoosts };
+  return withoutKey(inv, 'skillBoosts');
 }

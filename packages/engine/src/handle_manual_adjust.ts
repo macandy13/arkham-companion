@@ -1,8 +1,10 @@
+import { withoutKey } from '@arkham/util';
 import type { EngineContext } from './cards';
 import type { Adjustment, ManualAdjust, MoveCard } from './commands';
 import { agendaThresholdDecision } from './doom';
-import type { ActionsAdjusted, CardMoved, Event, TokensChanged } from './events';
+import type { ActionsAdjusted, CardMoved, Event, SkillBoostChanged, TokensChanged } from './events';
 import type { InstanceId } from './ids';
+import { activeInvestigator } from './investigators';
 import { requireCard } from './lookup';
 import { cardMoved } from './placement';
 import { apply } from './reducer';
@@ -52,8 +54,14 @@ export function handleManualAdjust(
 function handleAdjustment(
   state: GameState,
   adj: Adjustment,
-): CardMoved | TokensChanged | ActionsAdjusted {
+): CardMoved | TokensChanged | ActionsAdjusted | SkillBoostChanged {
   if (adj.kind === 'actions') return actionsAdjusted(state, adj.investigatorId, adj.delta);
+  if (adj.kind === 'skillBoost') {
+    activeInvestigator(state, adj.investigatorId);
+    if (!Number.isInteger(adj.delta) || adj.delta === 0)
+      throw new CommandRejected({ code: 'invalidModifierAmount', amount: adj.delta });
+    return { type: 'SkillBoostChanged', ...withoutKey(adj, 'kind') };
+  }
   const card = requireCard(state.cards, adj.cardId);
 
   switch (adj.kind) {

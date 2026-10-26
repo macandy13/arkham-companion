@@ -159,6 +159,8 @@ function stepLine(
       return t('skillTest.step.baseSkill', { skill: t(`skill.${skill}`), total });
     case 'addedSkill':
       return t('skillTest.step.addedSkill', { ...values, skill: t(`skill.${source.skill}`) });
+    case 'skillBoost':
+      return t('skillTest.step.skillBoost', { ...values, skill: t(`skill.${source.skill}`) });
     case 'chaosToken':
       return t('skillTest.step.chaosToken', {
         ...values,

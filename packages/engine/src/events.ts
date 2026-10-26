@@ -23,6 +23,7 @@ import type {
   InvestigatorStat,
   Phase,
   PhaseStep,
+  SkillName,
   SkillTest,
   SkillTestOutcome,
   TokenKind,
@@ -68,6 +69,7 @@ export type Event =
   | RoundEnded
   | TurnStarted
   | ActionsAdjusted
+  | SkillBoostChanged
   | ActionsReset
   | TurnEnded
   | StepsQueued
@@ -494,6 +496,17 @@ export interface TurnStarted {
 export interface ActionsAdjusted {
   type: 'ActionsAdjusted';
   investigatorId: InvestigatorId;
+  delta: number;
+}
+
+/**
+ * The lasting boost of an investigator's `skill` (`Investigator.skillBoosts`)
+ * changed by `delta`. Produced by a `ManualAdjust` of kind `skillBoost`.
+ */
+export interface SkillBoostChanged {
+  type: 'SkillBoostChanged';
+  investigatorId: InvestigatorId;
+  skill: SkillName;
   delta: number;
 }
 

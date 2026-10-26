@@ -14,11 +14,13 @@ import {
   skillTestSuggestion,
   suggestSkillTest,
   trait,
+  type Command,
   type ScenarioReference,
+  type SkillName,
   type SkillTestContext,
   type SkillTestInput,
 } from './index';
-import { stateAfter } from '../test/utils';
+import { rejectionFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const study = instanceId('study');
@@ -184,6 +186,87 @@ describe("skillTestSuggestion: base values, the players' modifier and tokens", (
     expect(() => skillTestSuggestion(context, state, investigateStudy, { modifier: 1.5 })).toThrow(
       CommandRejected,
     );
+  });
+});
+
+describe('skillTestSuggestion: lasting skill boosts', () => {
+  const { context, state } = aliceInStudy.start();
+  /** The players' correction that changes Alice's lasting boost of `skill` by `delta`. */
+  const boost = (skill: SkillName, delta: number): Command => ({
+    type: 'ManualAdjust',
+    adjustment: { kind: 'skillBoost', investigatorId: alice, skill, delta },
+  });
+
+  it('adds the boost of the tested skill as a step of its own after the printed skill', () => {
+    const boosted = stateAfter(context, state, boost('intellect', 1));
+
+    const suggestion = skillTestSuggestion(context, boosted, investigateStudy, { tokens: ['-1'] });
+
+    expect(suggestion.trace).toEqual([
+      { target: 'skill', source: { kind: 'baseSkill' }, change: 4, total: 4 },
+      {
+        target: 'skill',
+        source: { kind: 'skillBoost', skill: 'intellect' },
+        change: 1,
+        total: 5,
+      },
+      { target: 'skill', source: { kind: 'chaosToken', token: '-1' }, change: -1, total: 4 },
+      { target: 'difficulty', source: { kind: 'baseDifficulty' }, change: 3, total: 3 },
+    ]);
+  });
+
+  it('adds the boost of a second skill a card adds to the test', () => {
+    const boosted = stateAfter(context, state, boost('willpower', 2));
+
+    const suggestion = skillTestSuggestion(context, boosted, investigateStudy, {
+      addedSkill: 'willpower',
+    });
+
+    expect(suggestion.trace).toEqual([
+      { target: 'skill', source: { kind: 'baseSkill' }, change: 4, total: 4 },
+      {
+        target: 'skill',
+        source: { kind: 'skillBoost', skill: 'willpower' },
+        change: 2,
+        total: 6,
+      },
+      { target: 'skill', source: { kind: 'addedSkill', skill: 'willpower' }, change: 2, total: 8 },
+      { target: 'difficulty', source: { kind: 'baseDifficulty' }, change: 3, total: 3 },
+    ]);
+  });
+
+  it('leaves other skills untested and unchanged', () => {
+    const boosted = stateAfter(context, state, boost('combat', 1));
+
+    expect(skillTestSuggestion(context, boosted, investigateStudy).skill).toBe(4);
+  });
+
+  it.each([
+    { name: 'adds up corrections', deltas: [1, 1], expected: { combat: 2 } },
+    { name: 'goes below the printed value', deltas: [-1], expected: { combat: -1 } },
+    { name: 'forgets a boost back at 0', deltas: [2, -2], expected: undefined },
+  ])('$name', ({ deltas, expected }) => {
+    const after = deltas.reduce(
+      (current, delta) => stateAfter(context, current, boost('combat', delta)),
+      state,
+    );
+
+    expect(after.investigators.find(({ id }) => id === alice)?.skillBoosts).toEqual(expected);
+  });
+
+  it.each([0, 0.5])('rejects a change of %s', (delta) => {
+    expect(rejectionFrom(context, state, boost('combat', delta))).toEqual({
+      code: 'invalidModifierAmount',
+      amount: delta,
+    });
+  });
+
+  it('raises Investigate with the boosted skill in its suggestion', () => {
+    const boosted = stateAfter(context, state, boost('intellect', -2));
+
+    const asked = stateAfter(context, boosted, { type: 'Investigate', investigatorId: alice });
+
+    expect(asked.pending[0]?.suggestion).toMatchObject({ skill: 2, outcome: 'fail' });
   });
 });
 

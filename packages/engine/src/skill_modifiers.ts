@@ -8,6 +8,7 @@ import type {
   ChaosToken,
   Decision,
   GameState,
+  Investigator,
   ModifierSource,
   ModifierStep,
   ModifierTarget,
@@ -169,8 +170,8 @@ export function withSuggestion(ctx: EngineContext, state: GameState, decision: D
 }
 
 /**
- * The modifier pipeline: the investigator's printed skill, changed by the
- * players' modifier and then by the revealed chaos tokens (fixed values, the
+ * The modifier pipeline: the investigator's printed skill, changed by its
+ * lasting boost (`Investigator.skillBoosts`), the players' modifier and then by the revealed chaos tokens (fixed values, the
  * reference card side for the difficulty, then the scenario's
  * `tokenValues`), against the test's printed difficulty (Rules Reference,
  * "Skill Tests", ST.5). Neither value goes below 0 (Rules Reference,
@@ -192,6 +193,7 @@ export function skillTestSuggestion(
     change: tokenChange(ctx, state, test, token),
   }));
   const changes = [
+    ...boostChanges(investigator, [test.skill, ...(input.addedSkill ? [input.addedSkill] : [])]),
     ...addedSkillChanges(investigator.skills, input.addedSkill),
     ...playerChanges(input.modifier ?? 0),
     ...tokenChanges.flatMap(({ change }) => change ?? []),
@@ -242,6 +244,16 @@ function targetTrace(
     steps: withRunningTotals([baseStep, ...own, ...caps], (step) => step.change),
     total: autoFail ? 0 : floored,
   };
+}
+
+/** The lasting boosts of the tested `skills` (`Investigator.skillBoosts`), one step each. */
+function boostChanges(investigator: Investigator, skills: readonly SkillName[]): Change[] {
+  return skills.flatMap((skill) => {
+    const boost = investigator.skillBoosts?.[skill] ?? 0;
+    return boost === 0
+      ? []
+      : [{ target: 'skill', source: { kind: 'skillBoost', skill }, change: boost }];
+  });
 }
 
 function addedSkillChanges(skills: SkillValues, added: SkillName | undefined): Change[] {

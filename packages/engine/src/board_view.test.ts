@@ -83,6 +83,19 @@ describe('the phase and turn', () => {
 });
 
 describe('investigators', () => {
+  it('reads the lasting boosts of their skills, and none while there are none', () => {
+    const { context, state } = newGame().withInvestigator(alice).withInvestigator(bob).start();
+    const boosted = stateAfter(context, state, {
+      type: 'ManualAdjust',
+      adjustment: { kind: 'skillBoost', investigatorId: alice, skill: 'combat', delta: 1 },
+    });
+
+    const [aliceView, bobView] = boardView(context, boosted).investigators;
+
+    expect(aliceView?.boosts).toEqual({ combat: 1 });
+    expect(bobView).not.toHaveProperty('boosts');
+  });
+
   it('reads each investigator with their counters, location and threat area', () => {
     const { context, state } = newGame()
       .withLocation(study, blankLocation('study'))

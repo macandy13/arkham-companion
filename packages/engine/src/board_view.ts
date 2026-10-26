@@ -91,6 +91,8 @@ export interface InvestigatorView {
   doom?: number;
   /** The printed willpower, intellect, combat and agility, the base of their skill tests. */
   skills: SkillValues;
+  /** The lasting boosts of their skills (`Investigator.skillBoosts`), left out while there are none. */
+  boosts?: Partial<SkillValues>;
   /** The picture of their investigator card (`Investigator.imageSrc`), when the card data has one. */
   image?: CardImagePath;
   /** Actions left this round (`Investigator.actionsRemaining`). */
@@ -616,6 +618,7 @@ function investigatorView(
     horror: investigator.sanity.horror,
     ...(investigator.doomOnPlayerCards > 0 ? { doom: investigator.doomOnPlayerCards } : {}),
     skills: investigator.skills,
+    ...(investigator.skillBoosts === undefined ? {} : { boosts: investigator.skillBoosts }),
     ...(investigator.imageSrc === undefined ? {} : { image: investigator.imageSrc }),
     actions: investigator.actionsRemaining,
     ...(state.meta.turnsTaken.includes(investigator.id) ? { turnTaken: true as const } : {}),

@@ -113,6 +113,13 @@ export interface Investigator {
    */
   skills: SkillValues;
   /**
+   * Lasting changes to their skills from player cards the app does not model (an ally's +1
+   * combat), as the players set them (`ManualAdjust` of kind `skillBoost`): signed, kept until they
+   * change them, and added to the printed value in every skill test (`skillTestSuggestion`). A
+   * skill without a boost is left out.
+   */
+  skillBoosts?: Partial<SkillValues>;
+  /**
    * The picture of their investigator card (`InvestigatorCard.imageSrc`), copied at setup because
    * the investigator cards are not in the card data a resumed game runs with.
    */
@@ -302,7 +309,8 @@ export type ModifierTarget = 'skill' | 'difficulty';
  * Where one step of a skill test's explanation trace comes from
  * (`ModifierStep`), so the UI can name it: the investigator's printed skill,
  * the test's printed difficulty, a second skill a card adds to the test
- * (`SkillTestInput.addedSkill`), the one modifier the players enter
+ * (`SkillTestInput.addedSkill`), a lasting boost of a tested skill
+ * (`Investigator.skillBoosts`), the one modifier the players enter
  * (`SkillTestInput.modifier`), a revealed chaos token (with the reference
  * card's effect text, if it has one), or the rules that cap the result
  * (auto-fail, nothing below 0).
@@ -311,6 +319,7 @@ export type ModifierSource =
   | { kind: 'baseSkill' }
   | { kind: 'baseDifficulty' }
   | { kind: 'addedSkill'; skill: SkillName }
+  | { kind: 'skillBoost'; skill: SkillName }
   | { kind: 'playerModifier' }
   | { kind: 'chaosToken'; token: ChaosToken; effectKey?: string }
   | { kind: 'autoFail' }
