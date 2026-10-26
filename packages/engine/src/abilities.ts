@@ -38,6 +38,7 @@ import type {
   SkillTestOutcome,
   QueuedStep,
   SkillName,
+  WoundKind,
 } from './state';
 import type { Zone } from './zone';
 
@@ -251,6 +252,7 @@ export type AbilityCommand =
       {
         type:
           | 'AdjustInvestigator'
+          | 'HealInvestigator'
           | 'TakeDamageAndHorror'
           | 'PlaceDoom'
           | 'MoveCard'
@@ -1077,6 +1079,23 @@ export function takeDamageAndHorror(
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
   return { type: 'TakeDamageAndHorror', investigatorId: who, ...amounts };
+}
+
+/** "Heal N damage" or "heal N horror" (St. Mary's Hospital, Arkham Asylum): as much as there is. */
+export function heal(
+  stat: WoundKind,
+  amount: number,
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'HealInvestigator', investigatorId: who, stat, amount };
+}
+
+/** "Gain N resources" (First Bank of Arkham). */
+export function gainResources(
+  amount: number,
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'AdjustInvestigator', investigatorId: who, stat: 'resources', delta: amount };
 }
 
 /** "Take N horror", like `takeDamage`: Goat Spawn is `whenDefeated(takeHorror(1, eachInvestigatorAt(itsLocation())))`. */

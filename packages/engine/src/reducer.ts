@@ -62,6 +62,17 @@ export function apply(state: GameState, event: Event): GameState {
       return applyCardMoved(state, event);
     case 'SurgeGained':
       return updateCard(state, event.cardId, (card) => ({ ...card, gainedSurge: true }));
+    case 'CardActionUsed': {
+      const use = {
+        action: event.action,
+        investigatorId: event.investigatorId,
+        round: state.meta.round,
+      };
+      return updateCard(state, event.cardId, (card) => ({
+        ...card,
+        actionUses: [...(card.actionUses ?? []), use],
+      }));
+    }
     case 'TokensChanged':
       return applyTokensChanged(state, event);
     case 'CardFlipped':
