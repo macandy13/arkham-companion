@@ -1,5 +1,10 @@
 import {
+  atLocation,
   CommandRejected,
+  encounterDiscard,
+  engagedWith,
+  setAside,
+  threatAreaOf,
   optionNamed,
   type Decision,
   type GameState,
@@ -10,7 +15,9 @@ import {
   type ResolveDecision,
   type SkillName,
   type TokenKind,
+  type Zone,
 } from '@arkham/engine';
+import type { CardMove } from '../encounter/cardMoves';
 import { assertNever } from '@arkham/util';
 
 /** The tokens on a location that its menu's +/− steppers change. */
@@ -120,6 +127,12 @@ export interface GameActions {
    * investigator may be told to draw.
    */
   drawEncounter(investigator: InvestigatorId): Promise<void>;
+  /**
+   * Puts the encounter card `card` where `move` says, a correction by hand (`ManualAdjust`) for a
+   * revelation the engine left to the players: onto the discard pile, set aside, into a threat area,
+   * or at a location, engaged with an investigator there when `move` names one.
+   */
+  moveEncounterCard(card: InstanceId, move: CardMove): Promise<void>;
   /** Doom on the current agenda. */
   placeDoom(amount: number): Promise<void>;
   /** Doom taken off the current agenda by hand (a card effect, a miscount). */
@@ -244,6 +257,13 @@ export function gameActions(
         }),
       ),
     drawEncounter: (investigator) => play((table) => table.drawEncounterCard(investigator)),
+    moveEncounterCard: (card, move) =>
+      play((table) =>
+        table.play({
+          type: 'ManualAdjust',
+          adjustment: { kind: 'moveCard', cardId: card, ...placeOf(move) },
+        }),
+      ),
     placeDoom: (amount) => play((table) => table.placeDoom(amount)),
     removeDoom: (amount) => play((table) => table.removeDoom(amount)),
     revealLocation: (location) =>
@@ -282,6 +302,27 @@ function adjustStat(
       return table.takeHorror(investigator, delta);
     default:
       return assertNever(stat);
+  }
+}
+
+/** The zone (and, for the discard pile, the top) a `CardMove` puts a card in. */
+function placeOf(move: CardMove): { to: Zone; index?: number } {
+  switch (move.to) {
+    case 'discard':
+      return { to: encounterDiscard, index: 0 };
+    case 'setAside':
+      return { to: setAside };
+    case 'threatArea':
+      return { to: threatAreaOf(move.investigator) };
+    case 'location':
+      return {
+        to:
+          move.engagedWith === undefined
+            ? atLocation(move.location)
+            : engagedWith(move.engagedWith),
+      };
+    default:
+      return assertNever(move);
   }
 }
 

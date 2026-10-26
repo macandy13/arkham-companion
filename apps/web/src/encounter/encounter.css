@@ -63,17 +63,24 @@
 
 /* Resets the home screen's framed list items, which `#app > main ul > li` gives every list. */
 #board dialog[data-dialog='encounter'] li {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
   padding: 0;
   border: none;
   background: none;
 }
 
+/* A card's row: its small picture, its name and its victory points; a tap opens its moves. */
+#board dialog[data-dialog='encounter'] li summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-block: 0;
+  font-family: var(--font-family);
+  list-style: none;
+}
+
 /* The small card: its picture once loaded, the card art pattern before that or without one. */
-#board dialog[data-dialog='encounter'] li > img,
-#board dialog[data-dialog='encounter'] li:not([data-picture])::before {
+#board dialog[data-dialog='encounter'] li summary > img,
+#board dialog[data-dialog='encounter'] li:not([data-picture]) summary::before {
   flex: none;
   box-sizing: border-box;
   height: var(--encounter-list-card-height);
@@ -83,17 +90,17 @@
   object-fit: cover;
 }
 
-#board dialog[data-dialog='encounter'] li:not([data-picture])::before {
+#board dialog[data-dialog='encounter'] li:not([data-picture]) summary::before {
   content: '';
   background: var(--card-art-pattern), var(--color-surface);
 }
 
-#board dialog[data-dialog='encounter'] li:not([data-picture]) > img {
+#board dialog[data-dialog='encounter'] li:not([data-picture]) summary > img {
   position: absolute;
   visibility: hidden;
 }
 
-#board dialog[data-dialog='encounter'] li > data {
+#board dialog[data-dialog='encounter'] li summary > data {
   margin-inline-start: auto;
   color: var(--color-text-muted);
   font-size: var(--font-size-note);
@@ -149,4 +156,14 @@
   font-size: var(--font-size-note);
   font-weight: bold;
   text-transform: uppercase;
+}
+
+/* The places a card can be put (CardMoves): a wrapping row of buttons under its row. */
+#board :is(dialog[data-dialog='encounter'], #notices) menu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: var(--space-1) 0 0;
+  padding: 0;
+  list-style: none;
 }

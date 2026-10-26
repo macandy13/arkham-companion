@@ -3,13 +3,16 @@ import {
   blankEnemy,
   blankLocation,
   blankTreachery,
+  cardName,
   engagedWith,
   fixed,
   instanceId,
   investigatorId,
   newGame,
   PlayTable,
+  type CardPlaceView,
 } from '@arkham/engine';
+import type { CardMove } from '../encounter/cardMoves';
 import { gameActions, type ActionCost, type GameActions } from './gameActions';
 
 const study = instanceId('study');
@@ -92,6 +95,37 @@ describe('gameActions', () => {
 
     expect(table.board.encounter.discard.map(({ name }) => name)).toEqual(['top_card']);
     expect(table.board.encounter.deckCount).toBe(1);
+  });
+
+  it.each<{ move: CardMove; place: CardPlaceView }>([
+    { move: { to: 'discard' }, place: { kind: 'encounterDiscard' } },
+    { move: { to: 'setAside' }, place: { kind: 'setAside' } },
+    {
+      move: { to: 'threatArea', investigator: brook },
+      place: { kind: 'threatArea', investigator: brook },
+    },
+    {
+      move: { to: 'location', location: hall },
+      place: { kind: 'atLocation', location: cardName('hall') },
+    },
+    {
+      move: { to: 'location', location: study, engagedWith: alder },
+      place: { kind: 'engaged', investigator: alder },
+    },
+  ])('puts an encounter card by hand: $move.to', async ({ move, place }) => {
+    const card = instanceId('drawn');
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withInvestigator(alder, { locationId: study })
+        .withInvestigator(brook, { locationId: study })
+        .withCard(card, blankEnemy('drawn'), { kind: 'encounterDeck' }),
+    );
+
+    await actionsOn(table).moveEncounterCard(card, move);
+
+    expect(table.board.placeOf(card)).toEqual(place);
   });
 
   it('takes a clue from the study without a test', async () => {
