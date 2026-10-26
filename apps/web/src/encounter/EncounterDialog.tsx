@@ -17,7 +17,8 @@ export type EncounterPile = 'deck' | 'discard';
  * from the discard pile (`start`), its list starts open. The lists are read-only for now; a tap on
  * a card opens its zoom once cards have one (M3.7). A draw closes the dialog, so the card resolves
  * in front of the players (its decisions in the decision dialog); nothing is drawn while a step is
- * queued (`busy`) or when deck and discard pile are both empty. A native modal `<dialog>` brings
+ * queued (`busy`), while the players adjust the board (`adjusting`, since a draw is play, not a
+ * correction) or when deck and discard pile are both empty. A native modal `<dialog>` brings
  * focus trapping and Escape.
  */
 export function EncounterDialog({
@@ -25,12 +26,14 @@ export function EncounterDialog({
   start,
   actions,
   busy,
+  adjusting,
   onClose,
 }: {
   board: BoardView;
   start: EncounterPile;
   actions: GameActions;
   busy: boolean;
+  adjusting: boolean;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -56,7 +59,7 @@ export function EncounterDialog({
           <button
             key={investigator.id}
             type="button"
-            disabled={busy || empty}
+            disabled={busy || adjusting || empty}
             onClick={() => {
               onClose();
               void actions.drawEncounter(investigator.id);

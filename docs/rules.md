@@ -91,7 +91,7 @@ The game rules the engine implements, summarised in our own words so sessions do
 
 ## Encounter draws
 
-[Mythos step 1.4](https://arkhamdb.com/rules#Mythos_Phase), [encounter deck](https://arkhamdb.com/rules#Encounter_Deck). For each draw:
+[Mythos step 1.4](https://arkhamdb.com/rules#Mythos_Phase), [encounter deck](https://arkhamdb.com/rules#Encounter_Deck). A player card or effect that makes an investigator draw outside the mythos phase follows the same steps. For each draw:
 
 1. Draw the top card. If the deck is empty, shuffle the encounter discard pile back in first.
 2. [Peril](https://arkhamdb.com/rules#Peril): while it resolves, other players can't confer, play cards, trigger abilities or commit cards to that investigator's tests.

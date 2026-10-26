@@ -11,16 +11,18 @@ import './encounter.css';
  * The encounter piles in the header (`BoardView.encounter`): the deck as an upright card back with
  * the cards left on a round token, like the agenda's doom, and its discard pile beside it. Both are
  * buttons that open the encounter dialog (`EncounterDialog`), on the pile tapped, which draws with
- * `actions` unless a step is queued (`busy`).
+ * `actions` unless a step is queued (`busy`) or the players adjust the board (`adjusting`).
  */
 export function EncounterPiles({
   board,
   actions,
   busy,
+  adjusting,
 }: {
   board: BoardView;
   actions: GameActions;
   busy: boolean;
+  adjusting: boolean;
 }) {
   const { t } = useTranslation();
   const [openOn, setOpenOn] = useState<EncounterPile>();
@@ -41,6 +43,7 @@ export function EncounterPiles({
           start={openOn}
           actions={actions}
           busy={busy}
+          adjusting={adjusting}
           onClose={() => setOpenOn(undefined)}
         />
       )}

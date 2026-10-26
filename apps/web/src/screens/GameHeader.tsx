@@ -30,7 +30,7 @@ export function GameHeader({
 
   return (
     <header>
-      <EncounterDeck store={store} board={board} blocked={blocked} />
+      <EncounterDeck store={store} board={board} blocked={blocked} adjusting={adjusting} />
       <AgendaStatus store={store} board={board} blocked={blocked} adjusting={adjusting} />
       <ActStatus store={store} board={board} blocked={blocked} adjusting={adjusting} />
       <ScenarioCard open={open} />
@@ -45,15 +45,22 @@ function EncounterDeck({
   store,
   board,
   blocked,
+  adjusting,
 }: {
   store: StoreApi<AppState>;
   board: BoardView;
   blocked: boolean;
+  adjusting: boolean;
 }) {
   const { t } = useTranslation();
   return (
     <HeaderSlot label={t('header.encounterDeck')}>
-      <EncounterPiles board={board} actions={store.getState().actions} busy={blocked} />
+      <EncounterPiles
+        board={board}
+        actions={store.getState().actions}
+        busy={blocked}
+        adjusting={adjusting}
+      />
     </HeaderSlot>
   );
 }
