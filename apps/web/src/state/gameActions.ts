@@ -60,12 +60,15 @@ export interface GameActions {
   /** Changes the actions left this turn. */
   adjustActions(delta: number): Promise<void>;
   /**
-   * A move to a connected location, as the pawn's drag plays it. It counts off no action: the drag
-   * also catches the screen up with a move made at the table.
+   * A move to a connected location. As an action it counts off one and provokes attacks of
+   * opportunity; free (the default, as the pawn's drag plays it) it does neither, since a card
+   * allows it or the drag catches the screen up with a move made at the table.
    */
-  moveTo(location: InstanceId): Promise<void>;
+  moveTo(location: InstanceId, cost?: ActionCost): Promise<void>;
   /** An investigate action; its test stays open as a decision. */
   investigate(): Promise<void>;
+  /** One clue from `location`, the investigator's own, without a test, as a card grants it. */
+  takeClue(location: InstanceId): Promise<void>;
   /**
    * A fight; its test stays open as a decision. It is an action unless `cost` says `free`, as a
    * card can let an investigator fight without spending one.
@@ -167,9 +170,23 @@ export function gameActions(
       asAction((table, investigator) => table.useCardAction(investigator, card, action)),
     adjustActions: (delta) =>
       onTurn((table, investigator) => table.adjustActions(investigator, delta)),
-    moveTo: (location) => onTurn((table, investigator) => table.moveTo(investigator, location)),
+    moveTo: (location, cost = 'free') =>
+      cost === 'action'
+        ? asAction((table, investigator) => table.moveTo(investigator, location))
+        : onTurn((table, investigator) =>
+            table.play({ type: 'MoveInvestigator', investigatorId: investigator, to: location }),
+          ),
     investigate: () =>
       asAction((table, investigator) => table.investigate(investigator, { result: 'open' })),
+    takeClue: (location) =>
+      onTurn((table, investigator) =>
+        table.play({
+          type: 'DiscoverClues',
+          investigatorId: investigator,
+          locationId: location,
+          amount: 1,
+        }),
+      ),
     fight: (enemy, cost = 'action') =>
       costing(cost)((table, investigator) => table.fight(investigator, enemy, { result: 'open' })),
     evade: (enemy, cost = 'action') =>

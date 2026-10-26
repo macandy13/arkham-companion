@@ -34,7 +34,7 @@ test('take a turn from the investigator panel', async ({ page }) => {
 });
 
 // Journey: resign through the card that offers it, the Parlor's "[action] Resign.", from the turn row.
-test('resign at the Parlor', { tag: '@flow' }, async ({ page }) => {
+test('resign at the Parlor', async ({ page }) => {
   const alder = page.getByRole('region', { name: 'Alder' });
 
   await test.step('Resume a game with Alder in the Parlor on their turn', async () => {

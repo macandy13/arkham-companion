@@ -129,40 +129,74 @@ test('move an enemy on the map', async ({ page }) => {
   });
 });
 
-// Journey: keep the map in step with the table through a location's menu while adjusting the board:
-// reveal a location a card turned over, put doom on it, and place a clue a card adds to the Hallway.
-test('change a location by its menu', async ({ page }) => {
+// Journey: play from a location's details: Alder moves from the Hallway to the Attic as an
+// action, which reveals it, and takes a clue there as a card grants it.
+test('move and take a clue from the location details', { tag: '@flow' }, async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
-  const menu = (name: string) => page.getByRole('dialog', { name });
+  const details = (name: string) => page.getByRole('dialog', { name });
+
+  await test.step('Import a game in which Alder, on their turn, stands in the Hallway', async () => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    await expect(room('Hallway').getByRole('img', { name: 'Alder' })).toBeVisible();
+  });
+
+  await test.step('Tap the Attic and move Alder there as an action', async () => {
+    await room('Attic').click();
+    await expect(details('Attic')).toContainText('Unrevealed');
+    await details('Attic').getByRole('button', { name: 'Move here · 1 action' }).click();
+    await expect(room('Attic').getByRole('img', { name: 'Alder' })).toBeVisible();
+    await expect(room('Attic').getByRole('img', { name: /^Shroud/ })).toBeVisible();
+  });
+
+  await test.step('Tap the Attic again and take one of its clues without a test', async () => {
+    const clues = Number(
+      await room('Attic')
+        .getByRole('img', { name: /^Clues/ })
+        .textContent(),
+    );
+    await room('Attic').click();
+    await expect(details('Attic')).toContainText('Alder');
+    await details('Attic').getByRole('button', { name: 'Take a clue, no test' }).click();
+    await details('Attic').getByRole('button', { name: 'Close' }).click();
+    await expect(room('Attic').getByRole('img', { name: `Clues ${clues - 1}` })).toBeVisible();
+  });
+});
+
+// Journey: keep the map in step with the table through a location's details while adjusting the
+// board: reveal a location a card turned over, put doom on it, and place a clue a card adds to the
+// Hallway.
+test('correct a location from its details', async ({ page }) => {
+  const house = page.getByRole('figure', { name: 'House' });
+  const room = (name: string) => house.getByRole('group', { name });
+  const details = (name: string) => page.getByRole('dialog', { name });
 
   await test.step('Import a game in which Alder, on their turn, stands in the Hallway', async () => {
     await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
     await expect(room('Attic')).toContainText('Unrevealed');
   });
 
-  await test.step('Adjust the board, open the Attic’s menu, reveal it and put a doom on it', async () => {
+  await test.step('Adjust the board, open the Attic’s details, reveal it and put a doom on it', async () => {
     await page.getByRole('button', { name: 'Adjust board' }).click();
-    await room('Attic').getByRole('button', { name: 'Edit Attic' }).click();
-    await menu('Attic').getByRole('button', { name: 'Reveal' }).click();
-    await menu('Attic').getByRole('button', { name: 'Add doom' }).click();
-    await expect(menu('Attic')).toContainText('Doom 1');
-    await menu('Attic').getByRole('button', { name: 'Close' }).click();
+    await room('Attic').getByRole('button', { name: 'Details of Attic' }).click();
+    await details('Attic').getByRole('button', { name: 'Reveal' }).click();
+    await details('Attic').getByRole('button', { name: 'Add doom' }).click();
+    await expect(details('Attic')).toContainText('Doom 1');
+    await details('Attic').getByRole('button', { name: 'Close' }).click();
     await expect(room('Attic').getByRole('img', { name: /^Shroud/ })).toBeVisible();
     await expect(room('Attic').getByRole('img', { name: 'Doom 1' })).toBeVisible();
   });
 
-  await test.step('Open the Hallway’s menu and add a clue', async () => {
-    await room('Hallway').getByRole('button', { name: 'Edit Hallway' }).click();
-    await menu('Hallway').getByRole('button', { name: 'Add a clue' }).click();
-    await expect(menu('Hallway')).toContainText('Clues 1');
-    await menu('Hallway').getByRole('button', { name: 'Close' }).click();
+  await test.step('Open the Hallway’s details and add a clue', async () => {
+    await room('Hallway').click();
+    await details('Hallway').getByRole('button', { name: 'Add a clue' }).click();
+    await expect(details('Hallway')).toContainText('Clues 1');
+    await details('Hallway').getByRole('button', { name: 'Close' }).click();
     await expect(room('Hallway').getByRole('img', { name: 'Clues 1' })).toBeVisible();
   });
 
   await test.step('Keep the corrections with "Done"', async () => {
     await page.getByRole('button', { name: 'Done' }).click();
-    await expect(room('Hallway').getByRole('button', { name: 'Edit Hallway' })).toBeHidden();
     await expect(room('Hallway').getByRole('img', { name: 'Clues 1' })).toBeVisible();
   });
 });

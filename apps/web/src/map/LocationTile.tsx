@@ -1,4 +1,4 @@
-import { useRef, type KeyboardEvent } from 'react';
+import { useRef, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { EnemyView, InvestigatorView, LocationView, MapEnemyView } from '@arkham/engine';
 import { LOCATION_ART, PORTRAIT_SCAN, portraitArtViewBox } from '../catalog/cardArt';
@@ -20,6 +20,12 @@ import {
 import type { DragHandlers } from './usePieceDrag';
 import { shrinkAround, useShrinkToFit } from './useShrinkToFit';
 
+/**
+ * How far, in CSS pixels, the pointer may move between pressing and letting go for a tap on a
+ * tile; further, it was a pan of the map or a piece dragged, which open nothing.
+ */
+const TAP_SLOP = 8;
+
 /** A piece standing on a tile that the players may drag: an investigator's pawn or an enemy. */
 export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyView };
 
@@ -37,16 +43,17 @@ export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyVi
  * what attachments add) on the left edge where the art ends and the clues on the right, doom
  * under the clues when it has any; then a pawn per investigator there and a round token per enemy
  * at it, in rows along the bottom edge. `enemies` and `investigators` are the open game's pieces
- * at this location; `dragOf` gives the drag handlers of each piece that can be dragged now. Its
- * edit button in the top left corner calls `onEdit`; without `onEdit` (outside adjust mode) the
- * tile has none.
+ * at this location; `dragOf` gives the drag handlers of each piece that can be dragged now. A tap
+ * on the tile, or its details button in the top left corner, calls `onOpen`; a press that moves
+ * further than `TAP_SLOP` (a pan, a piece dragged) is no tap. Without `onOpen` (the card in the
+ * location details) it has neither.
  */
 export function LocationTile({
   location,
   enemies,
   investigators,
   dragOf,
-  onEdit,
+  onOpen,
   x,
   y,
 }: {
@@ -54,12 +61,22 @@ export function LocationTile({
   enemies: readonly MapEnemyView[];
   investigators: readonly InvestigatorView[];
   dragOf: (piece: TilePiece) => DragHandlers | undefined;
-  onEdit?: () => void;
+  onOpen?: () => void;
   x: number;
   y: number;
 }) {
   const { t } = useTranslation();
   const picture = useCardPicture(location.image);
+  const pressedAt = useRef<Point>(undefined);
+  const onPointerDown = (event: PointerEvent<SVGGElement>) => {
+    pressedAt.current = { x: event.clientX, y: event.clientY };
+  };
+  const onClick = (event: MouseEvent<SVGGElement>) => {
+    const from = pressedAt.current;
+    pressedAt.current = undefined;
+    if (from && Math.hypot(event.clientX - from.x, event.clientY - from.y) > TAP_SLOP) return;
+    onOpen?.();
+  };
 
   return (
     <g
@@ -69,6 +86,8 @@ export function LocationTile({
       data-side={location.revealed ? 'revealed' : 'unrevealed'}
       data-picture={picture?.shown ? 'shown' : undefined}
       transform={`translate(${x} ${y})`}
+      onPointerDown={onOpen && onPointerDown}
+      onClick={onOpen && onClick}
     >
       <rect width={TILE.width} height={TILE.height} />
       <rect {...ART_WINDOW} />
@@ -99,7 +118,7 @@ export function LocationTile({
       )}
       <LocationOrnament />
       <NameBand location={location} />
-      {onEdit && <EditButton location={location} onEdit={onEdit} />}
+      {onOpen && <DetailsButton location={location} onOpen={onOpen} />}
       {location.attachments?.map((name, i) => (
         <Attachment key={`${name}-${i}`} name={name} origin={attachmentOrigin(i)} />
       ))}
@@ -210,7 +229,7 @@ export function CardPatterns() {
 
 /**
  * The tile's name and type: the location's name on the name plate, centred like the printed name
- * and shrunk to fit `NAME_WIDTH` when it is long, so it never reaches the edit button, and on the
+ * and shrunk to fit `NAME_WIDTH` when it is long, so it never reaches the details button, and on the
  * type plate "Location", or on an unrevealed tile "Unrevealed", since that side shows
  * no shroud or clues.
  */
@@ -272,11 +291,13 @@ function Attachment({ name, origin: { x, y } }: { name: string; origin: Point })
 }
 
 /**
- * The tile's edit button, a round button with a pencil in its top left corner, where the printed
- * card shows its connection icon, named after the location. It is an SVG group rather than an HTML button, since it sits inside the drawing, so it
- * takes the keyboard (Enter, Space) itself.
+ * The tile's details button, a round button with an "i" in its top left corner, where the printed
+ * card shows its connection icon, named after the location. It is the keyboard's way to the
+ * details, which a tap on the tile also opens. It is an SVG group rather than an HTML button,
+ * since it sits inside the drawing, so it takes the keyboard (Enter, Space) itself; its click is
+ * the tile's, which opens the details.
  */
-function EditButton({ location, onEdit }: { location: LocationView; onEdit: () => void }) {
+function DetailsButton({ location, onOpen }: { location: LocationView; onOpen: () => void }) {
   const { t } = useTranslation();
   const radius = CONTENT.pawnRadius;
   const x = radius;
@@ -284,19 +305,18 @@ function EditButton({ location, onEdit }: { location: LocationView; onEdit: () =
   const onKeyDown = (event: KeyboardEvent<SVGGElement>) => {
     if (event.key !== 'Enter' && event.key !== ' ') return;
     event.preventDefault();
-    onEdit();
+    onOpen();
   };
   return (
     <g
       role="button"
       tabIndex={0}
-      aria-label={t('map.edit', { location: location.name })}
-      onClick={onEdit}
+      aria-label={t('map.details', { location: location.name })}
       onKeyDown={onKeyDown}
     >
       <circle cx={x} cy={y} r={radius} />
       <text x={x} y={y}>
-        ✎
+        i
       </text>
     </g>
   );

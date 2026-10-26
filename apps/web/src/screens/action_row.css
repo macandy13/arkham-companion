@@ -1,0 +1,128 @@
+/*
+ * The action row of the details windows (ActionRow: the enemy's and the location's): their
+ * `footer`, the groups side by side, each its small title over its buttons; a group too wide for
+ * a narrow screen moves to a second line. The buttons that count off an action carry the game's
+ * action arrow.
+ */
+#board :is(dialog[data-dialog='enemy'], dialog[data-dialog='location']) > footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  justify-content: center;
+  align-self: stretch;
+  padding-top: var(--space-2);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+/* A group's title over its buttons, the buttons side by side so the whole row stays one line. */
+#board :is(dialog[data-dialog='enemy'], dialog[data-dialog='location']) > footer > section {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: auto auto;
+  gap: var(--space-1);
+  justify-content: center;
+}
+
+#board
+  :is(dialog[data-dialog='enemy'], dialog[data-dialog='location'])
+  > footer
+  > section
+  + section {
+  padding-left: var(--space-1);
+  border-left: var(--border-width) solid var(--color-border);
+}
+
+#board :is(dialog[data-dialog='enemy'], dialog[data-dialog='location']) > footer h3 {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: var(--font-size-caption);
+  font-weight: normal;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+#board
+  :is(dialog[data-dialog='enemy'], dialog[data-dialog='location'])
+  > footer
+  > section
+  > button {
+  grid-row: 2;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  align-items: center;
+  padding: var(--space-1);
+  font-size: var(--font-size-caption);
+  white-space: nowrap;
+}
+
+#board
+  :is(dialog[data-dialog='enemy'], dialog[data-dialog='location'])
+  > footer
+  button[data-icon='fight']::before {
+  mask-image: url('../symbols/combat.svg');
+}
+
+#board
+  :is(dialog[data-dialog='enemy'], dialog[data-dialog='location'])
+  > footer
+  button[data-icon='evade']::before {
+  mask-image: url('../symbols/agility.svg');
+}
+
+#board
+  :is(dialog[data-dialog='enemy'], dialog[data-dialog='location'])
+  > footer
+  button[data-icon='damage']::before {
+  mask-image: url('../enemies/icons/damage.svg');
+}
+
+#board
+  :is(dialog[data-dialog='enemy'], dialog[data-dialog='location'])
+  > footer
+  button[data-icon='disengage']::before {
+  mask-image: url('../enemies/icons/disengage.svg');
+}
+
+#board
+  :is(dialog[data-dialog='enemy'], dialog[data-dialog='location'])
+  > footer
+  button[data-icon='defeat']::before {
+  mask-image: url('../enemies/icons/defeat.svg');
+}
+
+#board
+  :is(dialog[data-dialog='enemy'], dialog[data-dialog='location'])
+  > footer
+  button[data-icon='investigate']::before {
+  mask-image: url('../investigators/icons/investigate.svg');
+}
+
+#board
+  :is(dialog[data-dialog='enemy'], dialog[data-dialog='location'])
+  > footer
+  button[data-icon='move']::before {
+  mask-image: url('./icons/move.svg');
+}
+
+#board
+  :is(dialog[data-dialog='enemy'], dialog[data-dialog='location'])
+  > footer
+  button[data-icon='clue']::before {
+  mask-image: url('../investigators/icons/token.svg');
+}
+
+#board
+  :is(dialog[data-dialog='enemy'], dialog[data-dialog='location'])
+  button[data-cost='action']::after {
+  content: '';
+  position: absolute;
+  top: var(--space-1);
+  right: var(--space-1);
+  width: var(--action-mark-size);
+  height: var(--action-mark-size);
+  background: var(--color-accent);
+  mask: url('../symbols/action.svg') center / contain no-repeat;
+}

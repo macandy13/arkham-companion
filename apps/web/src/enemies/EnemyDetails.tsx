@@ -1,6 +1,7 @@
-import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BoardView, MapEnemyView } from '@arkham/engine';
+import { ActionButton, ActionGroup } from '../screens/ActionRow';
 import type { GameActions } from '../state/gameActions';
 import { EnemyCard } from './EnemyCard';
 import './enemies.css';
@@ -115,50 +116,5 @@ export function EnemyDetails({
         </ActionGroup>
       </footer>
     </dialog>
-  );
-}
-
-/** A titled group of buttons in the enemy details' action row. */
-function ActionGroup({ title, children }: { title: string; children: ReactNode }) {
-  const titleId = useId();
-  return (
-    <section aria-labelledby={titleId}>
-      <h3 id={titleId}>{title}</h3>
-      {children}
-    </section>
-  );
-}
-
-/**
- * A button of the action row: its icon over a short `caption`, named in full by `name` (which
- * contains the caption, so speech input finds it by the word it shows); `cost` marks the ones
- * that count off an action, which the stylesheet marks with the game's action arrow.
- */
-function ActionButton({
-  icon,
-  cost,
-  caption,
-  name,
-  disabled,
-  onClick,
-}: {
-  icon: 'fight' | 'evade' | 'damage' | 'disengage' | 'defeat';
-  cost?: 'action';
-  caption: string;
-  name: string;
-  disabled: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      data-icon={icon}
-      data-cost={cost}
-      aria-label={name}
-      disabled={disabled}
-      onClick={onClick}
-    >
-      {caption}
-    </button>
   );
 }
