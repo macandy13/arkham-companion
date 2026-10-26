@@ -922,6 +922,12 @@ export interface UseCardAction extends ActionCommand {
   investigatorId: InvestigatorId;
   cardId: InstanceId;
   action: number;
+  /**
+   * Who pays an action's group clue cost, and how many (`ActionCost` `groupClues`); omitted, the
+   * investigator taking it pays what they can and the others the rest, in seat order. Rejected
+   * for an action without a group cost (`noGroupCost`).
+   */
+  spend?: ClueSpend[];
 }
 
 /**

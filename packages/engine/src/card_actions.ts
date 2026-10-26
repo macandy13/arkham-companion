@@ -1,11 +1,18 @@
+import { assertNever } from '@arkham/util';
 import type { AbilityEffect, AbilityStep } from './abilities';
 import { isLocationInPlay } from './board';
-import { cardStats, type EngineContext } from './cards';
-import type { UseCardAction } from './commands';
+import { cardStats, resolveValue, type EngineContext, type ScaledValue } from './cards';
+import type { ClueSpend, UseCardAction } from './commands';
 import { locationOf } from './enemies';
 import type { CardActionUsed, InvestigatorChanged } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
-import { activeInvestigator, statValue } from './investigators';
+import {
+  activeInvestigator,
+  activeInvestigators,
+  defaultCluePayments,
+  groupCluePayments,
+  statValue,
+} from './investigators';
 import { currentCard, requireCard } from './lookup';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState, Investigator } from './state';
@@ -41,17 +48,78 @@ export interface ActionLimit {
 }
 
 /**
- * What the investigator who takes an action pays before its effects resolve ("Spend 5 resources:",
- * "Spend 2 clues:"). An action they can't pay for can't be taken (Rules Reference, "Costs").
+ * What is paid before an action's effects resolve (Rules Reference, "Costs"); an action that
+ * can't be paid for can't be taken. The investigator who takes it pays "Spend 5 resources:" or
+ * "Spend 2 clues:" (`resources`, `clues`); the investigators pay "Spend 2 [per investigator]
+ * clues, as a group:" (`groupClues`) together, at any location, choosing who pays how many.
  */
-export interface ActionCost {
-  readonly spend: 'resources' | 'clues';
-  readonly amount: number;
+export type ActionCost =
+  | { readonly spend: 'resources' | 'clues'; readonly amount: number }
+  | { readonly spend: 'groupClues'; readonly amount: ScaledValue };
+
+/**
+ * Whether `cost` can be paid for `investigator`'s action: they hold the resources or clues, or
+ * for a group cost the active investigators hold the clues together. No cost is always paid.
+ */
+export function canPay(
+  state: GameState,
+  investigator: Investigator,
+  cost: ActionCost | undefined,
+): boolean {
+  if (cost === undefined) return true;
+  switch (cost.spend) {
+    case 'resources':
+    case 'clues':
+      return statValue(investigator, cost.spend) >= cost.amount;
+    case 'groupClues': {
+      const held = activeInvestigators(state).reduce((sum, inv) => sum + inv.clues, 0);
+      return held >= groupClueAmount(state, cost.amount);
+    }
+    default:
+      return assertNever(cost);
+  }
 }
 
-/** Whether `investigator` holds what `cost` asks; no cost is always paid. */
-export function canPay(investigator: Investigator, cost: ActionCost | undefined): boolean {
-  return cost === undefined || statValue(investigator, cost.spend) >= cost.amount;
+/** The clues a group cost asks for the starting player count ("2 [per investigator]"). */
+function groupClueAmount(state: GameState, amount: ScaledValue): number {
+  return resolveValue(amount, state.meta.playerCount);
+}
+
+/**
+ * The events that pay `cost` for `investigator`'s action: their own resources or clues, or a
+ * group payment by `spend` (default: `defaultCluePayments`). `spend` is for group costs only.
+ */
+function costPayment(
+  state: GameState,
+  investigator: Investigator,
+  cost: ActionCost | undefined,
+  spend: readonly ClueSpend[] | undefined,
+): InvestigatorChanged[] {
+  if (spend !== undefined && cost?.spend !== 'groupClues')
+    throw new CommandRejected({ code: 'noGroupCost' });
+  if (cost === undefined) return [];
+  switch (cost.spend) {
+    case 'resources':
+    case 'clues':
+      return [
+        {
+          type: 'InvestigatorChanged',
+          investigatorId: investigator.id,
+          stat: cost.spend,
+          delta: -cost.amount,
+        },
+      ];
+    case 'groupClues': {
+      const required = groupClueAmount(state, cost.amount);
+      return groupCluePayments(
+        state,
+        spend ?? defaultCluePayments(state, investigator.id, required),
+        required,
+      );
+    }
+    default:
+      return assertNever(cost);
+  }
 }
 
 /**
@@ -121,7 +189,7 @@ export function cardActionsOfferedTo(
     const actions = cardStats(ctx.cards, card.code).actions ?? [];
     if (actions.length === 0 || !offersActionsTo(state, card, investigator)) return [];
     return actions.flatMap(({ designator, limit, cost }, action) =>
-      withinLimit(state, card, action, limit, investigator.id) && canPay(investigator, cost)
+      withinLimit(state, card, action, limit, investigator.id) && canPay(state, investigator, cost)
         ? [{ cardId: card.id, action, ...(designator === undefined ? {} : { designator }) }]
         : [],
     );
@@ -162,7 +230,8 @@ export function cardActionOf(ctx: EngineContext, state: GameState, cmd: UseCardA
  * `UseCardAction`: checks that the investigator may take the action now, in their own turn,
  * where the card offers it (`offersActionsTo`, else `cardActionUnavailable`) and as its limit
  * allows (`withinLimit`, else `cardActionLimitReached`), and that they can pay its cost (`canPay`,
- * else `cardActionCostUnpaid`); records the use (`CardActionUsed`) and pays the cost.
+ * else `cardActionCostUnpaid`); records the use (`CardActionUsed`) and pays the cost
+ * (`costPayment`).
  * Its effects follow as ability steps (`cardActionSteps`).
  */
 export function handleUseCardAction(
@@ -187,7 +256,7 @@ export function handleUseCardAction(
       action: cmd.action,
       investigatorId: investigator.id,
     });
-  if (!canPay(investigator, cost))
+  if (!canPay(state, investigator, cost))
     throw new CommandRejected({
       code: 'cardActionCostUnpaid',
       cardId: cmd.cardId,
@@ -200,16 +269,7 @@ export function handleUseCardAction(
     action: cmd.action,
     investigatorId: investigator.id,
   };
-  if (cost === undefined) return [used];
-  return [
-    used,
-    {
-      type: 'InvestigatorChanged',
-      investigatorId: investigator.id,
-      stat: cost.spend,
-      delta: -cost.amount,
-    },
-  ];
+  return [used, ...costPayment(state, investigator, cost, cmd.spend)];
 }
 
 /** The effects of the action `cmd` takes, as steps in its `action` window. */
