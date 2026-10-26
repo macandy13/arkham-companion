@@ -1,11 +1,19 @@
 <!-- screencasts:start -->
 
-_Recorded from 18dea04 by the PR preview workflow; updated on every push that changes `apps/web`._
+_Recorded from 707fb42 by the PR preview workflow; updated on every push that changes `apps/web`._
 
 ## Screenshots
 
-### the Ghoul Priest's details opened from its card on Alder's turn
+### the Hallway’s details, its card with Alder on it, on Alder’s turn
 
-![the Ghoul Priest's details opened from its card on Alder's turn](https://macandy13.github.io/arkham-companion/pr-preview/pr-436/screencasts/the-ghoul-priest-s-details-opened-from-its-card-on-alder-s-turn.png?v=18dea04)
+![the Hallway’s details, its card with Alder on it, on Alder’s turn](https://macandy13.github.io/arkham-companion/pr-preview/pr-436/screencasts/the-hallway-s-details-its-card-with-alder-on-it-on-alder-s-turn.png?v=707fb42)
+
+## Screencasts
+
+### move and take a clue from the location details
+
+![move and take a clue from the location details](https://macandy13.github.io/arkham-companion/pr-preview/pr-436/screencasts/move-and-take-a-clue-from-the-location-details.gif?v=707fb42)
+
+[Play with pause and speed controls](https://macandy13.github.io/arkham-companion/pr-preview/pr-436/screencasts/player.html?flow=move-and-take-a-clue-from-the-location-details&v=707fb42&speed=0.25)
 
 <!-- screencasts:end -->
