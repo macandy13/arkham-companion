@@ -1,4 +1,5 @@
 import { expect, test } from './fixtures/test';
+import { inTheParlorExport, resumeImportedGame } from './fixtures/saved_games';
 import { startQuickGame } from './fixtures/wizard';
 
 // Journey: take an investigator's turn from their panel – start it, see their actions, investigate, and end it,
@@ -29,5 +30,20 @@ test('take a turn from the investigator panel', async ({ page }) => {
   await test.step('End the turn', async () => {
     await bar.getByRole('button', { name: 'End turn' }).click();
     await expect(bar.getByText(/^Turn taken · /)).toBeVisible();
+  });
+});
+
+// Journey: resign through the card that offers it, the Parlor's "[action] Resign.", from the turn row.
+test('resign at the Parlor', { tag: '@flow' }, async ({ page }) => {
+  const alder = page.getByRole('region', { name: 'Alder' });
+
+  await test.step('Resume a game with Alder in the Parlor on their turn', async () => {
+    await resumeImportedGame(page, 'In the Parlor', inTheParlorExport('In the Parlor'));
+    await expect(alder.getByText(/^Turn · Parlor/)).toBeVisible();
+  });
+
+  await test.step('Resign', async () => {
+    await alder.getByRole('button', { name: 'Resign · Parlor' }).click();
+    await expect(alder.getByText('Resigned')).toBeVisible();
   });
 });

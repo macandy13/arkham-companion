@@ -26,9 +26,11 @@ import {
   mapId,
   newGame,
   perInvestigator,
+  resignAction,
   TableError,
   threatAreaOf,
   trait,
+  type CardAction,
 } from './index';
 import { stateAfter } from '../test/utils';
 
@@ -877,6 +879,28 @@ describe('a decision with one adjustable amount', () => {
     expect(boardView(context, asked).decisions[0]?.counts).toEqual({
       discover: { amount: { default: 2, min: 0, max: 3 } },
     });
+  });
+});
+
+describe('card actions', () => {
+  it('lists the actions the cards offer the investigator, with the card and designator', () => {
+    const parley: CardAction = { designator: 'parley', effects: [] };
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study', { actions: [resignAction()] }), {
+        revealed: true,
+      })
+      .withLocation(hallway, blankLocation('hallway', { actions: [resignAction()] }), {
+        revealed: true,
+      })
+      .withInvestigator(alice, { locationId: study })
+      .withAgenda(instanceId('agenda'), blankAgenda('agenda', null, { actions: [parley, parley] }))
+      .start();
+
+    expect(boardView(context, state).cardActions(alice)).toEqual([
+      { cardId: study, card: 'study', action: 0, designator: 'resign' },
+      { cardId: instanceId('agenda'), card: 'agenda', action: 0, designator: 'parley' },
+      { cardId: instanceId('agenda'), card: 'agenda', action: 1, designator: 'parley' },
+    ]);
   });
 });
 

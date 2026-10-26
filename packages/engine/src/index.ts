@@ -50,6 +50,7 @@ export {
   TableError,
   type ActView,
   type AgendaView,
+  type CardActionView,
   type DecisionCounts,
   type DecisionView,
   type DueAttackView,
