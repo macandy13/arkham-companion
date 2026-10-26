@@ -51,6 +51,9 @@ const hallAndCellars = newGame()
   .withConnection(hall, cellarSouth);
 const hallWithAlice = hallAndCellars.withInvestigator(alice, { locationId: hall });
 const hallWithAliceAndBob = hallWithAlice.withInvestigator(bob, { locationId: hall });
+const aliceInHallWithTwoClues = newGame()
+  .withLocation(hall, blankLocation('hall'), { clues: 2 })
+  .withInvestigator(alice, { locationId: hall });
 
 const setAside: Zone = { kind: 'setAside' };
 
@@ -308,11 +311,7 @@ describe('counts the answer confirms', () => {
 });
 
 describe('skill test result', () => {
-  /** Alice in the hall, which holds 2 clues. */
-  const { context, state: aliceInHall } = newGame()
-    .withLocation(hall, blankLocation('hall'), { clues: 2 })
-    .withInvestigator(alice, { locationId: hall })
-    .start();
+  const { context, state: aliceInHall } = aliceInHallWithTwoClues.start();
   const test = { skill: 'intellect', difficulty: 3 } as const;
   const decision = skillTestDecision(
     {
@@ -348,11 +347,7 @@ describe('skill test result', () => {
 });
 
 describe('skill test outcome record', () => {
-  /** Alice in the hall, which holds 2 clues. */
-  const { context, state: aliceInHall } = newGame()
-    .withLocation(hall, blankLocation('hall'), { clues: 2 })
-    .withInvestigator(alice, { locationId: hall })
-    .start();
+  const { context, state: aliceInHall } = aliceInHallWithTwoClues.start();
   const test = { skill: 'intellect', difficulty: 3 } as const;
   const decision = skillTestDecision(
     {
