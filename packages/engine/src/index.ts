@@ -152,6 +152,8 @@ export {
   takeHorror,
   heal,
   gainResources,
+  drawCards,
+  searchDeck,
   spendClues,
   moveTo,
   eachInvestigatorAt,

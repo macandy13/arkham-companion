@@ -178,6 +178,101 @@ describe('The Midnight Masks card abilities', () => {
     });
   });
 
+  describe.each([
+    {
+      code: '01124',
+      name: 'Your House',
+      deferred: { type: 'DrawCards', investigatorId: alice, amount: 1 },
+      resources: 6,
+    },
+    {
+      code: '01126',
+      name: 'Southside (Historical Society)',
+      deferred: { type: 'DrawCards', investigatorId: alice, amount: 3 },
+      resources: 5,
+    },
+    {
+      code: '01127',
+      name: "Southside (Ma's Boarding House)",
+      deferred: { type: 'SearchDeck', investigatorId: alice, traits: ['Ally'] },
+      resources: 5,
+    },
+    {
+      code: '01129',
+      name: 'Miskatonic University',
+      deferred: { type: 'SearchDeck', investigatorId: alice, traits: ['Tome', 'Spell'], top: 6 },
+      resources: 5,
+    },
+  ])('$name: $deferred.type, $resources resources after', ({ code, deferred, resources }) => {
+    const location = instanceId('location');
+    /** Alice there on her turn, with 5 resources. */
+    const aliceThere = newGame()
+      .withLocation(location, cardOf(code), { revealed: true })
+      .withInvestigator(alice, { locationId: location, resources: 5 })
+      .withTurnOf(alice);
+    const useIt: Command = {
+      type: 'UseCardAction',
+      investigatorId: alice,
+      cardId: location,
+      action: 0,
+      asAction: true,
+    };
+
+    it('leaves the step on her deck to alice', () => {
+      const { context, state: started } = aliceThere.start();
+
+      const { events, state } = execute(context, started, useIt);
+
+      expect(events).toContainEqual({ type: 'CommandDeferred', command: deferred });
+      expect(requireInvestigator(state, alice)).toMatchObject({ resources });
+    });
+  });
+
+  it.each([
+    { code: '01124', name: 'Your House', limit: 'once per turn' },
+    { code: '01126', name: 'Southside (Historical Society)', limit: 'once per game' },
+    { code: '01127', name: "Southside (Ma's Boarding House)", limit: 'once per game' },
+  ])('$name rejects a second use in the same turn ($limit)', ({ code }) => {
+    const location = instanceId('location');
+    const { context, state: started } = newGame()
+      .withLocation(location, cardOf(code), { revealed: true })
+      .withInvestigator(alice, { locationId: location })
+      .withTurnOf(alice)
+      .start();
+    const useIt: Command = {
+      type: 'UseCardAction',
+      investigatorId: alice,
+      cardId: location,
+      action: 0,
+      asAction: true,
+    };
+
+    const state = stateAfter(context, started, useIt);
+
+    expect(rejectionFrom(context, state, useIt)).toMatchObject({ code: 'cardActionLimitReached' });
+  });
+
+  it('lets alice search at Miskatonic University twice in a turn: it has no limit', () => {
+    const university = instanceId('miskatonic_university');
+    const { context, state: started } = newGame()
+      .withLocation(university, cardOf('01129'), { revealed: true })
+      .withInvestigator(alice, { locationId: university })
+      .withTurnOf(alice)
+      .start();
+    const searchThere: Command = {
+      type: 'UseCardAction',
+      investigatorId: alice,
+      cardId: university,
+      action: 0,
+      asAction: true,
+    };
+    const searchedOnce = stateAfter(context, started, searchThere);
+
+    const { events } = execute(context, searchedOnce, searchThere);
+
+    expect(events).toContainEqual(expect.objectContaining({ type: 'CommandDeferred' }));
+  });
+
   describe('Hunting Shadow', () => {
     const shadow = instanceId('hunting_shadow');
 
