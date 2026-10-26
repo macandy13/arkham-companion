@@ -1,5 +1,6 @@
 import { listIfAny } from '@arkham/util';
 import { isConnectionOpen, neighbours } from './board';
+import { cardActionsOfferedTo, type OfferedCardAction } from './card_actions';
 import { effectiveValue } from './card_values';
 import { cardStats, resolveValue, type EngineContext, type Trait } from './cards';
 import { optionName } from './describe_decision';
@@ -188,6 +189,15 @@ export interface EnemyStatsView {
 }
 
 /**
+ * One card action the investigator may take in their turn (`BoardView.cardActions`): the card by
+ * id and printed name, the index `UseCardAction.action` takes, and its designator, which names the
+ * action when it has one (Resign, Parley).
+ */
+export interface CardActionView extends OfferedCardAction {
+  readonly card: CardName;
+}
+
+/**
  * An enemy on a map (`MapView.enemies`) or in a threat area (`BoardView.enemiesEngagedWith`): its
  * `EnemyView` with its instance id, since those are where the players act on an enemy (drag it to
  * move or engage it, fight or evade it), and copies share a name.
@@ -322,6 +332,19 @@ export class BoardView {
     return enemiesInPlay(this.ctx, this.state)
       .map((enemy) => mapEnemyView(this.ctx, this.state, enemy))
       .filter(({ engagedWith }) => engagedWith === investigator);
+  }
+
+  /**
+   * The card actions the cards in play offer `investigator` (`cardActionsOfferedTo`): a revealed
+   * location's where they are, an enemy's at their location, a threat area's at its owner's
+   * location, and the current agenda's and act's. They take one in their turn.
+   */
+  cardActions(investigator: InvestigatorId): readonly CardActionView[] {
+    const inv = requireInvestigator(this.state, investigator);
+    return cardActionsOfferedTo(this.ctx, this.state, inv).map((offered) => ({
+      ...offered,
+      card: nameOf(this.ctx, requireCard(this.state, offered.cardId)),
+    }));
   }
 
   /** Locations on a map, in map order. */

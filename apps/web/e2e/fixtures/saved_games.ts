@@ -133,6 +133,19 @@ export function investigationOpenExport(title: string): Buffer {
 }
 
 /**
+ * Like `houseOpenedExport`, but the Parlor is revealed, by hand to keep the script short (act 2
+ * reveals it), and Alder spends their last action moving into it, so their turn row offers the
+ * Parlor's Resign.
+ */
+export function inTheParlorExport(title: string): Buffer {
+  const table = houseOpened(theGathering);
+  const parlor = cardIn(table, GATHERING_CODES.parlor);
+  table.play({ type: 'RevealLocation', locationId: parlor });
+  table.moveTo(alderId, parlor);
+  return exportOf(title, table, 'in_the_parlor');
+}
+
+/**
  * Like `houseOpenedExport`, but the Ghoul Priest, set aside at setup, has spawned in the Cellar,
  * given by hand to keep the script short, so a spec has an enemy to drag around the house.
  */

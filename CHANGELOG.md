@@ -2,6 +2,15 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.9](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.8...arkham-companion-v0.1.9) (2026-10-26)
+
+
+### Features
+
+* **engine:** card actions, and Resign on the cards that print it (M4.5 step 8a) ([f681f8a](https://github.com/macandy13/arkham-companion/commit/f681f8ad4eb68505caa039f93838b19822923c20))
+* **web:** card action buttons in the turn row (M4.5 step 8b) ([f6fa706](https://github.com/macandy13/arkham-companion/commit/f6fa706361fd6ebb9407d9031c97433edeb8ae38))
+* **web:** card action buttons in the turn row (M4.5 step 8b) ([e7f1281](https://github.com/macandy13/arkham-companion/commit/e7f1281d1ec0e565a675b50f603c63c02dd8d857))
+
 ## [0.1.8](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.7...arkham-companion-v0.1.8) (2026-10-26)
 
 

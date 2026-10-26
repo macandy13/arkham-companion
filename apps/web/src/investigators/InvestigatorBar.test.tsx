@@ -459,6 +459,46 @@ describe('InvestigatorBar', () => {
       },
     );
 
+    it('"Resign · study" takes the study`s Resign for the investigator whose turn it is', async () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study', { actions: [resignAction()] }), {
+            revealed: true,
+          })
+          .withInvestigator(alder, { locationId: study })
+          .withInvestigator(brook, { locationId: study })
+          .withTurnOf(alder),
+      );
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      fireEvent.click(within(panel('alder')).getByRole('button', { name: 'Resign · study' }));
+
+      await expect
+        .poll(() => table.board.investigator(alder))
+        .toMatchObject({ status: 'resigned' });
+    });
+
+    it('offers no card action where no card has one', () => {
+      const table = PlayTable.start(twoAtStudy.withTurnOf(alder));
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      expect(within(panel('alder')).queryByRole('button', { name: / · study$/ })).toBeNull();
+    });
+
     it('"Investigate" leaves the test of the investigation to the decision dialog', async () => {
       const table = PlayTable.start(twoAtStudy.withTurnOf(alder));
       render(

@@ -1,22 +1,26 @@
 import { useTranslation } from 'react-i18next';
-import { BASE_ACTIONS_PER_TURN, type InvestigatorView } from '@arkham/engine';
+import { BASE_ACTIONS_PER_TURN, type BoardView, type InvestigatorView } from '@arkham/engine';
 import { range } from '@arkham/util';
 import type { GameActions } from '../state/gameActions';
 
 /**
  * The turn controls on an investigator's panel. While it is their turn: a pip per action, filled
  * for each one left (`InvestigatorView.actions`), then investigate (its test goes to the decision
- * dialog) and End, as in the prototype's turn row. Before it, when the players may pick them next (`canStart`: the investigation phase, no
- * turn in progress, not taken this round), "Start turn", since the players choose the order.
+ * dialog), a button per card action the cards offer them (`BoardView.cardActions`, named by its
+ * designator and card: "Resign · Parlor") and End, as in the prototype's turn row. Before it,
+ * when the players may pick them next (`canStart`: the investigation phase, no turn in progress,
+ * not taken this round), "Start turn", since the players choose the order.
  * Nothing otherwise. The buttons wait while a step is queued (`busy`).
  */
 export function TurnControls({
+  board,
   investigator,
   onTurn,
   canStart,
   actions,
   busy,
 }: {
+  board: BoardView;
   investigator: InvestigatorView;
   onTurn: boolean;
   canStart: boolean;
@@ -49,6 +53,20 @@ export function TurnControls({
         disabled={busy}
         onClick={() => void actions.investigate()}
       />
+      {board.cardActions(investigator.id).map(({ cardId, card, action, designator }) => {
+        const name = t(`investigators.cardAction.${designator ?? 'plain'}`);
+        return (
+          <button
+            key={`${cardId}:${action}`}
+            type="button"
+            aria-label={t('investigators.cardActionOn', { action: name, card })}
+            disabled={busy}
+            onClick={() => void actions.useCardAction(cardId, action)}
+          >
+            {name}
+          </button>
+        );
+      })}
       <button
         type="button"
         aria-label={t('investigators.endTurn')}

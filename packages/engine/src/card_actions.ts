@@ -3,6 +3,7 @@ import { isLocationInPlay } from './board';
 import { cardStats, type EngineContext } from './cards';
 import type { UseCardAction } from './commands';
 import { locationOf } from './enemies';
+import type { InstanceId } from './ids';
 import { activeInvestigator } from './investigators';
 import { currentCard, requireCard } from './lookup';
 import { CommandRejected } from './rejection';
@@ -64,6 +65,37 @@ export function offersActionsTo(
         currentCard(state, 'agenda')?.id === card.id || currentCard(state, 'act')?.id === card.id
       );
   }
+}
+
+/**
+ * One action ability a card offers an investigator (`cardActionsOfferedTo`): the card, the index
+ * of the action in its `CardStats.actions` (what `UseCardAction.action` takes) and its designator.
+ */
+export interface OfferedCardAction {
+  readonly cardId: InstanceId;
+  readonly action: number;
+  readonly designator?: CardAction['designator'];
+}
+
+/**
+ * Every card action the cards in play offer `investigator` (`offersActionsTo`), in the order of
+ * the cards in the state, then of the actions on each card. It does not check whose turn it is:
+ * `UseCardAction` does.
+ */
+export function cardActionsOfferedTo(
+  ctx: EngineContext,
+  state: GameState,
+  investigator: Investigator,
+): OfferedCardAction[] {
+  return Object.values(state.cards).flatMap((card) => {
+    const actions = cardStats(ctx.cards, card.code).actions ?? [];
+    if (actions.length === 0 || !offersActionsTo(state, card, investigator)) return [];
+    return actions.map(({ designator }, action) => ({
+      cardId: card.id,
+      action,
+      ...(designator === undefined ? {} : { designator }),
+    }));
+  });
 }
 
 /** The action `cmd` takes; rejects an index the card doesn't print (`unknownCardAction`). */
