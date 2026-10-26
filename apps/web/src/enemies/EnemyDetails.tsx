@@ -7,31 +7,28 @@ import { EnemyCard } from './EnemyCard';
 import './enemies.css';
 
 /**
- * One enemy in full, opened by a tap on its card: whom it is engaged with, the enemy drawn as its
- * card (`EnemyCard`, from `BoardView.enemyStats`), and under it one row of what the players can
- * do to it. On the turn of an investigator who can reach it (`onTurn`: it is engaged with them, or
- * at their location), fight and evade as actions, which count off one, and the same without an
- * action, as some cards allow, and engage as an action when it is not engaged with them yet
- * (`BoardView.turn`); at any time,
- * what card effects do to an enemy: deal 1 damage, disengage it, defeat it. Each button shows a
- * short word and is named in full ("Fight · 1 action"). Fight and evade close it, so the decision
- * dialog that asks for the test's result is the only one open; damage keeps it open for the next
- * point, and engage for the fight that usually follows, and both read the enemy fresh from the
- * board. A native modal `<dialog>` brings focus trapping and Escape; nothing is tapped while a
- * step is queued (`busy`).
+ * One enemy in full, opened by a tap on its card or its map token: whom it is engaged with, the
+ * enemy drawn as its card (`EnemyCard`, from `BoardView.enemyStats`), and under it one row of what
+ * the players can do to it. On an investigator's turn, the basic actions the rules allow them
+ * against it (`BoardView.enemyActions`): fight, evade and engage as actions, which count off one,
+ * and fight and evade without an action, as some cards allow; at any time, what card effects do
+ * to an enemy: deal 1 damage, disengage it, defeat it. Each button shows a short word and is
+ * named in full ("Fight · 1 action"). Fight and evade close it, so the decision dialog that asks
+ * for the test's result is the only one open; damage keeps it open for the next point, and engage
+ * for the fight that usually follows, and both read the enemy fresh from the board. A native
+ * modal `<dialog>` brings focus trapping and Escape; nothing is tapped while a step is queued
+ * (`busy`).
  */
 export function EnemyDetails({
   board,
   enemy,
   actions,
-  onTurn,
   busy,
   onClose,
 }: {
   board: BoardView;
   enemy: MapEnemyView;
   actions: GameActions;
-  onTurn: boolean;
   busy: boolean;
   onClose: () => void;
 }) {
@@ -45,6 +42,8 @@ export function EnemyDetails({
     if (close) onClose();
     void play();
   };
+  const allowed = board.turn === undefined ? [] : board.enemyActions(board.turn, enemy.id);
+  const tests = allowed.filter((action) => action !== 'engage');
 
   return (
     <dialog ref={dialog} aria-labelledby={titleId} onCancel={onClose} data-dialog="enemy">
@@ -54,9 +53,9 @@ export function EnemyDetails({
       )}
       <EnemyCard enemy={enemy} stats={board.enemyStats(enemy.id)} titleId={titleId} />
       <footer>
-        {onTurn && (
-          <>
-            <ActionGroup title={t('enemy.asAction')}>
+        {allowed.length > 0 && (
+          <ActionGroup title={t('enemy.asAction')}>
+            {allowed.includes('fight') && (
               <ActionButton
                 icon="fight"
                 cost="action"
@@ -65,6 +64,8 @@ export function EnemyDetails({
                 disabled={busy}
                 onClick={step(() => actions.fight(enemy.id), true)}
               />
+            )}
+            {allowed.includes('evade') && (
               <ActionButton
                 icon="evade"
                 cost="action"
@@ -73,18 +74,22 @@ export function EnemyDetails({
                 disabled={busy}
                 onClick={step(() => actions.evade(enemy.id), true)}
               />
-              {enemy.engagedWith !== board.turn && (
-                <ActionButton
-                  icon="engage"
-                  cost="action"
-                  caption={t('enemy.caption.engage')}
-                  name={t('enemy.engageAction')}
-                  disabled={busy}
-                  onClick={step(() => actions.engage(enemy.id), false)}
-                />
-              )}
-            </ActionGroup>
-            <ActionGroup title={t('enemy.free')}>
+            )}
+            {allowed.includes('engage') && (
+              <ActionButton
+                icon="engage"
+                cost="action"
+                caption={t('enemy.caption.engage')}
+                name={t('enemy.engageAction')}
+                disabled={busy}
+                onClick={step(() => actions.engage(enemy.id), false)}
+              />
+            )}
+          </ActionGroup>
+        )}
+        {tests.length > 0 && (
+          <ActionGroup title={t('enemy.free')}>
+            {tests.includes('fight') && (
               <ActionButton
                 icon="fight"
                 caption={t('enemy.caption.fight')}
@@ -92,6 +97,8 @@ export function EnemyDetails({
                 disabled={busy}
                 onClick={step(() => actions.fight(enemy.id, 'free'), true)}
               />
+            )}
+            {tests.includes('evade') && (
               <ActionButton
                 icon="evade"
                 caption={t('enemy.caption.evade')}
@@ -99,8 +106,8 @@ export function EnemyDetails({
                 disabled={busy}
                 onClick={step(() => actions.evade(enemy.id, 'free'), true)}
               />
-            </ActionGroup>
-          </>
+            )}
+          </ActionGroup>
         )}
         <ActionGroup title={t('enemy.cardEffects')}>
           <ActionButton

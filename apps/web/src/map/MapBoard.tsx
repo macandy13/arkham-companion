@@ -117,9 +117,10 @@ type DraggedPiece = TilePiece & { from: InstanceId };
  *
  * A tap on a tile opens its details (`LocationDetails`): what the investigator whose turn it is
  * can do there, or while adjusting the corrections, when no piece is dragged. A tap on an enemy
- * token opens the enemy's details (`EnemyDetails`), the same as from the threat area: with
- * engage, fight and evade when the enemy is at the location of the investigator whose turn it
- * is, since the rules let them fight or evade an enemy there that is not engaged with them.
+ * token opens the enemy's details (`EnemyDetails`), the same as from the threat area, with what
+ * the investigator whose turn it is may do to it (`BoardView.enemyActions`): an enemy at their
+ * location that is not engaged with them stands only on the map, so this is where they engage
+ * it, or fight it when it is engaged with someone else.
  */
 function MapDrawing({
   map,
@@ -160,9 +161,9 @@ function MapDrawing({
       return true;
     },
   );
-  const tappedEnemy = Object.entries(map.enemies).flatMap(([location, enemies]) =>
-    enemies.filter(({ id }) => id === enemyFor).map((enemy) => ({ enemy, location })),
-  )[0];
+  const tappedEnemy = Object.values(map.enemies)
+    .flat()
+    .find(({ id }) => id === enemyFor);
   const detailsLocation = map.locations.find(({ id }) => id === detailsFor);
   const draggable = (piece: TilePiece) =>
     !busy && !adjusting && ('enemy' in piece || piece.investigator.id === mover?.id);
@@ -244,9 +245,8 @@ function MapDrawing({
       {tappedEnemy && (
         <EnemyDetails
           board={board}
-          enemy={tappedEnemy.enemy}
+          enemy={tappedEnemy}
           actions={actions}
-          onTurn={mover !== undefined && board.locationOf(mover.id) === tappedEnemy.location}
           busy={busy}
           onClose={() => setEnemyFor(undefined)}
         />
