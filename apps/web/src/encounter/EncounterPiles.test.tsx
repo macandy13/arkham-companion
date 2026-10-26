@@ -96,7 +96,7 @@ describe('EncounterPiles', () => {
     ).toEqual(['Rotting Remains', 'Swarm of Rats']);
     expect(within(pile('Set aside (1)')).getByRole('listitem').textContent).toBe('Lita Chantler');
     const ghoulPriest = within(pile('Victory display (1)')).getByRole('listitem');
-    expect(within(ghoulPriest).getByText('2 victory points')).toBeTruthy();
+    expect(ghoulPriest.querySelector('data')?.value).toBe('2');
   });
 
   it('opens the encounter dialog from the deck with its count and every list closed', () => {
@@ -114,6 +114,8 @@ describe('EncounterPiles', () => {
     const dialog = within(screen.getByRole('dialog', { name: 'Encounter deck' }));
     expect(dialog.getByText('1 card left in the encounter deck')).toBeTruthy();
     expect(dialog.getByText('Discard pile (0)').closest('details')?.open).toBe(false);
+    expect(dialog.getByText('Set aside (0)').closest('details')?.open).toBe(false);
+    expect(dialog.getByText('Victory display (0)').closest('details')?.open).toBe(false);
     expect(dialog.getAllByText('No cards')).toHaveLength(3);
   });
 });
