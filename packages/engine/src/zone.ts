@@ -77,6 +77,9 @@ export const encounterDiscard: Zone = { kind: 'encounterDiscard' };
 /** Cards the scenario set aside, out of play until a card or setup brings them in. */
 export const setAside: Zone = { kind: 'setAside' };
 
+/** A drawn encounter card while its revelation resolves. */
+export const resolvingZone: Zone = { kind: 'resolving' };
+
 /** Cards worth victory points the players have earned this scenario, counted at its end. */
 export const victoryDisplay: Zone = { kind: 'victoryDisplay' };
 

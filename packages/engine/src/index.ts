@@ -63,6 +63,7 @@ export {
   type LocationView,
   type MapEnemyView,
   type MapView,
+  type ResolvingCardView,
 } from './board_view';
 export {
   PlayTable,

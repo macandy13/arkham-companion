@@ -231,6 +231,8 @@
   --pile-count-size: 1.5rem;
   /* A card's small picture in a row of the encounter dialog's lists. */
   --encounter-list-card-height: 3.5rem;
+  /* The encounter card being resolved, large at the top of the decision dialog. */
+  --resolving-card-height: 14rem;
   /* A dragged map piece's copy, see-through so the tile under it stays readable. */
   --map-ghost-opacity: 0.6;
   /* A token with nothing on it (a location's clues once found) fades, so it reads as empty. */

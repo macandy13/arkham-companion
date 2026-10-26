@@ -54,7 +54,14 @@ import type {
   SkillTestSuggestion,
   SkillValues,
 } from './state';
-import { encounterDeck, encounterDiscard, setAside, victoryDisplay, type Zone } from './zone';
+import {
+  encounterDeck,
+  encounterDiscard,
+  resolvingZone,
+  setAside,
+  victoryDisplay,
+  type Zone,
+} from './zone';
 
 /**
  * A usage error of a test table: an unknown or ambiguous name, a decision or
@@ -302,6 +309,17 @@ export interface EncounterPilesView {
   victoryDisplay: readonly EncounterCardView[];
 }
 
+/**
+ * The encounter card being resolved (`BoardView.resolving`): a drawn card waits in the `resolving`
+ * zone while its revelation asks the players something. `drawnBy` is the investigator it was drawn
+ * for (from its queued placement), and `keywords` its printed keywords plus surge when it gained
+ * surge while resolving.
+ */
+export interface ResolvingCardView extends EncounterCardView {
+  drawnBy?: InvestigatorId;
+  keywords: readonly Keyword[];
+}
+
 /** One enemy attack enemy step 3.3 lists: the enemy by printed name and the investigator it attacks. */
 export interface DueAttackView {
   enemy: CardName;
@@ -460,6 +478,23 @@ export class BoardView {
       discard: cardsIn(encounterDiscard),
       setAside: cardsIn(setAside),
       victoryDisplay: cardsIn(victoryDisplay),
+    };
+  }
+
+  /** The encounter card being resolved, if a revelation waits for the players (`ResolvingCardView`). */
+  get resolving(): ResolvingCardView | undefined {
+    const [id] = cardsInZone(this.state, resolvingZone);
+    if (id === undefined) return undefined;
+    const card = requireCard(this.state, id);
+    const printed = cardStats(this.ctx.cards, card.code).keywords ?? [];
+    const surged = card.gainedSurge && !printed.some(({ name }) => name === 'surge');
+    const placement = this.state.meta.queue?.find(
+      (step) => step.kind === 'placeDrawnCard' && step.drawn.cardId === id,
+    );
+    return {
+      ...encounterCardView(this.ctx, card),
+      ...(placement?.kind === 'placeDrawnCard' ? { drawnBy: placement.drawn.investigatorId } : {}),
+      keywords: surged ? [...printed, { name: 'surge' }] : printed,
     };
   }
 

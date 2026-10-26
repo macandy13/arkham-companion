@@ -39,6 +39,8 @@ export const resources = {
       encounter: {
         close: 'Close',
         drawFor: 'Draw for {{name}}',
+        drawnFor: '{{card}}, drawn for {{name}}',
+        keywords: 'Keywords',
         discard: 'Discard pile',
         setAside: 'Set aside',
         victoryDisplay: 'Victory display',
@@ -545,6 +547,8 @@ export const resources = {
       encounter: {
         close: 'Schließen',
         drawFor: 'Für {{name}} ziehen',
+        drawnFor: '{{card}}, gezogen für {{name}}',
+        keywords: 'Schlüsselwörter',
         discard: 'Ablagestapel',
         setAside: 'Beiseitegelegt',
         victoryDisplay: 'Siegpunktanzeige',
