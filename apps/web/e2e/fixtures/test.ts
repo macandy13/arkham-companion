@@ -1,6 +1,7 @@
 import { expect, test as base } from '@playwright/test';
 import cards from './cards.json' with { type: 'json' };
 import packs from './packs.json' with { type: 'json' };
+import { localCardPicture } from './card_pictures';
 
 /** ArkhamDB endpoints the app reads, answered with the invented catalog. */
 const catalogFixtures = new Map<string, unknown>([
@@ -10,14 +11,15 @@ const catalogFixtures = new Map<string, unknown>([
 
 /**
  * Where ArkhamDB serves card pictures. The hand-written test scenario names its cards' pictures,
- * so the app asks for them; the guard turns them down, as when the player is offline, and the
- * card faces keep their pattern, so screenshots never show real card art.
+ * so the app asks for them; the guard answers them from the local copies the global setup
+ * downloaded (`card_pictures.ts`), and turns down the rest, as when the player is offline, so
+ * those card faces keep their pattern.
  */
 const CARD_PICTURES = /^\/bundles\/cards\//;
 
 /**
  * `test` with a network guard: the ArkhamDB catalog (on any language host) is answered from the
- * invented fixtures in this folder, card pictures are aborted, and every other non-local request
+ * invented fixtures in this folder, card pictures from their local copies, and every other non-local request
  * is aborted and recorded, so a test fails instead of silently reaching the network (CI has none)
  * or real card data.
  */
@@ -38,8 +40,12 @@ export const test = base.extend<{ externalRequests: string[] }>({
               headers: { 'Access-Control-Allow-Origin': '*' },
             });
           }
-          if (!CARD_PICTURES.test(url.pathname)) unexpected.push(url.href);
-          return route.abort();
+          if (!CARD_PICTURES.test(url.pathname)) {
+            unexpected.push(url.href);
+            return route.abort();
+          }
+          const picture = localCardPicture(url.pathname);
+          return picture ? route.fulfill({ path: picture }) : route.abort();
         },
       );
       await use(unexpected);

@@ -19,11 +19,16 @@ import {
   theGatheringHouse,
 } from '@arkham/scenarios';
 import { serialiseGameExport } from '../../src/storage/gameExport';
+import { ALDER_PICTURE } from './card_pictures';
 
-/** An invented investigator: the exported game reads them from its log, never from card data. */
+/**
+ * An invented investigator: the exported game reads them from its log, never from card data. Their
+ * picture is a real scan (`ALDER_PICTURE`), so the shots show the investigator card's art crop.
+ */
 const alder: InvestigatorCard = {
   code: investigatorCode('alder'),
   name: 'Alder',
+  imageSrc: ALDER_PICTURE,
   health: 6,
   sanity: 8,
   skills: { willpower: 3, intellect: 3, combat: 3, agility: 3 },
