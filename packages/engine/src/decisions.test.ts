@@ -6,6 +6,7 @@ import {
   blankLocation,
   checkInvariants,
   decisionId,
+  engagedWith,
   execute,
   handle,
   instanceId,
@@ -22,6 +23,7 @@ import {
   type InvestigatorId,
   type Zone,
 } from './index';
+import { cardOptionLabels } from './decisions';
 import { requireInvestigator } from './investigators';
 import { answer, rejectionFrom, stateAfter, withPendingDecisions } from '../test/utils';
 
@@ -720,5 +722,72 @@ describe('who answers', () => {
       answeredBy: alice,
       decider,
     });
+  });
+});
+
+describe('cardOptionLabels', () => {
+  const ghoulMinion = blankEnemy('ghoul_minion', { name: 'Ghoul Minion' });
+  const swarmOfRats = blankEnemy('swarm_of_rats', { name: 'Swarm of Rats' });
+  /** The hall (named "Hall") and two locations both named "Cellar", with alice in the hall. */
+  const table = newGame()
+    .withLocation(hall, blankLocation('hall', { name: 'Hall' }))
+    .withLocation(cellarNorth, cellarCard)
+    .withLocation(cellarSouth, cellarCard)
+    .withInvestigator(alice, { locationId: hall });
+
+  it.each([
+    {
+      name: 'names each card by its printed name when the names differ',
+      cards: [
+        { id: 'ghoul_in_hall', card: ghoulMinion, zone: atLocation(hall) },
+        { id: 'rats_in_hall', card: swarmOfRats, zone: atLocation(hall) },
+      ],
+      expected: ['Ghoul Minion', 'Swarm of Rats'],
+    },
+    {
+      name: 'adds the location to copies of one enemy',
+      cards: [
+        { id: 'ghoul_in_hall', card: ghoulMinion, zone: atLocation(hall) },
+        { id: 'ghoul_in_cellar', card: ghoulMinion, zone: atLocation(cellarNorth) },
+      ],
+      expected: ['Ghoul Minion (Hall)', 'Ghoul Minion (Cellar)'],
+    },
+    {
+      name: "counts an engaged enemy as at its investigator's location",
+      cards: [
+        { id: 'ghoul_on_alice', card: ghoulMinion, zone: engagedWith(alice) },
+        { id: 'ghoul_in_cellar', card: ghoulMinion, zone: atLocation(cellarNorth) },
+      ],
+      expected: ['Ghoul Minion (Hall)', 'Ghoul Minion (Cellar)'],
+    },
+    {
+      name: 'numbers copies of one enemy at one location',
+      cards: [
+        { id: 'first_ghoul', card: ghoulMinion, zone: atLocation(hall) },
+        { id: 'second_ghoul', card: ghoulMinion, zone: atLocation(hall) },
+      ],
+      expected: ['Ghoul Minion (Hall) 1', 'Ghoul Minion (Hall) 2'],
+    },
+  ])('$name', ({ cards, expected }) => {
+    const { context, state } = cards
+      .reduce((game, { id, card, zone }) => game.withCard(instanceId(id), card, zone), table)
+      .start();
+
+    const labels = cardOptionLabels(
+      context,
+      state,
+      cards.map(({ id }) => instanceId(id)),
+    );
+
+    expect(labels).toEqual(expected);
+  });
+
+  it('numbers locations with one name', () => {
+    const { context, state } = table.start();
+
+    expect(cardOptionLabels(context, state, [cellarNorth, cellarSouth])).toEqual([
+      'Cellar 1',
+      'Cellar 2',
+    ]);
   });
 });

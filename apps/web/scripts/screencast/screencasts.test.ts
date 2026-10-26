@@ -108,6 +108,56 @@ describe('screenshots', () => {
   });
 });
 
+describe('specs the base already tags', () => {
+  const shot = (file: string, title: string) => ({
+    title,
+    file,
+    tests: [{ projectName: 'screenshot', results: [] }],
+  });
+  const flow = (file: string, title: string) => ({
+    title,
+    file,
+    tests: [{ projectName: 'screencast', results: [] }],
+  });
+
+  it('are left out, so only the tags this PR adds are shown', () => {
+    const head: PlaywrightReport = {
+      suites: [
+        {
+          specs: [
+            shot('map.spec.ts', 'tagged on main'),
+            shot('map.spec.ts', 'tagged by this PR'),
+            flow('play.spec.ts', 'flow tagged on main'),
+          ],
+        },
+      ],
+    };
+    const base: PlaywrightReport = {
+      suites: [
+        {
+          specs: [
+            shot('map.spec.ts', 'tagged on main'),
+            flow('play.spec.ts', 'flow tagged on main'),
+          ],
+        },
+      ],
+    };
+
+    expect(screenshots(head, base).map((s) => s.title)).toEqual(['tagged by this PR']);
+    expect(flowVideos(head, base)).toEqual([]);
+  });
+
+  it.each([
+    { name: 'the same title in another file', baseSpec: shot('other.spec.ts', 'the attic') },
+    { name: 'the same spec as a flow, not a shot', baseSpec: flow('map.spec.ts', 'the attic') },
+  ])('are matched by file, title and project, so $name still shows', ({ baseSpec }) => {
+    const head: PlaywrightReport = { suites: [{ specs: [shot('map.spec.ts', 'the attic')] }] };
+    const base: PlaywrightReport = { suites: [{ specs: [baseSpec] }] };
+
+    expect(screenshots(head, base).map((s) => s.title)).toEqual(['the attic']);
+  });
+});
+
 describe('slugify', () => {
   it.each([
     {

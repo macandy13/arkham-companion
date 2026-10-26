@@ -13,10 +13,11 @@ import {
   type CardStats,
   type Command,
 } from '@arkham/engine';
-import { answer, cardIn, stateAfter } from '@arkham/engine/test/utils';
+import { answer, cardIn, rejectionFrom, stateAfter } from '@arkham/engine/test/utils';
 import {
   DEVOURER_BELOW_RESOLUTIONS,
   OFFER_OF_POWER_DECISION,
+  QUIET_GLADE_DECISION,
   theDevourerBelowCardDefs,
   theDevourerBelowCards,
 } from './cards';
@@ -134,6 +135,40 @@ describe('The Devourer Below card abilities', () => {
         });
       },
     );
+  });
+
+  describe('Arkham Woods (Quiet Glade)', () => {
+    const quietGlade = instanceId('quiet_glade');
+    /** Alice in the Quiet Glade on her turn, with 2 damage and 2 horror. */
+    const aliceInTheGlade = newGame()
+      .withLocation(quietGlade, cardOf('01155'), { revealed: true })
+      .withInvestigator(alice, {
+        locationId: quietGlade,
+        health: { max: 9, damage: 2 },
+        sanity: { max: 9, horror: 2 },
+      })
+      .withTurnOf(alice);
+    const useIt: Command = {
+      type: 'UseCardAction',
+      investigatorId: alice,
+      cardId: quietGlade,
+      action: 0,
+      asAction: true,
+    };
+
+    it.each([
+      { optionId: 'damage', left: { health: { damage: 1 }, sanity: { horror: 2 } } },
+      { optionId: 'horror', left: { health: { damage: 2 }, sanity: { horror: 1 } } },
+    ])('heals the 1 $optionId alice picks, once per turn', ({ optionId, left }) => {
+      const { context, state: started } = aliceInTheGlade.start();
+
+      const state = stateAfter(context, started, useIt, answer(QUIET_GLADE_DECISION, optionId));
+
+      expect(requireInvestigator(state, alice)).toMatchObject(left);
+      expect(rejectionFrom(context, state, useIt)).toMatchObject({
+        code: 'cardActionLimitReached',
+      });
+    });
   });
 
   describe('Offer of Power', () => {

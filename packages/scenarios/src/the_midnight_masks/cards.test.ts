@@ -12,7 +12,7 @@ import {
   type CardStats,
   type Command,
 } from '@arkham/engine';
-import { answer, cardIn, stateAfter } from '@arkham/engine/test/utils';
+import { answer, cardIn, rejectionFrom, stateAfter } from '@arkham/engine/test/utils';
 import {
   GRAVEYARD_DECISION,
   HUNTING_SHADOW_DECISION,
@@ -138,6 +138,42 @@ describe('The Midnight Masks card abilities', () => {
       expect(requireInvestigator(state, alice)).toMatchObject({
         locationId: at,
         sanity: { horror },
+      });
+    });
+  });
+
+  describe.each([
+    { code: '01128', name: "St. Mary's Hospital", after: { health: { damage: 1 } } },
+    { code: '01130', name: 'First Bank of Arkham', after: { resources: 8 } },
+    { code: '01131', name: 'Arkham Asylum', after: { sanity: { horror: 0 } } },
+  ])('$name', ({ code, after }) => {
+    const location = instanceId('location');
+    /** Alice there on her turn, with 4 damage, 3 horror and 5 resources. */
+    const aliceThere = newGame()
+      .withLocation(location, cardOf(code), { revealed: true })
+      .withInvestigator(alice, {
+        locationId: location,
+        health: { max: 9, damage: 4 },
+        sanity: { max: 9, horror: 3 },
+        resources: 5,
+      })
+      .withTurnOf(alice);
+    const useIt: Command = {
+      type: 'UseCardAction',
+      investigatorId: alice,
+      cardId: location,
+      action: 0,
+      asAction: true,
+    };
+
+    it('does what its action says for alice, once per game', () => {
+      const { context, state: started } = aliceThere.start();
+
+      const state = stateAfter(context, started, useIt);
+
+      expect(requireInvestigator(state, alice)).toMatchObject(after);
+      expect(rejectionFrom(context, state, useIt)).toMatchObject({
+        code: 'cardActionLimitReached',
       });
     });
   });
