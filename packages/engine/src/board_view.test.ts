@@ -84,7 +84,10 @@ describe('the phase and turn', () => {
 
 describe('investigators', () => {
   it('reads the lasting boosts of their skills, and none while there are none', () => {
-    const { context, state } = newGame().withInvestigator(alice).withInvestigator(bob).start();
+    const { context, state } = newGame()
+      .withInvestigator(alice, { skills: { willpower: 1, intellect: 2, combat: 3, agility: 4 } })
+      .withInvestigator(bob)
+      .start();
     const boosted = stateAfter(context, state, {
       type: 'ManualAdjust',
       adjustment: { kind: 'skillBoost', investigatorId: alice, skill: 'combat', delta: 1 },
@@ -92,7 +95,10 @@ describe('investigators', () => {
 
     const [aliceView, bobView] = boardView(context, boosted).investigators;
 
-    expect(aliceView?.boosts).toEqual({ combat: 1 });
+    expect(aliceView).toMatchObject({
+      boosts: { combat: 1 },
+      boostedSkills: { willpower: 1, intellect: 2, combat: 4, agility: 4 },
+    });
     expect(bobView).not.toHaveProperty('boosts');
   });
 
@@ -129,6 +135,7 @@ describe('investigators', () => {
         horror: 1,
         doom: 2,
         skills: { willpower: 1, intellect: 2, combat: 3, agility: 4 },
+        boostedSkills: { willpower: 1, intellect: 2, combat: 3, agility: 4 },
         image: '/bundles/cards/alice.png',
         actions: 3,
         threatArea: ['frozen_in_fear'],
