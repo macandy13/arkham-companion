@@ -3,6 +3,7 @@ import type { EngineContext } from './cards';
 import type {
   AdjustInvestigator,
   HealInvestigator,
+  DoByHand,
   DefeatInvestigator,
   DiscoverClues,
   MoveInvestigator,
@@ -92,6 +93,15 @@ export function handleHealInvestigator(
       stat: cmd.stat,
       delta: -healed,
     },
+  ];
+}
+
+/** `DoByHand`: tells the players about the step (`ByHandStepDue`), for an active investigator. */
+export function handleDoByHand(_ctx: EngineContext, state: GameState, cmd: DoByHand): Event[] {
+  const investigator = activeInvestigator(state, cmd.investigatorId);
+  requireCard(state.cards, cmd.cardId);
+  return [
+    { type: 'ByHandStepDue', investigatorId: investigator.id, cardId: cmd.cardId, step: cmd.step },
   ];
 }
 

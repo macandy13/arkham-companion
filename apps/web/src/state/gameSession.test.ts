@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
 import {
+  blankLocation,
   byName,
   cardDbWith,
   execute,
@@ -8,13 +9,15 @@ import {
   investigatorCardStats,
   investigatorCode,
   investigatorId,
+  instanceId,
+  newGame,
   scenario,
   type InvestigatorCard,
   type ScenarioDefinition,
 } from '@arkham/engine';
 import { GATHERING_CODES, theGathering, theGatheringCards } from '@arkham/scenarios';
 import { IndexedDbStore } from '../storage/IndexedDbStore';
-import { GameSession } from './gameSession';
+import { GameSession, skippedEffects } from './gameSession';
 
 describe('GameSession on The Gathering', () => {
   const alder: InvestigatorCard = {
@@ -192,7 +195,7 @@ describe('GameSession on The Gathering', () => {
     await session.play((table) => table.nextPhase());
 
     expect(afterTheBarrier).toEqual([
-      { card: 'The Barrier', effect: 'SpawnEnemy', missing: ['Ghoul Priest'] },
+      { kind: 'missingCard', card: 'The Barrier', effect: 'SpawnEnemy', missing: ['Ghoul Priest'] },
     ]);
     expect(session.skippedEffects).toEqual([]);
   });
@@ -206,5 +209,36 @@ describe('GameSession on The Gathering', () => {
     await expect(secondTab.play((table) => table.nextPhase())).rejects.toThrow();
 
     expect(secondTab.state).toEqual(firstTab.state);
+  });
+});
+
+describe('skippedEffects', () => {
+  it("names the investigator and the card of a step on the investigator's deck", () => {
+    const southside = instanceId('southside');
+    const alder = investigatorId('alder');
+    const { context, state } = newGame()
+      .withLocation(southside, blankLocation('southside', { name: 'Southside' }), {
+        revealed: true,
+      })
+      .withInvestigator(alder, { locationId: southside, name: 'Alder Ashcroft' })
+      .start();
+
+    const notices = skippedEffects({ ...context, scenario: theGathering }, state, [
+      {
+        type: 'ByHandStepDue',
+        investigatorId: alder,
+        cardId: southside,
+        step: { kind: 'draw', amount: 3 },
+      },
+    ]);
+
+    expect(notices).toEqual([
+      {
+        kind: 'deckStep',
+        card: 'Southside',
+        investigator: 'Alder Ashcroft',
+        step: { kind: 'draw', amount: 3 },
+      },
+    ]);
   });
 });

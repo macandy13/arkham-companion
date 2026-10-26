@@ -6,7 +6,8 @@
  * Hunting Shadow, Mysterious Chanting, On Wings of Darkness carrying Daisy off
  * to a Central location, the Ghoul Priest from The Gathering, the Wizard of
  * the Order's doom, "Wolf-Man" Drew's heal, two hunters chasing the
- * investigators, the First Bank of Arkham's once-per-game action, Daisy resigning through agenda 2's action, both agendas
+ * investigators, the First Bank of Arkham's once-per-game action, Your House's draw left to
+ * the players, Daisy resigning through agenda 2's action, both agendas
  * advancing on doom) and ends in a resolution
  * applied to the campaign log: two cultists interrogated, three still in the
  * Cultist deck and The Masked Hunter in play got away.
@@ -533,14 +534,23 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     });
 
     // Round 7 – investigation: the Wizard's doom makes 8. With the hunters
-    // next door, Roland runs to Your House, and Daisy takes the agenda's
-    // action and resigns.
+    // next door, Roland runs to Your House and takes its action: he gains 1
+    // resource and draws 1 card by hand, as the game holds no player cards.
+    // Daisy takes the agenda's action and resigns.
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'investigation' });
     expect(table.board.doomInPlay).toBe(8);
     table.startTurn(roland);
     table.moveTo(roland, byName('Rivertown'));
     table.moveTo(roland, byName('Your House'));
+    table.useCardAction(roland, byName('Your House'));
     table.endTurn(roland);
+    expect(table.board.investigator(roland)).toMatchObject({ resources: 15 });
+    expect(table.events).toContainEqual({
+      type: 'ByHandStepDue',
+      investigatorId: roland,
+      cardId: table.board.location(byName('Your House')).id,
+      step: { kind: 'draw', amount: 1 },
+    });
     table.startTurn(daisy);
     table.useCardAction(daisy, byName('Time Is Running Short'));
     expect(table.board.investigator(daisy).status).toBe('resigned');

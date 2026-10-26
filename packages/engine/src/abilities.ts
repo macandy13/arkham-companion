@@ -253,6 +253,7 @@ export type AbilityCommand =
         type:
           | 'AdjustInvestigator'
           | 'HealInvestigator'
+          | 'DoByHand'
           | 'TakeDamageAndHorror'
           | 'PlaceDoom'
           | 'MoveCard'
@@ -1088,6 +1089,37 @@ export function heal(
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
   return { type: 'HealInvestigator', investigatorId: who, stat, amount };
+}
+
+/** "Draw N cards" (Your House, Southside's Historical Society): the investigator draws them by hand. */
+export function drawCards(
+  amount: number,
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return {
+    type: 'DoByHand',
+    investigatorId: who,
+    cardId: { ref: 'self' },
+    step: { kind: 'draw', amount },
+  };
+}
+
+/**
+ * A search of the investigator's deck for a card with one of `traits`, taken into hand before the
+ * deck is shuffled (Ma's Boarding House, Miskatonic University), of only the `top` cards when the
+ * card says so: done by hand.
+ */
+export function searchDeck(
+  traits: readonly Trait[],
+  { top }: { top?: number } = {},
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return {
+    type: 'DoByHand',
+    investigatorId: who,
+    cardId: { ref: 'self' },
+    step: { kind: 'search', traits, ...(top === undefined ? {} : { top }) },
+  };
 }
 
 /** "Gain N resources" (First Bank of Arkham). */

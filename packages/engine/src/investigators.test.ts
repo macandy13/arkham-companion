@@ -225,6 +225,47 @@ describe('HealInvestigator', () => {
   });
 });
 
+describe('DoByHand', () => {
+  const { context, state } = hallCellarAttic
+    .withInvestigator(alice, { locationId: hall })
+    .withInvestigator(bob, { locationId: hall })
+    .start();
+  const drawThree: Command = {
+    type: 'DoByHand',
+    investigatorId: alice,
+    cardId: hall,
+    step: { kind: 'draw', amount: 3 },
+  };
+
+  it('tells the players to draw 3 cards for alice and changes nothing else', () => {
+    const { events, state: after } = execute(context, state, drawThree);
+
+    expect(events).toEqual([
+      {
+        type: 'ByHandStepDue',
+        investigatorId: alice,
+        cardId: hall,
+        step: { kind: 'draw', amount: 3 },
+      },
+    ]);
+    expect(after).toEqual(state);
+  });
+
+  it('rejects alice once she is defeated', () => {
+    const defeated = stateAfter(context, state, {
+      type: 'AdjustInvestigator',
+      investigatorId: alice,
+      stat: 'damage',
+      delta: 8,
+    });
+
+    expect(rejectionFrom(context, defeated, drawThree)).toEqual({
+      code: 'investigatorNotActive',
+      investigatorId: alice,
+    });
+  });
+});
+
 describe('AdjustInvestigator', () => {
   const { context, state } = hallCellarAttic
     .withInvestigator(alice, {

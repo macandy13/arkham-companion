@@ -44,22 +44,15 @@ test('Alder with four treacheries and the Ghoul Priest, scrolled on to the Ghoul
   await expect(ghoulPriest).toBeInViewport({ ratio: 1 });
 });
 
-test(
-  'the Hallway’s details, its card with Alder on it, on Alder’s turn',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+test('the Hallway’s details, its card with Alder on it, on Alder’s turn', async ({ page }) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-    await page
-      .getByRole('figure', { name: 'House' })
-      .getByRole('group', { name: 'Hallway' })
-      .click();
+  await page.getByRole('figure', { name: 'House' }).getByRole('group', { name: 'Hallway' }).click();
 
-    const details = page.getByRole('dialog', { name: 'Hallway' });
-    await expect(details.getByRole('img', { name: 'The card of Hallway' })).toBeVisible();
-    await expect(details.getByRole('button', { name: 'Investigate · 1 action' })).toBeVisible();
-  },
-);
+  const details = page.getByRole('dialog', { name: 'Hallway' });
+  await expect(details.getByRole('img', { name: 'The card of Hallway' })).toBeVisible();
+  await expect(details.getByRole('button', { name: 'Investigate · 1 action' })).toBeVisible();
+});
 
 test('the house map by day', async ({ page }) => {
   await page.goto('/#/settings');

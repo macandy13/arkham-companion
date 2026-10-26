@@ -131,7 +131,7 @@ test('move an enemy on the map', async ({ page }) => {
 
 // Journey: play from a location's details: Alder moves from the Hallway to the Attic as an
 // action, which reveals it, and takes a clue there as a card grants it.
-test('move and take a clue from the location details', { tag: '@flow' }, async ({ page }) => {
+test('move and take a clue from the location details', async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
   const details = (name: string) => page.getByRole('dialog', { name });

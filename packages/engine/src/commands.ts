@@ -39,6 +39,7 @@ export type Command =
   | MoveInvestigator
   | AdjustInvestigator
   | HealInvestigator
+  | DoByHand
   | TakeDamageAndHorror
   | DefeatInvestigator
   | DiscoverClues
@@ -297,6 +298,27 @@ export interface HealInvestigator {
   investigatorId: InvestigatorId;
   stat: WoundKind;
   amount: number;
+}
+
+/**
+ * Something an effect does to an investigator's own deck or hand, which the game doesn't track:
+ * "draw 3 cards", or "search (the top 6 cards of) your deck for an [[Ally]] … and add it to your
+ * hand. Shuffle your deck." A search finds a card with one of `traits`.
+ */
+export type DeckStep =
+  | { readonly kind: 'draw'; readonly amount: number }
+  | { readonly kind: 'search'; readonly traits: readonly Trait[]; readonly top?: number };
+
+/**
+ * The investigator does `step` by hand, as `cardId`'s effect (Your House, Southside, Miskatonic
+ * University): the players hold the player cards, so the engine only tells them
+ * (`ByHandStepDue`).
+ */
+export interface DoByHand {
+  type: 'DoByHand';
+  investigatorId: InvestigatorId;
+  cardId: InstanceId;
+  step: DeckStep;
 }
 
 /**

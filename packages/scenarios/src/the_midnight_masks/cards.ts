@@ -6,6 +6,7 @@ import {
   cardDbFrom,
   cardImagePath,
   disengageFromEachEnemy,
+  drawCards,
   engageReadyEnemies,
   decisionId,
   encounterSetCode,
@@ -25,6 +26,7 @@ import {
   placeDoomOnSelf,
   resolutionId,
   searchAndDraw,
+  searchDeck,
   shuffleEncounterDeck,
   skillTest,
   spendClues,
@@ -114,8 +116,7 @@ const cultist = ['Humanoid', 'Cultist'];
  * - the act's action (spending clues to draw from the Cultist deck) and its
  *   objective (the players advance it)
  * - agenda 1 turning into The Masked Hunter
- * - the Parley actions, and the actions of Your House, both Southsides,
- *   Miskatonic University and Northside
+ * - the Parley actions, and Northside's action
  * - Your House's hold on the Ghoul Priest and Easttown's cost reduction
  * - Ruth Turner going to the victory display once evaded: the `afterTest`
  *   window opens before the evade exhausts and disengages her
@@ -165,6 +166,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     shroud: 2,
     cluesPerInvestigator: 1,
     traits: arkham,
+    actions: [{ effects: [drawCards(1), gainResources(1)], limit: { per: 'turn' } }],
   }),
   location({
     code: '01125',
@@ -181,6 +183,8 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     shroud: 3,
     cluesPerInvestigator: 1,
     traits: arkham,
+    // Historical Society.
+    actions: [{ effects: [drawCards(3)], limit: { per: 'game' } }],
   }),
   location({
     code: '01127',
@@ -189,6 +193,8 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     shroud: 2,
     cluesPerInvestigator: 1,
     traits: arkham,
+    // Ma's Boarding House.
+    actions: [{ effects: [searchDeck([trait('Ally')])], limit: { per: 'game' } }],
   }),
   location({
     code: '01128',
@@ -207,6 +213,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     cluesPerInvestigator: 2,
     traits: arkham,
     victory: 1,
+    actions: [{ effects: [searchDeck([trait('Tome'), trait('Spell')], { top: 6 })] }],
   }),
   location({
     code: '01130',
