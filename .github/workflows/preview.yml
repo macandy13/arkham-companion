@@ -6,8 +6,8 @@ name: PR preview
 # When apps/web changes, the `@flow` E2E specs are recorded and the `@shot` specs
 # photographed, both published next to the preview (pr-<number>/screencasts/), and the PR
 # description's screencast section is rewritten to show them (see docs/automation.md). Only
-# the specs whose tag this PR adds are shown; tags already on the base branch belong to earlier
-# PRs. Living inside the preview directory means they are removed with it.
+# the specs whose picture this PR changes are shown, compared with a run on the base commit.
+# Living inside the preview directory means they are removed with it.
 # PRs from forks are skipped (no write token).
 
 on:
@@ -29,7 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          # The PR's merge commit plus its first parent, the base commit whose tags are skipped.
+          # The PR's merge commit plus its first parent, the base commit its pictures are compared with.
           fetch-depth: 2
       - if: github.event.action != 'closed'
         uses: pnpm/action-setup@v6
@@ -47,20 +47,6 @@ jobs:
           filters: |
             web:
               - 'apps/web/**'
-      # Lists the specs the base commit already tags, so the render step skips them. If the listing
-      # fails (e.g. a base spec that no longer loads), every tagged spec is shown.
-      - if: steps.changes.outputs.web == 'true'
-        run: |
-          mkdir -p apps/web/screencasts
-          git worktree add --detach "$RUNNER_TEMP/base" HEAD^1
-          ln -s "$PWD/node_modules" "$RUNNER_TEMP/base/node_modules"
-          ln -s "$PWD/apps/web/node_modules" "$RUNNER_TEMP/base/apps/web/node_modules"
-          if ! (cd "$RUNNER_TEMP/base/apps/web" && PLAYWRIGHT_JSON_OUTPUT_FILE="$RUNNER_TEMP/base.json" \
-              pnpm exec playwright test --list --reporter=json --project=screencast --project=screenshot --pass-with-no-tests); then
-            echo "::warning::Could not list the base commit's tagged specs; showing every tagged spec."
-            echo '{}' > "$RUNNER_TEMP/base.json"
-          fi
-          cp "$RUNNER_TEMP/base.json" apps/web/screencasts/base.json
       # The card pictures the E2E shots show, downloaded once by Playwright's global setup
       # (apps/web/e2e/fixtures/card_pictures.ts) and kept here, never in the repo.
       - if: steps.changes.outputs.web == 'true'
@@ -69,15 +55,31 @@ jobs:
           path: apps/web/e2e/.card_pictures
           key: card-pictures-${{ hashFiles('packages/scenarios/src/the_gathering/cards.ts', 'packages/scenarios/src/card_builders.ts', 'apps/web/e2e/fixtures/card_pictures.ts') }}
           restore-keys: card-pictures-
+      - if: steps.changes.outputs.web == 'true'
+        run: |
+          pnpm --filter @arkham/web exec playwright install --with-deps chromium
+          command -v ffmpeg || sudo apt-get install -y --no-install-recommends ffmpeg
+      # Records the base commit's tagged specs too, so the render step can leave out every spec
+      # whose picture (a shot, or a flow's end state) this PR doesn't change, including specs an
+      # earlier PR left tagged on main. Its own install, so the base builds with its own packages.
+      # If the base run fails, every tagged spec is shown.
+      - if: steps.changes.outputs.web == 'true'
+        run: |
+          mkdir -p apps/web/screencasts
+          echo '{}' > apps/web/screencasts/base.json
+          if ! (git worktree add --detach "$RUNNER_TEMP/base" HEAD^1 &&
+              cp -r apps/web/e2e/.card_pictures "$RUNNER_TEMP/base/apps/web/e2e/" 2>/dev/null;
+              cd "$RUNNER_TEMP/base" && pnpm install --frozen-lockfile --prefer-offline &&
+              cd apps/web && PLAYWRIGHT_JSON_OUTPUT_FILE="$GITHUB_WORKSPACE/apps/web/screencasts/base.json" \
+                pnpm exec playwright test --project=screencast --project=screenshot --reporter=json --pass-with-no-tests); then
+            echo "::warning::The base commit's run failed; specs it didn't photograph are all shown."
+          fi
       # Recorded before the preview build: Playwright builds with the root base path,
       # and the preview build below empties dist/ anyway.
       - if: steps.changes.outputs.web == 'true'
         # A failing flow must not block the preview; the E2E check reports it.
         continue-on-error: true
-        run: |
-          pnpm --filter @arkham/web exec playwright install --with-deps chromium
-          command -v ffmpeg || sudo apt-get install -y --no-install-recommends ffmpeg
-          pnpm --filter @arkham/web e2e:screencast
+        run: pnpm --filter @arkham/web e2e:screencast
       - if: steps.changes.outputs.web == 'true' && hashFiles('apps/web/screencasts/report.json') != ''
         working-directory: apps/web
         run: >-

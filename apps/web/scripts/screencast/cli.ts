@@ -7,14 +7,16 @@
  *     passing screenshot to `<outDir>/<slug>.png`, adds the player page (`player.html`, listing
  *     the recorded flows) and writes the PR description section to `<outDir>/section.md` and
  *     `version` to `<outDir>/version.txt`, so the workflow can tell when Pages serves this push.
- *     Specs `base.json` (`playwright test --list` on the base commit) already tags are skipped.
+ *     Specs whose picture is the same in `base.json` (the base commit's run) are skipped.
  *   node cli.ts splice <body.md> <section.md>
  *     Prints the PR description with the screencast section replaced.
  */
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import pixelmatch from 'pixelmatch';
+import { PNG } from 'pngjs';
 import {
   flowVideos,
   gifArgs,
@@ -23,7 +25,7 @@ import {
   replaceSection,
   screenshots,
 } from './screencasts.ts';
-import type { PlaywrightReport } from './screencasts.ts';
+import type { BaseRun, PlaywrightReport } from './screencasts.ts';
 
 function render(
   reportPath: string,
@@ -33,7 +35,10 @@ function render(
   version: string,
 ): void {
   const report = JSON.parse(readFileSync(reportPath, 'utf8')) as PlaywrightReport;
-  const base = JSON.parse(readFileSync(baseReportPath, 'utf8')) as PlaywrightReport;
+  const base: BaseRun = {
+    report: readBaseReport(baseReportPath),
+    samePicture,
+  };
   const flows = flowVideos(report, base);
   const shots = screenshots(report, base);
   mkdirSync(outDir, { recursive: true });
@@ -52,6 +57,31 @@ function render(
   writeFileSync(join(outDir, 'player.html'), playerPage(template, { flows, version }));
   writeFileSync(join(outDir, 'section.md'), renderSection({ flows, shots, baseUrl, version }));
   writeFileSync(join(outDir, 'version.txt'), `${version}\n`);
+}
+
+/**
+ * Whether two PNGs look the same. Pixels may differ slightly: the playmat's faint lines don't
+ * render byte-identically from run to run, so this uses Playwright's own default tolerance.
+ */
+function samePicture(headPath: string, basePath: string): boolean {
+  if (!existsSync(basePath)) return false;
+  const head = PNG.sync.read(readFileSync(headPath));
+  const base = PNG.sync.read(readFileSync(basePath));
+  if (head.width !== base.width || head.height !== base.height) return false;
+  const differing = pixelmatch(head.data, base.data, undefined, head.width, head.height, {
+    threshold: 0.2,
+  });
+  return differing === 0;
+}
+
+/** The base run's report, or none when the run broke off before writing a whole report. */
+function readBaseReport(path: string): PlaywrightReport {
+  try {
+    return JSON.parse(readFileSync(path, 'utf8')) as PlaywrightReport;
+  } catch (error) {
+    console.warn(`Ignoring the base run's report ${path}; every tagged spec is shown:`, error);
+    return {};
+  }
 }
 
 function splice(bodyPath: string, sectionPath: string): void {
