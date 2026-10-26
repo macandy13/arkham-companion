@@ -49,6 +49,9 @@ export default async function fetchCardPictures(): Promise<void> {
       try {
         const response = await fetch(`${ARKHAMDB}${path}`, { signal: AbortSignal.timeout(15_000) });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        // A challenge or error page served with 200 would otherwise stay in CI's cache for good.
+        const type = response.headers.get('content-type') ?? '';
+        if (!type.startsWith('image/')) throw new Error(`not a picture (${type})`);
         await writeFile(
           join(CARD_PICTURE_DIR, basename(path)),
           Buffer.from(await response.arrayBuffer()),
