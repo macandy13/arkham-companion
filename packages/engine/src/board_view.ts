@@ -620,19 +620,9 @@ export class BoardView {
    * by name, since only the card zoom needs the rest.
    */
   cardsIn(zone: Zone): readonly CardFaceView[] {
-    return cardsInZone(this.state, zone).map((id) => {
-      const { name, typeCode, traits, imageSrc, backImageSrc } = cardStats(
-        this.ctx.cards,
-        requireCard(this.state, id).code,
-      );
-      return {
-        name: cardName(name),
-        type: typeCode,
-        traits,
-        ...(imageSrc === undefined ? {} : { image: imageSrc }),
-        ...(backImageSrc === undefined ? {} : { backImage: backImageSrc }),
-      };
-    });
+    return cardsInZone(this.state, zone).map((id) =>
+      cardFaceOf(this.ctx, requireCard(this.state, id)),
+    );
   }
 
   private error(message: string): TableError {
@@ -667,6 +657,17 @@ function requireCard(state: GameState, id: InstanceId): CardInstance {
 
 function nameOf(ctx: EngineContext, card: CardInstance): CardName {
   return cardName(cardStats(ctx.cards, card.code).name);
+}
+
+function cardFaceOf(ctx: EngineContext, card: CardInstance): CardFaceView {
+  const { typeCode, traits, imageSrc, backImageSrc } = cardStats(ctx.cards, card.code);
+  return {
+    name: nameOf(ctx, card),
+    type: typeCode,
+    traits,
+    ...(imageSrc === undefined ? {} : { image: imageSrc }),
+    ...(backImageSrc === undefined ? {} : { backImage: backImageSrc }),
+  };
 }
 
 function namesIn(ctx: EngineContext, state: GameState, zone: Zone): CardName[] {

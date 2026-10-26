@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { cardImagePath, cardName, trait, type CardFaceView } from '@arkham/engine';
 import { initI18n } from '../i18n';
@@ -20,8 +20,10 @@ describe('CardZoom', () => {
 
     render(<CardZoom card={plainCurse} onClose={() => {}} />);
 
-    const zoom = screen.getByRole('dialog', { name: 'plain_curse' });
-    expect(zoom.querySelector('article')?.textContent).toBe('plain_curseTreacheryCurse. Omen.');
+    const zoom = within(screen.getByRole('dialog', { name: 'plain_curse' }));
+    expect(zoom.getByRole('heading', { name: 'plain_curse' })).toBeTruthy();
+    expect(zoom.getByText('Treachery')).toBeTruthy();
+    expect(zoom.getByText('Curse. Omen.')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Turn it over' })).toBeNull();
   });
 

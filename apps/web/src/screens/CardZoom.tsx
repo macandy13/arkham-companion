@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CardFaceView } from '@arkham/engine';
+import { sentences } from '@arkham/util';
 import { useCardPicture } from '../catalog/cardImages';
 import './card_zoom.css';
 
@@ -22,7 +23,16 @@ export function CardZoom({ card, onClose }: { card: CardFaceView; onClose: () =>
   const picture = useCardPicture(side === 'front' ? card.image : card.backImage);
 
   return (
-    <dialog ref={dialog} aria-labelledby={titleId} onCancel={onClose} data-dialog="card-zoom">
+    <dialog
+      ref={dialog}
+      aria-labelledby={titleId}
+      onCancel={(event) => {
+        // React passes `cancel` on to the dialogs around it, and Escape here closes only the zoom.
+        event.stopPropagation();
+        onClose();
+      }}
+      data-dialog="card-zoom"
+    >
       <button type="button" data-icon="close" aria-label={t('cardZoom.close')} onClick={onClose} />
       <article data-card={card.type} data-picture={picture?.shown ? 'shown' : undefined}>
         {picture && (
@@ -35,7 +45,7 @@ export function CardZoom({ card, onClose }: { card: CardFaceView; onClose: () =>
         )}
         <h2 id={titleId}>{card.name}</h2>
         <p>{t(`cardZoom.type.${card.type}`)}</p>
-        {card.traits.length > 0 && <p>{card.traits.map((trait) => `${trait}.`).join(' ')}</p>}
+        {card.traits.length > 0 && <p>{sentences(card.traits)}</p>}
       </article>
       {card.backImage !== undefined && (
         <button type="button" onClick={() => setSide(side === 'front' ? 'back' : 'front')}>

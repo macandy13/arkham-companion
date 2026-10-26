@@ -194,7 +194,12 @@ function Attached({ cards }: { cards: readonly CardFaceView[] }) {
       <ul>
         {cards.map((card, i) => (
           <li key={`${card.name}-${i}`}>
-            <button type="button" aria-haspopup="dialog" onClick={() => setZoomed(card)}>
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              aria-label={t('cardZoom.open', { name: card.name })}
+              onClick={() => setZoomed(card)}
+            >
               {card.name}
             </button>
           </li>

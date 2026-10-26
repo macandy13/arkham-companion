@@ -32,7 +32,10 @@
   mask-image: url('../investigators/icons/close.svg');
 }
 
-/* Upright like a printed card; the text fallback sits in the middle of the hatched art area. */
+/*
+ * Upright like a printed card; the text fallback sits in the middle of the hatched art area. The
+ * frame is the treachery colour, since treacheries are the only cards opened here so far.
+ */
 #board dialog[data-dialog='card-zoom'] > article {
   position: relative;
   display: flex;
