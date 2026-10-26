@@ -226,6 +226,64 @@ describe('InvestigatorBar', () => {
     });
   });
 
+  describe('the lead and turn markers', () => {
+    const alderAndBrook = () =>
+      PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study', { actions: [resignAction()] }), {
+            revealed: true,
+          })
+          .withInvestigator(alder, { locationId: study })
+          .withInvestigator(brook, { locationId: study }),
+      );
+
+    /** The markers beside `name`'s name, by what they say. */
+    const markersOf = (name: string) =>
+      within(within(panel(name)).getByRole('article'))
+        .queryAllByRole('img')
+        .map((marker) => marker.getAttribute('aria-label'));
+
+    it.each([
+      {
+        situation: 'on Brook’s turn, Alder leading',
+        table: () => {
+          const table = alderAndBrook();
+          table.nextPhase();
+          table.startTurn(brook);
+          return table;
+        },
+        alderMarkers: ['Lead investigator'],
+        brookMarkers: ['Their turn'],
+      },
+      {
+        situation: 'once Alder has resigned, leaving the lead to Brook',
+        table: () => {
+          const table = alderAndBrook();
+          table.nextPhase();
+          table.startTurn(alder);
+          table.useCardAction(alder, study);
+          return table;
+        },
+        alderMarkers: [],
+        brookMarkers: ['Lead investigator'],
+      },
+    ])('marks $situation', ({ table, alderMarkers, brookMarkers }) => {
+      const played = table();
+
+      render(
+        <InvestigatorBar
+          board={played.board}
+          actions={actionsOn(played)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      expect(markersOf('alder')).toEqual(alderMarkers);
+      expect(markersOf('brook')).toEqual(brookMarkers);
+    });
+  });
+
   describe('the steppers, while adjusting', () => {
     // Alder has 2 damage of 7 health, 2 horror of 6 sanity and 3 resources.
     const hurtAlder = newGame()

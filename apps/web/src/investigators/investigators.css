@@ -88,6 +88,23 @@
   font-size: var(--font-size-subtitle);
 }
 
+/* The lead and turn markers beside the name, gilt on the dark band like its rule. */
+#investigators [data-card='investigator'] > header > [data-marker] {
+  align-self: center;
+  width: var(--stat-icon-size);
+  height: var(--stat-icon-size);
+  background: var(--color-card-gilt);
+  mask: var(--marker-icon) center / contain no-repeat;
+}
+
+#investigators [data-marker='lead'] {
+  --marker-icon: url('./icons/lead.svg');
+}
+
+#investigators [data-marker='turn'] {
+  --marker-icon: url('../symbols/action.svg');
+}
+
 #investigators [data-card='investigator'] > header > p {
   margin: 0;
   font-size: var(--font-size-note);

@@ -4,6 +4,7 @@ import {
   TILE,
   connectionEnds,
   drawingSize,
+  leadMarkerPoints,
   attachmentOrigin,
   onPawn,
   pawnOffset,
@@ -203,5 +204,24 @@ describe('shrinkToFit', () => {
     { width: 180, room: 90, scale: 0.5 },
   ])('shrinks a name $width wide by $scale to fit $room', ({ width, room, scale }) => {
     expect(shrinkToFit(width, room)).toBe(scale);
+  });
+});
+
+describe('leadMarkerPoints', () => {
+  // A pawn's radius is 14, so the marker's centre sits 14·√½ ≈ 9.9 right of and above the pawn's,
+  // and its corners reach 7 from there.
+  it('draws a pentagon, point up, on the upper right edge of the pawn', () => {
+    const corners = leadMarkerPoints({ x: 100, y: 100 }).map(({ x, y }) => ({
+      x: Math.round(x * 10) / 10,
+      y: Math.round(y * 10) / 10,
+    }));
+
+    expect(corners).toEqual([
+      { x: 109.9, y: 83.1 },
+      { x: 116.6, y: 87.9 },
+      { x: 114, y: 95.8 },
+      { x: 105.8, y: 95.8 },
+      { x: 103.2, y: 87.9 },
+    ]);
   });
 });

@@ -35,6 +35,28 @@ export const TILE = { width: CARD.short, height: CARD.long, gap: 30 } as const;
 export const CONTENT = { inset: 10, band: 19, pawnRadius: 14, pawnGap: 6 } as const;
 
 /**
+ * The corners of the lead investigator's marker on a pawn centred on `pawn`: a pentagon, point up,
+ * like the game's lead investigator token, on the pawn's upper right edge, so the initial stays
+ * readable.
+ */
+export function leadMarkerPoints(pawn: Point): Point[] {
+  const centre = {
+    x: pawn.x + CONTENT.pawnRadius * Math.SQRT1_2,
+    y: pawn.y - CONTENT.pawnRadius * Math.SQRT1_2,
+  };
+  return Array.from({ length: 5 }, (_, corner) => {
+    const angle = -Math.PI / 2 + (corner * 2 * Math.PI) / 5;
+    return {
+      x: centre.x + LEAD_MARKER_RADIUS * Math.cos(angle),
+      y: centre.y + LEAD_MARKER_RADIUS * Math.sin(angle),
+    };
+  });
+}
+
+/** How far the lead marker's corners reach from its centre: half a pawn, so it reads as a badge. */
+const LEAD_MARKER_RADIUS = CONTENT.pawnRadius / 2;
+
+/**
  * The height of the line the shroud and clues sit on, where the art ends: 8/15 of the tile's
  * height, as on the printed card.
  */

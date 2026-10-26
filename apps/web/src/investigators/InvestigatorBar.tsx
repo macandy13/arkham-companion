@@ -44,6 +44,7 @@ export function InvestigatorBar({
           board={board}
           investigator={investigator}
           onTurn={board.turn === investigator.id}
+          lead={board.lead === investigator.id}
           engaged={board.enemiesEngagedWith(investigator.id)}
           canStart={
             picking && investigator.status === 'active' && investigator.turnTaken === undefined
@@ -61,7 +62,8 @@ export function InvestigatorBar({
  * One investigator: their threat area along the top edge of their card, the card drawn like the
  * printed investigator cards and the map's location cards (a name band with where they are and how
  * their round goes, the art window, the four skills and the counters as round tokens along its
- * foot), then their turn controls. Health and sanity show what is left of the printed value, like
+ * foot), then their turn controls. Beside the name, a pentagon marks the lead investigator, like
+ * the game's lead investigator token, and an action arrow the investigator whose turn it is. Health and sanity show what is left of the printed value, like
  * the dials, while their steppers place and heal damage and horror, like the tokens on the card.
  * Clues show without steppers: they are found by investigating and spent on the act.
  */
@@ -69,6 +71,7 @@ function InvestigatorPanel({
   board,
   investigator,
   onTurn,
+  lead,
   engaged,
   canStart,
   actions,
@@ -79,6 +82,8 @@ function InvestigatorPanel({
   board: BoardView;
   investigator: InvestigatorView;
   onTurn: boolean;
+  /** They are the lead investigator (`BoardView.lead`). */
+  lead: boolean;
   /** The enemies engaged with the investigator, shown in their threat area. */
   engaged: readonly MapEnemyView[];
   /** The players may start this investigator's turn now (`TurnControls`). */
@@ -107,6 +112,8 @@ function InvestigatorPanel({
       <article data-card="investigator">
         <header>
           <h3 id={nameId}>{investigator.name}</h3>
+          {lead && <span role="img" aria-label={t('investigators.lead')} data-marker="lead" />}
+          {onTurn && <span role="img" aria-label={t('investigators.onTurn')} data-marker="turn" />}
           <p>{statusLine(investigator, onTurn, t)}</p>
         </header>
         <CardArt image={investigator.image} />

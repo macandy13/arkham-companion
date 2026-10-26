@@ -1,6 +1,12 @@
 import { useRef, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { EnemyView, InvestigatorView, LocationView, MapEnemyView } from '@arkham/engine';
+import type {
+  BoardView,
+  EnemyView,
+  InvestigatorView,
+  LocationView,
+  MapEnemyView,
+} from '@arkham/engine';
 import { LOCATION_ART, PORTRAIT_SCAN, portraitArtViewBox } from '../catalog/cardArt';
 import { useCardPicture } from '../catalog/cardImages';
 import { LocationOrnament, TYPE_PLATE_CENTRE } from './cardOrnament';
@@ -11,6 +17,7 @@ import {
   CLUES_CENTRE,
   CONTENT,
   DOOM_CENTRE,
+  leadMarkerPoints,
   NAME_WIDTH,
   pawnOffset,
   SHROUD_CENTRE,
@@ -43,7 +50,7 @@ export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyVi
  * what attachments add) on the left edge where the art ends and the clues on the right, doom
  * under the clues when it has any; then a pawn per investigator there and a round token per enemy
  * at it, in rows along the bottom edge. `enemies` and `investigators` are the open game's pieces
- * at this location; `dragOf` gives the drag handlers of each piece that can be dragged now. A tap
+ * at this location, and `turnOrder` says whose pawns carry the lead and turn markers; `dragOf` gives the drag handlers of each piece that can be dragged now. A tap
  * on the tile, or its details button in the top left corner, calls `onOpen`; a press that moves
  * further than `TAP_SLOP` (a pan, a piece dragged) is no tap. Without `onOpen` (the card in the
  * location details) it has neither.
@@ -52,6 +59,7 @@ export function LocationTile({
   location,
   enemies,
   investigators,
+  turnOrder,
   dragOf,
   onOpen,
   x,
@@ -60,6 +68,7 @@ export function LocationTile({
   location: LocationView;
   enemies: readonly MapEnemyView[];
   investigators: readonly InvestigatorView[];
+  turnOrder: TurnOrder;
   dragOf: (piece: TilePiece) => DragHandlers | undefined;
   onOpen?: () => void;
   x: number;
@@ -151,6 +160,8 @@ export function LocationTile({
           key={investigator.id}
           investigator={investigator}
           centre={pawnOffset(i)}
+          lead={turnOrder.lead === investigator.id}
+          onTurn={turnOrder.turn === investigator.id}
           drag={dragOf({ investigator })}
         />
       ))}
@@ -345,27 +356,56 @@ function dragAttributes({
   };
 }
 
+/** Who leads and whose turn it is, which the pawns show (`BoardView.lead`, `BoardView.turn`). */
+export type TurnOrder = Pick<BoardView, 'lead' | 'turn'>;
+
 /**
- * An investigator's pawn (`data-pawn`): a circle with their initial, centred on `centre`. With `drag` it can
- * be dragged (`usePieceDrag`); a `ghost` is the copy that follows the pointer.
+ * An investigator's pawn (`data-pawn`): a circle with their initial, centred on `centre`. The
+ * `lead` investigator's pawn carries a pentagon like the game's lead investigator token, and the
+ * pawn of the investigator whose turn it is (`onTurn`, `data-turn`) a bolder ring; both are also
+ * in its name. With `drag` it can be dragged (`usePieceDrag`); a `ghost` is the copy that follows
+ * the pointer.
  */
 export function Pawn({
   investigator,
-  centre: { x, y },
+  centre,
+  lead = false,
+  onTurn = false,
   drag,
   ghost = false,
 }: {
   investigator: InvestigatorView;
   centre: Point;
+  lead?: boolean;
+  onTurn?: boolean;
   drag?: DragHandlers;
   ghost?: boolean;
 }) {
+  const { t } = useTranslation();
+  const { x, y } = centre;
+  const name = [
+    investigator.name,
+    ...(lead ? [t('map.lead')] : []),
+    ...(onTurn ? [t('map.onTurn')] : []),
+  ].join(', ');
   return (
-    <g data-pawn {...dragAttributes({ name: investigator.name, kind: 'pawn', drag, ghost })}>
+    <g
+      data-pawn
+      data-turn={onTurn || undefined}
+      {...dragAttributes({ name, kind: 'pawn', drag, ghost })}
+    >
       <circle cx={x} cy={y} r={CONTENT.pawnRadius} />
       <text x={x} y={y}>
         {investigator.name.charAt(0)}
       </text>
+      {lead && (
+        <polygon
+          data-marker="lead"
+          points={leadMarkerPoints(centre)
+            .map((corner) => `${corner.x},${corner.y}`)
+            .join(' ')}
+        />
+      )}
     </g>
   );
 }
