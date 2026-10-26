@@ -693,9 +693,23 @@ describe('enemies', () => {
       expect(() => board.enemy(any_rat)).toThrow(
         /^3 enemies match named "rat" \(rat_on_alice, rat_on_bob, rat_in_hallway\); narrow it with enemyMatching\(card, \{ engagedWith, at \}\), or use byId[^\n]*\n/,
       );
-      expect(() => board.enemy(enemyMatching(any_rat, { at: byName('study') }))).toThrow(
-        /^2 enemies match/,
-      );
+    });
+
+    it.each([
+      {
+        selector: enemyMatching(byName('rat'), { at: byName('study') }),
+        hint: 'narrow it with enemyMatching(card, { engagedWith }), or use byId',
+      },
+      {
+        selector: enemyMatching(byName('rat'), { engagedWith: alice, at: byName('study') }),
+        hint: 'use byId',
+      },
+    ])('suggests only the narrowings $selector does not use yet', ({ selector, hint }) => {
+      const { context, state } = rats
+        .withCard(instanceId('second_rat_on_alice'), rat, engagedWith(alice))
+        .start();
+
+      expect(() => boardView(context, state).enemy(selector)).toThrow(`; ${hint}\n`);
     });
 
     it.each([

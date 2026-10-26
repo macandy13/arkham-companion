@@ -318,10 +318,10 @@ export class PlayTable {
     investigator: InvestigatorRef,
     { result = 'pass', clues }: TestOptions & { clues?: number } = {},
   ): void {
-    const seat = this.seat(investigator);
+    const { id: seat, name } = this.board.investigator(investigator);
     this.atomically(() => {
       this.play({ type: 'Investigate', investigatorId: seat, asAction: true });
-      this.finishTest(`investigate:${seat}`, result, clues);
+      this.finishTest(`investigate:${seat}`, `${name}'s investigation`, result, clues);
     });
   }
 
@@ -336,11 +336,11 @@ export class PlayTable {
     enemy: EnemyRef,
     { result = 'pass', damage }: TestOptions & { damage?: number } = {},
   ): void {
-    const seat = this.seat(investigator);
+    const { id: seat, name } = this.board.investigator(investigator);
     const id = this.board.enemyId(enemy);
     this.atomically(() => {
       this.play({ type: 'Fight', investigatorId: seat, enemyId: id });
-      this.finishTest(`fight:${seat}:${id}`, result, damage);
+      this.finishTest(`fight:${seat}:${id}`, `${name}'s fight`, result, damage);
     });
   }
 
@@ -354,11 +354,11 @@ export class PlayTable {
     enemy: EnemyRef,
     { result = 'pass' }: TestOptions = {},
   ): void {
-    const seat = this.seat(investigator);
+    const { id: seat, name } = this.board.investigator(investigator);
     const id = this.board.enemyId(enemy);
     this.atomically(() => {
       this.play({ type: 'Evade', investigatorId: seat, enemyId: id });
-      this.finishTest(`evade:${seat}:${id}`, result);
+      this.finishTest(`evade:${seat}:${id}`, `${name}'s evasion`, result);
     });
   }
 
@@ -474,7 +474,8 @@ export class PlayTable {
     result: SkillTestResult,
     { for: investigator, amount }: { for?: InvestigatorRef; amount?: number } = {},
   ): void {
-    const seat = investigator === undefined ? undefined : this.seat(investigator);
+    const tested = investigator === undefined ? undefined : this.board.investigator(investigator);
+    const seat = tested?.id;
     const decision = this.onlyOne(
       this.current.pending.filter(
         (pending) =>
@@ -482,7 +483,7 @@ export class PlayTable {
           (seat === undefined ||
             (pending.decider.kind === 'investigator' && pending.decider.investigatorId === seat)),
       ),
-      `open skill test${seat === undefined ? '' : ` for ${seat}`}`,
+      `open skill test${tested === undefined ? '' : ` for ${tested.name}`}`,
     );
     this.resolveTestDecision(decision, result, amount);
   }
@@ -567,9 +568,15 @@ export class PlayTable {
   /**
    * Resolves the skill test `id` an action raised, unless the test is to stay
    * `open`. The test is missing when attacks of opportunity come first, which
-   * only the players' own `takeAttackOfOpportunity` can settle.
+   * only the players' own `takeAttackOfOpportunity` can settle. `action` names
+   * the test in the error, since the decision id is an engine detail.
    */
-  private finishTest(id: string, result: SkillTestResult | 'open', amount?: number): void {
+  private finishTest(
+    id: string,
+    action: string,
+    result: SkillTestResult | 'open',
+    amount?: number,
+  ): void {
     if (result === 'open') {
       if (amount !== undefined) throw this.error('an open test has no count to confirm yet');
       return;
@@ -577,7 +584,7 @@ export class PlayTable {
     const decision = pendingDecision(this.current, decisionId(id));
     if (!decision)
       throw this.error(
-        `no skill test ${id} is open; attacks of opportunity come first: take them with takeAttackOfOpportunity, then resolveTest`,
+        `the test of ${action} is not open; attacks of opportunity come first: take them with takeAttackOfOpportunity, then resolveTest`,
       );
     this.resolveTestDecision(decision, result, amount);
   }

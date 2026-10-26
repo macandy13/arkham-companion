@@ -451,18 +451,20 @@ describe('investigating', () => {
     const stateBefore = table.state;
     const eventsBefore = table.events;
 
-    expect(() => table.investigate(alice)).toThrow(/takeAttackOfOpportunity/);
+    expect(() => table.investigate(alice)).toThrow(
+      /the test of alice's investigation is not open; .*takeAttackOfOpportunity/,
+    );
 
     expect(table.state).toBe(stateBefore);
     expect(table.events).toEqual(eventsBefore);
   });
 
   it('does not resolve the test of an investigator who has none open', () => {
-    const table = PlayTable.start(game.withInvestigator(bob, { locationId: study }));
+    const table = PlayTable.start(game.withInvestigator(bob, { name: 'Bob', locationId: study }));
     table.investigate(alice, { result: 'open' });
 
     expect(() => table.resolveTest('pass', { for: bob })).toThrow(
-      /open skill test for bob, found 0/,
+      /open skill test for Bob, found 0/,
     );
     table.resolveTest('pass', { for: alice });
 
