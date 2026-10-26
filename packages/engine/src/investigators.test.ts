@@ -225,27 +225,20 @@ describe('HealInvestigator', () => {
   });
 });
 
-describe('DoByHand', () => {
+describe('DrawCards', () => {
   const { context, state } = hallCellarAttic
     .withInvestigator(alice, { locationId: hall })
     .withInvestigator(bob, { locationId: hall })
     .start();
-  const drawThree: Command = {
-    type: 'DoByHand',
-    investigatorId: alice,
-    cardId: hall,
-    step: { kind: 'draw', amount: 3 },
-  };
+  const drawThree: Command = { type: 'DrawCards', investigatorId: alice, amount: 3 };
 
-  it('tells the players to draw 3 cards for alice and changes nothing else', () => {
+  it('leaves drawing 3 cards to alice, as the game holds no player cards, and changes nothing', () => {
     const { events, state: after } = execute(context, state, drawThree);
 
     expect(events).toEqual([
       {
-        type: 'ByHandStepDue',
-        investigatorId: alice,
-        cardId: hall,
-        step: { kind: 'draw', amount: 3 },
+        type: 'CommandDeferred',
+        command: { type: 'DrawCards', investigatorId: alice, amount: 3 },
       },
     ]);
     expect(after).toEqual(state);

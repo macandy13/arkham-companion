@@ -1,4 +1,4 @@
-import type { DeckStep } from '@arkham/engine';
+import type { PlayerCardCommand } from '@arkham/engine';
 import { assertNever } from '@arkham/util';
 import { useTranslation } from 'react-i18next';
 import type { SkippedEffect } from '../state/gameSession';
@@ -25,21 +25,21 @@ export function SkippedEffectsNotice({
         effect: t(`skipped.effects.${effect.effect}`, { defaultValue: t('skipped.anEffect') }),
         missing: effect.missing.join(', '),
       });
-    const what = describeStep(effect.step);
-    return t('skipped.deck.step', { investigator: effect.investigator, card: effect.card, what });
+    const what = describeCommand(effect.command);
+    return t('skipped.deferred.step', { investigator: effect.investigator, what });
   };
 
-  const describeStep = (step: DeckStep): string => {
-    switch (step.kind) {
-      case 'draw':
-        return t('skipped.deck.draw', { count: step.amount });
-      case 'search':
-        return t(step.top === undefined ? 'skipped.deck.search' : 'skipped.deck.searchTop', {
-          traits: step.traits.join(t('skipped.deck.or')),
-          top: step.top,
-        });
+  const describeCommand = (command: PlayerCardCommand): string => {
+    switch (command.type) {
+      case 'DrawCards':
+        return t('skipped.deferred.draw', { count: command.amount });
+      case 'SearchDeck':
+        return t(
+          command.top === undefined ? 'skipped.deferred.search' : 'skipped.deferred.searchTop',
+          { traits: command.traits.join(t('skipped.deferred.or')), top: command.top },
+        );
       default:
-        return assertNever(step);
+        return assertNever(command);
     }
   };
 

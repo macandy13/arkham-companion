@@ -39,7 +39,8 @@ export type Command =
   | MoveInvestigator
   | AdjustInvestigator
   | HealInvestigator
-  | DoByHand
+  | DrawCards
+  | SearchDeck
   | TakeDamageAndHorror
   | DefeatInvestigator
   | DiscoverClues
@@ -301,25 +302,28 @@ export interface HealInvestigator {
 }
 
 /**
- * Something an effect does to an investigator's own deck or hand, which the game doesn't track:
- * "draw 3 cards", or "search (the top 6 cards of) your deck for an [[Ally]] … and add it to your
- * hand. Shuffle your deck." A search finds a card with one of `traits`.
+ * "Draw N cards": the investigator draws from their own deck. The game holds no player cards, so
+ * `handleDrawCards` leaves it to the players (`CommandDeferred`).
  */
-export type DeckStep =
-  | { readonly kind: 'draw'; readonly amount: number }
-  | { readonly kind: 'search'; readonly traits: readonly Trait[]; readonly top?: number };
+export interface DrawCards {
+  type: 'DrawCards';
+  investigatorId: InvestigatorId;
+  amount: number;
+}
 
 /**
- * The investigator does `step` by hand, as `cardId`'s effect (Your House, Southside, Miskatonic
- * University): the players hold the player cards, so the engine only tells them
- * (`ByHandStepDue`).
+ * "Search (the top `top` cards of) your deck for a card with one of `traits`, add it to your hand
+ * and shuffle your deck." Left to the players like `DrawCards`.
  */
-export interface DoByHand {
-  type: 'DoByHand';
+export interface SearchDeck {
+  type: 'SearchDeck';
   investigatorId: InvestigatorId;
-  cardId: InstanceId;
-  step: DeckStep;
+  traits: readonly Trait[];
+  top?: number;
 }
+
+/** The commands on player cards, which the engine defers to the players (`CommandDeferred`). */
+export type PlayerCardCommand = DrawCards | SearchDeck;
 
 /**
  * An active investigator takes `damage` and `horror` from one effect ("take 1

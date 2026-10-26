@@ -39,8 +39,8 @@ export const resources = {
         effect:
           '{{card}}: {{effect}} was skipped, as the game does not hold exactly one copy of {{missing}}. Please do it by hand.',
         anEffect: 'an effect',
-        deck: {
-          step: '{{investigator}} ({{card}}): {{what}}. Please do it by hand.',
+        deferred: {
+          step: '{{investigator}}: {{what}}. Please do it by hand.',
           draw_one: 'draw 1 card',
           draw_other: 'draw {{count}} cards',
           search:
@@ -520,8 +520,8 @@ export const resources = {
         effect:
           '{{card}}: {{effect}} wurde übersprungen, da es nicht genau ein Exemplar von {{missing}} im Spiel gibt. Bitte von Hand erledigen.',
         anEffect: 'Ein Effekt',
-        deck: {
-          step: '{{investigator}} ({{card}}): {{what}}. Bitte von Hand erledigen.',
+        deferred: {
+          step: '{{investigator}}: {{what}}. Bitte von Hand erledigen.',
           draw_one: 'Ziehe 1 Karte',
           draw_other: 'Ziehe {{count}} Karten',
           search:

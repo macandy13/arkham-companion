@@ -3,11 +3,10 @@ import {
   type AbilityEffectSkipped,
   type CardCode,
   type BoardView,
-  type DeckStep,
+  type PlayerCardCommand,
   type Event,
   PlayTable,
   type GameId,
-  type InstanceId,
   type GameState,
   type GameStore,
   type LoggedEvent,
@@ -35,8 +34,8 @@ export async function startGame(
 
 /**
  * A card effect the players resolve by hand, in their words: one the engine skipped because a card
- * it names is not in the game exactly once (`AbilityEffectSkipped`), or a step on an
- * investigator's own deck, which the game doesn't hold (`ByHandStepDue`).
+ * it names is not in the game exactly once (`AbilityEffectSkipped`), or a command on an
+ * investigator's own cards, which the game doesn't hold (`CommandDeferred`).
  */
 export type SkippedEffect =
   | {
@@ -49,11 +48,10 @@ export type SkippedEffect =
       readonly missing: readonly string[];
     }
   | {
-      readonly kind: 'deckStep';
-      readonly card: string;
-      /** The name of the investigator whose deck it is. */
+      readonly kind: 'deferred';
+      /** The name of the investigator whose cards it is about. */
       readonly investigator: string;
-      readonly step: DeckStep;
+      readonly command: PlayerCardCommand;
     };
 
 /** The effects `events` leave to the players, named with the cards of `ctx`; `state` holds the cards they name. */
@@ -64,30 +62,24 @@ export function skippedEffects(
 ): SkippedEffect[] {
   // A code the cards don't know (a typo in the scenario data) has no name; the code is all there is.
   const nameOf = (code: CardCode) => ctx.cards.get(code)?.name ?? code;
-  const cardName = (cardId: InstanceId) => {
-    const card = state.cards[cardId];
-    return card ? nameOf(card.code) : cardId;
-  };
   return events.flatMap((event): SkippedEffect[] => {
     switch (event.type) {
-      case 'AbilityEffectSkipped':
+      case 'AbilityEffectSkipped': {
+        const card = state.cards[event.cardId];
         return [
           {
             kind: 'missingCard',
-            card: cardName(event.cardId),
+            card: card ? nameOf(card.code) : event.cardId,
             effect: event.effect,
             missing: event.missing.map(nameOf),
           },
         ];
-      case 'ByHandStepDue': {
-        const investigator = state.investigators.find((inv) => inv.id === event.investigatorId);
+      }
+      case 'CommandDeferred': {
+        const { command } = event;
+        const investigator = state.investigators.find((inv) => inv.id === command.investigatorId);
         return [
-          {
-            kind: 'deckStep',
-            card: cardName(event.cardId),
-            investigator: investigator?.name ?? event.investigatorId,
-            step: event.step,
-          },
+          { kind: 'deferred', investigator: investigator?.name ?? command.investigatorId, command },
         ];
       }
       default:

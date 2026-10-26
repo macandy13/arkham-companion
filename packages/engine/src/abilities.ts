@@ -253,7 +253,8 @@ export type AbilityCommand =
         type:
           | 'AdjustInvestigator'
           | 'HealInvestigator'
-          | 'DoByHand'
+          | 'DrawCards'
+          | 'SearchDeck'
           | 'TakeDamageAndHorror'
           | 'PlaceDoom'
           | 'MoveCard'
@@ -1091,23 +1092,18 @@ export function heal(
   return { type: 'HealInvestigator', investigatorId: who, stat, amount };
 }
 
-/** "Draw N cards" (Your House, Southside's Historical Society): the investigator draws them by hand. */
+/** "Draw N cards" (Your House, Southside's Historical Society). */
 export function drawCards(
   amount: number,
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
-  return {
-    type: 'DoByHand',
-    investigatorId: who,
-    cardId: { ref: 'self' },
-    step: { kind: 'draw', amount },
-  };
+  return { type: 'DrawCards', investigatorId: who, amount };
 }
 
 /**
  * A search of the investigator's deck for a card with one of `traits`, taken into hand before the
  * deck is shuffled (Ma's Boarding House, Miskatonic University), of only the `top` cards when the
- * card says so: done by hand.
+ * card says so.
  */
 export function searchDeck(
   traits: readonly Trait[],
@@ -1115,10 +1111,10 @@ export function searchDeck(
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
   return {
-    type: 'DoByHand',
+    type: 'SearchDeck',
     investigatorId: who,
-    cardId: { ref: 'self' },
-    step: { kind: 'search', traits, ...(top === undefined ? {} : { top }) },
+    traits,
+    ...(top === undefined ? {} : { top }),
   };
 }
 

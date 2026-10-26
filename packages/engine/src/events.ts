@@ -1,6 +1,6 @@
 import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
 import type { AbilityCommand, TestedAction } from './abilities';
-import type { DeckStep } from './commands';
+import type { PlayerCardCommand } from './commands';
 import type {
   CardCode,
   DecisionId,
@@ -57,7 +57,7 @@ export type Event =
   | EncounterCardDrawn
   | SurgeGained
   | CardActionUsed
-  | ByHandStepDue
+  | CommandDeferred
   | AbilityEffectSkipped
   | CluesDiscovered
   | SkillTestResolved
@@ -350,14 +350,12 @@ export interface CardActionUsed {
 }
 
 /**
- * The investigator is to do `step` on their own cards by hand, as `cardId`'s effect. Only a notice
- * for the players: the reducer ignores it. Produced by `DoByHand`.
+ * The engine can't carry out `command` (it holds no player cards), so the players do it by hand.
+ * Only a notice: the reducer ignores it. Produced by `DrawCards` and `SearchDeck`.
  */
-export interface ByHandStepDue {
-  type: 'ByHandStepDue';
-  investigatorId: InvestigatorId;
-  cardId: InstanceId;
-  step: DeckStep;
+export interface CommandDeferred {
+  type: 'CommandDeferred';
+  command: PlayerCardCommand;
 }
 
 /**

@@ -179,26 +179,31 @@ describe('The Midnight Masks card abilities', () => {
   });
 
   describe.each([
-    { code: '01124', name: 'Your House', step: { kind: 'draw', amount: 1 }, resources: 6 },
+    {
+      code: '01124',
+      name: 'Your House',
+      deferred: { type: 'DrawCards', investigatorId: alice, amount: 1 },
+      resources: 6,
+    },
     {
       code: '01126',
       name: 'Southside (Historical Society)',
-      step: { kind: 'draw', amount: 3 },
+      deferred: { type: 'DrawCards', investigatorId: alice, amount: 3 },
       resources: 5,
     },
     {
       code: '01127',
       name: "Southside (Ma's Boarding House)",
-      step: { kind: 'search', traits: ['Ally'] },
+      deferred: { type: 'SearchDeck', investigatorId: alice, traits: ['Ally'] },
       resources: 5,
     },
     {
       code: '01129',
       name: 'Miskatonic University',
-      step: { kind: 'search', traits: ['Tome', 'Spell'], top: 6 },
+      deferred: { type: 'SearchDeck', investigatorId: alice, traits: ['Tome', 'Spell'], top: 6 },
       resources: 5,
     },
-  ])('$name', ({ code, step, resources }) => {
+  ])('$name: $deferred.type, $resources resources after', ({ code, deferred, resources }) => {
     const location = instanceId('location');
     /** Alice there on her turn, with 5 resources. */
     const aliceThere = newGame()
@@ -213,17 +218,12 @@ describe('The Midnight Masks card abilities', () => {
       asAction: true,
     };
 
-    it('leaves the step on her deck to alice and ends with $resources resources', () => {
+    it('leaves the step on her deck to alice', () => {
       const { context, state: started } = aliceThere.start();
 
       const { events, state } = execute(context, started, useIt);
 
-      expect(events).toContainEqual({
-        type: 'ByHandStepDue',
-        investigatorId: alice,
-        cardId: location,
-        step,
-      });
+      expect(events).toContainEqual({ type: 'CommandDeferred', command: deferred });
       expect(requireInvestigator(state, alice)).toMatchObject({ resources });
     });
   });
@@ -270,7 +270,7 @@ describe('The Midnight Masks card abilities', () => {
 
     const { events } = execute(context, searchedOnce, searchThere);
 
-    expect(events).toContainEqual(expect.objectContaining({ type: 'ByHandStepDue' }));
+    expect(events).toContainEqual(expect.objectContaining({ type: 'CommandDeferred' }));
   });
 
   describe('Hunting Shadow', () => {

@@ -213,31 +213,23 @@ describe('GameSession on The Gathering', () => {
 });
 
 describe('skippedEffects', () => {
-  it("names the investigator and the card of a step on the investigator's deck", () => {
+  it('names the investigator of a command the engine left to the players', () => {
     const southside = instanceId('southside');
     const alder = investigatorId('alder');
     const { context, state } = newGame()
-      .withLocation(southside, blankLocation('southside', { name: 'Southside' }), {
-        revealed: true,
-      })
+      .withLocation(southside, blankLocation('southside'), { revealed: true })
       .withInvestigator(alder, { locationId: southside, name: 'Alder Ashcroft' })
       .start();
 
     const notices = skippedEffects({ ...context, scenario: theGathering }, state, [
-      {
-        type: 'ByHandStepDue',
-        investigatorId: alder,
-        cardId: southside,
-        step: { kind: 'draw', amount: 3 },
-      },
+      { type: 'CommandDeferred', command: { type: 'DrawCards', investigatorId: alder, amount: 3 } },
     ]);
 
     expect(notices).toEqual([
       {
-        kind: 'deckStep',
-        card: 'Southside',
+        kind: 'deferred',
         investigator: 'Alder Ashcroft',
-        step: { kind: 'draw', amount: 3 },
+        command: { type: 'DrawCards', investigatorId: alder, amount: 3 },
       },
     ]);
   });

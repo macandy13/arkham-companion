@@ -3,7 +3,7 @@ import type { EngineContext } from './cards';
 import type {
   AdjustInvestigator,
   HealInvestigator,
-  DoByHand,
+  PlayerCardCommand,
   DefeatInvestigator,
   DiscoverClues,
   MoveInvestigator,
@@ -96,13 +96,18 @@ export function handleHealInvestigator(
   ];
 }
 
-/** `DoByHand`: tells the players about the step (`ByHandStepDue`), for an active investigator. */
-export function handleDoByHand(_ctx: EngineContext, state: GameState, cmd: DoByHand): Event[] {
-  const investigator = activeInvestigator(state, cmd.investigatorId);
-  requireCard(state.cards, cmd.cardId);
-  return [
-    { type: 'ByHandStepDue', investigatorId: investigator.id, cardId: cmd.cardId, step: cmd.step },
-  ];
+/**
+ * `DrawCards` and `SearchDeck`: the engine holds no player cards, so it hands the command to the
+ * players (`CommandDeferred`), for an active investigator. Support for player cards would handle
+ * them here instead.
+ */
+export function deferToPlayers(
+  _ctx: EngineContext,
+  state: GameState,
+  cmd: PlayerCardCommand,
+): Event[] {
+  activeInvestigator(state, cmd.investigatorId);
+  return [{ type: 'CommandDeferred', command: cmd }];
 }
 
 /**

@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { trait } from '@arkham/engine';
+import { investigatorId, trait } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { SkippedEffectsNotice } from './SkippedEffectsNotice';
 
 describe('SkippedEffectsNotice', () => {
+  const roland = investigatorId('roland');
   beforeAll(() => initI18n('en'));
   afterEach(cleanup);
 
@@ -44,35 +45,28 @@ describe('SkippedEffectsNotice', () => {
 
   it.each([
     {
-      card: 'Southside',
-      step: { kind: 'draw', amount: 3 },
-      text: 'Roland Banks (Southside): draw 3 cards. Please do it by hand.',
+      command: { type: 'DrawCards', investigatorId: roland, amount: 3 },
+      text: 'Roland Banks: draw 3 cards. Please do it by hand.',
     },
     {
-      card: 'Miskatonic University',
-      step: { kind: 'search', traits: [trait('Tome'), trait('Spell')], top: 6 },
-      text: 'Roland Banks (Miskatonic University): search the top 6 cards of your deck for a card with the trait Tome or Spell, add it to your hand and shuffle your deck. Please do it by hand.',
+      command: {
+        type: 'SearchDeck',
+        investigatorId: roland,
+        traits: [trait('Tome'), trait('Spell')],
+        top: 6,
+      },
+      text: 'Roland Banks: search the top 6 cards of your deck for a card with the trait Tome or Spell, add it to your hand and shuffle your deck. Please do it by hand.',
     },
-  ] as const)(
-    'asks the investigator to do a step on their deck by hand: $text',
-    ({ card, step, text }) => {
-      render(
-        <SkippedEffectsNotice
-          skipped={[
-            {
-              kind: 'deckStep',
-              card,
-              investigator: 'Roland Banks',
-              step,
-            },
-          ]}
-          onDismiss={() => {}}
-        />,
-      );
+  ] as const)('asks the players to do what the game left to them: $text', ({ command, text }) => {
+    render(
+      <SkippedEffectsNotice
+        skipped={[{ kind: 'deferred', investigator: 'Roland Banks', command }]}
+        onDismiss={() => {}}
+      />,
+    );
 
-      expect(screen.getByRole('status').textContent).toContain(text);
-    },
-  );
+    expect(screen.getByRole('status').textContent).toContain(text);
+  });
 
   it('is dismissed with OK', () => {
     const onDismiss = vi.fn();

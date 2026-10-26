@@ -546,10 +546,8 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     table.endTurn(roland);
     expect(table.board.investigator(roland)).toMatchObject({ resources: 15 });
     expect(table.events).toContainEqual({
-      type: 'ByHandStepDue',
-      investigatorId: roland,
-      cardId: table.board.location(byName('Your House')).id,
-      step: { kind: 'draw', amount: 1 },
+      type: 'CommandDeferred',
+      command: { type: 'DrawCards', investigatorId: roland, amount: 1 },
     });
     table.startTurn(daisy);
     table.useCardAction(daisy, byName('Time Is Running Short'));
