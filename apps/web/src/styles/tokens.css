@@ -238,6 +238,8 @@
   --action-spent-opacity: 0.3;
   /* The icon before the name of an investigator's counter. */
   --stat-icon-size: 0.875rem;
+  /* The skill icon on an investigator card's skill plate, above its value. */
+  --skill-plate-icon-size: 1.25rem;
   /* An icon on an icon button (`button[data-icon]` in base.css). */
   --icon-size: 1.25rem;
   /* What is left of a name kept only for screen readers: a dot, clipped away. */

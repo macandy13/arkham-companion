@@ -34,12 +34,14 @@ export function SkillToggles({
               aria-pressed={chosen.includes(each)}
               aria-label={t('investigators.skillValue', {
                 skill: t(`skill.${each}`),
-                value: investigator.skills[each],
+                value: investigator.boostedSkills[each],
               })}
               data-skill={each}
               onClick={() => onPick(each)}
             >
-              <data value={investigator.skills[each]}>{investigator.skills[each]}</data>
+              <data value={investigator.boostedSkills[each]}>
+                {investigator.boostedSkills[each]}
+              </data>
             </button>
           </li>
         ))}

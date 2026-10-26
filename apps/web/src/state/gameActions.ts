@@ -8,6 +8,7 @@ import {
   type InvestigatorStat,
   type PlayTable,
   type ResolveDecision,
+  type SkillName,
   type TokenKind,
 } from '@arkham/engine';
 import { assertNever } from '@arkham/util';
@@ -108,6 +109,11 @@ export interface GameActions {
   adjustActClues(delta: number): Promise<void>;
   /** One tap on an investigator's stepper: `delta` more (or, negative, fewer) of `stat`. */
   adjust(investigator: InvestigatorId, stat: SteppedStat, delta: number): Promise<void>;
+  /**
+   * One tap on a skill's stepper: the lasting boost of `skill` (`Investigator.skillBoosts`, what
+   * player cards in play add) changed by `delta`, a correction by hand (`ManualAdjust`).
+   */
+  boostSkill(investigator: InvestigatorId, skill: SkillName, delta: number): Promise<void>;
   /** Doom on the current agenda. */
   placeDoom(amount: number): Promise<void>;
   /** Doom taken off the current agenda by hand (a card effect, a miscount). */
@@ -224,6 +230,13 @@ export function gameActions(
       ),
     adjust: (investigator, stat, delta) =>
       play((table) => adjustStat(table, investigator, stat, delta)),
+    boostSkill: (investigator, skill, delta) =>
+      play((table) =>
+        table.play({
+          type: 'ManualAdjust',
+          adjustment: { kind: 'skillBoost', investigatorId: investigator, skill, delta },
+        }),
+      ),
     placeDoom: (amount) => play((table) => table.placeDoom(amount)),
     removeDoom: (amount) => play((table) => table.removeDoom(amount)),
     revealLocation: (location) =>
