@@ -46,3 +46,11 @@ export function withRunningTotals<T extends object>(
 export function range(count: number): number[] {
   return Array.from({ length: count }, (_, index) => index);
 }
+
+/**
+ * A copy of `items` with those that `matches` first, each group keeping its order: the
+ * investigator whose turn it is ahead of the others. Total: no match leaves an equal copy.
+ */
+export function matchingFirst<T>(items: readonly T[], matches: (item: T) => boolean): T[] {
+  return [...items.filter(matches), ...items.filter((item) => !matches(item))];
+}

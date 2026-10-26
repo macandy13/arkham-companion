@@ -114,6 +114,12 @@ export interface GameActions {
    * player cards in play add) changed by `delta`, a correction by hand (`ManualAdjust`).
    */
   boostSkill(investigator: InvestigatorId, skill: SkillName, delta: number): Promise<void>;
+  /**
+   * `investigator` draws the top card of the encounter deck, at any time, as player cards and
+   * effects say; it resolves like a mythos draw. Not tied to the turn, since any active
+   * investigator may be told to draw.
+   */
+  drawEncounter(investigator: InvestigatorId): Promise<void>;
   /** Doom on the current agenda. */
   placeDoom(amount: number): Promise<void>;
   /** Doom taken off the current agenda by hand (a card effect, a miscount). */
@@ -237,6 +243,7 @@ export function gameActions(
           adjustment: { kind: 'skillBoost', investigatorId: investigator, skill, delta },
         }),
       ),
+    drawEncounter: (investigator) => play((table) => table.drawEncounterCard(investigator)),
     placeDoom: (amount) => play((table) => table.placeDoom(amount)),
     removeDoom: (amount) => play((table) => table.removeDoom(amount)),
     revealLocation: (location) =>

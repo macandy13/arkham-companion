@@ -3,15 +3,25 @@ import { useTranslation } from 'react-i18next';
 import type { BoardView, EncounterCardView } from '@arkham/engine';
 import { useCardPicture } from '../catalog/cardImages';
 import { Token } from '../screens/Token';
+import type { GameActions } from '../state/gameActions';
 import { EncounterDialog, type EncounterPile } from './EncounterDialog';
 import './encounter.css';
 
 /**
  * The encounter piles in the header (`BoardView.encounter`): the deck as an upright card back with
  * the cards left on a round token, like the agenda's doom, and its discard pile beside it. Both are
- * buttons that open the encounter dialog (`EncounterDialog`), on the pile tapped.
+ * buttons that open the encounter dialog (`EncounterDialog`), on the pile tapped, which draws with
+ * `actions` unless a step is queued (`busy`).
  */
-export function EncounterPiles({ board }: { board: BoardView }) {
+export function EncounterPiles({
+  board,
+  actions,
+  busy,
+}: {
+  board: BoardView;
+  actions: GameActions;
+  busy: boolean;
+}) {
   const { t } = useTranslation();
   const [openOn, setOpenOn] = useState<EncounterPile>();
   const { deckCount, discard } = board.encounter;
@@ -26,7 +36,13 @@ export function EncounterPiles({ board }: { board: BoardView }) {
       </button>
       <DiscardPile top={discard[0]} count={discard.length} onOpen={() => setOpenOn('discard')} />
       {openOn && (
-        <EncounterDialog board={board} start={openOn} onClose={() => setOpenOn(undefined)} />
+        <EncounterDialog
+          board={board}
+          start={openOn}
+          actions={actions}
+          busy={busy}
+          onClose={() => setOpenOn(undefined)}
+        />
       )}
     </>
   );
