@@ -539,6 +539,36 @@ describe('FromSetAside', () => {
   });
 });
 
+describe('DrawFromScenarioDeck', () => {
+  const cultistDeck: Zone = { kind: 'scenarioDeck', deck: 'cultist' };
+  const drawCultist: Command = {
+    type: 'DrawFromScenarioDeck',
+    investigatorId: alice,
+    deck: 'cultist',
+  };
+
+  it('spawns the top card engaged with the drawer and leaves the rest in the deck', () => {
+    const { context, state } = aliceInHall
+      .withCard(instanceId('top_cultist'), foeCard, cultistDeck)
+      .withCard(instanceId('second_cultist'), foeCard, cultistDeck)
+      .start();
+
+    const after = stateAfter(context, state, drawCultist);
+
+    expect(after.cards[instanceId('top_cultist')]?.zone).toEqual(engagedWith(alice));
+    expect(idsIn(after, cultistDeck)).toEqual(['second_cultist']);
+  });
+
+  it('rejects a draw from an empty deck', () => {
+    const { context, state } = aliceInHall.start();
+
+    expect(rejectionFrom(context, state, drawCultist)).toEqual({
+      code: 'scenarioDeckEmpty',
+      deck: 'cultist',
+    });
+  });
+});
+
 describe('ShuffleInto', () => {
   it('adds the set-aside cards to the deck and shuffles all of it', () => {
     const { context, state } = aliceInHall

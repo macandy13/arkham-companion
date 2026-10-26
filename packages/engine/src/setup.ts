@@ -28,11 +28,11 @@ import {
 import { investigatorCard } from './investigator_cards';
 import { layoutOf, type Edge, type GridCell, type MapSpec } from './map';
 import { CommandRejected } from './rejection';
-import { nextInt, seedRng } from './rng';
+import { nextInt, seedRng, shuffle } from './rng';
 import type { ScenarioDefinition } from './scenario';
 import { spawnZone } from './spawn';
 import type { ChaosToken, Difficulty, TokenKind } from './state';
-import type { Zone } from './zone';
+import { scenarioDeck, type ScenarioDeck, type Zone } from './zone';
 
 /**
  * A number of tokens as printed in setup instructions: a plain amount or a
@@ -113,6 +113,16 @@ export interface BuildEncounterDeckStep {
   kind: 'buildEncounterDeck';
   sets: readonly EncounterSetCode[];
   exclude?: readonly CardCode[];
+}
+
+/**
+ * Builds a scenario deck of its own from one copy of each code, shuffled with the setup's seed
+ * ("shuffle them to form the Cultist deck").
+ */
+export interface ScenarioDeckStep {
+  kind: 'scenarioDeck';
+  deck: ScenarioDeck;
+  codes: readonly CardCode[];
 }
 
 /** Shuffles one copy of each code into the encounter deck, whatever its encounter set. */
@@ -200,6 +210,7 @@ type PlacingStep =
   | SetAsideStep
   | BuildEncounterDeckStep
   | ShuffleIntoEncounterDeckStep
+  | ScenarioDeckStep
   | PlaceTokensStep
   | SpawnStep
   | MoveInvestigatorsStep
@@ -207,6 +218,9 @@ type PlacingStep =
 
 /** Mixed into the setup seed for the location picks (`withPickedLocations`). */
 const VERSION_PICK_STREAM = 0x5e7c9;
+
+/** Mixed into the setup seed for the scenario deck shuffles (`withShuffledDecks`). */
+const SCENARIO_DECK_STREAM = 0xdec26;
 
 /** Mixed into the setup seed for the `OneAtRandomStep` picks. */
 const STEP_PICK_STREAM = 0x0a7e5;
@@ -291,12 +305,15 @@ export function compileSetup(ctx: ScenarioContext, options: SetupOptions): Start
   const log = options.campaign;
   if (log) checkCampaignSeats(log, def.id, options.investigators);
   const playerCount = options.investigators.length;
-  const steps = withPickedLocations(
-    placingSteps(def.setup, {
-      story: log?.story ?? {},
-      playerCount,
-      pick: seededPicker(options.seed ^ STEP_PICK_STREAM),
-    }),
+  const steps = withShuffledDecks(
+    withPickedLocations(
+      placingSteps(def.setup, {
+        story: log?.story ?? {},
+        playerCount,
+        pick: seededPicker(options.seed ^ STEP_PICK_STREAM),
+      }),
+      options.seed,
+    ),
     options.seed,
   );
   const env: SetupEnv = {
@@ -475,6 +492,20 @@ function withPickedLocations(steps: readonly PlacingStep[], seed: number): reado
 }
 
 /**
+ * The steps with the codes of each scenario deck in a shuffled order, from a seeded stream of
+ * their own: shuffling with the game's RNG would change every later random result of the game.
+ */
+function withShuffledDecks(steps: readonly PlacingStep[], seed: number): readonly PlacingStep[] {
+  let rng = seedRng(seed ^ SCENARIO_DECK_STREAM);
+  return steps.map((step) => {
+    if (step.kind !== 'scenarioDeck') return step;
+    const [codes, next] = shuffle(step.codes, rng);
+    rng = next;
+    return { ...step, codes };
+  });
+}
+
+/**
  * The map step with its `atRandom` locations picked and placed in their cells, and without the
  * connections to the ones left out.
  */
@@ -522,6 +553,7 @@ function renamed(step: PlacingStep, picked: (code: CardCode) => CardCode): Placi
     case 'setAside':
     case 'buildEncounterDeck':
     case 'shuffleIntoEncounterDeck':
+    case 'scenarioDeck':
     case 'addChaosTokens':
       return step;
   }
@@ -537,6 +569,11 @@ function applyStep(draft: SetupDraft, step: PlacingStep, env: SetupEnv): SetupDr
     case 'shuffleIntoEncounterDeck':
       return step.codes.reduce(
         (state, code) => withCard(state, code, { kind: 'encounterDeck' }),
+        draft,
+      );
+    case 'scenarioDeck':
+      return step.codes.reduce(
+        (state, code) => withCard(state, code, scenarioDeck(step.deck)),
         draft,
       );
     case 'buildEncounterDeck':
@@ -717,6 +754,7 @@ function stepCodes(step: PlacingStep): readonly CardCode[] {
       return [step.code];
     case 'setAside':
     case 'shuffleIntoEncounterDeck':
+    case 'scenarioDeck':
       return step.codes;
     default:
       return [];

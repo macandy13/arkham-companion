@@ -107,6 +107,29 @@ describe('compileSetup', () => {
     ]);
   });
 
+  it.each([
+    { seed: 1, order: ['cultist_c#1', 'cultist_b#1', 'cultist_a#1'] },
+    { seed: 3, order: ['cultist_b#1', 'cultist_c#1', 'cultist_a#1'] },
+  ])('builds the Cultist deck in the order seed $seed shuffles it to', ({ seed, order }) => {
+    const def = makeDefinition({
+      setup: [
+        {
+          kind: 'scenarioDeck',
+          deck: 'cultist',
+          codes: [cardCode('cultist_a'), cardCode('cultist_b'), cardCode('cultist_c')],
+        },
+      ],
+    });
+
+    const command = scenario.compileSetup(
+      { cards: investigatorCards, scenario: def },
+      makeSetupOptions({ seed }),
+    );
+
+    expect(command.cards.map((c) => c.id)).toEqual(order);
+    expect(command.cards.every((c) => c.zone.kind === 'scenarioDeck')).toBe(true);
+  });
+
   it('spawns an enemy at a location', () => {
     const def = makeDefinition({
       setup: [mainMap('loc'), { kind: 'spawn', code: cardCode('enemy'), at: cardCode('loc') }],

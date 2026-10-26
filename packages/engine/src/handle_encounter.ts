@@ -1,6 +1,7 @@
 import { cardStats, type CardStats, type EngineContext } from './cards';
 import type {
   DrawEncounter,
+  DrawFromScenarioDeck,
   EncounterMatch,
   EncounterSource,
   FromSetAside,
@@ -25,7 +26,7 @@ import { replay } from './reducer';
 import { CommandRejected } from './rejection';
 import { shuffle } from './rng';
 import type { CardInstance, GameState, Investigator } from './state';
-import { encounterDeck, encounterDiscard, setAside, type Zone } from './zone';
+import { encounterDeck, encounterDiscard, scenarioDeck, setAside, type Zone } from './zone';
 
 const RESOLVING: Zone = { kind: 'resolving' };
 
@@ -126,6 +127,18 @@ function cardsAbove(state: GameState, cardId: InstanceId): readonly InstanceId[]
   const deck = cardsInZone(state, encounterDeck);
   const index = deck.indexOf(cardId);
   return index < 0 ? [] : deck.slice(0, index);
+}
+
+/** `DrawFromScenarioDeck`: the deck's top card spawns, with the drawer as the fallback location. */
+export function handleDrawFromScenarioDeck(
+  ctx: EngineContext,
+  state: GameState,
+  cmd: DrawFromScenarioDeck,
+): Event[] {
+  const investigator = activeInvestigator(state, cmd.investigatorId);
+  const [top] = cardsInZone(state, scenarioDeck(cmd.deck));
+  if (top === undefined) throw new CommandRejected({ code: 'scenarioDeckEmpty', deck: cmd.deck });
+  return spawnEvents(ctx, state, top, { investigatorId: investigator.id });
 }
 
 /** `FromSetAside`: moves one set-aside copy of each code to `to`. */

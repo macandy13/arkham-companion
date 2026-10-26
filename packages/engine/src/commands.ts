@@ -23,7 +23,7 @@ import type {
   TokenKind,
   WoundKind,
 } from './state';
-import type { Zone } from './zone';
+import type { ScenarioDeck, Zone } from './zone';
 
 /** Commands are intents from the UI; `handle` validates them and produces events. */
 export type Command =
@@ -56,6 +56,7 @@ export type Command =
   | ShuffleEncounterDeck
   | EngageReadyEnemies
   | SpawnEnemy
+  | DrawFromScenarioDeck
   | EngageEnemy
   | DisengageEnemy
   | DamageEnemy
@@ -562,6 +563,18 @@ export interface ShuffleEncounterDeck {
  * `CardMoved`, then `EnemyEngaged` or `DecisionRequested` (prey tie). `DrawEncounter` resolves
  * a drawn enemy the same way.
  */
+/**
+ * "Draw the top card of the Cultist deck": `investigatorId` draws the top card of a scenario deck
+ * (`ScenarioDeckStep`), an enemy, which spawns like `SpawnEnemy` with them as the drawing
+ * investigator. Rejected when the deck is empty (`scenarioDeckEmpty`). Produces `SpawnEnemy`'s
+ * events.
+ */
+export interface DrawFromScenarioDeck {
+  type: 'DrawFromScenarioDeck';
+  investigatorId: InvestigatorId;
+  deck: ScenarioDeck;
+}
+
 export interface SpawnEnemy {
   type: 'SpawnEnemy';
   enemyId: InstanceId;

@@ -5,6 +5,8 @@ export type Zone =
   | { kind: 'encounterDeck' }
   | { kind: 'encounterDiscard' }
   | { kind: 'setAside' }
+  /** A deck of the scenario's own, apart from the encounter deck (The Midnight Masks' Cultist deck). */
+  | { kind: 'scenarioDeck'; deck: ScenarioDeck }
   | { kind: 'victoryDisplay' }
   | { kind: 'outOfGame' }
   /**
@@ -30,6 +32,12 @@ export type Zone =
   /** Attachment to a location, enemy, agenda, … */
   | { kind: 'attachedTo'; hostId: InstanceId };
 
+/**
+ * The scenario decks a setup can build (`ScenarioDeckStep`), one name per deck a scenario
+ * prints. Cards are drawn from the top with `DrawFromScenarioDeck`.
+ */
+export type ScenarioDeck = 'cultist';
+
 /** Discriminator of `Zone`. */
 export type ZoneKind = Zone['kind'];
 
@@ -48,6 +56,8 @@ export function zoneKey(zone: Zone): ZoneKey {
       return `${zone.kind}:${zone.investigatorId}` as ZoneKey;
     case 'attachedTo':
       return `attachedTo:${zone.hostId}` as ZoneKey;
+    case 'scenarioDeck':
+      return `scenarioDeck:${zone.deck}` as ZoneKey;
     default:
       return zone.kind as ZoneKey;
   }
@@ -66,6 +76,11 @@ export const encounterDiscard: Zone = { kind: 'encounterDiscard' };
 
 /** Cards the scenario set aside, out of play until a card or setup brings them in. */
 export const setAside: Zone = { kind: 'setAside' };
+
+/** A scenario deck of the scenario's own; its order is top first. */
+export function scenarioDeck(deck: ScenarioDeck): Zone {
+  return { kind: 'scenarioDeck', deck };
+}
 
 /** The zone of an unengaged card at a location, e.g. an enemy that spawned there. */
 export function atLocation(locationId: InstanceId): Zone {

@@ -7,7 +7,7 @@ import { cardsInZone } from './lookup';
 import { mapLocations } from './map';
 import { PHASE_STEP_TITLES } from './phases';
 import type { CardInstance, Decision, GameState, Investigator, PhaseStep } from './state';
-import type { Zone } from './zone';
+import { scenarioDeck, type ScenarioDeck, type Zone } from './zone';
 
 /**
  * The board as plain text, for debugging and test failure messages: round and
@@ -33,6 +33,7 @@ export function formatBoard(ctx: EngineContext, state: GameState): string {
     ...state.investigators.map((investigator) => investigatorLine(ctx, state, investigator)),
     encounterLine(ctx, state),
     ...resolvingLines(ctx, state),
+    ...scenarioDeckLines(state),
     `Set aside: ${countIn(state, { kind: 'setAside' })} cards`,
     `Victory display: ${listOrNone(namesIn(ctx, state, { kind: 'victoryDisplay' }))}`,
     ...decisionLines(ctx, state),
@@ -220,6 +221,20 @@ function cardsIn(state: GameState, zone: Zone): CardInstance[] {
 function namesIn(ctx: EngineContext, state: GameState, zone: Zone): string[] {
   return cardsIn(state, zone).map((card) => nameOf(ctx, card));
 }
+
+/** One line per scenario deck that has cards ("Cultist deck: 5 cards"); not their order, which is hidden. */
+function scenarioDeckLines(state: GameState): string[] {
+  const decks = new Set(
+    Object.values(state.cards).flatMap(({ zone }) =>
+      zone.kind === 'scenarioDeck' ? [zone.deck] : [],
+    ),
+  );
+  return [...decks].map(
+    (deck) => `${SCENARIO_DECK_NAMES[deck]}: ${countIn(state, scenarioDeck(deck))} cards`,
+  );
+}
+
+const SCENARIO_DECK_NAMES: Record<ScenarioDeck, string> = { cultist: 'Cultist deck' };
 
 function countIn(state: GameState, zone: Zone): number {
   return cardsInZone(state, zone).length;

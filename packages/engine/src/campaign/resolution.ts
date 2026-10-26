@@ -89,11 +89,10 @@ export type ResolutionStep =
     };
 
 /**
- * Where a card is when the game ends, as resolutions ask about it. A
- * scenario's own deck (The Midnight Masks' Cultist deck) is set aside, so
- * cards left out of it must go out of the game, not set aside.
+ * Where a card is when the game ends, as resolutions ask about it: `scenarioDeck` is any deck
+ * of the scenario's own (The Midnight Masks' Cultist deck).
  */
-export type CardPlace = 'inPlay' | 'setAside' | 'victoryDisplay';
+export type CardPlace = 'inPlay' | 'setAside' | 'scenarioDeck' | 'victoryDisplay';
 
 /** A question about the ended game that a `when` or `recordNames` step asks. */
 export type GameCondition =
@@ -310,9 +309,9 @@ function isAt(game: GameState, card: CardInstance, place: CardPlace): boolean {
     case 'inPlay':
       return isInPlay(game, card);
     case 'setAside':
-      return card.zone.kind === 'setAside';
+    case 'scenarioDeck':
     case 'victoryDisplay':
-      return card.zone.kind === 'victoryDisplay';
+      return card.zone.kind === place;
     default:
       return assertNever(place);
   }
