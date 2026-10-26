@@ -1127,6 +1127,14 @@ export function searchDeck(
   };
 }
 
+/** "Gain N clues from the token pool" (Northside). */
+export function gainClues(
+  amount: number,
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'AdjustInvestigator', investigatorId: who, stat: 'clues', delta: amount };
+}
+
 /** "Gain N resources" (First Bank of Arkham). */
 export function gainResources(
   amount: number,

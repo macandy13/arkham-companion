@@ -152,6 +152,7 @@ export {
   takeHorror,
   heal,
   gainResources,
+  gainClues,
   drawCards,
   searchDeck,
   spendClues,
@@ -180,7 +181,13 @@ export type {
   TestedAction,
 } from './abilities';
 export { MAX_TRIGGERED_COMMANDS } from './triggers';
-export { offersActionsTo, resignAction, type ActionLimit, type CardAction } from './card_actions';
+export {
+  offersActionsTo,
+  resignAction,
+  type ActionCost,
+  type ActionLimit,
+  type CardAction,
+} from './card_actions';
 export * from './store';
 export { undoLastGroup } from './undo';
 // Campaign functions are reached as `campaign.handleCommand` and so on, so

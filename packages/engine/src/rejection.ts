@@ -184,6 +184,13 @@ export type Rejection =
       action: number;
       investigatorId: InvestigatorId;
     }
+  /** `UseCardAction` on an action whose cost the investigator can't pay ("Spend 5 resources:"). */
+  | {
+      code: 'cardActionCostUnpaid';
+      cardId: InstanceId;
+      action: number;
+      investigatorId: InvestigatorId;
+    }
   /** A command that belongs to another phase (e.g. `EndTurn` outside investigation). */
   | { code: 'wrongPhase'; expected: Phase; actual: Phase }
   /** `EndTurn` for an investigator who has already taken their turn this round. */
@@ -411,6 +418,8 @@ function describe(r: Rejection): string {
       return `${r.investigatorId} cannot take the actions of ${r.cardId} now`;
     case 'cardActionLimitReached':
       return `${r.investigatorId} has used action ${r.action} of ${r.cardId} as often as its limit allows`;
+    case 'cardActionCostUnpaid':
+      return `${r.investigatorId} cannot pay the cost of action ${r.action} of ${r.cardId}`;
     case 'wrongPhase':
       return `only allowed in the ${r.expected} phase, not in ${r.actual}`;
     case 'turnAlreadyTaken':

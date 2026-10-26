@@ -139,6 +139,8 @@ export interface EnemyOptions {
   keywords?: readonly Keyword[];
   /** Its forced abilities ("Wolf-Man" Drew's heal). */
   abilities?: readonly Ability[];
+  /** Its action abilities, such as a Parley. */
+  actions?: readonly CardAction[];
 }
 
 /** Card stats for a hand-entered enemy, with its front picture (its back is the encounter back). */
@@ -149,6 +151,7 @@ export function enemy({
   quantity = 1,
   victory,
   abilities,
+  actions,
   ...stats
 }: EnemyOptions): CardStats {
   return {
@@ -161,6 +164,7 @@ export function enemy({
     quantity,
     ...(victory === undefined ? {} : { victory }),
     ...(abilities ? { abilities } : {}),
+    ...(actions ? { actions } : {}),
   };
 }
 
