@@ -1,7 +1,7 @@
 import { expect, test } from './fixtures/test';
 
 // Journey: the new game wizard from the entry points to a started game.
-test('start a new game', async ({ page }) => {
+test('start a new game', { tag: '@flow' }, async ({ page }) => {
   const portraits = page.getByRole('list', { name: 'Investigators' });
   const seats = page.getByRole('region', { name: 'Seats' });
   const search = page.getByRole('searchbox', { name: 'Search by name' });
@@ -33,7 +33,9 @@ test('start a new game', async ({ page }) => {
 
   await test.step('Filter by class and seat the seeker', async () => {
     await search.clear();
+    await page.getByRole('button', { name: 'Filters' }).click();
     await page.getByRole('button', { name: 'Seeker', exact: true }).click();
+    await page.getByRole('button', { name: 'Filters (1 set)' }).click();
     await expect(portraits.getByRole('listitem')).toHaveCount(1);
     await portraits.getByRole('button', { name: /Fake Seeker/ }).click();
     await page.getByRole('button', { name: 'Select', exact: true }).click();

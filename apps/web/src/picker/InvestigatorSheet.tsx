@@ -1,6 +1,6 @@
 import type { InvestigatorDef } from '@arkham/carddata';
 import { SKILL_NAMES } from '@arkham/engine';
-import { Fragment } from 'react';
+import { Fragment, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 interface InvestigatorSheetProps {
@@ -16,7 +16,11 @@ interface InvestigatorSheetProps {
   readonly onClose: () => void;
 }
 
-/** Detail sheet: both card faces, health, sanity, skills and the select action. */
+/**
+ * Detail sheet over the picker: both card faces, health, sanity, skills and the select action. A
+ * native modal `<dialog>` brings focus trapping and Escape; it stays open while it turns to the
+ * other chapter's version.
+ */
 export function InvestigatorSheet({
   investigator,
   otherChapter,
@@ -28,20 +32,27 @@ export function InvestigatorSheet({
   onClose,
 }: InvestigatorSheetProps) {
   const { t } = useTranslation();
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    dialog.current?.showModal();
+  }, []);
   const faces = [investigator.imageSrc, investigator.backImageSrc].filter(
     (src): src is string => src !== undefined,
   );
 
   return (
-    <aside aria-labelledby="picker-sheet-heading">
+    <dialog
+      ref={dialog}
+      aria-labelledby="picker-sheet-heading"
+      onCancel={onClose}
+      data-dialog="investigator"
+    >
       <header>
         <h3 id="picker-sheet-heading">{investigator.name}</h3>
         <small data-chapter={investigator.chapter}>
           {t('picker.chapterBadge', { n: investigator.chapter })}
         </small>
-        <button type="button" onClick={onClose}>
-          {t('picker.close')}
-        </button>
+        <button type="button" data-icon="close" aria-label={t('picker.close')} onClick={onClose} />
       </header>
       {investigator.subname && <p>{investigator.subname}</p>}
       <figure>
@@ -73,6 +84,6 @@ export function InvestigatorSheet({
       <button type="button" disabled={seatNumber !== undefined || seatsFull} onClick={onSelect}>
         {seatNumber === undefined ? t('picker.select') : t('picker.seated', { n: seatNumber })}
       </button>
-    </aside>
+    </dialog>
   );
 }
