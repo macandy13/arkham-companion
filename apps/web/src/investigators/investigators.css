@@ -151,17 +151,9 @@
   background: none;
 }
 
-#investigators [data-card='investigator'] > ul > li > button {
+/* The plate is the first button; the boost steppers after it keep the panel's small buttons. */
+#investigators [data-card='investigator'] > ul > li > button:first-child {
   grid-column: 1 / -1;
-}
-
-/* A lasting boost beside the boosted value, smaller, so the printed value can be told from the two. */
-#investigators [data-card='investigator'] > ul > li > button > data + data {
-  font-size: var(--font-size-caption);
-  font-weight: normal;
-}
-
-#investigators [data-card='investigator'] > ul > li > button {
   display: flex;
   gap: var(--space-1);
   align-items: center;
@@ -178,7 +170,13 @@
   font-variant-numeric: lining-nums;
 }
 
-#investigators [data-card='investigator'] > ul > li > button::before {
+/* A lasting boost beside the boosted value, smaller, so the printed value can be told from the two. */
+#investigators [data-card='investigator'] > ul > li > button:first-child > data + data {
+  font-size: var(--font-size-caption);
+  font-weight: normal;
+}
+
+#investigators [data-card='investigator'] > ul > li > button:first-child::before {
   content: '';
   width: var(--stat-icon-size);
   height: var(--stat-icon-size);

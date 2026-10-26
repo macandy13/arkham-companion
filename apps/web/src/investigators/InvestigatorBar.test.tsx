@@ -140,7 +140,12 @@ describe('InvestigatorBar', () => {
     );
 
     const combat = within(panel('alder')).getByRole('button', { name: 'Combat 3, boosted +2' });
-    expect(combat.textContent).toBe('3+2');
+    expect(
+      [...combat.querySelectorAll('data')].map((data) => [data.value, data.textContent]),
+    ).toEqual([
+      ['3', '3'],
+      ['2', '+2'],
+    ]);
   });
 
   it('shows the art of the card picture once it has loaded', () => {

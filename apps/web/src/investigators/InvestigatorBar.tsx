@@ -171,7 +171,7 @@ function Skills({
 }) {
   const { t } = useTranslation();
   const [testing, setTesting] = useState<SkillName>();
-  const { skills, boosts } = investigator;
+  const { boostedSkills, boosts } = investigator;
   // A defeated or resigned investigator has left the game, so their boosts no longer change.
   const off = busy || investigator.status !== 'active';
   return (
@@ -179,7 +179,7 @@ function Skills({
       <ul aria-label={t('investigators.skills')}>
         {SKILL_NAMES.map((skill) => {
           const boost = boosts?.[skill] ?? 0;
-          const value = skills[skill] + boost;
+          const value = boostedSkills[skill];
           const name = t(`skill.${skill}`);
           return (
             <li key={skill} data-skill={skill}>
