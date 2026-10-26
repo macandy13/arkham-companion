@@ -1745,7 +1745,7 @@ describe('doom on the nearest Cultist enemy, or a search for one', () => {
       },
     ]);
     expect(asked.pending.map((decision) => describeDecision(context, asked, decision))).toEqual([
-      'Which of the nearest enemies? Cultist / Cultist [chooseCard]',
+      'Which of the nearest enemies? Cultist (cellar) / Cultist (garden) [chooseCard]',
     ]);
     expect(after.cards[instanceId('garden_cultist')]?.tokens.doom).toBe(2);
     expect(after.cards[instanceId('cellar_cultist')]?.tokens.doom).toBeUndefined();

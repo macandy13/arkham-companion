@@ -361,6 +361,11 @@ export const resources = {
             doom: 'Draw 2 cards and place 2 doom on the current agenda',
             horror: 'Take 2 horror',
           },
+          quietGlade: {
+            prompt: '{{card}}: heal 1 damage or 1 horror',
+            damage: 'Heal 1 damage',
+            horror: 'Heal 1 horror',
+          },
         },
       },
       scenarios: { theGathering: 'The Gathering' },
@@ -828,6 +833,11 @@ export const resources = {
             prompt: '{{card}}: Du musst entweder',
             doom: '2 Karten ziehen und 2 Verderben auf die aktuelle Agenda legen',
             horror: '2 Horror erleiden',
+          },
+          quietGlade: {
+            prompt: '{{card}}: 1 Schaden oder 1 Horror heilen',
+            damage: '1 Schaden heilen',
+            horror: '1 Horror heilen',
           },
         },
       },

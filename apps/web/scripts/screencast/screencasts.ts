@@ -42,6 +42,8 @@ interface ReportSuite {
 
 interface ReportSpec {
   readonly title: string;
+  /** The spec file, relative to the test directory; identifies the spec together with `title`. */
+  readonly file?: string;
   readonly tests: readonly {
     readonly projectName: string;
     readonly results: readonly {
@@ -78,28 +80,44 @@ export interface Screenshot {
  */
 export const RECORDING_PROJECTS = { flows: 'screencast', shots: 'screenshot' } as const;
 
-/** Flattens the report into one entry per flow spec, in report order, using the last passing attempt. */
-export function flowVideos(report: PlaywrightReport): FlowVideo[] {
-  return specsIn(report, RECORDING_PROJECTS.flows).map((spec) => ({
+/**
+ * Flattens the report into one entry per flow spec, in report order, using the last passing
+ * attempt. `base` lists the specs the PR's base branch already tags (`playwright test --list`
+ * on the base commit); they are left out, because a tag that is already on `main` belongs to an
+ * earlier PR, not to this one.
+ */
+export function flowVideos(report: PlaywrightReport, base: PlaywrightReport = {}): FlowVideo[] {
+  return specsIn(report, RECORDING_PROJECTS.flows, base).map((spec) => ({
     title: spec.title,
     slug: slugify(spec.title),
     videoPath: passingAttachment(spec, RECORDING_PROJECTS.flows, 'video'),
   }));
 }
 
-/** Flattens the report into one entry per screenshot spec, in report order, using the last passing attempt. */
-export function screenshots(report: PlaywrightReport): Screenshot[] {
-  return specsIn(report, RECORDING_PROJECTS.shots).map((spec) => ({
+/**
+ * Flattens the report into one entry per screenshot spec, in report order, using the last
+ * passing attempt. Specs `base` already tags are left out, as in {@link flowVideos}.
+ */
+export function screenshots(report: PlaywrightReport, base: PlaywrightReport = {}): Screenshot[] {
+  return specsIn(report, RECORDING_PROJECTS.shots, base).map((spec) => ({
     title: spec.title,
     slug: slugify(spec.title),
     imagePath: passingAttachment(spec, RECORDING_PROJECTS.shots, 'screenshot'),
   }));
 }
 
-function specsIn(report: PlaywrightReport, project: string): ReportSpec[] {
-  return allSpecs(report.suites ?? []).filter((spec) =>
-    spec.tests.some((test) => test.projectName === project),
-  );
+function specsIn(report: PlaywrightReport, project: string, base: PlaywrightReport): ReportSpec[] {
+  const tagged = (r: PlaywrightReport) =>
+    allSpecs(r.suites ?? []).filter((spec) =>
+      spec.tests.some((test) => test.projectName === project),
+    );
+  const onBase = new Set(tagged(base).map(specKey));
+  return tagged(report).filter((spec) => !onBase.has(specKey(spec)));
+}
+
+// The leaf title is enough: specs repeating a title in one file would already collide on their slug.
+function specKey(spec: ReportSpec): string {
+  return `${spec.file ?? ''} › ${spec.title}`;
 }
 
 function allSpecs(suites: readonly ReportSuite[]): ReportSpec[] {

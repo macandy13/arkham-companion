@@ -22,6 +22,7 @@ import type {
   SkillName,
   SkillTest,
   TokenKind,
+  WoundKind,
 } from './state';
 import type { Zone } from './zone';
 
@@ -38,6 +39,7 @@ export type Command =
   | RevealLocation
   | MoveInvestigator
   | AdjustInvestigator
+  | HealInvestigator
   | TakeDamageAndHorror
   | DefeatInvestigator
   | DiscoverClues
@@ -286,6 +288,18 @@ export interface AdjustInvestigator {
   investigatorId: InvestigatorId;
   stat: InvestigatorStat;
   delta: number;
+}
+
+/**
+ * "Heal N damage" or "heal N horror": takes up to `amount` (a positive integer) of `stat` off an
+ * active investigator, as much as they have, since healing more than is there heals what is
+ * (Rules Reference, "Heal"). Produces `InvestigatorChanged`, or nothing when there is none.
+ */
+export interface HealInvestigator {
+  type: 'HealInvestigator';
+  investigatorId: InvestigatorId;
+  stat: WoundKind;
+  amount: number;
 }
 
 /**

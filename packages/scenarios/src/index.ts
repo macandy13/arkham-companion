@@ -30,6 +30,7 @@ export {
   DEVOURER_BELOW_RESOLUTIONS,
   DEVOURER_BELOW_SETS,
   OFFER_OF_POWER_DECISION,
+  QUIET_GLADE_DECISION,
   theDevourerBelowCardDefs,
   theDevourerBelowCards,
 } from './the_devourer_below/cards';

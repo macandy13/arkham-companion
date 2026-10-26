@@ -30,6 +30,8 @@ import type { Zone, ZoneKey } from './zone';
 
 /** Kinds of tokens that can be placed on a card instance. */
 export type TokenKind = 'doom' | 'clue' | 'damage' | 'horror' | 'resource';
+/** The two kinds of wounds an investigator takes and heals ("heal 3 damage", "heal 1 horror"). */
+export type WoundKind = 'damage' | 'horror';
 /** All token kinds, e.g. for iterating in the UI or in tests. */
 export const TOKEN_KINDS: readonly TokenKind[] = ['doom', 'clue', 'damage', 'horror', 'resource'];
 
@@ -56,6 +58,23 @@ export interface CardInstance {
    * so it always belongs to the card's latest draw.
    */
   gainedSurge?: true;
+  /**
+   * The uses of the card's action abilities that count towards their limits
+   * (`CardAction.limit`), oldest first. Recorded by `CardActionUsed`.
+   */
+  actionUses?: readonly CardActionUse[];
+}
+
+/**
+ * One use of a card action (`CardInstance.actionUses`): which action of the card, who took it and
+ * in which round, which is all the limits ask ("once per turn", "once per game", "group limit").
+ * Uses are kept on the card instance, so they would reset if the card left play and came back;
+ * no limited card does that yet.
+ */
+export interface CardActionUse {
+  action: number;
+  investigatorId: InvestigatorId;
+  round: number;
 }
 
 /**

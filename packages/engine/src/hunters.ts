@@ -3,7 +3,7 @@ import type { MoveHunter, MoveHunters } from './commands';
 import { CommandRejected } from './rejection';
 import { cardStats, type EngineContext } from './cards';
 import { chooseInvestigator, chooseLocation, engageEvents, preferredByPrey } from './engagement';
-import { requestDecision } from './decisions';
+import { cardOptionLabels, requestDecision } from './decisions';
 import type { Event } from './events';
 import { moveCardEvent } from './placement';
 import { decisionId, type InstanceId } from './ids';
@@ -56,14 +56,19 @@ export function handleMoveHunters(
   const [only] = movers;
   if (only === undefined) return [];
   if (movers.length === 1) return only.events;
+  const labels = cardOptionLabels(
+    ctx,
+    state,
+    movers.map(({ hunter }) => hunter.id),
+  );
   return requestDecision(state, {
     id: decisionId('hunterOrder'),
     kind: 'chooseCard',
     decider: { kind: 'lead' },
     prompt: 'decision.chooseHunterOrder',
-    options: movers.map(({ hunter }) => ({
+    options: movers.map(({ hunter }, i) => ({
       id: hunter.id,
-      label: cardStats(ctx.cards, hunter.code).name,
+      label: labels[i] ?? hunter.id,
       target: hunter.id,
       commands: [
         { type: 'MoveHunter', enemyId: hunter.id },
