@@ -446,14 +446,14 @@
 }
 
 /*
- * An engaged enemy's card is one big button that opens its details: the button lies over the
- * whole card, so the card still shows its name and health.
+ * Each card is one big button that opens it, an enemy's details or a treachery to read: the button
+ * lies over the whole card, so the card still shows its name and health.
  */
-#board > #investigators > section > div li[data-threat='enemy'] {
+#board > #investigators > section > div li {
   position: relative;
 }
 
-#board > #investigators > section > div li[data-threat='enemy'] > button {
+#board > #investigators > section > div li > button {
   position: absolute;
   inset: 0;
   min-width: 0;

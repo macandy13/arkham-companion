@@ -2,7 +2,7 @@ import { listIfAny } from '@arkham/util';
 import { isConnectionOpen, neighbours } from './board';
 import { cardActionsOfferedTo, type OfferedCardAction } from './card_actions';
 import { effectiveValue } from './card_values';
-import { cardStats, resolveValue, type EngineContext, type Trait } from './cards';
+import { cardStats, resolveValue, type CardType, type EngineContext, type Trait } from './cards';
 import { optionName } from './describe_decision';
 import type { Command } from './commands';
 import { doomInPlay, isInPlay } from './doom';
@@ -193,6 +193,21 @@ export interface EnemyStatsView {
   traits: readonly Trait[];
   keywords: readonly Keyword[];
   victory?: number;
+}
+
+/**
+ * A card as the players pick it up to read it (`BoardView.cardsIn`): its printed name, type and
+ * traits, and the pictures of its front and back when the card data has them. The card zoom shows
+ * a picture and falls back to the rest without one.
+ */
+export interface CardFaceView {
+  name: CardName;
+  type: CardType;
+  traits: readonly Trait[];
+  /** The picture of its front (`CardStats.imageSrc`). */
+  image?: CardImagePath;
+  /** The picture of its back (`CardStats.backImageSrc`), for a card with two sides. */
+  backImage?: CardImagePath;
 }
 
 /** A basic action against an enemy (`BoardView.enemyActions`). */
@@ -597,6 +612,27 @@ export class BoardView {
   /** The printed names of the cards in `zone`, top first. */
   namesIn(zone: Zone): CardName[] {
     return namesIn(this.ctx, this.state, zone);
+  }
+
+  /**
+   * The cards in `zone` to read, in the order of `namesIn`. Kept apart from the views' name
+   * lists (`InvestigatorView.threatArea`, `LocationView.attachments`), which expectations compare
+   * by name, since only the card zoom needs the rest.
+   */
+  cardsIn(zone: Zone): readonly CardFaceView[] {
+    return cardsInZone(this.state, zone).map((id) => {
+      const { name, typeCode, traits, imageSrc, backImageSrc } = cardStats(
+        this.ctx.cards,
+        requireCard(this.state, id).code,
+      );
+      return {
+        name: cardName(name),
+        type: typeCode,
+        traits,
+        ...(imageSrc === undefined ? {} : { image: imageSrc }),
+        ...(backImageSrc === undefined ? {} : { backImage: backImageSrc }),
+      };
+    });
   }
 
   private error(message: string): TableError {

@@ -1,0 +1,80 @@
+/*
+ * The card zoom (CardZoom): the × in the corner, the card as big as a zoomed card in the printed
+ * cards' parchment, and the button that turns it over. It lies in the top layer but inherits from
+ * the small card it opens from, so it resets the text.
+ */
+#board dialog[data-dialog='card-zoom'] {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: center;
+  padding-block-start: calc(var(--space-2) + var(--touch-target));
+  font-size: var(--font-size-body);
+  line-height: normal;
+  text-align: center;
+  hyphens: manual;
+}
+
+#board dialog[data-dialog='card-zoom']:not([open]) {
+  display: none;
+}
+
+#board dialog[data-dialog='card-zoom'] > button[data-icon='close'] {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  padding: 0;
+  border-radius: var(--radius-round);
+}
+
+#board dialog[data-dialog='card-zoom'] > button[data-icon='close']::before {
+  mask-image: url('../investigators/icons/close.svg');
+}
+
+/* Upright like a printed card; the text fallback sits in the middle of the hatched art area. */
+#board dialog[data-dialog='card-zoom'] > article {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  justify-content: center;
+  box-sizing: border-box;
+  width: var(--layout-zoom-card-width);
+  max-width: 100%;
+  aspect-ratio: 5 / 7;
+  padding: var(--space-3);
+  border: var(--card-border-width) solid var(--color-card-treachery);
+  border-radius: var(--radius);
+  background: var(--card-art-pattern), var(--color-card-face);
+  color: var(--color-card-text);
+  overflow: hidden;
+  filter: var(--piece-shadow);
+}
+
+#board dialog[data-dialog='card-zoom'] > article > :is(h2, p) {
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-card-face);
+}
+
+#board dialog[data-dialog='card-zoom'] > article > h2 {
+  font-size: var(--font-size-subtitle);
+}
+
+/* The picture fills the card once it has loaded and prints the name, type and traits itself. */
+#board dialog[data-dialog='card-zoom'] > article > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#board dialog[data-dialog='card-zoom'] > article:not([data-picture]) > img {
+  visibility: hidden;
+}
+
+#board dialog[data-dialog='card-zoom'] > article[data-picture] > :is(h2, p) {
+  opacity: 0;
+}
