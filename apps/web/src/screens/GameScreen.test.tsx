@@ -289,7 +289,7 @@ describe('GameScreen header', () => {
     const deck = within(deckPlace);
 
     expect(labels).toEqual(['Encounter deck', 'Agenda', 'Act', 'Scenario']);
-    expect(deck.getByRole('img', { name: 'Encounter discard pile' })).toBeTruthy();
+    expect(deck.getByRole('button', { name: 'Encounter discard pile' })).toBeTruthy();
   });
 
   it('warns instead of showing a board for a game it cannot play', async () => {
