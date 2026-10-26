@@ -6,7 +6,7 @@
  * Hunting Shadow, Mysterious Chanting, On Wings of Darkness carrying Daisy off
  * to a Central location, the Ghoul Priest from The Gathering, the Wizard of
  * the Order's doom, "Wolf-Man" Drew's heal, two hunters chasing the
- * investigators, Daisy resigning through agenda 2's action, both agendas
+ * investigators, the First Bank of Arkham's once-per-game action, Daisy resigning through agenda 2's action, both agendas
  * advancing on doom) and ends in a resolution
  * applied to the campaign log: two cultists interrogated, three still in the
  * Cultist deck and The Masked Hunter in play got away.
@@ -451,16 +451,18 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
 
     // Round 5 – investigation (4 of 8): the Priest has readied and engaged
     // Roland again. Two enemies at 2 damage each are too much for him: he
-    // evades both and falls back to Easttown. Daisy takes Easttown's clue and
-    // goes back to Rivertown.
+    // evades both, and with no enemy engaged he draws on the First Bank of
+    // Arkham, Downtown's action, for 3 resources. Daisy takes Easttown's clue
+    // and goes back to Rivertown.
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'investigation' });
     expect(table.board.doomInPlay).toBe(4);
     expect(table.board.enemy(byName(priest))).toMatchObject({ engagedWith: roland });
     table.startTurn(roland);
     table.evade(roland, byName(priest));
     table.evade(roland, byName(hunter));
-    table.moveTo(roland, byName('Easttown'));
+    table.useCardAction(roland, byName('Downtown'));
     table.endTurn(roland);
+    expect(table.board.investigator(roland)).toMatchObject({ resources: 12 });
     table.startTurn(daisy);
     table.moveTo(daisy, byName('Easttown'));
     table.investigate(daisy);
@@ -482,24 +484,28 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     table.answer(byName('Crypt Chill'), 'pass');
     expect(table.board.investigator(roland)).toMatchObject({ damage: 6 });
 
-    // Round 6 – investigation (6 of 8): the Priest and the Hunter wait in
-    // Downtown, one step from Roland. They run: both to Your House, three steps away.
+    // Round 6 – investigation (6 of 8): the Priest and the Hunter readied in
+    // Downtown and engaged Roland again. He evades both once more; the bank's
+    // action is spent for the game, so he falls back to Easttown. Daisy moves
+    // to Your House.
     expect(table.nextPhase()).toEqual({ round: 6, phase: 'investigation' });
     expect(table.board.doomInPlay).toBe(6);
+    expect(table.board.enemy(byName(hunter))).toMatchObject({ engagedWith: roland });
     table.startTurn(roland);
-    table.moveTo(roland, byName('Rivertown'));
-    table.moveTo(roland, byName('Your House'));
+    table.evade(roland, byName(priest));
+    table.evade(roland, byName(hunter));
+    expect(() => table.useCardAction(roland, byName('Downtown'))).toThrow(
+      expect.objectContaining({
+        rejection: expect.objectContaining({ code: 'cardActionLimitReached' }),
+      }),
+    );
+    table.moveTo(roland, byName('Easttown'));
     table.endTurn(roland);
     table.startTurn(daisy);
     table.moveTo(daisy, byName('Your House'));
     table.endTurn(daisy);
 
-    // Round 6 – enemy phase: both hunters move one step, into Easttown; the lead
-    // investigator picks the order. No one is in reach to attack.
-    expect(table.nextPhase()).toEqual({ round: 6, phase: 'enemy', step: 'huntersMove' });
-    table.answerOnly(hunter);
-    expect(table.board.enemy(byName(hunter))).toMatchObject({ at: 'Easttown' });
-    expect(table.board.enemy(byName(priest))).toMatchObject({ at: 'Easttown' });
+    // Round 6 – the exhausted enemies neither hunt nor attack.
     expect(table.nextPhase()).toEqual({ round: 6, phase: 'enemy' });
     expect(table.nextPhase()).toEqual({ round: 6, phase: 'upkeep' });
 
@@ -527,18 +533,24 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     });
 
     // Round 7 – investigation: the Wizard's doom makes 8. With the hunters
-    // next door, Daisy takes the agenda's action and resigns; Roland stays put.
+    // next door, Roland runs to Your House, and Daisy takes the agenda's
+    // action and resigns.
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'investigation' });
     expect(table.board.doomInPlay).toBe(8);
     table.startTurn(roland);
+    table.moveTo(roland, byName('Rivertown'));
+    table.moveTo(roland, byName('Your House'));
     table.endTurn(roland);
     table.startTurn(daisy);
     table.useCardAction(daisy, byName('Time Is Running Short'));
     expect(table.board.investigator(daisy).status).toBe('resigned');
 
-    // Round 7 – enemy phase: the hunters reach Rivertown, still a step short.
+    // Round 7 – enemy phase: both hunters move one step, into Easttown, still
+    // two steps short; the lead investigator picks the order.
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'enemy', step: 'huntersMove' });
     table.answerOnly(hunter);
+    expect(table.board.enemy(byName(hunter))).toMatchObject({ at: 'Easttown' });
+    expect(table.board.enemy(byName(priest))).toMatchObject({ at: 'Easttown' });
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'enemy' });
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'upkeep' });
 

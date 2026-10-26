@@ -11,7 +11,9 @@ import {
   encounterSetCode,
   endScenario,
   fixed,
+  gainResources,
   gainSurge,
+  heal,
   healSelf,
   ifEnemiesInPlay,
   ifYouHave,
@@ -112,7 +114,8 @@ const cultist = ['Humanoid', 'Cultist'];
  * - the act's action (spending clues to draw from the Cultist deck) and its
  *   objective (the players advance it)
  * - agenda 1 turning into The Masked Hunter
- * - the Parley actions and the locations' actions
+ * - the Parley actions, and the actions of Your House, both Southsides,
+ *   Miskatonic University and Northside
  * - Your House's hold on the Ghoul Priest and Easttown's cost reduction
  * - Ruth Turner going to the victory display once evaded: the `afterTest`
  *   window opens before the evade exhausts and disengages her
@@ -194,6 +197,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     shroud: 2,
     cluesPerInvestigator: 1,
     traits: arkham,
+    actions: [{ effects: [heal('damage', 3)], limit: { per: 'game' } }],
   }),
   location({
     code: '01129',
@@ -211,6 +215,8 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     shroud: 3,
     cluesPerInvestigator: 1,
     traits: arkham,
+    // First Bank of Arkham.
+    actions: [{ effects: [gainResources(3)], limit: { per: 'game' } }],
   }),
   location({
     code: '01131',
@@ -220,6 +226,8 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     cluesPerInvestigator: 2,
     traits: arkham,
     victory: 1,
+    // Arkham Asylum.
+    actions: [{ effects: [heal('horror', 3)], limit: { per: 'game' } }],
   }),
   location({
     code: '01132',

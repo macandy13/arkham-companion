@@ -168,6 +168,63 @@ describe('MoveInvestigator', () => {
   });
 });
 
+describe('HealInvestigator', () => {
+  const { context, state } = hallCellarAttic
+    .withInvestigator(alice, {
+      locationId: hall,
+      health: { max: 5, damage: 2 },
+      sanity: { max: 5, horror: 1 },
+    })
+    .start();
+
+  it.each([
+    { stat: 'damage', amount: 1, left: { health: { damage: 1 }, sanity: { horror: 1 } } },
+    { stat: 'damage', amount: 3, left: { health: { damage: 0 }, sanity: { horror: 1 } } },
+    { stat: 'horror', amount: 3, left: { health: { damage: 2 }, sanity: { horror: 0 } } },
+  ] as const)(
+    'heals $amount $stat of 2 damage and 1 horror, as much as there is',
+    ({ stat, amount, left }) => {
+      const healed = stateAfter(context, state, {
+        type: 'HealInvestigator',
+        investigatorId: alice,
+        stat,
+        amount,
+      });
+
+      expect(investigatorOf(healed, alice)).toMatchObject(left);
+    },
+  );
+
+  it('changes nothing once the horror is healed', () => {
+    const unhurt = stateAfter(context, state, {
+      type: 'HealInvestigator',
+      investigatorId: alice,
+      stat: 'horror',
+      amount: 1,
+    });
+
+    expect(
+      execute(context, unhurt, {
+        type: 'HealInvestigator',
+        investigatorId: alice,
+        stat: 'horror',
+        amount: 1,
+      }).events,
+    ).toEqual([]);
+  });
+
+  it.each([0, -1, 1.5])('rejects healing %s', (amount) => {
+    expect(
+      rejectionFrom(context, state, {
+        type: 'HealInvestigator',
+        investigatorId: alice,
+        stat: 'damage',
+        amount,
+      }),
+    ).toMatchObject({ code: 'invalidTokenDelta' });
+  });
+});
+
 describe('AdjustInvestigator', () => {
   const { context, state } = hallCellarAttic
     .withInvestigator(alice, {

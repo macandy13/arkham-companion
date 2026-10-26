@@ -55,6 +55,7 @@ export type Event =
   | ScenarioEnded
   | EncounterCardDrawn
   | SurgeGained
+  | CardActionUsed
   | AbilityEffectSkipped
   | CluesDiscovered
   | SkillTestResolved
@@ -332,6 +333,18 @@ export interface EncounterCardDrawn {
 export interface SurgeGained {
   type: 'SurgeGained';
   cardId: InstanceId;
+}
+
+/**
+ * The investigator took action number `action` of the card `cardId`; the reducer records the use
+ * in the current round (`CardInstance.actionUses`) for the action's limit. Produced by
+ * `UseCardAction`.
+ */
+export interface CardActionUsed {
+  type: 'CardActionUsed';
+  cardId: InstanceId;
+  action: number;
+  investigatorId: InvestigatorId;
 }
 
 /**
