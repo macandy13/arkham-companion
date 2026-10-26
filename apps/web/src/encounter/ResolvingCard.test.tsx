@@ -46,9 +46,9 @@ describe('ResolvingCard', () => {
 
     render(<ResolvingCard board={table.board} card={resolving} />);
 
-    expect(screen.getByRole('figure').querySelector('figcaption')?.textContent).toBe(
-      'Crypt Chill, drawn for Alder',
-    );
+    expect(
+      within(screen.getByRole('figure')).getByText('Crypt Chill, drawn for Alder'),
+    ).toBeTruthy();
     expect(
       within(screen.getByRole('list', { name: 'Keywords' }))
         .getAllByRole('listitem')

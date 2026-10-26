@@ -49,6 +49,7 @@ import type {
   NamedAmount,
   Phase,
   PhaseStepId,
+  QueuedStep,
   SkillTest,
   SkillTestKind,
   SkillTestSuggestion,
@@ -488,12 +489,10 @@ export class BoardView {
     const card = requireCard(this.state, id);
     const printed = cardStats(this.ctx.cards, card.code).keywords ?? [];
     const surged = card.gainedSurge && !printed.some(({ name }) => name === 'surge');
-    const placement = this.state.meta.queue?.find(
-      (step) => step.kind === 'placeDrawnCard' && step.drawn.cardId === id,
-    );
+    const placement = queuedPlacementOf(this.state, id);
     return {
       ...encounterCardView(this.ctx, card),
-      ...(placement?.kind === 'placeDrawnCard' ? { drawnBy: placement.drawn.investigatorId } : {}),
+      ...(placement ? { drawnBy: placement.drawn.investigatorId } : {}),
       keywords: surged ? [...printed, { name: 'surge' }] : printed,
     };
   }
@@ -902,6 +901,17 @@ function decisionView(ctx: EngineContext, state: GameState, decision: Decision):
     ...(Object.keys(labels).length > 0 ? { labels } : {}),
     ...(Object.keys(counts).length > 0 ? { counts } : {}),
   };
+}
+
+/** The queued placement of the drawn card `id`, which names the investigator it was drawn for. */
+function queuedPlacementOf(
+  state: GameState,
+  id: InstanceId,
+): Extract<QueuedStep, { kind: 'placeDrawnCard' }> | undefined {
+  return state.meta.queue?.find(
+    (step): step is Extract<QueuedStep, { kind: 'placeDrawnCard' }> =>
+      step.kind === 'placeDrawnCard' && step.drawn.cardId === id,
+  );
 }
 
 function encounterCardView(ctx: EngineContext, card: CardInstance): EncounterCardView {
