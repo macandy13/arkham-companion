@@ -52,6 +52,11 @@ export interface GameActions {
   /** Begins the turn of `investigator`, whom the players picked. */
   startTurn(investigator: InvestigatorId): Promise<void>;
   endTurn(): Promise<void>;
+  /**
+   * The turn investigator takes action number `action` of the card `card` offers them
+   * (`BoardView.cardActions`), such as the Parlor's Resign, counting off the action it costs.
+   */
+  useCardAction(card: InstanceId, action: number): Promise<void>;
   /** Changes the actions left this turn. */
   adjustActions(delta: number): Promise<void>;
   /**
@@ -158,6 +163,8 @@ export function gameActions(
     nextPhase: () => play((table) => void table.nextPhase()),
     startTurn: (investigator) => play((table) => table.startTurn(investigator)),
     endTurn: () => onTurn((table, investigator) => table.endTurn(investigator)),
+    useCardAction: (card, action) =>
+      asAction((table, investigator) => table.useCardAction(investigator, card, action)),
     adjustActions: (delta) =>
       onTurn((table, investigator) => table.adjustActions(investigator, delta)),
     moveTo: (location) => onTurn((table, investigator) => table.moveTo(investigator, location)),

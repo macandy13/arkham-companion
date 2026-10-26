@@ -75,7 +75,7 @@ function InvestigatorPanel({
   busy,
   adjusting,
 }: {
-  /** The board the skill tests read (`SkillTestDialog`). */
+  /** The board the skill tests (`SkillTestDialog`) and the card actions (`TurnControls`) read. */
   board: BoardView;
   investigator: InvestigatorView;
   onTurn: boolean;
@@ -114,6 +114,7 @@ function InvestigatorPanel({
         <Counters investigator={investigator} adjusting={adjusting} busy={busy} actions={actions} />
       </article>
       <TurnControls
+        board={board}
         investigator={investigator}
         onTurn={onTurn}
         canStart={canStart}
