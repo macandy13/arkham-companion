@@ -304,6 +304,15 @@ describe('InvestigatorBar', () => {
       await expect.poll(() => table.board.investigator(alder).boosts).toEqual(boosts);
     });
 
+    it('turns the boost steppers off while a step is queued', () => {
+      const table = PlayTable.start(hurtAlder);
+      render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy adjusting />);
+
+      expect(
+        within(panel('alder')).getByRole('button', { name: 'Raise the Combat boost' }),
+      ).toHaveProperty('disabled', true);
+    });
+
     it('cannot heal or spend below none', () => {
       const table = PlayTable.start(
         newGame()
