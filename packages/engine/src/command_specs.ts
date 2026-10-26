@@ -34,6 +34,7 @@ import {
 } from './handle_enemy';
 import {
   handleAdjustInvestigator,
+  handleHealInvestigator,
   handleDefeatInvestigator,
   handleDiscoverClues,
   handleMoveInvestigator,
@@ -175,6 +176,7 @@ const COMMAND_SPECS: CommandSpecs = {
     handle: handleMoveInvestigator,
     provokes: asAction,
   },
+  HealInvestigator: { handle: handleHealInvestigator },
   AdjustInvestigator: {
     handle: handleAdjustInvestigator,
   },

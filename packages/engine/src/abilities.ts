@@ -2,6 +2,7 @@ import { assertNever, range, shallowEqual } from '@arkham/util';
 import { cardStats, type EngineContext, type Trait } from './cards';
 import type { Command, EncounterMatch, ResolveEffect, TestSkill } from './commands';
 import { cardsInPlay } from './doom';
+import { cardOptionLabels } from './decisions';
 import type { Event } from './events';
 import type { TraumaKind } from './campaign/campaign_log';
 import {
@@ -38,6 +39,7 @@ import type {
   SkillTestOutcome,
   QueuedStep,
   SkillName,
+  WoundKind,
 } from './state';
 import type { Zone } from './zone';
 
@@ -251,6 +253,7 @@ export type AbilityCommand =
       {
         type:
           | 'AdjustInvestigator'
+          | 'HealInvestigator'
           | 'TakeDamageAndHorror'
           | 'PlaceDoom'
           | 'MoveCard'
@@ -606,7 +609,9 @@ export function resolveEffect(
   const [first, ...others] = candidates;
   if (first === undefined) return [];
   if (others.length === 0) return commandsFor(first.id);
-  return [pickDecision(ctx, opened.cardId, picked, investigator.id, candidates, commandsFor)];
+  return [
+    pickDecision(ctx, state, opened.cardId, picked, investigator.id, candidates, commandsFor),
+  ];
 }
 
 /**
@@ -684,6 +689,7 @@ function candidatesFor(
  */
 function pickDecision(
   ctx: EngineContext,
+  state: GameState,
   cardId: InstanceId,
   picked: PickedRef,
   investigatorId: InvestigatorId,
@@ -691,15 +697,20 @@ function pickDecision(
   commandsFor: (pickedId: InstanceId) => AbilityCommand[],
 ): Command {
   const { key, ...asked } = pickQuestion(picked, investigatorId);
+  const labels = cardOptionLabels(
+    ctx,
+    state,
+    candidates.map((card) => card.id),
+  );
   return {
     type: 'RequestDecision',
     decision: {
       ...asked,
       id: decisionId(`${key}:${cardId}`),
       subject: cardId,
-      options: candidates.map((card) => ({
+      options: candidates.map((card, i) => ({
         id: card.id,
-        label: cardStats(ctx.cards, card.code).name,
+        label: labels[i] ?? card.id,
         target: card.id,
         commands: commandsFor(card.id),
       })),
@@ -1077,6 +1088,23 @@ export function takeDamageAndHorror(
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
   return { type: 'TakeDamageAndHorror', investigatorId: who, ...amounts };
+}
+
+/** "Heal N damage" or "heal N horror" (St. Mary's Hospital, Arkham Asylum): as much as there is. */
+export function heal(
+  stat: WoundKind,
+  amount: number,
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'HealInvestigator', investigatorId: who, stat, amount };
+}
+
+/** "Gain N resources" (First Bank of Arkham). */
+export function gainResources(
+  amount: number,
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'AdjustInvestigator', investigatorId: who, stat: 'resources', delta: amount };
 }
 
 /** "Take N horror", like `takeDamage`: Goat Spawn is `whenDefeated(takeHorror(1, eachInvestigatorAt(itsLocation())))`. */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { camelCaseToWords, escapeRegExp, stripTrailingDot } from './index';
+import { camelCaseToWords, escapeRegExp, numberedDuplicates, stripTrailingDot } from './index';
 
 describe('camelCaseToWords', () => {
   it.each([
@@ -36,5 +36,28 @@ describe('escapeRegExp', () => {
     const pattern = new RegExp(`^${escapeRegExp(text)}$`);
     expect(pattern.test(text)).toBe(true);
     expect(pattern.test(lookAlike)).toBe(false);
+  });
+});
+
+describe('numberedDuplicates', () => {
+  it.each([
+    {
+      name: 'numbers each copy of a repeated text in order',
+      texts: ['Cellar', 'Hallway', 'Cellar'],
+      expected: ['Cellar 1', 'Hallway', 'Cellar 2'],
+    },
+    {
+      name: 'keeps texts that occur once',
+      texts: ['Attic', 'Cellar'],
+      expected: ['Attic', 'Cellar'],
+    },
+    {
+      name: 'numbers each repeated text on its own',
+      texts: ['Ghoul', 'Rat', 'Ghoul', 'Rat'],
+      expected: ['Ghoul 1', 'Rat 1', 'Ghoul 2', 'Rat 2'],
+    },
+    { name: 'keeps an empty list', texts: [], expected: [] },
+  ])('$name', ({ texts, expected }) => {
+    expect(numberedDuplicates(texts)).toEqual(expected);
   });
 });

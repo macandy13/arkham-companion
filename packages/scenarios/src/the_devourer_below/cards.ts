@@ -10,6 +10,7 @@ import {
   encounterSetCode,
   endScenario,
   fixed,
+  heal,
   healSelf,
   itsLocation,
   mapId,
@@ -103,10 +104,14 @@ const RITUAL_SITE_CELL: GridCell = { column: oneCard, row: 0 };
 /** Id of Offer of Power's question to its drawer: draw 2 cards and place 2 doom, or take 2 horror. */
 export const OFFER_OF_POWER_DECISION = decisionId('theDevourerBelow.offerOfPower');
 
+/** Id of the Quiet Glade action's question to its taker: heal 1 damage or 1 horror. */
+export const QUIET_GLADE_DECISION = decisionId('theDevourerBelow.quietGlade');
+
 const sets = DEVOURER_BELOW_SETS;
 const codes = DEVOURER_BELOW_CODES;
 const own = sets.theDevourerBelow;
 const offerOfPower = 'scenario.theDevourerBelow.offerOfPower';
+const quietGlade = 'scenario.theDevourerBelow.quietGlade';
 const woods = ['Woods'];
 
 /**
@@ -126,7 +131,7 @@ const woods = ['Woods'];
  * - act 2's objective and reverse side (the enemies at the Ritual Site), act
  *   3's action and objective (its R1 is automated once the players advance it)
  * - the Main Path's connection to each Woods location,
- *   the Arkham Woods' moving-out test, skill swaps and heal action, and the
+ *   the Arkham Woods' moving-out test, skill swaps, and the
  *   Ritual Site's clues at the end of the round
  * - Umôrdhoth's Lita action (R3) and Umôrdhoth's Wrath
  * - the Agents' constant and attack abilities (Screeching Byakhee, Yithian
@@ -226,6 +231,18 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
     shroud: 1,
     cluesPerInvestigator: 0,
     traits: woods,
+    // Quiet Glade.
+    actions: [
+      {
+        effects: [
+          youMustEither(QUIET_GLADE_DECISION, `${quietGlade}.prompt`, [
+            { id: 'damage', label: `${quietGlade}.damage`, effects: [heal('damage', 1)] },
+            { id: 'horror', label: `${quietGlade}.horror`, effects: [heal('horror', 1)] },
+          ]),
+        ],
+        limit: { per: 'turn' },
+      },
+    ],
   }),
   location({
     code: '01156',

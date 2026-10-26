@@ -177,6 +177,13 @@ export type Rejection =
   | { code: 'unknownCardAction'; cardId: InstanceId; action: number }
   /** `UseCardAction` on a card that offers its actions elsewhere or to someone else. */
   | { code: 'cardActionUnavailable'; cardId: InstanceId; investigatorId: InvestigatorId }
+  /** `UseCardAction` on an action its limit allows no more of now ("Limit once per game."). */
+  | {
+      code: 'cardActionLimitReached';
+      cardId: InstanceId;
+      action: number;
+      investigatorId: InvestigatorId;
+    }
   /** A command that belongs to another phase (e.g. `EndTurn` outside investigation). */
   | { code: 'wrongPhase'; expected: Phase; actual: Phase }
   /** `EndTurn` for an investigator who has already taken their turn this round. */
@@ -402,6 +409,8 @@ function describe(r: Rejection): string {
       return `${r.cardId} has no action ${r.action}`;
     case 'cardActionUnavailable':
       return `${r.investigatorId} cannot take the actions of ${r.cardId} now`;
+    case 'cardActionLimitReached':
+      return `${r.investigatorId} has used action ${r.action} of ${r.cardId} as often as its limit allows`;
     case 'wrongPhase':
       return `only allowed in the ${r.expected} phase, not in ${r.actual}`;
     case 'turnAlreadyTaken':
