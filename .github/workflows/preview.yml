@@ -5,8 +5,9 @@ name: PR preview
 # The action comments the link on the PR and removes the preview when the PR closes.
 # When apps/web changes, the `@flow` E2E specs are recorded and the `@shot` specs
 # photographed, both published next to the preview (pr-<number>/screencasts/), and the PR
-# description's screencast section is rewritten to show them (see docs/automation.md). Living inside the preview directory
-# means they are removed with it.
+# description's screencast section is rewritten to show them (see docs/automation.md). Only
+# the specs whose tag this PR adds are shown; tags already on the base branch belong to earlier
+# PRs. Living inside the preview directory means they are removed with it.
 # PRs from forks are skipped (no write token).
 
 on:
@@ -27,6 +28,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          # The PR's merge commit plus its first parent, the base commit whose tags are skipped.
+          fetch-depth: 2
       - if: github.event.action != 'closed'
         uses: pnpm/action-setup@v6
       - if: github.event.action != 'closed'
@@ -43,6 +47,20 @@ jobs:
           filters: |
             web:
               - 'apps/web/**'
+      # Lists the specs the base commit already tags, so the render step skips them. A failed
+      # listing (e.g. a base spec that no longer loads) falls back to showing every tagged spec.
+      - if: steps.changes.outputs.web == 'true'
+        run: |
+          mkdir -p apps/web/screencasts
+          git worktree add --detach "$RUNNER_TEMP/base" HEAD^1
+          ln -s "$PWD/node_modules" "$RUNNER_TEMP/base/node_modules"
+          ln -s "$PWD/apps/web/node_modules" "$RUNNER_TEMP/base/apps/web/node_modules"
+          if ! (cd "$RUNNER_TEMP/base/apps/web" && PLAYWRIGHT_JSON_OUTPUT_FILE="$RUNNER_TEMP/base.json" \
+              pnpm exec playwright test --list --reporter=json --project=screencast --project=screenshot); then
+            echo "::warning::Could not list the base commit's tagged specs; showing every tagged spec."
+            echo '{}' > "$RUNNER_TEMP/base.json"
+          fi
+          cp "$RUNNER_TEMP/base.json" apps/web/screencasts/base.json
       # Recorded before the preview build: Playwright builds with the root base path,
       # and the preview build below empties dist/ anyway.
       - if: steps.changes.outputs.web == 'true'
@@ -55,7 +73,7 @@ jobs:
       - if: steps.changes.outputs.web == 'true' && hashFiles('apps/web/screencasts/report.json') != ''
         working-directory: apps/web
         run: >-
-          node scripts/screencast/cli.ts render screencasts/report.json screencasts/out
+          node scripts/screencast/cli.ts render screencasts/report.json screencasts/base.json screencasts/out
           "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-preview/pr-${{ github.event.number }}/screencasts/"
           "${HEAD_SHA::7}"
         env:
@@ -71,7 +89,19 @@ jobs:
           source-dir: apps/web/dist
           preview-branch: gh-pages
           umbrella-dir: pr-preview
-      # After the deploy, so the description never links files that aren't published yet.
+      # The push above only starts a GitHub Pages build; the files are served once it finishes.
+      # A newer push to gh-pages (another PR's preview) can cancel this build, but its own build
+      # then publishes these files too, so wait for this push's version.txt, not for a build.
+      # The query string defeats the Pages CDN cache. On timeout the description is updated
+      # anyway: its links start working with the next Pages build.
+      - if: hashFiles('apps/web/screencasts/out/section.md') != ''
+        timeout-minutes: 15
+        continue-on-error: true
+        env:
+          URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-preview/pr-${{ github.event.number }}/screencasts/version.txt
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          until [ "$(curl -fsS "$URL?t=$(date +%s)" 2>/dev/null)" = "${HEAD_SHA::7}" ]; do sleep 15; done
       - if: hashFiles('apps/web/screencasts/out/section.md') != ''
         env:
           GH_TOKEN: ${{ github.token }}
