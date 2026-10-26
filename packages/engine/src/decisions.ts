@@ -45,7 +45,9 @@ export function requestDecision(state: GameState, decision: Decision): DecisionR
  * the cards has the same name ("Ghoul Minion (Cellar)"), and numbered when
  * that still leaves two alike (two Ghoul Minions in one cellar, two locations
  * named "Cellar"). Options are answered by readable name (`optionNamed`), so
- * two options with one name could not be answered at all.
+ * two options with one name could not be answered at all. The number only
+ * follows the order of `cardIds`: it tells the options apart, not the cards
+ * on the map, which are alike anyway.
  */
 export function cardOptionLabels(
   ctx: EngineContext,
@@ -54,13 +56,13 @@ export function cardOptionLabels(
 ): string[] {
   const names = cardIds.map((cardId) => cardName(ctx, state, cardId));
   const shared = new Set(duplicates(names));
-  const located = cardIds.map((cardId, i) => {
+  const withLocations = cardIds.map((cardId, i) => {
     const name = names[i] ?? cardId;
     const card = requireCard(state.cards, cardId);
     if (!shared.has(name) || !isEnemyOnTable(card)) return name;
     return `${name} (${cardName(ctx, state, locationOf(state, card))})`;
   });
-  return numberedDuplicates(located);
+  return numberedDuplicates(withLocations);
 }
 
 /** The printed name of the card `cardId`, or its ID when the card data has no definition for it. */

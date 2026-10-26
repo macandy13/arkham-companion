@@ -136,10 +136,10 @@ describe('DecisionDialog', () => {
     );
     table.play({ type: 'MoveHunters' });
     renderFirstDecision(table);
+    expect(optionButtons()).toEqual(['Ghoul Minion (Study)', 'Ghoul Minion (Hallway)']);
 
     fireEvent.click(screen.getByRole('button', { name: 'Ghoul Minion (Hallway)' }));
 
-    expect(optionButtons()).toEqual(['Ghoul Minion (Study)', 'Ghoul Minion (Hallway)']);
     expect(zoneOf(table.state, hallwayGhoul)).toEqual(engagedWith(alder));
     expect(zoneOf(table.state, studyGhoul)).toEqual(atLocation(hallway));
   });
