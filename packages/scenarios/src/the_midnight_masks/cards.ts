@@ -113,7 +113,7 @@ const arkham = ['Arkham'];
 const cultist = ['Humanoid', 'Cultist'];
 
 /**
- * "[action] Parley. <cost>: Add <the cultist> to the victory display." (Peter Warren, Victoria
+ * "[action] <cost>: Parley. Add <the cultist> to the victory display." (Peter Warren, Victoria
  * Devereux, Herman Collins).
  */
 function parleyIntoVictoryDisplay(cost: ActionCost): CardAction {

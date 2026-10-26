@@ -244,6 +244,15 @@ describe('DrawCards', () => {
     expect(after).toEqual(state);
   });
 
+  it('leaves discarding 4 cards from her hand to alice, and changes nothing', () => {
+    const discard: Command = { type: 'DiscardFromHand', investigatorId: alice, amount: 4 };
+
+    const { events, state: after } = execute(context, state, discard);
+
+    expect(events).toEqual([{ type: 'CommandDeferred', command: discard }]);
+    expect(after).toEqual(state);
+  });
+
   it('rejects alice once she is defeated', () => {
     const defeated = stateAfter(context, state, {
       type: 'AdjustInvestigator',

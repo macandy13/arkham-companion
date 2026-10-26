@@ -97,9 +97,9 @@ export function handleHealInvestigator(
 }
 
 /**
- * `DrawCards`, `SearchDeck` and `DiscardFromHand`: the engine holds no player cards, so it hands the command to the
- * players (`CommandDeferred`), for an active investigator. Support for player cards would handle
- * them here instead.
+ * `DrawCards`, `SearchDeck` and `DiscardFromHand`: the engine holds no player cards, so it hands
+ * the command to the players (`CommandDeferred`), for an active investigator. Support for player
+ * cards would handle them here instead.
  */
 export function deferToPlayers(
   _ctx: EngineContext,
