@@ -148,7 +148,7 @@ function CardArt({ image }: { image: CardImagePath | undefined }) {
 }
 
 /**
- * The four skills in the order the card prints them, each its value after its icon: the printed
+ * The four skills in the order the card prints them, each its value under its icon: the printed
  * value with its lasting boost (`InvestigatorView.boosts`, what player cards in play add), the
  * boost shown beside it, so the printed value stays recognisable. The icon alone does not say
  * which skill it is, so each one is named for screen readers. Tapping one opens a skill test
