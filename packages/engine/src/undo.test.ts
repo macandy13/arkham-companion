@@ -19,6 +19,7 @@ import {
   type GameState,
   type Zone,
 } from './index';
+import { requireInvestigator } from './investigators';
 import { answer } from '../test/utils';
 
 /** A log entry as the store keeps it, reduced to what undo looks at. */
@@ -221,14 +222,14 @@ describe('undo and the turn', () => {
 
     const afterUndo = afterUndoOf(commands);
 
-    expect(spent.investigators[0]?.actionsRemaining).toBe(2);
-    expect(afterUndo.investigators[0]?.actionsRemaining).toBe(3);
+    expect(requireInvestigator(spent, alice).actionsRemaining).toBe(2);
+    expect(requireInvestigator(afterUndo, alice).actionsRemaining).toBe(3);
   });
 
   it('puts the investigator back when a move taken mid-turn is undone', () => {
     const afterUndo = afterUndoOf([...intoInvestigation, startTurn, moveToCellar]);
 
-    expect(afterUndo.investigators[0]?.locationId).toBe(hall);
+    expect(requireInvestigator(afterUndo, alice).locationId).toBe(hall);
     expect(afterUndo.meta.turn).toEqual({ investigatorId: alice });
   });
 

@@ -19,6 +19,7 @@ import {
   type InstanceId,
   type Zone,
 } from './index';
+import { requireInvestigator } from './investigators';
 import { engageEvents } from './engagement';
 import { replay } from './reducer';
 import { answer, rejectionFrom, stateAfter } from '../test/utils';
@@ -420,7 +421,7 @@ describe('moving into an enemy`s location', () => {
     const after = stateAfter(context, state, { ...aliceMovesToCellar, avoidEngagement: true });
 
     expect(zoneOf(after, ghoul)).toEqual(atLocation(cellar));
-    expect(after.investigators[0]?.locationId).toBe(cellar);
+    expect(requireInvestigator(after, alice).locationId).toBe(cellar);
   });
 
   it('leaves an enemy at another location alone', () => {
