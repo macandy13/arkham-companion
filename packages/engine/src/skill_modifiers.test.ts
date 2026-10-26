@@ -224,13 +224,13 @@ describe('skillTestSuggestion: lasting skill boosts', () => {
 
     expect(suggestion.trace).toEqual([
       { target: 'skill', source: { kind: 'baseSkill' }, change: 4, total: 4 },
+      { target: 'skill', source: { kind: 'addedSkill', skill: 'willpower' }, change: 2, total: 6 },
       {
         target: 'skill',
         source: { kind: 'skillBoost', skill: 'willpower' },
         change: 2,
-        total: 6,
+        total: 8,
       },
-      { target: 'skill', source: { kind: 'addedSkill', skill: 'willpower' }, change: 2, total: 8 },
       { target: 'difficulty', source: { kind: 'baseDifficulty' }, change: 3, total: 3 },
     ]);
   });

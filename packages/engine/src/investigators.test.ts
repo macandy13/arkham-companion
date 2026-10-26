@@ -524,6 +524,20 @@ describe('prey helpers', () => {
     expect(bySkill(skill, extreme)([weakAlice, strongBob]).map((inv) => inv.id)).toEqual(expected);
   });
 
+  it('counts a lasting boost: alice, combat 2 boosted by 4, has the highest combat over bob at 5', () => {
+    const boostedAlice = blankInvestigator(alice, {
+      skills: { willpower: 3, intellect: 3, combat: 2, agility: 2 },
+      skillBoosts: { combat: 4 },
+    });
+    const strongBob = blankInvestigator(bob, {
+      skills: { willpower: 3, intellect: 3, combat: 5, agility: 2 },
+    });
+
+    expect(bySkill('combat', 'highest')([boostedAlice, strongBob]).map((inv) => inv.id)).toEqual([
+      alice,
+    ]);
+  });
+
   it('ignores defeated and resigned investigators', () => {
     const gone = { ...hurt, status: 'defeated' as const };
 

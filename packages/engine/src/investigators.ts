@@ -128,14 +128,15 @@ export function mostResources(investigators: readonly Investigator[]): Investiga
 
 /**
  * Prey "Highest [skill]" or "Lowest [skill]" (Ghoul Priest: "Highest [combat]"); see
- * `lowestRemainingHealth` for tie handling. Compares the printed skill: the engine tracks no
- * constant skill modifiers yet.
+ * `lowestRemainingHealth` for tie handling. Compares the skill values as modified (RR "Prey"):
+ * the printed skill and its lasting boost (`Investigator.skillBoosts`, Beat Cop's +1 combat).
  */
 export function bySkill(
   skill: SkillName,
   extreme: 'lowest' | 'highest',
 ): (investigators: readonly Investigator[]) => Investigator[] {
-  return (investigators) => tiedFor(investigators, (inv) => inv.skills[skill], extreme);
+  return (investigators) =>
+    tiedFor(investigators, (inv) => inv.skills[skill] + (inv.skillBoosts?.[skill] ?? 0), extreme);
 }
 
 function tiedFor(
