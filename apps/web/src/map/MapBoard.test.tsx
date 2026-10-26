@@ -552,6 +552,25 @@ describe('MapBoard', () => {
       ).toEqual(['alder', 'ghoul, engaged with alder']);
     });
 
+    it('draws the card and names the cards attached to the study', () => {
+      const table = PlayTable.start(
+        house.withCard(
+          instanceId('obscuring_fog'),
+          blankTreachery('obscuring_fog'),
+          attachedTo(study),
+        ),
+      );
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+
+      fireEvent.click(tile('study'));
+
+      expect(within(details('study')).getByRole('img', { name: 'The card of study' })).toBeTruthy();
+      const attached = within(details('study')).getByRole('region', { name: 'Attached' });
+      expect(within(attached).getByRole('listitem').textContent).toBe('obscuring_fog');
+    });
+
     it.each([
       {
         location: 'study',

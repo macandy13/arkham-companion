@@ -3,10 +3,13 @@ import { useTranslation } from 'react-i18next';
 import type { BoardView, InvestigatorId, LocationView } from '@arkham/engine';
 import { ActionButton, ActionGroup, type ActionIcon } from '../screens/ActionRow';
 import type { ActionCost, GameActions, LocationToken } from '../state/gameActions';
+import { CardPatterns, LocationTile } from './LocationTile';
+import { TILE } from './mapLayout';
 
 /**
- * One location in full, opened by a tap on its tile or its details button: its shroud and clues,
- * who is there (investigators and enemies), and under it one row of what the investigator whose
+ * One location in full, opened by a tap on its tile or its details button: its card, drawn like
+ * its tile with the pieces on it, its shroud and clues, who is there (investigators and enemies),
+ * the cards attached to it, and under it one row of what the investigator whose
  * turn it is can do there (`locationActions`). While the players adjust the board (`adjusting`),
  * the row gives way to the corrections instead: reveal it and add or remove its clues and doom,
  * as a card effect or the table asks, so the screen keeps up with the physical game; they are not
@@ -59,12 +62,14 @@ export function LocationDetails({
     <dialog ref={dialog} aria-labelledby={titleId} onCancel={onClose} data-dialog="location">
       <button type="button" data-icon="close" aria-label={t('location.close')} onClick={onClose} />
       <h2 id={titleId}>{location.name}</h2>
+      <LocationCard board={board} location={location} />
       <p>
         {location.revealed
           ? t('location.facts', { shroud: location.shroud, clues: location.clues })
           : t('location.unrevealed')}
       </p>
       <Here board={board} location={location} />
+      {location.attachments && <Attached names={location.attachments} />}
       {adjusting && <Corrections location={location} actions={actions} busy={busy} />}
       {offered.length > 0 && (
         <footer>
@@ -143,6 +148,51 @@ function locationActions(
       closes: true,
     },
   ];
+}
+
+/**
+ * The location drawn as its card, the same drawing as its tile on the map (with its pieces, but
+ * no details button), at the size of a zoomed card. It is one image to assistive technology,
+ * since the text around it says what it shows.
+ */
+function LocationCard({ board, location }: { board: BoardView; location: LocationView }) {
+  const { t } = useTranslation();
+  const map = board.maps.find(({ id }) => id === location.map);
+  return (
+    <svg
+      role="img"
+      aria-label={t('location.card', { name: location.name })}
+      viewBox={`0 0 ${TILE.width} ${TILE.height}`}
+    >
+      <defs>
+        <CardPatterns />
+      </defs>
+      <LocationTile
+        location={location}
+        enemies={map?.enemies[location.id] ?? []}
+        investigators={board.investigatorsAt(location.id)}
+        dragOf={() => undefined}
+        x={0}
+        y={0}
+      />
+    </svg>
+  );
+}
+
+/** The printed names of the cards attached to the location, such as a treachery put into play there. */
+function Attached({ names }: { names: readonly string[] }) {
+  const { t } = useTranslation();
+  const titleId = useId();
+  return (
+    <section aria-labelledby={titleId}>
+      <h3 id={titleId}>{t('location.attached')}</h3>
+      <ul>
+        {names.map((name, i) => (
+          <li key={`${name}-${i}`}>{name}</li>
+        ))}
+      </ul>
+    </section>
+  );
 }
 
 /**

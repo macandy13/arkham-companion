@@ -459,7 +459,15 @@
   color: var(--color-text-muted);
 }
 
-/* Who is there and the corrections: each a column under its small title. */
+/* The location's card, as big as a zoomed card. */
+#map dialog[data-dialog='location'] > svg {
+  align-self: center;
+  width: var(--layout-zoom-card-width);
+  max-height: none;
+  filter: var(--piece-shadow);
+}
+
+/* Who is there, the attached cards and the corrections: each a column under its small title. */
 #map dialog[data-dialog='location'] > section {
   display: flex;
   flex-direction: column;

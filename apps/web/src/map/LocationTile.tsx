@@ -45,7 +45,8 @@ export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyVi
  * at it, in rows along the bottom edge. `enemies` and `investigators` are the open game's pieces
  * at this location; `dragOf` gives the drag handlers of each piece that can be dragged now. A tap
  * on the tile, or its details button in the top left corner, calls `onOpen`; a press that moves
- * further than `TAP_SLOP` (a pan, a piece dragged) is no tap.
+ * further than `TAP_SLOP` (a pan, a piece dragged) is no tap. Without `onOpen` (the card in the
+ * location details) it has neither.
  */
 export function LocationTile({
   location,
@@ -60,7 +61,7 @@ export function LocationTile({
   enemies: readonly MapEnemyView[];
   investigators: readonly InvestigatorView[];
   dragOf: (piece: TilePiece) => DragHandlers | undefined;
-  onOpen: () => void;
+  onOpen?: () => void;
   x: number;
   y: number;
 }) {
@@ -74,7 +75,7 @@ export function LocationTile({
     const from = pressedAt.current;
     pressedAt.current = undefined;
     if (from && Math.hypot(event.clientX - from.x, event.clientY - from.y) > TAP_SLOP) return;
-    onOpen();
+    onOpen?.();
   };
 
   return (
@@ -85,8 +86,8 @@ export function LocationTile({
       data-side={location.revealed ? 'revealed' : 'unrevealed'}
       data-picture={picture?.shown ? 'shown' : undefined}
       transform={`translate(${x} ${y})`}
-      onPointerDown={onPointerDown}
-      onClick={onClick}
+      onPointerDown={onOpen && onPointerDown}
+      onClick={onOpen && onClick}
     >
       <rect width={TILE.width} height={TILE.height} />
       <rect {...ART_WINDOW} />
@@ -117,7 +118,7 @@ export function LocationTile({
       )}
       <LocationOrnament />
       <NameBand location={location} />
-      <DetailsButton location={location} onOpen={onOpen} />
+      {onOpen && <DetailsButton location={location} onOpen={onOpen} />}
       {location.attachments?.map((name, i) => (
         <Attachment key={`${name}-${i}`} name={name} origin={attachmentOrigin(i)} />
       ))}
