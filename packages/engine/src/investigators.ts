@@ -1,7 +1,7 @@
 import type { CluesDiscovered, DefeatCause, InvestigatorChanged, TokensChanged } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
 import { CommandRejected } from './rejection';
-import type { GameState, Investigator, InvestigatorStat, SkillName } from './state';
+import type { GameState, Investigator, InvestigatorStat, SkillName, SkillValues } from './state';
 
 /** Health the investigator has left; 0 or less means they are defeated. */
 export function remainingHealth(investigator: Investigator): number {
@@ -128,14 +128,32 @@ export function mostResources(investigators: readonly Investigator[]): Investiga
 
 /**
  * Prey "Highest [skill]" or "Lowest [skill]" (Ghoul Priest: "Highest [combat]"); see
- * `lowestRemainingHealth` for tie handling. Compares the printed skill: the engine tracks no
- * constant skill modifiers yet.
+ * `lowestRemainingHealth` for tie handling. Compares the skill values as modified (RR "Prey"):
+ * the printed skill and its lasting boost (`Investigator.skillBoosts`, Beat Cop's +1 combat).
  */
 export function bySkill(
   skill: SkillName,
   extreme: 'lowest' | 'highest',
 ): (investigators: readonly Investigator[]) => Investigator[] {
-  return (investigators) => tiedFor(investigators, (inv) => inv.skills[skill], extreme);
+  return (investigators) => tiedFor(investigators, (inv) => boostedSkills(inv)[skill], extreme);
+}
+
+/**
+ * `investigator`'s skill values with their lasting boosts (`Investigator.skillBoosts`) added to
+ * the printed ones: what Prey compares and what the investigator card shows. A skill test shows
+ * the boost as a step of its own instead (`skillTestSuggestion`).
+ */
+export function boostedSkills(
+  investigator: Pick<Investigator, 'skills' | 'skillBoosts'>,
+): SkillValues {
+  const { skills, skillBoosts } = investigator;
+  const boosted = (skill: SkillName) => skills[skill] + (skillBoosts?.[skill] ?? 0);
+  return {
+    willpower: boosted('willpower'),
+    intellect: boosted('intellect'),
+    combat: boosted('combat'),
+    agility: boosted('agility'),
+  };
 }
 
 function tiedFor(
