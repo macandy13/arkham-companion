@@ -10,7 +10,7 @@ import {
   mostClues,
   mostResources,
 } from './investigators';
-import { requestDecision } from './decisions';
+import { cardOptionLabels, requestDecision } from './decisions';
 import { hasKeyword } from './keywords';
 import { cardsAtLocation, cardsOfType } from './lookup';
 import { replay } from './reducer';
@@ -178,15 +178,16 @@ export function chooseLocation(
   locations: readonly InstanceId[],
   answer: (chosen: InstanceId) => Command,
 ): DecisionRequested[] {
+  const labels = cardOptionLabels(ctx, state, locations);
   return requestDecision(state, {
     id: decisionId(id),
     kind: 'chooseLocation',
     subject,
     prompt,
     decider: { kind: 'lead' },
-    options: locations.map((locationId) => ({
+    options: locations.map((locationId, i) => ({
       id: locationId,
-      label: locationName(ctx, state, locationId),
+      label: labels[i] ?? locationId,
       target: locationId,
       commands: [answer(locationId)],
     })),
@@ -195,10 +196,4 @@ export function chooseLocation(
 
 function engaged(enemyId: InstanceId, investigator: Investigator): EnemyEngaged {
   return { type: 'EnemyEngaged', enemyId, investigatorId: investigator.id };
-}
-
-/** The location's card name, or its ID when the card or its definition is missing. */
-function locationName(ctx: EngineContext, state: GameState, locationId: InstanceId): string {
-  const card = state.cards[locationId];
-  return (card && ctx.cards.get(card.code)?.name) ?? locationId;
 }

@@ -2,6 +2,7 @@ import { assertNever, range, shallowEqual } from '@arkham/util';
 import { cardStats, type EngineContext, type Trait } from './cards';
 import type { Command, EncounterMatch, ResolveEffect, TestSkill } from './commands';
 import { cardsInPlay } from './doom';
+import { cardOptionLabels } from './decisions';
 import type { Event } from './events';
 import type { TraumaKind } from './campaign/campaign_log';
 import {
@@ -608,7 +609,9 @@ export function resolveEffect(
   const [first, ...others] = candidates;
   if (first === undefined) return [];
   if (others.length === 0) return commandsFor(first.id);
-  return [pickDecision(ctx, opened.cardId, picked, investigator.id, candidates, commandsFor)];
+  return [
+    pickDecision(ctx, state, opened.cardId, picked, investigator.id, candidates, commandsFor),
+  ];
 }
 
 /**
@@ -686,6 +689,7 @@ function candidatesFor(
  */
 function pickDecision(
   ctx: EngineContext,
+  state: GameState,
   cardId: InstanceId,
   picked: PickedRef,
   investigatorId: InvestigatorId,
@@ -693,15 +697,20 @@ function pickDecision(
   commandsFor: (pickedId: InstanceId) => AbilityCommand[],
 ): Command {
   const { key, ...asked } = pickQuestion(picked, investigatorId);
+  const labels = cardOptionLabels(
+    ctx,
+    state,
+    candidates.map((card) => card.id),
+  );
   return {
     type: 'RequestDecision',
     decision: {
       ...asked,
       id: decisionId(`${key}:${cardId}`),
       subject: cardId,
-      options: candidates.map((card) => ({
+      options: candidates.map((card, i) => ({
         id: card.id,
-        label: cardStats(ctx.cards, card.code).name,
+        label: labels[i] ?? card.id,
         target: card.id,
         commands: commandsFor(card.id),
       })),
