@@ -1,3 +1,4 @@
+import { assertNever } from '@arkham/util';
 import type { AbilityEffect, AbilityStep } from './abilities';
 import { isLocationInPlay } from './board';
 import { cardStats, resolveValue, type EngineContext, type ScaledValue } from './cards';
@@ -66,9 +67,17 @@ export function canPay(
   cost: ActionCost | undefined,
 ): boolean {
   if (cost === undefined) return true;
-  if (cost.spend !== 'groupClues') return statValue(investigator, cost.spend) >= cost.amount;
-  const held = activeInvestigators(state).reduce((sum, inv) => sum + inv.clues, 0);
-  return held >= groupClueAmount(state, cost.amount);
+  switch (cost.spend) {
+    case 'resources':
+    case 'clues':
+      return statValue(investigator, cost.spend) >= cost.amount;
+    case 'groupClues': {
+      const held = activeInvestigators(state).reduce((sum, inv) => sum + inv.clues, 0);
+      return held >= groupClueAmount(state, cost.amount);
+    }
+    default:
+      return assertNever(cost);
+  }
 }
 
 /** The clues a group cost asks for the starting player count ("2 [per investigator]"). */
@@ -86,18 +95,31 @@ function costPayment(
   cost: ActionCost | undefined,
   spend: readonly ClueSpend[] | undefined,
 ): InvestigatorChanged[] {
-  if (cost?.spend !== 'groupClues') {
-    if (spend !== undefined) throw new CommandRejected({ code: 'noGroupCost' });
-    if (cost === undefined) return [];
-    const { spend: stat, amount } = cost;
-    return [{ type: 'InvestigatorChanged', investigatorId: investigator.id, stat, delta: -amount }];
+  if (spend !== undefined && cost?.spend !== 'groupClues')
+    throw new CommandRejected({ code: 'noGroupCost' });
+  if (cost === undefined) return [];
+  switch (cost.spend) {
+    case 'resources':
+    case 'clues':
+      return [
+        {
+          type: 'InvestigatorChanged',
+          investigatorId: investigator.id,
+          stat: cost.spend,
+          delta: -cost.amount,
+        },
+      ];
+    case 'groupClues': {
+      const required = groupClueAmount(state, cost.amount);
+      return groupCluePayments(
+        state,
+        spend ?? defaultCluePayments(state, investigator.id, required),
+        required,
+      );
+    }
+    default:
+      return assertNever(cost);
   }
-  const required = groupClueAmount(state, cost.amount);
-  return groupCluePayments(
-    state,
-    spend ?? defaultCluePayments(state, investigator.id, required),
-    required,
-  );
 }
 
 /**

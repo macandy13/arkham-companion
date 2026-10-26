@@ -312,6 +312,7 @@ describe('The Midnight Masks card abilities', () => {
       investigatorId: alice,
       cardId: act,
       action: 0,
+      asAction: true,
       spend: [
         { investigatorId: alice, amount: 1 },
         { investigatorId: bob, amount: 3 },

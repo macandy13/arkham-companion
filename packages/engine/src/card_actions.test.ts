@@ -419,6 +419,26 @@ describe('group clue costs', () => {
     expect(investigatorOf(after, bob)).toMatchObject({ clues: 2 });
   });
 
+  it('takes 3 of bob’s 3 first and alice’s 1 when bob, in the second seat, takes it', () => {
+    const { context, state } = newGame()
+      .withLocation(
+        hall,
+        blankLocation('hall', {
+          actions: [{ ...scareAction, cost: { spend: 'groupClues', amount: perInvestigator(2) } }],
+        }),
+        { revealed: true },
+      )
+      .withInvestigator(alice, { locationId: hall, clues: 3 })
+      .withInvestigator(bob, { locationId: hall, clues: 3 })
+      .withTurnOf(bob)
+      .start();
+
+    const after = stateAfter(context, state, useAsAction(bob, hall));
+
+    expect(investigatorOf(after, bob)).toMatchObject({ clues: 0, sanity: { horror: 1 } });
+    expect(investigatorOf(after, alice)).toMatchObject({ clues: 2 });
+  });
+
   it('neither offers nor accepts the action while the group holds only 3 clues', () => {
     const table = PlayTable.start(groupWith(1, 2));
 

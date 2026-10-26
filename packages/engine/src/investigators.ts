@@ -248,7 +248,7 @@ export function groupCluePayments(
   spend: readonly ClueSpend[],
   required: number,
 ): InvestigatorChanged[] {
-  const payers = new Set<string>();
+  const payers = new Set<InvestigatorId>();
   const payments = spend.map((payment): InvestigatorChanged => {
     if (!Number.isInteger(payment.amount) || payment.amount <= 0)
       throw new CommandRejected({ code: 'invalidTokenDelta', delta: payment.amount });
@@ -282,7 +282,7 @@ export function groupCluePayments(
 /**
  * A group payment of `required` clues when the players name no payers: `first` pays all they
  * can, then the other active investigators in seat order. The players change it by naming the
- * payers (`UseCardAction.spend`).
+ * payers (`UseCardAction.spend`); the app has no way to name them yet (#488).
  */
 export function defaultCluePayments(
   state: GameState,
