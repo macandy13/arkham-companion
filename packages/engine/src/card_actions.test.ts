@@ -9,15 +9,16 @@ import {
   instanceId,
   investigatorId,
   newGame,
+  perInvestigator,
   PlayTable,
   resignAction,
   takeHorror,
   threatAreaOf,
   type ActionLimit,
   type CardAction,
-  type Command,
   type InstanceId,
   type InvestigatorId,
+  type UseCardAction,
 } from './index';
 import { answer, investigatorOf, rejectionFrom, stateAfter } from '../test/utils';
 
@@ -44,7 +45,7 @@ const aliceInHallBobInCellar = newGame()
   .withInvestigator(bob, { locationId: cellar });
 
 /** `investigator` takes action number `action` of the card `cardId`, spending an action on it. */
-function useAsAction(investigator: InvestigatorId, cardId: InstanceId, action = 0): Command {
+function useAsAction(investigator: InvestigatorId, cardId: InstanceId, action = 0): UseCardAction {
   return { type: 'UseCardAction', investigatorId: investigator, cardId, action, asAction: true };
 }
 
@@ -372,5 +373,90 @@ describe('action costs', () => {
       action: 0,
       investigatorId: alice,
     });
+  });
+});
+
+describe('group clue costs', () => {
+  /**
+   * Alice in the hall on her turn with `aliceClues`, bob in the cellar with `bobClues`; the hall's
+   * action scares its taker for 2 clues per investigator, paid as a group: 4 clues for the two.
+   */
+  const groupWith = (aliceClues: number, bobClues: number) =>
+    newGame()
+      .withLocation(
+        hall,
+        blankLocation('hall', {
+          actions: [{ ...scareAction, cost: { spend: 'groupClues', amount: perInvestigator(2) } }],
+        }),
+        { revealed: true },
+      )
+      .withLocation(cellar, blankLocation('cellar'))
+      .withInvestigator(alice, { locationId: hall, clues: aliceClues })
+      .withInvestigator(bob, { locationId: cellar, clues: bobClues })
+      .withTurnOf(alice);
+
+  it('takes the 4 clues from alice and bob as they name them, bob paying from the cellar', () => {
+    const { context, state } = groupWith(3, 3).start();
+
+    const after = stateAfter(context, state, {
+      ...useAsAction(alice, hall),
+      spend: [
+        { investigatorId: alice, amount: 1 },
+        { investigatorId: bob, amount: 3 },
+      ],
+    });
+
+    expect(investigatorOf(after, alice)).toMatchObject({ clues: 2, sanity: { horror: 1 } });
+    expect(investigatorOf(after, bob)).toMatchObject({ clues: 0 });
+  });
+
+  it('takes all of alice’s 1 clue and 3 of bob’s 5 when nobody names the payers', () => {
+    const { context, state } = groupWith(1, 5).start();
+
+    const after = stateAfter(context, state, useAsAction(alice, hall));
+
+    expect(investigatorOf(after, alice)).toMatchObject({ clues: 0 });
+    expect(investigatorOf(after, bob)).toMatchObject({ clues: 2 });
+  });
+
+  it('neither offers nor accepts the action while the group holds only 3 clues', () => {
+    const table = PlayTable.start(groupWith(1, 2));
+
+    expect(table.board.cardActions(alice)).toEqual([]);
+    expect(rejectionFrom(table.ctx, table.state, useAsAction(alice, hall))).toMatchObject({
+      code: 'cardActionCostUnpaid',
+    });
+  });
+
+  it('rejects payers whose clues add up to 3 of the 4', () => {
+    const { context, state } = groupWith(3, 3).start();
+
+    expect(
+      rejectionFrom(context, state, {
+        ...useAsAction(alice, hall),
+        spend: [{ investigatorId: bob, amount: 3 }],
+      }),
+    ).toEqual({ code: 'wrongClueTotal', required: 4, spent: 3 });
+  });
+
+  it('rejects named payers for an action whose cost alice pays alone', () => {
+    const { context, state } = newGame()
+      .withLocation(
+        hall,
+        blankLocation('hall', {
+          actions: [{ ...scareAction, cost: { spend: 'clues', amount: 1 } }],
+        }),
+        { revealed: true },
+      )
+      .withInvestigator(alice, { locationId: hall, clues: 1 })
+      .withTurnOf(alice)
+      .start();
+
+    expect(
+      rejectionFrom(context, state, {
+        ...useAsAction(alice, hall),
+        spend: [{ investigatorId: alice, amount: 1 }],
+      }),
+    ).toEqual({ code: 'noGroupCost' });
   });
 });

@@ -155,6 +155,7 @@ export {
   gainResources,
   gainClues,
   drawCards,
+  drawFromScenarioDeck,
   searchDeck,
   spendClues,
   moveTo,

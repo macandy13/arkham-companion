@@ -303,6 +303,54 @@ describe('The Midnight Masks card abilities', () => {
     });
   });
 
+  describe('Uncovering the Conspiracy', () => {
+    const act = instanceId('uncovering_the_conspiracy');
+    const bob = investigatorId('bob');
+    const cultistDeck = { kind: 'scenarioDeck', deck: 'cultist' } as const;
+    const drawCultist: Command = {
+      type: 'UseCardAction',
+      investigatorId: alice,
+      cardId: act,
+      action: 0,
+      spend: [
+        { investigatorId: alice, amount: 1 },
+        { investigatorId: bob, amount: 3 },
+      ],
+    };
+    /** Alice and bob at Rivertown with 3 clues each on alice's turn, the act current. */
+    const atRivertown = () =>
+      newGame()
+        .withLocation(rivertown, cardOf('01125'), { revealed: true })
+        .withInvestigator(alice, { locationId: rivertown, clues: 3 })
+        .withInvestigator(bob, { locationId: rivertown, clues: 3 })
+        .withAct(act, cardOf('01123'))
+        .withTurnOf(alice);
+
+    it('spends 4 clues of the group and spawns the top cultist, Herman Collins, in the Graveyard', () => {
+      const { context, state } = atRivertown()
+        .withLocation(graveyard, cardOf('01133'), { revealed: true })
+        .withCard(instanceId('herman'), cardOf('01138'), cultistDeck)
+        .withCard(instanceId('peter'), cardOf('01139'), cultistDeck)
+        .start();
+
+      const after = stateAfter(context, state, drawCultist);
+
+      expect(requireInvestigator(after, alice).clues + requireInvestigator(after, bob).clues).toBe(
+        2,
+      );
+      expect(after.cards[instanceId('herman')]?.zone).toEqual(atLocation(graveyard));
+      expect(after.cards[instanceId('peter')]?.zone).toEqual(cultistDeck);
+    });
+
+    it('is refused with the Cultist deck empty, and nobody pays', () => {
+      const { context, state } = atRivertown().start();
+
+      expect(rejectionFrom(context, state, drawCultist)).toMatchObject({
+        code: 'triggeredCommandRejected',
+      });
+    });
+  });
+
   describe.each([
     { code: '01139', name: 'Peter Warren', holds: { clues: 2 }, after: { clues: 0 } },
     { code: '01140', name: 'Victoria Devereux', holds: { resources: 5 }, after: { resources: 0 } },

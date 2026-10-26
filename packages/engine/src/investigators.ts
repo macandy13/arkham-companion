@@ -1,3 +1,4 @@
+import type { ClueSpend } from './commands';
 import type { CluesDiscovered, DefeatCause, InvestigatorChanged, TokensChanged } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
 import { CommandRejected } from './rejection';
@@ -234,4 +235,67 @@ export function activeInvestigator(state: GameState, id: InvestigatorId): Invest
   if (investigator.status !== 'active')
     throw new CommandRejected({ code: 'investigatorNotActive', investigatorId: id });
   return investigator;
+}
+
+/**
+ * One `InvestigatorChanged` per payment of clues the investigators spend "as a group" (advancing
+ * the act, Uncovering the Conspiracy's action): the payers choose who pays how many. Rejects a
+ * payment that is not a whole number above 0, a payer listed twice or without that many clues,
+ * and payments that do not add up to `required`.
+ */
+export function groupCluePayments(
+  state: GameState,
+  spend: readonly ClueSpend[],
+  required: number,
+): InvestigatorChanged[] {
+  const payers = new Set<string>();
+  const payments = spend.map((payment): InvestigatorChanged => {
+    if (!Number.isInteger(payment.amount) || payment.amount <= 0)
+      throw new CommandRejected({ code: 'invalidTokenDelta', delta: payment.amount });
+    const investigator = activeInvestigator(state, payment.investigatorId);
+    if (payers.has(investigator.id))
+      throw new CommandRejected({
+        code: 'duplicateInvestigator',
+        investigatorId: investigator.id,
+      });
+    payers.add(investigator.id);
+    if (investigator.clues < payment.amount)
+      throw new CommandRejected({
+        code: 'negativeInvestigatorStat',
+        investigatorId: investigator.id,
+        stat: 'clues',
+        current: investigator.clues,
+        delta: -payment.amount,
+      });
+    return {
+      type: 'InvestigatorChanged',
+      investigatorId: investigator.id,
+      stat: 'clues',
+      delta: -payment.amount,
+    };
+  });
+  const spent = spend.reduce((sum, payment) => sum + payment.amount, 0);
+  if (spent !== required) throw new CommandRejected({ code: 'wrongClueTotal', required, spent });
+  return payments;
+}
+
+/**
+ * A group payment of `required` clues when the players name no payers: `first` pays all they
+ * can, then the other active investigators in seat order. The players change it by naming the
+ * payers (`UseCardAction.spend`).
+ */
+export function defaultCluePayments(
+  state: GameState,
+  first: InvestigatorId,
+  required: number,
+): ClueSpend[] {
+  const payers = activeInvestigators(state).sort(
+    (a, b) => Number(b.id === first) - Number(a.id === first),
+  );
+  let left = required;
+  return payers.flatMap((investigator) => {
+    const amount = Math.min(left, investigator.clues);
+    left -= amount;
+    return amount > 0 ? [{ investigatorId: investigator.id, amount }] : [];
+  });
 }
