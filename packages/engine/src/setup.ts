@@ -28,11 +28,11 @@ import {
 import { investigatorCard } from './investigator_cards';
 import { layoutOf, type Edge, type GridCell, type MapSpec } from './map';
 import { CommandRejected } from './rejection';
-import { nextInt, seedRng, shuffle } from './rng';
+import { nextInt, seedRng } from './rng';
 import type { ScenarioDefinition } from './scenario';
 import { spawnZone } from './spawn';
 import type { ChaosToken, Difficulty, TokenKind } from './state';
-import { scenarioDeck, type ScenarioDeck, type Zone } from './zone';
+import { sameZone, scenarioDeck, type ScenarioDeck, type Zone } from './zone';
 
 /**
  * A number of tokens as printed in setup instructions: a plain amount or a
@@ -115,14 +115,21 @@ export interface BuildEncounterDeckStep {
   exclude?: readonly CardCode[];
 }
 
-/**
- * Builds a scenario deck of its own from one copy of each code, shuffled with the setup's seed
- * ("shuffle them to form the Cultist deck").
- */
+/** Puts one copy of each code into a scenario deck of its own, in the order given. */
 export interface ScenarioDeckStep {
   kind: 'scenarioDeck';
   deck: ScenarioDeck;
   codes: readonly CardCode[];
+}
+
+/**
+ * Shuffles the cards earlier steps put into `zone` ("shuffle them to form the Cultist deck"),
+ * with the setup's seed on a stream of its own, so the game's RNG and every later random result
+ * stay the same. The encounter deck needs none: `StartScenario` shuffles it.
+ */
+export interface ShuffleStep {
+  kind: 'shuffle';
+  zone: Zone;
 }
 
 /** Shuffles one copy of each code into the encounter deck, whatever its encounter set. */
@@ -211,6 +218,7 @@ type PlacingStep =
   | BuildEncounterDeckStep
   | ShuffleIntoEncounterDeckStep
   | ScenarioDeckStep
+  | ShuffleStep
   | PlaceTokensStep
   | SpawnStep
   | MoveInvestigatorsStep
@@ -219,8 +227,8 @@ type PlacingStep =
 /** Mixed into the setup seed for the location picks (`withPickedLocations`). */
 const VERSION_PICK_STREAM = 0x5e7c9;
 
-/** Mixed into the setup seed for the scenario deck shuffles (`withShuffledDecks`). */
-const SCENARIO_DECK_STREAM = 0xdec26;
+/** Mixed into the setup seed for the `ShuffleStep`s. */
+const SHUFFLE_STREAM = 0x5a007;
 
 /** Mixed into the setup seed for the `OneAtRandomStep` picks. */
 const STEP_PICK_STREAM = 0x0a7e5;
@@ -284,6 +292,8 @@ interface SetupEnv {
   readonly playerCount: number;
   /** Copies of each code that steps other than `buildEncounterDeck` put on the table. */
   readonly usedCopies: ReadonlyMap<CardCode, number>;
+  /** A random whole number below `bound`, from the setup's stream for `ShuffleStep`s. */
+  readonly pick: (bound: number) => number;
 }
 
 /**
@@ -305,21 +315,19 @@ export function compileSetup(ctx: ScenarioContext, options: SetupOptions): Start
   const log = options.campaign;
   if (log) checkCampaignSeats(log, def.id, options.investigators);
   const playerCount = options.investigators.length;
-  const steps = withShuffledDecks(
-    withPickedLocations(
-      placingSteps(def.setup, {
-        story: log?.story ?? {},
-        playerCount,
-        pick: seededPicker(options.seed ^ STEP_PICK_STREAM),
-      }),
-      options.seed,
-    ),
+  const steps = withPickedLocations(
+    placingSteps(def.setup, {
+      story: log?.story ?? {},
+      playerCount,
+      pick: seededPicker(options.seed ^ STEP_PICK_STREAM),
+    }),
     options.seed,
   );
   const env: SetupEnv = {
     ctx,
     playerCount,
     usedCopies: usedCopies(def, steps),
+    pick: seededPicker(options.seed ^ SHUFFLE_STREAM),
   };
   const initial: SetupDraft = {
     maps: {},
@@ -492,20 +500,6 @@ function withPickedLocations(steps: readonly PlacingStep[], seed: number): reado
 }
 
 /**
- * The steps with the codes of each scenario deck in a shuffled order, from a seeded stream of
- * their own: shuffling with the game's RNG would change every later random result of the game.
- */
-function withShuffledDecks(steps: readonly PlacingStep[], seed: number): readonly PlacingStep[] {
-  let rng = seedRng(seed ^ SCENARIO_DECK_STREAM);
-  return steps.map((step) => {
-    if (step.kind !== 'scenarioDeck') return step;
-    const [codes, next] = shuffle(step.codes, rng);
-    rng = next;
-    return { ...step, codes };
-  });
-}
-
-/**
  * The map step with its `atRandom` locations picked and placed in their cells, and without the
  * connections to the ones left out.
  */
@@ -554,6 +548,7 @@ function renamed(step: PlacingStep, picked: (code: CardCode) => CardCode): Placi
     case 'buildEncounterDeck':
     case 'shuffleIntoEncounterDeck':
     case 'scenarioDeck':
+    case 'shuffle':
     case 'addChaosTokens':
       return step;
   }
@@ -576,6 +571,8 @@ function applyStep(draft: SetupDraft, step: PlacingStep, env: SetupEnv): SetupDr
         (state, code) => withCard(state, code, scenarioDeck(step.deck)),
         draft,
       );
+    case 'shuffle':
+      return withShuffled(draft, step.zone, env.pick);
     case 'buildEncounterDeck':
       return encounterDeckCards(step.sets, step.exclude ?? [], env).reduce(
         (state, code) => withCard(state, code, { kind: 'encounterDeck' }),
@@ -647,6 +644,17 @@ function withCard(
   return {
     ...draft,
     cards: [...draft.cards, { id, code, zone, faceUp, ...(tokens && { tokens }) }],
+  };
+}
+
+/** The draft with the cards in `zone` in a random order; every other card keeps its place. */
+function withShuffled(draft: SetupDraft, zone: Zone, pick: (bound: number) => number): SetupDraft {
+  const remaining = draft.cards.filter((card) => sameZone(card.zone, zone));
+  return {
+    ...draft,
+    cards: draft.cards.map((card) =>
+      sameZone(card.zone, zone) ? (remaining.splice(pick(remaining.length), 1)[0] ?? card) : card,
+    ),
   };
 }
 

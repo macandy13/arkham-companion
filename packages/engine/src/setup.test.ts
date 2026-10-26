@@ -109,8 +109,35 @@ describe('compileSetup', () => {
 
   it.each([
     { seed: 1, order: ['cultist_c#1', 'cultist_b#1', 'cultist_a#1'] },
-    { seed: 3, order: ['cultist_b#1', 'cultist_c#1', 'cultist_a#1'] },
-  ])('builds the Cultist deck in the order seed $seed shuffles it to', ({ seed, order }) => {
+    { seed: 4, order: ['cultist_b#1', 'cultist_c#1', 'cultist_a#1'] },
+  ])(
+    'shuffles the Cultist deck to the order of seed $seed, leaving a set-aside card in place',
+    ({ seed, order }) => {
+      const def = makeDefinition({
+        setup: [
+          {
+            kind: 'scenarioDeck',
+            deck: 'cultist',
+            codes: [cardCode('cultist_a'), cardCode('cultist_b'), cardCode('cultist_c')],
+          },
+          { kind: 'setAside', codes: [cardCode('masked_hunter')] },
+          { kind: 'shuffle', zone: { kind: 'scenarioDeck', deck: 'cultist' } },
+        ],
+      });
+
+      const command = scenario.compileSetup(
+        { cards: investigatorCards, scenario: def },
+        makeSetupOptions({ seed }),
+      );
+
+      expect(command.cards.map((c) => [c.id, c.zone.kind])).toEqual([
+        ...order.map((id) => [id, 'scenarioDeck']),
+        ['masked_hunter#1', 'setAside'],
+      ]);
+    },
+  );
+
+  it('keeps a scenario deck in the order given when no step shuffles it', () => {
     const def = makeDefinition({
       setup: [
         {
@@ -123,11 +150,10 @@ describe('compileSetup', () => {
 
     const command = scenario.compileSetup(
       { cards: investigatorCards, scenario: def },
-      makeSetupOptions({ seed }),
+      makeSetupOptions(),
     );
 
-    expect(command.cards.map((c) => c.id)).toEqual(order);
-    expect(command.cards.every((c) => c.zone.kind === 'scenarioDeck')).toBe(true);
+    expect(command.cards.map((c) => c.id)).toEqual(['cultist_a#1', 'cultist_b#1', 'cultist_c#1']);
   });
 
   it('spawns an enemy at a location', () => {
