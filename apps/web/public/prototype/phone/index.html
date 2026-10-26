@@ -1121,10 +1121,35 @@
         background-position: center 30%;
       }
       .nb .t {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 2px 4px;
         padding: 3px 4px;
         background: var(--band);
         color: var(--parchment);
         text-align: center;
+      }
+      /* A location's connection symbol, as in the upper left corner of the printed card. */
+      .sym {
+        width: 1.1rem;
+        height: 1.1rem;
+        flex: none;
+        border-radius: 4px;
+        background: #5a1d18;
+        border: 1.5px solid var(--parchment);
+        vertical-align: -0.15em;
+      }
+      .sym path,
+      .sym rect,
+      .sym circle {
+        fill: var(--parchment);
+      }
+      h2 .sym {
+        width: 1.4rem;
+        height: 1.4rem;
+        margin-right: 6px;
       }
       .nb.back .t {
         background: var(--band-back);
@@ -1165,7 +1190,8 @@
         display: none;
       }
       .nb.blocked .t::after {
-        content: ' · barricaded';
+        content: 'barricaded';
+        flex-basis: 100%;
         font-family: var(--body);
         font-size: 0.65rem;
         color: #f3b3ad;
@@ -1355,10 +1381,20 @@
           },
         ],
         locations: {
-          attic: { code: '01113', name: 'Attic', x: 0, y: 0, revealed: true, shroud: 1, clues: 3 },
+          attic: {
+            code: '01113',
+            name: 'Attic',
+            symbol: 'triangle',
+            x: 0,
+            y: 0,
+            revealed: true,
+            shroud: 1,
+            clues: 3,
+          },
           hallway: {
             code: '01112',
             name: 'Hallway',
+            symbol: 'square',
             x: 0,
             y: 1,
             revealed: true,
@@ -1368,6 +1404,7 @@
           parlor: {
             code: '01115',
             name: 'Parlor',
+            symbol: 'diamond',
             x: 1,
             y: 1,
             revealed: false,
@@ -1378,6 +1415,7 @@
           cellar: {
             code: '01114',
             name: 'Cellar',
+            symbol: 'plus',
             x: 0,
             y: 2,
             revealed: false,
@@ -1914,6 +1952,16 @@
         return dx < 0 ? 'w' : 'e';
       }
       const ARROW = { n: '▲', s: '▼', w: '◀', e: '▶' };
+      /* Our own drawings of the simple shapes, not the printed glyphs. */
+      const SYMBOL = {
+        triangle: '<path d="M12 5 19 18H5Z"/>',
+        square: '<rect x="6.5" y="6.5" width="11" height="11"/>',
+        diamond: '<path d="M12 4 20 12 12 20 4 12Z"/>',
+        plus: '<path d="M10 5h4v5h5v4h-5v5h-4v-5H5v-4h5Z"/>',
+        circle: '<circle cx="12" cy="12" r="6"/>',
+      };
+      const symbol = (l) =>
+        `<svg class="sym" viewBox="0 0 24 24" role="img" aria-label="${l.symbol}"><title>${l.symbol}</title>${SYMBOL[l.symbol]}</svg>`;
       function neighbourTile(key, dir) {
         const l = S.locations[key];
         const who = S.investigators.filter((x) => x.loc === key).map((x) => pawn(x));
@@ -1921,7 +1969,7 @@
         return `<button type="button" class="nb ${l.revealed ? '' : 'back'} ${l.blocked ? 'blocked' : ''}" data-focus="${key}" aria-label="Go to ${esc(l.name)}">
           <span class="art" data-img="${l.code}${l.revealed ? '' : 'b'}"></span>
           <span class="arrow">${ARROW[dir]}</span><span class="who">${[...who, ...foes].join('')}</span>
-          <span class="t">${esc(l.name)}</span></button>`;
+          <span class="t">${symbol(l)}${esc(l.name)}</span></button>`;
       }
       function locationRow(key) {
         const l = S.locations[key];
@@ -1958,7 +2006,7 @@
         return `<section class="row maprow locrow" aria-label="Location: ${esc(l.name)}">
           ${topStrip()}
           <div class="locview" style="--from-x: ${fx}; --from-y: ${fy}">
-            <h2><small>${l.revealed ? `Shroud ${l.shroud} · ${l.clues} clues left` : 'Unrevealed'}${l.blocked ? ' · barricaded' : ''}</small>${esc(l.name)}</h2>
+            <h2><small>${l.revealed ? `Shroud ${l.shroud} · ${l.clues} clues left` : 'Unrevealed'}${l.blocked ? ' · barricaded' : ''}</small>${symbol(l)}${esc(l.name)}</h2>
             <div class="compass">
               <div class="n">${sides.n.join('')}</div>
               <div class="w">${sides.w.join('')}</div>
