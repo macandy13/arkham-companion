@@ -5,7 +5,7 @@
  * scenario (setup, the phase assistant, turns and actions, skill tests,
  * clues, undoing a mis-tapped move, act 1's reverse side, doom and the agenda, encounter draws and revelation
  * tests, spawn instructions, engagement, hunters, attacks, attacks of opportunity, upkeep, undoing a whole mythos phase,
- * resigning, the reverse sides of agenda 2 and acts 2 and 3, and the end of the scenario) as one
+ * defeat, the reverse sides of agenda 2 and acts 2 and 3, and the end of the scenario) as one
  * session report: game-language steps on a `PlayTable`, phase by phase and
  * turn by turn, with the facts a player would check at the table asserted
  * where they happen.
@@ -76,7 +76,7 @@ const ghoulMinion = 'Ghoul Minion';
 const ravenousGhoul = 'Ravenous Ghoul';
 
 describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
-  it('plays from setup to resolution 1: act 1 opens the house, enemies spawn, hunt, attack and are defeated, Wendy resigns, the ghouls rise, act 2 brings the Ghoul Priest and its defeat lets the group burn the house', () => {
+  it('plays from setup to resolution 1: act 1 opens the house, enemies spawn, hunt, attack and are defeated, Wendy is defeated, the ghouls rise, act 2 brings the Ghoul Priest and its defeat lets the group burn the house', () => {
     // Setup
     const table = PlayTable.setUp(ctx, { investigators: zealotSeats, seed: 24 });
 
@@ -788,7 +788,9 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     `);
 
     // Round 8 – mythos: Roland draws Dissonant Voices and Daisy a Ghoul Minion;
-    // Wendy passes her willpower test against Crypt Chill.
+    // Wendy fails her willpower test against Crypt Chill. She has no asset to
+    // discard, so she takes 2 damage: 7 of 7, and she is defeated. Her 3 clues
+    // go to the Cellar and Frozen in Fear is discarded.
     expect(table.nextPhase()).toEqual({ round: 8, phase: 'mythos', step: 'drawEncounterCard' });
     expect(table.board.decisions).toEqual([
       {
@@ -801,22 +803,18 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         labels: { pass: 'decision.pass', fail: 'decision.fail' },
       },
     ]);
-    table.answer(byName('Crypt Chill'), 'pass');
+    table.answer(byName('Crypt Chill'), 'fail');
+    table.takeDamage(wendy, 2);
 
-    // Round 8 – investigation: Wendy, with Frozen in Fear still on her, resigns.
-    // Her 3 clues go to the Cellar and Frozen in Fear is discarded.
-    expect(table.nextPhase()).toEqual({ round: 8, phase: 'investigation' });
-    table.startTurn(wendy);
-    table.resign(wendy);
-
-    expect(table.board.turn).toBeUndefined();
+    expect(table.board.investigator(wendy).status).toBe('defeated');
     expect(table.board.perInvestigator('clues')).toEqual({ roland: 5, daisy: 1, wendy: 0 });
     expect(table.board.location(byName('Cellar')).clues).toBe(3);
     expect(table.board.namesIn({ kind: 'threatArea', investigatorId: wendy })).toEqual([]);
     expect(table.board.namesIn({ kind: 'encounterDiscard' })[0]).toBe('Frozen in Fear');
 
-    // The phase ends without waiting for Wendy. Roland empties his .38 Special
+    // Round 8 – investigation: the phase goes on without Wendy. Roland empties his .38 Special
     // into the Flesh-Eater (2 damage a shot) and searches the Attic again.
+    expect(table.nextPhase()).toEqual({ round: 8, phase: 'investigation' });
     table.startTurn(roland);
     table.fight(roland, byName('Flesh-Eater'), { damage: 2 });
     table.fight(roland, byName('Flesh-Eater'), { damage: 2 });
@@ -1090,7 +1088,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     // What resolution 1 writes to the campaign log: the house burned down, Roland as the lead earns
     // Lita and suffers 1 mental trauma, and everyone earns the 4 victory points plus 2, Wendy too
-    // although she resigned. Nobody was defeated, so there is no other trauma.
+    // although she was defeated. Defeated by damage, she suffers 1 physical trauma.
     const proposal = campaign.proposeResolution(ctx, table.state, theGatheringResolutions);
     expect(proposal).toEqual([
       {
@@ -1110,6 +1108,10 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       { kind: 'command', command: { type: 'AwardXp', code: daisyWalker.code, amount: 6 } },
       { kind: 'command', command: { type: 'AwardXp', code: wendyAdams.code, amount: 6 } },
       { kind: 'byHand', textKey: 'scenario.theGathering.resolution.upgradeDecks' },
+      {
+        kind: 'command',
+        command: { type: 'AddTrauma', code: wendyAdams.code, kind: 'physical', amount: 1 },
+      },
     ]);
 
     // The players confirm it as proposed, and the campaign log moves on to The Midnight Masks.
@@ -1131,7 +1133,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(log.investigators).toMatchObject([
       { code: rolandBanks.code, mentalTrauma: 1, xpEarned: 6 },
       { code: daisyWalker.code, mentalTrauma: 0, xpEarned: 6 },
-      { code: wendyAdams.code, mentalTrauma: 0, xpEarned: 6 },
+      { code: wendyAdams.code, mentalTrauma: 0, physicalTrauma: 1, xpEarned: 6 },
     ]);
     expect(log.playedScenarios).toEqual([
       { scenarioId: 'the-gathering', outcome: { kind: 'resolution', id: 'R1' } },

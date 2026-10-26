@@ -135,7 +135,13 @@ export type TimingWindow =
    * changes nothing while the effect only needs "its location", which the
    * event records.
    */
-  | { kind: 'defeated' };
+  | { kind: 'defeated' }
+  /**
+   * An action ability of the card (`CardStats.actions`), taken with `UseCardAction`, naming the
+   * investigator who took it and, as every window, the card. No event opens it: the command
+   * queues the action's effects itself, so an `Ability` listing this window never fires.
+   */
+  | { kind: 'action' };
 
 /** The basic actions whose test opens `tested`: investigate, fight and evade. */
 export type TestedAction = SkillTestKind['kind'];
@@ -267,6 +273,7 @@ export type AbilityCommand =
           | 'ShuffleEncounterDeck'
           | 'DrawEncounter'
           | 'DefeatInvestigator'
+          | 'Resign'
           | 'EndScenario';
       }
     >

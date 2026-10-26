@@ -9,6 +9,7 @@ import type {
   EngageEnemy,
   Investigate,
   MoveInvestigator,
+  UseCardAction,
 } from './commands';
 import {
   scenarioId,
@@ -572,7 +573,7 @@ export type QueuedStep =
  * The actions the engine sees that provoke attacks of opportunity
  * (`attackOfOpportunityDecisions`), which wait for those attacks.
  */
-export type HeldAction = MoveInvestigator | Investigate | EngageEnemy;
+export type HeldAction = MoveInvestigator | Investigate | EngageEnemy | UseCardAction;
 
 /**
  * Complete state of one scenario in play. Only ever produced by the reducer

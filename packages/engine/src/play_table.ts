@@ -265,9 +265,23 @@ export class PlayTable {
     this.play({ type: 'EndTurn', investigatorId: this.seat(investigator) });
   }
 
-  /** The investigator resigns as the action of their turn, which ends it. */
-  resign(investigator: InvestigatorRef): void {
-    this.play({ type: 'Resign', investigatorId: this.seat(investigator) });
+  /**
+   * The investigator takes the action ability number `action` (default the first) printed on the
+   * one card in the game `card` picks (a location, the agenda, an enemy, …).
+   */
+  useCardAction(investigator: InvestigatorRef, card: CardRef, action = 0): void {
+    const matcher = cardMatcher(card);
+    const { id } = this.onlyOne(
+      matchingCards(this.ctx, Object.values(this.current.cards), matcher),
+      `card ${describeMatcher(matcher)}`,
+    );
+    this.play({
+      type: 'UseCardAction',
+      investigatorId: this.seat(investigator),
+      cardId: id,
+      action,
+      asAction: true,
+    });
   }
 
   /**

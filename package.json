@@ -1,6 +1,6 @@
 {
   "name": "arkham-companion",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.28.0",
@@ -24,7 +24,7 @@
     "globals": "^17.13.0",
     "prettier": "^3.3.0",
     "typescript": "^6.0.2",
-    "typescript-eslint": "^8.0.0",
+    "typescript-eslint": "^8.72.0",
     "vitest": "^5.0.5"
   }
 }
