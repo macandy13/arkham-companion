@@ -81,13 +81,24 @@ export interface Screenshot {
 export const RECORDING_PROJECTS = { flows: 'screencast', shots: 'screenshot' } as const;
 
 /**
- * Flattens the report into one entry per flow spec, in report order, using the last passing
- * attempt. `base` lists the specs the PR's base branch already tags (`playwright test --list`
- * on the base commit); they are left out, because a tag that is already on `main` belongs to an
- * earlier PR, not to this one.
+ * The base commit's run of the same projects (`playwright test` on the merge commit's first
+ * parent) and how to compare two picture files. A spec the base also records is left out when
+ * its last picture (the shot, or a flow's end state) is the same on both sides: the PR didn't
+ * change it, an earlier PR only left its tag on `main`. Without a base, every tagged spec shows.
  */
-export function flowVideos(report: PlaywrightReport, base: PlaywrightReport = {}): FlowVideo[] {
-  return specsIn(report, RECORDING_PROJECTS.flows, base).map((spec) => ({
+export interface BaseRun {
+  readonly report: PlaywrightReport;
+  readonly samePicture: (headPath: string, basePath: string) => boolean;
+}
+
+const NO_BASE: BaseRun = { report: {}, samePicture: () => false };
+
+/**
+ * Flattens the report into one entry per flow spec, in report order, using the last passing
+ * attempt, leaving out flows whose end state `base` shows unchanged.
+ */
+export function flowVideos(report: PlaywrightReport, base: BaseRun = NO_BASE): FlowVideo[] {
+  return changedSpecs(report, RECORDING_PROJECTS.flows, base).map((spec) => ({
     title: spec.title,
     slug: slugify(spec.title),
     videoPath: passingAttachment(spec, RECORDING_PROJECTS.flows, 'video'),
@@ -96,23 +107,35 @@ export function flowVideos(report: PlaywrightReport, base: PlaywrightReport = {}
 
 /**
  * Flattens the report into one entry per screenshot spec, in report order, using the last
- * passing attempt. Specs `base` already tags are left out, as in {@link flowVideos}.
+ * passing attempt, leaving out shots whose picture `base` shows unchanged.
  */
-export function screenshots(report: PlaywrightReport, base: PlaywrightReport = {}): Screenshot[] {
-  return specsIn(report, RECORDING_PROJECTS.shots, base).map((spec) => ({
+export function screenshots(report: PlaywrightReport, base: BaseRun = NO_BASE): Screenshot[] {
+  return changedSpecs(report, RECORDING_PROJECTS.shots, base).map((spec) => ({
     title: spec.title,
     slug: slugify(spec.title),
     imagePath: passingAttachment(spec, RECORDING_PROJECTS.shots, 'screenshot'),
   }));
 }
 
-function specsIn(report: PlaywrightReport, project: string, base: PlaywrightReport): ReportSpec[] {
-  const tagged = (r: PlaywrightReport) =>
-    allSpecs(r.suites ?? []).filter((spec) =>
-      spec.tests.some((test) => test.projectName === project),
-    );
-  const onBase = new Set(tagged(base).map(specKey));
-  return tagged(report).filter((spec) => !onBase.has(specKey(spec)));
+function changedSpecs(report: PlaywrightReport, project: string, base: BaseRun): ReportSpec[] {
+  const basePictures = new Map(
+    specsIn(base.report, project).map((spec) => [
+      specKey(spec),
+      passingAttachment(spec, project, 'screenshot'),
+    ]),
+  );
+  return specsIn(report, project).filter((spec) => {
+    const headPicture = passingAttachment(spec, project, 'screenshot');
+    const basePicture = basePictures.get(specKey(spec));
+    // A missing picture on either side (failed run, spec new to the PR) can't prove "unchanged".
+    return !headPicture || !basePicture || !base.samePicture(headPicture, basePicture);
+  });
+}
+
+function specsIn(report: PlaywrightReport, project: string): ReportSpec[] {
+  return allSpecs(report.suites ?? []).filter((spec) =>
+    spec.tests.some((test) => test.projectName === project),
+  );
 }
 
 // The leaf title is enough: specs repeating a title in one file would already collide on their slug.

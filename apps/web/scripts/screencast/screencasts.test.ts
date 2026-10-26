@@ -108,26 +108,47 @@ describe('screenshots', () => {
   });
 });
 
-describe('specs the base already tags', () => {
-  const shot = (file: string, title: string) => ({
+describe('specs the base also records', () => {
+  const shot = (file: string, title: string, picture: string) => ({
     title,
     file,
-    tests: [{ projectName: 'screenshot', results: [] }],
+    tests: [
+      {
+        projectName: 'screenshot',
+        results: [{ status: 'passed', attachments: [{ name: 'screenshot', path: picture }] }],
+      },
+    ],
   });
-  const flow = (file: string, title: string) => ({
+  const flow = (file: string, title: string, video: string, endPicture: string) => ({
     title,
     file,
-    tests: [{ projectName: 'screencast', results: [] }],
+    tests: [
+      {
+        projectName: 'screencast',
+        results: [
+          {
+            status: 'passed',
+            attachments: [
+              { name: 'video', path: video },
+              { name: 'screenshot', path: endPicture },
+            ],
+          },
+        ],
+      },
+    ],
   });
+  // Pictures count as the same when their names say so: '/head/attic_old.png' matches '/base/attic_old.png'.
+  const samePicture = (head: string, base: string) =>
+    head.replace('/head/', '') === base.replace('/base/', '');
 
-  it('are left out, so only the tags this PR adds are shown', () => {
+  it('are left out when their picture is unchanged, and shown when the PR changes it', () => {
     const head: PlaywrightReport = {
       suites: [
         {
           specs: [
-            shot('map.spec.ts', 'tagged on main'),
-            shot('map.spec.ts', 'tagged by this PR'),
-            flow('play.spec.ts', 'flow tagged on main'),
+            shot('map.spec.ts', 'unchanged attic', '/head/attic_old.png'),
+            shot('map.spec.ts', 'restyled hallway', '/head/hallway_new.png'),
+            shot('map.spec.ts', 'new cellar', '/head/cellar.png'),
           ],
         },
       ],
@@ -136,26 +157,78 @@ describe('specs the base already tags', () => {
       suites: [
         {
           specs: [
-            shot('map.spec.ts', 'tagged on main'),
-            flow('play.spec.ts', 'flow tagged on main'),
+            shot('map.spec.ts', 'unchanged attic', '/base/attic_old.png'),
+            shot('map.spec.ts', 'restyled hallway', '/base/hallway_old.png'),
           ],
         },
       ],
     };
 
-    expect(screenshots(head, base).map((s) => s.title)).toEqual(['tagged by this PR']);
-    expect(flowVideos(head, base)).toEqual([]);
+    const shown = screenshots(head, { report: base, samePicture }).map((s) => s.title);
+
+    expect(shown).toEqual(['restyled hallway', 'new cellar']);
+  });
+
+  it("are shown as not taken when the PR's run failed, even though the base has a picture", () => {
+    const head: PlaywrightReport = {
+      suites: [
+        {
+          specs: [
+            {
+              title: 'broken attic',
+              file: 'map.spec.ts',
+              tests: [
+                { projectName: 'screenshot', results: [{ status: 'failed', attachments: [] }] },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const base: PlaywrightReport = {
+      suites: [{ specs: [shot('map.spec.ts', 'broken attic', '/base/attic.png')] }],
+    };
+
+    expect(screenshots(head, { report: base, samePicture })).toEqual([
+      { title: 'broken attic', slug: 'broken-attic', imagePath: undefined },
+    ]);
   });
 
   it.each([
-    { name: 'the same title in another file', baseSpec: shot('other.spec.ts', 'the attic') },
-    { name: 'the same spec as a flow, not a shot', baseSpec: flow('map.spec.ts', 'the attic') },
-  ])('are matched by file, title and project, so $name still shows', ({ baseSpec }) => {
-    const head: PlaywrightReport = { suites: [{ specs: [shot('map.spec.ts', 'the attic')] }] };
-    const base: PlaywrightReport = { suites: [{ specs: [baseSpec] }] };
+    { name: 'an unchanged end state is left out', headEnd: '/head/end_old.png', shown: [] },
+    { name: 'a changed end state is shown', headEnd: '/head/end_new.png', shown: ['play a turn'] },
+  ])('compare a flow by its end state: $name', ({ headEnd, shown }) => {
+    const head: PlaywrightReport = {
+      suites: [{ specs: [flow('play.spec.ts', 'play a turn', '/head/turn.webm', headEnd)] }],
+    };
+    const base: PlaywrightReport = {
+      suites: [
+        { specs: [flow('play.spec.ts', 'play a turn', '/base/turn.webm', '/base/end_old.png')] },
+      ],
+    };
 
-    expect(screenshots(head, base).map((s) => s.title)).toEqual(['the attic']);
+    expect(flowVideos(head, { report: base, samePicture }).map((f) => f.title)).toEqual(shown);
   });
+
+  it.each([
+    { name: 'another file', baseSpec: shot('other.spec.ts', 'the attic', '/base/attic.png') },
+    {
+      name: 'the flow project',
+      baseSpec: flow('map.spec.ts', 'the attic', '/base/attic.webm', '/base/attic.png'),
+    },
+  ])(
+    'are matched by file, title and project, so a base spec in $name is no match',
+    ({ baseSpec }) => {
+      const head: PlaywrightReport = {
+        suites: [{ specs: [shot('map.spec.ts', 'the attic', '/head/attic.png')] }],
+      };
+      const base: PlaywrightReport = { suites: [{ specs: [baseSpec] }] };
+
+      expect(screenshots(head, { report: base, samePicture }).map((s) => s.title)).toEqual([
+        'the attic',
+      ]);
+    },
+  );
 });
 
 describe('slugify', () => {

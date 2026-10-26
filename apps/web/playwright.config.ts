@@ -41,6 +41,8 @@ export default defineConfig({
       outputDir: 'test-results/screencast',
       use: {
         ...tablet,
+        // The end state, so the preview can tell whether this PR changed the flow (cli.ts render).
+        screenshot: 'on',
         video: {
           mode: 'on',
           size: tablet.viewport,
