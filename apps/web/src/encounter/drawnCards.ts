@@ -21,10 +21,17 @@ export interface DrawnCard {
 /**
  * The encounter cards `events` (one step's) drew or moved out of the `resolving` zone, in the
  * order they were drawn, each read where it is now on `board`. A card still resolving is left out:
- * the decision dialog shows it until its revelation is answered, and that step then lists it.
+ * the decision dialog shows it until its revelation is answered, and that step then lists it, for
+ * the investigator the board before the step (`before`) had it resolving for.
  */
-export function drawnCards(board: BoardView, events: readonly Event[]): DrawnCard[] {
+export function drawnCards(
+  before: BoardView,
+  board: BoardView,
+  events: readonly Event[],
+): DrawnCard[] {
   const drawnFor = new Map<InstanceId, InvestigatorId>();
+  const { resolving } = before;
+  if (resolving?.drawnBy !== undefined) drawnFor.set(resolving.id, resolving.drawnBy);
   const cards = unique(
     events.flatMap((event) => {
       if (event.type === 'EncounterCardDrawn') {

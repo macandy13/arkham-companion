@@ -17,61 +17,58 @@ import { drawnCards } from './drawnCards';
 const study = instanceId('study');
 const alder = investigatorId('alder');
 
-/** The events `step` adds to `table`'s log. */
-const eventsOf = (table: PlayTable, step: () => void) => {
-  const before = table.events.length;
+/** What `step` does to `table`: the board before it, its events and the board after it. */
+const stepOn = (table: PlayTable, step: () => void) => {
+  const before = table.board;
+  const logged = table.events.length;
   step();
-  return table.events.slice(before);
+  return { before, events: table.events.slice(logged), after: table.board };
 };
 
 describe('drawnCards', () => {
-  /**
-   * Alder in the Study; `top_card` (an enemy, or a treachery with `topCard`'s stats) lies on the
-   * encounter deck, a plain treachery under it.
-   */
-  const aldersDraw = (topCard: Partial<CardStats>, enemy = false) =>
+  /** Alder in the Study; `topCard` lies on the encounter deck, a plain treachery under it. */
+  const aldersDraw = (topCard: CardStats) =>
     PlayTable.start(
       newGame()
         .withLocation(study, blankLocation('study'), { revealed: true })
         .withInvestigator(alder, { locationId: study })
-        .withCard(
-          instanceId('top_card'),
-          enemy ? blankEnemy('top_card', topCard) : blankTreachery('top_card', topCard),
-          { kind: 'encounterDeck' },
-        )
+        .withCard(instanceId('top_card'), topCard, { kind: 'encounterDeck' })
         .withCard(instanceId('next_card'), blankTreachery('next_card'), {
           kind: 'encounterDeck',
         }),
     );
 
   it.each([
-    { drawn: 'a treachery', enemy: false, place: { kind: 'encounterDiscard' } },
-    { drawn: 'an enemy', enemy: true, place: { kind: 'engaged', investigator: alder } },
-  ])('lists $drawn drawn for alder where it went', ({ enemy, place }) => {
-    const table = aldersDraw({}, enemy);
+    { topCard: blankTreachery('top_card'), place: { kind: 'encounterDiscard' } },
+    { topCard: blankEnemy('top_card'), place: { kind: 'engaged', investigator: alder } },
+  ])('lists a $topCard.typeCode drawn for alder where it went', ({ topCard, place }) => {
+    const table = aldersDraw(topCard);
 
-    const events = eventsOf(table, () =>
+    const { before, events, after } = stepOn(table, () =>
       table.play({ type: 'DrawEncounter', investigatorId: alder }),
     );
 
-    expect(drawnCards(table.board, events)).toEqual([
+    expect(drawnCards(before, after, events)).toEqual([
       { card: expect.objectContaining({ name: 'top_card' }), drawnFor: alder, place },
     ]);
   });
 
-  it('leaves out a card still resolving, and lists it once its revelation test is answered', () => {
-    const table = aldersDraw({ abilities: [whenRevealed(skillTest('willpower', 4))] });
+  it('leaves out a card still resolving, and lists it for alder once its revelation test is answered', () => {
+    const table = aldersDraw(
+      blankTreachery('top_card', { abilities: [whenRevealed(skillTest('willpower', 4))] }),
+    );
 
-    const drawing = eventsOf(table, () =>
+    const drawing = stepOn(table, () =>
       table.play({ type: 'DrawEncounter', investigatorId: alder }),
     );
-    expect(drawnCards(table.board, drawing)).toEqual([]);
+    expect(drawnCards(drawing.before, drawing.after, drawing.events)).toEqual([]);
 
-    const answering = eventsOf(table, () => table.answer(byName('top_card'), 'pass'));
+    const answering = stepOn(table, () => table.answer(byName('top_card'), 'pass'));
 
-    expect(drawnCards(table.board, answering)).toEqual([
+    expect(drawnCards(answering.before, answering.after, answering.events)).toEqual([
       {
         card: expect.objectContaining({ name: 'top_card' }),
+        drawnFor: alder,
         place: { kind: 'encounterDiscard' },
       },
     ]);

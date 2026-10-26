@@ -45,7 +45,7 @@ export const resources = {
         went: '{{card}}: {{place}}',
         wentFor: '{{card}} for {{name}}: {{place}}',
         place: {
-          encounterDeck: 'shuffled back into the encounter deck',
+          encounterDeck: 'back in the encounter deck',
           encounterDiscard: 'discard pile',
           setAside: 'set aside',
           victoryDisplay: 'victory display',
@@ -65,9 +65,9 @@ export const resources = {
         victory_other: '{{count}} victory points',
       },
       toast: { label: 'Not possible', dismiss: 'OK', fallback: 'That is not possible right now.' },
+      notice: { dismiss: 'OK' },
       skipped: {
         label: 'Do this by hand',
-        dismiss: 'OK',
         effect:
           '{{card}}: {{effect}} was skipped, as the game does not hold exactly one copy of {{missing}}. Please do it by hand.',
         anEffect: 'an effect',
@@ -568,7 +568,7 @@ export const resources = {
         went: '{{card}}: {{place}}',
         wentFor: '{{card}} für {{name}}: {{place}}',
         place: {
-          encounterDeck: 'zurück ins Begegnungsdeck gemischt',
+          encounterDeck: 'zurück im Begegnungsdeck',
           encounterDiscard: 'Ablagestapel',
           setAside: 'beiseitegelegt',
           victoryDisplay: 'Siegpunktanzeige',
@@ -576,7 +576,7 @@ export const resources = {
           elsewhere: 'aus dem Spiel',
           threatArea: 'Bedrohungsbereich von {{name}}',
           engaged: 'in einen Kampf mit {{name}} verwickelt',
-          atLocation: 'an {{location}}',
+          atLocation: 'Ort: {{location}}',
           attachedTo: 'an {{card}} angehängt',
         },
         discard: 'Ablagestapel',
@@ -588,9 +588,9 @@ export const resources = {
         victory_other: '{{count}} Siegpunkte',
       },
       toast: { label: 'Nicht möglich', dismiss: 'OK', fallback: 'Das ist gerade nicht möglich.' },
+      notice: { dismiss: 'OK' },
       skipped: {
         label: 'Von Hand erledigen',
-        dismiss: 'OK',
         effect:
           '{{card}}: {{effect}} wurde übersprungen, da es nicht genau ein Exemplar von {{missing}} im Spiel gibt. Bitte von Hand erledigen.',
         anEffect: 'Ein Effekt',

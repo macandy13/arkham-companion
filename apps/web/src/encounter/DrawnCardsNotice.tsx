@@ -21,7 +21,7 @@ export function DrawnCardsNotice({
   const { t } = useTranslation();
   const nameOf = (investigator: InvestigatorId) => board.investigator(investigator).name;
 
-  const placeOf = (place: CardPlaceView): string => {
+  const describePlace = (place: CardPlaceView): string => {
     switch (place.kind) {
       case 'encounterDeck':
       case 'encounterDiscard':
@@ -48,17 +48,17 @@ export function DrawnCardsNotice({
         {drawn.map(({ card, drawnFor, place }) => (
           <li key={card.id}>
             {drawnFor === undefined
-              ? t('encounter.went', { card: card.name, place: placeOf(place) })
+              ? t('encounter.went', { card: card.name, place: describePlace(place) })
               : t('encounter.wentFor', {
                   card: card.name,
                   name: nameOf(drawnFor),
-                  place: placeOf(place),
+                  place: describePlace(place),
                 })}
           </li>
         ))}
       </ul>
       <button type="button" onClick={onDismiss}>
-        {t('skipped.dismiss')}
+        {t('notice.dismiss')}
       </button>
     </aside>
   );

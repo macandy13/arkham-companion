@@ -201,6 +201,7 @@ export class GameSession {
    */
   async play(step: PlayStep): Promise<Rejection | undefined> {
     const before = this.table.entries;
+    const boardBefore = this.table.board;
     try {
       this.table.step(() => step(this.table));
     } catch (error) {
@@ -228,7 +229,7 @@ export class GameSession {
     // Only a step that counts replaces them: a refused tap leaves an unread notice in place.
     const events = added.map((entry) => entry.event);
     this.skipped = skippedEffects(this.ctx, this.state, events);
-    this.drawn = drawnCards(this.board, events);
+    this.drawn = drawnCards(boardBefore, this.board, events);
     return undefined;
   }
 
