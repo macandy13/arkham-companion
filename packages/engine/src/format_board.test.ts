@@ -130,6 +130,34 @@ describe('formatBoard', () => {
     `);
   });
 
+  it('tells two decisions apart that read the same by their subject', () => {
+    const cellar = instanceId('cellar');
+    const twoGhouls = newGame()
+      .withLocation(hall, hallCard, { revealed: true })
+      .withLocation(cellar, blankLocation('cellar', { name: 'Cellar' }))
+      .withConnection(hall, cellar)
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(instanceId('first_ghoul'), ghoulCard, engagedWith(alice))
+      .withCard(instanceId('second_ghoul'), ghoulCard, engagedWith(alice))
+      .withTurnOf(alice)
+      .start();
+
+    const moved = stateAfter(twoGhouls.context, twoGhouls.state, {
+      type: 'MoveInvestigator',
+      investigatorId: alice,
+      to: cellar,
+      asAction: true,
+    });
+
+    expect(formatBoard(twoGhouls.context, moved).split('\n').slice(-3)).toMatchInlineSnapshot(`
+      [
+        "Pending decisions:",
+        "  [first_ghoul] Attack of opportunity by Ghoul: attack damage ×0 (0+) horror ×0 (0+) / does not provoke [confirm]",
+        "  [second_ghoul] Attack of opportunity by Ghoul: attack damage ×0 (0+) horror ×0 (0+) / does not provoke [confirm]",
+      ]
+    `);
+  });
+
   it('shows the turn in progress, the turns taken and the actions left', () => {
     const state = stateAfter(
       context,

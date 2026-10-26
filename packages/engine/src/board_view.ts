@@ -589,7 +589,7 @@ export class BoardView {
     if (others.length > 0)
       throw this.error(
         `${matches.length} enemies match ${describeMatcher(selector)} (${ids(matches)}); ` +
-          'narrow it with enemyMatching(card, { engagedWith, at }), or use byId',
+          narrowingHint(engagedWith === undefined, at === undefined),
       );
     return only;
   }
@@ -607,6 +607,16 @@ export class BoardView {
 /** The `BoardView` of `state`. */
 export function boardView(ctx: EngineContext, state: GameState): BoardView {
   return new BoardView(ctx, state);
+}
+
+/**
+ * How to pick one of several matching enemies: by the narrowings the selector
+ * doesn't use yet, or by id once it uses both.
+ */
+function narrowingHint(withoutEngaged: boolean, withoutAt: boolean): string {
+  const unused = [...(withoutEngaged ? ['engagedWith'] : []), ...(withoutAt ? ['at'] : [])];
+  if (unused.length === 0) return 'use byId';
+  return `narrow it with enemyMatching(card, { ${unused.join(', ')} }), or use byId`;
 }
 
 function ids(cards: readonly CardInstance[]): string {

@@ -11,6 +11,7 @@ import {
 import { useCardPicture } from '../catalog/cardImages';
 import type { GameActions, SteppedStat } from '../state/gameActions';
 import { SkillTestDialog } from './SkillTestDialog';
+import { signed } from './TestCalculation';
 import { ThreatArea } from './ThreatArea';
 import { TurnControls } from './TurnControls';
 import './investigators.css';
@@ -117,7 +118,13 @@ function InvestigatorPanel({
           <p>{statusLine(investigator, onTurn, t)}</p>
         </header>
         <CardArt image={investigator.image} />
-        <Skills board={board} investigator={investigator} />
+        <Skills
+          board={board}
+          investigator={investigator}
+          adjusting={adjusting}
+          busy={busy}
+          actions={actions}
+        />
         <Counters investigator={investigator} adjusting={adjusting} busy={busy} actions={actions} />
       </article>
       <TurnControls
@@ -149,31 +156,66 @@ function CardArt({ image }: { image: CardImagePath | undefined }) {
 }
 
 /**
- * The four skills in the order the card prints them, each its value after its icon. The icon
- * alone does not say which skill it is, so each one is named for screen readers. Tapping one
- * opens a skill test against it (`SkillTestDialog`), a calculator that changes nothing.
+ * The four skills in the order the card prints them, each its value under its icon: the printed
+ * value with its lasting boost (`InvestigatorView.boosts`, what player cards in play add), the
+ * boost shown beside it, so the printed value stays recognisable. The icon alone does not say
+ * which skill it is, so each one is named for screen readers. Tapping one opens a skill test
+ * against it (`SkillTestDialog`), a calculator that changes nothing; while the players adjust the
+ * board, steppers under each change its boost, unless a step is queued (`busy`).
  */
-function Skills({ board, investigator }: { board: BoardView; investigator: InvestigatorView }) {
+function Skills({
+  board,
+  investigator,
+  adjusting,
+  busy,
+  actions,
+}: {
+  board: BoardView;
+  investigator: InvestigatorView;
+  adjusting: boolean;
+  busy: boolean;
+  actions: GameActions;
+}) {
   const { t } = useTranslation();
   const [testing, setTesting] = useState<SkillName>();
-  const { skills } = investigator;
+  const { boostedSkills, boosts } = investigator;
+  // A defeated or resigned investigator has left the game, so their boosts no longer change.
+  const off = busy || investigator.status !== 'active';
   return (
     <>
       <ul aria-label={t('investigators.skills')}>
-        {SKILL_NAMES.map((skill) => (
-          <li key={skill} data-skill={skill}>
-            <button
-              type="button"
-              aria-label={t('investigators.skillValue', {
-                skill: t(`skill.${skill}`),
-                value: skills[skill],
-              })}
-              onClick={() => setTesting(skill)}
-            >
-              <data value={skills[skill]}>{skills[skill]}</data>
-            </button>
-          </li>
-        ))}
+        {SKILL_NAMES.map((skill) => {
+          const boost = boosts?.[skill] ?? 0;
+          const value = boostedSkills[skill];
+          const name = t(`skill.${skill}`);
+          return (
+            <li key={skill} data-skill={skill}>
+              <button
+                type="button"
+                aria-label={
+                  boost === 0
+                    ? t('investigators.skillValue', { skill: name, value })
+                    : t('investigators.boostedSkillValue', {
+                        skill: name,
+                        value,
+                        boost: signed(boost),
+                      })
+                }
+                onClick={() => setTesting(skill)}
+              >
+                <data value={value}>{value}</data>
+                {boost !== 0 && <data value={boost}>{signed(boost)}</data>}
+              </button>
+              {adjusting && (
+                <Steppers
+                  lower={{ label: t('investigators.lowerBoost', { skill: name }), disabled: off }}
+                  raise={{ label: t('investigators.raiseBoost', { skill: name }), disabled: off }}
+                  onStep={(delta) => void actions.boostSkill(investigator.id, skill, delta)}
+                />
+              )}
+            </li>
+          );
+        })}
       </ul>
       {testing && (
         <SkillTestDialog
