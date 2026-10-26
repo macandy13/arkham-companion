@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { InvestigatorDef, PackDef } from '@arkham/carddata';
-import { applyPickerFilters, cyclePositions, moveSeat, sortedPacks } from './pickerLogic';
+import {
+  activeFilterCount,
+  applyPickerFilters,
+  cyclePositions,
+  moveSeat,
+  seatNumber,
+  sortedPacks,
+} from './pickerLogic';
 
 function makeInvestigator(overrides: Partial<InvestigatorDef>): InvestigatorDef {
   return {
@@ -43,6 +50,16 @@ describe('applyPickerFilters', () => {
 
   it('sorts by name, then chapter', () => {
     expect(applyPickerFilters(all, none).map((i) => i.code)).toEqual(['a', 'a2', 'b']);
+  });
+
+  it('sorts names in quotes by their letters', () => {
+    const ashcan = makeInvestigator({ code: 'ashcan', name: '"Ashcan" Pete' });
+    const agnes = makeInvestigator({ code: 'agnes', name: 'Agnes Baker' });
+    const bob = makeInvestigator({ code: 'bob', name: 'Bob Jenkins' });
+
+    const sorted = applyPickerFilters([bob, ashcan, agnes], none).map((i) => i.code);
+
+    expect(sorted).toEqual(['agnes', 'ashcan', 'bob']);
   });
 
   it('searches the name case-insensitively', () => {
@@ -102,5 +119,29 @@ describe('moveSeat', () => {
   it('ignores out-of-range moves', () => {
     expect(moveSeat(['a', 'b'], 0, -1)).toEqual(['a', 'b']);
     expect(moveSeat(['a', 'b'], 5, 0)).toEqual(['a', 'b']);
+  });
+});
+
+describe('activeFilterCount', () => {
+  const none = { search: '', factions: [], onlyOwned: false };
+
+  it.each([
+    ['no filters', none, 0],
+    ['only a search', { ...none, search: 'alder' }, 0],
+    ['two classes', { ...none, factions: ['seeker', 'rogue'] }, 1],
+    ['a cycle and a pack', { ...none, cyclePosition: 2, packCode: 'p1' }, 2],
+    ['a chapter and the collection', { ...none, chapter: 2 as const, onlyOwned: true }, 2],
+  ])('counts %s as %i', (_, filters, count) => {
+    expect(activeFilterCount(filters)).toBe(count);
+  });
+});
+
+describe('seatNumber', () => {
+  it.each([
+    ['the lead', 'roland', 1],
+    ['the second seat', 'daisy', 2],
+    ['no one not seated', 'skids', undefined],
+  ])('gives %s', (_, code, seat) => {
+    expect(seatNumber(['roland', 'daisy'], code)).toBe(seat);
   });
 });
