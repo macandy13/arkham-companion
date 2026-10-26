@@ -339,3 +339,38 @@ describe('action limits', () => {
     },
   );
 });
+
+describe('action costs', () => {
+  /** Alice in the hall on her turn, with `resources` resources and 1 clue; the hall's action scares its taker for 2 resources. */
+  const aliceInHallWith = (resources: number) =>
+    newGame()
+      .withLocation(
+        hall,
+        blankLocation('hall', {
+          actions: [{ ...scareAction, cost: { spend: 'resources', amount: 2 } }],
+        }),
+        { revealed: true },
+      )
+      .withInvestigator(alice, { locationId: hall, resources, clues: 1 })
+      .withTurnOf(alice);
+
+  it('makes alice with 5 resources pay 2 before the action scares her', () => {
+    const { context, state } = aliceInHallWith(5).start();
+
+    const after = stateAfter(context, state, useAsAction(alice, hall));
+
+    expect(investigatorOf(after, alice)).toMatchObject({ resources: 3, sanity: { horror: 1 } });
+  });
+
+  it('neither offers nor accepts the action from alice with 1 resource', () => {
+    const table = PlayTable.start(aliceInHallWith(1));
+
+    expect(table.board.cardActions(alice)).toEqual([]);
+    expect(rejectionFrom(table.ctx, table.state, useAsAction(alice, hall))).toEqual({
+      code: 'cardActionCostUnpaid',
+      cardId: hall,
+      action: 0,
+      investigatorId: alice,
+    });
+  });
+});

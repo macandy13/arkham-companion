@@ -39,6 +39,16 @@ export const resources = {
         effect:
           '{{card}}: {{effect}} was skipped, as the game does not hold exactly one copy of {{missing}}. Please do it by hand.',
         anEffect: 'an effect',
+        deferred: {
+          step: '{{investigator}}: {{what}}. Please do it by hand.',
+          draw_one: 'draw 1 card',
+          draw_other: 'draw {{count}} cards',
+          search:
+            'search your deck for a card with the trait {{traits}}, add it to your hand and shuffle your deck',
+          searchTop:
+            'search the top {{top}} cards of your deck for a card with the trait {{traits}}, add it to your hand and shuffle your deck',
+          or: ' or ',
+        },
         effects: {
           RevealLocation: 'revealing the location',
           FromSetAside: 'putting the set-aside card into play',
@@ -189,6 +199,7 @@ export const resources = {
         asAction: 'Action',
         fightAction: 'Fight · 1 action',
         evadeAction: 'Evade · 1 action',
+        engageAction: 'Engage · 1 action',
         free: 'Free',
         fightFree: 'Fight, no action',
         evadeFree: 'Evade, no action',
@@ -199,6 +210,7 @@ export const resources = {
         caption: {
           fight: 'Fight',
           evade: 'Evade',
+          engage: 'Engage',
           damage: 'Damage',
           disengage: 'Disengage',
           defeat: 'Defeat',
@@ -511,6 +523,16 @@ export const resources = {
         effect:
           '{{card}}: {{effect}} wurde übersprungen, da es nicht genau ein Exemplar von {{missing}} im Spiel gibt. Bitte von Hand erledigen.',
         anEffect: 'Ein Effekt',
+        deferred: {
+          step: '{{investigator}}: {{what}}. Bitte von Hand erledigen.',
+          draw_one: 'Ziehe 1 Karte',
+          draw_other: 'Ziehe {{count}} Karten',
+          search:
+            'Durchsuche dein Deck nach einer Karte mit dem Merkmal {{traits}}, nimm sie auf die Hand und mische dein Deck',
+          searchTop:
+            'Durchsuche die obersten {{top}} Karten deines Decks nach einer Karte mit dem Merkmal {{traits}}, nimm sie auf die Hand und mische dein Deck',
+          or: ' oder ',
+        },
         effects: {
           RevealLocation: 'Das Aufdecken des Ortes',
           FromSetAside: 'Das Ins-Spiel-Bringen der beiseitegelegten Karte',
@@ -662,6 +684,7 @@ export const resources = {
         asAction: 'Aktion',
         fightAction: 'Kämpfen · 1 Aktion',
         evadeAction: 'Entkommen · 1 Aktion',
+        engageAction: 'In einen Kampf verwickeln · 1 Aktion',
         free: 'Frei',
         fightFree: 'Kämpfen, ohne Aktion',
         evadeFree: 'Entkommen, ohne Aktion',
@@ -672,6 +695,7 @@ export const resources = {
         caption: {
           fight: 'Kämpfen',
           evade: 'Entkommen',
+          engage: 'Verwickeln',
           damage: 'Schaden',
           disengage: 'Lösen',
           defeat: 'Besiegen',

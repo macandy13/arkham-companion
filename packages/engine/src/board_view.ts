@@ -4,7 +4,9 @@ import { cardActionsOfferedTo, type OfferedCardAction } from './card_actions';
 import { effectiveValue } from './card_values';
 import { cardStats, resolveValue, type EngineContext, type Trait } from './cards';
 import { optionName } from './describe_decision';
+import type { Command } from './commands';
 import { doomInPlay, isInPlay } from './doom';
+import { handle } from './handle';
 import { enemyHealth } from './enemies';
 import type { Keyword } from './keywords';
 import { formatBoard } from './format_board';
@@ -33,6 +35,7 @@ import { mapLocations, type Edge, type GameMap, type GridCell } from './map';
 import { attacksStillDue } from './phases';
 import { NAMED_AMOUNTS } from './state';
 import { boostedSkills, requireInvestigator } from './investigators';
+import { CommandRejected } from './rejection';
 import { skillTestSuggestion, type SkillTestInput } from './skill_modifiers';
 import type {
   AmountRange,
@@ -192,6 +195,11 @@ export interface EnemyStatsView {
   victory?: number;
 }
 
+/** A basic action against an enemy (`BoardView.enemyActions`). */
+export type EnemyAction = 'fight' | 'evade' | 'engage';
+
+const ENEMY_ACTIONS: readonly EnemyAction[] = ['fight', 'evade', 'engage'];
+
 /**
  * One card action the investigator may take in their turn (`BoardView.cardActions`): the card by
  * id and printed name, the index `UseCardAction.action` takes, and its designator, which names the
@@ -336,6 +344,32 @@ export class BoardView {
     return enemiesInPlay(this.ctx, this.state)
       .map((enemy) => mapEnemyView(this.ctx, this.state, enemy))
       .filter(({ engagedWith }) => engagedWith === investigator);
+  }
+
+  /**
+   * The basic actions `investigator` may take against `enemy` now, in this order: fight, evade,
+   * engage. Each is a dry run of its command (`handle`, the events dropped), so the screen offers
+   * only what the rules allow and they stay in the engine: evade only an enemy engaged with them
+   * (or a massive one at their location), fight no unengaged aloof enemy, engage none engaged
+   * with them already or massive, and all of them only at their location. Whether they have an
+   * action left is not asked, since a card can let them take one for free.
+   */
+  enemyActions(investigator: InvestigatorId, enemy: InstanceId): readonly EnemyAction[] {
+    const commands: Record<EnemyAction, Command> = {
+      fight: { type: 'Fight', investigatorId: investigator, enemyId: enemy },
+      evade: { type: 'Evade', investigatorId: investigator, enemyId: enemy },
+      engage: { type: 'EngageEnemy', investigatorId: investigator, enemyId: enemy },
+    };
+    return ENEMY_ACTIONS.filter((action) => {
+      try {
+        handle(this.ctx, this.state, commands[action]);
+        return true;
+      } catch (error) {
+        // A refusal is the answer: the rules do not allow this action now.
+        if (!(error instanceof CommandRejected)) throw error;
+        return false;
+      }
+    });
   }
 
   /**

@@ -11,6 +11,7 @@ import {
   CLUES_CENTRE,
   CONTENT,
   DOOM_CENTRE,
+  isTap,
   NAME_WIDTH,
   pawnOffset,
   SHROUD_CENTRE,
@@ -19,12 +20,6 @@ import {
 } from './mapLayout';
 import type { DragHandlers } from './usePieceDrag';
 import { shrinkAround, useShrinkToFit } from './useShrinkToFit';
-
-/**
- * How far, in CSS pixels, the pointer may move between pressing and letting go for a tap on a
- * tile; further, it was a pan of the map or a piece dragged, which open nothing.
- */
-const TAP_SLOP = 8;
 
 /** A piece standing on a tile that the players may drag: an investigator's pawn or an enemy. */
 export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyView };
@@ -45,7 +40,7 @@ export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyVi
  * at it, in rows along the bottom edge. `enemies` and `investigators` are the open game's pieces
  * at this location; `dragOf` gives the drag handlers of each piece that can be dragged now. A tap
  * on the tile, or its details button in the top left corner, calls `onOpen`; a press that moves
- * further than `TAP_SLOP` (a pan, a piece dragged) is no tap. Without `onOpen` (the card in the
+ * further (`isTap`: a pan, a piece dragged) is no tap. Without `onOpen` (the card in the
  * location details) it has neither.
  */
 export function LocationTile({
@@ -74,7 +69,7 @@ export function LocationTile({
   const onClick = (event: MouseEvent<SVGGElement>) => {
     const from = pressedAt.current;
     pressedAt.current = undefined;
-    if (from && Math.hypot(event.clientX - from.x, event.clientY - from.y) > TAP_SLOP) return;
+    if (from && !isTap(from, { x: event.clientX, y: event.clientY })) return;
     onOpen?.();
   };
 

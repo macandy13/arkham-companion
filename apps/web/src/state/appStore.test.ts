@@ -458,7 +458,12 @@ describe('appStore', () => {
           store.getState().dismissSkippedEffects();
 
           expect(shown).toEqual([
-            { card: 'Trapped', effect: 'RevealLocation', missing: ['secret_room'] },
+            {
+              kind: 'missingCard',
+              card: 'Trapped',
+              effect: 'RevealLocation',
+              missing: ['secret_room'],
+            },
           ]);
           expect(store.getState().current?.skippedEffects).toBeUndefined();
         });
