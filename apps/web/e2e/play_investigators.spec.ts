@@ -35,15 +35,15 @@ test('take a turn from the investigator panel', async ({ page }) => {
 
 // Journey: resign through the card that offers it, the Parlor's "[action] Resign.", from the turn row.
 test('resign at the Parlor', async ({ page }) => {
-  const alder = page.getByRole('region', { name: 'Alder' });
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
 
-  await test.step('Resume a game with Alder in the Parlor on their turn', async () => {
+  await test.step('Resume a game with Roland Banks in the Parlor on their turn', async () => {
     await resumeImportedGame(page, 'In the Parlor', inTheParlorExport('In the Parlor'));
-    await expect(alder.getByText(/^Turn · Parlor/)).toBeVisible();
+    await expect(roland.getByText(/^Turn · Parlor/)).toBeVisible();
   });
 
   await test.step('Resign', async () => {
-    await alder.getByRole('button', { name: 'Resign · Parlor' }).click();
-    await expect(alder.getByText('Resigned')).toBeVisible();
+    await roland.getByRole('button', { name: 'Resign · Parlor' }).click();
+    await expect(roland.getByText('Resigned')).toBeVisible();
   });
 });
