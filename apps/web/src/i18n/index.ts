@@ -188,6 +188,7 @@ export const resources = {
         asAction: 'Action',
         fightAction: 'Fight · 1 action',
         evadeAction: 'Evade · 1 action',
+        engageAction: 'Engage · 1 action',
         free: 'Free',
         fightFree: 'Fight, no action',
         evadeFree: 'Evade, no action',
@@ -198,6 +199,7 @@ export const resources = {
         caption: {
           fight: 'Fight',
           evade: 'Evade',
+          engage: 'Engage',
           damage: 'Damage',
           disengage: 'Disengage',
           defeat: 'Defeat',
@@ -655,6 +657,7 @@ export const resources = {
         asAction: 'Aktion',
         fightAction: 'Kämpfen · 1 Aktion',
         evadeAction: 'Entkommen · 1 Aktion',
+        engageAction: 'In einen Kampf verwickeln · 1 Aktion',
         free: 'Frei',
         fightFree: 'Kämpfen, ohne Aktion',
         evadeFree: 'Entkommen, ohne Aktion',
@@ -665,6 +668,7 @@ export const resources = {
         caption: {
           fight: 'Kämpfen',
           evade: 'Entkommen',
+          engage: 'Verwickeln',
           damage: 'Schaden',
           disengage: 'Lösen',
           defeat: 'Besiegen',

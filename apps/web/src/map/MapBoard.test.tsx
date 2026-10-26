@@ -478,6 +478,120 @@ describe('MapBoard', () => {
     });
   });
 
+  // Pieces stand as in "dragging pieces": the first on the Study's tile centred on (24, 186), the
+  // next on (58, 186).
+  describe('tapping an enemy', () => {
+    const rats = instanceId('rats');
+    const enemyBesideAlder = { x: 58, y: 186 };
+    const enemyDetails = () => screen.getByRole('dialog', { name: 'rats' });
+    const offered = () =>
+      within(enemyDetails())
+        .queryAllByRole('button')
+        .map((button) => button.getAttribute('aria-label'));
+
+    /** Presses the piece named `name` on the tile of `location` at `at` and lets go there. */
+    async function tapPiece(location: string, name: string, at: Point) {
+      const piece = within(tile(location)).getByRole('img', { name });
+      fireEvent.pointerDown(piece, { pointerId: 1, clientX: at.x, clientY: at.y });
+      fireEvent.pointerUp(piece, { pointerId: 1, clientX: at.x, clientY: at.y });
+      fireEvent.click(piece, { clientX: at.x, clientY: at.y });
+      await act(async () => {});
+    }
+
+    /**
+     * Alder's turn in the Study, with aloof rats (health 2) there, which stay unengaged until
+     * someone engages them.
+     */
+    const aldersTurnWithRats = () =>
+      PlayTable.start(
+        house
+          .withInvestigator(alder, { locationId: study })
+          .withCard(
+            rats,
+            blankEnemy('rats', { health: fixed(2), keywords: [{ name: 'aloof' }] }),
+            atLocation(study),
+          )
+          .withTurnOf(alder),
+      );
+
+    it("opens the enemy's details, not the tile's, with engage, fight and evade at the investigator's location", async () => {
+      const table = aldersTurnWithRats();
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+
+      await tapPiece('study', 'rats', enemyBesideAlder);
+
+      expect(screen.getAllByRole('dialog')).toHaveLength(1);
+      expect(offered()).toEqual([
+        'Close',
+        'Fight · 1 action',
+        'Evade · 1 action',
+        'Engage · 1 action',
+        'Fight, no action',
+        'Evade, no action',
+        'Deal 1 damage',
+        'Defeat',
+      ]);
+    });
+
+    it('engages the enemy as an action and keeps its details open', async () => {
+      const table = aldersTurnWithRats();
+      const { rerender } = render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+      await tapPiece('study', 'rats', enemyBesideAlder);
+
+      fireEvent.click(screen.getByRole('button', { name: 'Engage · 1 action' }));
+      await act(async () => {});
+      rerender(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+
+      expect(table.board.enemy(rats)).toMatchObject({ engagedWith: alder });
+      expect(table.board.investigator(alder).actions).toBe(2);
+      expect(screen.getByText('Engaged with alder')).toBeTruthy();
+      expect(offered()).not.toContain('Engage · 1 action');
+    });
+
+    it("fights an enemy engaged with another investigator at the investigator's location", async () => {
+      const bea = investigatorId('bea');
+      const table = PlayTable.start(
+        house
+          .withInvestigator(alder, { locationId: study })
+          .withInvestigator(bea, { locationId: study })
+          .withCard(rats, blankEnemy('rats', { health: fixed(2) }), engagedWith(bea))
+          .withTurnOf(alder),
+      );
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+      await tapPiece('study', 'rats, engaged with bea', { x: 92, y: 186 });
+
+      fireEvent.click(screen.getByRole('button', { name: 'Fight · 1 action' }));
+      await act(async () => {});
+
+      expect(table.board.decisions).toMatchObject([{ prompt: 'decision.fight', about: 'rats' }]);
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it('offers only the card effects for an enemy at another location', async () => {
+      const table = PlayTable.start(
+        house
+          .withInvestigator(alder, { locationId: hallway })
+          .withCard(rats, blankEnemy('rats', { health: fixed(2) }), atLocation(study))
+          .withTurnOf(alder),
+      );
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+
+      await tapPiece('study', 'rats', { x: 24, y: 186 });
+
+      expect(offered()).toEqual(['Close', 'Deal 1 damage', 'Defeat']);
+    });
+  });
+
   describe('the location details', () => {
     const details = (name: string) => screen.getByRole('dialog', { name });
     const tap = (name: string) => fireEvent.click(screen.getByRole('button', { name }));

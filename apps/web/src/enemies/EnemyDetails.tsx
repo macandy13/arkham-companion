@@ -9,13 +9,16 @@ import './enemies.css';
 /**
  * One enemy in full, opened by a tap on its card: whom it is engaged with, the enemy drawn as its
  * card (`EnemyCard`, from `BoardView.enemyStats`), and under it one row of what the players can
- * do to it. On the turn of the investigator it is engaged with (`onTurn`), fight and evade as
- * actions, which count off one, and the same without an action, as some cards allow; at any time,
+ * do to it. On the turn of an investigator who can reach it (`onTurn`: it is engaged with them, or
+ * at their location), fight and evade as actions, which count off one, and the same without an
+ * action, as some cards allow, and engage as an action when it is not engaged with them yet
+ * (`BoardView.turn`); at any time,
  * what card effects do to an enemy: deal 1 damage, disengage it, defeat it. Each button shows a
  * short word and is named in full ("Fight · 1 action"). Fight and evade close it, so the decision
  * dialog that asks for the test's result is the only one open; damage keeps it open for the next
- * point, and reads the enemy fresh from the board. A native modal `<dialog>` brings focus trapping
- * and Escape; nothing is tapped while a step is queued (`busy`).
+ * point, and engage for the fight that usually follows, and both read the enemy fresh from the
+ * board. A native modal `<dialog>` brings focus trapping and Escape; nothing is tapped while a
+ * step is queued (`busy`).
  */
 export function EnemyDetails({
   board,
@@ -70,6 +73,16 @@ export function EnemyDetails({
                 disabled={busy}
                 onClick={step(() => actions.evade(enemy.id), true)}
               />
+              {enemy.engagedWith !== board.turn && (
+                <ActionButton
+                  icon="engage"
+                  cost="action"
+                  caption={t('enemy.caption.engage')}
+                  name={t('enemy.engageAction')}
+                  disabled={busy}
+                  onClick={step(() => actions.engage(enemy.id), false)}
+                />
+              )}
             </ActionGroup>
             <ActionGroup title={t('enemy.free')}>
               <ActionButton

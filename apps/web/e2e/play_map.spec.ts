@@ -129,9 +129,48 @@ test('move an enemy on the map', async ({ page }) => {
   });
 });
 
+// Journey: act on an enemy from its token on the map: the Ghoul Priest in the Cellar offers only
+// card effects, as Alder is elsewhere; dragged to the Hallway it engages Alder, and a tap on it
+// there fights it as an action.
+test('fight an enemy from the map', { tag: '@flow' }, async ({ page }) => {
+  const house = page.getByRole('figure', { name: 'House' });
+  const room = (name: string) => house.getByRole('group', { name });
+  const priest = (name: string) => room(name).getByRole('img', { name: /^Ghoul Priest/ });
+  const details = page.getByRole('dialog', { name: 'Ghoul Priest' });
+
+  await test.step('Import a game in which the Ghoul Priest lurks in the Cellar', async () => {
+    await resumeImportedGame(
+      page,
+      'The Ghoul Priest is out',
+      ghoulPriestInCellarExport('The Ghoul Priest is out'),
+    );
+    await expect(priest('Cellar')).toBeVisible();
+  });
+
+  await test.step('Tap it in the Cellar: away from Alder, it offers only card effects', async () => {
+    await priest('Cellar').click();
+    await expect(details.getByRole('button', { name: 'Deal 1 damage' })).toBeVisible();
+    await expect(details.getByRole('button', { name: 'Fight · 1 action' })).toBeHidden();
+    await details.getByRole('button', { name: 'Close' }).click();
+  });
+
+  await test.step('Drag it to the Hallway, where it engages Alder', async () => {
+    await dragTo(page, priest('Cellar'), room('Hallway'));
+    await expect(
+      room('Hallway').getByRole('img', { name: 'Ghoul Priest, engaged with Alder' }),
+    ).toBeVisible();
+  });
+
+  await test.step('Tap it in the Hallway and fight it as an action', async () => {
+    await priest('Hallway').click();
+    await details.getByRole('button', { name: 'Fight · 1 action' }).click();
+    await expect(page.getByRole('dialog', { name: 'Fight Ghoul Priest' })).toBeVisible();
+  });
+});
+
 // Journey: play from a location's details: Alder moves from the Hallway to the Attic as an
 // action, which reveals it, and takes a clue there as a card grants it.
-test('move and take a clue from the location details', { tag: '@flow' }, async ({ page }) => {
+test('move and take a clue from the location details', async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
   const details = (name: string) => page.getByRole('dialog', { name });
