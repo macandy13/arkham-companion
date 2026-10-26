@@ -1,7 +1,7 @@
 import type { CluesDiscovered, DefeatCause, InvestigatorChanged, TokensChanged } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
 import { CommandRejected } from './rejection';
-import type { GameState, Investigator, InvestigatorStat, SkillName } from './state';
+import type { GameState, Investigator, InvestigatorStat, SkillName, SkillValues } from './state';
 
 /** Health the investigator has left; 0 or less means they are defeated. */
 export function remainingHealth(investigator: Investigator): number {
@@ -135,8 +135,25 @@ export function bySkill(
   skill: SkillName,
   extreme: 'lowest' | 'highest',
 ): (investigators: readonly Investigator[]) => Investigator[] {
-  return (investigators) =>
-    tiedFor(investigators, (inv) => inv.skills[skill] + (inv.skillBoosts?.[skill] ?? 0), extreme);
+  return (investigators) => tiedFor(investigators, (inv) => boostedSkills(inv)[skill], extreme);
+}
+
+/**
+ * `investigator`'s skill values with their lasting boosts (`Investigator.skillBoosts`) added to
+ * the printed ones: what Prey compares and what the investigator card shows. A skill test shows
+ * the boost as a step of its own instead (`skillTestSuggestion`).
+ */
+export function boostedSkills(
+  investigator: Pick<Investigator, 'skills' | 'skillBoosts'>,
+): SkillValues {
+  const { skills, skillBoosts } = investigator;
+  const boosted = (skill: SkillName) => skills[skill] + (skillBoosts?.[skill] ?? 0);
+  return {
+    willpower: boosted('willpower'),
+    intellect: boosted('intellect'),
+    combat: boosted('combat'),
+    agility: boosted('agility'),
+  };
 }
 
 function tiedFor(

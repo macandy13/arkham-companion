@@ -32,7 +32,7 @@ import { cardsInZone, cardsOfType, currentCard } from './lookup';
 import { mapLocations, type Edge, type GameMap, type GridCell } from './map';
 import { attacksStillDue } from './phases';
 import { NAMED_AMOUNTS } from './state';
-import { requireInvestigator } from './investigators';
+import { boostedSkills, requireInvestigator } from './investigators';
 import { skillTestSuggestion, type SkillTestInput } from './skill_modifiers';
 import type {
   AmountRange,
@@ -93,6 +93,8 @@ export interface InvestigatorView {
   skills: SkillValues;
   /** The lasting boosts of their skills (`Investigator.skillBoosts`), left out while there are none. */
   boosts?: Partial<SkillValues>;
+  /** Their skill values with the boosts added (`boostedSkills`); the printed ones while there are none. */
+  boostedSkills: SkillValues;
   /** The picture of their investigator card (`Investigator.imageSrc`), when the card data has one. */
   image?: CardImagePath;
   /** Actions left this round (`Investigator.actionsRemaining`). */
@@ -619,6 +621,7 @@ function investigatorView(
     ...(investigator.doomOnPlayerCards > 0 ? { doom: investigator.doomOnPlayerCards } : {}),
     skills: investigator.skills,
     ...(investigator.skillBoosts === undefined ? {} : { boosts: investigator.skillBoosts }),
+    boostedSkills: boostedSkills(investigator),
     ...(investigator.imageSrc === undefined ? {} : { image: investigator.imageSrc }),
     actions: investigator.actionsRemaining,
     ...(state.meta.turnsTaken.includes(investigator.id) ? { turnTaken: true as const } : {}),
