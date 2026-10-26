@@ -109,6 +109,7 @@ export function apply(state: GameState, event: Event): GameState {
       return applyScenarioEnded(state, event);
     case 'EncounterCardDrawn':
     case 'AbilityEffectSkipped':
+    case 'CommandDeferred':
     case 'CluesDiscovered':
     case 'SkillTestResolved':
     case 'EnemyAttacked':

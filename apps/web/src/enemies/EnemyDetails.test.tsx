@@ -35,7 +35,7 @@ const actionsOn = (table: PlayTable) =>
   );
 
 /** The ghoul's details on `table`, as Alder's threat area opens them; `onClose` is a spy. */
-const renderGhoulDetails = (table: PlayTable, onTurn: boolean, onClose = vi.fn()) => {
+const renderGhoulDetails = (table: PlayTable, onClose = vi.fn()) => {
   const enemy = table.board.enemiesEngagedWith(alder).find(({ id }) => id === ghoul);
   if (!enemy) throw new Error('the ghoul is engaged with alder');
   render(
@@ -43,7 +43,6 @@ const renderGhoulDetails = (table: PlayTable, onTurn: boolean, onClose = vi.fn()
       board={table.board}
       enemy={enemy}
       actions={actionsOn(table)}
-      onTurn={onTurn}
       busy={false}
       onClose={onClose}
     />,
@@ -72,7 +71,7 @@ describe('EnemyDetails', () => {
     );
 
   it("shows the ghoul's card named after it, with its fight, health left, evade and attack", () => {
-    renderGhoulDetails(PlayTable.start(ghoulOnAlder), false);
+    renderGhoulDetails(PlayTable.start(ghoulOnAlder));
 
     const numbers = screen
       .getAllByRole('term')
@@ -106,7 +105,7 @@ describe('EnemyDetails', () => {
           engagedWith(alder),
         ),
     );
-    renderGhoulDetails(table, false);
+    renderGhoulDetails(table);
 
     // The text box's lines are paragraphs, which have no role to find them by; the combat icon
     // in the prey line has no text, so it is checked by its name below.
@@ -133,7 +132,7 @@ describe('EnemyDetails', () => {
           engagedWith(alder),
         ),
     );
-    renderGhoulDetails(table, false);
+    renderGhoulDetails(table);
     // The art is decoration, so it has no role to find it by.
     const card = screen.getByRole('dialog', { hidden: true }).querySelector('[data-card="enemy"]');
     const picture = card?.querySelector('image');
@@ -167,7 +166,7 @@ describe('EnemyDetails', () => {
     '"$button" on alder\'s turn closes, leaves the test open and leaves $left actions',
     ({ group: name, button, prompt, left }) => {
       const table = PlayTable.start(ghoulOnAlder.withTurnOf(alder));
-      const onClose = renderGhoulDetails(table, true);
+      const onClose = renderGhoulDetails(table);
 
       fireEvent.click(within(group(name)).getByRole('button', { name: button }));
 
@@ -177,15 +176,30 @@ describe('EnemyDetails', () => {
     },
   );
 
-  it("offers only the card effects outside alder's turn", () => {
-    renderGhoulDetails(PlayTable.start(ghoulOnAlder.withTurnOf(brook)), false);
+  it('offers only the card effects outside an investigator turn', () => {
+    renderGhoulDetails(PlayTable.start(ghoulOnAlder));
 
     const groups = screen.getAllByRole('heading', { level: 3 }).map((title) => title.textContent);
     expect(groups).toEqual(['Card effect']);
   });
 
+  it("offers brook, at the same location on their turn, fight and engage but no evade of alder's ghoul", () => {
+    renderGhoulDetails(PlayTable.start(ghoulOnAlder.withTurnOf(brook)));
+
+    expect(
+      within(group('Action'))
+        .getAllByRole('button')
+        .map((button) => button.getAttribute('aria-label')),
+    ).toEqual(['Fight · 1 action', 'Engage · 1 action']);
+    expect(
+      within(group('Free'))
+        .getAllByRole('button')
+        .map((button) => button.getAttribute('aria-label')),
+    ).toEqual(['Fight, no action']);
+  });
+
   it('closes from its × button', () => {
-    const onClose = renderGhoulDetails(PlayTable.start(ghoulOnAlder), false);
+    const onClose = renderGhoulDetails(PlayTable.start(ghoulOnAlder));
 
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
 
@@ -194,7 +208,7 @@ describe('EnemyDetails', () => {
 
   it('deals 1 damage and stays open for the next point', () => {
     const table = PlayTable.start(ghoulOnAlder);
-    const onClose = renderGhoulDetails(table, false);
+    const onClose = renderGhoulDetails(table);
 
     fireEvent.click(screen.getByRole('button', { name: 'Deal 1 damage' }));
 
@@ -207,7 +221,7 @@ describe('EnemyDetails', () => {
     { button: 'Defeat', enemies: [] },
   ])('"$button" closes and leaves the enemies $enemies', ({ button, enemies }) => {
     const table = PlayTable.start(ghoulOnAlder);
-    const onClose = renderGhoulDetails(table, false);
+    const onClose = renderGhoulDetails(table);
 
     fireEvent.click(screen.getByRole('button', { name: button }));
 

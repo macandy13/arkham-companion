@@ -10,6 +10,7 @@ import type {
   MapId,
   MapView,
 } from '@arkham/engine';
+import { EnemyDetails } from '../enemies/EnemyDetails';
 import type { GameActions } from '../state/gameActions';
 import { LocationDetails } from './LocationDetails';
 import { CardPatterns, EnemyToken, LocationTile, Pawn, type TilePiece } from './LocationTile';
@@ -115,7 +116,11 @@ type DraggedPiece = TilePiece & { from: InstanceId };
  *   does not ask which card.
  *
  * A tap on a tile opens its details (`LocationDetails`): what the investigator whose turn it is
- * can do there, or while adjusting the corrections, when no piece is dragged.
+ * can do there, or while adjusting the corrections, when no piece is dragged. A tap on an enemy
+ * token opens the enemy's details (`EnemyDetails`), the same as from the threat area, with what
+ * the investigator whose turn it is may do to it (`BoardView.enemyActions`): an enemy at their
+ * location that is not engaged with them stands only on the map, so this is where they engage
+ * it, or fight it when it is engaged with someone else.
  */
 function MapDrawing({
   map,
@@ -137,16 +142,28 @@ function MapDrawing({
   const cells = tileCells(map);
   const mover = investigators.find(({ id }) => id === board.turn);
   const moverCentre = mover && pawnCentre(map, cells, board, mover.id);
-  const drag = usePieceDrag<DraggedPiece>(svg, (piece, point) => {
-    if ('enemy' in piece && moverCentre && onPawn(moverCentre, point)) {
-      void actions.engage(piece.enemy.id);
-      return;
-    }
-    const to = tileAt(cells, point);
-    if (to === undefined || to === piece.from) return;
-    void ('enemy' in piece ? actions.moveEnemy(piece.enemy.id, to) : actions.moveTo(to));
-  });
   const [detailsFor, setDetailsFor] = useState<InstanceId>();
+  const [enemyFor, setEnemyFor] = useState<InstanceId>();
+  const drag = usePieceDrag<DraggedPiece>(
+    svg,
+    (piece, point) => {
+      if ('enemy' in piece && moverCentre && onPawn(moverCentre, point)) {
+        void actions.engage(piece.enemy.id);
+        return;
+      }
+      const to = tileAt(cells, point);
+      if (to === undefined || to === piece.from) return;
+      void ('enemy' in piece ? actions.moveEnemy(piece.enemy.id, to) : actions.moveTo(to));
+    },
+    (piece) => {
+      if (!('enemy' in piece)) return false;
+      setEnemyFor(piece.enemy.id);
+      return true;
+    },
+  );
+  const tappedEnemy = Object.values(map.enemies)
+    .flat()
+    .find(({ id }) => id === enemyFor);
   const detailsLocation = map.locations.find(({ id }) => id === detailsFor);
   const draggable = (piece: TilePiece) =>
     !busy && !adjusting && ('enemy' in piece || piece.investigator.id === mover?.id);
@@ -224,6 +241,15 @@ function MapDrawing({
           busy={busy}
           adjusting={adjusting}
           onClose={() => setDetailsFor(undefined)}
+        />
+      )}
+      {tappedEnemy && (
+        <EnemyDetails
+          board={board}
+          enemy={tappedEnemy}
+          actions={actions}
+          busy={busy}
+          onClose={() => setEnemyFor(undefined)}
         />
       )}
     </figure>

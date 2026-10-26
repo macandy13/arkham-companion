@@ -1,12 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   atLocation,
+  byName,
   encounterSetCode,
   engagedWith,
   execute,
   instanceId,
   investigatorId,
   newGame,
+  PlayTable,
   requireInvestigator,
   resolveValue,
   type CardStats,
@@ -175,6 +177,165 @@ describe('The Midnight Masks card abilities', () => {
       expect(rejectionFrom(context, state, useIt)).toMatchObject({
         code: 'cardActionLimitReached',
       });
+    });
+  });
+
+  describe.each([
+    {
+      code: '01124',
+      name: 'Your House',
+      deferred: { type: 'DrawCards', investigatorId: alice, amount: 1 },
+      resources: 6,
+    },
+    {
+      code: '01126',
+      name: 'Southside (Historical Society)',
+      deferred: { type: 'DrawCards', investigatorId: alice, amount: 3 },
+      resources: 5,
+    },
+    {
+      code: '01127',
+      name: "Southside (Ma's Boarding House)",
+      deferred: { type: 'SearchDeck', investigatorId: alice, traits: ['Ally'] },
+      resources: 5,
+    },
+    {
+      code: '01129',
+      name: 'Miskatonic University',
+      deferred: { type: 'SearchDeck', investigatorId: alice, traits: ['Tome', 'Spell'], top: 6 },
+      resources: 5,
+    },
+  ])('$name: $deferred.type, $resources resources after', ({ code, deferred, resources }) => {
+    const location = instanceId('location');
+    /** Alice there on her turn, with 5 resources. */
+    const aliceThere = newGame()
+      .withLocation(location, cardOf(code), { revealed: true })
+      .withInvestigator(alice, { locationId: location, resources: 5 })
+      .withTurnOf(alice);
+    const useIt: Command = {
+      type: 'UseCardAction',
+      investigatorId: alice,
+      cardId: location,
+      action: 0,
+      asAction: true,
+    };
+
+    it('leaves the step on her deck to alice', () => {
+      const { context, state: started } = aliceThere.start();
+
+      const { events, state } = execute(context, started, useIt);
+
+      expect(events).toContainEqual({ type: 'CommandDeferred', command: deferred });
+      expect(requireInvestigator(state, alice)).toMatchObject({ resources });
+    });
+  });
+
+  it.each([
+    { code: '01124', name: 'Your House', limit: 'once per turn' },
+    { code: '01126', name: 'Southside (Historical Society)', limit: 'once per game' },
+    { code: '01127', name: "Southside (Ma's Boarding House)", limit: 'once per game' },
+  ])('$name rejects a second use in the same turn ($limit)', ({ code }) => {
+    const location = instanceId('location');
+    const { context, state: started } = newGame()
+      .withLocation(location, cardOf(code), { revealed: true })
+      .withInvestigator(alice, { locationId: location })
+      .withTurnOf(alice)
+      .start();
+    const useIt: Command = {
+      type: 'UseCardAction',
+      investigatorId: alice,
+      cardId: location,
+      action: 0,
+      asAction: true,
+    };
+
+    const state = stateAfter(context, started, useIt);
+
+    expect(rejectionFrom(context, state, useIt)).toMatchObject({ code: 'cardActionLimitReached' });
+  });
+
+  it('lets alice search at Miskatonic University twice in a turn: it has no limit', () => {
+    const university = instanceId('miskatonic_university');
+    const { context, state: started } = newGame()
+      .withLocation(university, cardOf('01129'), { revealed: true })
+      .withInvestigator(alice, { locationId: university })
+      .withTurnOf(alice)
+      .start();
+    const searchThere: Command = {
+      type: 'UseCardAction',
+      investigatorId: alice,
+      cardId: university,
+      action: 0,
+      asAction: true,
+    };
+    const searchedOnce = stateAfter(context, started, searchThere);
+
+    const { events } = execute(context, searchedOnce, searchThere);
+
+    expect(events).toContainEqual(expect.objectContaining({ type: 'CommandDeferred' }));
+  });
+
+  describe('Northside', () => {
+    const northside = instanceId('northside');
+    const bob = investigatorId('bob');
+    /** Alice and bob at Northside with 5 resources each, in round 1's investigation phase. */
+    const bothAtNorthside = () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(northside, cardOf('01134'), { revealed: true })
+          .withInvestigator(alice, { locationId: northside, resources: 5 })
+          .withInvestigator(bob, { locationId: northside, resources: 5 }),
+      );
+      table.nextPhase();
+      return table;
+    };
+
+    it("trades alice's 5 resources for 2 clues, and its group limit leaves bob nothing", () => {
+      const table = bothAtNorthside();
+      table.startTurn(alice);
+
+      table.useCardAction(alice, byName('Northside'));
+      table.endTurn(alice);
+      table.startTurn(bob);
+
+      expect(table.board.investigator(alice)).toMatchObject({ resources: 0, clues: 2 });
+      expect(table.board.cardActions(bob)).toEqual([]);
+    });
+  });
+
+  describe.each([
+    { code: '01139', name: 'Peter Warren', holds: { clues: 2 }, after: { clues: 0 } },
+    { code: '01140', name: 'Victoria Devereux', holds: { resources: 5 }, after: { resources: 0 } },
+  ])('$name', ({ code, name, holds, after }) => {
+    const cultist = instanceId('cultist');
+    /** Alice engaged with the cultist at Rivertown on her turn, holding `holds`. */
+    const aliceEngaged = (holding: { clues?: number; resources?: number }) =>
+      newGame()
+        .withLocation(rivertown, cardOf('01125'), { revealed: true })
+        .withInvestigator(alice, { locationId: rivertown, clues: 0, resources: 0, ...holding })
+        .withCard(cultist, cardOf(code), engagedWith(alice))
+        .withTurnOf(alice);
+    const parley: Command = {
+      type: 'UseCardAction',
+      investigatorId: alice,
+      cardId: cultist,
+      action: 0,
+      asAction: true,
+    };
+
+    it(`adds ${name} to the victory display for alice's payment, without an attack`, () => {
+      const { context, state: started } = aliceEngaged(holds).start();
+
+      const state = stateAfter(context, started, parley);
+
+      expect(state.cards[cultist]?.zone).toEqual({ kind: 'victoryDisplay' });
+      expect(requireInvestigator(state, alice)).toMatchObject({ ...after, health: { damage: 0 } });
+    });
+
+    it('is refused to alice with nothing to pay', () => {
+      const { context, state } = aliceEngaged({}).start();
+
+      expect(rejectionFrom(context, state, parley)).toMatchObject({ code: 'cardActionCostUnpaid' });
     });
   });
 

@@ -3,9 +3,9 @@ import { isLocationInPlay } from './board';
 import { cardStats, type EngineContext } from './cards';
 import type { UseCardAction } from './commands';
 import { locationOf } from './enemies';
-import type { CardActionUsed } from './events';
+import type { CardActionUsed, InvestigatorChanged } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
-import { activeInvestigator } from './investigators';
+import { activeInvestigator, statValue } from './investigators';
 import { currentCard, requireCard } from './lookup';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState, Investigator } from './state';
@@ -25,6 +25,8 @@ export interface CardAction {
   readonly designator?: 'resign' | 'parley';
   /** "(Limit once per …)", when the card prints one. */
   readonly limit?: ActionLimit;
+  /** "Spend N resources:" or "Spend N clues:", paid before the effects. */
+  readonly cost?: ActionCost;
   readonly effects: readonly AbilityEffect[];
 }
 
@@ -36,6 +38,20 @@ export interface CardAction {
 export interface ActionLimit {
   readonly per: 'turn' | 'game';
   readonly group?: true;
+}
+
+/**
+ * What the investigator who takes an action pays before its effects resolve ("Spend 5 resources:",
+ * "Spend 2 clues:"). An action they can't pay for can't be taken (Rules Reference, "Costs").
+ */
+export interface ActionCost {
+  readonly spend: 'resources' | 'clues';
+  readonly amount: number;
+}
+
+/** Whether `investigator` holds what `cost` asks; no cost is always paid. */
+export function canPay(investigator: Investigator, cost: ActionCost | undefined): boolean {
+  return cost === undefined || statValue(investigator, cost.spend) >= cost.amount;
 }
 
 /**
@@ -91,9 +107,9 @@ export interface OfferedCardAction {
 }
 
 /**
- * Every card action the cards in play offer `investigator` (`offersActionsTo`) and their limits
- * still allow (`withinLimit`), in the order of the cards in the state, then of the actions on
- * each card. It does not check whose turn it is:
+ * Every card action the cards in play offer `investigator` (`offersActionsTo`), their limits
+ * still allow (`withinLimit`) and the investigator can pay for (`canPay`), in the order of the
+ * cards in the state, then of the actions on each card. It does not check whose turn it is:
  * `UseCardAction` does.
  */
 export function cardActionsOfferedTo(
@@ -104,8 +120,8 @@ export function cardActionsOfferedTo(
   return Object.values(state.cards).flatMap((card) => {
     const actions = cardStats(ctx.cards, card.code).actions ?? [];
     if (actions.length === 0 || !offersActionsTo(state, card, investigator)) return [];
-    return actions.flatMap(({ designator, limit }, action) =>
-      withinLimit(state, card, action, limit, investigator.id)
+    return actions.flatMap(({ designator, limit, cost }, action) =>
+      withinLimit(state, card, action, limit, investigator.id) && canPay(investigator, cost)
         ? [{ cardId: card.id, action, ...(designator === undefined ? {} : { designator }) }]
         : [],
     );
@@ -145,17 +161,18 @@ export function cardActionOf(ctx: EngineContext, state: GameState, cmd: UseCardA
 /**
  * `UseCardAction`: checks that the investigator may take the action now, in their own turn,
  * where the card offers it (`offersActionsTo`, else `cardActionUnavailable`) and as its limit
- * allows (`withinLimit`, else `cardActionLimitReached`), and records the use (`CardActionUsed`).
+ * allows (`withinLimit`, else `cardActionLimitReached`), and that they can pay its cost (`canPay`,
+ * else `cardActionCostUnpaid`); records the use (`CardActionUsed`) and pays the cost.
  * Its effects follow as ability steps (`cardActionSteps`).
  */
 export function handleUseCardAction(
   ctx: EngineContext,
   state: GameState,
   cmd: UseCardAction,
-): CardActionUsed[] {
+): (CardActionUsed | InvestigatorChanged)[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
   requireTurnOf(state, investigator.id);
-  const { limit } = cardActionOf(ctx, state, cmd);
+  const { limit, cost } = cardActionOf(ctx, state, cmd);
   const card = requireCard(state.cards, cmd.cardId);
   if (!offersActionsTo(state, card, investigator))
     throw new CommandRejected({
@@ -170,12 +187,27 @@ export function handleUseCardAction(
       action: cmd.action,
       investigatorId: investigator.id,
     });
-  return [
-    {
-      type: 'CardActionUsed',
-      cardId: card.id,
+  if (!canPay(investigator, cost))
+    throw new CommandRejected({
+      code: 'cardActionCostUnpaid',
+      cardId: cmd.cardId,
       action: cmd.action,
       investigatorId: investigator.id,
+    });
+  const used: CardActionUsed = {
+    type: 'CardActionUsed',
+    cardId: card.id,
+    action: cmd.action,
+    investigatorId: investigator.id,
+  };
+  if (cost === undefined) return [used];
+  return [
+    used,
+    {
+      type: 'InvestigatorChanged',
+      investigatorId: investigator.id,
+      stat: cost.spend,
+      delta: -cost.amount,
     },
   ];
 }

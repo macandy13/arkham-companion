@@ -254,6 +254,8 @@ export type AbilityCommand =
         type:
           | 'AdjustInvestigator'
           | 'HealInvestigator'
+          | 'DrawCards'
+          | 'SearchDeck'
           | 'TakeDamageAndHorror'
           | 'PlaceDoom'
           | 'MoveCard'
@@ -1097,6 +1099,40 @@ export function heal(
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
   return { type: 'HealInvestigator', investigatorId: who, stat, amount };
+}
+
+/** "Draw N cards" (Your House, Southside's Historical Society). */
+export function drawCards(
+  amount: number,
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'DrawCards', investigatorId: who, amount };
+}
+
+/**
+ * A search of the investigator's deck for a card with one of `traits`, taken into hand before the
+ * deck is shuffled (Ma's Boarding House, Miskatonic University), of only the `top` cards when the
+ * card says so.
+ */
+export function searchDeck(
+  traits: readonly Trait[],
+  { top }: { top?: number } = {},
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return {
+    type: 'SearchDeck',
+    investigatorId: who,
+    traits,
+    ...(top === undefined ? {} : { top }),
+  };
+}
+
+/** "Gain N clues from the token pool" (Northside). */
+export function gainClues(
+  amount: number,
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'AdjustInvestigator', investigatorId: who, stat: 'clues', delta: amount };
 }
 
 /** "Gain N resources" (First Bank of Arkham). */

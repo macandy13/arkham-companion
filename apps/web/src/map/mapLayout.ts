@@ -230,3 +230,14 @@ export function pawnOffset(index: number): Point {
 export function onPawn(centre: Point, point: Point): boolean {
   return Math.hypot(point.x - centre.x, point.y - centre.y) <= CONTENT.pawnRadius;
 }
+
+/**
+ * How far, in CSS pixels, the pointer may move between pressing and letting go for a tap; further,
+ * it was a pan of the map or a piece dragged. A finger on a phone wobbles a few pixels.
+ */
+const TAP_SLOP = 8;
+
+/** Whether a press at screen point `pressed`, let go at `released`, is a tap rather than a pan or a drag. */
+export function isTap(pressed: Point, released: Point): boolean {
+  return Math.hypot(released.x - pressed.x, released.y - pressed.y) <= TAP_SLOP;
+}
