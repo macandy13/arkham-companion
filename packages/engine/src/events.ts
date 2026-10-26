@@ -1,5 +1,6 @@
 import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
 import type { AbilityCommand, TestedAction } from './abilities';
+import type { PlayerCardCommand } from './commands';
 import type {
   CardCode,
   DecisionId,
@@ -57,6 +58,7 @@ export type Event =
   | EncounterCardDrawn
   | SurgeGained
   | CardActionUsed
+  | CommandDeferred
   | AbilityEffectSkipped
   | CluesDiscovered
   | SkillTestResolved
@@ -347,6 +349,15 @@ export interface CardActionUsed {
   cardId: InstanceId;
   action: number;
   investigatorId: InvestigatorId;
+}
+
+/**
+ * The engine can't carry out `command` (it holds no player cards), so the players do it by hand.
+ * Only a notice: the reducer ignores it. Produced by `DrawCards` and `SearchDeck`.
+ */
+export interface CommandDeferred {
+  type: 'CommandDeferred';
+  command: PlayerCardCommand;
 }
 
 /**

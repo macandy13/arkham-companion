@@ -3,6 +3,7 @@ import {
   type AbilityEffectSkipped,
   type CardCode,
   type BoardView,
+  type PlayerCardCommand,
   type Event,
   PlayTable,
   type GameId,
@@ -32,19 +33,28 @@ export async function startGame(
 }
 
 /**
- * An ability effect the engine skipped because a card it names is not in the game exactly once
- * (`AbilityEffectSkipped`), in the players' words, so they can resolve it by hand.
+ * A card effect the players resolve by hand, in their words: one the engine skipped because a card
+ * it names is not in the game exactly once (`AbilityEffectSkipped`), or a command on an
+ * investigator's own cards, which the game doesn't hold (`CommandDeferred`).
  */
-export interface SkippedEffect {
-  /** The printed name of the card whose ability it is. */
-  card: string;
-  /** What the effect would have done. */
-  effect: AbilityEffectSkipped['effect'];
-  /** The printed names of the cards it could not find. */
-  missing: readonly string[];
-}
+export type SkippedEffect =
+  | {
+      readonly kind: 'missingCard';
+      /** The printed name of the card whose ability it is. */
+      readonly card: string;
+      /** What the effect would have done. */
+      readonly effect: AbilityEffectSkipped['effect'];
+      /** The printed names of the cards it could not find. */
+      readonly missing: readonly string[];
+    }
+  | {
+      readonly kind: 'deferred';
+      /** The name of the investigator whose cards it is about. */
+      readonly investigator: string;
+      readonly command: PlayerCardCommand;
+    };
 
-/** The effects `events` skipped, named with the cards of `ctx`; `state` holds the cards they name. */
+/** The effects `events` leave to the players, named with the cards of `ctx`; `state` holds the cards they name. */
 export function skippedEffects(
   ctx: ScenarioContext,
   state: GameState,
@@ -52,16 +62,29 @@ export function skippedEffects(
 ): SkippedEffect[] {
   // A code the cards don't know (a typo in the scenario data) has no name; the code is all there is.
   const nameOf = (code: CardCode) => ctx.cards.get(code)?.name ?? code;
-  return events.flatMap((event) => {
-    if (event.type !== 'AbilityEffectSkipped') return [];
-    const card = state.cards[event.cardId];
-    return [
-      {
-        card: card ? nameOf(card.code) : event.cardId,
-        effect: event.effect,
-        missing: event.missing.map(nameOf),
-      },
-    ];
+  return events.flatMap((event): SkippedEffect[] => {
+    switch (event.type) {
+      case 'AbilityEffectSkipped': {
+        const card = state.cards[event.cardId];
+        return [
+          {
+            kind: 'missingCard',
+            card: card ? nameOf(card.code) : event.cardId,
+            effect: event.effect,
+            missing: event.missing.map(nameOf),
+          },
+        ];
+      }
+      case 'CommandDeferred': {
+        const { command } = event;
+        const investigator = state.investigators.find((inv) => inv.id === command.investigatorId);
+        return [
+          { kind: 'deferred', investigator: investigator?.name ?? command.investigatorId, command },
+        ];
+      }
+      default:
+        return [];
+    }
   });
 }
 

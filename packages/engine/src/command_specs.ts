@@ -34,6 +34,7 @@ import {
 } from './handle_enemy';
 import {
   handleAdjustInvestigator,
+  deferToPlayers,
   handleHealInvestigator,
   handleDefeatInvestigator,
   handleDiscoverClues,
@@ -177,6 +178,8 @@ const COMMAND_SPECS: CommandSpecs = {
     provokes: asAction,
   },
   HealInvestigator: { handle: handleHealInvestigator },
+  DrawCards: { handle: deferToPlayers },
+  SearchDeck: { handle: deferToPlayers },
   AdjustInvestigator: {
     handle: handleAdjustInvestigator,
   },

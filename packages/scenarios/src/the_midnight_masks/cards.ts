@@ -6,11 +6,13 @@ import {
   cardDbFrom,
   cardImagePath,
   disengageFromEachEnemy,
+  drawCards,
   engageReadyEnemies,
   decisionId,
   encounterSetCode,
   endScenario,
   fixed,
+  gainClues,
   gainResources,
   gainSurge,
   heal,
@@ -18,6 +20,7 @@ import {
   ifEnemiesInPlay,
   ifYouHave,
   locationWith,
+  moveSelf,
   moveTo,
   nearestEnemy,
   onlyCopy,
@@ -25,6 +28,7 @@ import {
   placeDoomOnSelf,
   resolutionId,
   searchAndDraw,
+  searchDeck,
   shuffleEncounterDeck,
   skillTest,
   spendClues,
@@ -38,6 +42,8 @@ import {
   type CardDb,
   type CardStats,
   resignAction,
+  type ActionCost,
+  type CardAction,
 } from '@arkham/engine';
 import { act, agenda, enemy, location, prey, spawn, treachery } from '../card_builders';
 
@@ -104,6 +110,11 @@ const graveyard = 'scenario.theMidnightMasks.graveyard';
 const arkham = ['Arkham'];
 const cultist = ['Humanoid', 'Cultist'];
 
+/** "[action] Spend …: Parley. Add <the cultist> to the victory display." (Peter Warren, Victoria Devereux). */
+function parleyIntoVictoryDisplay(cost: ActionCost): CardAction {
+  return { designator: 'parley', cost, effects: [moveSelf({ kind: 'victoryDisplay' })] };
+}
+
 /**
  * Hand-entered card data for The Midnight Masks, keyed by the real ArkhamDB
  * codes; like The Gathering's, only names, codes, numbers, traits, keywords
@@ -114,8 +125,7 @@ const cultist = ['Humanoid', 'Cultist'];
  * - the act's action (spending clues to draw from the Cultist deck) and its
  *   objective (the players advance it)
  * - agenda 1 turning into The Masked Hunter
- * - the Parley actions, and the actions of Your House, both Southsides,
- *   Miskatonic University and Northside
+ * - Herman Collins' Parley (discarding cards from the hand)
  * - Your House's hold on the Ghoul Priest and Easttown's cost reduction
  * - Ruth Turner going to the victory display once evaded: the `afterTest`
  *   window opens before the evade exhausts and disengages her
@@ -165,6 +175,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     shroud: 2,
     cluesPerInvestigator: 1,
     traits: arkham,
+    actions: [{ effects: [drawCards(1), gainResources(1)], limit: { per: 'turn' } }],
   }),
   location({
     code: '01125',
@@ -181,6 +192,8 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     shroud: 3,
     cluesPerInvestigator: 1,
     traits: arkham,
+    // Historical Society.
+    actions: [{ effects: [drawCards(3)], limit: { per: 'game' } }],
   }),
   location({
     code: '01127',
@@ -189,6 +202,8 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     shroud: 2,
     cluesPerInvestigator: 1,
     traits: arkham,
+    // Ma's Boarding House.
+    actions: [{ effects: [searchDeck([trait('Ally')])], limit: { per: 'game' } }],
   }),
   location({
     code: '01128',
@@ -207,6 +222,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     cluesPerInvestigator: 2,
     traits: arkham,
     victory: 1,
+    actions: [{ effects: [searchDeck([trait('Tome'), trait('Spell')], { top: 6 })] }],
   }),
   location({
     code: '01130',
@@ -270,6 +286,13 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     cluesPerInvestigator: 2,
     traits: arkham,
     victory: 1,
+    actions: [
+      {
+        cost: { spend: 'resources', amount: 5 },
+        effects: [gainClues(2)],
+        limit: { per: 'game', group: true },
+      },
+    ],
   }),
   treachery({
     code: '01135',
@@ -357,6 +380,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     horror: 0,
     victory: 1,
     keywords: [spawn('Miskatonic University')],
+    actions: [parleyIntoVictoryDisplay({ spend: 'clues', amount: 2 })],
   }),
   enemy({
     code: '01140',
@@ -370,6 +394,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     horror: 0,
     victory: 1,
     keywords: [spawn('Northside')],
+    actions: [parleyIntoVictoryDisplay({ spend: 'resources', amount: 5 })],
   }),
   enemy({
     code: '01141',

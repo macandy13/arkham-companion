@@ -24,7 +24,6 @@ export function ThreatArea({
   treacheries,
   enemies,
   actions,
-  onTurn,
   busy,
 }: {
   /** The board the enemy details read their numbers from (`BoardView.enemyStats`). */
@@ -32,8 +31,6 @@ export function ThreatArea({
   treacheries: readonly CardName[];
   enemies: readonly MapEnemyView[];
   actions: GameActions;
-  /** It is the turn of the investigator whose threat area this is, so they may fight and evade. */
-  onTurn: boolean;
   busy: boolean;
 }) {
   const { t } = useTranslation();
@@ -65,14 +62,7 @@ export function ThreatArea({
           </li>
         ))}
         {enemies.map((enemy) => (
-          <EnemyCard
-            key={enemy.id}
-            board={board}
-            enemy={enemy}
-            actions={actions}
-            onTurn={onTurn}
-            busy={busy}
-          />
+          <EnemyCard key={enemy.id} board={board} enemy={enemy} actions={actions} busy={busy} />
         ))}
       </ul>
       {overflowing && (
@@ -98,13 +88,11 @@ function EnemyCard({
   board,
   enemy,
   actions,
-  onTurn,
   busy,
 }: {
   board: BoardView;
   enemy: MapEnemyView;
   actions: GameActions;
-  onTurn: boolean;
   busy: boolean;
 }) {
   const { t } = useTranslation();
@@ -135,7 +123,6 @@ function EnemyCard({
           board={board}
           enemy={enemy}
           actions={actions}
-          onTurn={onTurn}
           busy={busy}
           onClose={() => setDetailsOpen(false)}
         />

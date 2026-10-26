@@ -101,7 +101,6 @@ function InvestigatorPanel({
         treacheries={investigator.threatArea ?? []}
         enemies={engaged}
         actions={actions}
-        onTurn={onTurn}
         // Fighting and evading are play, so they wait while the players adjust, like the turn's.
         busy={busy || adjusting}
       />
