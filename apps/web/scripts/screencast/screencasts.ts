@@ -115,6 +115,7 @@ function specsIn(report: PlaywrightReport, project: string, base: PlaywrightRepo
   return tagged(report).filter((spec) => !onBase.has(specKey(spec)));
 }
 
+// The leaf title is enough: specs repeating a title in one file would already collide on their slug.
 function specKey(spec: ReportSpec): string {
   return `${spec.file ?? ''} › ${spec.title}`;
 }
