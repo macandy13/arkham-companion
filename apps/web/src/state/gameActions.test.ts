@@ -9,7 +9,7 @@ import {
   newGame,
   PlayTable,
 } from '@arkham/engine';
-import { gameActions, type GameActions } from './gameActions';
+import { gameActions, type ActionCost, type GameActions } from './gameActions';
 
 const study = instanceId('study');
 const hall = instanceId('hall');
@@ -55,13 +55,39 @@ describe('gameActions', () => {
     { verb: 'engage', act: (actions) => actions.engage(lurker), left: 2 },
     { verb: 'a free fight', act: (actions) => actions.fight(ghoul, 'free'), left: 3 },
     { verb: 'a free evade', act: (actions) => actions.evade(ghoul, 'free'), left: 3 },
-    { verb: 'moveTo (the pawn drag)', act: (actions) => actions.moveTo(hall), left: 3 },
+    { verb: 'a move', act: (actions) => actions.moveTo(hall, 'action'), left: 2 },
+    { verb: 'a free move (the pawn drag)', act: (actions) => actions.moveTo(hall), left: 3 },
   ])('$verb leaves alder $left of three actions', async ({ act, left }) => {
     const table = aldersTurn();
 
     await act(actionsOn(table));
 
     expect(table.board.investigator(alder)).toMatchObject({ actions: left });
+  });
+
+  it.each<{ cost: ActionCost; attacks: string[] }>([
+    { cost: 'action', attacks: ['ghoul'] },
+    { cost: 'free', attacks: [] },
+  ])('a move as $cost provokes attacks of opportunity from $attacks', async ({ cost, attacks }) => {
+    const table = aldersTurn();
+
+    await actionsOn(table).moveTo(hall, cost);
+
+    expect(table.board.decisions.map(({ about }) => about)).toEqual(attacks);
+  });
+
+  it('takes a clue from the study without a test', async () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true, clues: 2 })
+        .withInvestigator(alder, { locationId: study })
+        .withTurnOf(alder),
+    );
+
+    await actionsOn(table).takeClue(study);
+
+    expect(table.board.investigator(alder)).toMatchObject({ clues: 1, actions: 3 });
+    expect(table.board.location(study).clues).toBe(1);
   });
 
   it.each<{ effect: string; act: (actions: GameActions) => Promise<void>; ghoul: object }>([

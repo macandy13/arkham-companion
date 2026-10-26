@@ -1,5 +1,5 @@
 import { listIfAny } from '@arkham/util';
-import { isConnectionOpen } from './board';
+import { isConnectionOpen, neighbours } from './board';
 import { effectiveValue } from './card_values';
 import { cardStats, resolveValue, type EngineContext, type Trait } from './cards';
 import { optionName } from './describe_decision';
@@ -450,6 +450,27 @@ export class BoardView {
       InvestigatorId,
       InvestigatorView[K]
     >;
+  }
+
+  /**
+   * The locations a move from `location` can go to: its open connections on every map, a one-way
+   * one only from its start (`neighbours`, which the move itself checks), so the screen can
+   * offer a move there.
+   */
+  connectedTo(location: InstanceId): readonly InstanceId[] {
+    return neighbours(this.state, location);
+  }
+
+  /** The investigators at `location`, in seat order, as its `LocationView.investigators` lists them. */
+  investigatorsAt(location: InstanceId): readonly InvestigatorView[] {
+    return this.state.investigators
+      .filter((inv) => inv.locationId === location)
+      .map((inv) => investigatorView(this.ctx, this.state, inv));
+  }
+
+  /** The location `investigator` stands at; none until setup places them. */
+  locationOf(investigator: InvestigatorId): InstanceId | undefined {
+    return requireInvestigator(this.state, investigator).locationId;
   }
 
   /** The printed names of the in-play locations on `map`, in map order. */
