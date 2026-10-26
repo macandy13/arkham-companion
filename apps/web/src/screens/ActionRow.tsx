@@ -3,7 +3,15 @@ import './action_row.css';
 
 /** The icons an `ActionButton` shows, each a mask in `action_row.css`. */
 export type ActionIcon =
-  'fight' | 'evade' | 'damage' | 'disengage' | 'defeat' | 'investigate' | 'move' | 'clue';
+  | 'fight'
+  | 'evade'
+  | 'engage'
+  | 'damage'
+  | 'disengage'
+  | 'defeat'
+  | 'investigate'
+  | 'move'
+  | 'clue';
 
 /**
  * A titled group of buttons in a details window's action row (the enemy's, the location's): the

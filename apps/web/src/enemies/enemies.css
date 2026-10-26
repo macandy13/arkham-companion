@@ -28,6 +28,14 @@
   border-radius: var(--radius-round);
 }
 
+/*
+ * Opened from the map, an enemy nobody is engaged with has no line above its card, so the card
+ * would rise under the ×; the room the line takes keeps the × clear of it.
+ */
+#board dialog[data-dialog='enemy']:not(:has(> p)) {
+  padding-block-start: calc(var(--space-2) + var(--touch-target));
+}
+
 #board dialog[data-dialog='enemy'] > button[data-icon='close']::before {
   mask-image: url('../investigators/icons/close.svg');
 }
