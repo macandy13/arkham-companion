@@ -445,6 +445,52 @@
       .pawn.turn {
         box-shadow: var(--glow);
       }
+      .pawn {
+        position: relative;
+      }
+      /* The lead investigator's marker: a pentagon with a flashlight, like the game's token. */
+      .lead {
+        width: 1.4rem;
+        height: 1.4rem;
+        flex: none;
+        filter: drop-shadow(0 1px 2px rgb(0 0 0 / 60%));
+      }
+      .pawn .lead {
+        position: absolute;
+        right: -8px;
+        bottom: -6px;
+        width: 20px;
+        height: 20px;
+      }
+      /* The marker for the investigator whose turn it is. */
+      .turnbadge {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        padding: 1px 8px 1px 6px;
+        border-radius: 999px;
+        background: var(--brass);
+        color: var(--brass-text);
+        font-family: var(--body);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        white-space: nowrap;
+        box-shadow: var(--glow);
+      }
+      .turnbadge::before {
+        content: '';
+        width: 9px;
+        height: 9px;
+        clip-path: polygon(0 0, 55% 0, 100% 50%, 55% 100%, 0 100%, 45% 50%);
+        background: currentColor;
+      }
+      .leadlabel {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
 
       /* ---------- Overview: turn investigator ---------- */
       .invpanel {
@@ -480,7 +526,9 @@
         font-family: var(--display);
         font-weight: 400;
         font-size: 1.05rem;
-        display: block;
+        display: flex;
+        align-items: center;
+        gap: 6px;
       }
       .invpanel .top .who small {
         color: #d8c48e;
@@ -509,8 +557,81 @@
         border: 2px solid var(--card-edge);
         background-size: 330%;
         background-position: 4% 42%;
-        grid-row: span 2;
+        grid-row: span 3;
         padding: 0;
+      }
+      .skillrow {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 4px;
+      }
+      .skillrow .btn {
+        min-height: 0;
+        padding: 1px 0;
+        display: flex;
+        justify-content: center;
+        align-items: baseline;
+        gap: 4px;
+        font-size: 0.65rem;
+        color: var(--ink-muted);
+      }
+      .skillrow .btn b {
+        font-size: 0.95rem;
+        color: var(--ink);
+      }
+      /* Threat area above the investigator, as on the playmat: small cards, scrolled sideways. */
+      .threatrow {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        padding: 4px 8px 6px;
+        scrollbar-width: none;
+      }
+      .threatrow .label {
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+        font-size: 0.6rem;
+        color: var(--muted);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        text-align: center;
+      }
+      .smallcard {
+        position: relative;
+        flex: none;
+        width: 3.3rem;
+        aspect-ratio: 63 / 88;
+        border-radius: 5px;
+        border: 2px solid var(--c);
+        padding: 0;
+        overflow: hidden;
+        background: #14201c;
+      }
+      .smallcard .art {
+        position: absolute;
+        inset: 0;
+      }
+      .smallcard .n {
+        position: absolute;
+        inset: auto 0 0;
+        padding: 1px 2px;
+        background: rgb(5 12 10 / 80%);
+        font-size: 0.5rem;
+        line-height: 1.1;
+        text-align: center;
+      }
+      .smallcard .hp {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        min-width: 1.1rem;
+        padding: 0 3px;
+        border-radius: 999px;
+        background: var(--health);
+        border: 1px solid var(--text);
+        font-size: 0.6rem;
+        font-weight: 700;
+        line-height: 1rem;
       }
       .stats {
         display: flex;
@@ -740,6 +861,10 @@
       }
       .threatcard .art {
         height: 5rem;
+      }
+      .threatcard .art,
+      .smallcard .art {
+        background-position: center top;
       }
       .threatcard span {
         display: block;
@@ -1010,6 +1135,12 @@
           the wheel, or <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd>. <kbd>Esc</kbd> or the X
           goes back to the overview.
         </p>
+        <p>
+          The scenario cards row has the encounter deck leftmost but opens on the agenda. The
+          investigator whose turn it is wears a brass Turn badge; the lead investigator a pentagon
+          with a flashlight, like the game's token. Threat areas sit above the investigator, as
+          small cards in the overview.
+        </p>
         <h2>Locations</h2>
         <p>
           Tapping a location (on the preview or the full map) opens its sheet: the card, shroud and
@@ -1026,6 +1157,7 @@
         round: 2,
         phase: 'Investigation',
         turn: 0,
+        lead: 'roland',
         investigators: [
           {
             id: 'roland',
@@ -1123,7 +1255,9 @@
       ];
 
       /* The details view's rows and slides; `pos` is where it opens. */
-      const HEAD_SLIDES = ['agenda', 'act', 'encounter', 'scenario'];
+      /* The encounter deck sits leftmost, but the row opens on the agenda. */
+      const HEAD_SLIDES = ['encounter', 'agenda', 'act', 'scenario'];
+      const HEAD_DEFAULT = 1;
       let pos = { row: 0, slide: 0 };
       let view = 'overview';
       let zoom = 1;
@@ -1196,10 +1330,31 @@
       /* A token as a pill with "value/max" on one line, readable at strip size. */
       const pill = (c, value, of, label) =>
         `<span class="tok" style="--c: var(--${c})" title="${label}" aria-label="${label} ${value}${of != null ? ` of ${of}` : ''}">${value}${of != null ? `/${of}` : ''}</span>`;
+      const LEAD_SVG = `<svg class="lead" viewBox="0 0 100 100" role="img" aria-label="Lead investigator"><title>Lead investigator</title>
+        <path d="M50 5 95 38 78 93H22L5 38Z" fill="#1d3a32" stroke="#c9a45c" stroke-width="7" stroke-linejoin="round"/>
+        <g transform="rotate(-30 50 56)"><path d="M41 40 29 16h42L59 40z" fill="#f1d27a" opacity="0.75"/>
+        <path d="M38 40h24l-4 12H42z" fill="#ece3cf"/><rect x="43" y="52" width="14" height="28" rx="3" fill="#ece3cf"/></g></svg>`;
+      const isLead = (who) => who.id === S.lead;
+      const turnBadge = '<span class="turnbadge">Turn</span>';
       const pawn = (who, cls = '') => {
         const enemy = !!who.fight;
-        return `<span class="pawn ${enemy ? 'enemy' : ''} ${cls}" data-img="${who.code}" role="img" aria-label="${esc(who.name)}"><span>${initials(who.name)}</span></span>`;
+        return `<span class="pawn ${enemy ? 'enemy' : ''} ${cls}" data-img="${who.code}" role="img" aria-label="${esc(who.name)}${!enemy && isLead(who) ? ', lead investigator' : ''}"><span>${initials(who.name)}</span>${!enemy && isLead(who) ? LEAD_SVG : ''}</span>`;
       };
+      /* An investigator's threat area as small cards: engaged enemies first, then treacheries. */
+      function smallThreats(i) {
+        return [
+          ...enemiesEngaged(i).map(
+            (e) =>
+              `<button type="button" class="smallcard" style="--c: var(--doom)" data-enemy="${e.id}" aria-label="${esc(e.name)}, ${e.health - e.damage} of ${e.health} health"><span class="art" data-img="${e.code}"></span><span class="hp">${e.health - e.damage}</span><span class="n">${esc(e.name)}</span></button>`,
+          ),
+          ...i.threat.map(
+            (t) =>
+              `<button type="button" class="smallcard" style="--c: var(--treachery)" data-card-zoom="${t.code}" data-name="${esc(t.name)}" aria-label="${esc(t.name)}"><span class="art" data-img="${t.code}"></span><span class="n">${esc(t.name)}</span></button>`,
+          ),
+        ];
+      }
+      const skillRow = (i) =>
+        `<div class="skillrow">${SKILLS.map(([k, l]) => `<button type="button" class="btn" data-test="${i.id},${k}"><b>${i.skills[k]}</b>${l}</button>`).join('')}</div>`;
       const pips = (i) =>
         `<span class="pips" role="img" aria-label="${i.actions} of 3 actions left">${[0, 1, 2]
           .map((n) => `<span class="pip ${n < i.actions ? '' : 'spent'}"></span>`)
@@ -1217,21 +1372,13 @@
       function renderOverview() {
         const i = turnInv();
         const here = S.locations[i.loc];
-        const threats = [
-          ...enemiesEngaged(i).map(
-            (e) =>
-              `<span class="chip" style="--c: var(--doom)">${esc(e.name)} ${e.health - e.damage}/${e.health}</span>`,
-          ),
-          ...i.threat.map(
-            (t) => `<span class="chip" style="--c: var(--treachery)">${esc(t.name)}</span>`,
-          ),
-        ];
+        const threats = smallThreats(i);
         const others = invOrder()
           .slice(1)
           .map((n) => S.investigators[n])
           .map(
             (o) =>
-              `<button type="button" class="pawn" data-img="${o.code}" data-open-inv="${o.id}" aria-label="${esc(o.name)}: details" title="${esc(o.name)}"><span>${initials(o.name)}</span></button>`,
+              `<button type="button" class="pawn" data-img="${o.code}" data-open-inv="${o.id}" aria-label="${esc(o.name)}${isLead(o) ? ', lead investigator' : ''}: details" title="${esc(o.name)}"><span>${initials(o.name)}</span>${isLead(o) ? LEAD_SVG : ''}</button>`,
           )
           .join('');
         document.getElementById('overview').innerHTML = `
@@ -1253,20 +1400,21 @@
             <div class="tools">${icon('expand', 'Show the map full screen', 'data-do="fullmap"')}</div>
             ${board()}
           </div>
+          ${threats.length ? `<div class="threatrow" aria-label="Threat area of ${esc(i.name)}"><span class="label">Threat</span>${threats.join('')}</div>` : ''}
           <section class="invpanel" aria-label="${esc(i.name)}, turn">
             <div class="top">
-              <button type="button" class="who" data-open-inv="${i.id}"><b>${esc(i.name)}</b><small>Turn · ${esc(here.name)} · tap for details</small></button>
+              <button type="button" class="who" data-open-inv="${i.id}"><b>${isLead(i) ? LEAD_SVG : ''}${esc(i.name)} ${turnBadge}</b><small>${esc(here.name)} · tap for details</small></button>
               <span class="others" aria-label="Other investigators">${others}</span>
             </div>
             <div class="body">
               <button type="button" class="portrait art" data-img="${i.code}" data-open-inv="${i.id}" aria-label="${esc(i.name)}: details"></button>
               ${stats(i)}
+              ${skillRow(i)}
               <div class="acts">
                 ${pips(i)}
                 <button type="button" class="btn" data-do="investigate" ${canInvestigate(i) ? '' : 'disabled'}>Investigate</button>
                 <button type="button" class="btn primary" data-do="end">End turn</button>
               </div>
-              ${threats.length ? `<div class="threat">Threat: ${threats.join('')}</div>` : ''}
             </div>
           </section>`;
         const el = document.getElementById('overview');
@@ -1376,7 +1524,11 @@
         const box = el.querySelector('#fullbox');
         fitBoard(box, zoom, pan);
         wirePanZoom(box);
-        requestAnimationFrame(() => goTo(pos.row, pos.slide, 'instant'));
+        requestAnimationFrame(() => {
+          if (pos.row !== 0) resetHeadRow();
+          goTo(pos.row, pos.slide, 'instant');
+          lastRow = pos.row;
+        });
       }
       /* The map row's strips carry the numbers a player glances at while moving on the map. */
       function headerFacts() {
@@ -1439,7 +1591,9 @@
           ),
         ].join('');
         return `<article class="slide" aria-label="${esc(i.name)}">
-          <h2><small>${esc(i.cls)} · ${esc(S.locations[i.loc].name)}${isTurn ? ' · turn' : ''}</small>${esc(i.name)}</h2>
+          <h2><small>${esc(i.cls)} · ${esc(S.locations[i.loc].name)}${isLead(i) ? ' · lead investigator' : ''}</small><span class="leadlabel">${isLead(i) ? LEAD_SVG : ''}${esc(i.name)} ${isTurn ? turnBadge : ''}</span></h2>
+          <h2><small>Threat area</small></h2>
+          ${threats ? `<div class="threatlist">${threats}</div>` : '<p class="text">Empty.</p>'}
           <div class="bigcard landscape" style="--c: var(--investigator)"><img data-img="${i.code}" alt="${esc(i.name)}"></div>
           <div class="stats wide">${stats(i)
             .replace('<div class="stats">', '')
@@ -1454,8 +1608,6 @@
                   <button type="button" class="btn primary" data-do="end">End turn</button></div>`
               : `<p class="text">Not this investigator's turn.</p>`
           }
-          <h2><small>Threat area</small></h2>
-          ${threats ? `<div class="threatlist">${threats}</div>` : '<p class="text">Empty.</p>'}
         </article>`;
       }
       function goTo(row, slide, behavior = 'smooth') {
@@ -1477,10 +1629,18 @@
         const car = pager.querySelectorAll('.row')[row]?.querySelector('.carousel');
         return { row, slide: car ? Math.round(car.scrollLeft / car.clientWidth) : 0 };
       }
+      let lastRow = null;
+      /* Off screen, so the header row opens on the agenda again the next time it is swiped to. */
+      function resetHeadRow() {
+        const car = document.querySelector('#pager .row .carousel');
+        if (car) car.scrollTo({ left: HEAD_DEFAULT * car.clientWidth, behavior: 'instant' });
+      }
       function syncDots() {
         const pager = document.getElementById('pager');
         if (!pager) return;
         const { row } = current();
+        if (lastRow === 0 && row !== 0) resetHeadRow();
+        lastRow = row;
         document
           .querySelectorAll('.vdots button')
           .forEach((b) => b.setAttribute('aria-current', String(+b.dataset.row === row)));
