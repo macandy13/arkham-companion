@@ -70,6 +70,35 @@ button[data-icon]::before {
   mask: center / contain no-repeat;
 }
 
+/*
+ * A round icon button that opens a menu (the play screen's ☰, the picker's filters) and the menu
+ * it opens: a panel under the button over what lies below, framed in brass. The button's parent
+ * is positioned, so the menu lines up with its end. The menu's selector names `#app`, so it beats
+ * the screens' plain list rules (`#app > main ul`).
+ */
+button[data-icon][aria-expanded] {
+  min-width: var(--button-compact);
+  min-height: var(--button-compact);
+  padding: 0;
+  border-radius: var(--radius-round);
+}
+
+#app button[data-icon][aria-expanded] + * {
+  position: absolute;
+  z-index: var(--layer-menu);
+  top: 100%;
+  inset-inline-end: 0;
+  display: grid;
+  gap: var(--space-1);
+  min-width: max-content;
+  margin: var(--space-1) 0 0;
+  padding: var(--space-2);
+  list-style: none;
+  border: var(--border-width) solid var(--color-accent);
+  border-radius: var(--radius);
+  background: var(--color-background);
+}
+
 button:disabled {
   color: var(--color-text-muted);
 }

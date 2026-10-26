@@ -366,6 +366,8 @@ export const resources = {
       picker: {
         title: 'Choose investigators',
         filters: 'Investigator filters',
+        filterMenu: 'Filters',
+        filtersSet: 'Filters ({{count}} set)',
         search: 'Search by name',
         classes: 'Class',
         faction: {
@@ -384,6 +386,8 @@ export const resources = {
         all: 'All',
         myCollection: 'My collection',
         portraits: 'Investigators',
+        previousPage: 'Previous page',
+        nextPage: 'Next page',
         noResults: 'No investigators match the filters.',
         seats: 'Seats',
         noSeats: 'No investigators selected yet.',
@@ -810,6 +814,8 @@ export const resources = {
       picker: {
         title: 'Ermittler wählen',
         filters: 'Ermittlerfilter',
+        filterMenu: 'Filter',
+        filtersSet: 'Filter ({{count}} gesetzt)',
         search: 'Nach Namen suchen',
         classes: 'Klasse',
         faction: {
@@ -828,6 +834,8 @@ export const resources = {
         all: 'Alle',
         myCollection: 'Meine Sammlung',
         portraits: 'Ermittler',
+        previousPage: 'Vorige Seite',
+        nextPage: 'Nächste Seite',
         noResults: 'Keine Ermittler passen zu den Filtern.',
         seats: 'Plätze',
         noSeats: 'Noch keine Ermittler gewählt.',
