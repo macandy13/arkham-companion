@@ -299,13 +299,33 @@ describe('MapBoard', () => {
       <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
     );
 
-    expect(within(tile('study')).getByRole('img', { name: 'alder' })).toBeTruthy();
+    expect(
+      within(tile('study')).getByRole('img', { name: 'alder, lead investigator' }),
+    ).toBeTruthy();
     expect(
       within(tile('study')).getByRole('img', {
         name: 'ghoul, engaged with alder, 2 damage, exhausted',
       }),
     ).toBeTruthy();
     expect(within(tile('hallway')).getByRole('img', { name: 'rats' })).toBeTruthy();
+  });
+
+  it('marks the lead investigator’s pawn and the pawn of the investigator whose turn it is', () => {
+    const bea = investigatorId('bea');
+    // The first investigator seated leads, as the first seat does at setup.
+    const table = PlayTable.start(
+      house
+        .withInvestigator(bea, { locationId: study })
+        .withInvestigator(alder, { locationId: study })
+        .withTurnOf(alder),
+    );
+
+    render(
+      <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+    );
+
+    expect(within(tile('study')).getByRole('img', { name: 'bea, lead investigator' })).toBeTruthy();
+    expect(within(tile('study')).getByRole('img', { name: 'alder, their turn' })).toBeTruthy();
   });
 
   // The Study's tile spans 0–150 across and 0–210 down. Pieces stand in a row along its bottom
@@ -338,7 +358,7 @@ describe('MapBoard', () => {
         <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
       );
 
-      await drag('study', 'alder', firstPawn, 255, 105);
+      await drag('study', 'alder, lead investigator, their turn', firstPawn, 255, 105);
 
       expect(table.board.investigator(alder).at).toBe('hallway');
     });
@@ -354,7 +374,7 @@ describe('MapBoard', () => {
         <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
       );
 
-      await drag('study', 'alder', firstPawn, x, y);
+      await drag('study', 'alder, lead investigator, their turn', firstPawn, x, y);
 
       expect(table.board.investigator(alder).at).toBe('study');
     });
@@ -365,7 +385,7 @@ describe('MapBoard', () => {
       );
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy adjusting={false} />);
 
-      await drag('study', 'alder', firstPawn, 255, 105);
+      await drag('study', 'alder, lead investigator, their turn', firstPawn, 255, 105);
 
       expect(table.board.investigator(alder).at).toBe('study');
     });
@@ -376,7 +396,7 @@ describe('MapBoard', () => {
       );
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting />);
 
-      await drag('study', 'alder', firstPawn, 255, 105);
+      await drag('study', 'alder, lead investigator, their turn', firstPawn, 255, 105);
 
       expect(table.board.investigator(alder).at).toBe('study');
     });
@@ -392,7 +412,7 @@ describe('MapBoard', () => {
         <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
       );
 
-      await drag('study', 'bea', firstPawn, 255, 105);
+      await drag('study', 'bea, lead investigator', firstPawn, 255, 105);
 
       expect(table.board.investigator(bea).at).toBe('study');
     });

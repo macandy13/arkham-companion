@@ -171,6 +171,7 @@ function LocationCard({ board, location }: { board: BoardView; location: Locatio
         location={location}
         enemies={map?.enemies[location.id] ?? []}
         investigators={board.investigatorsAt(location.id)}
+        turnOrder={board}
         dragOf={() => undefined}
         x={0}
         y={0}

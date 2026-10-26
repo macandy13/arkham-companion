@@ -259,6 +259,9 @@
   --piece-ring-width: 3px;
   /* Lifts the pieces off the card they stand on. */
   --piece-shadow: drop-shadow(0 1px 1.5px rgb(0 0 0 / 60%));
+  /* The pawn of the investigator whose turn it is: a bolder gilt ring that glows, like their card. */
+  --turn-ring-width: 4px;
+  --turn-piece-glow: drop-shadow(0 0 var(--space-2) var(--color-accent));
 }
 
 :root[data-theme='light'] {

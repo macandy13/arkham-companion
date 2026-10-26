@@ -214,6 +214,7 @@ function MapDrawing({
                       location={location}
                       enemies={map.enemies[location.id] ?? []}
                       investigators={board.investigatorsAt(location.id)}
+                      turnOrder={board}
                       onOpen={() => setDetailsFor(location.id)}
                       dragOf={(piece) =>
                         draggable(piece)
@@ -260,7 +261,13 @@ function Ghost({ piece, at, board }: { piece: TilePiece; at: Point; board: Board
   return 'enemy' in piece ? (
     <EnemyToken enemy={piece.enemy} investigators={board.investigators} centre={at} ghost />
   ) : (
-    <Pawn investigator={piece.investigator} centre={at} ghost />
+    <Pawn
+      investigator={piece.investigator}
+      centre={at}
+      lead={board.lead === piece.investigator.id}
+      onTurn={board.turn === piece.investigator.id}
+      ghost
+    />
   );
 }
 

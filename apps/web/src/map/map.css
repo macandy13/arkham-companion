@@ -326,6 +326,22 @@
   stroke-width: var(--piece-ring-width);
 }
 
+#map svg [data-pawn][data-turn] {
+  filter: var(--piece-shadow) var(--turn-piece-glow);
+}
+
+#map svg [data-pawn][data-turn] circle {
+  stroke: var(--color-card-gilt);
+  stroke-width: var(--turn-ring-width);
+}
+
+/* The lead investigator's marker, gilt like the printed token's edge. */
+#map svg [data-pawn] [data-marker='lead'] {
+  fill: var(--color-card-gilt);
+  stroke: var(--color-ink);
+  stroke-width: var(--border-width);
+}
+
 #map svg circle {
   fill: var(--color-accent);
 }
