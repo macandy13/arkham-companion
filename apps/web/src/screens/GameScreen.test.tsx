@@ -214,6 +214,50 @@ describe('GameScreen header', () => {
     expect(await screen.findByText('The Barrier')).toBeTruthy();
   });
 
+  it('opens the agenda as a full card from its name, with its doom, and closes it again', async () => {
+    await renderTheGathering('game-screen-agenda-details-test');
+
+    fireEvent.click(button("What's Going On?!"));
+    const card = await screen.findByRole('dialog', { name: "What's Going On?!" });
+    const doom = within(card).getByRole('img', { name: 'Doom 0 / 3' });
+    fireEvent.click(within(card).getByRole('button', { name: 'Close' }));
+
+    expect(doom).toBeTruthy();
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('opens the act on a tap on its card but not on its Advance button', async () => {
+    await renderTheGathering('game-screen-act-tap-test');
+    const act = screen.getByRole('region', { name: 'Act' });
+    const face = act.querySelector('[data-card]');
+    if (!face) throw new Error('the act has no card');
+
+    fireEvent.click(within(act).getByRole('button', { name: 'Advance' }));
+    const openAfterAdvance = screen.queryByRole('dialog');
+    fireEvent.click(face);
+
+    expect(openAfterAdvance).toBeNull();
+    expect(await screen.findByRole('dialog', { name: 'Trapped' })).toBeTruthy();
+  });
+
+  it('advances the act from its full card and closes the card', async () => {
+    await renderTheGathering('game-screen-act-details-advance-test');
+    // Trapped needs 2 clues for one investigator.
+    fireEvent.click(button('Adjust board'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Add a clue' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Add a clue' }));
+    await screen.findByRole('img', { name: 'Clues 2 / 2' });
+    fireEvent.click(button('Done'));
+    await screen.findByRole('button', { name: 'Next' });
+    fireEvent.click(button('Trapped'));
+    const card = await screen.findByRole('dialog', { name: 'Trapped' });
+
+    fireEvent.click(within(card).getByRole('button', { name: 'Advance' }));
+
+    expect(await screen.findByText('The Barrier')).toBeTruthy();
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
   it('fills the agenda with its picture from ArkhamDB once it has loaded', async () => {
     const whatsGoingOn = theGatheringCards.get(cardCode('01105'));
     if (!whatsGoingOn) throw new Error("The Gathering has the agenda What's Going On?!");
