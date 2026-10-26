@@ -82,6 +82,13 @@
 #board
   :is(dialog[data-dialog='enemy'], dialog[data-dialog='location'])
   > footer
+  button[data-icon='engage']::before {
+  mask-image: url('../enemies/icons/engage.svg');
+}
+
+#board
+  :is(dialog[data-dialog='enemy'], dialog[data-dialog='location'])
+  > footer
   button[data-icon='disengage']::before {
   mask-image: url('../enemies/icons/disengage.svg');
 }
