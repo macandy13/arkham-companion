@@ -27,7 +27,7 @@ test('draw an encounter card for Roland Banks on his turn', { tag: '@flow' }, as
 
   await test.step('Crypt Chill resolves: a notice and the discard pile say where it went', async () => {
     await expect(page.getByRole('status', { name: 'Encounter cards drawn' })).toHaveText(
-      /Crypt Chill: discard pile/,
+      /Crypt Chill for Roland Banks: discard pile/,
     );
     await expect(
       page.getByRole('button', {
