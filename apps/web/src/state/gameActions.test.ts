@@ -91,9 +91,11 @@ describe('gameActions', () => {
 
     await actions.takeResource();
     const attacks = table.board.decisions.map(({ about }) => about);
+    const resourcesDuringAttack = table.board.investigator(alder).resources;
     await actions.answer('attack');
 
     expect(attacks).toEqual(['ghoul']);
+    expect(resourcesDuringAttack).toBe(2);
     expect(table.board.investigator(alder)).toMatchObject({ resources: 3, actions: 2 });
   });
 

@@ -37,7 +37,7 @@ export interface DecisionAmounts {
  * verbs, but with the screen's defaults:
  * - An action is taken by the investigator whose turn it is, since the rules allow actions only
  *   during one's own turn; without a turn it is refused with `noTurnInProgress`. Investigate,
- *   engage, and fight and evade unless free, count off one of their actions, which the engine
+ *   engage, take a resource, draw, play, and move, fight and evade unless free, count off one of their actions, which the engine
  *   leaves to the players; with none left they are refused, and `adjustActions` grants more.
  * - The decision dialog shows the first open decision, so an answer picks an option of that one;
  *   without one it is refused with `noPendingDecision`.
