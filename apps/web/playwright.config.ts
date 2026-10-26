@@ -19,6 +19,8 @@ const executablePath = process.env.PW_CHROMIUM_PATH;
  */
 export default defineConfig({
   testDir: './e2e',
+  // Downloads the card pictures the tests show into a gitignored folder (e2e/fixtures/card_pictures.ts).
+  globalSetup: './e2e/fixtures/card_pictures.ts',
   testMatch: '**/*.spec.ts',
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,

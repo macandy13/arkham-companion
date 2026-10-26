@@ -116,6 +116,38 @@ describe('InvestigatorBar', () => {
     ]);
   });
 
+  it('shows a boosted skill with its boost beside it, the printed value told apart', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withInvestigator(alder, {
+          locationId: study,
+          skills: { willpower: 4, intellect: 3, combat: 1, agility: 2 },
+        }),
+    );
+    table.play({
+      type: 'ManualAdjust',
+      adjustment: { kind: 'skillBoost', investigatorId: alder, skill: 'combat', delta: 2 },
+    });
+
+    render(
+      <InvestigatorBar
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+      />,
+    );
+
+    const combat = within(panel('alder')).getByRole('button', { name: 'Combat 3, boosted +2' });
+    expect(
+      [...combat.querySelectorAll('data')].map((data) => [data.value, data.textContent]),
+    ).toEqual([
+      ['3', '3'],
+      ['2', '+2'],
+    ]);
+  });
+
   it('shows the art of the card picture once it has loaded', () => {
     const table = PlayTable.start(
       newGame()
@@ -257,6 +289,29 @@ describe('InvestigatorBar', () => {
         await expect.poll(() => table.board.investigator(alder)[counter]).toBe(after);
       },
     );
+
+    it.each([
+      { button: 'Raise the Combat boost', boosts: { combat: 1 } },
+      { button: 'Lower the Agility boost', boosts: { agility: -1 } },
+    ])('"$button" leaves alder with the boosts $boosts', async ({ button, boosts }) => {
+      const table = PlayTable.start(hurtAlder);
+      render(
+        <InvestigatorBar board={table.board} actions={actionsOn(table)} busy={false} adjusting />,
+      );
+
+      fireEvent.click(within(panel('alder')).getByRole('button', { name: button }));
+
+      await expect.poll(() => table.board.investigator(alder).boosts).toEqual(boosts);
+    });
+
+    it('turns the boost steppers off while a step is queued', () => {
+      const table = PlayTable.start(hurtAlder);
+      render(<InvestigatorBar board={table.board} actions={actionsOn(table)} busy adjusting />);
+
+      expect(
+        within(panel('alder')).getByRole('button', { name: 'Raise the Combat boost' }),
+      ).toHaveProperty('disabled', true);
+    });
 
     it('cannot heal or spend below none', () => {
       const table = PlayTable.start(

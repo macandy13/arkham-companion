@@ -188,12 +188,14 @@
   --investigator-art-ratio: 4 / 3;
   /*
    * Where the art is on the scan of an investigator card's front (landscape, 419 × 300), in
-   * fractions of its width and height, as `LOCATION_ART` gives it for locations: the right half,
-   * under the top edge. The same 4 : 3 shape as the art window (`--investigator-art-ratio`), so the
-   * art keeps its proportions: change the area and the ratio together.
+   * fractions of its width and height, as `LOCATION_ART` gives it for locations: the left half,
+   * under the name plate, where the portrait's head and shoulders are (checked on the Core Set,
+   * Dunwich, Carcosa and Forgotten Age investigators). The same 4 : 3 shape as the art window
+   * (`--investigator-art-ratio`), so the art keeps its proportions: change the area and the ratio
+   * together.
    */
-  --investigator-art-x: 0.48;
-  --investigator-art-y: 0.04;
+  --investigator-art-x: 0.01;
+  --investigator-art-y: 0.14;
   --investigator-art-width: 0.52;
   --investigator-art-height: 0.545;
   /* A class icon on the picker's class filter. */
@@ -236,6 +238,8 @@
   --action-spent-opacity: 0.3;
   /* The icon before the name of an investigator's counter. */
   --stat-icon-size: 0.875rem;
+  /* The skill icon on an investigator card's skill plate, above its value. */
+  --skill-plate-icon-size: 1.25rem;
   /* An icon on an icon button (`button[data-icon]` in base.css). */
   --icon-size: 1.25rem;
   /* What is left of a name kept only for screen readers: a dot, clipped away. */

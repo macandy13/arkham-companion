@@ -19,6 +19,7 @@ import type {
   InvestigatorStat,
   NamedAmount,
   PerPointFailed,
+  SkillName,
   SkillTest,
   TokenKind,
   WoundKind,
@@ -179,12 +180,14 @@ export interface AddMap {
 
 /**
  * The concrete corrections a `ManualAdjust` can make. `actions` changes an
- * investigator's remaining actions, like `AdjustActions`.
+ * investigator's remaining actions, like `AdjustActions`; `skillBoost` changes
+ * the lasting boost of one of their skills (`Investigator.skillBoosts`).
  */
 export type Adjustment =
   | { kind: 'moveCard'; cardId: InstanceId; to: Zone; index?: number }
   | { kind: 'tokens'; cardId: InstanceId; token: TokenKind; delta: number }
-  | { kind: 'actions'; investigatorId: InvestigatorId; delta: number };
+  | { kind: 'actions'; investigatorId: InvestigatorId; delta: number }
+  | { kind: 'skillBoost'; investigatorId: InvestigatorId; skill: SkillName; delta: number };
 
 /**
  * Puts one location that is out of play (typically set aside) onto the map

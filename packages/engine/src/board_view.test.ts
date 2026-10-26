@@ -31,6 +31,8 @@ import {
   threatAreaOf,
   trait,
   type CardAction,
+  type CardStats,
+  type Zone,
 } from './index';
 import { stateAfter } from '../test/utils';
 
@@ -83,6 +85,25 @@ describe('the phase and turn', () => {
 });
 
 describe('investigators', () => {
+  it('reads the lasting boosts of their skills, and none while there are none', () => {
+    const { context, state } = newGame()
+      .withInvestigator(alice, { skills: { willpower: 1, intellect: 2, combat: 3, agility: 4 } })
+      .withInvestigator(bob)
+      .start();
+    const boosted = stateAfter(context, state, {
+      type: 'ManualAdjust',
+      adjustment: { kind: 'skillBoost', investigatorId: alice, skill: 'combat', delta: 1 },
+    });
+
+    const [aliceView, bobView] = boardView(context, boosted).investigators;
+
+    expect(aliceView).toMatchObject({
+      boosts: { combat: 1 },
+      boostedSkills: { willpower: 1, intellect: 2, combat: 4, agility: 4 },
+    });
+    expect(bobView).not.toHaveProperty('boosts');
+  });
+
   it('reads each investigator with their counters, location and threat area', () => {
     const { context, state } = newGame()
       .withLocation(study, blankLocation('study'))
@@ -116,6 +137,7 @@ describe('investigators', () => {
         horror: 1,
         doom: 2,
         skills: { willpower: 1, intellect: 2, combat: 3, agility: 4 },
+        boostedSkills: { willpower: 1, intellect: 2, combat: 3, agility: 4 },
         image: '/bundles/cards/alice.png',
         actions: 3,
         threatArea: ['frozen_in_fear'],
@@ -691,9 +713,23 @@ describe('enemies', () => {
       expect(() => board.enemy(any_rat)).toThrow(
         /^3 enemies match named "rat" \(rat_on_alice, rat_on_bob, rat_in_hallway\); narrow it with enemyMatching\(card, \{ engagedWith, at \}\), or use byId[^\n]*\n/,
       );
-      expect(() => board.enemy(enemyMatching(any_rat, { at: byName('study') }))).toThrow(
-        /^2 enemies match/,
-      );
+    });
+
+    it.each([
+      {
+        selector: enemyMatching(byName('rat'), { at: byName('study') }),
+        hint: 'narrow it with enemyMatching(card, { engagedWith }), or use byId',
+      },
+      {
+        selector: enemyMatching(byName('rat'), { engagedWith: alice, at: byName('study') }),
+        hint: 'use byId',
+      },
+    ])('suggests only the narrowings $selector does not use yet', ({ selector, hint }) => {
+      const { context, state } = rats
+        .withCard(instanceId('second_rat_on_alice'), rat, engagedWith(alice))
+        .start();
+
+      expect(() => boardView(context, state).enemy(selector)).toThrow(`; ${hint}\n`);
     });
 
     it.each([
@@ -932,6 +968,56 @@ describe('card actions', () => {
       { cardId: instanceId('agenda'), card: 'agenda', action: 0, designator: 'parley' },
       { cardId: instanceId('agenda'), card: 'agenda', action: 1, designator: 'parley' },
     ]);
+  });
+});
+
+describe('enemy actions', () => {
+  const ghoul = instanceId('ghoul');
+  /** Alice and Bob in the Study, the Hallway next door, and the ghoul (`card`) at `zone`. */
+  const studyWith = (card: CardStats, zone: Zone) =>
+    newGame()
+      .withLocation(study, blankLocation('study'), { revealed: true })
+      .withLocation(hallway, blankLocation('hallway'), { revealed: true })
+      .withInvestigator(alice, { locationId: study })
+      .withInvestigator(bob, { locationId: study })
+      .withCard(ghoul, card, zone)
+      .start();
+
+  it.each([
+    {
+      name: 'fights and evades an enemy engaged with them',
+      card: blankEnemy('ghoul'),
+      zone: engagedWith(alice),
+      expected: ['fight', 'evade'],
+    },
+    {
+      name: 'fights and engages an enemy engaged with someone else there, but cannot evade it',
+      card: blankEnemy('ghoul'),
+      zone: engagedWith(bob),
+      expected: ['fight', 'engage'],
+    },
+    {
+      name: 'only engages an unengaged aloof enemy there',
+      card: blankEnemy('aloof_ghoul', { keywords: [{ name: 'aloof' }] }),
+      zone: atLocation(study),
+      expected: ['engage'],
+    },
+    {
+      name: 'fights and evades a massive enemy there but cannot engage it',
+      card: blankEnemy('massive_ghoul', { keywords: [{ name: 'massive' }] }),
+      zone: atLocation(study),
+      expected: ['fight', 'evade'],
+    },
+    {
+      name: 'does nothing to an enemy at another location',
+      card: blankEnemy('aloof_ghoul', { keywords: [{ name: 'aloof' }] }),
+      zone: atLocation(hallway),
+      expected: [],
+    },
+  ])('$name', ({ card, zone, expected }) => {
+    const { context, state } = studyWith(card, zone);
+
+    expect(boardView(context, state).enemyActions(alice, ghoul)).toEqual(expected);
   });
 });
 

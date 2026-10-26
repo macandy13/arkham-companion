@@ -17,7 +17,8 @@ import { scenarioDeck, type ScenarioDeck, type Zone } from './zone';
  * piles and a card whose revelation is being resolved, set-aside cards, victory display and
  * pending decisions, each skill test with its suggested values. Cards are
  * named by their `CardDb` name; instance IDs appear only in brackets where
- * copies need telling apart (locations and enemies). The order is fixed (map,
+ * copies need telling apart (locations, enemies, and pending decisions that
+ * would otherwise read the same). The order is fixed (map,
  * zone and seat order), so the output is stable enough for inline snapshots.
  * Pure: it returns the text and never prints it.
  */
@@ -172,13 +173,26 @@ function resolvingLines(ctx: EngineContext, state: GameState): string[] {
 
 function decisionLines(ctx: EngineContext, state: GameState): string[] {
   if (state.pending.length === 0) return ['Pending decisions: none'];
+  const described = state.pending.map((decision) => ({
+    decision,
+    text: describeDecision(ctx, state, decision),
+  }));
   return [
     'Pending decisions:',
-    ...state.pending.flatMap((decision) => [
-      `  ${describeDecision(ctx, state, decision)}`,
-      ...suggestionLines(decision),
-    ]),
+    ...described.flatMap(({ decision, text }) => {
+      const repeated = described.filter((other) => other.text === text).length > 1;
+      return [`  ${repeated ? subjectTag(decision) : ''}${text}`, ...suggestionLines(decision)];
+    }),
   ];
+}
+
+/**
+ * The instance id of a decision's subject card in brackets, which tells two
+ * decisions apart that read the same, e.g. the attacks of opportunity of two
+ * copies of one enemy.
+ */
+function subjectTag({ subject }: Decision): string {
+  return subject === undefined ? '' : `[${subject}] `;
 }
 
 /**

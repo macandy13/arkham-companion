@@ -25,7 +25,7 @@ test('read the map', async ({ page }) => {
     await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
   });
 
-  await test.step('Read the house: Alder in the Hallway, which connects to the other rooms', async () => {
+  await test.step('Read the house: Roland Banks in the Hallway, which connects to the other rooms', async () => {
     // Act 1 removed the Study from the game, so its map has nothing left to show.
     await expect(page.getByRole('figure', { name: 'Study' })).toBeHidden();
     const house = page.getByRole('figure', { name: 'House' });
@@ -36,7 +36,7 @@ test('read the map', async ({ page }) => {
       await expect(house.getByRole('img', { name: `Hallway – ${room}` })).toBeAttached();
     }
     const hallway = house.getByRole('group', { name: 'Hallway' });
-    await expect(hallway.getByRole('img', { name: 'Alder' })).toBeVisible();
+    await expect(hallway.getByRole('img', { name: 'Roland Banks' })).toBeVisible();
     await expect(hallway.getByRole('img', { name: 'Shroud 1' })).toBeVisible();
     await expect(hallway.getByRole('img', { name: 'Clues 0' })).toBeVisible();
   });
@@ -75,21 +75,21 @@ test('move on the map', async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
 
-  await test.step('Import a game in which Alder, on their turn, stands in the Hallway', async () => {
+  await test.step('Import a game in which Roland Banks, on their turn, stands in the Hallway', async () => {
     await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
-    await expect(room('Hallway').getByRole('img', { name: 'Alder' })).toBeVisible();
+    await expect(room('Hallway').getByRole('img', { name: 'Roland Banks' })).toBeVisible();
   });
 
-  await test.step('Drag Alder to the Attic, which connects to the Hallway', async () => {
-    await dragTo(page, room('Hallway').getByRole('img', { name: 'Alder' }), room('Attic'));
-    await expect(room('Attic').getByRole('img', { name: 'Alder' })).toBeVisible();
-    await expect(room('Hallway').getByRole('img', { name: 'Alder' })).toBeHidden();
+  await test.step('Drag Roland Banks to the Attic, which connects to the Hallway', async () => {
+    await dragTo(page, room('Hallway').getByRole('img', { name: 'Roland Banks' }), room('Attic'));
+    await expect(room('Attic').getByRole('img', { name: 'Roland Banks' })).toBeVisible();
+    await expect(room('Hallway').getByRole('img', { name: 'Roland Banks' })).toBeHidden();
   });
 
-  await test.step('Drag Alder to the Cellar, which does not: Alder stays in the Attic', async () => {
-    await dragTo(page, room('Attic').getByRole('img', { name: 'Alder' }), room('Cellar'));
+  await test.step('Drag Roland Banks to the Cellar, which does not: Roland Banks stays in the Attic', async () => {
+    await dragTo(page, room('Attic').getByRole('img', { name: 'Roland Banks' }), room('Cellar'));
     await expect(page.getByText('Those locations are not connected.')).toBeVisible();
-    await expect(room('Attic').getByRole('img', { name: 'Alder' })).toBeVisible();
+    await expect(room('Attic').getByRole('img', { name: 'Roland Banks' })).toBeVisible();
   });
 });
 
@@ -116,10 +116,10 @@ test('move an enemy on the map', async ({ page }) => {
     await expect(priest('Cellar')).toBeHidden();
   });
 
-  await test.step('Drag it to the Hallway, where it engages Alder', async () => {
+  await test.step('Drag it to the Hallway, where it engages Roland Banks', async () => {
     await dragTo(page, priest('Parlor'), room('Hallway'));
     await expect(
-      room('Hallway').getByRole('img', { name: 'Ghoul Priest, engaged with Alder' }),
+      room('Hallway').getByRole('img', { name: 'Ghoul Priest, engaged with Roland Banks' }),
     ).toBeVisible();
   });
 
@@ -129,23 +129,62 @@ test('move an enemy on the map', async ({ page }) => {
   });
 });
 
-// Journey: play from a location's details: Alder moves from the Hallway to the Attic as an
+// Journey: act on an enemy from its token on the map: the Ghoul Priest in the Cellar offers only
+// card effects, as Roland Banks is elsewhere; dragged to the Hallway it engages Roland Banks, and a tap on it
+// there fights it as an action.
+test('fight an enemy from the map', async ({ page }) => {
+  const house = page.getByRole('figure', { name: 'House' });
+  const room = (name: string) => house.getByRole('group', { name });
+  const priest = (name: string) => room(name).getByRole('img', { name: /^Ghoul Priest/ });
+  const details = page.getByRole('dialog', { name: 'Ghoul Priest' });
+
+  await test.step('Import a game in which the Ghoul Priest lurks in the Cellar', async () => {
+    await resumeImportedGame(
+      page,
+      'The Ghoul Priest is out',
+      ghoulPriestInCellarExport('The Ghoul Priest is out'),
+    );
+    await expect(priest('Cellar')).toBeVisible();
+  });
+
+  await test.step('Tap it in the Cellar: away from Roland Banks, it offers only card effects', async () => {
+    await priest('Cellar').click();
+    await expect(details.getByRole('button', { name: 'Deal 1 damage' })).toBeVisible();
+    await expect(details.getByRole('button', { name: 'Fight · 1 action' })).toBeHidden();
+    await details.getByRole('button', { name: 'Close' }).click();
+  });
+
+  await test.step('Drag it to the Hallway, where it engages Roland Banks', async () => {
+    await dragTo(page, priest('Cellar'), room('Hallway'));
+    await expect(
+      room('Hallway').getByRole('img', { name: 'Ghoul Priest, engaged with Roland Banks' }),
+    ).toBeVisible();
+  });
+
+  await test.step('Tap it in the Hallway and fight it as an action', async () => {
+    await priest('Hallway').click();
+    await details.getByRole('button', { name: 'Fight · 1 action' }).click();
+    await expect(page.getByRole('dialog', { name: 'Fight Ghoul Priest' })).toBeVisible();
+  });
+});
+
+// Journey: play from a location's details: Roland Banks moves from the Hallway to the Attic as an
 // action, which reveals it, and takes a clue there as a card grants it.
 test('move and take a clue from the location details', async ({ page }) => {
   const house = page.getByRole('figure', { name: 'House' });
   const room = (name: string) => house.getByRole('group', { name });
   const details = (name: string) => page.getByRole('dialog', { name });
 
-  await test.step('Import a game in which Alder, on their turn, stands in the Hallway', async () => {
+  await test.step('Import a game in which Roland Banks, on their turn, stands in the Hallway', async () => {
     await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
-    await expect(room('Hallway').getByRole('img', { name: 'Alder' })).toBeVisible();
+    await expect(room('Hallway').getByRole('img', { name: 'Roland Banks' })).toBeVisible();
   });
 
-  await test.step('Tap the Attic and move Alder there as an action', async () => {
+  await test.step('Tap the Attic and move Roland Banks there as an action', async () => {
     await room('Attic').click();
     await expect(details('Attic')).toContainText('Unrevealed');
     await details('Attic').getByRole('button', { name: 'Move here · 1 action' }).click();
-    await expect(room('Attic').getByRole('img', { name: 'Alder' })).toBeVisible();
+    await expect(room('Attic').getByRole('img', { name: 'Roland Banks' })).toBeVisible();
     await expect(room('Attic').getByRole('img', { name: /^Shroud/ })).toBeVisible();
   });
 
@@ -156,7 +195,7 @@ test('move and take a clue from the location details', async ({ page }) => {
         .textContent(),
     );
     await room('Attic').click();
-    await expect(details('Attic')).toContainText('Alder');
+    await expect(details('Attic')).toContainText('Roland Banks');
     await details('Attic').getByRole('button', { name: 'Take a clue, no test' }).click();
     await details('Attic').getByRole('button', { name: 'Close' }).click();
     await expect(room('Attic').getByRole('img', { name: `Clues ${clues - 1}` })).toBeVisible();
@@ -171,7 +210,7 @@ test('correct a location from its details', async ({ page }) => {
   const room = (name: string) => house.getByRole('group', { name });
   const details = (name: string) => page.getByRole('dialog', { name });
 
-  await test.step('Import a game in which Alder, on their turn, stands in the Hallway', async () => {
+  await test.step('Import a game in which Roland Banks, on their turn, stands in the Hallway', async () => {
     await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
     await expect(room('Attic')).toContainText('Unrevealed');
   });

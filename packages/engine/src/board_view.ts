@@ -4,7 +4,9 @@ import { cardActionsOfferedTo, type OfferedCardAction } from './card_actions';
 import { effectiveValue } from './card_values';
 import { cardStats, resolveValue, type EngineContext, type Trait } from './cards';
 import { optionName } from './describe_decision';
+import type { Command } from './commands';
 import { doomInPlay, isInPlay } from './doom';
+import { handle } from './handle';
 import { enemyHealth } from './enemies';
 import type { Keyword } from './keywords';
 import { formatBoard } from './format_board';
@@ -32,7 +34,8 @@ import { cardsInZone, cardsOfType, currentCard } from './lookup';
 import { mapLocations, type Edge, type GameMap, type GridCell } from './map';
 import { attacksStillDue } from './phases';
 import { NAMED_AMOUNTS } from './state';
-import { requireInvestigator } from './investigators';
+import { boostedSkills, requireInvestigator } from './investigators';
+import { CommandRejected } from './rejection';
 import { skillTestSuggestion, type SkillTestInput } from './skill_modifiers';
 import type {
   AmountRange,
@@ -91,6 +94,10 @@ export interface InvestigatorView {
   doom?: number;
   /** The printed willpower, intellect, combat and agility, the base of their skill tests. */
   skills: SkillValues;
+  /** The lasting boosts of their skills (`Investigator.skillBoosts`), left out while there are none. */
+  boosts?: Partial<SkillValues>;
+  /** Their skill values with the boosts added (`boostedSkills`); the printed ones while there are none. */
+  boostedSkills: SkillValues;
   /** The picture of their investigator card (`Investigator.imageSrc`), when the card data has one. */
   image?: CardImagePath;
   /** Actions left this round (`Investigator.actionsRemaining`). */
@@ -187,6 +194,11 @@ export interface EnemyStatsView {
   keywords: readonly Keyword[];
   victory?: number;
 }
+
+/** A basic action against an enemy (`BoardView.enemyActions`). */
+export type EnemyAction = 'fight' | 'evade' | 'engage';
+
+const ENEMY_ACTIONS: readonly EnemyAction[] = ['fight', 'evade', 'engage'];
 
 /**
  * One card action the investigator may take in their turn (`BoardView.cardActions`): the card by
@@ -332,6 +344,32 @@ export class BoardView {
     return enemiesInPlay(this.ctx, this.state)
       .map((enemy) => mapEnemyView(this.ctx, this.state, enemy))
       .filter(({ engagedWith }) => engagedWith === investigator);
+  }
+
+  /**
+   * The basic actions `investigator` may take against `enemy` now, in this order: fight, evade,
+   * engage. Each is a dry run of its command (`handle`, the events dropped), so the screen offers
+   * only what the rules allow and they stay in the engine: evade only an enemy engaged with them
+   * (or a massive one at their location), fight no unengaged aloof enemy, engage none engaged
+   * with them already or massive, and all of them only at their location. Whether they have an
+   * action left is not asked, since a card can let them take one for free.
+   */
+  enemyActions(investigator: InvestigatorId, enemy: InstanceId): readonly EnemyAction[] {
+    const commands: Record<EnemyAction, Command> = {
+      fight: { type: 'Fight', investigatorId: investigator, enemyId: enemy },
+      evade: { type: 'Evade', investigatorId: investigator, enemyId: enemy },
+      engage: { type: 'EngageEnemy', investigatorId: investigator, enemyId: enemy },
+    };
+    return ENEMY_ACTIONS.filter((action) => {
+      try {
+        handle(this.ctx, this.state, commands[action]);
+        return true;
+      } catch (error) {
+        // A refusal is the answer: the rules do not allow this action now.
+        if (!(error instanceof CommandRejected)) throw error;
+        return false;
+      }
+    });
   }
 
   /**
@@ -551,7 +589,7 @@ export class BoardView {
     if (others.length > 0)
       throw this.error(
         `${matches.length} enemies match ${describeMatcher(selector)} (${ids(matches)}); ` +
-          'narrow it with enemyMatching(card, { engagedWith, at }), or use byId',
+          narrowingHint(engagedWith === undefined, at === undefined),
       );
     return only;
   }
@@ -569,6 +607,16 @@ export class BoardView {
 /** The `BoardView` of `state`. */
 export function boardView(ctx: EngineContext, state: GameState): BoardView {
   return new BoardView(ctx, state);
+}
+
+/**
+ * How to pick one of several matching enemies: by the narrowings the selector
+ * doesn't use yet, or by id once it uses both.
+ */
+function narrowingHint(withoutEngaged: boolean, withoutAt: boolean): string {
+  const unused = [...(withoutEngaged ? ['engagedWith'] : []), ...(withoutAt ? ['at'] : [])];
+  if (unused.length === 0) return 'use byId';
+  return `narrow it with enemyMatching(card, { ${unused.join(', ')} }), or use byId`;
 }
 
 function ids(cards: readonly CardInstance[]): string {
@@ -616,6 +664,8 @@ function investigatorView(
     horror: investigator.sanity.horror,
     ...(investigator.doomOnPlayerCards > 0 ? { doom: investigator.doomOnPlayerCards } : {}),
     skills: investigator.skills,
+    ...(investigator.skillBoosts === undefined ? {} : { boosts: investigator.skillBoosts }),
+    boostedSkills: boostedSkills(investigator),
     ...(investigator.imageSrc === undefined ? {} : { image: investigator.imageSrc }),
     actions: investigator.actionsRemaining,
     ...(state.meta.turnsTaken.includes(investigator.id) ? { turnTaken: true as const } : {}),

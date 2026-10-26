@@ -124,8 +124,8 @@
 }
 
 /*
- * The skills in one row beside the art, each a small parchment plate with its value after its icon,
- * opening a skill test. Two ids' worth, so they beat the home screen's padded
+ * The skills in one row beside the art, each a parchment plate as tall as the art, its value
+ * under its icon, opening a skill test. Two ids' worth, so they beat the home screen's padded
  * `#app > main ul > li` cards.
  */
 #investigators [data-card='investigator'] > ul {
@@ -133,40 +133,58 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-1);
-  align-content: center;
+  align-content: stretch;
   margin: 0;
   margin-inline-end: var(--space-2);
   padding: 0;
   list-style: none;
 }
 
+/*
+ * Each plate fills its cell, as tall as the art; while adjusting, the boost's − and + sit side by
+ * side under it.
+ */
 #investigators [data-card='investigator'] > ul > li {
+  display: grid;
+  grid-template: 1fr auto / repeat(2, minmax(0, 1fr));
+  gap: var(--space-1);
   padding: 0;
   border: none;
   background: none;
 }
 
-#investigators [data-card='investigator'] > ul > li > button {
+/* The plate is the first button; the boost steppers after it keep the panel's small buttons. */
+#investigators [data-card='investigator'] > ul > li > button:first-child {
+  grid-column: 1 / -1;
   display: flex;
-  gap: var(--space-1);
-  align-items: center;
+  flex-wrap: wrap;
+  gap: 0 var(--space-1);
+  align-content: center;
+  align-items: baseline;
   justify-content: center;
   width: 100%;
   min-width: 0;
-  padding: 0;
+  padding: var(--space-1) 0;
   border: var(--border-width) solid var(--color-ink-muted);
   background: var(--color-parchment-light);
   color: var(--color-ink);
   font-family: var(--font-family);
-  font-size: var(--font-size-note);
+  font-size: var(--font-size-title);
   font-weight: bold;
   font-variant-numeric: lining-nums;
 }
 
-#investigators [data-card='investigator'] > ul > li > button::before {
+/* A lasting boost beside the boosted value, smaller, so the printed value can be told from the two. */
+#investigators [data-card='investigator'] > ul > li > button:first-child > data + data {
+  font-size: var(--font-size-body);
+  font-weight: normal;
+}
+
+/* The icon on a line of its own above the value, so the value can take the plate's width. */
+#investigators [data-card='investigator'] > ul > li > button:first-child::before {
   content: '';
-  width: var(--stat-icon-size);
-  height: var(--stat-icon-size);
+  flex-basis: 100%;
+  height: var(--skill-plate-icon-size);
   background: var(--color-ink);
   mask: var(--skill-icon) center / contain no-repeat;
 }
