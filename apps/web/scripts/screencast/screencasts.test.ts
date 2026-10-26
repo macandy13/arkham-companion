@@ -169,24 +169,46 @@ describe('specs the base also records', () => {
     expect(shown).toEqual(['restyled hallway', 'new cellar']);
   });
 
-  it.each([
-    { name: 'its end state is unchanged', headEnd: '/head/end_old.png', shown: [] },
-    { name: 'its end state changed', headEnd: '/head/end_new.png', shown: ['play a turn'] },
-  ])(
-    'compare a flow by its end state, so it is shown only when $name changed',
-    ({ headEnd, shown }) => {
-      const head: PlaywrightReport = {
-        suites: [{ specs: [flow('play.spec.ts', 'play a turn', '/head/turn.webm', headEnd)] }],
-      };
-      const base: PlaywrightReport = {
-        suites: [
-          { specs: [flow('play.spec.ts', 'play a turn', '/base/turn.webm', '/base/end_old.png')] },
-        ],
-      };
+  it("are shown as not taken when the PR's run failed, even though the base has a picture", () => {
+    const head: PlaywrightReport = {
+      suites: [
+        {
+          specs: [
+            {
+              title: 'broken attic',
+              file: 'map.spec.ts',
+              tests: [
+                { projectName: 'screenshot', results: [{ status: 'failed', attachments: [] }] },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const base: PlaywrightReport = {
+      suites: [{ specs: [shot('map.spec.ts', 'broken attic', '/base/attic.png')] }],
+    };
 
-      expect(flowVideos(head, { report: base, samePicture }).map((f) => f.title)).toEqual(shown);
-    },
-  );
+    expect(screenshots(head, { report: base, samePicture })).toEqual([
+      { title: 'broken attic', slug: 'broken-attic', imagePath: undefined },
+    ]);
+  });
+
+  it.each([
+    { name: 'an unchanged end state is left out', headEnd: '/head/end_old.png', shown: [] },
+    { name: 'a changed end state is shown', headEnd: '/head/end_new.png', shown: ['play a turn'] },
+  ])('compare a flow by its end state: $name', ({ headEnd, shown }) => {
+    const head: PlaywrightReport = {
+      suites: [{ specs: [flow('play.spec.ts', 'play a turn', '/head/turn.webm', headEnd)] }],
+    };
+    const base: PlaywrightReport = {
+      suites: [
+        { specs: [flow('play.spec.ts', 'play a turn', '/base/turn.webm', '/base/end_old.png')] },
+      ],
+    };
+
+    expect(flowVideos(head, { report: base, samePicture }).map((f) => f.title)).toEqual(shown);
+  });
 
   it.each([
     { name: 'another file', baseSpec: shot('other.spec.ts', 'the attic', '/base/attic.png') },

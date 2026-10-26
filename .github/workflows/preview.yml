@@ -64,11 +64,14 @@ jobs:
       # earlier PR left tagged on main. Its own install, so the base builds with its own packages.
       # If the base run fails, every tagged spec is shown.
       - if: steps.changes.outputs.web == 'true'
+        timeout-minutes: 15
+        continue-on-error: true
         run: |
           mkdir -p apps/web/screencasts
           echo '{}' > apps/web/screencasts/base.json
           if ! (git worktree add --detach "$RUNNER_TEMP/base" HEAD^1 &&
-              cp -r apps/web/e2e/.card_pictures "$RUNNER_TEMP/base/apps/web/e2e/" 2>/dev/null;
+              { cp -r apps/web/e2e/.card_pictures "$RUNNER_TEMP/base/apps/web/e2e/" ||
+                echo "::notice::No cached card pictures; the base run downloads them."; } &&
               cd "$RUNNER_TEMP/base" && pnpm install --frozen-lockfile --prefer-offline &&
               cd apps/web && PLAYWRIGHT_JSON_OUTPUT_FILE="$GITHUB_WORKSPACE/apps/web/screencasts/base.json" \
                 pnpm exec playwright test --project=screencast --project=screenshot --reporter=json --pass-with-no-tests); then

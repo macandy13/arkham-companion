@@ -65,13 +65,18 @@ function render(
  */
 function samePicture(headPath: string, basePath: string): boolean {
   if (!existsSync(basePath)) return false;
-  const head = PNG.sync.read(readFileSync(headPath));
-  const base = PNG.sync.read(readFileSync(basePath));
-  if (head.width !== base.width || head.height !== base.height) return false;
-  const differing = pixelmatch(head.data, base.data, undefined, head.width, head.height, {
-    threshold: 0.2,
-  });
-  return differing === 0;
+  try {
+    const head = PNG.sync.read(readFileSync(headPath));
+    const base = PNG.sync.read(readFileSync(basePath));
+    if (head.width !== base.width || head.height !== base.height) return false;
+    const differing = pixelmatch(head.data, base.data, undefined, head.width, head.height, {
+      threshold: 0.2,
+    });
+    return differing === 0;
+  } catch (error) {
+    console.warn(`Could not compare ${headPath} with ${basePath}; showing it:`, error);
+    return false;
+  }
 }
 
 /** The base run's report, or none when the run broke off before writing a whole report. */
