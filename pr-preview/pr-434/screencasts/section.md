@@ -1,19 +1,19 @@
 <!-- screencasts:start -->
 
-_Recorded from 6fadbb5 by the PR preview workflow; updated on every push that changes `apps/web`._
+_Recorded from 9243e9d by the PR preview workflow; updated on every push that changes `apps/web`._
 
 ## Screenshots
 
-### the Attic’s details, one move from Alder in the Hallway
+### the Hallway’s details, its card with Alder on it, on Alder’s turn
 
-![the Attic’s details, one move from Alder in the Hallway](https://macandy13.github.io/arkham-companion/pr-preview/pr-434/screencasts/the-attic-s-details-one-move-from-alder-in-the-hallway.png?v=6fadbb5)
+![the Hallway’s details, its card with Alder on it, on Alder’s turn](https://macandy13.github.io/arkham-companion/pr-preview/pr-434/screencasts/the-hallway-s-details-its-card-with-alder-on-it-on-alder-s-turn.png?v=9243e9d)
 
 ## Screencasts
 
 ### move and take a clue from the location details
 
-![move and take a clue from the location details](https://macandy13.github.io/arkham-companion/pr-preview/pr-434/screencasts/move-and-take-a-clue-from-the-location-details.gif?v=6fadbb5)
+![move and take a clue from the location details](https://macandy13.github.io/arkham-companion/pr-preview/pr-434/screencasts/move-and-take-a-clue-from-the-location-details.gif?v=9243e9d)
 
-[Play with pause and speed controls](https://macandy13.github.io/arkham-companion/pr-preview/pr-434/screencasts/player.html?flow=move-and-take-a-clue-from-the-location-details&v=6fadbb5&speed=0.25)
+[Play with pause and speed controls](https://macandy13.github.io/arkham-companion/pr-preview/pr-434/screencasts/player.html?flow=move-and-take-a-clue-from-the-location-details&v=9243e9d&speed=0.25)
 
 <!-- screencasts:end -->
