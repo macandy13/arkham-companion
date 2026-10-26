@@ -478,46 +478,174 @@ describe('MapBoard', () => {
     });
   });
 
-  it('shows no edit buttons outside adjust mode', () => {
-    const table = PlayTable.start(house);
-    render(
-      <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
-    );
-
-    expect(within(tile('hallway')).queryByRole('button', { name: 'Edit hallway' })).toBeNull();
-  });
-
-  describe('the location menu, while adjusting', () => {
-    const menu = (name: string) => screen.getByRole('dialog', { name });
+  describe('the location details', () => {
+    const details = (name: string) => screen.getByRole('dialog', { name });
     const tap = (name: string) => fireEvent.click(screen.getByRole('button', { name }));
+    const offered = (name: string) =>
+      within(details(name))
+        .queryAllByRole('button')
+        .map((button) => button.getAttribute('aria-label') ?? button.textContent);
+    /**
+     * Alder's turn in the study, with a ghoul engaged with Alder there. The house connects the
+     * study with the hallway, and the hallway with the attic one way only.
+     */
+    const aldersTurn = () =>
+      PlayTable.start(
+        house
+          .withInvestigator(alder, { locationId: study })
+          .withCard(instanceId('ghoul'), blankEnemy('ghoul'), engagedWith(alder))
+          .withTurnOf(alder),
+      );
 
-    const editButton = (location: string) =>
-      within(tile(location)).getByRole('button', { name: `Edit ${location}` });
-
-    it('opens from the tile’s edit button and closes again', () => {
+    it('opens from a tap on the tile and closes again', () => {
       const table = PlayTable.start(house);
-      render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting />);
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
 
-      fireEvent.click(editButton('hallway'));
-      expect(menu('hallway')).toBeTruthy();
+      fireEvent.click(tile('hallway'));
+      expect(details('hallway')).toBeTruthy();
 
       tap('Close');
       expect(screen.queryByRole('dialog')).toBeNull();
     });
 
-    it.each(['Enter', ' '])('opens from the edit button by the %j key', (key) => {
+    it('opens nothing when the press moves on, as a pan of the map does', () => {
       const table = PlayTable.start(house);
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+
+      fireEvent.pointerDown(tile('hallway'), { clientX: 200, clientY: 100 });
+      fireEvent.click(tile('hallway'), { clientX: 240, clientY: 100 });
+
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it.each(['Enter', ' '])('opens from the details button by the %j key', (key) => {
+      const table = PlayTable.start(house);
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+
+      fireEvent.keyDown(
+        within(tile('hallway')).getByRole('button', { name: 'Details of hallway' }),
+        { key },
+      );
+
+      expect(details('hallway')).toBeTruthy();
+    });
+
+    it('shows the shroud, the clues and who is there', () => {
+      const table = aldersTurn();
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+
+      fireEvent.click(tile('study'));
+
+      expect(within(details('study')).getByText('Shroud 2 · Clues 2')).toBeTruthy();
+      expect(
+        within(details('study'))
+          .getAllByRole('listitem')
+          .map((item) => item.textContent),
+      ).toEqual(['alder', 'ghoul, engaged with alder']);
+    });
+
+    it('draws the card and names the cards attached to the study', () => {
+      const table = PlayTable.start(
+        house.withCard(
+          instanceId('obscuring_fog'),
+          blankTreachery('obscuring_fog'),
+          attachedTo(study),
+        ),
+      );
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+
+      fireEvent.click(tile('study'));
+
+      expect(within(details('study')).getByRole('img', { name: 'The card of study' })).toBeTruthy();
+      const attached = within(details('study')).getByRole('region', { name: 'Attached' });
+      expect(within(attached).getByRole('listitem').textContent).toBe('obscuring_fog');
+    });
+
+    it.each([
+      {
+        location: 'study',
+        buttons: ['Close', 'Investigate · 1 action', 'Take a clue, no test'],
+      },
+      {
+        location: 'hallway',
+        buttons: ['Close', 'Move here · 1 action', 'Move here, no action'],
+      },
+      { location: 'attic', buttons: ['Close'] },
+    ])('offers alder in the study at the $location: $buttons', ({ location, buttons }) => {
+      const table = aldersTurn();
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+
+      fireEvent.click(tile(location));
+
+      expect(offered(location)).toEqual(buttons);
+    });
+
+    it('moves alder to the hallway as an action and closes', async () => {
+      const table = PlayTable.start(
+        house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
+      );
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+      fireEvent.click(tile('hallway'));
+
+      tap('Move here · 1 action');
+      await act(async () => {});
+
+      expect(table.board.investigator(alder)).toMatchObject({ at: 'hallway', actions: 2 });
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
+    it('gives alder a clue from the study and stays open for the next', async () => {
+      const table = aldersTurn();
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+      fireEvent.click(tile('study'));
+
+      tap('Take a clue, no test');
+      await act(async () => {});
+
+      expect(table.board.investigator(alder)).toMatchObject({ clues: 1, actions: 3 });
+      expect(details('study')).toBeTruthy();
+    });
+  });
+
+  describe('the location details, while adjusting', () => {
+    const menu = (name: string) => screen.getByRole('dialog', { name });
+    const tap = (name: string) => fireEvent.click(screen.getByRole('button', { name }));
+
+    it('offers corrections instead of alder’s actions', () => {
+      const table = PlayTable.start(
+        house.withInvestigator(alder, { locationId: study }).withTurnOf(alder),
+      );
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting />);
 
-      fireEvent.keyDown(editButton('hallway'), { key });
+      fireEvent.click(tile('study'));
 
-      expect(menu('hallway')).toBeTruthy();
+      expect(
+        within(menu('study'))
+          .getAllByRole('button')
+          .map((button) => button.getAttribute('aria-label')),
+      ).toEqual(['Close', 'Remove a clue', 'Add a clue', 'Remove doom', 'Add doom']);
     });
 
     it('reveals an unrevealed location', async () => {
       const table = PlayTable.start(house);
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting />);
-      fireEvent.click(editButton('hallway'));
+      fireEvent.click(tile('hallway'));
 
       tap('Reveal');
       await act(async () => {});
@@ -535,7 +663,7 @@ describe('MapBoard', () => {
       async ({ button, clues, doom }) => {
         const table = PlayTable.start(house);
         render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting />);
-        fireEvent.click(editButton('study'));
+        fireEvent.click(tile('study'));
 
         tap(button);
         await act(async () => {});
@@ -548,7 +676,7 @@ describe('MapBoard', () => {
     it('turns off removing tokens at the hallway, which has no clues or doom', () => {
       const table = PlayTable.start(house);
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting />);
-      fireEvent.click(editButton('hallway'));
+      fireEvent.click(tile('hallway'));
       const disabled = (name: string) =>
         screen.getByRole('button', { name }).hasAttribute('disabled');
 
@@ -560,12 +688,12 @@ describe('MapBoard', () => {
     it('turns every change off while a step is still queued', () => {
       const table = PlayTable.start(house);
       render(<MapBoard board={table.board} actions={actionsOn(table)} busy adjusting />);
-      fireEvent.click(editButton('hallway'));
+      fireEvent.click(tile('hallway'));
 
       const enabled = within(menu('hallway'))
         .getAllByRole('button')
         .filter((button) => !button.hasAttribute('disabled'))
-        .map((button) => button.textContent);
+        .map((button) => button.getAttribute('aria-label') ?? button.textContent);
       expect(enabled).toEqual(['Close']);
     });
   });

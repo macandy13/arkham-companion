@@ -11,7 +11,7 @@ import type {
   MapView,
 } from '@arkham/engine';
 import type { GameActions } from '../state/gameActions';
-import { LocationMenu } from './LocationMenu';
+import { LocationDetails } from './LocationDetails';
 import { CardPatterns, EnemyToken, LocationTile, Pawn, type TilePiece } from './LocationTile';
 import {
   connectionEnds,
@@ -36,8 +36,8 @@ import './map.css';
  * later). The players pan, zoom and pinch each map, and move pieces by dragging them
  * (`MapDrawing`), which plays `actions`; no piece moves while a step is still queued (`busy`,
  * `OpenGame.busy`), since the turn it was dragged in may have ended by the time the move plays.
- * While the players adjust the board (`adjusting`, `OpenGame.adjusting`), the tiles' edit buttons
- * show and the pieces stay put, since a move is a step of play, not a correction.
+ * While the players adjust the board (`adjusting`, `OpenGame.adjusting`), a tile's details offer
+ * corrections and the pieces stay put, since a move is a step of play, not a correction.
  */
 export function MapBoard({
   board,
@@ -114,8 +114,8 @@ type DraggedPiece = TilePiece & { from: InstanceId };
  *   (`GameActions.moveEnemy`); the players drag it only when a card tells them to, so the map
  *   does not ask which card.
  *
- * While adjusting, a tile's edit button opens its menu (`LocationMenu`), where the players reveal
- * it and change its clues and doom; no piece is dragged meanwhile.
+ * A tap on a tile opens its details (`LocationDetails`): what the investigator whose turn it is
+ * can do there, or while adjusting the corrections, when no piece is dragged.
  */
 function MapDrawing({
   map,
@@ -146,8 +146,8 @@ function MapDrawing({
     if (to === undefined || to === piece.from) return;
     void ('enemy' in piece ? actions.moveEnemy(piece.enemy.id, to) : actions.moveTo(to));
   });
-  const [menuFor, setMenuFor] = useState<InstanceId>();
-  const menuLocation = map.locations.find(({ id }) => id === menuFor);
+  const [detailsFor, setDetailsFor] = useState<InstanceId>();
+  const detailsLocation = map.locations.find(({ id }) => id === detailsFor);
   const draggable = (piece: TilePiece) =>
     !busy && !adjusting && ('enemy' in piece || piece.investigator.id === mover?.id);
   const { width, height } = drawingSize(Object.values(cells));
@@ -157,7 +157,7 @@ function MapDrawing({
       {/*
         The library joins each exclusion to its wrapper class as both `X` and `.X`, so an entry
         must stay a valid selector after a leading dot: a bare attribute selector would not be,
-        and would stop every pan. Draggable pieces and the edit buttons start no pan.
+        and would stop every pan. Draggable pieces and the details buttons start no pan.
       */}
       <TransformWrapper
         maxScale={MAX_ZOOM}
@@ -197,7 +197,7 @@ function MapDrawing({
                       location={location}
                       enemies={map.enemies[location.id] ?? []}
                       investigators={board.investigatorsAt(location.id)}
-                      onEdit={adjusting ? () => setMenuFor(location.id) : undefined}
+                      onOpen={() => setDetailsFor(location.id)}
                       dragOf={(piece) =>
                         draggable(piece)
                           ? drag.handlers({ ...piece, from: location.id })
@@ -215,12 +215,14 @@ function MapDrawing({
           </svg>
         </TransformComponent>
       </TransformWrapper>
-      {adjusting && menuLocation && (
-        <LocationMenu
-          location={menuLocation}
+      {detailsLocation && (
+        <LocationDetails
+          board={board}
+          location={detailsLocation}
           actions={actions}
           busy={busy}
-          onClose={() => setMenuFor(undefined)}
+          adjusting={adjusting}
+          onClose={() => setDetailsFor(undefined)}
         />
       )}
     </figure>

@@ -2,10 +2,11 @@ import { useId, type ReactNode } from 'react';
 import './action_row.css';
 
 /** The icons an `ActionButton` shows, each a mask in `action_row.css`. */
-export type ActionIcon = 'fight' | 'evade' | 'damage' | 'disengage' | 'defeat';
+export type ActionIcon =
+  'fight' | 'evade' | 'damage' | 'disengage' | 'defeat' | 'investigate' | 'move' | 'clue';
 
 /**
- * A titled group of buttons in a details window's action row (the enemy's for now): the
+ * A titled group of buttons in a details window's action row (the enemy's, the location's): the
  * row is the window's `footer`, and the stylesheet sets the groups side by side.
  */
 export function ActionGroup({ title, children }: { title: string; children: ReactNode }) {
