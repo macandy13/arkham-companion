@@ -140,10 +140,25 @@
   list-style: none;
 }
 
+/* Each plate spans its cell; while adjusting, the boost's − and + sit side by side under it. */
 #investigators [data-card='investigator'] > ul > li {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  justify-content: center;
+  gap: var(--space-1);
   padding: 0;
   border: none;
   background: none;
+}
+
+#investigators [data-card='investigator'] > ul > li > button {
+  grid-column: 1 / -1;
+}
+
+/* A lasting boost beside the boosted value, smaller, so the printed value can be told from the two. */
+#investigators [data-card='investigator'] > ul > li > button > data + data {
+  font-size: var(--font-size-caption);
+  font-weight: normal;
 }
 
 #investigators [data-card='investigator'] > ul > li > button {

@@ -44,22 +44,15 @@ test('Alder with four treacheries and the Ghoul Priest, scrolled on to the Ghoul
   await expect(ghoulPriest).toBeInViewport({ ratio: 1 });
 });
 
-test(
-  'the Hallway’s details, its card with Alder on it, on Alder’s turn',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+test('the Hallway’s details, its card with Alder on it, on Alder’s turn', async ({ page }) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-    await page
-      .getByRole('figure', { name: 'House' })
-      .getByRole('group', { name: 'Hallway' })
-      .click();
+  await page.getByRole('figure', { name: 'House' }).getByRole('group', { name: 'Hallway' }).click();
 
-    const details = page.getByRole('dialog', { name: 'Hallway' });
-    await expect(details.getByRole('img', { name: 'The card of Hallway' })).toBeVisible();
-    await expect(details.getByRole('button', { name: 'Investigate · 1 action' })).toBeVisible();
-  },
-);
+  const details = page.getByRole('dialog', { name: 'Hallway' });
+  await expect(details.getByRole('img', { name: 'The card of Hallway' })).toBeVisible();
+  await expect(details.getByRole('button', { name: 'Investigate · 1 action' })).toBeVisible();
+});
 
 test('the house map by day', async ({ page }) => {
   await page.goto('/#/settings');
@@ -69,6 +62,22 @@ test('the house map by day', async ({ page }) => {
   await expect(page.getByRole('region', { name: 'Alder' })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
+
+test(
+  'Alder’s combat boosted by 2, as an ally in play gives it',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    const alder = page.getByRole('region', { name: 'Alder' });
+
+    await page.getByRole('button', { name: 'Adjust board' }).click();
+    await alder.getByRole('button', { name: 'Raise the Combat boost' }).click();
+    await alder.getByRole('button', { name: 'Raise the Combat boost' }).click();
+    await page.getByRole('button', { name: 'Done' }).click();
+
+    await expect(alder.getByRole('button', { name: 'Combat 5, boosted +2' })).toBeVisible();
+  },
+);
 
 test('Alder’s willpower and agility test, a token drawn', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
