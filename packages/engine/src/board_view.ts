@@ -1,4 +1,4 @@
-import { listIfAny } from '@arkham/util';
+import { assertNever, listIfAny } from '@arkham/util';
 import { isConnectionOpen, neighbours } from './board';
 import { cardActionsOfferedTo, type OfferedCardAction } from './card_actions';
 import { effectiveValue } from './card_values';
@@ -321,6 +321,25 @@ export interface ResolvingCardView extends EncounterCardView {
   keywords: readonly Keyword[];
 }
 
+/**
+ * Where a card is, in the players' words (`BoardView.placeOf`): a pile, an investigator's threat
+ * area, engaged with an investigator, at a location by its printed name, or attached to a card. Any
+ * other zone (a deck of the act or agenda, out of the game) is `elsewhere`.
+ */
+export type CardPlaceView =
+  | {
+      kind:
+        | 'encounterDeck'
+        | 'encounterDiscard'
+        | 'setAside'
+        | 'victoryDisplay'
+        | 'resolving'
+        | 'elsewhere';
+    }
+  | { kind: 'threatArea' | 'engaged'; investigator: InvestigatorId }
+  | { kind: 'atLocation'; location: CardName }
+  | { kind: 'attachedTo'; card: CardName };
+
 /** One enemy attack enemy step 3.3 lists: the enemy by printed name and the investigator it attacks. */
 export interface DueAttackView {
   enemy: CardName;
@@ -495,6 +514,42 @@ export class BoardView {
       ...(placement ? { drawnBy: placement.drawn.investigatorId } : {}),
       keywords: surged ? [...printed, { name: 'surge' }] : printed,
     };
+  }
+
+  /** The card `id` as the encounter piles show it, wherever it is now. */
+  encounterCard(id: InstanceId): EncounterCardView {
+    return encounterCardView(this.ctx, requireCard(this.state, id));
+  }
+
+  /** Where the card `id` is now (`CardPlaceView`), e.g. where a drawn encounter card went. */
+  placeOf(id: InstanceId): CardPlaceView {
+    const { zone } = requireCard(this.state, id);
+    switch (zone.kind) {
+      case 'encounterDeck':
+      case 'encounterDiscard':
+      case 'setAside':
+      case 'victoryDisplay':
+      case 'resolving':
+        return { kind: zone.kind };
+      case 'threatArea':
+      case 'engaged':
+        return { kind: zone.kind, investigator: zone.investigatorId };
+      case 'atLocation':
+        return {
+          kind: 'atLocation',
+          location: nameOf(this.ctx, requireCard(this.state, zone.locationId)),
+        };
+      case 'attachedTo':
+        return { kind: 'attachedTo', card: nameOf(this.ctx, requireCard(this.state, zone.hostId)) };
+      case 'scenarioDeck':
+      case 'outOfGame':
+      case 'agendaDeck':
+      case 'actDeck':
+      case 'location':
+        return { kind: 'elsewhere' };
+      default:
+        return assertNever(zone);
+    }
   }
 
   /** The chaos tokens in the bag for this scenario and difficulty, the players' to draw from. */

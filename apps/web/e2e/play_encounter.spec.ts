@@ -2,7 +2,7 @@ import { expect, test } from './fixtures/test';
 import { mythosDrawnExport, resumeImportedGame } from './fixtures/saved_games';
 
 // Journey: a player card tells Roland Banks to draw from the encounter deck on his turn – open the
-// encounter dialog from the header, draw for him and see the card resolve on the board.
+// encounter dialog from the header, draw for him, answer its test and see where the card went.
 test('draw an encounter card for Roland Banks on his turn', { tag: '@flow' }, async ({ page }) => {
   await test.step('Resume a game after two mythos phases and start Roland Banks’ turn', async () => {
     await resumeImportedGame(page, 'Two mythos draws', mythosDrawnExport('Two mythos draws'));
@@ -25,7 +25,10 @@ test('draw an encounter card for Roland Banks on his turn', { tag: '@flow' }, as
     await cryptChill.getByRole('button', { name: 'Passed' }).click();
   });
 
-  await test.step('Crypt Chill resolves and lies on the discard pile', async () => {
+  await test.step('Crypt Chill resolves: a notice and the discard pile say where it went', async () => {
+    await expect(page.getByRole('status', { name: 'Encounter cards drawn' })).toHaveText(
+      /Crypt Chill: discard pile/,
+    );
     await expect(
       page.getByRole('button', {
         name: 'Encounter discard pile, 2 cards, Crypt Chill on top',

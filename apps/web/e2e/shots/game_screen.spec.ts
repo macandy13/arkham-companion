@@ -165,18 +165,14 @@ test('the encounter dialog opened on the discard pile after two mythos phases', 
   await expect(dialog.getByRole('listitem').filter({ hasText: 'Dissonant Voices' })).toBeVisible();
 });
 
-test(
-  'Crypt Chill drawn for Roland Banks, its willpower test waiting',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'Two mythos draws', mythosDrawnExport('Two mythos draws'));
-    await page.getByRole('button', { name: 'Start turn' }).click();
-    await page.getByRole('button', { name: '24 cards left in the encounter deck' }).click();
+test('Crypt Chill drawn for Roland Banks, its willpower test waiting', async ({ page }) => {
+  await resumeImportedGame(page, 'Two mythos draws', mythosDrawnExport('Two mythos draws'));
+  await page.getByRole('button', { name: 'Start turn' }).click();
+  await page.getByRole('button', { name: '24 cards left in the encounter deck' }).click();
 
-    await page.getByRole('button', { name: 'Draw for Roland Banks' }).click();
+  await page.getByRole('button', { name: 'Draw for Roland Banks' }).click();
 
-    const cryptChill = page.getByRole('dialog', { name: 'Test for Crypt Chill' });
-    await expect(cryptChill.getByText('Crypt Chill, drawn for Roland Banks')).toBeVisible();
-    await expect(cryptChill.getByRole('img', { name: 'Crypt Chill' })).toBeVisible();
-  },
-);
+  const cryptChill = page.getByRole('dialog', { name: 'Test for Crypt Chill' });
+  await expect(cryptChill.getByText('Crypt Chill, drawn for Roland Banks')).toBeVisible();
+  await expect(cryptChill.getByRole('img', { name: 'Crypt Chill' })).toBeVisible();
+});
