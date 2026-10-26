@@ -3,7 +3,8 @@ import { isLocationInPlay } from './board';
 import { cardStats, type EngineContext } from './cards';
 import type { UseCardAction } from './commands';
 import { locationOf } from './enemies';
-import type { InstanceId } from './ids';
+import type { CardActionUsed } from './events';
+import type { InstanceId, InvestigatorId } from './ids';
 import { activeInvestigator } from './investigators';
 import { currentCard, requireCard } from './lookup';
 import { CommandRejected } from './rejection';
@@ -22,7 +23,19 @@ export interface CardAction {
    * does. Absent for a plain action.
    */
   readonly designator?: 'resign' | 'parley';
+  /** "(Limit once per …)", when the card prints one. */
+  readonly limit?: ActionLimit;
   readonly effects: readonly AbilityEffect[];
+}
+
+/**
+ * "(Limit once per turn.)", "(Limit once per game.)" or "(Group limit once per game.)": how often
+ * the action may be taken (Rules Reference, "Limits and Maximums"). A limit counts each
+ * investigator's uses apart; a group limit counts everyone's together.
+ */
+export interface ActionLimit {
+  readonly per: 'turn' | 'game';
+  readonly group?: true;
 }
 
 /**
@@ -78,8 +91,9 @@ export interface OfferedCardAction {
 }
 
 /**
- * Every card action the cards in play offer `investigator` (`offersActionsTo`), in the order of
- * the cards in the state, then of the actions on each card. It does not check whose turn it is:
+ * Every card action the cards in play offer `investigator` (`offersActionsTo`) and their limits
+ * still allow (`withinLimit`), in the order of the cards in the state, then of the actions on
+ * each card. It does not check whose turn it is:
  * `UseCardAction` does.
  */
 export function cardActionsOfferedTo(
@@ -90,12 +104,33 @@ export function cardActionsOfferedTo(
   return Object.values(state.cards).flatMap((card) => {
     const actions = cardStats(ctx.cards, card.code).actions ?? [];
     if (actions.length === 0 || !offersActionsTo(state, card, investigator)) return [];
-    return actions.map(({ designator }, action) => ({
-      cardId: card.id,
-      action,
-      ...(designator === undefined ? {} : { designator }),
-    }));
+    return actions.flatMap(({ designator, limit }, action) =>
+      withinLimit(state, card, action, limit, investigator.id)
+        ? [{ cardId: card.id, action, ...(designator === undefined ? {} : { designator }) }]
+        : [],
+    );
   });
+}
+
+/**
+ * Whether the limit of action number `action` of `card` lets `investigatorId` take it now. "Once
+ * per turn" counts the uses of the current round: card actions are taken only in the
+ * investigator's own turn, and each investigator has one turn per round.
+ */
+export function withinLimit(
+  state: GameState,
+  card: CardInstance,
+  action: number,
+  limit: ActionLimit | undefined,
+  investigatorId: InvestigatorId,
+): boolean {
+  if (limit === undefined) return true;
+  return !(card.actionUses ?? []).some(
+    (use) =>
+      use.action === action &&
+      (limit.group === true || use.investigatorId === investigatorId) &&
+      (limit.per === 'game' || use.round === state.meta.round),
+  );
 }
 
 /** The action `cmd` takes; rejects an index the card doesn't print (`unknownCardAction`). */
@@ -108,21 +143,41 @@ export function cardActionOf(ctx: EngineContext, state: GameState, cmd: UseCardA
 }
 
 /**
- * `UseCardAction`: checks that the investigator may take the action now, in their own turn and
- * where the card offers it (`offersActionsTo`, else `cardActionUnavailable`). It changes nothing
- * itself: its effects follow as ability steps (`cardActionSteps`).
+ * `UseCardAction`: checks that the investigator may take the action now, in their own turn,
+ * where the card offers it (`offersActionsTo`, else `cardActionUnavailable`) and as its limit
+ * allows (`withinLimit`, else `cardActionLimitReached`), and records the use (`CardActionUsed`).
+ * Its effects follow as ability steps (`cardActionSteps`).
  */
-export function handleUseCardAction(ctx: EngineContext, state: GameState, cmd: UseCardAction): [] {
+export function handleUseCardAction(
+  ctx: EngineContext,
+  state: GameState,
+  cmd: UseCardAction,
+): CardActionUsed[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
   requireTurnOf(state, investigator.id);
-  cardActionOf(ctx, state, cmd);
-  if (!offersActionsTo(state, requireCard(state.cards, cmd.cardId), investigator))
+  const { limit } = cardActionOf(ctx, state, cmd);
+  const card = requireCard(state.cards, cmd.cardId);
+  if (!offersActionsTo(state, card, investigator))
     throw new CommandRejected({
       code: 'cardActionUnavailable',
       cardId: cmd.cardId,
       investigatorId: investigator.id,
     });
-  return [];
+  if (!withinLimit(state, card, cmd.action, limit, investigator.id))
+    throw new CommandRejected({
+      code: 'cardActionLimitReached',
+      cardId: cmd.cardId,
+      action: cmd.action,
+      investigatorId: investigator.id,
+    });
+  return [
+    {
+      type: 'CardActionUsed',
+      cardId: card.id,
+      action: cmd.action,
+      investigatorId: investigator.id,
+    },
+  ];
 }
 
 /** The effects of the action `cmd` takes, as steps in its `action` window. */

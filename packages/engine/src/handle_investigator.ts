@@ -2,6 +2,7 @@ import { neighbours, requireLocationInPlay, revealEvents } from './board';
 import type { EngineContext } from './cards';
 import type {
   AdjustInvestigator,
+  HealInvestigator,
   DefeatInvestigator,
   DiscoverClues,
   MoveInvestigator,
@@ -71,6 +72,27 @@ export function handleMoveInvestigator(
   const arrived = [moved, ...reveal];
   if (cmd.avoidEngagement) return arrived;
   return [...arrived, ...arrivalEngagements(ctx, replay(arrived, state), cmd.to)];
+}
+
+/** `HealInvestigator`: heals what the investigator has of `stat`, up to `amount`. */
+export function handleHealInvestigator(
+  _ctx: EngineContext,
+  state: GameState,
+  cmd: HealInvestigator,
+): Event[] {
+  const investigator = activeInvestigator(state, cmd.investigatorId);
+  if (!Number.isInteger(cmd.amount) || cmd.amount <= 0)
+    throw new CommandRejected({ code: 'invalidTokenDelta', delta: cmd.amount });
+  const healed = Math.min(cmd.amount, statValue(investigator, cmd.stat));
+  if (healed === 0) return [];
+  return [
+    {
+      type: 'InvestigatorChanged',
+      investigatorId: investigator.id,
+      stat: cmd.stat,
+      delta: -healed,
+    },
+  ];
 }
 
 /**

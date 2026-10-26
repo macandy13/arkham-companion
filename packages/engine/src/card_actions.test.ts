@@ -9,9 +9,11 @@ import {
   instanceId,
   investigatorId,
   newGame,
+  PlayTable,
   resignAction,
   takeHorror,
   threatAreaOf,
+  type ActionLimit,
   type CardAction,
   type Command,
   type InstanceId,
@@ -256,4 +258,84 @@ describe('UseCardAction', () => {
       expect(investigatorOf(after, alice).status).toBe('resigned');
     });
   });
+});
+
+describe('action limits', () => {
+  /** Alice and bob in the hall, whose one action scares its taker, limited by `limit`; round 1's investigation phase. */
+  const bothInHallWith = (limit: ActionLimit) => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(hall, blankLocation('hall', { actions: [{ ...scareAction, limit }] }), {
+          revealed: true,
+        })
+        .withInvestigator(alice, { locationId: hall })
+        .withInvestigator(bob, { locationId: hall }),
+    );
+    table.nextPhase();
+    return table;
+  };
+  /** Ends round 1 after alice's turn and bob's, and starts alice's turn in round 2. */
+  const toAlicesTurnInRound2 = (table: PlayTable) => {
+    table.endTurn(alice);
+    table.startTurn(bob);
+    table.endTurn(bob);
+    table.nextPhase();
+    table.nextPhase();
+    table.nextPhase();
+    table.nextPhase();
+    expect(table.board).toMatchObject({ round: 2, phase: 'investigation' });
+    table.startTurn(alice);
+  };
+  const limitReached = expect.objectContaining({
+    rejection: expect.objectContaining({ code: 'cardActionLimitReached' }),
+  });
+
+  it.each([{ per: 'turn' } as const, { per: 'game' } as const])(
+    'rejects a second use in the same turn with a limit once per $per',
+    (limit) => {
+      const table = bothInHallWith(limit);
+      table.startTurn(alice);
+      table.useCardAction(alice, hall);
+
+      expect(() => table.useCardAction(alice, hall)).toThrow(limitReached);
+      expect(table.board.investigator(alice).horror).toBe(1);
+    },
+  );
+
+  it('lets alice take an action limited once per turn again in her next turn', () => {
+    const table = bothInHallWith({ per: 'turn' });
+    table.startTurn(alice);
+    table.useCardAction(alice, hall);
+    toAlicesTurnInRound2(table);
+
+    table.useCardAction(alice, hall);
+
+    expect(table.board.investigator(alice).horror).toBe(2);
+  });
+
+  it('rejects an action limited once per game in alice`s next turn', () => {
+    const table = bothInHallWith({ per: 'game' });
+    table.startTurn(alice);
+    table.useCardAction(alice, hall);
+    toAlicesTurnInRound2(table);
+
+    expect(() => table.useCardAction(alice, hall)).toThrow(limitReached);
+    expect(table.board.cardActions(alice)).toEqual([]);
+  });
+
+  it.each([
+    { limit: { per: 'game' } as const, bobsActions: 1 },
+    { limit: { per: 'game', group: true } as const, bobsActions: 0 },
+  ])(
+    'counts alice`s use against bob only for a group limit: bob is offered $bobsActions',
+    ({ limit, bobsActions }) => {
+      const table = bothInHallWith(limit);
+      table.startTurn(alice);
+      table.useCardAction(alice, hall);
+      table.endTurn(alice);
+      table.startTurn(bob);
+
+      expect(table.board.cardActions(bob)).toHaveLength(bobsActions);
+    },
+  );
 });
