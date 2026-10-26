@@ -13,8 +13,9 @@
  * Cultist deck and The Masked Hunter in play got away.
  *
  * What the engine leaves to the players is done by hand, as at the table:
- * the act's action (spend clues as a group, then draw the top card of the
- * Cultist deck), agenda 1's reverse side putting
+ * the act's clue payment (spend clues as a group; the draw from the Cultist
+ * deck is the engine's, and seed 40 puts "Wolf-Man" Drew, then Herman
+ * Collins on top of it), agenda 1's reverse side putting
  * The Masked Hunter into play, an Acolyte's doom as it enters play, Locked
  * Door, and Herman Collins' parley. The players count actions themselves,
  * so the script keeps each turn to 3 without touching the counter.

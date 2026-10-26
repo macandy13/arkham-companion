@@ -554,16 +554,6 @@ export interface ShuffleEncounterDeck {
 }
 
 /**
- * Puts an enemy that is not in play (encounter deck, set aside, …) into play.
- * Where it appears, in this order: `at`; the location named by its `spawn`
- * keyword (several matches or unreadable text: `DecisionRequested` of kind
- * `chooseLocation`, enemy stays put; no such location in play: discarded);
- * the location of `investigatorId` (the investigator who drew it), whom it
- * engages whatever its prey. Elsewhere it engages per `engageEvents`. Produces
- * `CardMoved`, then `EnemyEngaged` or `DecisionRequested` (prey tie). `DrawEncounter` resolves
- * a drawn enemy the same way.
- */
-/**
  * "Draw the top card of the Cultist deck": `investigatorId` draws the top card of a scenario deck
  * (`ScenarioDeckStep`), an enemy, which spawns like `SpawnEnemy` with them as the drawing
  * investigator. Rejected when the deck is empty (`scenarioDeckEmpty`). Produces `SpawnEnemy`'s
@@ -575,6 +565,16 @@ export interface DrawFromScenarioDeck {
   deck: ScenarioDeck;
 }
 
+/**
+ * Puts an enemy that is not in play (encounter deck, set aside, …) into play.
+ * Where it appears, in this order: `at`; the location named by its `spawn`
+ * keyword (several matches or unreadable text: `DecisionRequested` of kind
+ * `chooseLocation`, enemy stays put; no such location in play: discarded);
+ * the location of `investigatorId` (the investigator who drew it), whom it
+ * engages whatever its prey. Elsewhere it engages per `engageEvents`. Produces
+ * `CardMoved`, then `EnemyEngaged` or `DecisionRequested` (prey tie). `DrawEncounter` resolves
+ * a drawn enemy the same way.
+ */
 export interface SpawnEnemy {
   type: 'SpawnEnemy';
   enemyId: InstanceId;

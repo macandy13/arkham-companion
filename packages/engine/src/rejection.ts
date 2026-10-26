@@ -111,6 +111,7 @@ export type Rejection =
    */
   /** `DrawEncounter` with the encounter deck and its discard both empty. */
   | { code: 'encounterDeckEmpty' }
+  /** `DrawFromScenarioDeck` on a deck with no cards left. */
   | { code: 'scenarioDeckEmpty'; deck: ScenarioDeck }
   /** `DrawEncounter` brought an enemy for an investigator who is not at a location. */
   | { code: 'investigatorHasNoLocation'; investigatorId: InvestigatorId }
