@@ -312,6 +312,7 @@ describe('MapBoard', () => {
 
   it('marks the lead investigator’s pawn and the pawn of the investigator whose turn it is', () => {
     const bea = investigatorId('bea');
+    // The first investigator seated leads, as the first seat does at setup.
     const table = PlayTable.start(
       house
         .withInvestigator(bea, { locationId: study })

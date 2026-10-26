@@ -63,9 +63,10 @@ export function InvestigatorBar({
  * printed investigator cards and the map's location cards (a name band with where they are and how
  * their round goes, the art window, the four skills and the counters as round tokens along its
  * foot), then their turn controls. Beside the name, a pentagon marks the lead investigator, like
- * the game's lead investigator token, and an action arrow the investigator whose turn it is. Health and sanity show what is left of the printed value, like
- * the dials, while their steppers place and heal damage and horror, like the tokens on the card.
- * Clues show without steppers: they are found by investigating and spent on the act.
+ * the game's lead investigator token, and an action arrow the investigator whose turn it is.
+ * Health and sanity show what is left of the printed value, like the dials, while their steppers
+ * place and heal damage and horror, like the tokens on the card. Clues show without steppers: they
+ * are found by investigating and spent on the act.
  */
 function InvestigatorPanel({
   board,

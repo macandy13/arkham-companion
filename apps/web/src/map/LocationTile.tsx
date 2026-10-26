@@ -38,22 +38,22 @@ export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyVi
 
 /**
  * One location as a tile at (`x`, `y`), drawn as a card face in layers, laid out like the printed
- * location card: a face for the side the location shows (revealed or not), the art area across
- * its width with that side's pattern, the frame of the printed cards (`LocationOrnament`) over
- * it, the name on the name plate and the type on the type plate. When the side has a picture
+ * location card: a face for the side the location shows (revealed or not), the art area across its
+ * width with that side's pattern, the frame of the printed cards (`LocationOrnament`) over it, the
+ * name on the name plate and the type on the type plate. When the side has a picture
  * (`LocationView.image`), it shows once it has loaded (`data-picture`), in the look the players
  * chose (`Settings.cardLook`): the card's art cut out into the art window (`ART_WINDOW`, the
  * nested `svg`), or the whole card over the face (the `image`), with the frame, the texts and the
  * shroud the picture prints hidden. Both load the same address, so the browser fetches it once;
- * the stylesheet shows the one for the look. Over them lies what the game tracks: its
- * attachments peeking out at the right edge as small cards, and once revealed the shroud (with
- * what attachments add) on the left edge where the art ends and the clues on the right, doom
- * under the clues when it has any; then a pawn per investigator there and a round token per enemy
- * at it, in rows along the bottom edge. `enemies` and `investigators` are the open game's pieces
- * at this location, and `turnOrder` says whose pawns carry the lead and turn markers; `dragOf` gives the drag handlers of each piece that can be dragged now. A tap
- * on the tile, or its details button in the top left corner, calls `onOpen`; a press that moves
- * further than `TAP_SLOP` (a pan, a piece dragged) is no tap. Without `onOpen` (the card in the
- * location details) it has neither.
+ * the stylesheet shows the one for the look. Over them lies what the game tracks: its attachments
+ * peeking out at the right edge as small cards, and once revealed the shroud (with what
+ * attachments add) on the left edge where the art ends and the clues on the right, doom under the
+ * clues when it has any; then a pawn per investigator there and a round token per enemy at it, in
+ * rows along the bottom edge. `enemies` and `investigators` are the open game's pieces at this
+ * location, and `turnOrder` says whose pawns carry the lead and turn markers; `dragOf` gives the
+ * drag handlers of each piece that can be dragged now. A tap on the tile, or its details button in
+ * the top left corner, calls `onOpen`; a press that moves further than `TAP_SLOP` (a pan, a piece
+ * dragged) is no tap. Without `onOpen` (the card in the location details) it has neither.
  */
 export function LocationTile({
   location,
