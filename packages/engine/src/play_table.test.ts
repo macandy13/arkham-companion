@@ -380,7 +380,7 @@ describe('turns, actions and tokens', () => {
 describe('investigating', () => {
   const game = newGame()
     .withLocation(study, blankLocation('study', { shroud: 2 }), { revealed: true, clues: 3 })
-    .withInvestigator(alice, { locationId: study });
+    .withInvestigator(alice, { name: 'Alice', locationId: study });
 
   it('passes the test and discovers a clue by default', () => {
     const table = PlayTable.start(game);
@@ -452,7 +452,7 @@ describe('investigating', () => {
     const eventsBefore = table.events;
 
     expect(() => table.investigate(alice)).toThrow(
-      /the test of alice's investigation is not open; .*takeAttackOfOpportunity/,
+      /the test of Alice's investigation is not open; .*takeAttackOfOpportunity/,
     );
 
     expect(table.state).toBe(stateBefore);

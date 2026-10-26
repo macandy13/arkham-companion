@@ -172,12 +172,14 @@ function resolvingLines(ctx: EngineContext, state: GameState): string[] {
 
 function decisionLines(ctx: EngineContext, state: GameState): string[] {
   if (state.pending.length === 0) return ['Pending decisions: none'];
-  const described = state.pending.map((decision) => describeDecision(ctx, state, decision));
+  const described = state.pending.map((decision) => ({
+    decision,
+    text: describeDecision(ctx, state, decision),
+  }));
   return [
     'Pending decisions:',
-    ...state.pending.flatMap((decision, index) => {
-      const text = described[index] ?? '';
-      const repeated = described.filter((other) => other === text).length > 1;
+    ...described.flatMap(({ decision, text }) => {
+      const repeated = described.filter((other) => other.text === text).length > 1;
       return [`  ${repeated ? subjectTag(decision) : ''}${text}`, ...suggestionLines(decision)];
     }),
   ];
