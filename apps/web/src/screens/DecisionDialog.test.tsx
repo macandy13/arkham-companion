@@ -2,6 +2,7 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
+  atLocation,
   blankEnemy,
   fixed,
   blankLocation,
@@ -10,6 +11,7 @@ import {
   investigatorId,
   newGame,
   PlayTable,
+  zoneOf,
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { gameActions } from '../state/gameActions';
@@ -109,6 +111,37 @@ describe('DecisionDialog', () => {
     expect(table.board.investigator(alder)).toMatchObject({ damage: 0, horror: 0 });
     expect(table.board.decisions).toMatchObject([{ prompt: 'decision.investigate' }]);
     expect(screen.getByRole('heading').textContent).toBe('Attack of opportunity by Ghoul');
+  });
+
+  it('tells two copies of one enemy apart by their location', () => {
+    const hallway = instanceId('hallway');
+    const attic = instanceId('attic');
+    const studyGhoul = instanceId('study_ghoul');
+    const hallwayGhoul = instanceId('hallway_ghoul');
+    const ghoulMinion = blankEnemy('ghoul_minion', {
+      name: 'Ghoul Minion',
+      keywords: [{ name: 'hunter' }],
+    });
+    /** Study - Hallway - Attic with Alder in the Attic: both hunting ghouls have a step to take. */
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study', { name: 'Study' }), { revealed: true })
+        .withLocation(hallway, blankLocation('hallway', { name: 'Hallway' }), { revealed: true })
+        .withLocation(attic, blankLocation('attic', { name: 'Attic' }), { revealed: true })
+        .withConnection(study, hallway)
+        .withConnection(hallway, attic)
+        .withInvestigator(alder, { locationId: attic })
+        .withCard(studyGhoul, ghoulMinion, atLocation(study))
+        .withCard(hallwayGhoul, ghoulMinion, atLocation(hallway)),
+    );
+    table.play({ type: 'MoveHunters' });
+    renderFirstDecision(table);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ghoul Minion (Hallway)' }));
+
+    expect(optionButtons()).toEqual(['Ghoul Minion (Study)', 'Ghoul Minion (Hallway)']);
+    expect(zoneOf(table.state, hallwayGhoul)).toEqual(engagedWith(alder));
+    expect(zoneOf(table.state, studyGhoul)).toEqual(atLocation(hallway));
   });
 
   describe('with the chaos draw', () => {

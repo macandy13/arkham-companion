@@ -1,9 +1,11 @@
-import { assertNever } from '@arkham/util';
+import { assertNever, duplicates, numberedDuplicates } from '@arkham/util';
 import type { EngineContext } from './cards';
+import { isEnemyOnTable, locationOf } from './enemies';
 import type { Command, RequestDecision, ResolveDecision } from './commands';
 import type { DecisionRequested, DecisionResolved, SkillTestResolved } from './events';
 import type { DecisionId, InstanceId, InvestigatorId } from './ids';
 import { isActiveInvestigator } from './investigators';
+import { requireCard } from './lookup';
 import { CommandRejected } from './rejection';
 import { withSuggestion } from './skill_modifiers';
 import { NAMED_AMOUNTS } from './state';
@@ -35,6 +37,35 @@ export function pendingDecision(state: GameState, id: DecisionId): Decision | un
 export function requestDecision(state: GameState, decision: Decision): DecisionRequested[] {
   if (state.pending.some((pending) => pending.id === decision.id)) return [];
   return [{ type: 'DecisionRequested', decision }];
+}
+
+/**
+ * The labels of options that each pick one of `cardIds`, in that order: the
+ * card's printed name, followed by the name of its location when another of
+ * the cards has the same name ("Ghoul Minion (Cellar)"), and numbered when
+ * that still leaves two alike (two Ghoul Minions in one cellar, two locations
+ * named "Cellar"). Options are answered by readable name (`optionNamed`), so
+ * two options with one name could not be answered at all.
+ */
+export function cardOptionLabels(
+  ctx: EngineContext,
+  state: GameState,
+  cardIds: readonly InstanceId[],
+): string[] {
+  const names = cardIds.map((cardId) => cardName(ctx, state, cardId));
+  const shared = new Set(duplicates(names));
+  const located = cardIds.map((cardId, i) => {
+    const name = names[i] ?? cardId;
+    const card = requireCard(state.cards, cardId);
+    if (!shared.has(name) || !isEnemyOnTable(card)) return name;
+    return `${name} (${cardName(ctx, state, locationOf(state, card))})`;
+  });
+  return numberedDuplicates(located);
+}
+
+/** The printed name of the card `cardId`, or its ID when the card data has no definition for it. */
+function cardName(ctx: EngineContext, state: GameState, cardId: InstanceId): string {
+  return ctx.cards.get(requireCard(state.cards, cardId).code)?.name ?? cardId;
 }
 
 /**
