@@ -15,6 +15,8 @@ export default defineConfig({
         navigateFallbackAllowlist: [appShellNavigation(base)],
         // Fonts and the playmat drawings are part of the app shell, so the PWA looks the same offline.
         globPatterns: ['**/*.{js,css,html,woff2,svg}'],
+        // The design prototypes change while they are discussed; precached, a phone keeps showing an old copy.
+        globIgnores: ['prototype/**'],
         runtimeCaching: [cardImageCaching],
       },
       manifest: {
