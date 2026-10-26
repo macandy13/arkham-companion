@@ -20,7 +20,7 @@ const CARD_PICTURES = /^\/bundles\/cards\//;
 /**
  * `test` with a network guard: the ArkhamDB catalog (on any language host) is answered from the
  * invented fixtures in this folder, card pictures from their local copies, and every other non-local request
- * is aborted and recorded, so a test fails instead of silently reaching the network (CI has none)
+ * is aborted and recorded, so a test fails instead of silently reaching the network (the tests themselves must not)
  * or real card data.
  */
 export const test = base.extend<{ externalRequests: string[] }>({

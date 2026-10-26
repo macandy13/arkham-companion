@@ -12,7 +12,7 @@ const ARKHAMDB = 'https://arkhamdb.com';
  * Gitignored and never committed: card art is FFG's, and the deployed app always loads it from
  * ArkhamDB on the device. CI keeps the folder in its cache between runs.
  */
-export const CARD_PICTURE_DIR = join(import.meta.dirname, '..', '.card_pictures');
+const CARD_PICTURE_DIR = join(import.meta.dirname, '..', '.card_pictures');
 
 /**
  * The picture of the invented investigator Alder: Roland Banks' scan, so the investigator card's

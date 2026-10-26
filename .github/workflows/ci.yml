@@ -53,7 +53,7 @@ jobs:
       - uses: actions/cache@v6
         with:
           path: apps/web/e2e/.card_pictures
-          key: card-pictures-${{ hashFiles('packages/scenarios/src/the_gathering/cards.ts', 'apps/web/e2e/fixtures/card_pictures.ts') }}
+          key: card-pictures-${{ hashFiles('packages/scenarios/src/the_gathering/cards.ts', 'packages/scenarios/src/card_builders.ts', 'apps/web/e2e/fixtures/card_pictures.ts') }}
           restore-keys: card-pictures-
       - run: pnpm --filter @arkham/web exec playwright install --with-deps chromium
       - run: pnpm e2e
