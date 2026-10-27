@@ -2,6 +2,7 @@ import { expect, test } from '../fixtures/test';
 import {
   rolandThreatenedExport,
   houseOpenedExport,
+  inTheParlorExport,
   investigationOpenExport,
   mythosDrawnExport,
   pilesFilledExport,
@@ -238,5 +239,18 @@ test('the attack of opportunity Roland Banks provokes by taking a resource', asy
   const attack = page.getByRole('dialog', { name: 'Attack of opportunity by Ghoul Priest' });
   await expect(
     attack.getByText('Roland Banks takes a resource: Ghoul Priest attacks first'),
+  ).toBeVisible();
+});
+
+test('the Parlor’s details with its Resign among Roland Banks’ card actions', async ({ page }) => {
+  await resumeImportedGame(page, 'In the Parlor', inTheParlorExport('In the Parlor'));
+
+  await page.getByRole('figure', { name: 'House' }).getByRole('group', { name: 'Parlor' }).click();
+
+  const parlor = page.getByRole('dialog', { name: 'Parlor' });
+  await expect(
+    parlor
+      .getByRole('region', { name: 'Card actions' })
+      .getByRole('button', { name: 'Resign · Parlor' }),
   ).toBeVisible();
 });

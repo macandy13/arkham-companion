@@ -799,9 +799,15 @@ describe('agenda and act', () => {
 
     const board = boardView(context, stateAfter(context, state, { type: 'PlaceDoom', amount: 2 }));
 
-    expect(board.agenda).toEqual({ name: 'first_agenda', doom: 2, threshold: 3 });
+    expect(board.agenda).toEqual({
+      id: instanceId('first_agenda'),
+      name: 'first_agenda',
+      doom: 2,
+      threshold: 3,
+    });
     expect(board.doomInPlay).toBe(3);
     expect(board.act).toEqual({
+      id: instanceId('first_act'),
       name: 'first_act',
       clues: 0,
       advance: { kind: 'spendClues', held: 3, threshold: 4 },
@@ -827,6 +833,7 @@ describe('agenda and act', () => {
     );
 
     expect(board.act).toEqual({
+      id: instanceId('first_act'),
       name: 'first_act',
       clues: 2,
       advance: { kind: 'spendClues', held: 0, threshold: 3 },
@@ -846,6 +853,7 @@ describe('agenda and act', () => {
       .start();
 
     expect(boardView(context, state).act).toEqual({
+      id: instanceId('ritual_act'),
       name: 'ritual_act',
       clues: 0,
       advance: { kind: 'cluesOnAct', threshold: 2 },
@@ -860,7 +868,7 @@ describe('agenda and act', () => {
 
     const board = boardView(context, state);
 
-    expect(board.agenda).toEqual({ name: 'final_agenda', doom: 0 });
+    expect(board.agenda).toEqual({ id: instanceId('final_agenda'), name: 'final_agenda', doom: 0 });
   });
 
   it('shows the pictures of the agenda and act fronts', () => {
@@ -1295,8 +1303,71 @@ describe('card actions', () => {
 
     expect(boardView(context, state).cardActions(alice)).toEqual([
       { cardId: study, card: 'study', action: 0, designator: 'resign' },
-      { cardId: instanceId('agenda'), card: 'agenda', action: 0, designator: 'parley' },
-      { cardId: instanceId('agenda'), card: 'agenda', action: 1, designator: 'parley' },
+      { cardId: instanceId('agenda'), card: 'agenda', action: 0, designator: 'parley', number: 1 },
+      { cardId: instanceId('agenda'), card: 'agenda', action: 1, designator: 'parley', number: 2 },
+    ]);
+  });
+
+  it.each([
+    { printed: 'one plain action', actions: [{ effects: [] }], numbers: [undefined] },
+    {
+      printed: 'two plain actions and a resign',
+      actions: [{ effects: [] }, resignAction(), { effects: [] }],
+      numbers: [1, undefined, 2],
+    },
+  ])(
+    'numbers the actions of a kind the study prints more than one of: $printed',
+    ({ actions, numbers }) => {
+      const { context, state } = newGame()
+        .withLocation(study, blankLocation('study', { actions }), { revealed: true })
+        .withInvestigator(alice, { locationId: study })
+        .start();
+
+      expect(
+        boardView(context, state)
+          .cardActions(alice)
+          .map(({ number }) => number),
+      ).toEqual(numbers);
+    },
+  );
+
+  it('leaves out the act’s spend-clues advance, which the act shows, and does not number it', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'), { revealed: true })
+      .withInvestigator(alice, { locationId: study, clues: 2 })
+      .withAct(
+        instanceId('first_act'),
+        blankAct('first_act', { actions: [{ effects: [] }, advanceBySpendingClues(fixed(2))] }),
+      )
+      .withTurnOf(alice)
+      .start();
+
+    expect(boardView(context, state).cardActions(alice)).toEqual([
+      { cardId: instanceId('first_act'), card: 'first_act', action: 0 },
+    ]);
+  });
+
+  it('keeps the number of the second plain action once the first is used up', () => {
+    const { context, state } = newGame()
+      .withLocation(
+        study,
+        blankLocation('study', {
+          actions: [{ limit: { per: 'game' }, effects: [] }, { effects: [] }],
+        }),
+        { revealed: true },
+      )
+      .withInvestigator(alice, { locationId: study })
+      .withTurnOf(alice)
+      .start();
+    const afterTheFirst = stateAfter(context, state, {
+      type: 'UseCardAction',
+      investigatorId: alice,
+      cardId: study,
+      action: 0,
+    });
+
+    expect(boardView(context, afterTheFirst).cardActions(alice)).toEqual([
+      { cardId: study, card: 'study', action: 1, number: 2 },
     ]);
   });
 });
@@ -1379,7 +1450,7 @@ describe('namesIn', () => {
 });
 
 describe('cardsIn', () => {
-  it('gives each card in a zone its name, type, traits and pictures, top first', () => {
+  it('gives each card in a zone its id, name, type, traits and pictures, top first', () => {
     const { context, state } = newGame()
       .withLocation(study, blankLocation('study'))
       .withInvestigator(alice, { locationId: study })
@@ -1402,13 +1473,14 @@ describe('cardsIn', () => {
 
     expect(cards).toEqual([
       {
+        id: instanceId('two_sided_curse'),
         name: 'two_sided_curse',
         type: 'treachery',
         traits: ['Curse'],
         image: '/cards/curse_front.png',
         backImage: '/cards/curse_back.png',
       },
-      { name: 'plain_terror', type: 'treachery', traits: [] },
+      { id: instanceId('plain_terror'), name: 'plain_terror', type: 'treachery', traits: [] },
     ]);
   });
 });

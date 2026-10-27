@@ -1,7 +1,12 @@
 import { assertNever, listIfAny } from '@arkham/util';
 import { isConnectionOpen, neighbours } from './board';
 import { tokenObjective } from './abilities';
-import { cardActionsOfferedTo, cluesToAdvance, type OfferedCardAction } from './card_actions';
+import {
+  advanceActionOf,
+  cardActionsOfferedTo,
+  cluesToAdvance,
+  type OfferedCardAction,
+} from './card_actions';
 import { effectiveValue } from './card_values';
 import {
   cardStats,
@@ -223,6 +228,8 @@ export interface EnemyStatsView {
  * a picture and falls back to the rest without one.
  */
 export interface CardFaceView {
+  /** The card in play, to act on it (`BoardView.cardActions` by `cardId`). */
+  id: InstanceId;
   name: CardName;
   type: CardType;
   traits: readonly Trait[];
@@ -254,11 +261,12 @@ export interface CardActionView extends OfferedCardAction {
 export type MapEnemyView = EnemyView & { id: InstanceId };
 
 /**
- * The current agenda's name, the doom on the card itself and, when it has one, the doom
- * threshold for the player count. The threshold is compared with all doom in play
+ * The current agenda (`id`, to act on it), its name, the doom on the card itself and, when it has
+ * one, the doom threshold for the player count. The threshold is compared with all doom in play
  * (`BoardView.doomInPlay`), not with `doom`.
  */
 export interface AgendaView {
+  id: InstanceId;
   name: CardName;
   /** The picture of its front, the side in play (`CardStats.imageSrc`), when the card data has one. */
   image?: CardImagePath;
@@ -271,6 +279,7 @@ export interface AgendaView {
  * how (`ActAdvance`).
  */
 export interface ActView {
+  id: InstanceId;
   name: CardName;
   /** The picture of its front, the side in play (`CardStats.imageSrc`), when the card data has one. */
   image?: CardImagePath;
@@ -489,14 +498,20 @@ export class BoardView {
   /**
    * The card actions the cards in play offer `investigator` (`cardActionsOfferedTo`): a revealed
    * location's where they are, an enemy's at their location, a threat area's at its owner's
-   * location, and the current agenda's and act's. They take one in their turn.
+   * location, and the current agenda's and act's. They take one in their turn. The act's
+   * spend-clues advance is left out: `act.advance` shows it, with the clues it counts, and
+   * `PlayTable.spendCluesToAdvanceAct` takes it.
    */
   cardActions(investigator: InvestigatorId): readonly CardActionView[] {
     const inv = requireInvestigator(this.state, investigator);
-    return cardActionsOfferedTo(this.ctx, this.state, inv).map((offered) => ({
-      ...offered,
-      card: nameOf(this.ctx, requireCard(this.state, offered.cardId)),
-    }));
+    const act = currentCard(this.state, 'act');
+    const advance = act === undefined ? -1 : advanceActionOf(this.ctx, act);
+    return cardActionsOfferedTo(this.ctx, this.state, inv)
+      .filter(({ cardId, action }) => !(cardId === act?.id && action === advance))
+      .map((offered) => ({
+        ...offered,
+        card: nameOf(this.ctx, requireCard(this.state, offered.cardId)),
+      }));
   }
 
   /** Locations on a map, in map order. */
@@ -827,6 +842,7 @@ function nameOf(ctx: EngineContext, card: CardInstance): CardName {
 function cardFaceOf(ctx: EngineContext, card: CardInstance): CardFaceView {
   const { typeCode, traits, imageSrc, backImageSrc } = cardStats(ctx.cards, card.code);
   return {
+    id: card.id,
     name: nameOf(ctx, card),
     type: typeCode,
     traits,
@@ -980,6 +996,7 @@ function agendaView(ctx: EngineContext, state: GameState): AgendaView | undefine
   if (!agenda) return undefined;
   const { doom, imageSrc } = cardStats(ctx.cards, agenda.code);
   return {
+    id: agenda.id,
     name: nameOf(ctx, agenda),
     ...(imageSrc === undefined ? {} : { image: imageSrc }),
     doom: agenda.tokens.doom ?? 0,
@@ -993,6 +1010,7 @@ function actView(ctx: EngineContext, state: GameState): ActView | undefined {
   const stats = cardStats(ctx.cards, act.code);
   const advance = actAdvance(state, stats);
   return {
+    id: act.id,
     name: nameOf(ctx, act),
     ...(stats.imageSrc === undefined ? {} : { image: stats.imageSrc }),
     clues: act.tokens.clue ?? 0,

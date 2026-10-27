@@ -257,6 +257,40 @@ describe('GameScreen header', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
+  it.each([
+    { card: "What's Going On?!", code: '01105' },
+    { card: 'Trapped', code: '01108' },
+  ])(
+    "takes an action $card prints from its full card on alder's turn and closes it",
+    async ({ card, code }) => {
+      const printed = theGatheringCards.get(cardCode(code));
+      if (!printed) throw new Error(`The Gathering has ${card}`);
+      const store = await renderTheGathering(`game-screen-card-action-test-${code}`, [
+        { ...printed, actions: [{ effects: [] }] },
+      ]);
+      fireEvent.click(button('Next'));
+      fireEvent.click(await screen.findByRole('button', { name: 'Start turn' }));
+      await screen.findByRole('button', { name: 'End turn' });
+      fireEvent.click(button(card));
+      const details = await screen.findByRole('dialog', { name: card });
+
+      fireEvent.click(
+        within(within(details).getByRole('region', { name: 'Card actions' })).getByRole('button', {
+          name: `Action · ${card}`,
+        }),
+      );
+
+      await waitFor(() =>
+        expect(
+          store.getState().current?.board?.investigator(investigatorId('alder')),
+        ).toMatchObject({
+          actions: 2,
+        }),
+      );
+      expect(screen.queryByRole('dialog')).toBeNull();
+    },
+  );
+
   it('fills the agenda with its picture from ArkhamDB once it has loaded', async () => {
     const whatsGoingOn = theGatheringCards.get(cardCode('01105'));
     if (!whatsGoingOn) throw new Error("The Gathering has the agenda What's Going On?!");

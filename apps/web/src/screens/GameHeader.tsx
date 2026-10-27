@@ -5,6 +5,7 @@ import type { ActAdvance, BoardView, CardImagePath, CardName } from '@arkham/eng
 import { useCardPicture } from '../catalog/cardImages';
 import { EncounterPiles, HeaderPile, type PileProps } from '../encounter/EncounterPiles';
 import type { AppState, OpenGame } from '../state/appStore';
+import { CardActions, cardActionsOn } from './ActionRow';
 import { Token } from './Token';
 
 /**
@@ -91,6 +92,8 @@ function AgendaStatus({
   const { agenda } = board;
   if (!agenda) return null;
   const { actions } = store.getState();
+  const close = () => setZoomed(false);
+  const offered = adjusting ? [] : cardActionsOn(board, agenda.id);
   const tokenAndPlate = (
     <>
       <Token
@@ -141,7 +144,12 @@ function AgendaStatus({
           kind="agenda"
           name={agenda.name}
           image={agenda.image}
-          onClose={() => setZoomed(false)}
+          actionRow={
+            offered.length > 0 && (
+              <CardActions offered={offered} actions={actions} busy={blocked} onUse={close} />
+            )
+          }
+          onClose={close}
         >
           {tokenAndPlate}
         </CardDetails>
@@ -174,7 +182,10 @@ function ActStatus({
   const [zoomed, setZoomed] = useState(false);
   const { act } = board;
   if (!act) return null;
+  // Advancing can raise a decision (act 3's question), and that dialog must be the only one open.
+  const close = () => setZoomed(false);
   const { actions } = store.getState();
+  const offered = adjusting ? [] : cardActionsOn(board, act.id);
   const { advance } = act;
   const plate = (advance: ActAdvance, onAdvance?: () => void) => {
     const clues = advance.kind === 'spendClues' ? advance.held : act.clues;
@@ -226,15 +237,23 @@ function ActStatus({
   };
   const tokenAndPlate = (onAdvance?: () => void) => advance && plate(advance, onAdvance);
 
-  // Advancing can raise a decision (act 3's question), and that dialog must be the only one open.
-  const close = () => setZoomed(false);
   return (
     <HeaderSlot label={t('header.act')}>
       <HeaderCard kind="act" name={act.name} image={act.image} onOpen={() => setZoomed(true)}>
         {tokenAndPlate()}
       </HeaderCard>
       {zoomed && (
-        <CardDetails kind="act" name={act.name} image={act.image} onClose={close}>
+        <CardDetails
+          kind="act"
+          name={act.name}
+          image={act.image}
+          actionRow={
+            offered.length > 0 && (
+              <CardActions offered={offered} actions={actions} busy={blocked} onUse={close} />
+            )
+          }
+          onClose={close}
+        >
           {tokenAndPlate(close)}
         </CardDetails>
       )}
@@ -295,19 +314,23 @@ function HeaderCard({
 /**
  * The agenda or act (`kind`) as a full card in a dialog, as big as a zoomed card: the same face as
  * in the header with its picture large, its name as the dialog's title, and its token and plate
- * (`children`) with their buttons. The card text joins it once the card data has text. A native
- * modal `<dialog>` brings focus trapping and Escape.
+ * (`children`) with their buttons, and under it the action row of what the card offers the
+ * investigator whose turn it is (`actionRow`, `CardActions`), when it offers anything. The card
+ * text joins it once the card data has text. A native modal `<dialog>` brings focus trapping and
+ * Escape.
  */
 function CardDetails({
   kind,
   name,
   image,
+  actionRow,
   onClose,
   children,
 }: {
   kind: 'agenda' | 'act';
   name: CardName;
   image: CardImagePath | undefined;
+  actionRow: ReactNode;
   onClose: () => void;
   children: ReactNode;
 }) {
@@ -324,6 +347,7 @@ function CardDetails({
         <h2 id={titleId}>{name}</h2>
         {children}
       </CardFace>
+      {actionRow && <footer>{actionRow}</footer>}
     </dialog>
   );
 }

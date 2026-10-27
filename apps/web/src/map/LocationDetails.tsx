@@ -2,7 +2,13 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BoardView, CardFaceView, InvestigatorId, LocationView } from '@arkham/engine';
 import { CardZoom } from '../screens/CardZoom';
-import { ActionButton, ActionGroup, type ActionIcon } from '../screens/ActionRow';
+import {
+  ActionButton,
+  ActionGroup,
+  CardActions,
+  cardActionsOn,
+  type ActionIcon,
+} from '../screens/ActionRow';
 import type { ActionCost, GameActions, LocationToken } from '../state/gameActions';
 import { CardPatterns, LocationTile } from './LocationTile';
 import { TILE } from './mapLayout';
@@ -11,7 +17,8 @@ import { TILE } from './mapLayout';
  * One location in full, opened by a tap on its tile or its details button: its card, drawn like
  * its tile with the pieces on it, its shroud and clues, who is there (investigators and enemies),
  * the cards attached to it, and under it one row of what the investigator whose
- * turn it is can do there (`locationActions`). While the players adjust the board (`adjusting`),
+ * turn it is can do there (`locationActions`) and the actions the location's card offers them
+ * (`CardActions`, such as the Parlor's Resign). While the players adjust the board (`adjusting`),
  * the row gives way to the corrections instead: reveal it and add or remove its clues and doom,
  * as a card effect or the table asks, so the screen keeps up with the physical game; they are not
  * steps of play, so the two never show together. It reads the location fresh from the board, so
@@ -42,6 +49,7 @@ export function LocationDetails({
     dialog.current?.showModal();
   }, []);
   const offered = adjusting ? [] : locationActions(board, location, actions);
+  const printed = adjusting ? [] : cardActionsOn(board, location.id);
   const button = ({ key, icon, cost, play, closes }: LocationAction) => (
     <ActionButton
       key={key}
@@ -74,13 +82,16 @@ export function LocationDetails({
         <Attached cards={board.cardsIn({ kind: 'attachedTo', hostId: location.id })} />
       )}
       {adjusting && <Corrections location={location} actions={actions} busy={busy} />}
-      {offered.length > 0 && (
+      {offered.length + printed.length > 0 && (
         <footer>
           {asAction.length > 0 && (
             <ActionGroup title={t('location.asAction')}>{asAction.map(button)}</ActionGroup>
           )}
           {free.length > 0 && (
             <ActionGroup title={t('location.free')}>{free.map(button)}</ActionGroup>
+          )}
+          {printed.length > 0 && (
+            <CardActions offered={printed} actions={actions} busy={busy} onUse={onClose} />
           )}
         </footer>
       )}
