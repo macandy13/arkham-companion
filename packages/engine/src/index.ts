@@ -145,6 +145,7 @@ export {
   locationWith,
   readySelf,
   putIntoThreatArea,
+  takeControl,
   putMapIntoPlay,
   putLocationIntoPlay,
   putSetAsideIntoPlay,

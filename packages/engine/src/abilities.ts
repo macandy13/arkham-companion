@@ -1080,6 +1080,15 @@ export function putIntoThreatArea(): AbilityEffect {
 }
 
 /**
+ * "Take control of Lita Chantler": the card with the ability moves to the play area of the
+ * investigator the window names (the one who took the action), out of reach of everyone else's
+ * actions (`offersActionsTo`). Player cards aren't modelled, so this is for story assets.
+ */
+export function takeControl(): AbilityEffect {
+  return moveSelf({ kind: 'playArea', investigatorId: { ref: 'windowInvestigator' } });
+}
+
+/**
  * "Attach it to your location": the card with the ability attaches to the
  * location of the investigator the window names, within its limit per
  * location (`{ ref: 'windowLocation' }`).
