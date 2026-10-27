@@ -34,7 +34,7 @@ Every encounter card in the data (4,064: 211 Chapter Two, 3,853 Chapter One) sor
 
 **Status** says how far the engine is today:
 
-- **Covered** – the rule runs today, or card data can write the effect as an ability ([architecture.md](architecture.md), "Triggers and card effects").
+- **Covered** – the rule runs today, or card data can write the effect as an ability ([architecture, "Triggers and card effects"](architecture/triggers-and-card-effects.md)).
 - **Command** – the engine has the command, but `AbilityCommand` doesn't list it yet, so card data can't use it. Adding it is one line.
 - **Plan N** – step N of the [implementation plan](#implementation-plan) below, which orders the steps by campaign.
 - **Reminder** – display tier: the app shows the text in its timing window (plan step 2), players resolve it.

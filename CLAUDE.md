@@ -1,7 +1,7 @@
 # CLAUDE.md – Arkham Companion
 
 Web companion app (PWA) that runs the scenario side of Arkham Horror LCG (full campaigns, starting with _Night of the Zealot_; campaign order in `docs/product.md`).
-`docs/architecture.md` describes the app as built: an overview, then one section per component (how it works and why, its key types, its extension points). Read the component you change before changing it, don't re-derive it, and update its section in the same PR when the change extends or alters it. Requirements, screens, the milestone plan and designs for what isn't built yet are in `docs/product.md`.
+`docs/architecture.md` describes the app as built: an overview linking one page per component in `docs/architecture/` (how it works and why, its key types, its extension points). Read the component's page before changing it, don't re-derive it, and update that page in the same PR when the change extends or alters it; the overview changes only for a new package, dependency direction, key design decision or component page. Requirements, screens, the milestone plan and designs for what isn't built yet are in `docs/product.md`.
 Work is tracked in GitHub issues: one parent issue per milestone, tasks and slices as sub-issues (`docs/tasks/README.md`). Each task issue is self-contained; `docs/tasks/done/` is the archive of finished work.
 Game rules are summarised in `docs/rules.md` with links to the Rules Reference – check there before searching the web, and update it when a change corrects a rule.
 Code style and conventions (functions, comments, tests, markup, CSS, helpers) are in `docs/coding-guidelines.md` – follow them in every change.
@@ -41,7 +41,7 @@ Before finishing a task: `pnpm typecheck && pnpm lint && pnpm test` must pass. A
 
 Each milestone issue (label `milestone`, listed in `docs/tasks/README.md`) lists its tasks as sub-issues in order; do them in that order. A task issue's first line names the model: **Sonnet** is enough, **Opus** for design-heavy work. A task is one session, delivered as one or more small PRs. Start one from the phone: Code tab → repo → `Do task M1C.6 (#278)`.
 
-1. Read the task issue (with its parent and sub-issues) and only the architecture sections it references.
+1. Read the task issue (with its parent and sub-issues) and only the architecture pages it references.
 2. Keep the change small and focused on that task: one reviewable idea per PR, within the size budget in `docs/coding-guidelines.md` §7 – split bigger tasks into a stack of PRs and open one sub-issue per slice first (title `M1C.4c …`, a short body, the `**Model:** … · **Area:** …` line). Open a sub-issue (GitHub MCP `issue_write` with `parent_issue_number`) for each follow-up instead of doing it: under the task it came from, or under the milestone for a new task (`M5.6 …`, with Why, Benefit and a checklist). New milestones are new parent issues with the `milestone` label, added to `docs/tasks/README.md` and `docs/product.md`.
 3. The PR body says `Closes #<slice or task issue>`. Tick the task issue's checklist and, when the work changes the plan, edit its body; a short "Done" comment on the task issue records what was built. Close a task once its slices are closed; its follow-ups stay open as sub-issues.
 4. Open a PR against `main`. **The PR title is a Conventional Commit** – it becomes the squash commit and the changelog entry (Release Please):

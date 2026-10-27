@@ -20,7 +20,7 @@
 
 **Architecture**
 
-<!-- Link the docs/architecture.md section this PR updates, or "no component changed". New dependencies or patterns: one line on why. -->
+<!-- Link the docs/architecture/ page this PR updates, or "no component changed". New dependencies or patterns: one line on why. -->
 
 **Decisions for you**
 
