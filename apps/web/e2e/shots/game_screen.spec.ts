@@ -11,7 +11,7 @@ import {
 
 // Situations on the game screen, each photographed as it ends (`@shot`, coding guidelines §3).
 
-test('the house map with Roland Banks in the Hallway', { tag: '@shot' }, async ({ page }) => {
+test('the house map with Roland Banks in the Hallway', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   const hallway = page
@@ -193,4 +193,16 @@ test('Crypt Chill drawn for Roland Banks, its willpower test waiting', async ({ 
   const cryptChill = page.getByRole('dialog', { name: 'Test for Crypt Chill' });
   await expect(cryptChill.getByText('Crypt Chill, drawn for Roland Banks')).toBeVisible();
   await expect(cryptChill.getByRole('img', { name: 'Crypt Chill' })).toBeVisible();
+});
+
+test('The Barrier opened as a full card', { tag: '@shot' }, async ({ page }) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+
+  await page
+    .getByRole('region', { name: 'Act' })
+    .getByRole('button', { name: 'The Barrier' })
+    .click();
+
+  const card = page.getByRole('dialog', { name: 'The Barrier' });
+  await expect(card.getByRole('img', { name: 'Clues 0 / 3' })).toBeVisible();
 });

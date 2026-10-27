@@ -39,6 +39,7 @@ export const resources = {
         removeDoom: 'Remove doom',
         addClue: 'Add a clue',
         removeClue: 'Remove a clue',
+        close: 'Close',
         noGame: 'No game open',
       },
       encounter: {
@@ -587,6 +588,7 @@ export const resources = {
         removeDoom: 'Verderben entfernen',
         addClue: 'Hinweis hinzufügen',
         removeClue: 'Hinweis entfernen',
+        close: 'Schließen',
         noGame: 'Kein Spiel geöffnet',
       },
       encounter: {

@@ -73,7 +73,7 @@ test('move Dissonant Voices from the discard pile into Roland Banks’ threat ar
 
 // Journey: a card effect spawns the set-aside Ghoul Priest at a location the players choose – open
 // the set-aside cards on the scenario card, tap Spawn, then tap the Attic on the map.
-test('spawn the set-aside Ghoul Priest in the Attic', { tag: '@flow' }, async ({ page }) => {
+test('spawn the set-aside Ghoul Priest in the Attic', async ({ page }) => {
   const attic = page.getByRole('figure', { name: 'House' }).getByRole('group', { name: 'Attic' });
 
   await test.step('Resume a game with the house open and open the set-aside cards', async () => {
