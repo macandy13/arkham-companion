@@ -187,6 +187,8 @@ export interface TreacheryOptions {
   locationAttachment?: LocationAttachment;
   /** Its constant abilities (Obscuring Fog's +2 shroud on its location). */
   modifiers?: readonly CardModifier[];
+  /** Its action abilities, offered while it is in a threat area (Dreams of R'lyeh). */
+  actions?: readonly CardAction[];
 }
 
 /** Card stats for a hand-entered treachery, with its front picture. */
@@ -200,6 +202,7 @@ export function treachery({
   abilities,
   locationAttachment,
   modifiers,
+  actions,
 }: TreacheryOptions): CardStats {
   return {
     code: cardCode(code),
@@ -213,6 +216,7 @@ export function treachery({
     ...(abilities ? { abilities } : {}),
     ...(locationAttachment ? { locationAttachment } : {}),
     ...(modifiers ? { modifiers } : {}),
+    ...(actions ? { actions } : {}),
   };
 }
 
