@@ -185,32 +185,39 @@ export function gifArgs({ input, output }: { input: string; output: string }): s
  * The Markdown section (including its markers) listing every screenshot inline, then every
  * flow with an inline GIF and a link to the player page, which plays the full-quality video
  * with pause, seeking and speed; just the markers when nothing is tagged, which empties a
- * section an earlier push wrote. `version` (the commit) is appended as a query string
- * because file names stay the same across pushes and GitHub's image proxy caches by URL.
+ * section an earlier push wrote. Pictures are linked from `pictureBaseUrl` (the gh-pages
+ * branch on raw.githubusercontent.com, which serves a push at once, while Pages takes a minute
+ * or more to deploy it), the player from `baseUrl` (Pages, the only host that serves it as a
+ * page). `version` (the commit) is appended as a query string because file names stay the same
+ * across pushes and GitHub's image proxy caches by URL.
  */
 export function renderSection({
   flows,
   shots,
   baseUrl,
+  pictureBaseUrl,
   version,
 }: {
   flows: readonly FlowVideo[];
   shots: readonly Screenshot[];
   baseUrl: string;
+  pictureBaseUrl: string;
   version: string;
 }): string {
   // Nothing tagged means the PR changed no flow or situation: the markers stay, so a later push can fill them.
   if (flows.length === 0 && shots.length === 0) return [SECTION_START, SECTION_END].join('\n');
-  const base = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  const withSlash = (url: string) => (url.endsWith('/') ? url : `${url}/`);
+  const base = withSlash(baseUrl);
+  const pictures = withSlash(pictureBaseUrl);
   const shotEntries = shots.map((shot) => {
     const heading = `### ${shot.title}`;
     if (!shot.imagePath) return `${heading}\n\n_Not taken: the spec failed, see the E2E check._`;
-    return `${heading}\n\n![${shot.title}](${base}${shot.slug}.png?v=${version})`;
+    return `${heading}\n\n![${shot.title}](${pictures}${shot.slug}.png?v=${version})`;
   });
   const flowEntries = flows.map((flow) => {
     const heading = `### ${flow.title}`;
     if (!flow.videoPath) return `${heading}\n\n_Not recorded: the flow failed, see the E2E check._`;
-    const gif = `${base}${flow.slug}.gif?v=${version}`;
+    const gif = `${pictures}${flow.slug}.gif?v=${version}`;
     const player = `${base}player.html?flow=${flow.slug}&v=${version}&speed=${1 / SCREENCAST_SLOWDOWN}`;
     return `${heading}\n\n![${flow.title}](${gif})\n\n[Play with pause and speed controls](${player})`;
   });
