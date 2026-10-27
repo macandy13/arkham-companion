@@ -3,7 +3,7 @@ import { mythosDrawnExport, resumeImportedGame } from './fixtures/saved_games';
 
 // Journey: a player card tells Roland Banks to draw from the encounter deck on his turn – open the
 // encounter dialog from the header, draw for him, answer its test and see where the card went.
-test('draw an encounter card for Roland Banks on his turn', { tag: '@flow' }, async ({ page }) => {
+test('draw an encounter card for Roland Banks on his turn', async ({ page }) => {
   await test.step('Resume a game after two mythos phases and start Roland Banks’ turn', async () => {
     await resumeImportedGame(page, 'Two mythos draws', mythosDrawnExport('Two mythos draws'));
     await page.getByRole('button', { name: 'Start turn' }).click();
