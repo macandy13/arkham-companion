@@ -3,17 +3,18 @@ import { useTranslation } from 'react-i18next';
 import type { StoreApi } from 'zustand/vanilla';
 import type { BoardView, CardImagePath } from '@arkham/engine';
 import { useCardPicture } from '../catalog/cardImages';
+import { EncounterPiles } from '../encounter/EncounterPiles';
 import type { AppState, OpenGame } from '../state/appStore';
+import { Token } from './Token';
 
 /**
  * The play screen's header, laid out like the scenario's cards on the table, centred and each under
- * its label like the playmat's: the encounter deck and its discard pile (placeholders until the
- * encounter phase draws), the agenda, the act and the scenario card. The scenario's name is the
- * screen's heading. The cards' buttons wait while a step is queued (`OpenGame.busy`), since a
- * second tap would act on whatever the first one leaves open; the agenda's and act's steppers show
- * only while the players adjust the board (`OpenGame.adjusting`). The round, the phase and the
- * buttons that run the game sit in the status row below (`GameStatus`). `board` is the open game's
- * `OpenGame.board`.
+ * its label like the playmat's: the encounter deck and its discard pile, the agenda, the act and
+ * the scenario card. The scenario's name is the screen's heading. The cards' buttons wait while a
+ * step is queued (`OpenGame.busy`), since a second tap would act on whatever the first one leaves
+ * open; the agenda's and act's steppers show only while the players adjust the board
+ * (`OpenGame.adjusting`). The round, the phase and the buttons that run the game sit in the status
+ * row below (`GameStatus`). `board` is the open game's `OpenGame.board`.
  */
 export function GameHeader({
   store,
@@ -29,7 +30,7 @@ export function GameHeader({
 
   return (
     <header>
-      <EncounterDeck />
+      <EncounterDeck board={board} />
       <AgendaStatus store={store} board={board} blocked={blocked} adjusting={adjusting} />
       <ActStatus store={store} board={board} blocked={blocked} adjusting={adjusting} />
       <ScenarioCard open={open} />
@@ -38,15 +39,13 @@ export function GameHeader({
 }
 
 /**
- * The encounter deck as an upright card back and its discard pile as a small card outline beside
- * it. Both are placeholders until the encounter phase draws cards, so they show no counts yet.
+ * The encounter deck and its discard pile (`EncounterPiles`) under the playmat's label.
  */
-function EncounterDeck() {
+function EncounterDeck({ board }: { board: BoardView }) {
   const { t } = useTranslation();
   return (
     <HeaderSlot label={t('header.encounterDeck')}>
-      <div data-card="encounter" />
-      <div role="img" aria-label={t('header.encounterDiscard')} data-pile="discard" />
+      <EncounterPiles board={board} />
     </HeaderSlot>
   );
 }
@@ -193,31 +192,6 @@ function ActStatus({
         </footer>
       )}
     </HeaderCard>
-  );
-}
-
-/**
- * A big round token on the agenda or act, like the doom and clue tokens on the table: the `count`
- * and, when the card has one, its `threshold` under it ("2 of 7"). `label` says it in words for
- * screen readers, since the token's colour alone says what it counts.
- */
-function Token({
-  kind,
-  count,
-  threshold,
-  label,
-}: {
-  kind: 'doom' | 'clue';
-  count: number;
-  threshold: number | undefined;
-  label: string;
-}) {
-  const { t } = useTranslation();
-  return (
-    <p role="img" aria-label={label} data-token={kind}>
-      <data value={count}>{count}</data>
-      {threshold !== undefined && <span>{t('header.tokenThreshold', { threshold })}</span>}
-    </p>
   );
 }
 

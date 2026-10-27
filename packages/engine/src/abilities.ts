@@ -41,7 +41,7 @@ import type {
   SkillName,
   WoundKind,
 } from './state';
-import type { Zone } from './zone';
+import type { ScenarioDeck, Zone } from './zone';
 
 /**
  * The moment a card ability fires (architecture "Triggers and card
@@ -278,6 +278,7 @@ export type AbilityCommand =
           | 'ShuffleEncounterDiscard'
           | 'ShuffleEncounterDeck'
           | 'DrawEncounter'
+          | 'DrawFromScenarioDeck'
           | 'DefeatInvestigator'
           | 'Resign'
           | 'EndScenario';
@@ -1100,6 +1101,14 @@ export function heal(
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
   return { type: 'HealInvestigator', investigatorId: who, stat, amount };
+}
+
+/** "Draw the top card of the Cultist deck" (Uncovering the Conspiracy). */
+export function drawFromScenarioDeck(
+  deck: ScenarioDeck,
+  who: RelativeInvestigator = { ref: 'windowInvestigator' },
+): AbilityEffect {
+  return { type: 'DrawFromScenarioDeck', investigatorId: who, deck };
 }
 
 /** "Draw N cards" (Your House, Southside's Historical Society). */

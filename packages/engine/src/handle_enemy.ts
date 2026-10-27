@@ -21,9 +21,7 @@ import { moveCardEvent } from './placement';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState } from './state';
-import { encounterDiscard, type Zone } from './zone';
-
-const VICTORY_DISPLAY: Zone = { kind: 'victoryDisplay' };
+import { encounterDiscard, victoryDisplay } from './zone';
 
 /**
  * `EngageEnemy`: the enemy engages the investigator, who must be at its
@@ -198,7 +196,7 @@ function defeated(state: GameState, enemy: CardInstance, stats: CardStats): Enem
   return {
     type: 'EnemyDefeated',
     enemyId: enemy.id,
-    to: hasVictory ? VICTORY_DISPLAY : encounterDiscard,
+    to: hasVictory ? victoryDisplay : encounterDiscard,
     locationId: locationOf(state, enemy),
   };
 }
