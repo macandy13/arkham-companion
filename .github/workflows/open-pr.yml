@@ -6,9 +6,15 @@ name: Open PR
 # dispatch this workflow rather than creating the PR themselves (CLAUDE.md, "Workflow for
 # tasks"). It uses an App token, not GITHUB_TOKEN, because PRs opened with GITHUB_TOKEN start
 # no workflows and would never get their required checks.
-# Needs the repo variable CLAUDE_BOT_APP_ID and secret CLAUDE_BOT_PRIVATE_KEY (docs/automation.md).
+# A PR stacked on another one gets the `stacked` label and a "Stacked on #n" line, since GitHub's
+# PR lists don't show a PR's base; the label comes off when GitHub retargets the PR to main.
+# Needs CLAUDE_BOT_APP_ID (repo variable or secret) and the secret CLAUDE_BOT_PRIVATE_KEY
+# (docs/automation.md).
 
 on:
+  # Retargeting to main (when the PR below merges) is an `edited` event.
+  pull_request_target:
+    types: [edited]
   workflow_dispatch:
     inputs:
       branch:
@@ -28,25 +34,26 @@ on:
         type: boolean
         default: false
 
-# Every API call uses the App token, so GITHUB_TOKEN needs nothing.
+# `open` makes every API call with the App token, so GITHUB_TOKEN needs nothing there.
 permissions: {}
 
 jobs:
   open:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Check the App credentials
         env:
-          HAS_APP: ${{ vars.CLAUDE_BOT_APP_ID != '' && secrets.CLAUDE_BOT_PRIVATE_KEY != '' }}
+          HAS_APP: ${{ (vars.CLAUDE_BOT_APP_ID || secrets.CLAUDE_BOT_APP_ID) != '' && secrets.CLAUDE_BOT_PRIVATE_KEY != '' }}
         run: |
           if [ "$HAS_APP" != true ]; then
-            echo "::error::Repo variable CLAUDE_BOT_APP_ID or secret CLAUDE_BOT_PRIVATE_KEY is missing; open the PR directly instead."
+            echo "::error::CLAUDE_BOT_APP_ID or the secret CLAUDE_BOT_PRIVATE_KEY is missing; open the PR directly instead."
             exit 1
           fi
       - uses: actions/create-github-app-token@v2
         id: app
         with:
-          app-id: ${{ vars.CLAUDE_BOT_APP_ID }}
+          app-id: ${{ vars.CLAUDE_BOT_APP_ID || secrets.CLAUDE_BOT_APP_ID }}
           private-key: ${{ secrets.CLAUDE_BOT_PRIVATE_KEY }}
           permission-pull-requests: write
           permission-issues: write
@@ -62,9 +69,38 @@ jobs:
           BODY: ${{ inputs.body }}
           DRAFT: ${{ inputs.draft }}
         run: |
-          printf '%s' "$BODY" > "$RUNNER_TEMP/body.md"
+          body=$BODY
           args=()
           if [ "$DRAFT" = true ]; then args+=(--draft); fi
+          if [ "$BASE" != main ]; then
+            below=$(gh pr list --repo "$REPO" --head "$BASE" --json number --jq '.[0].number // empty')
+            stacked="**Stacked on #${below:-?}** (\`$BASE\`): merge that one first."
+            # The attribution block must stay the body's first two lines.
+            if [[ "$body" == '<!-- claude-projects-attribution'* ]]; then
+              body="$(head -n 2 <<<"$body")"$'\n\n'"$stacked"$'\n'"$(tail -n +3 <<<"$body")"
+            else
+              body="$stacked"$'\n\n'"$body"
+            fi
+            gh label create stacked --repo "$REPO" --force --color c5def5 \
+              --description 'Merges into another PR; merge that one first'
+            args+=(--label stacked)
+          fi
+          printf '%s' "$body" > "$RUNNER_TEMP/body.md"
           url=$(gh pr create --repo "$REPO" --head "$BRANCH" --base "$BASE" --title "$TITLE" \
             --body-file "$RUNNER_TEMP/body.md" --assignee "$OWNER" --reviewer "$OWNER" "${args[@]}")
           echo "Opened $url" >> "$GITHUB_STEP_SUMMARY"
+
+  unstack:
+    if: >-
+      github.event_name == 'pull_request_target' && github.event.changes.base &&
+      github.event.pull_request.base.ref == 'main' &&
+      contains(github.event.pull_request.labels.*.name, 'stacked')
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: gh pr edit "$PR" --repo "$REPO" --remove-label stacked
