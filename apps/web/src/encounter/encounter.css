@@ -8,6 +8,9 @@
   flex-direction: column;
   gap: var(--space-2);
   min-inline-size: min(var(--layout-zoom-card-width), 100%);
+  /* Wider than other dialogs, as wide as the row of a pile's cards beside its arrows. */
+  inline-size: min-content;
+  max-width: 100%;
   padding-inline: var(--space-2);
   font-size: var(--font-size-body);
 }
@@ -45,20 +48,47 @@
   gap: var(--space-2);
 }
 
-/* Keeps the disclosure triangle, which a flex summary would lose. */
-#board dialog[data-dialog='encounter'] summary {
-  padding-block: var(--space-2);
-  font-family: var(--font-family-display);
-  cursor: pointer;
+/*
+ * A pile's cards as a row, top card first, like the threat area: past `--encounter-strip-cards-shown` cards
+ * the row scrolls sideways and snaps to whole cards, with arrows on both sides. The chosen card is
+ * ringed in the accent colour; its name and moves sit under the row.
+ */
+#board dialog[data-dialog='encounter'] > div {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
 }
 
-#board dialog[data-dialog='encounter'] ul {
-  margin: 0;
+/* The arrows are the investigator picker's round previous and next buttons. */
+#board dialog[data-dialog='encounter'] > div > button {
+  min-width: var(--button-compact);
+  min-height: var(--button-compact);
   padding: 0;
-  list-style: none;
+  border-radius: var(--radius-round);
+}
+
+#board dialog[data-dialog='encounter'] > div > button[data-icon='previous']::before {
+  mask-image: url('../picker/icons/previous.svg');
+}
+
+#board dialog[data-dialog='encounter'] > div > button[data-icon='next']::before {
+  mask-image: url('../picker/icons/next.svg');
+}
+
+#board dialog[data-dialog='encounter'] > div > ul {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
+  flex: none;
+  gap: var(--space-2);
+  inline-size: calc(
+    var(--encounter-strip-cards-shown) * var(--encounter-strip-card-width) +
+      (var(--encounter-strip-cards-shown) - 1) * var(--space-2)
+  );
+  margin: 0;
+  padding: var(--space-1) 0;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
 }
 
 /* Resets the home screen's framed list items, which `#app > main ul > li` gives every list. */
@@ -68,40 +98,55 @@
   background: none;
 }
 
-/* A card's row: its small picture, its name and its victory points; a tap opens its moves. */
-#board dialog[data-dialog='encounter'] li summary {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding-block: 0;
-  font-family: var(--font-family);
-  list-style: none;
+#board dialog[data-dialog='encounter'] > div > ul > li {
+  flex: none;
+  scroll-snap-align: start;
 }
 
-/* The small card: its picture once loaded, the card art pattern before that or without one. */
-#board dialog[data-dialog='encounter'] li summary > img,
-#board dialog[data-dialog='encounter'] li:not([data-picture]) summary::before {
-  flex: none;
+#board dialog[data-dialog='encounter'] > div > ul > li > button {
+  display: block;
   box-sizing: border-box;
-  height: var(--encounter-list-card-height);
+  inline-size: var(--encounter-strip-card-width);
   aspect-ratio: 5 / 7;
-  border: var(--border-width) solid var(--color-card-encounter);
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: var(--card-border-width) solid var(--color-card-encounter);
   border-radius: var(--radius);
+  background: var(--card-art-pattern), var(--color-surface);
+  overflow: hidden;
+}
+
+#board dialog[data-dialog='encounter'] > div > ul > li > button[aria-pressed='true'] {
+  outline: var(--focus-ring-width) solid var(--color-accent);
+  outline-offset: var(--border-width);
+}
+
+#board dialog[data-dialog='encounter'] > div > ul > li > button > img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
   object-fit: cover;
 }
 
-#board dialog[data-dialog='encounter'] li:not([data-picture]) summary::before {
-  content: '';
-  background: var(--card-art-pattern), var(--color-surface);
-}
-
-#board dialog[data-dialog='encounter'] li:not([data-picture]) summary > img {
-  position: absolute;
+#board dialog[data-dialog='encounter'] > div > ul > li:not([data-picture]) > button > img {
   visibility: hidden;
 }
 
-#board dialog[data-dialog='encounter'] li summary > data {
-  margin-inline-start: auto;
+/* The chosen card: its name with its victory points, then where the players can put it. */
+#board dialog[data-dialog='encounter'] > section {
+  display: block;
+}
+
+#board dialog[data-dialog='encounter'] > section > h3 {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-1);
+  font-size: var(--font-size-body);
+}
+
+#board dialog[data-dialog='encounter'] > section > h3 > data {
   color: var(--color-text-muted);
   font-size: var(--font-size-note);
 }

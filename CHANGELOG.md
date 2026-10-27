@@ -2,6 +2,105 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.10](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.9...arkham-companion-v0.1.10) (2026-10-27)
+
+
+### Features
+
+* **engine:** action costs in resources and clues; Northside, Peter Warren and Victoria Devereux (M4.5 step 8d1) ([b71f555](https://github.com/macandy13/arkham-companion/commit/b71f555fcd9e6c4674390127e634181c4fccbec4))
+* **engine:** action costs in resources and clues; Northside, Peter Warren and Victoria Devereux (M4.5 step 8d1) ([71edeff](https://github.com/macandy13/arkham-companion/commit/71edeff5ae4aa0b0433e49ee8033b15c7d8ad8c1))
+* **engine:** action limits, and the heal and resource actions of Arkham's locations (M4.5 step 8c1) ([13f0632](https://github.com/macandy13/arkham-companion/commit/13f063288334fc14c41a076895951c3c03a8b379))
+* **engine:** action limits, and the heal and resource actions of Arkham's locations (M4.5 step 8c1) ([9a9e173](https://github.com/macandy13/arkham-companion/commit/9a9e173f663057df6f9ae2bc8af06c44fa151b44))
+* **engine:** encounter piles in the board view (M3.6a) ([191fdde](https://github.com/macandy13/arkham-companion/commit/191fdde70d0464fdc7c3834699ba918353a143d4))
+* **engine:** encounter piles in the board view (M3.6a) ([0724cc8](https://github.com/macandy13/arkham-companion/commit/0724cc82e28e69e87ca7b9870b07d6ce56d60c39))
+* **engine:** group clue costs; Uncovering the Conspiracy draws from the Cultist deck (M4.5 step 8d2b) ([6c26095](https://github.com/macandy13/arkham-companion/commit/6c260959a5228018da52324c7078a1e48b2d1b13))
+* **engine:** group clue costs; Uncovering the Conspiracy's action draws from the Cultist deck (M4.5 step 8d2b) ([64bf22d](https://github.com/macandy13/arkham-companion/commit/64bf22dee7aeeb08eabaeb96dffca9335cd110e7))
+* **engine:** hand card costs deferred to the players; Herman Collins' Parley (M4.5 step 8d3) ([5388bee](https://github.com/macandy13/arkham-companion/commit/5388beefee770b42b48c68cccd48c110abbed2f3))
+* **engine:** hand card costs left to the players; Herman Collins' Parley (M4.5 step 8d3) ([c711229](https://github.com/macandy13/arkham-companion/commit/c711229ea3eb3d89b2e8a421640addc5c919d948))
+* **engine:** lasting skill boosts in every skill test (M3.5h1) ([e05488c](https://github.com/macandy13/arkham-companion/commit/e05488c57abcc4542f56fffc5958b2d5d2d04d34))
+* **engine:** lasting skill boosts in every skill test (M3.5h1) ([9e44aa5](https://github.com/macandy13/arkham-companion/commit/9e44aa53e9a3bfc7e9018f999c5de95be5b7181b))
+* **engine:** location actions on the player's deck, deferred to the players (M4.5 step 8c2) ([b1ed9ba](https://github.com/macandy13/arkham-companion/commit/b1ed9baa4e5d5cffd2108edb1c89f17281b3d1f9))
+* **engine:** location actions on the player's deck, done by hand (M4.5 step 8c2) ([bce4f6f](https://github.com/macandy13/arkham-companion/commit/bce4f6fb9b7c8d3bfef1d6527653683223da7020))
+* **engine:** resource, draw and play actions provoke attacks of opportunity (M3.7g1) ([ecd4266](https://github.com/macandy13/arkham-companion/commit/ecd42667d96f453a2fac6aacc8bd2b3c53e130c5))
+* **engine:** resource, draw and play actions provoke attacks of opportunity (M3.7g1) ([ffea625](https://github.com/macandy13/arkham-companion/commit/ffea6250f0d93f1cbcb9e7fd17dd82e20c972052))
+* **engine:** shuffled Cultist deck and DrawFromScenarioDeck (M4.5 step 8d2a) ([df62982](https://github.com/macandy13/arkham-companion/commit/df629827858c9c260077fdb10d5dc711e31e2e5f))
+* **engine:** shuffled Cultist deck, shuffle setup step and DrawFromScenarioDeck (M4.5 step 8d2a) ([0fcbfff](https://github.com/macandy13/arkham-companion/commit/0fcbfffdede0a24c43a2687d783fac57e8c94054))
+* **engine:** skill tests in card actions; Dreams of R'lyeh and Disrupting the Ritual (M4.5 step 8e1) ([2d46e1e](https://github.com/macandy13/arkham-companion/commit/2d46e1ecf137cfa37edc44a6e250deec8254db04))
+* **engine:** skill tests in card actions; Dreams of R'lyeh and Disrupting the Ritual (M4.5 step 8e1) ([fb1b371](https://github.com/macandy13/arkham-companion/commit/fb1b371315606c362b57d6373c7a4b349d74fb60))
+* notice where a drawn encounter card went (M3.6e2) ([928ce5d](https://github.com/macandy13/arkham-companion/commit/928ce5de9db14ced5c4b58d22c3ef275d6b5cede))
+* notice where a drawn encounter card went (M3.6e2) ([95581e5](https://github.com/macandy13/arkham-companion/commit/95581e503a5994e34eb2fefeb087d59b3cfaffd8))
+* offer only the enemy actions the rules allow ([8c27c0e](https://github.com/macandy13/arkham-companion/commit/8c27c0ebdedc33c3f1a45ea23e97aa6e24e428d8))
+* show the encounter card being resolved (M3.6e1) ([4fc32d4](https://github.com/macandy13/arkham-companion/commit/4fc32d44ac94c5e169ef54cd5bdbb6425884f840))
+* show the encounter card being resolved (M3.6e1) ([678c024](https://github.com/macandy13/arkham-companion/commit/678c024192095bf280f3a9a5d834e0b3a1002290))
+* **web:** act on enemies from their map tokens (M3.7e) ([668da01](https://github.com/macandy13/arkham-companion/commit/668da01d53572669c71bf228db06a68dab469051))
+* **web:** act on enemies from their map tokens (M3.7e) ([e09bb09](https://github.com/macandy13/arkham-companion/commit/e09bb09b38cad5f03766e735f15276f455a586a8))
+* **web:** draw an encounter card for an investigator (M3.6d) ([08f636d](https://github.com/macandy13/arkham-companion/commit/08f636dc57acc4ab7aeed5918b0b8660d3e5c3ce))
+* **web:** draw an encounter card for an investigator (M3.6d) ([b63798d](https://github.com/macandy13/arkham-companion/commit/b63798dafec8ad370aa2ebac21d6d457233c8585))
+* **web:** edit and show skill boosts on the investigator card (M3.5h2) ([ea06d66](https://github.com/macandy13/arkham-companion/commit/ea06d663926cd0f4b784eb5021474cc8f87c2656))
+* **web:** edit and show skill boosts on the investigator card (M3.5h2) ([2167391](https://github.com/macandy13/arkham-companion/commit/216739125373e9310d05ce0feeadaea4b101f131))
+* **web:** encounter deck count and discard top card in the header (M3.6b) ([2cb28bf](https://github.com/macandy13/arkham-companion/commit/2cb28bf579b2737e0b51adc9e979fd1dbf575a61))
+* **web:** encounter deck count and discard top card in the header (M3.6b) ([f0a506a](https://github.com/macandy13/arkham-companion/commit/f0a506ac51cf5d9f30969f985d9f0bfc2a62d8af))
+* **web:** encounter dialog with discard, set-aside and victory display (M3.6c) ([bda4f3f](https://github.com/macandy13/arkham-companion/commit/bda4f3f46f819d52ee40cba372b76da8824ceba1))
+* **web:** encounter dialog with discard, set-aside and victory display (M3.6c) ([d6166fc](https://github.com/macandy13/arkham-companion/commit/d6166fc146cdecab1030d8e58c433667f370b919))
+* **web:** fan the header's piles, set-aside cards on the scenario card (M3.6h) ([b716b24](https://github.com/macandy13/arkham-companion/commit/b716b2431052ccd152ae741b3d2aed2143d2df4f))
+* **web:** fan the header's piles; set-aside cards on the scenario card, victory display slot ([a9d9bfc](https://github.com/macandy13/arkham-companion/commit/a9d9bfcbbd005d31f374fd455b4fb3fa682410ae))
+* **web:** location details with move, investigate and clue actions (M3.7f) ([39ca25f](https://github.com/macandy13/arkham-companion/commit/39ca25fb2d6434102fda82fada6b26dc9571bb1e))
+* **web:** location details with the card, who is there, attached cards and moves (M3) ([4f20d5f](https://github.com/macandy13/arkham-companion/commit/4f20d5f27360d3f234594b9105a2f18ea24bba34))
+* **web:** mark the lead investigator and whose turn it is (M3.5i) ([79ddabe](https://github.com/macandy13/arkham-companion/commit/79ddabedfaed7ded3f5a043a067c3bee11b7ee78))
+* **web:** mark the lead investigator and whose turn it is (M3.5i) ([9b851f8](https://github.com/macandy13/arkham-companion/commit/9b851f802ab28aded8d45b183b62b9cf167e88e7))
+* **web:** put encounter cards by hand from the dialog and the notice (M3.6f) ([9ebb726](https://github.com/macandy13/arkham-companion/commit/9ebb7267f98dcc5e66a67bf899c031b5af60e25f))
+* **web:** put encounter cards by hand from the dialog and the notice (M3.6f) ([71df6b3](https://github.com/macandy13/arkham-companion/commit/71df6b3543501e3ba0cea6f9acf7febf1ee28146))
+* **web:** resource, draw and play buttons in the turn row (M3.7g2) ([35f55e9](https://github.com/macandy13/arkham-companion/commit/35f55e9085bd16ec8e06af8ef54d7fb670a679f4))
+* **web:** resource, draw and play buttons in the turn row (M3.7g2) ([bd28ad1](https://github.com/macandy13/arkham-companion/commit/bd28ad18bbd54a349ca51f4e9903862a51139551))
+* **web:** show a pile's cards as a row with scroll arrows (M3.6i) ([8fbd8cb](https://github.com/macandy13/arkham-companion/commit/8fbd8cb57997ce19de575e3e7807f5fbdd55c933))
+* **web:** show a pile's cards as a row with scroll arrows in the encounter dialog ([78ff0b7](https://github.com/macandy13/arkham-companion/commit/78ff0b7f283d1c641f9667313037ad918d586187))
+* **web:** spawn an enemy from a pile where the players tap on the map ([fbb3b1b](https://github.com/macandy13/arkham-companion/commit/fbb3b1b6841a07d04369ad27d03847acf097318b))
+* **web:** spawn an enemy where the players tap on the map (M3.6j) ([d2b4ef2](https://github.com/macandy13/arkham-companion/commit/d2b4ef2367595f5c6adadd6cd64f2b70549dd50e))
+
+
+### Bug fixes
+
+* **engine:** Prey "highest skill" counts the lasting boost ([fa3bd62](https://github.com/macandy13/arkham-companion/commit/fa3bd626029c3492e79b1479c7f7b477489d8f3a))
+* **engine:** tell options for copies of one card apart (M3.7d) ([8c90ae4](https://github.com/macandy13/arkham-companion/commit/8c90ae46b1da0e0737371a19999b3174e9ebec35))
+* **engine:** tell options for copies of one card apart (M3.7d) ([9230736](https://github.com/macandy13/arkham-companion/commit/9230736f7dd6901b66f94c06e1902f8a7fe97778))
+* review findings for group clue costs ([c3d599a](https://github.com/macandy13/arkham-companion/commit/c3d599a25af46dcae38cc9a8f41f8073714097c1))
+* review findings for Herman Collins' Parley ([8086fc9](https://github.com/macandy13/arkham-companion/commit/8086fc9101d8965d2d104036664780397b2f7791))
+* review findings for the Cultist deck ([6c6fa11](https://github.com/macandy13/arkham-companion/commit/6c6fa112706fa9dac8f9a71aac4769a95b918609))
+* **scenarios:** Disrupting the Ritual has no clue requirement; play its action end to end ([0c93c5b](https://github.com/macandy13/arkham-companion/commit/0c93c5be71ac7042d5b2efffc5abd923d2a7c641))
+* **web:** crop the investigator art from the portrait (M3.5g) ([cc5ce86](https://github.com/macandy13/arkham-companion/commit/cc5ce86df8e9e451efc40be045b0d344b2bd9b56))
+* **web:** crop the investigator art from the portrait (M3.5g) ([e385d8c](https://github.com/macandy13/arkham-companion/commit/e385d8c0a6a50249be91803fbd399baf8ebc5069))
+* **web:** download E2E card pictures a few at a time with retries; rename Alder to Roland Banks ([e106f0f](https://github.com/macandy13/arkham-companion/commit/e106f0f71b9a4c4c4dace650cf198a040577235b))
+* **web:** drawn-card notice review fixes (M3.6e2) ([b1c7bbe](https://github.com/macandy13/arkham-companion/commit/b1c7bbecd2b5f0f4697e9612436f72b6e5d46e0c))
+* **web:** hold back encounter draws while adjusting; review fixes (M3.6d) ([aec0d49](https://github.com/macandy13/arkham-companion/commit/aec0d498746233716a1910eabc08aca0ddeb4308))
+* **web:** keep the boost steppers small and show boosted values in the skill test ([26465d3](https://github.com/macandy13/arkham-companion/commit/26465d31065b3d6a6bc6075fc4121a8b097e9dbe))
+* **web:** keep the markers on a dragged pawn; tag the shots that show them ([9ebe132](https://github.com/macandy13/arkham-companion/commit/9ebe13288c227744556585a485ddc5ea19548737))
+* **web:** offer every spawn the rules allow when moving an enemy by hand ([16fa2fb](https://github.com/macandy13/arkham-companion/commit/16fa2fb6b93b2ff0c777f5d28de73eca97759653))
+* **web:** skill plates fill the space beside the art, with a large value and boost ([6c23d32](https://github.com/macandy13/arkham-companion/commit/6c23d32707cca31a0039ec19e48052f135d173da))
+
+
+### Refactoring
+
+* **engine:** a general shuffle setup step instead of shuffling scenario decks ([1963310](https://github.com/macandy13/arkham-companion/commit/196331067d91a7fbadc2cb25ae0c20f2c32fa158))
+* **engine:** build Parley from parleyAction and addToVictoryDisplay ([6ca4238](https://github.com/macandy13/arkham-companion/commit/6ca4238acaca6cc9cc65228d4da968bc42dd0e00))
+* **engine:** card effects gain resources through GainResources; takenAsAction helper ([453c769](https://github.com/macandy13/arkham-companion/commit/453c7697a0d6b2f4765c620e65ca702a8937a57a))
+* **engine:** draw and search as real commands the engine defers to the players ([08cf93c](https://github.com/macandy13/arkham-companion/commit/08cf93c08e55d0b17da15d2a04334722aa06992c))
+* **engine:** one boostedSkills helper for Prey and the view ([59cf8dd](https://github.com/macandy13/arkham-companion/commit/59cf8ddbe5651ea361705696d67ad7c998b89c0d))
+* **engine:** use the pile zone constants in format_board and victory ([56fbc77](https://github.com/macandy13/arkham-companion/commit/56fbc77f060c539072e9211ee00236857aeba61f))
+* resolving view review nits (M3.6e1) ([c50c57f](https://github.com/macandy13/arkham-companion/commit/c50c57f7bb5422f6e20dba7c231685f68f436443))
+* **web:** review nits on the fanned piles ([2ce48ae](https://github.com/macandy13/arkham-companion/commit/2ce48ae5eb8931671414d78eaf1952ff352ecb03))
+* **web:** review nits on the header's encounter piles ([ee67f74](https://github.com/macandy13/arkham-companion/commit/ee67f743512063bc4a1f4da4e595745171a26b57))
+* **web:** review nits on the phone screenshots ([3a29599](https://github.com/macandy13/arkham-companion/commit/3a29599b39a5cf8a04743693174f60c85b37a330))
+* **web:** review nits on the pile strip ([033364b](https://github.com/macandy13/arkham-companion/commit/033364bdfb69d7a54d9b2df2b248bed62cc0a1fd))
+* **web:** Spawn is a cardMoves result; review nits ([2ce8825](https://github.com/macandy13/arkham-companion/commit/2ce88254f31007e5d1a9ffb0924ac0c951710882))
+
+
+### Documentation
+
+* add a clickable phone play screen prototype ([aeebd1a](https://github.com/macandy13/arkham-companion/commit/aeebd1a7acbfb4130ab04a3b2f3a21b62495b05b))
+* sessions resolve their own review threads ([7c7cc2d](https://github.com/macandy13/arkham-companion/commit/7c7cc2d8addb2e60dce784fef341403c42f5057a))
+* the header's encounter piles in the architecture ([c47f345](https://github.com/macandy13/arkham-companion/commit/c47f3458195a7aa9e2058bc2e9c7b4531a0f00de))
+* turn row and GameActions name the resource, draw and play actions ([9d3301e](https://github.com/macandy13/arkham-companion/commit/9d3301efe9d65cfd270b20dfe26accd09b80cbc7))
+
 ## [0.1.9](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.8...arkham-companion-v0.1.9) (2026-10-26)
 
 

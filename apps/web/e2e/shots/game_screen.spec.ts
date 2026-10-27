@@ -4,6 +4,7 @@ import {
   houseOpenedExport,
   investigationOpenExport,
   mythosDrawnExport,
+  pilesFilledExport,
   resumeImportedGame,
   twoMapsExport,
 } from '../fixtures/saved_games';
@@ -152,17 +153,34 @@ test('the encounter deck after two mythos phases, Dissonant Voices on the discar
   ).toBeVisible();
 });
 
-test('the encounter dialog opened on the discard pile after two mythos phases', async ({
+test('the header with its piles fanned: seven cards discarded, the set-aside cards on the scenario card, the Ghoul Priest in the victory display', async ({
   page,
 }) => {
-  await resumeImportedGame(page, 'Two mythos draws', mythosDrawnExport('Two mythos draws'));
+  await resumeImportedGame(page, 'Piles filled', pilesFilledExport('Piles filled'));
 
-  await page
-    .getByRole('button', { name: 'Encounter discard pile, 1 card, Dissonant Voices on top' })
-    .click();
+  await expect(
+    page.getByRole('button', { name: /^Encounter discard pile, 7 cards, .* on top$/ }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('region', { name: 'Scenario' }).getByRole('button', { name: /^Set aside, / }),
+  ).toBeVisible();
+  await expect(
+    page
+      .getByRole('region', { name: 'Victory' })
+      .getByRole('button', { name: 'Victory display, 2 victory points' }),
+  ).toBeVisible();
+});
 
-  const dialog = page.getByRole('dialog', { name: 'Encounter deck' });
-  await expect(dialog.getByRole('listitem').filter({ hasText: 'Dissonant Voices' })).toBeVisible();
+test('the discard pile of seven cards in its dialog, the top card chosen, scroll arrows beside the row', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'Piles filled', pilesFilledExport('Piles filled'));
+
+  await page.getByRole('button', { name: /^Encounter discard pile, 7 cards, / }).click();
+
+  const dialog = page.getByRole('dialog', { name: 'Discard pile (7)' });
+  await expect(dialog.getByRole('button', { name: 'Later cards' })).toBeVisible();
+  await expect(dialog.getByRole('button', { pressed: true })).toBeVisible();
 });
 
 test('Crypt Chill drawn for Roland Banks, its willpower test waiting', async ({ page }) => {

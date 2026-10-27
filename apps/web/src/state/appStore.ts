@@ -2,6 +2,7 @@ import { createStore, type StoreApi } from 'zustand/vanilla';
 import type {
   BoardView,
   Difficulty,
+  EncounterCardView,
   GameId,
   GameState,
   GameStore,
@@ -78,6 +79,11 @@ export interface OpenGame {
    * `dismissDrawnCards`.
    */
   drawnCards?: readonly DrawnCard[];
+  /**
+   * The enemy whose spawn location the players are choosing on the map (`AppState.startSpawn`),
+   * until they tap one or cancel.
+   */
+  spawning?: EncounterCardView;
 }
 
 /** Looks a scenario up by id; `findScenario` in the app, a stub in tests. */
@@ -111,6 +117,10 @@ export interface AppState {
   dismissSkippedEffects(): void;
   /** Clears `current.drawnCards` once the players have read them. */
   dismissDrawnCards(): void;
+  /** Lets the players choose on the map where `enemy` spawns (`current.spawning`). */
+  startSpawn(enemy: EncounterCardView): void;
+  /** Ends choosing a spawn location, after a tap on the map or a cancel. */
+  cancelSpawn(): void;
   /** Renames a saved game and reloads the list. */
   renameGame(gameId: GameId, title: string): Promise<void>;
   /** Copies a saved game under `title` and reloads the list; returns the copy's id. */
@@ -303,6 +313,14 @@ export function createAppStore(
       dismissDrawnCards() {
         const open = get().current;
         if (open?.drawnCards) set({ current: { ...open, drawnCards: undefined } });
+      },
+      startSpawn(enemy) {
+        const open = get().current;
+        if (open) set({ current: { ...open, spawning: enemy } });
+      },
+      cancelSpawn() {
+        const open = get().current;
+        if (open?.spawning) set({ current: { ...open, spawning: undefined } });
       },
       async renameGame(gameId, title) {
         await gameStore.renameGame(gameId, title);

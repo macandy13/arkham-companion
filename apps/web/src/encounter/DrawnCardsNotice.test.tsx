@@ -63,6 +63,7 @@ describe('DrawnCardsNotice', () => {
         ]}
         actions={actionsOn(table)}
         busy={false}
+        onSpawn={() => {}}
         onDismiss={() => {}}
       />,
     );
