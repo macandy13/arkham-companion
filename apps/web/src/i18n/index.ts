@@ -79,6 +79,7 @@ export const resources = {
             'search your deck for a card with the trait {{traits}}, add it to your hand and shuffle your deck',
           searchTop:
             'search the top {{top}} cards of your deck for a card with the trait {{traits}}, add it to your hand and shuffle your deck',
+          play: 'play a card',
           or: ' or ',
         },
         effects: {
@@ -602,6 +603,7 @@ export const resources = {
             'Durchsuche dein Deck nach einer Karte mit dem Merkmal {{traits}}, nimm sie auf die Hand und mische dein Deck',
           searchTop:
             'Durchsuche die obersten {{top}} Karten deines Decks nach einer Karte mit dem Merkmal {{traits}}, nimm sie auf die Hand und mische dein Deck',
+          play: 'Spiele eine Karte',
           or: ' oder ',
         },
         effects: {

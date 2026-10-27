@@ -2,6 +2,7 @@ import { neighbours, requireLocationInPlay, revealEvents } from './board';
 import type { EngineContext } from './cards';
 import type {
   AdjustInvestigator,
+  GainResources,
   HealInvestigator,
   PlayerCardCommand,
   DefeatInvestigator,
@@ -96,10 +97,25 @@ export function handleHealInvestigator(
   ];
 }
 
+/** `GainResources`: adds the resources, rejecting an amount that is not a positive integer. */
+export function handleGainResources(state: GameState, cmd: GainResources): InvestigatorChanged[] {
+  const investigator = activeInvestigator(state, cmd.investigatorId);
+  if (!Number.isInteger(cmd.amount) || cmd.amount <= 0)
+    throw new CommandRejected({ code: 'invalidTokenDelta', delta: cmd.amount });
+  return [
+    {
+      type: 'InvestigatorChanged',
+      investigatorId: investigator.id,
+      stat: 'resources',
+      delta: cmd.amount,
+    },
+  ];
+}
+
 /**
- * `DrawCards` and `SearchDeck`: the engine holds no player cards, so it hands the command to the
- * players (`CommandDeferred`), for an active investigator. Support for player cards would handle
- * them here instead.
+ * `DrawCards`, `SearchDeck` and `PlayCard`: the engine holds no player cards, so it hands the
+ * command to the players (`CommandDeferred`), for an active investigator. Support for player cards
+ * would handle them here instead.
  */
 export function deferToPlayers(
   _ctx: EngineContext,
