@@ -336,26 +336,26 @@ function Attachment({ name, origin: { x, y } }: { name: string; origin: Point })
  */
 function ConnectionSymbol({ symbol }: { symbol: LocationSymbol }) {
   const { t } = useTranslation();
-  // Centred like the details button across the name, so both sit on the name's line.
-  const centre = CONTENT.pawnRadius;
+  // On the name's line, like the printed symbol beside the name.
+  const centre = { x: CONTENT.pawnRadius, y: CONTENT.band / 2 };
   return (
     <g
       role="img"
       aria-label={t('map.connectionSymbol', { symbol: t(`map.symbols.${symbol}`) })}
       data-connection={symbol}
-      transform={`translate(${centre} ${centre})`}
+      transform={`translate(${centre.x} ${centre.y})`}
     >
       <circle r={CONNECTION_RADIUS} />
-      <path d={connectionGlyph(symbol, CONNECTION_RADIUS * CONNECTION_GLYPH_SCALE)} />
+      <path d={connectionGlyph(symbol, CONNECTION_GLYPH_SIZE)} />
     </g>
   );
 }
 
-/** The symbol's disc is smaller than the pieces, like the printed one beside the name. */
-const CONNECTION_RADIUS = CONTENT.pawnRadius * 0.55;
+/** The symbol's disc is a little smaller than the pieces, like the printed one beside the name. */
+const CONNECTION_RADIUS = CONTENT.pawnRadius * 0.75;
 
-/** How much of the disc's radius the glyph spans, so it sits inside the disc like the printed one. */
-const CONNECTION_GLYPH_SCALE = 0.45;
+/** The glyph's reach from the disc's centre: small inside the disc, like the printed one. */
+const CONNECTION_GLYPH_SIZE = CONTENT.pawnRadius * 0.25;
 
 /**
  * The tile's details button, a round button with an "i" in its top right corner, across the name
