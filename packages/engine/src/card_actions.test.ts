@@ -9,6 +9,7 @@ import {
   blankTreachery,
   engagedWith,
   execute,
+  heal,
   addToVictoryDisplay,
   instanceId,
   investigatorId,
@@ -387,6 +388,39 @@ describe('action limits', () => {
       expect(table.board.cardActions(bob)).toHaveLength(bobsActions);
     },
   );
+});
+
+describe('actions that would change nothing', () => {
+  /** The hall's one action heals 3 damage, once per game, like St. Mary's Hospital; alice is there on her turn. */
+  const hospitalHall = (damage: number) =>
+    newGame()
+      .withLocation(
+        hall,
+        blankLocation('hall', {
+          actions: [{ effects: [heal('damage', 3)], limit: { per: 'game' } }],
+        }),
+        { revealed: true },
+      )
+      .withInvestigator(alice, { locationId: hall, health: { max: 9, damage } })
+      .withTurnOf(alice);
+
+  it('neither offers nor accepts healing alice with no damage', () => {
+    const table = PlayTable.start(hospitalHall(0));
+
+    expect(table.board.cardActions(alice)).toEqual([]);
+    expect(rejectionFrom(table.ctx, table.state, useCardAction(alice, hall))).toEqual({
+      code: 'changesNothing',
+      command: 'UseCardAction',
+    });
+  });
+
+  it('offers and heals alice with 1 damage', () => {
+    const table = PlayTable.start(hospitalHall(1));
+
+    expect(table.board.cardActions(alice)).toMatchObject([{ cardId: hall, action: 0 }]);
+    table.play(useCardAction(alice, hall));
+    expect(table.board.investigator(alice).damage).toBe(0);
+  });
 });
 
 describe('action costs', () => {

@@ -7,6 +7,7 @@ import {
   instanceId,
   investigatorId,
   newGame,
+  PlayTable,
   requireInvestigator,
   threatAreaOf,
   resolveValue,
@@ -140,15 +141,16 @@ describe('The Devourer Below card abilities', () => {
 
   describe('Arkham Woods (Quiet Glade)', () => {
     const quietGlade = instanceId('quiet_glade');
-    /** Alice in the Quiet Glade on her turn, with 2 damage and 2 horror. */
-    const aliceInTheGlade = newGame()
-      .withLocation(quietGlade, cardOf('01155'), { revealed: true })
-      .withInvestigator(alice, {
-        locationId: quietGlade,
-        health: { max: 9, damage: 2 },
-        sanity: { max: 9, horror: 2 },
-      })
-      .withTurnOf(alice);
+    /** Alice in the Quiet Glade on her turn, with `damage` and `horror`. */
+    const aliceInTheGlade = (damage: number, horror: number) =>
+      newGame()
+        .withLocation(quietGlade, cardOf('01155'), { revealed: true })
+        .withInvestigator(alice, {
+          locationId: quietGlade,
+          health: { max: 9, damage },
+          sanity: { max: 9, horror },
+        })
+        .withTurnOf(alice);
     const useIt: Command = {
       type: 'UseCardAction',
       investigatorId: alice,
@@ -160,7 +162,7 @@ describe('The Devourer Below card abilities', () => {
       { optionId: 'damage', left: { health: { damage: 1 }, sanity: { horror: 2 } } },
       { optionId: 'horror', left: { health: { damage: 2 }, sanity: { horror: 1 } } },
     ])('heals the 1 $optionId alice picks, once per turn', ({ optionId, left }) => {
-      const { context, state: started } = aliceInTheGlade.start();
+      const { context, state: started } = aliceInTheGlade(2, 2).start();
 
       const state = stateAfter(context, started, useIt, answer(QUIET_GLADE_DECISION, optionId));
 
@@ -168,6 +170,23 @@ describe('The Devourer Below card abilities', () => {
       expect(rejectionFrom(context, state, useIt)).toMatchObject({
         code: 'cardActionLimitReached',
       });
+    });
+
+    it.each([
+      { wounds: 'neither damage nor horror', damage: 0, horror: 0, offered: false },
+      { wounds: '1 horror', damage: 0, horror: 1, offered: true },
+    ])('offers its action to alice with $wounds: $offered', ({ damage, horror, offered }) => {
+      const table = PlayTable.start(aliceInTheGlade(damage, horror));
+
+      expect(table.board.cardActions(alice).length > 0).toBe(offered);
+    });
+
+    it('lets alice pick only the horror when she has no damage', () => {
+      const table = PlayTable.start(aliceInTheGlade(0, 1));
+
+      table.play(useIt);
+
+      expect(table.state.pending).toMatchObject([{ options: [{ id: 'horror' }] }]);
     });
   });
 

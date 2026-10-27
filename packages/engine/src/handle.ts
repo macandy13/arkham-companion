@@ -316,6 +316,12 @@ function resolveCommand(
   const spec = commandSpec(command);
   const before = resolution.state;
   const own = spec.handle(resolution.ctx, before, command);
+  // After the handler, so that its own, more specific rejections (a used-up limit) come first;
+  // a rejected step rejects the command as it would in the real run. No steps, nothing to judge:
+  // an action with no effects is done at the table.
+  const mustChange = spec.mustChangeState?.(command, resolution.ctx, before) ?? [];
+  if (mustChange.length > 0 && dryRun(resolution, mustChange).length === 0)
+    throw new CommandRejected({ code: 'changesNothing', command: command.type });
   if (surgeDraw(own)) budget.encounterCards ??= encounterCardCount(before);
   const continuation = withOrigin(
     withinSurgeLimit(spec.continueWith?.(command, own, resolution.ctx, before) ?? [], budget),
@@ -471,11 +477,12 @@ function resumeHeldAction(resolution: Resolution, held: HeldAction, budget: Trig
 /**
  * An ability's choice ("you must either …") with only the options that can be
  * resolved now: a player who must choose picks an option that can change the
- * game state (RR "Must"), so "spend 1 clue" is no option without a clue. Each
- * option's commands, with the reactions they trigger, get a dry run on the
- * state before the ability's other commands run; one rejection drops the
- * option, although the rule would still allow an option that resolves in part
- * (no Night of the Zealot card has one). A choice with no option left is
+ * game state (RR "Must"), so "spend 1 clue" is no option without a clue, nor
+ * "heal 1 damage" without damage. Each option's commands, with the reactions
+ * they trigger, get a dry run on the state before the ability's other commands
+ * run; one rejection or no event at all drops the option, although the rule
+ * would still allow an option that resolves in part (no Night of the Zealot
+ * card has one). A choice with no option left is
  * dropped. A choice inside a test's outcome is raised by the answer, not here,
  * so it keeps all its options.
  */
@@ -484,24 +491,49 @@ function withResolvableOptions(resolution: Resolution, command: Command): Comman
     return [command];
   const options = command.decision.options.filter((option) => {
     const commands = plainOptionCommands(option);
-    return commands === undefined || canResolve(resolution, commands);
+    // An option with no commands is done at the table (What's Going On?!'s random discard).
+    if (commands === undefined || commands.length === 0) return true;
+    return changesState(resolution, commands.map(followUpStep));
   });
   if (options.length === 0) return [];
   return [{ ...command, decision: { ...command.decision, options } }];
 }
 
-/** Whether `commands` would be accepted now: a dry run on a resolution of its own that is dropped. */
-function canResolve(resolution: Resolution, commands: readonly Command[]): boolean {
-  const { ctx, state } = resolution;
+/** Whether `steps` would be accepted now and change the game state (`dryRun`). */
+function changesState(resolution: Resolution, steps: readonly Step[]): boolean {
   try {
-    run({ ctx, state, events: [] }, commands.map(followUpStep), newBudget(), {
-      resumesStored: false,
-    });
-    return true;
+    return dryRun(resolution, steps).length > 0;
   } catch (error) {
-    // A rejection is the answer here: the option cannot be resolved.
+    // A rejection is the answer here: the steps cannot be resolved.
     if (!(error instanceof CommandRejected)) throw error;
     return false;
+  }
+}
+
+/**
+ * The events `steps` would emit now, on a resolution of their own that is dropped. Throws
+ * `CommandRejected` when they would be rejected.
+ */
+function dryRun(resolution: Resolution, steps: readonly Step[]): readonly Event[] {
+  const dry: Resolution = { ctx: resolution.ctx, state: resolution.state, events: [] };
+  run(dry, steps, newBudget(), { resumesStored: false });
+  return dry.events;
+}
+
+/**
+ * Whether `command` would change the game state where its spec asks for that
+ * (`CommandSpec.mustChangeState`), so the screens offer only actions that do
+ * something. Steps that would be rejected count as a change: whether the
+ * command is allowed at all is for `handle` to say when it is taken.
+ */
+export function changesGameState(ctx: EngineContext, state: GameState, command: Command): boolean {
+  const steps = commandSpec(command).mustChangeState?.(command, ctx, state) ?? [];
+  if (steps.length === 0) return true;
+  try {
+    return dryRun({ ctx, state, events: [] }, steps).length > 0;
+  } catch (error) {
+    if (!(error instanceof CommandRejected)) throw error;
+    return true;
   }
 }
 
