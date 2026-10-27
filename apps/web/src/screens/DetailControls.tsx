@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
-import { range } from '@arkham/util';
+import { assertNever, range } from '@arkham/util';
 import type { DetailTarget } from './useDetailView';
 
 /** Where the detail view is scrolled to: its row, and the card or panel within that row. */
@@ -81,10 +81,9 @@ function useDetailScroll(
         last.row === next.row && last.item === next.item && last.items === next.items ? last : next,
       );
     };
-    const row = element.querySelector<HTMLElement>(target.row === 'cards' ? ROWS[0] : ROWS[2]);
-    const item = row?.querySelector<HTMLElement>(
-      target.row === 'cards' ? `:scope > [data-slot='${target.card}']` : ':scope > [data-focus]',
-    );
+    const row = element.querySelector<HTMLElement>(ROWS[ROW_INDEX[target.row]]);
+    const selector = itemOf(target);
+    const item = selector === undefined ? undefined : row?.querySelector<HTMLElement>(selector);
     row?.scrollIntoView?.({ block: 'start' });
     item?.scrollIntoView?.({ block: 'nearest', inline: 'start' });
     // Scrolling to where the board already is fires no event, so the dots read it once as well.
@@ -96,6 +95,23 @@ function useDetailScroll(
     };
   }, [board, target]);
   return position;
+}
+
+/** Where each row of a `DetailTarget` stands in `ROWS`. */
+const ROW_INDEX = { cards: 0, map: 1, investigators: 2 } as const;
+
+/** The card or panel of its row a target shows, as a selector within the row; the map has none. */
+function itemOf(target: DetailTarget): string | undefined {
+  switch (target.row) {
+    case 'cards':
+      return `:scope > [data-slot='${target.card}']`;
+    case 'map':
+      return undefined;
+    case 'investigators':
+      return `:scope > [data-investigator='${target.investigator}']`;
+    default:
+      return assertNever(target);
+  }
 }
 
 /** The row and the card or panel of the board the players see now, by how far each is scrolled. */

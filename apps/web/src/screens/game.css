@@ -688,6 +688,22 @@
     gap: var(--space-1);
   }
 
+  /* Opens the detail view on the map row, from the corner the map's zoom buttons leave free. */
+  #board:not([data-view]) > #map > button[data-detail='expand'] {
+    position: absolute;
+    z-index: var(--layer-map-controls);
+    inset-block-end: var(--space-2);
+    inset-inline-end: var(--space-2);
+    min-width: var(--button-compact);
+    min-height: var(--button-compact);
+    padding: 0;
+    border-radius: var(--radius-round);
+  }
+
+  #board:not([data-view]) > #map > button[data-detail='expand']::before {
+    mask-image: url('../map/icons/expand.svg');
+  }
+
   /* The track names only the current phase, so the row keeps its buttons on one line. */
   #board:not([data-view]) > #status ol > li:not([aria-current]) {
     position: absolute;
@@ -742,6 +758,67 @@
     width: 100%;
     align-content: center;
     scroll-snap-align: start;
+  }
+
+  /*
+   * The map row: the map between its two strips (MapStrip). The map takes every touch, for panning
+   * and pinching, so the browser never starts scrolling the board before the map's own handlers
+   * claim the touch; a vertical swipe to the next row starts on a strip, which the board scrolls.
+   */
+  #board[data-view='detail'] > #map figure {
+    position: relative;
+    touch-action: none;
+  }
+
+  /* The zoom buttons float over the map's corner, under the upper strip; the tabs take a line. */
+  #board[data-view='detail'] > #map > [role='tablist'] {
+    position: static;
+    align-self: start;
+    margin: var(--space-2);
+  }
+
+  #board[data-view='detail'] > #map > button[data-strip] {
+    flex: none;
+    flex-wrap: wrap;
+    align-self: stretch;
+    gap: var(--space-1) var(--space-2);
+    padding: var(--space-2);
+    border: none;
+    border-radius: 0;
+    font-size: var(--font-size-note);
+  }
+
+  /* Clear of the × at the top left. */
+  #board[data-view='detail'] > #map > button[data-strip='cards'] {
+    padding-inline-start: calc(var(--touch-target) + var(--space-3));
+  }
+
+  #board[data-view='detail'] > #map > button[data-strip] > span {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    white-space: nowrap;
+  }
+
+  #board[data-view='detail'] > #map > button[data-strip] > :is([data-stat], [data-skill])::before {
+    content: '';
+    width: var(--stat-icon-size);
+    height: var(--stat-icon-size);
+    background: var(--stat-colour, var(--color-text));
+    mask: var(--stat-icon, var(--skill-icon)) center / contain no-repeat;
+  }
+
+  #board[data-view='detail'] > #map > button[data-strip] > [data-stat='round']::before {
+    content: none;
+  }
+
+  #board[data-view='detail'] > #map > button[data-strip] > [data-stat='cards'] {
+    --stat-icon: url('../investigators/icons/token.svg');
+    --stat-colour: var(--color-card-encounter);
+  }
+
+  #board[data-view='detail'] > #map > button[data-strip] > [data-stat='actions'] {
+    --stat-icon: url('../symbols/action.svg');
   }
 
   #board[data-view='detail'] > #notices {

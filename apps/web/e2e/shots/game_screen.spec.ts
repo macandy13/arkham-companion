@@ -13,7 +13,7 @@ import {
 
 // Situations on the game screen, each photographed as it ends (`@shot`, coding guidelines §3).
 
-test('the house map with Roland Banks in the Hallway', async ({ page }) => {
+test('the house map with Roland Banks in the Hallway', { tag: '@shot' }, async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   const hallway = page
@@ -264,15 +264,11 @@ test('the Parlor tile printing its Resign', async ({ page }) => {
   await expect(parlor.getByText('Resign.')).toBeVisible();
 });
 
-test(
-  'Lita Chantler under Roland Banks’ card, in their control',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'Lita in control', litaControlledExport('Lita in control'));
+test('Lita Chantler under Roland Banks’ card, in their control', async ({ page }) => {
+  await resumeImportedGame(page, 'Lita in control', litaControlledExport('Lita in control'));
 
-    const cardsInPlay = page
-      .getByRole('region', { name: 'Roland Banks' })
-      .getByRole('list', { name: 'Cards in play' });
-    await expect(cardsInPlay.getByRole('listitem')).toHaveText('Lita Chantler');
-  },
-);
+  const cardsInPlay = page
+    .getByRole('region', { name: 'Roland Banks' })
+    .getByRole('list', { name: 'Cards in play' });
+  await expect(cardsInPlay.getByRole('listitem')).toHaveText('Lita Chantler');
+});
