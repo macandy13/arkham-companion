@@ -31,6 +31,7 @@ UI changes are easier to review as a recording than as a diff. E2E specs tagged 
 ## On `main`
 
 - **Deploy** (`deploy.yml`): builds and publishes to the root of the `gh-pages` branch → https://macandy13.github.io/arkham-companion/
+- **PR sync** (`pr-sync.yml`): on every push to `main`, and whenever a PR branch moves, test-merges each open PR's base into its head. A conflict labels the PR `needs-rebase` and comments the conflicting files once; the Claude session watching the PR then merges `main` in and resolves them. A clean merge removes the label, and is pushed only when the optional repo secret `PR_SYNC_TOKEN` exists (pushes with `GITHUB_TOKEN` start no CI, which would leave the required checks missing). Skips forks, Dependabot and Release Please branches.
 - **Release Please** (`release.yml`): keeps a release PR with version bump and `CHANGELOG.md` from the Conventional Commit titles. Merging it tags the release. Release PRs are opened by the Actions bot, so CI does not run on them – merge them with the admin bypass.
   - **Versions stay below 1.0 until the app is declared ready by hand.** `release-please-config.json` sets `"versioning": "always-bump-patch"`, so every release bumps only the patch number, whatever the commit types (a `feat!` too). A new minor version (0.2.0, 0.3.0 …) and 1.0.0 are chosen by hand when a version step in [product.md](product.md#versions) is reached: add `"release-as": "<version>"` to the config in a PR, merge the release PR it produces, then remove `release-as` again (otherwise every later release keeps that version).
 
@@ -52,4 +53,5 @@ UI changes are easier to review as a recording than as a diff. E2E specs tagged 
 - Pages → Source: **Deploy from a branch**, `gh-pages` / root.
 - Actions → General → **Allow GitHub Actions to create and approve pull requests** (Release Please).
 - Merge button: **squash merging only**, default commit message **Pull request title**; auto-delete head branches.
+- Optional: secret **`PR_SYNC_TOKEN`**, a fine-grained token for this repo with Contents and Workflows: read and write (a merge of `main` can bring in workflow changes), so PR sync pushes clean merges of `main` (each push runs the PR's full CI).
 - Ruleset on `main`: require PR, require status checks `check`, `e2e`, `title`; block force pushes; admins may bypass (for release PRs).
