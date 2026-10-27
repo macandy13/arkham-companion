@@ -383,10 +383,16 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     table.moveTo(daisy, byName('Graveyard'));
     table.answer(byName('Graveyard'), 'pass');
     expect(table.board.enemy(byName(herman))).toMatchObject({ engagedWith: daisy });
+    const hermanId = table.board.enemyId(byName(herman));
     table.useCardAction(daisy, byName(herman));
     expect(table.events).toContainEqual({
       type: 'CommandDeferred',
-      command: { type: 'DiscardFromHand', investigatorId: daisy, amount: 4 },
+      command: {
+        type: 'DiscardFromHand',
+        investigatorId: daisy,
+        amount: 4,
+        source: { cardId: hermanId, window: 'action' },
+      },
     });
     table.moveTo(daisy, byName('Rivertown'));
     table.endTurn(daisy);
@@ -522,7 +528,12 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     expect(table.board.investigator(roland)).toMatchObject({ resources: 15 });
     expect(table.events).toContainEqual({
       type: 'CommandDeferred',
-      command: { type: 'DrawCards', investigatorId: roland, amount: 1 },
+      command: {
+        type: 'DrawCards',
+        investigatorId: roland,
+        amount: 1,
+        source: { cardId: instanceId(`${MIDNIGHT_MASKS_CODES.yourHouse}#1`), window: 'action' },
+      },
     });
     table.startTurn(daisy);
     table.useCardAction(daisy, byName('Time Is Running Short'));

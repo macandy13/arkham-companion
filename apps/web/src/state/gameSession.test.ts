@@ -253,6 +253,31 @@ describe('skippedEffects', () => {
     ]);
   });
 
+  it('names the card whose ability asked alder to draw', () => {
+    const southside = instanceId('southside');
+    const alder = investigatorId('alder');
+    const { context, state } = newGame()
+      .withLocation(southside, blankLocation('southside', { name: 'Southside' }), {
+        revealed: true,
+      })
+      .withInvestigator(alder, { locationId: southside, name: 'Alder Ashcroft' })
+      .start();
+    const draw = {
+      type: 'DrawCards',
+      investigatorId: alder,
+      amount: 3,
+      source: { cardId: southside, window: 'action' },
+    } as const;
+
+    const notices = skippedEffects({ ...context, scenario: theGathering }, state, [
+      { type: 'CommandDeferred', command: draw },
+    ]);
+
+    expect(notices).toEqual([
+      { kind: 'deferred', card: 'Southside', investigator: 'Alder Ashcroft', command: draw },
+    ]);
+  });
+
   it('leaves out the play action alder took at the table, which needs no reminder', () => {
     const southside = instanceId('southside');
     const alder = investigatorId('alder');

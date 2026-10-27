@@ -145,10 +145,11 @@ function groupClueAmount(state: GameState, amount: ScaledValue): number {
 /**
  * The events that pay `cost` for `investigator`'s action: their own resources or clues, a group
  * payment by `spend` (default: `defaultCluePayments`), or a discard from their hand left to the
- * players. `spend` is for group costs only.
+ * players, naming `cardId`, the card whose action it is. `spend` is for group costs only.
  */
 function costPayment(
   state: GameState,
+  cardId: InstanceId,
   investigator: Investigator,
   cost: ActionCost | undefined,
   spend: readonly ClueSpend[] | undefined,
@@ -183,6 +184,7 @@ function costPayment(
             type: 'DiscardFromHand',
             investigatorId: investigator.id,
             amount: cost.amount,
+            source: { cardId, window: 'action' },
           },
         },
       ];
@@ -448,7 +450,7 @@ export function handleUseCardAction(
     action: cmd.action,
     investigatorId: investigator.id,
   };
-  return [used, ...costPayment(state, investigator, cost, cmd.spend)];
+  return [used, ...costPayment(state, card.id, investigator, cost, cmd.spend)];
 }
 
 /** The effects of the action `cmd` takes, as steps in its `action` window. */

@@ -26,7 +26,13 @@ export function SkippedEffectsNotice({
         missing: effect.missing.join(', '),
       });
     const what = describeCommand(effect.command);
-    return t('skipped.deferred.step', { investigator: effect.investigator, what });
+    if (effect.card === undefined)
+      return t('skipped.deferred.step', { investigator: effect.investigator, what });
+    return t('skipped.deferred.cardStep', {
+      card: effect.card,
+      investigator: effect.investigator,
+      what,
+    });
   };
 
   const describeCommand = (command: PlayerCardCommand): string => {
