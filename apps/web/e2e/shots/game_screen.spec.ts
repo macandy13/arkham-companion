@@ -261,3 +261,10 @@ test(
     ).toBeVisible();
   },
 );
+
+test('the Parlor tile printing its Resign', { tag: '@shot' }, async ({ page }) => {
+  await resumeImportedGame(page, 'In the Parlor', inTheParlorExport('In the Parlor'));
+
+  const parlor = page.getByRole('figure', { name: 'House' }).getByRole('group', { name: 'Parlor' });
+  await expect(parlor.getByText('Resign.')).toBeVisible();
+});

@@ -344,6 +344,33 @@ describe('locations', () => {
     ]);
   });
 
+  describe("the parlor's printed actions", () => {
+    const parlor = instanceId('parlor');
+    const parlorRevealed = (revealed: boolean) =>
+      newGame()
+        .withLocation(
+          parlor,
+          blankLocation('parlor', { actions: [resignAction(), { free: true, effects: [] }] }),
+          { revealed },
+        )
+        .withInvestigator(alice)
+        .start();
+
+    it('are printed on its revealed side, whoever may take them', () => {
+      const { context, state } = parlorRevealed(true);
+
+      expect(boardView(context, state).location(parlor)).toMatchObject({
+        printedActions: [{ designator: 'resign' }, { free: true }],
+      });
+    });
+
+    it('are not printed on its unrevealed side', () => {
+      const { context, state } = parlorRevealed(false);
+
+      expect(boardView(context, state).location(parlor)).not.toHaveProperty('printedActions');
+    });
+  });
+
   it('reads the doom on a location and a shroud that its attachments raise', () => {
     const { context, state } = house
       .withLocation(instanceId('cellar'), blankLocation('cellar', { shroud: 2 }), {

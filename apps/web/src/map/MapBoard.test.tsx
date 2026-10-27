@@ -111,6 +111,31 @@ describe('MapBoard', () => {
     expect(within(tile('attic')).getByText('Unrevealed')).toBeTruthy();
   });
 
+  it("prints the parlor's Resign and free action on its tile, whoever's turn it is", () => {
+    const parlor = instanceId('parlor');
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(
+          parlor,
+          blankLocation('parlor', { actions: [resignAction(), { free: true, effects: [] }] }),
+          { revealed: true },
+        )
+        .withInvestigator(alder),
+    );
+
+    render(
+      <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+    );
+
+    const printed = within(tile('parlor'))
+      .getAllByRole('paragraph')
+      .map((line) => [within(line).getByRole('img').getAttribute('aria-label'), line.textContent]);
+    expect(printed).toEqual([
+      ['Action', ' Resign.'],
+      ['Free', ' Action.'],
+    ]);
+  });
+
   describe('a location with a picture of its side', () => {
     // jsdom loads no images, so each test fires the picture's load or error itself.
     const withCellar = house.withLocation(

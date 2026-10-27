@@ -148,6 +148,7 @@ export const resources = {
         unrevealed: 'Unrevealed',
         doom: 'Doom {{count}}',
         attached: 'Attached: {{card}}',
+        printedAction: '{{action}}.',
         engagedWith: 'engaged with {{investigator}}',
         lead: 'lead investigator',
         onTurn: 'their turn',
@@ -322,6 +323,8 @@ export const resources = {
         agility: 'Agility',
         wild: 'Wild',
         per_investigator: 'per investigator',
+        action: 'Action',
+        free: 'Free',
       },
       investigators: {
         title: 'Investigators',
@@ -733,6 +736,7 @@ export const resources = {
         unrevealed: 'Unaufgedeckt',
         doom: 'Verderben {{count}}',
         attached: 'Angehängt: {{card}}',
+        printedAction: '{{action}}.',
         engagedWith: 'in einen Kampf verwickelt mit {{investigator}}',
         lead: 'Ermittlungsleiter',
         onTurn: 'am Zug',
@@ -907,6 +911,8 @@ export const resources = {
         agility: 'Geschick',
         wild: 'Joker',
         per_investigator: 'pro Ermittler',
+        action: 'Aktion',
+        free: 'Frei',
       },
       investigators: {
         title: 'Ermittler',
