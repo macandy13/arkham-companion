@@ -53,5 +53,5 @@ UI changes are easier to review as a recording than as a diff. E2E specs tagged 
 - Pages → Source: **Deploy from a branch**, `gh-pages` / root.
 - Actions → General → **Allow GitHub Actions to create and approve pull requests** (Release Please).
 - Merge button: **squash merging only**, default commit message **Pull request title**; auto-delete head branches.
-- Optional: secret **`PR_SYNC_TOKEN`**, a fine-grained token for this repo with Contents: read and write, so PR sync pushes clean merges of `main` (each push runs the PR's full CI).
+- Optional: secret **`PR_SYNC_TOKEN`**, a fine-grained token for this repo with Contents and Workflows: read and write (a merge of `main` can bring in workflow changes), so PR sync pushes clean merges of `main` (each push runs the PR's full CI).
 - Ruleset on `main`: require PR, require status checks `check`, `e2e`, `title`; block force pushes; admins may bypass (for release PRs).

@@ -7,7 +7,7 @@ name: PR sync
 #   comment wakes the Claude session that watches the PR, which merges main in and resolves
 #   them (CLAUDE.md, "Workflow for tasks").
 # - Clean: removes the label. With the repo secret PR_SYNC_TOKEN (a fine-grained token with
-#   contents: write) it also pushes the merge commit, so CI checks the PR against current
+#   contents and workflows: write) it also pushes the merge commit, so CI checks the PR against current
 #   main. Without it clean branches are left alone: pushes made with GITHUB_TOKEN start no
 #   workflows, so the new head would lack the required checks and block the merge, while an
 #   unpushed clean branch still merges.
