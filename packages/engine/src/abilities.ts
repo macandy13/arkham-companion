@@ -1,5 +1,12 @@
 import { assertNever, range, shallowEqual } from '@arkham/util';
-import { cardStats, resolveValue, type EngineContext, type ScaledValue, type Trait } from './cards';
+import {
+  cardStats,
+  resolveValue,
+  type CardStats,
+  type EngineContext,
+  type ScaledValue,
+  type Trait,
+} from './cards';
 import type { Command, EncounterMatch, ResolveEffect, TestSkill } from './commands';
 import { cardsInPlay } from './doom';
 import { cardOptionLabels } from './decisions';
@@ -1037,7 +1044,8 @@ export function whenEnemyDefeated(enemy: CardCode, ...effects: AbilityEffect[]):
  * "Objective – If there are 2 clues per investigator on this Act, advance": `effects` resolve
  * once tokens placed on the card bring it to `atLeast` tokens of `token`, written
  * `whenTokensOnSelf('clue', perInvestigator(2), advanceAct())`. Checked as tokens arrive
- * (`tokensPlaced`), so it fires on the placement that reaches the count.
+ * (`tokensPlaced`), so it fires on the placement that reaches the count; once, as advancing
+ * clears the act's tokens and every token-placing command emits one `TokensChanged` per card.
  */
 export function whenTokensOnSelf(
   token: TokenKind,
@@ -1049,6 +1057,18 @@ export function whenTokensOnSelf(
     condition: { kind: 'tokensOnSelf', token, atLeast },
     effects,
   };
+}
+
+/**
+ * The count of `token` a card's objective on its own tokens (`whenTokensOnSelf`) waits for, if it
+ * has one: the act's threshold as the board shows it (Disrupting the Ritual's 2 clues per
+ * investigator).
+ */
+export function tokenObjective(stats: CardStats, token: TokenKind): ScaledValue | undefined {
+  const objective = (stats.abilities ?? [])
+    .map((ability) => ability.condition)
+    .find((condition) => condition?.kind === 'tokensOnSelf' && condition.token === token);
+  return objective?.kind === 'tokensOnSelf' ? objective.atLeast : undefined;
 }
 
 /**

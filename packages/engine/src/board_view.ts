@@ -1,16 +1,9 @@
 import { assertNever, listIfAny } from '@arkham/util';
 import { isConnectionOpen, neighbours } from './board';
+import { tokenObjective } from './abilities';
 import { cardActionsOfferedTo, type OfferedCardAction } from './card_actions';
 import { effectiveValue } from './card_values';
-import {
-  cardStats,
-  resolveValue,
-  type CardStats,
-  type CardType,
-  type EngineContext,
-  type ScaledValue,
-  type Trait,
-} from './cards';
+import { cardStats, resolveValue, type CardType, type EngineContext, type Trait } from './cards';
 import { optionName } from './describe_decision';
 import type { Command } from './commands';
 import { doomInPlay, isInPlay } from './doom';
@@ -976,7 +969,7 @@ function actView(ctx: EngineContext, state: GameState): ActView | undefined {
   const act = currentCard(state, 'act');
   if (!act) return undefined;
   const stats = cardStats(ctx.cards, act.code);
-  const threshold = clueObjective(stats) ?? stats.clues;
+  const threshold = tokenObjective(stats, 'clue') ?? stats.clues;
   return {
     name: nameOf(ctx, act),
     ...(stats.imageSrc === undefined ? {} : { image: stats.imageSrc }),
@@ -985,18 +978,6 @@ function actView(ctx: EngineContext, state: GameState): ActView | undefined {
       ? {}
       : { threshold: resolveValue(threshold, state.meta.playerCount) }),
   };
-}
-
-/**
- * The clues an act's objective on its own clue tokens counts to (`whenTokensOnSelf`): the act's
- * threshold ahead of its clue requirement, so an act without one shows its progress all the same
- * (Disrupting the Ritual).
- */
-function clueObjective(stats: CardStats): ScaledValue | undefined {
-  const objective = (stats.abilities ?? [])
-    .map((ability) => ability.condition)
-    .find((condition) => condition?.kind === 'tokensOnSelf' && condition.token === 'clue');
-  return objective?.kind === 'tokensOnSelf' ? objective.atLeast : undefined;
 }
 
 function decisionView(ctx: EngineContext, state: GameState, decision: Decision): DecisionView {

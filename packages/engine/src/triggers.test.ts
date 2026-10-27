@@ -1391,7 +1391,7 @@ describe('objectives on the current agenda and act', () => {
   });
 });
 
-describe('objectives on the card`s own tokens', () => {
+describe("objectives on a card's own tokens", () => {
   /** "If there are 2 clues on this Act, advance." */
   const twoClueAct = blankAct('two_clue_act', {
     abilities: [whenTokensOnSelf('clue', fixed(2), advanceAct())],
