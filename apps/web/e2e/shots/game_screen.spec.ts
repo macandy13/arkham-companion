@@ -12,7 +12,7 @@ import {
 
 // Situations on the game screen, each photographed as it ends (`@shot`, coding guidelines §3).
 
-test('the house map with Roland Banks in the Hallway', async ({ page }) => {
+test('the house map with Roland Banks in the Hallway', { tag: '@shot' }, async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   const hallway = page
@@ -29,27 +29,29 @@ test('map tabs for the Study and the house, the house chosen', async ({ page }) 
   await expect(page.getByRole('tabpanel', { name: 'House' })).toBeVisible();
 });
 
-test('Roland Banks with four treacheries and the Ghoul Priest, scrolled on to the Ghoul Priest', async ({
-  page,
-}) => {
-  await resumeImportedGame(
-    page,
-    'Roland Banks threatened',
-    rolandThreatenedExport('Roland Banks threatened'),
-  );
+test(
+  'Roland Banks with four treacheries and the Ghoul Priest, scrolled on to the Ghoul Priest',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(
+      page,
+      'Roland Banks threatened',
+      rolandThreatenedExport('Roland Banks threatened'),
+    );
 
-  const roland = page.getByRole('region', { name: 'Roland Banks' });
-  const threatArea = roland.getByRole('list', { name: 'Threat area' });
-  const ghoulPriest = threatArea.getByRole('listitem', {
-    name: 'Ghoul Priest, 3 of 5 health left, 2 damage',
-  });
-  await expect(threatArea.getByRole('listitem')).toHaveCount(5);
-  await expect(ghoulPriest).not.toBeInViewport({ ratio: 1 });
+    const roland = page.getByRole('region', { name: 'Roland Banks' });
+    const threatArea = roland.getByRole('list', { name: 'Threat area' });
+    const ghoulPriest = threatArea.getByRole('listitem', {
+      name: 'Ghoul Priest, 3 of 5 health left, 2 damage',
+    });
+    await expect(threatArea.getByRole('listitem')).toHaveCount(5);
+    await expect(ghoulPriest).not.toBeInViewport({ ratio: 1 });
 
-  await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
+    await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
 
-  await expect(ghoulPriest).toBeInViewport({ ratio: 1 });
-});
+    await expect(ghoulPriest).toBeInViewport({ ratio: 1 });
+  },
+);
 
 test('the Hallway’s details, its card with Roland Banks on it, on Roland Banks’ turn', async ({
   page,
@@ -245,7 +247,8 @@ test('the attack of opportunity Roland Banks provokes by taking a resource', asy
 test('the Parlor’s details with its Resign among Roland Banks’ card actions', async ({ page }) => {
   await resumeImportedGame(page, 'In the Parlor', inTheParlorExport('In the Parlor'));
 
-  await page.getByRole('figure', { name: 'House' }).getByRole('group', { name: 'Parlor' }).click();
+  // On a phone the investigator panel lies over the Parlor's tile, so the keyboard opens it.
+  await page.getByRole('button', { name: 'Details of Parlor' }).press('Enter');
 
   const parlor = page.getByRole('dialog', { name: 'Parlor' });
   await expect(
@@ -253,4 +256,11 @@ test('the Parlor’s details with its Resign among Roland Banks’ card actions'
       .getByRole('region', { name: 'Card actions' })
       .getByRole('button', { name: 'Resign · Parlor' }),
   ).toBeVisible();
+});
+
+test('the Parlor tile printing its Resign', async ({ page }) => {
+  await resumeImportedGame(page, 'In the Parlor', inTheParlorExport('In the Parlor'));
+
+  const parlor = page.getByRole('figure', { name: 'House' }).getByRole('group', { name: 'Parlor' });
+  await expect(parlor.getByText('Resign.')).toBeVisible();
 });

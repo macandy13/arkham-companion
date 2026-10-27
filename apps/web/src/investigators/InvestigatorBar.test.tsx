@@ -316,6 +316,146 @@ describe('InvestigatorBar', () => {
     });
   });
 
+  describe('the focused panel and the other investigators’ avatars, for a phone', () => {
+    const alderAndBrook = () =>
+      PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'), { revealed: true })
+          .withInvestigator(alder, { locationId: study })
+          .withInvestigator(brook, { locationId: study }),
+      );
+
+    /** The names on the panels the phone shows (`data-focus`). */
+    const focused = () =>
+      screen
+        .getAllByRole('region')
+        .filter((region) => region.hasAttribute('data-focus'))
+        .map((region) => within(region).getByRole('heading').textContent);
+
+    const avatars = () =>
+      within(screen.getByRole('list', { name: 'Other investigators' }))
+        .getAllByRole('button')
+        .map((avatar) => avatar.getAttribute('aria-label'));
+
+    it.each([
+      {
+        situation: 'outside a turn, the lead investigator Alder',
+        turnOf: undefined,
+        shown: 'alder',
+        others: ['Show brook'],
+      },
+      {
+        situation: 'on Brook’s turn, Brook',
+        turnOf: brook,
+        shown: 'brook',
+        others: ['Show alder'],
+      },
+    ])('focuses $situation, the other one as an avatar', ({ turnOf, shown, others }) => {
+      const table = alderAndBrook();
+      if (turnOf) {
+        table.nextPhase();
+        table.startTurn(turnOf);
+      }
+
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      expect(focused()).toEqual([shown]);
+      expect(avatars()).toEqual(others);
+    });
+
+    it('focuses the investigator whose avatar is tapped, until the turn changes', () => {
+      const table = alderAndBrook();
+      table.nextPhase();
+      table.startTurn(alder);
+      const { rerender } = render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'Show brook' }));
+      const afterTap = focused();
+      table.endTurn(alder);
+      table.startTurn(brook);
+      table.endTurn(brook);
+      rerender(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      expect(afterTap).toEqual(['brook']);
+      expect(focused()).toEqual(['alder']);
+    });
+
+    it('brings the turn investigator back to the front when their turn comes round again', () => {
+      const table = alderAndBrook();
+      table.nextPhase();
+      table.startTurn(alder);
+      const { rerender } = render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'Show brook' }));
+      table.endTurn(alder);
+      table.startTurn(brook);
+      table.endTurn(brook);
+      table.nextPhase();
+      table.nextPhase();
+      table.nextPhase();
+      table.nextPhase();
+      table.startTurn(alder);
+      rerender(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      expect(table.board.round).toBe(2);
+      expect(focused()).toEqual(['alder']);
+    });
+
+    it('shows no avatars in a solo game', () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'))
+          .withInvestigator(alder, { locationId: study }),
+      );
+
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      expect(screen.queryByRole('list', { name: 'Other investigators' })).toBeNull();
+    });
+  });
+
   describe('the steppers, while adjusting', () => {
     // Alder has 2 damage of 7 health, 2 horror of 6 sanity and 3 resources.
     const hurtAlder = newGame()

@@ -5,8 +5,12 @@ import {
   advanceActionOf,
   cardActionsOfferedTo,
   cluesToAdvance,
+  printedActions,
   type OfferedCardAction,
+  type PrintedActionView,
 } from './card_actions';
+
+export type { PrintedActionView };
 import { effectiveValue } from './card_values';
 import {
   cardStats,
@@ -167,6 +171,12 @@ export type LocationView = LocationViewBase &
         revealed: true;
         /** Its shroud now, constant abilities included (`effectiveValue`). */
         shroud: number;
+        /**
+         * The action abilities its revealed side prints ("[action] Resign."), whoever may take
+         * them, in printed order, for drawing on the card; what the turn investigator may take
+         * now is `BoardView.cardActions`. Absent when it prints none.
+         */
+        printedActions?: readonly PrintedActionView[];
       }
     | { revealed: false }
   );
@@ -929,7 +939,7 @@ function enemyView(ctx: EngineContext, state: GameState, enemy: CardInstance): E
 
 function locationView(ctx: EngineContext, state: GameState, location: CardInstance): LocationView {
   const present = state.investigators.filter((inv) => inv.locationId === location.id);
-  const { imageSrc, backImageSrc } = cardStats(ctx.cards, location.code);
+  const { imageSrc, backImageSrc, actions } = cardStats(ctx.cards, location.code);
   const image = location.faceUp ? imageSrc : backImageSrc;
   return {
     id: location.id,
@@ -937,7 +947,11 @@ function locationView(ctx: EngineContext, state: GameState, location: CardInstan
     map: mapOf(location),
     ...(image === undefined ? {} : { image }),
     ...(location.faceUp
-      ? { revealed: true as const, shroud: effectiveValue(ctx, state, location, 'shroud') }
+      ? {
+          revealed: true as const,
+          shroud: effectiveValue(ctx, state, location, 'shroud'),
+          ...listIfAny('printedActions', printedActions(actions ?? [])),
+        }
       : { revealed: false as const }),
     clues: location.tokens.clue ?? 0,
     ...(location.tokens.doom ? { doom: location.tokens.doom } : {}),

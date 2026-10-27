@@ -382,6 +382,11 @@
   opacity: 1;
 }
 
+/* The other investigators' avatars show only on a phone, which has room for one panel. */
+#board > #investigators > ul {
+  display: none;
+}
+
 #investigators button[data-icon='investigate']::before {
   mask-image: url('./icons/investigate.svg');
 }
@@ -513,4 +518,115 @@
 
 #investigators button[data-icon='close']::before {
   mask-image: url('./icons/close.svg');
+}
+
+/*
+ * A phone held upright (tokens.css shrinks the counters and skills with the same query): one
+ * panel, the focused investigator's (`data-focus`), across the width under the map, with the
+ * others as round avatars along its top. The card drops its art window, so the skills and the
+ * counters each take a row.
+ */
+@media (orientation: portrait) and (max-width: 40rem) {
+  #board > #investigators {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-1);
+    padding-block: var(--space-1);
+  }
+
+  #board > #investigators > section {
+    width: 100%;
+  }
+
+  #board > #investigators > section:not([data-focus]) {
+    display: none;
+  }
+
+  #board > #investigators > ul {
+    display: flex;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  #board > #investigators > ul > li {
+    padding: 0;
+    border: none;
+    background: none;
+  }
+
+  /* The initial and the picture share the disc; the picture covers the initial once it loads. */
+  #board > #investigators > ul > li > button {
+    display: grid;
+    grid-template: 1fr / 1fr;
+    place-items: center;
+    background: var(--color-card-face);
+    color: var(--color-card-text);
+    font-family: var(--font-family-display);
+    font-size: var(--font-size-subtitle);
+    width: var(--investigator-avatar-size);
+    height: var(--investigator-avatar-size);
+    min-width: 0;
+    padding: 0;
+    border: var(--border-width) solid var(--color-card-edge);
+    border-radius: var(--radius-round);
+    overflow: hidden;
+  }
+
+  /* An investigator whose turn it is stays marked while another one is in front. */
+  #board > #investigators > ul > li[data-turn] > button {
+    box-shadow: var(--turn-glow);
+  }
+
+  #board > #investigators > ul > li > button > * {
+    grid-area: 1 / 1;
+  }
+
+  #board > #investigators > ul > li > button > picture {
+    position: relative;
+    place-self: stretch;
+  }
+
+  #board > #investigators > ul > li > button > picture:not([data-picture]) {
+    visibility: hidden;
+  }
+
+  #board > #investigators > ul > li > button > picture > img {
+    position: absolute;
+    width: calc(100% / var(--investigator-art-width));
+    max-width: none;
+    left: calc(var(--investigator-art-x) / var(--investigator-art-width) * -100%);
+    top: calc(var(--investigator-art-y) / var(--investigator-art-height) * -100%);
+  }
+
+  #investigators [data-card='investigator'] {
+    grid-template:
+      'name' auto
+      'skills' auto
+      'stats' auto /
+      1fr;
+    gap: var(--space-1);
+    padding-bottom: var(--space-1);
+  }
+
+  #investigators [data-card='investigator'] > picture {
+    display: none;
+  }
+
+  #investigators [data-card='investigator'] > ul {
+    margin-inline: var(--space-2);
+  }
+
+  #investigators [data-card='investigator'] > ul > li > button:first-child {
+    flex-wrap: nowrap;
+    gap: var(--space-1);
+    padding: 0;
+    font-size: var(--font-size-body);
+  }
+
+  #investigators [data-card='investigator'] > ul > li > button:first-child::before {
+    flex-basis: var(--skill-plate-icon-size);
+    width: var(--skill-plate-icon-size);
+  }
 }

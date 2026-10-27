@@ -99,6 +99,21 @@ export const ART_WINDOW = {
 export const NAME_WIDTH = TILE.width - 2 * (2 * CONTENT.pawnRadius + CONTENT.pawnGap);
 
 /**
+ * Where a tile prints its card text (its actions): the text box under the art, as wide as the name
+ * so it clears the shroud and clue tokens, and above the row of pieces along the bottom edge.
+ */
+export const TEXT_BOX = (() => {
+  const top = ART_WINDOW.y + ART_WINDOW.height + CONTENT.pawnGap;
+  const piecesTop = TILE.height - CONTENT.inset - 2 * CONTENT.pawnRadius;
+  return {
+    x: (TILE.width - NAME_WIDTH) / 2,
+    y: top,
+    width: NAME_WIDTH,
+    height: piecesTop - CONTENT.pawnGap - top,
+  } as const;
+})();
+
+/**
  * How much a name `width` units wide at its normal size must shrink to fit `room` units: 1 when it
  * fits, so short names keep their size and only long ones get smaller.
  */
