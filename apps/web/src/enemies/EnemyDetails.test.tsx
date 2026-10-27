@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   blankEnemy,
@@ -175,6 +175,41 @@ describe('EnemyDetails', () => {
       expect(table.board.investigator(alder)).toMatchObject({ actions: left });
     },
   );
+
+  it("parleys with the cultist through its card's action on alder's turn, closing first", async () => {
+    const cultist = instanceId('cultist');
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withInvestigator(alder, { locationId: study })
+        .withCard(
+          cultist,
+          blankEnemy('cultist', { actions: [{ designator: 'parley', effects: [] }] }),
+          engagedWith(alder),
+        )
+        .withTurnOf(alder),
+    );
+    const onClose = vi.fn();
+    const enemy = table.board.enemiesEngagedWith(alder)[0];
+    if (!enemy) throw new Error('the cultist is engaged with alder');
+    render(
+      <EnemyDetails
+        board={table.board}
+        enemy={enemy}
+        actions={actionsOn(table)}
+        busy={false}
+        onClose={onClose}
+      />,
+    );
+
+    fireEvent.click(
+      within(group('Card actions')).getByRole('button', { name: 'Parley · cultist' }),
+    );
+    await act(async () => {});
+
+    expect(onClose).toHaveBeenCalled();
+    expect(table.board.investigator(alder)).toMatchObject({ actions: 2 });
+  });
 
   it('offers only the card effects outside an investigator turn', () => {
     renderGhoulDetails(PlayTable.start(ghoulOnAlder));

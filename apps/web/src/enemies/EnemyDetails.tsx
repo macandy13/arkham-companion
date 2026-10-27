@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BoardView, MapEnemyView } from '@arkham/engine';
-import { ActionButton, ActionGroup } from '../screens/ActionRow';
+import { ActionButton, ActionGroup, CardActions, cardActionsOn } from '../screens/ActionRow';
 import type { GameActions } from '../state/gameActions';
 import { EnemyCard } from './EnemyCard';
 import './enemies.css';
@@ -44,6 +44,7 @@ export function EnemyDetails({
   };
   const allowed = board.turn === undefined ? [] : board.enemyActions(board.turn, enemy.id);
   const tests = allowed.filter((action) => action !== 'engage');
+  const offered = cardActionsOn(board, enemy.id);
 
   return (
     <dialog ref={dialog} aria-labelledby={titleId} onCancel={onClose} data-dialog="enemy">
@@ -108,6 +109,9 @@ export function EnemyDetails({
               />
             )}
           </ActionGroup>
+        )}
+        {offered.length > 0 && (
+          <CardActions offered={offered} actions={actions} busy={busy} onUse={onClose} />
         )}
         <ActionGroup title={t('enemy.cardEffects')}>
           <ActionButton

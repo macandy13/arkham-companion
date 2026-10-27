@@ -2,7 +2,7 @@
 
 The [game screen](../../apps/web/src/screens/GameScreen.tsx) has a header with the encounter deck, agenda, act, scenario and victory display laid out as cards, centred, each under the playmat's label, with the agenda's doom, the act's clues and the cards left in the encounter deck on big round tokens ("2 of 7").
 
-A tap on the agenda or act (or its name, a button for the keyboard) opens it as a full card in a dialog ([`CardDetails`](../../apps/web/src/screens/GameHeader.tsx)), the same face with its picture large and its buttons at full size; advancing closes it, since a decision may follow.
+A tap on the agenda or act (or its name, a button for the keyboard) opens it as a full card in a dialog ([`CardDetails`](../../apps/web/src/screens/GameHeader.tsx)), the same face with its picture large and its buttons at full size, and under it the card actions it offers the investigator whose turn it is (`CardActions`, as in the details windows); advancing or taking one closes it, since a decision may follow.
 
 The piles lie as small fans of their top three cards, slightly turned against each other, with a count on a disc ([`PileFan`](../../apps/web/src/encounter/PileFan.tsx), [`EncounterPiles`](../../apps/web/src/encounter/EncounterPiles.tsx)): the encounter discard pile tucked under the deck's lower right corner, the set-aside cards under the scenario card's, and the victory display in its own slot with the victory points earned so far (`BoardView.victoryPoints`, the victory display plus cleared locations that print victory); an empty pile is a dashed card outline.
 

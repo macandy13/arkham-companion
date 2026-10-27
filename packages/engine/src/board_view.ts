@@ -216,6 +216,8 @@ export interface EnemyStatsView {
  * a picture and falls back to the rest without one.
  */
 export interface CardFaceView {
+  /** The card in play, to act on it (`BoardView.cardActions` by `cardId`). */
+  id: InstanceId;
   name: CardName;
   type: CardType;
   traits: readonly Trait[];
@@ -247,11 +249,12 @@ export interface CardActionView extends OfferedCardAction {
 export type MapEnemyView = EnemyView & { id: InstanceId };
 
 /**
- * The current agenda's name, the doom on the card itself and, when it has one, the doom
- * threshold for the player count. The threshold is compared with all doom in play
+ * The current agenda (`id`, to act on it), its name, the doom on the card itself and, when it has
+ * one, the doom threshold for the player count. The threshold is compared with all doom in play
  * (`BoardView.doomInPlay`), not with `doom`.
  */
 export interface AgendaView {
+  id: InstanceId;
   name: CardName;
   /** The picture of its front, the side in play (`CardStats.imageSrc`), when the card data has one. */
   image?: CardImagePath;
@@ -265,6 +268,7 @@ export interface AgendaView {
  * player count.
  */
 export interface ActView {
+  id: InstanceId;
   name: CardName;
   /** The picture of its front, the side in play (`CardStats.imageSrc`), when the card data has one. */
   image?: CardImagePath;
@@ -819,6 +823,7 @@ function nameOf(ctx: EngineContext, card: CardInstance): CardName {
 function cardFaceOf(ctx: EngineContext, card: CardInstance): CardFaceView {
   const { typeCode, traits, imageSrc, backImageSrc } = cardStats(ctx.cards, card.code);
   return {
+    id: card.id,
     name: nameOf(ctx, card),
     type: typeCode,
     traits,
@@ -972,6 +977,7 @@ function agendaView(ctx: EngineContext, state: GameState): AgendaView | undefine
   if (!agenda) return undefined;
   const { doom, imageSrc } = cardStats(ctx.cards, agenda.code);
   return {
+    id: agenda.id,
     name: nameOf(ctx, agenda),
     ...(imageSrc === undefined ? {} : { image: imageSrc }),
     doom: agenda.tokens.doom ?? 0,
@@ -985,6 +991,7 @@ function actView(ctx: EngineContext, state: GameState): ActView | undefined {
   const stats = cardStats(ctx.cards, act.code);
   const threshold = tokenObjective(stats, 'clue') ?? cluesToAdvance(stats) ?? stats.clues;
   return {
+    id: act.id,
     name: nameOf(ctx, act),
     ...(stats.imageSrc === undefined ? {} : { image: stats.imageSrc }),
     clues: act.tokens.clue ?? 0,
