@@ -38,13 +38,19 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
   const phone = usePhone();
   const detail = useDetailView();
   const boardElement = useRef<HTMLDivElement>(null);
-  // Turning the phone sideways shows the whole board, so the detail view is a phone's only.
   const detailTarget = phone ? detail.target : undefined;
   const opensDetail = phone && !detailTarget;
 
   useEffect(() => {
     void store.getState().openGame(gameId);
   }, [store, gameId]);
+
+  // Turned sideways the phone shows the whole board, so the hidden view closes with its entry.
+  const { close: closeDetail } = detail;
+  const detailOpen = detail.target !== undefined;
+  useEffect(() => {
+    if (!phone && detailOpen) closeDetail();
+  }, [phone, detailOpen, closeDetail]);
 
   // Only a playable game has a board to read, so the board's parts get one and never check.
   if (!open?.board) {

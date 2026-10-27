@@ -4,7 +4,7 @@ import { useSyncExternalStore } from 'react';
  * The phone layout's media query: a phone held upright. The stylesheets' phone blocks (tokens.css,
  * game.css, investigators.css) write out the same query, since CSS cannot read this constant.
  */
-export const PHONE_QUERY = '(orientation: portrait) and (max-width: 40rem)';
+const PHONE_QUERY = '(orientation: portrait) and (max-width: 40rem)';
 
 /**
  * Whether the screen is a phone held upright (`PHONE_QUERY`), following it as the phone turns.

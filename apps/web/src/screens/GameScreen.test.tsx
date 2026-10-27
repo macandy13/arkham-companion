@@ -474,6 +474,7 @@ describe('GameScreen on a phone held upright', () => {
       db: 'phone-close-escape-test',
       close: () => fireEvent.keyDown(window, { key: 'Escape' }),
     },
+    { way: 'the back gesture', db: 'phone-close-back-test', close: () => window.history.back() },
   ])('goes back to the overview with $way, through the history', async ({ db, close }) => {
     await renderTheGathering(db);
     fireEvent.click(screen.getByRole('button', { name: 'Trapped' }));

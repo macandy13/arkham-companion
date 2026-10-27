@@ -16,8 +16,8 @@ const ROWS = [':scope > header', ':scope > #map', ':scope > #investigators'] as 
 
 /**
  * The detail view's controls over the board (`board`, the `#board` element), which the stylesheet
- * turns into three rows snapped vertically, the header's cards and the investigator panels each
- * snapped sideways: the × that closes it (`onClose`), a dot per row at the right edge and a dot per
+ * turns into three rows snapped vertically, the header's places (its four cards and the victory
+ * display) and the investigator panels each snapped sideways: the × that closes it (`onClose`), a dot per row at the right edge and a dot per
  * card or panel of the current row along the foot, the current one filled. As it opens it scrolls
  * to its `target`; once the players leave the cards row, the row goes back to the agenda, so it
  * opens there again. The dots only show where the players are, so screen readers skip them.
