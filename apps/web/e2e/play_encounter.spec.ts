@@ -38,33 +38,37 @@ test('draw an encounter card for Roland Banks on his turn', async ({ page }) => 
 });
 
 // Journey: Dissonant Voices was discarded, but a revelation the app left to the players puts it
-// into Roland Banks' threat area – open the discard pile, tap the card and move it there.
-test('move Dissonant Voices from the discard pile into Roland Banks’ threat area', async ({
-  page,
-}) => {
-  await test.step('Resume a game after two mythos phases and open the discard pile', async () => {
-    await resumeImportedGame(page, 'Two mythos draws', mythosDrawnExport('Two mythos draws'));
-    await page
-      .getByRole('button', { name: 'Encounter discard pile, 1 card, Dissonant Voices on top' })
-      .click();
-  });
+// into Roland Banks' threat area – open the discard pile, where it lies on top, and move it there.
+test(
+  'move Dissonant Voices from the discard pile into Roland Banks’ threat area',
+  { tag: '@flow' },
+  async ({ page }) => {
+    await test.step('Resume a game after two mythos phases and open the discard pile', async () => {
+      await resumeImportedGame(page, 'Two mythos draws', mythosDrawnExport('Two mythos draws'));
+      await page
+        .getByRole('button', { name: 'Encounter discard pile, 1 card, Dissonant Voices on top' })
+        .click();
+    });
 
-  await test.step('Tap Dissonant Voices and put it into Roland Banks’ threat area', async () => {
-    const dialog = page.getByRole('dialog', { name: 'Encounter deck' });
-    await dialog.getByText('Dissonant Voices').click();
-    await dialog.getByRole('button', { name: "Into Roland Banks's threat area" }).click();
-  });
+    await test.step('Put Dissonant Voices, the top card, into Roland Banks’ threat area', async () => {
+      await page
+        .getByRole('dialog', { name: 'Discard pile (1)' })
+        .getByRole('region', { name: 'Dissonant Voices' })
+        .getByRole('button', { name: "Into Roland Banks's threat area" })
+        .click();
+    });
 
-  await test.step('Roland Banks’ threat area holds it, and the discard pile is empty', async () => {
-    await expect(
-      page.getByRole('button', { name: 'Encounter discard pile', exact: true }),
-    ).toBeVisible();
-    await expect(
-      page
-        .getByRole('region', { name: 'Roland Banks' })
-        .getByRole('list', { name: 'Threat area' })
-        .getByRole('listitem')
-        .filter({ hasText: 'Dissonant Voices' }),
-    ).toBeVisible();
-  });
-});
+    await test.step('Roland Banks’ threat area holds it, and the discard pile is empty', async () => {
+      await expect(
+        page.getByRole('button', { name: 'Encounter discard pile', exact: true }),
+      ).toBeVisible();
+      await expect(
+        page
+          .getByRole('region', { name: 'Roland Banks' })
+          .getByRole('list', { name: 'Threat area' })
+          .getByRole('listitem')
+          .filter({ hasText: 'Dissonant Voices' }),
+      ).toBeVisible();
+    });
+  },
+);
