@@ -23,6 +23,7 @@ import {
 } from './card_matchers';
 import {
   cardName,
+  type CardCode,
   type CardImagePath,
   type CardName,
   type InstanceId,
@@ -53,7 +54,7 @@ import type {
   SkillTestSuggestion,
   SkillValues,
 } from './state';
-import type { Zone } from './zone';
+import { encounterDeck, encounterDiscard, setAside, victoryDisplay, type Zone } from './zone';
 
 /**
  * A usage error of a test table: an unknown or ambiguous name, a decision or
@@ -290,6 +291,32 @@ export interface DecisionView {
 /** The counts of one option of a `DecisionView`: its `amount` and its named amounts. */
 export type DecisionCounts = Partial<Record<'amount' | NamedAmount, AmountRange>>;
 
+/**
+ * One card in an encounter pile (`EncounterPilesView`): its id and code to act on it, its printed
+ * name and type, the picture of its front and its victory points where it prints them.
+ */
+export interface EncounterCardView {
+  id: InstanceId;
+  code: CardCode;
+  name: CardName;
+  type: CardType;
+  /** The picture of its front (`CardStats.imageSrc`), when the card data has one. */
+  image?: CardImagePath;
+  victory?: number;
+}
+
+/**
+ * The encounter piles as the screen shows them (`BoardView.encounter`): how many cards are left in
+ * the deck (face down, so only the count), the discard pile top first, the set-aside cards and the
+ * victory display in card order.
+ */
+export interface EncounterPilesView {
+  deckCount: number;
+  discard: readonly EncounterCardView[];
+  setAside: readonly EncounterCardView[];
+  victoryDisplay: readonly EncounterCardView[];
+}
+
 /** One enemy attack enemy step 3.3 lists: the enemy by printed name and the investigator it attacks. */
 export interface DueAttackView {
   enemy: CardName;
@@ -435,6 +462,20 @@ export class BoardView {
 
   get act(): ActView | undefined {
     return actView(this.ctx, this.state);
+  }
+
+  /** The encounter deck's count, the discard pile, the set-aside cards and the victory display. */
+  get encounter(): EncounterPilesView {
+    const cardsIn = (zone: Zone) =>
+      cardsInZone(this.state, zone).map((id) =>
+        encounterCardView(this.ctx, requireCard(this.state, id)),
+      );
+    return {
+      deckCount: cardsInZone(this.state, encounterDeck).length,
+      discard: cardsIn(encounterDiscard),
+      setAside: cardsIn(setAside),
+      victoryDisplay: cardsIn(victoryDisplay),
+    };
   }
 
   /** The chaos tokens in the bag for this scenario and difficulty, the players' to draw from. */
@@ -862,6 +903,18 @@ function decisionView(ctx: EngineContext, state: GameState, decision: Decision):
     options: decision.options.map(optionName),
     ...(Object.keys(labels).length > 0 ? { labels } : {}),
     ...(Object.keys(counts).length > 0 ? { counts } : {}),
+  };
+}
+
+function encounterCardView(ctx: EngineContext, card: CardInstance): EncounterCardView {
+  const { name, typeCode, imageSrc, victory } = cardStats(ctx.cards, card.code);
+  return {
+    id: card.id,
+    code: card.code,
+    name: cardName(name),
+    type: typeCode,
+    ...(imageSrc === undefined ? {} : { image: imageSrc }),
+    ...(victory === undefined ? {} : { victory }),
   };
 }
 

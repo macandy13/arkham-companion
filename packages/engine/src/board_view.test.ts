@@ -848,6 +848,65 @@ describe('agenda and act', () => {
   });
 });
 
+describe('encounter piles', () => {
+  it('counts the deck and lists the discard pile top first, the set-aside cards and the victory display', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withCard(instanceId('deck_card'), blankTreachery('deck_card'), { kind: 'encounterDeck' })
+      .withCard(instanceId('other_deck_card'), blankTreachery('other_deck_card'), {
+        kind: 'encounterDeck',
+      })
+      .withCard(
+        instanceId('top_discard'),
+        blankTreachery('top_discard', { imageSrc: cardImagePath('/cards/top_discard.png') }),
+        { kind: 'encounterDiscard' },
+      )
+      .withCard(instanceId('lower_discard'), blankEnemy('lower_discard'), {
+        kind: 'encounterDiscard',
+      })
+      .withCard(instanceId('lita'), blankAsset('lita'), { kind: 'setAside' })
+      .withCard(instanceId('ghoul_priest'), blankEnemy('ghoul_priest', { victory: 2 }), {
+        kind: 'victoryDisplay',
+      })
+      .start();
+
+    expect(boardView(context, state).encounter).toEqual({
+      deckCount: 2,
+      discard: [
+        {
+          id: 'top_discard',
+          code: 'top_discard',
+          name: 'top_discard',
+          type: 'treachery',
+          image: '/cards/top_discard.png',
+        },
+        { id: 'lower_discard', code: 'lower_discard', name: 'lower_discard', type: 'enemy' },
+      ],
+      setAside: [{ id: 'lita', code: 'lita', name: 'lita', type: 'asset' }],
+      victoryDisplay: [
+        {
+          id: 'ghoul_priest',
+          code: 'ghoul_priest',
+          name: 'ghoul_priest',
+          type: 'enemy',
+          victory: 2,
+        },
+      ],
+    });
+  });
+
+  it('reads empty piles as empty', () => {
+    const { context, state } = newGame().withLocation(study, blankLocation('study')).start();
+
+    expect(boardView(context, state).encounter).toEqual({
+      deckCount: 0,
+      discard: [],
+      setAside: [],
+      victoryDisplay: [],
+    });
+  });
+});
+
 describe('decisions and attacks', () => {
   const ghoulOnAlice = newGame()
     .withLocation(study, blankLocation('study', { shroud: 1 }), { revealed: true })

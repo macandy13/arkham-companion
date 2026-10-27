@@ -226,6 +226,9 @@
   --stat-token-size: 2.25rem;
   /* The encounter discard pile's symbol next to the deck: a small card outline this tall. */
   --layout-pile-symbol-height: 2rem;
+  /* Once it holds cards, the discard pile shows its top card this tall, with its count on a disc. */
+  --layout-pile-height: 4.5rem;
+  --pile-count-size: 1.5rem;
   /* A dragged map piece's copy, see-through so the tile under it stays readable. */
   --map-ghost-opacity: 0.6;
   /* A token with nothing on it (a location's clues once found) fades, so it reads as empty. */

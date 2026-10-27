@@ -77,6 +77,9 @@ export const encounterDiscard: Zone = { kind: 'encounterDiscard' };
 /** Cards the scenario set aside, out of play until a card or setup brings them in. */
 export const setAside: Zone = { kind: 'setAside' };
 
+/** Cards worth victory points the players have earned this scenario, counted at its end. */
+export const victoryDisplay: Zone = { kind: 'victoryDisplay' };
+
 /** A scenario deck of the scenario's own; its order is top first. */
 export function scenarioDeck(deck: ScenarioDeck): Zone {
   return { kind: 'scenarioDeck', deck };
