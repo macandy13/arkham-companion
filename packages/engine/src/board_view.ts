@@ -9,6 +9,7 @@ import { doomInPlay, isInPlay } from './doom';
 import { handle } from './handle';
 import { enemyHealth } from './enemies';
 import type { Keyword } from './keywords';
+import { forcedAttackPrompt } from './forced_attacks';
 import { formatBoard } from './format_board';
 import {
   cardMatcher,
@@ -45,6 +46,7 @@ import type {
   ChaosToken,
   Decision,
   GameState,
+  HeldAction,
   Investigator,
   InvestigatorStatus,
   NamedAmount,
@@ -297,6 +299,18 @@ export interface DecisionView {
    * carries them as `ResolveDecision.amount` and `amounts`.
    */
   counts?: Record<string, DecisionCounts>;
+  /** For an attack of opportunity, the action that provoked it and waits until the attacks are answered. */
+  provokedBy?: ProvokingActionView;
+}
+
+/**
+ * The action an attack of opportunity waits on (`DecisionView.provokedBy`, the queued `HeldAction`):
+ * its command and, for one aimed at a card, that card's printed name (where a move goes, the
+ * location investigated, the enemy engaged, the card whose action is used).
+ */
+export interface ProvokingActionView {
+  action: HeldAction['type'];
+  card?: CardName;
 }
 
 /** The counts of one option of a `DecisionView`: its `amount` and its named amounts. */
@@ -998,6 +1012,10 @@ function decisionView(ctx: EngineContext, state: GameState, decision: Decision):
     }),
   );
   const about = nameOfId(ctx, state, decision.subject);
+  const provokedBy =
+    decision.prompt === forcedAttackPrompt('attackOfOpportunity')
+      ? provokingAction(ctx, state)
+      : undefined;
   return {
     prompt: decision.prompt,
     kind: decision.kind,
@@ -1008,7 +1026,37 @@ function decisionView(ctx: EngineContext, state: GameState, decision: Decision):
     options: decision.options.map(optionName),
     ...(Object.keys(labels).length > 0 ? { labels } : {}),
     ...(Object.keys(counts).length > 0 ? { counts } : {}),
+    ...(provokedBy ? { provokedBy } : {}),
   };
+}
+
+/** The action held in the queue until the attacks of opportunity it provoked are answered. */
+function provokingAction(ctx: EngineContext, state: GameState): ProvokingActionView | undefined {
+  const held = state.meta.queue?.find(
+    (step): step is Extract<QueuedStep, { kind: 'action' }> => step.kind === 'action',
+  )?.command;
+  if (!held) return undefined;
+  const card = nameOfId(ctx, state, targetOf(state, held));
+  return { action: held.type, ...(card === undefined ? {} : { card }) };
+}
+
+function targetOf(state: GameState, action: HeldAction): InstanceId | undefined {
+  switch (action.type) {
+    case 'MoveInvestigator':
+      return action.to;
+    case 'Investigate':
+      return requireInvestigator(state, action.investigatorId).locationId;
+    case 'EngageEnemy':
+      return action.enemyId;
+    case 'UseCardAction':
+      return action.cardId;
+    case 'GainResources':
+    case 'DrawCards':
+    case 'PlayCard':
+      return undefined;
+    default:
+      return assertNever(action);
+  }
 }
 
 /** The queued placement of the drawn card `id`, which names the investigator it was drawn for. */

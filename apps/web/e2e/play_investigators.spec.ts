@@ -54,7 +54,7 @@ test('resign at the Parlor', async ({ page }) => {
 
 // Journey: the resource action under an engaged enemy: the Ghoul Priest attacks first, as every
 // action but fight and evade provokes it, and only then does Roland Banks gain the resource.
-test('take a resource while the Ghoul Priest is engaged', async ({ page }) => {
+test('take a resource while the Ghoul Priest is engaged', { tag: '@flow' }, async ({ page }) => {
   const roland = page.getByRole('region', { name: 'Roland Banks' });
   const resources = roland.locator('[data-stat="resources"] data');
 
@@ -70,7 +70,9 @@ test('take a resource while the Ghoul Priest is engaged', async ({ page }) => {
   await test.step('Take a resource: the Ghoul Priest attacks first', async () => {
     await roland.getByRole('button', { name: 'Take a resource' }).click();
     const attack = page.getByRole('dialog', { name: 'Attack of opportunity by Ghoul Priest' });
-    await expect(attack).toBeVisible();
+    await expect(
+      attack.getByText('Roland Banks takes a resource: Ghoul Priest attacks first'),
+    ).toBeVisible();
     await expect(resources).toHaveText('5');
     await attack.getByRole('button', { name: 'Take the attack' }).click();
   });

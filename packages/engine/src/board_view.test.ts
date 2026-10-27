@@ -41,7 +41,7 @@ import {
   type CardStats,
   type Zone,
 } from './index';
-import { stateAfter } from '../test/utils';
+import { answer, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -1091,8 +1091,79 @@ describe('decisions and attacks', () => {
         options: ['attack', 'does not provoke'],
         labels: { attack: 'decision.attack', 'does not provoke': 'decision.doesNotProvoke' },
         counts: { attack: { damage: { default: 1, min: 0 }, horror: { default: 2, min: 0 } } },
+        provokedBy: { action: 'Investigate', card: 'study' },
       },
     ]);
+  });
+
+  it.each([
+    {
+      provoking: { type: 'MoveInvestigator', investigatorId: alice, to: hallway, asAction: true },
+      provokedBy: { action: 'MoveInvestigator', card: 'hallway' },
+    },
+    {
+      provoking: {
+        type: 'EngageEnemy',
+        investigatorId: alice,
+        enemyId: instanceId('rat'),
+        asAction: true,
+      },
+      provokedBy: { action: 'EngageEnemy', card: 'rat' },
+    },
+    {
+      provoking: { type: 'GainResources', investigatorId: alice, amount: 1, asAction: true },
+      provokedBy: { action: 'GainResources' },
+    },
+    {
+      provoking: { type: 'DrawCards', investigatorId: alice, amount: 1, asAction: true },
+      provokedBy: { action: 'DrawCards' },
+    },
+    {
+      provoking: { type: 'PlayCard', investigatorId: alice, asAction: true },
+      provokedBy: { action: 'PlayCard' },
+    },
+  ] as const)(
+    'names $provokedBy.action as what provoked the attack of opportunity',
+    ({ provoking, provokedBy }) => {
+      const { context, state } = ghoulOnAlice
+        .withLocation(hallway, blankLocation('hallway'), { revealed: true })
+        .withConnection(study, hallway)
+        .withCard(
+          instanceId('rat'),
+          blankEnemy('rat', { keywords: [{ name: 'aloof' }] }),
+          atLocation(study),
+        )
+        .withTurnOf(alice)
+        .start();
+
+      const { decisions } = boardView(context, stateAfter(context, state, provoking));
+
+      expect(decisions).toEqual([expect.objectContaining({ provokedBy })]);
+    },
+  );
+
+  it('names no provoking action for a forced attack that is not an attack of opportunity', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'), { revealed: true })
+      .withInvestigator(alice, { locationId: study })
+      .withCard(
+        instanceId('ghoul'),
+        blankEnemy('ghoul', { fight: 9, keywords: [{ name: 'retaliate' }] }),
+        engagedWith(alice),
+      )
+      .withTurnOf(alice)
+      .start();
+    const retaliating = stateAfter(
+      context,
+      state,
+      { type: 'Fight', investigatorId: alice, enemyId: instanceId('ghoul') },
+      answer('fight:alice:ghoul', 'fail'),
+    );
+
+    const { decisions } = boardView(context, retaliating);
+
+    expect(decisions).toEqual([expect.objectContaining({ prompt: 'decision.retaliate' })]);
+    expect(decisions[0]).not.toHaveProperty('provokedBy');
   });
 
   it('reads no decisions when none is open', () => {

@@ -207,8 +207,24 @@ test('The Barrier opened as a full card', async ({ page }) => {
   await expect(card.getByRole('img', { name: 'Clues 0 / 3' })).toBeVisible();
 });
 
+test('Frozen in Fear from Roland Banks’ threat area, zoomed to read', async ({ page }) => {
+  await resumeImportedGame(
+    page,
+    'Roland Banks threatened',
+    rolandThreatenedExport('Roland Banks threatened'),
+  );
+
+  await page
+    .getByRole('region', { name: 'Roland Banks' })
+    .getByRole('button', { name: 'Read Frozen in Fear' })
+    .first()
+    .click();
+
+  await expect(page.getByRole('dialog', { name: 'Frozen in Fear' })).toBeVisible();
+});
+
 test(
-  'Frozen in Fear from Roland Banks’ threat area, zoomed to read',
+  'the attack of opportunity Roland Banks provokes by taking a resource',
   { tag: '@shot' },
   async ({ page }) => {
     await resumeImportedGame(
@@ -219,10 +235,12 @@ test(
 
     await page
       .getByRole('region', { name: 'Roland Banks' })
-      .getByRole('button', { name: 'Read Frozen in Fear' })
-      .first()
+      .getByRole('button', { name: 'Take a resource' })
       .click();
 
-    await expect(page.getByRole('dialog', { name: 'Frozen in Fear' })).toBeVisible();
+    const attack = page.getByRole('dialog', { name: 'Attack of opportunity by Ghoul Priest' });
+    await expect(
+      attack.getByText('Roland Banks takes a resource: Ghoul Priest attacks first'),
+    ).toBeVisible();
   },
 );
