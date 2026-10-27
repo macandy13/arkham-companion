@@ -113,6 +113,14 @@ export interface CommandSpec<C extends Command> {
    */
   provokes?(command: C, ctx: EngineContext, state: GameState): HeldAction | undefined;
   /**
+   * The steps of a command that may only be taken when they change the game state: an ability
+   * can't be initiated when its effect can't (Rules Reference, "Triggered Abilities"). `handle`
+   * dry-runs them on the state the command is handled in and rejects the command
+   * (`changesNothing`) when they emit no event, so "Heal 3 damage" isn't taken, and its limit
+   * isn't used up, with no damage to heal.
+   */
+  mustChangeState?(command: C, ctx: EngineContext, state: GameState): Continuation[];
+  /**
    * The rest of a command whose rules continue only after the forced effects
    * of its own events (`own`) have resolved. `handle` runs these steps after
    * those effects, and stores them while one of the effects asks the players
@@ -270,6 +278,7 @@ const COMMAND_SPECS: CommandSpecs = {
       const { free, designator } = cardActionOf(ctx, state, command);
       return free || designator !== undefined ? undefined : command;
     },
+    mustChangeState: (command, ctx, state) => cardActionSteps(ctx, state, command),
     continueWith: (command, _own, ctx, state) => cardActionSteps(ctx, state, command),
   },
   SetLeadInvestigator: {

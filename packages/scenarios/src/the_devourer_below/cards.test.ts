@@ -7,6 +7,7 @@ import {
   instanceId,
   investigatorId,
   newGame,
+  PlayTable,
   requireInvestigator,
   threatAreaOf,
   resolveValue,
@@ -168,6 +169,41 @@ describe('The Devourer Below card abilities', () => {
       expect(rejectionFrom(context, state, useIt)).toMatchObject({
         code: 'cardActionLimitReached',
       });
+    });
+
+    it.each([
+      { wounds: 'neither damage nor horror', damage: 0, horror: 0, offered: false },
+      { wounds: '1 horror', damage: 0, horror: 1, offered: true },
+    ])('offers its action to alice with $wounds: $offered', ({ damage, horror, offered }) => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(quietGlade, cardOf('01155'), { revealed: true })
+          .withInvestigator(alice, {
+            locationId: quietGlade,
+            health: { max: 9, damage },
+            sanity: { max: 9, horror },
+          })
+          .withTurnOf(alice),
+      );
+
+      expect(table.board.cardActions(alice).length > 0).toBe(offered);
+    });
+
+    it('lets alice pick only the horror when she has no damage', () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(quietGlade, cardOf('01155'), { revealed: true })
+          .withInvestigator(alice, {
+            locationId: quietGlade,
+            health: { max: 9, damage: 0 },
+            sanity: { max: 9, horror: 1 },
+          })
+          .withTurnOf(alice),
+      );
+
+      table.play(useIt);
+
+      expect(table.state.pending).toMatchObject([{ options: [{ id: 'horror' }] }]);
     });
   });
 

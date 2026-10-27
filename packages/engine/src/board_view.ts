@@ -23,7 +23,7 @@ import {
 import { optionName } from './describe_decision';
 import type { Command } from './commands';
 import { doomInPlay, isInPlay } from './doom';
-import { handle } from './handle';
+import { changesGameState, handle } from './handle';
 import { enemyHealth } from './enemies';
 import type { Keyword } from './keywords';
 import { forcedAttackPrompt } from './forced_attacks';
@@ -508,7 +508,8 @@ export class BoardView {
   /**
    * The card actions the cards in play offer `investigator` (`cardActionsOfferedTo`): a revealed
    * location's where they are, an enemy's at their location, a threat area's at its owner's
-   * location, and the current agenda's and act's. They take one in their turn. The act's
+   * location, and the current agenda's and act's, leaving out an action that would change
+   * nothing now (`changesGameState`: no damage for "Heal 3 damage"). They take one in their turn. The act's
    * spend-clues advance is left out: `act.advance` shows it, with the clues it counts, and
    * `PlayTable.spendCluesToAdvanceAct` takes it.
    */
@@ -518,6 +519,14 @@ export class BoardView {
     const advance = act === undefined ? -1 : advanceActionOf(this.ctx, act);
     return cardActionsOfferedTo(this.ctx, this.state, inv)
       .filter(({ cardId, action }) => !(cardId === act?.id && action === advance))
+      .filter(({ cardId, action }) =>
+        changesGameState(this.ctx, this.state, {
+          type: 'UseCardAction',
+          investigatorId: investigator,
+          cardId,
+          action,
+        }),
+      )
       .map((offered) => ({
         ...offered,
         card: nameOf(this.ctx, requireCard(this.state, offered.cardId)),
