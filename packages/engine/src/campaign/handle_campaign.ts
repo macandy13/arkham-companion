@@ -15,6 +15,7 @@ import { CampaignCommandRejected } from './campaign_rejection';
 import {
   handleAddTrauma,
   handleAwardXp,
+  handleEarnCard,
   handleMarkFate,
   handleReplaceInvestigator,
   handleSpendXp,
@@ -62,6 +63,8 @@ export function handleCommand(
       return handleMarkFate(log, command.code, 'killed');
     case 'MarkInsane':
       return handleMarkFate(log, command.code, 'insane');
+    case 'EarnCard':
+      return handleEarnCard(log, command);
     case 'ReplaceInvestigator':
       return handleReplaceInvestigator(ctx, log, command);
     case 'AdvanceScenario':

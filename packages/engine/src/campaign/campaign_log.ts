@@ -1,5 +1,6 @@
 import { assertNever } from '@arkham/util';
 import {
+  type CardCode,
   campaignDefinitionId,
   campaignId,
   type CampaignDefinitionId,
@@ -46,6 +47,11 @@ export interface CampaignInvestigator {
   readonly xpEarned: number;
   readonly xpSpent: number;
   readonly fate: InvestigatorFate;
+  /**
+   * The story cards they earned (`EarnCard`), such as Lita Chantler in The Gathering: they may
+   * include each in their deck, so a game trusts them to hold it ("If you control Lita").
+   */
+  readonly earnedCards: readonly CardCode[];
 }
 
 /** An entry of a `crossableList` story record, e.g. a cultist who got away. */

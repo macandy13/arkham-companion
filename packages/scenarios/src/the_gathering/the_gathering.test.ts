@@ -414,11 +414,11 @@ describe('The Gathering acts 2 and 3', () => {
   });
 
   it.each([
-    { optionId: 'burn', records: [ZEALOT_STORY.houseStillStanding, ZEALOT_STORY.litaEarned] },
-    { optionId: 'spare', records: [ZEALOT_STORY.houseStillStanding] },
+    { optionId: 'burn', earners: [investigatorCode('tank')] },
+    { optionId: 'spare', earners: [] },
   ])(
-    'records that someone earned Lita only when the lead chooses to burn the house ($optionId)',
-    ({ optionId, records }) => {
+    'lets the lead, tank, earn Lita only when they choose to burn the house ($optionId)',
+    ({ optionId, earners }) => {
       const asked = stateAfter(ctx, priestEngages(act2WaitingForPrey(), tank), {
         type: 'DefeatEnemy',
         enemyId: priest,
@@ -429,11 +429,11 @@ describe('The Gathering acts 2 and 3', () => {
 
       expect(
         (proposal ?? []).flatMap((change) =>
-          change.kind === 'command' && change.command.type === 'RecordStory'
-            ? [change.command.key]
+          change.kind === 'command' && change.command.type === 'EarnCard'
+            ? [change.command.code]
             : [],
         ),
-      ).toEqual(records);
+      ).toEqual(earners);
     },
   );
 
@@ -564,21 +564,16 @@ describe('The Gathering agendas 2 and 3', () => {
     expect(ended.meta).toMatchObject({ ended: true, resolution: 'R3' });
   });
 
-  it('records that someone earned Lita when R3 traps the investigators', () => {
+  it('leaves Lita for the players to give when R3 kills everyone, as nobody resigned', () => {
     const atAgenda3 = stateAfter(ctx, atAgenda2(), { type: 'AdvanceAgenda' });
     const ended = stateAfter(ctx, atAgenda3, { type: 'AdvanceAgenda' });
 
-    const proposal = campaign.proposeResolution(ctx, ended, theGatheringResolutions);
+    const proposal = campaign.proposeResolution(ctx, ended, theGatheringResolutions) ?? [];
 
-    // The lead is always among the killed: a lead who resigns hands the role to someone left in the house.
-    expect(proposal).toContainEqual({
-      kind: 'command',
-      command: {
-        type: 'RecordStory',
-        key: ZEALOT_STORY.litaEarned,
-        value: { kind: 'flag', value: true },
-      },
-    });
+    expect(proposal.filter((change) => change.kind !== 'command')).toEqual([
+      { kind: 'byHand', textKey: 'scenario.theGathering.resolution.replaceKilled' },
+      { kind: 'byHand', textKey: 'scenario.theGathering.resolution.earnLitaIfLeadKilled' },
+    ]);
   });
 
   it('defeats every investigator who has not resigned when agenda 3 advances at act 3', () => {
@@ -630,7 +625,7 @@ describe('The Gathering agendas 2 and 3', () => {
       },
       {
         kind: 'command',
-        command: { type: 'RecordStory', key: ZEALOT_STORY.litaEarned, value: yes },
+        command: { type: 'EarnCard', code: tankCode, card: codes.litaChantler },
       },
       { kind: 'byHand', textKey: 'scenario.theGathering.resolution.earnLita' },
       { kind: 'command', command: { type: 'AwardXp', code: tankCode, amount: 2 } },

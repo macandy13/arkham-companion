@@ -2,7 +2,13 @@ import { isPositiveInteger } from '@arkham/util';
 import type { InvestigatorCode } from '../ids';
 import type { CardDb } from '../cards';
 import { investigatorCard } from '../investigator_cards';
-import type { AddTrauma, AwardXp, ReplaceInvestigator, SpendXp } from './campaign_commands';
+import type {
+  AddTrauma,
+  AwardXp,
+  EarnCard,
+  ReplaceInvestigator,
+  SpendXp,
+} from './campaign_commands';
 import type { CampaignEvent } from './campaign_events';
 import {
   countAvailableXp,
@@ -67,6 +73,12 @@ export function handleMarkFate(
   return [{ type: 'InvestigatorFateChanged', code, fate }];
 }
 
+/** `EarnCard`: a story card for a living team member. */
+export function handleEarnCard(log: CampaignLog, command: EarnCard): CampaignEvent[] {
+  requireAlive(log, command.code);
+  return [{ type: 'CardEarned', code: command.code, card: command.card }];
+}
+
 /** `ReplaceInvestigator`: a newcomer takes the seat of a killed or insane team member. */
 export function handleReplaceInvestigator(
   ctx: CampaignContext,
@@ -125,6 +137,7 @@ export function newCampaignInvestigator(
     xpEarned: 0,
     xpSpent: 0,
     fate: 'alive',
+    earnedCards: [],
   };
 }
 

@@ -24,11 +24,19 @@ import {
   cardCode,
   type ActionLimit,
   type CardAction,
+  type CardCode,
   type InstanceId,
   type InvestigatorId,
   type UseCardAction,
 } from './index';
-import { answer, investigatorOf, makeCampaignLog, rejectionFrom, stateAfter } from '../test/utils';
+import {
+  answer,
+  campaignMember,
+  investigatorOf,
+  makeCampaignLog,
+  rejectionFrom,
+  stateAfter,
+} from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -500,37 +508,34 @@ describe('action conditions', () => {
 });
 
 describe('action conditions on a player card earned in the campaign', () => {
-  /** The hall's one action scares its taker "if you control Lita", whom the story record `lita_earned` says someone earned; alice is in the hall, on her turn, with no Lita in the game. */
-  const hallAskingForEarnedLita = newGame()
+  const lita = cardCode('lita');
+  /** The hall's one action scares its taker "if you control Lita"; alice is in the hall, on her turn, with no Lita in the game. */
+  const hallAskingForLita = newGame()
     .withLocation(
       hall,
       blankLocation('hall', {
-        actions: [
-          {
-            ...scareAction,
-            condition: {
-              kind: 'controls',
-              card: cardCode('lita'),
-              earnedWhen: { kind: 'flag', key: 'lita_earned', value: true },
-            },
-          },
-        ],
+        actions: [{ ...scareAction, condition: { kind: 'controls', card: lita } }],
       }),
       { revealed: true },
     )
     .withInvestigator(alice, { locationId: hall })
     .withTurnOf(alice);
+  /** The campaign log of alice and bob, with the cards each earned. */
+  const logWhere = (earned: { alice: CardCode[]; bob: CardCode[] }) =>
+    makeCampaignLog({
+      investigators: [
+        { ...campaignMember('alice', 'alice', 9, 9), earnedCards: earned.alice },
+        { ...campaignMember('bob', 'bob', 9, 9), earnedCards: earned.bob },
+      ],
+    });
 
   it.each([
     {
-      game: 'a campaign whose log says someone earned her',
-      setup: () =>
-        hallAskingForEarnedLita.withCampaign(
-          makeCampaignLog({ story: { lita_earned: { kind: 'flag', value: true } } }),
-        ),
+      game: 'a campaign where she earned Lita',
+      setup: () => hallAskingForLita.withCampaign(logWhere({ alice: [lita], bob: [] })),
     },
     // Its players chose the earlier resolutions themselves, so the game trusts alice.
-    { game: 'a standalone game', setup: () => hallAskingForEarnedLita },
+    { game: 'a standalone game', setup: () => hallAskingForLita },
   ])('lets alice take the action in $game', ({ setup }) => {
     const table = PlayTable.start(setup());
 
@@ -541,15 +546,12 @@ describe('action conditions on a player card earned in the campaign', () => {
 
   it.each([
     {
-      game: 'a campaign whose log says nobody earned her',
-      setup: () =>
-        hallAskingForEarnedLita.withCampaign(
-          makeCampaignLog({ story: { lita_earned: { kind: 'flag', value: false } } }),
-        ),
+      game: 'a campaign where bob earned Lita',
+      setup: () => hallAskingForLita.withCampaign(logWhere({ alice: [], bob: [lita] })),
     },
     {
-      game: 'a campaign whose log never mentions her',
-      setup: () => hallAskingForEarnedLita.withCampaign(makeCampaignLog({ story: {} })),
+      game: 'a campaign where nobody earned her',
+      setup: () => hallAskingForLita.withCampaign(logWhere({ alice: [], bob: [] })),
     },
   ])('neither offers nor accepts the action in $game', ({ setup }) => {
     const table = PlayTable.start(setup());

@@ -36,6 +36,11 @@ export function applyEvent(log: CampaignLog, event: CampaignEvent): CampaignLog 
         ...investigator,
         fate: event.fate,
       }));
+    case 'CardEarned':
+      return updateInvestigator(log, event.code, (investigator) => ({
+        ...investigator,
+        earnedCards: [...investigator.earnedCards, event.card],
+      }));
     case 'InvestigatorReplaced':
       return applyInvestigatorReplaced(log, event);
     case 'ScenarioPlayed':

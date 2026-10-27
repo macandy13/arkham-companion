@@ -11,12 +11,6 @@ export const ZEALOT_STORY = {
   ghoulPriestStillAlive: 'ghoulPriestStillAlive',
   /** "Lita was forced to find others to help her cause." */
   litaForcedToFindOthers: 'litaForcedToFindOthers',
-  /**
-   * An investigator earned the Lita Chantler card in The Gathering (`true`). Not a sentence of
-   * the campaign log but a deck change, recorded so The Devourer Below knows whether anyone can
-   * hold her for Umôrdhoth's action.
-   */
-  litaEarned: 'litaEarned',
   /** "Cultists We Interrogated": a list of the unique Cultists in The Midnight Masks' victory display. */
   cultistsWeInterrogated: 'cultistsWeInterrogated',
   /** "Cultists Who Got Away": a list of the unique Cultists left in the Cultist deck or in play. */
