@@ -94,6 +94,28 @@ export function twoGhoulPriestsExport(title: string): Buffer {
 }
 
 /**
+ * Like `houseOpenedExport`, but played on to the investigation phase of round 3, so the mythos
+ * phases of rounds 2 and 3 have drawn from the encounter deck (each "Next" runs one phase:
+ * enemy, upkeep, mythos, investigation): Dissonant Voices, drawn in round 2, lies on the discard
+ * pile.
+ */
+export function mythosDrawnExport(title: string): Buffer {
+  const table = houseOpened(theGathering);
+  table.endTurn(rolandId);
+  table.nextPhase();
+  table.nextPhase();
+  table.nextPhase();
+  table.nextPhase();
+  table.startTurn(rolandId);
+  table.endTurn(rolandId);
+  table.nextPhase();
+  table.nextPhase();
+  table.nextPhase();
+  table.nextPhase();
+  return exportOf(title, table, 'mythos_drawn');
+}
+
+/**
  * An export file of a solo game of The Gathering titled `title` in which the house map is in
  * play while Roland Banks is still in the Study, so two maps are visible at once. No scenario reaches
  * this yet (act 1 removes the Study as it opens the house), so the house is added directly; it

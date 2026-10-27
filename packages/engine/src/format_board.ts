@@ -7,7 +7,14 @@ import { cardsInZone } from './lookup';
 import { mapLocations } from './map';
 import { PHASE_STEP_TITLES } from './phases';
 import type { CardInstance, Decision, GameState, Investigator, PhaseStep } from './state';
-import { scenarioDeck, type ScenarioDeck, type Zone } from './zone';
+import {
+  encounterDiscard,
+  scenarioDeck,
+  setAside,
+  victoryDisplay,
+  type ScenarioDeck,
+  type Zone,
+} from './zone';
 
 /**
  * The board as plain text, for debugging and test failure messages: round and
@@ -35,8 +42,8 @@ export function formatBoard(ctx: EngineContext, state: GameState): string {
     encounterLine(ctx, state),
     ...resolvingLines(ctx, state),
     ...scenarioDeckLines(state),
-    `Set aside: ${countIn(state, { kind: 'setAside' })} cards`,
-    `Victory display: ${listOrNone(namesIn(ctx, state, { kind: 'victoryDisplay' }))}`,
+    `Set aside: ${countIn(state, setAside)} cards`,
+    `Victory display: ${listOrNone(namesIn(ctx, state, victoryDisplay))}`,
     ...decisionLines(ctx, state),
   ].join('\n');
 }
@@ -157,11 +164,11 @@ function investigatorLine(
 }
 
 function encounterLine(ctx: EngineContext, state: GameState): string {
-  const [top] = namesIn(ctx, state, { kind: 'encounterDiscard' });
+  const [top] = namesIn(ctx, state, encounterDiscard);
   const discardTop = top === undefined ? '' : `, top: ${top}`;
   return (
     `Encounter deck: ${countIn(state, { kind: 'encounterDeck' })} cards; ` +
-    `discard: ${countIn(state, { kind: 'encounterDiscard' })} cards${discardTop}`
+    `discard: ${countIn(state, encounterDiscard)} cards${discardTop}`
   );
 }
 
