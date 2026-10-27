@@ -11,6 +11,7 @@ import { DecisionDialog } from './DecisionDialog';
 import { GameHeader } from './GameHeader';
 import { GameStatus } from './GameStatus';
 import { RejectionToast } from './RejectionToast';
+import { DrawnCardsNotice } from '../encounter/DrawnCardsNotice';
 import { SkippedEffectsNotice } from './SkippedEffectsNotice';
 import './game.css';
 
@@ -76,6 +77,13 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
         />
       )}
       <div id="notices">
+        {open.drawnCards && (
+          <DrawnCardsNotice
+            board={board}
+            drawn={open.drawnCards}
+            onDismiss={() => store.getState().dismissDrawnCards()}
+          />
+        )}
         {open.skippedEffects && (
           <SkippedEffectsNotice
             skipped={open.skippedEffects}

@@ -26,9 +26,14 @@ import { replay } from './reducer';
 import { CommandRejected } from './rejection';
 import { shuffle } from './rng';
 import type { CardInstance, GameState, Investigator } from './state';
-import { encounterDeck, encounterDiscard, scenarioDeck, setAside, type Zone } from './zone';
-
-const RESOLVING: Zone = { kind: 'resolving' };
+import {
+  encounterDeck,
+  encounterDiscard,
+  resolvingZone,
+  scenarioDeck,
+  setAside,
+  type Zone,
+} from './zone';
 
 /**
  * `DrawEncounter`: draws one card into the `resolving` zone and turns it face
@@ -201,7 +206,11 @@ function drawOne(
     peril: hasKeyword(stats, 'peril'),
     surge: hasKeyword(stats, 'surge'),
   };
-  const resolving = cardMoved(replay(refill, state), requireCard(state.cards, cardId), RESOLVING);
+  const resolving = cardMoved(
+    replay(refill, state),
+    requireCard(state.cards, cardId),
+    resolvingZone,
+  );
   const revealed: CardFlipped = { type: 'CardFlipped', cardId, faceUp: true };
   return [...refill, drawn, resolving, revealed];
 }

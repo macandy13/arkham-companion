@@ -56,7 +56,7 @@ export function SkippedEffectsNotice({
         ))}
       </ul>
       <button type="button" onClick={onDismiss}>
-        {t('skipped.dismiss')}
+        {t('notice.dismiss')}
       </button>
     </aside>
   );

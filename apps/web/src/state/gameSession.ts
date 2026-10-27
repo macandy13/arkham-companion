@@ -15,6 +15,7 @@ import {
   type SetupOptions,
   takenAsAction,
 } from '@arkham/engine';
+import { drawnCards, type DrawnCard } from '../encounter/drawnCards';
 
 /**
  * Sets `ctx.scenario` up as a new saved game called `title` (`PlayTable.setUp`) and stores the
@@ -114,6 +115,7 @@ export class GameSession {
   ) {}
 
   private skipped: readonly SkippedEffect[] = [];
+  private drawn: readonly DrawnCard[] = [];
 
   /**
    * While the players adjust the board: the log the adjustment started from and the taps played on
@@ -140,6 +142,11 @@ export class GameSession {
   /** What the last step played skipped for the players to do by hand; none after an undo. */
   get skippedEffects(): readonly SkippedEffect[] {
     return this.skipped;
+  }
+
+  /** The encounter cards the last step played drew or placed (`drawnCards`); none after an undo. */
+  get drawnCards(): readonly DrawnCard[] {
+    return this.drawn;
   }
 
   /**
@@ -197,6 +204,7 @@ export class GameSession {
    */
   async play(step: PlayStep): Promise<Rejection | undefined> {
     const before = this.table.entries;
+    const boardBefore = this.table.board;
     try {
       this.table.step(() => step(this.table));
     } catch (error) {
@@ -222,11 +230,9 @@ export class GameSession {
       this.lastSeq = stored.at(-1)?.seq ?? this.lastSeq;
     });
     // Only a step that counts replaces them: a refused tap leaves an unread notice in place.
-    this.skipped = skippedEffects(
-      this.ctx,
-      this.state,
-      added.map((entry) => entry.event),
-    );
+    const events = added.map((entry) => entry.event);
+    this.skipped = skippedEffects(this.ctx, this.state, events);
+    this.drawn = drawnCards(boardBefore, this.board, events);
     return undefined;
   }
 
@@ -244,6 +250,7 @@ export class GameSession {
     if (!this.table.canUndo) return;
     const before = this.table.entries;
     this.skipped = [];
+    this.drawn = [];
     this.table.undo();
     await this.storing(before, async () => {
       const loaded = await this.store.undoLast(this.gameId, this.lastSeq);
