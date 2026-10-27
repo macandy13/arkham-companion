@@ -1,18 +1,16 @@
 import { useTranslation } from 'react-i18next';
-import type { BoardView, CardPlaceView, EncounterCardView, InvestigatorId } from '@arkham/engine';
+import type { BoardView, EncounterCardView, InvestigatorId } from '@arkham/engine';
 import { assertNever } from '@arkham/util';
 import type { GameActions } from '../state/gameActions';
 import { cardMoves, type CardMove } from './cardMoves';
 
-/** Where an enemy already is on the map, so it spawns no more. */
-const ON_TABLE: ReadonlySet<CardPlaceView['kind']> = new Set(['atLocation', 'engaged']);
-
 /**
  * A button per move that fits `card` (`cardMoves`), for the players to put it where a revelation
  * the engine left to them says: each one step (`GameActions.moveEncounterCard`), so one undo takes
- * it back. An enemy that is not on the map yet also gets a Spawn button: `onSpawn` lets the players
- * tap the location on the map, where the engine spawns and engages it by the rules. Nothing is
- * tapped while a step is queued (`busy`).
+ * it back. Spawn hands the enemy to `onSpawn` instead, which lets the players tap the location on
+ * the map, where the engine spawns and engages it by the rules. Like the other moves, it carries
+ * out a card effect the engine left to the players, so it stays open while they adjust the board.
+ * Nothing is tapped while a step is queued (`busy`).
  */
 export function CardMoves({
   board,
@@ -32,6 +30,8 @@ export function CardMoves({
 
   const label = (move: CardMove): string => {
     switch (move.to) {
+      case 'spawn':
+        return t('encounter.move.spawn');
       case 'discard':
         return t('encounter.move.discard');
       case 'setAside':
@@ -45,23 +45,17 @@ export function CardMoves({
 
   return (
     <menu aria-label={t('encounter.move.label', { card: card.name })}>
-      {card.type === 'enemy' && !ON_TABLE.has(board.placeOf(card.id).kind) && (
-        <li>
-          <button type="button" disabled={busy} onClick={() => onSpawn(card)}>
-            {t('encounter.move.spawn')}
-          </button>
-        </li>
-      )}
       {cardMoves(board, card).map((move) => {
-        const text = label(move);
         return (
           <li key={JSON.stringify(move)}>
             <button
               type="button"
               disabled={busy}
-              onClick={() => void actions.moveEncounterCard(card.id, move)}
+              onClick={() =>
+                move.to === 'spawn' ? onSpawn(card) : void actions.moveEncounterCard(card.id, move)
+              }
             >
-              {text}
+              {label(move)}
             </button>
           </li>
         );

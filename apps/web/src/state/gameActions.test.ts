@@ -12,7 +12,7 @@ import {
   PlayTable,
   type CardPlaceView,
 } from '@arkham/engine';
-import type { CardMove } from '../encounter/cardMoves';
+import type { PileMove } from '../encounter/cardMoves';
 import { gameActions, type ActionCost, type GameActions } from './gameActions';
 
 const study = instanceId('study');
@@ -97,7 +97,7 @@ describe('gameActions', () => {
     expect(table.board.encounter.deckCount).toBe(1);
   });
 
-  it.each<{ move: CardMove; place: CardPlaceView }>([
+  it.each<{ move: PileMove; place: CardPlaceView }>([
     { move: { to: 'discard' }, place: { kind: 'encounterDiscard' } },
     { move: { to: 'setAside' }, place: { kind: 'setAside' } },
     {

@@ -44,6 +44,7 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
   }
   const { board } = open;
   const [decision] = board.decisions;
+  const { spawning } = open;
 
   return (
     <div
@@ -61,11 +62,10 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
           busy={open.busy}
           adjusting={open.adjusting}
           onPick={
-            open.spawning &&
+            spawning &&
             ((location) => {
-              const enemy = open.spawning;
               store.getState().cancelSpawn();
-              if (enemy) void store.getState().actions.spawnEnemy(enemy.id, location);
+              void store.getState().actions.spawnEnemy(spawning.id, location);
             })
           }
         />

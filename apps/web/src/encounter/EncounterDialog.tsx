@@ -22,8 +22,7 @@ export type HeaderPileKind = 'discard' | 'setAside' | 'victoryDisplay';
  * empty. Opened on a pile, it shows the pile's cards in a row (`PileStrip`) with the places the
  * players can put the chosen one (`CardMoves`), for a revelation the engine left to them; its
  * Spawn closes the dialog and hands the enemy to `onSpawn`, so the players pick the location on
- * the map. A native
- * modal `<dialog>` brings focus trapping and Escape.
+ * the map. A native modal `<dialog>` brings focus trapping and Escape.
  */
 export function EncounterDialog({
   board,

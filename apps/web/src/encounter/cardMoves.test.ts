@@ -35,7 +35,12 @@ describe('cardMoves', () => {
     {
       where: 'on the discard pile',
       zone: { kind: 'encounterDiscard' } as const,
-      moves: [{ to: 'setAside' }],
+      moves: [{ to: 'spawn' }, { to: 'setAside' }],
+    },
+    {
+      where: 'set aside',
+      zone: { kind: 'setAside' } as const,
+      moves: [{ to: 'spawn' }, { to: 'discard' }],
     },
     {
       where: 'unengaged in the Hallway',
@@ -48,7 +53,7 @@ describe('cardMoves', () => {
       moves: [{ to: 'discard' }, { to: 'setAside' }],
     },
   ])(
-    'moves an enemy $where only to the discard pile or aside, never into a threat area',
+    'moves an enemy $where to a spawn when it is off the map, onto the discard pile or aside, never into a threat area',
     ({ zone, moves }) => {
       const table = brooksTurnWith(blankEnemy('ghoul'), zone);
 

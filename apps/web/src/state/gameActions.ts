@@ -15,7 +15,7 @@ import {
   type TokenKind,
   type Zone,
 } from '@arkham/engine';
-import type { CardMove } from '../encounter/cardMoves';
+import type { PileMove } from '../encounter/cardMoves';
 import { assertNever } from '@arkham/util';
 
 /** The tokens on a location that its menu's +/− steppers change. */
@@ -130,7 +130,7 @@ export interface GameActions {
    * revelation the engine left to the players: onto the discard pile, set aside or into a threat
    * area. Enemies spawn with `spawnEnemy` instead, so the engine engages them by the rules.
    */
-  moveEncounterCard(card: InstanceId, move: CardMove): Promise<void>;
+  moveEncounterCard(card: InstanceId, move: PileMove): Promise<void>;
   /**
    * Spawns `enemy` from a pile at `location`, which the players chose on the map: the engine
    * engages it there by the rules (prey, Aloof), as if a card effect spawned it there.
@@ -310,8 +310,8 @@ function adjustStat(
   }
 }
 
-/** The zone (and, for the discard pile, the top) a `CardMove` puts a card in. */
-function placeOf(move: CardMove): { to: Zone; index?: number } {
+/** The zone (and, for the discard pile, the top) a `PileMove` puts a card in. */
+function placeOf(move: PileMove): { to: Zone; index?: number } {
   switch (move.to) {
     case 'discard':
       return { to: encounterDiscard, index: 0 };
