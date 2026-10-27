@@ -4,6 +4,7 @@ import type {
   BoardView,
   EnemyView,
   InvestigatorView,
+  LocationSymbol,
   LocationView,
   MapEnemyView,
   PrintedActionView,
@@ -12,6 +13,7 @@ import { LOCATION_ART, PORTRAIT_SCAN, portraitArtViewBox } from '../catalog/card
 import { useCardPicture } from '../catalog/cardImages';
 import { cardActionCaption } from '../screens/ActionRow';
 import { LocationOrnament, TYPE_PLATE_CENTRE } from './cardOrnament';
+import { connectionGlyph } from './connectionSymbol';
 import {
   ART_WINDOW,
   ATTACHMENT,
@@ -126,6 +128,7 @@ export function LocationTile({
       )}
       <LocationOrnament />
       <NameBand location={location} />
+      {location.symbol && <ConnectionSymbol symbol={location.symbol} />}
       {onOpen && <DetailsButton location={location} onOpen={onOpen} />}
       {location.attachments?.map((name, i) => (
         <Attachment key={`${name}-${i}`} name={name} origin={attachmentOrigin(i)} />
@@ -325,6 +328,30 @@ function Attachment({ name, origin: { x, y } }: { name: string; origin: Point })
     </g>
   );
 }
+
+/**
+ * The location's connection symbol (`LocationView.symbol`) as a dark disc in the tile's top right
+ * corner, across the name from the details button: the printed card has it in its top left corner,
+ * which the details button takes. Named for screen readers, since its shape alone says nothing.
+ */
+function ConnectionSymbol({ symbol }: { symbol: LocationSymbol }) {
+  const { t } = useTranslation();
+  const radius = CONTENT.pawnRadius;
+  return (
+    <g
+      role="img"
+      aria-label={t('map.connectionSymbol', { symbol: t(`map.symbols.${symbol}`) })}
+      data-connection={symbol}
+      transform={`translate(${TILE.width - radius} ${radius})`}
+    >
+      <circle r={radius} />
+      <path d={connectionGlyph(symbol, radius * CONNECTION_GLYPH_SCALE)} />
+    </g>
+  );
+}
+
+/** How much of the disc's radius the glyph spans, so it sits inside the disc like the printed one. */
+const CONNECTION_GLYPH_SCALE = 0.45;
 
 /**
  * The tile's details button, a round button with an "i" in its top left corner, where the printed

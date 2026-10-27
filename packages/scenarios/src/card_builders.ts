@@ -12,6 +12,7 @@ import {
   type EncounterSetCode,
   type Keyword,
   type LocationAttachment,
+  type LocationSymbol,
   type ScaledValue,
   type Trait,
 } from '@arkham/engine';
@@ -121,6 +122,8 @@ export interface LocationOptions {
   abilities?: Ability[];
   /** Its action abilities, such as `resignAction()`. */
   actions?: readonly CardAction[];
+  /** The connection symbol in its upper left corner; left out where nobody has entered it yet. */
+  symbol?: LocationSymbol;
 }
 
 /** Card stats for a hand-entered location of `set`, with both printed sides. */
@@ -134,6 +137,7 @@ export function location({
   victory,
   abilities,
   actions,
+  symbol,
 }: LocationOptions): CardStats {
   return {
     ...scenarioCard(code, name, set),
@@ -144,6 +148,7 @@ export function location({
     ...(victory === undefined ? {} : { victory }),
     ...(abilities === undefined ? {} : { abilities }),
     ...(actions === undefined ? {} : { actions }),
+    ...(symbol === undefined ? {} : { symbol }),
   };
 }
 

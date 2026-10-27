@@ -18,6 +18,7 @@ import {
   type CardStats,
   type CardType,
   type EngineContext,
+  type LocationSymbol,
   type Trait,
 } from './cards';
 import { optionName } from './describe_decision';
@@ -188,6 +189,8 @@ interface LocationViewBase {
   map: MapId;
   /** The picture of the side it shows (`CardStats.imageSrc` once revealed, else `backImageSrc`), when the card data has one. */
   image?: CardImagePath;
+  /** Its connection symbol (`CardStats.symbol`), when the card data has one. */
+  symbol?: LocationSymbol;
   clues: number;
   doom?: number;
   investigators?: InvestigatorId[];
@@ -948,13 +951,14 @@ function enemyView(ctx: EngineContext, state: GameState, enemy: CardInstance): E
 
 function locationView(ctx: EngineContext, state: GameState, location: CardInstance): LocationView {
   const present = state.investigators.filter((inv) => inv.locationId === location.id);
-  const { imageSrc, backImageSrc, actions } = cardStats(ctx.cards, location.code);
+  const { imageSrc, backImageSrc, actions, symbol } = cardStats(ctx.cards, location.code);
   const image = location.faceUp ? imageSrc : backImageSrc;
   return {
     id: location.id,
     name: nameOf(ctx, location),
     map: mapOf(location),
     ...(image === undefined ? {} : { image }),
+    ...(symbol === undefined ? {} : { symbol }),
     ...(location.faceUp
       ? {
           revealed: true as const,

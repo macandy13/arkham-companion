@@ -111,6 +111,24 @@ describe('MapBoard', () => {
     expect(within(tile('attic')).getByText('Unrevealed')).toBeTruthy();
   });
 
+  it.each([
+    { side: 'revealed', revealed: true },
+    { side: 'unrevealed', revealed: false },
+  ])('names the connection symbol on the $side side of a tile', ({ revealed }) => {
+    const parlor = instanceId('parlor');
+    const table = PlayTable.start(
+      newGame().withLocation(parlor, blankLocation('parlor', { symbol: 'diamond' }), { revealed }),
+    );
+
+    render(
+      <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+    );
+
+    expect(
+      within(tile('parlor')).getByRole('img', { name: 'Connection symbol: diamond' }),
+    ).toBeTruthy();
+  });
+
   it("prints the parlor's Resign and free action on its tile, though alder is not there", () => {
     const parlor = instanceId('parlor');
     const table = PlayTable.start(

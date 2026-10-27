@@ -144,6 +144,13 @@ export interface CardStats {
   /** The card's action abilities ("[action]: …"), taken with `UseCardAction`; none when absent. */
   actions?: readonly CardAction[];
   /**
+   * Only on locations: the connection symbol in its upper left corner, the same on both sides of
+   * every location so far. The views label locations with it; movement follows the map's
+   * connections, not these symbols. Entered with the scenario data, since ArkhamDB has no field
+   * for it.
+   */
+  symbol?: LocationSymbol;
+  /**
    * The picture of its front on ArkhamDB, only for the views to show; no rule reads it. A
    * location's front is its revealed side.
    */
@@ -151,6 +158,12 @@ export interface CardStats {
   /** The picture of its back on ArkhamDB, for the views only: a location's unrevealed side. */
   backImageSrc?: CardImagePath;
 }
+
+/**
+ * A location's connection symbol (`CardStats.symbol`). The game prints many more; each joins this
+ * union with the first location that needs it, together with its glyph in the web app.
+ */
+export type LocationSymbol = 'circle' | 'square' | 'triangle' | 'plus' | 'diamond';
 
 /**
  * What a treachery attached to a location by its revelation does

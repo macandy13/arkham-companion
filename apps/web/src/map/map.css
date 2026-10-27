@@ -429,6 +429,21 @@
   fill: var(--color-ink);
 }
 
+/* The connection symbol: a light outline on a dark disc, like the printed corner. */
+#map svg g[data-connection] circle {
+  fill: var(--color-ink);
+  stroke: var(--card-band);
+  stroke-width: var(--piece-ring-width);
+}
+
+#map svg g[data-connection] path {
+  fill: none;
+  stroke: var(--color-parchment);
+  stroke-width: var(--piece-ring-width);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 #map svg g[role='button']:focus-visible {
   outline: var(--border-width) solid var(--color-accent);
 }
