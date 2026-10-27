@@ -572,6 +572,38 @@ describe('InvestigatorBar', () => {
       },
     );
 
+    it("names the study's two plain actions apart, as Action 1 and Action 2", () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(
+            study,
+            blankLocation('study', { actions: [{ effects: [] }, { effects: [] }] }),
+            {
+              revealed: true,
+            },
+          )
+          .withInvestigator(alder, { locationId: study })
+          .withTurnOf(alder),
+      );
+
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      const named = within(panel('alder'))
+        .getAllByRole('button', { name: / · study$/ })
+        .map((button) => [button.getAttribute('aria-label'), button.textContent]);
+      expect(named).toEqual([
+        ['Action 1 · study', 'Action 1'],
+        ['Action 2 · study', 'Action 2'],
+      ]);
+    });
+
     it('"Resign · study" takes the study`s Resign for the investigator whose turn it is', async () => {
       const table = PlayTable.start(
         newGame()

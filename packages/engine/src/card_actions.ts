@@ -287,6 +287,13 @@ export interface OfferedCardAction {
   readonly designator?: CardAction['designator'];
   /** The action costs no action (`CardAction.free`). */
   readonly free?: true;
+  /**
+   * Which of the card's printed actions of the same kind (the same designator, or plain) this is,
+   * counting from 1, when the card prints more than one, so each has a name of its own ("Action 2
+   * · Parlor"). Counted over the printed actions, not the offered ones, so a name stays put when
+   * a used-up action drops out. Absent when the card prints only one of its kind.
+   */
+  readonly number?: number;
 }
 
 /**
@@ -314,11 +321,24 @@ export function cardActionsOfferedTo(
               action,
               ...(designator === undefined ? {} : { designator }),
               ...(free === undefined ? {} : { free }),
+              ...numberOfKind(actions, action),
             },
           ]
         : [],
     );
   });
+}
+
+/**
+ * `OfferedCardAction.number` of the printed action at index `action` among `actions`: its place
+ * among the actions with its designator, when there is more than one of them.
+ */
+function numberOfKind(actions: readonly CardAction[], action: number): { number?: number } {
+  const designator = actions[action]?.designator;
+  const sameKind = actions.flatMap((printed, index) =>
+    printed.designator === designator ? [index] : [],
+  );
+  return sameKind.length > 1 ? { number: sameKind.indexOf(action) + 1 } : {};
 }
 
 /**

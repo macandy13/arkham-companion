@@ -81,14 +81,17 @@ export function cardActionsOn(board: BoardView, cardId: InstanceId): readonly Ca
 }
 
 /**
- * The words for an offered card action: its short `caption` ("Resign") and its full `name`
- * ("Resign · Parlor"), shared by the turn row and the card screens so both say the same.
+ * The words for an offered card action: its short `caption` ("Resign", "Action 2" for the second
+ * of a card's plain actions, `CardActionView.number`) and its full `name` ("Resign · Parlor"),
+ * shared by the turn row and the card screens so both say the same.
  */
 export function cardActionLabel(
   t: TFunction,
-  { card, designator }: CardActionView,
+  { card, designator, number }: CardActionView,
 ): { caption: string; name: string } {
-  const caption = t(`investigators.cardAction.${designator ?? 'plain'}`);
+  const kind = t(`investigators.cardAction.${designator ?? 'plain'}`);
+  const caption =
+    number === undefined ? kind : t('investigators.cardActionNumbered', { action: kind, number });
   return { caption, name: t('investigators.cardActionOn', { action: caption, card }) };
 }
 
