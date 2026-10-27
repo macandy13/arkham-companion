@@ -425,7 +425,7 @@ describe('action conditions', () => {
     .withLocation(
       hall,
       blankLocation('hall', {
-        actions: [{ ...scareAction, condition: { controls: cardCode('lita') } }],
+        actions: [{ ...scareAction, condition: { kind: 'controls', card: cardCode('lita') } }],
       }),
       { revealed: true },
     )

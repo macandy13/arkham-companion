@@ -289,7 +289,7 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
     // "[action] If you control Lita Chantler: You throw Lita to Umôrdhoth … (→R3)".
     actions: [
       {
-        condition: { controls: codes.litaChantler },
+        condition: { kind: 'controls', card: codes.litaChantler },
         effects: [endScenario(DEVOURER_BELOW_RESOLUTIONS.litaSacrificed)],
       },
     ],
