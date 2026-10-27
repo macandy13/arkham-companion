@@ -55,7 +55,16 @@ jobs:
           path: apps/web/e2e/.card_pictures
           key: card-pictures-${{ hashFiles('packages/scenarios/src/the_gathering/cards.ts', 'packages/scenarios/src/card_builders.ts', 'apps/web/e2e/fixtures/card_pictures.ts') }}
           restore-keys: card-pictures-
-      - run: pnpm --filter @arkham/web exec playwright install --with-deps chromium
+      # Chromium's headless shell without apt, as in preview.yml (see there). This job also runs
+      # on main, so its cache is the one every PR's preview and E2E job restore.
+      - id: playwright
+        run: echo "version=$(pnpm --filter @arkham/web exec playwright --version | awk '{ print $2 }')" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-shell-${{ runner.os }}-${{ env.ImageOS }}-${{ steps.playwright.outputs.version }}
+      - timeout-minutes: 5
+        run: pnpm --filter @arkham/web exec playwright install --only-shell chromium
       - run: pnpm e2e
       - uses: actions/upload-artifact@v7
         if: failure()

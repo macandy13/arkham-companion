@@ -57,8 +57,10 @@ jobs:
           path: apps/web/e2e/.card_pictures
           key: card-pictures-${{ hashFiles('packages/scenarios/src/the_gathering/cards.ts', 'packages/scenarios/src/card_builders.ts', 'apps/web/e2e/fixtures/card_pictures.ts') }}
           restore-keys: card-pictures-
-      # Headless runs only need Chromium's headless shell, cached per Playwright version so most
-      # runs skip the download; the system packages it needs still come from apt.
+      # Headless runs only need Chromium's headless shell, cached per Playwright version. No
+      # `--with-deps`: the runner image already has the libraries it needs, and apt only added
+      # fonts the app doesn't use (it bundles its own) from Ubuntu's mirror, which can drop to
+      # 55 kB/s when many jobs start at once and stall a run for 10 minutes.
       - id: playwright
         if: steps.changes.outputs.web == 'true'
         run: echo "version=$(pnpm --filter @arkham/web exec playwright --version | awk '{ print $2 }')" >> "$GITHUB_OUTPUT"
@@ -68,9 +70,8 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-shell-${{ runner.os }}-${{ env.ImageOS }}-${{ steps.playwright.outputs.version }}
       - if: steps.changes.outputs.web == 'true'
-        run: |
-          pnpm --filter @arkham/web exec playwright install --with-deps --only-shell chromium
-          command -v ffmpeg || sudo apt-get install -y --no-install-recommends ffmpeg
+        timeout-minutes: 5
+        run: pnpm --filter @arkham/web exec playwright install --only-shell chromium
       # Records the base commit's tagged specs too, so the render step can leave out every spec
       # whose picture (a shot, or a flow's end state) this PR doesn't change, including specs an
       # earlier PR left tagged on main. Its own install, so the base builds with its own packages.
@@ -95,6 +96,13 @@ jobs:
         # A failing flow must not block the preview; the E2E check reports it.
         continue-on-error: true
         run: pnpm --filter @arkham/web e2e:screencast
+      # ffmpeg only turns flow videos into GIFs, and it comes from Ubuntu's mirror (see above), so
+      # it is installed only when a flow was recorded, and a slow mirror fails the step instead of
+      # stalling the run.
+      - if: steps.changes.outputs.web == 'true' && hashFiles('apps/web/test-results/screencast/**/*.webm') != ''
+        timeout-minutes: 5
+        run: |
+          command -v ffmpeg || { sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg; }
       - if: steps.changes.outputs.web == 'true' && hashFiles('apps/web/screencasts/report.json') != ''
         working-directory: apps/web
         run: >-
