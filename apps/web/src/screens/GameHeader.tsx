@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StoreApi } from 'zustand/vanilla';
-import type { ActAdvance, BoardView, CardImagePath, CardName } from '@arkham/engine';
+import type { ActAdvance, ActView, BoardView, CardImagePath, CardName } from '@arkham/engine';
 import { useCardPicture } from '../catalog/cardImages';
 import { EncounterPiles, HeaderPile, type PileProps } from '../encounter/EncounterPiles';
 import type { AppState, OpenGame } from '../state/appStore';
@@ -209,7 +209,7 @@ function ActStatus({
   const offered = adjusting ? [] : cardActionsOn(board, act.id);
   const { advance } = act;
   const plate = (advance: ActAdvance, onAdvance?: () => void) => {
-    const clues = advance.kind === 'spendClues' ? advance.held : act.clues;
+    const clues = actClues(act, advance);
     const { threshold } = advance;
     return (
       <>
@@ -422,4 +422,12 @@ function CardFace({
       {children}
     </div>
   );
+}
+
+/**
+ * The clues that count towards advancing the act (`advance`, its `ActAdvance`): those the
+ * investigators hold for an act they advance by spending clues, else those lying on it.
+ */
+export function actClues(act: ActView, advance: ActAdvance): number {
+  return advance.kind === 'spendClues' ? advance.held : act.clues;
 }

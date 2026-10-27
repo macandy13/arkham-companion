@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { SKILL_NAMES, type BoardView, type SkillName } from '@arkham/engine';
+import { SKILL_NAMES, type BoardView, type InvestigatorView, type SkillName } from '@arkham/engine';
+import { actClues } from './GameHeader';
 import type { DetailTarget } from './useDetailView';
 
 /** One value on a strip: what the stylesheet draws its icon by, and the value as the strip shows it. */
@@ -13,10 +14,10 @@ interface StripValue {
 /**
  * An edge strip of the map row in the phone's detail view (M3.14c), a button leading to the row
  * on its side (`to`): `onGo` moves the view to the agenda, or to the panel of the strip's
- * investigator. Above the map the numbers of the cards row (the agenda's doom, the
- * act's clues, the encounter deck and the round), below it those of the investigator whose turn
- * it is, else the lead (their actions left on their turn, counters and skills). The map takes all
- * touches in that row, so a vertical swipe to the next row starts on a strip. Its values only
+ * investigator. Above the map the numbers of the cards row (the agenda's doom, the act's clues,
+ * the encounter deck and the round), below it those of the investigator whose turn it is, else
+ * the lead, else the first (their actions left on their turn, counters and skills). The map takes
+ * all touches in that row, so a vertical swipe to the next row starts on a strip. Its values only
  * show as numbers and icons, so its name says them in words.
  */
 export function MapStrip({
@@ -79,7 +80,7 @@ function cardValues(board: BoardView, t: Translate): StripValues {
   }
   if (act?.advance) {
     const { advance } = act;
-    const clues = advance.kind === 'spendClues' ? advance.held : act.clues;
+    const clues = actClues(act, advance);
     items.push({
       kind: 'clues',
       shown: `${clues}/${advance.threshold}`,
@@ -103,34 +104,12 @@ function cardValues(board: BoardView, t: Translate): StripValues {
   };
 }
 
-/** The lower strip: the numbers of the investigator whose turn it is, else of the lead. */
+/** The lower strip: the numbers of the turn's investigator, else of the lead, else of the first. */
 function investigatorValues(board: BoardView, t: Translate): StripValues | undefined {
-  const id = board.turn ?? board.lead;
+  const id = board.turn ?? board.lead ?? board.investigators[0]?.id;
   const investigator = board.investigators.find((candidate) => candidate.id === id);
   if (!investigator) return undefined;
-  const { health, damage, sanity, horror } = investigator;
-  const said = (stat: string, value: string | number) =>
-    t('investigators.skillValue', { skill: stat, value });
-  const counter = (kind: StripValue['kind'], stat: string, shown: string): StripValue => ({
-    kind,
-    shown,
-    label: said(stat, shown),
-  });
-  const items: StripValue[] = [
-    ...(board.turn === investigator.id
-      ? [
-          {
-            kind: 'actions' as const,
-            shown: String(investigator.actions),
-            label: t('investigators.actionsLeft', { count: investigator.actions }),
-          },
-        ]
-      : []),
-    counter('health', t('investigators.health'), `${health - damage}/${health}`),
-    counter('sanity', t('investigators.sanity'), `${sanity - horror}/${sanity}`),
-    counter('clues', t('investigators.clues'), String(investigator.clues)),
-    counter('resources', t('investigators.resources'), String(investigator.resources)),
-  ];
+  const items = investigatorCounters(investigator, board.turn === investigator.id, t);
   const skills = SKILL_NAMES.map((skill) => ({
     skill,
     value: investigator.boostedSkills[skill],
@@ -138,7 +117,9 @@ function investigatorValues(board: BoardView, t: Translate): StripValues | undef
   const label = [
     investigator.name,
     ...items.map((item) => item.label),
-    ...skills.map(({ skill, value }) => said(t(`skill.${skill}`), value)),
+    ...skills.map(({ skill, value }) =>
+      t('investigators.skillValue', { skill: t(`skill.${skill}`), value }),
+    ),
   ].join(', ');
   return {
     label,
@@ -147,4 +128,40 @@ function investigatorValues(board: BoardView, t: Translate): StripValues | undef
     items,
     skills,
   };
+}
+
+/** An investigator's counters on the lower strip, after their actions left while `onTurn`. */
+function investigatorCounters(
+  investigator: InvestigatorView,
+  onTurn: boolean,
+  t: Translate,
+): StripValue[] {
+  const { health, damage, sanity, horror } = investigator;
+  const counter = (kind: StripValue['kind'], stat: string, shown: string): StripValue => ({
+    kind,
+    shown,
+    label: t('investigators.skillValue', { skill: stat, value: shown }),
+  });
+  const items: StripValue[] = [];
+  if (onTurn)
+    items.push({
+      kind: 'actions',
+      shown: String(investigator.actions),
+      label: t('investigators.actionsLeft', { count: investigator.actions }),
+    });
+  items.push(
+    counter(
+      'health',
+      t('investigators.health'),
+      t('investigators.left', { left: health - damage, max: health }),
+    ),
+    counter(
+      'sanity',
+      t('investigators.sanity'),
+      t('investigators.left', { left: sanity - horror, max: sanity }),
+    ),
+    counter('clues', t('investigators.clues'), String(investigator.clues)),
+    counter('resources', t('investigators.resources'), String(investigator.resources)),
+  );
+  return items;
 }

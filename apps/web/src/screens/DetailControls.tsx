@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { useTranslation } from 'react-i18next';
-import { range } from '@arkham/util';
+import { assertNever, range } from '@arkham/util';
 import type { DetailTarget } from './useDetailView';
 
 /** Where the detail view is scrolled to: its row, and the card or panel within that row. */
@@ -102,10 +102,16 @@ const ROW_INDEX = { cards: 0, map: 1, investigators: 2 } as const;
 
 /** The card or panel of its row a target shows, as a selector within the row; the map has none. */
 function itemOf(target: DetailTarget): string | undefined {
-  if (target.row === 'cards') return `:scope > [data-slot='${target.card}']`;
-  if (target.row === 'investigators')
-    return `:scope > [data-investigator='${target.investigator}']`;
-  return undefined;
+  switch (target.row) {
+    case 'cards':
+      return `:scope > [data-slot='${target.card}']`;
+    case 'map':
+      return undefined;
+    case 'investigators':
+      return `:scope > [data-investigator='${target.investigator}']`;
+    default:
+      return assertNever(target);
+  }
 }
 
 /** The row and the card or panel of the board the players see now, by how far each is scrolled. */
