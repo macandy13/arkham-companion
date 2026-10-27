@@ -6,21 +6,22 @@ import { useCardPicture } from '../catalog/cardImages';
 import type { GameActions } from '../state/gameActions';
 import { CardMoves } from './CardMoves';
 
-/** Where the encounter dialog opens (`EncounterDialog.start`): on the deck or on one of its piles. */
+/**
+ * Where the encounter dialog opens (`EncounterDialog.start`): on the deck or one of the piles beside
+ * it.
+ */
 export type EncounterPile = 'deck' | 'discard' | 'setAside' | 'victoryDisplay';
 
 /**
- * The encounter piles in full, opened from the header's deck or one of its piles: how many cards are
- * left in the deck with a "Draw for …" button per active investigator (the one whose turn it is
- * first), as player cards and effects make an investigator draw outside the mythos phase, then the
- * discard pile (top first), the set-aside cards and the victory display
- * as lists that open and close (`details`), each card with a small picture and its name. Opened
- * from a pile (`start`), that pile's list starts open. A tap on a card opens the places the
- * players can put it (`CardMoves`), for a revelation the engine left to them. A draw closes the dialog, so the card resolves
- * in front of the players (its decisions in the decision dialog); nothing is drawn while a step is
- * queued (`busy`), while the players adjust the board (`adjusting`, since a draw is play, not a
- * correction) or when deck and discard pile are both empty. A native modal `<dialog>` brings
- * focus trapping and Escape.
+ * The deck or pile tapped in the header (`start`) in full. Opened on the deck, it shows how many
+ * cards are left with a "Draw for …" button per active investigator (the one whose turn it is
+ * first), as player cards and effects make an investigator draw outside the mythos phase. A draw
+ * closes the dialog, so the card resolves in front of the players (its decisions in the decision
+ * dialog); nothing is drawn while a step is queued (`busy`), while the players adjust the board
+ * (`adjusting`, since a draw is play, not a correction) or when deck and discard pile are both
+ * empty. Opened on a pile, it shows the pile's cards in a row (`PileStrip`) with the places the
+ * players can put the chosen one (`CardMoves`), for a revelation the engine left to them. A native
+ * modal `<dialog>` brings focus trapping and Escape.
  */
 export function EncounterDialog({
   board,
@@ -53,109 +54,151 @@ export function EncounterDialog({
     <CardMoves board={board} card={card} actions={actions} busy={busy} />
   );
 
+  const piles = {
+    discard: { title: t('encounter.discard'), cards: discard },
+    setAside: { title: t('encounter.setAside'), cards: setAside },
+    victoryDisplay: { title: t('encounter.victoryDisplay'), cards: victoryDisplay },
+  };
+
   return (
     <dialog ref={dialog} aria-labelledby={titleId} onCancel={onClose} data-dialog="encounter">
       <button type="button" data-icon="close" aria-label={t('encounter.close')} onClick={onClose} />
-      <h2 id={titleId}>{t('header.encounterDeck')}</h2>
-      <p>{t('header.encounterDeckCount', { count: deckCount })}</p>
-      <footer>
-        {drawers.map((investigator) => (
-          <button
-            key={investigator.id}
-            type="button"
-            disabled={busy || adjusting || empty}
-            onClick={() => {
-              onClose();
-              void actions.drawEncounter(investigator.id);
-            }}
-          >
-            {t('encounter.drawFor', { name: investigator.name })}
-          </button>
-        ))}
-      </footer>
-      <CardList
-        title={t('encounter.discard')}
-        cards={discard}
-        open={start === 'discard'}
-        moves={moves}
-      />
-      <CardList
-        title={t('encounter.setAside')}
-        cards={setAside}
-        open={start === 'setAside'}
-        moves={moves}
-      />
-      <CardList
-        title={t('encounter.victoryDisplay')}
-        cards={victoryDisplay}
-        open={start === 'victoryDisplay'}
-        moves={moves}
-      />
+      {start === 'deck' ? (
+        <>
+          <h2 id={titleId}>{t('header.encounterDeck')}</h2>
+          <p>{t('header.encounterDeckCount', { count: deckCount })}</p>
+          <footer>
+            {drawers.map((investigator) => (
+              <button
+                key={investigator.id}
+                type="button"
+                disabled={busy || adjusting || empty}
+                onClick={() => {
+                  onClose();
+                  void actions.drawEncounter(investigator.id);
+                }}
+              >
+                {t('encounter.drawFor', { name: investigator.name })}
+              </button>
+            ))}
+          </footer>
+        </>
+      ) : (
+        <PileStrip
+          titleId={titleId}
+          title={piles[start].title}
+          cards={piles[start].cards}
+          moves={moves}
+        />
+      )}
     </dialog>
   );
 }
 
+/** How many cards of a pile the dialog shows side by side; more scroll, a whole card at a time. */
+const STRIP_CARDS_SHOWN = 5;
+
 /**
- * One pile as a list that opens and closes, titled with its name and count; `open` is how it
- * starts. Empty, it says so instead of listing.
+ * One pile as a row of its cards, top card first, like the threat area's: past
+ * `STRIP_CARDS_SHOWN` cards the row scrolls by whole cards, with a swipe or its arrows. The card
+ * tapped (the top card at first) shows its name, victory points and the places the players can
+ * put it (`moves`) under the row. Empty, it says so instead.
  */
-function CardList({
+function PileStrip({
+  titleId,
   title,
   cards,
-  open,
   moves,
 }: {
+  titleId: string;
   title: string;
   cards: readonly EncounterCardView[];
-  open: boolean;
   moves: (card: EncounterCardView) => ReactNode;
 }) {
   const { t } = useTranslation();
+  const strip = useRef<HTMLUListElement>(null);
+  const [chosenId, setChosenId] = useState(cards[0]?.id);
+  const chosen = cards.find((card) => card.id === chosenId) ?? cards[0];
+  // One card's width is enough: the strip snaps to whole cards, so the scroll ends on the next one.
+  const scroll = (direction: -1 | 1) => {
+    const card = strip.current?.firstElementChild;
+    if (card instanceof HTMLElement)
+      strip.current?.scrollBy({ left: direction * card.offsetWidth, behavior: 'smooth' });
+  };
+  const overflowing = cards.length > STRIP_CARDS_SHOWN;
   return (
-    <details open={open}>
-      <summary>{t('encounter.pile', { pile: title, count: cards.length })}</summary>
-      {cards.length === 0 ? (
+    <>
+      <h2 id={titleId}>{t('encounter.pile', { pile: title, count: cards.length })}</h2>
+      {chosen === undefined ? (
         <p>{t('encounter.empty')}</p>
       ) : (
-        <ul>
-          {cards.map((card) => (
-            <CardEntry key={card.id} card={card} moves={moves} />
-          ))}
-        </ul>
+        <>
+          <div>
+            {overflowing && (
+              <button
+                type="button"
+                data-icon="previous"
+                aria-label={t('encounter.earlierCards')}
+                onClick={() => scroll(-1)}
+              />
+            )}
+            <ul ref={strip} aria-label={title}>
+              {cards.map((card) => (
+                <StripCard
+                  key={card.id}
+                  card={card}
+                  chosen={card.id === chosen.id}
+                  onChoose={() => setChosenId(card.id)}
+                />
+              ))}
+            </ul>
+            {overflowing && (
+              <button
+                type="button"
+                data-icon="next"
+                aria-label={t('encounter.laterCards')}
+                onClick={() => scroll(1)}
+              />
+            )}
+          </div>
+          <section aria-label={chosen.name}>
+            <h3>
+              {chosen.name}
+              {chosen.victory !== undefined && (
+                <data value={chosen.victory}>
+                  {t('encounter.victory', { count: chosen.victory })}
+                </data>
+              )}
+            </h3>
+            {moves(chosen)}
+          </section>
+        </>
       )}
-    </details>
+    </>
   );
 }
 
 /**
- * One card of a pile: a small picture of its front (the card art pattern until it loads, or when
- * the card data has none), its name and, where it has them, its victory points. A tap opens the
- * places the players can put it (`moves`, rendered only while open).
+ * One card of the row: its picture (the card art pattern until it loads, or when the card data
+ * has none), a button named for the card that chooses it.
  */
-function CardEntry({
+function StripCard({
   card,
-  moves,
+  chosen,
+  onChoose,
 }: {
   card: EncounterCardView;
-  moves: (card: EncounterCardView) => ReactNode;
+  chosen: boolean;
+  onChoose: () => void;
 }) {
-  const { t } = useTranslation();
   const picture = useCardPicture(card.image);
-  const [open, setOpen] = useState(false);
   return (
     <li data-picture={picture?.shown ? 'shown' : undefined}>
-      <details onToggle={(event) => setOpen(event.currentTarget.open)}>
-        <summary>
-          {picture && (
-            <img src={picture.url} alt="" onLoad={picture.onLoad} onError={picture.onError} />
-          )}
-          {card.name}
-          {card.victory !== undefined && (
-            <data value={card.victory}>{t('encounter.victory', { count: card.victory })}</data>
-          )}
-        </summary>
-        {open && moves(card)}
-      </details>
+      <button type="button" aria-label={card.name} aria-pressed={chosen} onClick={onChoose}>
+        {picture && (
+          <img src={picture.url} alt="" onLoad={picture.onLoad} onError={picture.onError} />
+        )}
+      </button>
     </li>
   );
 }

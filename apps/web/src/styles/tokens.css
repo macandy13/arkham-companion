@@ -235,8 +235,9 @@
   --pile-fan-turn-top: 8deg;
   --pile-fan-turn-second: -4deg;
   --pile-fan-turn-third: -16deg;
-  /* A card's small picture in a row of the encounter dialog's lists. */
-  --encounter-list-card-height: 3.5rem;
+  /* The encounter dialog's row of a pile's cards: this many side by side, each this wide. */
+  --strip-cards-shown: 5;
+  --encounter-strip-card-width: 7.5rem;
   /* The encounter card being resolved, large at the top of the decision dialog. */
   --resolving-card-height: 14rem;
   /* A dragged map piece's copy, see-through so the tile under it stays readable. */
