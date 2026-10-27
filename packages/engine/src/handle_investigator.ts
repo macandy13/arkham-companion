@@ -113,9 +113,9 @@ export function handleGainResources(state: GameState, cmd: GainResources): Inves
 }
 
 /**
- * `DrawCards`, `SearchDeck` and `PlayCard`: the engine holds no player cards, so it hands the
- * command to the players (`CommandDeferred`), for an active investigator. Support for player cards
- * would handle them here instead.
+ * `DrawCards`, `SearchDeck`, `PlayCard` and `DiscardFromHand`: the engine holds no player cards, so it
+ * hands the command to the players (`CommandDeferred`), for an active investigator. Support for
+ * player cards would handle them here instead.
  */
 export function deferToPlayers(
   _ctx: EngineContext,

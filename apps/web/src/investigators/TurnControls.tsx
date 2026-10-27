@@ -3,10 +3,14 @@ import { BASE_ACTIONS_PER_TURN, type BoardView, type InvestigatorView } from '@a
 import { range } from '@arkham/util';
 import type { GameActions } from '../state/gameActions';
 
+/** The basic actions the turn row offers, in its order, each a `GameActions` verb without arguments. */
+const BASIC_ACTIONS = ['investigate', 'takeResource', 'drawCard', 'playCard'] as const;
+
 /**
  * The turn controls on an investigator's panel. While it is their turn: a pip per action, filled
- * for each one left (`InvestigatorView.actions`), then investigate (its test goes to the decision
- * dialog), a button per card action the cards offer them (`BoardView.cardActions`, named by its
+ * for each one left (`InvestigatorView.actions`), then the basic actions as icon buttons:
+ * investigate (its test goes to the decision dialog), take a resource, and draw and play, whose cards
+ * the players handle at the table (`BASIC_ACTIONS`); then a button per card action the cards offer them (`BoardView.cardActions`, named by its
  * designator and card: "Resign · Parlor") and End, as in the prototype's turn row. Before it,
  * when the players may pick them next (`canStart`: the investigation phase, no turn in progress,
  * not taken this round), "Start turn", since the players choose the order.
@@ -45,14 +49,17 @@ export function TurnControls({
           <li key={slot} data-left={slot < left || undefined} />
         ))}
       </ul>
-      <button
-        type="button"
-        aria-label={t('investigators.investigate')}
-        title={t('investigators.investigate')}
-        data-icon="investigate"
-        disabled={busy}
-        onClick={() => void actions.investigate()}
-      />
+      {BASIC_ACTIONS.map((action) => (
+        <button
+          key={action}
+          type="button"
+          aria-label={t(`investigators.${action}`)}
+          title={t(`investigators.${action}`)}
+          data-icon={action}
+          disabled={busy}
+          onClick={() => void actions[action]()}
+        />
+      ))}
       {board.cardActions(investigator.id).map(({ cardId, card, action, designator }) => {
         const name = t(`investigators.cardAction.${designator ?? 'plain'}`);
         return (
