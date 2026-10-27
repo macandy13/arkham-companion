@@ -57,6 +57,7 @@ describe('EncounterPiles', () => {
         actions={actionsOn(table)}
         busy={false}
         adjusting={false}
+        onSpawn={() => {}}
       />,
     );
 
@@ -79,6 +80,7 @@ describe('EncounterPiles', () => {
         actions={actionsOn(table)}
         busy={false}
         adjusting={false}
+        onSpawn={() => {}}
       />,
     );
 
@@ -103,6 +105,7 @@ describe('EncounterPiles', () => {
         actions={actionsOn(table)}
         busy={false}
         adjusting={false}
+        onSpawn={() => {}}
       />,
     );
 
@@ -139,6 +142,7 @@ describe('EncounterPiles', () => {
         actions={actionsOn(table)}
         busy={false}
         adjusting={false}
+        onSpawn={() => {}}
       />,
     );
 
@@ -172,6 +176,7 @@ describe('EncounterPiles', () => {
           actions={actionsOn(table)}
           busy={false}
           adjusting={false}
+          onSpawn={() => {}}
         />,
       );
       fireEvent.click(screen.getByRole('button', { name: '2 cards left in the encounter deck' }));
@@ -188,6 +193,7 @@ describe('EncounterPiles', () => {
           actions={actionsOn(table)}
           busy={false}
           adjusting={false}
+          onSpawn={() => {}}
         />,
       );
 
@@ -216,6 +222,7 @@ describe('EncounterPiles', () => {
           actions={actionsOn(table)}
           busy={busy}
           adjusting={adjusting}
+          onSpawn={() => {}}
         />,
       );
 
@@ -227,6 +234,56 @@ describe('EncounterPiles', () => {
       );
       expect(draws.map((draw) => (draw as HTMLButtonElement).disabled)).toEqual([true, true]);
     });
+  });
+
+  it.each([
+    { kind: 'an enemy', card: blankEnemy('Swarm of Rats'), spawn: true },
+    { kind: 'a treachery', card: blankTreachery('Rotting Remains'), spawn: false },
+  ])('offers Spawn for $kind on the discard pile: $spawn', ({ card, spawn }) => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withCard(instanceId('discarded'), card, { kind: 'encounterDiscard' }),
+    );
+    render(
+      <EncounterPiles
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+        onSpawn={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^Encounter discard pile, 1 card/ }));
+
+    expect(screen.queryByRole('button', { name: 'Spawn' }) !== null).toBe(spawn);
+  });
+
+  it('closes the dialog and hands the enemy to onSpawn, for the players to pick its location on the map', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withCard(instanceId('rats'), blankEnemy('Swarm of Rats'), { kind: 'encounterDiscard' }),
+    );
+    const spawning: string[] = [];
+    render(
+      <EncounterPiles
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+        onSpawn={(enemy) => spawning.push(enemy.name)}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Encounter discard pile, 1 card, Swarm of Rats on top' }),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Spawn' }));
+
+    expect(spawning).toEqual(['Swarm of Rats']);
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('puts a card from the discard pile into a threat area as one step', async () => {
@@ -244,6 +301,7 @@ describe('EncounterPiles', () => {
         actions={actionsOn(table)}
         busy={false}
         adjusting={false}
+        onSpawn={() => {}}
       />,
     );
     fireEvent.click(
@@ -282,6 +340,7 @@ describe('HeaderPile', () => {
         actions={actionsOn(table)}
         busy={false}
         adjusting={false}
+        onSpawn={() => {}}
       />,
     );
 
@@ -310,6 +369,7 @@ describe('HeaderPile', () => {
         actions={actionsOn(table)}
         busy={false}
         adjusting={false}
+        onSpawn={() => {}}
       />,
     );
 
@@ -330,6 +390,7 @@ describe('HeaderPile', () => {
         actions={actionsOn(table)}
         busy={false}
         adjusting={false}
+        onSpawn={() => {}}
       />,
     );
 
@@ -357,6 +418,7 @@ describe('HeaderPile', () => {
         actions={actionsOn(table)}
         busy={false}
         adjusting={false}
+        onSpawn={() => {}}
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Set aside, 2 cards' }));
@@ -389,6 +451,7 @@ describe('HeaderPile', () => {
         actions={actionsOn(table)}
         busy={false}
         adjusting={false}
+        onSpawn={() => {}}
       />,
     );
 
