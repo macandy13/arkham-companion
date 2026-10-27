@@ -53,7 +53,7 @@ export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyVi
  * `enemies` and `investigators` are the open game's pieces at this location, and `turnOrder`
  * says whose pawns carry the lead and turn markers; `dragOf` gives the drag handlers of each
  * piece that can be dragged now. A tap on the tile, or its details button in
- * the top left corner, calls `onOpen`; a press that moves further (`isTap`: a pan, a piece
+ * the top right corner, calls `onOpen`; a press that moves further (`isTap`: a pan, a piece
  * dragged) is no tap. Without `onOpen` (the card in the location details) it has neither.
  */
 export function LocationTile({
@@ -330,32 +330,35 @@ function Attachment({ name, origin: { x, y } }: { name: string; origin: Point })
 }
 
 /**
- * The location's connection symbol (`LocationView.symbol`) as a dark disc in the tile's top right
- * corner, across the name from the details button: the printed card has it in its top left corner,
- * which the details button takes. Named for screen readers, since its shape alone says nothing.
+ * The location's connection symbol (`LocationView.symbol`) in the tile's top left corner, as on the
+ * printed card: a small disc in the symbol's colour with a light glyph. Named for screen readers,
+ * since its shape alone says nothing.
  */
 function ConnectionSymbol({ symbol }: { symbol: LocationSymbol }) {
   const { t } = useTranslation();
-  const radius = CONTENT.pawnRadius;
+  const centre = CONTENT.pawnRadius;
   return (
     <g
       role="img"
       aria-label={t('map.connectionSymbol', { symbol: t(`map.symbols.${symbol}`) })}
       data-connection={symbol}
-      transform={`translate(${TILE.width - radius} ${radius})`}
+      transform={`translate(${centre} ${centre})`}
     >
-      <circle r={radius} />
-      <path d={connectionGlyph(symbol, radius * CONNECTION_GLYPH_SCALE)} />
+      <circle r={CONNECTION_RADIUS} />
+      <path d={connectionGlyph(symbol, CONNECTION_RADIUS * CONNECTION_GLYPH_SCALE)} />
     </g>
   );
 }
+
+/** The symbol's disc is smaller than the pieces, like the printed one beside the name. */
+const CONNECTION_RADIUS = CONTENT.pawnRadius * 0.75;
 
 /** How much of the disc's radius the glyph spans, so it sits inside the disc like the printed one. */
 const CONNECTION_GLYPH_SCALE = 0.45;
 
 /**
- * The tile's details button, a round button with an "i" in its top left corner, where the printed
- * card shows its connection icon, named after the location. It is the keyboard's way to the
+ * The tile's details button, a round button with an "i" in its top right corner, across the name
+ * from the connection symbol, named after the location. It is the keyboard's way to the
  * details, which a tap on the tile also opens. It is an SVG group rather than an HTML button,
  * since it sits inside the drawing, so it takes the keyboard (Enter, Space) itself; its click is
  * the tile's, which opens the details.
@@ -363,7 +366,7 @@ const CONNECTION_GLYPH_SCALE = 0.45;
 function DetailsButton({ location, onOpen }: { location: LocationView; onOpen: () => void }) {
   const { t } = useTranslation();
   const radius = CONTENT.pawnRadius;
-  const x = radius;
+  const x = TILE.width - radius;
   const y = radius;
   const onKeyDown = (event: KeyboardEvent<SVGGElement>) => {
     if (event.key !== 'Enter' && event.key !== ' ') return;

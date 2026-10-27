@@ -38,6 +38,15 @@
   --color-card-investigator: #8a6a2c;
   --color-card-asset: #6f6a5c;
   /*
+   * The colours of the location connection symbols, as the printed cards colour each symbol (map
+   * tiles); the same in both themes, like the cards.
+   */
+  --color-connection-circle: #a78f32;
+  --color-connection-square: #8f2e2f;
+  --color-connection-triangle: #3b5775;
+  --color-connection-plus: #4a2219;
+  --color-connection-diamond: #557f47;
+  /*
    * The face of a card drawn by the app (map tiles, attachments): dark in both themes, like the
    * printed cards, so these are not redefined for the light theme.
    */
@@ -279,6 +288,8 @@
   --eliminated-opacity: 0.55;
   /* The rim of a round piece or token: the enemy ring, the shroud's bone edge. */
   --piece-ring-width: 3px;
+  /* The ring and glyph lines of a location's connection symbol, finer than a piece's ring. */
+  --connection-ring-width: 2px;
   /* Lifts the pieces off the card they stand on. */
   --piece-shadow: drop-shadow(0 1px 1.5px rgb(0 0 0 / 60%));
   /* The pawn of the investigator whose turn it is: a bolder gilt ring that glows, like their card. */
