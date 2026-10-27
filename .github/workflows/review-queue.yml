@@ -1,10 +1,11 @@
 name: Review queue
 
 # Keeps the pinned "Review queue" issue up to date for the repository owner: the open PRs
-# whose checks all passed, in merge order (a stacked PR right after the PR it builds on),
-# then the ones not ready yet (code in packages/review_queue). It reruns whenever a PR
-# workflow finishes, so a PR joins the queue as soon as its last check passes, and when a
-# PR closes or changes draft state; the hourly run catches the rest (labels). It never
+# whose checks all passed and that merge without conflicts, in merge order (a stacked PR
+# right after the PR it builds on), then the ones not ready yet (code in
+# packages/review_queue). It reruns whenever a PR workflow finishes, so a PR joins the
+# queue as soon as its last check passes, and when a PR closes, changes draft state or is
+# labelled (pr-sync.yml's `needs-rebase`); the hourly run catches the rest. It never
 # checks out PR code.
 
 on:
@@ -13,7 +14,7 @@ on:
       [CI, PR preview, PR quality, PR title, PR sync, CodeQL, Carddata check, Claude review]
     types: [completed]
   pull_request_target:
-    types: [closed, reopened, ready_for_review, converted_to_draft]
+    types: [closed, reopened, ready_for_review, converted_to_draft, labeled, unlabeled]
   schedule:
     - cron: '17 * * * *'
   workflow_dispatch:

@@ -30,7 +30,8 @@ function notReadyLine(pr: OpenPr): string {
 // No default case: TypeScript fails the build when `CheckState` gains a kind this misses.
 // Not `assertNever` from @arkham/util, since `node` won't strip types inside node_modules.
 function notReadyReason(pr: OpenPr): string {
-  if (pr.conflicts) return 'conflicts with its base';
+  if (pr.mergeable === 'conflicts') return 'conflicts with its base';
+  if (pr.mergeable === 'unknown') return 'GitHub is still checking it for conflicts';
   switch (pr.checks.kind) {
     case 'failed':
       return `failed ${pr.checks.names.join(', ')}`;
@@ -39,6 +40,6 @@ function notReadyReason(pr: OpenPr): string {
     case 'none':
       return 'no checks ran';
     case 'passed':
-      throw new Error(`#${pr.number} passed its checks and has no conflicts, so it is ready`);
+      throw new Error(`#${pr.number} passed its checks and merges cleanly, so it is ready`);
   }
 }
