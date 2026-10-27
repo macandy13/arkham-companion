@@ -21,6 +21,9 @@ import {
   readySelf,
   resolutionId,
   skillTest,
+  skillTestOfEither,
+  placeCluesOnSelf,
+  discardSelf,
   spawnEachSetAsideAt,
   takeDamageAndHorror,
   takeHorror,
@@ -107,6 +110,9 @@ export const OFFER_OF_POWER_DECISION = decisionId('theDevourerBelow.offerOfPower
 /** Id of the Quiet Glade action's question to its taker: heal 1 damage or 1 horror. */
 export const QUIET_GLADE_DECISION = decisionId('theDevourerBelow.quietGlade');
 
+/** Id of the question to whoever takes Disrupting the Ritual's action: test willpower or agility. */
+export const DISRUPTING_THE_RITUAL_DECISION = decisionId('theDevourerBelow.disruptingTheRitual');
+
 const sets = DEVOURER_BELOW_SETS;
 const codes = DEVOURER_BELOW_CODES;
 const own = sets.theDevourerBelow;
@@ -128,15 +134,16 @@ const woods = ['Woods'];
  *   willpower (6) tests and madness, agenda 3's Umôrdhoth and The Devourer
  *   Below, which becomes act and agenda at once) and agenda 2's +1 fight and
  *   evade for each enemy
- * - act 2's objective and reverse side (the enemies at the Ritual Site), act
- *   3's action and objective (its R1 is automated once the players advance it)
+ * - act 2's objective and reverse side (the enemies at the Ritual Site), and
+ *   act 3's objective check (the players advance it once its action has placed
+ *   the clues; its R1 is automated then)
  * - the Main Path's connection to each Woods location,
  *   the Arkham Woods' moving-out test, skill swaps, and the
  *   Ritual Site's clues at the end of the round
  * - Umôrdhoth's Lita action (R3) and Umôrdhoth's Wrath
  * - the Agents' constant and attack abilities (Screeching Byakhee, Yithian
  *   Observer), the madness weaknesses, Offer of Power's 2 cards, and Dreams of
- *   R'lyeh's -1 willpower and -1 sanity and its action
+ *   R'lyeh's -1 willpower and -1 sanity
  */
 export const theDevourerBelowCardDefs: readonly CardStats[] = [
   agenda({ code: '01143', name: 'The Arkham Woods', set: own, stage: 1, doom: 4 }),
@@ -168,6 +175,18 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
     name: 'Disrupting the Ritual',
     set: own,
     stage: 3,
+    // No clue requirement: only the clues its action places count towards its objective, which
+    // the players check and advance by hand (#523), so investigators can't pay for it.
+    actions: [
+      {
+        cost: { spend: 'clues', amount: 1 },
+        effects: [
+          skillTestOfEither(DISRUPTING_THE_RITUAL_DECISION, ['willpower', 'agility'], 3, {
+            onPass: [placeCluesOnSelf(1)],
+          }),
+        ],
+      },
+    ],
     abilities: [whenAdvanced(endScenario(DEVOURER_BELOW_RESOLUTIONS.ritualBroken))],
   }),
   location({
@@ -375,6 +394,7 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
     traits: ['Omen'],
     quantity: 2,
     abilities: [whenRevealed(putIntoThreatArea())],
+    actions: [{ effects: [skillTest('willpower', 3, { onPass: [discardSelf()] })] }],
   }),
 ];
 

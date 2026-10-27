@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json && tsc -p scripts",
     "e2e": "playwright test --project=tablet-landscape",
-    "e2e:screencast": "PLAYWRIGHT_JSON_OUTPUT_FILE=screencasts/report.json playwright test --project=screencast --project=screenshot --reporter=list,json --pass-with-no-tests"
+    "e2e:screencast": "PLAYWRIGHT_JSON_OUTPUT_FILE=screencasts/report.json playwright test --project=screencast --project=screenshot --project=screenshot-phone --reporter=list,json --pass-with-no-tests"
   },
   "dependencies": {
     "@arkham/carddata": "workspace:*",

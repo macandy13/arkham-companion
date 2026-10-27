@@ -34,6 +34,7 @@ import {
   resignAction,
   TableError,
   threatAreaOf,
+  playAreaOf,
   trait,
   type CardAction,
   type CardPlaceView,
@@ -125,6 +126,7 @@ describe('investigators', () => {
       })
       .withInvestigator(bob)
       .withCard(instanceId('frozen_in_fear'), blankTreachery('frozen_in_fear'), threatAreaOf(alice))
+      .withCard(instanceId('lita'), blankAsset('lita'), playAreaOf(alice))
       .start();
 
     const { investigators } = boardView(context, state);
@@ -147,11 +149,13 @@ describe('investigators', () => {
         image: '/bundles/cards/alice.png',
         actions: 3,
         threatArea: ['frozen_in_fear'],
+        controls: ['lita'],
       },
       expect.objectContaining({ id: bob, clues: 0 }),
     ]);
     expect(investigators[1]).not.toHaveProperty('at');
     expect(investigators[1]).not.toHaveProperty('threatArea');
+    expect(investigators[1]).not.toHaveProperty('controls');
     expect(investigators[1]).not.toHaveProperty('doom');
     expect(investigators[1]).not.toHaveProperty('image');
   });
@@ -913,6 +917,23 @@ describe('encounter piles', () => {
   });
 });
 
+describe('victoryPoints', () => {
+  it('counts the victory display and the cleared locations that print victory', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withLocation(instanceId('parlor'), blankLocation('parlor', { victory: 1 }), {
+        revealed: true,
+        clues: 0,
+      })
+      .withCard(instanceId('ghoul_priest'), blankEnemy('ghoul_priest', { victory: 2 }), {
+        kind: 'victoryDisplay',
+      })
+      .start();
+
+    expect(boardView(context, state).victoryPoints).toBe(3);
+  });
+});
+
 describe('the encounter card being resolved', () => {
   /** Alice in the study; the deck holds a perilous treachery that tests her willpower, then another card. */
   const aliceDraws = () =>
@@ -998,6 +1019,11 @@ describe('placeOf', () => {
       zone: engagedWith(alice),
       card: blankEnemy('ghoul'),
       place: { kind: 'engaged', investigator: alice },
+    },
+    {
+      zone: playAreaOf(alice),
+      card: blankAsset('lita'),
+      place: { kind: 'playArea', investigator: alice },
     },
     {
       zone: atLocation(hallway),

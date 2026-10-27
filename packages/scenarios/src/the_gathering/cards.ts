@@ -26,6 +26,7 @@ import {
   moveEachInvestigatorTo,
   moveEnemyTowards,
   onlyCopy,
+  parleyAction,
   perInvestigator,
   placeDoomOnSelf,
   putIntoThreatArea,
@@ -36,6 +37,7 @@ import {
   revealLocation,
   skillTest,
   spawnEnemyAt,
+  takeControl,
   takeDamage,
   takeHorror,
   trait,
@@ -320,6 +322,10 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     traits: [trait('Ally')],
     encounterCode: sets.theGathering,
     quantity: 1,
+    // The Parlor grants this "while Lita Chantler is not controlled by a player". She comes into
+    // play only there (act 2), and a controlled card in a play area offers no actions, so the
+    // action can sit on her own card.
+    actions: [parleyAction({ effects: [skillTest('intellect', 4, { onPass: [takeControl()] })] })],
     ...picturesOf(codes.litaChantler, 'front'),
   },
   enemy({

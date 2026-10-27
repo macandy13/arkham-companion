@@ -38,6 +38,7 @@ import { NAMED_AMOUNTS } from './state';
 import { boostedSkills, requireInvestigator } from './investigators';
 import { CommandRejected } from './rejection';
 import { skillTestSuggestion, type SkillTestInput } from './skill_modifiers';
+import { victoryPoints } from './victory';
 import type {
   AmountRange,
   CardInstance,
@@ -114,6 +115,8 @@ export interface InvestigatorView {
   /** They have taken their turn this round (`GameMeta.turnsTaken`). */
   turnTaken?: true;
   threatArea?: CardName[];
+  /** Printed names of the cards they control (`playArea` zone, e.g. Lita Chantler), left out while there are none. */
+  controls?: CardName[];
 }
 
 /**
@@ -351,7 +354,7 @@ export type CardPlaceView =
         | 'resolving'
         | 'elsewhere';
     }
-  | { kind: 'threatArea' | 'engaged'; investigator: InvestigatorId }
+  | { kind: 'threatArea' | 'engaged' | 'playArea'; investigator: InvestigatorId }
   | { kind: 'atLocation'; location: CardName }
   | { kind: 'attachedTo'; card: CardName };
 
@@ -516,6 +519,14 @@ export class BoardView {
     };
   }
 
+  /**
+   * The victory points the players have earned so far: the cards in the victory display and the
+   * cleared locations that print victory (`victoryPoints`), as the scenario's resolution counts them.
+   */
+  get victoryPoints(): number {
+    return victoryPoints(this.ctx, this.state);
+  }
+
   /** The encounter card being resolved, if a revelation waits for the players (`ResolvingCardView`). */
   get resolving(): ResolvingCardView | undefined {
     const [id] = cardsInZone(this.state, resolvingZone);
@@ -548,6 +559,7 @@ export class BoardView {
         return { kind: zone.kind };
       case 'threatArea':
       case 'engaged':
+      case 'playArea':
         return { kind: zone.kind, investigator: zone.investigatorId };
       case 'atLocation':
         return {
@@ -839,6 +851,10 @@ function investigatorView(
     ...listIfAny(
       'threatArea',
       namesIn(ctx, state, { kind: 'threatArea', investigatorId: investigator.id }),
+    ),
+    ...listIfAny(
+      'controls',
+      namesIn(ctx, state, { kind: 'playArea', investigatorId: investigator.id }),
     ),
   };
 }

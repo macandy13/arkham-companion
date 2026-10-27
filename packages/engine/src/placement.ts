@@ -22,6 +22,7 @@ export function validateZone(refs: ZoneRefs, cardId: InstanceId, zone: Zone): vo
       return;
     case 'engaged':
     case 'threatArea':
+    case 'playArea':
       if (!refs.investigators.has(zone.investigatorId)) {
         throw new CommandRejected({
           code: 'unknownInvestigator',

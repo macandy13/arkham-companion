@@ -16,8 +16,8 @@ import {
   isActiveInvestigator,
   withStatDelta,
 } from './investigators';
-import { cardsInZone } from './lookup';
-import { discardEncounterCard } from './placement';
+import { cardsInZone, requireCard } from './lookup';
+import { discardEncounterCard, moveCardEvent } from './placement';
 import type { GameState, Investigator } from './state';
 
 /** Id of the decision that asks the group for a new lead investigator. */
@@ -29,8 +29,9 @@ const NEW_LEAD_DECISION = decisionId('newLeadInvestigator');
  *
  * 1. `left` itself (`InvestigatorDefeated` or `InvestigatorResigned`).
  * 2. Their clues are placed on their location, enemies engaged with them stay
- *    at that location unengaged (keeping damage and exhaustion), and cards in
- *    their threat area are discarded.
+ *    at that location unengaged (keeping damage and exhaustion), cards in
+ *    their threat area are discarded and cards they control are removed from
+ *    the game.
  * 3. The enemies left unengaged engage another investigator at that location,
  *    as any ready unengaged enemy does (Rules Reference, "Enemy Engagement").
  * 4. If nobody is left, the scenario ends without a resolution.
@@ -55,6 +56,7 @@ export function investigatorLeavesEvents(
     ...clueEvents(investigator),
     ...engagedEnemyEvents(state, investigator),
     ...threatAreaEvents(state, investigator),
+    ...controlledCardEvents(state, investigator),
   ];
   const cleared = replay(events, state);
   const engagements =
@@ -129,6 +131,17 @@ function engagedEnemyEvents(state: GameState, investigator: Investigator): Event
 function threatAreaEvents(state: GameState, investigator: Investigator): Event[] {
   return cardsInZone(state, { kind: 'threatArea', investigatorId: investigator.id }).flatMap(
     (cardId) => discardEncounterCard(state, cardId),
+  );
+}
+
+/**
+ * Cards they control leave with them: "cards they control … are removed from the game" (Rules
+ * Reference, "Investigator Elimination"), so a story asset like Lita Chantler doesn't stay behind
+ * for the others to take.
+ */
+function controlledCardEvents(state: GameState, investigator: Investigator): Event[] {
+  return cardsInZone(state, { kind: 'playArea', investigatorId: investigator.id }).map((cardId) =>
+    moveCardEvent(requireCard(state.cards, cardId), { kind: 'outOfGame' }),
   );
 }
 

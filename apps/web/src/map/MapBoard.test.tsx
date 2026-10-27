@@ -632,6 +632,25 @@ describe('MapBoard', () => {
       expect(screen.queryByRole('dialog')).toBeNull();
     });
 
+    it('hands the tapped location to onPick instead of opening its details', () => {
+      const table = PlayTable.start(house);
+      const picked: string[] = [];
+      render(
+        <MapBoard
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+          onPick={(location) => picked.push(location)}
+        />,
+      );
+
+      fireEvent.click(tile('hallway'));
+
+      expect(picked).toEqual(['hallway']);
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+
     it('opens nothing when the press moves on, as a pan of the map does', () => {
       const table = PlayTable.start(house);
       render(
