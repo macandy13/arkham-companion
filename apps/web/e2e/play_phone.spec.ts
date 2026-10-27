@@ -62,7 +62,7 @@ test('swipe through the detail view on a phone', async ({ page }) => {
 // Journey: on a phone, open the map row from the compact map's expand button. Panning the map
 // keeps the row, since the map takes every touch; a swipe up from the strip below the map goes on
 // to the investigators, and a tap on the strip above it goes to the cards, on the agenda.
-test('pan the map and swipe on from its strips on a phone', { tag: '@flow' }, async ({ page }) => {
+test('pan the map and swipe on from its strips on a phone', async ({ page }) => {
   const board = page.locator('#board');
   const rowDots = page.locator('ol[data-dots="rows"] > li');
   const lowerStrip = page.locator('#map > button[data-strip="investigators"]');

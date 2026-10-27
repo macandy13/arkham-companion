@@ -117,7 +117,8 @@ interface LocationAction {
  * What the investigator whose turn it is can do at `location`: at their own location investigate
  * as an action, or take a clue without a test, as cards grant it; at a location connected to
  * theirs (`BoardView.connectedTo`) move there as an action, which provokes attacks of
- * opportunity, or free, as a card allows. A list rather than fixed buttons, since the cards
+ * opportunity, or free, as a card allows. What a card forbids there (`LocationView.forbidden`) is
+ * off (investigate) or left out (move). A list rather than fixed buttons, since the cards
  * attached to a location will add their own abilities to it. Nothing between turns.
  */
 function locationActions(
@@ -133,7 +134,7 @@ function locationActions(
         key: 'investigateAction',
         icon: 'investigate',
         cost: 'action',
-        play: () => actions.investigate(),
+        play: location.forbidden?.includes('investigate') ? undefined : () => actions.investigate(),
         closes: true,
       },
       {
@@ -146,6 +147,7 @@ function locationActions(
     ];
   const from = board.locationOf(turn);
   if (from === undefined || !board.connectedTo(from).includes(location.id)) return [];
+  if (location.forbidden?.includes('moveInto')) return [];
   return [
     {
       key: 'moveAction',

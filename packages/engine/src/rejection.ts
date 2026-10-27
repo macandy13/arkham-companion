@@ -10,6 +10,7 @@ import type {
   EncounterSetCode,
   ScenarioId,
 } from './ids';
+import type { LocationRestriction } from './restrictions';
 import type { Decider, InvestigatorStat, NamedAmount, Phase, TokenKind } from './state';
 import type { ScenarioDeck } from './zone';
 
@@ -77,6 +78,8 @@ export type Rejection =
   | { code: 'investigatorNotActive'; investigatorId: InvestigatorId }
   /** `MoveInvestigator` to a location that is not a neighbour of the current one. */
   | { code: 'notConnected'; from: InstanceId; to: InstanceId }
+  /** A move into or an investigation of a location a card in play forbids it at (`isRestricted`). */
+  | { code: 'restricted'; cannot: LocationRestriction; locationId: InstanceId }
   /** `MoveInvestigator` to the location the investigator is already at. */
   | { code: 'alreadyAtLocation'; investigatorId: InvestigatorId; locationId: InstanceId }
   /** The investigator is not at the location they would take clues from. */
@@ -348,6 +351,10 @@ function describe(r: Rejection): string {
       return `investigator ${r.investigatorId} is no longer in the scenario`;
     case 'notConnected':
       return `${r.from} is not connected to ${r.to}`;
+    case 'restricted':
+      return r.cannot === 'moveInto'
+        ? `a card forbids moving into ${r.locationId}`
+        : `a card forbids investigating ${r.locationId}`;
     case 'alreadyAtLocation':
       return `investigator ${r.investigatorId} is already at ${r.locationId}`;
     case 'enemyEngaged':

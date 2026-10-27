@@ -8,6 +8,7 @@ import {
   type Ability,
   type CardAction,
   type CardModifier,
+  type CardRestriction,
   type CardStats,
   type EncounterSetCode,
   type Keyword,
@@ -121,6 +122,8 @@ export interface LocationOptions {
   abilities?: Ability[];
   /** Its action abilities, such as `resignAction()`. */
   actions?: readonly CardAction[];
+  /** Its "cannot" abilities (the Parlor's barrier on its unrevealed side). */
+  restrictions?: readonly CardRestriction[];
 }
 
 /** Card stats for a hand-entered location of `set`, with both printed sides. */
@@ -134,6 +137,7 @@ export function location({
   victory,
   abilities,
   actions,
+  restrictions,
 }: LocationOptions): CardStats {
   return {
     ...scenarioCard(code, name, set),
@@ -144,6 +148,7 @@ export function location({
     ...(victory === undefined ? {} : { victory }),
     ...(abilities === undefined ? {} : { abilities }),
     ...(actions === undefined ? {} : { actions }),
+    ...(restrictions === undefined ? {} : { restrictions }),
   };
 }
 
@@ -209,6 +214,8 @@ export interface TreacheryOptions {
   modifiers?: readonly CardModifier[];
   /** Its action abilities, offered while it is in a threat area (Dreams of R'lyeh). */
   actions?: readonly CardAction[];
+  /** Its "cannot" abilities (Locked Door: its location cannot be investigated). */
+  restrictions?: readonly CardRestriction[];
 }
 
 /** Card stats for a hand-entered treachery, with its front picture. */
@@ -223,6 +230,7 @@ export function treachery({
   locationAttachment,
   modifiers,
   actions,
+  restrictions,
 }: TreacheryOptions): CardStats {
   return {
     code: cardCode(code),
@@ -237,6 +245,7 @@ export function treachery({
     ...(locationAttachment ? { locationAttachment } : {}),
     ...(modifiers ? { modifiers } : {}),
     ...(actions ? { actions } : {}),
+    ...(restrictions ? { restrictions } : {}),
   };
 }
 

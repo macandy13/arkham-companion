@@ -212,10 +212,15 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // Round 2 – investigation: Roland's turn (the Attic's shroud is 1)
     expect(table.nextPhase()).toEqual({ round: 2, phase: 'investigation' });
     table.startTurn(roland);
-    // A mis-tapped move to the Parlor is taken back.
-    table.moveTo(roland, byName('Parlor'));
+    // The barrier on the unrevealed Parlor keeps everyone out until act 2 reveals it.
+    expect(table.board.location(byName('Parlor')).forbidden).toEqual(['moveInto']);
+    expect(() => table.moveTo(roland, byName('Parlor'))).toThrow(
+      expect.objectContaining({ rejection: expect.objectContaining({ code: 'restricted' }) }),
+    );
+    // A mis-tapped move to the Cellar is taken back.
+    table.moveTo(roland, byName('Cellar'));
 
-    expect(table.board.perInvestigator('at')).toMatchObject({ roland: 'Parlor' });
+    expect(table.board.perInvestigator('at')).toMatchObject({ roland: 'Cellar' });
 
     table.undo();
 
@@ -964,7 +969,11 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     ]);
 
     expect(table.board.act?.name).toBe('What Have You Done?');
-    expect(table.board.location(byName('Parlor')).cards).toEqual(['Lita Chantler']);
+    expect(table.board.location(byName('Parlor'))).toMatchObject({
+      revealed: true,
+      cards: ['Lita Chantler'],
+    });
+    expect(table.board.location(byName('Parlor')).forbidden).toBeUndefined();
     expect(table.board.enemy(byName('Ghoul Priest'))).toEqual({
       name: 'Ghoul Priest',
       at: 'Hallway',
