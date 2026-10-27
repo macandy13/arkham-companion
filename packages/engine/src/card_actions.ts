@@ -4,7 +4,7 @@ import { isLocationInPlay } from './board';
 import { cardStats, resolveValue, type EngineContext, type ScaledValue } from './cards';
 import type { ClueSpend, UseCardAction } from './commands';
 import { locationOf } from './enemies';
-import type { CardActionUsed, InvestigatorChanged } from './events';
+import type { CardActionUsed, CommandDeferred, InvestigatorChanged } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
 import {
   activeInvestigator,
@@ -52,10 +52,13 @@ export interface ActionLimit {
  * can't be paid for can't be taken. The investigator who takes it pays "Spend 5 resources:" or
  * "Spend 2 clues:" (`resources`, `clues`); the investigators pay "Spend 2 [per investigator]
  * clues, as a group:" (`groupClues`) together, at any location, choosing who pays how many.
+ * "Choose and discard 4 cards from your hand:" (`handCards`) is the taker's too, but the game
+ * holds no player cards, so the players discard by hand (`DiscardFromHand`, deferred).
  */
 export type ActionCost =
   | { readonly spend: 'resources' | 'clues'; readonly amount: number }
-  | { readonly spend: 'groupClues'; readonly amount: ScaledValue };
+  | { readonly spend: 'groupClues'; readonly amount: ScaledValue }
+  | { readonly spend: 'handCards'; readonly amount: number };
 
 /**
  * Whether `cost` can be paid for `investigator`'s action: they hold the resources or clues, or
@@ -75,6 +78,9 @@ export function canPay(
       const held = activeInvestigators(state).reduce((sum, inv) => sum + inv.clues, 0);
       return held >= groupClueAmount(state, cost.amount);
     }
+    case 'handCards':
+      // The game doesn't know the hand; the players don't take an action they can't pay for.
+      return true;
     default:
       return assertNever(cost);
   }
@@ -86,15 +92,16 @@ function groupClueAmount(state: GameState, amount: ScaledValue): number {
 }
 
 /**
- * The events that pay `cost` for `investigator`'s action: their own resources or clues, or a
- * group payment by `spend` (default: `defaultCluePayments`). `spend` is for group costs only.
+ * The events that pay `cost` for `investigator`'s action: their own resources or clues, a group
+ * payment by `spend` (default: `defaultCluePayments`), or a discard from their hand left to the
+ * players. `spend` is for group costs only.
  */
 function costPayment(
   state: GameState,
   investigator: Investigator,
   cost: ActionCost | undefined,
   spend: readonly ClueSpend[] | undefined,
-): InvestigatorChanged[] {
+): (InvestigatorChanged | CommandDeferred)[] {
   if (spend !== undefined && cost?.spend !== 'groupClues')
     throw new CommandRejected({ code: 'noGroupCost' });
   if (cost === undefined) return [];
@@ -117,6 +124,17 @@ function costPayment(
         required,
       );
     }
+    case 'handCards':
+      return [
+        {
+          type: 'CommandDeferred',
+          command: {
+            type: 'DiscardFromHand',
+            investigatorId: investigator.id,
+            amount: cost.amount,
+          },
+        },
+      ];
     default:
       return assertNever(cost);
   }
@@ -131,6 +149,16 @@ export function resignAction(): CardAction {
     designator: 'resign',
     effects: [{ type: 'Resign', investigatorId: { ref: 'windowInvestigator' } }],
   };
+}
+
+/**
+ * "[action] <cost>: Parley. <effects>": an action with the Parley designator, so it provokes no
+ * attack of opportunity; the cost, limit and effects are the card's own, built from the usual
+ * blocks (The Midnight Masks' cultists: `{ cost: { spend: 'clues', amount: 2 }, effects:
+ * [addToVictoryDisplay({ ref: 'self' })] }`).
+ */
+export function parleyAction(action: Omit<CardAction, 'designator'>): CardAction {
+  return { ...action, designator: 'parley' };
 }
 
 /**
@@ -238,7 +266,7 @@ export function handleUseCardAction(
   ctx: EngineContext,
   state: GameState,
   cmd: UseCardAction,
-): (CardActionUsed | InvestigatorChanged)[] {
+): (CardActionUsed | InvestigatorChanged | CommandDeferred)[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
   requireTurnOf(state, investigator.id);
   const { limit, cost } = cardActionOf(ctx, state, cmd);
