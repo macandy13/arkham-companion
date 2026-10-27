@@ -352,7 +352,7 @@ function ConnectionSymbol({ symbol }: { symbol: LocationSymbol }) {
 }
 
 /** The symbol's disc is smaller than the pieces, like the printed one beside the name. */
-const CONNECTION_RADIUS = CONTENT.pawnRadius * 0.75;
+const CONNECTION_RADIUS = CONTENT.pawnRadius * 0.55;
 
 /** How much of the disc's radius the glyph spans, so it sits inside the disc like the printed one. */
 const CONNECTION_GLYPH_SCALE = 0.45;

@@ -289,7 +289,7 @@
   /* The rim of a round piece or token: the enemy ring, the shroud's bone edge. */
   --piece-ring-width: 3px;
   /* The ring and glyph lines of a location's connection symbol, finer than a piece's ring. */
-  --connection-ring-width: 2px;
+  --connection-ring-width: 1.5px;
   /* Lifts the pieces off the card they stand on. */
   --piece-shadow: drop-shadow(0 1px 1.5px rgb(0 0 0 / 60%));
   /* The pawn of the investigator whose turn it is: a bolder gilt ring that glows, like their card. */
