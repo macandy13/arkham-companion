@@ -193,8 +193,8 @@ export function inTheParlorExport(title: string): Buffer {
 }
 
 /**
- * Like `houseOpenedExport`, but Roland Banks controls Lita Chantler, set aside at setup, as after
- * her Parley at the Parlor; put into their play area by hand to keep the script short.
+ * Like `houseOpenedExport`, but Roland Banks controls Lita Chantler, as after her Parley at the
+ * Parlor; put into their play area by hand to keep the script short.
  */
 export function litaControlledExport(title: string): Buffer {
   const table = houseOpened(theGathering);

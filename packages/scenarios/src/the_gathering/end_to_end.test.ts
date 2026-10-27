@@ -1027,13 +1027,14 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.nextPhase()).toEqual({ round: 11, phase: 'mythos', step: 'drawEncounterCard' });
     table.answer(byName('Crypt Chill'), 'pass');
 
-    // Round 11 – investigation: Roland shoots the Priest twice, each with a Vicious Blow (3
-    // damage each), and evades it, so it cannot attack him: its attack (2 horror) would drive him
+    // Round 11 – investigation: Roland shoots the Priest twice, each with a Vicious Blow and
+    // Lita at his side (4 damage each: her +1 against a Monster, played by hand like her other
+    // abilities), and evades it, so it cannot attack him: its attack (2 horror) would drive him
     // insane at 4 of 5. Daisy defeats the Ravenous Ghoul with three blows.
     expect(table.nextPhase()).toEqual({ round: 11, phase: 'investigation' });
     table.startTurn(roland);
-    table.fight(roland, byName('Ghoul Priest'), { damage: 3 });
-    table.fight(roland, byName('Ghoul Priest'), { damage: 3 });
+    table.fight(roland, byName('Ghoul Priest'), { damage: 4 });
+    table.fight(roland, byName('Ghoul Priest'), { damage: 4 });
     table.evade(roland, byName('Ghoul Priest'));
     table.endTurn(roland);
     table.startTurn(daisy);
@@ -1043,7 +1044,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     table.endTurn(daisy);
 
     expect(table.board.enemies).toEqual([
-      { name: 'Ghoul Priest', at: 'Parlor', health: 15, damage: 7, exhausted: true },
+      { name: 'Ghoul Priest', at: 'Parlor', health: 15, damage: 9, exhausted: true },
     ]);
 
     // Round 11 – enemy and upkeep phases: nothing attacks; the Priest readies and engages Roland
@@ -1065,15 +1066,14 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       engagedWith: daisy,
     });
 
-    // Round 12 – investigation: Roland shoots the Priest twice more (his .45 Automatic's last
-    // ammo, 3 damage each with a Vicious Blow) and strikes it with his fist and a Vicious Blow
-    // (2 damage): its fifteenth damage. It goes to the victory display, which meets act 3's
-    // objective: the act advances by itself and asks Roland, the lead, whether to burn the house.
+    // Round 12 – investigation: Roland shoots the Priest twice more, his .45 Automatic's last
+    // ammo, 4 damage each with a Vicious Blow and Lita: the second shot deals its fifteenth damage.
+    // It goes to the victory display, which meets act 3's objective: the act advances by itself
+    // and asks Roland, the lead, whether to burn the house.
     expect(table.nextPhase()).toEqual({ round: 12, phase: 'investigation' });
     table.startTurn(roland);
-    table.fight(roland, byName('Ghoul Priest'), { damage: 3 });
-    table.fight(roland, byName('Ghoul Priest'), { damage: 3 });
-    table.fight(roland, byName('Ghoul Priest'), { damage: 2 });
+    table.fight(roland, byName('Ghoul Priest'), { damage: 4 });
+    table.fight(roland, byName('Ghoul Priest'), { damage: 4 });
 
     expect(table.board.namesIn({ kind: 'victoryDisplay' })).toEqual([
       'Icy Ghoul',
