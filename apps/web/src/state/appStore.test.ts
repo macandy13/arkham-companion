@@ -411,6 +411,20 @@ describe('appStore', () => {
           });
         });
 
+        // Seed 3 puts Dissonant Voices on top of the encounter deck.
+        it('shows the encounter card a draw put in a threat area until the players dismiss it', async () => {
+          const store = await aldersTurn('actions-drawn-cards-test');
+          await store.getState().actions.drawEncounter(investigatorId('alder'));
+          const shown = store.getState().current?.drawnCards;
+
+          store.getState().dismissDrawnCards();
+
+          expect(shown?.map(({ card, place }) => [card.name, place.kind])).toEqual([
+            ['Dissonant Voices', 'threatArea'],
+          ]);
+          expect(store.getState().current?.drawnCards).toBeUndefined();
+        });
+
         it('takes doom off the current agenda', async () => {
           const store = await aldersTurn('actions-remove-doom-test');
           await store.getState().actions.placeDoom(2);

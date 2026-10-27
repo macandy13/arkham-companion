@@ -98,3 +98,55 @@
   color: var(--color-text-muted);
   font-size: var(--font-size-note);
 }
+
+/*
+ * The card being resolved at the top of the decision dialog (ResolvingCard): its picture large,
+ * whom it was drawn for, and its keywords as badges in the encounter colour.
+ */
+#board dialog[data-dialog='decision'] figure[data-part='resolving'] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+}
+
+#board dialog[data-dialog='decision'] figure[data-part='resolving'] > img {
+  box-sizing: border-box;
+  height: var(--resolving-card-height);
+  aspect-ratio: 5 / 7;
+  border-radius: var(--radius);
+  background: var(--card-art-pattern), var(--color-surface);
+  box-shadow: var(--header-token-shadow);
+  object-fit: cover;
+}
+
+#board dialog[data-dialog='decision'] figure[data-part='resolving']:not([data-picture]) > img {
+  display: none;
+}
+
+#board dialog[data-dialog='decision'] figure[data-part='resolving'] > figcaption {
+  font-family: var(--font-family-display);
+  color: var(--color-text-muted);
+}
+
+#board dialog[data-dialog='decision'] figure[data-part='resolving'] > ul {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#board dialog[data-dialog='decision'] figure[data-part='resolving'] li {
+  padding: 0 var(--space-2);
+  border: none;
+  border-radius: var(--radius-round);
+  background: var(--color-card-encounter);
+  color: var(--header-token-text);
+  font-size: var(--font-size-note);
+  font-weight: bold;
+  text-transform: uppercase;
+}

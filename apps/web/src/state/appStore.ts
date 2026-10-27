@@ -14,6 +14,7 @@ import type {
 import { emptyState } from '@arkham/engine';
 import { gameActions, type GameActions } from './gameActions';
 import { GameSession, startGame, type PlayStep, type SkippedEffect } from './gameSession';
+import type { DrawnCard } from '../encounter/drawnCards';
 import { findScenario, type ScenarioEntry } from '../scenarios/scenarioCatalog';
 import { parseGameExport, serialiseGameExport } from '../storage/gameExport';
 
@@ -72,6 +73,11 @@ export interface OpenGame {
    * the next action or `dismissSkippedEffects`.
    */
   skippedEffects?: readonly SkippedEffect[];
+  /**
+   * The encounter cards the last action drew or placed and where they went, until the next action or
+   * `dismissDrawnCards`.
+   */
+  drawnCards?: readonly DrawnCard[];
 }
 
 /** Looks a scenario up by id; `findScenario` in the app, a stub in tests. */
@@ -103,6 +109,8 @@ export interface AppState {
   dismissRejection(): void;
   /** Clears `current.skippedEffects` once the players have read them. */
   dismissSkippedEffects(): void;
+  /** Clears `current.drawnCards` once the players have read them. */
+  dismissDrawnCards(): void;
   /** Renames a saved game and reloads the list. */
   renameGame(gameId: GameId, title: string): Promise<void>;
   /** Copies a saved game under `title` and reloads the list; returns the copy's id. */
@@ -175,6 +183,7 @@ export function createAppStore(
           adjusting: played.adjusting,
           rejection,
           skippedEffects: played.skippedEffects.length > 0 ? played.skippedEffects : undefined,
+          drawnCards: played.drawnCards.length > 0 ? played.drawnCards : undefined,
         },
       });
     }
@@ -290,6 +299,10 @@ export function createAppStore(
       dismissSkippedEffects() {
         const open = get().current;
         if (open?.skippedEffects) set({ current: { ...open, skippedEffects: undefined } });
+      },
+      dismissDrawnCards() {
+        const open = get().current;
+        if (open?.drawnCards) set({ current: { ...open, drawnCards: undefined } });
       },
       async renameGame(gameId, title) {
         await gameStore.renameGame(gameId, title);
