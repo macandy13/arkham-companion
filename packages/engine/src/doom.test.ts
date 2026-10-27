@@ -175,6 +175,33 @@ const manualDoom = (cardId: typeof hall, delta: number): Command => ({
   adjustment: { kind: 'tokens', cardId, token: 'doom', delta },
 });
 
+describe('PlaceTokens', () => {
+  const { context, state } = doomTable
+    .withInvestigator(alice, { locationId: hall, clues: 1 })
+    .start();
+
+  it('puts clues from the pool on the current act, not alice’s', () => {
+    const next = stateAfter(context, state, {
+      type: 'PlaceTokens',
+      cardId: act1,
+      token: 'clue',
+      amount: 1,
+    });
+
+    expect(next.cards[act1]!.tokens.clue).toBe(1);
+    expect(requireInvestigator(next, alice).clues).toBe(1);
+  });
+
+  it.each([
+    { name: 'the act still waiting in the deck', cardId: act2, amount: 1, code: 'cardNotInPlay' },
+    { name: 'the current act', cardId: act1, amount: 0, code: 'invalidTokenDelta' },
+  ])('rejects $amount clues on $name', ({ cardId, amount, code }) => {
+    expect(
+      rejectionFrom(context, state, { type: 'PlaceTokens', cardId, token: 'clue', amount }).code,
+    ).toBe(code);
+  });
+});
+
 describe('doom total invariant', () => {
   it.each<{ name: string; commands: Command[]; total: number }>([
     { name: 'nothing placed', commands: [], total: 0 },

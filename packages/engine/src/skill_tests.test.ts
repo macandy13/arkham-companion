@@ -17,6 +17,8 @@ import {
   putIntoThreatArea,
   skillTest,
   skillTestDecision,
+  skillTestOfEither,
+  takeHorror,
   whenRevealed,
   zoneKey,
   type CardStats,
@@ -670,6 +672,61 @@ describe('revelation test', () => {
 
     expect(drawn.pending).toEqual([]);
   });
+});
+
+describe('test of either of two skills', () => {
+  const sway = instanceId('sway');
+  const swayChoice = decisionId('sway.skill');
+  /** A treachery whose revelation tests willpower (3) or agility (3), giving 1 horror on a fail. */
+  const swayingTreachery = blankTreachery('swaying_treachery', {
+    abilities: [
+      whenRevealed(
+        skillTestOfEither(swayChoice, ['willpower', 'agility'], 3, {
+          onFail: [takeHorror(1)],
+        }),
+      ),
+    ],
+  });
+  const draw: Command = { type: 'DrawEncounter', investigatorId: alice };
+
+  it('lets the drawer pick the skill', () => {
+    const { context, state } = aliceInStudy
+      .withCard(sway, swayingTreachery, { kind: 'encounterDeck' })
+      .start();
+
+    const drawn = stateAfter(context, state, draw);
+
+    expect(drawn.pending).toMatchObject([
+      {
+        id: swayChoice,
+        kind: 'chooseOption',
+        prompt: 'decision.chooseSkill',
+        decider: { kind: 'investigator', investigatorId: alice },
+        options: [
+          { id: 'willpower', label: 'skill.willpower' },
+          { id: 'agility', label: 'skill.agility' },
+        ],
+      },
+    ]);
+  });
+
+  it.each([
+    { skill: 'willpower', result: 'pass', horror: 0 },
+    { skill: 'agility', result: 'fail', horror: 1 },
+  ])(
+    'tests $skill (3) once picked; a $result costs $horror horror',
+    ({ skill, result, horror }) => {
+      const { context, state } = aliceInStudy
+        .withCard(sway, swayingTreachery, { kind: 'encounterDeck' })
+        .start();
+      const picked = stateAfter(context, state, draw, answer(swayChoice, skill));
+
+      const resolved = stateAfter(context, picked, answer('test:sway', result));
+
+      expect(picked.pending).toMatchObject([{ skillTest: { skill, difficulty: 3 } }]);
+      expect(requireInvestigator(resolved, alice).sanity.horror).toBe(horror);
+    },
+  );
 });
 
 describe('card-driven skill test', () => {

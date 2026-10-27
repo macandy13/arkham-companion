@@ -16,6 +16,7 @@ import {
 import { answer, cardIn, rejectionFrom, stateAfter } from '@arkham/engine/test/utils';
 import {
   DEVOURER_BELOW_RESOLUTIONS,
+  DISRUPTING_THE_RITUAL_DECISION,
   OFFER_OF_POWER_DECISION,
   QUIET_GLADE_DECISION,
   theDevourerBelowCardDefs,
@@ -213,29 +214,97 @@ describe('The Devourer Below card abilities', () => {
     });
   });
 
-  it("puts Dreams of R'lyeh into alice's threat area", () => {
+  describe("Dreams of R'lyeh", () => {
     const dreams = instanceId('dreams_of_rlyeh');
-    const { context, state: started } = newGame()
-      .withLocation(mainPath, cardOf('01149'), { revealed: true })
-      .withInvestigator(alice, { locationId: mainPath })
-      .withCard(dreams, cardOf('01182'), { kind: 'encounterDeck' })
-      .start();
 
-    const { state } = execute(context, started, aliceDraws("Dreams of R'lyeh"));
+    it("puts Dreams of R'lyeh into alice's threat area", () => {
+      const { context, state: started } = newGame()
+        .withLocation(mainPath, cardOf('01149'), { revealed: true })
+        .withInvestigator(alice, { locationId: mainPath })
+        .withCard(dreams, cardOf('01182'), { kind: 'encounterDeck' })
+        .start();
 
-    expect(state.cards[dreams]?.zone).toEqual(threatAreaOf(alice));
+      const { state } = execute(context, started, aliceDraws("Dreams of R'lyeh"));
+
+      expect(state.cards[dreams]?.zone).toEqual(threatAreaOf(alice));
+    });
+
+    it.each([
+      { result: 'pass', zone: { kind: 'encounterDiscard' } },
+      { result: 'fail', zone: threatAreaOf(alice) },
+    ])(
+      'tests willpower (3) as an action; a $result leaves it in $zone.kind',
+      ({ result, zone }) => {
+        const { context, state: started } = newGame()
+          .withLocation(mainPath, cardOf('01149'), { revealed: true })
+          .withInvestigator(alice, { locationId: mainPath })
+          .withCard(dreams, cardOf('01182'), threatAreaOf(alice))
+          .withTurnOf(alice)
+          .start();
+        const tested = stateAfter(context, started, {
+          type: 'UseCardAction',
+          investigatorId: alice,
+          cardId: dreams,
+          action: 0,
+          asAction: true,
+        });
+
+        const state = stateAfter(context, tested, answer('test:dreams_of_rlyeh', result));
+
+        expect(tested.pending).toMatchObject([
+          { skillTest: { skill: 'willpower', difficulty: 3 } },
+        ]);
+        expect(state.cards[dreams]?.zone).toEqual(zone);
+      },
+    );
   });
 
-  it('ends the scenario with R1 (the ritual is broken) when Disrupting the Ritual advances', () => {
-    const { context, state: started } = newGame()
+  describe('Disrupting the Ritual', () => {
+    const act = instanceId('disrupting_the_ritual');
+    /** Alice with 1 clue on her turn, while Disrupting the Ritual is the act. */
+    const aliceWithAClue = newGame()
       .withLocation(mainPath, cardOf('01149'), { revealed: true })
-      .withInvestigator(alice, { locationId: mainPath })
-      .withAct(instanceId('disrupting_the_ritual'), cardOf('01148'))
-      .start();
+      .withInvestigator(alice, { locationId: mainPath, clues: 1 })
+      .withAct(act, cardOf('01148'))
+      .withTurnOf(alice);
+    const disrupt: Command = {
+      type: 'UseCardAction',
+      investigatorId: alice,
+      cardId: act,
+      action: 0,
+      asAction: true,
+    };
 
-    const { state } = execute(context, started, { type: 'AdvanceAct' });
+    it.each([
+      { skill: 'willpower', result: 'pass', actClues: 1 },
+      { skill: 'agility', result: 'pass', actClues: 1 },
+      { skill: 'agility', result: 'fail', actClues: 0 },
+    ])(
+      'spends alice’s clue on a $skill (3) test; a $result places $actClues clue on the act',
+      ({ skill, result, actClues }) => {
+        const { context, state: started } = aliceWithAClue.start();
+        const chosen = stateAfter(
+          context,
+          started,
+          disrupt,
+          answer(DISRUPTING_THE_RITUAL_DECISION, skill),
+        );
 
-    expect(state.meta.resolution).toBe(DEVOURER_BELOW_RESOLUTIONS.ritualBroken);
+        const state = stateAfter(context, chosen, answer('test:disrupting_the_ritual', result));
+
+        expect(chosen.pending).toMatchObject([{ skillTest: { skill, difficulty: 3 } }]);
+        expect(requireInvestigator(state, alice).clues).toBe(0);
+        expect(state.cards[act]?.tokens.clue ?? 0).toBe(actClues);
+      },
+    );
+
+    it('ends the scenario with R1 (the ritual is broken) when it advances', () => {
+      const { context, state: started } = aliceWithAClue.start();
+
+      const { state } = execute(context, started, { type: 'AdvanceAct' });
+
+      expect(state.meta.resolution).toBe(DEVOURER_BELOW_RESOLUTIONS.ritualBroken);
+    });
   });
 
   describe('Goat Spawn', () => {

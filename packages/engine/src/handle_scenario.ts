@@ -1,5 +1,12 @@
 import { cardStats, resolveValue, type EngineContext } from './cards';
-import type { AdvanceAct, AdvanceAgenda, ClueSpend, EndScenario, PlaceDoom } from './commands';
+import type {
+  AdvanceAct,
+  AdvanceAgenda,
+  ClueSpend,
+  EndScenario,
+  PlaceDoom,
+  PlaceTokens,
+} from './commands';
 import { cardsWithDoom, isInPlay } from './doom';
 import { activeInvestigators, groupCluePayments } from './investigators';
 import type {
@@ -17,19 +24,33 @@ import type { InstanceId, ResolutionId } from './ids';
 import { requireCard } from './lookup';
 import { clearTokensEvents, moveCardEvent } from './placement';
 import { CommandRejected } from './rejection';
-import type { CardInstance, GameState } from './state';
+import type { CardInstance, GameState, TokenKind } from './state';
 import { zoneKey } from './zone';
 
 type Deck = 'agenda' | 'act';
 
 /** `PlaceDoom`: doom on a card in play; the current agenda unless the command names another. */
 export function handlePlaceDoom(state: GameState, cmd: PlaceDoom): TokensChanged[] {
-  if (!Number.isInteger(cmd.amount) || cmd.amount <= 0)
-    throw new CommandRejected({ code: 'invalidTokenDelta', delta: cmd.amount });
   const card =
     cmd.cardId === undefined ? currentCard(state, 'agenda') : requireCard(state.cards, cmd.cardId);
+  return tokensPlaced(state, card, 'doom', cmd.amount);
+}
+
+/** `PlaceTokens`: tokens from the pool on a card in play. */
+export function handlePlaceTokens(state: GameState, cmd: PlaceTokens): TokensChanged[] {
+  return tokensPlaced(state, requireCard(state.cards, cmd.cardId), cmd.token, cmd.amount);
+}
+
+function tokensPlaced(
+  state: GameState,
+  card: CardInstance,
+  token: TokenKind,
+  amount: number,
+): TokensChanged[] {
+  if (!Number.isInteger(amount) || amount <= 0)
+    throw new CommandRejected({ code: 'invalidTokenDelta', delta: amount });
   if (!isInPlay(state, card)) throw new CommandRejected({ code: 'cardNotInPlay', cardId: card.id });
-  return [{ type: 'TokensChanged', cardId: card.id, token: 'doom', delta: cmd.amount }];
+  return [{ type: 'TokensChanged', cardId: card.id, token, delta: amount }];
 }
 
 /**
