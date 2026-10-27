@@ -488,7 +488,32 @@ export class PlayTable {
     this.resolveTestDecision(decision, result, amount);
   }
 
-  /** Resources from the resource action or a card. */
+  /** The basic resource action: 1 resource, provoking attacks of opportunity like any action. */
+  takeResource(investigator: InvestigatorRef): void {
+    this.play({
+      type: 'GainResources',
+      investigatorId: this.seat(investigator),
+      amount: 1,
+      asAction: true,
+    });
+  }
+
+  /** The basic draw action; the card itself is drawn at the table. */
+  drawCard(investigator: InvestigatorRef): void {
+    this.play({
+      type: 'DrawCards',
+      investigatorId: this.seat(investigator),
+      amount: 1,
+      asAction: true,
+    });
+  }
+
+  /** The basic play action; the card is played, and paid for, at the table. */
+  playCard(investigator: InvestigatorRef): void {
+    this.play({ type: 'PlayCard', investigatorId: this.seat(investigator), asAction: true });
+  }
+
+  /** The players' correction of the resource count. */
   gainResources(investigator: InvestigatorRef, amount: number): void {
     this.adjust(investigator, 'resources', amount);
   }

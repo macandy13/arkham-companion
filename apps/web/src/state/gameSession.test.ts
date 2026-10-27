@@ -252,4 +252,22 @@ describe('skippedEffects', () => {
       },
     ]);
   });
+
+  it('leaves out the play action alder took at the table, which needs no reminder', () => {
+    const southside = instanceId('southside');
+    const alder = investigatorId('alder');
+    const { context, state } = newGame()
+      .withLocation(southside, blankLocation('southside'), { revealed: true })
+      .withInvestigator(alder, { locationId: southside, name: 'Alder Ashcroft' })
+      .start();
+
+    const notices = skippedEffects({ ...context, scenario: theGathering }, state, [
+      {
+        type: 'CommandDeferred',
+        command: { type: 'PlayCard', investigatorId: alder, asAction: true },
+      },
+    ]);
+
+    expect(notices).toEqual([]);
+  });
 });
