@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { buildQueue, checkState, mergeOrder, type CheckRun, type OpenPr } from './queue.ts';
+import {
+  buildQueue,
+  checkState,
+  isReviewable,
+  mergeOrder,
+  QUEUE_JOB,
+  type CheckRun,
+  type OpenPr,
+} from './queue.ts';
 import { renderQueue } from './render.ts';
 
 describe('checkState', () => {
@@ -7,11 +15,13 @@ describe('checkState', () => {
   const skipped: CheckRun = { name: 'screencasts', status: 'completed', conclusion: 'skipped' };
   const failed: CheckRun = { name: 'bundle-size', status: 'completed', conclusion: 'failure' };
   const running: CheckRun = { name: 'preview', status: 'in_progress', conclusion: null };
+  const queueJob: CheckRun = { name: QUEUE_JOB, status: 'in_progress', conclusion: null };
 
   it.each([
     ['passed and skipped runs', [passed, skipped], { kind: 'passed' }],
     ['a running run', [passed, running], { kind: 'running', names: ['preview'] }],
     ['a failed and a running run', [failed, running], { kind: 'failed', names: ['bundle-size'] }],
+    ['the running queue job, left out', [passed, queueJob], { kind: 'passed' }],
     ['no runs', [], { kind: 'none' }],
   ])('%s', (_case, runs, expected) => {
     expect(checkState(runs, [])).toEqual(expected);
@@ -29,38 +39,51 @@ describe('checkState', () => {
   });
 });
 
-/** A PR whose checks passed, without conflicts and without a review yet. */
-function unreviewedGreenPr(number: number, baseRef: string, headRef: string): OpenPr {
+describe('isReviewable', () => {
+  it.each([
+    ['a PR from a branch here', { draft: false, headRef: 'claude/thread', fromFork: false }, true],
+    ['a draft', { draft: true, headRef: 'claude/thread', fromFork: false }, false],
+    ['a fork PR from its main', { draft: false, headRef: 'main', fromFork: true }, false],
+    [
+      'the release PR',
+      { draft: false, headRef: 'release-please--branches--main', fromFork: false },
+      false,
+    ],
+  ])('%s → %s', (_case, pr, expected) => {
+    expect(isReviewable(pr)).toBe(expected);
+  });
+});
+
+/** A PR whose checks passed and that has no conflicts. */
+function greenPr(pr: { number: number; base: string; head: string; title?: string }): OpenPr {
   return {
-    number,
-    title: `PR ${number}`,
-    baseRef,
-    headRef,
-    headSha: `${headRef}_head`,
+    number: pr.number,
+    title: pr.title ?? `PR ${pr.number}`,
+    baseRef: pr.base,
+    headRef: pr.head,
     checks: { kind: 'passed' },
     conflicts: false,
-    review: undefined,
   };
 }
 
 describe('mergeOrder', () => {
   it('puts PRs on main by number, each followed by the PRs stacked on it', () => {
     const prs = [
-      unreviewedGreenPr(507, 'resolving', 'moves'),
-      unreviewedGreenPr(504, 'main', 'card_zoom'),
-      unreviewedGreenPr(501, 'dialog', 'draw'),
-      unreviewedGreenPr(496, 'main', 'dialog'),
-      unreviewedGreenPr(503, 'draw', 'resolving'),
-      unreviewedGreenPr(509, 'main', 'screenshots'),
+      greenPr({ number: 507, base: 'resolving', head: 'moves' }),
+      greenPr({ number: 504, base: 'main', head: 'card_zoom' }),
+      greenPr({ number: 501, base: 'dialog', head: 'draw' }),
+      greenPr({ number: 496, base: 'main', head: 'dialog' }),
+      greenPr({ number: 503, base: 'draw', head: 'resolving' }),
+      greenPr({ number: 509, base: 'main', head: 'screenshots' }),
     ];
 
     expect(mergeOrder(prs).map((pr) => pr.number)).toEqual([496, 501, 503, 507, 504, 509]);
   });
 
-  it('treats a PR whose base is no open PR (merged or never one) as a root', () => {
+  it('treats a PR whose base is no open PR (merged, or never one) as a root', () => {
     const prs = [
-      unreviewedGreenPr(503, 'draw', 'resolving'),
-      unreviewedGreenPr(500, 'main', 'agenda'),
+      greenPr({ number: 503, base: 'draw', head: 'resolving' }),
+      greenPr({ number: 500, base: 'main', head: 'agenda' }),
     ];
 
     expect(mergeOrder(prs).map((pr) => pr.number)).toEqual([500, 503]);
@@ -68,64 +91,30 @@ describe('mergeOrder', () => {
 });
 
 describe('buildQueue', () => {
-  it('queues green PRs with their stack base and leaves out the ones not ready', () => {
+  it('queues green PRs with the PR they are stacked on and leaves out the ones not ready', () => {
     const dialog: OpenPr = {
-      ...unreviewedGreenPr(496, 'main', 'dialog'),
+      ...greenPr({ number: 496, base: 'main', head: 'dialog' }),
       checks: { kind: 'running', names: ['preview'] },
     };
-    const draw = unreviewedGreenPr(501, 'dialog', 'draw');
-    const conflicting: OpenPr = { ...unreviewedGreenPr(502, 'main', 'parley'), conflicts: true };
+    const draw = greenPr({ number: 501, base: 'dialog', head: 'draw' });
+    const conflicting: OpenPr = {
+      ...greenPr({ number: 502, base: 'main', head: 'parley' }),
+      conflicts: true,
+    };
 
     const queue = buildQueue([dialog, draw, conflicting]);
 
-    expect(queue.queue).toEqual([{ pr: draw, tag: 'review', stackedOn: dialog }]);
+    expect(queue.queue).toEqual([{ pr: draw, stackedOn: dialog }]);
     expect(queue.notReady).toEqual([dialog, conflicting]);
-  });
-
-  it.each([
-    ['no review', undefined, 'queue', 'review'],
-    [
-      'approved at an older commit',
-      { state: 'APPROVED', sha: 'older_commit' },
-      'queue',
-      'approved',
-    ],
-    [
-      'commented at an older commit',
-      { state: 'COMMENTED', sha: 'older_commit' },
-      'queue',
-      're-review',
-    ],
-    [
-      'changes requested at the head',
-      { state: 'CHANGES_REQUESTED', sha: 'head_commit' },
-      'waiting',
-      undefined,
-    ],
-  ] as const)('%s → %s', (_case, review, list, tag) => {
-    const pr: OpenPr = {
-      ...unreviewedGreenPr(491, 'main', 'buttons'),
-      headSha: 'head_commit',
-      review,
-    };
-
-    const queue = buildQueue([pr]);
-
-    expect(queue.queue.map((entry) => entry.tag)).toEqual(list === 'queue' ? [tag] : []);
-    expect(queue.waiting).toEqual(list === 'waiting' ? [pr] : []);
   });
 });
 
 describe('renderQueue', () => {
   it('numbers the queue in merge order and gives the reason for each PR not ready', () => {
-    const dialog = {
-      ...unreviewedGreenPr(496, 'main', 'dialog'),
-      title: 'feat(web): encounter dialog',
-    };
-    const draw = { ...unreviewedGreenPr(501, 'dialog', 'draw'), title: 'feat(web): draw a card' };
+    const dialog = greenPr({ number: 496, base: 'main', head: 'dialog', title: 'feat: dialog' });
+    const draw = greenPr({ number: 501, base: 'dialog', head: 'draw', title: 'feat: draw' });
     const bump: OpenPr = {
-      ...unreviewedGreenPr(154, 'main', 'dependabot/actions'),
-      title: 'ci: bump actions',
+      ...greenPr({ number: 154, base: 'main', head: 'dependabot/actions', title: 'ci: bump' }),
       checks: { kind: 'failed', names: ['bundle-size'] },
     };
 
@@ -133,14 +122,14 @@ describe('renderQueue', () => {
 
     expect(body).toContain(
       [
-        '## Queue (2)',
+        '## Ready for review (2)',
         '',
-        '1. #496 feat(web): encounter dialog (to review)',
-        '2. #501 feat(web): draw a card (to review, after #496)',
+        '1. #496 feat: dialog',
+        '2. #501 feat: draw (after #496)',
         '',
         '## Not ready (1)',
         '',
-        '- #154 ci: bump actions: failed bundle-size',
+        '- #154 ci: bump: failed bundle-size',
       ].join('\n'),
     );
   });
@@ -155,30 +144,16 @@ describe('renderQueue', () => {
     ['no checks', { checks: { kind: 'none' } }, 'no checks ran'],
   ] as const)('gives %s as the reason a PR is not ready', (_case, state, reason) => {
     const pr: OpenPr = {
-      ...unreviewedGreenPr(443, 'main', 'release'),
-      title: 'chore: release',
+      ...greenPr({ number: 443, base: 'main', head: 'release', title: 'chore: release' }),
       ...state,
     };
 
     expect(renderQueue(buildQueue([pr]))).toContain(`- #443 chore: release: ${reason}`);
   });
 
-  it('lists PRs waiting on their author under their own heading', () => {
-    const pr: OpenPr = {
-      ...unreviewedGreenPr(500, 'main', 'agenda'),
-      title: 'feat(web): full agenda',
-      headSha: 'head_commit',
-      review: { state: 'CHANGES_REQUESTED', sha: 'head_commit' },
-    };
-
-    expect(renderQueue(buildQueue([pr]))).toContain(
-      '## Waiting on the author (1)\n\n- #500 feat(web): full agenda',
-    );
-  });
-
   it('says so when nothing is left to review', () => {
-    expect(renderQueue({ queue: [], waiting: [], notReady: [] })).toContain(
-      '## Queue (0)\n\nNothing to review.',
+    expect(renderQueue({ queue: [], notReady: [] })).toContain(
+      '## Ready for review (0)\n\nNothing to review.',
     );
   });
 });

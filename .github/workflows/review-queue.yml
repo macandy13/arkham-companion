@@ -2,18 +2,16 @@ name: Review queue
 
 # Keeps the pinned "Review queue" issue up to date for the repository owner: the open PRs
 # whose checks all passed, in merge order (a stacked PR right after the PR it builds on),
-# then the PRs waiting on their author and the ones not ready yet (code in
-# packages/review_queue). It reruns whenever a PR workflow finishes, so a PR joins the queue
-# as soon as its last check passes, and on reviews and draft changes; the hourly run catches
-# the rest (labels, closed PRs). It never checks out PR code.
+# then the ones not ready yet (code in packages/review_queue). It reruns whenever a PR
+# workflow finishes, so a PR joins the queue as soon as its last check passes, and when a
+# PR closes or changes draft state; the hourly run catches the rest (labels). It never
+# checks out PR code.
 
 on:
   workflow_run:
     workflows:
       [CI, PR preview, PR quality, PR title, PR sync, CodeQL, Carddata check, Claude review]
     types: [completed]
-  pull_request_review:
-    types: [submitted, dismissed]
   pull_request_target:
     types: [closed, reopened, ready_for_review, converted_to_draft]
   schedule:
@@ -32,8 +30,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # packages/review_queue/src/cli.ts leaves this job's name out of the checks it reads,
-  # since the events above can show it as a check on the PR that started it.
+  # The job name is QUEUE_JOB in packages/review_queue/src/queue.ts, which leaves it out
+  # of the checks it reads: pull_request_target can show it as a check on a stacked PR.
   review-queue:
     runs-on: ubuntu-latest
     env:

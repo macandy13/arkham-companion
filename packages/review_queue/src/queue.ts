@@ -25,11 +25,21 @@ export type CheckState =
 /** A finished run counts as passed with these conclusions, as GitHub's merge box does. */
 const PASSING_CONCLUSIONS = new Set(['success', 'neutral', 'skipped']);
 
-/** Sums up a head commit's check runs and commit statuses; a failure outranks a running check. */
+/**
+ * The name of the job in `review-queue.yml`. Some of the events that start it show it as a
+ * check on a PR, where it is still running while it reads that PR's checks.
+ */
+export const QUEUE_JOB = 'review-queue';
+
+/**
+ * Sums up a head commit's check runs and commit statuses, leaving out the queue's own job;
+ * a failure outranks a running check.
+ */
 export function checkState(
-  runs: readonly CheckRun[],
+  allRuns: readonly CheckRun[],
   statuses: readonly CommitStatus[],
 ): CheckState {
+  const runs = allRuns.filter((run) => run.name !== QUEUE_JOB);
   const failed = [
     ...runs.filter(
       (run) => run.status === 'completed' && !PASSING_CONCLUSIONS.has(run.conclusion ?? ''),
@@ -49,43 +59,49 @@ function checkName(check: CheckRun | CommitStatus): string {
   return 'name' in check ? check.name : check.context;
 }
 
-/** The reviewer's latest review that still counts (GitHub drops dismissed ones). */
-export interface Review {
-  readonly state: 'APPROVED' | 'CHANGES_REQUESTED' | 'COMMENTED';
-  /** The head commit the review was made on. */
-  readonly sha: string;
+/** Facts from GitHub's PR list that decide whether a PR belongs in the queue at all. */
+export interface ListedPr {
+  readonly draft: boolean;
+  readonly headRef: string;
+  /** Its head branch lives in a fork, so its branch name may clash with ours (even `main`). */
+  readonly fromFork: boolean;
 }
 
-/** What the queue needs to know about one open, non-draft PR; `cli.ts` reads it from GitHub. */
+/**
+ * Drafts aren't ready, Release Please PRs get no CI and are merged when a release is due,
+ * and fork PRs would break stacking by branch name (pr-sync.yml skips them too).
+ */
+export function isReviewable(pr: ListedPr): boolean {
+  return !pr.draft && !pr.fromFork && !pr.headRef.startsWith('release-please--');
+}
+
+/** What the queue needs to know about one reviewable PR; `cli.ts` reads it from GitHub. */
 export interface OpenPr {
   readonly number: number;
   readonly title: string;
   /** The branch it merges into: another PR's `headRef` when it is stacked on that PR. */
   readonly baseRef: string;
   readonly headRef: string;
-  readonly headSha: string;
   readonly checks: CheckState;
   /** Labelled `needs-rebase` by `pr-sync.yml`: the branch conflicts with its base. */
   readonly conflicts: boolean;
-  readonly review: Review | undefined;
 }
-
-/** Why a PR in the queue needs the reviewer: first look, a look at new commits, or the merge. */
-export type QueueTag = 'review' | 're-review' | 'approved';
 
 /** A PR in the queue, with the open PR it is stacked on, if any. */
 export interface QueueEntry {
   readonly pr: OpenPr;
-  readonly tag: QueueTag;
   readonly stackedOn: OpenPr | undefined;
 }
 
-/** The open PRs sorted by what the reviewer can do with them, each list in merge order. */
+/**
+ * The open PRs split by whether they can be reviewed now, each list in merge order.
+ * Reviews don't move PRs between lists: the PRs here are opened under the owner's
+ * account, so the owner can't approve them, and sessions post review comments as the
+ * owner too, so no review state tells whether the owner has looked.
+ */
 export interface ReviewQueue {
-  /** Checks passed, no conflicts, and the reviewer's move. */
+  /** Checks passed and no conflicts. */
   readonly queue: readonly QueueEntry[];
-  /** Reviewed by the reviewer at its current head without approval: the author's move. */
-  readonly waiting: readonly OpenPr[];
   /** Checks running or failed, none at all, or conflicts. */
   readonly notReady: readonly OpenPr[];
 }
@@ -97,22 +113,15 @@ export interface ReviewQueue {
 export function buildQueue(prs: readonly OpenPr[]): ReviewQueue {
   const byHead = new Map(prs.map((pr) => [pr.headRef, pr]));
   const queue: QueueEntry[] = [];
-  const waiting: OpenPr[] = [];
   const notReady: OpenPr[] = [];
   for (const pr of mergeOrder(prs)) {
-    const tag = queueTag(pr);
-    if (pr.checks.kind !== 'passed' || pr.conflicts) notReady.push(pr);
-    else if (tag === undefined) waiting.push(pr);
-    else queue.push({ pr, tag, stackedOn: byHead.get(pr.baseRef) });
+    if (pr.checks.kind === 'passed' && !pr.conflicts) {
+      queue.push({ pr, stackedOn: byHead.get(pr.baseRef) });
+    } else {
+      notReady.push(pr);
+    }
   }
-  return { queue, waiting, notReady };
-}
-
-/** Undefined when the reviewer already reviewed the current head without approving it. */
-function queueTag(pr: OpenPr): QueueTag | undefined {
-  if (pr.review === undefined) return 'review';
-  if (pr.review.state === 'APPROVED') return 'approved';
-  return pr.review.sha === pr.headSha ? undefined : 're-review';
+  return { queue, notReady };
 }
 
 /** The PRs in merge order (see `buildQueue`). */
