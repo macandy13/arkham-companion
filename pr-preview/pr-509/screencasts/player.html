@@ -67,7 +67,7 @@
       const SPEEDS = [0.125, 0.25, 0.5, 1];
       // Filled in by `playerPage` (screencasts.ts) with this push's flows. The page plays only
       // a flow named there, so a crafted link can never make it load or link another URL.
-      const RECORDED = {"version":"2b3df3c","flows":{}};
+      const RECORDED = {"version":"02da7a3","flows":{}};
       const params = new URLSearchParams(location.search);
       const flow = Object.keys(RECORDED.flows).find((slug) => slug === params.get('flow'));
       const requested = Number(params.get('speed'));
