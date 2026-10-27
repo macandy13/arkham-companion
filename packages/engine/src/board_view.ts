@@ -38,6 +38,7 @@ import { NAMED_AMOUNTS } from './state';
 import { boostedSkills, requireInvestigator } from './investigators';
 import { CommandRejected } from './rejection';
 import { skillTestSuggestion, type SkillTestInput } from './skill_modifiers';
+import { victoryPoints } from './victory';
 import type {
   AmountRange,
   CardInstance,
@@ -499,6 +500,14 @@ export class BoardView {
       setAside: cardsIn(setAside),
       victoryDisplay: cardsIn(victoryDisplay),
     };
+  }
+
+  /**
+   * The victory points the players have earned so far: the cards in the victory display and the
+   * cleared locations that print victory (`victoryPoints`), as the scenario's resolution counts them.
+   */
+  get victoryPoints(): number {
+    return victoryPoints(this.ctx, this.state);
   }
 
   /** The encounter card being resolved, if a revelation waits for the players (`ResolvingCardView`). */

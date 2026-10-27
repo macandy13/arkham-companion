@@ -913,6 +913,23 @@ describe('encounter piles', () => {
   });
 });
 
+describe('victoryPoints', () => {
+  it('counts the victory display and the cleared locations that print victory', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withLocation(instanceId('parlor'), blankLocation('parlor', { victory: 1 }), {
+        revealed: true,
+        clues: 0,
+      })
+      .withCard(instanceId('ghoul_priest'), blankEnemy('ghoul_priest', { victory: 2 }), {
+        kind: 'victoryDisplay',
+      })
+      .start();
+
+    expect(boardView(context, state).victoryPoints).toBe(3);
+  });
+});
+
 describe('the encounter card being resolved', () => {
   /** Alice in the study; the deck holds a perilous treachery that tests her willpower, then another card. */
   const aliceDraws = () =>

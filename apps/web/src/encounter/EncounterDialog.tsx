@@ -6,16 +6,16 @@ import { useCardPicture } from '../catalog/cardImages';
 import type { GameActions } from '../state/gameActions';
 import { CardMoves } from './CardMoves';
 
-/** Where the encounter dialog opens (`EncounterDialog.start`): on the deck or on the discard pile. */
-export type EncounterPile = 'deck' | 'discard';
+/** Where the encounter dialog opens (`EncounterDialog.start`): on the deck or on one of its piles. */
+export type EncounterPile = 'deck' | 'discard' | 'setAside' | 'victoryDisplay';
 
 /**
- * The encounter piles in full, opened from the header's deck or discard pile: how many cards are
+ * The encounter piles in full, opened from the header's deck or one of its piles: how many cards are
  * left in the deck with a "Draw for …" button per active investigator (the one whose turn it is
  * first), as player cards and effects make an investigator draw outside the mythos phase, then the
  * discard pile (top first), the set-aside cards and the victory display
  * as lists that open and close (`details`), each card with a small picture and its name. Opened
- * from the discard pile (`start`), its list starts open. A tap on a card opens the places the
+ * from a pile (`start`), that pile's list starts open. A tap on a card opens the places the
  * players can put it (`CardMoves`), for a revelation the engine left to them. A draw closes the dialog, so the card resolves
  * in front of the players (its decisions in the decision dialog); nothing is drawn while a step is
  * queued (`busy`), while the players adjust the board (`adjusting`, since a draw is play, not a
@@ -79,11 +79,16 @@ export function EncounterDialog({
         open={start === 'discard'}
         moves={moves}
       />
-      <CardList title={t('encounter.setAside')} cards={setAside} open={false} moves={moves} />
+      <CardList
+        title={t('encounter.setAside')}
+        cards={setAside}
+        open={start === 'setAside'}
+        moves={moves}
+      />
       <CardList
         title={t('encounter.victoryDisplay')}
         cards={victoryDisplay}
-        open={false}
+        open={start === 'victoryDisplay'}
         moves={moves}
       />
     </dialog>
