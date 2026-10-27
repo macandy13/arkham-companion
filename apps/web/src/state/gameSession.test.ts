@@ -200,6 +200,25 @@ describe('GameSession on The Gathering', () => {
     expect(session.skippedEffects).toEqual([]);
   });
 
+  // Seed 3 puts Dissonant Voices on top of the encounter deck.
+  it('lists the encounter cards a step drew and where they went, until it is undone', async () => {
+    const { store, gameId } = await storedGame('session-drawn-cards-test');
+    const session = await GameSession.open(store, gameId, ctx);
+
+    await session.play((table) => table.drawEncounterCard(investigatorId('alder')));
+    const drawn = session.drawnCards.map(({ card, drawnFor, place }) => [
+      card.name,
+      drawnFor,
+      place,
+    ]);
+    await session.undo();
+
+    expect(drawn).toEqual([
+      ['Dissonant Voices', 'alder', { kind: 'threatArea', investigator: 'alder' }],
+    ]);
+    expect(session.drawnCards).toEqual([]);
+  });
+
   it('reloads what another tab stored when its own write is refused', async () => {
     const { store, gameId } = await storedGame('session-two-tabs-test');
     const firstTab = await GameSession.open(store, gameId, ctx);

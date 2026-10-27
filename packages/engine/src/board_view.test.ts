@@ -16,6 +16,7 @@ import {
   byId,
   byName,
   cardCode,
+  cardName,
   decisionId,
   engagedWith,
   enemyMatching,
@@ -35,6 +36,7 @@ import {
   threatAreaOf,
   trait,
   type CardAction,
+  type CardPlaceView,
   type CardStats,
   type Zone,
 } from './index';
@@ -975,6 +977,48 @@ describe('the encounter card being resolved', () => {
     table.answer(byName('crypt_chill'), 'pass');
 
     expect(table.board.resolving).toBeUndefined();
+  });
+});
+
+describe('placeOf', () => {
+  const placed = instanceId('placed');
+
+  it.each<{ zone: Zone; card: CardStats; place: CardPlaceView }>([
+    {
+      zone: { kind: 'encounterDiscard' },
+      card: blankTreachery('crypt_chill'),
+      place: { kind: 'encounterDiscard' },
+    },
+    {
+      zone: threatAreaOf(alice),
+      card: blankTreachery('frozen_in_fear'),
+      place: { kind: 'threatArea', investigator: alice },
+    },
+    {
+      zone: engagedWith(alice),
+      card: blankEnemy('ghoul'),
+      place: { kind: 'engaged', investigator: alice },
+    },
+    {
+      zone: atLocation(hallway),
+      card: blankEnemy('ghoul'),
+      place: { kind: 'atLocation', location: cardName('hallway') },
+    },
+    {
+      zone: attachedTo(study),
+      card: blankTreachery('obscuring_fog'),
+      place: { kind: 'attachedTo', card: cardName('study') },
+    },
+    { zone: { kind: 'outOfGame' }, card: blankTreachery('gone'), place: { kind: 'elsewhere' } },
+  ])('reads a card in $zone.kind as $place.kind', ({ zone, card, place }) => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withLocation(hallway, blankLocation('hallway'))
+      .withInvestigator(alice, { locationId: study })
+      .withCard(placed, card, zone)
+      .start();
+
+    expect(boardView(context, state).placeOf(placed)).toEqual(place);
   });
 });
 
