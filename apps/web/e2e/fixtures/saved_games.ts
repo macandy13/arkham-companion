@@ -7,10 +7,12 @@ import {
   investigatorCode,
   investigatorId,
   PlayTable,
+  zoneOf,
   type CardCode,
   type InstanceId,
   type InvestigatorCard,
   type ScenarioDefinition,
+  type Zone,
 } from '@arkham/engine';
 import {
   GATHERING_CODES,
@@ -113,6 +115,23 @@ export function mythosDrawnExport(title: string): Buffer {
   table.nextPhase();
   table.nextPhase();
   return exportOf(title, table, 'mythos_drawn');
+}
+
+/**
+ * Like `houseOpenedExport`, but with every header pile holding cards, all moved by hand to keep the
+ * script short: seven encounter cards lie on the discard pile, and the Ghoul Priest (2
+ * victory) has left the set-aside cards for the victory display, so the header fans each pile.
+ */
+export function pilesFilledExport(title: string): Buffer {
+  const table = houseOpened(theGathering);
+  const move = (cardId: InstanceId, to: Zone) =>
+    table.play({ type: 'ManualAdjust', adjustment: { kind: 'moveCard', cardId, to, index: 0 } });
+  const deck = Object.values(table.state.cards)
+    .filter((card) => zoneOf(table.state, card.id).kind === 'encounterDeck')
+    .map((card) => card.id);
+  for (const card of deck.slice(0, 7)) move(card, { kind: 'encounterDiscard' });
+  move(cardIn(table, GATHERING_CODES.ghoulPriest), { kind: 'victoryDisplay' });
+  return exportOf(title, table, 'piles_filled');
 }
 
 /**

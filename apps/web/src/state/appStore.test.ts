@@ -425,6 +425,21 @@ describe('appStore', () => {
           expect(store.getState().current?.drawnCards).toBeUndefined();
         });
 
+        it('remembers the enemy whose spawn location the players choose until they cancel', async () => {
+          const store = await aldersTurn('actions-spawning-test');
+          const ghoulPriest = store
+            .getState()
+            .current?.board?.encounter.setAside.find(({ name }) => name === 'Ghoul Priest');
+          if (!ghoulPriest) throw new Error('the Ghoul Priest is set aside at setup');
+
+          store.getState().startSpawn(ghoulPriest);
+          const chosen = store.getState().current?.spawning?.name;
+          store.getState().cancelSpawn();
+
+          expect(chosen).toBe('Ghoul Priest');
+          expect(store.getState().current?.spawning).toBeUndefined();
+        });
+
         it('takes doom off the current agenda', async () => {
           const store = await aldersTurn('actions-remove-doom-test');
           await store.getState().actions.placeDoom(2);

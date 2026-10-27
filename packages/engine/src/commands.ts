@@ -50,6 +50,7 @@ export type Command =
   | DiscoverClues
   | PlaceClues
   | PlaceDoom
+  | PlaceTokens
   | AdvanceAgenda
   | AdvanceAct
   | EndScenario
@@ -440,6 +441,18 @@ export interface PlaceDoom {
   type: 'PlaceDoom';
   /** Defaults to the current agenda. */
   cardId?: InstanceId;
+  amount: number;
+}
+
+/**
+ * Puts `amount` (positive) tokens from the token pool on a card in play ("place 1 clue on this
+ * act", Disrupting the Ritual). Only clues for now: doom has `PlaceDoom`, which defaults to the
+ * current agenda, and damage and horror on an enemy are wounds. Produces `TokensChanged`.
+ */
+export interface PlaceTokens {
+  type: 'PlaceTokens';
+  cardId: InstanceId;
+  token: 'clue';
   amount: number;
 }
 
