@@ -214,7 +214,7 @@ const COMMAND_SPECS: CommandSpecs = {
     continueWith: finishAdvance,
   },
   AdvanceAct: {
-    handle: handleAdvanceAct,
+    handle: (_ctx, state, command) => handleAdvanceAct(state, command),
     continueWith: finishAdvance,
   },
   EndScenario: { handle: (_ctx, _state, command) => handleEndScenario(command) },

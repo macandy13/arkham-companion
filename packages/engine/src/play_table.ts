@@ -17,6 +17,7 @@ import { formatBoard } from './format_board';
 import { decisionId, type InvestigatorId } from './ids';
 import { checkInvariants } from './invariants';
 import { requireCard } from './lookup';
+import { advanceActionOf } from './card_actions';
 import { replay } from './reducer';
 import { CommandRejected, type Rejection } from './rejection';
 import { compileSetup, type InvestigatorSeat } from './setup';
@@ -423,14 +424,33 @@ export class PlayTable {
     });
   }
 
-  /** The investigators pay the act's clue requirement, each the clues listed with them, and advance it. */
-  spendCluesToAdvanceAct(spend: ReadonlyArray<readonly [InvestigatorRef, number]>): void {
+  /**
+   * The investigator whose turn it is takes the current act's `advanceBySpendingClues` action:
+   * the investigators pay its clues, each the clues listed with them (omitted, the turn's
+   * investigator pays what they can and the others the rest), and the act advances.
+   */
+  spendCluesToAdvanceAct(spend?: ReadonlyArray<readonly [InvestigatorRef, number]>): void {
+    const turn = this.current.meta.turn?.investigatorId;
+    if (turn === undefined)
+      throw new TableError('no investigator turn to spend clues in', this.formatted());
+    const actId = this.current.act.current;
+    const action =
+      actId === undefined ? -1 : advanceActionOf(this.ctx, requireCard(this.current.cards, actId));
+    if (actId === undefined || action < 0)
+      throw new TableError('the current act does not advance by spending clues', this.formatted());
     this.play({
-      type: 'AdvanceAct',
-      spend: spend.map(([investigator, amount]) => ({
-        investigatorId: this.seat(investigator),
-        amount,
-      })),
+      type: 'UseCardAction',
+      investigatorId: turn,
+      cardId: actId,
+      action,
+      ...(spend === undefined
+        ? {}
+        : {
+            spend: spend.map(([investigator, amount]) => ({
+              investigatorId: this.seat(investigator),
+              amount,
+            })),
+          }),
     });
   }
 

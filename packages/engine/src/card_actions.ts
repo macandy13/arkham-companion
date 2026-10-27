@@ -208,16 +208,23 @@ export function advanceBySpendingClues(clues: ScaledValue): CardAction {
   };
 }
 
+/** Whether `action` is an act's `advanceBySpendingClues`: a group clue cost to advance the act. */
+function advancesBySpendingClues({ cost, effects }: CardAction): boolean {
+  return cost?.spend === 'groupClues' && effects.some((effect) => effect.type === 'AdvanceAct');
+}
+
 /**
  * The clues the investigators spend as a group to advance an act of `stats` with its
  * `advanceBySpendingClues` ability; none when it has no such ability.
  */
 export function cluesToAdvance(stats: CardStats): ScaledValue | undefined {
-  return (stats.actions ?? []).flatMap(({ cost, effects }) =>
-    cost?.spend === 'groupClues' && effects.some((effect) => effect.type === 'AdvanceAct')
-      ? [cost.amount]
-      : [],
-  )[0];
+  const cost = stats.actions?.find(advancesBySpendingClues)?.cost;
+  return cost?.spend === 'groupClues' ? cost.amount : undefined;
+}
+
+/** The index (`UseCardAction.action`) of `act`'s `advanceBySpendingClues` ability; -1 when none. */
+export function advanceActionOf(ctx: EngineContext, act: CardInstance): number {
+  return (cardStats(ctx.cards, act.code).actions ?? []).findIndex(advancesBySpendingClues);
 }
 
 /**

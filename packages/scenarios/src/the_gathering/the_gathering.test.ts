@@ -224,21 +224,10 @@ describe('The Gathering house (after act 1)', () => {
 describe('The Gathering act 1 reverse side', () => {
   const studyCard = instanceId('01111#1');
   const hallway = instanceId('01112#1');
-  const tank = investigatorId('tank');
   const seeker = investigatorId('seeker');
 
-  /** Both investigators take the Study's 4 clues and spend 2 each to advance act 1. */
-  const advanceTrapped: Command[] = [
-    { type: 'DiscoverClues', investigatorId: tank, locationId: studyCard, amount: 2 },
-    { type: 'DiscoverClues', investigatorId: seeker, locationId: studyCard, amount: 2 },
-    {
-      type: 'AdvanceAct',
-      spend: [
-        { investigatorId: tank, amount: 2 },
-        { investigatorId: seeker, amount: 2 },
-      ],
-    },
-  ];
+  /** Act 1 advances (its clue cost is the end-to-end test's). */
+  const advanceTrapped: Command[] = [{ type: 'AdvanceAct' }];
 
   function startTwoPlayer(): GameState {
     return startScenario(ctx, { playerCount: 2 });
@@ -313,19 +302,7 @@ describe('The Gathering enemies', () => {
   const attic = instanceId('01113#1');
   const hallway = instanceId('01112#1');
   const tank = investigatorId('tank');
-  const seeker = investigatorId('seeker');
-  const studyCard = instanceId('01111#1');
-  const advanceTrapped: Command[] = [
-    { type: 'DiscoverClues', investigatorId: tank, locationId: studyCard, amount: 2 },
-    { type: 'DiscoverClues', investigatorId: seeker, locationId: studyCard, amount: 2 },
-    {
-      type: 'AdvanceAct',
-      spend: [
-        { investigatorId: tank, amount: 2 },
-        { investigatorId: seeker, amount: 2 },
-      ],
-    },
-  ];
+  const advanceTrapped: Command[] = [{ type: 'AdvanceAct' }];
   const start = () => startScenario(ctx, { playerCount: 2 });
 
   it('discards the Flesh-Eater while the Attic is not in play', () => {

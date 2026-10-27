@@ -1,5 +1,6 @@
 import { neighbours } from './board';
 import { resolveValue, type EngineContext } from './cards';
+import { cluesToAdvance } from './card_actions';
 import { describeDecision } from './describe_decision';
 import { doomInPlay } from './doom';
 import type { InstanceId, MapId } from './ids';
@@ -86,7 +87,8 @@ function agendaLine(ctx: EngineContext, state: GameState): string {
 function actLine(ctx: EngineContext, state: GameState): string {
   const act = currentCard(state, state.act.current);
   if (!act) return 'Act: none';
-  const clues = ctx.cards.get(act.code)?.clues;
+  const stats = ctx.cards.get(act.code);
+  const clues = stats && cluesToAdvance(stats);
   const requirement =
     clues === undefined
       ? 'no clue requirement'

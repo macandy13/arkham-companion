@@ -60,7 +60,7 @@ describe('blank cards', () => {
     {
       name: 'act',
       card: blankAct('act'),
-      stats: { typeCode: 'act', stage: { number: 1 }, clues: fixed(0) },
+      stats: { typeCode: 'act', stage: { number: 1 } },
     },
   ])('makes a $name with nothing on it, named after its code', ({ card, stats }) => {
     expect(card).toEqual({ code: card.code, name: card.code, traits: [], ...stats });

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  advanceBySpendingClues,
   blankAct,
   blankAgenda,
   blankEnemy,
@@ -381,8 +382,12 @@ describe('turns, actions and tokens', () => {
         .withLocation(study, blankLocation('study'))
         .withInvestigator(alice, { locationId: study, clues: 1 })
         .withInvestigator(bob, { locationId: study, clues: 1 })
-        .withAct(instanceId('first_act'), blankAct('first_act', { clues: fixed(2) }))
-        .withAct(instanceId('last_act'), blankAct('last_act', { stage: { number: 2 } })),
+        .withAct(
+          instanceId('first_act'),
+          blankAct('first_act', { actions: [advanceBySpendingClues(fixed(2))] }),
+        )
+        .withAct(instanceId('last_act'), blankAct('last_act', { stage: { number: 2 } }))
+        .withTurnOf(alice),
     );
 
     table.spendCluesToAdvanceAct([

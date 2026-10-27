@@ -1,8 +1,8 @@
 # Play screen: encounter piles
 
-The [game screen](../../apps/web/src/screens/GameScreen.tsx) has a header with the encounter deck, agenda, act, scenario and victory display laid out as cards, centred, each under the playmat's label, with the agenda's doom, the act's clues and the cards left in the encounter deck on big round tokens ("2 of 7").
+The [game screen](../../apps/web/src/screens/GameScreen.tsx) has a header with the encounter deck, agenda, act, scenario and victory display laid out as cards, centred, each under the playmat's label, with the agenda's doom, the act's clues (the ones the investigators hold against its cost, or for an act that advances itself the ones on it, `ActAdvance`) and the cards left in the encounter deck on big round tokens ("2 of 7").
 
-A tap on the agenda or act (or its name, a button for the keyboard) opens it as a full card in a dialog ([`CardDetails`](../../apps/web/src/screens/GameHeader.tsx)), the same face with its picture large and its buttons at full size; advancing closes it, since a decision may follow.
+A tap on the agenda or act (or its name, a button for the keyboard) opens it as a full card in a dialog ([`CardDetails`](../../apps/web/src/screens/GameHeader.tsx)), the same face with its picture large and its buttons at full size; advancing closes it, since a decision may follow. The act's Advance button takes its spend-clues action for the investigator whose turn it is (`GameActions.advanceAct`), so it waits for a turn and enough clues; the clue steppers, a correction while adjusting, show only for an act that counts the clues on it.
 
 The piles lie as small fans of their top three cards, slightly turned against each other, with a count on a disc ([`PileFan`](../../apps/web/src/encounter/PileFan.tsx), [`EncounterPiles`](../../apps/web/src/encounter/EncounterPiles.tsx)): the encounter discard pile tucked under the deck's lower right corner, the set-aside cards under the scenario card's, and the victory display in its own slot with the victory points earned so far (`BoardView.victoryPoints`, the victory display plus cleared locations that print victory); an empty pile is a dashed card outline.
 

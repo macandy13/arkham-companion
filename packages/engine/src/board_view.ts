@@ -3,7 +3,14 @@ import { isConnectionOpen, neighbours } from './board';
 import { tokenObjective } from './abilities';
 import { cardActionsOfferedTo, cluesToAdvance, type OfferedCardAction } from './card_actions';
 import { effectiveValue } from './card_values';
-import { cardStats, resolveValue, type CardType, type EngineContext, type Trait } from './cards';
+import {
+  cardStats,
+  resolveValue,
+  type CardStats,
+  type CardType,
+  type EngineContext,
+  type Trait,
+} from './cards';
 import { optionName } from './describe_decision';
 import type { Command } from './commands';
 import { doomInPlay, isInPlay } from './doom';
@@ -260,17 +267,26 @@ export interface AgendaView {
 }
 
 /**
- * The current act like `AgendaView`: its name, the clue tokens on it (the players' correction, which
- * counts towards advancing it, see `AdvanceAct`) and, when it has one, the clues it needs for the
- * player count.
+ * The current act like `AgendaView`: its name, the clue tokens on it and, when clues advance it,
+ * how (`ActAdvance`).
  */
 export interface ActView {
   name: CardName;
   /** The picture of its front, the side in play (`CardStats.imageSrc`), when the card data has one. */
   image?: CardImagePath;
   clues: number;
-  threshold?: number;
+  advance?: ActAdvance;
 }
+
+/**
+ * How clues advance the current act, with the clues it needs for the starting player count:
+ * the investigators spend the clues they hold (`spendClues`, its `advanceBySpendingClues`
+ * action, which the turn's investigator takes), or it advances itself once enough clues lie on it
+ * (`cluesOnAct`, an objective like Disrupting the Ritual's, `whenTokensOnSelf`).
+ */
+export type ActAdvance =
+  | { readonly kind: 'spendClues'; readonly held: number; readonly threshold: number }
+  | { readonly kind: 'cluesOnAct'; readonly threshold: number };
 
 /**
  * One open decision as the players see it: the question (`prompt`, the
@@ -506,14 +522,6 @@ export class BoardView {
   /** All doom the agenda's threshold counts: on every card in play and the players' (`doomInPlay`). */
   get doomInPlay(): number {
     return doomInPlay(this.state);
-  }
-
-  /**
-   * The clues the investigators hold between them, which they may pool to advance the act
-   * (`act.threshold`). Eliminated investigators have dropped theirs, so every seat counts.
-   */
-  get cluesHeld(): number {
-    return this.investigators.reduce((sum, investigator) => sum + investigator.clues, 0);
   }
 
   get act(): ActView | undefined {
@@ -983,15 +991,24 @@ function actView(ctx: EngineContext, state: GameState): ActView | undefined {
   const act = currentCard(state, 'act');
   if (!act) return undefined;
   const stats = cardStats(ctx.cards, act.code);
-  const threshold = tokenObjective(stats, 'clue') ?? cluesToAdvance(stats) ?? stats.clues;
+  const advance = actAdvance(state, stats);
   return {
     name: nameOf(ctx, act),
     ...(stats.imageSrc === undefined ? {} : { image: stats.imageSrc }),
     clues: act.tokens.clue ?? 0,
-    ...(threshold === undefined
-      ? {}
-      : { threshold: resolveValue(threshold, state.meta.playerCount) }),
+    ...(advance === undefined ? {} : { advance }),
   };
+}
+
+function actAdvance(state: GameState, stats: CardStats): ActAdvance | undefined {
+  const onAct = tokenObjective(stats, 'clue');
+  if (onAct !== undefined)
+    return { kind: 'cluesOnAct', threshold: resolveValue(onAct, state.meta.playerCount) };
+  const spent = cluesToAdvance(stats);
+  if (spent === undefined) return undefined;
+  // Eliminated investigators have dropped their clues, so every seat counts.
+  const held = state.investigators.reduce((sum, investigator) => sum + investigator.clues, 0);
+  return { kind: 'spendClues', held, threshold: resolveValue(spent, state.meta.playerCount) };
 }
 
 function decisionView(ctx: EngineContext, state: GameState, decision: Decision): DecisionView {

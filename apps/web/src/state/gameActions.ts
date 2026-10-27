@@ -110,10 +110,11 @@ export interface GameActions {
   /** Enemy step 3.3: each listed enemy attack at its printed damage and horror. */
   resolveEnemyAttacks(): Promise<void>;
   /**
-   * The investigators spend the clues listed with them to advance the act; the clues on the act
-   * (`adjustActClues`) count towards it, so `spend` covers only the rest.
+   * The investigator whose turn it is takes the act's spend-clues action: the investigators spend
+   * the clues listed with them (omitted, that investigator pays what they can and the others the
+   * rest) and the act advances.
    */
-  advanceAct(spend: readonly ClueSpend[]): Promise<void>;
+  advanceAct(spend?: readonly ClueSpend[]): Promise<void>;
   /**
    * The act card's +/− steppers: `delta` more (or, negative, fewer) clues on the current act, a
    * correction by hand that leaves the investigators' clues alone.
@@ -257,7 +258,9 @@ export function gameActions(
     resolveEnemyAttacks: () => play((table) => table.resolveEnemyAttacks()),
     advanceAct: (spend) =>
       play((table) =>
-        table.spendCluesToAdvanceAct(spend.map(({ investigator, clues }) => [investigator, clues])),
+        table.spendCluesToAdvanceAct(
+          spend?.map(({ investigator, clues }) => [investigator, clues]),
+        ),
       ),
     adjustActClues: (delta) =>
       play((table) =>

@@ -10,6 +10,7 @@ import {
   investigatorCardStats,
   investigatorCode,
   investigatorId,
+  instanceId,
   type CardStats,
   type InvestigatorCard,
 } from '@arkham/engine';
@@ -58,6 +59,9 @@ async function renderTheGathering(db: string, replacedCards: readonly CardStats[
   await screen.findByRole('heading', { name: 'Setup' });
   return store;
 }
+
+/** The Study, where Alder starts, with Trapped's 2 clues for one investigator. */
+const study = instanceId('01111#1');
 
 const button = (name: string) => screen.getByRole<HTMLButtonElement>('button', { name });
 
@@ -175,43 +179,33 @@ describe('GameScreen header', () => {
     expect(await screen.findByRole('img', { name: 'Doom 0 / 3' })).toBeTruthy();
   });
 
-  it("puts a clue on the act and takes it off again, leaving Alder's clues alone", async () => {
+  it('counts the clues Alder holds on the act', async () => {
     const store = await renderTheGathering('game-screen-act-clues-test');
-    fireEvent.click(button('Adjust board'));
-    await screen.findByRole('button', { name: 'Done' });
-    const removeAtZero = button('Remove a clue').disabled;
+    const { actions } = store.getState();
+    await actions.nextPhase();
+    await actions.startTurn(investigatorId('alder'));
 
-    fireEvent.click(button('Add a clue'));
-    await screen.findByRole('img', { name: 'Clues 1 / 2' });
-    const alderAfterAdding = store.getState().current?.board?.investigator(investigatorId('alder'));
-    fireEvent.click(button('Remove a clue'));
+    await actions.takeClue(study);
 
-    expect(removeAtZero).toBe(true);
-    expect(alderAfterAdding?.clues).toBe(0);
-    expect(await screen.findByRole('img', { name: 'Clues 0 / 2' })).toBeTruthy();
+    expect(await screen.findByRole('img', { name: 'Clues 1 / 2' })).toBeTruthy();
   });
 
-  it('advances the act once the clues on it reach what it needs', async () => {
-    await renderTheGathering('game-screen-act-advance-test');
+  it("advances the act in Alder's turn once he holds the clues it needs, spending them", async () => {
+    const store = await renderTheGathering('game-screen-act-advance-test');
     // Trapped needs 2 clues for one investigator.
-    fireEvent.click(button('Adjust board'));
-    fireEvent.click(await screen.findByRole('button', { name: 'Add a clue' }));
-    await screen.findByRole('img', { name: 'Clues 1 / 2' });
-    fireEvent.click(button('Done'));
-    await screen.findByRole('button', { name: 'Next' });
-    const advanceAtOne = button('Advance').disabled;
-    fireEvent.click(button('Adjust board'));
-    fireEvent.click(await screen.findByRole('button', { name: 'Add a clue' }));
+    const { actions } = store.getState();
+    await actions.nextPhase();
+    await actions.startTurn(investigatorId('alder'));
+    await actions.takeClue(study);
+    const advanceAtOneClue = button('Advance').disabled;
+    await actions.takeClue(study);
     await screen.findByRole('img', { name: 'Clues 2 / 2' });
-    const advanceWhileAdjusting = button('Advance').disabled;
-    fireEvent.click(button('Done'));
-    await screen.findByRole('button', { name: 'Next' });
 
     fireEvent.click(button('Advance'));
 
-    expect(advanceAtOne).toBe(true);
-    expect(advanceWhileAdjusting).toBe(true);
+    expect(advanceAtOneClue).toBe(true);
     expect(await screen.findByText('The Barrier')).toBeTruthy();
+    expect(store.getState().current?.board?.investigator(investigatorId('alder')).clues).toBe(0);
   });
 
   it('opens the agenda as a full card from its name, with its doom, and closes it again', async () => {
@@ -226,31 +220,34 @@ describe('GameScreen header', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
-  it("opens the act on a tap on its card but not on its plate's Add a clue button", async () => {
-    await renderTheGathering('game-screen-act-tap-test');
+  it("opens the act on a tap on its card but not on its plate's Advance button", async () => {
+    const store = await renderTheGathering('game-screen-act-tap-test');
+    const { actions } = store.getState();
+    await actions.nextPhase();
+    await actions.startTurn(investigatorId('alder'));
+    await actions.takeClue(study);
+    await actions.takeClue(study);
     const act = screen.getByRole('region', { name: 'Act' });
     const face = act.querySelector('[data-card]');
     if (!face) throw new Error('the act has no card');
-    fireEvent.click(button('Adjust board'));
 
-    fireEvent.click(await within(act).findByRole('button', { name: 'Add a clue' }));
-    await within(act).findByRole('img', { name: 'Clues 1 / 2' });
-    const openAfterAddingAClue = screen.queryByRole('dialog');
+    fireEvent.click(await within(act).findByRole('button', { name: 'Advance' }));
+    await within(act).findByText('The Barrier');
+    const openAfterAdvancing = screen.queryByRole('dialog');
     fireEvent.click(face);
 
-    expect(openAfterAddingAClue).toBeNull();
-    expect(await screen.findByRole('dialog', { name: 'Trapped' })).toBeTruthy();
+    expect(openAfterAdvancing).toBeNull();
+    expect(await screen.findByRole('dialog', { name: 'The Barrier' })).toBeTruthy();
   });
 
   it('advances the act from its full card and closes the card', async () => {
-    await renderTheGathering('game-screen-act-details-advance-test');
+    const store = await renderTheGathering('game-screen-act-details-advance-test');
     // Trapped needs 2 clues for one investigator.
-    fireEvent.click(button('Adjust board'));
-    fireEvent.click(await screen.findByRole('button', { name: 'Add a clue' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Add a clue' }));
-    await screen.findByRole('img', { name: 'Clues 2 / 2' });
-    fireEvent.click(button('Done'));
-    await screen.findByRole('button', { name: 'Next' });
+    const { actions } = store.getState();
+    await actions.nextPhase();
+    await actions.startTurn(investigatorId('alder'));
+    await actions.takeClue(study);
+    await actions.takeClue(study);
     fireEvent.click(button('Trapped'));
     const card = await screen.findByRole('dialog', { name: 'Trapped' });
 

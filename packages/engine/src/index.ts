@@ -48,6 +48,7 @@ export {
   BoardView,
   boardView,
   TableError,
+  type ActAdvance,
   type ActView,
   type AgendaView,
   type CardActionView,
