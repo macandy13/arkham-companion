@@ -106,8 +106,7 @@ const alice = investigatorId('alice');
 /** The first agenda advances at 3 doom, the second at 5. */
 const firstAgendaCard = blankAgenda('first_agenda', fixed(3));
 const secondAgendaCard = blankAgenda('second_agenda', fixed(5), { stage: { number: 2 } });
-/** The first act needs 2 clues per investigator. */
-const firstActCard = blankAct('first_act', { clues: perInvestigator(2) });
+const firstActCard = blankAct('first_act');
 const secondActCard = blankAct('second_act', { stage: { number: 2 } });
 /** The cellar has clues, so revealing it places them (a `TokensChanged` after its `CardFlipped`). */
 const cellarCard = blankLocation('cellar', { clues: perInvestigator(2) });

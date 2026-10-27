@@ -179,7 +179,7 @@ describe('GameScreen header', () => {
     expect(await screen.findByRole('img', { name: 'Doom 0 / 3' })).toBeTruthy();
   });
 
-  it('counts the clues Alder holds on the act', async () => {
+  it("shows the clues Alder holds against the act's cost", async () => {
     const store = await renderTheGathering('game-screen-act-clues-test');
     const { actions } = store.getState();
     await actions.nextPhase();

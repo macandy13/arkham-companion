@@ -44,7 +44,7 @@ import { cardsInZone, cardsOfType, currentCard } from './lookup';
 import { mapLocations, type Edge, type GameMap, type GridCell } from './map';
 import { attacksStillDue } from './phases';
 import { NAMED_AMOUNTS } from './state';
-import { boostedSkills, requireInvestigator } from './investigators';
+import { boostedSkills, cluesHeldByGroup, requireInvestigator } from './investigators';
 import { CommandRejected } from './rejection';
 import { skillTestSuggestion, type SkillTestInput } from './skill_modifiers';
 import { victoryPoints } from './victory';
@@ -1006,9 +1006,11 @@ function actAdvance(state: GameState, stats: CardStats): ActAdvance | undefined 
     return { kind: 'cluesOnAct', threshold: resolveValue(onAct, state.meta.playerCount) };
   const spent = cluesToAdvance(stats);
   if (spent === undefined) return undefined;
-  // Eliminated investigators have dropped their clues, so every seat counts.
-  const held = state.investigators.reduce((sum, investigator) => sum + investigator.clues, 0);
-  return { kind: 'spendClues', held, threshold: resolveValue(spent, state.meta.playerCount) };
+  return {
+    kind: 'spendClues',
+    held: cluesHeldByGroup(state),
+    threshold: resolveValue(spent, state.meta.playerCount),
+  };
 }
 
 function decisionView(ctx: EngineContext, state: GameState, decision: Decision): DecisionView {

@@ -619,7 +619,7 @@ describe('AdvanceAct', () => {
         state,
         spendOnFirstAct([
           { investigatorId: alice, amount: 0 },
-          { investigatorId: bob, amount: 4 },
+          { investigatorId: bob, amount: 2 },
         ]),
       ).code,
     ).toBe('invalidTokenDelta');

@@ -337,6 +337,10 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     // Round 3 – investigation: Daisy's turn (the minion's fight is 2)
     table.startTurn(daisy);
+    // At 4 of 5 horror Roland cannot take another attack, so Daisy then hits the
+    // Ghoul Minion engaged with him twice (combat 2 against 2: she commits her two
+    // combat icons and the tokens are kind), which defeats it, then hits the
+    // Ghoul Priest once (it has 5 health per investigator, 15).
     table.fight(daisy, byName(ghoulMinion));
     table.fight(daisy, byName(ghoulMinion));
     table.endTurn(daisy);
@@ -939,10 +943,6 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       'Dissonant Voices',
     ]);
 
-    // At 4 of 5 horror Roland cannot take another attack, so Daisy then hits the Ghoul Minion engaged with him twice
-    // (combat 2 against 2: she commits her two combat icons and the tokens are
-    // kind), which defeats it, then hits the Ghoul Priest once (it has 5 health
-    // per investigator, 15).
     expect(table.nextPhase()).toEqual({ round: 10, phase: 'investigation' });
     table.startTurn(daisy);
     // Round 10 – investigation: both are in the Hallway holding 9 clues, the 3

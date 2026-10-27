@@ -14,7 +14,7 @@ import type { CardActionUsed, CommandDeferred, InvestigatorChanged } from './eve
 import type { CardCode, InstanceId, InvestigatorId } from './ids';
 import {
   activeInvestigator,
-  activeInvestigators,
+  cluesHeldByGroup,
   defaultCluePayments,
   groupCluePayments,
   statValue,
@@ -127,10 +127,8 @@ export function canPay(
     case 'resources':
     case 'clues':
       return statValue(investigator, cost.spend) >= cost.amount;
-    case 'groupClues': {
-      const held = activeInvestigators(state).reduce((sum, inv) => sum + inv.clues, 0);
-      return held >= groupClueAmount(state, cost.amount);
-    }
+    case 'groupClues':
+      return cluesHeldByGroup(state) >= groupClueAmount(state, cost.amount);
     case 'handCards':
       // The game doesn't know the hand; the players don't take an action they can't pay for.
       return true;

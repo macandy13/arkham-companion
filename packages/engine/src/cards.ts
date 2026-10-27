@@ -104,7 +104,7 @@ export interface CardStats {
   /** Only on agendas and acts. */
   stage?: CardStage;
   shroud?: number;
-  /** Clues placed on a revealed location, or the clue threshold of an act. */
+  /** Clues placed on a revealed location (an act's clue cost is its `advanceBySpendingClues`). */
   clues?: ScaledValue;
   fight?: number;
   evade?: number;
