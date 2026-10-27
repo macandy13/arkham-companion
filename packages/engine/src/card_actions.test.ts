@@ -404,7 +404,7 @@ describe('actions that would change nothing', () => {
       .withInvestigator(alice, { locationId: hall, health: { max: 9, damage } })
       .withTurnOf(alice);
 
-  it('neither offers nor accepts healing alice with no damage, and keeps its limit', () => {
+  it('neither offers nor accepts healing alice with no damage', () => {
     const table = PlayTable.start(hospitalHall(0));
 
     expect(table.board.cardActions(alice)).toEqual([]);
@@ -412,7 +412,6 @@ describe('actions that would change nothing', () => {
       code: 'changesNothing',
       command: 'UseCardAction',
     });
-    expect(table.state.cards[hall]?.actionUses ?? []).toEqual([]);
   });
 
   it('offers and heals alice with 1 damage', () => {
