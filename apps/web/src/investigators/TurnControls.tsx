@@ -12,8 +12,8 @@ const BASIC_ACTIONS = ['investigate', 'takeResource', 'drawCard', 'playCard'] as
  * for each one left (`InvestigatorView.actions`), then the basic actions as icon buttons:
  * investigate (its test goes to the decision dialog), take a resource, and draw and play, whose cards
  * the players handle at the table (`BASIC_ACTIONS`), investigate off where a card forbids it
- * (`LocationView.forbidden`, Locked Door) and play while a card forbids it them
- * (`InvestigatorView.forbidden`, Dissonant Voices); then a button per card action the cards offer them (`BoardView.cardActions`, named by its
+ * (`LocationView.forbidden`, Locked Door) and play while a card forbids them to
+ * play (`InvestigatorView.forbidden`, Dissonant Voices); then a button per card action the cards offer them (`BoardView.cardActions`, named by its
  * designator and card: "Resign · Parlor") and End, as in the prototype's turn row. Before it,
  * when the players may pick them next (`canStart`: the investigation phase, no turn in progress,
  * not taken this round), "Start turn", since the players choose the order.

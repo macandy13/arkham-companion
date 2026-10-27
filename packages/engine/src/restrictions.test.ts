@@ -8,6 +8,7 @@ import {
   blankTreachery,
   engagedWith,
   perInvestigator,
+  takeHorror,
   threatAreaOf,
   instanceId,
   investigatorId,
@@ -119,6 +120,7 @@ describe('an enemy whose engaged investigator cannot discover or spend clues (Th
   const bob = investigatorId('bob');
   const hunter = instanceId('hunter');
   const act = instanceId('act');
+  const cultist = instanceId('cultist');
   /** An enemy that forbids the investigator engaged with it to discover or spend clues. */
   const hunterCard = blankEnemy('hunter', {
     restrictions: [
@@ -194,6 +196,50 @@ describe('an enemy whose engaged investigator cannot discover or spend clues (Th
         ],
       }),
     ).toEqual({ code: 'restrictedFor', cannot: 'spendClues', investigatorId: alice });
+  });
+  it('lets bob pay both clues of a group cost when nobody names the payers', () => {
+    const cultistCard = blankEnemy('cultist', {
+      // Free, so the hunter's attack of opportunity doesn't come first.
+      actions: [
+        {
+          free: true,
+          effects: [takeHorror(1)],
+          cost: { spend: 'groupClues', amount: perInvestigator(1) },
+        },
+      ],
+    });
+    const { context, state } = hallWithHunter(engagedWith(alice))
+      .withCard(cultist, cultistCard, engagedWith(bob))
+      .start();
+
+    const paid = stateAfter(context, state, {
+      type: 'UseCardAction',
+      investigatorId: alice,
+      cardId: cultist,
+      action: 0,
+    });
+
+    expect(investigatorOf(paid, alice).clues).toBe(2);
+    expect(investigatorOf(paid, bob).clues).toBe(0);
+  });
+
+  it('neither offers nor accepts alice an action that costs her own clue', () => {
+    const cultistCard = blankEnemy('cultist', {
+      actions: [{ effects: [takeHorror(1)], cost: { spend: 'clues', amount: 1 } }],
+    });
+    const table = PlayTable.start(
+      hallWithHunter(engagedWith(alice)).withCard(cultist, cultistCard, engagedWith(bob)),
+    );
+
+    expect(table.board.cardActions(alice)).toEqual([]);
+    expect(
+      rejectionFrom(table.ctx, table.state, {
+        type: 'UseCardAction',
+        investigatorId: alice,
+        cardId: cultist,
+        action: 0,
+      }),
+    ).toEqual({ code: 'cardActionCostUnpaid', cardId: cultist, action: 0, investigatorId: alice });
   });
 });
 
