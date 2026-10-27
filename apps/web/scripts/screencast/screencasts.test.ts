@@ -291,29 +291,31 @@ describe('renderSection', () => {
   const recorded = { title: 'Create a game', slug: 'create-a-game', videoPath: '/v.webm' };
   const failed = { title: 'Broken flow', slug: 'broken-flow', videoPath: undefined };
 
-  it('embeds a cache-busted GIF and links the player for a recorded flow', () => {
+  it('embeds a cache-busted GIF from the picture host and links the player on Pages for a recorded flow', () => {
     const section = renderSection({
       flows: [recorded],
       shots: [],
       baseUrl: 'https://x.test/s',
+      pictureBaseUrl: 'https://raw.x.test/s',
       version: 'abc123',
     });
 
-    expect(section).toContain('![Create a game](https://x.test/s/create-a-game.gif?v=abc123)');
+    expect(section).toContain('![Create a game](https://raw.x.test/s/create-a-game.gif?v=abc123)');
     expect(section).toContain(
       '[Play with pause and speed controls](https://x.test/s/player.html?flow=create-a-game&v=abc123&speed=0.25)',
     );
   });
 
-  it('embeds a cache-busted screenshot above the screencasts', () => {
+  it('embeds a cache-busted screenshot from the picture host above the screencasts', () => {
     const section = renderSection({
       flows: [recorded],
       shots: [{ title: 'Map tabs', slug: 'map-tabs', imagePath: '/tabs.png' }],
       baseUrl: 'https://x.test/s',
+      pictureBaseUrl: 'https://raw.x.test/s',
       version: 'abc123',
     });
 
-    expect(section).toContain('![Map tabs](https://x.test/s/map-tabs.png?v=abc123)');
+    expect(section).toContain('![Map tabs](https://raw.x.test/s/map-tabs.png?v=abc123)');
     expect(section.indexOf('## Screenshots')).toBeLessThan(section.indexOf('## Screencasts'));
   });
 
@@ -322,6 +324,7 @@ describe('renderSection', () => {
       flows: [],
       shots: [{ title: 'Map tabs', slug: 'map-tabs', imagePath: undefined }],
       baseUrl: 'https://x.test/s',
+      pictureBaseUrl: 'https://raw.x.test/s',
       version: 'abc123',
     });
 
@@ -335,6 +338,7 @@ describe('renderSection', () => {
       flows: [],
       shots: [],
       baseUrl: 'https://x.test/s',
+      pictureBaseUrl: 'https://raw.x.test/s',
       version: 'abc123',
     });
 
@@ -346,6 +350,7 @@ describe('renderSection', () => {
       flows: [failed],
       shots: [],
       baseUrl: 'https://x.test/s/',
+      pictureBaseUrl: 'https://raw.x.test/s/',
       version: 'abc123',
     });
 
@@ -359,6 +364,7 @@ describe('renderSection', () => {
       flows: [],
       shots: [],
       baseUrl: 'https://x.test/s/',
+      pictureBaseUrl: 'https://raw.x.test/s/',
       version: 'abc123',
     });
 
