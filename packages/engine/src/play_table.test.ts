@@ -398,6 +398,29 @@ describe('turns, actions and tokens', () => {
     expect(table.board.act).toMatchObject({ name: 'last_act' });
     expect(table.board.investigators.map((inv) => inv.clues)).toEqual([0, 0]);
   });
+
+  it.each([
+    {
+      when: 'before anyone`s turn',
+      act: blankAct('first_act', { actions: [advanceBySpendingClues(fixed(1))] }),
+      turn: false,
+      error: 'no investigator turn to spend clues in',
+    },
+    {
+      when: 'for an act without a clue cost',
+      act: blankAct('first_act'),
+      turn: true,
+      error: 'the current act does not advance by spending clues',
+    },
+  ])('refuses to spend clues on the act $when', ({ act, turn, error }) => {
+    const game = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withInvestigator(alice, { locationId: study, clues: 1 })
+      .withAct(instanceId('first_act'), act);
+    const table = PlayTable.start(turn ? game.withTurnOf(alice) : game);
+
+    expect(() => table.spendCluesToAdvanceAct()).toThrow(error);
+  });
 });
 
 describe('investigating', () => {
