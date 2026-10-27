@@ -244,25 +244,21 @@ test('the attack of opportunity Roland Banks provokes by taking a resource', asy
   ).toBeVisible();
 });
 
-test(
-  'the Parlor’s details with its Resign among Roland Banks’ card actions',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'In the Parlor', inTheParlorExport('In the Parlor'));
+test('the Parlor’s details with its Resign among Roland Banks’ card actions', async ({ page }) => {
+  await resumeImportedGame(page, 'In the Parlor', inTheParlorExport('In the Parlor'));
 
-    // On a phone the investigator panel lies over the Parlor's tile, so the keyboard opens it.
-    await page.getByRole('button', { name: 'Details of Parlor' }).press('Enter');
+  // On a phone the investigator panel lies over the Parlor's tile, so the keyboard opens it.
+  await page.getByRole('button', { name: 'Details of Parlor' }).press('Enter');
 
-    const parlor = page.getByRole('dialog', { name: 'Parlor' });
-    await expect(
-      parlor
-        .getByRole('region', { name: 'Card actions' })
-        .getByRole('button', { name: 'Resign · Parlor' }),
-    ).toBeVisible();
-  },
-);
+  const parlor = page.getByRole('dialog', { name: 'Parlor' });
+  await expect(
+    parlor
+      .getByRole('region', { name: 'Card actions' })
+      .getByRole('button', { name: 'Resign · Parlor' }),
+  ).toBeVisible();
+});
 
-test('the Parlor tile printing its Resign', { tag: '@shot' }, async ({ page }) => {
+test('the Parlor tile printing its Resign', async ({ page }) => {
   await resumeImportedGame(page, 'In the Parlor', inTheParlorExport('In the Parlor'));
 
   const parlor = page.getByRole('figure', { name: 'House' }).getByRole('group', { name: 'Parlor' });

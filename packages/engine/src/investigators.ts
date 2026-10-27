@@ -217,6 +217,14 @@ export function activeInvestigators(state: GameState): Investigator[] {
   return state.investigators.filter((inv) => inv.status === 'active');
 }
 
+/**
+ * The clues the active investigators hold between them, which they may spend as a group (a
+ * `groupClues` cost, the act's `advanceBySpendingClues`).
+ */
+export function cluesHeldByGroup(state: GameState): number {
+  return activeInvestigators(state).reduce((sum, inv) => sum + inv.clues, 0);
+}
+
 /** Whether `id` names an investigator still in the scenario (not defeated or resigned). */
 export function isActiveInvestigator(state: GameState, id: InvestigatorId): boolean {
   return findInvestigator(state, id)?.status === 'active';

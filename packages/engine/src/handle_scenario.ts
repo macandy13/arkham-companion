@@ -1,14 +1,6 @@
-import { cardStats, resolveValue, type EngineContext } from './cards';
-import type {
-  AdvanceAct,
-  AdvanceAgenda,
-  ClueSpend,
-  EndScenario,
-  PlaceDoom,
-  PlaceTokens,
-} from './commands';
+import type { AdvanceAct, AdvanceAgenda, EndScenario, PlaceDoom, PlaceTokens } from './commands';
 import { cardsWithDoom, isInPlay } from './doom';
-import { activeInvestigators, groupCluePayments } from './investigators';
+import { activeInvestigators } from './investigators';
 import type {
   ActAdvanced,
   AgendaAdvanced,
@@ -64,31 +56,15 @@ export function handleAdvanceAgenda(state: GameState, cmd: AdvanceAgenda): Event
 }
 
 /**
- * `AdvanceAct`, first step: the investigators pay the act's clue requirement
- * when the command carries `spend` (paying clues is only one way to advance an
- * act; others are an objective met, an action taken or an enemy defeated, and
- * those advance with no `spend`), and the act turns to its reverse side;
- * `completeAdvance` replaces it. Clues already on the act lower what `spend` must add up to.
- * Payments are validated up front so a rejected command pays nothing.
+ * `AdvanceAct`, first step: the act turns to its reverse side, and `completeAdvance` replaces it.
+ * It pays nothing: an act's clues are the cost of its own `advanceBySpendingClues` action, whose
+ * effect this is; an objective met or another card's effect advances it for free.
  */
-export function handleAdvanceAct(ctx: EngineContext, state: GameState, cmd: AdvanceAct): Event[] {
+export function handleAdvanceAct(state: GameState, cmd: AdvanceAct): Event[] {
   const act = currentCard(state, 'act');
   const flip = reverseSide(state, 'act', cmd.resolution);
-  const required = clueRequirement(ctx, state, act);
-  // Clues the players put on the act by hand stand for clues the group already spent towards it
-  // (our convention, docs/rules.md "Act and clues"), so the investigators pay only the rest.
-  const placed = act.tokens.clue ?? 0;
-  const payments =
-    cmd.spend === undefined
-      ? []
-      : cluePayments(
-          state,
-          act,
-          cmd.spend,
-          required === undefined ? undefined : Math.max(0, required - placed),
-        );
   // Advancing removes the act's tokens (RR "Act Deck and Agenda Deck"), the clues on it included.
-  return [...payments, ...clearTokensEvents(act), ...flip];
+  return [...clearTokensEvents(act), ...flip];
 }
 
 /**
@@ -177,35 +153,6 @@ function doomRemoval(state: GameState): (TokensChanged | InvestigatorChanged)[] 
       delta: -inv.doomOnPlayerCards,
     }));
   return [...fromCards, ...fromPlayerCards];
-}
-
-/**
- * Clues the act costs for the starting player count; `undefined` for an act
- * without a clue value, which cannot be paid for (not "free": a 0 would let
- * an empty payment pass as if the card asked for it).
- */
-function clueRequirement(
-  ctx: EngineContext,
-  state: GameState,
-  act: CardInstance,
-): number | undefined {
-  const threshold = cardStats(ctx.cards, act.code).clues;
-  return threshold === undefined ? undefined : resolveValue(threshold, state.meta.playerCount);
-}
-
-/**
- * One `InvestigatorChanged` per payment (`groupCluePayments`); rejects any payment for an act
- * without a clue threshold.
- */
-function cluePayments(
-  state: GameState,
-  act: CardInstance,
-  spend: readonly ClueSpend[],
-  required: number | undefined,
-): InvestigatorChanged[] {
-  if (required === undefined)
-    throw new CommandRejected({ code: 'noClueThreshold', cardId: act.id });
-  return groupCluePayments(state, spend, required);
 }
 
 /** The current agenda or act; rejects if the deck is exhausted. */

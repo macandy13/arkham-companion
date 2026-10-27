@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  advanceBySpendingClues,
   advanceAct,
   whenTokensOnSelf,
   resolutionId,
@@ -809,13 +810,16 @@ describe('enemies', () => {
 });
 
 describe('agenda and act', () => {
-  it('reads the current agenda with its doom and threshold, the doom in play, the act with its clue requirement and the clues held', () => {
+  it('reads the current agenda with its doom and threshold, the doom in play, and the act with the clues held against its cost', () => {
     const { context, state } = newGame()
       .withLocation(study, blankLocation('study'))
       .withInvestigator(alice, { locationId: study, clues: 1 })
       .withInvestigator(bob, { locationId: study, clues: 2 })
       .withAgenda(instanceId('first_agenda'), blankAgenda('first_agenda', fixed(3)))
-      .withAct(instanceId('first_act'), blankAct('first_act', { clues: perInvestigator(2) }))
+      .withAct(
+        instanceId('first_act'),
+        blankAct('first_act', { actions: [advanceBySpendingClues(perInvestigator(2))] }),
+      )
       .withCard(instanceId('doomed_curse'), blankTreachery('doomed_curse'), threatAreaOf(alice), {
         tokens: { doom: 1 },
       })
@@ -834,16 +838,18 @@ describe('agenda and act', () => {
       id: instanceId('first_act'),
       name: 'first_act',
       clues: 0,
-      threshold: 4,
+      advance: { kind: 'spendClues', held: 3, threshold: 4 },
     });
-    expect(board.cluesHeld).toBe(3);
   });
 
-  it('counts the clues the players put on the act', () => {
+  it('counts the clues the players put on the act apart from its cost', () => {
     const { context, state } = newGame()
       .withLocation(study, blankLocation('study'))
       .withInvestigator(alice, { locationId: study })
-      .withAct(instanceId('first_act'), blankAct('first_act', { clues: fixed(3) }))
+      .withAct(
+        instanceId('first_act'),
+        blankAct('first_act', { actions: [advanceBySpendingClues(fixed(3))] }),
+      )
       .start();
 
     const board = boardView(
@@ -858,7 +864,7 @@ describe('agenda and act', () => {
       id: instanceId('first_act'),
       name: 'first_act',
       clues: 2,
-      threshold: 3,
+      advance: { kind: 'spendClues', held: 0, threshold: 3 },
     });
   });
 
@@ -878,7 +884,7 @@ describe('agenda and act', () => {
       id: instanceId('ritual_act'),
       name: 'ritual_act',
       clues: 0,
-      threshold: 2,
+      advance: { kind: 'cluesOnAct', threshold: 2 },
     });
   });
 
@@ -1352,6 +1358,22 @@ describe('card actions', () => {
       ).toEqual(numbers);
     },
   );
+
+  it('leaves out the act’s spend-clues advance, which the act shows, and does not number it', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'), { revealed: true })
+      .withInvestigator(alice, { locationId: study, clues: 2 })
+      .withAct(
+        instanceId('first_act'),
+        blankAct('first_act', { actions: [{ effects: [] }, advanceBySpendingClues(fixed(2))] }),
+      )
+      .withTurnOf(alice)
+      .start();
+
+    expect(boardView(context, state).cardActions(alice)).toEqual([
+      { cardId: instanceId('first_act'), card: 'first_act', action: 0 },
+    ]);
+  });
 
   it('keeps the number of the second plain action once the first is used up', () => {
     const { context, state } = newGame()

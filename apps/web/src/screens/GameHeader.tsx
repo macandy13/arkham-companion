@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StoreApi } from 'zustand/vanilla';
-import type { BoardView, CardImagePath, CardName } from '@arkham/engine';
+import type { ActAdvance, BoardView, CardImagePath, CardName } from '@arkham/engine';
 import { useCardPicture } from '../catalog/cardImages';
 import { EncounterPiles, HeaderPile, type PileProps } from '../encounter/EncounterPiles';
 import type { AppState, OpenGame } from '../state/appStore';
@@ -159,12 +159,13 @@ function AgendaStatus({
 }
 
 /**
- * The current act as a landscape card: its name, a big clue token with the clues on the act against
- * the clues it needs, and on the plate at its foot steppers for them while adjusting and its
- * advance once there are enough, paid by the clues on the act. The steppers are a correction by
- * hand that leaves the investigators alone, until a dialog moves clues onto the act from the
- * investigators the players pick. Advancing is play, not a correction, so it waits while the
- * players adjust.
+ * The current act as a landscape card: its name, a big clue token with the clues that count towards
+ * advancing it against the clues it needs (`ActAdvance`), and a plate at its foot. For an act the
+ * investigators advance by spending clues, the token counts the clues they hold and the plate has
+ * its advance, the act's own action, which the investigator whose turn it is takes once they hold
+ * enough; advancing is play, not a correction, so it waits while the players adjust. For an act
+ * that advances itself once clues lie on it, the token counts those and the plate has steppers for
+ * them while adjusting, a correction by hand.
  */
 function ActStatus({
   store,
@@ -185,20 +186,20 @@ function ActStatus({
   const close = () => setZoomed(false);
   const { actions } = store.getState();
   const offered = adjusting ? [] : cardActionsOn(board, act.id);
-  const { clues, threshold } = act;
-  const tokenAndPlate = (onAdvance?: () => void) => (
-    <>
-      {threshold !== undefined && (
+  const { advance } = act;
+  const plate = (advance: ActAdvance, onAdvance?: () => void) => {
+    const clues = advance.kind === 'spendClues' ? advance.held : act.clues;
+    const { threshold } = advance;
+    return (
+      <>
         <Token
           kind="clue"
           count={clues}
           threshold={threshold}
           label={t('header.cluesOf', { clues, threshold })}
         />
-      )}
-      {threshold !== undefined && (
         <footer>
-          {adjusting && (
+          {advance.kind === 'cluesOnAct' && adjusting && (
             <>
               <button
                 type="button"
@@ -218,20 +219,23 @@ function ActStatus({
               </button>
             </>
           )}
-          <button
-            type="button"
-            disabled={blocked || adjusting || clues < threshold}
-            onClick={() => {
-              onAdvance?.();
-              void actions.advanceAct([]);
-            }}
-          >
-            {t('header.advanceAct')}
-          </button>
+          {advance.kind === 'spendClues' && (
+            <button
+              type="button"
+              disabled={blocked || adjusting || board.turn === undefined || clues < threshold}
+              onClick={() => {
+                onAdvance?.();
+                void actions.advanceAct();
+              }}
+            >
+              {t('header.advanceAct')}
+            </button>
+          )}
         </footer>
-      )}
-    </>
-  );
+      </>
+    );
+  };
+  const tokenAndPlate = (onAdvance?: () => void) => advance && plate(advance, onAdvance);
 
   return (
     <HeaderSlot label={t('header.act')}>

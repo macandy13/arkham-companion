@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   resolutionId,
+  advanceBySpendingClues,
   blankAct,
   blankAgenda,
   blankEnemy,
@@ -20,11 +21,13 @@ import {
   newGame,
   perInvestigator,
   whenAdvanced,
+  type ClueSpend,
   type Command,
   type EngineContext,
   type Event,
   type GameState,
   type InstanceId,
+  type UseCardAction,
 } from './index';
 import { requireInvestigator } from './investigators';
 import { answer, rejectionFrom, stateAfter } from '../test/utils';
@@ -42,9 +45,14 @@ const bob = investigatorId('bob');
 /** The first agenda advances at 3 doom, the second (and last) at 5. */
 const firstAgendaCard = blankAgenda('first_agenda', fixed(3));
 const secondAgendaCard = blankAgenda('second_agenda', fixed(5), { stage: { number: 2 } });
-/** The first act takes 2 clues per investigator, the second (and last) 3 per investigator. */
-const firstActCard = blankAct('first_act', { clues: perInvestigator(2) });
-const secondActCard = blankAct('second_act', { stage: { number: 2 }, clues: perInvestigator(3) });
+/** The first act advances for 2 clues per investigator, the second (and last) for 3 per investigator. */
+const firstActCard = blankAct('first_act', {
+  actions: [advanceBySpendingClues(perInvestigator(2))],
+});
+const secondActCard = blankAct('second_act', {
+  stage: { number: 2 },
+  actions: [advanceBySpendingClues(perInvestigator(3))],
+});
 const hallCard = blankLocation('hall');
 const ghoulCard = blankEnemy('ghoul');
 const treacheryCard = blankTreachery('treachery');
@@ -529,16 +537,26 @@ describe('AdvanceAct', () => {
   const { context, state } = doomTable
     .withInvestigator(alice, { locationId: hall, clues: 3 })
     .withInvestigator(bob, { locationId: hall, clues: 2 })
+    .withTurnOf(alice)
     .start();
+  /** Alice takes the first act's spend-clues action, the investigators paying `spend`. */
+  const spendOnFirstAct = (spend: ClueSpend[]): UseCardAction => ({
+    type: 'UseCardAction',
+    investigatorId: alice,
+    cardId: act1,
+    action: 0,
+    spend,
+  });
 
   it('charges the clues per investigator and makes the next act current', () => {
-    const next = stateAfter(context, state, {
-      type: 'AdvanceAct',
-      spend: [
+    const next = stateAfter(
+      context,
+      state,
+      spendOnFirstAct([
         { investigatorId: alice, amount: 3 },
         { investigatorId: bob, amount: 1 },
-      ],
-    });
+      ]),
+    );
 
     expect(next.investigators.map((inv) => inv.clues)).toEqual([0, 1]);
     expect(next.act.current).toBe(act2);
@@ -550,76 +568,28 @@ describe('AdvanceAct', () => {
   it('keeps doom in play when an act advances', () => {
     const withDoom = stateAfter(context, state, { type: 'PlaceDoom', amount: 1 });
 
-    const next = stateAfter(context, withDoom, {
-      type: 'AdvanceAct',
-      spend: [
-        { investigatorId: alice, amount: 3 },
-        { investigatorId: bob, amount: 1 },
-      ],
-    });
+    const next = stateAfter(context, withDoom, { type: 'AdvanceAct' });
 
     expect(doomInPlay(next)).toBe(1);
   });
 
-  it('counts clues on the act towards its requirement, so the investigators pay the rest', () => {
+  it('does not count clues on the act towards its cost, and removes them as it advances', () => {
     const oneOnTheAct = stateAfter(context, state, {
       type: 'ManualAdjust',
       adjustment: { kind: 'tokens', cardId: act1, token: 'clue', delta: 1 },
     });
 
-    const next = stateAfter(context, oneOnTheAct, {
-      type: 'AdvanceAct',
-      spend: [{ investigatorId: alice, amount: 3 }],
-    });
-
-    expect(next.investigators.map((inv) => inv.clues)).toEqual([0, 2]);
-    expect(next.act.current).toBe(act2);
-    expect(next.cards[act1]!.tokens.clue).toBeUndefined();
-    expect(checkInvariants(next)).toEqual([]);
-  });
-
-  it('advances with no payment once the act holds all the clues it needs', () => {
-    const allOnTheAct = stateAfter(context, state, {
-      type: 'ManualAdjust',
-      adjustment: { kind: 'tokens', cardId: act1, token: 'clue', delta: 4 },
-    });
-
-    const next = stateAfter(context, allOnTheAct, { type: 'AdvanceAct', spend: [] });
-
-    expect(next.investigators.map((inv) => inv.clues)).toEqual([3, 2]);
-    expect(next.act.current).toBe(act2);
-    expect(next.cards[act1]!.tokens.clue).toBeUndefined();
-  });
-
-  it('rejects a payment once the act holds more clues than it needs', () => {
-    const fiveOnTheAct = stateAfter(context, state, {
-      type: 'ManualAdjust',
-      adjustment: { kind: 'tokens', cardId: act1, token: 'clue', delta: 5 },
-    });
-
     expect(
-      rejectionFrom(context, fiveOnTheAct, {
-        type: 'AdvanceAct',
-        spend: [{ investigatorId: alice, amount: 1 }],
-      }),
-    ).toEqual({ code: 'wrongClueTotal', required: 0, spent: 1 });
-  });
-
-  it('rejects a total that differs from the requirement', () => {
-    expect(
-      rejectionFrom(context, state, {
-        type: 'AdvanceAct',
-        spend: [{ investigatorId: alice, amount: 3 }],
-      }),
+      rejectionFrom(context, oneOnTheAct, spendOnFirstAct([{ investigatorId: alice, amount: 3 }])),
     ).toEqual({ code: 'wrongClueTotal', required: 4, spent: 3 });
+    expect(
+      stateAfter(context, oneOnTheAct, { type: 'AdvanceAct' }).cards[act1]!.tokens.clue,
+    ).toBeUndefined();
   });
 
   it('rejects paying more clues than the investigator has', () => {
     expect(
-      rejectionFrom(context, state, {
-        type: 'AdvanceAct',
-        spend: [{ investigatorId: bob, amount: 4 }],
-      }),
+      rejectionFrom(context, state, spendOnFirstAct([{ investigatorId: bob, amount: 4 }])),
     ).toEqual({
       code: 'negativeInvestigatorStat',
       investigatorId: bob,
@@ -631,26 +601,31 @@ describe('AdvanceAct', () => {
 
   it('rejects the same investigator paying twice', () => {
     expect(
-      rejectionFrom(context, state, {
-        type: 'AdvanceAct',
-        spend: [
+      rejectionFrom(
+        context,
+        state,
+        spendOnFirstAct([
           { investigatorId: alice, amount: 2 },
-          { investigatorId: alice, amount: 1 },
-        ],
-      }).code,
+          { investigatorId: alice, amount: 2 },
+        ]),
+      ).code,
     ).toBe('duplicateInvestigator');
   });
 
   it('rejects a payment of zero clues', () => {
     expect(
-      rejectionFrom(context, state, {
-        type: 'AdvanceAct',
-        spend: [{ investigatorId: alice, amount: 0 }],
-      }).code,
+      rejectionFrom(
+        context,
+        state,
+        spendOnFirstAct([
+          { investigatorId: alice, amount: 0 },
+          { investigatorId: bob, amount: 2 },
+        ]),
+      ).code,
     ).toBe('invalidTokenDelta');
   });
 
-  it('rejects payment from a defeated investigator', () => {
+  it('keeps the starting player count after bob is defeated, so alice alone cannot pay', () => {
     const defeated = stateAfter(context, state, {
       type: 'AdjustInvestigator',
       investigatorId: bob,
@@ -659,86 +634,32 @@ describe('AdvanceAct', () => {
     });
 
     expect(
-      rejectionFrom(context, defeated, {
-        type: 'AdvanceAct',
-        spend: [{ investigatorId: bob, amount: 2 }],
-      }).code,
-    ).toBe('investigatorNotActive');
-  });
-
-  it('uses the starting player count after an investigator is defeated', () => {
-    const defeated = stateAfter(context, state, {
-      type: 'AdjustInvestigator',
-      investigatorId: bob,
-      stat: 'damage',
-      delta: 8,
-    });
-
-    expect(
-      rejectionFrom(context, defeated, {
-        type: 'AdvanceAct',
-        spend: [{ investigatorId: alice, amount: 2 }],
-      }),
-    ).toEqual({ code: 'wrongClueTotal', required: 4, spent: 2 });
+      rejectionFrom(context, defeated, spendOnFirstAct([{ investigatorId: alice, amount: 3 }]))
+        .code,
+    ).toBe('cardActionCostUnpaid');
   });
 
   it('ends the scenario with the resolution when the last act advances', () => {
-    const lastAct = stateAfter(context, state, {
-      type: 'AdvanceAct',
-      spend: [
-        { investigatorId: alice, amount: 3 },
-        { investigatorId: bob, amount: 1 },
-      ],
-    });
-    const rich = stateAfter(context, lastAct, {
-      type: 'AdjustInvestigator',
-      investigatorId: bob,
-      stat: 'clues',
-      delta: 5,
-    });
+    const lastAct = stateAfter(context, state, { type: 'AdvanceAct' });
 
-    const ended = execute(context, rich, {
-      type: 'AdvanceAct',
-      spend: [{ investigatorId: bob, amount: 6 }],
-      resolution: resolutionId('R2'),
-    });
+    const ended = execute(context, lastAct, { type: 'AdvanceAct', resolution: resolutionId('R2') });
 
     expect(ended.events.at(-1)).toEqual({ type: 'ScenarioEnded', resolution: resolutionId('R2') });
     expect(ended.state.act.current).toBeUndefined();
   });
 
   it('rejects advancing the last act without a resolution', () => {
-    const lastAct = stateAfter(
-      context,
-      state,
-      {
-        type: 'AdvanceAct',
-        spend: [
-          { investigatorId: alice, amount: 3 },
-          { investigatorId: bob, amount: 1 },
-        ],
-      },
-      { type: 'AdjustInvestigator', investigatorId: bob, stat: 'clues', delta: 5 },
-    );
+    const lastAct = stateAfter(context, state, { type: 'AdvanceAct' });
 
-    expect(
-      rejectionFrom(context, lastAct, {
-        type: 'AdvanceAct',
-        spend: [{ investigatorId: bob, amount: 6 }],
-      }),
-    ).toEqual({ code: 'resolutionRequired', deck: 'act' });
+    expect(rejectionFrom(context, lastAct, { type: 'AdvanceAct' })).toEqual({
+      code: 'resolutionRequired',
+      deck: 'act',
+    });
   });
 
   it('rejects a resolution while another act follows', () => {
     expect(
-      rejectionFrom(context, state, {
-        type: 'AdvanceAct',
-        spend: [
-          { investigatorId: alice, amount: 3 },
-          { investigatorId: bob, amount: 1 },
-        ],
-        resolution: resolutionId('R2'),
-      }),
+      rejectionFrom(context, state, { type: 'AdvanceAct', resolution: resolutionId('R2') }),
     ).toEqual({ code: 'unexpectedResolution', deck: 'act' });
   });
 
@@ -746,22 +667,11 @@ describe('AdvanceAct', () => {
     const ended = stateAfter(
       context,
       state,
-      {
-        type: 'AdvanceAct',
-        spend: [
-          { investigatorId: alice, amount: 3 },
-          { investigatorId: bob, amount: 1 },
-        ],
-      },
-      { type: 'AdjustInvestigator', investigatorId: bob, stat: 'clues', delta: 5 },
-      {
-        type: 'AdvanceAct',
-        spend: [{ investigatorId: bob, amount: 6 }],
-        resolution: resolutionId('R2'),
-      },
+      { type: 'AdvanceAct' },
+      { type: 'AdvanceAct', resolution: resolutionId('R2') },
     );
 
-    expect(rejectionFrom(context, ended, { type: 'AdvanceAct', spend: [] })).toEqual({
+    expect(rejectionFrom(context, ended, { type: 'AdvanceAct' })).toEqual({
       code: 'scenarioEnded',
       command: 'AdvanceAct',
     });
@@ -887,8 +797,8 @@ describe('cards without a threshold', () => {
   /** An agenda without a printed doom threshold. */
   const plainAgendaCard = blankAgenda('plain_agenda', null);
   /** Two acts without a printed clue threshold. */
-  const plainActCard = blankAct('plain_act', { clues: undefined });
-  const nextActCard = blankAct('next_act', { stage: { number: 2 }, clues: undefined });
+  const plainActCard = blankAct('plain_act');
+  const nextActCard = blankAct('next_act', { stage: { number: 2 } });
   const { context, state } = newGame()
     .withAgenda(plainAgenda, plainAgendaCard)
     .withAct(plainAct, plainActCard)
@@ -912,22 +822,6 @@ describe('cards without a threshold', () => {
     const next = stateAfter(context, state, { type: 'AdvanceAct' });
 
     expect(next.act.current).toBe(nextAct);
-  });
-
-  it('rejects paying clues for an act without a clue threshold', () => {
-    expect(
-      rejectionFrom(context, state, {
-        type: 'AdvanceAct',
-        spend: [{ investigatorId: alice, amount: 1 }],
-      }),
-    ).toEqual({ code: 'noClueThreshold', cardId: plainAct });
-  });
-
-  it('rejects an empty payment for an act without a clue threshold', () => {
-    expect(rejectionFrom(context, state, { type: 'AdvanceAct', spend: [] })).toEqual({
-      code: 'noClueThreshold',
-      cardId: plainAct,
-    });
   });
 });
 

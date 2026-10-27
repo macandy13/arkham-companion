@@ -337,6 +337,10 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     // Round 3 – investigation: Daisy's turn (the minion's fight is 2)
     table.startTurn(daisy);
+    // At 4 of 5 horror Roland cannot take another attack, so Daisy then hits the
+    // Ghoul Minion engaged with him twice (combat 2 against 2: she commits her two
+    // combat icons and the tokens are kind), which defeats it, then hits the
+    // Ghoul Priest once (it has 5 health per investigator, 15).
     table.fight(daisy, byName(ghoulMinion));
     table.fight(daisy, byName(ghoulMinion));
     table.endTurn(daisy);
@@ -920,30 +924,6 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     // Ghoul enemy in the Hallway or Parlor: the two ghouls.
     expect(table.board.agenda).toMatchObject({ name: "They're Getting Out!", doom: 2 });
 
-    // The round has ended with both in the Hallway holding 9 clues, the 3 per
-    // investigator act 2 asks for (Wendy still counts). Its reverse side
-    // reveals the Parlor (on the house map, unrevealed, since act 1), puts Lita
-    // Chantler there and spawns the Ghoul Priest in the Hallway. Its prey
-    // (highest combat) picks Roland (combat 4) over Daisy (combat 2).
-    expect(table.board.perInvestigator('at')).toEqual({
-      roland: 'Hallway',
-      daisy: 'Hallway',
-      wendy: 'Cellar',
-    });
-    table.spendCluesToAdvanceAct([
-      [roland, 7],
-      [daisy, 2],
-    ]);
-
-    expect(table.board.act?.name).toBe('What Have You Done?');
-    expect(table.board.location(byName('Parlor')).cards).toEqual(['Lita Chantler']);
-    expect(table.board.enemy(byName('Ghoul Priest'))).toEqual({
-      name: 'Ghoul Priest',
-      at: 'Hallway',
-      health: 15,
-      engagedWith: roland,
-    });
-
     // Round 10 – mythos: Roland draws Dissonant Voices, Daisy Rotting Remains
     // (willpower 3 against 3: she passes).
     expect(table.nextPhase()).toEqual({ round: 10, phase: 'mythos', step: 'drawEncounterCard' });
@@ -963,13 +943,33 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
       'Dissonant Voices',
     ]);
 
-    // Round 10 – investigation: at 4 of 5 horror Roland cannot take another
-    // attack. Daisy goes first and hits the Ghoul Minion engaged with him twice
-    // (combat 2 against 2: she commits her two combat icons and the tokens are
-    // kind), which defeats it, then hits the Ghoul Priest once (it has 5 health
-    // per investigator, 15).
     expect(table.nextPhase()).toEqual({ round: 10, phase: 'investigation' });
     table.startTurn(daisy);
+    // Round 10 – investigation: both are in the Hallway holding 9 clues, the 3
+    // per investigator act 2 asks for (Wendy still counts). Daisy goes first and
+    // spends them with Roland as her turn begins; the act's reverse side reveals
+    // the Parlor (on the house map, unrevealed, since act 1), puts Lita Chantler
+    // there and spawns the Ghoul Priest in the Hallway. Its prey (highest combat)
+    // picks Roland (combat 4) over Daisy (combat 2).
+    expect(table.board.perInvestigator('at')).toEqual({
+      roland: 'Hallway',
+      daisy: 'Hallway',
+      wendy: 'Cellar',
+    });
+    table.spendCluesToAdvanceAct([
+      [roland, 7],
+      [daisy, 2],
+    ]);
+
+    expect(table.board.act?.name).toBe('What Have You Done?');
+    expect(table.board.location(byName('Parlor')).cards).toEqual(['Lita Chantler']);
+    expect(table.board.enemy(byName('Ghoul Priest'))).toEqual({
+      name: 'Ghoul Priest',
+      at: 'Hallway',
+      health: 15,
+      engagedWith: roland,
+    });
+
     table.fight(daisy, byName(ghoulMinion));
     table.fight(daisy, byName(ghoulMinion));
     table.fight(daisy, byName('Ghoul Priest'));

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  advanceBySpendingClues,
   attachedTo,
   blankAct,
   blankAgenda,
@@ -29,7 +30,10 @@ const ghoul = instanceId('ghoul');
 /** Every card has a printed name, since the board lists cards by name. */
 const planCard = blankAgenda('plan', fixed(2), { name: 'The Plan' });
 /** Needs 2 clues per investigator, so 4 with Alice and Bob. */
-const searchCard = blankAct('search', { name: 'The Search', clues: perInvestigator(2) });
+const searchCard = blankAct('search', {
+  name: 'The Search',
+  actions: [advanceBySpendingClues(perInvestigator(2))],
+});
 const hallCard = blankLocation('hall', { name: 'Hall' });
 const atticCard = blankLocation('attic', { name: 'Attic' });
 /** 3 health, so it survives the 2 damage the board shows. */

@@ -75,12 +75,11 @@ export function blankAgenda(
 }
 
 /**
- * An act at stage 1 with a clue threshold of 0, so the investigators can
- * advance it without spending clues. `clues: undefined` in `stats` is an act
- * without a printed threshold, for which no clues can be spent.
+ * An act at stage 1 with no way to advance of its own: `AdvanceAct` advances it, and
+ * `actions: [advanceBySpendingClues(…)]` in `stats` gives it a clue cost.
  */
 export function blankAct(code: string, stats: BlankCardStats = {}): CardStats {
-  return blankCard('act', code, { stage: { number: 1 }, clues: fixed(0) }, stats);
+  return blankCard('act', code, { stage: { number: 1 } }, stats);
 }
 
 /** Fields `blankInvestigator` sets on top of its plain ones; the ID is its own parameter. */

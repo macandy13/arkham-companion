@@ -1,4 +1,5 @@
 import {
+  advanceBySpendingClues,
   cardCode,
   cardImagePath,
   fixed,
@@ -55,7 +56,10 @@ export function agenda({
   };
 }
 
-/** Printed values of an act; an act without a clue threshold omits `cluesPerInvestigator`. */
+/**
+ * Printed values of an act; an act without a clue threshold (one whose objective replaces it)
+ * omits `cluesPerInvestigator`, else it gets `advanceBySpendingClues`.
+ */
 export interface ActOptions {
   code: string;
   name: string;
@@ -82,10 +86,26 @@ export function act({
     ...scenarioCard(code, name, set),
     typeCode: 'act',
     stage: { number: stage },
-    ...(cluesPerInvestigator === undefined ? {} : { clues: perInvestigator(cluesPerInvestigator) }),
     ...(abilities ? { abilities } : {}),
-    ...(actions ? { actions } : {}),
+    ...actActions(actions, cluesPerInvestigator),
   };
+}
+
+/**
+ * The act's printed actions, then its spend-clues ability for a clue threshold, so the printed
+ * ones keep their indices (`UseCardAction.action`).
+ */
+function actActions(
+  printed: readonly CardAction[] | undefined,
+  cluesPerInvestigator: number | undefined,
+): Pick<CardStats, 'actions'> {
+  const actions = [
+    ...(printed ?? []),
+    ...(cluesPerInvestigator === undefined
+      ? []
+      : [advanceBySpendingClues(perInvestigator(cluesPerInvestigator))]),
+  ];
+  return actions.length === 0 ? {} : { actions };
 }
 
 /** Printed values of a location whose clues scale per investigator. */

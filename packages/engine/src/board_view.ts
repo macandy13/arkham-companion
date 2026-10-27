@@ -2,6 +2,7 @@ import { assertNever, listIfAny } from '@arkham/util';
 import { isConnectionOpen, neighbours } from './board';
 import { tokenObjective } from './abilities';
 import {
+  advanceActionOf,
   cardActionsOfferedTo,
   cluesToAdvance,
   printedActions,
@@ -11,7 +12,14 @@ import {
 
 export type { PrintedActionView };
 import { effectiveValue } from './card_values';
-import { cardStats, resolveValue, type CardType, type EngineContext, type Trait } from './cards';
+import {
+  cardStats,
+  resolveValue,
+  type CardStats,
+  type CardType,
+  type EngineContext,
+  type Trait,
+} from './cards';
 import { optionName } from './describe_decision';
 import type { Command } from './commands';
 import { doomInPlay, isInPlay } from './doom';
@@ -45,7 +53,7 @@ import { cardsInZone, cardsOfType, currentCard } from './lookup';
 import { mapLocations, type Edge, type GameMap, type GridCell } from './map';
 import { attacksStillDue } from './phases';
 import { NAMED_AMOUNTS } from './state';
-import { boostedSkills, requireInvestigator } from './investigators';
+import { boostedSkills, cluesHeldByGroup, requireInvestigator } from './investigators';
 import { CommandRejected } from './rejection';
 import { skillTestSuggestion, type SkillTestInput } from './skill_modifiers';
 import { victoryPoints } from './victory';
@@ -277,9 +285,8 @@ export interface AgendaView {
 }
 
 /**
- * The current act like `AgendaView`: its name, the clue tokens on it (the players' correction, which
- * counts towards advancing it, see `AdvanceAct`) and, when it has one, the clues it needs for the
- * player count.
+ * The current act like `AgendaView`: its name, the clue tokens on it and, when clues advance it,
+ * how (`ActAdvance`).
  */
 export interface ActView {
   id: InstanceId;
@@ -287,8 +294,18 @@ export interface ActView {
   /** The picture of its front, the side in play (`CardStats.imageSrc`), when the card data has one. */
   image?: CardImagePath;
   clues: number;
-  threshold?: number;
+  advance?: ActAdvance;
 }
+
+/**
+ * How clues advance the current act, with the clues it needs for the starting player count:
+ * the investigators spend the clues they hold (`spendClues`, its `advanceBySpendingClues`
+ * action, which the turn's investigator takes), or it advances itself once enough clues lie on it
+ * (`cluesOnAct`, an objective like Disrupting the Ritual's, `whenTokensOnSelf`).
+ */
+export type ActAdvance =
+  | { readonly kind: 'spendClues'; readonly held: number; readonly threshold: number }
+  | { readonly kind: 'cluesOnAct'; readonly threshold: number };
 
 /**
  * One open decision as the players see it: the question (`prompt`, the
@@ -491,14 +508,20 @@ export class BoardView {
   /**
    * The card actions the cards in play offer `investigator` (`cardActionsOfferedTo`): a revealed
    * location's where they are, an enemy's at their location, a threat area's at its owner's
-   * location, and the current agenda's and act's. They take one in their turn.
+   * location, and the current agenda's and act's. They take one in their turn. The act's
+   * spend-clues advance is left out: `act.advance` shows it, with the clues it counts, and
+   * `PlayTable.spendCluesToAdvanceAct` takes it.
    */
   cardActions(investigator: InvestigatorId): readonly CardActionView[] {
     const inv = requireInvestigator(this.state, investigator);
-    return cardActionsOfferedTo(this.ctx, this.state, inv).map((offered) => ({
-      ...offered,
-      card: nameOf(this.ctx, requireCard(this.state, offered.cardId)),
-    }));
+    const act = currentCard(this.state, 'act');
+    const advance = act === undefined ? -1 : advanceActionOf(this.ctx, act);
+    return cardActionsOfferedTo(this.ctx, this.state, inv)
+      .filter(({ cardId, action }) => !(cardId === act?.id && action === advance))
+      .map((offered) => ({
+        ...offered,
+        card: nameOf(this.ctx, requireCard(this.state, offered.cardId)),
+      }));
   }
 
   /** Locations on a map, in map order. */
@@ -524,14 +547,6 @@ export class BoardView {
   /** All doom the agenda's threshold counts: on every card in play and the players' (`doomInPlay`). */
   get doomInPlay(): number {
     return doomInPlay(this.state);
-  }
-
-  /**
-   * The clues the investigators hold between them, which they may pool to advance the act
-   * (`act.threshold`). Eliminated investigators have dropped theirs, so every seat counts.
-   */
-  get cluesHeld(): number {
-    return this.investigators.reduce((sum, investigator) => sum + investigator.clues, 0);
   }
 
   get act(): ActView | undefined {
@@ -1007,15 +1022,26 @@ function actView(ctx: EngineContext, state: GameState): ActView | undefined {
   const act = currentCard(state, 'act');
   if (!act) return undefined;
   const stats = cardStats(ctx.cards, act.code);
-  const threshold = tokenObjective(stats, 'clue') ?? cluesToAdvance(stats) ?? stats.clues;
+  const advance = actAdvance(state, stats);
   return {
     id: act.id,
     name: nameOf(ctx, act),
     ...(stats.imageSrc === undefined ? {} : { image: stats.imageSrc }),
     clues: act.tokens.clue ?? 0,
-    ...(threshold === undefined
-      ? {}
-      : { threshold: resolveValue(threshold, state.meta.playerCount) }),
+    ...(advance === undefined ? {} : { advance }),
+  };
+}
+
+function actAdvance(state: GameState, stats: CardStats): ActAdvance | undefined {
+  const onAct = tokenObjective(stats, 'clue');
+  if (onAct !== undefined)
+    return { kind: 'cluesOnAct', threshold: resolveValue(onAct, state.meta.playerCount) };
+  const spent = cluesToAdvance(stats);
+  if (spent === undefined) return undefined;
+  return {
+    kind: 'spendClues',
+    held: cluesHeldByGroup(state),
+    threshold: resolveValue(spent, state.meta.playerCount),
   };
 }
 

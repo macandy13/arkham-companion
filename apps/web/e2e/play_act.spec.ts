@@ -1,24 +1,18 @@
 import { expect, test } from './fixtures/test';
 import { resumeImportedGame, twoGhoulPriestsExport } from './fixtures/saved_games';
 
-// Journey: advance the act once its clues are on it – in a game whose setup put two
-// Ghoul Priests aside, so the act's reverse side cannot tell which one spawns and asks the players
-// to do it by hand.
-test('advance the act from its full card', async ({ page }) => {
+// Journey: advance the act once the investigators hold its clues, spending them – in a game whose
+// setup put two Ghoul Priests aside, so the act's reverse side cannot tell which one spawns and asks
+// the players to do it by hand.
+test('advance the act from its full card', { tag: '@flow' }, async ({ page }) => {
   await test.step('Import a game at act 2 with two Ghoul Priests set aside', async () => {
     await resumeImportedGame(page, 'Two Ghoul Priests', twoGhoulPriestsExport('Two Ghoul Priests'));
   });
 
-  await test.step('Put 3 clues on The Barrier while adjusting the board, then advance it from its full card', async () => {
+  await test.step('Read the 3 clues Roland Banks holds on The Barrier, then advance it from its full card', async () => {
     const act = page.getByRole('region', { name: 'Act' });
     await expect(act.getByText('The Barrier')).toBeVisible();
-    await page.getByRole('button', { name: 'Adjust board' }).click();
-    const addClue = act.getByRole('button', { name: 'Add a clue' });
-    await addClue.click();
-    await addClue.click();
-    await addClue.click();
     await expect(act.getByRole('img', { name: 'Clues 3 / 3' })).toBeVisible();
-    await page.getByRole('button', { name: 'Done' }).click();
     await act.getByRole('button', { name: 'The Barrier' }).click();
     const card = page.getByRole('dialog', { name: 'The Barrier' });
     await card.getByRole('button', { name: 'Advance' }).click();

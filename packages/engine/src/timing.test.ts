@@ -9,6 +9,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  advanceBySpendingClues,
   resolutionId,
   atEndOfTurn,
   atLocation,
@@ -208,7 +209,10 @@ describe('the last act whose reverse side asks something', () => {
   });
   /** Two acts and the hall with alice. */
   const game = newGame()
-    .withAct(instanceId('first_act'), blankAct('first_act', { clues: perInvestigator(2) }))
+    .withAct(
+      instanceId('first_act'),
+      blankAct('first_act', { actions: [advanceBySpendingClues(perInvestigator(2))] }),
+    )
     .withAct(instanceId('last_act'), lastAct)
     .withLocation(hall, blankLocation('hall'))
     .withInvestigator(alice, { locationId: hall });
@@ -426,7 +430,10 @@ describe('a per-investigator threshold after an investigator is eliminated', () 
   const bob = investigatorId('bob');
   /** The hall with alice (3 health) and bob, who has 4 clues; an act needing 2 clues per investigator, then the next act. */
   const game = newGame()
-    .withAct(instanceId('first_act'), blankAct('first_act', { clues: perInvestigator(2) }))
+    .withAct(
+      instanceId('first_act'),
+      blankAct('first_act', { actions: [advanceBySpendingClues(perInvestigator(2))] }),
+    )
     .withAct(instanceId('next_act'), blankAct('next_act', { stage: { number: 2 } }))
     .withLocation(hall, blankLocation('hall'))
     .withInvestigator(alice, { locationId: hall, health: { max: 3, damage: 0 } })
@@ -439,12 +446,7 @@ describe('a per-investigator threshold after an investigator is eliminated', () 
     table.takeDamage(alice, 3);
 
     expect(table.board.investigator(alice).status).toBe('defeated');
-    expect(table.board.act).toEqual({
-      id: instanceId('first_act'),
-      name: 'first_act',
-      clues: 0,
-      threshold: 4,
-    });
+    expect(table.board.act?.advance).toEqual({ kind: 'spendClues', held: 4, threshold: 4 });
 
     table.spendCluesToAdvanceAct([[bob, 4]]);
 

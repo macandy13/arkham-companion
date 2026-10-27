@@ -536,10 +536,10 @@ describe('advancing the act by spending clues', () => {
     });
   });
 
-  it('shows its clues for two investigators as the act`s threshold', () => {
+  it('shows the clues alice and bob hold against its cost for two investigators', () => {
     const table = PlayTable.start(firstActForOneCluePerInvestigator);
 
-    expect(table.board.act).toMatchObject({ name: 'first_act', threshold: 2 });
+    expect(table.board.act?.advance).toEqual({ kind: 'spendClues', held: 2, threshold: 2 });
   });
 });
 

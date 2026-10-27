@@ -101,9 +101,7 @@ export type Rejection =
   | { code: 'scenarioEnded'; command: CommandType }
   /** `AdvanceAgenda`/`AdvanceAct` names a fallback resolution although further cards follow. */
   | { code: 'unexpectedResolution'; deck: 'agenda' | 'act' }
-  /** `AdvanceAct` pays clues for an act whose card data has no clue threshold. */
-  | { code: 'noClueThreshold'; cardId: InstanceId }
-  /** The clues paid for an act do not add up to its requirement. */
+  /** The clues paid as a group (a `groupClues` cost, `UseCardAction.spend`) do not add up to it. */
   | { code: 'wrongClueTotal'; required: number; spent: number }
   /**
    * The forced effects a command triggered kept triggering each other beyond
@@ -364,8 +362,6 @@ function describe(r: Rejection): string {
       return `the scenario has ended, ${r.command} is not possible any more`;
     case 'unexpectedResolution':
       return `a resolution is only allowed for the last ${r.deck}`;
-    case 'noClueThreshold':
-      return `${r.cardId} has no clue threshold to pay`;
     case 'wrongClueTotal':
       return `${r.required} clues are required, ${r.spent} spent`;
     case 'encounterDeckEmpty':
