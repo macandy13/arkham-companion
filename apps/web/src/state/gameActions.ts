@@ -60,7 +60,8 @@ export interface GameActions {
   endTurn(): Promise<void>;
   /**
    * The turn investigator takes action number `action` of the card `card` offers them
-   * (`BoardView.cardActions`), such as the Parlor's Resign, counting off the action it costs.
+   * (`BoardView.cardActions`), such as the Parlor's Resign, counting off the action it costs
+   * unless it is free.
    */
   useCardAction(card: InstanceId, action: number): Promise<void>;
   /** Changes the actions left this turn. */
@@ -201,7 +202,13 @@ export function gameActions(
     startTurn: (investigator) => play((table) => table.startTurn(investigator)),
     endTurn: () => onTurn((table, investigator) => table.endTurn(investigator)),
     useCardAction: (card, action) =>
-      asAction((table, investigator) => table.useCardAction(investigator, card, action)),
+      onTurn((table, investigator) => {
+        const offered = table.board
+          .cardActions(investigator)
+          .find((option) => option.cardId === card && option.action === action);
+        if (!offered?.free) table.spendAction(investigator);
+        table.useCardAction(investigator, card, action);
+      }),
     adjustActions: (delta) =>
       onTurn((table, investigator) => table.adjustActions(investigator, delta)),
     moveTo: (location, cost = 'free') =>

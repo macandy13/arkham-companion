@@ -102,7 +102,6 @@ describe('Lita Chantler', () => {
     investigatorId: alice,
     cardId: lita,
     action: 0,
-    asAction: true,
   };
 
   it.each([

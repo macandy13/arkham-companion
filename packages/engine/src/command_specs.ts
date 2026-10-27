@@ -1,5 +1,12 @@
 import type { EngineContext } from './cards';
-import type { AdvanceAct, AdvanceAgenda, Command, CommandType, DrawEncounter } from './commands';
+import type {
+  ActionCommand,
+  AdvanceAct,
+  AdvanceAgenda,
+  Command,
+  CommandType,
+  DrawEncounter,
+} from './commands';
 import { handleDealEnemyAttack } from './attacks_of_opportunity';
 import { handleRequestDecision, handleResolveDecision } from './decisions';
 import { agendaThresholdDecision } from './doom';
@@ -154,7 +161,7 @@ function placeDrawnCard(_command: DrawEncounter, own: readonly Event[]): Continu
 }
 
 /** `provokes` of the action commands: the command when the players took it as an action. */
-function asAction<C extends HeldAction>(command: C): C | undefined {
+function asAction<C extends HeldAction & ActionCommand>(command: C): C | undefined {
   return command.asAction ? command : undefined;
 }
 
@@ -259,10 +266,10 @@ const COMMAND_SPECS: CommandSpecs = {
   Resign: { handle: handleResign },
   UseCardAction: {
     handle: handleUseCardAction,
-    provokes: (command, ctx, state) =>
-      command.asAction && cardActionOf(ctx, state, command).designator === undefined
-        ? command
-        : undefined,
+    provokes: (command, ctx, state) => {
+      const { free, designator } = cardActionOf(ctx, state, command);
+      return free || designator !== undefined ? undefined : command;
+    },
     continueWith: (command, _own, ctx, state) => cardActionSteps(ctx, state, command),
   },
   SetLeadInvestigator: {

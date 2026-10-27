@@ -31,6 +31,13 @@ export interface CardAction {
    * does. Absent for a plain action.
    */
   readonly designator?: 'resign' | 'parley';
+  /**
+   * A "[free]" ability, taken without spending an action in any player window (Rules Reference,
+   * "[free]"): `UseCardAction` takes it outside the taker's turn too and not as an
+   * action, so it never provokes attacks of opportunity. Abilities limited to a narrower timing (an act's group clue
+   * spend, "during any investigator's turn") need their own check. Absent for an action ability.
+   */
+  readonly free?: true;
   /** "(Limit once per …)", when the card prints one. */
   readonly limit?: ActionLimit;
   /** "Spend N resources:" or "Spend N clues:", paid before the effects. */
@@ -234,6 +241,8 @@ export interface OfferedCardAction {
   readonly cardId: InstanceId;
   readonly action: number;
   readonly designator?: CardAction['designator'];
+  /** The action costs no action (`CardAction.free`). */
+  readonly free?: true;
 }
 
 /**
@@ -251,11 +260,18 @@ export function cardActionsOfferedTo(
   return Object.values(state.cards).flatMap((card) => {
     const actions = cardStats(ctx.cards, card.code).actions ?? [];
     if (actions.length === 0 || !offersActionsTo(state, card, investigator)) return [];
-    return actions.flatMap(({ designator, limit, cost, condition }, action) =>
+    return actions.flatMap(({ designator, free, limit, cost, condition }, action) =>
       withinLimit(state, card, action, limit, investigator.id) &&
       canPay(state, investigator, cost) &&
       actionConditionHolds(state, investigator, condition)
-        ? [{ cardId: card.id, action, ...(designator === undefined ? {} : { designator }) }]
+        ? [
+            {
+              cardId: card.id,
+              action,
+              ...(designator === undefined ? {} : { designator }),
+              ...(free === undefined ? {} : { free }),
+            },
+          ]
         : [],
     );
   });
@@ -292,7 +308,8 @@ export function cardActionOf(ctx: EngineContext, state: GameState, cmd: UseCardA
 }
 
 /**
- * `UseCardAction`: checks that the investigator may take the action now, in their own turn,
+ * `UseCardAction`: checks that the investigator may take the action now, in their own turn
+ * unless it is free,
  * where the card offers it (`offersActionsTo`, else `cardActionUnavailable`) and as its limit
  * allows (`withinLimit`, else `cardActionLimitReached`), that they meet its condition
  * (`actionConditionHolds`, else `cardActionConditionUnmet`) and that they can pay its cost (`canPay`,
@@ -306,8 +323,8 @@ export function handleUseCardAction(
   cmd: UseCardAction,
 ): (CardActionUsed | InvestigatorChanged | CommandDeferred)[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
-  requireTurnOf(state, investigator.id);
-  const { limit, cost, condition } = cardActionOf(ctx, state, cmd);
+  const { free, limit, cost, condition } = cardActionOf(ctx, state, cmd);
+  if (!free) requireTurnOf(state, investigator.id);
   const card = requireCard(state.cards, cmd.cardId);
   if (!offersActionsTo(state, card, investigator))
     throw new CommandRejected({

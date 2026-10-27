@@ -267,7 +267,8 @@ export class PlayTable {
 
   /**
    * The investigator takes the action ability number `action` (default the first) printed on the
-   * one card in the game `card` picks (a location, the agenda, an enemy, …).
+   * one card in the game `card` picks (a location, the agenda, an enemy, …), as an action unless
+   * it is free (`CardAction.free`).
    */
   useCardAction(investigator: InvestigatorRef, card: CardRef, action = 0): void {
     const matcher = cardMatcher(card);
@@ -280,7 +281,6 @@ export class PlayTable {
       investigatorId: this.seat(investigator),
       cardId: id,
       action,
-      asAction: true,
     });
   }
 
