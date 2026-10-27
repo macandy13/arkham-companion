@@ -2,6 +2,7 @@ import { locationsInPlay } from './board';
 import type { EngineContext } from './cards';
 import { cardsInZone, requireCard } from './lookup';
 import type { CardInstance, GameState } from './state';
+import { victoryDisplay } from './zone';
 
 /**
  * The victory points the scenario is worth at its end: the cards in the
@@ -11,9 +12,7 @@ import type { CardInstance, GameState } from './state';
  * the ended game stays as it was played. Resolutions turn it into experience.
  */
 export function victoryPoints(ctx: EngineContext, state: GameState): number {
-  const inDisplay = cardsInZone(state, { kind: 'victoryDisplay' }).map((id) =>
-    requireCard(state.cards, id),
-  );
+  const inDisplay = cardsInZone(state, victoryDisplay).map((id) => requireCard(state.cards, id));
   const clearedLocations = locationsInPlay(ctx, state).filter(
     (card) => card.faceUp && (card.tokens.clue ?? 0) === 0,
   );
