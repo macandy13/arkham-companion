@@ -239,6 +239,13 @@ const ENEMY_ACTIONS: readonly EnemyAction[] = ['fight', 'evade', 'engage'];
  */
 export interface CardActionView extends OfferedCardAction {
   readonly card: CardName;
+  /**
+   * Which of the card's printed actions of the same kind (the same designator, or plain) this is,
+   * counting from 1, when the card prints more than one, so each has a name of its own ("Action 2
+   * · Parlor"). Counted over the printed actions, not the offered ones, so a name stays put when
+   * a used-up action drops out. Absent when the card prints only one of its kind.
+   */
+  readonly number?: number;
 }
 
 /**
@@ -481,10 +488,17 @@ export class BoardView {
    */
   cardActions(investigator: InvestigatorId): readonly CardActionView[] {
     const inv = requireInvestigator(this.state, investigator);
-    return cardActionsOfferedTo(this.ctx, this.state, inv).map((offered) => ({
-      ...offered,
-      card: nameOf(this.ctx, requireCard(this.state, offered.cardId)),
-    }));
+    return cardActionsOfferedTo(this.ctx, this.state, inv).map((offered) => {
+      const card = requireCard(this.state, offered.cardId);
+      const sameKind = (cardStats(this.ctx.cards, card.code).actions ?? []).flatMap(
+        ({ designator }, action) => (designator === offered.designator ? [action] : []),
+      );
+      return {
+        ...offered,
+        card: nameOf(this.ctx, card),
+        ...(sameKind.length > 1 ? { number: sameKind.indexOf(offered.action) + 1 } : {}),
+      };
+    });
   }
 
   /** Locations on a map, in map order. */

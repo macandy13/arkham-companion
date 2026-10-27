@@ -1297,8 +1297,55 @@ describe('card actions', () => {
 
     expect(boardView(context, state).cardActions(alice)).toEqual([
       { cardId: study, card: 'study', action: 0, designator: 'resign' },
-      { cardId: instanceId('agenda'), card: 'agenda', action: 0, designator: 'parley' },
-      { cardId: instanceId('agenda'), card: 'agenda', action: 1, designator: 'parley' },
+      { cardId: instanceId('agenda'), card: 'agenda', action: 0, designator: 'parley', number: 1 },
+      { cardId: instanceId('agenda'), card: 'agenda', action: 1, designator: 'parley', number: 2 },
+    ]);
+  });
+
+  it.each([
+    { printed: 'one plain action', actions: [{ effects: [] }], numbers: [undefined] },
+    {
+      printed: 'two plain actions and a resign',
+      actions: [{ effects: [] }, resignAction(), { effects: [] }],
+      numbers: [1, undefined, 2],
+    },
+  ])(
+    'numbers the actions of a kind the study prints more than one of: $printed',
+    ({ actions, numbers }) => {
+      const { context, state } = newGame()
+        .withLocation(study, blankLocation('study', { actions }), { revealed: true })
+        .withInvestigator(alice, { locationId: study })
+        .start();
+
+      expect(
+        boardView(context, state)
+          .cardActions(alice)
+          .map(({ number }) => number),
+      ).toEqual(numbers);
+    },
+  );
+
+  it('keeps the number of the second plain action once the first is used up', () => {
+    const { context, state } = newGame()
+      .withLocation(
+        study,
+        blankLocation('study', {
+          actions: [{ limit: { per: 'game' }, effects: [] }, { effects: [] }],
+        }),
+        { revealed: true },
+      )
+      .withInvestigator(alice, { locationId: study })
+      .withTurnOf(alice)
+      .start();
+    const afterTheFirst = stateAfter(context, state, {
+      type: 'UseCardAction',
+      investigatorId: alice,
+      cardId: study,
+      action: 0,
+    });
+
+    expect(boardView(context, afterTheFirst).cardActions(alice)).toEqual([
+      { cardId: study, card: 'study', action: 1, number: 2 },
     ]);
   });
 });
