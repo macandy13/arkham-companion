@@ -1,6 +1,6 @@
 <!-- screencasts:start -->
 
-_Recorded from 58a565c by the PR preview workflow; updated on every push that changes `apps/web`._
+_Recorded from 2ebed9f by the PR preview workflow; updated on every push that changes `apps/web`._
 
 ## Screenshots
 
@@ -8,7 +8,7 @@ _Recorded from 58a565c by the PR preview workflow; updated on every push that ch
 
 <table>
 <tr><th>Desktop</th><th>Phone</th></tr>
-<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-504/screencasts/frozen-in-fear-from-roland-banks-threat-area-zoomed-to-read-desktop.png?v=58a565c" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-504/screencasts/frozen-in-fear-from-roland-banks-threat-area-zoomed-to-read-phone.png?v=58a565c" alt="Phone" width="180"></td></tr>
+<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-504/screencasts/frozen-in-fear-from-roland-banks-threat-area-zoomed-to-read-desktop.png?v=2ebed9f" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-504/screencasts/frozen-in-fear-from-roland-banks-threat-area-zoomed-to-read-phone.png?v=2ebed9f" alt="Phone" width="180"></td></tr>
 </table>
 
 <!-- screencasts:end -->
