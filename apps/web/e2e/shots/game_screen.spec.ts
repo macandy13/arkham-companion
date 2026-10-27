@@ -195,7 +195,7 @@ test('Crypt Chill drawn for Roland Banks, its willpower test waiting', async ({ 
   await expect(cryptChill.getByRole('img', { name: 'Crypt Chill' })).toBeVisible();
 });
 
-test('The Barrier opened as a full card', { tag: '@shot' }, async ({ page }) => {
+test('The Barrier opened as a full card', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   await page
@@ -206,3 +206,23 @@ test('The Barrier opened as a full card', { tag: '@shot' }, async ({ page }) => 
   const card = page.getByRole('dialog', { name: 'The Barrier' });
   await expect(card.getByRole('img', { name: 'Clues 0 / 3' })).toBeVisible();
 });
+
+test(
+  'Frozen in Fear from Roland Banks’ threat area, zoomed to read',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(
+      page,
+      'Roland Banks threatened',
+      rolandThreatenedExport('Roland Banks threatened'),
+    );
+
+    await page
+      .getByRole('region', { name: 'Roland Banks' })
+      .getByRole('button', { name: 'Read Frozen in Fear' })
+      .first()
+      .click();
+
+    await expect(page.getByRole('dialog', { name: 'Frozen in Fear' })).toBeVisible();
+  },
+);

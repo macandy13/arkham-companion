@@ -1,6 +1,7 @@
 import { useId, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { EnemyStatsView, Keyword, MapEnemyView } from '@arkham/engine';
+import { sentences } from '@arkham/util';
 import { ENEMY_ART, PORTRAIT_SCAN, portraitArtViewBox } from '../catalog/cardArt';
 import { useCardPicture } from '../catalog/cardImages';
 import { shrinkAround, useShrinkToFit } from '../map/useShrinkToFit';
@@ -182,11 +183,6 @@ function KeywordLines({ keywords }: { keywords: readonly Keyword[] }) {
       ))}
     </>
   );
-}
-
-/** Words as the card prints a list of them: each ending in a full stop. */
-function sentences(words: readonly string[]): string {
-  return words.map((word) => `${word}.`).join(' ');
 }
 
 /** One icon per point of an attack, damage or horror. */

@@ -207,6 +207,21 @@ export interface EnemyStatsView {
   victory?: number;
 }
 
+/**
+ * A card as the players pick it up to read it (`BoardView.cardsIn`): its printed name, type and
+ * traits, and the pictures of its front and back when the card data has them. The card zoom shows
+ * a picture and falls back to the rest without one.
+ */
+export interface CardFaceView {
+  name: CardName;
+  type: CardType;
+  traits: readonly Trait[];
+  /** The picture of its front (`CardStats.imageSrc`). */
+  image?: CardImagePath;
+  /** The picture of its back (`CardStats.backImageSrc`), for a card with two sides. */
+  backImage?: CardImagePath;
+}
+
 /** A basic action against an enemy (`BoardView.enemyActions`). */
 export type EnemyAction = 'fight' | 'evade' | 'engage';
 
@@ -741,6 +756,17 @@ export class BoardView {
     return namesIn(this.ctx, this.state, zone);
   }
 
+  /**
+   * The cards in `zone` to read, in the order of `namesIn`. Kept apart from the views' name
+   * lists (`InvestigatorView.threatArea`, `LocationView.attachments`), which expectations compare
+   * by name, since only the card zoom needs the rest.
+   */
+  cardsIn(zone: Zone): readonly CardFaceView[] {
+    return cardsInZone(this.state, zone).map((id) =>
+      cardFaceOf(this.ctx, requireCard(this.state, id)),
+    );
+  }
+
   private error(message: string): TableError {
     return new TableError(message, formatBoard(this.ctx, this.state));
   }
@@ -773,6 +799,17 @@ function requireCard(state: GameState, id: InstanceId): CardInstance {
 
 function nameOf(ctx: EngineContext, card: CardInstance): CardName {
   return cardName(cardStats(ctx.cards, card.code).name);
+}
+
+function cardFaceOf(ctx: EngineContext, card: CardInstance): CardFaceView {
+  const { typeCode, traits, imageSrc, backImageSrc } = cardStats(ctx.cards, card.code);
+  return {
+    name: nameOf(ctx, card),
+    type: typeCode,
+    traits,
+    ...(imageSrc === undefined ? {} : { image: imageSrc }),
+    ...(backImageSrc === undefined ? {} : { backImage: backImageSrc }),
+  };
 }
 
 function namesIn(ctx: EngineContext, state: GameState, zone: Zone): CardName[] {

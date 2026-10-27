@@ -712,6 +712,26 @@ describe('MapBoard', () => {
       expect(within(attached).getByRole('listitem').textContent).toBe('obscuring_fog');
     });
 
+    it('opens an attached card to read, and Escape there leaves the study open', () => {
+      const table = PlayTable.start(
+        house.withCard(
+          instanceId('obscuring_fog'),
+          blankTreachery('obscuring_fog'),
+          attachedTo(study),
+        ),
+      );
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+      fireEvent.click(tile('study'));
+
+      fireEvent.click(within(details('study')).getByRole('button', { name: 'Read obscuring_fog' }));
+      fireEvent(screen.getByRole('dialog', { name: 'obscuring_fog' }), new Event('cancel'));
+
+      expect(screen.queryByRole('dialog', { name: 'obscuring_fog' })).toBeNull();
+      expect(details('study')).toBeTruthy();
+    });
+
     it.each([
       {
         location: 'study',
