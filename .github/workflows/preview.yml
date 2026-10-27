@@ -47,6 +47,8 @@ jobs:
           filters: |
             web:
               - 'apps/web/**'
+              # So a change to this workflow runs (and times) the steps it changes.
+              - '.github/workflows/preview.yml'
       # The card pictures the E2E shots show, downloaded once by Playwright's global setup
       # (apps/web/e2e/fixtures/card_pictures.ts) and kept here, never in the repo.
       - if: steps.changes.outputs.web == 'true'
@@ -55,10 +57,23 @@ jobs:
           path: apps/web/e2e/.card_pictures
           key: card-pictures-${{ hashFiles('packages/scenarios/src/the_gathering/cards.ts', 'packages/scenarios/src/card_builders.ts', 'apps/web/e2e/fixtures/card_pictures.ts') }}
           restore-keys: card-pictures-
-      - if: steps.changes.outputs.web == 'true'
+      # Headless runs only need Chromium's headless shell, cached per Playwright version. No
+      # `--with-deps`: the runner image already has the libraries it needs, and apt only added
+      # fonts the app doesn't use (it bundles its own) from Ubuntu's mirror, which can drop to
+      # 55 kB/s when many jobs start at once and stall a run for 10 minutes.
+      - id: playwright
+        if: steps.changes.outputs.web == 'true'
         run: |
-          pnpm --filter @arkham/web exec playwright install --with-deps chromium
-          command -v ffmpeg || sudo apt-get install -y --no-install-recommends ffmpeg
+          echo "version=$(pnpm --filter @arkham/web exec playwright --version | awk '{ print $2 }')" >> "$GITHUB_OUTPUT"
+          echo "image=$ImageOS" >> "$GITHUB_OUTPUT"
+      - if: steps.changes.outputs.web == 'true'
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-shell-${{ steps.playwright.outputs.image }}-${{ steps.playwright.outputs.version }}
+      - if: steps.changes.outputs.web == 'true'
+        timeout-minutes: 5
+        run: pnpm --filter @arkham/web exec playwright install --only-shell chromium
       # Records the base commit's tagged specs too, so the render step can leave out every spec
       # whose picture (a shot, or a flow's end state) this PR doesn't change, including specs an
       # earlier PR left tagged on main. Its own install, so the base builds with its own packages.
@@ -83,11 +98,22 @@ jobs:
         # A failing flow must not block the preview; the E2E check reports it.
         continue-on-error: true
         run: pnpm --filter @arkham/web e2e:screencast
+      # ffmpeg only turns flow videos into GIFs, and it comes from Ubuntu's mirror (see above), so
+      # it is installed only when a flow was recorded, and a slow mirror times the step out instead
+      # of stalling the run. Without ffmpeg the render step fails and the description keeps its
+      # old section, but the preview is still deployed.
+      - if: steps.changes.outputs.web == 'true' && hashFiles('apps/web/test-results/screencast/**/*.webm') != ''
+        timeout-minutes: 5
+        continue-on-error: true
+        run: |
+          command -v ffmpeg || { sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg; }
       - if: steps.changes.outputs.web == 'true' && hashFiles('apps/web/screencasts/report.json') != ''
         working-directory: apps/web
+        continue-on-error: true
         run: >-
           node scripts/screencast/cli.ts render screencasts/report.json screencasts/base.json screencasts/out
           "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-preview/pr-${{ github.event.number }}/screencasts/"
+          "https://raw.githubusercontent.com/${{ github.repository }}/gh-pages/pr-preview/pr-${{ github.event.number }}/screencasts/"
           "${HEAD_SHA::7}"
         env:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
@@ -102,24 +128,19 @@ jobs:
           source-dir: apps/web/dist
           preview-branch: gh-pages
           umbrella-dir: pr-preview
-      # The push above only starts a GitHub Pages build; the files are served once it finishes.
-      # A newer push to gh-pages (another PR's preview) can cancel this build, but its own build
-      # then publishes these files too, so wait for this push's version.txt, not for a build.
-      # The query string defeats the Pages CDN cache. On timeout the description is updated
-      # anyway: its links start working with the next Pages build.
-      - if: hashFiles('apps/web/screencasts/out/section.md') != ''
-        timeout-minutes: 15
-        continue-on-error: true
-        env:
-          URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-preview/pr-${{ github.event.number }}/screencasts/version.txt
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          until [ "$(curl -fsS --max-time 10 "$URL?t=$(date +%s)" 2>/dev/null)" = "${HEAD_SHA::7}" ]; do sleep 15; done
+      # The description's pictures come from the gh-pages branch itself (raw.githubusercontent.com),
+      # which serves the push above at once, so it is updated without waiting for the Pages build;
+      # only the player link starts working once Pages has deployed (a minute or two). The raw host
+      # caches a branch URL for 5 minutes whatever its query string, so the links name the commit
+      # just pushed (a later one from another PR's preview holds these files too).
       - if: hashFiles('apps/web/screencasts/out/section.md') != ''
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.number }}
         run: |
+          PAGES_COMMIT=$(git ls-remote origin refs/heads/gh-pages | cut -f1)
+          [ -n "$PAGES_COMMIT" ] || { echo "::error::No gh-pages branch to link the pictures from."; exit 1; }
+          sed -i "s#/gh-pages/pr-preview/#/$PAGES_COMMIT/pr-preview/#g" apps/web/screencasts/out/section.md
           gh api "repos/$GITHUB_REPOSITORY/pulls/$PR" --jq '.body // ""' > "$RUNNER_TEMP/body.md"
           node apps/web/scripts/screencast/cli.ts splice "$RUNNER_TEMP/body.md" apps/web/screencasts/out/section.md > "$RUNNER_TEMP/new-body.md"
           gh api --method PATCH "repos/$GITHUB_REPOSITORY/pulls/$PR" -F "body=@$RUNNER_TEMP/new-body.md" --silent
