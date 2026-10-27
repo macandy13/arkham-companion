@@ -188,6 +188,8 @@ export function offersActionsTo(
       const ownerId = zone.investigatorId;
       return here === state.investigators.find((inv) => inv.id === ownerId)?.locationId;
     }
+    case 'playArea':
+      return false;
     default:
       return (
         currentCard(state, 'agenda')?.id === card.id || currentCard(state, 'act')?.id === card.id
