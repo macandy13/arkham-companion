@@ -1,6 +1,6 @@
 <!-- screencasts:start -->
 
-_Recorded from edcff41 by the PR preview workflow; updated on every push that changes `apps/web`._
+_Recorded from b5e7c24 by the PR preview workflow; updated on every push that changes `apps/web`._
 
 ## Screenshots
 
@@ -8,7 +8,7 @@ _Recorded from edcff41 by the PR preview workflow; updated on every push that ch
 
 <table>
 <tr><th>Desktop</th><th>Phone</th></tr>
-<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-627/screencasts/the-house-map-with-roland-banks-in-the-hallway-desktop.png?v=edcff41" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-627/screencasts/the-house-map-with-roland-banks-in-the-hallway-phone.png?v=edcff41" alt="Phone" width="180"></td></tr>
+<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-627/screencasts/the-house-map-with-roland-banks-in-the-hallway-desktop.png?v=b5e7c24" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-627/screencasts/the-house-map-with-roland-banks-in-the-hallway-phone.png?v=b5e7c24" alt="Phone" width="180"></td></tr>
 </table>
 
 <!-- screencasts:end -->
