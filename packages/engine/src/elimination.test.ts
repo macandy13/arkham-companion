@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   attachedTo,
   atLocation,
+  blankAsset,
   blankEnemy,
   blankLocation,
   blankTreachery,
@@ -14,6 +15,7 @@ import {
   investigatorId,
   newGame,
   perInvestigator,
+  playAreaOf,
   playerOrder,
   threatAreaOf,
   zoneKey,
@@ -33,6 +35,7 @@ const cellar = instanceId('cellar');
 const aliceGhoul = instanceId('alice_ghoul');
 const bobGhoul = instanceId('bob_ghoul');
 const frozenInFear = instanceId('frozen_in_fear');
+const aliceAlly = instanceId('alice_ally');
 
 const hallCard = blankLocation('hall');
 /** 2 health per investigator, so a ghoul with 1 damage is still in play. */
@@ -77,8 +80,8 @@ function idsIn(state: GameState, zone: Zone): string[] {
 /**
  * Hall - cellar. Alice (seat 0, the lead) and bob (seat 1) are in the hall,
  * carol (seat 2) in the cellar. Alice holds 2 clues, has a ghoul with 1 damage
- * engaged and Frozen in Fear with 1 doom in her threat area; bob has a ghoul
- * engaged.
+ * engaged, Frozen in Fear with 1 doom in her threat area and an ally she
+ * controls; bob has a ghoul engaged.
  */
 const threeInvestigators = newGame()
   .withLocation(hall, hallCard)
@@ -89,7 +92,8 @@ const threeInvestigators = newGame()
   .withInvestigator(carol, { locationId: cellar })
   .withCard(aliceGhoul, ghoulCard, engagedWith(alice), { tokens: { damage: 1 } })
   .withCard(bobGhoul, ghoulCard, engagedWith(bob))
-  .withCard(frozenInFear, frozenInFearCard, threatAreaOf(alice), { tokens: { doom: 1 } });
+  .withCard(frozenInFear, frozenInFearCard, threatAreaOf(alice), { tokens: { doom: 1 } })
+  .withCard(aliceAlly, blankAsset('ally'), playAreaOf(alice));
 
 /** Round 1's investigation phase with alice's turn in progress and her ghoul exhausted. */
 function aliceTurn(): BuiltGame {
@@ -134,6 +138,10 @@ describe.each([
   it('discards the cards in their threat area without their doom', () => {
     expect(idsIn(after(), { kind: 'encounterDiscard' })).toEqual([frozenInFear]);
     expect(after().cards[frozenInFear]?.tokens).toEqual({});
+  });
+
+  it('removes the cards they control from the game', () => {
+    expect(after().cards[aliceAlly]?.zone).toEqual({ kind: 'outOfGame' });
   });
 
   it('ends their turn', () => {

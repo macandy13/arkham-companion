@@ -115,6 +115,8 @@ export interface InvestigatorView {
   /** They have taken their turn this round (`GameMeta.turnsTaken`). */
   turnTaken?: true;
   threatArea?: CardName[];
+  /** Printed names of the cards they control (`playArea` zone, e.g. Lita Chantler), left out while there are none. */
+  controls?: CardName[];
 }
 
 /**
@@ -337,7 +339,7 @@ export type CardPlaceView =
         | 'resolving'
         | 'elsewhere';
     }
-  | { kind: 'threatArea' | 'engaged'; investigator: InvestigatorId }
+  | { kind: 'threatArea' | 'engaged' | 'playArea'; investigator: InvestigatorId }
   | { kind: 'atLocation'; location: CardName }
   | { kind: 'attachedTo'; card: CardName };
 
@@ -542,6 +544,7 @@ export class BoardView {
         return { kind: zone.kind };
       case 'threatArea':
       case 'engaged':
+      case 'playArea':
         return { kind: zone.kind, investigator: zone.investigatorId };
       case 'atLocation':
         return {
@@ -811,6 +814,10 @@ function investigatorView(
     ...listIfAny(
       'threatArea',
       namesIn(ctx, state, { kind: 'threatArea', investigatorId: investigator.id }),
+    ),
+    ...listIfAny(
+      'controls',
+      namesIn(ctx, state, { kind: 'playArea', investigatorId: investigator.id }),
     ),
   };
 }

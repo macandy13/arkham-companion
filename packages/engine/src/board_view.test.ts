@@ -34,6 +34,7 @@ import {
   resignAction,
   TableError,
   threatAreaOf,
+  playAreaOf,
   trait,
   type CardAction,
   type CardPlaceView,
@@ -125,6 +126,7 @@ describe('investigators', () => {
       })
       .withInvestigator(bob)
       .withCard(instanceId('frozen_in_fear'), blankTreachery('frozen_in_fear'), threatAreaOf(alice))
+      .withCard(instanceId('lita'), blankAsset('lita'), playAreaOf(alice))
       .start();
 
     const { investigators } = boardView(context, state);
@@ -147,11 +149,13 @@ describe('investigators', () => {
         image: '/bundles/cards/alice.png',
         actions: 3,
         threatArea: ['frozen_in_fear'],
+        controls: ['lita'],
       },
       expect.objectContaining({ id: bob, clues: 0 }),
     ]);
     expect(investigators[1]).not.toHaveProperty('at');
     expect(investigators[1]).not.toHaveProperty('threatArea');
+    expect(investigators[1]).not.toHaveProperty('controls');
     expect(investigators[1]).not.toHaveProperty('doom');
     expect(investigators[1]).not.toHaveProperty('image');
   });
@@ -1015,6 +1019,11 @@ describe('placeOf', () => {
       zone: engagedWith(alice),
       card: blankEnemy('ghoul'),
       place: { kind: 'engaged', investigator: alice },
+    },
+    {
+      zone: playAreaOf(alice),
+      card: blankAsset('lita'),
+      place: { kind: 'playArea', investigator: alice },
     },
     {
       zone: atLocation(hallway),

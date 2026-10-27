@@ -42,6 +42,7 @@ export function DrawnCardsNotice({
         return t(`encounter.place.${place.kind}`);
       case 'threatArea':
       case 'engaged':
+      case 'playArea':
         return t(`encounter.place.${place.kind}`, { name: nameOf(place.investigator) });
       case 'atLocation':
         return t('encounter.place.atLocation', { location: place.location });
