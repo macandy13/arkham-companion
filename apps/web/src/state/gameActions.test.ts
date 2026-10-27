@@ -51,6 +51,9 @@ describe('gameActions', () => {
 
   it.each<{ verb: string; act: (actions: GameActions) => Promise<void>; left: number }>([
     { verb: 'investigate', act: (actions) => actions.investigate(), left: 2 },
+    { verb: 'the resource action', act: (actions) => actions.takeResource(), left: 2 },
+    { verb: 'the draw action', act: (actions) => actions.drawCard(), left: 2 },
+    { verb: 'the play action', act: (actions) => actions.playCard(), left: 2 },
     { verb: 'fight', act: (actions) => actions.fight(ghoul), left: 2 },
     { verb: 'evade', act: (actions) => actions.evade(ghoul), left: 2 },
     { verb: 'engage', act: (actions) => actions.engage(lurker), left: 2 },
@@ -92,6 +95,26 @@ describe('gameActions', () => {
 
     expect(table.board.encounter.discard.map(({ name }) => name)).toEqual(['top_card']);
     expect(table.board.encounter.deckCount).toBe(1);
+  });
+
+  it('gives alder, at 2 resources, the resource of the resource action once the ghoul has attacked', async () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withInvestigator(alder, { locationId: study, resources: 2 })
+        .withCard(ghoul, blankEnemy('ghoul'), engagedWith(alder))
+        .withTurnOf(alder),
+    );
+    const actions = actionsOn(table);
+
+    await actions.takeResource();
+    const attacks = table.board.decisions.map(({ about }) => about);
+    const resourcesDuringAttack = table.board.investigator(alder).resources;
+    await actions.answer('attack');
+
+    expect(attacks).toEqual(['ghoul']);
+    expect(resourcesDuringAttack).toBe(2);
+    expect(table.board.investigator(alder)).toMatchObject({ resources: 3, actions: 2 });
   });
 
   it('takes a clue from the study without a test', async () => {

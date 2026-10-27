@@ -37,7 +37,7 @@ export interface DecisionAmounts {
  * verbs, but with the screen's defaults:
  * - An action is taken by the investigator whose turn it is, since the rules allow actions only
  *   during one's own turn; without a turn it is refused with `noTurnInProgress`. Investigate,
- *   engage, and fight and evade unless free, count off one of their actions, which the engine
+ *   engage, take a resource, draw, play, and move, fight and evade unless free, count off one of their actions, which the engine
  *   leaves to the players; with none left they are refused, and `adjustActions` grants more.
  * - The decision dialog shows the first open decision, so an answer picks an option of that one;
  *   without one it is refused with `noPendingDecision`.
@@ -68,6 +68,12 @@ export interface GameActions {
   moveTo(location: InstanceId, cost?: ActionCost): Promise<void>;
   /** An investigate action; its test stays open as a decision. */
   investigate(): Promise<void>;
+  /** The resource action: one action for one resource. */
+  takeResource(): Promise<void>;
+  /** The draw action; the card is drawn at the table. */
+  drawCard(): Promise<void>;
+  /** The play action; the card is played, and paid for, at the table. */
+  playCard(): Promise<void>;
   /** One clue from `location`, the investigator's own, without a test, as a card grants it. */
   takeClue(location: InstanceId): Promise<void>;
   /**
@@ -190,6 +196,9 @@ export function gameActions(
           ),
     investigate: () =>
       asAction((table, investigator) => table.investigate(investigator, { result: 'open' })),
+    takeResource: () => asAction((table, investigator) => table.takeResource(investigator)),
+    drawCard: () => asAction((table, investigator) => table.drawCard(investigator)),
+    playCard: () => asAction((table, investigator) => table.playCard(investigator)),
     takeClue: (location) =>
       onTurn((table, investigator) =>
         table.play({
