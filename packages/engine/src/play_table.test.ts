@@ -195,7 +195,12 @@ describe('rejected and broken steps', () => {
 
     expect(error).toBeInstanceOf(Error);
     expect(error).not.toBeInstanceOf(CommandRejected);
-    expect(table.board.agenda).toEqual({ name: 'broken_agenda', doom: 0, threshold: 5 });
+    expect(table.board.agenda).toEqual({
+      id: instanceId('broken_agenda'),
+      name: 'broken_agenda',
+      doom: 0,
+      threshold: 5,
+    });
   });
 });
 
@@ -347,7 +352,12 @@ describe('turns, actions and tokens', () => {
 
     table.placeDoom(2);
 
-    expect(table.board.agenda).toEqual({ name: 'agenda', doom: 2, threshold: 5 });
+    expect(table.board.agenda).toEqual({
+      id: instanceId('agenda'),
+      name: 'agenda',
+      doom: 2,
+      threshold: 5,
+    });
   });
 
   it('removes doom from the agenda', () => {
@@ -358,7 +368,12 @@ describe('turns, actions and tokens', () => {
 
     table.removeDoom(2);
 
-    expect(table.board.agenda).toEqual({ name: 'agenda', doom: 1, threshold: 5 });
+    expect(table.board.agenda).toEqual({
+      id: instanceId('agenda'),
+      name: 'agenda',
+      doom: 1,
+      threshold: 5,
+    });
   });
 
   it.each([0, -1, 1.5])('refuses to remove %s doom', (amount) => {

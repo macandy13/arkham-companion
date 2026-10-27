@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { BoardView, CardFaceView, MapEnemyView } from '@arkham/engine';
 import { EnemyDetails } from '../enemies/EnemyDetails';
 import { enemyConditions } from '../map/LocationTile';
+import { CardActions, cardActionsOn } from '../screens/ActionRow';
 import { CardZoom } from '../screens/CardZoom';
 import type { GameActions } from '../state/gameActions';
 
@@ -16,7 +17,7 @@ export const THREAT_CARDS_SHOWN = 4;
  * An investigator's threat area, laid as a row of small cards along the top edge of their card:
  * the treacheries in it (`BoardView.cardsIn` its zone), then the enemies engaged with them, each
  * with the health it has left, like the damage tokens on the card. A tap on a treachery opens it
- * large to read (`CardZoom`). Past `THREAT_CARDS_SHOWN` cards
+ * large to read and act on (`CardZoom`). Past `THREAT_CARDS_SHOWN` cards
  * the row scrolls by whole cards, with a swipe or its arrows. A tap on an enemy card opens its
  * details with what the players can do to it (`EnemyDetails`). Nothing while the area is empty,
  * so the card keeps its place.
@@ -58,8 +59,8 @@ export function ThreatArea({
         </button>
       )}
       <ul ref={strip} aria-label={t('investigators.threatArea')}>
-        {treacheries.map((card, index) => (
-          <TreacheryCard key={`${card.name}-${index}`} card={card} />
+        {treacheries.map((card) => (
+          <TreacheryCard key={card.id} board={board} card={card} actions={actions} busy={busy} />
         ))}
         {enemies.map((enemy) => (
           <EnemyCard key={enemy.id} board={board} enemy={enemy} actions={actions} busy={busy} />
@@ -80,11 +81,24 @@ export function ThreatArea({
 
 /**
  * A treachery in the threat area as a small card with its name; a tap on it, a button over the
- * whole card like the enemies', opens it large (`CardZoom`).
+ * whole card like the enemies', opens it large (`CardZoom`), with the actions it offers, such as
+ * one that discards it.
  */
-function TreacheryCard({ card }: { card: CardFaceView }) {
+function TreacheryCard({
+  board,
+  card,
+  actions,
+  busy,
+}: {
+  board: BoardView;
+  card: CardFaceView;
+  actions: GameActions;
+  busy: boolean;
+}) {
   const { t } = useTranslation();
   const [zoomed, setZoomed] = useState(false);
+  const close = () => setZoomed(false);
+  const offered = cardActionsOn(board, card.id);
   return (
     <li data-threat="treachery">
       {card.name}
@@ -94,7 +108,13 @@ function TreacheryCard({ card }: { card: CardFaceView }) {
         aria-label={t('cardZoom.open', { name: card.name })}
         onClick={() => setZoomed(true)}
       />
-      {zoomed && <CardZoom card={card} onClose={() => setZoomed(false)} />}
+      {zoomed && (
+        <CardZoom card={card} onClose={close}>
+          {offered.length > 0 && (
+            <CardActions offered={offered} actions={actions} busy={busy} onUse={close} />
+          )}
+        </CardZoom>
+      )}
     </li>
   );
 }

@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { BASE_ACTIONS_PER_TURN, type BoardView, type InvestigatorView } from '@arkham/engine';
 import { range } from '@arkham/util';
+import { cardActionLabel } from '../screens/ActionRow';
 import type { GameActions } from '../state/gameActions';
 
 /** The basic actions the turn row offers, in its order, each a `GameActions` verb without arguments. */
@@ -60,17 +61,18 @@ export function TurnControls({
           onClick={() => void actions[action]()}
         />
       ))}
-      {board.cardActions(investigator.id).map(({ cardId, card, action, designator }) => {
-        const name = t(`investigators.cardAction.${designator ?? 'plain'}`);
+      {board.cardActions(investigator.id).map((offer) => {
+        const { cardId, action } = offer;
+        const { caption, name } = cardActionLabel(t, offer);
         return (
           <button
             key={`${cardId}:${action}`}
             type="button"
-            aria-label={t('investigators.cardActionOn', { action: name, card })}
+            aria-label={name}
             disabled={busy}
             onClick={() => void actions.useCardAction(cardId, action)}
           >
-            {name}
+            {caption}
           </button>
         );
       })}

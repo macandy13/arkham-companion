@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CardFaceView } from '@arkham/engine';
 import { sentences } from '@arkham/util';
@@ -9,10 +9,19 @@ import './card_zoom.css';
  * One card picked up to read (`CardFaceView`), as big as a zoomed card: its picture once it has
  * loaded, and under the picture, for a card without one or until it loads, what the card data
  * says of it in our own frame: its name, type and traits. A card with a back turns over with a
- * button. Reading it changes nothing in the game, so it has no actions. A native modal
- * `<dialog>` brings focus trapping and Escape.
+ * button. Under it, as `children`, the action row of what the card offers the investigator whose
+ * turn it is (`CardActions`), when it offers anything; reading it alone changes nothing in the
+ * game. A native modal `<dialog>` brings focus trapping and Escape.
  */
-export function CardZoom({ card, onClose }: { card: CardFaceView; onClose: () => void }) {
+export function CardZoom({
+  card,
+  onClose,
+  children,
+}: {
+  card: CardFaceView;
+  onClose: () => void;
+  children?: ReactNode;
+}) {
   const { t } = useTranslation();
   const titleId = useId();
   const dialog = useRef<HTMLDialogElement>(null);
@@ -52,6 +61,7 @@ export function CardZoom({ card, onClose }: { card: CardFaceView; onClose: () =>
           {t(side === 'front' ? 'cardZoom.showBack' : 'cardZoom.showFront')}
         </button>
       )}
+      {children && <footer>{children}</footer>}
     </dialog>
   );
 }

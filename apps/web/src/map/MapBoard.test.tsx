@@ -15,6 +15,7 @@ import {
   mapId,
   newGame,
   PlayTable,
+  resignAction,
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { gameActions } from '../state/gameActions';
@@ -751,6 +752,50 @@ describe('MapBoard', () => {
       fireEvent.click(tile(location));
 
       expect(offered(location)).toEqual(buttons);
+    });
+
+    describe("the parlor's Resign", () => {
+      const parlor = instanceId('parlor');
+      const aldersTurnInTheParlor = () =>
+        PlayTable.start(
+          newGame()
+            .withLocation(parlor, blankLocation('parlor', { actions: [resignAction()] }), {
+              revealed: true,
+            })
+            .withInvestigator(alder, { locationId: parlor })
+            .withTurnOf(alder),
+        );
+
+      it('offers it among the card actions, resigns alder and closes', async () => {
+        const table = aldersTurnInTheParlor();
+        render(
+          <MapBoard
+            board={table.board}
+            actions={actionsOn(table)}
+            busy={false}
+            adjusting={false}
+          />,
+        );
+        fireEvent.click(tile('parlor'));
+        const cardActions = within(details('parlor')).getByRole('region', { name: 'Card actions' });
+
+        fireEvent.click(within(cardActions).getByRole('button', { name: 'Resign · parlor' }));
+        await act(async () => {});
+
+        expect(table.board.investigator(alder).status).toBe('resigned');
+        expect(screen.queryByRole('dialog')).toBeNull();
+      });
+
+      it('leaves it out while the players adjust the board', () => {
+        const table = aldersTurnInTheParlor();
+        render(<MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting />);
+
+        fireEvent.click(tile('parlor'));
+
+        expect(
+          within(details('parlor')).queryByRole('button', { name: 'Resign · parlor' }),
+        ).toBeNull();
+      });
     });
 
     it('moves alder to the hallway as an action and closes', async () => {

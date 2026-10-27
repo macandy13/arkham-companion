@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { cardImagePath, cardName, trait, type CardFaceView } from '@arkham/engine';
+import { cardImagePath, cardName, instanceId, trait, type CardFaceView } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { CardZoom } from './CardZoom';
 
@@ -13,6 +13,7 @@ describe('CardZoom', () => {
 
   it('reads a card without a picture from its name, type and traits', () => {
     const plainCurse: CardFaceView = {
+      id: instanceId('plain_curse'),
       name: cardName('plain_curse'),
       type: 'treachery',
       traits: [trait('Curse'), trait('Omen')],
@@ -29,6 +30,7 @@ describe('CardZoom', () => {
 
   it('shows the picture of the front once it has loaded, and turns over to the back', () => {
     const twoSidedCurse: CardFaceView = {
+      id: instanceId('two_sided_curse'),
       name: cardName('two_sided_curse'),
       type: 'treachery',
       traits: [],
@@ -53,7 +55,12 @@ describe('CardZoom', () => {
     let closed = false;
     render(
       <CardZoom
-        card={{ name: cardName('plain_curse'), type: 'treachery', traits: [] }}
+        card={{
+          id: instanceId('plain_curse'),
+          name: cardName('plain_curse'),
+          type: 'treachery',
+          traits: [],
+        }}
         onClose={() => {
           closed = true;
         }}
