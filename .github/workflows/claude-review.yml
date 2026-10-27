@@ -44,10 +44,10 @@ jobs:
             Review this pull request. The PR branch is checked out in the working directory.
             Follow REVIEW.md if it exists: it says what is blocking, what is a nit and what
             to leave alone. The rules it refers to are in CLAUDE.md and
-            docs/coding-guidelines.md; game rules are summarised in docs/rules.md.
+            docs/coding-guidelines.md; game rules are summarised in docs/rules/ (index: docs/rules.md).
 
             Check the "Rules claims" in the PR description's review map against
-            docs/rules.md, and flag rule changes in the diff that the map does not claim.
+            the pages in docs/rules/, and flag rule changes in the diff that the map does not claim.
 
             Use `gh pr diff` and `gh pr view` to read the PR. Post one top-level summary
             with `gh pr comment`, in the format REVIEW.md asks for, short enough to read on

@@ -68,7 +68,7 @@ Night of the Zealot's twelve steps also cover half of Chapter Two and of every l
 
 ### Keywords
 
-The keyword rules are in [rules.md](rules.md#enemy-keywords).
+The keyword rules are in [rules, "Enemy keywords"](rules/enemy-keywords.md).
 
 | Rule                                                            | Ch. 2 | Ch. 1 | Status                |
 | --------------------------------------------------------------- | ----- | ----- | --------------------- |

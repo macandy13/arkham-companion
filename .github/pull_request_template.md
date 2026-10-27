@@ -16,7 +16,7 @@
 
 **Rules claims**
 
-<!-- Each game rule this PR implements or changes, in table terms, linking its docs/rules.md section. -->
+<!-- Each game rule this PR implements or changes, in table terms, linking its docs/rules/ page. -->
 
 **Architecture**
 
