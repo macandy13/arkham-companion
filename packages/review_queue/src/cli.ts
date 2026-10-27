@@ -7,6 +7,7 @@ import {
   buildQueue,
   checkState,
   isReviewable,
+  mergeability,
   type CheckRun,
   type CommitStatus,
   type OpenPr,
@@ -43,7 +44,9 @@ interface ApiPull {
 }
 
 async function openPr(pull: ApiPull): Promise<OpenPr> {
-  const [runs, status] = await Promise.all([
+  // Only the single-PR endpoint has `mergeable`; reading it also makes GitHub compute it.
+  const [details, runs, status] = await Promise.all([
+    api<{ mergeable: boolean | null }>(`pulls/${pull.number}`),
     api<{ check_runs: CheckRun[] }>(`commits/${pull.head.sha}/check-runs?per_page=100`),
     api<{ statuses: CommitStatus[] }>(`commits/${pull.head.sha}/status`),
   ]);
@@ -53,7 +56,10 @@ async function openPr(pull: ApiPull): Promise<OpenPr> {
     baseRef: pull.base.ref,
     headRef: pull.head.ref,
     checks: checkState(runs.check_runs, status.statuses),
-    conflicts: pull.labels.some((label) => label.name === 'needs-rebase'),
+    mergeable: mergeability(
+      details.mergeable,
+      pull.labels.map((label) => label.name),
+    ),
   };
 }
 
