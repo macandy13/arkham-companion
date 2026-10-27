@@ -6,16 +6,16 @@
  * Hunting Shadow, Mysterious Chanting, On Wings of Darkness carrying Daisy off
  * to a Central location, the Ghoul Priest from The Gathering, the Wizard of
  * the Order's doom, "Wolf-Man" Drew's heal, two hunters chasing the
- * investigators, the First Bank of Arkham's once-per-game action, Your House's draw left to
- * the players, Daisy resigning through agenda 2's action, both agendas
- * advancing on doom) and ends in a resolution
+ * investigators, the act's action paid in clues as a group to draw from the
+ * shuffled Cultist deck (seed 40 puts "Wolf-Man" Drew, then Herman Collins on
+ * top), the First Bank of Arkham's once-per-game action, Your House's draw
+ * left to the players, Daisy resigning through agenda 2's action, both
+ * agendas advancing on doom) and ends in a resolution
  * applied to the campaign log: two cultists interrogated, three still in the
  * Cultist deck and The Masked Hunter in play got away.
  *
  * What the engine leaves to the players is done by hand, as at the table:
- * the act's clue payment (spend clues as a group; the draw from the Cultist
- * deck is the engine's, and seed 40 puts "Wolf-Man" Drew, then Herman
- * Collins on top of it), agenda 1's reverse side putting
+ * agenda 1's reverse side putting
  * The Masked Hunter into play, an Acolyte's doom as it enters play, Locked
  * Door, and Herman Collins' parley. The players count actions themselves,
  * so the script keeps each turn to 3 without touching the counter.
@@ -35,7 +35,6 @@ import {
   zoneKey,
   type CampaignCommand,
   type CampaignLog,
-  type InvestigatorId,
   type CardRef,
   type ScenarioContext,
 } from '@arkham/engine';
@@ -71,6 +70,7 @@ const seats = [
 const drew = '"Wolf-Man" Drew';
 const herman = 'Herman Collins';
 const hunter = 'The Masked Hunter';
+const act = 'Uncovering the Conspiracy';
 const priest = 'Ghoul Priest';
 const wizard = 'Wizard of the Order';
 const yes = { kind: 'flag', value: true } as const;
@@ -157,25 +157,6 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     ]);
     expect(table.board.namesIn({ kind: 'encounterDeck' })).toContain('Ghoul Priest');
 
-    /**
-     * The act's action, by hand: the group spends 2 clues per investigator,
-     * as `paid` says, and `drawer` draws the top card of the Cultist deck,
-     * which spawns by its spawn keyword.
-     */
-    const drawFromTheCultistDeck = (
-      paid: ReadonlyArray<readonly [InvestigatorId, number]>,
-      drawer: InvestigatorId,
-    ) =>
-      table.step(() => {
-        for (const [investigator, clues] of paid)
-          table.play({
-            type: 'AdjustInvestigator',
-            investigatorId: investigator,
-            stat: 'clues',
-            delta: -clues,
-          });
-        table.play({ type: 'DrawFromScenarioDeck', investigatorId: drawer, deck: 'cultist' });
-      });
     /** An Acolyte entering play during the game places 1 doom on itself; the players do it. */
     const acolyteDoomAt = (location: CardRef) =>
       table.play({
@@ -251,13 +232,8 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     table.startTurn(roland);
     table.moveTo(roland, byName('Easttown'));
     table.investigate(roland);
-    drawFromTheCultistDeck(
-      [
-        [roland, 3],
-        [daisy, 1],
-      ],
-      roland,
-    );
+    // Nobody names the payers: Roland pays his 3 clues, Daisy the 4th.
+    table.useCardAction(roland, byName(act));
     table.endTurn(roland);
 
     expect(table.board.enemy(byName(drew))).toEqual({ name: drew, at: 'Downtown', health: 4 });
@@ -313,7 +289,7 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     table.startTurn(daisy);
     table.investigate(daisy);
     table.investigate(daisy);
-    drawFromTheCultistDeck([[daisy, 4]], daisy);
+    table.useCardAction(daisy, byName(act));
     table.endTurn(daisy);
 
     expect(table.board.location(byName('Graveyard'))).toMatchObject({ clues: 0 });

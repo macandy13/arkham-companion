@@ -64,6 +64,8 @@ export interface ActOptions {
   cluesPerInvestigator?: number;
   /** Its reverse side (`whenAdvanced`) and its objective. */
   abilities?: readonly Ability[];
+  /** Its action abilities, such as Uncovering the Conspiracy's draw from the Cultist deck. */
+  actions?: readonly CardAction[];
 }
 
 /** Card stats for a hand-entered act of `set`, with both printed sides. */
@@ -74,6 +76,7 @@ export function act({
   stage,
   cluesPerInvestigator,
   abilities,
+  actions,
 }: ActOptions): CardStats {
   return {
     ...scenarioCard(code, name, set),
@@ -81,6 +84,7 @@ export function act({
     stage: { number: stage },
     ...(cluesPerInvestigator === undefined ? {} : { clues: perInvestigator(cluesPerInvestigator) }),
     ...(abilities ? { abilities } : {}),
+    ...(actions ? { actions } : {}),
   };
 }
 

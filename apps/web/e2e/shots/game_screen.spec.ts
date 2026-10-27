@@ -3,6 +3,7 @@ import {
   rolandThreatenedExport,
   houseOpenedExport,
   investigationOpenExport,
+  mythosDrawnExport,
   resumeImportedGame,
   twoMapsExport,
 } from '../fixtures/saved_games';
@@ -135,6 +136,20 @@ test("the Ghoul Priest's details opened from its card on Roland Banks' turn", as
   await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
 
   await expect(page.getByRole('dialog', { name: 'Ghoul Priest' })).toBeVisible();
+});
+
+test('the encounter deck after two mythos phases, Dissonant Voices on the discard pile', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'Two mythos draws', mythosDrawnExport('Two mythos draws'));
+
+  const deck = page.getByRole('region', { name: 'Encounter deck' });
+  await expect(
+    deck.getByRole('img', { name: '24 cards left in the encounter deck' }),
+  ).toBeVisible();
+  await expect(
+    deck.getByRole('img', { name: 'Encounter discard pile, 1 card, Dissonant Voices on top' }),
+  ).toBeVisible();
 });
 
 test('The Barrier opened as a full card', { tag: '@shot' }, async ({ page }) => {

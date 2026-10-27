@@ -1,7 +1,7 @@
 import { cardStats, resolveValue, type EngineContext } from './cards';
 import type { AdvanceAct, AdvanceAgenda, ClueSpend, EndScenario, PlaceDoom } from './commands';
 import { cardsWithDoom, isInPlay } from './doom';
-import { activeInvestigators } from './investigators';
+import { activeInvestigators, groupCluePayments } from './investigators';
 import type {
   ActAdvanced,
   AgendaAdvanced,
@@ -13,7 +13,6 @@ import type {
   ScenarioEnded,
   TokensChanged,
 } from './events';
-import { activeInvestigator } from './investigators';
 import type { InstanceId, ResolutionId } from './ids';
 import { requireCard } from './lookup';
 import { clearTokensEvents, moveCardEvent } from './placement';
@@ -174,8 +173,8 @@ function clueRequirement(
 }
 
 /**
- * One `InvestigatorChanged` per payment; rejects payments that do not add up
- * to `required`, and any payment for an act without a clue threshold.
+ * One `InvestigatorChanged` per payment (`groupCluePayments`); rejects any payment for an act
+ * without a clue threshold.
  */
 function cluePayments(
   state: GameState,
@@ -185,35 +184,7 @@ function cluePayments(
 ): InvestigatorChanged[] {
   if (required === undefined)
     throw new CommandRejected({ code: 'noClueThreshold', cardId: act.id });
-  const payers = new Set<string>();
-  const payments = spend.map((payment): InvestigatorChanged => {
-    if (!Number.isInteger(payment.amount) || payment.amount <= 0)
-      throw new CommandRejected({ code: 'invalidTokenDelta', delta: payment.amount });
-    const investigator = activeInvestigator(state, payment.investigatorId);
-    if (payers.has(investigator.id))
-      throw new CommandRejected({
-        code: 'duplicateInvestigator',
-        investigatorId: investigator.id,
-      });
-    payers.add(investigator.id);
-    if (investigator.clues < payment.amount)
-      throw new CommandRejected({
-        code: 'negativeInvestigatorStat',
-        investigatorId: investigator.id,
-        stat: 'clues',
-        current: investigator.clues,
-        delta: -payment.amount,
-      });
-    return {
-      type: 'InvestigatorChanged',
-      investigatorId: investigator.id,
-      stat: 'clues',
-      delta: -payment.amount,
-    };
-  });
-  const spent = spend.reduce((sum, payment) => sum + payment.amount, 0);
-  if (spent !== required) throw new CommandRejected({ code: 'wrongClueTotal', required, spent });
-  return payments;
+  return groupCluePayments(state, spend, required);
 }
 
 /** The current agenda or act; rejects if the deck is exhausted. */
