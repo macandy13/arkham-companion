@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   blankEnemy,
   blankLocation,
+  blankTreachery,
   engagedWith,
   fixed,
   instanceId,
@@ -77,6 +78,23 @@ describe('gameActions', () => {
     await actionsOn(table).moveTo(hall, cost);
 
     expect(table.board.decisions.map(({ about }) => about)).toEqual(attacks);
+  });
+
+  it('draws the top encounter card for an investigator outside the mythos phase', async () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withInvestigator(alder, { locationId: study })
+        .withInvestigator(brook, { locationId: study })
+        .withCard(instanceId('top_card'), blankTreachery('top_card'), { kind: 'encounterDeck' })
+        .withCard(instanceId('next_card'), blankTreachery('next_card'), { kind: 'encounterDeck' })
+        .withTurnOf(alder),
+    );
+
+    await actionsOn(table).drawEncounter(brook);
+
+    expect(table.board.encounter.discard.map(({ name }) => name)).toEqual(['top_card']);
+    expect(table.board.encounter.deckCount).toBe(1);
   });
 
   it('gives alder, at 2 resources, the resource of the resource action once the ghoul has attacked', async () => {

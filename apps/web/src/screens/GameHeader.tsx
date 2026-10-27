@@ -31,7 +31,7 @@ export function GameHeader({
 
   return (
     <header>
-      <EncounterDeck board={board} />
+      <EncounterDeck store={store} board={board} blocked={blocked} adjusting={adjusting} />
       <AgendaStatus store={store} board={board} blocked={blocked} adjusting={adjusting} />
       <ActStatus store={store} board={board} blocked={blocked} adjusting={adjusting} />
       <ScenarioCard open={open} />
@@ -42,11 +42,26 @@ export function GameHeader({
 /**
  * The encounter deck and its discard pile (`EncounterPiles`) under the playmat's label.
  */
-function EncounterDeck({ board }: { board: BoardView }) {
+function EncounterDeck({
+  store,
+  board,
+  blocked,
+  adjusting,
+}: {
+  store: StoreApi<AppState>;
+  board: BoardView;
+  blocked: boolean;
+  adjusting: boolean;
+}) {
   const { t } = useTranslation();
   return (
     <HeaderSlot label={t('header.encounterDeck')}>
-      <EncounterPiles board={board} />
+      <EncounterPiles
+        board={board}
+        actions={store.getState().actions}
+        busy={blocked}
+        adjusting={adjusting}
+      />
     </HeaderSlot>
   );
 }

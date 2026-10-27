@@ -39,6 +39,7 @@ export const resources = {
       },
       encounter: {
         close: 'Close',
+        drawFor: 'Draw for {{name}}',
         discard: 'Discard pile',
         setAside: 'Set aside',
         victoryDisplay: 'Victory display',
@@ -551,6 +552,7 @@ export const resources = {
       },
       encounter: {
         close: 'Schließen',
+        drawFor: 'Für {{name}} ziehen',
         discard: 'Ablagestapel',
         setAside: 'Beiseitegelegt',
         victoryDisplay: 'Siegpunktanzeige',
