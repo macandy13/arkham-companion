@@ -1,4 +1,6 @@
 import {
+  perInvestigator,
+  advanceAct,
   afterEngaging,
   afterEntering,
   atEndOfEachTurn,
@@ -29,6 +31,7 @@ import {
   takeHorror,
   trait,
   whenAdvanced,
+  whenTokensOnSelf,
   whenDefeated,
   whenRevealed,
   youMustEither,
@@ -136,9 +139,7 @@ const woods = ['Woods'];
  *   willpower (6) tests and madness, agenda 3's Umôrdhoth and The Devourer
  *   Below, which becomes act and agenda at once) and agenda 2's +1 fight and
  *   evade for each enemy
- * - act 2's objective and reverse side (the enemies at the Ritual Site), and
- *   act 3's objective check (the players advance it once its action has placed
- *   the clues; its R1 is automated then)
+ * - act 2's objective and reverse side (the enemies at the Ritual Site)
  * - the Main Path's connection to each Woods location,
  *   the Arkham Woods' moving-out test, skill swaps, and the
  *   Ritual Site's clues at the end of the round
@@ -177,8 +178,8 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
     name: 'Disrupting the Ritual',
     set: own,
     stage: 3,
-    // No clue requirement: only the clues its action places count towards its objective, which
-    // the players check and advance by hand (#523), so investigators can't pay for it.
+    // No clue requirement, so investigators can't pay for it: only the clues its action places
+    // count, towards its objective.
     actions: [
       {
         cost: { spend: 'clues', amount: 1 },
@@ -189,7 +190,10 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
         ],
       },
     ],
-    abilities: [whenAdvanced(endScenario(DEVOURER_BELOW_RESOLUTIONS.ritualBroken))],
+    abilities: [
+      whenTokensOnSelf('clue', perInvestigator(2), advanceAct()),
+      whenAdvanced(endScenario(DEVOURER_BELOW_RESOLUTIONS.ritualBroken)),
+    ],
   }),
   location({
     code: '01149',

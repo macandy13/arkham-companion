@@ -1,5 +1,5 @@
 import { assertNever, range, shallowEqual } from '@arkham/util';
-import { cardStats, type EngineContext, type Trait } from './cards';
+import { cardStats, resolveValue, type EngineContext, type ScaledValue, type Trait } from './cards';
 import type { Command, EncounterMatch, ResolveEffect, TestSkill } from './commands';
 import { cardsInPlay } from './doom';
 import { cardOptionLabels } from './decisions';
@@ -39,6 +39,7 @@ import type {
   SkillTestOutcome,
   QueuedStep,
   SkillName,
+  TokenKind,
   WoundKind,
 } from './state';
 import type { ScenarioDeck, Zone } from './zone';
@@ -130,6 +131,14 @@ export type TimingWindow =
    * ones, so a used-up act or agenda never fires again.
    */
   | { kind: 'enemyDefeated'; enemy: CardCode }
+  /**
+   * Tokens of `token` were placed on the card (`TokensChanged` with a positive delta): for an
+   * objective on the card's own tokens ("If there are 2 clues per investigator on this Act,
+   * advance", `whenTokensOnSelf`), which checks the count with a `tokensOnSelf` condition. Names
+   * no investigator. Corrections (`ManualAdjust`) fire no triggers, so tokens put on by hand
+   * open nothing.
+   */
+  | { kind: 'tokensPlaced'; token: TokenKind }
   /**
    * "When [this enemy] is defeated": opened by `EnemyDefeated` for the enemy,
    * naming the location it was at and no investigator. It resolves once the
@@ -349,7 +358,9 @@ export type AbilityCondition =
    * The number of enemies with `trait` on the table is within the range
    * ("If there are no [[Cultist]] enemies in play", `enemiesOnTable`).
    */
-  | ({ kind: 'enemiesInPlay'; trait: Trait } & StatRange);
+  | ({ kind: 'enemiesInPlay'; trait: Trait } & StatRange)
+  /** The card with the ability holds at least `atLeast` tokens of `token` ("2 clues per investigator on this Act"). */
+  | { kind: 'tokensOnSelf'; token: TokenKind; atLeast: ScaledValue };
 
 /** Bounds on a value, both included; at least one is given, so the range always says something. */
 export type StatRange = { min: number; max?: number } | { min?: number; max: number };
@@ -489,6 +500,9 @@ export function windowsOpenedBy(
     case 'AgendaAdvanced':
     case 'ActAdvanced':
       return [{ window: { kind: 'advanced' }, cardId: event.cardId }];
+    case 'TokensChanged':
+      if (event.delta <= 0) return [];
+      return [{ window: { kind: 'tokensPlaced', token: event.token }, cardId: event.cardId }];
     case 'EnemyDefeated': {
       const enemy = requireCard(state.cards, event.enemyId).code;
       const self: OpenedWindow = {
@@ -559,6 +573,10 @@ function conditionHolds(
     }
     case 'enemiesInPlay':
       return inRange(enemiesOnTable(ctx, state, condition.trait).length, condition);
+    case 'tokensOnSelf': {
+      const held = state.cards[opened.cardId]?.tokens[condition.token] ?? 0;
+      return held >= resolveValue(condition.atLeast, state.meta.playerCount);
+    }
     default:
       return assertNever(condition);
   }
@@ -1013,6 +1031,24 @@ export function atEndOfRound(...effects: AbilityEffect[]): Ability {
  */
 export function whenEnemyDefeated(enemy: CardCode, ...effects: AbilityEffect[]): Ability {
   return { window: { kind: 'enemyDefeated', enemy }, effects };
+}
+
+/**
+ * "Objective – If there are 2 clues per investigator on this Act, advance": `effects` resolve
+ * once tokens placed on the card bring it to `atLeast` tokens of `token`, written
+ * `whenTokensOnSelf('clue', perInvestigator(2), advanceAct())`. Checked as tokens arrive
+ * (`tokensPlaced`), so it fires on the placement that reaches the count.
+ */
+export function whenTokensOnSelf(
+  token: TokenKind,
+  atLeast: ScaledValue,
+  ...effects: AbilityEffect[]
+): Ability {
+  return {
+    window: { kind: 'tokensPlaced', token },
+    condition: { kind: 'tokensOnSelf', token, atLeast },
+    effects,
+  };
 }
 
 /**
