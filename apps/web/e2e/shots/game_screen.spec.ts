@@ -10,7 +10,7 @@ import {
 
 // Situations on the game screen, each photographed as it ends (`@shot`, coding guidelines §3).
 
-test('the house map with Roland Banks in the Hallway', async ({ page }) => {
+test('the house map with Roland Banks in the Hallway', { tag: '@shot' }, async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   const hallway = page
@@ -138,18 +138,16 @@ test("the Ghoul Priest's details opened from its card on Roland Banks' turn", as
   await expect(page.getByRole('dialog', { name: 'Ghoul Priest' })).toBeVisible();
 });
 
-test(
-  'the encounter deck after two mythos phases, Dissonant Voices on the discard pile',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'Two mythos draws', mythosDrawnExport('Two mythos draws'));
+test('the encounter deck after two mythos phases, Dissonant Voices on the discard pile', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'Two mythos draws', mythosDrawnExport('Two mythos draws'));
 
-    const deck = page.getByRole('region', { name: 'Encounter deck' });
-    await expect(
-      deck.getByRole('img', { name: '24 cards left in the encounter deck' }),
-    ).toBeVisible();
-    await expect(
-      deck.getByRole('img', { name: 'Encounter discard pile, 1 card, Dissonant Voices on top' }),
-    ).toBeVisible();
-  },
-);
+  const deck = page.getByRole('region', { name: 'Encounter deck' });
+  await expect(
+    deck.getByRole('img', { name: '24 cards left in the encounter deck' }),
+  ).toBeVisible();
+  await expect(
+    deck.getByRole('img', { name: 'Encounter discard pile, 1 card, Dissonant Voices on top' }),
+  ).toBeVisible();
+});

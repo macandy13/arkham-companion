@@ -61,8 +61,9 @@ jobs:
           command -v ffmpeg || sudo apt-get install -y --no-install-recommends ffmpeg
       # Records the base commit's tagged specs too, so the render step can leave out every spec
       # whose picture (a shot, or a flow's end state) this PR doesn't change, including specs an
-      # earlier PR left tagged on main. Its own install, so the base builds with its own packages.
-      # If the base run fails, every tagged spec is shown.
+      # earlier PR left tagged on main. Its own install and its own `e2e:screencast` script, so the
+      # base builds with its own packages and records with its own projects (naming a project the
+      # base doesn't have would fail its run). Specs the base run doesn't photograph are all shown.
       - if: steps.changes.outputs.web == 'true'
         timeout-minutes: 15
         continue-on-error: true
@@ -73,10 +74,11 @@ jobs:
               { cp -r apps/web/e2e/.card_pictures "$RUNNER_TEMP/base/apps/web/e2e/" ||
                 echo "::notice::No cached card pictures; the base run downloads them."; } &&
               cd "$RUNNER_TEMP/base" && pnpm install --frozen-lockfile --prefer-offline &&
-              cd apps/web && PLAYWRIGHT_JSON_OUTPUT_FILE="$GITHUB_WORKSPACE/apps/web/screencasts/base.json" \
-                pnpm exec playwright test --project=screencast --project=screenshot --reporter=json --pass-with-no-tests); then
+              pnpm --filter @arkham/web e2e:screencast); then
             echo "::warning::The base commit's run failed; specs it didn't photograph are all shown."
           fi
+          cp "$RUNNER_TEMP/base/apps/web/screencasts/report.json" apps/web/screencasts/base.json ||
+            echo "::warning::The base commit's run wrote no report; every tagged spec is shown."
       # Recorded before the preview build: Playwright builds with the root base path,
       # and the preview build below empties dist/ anyway.
       - if: steps.changes.outputs.web == 'true'

@@ -8,14 +8,25 @@ const tablet = {
   hasTouch: true,
 };
 
+// Phone portrait, the size the phone play screen is designed for (M3.14, 390 px like its
+// prototype). Screenshots only: flows stay on the tablet.
+const phone = {
+  ...devices['Desktop Chrome'],
+  viewport: { width: 390, height: 844 },
+  deviceScaleFactor: 2,
+  isMobile: true,
+  hasTouch: true,
+};
+
 // Lets local/cloud sessions use a preinstalled Chromium instead of downloading one.
 const executablePath = process.env.PW_CHROMIUM_PATH;
 
 /**
  * E2E tests run against the production build (`vite preview`), the same bundle users get.
  * `tablet-landscape` runs every spec (`pnpm e2e`). For the PR description, `screencast`
- * re-runs only the specs tagged `@flow`, slowed down and recorded, and `screenshot` only the
- * specs tagged `@shot`, photographed as they end (`pnpm e2e:screencast`, see docs/automation.md).
+ * re-runs only the specs tagged `@flow`, slowed down and recorded, and `screenshot` and
+ * `screenshot-phone` only the specs tagged `@shot`, photographed as they end on the tablet and on
+ * a phone (`pnpm e2e:screencast`, see docs/automation.md).
  */
 export default defineConfig({
   testDir: './e2e',
@@ -63,6 +74,12 @@ export default defineConfig({
       grep: /@shot/,
       outputDir: 'test-results/screenshot',
       use: { ...tablet, screenshot: 'on', launchOptions: { executablePath } },
+    },
+    {
+      name: RECORDING_PROJECTS.phoneShots,
+      grep: /@shot/,
+      outputDir: 'test-results/screenshot-phone',
+      use: { ...phone, screenshot: 'on', launchOptions: { executablePath } },
     },
   ],
   webServer: {

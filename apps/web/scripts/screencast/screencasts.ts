@@ -64,21 +64,48 @@ export interface FlowVideo {
 }
 
 /**
- * One screenshot spec (tagged `@shot`). `imagePath` is the `.png` Playwright took when the
- * test ended, or `undefined` when the spec did not pass.
+ * One screenshot spec (tagged `@shot`). `pictures` holds, per device, the `.png` Playwright
+ * took when the test ended, or `undefined` when the spec did not pass on that device.
  */
 export interface Screenshot {
   readonly title: string;
   readonly slug: string;
-  readonly imagePath: string | undefined;
+  readonly pictures: Readonly<Record<ShotDevice, string | undefined>>;
 }
 
 /**
  * The Playwright projects that record for the PR (`playwright.config.ts`): `screencast` films
- * the `@flow` specs, `screenshot` photographs the `@shot` specs as they end. Both run in one
- * report, so each spec is read from its own project only.
+ * the `@flow` specs, `screenshot` and `screenshot-phone` photograph the `@shot` specs as they
+ * end, on the tablet and on a phone. All run in one report, so each spec is read from its own
+ * projects only.
  */
-export const RECORDING_PROJECTS = { flows: 'screencast', shots: 'screenshot' } as const;
+export const RECORDING_PROJECTS = {
+  flows: 'screencast',
+  shots: 'screenshot',
+  phoneShots: 'screenshot-phone',
+} as const;
+
+/** The screens every `@shot` spec is photographed on, shown side by side in the PR. */
+export type ShotDevice = 'desktop' | 'phone';
+
+/**
+ * Per device: the project that photographs it, its column heading, and the width it is shown
+ * at. The widths give both pictures about the same height (tablet 1180×820, phone 390×844),
+ * and side by side they still fit the PR description's column.
+ */
+export const SHOT_DEVICES: Readonly<
+  Record<ShotDevice, { project: string; label: string; width: number }>
+> = {
+  desktop: { project: RECORDING_PROJECTS.shots, label: 'Desktop', width: 560 },
+  phone: { project: RECORDING_PROJECTS.phoneShots, label: 'Phone', width: 180 },
+};
+
+const SHOT_DEVICE_NAMES = Object.keys(SHOT_DEVICES) as ShotDevice[];
+
+/** The published file name of one device's picture of a shot (`map-tabs-phone.png`). */
+export function shotFile(slug: string, device: ShotDevice): string {
+  return `${slug}-${device}.png`;
+}
 
 /**
  * The base commit's run of the same projects (`playwright test` on the merge commit's first
@@ -98,7 +125,7 @@ const NO_BASE: BaseRun = { report: {}, samePicture: () => false };
  * attempt, leaving out flows whose end state `base` shows unchanged.
  */
 export function flowVideos(report: PlaywrightReport, base: BaseRun = NO_BASE): FlowVideo[] {
-  return changedSpecs(report, RECORDING_PROJECTS.flows, base).map((spec) => ({
+  return changedSpecs(report, [RECORDING_PROJECTS.flows], base).map((spec) => ({
     title: spec.title,
     slug: slugify(spec.title),
     videoPath: passingAttachment(spec, RECORDING_PROJECTS.flows, 'video'),
@@ -107,35 +134,56 @@ export function flowVideos(report: PlaywrightReport, base: BaseRun = NO_BASE): F
 
 /**
  * Flattens the report into one entry per screenshot spec, in report order, using the last
- * passing attempt, leaving out shots whose picture `base` shows unchanged.
+ * passing attempt per device, leaving out shots whose pictures `base` shows unchanged on every
+ * device.
  */
 export function screenshots(report: PlaywrightReport, base: BaseRun = NO_BASE): Screenshot[] {
-  return changedSpecs(report, RECORDING_PROJECTS.shots, base).map((spec) => ({
+  const projects = SHOT_DEVICE_NAMES.map((device) => SHOT_DEVICES[device].project);
+  return changedSpecs(report, projects, base).map((spec) => ({
     title: spec.title,
     slug: slugify(spec.title),
-    imagePath: passingAttachment(spec, RECORDING_PROJECTS.shots, 'screenshot'),
+    pictures: {
+      desktop: passingAttachment(spec, SHOT_DEVICES.desktop.project, 'screenshot'),
+      phone: passingAttachment(spec, SHOT_DEVICES.phone.project, 'screenshot'),
+    },
   }));
 }
 
-function changedSpecs(report: PlaywrightReport, project: string, base: BaseRun): ReportSpec[] {
-  const basePictures = new Map(
-    specsIn(base.report, project).map((spec) => [
-      specKey(spec),
-      passingAttachment(spec, project, 'screenshot'),
-    ]),
+/**
+ * The specs `projects` record, in report order, except those whose last picture in every one of
+ * the projects is the same in `base`.
+ */
+function changedSpecs(
+  report: PlaywrightReport,
+  projects: readonly string[],
+  base: BaseRun,
+): ReportSpec[] {
+  const baseSpecs = new Map(specsIn(base.report, projects).map((spec) => [specKey(spec), spec]));
+  return specsIn(report, projects).filter((spec) =>
+    projects.some((project) => {
+      if (!spec.tests.some((test) => test.projectName === project)) return false;
+      const headPicture = passingAttachment(spec, project, 'screenshot');
+      const baseSpec = baseSpecs.get(specKey(spec));
+      const basePicture = baseSpec && passingAttachment(baseSpec, project, 'screenshot');
+      // A missing picture on either side (failed run, spec or device new to the PR) can't prove "unchanged".
+      return !headPicture || !basePicture || !base.samePicture(headPicture, basePicture);
+    }),
   );
-  return specsIn(report, project).filter((spec) => {
-    const headPicture = passingAttachment(spec, project, 'screenshot');
-    const basePicture = basePictures.get(specKey(spec));
-    // A missing picture on either side (failed run, spec new to the PR) can't prove "unchanged".
-    return !headPicture || !basePicture || !base.samePicture(headPicture, basePicture);
-  });
 }
 
-function specsIn(report: PlaywrightReport, project: string): ReportSpec[] {
-  return allSpecs(report.suites ?? []).filter((spec) =>
-    spec.tests.some((test) => test.projectName === project),
-  );
+/**
+ * One spec per file and title that `projects` ran, in report order. Playwright lists a spec once
+ * per project, so the runs of the same spec are merged into one entry holding all their tests.
+ */
+function specsIn(report: PlaywrightReport, projects: readonly string[]): ReportSpec[] {
+  const merged = new Map<string, ReportSpec>();
+  for (const spec of allSpecs(report.suites ?? [])) {
+    const tests = spec.tests.filter((test) => projects.includes(test.projectName));
+    if (tests.length === 0) continue;
+    const earlier = merged.get(specKey(spec));
+    merged.set(specKey(spec), { ...spec, tests: [...(earlier?.tests ?? []), ...tests] });
+  }
+  return [...merged.values()];
 }
 
 // The leaf title is enough: specs repeating a title in one file would already collide on their slug.
@@ -182,7 +230,8 @@ export function gifArgs({ input, output }: { input: string; output: string }): s
 }
 
 /**
- * The Markdown section (including its markers) listing every screenshot inline, then every
+ * The Markdown section (including its markers) listing every screenshot inline, desktop and
+ * phone side by side, then every
  * flow with an inline GIF and a link to the player page, which plays the full-quality video
  * with pause, seeking and speed; just the markers when nothing is tagged, which empties a
  * section an earlier push wrote. `version` (the commit) is appended as a query string
@@ -204,8 +253,25 @@ export function renderSection({
   const base = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
   const shotEntries = shots.map((shot) => {
     const heading = `### ${shot.title}`;
-    if (!shot.imagePath) return `${heading}\n\n_Not taken: the spec failed, see the E2E check._`;
-    return `${heading}\n\n![${shot.title}](${base}${shot.slug}.png?v=${version})`;
+    const notTaken = 'Not taken: the spec failed, see the E2E check.';
+    if (SHOT_DEVICE_NAMES.every((device) => !shot.pictures[device]))
+      return `${heading}\n\n_${notTaken}_`;
+    // HTML rather than a Markdown table: only `width` keeps both pictures side by side at sizes that match.
+    const cell = (device: ShotDevice) => {
+      const { label, width } = SHOT_DEVICES[device];
+      if (!shot.pictures[device]) return `<td>${notTaken}</td>`;
+      const src = `${base}${shotFile(shot.slug, device)}?v=${version}`;
+      return `<td><img src="${src}" alt="${label}" width="${width}"></td>`;
+    };
+    const headings = SHOT_DEVICE_NAMES.map((device) => `<th>${SHOT_DEVICES[device].label}</th>`);
+    return [
+      heading,
+      '',
+      '<table>',
+      `<tr>${headings.join('')}</tr>`,
+      `<tr>${SHOT_DEVICE_NAMES.map(cell).join('')}</tr>`,
+      '</table>',
+    ].join('\n');
   });
   const flowEntries = flows.map((flow) => {
     const heading = `### ${flow.title}`;

@@ -100,16 +100,67 @@ describe('screenshots', () => {
     };
 
     expect(screenshots(report)).toEqual([
-      { title: 'Map tabs', slug: 'map-tabs', imagePath: '/tabs.png' },
+      {
+        title: 'Map tabs',
+        slug: 'map-tabs',
+        pictures: { desktop: '/tabs.png', phone: undefined },
+      },
     ]);
     expect(flowVideos(report)).toEqual([
       { title: 'Read the map', slug: 'read-the-map', videoPath: '/map.webm' },
     ]);
   });
+
+  it('takes the desktop picture from screenshot and the phone picture from screenshot-phone', () => {
+    // Playwright lists the spec once per project.
+    const report: PlaywrightReport = {
+      suites: [
+        {
+          specs: [
+            {
+              title: 'Map tabs',
+              file: 'map.spec.ts',
+              tests: [
+                {
+                  projectName: 'screenshot',
+                  results: [
+                    { status: 'passed', attachments: [{ name: 'screenshot', path: '/wide.png' }] },
+                  ],
+                },
+              ],
+            },
+            {
+              title: 'Map tabs',
+              file: 'map.spec.ts',
+              tests: [
+                {
+                  projectName: 'screenshot-phone',
+                  results: [
+                    {
+                      status: 'passed',
+                      attachments: [{ name: 'screenshot', path: '/narrow.png' }],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(screenshots(report)).toEqual([
+      {
+        title: 'Map tabs',
+        slug: 'map-tabs',
+        pictures: { desktop: '/wide.png', phone: '/narrow.png' },
+      },
+    ]);
+  });
 });
 
 describe('specs the base also records', () => {
-  const shot = (file: string, title: string, picture: string) => ({
+  const shot = (file: string, title: string, picture: string, phonePicture?: string) => ({
     title,
     file,
     tests: [
@@ -117,6 +168,16 @@ describe('specs the base also records', () => {
         projectName: 'screenshot',
         results: [{ status: 'passed', attachments: [{ name: 'screenshot', path: picture }] }],
       },
+      ...(phonePicture
+        ? [
+            {
+              projectName: 'screenshot-phone',
+              results: [
+                { status: 'passed', attachments: [{ name: 'screenshot', path: phonePicture }] },
+              ],
+            },
+          ]
+        : []),
     ],
   });
   const flow = (file: string, title: string, video: string, endPicture: string) => ({
@@ -190,8 +251,39 @@ describe('specs the base also records', () => {
     };
 
     expect(screenshots(head, { report: base, samePicture })).toEqual([
-      { title: 'broken attic', slug: 'broken-attic', imagePath: undefined },
+      {
+        title: 'broken attic',
+        slug: 'broken-attic',
+        pictures: { desktop: undefined, phone: undefined },
+      },
     ]);
+  });
+
+  it.each([
+    { name: 'both pictures are unchanged', headPhone: '/head/phone_old.png', shown: [] },
+    { name: 'only the phone picture changed', headPhone: '/head/phone_new.png', shown: ['attic'] },
+  ])('compare a shot on every device: shown unless $name', ({ headPhone, shown }) => {
+    const head: PlaywrightReport = {
+      suites: [{ specs: [shot('map.spec.ts', 'attic', '/head/desk_old.png', headPhone)] }],
+    };
+    const base: PlaywrightReport = {
+      suites: [
+        { specs: [shot('map.spec.ts', 'attic', '/base/desk_old.png', '/base/phone_old.png')] },
+      ],
+    };
+
+    expect(screenshots(head, { report: base, samePicture }).map((s) => s.title)).toEqual(shown);
+  });
+
+  it('show a shot the base took on the desktop only, since its phone picture is new', () => {
+    const head: PlaywrightReport = {
+      suites: [{ specs: [shot('map.spec.ts', 'attic', '/head/desk.png', '/head/phone.png')] }],
+    };
+    const base: PlaywrightReport = {
+      suites: [{ specs: [shot('map.spec.ts', 'attic', '/base/desk.png')] }],
+    };
+
+    expect(screenshots(head, { report: base, samePicture }).map((s) => s.title)).toEqual(['attic']);
   });
 
   it.each([
@@ -305,28 +397,65 @@ describe('renderSection', () => {
     );
   });
 
-  it('embeds a cache-busted screenshot above the screencasts', () => {
+  it('shows the desktop and phone screenshots side by side, cache-busted, above the screencasts', () => {
     const section = renderSection({
       flows: [recorded],
-      shots: [{ title: 'Map tabs', slug: 'map-tabs', imagePath: '/tabs.png' }],
+      shots: [
+        {
+          title: 'Map tabs',
+          slug: 'map-tabs',
+          pictures: { desktop: '/wide.png', phone: '/narrow.png' },
+        },
+      ],
       baseUrl: 'https://x.test/s',
       version: 'abc123',
     });
 
-    expect(section).toContain('![Map tabs](https://x.test/s/map-tabs.png?v=abc123)');
+    expect(section).toContain(
+      [
+        '### Map tabs',
+        '',
+        '<table>',
+        '<tr><th>Desktop</th><th>Phone</th></tr>',
+        '<tr><td><img src="https://x.test/s/map-tabs-desktop.png?v=abc123" alt="Desktop" width="560"></td>' +
+          '<td><img src="https://x.test/s/map-tabs-phone.png?v=abc123" alt="Phone" width="180"></td></tr>',
+        '</table>',
+      ].join('\n'),
+    );
     expect(section.indexOf('## Screenshots')).toBeLessThan(section.indexOf('## Screencasts'));
+  });
+
+  it('notes a device whose screenshot failed next to the one that was taken', () => {
+    const section = renderSection({
+      flows: [],
+      shots: [
+        {
+          title: 'Map tabs',
+          slug: 'map-tabs',
+          pictures: { desktop: '/wide.png', phone: undefined },
+        },
+      ],
+      baseUrl: 'https://x.test/s',
+      version: 'abc123',
+    });
+
+    expect(section).toContain('map-tabs-desktop.png');
+    expect(section).toContain('<td>Not taken: the spec failed, see the E2E check.</td>');
+    expect(section).not.toContain('map-tabs-phone.png');
   });
 
   it('notes a failed screenshot instead of linking a missing file', () => {
     const section = renderSection({
       flows: [],
-      shots: [{ title: 'Map tabs', slug: 'map-tabs', imagePath: undefined }],
+      shots: [
+        { title: 'Map tabs', slug: 'map-tabs', pictures: { desktop: undefined, phone: undefined } },
+      ],
       baseUrl: 'https://x.test/s',
       version: 'abc123',
     });
 
     expect(section).toContain('Not taken');
-    expect(section).not.toContain('map-tabs.png');
+    expect(section).not.toContain('<table>');
     expect(section).not.toContain('## Screencasts');
   });
 
