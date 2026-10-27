@@ -108,7 +108,10 @@ export function EncounterDialog({
   );
 }
 
-/** How many cards of a pile the dialog shows side by side; more scroll, a whole card at a time. */
+/**
+ * How many cards of a pile the dialog shows side by side; more scroll, a whole card at a time.
+ * `--encounter-strip-cards-shown` in tokens.css sizes the row to match.
+ */
 const STRIP_CARDS_SHOWN = 5;
 
 /**

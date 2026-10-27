@@ -378,7 +378,8 @@ describe('HeaderPile', () => {
 
     expect(dialog.getByRole('button', { name: 'Ghoul Priest', pressed: true })).toBeTruthy();
     const chosen = dialog.getByRole('region', { name: 'Ghoul Priest' });
-    expect(chosen.querySelector('h3')?.textContent).toBe('Ghoul Priest2 victory points');
+    expect(within(chosen).getByRole('heading', { name: /^Ghoul Priest/ })).toBeTruthy();
+    expect(chosen.querySelector('data')?.value).toBe('2');
   });
 
   it.each([
