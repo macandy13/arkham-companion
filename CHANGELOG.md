@@ -54,6 +54,8 @@ The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: 
 * **web:** resource, draw and play buttons in the turn row (M3.7g2) ([bd28ad1](https://github.com/macandy13/arkham-companion/commit/bd28ad18bbd54a349ca51f4e9903862a51139551))
 * **web:** show a pile's cards as a row with scroll arrows (M3.6i) ([8fbd8cb](https://github.com/macandy13/arkham-companion/commit/8fbd8cb57997ce19de575e3e7807f5fbdd55c933))
 * **web:** show a pile's cards as a row with scroll arrows in the encounter dialog ([78ff0b7](https://github.com/macandy13/arkham-companion/commit/78ff0b7f283d1c641f9667313037ad918d586187))
+* **web:** spawn an enemy from a pile where the players tap on the map ([fbb3b1b](https://github.com/macandy13/arkham-companion/commit/fbb3b1b6841a07d04369ad27d03847acf097318b))
+* **web:** spawn an enemy where the players tap on the map (M3.6j) ([d2b4ef2](https://github.com/macandy13/arkham-companion/commit/d2b4ef2367595f5c6adadd6cd64f2b70549dd50e))
 
 
 ### Bug fixes
@@ -89,6 +91,7 @@ The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: 
 * **web:** review nits on the header's encounter piles ([ee67f74](https://github.com/macandy13/arkham-companion/commit/ee67f743512063bc4a1f4da4e595745171a26b57))
 * **web:** review nits on the phone screenshots ([3a29599](https://github.com/macandy13/arkham-companion/commit/3a29599b39a5cf8a04743693174f60c85b37a330))
 * **web:** review nits on the pile strip ([033364b](https://github.com/macandy13/arkham-companion/commit/033364bdfb69d7a54d9b2df2b248bed62cc0a1fd))
+* **web:** Spawn is a cardMoves result; review nits ([2ce8825](https://github.com/macandy13/arkham-companion/commit/2ce88254f31007e5d1a9ffb0924ac0c951710882))
 
 
 ### Documentation
