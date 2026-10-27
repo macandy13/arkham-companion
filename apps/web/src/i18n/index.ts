@@ -58,6 +58,8 @@ export const resources = {
           step: '{{investigator}}: {{what}}. Please do it by hand.',
           draw_one: 'draw 1 card',
           draw_other: 'draw {{count}} cards',
+          discard_one: 'choose and discard 1 card from your hand',
+          discard_other: 'choose and discard {{count}} cards from your hand',
           search:
             'search your deck for a card with the trait {{traits}}, add it to your hand and shuffle your deck',
           searchTop:
@@ -565,6 +567,8 @@ export const resources = {
           step: '{{investigator}}: {{what}}. Bitte von Hand erledigen.',
           draw_one: 'Ziehe 1 Karte',
           draw_other: 'Ziehe {{count}} Karten',
+          discard_one: 'Wähle 1 Karte aus deiner Hand und wirf sie ab',
+          discard_other: 'Wähle {{count}} Karten aus deiner Hand und wirf sie ab',
           search:
             'Durchsuche dein Deck nach einer Karte mit dem Merkmal {{traits}}, nimm sie auf die Hand und mische dein Deck',
           searchTop:

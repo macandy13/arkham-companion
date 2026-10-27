@@ -388,6 +388,31 @@ describe('The Midnight Masks card abilities', () => {
     });
   });
 
+  it('adds Herman Collins to the victory display, leaving alice’s 4 discards to the players', () => {
+    const herman = instanceId('herman');
+    const { context, state } = newGame()
+      .withLocation(rivertown, cardOf('01125'), { revealed: true })
+      .withInvestigator(alice, { locationId: rivertown })
+      .withCard(herman, cardOf('01138'), engagedWith(alice))
+      .withTurnOf(alice)
+      .start();
+
+    const { state: after, events } = execute(context, state, {
+      type: 'UseCardAction',
+      investigatorId: alice,
+      cardId: herman,
+      action: 0,
+      asAction: true,
+    });
+
+    expect(after.cards[herman]?.zone).toEqual({ kind: 'victoryDisplay' });
+    expect(requireInvestigator(after, alice)).toMatchObject({ health: { damage: 0 } });
+    expect(events).toContainEqual({
+      type: 'CommandDeferred',
+      command: { type: 'DiscardFromHand', investigatorId: alice, amount: 4 },
+    });
+  });
+
   describe('Hunting Shadow', () => {
     const shadow = instanceId('hunting_shadow');
 
