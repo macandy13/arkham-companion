@@ -4,7 +4,7 @@ For the `pr-reviewer` subagent, which Claude sessions run on their branch before
 
 ## Blocking: always flag
 
-- **Game rules.** Behaviour that contradicts `docs/rules.md` or the Rules Reference, or a rule choice the players make at the table that the code picks silently instead of raising a `Decision`. Quote the rule.
+- **Game rules.** Behaviour that contradicts the rules summary (`docs/rules/`) or the Rules Reference, or a rule choice the players make at the table that the code picks silently instead of raising a `Decision`. Quote the rule.
 - **Ground rules.** Engine purity (no React, DOM, IndexedDB, fetch, `Date.now()`, `Math.random()`); state changes outside Command → Events → reducer; storage outside `GameStore`; ArkhamDB card JSON, card text or images in the repo.
 - **Test readability** (coding guidelines §3):
   - a test that can't be understood from its body plus the `describe` right above it;
