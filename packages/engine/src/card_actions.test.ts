@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  advanceBySpendingClues,
   atLocation,
+  blankAct,
   blankAgenda,
   blankEnemy,
   blankLocation,
@@ -494,6 +496,50 @@ describe('action conditions', () => {
       action: 0,
       investigatorId: alice,
     });
+  });
+});
+
+describe('advancing the act by spending clues', () => {
+  const firstAct = instanceId('first_act');
+  /**
+   * The first act advances for 1 clue per investigator, spent as a group; alice and bob hold 1
+   * clue each in the hall, before anyone's turn.
+   */
+  const firstActForOneCluePerInvestigator = newGame()
+    .withLocation(hall, blankLocation('hall'), { revealed: true })
+    .withAct(
+      firstAct,
+      blankAct('first_act', { actions: [advanceBySpendingClues(perInvestigator(1))] }),
+    )
+    .withAct(instanceId('second_act'), blankAct('second_act'))
+    .withInvestigator(alice, { locationId: hall, clues: 1 })
+    .withInvestigator(bob, { locationId: hall, clues: 1 });
+
+  it('lets alice advance it in bob`s turn, both paying a clue', () => {
+    const table = PlayTable.start(firstActForOneCluePerInvestigator.withTurnOf(bob));
+
+    table.play(useCardAction(alice, firstAct));
+
+    expect(table.board.act?.name).toBe('second_act');
+    expect(table.board.perInvestigator('clues')).toEqual({ alice: 0, bob: 0 });
+  });
+
+  it('neither offers nor accepts it before anyone`s turn', () => {
+    const table = PlayTable.start(firstActForOneCluePerInvestigator);
+
+    expect(table.board.cardActions(alice)).toEqual([]);
+    expect(rejectionFrom(table.ctx, table.state, useCardAction(alice, firstAct))).toEqual({
+      code: 'cardActionConditionUnmet',
+      cardId: firstAct,
+      action: 0,
+      investigatorId: alice,
+    });
+  });
+
+  it('shows its clues for two investigators as the act`s threshold', () => {
+    const table = PlayTable.start(firstActForOneCluePerInvestigator);
+
+    expect(table.board.act).toMatchObject({ name: 'first_act', threshold: 2 });
   });
 });
 

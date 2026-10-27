@@ -3,6 +3,7 @@ import { isConnectionOpen, neighbours } from './board';
 import { tokenObjective } from './abilities';
 import {
   cardActionsOfferedTo,
+  cluesToAdvance,
   printedActions,
   type OfferedCardAction,
   type PrintedActionView,
@@ -1006,7 +1007,7 @@ function actView(ctx: EngineContext, state: GameState): ActView | undefined {
   const act = currentCard(state, 'act');
   if (!act) return undefined;
   const stats = cardStats(ctx.cards, act.code);
-  const threshold = tokenObjective(stats, 'clue') ?? stats.clues;
+  const threshold = tokenObjective(stats, 'clue') ?? cluesToAdvance(stats) ?? stats.clues;
   return {
     id: act.id,
     name: nameOf(ctx, act),
