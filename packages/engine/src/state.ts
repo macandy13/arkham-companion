@@ -5,10 +5,13 @@ import type {
   AdvanceAgenda,
   Command,
   CommandType,
+  DrawCards,
   DrawEncounter,
   EngageEnemy,
+  GainResources,
   Investigate,
   MoveInvestigator,
+  PlayCard,
   UseCardAction,
 } from './commands';
 import {
@@ -601,7 +604,14 @@ export type QueuedStep =
  * The actions the engine sees that provoke attacks of opportunity
  * (`attackOfOpportunityDecisions`), which wait for those attacks.
  */
-export type HeldAction = MoveInvestigator | Investigate | EngageEnemy | UseCardAction;
+export type HeldAction =
+  | MoveInvestigator
+  | Investigate
+  | EngageEnemy
+  | UseCardAction
+  | GainResources
+  | DrawCards
+  | PlayCard;
 
 /**
  * Complete state of one scenario in play. Only ever produced by the reducer
