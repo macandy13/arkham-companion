@@ -75,6 +75,22 @@ export function isReviewable(pr: ListedPr): boolean {
   return !pr.draft && !pr.fromFork && !pr.headRef.startsWith('release-please--');
 }
 
+/** Whether a PR merges into its base without conflicts; `unknown` while GitHub still checks. */
+export type Mergeable = 'clean' | 'conflicts' | 'unknown';
+
+/**
+ * Combines GitHub's `mergeable` flag (null until GitHub has test-merged the current head
+ * and base) with the `needs-rebase` label from `pr-sync.yml`. Either one saying "conflict"
+ * wins: the label can be newer than the flag GitHub last computed, and the reverse.
+ */
+export function mergeability(
+  githubMergeable: boolean | null,
+  labels: readonly string[],
+): Mergeable {
+  if (githubMergeable === false || labels.includes('needs-rebase')) return 'conflicts';
+  return githubMergeable === null ? 'unknown' : 'clean';
+}
+
 /** What the queue needs to know about one reviewable PR; `cli.ts` reads it from GitHub. */
 export interface OpenPr {
   readonly number: number;
@@ -83,8 +99,7 @@ export interface OpenPr {
   readonly baseRef: string;
   readonly headRef: string;
   readonly checks: CheckState;
-  /** Labelled `needs-rebase` by `pr-sync.yml`: the branch conflicts with its base. */
-  readonly conflicts: boolean;
+  readonly mergeable: Mergeable;
 }
 
 /** A PR in the queue, with the open PR it is stacked on, if any. */
@@ -100,9 +115,9 @@ export interface QueueEntry {
  * owner too, so no review state tells whether the owner has looked.
  */
 export interface ReviewQueue {
-  /** Checks passed and no conflicts. */
+  /** Checks passed and known to merge without conflicts. */
   readonly queue: readonly QueueEntry[];
-  /** Checks running or failed, none at all, or conflicts. */
+  /** Checks running or failed, none at all, conflicts, or mergeability still unknown. */
   readonly notReady: readonly OpenPr[];
 }
 
@@ -115,7 +130,7 @@ export function buildQueue(prs: readonly OpenPr[]): ReviewQueue {
   const queue: QueueEntry[] = [];
   const notReady: OpenPr[] = [];
   for (const pr of mergeOrder(prs)) {
-    if (pr.checks.kind === 'passed' && !pr.conflicts) {
+    if (pr.checks.kind === 'passed' && pr.mergeable === 'clean') {
       queue.push({ pr, stackedOn: byHead.get(pr.baseRef) });
     } else {
       notReady.push(pr);
