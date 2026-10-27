@@ -463,6 +463,43 @@ describe('GameScreen on a phone held upright', () => {
     ]);
   });
 
+  it('opens the detail view on the map from its expand button', async () => {
+    await renderTheGathering('phone-map-test');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show the map on the whole screen' }));
+
+    expect(board()?.getAttribute('data-view')).toBe('detail');
+    expect(scrolledTo).toEqual([document.getElementById('map')]);
+  });
+
+  it.each([
+    {
+      strip: 'the cards',
+      db: 'phone-cards-strip-test',
+      name: 'Doom 0 / 3, Clues 0 / 2, 26 cards left in the encounter deck, Setup',
+      row: () => board()?.querySelector('header'),
+      item: () => screen.getByRole('region', { name: 'Agenda' }),
+    },
+    {
+      strip: "Alder's panel",
+      db: 'phone-investigator-strip-test',
+      name: 'Alder, Health 6/6, Sanity 8/8, Clues 0, Resources 5, Willpower 3, Intellect 3, Combat 3, Agility 3',
+      row: () => document.getElementById('investigators'),
+      item: () => screen.getByRole('region', { name: 'Alder' }),
+    },
+  ])(
+    'names the numbers of $strip on its strip over the map, and goes there from it',
+    async ({ db, name, row, item }) => {
+      await renderTheGathering(db);
+      fireEvent.click(screen.getByRole('button', { name: 'Show the map on the whole screen' }));
+      scrolledTo = [];
+
+      fireEvent.click(screen.getByRole('button', { name }));
+
+      expect(scrolledTo).toEqual([row(), item()]);
+    },
+  );
+
   it.each([
     {
       way: 'the ×',

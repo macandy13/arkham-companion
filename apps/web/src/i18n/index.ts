@@ -8,6 +8,7 @@ export const resources = {
       app: { title: 'Arkham Companion' },
       detail: {
         close: 'Back to the overview',
+        openMap: 'Show the map on the whole screen',
       },
       header: {
         round: 'Round {{round}}',
@@ -601,6 +602,7 @@ export const resources = {
       app: { title: 'Arkham Companion' },
       detail: {
         close: 'Zurück zur Übersicht',
+        openMap: 'Karte auf dem ganzen Bildschirm zeigen',
       },
       header: {
         round: 'Runde {{round}}',

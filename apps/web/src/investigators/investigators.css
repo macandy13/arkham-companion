@@ -290,27 +290,28 @@
   mask: var(--stat-icon) center / contain no-repeat;
 }
 
-#investigators [data-stat='health'] {
+/* The counters' icons and colours; the detail view's map strips (MapStrip) show them too. */
+:is(#investigators, [data-strip]) [data-stat='health'] {
   --stat-icon: url('./icons/health.svg');
   --stat-colour: var(--color-health);
 }
 
-#investigators [data-stat='sanity'] {
+:is(#investigators, [data-strip]) [data-stat='sanity'] {
   --stat-icon: url('./icons/sanity.svg');
   --stat-colour: var(--color-sanity);
 }
 
-#investigators [data-stat='clues'] {
+:is(#investigators, [data-strip]) [data-stat='clues'] {
   --stat-icon: url('./icons/token.svg');
   --stat-colour: var(--color-clue);
 }
 
-#investigators [data-stat='resources'] {
+:is(#investigators, [data-strip]) [data-stat='resources'] {
   --stat-icon: url('./icons/token.svg');
   --stat-colour: var(--color-accent);
 }
 
-#investigators [data-stat='doom'] {
+:is(#investigators, [data-strip]) [data-stat='doom'] {
   --stat-icon: url('./icons/token.svg');
   --stat-colour: var(--color-doom);
 }

@@ -179,6 +179,7 @@ function InvestigatorPanel({
       data-status={investigator.status}
       data-turn={onTurn || undefined}
       data-focus={focused || undefined}
+      data-investigator={investigator.id}
     >
       <ThreatArea
         board={board}

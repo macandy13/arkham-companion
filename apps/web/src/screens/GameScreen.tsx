@@ -11,6 +11,7 @@ import { DecisionDialog } from './DecisionDialog';
 import { DetailControls } from './DetailControls';
 import { GameHeader } from './GameHeader';
 import { GameStatus } from './GameStatus';
+import { MapStrip } from './MapStrip';
 import { RejectionToast } from './RejectionToast';
 import { DrawnCardsNotice } from '../encounter/DrawnCardsNotice';
 import { SpawnPrompt } from '../encounter/SpawnPrompt';
@@ -26,8 +27,9 @@ import './game.css';
  * a game it cannot play (its scenario is not in the catalog) gets a warning instead of a board.
  *
  * On a phone held upright the board starts as the compact view (the stylesheet's phone blocks); a
- * tap on a header card or the investigator's name opens the detail view on it (`useDetailView`,
- * `data-view="detail"`), the same parts laid out as rows to swipe between (`DetailControls`).
+ * tap on a header card, the map's expand button or the investigator's name opens the detail view
+ * on it (`useDetailView`, `data-view="detail"`), the same parts laid out as rows to swipe between
+ * (`DetailControls`); the map row gets a strip above and below the map (`MapStrip`).
  */
 export function GameScreen({ store }: { store: StoreApi<AppState> }) {
   const { t } = useTranslation();
@@ -82,6 +84,16 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
       <GameStatus store={store} open={open} board={board} />
       <section id="map" aria-labelledby="map-title">
         <h2 id="map-title">{t('map.title')}</h2>
+        {opensDetail && (
+          <button
+            type="button"
+            data-icon="expand"
+            data-detail="expand"
+            aria-label={t('detail.openMap')}
+            onClick={() => detail.open({ row: 'map' })}
+          />
+        )}
+        {detailTarget && <MapStrip board={board} to="cards" onGo={detail.go} />}
         <MapBoard
           board={board}
           actions={store.getState().actions}
@@ -95,6 +107,7 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
             })
           }
         />
+        {detailTarget && <MapStrip board={board} to="investigators" onGo={detail.go} />}
       </section>
       <section id="investigators" aria-labelledby="investigators-title">
         <h2 id="investigators-title">{t('investigators.title')}</h2>

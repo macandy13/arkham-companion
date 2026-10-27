@@ -58,3 +58,58 @@ test('swipe through the detail view on a phone', { tag: '@flow' }, async ({ page
     await expect(page.getByRole('button', { name: 'Next' })).toBeVisible();
   });
 });
+
+// Journey: on a phone, open the map row from the compact map's expand button. Panning the map
+// keeps the row, since the map takes every touch; a swipe up from the strip below the map goes on
+// to the investigators, and a tap on the strip above it goes to the cards, on the agenda.
+test('pan the map and swipe on from its strips on a phone', { tag: '@flow' }, async ({ page }) => {
+  const board = page.locator('#board');
+  const rowDots = page.locator('ol[data-dots="rows"] > li');
+  const lowerStrip = page.locator('#map > button[data-strip="investigators"]');
+  const swipeUp = async (from: { x: number; y: number }) => {
+    const touch = await page.context().newCDPSession(page);
+    const at = (y: number) => [{ x: from.x, y }];
+    await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: at(from.y) });
+    for (const step of [1, 2, 3, 4, 5, 6])
+      await touch.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: at(from.y - step * 60),
+      });
+    await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  };
+
+  await test.step('Open the map on the whole screen', async () => {
+    await resumeImportedGame(
+      page,
+      'Roland Banks threatened',
+      rolandThreatenedExport('Roland Banks threatened'),
+    );
+    await page.getByRole('button', { name: 'Show the map on the whole screen' }).click();
+    await expect(board).toHaveAttribute('data-view', 'detail');
+    await expect(rowDots.nth(1)).toHaveAttribute('data-current');
+    await expect(lowerStrip).toHaveAccessibleName(/^Roland Banks, 3 actions left, Health /);
+  });
+
+  await test.step('Pan the map: the row stays', async () => {
+    const map = await page.getByRole('figure', { name: 'House' }).boundingBox();
+    if (!map) throw new Error('The map is not shown');
+    await swipeUp({ x: map.x + map.width / 2, y: map.y + map.height - 20 });
+    await expect(rowDots.nth(1)).toHaveAttribute('data-current');
+  });
+
+  await test.step('Swipe up from the strip below the map to the investigators', async () => {
+    const strip = await lowerStrip.boundingBox();
+    if (!strip) throw new Error('The strip is not shown');
+    await swipeUp({ x: strip.x + strip.width / 2, y: strip.y + strip.height / 2 });
+    await expect(rowDots.nth(2)).toHaveAttribute('data-current');
+    await expect(page.getByRole('region', { name: 'Roland Banks' })).toBeInViewport();
+  });
+
+  await test.step('Back on the map, tap the strip above it to go to the cards', async () => {
+    await board.evaluate((element) => element.scrollTo({ top: element.clientHeight }));
+    await expect(rowDots.nth(1)).toHaveAttribute('data-current');
+    await page.locator('#map > button[data-strip="cards"]').click();
+    await expect(page.getByRole('region', { name: 'Agenda' })).toBeInViewport({ ratio: 1 });
+    await expect(rowDots.nth(0)).toHaveAttribute('data-current');
+  });
+});
