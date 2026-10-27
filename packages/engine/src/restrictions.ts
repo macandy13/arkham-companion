@@ -1,6 +1,6 @@
 import { assertNever } from '@arkham/util';
 import { cardStats, type EngineContext } from './cards';
-import { isInPlay } from './doom';
+import { cardsInPlay } from './doom';
 import type { CardInstance, GameState } from './state';
 
 /**
@@ -35,7 +35,7 @@ export interface CardRestriction {
 }
 
 /**
- * Whether a card in play forbids `cannot` at `location` (Rules Reference, "Can't": a "cannot"
+ * Whether a card in play forbids `cannot` at `location` (Rules Reference, "Cannot": a "cannot"
  * outranks any effect that would allow it, so card effects that move an investigator are refused
  * as well as the move action).
  */
@@ -45,7 +45,7 @@ export function isRestricted(
   location: CardInstance,
   cannot: LocationRestriction,
 ): boolean {
-  return Object.values(state.cards).some((source) =>
+  return cardsInPlay(state).some((source) =>
     activeRestrictions(ctx, state, source).some(
       (restriction) => restriction.cannot === cannot && isAbout(source, restriction.of, location),
     ),
@@ -58,9 +58,12 @@ function activeRestrictions(
   source: CardInstance,
 ): readonly CardRestriction[] {
   const stats = cardStats(ctx.cards, source.code);
-  if (!stats.restrictions || !isInPlay(state, source)) return [];
+  if (!stats.restrictions) return [];
   if (stats.typeCode !== 'location') return stats.restrictions;
-  return stats.restrictions.filter((restriction) => !restriction.unrevealed === source.faceUp);
+  const onUnrevealedSide = !source.faceUp;
+  return stats.restrictions.filter(
+    (restriction) => (restriction.unrevealed === true) === onUnrevealedSide,
+  );
 }
 
 function isAbout(source: CardInstance, of: RestrictedLocation, location: CardInstance): boolean {

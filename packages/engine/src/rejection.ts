@@ -1,3 +1,4 @@
+import { assertNever } from '@arkham/util';
 import type { InvestigatorFate, StoryCondition } from './campaign/campaign_log';
 import type { CommandType } from './commands';
 import type {
@@ -352,9 +353,14 @@ function describe(r: Rejection): string {
     case 'notConnected':
       return `${r.from} is not connected to ${r.to}`;
     case 'restricted':
-      return r.cannot === 'moveInto'
-        ? `a card forbids moving into ${r.locationId}`
-        : `a card forbids investigating ${r.locationId}`;
+      switch (r.cannot) {
+        case 'moveInto':
+          return `a card forbids moving into ${r.locationId}`;
+        case 'investigate':
+          return `a card forbids investigating ${r.locationId}`;
+        default:
+          return assertNever(r.cannot);
+      }
     case 'alreadyAtLocation':
       return `investigator ${r.investigatorId} is already at ${r.locationId}`;
     case 'enemyEngaged':

@@ -8,6 +8,7 @@ import {
   newGame,
   PlayTable,
   setAside,
+  type Zone,
 } from './index';
 import { rejectionFrom, stateAfter } from '../test/utils';
 
@@ -74,7 +75,7 @@ describe('a location nobody may move into while it is unrevealed (the Parlor)', 
 
 describe('a treachery whose attached location cannot be investigated (Locked Door)', () => {
   /** Alice in the revealed hall, with the locked door attached to it or set aside. */
-  const aliceInHallWithLockedDoor = (zone: typeof setAside) =>
+  const aliceInHallWithLockedDoor = (zone: Zone) =>
     newGame()
       .withLocation(hall, blankLocation('hall'), { revealed: true })
       .withInvestigator(alice, { locationId: hall })
