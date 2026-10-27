@@ -259,6 +259,40 @@ describe('DrawCards', () => {
   });
 });
 
+describe('GainResources', () => {
+  const { context, state } = hallCellarAttic
+    .withInvestigator(alice, { locationId: hall, resources: 5 })
+    .start();
+
+  it('gives alice, at 5 resources, the 2 resources of a card effect', () => {
+    const after = stateAfter(context, state, {
+      type: 'GainResources',
+      investigatorId: alice,
+      amount: 2,
+    });
+
+    expect(investigatorOf(after, alice).resources).toBe(7);
+  });
+
+  it.each([0, -1, 1.5])('rejects gaining %s resources', (amount) => {
+    expect(
+      rejectionFrom(context, state, { type: 'GainResources', investigatorId: alice, amount }),
+    ).toMatchObject({ code: 'invalidTokenDelta' });
+  });
+});
+
+describe('PlayCard', () => {
+  const { context, state } = hallCellarAttic.withInvestigator(alice, { locationId: hall }).start();
+
+  it('leaves the card alice plays to the players, as the game holds no player cards', () => {
+    const { events } = execute(context, state, { type: 'PlayCard', investigatorId: alice });
+
+    expect(events).toEqual([
+      { type: 'CommandDeferred', command: { type: 'PlayCard', investigatorId: alice } },
+    ]);
+  });
+});
+
 describe('AdjustInvestigator', () => {
   const { context, state } = hallCellarAttic
     .withInvestigator(alice, {

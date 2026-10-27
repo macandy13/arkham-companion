@@ -36,6 +36,7 @@ import {
 import {
   handleAdjustInvestigator,
   deferToPlayers,
+  handleGainResources,
   handleHealInvestigator,
   handleDefeatInvestigator,
   handleDiscoverClues,
@@ -98,8 +99,9 @@ export interface CommandSpec<C extends Command> {
    * it recognises only the action commands it sees. `Fight` and `Evade` never provoke: the
    * rules exempt them. `AdjustActions` does not either, even with a negative
    * delta: the players count off the actions the engine saw as well, so
-   * treating every -1 as an action would ask twice for the same action, and
-   * actions the engine cannot see are left to the players (M1.12 follow-up).
+   * treating every -1 as an action would ask twice for the same action. The
+   * actions on player cards are commands of their own taken `asAction`
+   * (`GainResources`, `DrawCards`, `PlayCard`), so they provoke once.
    */
   provokes?(command: C, ctx: EngineContext, state: GameState): HeldAction | undefined;
   /**
@@ -179,8 +181,13 @@ const COMMAND_SPECS: CommandSpecs = {
     provokes: asAction,
   },
   HealInvestigator: { handle: handleHealInvestigator },
-  DrawCards: { handle: deferToPlayers },
+  GainResources: {
+    handle: (_ctx, state, command) => handleGainResources(state, command),
+    provokes: asAction,
+  },
+  DrawCards: { handle: deferToPlayers, provokes: asAction },
   SearchDeck: { handle: deferToPlayers },
+  PlayCard: { handle: deferToPlayers, provokes: asAction },
   AdjustInvestigator: {
     handle: handleAdjustInvestigator,
   },
