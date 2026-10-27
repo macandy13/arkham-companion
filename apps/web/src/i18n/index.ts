@@ -36,6 +36,16 @@ export const resources = {
         removeClue: 'Remove a clue',
         noGame: 'No game open',
       },
+      encounter: {
+        close: 'Close',
+        discard: 'Discard pile',
+        setAside: 'Set aside',
+        victoryDisplay: 'Victory display',
+        pile: '{{pile}} ({{count}})',
+        empty: 'No cards',
+        victory_one: '{{count}} victory point',
+        victory_other: '{{count}} victory points',
+      },
       toast: { label: 'Not possible', dismiss: 'OK', fallback: 'That is not possible right now.' },
       skipped: {
         label: 'Do this by hand',
@@ -537,6 +547,16 @@ export const resources = {
         addClue: 'Hinweis hinzufügen',
         removeClue: 'Hinweis entfernen',
         noGame: 'Kein Spiel geöffnet',
+      },
+      encounter: {
+        close: 'Schließen',
+        discard: 'Ablagestapel',
+        setAside: 'Beiseitegelegt',
+        victoryDisplay: 'Siegpunktanzeige',
+        pile: '{{pile}} ({{count}})',
+        empty: 'Keine Karten',
+        victory_one: '{{count}} Siegpunkt',
+        victory_other: '{{count}} Siegpunkte',
       },
       toast: { label: 'Nicht möglich', dismiss: 'OK', fallback: 'Das ist gerade nicht möglich.' },
       skipped: {

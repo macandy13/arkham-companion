@@ -138,18 +138,33 @@ test("the Ghoul Priest's details opened from its card on Roland Banks' turn", as
   await expect(page.getByRole('dialog', { name: 'Ghoul Priest' })).toBeVisible();
 });
 
+test('the encounter deck after two mythos phases, Dissonant Voices on the discard pile', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'Two mythos draws', mythosDrawnExport('Two mythos draws'));
+
+  const deck = page.getByRole('region', { name: 'Encounter deck' });
+  await expect(
+    deck.getByRole('button', { name: '24 cards left in the encounter deck' }),
+  ).toBeVisible();
+  await expect(
+    deck.getByRole('button', { name: 'Encounter discard pile, 1 card, Dissonant Voices on top' }),
+  ).toBeVisible();
+});
+
 test(
-  'the encounter deck after two mythos phases, Dissonant Voices on the discard pile',
+  'the encounter dialog opened on the discard pile after two mythos phases',
   { tag: '@shot' },
   async ({ page }) => {
     await resumeImportedGame(page, 'Two mythos draws', mythosDrawnExport('Two mythos draws'));
 
-    const deck = page.getByRole('region', { name: 'Encounter deck' });
+    await page
+      .getByRole('button', { name: 'Encounter discard pile, 1 card, Dissonant Voices on top' })
+      .click();
+
+    const dialog = page.getByRole('dialog', { name: 'Encounter deck' });
     await expect(
-      deck.getByRole('img', { name: '24 cards left in the encounter deck' }),
-    ).toBeVisible();
-    await expect(
-      deck.getByRole('img', { name: 'Encounter discard pile, 1 card, Dissonant Voices on top' }),
+      dialog.getByRole('listitem').filter({ hasText: 'Dissonant Voices' }),
     ).toBeVisible();
   },
 );
