@@ -1,7 +1,13 @@
 import { assertNever } from '@arkham/util';
-import type { AbilityEffect, AbilityStep } from './abilities';
+import { advanceAct, type AbilityEffect, type AbilityStep } from './abilities';
 import { isLocationInPlay } from './board';
-import { cardStats, resolveValue, type EngineContext, type ScaledValue } from './cards';
+import {
+  cardStats,
+  resolveValue,
+  type CardStats,
+  type EngineContext,
+  type ScaledValue,
+} from './cards';
 import type { ClueSpend, UseCardAction } from './commands';
 import { locationOf } from './enemies';
 import type { CardActionUsed, CommandDeferred, InvestigatorChanged } from './events';
@@ -58,16 +64,19 @@ export interface ActionLimit {
 }
 
 /**
- * A condition on the investigator taking an action, printed before its colon: "If you control
- * Lita Chantler:" (`controls`, Umôrdhoth). An action whose condition doesn't hold is neither
- * offered nor accepted. Tagged by `kind`, like `AbilityCondition`, so the next condition joins as
- * another member.
+ * A condition on taking an action, printed before its colon: "If you control Lita Chantler:"
+ * (`controls`, Umôrdhoth), or a timing narrower than a free action's any player window, "during
+ * any investigator's turn" (`investigatorTurn`, the act's group clue spend). An action whose
+ * condition doesn't hold is neither offered nor accepted. Tagged by `kind`, like
+ * `AbilityCondition`, so the next condition joins as another member.
  */
-export type ActionCondition = { readonly kind: 'controls'; readonly card: CardCode };
+export type ActionCondition =
+  { readonly kind: 'controls'; readonly card: CardCode } | { readonly kind: 'investigatorTurn' };
 
 /**
- * Whether `condition` holds for `investigator`. "If you control X" holds when a card X is in their
- * play area. When the game has no card X at all, X is a player card the players hold (Lita
+ * Whether `condition` holds for `investigator`. "During any investigator's turn" holds while
+ * anyone's turn is in progress, not only the taker's. "If you control X" holds when a card X is in
+ * their play area. When the game has no card X at all, X is a player card the players hold (Lita
  * Chantler, earned in The Gathering, is in an investigator's deck by The Devourer Below), which
  * the game doesn't track, so it trusts the investigator taking the action, as it trusts a hand
  * card cost. No condition always holds.
@@ -78,9 +87,17 @@ export function actionConditionHolds(
   condition: ActionCondition | undefined,
 ): boolean {
   if (condition === undefined) return true;
-  const copies = Object.values(state.cards).filter((card) => card.code === condition.card);
-  if (copies.length === 0) return true;
-  return copies.some((card) => sameZone(card.zone, playAreaOf(investigator.id)));
+  switch (condition.kind) {
+    case 'investigatorTurn':
+      return state.meta.turn !== undefined;
+    case 'controls': {
+      const copies = Object.values(state.cards).filter((card) => card.code === condition.card);
+      if (copies.length === 0) return true;
+      return copies.some((card) => sameZone(card.zone, playAreaOf(investigator.id)));
+    }
+    default:
+      return assertNever(condition);
+  }
 }
 
 /**
@@ -174,6 +191,33 @@ function costPayment(
     default:
       return assertNever(cost);
   }
+}
+
+/**
+ * The act's own way to advance (Rules Reference, "Clues" and "Act Deck"): during any investigator's
+ * turn, as a [free] ability, the investigators spend `clues` as a group and advance the act. No act
+ * prints it, so the act builders add it for an act with a clue threshold; an act whose objective
+ * replaces the requirement leaves it out.
+ */
+export function advanceBySpendingClues(clues: ScaledValue): CardAction {
+  return {
+    free: true,
+    condition: { kind: 'investigatorTurn' },
+    cost: { spend: 'groupClues', amount: clues },
+    effects: [advanceAct()],
+  };
+}
+
+/**
+ * The clues the investigators spend as a group to advance an act of `stats` with its
+ * `advanceBySpendingClues` ability; none when it has no such ability.
+ */
+export function cluesToAdvance(stats: CardStats): ScaledValue | undefined {
+  return (stats.actions ?? []).flatMap(({ cost, effects }) =>
+    cost?.spend === 'groupClues' && effects.some((effect) => effect.type === 'AdvanceAct')
+      ? [cost.amount]
+      : [],
+  )[0];
 }
 
 /**

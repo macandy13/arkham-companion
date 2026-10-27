@@ -196,6 +196,7 @@ export type {
 export { MAX_TRIGGERED_COMMANDS } from './triggers';
 export {
   offersActionsTo,
+  advanceBySpendingClues,
   parleyAction,
   resignAction,
   type ActionCondition,
