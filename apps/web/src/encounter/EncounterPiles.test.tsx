@@ -241,4 +241,37 @@ describe('EncounterPiles', () => {
       expect(draws.map((draw) => (draw as HTMLButtonElement).disabled)).toEqual([true, true]);
     });
   });
+
+  it('puts a card from the discard pile into a threat area as one step', async () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withInvestigator(alder, { locationId: study, name: 'Alder' })
+        .withCard(instanceId('frozen_in_fear'), blankTreachery('Frozen in Fear'), {
+          kind: 'encounterDiscard',
+        }),
+    );
+    render(
+      <EncounterPiles
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Encounter discard pile, 1 card, Frozen in Fear on top' }),
+    );
+    const dialog = within(screen.getByRole('dialog', { name: 'Encounter deck' }));
+    const frozenInFear = dialog.getByText('Frozen in Fear').closest('details');
+    if (!frozenInFear) throw new Error('Frozen in Fear has a row');
+    frozenInFear.open = true;
+    fireEvent(frozenInFear, new Event('toggle'));
+
+    fireEvent.click(await dialog.findByRole('button', { name: "Into Alder's threat area" }));
+
+    await waitFor(() =>
+      expect(table.board.investigator(alder).threatArea).toEqual(['Frozen in Fear']),
+    );
+  });
 });
