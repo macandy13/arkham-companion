@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { duplicates, range, unique, withoutFirst, withRunningTotals } from './index';
+import { duplicates, matchingFirst, range, unique, withoutFirst, withRunningTotals } from './index';
 
 describe('duplicates', () => {
   it('lists each repeated item once', () => {
@@ -91,5 +91,19 @@ describe('range', () => {
     { count: 0, numbers: [] },
   ])('counts $count numbers from 0', ({ count, numbers }) => {
     expect(range(count)).toEqual(numbers);
+  });
+});
+
+describe('matchingFirst', () => {
+  it.each<{ items: string[]; first: string; expected: string[] }>([
+    {
+      items: ['agnes', 'roland', 'daisy'],
+      first: 'roland',
+      expected: ['roland', 'agnes', 'daisy'],
+    },
+    { items: ['agnes', 'daisy'], first: 'roland', expected: ['agnes', 'daisy'] },
+    { items: [], first: 'roland', expected: [] },
+  ])('puts $first ahead of $items', ({ items, first, expected }) => {
+    expect(matchingFirst(items, (item) => item === first)).toEqual(expected);
   });
 });
