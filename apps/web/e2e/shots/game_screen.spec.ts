@@ -156,13 +156,13 @@ test(
 );
 
 test(
-  'the header with its piles fanned: five cards discarded, the set-aside cards on the scenario card, the Ghoul Priest in the victory display',
+  'the header with its piles fanned: seven cards discarded, the set-aside cards on the scenario card, the Ghoul Priest in the victory display',
   { tag: '@shot' },
   async ({ page }) => {
     await resumeImportedGame(page, 'Piles filled', pilesFilledExport('Piles filled'));
 
     await expect(
-      page.getByRole('button', { name: /^Encounter discard pile, 5 cards, .* on top$/ }),
+      page.getByRole('button', { name: /^Encounter discard pile, 7 cards, .* on top$/ }),
     ).toBeVisible();
     await expect(
       page.getByRole('region', { name: 'Scenario' }).getByRole('button', { name: /^Set aside, / }),
