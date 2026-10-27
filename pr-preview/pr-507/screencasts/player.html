@@ -67,7 +67,7 @@
       const SPEEDS = [0.125, 0.25, 0.5, 1];
       // Filled in by `playerPage` (screencasts.ts) with this push's flows. The page plays only
       // a flow named there, so a crafted link can never make it load or link another URL.
-      const RECORDED = {"version":"2269327","flows":{"draw-an-encounter-card-for-roland-banks-on-his-turn":"draw an encounter card for Roland Banks on his turn","move-dissonant-voices-from-the-discard-pile-into-roland-banks-threat-area":"move Dissonant Voices from the discard pile into Roland Banks’ threat area"}};
+      const RECORDED = {"version":"d24c18a","flows":{"draw-an-encounter-card-for-roland-banks-on-his-turn":"draw an encounter card for Roland Banks on his turn","move-dissonant-voices-from-the-discard-pile-into-roland-banks-threat-area":"move Dissonant Voices from the discard pile into Roland Banks’ threat area"}};
       const params = new URLSearchParams(location.search);
       const flow = Object.keys(RECORDED.flows).find((slug) => slug === params.get('flow'));
       const requested = Number(params.get('speed'));
