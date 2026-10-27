@@ -1,5 +1,6 @@
 import { assertNever } from '@arkham/util';
 import { advanceAct, type AbilityEffect, type AbilityStep } from './abilities';
+import { storyHolds, type StoryCondition } from './campaign/campaign_log';
 import { isLocationInPlay } from './board';
 import {
   cardStats,
@@ -71,7 +72,16 @@ export interface ActionLimit {
  * `AbilityCondition`, so the next condition joins as another member.
  */
 export type ActionCondition =
-  { readonly kind: 'controls'; readonly card: CardCode } | { readonly kind: 'investigatorTurn' };
+  | {
+      readonly kind: 'controls';
+      readonly card: CardCode;
+      /**
+       * For a player card the players earn in the campaign (Lita Chantler): the story record
+       * that says someone earned it. Without it, nobody can hold the card.
+       */
+      readonly earnedWhen?: StoryCondition;
+    }
+  | { readonly kind: 'investigatorTurn' };
 
 /**
  * Whether `condition` holds for `investigator`. "During any investigator's turn" holds while
@@ -79,7 +89,8 @@ export type ActionCondition =
  * their play area. When the game has no card X at all, X is a player card the players hold (Lita
  * Chantler, earned in The Gathering, is in an investigator's deck by The Devourer Below), which
  * the game doesn't track, so it trusts the investigator taking the action, as it trusts a hand
- * card cost. No condition always holds.
+ * card cost, as long as the campaign log says someone earned the card (`earnedWhen`); a
+ * standalone game reads as an empty log, where nobody did. No condition always holds.
  */
 export function actionConditionHolds(
   state: GameState,
@@ -92,7 +103,10 @@ export function actionConditionHolds(
       return state.meta.turn !== undefined;
     case 'controls': {
       const copies = Object.values(state.cards).filter((card) => card.code === condition.card);
-      if (copies.length === 0) return true;
+      if (copies.length === 0) {
+        if (condition.earnedWhen === undefined) return true;
+        return storyHolds(state.campaign?.story ?? {}, condition.earnedWhen) === true;
+      }
       return copies.some((card) => sameZone(card.zone, playAreaOf(investigator.id)));
     }
     default:

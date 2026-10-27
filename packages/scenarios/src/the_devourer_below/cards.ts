@@ -42,6 +42,7 @@ import {
   resignAction,
 } from '@arkham/engine';
 import { act, agenda, enemy, location, prey, treachery } from '../card_builders';
+import { ZEALOT_STORY } from '../night_of_the_zealot/story';
 
 /**
  * ArkhamDB encounter set codes of The Devourer Below (Core Set, 2016): the
@@ -293,7 +294,11 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
     // "[action] If you control Lita Chantler: You throw Lita to Umôrdhoth … (→R3)".
     actions: [
       {
-        condition: { kind: 'controls', card: codes.litaChantler },
+        condition: {
+          kind: 'controls',
+          card: codes.litaChantler,
+          earnedWhen: { kind: 'flag', key: ZEALOT_STORY.litaEarned, value: true },
+        },
         effects: [endScenario(DEVOURER_BELOW_RESOLUTIONS.litaSacrificed)],
       },
     ],

@@ -28,7 +28,7 @@ import {
   type InvestigatorId,
   type UseCardAction,
 } from './index';
-import { answer, investigatorOf, rejectionFrom, stateAfter } from '../test/utils';
+import { answer, investigatorOf, makeCampaignLog, rejectionFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -488,6 +488,66 @@ describe('action conditions', () => {
     { where: 'in the hall, uncontrolled', zone: atLocation(hall) },
   ])('neither offers nor accepts the action from alice with Lita $where', ({ zone }) => {
     const table = PlayTable.start(hallAskingForLita.withCard(lita, blankAsset('lita'), zone));
+
+    expect(table.board.cardActions(alice)).toEqual([]);
+    expect(rejectionFrom(table.ctx, table.state, useCardAction(alice, hall))).toEqual({
+      code: 'cardActionConditionUnmet',
+      cardId: hall,
+      action: 0,
+      investigatorId: alice,
+    });
+  });
+});
+
+describe('action conditions on a player card earned in the campaign', () => {
+  /** The hall's one action scares its taker "if you control Lita", whom the story record `lita_earned` says someone earned; alice is in the hall, on her turn, with no Lita in the game. */
+  const hallAskingForEarnedLita = newGame()
+    .withLocation(
+      hall,
+      blankLocation('hall', {
+        actions: [
+          {
+            ...scareAction,
+            condition: {
+              kind: 'controls',
+              card: cardCode('lita'),
+              earnedWhen: { kind: 'flag', key: 'lita_earned', value: true },
+            },
+          },
+        ],
+      }),
+      { revealed: true },
+    )
+    .withInvestigator(alice, { locationId: hall })
+    .withTurnOf(alice);
+
+  it('lets alice take the action when the campaign log says someone earned Lita', () => {
+    const table = PlayTable.start(
+      hallAskingForEarnedLita.withCampaign(
+        makeCampaignLog({ story: { lita_earned: { kind: 'flag', value: true } } }),
+      ),
+    );
+
+    table.play(useCardAction(alice, hall));
+
+    expect(table.board.investigator(alice).horror).toBe(1);
+  });
+
+  it.each([
+    {
+      game: 'a campaign whose log says nobody earned her',
+      setup: () =>
+        hallAskingForEarnedLita.withCampaign(
+          makeCampaignLog({ story: { lita_earned: { kind: 'flag', value: false } } }),
+        ),
+    },
+    {
+      game: 'a campaign whose log never mentions her',
+      setup: () => hallAskingForEarnedLita.withCampaign(makeCampaignLog({ story: {} })),
+    },
+    { game: 'a standalone game', setup: () => hallAskingForEarnedLita },
+  ])('neither offers nor accepts the action in $game', ({ setup }) => {
+    const table = PlayTable.start(setup());
 
     expect(table.board.cardActions(alice)).toEqual([]);
     expect(rejectionFrom(table.ctx, table.state, useCardAction(alice, hall))).toEqual({

@@ -8,6 +8,7 @@ const no: StoryValue = { kind: 'flag', value: false };
 /** Translation key prefix for the steps the players do by hand. */
 const byHandKeyPrefix = 'scenario.theGathering.resolution';
 
+const litaEarned: ResolutionStep = { kind: 'record', key: ZEALOT_STORY.litaEarned, value: yes };
 const litaJoinsTheLead: ResolutionStep = { kind: 'byHand', textKey: `${byHandKeyPrefix}.earnLita` };
 const upgradeDecks: ResolutionStep = { kind: 'byHand', textKey: `${byHandKeyPrefix}.upgradeDecks` };
 /** Victory points plus 2 "as they gain insight into the hidden world of the Mythos". */
@@ -22,13 +23,17 @@ const victoryPlusInsight: ResolutionStep = {
  * The Gathering's resolutions, in the campaign guide's order of steps.
  * R3 gives no experience because everyone left in the house is killed. Its
  * last step, "if the lead investigator was killed, choose an investigator to
- * earn Lita", is about the players' decks, so it is a by-hand step with the
- * condition in its text.
+ * earn Lita", always applies: a lead who resigns or is defeated hands the role
+ * to someone still in the house, so the lead is among those R3 kills. Earning
+ * Lita is about the players' decks, so it is a by-hand step, plus a record
+ * that someone earned her (`litaEarned`) for The Devourer Below. Only R2
+ * leaves her unearned.
  */
 export const theGatheringResolutions: ScenarioResolutions = {
   none: [
     { kind: 'record', key: ZEALOT_STORY.houseStillStanding, value: yes },
     { kind: 'record', key: ZEALOT_STORY.ghoulPriestStillAlive, value: yes },
+    litaEarned,
     litaJoinsTheLead,
     victoryPlusInsight,
     upgradeDecks,
@@ -36,6 +41,7 @@ export const theGatheringResolutions: ScenarioResolutions = {
   byId: {
     [GATHERING_RESOLUTIONS.burnedDown]: [
       { kind: 'record', key: ZEALOT_STORY.houseStillStanding, value: no },
+      litaEarned,
       litaJoinsTheLead,
       { kind: 'addTrauma', to: 'lead', trauma: 'mental', amount: 1 },
       victoryPlusInsight,
@@ -53,6 +59,7 @@ export const theGatheringResolutions: ScenarioResolutions = {
       { kind: 'record', key: ZEALOT_STORY.ghoulPriestStillAlive, value: yes },
       { kind: 'markKilled', to: 'notResigned' },
       { kind: 'byHand', textKey: `${byHandKeyPrefix}.replaceKilled` },
+      litaEarned,
       { kind: 'byHand', textKey: `${byHandKeyPrefix}.earnLitaIfLeadKilled` },
     ],
   },

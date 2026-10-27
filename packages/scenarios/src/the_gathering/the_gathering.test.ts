@@ -413,6 +413,30 @@ describe('The Gathering acts 2 and 3', () => {
     expect(ended.act.current).toBeUndefined();
   });
 
+  it.each([
+    { optionId: 'burn', records: [ZEALOT_STORY.houseStillStanding, ZEALOT_STORY.litaEarned] },
+    { optionId: 'spare', records: [ZEALOT_STORY.houseStillStanding] },
+  ])(
+    'records that someone earned Lita only when the lead chooses to burn the house ($optionId)',
+    ({ optionId, records }) => {
+      const asked = stateAfter(ctx, priestEngages(act2WaitingForPrey(), tank), {
+        type: 'DefeatEnemy',
+        enemyId: priest,
+      });
+      const ended = stateAfter(ctx, asked, answer(BURN_THE_HOUSE_DECISION, optionId));
+
+      const proposal = campaign.proposeResolution(ctx, ended, theGatheringResolutions);
+
+      expect(
+        (proposal ?? []).flatMap((change) =>
+          change.kind === 'command' && change.command.type === 'RecordStory'
+            ? [change.command.key]
+            : [],
+        ),
+      ).toEqual(records);
+    },
+  );
+
   it('does not advance act 3 when another enemy is defeated', () => {
     // In the empty Attic, so it engages nobody.
     const withFleshEater = stateAfter(ctx, priestEngages(act2WaitingForPrey(), tank), {
@@ -540,6 +564,23 @@ describe('The Gathering agendas 2 and 3', () => {
     expect(ended.meta).toMatchObject({ ended: true, resolution: 'R3' });
   });
 
+  it('records that someone earned Lita when R3 traps the investigators', () => {
+    const atAgenda3 = stateAfter(ctx, atAgenda2(), { type: 'AdvanceAgenda' });
+    const ended = stateAfter(ctx, atAgenda3, { type: 'AdvanceAgenda' });
+
+    const proposal = campaign.proposeResolution(ctx, ended, theGatheringResolutions);
+
+    // The lead is always among the killed: a lead who resigns hands the role to someone left in the house.
+    expect(proposal).toContainEqual({
+      kind: 'command',
+      command: {
+        type: 'RecordStory',
+        key: ZEALOT_STORY.litaEarned,
+        value: { kind: 'flag', value: true },
+      },
+    });
+  });
+
   it('defeats every investigator who has not resigned when agenda 3 advances at act 3', () => {
     const atAct3 = stateAfter(ctx, atAgenda2(), { type: 'AdvanceAgenda' }, { type: 'AdvanceAct' });
     const preyQuestion = atAct3.pending.find((decision) => decision.subject === priest);
@@ -586,6 +627,10 @@ describe('The Gathering agendas 2 and 3', () => {
       {
         kind: 'command',
         command: { type: 'RecordStory', key: ZEALOT_STORY.ghoulPriestStillAlive, value: yes },
+      },
+      {
+        kind: 'command',
+        command: { type: 'RecordStory', key: ZEALOT_STORY.litaEarned, value: yes },
       },
       { kind: 'byHand', textKey: 'scenario.theGathering.resolution.earnLita' },
       { kind: 'command', command: { type: 'AwardXp', code: tankCode, amount: 2 } },

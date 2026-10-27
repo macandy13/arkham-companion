@@ -1113,6 +1113,10 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
           value: { kind: 'flag', value: false },
         },
       },
+      {
+        kind: 'command',
+        command: { type: 'RecordStory', key: 'litaEarned', value: { kind: 'flag', value: true } },
+      },
       { kind: 'byHand', textKey: 'scenario.theGathering.resolution.earnLita' },
       {
         kind: 'command',
@@ -1143,7 +1147,10 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     const { log } = campaign.applyResolution(campaignCtx, zealotCampaign, table.state, confirmed);
 
-    expect(log.story).toEqual({ houseStillStanding: { kind: 'flag', value: false } });
+    expect(log.story).toEqual({
+      houseStillStanding: { kind: 'flag', value: false },
+      litaEarned: { kind: 'flag', value: true },
+    });
     expect(log.investigators).toMatchObject([
       { code: rolandBanks.code, mentalTrauma: 1, xpEarned: 6 },
       { code: daisyWalker.code, mentalTrauma: 0, xpEarned: 6 },

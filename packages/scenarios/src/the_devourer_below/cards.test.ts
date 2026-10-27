@@ -7,13 +7,22 @@ import {
   instanceId,
   investigatorId,
   newGame,
+  PlayTable,
   requireInvestigator,
   threatAreaOf,
   resolveValue,
+  type CampaignLog,
   type CardStats,
   type Command,
 } from '@arkham/engine';
-import { answer, cardIn, rejectionFrom, stateAfter } from '@arkham/engine/test/utils';
+import {
+  answer,
+  cardIn,
+  makeCampaignLog,
+  rejectionFrom,
+  stateAfter,
+} from '@arkham/engine/test/utils';
+import { ZEALOT_STORY } from '../night_of_the_zealot/story';
 import {
   DEVOURER_BELOW_RESOLUTIONS,
   DISRUPTING_THE_RITUAL_DECISION,
@@ -324,24 +333,32 @@ describe('The Devourer Below card abilities', () => {
   });
 
   describe('Umôrdhoth', () => {
-    it('ends the scenario with R3 (Lita sacrificed) after its attack of opportunity on alice, who takes its action', () => {
-      // Lita Chantler is a player card here, not a card of the game, so the action trusts alice to control her.
-      const { context, state: started } = newGame()
+    const umordhoth = instanceId('umordhoth');
+    const takeUmordhothsAction: Command = {
+      type: 'UseCardAction',
+      investigatorId: alice,
+      cardId: umordhoth,
+      action: 0,
+    };
+    /** Alice faces Umôrdhoth on the Main Path, on her turn, in the campaign log `story`. */
+    const aliceFacingUmordhoth = (story: CampaignLog['story']) =>
+      newGame()
         .withLocation(mainPath, cardOf('01149'), { revealed: true })
         .withInvestigator(alice, {
           locationId: mainPath,
           health: { max: 8, damage: 0 },
           sanity: { max: 8, horror: 0 },
         })
-        .withCard(instanceId('umordhoth'), cardOf('01157'), atLocation(mainPath))
-        .withTurnOf(alice)
-        .start();
-      const taken = stateAfter(context, started, {
-        type: 'UseCardAction',
-        investigatorId: alice,
-        cardId: instanceId('umordhoth'),
-        action: 0,
-      });
+        .withCard(umordhoth, cardOf('01157'), atLocation(mainPath))
+        .withCampaign(makeCampaignLog({ story }))
+        .withTurnOf(alice);
+
+    it('ends the scenario with R3 (Lita sacrificed) after its attack of opportunity on alice, who takes its action', () => {
+      // Lita Chantler is a player card here, earned in The Gathering, so the action trusts alice to control her.
+      const { context, state: started } = aliceFacingUmordhoth({
+        [ZEALOT_STORY.litaEarned]: { kind: 'flag', value: true },
+      }).start();
+      const taken = stateAfter(context, started, takeUmordhothsAction);
 
       // Massive, it is engaged with alice, so the plain action provokes its attack first.
       const state = stateAfter(context, taken, answer('attackOfOpportunity:umordhoth', 'attack'));
@@ -352,6 +369,16 @@ describe('The Devourer Below card abilities', () => {
         sanity: { horror: 3 },
       });
       expect(state.meta.resolution).toBe(DEVOURER_BELOW_RESOLUTIONS.litaSacrificed);
+    });
+
+    it('neither offers nor accepts its action when nobody earned Lita in The Gathering', () => {
+      const table = PlayTable.start(aliceFacingUmordhoth({}));
+
+      // Only the Main Path's own action is left.
+      expect(table.board.cardActions(alice).map((action) => action.cardId)).toEqual([mainPath]);
+      expect(rejectionFrom(table.ctx, table.state, takeUmordhothsAction)).toMatchObject({
+        code: 'cardActionConditionUnmet',
+      });
     });
   });
 
