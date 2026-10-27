@@ -38,6 +38,13 @@
   color: var(--color-text-muted);
 }
 
+/* The draw buttons, one per investigator, wrapping when there are many. */
+#board dialog[data-dialog='encounter'] > footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
 /* Keeps the disclosure triangle, which a flex summary would lose. */
 #board dialog[data-dialog='encounter'] summary {
   padding-block: var(--space-2);
