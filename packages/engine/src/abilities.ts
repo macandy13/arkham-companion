@@ -1317,6 +1317,11 @@ export function removeFromGame(card: RelativeCard): AbilityEffect {
   return { type: 'MoveCard', cardId: card, to: { kind: 'outOfGame' } };
 }
 
+/** "Add Peter Warren to the victory display". */
+export function addToVictoryDisplay(card: RelativeCard): AbilityEffect {
+  return { type: 'MoveCard', cardId: card, to: { kind: 'victoryDisplay' } };
+}
+
 /** "Advance": the current act advances without spending clues, as an objective does. */
 export function advanceAct(): AbilityEffect {
   return { type: 'AdvanceAct' };

@@ -146,6 +146,7 @@ export {
   putLocationIntoPlay,
   putSetAsideIntoPlay,
   removeFromGame,
+  addToVictoryDisplay,
   revealLocation,
   skillTest,
   spawnEachSetAsideAt,
@@ -187,6 +188,7 @@ export type {
 export { MAX_TRIGGERED_COMMANDS } from './triggers';
 export {
   offersActionsTo,
+  parleyAction,
   resignAction,
   type ActionCost,
   type ActionLimit,
