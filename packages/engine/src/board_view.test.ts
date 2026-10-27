@@ -795,9 +795,19 @@ describe('agenda and act', () => {
 
     const board = boardView(context, stateAfter(context, state, { type: 'PlaceDoom', amount: 2 }));
 
-    expect(board.agenda).toEqual({ name: 'first_agenda', doom: 2, threshold: 3 });
+    expect(board.agenda).toEqual({
+      id: instanceId('first_agenda'),
+      name: 'first_agenda',
+      doom: 2,
+      threshold: 3,
+    });
     expect(board.doomInPlay).toBe(3);
-    expect(board.act).toEqual({ name: 'first_act', clues: 0, threshold: 4 });
+    expect(board.act).toEqual({
+      id: instanceId('first_act'),
+      name: 'first_act',
+      clues: 0,
+      threshold: 4,
+    });
     expect(board.cluesHeld).toBe(3);
   });
 
@@ -816,7 +826,12 @@ describe('agenda and act', () => {
       }),
     );
 
-    expect(board.act).toEqual({ name: 'first_act', clues: 2, threshold: 3 });
+    expect(board.act).toEqual({
+      id: instanceId('first_act'),
+      name: 'first_act',
+      clues: 2,
+      threshold: 3,
+    });
   });
 
   it('takes the act threshold from its objective on its own clues', () => {
@@ -831,7 +846,12 @@ describe('agenda and act', () => {
       )
       .start();
 
-    expect(boardView(context, state).act).toEqual({ name: 'ritual_act', clues: 0, threshold: 2 });
+    expect(boardView(context, state).act).toEqual({
+      id: instanceId('ritual_act'),
+      name: 'ritual_act',
+      clues: 0,
+      threshold: 2,
+    });
   });
 
   it('reads an agenda without a doom threshold without one', () => {
@@ -842,7 +862,7 @@ describe('agenda and act', () => {
 
     const board = boardView(context, state);
 
-    expect(board.agenda).toEqual({ name: 'final_agenda', doom: 0 });
+    expect(board.agenda).toEqual({ id: instanceId('final_agenda'), name: 'final_agenda', doom: 0 });
   });
 
   it('shows the pictures of the agenda and act fronts', () => {
@@ -1174,7 +1194,6 @@ describe('decisions and attacks', () => {
       investigatorId: alice,
       cardId: study,
       action: 0,
-      asAction: true,
     });
 
     const { decisions } = boardView(context, usingTheStudy);
@@ -1362,7 +1381,7 @@ describe('namesIn', () => {
 });
 
 describe('cardsIn', () => {
-  it('gives each card in a zone its name, type, traits and pictures, top first', () => {
+  it('gives each card in a zone its id, name, type, traits and pictures, top first', () => {
     const { context, state } = newGame()
       .withLocation(study, blankLocation('study'))
       .withInvestigator(alice, { locationId: study })
@@ -1385,13 +1404,14 @@ describe('cardsIn', () => {
 
     expect(cards).toEqual([
       {
+        id: instanceId('two_sided_curse'),
         name: 'two_sided_curse',
         type: 'treachery',
         traits: ['Curse'],
         image: '/cards/curse_front.png',
         backImage: '/cards/curse_back.png',
       },
-      { name: 'plain_terror', type: 'treachery', traits: [] },
+      { id: instanceId('plain_terror'), name: 'plain_terror', type: 'treachery', traits: [] },
     ]);
   });
 });

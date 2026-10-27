@@ -1,4 +1,7 @@
 import { useId, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { BoardView, CardActionView, InstanceId } from '@arkham/engine';
+import type { GameActions } from '../state/gameActions';
 import './action_row.css';
 
 /** The icons an `ActionButton` shows, each a mask in `action_row.css`. */
@@ -11,7 +14,10 @@ export type ActionIcon =
   | 'defeat'
   | 'investigate'
   | 'move'
-  | 'clue';
+  | 'clue'
+  | 'resign'
+  | 'parley'
+  | 'cardAction';
 
 /**
  * A titled group of buttons in a details window's action row (the enemy's, the location's): the
@@ -58,5 +64,57 @@ export function ActionButton({
     >
       {caption}
     </button>
+  );
+}
+
+/**
+ * The card actions the card `cardId` offers the investigator whose turn it is
+ * (`BoardView.cardActions`); none between turns. The details windows show them on the card that
+ * prints them, besides the turn row's buttons for every card.
+ */
+export function cardActionsOn(board: BoardView, cardId: InstanceId): readonly CardActionView[] {
+  return board.turn === undefined
+    ? []
+    : board.cardActions(board.turn).filter((offered) => offered.cardId === cardId);
+}
+
+/**
+ * The card actions of one card (`cardActionsOn`) as a group of the action row, each named like
+ * the turn row's button ("Resign · Parlor") and marked with the action arrow unless it is free.
+ * Taking one closes the window first (`onUse`), since its effects may ask something next or take
+ * the investigator out of the game (Resign).
+ */
+export function CardActions({
+  offered,
+  actions,
+  busy,
+  onUse,
+}: {
+  offered: readonly CardActionView[];
+  actions: GameActions;
+  busy: boolean;
+  onUse: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <ActionGroup title={t('cardActions.title')}>
+      {offered.map(({ cardId, card, action, designator, free }) => {
+        const caption = t(`investigators.cardAction.${designator ?? 'plain'}`);
+        return (
+          <ActionButton
+            key={action}
+            icon={designator ?? 'cardAction'}
+            cost={free ? undefined : 'action'}
+            caption={caption}
+            name={t('investigators.cardActionOn', { action: caption, card })}
+            disabled={busy}
+            onClick={() => {
+              onUse();
+              void actions.useCardAction(cardId, action);
+            }}
+          />
+        );
+      })}
+    </ActionGroup>
   );
 }

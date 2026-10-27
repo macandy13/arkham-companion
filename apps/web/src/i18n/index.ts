@@ -277,6 +277,9 @@ export const resources = {
         ofMax: 'of {{max}}',
         victory: 'Victory {{points}}.',
       },
+      cardActions: {
+        title: 'Card actions',
+      },
       cardZoom: {
         open: 'Read {{name}}',
         close: 'Close',
@@ -857,6 +860,9 @@ export const resources = {
         type: 'Gegner',
         ofMax: 'von {{max}}',
         victory: 'Sieg {{points}}.',
+      },
+      cardActions: {
+        title: 'Kartenaktionen',
       },
       cardZoom: {
         open: '{{name}} lesen',

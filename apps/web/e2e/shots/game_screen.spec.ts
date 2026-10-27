@@ -2,6 +2,7 @@ import { expect, test } from '../fixtures/test';
 import {
   rolandThreatenedExport,
   houseOpenedExport,
+  inTheParlorExport,
   investigationOpenExport,
   mythosDrawnExport,
   pilesFilledExport,
@@ -223,24 +224,40 @@ test('Frozen in Fear from Roland Banks’ threat area, zoomed to read', async ({
   await expect(page.getByRole('dialog', { name: 'Frozen in Fear' })).toBeVisible();
 });
 
+test('the attack of opportunity Roland Banks provokes by taking a resource', async ({ page }) => {
+  await resumeImportedGame(
+    page,
+    'Roland Banks threatened',
+    rolandThreatenedExport('Roland Banks threatened'),
+  );
+
+  await page
+    .getByRole('region', { name: 'Roland Banks' })
+    .getByRole('button', { name: 'Take a resource' })
+    .click();
+
+  const attack = page.getByRole('dialog', { name: 'Attack of opportunity by Ghoul Priest' });
+  await expect(
+    attack.getByText('Roland Banks takes a resource: Ghoul Priest attacks first'),
+  ).toBeVisible();
+});
+
 test(
-  'the attack of opportunity Roland Banks provokes by taking a resource',
+  'the Parlor’s details with its Resign among Roland Banks’ card actions',
   { tag: '@shot' },
   async ({ page }) => {
-    await resumeImportedGame(
-      page,
-      'Roland Banks threatened',
-      rolandThreatenedExport('Roland Banks threatened'),
-    );
+    await resumeImportedGame(page, 'In the Parlor', inTheParlorExport('In the Parlor'));
 
     await page
-      .getByRole('region', { name: 'Roland Banks' })
-      .getByRole('button', { name: 'Take a resource' })
+      .getByRole('figure', { name: 'House' })
+      .getByRole('group', { name: 'Parlor' })
       .click();
 
-    const attack = page.getByRole('dialog', { name: 'Attack of opportunity by Ghoul Priest' });
+    const parlor = page.getByRole('dialog', { name: 'Parlor' });
     await expect(
-      attack.getByText('Roland Banks takes a resource: Ghoul Priest attacks first'),
+      parlor
+        .getByRole('region', { name: 'Card actions' })
+        .getByRole('button', { name: 'Resign · Parlor' }),
     ).toBeVisible();
   },
 );

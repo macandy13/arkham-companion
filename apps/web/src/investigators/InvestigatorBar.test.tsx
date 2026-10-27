@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import {
   blankEnemy,
@@ -713,6 +713,36 @@ describe('InvestigatorBar', () => {
 
       const zoom = screen.getByRole('dialog', { name: 'dissonant_voices' });
       expect(within(zoom).getByText('Treachery')).toBeTruthy();
+    });
+
+    it("takes the action of a treachery in alder's threat area from its zoom and closes it", async () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'))
+          .withInvestigator(alder, { locationId: study })
+          .withCard(
+            instanceId('fear'),
+            blankTreachery('frozen_in_fear', { actions: [{ effects: [] }] }),
+            threatAreaOf(alder),
+          )
+          .withTurnOf(alder),
+      );
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+      fireEvent.click(within(panel('alder')).getByRole('button', { name: 'Read frozen_in_fear' }));
+      const zoom = screen.getByRole('dialog', { name: 'frozen_in_fear' });
+
+      fireEvent.click(within(zoom).getByRole('button', { name: 'Action · frozen_in_fear' }));
+      await act(async () => {});
+
+      expect(screen.queryByRole('dialog', { name: 'frozen_in_fear' })).toBeNull();
+      expect(table.board.investigator(alder)).toMatchObject({ actions: 2 });
     });
 
     it('leaves the card whole while the threat area is empty', () => {

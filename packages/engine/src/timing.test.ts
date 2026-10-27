@@ -409,7 +409,12 @@ describe('doom reaching the threshold outside the mythos phase', () => {
     });
 
     expect(table.nextPhase()).toEqual({ round: 1, phase: 'upkeep' });
-    expect(table.board.agenda).toEqual({ name: 'first_agenda', doom: 2, threshold: 2 });
+    expect(table.board.agenda).toEqual({
+      id: instanceId('first_agenda'),
+      name: 'first_agenda',
+      doom: 2,
+      threshold: 2,
+    });
 
     // Mythos step 1.2 adds its doom before the check, so the agenda carries 3.
     expect(table.nextPhase()).toEqual({ round: 2, phase: 'mythos', step: 'checkDoomThreshold' });
@@ -434,7 +439,12 @@ describe('a per-investigator threshold after an investigator is eliminated', () 
     table.takeDamage(alice, 3);
 
     expect(table.board.investigator(alice).status).toBe('defeated');
-    expect(table.board.act).toEqual({ name: 'first_act', clues: 0, threshold: 4 });
+    expect(table.board.act).toEqual({
+      id: instanceId('first_act'),
+      name: 'first_act',
+      clues: 0,
+      threshold: 4,
+    });
 
     table.spendCluesToAdvanceAct([[bob, 4]]);
 
