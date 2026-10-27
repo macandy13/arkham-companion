@@ -52,6 +52,7 @@ export {
   type AgendaView,
   type CardActionView,
   type CardFaceView,
+  type CardPlaceView,
   type DecisionCounts,
   type DecisionView,
   type DueAttackView,
@@ -64,6 +65,7 @@ export {
   type LocationView,
   type MapEnemyView,
   type MapView,
+  type ResolvingCardView,
 } from './board_view';
 export {
   PlayTable,

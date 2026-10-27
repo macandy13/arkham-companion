@@ -1,4 +1,4 @@
-import { listIfAny } from '@arkham/util';
+import { assertNever, listIfAny } from '@arkham/util';
 import { isConnectionOpen, neighbours } from './board';
 import { cardActionsOfferedTo, type OfferedCardAction } from './card_actions';
 import { effectiveValue } from './card_values';
@@ -49,12 +49,20 @@ import type {
   NamedAmount,
   Phase,
   PhaseStepId,
+  QueuedStep,
   SkillTest,
   SkillTestKind,
   SkillTestSuggestion,
   SkillValues,
 } from './state';
-import { encounterDeck, encounterDiscard, setAside, victoryDisplay, type Zone } from './zone';
+import {
+  encounterDeck,
+  encounterDiscard,
+  resolvingZone,
+  setAside,
+  victoryDisplay,
+  type Zone,
+} from './zone';
 
 /**
  * A usage error of a test table: an unknown or ambiguous name, a decision or
@@ -317,6 +325,36 @@ export interface EncounterPilesView {
   victoryDisplay: readonly EncounterCardView[];
 }
 
+/**
+ * The encounter card being resolved (`BoardView.resolving`): a drawn card waits in the `resolving`
+ * zone while its revelation asks the players something. `drawnBy` is the investigator it was drawn
+ * for (from its queued placement), and `keywords` its printed keywords plus surge when it gained
+ * surge while resolving.
+ */
+export interface ResolvingCardView extends EncounterCardView {
+  drawnBy?: InvestigatorId;
+  keywords: readonly Keyword[];
+}
+
+/**
+ * Where a card is, in the players' words (`BoardView.placeOf`): a pile, an investigator's threat
+ * area, engaged with an investigator, at a location by its printed name, or attached to a card. Any
+ * other zone (a deck of the act or agenda, out of the game) is `elsewhere`.
+ */
+export type CardPlaceView =
+  | {
+      kind:
+        | 'encounterDeck'
+        | 'encounterDiscard'
+        | 'setAside'
+        | 'victoryDisplay'
+        | 'resolving'
+        | 'elsewhere';
+    }
+  | { kind: 'threatArea' | 'engaged'; investigator: InvestigatorId }
+  | { kind: 'atLocation'; location: CardName }
+  | { kind: 'attachedTo'; card: CardName };
+
 /** One enemy attack enemy step 3.3 lists: the enemy by printed name and the investigator it attacks. */
 export interface DueAttackView {
   enemy: CardName;
@@ -476,6 +514,57 @@ export class BoardView {
       setAside: cardsIn(setAside),
       victoryDisplay: cardsIn(victoryDisplay),
     };
+  }
+
+  /** The encounter card being resolved, if a revelation waits for the players (`ResolvingCardView`). */
+  get resolving(): ResolvingCardView | undefined {
+    const [id] = cardsInZone(this.state, resolvingZone);
+    if (id === undefined) return undefined;
+    const card = requireCard(this.state, id);
+    const printed = cardStats(this.ctx.cards, card.code).keywords ?? [];
+    const surged = card.gainedSurge && !printed.some(({ name }) => name === 'surge');
+    const placement = queuedPlacementOf(this.state, id);
+    return {
+      ...encounterCardView(this.ctx, card),
+      ...(placement ? { drawnBy: placement.drawn.investigatorId } : {}),
+      keywords: surged ? [...printed, { name: 'surge' }] : printed,
+    };
+  }
+
+  /** The card `id` as the encounter piles show it, wherever it is now. */
+  encounterCard(id: InstanceId): EncounterCardView {
+    return encounterCardView(this.ctx, requireCard(this.state, id));
+  }
+
+  /** Where the card `id` is now (`CardPlaceView`), e.g. where a drawn encounter card went. */
+  placeOf(id: InstanceId): CardPlaceView {
+    const { zone } = requireCard(this.state, id);
+    switch (zone.kind) {
+      case 'encounterDeck':
+      case 'encounterDiscard':
+      case 'setAside':
+      case 'victoryDisplay':
+      case 'resolving':
+        return { kind: zone.kind };
+      case 'threatArea':
+      case 'engaged':
+        return { kind: zone.kind, investigator: zone.investigatorId };
+      case 'atLocation':
+        return {
+          kind: 'atLocation',
+          location: nameOf(this.ctx, requireCard(this.state, zone.locationId)),
+        };
+      case 'attachedTo':
+        return { kind: 'attachedTo', card: nameOf(this.ctx, requireCard(this.state, zone.hostId)) };
+      case 'scenarioDeck':
+      case 'outOfGame':
+      case 'agendaDeck':
+      case 'actDeck':
+      case 'location':
+        return { kind: 'elsewhere' };
+      default:
+        return assertNever(zone);
+    }
   }
 
   /** The chaos tokens in the bag for this scenario and difficulty, the players' to draw from. */
@@ -904,6 +993,17 @@ function decisionView(ctx: EngineContext, state: GameState, decision: Decision):
     ...(Object.keys(labels).length > 0 ? { labels } : {}),
     ...(Object.keys(counts).length > 0 ? { counts } : {}),
   };
+}
+
+/** The queued placement of the drawn card `id`, which names the investigator it was drawn for. */
+function queuedPlacementOf(
+  state: GameState,
+  id: InstanceId,
+): Extract<QueuedStep, { kind: 'placeDrawnCard' }> | undefined {
+  return state.meta.queue?.find(
+    (step): step is Extract<QueuedStep, { kind: 'placeDrawnCard' }> =>
+      step.kind === 'placeDrawnCard' && step.drawn.cardId === id,
+  );
 }
 
 function encounterCardView(ctx: EngineContext, card: CardInstance): EncounterCardView {
