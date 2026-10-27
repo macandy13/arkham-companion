@@ -7,6 +7,7 @@ import { EncounterPiles, HeaderPile, type PileProps } from '../encounter/Encount
 import type { AppState, OpenGame } from '../state/appStore';
 import { CardActions, cardActionsOn } from './ActionRow';
 import { Token } from './Token';
+import type { HeaderCardKind } from './useDetailView';
 
 /**
  * The play screen's header, laid out like the scenario's cards on the table, centred and each under
@@ -16,16 +17,20 @@ import { Token } from './Token';
  * open; the agenda's and act's steppers show only while the players adjust the board
  * (`OpenGame.adjusting`). The round, the phase and the buttons that run the game sit in the status
  * row below (`GameStatus`). A tap on the agenda or act opens it as a full card (`CardDetails`).
- * `board` is the open game's `OpenGame.board`.
+ * `board` is the open game's `OpenGame.board`. On a phone's compact view a tap on any of the four
+ * cards calls `onOpenCard` instead (the detail view opens on it), so the card's own buttons and
+ * dialogs wait for the detail view.
  */
 export function GameHeader({
   store,
   open,
   board,
+  onOpenCard,
 }: {
   store: StoreApi<AppState>;
   open: OpenGame;
   board: BoardView;
+  onOpenCard?: ((card: HeaderCardKind) => void) | undefined;
 }) {
   const { t } = useTranslation();
   const blocked = open.busy;
@@ -40,12 +45,24 @@ export function GameHeader({
 
   return (
     <header>
-      <HeaderSlot label={t('header.encounterDeck')}>
+      <HeaderSlot label={t('header.encounterDeck')} card="encounter" onOpen={onOpenCard}>
         <EncounterPiles {...piles} />
       </HeaderSlot>
-      <AgendaStatus store={store} board={board} blocked={blocked} adjusting={adjusting} />
-      <ActStatus store={store} board={board} blocked={blocked} adjusting={adjusting} />
-      <HeaderSlot label={t('header.scenario')}>
+      <AgendaStatus
+        store={store}
+        board={board}
+        blocked={blocked}
+        adjusting={adjusting}
+        onOpen={onOpenCard}
+      />
+      <ActStatus
+        store={store}
+        board={board}
+        blocked={blocked}
+        adjusting={adjusting}
+        onOpen={onOpenCard}
+      />
+      <HeaderSlot label={t('header.scenario')} card="scenario" onOpen={onOpenCard}>
         <ScenarioCard open={open} />
         <HeaderPile pile="setAside" {...piles} />
       </HeaderSlot>
@@ -81,11 +98,13 @@ function AgendaStatus({
   board,
   blocked,
   adjusting,
+  onOpen,
 }: {
   store: StoreApi<AppState>;
   board: BoardView;
   blocked: boolean;
   adjusting: boolean;
+  onOpen: ((card: HeaderCardKind) => void) | undefined;
 }) {
   const { t } = useTranslation();
   const [zoomed, setZoomed] = useState(false);
@@ -130,7 +149,7 @@ function AgendaStatus({
   );
 
   return (
-    <HeaderSlot label={t('header.agenda')}>
+    <HeaderSlot label={t('header.agenda')} card="agenda" onOpen={onOpen}>
       <HeaderCard
         kind="agenda"
         name={agenda.name}
@@ -172,11 +191,13 @@ function ActStatus({
   board,
   blocked,
   adjusting,
+  onOpen,
 }: {
   store: StoreApi<AppState>;
   board: BoardView;
   blocked: boolean;
   adjusting: boolean;
+  onOpen: ((card: HeaderCardKind) => void) | undefined;
 }) {
   const { t } = useTranslation();
   const [zoomed, setZoomed] = useState(false);
@@ -238,7 +259,7 @@ function ActStatus({
   const tokenAndPlate = (onAdvance?: () => void) => advance && plate(advance, onAdvance);
 
   return (
-    <HeaderSlot label={t('header.act')}>
+    <HeaderSlot label={t('header.act')} card="act" onOpen={onOpen}>
       <HeaderCard kind="act" name={act.name} image={act.image} onOpen={() => setZoomed(true)}>
         {tokenAndPlate()}
       </HeaderCard>
@@ -263,12 +284,35 @@ function ActStatus({
 
 /**
  * One place of the header: the playmat's `label` over the card or cards (`children`) that lie
- * there. The label names the place for screen readers too.
+ * there. The label names the place for screen readers too. With `onOpen` (the phone's compact
+ * view), a tap anywhere in the place, its buttons included, opens the detail view on its `card`
+ * instead: the tap is caught before it reaches them.
  */
-function HeaderSlot({ label, children }: { label: string; children: ReactNode }) {
+function HeaderSlot({
+  label,
+  card,
+  onOpen,
+  children,
+}: {
+  label: string;
+  card?: HeaderCardKind;
+  onOpen?: ((card: HeaderCardKind) => void) | undefined;
+  children: ReactNode;
+}) {
   const id = useId();
   return (
-    <section aria-labelledby={id}>
+    <section
+      aria-labelledby={id}
+      data-slot={card}
+      onClickCapture={
+        card &&
+        onOpen &&
+        ((event) => {
+          event.stopPropagation();
+          onOpen(card);
+        })
+      }
+    >
       <p id={id}>{label}</p>
       {children}
     </section>

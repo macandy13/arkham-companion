@@ -269,6 +269,11 @@
   --threat-cards-shown: 4;
   /* The round avatar of another investigator over the phone's one investigator panel. */
   --investigator-avatar-size: 2.75rem;
+  /* The phone's detail view: its cards row shows the header cards this tall. */
+  --layout-detail-card-height: 14rem;
+  /* A dot of the detail view's row and card dots, and their layer over the rows. */
+  --detail-dot-size: 0.5rem;
+  --layer-detail-controls: 3;
   /* The panel of an investigator who has left the game (defeated or resigned) steps back. */
   --eliminated-opacity: 0.55;
   /* The rim of a round piece or token: the enemy ring, the shroud's bone edge. */
@@ -315,15 +320,20 @@
  * its four header cards small in one row with small tokens and the investigator card's skills and
  * counters smaller, so the map keeps the room between the header and the one investigator panel.
  * game.css and investigators.css open their phone rules with the same query, written out in
- * each, since a custom property cannot stand in a media query.
+ * each, since a custom property cannot stand in a media query (usePhone.ts holds it for scripts).
+ * The detail view (`data-view`) shows the cards in full again, its header cards taller still.
  */
 @media (orientation: portrait) and (max-width: 40rem) {
-  :root {
+  #board:not([data-view]) {
     --layout-header-card-height: 4.75rem;
     --header-token-size: 2.25rem;
     --header-token-border-width: 2px;
     --font-size-token-count: 1rem;
     --skill-plate-icon-size: 0.875rem;
     --stat-token-size: 1.75rem;
+  }
+
+  #board[data-view='detail'] {
+    --layout-header-card-height: var(--layout-detail-card-height);
   }
 }

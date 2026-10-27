@@ -2,7 +2,7 @@
 import 'fake-indexeddb/auto';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
-import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   cardCode,
   cardDbWith,
@@ -407,5 +407,79 @@ describe('GameScreen map', () => {
         .getAllByRole('group')
         .map((tile) => tile.getAttribute('aria-label')),
     ).toEqual(['Study']);
+  });
+});
+
+describe('GameScreen on a phone held upright', () => {
+  /** The elements the screen scrolled into view, in order, as the detail view opened on them. */
+  let scrolledTo: Element[];
+
+  beforeAll(async () => {
+    await initI18n('en');
+  });
+  beforeEach(() => {
+    scrolledTo = [];
+    // jsdom has neither media queries nor scrolling, so the screen is told it is a phone.
+    vi.stubGlobal('matchMedia', () => ({
+      matches: true,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }));
+    Element.prototype.scrollIntoView = function (this: Element) {
+      scrolledTo.push(this);
+    };
+  });
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+    // @ts-expect-error jsdom has no scrollIntoView; the stub above is removed again.
+    delete Element.prototype.scrollIntoView;
+  });
+
+  const board = () => document.getElementById('board');
+
+  it('opens the detail view on the act from a tap on it, instead of its full card', async () => {
+    await renderTheGathering('phone-act-test');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Trapped' }));
+
+    expect(board()?.getAttribute('data-view')).toBe('detail');
+    expect(scrolledTo).toEqual([
+      board()?.querySelector('header'),
+      screen.getByRole('region', { name: 'Act' }),
+    ]);
+    expect(screen.queryByRole('dialog', { name: 'Trapped' })).toBeNull();
+  });
+
+  it("opens the detail view on Alder's panel from the name on it", async () => {
+    await renderTheGathering('phone-investigator-test');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Alder' }));
+
+    expect(board()?.getAttribute('data-view')).toBe('detail');
+    expect(scrolledTo).toEqual([
+      document.getElementById('investigators'),
+      screen.getByRole('region', { name: 'Alder' }),
+    ]);
+  });
+
+  it.each([
+    {
+      way: 'the ×',
+      db: 'phone-close-button-test',
+      close: () => fireEvent.click(screen.getByRole('button', { name: 'Back to the overview' })),
+    },
+    {
+      way: 'Escape',
+      db: 'phone-close-escape-test',
+      close: () => fireEvent.keyDown(window, { key: 'Escape' }),
+    },
+  ])('goes back to the overview with $way, through the history', async ({ db, close }) => {
+    await renderTheGathering(db);
+    fireEvent.click(screen.getByRole('button', { name: 'Trapped' }));
+
+    close();
+
+    await waitFor(() => expect(board()?.hasAttribute('data-view')).toBe(false));
   });
 });

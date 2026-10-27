@@ -642,23 +642,23 @@
 }
 
 /*
- * A phone held upright (tokens.css shrinks the cards and tokens with the same query): the four
- * header cards in one row without their labels, piles or plates, so the map takes the room left.
- * A tap on the agenda or act still opens its full card with its buttons; the piles come back in
- * the phone's detail view. The status row keeps to one line.
+ * A phone held upright, in the compact view (tokens.css shrinks the cards and tokens alike): the
+ * four header cards in one row without their labels, piles or plates, so the map takes the room
+ * left. A tap on a card opens the detail view on it, where they come back. The status row keeps
+ * to one line.
  */
 @media (orientation: portrait) and (max-width: 40rem) {
-  #board > header,
-  #board > header > section {
+  #board:not([data-view]) > header,
+  #board:not([data-view]) > header > section {
     flex-wrap: nowrap;
     gap: var(--space-1);
   }
 
-  #board > header {
+  #board:not([data-view]) > header {
     padding-block: var(--space-1);
   }
 
-  #board > header > section > p {
+  #board:not([data-view]) > header > section > p {
     position: absolute;
     width: var(--hidden-size);
     height: var(--hidden-size);
@@ -667,34 +667,138 @@
     white-space: nowrap;
   }
 
-  #board > header [data-pile],
-  #board > header > section:has([data-pile='victoryDisplay']),
-  #board > header > section > [data-card] > footer {
+  #board:not([data-view]) > header [data-pile],
+  #board:not([data-view]) > header > section:has([data-pile='victoryDisplay']),
+  #board:not([data-view]) > header > section > [data-card] > footer {
     display: none;
   }
 
-  #board > header > section > [data-card] > :is(h1, h2) {
+  #board:not([data-view]) > header > section > [data-card] > :is(h1, h2) {
     padding: var(--space-1);
     font-size: var(--font-size-note);
     line-height: 1;
   }
 
-  #board > header > section > [data-card] [data-token]:not([data-token='cards']) {
+  #board:not([data-view]) > header > section > [data-card] [data-token]:not([data-token='cards']) {
     inset-inline-end: var(--space-1);
     inset-block-end: var(--space-1);
   }
 
-  #status {
+  #board:not([data-view]) > #status {
     gap: var(--space-1);
   }
 
   /* The track names only the current phase, so the row keeps its buttons on one line. */
-  #status ol > li:not([aria-current]) {
+  #board:not([data-view]) > #status ol > li:not([aria-current]) {
     position: absolute;
     width: var(--hidden-size);
     height: var(--hidden-size);
     overflow: hidden;
     clip-path: inset(50%);
     white-space: nowrap;
+  }
+}
+
+/*
+ * The phone's detail view (`data-view='detail'`, DetailControls): the header, the map and the
+ * investigators as three rows a screen tall, snapped vertically, and the header's places snapped
+ * sideways, each a screen wide with its label, piles and plate again. The status row steps aside;
+ * the notices float over whichever row shows. The × and the dots float over the rows.
+ */
+@media (orientation: portrait) and (max-width: 40rem) {
+  #board[data-view='detail'] {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    scroll-snap-type: y mandatory;
+    scrollbar-width: none;
+  }
+
+  #board[data-view='detail'] > :is(header, #map, #investigators) {
+    flex: none;
+    box-sizing: border-box;
+    height: 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  #board[data-view='detail'] > #status {
+    display: none;
+  }
+
+  #board[data-view='detail'] > header {
+    flex-wrap: nowrap;
+    justify-content: start;
+    align-items: center;
+    gap: 0;
+    padding: 0;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  #board[data-view='detail'] > header > section {
+    flex: none;
+    width: 100%;
+    align-content: center;
+    scroll-snap-align: start;
+  }
+
+  #board[data-view='detail'] > #notices {
+    position: fixed;
+    inset-inline: var(--space-2);
+    inset-block-end: var(--space-5);
+    z-index: var(--layer-detail-controls);
+  }
+
+  /* At the top left, clear of the map's zoom buttons at its top right. */
+  #board[data-view='detail'] > button[data-detail='close'] {
+    position: fixed;
+    inset-block-start: var(--space-2);
+    inset-inline-start: var(--space-2);
+    z-index: var(--layer-detail-controls);
+    border-radius: var(--radius-round);
+  }
+
+  #board[data-view='detail'] > button[data-detail='close']::before {
+    mask-image: url('../investigators/icons/close.svg');
+  }
+
+  /* The row dots stand down the right edge, the card dots along the foot. */
+  #board[data-view='detail'] > ol[data-dots] {
+    position: fixed;
+    z-index: var(--layer-detail-controls);
+    display: flex;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    pointer-events: none;
+  }
+
+  #board[data-view='detail'] > ol[data-dots='rows'] {
+    flex-direction: column;
+    inset-inline-end: var(--space-1);
+    inset-block-start: 50%;
+    transform: translateY(-50%);
+  }
+
+  #board[data-view='detail'] > ol[data-dots='items'] {
+    inset-inline: 0;
+    inset-block-end: var(--space-2);
+    justify-content: center;
+  }
+
+  #board[data-view='detail'] > ol[data-dots] > li {
+    width: var(--detail-dot-size);
+    height: var(--detail-dot-size);
+    padding: 0;
+    border: var(--border-width) solid var(--color-accent);
+    border-radius: var(--radius-round);
+    background: none;
+  }
+
+  #board[data-view='detail'] > ol[data-dots] > li[data-current] {
+    background: var(--color-accent);
   }
 }

@@ -12,7 +12,7 @@ import {
 
 // Situations on the game screen, each photographed as it ends (`@shot`, coding guidelines §3).
 
-test('the house map with Roland Banks in the Hallway', { tag: '@shot' }, async ({ page }) => {
+test('the house map with Roland Banks in the Hallway', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   const hallway = page
@@ -29,29 +29,27 @@ test('map tabs for the Study and the house, the house chosen', async ({ page }) 
   await expect(page.getByRole('tabpanel', { name: 'House' })).toBeVisible();
 });
 
-test(
-  'Roland Banks with four treacheries and the Ghoul Priest, scrolled on to the Ghoul Priest',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(
-      page,
-      'Roland Banks threatened',
-      rolandThreatenedExport('Roland Banks threatened'),
-    );
+test('Roland Banks with four treacheries and the Ghoul Priest, scrolled on to the Ghoul Priest', async ({
+  page,
+}) => {
+  await resumeImportedGame(
+    page,
+    'Roland Banks threatened',
+    rolandThreatenedExport('Roland Banks threatened'),
+  );
 
-    const roland = page.getByRole('region', { name: 'Roland Banks' });
-    const threatArea = roland.getByRole('list', { name: 'Threat area' });
-    const ghoulPriest = threatArea.getByRole('listitem', {
-      name: 'Ghoul Priest, 3 of 5 health left, 2 damage',
-    });
-    await expect(threatArea.getByRole('listitem')).toHaveCount(5);
-    await expect(ghoulPriest).not.toBeInViewport({ ratio: 1 });
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
+  const threatArea = roland.getByRole('list', { name: 'Threat area' });
+  const ghoulPriest = threatArea.getByRole('listitem', {
+    name: 'Ghoul Priest, 3 of 5 health left, 2 damage',
+  });
+  await expect(threatArea.getByRole('listitem')).toHaveCount(5);
+  await expect(ghoulPriest).not.toBeInViewport({ ratio: 1 });
 
-    await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
+  await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
 
-    await expect(ghoulPriest).toBeInViewport({ ratio: 1 });
-  },
-);
+  await expect(ghoulPriest).toBeInViewport({ ratio: 1 });
+});
 
 test('the Hallway’s details, its card with Roland Banks on it, on Roland Banks’ turn', async ({
   page,

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
 import { useStore } from 'zustand';
@@ -8,12 +8,15 @@ import type { AppState } from '../state/appStore';
 import { InvestigatorBar } from '../investigators/InvestigatorBar';
 import { MapBoard } from '../map/MapBoard';
 import { DecisionDialog } from './DecisionDialog';
+import { DetailControls } from './DetailControls';
 import { GameHeader } from './GameHeader';
 import { GameStatus } from './GameStatus';
 import { RejectionToast } from './RejectionToast';
 import { DrawnCardsNotice } from '../encounter/DrawnCardsNotice';
 import { SpawnPrompt } from '../encounter/SpawnPrompt';
 import { SkippedEffectsNotice } from './SkippedEffectsNotice';
+import { useDetailView } from './useDetailView';
+import { usePhone } from './usePhone';
 import './game.css';
 
 /**
@@ -21,6 +24,10 @@ import './game.css';
  * and shows the board layout of product.md "UI concept": the header, the status row, the map, the investigator bar,
  * the first open decision as a dialog, the reason when an action is refused, and the card effects it skipped. Until the game is open it says so, and
  * a game it cannot play (its scenario is not in the catalog) gets a warning instead of a board.
+ *
+ * On a phone held upright the board starts as the compact view (the stylesheet's phone blocks); a
+ * tap on a header card or the investigator's name opens the detail view on it (`useDetailView`,
+ * `data-view="detail"`), the same parts laid out as rows to swipe between (`DetailControls`).
  */
 export function GameScreen({ store }: { store: StoreApi<AppState> }) {
   const { t } = useTranslation();
@@ -28,6 +35,12 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
   const gameId = toGameId(useParams().id ?? '');
   const current = useStore(store, (s) => s.current);
   const open = current?.gameId === gameId ? current : undefined;
+  const phone = usePhone();
+  const detail = useDetailView();
+  const boardElement = useRef<HTMLDivElement>(null);
+  // Turning the phone sideways shows the whole board, so the detail view is a phone's only.
+  const detailTarget = phone ? detail.target : undefined;
+  const opensDetail = phone && !detailTarget;
 
   useEffect(() => {
     void store.getState().openGame(gameId);
@@ -49,10 +62,17 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
   return (
     <div
       id="board"
+      ref={boardElement}
+      data-view={detailTarget ? 'detail' : undefined}
       data-adjusting={open.adjusting || undefined}
       data-spawning={open.spawning ? true : undefined}
     >
-      <GameHeader store={store} open={open} board={board} />
+      <GameHeader
+        store={store}
+        open={open}
+        board={board}
+        onOpenCard={opensDetail ? (card) => detail.open({ row: 'cards', card }) : undefined}
+      />
       <GameStatus store={store} open={open} board={board} />
       <section id="map" aria-labelledby="map-title">
         <h2 id="map-title">{t('map.title')}</h2>
@@ -77,8 +97,16 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
           actions={store.getState().actions}
           busy={open.busy}
           adjusting={open.adjusting}
+          onOpen={
+            opensDetail
+              ? (investigator) => detail.open({ row: 'investigators', investigator })
+              : undefined
+          }
         />
       </section>
+      {detailTarget && (
+        <DetailControls board={boardElement} target={detailTarget} onClose={detail.close} />
+      )}
       {/* Adjusting the board is allowed with a decision open, so the dialog steps aside meanwhile. */}
       {decision && !open.adjusting && (
         <DecisionDialog

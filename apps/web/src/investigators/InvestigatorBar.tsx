@@ -27,18 +27,22 @@ import './investigators.css';
  *
  * A phone has room for one panel only, so there the stylesheet shows just the focused one
  * (`data-focus`) with the others as avatar buttons above it (`OtherInvestigators`); a wider screen
- * shows every panel and hides the avatars. Focus follows the turn, see `useFocus`.
+ * shows every panel and hides the avatars. Focus follows the turn, see `useFocus`. With `onOpen`
+ * (the phone's compact view), the focused investigator's name is a button that opens the detail
+ * view on their panel.
  */
 export function InvestigatorBar({
   board,
   actions,
   busy,
   adjusting,
+  onOpen,
 }: {
   board: BoardView;
   actions: GameActions;
   busy: boolean;
   adjusting: boolean;
+  onOpen?: ((investigator: InvestigatorId) => void) | undefined;
 }) {
   // The players pick who goes next in the investigation phase, once no turn is in progress.
   const picking = board.phase === 'investigation' && board.turn === undefined;
@@ -52,6 +56,7 @@ export function InvestigatorBar({
           board={board}
           investigator={investigator}
           focused={focus === investigator.id}
+          onOpen={focus === investigator.id ? onOpen : undefined}
           onTurn={board.turn === investigator.id}
           lead={board.lead === investigator.id}
           engaged={board.enemiesEngagedWith(investigator.id)}
@@ -137,6 +142,7 @@ function InvestigatorPanel({
   board,
   investigator,
   focused,
+  onOpen,
   onTurn,
   lead,
   engaged,
@@ -150,6 +156,8 @@ function InvestigatorPanel({
   investigator: InvestigatorView;
   /** The phone shows this panel in full (`useFocus`). */
   focused: boolean;
+  /** Opens the phone's detail view on this panel, from a tap on the name. */
+  onOpen: ((investigator: InvestigatorId) => void) | undefined;
   onTurn: boolean;
   /** They are the lead investigator (`BoardView.lead`). */
   lead: boolean;
@@ -180,7 +188,15 @@ function InvestigatorPanel({
       />
       <article data-card="investigator">
         <header>
-          <h3 id={nameId}>{investigator.name}</h3>
+          <h3 id={nameId}>
+            {onOpen ? (
+              <button type="button" onClick={() => onOpen(investigator.id)}>
+                {investigator.name}
+              </button>
+            ) : (
+              investigator.name
+            )}
+          </h3>
           {lead && <span role="img" aria-label={t('investigators.lead')} data-marker="lead" />}
           {onTurn && <span role="img" aria-label={t('investigators.onTurn')} data-marker="turn" />}
           <p>{statusLine(investigator, onTurn, t)}</p>
