@@ -7,7 +7,7 @@ import {
   roland,
   startedCampaign,
 } from '../../test/utils';
-import { investigatorCode } from '../ids';
+import { cardCode, investigatorCode } from '../ids';
 import { findInvestigator } from './campaign_log';
 import { handleCommand } from './handle_campaign';
 
@@ -170,6 +170,28 @@ describe('MarkKilled and MarkInsane', () => {
   });
 });
 
+describe('EarnCard', () => {
+  it('adds the story card to roland’s earned cards only', () => {
+    const log = startedCampaign(
+      { investigators: [roland.code, daisy.code] },
+      { type: 'EarnCard', code: roland.code, card: cardCode('lita') },
+    );
+
+    expect(findInvestigator(log, roland.code)?.earnedCards).toEqual([cardCode('lita')]);
+    expect(findInvestigator(log, daisy.code)?.earnedCards).toEqual([]);
+  });
+
+  it('lists a story card roland earns twice once', () => {
+    const log = startedCampaign(
+      { investigators: [roland.code] },
+      { type: 'EarnCard', code: roland.code, card: cardCode('lita') },
+      { type: 'EarnCard', code: roland.code, card: cardCode('lita') },
+    );
+
+    expect(findInvestigator(log, roland.code)?.earnedCards).toEqual([cardCode('lita')]);
+  });
+});
+
 describe('eliminated investigators (Roland is killed, Daisy is insane)', () => {
   const log = startedCampaign(
     { investigators: [roland.code, daisy.code] },
@@ -181,7 +203,7 @@ describe('eliminated investigators (Roland is killed, Daisy is insane)', () => {
     { code: roland.code, fate: 'killed' },
     { code: daisy.code, fate: 'insane' },
   ] as const)(
-    '$code ($fate) cannot gain XP, spend XP, gain trauma or be marked again',
+    '$code ($fate) cannot gain XP, spend XP, gain trauma, be marked again or earn a card',
     ({ code, fate }) => {
       const commands = [
         { type: 'AwardXp', code, amount: 1 },
@@ -189,6 +211,7 @@ describe('eliminated investigators (Roland is killed, Daisy is insane)', () => {
         { type: 'AddTrauma', code, kind: 'physical', amount: 1 },
         { type: 'MarkKilled', code },
         { type: 'MarkInsane', code },
+        { type: 'EarnCard', code, card: cardCode('lita') },
       ] as const;
       for (const command of commands) {
         expect(campaignRejectionOf(() => handleCommand(campaignContext, log, command))).toEqual({

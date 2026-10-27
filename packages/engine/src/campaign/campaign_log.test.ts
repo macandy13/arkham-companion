@@ -25,6 +25,7 @@ describe('campaign log queries', () => {
     xpEarned: 5,
     xpSpent: 2,
     fate: 'alive',
+    earnedCards: [],
   };
 
   it('an empty log has not started, a started one has', () => {

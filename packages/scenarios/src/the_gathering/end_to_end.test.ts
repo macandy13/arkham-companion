@@ -46,6 +46,7 @@ import {
 import { answer } from '@arkham/engine/test/utils';
 import {
   BURN_THE_HOUSE_DECISION,
+  GATHERING_CODES,
   WHATS_GOING_ON_DECISION,
   theGathering,
   theGatheringCards,
@@ -1113,6 +1114,10 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
           value: { kind: 'flag', value: false },
         },
       },
+      {
+        kind: 'command',
+        command: { type: 'EarnCard', code: rolandBanks.code, card: GATHERING_CODES.litaChantler },
+      },
       { kind: 'byHand', textKey: 'scenario.theGathering.resolution.earnLita' },
       {
         kind: 'command',
@@ -1145,8 +1150,13 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
 
     expect(log.story).toEqual({ houseStillStanding: { kind: 'flag', value: false } });
     expect(log.investigators).toMatchObject([
-      { code: rolandBanks.code, mentalTrauma: 1, xpEarned: 6 },
-      { code: daisyWalker.code, mentalTrauma: 0, xpEarned: 6 },
+      {
+        code: rolandBanks.code,
+        mentalTrauma: 1,
+        xpEarned: 6,
+        earnedCards: [GATHERING_CODES.litaChantler],
+      },
+      { code: daisyWalker.code, mentalTrauma: 0, xpEarned: 6, earnedCards: [] },
       { code: wendyAdams.code, mentalTrauma: 0, physicalTrauma: 1, xpEarned: 6 },
     ]);
     expect(log.playedScenarios).toEqual([

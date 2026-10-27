@@ -168,6 +168,69 @@ describe('proposeResolution', () => {
     ]);
   });
 
+  it.each([
+    {
+      step: 'the lead earns it',
+      outcome: 'Lita for alice, the lead',
+      earn: { kind: 'earnCard', to: 'lead', card: cardCode('lita') },
+      change: {
+        kind: 'command',
+        command: { type: 'EarnCard', code: aliceCode, card: cardCode('lita') },
+      },
+    },
+    {
+      step: 'the players choose one of everyone to earn it',
+      outcome: 'a choice of alice or bob for Lita',
+      earn: { kind: 'earnCard', to: 'each', card: cardCode('lita'), choose: true },
+      change: {
+        kind: 'choice',
+        options: [
+          { type: 'EarnCard', code: aliceCode, card: cardCode('lita') },
+          { type: 'EarnCard', code: bobCode, card: cardCode('lita') },
+        ],
+      },
+    },
+  ] as const)('proposes $outcome when $step', ({ earn, change }) => {
+    const { context, state } = table.start();
+
+    const proposal = campaign.proposeResolution(context, stateAfter(context, state, endWith(r1)), {
+      byId: { [r1]: [earn] },
+      none: [],
+    });
+
+    expect(proposal).toEqual([change]);
+  });
+
+  it('offers only bob, who resigned, to earn Lita', () => {
+    const { context, state } = table.withTurnOf(bob).start();
+
+    const proposal = campaign.proposeResolution(
+      context,
+      stateAfter(context, state, resign(bob), endWith(r3)),
+      {
+        byId: {
+          [r3]: [{ kind: 'earnCard', to: 'resigned', card: cardCode('lita'), choose: true }],
+        },
+        none: [],
+      },
+    );
+
+    expect(proposal).toEqual([
+      { kind: 'choice', options: [{ type: 'EarnCard', code: bobCode, card: cardCode('lita') }] },
+    ]);
+  });
+
+  it('offers no choice of who earns a card when nobody resigned', () => {
+    const { context, state } = table.start();
+
+    const proposal = campaign.proposeResolution(context, stateAfter(context, state, endWith(r1)), {
+      byId: { [r1]: [{ kind: 'earnCard', to: 'resigned', card: cardCode('lita'), choose: true }] },
+      none: [],
+    });
+
+    expect(proposal).toEqual([]);
+  });
+
   it('gives no defeat trauma to an investigator the resolution kills', () => {
     const resolutions: ScenarioResolutions = {
       byId: { [r3]: [{ kind: 'markKilled', to: 'notResigned' }] },

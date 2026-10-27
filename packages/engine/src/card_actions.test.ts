@@ -25,11 +25,19 @@ import {
   cardCode,
   type ActionLimit,
   type CardAction,
+  type CardCode,
   type InstanceId,
   type InvestigatorId,
   type UseCardAction,
 } from './index';
-import { answer, investigatorOf, rejectionFrom, stateAfter } from '../test/utils';
+import {
+  answer,
+  campaignMember,
+  investigatorOf,
+  makeCampaignLog,
+  rejectionFrom,
+  stateAfter,
+} from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -522,6 +530,69 @@ describe('action conditions', () => {
     { where: 'in the hall, uncontrolled', zone: atLocation(hall) },
   ])('neither offers nor accepts the action from alice with Lita $where', ({ zone }) => {
     const table = PlayTable.start(hallAskingForLita.withCard(lita, blankAsset('lita'), zone));
+
+    expect(table.board.cardActions(alice)).toEqual([]);
+    expect(rejectionFrom(table.ctx, table.state, useCardAction(alice, hall))).toEqual({
+      code: 'cardActionConditionUnmet',
+      cardId: hall,
+      action: 0,
+      investigatorId: alice,
+    });
+  });
+});
+
+describe('action conditions on a player card earned in the campaign', () => {
+  const lita = cardCode('lita');
+  /** The hall's one action scares its taker "if you control Lita"; alice is in the hall, on her turn, with no Lita in the game. */
+  const hallAskingForLita = newGame()
+    .withLocation(
+      hall,
+      blankLocation('hall', {
+        actions: [{ ...scareAction, condition: { kind: 'controls', card: lita } }],
+      }),
+      { revealed: true },
+    )
+    .withInvestigator(alice, { locationId: hall })
+    .withTurnOf(alice);
+  /**
+   * The campaign log of alice and bob, with the cards each earned. A game investigator is the
+   * campaign member with their investigator code, and `withInvestigator(alice)` gives alice the
+   * code 'alice', so the log's 'alice' is the hall's alice.
+   */
+  const logWhere = (earned: { alice: CardCode[]; bob: CardCode[] }) =>
+    makeCampaignLog({
+      investigators: [
+        { ...campaignMember('alice', 'alice', 9, 9), earnedCards: earned.alice },
+        { ...campaignMember('bob', 'bob', 9, 9), earnedCards: earned.bob },
+      ],
+    });
+
+  it.each([
+    {
+      game: 'a campaign where she earned Lita',
+      setup: () => hallAskingForLita.withCampaign(logWhere({ alice: [lita], bob: [] })),
+    },
+    // Its players chose the earlier resolutions themselves, so the game trusts alice.
+    { game: 'a standalone game', setup: () => hallAskingForLita },
+  ])('lets alice take the action in $game', ({ setup }) => {
+    const table = PlayTable.start(setup());
+
+    table.play(useCardAction(alice, hall));
+
+    expect(table.board.investigator(alice).horror).toBe(1);
+  });
+
+  it.each([
+    {
+      game: 'a campaign where bob earned Lita',
+      setup: () => hallAskingForLita.withCampaign(logWhere({ alice: [], bob: [lita] })),
+    },
+    {
+      game: 'a campaign where nobody earned her',
+      setup: () => hallAskingForLita.withCampaign(logWhere({ alice: [], bob: [] })),
+    },
+  ])('neither offers nor accepts the action in $game', ({ setup }) => {
+    const table = PlayTable.start(setup());
 
     expect(table.board.cardActions(alice)).toEqual([]);
     expect(rejectionFrom(table.ctx, table.state, useCardAction(alice, hall))).toEqual({

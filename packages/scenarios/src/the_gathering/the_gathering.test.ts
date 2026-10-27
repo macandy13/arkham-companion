@@ -413,6 +413,29 @@ describe('The Gathering acts 2 and 3', () => {
     expect(ended.act.current).toBeUndefined();
   });
 
+  it.each([
+    { optionId: 'burn', earners: [investigatorCode('tank')] },
+    { optionId: 'spare', earners: [] },
+  ])(
+    'lets the lead, tank, earn Lita only when they choose to burn the house ($optionId)',
+    ({ optionId, earners }) => {
+      const asked = stateAfter(ctx, priestEngages(act2WaitingForPrey(), tank), {
+        type: 'DefeatEnemy',
+        enemyId: priest,
+      });
+      const ended = stateAfter(ctx, asked, answer(BURN_THE_HOUSE_DECISION, optionId));
+
+      const proposal = campaign.proposeResolution(ctx, ended, theGatheringResolutions) ?? [];
+
+      const litaEarners = proposal.flatMap((change) =>
+        change.kind === 'command' && change.command.type === 'EarnCard'
+          ? [change.command.code]
+          : [],
+      );
+      expect(litaEarners).toEqual(earners);
+    },
+  );
+
   it('does not advance act 3 when another enemy is defeated', () => {
     // In the empty Attic, so it engages nobody.
     const withFleshEater = stateAfter(ctx, priestEngages(act2WaitingForPrey(), tank), {
@@ -540,6 +563,37 @@ describe('The Gathering agendas 2 and 3', () => {
     expect(ended.meta).toMatchObject({ ended: true, resolution: 'R3' });
   });
 
+  it('leaves Lita for the players to give when R3 kills everyone, as nobody resigned', () => {
+    const atAgenda3 = stateAfter(ctx, atAgenda2(), { type: 'AdvanceAgenda' });
+    const ended = stateAfter(ctx, atAgenda3, { type: 'AdvanceAgenda' });
+
+    const proposal = campaign.proposeResolution(ctx, ended, theGatheringResolutions) ?? [];
+
+    expect(proposal.filter((change) => change.kind !== 'command')).toEqual([
+      { kind: 'byHand', textKey: 'scenario.theGathering.resolution.replaceKilled' },
+      { kind: 'byHand', textKey: 'scenario.theGathering.resolution.earnLitaIfLeadKilled' },
+    ]);
+  });
+
+  it('lets the players give Lita only to seeker, who resigned, when R3 kills the rest', () => {
+    const atAgenda3 = stateAfter(ctx, atAgenda2(), { type: 'AdvanceAgenda' });
+    const ended = stateAfter(
+      ctx,
+      atAgenda3,
+      { type: 'NextPhase' },
+      { type: 'StartTurn', investigatorId: seeker },
+      { type: 'Resign', investigatorId: seeker },
+      { type: 'AdvanceAgenda' },
+    );
+
+    const proposal = campaign.proposeResolution(ctx, ended, theGatheringResolutions) ?? [];
+
+    expect(proposal).toContainEqual({
+      kind: 'choice',
+      options: [{ type: 'EarnCard', code: investigatorCode('seeker'), card: codes.litaChantler }],
+    });
+  });
+
   it('defeats every investigator who has not resigned when agenda 3 advances at act 3', () => {
     const atAct3 = stateAfter(ctx, atAgenda2(), { type: 'AdvanceAgenda' }, { type: 'AdvanceAct' });
     const preyQuestion = atAct3.pending.find((decision) => decision.subject === priest);
@@ -586,6 +640,10 @@ describe('The Gathering agendas 2 and 3', () => {
       {
         kind: 'command',
         command: { type: 'RecordStory', key: ZEALOT_STORY.ghoulPriestStillAlive, value: yes },
+      },
+      {
+        kind: 'command',
+        command: { type: 'EarnCard', code: tankCode, card: codes.litaChantler },
       },
       { kind: 'byHand', textKey: 'scenario.theGathering.resolution.earnLita' },
       { kind: 'command', command: { type: 'AwardXp', code: tankCode, amount: 2 } },

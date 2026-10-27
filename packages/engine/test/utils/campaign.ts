@@ -16,7 +16,7 @@ import {
   type StartCampaign,
 } from '../../src/index';
 
-/** A team member as the log holds them at campaign start: no trauma, no XP, alive. */
+/** A team member as the log holds them at campaign start: no trauma, no XP, no earned cards, alive. */
 export function campaignMember(
   code: string,
   name: string,
@@ -33,6 +33,7 @@ export function campaignMember(
     xpEarned: 0,
     xpSpent: 0,
     fate: 'alive',
+    earnedCards: [],
   };
 }
 

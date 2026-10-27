@@ -1,4 +1,10 @@
-import type { CampaignDefinitionId, CampaignId, InvestigatorCode, ScenarioId } from '../ids';
+import type {
+  CampaignDefinitionId,
+  CampaignId,
+  CardCode,
+  InvestigatorCode,
+  ScenarioId,
+} from '../ids';
 import type { ChaosToken, Difficulty } from '../state';
 import type {
   CampaignInvestigator,
@@ -25,6 +31,7 @@ export type CampaignEvent =
   | XpChanged
   | TraumaChanged
   | InvestigatorFateChanged
+  | CardEarned
   | InvestigatorReplaced
   | ScenarioPlayed
   | ScenarioPositionChanged
@@ -91,6 +98,13 @@ export interface InvestigatorFateChanged {
   readonly type: 'InvestigatorFateChanged';
   readonly code: InvestigatorCode;
   readonly fate: InvestigatorFate;
+}
+
+/** A team member earned a story card (`CampaignInvestigator.earnedCards`). Produced by `EarnCard`. */
+export interface CardEarned {
+  readonly type: 'CardEarned';
+  readonly code: InvestigatorCode;
+  readonly card: CardCode;
 }
 
 /**

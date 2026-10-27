@@ -55,6 +55,7 @@ describe('StartCampaign', () => {
           xpEarned: 0,
           xpSpent: 0,
           fate: 'alive',
+          earnedCards: [],
         },
         {
           code: daisy.code,
@@ -66,6 +67,7 @@ describe('StartCampaign', () => {
           xpEarned: 0,
           xpSpent: 0,
           fate: 'alive',
+          earnedCards: [],
         },
       ],
       formerInvestigators: [],
