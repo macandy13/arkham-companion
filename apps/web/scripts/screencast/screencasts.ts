@@ -100,7 +100,8 @@ export const SHOT_DEVICES: Readonly<
   phone: { project: RECORDING_PROJECTS.phoneShots, label: 'Phone', width: 180 },
 };
 
-const SHOT_DEVICE_NAMES = Object.keys(SHOT_DEVICES) as ShotDevice[];
+/** The devices in column order. */
+export const SHOT_DEVICE_NAMES = Object.keys(SHOT_DEVICES) as ShotDevice[];
 
 /** The published file name of one device's picture of a shot (`map-tabs-phone.png`). */
 export function shotFile(slug: string, device: ShotDevice): string {
@@ -142,10 +143,12 @@ export function screenshots(report: PlaywrightReport, base: BaseRun = NO_BASE): 
   return changedSpecs(report, projects, base).map((spec) => ({
     title: spec.title,
     slug: slugify(spec.title),
-    pictures: {
-      desktop: passingAttachment(spec, SHOT_DEVICES.desktop.project, 'screenshot'),
-      phone: passingAttachment(spec, SHOT_DEVICES.phone.project, 'screenshot'),
-    },
+    pictures: Object.fromEntries(
+      SHOT_DEVICE_NAMES.map((device) => [
+        device,
+        passingAttachment(spec, SHOT_DEVICES[device].project, 'screenshot'),
+      ]),
+    ) as Record<ShotDevice, string | undefined>,
   }));
 }
 

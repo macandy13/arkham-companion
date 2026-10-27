@@ -24,9 +24,10 @@ import {
   renderSection,
   replaceSection,
   screenshots,
+  SHOT_DEVICE_NAMES,
   shotFile,
 } from './screencasts.ts';
-import type { BaseRun, PlaywrightReport, ShotDevice } from './screencasts.ts';
+import type { BaseRun, PlaywrightReport } from './screencasts.ts';
 
 function render(
   reportPath: string,
@@ -44,8 +45,10 @@ function render(
   const shots = screenshots(report, base);
   mkdirSync(outDir, { recursive: true });
   for (const { slug, pictures } of shots) {
-    for (const [device, picture] of Object.entries(pictures) as [ShotDevice, string | undefined][])
+    for (const device of SHOT_DEVICE_NAMES) {
+      const picture = pictures[device];
       if (picture) copyFileSync(picture, join(outDir, shotFile(slug, device)));
+    }
   }
   for (const { slug, videoPath } of flows) {
     if (!videoPath) continue;

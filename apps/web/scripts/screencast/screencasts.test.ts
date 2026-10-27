@@ -260,9 +260,9 @@ describe('specs the base also records', () => {
   });
 
   it.each([
-    { name: 'both pictures are unchanged', headPhone: '/head/phone_old.png', shown: [] },
-    { name: 'only the phone picture changed', headPhone: '/head/phone_new.png', shown: ['attic'] },
-  ])('compare a shot on every device: shown unless $name', ({ headPhone, shown }) => {
+    { name: 'both unchanged, left out', headPhone: '/head/phone_old.png', shown: [] },
+    { name: 'only the phone changed, shown', headPhone: '/head/phone_new.png', shown: ['attic'] },
+  ])('compare a shot on every device: $name', ({ headPhone, shown }) => {
     const head: PlaywrightReport = {
       suites: [{ specs: [shot('map.spec.ts', 'attic', '/head/desk_old.png', headPhone)] }],
     };
