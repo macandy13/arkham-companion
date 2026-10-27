@@ -25,7 +25,7 @@ flowchart LR
   CD --> ADB
 ```
 
-Arrows are package dependencies; [ESLint](../eslint.config.js) enforces the important ones. The engine depends only on `@arkham/util`: no React, storage, network, clock or `Math.random`. Only [`IndexedDbStore`](../apps/web/src/storage/IndexedDbStore.ts) imports Dexie. [`packages/review_digest`](../packages/review_digest/src/) is CI tooling.
+Arrows are package dependencies; [ESLint](../eslint.config.js) enforces the important ones. The engine depends only on `@arkham/util`: no React, storage, network, clock or `Math.random`. Only [`IndexedDbStore`](../apps/web/src/storage/IndexedDbStore.ts) imports Dexie. [`packages/review_digest`](../packages/review_digest/src/) and [`packages/review_queue`](../packages/review_queue/src/) are CI tooling.
 
 - [`packages/engine`](../packages/engine/src/): game state, commands, events, reducer, generic rules, the `GameStore` interface, and the test tools (`GameBuilder`, `PlayTable`, `BoardView`).
 - [`packages/scenarios`](../packages/scenarios/src/): scenario and campaign definitions; special rules are card abilities.
