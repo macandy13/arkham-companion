@@ -43,6 +43,7 @@ export type Command =
   | GainResources
   | DrawCards
   | SearchDeck
+  | DiscardFromHand
   | PlayCard
   | TakeDamageAndHorror
   | DefeatInvestigator
@@ -349,8 +350,18 @@ export interface PlayCard extends ActionCommand {
   investigatorId: InvestigatorId;
 }
 
+/**
+ * "Choose and discard N cards from your hand" (Herman Collins' Parley cost): the investigator
+ * discards from their own hand. Left to the players like `DrawCards`.
+ */
+export interface DiscardFromHand {
+  type: 'DiscardFromHand';
+  investigatorId: InvestigatorId;
+  amount: number;
+}
+
 /** The commands on player cards, which the engine defers to the players (`CommandDeferred`). */
-export type PlayerCardCommand = DrawCards | SearchDeck | PlayCard;
+export type PlayerCardCommand = DrawCards | SearchDeck | PlayCard | DiscardFromHand;
 
 /**
  * Whether the players took `command` as an action at the table (the draw or play action), rather
@@ -362,6 +373,7 @@ export function takenAsAction(command: PlayerCardCommand): boolean {
     case 'PlayCard':
       return command.asAction === true;
     case 'SearchDeck':
+    case 'DiscardFromHand':
       return false;
   }
 }
