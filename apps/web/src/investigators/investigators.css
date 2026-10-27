@@ -386,6 +386,18 @@
   mask-image: url('./icons/investigate.svg');
 }
 
+#investigators button[data-icon='takeResource']::before {
+  mask-image: url('./icons/resource.svg');
+}
+
+#investigators button[data-icon='drawCard']::before {
+  mask-image: url('./icons/draw.svg');
+}
+
+#investigators button[data-icon='playCard']::before {
+  mask-image: url('./icons/play.svg');
+}
+
 /*
  * The threat area: a row of small cards standing on the investigator card's top edge, starting at
  * its left, as cards laid along the card on the table. Past `--threat-cards-shown` cards the row
