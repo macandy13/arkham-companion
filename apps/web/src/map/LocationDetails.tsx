@@ -1,6 +1,7 @@
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BoardView, InvestigatorId, LocationView } from '@arkham/engine';
+import type { BoardView, CardFaceView, InvestigatorId, LocationView } from '@arkham/engine';
+import { CardZoom } from '../screens/CardZoom';
 import { ActionButton, ActionGroup, type ActionIcon } from '../screens/ActionRow';
 import type { ActionCost, GameActions, LocationToken } from '../state/gameActions';
 import { CardPatterns, LocationTile } from './LocationTile';
@@ -69,7 +70,9 @@ export function LocationDetails({
           : t('location.unrevealed')}
       </p>
       <Here board={board} location={location} />
-      {location.attachments && <Attached names={location.attachments} />}
+      {location.attachments && (
+        <Attached cards={board.cardsIn({ kind: 'attachedTo', hostId: location.id })} />
+      )}
       {adjusting && <Corrections location={location} actions={actions} busy={busy} />}
       {offered.length > 0 && (
         <footer>
@@ -180,18 +183,29 @@ function LocationCard({ board, location }: { board: BoardView; location: Locatio
   );
 }
 
-/** The printed names of the cards attached to the location, such as a treachery put into play there. */
-function Attached({ names }: { names: readonly string[] }) {
+/** The cards attached to the location, such as a treachery put into play there, each opening large to read (`CardZoom`). */
+function Attached({ cards }: { cards: readonly CardFaceView[] }) {
   const { t } = useTranslation();
   const titleId = useId();
+  const [zoomed, setZoomed] = useState<CardFaceView>();
   return (
     <section aria-labelledby={titleId}>
       <h3 id={titleId}>{t('location.attached')}</h3>
       <ul>
-        {names.map((name, i) => (
-          <li key={`${name}-${i}`}>{name}</li>
+        {cards.map((card, i) => (
+          <li key={`${card.name}-${i}`}>
+            <button
+              type="button"
+              aria-haspopup="dialog"
+              aria-label={t('cardZoom.open', { name: card.name })}
+              onClick={() => setZoomed(card)}
+            >
+              {card.name}
+            </button>
+          </li>
         ))}
       </ul>
+      {zoomed && <CardZoom card={zoomed} onClose={() => setZoomed(undefined)} />}
     </section>
   );
 }

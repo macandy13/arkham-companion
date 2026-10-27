@@ -691,6 +691,30 @@ describe('InvestigatorBar', () => {
       expect(screen.getByRole('dialog', { name: 'ghoul_minion' })).toBeTruthy();
     });
 
+    it('opens a treachery in the threat area to read', () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'))
+          .withInvestigator(alder, { locationId: study })
+          .withCard(instanceId('voices'), blankTreachery('dissonant_voices'), threatAreaOf(alder)),
+      );
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      fireEvent.click(
+        within(panel('alder')).getByRole('button', { name: 'Read dissonant_voices' }),
+      );
+
+      const zoom = screen.getByRole('dialog', { name: 'dissonant_voices' });
+      expect(within(zoom).getByText('Treachery')).toBeTruthy();
+    });
+
     it('leaves the card whole while the threat area is empty', () => {
       const table = PlayTable.start(
         newGame()

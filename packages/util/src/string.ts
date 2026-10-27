@@ -3,6 +3,11 @@ export function stripTrailingDot(text: string): string {
   return text.endsWith('.') ? text.slice(0, -1) : text;
 }
 
+/** Words as a card prints a list of them, each ending in a full stop: `Curse. Omen.` */
+export function sentences(words: readonly string[]): string {
+  return words.map((word) => `${word}.`).join(' ');
+}
+
 /** A camelCase identifier as lower-case words: `failedBy` becomes `failed by`. */
 export function camelCaseToWords(text: string): string {
   return text.replace(/([a-z0-9])([A-Z])/g, '$1 $2').toLowerCase();

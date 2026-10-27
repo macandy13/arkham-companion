@@ -51,6 +51,7 @@ export {
   type ActView,
   type AgendaView,
   type CardActionView,
+  type CardFaceView,
   type CardPlaceView,
   type DecisionCounts,
   type DecisionView,

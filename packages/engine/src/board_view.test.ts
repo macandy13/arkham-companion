@@ -1247,3 +1247,38 @@ describe('namesIn', () => {
     expect(board.namesIn({ kind: 'encounterDiscard' })).toEqual([]);
   });
 });
+
+describe('cardsIn', () => {
+  it('gives each card in a zone its name, type, traits and pictures, top first', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withInvestigator(alice, { locationId: study })
+      .withCard(
+        instanceId('two_sided_curse'),
+        blankTreachery('two_sided_curse', {
+          traits: [trait('Curse')],
+          imageSrc: cardImagePath('/cards/curse_front.png'),
+          backImageSrc: cardImagePath('/cards/curse_back.png'),
+        }),
+        { kind: 'threatArea', investigatorId: alice },
+      )
+      .withCard(instanceId('plain_terror'), blankTreachery('plain_terror'), {
+        kind: 'threatArea',
+        investigatorId: alice,
+      })
+      .start();
+
+    const cards = boardView(context, state).cardsIn({ kind: 'threatArea', investigatorId: alice });
+
+    expect(cards).toEqual([
+      {
+        name: 'two_sided_curse',
+        type: 'treachery',
+        traits: ['Curse'],
+        image: '/cards/curse_front.png',
+        backImage: '/cards/curse_back.png',
+      },
+      { name: 'plain_terror', type: 'treachery', traits: [] },
+    ]);
+  });
+});

@@ -1,5 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { camelCaseToWords, escapeRegExp, numberedDuplicates, stripTrailingDot } from './index';
+import {
+  camelCaseToWords,
+  escapeRegExp,
+  numberedDuplicates,
+  sentences,
+  stripTrailingDot,
+} from './index';
+
+describe('sentences', () => {
+  it.each([
+    { name: 'ends each word with a full stop', words: ['Curse', 'Omen'], expected: 'Curse. Omen.' },
+    { name: 'ends a single word', words: ['Ghoul'], expected: 'Ghoul.' },
+    { name: 'gives nothing for no words', words: [], expected: '' },
+  ])('$name', ({ words, expected }) => {
+    expect(sentences(words)).toBe(expected);
+  });
+});
 
 describe('camelCaseToWords', () => {
   it.each([

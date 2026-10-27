@@ -104,7 +104,7 @@ function InvestigatorPanel({
     >
       <ThreatArea
         board={board}
-        treacheries={investigator.threatArea ?? []}
+        treacheries={board.cardsIn({ kind: 'threatArea', investigatorId: investigator.id })}
         enemies={engaged}
         actions={actions}
         // Fighting and evading are play, so they wait while the players adjust, like the turn's.
