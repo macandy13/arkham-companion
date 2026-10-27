@@ -7,7 +7,10 @@ import type { GameActions } from '../state/gameActions';
 import { CardMoves } from './CardMoves';
 
 /** Where the encounter dialog opens (`EncounterDialog.start`): on the deck or on one of its piles. */
-export type EncounterPile = 'deck' | 'discard' | 'setAside' | 'victoryDisplay';
+export type EncounterPile = 'deck' | HeaderPileKind;
+
+/** The piles the header fans beside its cards (`HeaderPile`), each opening the dialog on itself. */
+export type HeaderPileKind = 'discard' | 'setAside' | 'victoryDisplay';
 
 /**
  * The encounter piles in full, opened from the header's deck or one of its piles: how many cards are

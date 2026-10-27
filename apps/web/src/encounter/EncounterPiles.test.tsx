@@ -282,7 +282,7 @@ describe('HeaderPile', () => {
   });
   afterEach(cleanup);
 
-  it('fans the top three set-aside cards, top card in front, with the count on its disc', () => {
+  it('fans the top three set-aside cards with the count on its disc', () => {
     const table = PlayTable.start(
       newGame()
         .withLocation(study, blankLocation('study'))

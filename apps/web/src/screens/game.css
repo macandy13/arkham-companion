@@ -235,7 +235,7 @@
   margin-inline-start: var(--pile-fan-tuck);
 }
 
-#board > header [data-pile]:not(:has(> data)) {
+#board > header [data-pile]:not(:has(> ul)) {
   height: var(--layout-pile-symbol-height);
   border: var(--border-width) dashed var(--color-card-encounter);
   border-radius: var(--radius);
