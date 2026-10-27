@@ -59,14 +59,8 @@ export function ThreatArea({
         </button>
       )}
       <ul ref={strip} aria-label={t('investigators.threatArea')}>
-        {treacheries.map((card, index) => (
-          <TreacheryCard
-            key={`${card.name}-${index}`}
-            board={board}
-            card={card}
-            actions={actions}
-            busy={busy}
-          />
+        {treacheries.map((card) => (
+          <TreacheryCard key={card.id} board={board} card={card} actions={actions} busy={busy} />
         ))}
         {enemies.map((enemy) => (
           <EnemyCard key={enemy.id} board={board} enemy={enemy} actions={actions} busy={busy} />

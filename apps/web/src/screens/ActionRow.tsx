@@ -1,4 +1,5 @@
 import { useId, type ReactNode } from 'react';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import type { BoardView, CardActionView, InstanceId } from '@arkham/engine';
 import type { GameActions } from '../state/gameActions';
@@ -20,8 +21,9 @@ export type ActionIcon =
   | 'cardAction';
 
 /**
- * A titled group of buttons in a details window's action row (the enemy's, the location's): the
- * row is the window's `footer`, and the stylesheet sets the groups side by side.
+ * A titled group of buttons in a details window's action row (the enemy's, the location's, the
+ * agenda's and act's full card, the card zoom): the row is the window's `footer`, and the
+ * stylesheet sets the groups side by side.
  */
 export function ActionGroup({ title, children }: { title: string; children: ReactNode }) {
   const titleId = useId();
@@ -79,6 +81,18 @@ export function cardActionsOn(board: BoardView, cardId: InstanceId): readonly Ca
 }
 
 /**
+ * The words for an offered card action: its short `caption` ("Resign") and its full `name`
+ * ("Resign · Parlor"), shared by the turn row and the card screens so both say the same.
+ */
+export function cardActionLabel(
+  t: TFunction,
+  { card, designator }: CardActionView,
+): { caption: string; name: string } {
+  const caption = t(`investigators.cardAction.${designator ?? 'plain'}`);
+  return { caption, name: t('investigators.cardActionOn', { action: caption, card }) };
+}
+
+/**
  * The card actions of one card (`cardActionsOn`) as a group of the action row, each named like
  * the turn row's button ("Resign · Parlor") and marked with the action arrow unless it is free.
  * Taking one closes the window first (`onUse`), since its effects may ask something next or take
@@ -98,15 +112,16 @@ export function CardActions({
   const { t } = useTranslation();
   return (
     <ActionGroup title={t('cardActions.title')}>
-      {offered.map(({ cardId, card, action, designator, free }) => {
-        const caption = t(`investigators.cardAction.${designator ?? 'plain'}`);
+      {offered.map((offer) => {
+        const { cardId, action, designator, free } = offer;
+        const { caption, name } = cardActionLabel(t, offer);
         return (
           <ActionButton
             key={action}
             icon={designator ?? 'cardAction'}
             cost={free ? undefined : 'action'}
             caption={caption}
-            name={t('investigators.cardActionOn', { action: caption, card })}
+            name={name}
             disabled={busy}
             onClick={() => {
               onUse();
