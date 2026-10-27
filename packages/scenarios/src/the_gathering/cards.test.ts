@@ -1,6 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { cardCode, putIntoThreatArea, whenRevealed } from '@arkham/engine';
+import {
+  atLocation,
+  cardCode,
+  instanceId,
+  investigatorId,
+  newGame,
+  playAreaOf,
+  putIntoThreatArea,
+  whenRevealed,
+  type CardStats,
+  type Command,
+} from '@arkham/engine';
+import { answer, cardIn, rejectionFrom, stateAfter } from '@arkham/engine/test/utils';
 import { theGatheringCards } from './cards';
+
+/** The card with `code` in the scenario's card data. */
+const cardOf = (code: string): CardStats => cardIn(theGatheringCards, code);
 
 describe('The Gathering card data', () => {
   it.each([
@@ -69,5 +84,56 @@ describe('The Gathering card data', () => {
     expect(theGatheringCards.get(cardCode('01163'))?.abilities).not.toContainEqual(
       whenRevealed(putIntoThreatArea()),
     );
+  });
+});
+
+describe('Lita Chantler', () => {
+  const alice = investigatorId('alice');
+  const bob = investigatorId('bob');
+  const parlor = instanceId('parlor');
+  const lita = instanceId('lita_chantler');
+  /** Alice and bob in the revealed Parlor; each test puts Lita Chantler in and picks the turn. */
+  const aliceAndBobInTheParlor = newGame()
+    .withLocation(parlor, cardOf('01115'), { revealed: true })
+    .withInvestigator(alice, { locationId: parlor })
+    .withInvestigator(bob, { locationId: parlor });
+  const parley: Command = {
+    type: 'UseCardAction',
+    investigatorId: alice,
+    cardId: lita,
+    action: 0,
+    asAction: true,
+  };
+
+  it.each([
+    { result: 'pass', zone: playAreaOf(alice) },
+    { result: 'fail', zone: atLocation(parlor) },
+  ])(
+    'lets alice Parley with an intellect (4) test; a $result leaves Lita in $zone.kind',
+    ({ result, zone }) => {
+      const { context, state: started } = aliceAndBobInTheParlor
+        .withCard(lita, cardOf('01117'), atLocation(parlor))
+        .withTurnOf(alice)
+        .start();
+      const tested = stateAfter(context, started, parley);
+
+      const state = stateAfter(context, tested, answer('test:lita_chantler', result));
+
+      expect(tested.pending).toMatchObject([{ skillTest: { skill: 'intellect', difficulty: 4 } }]);
+      expect(state.cards[lita]?.zone).toEqual(zone);
+    },
+  );
+
+  it('rejects a Parley from bob once alice controls Lita', () => {
+    const { context, state } = aliceAndBobInTheParlor
+      .withCard(lita, cardOf('01117'), playAreaOf(alice))
+      .withTurnOf(bob)
+      .start();
+
+    expect(rejectionFrom(context, state, { ...parley, investigatorId: bob })).toEqual({
+      code: 'cardActionUnavailable',
+      cardId: lita,
+      investigatorId: bob,
+    });
   });
 });

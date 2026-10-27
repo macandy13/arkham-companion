@@ -29,6 +29,11 @@ export type Zone =
   | { kind: 'engaged'; investigatorId: InvestigatorId }
   /** Non-enemy cards in an investigator's threat area (treacheries, …). */
   | { kind: 'threatArea'; investigatorId: InvestigatorId }
+  /**
+   * A card an investigator controls in their play area: a story asset they took control of
+   * (Lita Chantler). Player cards are not modelled, so only encounter cards come here.
+   */
+  | { kind: 'playArea'; investigatorId: InvestigatorId }
   /** Attachment to a location, enemy, agenda, … */
   | { kind: 'attachedTo'; hostId: InstanceId };
 
@@ -53,6 +58,7 @@ export function zoneKey(zone: Zone): ZoneKey {
       return `atLocation:${zone.locationId}` as ZoneKey;
     case 'engaged':
     case 'threatArea':
+    case 'playArea':
       return `${zone.kind}:${zone.investigatorId}` as ZoneKey;
     case 'attachedTo':
       return `attachedTo:${zone.hostId}` as ZoneKey;
@@ -101,6 +107,11 @@ export function engagedWith(investigatorId: InvestigatorId): Zone {
 /** The zone of a non-enemy card in an investigator's threat area. */
 export function threatAreaOf(investigatorId: InvestigatorId): Zone {
   return { kind: 'threatArea', investigatorId };
+}
+
+/** The zone of a card `investigatorId` controls (`takeControl`). */
+export function playAreaOf(investigatorId: InvestigatorId): Zone {
+  return { kind: 'playArea', investigatorId };
 }
 
 /** The zone of a card attached to another card (a location, an enemy, an agenda, …). */

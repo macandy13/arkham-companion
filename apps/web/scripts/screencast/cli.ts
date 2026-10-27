@@ -4,7 +4,7 @@
  *
  *   node cli.ts render <report.json> <base.json> <outDir> <baseUrl> <pictureBaseUrl> <version>
  *     Converts every passing flow video into `<outDir>/<slug>.gif` and `.webm`, copies every
- *     passing screenshot to `<outDir>/<slug>.png`, adds the player page (`player.html`, listing
+ *     passing screenshot to `<outDir>/<slug>-<device>.png`, adds the player page (`player.html`, listing
  *     the recorded flows) and writes the PR description section to `<outDir>/section.md`, with
  *     pictures linked from `pictureBaseUrl` and the player from `baseUrl`.
  *     Specs whose picture is the same in `base.json` (the base commit's run) are skipped.
@@ -24,6 +24,8 @@ import {
   renderSection,
   replaceSection,
   screenshots,
+  SHOT_DEVICE_NAMES,
+  shotFile,
 } from './screencasts.ts';
 import type { BaseRun, PlaywrightReport } from './screencasts.ts';
 
@@ -43,8 +45,11 @@ function render(
   const flows = flowVideos(report, base);
   const shots = screenshots(report, base);
   mkdirSync(outDir, { recursive: true });
-  for (const { slug, imagePath } of shots) {
-    if (imagePath) copyFileSync(imagePath, join(outDir, `${slug}.png`));
+  for (const { slug, pictures } of shots) {
+    for (const device of SHOT_DEVICE_NAMES) {
+      const picture = pictures[device];
+      if (picture) copyFileSync(picture, join(outDir, shotFile(slug, device)));
+    }
   }
   for (const { slug, videoPath } of flows) {
     if (!videoPath) continue;

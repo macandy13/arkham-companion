@@ -224,13 +224,20 @@
   --picker-count-size: 1.125rem;
   /* The round counters along the foot of an investigator card. */
   --stat-token-size: 2.25rem;
-  /* The encounter discard pile's symbol next to the deck: a small card outline this tall. */
+  /* An empty header pile's symbol: a small card outline this tall. */
   --layout-pile-symbol-height: 2rem;
-  /* Once it holds cards, the discard pile shows its top card this tall, with its count on a disc. */
-  --layout-pile-height: 4.5rem;
+  /* Once it holds cards, a header pile fans its top cards this tall, with its count on a disc. */
+  --layout-pile-height: 3.5rem;
   --pile-count-size: 1.5rem;
-  /* A card's small picture in a row of the encounter dialog's lists. */
-  --encounter-list-card-height: 3.5rem;
+  /* A fanned pile reaches this far over its card's lower corner (negative: a margin that tucks it). */
+  --pile-fan-tuck: -1.25rem;
+  /* The turns of a fanned pile's top three cards, top card first. */
+  --pile-fan-turn-top: 8deg;
+  --pile-fan-turn-second: -4deg;
+  --pile-fan-turn-third: -16deg;
+  /* The encounter dialog's row of a pile's cards: this many side by side, each this wide. */
+  --encounter-strip-cards-shown: 5;
+  --encounter-strip-card-width: 7.5rem;
   /* The encounter card being resolved, large at the top of the decision dialog. */
   --resolving-card-height: 14rem;
   /* A dragged map piece's copy, see-through so the tile under it stays readable. */

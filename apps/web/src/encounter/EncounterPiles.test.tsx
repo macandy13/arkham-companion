@@ -13,7 +13,7 @@ import {
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { gameActions } from '../state/gameActions';
-import { EncounterPiles } from './EncounterPiles';
+import { EncounterPiles, HeaderPile } from './EncounterPiles';
 
 const study = instanceId('study');
 const alder = investigatorId('alder');
@@ -57,6 +57,7 @@ describe('EncounterPiles', () => {
         actions={actionsOn(table)}
         busy={false}
         adjusting={false}
+        onSpawn={() => {}}
       />,
     );
 
@@ -79,6 +80,7 @@ describe('EncounterPiles', () => {
         actions={actionsOn(table)}
         busy={false}
         adjusting={false}
+        onSpawn={() => {}}
       />,
     );
 
@@ -86,7 +88,7 @@ describe('EncounterPiles', () => {
     expect(screen.getByRole('button', { name: 'Encounter discard pile' }).textContent).toBe('');
   });
 
-  it('opens the encounter dialog from the discard pile with its list open, top card first', () => {
+  it('opens the discard pile as a row of its cards, top card first and chosen', () => {
     const table = PlayTable.start(
       newGame()
         .withLocation(study, blankLocation('study'))
@@ -95,10 +97,6 @@ describe('EncounterPiles', () => {
         })
         .withCard(instanceId('lower_discard'), blankEnemy('Swarm of Rats'), {
           kind: 'encounterDiscard',
-        })
-        .withCard(instanceId('lita'), blankAsset('Lita Chantler'), { kind: 'setAside' })
-        .withCard(instanceId('ghoul_priest'), blankEnemy('Ghoul Priest', { victory: 2 }), {
-          kind: 'victoryDisplay',
         }),
     );
     render(
@@ -107,6 +105,7 @@ describe('EncounterPiles', () => {
         actions={actionsOn(table)}
         busy={false}
         adjusting={false}
+        onSpawn={() => {}}
       />,
     );
 
@@ -116,31 +115,25 @@ describe('EncounterPiles', () => {
       }),
     );
 
-    const dialog = within(screen.getByRole('dialog', { name: 'Encounter deck' }));
-    const pile = (name: string) => {
-      const details = dialog.getByText(name).closest('details');
-      if (!details) throw new Error(`no pile ${name}`);
-      return details;
-    };
-    expect(pile('Discard pile (2)').open).toBe(true);
-    expect(pile('Set aside (1)').open).toBe(false);
-    expect(pile('Victory display (1)').open).toBe(false);
-    expect(
-      within(pile('Discard pile (2)'))
-        .getAllByRole('listitem')
-        .map((card) => card.textContent),
-    ).toEqual(['Rotting Remains', 'Swarm of Rats']);
-    expect(within(pile('Set aside (1)')).getByRole('listitem').textContent).toBe('Lita Chantler');
-    const ghoulPriest = within(pile('Victory display (1)')).getByRole('listitem');
-    expect(ghoulPriest.querySelector('data')?.value).toBe('2');
+    const dialog = within(screen.getByRole('dialog', { name: 'Discard pile (2)' }));
+    const row = within(dialog.getByRole('list', { name: 'Discard pile' }));
+    expect(row.getAllByRole('button').map((card) => card.getAttribute('aria-label'))).toEqual([
+      'Rotting Remains',
+      'Swarm of Rats',
+    ]);
+    expect(row.getByRole('button', { name: 'Rotting Remains', pressed: true })).toBeTruthy();
+    expect(dialog.getByRole('region', { name: 'Rotting Remains' })).toBeTruthy();
   });
 
-  it('opens the encounter dialog from the deck with its count and every list closed', () => {
+  it('opens the deck with its count and none of the piles', () => {
     const table = PlayTable.start(
       newGame()
         .withLocation(study, blankLocation('study'))
         .withCard(instanceId('deck_card'), blankTreachery('Ancient Evils'), {
           kind: 'encounterDeck',
+        })
+        .withCard(instanceId('discarded'), blankTreachery('Rotting Remains'), {
+          kind: 'encounterDiscard',
         }),
     );
     render(
@@ -149,6 +142,7 @@ describe('EncounterPiles', () => {
         actions={actionsOn(table)}
         busy={false}
         adjusting={false}
+        onSpawn={() => {}}
       />,
     );
 
@@ -156,10 +150,7 @@ describe('EncounterPiles', () => {
 
     const dialog = within(screen.getByRole('dialog', { name: 'Encounter deck' }));
     expect(dialog.getByText('1 card left in the encounter deck')).toBeTruthy();
-    expect(dialog.getByText('Discard pile (0)').closest('details')?.open).toBe(false);
-    expect(dialog.getByText('Set aside (0)').closest('details')?.open).toBe(false);
-    expect(dialog.getByText('Victory display (0)').closest('details')?.open).toBe(false);
-    expect(dialog.getAllByText('No cards')).toHaveLength(3);
+    expect(dialog.queryByRole('list')).toBeNull();
   });
 
   describe("on Brook's turn, with Alder and Brook in the Study", () => {
@@ -185,6 +176,7 @@ describe('EncounterPiles', () => {
           actions={actionsOn(table)}
           busy={false}
           adjusting={false}
+          onSpawn={() => {}}
         />,
       );
       fireEvent.click(screen.getByRole('button', { name: '2 cards left in the encounter deck' }));
@@ -201,6 +193,7 @@ describe('EncounterPiles', () => {
           actions={actionsOn(table)}
           busy={false}
           adjusting={false}
+          onSpawn={() => {}}
         />,
       );
 
@@ -229,6 +222,7 @@ describe('EncounterPiles', () => {
           actions={actionsOn(table)}
           busy={busy}
           adjusting={adjusting}
+          onSpawn={() => {}}
         />,
       );
 
@@ -240,5 +234,231 @@ describe('EncounterPiles', () => {
       );
       expect(draws.map((draw) => (draw as HTMLButtonElement).disabled)).toEqual([true, true]);
     });
+  });
+
+  it.each([
+    { kind: 'an enemy', card: blankEnemy('Swarm of Rats'), spawn: true },
+    { kind: 'a treachery', card: blankTreachery('Rotting Remains'), spawn: false },
+  ])('offers Spawn for $kind on the discard pile: $spawn', ({ card, spawn }) => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withCard(instanceId('discarded'), card, { kind: 'encounterDiscard' }),
+    );
+    render(
+      <EncounterPiles
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+        onSpawn={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^Encounter discard pile, 1 card/ }));
+
+    expect(screen.queryByRole('button', { name: 'Spawn' }) !== null).toBe(spawn);
+  });
+
+  it('closes the dialog and hands the enemy to onSpawn, for the players to pick its location on the map', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withCard(instanceId('rats'), blankEnemy('Swarm of Rats'), { kind: 'encounterDiscard' }),
+    );
+    const spawning: string[] = [];
+    render(
+      <EncounterPiles
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+        onSpawn={(enemy) => spawning.push(enemy.name)}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Encounter discard pile, 1 card, Swarm of Rats on top' }),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Spawn' }));
+
+    expect(spawning).toEqual(['Swarm of Rats']);
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('puts a card from the discard pile into a threat area as one step', async () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withInvestigator(alder, { locationId: study, name: 'Alder' })
+        .withCard(instanceId('frozen_in_fear'), blankTreachery('Frozen in Fear'), {
+          kind: 'encounterDiscard',
+        }),
+    );
+    render(
+      <EncounterPiles
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+        onSpawn={() => {}}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Encounter discard pile, 1 card, Frozen in Fear on top' }),
+    );
+    const frozenInFear = within(screen.getByRole('region', { name: 'Frozen in Fear' }));
+
+    fireEvent.click(frozenInFear.getByRole('button', { name: "Into Alder's threat area" }));
+
+    await waitFor(() =>
+      expect(table.board.investigator(alder).threatArea).toEqual(['Frozen in Fear']),
+    );
+  });
+});
+
+describe('HeaderPile', () => {
+  beforeAll(async () => {
+    await initI18n('en');
+  });
+  afterEach(cleanup);
+
+  it('fans the top three set-aside cards with the count on its disc', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withCard(instanceId('lita'), blankAsset('Lita Chantler'), { kind: 'setAside' })
+        .withCard(instanceId('ghoul_priest'), blankEnemy('Ghoul Priest'), { kind: 'setAside' })
+        .withCard(instanceId('cellar'), blankLocation('Cellar'), { kind: 'setAside' })
+        .withCard(instanceId('attic'), blankLocation('Attic'), { kind: 'setAside' }),
+    );
+
+    render(
+      <HeaderPile
+        pile="setAside"
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+        onSpawn={() => {}}
+      />,
+    );
+
+    const pile = screen.getByRole('button', { name: 'Set aside, 4 cards' });
+    expect(within(pile).getAllByRole('listitem')).toHaveLength(3);
+    expect(pile.querySelector('data')?.value).toBe('4');
+  });
+
+  it('shows the victory points earned on the victory display, cleared locations included', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withLocation(instanceId('parlor'), blankLocation('Parlor', { victory: 1 }), {
+          revealed: true,
+          clues: 0,
+        })
+        .withCard(instanceId('ghoul_priest'), blankEnemy('Ghoul Priest', { victory: 2 }), {
+          kind: 'victoryDisplay',
+        }),
+    );
+
+    render(
+      <HeaderPile
+        pile="victoryDisplay"
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+        onSpawn={() => {}}
+      />,
+    );
+
+    const pile = screen.getByRole('button', { name: 'Victory display, 3 victory points' });
+    expect(pile.querySelector('data')?.value).toBe('3');
+  });
+
+  it('opens the tapped pile in the encounter dialog', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withCard(instanceId('lita'), blankAsset('Lita Chantler'), { kind: 'setAside' }),
+    );
+    render(
+      <HeaderPile
+        pile="setAside"
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+        onSpawn={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Set aside, 1 card' }));
+
+    const dialog = within(screen.getByRole('dialog', { name: 'Set aside (1)' }));
+    expect(
+      within(dialog.getByRole('list', { name: 'Set aside' })).getByRole('button').ariaLabel,
+    ).toBe('Lita Chantler');
+  });
+
+  it('shows the card tapped in the row with its victory points', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withCard(instanceId('lita'), blankAsset('Lita Chantler'), { kind: 'setAside' })
+        .withCard(instanceId('ghoul_priest'), blankEnemy('Ghoul Priest', { victory: 2 }), {
+          kind: 'setAside',
+        }),
+    );
+    render(
+      <HeaderPile
+        pile="setAside"
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+        onSpawn={() => {}}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Set aside, 2 cards' }));
+    const dialog = within(screen.getByRole('dialog', { name: 'Set aside (2)' }));
+
+    fireEvent.click(dialog.getByRole('button', { name: 'Ghoul Priest' }));
+
+    expect(dialog.getByRole('button', { name: 'Ghoul Priest', pressed: true })).toBeTruthy();
+    const chosen = dialog.getByRole('region', { name: 'Ghoul Priest' });
+    expect(within(chosen).getByRole('heading', { name: /^Ghoul Priest/ })).toBeTruthy();
+    expect(chosen.querySelector('data')?.value).toBe('2');
+  });
+
+  it.each([
+    ['five cards fit, without arrows', 5, false],
+    ['six cards scroll, with arrows', 6, true],
+  ])('shows a pile of %s', (_, count, arrows) => {
+    const game = ['Attic', 'Cellar', 'Parlor', 'Hallway', 'Lodge', 'Barn']
+      .slice(0, count)
+      .reduce(
+        (pile, name) =>
+          pile.withCard(instanceId(name.toLowerCase()), blankLocation(name), { kind: 'setAside' }),
+        newGame().withLocation(study, blankLocation('study')),
+      );
+    const table = PlayTable.start(game);
+    render(
+      <HeaderPile
+        pile="setAside"
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+        onSpawn={() => {}}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: `Set aside, ${count} cards` }));
+
+    const dialog = within(screen.getByRole('dialog'));
+    expect(dialog.queryByRole('button', { name: 'Earlier cards' }) !== null).toBe(arrows);
+    expect(dialog.queryByRole('button', { name: 'Later cards' }) !== null).toBe(arrows);
   });
 });

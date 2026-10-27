@@ -259,6 +259,7 @@ export type AbilityCommand =
           | 'SearchDeck'
           | 'TakeDamageAndHorror'
           | 'PlaceDoom'
+          | 'PlaceTokens'
           | 'MoveCard'
           | 'DiscardCard'
           | 'RevealLocation'
@@ -1050,11 +1051,41 @@ export function skillTest(
 }
 
 /**
+ * "Test [willpower] (3) or [agility] (3)": the investigator the window names picks one of
+ * `skills` (decision `id`), then tests it like `skillTest`, with the same outcomes either way.
+ */
+export function skillTestOfEither(
+  id: DecisionId,
+  skills: readonly [SkillName, SkillName],
+  difficulty: number,
+  outcomes: Parameters<typeof skillTest>[2] = {},
+): AbilityEffect {
+  return youMustEither(
+    id,
+    'decision.chooseSkill',
+    skills.map((skill) => ({
+      id: skill,
+      label: `skill.${skill}`,
+      effects: [skillTest(skill, difficulty, outcomes)],
+    })),
+  );
+}
+
+/**
  * "Put it into play in your threat area": the card with the ability moves to
  * the threat area of the investigator the window names (the drawer).
  */
 export function putIntoThreatArea(): AbilityEffect {
   return moveSelf({ kind: 'threatArea', investigatorId: { ref: 'windowInvestigator' } });
+}
+
+/**
+ * "Take control of Lita Chantler": the card with the ability moves to the play area of the
+ * investigator the window names (the one who took the action), out of reach of everyone else's
+ * actions (`offersActionsTo`). Player cards aren't modelled, so this is for story assets.
+ */
+export function takeControl(): AbilityEffect {
+  return moveSelf({ kind: 'playArea', investigatorId: { ref: 'windowInvestigator' } });
 }
 
 /**
@@ -1253,6 +1284,11 @@ export function nearestEnemy(trait?: Trait): RelativeCard {
 /** "Place N doom on it": doom on the card with the ability. */
 export function placeDoomOnSelf(amount: number): AbilityEffect {
   return { type: 'PlaceDoom', cardId: { ref: 'self' }, amount };
+}
+
+/** "Place N clues on this act": clues from the token pool on the card with the ability. */
+export function placeCluesOnSelf(amount: number): AbilityEffect {
+  return { type: 'PlaceTokens', cardId: { ref: 'self' }, token: 'clue', amount };
 }
 
 /** Heals up to `amount` damage from the enemy that has the ability ("heal 2 damage from it"). */

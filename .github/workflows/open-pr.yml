@@ -46,7 +46,7 @@ jobs:
             echo "::error::CLAUDE_BOT_APP_ID or the secret CLAUDE_BOT_PRIVATE_KEY is missing; open the PR directly instead."
             exit 1
           fi
-      - uses: actions/create-github-app-token@v2
+      - uses: actions/create-github-app-token@v3
         id: app
         with:
           app-id: ${{ vars.CLAUDE_BOT_APP_ID || secrets.CLAUDE_BOT_APP_ID }}

@@ -33,8 +33,9 @@ updates:
       prefix: ci
     ignore:
       # Its v3 is an unreleased dev branch whose inputs differ (build-script fails).
+      # `versions: ['3.x']` didn't match the `v3` branch ref (#532), so ignore majors instead.
       - dependency-name: preactjs/compressed-size-action
-        versions: ['3.x']
+        update-types: ['version-update:semver-major']
     groups:
       actions:
         patterns: ['*']

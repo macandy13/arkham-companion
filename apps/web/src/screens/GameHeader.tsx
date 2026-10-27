@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { StoreApi } from 'zustand/vanilla';
 import type { BoardView, CardImagePath, CardName } from '@arkham/engine';
 import { useCardPicture } from '../catalog/cardImages';
-import { EncounterPiles } from '../encounter/EncounterPiles';
+import { EncounterPiles, HeaderPile, type PileProps } from '../encounter/EncounterPiles';
 import type { AppState, OpenGame } from '../state/appStore';
 import { Token } from './Token';
 
@@ -26,43 +26,32 @@ export function GameHeader({
   open: OpenGame;
   board: BoardView;
 }) {
+  const { t } = useTranslation();
   const blocked = open.busy;
   const { adjusting } = open;
+  const piles: PileProps = {
+    board,
+    actions: store.getState().actions,
+    busy: blocked,
+    adjusting,
+    onSpawn: (enemy) => store.getState().startSpawn(enemy),
+  };
 
   return (
     <header>
-      <EncounterDeck store={store} board={board} blocked={blocked} adjusting={adjusting} />
+      <HeaderSlot label={t('header.encounterDeck')}>
+        <EncounterPiles {...piles} />
+      </HeaderSlot>
       <AgendaStatus store={store} board={board} blocked={blocked} adjusting={adjusting} />
       <ActStatus store={store} board={board} blocked={blocked} adjusting={adjusting} />
-      <ScenarioCard open={open} />
+      <HeaderSlot label={t('header.scenario')}>
+        <ScenarioCard open={open} />
+        <HeaderPile pile="setAside" {...piles} />
+      </HeaderSlot>
+      <HeaderSlot label={t('header.victory')}>
+        <HeaderPile pile="victoryDisplay" {...piles} />
+      </HeaderSlot>
     </header>
-  );
-}
-
-/**
- * The encounter deck and its discard pile (`EncounterPiles`) under the playmat's label.
- */
-function EncounterDeck({
-  store,
-  board,
-  blocked,
-  adjusting,
-}: {
-  store: StoreApi<AppState>;
-  board: BoardView;
-  blocked: boolean;
-  adjusting: boolean;
-}) {
-  const { t } = useTranslation();
-  return (
-    <HeaderSlot label={t('header.encounterDeck')}>
-      <EncounterPiles
-        board={board}
-        actions={store.getState().actions}
-        busy={blocked}
-        adjusting={adjusting}
-      />
-    </HeaderSlot>
   );
 }
 
@@ -74,11 +63,9 @@ function EncounterDeck({
 function ScenarioCard({ open }: { open: OpenGame }) {
   const { t } = useTranslation();
   return (
-    <HeaderSlot label={t('header.scenario')}>
-      <div data-card="scenario">
-        <h1>{open.scenarioNameKey ? t(open.scenarioNameKey) : t('header.scenario')}</h1>
-      </div>
-    </HeaderSlot>
+    <div data-card="scenario">
+      <h1>{open.scenarioNameKey ? t(open.scenarioNameKey) : t('header.scenario')}</h1>
+    </div>
   );
 }
 

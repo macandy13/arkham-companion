@@ -322,7 +322,7 @@ describe('GameScreen header', () => {
     ]);
   });
 
-  it('lays the encounter deck with its discard pile, agenda, act and scenario out under their labels', async () => {
+  it('lays the encounter deck with its discard pile, agenda, act, scenario with the set-aside cards and victory display out under their labels', async () => {
     await renderTheGathering('game-screen-encounter-test');
 
     // The investigator cards have headers too, so the board's header is the one holding the deck.
@@ -334,8 +334,12 @@ describe('GameScreen header', () => {
       .map((place) => place.firstChild?.textContent);
     const deck = within(deckPlace);
 
-    expect(labels).toEqual(['Encounter deck', 'Agenda', 'Act', 'Scenario']);
+    expect(labels).toEqual(['Encounter deck', 'Agenda', 'Act', 'Scenario', 'Victory']);
     expect(deck.getByRole('button', { name: 'Encounter discard pile' })).toBeTruthy();
+    const scenario = within(within(boardHeader).getByRole('region', { name: 'Scenario' }));
+    expect(scenario.getByRole('button', { name: /^Set aside, \d+ cards?$/ })).toBeTruthy();
+    const victory = within(within(boardHeader).getByRole('region', { name: 'Victory' }));
+    expect(victory.getByRole('button', { name: 'Victory display, 0 victory points' })).toBeTruthy();
   });
 
   it('warns instead of showing a board for a game it cannot play', async () => {

@@ -3,13 +3,16 @@ import {
   blankEnemy,
   blankLocation,
   blankTreachery,
+  cardName,
   engagedWith,
   fixed,
   instanceId,
   investigatorId,
   newGame,
   PlayTable,
+  type CardPlaceView,
 } from '@arkham/engine';
+import type { PileMove } from '../encounter/cardMoves';
 import { gameActions, type ActionCost, type GameActions } from './gameActions';
 
 const study = instanceId('study');
@@ -95,6 +98,55 @@ describe('gameActions', () => {
 
     expect(table.board.encounter.discard.map(({ name }) => name)).toEqual(['top_card']);
     expect(table.board.encounter.deckCount).toBe(1);
+  });
+
+  it.each<{ move: PileMove; place: CardPlaceView }>([
+    { move: { to: 'discard' }, place: { kind: 'encounterDiscard' } },
+    { move: { to: 'setAside' }, place: { kind: 'setAside' } },
+    {
+      move: { to: 'threatArea', investigator: brook },
+      place: { kind: 'threatArea', investigator: brook },
+    },
+  ])('puts an encounter card by hand: $move.to', async ({ move, place }) => {
+    const card = instanceId('drawn');
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withInvestigator(alder, { locationId: study })
+        .withInvestigator(brook, { locationId: study })
+        .withCard(card, blankEnemy('drawn'), { kind: 'encounterDeck' }),
+    );
+
+    await actionsOn(table).moveEncounterCard(card, move);
+
+    expect(table.board.placeOf(card)).toEqual(place);
+  });
+
+  it.each<{ where: string; location: typeof study; place: CardPlaceView }>([
+    {
+      where: 'unengaged in the empty Hall',
+      location: hall,
+      place: { kind: 'atLocation', location: cardName('hall') },
+    },
+    {
+      where: 'engaged with Alder, alone in the Study, as the rules say',
+      location: study,
+      place: { kind: 'engaged', investigator: alder },
+    },
+  ])('spawns an enemy from the discard pile $where', async ({ location, place }) => {
+    const ghoulFromDiscard = instanceId('ghoul_from_discard');
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withInvestigator(alder, { locationId: study })
+        .withCard(ghoulFromDiscard, blankEnemy('ghoul'), { kind: 'encounterDiscard' }),
+    );
+
+    await actionsOn(table).spawnEnemy(ghoulFromDiscard, location);
+
+    expect(table.board.placeOf(ghoulFromDiscard)).toEqual(place);
   });
 
   it('gives alder, at 2 resources, the resource of the resource action once the ghoul has attacked', async () => {

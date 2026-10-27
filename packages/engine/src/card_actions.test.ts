@@ -17,6 +17,8 @@ import {
   resignAction,
   takeHorror,
   threatAreaOf,
+  playAreaOf,
+  blankAsset,
   type ActionLimit,
   type CardAction,
   type InstanceId,
@@ -178,6 +180,20 @@ describe('UseCardAction', () => {
           threatAreaOf(alice),
         ),
       cardId: instanceId('curse'),
+    },
+    {
+      name: 'an ally alice controls, at his location',
+      setup: () =>
+        newGame()
+          .withLocation(hall, blankLocation('hall'))
+          .withInvestigator(alice, { locationId: hall })
+          .withInvestigator(bob, { locationId: hall })
+          .withCard(
+            instanceId('ally'),
+            blankAsset('scary_ally', { actions: [scaryParley] }),
+            playAreaOf(alice),
+          ),
+      cardId: instanceId('ally'),
     },
   ])('rejects bob taking the action of $name', ({ setup, cardId }) => {
     const { context, state } = setup().withTurnOf(bob).start();

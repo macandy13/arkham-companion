@@ -8,7 +8,7 @@ import type { CardInstance, GameState } from './state';
 
 /**
  * Whether a card is in play, i.e. part of the table that doom is counted on:
- * on a map, at a location, engaged, in a threat area, or attached to a card in
+ * on a map, at a location, engaged, in a threat area or play area, or attached to a card in
  * play. Of the agenda and act decks only the current card is in play. Defined
  * by zone alone because the state stores no card types.
  */
@@ -18,6 +18,7 @@ export function isInPlay(state: GameState, card: CardInstance): boolean {
     case 'location':
     case 'engaged':
     case 'threatArea':
+    case 'playArea':
       return true;
     case 'agendaDeck':
       return state.agenda.current === card.id;
