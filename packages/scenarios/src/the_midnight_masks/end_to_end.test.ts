@@ -345,6 +345,8 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
       engagedWith: roland,
       health: 8,
     });
+    // While engaged with it, Roland can't discover or spend clues.
+    expect(table.board.investigator(roland).forbidden).toEqual(['discoverClues', 'spendClues']);
 
     // Round 4 – mythos: Roland draws the Ghoul Priest, still alive from The
     // Gathering; he spawns engaged with Roland, who has the highest combat. Daisy

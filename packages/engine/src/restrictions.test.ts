@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
+  advanceBySpendingClues,
   attachedTo,
+  blankAct,
+  blankEnemy,
   blankLocation,
   blankTreachery,
+  engagedWith,
+  perInvestigator,
+  threatAreaOf,
   instanceId,
   investigatorId,
   newGame,
@@ -10,7 +16,7 @@ import {
   setAside,
   type Zone,
 } from './index';
-import { rejectionFrom, stateAfter } from '../test/utils';
+import { answer, investigatorOf, rejectionFrom, stateAfter } from '../test/utils';
 
 const alice = investigatorId('alice');
 const hall = instanceId('hall');
@@ -106,5 +112,123 @@ describe('a treachery whose attached location cannot be investigated (Locked Doo
     expect(
       PlayTable.start(aliceInHallWithLockedDoor(setAside)).board.location(hall).forbidden,
     ).toBeUndefined();
+  });
+});
+
+describe('an enemy whose engaged investigator cannot discover or spend clues (The Masked Hunter)', () => {
+  const bob = investigatorId('bob');
+  const hunter = instanceId('hunter');
+  const act = instanceId('act');
+  /** An enemy that forbids the investigator engaged with it to discover or spend clues. */
+  const hunterCard = blankEnemy('hunter', {
+    restrictions: [
+      { cannot: 'discoverClues', who: 'threatArea' },
+      { cannot: 'spendClues', who: 'threatArea' },
+    ],
+  });
+  /**
+   * Alice (2 clues) and bob (2 clues) in the hall with 3 clues, on alice's turn; the hunter is
+   * `hunterZone`; the act advances for 1 clue per investigator, spent as a group.
+   */
+  const hallWithHunter = (hunterZone: Zone) =>
+    newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true, clues: 3 })
+      .withInvestigator(alice, { locationId: hall, clues: 2 })
+      .withInvestigator(bob, { locationId: hall, clues: 2 })
+      .withCard(hunter, hunterCard, hunterZone)
+      .withAct(act, blankAct('act', { actions: [advanceBySpendingClues(perInvestigator(1))] }))
+      .withTurnOf(alice);
+
+  it('rejects alice discovering a clue while the hunter is engaged with her', () => {
+    const { context, state } = hallWithHunter(engagedWith(alice)).start();
+
+    expect(
+      rejectionFrom(context, state, {
+        type: 'DiscoverClues',
+        investigatorId: alice,
+        locationId: hall,
+        amount: 1,
+      }),
+    ).toEqual({ code: 'restrictedFor', cannot: 'discoverClues', investigatorId: alice });
+  });
+
+  it.each([
+    { hunter: 'engaged with alice', zone: engagedWith(alice), clues: 2 },
+    { hunter: 'engaged with bob', zone: engagedWith(bob), clues: 3 },
+  ])(
+    'lets alice’s passed investigation end with $clues clues while the hunter is $hunter',
+    ({ zone, clues }) => {
+      const { context, state } = hallWithHunter(zone).start();
+
+      const passed = stateAfter(
+        context,
+        state,
+        { type: 'Investigate', investigatorId: alice },
+        answer(`investigate:${alice}`, 'pass'),
+      );
+
+      expect(investigatorOf(passed, alice).clues).toBe(clues);
+    },
+  );
+
+  it('counts only bob’s 2 clues toward the act while the hunter is engaged with alice', () => {
+    const table = PlayTable.start(hallWithHunter(engagedWith(alice)));
+
+    expect(table.board.act?.advance).toMatchObject({ kind: 'spendClues', held: 2 });
+    expect(table.board.investigator(alice).forbidden).toEqual(['discoverClues', 'spendClues']);
+    expect(table.board.investigator(bob).forbidden).toBeUndefined();
+  });
+
+  it('rejects alice paying for the act while the hunter is engaged with her', () => {
+    const { context, state } = hallWithHunter(engagedWith(alice)).start();
+
+    expect(
+      rejectionFrom(context, state, {
+        type: 'UseCardAction',
+        investigatorId: alice,
+        cardId: act,
+        action: 0,
+        spend: [
+          { investigatorId: alice, amount: 1 },
+          { investigatorId: bob, amount: 1 },
+        ],
+      }),
+    ).toEqual({ code: 'restrictedFor', cannot: 'spendClues', investigatorId: alice });
+  });
+});
+
+describe('a treachery whose investigator cannot play assets or events (Dissonant Voices)', () => {
+  const bob = investigatorId('bob');
+  /** A treachery that forbids the investigator whose threat area holds it to play assets or events. */
+  const voicesCard = blankTreachery('voices', {
+    restrictions: [{ cannot: 'playAssetsOrEvents', who: 'threatArea' }],
+  });
+  /** Alice and bob in the hall, the voices in alice's threat area. */
+  const voicesOnAlice = newGame()
+    .withLocation(hall, blankLocation('hall'), { revealed: true })
+    .withInvestigator(alice, { locationId: hall })
+    .withInvestigator(bob, { locationId: hall })
+    .withCard(instanceId('voices'), voicesCard, threatAreaOf(alice));
+
+  it('rejects alice playing a card, and leaves bob’s play to the players', () => {
+    const { context, state } = voicesOnAlice.start();
+
+    expect(rejectionFrom(context, state, { type: 'PlayCard', investigatorId: alice })).toEqual({
+      code: 'restrictedFor',
+      cannot: 'playAssetsOrEvents',
+      investigatorId: alice,
+    });
+    expect(
+      stateAfter(context, state, { type: 'PlayCard', investigatorId: bob }).investigators,
+    ).toEqual(state.investigators);
+  });
+
+  it('shows the play forbidden on alice only', () => {
+    const table = PlayTable.start(voicesOnAlice);
+
+    expect(table.board.perInvestigator('forbidden')).toEqual({
+      alice: ['playAssetsOrEvents'],
+      bob: undefined,
+    });
   });
 });

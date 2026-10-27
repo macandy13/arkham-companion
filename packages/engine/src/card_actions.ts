@@ -22,6 +22,7 @@ import {
 } from './investigators';
 import { currentCard, requireCard } from './lookup';
 import { CommandRejected } from './rejection';
+import { isRestrictedFor } from './restrictions';
 import type { CardInstance, GameState, Investigator } from './state';
 import { requireTurnOf } from './turns';
 import { playAreaOf, sameZone } from './zone';
@@ -123,9 +124,11 @@ export type ActionCost =
 
 /**
  * Whether `cost` can be paid for `investigator`'s action: they hold the resources or clues, or
- * for a group cost the active investigators hold the clues together. No cost is always paid.
+ * for a group cost the active investigators hold the clues together, counting only clues no card
+ * forbids to spend (`isRestrictedFor`). No cost is always paid.
  */
 export function canPay(
+  ctx: EngineContext,
   state: GameState,
   investigator: Investigator,
   cost: ActionCost | undefined,
@@ -133,10 +136,14 @@ export function canPay(
   if (cost === undefined) return true;
   switch (cost.spend) {
     case 'resources':
-    case 'clues':
       return statValue(investigator, cost.spend) >= cost.amount;
+    case 'clues':
+      return (
+        !isRestrictedFor(ctx, state, investigator.id, 'spendClues') &&
+        statValue(investigator, cost.spend) >= cost.amount
+      );
     case 'groupClues':
-      return cluesHeldByGroup(state) >= groupClueAmount(state, cost.amount);
+      return cluesHeldByGroup(ctx, state) >= groupClueAmount(state, cost.amount);
     case 'handCards':
       // The game doesn't know the hand; the players don't take an action they can't pay for.
       return true;
@@ -156,6 +163,7 @@ function groupClueAmount(state: GameState, amount: ScaledValue): number {
  * players, naming `cardId`, the card whose action it is. `spend` is for group costs only.
  */
 function costPayment(
+  ctx: EngineContext,
   state: GameState,
   cardId: InstanceId,
   investigator: Investigator,
@@ -179,8 +187,9 @@ function costPayment(
     case 'groupClues': {
       const required = groupClueAmount(state, cost.amount);
       return groupCluePayments(
+        ctx,
         state,
-        spend ?? defaultCluePayments(state, investigator.id, required),
+        spend ?? defaultCluePayments(ctx, state, investigator.id, required),
         required,
       );
     }
@@ -328,7 +337,7 @@ export function cardActionsOfferedTo(
     if (actions.length === 0 || !offersActionsTo(state, card, investigator)) return [];
     return actions.flatMap(({ designator, free, limit, cost, condition }, action) =>
       withinLimit(state, card, action, limit, investigator.id) &&
-      canPay(state, investigator, cost) &&
+      canPay(ctx, state, investigator, cost) &&
       actionConditionHolds(state, investigator, condition)
         ? [
             {
@@ -445,7 +454,7 @@ export function handleUseCardAction(
       action: cmd.action,
       investigatorId: investigator.id,
     });
-  if (!canPay(state, investigator, cost))
+  if (!canPay(ctx, state, investigator, cost))
     throw new CommandRejected({
       code: 'cardActionCostUnpaid',
       cardId: cmd.cardId,
@@ -458,7 +467,7 @@ export function handleUseCardAction(
     action: cmd.action,
     investigatorId: investigator.id,
   };
-  return [used, ...costPayment(state, card.id, investigator, cost, cmd.spend)];
+  return [used, ...costPayment(ctx, state, card.id, investigator, cost, cmd.spend)];
 }
 
 /** The effects of the action `cmd` takes, as steps in its `action` window. */

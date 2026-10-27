@@ -55,7 +55,14 @@ import { attacksStillDue } from './phases';
 import { NAMED_AMOUNTS } from './state';
 import { boostedSkills, cluesHeldByGroup, requireInvestigator } from './investigators';
 import { CommandRejected } from './rejection';
-import { isRestricted, LOCATION_RESTRICTIONS, type LocationRestriction } from './restrictions';
+import {
+  INVESTIGATOR_RESTRICTIONS,
+  isRestricted,
+  isRestrictedFor,
+  LOCATION_RESTRICTIONS,
+  type InvestigatorRestriction,
+  type LocationRestriction,
+} from './restrictions';
 import { skillTestSuggestion, type SkillTestInput } from './skill_modifiers';
 import { victoryPoints } from './victory';
 import type {
@@ -137,6 +144,12 @@ export interface InvestigatorView {
   threatArea?: CardName[];
   /** Printed names of the cards they control (`playArea` zone, e.g. Lita Chantler), left out while there are none. */
   controls?: CardName[];
+  /**
+   * What the cards in play forbid them (`isRestrictedFor`): discovering or spending clues (The
+   * Masked Hunter), playing assets or events (Dissonant Voices). The screen offers none of it;
+   * absent when nothing is forbidden.
+   */
+  forbidden?: InvestigatorRestriction[];
 }
 
 /**
@@ -920,6 +933,12 @@ function investigatorView(
       'controls',
       namesIn(ctx, state, { kind: 'playArea', investigatorId: investigator.id }),
     ),
+    ...listIfAny(
+      'forbidden',
+      INVESTIGATOR_RESTRICTIONS.filter((cannot) =>
+        isRestrictedFor(ctx, state, investigator.id, cannot),
+      ),
+    ),
   };
 }
 
@@ -1041,7 +1060,7 @@ function actView(ctx: EngineContext, state: GameState): ActView | undefined {
   const act = currentCard(state, 'act');
   if (!act) return undefined;
   const stats = cardStats(ctx.cards, act.code);
-  const advance = actAdvance(state, stats);
+  const advance = actAdvance(ctx, state, stats);
   return {
     id: act.id,
     name: nameOf(ctx, act),
@@ -1051,7 +1070,11 @@ function actView(ctx: EngineContext, state: GameState): ActView | undefined {
   };
 }
 
-function actAdvance(state: GameState, stats: CardStats): ActAdvance | undefined {
+function actAdvance(
+  ctx: EngineContext,
+  state: GameState,
+  stats: CardStats,
+): ActAdvance | undefined {
   const onAct = tokenObjective(stats, 'clue');
   if (onAct !== undefined)
     return { kind: 'cluesOnAct', threshold: resolveValue(onAct, state.meta.playerCount) };
@@ -1059,7 +1082,7 @@ function actAdvance(state: GameState, stats: CardStats): ActAdvance | undefined 
   if (spent === undefined) return undefined;
   return {
     kind: 'spendClues',
-    held: cluesHeldByGroup(state),
+    held: cluesHeldByGroup(ctx, state),
     threshold: resolveValue(spent, state.meta.playerCount),
   };
 }

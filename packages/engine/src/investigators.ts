@@ -1,7 +1,9 @@
+import type { EngineContext } from './cards';
 import type { ClueSpend } from './commands';
 import type { CluesDiscovered, DefeatCause, InvestigatorChanged, TokensChanged } from './events';
 import type { InstanceId, InvestigatorId } from './ids';
 import { CommandRejected } from './rejection';
+import { isRestrictedFor } from './restrictions';
 import type { GameState, Investigator, InvestigatorStat, SkillName, SkillValues } from './state';
 
 /** Health the investigator has left; 0 or less means they are defeated. */
@@ -219,10 +221,18 @@ export function activeInvestigators(state: GameState): Investigator[] {
 
 /**
  * The clues the active investigators hold between them, which they may spend as a group (a
- * `groupClues` cost, the act's `advanceBySpendingClues`).
+ * `groupClues` cost, the act's `advanceBySpendingClues`). The clues of an investigator a card
+ * forbids to spend clues (`isRestrictedFor`, The Masked Hunter) don't count.
  */
-export function cluesHeldByGroup(state: GameState): number {
-  return activeInvestigators(state).reduce((sum, inv) => sum + inv.clues, 0);
+export function cluesHeldByGroup(ctx: EngineContext, state: GameState): number {
+  return clueSpenders(ctx, state).reduce((sum, inv) => sum + inv.clues, 0);
+}
+
+/** The active investigators no card forbids to spend clues, in seat order. */
+function clueSpenders(ctx: EngineContext, state: GameState): Investigator[] {
+  return activeInvestigators(state).filter(
+    (inv) => !isRestrictedFor(ctx, state, inv.id, 'spendClues'),
+  );
 }
 
 /** Whether `id` names an investigator still in the scenario (not defeated or resigned). */
@@ -248,10 +258,11 @@ export function activeInvestigator(state: GameState, id: InvestigatorId): Invest
 /**
  * One `InvestigatorChanged` per payment of clues the investigators spend "as a group" (advancing
  * the act, Uncovering the Conspiracy's action): the payers choose who pays how many. Rejects a
- * payment that is not a whole number above 0, a payer listed twice or without that many clues,
- * and payments that do not add up to `required`.
+ * payment that is not a whole number above 0, a payer listed twice, without that many clues or
+ * forbidden to spend clues (`restrictedFor`), and payments that do not add up to `required`.
  */
 export function groupCluePayments(
+  ctx: EngineContext,
   state: GameState,
   spend: readonly ClueSpend[],
   required: number,
@@ -267,6 +278,12 @@ export function groupCluePayments(
         investigatorId: investigator.id,
       });
     payers.add(investigator.id);
+    if (isRestrictedFor(ctx, state, investigator.id, 'spendClues'))
+      throw new CommandRejected({
+        code: 'restrictedFor',
+        cannot: 'spendClues',
+        investigatorId: investigator.id,
+      });
     if (investigator.clues < payment.amount)
       throw new CommandRejected({
         code: 'negativeInvestigatorStat',
@@ -289,15 +306,17 @@ export function groupCluePayments(
 
 /**
  * A group payment of `required` clues when the players name no payers: `first` pays all they
- * can, then the other active investigators in seat order. The players change it by naming the
- * payers (`UseCardAction.spend`); the app has no way to name them yet (#488).
+ * can, then the other active investigators in seat order, leaving out those a card forbids to
+ * spend clues. The players change it by naming the payers (`UseCardAction.spend`); the app has
+ * no way to name them yet (#488).
  */
 export function defaultCluePayments(
+  ctx: EngineContext,
   state: GameState,
   first: InvestigatorId,
   required: number,
 ): ClueSpend[] {
-  const payers = activeInvestigators(state).sort(
+  const payers = clueSpenders(ctx, state).sort(
     (a, b) => Number(b.id === first) - Number(a.id === first),
   );
   let left = required;

@@ -17,7 +17,7 @@ import { decisionId, type InstanceId } from './ids';
 import { hasKeyword } from './keywords';
 import { requireCard } from './lookup';
 import { CommandRejected } from './rejection';
-import { isRestricted } from './restrictions';
+import { isRestricted, isRestrictedFor } from './restrictions';
 import { withSuggestion } from './skill_modifiers';
 import type {
   AmountRange,
@@ -187,7 +187,7 @@ export function testedActionCommands(
   const kind = decision.testKind;
   switch (kind.kind) {
     case 'investigate':
-      return investigateCommands(state, investigator, kind.locationId, answer);
+      return investigateCommands(ctx, state, investigator, kind.locationId, answer);
     case 'fight':
       return fightCommands(ctx, state, investigator, kind, answer);
     case 'evade':
@@ -210,12 +210,15 @@ interface TestAnswer {
  * does nothing.
  */
 function investigateCommands(
+  ctx: EngineContext,
   state: GameState,
   investigator: Investigator,
   locationId: InstanceId,
   { outcome, amount = 1 }: TestAnswer,
 ): Command[] {
   if (outcome === 'fail') return [];
+  // "Cannot discover clues" (The Masked Hunter): the investigation succeeds and finds nothing.
+  if (isRestrictedFor(ctx, state, investigator.id, 'discoverClues')) return [];
   const location = requireCard(state.cards, locationId);
   const clues = Math.min(amount, location.tokens.clue ?? 0);
   return clues > 0

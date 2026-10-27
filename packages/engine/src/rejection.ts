@@ -11,7 +11,7 @@ import type {
   EncounterSetCode,
   ScenarioId,
 } from './ids';
-import type { LocationRestriction } from './restrictions';
+import type { InvestigatorRestriction, LocationRestriction } from './restrictions';
 import type { Decider, InvestigatorStat, NamedAmount, Phase, TokenKind } from './state';
 import type { ScenarioDeck } from './zone';
 
@@ -81,6 +81,8 @@ export type Rejection =
   | { code: 'notConnected'; from: InstanceId; to: InstanceId }
   /** A move into or an investigation of a location a card in play forbids it at (`isRestricted`). */
   | { code: 'restricted'; cannot: LocationRestriction; locationId: InstanceId }
+  /** A clue discovery or spend, or a card played, that a card in play forbids the investigator (`isRestrictedFor`). */
+  | { code: 'restrictedFor'; cannot: InvestigatorRestriction; investigatorId: InvestigatorId }
   /** `MoveInvestigator` to the location the investigator is already at. */
   | { code: 'alreadyAtLocation'; investigatorId: InvestigatorId; locationId: InstanceId }
   /** The investigator is not at the location they would take clues from. */
@@ -353,14 +355,9 @@ function describe(r: Rejection): string {
     case 'notConnected':
       return `${r.from} is not connected to ${r.to}`;
     case 'restricted':
-      switch (r.cannot) {
-        case 'moveInto':
-          return `a card forbids moving into ${r.locationId}`;
-        case 'investigate':
-          return `a card forbids investigating ${r.locationId}`;
-        default:
-          return assertNever(r.cannot);
-      }
+      return `a card forbids ${locationRestrictionText(r.cannot)} ${r.locationId}`;
+    case 'restrictedFor':
+      return `a card forbids ${r.investigatorId} to ${investigatorRestrictionText(r.cannot)}`;
     case 'alreadyAtLocation':
       return `investigator ${r.investigatorId} is already at ${r.locationId}`;
     case 'enemyEngaged':
@@ -489,5 +486,29 @@ function describe(r: Rejection): string {
       return `${r.token} on ${r.cardId} would become ${r.current + r.delta}`;
     case 'currentStageCard':
       return `${r.cardId} is the current ${r.deck}; advance it instead of moving it`;
+  }
+}
+
+function locationRestrictionText(cannot: LocationRestriction): string {
+  switch (cannot) {
+    case 'moveInto':
+      return 'moving into';
+    case 'investigate':
+      return 'investigating';
+    default:
+      return assertNever(cannot);
+  }
+}
+
+function investigatorRestrictionText(cannot: InvestigatorRestriction): string {
+  switch (cannot) {
+    case 'discoverClues':
+      return 'discover clues';
+    case 'spendClues':
+      return 'spend clues';
+    case 'playAssetsOrEvents':
+      return 'play assets or events';
+    default:
+      return assertNever(cannot);
   }
 }

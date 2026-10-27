@@ -949,6 +949,8 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
     expect(table.board.namesIn({ kind: 'threatArea', investigatorId: roland })).toEqual([
       'Dissonant Voices',
     ]);
+    // Until the round ends, Roland can't play assets or events.
+    expect(table.board.investigator(roland).forbidden).toEqual(['playAssetsOrEvents']);
 
     expect(table.nextPhase()).toEqual({ round: 10, phase: 'investigation' });
     table.startTurn(daisy);

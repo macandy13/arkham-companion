@@ -170,6 +170,8 @@ export interface EnemyOptions {
   abilities?: readonly Ability[];
   /** Its action abilities, such as a Parley. */
   actions?: readonly CardAction[];
+  /** Its "cannot" abilities (The Masked Hunter: who is engaged with it can't discover or spend clues). */
+  restrictions?: readonly CardRestriction[];
 }
 
 /** Card stats for a hand-entered enemy, with its front picture (its back is the encounter back). */

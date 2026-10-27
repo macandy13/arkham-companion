@@ -427,6 +427,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     traits: ['Terror'],
     quantity: 2,
     abilities: [whenRevealed(putIntoThreatArea()), atEndOfRound(discardSelf())],
+    restrictions: [{ cannot: 'playAssetsOrEvents', who: 'threatArea' }],
   }),
   treachery({
     code: '01166',
