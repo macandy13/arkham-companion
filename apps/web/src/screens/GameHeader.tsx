@@ -1,7 +1,7 @@
-import { useId, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StoreApi } from 'zustand/vanilla';
-import type { BoardView, CardImagePath } from '@arkham/engine';
+import type { BoardView, CardImagePath, CardName } from '@arkham/engine';
 import { useCardPicture } from '../catalog/cardImages';
 import { EncounterPiles, HeaderPile, type PileProps } from '../encounter/EncounterPiles';
 import type { AppState, OpenGame } from '../state/appStore';
@@ -14,7 +14,8 @@ import { Token } from './Token';
  * step is queued (`OpenGame.busy`), since a second tap would act on whatever the first one leaves
  * open; the agenda's and act's steppers show only while the players adjust the board
  * (`OpenGame.adjusting`). The round, the phase and the buttons that run the game sit in the status
- * row below (`GameStatus`). `board` is the open game's `OpenGame.board`.
+ * row below (`GameStatus`). A tap on the agenda or act opens it as a full card (`CardDetails`).
+ * `board` is the open game's `OpenGame.board`.
  */
 export function GameHeader({
   store,
@@ -86,13 +87,12 @@ function AgendaStatus({
   adjusting: boolean;
 }) {
   const { t } = useTranslation();
+  const [zoomed, setZoomed] = useState(false);
   const { agenda } = board;
   if (!agenda) return null;
   const { actions } = store.getState();
-
-  return (
-    <HeaderCard kind="agenda" label={t('header.agenda')} image={agenda.image}>
-      <h2>{agenda.name}</h2>
+  const tokenAndPlate = (
+    <>
       <Token
         kind="doom"
         count={board.doomInPlay}
@@ -123,7 +123,30 @@ function AgendaStatus({
           </button>
         </footer>
       )}
-    </HeaderCard>
+    </>
+  );
+
+  return (
+    <HeaderSlot label={t('header.agenda')}>
+      <HeaderCard
+        kind="agenda"
+        name={agenda.name}
+        image={agenda.image}
+        onOpen={() => setZoomed(true)}
+      >
+        {tokenAndPlate}
+      </HeaderCard>
+      {zoomed && (
+        <CardDetails
+          kind="agenda"
+          name={agenda.name}
+          image={agenda.image}
+          onClose={() => setZoomed(false)}
+        >
+          {tokenAndPlate}
+        </CardDetails>
+      )}
+    </HeaderSlot>
   );
 }
 
@@ -147,13 +170,13 @@ function ActStatus({
   adjusting: boolean;
 }) {
   const { t } = useTranslation();
+  const [zoomed, setZoomed] = useState(false);
   const { act } = board;
   if (!act) return null;
   const { actions } = store.getState();
   const { clues, threshold } = act;
-  return (
-    <HeaderCard kind="act" label={t('header.act')} image={act.image}>
-      <h2>{act.name}</h2>
+  const tokenAndPlate = (onAdvance?: () => void) => (
+    <>
       {threshold !== undefined && (
         <Token
           kind="clue"
@@ -187,13 +210,31 @@ function ActStatus({
           <button
             type="button"
             disabled={blocked || adjusting || clues < threshold}
-            onClick={() => void actions.advanceAct([])}
+            onClick={() => {
+              onAdvance?.();
+              void actions.advanceAct([]);
+            }}
           >
             {t('header.advanceAct')}
           </button>
         </footer>
       )}
-    </HeaderCard>
+    </>
+  );
+
+  // Advancing can raise a decision (act 3's question), and that dialog must be the only one open.
+  const close = () => setZoomed(false);
+  return (
+    <HeaderSlot label={t('header.act')}>
+      <HeaderCard kind="act" name={act.name} image={act.image} onOpen={() => setZoomed(true)}>
+        {tokenAndPlate()}
+      </HeaderCard>
+      {zoomed && (
+        <CardDetails kind="act" name={act.name} image={act.image} onClose={close}>
+          {tokenAndPlate(close)}
+        </CardDetails>
+      )}
+    </HeaderSlot>
   );
 }
 
@@ -212,31 +253,101 @@ function HeaderSlot({ label, children }: { label: string; children: ReactNode })
 }
 
 /**
- * The landscape card of the agenda or act (`kind`) under its `label`, holding its name band, token
- * and plate (`children`). When its side has a picture (`image`), the picture fills the card once
- * it has loaded (`data-picture`), and the stylesheet hides the name band the picture prints; the
- * token and plate stay, since their count and buttons are live.
+ * The landscape card of the agenda or act (`kind`) in the header: its name band and, as
+ * `children`, its token and plate. A tap on the card, or on its name, which is a button for the
+ * keyboard, calls `onOpen`; a tap on the plate's buttons only does what the button says.
  */
 function HeaderCard({
   kind,
-  label,
+  name,
   image,
+  onOpen,
   children,
 }: {
   kind: 'agenda' | 'act';
-  label: string;
+  name: CardName;
   image: CardImagePath | undefined;
+  onOpen: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <CardFace
+      kind={kind}
+      image={image}
+      onClick={(event) => {
+        if (!(event.target instanceof Element && event.target.closest('button'))) onOpen();
+      }}
+    >
+      <h2>
+        <button type="button" onClick={onOpen}>
+          {name}
+        </button>
+      </h2>
+      {children}
+    </CardFace>
+  );
+}
+
+/**
+ * The agenda or act (`kind`) as a full card in a dialog, as big as a zoomed card: the same face as
+ * in the header with its picture large, its name as the dialog's title, and its token and plate
+ * (`children`) with their buttons. The card text joins it once the card data has text. A native
+ * modal `<dialog>` brings focus trapping and Escape.
+ */
+function CardDetails({
+  kind,
+  name,
+  image,
+  onClose,
+  children,
+}: {
+  kind: 'agenda' | 'act';
+  name: CardName;
+  image: CardImagePath | undefined;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  const { t } = useTranslation();
+  const titleId = useId();
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    dialog.current?.showModal();
+  }, []);
+  return (
+    <dialog ref={dialog} aria-labelledby={titleId} onCancel={onClose} data-dialog="card">
+      <button type="button" data-icon="close" aria-label={t('header.close')} onClick={onClose} />
+      <CardFace kind={kind} image={image}>
+        <h2 id={titleId}>{name}</h2>
+        {children}
+      </CardFace>
+    </dialog>
+  );
+}
+
+/**
+ * The face of the agenda or act (`kind`), holding its name band, token and plate (`children`).
+ * When its side has a picture (`image`), the picture fills the card once it has loaded
+ * (`data-picture`), and the stylesheet hides the name band the picture prints; the token and
+ * plate stay, since their count and buttons are live.
+ */
+function CardFace({
+  kind,
+  image,
+  onClick,
+  children,
+}: {
+  kind: 'agenda' | 'act';
+  image: CardImagePath | undefined;
+  onClick?: (event: MouseEvent<HTMLDivElement>) => void;
   children: ReactNode;
 }) {
   const picture = useCardPicture(image);
   return (
-    <HeaderSlot label={label}>
-      <div data-card={kind} data-picture={picture?.shown ? 'shown' : undefined}>
-        {picture && (
-          <img src={picture.url} alt="" onLoad={picture.onLoad} onError={picture.onError} />
-        )}
-        {children}
-      </div>
-    </HeaderSlot>
+    <div data-card={kind} data-picture={picture?.shown ? 'shown' : undefined} onClick={onClick}>
+      {picture && (
+        <img src={picture.url} alt="" onLoad={picture.onLoad} onError={picture.onError} />
+      )}
+      {children}
+    </div>
   );
 }

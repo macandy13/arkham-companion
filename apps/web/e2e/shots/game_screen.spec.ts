@@ -195,6 +195,18 @@ test('Crypt Chill drawn for Roland Banks, its willpower test waiting', async ({ 
   await expect(cryptChill.getByRole('img', { name: 'Crypt Chill' })).toBeVisible();
 });
 
+test('The Barrier opened as a full card', async ({ page }) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+
+  await page
+    .getByRole('region', { name: 'Act' })
+    .getByRole('button', { name: 'The Barrier' })
+    .click();
+
+  const card = page.getByRole('dialog', { name: 'The Barrier' });
+  await expect(card.getByRole('img', { name: 'Clues 0 / 3' })).toBeVisible();
+});
+
 test(
   'Frozen in Fear from Roland Banks’ threat area, zoomed to read',
   { tag: '@shot' },
