@@ -10,11 +10,13 @@ test.use({
   hasTouch: true,
 });
 
-// Journey: on a phone, open the detail view from the act in the compact view, swipe along the
-// cards row to the agenda, down to the map and the investigators, and go back to the overview.
+// Journey: on a phone, open the detail view from the act in the compact view, swipe down to the
+// map and the investigators, back up to the cards, which wait on the agenda again, and go back to
+// the overview. The dots follow along: the rows' at the right edge, the cards' along the foot.
 test('swipe through the detail view on a phone', { tag: '@flow' }, async ({ page }) => {
   const board = page.locator('#board');
-  const cardsRow = page.locator('#board > header');
+  const rowDots = page.locator('ol[data-dots="rows"] > li');
+  const cardDots = page.locator('ol[data-dots="items"] > li');
   const swipeTo = (row: number) =>
     board.evaluate((element, to) => element.scrollTo({ top: to * element.clientHeight }), row);
 
@@ -27,21 +29,27 @@ test('swipe through the detail view on a phone', { tag: '@flow' }, async ({ page
     await page.getByRole('region', { name: 'Act' }).click();
     await expect(board).toHaveAttribute('data-view', 'detail');
     await expect(page.getByRole('region', { name: 'Act' })).toBeInViewport({ ratio: 1 });
-  });
-
-  await test.step('Swipe back to the agenda', async () => {
-    await cardsRow.evaluate((row) => row.scrollBy({ left: -row.clientWidth }));
-    await expect(page.getByRole('region', { name: 'Agenda' })).toBeInViewport({ ratio: 1 });
+    // The cards row's places: encounter deck, agenda, act, scenario and victory display.
+    await expect(cardDots).toHaveCount(5);
+    await expect(cardDots.nth(2)).toHaveAttribute('data-current');
   });
 
   await test.step('Swipe down to the map', async () => {
     await swipeTo(1);
     await expect(page.getByRole('figure', { name: 'House' })).toBeInViewport();
+    await expect(rowDots.nth(1)).toHaveAttribute('data-current');
   });
 
   await test.step('Swipe down to the investigators', async () => {
     await swipeTo(2);
     await expect(page.getByRole('region', { name: 'Roland Banks' })).toBeInViewport();
+    await expect(rowDots.nth(2)).toHaveAttribute('data-current');
+  });
+
+  await test.step('Swipe back up to the cards, which wait on the agenda', async () => {
+    await swipeTo(0);
+    await expect(page.getByRole('region', { name: 'Agenda' })).toBeInViewport({ ratio: 1 });
+    await expect(cardDots.nth(1)).toHaveAttribute('data-current');
   });
 
   await test.step('Go back to the overview', async () => {

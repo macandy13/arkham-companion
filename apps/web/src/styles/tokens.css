@@ -272,7 +272,8 @@
   --investigator-avatar-size: 2.75rem;
   /* The phone's detail view: its cards row shows the header cards this tall. */
   --layout-detail-card-height: 14rem;
-  /* The detail view's × and notices, over its rows. */
+  /* A dot of the detail view's row and card dots, and their layer over the rows. */
+  --detail-dot-size: 0.5rem;
   --layer-detail-controls: 3;
   /* The panel of an investigator who has left the game (defeated or resigned) steps back. */
   --eliminated-opacity: 0.55;
