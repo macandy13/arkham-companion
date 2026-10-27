@@ -19,7 +19,7 @@ Never rely on memory alone for a rule. Quote the rule (short excerpt, with secti
 
 ## What to check
 
-- Read the engine and scenario sections of `docs/architecture.md` and the task issue the change belongs to, then the changed code in `packages/engine` and `packages/scenarios`.
+- Read the engine and scenario pages in `docs/architecture/` and the task issue the change belongs to, then the changed code in `packages/engine` and `packages/scenarios`.
 - Phase order and timing (mythos → investigation → enemy → upkeep; what is skipped in round 1).
 - Doom, agenda and act thresholds, including per-investigator values and when advancing happens.
 - Encounter draws: draw order, surge, peril, empty deck reshuffle, revelation vs. spawn.

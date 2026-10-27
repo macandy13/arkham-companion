@@ -104,7 +104,7 @@ New campaigns ([M7](https://github.com/macandy13/arkham-companion/issues/270)) a
 
 ## Planned designs
 
-Designs for parts that have a milestone but no code yet. The PR that builds one describes it in [architecture.md](architecture.md) and removes it here.
+Designs for parts that have a milestone but no code yet. The PR that builds one describes it on its component's page in [architecture](architecture.md) and removes it here.
 
 ### Campaign mode ([M1C](https://github.com/macandy13/arkham-companion/issues/262), [M5](https://github.com/macandy13/arkham-companion/issues/267))
 

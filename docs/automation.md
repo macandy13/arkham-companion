@@ -41,7 +41,7 @@ UI changes are easier to review as a recording than as a diff. E2E specs tagged 
 
 - **Dependabot** (`.github/dependabot.yml`): Monday, grouped npm minor/patch, npm major and GitHub Actions updates. CI checks them; merge when green.
 - **CodeQL** scheduled scan.
-- **Docs sync** (a Claude routine, configured at claude.ai/code/routines): compares merged PRs with the task issues and `docs/architecture.md`, opens a `docs:` PR for architecture drift and a sub-issue per unhandled follow-up under its task.
+- **Docs sync** (a Claude routine, configured at claude.ai/code/routines): compares merged PRs with the task issues and `docs/architecture.md` with its component pages in `docs/architecture/`, opens a `docs:` PR for architecture drift and a sub-issue per unhandled follow-up under its task.
 
 ## Inside Claude Code sessions (`.claude/`)
 

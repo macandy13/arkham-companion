@@ -16,7 +16,7 @@ For the `pr-reviewer` subagent, which Claude sessions run on their branch before
   - A test helper a second test file needs that is not in `packages/engine/test/utils/` or `PlayTable` / `BoardView` (`packages/engine/src`).
   - A lookup or query re-implemented inline when it exists, or should exist, next to its entity (`board.ts`, `lookup.ts`).
   - A generic string, array or object operation inlined instead of living in `@arkham/util`.
-- **Architecture doc out of date.** A change that adds or alters a component (a new kind of command, trigger, decision, setup step, store method, package or dependency direction) without updating that component's section in `docs/architecture.md`.
+- **Architecture doc out of date.** A change that adds or alters a component (a new kind of command, trigger, decision, setup step, store method, package or dependency direction) without updating that component's page in `docs/architecture/`.
 - **Silent `catch`**, `any` without a comment, an exported type or function without a doc comment.
 - **PR shape** (coding guidelines §7): more than one reviewable idea, or over the size budget without a stack plan (slice sub-issues) on the task issue; a review thread from an earlier round left unanswered.
 
