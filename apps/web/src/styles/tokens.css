@@ -267,6 +267,8 @@
   --threat-card-width: 3rem;
   --threat-card-height: 4.2rem;
   --threat-cards-shown: 4;
+  /* The round avatar of another investigator over the phone's one investigator panel. */
+  --investigator-avatar-size: 2.75rem;
   /* The panel of an investigator who has left the game (defeated or resigned) steps back. */
   --eliminated-opacity: 0.55;
   /* The rim of a round piece or token: the enemy ring, the shroud's bone edge. */
@@ -306,4 +308,21 @@
     var(--color-parchment-shade)
   );
   --header-shade: linear-gradient(to bottom, rgb(250 245 232 / 90%), rgb(250 245 232 / 35%));
+}
+
+/*
+ * A phone held upright: the play screen's compact mode (the prototype in public/prototype/phone), its four
+ * header cards small in one row with small tokens and the investigator card's skills and counters
+ * smaller, so the map keeps the room between the header and the one investigator panel. game.css and investigators.css open their phone rules with the
+ * same query, written out in each, since a custom property cannot stand in a media query.
+ */
+@media (orientation: portrait) and (max-width: 40rem) {
+  :root {
+    --layout-header-card-height: 4.75rem;
+    --header-token-size: 2.25rem;
+    --header-token-border-width: 2px;
+    --font-size-token-count: 1rem;
+    --skill-plate-icon-size: 0.875rem;
+    --stat-token-size: 1.75rem;
+  }
 }

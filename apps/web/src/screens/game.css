@@ -10,8 +10,10 @@
   grid-template-rows: 1fr;
 }
 
+/* The board stretches to the foot of the screen, so the map takes the room a small map leaves. */
 #app > main:has(#board) {
   display: grid;
+  align-content: stretch;
   max-width: none;
   padding: 0;
   min-height: 0;
@@ -637,4 +639,62 @@
   border-color: var(--color-accent);
   background: var(--color-accent);
   color: var(--color-accent-text);
+}
+
+/*
+ * A phone held upright (tokens.css shrinks the cards and tokens with the same query): the four
+ * header cards in one row without their labels, piles or plates, so the map takes the room left.
+ * A tap on the agenda or act still opens its full card with its buttons; the piles come back in
+ * the phone's detail view. The status row keeps to one line.
+ */
+@media (orientation: portrait) and (max-width: 40rem) {
+  #board > header,
+  #board > header > section {
+    flex-wrap: nowrap;
+    gap: var(--space-1);
+  }
+
+  #board > header {
+    padding-block: var(--space-1);
+  }
+
+  #board > header > section > p {
+    position: absolute;
+    width: var(--hidden-size);
+    height: var(--hidden-size);
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  #board > header [data-pile],
+  #board > header > section:has([data-pile='victoryDisplay']),
+  #board > header > section > [data-card] > footer {
+    display: none;
+  }
+
+  #board > header > section > [data-card] > :is(h1, h2) {
+    padding: var(--space-1);
+    font-size: var(--font-size-note);
+    line-height: 1.1;
+  }
+
+  #board > header > section > [data-card] [data-token]:not([data-token='cards']) {
+    inset-inline-end: var(--space-1);
+    inset-block-end: var(--space-1);
+  }
+
+  #status {
+    gap: var(--space-1);
+  }
+
+  /* The track names only the current phase, so the row keeps its buttons on one line. */
+  #status ol > li:not([aria-current]) {
+    position: absolute;
+    width: var(--hidden-size);
+    height: var(--hidden-size);
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }

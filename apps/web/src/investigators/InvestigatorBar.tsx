@@ -4,6 +4,7 @@ import {
   SKILL_NAMES,
   type BoardView,
   type CardImagePath,
+  type InvestigatorId,
   type InvestigatorView,
   type MapEnemyView,
   type SkillName,
@@ -23,6 +24,10 @@ import './investigators.css';
  * stepper, which plays `actions`; nothing is tapped while a step is queued (`busy`). The steppers
  * show only while the players adjust the board (`adjusting`, `OpenGame.adjusting`), and the turn
  * controls wait meanwhile, since a turn step is play, not a correction.
+ *
+ * A phone has room for one panel only, so there the stylesheet shows just the focused one
+ * (`data-focus`) with the others as avatar buttons above it (`OtherInvestigators`); a wider screen
+ * shows every panel and hides the avatars. Focus follows the turn, see `useFocus`.
  */
 export function InvestigatorBar({
   board,
@@ -37,13 +42,16 @@ export function InvestigatorBar({
 }) {
   // The players pick who goes next in the investigation phase, once no turn is in progress.
   const picking = board.phase === 'investigation' && board.turn === undefined;
+  const [focus, setFocus] = useFocus(board);
   return (
     <>
+      <OtherInvestigators board={board} focus={focus} onFocus={setFocus} />
       {board.investigators.map((investigator) => (
         <InvestigatorPanel
           key={investigator.id}
           board={board}
           investigator={investigator}
+          focused={focus === investigator.id}
           onTurn={board.turn === investigator.id}
           lead={board.lead === investigator.id}
           engaged={board.enemiesEngagedWith(investigator.id)}
@@ -60,6 +68,56 @@ export function InvestigatorBar({
 }
 
 /**
+ * The investigator the phone shows in full: the one the players tapped last, until the turn
+ * changes, else the one whose turn it is, else the lead investigator (the first one once nobody
+ * leads, as everyone has left the game). Keyed by the turn it was
+ * picked on, so a new turn brings its investigator to the front without an effect.
+ */
+function useFocus(board: BoardView): [InvestigatorId | undefined, (id: InvestigatorId) => void] {
+  const [picked, setPicked] = useState<{ id: InvestigatorId; turn: InvestigatorId | undefined }>();
+  const focus =
+    picked && picked.turn === board.turn
+      ? picked.id
+      : (board.turn ?? board.lead ?? board.investigators[0]?.id);
+  return [focus, (id) => setPicked({ id, turn: board.turn })];
+}
+
+/**
+ * The investigators besides the focused one (`focus`, see `useFocus`) as round avatars of their
+ * card's art, or their initial like their pawn on the map until it loads, each a button that brings their panel to the front (`onFocus`). Only the phone shows
+ * them; nothing in a solo game.
+ */
+function OtherInvestigators({
+  board,
+  focus,
+  onFocus,
+}: {
+  board: BoardView;
+  focus: InvestigatorId | undefined;
+  onFocus: (id: InvestigatorId) => void;
+}) {
+  const { t } = useTranslation();
+  const others = board.investigators.filter(({ id }) => id !== focus);
+  if (others.length === 0) return null;
+  return (
+    <ul aria-label={t('investigators.others')}>
+      {others.map((investigator) => (
+        <li key={investigator.id} data-turn={board.turn === investigator.id || undefined}>
+          <button
+            type="button"
+            aria-label={t('investigators.show', { name: investigator.name })}
+            onClick={() => onFocus(investigator.id)}
+          >
+            <span>{investigator.name.charAt(0)}</span>
+            <CardArt image={investigator.image} />
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/**
  * One investigator: their threat area along the top edge of their card, the card drawn like the
  * printed investigator cards and the map's location cards (a name band with where they are and how
  * their round goes, the art window, the four skills and the counters as round tokens along its
@@ -72,6 +130,7 @@ export function InvestigatorBar({
 function InvestigatorPanel({
   board,
   investigator,
+  focused,
   onTurn,
   lead,
   engaged,
@@ -83,6 +142,8 @@ function InvestigatorPanel({
   /** The board the skill tests (`SkillTestDialog`) and the card actions (`TurnControls`) read. */
   board: BoardView;
   investigator: InvestigatorView;
+  /** The phone shows this panel in full (`useFocus`). */
+  focused: boolean;
   onTurn: boolean;
   /** They are the lead investigator (`BoardView.lead`). */
   lead: boolean;
@@ -101,6 +162,7 @@ function InvestigatorPanel({
       aria-labelledby={nameId}
       data-status={investigator.status}
       data-turn={onTurn || undefined}
+      data-focus={focused || undefined}
     >
       <ThreatArea
         board={board}
