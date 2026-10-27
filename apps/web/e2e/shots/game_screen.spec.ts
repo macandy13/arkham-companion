@@ -145,9 +145,22 @@ test('the encounter deck after two mythos phases, Dissonant Voices on the discar
 
   const deck = page.getByRole('region', { name: 'Encounter deck' });
   await expect(
-    deck.getByRole('img', { name: '24 cards left in the encounter deck' }),
+    deck.getByRole('button', { name: '24 cards left in the encounter deck' }),
   ).toBeVisible();
   await expect(
-    deck.getByRole('img', { name: 'Encounter discard pile, 1 card, Dissonant Voices on top' }),
+    deck.getByRole('button', { name: 'Encounter discard pile, 1 card, Dissonant Voices on top' }),
   ).toBeVisible();
+});
+
+test('the encounter dialog opened on the discard pile after two mythos phases', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'Two mythos draws', mythosDrawnExport('Two mythos draws'));
+
+  await page
+    .getByRole('button', { name: 'Encounter discard pile, 1 card, Dissonant Voices on top' })
+    .click();
+
+  const dialog = page.getByRole('dialog', { name: 'Encounter deck' });
+  await expect(dialog.getByRole('listitem').filter({ hasText: 'Dissonant Voices' })).toBeVisible();
 });

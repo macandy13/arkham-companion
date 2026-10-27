@@ -229,6 +229,8 @@
   /* Once it holds cards, the discard pile shows its top card this tall, with its count on a disc. */
   --layout-pile-height: 4.5rem;
   --pile-count-size: 1.5rem;
+  /* A card's small picture in a row of the encounter dialog's lists. */
+  --encounter-list-card-height: 3.5rem;
   /* A dragged map piece's copy, see-through so the tile under it stays readable. */
   --map-ghost-opacity: 0.6;
   /* A token with nothing on it (a location's clues once found) fades, so it reads as empty. */

@@ -201,6 +201,7 @@
 
 #board > header [data-card='encounter'] {
   aspect-ratio: 5 / 7;
+  padding: 0;
   border-color: var(--color-card-encounter);
 }
 
@@ -215,6 +216,10 @@
  */
 #board > header [data-pile='discard'] {
   position: relative;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  background: none;
   box-sizing: border-box;
   height: var(--layout-pile-symbol-height);
   aspect-ratio: 5 / 7;
