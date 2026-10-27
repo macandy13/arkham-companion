@@ -703,7 +703,7 @@
  * The phone's detail view (`data-view='detail'`, DetailControls): the header, the map and the
  * investigators as three rows a screen tall, snapped vertically, and the header's places snapped
  * sideways, each a screen wide with its label, piles and plate again. The status row steps aside;
- * the notices and the × float over whichever row shows.
+ * the notices float over whichever row shows. The × and the dots float over the rows.
  */
 @media (orientation: portrait) and (max-width: 40rem) {
   #board[data-view='detail'] {
@@ -762,5 +762,43 @@
 
   #board[data-view='detail'] > button[data-detail='close']::before {
     mask-image: url('../investigators/icons/close.svg');
+  }
+
+  /* The row dots stand down the right edge, the card dots along the foot. */
+  #board[data-view='detail'] > ol[data-dots] {
+    position: fixed;
+    z-index: var(--layer-detail-controls);
+    display: flex;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    pointer-events: none;
+  }
+
+  #board[data-view='detail'] > ol[data-dots='rows'] {
+    flex-direction: column;
+    inset-inline-end: var(--space-1);
+    inset-block-start: 50%;
+    transform: translateY(-50%);
+  }
+
+  #board[data-view='detail'] > ol[data-dots='items'] {
+    inset-inline: 0;
+    inset-block-end: var(--space-2);
+    justify-content: center;
+  }
+
+  #board[data-view='detail'] > ol[data-dots] > li {
+    width: var(--detail-dot-size);
+    height: var(--detail-dot-size);
+    padding: 0;
+    border: var(--border-width) solid var(--color-accent);
+    border-radius: var(--radius-round);
+    background: none;
+  }
+
+  #board[data-view='detail'] > ol[data-dots] > li[data-current] {
+    background: var(--color-accent);
   }
 }
