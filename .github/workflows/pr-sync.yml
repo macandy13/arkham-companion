@@ -6,8 +6,9 @@ name: PR sync
 # - Conflict: labels the PR `needs-rebase` and comments once with the conflicting files. The
 #   comment wakes the Claude session that watches the PR, which merges main in and resolves
 #   them (CLAUDE.md, "Workflow for tasks").
-# - Clean: removes the label and pushes nothing. A clean PR squash-merges as it is, and a
-#   pushed merge of main would re-run every check on every open PR after each merge.
+# - Clean: removes the label, deletes its conflict comments and pushes nothing. A clean PR
+#   squash-merges as it is, and a pushed merge of main would re-run every check on every open
+#   PR after each merge.
 # Skipped: PRs from forks (no write token), Dependabot and Release Please branches (their
 # bots keep them up to date and stop doing so once someone else pushes).
 
@@ -61,6 +62,10 @@ jobs:
             if git merge -q --no-edit -m "Merge branch '$base' into $head" "origin/$base"; then
               echo "#$n: merges cleanly with $base"
               if [ "$labelled" = true ]; then gh pr edit "$n" --remove-label needs-rebase; fi
+              # A fixed conflict leaves no trace: its comment would read as an open problem.
+              gh api "repos/$GITHUB_REPOSITORY/issues/$n/comments" --paginate \
+                --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | contains("pr-sync.yml"))) | .id' |
+                while read -r id; do gh api -X DELETE "repos/$GITHUB_REPOSITORY/issues/comments/$id"; done
             else
               files=$(git diff --name-only --diff-filter=U | sed 's/^/- `/; s/$/`/')
               git merge --abort
