@@ -106,7 +106,7 @@ export function actionConditionHolds(
       const copies = Object.values(state.cards).filter((card) => card.code === condition.card);
       if (copies.length === 0) {
         if (condition.earnedWhen === undefined || state.campaign === undefined) return true;
-        return storyHolds(state.campaign?.story ?? {}, condition.earnedWhen) === true;
+        return storyHolds(state.campaign.story, condition.earnedWhen) === true;
       }
       return copies.some((card) => sameZone(card.zone, playAreaOf(investigator.id)));
     }
