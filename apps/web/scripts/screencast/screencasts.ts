@@ -187,9 +187,10 @@ export function gifArgs({ input, output }: { input: string; output: string }): s
  * with pause, seeking and speed; just the markers when nothing is tagged, which empties a
  * section an earlier push wrote. Pictures are linked from `pictureBaseUrl` (the gh-pages
  * branch on raw.githubusercontent.com, which serves a push at once, while Pages takes a minute
- * or more to deploy it), the player from `baseUrl` (Pages, the only host that serves it as a
- * page). `version` (the commit) is appended as a query string because file names stay the same
- * across pushes and GitHub's image proxy caches by URL.
+ * or more to deploy it; the workflow pins the branch to the commit it pushed), the player from
+ * `baseUrl` (Pages, the only host that serves it as a page). `version` (the commit) is appended
+ * as a query string because the player's file name stays the same across pushes and GitHub's
+ * image proxy and Pages cache by URL.
  */
 export function renderSection({
   flows,

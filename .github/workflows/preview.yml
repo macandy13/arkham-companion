@@ -66,7 +66,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-shell-${{ steps.playwright.outputs.version }}
+          key: playwright-shell-${{ runner.os }}-${{ env.ImageOS }}-${{ steps.playwright.outputs.version }}
       - if: steps.changes.outputs.web == 'true'
         run: |
           pnpm --filter @arkham/web exec playwright install --with-deps --only-shell chromium
@@ -126,6 +126,7 @@ jobs:
           PR: ${{ github.event.number }}
         run: |
           PAGES_COMMIT=$(git ls-remote origin refs/heads/gh-pages | cut -f1)
+          [ -n "$PAGES_COMMIT" ] || { echo "::error::No gh-pages branch to link the pictures from."; exit 1; }
           sed -i "s#/gh-pages/pr-preview/#/$PAGES_COMMIT/pr-preview/#g" apps/web/screencasts/out/section.md
           gh api "repos/$GITHUB_REPOSITORY/pulls/$PR" --jq '.body // ""' > "$RUNNER_TEMP/body.md"
           node apps/web/scripts/screencast/cli.ts splice "$RUNNER_TEMP/body.md" apps/web/screencasts/out/section.md > "$RUNNER_TEMP/new-body.md"
