@@ -248,10 +248,8 @@ test(
   async ({ page }) => {
     await resumeImportedGame(page, 'In the Parlor', inTheParlorExport('In the Parlor'));
 
-    await page
-      .getByRole('figure', { name: 'House' })
-      .getByRole('group', { name: 'Parlor' })
-      .click();
+    // On a phone the investigator panel lies over the Parlor's tile, so the keyboard opens it.
+    await page.getByRole('button', { name: 'Details of Parlor' }).press('Enter');
 
     const parlor = page.getByRole('dialog', { name: 'Parlor' });
     await expect(
