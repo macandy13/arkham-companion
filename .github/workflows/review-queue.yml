@@ -1,0 +1,60 @@
+name: Review queue
+
+# Keeps the pinned "Review queue" issue up to date for the repository owner: the open PRs
+# whose checks all passed, in merge order (a stacked PR right after the PR it builds on),
+# then the PRs waiting on their author and the ones not ready yet (code in
+# packages/review_queue). It reruns whenever a PR workflow finishes, so a PR joins the queue
+# as soon as its last check passes, and on reviews and draft changes; the hourly run catches
+# the rest (labels, closed PRs). It never checks out PR code.
+
+on:
+  workflow_run:
+    workflows:
+      [CI, PR preview, PR quality, PR title, PR sync, CodeQL, Carddata check, Claude review]
+    types: [completed]
+  pull_request_review:
+    types: [submitted, dismissed]
+  pull_request_target:
+    types: [closed, reopened, ready_for_review, converted_to_draft]
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: read
+  statuses: read
+  pull-requests: read
+  issues: write
+
+concurrency:
+  group: review-queue
+  cancel-in-progress: true
+
+jobs:
+  # packages/review_queue/src/cli.ts leaves this job's name out of the checks it reads,
+  # since the events above can show it as a check on the PR that started it.
+  review-queue:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Write the queue into the pinned issue
+        run: |
+          body=$(node packages/review_queue/src/cli.ts)
+          gh label create review-queue --force --color 0e8a16 \
+            --description 'The pinned issue listing the PRs ready for review'
+          issue=$(gh issue list --label review-queue --state open --json number --jq '.[0].number // empty')
+          if [ -z "$issue" ]; then
+            url=$(gh issue create --title 'Review queue' --label review-queue --body "$body")
+            gh issue pin "$url" || echo "::warning::Could not pin $url (at most 3 issues can be pinned)."
+          elif [ "$(gh issue view "$issue" --json body --jq .body)" != "$body" ]; then
+            gh issue edit "$issue" --body "$body"
+          fi
