@@ -10,6 +10,12 @@ What the scenario cards ask of the engine beyond the generic rules in [rules.md]
 - **Coverage, all cards:** "Coverage by rule" re-reads both chapters at commit `5f633d3` (2026-10-19) with one regular expression per rule, and marks each as covered by the engine of 2026-10-22 (after P1 slice 5c2) or names its plan step. Reprints (`duplicate_of`) are left out.
 - **Not in the data:** location connection symbols, scenario setup, codex entries and resolutions. These live on the card images and in the campaign guides (see "Data gaps").
 
+## Encounter rule census
+
+A newer, automated count supersedes the regex coverage numbers below. On 2026-10-27 all 4,065 ArkhamDB encounter cards were split into 20,683 sentences and matched against 236 rule patterns, each marked with what the engine of that day supports (yes, partial, command only, no, left to the players, plain text). A card is ready when every rule it uses is supported. Ready today: Night of the Zealot 50 of 80 core cards and 14 of 38 Return to cards, Core Set (2026) 21 of 92, Children of Blood 15 of 119, all campaigns 9 %.
+
+The scripts, the patterns with their statuses and the per-card results live outside the repo (they read the full card dump, which is never committed). ME.6 keeps them current, and every MC milestone starts by re-running them for its campaign.
+
 ## At a glance
 
 1. **Every gap now has a plan step, ordered by campaign.** 12 of 211 Chapter Two cards (6 %) run fully today. After the Night of the Zealot steps (1–12), 106 run, and after the Chapter Two steps (13–26), all 211 do. The first version of the plan reached 130 and left out six cases (see "Not covered yet").
@@ -319,7 +325,7 @@ Players trigger these with their own actions, so the app needs a way to activate
 - **Limit 1 per investigator / per location** – Cards: Unspeakable Truths, Languor, Echoing in Darkness, Arcane Lock. Primitive: placement check; surge or discard if over. Tier: auto
 - **Attach to the nearest enemy of a trait, or search the deck for one first** – Cards: Sanguine Rebirth, Unnatural Strength. Primitive: "nearest … with trait" query + search. Tier: auto
 - **Search the encounter deck and discard for a trait and draw it** – Cards: Blasphemous Invocation, In the Shadows 13115, act 12111 (Fire! ×per investigator), 13069. Primitive: search + shuffle. Tier: auto
-- **Draw the topmost copy of a named card from the discard** – Cards: reference cards 12105/12168, agenda 12108. Primitive: `drawTopmostFromDiscard` (_Spreading Flames_, M7.1). Tier: auto
+- **Draw the topmost copy of a named card from the discard** – Cards: reference cards 12105/12168, agenda 12108. Primitive: `drawTopmostFromDiscard` (_Spreading Flames_, MC2). Tier: auto
 - **Nearest non-Elite enemy moves once toward you and attacks if it engages** – Cards: Aerial Pursuit 12163. Primitive: "move toward" + immediate attack. Tier: auto
 - **Draw a random set-aside enemy of a trait** – Cards: Burning Daylight 13028. Primitive: set-aside query with RNG. Tier: auto
 - **Hand, deck and card-type effects** – Cards: Wild Compulsion, Dissonance 12194, Torment 12195, Languor, Putrid Vapors 12192. Tier: display
@@ -355,7 +361,7 @@ Players trigger these with their own actions, so the app needs a way to activate
 
 ## Implementation plan
 
-The plan adds full campaigns in this order: Night of the Zealot, the Chapter Two campaigns, The Dunwich Legacy, The Path to Carcosa, The Forgotten Age, The Innsmouth Conspiracy, and then the rest in release order. Each campaign gets the steps its cards need first, so the generic rules land with the first campaign that plays them. Night of the Zealot comes first because the engine already plays The Gathering in tests, and its 80 cards need most of the generic steps. Each line below is one task of one or a few small PRs. Steps 1–12 are task M4.5, built with _The Gathering_ (M4) before _The Midnight Masks_ and _The Devourer Below_ (M5). Steps 13–36 belong to M7, one section per campaign.
+The plan adds full campaigns in this order: Night of the Zealot, the Chapter Two campaigns, The Dunwich Legacy, The Path to Carcosa, The Forgotten Age, The Innsmouth Conspiracy, and then the rest in release order. Each campaign gets the steps its cards need first, so the generic rules land with the first campaign that plays them. Night of the Zealot comes first because the engine already plays The Gathering in tests, and its 80 cards need most of the generic steps. Each line below is one task of one or a few small PRs. Steps 1–7 were task M4.5; steps 8–12 are MC1.1–MC1.5 in the Night of the Zealot milestone (MC1). Steps 13–36 belong to the campaign milestones MC2–MC13, one section per campaign.
 
 Every campaign after Chapter Two starts with a card-by-card read of its encounter cards, like the Chapter Two read above. The counts in this document come from regular expressions and miss mechanics they don't name.
 
