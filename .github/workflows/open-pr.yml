@@ -1,0 +1,70 @@
+name: Open PR
+
+# Opens a PR as the repo's GitHub App bot instead of the owner, so the owner can approve it and
+# `main` can require that approval (GitHub never lets authors approve their own PRs). Claude
+# sessions reach GitHub only with the owner's credentials, so they push their branch and
+# dispatch this workflow rather than creating the PR themselves (CLAUDE.md, "Workflow for
+# tasks"). It uses an App token, not GITHUB_TOKEN, because PRs opened with GITHUB_TOKEN start
+# no workflows and would never get their required checks.
+# Needs the repo variable CLAUDE_BOT_APP_ID and secret CLAUDE_BOT_PRIVATE_KEY (docs/automation.md).
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Head branch, already pushed
+        required: true
+      title:
+        description: PR title (Conventional Commit)
+        required: true
+      body:
+        description: PR description
+        required: true
+      base:
+        description: Base branch (another PR's branch for a stacked PR)
+        default: main
+      draft:
+        description: Open as draft
+        type: boolean
+        default: false
+
+# Every API call uses the App token, so GITHUB_TOKEN needs nothing.
+permissions: {}
+
+jobs:
+  open:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the App credentials
+        env:
+          HAS_APP: ${{ vars.CLAUDE_BOT_APP_ID != '' && secrets.CLAUDE_BOT_PRIVATE_KEY != '' }}
+        run: |
+          if [ "$HAS_APP" != true ]; then
+            echo "::error::Repo variable CLAUDE_BOT_APP_ID or secret CLAUDE_BOT_PRIVATE_KEY is missing; open the PR directly instead."
+            exit 1
+          fi
+      - uses: actions/create-github-app-token@v2
+        id: app
+        with:
+          app-id: ${{ vars.CLAUDE_BOT_APP_ID }}
+          private-key: ${{ secrets.CLAUDE_BOT_PRIVATE_KEY }}
+          permission-pull-requests: write
+          permission-issues: write
+      # Inputs go through env, never into the script text, so a title or body can't inject shell.
+      - name: Create the PR
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+          REPO: ${{ github.repository }}
+          OWNER: ${{ github.repository_owner }}
+          BRANCH: ${{ inputs.branch }}
+          BASE: ${{ inputs.base }}
+          TITLE: ${{ inputs.title }}
+          BODY: ${{ inputs.body }}
+          DRAFT: ${{ inputs.draft }}
+        run: |
+          printf '%s' "$BODY" > "$RUNNER_TEMP/body.md"
+          args=()
+          if [ "$DRAFT" = true ]; then args+=(--draft); fi
+          url=$(gh pr create --repo "$REPO" --head "$BRANCH" --base "$BASE" --title "$TITLE" \
+            --body-file "$RUNNER_TEMP/body.md" --assignee "$OWNER" --reviewer "$OWNER" "${args[@]}")
+          echo "Opened $url" >> "$GITHUB_STEP_SUMMARY"
