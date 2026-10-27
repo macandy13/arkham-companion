@@ -133,6 +133,11 @@ export interface GameActions {
    * or at a location, engaged with an investigator there when `move` names one.
    */
   moveEncounterCard(card: InstanceId, move: CardMove): Promise<void>;
+  /**
+   * Spawns `enemy` from a pile at `location`, which the players chose on the map: the engine
+   * engages it there by the rules (prey, Aloof), as if a card effect spawned it there.
+   */
+  spawnEnemy(enemy: InstanceId, location: InstanceId): Promise<void>;
   /** Doom on the current agenda. */
   placeDoom(amount: number): Promise<void>;
   /** Doom taken off the current agenda by hand (a card effect, a miscount). */
@@ -264,6 +269,8 @@ export function gameActions(
           adjustment: { kind: 'moveCard', cardId: card, ...placeOf(move) },
         }),
       ),
+    spawnEnemy: (enemy, location) =>
+      play((table) => table.play({ type: 'SpawnEnemy', enemyId: enemy, at: location })),
     placeDoom: (amount) => play((table) => table.placeDoom(amount)),
     removeDoom: (amount) => play((table) => table.removeDoom(amount)),
     revealLocation: (location) =>
@@ -314,13 +321,6 @@ function placeOf(move: CardMove): { to: Zone; index?: number } {
       return { to: setAside };
     case 'threatArea':
       return { to: threatAreaOf(move.investigator) };
-    case 'location':
-      return {
-        to:
-          move.engagedWith === undefined
-            ? atLocation(move.location)
-            : engagedWith(move.engagedWith),
-      };
     default:
       return assertNever(move);
   }

@@ -20,7 +20,9 @@ export type HeaderPileKind = 'discard' | 'setAside' | 'victoryDisplay';
  * dialog); nothing is drawn while a step is queued (`busy`), while the players adjust the board
  * (`adjusting`, since a draw is play, not a correction) or when deck and discard pile are both
  * empty. Opened on a pile, it shows the pile's cards in a row (`PileStrip`) with the places the
- * players can put the chosen one (`CardMoves`), for a revelation the engine left to them. A native
+ * players can put the chosen one (`CardMoves`), for a revelation the engine left to them; its
+ * Spawn closes the dialog and hands the enemy to `onSpawn`, so the players pick the location on
+ * the map. A native
  * modal `<dialog>` brings focus trapping and Escape.
  */
 export function EncounterDialog({
@@ -29,6 +31,7 @@ export function EncounterDialog({
   actions,
   busy,
   adjusting,
+  onSpawn,
   onClose,
 }: {
   board: BoardView;
@@ -36,6 +39,7 @@ export function EncounterDialog({
   actions: GameActions;
   busy: boolean;
   adjusting: boolean;
+  onSpawn: (card: EncounterCardView) => void;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -51,7 +55,16 @@ export function EncounterDialog({
   );
   const empty = deckCount === 0 && discard.length === 0;
   const moves = (card: EncounterCardView) => (
-    <CardMoves board={board} card={card} actions={actions} busy={busy} />
+    <CardMoves
+      board={board}
+      card={card}
+      actions={actions}
+      busy={busy}
+      onSpawn={(enemy) => {
+        onClose();
+        onSpawn(enemy);
+      }}
+    />
   );
 
   const piles = {

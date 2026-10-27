@@ -45,11 +45,14 @@ export function MapBoard({
   actions,
   busy,
   adjusting,
+  onPick,
 }: {
   board: BoardView;
   actions: GameActions;
   busy: boolean;
   adjusting: boolean;
+  /** While the players choose a location (an enemy's spawn), a tap on a tile picks it. */
+  onPick?: (location: InstanceId) => void;
 }) {
   const { t } = useTranslation();
   const idPrefix = useId();
@@ -60,7 +63,14 @@ export function MapBoard({
   if (!current) return null;
   if (shown.length === 1)
     return (
-      <MapDrawing map={current} board={board} actions={actions} busy={busy} adjusting={adjusting} />
+      <MapDrawing
+        map={current}
+        board={board}
+        actions={actions}
+        busy={busy}
+        adjusting={adjusting}
+        onPick={onPick}
+      />
     );
 
   const tabId = (map: MapView) => `${idPrefix}-tab-${map.id}`;
@@ -91,6 +101,7 @@ export function MapBoard({
           actions={actions}
           busy={busy}
           adjusting={adjusting}
+          onPick={onPick}
         />
       </div>
     </>
@@ -128,12 +139,14 @@ function MapDrawing({
   actions,
   busy,
   adjusting,
+  onPick,
 }: {
   map: MapView;
   board: BoardView;
   actions: GameActions;
   busy: boolean;
   adjusting: boolean;
+  onPick?: (location: InstanceId) => void;
 }) {
   const investigators = board.investigators;
   const captionId = useId();
@@ -215,7 +228,9 @@ function MapDrawing({
                       enemies={map.enemies[location.id] ?? []}
                       investigators={board.investigatorsAt(location.id)}
                       turnOrder={board}
-                      onOpen={() => setDetailsFor(location.id)}
+                      onOpen={() =>
+                        onPick ? onPick(location.id) : setDetailsFor(location.id)
+                      }
                       dragOf={(piece) =>
                         draggable(piece)
                           ? drag.handlers({ ...piece, from: location.id })

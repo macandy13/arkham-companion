@@ -9,14 +9,16 @@ import { PileFan } from './PileFan';
 import './encounter.css';
 
 /**
- * What the header's piles share: the board they show, the `actions` their dialog plays, and
- * whether a step is queued (`busy`) or the players adjust the board (`adjusting`).
+ * What the header's piles share: the board they show, the `actions` their dialog plays, whether a
+ * step is queued (`busy`) or the players adjust the board (`adjusting`), and `onSpawn`, which lets
+ * the players choose on the map where an enemy from a pile spawns.
  */
 export interface PileProps {
   board: BoardView;
   actions: GameActions;
   busy: boolean;
   adjusting: boolean;
+  onSpawn: (card: EncounterCardView) => void;
 }
 
 /**

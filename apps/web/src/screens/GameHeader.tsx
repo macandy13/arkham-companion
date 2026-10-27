@@ -33,6 +33,7 @@ export function GameHeader({
     actions: store.getState().actions,
     busy: blocked,
     adjusting,
+    onSpawn: (enemy) => store.getState().startSpawn(enemy),
   };
 
   return (

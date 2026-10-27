@@ -57,6 +57,7 @@ describe('EncounterPiles', () => {
         actions={actionsOn(table)}
         busy={false}
         adjusting={false}
+        onSpawn={() => {}}
       />,
     );
 
@@ -79,6 +80,7 @@ describe('EncounterPiles', () => {
         actions={actionsOn(table)}
         busy={false}
         adjusting={false}
+        onSpawn={() => {}}
       />,
     );
 
@@ -103,6 +105,7 @@ describe('EncounterPiles', () => {
         actions={actionsOn(table)}
         busy={false}
         adjusting={false}
+        onSpawn={() => {}}
       />,
     );
 
@@ -139,6 +142,7 @@ describe('EncounterPiles', () => {
         actions={actionsOn(table)}
         busy={false}
         adjusting={false}
+        onSpawn={() => {}}
       />,
     );
 
@@ -172,6 +176,7 @@ describe('EncounterPiles', () => {
           actions={actionsOn(table)}
           busy={false}
           adjusting={false}
+          onSpawn={() => {}}
         />,
       );
       fireEvent.click(screen.getByRole('button', { name: '2 cards left in the encounter deck' }));
@@ -188,6 +193,7 @@ describe('EncounterPiles', () => {
           actions={actionsOn(table)}
           busy={false}
           adjusting={false}
+          onSpawn={() => {}}
         />,
       );
 
@@ -216,6 +222,7 @@ describe('EncounterPiles', () => {
           actions={actionsOn(table)}
           busy={busy}
           adjusting={adjusting}
+          onSpawn={() => {}}
         />,
       );
 
@@ -244,6 +251,7 @@ describe('EncounterPiles', () => {
         actions={actionsOn(table)}
         busy={false}
         adjusting={false}
+        onSpawn={() => {}}
       />,
     );
     fireEvent.click(
@@ -282,6 +290,7 @@ describe('HeaderPile', () => {
         actions={actionsOn(table)}
         busy={false}
         adjusting={false}
+        onSpawn={() => {}}
       />,
     );
 
@@ -310,6 +319,7 @@ describe('HeaderPile', () => {
         actions={actionsOn(table)}
         busy={false}
         adjusting={false}
+        onSpawn={() => {}}
       />,
     );
 
@@ -330,6 +340,7 @@ describe('HeaderPile', () => {
         actions={actionsOn(table)}
         busy={false}
         adjusting={false}
+        onSpawn={() => {}}
       />,
     );
 
@@ -357,6 +368,7 @@ describe('HeaderPile', () => {
         actions={actionsOn(table)}
         busy={false}
         adjusting={false}
+        onSpawn={() => {}}
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Set aside, 2 cards' }));
@@ -388,6 +400,7 @@ describe('HeaderPile', () => {
         actions={actionsOn(table)}
         busy={false}
         adjusting={false}
+        onSpawn={() => {}}
       />,
     );
 

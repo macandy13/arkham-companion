@@ -18,12 +18,14 @@ export function DrawnCardsNotice({
   drawn,
   actions,
   busy,
+  onSpawn,
   onDismiss,
 }: {
   board: BoardView;
   drawn: readonly DrawnCard[];
   actions: GameActions;
   busy: boolean;
+  onSpawn: (card: EncounterCardView) => void;
   onDismiss: () => void;
 }) {
   const { t } = useTranslation();
@@ -54,7 +56,14 @@ export function DrawnCardsNotice({
     <aside role="status" aria-label={t('encounter.drawnLabel')}>
       <ul>
         {drawn.map(({ card, drawnFor, place }) => (
-          <DrawnLine key={card.id} board={board} card={card} actions={actions} busy={busy}>
+          <DrawnLine
+            key={card.id}
+            board={board}
+            card={card}
+            actions={actions}
+            busy={busy}
+            onSpawn={onSpawn}
+          >
             {drawnFor === undefined
               ? t('encounter.went', { card: card.name, place: describePlace(place) })
               : t('encounter.wentFor', {
@@ -78,12 +87,14 @@ function DrawnLine({
   card,
   actions,
   busy,
+  onSpawn,
   children,
 }: {
   board: BoardView;
   card: EncounterCardView;
   actions: GameActions;
   busy: boolean;
+  onSpawn: (card: EncounterCardView) => void;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -91,7 +102,9 @@ function DrawnLine({
     <li>
       <details onToggle={(event) => setOpen(event.currentTarget.open)}>
         <summary>{children}</summary>
-        {open && <CardMoves board={board} card={card} actions={actions} busy={busy} />}
+        {open && (
+          <CardMoves board={board} card={card} actions={actions} busy={busy} onSpawn={onSpawn} />
+        )}
       </details>
     </li>
   );

@@ -12,6 +12,7 @@ import { GameHeader } from './GameHeader';
 import { GameStatus } from './GameStatus';
 import { RejectionToast } from './RejectionToast';
 import { DrawnCardsNotice } from '../encounter/DrawnCardsNotice';
+import { SpawnPrompt } from '../encounter/SpawnPrompt';
 import { SkippedEffectsNotice } from './SkippedEffectsNotice';
 import './game.css';
 
@@ -45,7 +46,11 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
   const [decision] = board.decisions;
 
   return (
-    <div id="board" data-adjusting={open.adjusting || undefined}>
+    <div
+      id="board"
+      data-adjusting={open.adjusting || undefined}
+      data-spawning={open.spawning ? true : undefined}
+    >
       <GameHeader store={store} open={open} board={board} />
       <GameStatus store={store} open={open} board={board} />
       <section id="map" aria-labelledby="map-title">
@@ -55,6 +60,14 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
           actions={store.getState().actions}
           busy={open.busy}
           adjusting={open.adjusting}
+          onPick={
+            open.spawning &&
+            ((location) => {
+              const enemy = open.spawning;
+              store.getState().cancelSpawn();
+              if (enemy) void store.getState().actions.spawnEnemy(enemy.id, location);
+            })
+          }
         />
       </section>
       <section id="investigators" aria-labelledby="investigators-title">
@@ -77,12 +90,16 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
         />
       )}
       <div id="notices">
+        {open.spawning && (
+          <SpawnPrompt enemy={open.spawning} onCancel={() => store.getState().cancelSpawn()} />
+        )}
         {open.drawnCards && (
           <DrawnCardsNotice
             board={board}
             drawn={open.drawnCards}
             actions={store.getState().actions}
             busy={open.busy}
+            onSpawn={(enemy) => store.getState().startSpawn(enemy)}
             onDismiss={() => store.getState().dismissDrawnCards()}
           />
         )}

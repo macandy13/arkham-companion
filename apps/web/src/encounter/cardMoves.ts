@@ -10,8 +10,7 @@ import { matchingFirst } from '@arkham/util';
 export type CardMove =
   | { to: 'discard' }
   | { to: 'setAside' }
-  | { to: 'threatArea'; investigator: InvestigatorId }
-  | { to: 'location'; location: InstanceId; engagedWith?: InvestigatorId };
+  | { to: 'threatArea'; investigator: InvestigatorId };
 
 /**
  * The moves that fit `card` where it is now on `board`: an enemy spawns at a location, unengaged or
@@ -26,25 +25,6 @@ export function cardMoves(board: BoardView, card: EncounterCardView): CardMove[]
     board.investigators.filter((investigator) => investigator.status === 'active'),
     (investigator) => investigator.id === board.turn,
   );
-  const engagedWith = place.kind === 'engaged' ? place.investigator : undefined;
-  const spawns: CardMove[] =
-    card.type === 'enemy'
-      ? board.locations.flatMap(({ id, name }): CardMove[] => [
-          ...(place.kind === 'atLocation' && place.location === name
-            ? []
-            : [{ to: 'location', location: id } as const]),
-          ...active
-            .filter(
-              (investigator) =>
-                board.locationOf(investigator.id) === id && investigator.id !== engagedWith,
-            )
-            .map(({ id: investigator }) => ({
-              to: 'location' as const,
-              location: id,
-              engagedWith: investigator,
-            })),
-        ])
-      : [];
   const threatAreas: CardMove[] =
     card.type === 'treachery'
       ? active
@@ -52,7 +32,6 @@ export function cardMoves(board: BoardView, card: EncounterCardView): CardMove[]
           .map(({ id }) => ({ to: 'threatArea', investigator: id }))
       : [];
   return [
-    ...spawns,
     ...threatAreas,
     ...(place.kind === 'encounterDiscard' ? [] : [{ to: 'discard' } as const]),
     ...(place.kind === 'setAside' ? [] : [{ to: 'setAside' } as const]),
