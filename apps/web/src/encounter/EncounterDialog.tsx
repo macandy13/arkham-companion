@@ -1,9 +1,10 @@
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BoardView, EncounterCardView } from '@arkham/engine';
 import { matchingFirst } from '@arkham/util';
 import { useCardPicture } from '../catalog/cardImages';
 import type { GameActions } from '../state/gameActions';
+import { CardMoves } from './CardMoves';
 
 /** Where the encounter dialog opens (`EncounterDialog.start`): on the deck or on the discard pile. */
 export type EncounterPile = 'deck' | 'discard';
@@ -14,8 +15,8 @@ export type EncounterPile = 'deck' | 'discard';
  * first), as player cards and effects make an investigator draw outside the mythos phase, then the
  * discard pile (top first), the set-aside cards and the victory display
  * as lists that open and close (`details`), each card with a small picture and its name. Opened
- * from the discard pile (`start`), its list starts open. The lists are read-only for now; a tap on
- * a card opens its zoom once cards have one (M3.7). A draw closes the dialog, so the card resolves
+ * from the discard pile (`start`), its list starts open. A tap on a card opens the places the
+ * players can put it (`CardMoves`), for a revelation the engine left to them. A draw closes the dialog, so the card resolves
  * in front of the players (its decisions in the decision dialog); nothing is drawn while a step is
  * queued (`busy`), while the players adjust the board (`adjusting`, since a draw is play, not a
  * correction) or when deck and discard pile are both empty. A native modal `<dialog>` brings
@@ -48,6 +49,9 @@ export function EncounterDialog({
     (investigator) => investigator.id === board.turn,
   );
   const empty = deckCount === 0 && discard.length === 0;
+  const moves = (card: EncounterCardView) => (
+    <CardMoves board={board} card={card} actions={actions} busy={busy} />
+  );
 
   return (
     <dialog ref={dialog} aria-labelledby={titleId} onCancel={onClose} data-dialog="encounter">
@@ -69,9 +73,19 @@ export function EncounterDialog({
           </button>
         ))}
       </footer>
-      <CardList title={t('encounter.discard')} cards={discard} open={start === 'discard'} />
-      <CardList title={t('encounter.setAside')} cards={setAside} open={false} />
-      <CardList title={t('encounter.victoryDisplay')} cards={victoryDisplay} open={false} />
+      <CardList
+        title={t('encounter.discard')}
+        cards={discard}
+        open={start === 'discard'}
+        moves={moves}
+      />
+      <CardList title={t('encounter.setAside')} cards={setAside} open={false} moves={moves} />
+      <CardList
+        title={t('encounter.victoryDisplay')}
+        cards={victoryDisplay}
+        open={false}
+        moves={moves}
+      />
     </dialog>
   );
 }
@@ -84,10 +98,12 @@ function CardList({
   title,
   cards,
   open,
+  moves,
 }: {
   title: string;
   cards: readonly EncounterCardView[];
   open: boolean;
+  moves: (card: EncounterCardView) => ReactNode;
 }) {
   const { t } = useTranslation();
   return (
@@ -98,7 +114,7 @@ function CardList({
       ) : (
         <ul>
           {cards.map((card) => (
-            <CardEntry key={card.id} card={card} />
+            <CardEntry key={card.id} card={card} moves={moves} />
           ))}
         </ul>
       )}
@@ -108,20 +124,33 @@ function CardList({
 
 /**
  * One card of a pile: a small picture of its front (the card art pattern until it loads, or when
- * the card data has none), its name and, where it has them, its victory points.
+ * the card data has none), its name and, where it has them, its victory points. A tap opens the
+ * places the players can put it (`moves`, rendered only while open).
  */
-function CardEntry({ card }: { card: EncounterCardView }) {
+function CardEntry({
+  card,
+  moves,
+}: {
+  card: EncounterCardView;
+  moves: (card: EncounterCardView) => ReactNode;
+}) {
   const { t } = useTranslation();
   const picture = useCardPicture(card.image);
+  const [open, setOpen] = useState(false);
   return (
     <li data-picture={picture?.shown ? 'shown' : undefined}>
-      {picture && (
-        <img src={picture.url} alt="" onLoad={picture.onLoad} onError={picture.onError} />
-      )}
-      {card.name}
-      {card.victory !== undefined && (
-        <data value={card.victory}>{t('encounter.victory', { count: card.victory })}</data>
-      )}
+      <details onToggle={(event) => setOpen(event.currentTarget.open)}>
+        <summary>
+          {picture && (
+            <img src={picture.url} alt="" onLoad={picture.onLoad} onError={picture.onError} />
+          )}
+          {card.name}
+          {card.victory !== undefined && (
+            <data value={card.victory}>{t('encounter.victory', { count: card.victory })}</data>
+          )}
+        </summary>
+        {open && moves(card)}
+      </details>
     </li>
   );
 }

@@ -81,6 +81,8 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
           <DrawnCardsNotice
             board={board}
             drawn={open.drawnCards}
+            actions={store.getState().actions}
+            busy={open.busy}
             onDismiss={() => store.getState().dismissDrawnCards()}
           />
         )}

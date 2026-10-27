@@ -42,6 +42,14 @@ export const resources = {
         drawnFor: '{{card}}, drawn for {{name}}',
         keywords: 'Keywords',
         drawnLabel: 'Encounter cards drawn',
+        move: {
+          label: 'Put {{card}}',
+          discard: 'Discard',
+          setAside: 'Set aside',
+          threatArea: "Into {{name}}'s threat area",
+          spawn: 'Spawn at {{location}}',
+          spawnEngaged: 'Spawn at {{location}}, engaged with {{name}}',
+        },
         went: '{{card}}: {{place}}',
         wentFor: '{{card}} for {{name}}: {{place}}',
         place: {
@@ -571,6 +579,14 @@ export const resources = {
         drawnFor: '{{card}}, gezogen für {{name}}',
         keywords: 'Schlüsselwörter',
         drawnLabel: 'Gezogene Begegnungskarten',
+        move: {
+          label: '{{card}} platzieren',
+          discard: 'Abwerfen',
+          setAside: 'Beiseitelegen',
+          threatArea: 'In den Bedrohungsbereich von {{name}}',
+          spawn: 'Erscheinen: {{location}}',
+          spawnEngaged: 'Erscheinen: {{location}}, im Kampf mit {{name}}',
+        },
         went: '{{card}}: {{place}}',
         wentFor: '{{card}} für {{name}}: {{place}}',
         place: {
