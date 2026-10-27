@@ -307,6 +307,24 @@ describe('turns, actions and tokens', () => {
     expect(table.board.turn).toBeUndefined();
   });
 
+  it('takes the resource, draw and play actions, of which only the resource changes the board', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withInvestigator(alice, { locationId: study, resources: 2 }),
+    );
+
+    table.takeResource(alice);
+    table.drawCard(alice);
+    table.playCard(alice);
+
+    expect(table.board.investigator(alice).resources).toBe(3);
+    expect(table.events.slice(-2).map((event) => event.type)).toEqual([
+      'CommandDeferred',
+      'CommandDeferred',
+    ]);
+  });
+
   it('gains and spends resources and takes damage and horror', () => {
     const table = PlayTable.start(game);
 
