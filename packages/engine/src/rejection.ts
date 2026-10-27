@@ -99,6 +99,12 @@ export type Rejection =
   | { code: 'resolutionRequired'; deck: 'agenda' | 'act' }
   /** A command after the scenario ended (`GameMeta.ended`); only `ManualAdjust` is still accepted. */
   | { code: 'scenarioEnded'; command: CommandType }
+  /**
+   * A command whose effects would change nothing (`CommandSpec.mustChangeState`): an ability
+   * can't be initiated then (Rules Reference, "Triggered Abilities"), e.g. "Heal 3 damage" with
+   * no damage.
+   */
+  | { code: 'changesNothing'; command: CommandType }
   /** `AdvanceAgenda`/`AdvanceAct` names a fallback resolution although further cards follow. */
   | { code: 'unexpectedResolution'; deck: 'agenda' | 'act' }
   /** The clues paid as a group (a `groupClues` cost, `UseCardAction.spend`) do not add up to it. */
@@ -360,6 +366,8 @@ function describe(r: Rejection): string {
       return `the last ${r.deck} needs a resolution`;
     case 'scenarioEnded':
       return `the scenario has ended, ${r.command} is not possible any more`;
+    case 'changesNothing':
+      return `${r.command} would change nothing now`;
     case 'unexpectedResolution':
       return `a resolution is only allowed for the last ${r.deck}`;
     case 'wrongClueTotal':

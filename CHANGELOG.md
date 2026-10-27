@@ -2,6 +2,79 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.11](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.10...arkham-companion-v0.1.11) (2026-10-27)
+
+
+### Features
+
+* **engine:** acts advance only through their spend-clues ability (M4.5 step 8g2b) ([0a715ff](https://github.com/macandy13/arkham-companion/commit/0a715ff326e200e320f5b2f90a9b862e8e226564))
+* **engine:** acts advance only through their spend-clues ability (M4.5 step 8g2b) ([f67f974](https://github.com/macandy13/arkham-companion/commit/f67f97410509daf7625d9b272b19c88427703064))
+* **engine:** card actions with a condition; Umôrdhoth's Lita action (M4.5 step 8e3) ([2098bdd](https://github.com/macandy13/arkham-companion/commit/2098bdde71759b432b96181b3225b2c232038bad))
+* **engine:** card actions with a condition; Umôrdhoth's Lita action (M4.5 step 8e3) ([4dd0b2d](https://github.com/macandy13/arkham-companion/commit/4dd0b2d69050aa0f47f0ab1468886e8e5e047bfe))
+* **engine:** free card actions (M4.5 step 8g1) ([dbe5dee](https://github.com/macandy13/arkham-companion/commit/dbe5dee2b6b27faec7d0d7dc0fb6ea1d04beeb1e))
+* **engine:** free card actions (M4.5 step 8g1) ([3952d53](https://github.com/macandy13/arkham-companion/commit/3952d5347b21fe900fa786fad8bce503d0c425ff))
+* **engine:** number a card's actions of the same kind (MC1.1f2) ([1304d22](https://github.com/macandy13/arkham-companion/commit/1304d2246d20cb6d2e8e4b029c874355a8c309b0))
+* **engine:** number a card's actions of the same kind (MC1.1f2) ([ac4d3d4](https://github.com/macandy13/arkham-companion/commit/ac4d3d4717465259704143efa4601feabdd9d3a0))
+* **engine:** objectives on a card's own tokens; Disrupting the Ritual advances itself (M4.5 step 8e4) ([f96eb2e](https://github.com/macandy13/arkham-companion/commit/f96eb2ec1876c70f2adb031f5df80e9db1f84df0))
+* **engine:** objectives on a card's own tokens; Disrupting the Ritual advances itself (M4.5 step 8e4) ([2aeca0a](https://github.com/macandy13/arkham-companion/commit/2aeca0aa6edd1e38b81968a5bc81b0a5e544b446))
+* **engine:** the act's spend-clues ability (M4.5 step 8g2a) ([14594fe](https://github.com/macandy13/arkham-companion/commit/14594fefea793bd31f2c0433d1c957460cc117dd))
+* **engine:** the act's spend-clues ability (M4.5 step 8g2a) ([e07cc60](https://github.com/macandy13/arkham-companion/commit/e07cc609ba4c672393c7c019704c090d65d83814))
+* **scenarios:** Lita Chantler's Parley takes control of her (M4.5 step 8e2) ([c12d280](https://github.com/macandy13/arkham-companion/commit/c12d280183c202ceafbc40a19dcc1dcaaed1f076))
+* **web:** agenda and act open as a full card (M3.7h) ([337f253](https://github.com/macandy13/arkham-companion/commit/337f253421a62c3ce2e82c870373617c514adc36))
+* **web:** card zoom for treacheries and attached cards (M3.7i) ([09acfe2](https://github.com/macandy13/arkham-companion/commit/09acfe27d1b748768357387cc9db564b8fd7b39b))
+* **web:** name the action that provoked an attack of opportunity (M3.7j) ([21cb0fd](https://github.com/macandy13/arkham-companion/commit/21cb0fd150b9fb1ca45bc372c1fa1f5ce037e577))
+* **web:** name the action that provoked an attack of opportunity (M3.7j) ([4e41e81](https://github.com/macandy13/arkham-companion/commit/4e41e815c65e8a70d46a67fafad4ba26ed136af6))
+* **web:** Parley with Lita in The Gathering's end-to-end game, show controlled cards (MC1.1e2b) ([f9aab23](https://github.com/macandy13/arkham-companion/commit/f9aab23178ee4ff9db99381864bad7b7289ddd41))
+* **web:** phone compact mode for the play screen (M3.14a) ([884ac4b](https://github.com/macandy13/arkham-companion/commit/884ac4b46fe26d429689846c35a931213d4bb51e))
+* **web:** phone compact mode for the play screen (M3.14a) ([9867016](https://github.com/macandy13/arkham-companion/commit/9867016be67773422beb9a2a998e9ed25d06f055))
+* **web:** phone detail view with swipe rows (M3.14b) ([f41ec28](https://github.com/macandy13/arkham-companion/commit/f41ec284e7968662fce179aeb1a35781433b5afe))
+* **web:** phone detail view with swipe rows (M3.14b) ([88c32ca](https://github.com/macandy13/arkham-companion/commit/88c32ca47b40958aa735ef147a88b1656075281e))
+* **web:** print a location's actions on its map tile (MC1.1f3) ([5dfcb25](https://github.com/macandy13/arkham-companion/commit/5dfcb25353addb5a2f19eb719fe3c9c5df0e5b55))
+* **web:** print a location's actions on its map tile (MC1.1f3) ([ed3869b](https://github.com/macandy13/arkham-companion/commit/ed3869b5b01a29638cd699f33b4354f4f18b76f2))
+* **web:** row and card dots in the phone detail view (M3.14b2) ([abf3c9d](https://github.com/macandy13/arkham-companion/commit/abf3c9d5fef6c6dd434483fca71a1ba955ba1a14))
+* **web:** row and card dots in the phone detail view (M3.14b2) ([7affcde](https://github.com/macandy13/arkham-companion/commit/7affcde44263a6ccb2e1094130227e894320ec29))
+* **web:** show card actions on the card screens (MC1.1f1) ([6d60201](https://github.com/macandy13/arkham-companion/commit/6d60201d51c087f7eedb5ca551221469471d0e09))
+* **web:** show card actions on the card screens (MC1.1f1) ([3caeb3d](https://github.com/macandy13/arkham-companion/commit/3caeb3d0c7d2277295fe1f7e97a8b89bacc87429))
+* **web:** show controlled cards; Lita's Parley in The Gathering's end-to-end game (MC1.1e2b) ([1597c7a](https://github.com/macandy13/arkham-companion/commit/1597c7a2295eeb354d258265076f2129bce2724e))
+
+
+### Bug fixes
+
+* **engine:** drop asAction from the UseCardAction board view test ([39a56dc](https://github.com/macandy13/arkham-companion/commit/39a56dcb8c9dd744a198c9802e0f8755d148787b))
+* **engine:** drop asAction from the UseCardAction test after [#567](https://github.com/macandy13/arkham-companion/issues/567) ([0560eb2](https://github.com/macandy13/arkham-companion/commit/0560eb278565bdae4679f918ce16bfc33bb8d4f8))
+* **engine:** free action timing doc and one free-action lookup ([8e13d13](https://github.com/macandy13/arkham-companion/commit/8e13d13cd05e2cd32ec2b36af544fc507ecc3ed9))
+* **web:** close the detail view once, keep the router's history state (M3.14b) ([da1aaa6](https://github.com/macandy13/arkham-companion/commit/da1aaa664d5ac80a3351d778221392182304502e))
+* **web:** keep a focus tap only for its own turn (M3.14a) ([4eddd35](https://github.com/macandy13/arkham-companion/commit/4eddd3513da18656cc23a3bc3c018bf2b4911763))
+
+
+### Refactoring
+
+* define PrintedActionView once, clearer test names ([3ccda8c](https://github.com/macandy13/arkham-companion/commit/3ccda8cf7e7ee4f847f4d78016989bf472a8202b))
+* **engine:** move tokenObjective next to the abilities ([0ce60dc](https://github.com/macandy13/arkham-companion/commit/0ce60dc1414366f71d9dac9677914ccf062ade5c))
+* **engine:** name the playArea case in offersActionsTo ([e51d36b](https://github.com/macandy13/arkham-companion/commit/e51d36b4dadca144e3ebab1f76bc04fa04a6c6e0))
+* **engine:** number card actions where they are offered ([8ead85c](https://github.com/macandy13/arkham-companion/commit/8ead85c71ea62cd17c635ac2c3aa2c008e7924a8))
+* **engine:** review nits on the act's spend-clues ability ([93b77d3](https://github.com/macandy13/arkham-companion/commit/93b77d3f558e909ba2daeb21c73890cf6cd69ce5))
+* **engine:** review nits on the act's spend-clues switch ([c968447](https://github.com/macandy13/arkham-companion/commit/c96844738e4ee7e0faca5d1ca56da2504d78cdb1))
+* **engine:** tag ActionCondition by kind; rename actionConditionHolds ([3cf2454](https://github.com/macandy13/arkham-companion/commit/3cf2454b064de7d0a920edd716f63b8b35d16af7))
+* **engine:** the printed card action decides whether UseCardAction is an action ([8fc60ba](https://github.com/macandy13/arkham-companion/commit/8fc60baf1d48b8c685ed121511c3dce65ad0e12c))
+* **web:** move the detail view's dots to their own slice (M3.14b) ([2593180](https://github.com/macandy13/arkham-companion/commit/2593180d906fee55384f59835000fb14e9586ae2))
+* **web:** share card action labels with the turn row, cover the act's card actions ([d876a2a](https://github.com/macandy13/arkham-companion/commit/d876a2a7483b0994d256f72e193380d5d4b71804))
+
+
+### Documentation
+
+* draw diagrams in Mermaid and always name the chart type ([f4b1d31](https://github.com/macandy13/arkham-companion/commit/f4b1d31304e4bb297b704be71f2b836441f7870c))
+* free action timing in the card effects page ([3a3bef3](https://github.com/macandy13/arkham-companion/commit/3a3bef3e9b23f52a4053db1a778ad304ecf9db64))
+* plan campaigns as MC milestones and add the engine consistency milestone ([db09b7e](https://github.com/macandy13/arkham-companion/commit/db09b7ecf34fc4697dedb9c5ee77e65787a23ee8))
+* plan campaigns as MC milestones and add the engine consistency milestone ([614ef79](https://github.com/macandy13/arkham-companion/commit/614ef7955eed41d7e4adc417b1e297282d722088))
+* point the remaining references at architecture pages ([e3820fb](https://github.com/macandy13/arkham-companion/commit/e3820fb5ca093f65f753c731fb56d82d569eb143))
+* say where the census lives and when it is re-run ([dadc0d6](https://github.com/macandy13/arkham-companion/commit/dadc0d6c2cb9913ea8b3eda553237b200b2050b1))
+* split the architecture doc into one page per component ([a36e0a8](https://github.com/macandy13/arkham-companion/commit/a36e0a8a06882dfd7231f9cdf84f1f980a0b54db))
+* split the architecture doc into one page per component ([6d553d3](https://github.com/macandy13/arkham-companion/commit/6d553d3068b9c4cb2e65297d35b6754a05b8be17))
+* split the rules summary into one page per topic ([a769017](https://github.com/macandy13/arkham-companion/commit/a76901795fa7985884177545b13b242fc8f4541c))
+* split the rules summary into one page per topic ([c739fd5](https://github.com/macandy13/arkham-companion/commit/c739fd59b1f189b7c15e8f22f5e65235929eb893))
+* word the rules index for its topic pages ([25efb43](https://github.com/macandy13/arkham-companion/commit/25efb439398f90d5a493693c9e56226ec12540a9))
+
 ## [0.1.10](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.9...arkham-companion-v0.1.10) (2026-10-27)
 
 
