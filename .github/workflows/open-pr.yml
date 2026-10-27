@@ -7,14 +7,11 @@ name: Open PR
 # tasks"). It uses an App token, not GITHUB_TOKEN, because PRs opened with GITHUB_TOKEN start
 # no workflows and would never get their required checks.
 # A PR stacked on another one gets the `stacked` label and a "Stacked on #n" line, since GitHub's
-# PR lists don't show a PR's base; the label comes off when GitHub retargets the PR to main.
+# PR lists don't show a PR's base; `pr-unstack.yml` takes the label off when GitHub retargets the PR to main.
 # Needs CLAUDE_BOT_APP_ID (repo variable or secret) and the secret CLAUDE_BOT_PRIVATE_KEY
 # (docs/automation.md).
 
 on:
-  # Retargeting to main (when the PR below merges) is an `edited` event.
-  pull_request_target:
-    types: [edited]
   workflow_dispatch:
     inputs:
       branch:
@@ -34,12 +31,11 @@ on:
         type: boolean
         default: false
 
-# `open` makes every API call with the App token, so GITHUB_TOKEN needs nothing there.
+# Every API call uses the App token, so GITHUB_TOKEN needs nothing.
 permissions: {}
 
 jobs:
   open:
-    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Check the App credentials
@@ -70,6 +66,7 @@ jobs:
           DRAFT: ${{ inputs.draft }}
         run: |
           body=$BODY
+          BASE=${BASE:-main}
           args=()
           if [ "$DRAFT" = true ]; then args+=(--draft); fi
           if [ "$BASE" != main ]; then
@@ -89,18 +86,3 @@ jobs:
           url=$(gh pr create --repo "$REPO" --head "$BRANCH" --base "$BASE" --title "$TITLE" \
             --body-file "$RUNNER_TEMP/body.md" --assignee "$OWNER" --reviewer "$OWNER" "${args[@]}")
           echo "Opened $url" >> "$GITHUB_STEP_SUMMARY"
-
-  unstack:
-    if: >-
-      github.event_name == 'pull_request_target' && github.event.changes.base &&
-      github.event.pull_request.base.ref == 'main' &&
-      contains(github.event.pull_request.labels.*.name, 'stacked')
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-    steps:
-      - env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          PR: ${{ github.event.pull_request.number }}
-        run: gh pr edit "$PR" --repo "$REPO" --remove-label stacked
