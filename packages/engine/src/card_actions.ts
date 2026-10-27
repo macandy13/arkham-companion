@@ -33,8 +33,8 @@ export interface CardAction {
   readonly designator?: 'resign' | 'parley';
   /**
    * A "[free]" ability, taken without spending an action in any player window (Rules Reference,
-   * "[free]"): `UseCardAction` takes it outside the taker's turn too, never `asAction`, so it never
-   * provokes attacks of opportunity. Abilities limited to a narrower timing (an act's group clue
+   * "[free]"): `UseCardAction` takes it outside the taker's turn too and not as an
+   * action, so it never provokes attacks of opportunity. Abilities limited to a narrower timing (an act's group clue
    * spend, "during any investigator's turn") need their own check. Absent for an action ability.
    */
   readonly free?: true;
@@ -298,11 +298,6 @@ export function withinLimit(
   );
 }
 
-/** Whether action number `action` printed on cards of `code` is free (`CardAction.free`). */
-export function isFreeCardAction(ctx: EngineContext, code: CardCode, action: number): boolean {
-  return cardStats(ctx.cards, code).actions?.[action]?.free === true;
-}
-
 /** The action `cmd` takes; rejects an index the card doesn't print (`unknownCardAction`). */
 export function cardActionOf(ctx: EngineContext, state: GameState, cmd: UseCardAction): CardAction {
   const card = requireCard(state.cards, cmd.cardId);
@@ -314,7 +309,7 @@ export function cardActionOf(ctx: EngineContext, state: GameState, cmd: UseCardA
 
 /**
  * `UseCardAction`: checks that the investigator may take the action now, in their own turn
- * unless it is free (then never `asAction`, else `freeCardActionAsAction`),
+ * unless it is free,
  * where the card offers it (`offersActionsTo`, else `cardActionUnavailable`) and as its limit
  * allows (`withinLimit`, else `cardActionLimitReached`), that they meet its condition
  * (`actionConditionHolds`, else `cardActionConditionUnmet`) and that they can pay its cost (`canPay`,
@@ -329,12 +324,6 @@ export function handleUseCardAction(
 ): (CardActionUsed | InvestigatorChanged | CommandDeferred)[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
   const { free, limit, cost, condition } = cardActionOf(ctx, state, cmd);
-  if (free && cmd.asAction)
-    throw new CommandRejected({
-      code: 'freeCardActionAsAction',
-      cardId: cmd.cardId,
-      action: cmd.action,
-    });
   if (!free) requireTurnOf(state, investigator.id);
   const card = requireCard(state.cards, cmd.cardId);
   if (!offersActionsTo(state, card, investigator))

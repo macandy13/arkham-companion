@@ -165,7 +165,6 @@ describe('The Midnight Masks card abilities', () => {
       investigatorId: alice,
       cardId: location,
       action: 0,
-      asAction: true,
     };
 
     it('does what its action says for alice, once per game', () => {
@@ -217,7 +216,6 @@ describe('The Midnight Masks card abilities', () => {
       investigatorId: alice,
       cardId: location,
       action: 0,
-      asAction: true,
     };
 
     it('leaves the step on her deck to alice', () => {
@@ -246,7 +244,6 @@ describe('The Midnight Masks card abilities', () => {
       investigatorId: alice,
       cardId: location,
       action: 0,
-      asAction: true,
     };
 
     const state = stateAfter(context, started, useIt);
@@ -266,7 +263,6 @@ describe('The Midnight Masks card abilities', () => {
       investigatorId: alice,
       cardId: university,
       action: 0,
-      asAction: true,
     };
     const searchedOnce = stateAfter(context, started, searchThere);
 
@@ -312,7 +308,6 @@ describe('The Midnight Masks card abilities', () => {
       investigatorId: alice,
       cardId: act,
       action: 0,
-      asAction: true,
       spend: [
         { investigatorId: alice, amount: 1 },
         { investigatorId: bob, amount: 3 },
@@ -369,7 +364,6 @@ describe('The Midnight Masks card abilities', () => {
       investigatorId: alice,
       cardId: cultist,
       action: 0,
-      asAction: true,
     };
 
     it(`adds ${name} to the victory display for alice's payment, without an attack`, () => {
@@ -402,7 +396,6 @@ describe('The Midnight Masks card abilities', () => {
       investigatorId: alice,
       cardId: herman,
       action: 0,
-      asAction: true,
     });
 
     expect(after.cards[herman]?.zone).toEqual({ kind: 'victoryDisplay' });

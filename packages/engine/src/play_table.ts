@@ -9,7 +9,6 @@ import {
   type InvestigatorRef,
 } from './card_matchers';
 import { type EngineContext, type ScenarioContext } from './cards';
-import { isFreeCardAction } from './card_actions';
 import type { Command } from './commands';
 import { pendingDecision } from './decisions';
 import { describeDecision, optionNamed } from './describe_decision';
@@ -273,7 +272,7 @@ export class PlayTable {
    */
   useCardAction(investigator: InvestigatorRef, card: CardRef, action = 0): void {
     const matcher = cardMatcher(card);
-    const { id, code } = this.onlyOne(
+    const { id } = this.onlyOne(
       matchingCards(this.ctx, Object.values(this.current.cards), matcher),
       `card ${describeMatcher(matcher)}`,
     );
@@ -282,7 +281,6 @@ export class PlayTable {
       investigatorId: this.seat(investigator),
       cardId: id,
       action,
-      ...(isFreeCardAction(this.ctx, code, action) ? {} : { asAction: true as const }),
     });
   }
 

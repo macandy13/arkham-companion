@@ -50,9 +50,13 @@ const aliceInHallBobInCellar = newGame()
   .withInvestigator(alice, { locationId: hall })
   .withInvestigator(bob, { locationId: cellar });
 
-/** `investigator` takes action number `action` of the card `cardId`, spending an action on it. */
-function useAsAction(investigator: InvestigatorId, cardId: InstanceId, action = 0): UseCardAction {
-  return { type: 'UseCardAction', investigatorId: investigator, cardId, action, asAction: true };
+/** `investigator` takes action number `action` of the card `cardId`. */
+function useCardAction(
+  investigator: InvestigatorId,
+  cardId: InstanceId,
+  action = 0,
+): UseCardAction {
+  return { type: 'UseCardAction', investigatorId: investigator, cardId, action };
 }
 
 describe('UseCardAction', () => {
@@ -63,7 +67,7 @@ describe('UseCardAction', () => {
       .withTurnOf(alice)
       .start();
 
-    const after = stateAfter(context, state, useAsAction(alice, hall));
+    const after = stateAfter(context, state, useCardAction(alice, hall));
 
     expect(investigatorOf(after, alice).sanity.horror).toBe(1);
   });
@@ -77,7 +81,7 @@ describe('UseCardAction', () => {
       .withTurnOf(alice)
       .start();
 
-    const after = stateAfter(context, state, useAsAction(alice, hall));
+    const after = stateAfter(context, state, useCardAction(alice, hall));
 
     expect(investigatorOf(after, alice).status).toBe('resigned');
   });
@@ -139,7 +143,7 @@ describe('UseCardAction', () => {
   ])('lets bob take the action of $name', ({ setup, cardId }) => {
     const { context, state } = setup().withTurnOf(bob).start();
 
-    const after = stateAfter(context, state, useAsAction(bob, cardId));
+    const after = stateAfter(context, state, useCardAction(bob, cardId));
 
     expect(investigatorOf(after, bob).sanity.horror).toBe(1);
   });
@@ -199,7 +203,7 @@ describe('UseCardAction', () => {
   ])('rejects bob taking the action of $name', ({ setup, cardId }) => {
     const { context, state } = setup().withTurnOf(bob).start();
 
-    expect(rejectionFrom(context, state, useAsAction(bob, cardId))).toEqual({
+    expect(rejectionFrom(context, state, useCardAction(bob, cardId))).toEqual({
       code: 'cardActionUnavailable',
       cardId,
       investigatorId: bob,
@@ -214,7 +218,7 @@ describe('UseCardAction', () => {
       .withTurnOf(bob)
       .start();
 
-    expect(rejectionFrom(context, state, useAsAction(alice, hall))).toMatchObject({
+    expect(rejectionFrom(context, state, useCardAction(alice, hall))).toMatchObject({
       code: 'turnNotInProgress',
       investigatorId: alice,
     });
@@ -227,7 +231,7 @@ describe('UseCardAction', () => {
       .withTurnOf(alice)
       .start();
 
-    expect(rejectionFrom(context, state, useAsAction(alice, hall, 1))).toEqual({
+    expect(rejectionFrom(context, state, useCardAction(alice, hall, 1))).toEqual({
       code: 'unknownCardAction',
       cardId: hall,
       action: 1,
@@ -247,7 +251,7 @@ describe('UseCardAction', () => {
     it('provokes an attack of opportunity for a plain action', () => {
       const { context, state } = ghoulOnAlice.start();
 
-      const after = stateAfter(context, state, useAsAction(alice, hall, 0));
+      const after = stateAfter(context, state, useCardAction(alice, hall, 0));
 
       expect(after.pending).toMatchObject([{ id: `attackOfOpportunity:${ghoul}` }]);
       expect(investigatorOf(after, alice).sanity.horror).toBe(0);
@@ -259,7 +263,7 @@ describe('UseCardAction', () => {
       const after = stateAfter(
         context,
         state,
-        useAsAction(alice, hall, 0),
+        useCardAction(alice, hall, 0),
         answer(`attackOfOpportunity:${ghoul}`, 'attack'),
       );
 
@@ -273,7 +277,7 @@ describe('UseCardAction', () => {
     it('provokes none for Resign', () => {
       const { context, state } = ghoulOnAlice.start();
 
-      const after = stateAfter(context, state, useAsAction(alice, hall, 1));
+      const after = stateAfter(context, state, useCardAction(alice, hall, 1));
 
       expect(after.pending).toEqual([]);
       expect(investigatorOf(after, alice).status).toBe('resigned');
@@ -294,7 +298,7 @@ describe('UseCardAction', () => {
         .withTurnOf(alice)
         .start();
 
-      const after = stateAfter(context, state, useAsAction(alice, ghoul));
+      const after = stateAfter(context, state, useCardAction(alice, ghoul));
 
       expect(after.pending).toEqual([]);
       expect(after.cards[ghoul]?.zone).toEqual({ kind: 'victoryDisplay' });
@@ -400,7 +404,7 @@ describe('action costs', () => {
   it('makes alice with 5 resources pay 2 before the action scares her', () => {
     const { context, state } = aliceInHallWith(5).start();
 
-    const after = stateAfter(context, state, useAsAction(alice, hall));
+    const after = stateAfter(context, state, useCardAction(alice, hall));
 
     expect(investigatorOf(after, alice)).toMatchObject({ resources: 3, sanity: { horror: 1 } });
   });
@@ -409,7 +413,7 @@ describe('action costs', () => {
     const table = PlayTable.start(aliceInHallWith(1));
 
     expect(table.board.cardActions(alice)).toEqual([]);
-    expect(rejectionFrom(table.ctx, table.state, useAsAction(alice, hall))).toEqual({
+    expect(rejectionFrom(table.ctx, table.state, useCardAction(alice, hall))).toEqual({
       code: 'cardActionCostUnpaid',
       cardId: hall,
       action: 0,
@@ -428,12 +432,6 @@ describe('free actions', () => {
     .withInvestigator(bob, { locationId: hall })
     .withCard(ghoul, blankEnemy('ghoul', { damage: 1 }), engagedWith(alice))
     .withTurnOf(alice);
-  const takeFree = (investigator: InvestigatorId): UseCardAction => ({
-    type: 'UseCardAction',
-    investigatorId: investigator,
-    cardId: hall,
-    action: 0,
-  });
 
   it.each([
     { who: 'alice take it while engaged with the ready ghoul', investigator: alice },
@@ -441,7 +439,7 @@ describe('free actions', () => {
   ])('lets $who, provoking no attack', ({ investigator }) => {
     const { context, state } = ghoulOnAliceBobAlongside.start();
 
-    const after = stateAfter(context, state, takeFree(investigator));
+    const after = stateAfter(context, state, useCardAction(investigator, hall));
 
     expect(after.pending).toEqual([]);
     expect(investigatorOf(after, investigator).sanity.horror).toBe(1);
@@ -451,16 +449,6 @@ describe('free actions', () => {
     const table = PlayTable.start(ghoulOnAliceBobAlongside);
 
     expect(table.board.cardActions(bob)).toMatchObject([{ cardId: hall, action: 0, free: true }]);
-  });
-
-  it('rejects taking it as an action', () => {
-    const { context, state } = ghoulOnAliceBobAlongside.start();
-
-    expect(rejectionFrom(context, state, useAsAction(alice, hall))).toEqual({
-      code: 'freeCardActionAsAction',
-      cardId: hall,
-      action: 0,
-    });
   });
 });
 
@@ -488,7 +476,7 @@ describe('action conditions', () => {
   ])('lets alice take the action with Lita $where', ({ setup }) => {
     const table = PlayTable.start(setup());
 
-    table.play(useAsAction(alice, hall));
+    table.play(useCardAction(alice, hall));
 
     expect(table.board.investigator(alice).horror).toBe(1);
   });
@@ -500,7 +488,7 @@ describe('action conditions', () => {
     const table = PlayTable.start(hallAskingForLita.withCard(lita, blankAsset('lita'), zone));
 
     expect(table.board.cardActions(alice)).toEqual([]);
-    expect(rejectionFrom(table.ctx, table.state, useAsAction(alice, hall))).toEqual({
+    expect(rejectionFrom(table.ctx, table.state, useCardAction(alice, hall))).toEqual({
       code: 'cardActionConditionUnmet',
       cardId: hall,
       action: 0,
@@ -523,7 +511,7 @@ describe('hand card costs', () => {
       .withTurnOf(alice)
       .start();
 
-    const { state: after, events } = execute(context, state, useAsAction(alice, hall));
+    const { state: after, events } = execute(context, state, useCardAction(alice, hall));
 
     expect(events).toContainEqual({
       type: 'CommandDeferred',
@@ -556,7 +544,7 @@ describe('group clue costs', () => {
     const { context, state } = groupWith(3, 3).start();
 
     const after = stateAfter(context, state, {
-      ...useAsAction(alice, hall),
+      ...useCardAction(alice, hall),
       spend: [
         { investigatorId: alice, amount: 1 },
         { investigatorId: bob, amount: 3 },
@@ -570,7 +558,7 @@ describe('group clue costs', () => {
   it('takes all of alice’s 1 clue and 3 of bob’s 5 when nobody names the payers', () => {
     const { context, state } = groupWith(1, 5).start();
 
-    const after = stateAfter(context, state, useAsAction(alice, hall));
+    const after = stateAfter(context, state, useCardAction(alice, hall));
 
     expect(investigatorOf(after, alice)).toMatchObject({ clues: 0 });
     expect(investigatorOf(after, bob)).toMatchObject({ clues: 2 });
@@ -590,7 +578,7 @@ describe('group clue costs', () => {
       .withTurnOf(bob)
       .start();
 
-    const after = stateAfter(context, state, useAsAction(bob, hall));
+    const after = stateAfter(context, state, useCardAction(bob, hall));
 
     expect(investigatorOf(after, bob)).toMatchObject({ clues: 0, sanity: { horror: 1 } });
     expect(investigatorOf(after, alice)).toMatchObject({ clues: 2 });
@@ -600,7 +588,7 @@ describe('group clue costs', () => {
     const table = PlayTable.start(groupWith(1, 2));
 
     expect(table.board.cardActions(alice)).toEqual([]);
-    expect(rejectionFrom(table.ctx, table.state, useAsAction(alice, hall))).toMatchObject({
+    expect(rejectionFrom(table.ctx, table.state, useCardAction(alice, hall))).toMatchObject({
       code: 'cardActionCostUnpaid',
     });
   });
@@ -610,7 +598,7 @@ describe('group clue costs', () => {
 
     expect(
       rejectionFrom(context, state, {
-        ...useAsAction(alice, hall),
+        ...useCardAction(alice, hall),
         spend: [{ investigatorId: bob, amount: 3 }],
       }),
     ).toEqual({ code: 'wrongClueTotal', required: 4, spent: 3 });
@@ -631,7 +619,7 @@ describe('group clue costs', () => {
 
     expect(
       rejectionFrom(context, state, {
-        ...useAsAction(alice, hall),
+        ...useCardAction(alice, hall),
         spend: [{ investigatorId: alice, amount: 1 }],
       }),
     ).toEqual({ code: 'noGroupCost' });

@@ -154,7 +154,6 @@ describe('The Devourer Below card abilities', () => {
       investigatorId: alice,
       cardId: quietGlade,
       action: 0,
-      asAction: true,
     };
 
     it.each([
@@ -246,7 +245,6 @@ describe('The Devourer Below card abilities', () => {
           investigatorId: alice,
           cardId: dreams,
           action: 0,
-          asAction: true,
         });
 
         const state = stateAfter(context, tested, answer('test:dreams_of_rlyeh', result));
@@ -272,7 +270,6 @@ describe('The Devourer Below card abilities', () => {
       investigatorId: alice,
       cardId: act,
       action: 0,
-      asAction: true,
     };
 
     it.each([
@@ -344,7 +341,6 @@ describe('The Devourer Below card abilities', () => {
         investigatorId: alice,
         cardId: instanceId('umordhoth'),
         action: 0,
-        asAction: true,
       });
 
       // Massive, it is engaged with alice, so the plain action provokes its attack first.

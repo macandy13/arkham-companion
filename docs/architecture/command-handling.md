@@ -14,6 +14,6 @@ Every command type has one entry in [`COMMAND_SPECS`](../../packages/engine/src/
 
 ## Extension points
 
-- **A new command:** add it to the `Command` union in [`commands.ts`](../../packages/engine/src/commands.ts), its handler in a `handle_<area>.ts` and its `COMMAND_SPECS` entry. An action command extends `ActionCommand`, and its spec uses `provokes: asAction`.
+- **A new command:** add it to the `Command` union in [`commands.ts`](../../packages/engine/src/commands.ts), its handler in a `handle_<area>.ts` and its `COMMAND_SPECS` entry. An action command extends `ActionCommand`, and its spec uses `provokes: asAction`; `UseCardAction` is the exception, as the printed ability decides whether it is an action (`CardAction.free`).
 - **A new event:** reuse one if you can; otherwise add it in [`events.ts`](../../packages/engine/src/events.ts) with a non-validating case in `apply`.
 - **A new refusal:** add a `RejectionCode` in [`rejection.ts`](../../packages/engine/src/rejection.ts).

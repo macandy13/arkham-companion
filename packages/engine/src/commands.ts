@@ -975,12 +975,13 @@ export interface Resign {
 
 /**
  * The investigator takes the action ability number `action` (index into `CardStats.actions`) of
- * the card `cardId`, in their own turn (unless it is free, `CardAction.free`, which is never
- * `asAction`) and where the card offers it (`offersActionsTo`). Taken as an action it provokes
- * attacks of opportunity, unless it is a Resign or Parley. Produces no
- * events of its own: the action's effects follow (`cardActionSteps`).
+ * the card `cardId` where the card offers it (`offersActionsTo`). The printed ability decides
+ * whether it is taken as an action, so unlike an `ActionCommand` it carries no `asAction`: an
+ * action ability is taken in the investigator's own turn and provokes attacks of opportunity
+ * unless it is a Resign or Parley; a free one (`CardAction.free`) is taken at any time and never
+ * provokes. Produces no events of its own: the action's effects follow (`cardActionSteps`).
  */
-export interface UseCardAction extends ActionCommand {
+export interface UseCardAction {
   type: 'UseCardAction';
   investigatorId: InvestigatorId;
   cardId: InstanceId;
