@@ -28,8 +28,8 @@ on:
         type: boolean
         default: false
 
-permissions:
-  contents: read
+# Every API call uses the App token, so GITHUB_TOKEN needs nothing.
+permissions: {}
 
 jobs:
   open:
@@ -48,6 +48,8 @@ jobs:
         with:
           app-id: ${{ vars.CLAUDE_BOT_APP_ID }}
           private-key: ${{ secrets.CLAUDE_BOT_PRIVATE_KEY }}
+          permission-pull-requests: write
+          permission-issues: write
       # Inputs go through env, never into the script text, so a title or body can't inject shell.
       - name: Create the PR
         env:
@@ -61,7 +63,8 @@ jobs:
           DRAFT: ${{ inputs.draft }}
         run: |
           printf '%s' "$BODY" > "$RUNNER_TEMP/body.md"
+          args=()
+          if [ "$DRAFT" = true ]; then args+=(--draft); fi
           url=$(gh pr create --repo "$REPO" --head "$BRANCH" --base "$BASE" --title "$TITLE" \
-            --body-file "$RUNNER_TEMP/body.md" --assignee "$OWNER" --reviewer "$OWNER" \
-            $([ "$DRAFT" = true ] && echo --draft))
+            --body-file "$RUNNER_TEMP/body.md" --assignee "$OWNER" --reviewer "$OWNER" "${args[@]}")
           echo "Opened $url" >> "$GITHUB_STEP_SUMMARY"
