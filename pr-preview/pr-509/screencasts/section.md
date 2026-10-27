@@ -1,6 +1,6 @@
 <!-- screencasts:start -->
 
-_Recorded from c891fb9 by the PR preview workflow; updated on every push that changes `apps/web`._
+_Recorded from d4c3cd7 by the PR preview workflow; updated on every push that changes `apps/web`._
 
 ## Screenshots
 
@@ -8,14 +8,14 @@ _Recorded from c891fb9 by the PR preview workflow; updated on every push that ch
 
 <table>
 <tr><th>Desktop</th><th>Phone</th></tr>
-<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-509/screencasts/the-house-map-with-roland-banks-in-the-hallway-desktop.png?v=c891fb9" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-509/screencasts/the-house-map-with-roland-banks-in-the-hallway-phone.png?v=c891fb9" alt="Phone" width="180"></td></tr>
+<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-509/screencasts/the-house-map-with-roland-banks-in-the-hallway-desktop.png?v=d4c3cd7" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-509/screencasts/the-house-map-with-roland-banks-in-the-hallway-phone.png?v=d4c3cd7" alt="Phone" width="180"></td></tr>
 </table>
 
 ### the game list with one saved game
 
 <table>
 <tr><th>Desktop</th><th>Phone</th></tr>
-<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-509/screencasts/the-game-list-with-one-saved-game-desktop.png?v=c891fb9" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-509/screencasts/the-game-list-with-one-saved-game-phone.png?v=c891fb9" alt="Phone" width="180"></td></tr>
+<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-509/screencasts/the-game-list-with-one-saved-game-desktop.png?v=d4c3cd7" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-509/screencasts/the-game-list-with-one-saved-game-phone.png?v=d4c3cd7" alt="Phone" width="180"></td></tr>
 </table>
 
 <!-- screencasts:end -->
