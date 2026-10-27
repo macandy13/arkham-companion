@@ -264,12 +264,52 @@ describe('attacks of opportunity', () => {
       { type: 'MoveInvestigator', investigatorId: alice, to: cellar, ignoreConnections: true },
     ],
     ['a card effect making her investigate', { type: 'Investigate', investigatorId: alice }],
+    [
+      'a card effect giving her resources',
+      { type: 'GainResources', investigatorId: alice, amount: 2 },
+    ],
+    ['a card effect making her draw', { type: 'DrawCards', investigatorId: alice, amount: 1 }],
   ])('does not ask for %s', (_, command) => {
     const { context, state } = ghoulOnAlice.withTurnOf(alice).start();
 
     const after = stateAfter(context, state, command);
 
     expect(pendingIds(after)).not.toContain(`attackOfOpportunity:${ghoul}`);
+  });
+
+  it.each<[string, Command]>([
+    [
+      'the resource action',
+      { type: 'GainResources', investigatorId: alice, amount: 1, asAction: true },
+    ],
+    ['the draw action', { type: 'DrawCards', investigatorId: alice, amount: 1, asAction: true }],
+    ['the play action', { type: 'PlayCard', investigatorId: alice, asAction: true }],
+  ])('asks for the ghoul`s attack on %s, which the engine sees as an action', (_, command) => {
+    const { context, state } = ghoulOnAlice.withTurnOf(alice).start();
+
+    const after = stateAfter(context, state, command);
+
+    expect(pendingIds(after)).toEqual([`attackOfOpportunity:${ghoul}`]);
+  });
+
+  it('gives alice, at 2 resources, the resource of her resource action only after the ghoul`s attack', () => {
+    const { context, state: started } = hallAndCellar
+      .withInvestigator(alice, { locationId: hall, resources: 2 })
+      .withCard(ghoul, ghoulCard, engagedWith(alice))
+      .withTurnOf(alice)
+      .start();
+    const resourceAction: Command = {
+      type: 'GainResources',
+      investigatorId: alice,
+      amount: 1,
+      asAction: true,
+    };
+    const held = stateAfter(context, started, resourceAction);
+
+    const after = stateAfter(context, held, answer(ghoulAttack, 'attack'));
+
+    expect(investigatorOf(held, alice).resources).toBe(2);
+    expect(investigatorOf(after, alice).resources).toBe(3);
   });
 
   it('does not ask when the engaged enemy is exhausted', () => {

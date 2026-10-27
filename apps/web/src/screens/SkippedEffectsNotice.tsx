@@ -38,6 +38,8 @@ export function SkippedEffectsNotice({
           command.top === undefined ? 'skipped.deferred.search' : 'skipped.deferred.searchTop',
           { traits: command.traits.join(t('skipped.deferred.or')), top: command.top },
         );
+      case 'PlayCard':
+        return t('skipped.deferred.play');
       default:
         return assertNever(command);
     }
