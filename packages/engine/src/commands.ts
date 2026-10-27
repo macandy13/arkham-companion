@@ -40,9 +40,11 @@ export type Command =
   | MoveInvestigator
   | AdjustInvestigator
   | HealInvestigator
+  | GainResources
   | DrawCards
   | SearchDeck
   | DiscardFromHand
+  | PlayCard
   | TakeDamageAndHorror
   | DefeatInvestigator
   | DiscoverClues
@@ -307,10 +309,21 @@ export interface HealInvestigator {
 }
 
 /**
- * "Draw N cards": the investigator draws from their own deck. The game holds no player cards, so
- * `handleDrawCards` leaves it to the players (`CommandDeferred`).
+ * The investigator gains `amount` resources (a positive integer): the basic resource action, taken
+ * `asAction` for 1, or a card effect. Produces `InvestigatorChanged`.
  */
-export interface DrawCards {
+export interface GainResources extends ActionCommand {
+  type: 'GainResources';
+  investigatorId: InvestigatorId;
+  amount: number;
+}
+
+/**
+ * "Draw N cards": the investigator draws from their own deck, as a card effect or `asAction` as
+ * the basic draw action. The game holds no player cards, so `deferToPlayers` leaves it to the
+ * players (`CommandDeferred`).
+ */
+export interface DrawCards extends ActionCommand {
   type: 'DrawCards';
   investigatorId: InvestigatorId;
   amount: number;
@@ -328,6 +341,16 @@ export interface SearchDeck {
 }
 
 /**
+ * The investigator plays a card from their hand: the basic play action when `asAction`, which
+ * provokes attacks of opportunity even though the engine never sees the card. The game holds no
+ * player cards, so the card and its cost are left to the players like `DrawCards`.
+ */
+export interface PlayCard extends ActionCommand {
+  type: 'PlayCard';
+  investigatorId: InvestigatorId;
+}
+
+/**
  * "Choose and discard N cards from your hand" (Herman Collins' Parley cost): the investigator
  * discards from their own hand. Left to the players like `DrawCards`.
  */
@@ -338,7 +361,22 @@ export interface DiscardFromHand {
 }
 
 /** The commands on player cards, which the engine defers to the players (`CommandDeferred`). */
-export type PlayerCardCommand = DrawCards | SearchDeck | DiscardFromHand;
+export type PlayerCardCommand = DrawCards | SearchDeck | PlayCard | DiscardFromHand;
+
+/**
+ * Whether the players took `command` as an action at the table (the draw or play action), rather
+ * than a card effect asking them to do it.
+ */
+export function takenAsAction(command: PlayerCardCommand): boolean {
+  switch (command.type) {
+    case 'DrawCards':
+    case 'PlayCard':
+      return command.asAction === true;
+    case 'SearchDeck':
+    case 'DiscardFromHand':
+      return false;
+  }
+}
 
 /**
  * An active investigator takes `damage` and `horror` from one effect ("take 1

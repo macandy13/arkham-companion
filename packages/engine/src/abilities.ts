@@ -254,6 +254,7 @@ export type AbilityCommand =
         type:
           | 'AdjustInvestigator'
           | 'HealInvestigator'
+          | 'GainResources'
           | 'DrawCards'
           | 'SearchDeck'
           | 'TakeDamageAndHorror'
@@ -1149,7 +1150,7 @@ export function gainResources(
   amount: number,
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
-  return { type: 'AdjustInvestigator', investigatorId: who, stat: 'resources', delta: amount };
+  return { type: 'GainResources', investigatorId: who, amount };
 }
 
 /** "Take N horror", like `takeDamage`: Goat Spawn is `whenDefeated(takeHorror(1, eachInvestigatorAt(itsLocation())))`. */
