@@ -7,9 +7,11 @@ import {
   blankTreachery,
   engagedWith,
   execute,
+  addToVictoryDisplay,
   instanceId,
   investigatorId,
   newGame,
+  parleyAction,
   perInvestigator,
   PlayTable,
   resignAction,
@@ -35,7 +37,7 @@ const scareAction: CardAction = { effects: [takeHorror(1)] };
  * A Parley that scares the investigator who takes it: a Parley provokes no attack of
  * opportunity, so an enemy engaged with them can offer it without attacking first.
  */
-const scaryParley: CardAction = { designator: 'parley', effects: [takeHorror(1)] };
+const scaryParley = parleyAction({ effects: [takeHorror(1)] });
 
 /** Hall and cellar, connected, with alice in the hall and bob in the cellar. */
 const aliceInHallBobInCellar = newGame()
@@ -258,6 +260,28 @@ describe('UseCardAction', () => {
 
       expect(after.pending).toEqual([]);
       expect(investigatorOf(after, alice).status).toBe('resigned');
+    });
+
+    it('provokes none for a Parley, which adds the ghoul to the victory display', () => {
+      const { context, state } = newGame()
+        .withLocation(hall, scaryHallCard, { revealed: true })
+        .withInvestigator(alice, { locationId: hall })
+        .withCard(
+          ghoul,
+          blankEnemy('talkative_ghoul', {
+            damage: 1,
+            actions: [parleyAction({ effects: [addToVictoryDisplay({ ref: 'self' })] })],
+          }),
+          engagedWith(alice),
+        )
+        .withTurnOf(alice)
+        .start();
+
+      const after = stateAfter(context, state, useAsAction(alice, ghoul));
+
+      expect(after.pending).toEqual([]);
+      expect(after.cards[ghoul]?.zone).toEqual({ kind: 'victoryDisplay' });
+      expect(investigatorOf(after, alice).health.damage).toBe(0);
     });
   });
 });

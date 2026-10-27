@@ -22,7 +22,6 @@ import {
   ifEnemiesInPlay,
   ifYouHave,
   locationWith,
-  moveSelf,
   moveTo,
   nearestEnemy,
   onlyCopy,
@@ -44,8 +43,8 @@ import {
   type CardDb,
   type CardStats,
   resignAction,
-  type ActionCost,
-  type CardAction,
+  parleyAction,
+  addToVictoryDisplay,
 } from '@arkham/engine';
 import { act, agenda, enemy, location, prey, spawn, treachery } from '../card_builders';
 
@@ -111,14 +110,6 @@ const huntingShadow = 'scenario.theMidnightMasks.huntingShadow';
 const graveyard = 'scenario.theMidnightMasks.graveyard';
 const arkham = ['Arkham'];
 const cultist = ['Humanoid', 'Cultist'];
-
-/**
- * "[action] <cost>: Parley. Add <the cultist> to the victory display." (Peter Warren, Victoria
- * Devereux, Herman Collins).
- */
-function parleyIntoVictoryDisplay(cost: ActionCost): CardAction {
-  return { designator: 'parley', cost, effects: [moveSelf({ kind: 'victoryDisplay' })] };
-}
 
 /**
  * Hand-entered card data for The Midnight Masks, keyed by the real ArkhamDB
@@ -376,7 +367,12 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     horror: 1,
     victory: 1,
     keywords: [spawn('Graveyard')],
-    actions: [parleyIntoVictoryDisplay({ spend: 'handCards', amount: 4 })],
+    actions: [
+      parleyAction({
+        cost: { spend: 'handCards', amount: 4 },
+        effects: [addToVictoryDisplay({ ref: 'self' })],
+      }),
+    ],
   }),
   enemy({
     code: '01139',
@@ -390,7 +386,12 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     horror: 0,
     victory: 1,
     keywords: [spawn('Miskatonic University')],
-    actions: [parleyIntoVictoryDisplay({ spend: 'clues', amount: 2 })],
+    actions: [
+      parleyAction({
+        cost: { spend: 'clues', amount: 2 },
+        effects: [addToVictoryDisplay({ ref: 'self' })],
+      }),
+    ],
   }),
   enemy({
     code: '01140',
@@ -404,7 +405,12 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     horror: 0,
     victory: 1,
     keywords: [spawn('Northside')],
-    actions: [parleyIntoVictoryDisplay({ spend: 'resources', amount: 5 })],
+    actions: [
+      parleyAction({
+        cost: { spend: 'resources', amount: 5 },
+        effects: [addToVictoryDisplay({ ref: 'self' })],
+      }),
+    ],
   }),
   enemy({
     code: '01141',

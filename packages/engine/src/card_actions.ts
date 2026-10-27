@@ -152,6 +152,16 @@ export function resignAction(): CardAction {
 }
 
 /**
+ * "[action] <cost>: Parley. <effects>": an action with the Parley designator, so it provokes no
+ * attack of opportunity; the cost, limit and effects are the card's own, built from the usual
+ * blocks (The Midnight Masks' cultists: `{ cost: { spend: 'clues', amount: 2 }, effects:
+ * [addToVictoryDisplay({ ref: 'self' })] }`).
+ */
+export function parleyAction(action: Omit<CardAction, 'designator'>): CardAction {
+  return { ...action, designator: 'parley' };
+}
+
+/**
  * Whether `investigator` may take the action abilities of `card` (Rules Reference, "Abilities"):
  * a revealed location's at that location, an enemy's at its location (engaged with them or not),
  * a card's in a threat area at its owner's location, and the current agenda's and act's anyone.
