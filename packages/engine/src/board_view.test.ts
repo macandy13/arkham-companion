@@ -16,6 +16,7 @@ import {
   byId,
   byName,
   cardCode,
+  cardName,
   decisionId,
   engagedWith,
   enemyMatching,
@@ -26,11 +27,16 @@ import {
   mapId,
   newGame,
   perInvestigator,
+  gainSurge,
+  PlayTable,
+  skillTest,
+  whenRevealed,
   resignAction,
   TableError,
   threatAreaOf,
   trait,
   type CardAction,
+  type CardPlaceView,
   type CardStats,
   type Zone,
 } from './index';
@@ -904,6 +910,115 @@ describe('encounter piles', () => {
       setAside: [],
       victoryDisplay: [],
     });
+  });
+});
+
+describe('the encounter card being resolved', () => {
+  /** Alice in the study; the deck holds a perilous treachery that tests her willpower, then another card. */
+  const aliceDraws = () =>
+    PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withInvestigator(alice, { locationId: study })
+        .withCard(
+          instanceId('crypt_chill'),
+          blankTreachery('crypt_chill', {
+            keywords: [{ name: 'peril' }],
+            abilities: [whenRevealed(skillTest('willpower', 4))],
+          }),
+          { kind: 'encounterDeck' },
+        )
+        .withCard(instanceId('next_card'), blankTreachery('next_card'), {
+          kind: 'encounterDeck',
+        }),
+    );
+
+  it('shows the drawn card, whom it was drawn for and its keywords while its revelation test waits', () => {
+    const table = aliceDraws();
+
+    table.play({ type: 'DrawEncounter', investigatorId: alice });
+
+    expect(table.board.resolving).toEqual({
+      id: 'crypt_chill',
+      code: 'crypt_chill',
+      name: 'crypt_chill',
+      type: 'treachery',
+      drawnBy: alice,
+      keywords: [{ name: 'peril' }],
+    });
+  });
+
+  it('adds surge when the card gained it while resolving', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withInvestigator(alice, { locationId: study })
+        .withCard(
+          instanceId('false_lead'),
+          blankTreachery('false_lead', {
+            abilities: [whenRevealed(gainSurge(), skillTest('intellect', 2))],
+          }),
+          { kind: 'encounterDeck' },
+        )
+        .withCard(instanceId('next_card'), blankTreachery('next_card'), {
+          kind: 'encounterDeck',
+        }),
+    );
+
+    table.play({ type: 'DrawEncounter', investigatorId: alice });
+
+    expect(table.board.resolving?.keywords).toEqual([{ name: 'surge' }]);
+  });
+
+  it('shows nothing once the card has resolved', () => {
+    const table = aliceDraws();
+    table.play({ type: 'DrawEncounter', investigatorId: alice });
+
+    table.answer(byName('crypt_chill'), 'pass');
+
+    expect(table.board.resolving).toBeUndefined();
+  });
+});
+
+describe('placeOf', () => {
+  const placed = instanceId('placed');
+
+  it.each<{ zone: Zone; card: CardStats; place: CardPlaceView }>([
+    {
+      zone: { kind: 'encounterDiscard' },
+      card: blankTreachery('crypt_chill'),
+      place: { kind: 'encounterDiscard' },
+    },
+    {
+      zone: threatAreaOf(alice),
+      card: blankTreachery('frozen_in_fear'),
+      place: { kind: 'threatArea', investigator: alice },
+    },
+    {
+      zone: engagedWith(alice),
+      card: blankEnemy('ghoul'),
+      place: { kind: 'engaged', investigator: alice },
+    },
+    {
+      zone: atLocation(hallway),
+      card: blankEnemy('ghoul'),
+      place: { kind: 'atLocation', location: cardName('hallway') },
+    },
+    {
+      zone: attachedTo(study),
+      card: blankTreachery('obscuring_fog'),
+      place: { kind: 'attachedTo', card: cardName('study') },
+    },
+    { zone: { kind: 'outOfGame' }, card: blankTreachery('gone'), place: { kind: 'elsewhere' } },
+  ])('reads a card in $zone.kind as $place.kind', ({ zone, card, place }) => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withLocation(hallway, blankLocation('hallway'))
+      .withInvestigator(alice, { locationId: study })
+      .withCard(placed, card, zone)
+      .start();
+
+    expect(boardView(context, state).placeOf(placed)).toEqual(place);
   });
 });
 

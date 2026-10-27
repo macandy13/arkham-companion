@@ -11,6 +11,7 @@ import type {
   SkillTestSuggestion,
 } from '@arkham/engine';
 import { assertNever } from '@arkham/util';
+import { ResolvingCard } from '../encounter/ResolvingCard';
 import { drawTokens, testFinished } from '../investigators/drawTokens';
 import {
   DrawnTokens,
@@ -22,9 +23,10 @@ import {
 import type { DecisionAmounts, GameActions } from '../state/gameActions';
 
 /**
- * The first open decision (`BoardView.decisions[0]`) as a modal over the board: the question in
- * the players' words with the card it is about, the investigator who answers it, the test of a
- * skill test, and one button per option, answered through `GameActions.answer` with the default
+ * The first open decision (`BoardView.decisions[0]`) as a modal over the board: the encounter
+ * card being resolved, if its revelation asked (`ResolvingCard`), the question in the players'
+ * words with the card it is about, the investigator who answers it, the test of a skill test, and
+ * one button per option, answered through `GameActions.answer` with the default
  * counts. A skill test one investigator takes also brings the chaos bag draw of the skill test
  * dialog: the players keep the test's skill or switch to another (a card can test a different
  * one), set their modifier and let the app draw, and the calculation
@@ -71,6 +73,7 @@ export function DecisionDialog({
       onCancel={(event) => event.preventDefault()}
       data-dialog="decision"
     >
+      {board.resolving && <ResolvingCard board={board} card={board.resolving} />}
       <h2 id={titleId}>
         {t(decision.prompt, { card: decision.about, defaultValue: decision.prompt })}
       </h2>

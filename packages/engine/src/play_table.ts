@@ -533,6 +533,14 @@ export class PlayTable {
     this.adjust(investigator, 'horror', amount);
   }
 
+  /**
+   * The investigator draws the top card of the encounter deck, as player cards and effects say
+   * outside the mythos phase; it resolves like a mythos draw (revelation, decisions, surge).
+   */
+  drawEncounterCard(investigator: InvestigatorRef): void {
+    this.play({ type: 'DrawEncounter', investigatorId: this.seat(investigator) });
+  }
+
   /** Doom from a card effect (e.g. Ancient Evils) on the current agenda. */
   placeDoom(amount: number): void {
     this.play({ type: 'PlaceDoom', amount });

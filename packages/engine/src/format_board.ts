@@ -9,6 +9,7 @@ import { PHASE_STEP_TITLES } from './phases';
 import type { CardInstance, Decision, GameState, Investigator, PhaseStep } from './state';
 import {
   encounterDiscard,
+  resolvingZone,
   scenarioDeck,
   setAside,
   victoryDisplay,
@@ -174,7 +175,7 @@ function encounterLine(ctx: EngineContext, state: GameState): string {
 
 /** The encounter cards whose revelation is still being resolved, if any. */
 function resolvingLines(ctx: EngineContext, state: GameState): string[] {
-  const resolving = namesIn(ctx, state, { kind: 'resolving' });
+  const resolving = namesIn(ctx, state, resolvingZone);
   return resolving.length > 0 ? [`Resolving: ${resolving.join(', ')}`] : [];
 }
 
