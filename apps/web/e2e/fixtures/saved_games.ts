@@ -119,7 +119,7 @@ export function mythosDrawnExport(title: string): Buffer {
 
 /**
  * Like `houseOpenedExport`, but with every header pile holding cards, all moved by hand to keep the
- * script short: the top five encounter cards lie on the discard pile, and the Ghoul Priest (2
+ * script short: five encounter cards lie on the discard pile, and the Ghoul Priest (2
  * victory) has left the set-aside cards for the victory display, so the header fans each pile.
  */
 export function pilesFilledExport(title: string): Buffer {

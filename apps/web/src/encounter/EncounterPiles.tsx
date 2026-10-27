@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BoardView } from '@arkham/engine';
+import type { TFunction } from 'i18next';
+import type { BoardView, EncounterCardView } from '@arkham/engine';
 import { Token } from '../screens/Token';
 import type { GameActions } from '../state/gameActions';
-import { EncounterDialog, type EncounterPile } from './EncounterDialog';
+import { EncounterDialog, type HeaderPileKind } from './EncounterDialog';
 import { PileFan } from './PileFan';
 import './encounter.css';
 
@@ -49,26 +50,37 @@ export function EncounterPiles(props: PileProps) {
  * victory points earned so far (`BoardView.victoryPoints`) on its disc. A tap opens the encounter
  * dialog on it.
  */
-export function HeaderPile({
-  pile,
-  ...props
-}: PileProps & { pile: Exclude<EncounterPile, 'deck'> }) {
+export function HeaderPile({ pile, ...props }: PileProps & { pile: HeaderPileKind }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const { board } = props;
   const cards = board.encounter[pile];
-  const [top] = cards;
   const value = pile === 'victoryDisplay' ? board.victoryPoints : cards.length;
-  const label =
-    pile === 'discard'
-      ? top
-        ? t('header.encounterDiscardTop', { count: cards.length, card: top.name })
-        : t('header.encounterDiscard')
-      : t(`header.${pile}`, { count: value });
+  const label = pileLabel(pile, cards, value, t);
   return (
     <>
       <PileFan pile={pile} cards={cards} value={value} label={label} onOpen={() => setOpen(true)} />
       {open && <EncounterDialog {...props} start={pile} onClose={() => setOpen(false)} />}
     </>
   );
+}
+
+/** What a screen reader hears for a header pile: its name, its count or points, the top discard. */
+function pileLabel(
+  pile: HeaderPileKind,
+  cards: readonly EncounterCardView[],
+  value: number,
+  t: TFunction,
+): string {
+  switch (pile) {
+    case 'discard': {
+      const [top] = cards;
+      return top
+        ? t('header.encounterDiscardTop', { count: cards.length, card: top.name })
+        : t('header.encounterDiscard');
+    }
+    case 'setAside':
+    case 'victoryDisplay':
+      return t(`header.${pile}`, { count: value });
+  }
 }

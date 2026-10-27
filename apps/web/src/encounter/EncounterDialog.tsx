@@ -6,11 +6,11 @@ import { useCardPicture } from '../catalog/cardImages';
 import type { GameActions } from '../state/gameActions';
 import { CardMoves } from './CardMoves';
 
-/**
- * Where the encounter dialog opens (`EncounterDialog.start`): on the deck or one of the piles beside
- * it.
- */
-export type EncounterPile = 'deck' | 'discard' | 'setAside' | 'victoryDisplay';
+/** Where the encounter dialog opens (`EncounterDialog.start`): on the deck or on one of its piles. */
+export type EncounterPile = 'deck' | HeaderPileKind;
+
+/** The piles the header fans beside its cards (`HeaderPile`), each opening the dialog on itself. */
+export type HeaderPileKind = 'discard' | 'setAside' | 'victoryDisplay';
 
 /**
  * The deck or pile tapped in the header (`start`) in full. Opened on the deck, it shows how many
