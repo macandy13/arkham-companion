@@ -175,9 +175,8 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
     name: 'Disrupting the Ritual',
     set: own,
     stage: 3,
-    // Its objective counts the clues the action places; the players advance it once there are
-    // enough, paying with the clues on the act only.
-    cluesPerInvestigator: 2,
+    // No clue requirement: only the clues its action places count towards its objective, which
+    // the players check and advance by hand (#523), so investigators can't pay for it.
     actions: [
       {
         cost: { spend: 'clues', amount: 1 },

@@ -7,7 +7,9 @@
  * who got away and the Ghoul Priest, the four random Arkham Woods connecting
  * on their revealed sides, Unhallowed Ground's willpower test, Offer of Power,
  * act 1 opening the Ritual Site and spawning the Cultists who got away on the
- * Main Path, Mysterious Chanting, hunters closing in, Roland defeated) and
+ * Main Path, Mysterious Chanting, act 3's action (spend 1 clue, test agility,
+ * place a clue on the act) with its attacks of opportunity, hunters closing
+ * in, Roland defeated) and
  * ends in a resolution applied to the campaign log: the ritual broken, the
  * Yithian Observer and Peter Warren in the victory display, Roland's defeat
  * trauma, and the campaign won.
@@ -15,8 +17,8 @@
  * What the engine leaves to the players is done by hand, as at the table:
  * agenda 1's reverse side (the Monster spawning at the Main Path with 1 doom),
  * act 2's objective and reverse side (the enemy spawning at the Ritual Site),
- * act 3's action (spend 1 clue and test to place it on the act, which provokes
- * attacks of opportunity), the Ritual Site's clues at the end of the round,
+ * act 3's objective (advancing it once it holds 2 clues per investigator), the
+ * Ritual Site's clues at the end of the round,
  * Frozen in Fear's extra action, agenda 2's +1 fight and evade, Ancient
  * Evils' doom, Umôrdhoth's Wrath, Twisting Paths' test to leave it (Daisy
  * passes) and the 2 random cards "it is past midnight" discards from each
@@ -41,6 +43,7 @@ import {
 import { answer } from '@arkham/engine/test/utils';
 import {
   DEVOURER_BELOW_CODES as codes,
+  DISRUPTING_THE_RITUAL_DECISION,
   MIDNIGHT_MASKS_RESOLUTIONS,
   OFFER_OF_POWER_DECISION,
   ZEALOT_STORY,
@@ -71,7 +74,6 @@ const seats = [
 const yes = { kind: 'flag', value: true } as const;
 const mainPath = instanceId(`${codes.mainPath}#1`);
 const ritualSite = instanceId(`${codes.ritualSite}#1`);
-const disruptingTheRitual = instanceId(`${codes.disruptingTheRitual}#1`);
 /** The four Arkham Woods seed 9 puts into play; they share their name, so they go by ID. */
 const unhallowedGround = instanceId(`${codes.arkhamWoodsUnhallowedGround}#1`);
 const twistingPaths = instanceId(`${codes.arkhamWoodsTwistingPaths}#1`);
@@ -181,23 +183,14 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
     ]);
 
     /**
-     * Act 3's action, by hand: the investigator spends 1 clue and passes the
-     * willpower or agility test, so the clue goes onto the act.
+     * Act 3's action: the investigator spends 1 clue and passes the agility
+     * test they pick, so 1 clue goes onto the act.
      */
-    const placeClueOnTheAct = (investigator: InvestigatorId) =>
-      table.step(() => {
-        table.spendAction(investigator);
-        table.play({
-          type: 'AdjustInvestigator',
-          investigatorId: investigator,
-          stat: 'clues',
-          delta: -1,
-        });
-        table.play({
-          type: 'ManualAdjust',
-          adjustment: { kind: 'tokens', cardId: disruptingTheRitual, token: 'clue', delta: 1 },
-        });
-      });
+    const placeClueOnTheAct = (investigator: InvestigatorId) => {
+      table.useCardAction(investigator, byName('Disrupting the Ritual'));
+      table.play(answer(DISRUPTING_THE_RITUAL_DECISION, 'agility'));
+      table.answer(byName('Disrupting the Ritual'), 'pass');
+    };
 
     // Round 1 – no mythos phase. Roland takes the 2 clues of the Old House, Daisy
     // the 2 of the Twisting Paths. Once both are revealed, the ring connects them.
@@ -390,22 +383,18 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
 
     // Round 5 – Roland finishes the Yithian Observer and Peter Warren with his
     // .45 and a Vicious Blow, which takes their 3 doom out of play, and places
-    // his last clue on act 3; Victoria and Ruth attack him as he does (by hand).
+    // his last clue on act 3; Victoria and Ruth make attacks of opportunity as he does.
     // Daisy defeats the Ghoul Minion and, with Deduction, takes 2 clues from
     // the Ritual Site.
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'investigation' });
     table.startTurn(roland);
     table.fight(roland, byName(yithian), { damage: 2 });
     table.fight(roland, byName('Peter Warren'), { damage: 3 });
+    table.useCardAction(roland, byName('Disrupting the Ritual'));
     for (const attacker of ['Victoria Devereux', 'Ruth Turner'])
-      table.play({
-        type: 'DealEnemyAttack',
-        enemyId: table.board.enemyId(byName(attacker)),
-        investigatorId: roland,
-        damage: 1,
-        horror: 0,
-      });
-    placeClueOnTheAct(roland);
+      table.takeAttackOfOpportunity(byName(attacker));
+    table.play(answer(DISRUPTING_THE_RITUAL_DECISION, 'agility'));
+    table.answer(byName('Disrupting the Ritual'), 'pass');
     table.endTurn(roland);
     table.startTurn(daisy);
     table.fight(daisy, byName('Ghoul Minion'));

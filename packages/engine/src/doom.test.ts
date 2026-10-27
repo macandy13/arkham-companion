@@ -176,9 +176,11 @@ const manualDoom = (cardId: typeof hall, delta: number): Command => ({
 });
 
 describe('PlaceTokens', () => {
-  const { context, state } = aliceAlone.start();
+  const { context, state } = doomTable
+    .withInvestigator(alice, { locationId: hall, clues: 1 })
+    .start();
 
-  it('puts clues from the pool on the current act', () => {
+  it('puts clues from the pool on the current act, not alice’s', () => {
     const next = stateAfter(context, state, {
       type: 'PlaceTokens',
       cardId: act1,
@@ -187,7 +189,7 @@ describe('PlaceTokens', () => {
     });
 
     expect(next.cards[act1]!.tokens.clue).toBe(1);
-    expect(requireInvestigator(next, alice).clues).toBe(0);
+    expect(requireInvestigator(next, alice).clues).toBe(1);
   });
 
   it.each([
