@@ -1,7 +1,7 @@
 import { assertNever, listIfAny } from '@arkham/util';
 import { isConnectionOpen, neighbours } from './board';
 import { tokenObjective } from './abilities';
-import { cardActionsOfferedTo, type OfferedCardAction } from './card_actions';
+import { cardActionsOfferedTo, cluesToAdvance, type OfferedCardAction } from './card_actions';
 import { effectiveValue } from './card_values';
 import { cardStats, resolveValue, type CardType, type EngineContext, type Trait } from './cards';
 import { optionName } from './describe_decision';
@@ -983,7 +983,7 @@ function actView(ctx: EngineContext, state: GameState): ActView | undefined {
   const act = currentCard(state, 'act');
   if (!act) return undefined;
   const stats = cardStats(ctx.cards, act.code);
-  const threshold = tokenObjective(stats, 'clue') ?? stats.clues;
+  const threshold = tokenObjective(stats, 'clue') ?? cluesToAdvance(stats) ?? stats.clues;
   return {
     name: nameOf(ctx, act),
     ...(stats.imageSrc === undefined ? {} : { image: stats.imageSrc }),
