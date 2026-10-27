@@ -46,10 +46,11 @@ export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyVi
  * the stylesheet shows the one for the look. Over them lies what the game tracks: its attachments
  * peeking out at the right edge as small cards, and once revealed the shroud (with what
  * attachments add) on the left edge where the art ends and the clues on the right, doom under the
- * clues when it has any, and the actions it prints in the text box (`PrintedActions`); then a pawn per investigator there and a round token per enemy at it, in
- * rows along the bottom edge. `enemies` and `investigators` are the open game's pieces at this
- * location, and `turnOrder` says whose pawns carry the lead and turn markers; `dragOf` gives the
- * drag handlers of each piece that can be dragged now. A tap on the tile, or its details button in
+ * clues when it has any, and the actions it prints in the text box (`PrintedActions`); then a
+ * pawn per investigator there and a round token per enemy at it, in rows along the bottom edge.
+ * `enemies` and `investigators` are the open game's pieces at this location, and `turnOrder`
+ * says whose pawns carry the lead and turn markers; `dragOf` gives the drag handlers of each
+ * piece that can be dragged now. A tap on the tile, or its details button in
  * the top left corner, calls `onOpen`; a press that moves further (`isTap`: a pan, a piece
  * dragged) is no tap. Without `onOpen` (the card in the location details) it has neither.
  */

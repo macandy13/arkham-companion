@@ -286,13 +286,17 @@ export function cardActionsOfferedTo(
 }
 
 /**
+ * One action ability as its card prints it (`LocationView.printedActions`): its designator, whether
+ * it is free, and its `number` among the card's actions of the same kind (`OfferedCardAction`).
+ */
+export type PrintedActionView = Pick<OfferedCardAction, 'designator' | 'free' | 'number'>;
+
+/**
  * How a card prints its `actions`, whoever may take them (`LocationView.printedActions`): each
  * one's designator, whether it is free, and its number among the actions of its kind, as
  * `cardActionsOfferedTo` numbers them.
  */
-export function printedActions(
-  actions: readonly CardAction[],
-): Pick<OfferedCardAction, 'designator' | 'free' | 'number'>[] {
+export function printedActions(actions: readonly CardAction[]): PrintedActionView[] {
   return actions.map(({ designator, free }, action) => ({
     ...(designator === undefined ? {} : { designator }),
     ...(free === undefined ? {} : { free }),

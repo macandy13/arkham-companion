@@ -294,8 +294,8 @@
  * chose (`data-card-look` on the document): "frames" (the default) shows the card's art in the
  * art window (the nested svg) under our own name band and tokens; "faces" lays the whole card
  * (the image) over the face, and the name band, shroud token and printed actions give way to the
- * ones the picture prints. They stay transparent rather than removed, so they keep naming the tile's shroud to
- * assistive technology.
+ * ones the picture prints. They stay transparent rather than removed, so they keep naming the
+ * tile's shroud to assistive technology.
  */
 #map svg [data-card]:not([data-picture]) > :is(image, svg),
 #map svg [data-card] > image,

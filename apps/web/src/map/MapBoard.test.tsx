@@ -111,7 +111,7 @@ describe('MapBoard', () => {
     expect(within(tile('attic')).getByText('Unrevealed')).toBeTruthy();
   });
 
-  it("prints the parlor's Resign and free action on its tile, whoever's turn it is", () => {
+  it("prints the parlor's Resign and free action on its tile, though alder is not there", () => {
     const parlor = instanceId('parlor');
     const table = PlayTable.start(
       newGame()

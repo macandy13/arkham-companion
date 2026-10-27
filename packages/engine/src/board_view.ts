@@ -1,7 +1,14 @@
 import { assertNever, listIfAny } from '@arkham/util';
 import { isConnectionOpen, neighbours } from './board';
 import { tokenObjective } from './abilities';
-import { cardActionsOfferedTo, printedActions, type OfferedCardAction } from './card_actions';
+import {
+  cardActionsOfferedTo,
+  printedActions,
+  type OfferedCardAction,
+  type PrintedActionView,
+} from './card_actions';
+
+export type { PrintedActionView };
 import { effectiveValue } from './card_values';
 import { cardStats, resolveValue, type CardType, type EngineContext, type Trait } from './cards';
 import { optionName } from './describe_decision';
@@ -164,12 +171,6 @@ export type LocationView = LocationViewBase &
       }
     | { revealed: false }
   );
-
-/**
- * One action ability as its card prints it (`LocationView.printedActions`): its designator, whether
- * it is free, and its `number` among the card's actions of the same kind (`OfferedCardAction`).
- */
-export type PrintedActionView = Pick<OfferedCardAction, 'designator' | 'free' | 'number'>;
 
 /** What a `LocationView` shows on either side of the card. */
 interface LocationViewBase {
