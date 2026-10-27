@@ -1187,10 +1187,7 @@ export function takeDamage(
  * `command` with `source` on each command on the players' own cards in it (`PlayerCardCommand`),
  * the options of a choice included, so the notice of a deferred one names the card that asked.
  */
-export function withSource<C extends { readonly type: string }>(
-  command: C,
-  source: CommandSource,
-): C {
+function withSource<C extends { readonly type: string }>(command: C, source: CommandSource): C {
   switch (command.type) {
     case 'DrawCards':
     case 'SearchDeck':

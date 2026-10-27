@@ -523,6 +523,7 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     table.startTurn(roland);
     table.moveTo(roland, byName('Rivertown'));
     table.moveTo(roland, byName('Your House'));
+    const yourHouse = table.board.location(byName('Your House')).id;
     table.useCardAction(roland, byName('Your House'));
     table.endTurn(roland);
     expect(table.board.investigator(roland)).toMatchObject({ resources: 15 });
@@ -532,7 +533,7 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
         type: 'DrawCards',
         investigatorId: roland,
         amount: 1,
-        source: { cardId: instanceId(`${MIDNIGHT_MASKS_CODES.yourHouse}#1`), window: 'action' },
+        source: { cardId: yourHouse, window: 'action' },
       },
     });
     table.startTurn(daisy);

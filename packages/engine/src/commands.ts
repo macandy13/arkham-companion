@@ -320,11 +320,6 @@ export interface GainResources extends ActionCommand {
 }
 
 /**
- * "Draw N cards": the investigator draws from their own deck, as a card effect or `asAction` as
- * the basic draw action. The game holds no player cards, so `deferToPlayers` leaves it to the
- * players (`CommandDeferred`).
- */
-/**
  * The card whose ability asked for a command on the players' own cards, and the timing window it
  * resolved in (`action` for a card action and its cost), so the notice can name the card. Absent
  * on a command the players issued themselves, such as the draw action.
@@ -342,6 +337,11 @@ interface AskedByCard {
   source?: CommandSource;
 }
 
+/**
+ * "Draw N cards": the investigator draws from their own deck, as a card effect or `asAction` as
+ * the basic draw action. The game holds no player cards, so `deferToPlayers` leaves it to the
+ * players (`CommandDeferred`).
+ */
 export interface DrawCards extends ActionCommand, AskedByCard {
   type: 'DrawCards';
   investigatorId: InvestigatorId;
