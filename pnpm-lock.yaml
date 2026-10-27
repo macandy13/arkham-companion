@@ -152,6 +152,12 @@ importers:
         specifier: ^26.6.5
         version: 26.6.5
 
+  packages/review_queue:
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
+
   packages/scenarios:
     dependencies:
       '@arkham/engine':
