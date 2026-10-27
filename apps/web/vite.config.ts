@@ -23,7 +23,7 @@ export default defineConfig({
         name: 'Arkham Companion',
         short_name: 'Arkham',
         display: 'standalone',
-        orientation: 'landscape',
+        orientation: 'any',
         background_color: '#1b1b1f',
         theme_color: '#1b1b1f',
         icons: [{ src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
