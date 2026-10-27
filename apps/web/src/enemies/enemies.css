@@ -206,7 +206,8 @@
   --stat-symbol: url('../symbols/agility.svg');
 }
 
-#board svg[data-card='enemy'] [data-part='text'] {
+/* A card's text box, the enemy card's and the actions a location tile prints. */
+#board :is(svg[data-card='enemy'], [data-card='location']) [data-part='text'] {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -218,7 +219,7 @@
   text-align: center;
 }
 
-#board svg[data-card='enemy'] [data-part='text'] > p {
+#board :is(svg[data-card='enemy'], [data-card='location']) [data-part='text'] > p {
   margin: 0;
 }
 
@@ -246,7 +247,7 @@
   gap: var(--card-text-gap);
 }
 
-#board svg[data-card='enemy'] [data-symbol] {
+#board :is(svg[data-card='enemy'], [data-card='location']) [data-symbol] {
   display: inline-block;
   width: var(--card-attack-icon-size);
   height: var(--card-attack-icon-size);
@@ -285,6 +286,14 @@
 
 #board svg[data-card='enemy'] [data-symbol='wild'] {
   --symbol: url('../symbols/wild.svg');
+}
+
+#board :is(svg[data-card='enemy'], [data-card='location']) [data-symbol='action'] {
+  --symbol: url('../symbols/action.svg');
+}
+
+#board :is(svg[data-card='enemy'], [data-card='location']) [data-symbol='free'] {
+  --symbol: url('../symbols/free.svg');
 }
 
 #board svg[data-card='enemy'] [data-symbol='per_investigator'] {

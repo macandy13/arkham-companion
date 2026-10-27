@@ -1,7 +1,7 @@
 import { useId, type ReactNode } from 'react';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
-import type { BoardView, CardActionView, InstanceId } from '@arkham/engine';
+import type { BoardView, CardActionView, InstanceId, PrintedActionView } from '@arkham/engine';
 import type { GameActions } from '../state/gameActions';
 import './action_row.css';
 
@@ -87,12 +87,21 @@ export function cardActionsOn(board: BoardView, cardId: InstanceId): readonly Ca
  */
 export function cardActionLabel(
   t: TFunction,
-  { card, designator, number }: CardActionView,
+  offer: CardActionView,
 ): { caption: string; name: string } {
+  const caption = cardActionCaption(t, offer);
+  return { caption, name: t('investigators.cardActionOn', { action: caption, card: offer.card }) };
+}
+
+/**
+ * The short name of a card action, offered or printed: its designator ("Resign") or "Action",
+ * numbered when the card prints more than one of its kind ("Action 2", `PrintedActionView.number`).
+ */
+export function cardActionCaption(t: TFunction, { designator, number }: PrintedActionView): string {
   const kind = t(`investigators.cardAction.${designator ?? 'plain'}`);
-  const caption =
-    number === undefined ? kind : t('investigators.cardActionNumbered', { action: kind, number });
-  return { caption, name: t('investigators.cardActionOn', { action: caption, card }) };
+  return number === undefined
+    ? kind
+    : t('investigators.cardActionNumbered', { action: kind, number });
 }
 
 /**

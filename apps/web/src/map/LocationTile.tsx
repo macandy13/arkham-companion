@@ -6,9 +6,11 @@ import type {
   InvestigatorView,
   LocationView,
   MapEnemyView,
+  PrintedActionView,
 } from '@arkham/engine';
 import { LOCATION_ART, PORTRAIT_SCAN, portraitArtViewBox } from '../catalog/cardArt';
 import { useCardPicture } from '../catalog/cardImages';
+import { cardActionCaption } from '../screens/ActionRow';
 import { LocationOrnament, TYPE_PLATE_CENTRE } from './cardOrnament';
 import {
   ART_WINDOW,
@@ -22,6 +24,7 @@ import {
   NAME_WIDTH,
   pawnOffset,
   SHROUD_CENTRE,
+  TEXT_BOX,
   TILE,
   type Point,
 } from './mapLayout';
@@ -43,10 +46,11 @@ export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyVi
  * the stylesheet shows the one for the look. Over them lies what the game tracks: its attachments
  * peeking out at the right edge as small cards, and once revealed the shroud (with what
  * attachments add) on the left edge where the art ends and the clues on the right, doom under the
- * clues when it has any; then a pawn per investigator there and a round token per enemy at it, in
- * rows along the bottom edge. `enemies` and `investigators` are the open game's pieces at this
- * location, and `turnOrder` says whose pawns carry the lead and turn markers; `dragOf` gives the
- * drag handlers of each piece that can be dragged now. A tap on the tile, or its details button in
+ * clues when it has any, and the actions it prints in the text box (`PrintedActions`); then a
+ * pawn per investigator there and a round token per enemy at it, in rows along the bottom edge.
+ * `enemies` and `investigators` are the open game's pieces at this location, and `turnOrder`
+ * says whose pawns carry the lead and turn markers; `dragOf` gives the drag handlers of each
+ * piece that can be dragged now. A tap on the tile, or its details button in
  * the top left corner, calls `onOpen`; a press that moves further (`isTap`: a pan, a piece
  * dragged) is no tap. Without `onOpen` (the card in the location details) it has neither.
  */
@@ -140,6 +144,7 @@ export function LocationTile({
             label={t('map.clues', { count: location.clues })}
             centre={CLUES_CENTRE}
           />
+          {location.printedActions && <PrintedActions actions={location.printedActions} />}
         </>
       )}
       {location.doom ? (
@@ -274,6 +279,31 @@ function Token({ kind, value, label, centre: { x, y } }: TokenCount & { centre: 
         {value}
       </text>
     </g>
+  );
+}
+
+/**
+ * The action abilities the location prints (`LocationView.printedActions`), a line each in the
+ * text box as on the printed card: the action or free symbol, then its name ("Resign."). They show
+ * whoever may take them; taking one is the location details' or the turn row's. HTML in a
+ * `foreignObject`, like the enemy card's text, so a long line wraps.
+ */
+function PrintedActions({ actions }: { actions: readonly PrintedActionView[] }) {
+  const { t } = useTranslation();
+  return (
+    <foreignObject {...TEXT_BOX}>
+      <div data-part="text">
+        {actions.map((action, index) => {
+          const symbol = action.free ? 'free' : 'action';
+          return (
+            <p key={index}>
+              <span role="img" aria-label={t(`symbol.${symbol}`)} data-symbol={symbol} />{' '}
+              {t('map.printedAction', { action: cardActionCaption(t, action) })}
+            </p>
+          );
+        })}
+      </div>
+    </foreignObject>
   );
 }
 
