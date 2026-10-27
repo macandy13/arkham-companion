@@ -77,7 +77,7 @@ export type ActionCondition =
       readonly card: CardCode;
       /**
        * For a player card the players earn in the campaign (Lita Chantler): the story record
-       * that says someone earned it. Without it, nobody can hold the card.
+       * that says someone earned it; unless the log has that record, nobody can hold the card.
        */
       readonly earnedWhen?: StoryCondition;
     }
@@ -89,8 +89,9 @@ export type ActionCondition =
  * their play area. When the game has no card X at all, X is a player card the players hold (Lita
  * Chantler, earned in The Gathering, is in an investigator's deck by The Devourer Below), which
  * the game doesn't track, so it trusts the investigator taking the action, as it trusts a hand
- * card cost, as long as the campaign log says someone earned the card (`earnedWhen`); a
- * standalone game reads as an empty log, where nobody did. No condition always holds.
+ * card cost, as long as the campaign log says someone earned the card (`earnedWhen`). A
+ * standalone game has no log: its players pick the earlier resolutions themselves (Rules
+ * Reference, "Standalone Mode"), so it trusts the taker too. No condition always holds.
  */
 export function actionConditionHolds(
   state: GameState,
@@ -104,7 +105,7 @@ export function actionConditionHolds(
     case 'controls': {
       const copies = Object.values(state.cards).filter((card) => card.code === condition.card);
       if (copies.length === 0) {
-        if (condition.earnedWhen === undefined) return true;
+        if (condition.earnedWhen === undefined || state.campaign === undefined) return true;
         return storyHolds(state.campaign?.story ?? {}, condition.earnedWhen) === true;
       }
       return copies.some((card) => sameZone(card.zone, playAreaOf(investigator.id)));

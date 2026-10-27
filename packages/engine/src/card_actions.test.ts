@@ -521,12 +521,18 @@ describe('action conditions on a player card earned in the campaign', () => {
     .withInvestigator(alice, { locationId: hall })
     .withTurnOf(alice);
 
-  it('lets alice take the action when the campaign log says someone earned Lita', () => {
-    const table = PlayTable.start(
-      hallAskingForEarnedLita.withCampaign(
-        makeCampaignLog({ story: { lita_earned: { kind: 'flag', value: true } } }),
-      ),
-    );
+  it.each([
+    {
+      game: 'a campaign whose log says someone earned her',
+      setup: () =>
+        hallAskingForEarnedLita.withCampaign(
+          makeCampaignLog({ story: { lita_earned: { kind: 'flag', value: true } } }),
+        ),
+    },
+    // Its players chose the earlier resolutions themselves, so the game trusts alice.
+    { game: 'a standalone game', setup: () => hallAskingForEarnedLita },
+  ])('lets alice take the action in $game', ({ setup }) => {
+    const table = PlayTable.start(setup());
 
     table.play(useCardAction(alice, hall));
 
@@ -545,7 +551,6 @@ describe('action conditions on a player card earned in the campaign', () => {
       game: 'a campaign whose log never mentions her',
       setup: () => hallAskingForEarnedLita.withCampaign(makeCampaignLog({ story: {} })),
     },
-    { game: 'a standalone game', setup: () => hallAskingForEarnedLita },
   ])('neither offers nor accepts the action in $game', ({ setup }) => {
     const table = PlayTable.start(setup());
 
