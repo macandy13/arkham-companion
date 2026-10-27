@@ -70,22 +70,28 @@ export function InvestigatorBar({
 /**
  * The investigator the phone shows in full: the one the players tapped last, until the turn
  * changes, else the one whose turn it is, else the lead investigator (the first one once nobody
- * leads, as everyone has left the game). Keyed by the turn it was
- * picked on, so a new turn brings its investigator to the front without an effect.
+ * leads, as everyone has left the game). A tap is kept with the round, phase and turn it was made
+ * in (`turnKey`), so a new turn brings its investigator to the front without an effect, even when
+ * the same investigator's turn comes round again.
  */
 function useFocus(board: BoardView): [InvestigatorId | undefined, (id: InvestigatorId) => void] {
-  const [picked, setPicked] = useState<{ id: InvestigatorId; turn: InvestigatorId | undefined }>();
+  const [picked, setPicked] = useState<{ id: InvestigatorId; turn: string }>();
   const focus =
-    picked && picked.turn === board.turn
+    picked && picked.turn === turnKey(board)
       ? picked.id
       : (board.turn ?? board.lead ?? board.investigators[0]?.id);
-  return [focus, (id) => setPicked({ id, turn: board.turn })];
+  return [focus, (id) => setPicked({ id, turn: turnKey(board) })];
+}
+
+/** Names the turn in progress, or the time between turns, uniquely within a game (`useFocus`). */
+function turnKey(board: BoardView): string {
+  return `${board.round}:${board.phase}:${board.turn ?? ''}`;
 }
 
 /**
  * The investigators besides the focused one (`focus`, see `useFocus`) as round avatars of their
- * card's art, or their initial like their pawn on the map until it loads, each a button that brings their panel to the front (`onFocus`). Only the phone shows
- * them; nothing in a solo game.
+ * card's art, or their initial like their pawn on the map until it loads, each a button that
+ * brings their panel to the front (`onFocus`). Only the phone shows them; nothing in a solo game.
  */
 function OtherInvestigators({
   board,

@@ -401,6 +401,41 @@ describe('InvestigatorBar', () => {
       expect(focused()).toEqual(['alder']);
     });
 
+    it('brings the turn investigator back to the front when their turn comes round again', () => {
+      const table = alderAndBrook();
+      table.nextPhase();
+      table.startTurn(alder);
+      const { rerender } = render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole('button', { name: 'Show brook' }));
+      table.endTurn(alder);
+      table.startTurn(brook);
+      table.endTurn(brook);
+      table.nextPhase();
+      table.nextPhase();
+      table.nextPhase();
+      table.nextPhase();
+      table.startTurn(alder);
+      rerender(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      expect(table.board.round).toBe(2);
+      expect(focused()).toEqual(['alder']);
+    });
+
     it('shows no avatars in a solo game', () => {
       const table = PlayTable.start(
         newGame()

@@ -521,9 +521,10 @@
 }
 
 /*
- * A phone held upright (tokens.css shrinks the counters and skills with the same query): one panel, the focused investigator's (`data-focus`), across the width under the map,
- * with the others as round avatars along its top. The card drops its art window, so the skills
- * and the counters each take a row.
+ * A phone held upright (tokens.css shrinks the counters and skills with the same query): one
+ * panel, the focused investigator's (`data-focus`), across the width under the map, with the
+ * others as round avatars along its top. The card drops its art window, so the skills and the
+ * counters each take a row.
  */
 @media (orientation: portrait) and (max-width: 40rem) {
   #board > #investigators {

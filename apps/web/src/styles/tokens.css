@@ -311,10 +311,11 @@
 }
 
 /*
- * A phone held upright: the play screen's compact mode (the prototype in public/prototype/phone), its four
- * header cards small in one row with small tokens and the investigator card's skills and counters
- * smaller, so the map keeps the room between the header and the one investigator panel. game.css and investigators.css open their phone rules with the
- * same query, written out in each, since a custom property cannot stand in a media query.
+ * A phone held upright: the play screen's compact mode (the prototype in public/prototype/phone),
+ * its four header cards small in one row with small tokens and the investigator card's skills and
+ * counters smaller, so the map keeps the room between the header and the one investigator panel.
+ * game.css and investigators.css open their phone rules with the same query, written out in
+ * each, since a custom property cannot stand in a media query.
  */
 @media (orientation: portrait) and (max-width: 40rem) {
   :root {
