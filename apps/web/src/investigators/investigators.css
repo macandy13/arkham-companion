@@ -538,28 +538,28 @@
 }
 
 /*
- * A phone held upright (tokens.css shrinks the counters and skills with the same query): one
+ * A phone held upright, in the compact view (tokens.css shrinks the counters and skills): one
  * panel, the focused investigator's (`data-focus`), across the width under the map, with the
  * others as round avatars along its top. The card drops its art window, so the skills and the
  * counters each take a row.
  */
 @media (orientation: portrait) and (max-width: 40rem) {
-  #board > #investigators {
+  #board:not([data-view]) > #investigators {
     flex-direction: column;
     align-items: stretch;
     gap: var(--space-1);
     padding-block: var(--space-1);
   }
 
-  #board > #investigators > section {
+  #board:not([data-view]) > #investigators > section {
     width: 100%;
   }
 
-  #board > #investigators > section:not([data-focus]) {
+  #board:not([data-view]) > #investigators > section:not([data-focus]) {
     display: none;
   }
 
-  #board > #investigators > ul {
+  #board:not([data-view]) > #investigators > ul {
     display: flex;
     gap: var(--space-2);
     margin: 0;
@@ -567,14 +567,14 @@
     list-style: none;
   }
 
-  #board > #investigators > ul > li {
+  #board:not([data-view]) > #investigators > ul > li {
     padding: 0;
     border: none;
     background: none;
   }
 
   /* The initial and the picture share the disc; the picture covers the initial once it loads. */
-  #board > #investigators > ul > li > button {
+  #board:not([data-view]) > #investigators > ul > li > button {
     display: grid;
     grid-template: 1fr / 1fr;
     place-items: center;
@@ -592,24 +592,24 @@
   }
 
   /* An investigator whose turn it is stays marked while another one is in front. */
-  #board > #investigators > ul > li[data-turn] > button {
+  #board:not([data-view]) > #investigators > ul > li[data-turn] > button {
     box-shadow: var(--turn-glow);
   }
 
-  #board > #investigators > ul > li > button > * {
+  #board:not([data-view]) > #investigators > ul > li > button > * {
     grid-area: 1 / 1;
   }
 
-  #board > #investigators > ul > li > button > picture {
+  #board:not([data-view]) > #investigators > ul > li > button > picture {
     position: relative;
     place-self: stretch;
   }
 
-  #board > #investigators > ul > li > button > picture:not([data-picture]) {
+  #board:not([data-view]) > #investigators > ul > li > button > picture:not([data-picture]) {
     visibility: hidden;
   }
 
-  #board > #investigators > ul > li > button > picture > img {
+  #board:not([data-view]) > #investigators > ul > li > button > picture > img {
     position: absolute;
     width: calc(100% / var(--investigator-art-width));
     max-width: none;
@@ -617,7 +617,7 @@
     top: calc(var(--investigator-art-y) / var(--investigator-art-height) * -100%);
   }
 
-  #investigators [data-card='investigator'] {
+  #board:not([data-view]) #investigators [data-card='investigator'] {
     grid-template:
       'name' auto
       'skills' auto
@@ -627,23 +627,52 @@
     padding-bottom: var(--space-1);
   }
 
-  #investigators [data-card='investigator'] > picture {
+  #board:not([data-view]) #investigators [data-card='investigator'] > picture {
     display: none;
   }
 
-  #investigators [data-card='investigator'] > ul {
+  #board:not([data-view]) #investigators [data-card='investigator'] > ul {
     margin-inline: var(--space-2);
   }
 
-  #investigators [data-card='investigator'] > ul > li > button:first-child {
+  #board:not([data-view]) #investigators [data-card='investigator'] > ul > li > button:first-child {
     flex-wrap: nowrap;
     gap: var(--space-1);
     padding: 0;
     font-size: var(--font-size-body);
   }
 
-  #investigators [data-card='investigator'] > ul > li > button:first-child::before {
+  #board:not([data-view])
+    #investigators
+    [data-card='investigator']
+    > ul
+    > li
+    > button:first-child::before {
     flex-basis: var(--skill-plate-icon-size);
     width: var(--skill-plate-icon-size);
+  }
+}
+
+/*
+ * The phone's detail view (`data-view='detail'`, game.css): every investigator's whole panel, a
+ * screen wide, snapped sideways in seat order, with the threat area above the card and the turn
+ * controls under it, as on a tablet.
+ */
+@media (orientation: portrait) and (max-width: 40rem) {
+  #board[data-view='detail'] > #investigators {
+    align-items: center;
+    gap: 0;
+    padding: 0;
+    border-top: 0;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  #board[data-view='detail'] > #investigators > section {
+    box-sizing: border-box;
+    width: 100%;
+    padding: var(--space-2);
+    scroll-snap-align: start;
   }
 }

@@ -6,6 +6,9 @@ export const resources = {
   en: {
     translation: {
       app: { title: 'Arkham Companion' },
+      detail: {
+        close: 'Back to the overview',
+      },
       header: {
         round: 'Round {{round}}',
         phases: 'Phases',
@@ -596,6 +599,9 @@ export const resources = {
   de: {
     translation: {
       app: { title: 'Arkham Companion' },
+      detail: {
+        close: 'Zurück zur Übersicht',
+      },
       header: {
         round: 'Runde {{round}}',
         phases: 'Phasen',
