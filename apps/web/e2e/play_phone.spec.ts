@@ -13,7 +13,7 @@ test.use({
 // Journey: on a phone, open the detail view from the act in the compact view, swipe down to the
 // map and the investigators, back up to the cards, which wait on the agenda again, and go back to
 // the overview. The dots follow along: the rows' at the right edge, the cards' along the foot.
-test('swipe through the detail view on a phone', { tag: '@flow' }, async ({ page }) => {
+test('swipe through the detail view on a phone', async ({ page }) => {
   const board = page.locator('#board');
   const rowDots = page.locator('ol[data-dots="rows"] > li');
   const cardDots = page.locator('ol[data-dots="items"] > li');

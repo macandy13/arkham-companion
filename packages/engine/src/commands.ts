@@ -1,4 +1,4 @@
-import type { AbilityEffect, OpenedWindow } from './abilities';
+import type { AbilityEffect, OpenedWindow, TimingWindow } from './abilities';
 import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
 import type { CardType, Trait } from './cards';
 import type {
@@ -320,11 +320,29 @@ export interface GainResources extends ActionCommand {
 }
 
 /**
+ * The card whose ability asked for a command on the players' own cards, and the timing window it
+ * resolved in (`action` for a card action and its cost), so the notice can name the card. Absent
+ * on a command the players issued themselves, such as the draw action.
+ */
+export interface CommandSource {
+  readonly cardId: InstanceId;
+  readonly window: TimingWindow['kind'];
+}
+
+/**
+ * A command on the players' own cards that a card can ask for (`PlayerCardCommand`). The ability
+ * step that resolves it stamps its `source` (`withSource`), as does an action's hand card cost.
+ */
+interface AskedByCard {
+  source?: CommandSource;
+}
+
+/**
  * "Draw N cards": the investigator draws from their own deck, as a card effect or `asAction` as
  * the basic draw action. The game holds no player cards, so `deferToPlayers` leaves it to the
  * players (`CommandDeferred`).
  */
-export interface DrawCards extends ActionCommand {
+export interface DrawCards extends ActionCommand, AskedByCard {
   type: 'DrawCards';
   investigatorId: InvestigatorId;
   amount: number;
@@ -334,7 +352,7 @@ export interface DrawCards extends ActionCommand {
  * "Search (the top `top` cards of) your deck for a card with one of `traits`, add it to your hand
  * and shuffle your deck." Left to the players like `DrawCards`.
  */
-export interface SearchDeck {
+export interface SearchDeck extends AskedByCard {
   type: 'SearchDeck';
   investigatorId: InvestigatorId;
   traits: readonly Trait[];
@@ -346,7 +364,7 @@ export interface SearchDeck {
  * provokes attacks of opportunity even though the engine never sees the card. The game holds no
  * player cards, so the card and its cost are left to the players like `DrawCards`.
  */
-export interface PlayCard extends ActionCommand {
+export interface PlayCard extends ActionCommand, AskedByCard {
   type: 'PlayCard';
   investigatorId: InvestigatorId;
 }
@@ -355,7 +373,7 @@ export interface PlayCard extends ActionCommand {
  * "Choose and discard N cards from your hand" (Herman Collins' Parley cost): the investigator
  * discards from their own hand. Left to the players like `DrawCards`.
  */
-export interface DiscardFromHand {
+export interface DiscardFromHand extends AskedByCard {
   type: 'DiscardFromHand';
   investigatorId: InvestigatorId;
   amount: number;

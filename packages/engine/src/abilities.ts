@@ -7,7 +7,14 @@ import {
   type ScaledValue,
   type Trait,
 } from './cards';
-import type { Command, EncounterMatch, ResolveEffect, TestSkill } from './commands';
+import type {
+  Command,
+  CommandSource,
+  EncounterMatch,
+  RequestDecision,
+  ResolveEffect,
+  TestSkill,
+} from './commands';
 import { cardsInPlay } from './doom';
 import { cardOptionLabels } from './decisions';
 import type { Event } from './events';
@@ -630,7 +637,14 @@ export function resolveEffect(
       const resolved = resolveRefs(deferred, { ...refs, each: id, picked });
       // The walk keeps every field but the references, which become the IDs the
       // command type expects, so the result is an `AbilityCommand`.
-      return resolved === undefined ? [] : [resolved as AbilityCommand];
+      return resolved === undefined
+        ? []
+        : [
+            withSource(resolved as AbilityCommand, {
+              cardId: opened.cardId,
+              window: opened.window.kind,
+            }),
+          ];
     });
   const picked = pickedRef(deferred);
   if (picked === undefined) return commandsFor();
@@ -1167,6 +1181,31 @@ export function takeDamage(
   who: RelativeInvestigator = { ref: 'windowInvestigator' },
 ): AbilityEffect {
   return { type: 'AdjustInvestigator', investigatorId: who, stat: 'damage', delta: amount };
+}
+
+/**
+ * `command` with `source` on each command on the players' own cards in it (`PlayerCardCommand`),
+ * the options of a choice included, so the notice of a deferred one names the card that asked.
+ */
+function withSource<C extends { readonly type: string }>(command: C, source: CommandSource): C {
+  switch (command.type) {
+    case 'DrawCards':
+    case 'SearchDeck':
+    case 'PlayCard':
+    case 'DiscardFromHand':
+      return { ...command, source };
+    case 'RequestDecision': {
+      // Narrowing on `type` doesn't reach a generic `C`; the type says it is a `RequestDecision`.
+      const { decision } = command as unknown as RequestDecision;
+      const options = decision.options.map((option) => ({
+        ...option,
+        commands: option.commands.map((inner) => withSource(inner, source)),
+      }));
+      return { ...command, decision: { ...decision, options } };
+    }
+    default:
+      return command;
+  }
 }
 
 /**

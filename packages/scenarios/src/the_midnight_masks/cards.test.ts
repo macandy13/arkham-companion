@@ -223,7 +223,10 @@ describe('The Midnight Masks card abilities', () => {
 
       const { events, state } = execute(context, started, useIt);
 
-      expect(events).toContainEqual({ type: 'CommandDeferred', command: deferred });
+      expect(events).toContainEqual({
+        type: 'CommandDeferred',
+        command: { ...deferred, source: { cardId: location, window: 'action' } },
+      });
       expect(requireInvestigator(state, alice)).toMatchObject({ resources });
     });
   });
@@ -402,7 +405,12 @@ describe('The Midnight Masks card abilities', () => {
     expect(requireInvestigator(after, alice)).toMatchObject({ health: { damage: 0 } });
     expect(events).toContainEqual({
       type: 'CommandDeferred',
-      command: { type: 'DiscardFromHand', investigatorId: alice, amount: 4 },
+      command: {
+        type: 'DiscardFromHand',
+        investigatorId: alice,
+        amount: 4,
+        source: { cardId: herman, window: 'action' },
+      },
     });
   });
 

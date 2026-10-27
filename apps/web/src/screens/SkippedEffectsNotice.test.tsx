@@ -72,6 +72,26 @@ describe('SkippedEffectsNotice', () => {
     expect(screen.getByRole('status').textContent).toContain(text);
   });
 
+  it('names the card that asked for the step', () => {
+    render(
+      <SkippedEffectsNotice
+        skipped={[
+          {
+            kind: 'deferred',
+            card: 'Your House',
+            investigator: 'Roland Banks',
+            command: { type: 'DrawCards', investigatorId: roland, amount: 1 },
+          },
+        ]}
+        onDismiss={() => {}}
+      />,
+    );
+
+    expect(screen.getByRole('status').textContent).toContain(
+      'Your House asks Roland Banks to draw 1 card. Please do it by hand.',
+    );
+  });
+
   it('is dismissed with OK', () => {
     const onDismiss = vi.fn();
     render(

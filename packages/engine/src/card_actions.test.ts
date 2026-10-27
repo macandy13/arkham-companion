@@ -23,6 +23,9 @@ import {
   playAreaOf,
   blankAsset,
   cardCode,
+  decisionId,
+  drawCards,
+  youMustEither,
   type ActionLimit,
   type CardAction,
   type CardCode,
@@ -648,6 +651,59 @@ describe('advancing the act by spending clues', () => {
   });
 });
 
+describe('the card a deferred step came from', () => {
+  const library = instanceId('library');
+  const choiceId = decisionId('library.choice');
+  /** The library's actions: "Draw 2 cards", and "You must either draw 1 card or take 1 horror". */
+  const aliceInTheLibrary = newGame()
+    .withLocation(
+      library,
+      blankLocation('library', {
+        actions: [
+          { effects: [drawCards(2)] },
+          {
+            effects: [
+              youMustEither(choiceId, 'library.prompt', [
+                { id: 'draw', label: 'library.draw', effects: [drawCards(1)] },
+                { id: 'horror', label: 'library.horror', effects: [takeHorror(1)] },
+              ]),
+            ],
+          },
+        ],
+      }),
+      { revealed: true },
+    )
+    .withInvestigator(alice, { locationId: library })
+    .withTurnOf(alice);
+
+  const drawnFromLibrary = (amount: number) => ({
+    type: 'CommandDeferred',
+    command: {
+      type: 'DrawCards',
+      investigatorId: alice,
+      amount,
+      source: { cardId: library, window: 'action' },
+    },
+  });
+
+  it('names the library on the draw its action asks for', () => {
+    const { context, state } = aliceInTheLibrary.start();
+
+    const { events } = execute(context, state, useCardAction(alice, library, 0));
+
+    expect(events).toContainEqual(drawnFromLibrary(2));
+  });
+
+  it('names the library on the draw alice picks as an option of its choice', () => {
+    const { context, state } = aliceInTheLibrary.start();
+    const asked = stateAfter(context, state, useCardAction(alice, library, 1));
+
+    const { events } = execute(context, asked, answer(choiceId, 'draw'));
+
+    expect(events).toContainEqual(drawnFromLibrary(1));
+  });
+});
+
 describe('hand card costs', () => {
   it('leaves alice’s discard of 4 cards to the players and still scares her', () => {
     const { context, state } = newGame()
@@ -666,7 +722,12 @@ describe('hand card costs', () => {
 
     expect(events).toContainEqual({
       type: 'CommandDeferred',
-      command: { type: 'DiscardFromHand', investigatorId: alice, amount: 4 },
+      command: {
+        type: 'DiscardFromHand',
+        investigatorId: alice,
+        amount: 4,
+        source: { cardId: hall, window: 'action' },
+      },
     });
     expect(investigatorOf(after, alice)).toMatchObject({ sanity: { horror: 1 } });
   });
