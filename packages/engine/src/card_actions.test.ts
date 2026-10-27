@@ -19,6 +19,7 @@ import {
   threatAreaOf,
   playAreaOf,
   blankAsset,
+  cardCode,
   type ActionLimit,
   type CardAction,
   type InstanceId,
@@ -410,6 +411,51 @@ describe('action costs', () => {
     expect(table.board.cardActions(alice)).toEqual([]);
     expect(rejectionFrom(table.ctx, table.state, useAsAction(alice, hall))).toEqual({
       code: 'cardActionCostUnpaid',
+      cardId: hall,
+      action: 0,
+      investigatorId: alice,
+    });
+  });
+});
+
+describe('action conditions', () => {
+  const lita = instanceId('lita');
+  /** The hall's one action scares its taker "if you control Lita"; alice and bob are in the hall, on alice's turn. */
+  const hallAskingForLita = newGame()
+    .withLocation(
+      hall,
+      blankLocation('hall', {
+        actions: [{ ...scareAction, condition: { kind: 'controls', card: cardCode('lita') } }],
+      }),
+      { revealed: true },
+    )
+    .withInvestigator(alice, { locationId: hall })
+    .withInvestigator(bob, { locationId: hall })
+    .withTurnOf(alice);
+
+  it.each([
+    {
+      where: 'in alice`s play area',
+      setup: () => hallAskingForLita.withCard(lita, blankAsset('lita'), playAreaOf(alice)),
+    },
+    { where: 'nowhere in the game (a player card)', setup: () => hallAskingForLita },
+  ])('lets alice take the action with Lita $where', ({ setup }) => {
+    const table = PlayTable.start(setup());
+
+    table.play(useAsAction(alice, hall));
+
+    expect(table.board.investigator(alice).horror).toBe(1);
+  });
+
+  it.each([
+    { where: 'in bob`s play area', zone: playAreaOf(bob) },
+    { where: 'in the hall, uncontrolled', zone: atLocation(hall) },
+  ])('neither offers nor accepts the action from alice with Lita $where', ({ zone }) => {
+    const table = PlayTable.start(hallAskingForLita.withCard(lita, blankAsset('lita'), zone));
+
+    expect(table.board.cardActions(alice)).toEqual([]);
+    expect(rejectionFrom(table.ctx, table.state, useAsAction(alice, hall))).toEqual({
+      code: 'cardActionConditionUnmet',
       cardId: hall,
       action: 0,
       investigatorId: alice,

@@ -298,12 +298,64 @@ describe('The Devourer Below card abilities', () => {
       },
     );
 
+    it('advances by itself to R1 once a pass places the second clue a lone investigator needs', () => {
+      const { context, state: started } = newGame()
+        .withLocation(mainPath, cardOf('01149'), { revealed: true })
+        .withInvestigator(alice, { locationId: mainPath, clues: 1 })
+        .withCard(act, cardOf('01148'), { kind: 'actDeck' }, { faceUp: true, tokens: { clue: 1 } })
+        .withTurnOf(alice)
+        .start();
+
+      const state = stateAfter(
+        context,
+        started,
+        disrupt,
+        answer(DISRUPTING_THE_RITUAL_DECISION, 'willpower'),
+        answer('test:disrupting_the_ritual', 'pass'),
+      );
+
+      expect(state.meta.resolution).toBe(DEVOURER_BELOW_RESOLUTIONS.ritualBroken);
+    });
+
     it('ends the scenario with R1 (the ritual is broken) when it advances', () => {
       const { context, state: started } = aliceWithAClue.start();
 
       const { state } = execute(context, started, { type: 'AdvanceAct' });
 
       expect(state.meta.resolution).toBe(DEVOURER_BELOW_RESOLUTIONS.ritualBroken);
+    });
+  });
+
+  describe('Umôrdhoth', () => {
+    it('ends the scenario with R3 (Lita sacrificed) after its attack of opportunity on alice, who takes its action', () => {
+      // Lita Chantler is a player card here, not a card of the game, so the action trusts alice to control her.
+      const { context, state: started } = newGame()
+        .withLocation(mainPath, cardOf('01149'), { revealed: true })
+        .withInvestigator(alice, {
+          locationId: mainPath,
+          health: { max: 8, damage: 0 },
+          sanity: { max: 8, horror: 0 },
+        })
+        .withCard(instanceId('umordhoth'), cardOf('01157'), atLocation(mainPath))
+        .withTurnOf(alice)
+        .start();
+      const taken = stateAfter(context, started, {
+        type: 'UseCardAction',
+        investigatorId: alice,
+        cardId: instanceId('umordhoth'),
+        action: 0,
+        asAction: true,
+      });
+
+      // Massive, it is engaged with alice, so the plain action provokes its attack first.
+      const state = stateAfter(context, taken, answer('attackOfOpportunity:umordhoth', 'attack'));
+
+      expect(taken.pending).toMatchObject([{ id: 'attackOfOpportunity:umordhoth' }]);
+      expect(requireInvestigator(state, alice)).toMatchObject({
+        health: { damage: 3 },
+        sanity: { horror: 3 },
+      });
+      expect(state.meta.resolution).toBe(DEVOURER_BELOW_RESOLUTIONS.litaSacrificed);
     });
   });
 

@@ -174,6 +174,7 @@ export {
   whenAdvanced,
   whenDefeated,
   whenEnemyDefeated,
+  whenTokensOnSelf,
   whenRevealed,
 } from './abilities';
 export type {
@@ -197,6 +198,7 @@ export {
   offersActionsTo,
   parleyAction,
   resignAction,
+  type ActionCondition,
   type ActionCost,
   type ActionLimit,
   type CardAction,
