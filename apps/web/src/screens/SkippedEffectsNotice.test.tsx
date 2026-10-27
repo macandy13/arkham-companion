@@ -57,6 +57,10 @@ describe('SkippedEffectsNotice', () => {
       },
       text: 'Roland Banks: search the top 6 cards of your deck for a card with the trait Tome or Spell, add it to your hand and shuffle your deck. Please do it by hand.',
     },
+    {
+      command: { type: 'DiscardFromHand', investigatorId: roland, amount: 4 },
+      text: 'Roland Banks: choose and discard 4 cards from your hand. Please do it by hand.',
+    },
   ] as const)('asks the players to do what the game left to them: $text', ({ command, text }) => {
     render(
       <SkippedEffectsNotice

@@ -1,5 +1,9 @@
 import { expect, test } from './fixtures/test';
-import { inTheParlorExport, resumeImportedGame } from './fixtures/saved_games';
+import {
+  inTheParlorExport,
+  resumeImportedGame,
+  rolandThreatenedExport,
+} from './fixtures/saved_games';
 import { startQuickGame } from './fixtures/wizard';
 
 // Journey: take an investigator's turn from their panel – start it, see their actions, investigate, and end it,
@@ -45,5 +49,34 @@ test('resign at the Parlor', async ({ page }) => {
   await test.step('Resign', async () => {
     await roland.getByRole('button', { name: 'Resign · Parlor' }).click();
     await expect(roland.getByText('Resigned')).toBeVisible();
+  });
+});
+
+// Journey: the resource action under an engaged enemy: the Ghoul Priest attacks first, as every
+// action but fight and evade provokes it, and only then does Roland Banks gain the resource.
+test('take a resource while the Ghoul Priest is engaged', { tag: '@flow' }, async ({ page }) => {
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
+  const resources = roland.locator('[data-stat="resources"] data');
+
+  await test.step('Resume a game with the Ghoul Priest engaged with Roland Banks', async () => {
+    await resumeImportedGame(
+      page,
+      'Roland threatened',
+      rolandThreatenedExport('Roland threatened'),
+    );
+    await expect(resources).toHaveText('5');
+  });
+
+  await test.step('Take a resource: the Ghoul Priest attacks first', async () => {
+    await roland.getByRole('button', { name: 'Take a resource' }).click();
+    const attack = page.getByRole('dialog', { name: 'Attack of opportunity by Ghoul Priest' });
+    await expect(attack).toBeVisible();
+    await expect(resources).toHaveText('5');
+    await attack.getByRole('button', { name: 'Take the attack' }).click();
+  });
+
+  await test.step('Then the resource arrives and the action is spent', async () => {
+    await expect(resources).toHaveText('6');
+    await expect(roland.getByRole('list', { name: '2 actions left' })).toBeVisible();
   });
 });
