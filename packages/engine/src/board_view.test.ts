@@ -1174,7 +1174,6 @@ describe('decisions and attacks', () => {
       investigatorId: alice,
       cardId: study,
       action: 0,
-      asAction: true,
     });
 
     const { decisions } = boardView(context, usingTheStudy);
