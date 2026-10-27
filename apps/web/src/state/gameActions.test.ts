@@ -10,6 +10,7 @@ import {
   investigatorId,
   newGame,
   PlayTable,
+  takeHorror,
   type CardPlaceView,
 } from '@arkham/engine';
 import type { PileMove } from '../encounter/cardMoves';
@@ -70,6 +71,23 @@ describe('gameActions', () => {
     await act(actionsOn(table));
 
     expect(table.board.investigator(alder)).toMatchObject({ actions: left });
+  });
+
+  it.each([
+    { kind: 'a card action', free: undefined, left: 2 },
+    { kind: 'a free card action', free: true as const, left: 3 },
+  ])('$kind leaves alder $left of three actions', async ({ free, left }) => {
+    const scare = { effects: [takeHorror(1)], ...(free ? { free } : {}) };
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study', { actions: [scare] }), { revealed: true })
+        .withInvestigator(alder, { locationId: study })
+        .withTurnOf(alder),
+    );
+
+    await actionsOn(table).useCardAction(study, 0);
+
+    expect(table.board.investigator(alder)).toMatchObject({ horror: 1, actions: left });
   });
 
   it.each<{ cost: ActionCost; attacks: string[] }>([

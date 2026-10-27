@@ -8,7 +8,7 @@ import {
   type EnemyRef,
   type InvestigatorRef,
 } from './card_matchers';
-import { type EngineContext, type ScenarioContext } from './cards';
+import { cardStats, type EngineContext, type ScenarioContext } from './cards';
 import type { Command } from './commands';
 import { pendingDecision } from './decisions';
 import { describeDecision, optionNamed } from './describe_decision';
@@ -267,20 +267,22 @@ export class PlayTable {
 
   /**
    * The investigator takes the action ability number `action` (default the first) printed on the
-   * one card in the game `card` picks (a location, the agenda, an enemy, …).
+   * one card in the game `card` picks (a location, the agenda, an enemy, …), as an action unless
+   * it is free (`CardAction.free`).
    */
   useCardAction(investigator: InvestigatorRef, card: CardRef, action = 0): void {
     const matcher = cardMatcher(card);
-    const { id } = this.onlyOne(
+    const { id, code } = this.onlyOne(
       matchingCards(this.ctx, Object.values(this.current.cards), matcher),
       `card ${describeMatcher(matcher)}`,
     );
+    const free = cardStats(this.ctx.cards, code).actions?.[action]?.free;
     this.play({
       type: 'UseCardAction',
       investigatorId: this.seat(investigator),
       cardId: id,
       action,
-      asAction: true,
+      ...(free ? {} : { asAction: true as const }),
     });
   }
 

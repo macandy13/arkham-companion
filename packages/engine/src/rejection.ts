@@ -196,6 +196,8 @@ export type Rejection =
       action: number;
       investigatorId: InvestigatorId;
     }
+  /** `UseCardAction` taking a free action (`CardAction.free`) `asAction`, which it never costs. */
+  | { code: 'freeCardActionAsAction'; cardId: InstanceId; action: number }
   /** `UseCardAction` on an action whose condition doesn't hold for the investigator ("If you control Lita Chantler:"). */
   | {
       code: 'cardActionConditionUnmet';
@@ -436,6 +438,8 @@ function describe(r: Rejection): string {
       return `${r.investigatorId} has used action ${r.action} of ${r.cardId} as often as its limit allows`;
     case 'cardActionCostUnpaid':
       return `${r.investigatorId} cannot pay the cost of action ${r.action} of ${r.cardId}`;
+    case 'freeCardActionAsAction':
+      return `action ${r.action} of ${r.cardId} is free, so it is not taken as an action`;
     case 'cardActionConditionUnmet':
       return `the condition of action ${r.action} of ${r.cardId} does not hold for ${r.investigatorId}`;
     case 'wrongPhase':

@@ -418,6 +418,55 @@ describe('action costs', () => {
   });
 });
 
+describe('free actions', () => {
+  /** The hall's one action scares its taker without costing an action. */
+  const freeScare: CardAction = { ...scareAction, free: true };
+  /** Alice in the hall with a ready ghoul engaged, bob there too; it is alice's turn. */
+  const ghoulOnAliceBobAlongside = newGame()
+    .withLocation(hall, blankLocation('hall', { actions: [freeScare] }), { revealed: true })
+    .withInvestigator(alice, { locationId: hall })
+    .withInvestigator(bob, { locationId: hall })
+    .withCard(ghoul, blankEnemy('ghoul', { damage: 1 }), engagedWith(alice))
+    .withTurnOf(alice);
+  const takeFree = (investigator: InvestigatorId): UseCardAction => ({
+    type: 'UseCardAction',
+    investigatorId: investigator,
+    cardId: hall,
+    action: 0,
+  });
+
+  it.each([
+    {
+      who: 'alice, engaged with the ready ghoul, without an attack of opportunity',
+      investigator: alice,
+    },
+    { who: 'bob outside his turn', investigator: bob },
+  ])('lets $who take it', ({ investigator }) => {
+    const { context, state } = ghoulOnAliceBobAlongside.start();
+
+    const after = stateAfter(context, state, takeFree(investigator));
+
+    expect(after.pending).toEqual([]);
+    expect(investigatorOf(after, investigator).sanity.horror).toBe(1);
+  });
+
+  it('offers it as free', () => {
+    const table = PlayTable.start(ghoulOnAliceBobAlongside);
+
+    expect(table.board.cardActions(bob)).toMatchObject([{ cardId: hall, action: 0, free: true }]);
+  });
+
+  it('rejects taking it as an action', () => {
+    const { context, state } = ghoulOnAliceBobAlongside.start();
+
+    expect(rejectionFrom(context, state, useAsAction(alice, hall))).toEqual({
+      code: 'freeCardActionAsAction',
+      cardId: hall,
+      action: 0,
+    });
+  });
+});
+
 describe('action conditions', () => {
   const lita = instanceId('lita');
   /** The hall's one action scares its taker "if you control Lita"; alice and bob are in the hall, on alice's turn. */
