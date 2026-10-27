@@ -7,6 +7,8 @@ import {
   cardImagePath,
   disengageFromEachEnemy,
   drawCards,
+  drawFromScenarioDeck,
+  perInvestigator,
   engageReadyEnemies,
   decisionId,
   encounterSetCode,
@@ -122,8 +124,7 @@ function parleyIntoVictoryDisplay(cost: ActionCost): CardAction {
  * core set data), no card text, JSON or images. Effects the engine has no
  * rule for yet are left out, so the players resolve them from the card:
  *
- * - the act's action (spending clues to draw from the Cultist deck) and its
- *   objective (the players advance it)
+ * - the act's objective (the players advance it)
  * - agenda 1 turning into The Masked Hunter
  * - Herman Collins' Parley (discarding cards from the hand)
  * - Your House's hold on the Ghoul Priest and Easttown's cost reduction
@@ -167,6 +168,12 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     set: own,
     stage: 1,
     abilities: [whenAdvanced(endScenario(MIDNIGHT_MASKS_RESOLUTIONS.conspiracyUncovered))],
+    actions: [
+      {
+        cost: { spend: 'groupClues', amount: perInvestigator(2) },
+        effects: [drawFromScenarioDeck('cultist')],
+      },
+    ],
   }),
   location({
     code: '01124',
