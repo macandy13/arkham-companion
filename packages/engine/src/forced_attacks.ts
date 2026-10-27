@@ -45,7 +45,7 @@ export function forcedAttackDecision(
     id: decisionId(`${kind}:${enemyId}`),
     kind: 'confirm',
     subject: enemyId,
-    prompt: `decision.${kind}`,
+    prompt: forcedAttackPrompt(kind),
     decider: { kind: 'investigator', investigatorId },
     options: [
       {
@@ -65,6 +65,11 @@ export function forcedAttackDecision(
       { id: 'skip', label: SKIP_LABELS[kind], commands: [] },
     ],
   };
+}
+
+/** The prompt of a `forcedAttackDecision` of `kind`, so views can tell which forced attack asks. */
+export function forcedAttackPrompt(kind: ForcedAttackKind): string {
+  return `decision.${kind}`;
 }
 
 /** The forced attacks a keyword triggers after a failed test; the kind is also the keyword's name. */

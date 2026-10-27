@@ -65,6 +65,7 @@ export {
   type LocationView,
   type MapEnemyView,
   type MapView,
+  type ProvokingActionView,
   type ResolvingCardView,
 } from './board_view';
 export {

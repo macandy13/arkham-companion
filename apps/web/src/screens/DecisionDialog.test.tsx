@@ -113,6 +113,21 @@ describe('DecisionDialog', () => {
     expect(screen.getByRole('heading').textContent).toBe('Attack of opportunity by Ghoul');
   });
 
+  it('names the action that provoked an attack of opportunity', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study', { name: 'Study' }), { revealed: true })
+        .withInvestigator(alder, { name: 'Alder', locationId: study })
+        .withCard(ghoul, blankEnemy('ghoul', { name: 'Ghoul' }), engagedWith(alder))
+        .withTurnOf(alder),
+    );
+    table.investigate(alder, { result: 'open' });
+
+    renderFirstDecision(table);
+
+    expect(screen.getByText('Alder investigates Study: Ghoul attacks first')).toBeDefined();
+  });
+
   it('tells two copies of one enemy apart by their location', () => {
     const hallway = instanceId('hallway');
     const attic = instanceId('attic');

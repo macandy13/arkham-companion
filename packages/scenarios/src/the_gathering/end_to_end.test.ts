@@ -679,6 +679,7 @@ describe('The Gathering end to end: Roland, Daisy and Wendy, seed 24', () => {
         options: ['attack', 'does not provoke'],
         labels: { attack: 'decision.attack', 'does not provoke': 'decision.doesNotProvoke' },
         counts: { attack: { damage: { default: 1, min: 0 }, horror: { default: 2, min: 0 } } },
+        provokedBy: { action: 'Investigate', card: 'Attic' },
       },
     ]);
 
