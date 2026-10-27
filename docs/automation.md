@@ -24,7 +24,7 @@ UI changes are easier to review as a recording than as a diff. E2E specs tagged 
 
 ### Review aids
 
-- **Key changes and review map**: the PR template's sections that show the main API/code changes as snippets and tell the reviewer what to read first, which rules changed, which architecture section moved and the decisions left to them, as links rather than prose (coding guidelines §7). Claude fills them in when it opens a PR.
+- **Key changes and review map**: the PR template's sections that show the main API/code changes as snippets and tell the reviewer what to read first, which rules changed, which architecture page changed and the decisions left to them, as links rather than prose (coding guidelines §7). Claude fills them in when it opens a PR.
 - **`REVIEW.md`**: what a reviewer flags as blocking, flags as optional, or ignores. The `pr-reviewer` subagent (`.claude/agents/pr-reviewer.md`) applies it in the session that opens the PR, in a fresh context, and the session posts its summary and inline comments on the PR. It runs on the session's subscription, so it costs nothing per review; the `claude-review` label runs the same check in CI when wanted.
 - **`.gitattributes`**: the lockfile, changelog, release manifest and `docs/tasks/done/` are marked `linguist-generated`, so GitHub collapses them in the diff.
 

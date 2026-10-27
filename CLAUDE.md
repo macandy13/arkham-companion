@@ -41,7 +41,7 @@ Before finishing a task: `pnpm typecheck && pnpm lint && pnpm test` must pass. A
 
 Each milestone issue (label `milestone`, listed in `docs/tasks/README.md`) lists its tasks as sub-issues in order; do them in that order. A task issue's first line names the model: **Sonnet** is enough, **Opus** for design-heavy work. A task is one session, delivered as one or more small PRs. Start one from the phone: Code tab → repo → `Do task M1C.6 (#278)`.
 
-1. Read the task issue (with its parent and sub-issues) and only the architecture sections it references.
+1. Read the task issue (with its parent and sub-issues) and only the architecture pages it references.
 2. Keep the change small and focused on that task: one reviewable idea per PR, within the size budget in `docs/coding-guidelines.md` §7 – split bigger tasks into a stack of PRs and open one sub-issue per slice first (title `M1C.4c …`, a short body, the `**Model:** … · **Area:** …` line). Open a sub-issue (GitHub MCP `issue_write` with `parent_issue_number`) for each follow-up instead of doing it: under the task it came from, or under the milestone for a new task (`M5.6 …`, with Why, Benefit and a checklist). New milestones are new parent issues with the `milestone` label, added to `docs/tasks/README.md` and `docs/product.md`.
 3. The PR body says `Closes #<slice or task issue>`. Tick the task issue's checklist and, when the work changes the plan, edit its body; a short "Done" comment on the task issue records what was built. Close a task once its slices are closed; its follow-ups stay open as sub-issues.
 4. Open a PR against `main`. **The PR title is a Conventional Commit** – it becomes the squash commit and the changelog entry (Release Please):
