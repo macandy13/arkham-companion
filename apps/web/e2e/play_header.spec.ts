@@ -4,7 +4,7 @@ import { startQuickGame } from './fixtures/wizard';
 // Journey: run the game clock from the header and the status row – read the agenda's doom and the
 // act's clues, correct the doom while adjusting the board and keep the correction with "Done", move
 // on a phase, see why a step is refused, and take a step back, then back the game up from the menu.
-test('play the phases from the header', { tag: '@flow' }, async ({ page }) => {
+test('play the phases from the header', async ({ page }) => {
   await test.step('Start a quick game', async () => {
     await page.goto('/#/new');
     await startQuickGame(page);

@@ -13,6 +13,7 @@ import { useCardPicture } from '../catalog/cardImages';
 import type { GameActions, SteppedStat } from '../state/gameActions';
 import { SkillTestDialog } from './SkillTestDialog';
 import { signed } from './TestCalculation';
+import { PlayArea } from './PlayArea';
 import { ThreatArea } from './ThreatArea';
 import { TurnControls } from './TurnControls';
 import './investigators.css';
@@ -127,8 +128,9 @@ function OtherInvestigators({
  * One investigator: their threat area along the top edge of their card, the card drawn like the
  * printed investigator cards and the map's location cards (a name band with where they are and how
  * their round goes, the art window, the four skills and the counters as round tokens along its
- * foot), then their turn controls. Beside the name, a pentagon marks the lead investigator, like
- * the game's lead investigator token, and an action arrow the investigator whose turn it is.
+ * foot), the cards they control under it (`PlayArea`), then their turn controls. Beside the name,
+ * a pentagon marks the lead investigator, like the game's lead investigator token, and an action
+ * arrow the investigator whose turn it is.
  * Health and sanity show what is left of the printed value, like the dials, while their steppers
  * place and heal damage and horror, like the tokens on the card. Clues show without steppers: they
  * are found by investigating and spent on the act.
@@ -195,6 +197,12 @@ function InvestigatorPanel({
         />
         <Counters investigator={investigator} adjusting={adjusting} busy={busy} actions={actions} />
       </article>
+      <PlayArea
+        board={board}
+        cards={board.cardsIn({ kind: 'playArea', investigatorId: investigator.id })}
+        actions={actions}
+        busy={busy || adjusting}
+      />
       <TurnControls
         board={board}
         investigator={investigator}

@@ -2,6 +2,7 @@
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import {
+  blankAsset,
   blankEnemy,
   blankLocation,
   blankTreachery,
@@ -12,6 +13,7 @@ import {
   investigatorId,
   newGame,
   PlayTable,
+  playAreaOf,
   resignAction,
   threatAreaOf,
 } from '@arkham/engine';
@@ -972,6 +974,52 @@ describe('InvestigatorBar', () => {
         .queryAllByRole('button', { name: /threat area/ })
         .map((button) => button.getAttribute('aria-label'));
       expect(shown).toEqual(arrows);
+    });
+  });
+
+  describe('the play area', () => {
+    const lita = instanceId('lita_chantler');
+    /** Alder controls Lita Chantler; brook controls nothing. */
+    const aldersLita = () =>
+      PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'))
+          .withInvestigator(alder, { locationId: study })
+          .withInvestigator(brook, { locationId: study })
+          .withCard(lita, blankAsset('lita_chantler'), playAreaOf(alder)),
+      );
+
+    it('lists the cards alder controls under the card, and none for brook', () => {
+      const table = aldersLita();
+
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      const played = within(panel('alder')).getByRole('list', { name: 'Cards in play' });
+      expect(within(played).getByRole('listitem').textContent).toBe('lita_chantler');
+      expect(within(panel('brook')).queryByRole('list', { name: 'Cards in play' })).toBeNull();
+    });
+
+    it('opens a controlled card to read', () => {
+      const table = aldersLita();
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      fireEvent.click(within(panel('alder')).getByRole('button', { name: 'Read lita_chantler' }));
+
+      expect(screen.getByRole('dialog', { name: 'lita_chantler' })).toBeTruthy();
     });
   });
 });

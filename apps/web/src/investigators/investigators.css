@@ -430,7 +430,7 @@
 }
 
 /* Two ids, so they beat the home screen's padded `#app > main ul > li` cards. */
-#board > #investigators > section > div li {
+#board > #investigators > section li[data-card] {
   display: grid;
   flex: none;
   align-content: space-between;
@@ -452,12 +452,29 @@
   scroll-snap-align: start;
 }
 
+/*
+ * The play area: the cards the investigator controls, a row of the same small cards under their
+ * card, as they lie beside it on the table.
+ */
+#board > #investigators > section > ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#board > #investigators > section li[data-card='asset'] {
+  border-color: var(--color-card-asset);
+}
+
 /* An engaged enemy's card is framed in the doom colour, its health left at its foot. */
-#board > #investigators > section > div li[data-threat='enemy'] {
+#board > #investigators > section li[data-card='enemy'] {
   border-color: var(--color-doom);
 }
 
-#board > #investigators > section > div li > data {
+#board > #investigators > section li[data-card] > data {
   font-family: var(--font-family-display);
   font-size: var(--font-size-body);
 }
@@ -466,11 +483,11 @@
  * Each card is one big button that opens it, an enemy's details or a treachery to read: the button
  * lies over the whole card, so the card still shows its name and health.
  */
-#board > #investigators > section > div li {
+#board > #investigators > section li[data-card] {
   position: relative;
 }
 
-#board > #investigators > section > div li > button {
+#board > #investigators > section li[data-card] > button {
   position: absolute;
   inset: 0;
   min-width: 0;
@@ -480,7 +497,7 @@
   background: none;
 }
 
-#board > #investigators > section > div li[data-exhausted] {
+#board > #investigators > section li[data-card][data-exhausted] {
   opacity: var(--eliminated-opacity);
 }
 

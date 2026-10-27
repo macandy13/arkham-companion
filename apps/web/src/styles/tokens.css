@@ -28,7 +28,7 @@
   --color-token-text: #ffffff;
   /*
    * Card frames by card type: locations on the map; the encounter deck, agenda, act and scenario
-   * in the header; investigators in the investigator bar.
+   * in the header; investigators and the assets they control in the investigator bar.
    */
   --color-card-agenda: #9a4a3c;
   --color-card-act: #4a6f9a;
@@ -36,6 +36,7 @@
   --color-card-encounter: #4f6b52;
   --color-card-treachery: #6e5a8c;
   --color-card-investigator: #8a6a2c;
+  --color-card-asset: #6f6a5c;
   /*
    * The face of a card drawn by the app (map tiles, attachments): dark in both themes, like the
    * printed cards, so these are not redefined for the light theme.

@@ -60,7 +60,14 @@ export function ThreatArea({
       )}
       <ul ref={strip} aria-label={t('investigators.threatArea')}>
         {treacheries.map((card) => (
-          <TreacheryCard key={card.id} board={board} card={card} actions={actions} busy={busy} />
+          <SmallCard
+            key={card.id}
+            kind="treachery"
+            board={board}
+            card={card}
+            actions={actions}
+            busy={busy}
+          />
         ))}
         {enemies.map((enemy) => (
           <EnemyCard key={enemy.id} board={board} enemy={enemy} actions={actions} busy={busy} />
@@ -80,16 +87,18 @@ export function ThreatArea({
 }
 
 /**
- * A treachery in the threat area as a small card with its name; a tap on it, a button over the
- * whole card like the enemies', opens it large (`CardZoom`), with the actions it offers, such as
- * one that discards it.
+ * A treachery in the threat area or an asset in the play area (`kind`, which picks its frame) as
+ * a small card with its name; a tap on it, a button over the whole card like the enemies', opens
+ * it large (`CardZoom`), with the actions it offers, such as one that discards a treachery.
  */
-function TreacheryCard({
+export function SmallCard({
+  kind,
   board,
   card,
   actions,
   busy,
 }: {
+  kind: 'treachery' | 'asset';
   board: BoardView;
   card: CardFaceView;
   actions: GameActions;
@@ -100,7 +109,7 @@ function TreacheryCard({
   const close = () => setZoomed(false);
   const offered = cardActionsOn(board, card.id);
   return (
-    <li data-threat="treachery">
+    <li data-card={kind}>
       {card.name}
       <button
         type="button"
@@ -141,7 +150,7 @@ function EnemyCard({
   const left = enemy.health === undefined ? undefined : enemy.health - (enemy.damage ?? 0);
   return (
     <li
-      data-threat="enemy"
+      data-card="enemy"
       data-exhausted={enemy.exhausted}
       aria-label={[
         enemy.name,
