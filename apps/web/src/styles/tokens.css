@@ -39,7 +39,7 @@
   --color-card-asset: #6f6a5c;
   /*
    * The colours of the location connection symbols, as the printed cards colour each symbol (map
-   * tiles); the same in both themes, like the cards.
+   * tiles), sampled from The Gathering's card pictures; the same in both themes, like the cards.
    */
   --color-connection-circle: #a78f32;
   --color-connection-square: #8f2e2f;

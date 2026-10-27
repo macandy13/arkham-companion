@@ -336,6 +336,7 @@ function Attachment({ name, origin: { x, y } }: { name: string; origin: Point })
  */
 function ConnectionSymbol({ symbol }: { symbol: LocationSymbol }) {
   const { t } = useTranslation();
+  // Centred like the details button across the name, so both sit on the name's line.
   const centre = CONTENT.pawnRadius;
   return (
     <g
