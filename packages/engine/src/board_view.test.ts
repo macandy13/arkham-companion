@@ -32,6 +32,7 @@ import {
   skillTest,
   whenRevealed,
   resignAction,
+  takeHorror,
   TableError,
   threatAreaOf,
   playAreaOf,
@@ -1105,7 +1106,7 @@ describe('decisions and attacks', () => {
       provoking: {
         type: 'EngageEnemy',
         investigatorId: alice,
-        enemyId: instanceId('rat'),
+        enemyId: instanceId('unengaged_rat'),
         asAction: true,
       },
       provokedBy: { action: 'EngageEnemy', card: 'rat' },
@@ -1129,7 +1130,7 @@ describe('decisions and attacks', () => {
         .withLocation(hallway, blankLocation('hallway'), { revealed: true })
         .withConnection(study, hallway)
         .withCard(
-          instanceId('rat'),
+          instanceId('unengaged_rat'),
           blankEnemy('rat', { keywords: [{ name: 'aloof' }] }),
           atLocation(study),
         )
@@ -1141,6 +1142,30 @@ describe('decisions and attacks', () => {
       expect(decisions).toEqual([expect.objectContaining({ provokedBy })]);
     },
   );
+
+  it('names the card whose action provoked the attack of opportunity', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study', { actions: [{ effects: [takeHorror(1)] }] }), {
+        revealed: true,
+      })
+      .withInvestigator(alice, { locationId: study })
+      .withCard(instanceId('ghoul'), blankEnemy('ghoul'), engagedWith(alice))
+      .withTurnOf(alice)
+      .start();
+    const usingTheStudy = stateAfter(context, state, {
+      type: 'UseCardAction',
+      investigatorId: alice,
+      cardId: study,
+      action: 0,
+      asAction: true,
+    });
+
+    const { decisions } = boardView(context, usingTheStudy);
+
+    expect(decisions).toEqual([
+      expect.objectContaining({ provokedBy: { action: 'UseCardAction', card: 'study' } }),
+    ]);
+  });
 
   it('names no provoking action for a forced attack that is not an attack of opportunity', () => {
     const { context, state } = newGame()
