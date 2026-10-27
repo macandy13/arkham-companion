@@ -73,9 +73,13 @@ export function handleMarkFate(
   return [{ type: 'InvestigatorFateChanged', code, fate }];
 }
 
-/** `EarnCard`: a story card for a living team member. */
+/**
+ * `EarnCard`: a story card for a living team member. Earning a card they already hold changes
+ * nothing, so `earnedCards` lists each story card once.
+ */
 export function handleEarnCard(log: CampaignLog, command: EarnCard): CampaignEvent[] {
-  requireAlive(log, command.code);
+  const investigator = requireAlive(log, command.code);
+  if (investigator.earnedCards.includes(command.card)) return [];
   return [{ type: 'CardEarned', code: command.code, card: command.card }];
 }
 

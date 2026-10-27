@@ -180,6 +180,16 @@ describe('EarnCard', () => {
     expect(findInvestigator(log, roland.code)?.earnedCards).toEqual([cardCode('lita')]);
     expect(findInvestigator(log, daisy.code)?.earnedCards).toEqual([]);
   });
+
+  it('lists a story card roland earns twice once', () => {
+    const log = startedCampaign(
+      { investigators: [roland.code] },
+      { type: 'EarnCard', code: roland.code, card: cardCode('lita') },
+      { type: 'EarnCard', code: roland.code, card: cardCode('lita') },
+    );
+
+    expect(findInvestigator(log, roland.code)?.earnedCards).toEqual([cardCode('lita')]);
+  });
 });
 
 describe('eliminated investigators (Roland is killed, Daisy is insane)', () => {

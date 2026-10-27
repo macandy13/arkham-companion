@@ -554,7 +554,11 @@ describe('action conditions on a player card earned in the campaign', () => {
     )
     .withInvestigator(alice, { locationId: hall })
     .withTurnOf(alice);
-  /** The campaign log of alice and bob, with the cards each earned. */
+  /**
+   * The campaign log of alice and bob, with the cards each earned. A game investigator is the
+   * campaign member with their investigator code, and `withInvestigator(alice)` gives alice the
+   * code 'alice', so the log's 'alice' is the hall's alice.
+   */
   const logWhere = (earned: { alice: CardCode[]; bob: CardCode[] }) =>
     makeCampaignLog({
       investigators: [

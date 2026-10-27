@@ -425,15 +425,14 @@ describe('The Gathering acts 2 and 3', () => {
       });
       const ended = stateAfter(ctx, asked, answer(BURN_THE_HOUSE_DECISION, optionId));
 
-      const proposal = campaign.proposeResolution(ctx, ended, theGatheringResolutions);
+      const proposal = campaign.proposeResolution(ctx, ended, theGatheringResolutions) ?? [];
 
-      expect(
-        (proposal ?? []).flatMap((change) =>
-          change.kind === 'command' && change.command.type === 'EarnCard'
-            ? [change.command.code]
-            : [],
-        ),
-      ).toEqual(earners);
+      const litaEarners = proposal.flatMap((change) =>
+        change.kind === 'command' && change.command.type === 'EarnCard'
+          ? [change.command.code]
+          : [],
+      );
+      expect(litaEarners).toEqual(earners);
     },
   );
 
@@ -574,6 +573,25 @@ describe('The Gathering agendas 2 and 3', () => {
       { kind: 'byHand', textKey: 'scenario.theGathering.resolution.replaceKilled' },
       { kind: 'byHand', textKey: 'scenario.theGathering.resolution.earnLitaIfLeadKilled' },
     ]);
+  });
+
+  it('lets the players give Lita only to seeker, who resigned, when R3 kills the rest', () => {
+    const atAgenda3 = stateAfter(ctx, atAgenda2(), { type: 'AdvanceAgenda' });
+    const ended = stateAfter(
+      ctx,
+      atAgenda3,
+      { type: 'NextPhase' },
+      { type: 'StartTurn', investigatorId: seeker },
+      { type: 'Resign', investigatorId: seeker },
+      { type: 'AdvanceAgenda' },
+    );
+
+    const proposal = campaign.proposeResolution(ctx, ended, theGatheringResolutions) ?? [];
+
+    expect(proposal).toContainEqual({
+      kind: 'choice',
+      options: [{ type: 'EarnCard', code: investigatorCode('seeker'), card: codes.litaChantler }],
+    });
   });
 
   it('defeats every investigator who has not resigned when agenda 3 advances at act 3', () => {
