@@ -1,19 +1,19 @@
 <!-- screencasts:start -->
 
-_Recorded from 90ea265 by the PR preview workflow; updated on every push that changes `apps/web`._
+_Recorded from 2269327 by the PR preview workflow; updated on every push that changes `apps/web`._
 
 ## Screencasts
 
 ### draw an encounter card for Roland Banks on his turn
 
-![draw an encounter card for Roland Banks on his turn](https://macandy13.github.io/arkham-companion/pr-preview/pr-507/screencasts/draw-an-encounter-card-for-roland-banks-on-his-turn.gif?v=90ea265)
+![draw an encounter card for Roland Banks on his turn](https://macandy13.github.io/arkham-companion/pr-preview/pr-507/screencasts/draw-an-encounter-card-for-roland-banks-on-his-turn.gif?v=2269327)
 
-[Play with pause and speed controls](https://macandy13.github.io/arkham-companion/pr-preview/pr-507/screencasts/player.html?flow=draw-an-encounter-card-for-roland-banks-on-his-turn&v=90ea265&speed=0.25)
+[Play with pause and speed controls](https://macandy13.github.io/arkham-companion/pr-preview/pr-507/screencasts/player.html?flow=draw-an-encounter-card-for-roland-banks-on-his-turn&v=2269327&speed=0.25)
 
 ### move Dissonant Voices from the discard pile into Roland Banks’ threat area
 
-![move Dissonant Voices from the discard pile into Roland Banks’ threat area](https://macandy13.github.io/arkham-companion/pr-preview/pr-507/screencasts/move-dissonant-voices-from-the-discard-pile-into-roland-banks-threat-area.gif?v=90ea265)
+![move Dissonant Voices from the discard pile into Roland Banks’ threat area](https://macandy13.github.io/arkham-companion/pr-preview/pr-507/screencasts/move-dissonant-voices-from-the-discard-pile-into-roland-banks-threat-area.gif?v=2269327)
 
-[Play with pause and speed controls](https://macandy13.github.io/arkham-companion/pr-preview/pr-507/screencasts/player.html?flow=move-dissonant-voices-from-the-discard-pile-into-roland-banks-threat-area&v=90ea265&speed=0.25)
+[Play with pause and speed controls](https://macandy13.github.io/arkham-companion/pr-preview/pr-507/screencasts/player.html?flow=move-dissonant-voices-from-the-discard-pile-into-roland-banks-threat-area&v=2269327&speed=0.25)
 
 <!-- screencasts:end -->
