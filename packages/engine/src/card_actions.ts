@@ -32,9 +32,10 @@ export interface CardAction {
    */
   readonly designator?: 'resign' | 'parley';
   /**
-   * Taken without spending an action ("[fast]", or an act's "the investigators may spend clues as
-   * a group" in any player window): `UseCardAction` takes it outside the taker's turn too, never
-   * `asAction`, so it never provokes attacks of opportunity. Absent for an action ability.
+   * A "[free]" ability, taken without spending an action in any player window (Rules Reference,
+   * "[free]"): `UseCardAction` takes it outside the taker's turn too, never `asAction`, so it never
+   * provokes attacks of opportunity. Abilities limited to a narrower timing (an act's group clue
+   * spend, "during any investigator's turn") need their own check. Absent for an action ability.
    */
   readonly free?: true;
   /** "(Limit once per …)", when the card prints one. */
@@ -295,6 +296,11 @@ export function withinLimit(
       (limit.group === true || use.investigatorId === investigatorId) &&
       (limit.per === 'game' || use.round === state.meta.round),
   );
+}
+
+/** Whether action number `action` printed on cards of `code` is free (`CardAction.free`). */
+export function isFreeCardAction(ctx: EngineContext, code: CardCode, action: number): boolean {
+  return cardStats(ctx.cards, code).actions?.[action]?.free === true;
 }
 
 /** The action `cmd` takes; rejects an index the card doesn't print (`unknownCardAction`). */

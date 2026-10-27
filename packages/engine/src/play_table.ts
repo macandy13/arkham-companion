@@ -8,7 +8,8 @@ import {
   type EnemyRef,
   type InvestigatorRef,
 } from './card_matchers';
-import { cardStats, type EngineContext, type ScenarioContext } from './cards';
+import { type EngineContext, type ScenarioContext } from './cards';
+import { isFreeCardAction } from './card_actions';
 import type { Command } from './commands';
 import { pendingDecision } from './decisions';
 import { describeDecision, optionNamed } from './describe_decision';
@@ -276,13 +277,12 @@ export class PlayTable {
       matchingCards(this.ctx, Object.values(this.current.cards), matcher),
       `card ${describeMatcher(matcher)}`,
     );
-    const free = cardStats(this.ctx.cards, code).actions?.[action]?.free;
     this.play({
       type: 'UseCardAction',
       investigatorId: this.seat(investigator),
       cardId: id,
       action,
-      ...(free ? {} : { asAction: true as const }),
+      ...(isFreeCardAction(this.ctx, code, action) ? {} : { asAction: true as const }),
     });
   }
 

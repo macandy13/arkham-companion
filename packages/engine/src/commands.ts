@@ -975,8 +975,9 @@ export interface Resign {
 
 /**
  * The investigator takes the action ability number `action` (index into `CardStats.actions`) of
- * the card `cardId`, in their own turn and where the card offers it (`offersActionsTo`). Taken
- * as an action it provokes attacks of opportunity, unless it is a Resign or Parley. Produces no
+ * the card `cardId`, in their own turn (unless it is free, `CardAction.free`, which is never
+ * `asAction`) and where the card offers it (`offersActionsTo`). Taken as an action it provokes
+ * attacks of opportunity, unless it is a Resign or Parley. Produces no
  * events of its own: the action's effects follow (`cardActionSteps`).
  */
 export interface UseCardAction extends ActionCommand {

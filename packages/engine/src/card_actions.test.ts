@@ -436,12 +436,9 @@ describe('free actions', () => {
   });
 
   it.each([
-    {
-      who: 'alice, engaged with the ready ghoul, without an attack of opportunity',
-      investigator: alice,
-    },
-    { who: 'bob outside his turn', investigator: bob },
-  ])('lets $who take it', ({ investigator }) => {
+    { who: 'alice take it while engaged with the ready ghoul', investigator: alice },
+    { who: 'bob take it outside his turn', investigator: bob },
+  ])('lets $who, provoking no attack', ({ investigator }) => {
     const { context, state } = ghoulOnAliceBobAlongside.start();
 
     const after = stateAfter(context, state, takeFree(investigator));
