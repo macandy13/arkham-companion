@@ -111,6 +111,8 @@ export type Rejection =
    */
   /** `DrawEncounter` with the encounter deck and its discard both empty. */
   | { code: 'encounterDeckEmpty' }
+  /** `UseCardAction.spend` for an action whose cost is not paid as a group. */
+  | { code: 'noGroupCost' }
   /** `DrawFromScenarioDeck` on a deck with no cards left. */
   | { code: 'scenarioDeckEmpty'; deck: ScenarioDeck }
   /** `DrawEncounter` brought an enemy for an investigator who is not at a location. */
@@ -361,6 +363,8 @@ function describe(r: Rejection): string {
       return `${r.required} clues are required, ${r.spent} spent`;
     case 'encounterDeckEmpty':
       return 'the encounter deck and its discard are empty';
+    case 'noGroupCost':
+      return 'only a cost paid as a group names its payers';
     case 'scenarioDeckEmpty':
       return `the ${r.deck} deck is empty`;
     case 'investigatorHasNoLocation':
