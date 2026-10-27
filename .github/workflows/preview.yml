@@ -63,12 +63,14 @@ jobs:
       # 55 kB/s when many jobs start at once and stall a run for 10 minutes.
       - id: playwright
         if: steps.changes.outputs.web == 'true'
-        run: echo "version=$(pnpm --filter @arkham/web exec playwright --version | awk '{ print $2 }')" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "version=$(pnpm --filter @arkham/web exec playwright --version | awk '{ print $2 }')" >> "$GITHUB_OUTPUT"
+          echo "image=$ImageOS" >> "$GITHUB_OUTPUT"
       - if: steps.changes.outputs.web == 'true'
         uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-shell-${{ runner.os }}-${{ env.ImageOS }}-${{ steps.playwright.outputs.version }}
+          key: playwright-shell-${{ steps.playwright.outputs.image }}-${{ steps.playwright.outputs.version }}
       - if: steps.changes.outputs.web == 'true'
         timeout-minutes: 5
         run: pnpm --filter @arkham/web exec playwright install --only-shell chromium
