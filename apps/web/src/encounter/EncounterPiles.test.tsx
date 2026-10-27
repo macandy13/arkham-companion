@@ -13,7 +13,7 @@ import {
 } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { gameActions } from '../state/gameActions';
-import { EncounterPiles } from './EncounterPiles';
+import { EncounterPiles, HeaderPile } from './EncounterPiles';
 
 const study = instanceId('study');
 const alder = investigatorId('alder');
@@ -273,5 +273,87 @@ describe('EncounterPiles', () => {
     await waitFor(() =>
       expect(table.board.investigator(alder).threatArea).toEqual(['Frozen in Fear']),
     );
+  });
+});
+
+describe('HeaderPile', () => {
+  beforeAll(async () => {
+    await initI18n('en');
+  });
+  afterEach(cleanup);
+
+  it('fans the top three set-aside cards with the count on its disc', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withCard(instanceId('lita'), blankAsset('Lita Chantler'), { kind: 'setAside' })
+        .withCard(instanceId('ghoul_priest'), blankEnemy('Ghoul Priest'), { kind: 'setAside' })
+        .withCard(instanceId('cellar'), blankLocation('Cellar'), { kind: 'setAside' })
+        .withCard(instanceId('attic'), blankLocation('Attic'), { kind: 'setAside' }),
+    );
+
+    render(
+      <HeaderPile
+        pile="setAside"
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+      />,
+    );
+
+    const pile = screen.getByRole('button', { name: 'Set aside, 4 cards' });
+    expect(within(pile).getAllByRole('listitem')).toHaveLength(3);
+    expect(pile.querySelector('data')?.value).toBe('4');
+  });
+
+  it('shows the victory points earned on the victory display, cleared locations included', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withLocation(instanceId('parlor'), blankLocation('Parlor', { victory: 1 }), {
+          revealed: true,
+          clues: 0,
+        })
+        .withCard(instanceId('ghoul_priest'), blankEnemy('Ghoul Priest', { victory: 2 }), {
+          kind: 'victoryDisplay',
+        }),
+    );
+
+    render(
+      <HeaderPile
+        pile="victoryDisplay"
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+      />,
+    );
+
+    const pile = screen.getByRole('button', { name: 'Victory display, 3 victory points' });
+    expect(pile.querySelector('data')?.value).toBe('3');
+  });
+
+  it('opens the encounter dialog with the tapped pile open', () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'))
+        .withCard(instanceId('lita'), blankAsset('Lita Chantler'), { kind: 'setAside' }),
+    );
+    render(
+      <HeaderPile
+        pile="setAside"
+        board={table.board}
+        actions={actionsOn(table)}
+        busy={false}
+        adjusting={false}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Set aside, 1 card' }));
+
+    const dialog = within(screen.getByRole('dialog', { name: 'Encounter deck' }));
+    expect(dialog.getByText('Set aside (1)').closest('details')?.open).toBe(true);
+    expect(dialog.getByText('Discard pile (0)').closest('details')?.open).toBe(false);
   });
 });

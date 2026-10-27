@@ -211,44 +211,84 @@
 }
 
 /*
- * The encounter discard pile is a small card beside the deck: an empty card outline, or its top
- * card's picture (the art pattern until it loads) with the pile's count on a disc at its foot.
+ * The piles beside a card lie fanned on its lower right corner, as players leave them on the table:
+ * the encounter discard pile on the deck, the set-aside cards on the scenario card. The victory
+ * display lies on its own. Up to three of a pile's top cards fan out, the top one in
+ * front, with the pile's count (the victory points for the victory display) on a disc at its foot.
+ * An empty pile is only a small dashed card outline.
  */
-#board > header [data-pile='discard'] {
+#board > header [data-pile] {
   position: relative;
+  z-index: 1;
+  align-self: end;
   min-width: 0;
   min-height: 0;
   padding: 0;
+  border: none;
   background: none;
   box-sizing: border-box;
-  height: var(--layout-pile-symbol-height);
+  height: var(--layout-pile-height);
   aspect-ratio: 5 / 7;
+}
+
+#board > header :is([data-pile='discard'], [data-pile='setAside']) {
+  margin-inline-start: var(--pile-fan-tuck);
+}
+
+#board > header [data-pile]:not(:has(> ul)) {
+  height: var(--layout-pile-symbol-height);
   border: var(--border-width) dashed var(--color-card-encounter);
   border-radius: var(--radius);
+  background: var(--color-surface);
 }
 
-#board > header [data-pile='discard']:has(> data) {
-  height: var(--layout-pile-height);
-  border: var(--card-border-width) solid var(--color-card-encounter);
-  background: var(--card-art-pattern), var(--color-surface);
-}
-
-#board > header [data-pile='discard'] > img {
+#board > header [data-pile] > ul {
   position: absolute;
   inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#board > header [data-pile] > ul > li {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: var(--card-border-width) solid var(--color-card-encounter);
+  border-radius: var(--radius);
+  background: var(--card-art-pattern), var(--color-surface);
+  box-shadow: var(--header-token-shadow);
+  overflow: hidden;
+  transform-origin: 50% 100%;
+}
+
+#board > header [data-pile] > ul > li:nth-last-child(1) {
+  transform: rotate(var(--pile-fan-turn-top));
+}
+
+#board > header [data-pile] > ul > li:nth-last-child(2) {
+  transform: rotate(var(--pile-fan-turn-second));
+}
+
+#board > header [data-pile] > ul > li:nth-last-child(3) {
+  transform: rotate(var(--pile-fan-turn-third));
+}
+
+#board > header [data-pile] > ul > li > img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-#board > header [data-pile='discard']:not([data-picture]) > img {
+#board > header [data-pile] > ul > li:not([data-picture]) > img {
   visibility: hidden;
 }
 
-#board > header [data-pile='discard'] > data {
+#board > header [data-pile] > data {
   position: absolute;
-  inset-block-end: var(--space-1);
-  inset-inline-end: var(--space-1);
+  inset-block-end: calc(-1 * var(--space-1));
+  inset-inline-end: calc(-1 * var(--space-1));
   min-width: var(--pile-count-size);
   height: var(--pile-count-size);
   display: grid;
@@ -258,6 +298,10 @@
   color: var(--header-token-text);
   font-size: var(--font-size-note);
   font-weight: bold;
+}
+
+#board > header [data-pile='setAside'] > data {
+  background: var(--color-card-scenario);
 }
 
 #board > header [data-card='agenda'] {

@@ -4,6 +4,7 @@ import {
   houseOpenedExport,
   investigationOpenExport,
   mythosDrawnExport,
+  pilesFilledExport,
   resumeImportedGame,
   twoMapsExport,
 } from '../fixtures/saved_games';
@@ -138,19 +139,41 @@ test("the Ghoul Priest's details opened from its card on Roland Banks' turn", as
   await expect(page.getByRole('dialog', { name: 'Ghoul Priest' })).toBeVisible();
 });
 
-test('the encounter deck after two mythos phases, Dissonant Voices on the discard pile', async ({
-  page,
-}) => {
-  await resumeImportedGame(page, 'Two mythos draws', mythosDrawnExport('Two mythos draws'));
+test(
+  'the encounter deck after two mythos phases, Dissonant Voices on the discard pile',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'Two mythos draws', mythosDrawnExport('Two mythos draws'));
 
-  const deck = page.getByRole('region', { name: 'Encounter deck' });
-  await expect(
-    deck.getByRole('button', { name: '24 cards left in the encounter deck' }),
-  ).toBeVisible();
-  await expect(
-    deck.getByRole('button', { name: 'Encounter discard pile, 1 card, Dissonant Voices on top' }),
-  ).toBeVisible();
-});
+    const deck = page.getByRole('region', { name: 'Encounter deck' });
+    await expect(
+      deck.getByRole('button', { name: '24 cards left in the encounter deck' }),
+    ).toBeVisible();
+    await expect(
+      deck.getByRole('button', { name: 'Encounter discard pile, 1 card, Dissonant Voices on top' }),
+    ).toBeVisible();
+  },
+);
+
+test(
+  'the header with its piles fanned: seven cards discarded, the set-aside cards on the scenario card, the Ghoul Priest in the victory display',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'Piles filled', pilesFilledExport('Piles filled'));
+
+    await expect(
+      page.getByRole('button', { name: /^Encounter discard pile, 7 cards, .* on top$/ }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('region', { name: 'Scenario' }).getByRole('button', { name: /^Set aside, / }),
+    ).toBeVisible();
+    await expect(
+      page
+        .getByRole('region', { name: 'Victory' })
+        .getByRole('button', { name: 'Victory display, 2 victory points' }),
+    ).toBeVisible();
+  },
+);
 
 test('the encounter dialog opened on the discard pile after two mythos phases', async ({
   page,
