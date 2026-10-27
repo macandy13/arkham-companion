@@ -173,6 +173,7 @@ export {
   whenAdvanced,
   whenDefeated,
   whenEnemyDefeated,
+  whenTokensOnSelf,
   whenRevealed,
 } from './abilities';
 export type {

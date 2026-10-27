@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  advanceAct,
+  whenTokensOnSelf,
   resolutionId,
   cardImagePath,
   atLocation,
@@ -814,6 +816,21 @@ describe('agenda and act', () => {
     );
 
     expect(board.act).toEqual({ name: 'first_act', clues: 2, threshold: 3 });
+  });
+
+  it('takes the act threshold from its objective on its own clues', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withInvestigator(alice, { locationId: study })
+      .withAct(
+        instanceId('ritual_act'),
+        blankAct('ritual_act', {
+          abilities: [whenTokensOnSelf('clue', perInvestigator(2), advanceAct())],
+        }),
+      )
+      .start();
+
+    expect(boardView(context, state).act).toEqual({ name: 'ritual_act', clues: 0, threshold: 2 });
   });
 
   it('reads an agenda without a doom threshold without one', () => {

@@ -1,5 +1,6 @@
 import { assertNever, listIfAny } from '@arkham/util';
 import { isConnectionOpen, neighbours } from './board';
+import { tokenObjective } from './abilities';
 import { cardActionsOfferedTo, type OfferedCardAction } from './card_actions';
 import { effectiveValue } from './card_values';
 import { cardStats, resolveValue, type CardType, type EngineContext, type Trait } from './cards';
@@ -967,12 +968,15 @@ function agendaView(ctx: EngineContext, state: GameState): AgendaView | undefine
 function actView(ctx: EngineContext, state: GameState): ActView | undefined {
   const act = currentCard(state, 'act');
   if (!act) return undefined;
-  const { clues, imageSrc } = cardStats(ctx.cards, act.code);
+  const stats = cardStats(ctx.cards, act.code);
+  const threshold = tokenObjective(stats, 'clue') ?? stats.clues;
   return {
     name: nameOf(ctx, act),
-    ...(imageSrc === undefined ? {} : { image: imageSrc }),
+    ...(stats.imageSrc === undefined ? {} : { image: stats.imageSrc }),
     clues: act.tokens.clue ?? 0,
-    ...(clues === undefined ? {} : { threshold: resolveValue(clues, state.meta.playerCount) }),
+    ...(threshold === undefined
+      ? {}
+      : { threshold: resolveValue(threshold, state.meta.playerCount) }),
   };
 }
 

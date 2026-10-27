@@ -17,8 +17,7 @@
  * What the engine leaves to the players is done by hand, as at the table:
  * agenda 1's reverse side (the Monster spawning at the Main Path with 1 doom),
  * act 2's objective and reverse side (the enemy spawning at the Ritual Site),
- * act 3's objective (advancing it once it holds 2 clues per investigator), the
- * Ritual Site's clues at the end of the round,
+ * the Ritual Site's clues at the end of the round,
  * Frozen in Fear's extra action, agenda 2's +1 fight and evade, Ancient
  * Evils' doom, Umôrdhoth's Wrath, Twisting Paths' test to leave it (Daisy
  * passes) and the 2 random cards "it is past midnight" discards from each
@@ -431,8 +430,9 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
 
     // Round 6 – mythos: Daisy draws Ancient Evils and places its doom by hand,
     // 4 of 5. Alone, she places her 3 clues on the act; with Roland's that
-    // makes 4, 2 per investigator, and the act advances: the ritual is broken
-    // (R1) a round before the agenda would have advanced.
+    // makes 4, 2 per investigator, and the act's objective advances it by
+    // itself: the ritual is broken (R1) a round before the agenda would have
+    // advanced.
     expect(table.nextPhase()).toEqual({ round: 6, phase: 'mythos' });
     expect(table.board.namesIn({ kind: 'encounterDiscard' })[0]).toBe('Ancient Evils');
     table.play({ type: 'PlaceDoom', amount: 1 });
@@ -442,7 +442,6 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
     placeClueOnTheAct(daisy);
     placeClueOnTheAct(daisy);
     placeClueOnTheAct(daisy);
-    table.play({ type: 'AdvanceAct' });
 
     expect(table.board.ended).toBe(true);
     expect(table.board.resolution).toBe('R1');

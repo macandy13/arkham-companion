@@ -82,6 +82,7 @@ import {
   whenAdvanced,
   whenDefeated,
   whenEnemyDefeated,
+  whenTokensOnSelf,
   whenRevealed,
   whenTurnBegins,
   youMustEither,
@@ -1385,6 +1386,44 @@ describe('objectives on the current agenda and act', () => {
       .start();
 
     const { state } = execute(context, started, { type: 'DefeatEnemy', enemyId: priest });
+
+    expect(state.act.current).toBe(act1);
+  });
+});
+
+describe("objectives on a card's own tokens", () => {
+  /** "If there are 2 clues on this Act, advance." */
+  const twoClueAct = blankAct('two_clue_act', {
+    abilities: [whenTokensOnSelf('clue', fixed(2), advanceAct())],
+  });
+  /** Alice in the hall; the current act holds `clues` clues and advances at 2. */
+  const actWithClues = (clues: number) =>
+    newGame()
+      .withAgenda(agenda1, firstAgendaCard)
+      .withCard(act1, twoClueAct, { kind: 'actDeck' }, { faceUp: true, tokens: { clue: clues } })
+      .withAct(act2, secondActCard)
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall });
+  const placeClueOnAct: Command = { type: 'PlaceTokens', cardId: act1, token: 'clue', amount: 1 };
+
+  it.each([
+    { clues: 1, current: act2, outcome: 'advances' },
+    { clues: 0, current: act1, outcome: 'stays' },
+  ])('$outcome when a clue is placed on the act holding $clues', ({ clues, current }) => {
+    const { context, state: started } = actWithClues(clues).start();
+
+    const { state } = execute(context, started, placeClueOnAct);
+
+    expect(state.act.current).toBe(current);
+  });
+
+  it('does not fire for a clue put on by hand, a correction', () => {
+    const { context, state: started } = actWithClues(1).start();
+
+    const { state } = execute(context, started, {
+      type: 'ManualAdjust',
+      adjustment: { kind: 'tokens', cardId: act1, token: 'clue', delta: 1 },
+    });
 
     expect(state.act.current).toBe(act1);
   });

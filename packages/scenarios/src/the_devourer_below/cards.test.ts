@@ -298,6 +298,25 @@ describe('The Devourer Below card abilities', () => {
       },
     );
 
+    it('advances by itself to R1 once a pass places the second clue a lone investigator needs', () => {
+      const { context, state: started } = newGame()
+        .withLocation(mainPath, cardOf('01149'), { revealed: true })
+        .withInvestigator(alice, { locationId: mainPath, clues: 1 })
+        .withCard(act, cardOf('01148'), { kind: 'actDeck' }, { faceUp: true, tokens: { clue: 1 } })
+        .withTurnOf(alice)
+        .start();
+
+      const state = stateAfter(
+        context,
+        started,
+        disrupt,
+        answer(DISRUPTING_THE_RITUAL_DECISION, 'willpower'),
+        answer('test:disrupting_the_ritual', 'pass'),
+      );
+
+      expect(state.meta.resolution).toBe(DEVOURER_BELOW_RESOLUTIONS.ritualBroken);
+    });
+
     it('ends the scenario with R1 (the ritual is broken) when it advances', () => {
       const { context, state: started } = aliceWithAClue.start();
 
