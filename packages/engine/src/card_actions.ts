@@ -1,5 +1,5 @@
 import { assertNever } from '@arkham/util';
-import type { AbilityEffect, AbilityStep } from './abilities';
+import { advanceAct, type AbilityEffect, type AbilityStep } from './abilities';
 import { isLocationInPlay } from './board';
 import {
   cardStats,
@@ -87,10 +87,17 @@ export function actionConditionHolds(
   condition: ActionCondition | undefined,
 ): boolean {
   if (condition === undefined) return true;
-  if (condition.kind === 'investigatorTurn') return state.meta.turn !== undefined;
-  const copies = Object.values(state.cards).filter((card) => card.code === condition.card);
-  if (copies.length === 0) return true;
-  return copies.some((card) => sameZone(card.zone, playAreaOf(investigator.id)));
+  switch (condition.kind) {
+    case 'investigatorTurn':
+      return state.meta.turn !== undefined;
+    case 'controls': {
+      const copies = Object.values(state.cards).filter((card) => card.code === condition.card);
+      if (copies.length === 0) return true;
+      return copies.some((card) => sameZone(card.zone, playAreaOf(investigator.id)));
+    }
+    default:
+      return assertNever(condition);
+  }
 }
 
 /**
@@ -197,7 +204,7 @@ export function advanceBySpendingClues(clues: ScaledValue): CardAction {
     free: true,
     condition: { kind: 'investigatorTurn' },
     cost: { spend: 'groupClues', amount: clues },
-    effects: [{ type: 'AdvanceAct' }],
+    effects: [advanceAct()],
   };
 }
 
@@ -206,11 +213,11 @@ export function advanceBySpendingClues(clues: ScaledValue): CardAction {
  * `advanceBySpendingClues` ability; none when it has no such ability.
  */
 export function cluesToAdvance(stats: CardStats): ScaledValue | undefined {
-  const advance = (stats.actions ?? []).find(
-    ({ cost, effects }) =>
-      cost?.spend === 'groupClues' && effects.some((effect) => effect.type === 'AdvanceAct'),
-  );
-  return advance?.cost?.spend === 'groupClues' ? advance.cost.amount : undefined;
+  return (stats.actions ?? []).flatMap(({ cost, effects }) =>
+    cost?.spend === 'groupClues' && effects.some((effect) => effect.type === 'AdvanceAct')
+      ? [cost.amount]
+      : [],
+  )[0];
 }
 
 /**
