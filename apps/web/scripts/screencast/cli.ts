@@ -2,11 +2,11 @@
  * Command-line entry for the PR screencasts, run with plain `node` (type stripping) by
  * `.github/workflows/preview.yml`:
  *
- *   node cli.ts render <report.json> <base.json> <outDir> <baseUrl> <version>
+ *   node cli.ts render <report.json> <base.json> <outDir> <baseUrl> <pictureBaseUrl> <version>
  *     Converts every passing flow video into `<outDir>/<slug>.gif` and `.webm`, copies every
  *     passing screenshot to `<outDir>/<slug>-<device>.png`, adds the player page (`player.html`, listing
- *     the recorded flows) and writes the PR description section to `<outDir>/section.md` and
- *     `version` to `<outDir>/version.txt`, so the workflow can tell when Pages serves this push.
+ *     the recorded flows) and writes the PR description section to `<outDir>/section.md`, with
+ *     pictures linked from `pictureBaseUrl` and the player from `baseUrl`.
  *     Specs whose picture is the same in `base.json` (the base commit's run) are skipped.
  *   node cli.ts splice <body.md> <section.md>
  *     Prints the PR description with the screencast section replaced.
@@ -34,6 +34,7 @@ function render(
   baseReportPath: string,
   outDir: string,
   baseUrl: string,
+  pictureBaseUrl: string,
   version: string,
 ): void {
   const report = JSON.parse(readFileSync(reportPath, 'utf8')) as PlaywrightReport;
@@ -60,8 +61,10 @@ function render(
   const here = dirname(fileURLToPath(import.meta.url));
   const template = readFileSync(join(here, 'player.html'), 'utf8');
   writeFileSync(join(outDir, 'player.html'), playerPage(template, { flows, version }));
-  writeFileSync(join(outDir, 'section.md'), renderSection({ flows, shots, baseUrl, version }));
-  writeFileSync(join(outDir, 'version.txt'), `${version}\n`);
+  writeFileSync(
+    join(outDir, 'section.md'),
+    renderSection({ flows, shots, baseUrl, pictureBaseUrl, version }),
+  );
 }
 
 /**
@@ -101,21 +104,22 @@ function splice(bodyPath: string, sectionPath: string): void {
 }
 
 const [command, ...args] = process.argv.slice(2);
-if (command === 'render' && args.length === 5) {
-  const [reportPath, baseReportPath, outDir, baseUrl, version] = args as [
+if (command === 'render' && args.length === 6) {
+  const [reportPath, baseReportPath, outDir, baseUrl, pictureBaseUrl, version] = args as [
+    string,
     string,
     string,
     string,
     string,
     string,
   ];
-  render(reportPath, baseReportPath, outDir, baseUrl, version);
+  render(reportPath, baseReportPath, outDir, baseUrl, pictureBaseUrl, version);
 } else if (command === 'splice' && args.length === 2) {
   const [bodyPath, sectionPath] = args as [string, string];
   splice(bodyPath, sectionPath);
 } else {
   console.error(
-    'usage: cli.ts render <report> <base> <outDir> <baseUrl> <version> | splice <body> <section>',
+    'usage: cli.ts render <report> <base> <outDir> <baseUrl> <pictureBaseUrl> <version> | splice <body> <section>',
   );
   process.exit(1);
 }

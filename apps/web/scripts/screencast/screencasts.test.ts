@@ -383,21 +383,22 @@ describe('renderSection', () => {
   const recorded = { title: 'Create a game', slug: 'create-a-game', videoPath: '/v.webm' };
   const failed = { title: 'Broken flow', slug: 'broken-flow', videoPath: undefined };
 
-  it('embeds a cache-busted GIF and links the player for a recorded flow', () => {
+  it('embeds a cache-busted GIF from the picture host and links the player on Pages for a recorded flow', () => {
     const section = renderSection({
       flows: [recorded],
       shots: [],
       baseUrl: 'https://x.test/s',
+      pictureBaseUrl: 'https://raw.x.test/s',
       version: 'abc123',
     });
 
-    expect(section).toContain('![Create a game](https://x.test/s/create-a-game.gif?v=abc123)');
+    expect(section).toContain('![Create a game](https://raw.x.test/s/create-a-game.gif?v=abc123)');
     expect(section).toContain(
       '[Play with pause and speed controls](https://x.test/s/player.html?flow=create-a-game&v=abc123&speed=0.25)',
     );
   });
 
-  it('shows the desktop and phone screenshots side by side, cache-busted, above the screencasts', () => {
+  it('shows the desktop and phone screenshots side by side, cache-busted from the picture host, above the screencasts', () => {
     const section = renderSection({
       flows: [recorded],
       shots: [
@@ -408,6 +409,7 @@ describe('renderSection', () => {
         },
       ],
       baseUrl: 'https://x.test/s',
+      pictureBaseUrl: 'https://raw.x.test/s',
       version: 'abc123',
     });
 
@@ -417,8 +419,8 @@ describe('renderSection', () => {
         '',
         '<table>',
         '<tr><th>Desktop</th><th>Phone</th></tr>',
-        '<tr><td><img src="https://x.test/s/map-tabs-desktop.png?v=abc123" alt="Desktop" width="560"></td>' +
-          '<td><img src="https://x.test/s/map-tabs-phone.png?v=abc123" alt="Phone" width="180"></td></tr>',
+        '<tr><td><img src="https://raw.x.test/s/map-tabs-desktop.png?v=abc123" alt="Desktop" width="560"></td>' +
+          '<td><img src="https://raw.x.test/s/map-tabs-phone.png?v=abc123" alt="Phone" width="180"></td></tr>',
         '</table>',
       ].join('\n'),
     );
@@ -436,6 +438,7 @@ describe('renderSection', () => {
         },
       ],
       baseUrl: 'https://x.test/s',
+      pictureBaseUrl: 'https://raw.x.test/s',
       version: 'abc123',
     });
 
@@ -451,6 +454,7 @@ describe('renderSection', () => {
         { title: 'Map tabs', slug: 'map-tabs', pictures: { desktop: undefined, phone: undefined } },
       ],
       baseUrl: 'https://x.test/s',
+      pictureBaseUrl: 'https://raw.x.test/s',
       version: 'abc123',
     });
 
@@ -464,6 +468,7 @@ describe('renderSection', () => {
       flows: [],
       shots: [],
       baseUrl: 'https://x.test/s',
+      pictureBaseUrl: 'https://raw.x.test/s',
       version: 'abc123',
     });
 
@@ -475,6 +480,7 @@ describe('renderSection', () => {
       flows: [failed],
       shots: [],
       baseUrl: 'https://x.test/s/',
+      pictureBaseUrl: 'https://raw.x.test/s/',
       version: 'abc123',
     });
 
@@ -488,6 +494,7 @@ describe('renderSection', () => {
       flows: [],
       shots: [],
       baseUrl: 'https://x.test/s/',
+      pictureBaseUrl: 'https://raw.x.test/s/',
       version: 'abc123',
     });
 
