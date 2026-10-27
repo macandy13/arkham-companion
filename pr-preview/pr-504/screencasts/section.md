@@ -1,19 +1,19 @@
 <!-- screencasts:start -->
 
-_Recorded from 1bc93d2 by the PR preview workflow; updated on every push that changes `apps/web`._
+_Recorded from a61c7b0 by the PR preview workflow; updated on every push that changes `apps/web`._
 
 ## Screenshots
 
 ### Frozen in Fear from Roland Banks’ threat area, zoomed to read
 
-![Frozen in Fear from Roland Banks’ threat area, zoomed to read](https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-504/screencasts/frozen-in-fear-from-roland-banks-threat-area-zoomed-to-read.png?v=1bc93d2)
+![Frozen in Fear from Roland Banks’ threat area, zoomed to read](https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-504/screencasts/frozen-in-fear-from-roland-banks-threat-area-zoomed-to-read.png?v=a61c7b0)
 
 ## Screencasts
 
 ### take a resource while the Ghoul Priest is engaged
 
-![take a resource while the Ghoul Priest is engaged](https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-504/screencasts/take-a-resource-while-the-ghoul-priest-is-engaged.gif?v=1bc93d2)
+![take a resource while the Ghoul Priest is engaged](https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-504/screencasts/take-a-resource-while-the-ghoul-priest-is-engaged.gif?v=a61c7b0)
 
-[Play with pause and speed controls](https://macandy13.github.io/arkham-companion/pr-preview/pr-504/screencasts/player.html?flow=take-a-resource-while-the-ghoul-priest-is-engaged&v=1bc93d2&speed=0.25)
+[Play with pause and speed controls](https://macandy13.github.io/arkham-companion/pr-preview/pr-504/screencasts/player.html?flow=take-a-resource-while-the-ghoul-priest-is-engaged&v=a61c7b0&speed=0.25)
 
 <!-- screencasts:end -->
