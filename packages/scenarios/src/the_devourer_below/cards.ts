@@ -71,6 +71,8 @@ export const DEVOURER_BELOW_CODES = {
   arkhamWoodsQuietGlade: cardCode('01155'),
   ritualSite: cardCode('01156'),
   umordhoth: cardCode('01157'),
+  /** The Gathering's Lita Chantler, a player card by now: Umôrdhoth's action asks for her. */
+  litaChantler: cardCode('01117'),
 } as const;
 
 /**
@@ -140,7 +142,7 @@ const woods = ['Woods'];
  * - the Main Path's connection to each Woods location,
  *   the Arkham Woods' moving-out test, skill swaps, and the
  *   Ritual Site's clues at the end of the round
- * - Umôrdhoth's Lita action (R3) and Umôrdhoth's Wrath
+ * - Umôrdhoth's Wrath
  * - the Agents' constant and attack abilities (Screeching Byakhee, Yithian
  *   Observer), the madness weaknesses, Offer of Power's 2 cards, and Dreams of
  *   R'lyeh's -1 willpower and -1 sanity
@@ -284,6 +286,13 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
     horror: 3,
     keywords: [{ name: 'hunter' }, { name: 'massive' }],
     abilities: [atEndOfEachTurn(readySelf())],
+    // "[action] If you control Lita Chantler: You throw Lita to Umôrdhoth … (→R3)".
+    actions: [
+      {
+        condition: { controls: codes.litaChantler },
+        effects: [endScenario(DEVOURER_BELOW_RESOLUTIONS.litaSacrificed)],
+      },
+    ],
   }),
   treachery({
     code: '01158',

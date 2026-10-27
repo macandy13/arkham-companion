@@ -5,7 +5,7 @@ import { cardStats, resolveValue, type EngineContext, type ScaledValue } from '.
 import type { ClueSpend, UseCardAction } from './commands';
 import { locationOf } from './enemies';
 import type { CardActionUsed, CommandDeferred, InvestigatorChanged } from './events';
-import type { InstanceId, InvestigatorId } from './ids';
+import type { CardCode, InstanceId, InvestigatorId } from './ids';
 import {
   activeInvestigator,
   activeInvestigators,
@@ -17,6 +17,7 @@ import { currentCard, requireCard } from './lookup';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState, Investigator } from './state';
 import { requireTurnOf } from './turns';
+import { playAreaOf, sameZone } from './zone';
 
 /**
  * An action ability printed on a card ("[action]: …", `CardStats.actions`), taken with
@@ -34,6 +35,8 @@ export interface CardAction {
   readonly limit?: ActionLimit;
   /** "Spend N resources:" or "Spend N clues:", paid before the effects. */
   readonly cost?: ActionCost;
+  /** "If you control Lita Chantler:", which the investigator taking it must meet (`conditionHolds`). */
+  readonly condition?: ActionCondition;
   readonly effects: readonly AbilityEffect[];
 }
 
@@ -45,6 +48,33 @@ export interface CardAction {
 export interface ActionLimit {
   readonly per: 'turn' | 'game';
   readonly group?: true;
+}
+
+/**
+ * A condition on the investigator taking an action, printed before its colon: "If you control
+ * Lita Chantler:" (`controls`, Umôrdhoth). An action whose condition doesn't hold is neither
+ * offered nor accepted.
+ */
+export interface ActionCondition {
+  readonly controls: CardCode;
+}
+
+/**
+ * Whether `condition` holds for `investigator`. "If you control X" holds when a card X is in their
+ * play area. When the game has no card X at all, X is a player card the players hold (Lita
+ * Chantler, earned in The Gathering, is in an investigator's deck by The Devourer Below), which
+ * the game doesn't track, so it trusts the investigator taking the action, as it trusts a hand
+ * card cost. No condition always holds.
+ */
+export function conditionHolds(
+  state: GameState,
+  investigator: Investigator,
+  condition: ActionCondition | undefined,
+): boolean {
+  if (condition === undefined) return true;
+  const copies = Object.values(state.cards).filter((card) => card.code === condition.controls);
+  if (copies.length === 0) return true;
+  return copies.some((card) => sameZone(card.zone, playAreaOf(investigator.id)));
 }
 
 /**
@@ -209,7 +239,8 @@ export interface OfferedCardAction {
 
 /**
  * Every card action the cards in play offer `investigator` (`offersActionsTo`), their limits
- * still allow (`withinLimit`) and the investigator can pay for (`canPay`), in the order of the
+ * still allow (`withinLimit`), the investigator can pay for (`canPay`) and meets the condition of
+ * (`conditionHolds`), in the order of the
  * cards in the state, then of the actions on each card. It does not check whose turn it is:
  * `UseCardAction` does.
  */
@@ -221,8 +252,10 @@ export function cardActionsOfferedTo(
   return Object.values(state.cards).flatMap((card) => {
     const actions = cardStats(ctx.cards, card.code).actions ?? [];
     if (actions.length === 0 || !offersActionsTo(state, card, investigator)) return [];
-    return actions.flatMap(({ designator, limit, cost }, action) =>
-      withinLimit(state, card, action, limit, investigator.id) && canPay(state, investigator, cost)
+    return actions.flatMap(({ designator, limit, cost, condition }, action) =>
+      withinLimit(state, card, action, limit, investigator.id) &&
+      canPay(state, investigator, cost) &&
+      conditionHolds(state, investigator, condition)
         ? [{ cardId: card.id, action, ...(designator === undefined ? {} : { designator }) }]
         : [],
     );
@@ -262,7 +295,8 @@ export function cardActionOf(ctx: EngineContext, state: GameState, cmd: UseCardA
 /**
  * `UseCardAction`: checks that the investigator may take the action now, in their own turn,
  * where the card offers it (`offersActionsTo`, else `cardActionUnavailable`) and as its limit
- * allows (`withinLimit`, else `cardActionLimitReached`), and that they can pay its cost (`canPay`,
+ * allows (`withinLimit`, else `cardActionLimitReached`), that they meet its condition
+ * (`conditionHolds`, else `cardActionConditionUnmet`) and that they can pay its cost (`canPay`,
  * else `cardActionCostUnpaid`); records the use (`CardActionUsed`) and pays the cost
  * (`costPayment`).
  * Its effects follow as ability steps (`cardActionSteps`).
@@ -274,7 +308,7 @@ export function handleUseCardAction(
 ): (CardActionUsed | InvestigatorChanged | CommandDeferred)[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
   requireTurnOf(state, investigator.id);
-  const { limit, cost } = cardActionOf(ctx, state, cmd);
+  const { limit, cost, condition } = cardActionOf(ctx, state, cmd);
   const card = requireCard(state.cards, cmd.cardId);
   if (!offersActionsTo(state, card, investigator))
     throw new CommandRejected({
@@ -285,6 +319,13 @@ export function handleUseCardAction(
   if (!withinLimit(state, card, cmd.action, limit, investigator.id))
     throw new CommandRejected({
       code: 'cardActionLimitReached',
+      cardId: cmd.cardId,
+      action: cmd.action,
+      investigatorId: investigator.id,
+    });
+  if (!conditionHolds(state, investigator, condition))
+    throw new CommandRejected({
+      code: 'cardActionConditionUnmet',
       cardId: cmd.cardId,
       action: cmd.action,
       investigatorId: investigator.id,

@@ -195,6 +195,7 @@ export {
   offersActionsTo,
   parleyAction,
   resignAction,
+  type ActionCondition,
   type ActionCost,
   type ActionLimit,
   type CardAction,
