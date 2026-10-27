@@ -1,0 +1,85 @@
+name: PR sync
+
+# Keeps open PRs mergeable while several sessions merge into main in parallel. On every push
+# to main, and whenever a PR's branch moves, it test-merges each open PR's base branch into
+# its head:
+# - Conflict: labels the PR `needs-rebase` and comments once with the conflicting files. The
+#   comment wakes the Claude session that watches the PR, which merges main in and resolves
+#   them (CLAUDE.md, "Workflow for tasks").
+# - Clean: removes the label. With the repo secret PR_SYNC_TOKEN (a fine-grained token with
+#   contents: write) it also pushes the merge commit, so CI checks the PR against current
+#   main. Without it clean branches are left alone: pushes made with GITHUB_TOKEN start no
+#   workflows, so the new head would lack the required checks and block the merge, while an
+#   unpushed clean branch still merges.
+# Skipped: PRs from forks (no write token), Dependabot and Release Please branches (their
+# bots keep them up to date and stop doing so once someone else pushes).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: pr-sync-${{ github.event.pull_request.number || 'all' }}
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR: ${{ github.event.pull_request.number }}
+      CAN_PUSH: ${{ secrets.PR_SYNC_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.PR_SYNC_TOKEN || github.token }}
+      - name: Test-merge each open PR with its base
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898283+github-actions[bot]@users.noreply.github.com'
+          gh label create needs-rebase --force --color d93f0b \
+            --description 'Conflicts with its base branch; merge it in and resolve'
+          fields=number,baseRefName,headRefName,isCrossRepository,labels
+          if [ -n "$PR" ]; then
+            prs=$(gh pr view "$PR" --json "$fields" --jq '[.]')
+          else
+            prs=$(gh pr list --state open --limit 200 --json "$fields")
+          fi
+          jq -c '.[] | select((.isCrossRepository | not)
+              and (.headRefName | test("^(dependabot/|release-please--)") | not))' <<<"$prs" |
+          while read -r pr; do
+            n=$(jq -r .number <<<"$pr")
+            base=$(jq -r .baseRefName <<<"$pr")
+            head=$(jq -r .headRefName <<<"$pr")
+            labelled=$(jq -r 'any(.labels[]; .name == "needs-rebase")' <<<"$pr")
+            git checkout -q -B sync "origin/$head"
+            if git merge -q --no-edit -m "Merge branch '$base' into $head" "origin/$base"; then
+              echo "#$n: merges cleanly with $base"
+              if [ "$labelled" = true ]; then gh pr edit "$n" --remove-label needs-rebase; fi
+              if [ "$CAN_PUSH" = true ] && [ "$(git rev-parse HEAD)" != "$(git rev-parse "origin/$head")" ]; then
+                # Fails when the PR's session pushed in the meantime; its push re-runs this check.
+                git push -q origin "HEAD:refs/heads/$head" || echo "::warning::#$n: could not push the merge of $base"
+              fi
+            else
+              files=$(git diff --name-only --diff-filter=U | sed 's/^/- `/; s/$/`/')
+              git merge --abort
+              echo "::notice::#$n conflicts with $base"
+              if [ "$labelled" != true ]; then
+                gh pr edit "$n" --add-label needs-rebase
+                gh pr comment "$n" --body "$(printf '%s\n' \
+                  "Merging \`$base\` into this branch conflicts in:" '' "$files" '' \
+                  "Merge \`$base\` in (a merge commit, no rebase), resolve the conflicts, run typecheck, lint and tests, and push. The \`needs-rebase\` label goes away once the branch merges cleanly." \
+                  '' '---' '_Posted by the PR sync workflow (`.github/workflows/pr-sync.yml`)._')"
+              fi
+            fi
+          done
