@@ -228,9 +228,7 @@ function MapDrawing({
                       enemies={map.enemies[location.id] ?? []}
                       investigators={board.investigatorsAt(location.id)}
                       turnOrder={board}
-                      onOpen={() =>
-                        onPick ? onPick(location.id) : setDetailsFor(location.id)
-                      }
+                      onOpen={() => (onPick ? onPick(location.id) : setDetailsFor(location.id))}
                       dragOf={(piece) =>
                         draggable(piece)
                           ? drag.handlers({ ...piece, from: location.id })

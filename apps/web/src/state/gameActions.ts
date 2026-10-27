@@ -1,8 +1,6 @@
 import {
-  atLocation,
   CommandRejected,
   encounterDiscard,
-  engagedWith,
   setAside,
   threatAreaOf,
   optionNamed,
@@ -129,8 +127,8 @@ export interface GameActions {
   drawEncounter(investigator: InvestigatorId): Promise<void>;
   /**
    * Puts the encounter card `card` where `move` says, a correction by hand (`ManualAdjust`) for a
-   * revelation the engine left to the players: onto the discard pile, set aside, into a threat area,
-   * or at a location, engaged with an investigator there when `move` names one.
+   * revelation the engine left to the players: onto the discard pile, set aside or into a threat
+   * area. Enemies spawn with `spawnEnemy` instead, so the engine engages them by the rules.
    */
   moveEncounterCard(card: InstanceId, move: CardMove): Promise<void>;
   /**

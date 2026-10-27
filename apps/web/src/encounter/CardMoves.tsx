@@ -1,10 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import type {
-  BoardView,
-  CardPlaceView,
-  EncounterCardView,
-  InvestigatorId,
-} from '@arkham/engine';
+import type { BoardView, CardPlaceView, EncounterCardView, InvestigatorId } from '@arkham/engine';
 import { assertNever } from '@arkham/util';
 import type { GameActions } from '../state/gameActions';
 import { cardMoves, type CardMove } from './cardMoves';

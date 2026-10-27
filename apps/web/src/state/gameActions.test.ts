@@ -104,14 +104,6 @@ describe('gameActions', () => {
       move: { to: 'threatArea', investigator: brook },
       place: { kind: 'threatArea', investigator: brook },
     },
-    {
-      move: { to: 'location', location: hall },
-      place: { kind: 'atLocation', location: cardName('hall') },
-    },
-    {
-      move: { to: 'location', location: study, engagedWith: alder },
-      place: { kind: 'engaged', investigator: alder },
-    },
   ])('puts an encounter card by hand: $move.to', async ({ move, place }) => {
     const card = instanceId('drawn');
     const table = PlayTable.start(
@@ -126,6 +118,32 @@ describe('gameActions', () => {
     await actionsOn(table).moveEncounterCard(card, move);
 
     expect(table.board.placeOf(card)).toEqual(place);
+  });
+
+  it.each<{ where: string; location: typeof study; place: CardPlaceView }>([
+    {
+      where: 'unengaged in the empty Hall',
+      location: hall,
+      place: { kind: 'atLocation', location: cardName('hall') },
+    },
+    {
+      where: 'engaged with Alder, alone in the Study, as the rules say',
+      location: study,
+      place: { kind: 'engaged', investigator: alder },
+    },
+  ])('spawns an enemy from the discard pile $where', async ({ location, place }) => {
+    const ghoulFromDiscard = instanceId('ghoul_from_discard');
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withInvestigator(alder, { locationId: study })
+        .withCard(ghoulFromDiscard, blankEnemy('ghoul'), { kind: 'encounterDiscard' }),
+    );
+
+    await actionsOn(table).spawnEnemy(ghoulFromDiscard, location);
+
+    expect(table.board.placeOf(ghoulFromDiscard)).toEqual(place);
   });
 
   it('takes a clue from the study without a test', async () => {
