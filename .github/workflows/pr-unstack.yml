@@ -1,0 +1,26 @@
+name: PR unstack
+
+# Takes the `stacked` label (set by open-pr.yml) off a PR once GitHub retargets it to main,
+# which happens when the PR below it merges and its branch is deleted. A workflow of its own,
+# since it runs on every PR edit and would otherwise show open-pr.yml's job on each PR. It
+# never checks out PR code, so pull_request_target is safe here.
+
+on:
+  pull_request_target:
+    types: [edited]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  unstack:
+    if: >-
+      github.event.changes.base && github.event.pull_request.base.ref == 'main' &&
+      contains(github.event.pull_request.labels.*.name, 'stacked')
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: gh api -X DELETE "repos/$REPO/issues/$PR/labels/stacked"

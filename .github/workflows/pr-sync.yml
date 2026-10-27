@@ -6,11 +6,9 @@ name: PR sync
 # - Conflict: labels the PR `needs-rebase` and comments once with the conflicting files. The
 #   comment wakes the Claude session that watches the PR, which merges main in and resolves
 #   them (CLAUDE.md, "Workflow for tasks").
-# - Clean: removes the label. With the repo secret PR_SYNC_TOKEN (a fine-grained token with
-#   contents and workflows: write) it also pushes the merge commit, so CI checks the PR against current
-#   main. Without it clean branches are left alone: pushes made with GITHUB_TOKEN start no
-#   workflows, so the new head would lack the required checks and block the merge, while an
-#   unpushed clean branch still merges.
+# - Clean: removes the label, deletes its conflict comments and pushes nothing. A clean PR
+#   squash-merges as it is, and a pushed merge of main would re-run every check on every open
+#   PR after each merge.
 # Skipped: PRs from forks (no write token), Dependabot and Release Please branches (their
 # bots keep them up to date and stop doing so once someone else pushes).
 
@@ -22,7 +20,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   pull-requests: write
   issues: write
 
@@ -37,12 +35,10 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       PR: ${{ github.event.pull_request.number }}
-      CAN_PUSH: ${{ secrets.PR_SYNC_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-          token: ${{ secrets.PR_SYNC_TOKEN || github.token }}
       - name: Test-merge each open PR with its base
         run: |
           git config user.name 'github-actions[bot]'
@@ -66,10 +62,10 @@ jobs:
             if git merge -q --no-edit -m "Merge branch '$base' into $head" "origin/$base"; then
               echo "#$n: merges cleanly with $base"
               if [ "$labelled" = true ]; then gh pr edit "$n" --remove-label needs-rebase; fi
-              if [ "$CAN_PUSH" = true ] && [ "$(git rev-parse HEAD)" != "$(git rev-parse "origin/$head")" ]; then
-                # Fails when the PR's session pushed in the meantime; its push re-runs this check.
-                git push -q origin "HEAD:refs/heads/$head" || echo "::warning::#$n: could not push the merge of $base"
-              fi
+              # A fixed conflict leaves no trace: its comment would read as an open problem.
+              gh api "repos/$GITHUB_REPOSITORY/issues/$n/comments" --paginate \
+                --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | contains("pr-sync.yml"))) | .id' |
+                while read -r id; do gh api -X DELETE "repos/$GITHUB_REPOSITORY/issues/comments/$id"; done
             else
               files=$(git diff --name-only --diff-filter=U | sed 's/^/- `/; s/$/`/')
               git merge --abort
