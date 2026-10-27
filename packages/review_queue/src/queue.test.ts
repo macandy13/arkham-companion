@@ -3,6 +3,7 @@ import {
   buildQueue,
   checkState,
   isReviewable,
+  mergeability,
   mergeOrder,
   QUEUE_JOB,
   type CheckRun,
@@ -54,7 +55,19 @@ describe('isReviewable', () => {
   });
 });
 
-/** A PR whose checks passed and that has no conflicts. */
+describe('mergeability', () => {
+  it.each([
+    ['GitHub says mergeable, no label', true, [], 'clean'],
+    ['GitHub says conflicts', false, [], 'conflicts'],
+    ["the needs-rebase label, older than GitHub's flag", true, ['needs-rebase'], 'conflicts'],
+    ['GitHub still checking', null, [], 'unknown'],
+    ['GitHub still checking, but labelled', null, ['needs-rebase'], 'conflicts'],
+  ] as const)('%s → %s', (_case, githubMergeable, labels, expected) => {
+    expect(mergeability(githubMergeable, labels)).toBe(expected);
+  });
+});
+
+/** A PR whose checks passed and that merges cleanly. */
 function greenPr(pr: { number: number; base: string; head: string; title?: string }): OpenPr {
   return {
     number: pr.number,
@@ -62,7 +75,7 @@ function greenPr(pr: { number: number; base: string; head: string; title?: strin
     baseRef: pr.base,
     headRef: pr.head,
     checks: { kind: 'passed' },
-    conflicts: false,
+    mergeable: 'clean',
   };
 }
 
@@ -99,7 +112,7 @@ describe('buildQueue', () => {
     const draw = greenPr({ number: 501, base: 'dialog', head: 'draw' });
     const conflicting: OpenPr = {
       ...greenPr({ number: 502, base: 'main', head: 'parley' }),
-      conflicts: true,
+      mergeable: 'conflicts',
     };
 
     const queue = buildQueue([dialog, draw, conflicting]);
@@ -135,7 +148,8 @@ describe('renderQueue', () => {
   });
 
   it.each([
-    ['conflicts', { conflicts: true }, 'conflicts with its base'],
+    ['conflicts', { mergeable: 'conflicts' }, 'conflicts with its base'],
+    ['unknown mergeability', { mergeable: 'unknown' }, 'GitHub is still checking it for conflicts'],
     [
       'running checks',
       { checks: { kind: 'running', names: ['preview', 'e2e'] } },
