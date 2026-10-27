@@ -419,10 +419,14 @@
   cursor: pointer;
 }
 
-#map svg g[role='button'] circle {
-  fill: var(--color-parchment);
+/* The details button and the connection symbol share the ring of the name band's colour. */
+#map svg :is(g[role='button'], g[data-connection]) circle {
   stroke: var(--card-band);
   stroke-width: var(--piece-ring-width);
+}
+
+#map svg g[role='button'] circle {
+  fill: var(--color-parchment);
 }
 
 #map svg g[role='button'] circle + text {
@@ -432,8 +436,6 @@
 /* The connection symbol: a light outline on a dark disc, like the printed corner. */
 #map svg g[data-connection] circle {
   fill: var(--color-ink);
-  stroke: var(--card-band);
-  stroke-width: var(--piece-ring-width);
 }
 
 #map svg g[data-connection] path {

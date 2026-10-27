@@ -1,12 +1,12 @@
 import type { LocationSymbol } from '@arkham/engine';
+import { assertNever } from '@arkham/util';
 
 /**
  * The outline of a connection symbol (`LocationSymbol`) as SVG path data, centred on the origin
- * and `size` units from its centre to its edge: simple shapes of our own, which the stylesheet
+ * and `s` units from its centre to its edge: simple shapes of our own, which the stylesheet
  * strokes in the light colour of the printed corner disc, rather than the printed glyphs.
  */
-export function connectionGlyph(symbol: LocationSymbol, size: number): string {
-  const s = size;
+export function connectionGlyph(symbol: LocationSymbol, s: number): string {
   switch (symbol) {
     case 'circle':
       return `M ${-s} 0 A ${s} ${s} 0 1 0 ${s} 0 A ${s} ${s} 0 1 0 ${-s} 0 Z`;
@@ -18,5 +18,7 @@ export function connectionGlyph(symbol: LocationSymbol, size: number): string {
       return `M ${-s} 0 H ${s} M 0 ${-s} V ${s}`;
     case 'diamond':
       return `M 0 ${-s} L ${s} 0 L 0 ${s} L ${-s} 0 Z`;
+    default:
+      return assertNever(symbol);
   }
 }
