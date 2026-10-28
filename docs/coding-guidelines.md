@@ -152,4 +152,5 @@ The rules pages (`docs/rules/`) and architecture pages (`docs/architecture/`) gr
 - **Enumerations are lists.** When a paragraph lists items (steps, cases, card examples, extension points), write them as a Markdown list, one item per line; numbered when the order matters.
 - **Long list items get sub-items.** Give a list item a short lead sentence and put its cases or exceptions into a nested list instead of one long line.
 - **One sentence per line** is fine inside a paragraph; it renders as one paragraph and diffs line by line.
+- **Card rulings apart.** A ruling for one named card goes to its group page in `docs/rules/cards/`, not into the general rule ([rules.md](rules.md), "Card rulings").
 - **No fragments around a list.** End the lead sentence before the list, and don't continue it after the list as a lowercase paragraph; keep "it" and "that" in the same item or paragraph as what they refer to.

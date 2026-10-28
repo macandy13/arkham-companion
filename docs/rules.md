@@ -14,8 +14,14 @@ Each topic page links to its section on [ArkhamDB's copy of the Rules Reference]
 **One page per topic.**
 
 - Each topic below has its own page in [`rules/`](rules/), so PRs that touch different rules don't conflict.
-- A PR edits its topic's page; this page changes only when a topic is added.
+- A PR edits its topic's page; this page changes only when a topic or card group is added.
 - Refer to topics by name (rules "Act and clues").
+
+**Card rulings.** A ruling for one named card goes to its group's page in [`rules/cards/`](rules/cards/), grouped by mechanic, not by scenario, so later campaigns add cards to the groups.
+
+- The topic page keeps the general rule and links to the group ("Card rulings: …").
+- A group page starts with the principle its cards share, then one list item per card: the card text in short, our ruling and its source.
+- A card named in parentheses as an example of a general rule ("Obscuring Fog's +2 shroud") stays on the topic page.
 
 **Shape of a page.** Keep paragraphs short and put enumerations into Markdown lists, one item per line, so parallel PRs that add to a page don't conflict (`docs/coding-guidelines.md` §8).
 
@@ -39,3 +45,10 @@ Each topic page links to its section on [ArkhamDB's copy of the Rules Reference]
 - [Damage, horror and defeat](rules/damage-horror-and-defeat.md)
 - [Elimination and resign](rules/elimination-and-resign.md)
 - [Campaign](rules/campaign.md)
+
+## Card rulings
+
+- [Restrictions ("cannot")](rules/cards/restrictions.md)
+- [Objectives and special acts and agendas](rules/cards/objectives.md)
+- [Costs of card actions](rules/cards/action-costs.md)
+- [Story assets and earned cards](rules/cards/story-assets.md)
