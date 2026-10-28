@@ -31,6 +31,7 @@ import {
   takeHorror,
   trait,
   whenAdvanced,
+  whenAnInvestigatorEnters,
   whenTokensOnSelf,
   whenDefeated,
   whenRevealed,
@@ -139,7 +140,7 @@ const woods = ['Woods'];
  *   willpower (6) tests and madness, agenda 3's Umôrdhoth and The Devourer
  *   Below, which becomes act and agenda at once) and agenda 2's +1 fight and
  *   evade for each enemy
- * - act 2's objective and reverse side (the enemies at the Ritual Site)
+ * - act 2's reverse side (the enemies at the Ritual Site)
  * - the Main Path's connection to each Woods location,
  *   the Arkham Woods' moving-out test, skill swaps, and the
  *   Ritual Site's clues at the end of the round
@@ -172,7 +173,13 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
       ),
     ],
   }),
-  act({ code: '01147', name: 'Into the Darkness', set: own, stage: 2 }),
+  act({
+    code: '01147',
+    name: 'Into the Darkness',
+    set: own,
+    stage: 2,
+    abilities: [whenAnInvestigatorEnters(codes.ritualSite, advanceAct())],
+  }),
   act({
     code: '01148',
     name: 'Disrupting the Ritual',
