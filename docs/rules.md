@@ -14,7 +14,7 @@ Each topic page links to its section on [ArkhamDB's copy of the Rules Reference]
 **One page per topic.**
 
 - Each topic below has its own page in [`rules/`](rules/), so PRs that touch different rules don't conflict.
-- A PR edits its topic's page; this page changes only when a topic is added.
+- A PR edits its topic's page; this page changes only when a topic or card group is added.
 - Refer to topics by name (rules "Act and clues").
 
 **Card rulings.** A ruling for one named card goes to its group's page in [`rules/cards/`](rules/cards/), grouped by mechanic, not by scenario, so later campaigns add cards to the groups.

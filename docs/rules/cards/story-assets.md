@@ -1,6 +1,6 @@
 # Story assets and earned cards
 
-Card rulings for [Elimination and resign](../elimination-and-resign.md) and [Campaign](../campaign.md).
+Card rulings for [Elimination and resign](../elimination-and-resign.md).
 A story asset is an encounter card the investigators can take control of; a resolution can let an investigator earn it for their deck.
 The app tracks it while it is an encounter card and only trusts the players once it becomes a player card.
 

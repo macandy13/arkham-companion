@@ -6,7 +6,7 @@ The cards below add when an objective is checked, what counts towards it, and ac
 
 ## Objectives
 
-- "If the Ghoul Priest is defeated, advance" fires when the defeat happens while act 3 is current.
+- "If the Ghoul Priest is defeated, advance" (The Gathering, act 3) fires when the defeat happens while act 3 is current.
 - "If an investigator enters the Ritual Site, advance" (Into the Darkness, The Devourer Below act 2) fires when an investigator moves into it, revealed or not ([Move](https://arkhamdb.com/rules#Move): moving enters the new location).
   - It can't fire at setup: the Ritual Site is set aside until act 1 advances, and act 2 isn't current yet.
 - "If there are 6 unique [[Cultist]] enemies in the victory display, advance" (Uncovering the Conspiracy, The Midnight Masks act 1) counts unique (✷) Cultists only, so an Acolyte there doesn't count.
