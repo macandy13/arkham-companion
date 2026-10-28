@@ -201,6 +201,7 @@ Where this lives in `GameState` ([`state.ts`](../packages/engine/src/state.ts)):
 - [Game state](architecture/game-state.md): `GameState`, zones, maps and invariants.
 - [Command handling](architecture/command-handling.md): `handle` and `apply`, the step queue, `COMMAND_SPECS`.
 - [Triggers and card effects](architecture/triggers-and-card-effects.md): abilities, templated commands, card actions and modifiers.
+  - [Card patterns](architecture/card-patterns.md): card text to card data, one example per pattern.
 - [Decisions](architecture/decisions.md): questions for the players and skill tests.
 - [Rounds, phases and turns](architecture/rounds-phases-and-turns.md): automated phase steps and turns.
 - [Rule modules](architecture/rule-modules.md): generic rules per subject.
