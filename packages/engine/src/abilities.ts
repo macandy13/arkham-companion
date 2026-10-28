@@ -1660,7 +1660,7 @@ export function advanceAct(): AbilityEffect {
   return { type: 'AdvanceAct' };
 }
 
-/** "Replace the current act and agenda with The Devourer Below", on an agenda's reverse side. */
+/** "Replace the current act and agenda with this card", on an agenda's reverse side (Vengeance Awaits). */
 export function becomeActAndAgenda(): AbilityEffect {
   return { type: 'BecomeActAndAgenda' };
 }

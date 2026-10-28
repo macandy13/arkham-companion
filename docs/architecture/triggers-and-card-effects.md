@@ -34,6 +34,7 @@ An [`Ability`](../../packages/engine/src/abilities.ts) is:
 
 Some effects in detail:
 
+- "Replace the current act and agenda with this card" on an agenda's reverse side is `becomeActAndAgenda()` (`BecomeActAndAgenda`): the advancing agenda becomes the current act too and the act deck goes out of the game; `completeAdvance` then leaves the card in play, face down, so the scenario goes on until its objective or the investigators' elimination. A face-down agenda asks for no advance by doom (`agendaThresholdDecision`), and its view shows no threshold.
 - "Take 1 horror and 1 damage" is one `TakeDamageAndHorror` (`takeDamageAndHorror({ damage, horror })`), placed at once through the same `woundEvents` as an enemy attack, so a defeat by one does not lose the other.
 - An effect that leaves an enemy unengaged next to an investigator ends with `engageReadyEnemies()` (`EngageReadyEnemies`), which runs the engagement rule for every enemy at a location, as setup does.
 - "This card gains surge" (`GainSurge`) marks the resolving card (`CardInstance.gainedSurge`), and placing it queues the surge draw a printed surge would have queued.
