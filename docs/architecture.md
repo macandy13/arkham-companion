@@ -52,20 +52,21 @@ Only [`IndexedDbStore`](../apps/web/src/storage/IndexedDbStore.ts) imports Dexie
 ```mermaid
 sequenceDiagram
   participant UI as Component
-  participant GA as GameActions
+  participant AS as App store
   participant GS as GameSession
   participant PT as PlayTable
   participant E as execute
   participant DB as GameStore
-  UI->>GA: actions.moveTo(hallway)
-  GA->>GS: one step
-  GS->>PT: moveTo(turn investigator, Hallway)
-  PT->>E: Command
+  UI->>AS: actions.moveTo(hallway, 'action')
+  AS->>GS: play(step), strictly in order
+  GS->>PT: table.step: spendAction, then moveTo
+  PT->>E: AdjustActions, then MoveInvestigator
   E->>E: handle → Event[], replay → GameState
   E-->>PT: state + events, or CommandRejected
-  PT-->>GS: new table
+  PT-->>GS: new table, or the step's Rejection
   GS->>DB: appendEvents (one undo group)
-  GS-->>UI: publish OpenGame (new BoardView)
+  GS-->>AS: played
+  AS-->>UI: publish OpenGame (new BoardView), or a toast
 ```
 
 1. A component calls an action on the app store's [`GameActions`](../apps/web/src/state/gameActions.ts) (`actions.moveTo(hallway)`).
@@ -121,7 +122,7 @@ flowchart TD
 
 - `handle` is the only place that decides: it validates the command, reads card data and draws from the seeded RNG, and writes everything it worked out into the events.
 - `apply` only folds events into state, so replaying a stored log gives the same state without card data.
-- Every event of one player command shares its `commandId`; undo drops the whole group.
+- Every event of one step (`GameSession.play` → `PlayTable.step`, e.g. spending the action and the move) shares one `commandId`; undo drops the whole group.
 
 ### Inside `handle`: the step queue
 
@@ -131,20 +132,21 @@ One command resolves as a queue of steps, depth first: a step's own events, then
 flowchart TD
   IN["command from the players"] --> ACC{"accepted now?<br/>ended / decision pending"}
   ACC -- no --> REJ["CommandRejected"]
-  ACC -- yes --> PROV{"an action that provokes<br/>attacks of opportunity?"}
-  PROV -- yes --> HOLD["one attack decision per enemy<br/>+ StepsQueued: the held action"]
+  ACC -- yes --> PROV{"the turn investigator's action<br/>(asAction) engaged with ready enemies?"}
+  PROV -- yes --> HOLD["dry run rejects an illegal action;<br/>else one attack decision per enemy<br/>+ StepsQueued: the held action"]
   PROV -- no --> Q["queue = [command]"]
   Q --> NEXT{"new decision raised?"}
   NEXT -- yes --> SUSP["StepsQueued: rest of the queue<br/>stored in meta.queue"]
   NEXT -- no --> TAKE{"step left?"}
   TAKE -- yes --> RUN["run the step's handler<br/>emit its events (apply)"]
-  RUN --> FRONT["put in front of the queue:<br/>1. triggered ability steps<br/>2. the chosen option's commands<br/>3. continuations (reverse side, place drawn card, surge, next phase step)"]
+  RUN --> FRONT["put in front of the queue:<br/>1. triggered ability steps<br/>2. the chosen option's commands<br/>3. continuations (rest of an agenda/act advance,<br/>place drawn card, surge, card action effects,<br/>exhaust after attack, next phase step)"]
   FRONT --> NEXT
   TAKE -- no --> STORED{"meta.queue has a step<br/>and nothing is pending?"}
   STORED -- yes --> RES["StepResumed: take it"] --> NEXT
   STORED -- no --> DONE["return all events"]
 ```
 
+- Triggered steps include a new lead after the lead left (`newLeadInvestigator`). A phase step runs its commands first, then the triggers of its events, then the next phase step.
 - A rejected follow-up rejects the whole player command (`triggeredCommandRejected`), and so does a chain longer than `MAX_TRIGGERED_COMMANDS` (`triggerLoop`).
 - Steps are plain data (`QueuedStep`): a command, an ability effect, a held action, the rest of an agenda or act advance, placing a drawn card, a surge draw, a new lead, an enemy exhausting after its attack.
   That is what lets the rest of a resolution wait in the state.
@@ -160,11 +162,12 @@ flowchart TD
   W --> AB["abilitySteps<br/>abilities of that card in that window<br/>whose condition holds"]
   AB --> ST["one ability step per effect"]
   ST --> RE["resolveEffect when its turn comes<br/>fills self, windowInvestigator, eachEnemy, …"]
-  RE --> CMD["plain Command<br/>handled like any other"]
+  RE --> CMD["plain Command(s)<br/>handled like any other"]
 ```
 
 - Windows open against the state right after each event, but abilities are checked against the state after all of the command's events, so every ability sees the complete outcome.
-- Each effect resolves only when its step comes up, so it sees what the effects before it did, and its own triggers resolve before the next sibling (a nested sequence, last in first out).
+- Each effect resolves only when its step comes up, so it sees what the effects before it did, and its own triggers resolve before its next sibling (depth first).
+- An effect on each investigator or enemy runs all its commands at once (`resolveAtOnce`, RR "Priority of Simultaneous Resolution"), and a "you must either" choice keeps only the options that can change the state (`withResolvableOptions`).
 
 ### Decisions and held actions
 
@@ -176,7 +179,7 @@ sequenceDiagram
   participant P as Players
   participant H as handle
   participant S as GameState
-  P->>H: MoveInvestigator (engaged with a ready Ghoul)
+  P->>H: MoveInvestigator as an action, in their turn (engaged with a ready Ghoul)
   H->>S: DecisionRequested (Ghoul attacks)<br/>StepsQueued [action: MoveInvestigator]
   Note over S: pending = [attack]<br/>meta.queue = [held move]
   P->>H: ResolveDecision (attack: 1 damage)
@@ -187,7 +190,7 @@ sequenceDiagram
 
 Where this lives in `GameState` ([`state.ts`](../packages/engine/src/state.ts)):
 
-- `pending: Decision[]`: the open questions. Each option carries the commands it runs, so the answer is data. While one is pending, only the commands whose spec allows it (`allowedWhilePending`: answers, `ManualAdjust`) are accepted.
+- `pending: Decision[]`: the open questions. Each option carries the commands it runs, so the answer is data; only a basic action's skill test works out its consequences when the answer arrives (`testKind`, so corrections made meanwhile count). While one is pending, only `ResolveDecision` and `ManualAdjust` are accepted (`allowedWhilePending`).
 - `meta.queue: QueuedStep[]`: the rest of a resolution waiting for those answers, next first. The command that clears the last decision resumes it after its own steps.
 - A held action (`kind: 'action'`) is an action waiting for the attacks of opportunity it provoked. It runs once they are all answered, or is dropped (`ActionDropped`) if the investigator was defeated or the action became illegal meanwhile, so the answer stays valid.
 - `meta.steps: PhaseStep[]`: the automated steps left in the current phase (doom, encounter draws, hunters, attacks, upkeep). They are not queued: the players go on with the next `NextPhase`.

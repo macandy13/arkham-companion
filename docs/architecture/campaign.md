@@ -25,9 +25,9 @@ flowchart TD
   SETUP --> GAME["game: StartScenario … ScenarioEnded<br/>GameState.campaign = copy of the log"]
   GAME --> PROP["campaign.proposeResolution<br/>reads the ended game"]
   PROP --> EDIT["players confirm or edit<br/>the proposed commands"]
-  EDIT --> APPLY["campaign.applyResolution<br/>all or none, then AdvanceScenario"]
+  EDIT --> APPLY["campaign.applyResolution<br/>confirmed commands (EndCampaign on the last scenario),<br/>then AdvanceScenario; all or none"]
   APPLY --> LOG
-  APPLY -- "last scenario: endCampaign step" --> END["EndCampaign<br/>CampaignLog.result"]
+  APPLY -- "after EndCampaign" --> END["CampaignLog.result set:<br/>won, lost or survived"]
 ```
 
 ## Resolutions

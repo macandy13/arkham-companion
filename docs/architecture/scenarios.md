@@ -18,7 +18,7 @@ flowchart TD
   CS --> SS["StartScenario command"]
   SS --> EV["ScenarioStarted, cards into zones,<br/>shuffled encounter deck"]
   EV --> PLAY["rounds: mythos → investigation → enemy → upkeep"]
-  PLAY -- "a reverse side's (→R#): EndScenario" --> END["ScenarioEnded<br/>meta.resolution, meta.ended"]
+  PLAY -- "a reverse side's (→R#): EndScenario,<br/>or advancing the last agenda/act" --> END["ScenarioEnded<br/>meta.resolution, meta.ended"]
   PLAY -- "every investigator eliminated" --> NONE["ScenarioEnded<br/>no resolution"]
   END --> NEXT["standalone: done<br/>campaign: proposeResolution (see Campaign)"]
   NONE --> NEXT
