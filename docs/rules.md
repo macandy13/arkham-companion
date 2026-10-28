@@ -52,3 +52,6 @@ Each topic page links to its section on [ArkhamDB's copy of the Rules Reference]
 - [Objectives and special acts and agendas](rules/cards/objectives.md)
 - [Costs of card actions](rules/cards/action-costs.md)
 - [Story assets and earned cards](rules/cards/story-assets.md)
+- [Searching, drawing and attaching encounter cards](rules/cards/encounter-searches.md)
+- [Resolution order](rules/cards/resolution-order.md)
+- [Children of Blood](rules/cards/children-of-blood.md)
