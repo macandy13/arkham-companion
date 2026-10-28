@@ -447,7 +447,8 @@ export interface EnemyAttacked {
 /**
  * The investigator evaded the enemy, after its exhaustion and disengagement.
  * Changes no state: it marks the evasion for `windowsOpenedBy` (`evaded`),
- * since an exhausted enemy that was not engaged changes nothing else.
+ * since an evasion may produce neither `ExhaustChanged` nor `EnemyDisengaged`
+ * (an exhausted massive enemy).
  * Produced by `EvadeEnemy`.
  */
 export interface EnemyEvaded {

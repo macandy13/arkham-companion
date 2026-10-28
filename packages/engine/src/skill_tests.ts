@@ -11,7 +11,7 @@ import {
 } from './decisions';
 import type { DecisionRequested } from './events';
 import { keywordAttackCommands } from './forced_attacks';
-import { enemyOf, isEnemyOnTable, locationOf } from './enemies';
+import { enemyOf, isEngagedWith, isEnemyOnTable, locationOf } from './enemies';
 import { activeInvestigator } from './investigators';
 import { decisionId, type InstanceId } from './ids';
 import { hasKeyword } from './keywords';
@@ -157,10 +157,6 @@ export function handleEvade(ctx: EngineContext, state: GameState, cmd: Evade): D
     testKind: { kind: 'evade', enemyId: enemy.id },
     outcomes: { onPass: [], onFail: [] },
   });
-}
-
-function isEngagedWith(enemy: CardInstance, investigator: Investigator): boolean {
-  return enemy.zone.kind === 'engaged' && enemy.zone.investigatorId === investigator.id;
 }
 
 /**
