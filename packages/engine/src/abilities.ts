@@ -5,6 +5,7 @@ import {
   type CardStats,
   type EngineContext,
   type ScaledValue,
+  type TokenAmount,
   type Trait,
 } from './cards';
 import type {
@@ -1554,7 +1555,7 @@ export function placeDoomOnSelf(amount: number): AbilityEffect {
 }
 
 /** "Place N clues on this act": clues from the token pool on the card with the ability. */
-export function placeCluesOnSelf(amount: number): AbilityEffect {
+export function placeCluesOnSelf(amount: TokenAmount): AbilityEffect {
   return { type: 'PlaceTokens', cardId: { ref: 'self' }, token: 'clue', amount };
 }
 
@@ -1563,7 +1564,7 @@ export function placeCluesOnSelf(amount: number): AbilityEffect {
  * card with the ability, up to `upTo`, written `placeCluesOnSelfUpTo(perInvestigator(2))` (Ritual
  * Site); none when it has as many already, which is also its "if there are fewer than".
  */
-export function placeCluesOnSelfUpTo(upTo: ScaledValue): AbilityEffect {
+export function placeCluesOnSelfUpTo(upTo: TokenAmount): AbilityEffect {
   return { type: 'PlaceTokens', cardId: { ref: 'self' }, token: 'clue', upTo };
 }
 

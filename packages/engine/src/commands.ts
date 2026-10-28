@@ -1,6 +1,6 @@
 import type { AbilityEffect, OpenedWindow, TimingWindow } from './abilities';
 import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
-import type { CardType, ScaledValue, Trait } from './cards';
+import type { CardType, TokenAmount, Trait } from './cards';
 import type {
   CardCode,
   DecisionId,
@@ -473,7 +473,7 @@ export type PlaceTokens = {
   type: 'PlaceTokens';
   cardId: InstanceId;
   token: 'clue';
-} & ({ amount: number } | { upTo: ScaledValue });
+} & ({ amount: TokenAmount } | { upTo: TokenAmount });
 
 /**
  * Advances the current agenda: all doom in play is removed, the agenda is

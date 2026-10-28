@@ -200,6 +200,17 @@ describe('PlaceTokens', () => {
     expect(requireInvestigator(next, alice).clues).toBe(1);
   });
 
+  it('puts 2 clues per investigator on the current act for alice alone', () => {
+    const next = stateAfter(context, state, {
+      type: 'PlaceTokens',
+      cardId: act1,
+      token: 'clue',
+      amount: perInvestigator(2),
+    });
+
+    expect(next.cards[act1]!.tokens.clue).toBe(2);
+  });
+
   it.each([
     { name: 'the act still waiting in the deck', cardId: act2, amount: 1, code: 'cardNotInPlay' },
     { name: 'the current act', cardId: act1, amount: 0, code: 'invalidTokenDelta' },
