@@ -22,6 +22,11 @@ export interface LogStep {
   /** The `LoggedEvent.commandId` of the step's undo group, which a jump back names. */
   readonly id: string;
   readonly lines: readonly string[];
+  /**
+   * How many undo groups came after it, the ones without a line included: what going back to it
+   * takes back (`GameSession.undoTo`).
+   */
+  readonly later: number;
 }
 
 /**
@@ -35,14 +40,15 @@ export function gameLog(
   state: GameState,
   entries: readonly LoggedEvent[],
 ): LogStep[] {
-  return runsBy(entries, (entry) => entry.commandId).flatMap(({ key, items }) => {
+  const runs = runsBy(entries, (entry) => entry.commandId);
+  return runs.flatMap(({ key, items }, index) => {
     const lines = eventLines(
       t,
       ctx,
       state,
       items.map((entry) => entry.event),
     );
-    return lines.length > 0 ? [{ id: key, lines }] : [];
+    return lines.length > 0 ? [{ id: key, lines, later: runs.length - 1 - index }] : [];
   });
 }
 

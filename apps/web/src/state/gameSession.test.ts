@@ -100,6 +100,49 @@ describe('GameSession on The Gathering', () => {
     expect((await store.loadGame(gameId))?.state).toEqual(afterNextPhase);
   });
 
+  it.each([
+    { case: 'a step the log does not hold', step: 'no_such_step' },
+    { case: 'the newest step', step: 'newest' },
+  ])('changes nothing when going back to $case', async ({ step }) => {
+    const { store, gameId } = await storedGame(`session-undo-to-nothing-${step}`);
+    const session = await GameSession.open(store, gameId, ctx);
+    await session.play((table) => table.nextPhase());
+    const afterNextPhase = session.state;
+    const newest = session.entries.at(-1)?.commandId ?? '';
+
+    await session.undoTo(step === 'newest' ? newest : step);
+
+    expect(session.state).toEqual(afterNextPhase);
+  });
+
+  it('goes back to the scenario start, which stays', async () => {
+    const { store, gameId } = await storedGame('session-undo-to-start-test');
+    const session = await GameSession.open(store, gameId, ctx);
+    const atSetup = session.state;
+    const start = session.entries[0]?.commandId ?? '';
+    await session.play((table) => table.nextPhase());
+    await session.play((table) => table.startTurn(investigatorId('alder')));
+
+    await session.undoTo(start);
+
+    expect(session.state).toEqual(atSetup);
+    expect(session.canUndo).toBe(false);
+  });
+
+  it('does not go back while the players adjust the board', async () => {
+    const { store, gameId } = await storedGame('session-undo-to-adjusting-test');
+    const session = await GameSession.open(store, gameId, ctx);
+    const start = session.entries[0]?.commandId ?? '';
+    await session.play((table) => table.nextPhase());
+    session.startAdjusting();
+    await session.play((table) => table.gainResources(investigatorId('alder'), 1));
+    const adjusted = session.state;
+
+    await session.undoTo(start);
+
+    expect(session.state).toEqual(adjusted);
+  });
+
   describe('adjusting the board', () => {
     const alderId = investigatorId('alder');
     // Alder starts with 5 resources and no damage.

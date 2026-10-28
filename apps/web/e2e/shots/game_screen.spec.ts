@@ -77,14 +77,18 @@ test('the house map by day', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
 
-test('the game log after two rounds, scrolled to the newest step', async ({ page }) => {
-  await resumeImportedGame(page, 'Two rounds', mythosDrawnStepsExport('Two rounds'));
+test(
+  'the game log after two rounds, scrolled to the newest step',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'Two rounds', mythosDrawnStepsExport('Two rounds'));
 
-  await page.getByRole('button', { name: 'Game log' }).click();
+    await page.getByRole('button', { name: 'Game log' }).click();
 
-  const log = page.getByRole('dialog', { name: 'Game log' });
-  await expect(log.getByText('Round 3: Investigation phase')).toBeInViewport();
-});
+    const log = page.getByRole('dialog', { name: 'Game log' });
+    await expect(log.getByText('Round 3: Investigation phase')).toBeInViewport();
+  },
+);
 
 test('Roland Banks’ combat boosted by 2, as an ally in play gives it', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));

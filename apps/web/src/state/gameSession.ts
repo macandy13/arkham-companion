@@ -280,7 +280,7 @@ export class GameSession {
    * Takes back every step after the step `stepId` (a `LoggedEvent.commandId`), one undo group at a
    * time like `undo`, so the game is as it was right after that step, in memory and in storage.
    * Does nothing for a step the log doesn't hold, and while adjusting, whose taps aren't steps of
-   * the log yet.
+   * the log yet. Not all or nothing: a failed write stops it part-way, at what is stored (`undo`).
    */
   async undoTo(stepId: string): Promise<void> {
     if (this.adjustment) return;

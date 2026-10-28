@@ -4,14 +4,13 @@ import type { GameState } from '@arkham/engine';
 import type { GameLogSource } from '../state/appStore';
 import { ConfirmDialog } from '../screens/ConfirmDialog';
 import { useBackCloses } from '../screens/useBackCloses';
-import type { LogStep } from './gameLog';
-import { gameLog } from './gameLog';
+import { gameLog, type LogStep } from './gameLog';
 import './game_log.css';
 
 /**
  * The game log over the board (M3.8): every step of the open game (`gameLog`) in the order it was
  * played, one list item per step with a line per thing it did, scrolled to the newest step, which
- * is the one players ask about. `state` is the game after `log`. Every step but the newest offers
+ * is the one players ask about. `state` is the game after `log`. Every step but the newest undo group offers
  * to go back to it (`onGoBack`, after a confirm, then the log closes), unless the screen can't
  * take steps back now (busy or adjusting), which leaves `onGoBack` out. A native modal `<dialog>`
  * brings focus trapping and Escape; on a phone the back gesture closes it too (`useBackCloses`).
@@ -38,7 +37,7 @@ export function GameLogDialog({
   }, []);
   const close = useBackCloses(onClose);
   const steps = gameLog(t, log.ctx, state, log.entries);
-  const [goingBack, setGoingBack] = useState<{ step: LogStep; later: number }>();
+  const [goingBack, setGoingBack] = useState<LogStep>();
 
   return (
     <dialog
@@ -61,11 +60,8 @@ export function GameLogDialog({
                 <li key={lineIndex}>{line}</li>
               ))}
             </ul>
-            {onGoBack && index < steps.length - 1 && (
-              <button
-                type="button"
-                onClick={() => setGoingBack({ step, later: steps.length - 1 - index })}
-              >
+            {onGoBack && step.later > 0 && (
+              <button type="button" onClick={() => setGoingBack(step)}>
                 {t('log.goBack')}
               </button>
             )}
@@ -77,7 +73,7 @@ export function GameLogDialog({
           title={t('log.goBackTitle')}
           confirmLabel={t('log.goBack')}
           onConfirm={() => {
-            onGoBack(goingBack.step.id);
+            onGoBack(goingBack.id);
             close();
           }}
           onCancel={() => setGoingBack(undefined)}
