@@ -44,6 +44,7 @@ Once the scenario has ended, only `ManualAdjust` is accepted ([Command handling]
 - The Devourer Below is in [`the_devourer_below/`](../../packages/scenarios/src/the_devourer_below/) (cards, setup and resolutions; each of its resolutions ends the campaign).
   - It plays with The Gathering's and The Midnight Masks' cards joined in.
   - Its setup sets aside each enemy The Midnight Masks recorded as got away, by name, and act 1's reverse side puts the Ritual Site onto the Woods map (`PutLocationIntoPlay`) and spawns them at the Main Path.
+  - Agenda 3 (Vengeance Awaits) spawns Umôrdhoth at the Ritual Site as it advances, putting the site into play at act 1 and clearing its enemies at act 2 or 3 (`duringAct`), then turns into The Devourer Below, act and agenda at once (`becomeActAndAgenda`), whose objective ends in R2 when Umôrdhoth is defeated.
 
 Hand-entered card data is built with the shared [`card_builders.ts`](../../packages/scenarios/src/card_builders.ts) (`agenda`, `act`, `location`, `enemy`, `treachery`), one builder per card type that takes the printed values and the card's encounter set. A location's connection symbol (`CardStats.symbol`, a `LocationSymbol`) is entered there too, since ArkhamDB's card data has no field for it.
 The app lists playable scenarios in its [scenario catalog](../../apps/web/src/scenarios/scenarioCatalog.ts).
