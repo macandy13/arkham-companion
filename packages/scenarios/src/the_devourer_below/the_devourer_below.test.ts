@@ -35,6 +35,7 @@ import {
   DEVOURER_BELOW_CODES as codes,
   DEVOURER_BELOW_RESOLUTIONS,
   GATHERING_CODES,
+  MIDNIGHT_MASKS_CODES,
   MIDNIGHT_MASKS_RESOLUTIONS,
   ZEALOT_STORY,
   nightOfTheZealot,
@@ -318,34 +319,41 @@ describe('The Devourer Below setup in the campaign', () => {
       expect(state.meta.ended).toBeUndefined();
     });
 
-    it('at act 2 discards the enemies at the Ritual Site before Umôrdhoth spawns there', () => {
-      const atAct2 = stateAfter(ctx, started(), { type: 'AdvanceAct' });
-      // Peter Warren (01139), engaged with Roland at the Main Path since act 1 advanced.
-      const peterAtTheRitualSite: Command = {
-        type: 'ManualAdjust',
-        adjustment: {
-          kind: 'moveCard',
-          cardId: instanceId('01139#1'),
-          to: atRitualSite,
-        },
-      };
+    it.each([
+      { act: 'act 2', advances: 1 },
+      { act: 'act 3', advances: 2 },
+    ])(
+      'at $act discards the enemies at the Ritual Site before Umôrdhoth spawns there',
+      ({ advances }) => {
+        const advanceAct: Command = { type: 'AdvanceAct' };
+        const atAct = stateAfter(ctx, started(), ...Array<Command>(advances).fill(advanceAct));
+        // Peter Warren is engaged with Roland at the Main Path since act 1 advanced.
+        const peterAtTheRitualSite: Command = {
+          type: 'ManualAdjust',
+          adjustment: {
+            kind: 'moveCard',
+            cardId: instanceId(`${MIDNIGHT_MASKS_CODES.peterWarren}#1`),
+            to: atRitualSite,
+          },
+        };
 
-      const state = stateAfter(
-        ctx,
-        atAct2,
-        peterAtTheRitualSite,
-        advanceAgenda,
-        advanceAgenda,
-        advanceAgenda,
-      );
+        const state = stateAfter(
+          ctx,
+          atAct,
+          peterAtTheRitualSite,
+          advanceAgenda,
+          advanceAgenda,
+          advanceAgenda,
+        );
 
-      expect(namesIn(state, atRitualSite)).toEqual(['Umôrdhoth']);
-      expect(namesIn(state, { kind: 'encounterDiscard' })).toContain('Peter Warren');
-      expect(namesIn(state, { kind: 'engaged', investigatorId: rolandSeat.id })).toEqual([
-        'The Masked Hunter',
-      ]);
-      expect(state.act.current).toBe(devourer);
-    });
+        expect(namesIn(state, atRitualSite)).toEqual(['Umôrdhoth']);
+        expect(namesIn(state, { kind: 'encounterDiscard' })).toContain('Peter Warren');
+        expect(namesIn(state, { kind: 'engaged', investigatorId: rolandSeat.id })).toEqual([
+          'The Masked Hunter',
+        ]);
+        expect(state.act.current).toBe(devourer);
+      },
+    );
 
     it('ends in R2 once Umôrdhoth is defeated', () => {
       const devoured = stateAfter(ctx, started(), advanceAgenda, advanceAgenda, advanceAgenda);
