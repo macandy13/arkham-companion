@@ -1,4 +1,5 @@
 import {
+  advanceAct,
   afterAttacking,
   afterEntering,
   atEndOfPhase,
@@ -43,6 +44,7 @@ import {
   takeHorror,
   trait,
   whenAdvanced,
+  whenVictoryDisplayHolds,
   whenRevealed,
   youMustEither,
   type CardDb,
@@ -126,11 +128,12 @@ const cultist = ['Humanoid', 'Cultist'];
  * core set data), no card text, JSON or images. Effects the engine has no
  * rule for yet are left out, so the players resolve them from the card:
  *
- * - the act's objective (the players advance it)
  * - agenda 1 turning into The Masked Hunter
  * - Your House's hold on the Ghoul Priest and Easttown's cost reduction
  * - Ruth Turner going to the victory display once evaded: the `afterTest`
- *   window opens before the evade exhausts and disengages her
+ *   window opens before the evade exhausts and disengages her; put there by
+ *   hand, she doesn't trigger act 1's objective, so if she is the sixth unique
+ *   Cultist the players advance the act themselves
  * - Acolyte's doom as it enters play during the game (setup places it)
  * - Hunting Nightgaunt's constant ability
  * - the players' pick among several Cultist enemies for Mysterious Chanting's
@@ -167,7 +170,10 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     name: 'Uncovering the Conspiracy',
     set: own,
     stage: 1,
-    abilities: [whenAdvanced(endScenario(MIDNIGHT_MASKS_RESOLUTIONS.conspiracyUncovered))],
+    abilities: [
+      whenVictoryDisplayHolds({ trait: trait('Cultist'), unique: true }, 6, advanceAct()),
+      whenAdvanced(endScenario(MIDNIGHT_MASKS_RESOLUTIONS.conspiracyUncovered)),
+    ],
     actions: [
       {
         cost: { spend: 'groupClues', amount: perInvestigator(2) },
@@ -344,6 +350,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     damage: 2,
     horror: 1,
     victory: 2,
+    unique: true,
     keywords: [spawn('Engaged with prey'), prey('Most clues'), { name: 'hunter' }],
     restrictions: [{ cannot: ['discover', 'spend'], what: 'clues', who: 'threatArea' }],
   }),
@@ -358,6 +365,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     damage: 2,
     horror: 0,
     victory: 1,
+    unique: true,
     keywords: [spawn('Downtown')],
     // The card heals "when" Drew attacks; after the attack is the nearest window, and the heal
     // lands the same unless a player card (Guard Dog) damages him during his attack.
@@ -374,6 +382,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     damage: 1,
     horror: 1,
     victory: 1,
+    unique: true,
     keywords: [spawn('Graveyard')],
     actions: [
       parleyAction({
@@ -393,6 +402,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     damage: 1,
     horror: 0,
     victory: 1,
+    unique: true,
     keywords: [spawn('Miskatonic University')],
     actions: [
       parleyAction({
@@ -412,6 +422,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     damage: 1,
     horror: 0,
     victory: 1,
+    unique: true,
     keywords: [spawn('Northside')],
     actions: [
       parleyAction({
@@ -431,6 +442,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     damage: 1,
     horror: 0,
     victory: 1,
+    unique: true,
     keywords: [spawn("St. Mary's Hospital")],
   }),
   enemy({

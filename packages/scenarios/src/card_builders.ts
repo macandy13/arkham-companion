@@ -169,6 +169,8 @@ export interface EnemyOptions {
   damage: number;
   horror: number;
   victory?: number;
+  /** A unique enemy (✷), such as the cultists of The Midnight Masks. */
+  unique?: true;
   quantity?: number;
   keywords?: readonly Keyword[];
   /** Its forced abilities ("Wolf-Man" Drew's heal). */

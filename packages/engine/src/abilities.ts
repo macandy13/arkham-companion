@@ -39,6 +39,7 @@ import {
 } from './enemies';
 import { isActiveInvestigator, playerOrder, requireInvestigator, statValue } from './investigators';
 import { cardsInZone, currentCard, requireCard } from './lookup';
+import { inVictoryDisplay } from './victory';
 import type { AddMapStep } from './setup';
 import type {
   CardInstance,
@@ -151,6 +152,13 @@ export type TimingWindow =
    * Site, advance"), opened for both, naming the investigator.
    */
   | { kind: 'investigatorEntered'; location: CardCode }
+  /**
+   * A card entered the victory display (`CardMoved`, or `EnemyDefeated` for an enemy with
+   * victory): an objective of the current agenda or act
+   * on what the display holds ("If there are 6 unique [[Cultist]] enemies in the victory display,
+   * advance"), opened for both, naming no investigator; a `victoryDisplayHolds` condition counts.
+   */
+  | { kind: 'addedToVictoryDisplay' }
   /**
    * Tokens of `token` were placed on the card (`TokensChanged` with a positive delta): for an
    * objective on the card's own tokens ("If there are 2 clues per investigator on this Act,
@@ -393,8 +401,23 @@ export type AbilityCondition =
    * location, Locked Door gains surge"), counted like the effect that names it.
    */
   | { kind: 'noCandidate'; ref: PickedRef }
+  /**
+   * The number of cards in the victory display that match `filter` is within the range ("6
+   * unique [[Cultist]] enemies").
+   */
+  | ({ kind: 'victoryDisplayHolds'; filter: VictoryDisplayFilter } & StatRange)
   /** The card with the ability holds at least `atLeast` tokens of `token` ("2 clues per investigator on this Act"). */
   | { kind: 'tokensOnSelf'; token: TokenKind; atLeast: ScaledValue };
+
+/**
+ * The cards a `victoryDisplayHolds` condition counts: those with `trait` and, if `unique`, only
+ * unique ones. The trait stands in for "[[Cultist]] enemies": in Night of the Zealot only enemies
+ * carry it.
+ */
+export interface VictoryDisplayFilter {
+  trait: Trait;
+  unique?: true;
+}
 
 /** Bounds on a value, both included; at least one is given, so the range always says something. */
 export type StatRange = { min: number; max?: number } | { min?: number; max: number };
@@ -542,6 +565,8 @@ export function windowsOpenedBy(
     case 'AgendaAdvanced':
     case 'ActAdvanced':
       return [{ window: { kind: 'advanced' }, cardId: event.cardId }];
+    case 'CardMoved':
+      return event.to.kind === 'victoryDisplay' ? addedToVictoryDisplay(state) : [];
     case 'TokensChanged':
       if (event.delta <= 0) return [];
       return [{ window: { kind: 'tokensPlaced', token: event.token }, cardId: event.cardId }];
@@ -560,6 +585,7 @@ export function windowsOpenedBy(
           window: { kind: 'enemyDefeated' as const, enemy },
           cardId,
         })),
+        ...(event.to.kind === 'victoryDisplay' ? addedToVictoryDisplay(state) : []),
       ];
     }
     default:
@@ -574,6 +600,13 @@ export function windowsOpenedBy(
  */
 function objectiveCards(state: GameState): InstanceId[] {
   return [state.agenda.current, state.act.current].filter((cardId) => cardId !== undefined);
+}
+
+function addedToVictoryDisplay(state: GameState): OpenedWindow[] {
+  return objectiveCards(state).map((cardId) => ({
+    window: { kind: 'addedToVictoryDisplay' },
+    cardId,
+  }));
 }
 
 /**
@@ -623,6 +656,8 @@ function conditionHolds(
     }
     case 'enemiesInPlay':
       return inRange(enemiesOnTable(ctx, state, condition.trait).length, condition);
+    case 'victoryDisplayHolds':
+      return inRange(inVictoryDisplay(ctx, state, condition.filter).length, condition);
     case 'noCandidate': {
       const { investigatorId } = opened;
       const from =
@@ -1141,6 +1176,24 @@ export function whenEnemyDefeated(enemy: CardCode, ...effects: AbilityEffect[]):
  */
 export function whenAnInvestigatorEnters(location: CardCode, ...effects: AbilityEffect[]): Ability {
   return { window: { kind: 'investigatorEntered', location }, effects };
+}
+
+/**
+ * An objective of an agenda or act on the victory display: `effects` resolve once a card entering
+ * it brings the cards matching `filter` there to `atLeast`. "If there are 6 unique [[Cultist]]
+ * enemies in the victory display, advance" is
+ * `whenVictoryDisplayHolds({ trait: trait('Cultist'), unique: true }, 6, advanceAct())`.
+ */
+export function whenVictoryDisplayHolds(
+  filter: VictoryDisplayFilter,
+  atLeast: number,
+  ...effects: AbilityEffect[]
+): Ability {
+  return {
+    window: { kind: 'addedToVictoryDisplay' },
+    condition: { kind: 'victoryDisplayHolds', filter, min: atLeast },
+    effects,
+  };
 }
 
 /**

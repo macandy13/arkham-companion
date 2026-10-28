@@ -120,6 +120,8 @@ export interface CardStats {
   /** Horror an enemy deals when it attacks. */
   horror?: number;
   victory?: number;
+  /** A unique card (✷ before its name): only one copy can be in play; counted by objectives such as "6 unique [[Cultist]] enemies". */
+  unique?: true;
   /** Doom threshold of an agenda. */
   doom?: ScaledValue;
   /** ArkhamDB encounter set the card belongs to; absent for player cards. */

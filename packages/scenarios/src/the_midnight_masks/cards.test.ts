@@ -12,6 +12,7 @@ import {
   PlayTable,
   requireInvestigator,
   resolveValue,
+  victoryDisplay,
   type CardStats,
   type Command,
 } from '@arkham/engine';
@@ -350,6 +351,48 @@ describe('The Midnight Masks card abilities', () => {
         code: 'triggeredCommandRejected',
       });
     });
+
+    const maskedHunter = { id: instanceId('masked_hunter'), code: '01121b' };
+    const drew = { id: instanceId('wolf_man_drew'), code: '01137' };
+    const peter = { id: instanceId('peter_warren'), code: '01139' };
+    const victoria = { id: instanceId('victoria_devereux'), code: '01140' };
+    const ruth = { id: instanceId('ruth_turner'), code: '01141' };
+    const acolyte = { id: instanceId('acolyte'), code: '01169' };
+
+    it.each([
+      {
+        inDisplay: 'The Masked Hunter, Drew, Peter, Victoria and Ruth',
+        shown: [maskedHunter, drew, peter, victoria, ruth],
+        resolution: 'R1',
+      },
+      {
+        inDisplay: 'The Masked Hunter, Drew, Peter, Victoria and an Acolyte',
+        shown: [maskedHunter, drew, peter, victoria, acolyte],
+        resolution: undefined,
+      },
+    ])(
+      'with $inDisplay in the victory display, interrogating Herman Collins ends in $resolution',
+      ({ shown, resolution }) => {
+        const herman = instanceId('herman');
+        const withDisplay = shown.reduce(
+          (game, { id, code }) => game.withCard(id, cardOf(code), victoryDisplay),
+          atRivertown(),
+        );
+        const { context, state } = withDisplay
+          .withCard(herman, cardOf('01138'), engagedWith(alice))
+          .start();
+
+        const after = stateAfter(context, state, {
+          type: 'UseCardAction',
+          investigatorId: alice,
+          cardId: herman,
+          action: 0,
+        });
+
+        expect(after.cards[herman]?.zone).toEqual(victoryDisplay);
+        expect(after.meta.resolution).toBe(resolution);
+      },
+    );
   });
 
   describe.each([

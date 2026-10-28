@@ -181,6 +181,7 @@ export {
   whenDefeated,
   whenEnemyDefeated,
   whenAnInvestigatorEnters,
+  whenVictoryDisplayHolds,
   whenTokensOnSelf,
   whenRevealed,
 } from './abilities';
@@ -188,6 +189,7 @@ export type {
   Ability,
   AbilityChoice,
   AbilityCondition,
+  VictoryDisplayFilter,
   AbilityCommand,
   AbilityEffect,
   AbilityOption,

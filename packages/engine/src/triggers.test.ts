@@ -79,10 +79,12 @@ import {
   takeHorror,
   threatAreaOf,
   trait,
+  victoryDisplay,
   whenAdvanced,
   whenDefeated,
   whenEnemyDefeated,
   whenAnInvestigatorEnters,
+  whenVictoryDisplayHolds,
   whenTokensOnSelf,
   whenRevealed,
   whenTurnBegins,
@@ -1464,6 +1466,71 @@ describe('objectives on entering a location', () => {
     });
 
     expect(state.cards[agenda1]?.tokens.doom).toBe(1);
+  });
+});
+
+describe('objectives on the victory display', () => {
+  const cultist = trait('Cultist');
+  const newcomer = instanceId('newcomer');
+  /** "If there are 2 unique Cultist enemies in the victory display, advance." */
+  const twoCultistsAct = blankAct('two_cultists_act', {
+    abilities: [whenVictoryDisplayHolds({ trait: cultist, unique: true }, 2, advanceAct())],
+  });
+  /**
+   * Alice in the hall with `newcomer`, an enemy worth 1 victory; one unique Cultist is in the
+   * victory display already, and act 1 waits for two.
+   */
+  const displayTable = (newcomerCard: CardStats) =>
+    newGame()
+      .withAgenda(agenda1, firstAgendaCard)
+      .withAct(act1, twoCultistsAct)
+      .withAct(act2, secondActCard)
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withCard(
+        instanceId('first_cultist'),
+        blankEnemy('first_cultist', { traits: [cultist], unique: true, victory: 1 }),
+        victoryDisplay,
+      )
+      .withCard(newcomer, newcomerCard, atLocation(hall), { faceUp: true })
+      .withInvestigator(alice, { locationId: hall });
+
+  it.each([
+    {
+      newcomer: 'a unique Cultist',
+      card: blankEnemy('unique_cultist', { traits: [cultist], unique: true, victory: 1 }),
+      act: act2,
+    },
+    {
+      newcomer: 'a Cultist that is not unique',
+      card: blankEnemy('plain_cultist', { traits: [cultist], victory: 1 }),
+      act: act1,
+    },
+    {
+      newcomer: 'a unique Monster',
+      card: blankEnemy('unique_monster', { traits: [trait('Monster')], unique: true, victory: 1 }),
+      act: act1,
+    },
+  ])('with $newcomer defeated, the act is $act', ({ card, act }) => {
+    const { context, state: started } = displayTable(card).start();
+
+    const { state } = execute(context, started, { type: 'DefeatEnemy', enemyId: newcomer });
+
+    expect(state.cards[newcomer]?.zone).toEqual(victoryDisplay);
+    expect(state.act.current).toBe(act);
+  });
+
+  it('advances when a unique Cultist is put into the victory display without a defeat (by an effect such as a Parley)', () => {
+    const { context, state: started } = displayTable(
+      blankEnemy('unique_cultist', { traits: [cultist], unique: true, victory: 1 }),
+    ).start();
+
+    const { state } = execute(context, started, {
+      type: 'MoveCard',
+      cardId: newcomer,
+      to: victoryDisplay,
+    });
+
+    expect(state.act.current).toBe(act2);
   });
 });
 
