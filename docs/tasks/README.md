@@ -17,7 +17,7 @@ Each campaign is one `MCx` milestone (tasks `MCx.1`, `MCx.2` …). Generic engin
 A fixed recipe keeps each new scenario small and predictable, and forces shared mechanics into the engine instead of copy-pasted scenario code.
 
 1. **Import (Sonnet):** `pnpm carddata:fetch <pack>`; the ArkhamCards import (M4.1) for the scenario.
-2. **Connections (Opus):** connection symbol extraction and review (M4.2) for the pack's locations.
+2. **Connections (Opus):** connection symbol extraction and review (M4.2) for the pack's locations. The symbols each campaign needs are listed in [location-symbols.md](../location-symbols.md).
 3. **Definition (Opus):** `ScenarioDefinition`, setup steps, setup test.
 4. **Mechanics (Opus):** special rules as card abilities; promote anything a second scenario needs into an engine primitive.
 5. **Playtest (Sonnet):** golden replay and the playtest checklist.
