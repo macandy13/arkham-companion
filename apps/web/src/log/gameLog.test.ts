@@ -135,11 +135,11 @@ describe('gameLog', () => {
     expect(
       gameLog(t, table.ctx, table.state, table.entries)
         .slice(-2)
-        .map((s) => s.lines),
+        .map((step) => step.lines),
     ).toEqual([['Roland Banks draws Grasping Hands'], ['Roland Banks: Agility test (3) failed']]);
   });
 
-  it('tells an enemy engaging, attacking and being defeated', () => {
+  it('tells a fight that defeats an enemy', () => {
     const table = PlayTable.start(
       rolandsTurn.withCard(
         instanceId('ghoul'),
@@ -157,11 +157,41 @@ describe('gameLog', () => {
     ]);
   });
 
-  it('marks the phases and turns', () => {
+  it('marks the end of a turn and the next phase', () => {
     const table = PlayTable.start(rolandsTurn);
+    const stepsBefore = gameLog(t, table.ctx, table.state, table.entries).length;
 
     table.endTurn(byName('Roland Banks'));
+    table.nextPhase();
 
-    expect(lastStepOf(t, table)).toEqual(["Roland Banks's turn ends"]);
+    const steps = gameLog(t, table.ctx, table.state, table.entries).slice(stepsBefore);
+    expect(steps.map((step) => step.lines)).toEqual([
+      ["Roland Banks's turn ends"],
+      ['Round 1: Enemy phase'],
+    ]);
+  });
+
+  it('tells an enemy spawning, then moving in and engaging', () => {
+    const table = PlayTable.start(
+      rolandsTurn
+        .withCard(
+          instanceId('ghoul'),
+          blankEnemy('Ghoul', { keywords: [{ name: 'spawn', detail: 'Hallway' }] }),
+          { kind: 'encounterDeck' },
+        )
+        .withCard(instanceId('next_card'), blankTreachery('Next card'), { kind: 'encounterDeck' }),
+    );
+    table.drawEncounterCard(byName('Roland Banks'));
+
+    table.moveEnemy(byName('Ghoul'), byName('Study'));
+
+    expect(
+      gameLog(t, table.ctx, table.state, table.entries)
+        .slice(-2)
+        .map((step) => step.lines),
+    ).toEqual([
+      ['Roland Banks draws Ghoul', 'Ghoul spawns at Hallway'],
+      ['Ghoul moves to Study', 'Ghoul engages Roland Banks'],
+    ]);
   });
 });

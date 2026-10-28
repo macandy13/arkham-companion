@@ -1,5 +1,6 @@
 import type { TFunction } from 'i18next';
 import type {
+  CardMoved,
   EngineContext,
   Event,
   GameState,
@@ -18,7 +19,7 @@ import { assertNever, runsBy } from '@arkham/util';
  * the unit `GameSession.undo` takes back) as readable lines, in the order they happened.
  */
 export interface LogStep {
-  /** The step's `commandId`, so a later jump back can name the step. */
+  /** The `LoggedEvent.commandId` of the step's undo group, which a jump back names. */
   readonly id: string;
   readonly lines: readonly string[];
 }
@@ -66,6 +67,7 @@ export function eventLines(
     investigator: (id) => state.investigators.find((inv) => inv.id === id)?.name ?? id,
   };
   return events.flatMap((event) => {
+    // A discovery is the only clue change of its step: no rule moves clues while a test resolves.
     const isDiscovery =
       (event.type === 'TokensChanged' &&
         event.token === 'clue' &&
@@ -97,9 +99,7 @@ function eventLine(t: TFunction, names: Names, state: GameState, event: Event): 
     case 'DeckShuffled':
       return event.zone.kind === 'encounterDeck' ? t('log.encounterDeckShuffled') : undefined;
     case 'CardMoved':
-      return event.to.kind === 'location'
-        ? t('log.entersPlay', { card: names.card(event.cardId) })
-        : undefined;
+      return cardMovedLine(t, names, event);
     case 'CardFlipped':
       // Agendas and acts turn over as they advance, which their own line says.
       return event.faceUp && state.cards[event.cardId]?.zone.kind === 'location'
@@ -199,6 +199,20 @@ function eventLine(t: TFunction, names: Names, state: GameState, event: Event): 
     default:
       return assertNever(event);
   }
+}
+
+/**
+ * A location put into play, or an enemy spawning at or moving to a location; other moves (a card
+ * discarded, set aside, attached) follow from a line of their own, such as the draw or the defeat.
+ */
+function cardMovedLine(t: TFunction, names: Names, { cardId, from, to }: CardMoved) {
+  if (to.kind === 'location') return t('log.entersPlay', { card: names.card(cardId) });
+  if (to.kind !== 'atLocation') return undefined;
+  const fromPlay = from.kind === 'atLocation' || from.kind === 'engaged';
+  return t(fromPlay ? 'log.enemyMoved' : 'log.spawned', {
+    enemy: names.card(cardId),
+    location: names.card(to.locationId),
+  });
 }
 
 /** What an investigator does with their own cards, which the players carry out at the table. */
