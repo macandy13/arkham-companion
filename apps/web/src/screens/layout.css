@@ -3,6 +3,8 @@
   grid-template-rows: auto 1fr;
   /* The visible height, so a phone's address bar never hides the foot of the screen. */
   min-height: 100dvh;
+  /* The safe areas pad the screen from within its height, never add to it. */
+  box-sizing: border-box;
   padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
 }
 

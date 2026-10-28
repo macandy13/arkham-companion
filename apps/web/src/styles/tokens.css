@@ -345,9 +345,10 @@
  * its four header cards small in one row with small tokens and the investigator card's skills and
  * counters smaller, so the map keeps the room between the header and the one investigator panel.
  * A phone held sideways (under 30rem tall) keeps the tablet's board but takes the same sizes, so
- * the header leaves the map and the panels the screen's little height. game.css and
- * investigators.css open their phone rules with the same queries, written out in each, since a
- * custom property cannot stand in a media query (usePhone.ts holds the upright one for scripts).
+ * the header leaves the map and the panels the screen's little height. game.css opens its phone
+ * rules with the same queries and investigators.css with the upright one, written out in each,
+ * since a custom property cannot stand in a media query (usePhone.ts holds the upright one for
+ * scripts).
  */
 @media (orientation: portrait) and (max-width: 40rem),
   (orientation: landscape) and (max-height: 30rem) {
