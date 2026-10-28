@@ -138,6 +138,7 @@ export {
   placeDoomOn,
   placeDoomOnSelf,
   placeCluesOnSelf,
+  placeCluesOnSelfUpTo,
   nearestEnemy,
   healSelf,
   gainSurge,

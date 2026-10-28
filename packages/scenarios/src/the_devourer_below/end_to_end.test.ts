@@ -7,8 +7,10 @@
  * who got away and the Ghoul Priest, the four random Arkham Woods connecting
  * on their revealed sides, Unhallowed Ground's willpower test, Offer of Power,
  * act 1 opening the Ritual Site and spawning the Cultists who got away on the
- * Main Path, act 2 advancing as Daisy enters the Ritual Site, Mysterious Chanting, act 3's action (spend 1 clue, test agility,
- * place a clue on the act) with its attacks of opportunity, hunters closing
+ * Main Path, act 2 advancing as Daisy enters the Ritual Site, the Ritual
+ * Site's clues at the end of the round, Mysterious Chanting, act 3's action
+ * (spend 1 clue, test agility, place a clue on the act) with its attacks of
+ * opportunity, hunters closing
  * in, Roland defeated) and
  * ends in a resolution applied to the campaign log: the ritual broken, the
  * Yithian Observer and Peter Warren in the victory display, Roland's defeat
@@ -17,7 +19,6 @@
  * What the engine leaves to the players is done by hand, as at the table:
  * agenda 1's reverse side (the Monster spawning at the Main Path with 1 doom),
  * act 2's reverse side (the enemy spawning at the Ritual Site),
- * the Ritual Site's clues at the end of the round,
  * Frozen in Fear's extra action, agenda 2's +1 fight and evade, Ancient
  * Evils' doom, Umôrdhoth's Wrath, Twisting Paths' test to leave it (Daisy
  * passes) and the 2 random cards "it is past midnight" discards from each
@@ -405,6 +406,7 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
     expect(table.board.namesIn({ kind: 'victoryDisplay' })).toEqual([yithian, 'Peter Warren']);
     expect(table.board.doomInPlay).toBe(2);
     expect(table.board.investigator(daisy)).toMatchObject({ clues: 3 });
+    expect(table.board.location(ritualSite)).toMatchObject({ clues: 2 });
 
     // Round 5 – enemy phase: both hunters close in on the Main Path and engage
     // Roland; the lead moves The Masked Hunter first. With Victoria's and
@@ -421,12 +423,10 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
     table.resolveEnemyAttacks();
     expect(table.board.investigator(roland)).toMatchObject({ status: 'defeated', damage: 9 });
 
-    // As the round ends in upkeep, the Ritual Site fills up to 4 clues again, by hand.
+    // As the round ends, the Ritual Site fills up to 4 clues again: 2 per
+    // investigator, counted from the 2 who started, Roland's defeat aside.
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'upkeep' });
-    table.play({
-      type: 'ManualAdjust',
-      adjustment: { kind: 'tokens', cardId: ritualSite, token: 'clue', delta: 2 },
-    });
+    expect(table.board.location(ritualSite)).toMatchObject({ clues: 4 });
 
     // Round 6 – mythos: Daisy draws Ancient Evils and places its doom by hand,
     // 4 of 5. Alone, she places her 3 clues on the act; with Roland's that

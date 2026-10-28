@@ -25,6 +25,7 @@ import {
   skillTest,
   skillTestOfEither,
   placeCluesOnSelf,
+  placeCluesOnSelfUpTo,
   discardSelf,
   spawnEachSetAsideAt,
   takeDamageAndHorror,
@@ -142,8 +143,7 @@ const woods = ['Woods'];
  *   evade for each enemy
  * - act 2's reverse side (the enemies at the Ritual Site)
  * - the Main Path's connection to each Woods location,
- *   the Arkham Woods' moving-out test, skill swaps, and the
- *   Ritual Site's clues at the end of the round
+ *   the Arkham Woods' moving-out test, and skill swaps
  * - Umôrdhoth's Wrath
  * - the Agents' constant and attack abilities (Screeching Byakhee, Yithian
  *   Observer), the madness weaknesses, Offer of Power's 2 cards, and Dreams of
@@ -283,6 +283,7 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
     shroud: 3,
     cluesPerInvestigator: 2,
     traits: ['Cave'],
+    abilities: [atEndOfRound(placeCluesOnSelfUpTo(perInvestigator(2)))],
   }),
   enemy({
     code: '01157',

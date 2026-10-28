@@ -74,6 +74,17 @@ export function resolveValue(value: ScaledValue, playerCount: number): number {
 }
 
 /**
+ * An amount as printed on a card or in setup instructions: a plain number or a `ScaledValue`
+ * ("2 clues per investigator"), resolved against the player count by `resolveAmount`.
+ */
+export type TokenAmount = number | ScaledValue;
+
+/** The number `amount` stands for with `playerCount` investigators. */
+export function resolveAmount(amount: TokenAmount, playerCount: number): number {
+  return typeof amount === 'number' ? amount : resolveValue(amount, playerCount);
+}
+
+/**
  * Position of an agenda or act in its deck, e.g. 2 for "Agenda 2a".
  *
  * Some scenarios print several cards for the same stage (2a/b and 2c/d, or

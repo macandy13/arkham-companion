@@ -35,9 +35,23 @@ export function isInPlay(state: GameState, card: CardInstance): boolean {
   }
 }
 
-/** Every card in play (`isInPlay`), in card order: the cards a window for "each card in play" opens for. */
+/** Every card in play (`isInPlay`), in card order; `cardsWithActiveAbilities` narrows it for windows. */
 export function cardsInPlay(state: GameState): CardInstance[] {
   return Object.values(state.cards).filter((card) => isInPlay(state, card));
+}
+
+/**
+ * Whether the card's printed abilities, modifiers and actions are active: all but an unrevealed
+ * location's, which are printed on its revealed side (RR "Locations"). Its restrictions are kept
+ * apart, as some are printed on the unrevealed side (`CardRestriction.unrevealed`).
+ */
+export function hasActiveAbilities(card: CardInstance): boolean {
+  return card.zone.kind !== 'location' || card.faceUp;
+}
+
+/** The cards in play a window for "each card in play" opens for (`hasActiveAbilities`). */
+export function cardsWithActiveAbilities(state: GameState): CardInstance[] {
+  return cardsInPlay(state).filter(hasActiveAbilities);
 }
 
 /** Cards in play that carry doom, including the current agenda. */

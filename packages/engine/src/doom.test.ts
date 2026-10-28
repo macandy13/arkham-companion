@@ -200,6 +200,17 @@ describe('PlaceTokens', () => {
     expect(requireInvestigator(next, alice).clues).toBe(1);
   });
 
+  it('puts 2 clues per investigator on the current act for alice alone', () => {
+    const next = stateAfter(context, state, {
+      type: 'PlaceTokens',
+      cardId: act1,
+      token: 'clue',
+      amount: perInvestigator(2),
+    });
+
+    expect(next.cards[act1]!.tokens.clue).toBe(2);
+  });
+
   it.each([
     { name: 'the act still waiting in the deck', cardId: act2, amount: 1, code: 'cardNotInPlay' },
     { name: 'the current act', cardId: act1, amount: 0, code: 'invalidTokenDelta' },
@@ -208,6 +219,32 @@ describe('PlaceTokens', () => {
       rejectionFrom(context, state, { type: 'PlaceTokens', cardId, token: 'clue', amount }).code,
     ).toBe(code);
   });
+});
+
+describe('PlaceTokens up to a count', () => {
+  it.each([
+    { held: 1, placed: 3 },
+    { held: 4, placed: 0 },
+    { held: 5, placed: 0 },
+  ])(
+    'tops the act up to 2 clues per investigator for alice and bob: holding $held, it gets $placed',
+    ({ held, placed }) => {
+      const { context, state } = aliceAndBob.start();
+      const holding = stateAfter(context, state, {
+        type: 'ManualAdjust',
+        adjustment: { kind: 'tokens', cardId: act1, token: 'clue', delta: held },
+      });
+
+      const next = stateAfter(context, holding, {
+        type: 'PlaceTokens',
+        cardId: act1,
+        token: 'clue',
+        upTo: perInvestigator(2),
+      });
+
+      expect(next.cards[act1]!.tokens.clue).toBe(held + placed);
+    },
+  );
 });
 
 describe('doom total invariant', () => {

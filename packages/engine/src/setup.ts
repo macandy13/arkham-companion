@@ -7,12 +7,13 @@ import {
 } from './campaign/campaign_log';
 import {
   cardStats,
+  resolveAmount,
   resolveValue,
   type CardStats,
   type CardType,
   type EngineContext,
   type ScenarioContext,
-  type ScaledValue,
+  type TokenAmount,
 } from './cards';
 import type { StartScenario, StartingCard, StartingInvestigator } from './commands';
 import {
@@ -33,13 +34,6 @@ import type { ScenarioDefinition } from './scenario';
 import { spawnZone } from './spawn';
 import type { ChaosToken, Difficulty, TokenKind } from './state';
 import { sameZone, scenarioDeck, type ScenarioDeck, type Zone } from './zone';
-
-/**
- * A number of tokens as printed in setup instructions: a plain amount or a
- * `ScaledValue` (e.g. "n per investigator"), resolved against the player count
- * by `compileSetup`.
- */
-export type TokenAmount = number | ScaledValue;
 
 /**
  * A location an `AddMapStep` puts into play, unrevealed unless `faceUp`, drawn in its `at` cell
@@ -680,8 +674,7 @@ function targetId(cards: readonly CodedCard[], code: CardCode): InstanceId {
 /** The draft with the step's tokens added to its target card. */
 function withTokens(draft: SetupDraft, step: PlaceTokensStep, playerCount: number): SetupDraft {
   const id = targetId(draft.cards, step.target);
-  const amount =
-    typeof step.amount === 'number' ? step.amount : resolveValue(step.amount, playerCount);
+  const amount = resolveAmount(step.amount, playerCount);
   return {
     ...draft,
     cards: draft.cards.map((card) =>
