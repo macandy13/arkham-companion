@@ -14,7 +14,7 @@ An [`Ability`](../../packages/engine/src/abilities.ts) is:
   - `phaseEnds`,
   - `roundEnds`,
   - `advanced`,
-  - `enemyDefeated` and `investigatorEntered`, objectives opened for the current agenda and act (`whenEnemyDefeated`, `whenAnInvestigatorEnters`),
+  - `enemyDefeated`, `investigatorEntered` and `addedToVictoryDisplay`, objectives opened for the current agenda and act (`whenEnemyDefeated`, `whenAnInvestigatorEnters`, `whenVictoryDisplayHolds`),
   - `tested` after a basic action's test,
   - `engaged` either way round,
   - `attacked` (attacks of opportunity included),
@@ -26,6 +26,7 @@ An [`Ability`](../../packages/engine/src/abilities.ts) is:
   - the tokens on the card itself: `whenTokensOnSelf('clue', perInvestigator(2), advanceAct())` for an objective on the act's own clues, whose count the act's view shows as its threshold,
   - what the window's investigator has: `ifYouHave('clues', { max: 0 }, …)`,
   - how many enemies of a trait are in play: `ifEnemiesInPlay(trait('Cultist'), { max: 0 }, …)`,
+  - how many cards of a trait, unique ones only if asked (`CardStats.unique`), the victory display holds: `whenVictoryDisplayHolds({ trait: trait('Cultist'), unique: true }, 6, advanceAct())`,
   - or that a reference with candidates stands for nothing: `ifNoCandidate(locationWithMost('clue'), whenRevealed(gainSurge()))` for Locked Door's "If there is no such location, Locked Door gains surge";
 - an optional repeat once per matching enemy (`forEachEnemy({ trait, at }, …)`, counted with the condition as the window opens);
 - and a list of effects.

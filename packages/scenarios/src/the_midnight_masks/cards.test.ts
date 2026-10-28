@@ -12,6 +12,7 @@ import {
   PlayTable,
   requireInvestigator,
   resolveValue,
+  victoryDisplay,
   type CardStats,
   type Command,
 } from '@arkham/engine';
@@ -350,6 +351,41 @@ describe('The Midnight Masks card abilities', () => {
         code: 'triggeredCommandRejected',
       });
     });
+
+    it.each([
+      {
+        inDisplay: 'the other five unique Cultists',
+        shown: ['01121b', '01137', '01139', '01140', '01141'],
+        resolution: 'R1',
+      },
+      {
+        inDisplay: 'four unique Cultists and an Acolyte',
+        shown: ['01121b', '01137', '01139', '01140', '01169'],
+        resolution: undefined,
+      },
+    ])(
+      'with $inDisplay in the victory display, interrogating Herman Collins ends in $resolution',
+      ({ shown, resolution }) => {
+        const herman = instanceId('herman');
+        const withDisplay = shown.reduce(
+          (game, code) => game.withCard(instanceId(`shown_${code}`), cardOf(code), victoryDisplay),
+          atRivertown(),
+        );
+        const { context, state } = withDisplay
+          .withCard(herman, cardOf('01138'), engagedWith(alice))
+          .start();
+
+        const after = stateAfter(context, state, {
+          type: 'UseCardAction',
+          investigatorId: alice,
+          cardId: herman,
+          action: 0,
+        });
+
+        expect(after.cards[herman]?.zone).toEqual(victoryDisplay);
+        expect(after.meta.resolution).toBe(resolution);
+      },
+    );
   });
 
   describe.each([
