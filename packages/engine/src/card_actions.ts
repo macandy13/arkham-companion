@@ -1,3 +1,4 @@
+import { hasActiveAbilities } from './doom';
 import { assertNever } from '@arkham/util';
 import { advanceAct, type AbilityEffect, type AbilityStep } from './abilities';
 import { findInvestigator } from './campaign/campaign_log';
@@ -284,7 +285,7 @@ export function offersActionsTo(
   const here = investigator.locationId;
   switch (zone.kind) {
     case 'location':
-      return isLocationInPlay(state, card.id) && card.faceUp && here === card.id;
+      return isLocationInPlay(state, card.id) && hasActiveAbilities(card) && here === card.id;
     case 'atLocation':
       return here === zone.locationId;
     case 'engaged':

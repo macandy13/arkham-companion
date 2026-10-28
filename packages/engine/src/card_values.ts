@@ -1,6 +1,6 @@
 import { assertNever } from '@arkham/util';
 import { cardStats, type EngineContext } from './cards';
-import { isInPlay } from './doom';
+import { hasActiveAbilities, isInPlay } from './doom';
 import { enemiesAt } from './enemies';
 import type { CardInstance, GameState } from './state';
 
@@ -58,8 +58,7 @@ function activeModifiers(
   source: CardInstance,
 ): readonly CardModifier[] {
   const stats = cardStats(ctx.cards, source.code);
-  if (!stats.modifiers || !isInPlay(state, source)) return [];
-  if (stats.typeCode === 'location' && !source.faceUp) return [];
+  if (!stats.modifiers || !isInPlay(state, source) || !hasActiveAbilities(source)) return [];
   return stats.modifiers;
 }
 

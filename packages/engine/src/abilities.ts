@@ -15,7 +15,7 @@ import type {
   ResolveEffect,
   TestSkill,
 } from './commands';
-import { cardsInPlay } from './doom';
+import { cardsWithActiveAbilities } from './doom';
 import { cardOptionLabels } from './decisions';
 import type { Event } from './events';
 import type { TraumaKind } from './campaign/campaign_log';
@@ -505,7 +505,7 @@ export function windowsOpenedBy(
           cardId,
           investigatorId,
         })),
-        ...cardsWithActiveText(state).map((card) => ({
+        ...cardsWithActiveAbilities(state).map((card) => ({
           window: { kind: 'eachTurnEnds' } as const,
           cardId: card.id,
           investigatorId,
@@ -523,7 +523,7 @@ export function windowsOpenedBy(
     case 'PhaseChanged': {
       const phase = event.ended;
       if (!isEndingPhase(phase)) return [];
-      return cardsWithActiveText(state).map((card) => ({
+      return cardsWithActiveAbilities(state).map((card) => ({
         window: { kind: 'phaseEnds', phase },
         cardId: card.id,
       }));
@@ -561,7 +561,7 @@ export function windowsOpenedBy(
       );
     }
     case 'RoundEnded':
-      return cardsWithActiveText(state).map((card) => ({
+      return cardsWithActiveAbilities(state).map((card) => ({
         window: { kind: 'roundEnds' },
         cardId: card.id,
       }));
@@ -594,15 +594,6 @@ export function windowsOpenedBy(
     default:
       return [];
   }
-}
-
-/**
- * The cards in play whose abilities a window for "each card in play" reaches: all but unrevealed
- * locations, whose abilities are printed on the revealed side: an unrevealed Ritual Site gets no
- * clues at the end of the round, only the ones its reveal places.
- */
-function cardsWithActiveText(state: GameState): CardInstance[] {
-  return cardsInPlay(state).filter((card) => card.zone.kind !== 'location' || card.faceUp);
 }
 
 /**
