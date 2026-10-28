@@ -256,3 +256,46 @@ const TAP_SLOP = 8;
 export function isTap(pressed: Point, released: Point): boolean {
   return Math.hypot(released.x - pressed.x, released.y - pressed.y) <= TAP_SLOP;
 }
+
+/** A side of a location's tile, where the location mode puts a neighbour: as it lies on the map. */
+export type Side = 'above' | 'below' | 'left' | 'right';
+
+/**
+ * A location connected to the one the location mode shows (`neighboursOf`): on which side of it
+ * its tile lies, and for a one-way connection which way it goes, `out` from the shown location
+ * or `in` towards it.
+ */
+export interface Neighbour {
+  id: InstanceId;
+  side: Side;
+  oneWay?: 'in' | 'out';
+}
+
+/**
+ * The locations `location` connects to on `map`, at either end of an edge, in edge order, each on
+ * the side where its tile lies (`tileCells`): above or below where the centres lie further apart
+ * down than across, left or right otherwise, so the players find each one where it is on the map.
+ */
+export function neighboursOf(map: MapView, location: InstanceId): Neighbour[] {
+  const cells = tileCells(map);
+  const from = cells[location];
+  if (!from) return [];
+  return map.connections.flatMap(({ from: start, to, oneWay }) => {
+    const id = start === location ? to : to === location ? start : undefined;
+    const cell = id && cells[id];
+    if (!id || !cell) return [];
+    const neighbour: Neighbour = { id, side: sideOf(from, cell) };
+    if (oneWay) neighbour.oneWay = start === location ? 'out' : 'in';
+    return [neighbour];
+  });
+}
+
+/** On which side of the tile in `from` the tile in `to` lies. */
+function sideOf(from: GridCell, to: GridCell): Side {
+  const a = centre(from);
+  const b = centre(to);
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  if (Math.abs(dy) >= Math.abs(dx)) return dy < 0 ? 'above' : 'below';
+  return dx < 0 ? 'left' : 'right';
+}

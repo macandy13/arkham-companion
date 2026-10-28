@@ -129,6 +129,8 @@
   --touch-target: 2.75rem;
   /* Buttons on a card (the agenda's doom steppers, the act's advance), small so the card stays compact. */
   --button-compact: 1.75rem;
+  /* How long a new location takes to slide in, in the phone's location mode. */
+  --duration-slide: 0.25s;
   /* The keyboard focus ring, in the accent colour. */
   --focus-ring-width: 2px;
   /* The dashed line round the map while the players adjust the board. */
@@ -143,6 +145,8 @@
   --layout-sheet-width: 22rem;
   /* A card drawn in full in a dialog (the enemy details), like the prototype's zoomed card. */
   --layout-zoom-card-width: 15rem;
+  /* A neighbour's tile beside the location's card in the phone's location mode, as in the prototype. */
+  --layout-neighbour-width: 4.8rem;
   /* Connection lines on the map, in its SVG user units (mapLayout.ts TILE). */
   --map-line-width: 3px;
   /*

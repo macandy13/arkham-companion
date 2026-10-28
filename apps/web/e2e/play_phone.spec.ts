@@ -1,5 +1,9 @@
 import { expect, test } from './fixtures/test';
-import { rolandThreatenedExport, resumeImportedGame } from './fixtures/saved_games';
+import {
+  houseOpenedExport,
+  rolandThreatenedExport,
+  resumeImportedGame,
+} from './fixtures/saved_games';
 
 // A phone held upright, as the screen-phone shots take it, so the play screen shows its compact
 // view and opens the detail view.
@@ -115,26 +119,36 @@ test('pan the map and swipe on from its strips on a phone', async ({ page }) => 
 });
 
 // Journey: on a phone, a tap on the Hallway in the compact map shows it in the map row in place of
-// the map, with who is there and what Roland Banks can do; the Map button brings the map back.
-test('open a location in the map row on a phone', { tag: '@flow' }, async ({ page }) => {
-  const board = page.locator('#board');
-  const hallway = page.getByRole('region', { name: 'Hallway' });
+// the map, its neighbours around it; a tap on the Attic above it shows the Attic, where Roland
+// Banks moves, and the Map button brings the map back.
+test(
+  'open a location in the map row and move on from it on a phone',
+  { tag: '@flow' },
+  async ({ page }) => {
+    const board = page.locator('#board');
+    const shown = page.locator('#map > section[data-mode="location"]');
 
-  await test.step('Tap the Hallway on the map', async () => {
-    await resumeImportedGame(
-      page,
-      'Roland Banks threatened',
-      rolandThreatenedExport('Roland Banks threatened'),
-    );
-    await page.getByRole('button', { name: 'Details of Hallway' }).click();
-    await expect(board).toHaveAttribute('data-view', 'detail');
-    await expect(hallway.getByRole('heading', { name: 'Hallway' })).toBeInViewport();
-    await expect(hallway.getByRole('button', { name: /^Investigate/ })).toBeVisible();
-  });
+    await test.step('Tap the Hallway on the map', async () => {
+      await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+      await page.getByRole('button', { name: 'Details of Hallway' }).click();
+      await expect(board).toHaveAttribute('data-view', 'detail');
+      await expect(shown.getByRole('heading', { name: 'Hallway' })).toBeInViewport();
+    });
 
-  await test.step('Go back to the whole map', async () => {
-    await hallway.getByRole('button', { name: 'Map' }).click();
-    await expect(page.getByRole('figure', { name: 'House' })).toBeInViewport();
-    await expect(hallway).toHaveCount(0);
-  });
-});
+    await test.step('Jump to the Attic beside it', async () => {
+      await shown.getByRole('button', { name: /^Go to Attic/ }).click();
+      await expect(shown.getByRole('heading', { name: 'Attic' })).toBeInViewport();
+    });
+
+    await test.step('Move Roland Banks there', async () => {
+      await shown.getByRole('button', { name: 'Move here · 1 action' }).click();
+      await expect(shown.getByRole('region', { name: 'Here' })).toContainText('Roland Banks');
+    });
+
+    await test.step('Go back to the whole map', async () => {
+      await shown.getByRole('button', { name: 'Map' }).click();
+      await expect(page.getByRole('figure', { name: 'House' })).toBeInViewport();
+      await expect(shown).toHaveCount(0);
+    });
+  },
+);

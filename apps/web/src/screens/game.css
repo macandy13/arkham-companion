@@ -773,14 +773,139 @@
   /* The location mode (LocationFocus) fills the room between the strips and scrolls on its own. */
   #board[data-view='detail'] > #map > section[data-mode='location'] {
     flex: 1;
+    flex-wrap: nowrap;
     align-self: stretch;
     min-height: 0;
     overflow-y: auto;
     padding: var(--space-2) var(--space-3);
   }
 
+  /* Each part keeps its height, so the column scrolls instead of squeezing them. */
+  #board[data-view='detail'] > #map > section[data-mode='location'] > * {
+    flex: none;
+  }
+
   #board[data-view='detail'] > #map > section[data-mode='location'] > button {
     align-self: start;
+  }
+
+  /*
+   * The location's card with its neighbours around it (LocationFocus), each side's tiles in a line
+   * along it, as they lie on the map. A new location slides in from the side it was tapped on.
+   */
+  #board[data-view='detail'] [data-compass] {
+    display: grid;
+    grid-template:
+      '. above .' auto
+      'left card right' auto
+      '. below .' auto / var(--layout-neighbour-width) 1fr var(--layout-neighbour-width);
+    gap: var(--space-1);
+    align-items: center;
+    justify-items: center;
+  }
+
+  #board[data-view='detail'] [data-compass] > svg {
+    grid-area: card;
+    width: 100%;
+    max-width: var(--layout-zoom-card-width);
+    filter: var(--piece-shadow);
+  }
+
+  #board[data-view='detail'] [data-compass] > ul {
+    display: flex;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  #board[data-view='detail'] [data-compass] > ul[data-side='above'] {
+    grid-area: above;
+  }
+
+  #board[data-view='detail'] [data-compass] > ul[data-side='below'] {
+    grid-area: below;
+  }
+
+  #board[data-view='detail'] [data-compass] > ul[data-side='left'] {
+    grid-area: left;
+    flex-direction: column;
+  }
+
+  #board[data-view='detail'] [data-compass] > ul[data-side='right'] {
+    grid-area: right;
+    flex-direction: column;
+  }
+
+  /* Resets the home screen's framed list items, which `#app > main ul > li` gives every list. */
+  #board[data-view='detail'] [data-compass] li {
+    padding: 0;
+    border: none;
+    background: none;
+  }
+
+  /* A neighbour: a small parchment tile with its symbol and name, and who is there. */
+  #board[data-view='detail'] [data-compass] button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+    width: var(--layout-neighbour-width);
+    padding: var(--space-1);
+    border: var(--card-border-width) solid var(--color-accent);
+    border-radius: var(--radius);
+    background: var(--color-parchment);
+    color: var(--color-ink);
+    font-size: var(--font-size-note);
+  }
+
+  #board[data-view='detail'] [data-compass] button > svg {
+    width: var(--button-compact);
+    height: var(--button-compact);
+  }
+
+  #board[data-view='detail'] [data-compass] button[data-blocked] {
+    border-style: dashed;
+    border-color: var(--color-doom);
+  }
+
+  #board[data-view='detail'] [data-compass] button[data-one-way='in'] {
+    border-style: dotted;
+  }
+
+  #board[data-view='detail'] [data-compass] button > [data-pieces] {
+    display: flex;
+    gap: var(--space-1);
+    font-weight: bold;
+  }
+
+  @keyframes location-arrives {
+    from {
+      opacity: 0;
+      translate: var(--arrive-from);
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    #board[data-view='detail'] > #map > section[data-mode='location'][data-from] {
+      animation: location-arrives var(--duration-slide) ease-out;
+    }
+
+    #board[data-view='detail'] > #map > section[data-from='above'] {
+      --arrive-from: 0 calc(-1 * var(--space-5));
+    }
+
+    #board[data-view='detail'] > #map > section[data-from='below'] {
+      --arrive-from: 0 var(--space-5);
+    }
+
+    #board[data-view='detail'] > #map > section[data-from='left'] {
+      --arrive-from: calc(-1 * var(--space-5)) 0;
+    }
+
+    #board[data-view='detail'] > #map > section[data-from='right'] {
+      --arrive-from: var(--space-5) 0;
+    }
   }
 
   /* The zoom buttons float over the map's corner, under the upper strip; the tabs take a line. */

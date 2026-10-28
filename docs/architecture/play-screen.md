@@ -68,6 +68,10 @@ A tap on a strip moves the view to the agenda or to that investigator's panel (`
 On a phone a tap on a location, in the compact map or the map row, shows that location in the map row in place of the map (`{ row: 'map', location }`, [`LocationFocus`](../../apps/web/src/map/LocationFocus.tsx)) instead of the details dialog the tablet opens. The strips stay above and below it.
 
 - Its content is the dialog's ([`LocationContent`](../../apps/web/src/map/LocationDetails.tsx)): the card, shroud and clues, who is there, the attached cards, and the action row or the corrections. The stylesheets share their rules (`:is(dialog[data-dialog='location'], [data-mode='location'])`).
+- Its connected locations sit around the card, each on the side where its tile lies on the map (`neighboursOf` in [`mapLayout.ts`](../../apps/web/src/map/mapLayout.ts): above or below where the centres lie further apart down than across, otherwise left or right).
+  - Each neighbour is a small tile with its connection symbol, its name and the initials of who is there.
+  - A barricaded neighbour (a card forbids moving in) has a dashed red frame, and a one-way connection into the shown location a dotted one; the tile's name says both.
+  - A tap on a neighbour shows it instead (`go`, no new history entry), sliding in from that side unless the players prefer reduced motion.
 - It stays on the location after a move or an investigation, since it is a row, not a window over it.
 - The Map button brings the whole map back, and so does the location leaving play. While the players choose where a spawned enemy goes, the map shows until they place it.
 - It takes the focus as it opens, so a keyboard tap on a tile's "i" button lands on it.
