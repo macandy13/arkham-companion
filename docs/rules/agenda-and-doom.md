@@ -5,5 +5,7 @@
 - Doom in play counts doom on the agenda **and on every other card in play** (enemies, locations, assets).
 - The agenda advances at the mythos "check doom threshold" step when doom in play is at or above its threshold and the agenda has no "Objective –". Outside that step it only advances when a card says so.
 - Thresholds may be flat or [per investigator](per-investigator-values.md).
-- Doom "for each [[Ghoul]] enemy in the Hallway or Parlor" (They're Getting Out!, at the end of the round) counts the matching enemies there as the round-end window opens, engaged ones included (an engaged enemy is at its investigator's location). Placed outside the mythos phase, it can only advance the agenda at the next threshold check. Our reading: counting as the window opens rather than as the effect resolves differs only if another round-end ability moved a Ghoul first, which no Night of the Zealot card does.
+- Doom "for each [[Ghoul]] enemy in the Hallway or Parlor" (They're Getting Out!, at the end of the round) counts the matching enemies there as the round-end window opens, engaged ones included (an engaged enemy is at its investigator's location).
+  - Placed outside the mythos phase, it can only advance the agenda at the next threshold check.
+  - Our reading: counting as the window opens rather than as the effect resolves differs only if another round-end ability moved a Ghoul first, which no Night of the Zealot card does.
 - Advancing the agenda removes **all doom from all cards in play**, then flips the agenda and follows its back side. Unless the back names a different next card, the next agenda in sequence becomes current and the old one is removed from the game.
