@@ -79,7 +79,9 @@ function turnLines(state: GameState): string[] {
 function agendaLine(ctx: EngineContext, state: GameState): string {
   const agenda = currentCard(state, state.agenda.current);
   if (!agenda) return 'Agenda: none';
-  const threshold = ctx.cards.get(agenda.code)?.doom;
+  // A face-down agenda is the reverse side of a card that became act and agenda at once: its
+  // printed threshold no longer counts (`agendaThresholdDecision`).
+  const threshold = agenda.faceUp ? ctx.cards.get(agenda.code)?.doom : undefined;
   const of = threshold === undefined ? '' : `/${resolveValue(threshold, state.meta.playerCount)}`;
   return `Agenda: ${nameOf(ctx, agenda)} – doom ${doomInPlay(state)}${of}`;
 }

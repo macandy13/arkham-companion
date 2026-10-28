@@ -2,6 +2,7 @@
 
 Engine modules have unit tests; invariants have table tests.
 Each scenario has an end-to-end test ([`end_to_end.test.ts`](../../packages/scenarios/src/the_gathering/end_to_end.test.ts)) that plays rounds through a `PlayTable`, checking invariants after every command and replaying the log at the end.
+A scenario may add one per other path to a resolution (The Devourer Below's [`umordhoth_end_to_end.test.ts`](../../packages/scenarios/src/the_devourer_below/umordhoth_end_to_end.test.ts) ends in R2).
 [`formatBoard`](../../packages/engine/src/format_board.ts) renders the board as stable text for snapshots and errors.
 
 The three test tools live in the engine's source, so the app uses them too:
