@@ -2,6 +2,71 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.12](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.11...arkham-companion-v0.1.12) (2026-10-28)
+
+
+### Features
+
+* **engine:** don't offer card actions that would change nothing (MC1.1c4) ([6755b12](https://github.com/macandy13/arkham-companion/commit/6755b1274e2bbc03247d1ccc393fe12a8425a6a1))
+* **engine:** don't offer card actions that would change nothing (MC1.1c4) ([8d0f21e](https://github.com/macandy13/arkham-companion/commit/8d0f21e94716bfea53ddaa3c05d7ccbcb9a56ae1))
+* **engine:** forbid moving into the unrevealed Parlor and investigating under Locked Door (MC1.2a) ([cec9d36](https://github.com/macandy13/arkham-companion/commit/cec9d363b789f0ae7f8173ed4fb0bf7d8e32e8f2))
+* **engine:** forbid moving into the unrevealed Parlor and investigating under Locked Door (MC1.2a) ([0ae4b64](https://github.com/macandy13/arkham-companion/commit/0ae4b64237f9875e176e710a4597af64afcec815))
+* **engine:** hide Umôrdhoth's action when nobody earned Lita (MC1.1c6) ([63384ef](https://github.com/macandy13/arkham-companion/commit/63384ef8e88f43f8a64b894a0dcc98db14bcb0ba))
+* **engine:** hide Umôrdhoth's action when nobody earned Lita (MC1.1c6) ([c608383](https://github.com/macandy13/arkham-companion/commit/c608383f5f8a550500e05b0a4b9b0ae817e79ad2))
+* **engine:** Locked Door attaches to the location with the most clues (MC1.3) ([3af1926](https://github.com/macandy13/arkham-companion/commit/3af192604d47b493ea96f267484d32b7ee655c0b))
+* **engine:** Locked Door attaches to the location with the most clues (MC1.3) ([a24d09b](https://github.com/macandy13/arkham-companion/commit/a24d09bb5f4cdf96bcb3b64a5d557ddd5445f150))
+* **engine:** name the card a deferred step came from (MC1.1c5) ([a2f389f](https://github.com/macandy13/arkham-companion/commit/a2f389f845ad9dbae75f59c15aa0f1e325fa0270))
+* **engine:** name the card a deferred step came from (MC1.1c5) ([1d2994a](https://github.com/macandy13/arkham-companion/commit/1d2994a4215e3badec0819fc4e57fb0a28c7c425))
+* **engine:** The Masked Hunter stops clue discovery and spending, Dissonant Voices card play (MC1.2b) ([8bfe18a](https://github.com/macandy13/arkham-companion/commit/8bfe18a8dd657929ed8f82a98c4f3d7af1cc4463))
+* **engine:** The Masked Hunter stops clue discovery and spending, Dissonant Voices card play (MC1.2b) ([1788a06](https://github.com/macandy13/arkham-companion/commit/1788a066a40dd516bfdd9d5ada7c4d8d744d2536))
+* **web:** connection symbol top left in its printed colour, details button top right (M3.14d review) ([8309c76](https://github.com/macandy13/arkham-companion/commit/8309c762b9d2114e7b1f7de46e4eefe56554d647))
+* **web:** connection symbols on location tiles (M3.14d) ([f00d01f](https://github.com/macandy13/arkham-companion/commit/f00d01faf1216566614ec5d6fc3ff1420ea9729a))
+* **web:** connection symbols on location tiles (M3.14d) ([5b45ad3](https://github.com/macandy13/arkham-companion/commit/5b45ad343aff9910d44941dc1d7afe9d95b15643))
+* **web:** map row strips and expand button in the phone detail view (M3.14c) ([c23d2d2](https://github.com/macandy13/arkham-companion/commit/c23d2d26f4ff5511b1809861df43cb8cbd0ce05a))
+* **web:** map row strips and expand button in the phone detail view (M3.14c) ([f56a33f](https://github.com/macandy13/arkham-companion/commit/f56a33f0182ad6af9485c65ed1fe05d6aa6cf6bf))
+
+
+### Bug fixes
+
+* **engine:** earn a story card once, test the resigned target ([f5df6c6](https://github.com/macandy13/arkham-companion/commit/f5df6c615f7b57b46b69b04c775c5074de244619))
+* **engine:** trust the taker in a standalone game; clarify the earned record ([012fb57](https://github.com/macandy13/arkham-companion/commit/012fb57acd98443652f09c6a44fe0359ce658450))
+* keep DrawCards' doc comment; name Your House by its view ([28356c8](https://github.com/macandy13/arkham-companion/commit/28356c86e3cc61ed0250e5ef3855e123d8b0ddc1))
+* **web:** connection disc back to its size, on the name's line (M3.14d review) ([b5e7c24](https://github.com/macandy13/arkham-companion/commit/b5e7c24b965c515c206b18bebf62b9ef699ccf28))
+* **web:** smaller connection symbol disc (M3.14d review) ([edcff41](https://github.com/macandy13/arkham-companion/commit/edcff4104046199cd032b0477c15df8f82121444))
+
+
+### Refactoring
+
+* **engine:** address review of the location restrictions ([f4889a9](https://github.com/macandy13/arkham-companion/commit/f4889a9f935109968b6da847368a88aeccff706d))
+* **engine:** derive the restricted verbs from one list ([2709fee](https://github.com/macandy13/arkham-companion/commit/2709feee802ffeee920c6da78ddec1fb4861eb90))
+* **engine:** investigator restrictions as verbs on a noun ([3d63fe1](https://github.com/macandy13/arkham-companion/commit/3d63fe1771a40edf228ed25e9b1f88523e016f31))
+* **engine:** playCards restriction with a type and trait filter ([28d0f1e](https://github.com/macandy13/arkham-companion/commit/28d0f1e09b840eba3857349040925af4914810d8))
+* **engine:** read the log directly once it exists ([1925897](https://github.com/macandy13/arkham-companion/commit/1925897a1c0e374ad407937c01008d15e5bf8404))
+* **engine:** record who earned Lita in the campaign log instead of a story flag ([b3f6e40](https://github.com/macandy13/arkham-companion/commit/b3f6e406137dd2143b78d1d4dfbf3a816bab00b2))
+* **web:** exhaustive connection glyphs, shared ring rule (M3.14d review) ([6dd24b9](https://github.com/macandy13/arkham-companion/commit/6dd24b948cc2a631a44826b6c85c4f9cd2ea3285))
+* **web:** share the act's clue count, exhaustive detail targets (M3.14c review) ([9666191](https://github.com/macandy13/arkham-companion/commit/96661911df5ccc25b2e4ac825fbb01ccf06a4ca7))
+
+
+### Documentation
+
+* add engine overview and lifecycle diagrams to the architecture docs ([59373bf](https://github.com/macandy13/arkham-companion/commit/59373bf49f72914450948fd3210e8212185d7b91))
+* add engine overview and lifecycle diagrams to the architecture docs ([5a390a1](https://github.com/macandy13/arkham-companion/commit/5a390a1639896f2a88889c9e35654288c634b581))
+* correct engine overview details from review ([2abf977](https://github.com/macandy13/arkham-companion/commit/2abf977e05c70a0f249b2db501d14116ee9ad962))
+* fix architecture list splits from review ([6a216a4](https://github.com/macandy13/arkham-companion/commit/6a216a43ac7999dd8f25dc597aebebd80873af14))
+* fix play screen list splits from review ([6c75a35](https://github.com/macandy13/arkham-companion/commit/6c75a3513b92975e0c8b8b6dde0644f36837538d))
+* fix rules list splits from review ([53fa0f7](https://github.com/macandy13/arkham-companion/commit/53fa0f7ad94cd10d0e964d7b05ffb5de78f7c8d4))
+* link every task and say how sides are counted ([1c15e54](https://github.com/macandy13/arkham-companion/commit/1c15e5477584739f53b74f59ea21001ad7fa8527))
+* list the location symbols each campaign needs ([0f338d7](https://github.com/macandy13/arkham-companion/commit/0f338d7c4e5a910156f47b6f21a485276ffe9b5b))
+* list the location symbols each campaign needs ([92b63fa](https://github.com/macandy13/arkham-companion/commit/92b63fa2a4f994c3482ea28831a474025d2d0203))
+* Locked Door refuses every investigation, not only the action ([0543a16](https://github.com/macandy13/arkham-companion/commit/0543a16d764439c22bcae2ae0d425ed5147b682a))
+* split engine architecture pages into short paragraphs and lists ([85f3bbe](https://github.com/macandy13/arkham-companion/commit/85f3bbe6bb867a3f31326691ad0ee2cca4f866bf))
+* split engine architecture pages into short paragraphs and lists ([d899ac9](https://github.com/macandy13/arkham-companion/commit/d899ac96522e1ed1ee6fcaa72c9b5786caa99bb7))
+* split rules pages into short paragraphs and lists ([6f0a356](https://github.com/macandy13/arkham-companion/commit/6f0a356bbb3cf94a2e3cff4bb0cbec9abf01bf5e))
+* split rules pages into short paragraphs and lists ([133172c](https://github.com/macandy13/arkham-companion/commit/133172cf81ce7fd3a8befa0b8acf99ea9aa8c11a))
+* split web app architecture pages into short paragraphs and lists ([4e78d68](https://github.com/macandy13/arkham-companion/commit/4e78d68f896b0f5ce60cbc4a1caa8d17518a864d))
+* split web app architecture pages into short paragraphs and lists ([49a7cce](https://github.com/macandy13/arkham-companion/commit/49a7cce47bbc5cb3a5eddc99dbaad7f2adab902e))
+* **web:** say where the connection colours come from (M3.14d review) ([58a0fcc](https://github.com/macandy13/arkham-companion/commit/58a0fcce0dd738051823930aa3b6db7430faf16a))
+
 ## [0.1.11](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.10...arkham-companion-v0.1.11) (2026-10-27)
 
 
