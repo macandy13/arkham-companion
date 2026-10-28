@@ -107,6 +107,15 @@
   --space-5: 2.5rem;
 
   /*
+   * The edges of the screen a notch, rounded corners or a phone's home bar cover, since the page
+   * reaches under them (index.html's `viewport-fit=cover`); 0 on a screen without them.
+   */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  /*
    * Display type for names and labels, and the UI type for everything else: the playmat's fonts,
    * IM Fell English SC and Alegreya Sans (OFL), self-hosted through `@fontsource` (App.tsx).
    */
@@ -335,11 +344,14 @@
  * A phone held upright: the play screen's compact mode (the prototype in public/prototype/phone),
  * its four header cards small in one row with small tokens and the investigator card's skills and
  * counters smaller, so the map keeps the room between the header and the one investigator panel.
- * game.css and investigators.css open their phone rules with the same query, written out in
- * each, since a custom property cannot stand in a media query (usePhone.ts holds it for scripts).
- * The detail view (`data-view`) shows the cards in full again, its header cards taller still.
+ * A phone held sideways (under 30rem tall) keeps the tablet's board but takes the same sizes, so
+ * the header leaves the map and the panels the screen's little height. game.css opens its phone
+ * rules with the same queries and investigators.css with the upright one, written out in each,
+ * since a custom property cannot stand in a media query (usePhone.ts holds the upright one for
+ * scripts).
  */
-@media (orientation: portrait) and (max-width: 40rem) {
+@media (orientation: portrait) and (max-width: 40rem),
+  (orientation: landscape) and (max-height: 30rem) {
   #board:not([data-view]) {
     --layout-header-card-height: 4.75rem;
     --header-token-size: 2.25rem;
@@ -348,8 +360,19 @@
     --skill-plate-icon-size: 0.875rem;
     --stat-token-size: 1.75rem;
   }
+}
 
+/*
+ * The upright phone's detail view (`data-view`) shows the cards in full again, its header cards
+ * taller still, and its dialogs keep to the phone's width.
+ */
+@media (orientation: portrait) and (max-width: 40rem) {
   #board[data-view='detail'] {
     --layout-header-card-height: var(--layout-detail-card-height);
+  }
+
+  /* The encounter dialog's row fits two cards. */
+  #board {
+    --encounter-strip-cards-shown: 2;
   }
 }

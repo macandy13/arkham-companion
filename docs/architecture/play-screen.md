@@ -37,7 +37,7 @@ The same query opens a block in [`tokens.css`](../../apps/web/src/styles/tokens.
 - the header shows only its four cards in one row:
   - the slot labels are hidden for the eye only,
   - and the piles, the victory display and the card plates are hidden.
-  - A tap on the agenda or act still opens its full card with its buttons;
+  - A tap on a card opens the detail view on it (below);
 - the status row names only the current phase, so it stays on one line;
 - the investigator bar shows one panel, the focused one (`data-focus`, `useFocus` in [`InvestigatorBar.tsx`](../../apps/web/src/investigators/InvestigatorBar.tsx): the one whose avatar was tapped until the turn changes, else the turn's, else the lead), without its art window, and the other investigators as round avatar buttons above it.
   The avatars are in the markup on every screen and hidden outside the phone, so the switch is CSS only.
@@ -76,7 +76,14 @@ On a phone a tap on a location, in the compact map or the map row, shows that lo
 - The Map button brings the whole map back, and so does the location leaving play. While the players choose where a spawned enemy goes, the map shows until they place it.
 - It takes the focus as it opens, so a keyboard tap on a tile's "i" button lands on it.
 
-The web app manifest allows any orientation, so an installed app turns with the phone.
+### Screen edges and turning
+
+- The page reaches under a notch, rounded corners and the home bar (`viewport-fit=cover` in `index.html`).
+  `#app` pads itself by the safe areas (`--safe-*` in `tokens.css`, from `env(safe-area-inset-*)`), and the detail view's floating ×, dots and notices add them to their insets.
+- The play screen is `100dvh` tall, the visible height, so a phone's address bar never hides the strips or the turn controls.
+- The web app manifest allows any orientation, so an installed app turns with the phone.
+  A phone held sideways (`(orientation: landscape) and (max-height: 30rem)`) keeps the tablet's board, with the compact mode's header row and sizes (a second query on the first phone blocks of `tokens.css` and `game.css`), so the map and the investigator panel keep the screen's little height.
+- Dialogs fit the phone's width; the encounter dialog shows two cards of a pile at a time.
 
 ## Frames
 
