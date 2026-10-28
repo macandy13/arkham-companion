@@ -4,6 +4,7 @@ import type {
   BoardView,
   EnemyView,
   InvestigatorView,
+  LocationSymbol,
   LocationView,
   MapEnemyView,
   PrintedActionView,
@@ -12,6 +13,7 @@ import { LOCATION_ART, PORTRAIT_SCAN, portraitArtViewBox } from '../catalog/card
 import { useCardPicture } from '../catalog/cardImages';
 import { cardActionCaption } from '../screens/ActionRow';
 import { LocationOrnament, TYPE_PLATE_CENTRE } from './cardOrnament';
+import { connectionGlyph } from './connectionSymbol';
 import {
   ART_WINDOW,
   ATTACHMENT,
@@ -51,7 +53,7 @@ export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyVi
  * `enemies` and `investigators` are the open game's pieces at this location, and `turnOrder`
  * says whose pawns carry the lead and turn markers; `dragOf` gives the drag handlers of each
  * piece that can be dragged now. A tap on the tile, or its details button in
- * the top left corner, calls `onOpen`; a press that moves further (`isTap`: a pan, a piece
+ * the top right corner, calls `onOpen`; a press that moves further (`isTap`: a pan, a piece
  * dragged) is no tap. Without `onOpen` (the card in the location details) it has neither.
  */
 export function LocationTile({
@@ -126,6 +128,7 @@ export function LocationTile({
       )}
       <LocationOrnament />
       <NameBand location={location} />
+      {location.symbol && <ConnectionSymbol symbol={location.symbol} />}
       {onOpen && <DetailsButton location={location} onOpen={onOpen} />}
       {location.attachments?.map((name, i) => (
         <Attachment key={`${name}-${i}`} name={name} origin={attachmentOrigin(i)} />
@@ -327,8 +330,36 @@ function Attachment({ name, origin: { x, y } }: { name: string; origin: Point })
 }
 
 /**
- * The tile's details button, a round button with an "i" in its top left corner, where the printed
- * card shows its connection icon, named after the location. It is the keyboard's way to the
+ * The location's connection symbol (`LocationView.symbol`) in the tile's top left corner, as on the
+ * printed card: a small disc in the symbol's colour with a light glyph. Named for screen readers,
+ * since its shape alone says nothing.
+ */
+function ConnectionSymbol({ symbol }: { symbol: LocationSymbol }) {
+  const { t } = useTranslation();
+  // On the name's line, like the printed symbol beside the name.
+  const centre = { x: CONTENT.pawnRadius, y: CONTENT.band / 2 };
+  return (
+    <g
+      role="img"
+      aria-label={t('map.connectionSymbol', { symbol: t(`map.symbols.${symbol}`) })}
+      data-connection={symbol}
+      transform={`translate(${centre.x} ${centre.y})`}
+    >
+      <circle r={CONNECTION_RADIUS} />
+      <path d={connectionGlyph(symbol, CONNECTION_GLYPH_SIZE)} />
+    </g>
+  );
+}
+
+/** The symbol's disc is a little smaller than the pieces, like the printed one beside the name. */
+const CONNECTION_RADIUS = CONTENT.pawnRadius * 0.75;
+
+/** The glyph's reach from the disc's centre: small inside the disc, like the printed one. */
+const CONNECTION_GLYPH_SIZE = CONTENT.pawnRadius * 0.25;
+
+/**
+ * The tile's details button, a round button with an "i" in its top right corner, across the name
+ * from the connection symbol, named after the location. It is the keyboard's way to the
  * details, which a tap on the tile also opens. It is an SVG group rather than an HTML button,
  * since it sits inside the drawing, so it takes the keyboard (Enter, Space) itself; its click is
  * the tile's, which opens the details.
@@ -336,7 +367,7 @@ function Attachment({ name, origin: { x, y } }: { name: string; origin: Point })
 function DetailsButton({ location, onOpen }: { location: LocationView; onOpen: () => void }) {
   const { t } = useTranslation();
   const radius = CONTENT.pawnRadius;
-  const x = radius;
+  const x = TILE.width - radius;
   const y = radius;
   const onKeyDown = (event: KeyboardEvent<SVGGElement>) => {
     if (event.key !== 'Enter' && event.key !== ' ') return;

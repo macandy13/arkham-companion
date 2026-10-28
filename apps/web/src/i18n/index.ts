@@ -9,6 +9,7 @@ export const resources = {
       detail: {
         close: 'Back to the overview',
         openMap: 'Show the map on the whole screen',
+        showMap: 'Map',
       },
       header: {
         round: 'Round {{round}}',
@@ -147,6 +148,14 @@ export const resources = {
         zoomIn: 'Zoom in',
         zoomOut: 'Zoom out',
         fit: 'Fit map',
+        connectionSymbol: 'Connection symbol: {{symbol}}',
+        symbols: {
+          circle: 'circle',
+          square: 'square',
+          triangle: 'triangle',
+          plus: 'plus',
+          diamond: 'diamond',
+        },
         shroud: 'Shroud {{shroud}}',
         clues: 'Clues {{count}}',
         location: 'Location',
@@ -605,6 +614,7 @@ export const resources = {
       detail: {
         close: 'Zurück zur Übersicht',
         openMap: 'Karte auf dem ganzen Bildschirm zeigen',
+        showMap: 'Karte',
       },
       header: {
         round: 'Runde {{round}}',
@@ -744,6 +754,14 @@ export const resources = {
         zoomIn: 'Vergrößern',
         zoomOut: 'Verkleinern',
         fit: 'Ganze Karte',
+        connectionSymbol: 'Verbindungssymbol: {{symbol}}',
+        symbols: {
+          circle: 'Kreis',
+          square: 'Quadrat',
+          triangle: 'Dreieck',
+          plus: 'Plus',
+          diamond: 'Raute',
+        },
         shroud: 'Schleier {{shroud}}',
         clues: 'Hinweise {{count}}',
         location: 'Ort',

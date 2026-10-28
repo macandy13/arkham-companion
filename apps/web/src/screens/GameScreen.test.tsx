@@ -472,6 +472,31 @@ describe('GameScreen on a phone held upright', () => {
     expect(scrolledTo).toEqual([document.getElementById('map')]);
   });
 
+  it('shows the Study in the map row from a tap on its tile, instead of its details', async () => {
+    await renderTheGathering('phone-location-test');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Details of Study' }));
+
+    expect(board()?.getAttribute('data-view')).toBe('detail');
+    expect(scrolledTo).toEqual([document.getElementById('map')]);
+    const study = screen.getByRole('region', { name: 'Study' });
+    expect(within(study).getByRole('img', { name: 'The card of Study' })).toBeTruthy();
+    expect(document.activeElement).toBe(study);
+    expect(screen.queryByRole('dialog', { name: 'Study' })).toBeNull();
+    expect(screen.queryByRole('figure', { name: 'Study' })).toBeNull();
+  });
+
+  it('brings the whole map back from the Map button of a location', async () => {
+    await renderTheGathering('phone-location-map-test');
+    fireEvent.click(screen.getByRole('button', { name: 'Details of Study' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Map' }));
+
+    expect(screen.queryByRole('region', { name: 'Study' })).toBeNull();
+    expect(screen.getByRole('figure', { name: 'Study' })).toBeTruthy();
+    expect(board()?.getAttribute('data-view')).toBe('detail');
+  });
+
   it.each([
     {
       strip: 'the cards',

@@ -13,6 +13,7 @@ import {
   type EncounterSetCode,
   type Keyword,
   type LocationAttachment,
+  type LocationSymbol,
   type ScaledValue,
   type Trait,
 } from '@arkham/engine';
@@ -122,6 +123,8 @@ export interface LocationOptions {
   abilities?: Ability[];
   /** Its action abilities, such as `resignAction()`. */
   actions?: readonly CardAction[];
+  /** The connection symbol in its upper left corner; left out where nobody has entered it yet. */
+  symbol?: LocationSymbol;
   /** Its "cannot" abilities (the Parlor's barrier on its unrevealed side). */
   restrictions?: readonly CardRestriction[];
 }
@@ -137,6 +140,7 @@ export function location({
   victory,
   abilities,
   actions,
+  symbol,
   restrictions,
 }: LocationOptions): CardStats {
   return {
@@ -148,6 +152,7 @@ export function location({
     ...(victory === undefined ? {} : { victory }),
     ...(abilities === undefined ? {} : { abilities }),
     ...(actions === undefined ? {} : { actions }),
+    ...(symbol === undefined ? {} : { symbol }),
     ...(restrictions === undefined ? {} : { restrictions }),
   };
 }

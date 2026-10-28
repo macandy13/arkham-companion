@@ -2,7 +2,7 @@
 
 The [map](../../apps/web/src/map/MapBoard.tsx) is an SVG of location tiles at their layout cells with pan, zoom and drag-to-play pieces (its tabs and small zoom icons float over its top corners, and its name is for screen readers only).
 
-A tap on a tile (or its "i" button, for the keyboard) opens the location's [details](../../apps/web/src/map/LocationDetails.tsx):
+A tap on a tile (or its "i" button, for the keyboard) opens the location's [details](../../apps/web/src/map/LocationDetails.tsx) (on a phone in the map row instead, the [location mode](play-screen.md#location-mode)):
 
 - its card (the tile's drawing with its pieces, at zoomed-card size),
 - its shroud and clues,
@@ -20,7 +20,7 @@ A tap on an enemy token (a press let go where it went down, `isTap`, which a dra
 
 ## Location tiles
 
-Location tiles are drawn like the printed location card, with our own SVG frame ([`cardOrnament.tsx`](../../apps/web/src/map/cardOrnament.tsx)) over art cut from the same area of the scan, so the printed frame stays hidden under ours.
+Location tiles are drawn like the printed location card, with our own SVG frame ([`cardOrnament.tsx`](../../apps/web/src/map/cardOrnament.tsx)) over art cut from the same area of the scan, so the printed frame stays hidden under ours. The location's connection symbol (`LocationView.symbol`) sits in the tile's top left corner as on the printed card, a disc in the symbol's printed colour (`--color-connection-*` tokens) with our own glyph ([`connectionSymbol.ts`](../../apps/web/src/map/connectionSymbol.ts)), centred on the name's line; the details button takes the top right corner.
 
 A revealed location's text box prints its action abilities, whoever may take them (`LocationView.printedActions`: the action or free symbol and the name, "Resign."), as HTML in a `foreignObject` styled like the enemy card's text; with the whole card picture shown ("faces" look) it gives way to the printed text.
 
