@@ -1,12 +1,23 @@
 # Arkham Companion – Architecture
 
-How the app is built today: the key pieces, their boundaries and the ideas behind them. This page is the overview; each component has its own page in [`architecture/`](architecture/), linked below. Requirements and plans are in [product.md](product.md). Details live in the code's doc comments; these pages point at them.
+How the app is built today: the key pieces, their boundaries and the ideas behind them.
+This page is the overview; each component has its own page in [`architecture/`](architecture/), linked below.
+Requirements and plans are in [product.md](product.md).
+Details live in the code's doc comments; these pages point at them.
 
-**Keeping it current:** a PR that adds or changes a component updates that component's page, briefly: a new concept, boundary or extension point, not every new field or case. This overview changes only for a new package, dependency direction or key design decision, or when a component page is added. One page per component keeps parallel PRs out of each other's way; when a page grows long, split it by part (as the play screen is). Refer to components by name (architecture "Triggers and card effects"). Link files, not lines.
+**Keeping it current:**
+
+- A PR that adds or changes a component updates that component's page, briefly: a new concept, boundary or extension point, not every new field or case.
+- This overview changes only for a new package, dependency direction or key design decision, or when a component page is added.
+- One page per component keeps parallel PRs out of each other's way; when a page grows long, split it by part (as the play screen is).
+- Keep paragraphs short and enumerations as lists, one item per line ([coding guidelines](coding-guidelines.md) §8).
+- Refer to components by name (architecture "Triggers and card effects").
+- Link files, not lines.
 
 ## Overview
 
-An offline PWA with no backend. Players keep their own decks, skill tests and chaos bag; the app runs the scenario side: encounter deck, doom, agenda and act, the map, enemies and forced effects.
+An offline PWA with no backend.
+Players keep their own decks, skill tests and chaos bag; the app runs the scenario side: encounter deck, doom, agenda and act, the map, enemies and forced effects.
 
 ```mermaid
 flowchart LR
@@ -25,7 +36,10 @@ flowchart LR
   CD --> ADB
 ```
 
-Arrows are package dependencies; [ESLint](../eslint.config.js) enforces the important ones. The engine depends only on `@arkham/util`: no React, storage, network, clock or `Math.random`. Only [`IndexedDbStore`](../apps/web/src/storage/IndexedDbStore.ts) imports Dexie. [`packages/review_digest`](../packages/review_digest/src/) is CI tooling.
+Arrows are package dependencies; [ESLint](../eslint.config.js) enforces the important ones.
+The engine depends only on `@arkham/util`: no React, storage, network, clock or `Math.random`.
+Only [`IndexedDbStore`](../apps/web/src/storage/IndexedDbStore.ts) imports Dexie.
+[`packages/review_digest`](../packages/review_digest/src/) is CI tooling.
 
 - [`packages/engine`](../packages/engine/src/): game state, commands, events, reducer, generic rules, the `GameStore` interface, and the test tools (`GameBuilder`, `PlayTable`, `BoardView`).
 - [`packages/scenarios`](../packages/scenarios/src/): scenario and campaign definitions; special rules are card abilities.
@@ -48,9 +62,22 @@ Arrows are package dependencies; [ESLint](../eslint.config.js) enforces the impo
 - **Assistant, not referee.** Where the rules give the players a choice, the engine asks instead of guessing, and `ManualAdjust` can correct any state. A rules bug never blocks a game night.
 - **Scenarios as data.** A scenario is setup data plus card data whose abilities carry its rules. What two scenarios need becomes an engine primitive.
 - **Card data from ArkhamDB.** Fetched at build or run time; nothing copyrighted is committed or bundled.
-- **Strong types.** All identifiers are branded strings ([`ids.ts`](../packages/engine/src/ids.ts)): `CardCode` (printed data, shared by copies), `InstanceId` (one card on the table), `InvestigatorId` (a seat in one game), `InvestigatorCode` (the investigator card), `CardName` (readable, never an identity).
+- **Strong types.** All identifiers are branded strings ([`ids.ts`](../packages/engine/src/ids.ts)):
+  - `CardCode` (printed data, shared by copies),
+  - `InstanceId` (one card on the table),
+  - `InvestigatorId` (a seat in one game),
+  - `InvestigatorCode` (the investigator card),
+  - `CardName` (readable, never an identity).
 
-Stack: TypeScript strict, Vite + pnpm workspaces, React 19 with hash routes (static GitHub Pages), Zustand, i18next (English and German), Dexie, zod for external input only, vite-plugin-pwa, Vitest and Playwright.
+Stack:
+
+- TypeScript strict, Vite + pnpm workspaces
+- React 19 with hash routes (static GitHub Pages), Zustand
+- i18next (English and German)
+- Dexie
+- zod for external input only
+- vite-plugin-pwa
+- Vitest and Playwright.
 
 ## Components
 
@@ -66,5 +93,8 @@ Stack: TypeScript strict, Vite + pnpm workspaces, React 19 with hash routes (sta
 - [Persistence](architecture/persistence.md): `GameStore` and `IndexedDbStore`.
 - [Web app](architecture/web-app.md): routes, the investigator picker, `OpenGame`.
   - [Play screen](architecture/play-screen.md): layout, status row, symbols and styling.
-  - [Encounter piles](architecture/play-screen-encounter.md), [map and locations](architecture/play-screen-map.md), [investigators and enemies](architecture/play-screen-investigators.md), [decisions](architecture/play-screen-decisions.md).
+    - [Encounter piles](architecture/play-screen-encounter.md)
+    - [Map and locations](architecture/play-screen-map.md)
+    - [Investigators and enemies](architecture/play-screen-investigators.md)
+    - [Decisions](architecture/play-screen-decisions.md)
 - [Tests and debugging](architecture/tests-and-debugging.md): `newGame()`, `PlayTable`, `BoardView`.
