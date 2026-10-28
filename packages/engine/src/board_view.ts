@@ -1053,12 +1053,16 @@ function agendaView(ctx: EngineContext, state: GameState): AgendaView | undefine
   const agenda = currentCard(state, 'agenda');
   if (!agenda) return undefined;
   const { doom, imageSrc } = cardStats(ctx.cards, agenda.code);
+  // Face down, as act and agenda at once, it shows its reverse side, which prints no threshold.
+  const threshold = agenda.faceUp ? doom : undefined;
   return {
     id: agenda.id,
     name: nameOf(ctx, agenda),
     ...(imageSrc === undefined ? {} : { image: imageSrc }),
     doom: agenda.tokens.doom ?? 0,
-    ...(doom === undefined ? {} : { threshold: resolveValue(doom, state.meta.playerCount) }),
+    ...(threshold === undefined
+      ? {}
+      : { threshold: resolveValue(threshold, state.meta.playerCount) }),
   };
 }
 

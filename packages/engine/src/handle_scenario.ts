@@ -13,7 +13,7 @@ import type {
   TokensChanged,
 } from './events';
 import type { InstanceId, ResolutionId } from './ids';
-import { requireCard } from './lookup';
+import { cardsInZone, requireCard } from './lookup';
 import { resolveAmount } from './cards';
 import { clearTokensEvents, moveCardEvent } from './placement';
 import { CommandRejected } from './rejection';
@@ -100,6 +100,8 @@ export function completeAdvance(
   asked: boolean,
 ): (CardMoved | CurrentCardChanged | ScenarioEnded)[] {
   const card = requireCard(state.cards, cardId);
+  // Its reverse side made it the act as well (`BecomeActAndAgenda`): it stays, and nothing follows.
+  if (state.agenda.current === card.id && state.act.current === card.id) return [];
   const nextId = nextCardId(state, deck, card.id);
   // A question that chose no resolution (a prey tie, say) leaves the fallback to end it.
   const decided = state.meta.ended === true || (asked && resolution === undefined);
@@ -115,6 +117,17 @@ export function completeAdvance(
 /** The event that makes `cardId` the current card of `deck`, or leaves the deck without one. */
 function currentCardChanged(deck: Deck, cardId: InstanceId | undefined): CurrentCardChanged {
   return { type: 'CurrentCardChanged', deck, ...(cardId === undefined ? {} : { cardId }) };
+}
+
+/** `BecomeActAndAgenda`: the act deck leaves the game and the current agenda becomes the act too. */
+export function handleBecomeActAndAgenda(state: GameState): (CardMoved | CurrentCardChanged)[] {
+  const agenda = currentCard(state, 'agenda');
+  return [
+    ...cardsInZone(state, { kind: 'actDeck' }).map((cardId) =>
+      moveCardEvent(requireCard(state.cards, cardId), { kind: 'outOfGame' }),
+    ),
+    currentCardChanged('act', agenda.id),
+  ];
 }
 
 /** `EndScenario`: the scenario is over with the command's resolution. */

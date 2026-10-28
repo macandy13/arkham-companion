@@ -87,7 +87,8 @@ export function doomInPlay(state: GameState): number {
  */
 export function agendaThresholdDecision(ctx: EngineContext, state: GameState): DecisionRequested[] {
   const agenda = currentCard(state, 'agenda');
-  if (!agenda) return [];
+  // Face down it shows its reverse side, which prints no threshold (The Devourer Below).
+  if (!agenda?.faceUp) return [];
   const threshold = cardStats(ctx.cards, agenda.code).doom;
   if (
     threshold === undefined ||
