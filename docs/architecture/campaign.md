@@ -13,6 +13,23 @@ A game keeps a copy in `GameState.campaign`.
 Reached through the `campaign` namespace (`campaign.handleCommand`).
 First definition: [Night of the Zealot](../../packages/scenarios/src/night_of_the_zealot/campaign.ts).
 
+## Lifecycle
+
+A campaign log and each game are separate event logs; the game reads a copy of the log, and only a confirmed resolution writes back.
+
+```mermaid
+flowchart TD
+  DEF["CampaignDefinition<br/>scenario order, chaos bags"] --> START["StartCampaign<br/>(compileStart)"]
+  START --> LOG[("CampaignLog<br/>team, trauma, XP, records, chaos bag")]
+  LOG --> SETUP["compileSetup with the log<br/>next scenario, living team"]
+  SETUP --> GAME["game: StartScenario … ScenarioEnded<br/>GameState.campaign = copy of the log"]
+  GAME --> PROP["campaign.proposeResolution<br/>reads the ended game"]
+  PROP --> EDIT["players confirm or edit<br/>the proposed commands"]
+  EDIT --> APPLY["campaign.applyResolution<br/>all or none, then AdvanceScenario"]
+  APPLY --> LOG
+  APPLY -- "last scenario: endCampaign step" --> END["EndCampaign<br/>CampaignLog.result"]
+```
+
 ## Resolutions
 
 A scenario's resolutions are data on `ScenarioDefinition.resolutions` ([`resolution.ts`](../../packages/engine/src/campaign/resolution.ts)): per resolution id, plus "no resolution", a list of `ResolutionStep`s:

@@ -49,6 +49,25 @@ Only [`IndexedDbStore`](../apps/web/src/storage/IndexedDbStore.ts) imports Dexie
 
 ### How one player action flows
 
+```mermaid
+sequenceDiagram
+  participant UI as Component
+  participant GA as GameActions
+  participant GS as GameSession
+  participant PT as PlayTable
+  participant E as execute
+  participant DB as GameStore
+  UI->>GA: actions.moveTo(hallway)
+  GA->>GS: one step
+  GS->>PT: moveTo(turn investigator, Hallway)
+  PT->>E: Command
+  E->>E: handle → Event[], replay → GameState
+  E-->>PT: state + events, or CommandRejected
+  PT-->>GS: new table
+  GS->>DB: appendEvents (one undo group)
+  GS-->>UI: publish OpenGame (new BoardView)
+```
+
 1. A component calls an action on the app store's [`GameActions`](../apps/web/src/state/gameActions.ts) (`actions.moveTo(hallway)`).
 2. The [`GameSession`](../apps/web/src/state/gameSession.ts) plays it as one step on its `PlayTable`, which sends `Command`s through [`execute`](../packages/engine/src/execute.ts).
 3. [`handle`](../packages/engine/src/handle.ts) checks each command and returns every `Event` it causes, forced effects included, or throws `CommandRejected`.
@@ -79,6 +98,101 @@ Stack:
 - vite-plugin-pwa
 - Vitest and Playwright
 
+## Engine overview
+
+The core of the app's logic: how one command becomes events, how card abilities hook in, and how the engine waits for the players.
+Details are on the component pages: [Command handling](architecture/command-handling.md), [Triggers and card effects](architecture/triggers-and-card-effects.md), [Decisions](architecture/decisions.md), [Rounds, phases and turns](architecture/rounds-phases-and-turns.md).
+
+### Command → events → state
+
+```mermaid
+flowchart TD
+  C["Command<br/>MoveInvestigator, ResolveDecision, NextPhase, …"]
+  H["handle(ctx, state, command)<br/>all rules, card data, RNG"]
+  EV["Event[]<br/>InvestigatorMoved, DecisionRequested, …"]
+  A["apply(state, event)<br/>no checks, no card data"]
+  S["GameState"]
+  LOG[("event log<br/>GameStore")]
+  C --> H --> EV --> A --> S
+  EV --> LOG
+  LOG -- "replay on load / undo" --> A
+  S -. "next command reads it" .-> H
+```
+
+- `handle` is the only place that decides: it validates the command, reads card data and draws from the seeded RNG, and writes everything it worked out into the events.
+- `apply` only folds events into state, so replaying a stored log gives the same state without card data.
+- Every event of one player command shares its `commandId`; undo drops the whole group.
+
+### Inside `handle`: the step queue
+
+One command resolves as a queue of steps, depth first: a step's own events, then the forced effects they trigger, then the options an answer chose, then the step's continuations.
+
+```mermaid
+flowchart TD
+  IN["command from the players"] --> ACC{"accepted now?<br/>ended / decision pending"}
+  ACC -- no --> REJ["CommandRejected"]
+  ACC -- yes --> PROV{"an action that provokes<br/>attacks of opportunity?"}
+  PROV -- yes --> HOLD["one attack decision per enemy<br/>+ StepsQueued: the held action"]
+  PROV -- no --> Q["queue = [command]"]
+  Q --> NEXT{"new decision raised?"}
+  NEXT -- yes --> SUSP["StepsQueued: rest of the queue<br/>stored in meta.queue"]
+  NEXT -- no --> TAKE{"step left?"}
+  TAKE -- yes --> RUN["run the step's handler<br/>emit its events (apply)"]
+  RUN --> FRONT["put in front of the queue:<br/>1. triggered ability steps<br/>2. the chosen option's commands<br/>3. continuations (reverse side, place drawn card, surge, next phase step)"]
+  FRONT --> NEXT
+  TAKE -- no --> STORED{"meta.queue has a step<br/>and nothing is pending?"}
+  STORED -- yes --> RES["StepResumed: take it"] --> NEXT
+  STORED -- no --> DONE["return all events"]
+```
+
+- A rejected follow-up rejects the whole player command (`triggeredCommandRejected`), and so does a chain longer than `MAX_TRIGGERED_COMMANDS` (`triggerLoop`).
+- Steps are plain data (`QueuedStep`): a command, an ability effect, a held action, the rest of an agenda or act advance, placing a drawn card, a surge draw, a new lead, an enemy exhausting after its attack.
+  That is what lets the rest of a resolution wait in the state.
+
+### Timing windows
+
+Card abilities are data: a timing window, an optional condition and effects ([Triggers and card effects](architecture/triggers-and-card-effects.md)).
+After a step emits its events, `triggeredSteps` asks which windows each event opens and which cards have abilities there.
+
+```mermaid
+flowchart TD
+  EV["event<br/>InvestigatorMoved"] --> W["windowsOpenedBy<br/>entered: Hallway, Roland"]
+  W --> AB["abilitySteps<br/>abilities of that card in that window<br/>whose condition holds"]
+  AB --> ST["one ability step per effect"]
+  ST --> RE["resolveEffect when its turn comes<br/>fills self, windowInvestigator, eachEnemy, …"]
+  RE --> CMD["plain Command<br/>handled like any other"]
+```
+
+- Windows open against the state right after each event, but abilities are checked against the state after all of the command's events, so every ability sees the complete outcome.
+- Each effect resolves only when its step comes up, so it sees what the effects before it did, and its own triggers resolve before the next sibling (a nested sequence, last in first out).
+
+### Decisions and held actions
+
+When the rules give the players a choice, or the engine needs a result it cannot know (a skill test), a step emits `DecisionRequested` and the queue stops.
+The rest waits in the state until the answer:
+
+```mermaid
+sequenceDiagram
+  participant P as Players
+  participant H as handle
+  participant S as GameState
+  P->>H: MoveInvestigator (engaged with a ready Ghoul)
+  H->>S: DecisionRequested (Ghoul attacks)<br/>StepsQueued [action: MoveInvestigator]
+  Note over S: pending = [attack]<br/>meta.queue = [held move]
+  P->>H: ResolveDecision (attack: 1 damage)
+  H->>S: DecisionResolved, damage events, forced effects
+  Note over S: pending = []
+  H->>S: StepResumed, InvestigatorMoved, …<br/>or ActionDropped if the move is no longer possible
+```
+
+Where this lives in `GameState` ([`state.ts`](../packages/engine/src/state.ts)):
+
+- `pending: Decision[]`: the open questions. Each option carries the commands it runs, so the answer is data. While one is pending, only the commands whose spec allows it (`allowedWhilePending`: answers, `ManualAdjust`) are accepted.
+- `meta.queue: QueuedStep[]`: the rest of a resolution waiting for those answers, next first. The command that clears the last decision resumes it after its own steps.
+- A held action (`kind: 'action'`) is an action waiting for the attacks of opportunity it provoked. It runs once they are all answered, or is dropped (`ActionDropped`) if the investigator was defeated or the action became illegal meanwhile, so the answer stays valid.
+- `meta.steps: PhaseStep[]`: the automated steps left in the current phase (doom, encounter draws, hunters, attacks, upkeep). They are not queued: the players go on with the next `NextPhase`.
+- `meta.phase`, `meta.round`, `meta.turn` and `meta.turnsTaken`: where the round stands.
+
 ## Components
 
 - [Game state](architecture/game-state.md): `GameState`, zones, maps and invariants.
@@ -87,8 +201,8 @@ Stack:
 - [Decisions](architecture/decisions.md): questions for the players and skill tests.
 - [Rounds, phases and turns](architecture/rounds-phases-and-turns.md): automated phase steps and turns.
 - [Rule modules](architecture/rule-modules.md): generic rules per subject.
-- [Scenarios](architecture/scenarios.md): `ScenarioDefinition`, setup steps, hand-entered scenarios.
-- [Campaign](architecture/campaign.md): the campaign log and resolutions.
+- [Scenarios](architecture/scenarios.md): `ScenarioDefinition`, setup to end, setup steps, hand-entered scenarios.
+- [Campaign](architecture/campaign.md): the campaign log, its lifecycle and resolutions.
 - [Card data](architecture/card-data.md): `CardDb` and the ArkhamDB pipeline.
 - [Persistence](architecture/persistence.md): `GameStore` and `IndexedDbStore`.
 - [Web app](architecture/web-app.md): routes, the investigator picker, `OpenGame`.
