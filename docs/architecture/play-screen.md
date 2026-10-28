@@ -69,7 +69,8 @@ On a phone a tap on a location, in the compact map or the map row, shows that lo
 
 - Its content is the dialog's ([`LocationContent`](../../apps/web/src/map/LocationDetails.tsx)): the card, shroud and clues, who is there, the attached cards, and the action row or the corrections. The stylesheets share their rules (`:is(dialog[data-dialog='location'], [data-mode='location'])`).
 - It stays on the location after a move or an investigation, since it is a row, not a window over it.
-- The Map button brings the whole map back. So do a spawn the players place on the map, and the location leaving play.
+- The Map button brings the whole map back, and so does the location leaving play. While the players choose where a spawned enemy goes, the map shows until they place it.
+- It takes the focus as it opens, so a keyboard tap on a tile's "i" button lands on it.
 
 The web app manifest allows any orientation, so an installed app turns with the phone.
 

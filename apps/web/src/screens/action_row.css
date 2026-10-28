@@ -1,8 +1,8 @@
 /*
  * The action row of the details windows (ActionRow: the enemy's, the location's, the agenda's and
- * act's, a zoomed card's) and of the phone's location mode: their `footer` of titled groups, the groups side by side, each its
- * small title over its buttons; a group too wide for a narrow screen moves to a second line. The
- * buttons that count off an action carry the game's action arrow.
+ * act's, a zoomed card's) and of the phone's location mode: their `footer` of titled groups, the
+ * groups side by side, each its small title over its buttons; a group too wide for a narrow screen
+ * moves to a second line. The buttons that count off an action carry the game's action arrow.
  */
 #board :is(dialog, [data-mode='location']) > footer:has(> section > h3) {
   display: flex;

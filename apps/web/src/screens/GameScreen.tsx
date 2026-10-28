@@ -32,7 +32,8 @@ import './game.css';
  * on it (`useDetailView`, `data-view="detail"`), the same parts laid out as rows to swipe between
  * (`DetailControls`); the map row gets a strip above and below the map (`MapStrip`). A tap on a
  * location there or in the compact view shows that location in the map row (`LocationFocus`), the
- * location mode, until the players go back to the map or choose a location for a spawn.
+ * location mode, until the players go back to the map; while they choose where an enemy spawns,
+ * the map shows.
  */
 export function GameScreen({ store }: { store: StoreApi<AppState> }) {
   const { t } = useTranslation();

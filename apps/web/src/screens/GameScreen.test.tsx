@@ -481,6 +481,7 @@ describe('GameScreen on a phone held upright', () => {
     expect(scrolledTo).toEqual([document.getElementById('map')]);
     const study = screen.getByRole('region', { name: 'Study' });
     expect(within(study).getByRole('img', { name: 'The card of Study' })).toBeTruthy();
+    expect(document.activeElement).toBe(study);
     expect(screen.queryByRole('dialog', { name: 'Study' })).toBeNull();
     expect(screen.queryByRole('figure', { name: 'Study' })).toBeNull();
   });

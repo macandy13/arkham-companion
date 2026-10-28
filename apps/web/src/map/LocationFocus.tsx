@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BoardView, LocationView } from '@arkham/engine';
 import type { GameActions } from '../state/gameActions';
@@ -9,7 +9,8 @@ import { LocationContent } from './LocationDetails';
  * whole map, with the same content as the location details dialog (`LocationContent`) and a Map
  * button that brings the whole map back (`onMap`). It stays on the location after a move or an
  * investigation, since the players look at the row, not a window over it; a decision that follows
- * opens as its own dialog.
+ * opens as its own dialog. It takes the focus as it opens on a location, since the tile tapped to
+ * open it is gone with the map.
  */
 export function LocationFocus({
   board,
@@ -28,8 +29,12 @@ export function LocationFocus({
 }) {
   const { t } = useTranslation();
   const titleId = useId();
+  const section = useRef<HTMLElement>(null);
+  useEffect(() => {
+    section.current?.focus({ preventScroll: true });
+  }, [location.id]);
   return (
-    <section aria-labelledby={titleId} data-mode="location">
+    <section ref={section} tabIndex={-1} aria-labelledby={titleId} data-mode="location">
       <LocationContent
         board={board}
         location={location}

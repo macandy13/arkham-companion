@@ -59,7 +59,10 @@ test('the Hallway’s details, its card with Roland Banks on it, on Roland Banks
 
   await page.getByRole('figure', { name: 'House' }).getByRole('group', { name: 'Hallway' }).click();
 
-  const details = page.getByRole('dialog', { name: 'Hallway' });
+  // A dialog on a tablet, the location mode in place of the map on a phone.
+  const details = page
+    .getByRole('dialog', { name: 'Hallway' })
+    .or(page.getByRole('region', { name: 'Hallway' }));
   await expect(details.getByRole('img', { name: 'The card of Hallway' })).toBeVisible();
   await expect(details.getByRole('button', { name: 'Investigate · 1 action' })).toBeVisible();
 });
