@@ -180,6 +180,7 @@ export {
   whenAdvanced,
   whenDefeated,
   whenEnemyDefeated,
+  whenAnInvestigatorEnters,
   whenTokensOnSelf,
   whenRevealed,
 } from './abilities';

@@ -82,6 +82,7 @@ import {
   whenAdvanced,
   whenDefeated,
   whenEnemyDefeated,
+  whenAnInvestigatorEnters,
   whenTokensOnSelf,
   whenRevealed,
   whenTurnBegins,
@@ -1387,6 +1388,41 @@ describe('objectives on the current agenda and act', () => {
     const { state } = execute(context, started, { type: 'DefeatEnemy', enemyId: priest });
 
     expect(state.act.current).toBe(act1);
+  });
+});
+
+describe('objectives on entering a location', () => {
+  const attic = instanceId('attic');
+  const cellarCode = cardCode('cellar');
+  /** "If an investigator enters the cellar, advance." */
+  const cellarObjectiveAct = blankAct('cellar_objective_act', {
+    abilities: [whenAnInvestigatorEnters(cellarCode, advanceAct())],
+  });
+  /** Alice in the hall, connected to the revealed cellar and the attic; act 1 has the cellar objective. */
+  const enteringTable = newGame()
+    .withAgenda(agenda1, firstAgendaCard)
+    .withAct(act1, cellarObjectiveAct)
+    .withAct(act2, secondActCard)
+    .withLocation(hall, blankLocation('hall'), { revealed: true })
+    .withLocation(cellar, blankLocation('cellar'), { revealed: true })
+    .withLocation(attic, blankLocation('attic'), { revealed: true })
+    .withConnection(hall, cellar)
+    .withConnection(hall, attic)
+    .withInvestigator(alice, { locationId: hall });
+
+  it.each([
+    { to: cellar, act: act2, outcome: 'advances' },
+    { to: attic, act: act1, outcome: 'stays' },
+  ])('$outcome when alice moves to the $to', ({ to, act }) => {
+    const { context, state: started } = enteringTable.start();
+
+    const { state } = execute(context, started, {
+      type: 'MoveInvestigator',
+      investigatorId: alice,
+      to,
+    });
+
+    expect(state.act.current).toBe(act);
   });
 });
 

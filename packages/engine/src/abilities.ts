@@ -146,6 +146,12 @@ export type TimingWindow =
    */
   | { kind: 'enemyDefeated'; enemy: CardCode }
   /**
+   * An investigator entered a location of code `location` (`InvestigatorMoved`, counted like
+   * `entered`): an objective of the current agenda or act ("If an investigator enters the Ritual
+   * Site, advance"), opened for both, naming the investigator.
+   */
+  | { kind: 'investigatorEntered'; location: CardCode }
+  /**
    * Tokens of `token` were placed on the card (`TokensChanged` with a positive delta): for an
    * objective on the card's own tokens ("If there are 2 clues per investigator on this Act,
    * advance", `whenTokensOnSelf`), which checks the count with a `tokensOnSelf` condition. Names
@@ -455,11 +461,19 @@ export function windowsOpenedBy(
         },
       ];
     }
-    case 'InvestigatorMoved':
+    case 'InvestigatorMoved': {
       if (event.from === undefined) return [];
+      const { investigatorId } = event;
+      const location = requireCard(state.cards, event.to).code;
       return [
-        { window: { kind: 'entered' }, cardId: event.to, investigatorId: event.investigatorId },
+        { window: { kind: 'entered' }, cardId: event.to, investigatorId },
+        ...objectiveCards(state).map((cardId) => ({
+          window: { kind: 'investigatorEntered' as const, location },
+          cardId,
+          investigatorId,
+        })),
       ];
+    }
     case 'TurnEnded': {
       const { investigatorId } = event;
       return [
@@ -538,20 +552,28 @@ export function windowsOpenedBy(
         cardId: event.enemyId,
         locationId: event.locationId,
       };
-      // The enemy's own ability, then agenda before act: a fixed stand-in, as the rules let the
+      // The enemy's own ability before the objectives: a fixed stand-in, as the rules let the
       // lead order simultaneous forced effects (M1V).
       return [
         self,
-        ...[state.agenda.current, state.act.current].flatMap((cardId) =>
-          cardId === undefined
-            ? []
-            : [{ window: { kind: 'enemyDefeated' as const, enemy }, cardId }],
-        ),
+        ...objectiveCards(state).map((cardId) => ({
+          window: { kind: 'enemyDefeated' as const, enemy },
+          cardId,
+        })),
       ];
     }
     default:
       return [];
   }
+}
+
+/**
+ * The cards whose objectives an event can fulfil: the current agenda, then the current act, a
+ * fixed order for the lead's choice between simultaneous forced effects (M1V). Only the current
+ * ones, so a used-up act or agenda never fires again.
+ */
+function objectiveCards(state: GameState): InstanceId[] {
+  return [state.agenda.current, state.act.current].filter((cardId) => cardId !== undefined);
 }
 
 /**
@@ -1110,6 +1132,15 @@ export function atEndOfRound(...effects: AbilityEffect[]): Ability {
  */
 export function whenEnemyDefeated(enemy: CardCode, ...effects: AbilityEffect[]): Ability {
   return { window: { kind: 'enemyDefeated', enemy }, effects };
+}
+
+/**
+ * An objective of an agenda or act that its current card fulfils when an investigator enters a
+ * location of code `location`: "If an investigator enters the Ritual Site, advance", written
+ * `whenAnInvestigatorEnters(codes.ritualSite, advanceAct())`.
+ */
+export function whenAnInvestigatorEnters(location: CardCode, ...effects: AbilityEffect[]): Ability {
+  return { window: { kind: 'investigatorEntered', location }, effects };
 }
 
 /**

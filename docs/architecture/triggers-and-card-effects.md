@@ -14,7 +14,7 @@ An [`Ability`](../../packages/engine/src/abilities.ts) is:
   - `phaseEnds`,
   - `roundEnds`,
   - `advanced`,
-  - `enemyDefeated`,
+  - `enemyDefeated` and `investigatorEntered`, objectives opened for the current agenda and act (`whenEnemyDefeated`, `whenAnInvestigatorEnters`),
   - `tested` after a basic action's test,
   - `engaged` either way round,
   - `attacked` (attacks of opportunity included),
