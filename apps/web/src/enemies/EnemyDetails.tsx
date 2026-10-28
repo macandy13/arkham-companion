@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { BoardView, MapEnemyView } from '@arkham/engine';
 import { ActionButton, ActionGroup, CardActions, cardActionsOn } from '../screens/ActionRow';
 import type { GameActions } from '../state/gameActions';
+import { useBackCloses } from '../screens/useBackCloses';
 import { EnemyCard } from './EnemyCard';
 import './enemies.css';
 
@@ -17,7 +18,7 @@ import './enemies.css';
  * for the test's result is the only one open; damage keeps it open for the next point, and engage
  * for the fight that usually follows, and both read the enemy fresh from the board. A native
  * modal `<dialog>` brings focus trapping and Escape; nothing is tapped while a step is queued
- * (`busy`).
+ * (`busy`). On a phone it fills the screen and the back gesture closes it too (`useBackCloses`).
  */
 export function EnemyDetails({
   board,
@@ -38,8 +39,9 @@ export function EnemyDetails({
   useEffect(() => {
     dialog.current?.showModal();
   }, []);
-  const step = (play: () => Promise<void>, close: boolean) => () => {
-    if (close) onClose();
+  const close = useBackCloses(onClose);
+  const step = (play: () => Promise<void>, closes: boolean) => () => {
+    if (closes) close();
     void play();
   };
   const allowed = board.turn === undefined ? [] : board.enemyActions(board.turn, enemy.id);
@@ -47,8 +49,8 @@ export function EnemyDetails({
   const offered = cardActionsOn(board, enemy.id);
 
   return (
-    <dialog ref={dialog} aria-labelledby={titleId} onCancel={onClose} data-dialog="enemy">
-      <button type="button" data-icon="close" aria-label={t('enemy.close')} onClick={onClose} />
+    <dialog ref={dialog} aria-labelledby={titleId} onCancel={close} data-dialog="enemy">
+      <button type="button" data-icon="close" aria-label={t('enemy.close')} onClick={close} />
       {enemy.engagedWith !== undefined && (
         <p>{t('enemy.engagedWith', { name: board.investigator(enemy.engagedWith).name })}</p>
       )}
@@ -111,7 +113,7 @@ export function EnemyDetails({
           </ActionGroup>
         )}
         {offered.length > 0 && (
-          <CardActions offered={offered} actions={actions} busy={busy} onUse={onClose} />
+          <CardActions offered={offered} actions={actions} busy={busy} onUse={close} />
         )}
         <ActionGroup title={t('enemy.cardEffects')}>
           <ActionButton

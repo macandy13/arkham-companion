@@ -30,9 +30,15 @@ export function useDetailView(): {
   const [target, setTarget] = useState<DetailTarget>();
   // The back step lands a moment later, so a second Escape or × before it must not step again.
   const closing = useRef(false);
+  // Names the view's own entry, which a back step from a card over the view lands on again.
+  const entry = useRef<string>(undefined);
   const open = useCallback((next: DetailTarget) => {
+    entry.current = crypto.randomUUID();
     // The router keeps its own position in the history state, so the entry carries it on.
-    window.history.pushState({ ...window.history.state, detailView: true }, '');
+    window.history.pushState(
+      { ...routerState(window.history.state), detailView: entry.current },
+      '',
+    );
     closing.current = false;
     setTarget(next);
   }, []);
@@ -46,6 +52,8 @@ export function useDetailView(): {
   useEffect(() => {
     if (!shown) return;
     const onBack = () => {
+      // A card opened over the view (`useBackCloses`) steps back onto the view's own entry.
+      if (detailEntryOf(window.history.state) === entry.current) return;
       closing.current = false;
       setTarget(undefined);
     };
@@ -61,4 +69,22 @@ export function useDetailView(): {
     };
   }, [shown, close]);
   return { target, open, go, close };
+}
+
+/** The detail view entry a history entry's state names: the one it is, or the one it lies over. */
+function detailEntryOf(state: unknown): string | undefined {
+  return typeof state === 'object' &&
+    state !== null &&
+    'detailView' in state &&
+    typeof state.detailView === 'string'
+    ? state.detailView
+    : undefined;
+}
+
+/** A history entry's state without the names of the views over the screen, the router's own. */
+function routerState(state: unknown): object {
+  if (typeof state !== 'object' || state === null) return {};
+  return Object.fromEntries(
+    Object.entries(state).filter(([key]) => key !== 'detailView' && key !== 'cardView'),
+  );
 }

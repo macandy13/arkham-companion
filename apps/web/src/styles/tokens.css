@@ -371,8 +371,12 @@
     --layout-header-card-height: var(--layout-detail-card-height);
   }
 
-  /* The encounter dialog's row fits two cards. */
+  /*
+   * The encounter dialog's row fits two cards, and a card opened over the whole screen (game.css)
+   * grows to nearly its width.
+   */
   #board {
     --encounter-strip-cards-shown: 2;
+    --layout-zoom-card-width: 20rem;
   }
 }
