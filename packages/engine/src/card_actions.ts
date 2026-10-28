@@ -1,5 +1,6 @@
 import { assertNever } from '@arkham/util';
 import { advanceAct, type AbilityEffect, type AbilityStep } from './abilities';
+import { findInvestigator } from './campaign/campaign_log';
 import { isLocationInPlay } from './board';
 import {
   cardStats,
@@ -79,7 +80,10 @@ export type ActionCondition =
  * their play area. When the game has no card X at all, X is a player card the players hold (Lita
  * Chantler, earned in The Gathering, is in an investigator's deck by The Devourer Below), which
  * the game doesn't track, so it trusts the investigator taking the action, as it trusts a hand
- * card cost. No condition always holds.
+ * card cost, as long as the campaign log says they earned the card
+ * (`CampaignInvestigator.earnedCards`). A standalone game has no log: its players pick the
+ * earlier resolutions themselves (Rules Reference, "Standalone Mode"), so it trusts the taker
+ * too. No condition always holds.
  */
 export function actionConditionHolds(
   state: GameState,
@@ -92,7 +96,11 @@ export function actionConditionHolds(
       return state.meta.turn !== undefined;
     case 'controls': {
       const copies = Object.values(state.cards).filter((card) => card.code === condition.card);
-      if (copies.length === 0) return true;
+      if (copies.length === 0) {
+        if (state.campaign === undefined) return true;
+        const member = findInvestigator(state.campaign, investigator.code);
+        return member?.earnedCards.includes(condition.card) === true;
+      }
       return copies.some((card) => sameZone(card.zone, playAreaOf(investigator.id)));
     }
     default:
@@ -145,10 +153,11 @@ function groupClueAmount(state: GameState, amount: ScaledValue): number {
 /**
  * The events that pay `cost` for `investigator`'s action: their own resources or clues, a group
  * payment by `spend` (default: `defaultCluePayments`), or a discard from their hand left to the
- * players. `spend` is for group costs only.
+ * players, naming `cardId`, the card whose action it is. `spend` is for group costs only.
  */
 function costPayment(
   state: GameState,
+  cardId: InstanceId,
   investigator: Investigator,
   cost: ActionCost | undefined,
   spend: readonly ClueSpend[] | undefined,
@@ -183,6 +192,7 @@ function costPayment(
             type: 'DiscardFromHand',
             investigatorId: investigator.id,
             amount: cost.amount,
+            source: { cardId, window: 'action' },
           },
         },
       ];
@@ -448,7 +458,7 @@ export function handleUseCardAction(
     action: cmd.action,
     investigatorId: investigator.id,
   };
-  return [used, ...costPayment(state, investigator, cost, cmd.spend)];
+  return [used, ...costPayment(state, card.id, investigator, cost, cmd.spend)];
 }
 
 /** The effects of the action `cmd` takes, as steps in its `action` window. */

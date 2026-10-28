@@ -30,7 +30,9 @@ export type ResolutionTarget =
   /** The lead investigator at the scenario's end. */
   | 'lead'
   /** Everyone who did not resign, e.g. The Gathering's R3: "each investigator who has not resigned is killed". */
-  | 'notResigned';
+  | 'notResigned'
+  /** Everyone who resigned, the ones R3 leaves alive. */
+  | 'resigned';
 
 /**
  * One step of a resolution as the campaign guide prints it, as data on the
@@ -60,6 +62,16 @@ export type ResolutionStep =
       readonly amount: number;
     }
   | { readonly kind: 'markKilled'; readonly to: ResolutionTarget }
+  /**
+   * "… earns the Lita Chantler card": `card` for each of `to`, or with `choose`, for one of them
+   * the players pick ("choose an investigator to earn …"), offered as a choice.
+   */
+  | {
+      readonly kind: 'earnCard';
+      readonly to: ResolutionTarget;
+      readonly card: CardCode;
+      readonly choose?: true;
+    }
   | { readonly kind: 'markInsane'; readonly to: ResolutionTarget }
   /** "The investigators win!": the campaign ends with `result` (`EndCampaign`). */
   | { readonly kind: 'endCampaign'; readonly result: CampaignResult }
@@ -265,6 +277,15 @@ function proposeStep(ctx: EngineContext, game: GameState, step: ResolutionStep):
       return targetCodes(game, step.to).map((code) => command({ type: 'MarkKilled', code }));
     case 'markInsane':
       return targetCodes(game, step.to).map((code) => command({ type: 'MarkInsane', code }));
+    case 'earnCard': {
+      const earns = targetCodes(game, step.to).map((code): CampaignCommand => ({
+        type: 'EarnCard',
+        code,
+        card: step.card,
+      }));
+      if (!step.choose) return earns.map(command);
+      return earns.length > 0 ? [{ kind: 'choice', options: earns }] : [];
+    }
     case 'endCampaign':
       return [command({ type: 'EndCampaign', result: step.result })];
     case 'byHand':
@@ -329,6 +350,8 @@ function targetInvestigators(game: GameState, target: ResolutionTarget): Investi
       return game.investigators.filter((inv) => inv.id === game.meta.leadInvestigator);
     case 'notResigned':
       return game.investigators.filter((inv) => inv.status !== 'resigned');
+    case 'resigned':
+      return game.investigators.filter((inv) => inv.status === 'resigned');
     default:
       return assertNever(target);
   }

@@ -51,6 +51,8 @@ export type SkippedEffect =
     }
   | {
       readonly kind: 'deferred';
+      /** The printed name of the card whose ability asked for it (`CommandSource`), if a card did. */
+      readonly card?: string;
       /** The name of the investigator whose cards it is about. */
       readonly investigator: string;
       readonly command: PlayerCardCommand;
@@ -82,8 +84,14 @@ export function skippedEffects(
         // The players took it as an action at the table themselves, so there is nothing to remind them of.
         if (takenAsAction(command)) return [];
         const investigator = state.investigators.find((inv) => inv.id === command.investigatorId);
+        const source = command.source && state.cards[command.source.cardId];
         return [
-          { kind: 'deferred', investigator: investigator?.name ?? command.investigatorId, command },
+          {
+            kind: 'deferred',
+            ...(source ? { card: nameOf(source.code) } : {}),
+            investigator: investigator?.name ?? command.investigatorId,
+            command,
+          },
         ];
       }
       default:

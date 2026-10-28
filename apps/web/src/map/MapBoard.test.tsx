@@ -797,6 +797,41 @@ describe('MapBoard', () => {
       expect(offered(location)).toEqual(buttons);
     });
 
+    it('turns investigate off under a locked door and offers no move past a barrier', () => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'), { revealed: true })
+          .withLocation(
+            hallway,
+            blankLocation('hallway', {
+              restrictions: [{ cannot: 'moveInto', of: 'self', unrevealed: true }],
+            }),
+          )
+          .withConnection(study, hallway)
+          .withCard(
+            instanceId('locked_door'),
+            blankTreachery('locked_door', {
+              restrictions: [{ cannot: 'investigate', of: 'host' }],
+            }),
+            attachedTo(study),
+          )
+          .withInvestigator(alder, { locationId: study })
+          .withTurnOf(alder),
+      );
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+
+      fireEvent.click(tile('study'));
+      const investigate = within(details('study')).getByRole('button', {
+        name: 'Investigate · 1 action',
+      });
+      expect(investigate).toHaveProperty('disabled', true);
+      tap('Close');
+      fireEvent.click(tile('hallway'));
+      expect(offered('hallway')).toEqual(['Close']);
+    });
+
     describe("the parlor's Resign", () => {
       const parlor = instanceId('parlor');
       const aldersTurnInTheParlor = () =>

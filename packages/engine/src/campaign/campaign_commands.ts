@@ -1,4 +1,10 @@
-import type { CampaignDefinitionId, CampaignId, InvestigatorCode, ScenarioId } from '../ids';
+import type {
+  CampaignDefinitionId,
+  CampaignId,
+  CardCode,
+  InvestigatorCode,
+  ScenarioId,
+} from '../ids';
 import type { ChaosToken, Difficulty } from '../state';
 import type {
   CampaignResult,
@@ -24,6 +30,7 @@ export type CampaignCommand =
   | AddTrauma
   | MarkKilled
   | MarkInsane
+  | EarnCard
   | ReplaceInvestigator
   | AdvanceScenario
   | EndCampaign
@@ -115,6 +122,16 @@ export interface MarkKilled {
 export interface MarkInsane {
   readonly type: 'MarkInsane';
   readonly code: InvestigatorCode;
+}
+
+/**
+ * A living team member earns a story card ("the lead investigator earns the Lita Chantler card")
+ * and may include it in their deck. Produces `CardEarned`.
+ */
+export interface EarnCard {
+  readonly type: 'EarnCard';
+  readonly code: InvestigatorCode;
+  readonly card: CardCode;
 }
 
 /**

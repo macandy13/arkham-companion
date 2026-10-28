@@ -23,13 +23,24 @@ import {
   playAreaOf,
   blankAsset,
   cardCode,
+  decisionId,
+  drawCards,
+  youMustEither,
   type ActionLimit,
   type CardAction,
+  type CardCode,
   type InstanceId,
   type InvestigatorId,
   type UseCardAction,
 } from './index';
-import { answer, investigatorOf, rejectionFrom, stateAfter } from '../test/utils';
+import {
+  answer,
+  campaignMember,
+  investigatorOf,
+  makeCampaignLog,
+  rejectionFrom,
+  stateAfter,
+} from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -533,6 +544,69 @@ describe('action conditions', () => {
   });
 });
 
+describe('action conditions on a player card earned in the campaign', () => {
+  const lita = cardCode('lita');
+  /** The hall's one action scares its taker "if you control Lita"; alice is in the hall, on her turn, with no Lita in the game. */
+  const hallAskingForLita = newGame()
+    .withLocation(
+      hall,
+      blankLocation('hall', {
+        actions: [{ ...scareAction, condition: { kind: 'controls', card: lita } }],
+      }),
+      { revealed: true },
+    )
+    .withInvestigator(alice, { locationId: hall })
+    .withTurnOf(alice);
+  /**
+   * The campaign log of alice and bob, with the cards each earned. A game investigator is the
+   * campaign member with their investigator code, and `withInvestigator(alice)` gives alice the
+   * code 'alice', so the log's 'alice' is the hall's alice.
+   */
+  const logWhere = (earned: { alice: CardCode[]; bob: CardCode[] }) =>
+    makeCampaignLog({
+      investigators: [
+        { ...campaignMember('alice', 'alice', 9, 9), earnedCards: earned.alice },
+        { ...campaignMember('bob', 'bob', 9, 9), earnedCards: earned.bob },
+      ],
+    });
+
+  it.each([
+    {
+      game: 'a campaign where she earned Lita',
+      setup: () => hallAskingForLita.withCampaign(logWhere({ alice: [lita], bob: [] })),
+    },
+    // Its players chose the earlier resolutions themselves, so the game trusts alice.
+    { game: 'a standalone game', setup: () => hallAskingForLita },
+  ])('lets alice take the action in $game', ({ setup }) => {
+    const table = PlayTable.start(setup());
+
+    table.play(useCardAction(alice, hall));
+
+    expect(table.board.investigator(alice).horror).toBe(1);
+  });
+
+  it.each([
+    {
+      game: 'a campaign where bob earned Lita',
+      setup: () => hallAskingForLita.withCampaign(logWhere({ alice: [], bob: [lita] })),
+    },
+    {
+      game: 'a campaign where nobody earned her',
+      setup: () => hallAskingForLita.withCampaign(logWhere({ alice: [], bob: [] })),
+    },
+  ])('neither offers nor accepts the action in $game', ({ setup }) => {
+    const table = PlayTable.start(setup());
+
+    expect(table.board.cardActions(alice)).toEqual([]);
+    expect(rejectionFrom(table.ctx, table.state, useCardAction(alice, hall))).toEqual({
+      code: 'cardActionConditionUnmet',
+      cardId: hall,
+      action: 0,
+      investigatorId: alice,
+    });
+  });
+});
+
 describe('advancing the act by spending clues', () => {
   const firstAct = instanceId('first_act');
   /**
@@ -577,6 +651,59 @@ describe('advancing the act by spending clues', () => {
   });
 });
 
+describe('the card a deferred step came from', () => {
+  const library = instanceId('library');
+  const choiceId = decisionId('library.choice');
+  /** The library's actions: "Draw 2 cards", and "You must either draw 1 card or take 1 horror". */
+  const aliceInTheLibrary = newGame()
+    .withLocation(
+      library,
+      blankLocation('library', {
+        actions: [
+          { effects: [drawCards(2)] },
+          {
+            effects: [
+              youMustEither(choiceId, 'library.prompt', [
+                { id: 'draw', label: 'library.draw', effects: [drawCards(1)] },
+                { id: 'horror', label: 'library.horror', effects: [takeHorror(1)] },
+              ]),
+            ],
+          },
+        ],
+      }),
+      { revealed: true },
+    )
+    .withInvestigator(alice, { locationId: library })
+    .withTurnOf(alice);
+
+  const drawnFromLibrary = (amount: number) => ({
+    type: 'CommandDeferred',
+    command: {
+      type: 'DrawCards',
+      investigatorId: alice,
+      amount,
+      source: { cardId: library, window: 'action' },
+    },
+  });
+
+  it('names the library on the draw its action asks for', () => {
+    const { context, state } = aliceInTheLibrary.start();
+
+    const { events } = execute(context, state, useCardAction(alice, library, 0));
+
+    expect(events).toContainEqual(drawnFromLibrary(2));
+  });
+
+  it('names the library on the draw alice picks as an option of its choice', () => {
+    const { context, state } = aliceInTheLibrary.start();
+    const asked = stateAfter(context, state, useCardAction(alice, library, 1));
+
+    const { events } = execute(context, asked, answer(choiceId, 'draw'));
+
+    expect(events).toContainEqual(drawnFromLibrary(1));
+  });
+});
+
 describe('hand card costs', () => {
   it('leaves alice’s discard of 4 cards to the players and still scares her', () => {
     const { context, state } = newGame()
@@ -595,7 +722,12 @@ describe('hand card costs', () => {
 
     expect(events).toContainEqual({
       type: 'CommandDeferred',
-      command: { type: 'DiscardFromHand', investigatorId: alice, amount: 4 },
+      command: {
+        type: 'DiscardFromHand',
+        investigatorId: alice,
+        amount: 4,
+        source: { cardId: hall, window: 'action' },
+      },
     });
     expect(investigatorOf(after, alice)).toMatchObject({ sanity: { horror: 1 } });
   });

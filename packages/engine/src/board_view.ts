@@ -56,6 +56,7 @@ import { attacksStillDue } from './phases';
 import { NAMED_AMOUNTS } from './state';
 import { boostedSkills, cluesHeldByGroup, requireInvestigator } from './investigators';
 import { CommandRejected } from './rejection';
+import { isRestricted, LOCATION_RESTRICTIONS, type LocationRestriction } from './restrictions';
 import { skillTestSuggestion, type SkillTestInput } from './skill_modifiers';
 import { victoryPoints } from './victory';
 import type {
@@ -196,6 +197,11 @@ interface LocationViewBase {
   investigators?: InvestigatorId[];
   cards?: CardName[];
   attachments?: CardName[];
+  /**
+   * What the cards in play forbid at it (`isRestricted`): moving into it (the Parlor's barrier),
+   * investigating it (Locked Door). The screen offers neither; absent when nothing is forbidden.
+   */
+  forbidden?: LocationRestriction[];
 }
 
 /**
@@ -974,6 +980,10 @@ function locationView(ctx: EngineContext, state: GameState, location: CardInstan
     ),
     ...listIfAny('cards', namesIn(ctx, state, { kind: 'atLocation', locationId: location.id })),
     ...listIfAny('attachments', namesIn(ctx, state, { kind: 'attachedTo', hostId: location.id })),
+    ...listIfAny(
+      'forbidden',
+      LOCATION_RESTRICTIONS.filter((cannot) => isRestricted(ctx, state, location, cannot)),
+    ),
   };
 }
 

@@ -9,6 +9,7 @@ export * from './spawn';
 export type * from './scenario';
 export * from './cards';
 export * from './card_values';
+export * from './restrictions';
 export * from './blank_cards';
 export * from './game_builder';
 export * from './investigator_cards';
