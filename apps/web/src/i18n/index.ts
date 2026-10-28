@@ -193,6 +193,17 @@ export const resources = {
           clue: 'Clue',
         },
         corrections: 'Correct the board',
+        side: {
+          above: 'Above',
+          left: 'To the left',
+          right: 'To the right',
+          below: 'Below',
+        },
+        neighbour: {
+          goTo: 'Go to {{name}}',
+          blocked: 'barricaded',
+          oneWay: { out: 'one way from here', in: 'one way to here' },
+        },
         reveal: 'Reveal',
         clue: {
           label: 'Clues',
@@ -799,6 +810,17 @@ export const resources = {
           clue: 'Hinweis',
         },
         corrections: 'Spielfeld korrigieren',
+        side: {
+          above: 'Oben',
+          left: 'Links',
+          right: 'Rechts',
+          below: 'Unten',
+        },
+        neighbour: {
+          goTo: 'Zu {{name}}',
+          blocked: 'verbarrikadiert',
+          oneWay: { out: 'nur von hier aus', in: 'nur hierher' },
+        },
         reveal: 'Aufdecken',
         clue: {
           label: 'Hinweise',

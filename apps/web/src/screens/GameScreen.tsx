@@ -111,6 +111,7 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
             actions={store.getState().actions}
             busy={open.busy}
             adjusting={open.adjusting}
+            onGo={(location) => detail.go({ row: 'map', location })}
             onMap={() => detail.go({ row: 'map' })}
           />
         ) : (

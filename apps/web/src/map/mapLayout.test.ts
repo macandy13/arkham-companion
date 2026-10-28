@@ -5,6 +5,7 @@ import {
   connectionEnds,
   drawingSize,
   leadMarkerPoints,
+  neighboursOf,
   attachmentOrigin,
   onPawn,
   pawnOffset,
@@ -223,5 +224,44 @@ describe('leadMarkerPoints', () => {
       { x: 105.8, y: 95.8 },
       { x: 103.2, y: 87.9 },
     ]);
+  });
+});
+
+// One card step is 180 across and 240 down, so a tile two rows up and three columns across lies
+// further across (180) than down (160).
+describe('neighboursOf', () => {
+  const cellar = instanceId('cellar');
+  const parlor = instanceId('parlor');
+  const house: MapView = {
+    ...houseWith([hallway, study, attic, cellar, parlor], {
+      [hallway]: { column: 3, row: 3 },
+      [study]: { column: 3, row: 0 },
+      [attic]: { column: 0, row: 3 },
+      [cellar]: { column: 6, row: 1 },
+      [parlor]: { column: 2, row: 6 },
+    }),
+    connections: [
+      { from: hallway, to: study, oneWay: false },
+      { from: attic, to: hallway, oneWay: false },
+      { from: hallway, to: cellar, oneWay: true },
+      { from: parlor, to: hallway, oneWay: true },
+    ],
+  };
+
+  it.each([
+    { neighbour: study, where: 'straight above', side: 'above', oneWay: undefined },
+    { neighbour: attic, where: 'straight left', side: 'left', oneWay: undefined },
+    { neighbour: cellar, where: 'up and further right', side: 'right', oneWay: 'out' },
+    { neighbour: parlor, where: 'down and a little left', side: 'below', oneWay: 'in' },
+  ])('puts the $neighbour tile, $where of the Hallway, $side', ({ neighbour, side, oneWay }) => {
+    expect(neighboursOf(house, hallway).find(({ id }) => id === neighbour)).toEqual({
+      id: neighbour,
+      side,
+      ...(oneWay && { oneWay }),
+    });
+  });
+
+  it('lists only the locations connected to it', () => {
+    expect(neighboursOf(house, study)).toEqual([{ id: hallway, side: 'below' }]);
   });
 });

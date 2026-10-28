@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BoardView, CardFaceView, InvestigatorId, LocationView } from '@arkham/engine';
 import { CardZoom } from '../screens/CardZoom';
@@ -66,7 +66,8 @@ export function LocationDetails({
  * corrections instead: reveal it and add or remove its clues and doom, as a card effect or the
  * table asks, so the screen keeps up with the physical game; they are not steps of play, so the
  * two never show together. It reads the location fresh from the board, so its counts follow each
- * step. A move, an investigation or a card action calls `onLeave` first, for a view that should
+ * step. The location mode sets its neighbours around the card (`around`). A move, an
+ * investigation or a card action calls `onLeave` first, for a view that should
  * step aside then; corrections and a clue taken do not, since those often come several at a
  * time. Nothing is tapped while a step is queued (`busy`).
  */
@@ -77,6 +78,7 @@ export function LocationContent({
   busy,
   adjusting,
   titleId,
+  around,
   onLeave,
 }: {
   board: BoardView;
@@ -85,6 +87,7 @@ export function LocationContent({
   busy: boolean;
   adjusting: boolean;
   titleId: string;
+  around?: (card: ReactNode) => ReactNode;
   onLeave?: () => void;
 }) {
   const { t } = useTranslation();
@@ -110,7 +113,11 @@ export function LocationContent({
   return (
     <>
       <h2 id={titleId}>{location.name}</h2>
-      <LocationCard board={board} location={location} />
+      {around ? (
+        around(<LocationCard board={board} location={location} />)
+      ) : (
+        <LocationCard board={board} location={location} />
+      )}
       <p>
         {location.revealed
           ? t('location.facts', { shroud: location.shroud, clues: location.clues })

@@ -331,13 +331,18 @@ function Attachment({ name, origin: { x, y } }: { name: string; origin: Point })
 
 /**
  * The location's connection symbol (`LocationView.symbol`) in the tile's top left corner, as on the
- * printed card: a small disc in the symbol's colour with a light glyph. Named for screen readers,
- * since its shape alone says nothing.
+ * printed card: a small disc in the symbol's colour with a light glyph, centred on the name's line
+ * unless a drawing of its own gives it a `centre` (the location mode's neighbours). Named for
+ * screen readers, since its shape alone says nothing.
  */
-function ConnectionSymbol({ symbol }: { symbol: LocationSymbol }) {
+export function ConnectionSymbol({
+  symbol,
+  centre = { x: CONTENT.pawnRadius, y: CONTENT.band / 2 },
+}: {
+  symbol: LocationSymbol;
+  centre?: Point;
+}) {
   const { t } = useTranslation();
-  // On the name's line, like the printed symbol beside the name.
-  const centre = { x: CONTENT.pawnRadius, y: CONTENT.band / 2 };
   return (
     <g
       role="img"
@@ -352,7 +357,7 @@ function ConnectionSymbol({ symbol }: { symbol: LocationSymbol }) {
 }
 
 /** The symbol's disc is a little smaller than the pieces, like the printed one beside the name. */
-const CONNECTION_RADIUS = CONTENT.pawnRadius * 0.75;
+export const CONNECTION_RADIUS = CONTENT.pawnRadius * 0.75;
 
 /** The glyph's reach from the disc's centre: small inside the disc, like the printed one. */
 const CONNECTION_GLYPH_SIZE = CONTENT.pawnRadius * 0.25;
