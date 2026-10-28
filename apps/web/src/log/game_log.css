@@ -1,0 +1,57 @@
+/*
+ * The game log (GameLogDialog): the title with the × beside it, then the steps as a list that
+ * scrolls on its own, a rule between steps, so the dialog stays within the height a modal dialog
+ * gets by default.
+ */
+#board dialog[data-dialog='log'][open] {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--space-2);
+  box-sizing: border-box;
+  width: var(--layout-sheet-width);
+  max-width: 100%;
+}
+
+#board dialog[data-dialog='log'] h2 {
+  margin: 0;
+  font-size: var(--font-size-subtitle);
+}
+
+#board dialog[data-dialog='log'] > button[data-icon='close'] {
+  padding: 0;
+  border-radius: var(--radius-round);
+}
+
+#board dialog[data-dialog='log'] > button[data-icon='close']::before {
+  mask-image: url('../investigators/icons/close.svg');
+}
+
+#board dialog[data-dialog='log'] ol {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+#board dialog[data-dialog='log'] ol > li:not(:last-child) {
+  padding-block: var(--space-2);
+  border-block-end: var(--border-width) solid var(--color-border);
+}
+
+#board dialog[data-dialog='log'] ol > li > ul {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A line is plain text, not one of the framed list items `#app > main ul > li` gives the home screen. */
+#board dialog[data-dialog='log'] ol > li > ul > li {
+  display: list-item;
+  padding: 0;
+  border: none;
+  background: none;
+}

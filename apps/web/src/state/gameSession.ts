@@ -117,7 +117,8 @@ export class GameSession {
   private constructor(
     private readonly store: GameStore,
     readonly gameId: GameId,
-    private readonly ctx: ScenarioContext,
+    /** The rules the game is played with, whose cards name what the log tells (`history`). */
+    readonly ctx: ScenarioContext,
     private table: PlayTable,
     private lastSeq: number,
   ) {}
@@ -145,6 +146,14 @@ export class GameSession {
   /** `state` read in game language (`BoardView`), with the names and thresholds of its cards. */
   get board(): BoardView {
     return this.table.board;
+  }
+
+  /**
+   * Every event so far with its undo group, the scenario start included, for the game log
+   * (`gameLog`); while adjusting, with the adjustment's taps.
+   */
+  get entries(): readonly LoggedEvent[] {
+    return this.table.entries;
   }
 
   /** What the last step played skipped for the players to do by hand; none after an undo. */

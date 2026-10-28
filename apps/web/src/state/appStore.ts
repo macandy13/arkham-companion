@@ -3,11 +3,13 @@ import type {
   BoardView,
   Difficulty,
   EncounterCardView,
+  EngineContext,
   GameId,
   GameState,
   GameStore,
   GameSummary,
   InvestigatorSeat,
+  LoggedEvent,
   Rejection,
   ScenarioContext,
   ScenarioId,
@@ -52,6 +54,11 @@ export interface OpenGame {
    * reading names and thresholds needs its scenario's cards.
    */
   board?: BoardView;
+  /**
+   * The game's log so far and the rules that name its cards, which the log dialog tells
+   * (`gameLog`). Only a playable game has one, like `board`.
+   */
+  history?: GameHistory;
   /** i18n key of the scenario's name (`ScenarioEntry.nameKey`); a playable game always has one. */
   scenarioNameKey?: string;
   /**
@@ -84,6 +91,17 @@ export interface OpenGame {
    * until they tap one or cancel.
    */
   spawning?: EncounterCardView;
+}
+
+/** A game's log (`GameSession.entries`) with the rules it is played with (`GameSession.ctx`). */
+export interface GameHistory {
+  readonly ctx: EngineContext;
+  readonly entries: readonly LoggedEvent[];
+}
+
+/** The open game's history as `played` holds it now. */
+function historyOf(played: GameSession): GameHistory {
+  return { ctx: played.ctx, entries: played.entries };
 }
 
 /** Looks a scenario up by id; `findScenario` in the app, a stub in tests. */
@@ -172,6 +190,7 @@ export function createAppStore(
           state: session?.state ?? state,
           playable: session !== undefined,
           board: session?.board,
+          history: session && historyOf(session),
           scenarioNameKey: entry?.nameKey,
           busy: unfinishedSteps > 0,
           canUndo: session?.canUndo ?? false,
@@ -189,6 +208,7 @@ export function createAppStore(
           ...current,
           state: played.state,
           board: played.board,
+          history: historyOf(played),
           canUndo: played.canUndo,
           adjusting: played.adjusting,
           rejection,

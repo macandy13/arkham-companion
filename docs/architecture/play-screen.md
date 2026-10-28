@@ -10,7 +10,7 @@ The [game screen](../../apps/web/src/screens/GameScreen.tsx) shows, from top to 
 The first open decision shows as a dialog over the board ([decisions](play-screen-decisions.md)).
 Each part has its own page, so changes to different parts touch different files.
 
-The [status row](../../apps/web/src/screens/GameStatus.tsx) has the round, the phase track, Next and round icon buttons for adjust, undo and a ☰ menu (the play screen hides the app's title bar, so its links and the export sit in that menu).
+The [status row](../../apps/web/src/screens/GameStatus.tsx) has the round, the phase track, Next and round icon buttons for adjust, undo, the game log and a ☰ menu (the play screen hides the app's title bar, so its links and the export sit in that menu).
 
 ## Symbols
 
@@ -101,6 +101,8 @@ A card that goes while it is open (an enemy leaving play) drops its entry a tick
 - one step per undo group (`commandId`), the unit undo takes back, so the log and undo agree on what a step is;
 - each event the players care about becomes one translated line (`log.*` strings), named with the cards and investigators of the state; bookkeeping (phase steps, queues, decisions asked, map layout) has none, and a step without lines is left out;
 - a clue discovery is one line, without the location and investigator counters it moved.
+
+The log button opens [`GameLogDialog`](../../apps/web/src/log/GameLogDialog.tsx) over the board: the steps oldest first, a rule between them, scrolled to the newest. It reads `OpenGame.history` (the session's `entries` and the rules that name their cards), so it waits for no step.
 
 [`eventLines`](../../apps/web/src/log/gameLog.ts) is the same for one step's events, for notices of what a step just did (M3.13).
 

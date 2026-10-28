@@ -12,6 +12,9 @@ export const resources = {
         showMap: 'Map',
       },
       log: {
+        title: 'Game log',
+        open: 'Game log',
+        close: 'Close the game log',
         scenarioStarted: 'The scenario begins',
         scenarioEnded: 'The scenario ends with resolution {{resolution}}',
         scenarioEndedUnresolved: 'The scenario ends without a resolution',
@@ -708,6 +711,9 @@ export const resources = {
         showMap: 'Karte',
       },
       log: {
+        title: 'Spielverlauf',
+        open: 'Spielverlauf',
+        close: 'Spielverlauf schließen',
         scenarioStarted: 'Das Szenario beginnt',
         scenarioEnded: 'Das Szenario endet mit Auflösung {{resolution}}',
         scenarioEndedUnresolved: 'Das Szenario endet ohne Auflösung',

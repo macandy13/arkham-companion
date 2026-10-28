@@ -55,14 +55,18 @@ function houseOpened(scenario: ScenarioDefinition): PlayTable {
   return table;
 }
 
-/** The export file of `table`'s game, titled `title`, as the home screen's import reads it. */
-function exportOf(title: string, table: PlayTable, commandId: string): Buffer {
-  const events = table.events.map((event, seq) => ({
+/**
+ * The export file of `table`'s game, titled `title`, as the home screen's import reads it. With a
+ * `commandId` the whole game is one undo group, so the screen opens with nothing to undo;
+ * without, it keeps the table's own steps, as the game log shows them.
+ */
+function exportOf(title: string, table: PlayTable, commandId?: string): Buffer {
+  const events = table.entries.map((entry, seq) => ({
     gameId: gameId('export'),
     seq: seq + 1,
     timestamp: seq,
-    commandId,
-    event,
+    commandId: commandId ?? entry.commandId,
+    event: entry.event,
   }));
   return Buffer.from(serialiseGameExport(title, 0, events));
 }
@@ -102,6 +106,16 @@ export function twoGhoulPriestsExport(title: string): Buffer {
  * pile.
  */
 export function mythosDrawnExport(title: string): Buffer {
+  return exportOf(title, mythosDrawn(), 'mythos_drawn');
+}
+
+/** Like `mythosDrawnExport`, but every step its own undo group, so the game log lists them. */
+export function mythosDrawnStepsExport(title: string): Buffer {
+  return exportOf(title, mythosDrawn());
+}
+
+/** The game of `mythosDrawnExport`. */
+function mythosDrawn(): PlayTable {
   const table = houseOpened(theGathering);
   table.endTurn(rolandId);
   table.nextPhase();
@@ -114,7 +128,7 @@ export function mythosDrawnExport(title: string): Buffer {
   table.nextPhase();
   table.nextPhase();
   table.nextPhase();
-  return exportOf(title, table, 'mythos_drawn');
+  return table;
 }
 
 /**
