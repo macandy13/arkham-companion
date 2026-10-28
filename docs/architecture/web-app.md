@@ -25,8 +25,7 @@ A tap on a portrait opens the detail sheet as a dialog.
 The open game (`OpenGame`) is the play screen's single source of truth:
 
 - **`GameActions`** ([`gameActions.ts`](../../apps/web/src/state/gameActions.ts)) are the players' verbs (`moveTo`, `investigate`, `answer('pass')`). They act for the investigator whose turn it is and answer the first pending decision, so they take no ids.
-  - Investigate, engage, take a resource, draw and play (`takeResource`, `drawCard`, `playCard`: the engine's commands taken `asAction`), and move, fight and evade unless `free`, also count off one of that investigator's actions, which the engine leaves to the players (the pawn's drag is a free move, as it also catches up with a move made at the table; a free move provokes no attacks of opportunity),
-  - and leave a skill test open for the decision dialog;
+  - Investigate, engage, take a resource, draw and play (`takeResource`, `drawCard`, `playCard`: the engine's commands taken `asAction`), and move, fight and evade unless `free`, also count off one of that investigator's actions, which the engine leaves to the players (the pawn's drag is a free move, as it also catches up with a move made at the table; a free move provokes no attacks of opportunity), and leave a skill test open for the decision dialog;
   - buttons are disabled while `OpenGame.busy`.
 - **`GameSession`** ([`gameSession.ts`](../../apps/web/src/state/gameSession.ts)) holds a `PlayTable` resumed from the stored log, plays each action as one undo group, writes it, then publishes the state.
   - A refused step stores nothing and shows its `Rejection` as a toast; a failed write reloads the stored game.

@@ -12,7 +12,8 @@ A tap on a tile (or its "i" button, for the keyboard) opens the location's [deta
   - investigate as an action or take a clue without a test at their own location,
   - move as an action or free to a connected one (`BoardView.connectedTo`),
   - plus the location's own card actions (`CardActions`, the Parlor's Resign),
-  - with the corrections (reveal, clue and doom steppers) in its place while adjusting.
+
+  While adjusting, the corrections (reveal, clue and doom steppers) take its place.
 
 A tap on an enemy token (a press let go where it went down, `isTap`, which a drag is not) opens the enemy's details as from the threat area.
 

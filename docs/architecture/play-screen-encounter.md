@@ -31,12 +31,10 @@ A tap on the deck or a pile opens the [encounter dialog](../../apps/web/src/enco
 - on the deck, its count with a "Draw for …" button per active investigator, the one whose turn it is first (`GameActions.drawEncounter`, for player cards and effects that draw outside the mythos phase; the card then resolves as in the mythos phase);
 - on a pile, its cards as a row of pictures, top card first (`PileStrip`: five side by side, `--encounter-strip-cards-shown`; more scroll by whole cards with a swipe or the investigator picker's round arrows), the chosen card (the top one at first) named under the row with its victory points and its moves.
 
-A tap on a line of the drawn-cards notice below opens the places the players can put it ([`CardMoves`](../../apps/web/src/encounter/CardMoves.tsx) over [`cardMoves`](../../apps/web/src/encounter/cardMoves.ts)):
+A tap on a line of the drawn-cards notice below opens the places the players can put it ([`CardMoves`](../../apps/web/src/encounter/CardMoves.tsx) over [`cardMoves`](../../apps/web/src/encounter/cardMoves.ts)), each a `ManualAdjust` `moveCard` step (`GameActions.moveEncounterCard`), for revelations the engine leaves to them:
 
 - a treachery goes into a threat area,
-- any card onto the discard pile or aside,
-
-each a `ManualAdjust` `moveCard` step (`GameActions.moveEncounterCard`), for revelations the engine leaves to them.
+- any card onto the discard pile or aside.
 
 An enemy not yet on the map gets one Spawn button instead, which closes the dialog and asks the players to tap a location ([`SpawnPrompt`](../../apps/web/src/encounter/SpawnPrompt.tsx) with Cancel, `OpenGame.spawning`; every tile glows and `MapBoard.onPick` takes the tap).
 The tap plays `SpawnEnemy` (`GameActions.spawnEnemy`), so the engine engages it by the rules (prey, Aloof).

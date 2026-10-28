@@ -23,13 +23,13 @@ Their [threat area](../../apps/web/src/investigators/ThreatArea.tsx) is a row of
 - treacheries
 - and engaged enemies, the enemies with their health left (`EnemyView.health`, scaled by the player count through `enemyHealth`).
 
+The threat area shows four cards (`THREAT_CARDS_SHOWN`); more scroll by whole cards with a swipe or its arrows (CSS scroll snap).
+
 A tap on a treachery opens the [card zoom](../../apps/web/src/screens/CardZoom.tsx), the card as big as a zoomed card to read (`BoardView.cardsIn` a zone: id, name, type, traits and the pictures of both sides):
 
 - its picture, turned over with a button when it has a back,
 - and without one its name, type and traits in our own frame,
 - and under it the actions the card offers the investigator whose turn it is.
-
-It shows four cards (`THREAT_CARDS_SHOWN`); more scroll by whole cards with a swipe or its arrows (CSS scroll snap).
 
 The cards an investigator controls (their `playArea` zone, Lita Chantler after a Parley) lie under their card as the same small cards in the asset frame ([`PlayArea`](../../apps/web/src/investigators/PlayArea.tsx), `SmallCard`), each opening the card zoom.
 
@@ -54,8 +54,7 @@ Under it is one row of buttons ([`ActionRow`](../../apps/web/src/screens/ActionR
 ## Card actions
 
 Every card screen shows the actions its card offers the same way ([`CardActions`](../../apps/web/src/screens/ActionRow.tsx) over `cardActionsOn`, the turn investigator's `BoardView.cardActions` on that card, found by the `id` each card view carries):
-
-- a "Card actions" group named like the turn row's buttons ("Resign · Parlor"), with the action arrow unless the action is free;
-- taking one closes the window first.
+a "Card actions" group named like the turn row's buttons ("Resign · Parlor"), with the action arrow unless the action is free.
+Taking one closes the window first.
 
 The turn row keeps a button for every card action besides.

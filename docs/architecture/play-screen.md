@@ -4,7 +4,7 @@ The [game screen](../../apps/web/src/screens/GameScreen.tsx) shows, from top to 
 
 1. a header with the encounter piles, agenda, act and scenario ([encounter piles](play-screen-encounter.md)),
 2. a status row,
-3. the map ([map and locations](play-screen-map.md))
+3. the map ([map and locations](play-screen-map.md)),
 4. and the investigator bar ([investigators and enemies](play-screen-investigators.md)).
 
 The first open decision shows as a dialog over the board ([decisions](play-screen-decisions.md)).
@@ -36,8 +36,8 @@ The same query opens a block in [`tokens.css`](../../apps/web/src/styles/tokens.
 
 - the header shows only its four cards in one row:
   - the slot labels are hidden for the eye only,
-  - and the piles, the victory display and the card plates are hidden;
-  - a tap on the agenda or act still opens its full card with its buttons;
+  - and the piles, the victory display and the card plates are hidden.
+  - A tap on the agenda or act still opens its full card with its buttons;
 - the status row names only the current phase, so it stays on one line;
 - the investigator bar shows one panel, the focused one (`data-focus`, `useFocus` in [`InvestigatorBar.tsx`](../../apps/web/src/investigators/InvestigatorBar.tsx): the one whose avatar was tapped until the turn changes, else the turn's, else the lead), without its art window, and the other investigators as round avatar buttons above it.
   The avatars are in the markup on every screen and hidden outside the phone, so the switch is CSS only.
@@ -57,10 +57,10 @@ It rearranges the same parts and adds no second copy of them:
 
 In the map row the map takes every touch (`touch-action: none`, besides the zoom library's own handlers), so panning never scrolls the board; a strip above and below the map ([`MapStrip`](../../apps/web/src/screens/MapStrip.tsx)) is where a vertical swipe to the next row starts.
 
-- The upper strip shows the cards row's numbers (doom, act clues, encounter deck, round and phase),
-- the lower one those of the turn's investigator, else the lead (actions left, counters, skills),
+- The upper strip shows the cards row's numbers (doom, act clues, encounter deck, round and phase) as icons with the values,
+- the lower one those of the turn's investigator, else the lead (actions left, counters, skills).
 
-as icons with the values; the strip's accessible name says them in words.
+The strip's accessible name says them in words.
 A tap on a strip moves the view to the agenda or to that investigator's panel (`useDetailView().go`, which changes the target without a new history entry).
 
 The web app manifest allows any orientation, so an installed app turns with the phone.
