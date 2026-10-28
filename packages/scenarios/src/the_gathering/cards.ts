@@ -301,6 +301,8 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     shroud: 2,
     cluesPerInvestigator: 0,
     actions: [resignAction()],
+    // The barrier on its unrevealed side: act 2 reveals it.
+    restrictions: [{ cannot: 'moveInto', of: 'self', unrevealed: true }],
   }),
   enemy({
     code: codes.ghoulPriest,

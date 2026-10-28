@@ -17,6 +17,7 @@ import { decisionId, type InstanceId } from './ids';
 import { hasKeyword } from './keywords';
 import { requireCard } from './lookup';
 import { CommandRejected } from './rejection';
+import { isRestricted } from './restrictions';
 import { withSuggestion } from './skill_modifiers';
 import type {
   AmountRange,
@@ -34,7 +35,8 @@ import type {
  * location (`effectiveValue`, constant abilities included). Its consequences follow
  * the answer (`investigateCommands`); a pass discovers 1 clue unless the
  * players confirm another count, up to the clues on the location when the
- * test starts. A location without clues makes the count not adjustable.
+ * test starts. A location without clues makes the count not adjustable. Rejected at a location
+ * a card forbids investigating (`isRestricted`, Locked Door).
  */
 export function handleInvestigate(
   ctx: EngineContext,
@@ -43,6 +45,12 @@ export function handleInvestigate(
 ): DecisionRequested[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
   const location = investigatorLocation(state, investigator);
+  if (isRestricted(ctx, state, location, 'investigate'))
+    throw new CommandRejected({
+      code: 'restricted',
+      cannot: 'investigate',
+      locationId: location.id,
+    });
   const clues = location.tokens.clue ?? 0;
   return skillTest(ctx, state, {
     investigator,

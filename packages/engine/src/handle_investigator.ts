@@ -33,6 +33,7 @@ import {
 import { requireCard } from './lookup';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
+import { isRestricted } from './restrictions';
 import type { GameState } from './state';
 
 /**
@@ -41,7 +42,8 @@ import type { GameState } from './state';
  * clues are placed exactly as for an explicit `RevealLocation`. Ready,
  * unengaged enemies at the destination then engage (`arrivalEngagements`),
  * whether the move is an action or a card effect, unless the effect avoids
- * engagement (`avoidEngagement`).
+ * engagement (`avoidEngagement`). Rejected into a location a card forbids moving into
+ * (`isRestricted`, the Parlor's barrier), whatever the move.
  */
 export function handleMoveInvestigator(
   ctx: EngineContext,
@@ -63,6 +65,8 @@ export function handleMoveInvestigator(
     !neighbours(state, investigator.locationId).includes(cmd.to)
   )
     throw new CommandRejected({ code: 'notConnected', from: investigator.locationId, to: cmd.to });
+  if (isRestricted(ctx, state, destination, 'moveInto'))
+    throw new CommandRejected({ code: 'restricted', cannot: 'moveInto', locationId: cmd.to });
 
   const moved: InvestigatorMoved = {
     type: 'InvestigatorMoved',

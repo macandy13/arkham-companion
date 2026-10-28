@@ -12,7 +12,7 @@ The [investigator bar](../../apps/web/src/investigators/InvestigatorBar.tsx) sho
 - and the turn controls under the card:
   - start turn,
   - actions left,
-  - icon buttons for investigate, take a resource, draw and play,
+  - icon buttons for investigate (off where a card forbids investigating their location, `LocationView.forbidden`: Locked Door), take a resource, draw and play,
   - a button per card action the cards offer them (`BoardView.cardActions`, "Resign · Parlor"),
   - end.
 

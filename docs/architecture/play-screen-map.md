@@ -11,6 +11,7 @@ A tap on a tile (or its "i" button, for the keyboard) opens the location's [deta
 - and an action row (the enemy details' [`ActionRow`](../../apps/web/src/screens/ActionRow.tsx)) built from a list of what the investigator whose turn it is can do there:
   - investigate as an action or take a clue without a test at their own location,
   - move as an action or free to a connected one (`BoardView.connectedTo`),
+  - where a card forbids it (`LocationView.forbidden`) investigate off and no move (Locked Door, the unrevealed Parlor's barrier),
   - plus the location's own card actions (`CardActions`, the Parlor's Resign),
 
   While adjusting, the corrections (reveal, clue and doom steppers) take its place.
