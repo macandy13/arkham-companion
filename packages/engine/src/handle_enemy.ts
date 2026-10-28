@@ -6,6 +6,7 @@ import type {
   DefeatEnemy,
   DisengageEnemy,
   EngageEnemy,
+  EvadeEnemy,
   ExhaustEnemy,
   MoveEnemy,
   MoveEnemyTowards,
@@ -161,6 +162,30 @@ export function handleDefeatEnemy(
 ): EnemyDefeated[] {
   const { enemy, stats } = onTableEnemyOf(ctx, state, cmd.enemyId);
   return [defeated(state, enemy, stats)];
+}
+
+/**
+ * `EvadeEnemy`: an exhausted enemy stays exhausted and one engaged with
+ * someone else stays engaged, but either is still evaded, so the window opens.
+ */
+export function handleEvadeEnemy(ctx: EngineContext, state: GameState, cmd: EvadeEnemy): Event[] {
+  const { enemy } = onTableEnemyOf(ctx, state, cmd.enemyId);
+  const investigator = activeInvestigator(state, cmd.investigatorId);
+  const engagedWithEvader =
+    enemy.zone.kind === 'engaged' && enemy.zone.investigatorId === investigator.id;
+  return [
+    ...(enemy.exhausted ? [] : [exhaustChange(enemy, true)]),
+    ...(engagedWithEvader
+      ? [
+          {
+            type: 'EnemyDisengaged',
+            enemyId: enemy.id,
+            locationId: locationOf(state, enemy),
+          } as const,
+        ]
+      : []),
+    { type: 'EnemyEvaded', enemyId: enemy.id, investigatorId: investigator.id },
+  ];
 }
 
 /** `ExhaustEnemy`. */

@@ -65,6 +65,7 @@ export type Event =
   | EnemyEngaged
   | EnemyAttacked
   | EnemyDisengaged
+  | EnemyEvaded
   | EnemyDefeated
   | ExhaustChanged
   | PhaseChanged
@@ -439,6 +440,18 @@ export interface EnemyEngaged {
  */
 export interface EnemyAttacked {
   type: 'EnemyAttacked';
+  enemyId: InstanceId;
+  investigatorId: InvestigatorId;
+}
+
+/**
+ * The investigator evaded the enemy, after its exhaustion and disengagement.
+ * Changes no state: it marks the evasion for `windowsOpenedBy` (`evaded`),
+ * since an exhausted enemy that was not engaged changes nothing else.
+ * Produced by `EvadeEnemy`.
+ */
+export interface EnemyEvaded {
+  type: 'EnemyEvaded';
   enemyId: InstanceId;
   investigatorId: InvestigatorId;
 }

@@ -18,6 +18,7 @@ An [`Ability`](../../packages/engine/src/abilities.ts) is:
   - `tested` after a basic action's test,
   - `engaged` either way round,
   - `attacked` (attacks of opportunity included),
+  - `evaded` for the enemy, naming the evader, once `EvadeEnemy` (a passed evasion or an effect) has exhausted and disengaged it, so later than `tested` (`afterEvaded`, Ruth Turner),
   - `cluesDiscovered`,
   - `defeated` for the enemy itself, naming where it was,
   - `tokensPlaced` for tokens placed on the card;

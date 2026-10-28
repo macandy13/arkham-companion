@@ -119,6 +119,11 @@ export type TimingWindow =
    */
   | { kind: 'attacked' }
   /**
+   * "After [this enemy] is evaded": opened by `EnemyEvaded` for the enemy, naming the evader,
+   * once it is exhausted and disengaged; unlike `tested` for an evasion, which opens before.
+   */
+  | { kind: 'evaded' }
+  /**
    * "After you discover clues at [this location]": opened by
    * `CluesDiscovered` for the location, naming the investigator.
    */
@@ -541,6 +546,14 @@ export function windowsOpenedBy(
       return [
         {
           window: { kind: 'attacked' },
+          cardId: event.enemyId,
+          investigatorId: event.investigatorId,
+        },
+      ];
+    case 'EnemyEvaded':
+      return [
+        {
+          window: { kind: 'evaded' },
           cardId: event.enemyId,
           investigatorId: event.investigatorId,
         },
@@ -1152,6 +1165,11 @@ export function whenDefeated(...effects: AbilityEffect[]): Ability {
 /** A forced ability "after [this enemy] attacks you", written `afterAttacking(takeHorror(1))`. */
 export function afterAttacking(...effects: AbilityEffect[]): Ability {
   return { window: { kind: 'attacked' }, effects };
+}
+
+/** A forced ability "after [this enemy] is evaded", written `afterEvaded(addToVictoryDisplay({ ref: 'self' }))`. */
+export function afterEvaded(...effects: AbilityEffect[]): Ability {
+  return { window: { kind: 'evaded' }, effects };
 }
 
 /** A forced ability "after you discover clues at [this location]", written `afterDiscoveringClues(placeDoomOnSelf(1))`. */

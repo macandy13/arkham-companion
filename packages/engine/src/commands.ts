@@ -69,6 +69,7 @@ export type Command =
   | GainSurge
   | DefeatEnemy
   | ExhaustEnemy
+  | EvadeEnemy
   | ReadyEnemy
   | MoveEnemy
   | MoveEnemyTowards
@@ -729,6 +730,18 @@ export interface HealEnemy {
 export interface DefeatEnemy {
   type: 'DefeatEnemy';
   enemyId: InstanceId;
+}
+
+/**
+ * The investigator evades the enemy, as a passed evasion does: a ready enemy
+ * exhausts, one engaged with them disengages (a massive enemy only
+ * exhausts), and then "after [this enemy] is evaded" opens. Produces
+ * `ExhaustChanged`, `EnemyDisengaged`, then `EnemyEvaded`.
+ */
+export interface EvadeEnemy {
+  type: 'EvadeEnemy';
+  enemyId: InstanceId;
+  investigatorId: InvestigatorId;
 }
 
 /** Exhausts a ready enemy in play (after it attacked, or by a card effect). Produces `ExhaustChanged`. */

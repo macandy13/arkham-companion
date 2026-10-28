@@ -248,8 +248,7 @@ function fightCommands(
 }
 
 /**
- * A passed evasion exhausts the enemy and disengages it; a massive enemy only
- * exhausts, since it is never in the `engaged` zone. A failed one lets an
+ * A passed evasion evades the enemy (`EvadeEnemy`). A failed one lets an
  * alert enemy attack the evader (`keywordAttackCommands`).
  */
 function evadeCommands(
@@ -262,10 +261,7 @@ function evadeCommands(
   const { enemy, stats } = enemyOf(ctx, state, enemyId);
   if (outcome === 'fail')
     return keywordAttackCommands(ctx, state, 'alert', enemy, stats, investigator.id);
-  return [
-    ...(enemy.exhausted ? [] : [{ type: 'ExhaustEnemy', enemyId } as const]),
-    ...(isEngagedWith(enemy, investigator) ? [{ type: 'DisengageEnemy', enemyId } as const] : []),
-  ];
+  return [{ type: 'EvadeEnemy', enemyId, investigatorId: investigator.id }];
 }
 
 /**
