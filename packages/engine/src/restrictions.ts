@@ -1,4 +1,4 @@
-import { assertNever, listIfAny } from '@arkham/util';
+import { assertNever, withoutEmptyLists } from '@arkham/util';
 import { cardStats, type EngineContext, type Trait } from './cards';
 import { cardsInPlay } from './doom';
 import type { InvestigatorId } from './ids';
@@ -16,25 +16,28 @@ export type LocationRestriction = (typeof LOCATION_RESTRICTIONS)[number];
 export const LOCATION_RESTRICTIONS = ['moveInto', 'investigate'] as const;
 
 /**
- * What a constant "cannot" ability forbids an investigator, as verbs by the noun they act on
- * (`InvestigatorCardRestriction`): The Masked Hunter's "you cannot discover or spend clues" is
- * `clues: discover, spend`, Dissonant Voices' "You cannot play assets or events" `cards: play`.
- * A new "cannot" (healing horror, gaining resources) adds its verb, or its noun and verbs, here
- * and a check in the handler that does it.
+ * Every verb a constant "cannot" ability can forbid an investigator, by the noun it acts on
+ * (`InvestigatorCardRestriction`), in the order `Forbidden` lists them: The Masked Hunter's "you
+ * cannot discover or spend clues" is `clues: discover, spend`, Dissonant Voices' "You cannot play
+ * assets or events" `cards: play`. A new "cannot" (healing horror, gaining resources) adds its
+ * verb, or its noun and verbs, here and a check in the handler that does it.
  */
-export interface RestrictedVerbs {
-  clues: 'discover' | 'spend';
-  cards: 'play';
-}
+export const RESTRICTED_VERBS = {
+  clues: ['discover', 'spend'],
+  cards: ['play'],
+} as const;
+
+/** The verbs a restriction can forbid for each noun (`RESTRICTED_VERBS`). */
+export type RestrictedVerbs = {
+  -readonly [N in keyof typeof RESTRICTED_VERBS]: (typeof RESTRICTED_VERBS)[N][number];
+};
 
 /** What an investigator restriction is about (`RestrictedVerbs`). */
 export type RestrictedNoun = keyof RestrictedVerbs;
 
-/** Every verb a restriction can forbid for each noun, in the order `Forbidden` lists them. */
-export const RESTRICTED_VERBS: { readonly [N in RestrictedNoun]: readonly RestrictedVerbs[N][] } = {
-  clues: ['discover', 'spend'],
-  cards: ['play'],
-};
+// `RESTRICTED_VERBS` as a mapped type, so indexing it with a generic noun keeps that noun's verbs.
+const VERBS_BY_NOUN: { readonly [N in RestrictedNoun]: readonly RestrictedVerbs[N][] } =
+  RESTRICTED_VERBS;
 
 /** One forbidden step, as a rejection names it: `{ cannot: 'spend', what: 'clues' }`. */
 export type ForbiddenStep = {
@@ -156,11 +159,14 @@ export function forbiddenFor(
   state: GameState,
   investigator: InvestigatorId,
 ): Forbidden {
-  const verbs = <N extends RestrictedNoun>(what: N) =>
-    RESTRICTED_VERBS[what].filter((cannot) =>
-      isRestrictedFor(ctx, state, investigator, cannot, what),
-    );
-  return { ...listIfAny('clues', verbs('clues')), ...listIfAny('cards', verbs('cards')) };
+  const verbs = <N extends RestrictedNoun>(what: N): RestrictedVerbs[N][] =>
+    VERBS_BY_NOUN[what].filter((cannot) => isRestrictedFor(ctx, state, investigator, cannot, what));
+  // Every key required, so a noun added to RESTRICTED_VERBS can't be missed here.
+  const byNoun: { [N in RestrictedNoun]: RestrictedVerbs[N][] } = {
+    clues: verbs('clues'),
+    cards: verbs('cards'),
+  };
+  return withoutEmptyLists(byNoun);
 }
 
 function activeRestrictions(ctx: EngineContext, source: CardInstance): readonly CardRestriction[] {

@@ -19,6 +19,19 @@ export function listIfAny<K extends string, T>(key: K, list: readonly T[]): { [P
 }
 
 /**
+ * `record` without the keys whose list is empty, so a view lists only what applies (an
+ * investigator's forbidden verbs by noun) instead of showing `key: []`.
+ */
+export function withoutEmptyLists<T extends { [key: string]: readonly unknown[] }>(
+  record: T,
+): Partial<T> {
+  // Object.fromEntries loses the key types; the filter keeps only keys and values from `record`.
+  return Object.fromEntries(
+    Object.entries(record).filter(([, list]) => list.length > 0),
+  ) as Partial<T>;
+}
+
+/**
  * `{ [key]: record }` when the record has own keys, else the empty object: `listIfAny` for a
  * record, so an empty one stays out of a view instead of showing up as `key: {}`.
  */
