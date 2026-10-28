@@ -10,6 +10,7 @@ import {
   perInvestigator,
   takeHorror,
   threatAreaOf,
+  trait,
   instanceId,
   investigatorId,
   newGame,
@@ -247,7 +248,9 @@ describe('a treachery whose investigator cannot play assets or events (Dissonant
   const bob = investigatorId('bob');
   /** A treachery that forbids the investigator whose threat area holds it to play assets or events. */
   const voicesCard = blankTreachery('voices', {
-    restrictions: [{ cannot: 'playAssetsOrEvents', who: 'threatArea' }],
+    restrictions: [
+      { cannot: 'playCards', who: 'threatArea', cards: { types: ['asset', 'event'] } },
+    ],
   });
   /** Alice and bob in the hall, the voices in alice's threat area. */
   const voicesOnAlice = newGame()
@@ -261,7 +264,7 @@ describe('a treachery whose investigator cannot play assets or events (Dissonant
 
     expect(rejectionFrom(context, state, { type: 'PlayCard', investigatorId: alice })).toEqual({
       code: 'restrictedFor',
-      cannot: 'playAssetsOrEvents',
+      cannot: 'playCards',
       investigatorId: alice,
     });
     expect(
@@ -273,8 +276,26 @@ describe('a treachery whose investigator cannot play assets or events (Dissonant
     const table = PlayTable.start(voicesOnAlice);
 
     expect(table.board.perInvestigator('forbidden')).toEqual({
-      alice: ['playAssetsOrEvents'],
+      alice: ['playCards'],
       bob: undefined,
     });
+  });
+
+  it.each([
+    { cards: 'assets only', filter: { types: ['asset'] } as const },
+    { cards: 'Firearm cards', filter: { traits: [trait('Firearm')] } },
+  ])('leaves alice’s play to the players when a card forbids her $cards', ({ filter }) => {
+    const narrower = blankTreachery('voices', {
+      restrictions: [{ cannot: 'playCards', who: 'threatArea', cards: filter }],
+    });
+    const { context, state } = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(instanceId('voices'), narrower, threatAreaOf(alice))
+      .start();
+
+    expect(
+      stateAfter(context, state, { type: 'PlayCard', investigatorId: alice }).investigators,
+    ).toEqual(state.investigators);
   });
 });

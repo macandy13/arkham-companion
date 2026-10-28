@@ -506,8 +506,8 @@ function investigatorRestrictionText(cannot: InvestigatorRestriction): string {
       return 'discover clues';
     case 'spendClues':
       return 'spend clues';
-    case 'playAssetsOrEvents':
-      return 'play assets or events';
+    case 'playCards':
+      return 'play cards';
     default:
       return assertNever(cannot);
   }

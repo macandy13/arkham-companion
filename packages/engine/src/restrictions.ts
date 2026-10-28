@@ -1,5 +1,5 @@
 import { assertNever } from '@arkham/util';
-import { cardStats, type EngineContext } from './cards';
+import { cardStats, type EngineContext, type Trait } from './cards';
 import { cardsInPlay } from './doom';
 import type { InvestigatorId } from './ids';
 import type { CardInstance, GameState } from './state';
@@ -18,17 +18,13 @@ export const LOCATION_RESTRICTIONS = ['moveInto', 'investigate'] as const;
 /**
  * What a constant "cannot" ability forbids an investigator (`InvestigatorCardRestriction.cannot`):
  * - `discoverClues`, `spendClues`: The Masked Hunter's "you cannot discover or spend clues".
- * - `playAssetsOrEvents`: Dissonant Voices' "You cannot play assets or events". Only assets and
- *   events are played (skills are committed), so it forbids every `PlayCard`.
+ * - `playCards`: playing the player cards `InvestigatorCardRestriction.cards` names (Dissonant
+ *   Voices' "You cannot play assets or events": all of them).
  */
 export type InvestigatorRestriction = (typeof INVESTIGATOR_RESTRICTIONS)[number];
 
 /** Every `InvestigatorRestriction`, in the order an `InvestigatorView.forbidden` lists them. */
-export const INVESTIGATOR_RESTRICTIONS = [
-  'discoverClues',
-  'spendClues',
-  'playAssetsOrEvents',
-] as const;
+export const INVESTIGATOR_RESTRICTIONS = ['discoverClues', 'spendClues', 'playCards'] as const;
 
 /**
  * The location a restriction is about, relative to the card that has it: the card itself (a
@@ -51,13 +47,26 @@ export interface LocationCardRestriction {
   unrevealed?: true;
 }
 
+/** The player card types that are played: skills are committed to tests instead (RR "Play"). */
+export type PlayedCardType = 'asset' | 'event';
+
 /**
- * A "cannot" about an investigator: `{ cannot: 'playAssetsOrEvents', who: 'threatArea' }` is
- * Dissonant Voices.
+ * The player cards a `playCards` restriction names: those of one of `types` and, when `traits`
+ * is set, with one of them; every played card when absent.
+ */
+export interface PlayedCardFilter {
+  types?: readonly PlayedCardType[];
+  traits?: readonly Trait[];
+}
+
+/**
+ * A "cannot" about an investigator: `{ cannot: 'playCards', who: 'threatArea', cards: { types:
+ * ['asset', 'event'] } }` is Dissonant Voices. `cards` narrows `playCards` only.
  */
 export interface InvestigatorCardRestriction {
   cannot: InvestigatorRestriction;
   who: RestrictedInvestigator;
+  cards?: PlayedCardFilter;
 }
 
 /**
@@ -90,7 +99,12 @@ export function isRestricted(
   );
 }
 
-/** Whether a card in play forbids `investigator` to do `cannot`, as `isRestricted` does for a location. */
+/**
+ * Whether a card in play forbids `investigator` to do `cannot`, as `isRestricted` does for a
+ * location. The engine never sees the player card a `PlayCard` plays, so `playCards` holds only
+ * where a restriction names every played card (Dissonant Voices); a narrower one ("cannot play
+ * Firearm assets") stays card text for the players.
+ */
 export function isRestrictedFor(
   ctx: EngineContext,
   state: GameState,
@@ -102,6 +116,7 @@ export function isRestrictedFor(
       (restriction) =>
         'who' in restriction &&
         restriction.cannot === cannot &&
+        (cannot !== 'playCards' || namesEveryPlayedCard(restriction.cards)) &&
         binds(source, restriction.who, investigator),
     ),
   );
@@ -144,3 +159,11 @@ function binds(
       return assertNever(who);
   }
 }
+
+function namesEveryPlayedCard(cards: PlayedCardFilter | undefined): boolean {
+  if (cards === undefined) return true;
+  const types = cards.types ?? PLAYED_CARD_TYPES;
+  return cards.traits === undefined && PLAYED_CARD_TYPES.every((type) => types.includes(type));
+}
+
+const PLAYED_CARD_TYPES: readonly PlayedCardType[] = ['asset', 'event'];

@@ -146,7 +146,7 @@ export interface InvestigatorView {
   controls?: CardName[];
   /**
    * What the cards in play forbid them (`isRestrictedFor`): discovering or spending clues (The
-   * Masked Hunter), playing assets or events (Dissonant Voices). The screen offers none of it;
+   * Masked Hunter), playing cards (Dissonant Voices' assets or events). The screen offers none of it;
    * absent when nothing is forbidden.
    */
   forbidden?: InvestigatorRestriction[];

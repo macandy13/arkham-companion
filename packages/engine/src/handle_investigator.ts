@@ -133,14 +133,14 @@ export function deferToPlayers(
 
 /**
  * `PlayCard`: left to the players like `deferToPlayers`, but rejected for an investigator a card
- * forbids to play assets or events (`isRestrictedFor`, Dissonant Voices): those are the only
- * cards played, so the engine can refuse it without seeing the card.
+ * forbids to play every card (`isRestrictedFor`, Dissonant Voices' "assets or events", the only
+ * cards played), which the engine can refuse without seeing the card.
  */
 export function handlePlayCard(ctx: EngineContext, state: GameState, cmd: PlayCard): Event[] {
-  if (isRestrictedFor(ctx, state, cmd.investigatorId, 'playAssetsOrEvents'))
+  if (isRestrictedFor(ctx, state, cmd.investigatorId, 'playCards'))
     throw new CommandRejected({
       code: 'restrictedFor',
-      cannot: 'playAssetsOrEvents',
+      cannot: 'playCards',
       investigatorId: cmd.investigatorId,
     });
   return deferToPlayers(ctx, state, cmd);
