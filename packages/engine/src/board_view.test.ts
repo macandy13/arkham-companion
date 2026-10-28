@@ -413,6 +413,14 @@ describe('locations', () => {
     },
   );
 
+  it("shows a location's connection symbol", () => {
+    const { context, state } = house
+      .withLocation(instanceId('cellar'), blankLocation('cellar', { symbol: 'plus' }))
+      .start();
+
+    expect(boardView(context, state).location(byName('cellar')).symbol).toBe('plus');
+  });
+
   it('leaves out locations that are not on a map', () => {
     const { context, state } = house
       .withCard(instanceId('cellar'), blankLocation('cellar'), { kind: 'setAside' })

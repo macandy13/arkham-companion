@@ -30,29 +30,27 @@ test('map tabs for the Study and the house, the house chosen', async ({ page }) 
   await expect(page.getByRole('tabpanel', { name: 'House' })).toBeVisible();
 });
 
-test(
-  'Roland Banks with four treacheries and the Ghoul Priest, scrolled on to the Ghoul Priest',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(
-      page,
-      'Roland Banks threatened',
-      rolandThreatenedExport('Roland Banks threatened'),
-    );
+test('Roland Banks with four treacheries and the Ghoul Priest, scrolled on to the Ghoul Priest', async ({
+  page,
+}) => {
+  await resumeImportedGame(
+    page,
+    'Roland Banks threatened',
+    rolandThreatenedExport('Roland Banks threatened'),
+  );
 
-    const roland = page.getByRole('region', { name: 'Roland Banks' });
-    const threatArea = roland.getByRole('list', { name: 'Threat area' });
-    const ghoulPriest = threatArea.getByRole('listitem', {
-      name: 'Ghoul Priest, 3 of 5 health left, 2 damage',
-    });
-    await expect(threatArea.getByRole('listitem')).toHaveCount(5);
-    await expect(ghoulPriest).not.toBeInViewport({ ratio: 1 });
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
+  const threatArea = roland.getByRole('list', { name: 'Threat area' });
+  const ghoulPriest = threatArea.getByRole('listitem', {
+    name: 'Ghoul Priest, 3 of 5 health left, 2 damage',
+  });
+  await expect(threatArea.getByRole('listitem')).toHaveCount(5);
+  await expect(ghoulPriest).not.toBeInViewport({ ratio: 1 });
 
-    await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
+  await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
 
-    await expect(ghoulPriest).toBeInViewport({ ratio: 1 });
-  },
-);
+  await expect(ghoulPriest).toBeInViewport({ ratio: 1 });
+});
 
 test('the Hallway’s details, its card with Roland Banks on it, on Roland Banks’ turn', async ({
   page,
@@ -61,7 +59,10 @@ test('the Hallway’s details, its card with Roland Banks on it, on Roland Banks
 
   await page.getByRole('figure', { name: 'House' }).getByRole('group', { name: 'Hallway' }).click();
 
-  const details = page.getByRole('dialog', { name: 'Hallway' });
+  // A dialog on a tablet, the location mode in place of the map on a phone.
+  const details = page
+    .getByRole('dialog', { name: 'Hallway' })
+    .or(page.getByRole('region', { name: 'Hallway' }));
   await expect(details.getByRole('img', { name: 'The card of Hallway' })).toBeVisible();
   await expect(details.getByRole('button', { name: 'Investigate · 1 action' })).toBeVisible();
 });
@@ -245,19 +246,26 @@ test('the attack of opportunity Roland Banks provokes by taking a resource', asy
   ).toBeVisible();
 });
 
-test('the Parlor’s details with its Resign among Roland Banks’ card actions', async ({ page }) => {
-  await resumeImportedGame(page, 'In the Parlor', inTheParlorExport('In the Parlor'));
+test(
+  'the Parlor’s details with its Resign among Roland Banks’ card actions',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'In the Parlor', inTheParlorExport('In the Parlor'));
 
-  // On a phone the investigator panel lies over the Parlor's tile, so the keyboard opens it.
-  await page.getByRole('button', { name: 'Details of Parlor' }).press('Enter');
+    // On a phone the investigator panel lies over the Parlor's tile, so the keyboard opens it.
+    await page.getByRole('button', { name: 'Details of Parlor' }).press('Enter');
 
-  const parlor = page.getByRole('dialog', { name: 'Parlor' });
-  await expect(
-    parlor
-      .getByRole('region', { name: 'Card actions' })
-      .getByRole('button', { name: 'Resign · Parlor' }),
-  ).toBeVisible();
-});
+    // A dialog on a tablet, the location mode in place of the map on a phone.
+    const parlor = page
+      .getByRole('dialog', { name: 'Parlor' })
+      .or(page.getByRole('region', { name: 'Parlor' }));
+    await expect(
+      parlor
+        .getByRole('region', { name: 'Card actions' })
+        .getByRole('button', { name: 'Resign · Parlor' }),
+    ).toBeVisible();
+  },
+);
 
 test(
   'the unrevealed Parlor’s details, its barrier offering Roland Banks no move',
@@ -268,8 +276,11 @@ test(
     // On a phone the investigator panel lies over the Parlor's tile, so the keyboard opens it.
     await page.getByRole('button', { name: 'Details of Parlor' }).press('Enter');
 
-    const parlor = page.getByRole('dialog', { name: 'Parlor' });
-    await expect(parlor.getByRole('button', { name: 'Close' })).toBeVisible();
+    // A dialog on a tablet, the location mode in place of the map on a phone.
+    const parlor = page
+      .getByRole('dialog', { name: 'Parlor' })
+      .or(page.getByRole('region', { name: 'Parlor' }));
+    await expect(parlor.getByRole('heading', { name: 'Parlor' })).toBeVisible();
     await expect(parlor.getByRole('button', { name: /^Move here/ })).toHaveCount(0);
   },
 );

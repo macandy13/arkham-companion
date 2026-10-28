@@ -3,9 +3,10 @@ import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
 import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
-import { gameId as toGameId } from '@arkham/engine';
+import { gameId as toGameId, type InstanceId } from '@arkham/engine';
 import type { AppState } from '../state/appStore';
 import { InvestigatorBar } from '../investigators/InvestigatorBar';
+import { LocationFocus } from '../map/LocationFocus';
 import { MapBoard } from '../map/MapBoard';
 import { DecisionDialog } from './DecisionDialog';
 import { DetailControls } from './DetailControls';
@@ -29,7 +30,10 @@ import './game.css';
  * On a phone held upright the board starts as the compact view (the stylesheet's phone blocks); a
  * tap on a header card, the map's expand button or the investigator's name opens the detail view
  * on it (`useDetailView`, `data-view="detail"`), the same parts laid out as rows to swipe between
- * (`DetailControls`); the map row gets a strip above and below the map (`MapStrip`).
+ * (`DetailControls`); the map row gets a strip above and below the map (`MapStrip`). A tap on a
+ * location there or in the compact view shows that location in the map row (`LocationFocus`), the
+ * location mode, until the players go back to the map; while they choose where an enemy spawns,
+ * the map shows.
  */
 export function GameScreen({ store }: { store: StoreApi<AppState> }) {
   const { t } = useTranslation();
@@ -66,6 +70,12 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
   const { board } = open;
   const [decision] = board.decisions;
   const { spawning } = open;
+  const focusId = detailTarget?.row === 'map' ? detailTarget.location : undefined;
+  // A location that left play, or a spawn to place on the map, brings the whole map back.
+  const focused = spawning ? undefined : board.locations.find(({ id }) => id === focusId);
+  const showLocation = phone
+    ? (location: InstanceId) => (detailTarget ? detail.go : detail.open)({ row: 'map', location })
+    : undefined;
 
   return (
     <div
@@ -94,19 +104,31 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
           />
         )}
         {detailTarget && <MapStrip board={board} to="cards" onGo={detail.go} />}
-        <MapBoard
-          board={board}
-          actions={store.getState().actions}
-          busy={open.busy}
-          adjusting={open.adjusting}
-          onPick={
-            spawning &&
-            ((location) => {
-              store.getState().cancelSpawn();
-              void store.getState().actions.spawnEnemy(spawning.id, location);
-            })
-          }
-        />
+        {focused ? (
+          <LocationFocus
+            board={board}
+            location={focused}
+            actions={store.getState().actions}
+            busy={open.busy}
+            adjusting={open.adjusting}
+            onMap={() => detail.go({ row: 'map' })}
+          />
+        ) : (
+          <MapBoard
+            board={board}
+            actions={store.getState().actions}
+            busy={open.busy}
+            adjusting={open.adjusting}
+            onPick={
+              spawning &&
+              ((location) => {
+                store.getState().cancelSpawn();
+                void store.getState().actions.spawnEnemy(spawning.id, location);
+              })
+            }
+            onOpenLocation={showLocation}
+          />
+        )}
         {detailTarget && <MapStrip board={board} to="investigators" onGo={detail.go} />}
       </section>
       <section id="investigators" aria-labelledby="investigators-title">

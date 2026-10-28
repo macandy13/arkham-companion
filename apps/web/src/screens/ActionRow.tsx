@@ -107,8 +107,8 @@ export function cardActionCaption(t: TFunction, { designator, number }: PrintedA
 /**
  * The card actions of one card (`cardActionsOn`) as a group of the action row, each named like
  * the turn row's button ("Resign · Parlor") and marked with the action arrow unless it is free.
- * Taking one closes the window first (`onUse`), since its effects may ask something next or take
- * the investigator out of the game (Resign).
+ * Taking one calls `onUse` first, so a window around it closes, since its effects may ask something
+ * next or take the investigator out of the game (Resign).
  */
 export function CardActions({
   offered,
@@ -119,7 +119,7 @@ export function CardActions({
   offered: readonly CardActionView[];
   actions: GameActions;
   busy: boolean;
-  onUse: () => void;
+  onUse?: () => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -136,7 +136,7 @@ export function CardActions({
             name={name}
             disabled={busy}
             onClick={() => {
-              onUse();
+              onUse?.();
               void actions.useCardAction(cardId, action);
             }}
           />

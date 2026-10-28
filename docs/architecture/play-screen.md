@@ -63,6 +63,15 @@ In the map row the map takes every touch (`touch-action: none`, besides the zoom
 The strip's accessible name says them in words.
 A tap on a strip moves the view to the agenda or to that investigator's panel (`useDetailView().go`, which changes the target without a new history entry).
 
+### Location mode
+
+On a phone a tap on a location, in the compact map or the map row, shows that location in the map row in place of the map (`{ row: 'map', location }`, [`LocationFocus`](../../apps/web/src/map/LocationFocus.tsx)) instead of the details dialog the tablet opens. The strips stay above and below it.
+
+- Its content is the dialog's ([`LocationContent`](../../apps/web/src/map/LocationDetails.tsx)): the card, shroud and clues, who is there, the attached cards, and the action row or the corrections. The stylesheets share their rules (`:is(dialog[data-dialog='location'], [data-mode='location'])`).
+- It stays on the location after a move or an investigation, since it is a row, not a window over it.
+- The Map button brings the whole map back, and so does the location leaving play. While the players choose where a spawned enemy goes, the map shows until they place it.
+- It takes the focus as it opens, so a keyboard tap on a tile's "i" button lands on it.
+
 The web app manifest allows any orientation, so an installed app turns with the phone.
 
 ## Frames

@@ -45,7 +45,7 @@ Once the scenario has ended, only `ManualAdjust` is accepted ([Command handling]
   - It plays with The Gathering's and The Midnight Masks' cards joined in.
   - Its setup sets aside each enemy The Midnight Masks recorded as got away, by name, and act 1's reverse side puts the Ritual Site onto the Woods map (`PutLocationIntoPlay`) and spawns them at the Main Path.
 
-Hand-entered card data is built with the shared [`card_builders.ts`](../../packages/scenarios/src/card_builders.ts) (`agenda`, `act`, `location`, `enemy`, `treachery`), one builder per card type that takes the printed values and the card's encounter set.
+Hand-entered card data is built with the shared [`card_builders.ts`](../../packages/scenarios/src/card_builders.ts) (`agenda`, `act`, `location`, `enemy`, `treachery`), one builder per card type that takes the printed values and the card's encounter set. A location's connection symbol (`CardStats.symbol`, a `LocationSymbol`) is entered there too, since ArkhamDB's card data has no field for it.
 The app lists playable scenarios in its [scenario catalog](../../apps/web/src/scenarios/scenarioCatalog.ts).
 
 ## Extension points

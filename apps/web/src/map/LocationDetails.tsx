@@ -14,18 +14,10 @@ import { CardPatterns, LocationTile } from './LocationTile';
 import { TILE } from './mapLayout';
 
 /**
- * One location in full, opened by a tap on its tile or its details button: its card, drawn like
- * its tile with the pieces on it, its shroud and clues, who is there (investigators and enemies),
- * the cards attached to it, and under it one row of what the investigator whose
- * turn it is can do there (`locationActions`) and the actions the location's card offers them
- * (`CardActions`, such as the Parlor's Resign). While the players adjust the board (`adjusting`),
- * the row gives way to the corrections instead: reveal it and add or remove its clues and doom,
- * as a card effect or the table asks, so the screen keeps up with the physical game; they are not
- * steps of play, so the two never show together. It reads the location fresh from the board, so
- * its counts follow each step, and stays open across corrections and a clue taken, since those
- * often come several at a time; a move or an investigation closes it, so the decision dialog
- * that may follow is the only one open. A native modal `<dialog>` brings focus trapping and
- * Escape; nothing is tapped while a step is queued (`busy`).
+ * One location in full as a dialog, opened by a tap on its tile or its details button on a tablet
+ * or wider: the location's content (`LocationContent`) with a close button. A native modal
+ * `<dialog>` brings focus trapping and Escape. A move or an investigation closes it, so the
+ * decision dialog that may follow is the only one open.
  */
 export function LocationDetails({
   board,
@@ -48,6 +40,54 @@ export function LocationDetails({
   useEffect(() => {
     dialog.current?.showModal();
   }, []);
+  return (
+    <dialog ref={dialog} aria-labelledby={titleId} onCancel={onClose} data-dialog="location">
+      <button type="button" data-icon="close" aria-label={t('location.close')} onClick={onClose} />
+      <LocationContent
+        board={board}
+        location={location}
+        actions={actions}
+        busy={busy}
+        adjusting={adjusting}
+        titleId={titleId}
+        onLeave={onClose}
+      />
+    </dialog>
+  );
+}
+
+/**
+ * What the players see of one location, in the details dialog and in the phone's location mode
+ * (`LocationFocus`): its name as a heading (`titleId`), its card, drawn like its tile with the
+ * pieces on it, its shroud and clues, who is there (investigators and enemies), the cards attached
+ * to it, and under it one row of what the investigator whose turn it is can do there
+ * (`locationActions`) and the actions the location's card offers them (`CardActions`, such as the
+ * Parlor's Resign). While the players adjust the board (`adjusting`), the row gives way to the
+ * corrections instead: reveal it and add or remove its clues and doom, as a card effect or the
+ * table asks, so the screen keeps up with the physical game; they are not steps of play, so the
+ * two never show together. It reads the location fresh from the board, so its counts follow each
+ * step. A move, an investigation or a card action calls `onLeave` first, for a view that should
+ * step aside then; corrections and a clue taken do not, since those often come several at a
+ * time. Nothing is tapped while a step is queued (`busy`).
+ */
+export function LocationContent({
+  board,
+  location,
+  actions,
+  busy,
+  adjusting,
+  titleId,
+  onLeave,
+}: {
+  board: BoardView;
+  location: LocationView;
+  actions: GameActions;
+  busy: boolean;
+  adjusting: boolean;
+  titleId: string;
+  onLeave?: () => void;
+}) {
+  const { t } = useTranslation();
   const offered = adjusting ? [] : locationActions(board, location, actions);
   const printed = adjusting ? [] : cardActionsOn(board, location.id);
   const button = ({ key, icon, cost, play, closes }: LocationAction) => (
@@ -59,7 +99,7 @@ export function LocationDetails({
       name={t(`location.${key}`)}
       disabled={busy || play === undefined}
       onClick={() => {
-        if (closes) onClose();
+        if (closes) onLeave?.();
         void play?.();
       }}
     />
@@ -68,8 +108,7 @@ export function LocationDetails({
   const free = offered.filter(({ cost }) => cost === 'free');
 
   return (
-    <dialog ref={dialog} aria-labelledby={titleId} onCancel={onClose} data-dialog="location">
-      <button type="button" data-icon="close" aria-label={t('location.close')} onClick={onClose} />
+    <>
       <h2 id={titleId}>{location.name}</h2>
       <LocationCard board={board} location={location} />
       <p>
@@ -91,11 +130,11 @@ export function LocationDetails({
             <ActionGroup title={t('location.free')}>{free.map(button)}</ActionGroup>
           )}
           {printed.length > 0 && (
-            <CardActions offered={printed} actions={actions} busy={busy} onUse={onClose} />
+            <CardActions offered={printed} actions={actions} busy={busy} onUse={onLeave} />
           )}
         </footer>
       )}
-    </dialog>
+    </>
   );
 }
 
