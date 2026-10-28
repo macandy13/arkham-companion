@@ -1,8 +1,18 @@
 # Game state
 
-The whole table is one serialisable value, [`GameState`](../../packages/engine/src/state.ts). Every physical card is one `CardInstance` with a unique ID, its card code and exactly one [`Zone`](../../packages/engine/src/zone.ts), so moving a card anywhere is the same operation. The state stores codes, not card data; rules look stats up in the `CardDb`. Investigators are not card instances but seats with their own record.
+The whole table is one serialisable value, [`GameState`](../../packages/engine/src/state.ts).
 
-Location connections are an explicit graph on each [`GameMap`](../../packages/engine/src/map.ts), since they change in play and can be one-way. A `revealedOnly` edge, printed on revealed sides only (the Arkham Woods to each other), counts in `neighbours` and shows on the map once both its locations are revealed. Each map also keeps its book layout (`GameMap.layout`, cells on a grid three times finer than a card), which only the screen reads. A whole new map joins the board with `AddMap`; a single location joins a map already there with `PutLocationIntoPlay`, which sets its layout cell too (`LayoutCellSet`). [`checkInvariants`](../../packages/engine/src/invariants.ts) states what must always hold; tests run it after every command.
+- Every physical card is one `CardInstance` with a unique ID, its card code and exactly one [`Zone`](../../packages/engine/src/zone.ts), so moving a card anywhere is the same operation.
+- The state stores codes, not card data; rules look stats up in the `CardDb`.
+- Investigators are not card instances but seats with their own record.
+
+Location connections are an explicit graph on each [`GameMap`](../../packages/engine/src/map.ts), since they change in play and can be one-way.
+
+- A `revealedOnly` edge, printed on revealed sides only (the Arkham Woods to each other), counts in `neighbours` and shows on the map once both its locations are revealed.
+- Each map also keeps its book layout (`GameMap.layout`, cells on a grid three times finer than a card), which only the screen reads.
+- A whole new map joins the board with `AddMap`; a single location joins a map already there with `PutLocationIntoPlay`, which sets its layout cell too (`LayoutCellSet`).
+
+[`checkInvariants`](../../packages/engine/src/invariants.ts) states what must always hold; tests run it after every command.
 
 ```ts
 interface GameState {

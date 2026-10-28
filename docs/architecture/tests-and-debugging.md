@@ -1,6 +1,10 @@
 # Tests and debugging
 
-Engine modules have unit tests; invariants have table tests. Each scenario has an end-to-end test ([`end_to_end.test.ts`](../../packages/scenarios/src/the_gathering/end_to_end.test.ts)) that plays rounds through a `PlayTable`, checking invariants after every command and replaying the log at the end. [`formatBoard`](../../packages/engine/src/format_board.ts) renders the board as stable text for snapshots and errors. The three test tools live in the engine's source, so the app uses them too:
+Engine modules have unit tests; invariants have table tests.
+Each scenario has an end-to-end test ([`end_to_end.test.ts`](../../packages/scenarios/src/the_gathering/end_to_end.test.ts)) that plays rounds through a `PlayTable`, checking invariants after every command and replaying the log at the end.
+[`formatBoard`](../../packages/engine/src/format_board.ts) renders the board as stable text for snapshots and errors.
+
+The three test tools live in the engine's source, so the app uses them too:
 
 - **`newGame()`** ([`game_builder.ts`](../../packages/engine/src/game_builder.ts)) builds a table from locations, maps, investigators and cards in zones, each placed with its [blank card](../../packages/engine/src/blank_cards.ts) definition carrying only the stats the test is about, and starts it through `StartScenario`. Unit tests build their tables with it instead of file-local setup helpers, and every card and ID an assertion checks is named in the test ([coding guidelines](../coding-guidelines.md) §3).
 - **`PlayTable`** ([`play_table.ts`](../../packages/engine/src/play_table.ts)) plays a table in game language (`nextPhase()`, `moveTo(byName('Roland Banks'), byName('Hallway'))`, `answer(…, 'fail')`). Each method is one atomic undo group; a refusal throws `TableRejected` with the board attached.
