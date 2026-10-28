@@ -38,9 +38,10 @@ describe('GameLogDialog', () => {
     );
 
     const [steps] = within(screen.getByRole('dialog', { name: 'Game log' })).getAllByRole('list');
-    expect(steps?.children).toHaveLength(3);
     expect([...(steps?.children ?? [])].map((step) => step.textContent)).toEqual([
       'The scenario begins',
+      'Round 1: Investigation phase',
+      "Roland Banks's turn begins",
       'Roland Banks takes 2 damage',
       "Roland Banks's turn ends",
     ]);
