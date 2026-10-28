@@ -3,7 +3,7 @@
 A scenario is a [`ScenarioDefinition`](../../packages/engine/src/scenario.ts): agenda and act decks, chaos bags, reference card, setup steps and token modifiers.
 [`compileSetup`](../../packages/engine/src/setup.ts) turns it plus the players' choices into one `StartScenario` command, reading investigator stats from the cards.
 
-Its `SetupOptions` are standalone (the players pick the difficulty) or a campaign's: then
+Its `SetupOptions` are standalone (the players pick the difficulty) or a campaign's. In a campaign:
 
 - the log gives the difficulty and the chaos bag,
 - each investigator starts with damage and horror for their trauma,

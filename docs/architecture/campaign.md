@@ -24,9 +24,9 @@ A scenario's resolutions are data on `ScenarioDefinition.resolutions` ([`resolut
 - killed/insane,
 - a story card earned (`earnCard`, by each target or, with `choose`, a `choice` of one of them),
 - the end of the campaign,
-- or a step the players do by hand,
+- or a step the players do by hand.
 
-plus steps that read the ended game:
+Steps that read the ended game:
 
 - `when` picks its steps by a `GameCondition` (a card in play, set aside, in a scenario deck or in the victory display, the current agenda, or any of these)
 - and `recordNames` writes the names of the cards whose condition holds as a list record.
@@ -40,7 +40,7 @@ Steps name their target (`each`, `lead`, `notResigned`, `resigned`) instead of i
 
 An investigator the proposal kills, drives insane, or gives trauma up to their health or sanity on the log gets no change after that one, since the campaign rejects commands for them.
 
-It only proposes: the players confirm or edit the list, and `campaign.applyResolution` applies the confirmed commands in one step, all or none, followed by `AdvanceScenario`, which adds the scenario and its outcome to `CampaignLog.playedScenarios` and moves on.
+`campaign.proposeResolution` only proposes: the players confirm or edit the list, and `campaign.applyResolution` applies the confirmed commands in one step, all or none, followed by `AdvanceScenario`, which adds the scenario and its outcome to `CampaignLog.playedScenarios` and moves on.
 
 The last scenario's `endCampaign` step proposes `EndCampaign`, which sets `CampaignLog.result` (`won`, `lost`, or `survived` for an ending that is neither); a log without a result is still running.
 

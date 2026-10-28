@@ -77,7 +77,7 @@ Stack:
 - Dexie
 - zod for external input only
 - vite-plugin-pwa
-- Vitest and Playwright.
+- Vitest and Playwright
 
 ## Components
 

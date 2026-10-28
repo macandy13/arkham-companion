@@ -18,9 +18,9 @@ Skill tests ([`skill_tests.ts`](../../packages/engine/src/skill_tests.ts)) carry
 - the printed skill,
 - its lasting boost (`Investigator.skillBoosts`: what player cards in play add, such as an ally's +1 combat, which the players set with a `ManualAdjust` of kind `skillBoost` and which lasts until they change it),
 - one player-entered modifier
-- and the chaos tokens,
+- and the chaos tokens.
 
-but the answer stays the players' pass or fail.
+The answer stays the players' pass or fail.
 
 ## Extension points
 

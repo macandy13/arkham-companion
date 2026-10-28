@@ -88,9 +88,9 @@ Action abilities ("[action]: …") are data too: `CardStats.actions` lists [`Car
 - a location's at it,
 - an enemy's at its location,
 - a threat area's at its owner's location,
-- the current agenda's and act's for anyone,
+- the current agenda's and act's for anyone.
 
-and continues with its effects as ability steps in an `action` window naming the investigator.
+It continues with its effects as ability steps in an `action` window naming the investigator.
 An action ability provokes attacks of opportunity unless it is a Resign or Parley, which is why `CommandSpec.provokes` and `continueWith` see the context and state.
 
 ### Limits, costs and conditions
@@ -107,7 +107,8 @@ An action ability provokes attacks of opportunity unless it is a Resign or Parle
 
 ### Advancing the act
 
-- `investigatorTurn` ("during any investigator's turn") holds while anyone's turn is in progress.
+The `investigatorTurn` condition ("during any investigator's turn") holds while anyone's turn is in progress.
+
 - `advanceBySpendingClues(clues)` is the act's group clue spend as a free action with that condition, a `groupClues` cost and `AdvanceAct`, which the act builders give every act with a clue threshold (after its printed actions, so their indices stay).
 - `AdvanceAct` itself pays nothing: it is that action's effect, an objective's or another card's.
 - `BoardView.act.advance` says how clues advance the act (`ActAdvance`): `spendClues`, the clues the investigators hold against that cost (`cluesToAdvance`), or `cluesOnAct`, an objective counting the clues on it (`tokenObjective`).
