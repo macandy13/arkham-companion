@@ -143,3 +143,11 @@ The description is read on a phone before the diff. It points the reviewer at th
 - **Why first, without names.** Open with why the PR exists. Give the reason itself; never attribute it to a person ("Andy asked/chose/wanted …"). The required attribution block stays above everything.
 - **Draw it when a picture is faster.** A flow, a state machine, a dependency or an order of steps reads faster as a Mermaid diagram than as prose, in a PR description or a doc. Start every block with its diagram type (`flowchart LR`, `sequenceDiagram`, `stateDiagram-v2`); without it GitHub shows an error instead of the diagram.
 - **Weight by what the owner reviews.** Rules, API and architecture, tests and coverage get a line each; plumbing gets one "Skim or skip" line in total.
+
+## 8. Docs
+
+The rules pages (`docs/rules/`) and architecture pages (`docs/architecture/`) grow with almost every PR, often in parallel. Shape them so additions land on their own lines and don't conflict.
+
+- **Short paragraphs.** One idea per paragraph, a few sentences at most. Start a new paragraph rather than extending a long one.
+- **Enumerations are lists.** When a paragraph lists items (steps, cases, card examples, extension points), write them as a Markdown list, one item per line; numbered when the order matters.
+- **Long list items get sub-items.** Give a list item a short lead sentence and put its cases or exceptions into a nested list instead of one long line.

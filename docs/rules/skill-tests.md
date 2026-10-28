@@ -5,16 +5,54 @@
 1. Determine the skill (willpower, intellect, combat or agility). Difficulty is the fight value, shroud, evade value, or the number in parentheses on the card, each with its active modifiers (Obscuring Fog's +2 shroud).
 2. Commit cards: the tester commits any number, and each other investigator at the same location commits up to one. Each matching or wild icon gives +1.
 3. Reveal a chaos token.
-4. Resolve its symbol: skull, cultist, tablet and elder thing use the scenario reference card, elder sign uses the tester's investigator card, and auto-fail fails the test.
+4. Resolve its symbol:
+   - skull, cultist, tablet and elder thing use the scenario reference card,
+   - elder sign uses the tester's investigator card,
+   - and auto-fail fails the test.
 5. Modified skill = base skill plus icons, the token's modifier and active effects.
-6. Success if the skill is at or above the difficulty. Auto-fail sets the skill to 0, and auto-success sets the difficulty to 0. Reactions and forced effects on "succeeded/failed" trigger here.
-7. Apply results in an order the tester chooses (clue discovered, damage dealt, card effects), including "if this test succeeds/fails" effects. "After you succeed/fail" abilities are not results: they trigger in step 6, before these (Rules Reference, "Skill Test Results and Advanced Timing"). That includes "after you successfully investigate" and "after attached location is successfully investigated" (Obscuring Fog is discarded before the clue is discovered).
+6. Success if the skill is at or above the difficulty.
+   - Auto-fail sets the skill to 0, and auto-success sets the difficulty to 0.
+   - Reactions and forced effects on "succeeded/failed" trigger here.
+7. Apply results in an order the tester chooses (clue discovered, damage dealt, card effects), including "if this test succeeds/fails" effects.
+   - "After you succeed/fail" abilities are not results: they trigger in step 6, before these (Rules Reference, "Skill Test Results and Advanced Timing").
+   - That includes "after you successfully investigate" and "after attached location is successfully investigated" (Obscuring Fog is discarded before the clue is discovered).
 8. Discard committed cards and return the tokens to the bag.
 
 Bless (+2), curse (-2), frost (-1) and the blood token (-1) each make the tester reveal another token, whose modifier also applies.
 
-The blood token comes with Children of Blood, not the Core Set (2026) ([campaign guide](https://images-cdn.fantasyflightgames.com/filer_public/a8/9c/a89c98b9-9de4-4b6c-8110-80fedbdcdb60/ahc106_campaign_guide-web.pdf), p. 3): if a test with a blood token fails, 1 blood token revealed during it is sealed on the tester (only for the first blood token of the test). At most 3 are sealed on one investigator, and at most 12 are in the bag and sealed together. Added tokens stay in the bag for the campaign. Some resolutions (River of Blood, New Horizons) release the sealed ones back into the bag. A blood token revealed outside a skill test has no effect unless a card says so. Encounter cards check for, and can release, blood tokens sealed on an investigator.
+## Blood token
 
-A test [succeeds by](https://arkhamdb.com/rules#Skill_Test_Timing) the modified skill minus the difficulty ("succeed by 2 or more") and fails by the difficulty minus the modified skill; after an [auto-fail](https://arkhamdb.com/rules#Automatic_Failure_Success), whose skill is 0, that is the whole difficulty. "For each point you fail by" scales with it (Grasping Hands: 1 damage per point), so a fail by 0 (an auto-fail against difficulty 0) deals nothing. When a fail's first part defeats the tester, its later parts that concern them are skipped, since a defeated investigator is out of play, and parts that concern others still happen (resolve as much as possible). The same goes for what the card does after the test: On Wings of Darkness's "Then, disengage with each non-[[Nightgaunt]] enemy engaged with you and move to a [[Central]] location" follows the test whether it passed or failed, and does nothing for a drawer the fail defeated. The drawer picks the Central location when there are several (our reading of "you … move"; the RR's "Choices" gives open choices to the lead); their own location is not one to move to ([Move](https://arkhamdb.com/rules#Move): a move to the current location can't happen), so they stay when it is the only one. A disengaged enemy is ready and unengaged, so once the drawer has moved it engages whoever is still at its location, the drawer included when they stayed ([Enemy Engagement](https://arkhamdb.com/rules#Enemy_Engagement): "any time a ready unengaged enemy is at the same location as an investigator"; checked after the whole sentence, our reading). Horror and damage from one effect ("take 1 horror and 1 damage") are placed [simultaneously](https://arkhamdb.com/rules#Dealing_Damage_Horror), so both land even when either defeats. Defeated by both at once, the investigator chooses which trauma to suffer ([Trauma](https://arkhamdb.com/rules#Trauma)) (see [Campaign](campaign.md)). False Lead's "place 1 of your clues on your location" for each point places as many as the investigator has when they have fewer ([golden rules](https://arkhamdb.com/rules#Golden_Rules): resolve as much as possible). The players confirm the margin with their answer.
+The blood token comes with Children of Blood, not the Core Set (2026) ([campaign guide](https://images-cdn.fantasyflightgames.com/filer_public/a8/9c/a89c98b9-9de4-4b6c-8110-80fedbdcdb60/ahc106_campaign_guide-web.pdf), p. 3):
 
-If auto-success or auto-failure is known before step 3, skip steps 3 and 4. [Variable difficulty](https://arkhamdb.com/rules#Variable_Difficulty_Skill_Tests) is fixed once step 6 checks it.
+- If a test with a blood token fails, 1 blood token revealed during it is sealed on the tester (only for the first blood token of the test).
+- At most 3 are sealed on one investigator, and at most 12 are in the bag and sealed together.
+- Added tokens stay in the bag for the campaign.
+- Some resolutions (River of Blood, New Horizons) release the sealed ones back into the bag.
+- A blood token revealed outside a skill test has no effect unless a card says so.
+- Encounter cards check for, and can release, blood tokens sealed on an investigator.
+
+## Margin of success and failure
+
+A test [succeeds by](https://arkhamdb.com/rules#Skill_Test_Timing) the modified skill minus the difficulty ("succeed by 2 or more") and fails by the difficulty minus the modified skill; after an [auto-fail](https://arkhamdb.com/rules#Automatic_Failure_Success), whose skill is 0, that is the whole difficulty.
+
+- "For each point you fail by" scales with it (Grasping Hands: 1 damage per point), so a fail by 0 (an auto-fail against difficulty 0) deals nothing.
+- False Lead's "place 1 of your clues on your location" for each point places as many as the investigator has when they have fewer ([golden rules](https://arkhamdb.com/rules#Golden_Rules): resolve as much as possible).
+- The players confirm the margin with their answer.
+
+## Results that defeat the tester
+
+When a fail's first part defeats the tester, its later parts that concern them are skipped, since a defeated investigator is out of play, and parts that concern others still happen (resolve as much as possible).
+
+The same goes for what the card does after the test: On Wings of Darkness's "Then, disengage with each non-[[Nightgaunt]] enemy engaged with you and move to a [[Central]] location" follows the test whether it passed or failed, and does nothing for a drawer the fail defeated.
+
+- The drawer picks the Central location when there are several (our reading of "you … move"; the RR's "Choices" gives open choices to the lead).
+- Their own location is not one to move to ([Move](https://arkhamdb.com/rules#Move): a move to the current location can't happen), so they stay when it is the only one.
+- A disengaged enemy is ready and unengaged, so once the drawer has moved it engages whoever is still at its location, the drawer included when they stayed ([Enemy Engagement](https://arkhamdb.com/rules#Enemy_Engagement): "any time a ready unengaged enemy is at the same location as an investigator"; checked after the whole sentence, our reading).
+
+Horror and damage from one effect ("take 1 horror and 1 damage") are placed [simultaneously](https://arkhamdb.com/rules#Dealing_Damage_Horror), so both land even when either defeats.
+Defeated by both at once, the investigator chooses which trauma to suffer ([Trauma](https://arkhamdb.com/rules#Trauma)) (see [Campaign](campaign.md)).
+
+## Skipped steps
+
+If auto-success or auto-failure is known before step 3, skip steps 3 and 4.
+[Variable difficulty](https://arkhamdb.com/rules#Variable_Difficulty_Skill_Tests) is fixed once step 6 checks it.
