@@ -58,6 +58,7 @@ import { handleManualAdjust, handleMoveCard } from './handle_manual_adjust';
 import {
   handleAdvanceAct,
   handleAdvanceAgenda,
+  handleBecomeActAndAgenda,
   handleEndScenario,
   handlePlaceDoom,
   handlePlaceTokens,
@@ -223,6 +224,7 @@ const COMMAND_SPECS: CommandSpecs = {
     // The reverse side resolves before the next agenda becomes current.
     continueWith: finishAdvance,
   },
+  BecomeActAndAgenda: { handle: (_ctx, state) => handleBecomeActAndAgenda(state) },
   AdvanceAct: {
     handle: (_ctx, state, command) => handleAdvanceAct(state, command),
     continueWith: finishAdvance,

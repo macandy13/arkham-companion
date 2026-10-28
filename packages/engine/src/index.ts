@@ -111,6 +111,7 @@ export {
   afterDiscoveringClues,
   afterAttacking,
   afterEvaded,
+  becomeActAndAgenda,
   afterEngaging,
   afterEntering,
   afterTest,

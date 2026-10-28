@@ -9,3 +9,4 @@
   - Placed outside the mythos phase, it can only advance the agenda at the next threshold check.
   - Our reading: counting as the window opens rather than as the effect resolves differs only if another round-end ability moved a Ghoul first, which no Night of the Zealot card does.
 - Advancing the agenda removes **all doom from all cards in play**, then flips the agenda and follows its back side. Unless the back names a different next card, the next agenda in sequence becomes current and the old one is removed from the game.
+- A reverse side that replaces the current act and agenda with itself (The Devourer Below, agenda 3 of The Devourer Below) makes that card both the current act and the current agenda; the rest of the act deck is gone. It stays in play on its reverse side, which prints no doom threshold and no clue requirement, so doom no longer advances it; only its objective ends the scenario, and it fires once, as one card's.

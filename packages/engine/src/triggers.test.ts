@@ -19,6 +19,7 @@ import {
   afterEngaging,
   afterEntering,
   afterEvaded,
+  becomeActAndAgenda,
   afterTest,
   atLocation,
   attachedTo,
@@ -99,6 +100,7 @@ import {
   type Command,
   type Zone,
 } from './index';
+import { agendaThresholdDecision } from './doom';
 import { requireInvestigator } from './investigators';
 import { answer, rejectionFrom, stateAfter } from '../test/utils';
 
@@ -282,6 +284,63 @@ describe('trigger bus', () => {
 
       // The flipped agenda leaves the game afterwards, so only the events show whether it placed doom.
       expect(events.filter((e) => e.type === 'TokensChanged' && e.delta > 0)).toEqual([]);
+    });
+  });
+
+  describe('a reverse side that is act and agenda at once', () => {
+    const devourer = instanceId('devourer');
+    const elder = instanceId('elder');
+    /**
+     * "Replace the current act and agenda with this card" on its reverse side, whose objective is
+     * "If the elder is defeated, (→R2)" (agenda 3 of The Devourer Below).
+     */
+    const devourerCard = blankAgenda('devourer', fixed(3), {
+      abilities: [
+        whenAdvanced(becomeActAndAgenda()),
+        whenEnemyDefeated(cardCode('elder'), endScenario(resolutionId('R2'))),
+      ],
+    });
+    /** The devourer as the only agenda, both acts still to come, the elder in the hall. */
+    const devourerTable = newGame()
+      .withAgenda(devourer, devourerCard)
+      .withAct(act1, firstActCard)
+      .withAct(act2, secondActCard)
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(elder, blankEnemy('elder', { keywords: [{ name: 'aloof' }] }), atLocation(hall));
+
+    it('replaces the act and stays as both, face down, without ending the scenario', () => {
+      const { context, state: started } = devourerTable.start();
+
+      const state = stateAfter(context, started, { type: 'AdvanceAgenda' });
+
+      expect(state.agenda.current).toBe(devourer);
+      expect(state.act.current).toBe(devourer);
+      expect(state.cards[devourer]?.faceUp).toBe(false);
+      expect(state.cards[act1]?.zone).toEqual({ kind: 'outOfGame' });
+      expect(state.cards[act2]?.zone).toEqual({ kind: 'outOfGame' });
+      expect(state.meta.ended).toBeUndefined();
+    });
+
+    it('fulfils its objective once, as one card', () => {
+      const { context, state: started } = devourerTable.start();
+      const merged = stateAfter(context, started, { type: 'AdvanceAgenda' });
+
+      const { state, events } = execute(context, merged, { type: 'DefeatEnemy', enemyId: elder });
+
+      expect(events.filter((event) => event.type === 'ScenarioEnded')).toEqual([
+        { type: 'ScenarioEnded', resolution: resolutionId('R2') },
+      ]);
+      expect(state.meta.resolution).toBe('R2');
+    });
+
+    it('asks for no advance by doom, as its reverse side prints no threshold', () => {
+      const { context, state: started } = devourerTable.start();
+      const merged = stateAfter(context, started, { type: 'AdvanceAgenda' });
+
+      const state = stateAfter(context, merged, { type: 'PlaceDoom', amount: 3 });
+
+      expect(agendaThresholdDecision(context, state)).toEqual([]);
     });
   });
 

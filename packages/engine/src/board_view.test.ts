@@ -6,6 +6,8 @@ import {
   resolutionId,
   cardImagePath,
   atLocation,
+  becomeActAndAgenda,
+  whenAdvanced,
   attachedTo,
   blankAct,
   blankAgenda,
@@ -916,6 +918,23 @@ describe('agenda and act', () => {
     const board = boardView(context, state);
 
     expect(board.agenda).toEqual({ id: instanceId('final_agenda'), name: 'final_agenda', doom: 0 });
+  });
+
+  it('reads one card as act and agenda at once, without the threshold of its front', () => {
+    const devourer = instanceId('devourer');
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'))
+      .withAgenda(
+        devourer,
+        blankAgenda('devourer', fixed(3), { abilities: [whenAdvanced(becomeActAndAgenda())] }),
+      )
+      .withAct(instanceId('first_act'), blankAct('first_act'))
+      .start();
+
+    const board = boardView(context, stateAfter(context, state, { type: 'AdvanceAgenda' }));
+
+    expect(board.agenda).toEqual({ id: devourer, name: 'devourer', doom: 0 });
+    expect(board.act).toEqual({ id: devourer, name: 'devourer', clues: 0 });
   });
 
   it('shows the pictures of the agenda and act fronts', () => {

@@ -58,7 +58,12 @@ const { context, state: startState } = newGame()
     skills: { willpower: 3, intellect: 4, combat: 2, agility: 1 },
   })
   .withInvestigator(bob, { name: 'Bob', locationId: attic })
-  .withCard(instanceId('plan'), planCard, { kind: 'agendaDeck' }, { tokens: { doom: 1 } })
+  .withCard(
+    instanceId('plan'),
+    planCard,
+    { kind: 'agendaDeck' },
+    { faceUp: true, tokens: { doom: 1 } },
+  )
   .withCard(instanceId('search'), searchCard, { kind: 'actDeck' })
   .withCard(ghoul, ghoulCard, engagedWith(alice))
   .withCard(instanceId('dread'), dreadCard, threatAreaOf(alice))

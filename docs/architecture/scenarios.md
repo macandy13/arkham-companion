@@ -50,5 +50,6 @@ The app lists playable scenarios in its [scenario catalog](../../apps/web/src/sc
 
 ## Extension points
 
+- **One card as act and agenda:** a reverse side's `becomeActAndAgenda()` (`BecomeActAndAgenda`) makes the advancing agenda the current act too and sends the act deck out of the game; `completeAdvance` then leaves the card in play, face down, so the scenario goes on until its objective. A face-down agenda asks for no advance by doom (`agendaThresholdDecision`) and its view shows no threshold.
 - **A new scenario:** a folder in `packages/scenarios/src/` with definition, cards (rules as abilities) and an end-to-end test, exported and added to the catalog.
 - **A new setup step:** a `SetupStep` kind in `setup.ts`, only when two scenarios need it.

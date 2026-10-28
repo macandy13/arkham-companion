@@ -52,6 +52,7 @@ export type Command =
   | PlaceDoom
   | PlaceTokens
   | AdvanceAgenda
+  | BecomeActAndAgenda
   | AdvanceAct
   | EndScenario
   | DrawEncounter
@@ -493,6 +494,18 @@ export interface AdvanceAgenda {
    * the scenario itself; rejected while further agendas follow.
    */
   resolution?: ResolutionId;
+}
+
+/**
+ * "Replace the current act and agenda with this card. It is both the current act and the current
+ * agenda" (The Devourer Below, agenda 3's reverse side): the current agenda, while it advances,
+ * becomes the current act as well, and the act deck leaves the game, so no act follows. The
+ * advance then leaves the card in play, turned to its reverse side, which prints neither a doom
+ * threshold nor a clue requirement (`completeAdvance`). Produces `CardMoved` for each card of
+ * the act deck, then `CurrentCardChanged`.
+ */
+export interface BecomeActAndAgenda {
+  type: 'BecomeActAndAgenda';
 }
 
 /** Clues one investigator pays towards advancing the act. */

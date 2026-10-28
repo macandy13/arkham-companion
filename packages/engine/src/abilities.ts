@@ -1,4 +1,4 @@
-import { assertNever, range, shallowEqual } from '@arkham/util';
+import { assertNever, range, shallowEqual, unique } from '@arkham/util';
 import {
   cardStats,
   resolveValue,
@@ -328,6 +328,7 @@ export type AbilityCommand =
           | 'PutLocationIntoPlay'
           | 'AddConnection'
           | 'AdvanceAct'
+          | 'BecomeActAndAgenda'
           | 'ShuffleEncounterDiscard'
           | 'ShuffleEncounterDeck'
           | 'DrawEncounter'
@@ -616,7 +617,8 @@ export function windowsOpenedBy(
  * ones, so a used-up act or agenda never fires again.
  */
 function objectiveCards(state: GameState): InstanceId[] {
-  return [state.agenda.current, state.act.current].filter((cardId) => cardId !== undefined);
+  // One card that is act and agenda at once (`BecomeActAndAgenda`) fulfils its objective once.
+  return unique([state.agenda.current, state.act.current].filter((cardId) => cardId !== undefined));
 }
 
 function addedToVictoryDisplay(state: GameState): OpenedWindow[] {
@@ -1656,6 +1658,11 @@ export function addToVictoryDisplay(card: RelativeCard): AbilityEffect {
 /** "Advance": the current act advances without spending clues, as an objective does. */
 export function advanceAct(): AbilityEffect {
   return { type: 'AdvanceAct' };
+}
+
+/** "Replace the current act and agenda with The Devourer Below", on an agenda's reverse side. */
+export function becomeActAndAgenda(): AbilityEffect {
+  return { type: 'BecomeActAndAgenda' };
 }
 
 /** "Shuffle the encounter discard pile into the encounter deck". */
