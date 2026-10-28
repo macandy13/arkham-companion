@@ -13,6 +13,8 @@ For each draw:
 4. An enemy [spawns](spawn-and-engagement.md).
 5. A treachery goes to the encounter discard pile unless its text says otherwise.
    - One whose revelation attaches it somewhere stays there; if there is nothing to attach it to, or a [limit](https://arkhamdb.com/rules#Limits_and_Maximums) ("Limit 1 per location", counted by title) keeps it from attaching, it is discarded ([Attach To](https://arkhamdb.com/rules#Attach_To)).
+   - Locked Door ("Attach to the location with the most clues and without a copy of Locked Door attached. If there is no such location, Locked Door gains surge") attaches to the location in play with the most clues among those without a copy, wherever the drawer is. Locations with equally many go to the lead investigator ([Choices](https://arkhamdb.com/rules#Choices_and_the_Grim_Rule)), and that includes every location without a copy when none has a clue. With a copy everywhere it is discarded and surges.
+   - An attached card's action ("[action]: Test [combat] (4) or [agility] (4). If you succeed, discard Locked Door") can be taken by an investigator at the location it is attached to ([Abilities](https://arkhamdb.com/rules#Abilities): a card's actions are available to investigators at its location).
    - A treachery or enemy with Victory X goes to the victory display instead when it is overcome (see [Victory display](https://arkhamdb.com/rules#Victory_Display_Victory_Points)).
 6. [Surge](https://arkhamdb.com/rules#Surge): after resolving, draw another encounter card and start over.
    - A card that gains surge while it resolves (False Lead: "if you have no clues, False Lead gains surge") surges like one with printed surge; one with both surges once (our reading, no explicit ruling exists).

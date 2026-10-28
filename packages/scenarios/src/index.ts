@@ -17,6 +17,7 @@ export { theGatheringResolutions } from './the_gathering/resolutions';
 export {
   GRAVEYARD_DECISION,
   HUNTING_SHADOW_DECISION,
+  LOCKED_DOOR_DECISION,
   MIDNIGHT_MASKS_CODES,
   MIDNIGHT_MASKS_RESOLUTIONS,
   MIDNIGHT_MASKS_SETS,

@@ -23,6 +23,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  attachedTo,
   byName,
   campaign,
   campaignId,
@@ -43,6 +44,7 @@ import { answer } from '@arkham/engine/test/utils';
 import {
   GRAVEYARD_DECISION,
   HUNTING_SHADOW_DECISION,
+  LOCKED_DOOR_DECISION,
   MIDNIGHT_MASKS_CODES,
   ZEALOT_STORY,
   nightOfTheZealot,
@@ -410,24 +412,12 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'upkeep' });
 
     // Round 5 – mythos: another Acolyte, at St. Mary's Hospital with its 1 doom.
-    // Daisy draws Locked Door, which the players attach to the location with
-    // the most clues, Downtown.
+    // Daisy draws Locked Door, which attaches to the location with the most
+    // clues, Downtown.
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos', step: 'drawEncounterCard' });
     table.answer(byName('Acolyte'), "St. Mary's Hospital");
     acolyteDoomAt(byName("St. Mary's Hospital"));
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos' });
-    expect(table.board.namesIn({ kind: 'encounterDiscard' })[0]).toBe('Locked Door');
-    const lockedDoor = table.state.order[zoneKey({ kind: 'encounterDiscard' })]?.[0];
-    if (lockedDoor === undefined) throw new Error('Locked Door is not on the encounter discard');
-    table.play({
-      type: 'ManualAdjust',
-      adjustment: {
-        kind: 'moveCard',
-        cardId: lockedDoor,
-        to: { kind: 'attachedTo', hostId: table.board.location(byName('Downtown')).id },
-      },
-    });
-
     // Downtown can't be investigated while the door is attached.
     expect(table.board.location(byName('Downtown'))).toMatchObject({
       clues: 2,
@@ -496,21 +486,15 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     expect(table.nextPhase()).toEqual({ round: 6, phase: 'upkeep' });
 
     // Round 7 – mythos: the agenda's doom makes 7 of 8, one short. Roland draws
-    // the second Locked Door; no location without one has a clue, so the
-    // players pick Rivertown. Daisy draws On Wings of Darkness again, fails,
-    // takes 1 damage and 1 horror and is carried back to Rivertown.
+    // the second Locked Door; no location without one has a clue, so Roland,
+    // the lead investigator, picks Rivertown among them all. Daisy draws On
+    // Wings of Darkness again, fails, takes 1 damage and 1 horror and is
+    // carried back to Rivertown.
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'drawEncounterCard' });
     expect(table.board.doomInPlay).toBe(7);
-    const secondDoor = table.state.order[zoneKey({ kind: 'encounterDiscard' })]?.[0];
-    if (secondDoor === undefined) throw new Error('Locked Door is not on the encounter discard');
-    table.play({
-      type: 'ManualAdjust',
-      adjustment: {
-        kind: 'moveCard',
-        cardId: secondDoor,
-        to: { kind: 'attachedTo', hostId: table.board.location(byName('Rivertown')).id },
-      },
-    });
+    table.answer(byName('Locked Door'), 'Rivertown');
+    expect(table.board.location(byName('Rivertown')).attachments).toEqual(['Locked Door']);
+    expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'drawEncounterCard' });
     table.answer(byName('On Wings of Darkness'), 'fail');
     expect(table.board.investigator(daisy)).toMatchObject({
       at: 'Rivertown',
@@ -521,7 +505,8 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     // Round 7 – investigation: the Wizard's doom makes 8. With the hunters
     // next door, Roland runs to Your House and takes its action: he gains 1
     // resource and draws 1 card by hand, as the game holds no player cards.
-    // Daisy takes the agenda's action and resigns.
+    // Daisy tries Locked Door's action in Rivertown, passes agility (4) and
+    // discards the door, then takes the agenda's action and resigns.
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'investigation' });
     expect(table.board.doomInPlay).toBe(8);
     table.startTurn(roland);
@@ -541,6 +526,14 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
       },
     });
     table.startTurn(daisy);
+    const rivertown = table.board.location(byName('Rivertown')).id;
+    const rivertownDoor = table.state.order[zoneKey(attachedTo(rivertown))]?.[0];
+    if (rivertownDoor === undefined) throw new Error('Locked Door is not attached to Rivertown');
+    table.useCardAction(daisy, rivertownDoor);
+    table.play(answer(LOCKED_DOOR_DECISION, 'agility'));
+    table.answer(rivertownDoor, 'pass');
+    expect(table.board.location(byName('Rivertown'))).not.toHaveProperty('attachments');
+    expect(table.board.namesIn({ kind: 'encounterDiscard' })[0]).toBe('Locked Door');
     table.useCardAction(daisy, byName('Time Is Running Short'));
     expect(table.board.investigator(daisy).status).toBe('resigned');
 

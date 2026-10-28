@@ -234,7 +234,16 @@ export type RelativeCard =
    * that investigator picks one: the effect becomes a decision with an option
    * per location.
    */
-  | { ref: 'locationWith'; trait: Trait };
+  | { ref: 'locationWith'; trait: Trait }
+  /**
+   * The location in play with the most `token`s that the card with the ability
+   * may attach to ("attach to the location with the most clues and without a
+   * copy of Locked Door attached": its `LocationAttachment.onePerLocation`
+   * limit); none when it may attach nowhere. Equally many go to the lead
+   * investigator (Rules Reference, "Choices"): the effect becomes a decision
+   * with an option per location.
+   */
+  | { ref: 'locationWithMost'; token: TokenKind };
 
 /**
  * An investigator an ability names relative to its window: the one the
@@ -373,6 +382,11 @@ export type AbilityCondition =
    * ("If there are no [[Cultist]] enemies in play", `enemiesOnTable`).
    */
   | ({ kind: 'enemiesInPlay'; trait: Trait } & StatRange)
+  /**
+   * `ref` stands for nothing as the window opens ("If there is no such
+   * location, Locked Door gains surge"), counted like the effect that names it.
+   */
+  | { kind: 'noCandidate'; ref: PickedRef }
   /** The card with the ability holds at least `atLeast` tokens of `token` ("2 clues per investigator on this Act"). */
   | { kind: 'tokensOnSelf'; token: TokenKind; atLeast: ScaledValue };
 
@@ -587,6 +601,14 @@ function conditionHolds(
     }
     case 'enemiesInPlay':
       return inRange(enemiesOnTable(ctx, state, condition.trait).length, condition);
+    case 'noCandidate': {
+      const { investigatorId } = opened;
+      const from =
+        investigatorId !== undefined && isActiveInvestigator(state, investigatorId)
+          ? requireInvestigator(state, investigatorId).locationId
+          : undefined;
+      return candidatesFor(ctx, state, condition.ref, opened.cardId, from).length === 0;
+    }
     case 'tokensOnSelf': {
       const held = state.cards[opened.cardId]?.tokens[condition.token] ?? 0;
       return held >= resolveValue(condition.atLeast, state.meta.playerCount);
@@ -648,8 +670,8 @@ export function resolveEffect(
     });
   const picked = pickedRef(deferred);
   if (picked === undefined) return commandsFor();
-  if (investigator?.locationId === undefined) return [];
-  const candidates = candidatesFor(ctx, state, picked, investigator.locationId);
+  if (investigator === undefined) return [];
+  const candidates = candidatesFor(ctx, state, picked, opened.cardId, investigator.locationId);
   const [first, ...others] = candidates;
   if (first === undefined) return [];
   if (others.length === 0) return commandsFor(first.id);
@@ -691,36 +713,61 @@ function pickQuestion(
         prompt: 'decision.chooseLocationToMove',
         decider: { kind: 'investigator', investigatorId },
       };
+    case 'locationWithMost':
+      return {
+        key: 'most',
+        kind: 'chooseLocation',
+        prompt: 'decision.chooseLocationToAttach',
+        decider: { kind: 'lead' },
+      };
     default:
       return assertNever(picked);
   }
 }
 
 /** A reference that stands for one of several candidates, which someone may have to pick. */
-type PickedRef = Extract<RelativeCard, { ref: 'nearestEnemy' | 'locationWith' }>;
+export type PickedRef = Extract<
+  RelativeCard,
+  { ref: 'nearestEnemy' | 'locationWith' | 'locationWithMost' }
+>;
 
-/** The first reference in `effect` with candidates (`nearestEnemy`, `locationWith`), if it holds one. */
+/** The first reference in `effect` with candidates (`nearestEnemy`, `locationWith`, `locationWithMost`), if it holds one. */
 function pickedRef(effect: unknown): PickedRef | undefined {
   return findRef(effect, (ref) =>
-    ref.ref === 'nearestEnemy' || ref.ref === 'locationWith' ? ref : undefined,
+    ref.ref === 'nearestEnemy' || ref.ref === 'locationWith' || ref.ref === 'locationWithMost'
+      ? ref
+      : undefined,
   );
 }
 
-/** The cards `picked` may stand for, counted from `from`, the location of the investigator the window names. */
+/**
+ * The cards `picked` may stand for when `cardId`'s ability resolves, counted from `from`, the
+ * location of the investigator the window names: no nearest enemy without it, while the
+ * location with the most tokens doesn't depend on it.
+ */
 function candidatesFor(
   ctx: EngineContext,
   state: GameState,
   picked: PickedRef,
-  from: InstanceId,
+  cardId: InstanceId,
+  from: InstanceId | undefined,
 ): CardInstance[] {
   switch (picked.ref) {
     case 'nearestEnemy':
-      return nearestEnemies(ctx, state, from, picked.trait);
+      return from === undefined ? [] : nearestEnemies(ctx, state, from, picked.trait);
     case 'locationWith':
       return locationsInPlay(ctx, state).filter(
         (location) =>
           location.id !== from && cardStats(ctx.cards, location.code).traits.includes(picked.trait),
       );
+    case 'locationWithMost': {
+      const open = locationsInPlay(ctx, state).filter((location) =>
+        mayAttach(ctx, state, cardId, location),
+      );
+      const held = (location: CardInstance) => location.tokens[picked.token] ?? 0;
+      const most = Math.max(...open.map(held));
+      return open.filter((location) => held(location) === most);
+    }
     default:
       return assertNever(picked);
   }
@@ -885,13 +932,23 @@ function attachableLocation(
   const location =
     investigator.locationId === undefined ? undefined : state.cards[investigator.locationId];
   if (!location) return undefined;
+  return mayAttach(ctx, state, cardId, location) ? location.id : undefined;
+}
+
+/** Whether `cardId` may attach to `location`: not while its one-per-location limit is reached there. */
+function mayAttach(
+  ctx: EngineContext,
+  state: GameState,
+  cardId: InstanceId,
+  location: CardInstance,
+): boolean {
   const stats = cardStats(ctx.cards, requireCard(state.cards, cardId).code);
-  const limitReached =
-    stats.locationAttachment?.onePerLocation === true &&
-    locationAttachments(ctx, state, location).some(
+  return (
+    stats.locationAttachment?.onePerLocation !== true ||
+    !locationAttachments(ctx, state, location).some(
       ({ card }) => cardStats(ctx.cards, card.code).name === stats.name,
-    );
-  return limitReached ? undefined : location.id;
+    )
+  );
 }
 
 function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
@@ -921,6 +978,7 @@ function resolveRefs(value: unknown, refs: ResolvedRefs): unknown {
         return refs.each;
       case 'nearestEnemy':
       case 'locationWith':
+      case 'locationWithMost':
         return refs.picked;
       default:
         return assertNever(value);
@@ -1156,6 +1214,33 @@ export function putIntoThreatArea(): AbilityEffect {
  */
 export function takeControl(): AbilityEffect {
   return moveSelf({ kind: 'playArea', investigatorId: { ref: 'windowInvestigator' } });
+}
+
+/**
+ * "Attach it to the location with the most clues": the card with the ability attaches to
+ * `location`, written `attachTo(locationWithMost('clue'))` (Locked Door).
+ */
+export function attachTo(location: RelativeCard): AbilityEffect {
+  return moveSelf({ kind: 'attachedTo', hostId: location });
+}
+
+/**
+ * "The location with the most clues and without a copy of [this card] attached"
+ * (`locationWithMost`), picked by the lead investigator when several have as many.
+ */
+export function locationWithMost(
+  token: TokenKind,
+): Extract<PickedRef, { ref: 'locationWithMost' }> {
+  return { ref: 'locationWithMost', token };
+}
+
+/**
+ * "If there is no such location, …": `ability` fires only while `ref` stands for
+ * nothing as its window opens, written
+ * `ifNoCandidate(locationWithMost('clue'), whenRevealed(gainSurge()))` (Locked Door).
+ */
+export function ifNoCandidate(ref: PickedRef, ability: Ability): Ability {
+  return { ...ability, condition: { kind: 'noCandidate', ref } };
 }
 
 /**

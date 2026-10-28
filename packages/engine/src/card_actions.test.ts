@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   advanceBySpendingClues,
   atLocation,
+  attachedTo,
   blankAct,
   blankAgenda,
   blankEnemy,
@@ -154,6 +155,16 @@ describe('UseCardAction', () => {
           ),
       cardId: instanceId('curse'),
     },
+    {
+      name: 'a treachery attached to the cellar (Locked Door)',
+      setup: () =>
+        aliceInHallBobInCellar.withCard(
+          instanceId('door'),
+          blankTreachery('scary_door', { actions: [scareAction] }),
+          attachedTo(cellar),
+        ),
+      cardId: instanceId('door'),
+    },
   ])('lets bob take the action of $name', ({ setup, cardId }) => {
     const { context, state } = setup().withTurnOf(bob).start();
 
@@ -189,6 +200,16 @@ describe('UseCardAction', () => {
           atLocation(hall),
         ),
       cardId: ghoul,
+    },
+    {
+      name: 'a treachery attached to the hall',
+      setup: () =>
+        aliceInHallBobInCellar.withCard(
+          instanceId('door'),
+          blankTreachery('scary_door', { actions: [scareAction] }),
+          attachedTo(hall),
+        ),
+      cardId: instanceId('door'),
     },
     {
       name: 'a treachery in the threat area of alice, at another location',

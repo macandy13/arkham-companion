@@ -255,7 +255,7 @@ function refillIfEmpty(state: GameState): Event[] {
  * An enemy spawns (spawn instruction, engagement) like `SpawnEnemy`, with
  * the drawer as fallback location; every other card goes to the top of the
  * discard, unless its revelation put it somewhere else (`putIntoThreatArea`,
- * `attachToLocation`). It runs once the revelation has resolved, a revelation test's answer
+ * `attachToLocation`, `attachTo`). It runs once the revelation has resolved, a revelation test's answer
  * included (Rules Reference: a card is discarded after its revelation
  * resolves).
  */

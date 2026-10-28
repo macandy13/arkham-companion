@@ -268,7 +268,8 @@ export function parleyAction(action: Omit<CardAction, 'designator'>): CardAction
 /**
  * Whether `investigator` may take the action abilities of `card` (Rules Reference, "Abilities"):
  * a revealed location's at that location, an enemy's at its location (engaged with them or not),
- * a card's in a threat area at its owner's location, and the current agenda's and act's anyone.
+ * a card's in a threat area at its owner's location, a card's attached to a location at that
+ * location (Locked Door), and the current agenda's and act's anyone.
  * An unrevealed location has only its unrevealed side's text, so it offers none. A card an
  * investigator controls (`playArea`) offers none either: its abilities are its controller's to
  * use by hand, like a player card's, and the one story asset that comes there, Lita Chantler,
@@ -292,6 +293,8 @@ export function offersActionsTo(
       const ownerId = zone.investigatorId;
       return here === state.investigators.find((inv) => inv.id === ownerId)?.locationId;
     }
+    case 'attachedTo':
+      return here === zone.hostId;
     case 'playArea':
       return false;
     default:
