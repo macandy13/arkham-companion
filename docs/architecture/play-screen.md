@@ -94,6 +94,16 @@ A card that goes while it is open (an enemy leaving play) drops its entry a tick
   A phone held sideways (`(orientation: landscape) and (max-height: 30rem)`) keeps the tablet's board, with the compact mode's header row and sizes (a second query on the first phone blocks of `tokens.css` and `game.css`), so the map and the investigator panel keep the screen's little height.
 - Dialogs fit the phone's width; the encounter dialog shows two cards of a pile at a time.
 
+## Game log
+
+[`gameLog`](../../apps/web/src/log/gameLog.ts) reads the game's stored log as the players would tell it (M3.8):
+
+- one step per undo group (`commandId`), the unit undo takes back, so the log and undo agree on what a step is;
+- each event the players care about becomes one translated line (`log.*` strings), named with the cards and investigators of the state; bookkeeping (phase steps, queues, decisions asked, map layout) has none, and a step without lines is left out;
+- a clue discovery is one line, without the location and investigator counters it moved.
+
+[`eventLines`](../../apps/web/src/log/gameLog.ts) is the same for one step's events, for notices of what a step just did (M3.13).
+
 ## Frames
 
 Screens outside play, dialogs and the play screen's notices (at half the frame width) share one frame in the playmat's line style (brass rules, a quarter of its zodiac ring and a star in each corner, [`panel_frame.svg`](../../apps/web/src/styles/panel_frame.svg) as a `border-image`, with a light-theme copy) and a small ring under each title ([`ornament_rule.svg`](../../apps/web/src/styles/ornament_rule.svg)).
@@ -102,5 +112,6 @@ The investigator cards are parchment in both themes, like printed cards and the 
 
 ## Extension points
 
+- **A new event:** its line (or `undefined` for bookkeeping) in `eventLine`'s `switch`, which fails to compile until it has one, with en and de strings under `log`.
 - **A new game symbol:** cut it from the symbol sheet into `symbols/<name>.svg` (one path, 100×100 box, no colour) and draw it with `mask: url(...)`.
 - **A part that changes on a phone:** add its rules to the phone block of its stylesheet (same query as in `tokens.css`), and a size to the phone block of `tokens.css`; hide what the phone leaves out rather than rendering per screen size.
