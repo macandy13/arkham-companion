@@ -137,10 +137,11 @@ export function deferToPlayers(
  * cards played), which the engine can refuse without seeing the card.
  */
 export function handlePlayCard(ctx: EngineContext, state: GameState, cmd: PlayCard): Event[] {
-  if (isRestrictedFor(ctx, state, cmd.investigatorId, 'playCards'))
+  if (isRestrictedFor(ctx, state, cmd.investigatorId, 'play', 'cards'))
     throw new CommandRejected({
       code: 'restrictedFor',
-      cannot: 'playCards',
+      cannot: 'play',
+      what: 'cards',
       investigatorId: cmd.investigatorId,
     });
   return deferToPlayers(ctx, state, cmd);
@@ -241,10 +242,11 @@ export function handleDiscoverClues(
   cmd: DiscoverClues,
 ): (TokensChanged | InvestigatorChanged | CluesDiscovered)[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
-  if (isRestrictedFor(ctx, state, investigator.id, 'discoverClues'))
+  if (isRestrictedFor(ctx, state, investigator.id, 'discover', 'clues'))
     throw new CommandRejected({
       code: 'restrictedFor',
-      cannot: 'discoverClues',
+      cannot: 'discover',
+      what: 'clues',
       investigatorId: investigator.id,
     });
   if (!Number.isInteger(cmd.amount) || cmd.amount <= 0)

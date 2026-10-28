@@ -338,10 +338,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     horror: 1,
     victory: 2,
     keywords: [spawn('Engaged with prey'), prey('Most clues'), { name: 'hunter' }],
-    restrictions: [
-      { cannot: 'discoverClues', who: 'threatArea' },
-      { cannot: 'spendClues', who: 'threatArea' },
-    ],
+    restrictions: [{ cannot: ['discover', 'spend'], what: 'clues', who: 'threatArea' }],
   }),
   enemy({
     code: '01137',

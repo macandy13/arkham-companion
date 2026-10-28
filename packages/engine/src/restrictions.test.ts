@@ -124,10 +124,7 @@ describe('an enemy whose engaged investigator cannot discover or spend clues (Th
   const cultist = instanceId('cultist');
   /** An enemy that forbids the investigator engaged with it to discover or spend clues. */
   const hunterCard = blankEnemy('hunter', {
-    restrictions: [
-      { cannot: 'discoverClues', who: 'threatArea' },
-      { cannot: 'spendClues', who: 'threatArea' },
-    ],
+    restrictions: [{ cannot: ['discover', 'spend'], what: 'clues', who: 'threatArea' }],
   });
   /**
    * Alice (2 clues) and bob (2 clues) in the hall with 3 clues, on alice's turn; the hunter is
@@ -152,7 +149,12 @@ describe('an enemy whose engaged investigator cannot discover or spend clues (Th
         locationId: hall,
         amount: 1,
       }),
-    ).toEqual({ code: 'restrictedFor', cannot: 'discoverClues', investigatorId: alice });
+    ).toEqual({
+      code: 'restrictedFor',
+      cannot: 'discover',
+      what: 'clues',
+      investigatorId: alice,
+    });
   });
 
   it.each([
@@ -178,7 +180,7 @@ describe('an enemy whose engaged investigator cannot discover or spend clues (Th
     const table = PlayTable.start(hallWithHunter(engagedWith(alice)));
 
     expect(table.board.act?.advance).toMatchObject({ kind: 'spendClues', held: 2 });
-    expect(table.board.investigator(alice).forbidden).toEqual(['discoverClues', 'spendClues']);
+    expect(table.board.investigator(alice).forbidden).toEqual({ clues: ['discover', 'spend'] });
     expect(table.board.investigator(bob).forbidden).toBeUndefined();
   });
 
@@ -196,7 +198,12 @@ describe('an enemy whose engaged investigator cannot discover or spend clues (Th
           { investigatorId: bob, amount: 1 },
         ],
       }),
-    ).toEqual({ code: 'restrictedFor', cannot: 'spendClues', investigatorId: alice });
+    ).toEqual({
+      code: 'restrictedFor',
+      cannot: 'spend',
+      what: 'clues',
+      investigatorId: alice,
+    });
   });
   it('lets bob pay both clues of a group cost when nobody names the payers', () => {
     const cultistCard = blankEnemy('cultist', {
@@ -249,7 +256,7 @@ describe('a treachery whose investigator cannot play assets or events (Dissonant
   /** A treachery that forbids the investigator whose threat area holds it to play assets or events. */
   const voicesCard = blankTreachery('voices', {
     restrictions: [
-      { cannot: 'playCards', who: 'threatArea', cards: { types: ['asset', 'event'] } },
+      { cannot: ['play'], what: 'cards', who: 'threatArea', cards: { types: ['asset', 'event'] } },
     ],
   });
   /** Alice and bob in the hall, the voices in alice's threat area. */
@@ -264,7 +271,8 @@ describe('a treachery whose investigator cannot play assets or events (Dissonant
 
     expect(rejectionFrom(context, state, { type: 'PlayCard', investigatorId: alice })).toEqual({
       code: 'restrictedFor',
-      cannot: 'playCards',
+      cannot: 'play',
+      what: 'cards',
       investigatorId: alice,
     });
     expect(
@@ -276,7 +284,7 @@ describe('a treachery whose investigator cannot play assets or events (Dissonant
     const table = PlayTable.start(voicesOnAlice);
 
     expect(table.board.perInvestigator('forbidden')).toEqual({
-      alice: ['playCards'],
+      alice: { cards: ['play'] },
       bob: undefined,
     });
   });
@@ -286,7 +294,7 @@ describe('a treachery whose investigator cannot play assets or events (Dissonant
     { cards: 'Firearm cards', filter: { traits: [trait('Firearm')] } },
   ])('leaves alice’s play to the players when a card forbids her $cards', ({ filter }) => {
     const narrower = blankTreachery('voices', {
-      restrictions: [{ cannot: 'playCards', who: 'threatArea', cards: filter }],
+      restrictions: [{ cannot: ['play'], what: 'cards', who: 'threatArea', cards: filter }],
     });
     const { context, state } = newGame()
       .withLocation(hall, blankLocation('hall'), { revealed: true })

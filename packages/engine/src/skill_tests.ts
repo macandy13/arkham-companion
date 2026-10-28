@@ -218,7 +218,7 @@ function investigateCommands(
 ): Command[] {
   if (outcome === 'fail') return [];
   // "Cannot discover clues" (The Masked Hunter): the investigation succeeds and finds nothing.
-  if (isRestrictedFor(ctx, state, investigator.id, 'discoverClues')) return [];
+  if (isRestrictedFor(ctx, state, investigator.id, 'discover', 'clues')) return [];
   const location = requireCard(state.cards, locationId);
   const clues = Math.min(amount, location.tokens.clue ?? 0);
   return clues > 0

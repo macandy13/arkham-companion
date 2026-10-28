@@ -781,7 +781,7 @@ describe('MapBoard', () => {
 
     it('turns taking a clue off while an enemy engaged with alder forbids discovering clues', () => {
       const hunter = blankEnemy('hunter', {
-        restrictions: [{ cannot: 'discoverClues', who: 'threatArea' }],
+        restrictions: [{ cannot: ['discover'], what: 'clues', who: 'threatArea' }],
       });
       const table = PlayTable.start(
         house

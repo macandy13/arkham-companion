@@ -428,7 +428,7 @@ export const theGatheringCardDefs: readonly CardStats[] = [
     quantity: 2,
     abilities: [whenRevealed(putIntoThreatArea()), atEndOfRound(discardSelf())],
     restrictions: [
-      { cannot: 'playCards', who: 'threatArea', cards: { types: ['asset', 'event'] } },
+      { cannot: ['play'], what: 'cards', who: 'threatArea', cards: { types: ['asset', 'event'] } },
     ],
   }),
   treachery({

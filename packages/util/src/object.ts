@@ -19,6 +19,17 @@ export function listIfAny<K extends string, T>(key: K, list: readonly T[]): { [P
 }
 
 /**
+ * `{ [key]: record }` when the record has own keys, else the empty object: `listIfAny` for a
+ * record, so an empty one stays out of a view instead of showing up as `key: {}`.
+ */
+export function recordIfAny<K extends string, T extends object>(
+  key: K,
+  record: T,
+): { [P in K]?: T } {
+  return Object.keys(record).length > 0 ? ({ [key]: record } as { [P in K]: T }) : {};
+}
+
+/**
  * Whether `a` and `b` have the same own keys with the same values (`Object.is`),
  * one level deep. For small flat records compared as values, such as a timing
  * window and its parameters.

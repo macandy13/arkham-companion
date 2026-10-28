@@ -139,7 +139,7 @@ export function canPay(
       return statValue(investigator, cost.spend) >= cost.amount;
     case 'clues':
       return (
-        !isRestrictedFor(ctx, state, investigator.id, 'spendClues') &&
+        !isRestrictedFor(ctx, state, investigator.id, 'spend', 'clues') &&
         statValue(investigator, cost.spend) >= cost.amount
       );
     case 'groupClues':

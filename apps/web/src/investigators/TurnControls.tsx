@@ -50,7 +50,7 @@ export function TurnControls({
     at !== undefined && board.location(at).forbidden?.includes('investigate') === true;
   const isOff = (action: (typeof BASIC_ACTIONS)[number]) =>
     (action === 'investigate' && cannotInvestigate) ||
-    (action === 'playCard' && investigator.forbidden?.includes('playCards') === true);
+    (action === 'playCard' && investigator.forbidden?.cards?.includes('play') === true);
   return (
     <div role="group" aria-label={t('investigators.turn')}>
       <ul aria-label={t('investigators.actionsLeft', { count: left })}>

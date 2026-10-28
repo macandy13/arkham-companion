@@ -1,4 +1,4 @@
-import { assertNever } from '@arkham/util';
+import { assertNever, listIfAny } from '@arkham/util';
 import { cardStats, type EngineContext, type Trait } from './cards';
 import { cardsInPlay } from './doom';
 import type { InvestigatorId } from './ids';
@@ -16,15 +16,36 @@ export type LocationRestriction = (typeof LOCATION_RESTRICTIONS)[number];
 export const LOCATION_RESTRICTIONS = ['moveInto', 'investigate'] as const;
 
 /**
- * What a constant "cannot" ability forbids an investigator (`InvestigatorCardRestriction.cannot`):
- * - `discoverClues`, `spendClues`: The Masked Hunter's "you cannot discover or spend clues".
- * - `playCards`: playing the player cards `InvestigatorCardRestriction.cards` names (Dissonant
- *   Voices' "You cannot play assets or events": all of them).
+ * What a constant "cannot" ability forbids an investigator, as verbs by the noun they act on
+ * (`InvestigatorCardRestriction`): The Masked Hunter's "you cannot discover or spend clues" is
+ * `clues: discover, spend`, Dissonant Voices' "You cannot play assets or events" `cards: play`.
+ * A new "cannot" (healing horror, gaining resources) adds its verb, or its noun and verbs, here
+ * and a check in the handler that does it.
  */
-export type InvestigatorRestriction = (typeof INVESTIGATOR_RESTRICTIONS)[number];
+export interface RestrictedVerbs {
+  clues: 'discover' | 'spend';
+  cards: 'play';
+}
 
-/** Every `InvestigatorRestriction`, in the order an `InvestigatorView.forbidden` lists them. */
-export const INVESTIGATOR_RESTRICTIONS = ['discoverClues', 'spendClues', 'playCards'] as const;
+/** What an investigator restriction is about (`RestrictedVerbs`). */
+export type RestrictedNoun = keyof RestrictedVerbs;
+
+/** Every verb a restriction can forbid for each noun, in the order `Forbidden` lists them. */
+export const RESTRICTED_VERBS: { readonly [N in RestrictedNoun]: readonly RestrictedVerbs[N][] } = {
+  clues: ['discover', 'spend'],
+  cards: ['play'],
+};
+
+/** One forbidden step, as a rejection names it: `{ cannot: 'spend', what: 'clues' }`. */
+export type ForbiddenStep = {
+  [N in RestrictedNoun]: { cannot: RestrictedVerbs[N]; what: N };
+}[RestrictedNoun];
+
+/**
+ * The verbs the cards in play forbid one investigator, by noun (`forbiddenFor`): `{ clues:
+ * ['discover', 'spend'] }` while The Masked Hunter is engaged with them.
+ */
+export type Forbidden = { [N in RestrictedNoun]?: RestrictedVerbs[N][] };
 
 /**
  * The location a restriction is about, relative to the card that has it: the card itself (a
@@ -51,7 +72,7 @@ export interface LocationCardRestriction {
 export type PlayedCardType = 'asset' | 'event';
 
 /**
- * The player cards a `playCards` restriction names: those of one of `types` and, when `traits`
+ * The player cards a `play` `cards` restriction names: those of one of `types` and, when `traits`
  * is set, with one of them; every played card when absent.
  */
 export interface PlayedCardFilter {
@@ -60,14 +81,19 @@ export interface PlayedCardFilter {
 }
 
 /**
- * A "cannot" about an investigator: `{ cannot: 'playCards', who: 'threatArea', cards: { types:
- * ['asset', 'event'] } }` is Dissonant Voices. `cards` narrows `playCards` only.
+ * A "cannot" about an investigator: verbs and the noun they act on. `{ cannot: ['discover',
+ * 'spend'], what: 'clues', who: 'threatArea' }` is The Masked Hunter, `{ cannot: ['play'], what:
+ * 'cards', who: 'threatArea', cards: { types: ['asset', 'event'] } }` Dissonant Voices; `cards`
+ * narrows which cards.
  */
-export interface InvestigatorCardRestriction {
-  cannot: InvestigatorRestriction;
-  who: RestrictedInvestigator;
-  cards?: PlayedCardFilter;
-}
+export type InvestigatorCardRestriction =
+  | { cannot: readonly RestrictedVerbs['clues'][]; what: 'clues'; who: RestrictedInvestigator }
+  | {
+      cannot: readonly RestrictedVerbs['cards'][];
+      what: 'cards';
+      who: RestrictedInvestigator;
+      cards?: PlayedCardFilter;
+    };
 
 /**
  * A constant "cannot" ability (`CardStats.restrictions`), as card data. Like a `CardModifier` it
@@ -100,26 +126,41 @@ export function isRestricted(
 }
 
 /**
- * Whether a card in play forbids `investigator` to do `cannot`, as `isRestricted` does for a
- * location. The engine never sees the player card a `PlayCard` plays, so `playCards` holds only
- * where a restriction names every played card (Dissonant Voices); a narrower one ("cannot play
- * Firearm assets") stays card text for the players.
+ * Whether a card in play forbids `investigator` to do `cannot` to `what`, as `isRestricted` does
+ * for a location. The engine never sees the player card a `PlayCard` plays, so `play` `cards`
+ * holds only where a restriction names every played card (Dissonant Voices); a narrower one
+ * ("cannot play Firearm assets") stays card text for the players.
  */
-export function isRestrictedFor(
+export function isRestrictedFor<N extends RestrictedNoun>(
   ctx: EngineContext,
   state: GameState,
   investigator: InvestigatorId,
-  cannot: InvestigatorRestriction,
+  cannot: RestrictedVerbs[N],
+  what: N,
 ): boolean {
   return cardsInPlay(state).some((source) =>
     activeRestrictions(ctx, source).some(
       (restriction) =>
         'who' in restriction &&
-        restriction.cannot === cannot &&
-        (cannot !== 'playCards' || namesEveryPlayedCard(restriction.cards)) &&
+        restriction.what === what &&
+        restriction.cannot.some((verb) => verb === cannot) &&
+        (restriction.what !== 'cards' || namesEveryPlayedCard(restriction.cards)) &&
         binds(source, restriction.who, investigator),
     ),
   );
+}
+
+/** Every verb `isRestrictedFor` holds for `investigator`, by noun; nouns with none left out. */
+export function forbiddenFor(
+  ctx: EngineContext,
+  state: GameState,
+  investigator: InvestigatorId,
+): Forbidden {
+  const verbs = <N extends RestrictedNoun>(what: N) =>
+    RESTRICTED_VERBS[what].filter((cannot) =>
+      isRestrictedFor(ctx, state, investigator, cannot, what),
+    );
+  return { ...listIfAny('clues', verbs('clues')), ...listIfAny('cards', verbs('cards')) };
 }
 
 function activeRestrictions(ctx: EngineContext, source: CardInstance): readonly CardRestriction[] {

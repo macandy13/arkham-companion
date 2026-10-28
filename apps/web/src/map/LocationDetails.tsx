@@ -129,7 +129,7 @@ function locationActions(
 ): LocationAction[] {
   const turn = board.turn;
   if (turn === undefined) return [];
-  const cannotDiscover = board.investigator(turn).forbidden?.includes('discoverClues') === true;
+  const cannotDiscover = board.investigator(turn).forbidden?.clues?.includes('discover') === true;
   if (location.investigators?.includes(turn))
     return [
       {

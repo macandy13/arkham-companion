@@ -807,7 +807,7 @@ describe('InvestigatorBar', () => {
 
     it('turns "Play a card" off while dissonant voices in alder’s threat area forbid it', () => {
       const voices = blankTreachery('voices', {
-        restrictions: [{ cannot: 'playCards', who: 'threatArea' }],
+        restrictions: [{ cannot: ['play'], what: 'cards', who: 'threatArea' }],
       });
       const table = PlayTable.start(
         twoAtStudy.withCard(instanceId('voices'), voices, threatAreaOf(alder)).withTurnOf(alder),

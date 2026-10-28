@@ -1,4 +1,4 @@
-import { assertNever, listIfAny } from '@arkham/util';
+import { assertNever, listIfAny, recordIfAny } from '@arkham/util';
 import { isConnectionOpen, neighbours } from './board';
 import { tokenObjective } from './abilities';
 import {
@@ -56,11 +56,10 @@ import { NAMED_AMOUNTS } from './state';
 import { boostedSkills, cluesHeldByGroup, requireInvestigator } from './investigators';
 import { CommandRejected } from './rejection';
 import {
-  INVESTIGATOR_RESTRICTIONS,
+  forbiddenFor,
   isRestricted,
-  isRestrictedFor,
   LOCATION_RESTRICTIONS,
-  type InvestigatorRestriction,
+  type Forbidden,
   type LocationRestriction,
 } from './restrictions';
 import { skillTestSuggestion, type SkillTestInput } from './skill_modifiers';
@@ -145,11 +144,11 @@ export interface InvestigatorView {
   /** Printed names of the cards they control (`playArea` zone, e.g. Lita Chantler), left out while there are none. */
   controls?: CardName[];
   /**
-   * What the cards in play forbid them (`isRestrictedFor`): discovering or spending clues (The
-   * Masked Hunter), playing cards (Dissonant Voices' assets or events). The screen offers none of it;
-   * absent when nothing is forbidden.
+   * What the cards in play forbid them, verbs by noun (`forbiddenFor`): `{ clues: ['discover',
+   * 'spend'] }` under The Masked Hunter, `{ cards: ['play'] }` under Dissonant Voices. The screen
+   * offers none of it; absent when nothing is forbidden.
    */
-  forbidden?: InvestigatorRestriction[];
+  forbidden?: Forbidden;
 }
 
 /**
@@ -933,12 +932,7 @@ function investigatorView(
       'controls',
       namesIn(ctx, state, { kind: 'playArea', investigatorId: investigator.id }),
     ),
-    ...listIfAny(
-      'forbidden',
-      INVESTIGATOR_RESTRICTIONS.filter((cannot) =>
-        isRestrictedFor(ctx, state, investigator.id, cannot),
-      ),
-    ),
+    ...recordIfAny('forbidden', forbiddenFor(ctx, state, investigator.id)),
   };
 }
 

@@ -11,7 +11,7 @@ import type {
   EncounterSetCode,
   ScenarioId,
 } from './ids';
-import type { InvestigatorRestriction, LocationRestriction } from './restrictions';
+import type { ForbiddenStep, LocationRestriction } from './restrictions';
 import type { Decider, InvestigatorStat, NamedAmount, Phase, TokenKind } from './state';
 import type { ScenarioDeck } from './zone';
 
@@ -82,7 +82,7 @@ export type Rejection =
   /** A move into or an investigation of a location a card in play forbids it at (`isRestricted`). */
   | { code: 'restricted'; cannot: LocationRestriction; locationId: InstanceId }
   /** A clue discovery or spend, or a card played, that a card in play forbids the investigator (`isRestrictedFor`). */
-  | { code: 'restrictedFor'; cannot: InvestigatorRestriction; investigatorId: InvestigatorId }
+  | ({ code: 'restrictedFor'; investigatorId: InvestigatorId } & ForbiddenStep)
   /** `MoveInvestigator` to the location the investigator is already at. */
   | { code: 'alreadyAtLocation'; investigatorId: InvestigatorId; locationId: InstanceId }
   /** The investigator is not at the location they would take clues from. */
@@ -357,7 +357,7 @@ function describe(r: Rejection): string {
     case 'restricted':
       return `a card forbids ${locationRestrictionText(r.cannot)} ${r.locationId}`;
     case 'restrictedFor':
-      return `a card forbids ${r.investigatorId} to ${investigatorRestrictionText(r.cannot)}`;
+      return `a card forbids ${r.investigatorId} to ${r.cannot} ${r.what}`;
     case 'alreadyAtLocation':
       return `investigator ${r.investigatorId} is already at ${r.locationId}`;
     case 'enemyEngaged':
@@ -495,19 +495,6 @@ function locationRestrictionText(cannot: LocationRestriction): string {
       return 'moving into';
     case 'investigate':
       return 'investigating';
-    default:
-      return assertNever(cannot);
-  }
-}
-
-function investigatorRestrictionText(cannot: InvestigatorRestriction): string {
-  switch (cannot) {
-    case 'discoverClues':
-      return 'discover clues';
-    case 'spendClues':
-      return 'spend clues';
-    case 'playCards':
-      return 'play cards';
     default:
       return assertNever(cannot);
   }

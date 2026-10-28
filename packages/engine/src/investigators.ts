@@ -231,7 +231,7 @@ export function cluesHeldByGroup(ctx: EngineContext, state: GameState): number {
 /** The active investigators no card forbids to spend clues, in seat order. */
 function clueSpenders(ctx: EngineContext, state: GameState): Investigator[] {
   return activeInvestigators(state).filter(
-    (inv) => !isRestrictedFor(ctx, state, inv.id, 'spendClues'),
+    (inv) => !isRestrictedFor(ctx, state, inv.id, 'spend', 'clues'),
   );
 }
 
@@ -278,10 +278,11 @@ export function groupCluePayments(
         investigatorId: investigator.id,
       });
     payers.add(investigator.id);
-    if (isRestrictedFor(ctx, state, investigator.id, 'spendClues'))
+    if (isRestrictedFor(ctx, state, investigator.id, 'spend', 'clues'))
       throw new CommandRejected({
         code: 'restrictedFor',
-        cannot: 'spendClues',
+        cannot: 'spend',
+        what: 'clues',
         investigatorId: investigator.id,
       });
     if (investigator.clues < payment.amount)
