@@ -9,6 +9,23 @@ Its `SetupOptions` are standalone (the players pick the difficulty) or a campaig
 - each investigator starts with damage and horror for their trauma,
 - and setup is refused unless it is the log's next scenario and the seats are exactly its living team.
 
+## From setup to the end
+
+```mermaid
+flowchart TD
+  DEF["ScenarioDefinition<br/>decks, chaos bags, setup steps, resolutions"] --> CS["compileSetup<br/>pure: picks versions and branches with the seed"]
+  OPT["SetupOptions<br/>standalone difficulty, or the campaign log"] --> CS
+  CS --> SS["StartScenario command"]
+  SS --> EV["ScenarioStarted, cards into zones,<br/>shuffled encounter deck"]
+  EV --> PLAY["rounds: mythos → investigation → enemy → upkeep"]
+  PLAY -- "a reverse side's (→R#): EndScenario,<br/>or advancing the last agenda/act" --> END["ScenarioEnded<br/>meta.resolution, meta.ended"]
+  PLAY -- "every investigator eliminated" --> NONE["ScenarioEnded<br/>no resolution"]
+  END --> NEXT["standalone: done<br/>campaign: proposeResolution (see Campaign)"]
+  NONE --> NEXT
+```
+
+Once the scenario has ended, only `ManualAdjust` is accepted ([Command handling](command-handling.md)).
+
 ## Setup steps
 
 - A `whenStory` setup step picks its `then` or `otherwise` steps by a `StoryCondition` on the log's story records (a flag, at least n names on a list, or one name on it); a standalone game answers as an empty log.

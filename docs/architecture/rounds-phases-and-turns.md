@@ -10,6 +10,15 @@
 An enemy-phase attack exhausts its enemy as `ResolveEnemyAttack`'s continuation (`exhaustAfterAttack`), after the abilities the attack triggered.
 Turns ([`turns.ts`](../../packages/engine/src/turns.ts)) record who acts and the actions left.
 
+```mermaid
+flowchart TD
+  SETUP["setup"] -- "NextPhase: round 1 skips mythos" --> INV
+  MYTH["Mythos<br/>placeDoom, checkDoomThreshold,<br/>drawEncounterCard per investigator"] -- NextPhase --> INV
+  INV["Investigation<br/>StartTurn → actions → EndTurn,<br/>the players pick who goes next"] -- "NextPhase, once every<br/>investigator took a turn" --> EN
+  EN["Enemy<br/>huntersMove, enemiesAttack"] -- NextPhase --> UP
+  UP["Upkeep<br/>resetActions, readyExhausted,<br/>gainResources, RoundEnded"] -- "NextPhase: next round" --> MYTH
+```
+
 ## Extension points
 
 - **A new automated step:** a `PhaseStepId` with its title in `PHASE_STEP_TITLES`, in its phase's list.
