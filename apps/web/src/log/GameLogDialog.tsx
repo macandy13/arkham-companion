@@ -1,24 +1,30 @@
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { GameState } from '@arkham/engine';
 import type { GameLogSource } from '../state/appStore';
+import { ConfirmDialog } from '../screens/ConfirmDialog';
 import { useBackCloses } from '../screens/useBackCloses';
+import type { LogStep } from './gameLog';
 import { gameLog } from './gameLog';
 import './game_log.css';
 
 /**
  * The game log over the board (M3.8): every step of the open game (`gameLog`) in the order it was
  * played, one list item per step with a line per thing it did, scrolled to the newest step, which
- * is the one players ask about. `state` is the game after `log`. A native modal `<dialog>`
+ * is the one players ask about. `state` is the game after `log`. Every step but the newest offers
+ * to go back to it (`onGoBack`, after a confirm, then the log closes), unless the screen can't
+ * take steps back now (busy or adjusting), which leaves `onGoBack` out. A native modal `<dialog>`
  * brings focus trapping and Escape; on a phone the back gesture closes it too (`useBackCloses`).
  */
 export function GameLogDialog({
   log,
   state,
+  onGoBack,
   onClose,
 }: {
   log: GameLogSource;
   state: GameState;
+  onGoBack?: (stepId: string) => void;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -32,6 +38,7 @@ export function GameLogDialog({
   }, []);
   const close = useBackCloses(onClose);
   const steps = gameLog(t, log.ctx, state, log.entries);
+  const [goingBack, setGoingBack] = useState<{ step: LogStep; later: number }>();
 
   return (
     <dialog
@@ -39,7 +46,8 @@ export function GameLogDialog({
       aria-labelledby={titleId}
       onCancel={(event) => {
         event.preventDefault();
-        close();
+        // React passes the confirm's own Escape on to this dialog; that one closes only the confirm.
+        if (event.target === dialog.current) close();
       }}
       data-dialog="log"
     >
@@ -53,9 +61,30 @@ export function GameLogDialog({
                 <li key={lineIndex}>{line}</li>
               ))}
             </ul>
+            {onGoBack && index < steps.length - 1 && (
+              <button
+                type="button"
+                onClick={() => setGoingBack({ step, later: steps.length - 1 - index })}
+              >
+                {t('log.goBack')}
+              </button>
+            )}
           </li>
         ))}
       </ol>
+      {onGoBack && goingBack && (
+        <ConfirmDialog
+          title={t('log.goBackTitle')}
+          confirmLabel={t('log.goBack')}
+          onConfirm={() => {
+            onGoBack(goingBack.step.id);
+            close();
+          }}
+          onCancel={() => setGoingBack(undefined)}
+        >
+          <p>{t('log.goBackWarning', { count: goingBack.later })}</p>
+        </ConfirmDialog>
+      )}
     </dialog>
   );
 }

@@ -104,6 +104,8 @@ A card that goes while it is open (an enemy leaving play) drops its entry a tick
 
 The log button opens [`GameLogDialog`](../../apps/web/src/log/GameLogDialog.tsx) over the board: the steps oldest first, a rule between them, scrolled to the newest. It reads `OpenGame.log` (the session's `entries` and the rules that name their cards), so it waits for no step.
 
+Every step but the newest has "Go back here": after a confirm that counts the steps taken back, `GameActions.undoTo` takes back each later step, one undo group at a time (`GameSession.undoTo`, the same `GameStore.undoLast` as Undo), so the game is as it was right after that step. It waits like every other step, and the log offers it neither while a step is queued nor while the players adjust the board.
+
 [`eventLines`](../../apps/web/src/log/gameLog.ts) is the same for one step's events, for notices of what a step just did (M3.13).
 
 ## Frames

@@ -160,6 +160,11 @@ export interface GameActions {
   /** Takes back the last step; never the scenario start. While adjusting, the last tap. */
   undo(): Promise<void>;
   /**
+   * Goes back to right after the step `stepId` of the game log (`LogStep.id`): every later step is
+   * taken back. Does nothing while adjusting.
+   */
+  undoTo(stepId: string): Promise<void>;
+  /**
    * "Adjust board": the actions after it change the screen only, until `finishAdjusting` stores
    * them all as one step, so one undo takes the whole correction back, or `cancelAdjusting` drops
    * them (`OpenGame.adjusting` meanwhile). Every action joins the adjustment, so the screen offers
@@ -181,12 +186,12 @@ export interface Adjusting {
 
 /**
  * The play screen's actions over a `PlayTable` that `play` runs one step at a time and stores, and
- * the `undo` that takes a step back. The table stays behind this facade, so its test defaults and
+ * the `undo` that takes a step back, or every step after the step it names. The table stays behind this facade, so its test defaults and
  * its matchers never reach a component.
  */
 export function gameActions(
   play: (step: (table: PlayTable) => void) => Promise<void>,
-  undo: () => Promise<void>,
+  undo: (toStep?: string) => Promise<void>,
   adjusting: Adjusting,
 ): GameActions {
   const onTurn = (action: (table: PlayTable, investigator: InvestigatorId) => void) =>
@@ -303,7 +308,8 @@ export function gameActions(
               },
         ),
       ),
-    undo,
+    undo: () => undo(),
+    undoTo: (stepId) => undo(stepId),
     startAdjusting: adjusting.start,
     finishAdjusting: adjusting.finish,
     cancelAdjusting: adjusting.cancel,

@@ -13,8 +13,8 @@ import { GameExportButton } from './GameExportButton';
  * round icon buttons for "Adjust board", undo, the game log (`GameLogDialog`) and the menu. While
  * the players adjust the board (`OpenGame.adjusting`), "Done" and "Cancel" take the place of
  * "Next". Its buttons wait while a step is queued (`OpenGame.busy`), since a second tap would act
- * on whatever the first one leaves open; the log only reads, so it never waits. `board` is the
- * open game's `OpenGame.board`.
+ * on whatever the first one leaves open; the log opens meanwhile, only its going back waits.
+ * `board` is the open game's `OpenGame.board`.
  */
 export function GameStatus({
   store,
@@ -83,7 +83,12 @@ export function GameStatus({
         />
       )}
       {log && logOpen && (
-        <GameLogDialog log={log} state={open.state} onClose={() => setLogOpen(false)} />
+        <GameLogDialog
+          log={log}
+          state={open.state}
+          onGoBack={blocked || adjusting ? undefined : (step) => void actions.undoTo(step)}
+          onClose={() => setLogOpen(false)}
+        />
       )}
       <GameMenu store={store} />
     </section>

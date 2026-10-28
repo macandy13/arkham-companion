@@ -85,6 +85,21 @@ describe('GameSession on The Gathering', () => {
     expect((await store.loadGame(gameId))?.state).toEqual(atSetup);
   });
 
+  it('goes back to right after a step of the log, in memory and in storage alike', async () => {
+    const { store, gameId } = await storedGame('session-undo-to-test');
+    const session = await GameSession.open(store, gameId, ctx);
+    await session.play((table) => table.nextPhase());
+    const afterNextPhase = session.state;
+    const nextPhaseStep = session.entries.at(-1)?.commandId ?? '';
+    await session.play((table) => table.startTurn(investigatorId('alder')));
+    await session.play((table) => table.investigate(byName('Alder'), { result: 'fail' }));
+
+    await session.undoTo(nextPhaseStep);
+
+    expect(session.state).toEqual(afterNextPhase);
+    expect((await store.loadGame(gameId))?.state).toEqual(afterNextPhase);
+  });
+
   describe('adjusting the board', () => {
     const alderId = investigatorId('alder');
     // Alder starts with 5 resources and no damage.

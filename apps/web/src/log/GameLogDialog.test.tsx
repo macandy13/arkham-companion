@@ -62,4 +62,56 @@ describe('GameLogDialog', () => {
 
     expect(onClose).toHaveBeenCalled();
   });
+
+  it('goes back to a step after a confirm that counts the steps taken back, then closes', () => {
+    const table = PlayTable.start(rolandsTurn);
+    table.takeDamage(byName('Roland Banks'), 2);
+    const damageStep = table.entries.at(-1)?.commandId;
+    table.takeHorror(byName('Roland Banks'), 1);
+    table.endTurn(byName('Roland Banks'));
+    const onGoBack = vi.fn();
+    const onClose = vi.fn();
+    render(
+      <GameLogDialog
+        log={{ ctx: table.ctx, entries: table.entries }}
+        state={table.state}
+        onGoBack={onGoBack}
+        onClose={onClose}
+      />,
+    );
+    const damage = screen.getByText('Roland Banks takes 2 damage').closest('ol > li');
+    fireEvent.click(within(damage as HTMLElement).getByRole('button', { name: 'Go back here' }));
+    const confirm = screen.getByRole('alertdialog', { name: 'Go back to this step?' });
+    expect(confirm.textContent).toContain('The 2 steps after it are taken back.');
+
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Go back here' }));
+
+    expect(onGoBack).toHaveBeenCalledWith(damageStep);
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('offers no way back from the newest step, nor while the screen cannot go back', () => {
+    const table = PlayTable.start(rolandsTurn);
+    table.takeDamage(byName('Roland Banks'), 2);
+    const { rerender } = render(
+      <GameLogDialog
+        log={{ ctx: table.ctx, entries: table.entries }}
+        state={table.state}
+        onGoBack={() => {}}
+        onClose={() => {}}
+      />,
+    );
+    const newest = screen.getByText('Roland Banks takes 2 damage').closest('ol > li');
+    expect(within(newest as HTMLElement).queryByRole('button')).toBeNull();
+
+    rerender(
+      <GameLogDialog
+        log={{ ctx: table.ctx, entries: table.entries }}
+        state={table.state}
+        onClose={() => {}}
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Go back here' })).toBeNull();
+  });
 });
