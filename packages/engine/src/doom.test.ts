@@ -210,6 +210,32 @@ describe('PlaceTokens', () => {
   });
 });
 
+describe('PlaceTokens up to a count', () => {
+  it.each([
+    { held: 1, placed: 3 },
+    { held: 4, placed: 0 },
+    { held: 5, placed: 0 },
+  ])(
+    'tops the act up to 2 clues per investigator for alice and bob: holding $held, it gets $placed',
+    ({ held, placed }) => {
+      const { context, state } = aliceAndBob.start();
+      const holding = stateAfter(context, state, {
+        type: 'ManualAdjust',
+        adjustment: { kind: 'tokens', cardId: act1, token: 'clue', delta: held },
+      });
+
+      const next = stateAfter(context, holding, {
+        type: 'PlaceTokens',
+        cardId: act1,
+        token: 'clue',
+        upTo: perInvestigator(2),
+      });
+
+      expect(next.cards[act1]!.tokens.clue).toBe(held + placed);
+    },
+  );
+});
+
 describe('doom total invariant', () => {
   it.each<{ name: string; commands: Command[]; total: number }>([
     { name: 'nothing placed', commands: [], total: 0 },

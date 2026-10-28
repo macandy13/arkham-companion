@@ -505,7 +505,7 @@ export function windowsOpenedBy(
           cardId,
           investigatorId,
         })),
-        ...cardsInPlay(state).map((card) => ({
+        ...cardsWithActiveText(state).map((card) => ({
           window: { kind: 'eachTurnEnds' } as const,
           cardId: card.id,
           investigatorId,
@@ -523,7 +523,7 @@ export function windowsOpenedBy(
     case 'PhaseChanged': {
       const phase = event.ended;
       if (!isEndingPhase(phase)) return [];
-      return cardsInPlay(state).map((card) => ({
+      return cardsWithActiveText(state).map((card) => ({
         window: { kind: 'phaseEnds', phase },
         cardId: card.id,
       }));
@@ -561,7 +561,10 @@ export function windowsOpenedBy(
       );
     }
     case 'RoundEnded':
-      return cardsInPlay(state).map((card) => ({ window: { kind: 'roundEnds' }, cardId: card.id }));
+      return cardsWithActiveText(state).map((card) => ({
+        window: { kind: 'roundEnds' },
+        cardId: card.id,
+      }));
     case 'AgendaAdvanced':
     case 'ActAdvanced':
       return [{ window: { kind: 'advanced' }, cardId: event.cardId }];
@@ -591,6 +594,15 @@ export function windowsOpenedBy(
     default:
       return [];
   }
+}
+
+/**
+ * The cards in play whose abilities a window for "each card in play" reaches: all but unrevealed
+ * locations, whose abilities are printed on the revealed side: an unrevealed Ritual Site gets no
+ * clues at the end of the round, only the ones its reveal places.
+ */
+function cardsWithActiveText(state: GameState): CardInstance[] {
+  return cardsInPlay(state).filter((card) => card.zone.kind !== 'location' || card.faceUp);
 }
 
 /**
@@ -1553,6 +1565,15 @@ export function placeDoomOnSelf(amount: number): AbilityEffect {
 /** "Place N clues on this act": clues from the token pool on the card with the ability. */
 export function placeCluesOnSelf(amount: number): AbilityEffect {
   return { type: 'PlaceTokens', cardId: { ref: 'self' }, token: 'clue', amount };
+}
+
+/**
+ * "Add clues to it until it has 2 clues per investigator on it": clues from the token pool on the
+ * card with the ability, up to `upTo`, written `placeCluesOnSelfUpTo(perInvestigator(2))` (Ritual
+ * Site); none when it has as many already, which is also its "if there are fewer than".
+ */
+export function placeCluesOnSelfUpTo(upTo: ScaledValue): AbilityEffect {
+  return { type: 'PlaceTokens', cardId: { ref: 'self' }, token: 'clue', upTo };
 }
 
 /** Heals up to `amount` damage from the enemy that has the ability ("heal 2 damage from it"). */

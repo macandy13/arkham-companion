@@ -14,6 +14,7 @@ import type {
 } from './events';
 import type { InstanceId, ResolutionId } from './ids';
 import { requireCard } from './lookup';
+import { resolveValue } from './cards';
 import { clearTokensEvents, moveCardEvent } from './placement';
 import { CommandRejected } from './rejection';
 import type { CardInstance, GameState, TokenKind } from './state';
@@ -30,7 +31,10 @@ export function handlePlaceDoom(state: GameState, cmd: PlaceDoom): TokensChanged
 
 /** `PlaceTokens`: tokens from the pool on a card in play. */
 export function handlePlaceTokens(state: GameState, cmd: PlaceTokens): TokensChanged[] {
-  return tokensPlaced(state, requireCard(state.cards, cmd.cardId), cmd.token, cmd.amount);
+  const card = requireCard(state.cards, cmd.cardId);
+  if ('amount' in cmd) return tokensPlaced(state, card, cmd.token, cmd.amount);
+  const missing = resolveValue(cmd.upTo, state.meta.playerCount) - (card.tokens[cmd.token] ?? 0);
+  return missing > 0 ? tokensPlaced(state, card, cmd.token, missing) : [];
 }
 
 function tokensPlaced(

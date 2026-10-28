@@ -81,7 +81,8 @@ whenAdvanced(revealLocation(onlyCopy(codes.parlor)), …)
 
 - A card's test can cost the tester for each point it fails by (`skillTest(…, { perPointFailed })`: 1 damage, 1 horror, or 1 of their clues placed on their location by `PlaceClues`); the fail answer's `margin` is the count.
 - "Test [willpower] (3) or [agility] (3)" is `skillTestOfEither(id, ['willpower', 'agility'], 3, outcomes)`: a choice for the tester with one `skillTest` per skill, the same outcomes either way.
-- `PlaceTokens` puts clues from the token pool on a card in play (`placeCluesOnSelf(1)`, "place 1 clue on this act"); doom keeps its own `PlaceDoom`.
+- `PlaceTokens` puts clues from the token pool on a card in play (`placeCluesOnSelf(1)`, "place 1 clue on this act"), or tops it up to a count (`placeCluesOnSelfUpTo(perInvestigator(2))`, Ritual Site); doom keeps its own `PlaceDoom`.
+- Windows for every card in play (`eachTurnEnds`, `phaseEnds`, `roundEnds`) skip unrevealed locations, whose abilities are on their revealed side.
 
 ## Card actions
 

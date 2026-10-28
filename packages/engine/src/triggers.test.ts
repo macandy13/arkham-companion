@@ -62,6 +62,7 @@ import {
   perInvestigator,
   nearestEnemy,
   placeDoomOn,
+  placeCluesOnSelfUpTo,
   placeDoomOnAgenda,
   placeDoomOnSelf,
   putLocationIntoPlay,
@@ -425,6 +426,29 @@ describe('trigger bus', () => {
         tokens: {},
       });
     });
+
+    it.each([
+      { cellar: 'revealed', revealed: true, clues: 4 },
+      { cellar: 'unrevealed', revealed: false, clues: undefined },
+    ])(
+      'tops up the $cellar cellar to 4 clues at the end of the round only once revealed',
+      ({ revealed, clues }) => {
+        /** "At the end of the round: add clues to it until it has 4 clues on it." */
+        const fillingCellar = blankLocation('filling_cellar', {
+          abilities: [atEndOfRound(placeCluesOnSelfUpTo(fixed(4)))],
+        });
+        const { context, state } = newGame()
+          .withLocation(hall, blankLocation('hall'), { revealed: true })
+          .withLocation(cellar, fillingCellar, { revealed })
+          .withInvestigator(alice, { locationId: hall })
+          .withTurnOf(alice)
+          .start();
+
+        const after = stateAfter(context, state, endTurnOfAlice, nextPhase, nextPhase);
+
+        expect(after.cards[cellar]?.tokens.clue).toBe(clues);
+      },
+    );
 
     it('drops a test at the end of the round, which names no investigator', () => {
       const testingOmen = blankTreachery('testing_omen', {

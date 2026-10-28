@@ -1,6 +1,6 @@
 import type { AbilityEffect, OpenedWindow, TimingWindow } from './abilities';
 import type { CampaignLog, TraumaKind } from './campaign/campaign_log';
-import type { CardType, Trait } from './cards';
+import type { CardType, ScaledValue, Trait } from './cards';
 import type {
   CardCode,
   DecisionId,
@@ -463,16 +463,17 @@ export interface PlaceDoom {
 }
 
 /**
- * Puts `amount` (positive) tokens from the token pool on a card in play ("place 1 clue on this
- * act", Disrupting the Ritual). Only clues for now: doom has `PlaceDoom`, which defaults to the
- * current agenda, and damage and horror on an enemy are wounds. Produces `TokensChanged`.
+ * Puts tokens from the token pool on a card in play: `amount` (positive) of them ("place 1 clue
+ * on this act", Disrupting the Ritual), or as many as bring it `upTo` ("Add clues to it until it
+ * has 2 clues per investigator on it", Ritual Site), none when it holds that many already. Only
+ * clues for now: doom has `PlaceDoom`, which defaults to the current agenda, and damage and
+ * horror on an enemy are wounds. Produces `TokensChanged`.
  */
-export interface PlaceTokens {
+export type PlaceTokens = {
   type: 'PlaceTokens';
   cardId: InstanceId;
   token: 'clue';
-  amount: number;
-}
+} & ({ amount: number } | { upTo: ScaledValue });
 
 /**
  * Advances the current agenda: all doom in play is removed, the agenda is
