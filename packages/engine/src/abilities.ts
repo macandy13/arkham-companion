@@ -409,7 +409,11 @@ export type AbilityCondition =
   /** The card with the ability holds at least `atLeast` tokens of `token` ("2 clues per investigator on this Act"). */
   | { kind: 'tokensOnSelf'; token: TokenKind; atLeast: ScaledValue };
 
-/** The cards a `victoryDisplayHolds` condition counts: those with `trait` and, if `unique`, only unique ones. */
+/**
+ * The cards a `victoryDisplayHolds` condition counts: those with `trait` and, if `unique`, only
+ * unique ones. The trait stands in for "[[Cultist]] enemies": in Night of the Zealot only enemies
+ * carry it.
+ */
 export interface VictoryDisplayFilter {
   trait: Trait;
   unique?: true;

@@ -1519,7 +1519,7 @@ describe('objectives on the victory display', () => {
     expect(state.act.current).toBe(act);
   });
 
-  it('advances when a unique Cultist is put into the victory display without a defeat (Ruth Turner evaded)', () => {
+  it('advances when a unique Cultist is put into the victory display without a defeat (by an effect such as a Parley)', () => {
     const { context, state: started } = displayTable(
       blankEnemy('unique_cultist', { traits: [cultist], unique: true, victory: 1 }),
     ).start();

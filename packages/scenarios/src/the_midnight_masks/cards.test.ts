@@ -352,15 +352,22 @@ describe('The Midnight Masks card abilities', () => {
       });
     });
 
+    const maskedHunter = { id: instanceId('masked_hunter'), code: '01121b' };
+    const drew = { id: instanceId('wolf_man_drew'), code: '01137' };
+    const peter = { id: instanceId('peter_warren'), code: '01139' };
+    const victoria = { id: instanceId('victoria_devereux'), code: '01140' };
+    const ruth = { id: instanceId('ruth_turner'), code: '01141' };
+    const acolyte = { id: instanceId('acolyte'), code: '01169' };
+
     it.each([
       {
-        inDisplay: 'the other five unique Cultists',
-        shown: ['01121b', '01137', '01139', '01140', '01141'],
+        inDisplay: 'The Masked Hunter, Drew, Peter, Victoria and Ruth',
+        shown: [maskedHunter, drew, peter, victoria, ruth],
         resolution: 'R1',
       },
       {
-        inDisplay: 'four unique Cultists and an Acolyte',
-        shown: ['01121b', '01137', '01139', '01140', '01169'],
+        inDisplay: 'The Masked Hunter, Drew, Peter, Victoria and an Acolyte',
+        shown: [maskedHunter, drew, peter, victoria, acolyte],
         resolution: undefined,
       },
     ])(
@@ -368,7 +375,7 @@ describe('The Midnight Masks card abilities', () => {
       ({ shown, resolution }) => {
         const herman = instanceId('herman');
         const withDisplay = shown.reduce(
-          (game, code) => game.withCard(instanceId(`shown_${code}`), cardOf(code), victoryDisplay),
+          (game, { id, code }) => game.withCard(id, cardOf(code), victoryDisplay),
           atRivertown(),
         );
         const { context, state } = withDisplay

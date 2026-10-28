@@ -402,6 +402,8 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     table.endTurn(daisy);
 
     expect(table.board.namesIn({ kind: 'victoryDisplay' })).toEqual([drew, herman]);
+    // 2 of the 6 unique Cultists act 1's objective waits for: it stays.
+    expect(table.board.act).toMatchObject({ name: 'Uncovering the Conspiracy' });
 
     // Round 4 – enemy phase: the evaded, exhausted Priest holds back; the Hunter
     // attacks Roland for 2 damage and 1 horror.
