@@ -13,7 +13,7 @@ import {
 
 // Situations on the game screen, each photographed as it ends (`@shot`, coding guidelines §3).
 
-test('the house map with Roland Banks in the Hallway', { tag: '@shot' }, async ({ page }) => {
+test('the house map with Roland Banks in the Hallway', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   const hallway = page
@@ -256,6 +256,21 @@ test('the Parlor’s details with its Resign among Roland Banks’ card actions'
       .getByRole('button', { name: 'Resign · Parlor' }),
   ).toBeVisible();
 });
+
+test(
+  'the unrevealed Parlor’s details, its barrier offering Roland Banks no move',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+
+    // On a phone the investigator panel lies over the Parlor's tile, so the keyboard opens it.
+    await page.getByRole('button', { name: 'Details of Parlor' }).press('Enter');
+
+    const parlor = page.getByRole('dialog', { name: 'Parlor' });
+    await expect(parlor.getByRole('button', { name: 'Close' })).toBeVisible();
+    await expect(parlor.getByRole('button', { name: /^Move here/ })).toHaveCount(0);
+  },
+);
 
 test('the Parlor tile printing its Resign', async ({ page }) => {
   await resumeImportedGame(page, 'In the Parlor', inTheParlorExport('In the Parlor'));

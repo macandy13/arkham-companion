@@ -426,9 +426,11 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
       },
     });
 
+    // Downtown can't be investigated while the door is attached.
     expect(table.board.location(byName('Downtown'))).toMatchObject({
       clues: 2,
       attachments: ['Locked Door'],
+      forbidden: ['investigate'],
     });
 
     // Round 5 – investigation (4 of 8): the Priest has readied and engaged

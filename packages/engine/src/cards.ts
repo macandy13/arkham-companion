@@ -2,6 +2,7 @@ import { stripTrailingDot } from '@arkham/util';
 import type { Ability } from './abilities';
 import type { CardAction } from './card_actions';
 import type { CardModifier } from './card_values';
+import type { CardRestriction } from './restrictions';
 import type { Brand, CardCode, CardImagePath, EncounterSetCode } from './ids';
 import type { Keyword } from './keywords';
 import type { ScenarioDefinition } from './scenario';
@@ -139,6 +140,11 @@ export interface CardStats {
    * when absent.
    */
   modifiers?: readonly CardModifier[];
+  /**
+   * Its constant "cannot" abilities ("The attached location cannot be investigated");
+   * `isRestricted` reads them. None when absent.
+   */
+  restrictions?: readonly CardRestriction[];
   /** The card's forced abilities as data (architecture "Triggers and card effects"); none when absent. */
   abilities?: readonly Ability[];
   /** The card's action abilities ("[action]: …"), taken with `UseCardAction`; none when absent. */

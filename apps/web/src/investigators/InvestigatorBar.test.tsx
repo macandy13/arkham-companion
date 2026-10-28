@@ -2,6 +2,7 @@
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import {
+  attachedTo,
   blankAsset,
   blankEnemy,
   blankLocation,
@@ -802,6 +803,30 @@ describe('InvestigatorBar', () => {
       await expect
         .poll(() => table.board.decisions)
         .toMatchObject([{ prompt: 'decision.investigate', for: alder }]);
+    });
+
+    it('turns "Investigate" off while a locked door on the study forbids it', () => {
+      const lockedDoor = blankTreachery('locked_door', {
+        restrictions: [{ cannot: 'investigate', of: 'host' }],
+      });
+      const table = PlayTable.start(
+        twoAtStudy
+          .withCard(instanceId('locked_door'), lockedDoor, attachedTo(study))
+          .withTurnOf(alder),
+      );
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      expect(within(panel('alder')).getByRole('button', { name: 'Investigate' })).toHaveProperty(
+        'disabled',
+        true,
+      );
     });
   });
 

@@ -125,7 +125,7 @@ const cultist = ['Humanoid', 'Cultist'];
  *   window opens before the evade exhausts and disengages her
  * - Acolyte's doom as it enters play during the game (setup places it)
  * - the Masked Hunter's and Hunting Nightgaunt's constant abilities
- * - Locked Door
+ * - Locked Door's revelation (attach to the location with the most clues, MC1.3) and its action
  * - the players' pick among several Cultist enemies for Mysterious Chanting's
  *   search: the engine draws the first match (#346)
  *
@@ -501,6 +501,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     set: sets.lockedDoors,
     traits: ['Obstacle'],
     quantity: 2,
+    restrictions: [{ cannot: 'investigate', of: 'host' }],
   }),
 ];
 
