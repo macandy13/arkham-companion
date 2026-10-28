@@ -78,6 +78,12 @@ On a phone a tap on a location, in the compact map or the map row, shows that lo
 - The Map button brings the whole map back, and so does the location leaving play. While the players choose where a spawned enemy goes, the map shows until they place it.
 - It takes the focus as it opens, so a keyboard tap on a tile's "i" button lands on it.
 
+### Cards over the whole screen
+
+On a phone an enemy's details (`EnemyDetails`) and a zoomed card (`CardZoom`: a treachery or asset, a card attached to a location) are the same dialogs as on the tablet, laid over the whole screen without their frame (`game.css`).
+The back gesture closes them as it closes the detail view ([`useBackCloses`](../../apps/web/src/screens/useBackCloses.ts)): opening pushes a history entry, the × and Escape step back through it, and the detail view ignores a back step that lands on its own entry (`useDetailView` names it).
+Their buttons that close them (fight, evade, a card action) close them the same way. A card that goes while it is open (an enemy leaving play) leaves its entry behind, so the next back step changes nothing on the screen.
+
 ### Screen edges and turning
 
 - The page reaches under a notch, rounded corners and the home bar (`viewport-fit=cover` in `index.html`).
