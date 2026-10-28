@@ -1,4 +1,9 @@
 import {
+  whenEnemyDefeated,
+  spawnEnemyAt,
+  duringAct,
+  discardEachEnemyAt,
+  becomeActAndAgenda,
   perInvestigator,
   advanceAct,
   afterEngaging,
@@ -137,13 +142,12 @@ const woods = ['Woods'];
  * Effects the engine has no rule for yet are left out, so the players resolve
  * them from the card:
  *
- * - the agendas' reverse sides (agenda 1's Monster spawn, agenda 2's
- *   willpower (6) tests and madness, agenda 3's Umôrdhoth and The Devourer
- *   Below, which becomes act and agenda at once) and agenda 2's +1 fight and
- *   evade for each enemy
+ * - agenda 1's and 2's reverse sides (agenda 1's Monster spawn, agenda 2's
+ *   willpower (6) tests and madness) and agenda 2's +1 fight and evade for
+ *   each enemy
  * - act 2's reverse side (the enemies at the Ritual Site)
- * - the Main Path's connection to each Woods location,
- *   the Arkham Woods' moving-out test, and skill swaps
+ * - the Arkham Woods' moving-out test and skill swaps (setup connects the
+ *   Main Path to each Woods location)
  * - Umôrdhoth's Wrath
  * - the Agents' constant and attack abilities (Screeching Byakhee, Yithian
  *   Observer), the madness weaknesses, Offer of Power's 2 cards, and Dreams of
@@ -152,7 +156,36 @@ const woods = ['Woods'];
 export const theDevourerBelowCardDefs: readonly CardStats[] = [
   agenda({ code: '01143', name: 'The Arkham Woods', set: own, stage: 1, doom: 4 }),
   agenda({ code: '01144', name: 'The Ritual Begins', set: own, stage: 2, doom: 5 }),
-  agenda({ code: '01145', name: 'Vengeance Awaits', set: own, stage: 3, doom: 5 }),
+  agenda({
+    code: '01145',
+    name: 'Vengeance Awaits',
+    set: own,
+    stage: 3,
+    doom: 5,
+    abilities: [
+      // "When this agenda advances": at act 1 the Ritual Site is still set aside.
+      duringAct(
+        [codes.investigatingTheTrail],
+        whenAdvanced(
+          ...putLocationIntoPlay(codes.ritualSite, WOODS_MAP, {
+            at: RITUAL_SITE_CELL,
+            connectedTo: [codes.mainPath],
+          }),
+          spawnEnemyAt(onlyCopy(codes.umordhoth), onlyCopy(codes.ritualSite)),
+        ),
+      ),
+      duringAct(
+        [codes.intoTheDarkness, codes.disruptingTheRitual],
+        whenAdvanced(
+          discardEachEnemyAt(onlyCopy(codes.ritualSite)),
+          spawnEnemyAt(onlyCopy(codes.umordhoth), onlyCopy(codes.ritualSite)),
+        ),
+      ),
+      // Its reverse side, The Devourer Below, is act and agenda at once with this objective.
+      whenAdvanced(becomeActAndAgenda()),
+      whenEnemyDefeated(codes.umordhoth, endScenario(DEVOURER_BELOW_RESOLUTIONS.umordhothRepelled)),
+    ],
+  }),
   act({
     code: '01146',
     name: 'Investigating the Trail',
@@ -161,8 +194,8 @@ export const theDevourerBelowCardDefs: readonly CardStats[] = [
     cluesPerInvestigator: 3,
     // Setup sets aside exactly the enemies recorded under "Cultists Who Got Away", all of them
     // Cultists; the only other set-aside enemy, Umôrdhoth, is none. "If it is not already in
-    // play" needs no check yet: only agenda 3, which the players resolve by hand, puts the
-    // Ritual Site into play before act 1 advances.
+    // play" needs no check: only agenda 3 puts the Ritual Site into play before act 1 advances,
+    // and it replaces act 1 as it does.
     abilities: [
       whenAdvanced(
         ...putLocationIntoPlay(codes.ritualSite, WOODS_MAP, {

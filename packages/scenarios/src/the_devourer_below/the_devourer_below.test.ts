@@ -35,6 +35,7 @@ import {
   DEVOURER_BELOW_CODES as codes,
   DEVOURER_BELOW_RESOLUTIONS,
   GATHERING_CODES,
+  MIDNIGHT_MASKS_CODES,
   MIDNIGHT_MASKS_RESOLUTIONS,
   ZEALOT_STORY,
   nightOfTheZealot,
@@ -287,6 +288,83 @@ describe('The Devourer Below setup in the campaign', () => {
     });
     expect(namesIn(state, { kind: 'engaged', investigatorId: rolandSeat.id })).toEqual([]);
     expect(namesIn(state, { kind: 'setAside' })).toEqual(['Umôrdhoth']);
+  });
+
+  describe('when agenda 3, Vengeance Awaits, advances', () => {
+    const ritualSite = instanceId(`${codes.ritualSite}#1`);
+    const devourer = instanceId(`${codes.vengeanceAwaits}#1`);
+    const atRitualSite: Zone = { kind: 'atLocation', locationId: ritualSite };
+    const advanceAgenda: Command = { type: 'AdvanceAgenda' };
+    /** Roland's game, with Peter Warren and The Masked Hunter set aside as the Cultists who got away. */
+    const started = () =>
+      execute(
+        ctx,
+        emptyState(),
+        scenario.compileSetup(ctx, {
+          seed: 1,
+          investigators: [rolandSeat],
+          campaign: logWith(peterAndTheHunter),
+        }),
+      ).state;
+
+    it('at act 1 puts the Ritual Site above the Main Path, spawns Umôrdhoth there and becomes The Devourer Below, act and agenda at once', () => {
+      const state = stateAfter(ctx, started(), advanceAgenda, advanceAgenda, advanceAgenda);
+
+      expect(state.cards[ritualSite]?.zone).toEqual({ kind: 'location', mapId: woods });
+      expect(state.board.maps[woods]?.layout[ritualSite]).toEqual({ column: 3, row: 0 });
+      expect(neighbours(state, mainPath)).toContain(ritualSite);
+      expect(namesIn(state, atRitualSite)).toEqual(['Umôrdhoth']);
+      expect(state.agenda.current).toBe(devourer);
+      expect(state.act.current).toBe(devourer);
+      expect(state.meta.ended).toBeUndefined();
+    });
+
+    it.each([
+      { act: 'act 2', advances: 1 },
+      { act: 'act 3', advances: 2 },
+    ])(
+      'at $act discards the enemies at the Ritual Site before Umôrdhoth spawns there',
+      ({ advances }) => {
+        const advanceAct: Command = { type: 'AdvanceAct' };
+        const atAct = stateAfter(ctx, started(), ...Array<Command>(advances).fill(advanceAct));
+        // Peter Warren is engaged with Roland at the Main Path since act 1 advanced.
+        const peterAtTheRitualSite: Command = {
+          type: 'ManualAdjust',
+          adjustment: {
+            kind: 'moveCard',
+            cardId: instanceId(`${MIDNIGHT_MASKS_CODES.peterWarren}#1`),
+            to: atRitualSite,
+          },
+        };
+
+        const state = stateAfter(
+          ctx,
+          atAct,
+          peterAtTheRitualSite,
+          advanceAgenda,
+          advanceAgenda,
+          advanceAgenda,
+        );
+
+        expect(namesIn(state, atRitualSite)).toEqual(['Umôrdhoth']);
+        expect(namesIn(state, { kind: 'encounterDiscard' })).toContain('Peter Warren');
+        expect(namesIn(state, { kind: 'engaged', investigatorId: rolandSeat.id })).toEqual([
+          'The Masked Hunter',
+        ]);
+        expect(state.act.current).toBe(devourer);
+      },
+    );
+
+    it('ends in R2 once Umôrdhoth is defeated', () => {
+      const devoured = stateAfter(ctx, started(), advanceAgenda, advanceAgenda, advanceAgenda);
+
+      const state = stateAfter(ctx, devoured, {
+        type: 'DefeatEnemy',
+        enemyId: instanceId(`${codes.umordhoth}#1`),
+      });
+
+      expect(state.meta.resolution).toBe(DEVOURER_BELOW_RESOLUTIONS.umordhothRepelled);
+    });
   });
 
   it('sets up from The Midnight Masks R2: 3 Cultists got away, the Ghoul Priest lives', () => {
