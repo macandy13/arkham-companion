@@ -764,6 +764,14 @@ export class BoardView {
       .map((inv) => investigatorView(this.ctx, this.state, inv));
   }
 
+  /**
+   * The enemies at `location`, engaged ones included, in card order, as its map lists them
+   * (`MapView.enemies`), so a screen showing one location needs no map.
+   */
+  enemiesAt(location: InstanceId): readonly MapEnemyView[] {
+    return enemiesByLocation(this.ctx, this.state, [location])[location] ?? [];
+  }
+
   /** The location `investigator` stands at; none until setup places them. */
   locationOf(investigator: InvestigatorId): InstanceId | undefined {
     return requireInvestigator(this.state, investigator).locationId;

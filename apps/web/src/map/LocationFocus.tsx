@@ -133,8 +133,7 @@ function NeighbourTile({
 }) {
   const { t } = useTranslation();
   const location = board.location(neighbour.id);
-  const enemies = board.maps.find(({ id }) => id === location.map)?.enemies[neighbour.id] ?? [];
-  const pieces = [...board.investigatorsAt(neighbour.id), ...enemies];
+  const pieces = [...board.investigatorsAt(neighbour.id), ...board.enemiesAt(neighbour.id)];
   const blocked = location.forbidden?.includes('moveInto') === true;
   const name = [
     location.name,

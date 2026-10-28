@@ -222,7 +222,6 @@ function locationActions(
  */
 function LocationCard({ board, location }: { board: BoardView; location: LocationView }) {
   const { t } = useTranslation();
-  const map = board.maps.find(({ id }) => id === location.map);
   return (
     <svg
       role="img"
@@ -234,7 +233,7 @@ function LocationCard({ board, location }: { board: BoardView; location: Locatio
       </defs>
       <LocationTile
         location={location}
-        enemies={map?.enemies[location.id] ?? []}
+        enemies={board.enemiesAt(location.id)}
         investigators={board.investigatorsAt(location.id)}
         turnOrder={board}
         dragOf={() => undefined}
@@ -280,7 +279,7 @@ function Here({ board, location }: { board: BoardView; location: LocationView })
   const { t } = useTranslation();
   const titleId = useId();
   const investigators = board.investigatorsAt(location.id);
-  const enemies = board.maps.find(({ id }) => id === location.map)?.enemies[location.id] ?? [];
+  const enemies = board.enemiesAt(location.id);
   const nameOf = (id: InvestigatorId) => board.investigator(id).name;
   return (
     <section aria-labelledby={titleId}>

@@ -531,6 +531,17 @@ describe('locations', () => {
     });
   });
 
+  it('lists the ghoul at the hallway, the rat engaged with alice at the study', () => {
+    const { context, state } = house
+      .withCard(instanceId('ghoul'), blankEnemy('ghoul', { health: fixed(3) }), atLocation(hallway))
+      .withCard(instanceId('rat'), blankEnemy('rat', { health: fixed(1) }), engagedWith(alice))
+      .start();
+    const board = boardView(context, state);
+
+    expect(board.enemiesAt(hallway).map(({ name }) => name)).toEqual(['ghoul']);
+    expect(board.enemiesAt(study).map(({ name }) => name)).toEqual(['rat']);
+  });
+
   it.each([
     { map: 'main', expected: ['study', 'hallway'] },
     { map: 'upstairs', expected: ['attic'] },

@@ -793,7 +793,7 @@
    * The location's card with its neighbours around it (LocationFocus), each side's tiles in a line
    * along it, as they lie on the map. A new location slides in from the side it was tapped on.
    */
-  #board[data-view='detail'] > #map > section[data-mode='location'] [data-compass] {
+  #board[data-view='detail'] [data-compass] {
     display: grid;
     grid-template:
       '. above .' auto
@@ -804,14 +804,14 @@
     justify-items: center;
   }
 
-  #board[data-view='detail'] > #map > section[data-mode='location'] [data-compass] > svg {
+  #board[data-view='detail'] [data-compass] > svg {
     grid-area: card;
     width: 100%;
     max-width: var(--layout-zoom-card-width);
     filter: var(--piece-shadow);
   }
 
-  #board[data-view='detail'] > #map > section[data-mode='location'] [data-compass] > ul {
+  #board[data-view='detail'] [data-compass] > ul {
     display: flex;
     gap: var(--space-1);
     margin: 0;
