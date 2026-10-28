@@ -429,6 +429,41 @@
   fill: var(--color-ink);
 }
 
+/* The connection symbol: a light glyph on a disc in the symbol's colour, ringed like the print. */
+#map svg g[data-connection] circle {
+  fill: var(--connection-colour);
+  stroke: var(--color-parchment);
+  stroke-width: var(--connection-ring-width);
+}
+
+#map svg g[data-connection] path {
+  fill: none;
+  stroke: var(--color-parchment);
+  stroke-width: var(--connection-ring-width);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+#map svg g[data-connection='circle'] {
+  --connection-colour: var(--color-connection-circle);
+}
+
+#map svg g[data-connection='square'] {
+  --connection-colour: var(--color-connection-square);
+}
+
+#map svg g[data-connection='triangle'] {
+  --connection-colour: var(--color-connection-triangle);
+}
+
+#map svg g[data-connection='plus'] {
+  --connection-colour: var(--color-connection-plus);
+}
+
+#map svg g[data-connection='diamond'] {
+  --connection-colour: var(--color-connection-diamond);
+}
+
 #map svg g[role='button']:focus-visible {
   outline: var(--border-width) solid var(--color-accent);
 }

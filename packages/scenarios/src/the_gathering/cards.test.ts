@@ -48,6 +48,16 @@ describe('The Gathering card data', () => {
   });
 
   it.each([
+    { code: '01111', name: 'Study', symbol: 'circle' },
+    { code: '01112', name: 'Hallway', symbol: 'square' },
+    { code: '01113', name: 'Attic', symbol: 'triangle' },
+    { code: '01114', name: 'Cellar', symbol: 'plus' },
+    { code: '01115', name: 'Parlor', symbol: 'diamond' },
+  ])('gives $name its printed connection symbol, the $symbol', ({ code, symbol }) => {
+    expect(cardOf(code).symbol).toBe(symbol);
+  });
+
+  it.each([
     { code: '01116', name: 'Ghoul Priest', keywords: ['hunter', 'prey', 'retaliate'] },
     { code: '01118', name: 'Flesh-Eater', keywords: ['spawn'] },
     { code: '01119', name: 'Icy Ghoul', keywords: ['spawn'] },
