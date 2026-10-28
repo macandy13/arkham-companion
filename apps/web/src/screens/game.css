@@ -723,6 +723,37 @@
 }
 
 /*
+ * On a phone held upright an enemy's details or a zoomed card fill the screen (M3.14g, like the
+ * location mode), without the frame and the dimmed board around them, the × at the top left where
+ * the detail view keeps its own. `[open]` outweighs the dialogs' own rules (enemies.css,
+ * card_zoom.css).
+ */
+@media (orientation: portrait) and (max-width: 40rem) {
+  #board dialog:is([data-dialog='enemy'], [data-dialog='card-zoom'])[open] {
+    box-sizing: border-box;
+    justify-content: center;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    padding: calc(var(--space-2) + var(--touch-target) + var(--safe-top))
+      calc(var(--space-3) + var(--safe-right)) calc(var(--space-3) + var(--safe-bottom))
+      calc(var(--space-3) + var(--safe-left));
+    border: none;
+    overflow-y: auto;
+  }
+
+  #board
+    dialog:is([data-dialog='enemy'], [data-dialog='card-zoom'])[open]
+    > button[data-icon='close'] {
+    top: calc(var(--space-2) + var(--safe-top));
+    right: auto;
+    left: calc(var(--space-2) + var(--safe-left));
+  }
+}
+
+/*
  * The phone's detail view (`data-view='detail'`, DetailControls): the header, the map and the
  * investigators as three rows a screen tall, snapped vertically, and the header's places snapped
  * sideways, each a screen wide with its label, piles and plate again. The status row steps aside;

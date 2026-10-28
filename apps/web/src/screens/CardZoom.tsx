@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { CardFaceView } from '@arkham/engine';
 import { sentences } from '@arkham/util';
 import { useCardPicture } from '../catalog/cardImages';
+import { useBackCloses } from './useBackCloses';
 import './card_zoom.css';
 
 /**
@@ -10,8 +11,10 @@ import './card_zoom.css';
  * loaded, and under the picture, for a card without one or until it loads, what the card data
  * says of it in our own frame: its name, type and traits. A card with a back turns over with a
  * button. Under it, as `children`, the action row of what the card offers the investigator whose
- * turn it is (`CardActions`), when it offers anything; reading it alone changes nothing in the
- * game. A native modal `<dialog>` brings focus trapping and Escape.
+ * turn it is (`CardActions`), when it offers anything, given the zoom's own `close` for the
+ * actions that close it; reading it alone changes nothing in the game. A native modal `<dialog>`
+ * brings focus trapping and Escape. On a phone it fills the screen and the back gesture closes it
+ * too (`useBackCloses`), which is why its actions close it through `close`.
  */
 export function CardZoom({
   card,
@@ -20,7 +23,7 @@ export function CardZoom({
 }: {
   card: CardFaceView;
   onClose: () => void;
-  children?: ReactNode;
+  children?: (close: () => void) => ReactNode;
 }) {
   const { t } = useTranslation();
   const titleId = useId();
@@ -28,6 +31,8 @@ export function CardZoom({
   useEffect(() => {
     dialog.current?.showModal();
   }, []);
+  const close = useBackCloses(onClose);
+  const actionRow = children?.(close);
   const [side, setSide] = useState<'front' | 'back'>('front');
   const picture = useCardPicture(side === 'front' ? card.image : card.backImage);
 
@@ -38,11 +43,11 @@ export function CardZoom({
       onCancel={(event) => {
         // React passes `cancel` on to the dialogs around it, and Escape here closes only the zoom.
         event.stopPropagation();
-        onClose();
+        close();
       }}
       data-dialog="card-zoom"
     >
-      <button type="button" data-icon="close" aria-label={t('cardZoom.close')} onClick={onClose} />
+      <button type="button" data-icon="close" aria-label={t('cardZoom.close')} onClick={close} />
       <article data-card={card.type} data-picture={picture?.shown ? 'shown' : undefined}>
         {picture && (
           <img
@@ -61,7 +66,7 @@ export function CardZoom({
           {t(side === 'front' ? 'cardZoom.showBack' : 'cardZoom.showFront')}
         </button>
       )}
-      {children && <footer>{children}</footer>}
+      {actionRow && <footer>{actionRow}</footer>}
     </dialog>
   );
 }

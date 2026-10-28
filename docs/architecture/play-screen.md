@@ -31,7 +31,7 @@ The board stretches to the foot of the screen, so the map always takes the room 
 
 ## Phone
 
-A phone held upright (`(orientation: portrait) and (max-width: 40rem)`) gets the compact mode of the [phone prototype](../../apps/web/public/prototype/phone/index.html) (M3.14).
+A phone held upright (`(orientation: portrait) and (max-width: 40rem)`) gets the compact mode (M3.14, designed in the phone prototype of #432, removed once the app showed the same).
 The same query opens a block in [`tokens.css`](../../apps/web/src/styles/tokens.css) (smaller header cards, tokens, skills and counters), `game.css` and [`investigators.css`](../../apps/web/src/investigators/investigators.css), written out in each, since a custom property cannot stand in a media query. On a phone:
 
 - the header shows only its four cards in one row:
@@ -77,6 +77,13 @@ On a phone a tap on a location, in the compact map or the map row, shows that lo
 - It stays on the location after a move or an investigation, since it is a row, not a window over it.
 - The Map button brings the whole map back, and so does the location leaving play. While the players choose where a spawned enemy goes, the map shows until they place it.
 - It takes the focus as it opens, so a keyboard tap on a tile's "i" button lands on it.
+
+### Cards over the whole screen
+
+On a phone an enemy's details (`EnemyDetails`) and a zoomed card (`CardZoom`: a treachery or asset, a card attached to a location) are the same dialogs as on the tablet, laid over the whole screen without their frame (`game.css`).
+The back gesture closes them as it closes the detail view ([`useBackCloses`](../../apps/web/src/screens/useBackCloses.ts)): opening pushes a history entry named by a fresh id, and the ×, Escape and their buttons that close them (fight, evade, a card action) step back through it once.
+The detail view names its own entry too and ignores a back step that lands on it.
+A card that goes while it is open (an enemy leaving play) drops its entry a tick later, unless it mounts again at once (development's double effects), so no back step is left that changes nothing.
 
 ### Screen edges and turning
 

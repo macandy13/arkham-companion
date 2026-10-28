@@ -119,9 +119,11 @@ export function SmallCard({
       />
       {zoomed && (
         <CardZoom card={card} onClose={close}>
-          {offered.length > 0 && (
-            <CardActions offered={offered} actions={actions} busy={busy} onUse={close} />
-          )}
+          {(closeZoom) =>
+            offered.length > 0 && (
+              <CardActions offered={offered} actions={actions} busy={busy} onUse={closeZoom} />
+            )
+          }
         </CardZoom>
       )}
     </li>

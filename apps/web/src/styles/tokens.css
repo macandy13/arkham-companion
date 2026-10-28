@@ -341,7 +341,7 @@
 }
 
 /*
- * A phone held upright: the play screen's compact mode (the prototype in public/prototype/phone),
+ * A phone held upright: the play screen's compact mode (M3.14),
  * its four header cards small in one row with small tokens and the investigator card's skills and
  * counters smaller, so the map keeps the room between the header and the one investigator panel.
  * A phone held sideways (under 30rem tall) keeps the tablet's board but takes the same sizes, so
@@ -371,8 +371,12 @@
     --layout-header-card-height: var(--layout-detail-card-height);
   }
 
-  /* The encounter dialog's row fits two cards. */
+  /*
+   * The encounter dialog's row fits two cards, and a card opened over the whole screen (game.css)
+   * grows to nearly its width.
+   */
   #board {
     --encounter-strip-cards-shown: 2;
+    --layout-zoom-card-width: 20rem;
   }
 }
