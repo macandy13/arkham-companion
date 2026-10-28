@@ -110,7 +110,7 @@ An action ability provokes attacks of opportunity unless it is a Resign or Parle
 - A free action (`CardAction.free`, a "[free]" ability) costs no action: `UseCardAction` takes it in any player window, outside the taker's turn too, and it never provokes (`UseCardAction` has no `asAction`: the printed ability decides); `GameActions.useCardAction` counts off an action only for the others.
 - An action whose effects would change nothing can't be taken (RR "Triggered Abilities"): `UseCardAction`'s spec names its effects as `CommandSpec.mustChangeState`, which `handle` dry-runs after the handler's own checks and rejects (`changesNothing`) when they would emit no event, so the limit isn't used up; `BoardView.cardActions` leaves such an action out (`changesGameState`). An action with no effects the engine runs is done at the table and always offered.
 - A `CardAction.condition` ("If you control Lita Chantler:", `ActionCondition`) must hold for the taker (`actionConditionHolds`), else the action is neither offered nor accepted (`cardActionConditionUnmet`).
-  - `controls` checks their play area; a player card the game doesn't track is trusted to the taker if the campaign log says they earned it (`CampaignInvestigator.earnedCards`), and always in a standalone game (example in [Card patterns](card-patterns.md)).
+  - `controls` checks their play area; a card of which the game has no copy at all is a player card it doesn't track, and is trusted to the taker if the campaign log says they earned it (`CampaignInvestigator.earnedCards`), and always in a standalone game (example in [Card patterns](card-patterns.md)).
 - A rejected effect rejects the whole action, cost included.
 
 ### Advancing the act

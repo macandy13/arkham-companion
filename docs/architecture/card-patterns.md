@@ -15,9 +15,9 @@ A "cannot" is a `CardStats.restrictions` entry, never an ability.
 - Locked Door, "The attached location cannot be investigated":
   `restrictions: [{ cannot: 'investigate', of: 'host' }]`.
 - The Masked Hunter, "While you are engaged with The Masked Hunter, you cannot discover or spend clues":
-  `{ cannot: ['discover', 'spend'], what: 'clues', who: 'threatArea' }`.
+  `restrictions: [{ cannot: ['discover', 'spend'], what: 'clues', who: 'threatArea' }]`.
 - Dissonant Voices, "You cannot play assets or events":
-  `{ cannot: ['play'], what: 'cards', who: 'threatArea', cards: { types: ['asset', 'event'] } }`.
+  `restrictions: [{ cannot: ['play'], what: 'cards', who: 'threatArea', cards: { types: ['asset', 'event'] } }]`.
 
 ## Objectives and special acts and agendas
 
@@ -47,7 +47,7 @@ A cost is `CardAction.cost`, paid before the effects.
 - Lita Chantler's Parley: `parleyAction({ effects: [skillTest('intellect', 4, { onPass: [takeControl()] })] })`.
 - "If you control Lita Chantler:" (Umôrdhoth): `condition: { kind: 'controls', card: codes.litaChantler }`.
   - `controls` checks the taker's play area. When the game has no copy of the card at all, it is a player card the game doesn't track, so the taker is trusted, as with a hand card cost.
-  - The campaign log must say the taker earned it (`CampaignInvestigator.earnedCards`, written by The Gathering's resolutions with `earnCard`), so Umôrdhoth's action is hidden from an investigator who didn't.
+  - That trust needs the campaign log to say the taker earned Lita (`CampaignInvestigator.earnedCards`, written by The Gathering's resolutions with `earnCard`), so Umôrdhoth's action is hidden from an investigator who didn't.
   - A standalone game has no log and trusts the taker.
 
 ## Searching, drawing and attaching encounter cards
