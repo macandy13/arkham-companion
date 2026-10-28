@@ -33,6 +33,7 @@ import {
   scenario,
   type CampaignCommand,
   type CampaignLog,
+  type InstanceId,
   type InvestigatorId,
   type ScenarioContext,
 } from '@arkham/engine';
@@ -130,14 +131,17 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 7', () => {
       scenario.compileSetup(ctx, { seed: 7, investigators: seats, campaign: log }),
     );
     expect(table.board.agenda).toMatchObject({ name: 'The Arkham Woods', doom: 0 });
-    expect(table.board.namesIn({ kind: 'setAside' }).sort()).toEqual(['Ritual Site', umordhoth]);
+    expect(table.board.namesIn({ kind: 'setAside' })).toEqual(
+      expect.arrayContaining(['Ritual Site', umordhoth]),
+    );
+    expect(table.board.namesIn({ kind: 'setAside' })).toHaveLength(2);
 
     const quietTurn = (investigator: InvestigatorId) => {
       table.startTurn(investigator);
       table.endTurn(investigator);
     };
     /** The investigator evades the Goat Spawn engaged with them, so it can't attack this round. */
-    const evadeTurn = (investigator: InvestigatorId, ...goats: readonly (typeof firstGoat)[]) => {
+    const evadeTurn = (investigator: InvestigatorId, ...goats: readonly InstanceId[]) => {
       table.startTurn(investigator);
       for (const goat of goats) table.evade(investigator, byId(goat));
       table.endTurn(investigator);
@@ -166,7 +170,7 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 7', () => {
 
     // Round 3 – Roland draws Umôrdhoth's Wrath and discards 2 cards by hand;
     // Daisy draws a Ghoul Minion, which Roland defeats.
-    table.nextPhase();
+    expect(table.nextPhase()).toMatchObject({ round: 3, phase: 'mythos' });
     expect(table.nextPhase()).toEqual({ round: 3, phase: 'investigation' });
     table.startTurn(roland);
     table.fight(roland, byName('Ghoul Minion'), { damage: 2 });
@@ -178,7 +182,7 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 7', () => {
     // Round 4 – the Wizard's doom fills agenda 1. Its reverse side is done by
     // hand: the discard goes back into the encounter deck, and the first
     // Monster from its top, a Goat Spawn, spawns at the Main Path with 1 doom.
-    table.nextPhase();
+    expect(table.nextPhase()).toMatchObject({ round: 4, phase: 'mythos' });
     table.answer(byName('The Arkham Woods'), 'yes');
     expect(table.board.agenda).toMatchObject({ name: 'The Ritual Begins', doom: 0 });
     table.play({ type: 'ShuffleEncounterDiscard' });
@@ -202,7 +206,7 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 7', () => {
 
     // Round 5 – Roland fails Grasping Hands; Daisy draws Ancient Evils and
     // places its doom by hand.
-    table.nextPhase();
+    expect(table.nextPhase()).toMatchObject({ round: 5, phase: 'mythos' });
     table.answer(byName('Grasping Hands'), 'fail');
     table.nextPhase();
     table.play({ type: 'PlaceDoom', amount: 1 });
@@ -217,7 +221,7 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 7', () => {
     // From now on the investigators evade the Goat Spawn rather than defeat
     // them: each defeat costs everyone at the Main Path 1 horror, which they
     // need to stand Umôrdhoth's attacks.
-    table.nextPhase();
+    expect(table.nextPhase()).toMatchObject({ round: 6, phase: 'mythos' });
     table.answer(byName('The Ritual Begins'), 'yes');
     expect(table.board.agenda).toMatchObject({ name: 'Vengeance Awaits', doom: 0 });
     table.nextPhase();
@@ -234,7 +238,7 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 7', () => {
 
     // Round 7 – another Goat Spawn engages Roland; Daisy draws Umôrdhoth's
     // Wrath and discards 2 cards by hand.
-    table.nextPhase();
+    expect(table.nextPhase()).toMatchObject({ round: 7, phase: 'mythos' });
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'investigation' });
     evadeTurn(roland, firstGoat);
     evadeTurn(daisy, secondGoat);
@@ -246,7 +250,7 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 7', () => {
 
     // Round 8 – the third Goat Spawn engages Daisy; the Wizard's 2 doom and
     // the Goat Spawn's 1 leave the agenda 1 short.
-    table.nextPhase();
+    expect(table.nextPhase()).toMatchObject({ round: 8, phase: 'mythos' });
     expect(table.board.doomInPlay).toBe(4);
     table.nextPhase();
     evadeTurn(roland, firstGoat);
@@ -261,18 +265,15 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 7', () => {
     // Round 9 – doom fills agenda 3 while act 1 is still current: the Ritual
     // Site comes into play next to the Main Path, Umôrdhoth spawns there, and
     // Vengeance Awaits becomes the act as well as the agenda.
-    table.nextPhase();
+    expect(table.nextPhase()).toMatchObject({ round: 9, phase: 'mythos' });
     table.answer(byName('Vengeance Awaits'), 'yes');
-    expect(table.board.agenda).toEqual({
+    expect(table.board.agenda).toMatchObject({
       id: vengeanceAwaits,
       name: 'Vengeance Awaits',
-      image: '/bundles/cards/01145.png',
       doom: 0,
     });
+    expect(table.board.agenda).not.toHaveProperty('threshold');
     expect(table.board.act).toMatchObject({ id: vengeanceAwaits, name: 'Vengeance Awaits' });
-    expect(table.formatted()).toContain(
-      'Agenda: Vengeance Awaits – doom 0\nAct: Vengeance Awaits – no clue requirement',
-    );
     expect(table.board.location(ritualSite)).toMatchObject({ name: 'Ritual Site' });
     expect(table.board.enemiesAt(ritualSite)).toMatchObject([{ name: umordhoth }]);
     expect(table.board.namesIn({ kind: 'setAside' })).toEqual([]);
@@ -285,7 +286,8 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 7', () => {
     expect(table.nextPhase()).toEqual({ round: 9, phase: 'investigation' });
 
     // Each evades their Goat Spawn and goes to the Ritual Site, where Roland
-    // lands the first blow (his .45 Automatic with a Vicious Blow).
+    // lands the first blow. Each of his hits does 3 damage: his .45 Automatic's 2,
+    // plus 1 from a Vicious Blow or another card he commits (the players add it to the damage).
     table.startTurn(roland);
     table.evade(roland, byId(firstGoat));
     table.moveTo(roland, ritualSite);

@@ -23,7 +23,7 @@ import {
 } from './cards';
 import { optionName } from './describe_decision';
 import type { Command } from './commands';
-import { doomInPlay, isInPlay } from './doom';
+import { agendaThreshold, doomInPlay, isInPlay } from './doom';
 import { changesGameState, handle } from './handle';
 import { enemyHealth } from './enemies';
 import type { Keyword } from './keywords';
@@ -1052,17 +1052,14 @@ function mapOf({ zone, id }: CardInstance): MapId {
 function agendaView(ctx: EngineContext, state: GameState): AgendaView | undefined {
   const agenda = currentCard(state, 'agenda');
   if (!agenda) return undefined;
-  const { doom, imageSrc } = cardStats(ctx.cards, agenda.code);
-  // Face down, as act and agenda at once, it shows its reverse side, which prints no threshold.
-  const threshold = agenda.faceUp ? doom : undefined;
+  const { imageSrc } = cardStats(ctx.cards, agenda.code);
+  const threshold = agendaThreshold(ctx, state, agenda);
   return {
     id: agenda.id,
     name: nameOf(ctx, agenda),
     ...(imageSrc === undefined ? {} : { image: imageSrc }),
     doom: agenda.tokens.doom ?? 0,
-    ...(threshold === undefined
-      ? {}
-      : { threshold: resolveValue(threshold, state.meta.playerCount) }),
+    ...(threshold === undefined ? {} : { threshold }),
   };
 }
 

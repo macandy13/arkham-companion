@@ -1,4 +1,4 @@
-import { cardStats, resolveValue, type EngineContext } from './cards';
+import { resolveValue, type EngineContext } from './cards';
 import type { DecisionRequested } from './events';
 import { confirmOptions, requestDecision } from './decisions';
 import { decisionId } from './ids';
@@ -76,6 +76,20 @@ export function doomInPlay(state: GameState): number {
 }
 
 /**
+ * The doom `agenda` needs to advance, for this many players; none when it prints no
+ * threshold. Face down, as act and agenda at once (The Devourer Below's Vengeance Awaits),
+ * it shows its reverse side, which prints none, so its doom no longer advances it.
+ */
+export function agendaThreshold(
+  ctx: EngineContext,
+  state: GameState,
+  agenda: CardInstance,
+): number | undefined {
+  const threshold = agenda.faceUp ? ctx.cards.get(agenda.code)?.doom : undefined;
+  return threshold === undefined ? undefined : resolveValue(threshold, state.meta.playerCount);
+}
+
+/**
  * `CheckDoomThreshold`: asks to confirm advancing the agenda when the doom
  * total has reached its threshold. Rules Reference, "Agenda Deck": the agenda
  * then must advance, and this check (mythos phase, or a card that says so)
@@ -87,14 +101,8 @@ export function doomInPlay(state: GameState): number {
  */
 export function agendaThresholdDecision(ctx: EngineContext, state: GameState): DecisionRequested[] {
   const agenda = currentCard(state, 'agenda');
-  // Face down it shows its reverse side, which prints no threshold (The Devourer Below).
-  if (!agenda?.faceUp) return [];
-  const threshold = cardStats(ctx.cards, agenda.code).doom;
-  if (
-    threshold === undefined ||
-    doomInPlay(state) < resolveValue(threshold, state.meta.playerCount)
-  )
-    return [];
+  const threshold = agenda && agendaThreshold(ctx, state, agenda);
+  if (!agenda || threshold === undefined || doomInPlay(state) < threshold) return [];
   return requestDecision(state, {
     id: decisionId(`advanceAgenda:${agenda.id}`),
     kind: 'confirm',
