@@ -46,6 +46,7 @@ export function MapBoard({
   busy,
   adjusting,
   onPick,
+  onOpenLocation,
 }: {
   board: BoardView;
   actions: GameActions;
@@ -53,6 +54,8 @@ export function MapBoard({
   adjusting: boolean;
   /** While the players choose a location (an enemy's spawn), a tap on a tile picks it. */
   onPick?: (location: InstanceId) => void;
+  /** Where a tap on a tile shows its location instead of its details dialog (the phone). */
+  onOpenLocation?: (location: InstanceId) => void;
 }) {
   const { t } = useTranslation();
   const idPrefix = useId();
@@ -70,6 +73,7 @@ export function MapBoard({
         busy={busy}
         adjusting={adjusting}
         onPick={onPick}
+        onOpenLocation={onOpenLocation}
       />
     );
 
@@ -102,6 +106,7 @@ export function MapBoard({
           busy={busy}
           adjusting={adjusting}
           onPick={onPick}
+          onOpenLocation={onOpenLocation}
         />
       </div>
     </>
@@ -127,7 +132,8 @@ type DraggedPiece = TilePiece & { from: InstanceId };
  *   does not ask which card.
  *
  * A tap on a tile opens its details (`LocationDetails`): what the investigator whose turn it is
- * can do there, or while adjusting the corrections, when no piece is dragged. A tap on an enemy
+ * can do there, or while adjusting the corrections, when no piece is dragged; on a phone it calls
+ * `onOpenLocation` instead, which shows the location in place of the map. A tap on an enemy
  * token opens the enemy's details (`EnemyDetails`), the same as from the threat area, with what
  * the investigator whose turn it is may do to it (`BoardView.enemyActions`): an enemy at their
  * location that is not engaged with them stands only on the map, so this is where they engage
@@ -140,6 +146,7 @@ function MapDrawing({
   busy,
   adjusting,
   onPick,
+  onOpenLocation,
 }: {
   map: MapView;
   board: BoardView;
@@ -147,6 +154,7 @@ function MapDrawing({
   busy: boolean;
   adjusting: boolean;
   onPick?: (location: InstanceId) => void;
+  onOpenLocation?: (location: InstanceId) => void;
 }) {
   const investigators = board.investigators;
   const captionId = useId();
@@ -228,7 +236,7 @@ function MapDrawing({
                       enemies={map.enemies[location.id] ?? []}
                       investigators={board.investigatorsAt(location.id)}
                       turnOrder={board}
-                      onOpen={() => (onPick ? onPick(location.id) : setDetailsFor(location.id))}
+                      onOpen={() => (onPick ?? onOpenLocation ?? setDetailsFor)(location.id)}
                       dragOf={(piece) =>
                         draggable(piece)
                           ? drag.handlers({ ...piece, from: location.id })

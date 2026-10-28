@@ -2,7 +2,7 @@
 
 The [map](../../apps/web/src/map/MapBoard.tsx) is an SVG of location tiles at their layout cells with pan, zoom and drag-to-play pieces (its tabs and small zoom icons float over its top corners, and its name is for screen readers only).
 
-A tap on a tile (or its "i" button, for the keyboard) opens the location's [details](../../apps/web/src/map/LocationDetails.tsx):
+A tap on a tile (or its "i" button, for the keyboard) opens the location's [details](../../apps/web/src/map/LocationDetails.tsx) (on a phone in the map row instead, the [location mode](play-screen.md#location-mode)):
 
 - its card (the tile's drawing with its pieces, at zoomed-card size),
 - its shroud and clues,

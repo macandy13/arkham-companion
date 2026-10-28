@@ -1,16 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { InvestigatorId } from '@arkham/engine';
+import type { InstanceId, InvestigatorId } from '@arkham/engine';
 
 /** One of the header's four cards, which the detail view opens on. */
 export type HeaderCardKind = 'encounter' | 'agenda' | 'act' | 'scenario';
 
 /**
- * What the phone's detail view shows: a header card in the cards row, the map row, or an
- * investigator's panel in the investigators row.
+ * What the phone's detail view shows: a header card in the cards row, the map row (the whole map,
+ * or one `location` in its place, the location mode), or an investigator's panel in the
+ * investigators row.
  */
 export type DetailTarget =
   | { row: 'cards'; card: HeaderCardKind }
-  | { row: 'map' }
+  | { row: 'map'; location?: InstanceId }
   | { row: 'investigators'; investigator: InvestigatorId };
 
 /**
