@@ -95,10 +95,11 @@ describe('CardZoom on a phone held upright', () => {
     }));
   });
   afterEach(() => {
+    // Off the card's entry first, so a zoom left open drops nothing into the next test.
+    window.history.replaceState(null, '');
     cleanup();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
-    window.history.replaceState(null, '');
   });
 
   it('closes on the back gesture, which leaves the entry it opened', () => {
@@ -108,39 +109,50 @@ describe('CardZoom on a phone held upright', () => {
 
     window.dispatchEvent(new PopStateEvent('popstate'));
 
-    expect(opened).toEqual({ cardView: true });
+    expect(opened).toEqual({ cardView: expect.any(String) });
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it('steps back through the history from its × button, to close as the back gesture does', () => {
+  it('steps back through the history once from its × button, however often it is tapped', () => {
     const back = vi.spyOn(window.history, 'back').mockImplementation(() => {});
     const onClose = vi.fn();
     render(<CardZoom card={plainCurse} onClose={onClose} />);
 
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
 
     expect(back).toHaveBeenCalledOnce();
     expect(onClose).not.toHaveBeenCalled();
   });
 
+  /**
+   * The detail view with buttons that open the curse zoomed over it, close the view, and take the
+   * curse away while it is open, as when its card leaves play.
+   */
+  function CurseOverTheDetailView() {
+    const detail = useDetailView();
+    const [zoomed, setZoomed] = useState(false);
+    return (
+      <>
+        <p>{detail.target ? 'Detail view' : 'Overview'}</p>
+        <button type="button" onClick={() => detail.open({ row: 'map' })}>
+          Open the detail view
+        </button>
+        <button type="button" onClick={detail.close}>
+          Close the detail view
+        </button>
+        <button type="button" onClick={() => setZoomed(true)}>
+          Zoom the curse
+        </button>
+        <button type="button" onClick={() => setZoomed(false)}>
+          Take the curse away
+        </button>
+        {zoomed && <CardZoom card={plainCurse} onClose={() => setZoomed(false)} />}
+      </>
+    );
+  }
+
   it('closes on its × over the detail view, which stays open', async () => {
-    /** The detail view with a button that opens the curse zoomed over it. */
-    function CurseOverTheDetailView() {
-      const detail = useDetailView();
-      const [zoomed, setZoomed] = useState(false);
-      return (
-        <>
-          <p>{detail.target ? 'Detail view' : 'Overview'}</p>
-          <button type="button" onClick={() => detail.open({ row: 'map' })}>
-            Open the detail view
-          </button>
-          <button type="button" onClick={() => setZoomed(true)}>
-            Zoom the curse
-          </button>
-          {zoomed && <CardZoom card={plainCurse} onClose={() => setZoomed(false)} />}
-        </>
-      );
-    }
     render(<CurseOverTheDetailView />);
     fireEvent.click(screen.getByRole('button', { name: 'Open the detail view' }));
     fireEvent.click(screen.getByRole('button', { name: 'Zoom the curse' }));
@@ -149,5 +161,17 @@ describe('CardZoom on a phone held upright', () => {
 
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(screen.getByText('Detail view')).toBeTruthy();
+  });
+
+  it('drops its entry as it goes while open, so the detail view still closes with its ×', async () => {
+    render(<CurseOverTheDetailView />);
+    fireEvent.click(screen.getByRole('button', { name: 'Open the detail view' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Zoom the curse' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Take the curse away' }));
+    await waitFor(() => expect(window.history.state).not.toHaveProperty('cardView'));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close the detail view' }));
+
+    await waitFor(() => expect(screen.getByText('Overview')).toBeTruthy());
   });
 });

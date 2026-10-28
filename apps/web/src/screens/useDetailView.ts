@@ -35,7 +35,10 @@ export function useDetailView(): {
   const open = useCallback((next: DetailTarget) => {
     entry.current = crypto.randomUUID();
     // The router keeps its own position in the history state, so the entry carries it on.
-    window.history.pushState({ ...window.history.state, detailView: entry.current }, '');
+    window.history.pushState(
+      { ...routerState(window.history.state), detailView: entry.current },
+      '',
+    );
     closing.current = false;
     setTarget(next);
   }, []);
@@ -69,8 +72,19 @@ export function useDetailView(): {
 }
 
 /** The detail view entry a history entry's state names: the one it is, or the one it lies over. */
-function detailEntryOf(state: unknown): unknown {
-  return typeof state === 'object' && state !== null && 'detailView' in state
+function detailEntryOf(state: unknown): string | undefined {
+  return typeof state === 'object' &&
+    state !== null &&
+    'detailView' in state &&
+    typeof state.detailView === 'string'
     ? state.detailView
     : undefined;
+}
+
+/** A history entry's state without the names of the views over the screen, the router's own. */
+function routerState(state: unknown): object {
+  if (typeof state !== 'object' || state === null) return {};
+  return Object.fromEntries(
+    Object.entries(state).filter(([key]) => key !== 'detailView' && key !== 'cardView'),
+  );
 }

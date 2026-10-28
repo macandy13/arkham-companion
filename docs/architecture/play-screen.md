@@ -81,8 +81,9 @@ On a phone a tap on a location, in the compact map or the map row, shows that lo
 ### Cards over the whole screen
 
 On a phone an enemy's details (`EnemyDetails`) and a zoomed card (`CardZoom`: a treachery or asset, a card attached to a location) are the same dialogs as on the tablet, laid over the whole screen without their frame (`game.css`).
-The back gesture closes them as it closes the detail view ([`useBackCloses`](../../apps/web/src/screens/useBackCloses.ts)): opening pushes a history entry, the × and Escape step back through it, and the detail view ignores a back step that lands on its own entry (`useDetailView` names it).
-Their buttons that close them (fight, evade, a card action) close them the same way. A card that goes while it is open (an enemy leaving play) leaves its entry behind, so the next back step changes nothing on the screen.
+The back gesture closes them as it closes the detail view ([`useBackCloses`](../../apps/web/src/screens/useBackCloses.ts)): opening pushes a history entry named by a fresh id, and the ×, Escape and their buttons that close them (fight, evade, a card action) step back through it once.
+The detail view names its own entry too and ignores a back step that lands on it.
+A card that goes while it is open (an enemy leaving play) drops its entry a tick later, unless it mounts again at once (development's double effects), so no back step is left that changes nothing.
 
 ### Screen edges and turning
 
