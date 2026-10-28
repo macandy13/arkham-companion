@@ -23,6 +23,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  attachedTo,
   byName,
   campaign,
   campaignId,
@@ -33,6 +34,7 @@ import {
   PlayTable,
   replay,
   scenario,
+  zoneKey,
   type CampaignCommand,
   type CampaignLog,
   type CardRef,
@@ -42,6 +44,7 @@ import { answer } from '@arkham/engine/test/utils';
 import {
   GRAVEYARD_DECISION,
   HUNTING_SHADOW_DECISION,
+  LOCKED_DOOR_DECISION,
   MIDNIGHT_MASKS_CODES,
   ZEALOT_STORY,
   nightOfTheZealot,
@@ -484,8 +487,9 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
 
     // Round 7 – mythos: the agenda's doom makes 7 of 8, one short. Roland draws
     // the second Locked Door; no location without one has a clue, so Roland,
-    // the lead investigator, picks Rivertown among them all. Daisy draws On Wings of Darkness again, fails,
-    // takes 1 damage and 1 horror and is carried back to Rivertown.
+    // the lead investigator, picks Rivertown among them all. Daisy draws On
+    // Wings of Darkness again, fails, takes 1 damage and 1 horror and is
+    // carried back to Rivertown.
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'drawEncounterCard' });
     expect(table.board.doomInPlay).toBe(7);
     table.answer(byName('Locked Door'), 'Rivertown');
@@ -501,7 +505,8 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     // Round 7 – investigation: the Wizard's doom makes 8. With the hunters
     // next door, Roland runs to Your House and takes its action: he gains 1
     // resource and draws 1 card by hand, as the game holds no player cards.
-    // Daisy takes the agenda's action and resigns.
+    // Daisy tries Locked Door's action in Rivertown, passes agility (4) and
+    // discards the door, then takes the agenda's action and resigns.
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'investigation' });
     expect(table.board.doomInPlay).toBe(8);
     table.startTurn(roland);
@@ -521,6 +526,14 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
       },
     });
     table.startTurn(daisy);
+    const rivertown = table.board.location(byName('Rivertown')).id;
+    const rivertownDoor = table.state.order[zoneKey(attachedTo(rivertown))]?.[0];
+    if (rivertownDoor === undefined) throw new Error('Locked Door is not attached to Rivertown');
+    table.useCardAction(daisy, rivertownDoor);
+    table.play(answer(LOCKED_DOOR_DECISION, 'agility'));
+    table.answer(rivertownDoor, 'pass');
+    expect(table.board.location(byName('Rivertown'))).not.toHaveProperty('attachments');
+    expect(table.board.namesIn({ kind: 'encounterDiscard' })[0]).toBe('Locked Door');
     table.useCardAction(daisy, byName('Time Is Running Short'));
     expect(table.board.investigator(daisy).status).toBe('resigned');
 

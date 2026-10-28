@@ -40,14 +40,23 @@ const plainTreachery = blankTreachery('plain_treachery');
 const aliceDraws: Command = { type: 'DrawEncounter', investigatorId: alice };
 
 /**
- * Alice (the lead) and bob in the hall with `hallClues`, the study with `studyClues`; the door
+ * Alice (the lead) and bob in the hall with `hallClues`, the study with `studyClues` (revealed
+ * unless `studyRevealed` is false); the door
  * is on top of the encounter deck, then a plain treachery and another one, so the deck isn't
  * reshuffled once it has drawn both.
  */
-const doorDrawnWith = (hallClues: number, studyClues: number) =>
+const doorDrawnWith = ({
+  hallClues,
+  studyClues,
+  studyRevealed = true,
+}: {
+  hallClues: number;
+  studyClues: number;
+  studyRevealed?: boolean;
+}) =>
   newGame()
     .withLocation(hall, blankLocation('hall'), { revealed: true, clues: hallClues })
-    .withLocation(study, blankLocation('study'), { revealed: true, clues: studyClues })
+    .withLocation(study, blankLocation('study'), { revealed: studyRevealed, clues: studyClues })
     .withConnection(hall, study)
     .withInvestigator(alice, { locationId: hall })
     .withInvestigator(bob, { locationId: hall })
@@ -57,7 +66,7 @@ const doorDrawnWith = (hallClues: number, studyClues: number) =>
 
 describe('a treachery that attaches to the location with the most clues (Locked Door)', () => {
   it('attaches to the study with 3 clues, not to the hall alice drew it in', () => {
-    const { context, state } = doorDrawnWith(1, 3).start();
+    const { context, state } = doorDrawnWith({ hallClues: 1, studyClues: 3 }).start();
 
     const after = stateAfter(context, state, aliceDraws);
 
@@ -66,7 +75,7 @@ describe('a treachery that attaches to the location with the most clues (Locked 
   });
 
   it('attaches to the hall when the study already has a copy', () => {
-    const { context, state } = doorDrawnWith(1, 3)
+    const { context, state } = doorDrawnWith({ hallClues: 1, studyClues: 3 })
       .withCard(instanceId('old_door'), lockingDoor, attachedTo(study))
       .start();
 
@@ -75,26 +84,32 @@ describe('a treachery that attaches to the location with the most clues (Locked 
     expect(after.cards[door]?.zone).toEqual(attachedTo(hall));
   });
 
-  it('asks alice, the lead, between the hall and the study with 2 clues each', () => {
-    const { context, state } = doorDrawnWith(2, 2).start();
+  it.each([
+    { study: 'revealed', hallClues: 2, studyClues: 2, studyRevealed: true },
+    { study: 'unrevealed', hallClues: 0, studyClues: 0, studyRevealed: false },
+  ])(
+    'asks alice, the lead, between the hall with $hallClues clues and the $study study with $studyClues',
+    ({ hallClues, studyClues, studyRevealed }) => {
+      const { context, state } = doorDrawnWith({ hallClues, studyClues, studyRevealed }).start();
 
-    const asked = stateAfter(context, state, aliceDraws);
+      const asked = stateAfter(context, state, aliceDraws);
 
-    expect(asked.pending).toMatchObject([
-      {
-        id: 'most:door',
-        kind: 'chooseLocation',
-        prompt: 'decision.chooseLocationToAttach',
-        decider: { kind: 'lead' },
-        options: [{ id: hall }, { id: study }],
-      },
-    ]);
-    const after = stateAfter(context, asked, answer('most:door', study));
-    expect(after.cards[door]?.zone).toEqual(attachedTo(study));
-  });
+      expect(asked.pending).toMatchObject([
+        {
+          id: 'most:door',
+          kind: 'chooseLocation',
+          prompt: 'decision.chooseLocationToAttach',
+          decider: { kind: 'lead' },
+          options: [{ id: hall }, { id: study }],
+        },
+      ]);
+      const after = stateAfter(context, asked, answer('most:door', study));
+      expect(after.cards[door]?.zone).toEqual(attachedTo(study));
+    },
+  );
 
   it('is discarded and surges when both locations have a copy', () => {
-    const { context, state } = doorDrawnWith(1, 3)
+    const { context, state } = doorDrawnWith({ hallClues: 1, studyClues: 3 })
       .withCard(instanceId('hall_door'), lockingDoor, attachedTo(hall))
       .withCard(instanceId('study_door'), lockingDoor, attachedTo(study))
       .start();

@@ -607,10 +607,7 @@ function conditionHolds(
         investigatorId !== undefined && isActiveInvestigator(state, investigatorId)
           ? requireInvestigator(state, investigatorId).locationId
           : undefined;
-      return (
-        from === undefined ||
-        candidatesFor(ctx, state, condition.ref, opened.cardId, from).length === 0
-      );
+      return candidatesFor(ctx, state, condition.ref, opened.cardId, from).length === 0;
     }
     case 'tokensOnSelf': {
       const held = state.cards[opened.cardId]?.tokens[condition.token] ?? 0;
@@ -673,7 +670,7 @@ export function resolveEffect(
     });
   const picked = pickedRef(deferred);
   if (picked === undefined) return commandsFor();
-  if (investigator?.locationId === undefined) return [];
+  if (investigator === undefined) return [];
   const candidates = candidatesFor(ctx, state, picked, opened.cardId, investigator.locationId);
   const [first, ...others] = candidates;
   if (first === undefined) return [];
@@ -745,18 +742,19 @@ function pickedRef(effect: unknown): PickedRef | undefined {
 
 /**
  * The cards `picked` may stand for when `cardId`'s ability resolves, counted from `from`, the
- * location of the investigator the window names.
+ * location of the investigator the window names: no nearest enemy without it, while the
+ * location with the most tokens doesn't depend on it.
  */
 function candidatesFor(
   ctx: EngineContext,
   state: GameState,
   picked: PickedRef,
   cardId: InstanceId,
-  from: InstanceId,
+  from: InstanceId | undefined,
 ): CardInstance[] {
   switch (picked.ref) {
     case 'nearestEnemy':
-      return nearestEnemies(ctx, state, from, picked.trait);
+      return from === undefined ? [] : nearestEnemies(ctx, state, from, picked.trait);
     case 'locationWith':
       return locationsInPlay(ctx, state).filter(
         (location) =>
