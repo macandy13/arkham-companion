@@ -146,8 +146,8 @@ export type TimingWindow =
    */
   | { kind: 'enemyDefeated'; enemy: CardCode }
   /**
-   * An investigator entered a location of code `location` (`InvestigatorMoved`, counted like
-   * `entered`): an objective of the current agenda or act ("If an investigator enters the Ritual
+   * An investigator moved into a location of code `location` (`InvestigatorMoved` from another
+   * location, as for `entered`, and after that location's own `entered` abilities): an objective of the current agenda or act ("If an investigator enters the Ritual
    * Site, advance"), opened for both, naming the investigator.
    */
   | { kind: 'investigatorEntered'; location: CardCode }

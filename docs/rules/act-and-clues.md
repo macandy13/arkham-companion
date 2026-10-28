@@ -6,7 +6,7 @@
 - A successful investigate discovers 1 clue: it moves from the location to the investigator.
 - An "Objective –" is active only while its agenda or act is current: the cards below it in the deck are not in play.
   - "If the Ghoul Priest is defeated, advance" fires when the defeat happens while act 3 is current.
-  - "If an investigator enters the Ritual Site, advance" (Into the Darkness, The Devourer Below act 2) fires when an investigator moves into it, revealed or not; being placed there at setup is no move.
+  - "If an investigator enters the Ritual Site, advance" (Into the Darkness, The Devourer Below act 2) fires when an investigator moves into it, revealed or not ([Move](https://arkhamdb.com/rules#Move): moving enters the new location). It can't fire at setup: the Ritual Site is set aside until act 1 advances, and act 2 isn't current yet.
   - Advancing by an objective spends no clues: the objective overrides the clue requirement (RR "Act Deck and Agenda Deck").
 - If the act has no "Objective –", the group may spend the required clues from any mix of investigators at any player window during an investigator's turn ([free] ability) to advance it. An "Objective –" replaces or adds to that requirement.
   - The app models this as the act's own free action, offered during any investigator's turn; clues on the act don't count towards it.
