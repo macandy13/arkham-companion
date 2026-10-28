@@ -121,34 +121,46 @@ test('pan the map and swipe on from its strips on a phone', async ({ page }) => 
 // Journey: on a phone, a tap on the Hallway in the compact map shows it in the map row in place of
 // the map, its neighbours around it; a tap on the Attic above it shows the Attic, where Roland
 // Banks moves, and the Map button brings the map back.
-test(
-  'open a location in the map row and move on from it on a phone',
-  { tag: '@flow' },
-  async ({ page }) => {
-    const board = page.locator('#board');
-    const shown = page.locator('#map > section[data-mode="location"]');
+test('open a location in the map row and move on from it on a phone', async ({ page }) => {
+  const board = page.locator('#board');
+  const shown = page.locator('#map > section[data-mode="location"]');
 
-    await test.step('Tap the Hallway on the map', async () => {
-      await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
-      await page.getByRole('button', { name: 'Details of Hallway' }).click();
-      await expect(board).toHaveAttribute('data-view', 'detail');
-      await expect(shown.getByRole('heading', { name: 'Hallway' })).toBeInViewport();
-    });
+  await test.step('Tap the Hallway on the map', async () => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    await page.getByRole('button', { name: 'Details of Hallway' }).click();
+    await expect(board).toHaveAttribute('data-view', 'detail');
+    await expect(shown.getByRole('heading', { name: 'Hallway' })).toBeInViewport();
+  });
 
-    await test.step('Jump to the Attic beside it', async () => {
-      await shown.getByRole('button', { name: /^Go to Attic/ }).click();
-      await expect(shown.getByRole('heading', { name: 'Attic' })).toBeInViewport();
-    });
+  await test.step('Jump to the Attic beside it', async () => {
+    await shown.getByRole('button', { name: /^Go to Attic/ }).click();
+    await expect(shown.getByRole('heading', { name: 'Attic' })).toBeInViewport();
+  });
 
-    await test.step('Move Roland Banks there', async () => {
-      await shown.getByRole('button', { name: 'Move here · 1 action' }).click();
-      await expect(shown.getByRole('region', { name: 'Here' })).toContainText('Roland Banks');
-    });
+  await test.step('Move Roland Banks there', async () => {
+    await shown.getByRole('button', { name: 'Move here · 1 action' }).click();
+    await expect(shown.getByRole('region', { name: 'Here' })).toContainText('Roland Banks');
+  });
 
-    await test.step('Go back to the whole map', async () => {
-      await shown.getByRole('button', { name: 'Map' }).click();
-      await expect(page.getByRole('figure', { name: 'House' })).toBeInViewport();
-      await expect(shown).toHaveCount(0);
-    });
-  },
-);
+  await test.step('Go back to the whole map', async () => {
+    await shown.getByRole('button', { name: 'Map' }).click();
+    await expect(page.getByRole('figure', { name: 'House' })).toBeInViewport();
+    await expect(shown).toHaveCount(0);
+  });
+});
+
+test.describe('a phone held sideways', () => {
+  test.use({ viewport: { width: 844, height: 390 } });
+
+  // The tablet's board, its header in one short row, so the map and the panel still show.
+  test('keeps the map and the investigator panel on the screen', async ({ page }) => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+
+    await expect(page.locator('#board')).not.toHaveAttribute('data-view', 'detail');
+    await expect(
+      page.getByRole('figure', { name: 'House' }).getByRole('group', { name: 'Hallway' }),
+    ).toBeInViewport();
+    await expect(page.getByRole('region', { name: 'Roland Banks' })).toBeInViewport();
+    await expect(page.getByRole('button', { name: 'Next' })).toBeInViewport({ ratio: 1 });
+  });
+});

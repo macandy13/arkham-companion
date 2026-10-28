@@ -5,7 +5,7 @@
  * width to spare and the map keeps its height.
  */
 #app:has(#board) {
-  height: 100vh;
+  height: 100dvh;
   /* The play screen has no title bar, so the board takes the one row. */
   grid-template-rows: 1fr;
 }
@@ -642,12 +642,12 @@
 }
 
 /*
- * A phone held upright, in the compact view (tokens.css shrinks the cards and tokens alike): the
- * four header cards in one row without their labels, piles or plates, so the map takes the room
- * left. A tap on a card opens the detail view on it, where they come back. The status row keeps
- * to one line.
+ * A phone, upright in the compact view or held sideways on the tablet's board (tokens.css shrinks
+ * the cards and tokens alike): the header cards in one row without their labels, so the map takes
+ * the room left.
  */
-@media (orientation: portrait) and (max-width: 40rem) {
+@media (orientation: portrait) and (max-width: 40rem),
+  (orientation: landscape) and (max-height: 30rem) {
   #board:not([data-view]) > header,
   #board:not([data-view]) > header > section {
     flex-wrap: nowrap;
@@ -667,16 +667,23 @@
     white-space: nowrap;
   }
 
-  #board:not([data-view]) > header [data-pile],
-  #board:not([data-view]) > header > section:has([data-pile='victoryDisplay']),
-  #board:not([data-view]) > header > section > [data-card] > footer {
-    display: none;
-  }
-
   #board:not([data-view]) > header > section > [data-card] > :is(h1, h2) {
     padding: var(--space-1);
     font-size: var(--font-size-note);
     line-height: 1;
+  }
+}
+
+/*
+ * A phone held upright, in the compact view: the four header cards without their piles or plates.
+ * A tap on a card opens the detail view on it, where they come back. The status row keeps to one
+ * line.
+ */
+@media (orientation: portrait) and (max-width: 40rem) {
+  #board:not([data-view]) > header [data-pile],
+  #board:not([data-view]) > header > section:has([data-pile='victoryDisplay']),
+  #board:not([data-view]) > header > section > [data-card] > footer {
+    display: none;
   }
 
   #board:not([data-view]) > header > section > [data-card] [data-token]:not([data-token='cards']) {
@@ -961,16 +968,16 @@
 
   #board[data-view='detail'] > #notices {
     position: fixed;
-    inset-inline: var(--space-2);
-    inset-block-end: var(--space-5);
+    inset-inline: calc(var(--space-2) + var(--safe-left)) calc(var(--space-2) + var(--safe-right));
+    inset-block-end: calc(var(--space-5) + var(--safe-bottom));
     z-index: var(--layer-detail-controls);
   }
 
   /* At the top left, clear of the map's zoom buttons at its top right. */
   #board[data-view='detail'] > button[data-detail='close'] {
     position: fixed;
-    inset-block-start: var(--space-2);
-    inset-inline-start: var(--space-2);
+    inset-block-start: calc(var(--space-2) + var(--safe-top));
+    inset-inline-start: calc(var(--space-2) + var(--safe-left));
     z-index: var(--layer-detail-controls);
     border-radius: var(--radius-round);
   }
@@ -993,14 +1000,14 @@
 
   #board[data-view='detail'] > ol[data-dots='rows'] {
     flex-direction: column;
-    inset-inline-end: var(--space-1);
+    inset-inline-end: calc(var(--space-1) + var(--safe-right));
     inset-block-start: 50%;
     transform: translateY(-50%);
   }
 
   #board[data-view='detail'] > ol[data-dots='items'] {
     inset-inline: 0;
-    inset-block-end: var(--space-2);
+    inset-block-end: calc(var(--space-2) + var(--safe-bottom));
     justify-content: center;
   }
 
