@@ -1,21 +1,14 @@
 # Act and clues
 
 [Clues](https://arkhamdb.com/rules#Clues), [act deck](https://arkhamdb.com/rules#Act_Deck_and_Agenda_Deck).
+Card rulings: [Objectives and special acts and agendas](cards/objectives.md).
 
 - When an investigator first enters an unrevealed location, it is revealed and gets clues equal to its clue value, which is usually per investigator. An enemy moving into an unrevealed location does **not** reveal it.
 - A successful investigate discovers 1 clue: it moves from the location to the investigator.
-- Ritual Site (The Devourer Below): "At the end of the round, if there are fewer than 2 clues per investigator on Ritual Site: Add clues to it until it has 2 clues per investigator on it." The clues come from the token pool, counted per investigator who started the scenario, like its clue value ([Per Investigator](https://arkhamdb.com/rules#Per_Investigator): eliminated investigators still count). Only a revealed Ritual Site does it: an unrevealed location's abilities are on its revealed side ([Locations](https://arkhamdb.com/rules#Locations)).
 - An "Objective –" is active only while its agenda or act is current: the cards below it in the deck are not in play.
-  - "If the Ghoul Priest is defeated, advance" fires when the defeat happens while act 3 is current.
-  - "If an investigator enters the Ritual Site, advance" (Into the Darkness, The Devourer Below act 2) fires when an investigator moves into it, revealed or not ([Move](https://arkhamdb.com/rules#Move): moving enters the new location). It can't fire at setup: the Ritual Site is set aside until act 1 advances, and act 2 isn't current yet.
-  - "If there are 6 unique [[Cultist]] enemies in the victory display, advance" (Uncovering the Conspiracy, The Midnight Masks act 1) counts unique (✷) Cultists only, so an Acolyte there doesn't count; the app checks it whenever a card enters the victory display, by a defeat or by an effect such as a Parley. Ruth Turner, who goes there once evaded, triggers it as well. A card put there by hand, a correction, doesn't.
   - Advancing by an objective spends no clues: the objective overrides the clue requirement (RR "Act Deck and Agenda Deck").
 - If the act has no "Objective –", the group may spend the required clues from any mix of investigators at any player window during an investigator's turn ([free] ability) to advance it. An "Objective –" replaces or adds to that requirement.
   - The app models this as the act's own free action, offered during any investigator's turn; clues on the act don't count towards it.
-- Disrupting the Ritual (The Devourer Below, act 3) has no clue requirement: its objective advances it once 2 clues per investigator lie on it.
-  - Only its own action puts clues there, 1 from the token pool on a passed test (the clue its cost spends is not one of them).
-  - Investigators can't spend clues to advance it.
-  - The app checks the objective as clues arrive and advances the act itself; clues put on it by hand, a correction, don't trigger it.
 - Advancing an act removes all tokens from it (RR "Act Deck and Agenda Deck" step 1), flips it, follows the back, and makes the next act current (unless the back names one).
 - For agenda and act alike, the back resolves completely first, including any choice it asks. Only then does the next card become current, and at that same moment the advanced card leaves the game (RR "Act Deck and Agenda Deck" step 3: "simultaneously removed").
 - A "(→R#)" on any card ends the scenario with that resolution.
