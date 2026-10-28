@@ -2,7 +2,7 @@ import { neighbours } from './board';
 import { resolveValue, type EngineContext } from './cards';
 import { cluesToAdvance } from './card_actions';
 import { describeDecision } from './describe_decision';
-import { doomInPlay } from './doom';
+import { agendaThreshold, doomInPlay } from './doom';
 import type { InstanceId, MapId } from './ids';
 import { cardsInZone } from './lookup';
 import { mapLocations } from './map';
@@ -79,8 +79,8 @@ function turnLines(state: GameState): string[] {
 function agendaLine(ctx: EngineContext, state: GameState): string {
   const agenda = currentCard(state, state.agenda.current);
   if (!agenda) return 'Agenda: none';
-  const threshold = ctx.cards.get(agenda.code)?.doom;
-  const of = threshold === undefined ? '' : `/${resolveValue(threshold, state.meta.playerCount)}`;
+  const threshold = agendaThreshold(ctx, state, agenda);
+  const of = threshold === undefined ? '' : `/${threshold}`;
   return `Agenda: ${nameOf(ctx, agenda)} – doom ${doomInPlay(state)}${of}`;
 }
 

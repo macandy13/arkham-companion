@@ -108,6 +108,19 @@ describe('formatBoard', () => {
     `);
   });
 
+  it('shows no doom threshold for a face-down agenda', () => {
+    const { context: faceDownContext, state } = newGame()
+      .withCard(
+        instanceId('plan'),
+        planCard,
+        { kind: 'agendaDeck' },
+        { faceUp: false, tokens: { doom: 1 } },
+      )
+      .start();
+
+    expect(formatBoard(faceDownContext, state).split('\n')[1]).toBe('Agenda: The Plan – doom 1');
+  });
+
   it('lists pending decisions with their options', () => {
     const state = stateAfter(
       context,
