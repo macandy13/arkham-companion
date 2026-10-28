@@ -779,6 +779,27 @@ describe('MapBoard', () => {
       expect(offered(location)).toEqual(buttons);
     });
 
+    it('turns taking a clue off while an enemy engaged with alder forbids discovering clues', () => {
+      const hunter = blankEnemy('hunter', {
+        restrictions: [{ cannot: ['discover'], what: 'clues', who: 'threatArea' }],
+      });
+      const table = PlayTable.start(
+        house
+          .withInvestigator(alder, { locationId: study })
+          .withCard(instanceId('hunter'), hunter, engagedWith(alder))
+          .withTurnOf(alder),
+      );
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+
+      fireEvent.click(tile('study'));
+
+      expect(
+        within(details('study')).getByRole('button', { name: 'Take a clue, no test' }),
+      ).toHaveProperty('disabled', true);
+    });
+
     it('turns investigate off under a locked door and offers no move past a barrier', () => {
       const table = PlayTable.start(
         newGame()

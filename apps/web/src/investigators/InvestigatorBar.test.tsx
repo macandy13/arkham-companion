@@ -805,6 +805,28 @@ describe('InvestigatorBar', () => {
         .toMatchObject([{ prompt: 'decision.investigate', for: alder }]);
     });
 
+    it('turns "Play a card" off while dissonant voices in alder’s threat area forbid it', () => {
+      const voices = blankTreachery('voices', {
+        restrictions: [{ cannot: ['play'], what: 'cards', who: 'threatArea' }],
+      });
+      const table = PlayTable.start(
+        twoAtStudy.withCard(instanceId('voices'), voices, threatAreaOf(alder)).withTurnOf(alder),
+      );
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      expect(within(panel('alder')).getByRole('button', { name: 'Play a card' })).toHaveProperty(
+        'disabled',
+        true,
+      );
+    });
+
     it('turns "Investigate" off while a locked door on the study forbids it', () => {
       const lockedDoor = blankTreachery('locked_door', {
         restrictions: [{ cannot: 'investigate', of: 'host' }],

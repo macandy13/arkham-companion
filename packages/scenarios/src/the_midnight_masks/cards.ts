@@ -124,7 +124,7 @@ const cultist = ['Humanoid', 'Cultist'];
  * - Ruth Turner going to the victory display once evaded: the `afterTest`
  *   window opens before the evade exhausts and disengages her
  * - Acolyte's doom as it enters play during the game (setup places it)
- * - the Masked Hunter's and Hunting Nightgaunt's constant abilities
+ * - Hunting Nightgaunt's constant ability
  * - Locked Door's revelation (attach to the location with the most clues, MC1.3) and its action
  * - the players' pick among several Cultist enemies for Mysterious Chanting's
  *   search: the engine draws the first match (#346)
@@ -338,6 +338,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     horror: 1,
     victory: 2,
     keywords: [spawn('Engaged with prey'), prey('Most clues'), { name: 'hunter' }],
+    restrictions: [{ cannot: ['discover', 'spend'], what: 'clues', who: 'threatArea' }],
   }),
   enemy({
     code: '01137',

@@ -1,4 +1,4 @@
-import { assertNever, listIfAny } from '@arkham/util';
+import { assertNever, listIfAny, recordIfAny } from '@arkham/util';
 import { isConnectionOpen, neighbours } from './board';
 import { tokenObjective } from './abilities';
 import {
@@ -55,7 +55,13 @@ import { attacksStillDue } from './phases';
 import { NAMED_AMOUNTS } from './state';
 import { boostedSkills, cluesHeldByGroup, requireInvestigator } from './investigators';
 import { CommandRejected } from './rejection';
-import { isRestricted, LOCATION_RESTRICTIONS, type LocationRestriction } from './restrictions';
+import {
+  forbiddenFor,
+  isRestricted,
+  LOCATION_RESTRICTIONS,
+  type Forbidden,
+  type LocationRestriction,
+} from './restrictions';
 import { skillTestSuggestion, type SkillTestInput } from './skill_modifiers';
 import { victoryPoints } from './victory';
 import type {
@@ -137,6 +143,12 @@ export interface InvestigatorView {
   threatArea?: CardName[];
   /** Printed names of the cards they control (`playArea` zone, e.g. Lita Chantler), left out while there are none. */
   controls?: CardName[];
+  /**
+   * What the cards in play forbid them, verbs by noun (`forbiddenFor`): `{ clues: ['discover',
+   * 'spend'] }` under The Masked Hunter, `{ cards: ['play'] }` under Dissonant Voices. The screen
+   * offers none of it; absent when nothing is forbidden.
+   */
+  forbidden?: Forbidden;
 }
 
 /**
@@ -920,6 +932,7 @@ function investigatorView(
       'controls',
       namesIn(ctx, state, { kind: 'playArea', investigatorId: investigator.id }),
     ),
+    ...recordIfAny('forbidden', forbiddenFor(ctx, state, investigator.id)),
   };
 }
 
@@ -1041,7 +1054,7 @@ function actView(ctx: EngineContext, state: GameState): ActView | undefined {
   const act = currentCard(state, 'act');
   if (!act) return undefined;
   const stats = cardStats(ctx.cards, act.code);
-  const advance = actAdvance(state, stats);
+  const advance = actAdvance(ctx, state, stats);
   return {
     id: act.id,
     name: nameOf(ctx, act),
@@ -1051,7 +1064,11 @@ function actView(ctx: EngineContext, state: GameState): ActView | undefined {
   };
 }
 
-function actAdvance(state: GameState, stats: CardStats): ActAdvance | undefined {
+function actAdvance(
+  ctx: EngineContext,
+  state: GameState,
+  stats: CardStats,
+): ActAdvance | undefined {
   const onAct = tokenObjective(stats, 'clue');
   if (onAct !== undefined)
     return { kind: 'cluesOnAct', threshold: resolveValue(onAct, state.meta.playerCount) };
@@ -1059,7 +1076,7 @@ function actAdvance(state: GameState, stats: CardStats): ActAdvance | undefined 
   if (spent === undefined) return undefined;
   return {
     kind: 'spendClues',
-    held: cluesHeldByGroup(state),
+    held: cluesHeldByGroup(ctx, state),
     threshold: resolveValue(spent, state.meta.playerCount),
   };
 }

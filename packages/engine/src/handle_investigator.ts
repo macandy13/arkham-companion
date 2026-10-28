@@ -4,6 +4,7 @@ import type {
   AdjustInvestigator,
   GainResources,
   HealInvestigator,
+  PlayCard,
   PlayerCardCommand,
   DefeatInvestigator,
   DiscoverClues,
@@ -33,7 +34,7 @@ import {
 import { requireCard } from './lookup';
 import { replay } from './reducer';
 import { CommandRejected } from './rejection';
-import { isRestricted } from './restrictions';
+import { isRestricted, isRestrictedFor } from './restrictions';
 import type { GameState } from './state';
 
 /**
@@ -131,6 +132,22 @@ export function deferToPlayers(
 }
 
 /**
+ * `PlayCard`: left to the players like `deferToPlayers`, but rejected for an investigator a card
+ * forbids to play every card (`isRestrictedFor`, Dissonant Voices' "assets or events", the only
+ * cards played), which the engine can refuse without seeing the card.
+ */
+export function handlePlayCard(ctx: EngineContext, state: GameState, cmd: PlayCard): Event[] {
+  if (isRestrictedFor(ctx, state, cmd.investigatorId, 'play', 'cards'))
+    throw new CommandRejected({
+      code: 'restrictedFor',
+      cannot: 'play',
+      what: 'cards',
+      investigatorId: cmd.investigatorId,
+    });
+  return deferToPlayers(ctx, state, cmd);
+}
+
+/**
  * `AdjustInvestigator`: changes one counter and defeats the investigator in
  * the same step if that uses up their health or sanity, so no state ever
  * shows an active investigator with nothing left. A defeat comes with the
@@ -215,12 +232,23 @@ export function handleSetLeadInvestigator(
   return [{ type: 'LeadInvestigatorChanged', investigatorId: investigator.id }];
 }
 
-/** `DiscoverClues`: moves `amount` clues from the investigator's own location to them. */
+/**
+ * `DiscoverClues`: moves `amount` clues from the investigator's own location to them. Rejected for
+ * an investigator a card forbids to discover clues (`isRestrictedFor`, The Masked Hunter).
+ */
 export function handleDiscoverClues(
+  ctx: EngineContext,
   state: GameState,
   cmd: DiscoverClues,
 ): (TokensChanged | InvestigatorChanged | CluesDiscovered)[] {
   const investigator = activeInvestigator(state, cmd.investigatorId);
+  if (isRestrictedFor(ctx, state, investigator.id, 'discover', 'clues'))
+    throw new CommandRejected({
+      code: 'restrictedFor',
+      cannot: 'discover',
+      what: 'clues',
+      investigatorId: investigator.id,
+    });
   if (!Number.isInteger(cmd.amount) || cmd.amount <= 0)
     throw new CommandRejected({ code: 'invalidTokenDelta', delta: cmd.amount });
   const location = requireCard(state.cards, cmd.locationId);

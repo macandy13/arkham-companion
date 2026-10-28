@@ -61,7 +61,7 @@ When its turn comes, `resolveEffect` fills in the IDs from the current state, so
 
 Commands on player cards (`DrawCards`, `SearchDeck`, `PlayCard`; factories `drawCards`, `searchDeck`; and `DiscardFromHand`, which only a `handCards` cost emits) are written as if the engine could carry them out.
 
-- Their handler decides it can't, since the game holds no player cards, and records `CommandDeferred`, which the play screen lists with the skipped effects for the players to do, unless the players took it as an action themselves (`asAction`).
+- Their handler decides it can't, since the game holds no player cards, and records `CommandDeferred` (`PlayCard` is first rejected while a card forbids its investigator to play assets or events, below), which the play screen lists with the skipped effects for the players to do, unless the players took it as an action themselves (`asAction`).
 - Such a command a card asked for carries its `source` (`CommandSource`: the card and the timing window), stamped by `resolveEffect` (`withSource`, a choice's options included) or by the action's hand card cost, so the notice names the card ("Your House asks Roland Banks to draw 1 card"); a command without one is the players' own.
 - The basic draw and play actions are these commands taken `asAction`, and the resource action is `GainResources` (which card effects use too) taken `asAction`, so all three provoke attacks of opportunity like the actions the engine carries out.
 - Supporting player cards later only changes those handlers.
@@ -134,6 +134,15 @@ The `investigatorTurn` condition ("during any investigator's turn") holds while 
 ## Constant abilities
 
 Constant abilities are data too (`CardStats.modifiers`); [`effectiveValue`](../../packages/engine/src/card_values.ts) is the one place that answers "what is this value now". "Cannot" abilities are `CardStats.restrictions` ([`CardRestriction`](../../packages/engine/src/restrictions.ts): what is forbidden, `moveInto` or `investigate`, at which location, the card itself or its host), and [`isRestricted`](../../packages/engine/src/restrictions.ts) is the one place that answers "may anyone do this here": `MoveInvestigator` and `Investigate` reject a forbidden step (`restricted`), and `LocationView.forbidden` lists them so the screen offers neither. Like a modifier a restriction holds while its card is in play and a location's once it is revealed, except one printed on the unrevealed side (`unrevealed`, the Parlor's barrier), which holds until then.
+
+A restriction can also bind an investigator (`InvestigatorCardRestriction`), which [`isRestrictedFor`](../../packages/engine/src/restrictions.ts) answers:
+
+- It names verbs and the noun they act on (`RESTRICTED_VERBS`): The Masked Hunter is `cannot: ['discover', 'spend'], what: 'clues'`, Dissonant Voices `cannot: ['play'], what: 'cards'`. A new "cannot", such as healing horror or gaining resources, adds its verb and noun there and a check in its handler.
+- It binds the investigator in whose threat area the card is, an engaged enemy included (`who: 'threatArea'`).
+- `play` `cards` names the cards by type and trait (`PlayedCardFilter`). The engine never sees the card played, so it refuses a `PlayCard` only where the filter names every played card, as Dissonant Voices' assets or events do.
+- `DiscoverClues` and `PlayCard` reject it (`restrictedFor`), and a passed investigation discovers nothing.
+- Clue costs leave their clues out (`cluesHeldByGroup`, `defaultCluePayments`); `groupCluePayments` rejects them as payers, and `canPay` an own clue cost.
+- `InvestigatorView.forbidden` lists them for the screen, verbs by noun (`forbiddenFor`: `{ clues: ['discover', 'spend'] }`).
 
 ## Extension points
 

@@ -48,6 +48,7 @@ import {
   handleDefeatInvestigator,
   handleDiscoverClues,
   handleMoveInvestigator,
+  handlePlayCard,
   handlePlaceClues,
   handleSetLeadInvestigator,
   handleTakeDamageAndHorror,
@@ -204,7 +205,7 @@ const COMMAND_SPECS: CommandSpecs = {
   DrawCards: { handle: deferToPlayers, provokes: asAction },
   SearchDeck: { handle: deferToPlayers },
   DiscardFromHand: { handle: deferToPlayers },
-  PlayCard: { handle: deferToPlayers, provokes: asAction },
+  PlayCard: { handle: handlePlayCard, provokes: asAction },
   AdjustInvestigator: {
     handle: handleAdjustInvestigator,
   },
@@ -212,7 +213,7 @@ const COMMAND_SPECS: CommandSpecs = {
   DefeatInvestigator: {
     handle: handleDefeatInvestigator,
   },
-  DiscoverClues: { handle: (_ctx, state, command) => handleDiscoverClues(state, command) },
+  DiscoverClues: { handle: handleDiscoverClues },
   PlaceClues: { handle: (_ctx, state, command) => handlePlaceClues(state, command) },
   PlaceDoom: { handle: (_ctx, state, command) => handlePlaceDoom(state, command) },
   PlaceTokens: { handle: (_ctx, state, command) => handlePlaceTokens(state, command) },

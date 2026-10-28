@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { listIfAny, shallowEqual, withoutKey } from './index';
+import { listIfAny, recordIfAny, shallowEqual, withoutEmptyLists, withoutKey } from './index';
 
 describe('withoutKey', () => {
   it('removes the key from the copy', () => {
@@ -36,6 +36,28 @@ describe('listIfAny', () => {
     const list = ['study'];
 
     expect(listIfAny('cards', list).cards).not.toBe(list);
+  });
+});
+
+describe('withoutEmptyLists', () => {
+  it.each([
+    { record: { clues: [], cards: [] }, expected: {} },
+    { record: { clues: ['spend'], cards: [] }, expected: { clues: ['spend'] } },
+    {
+      record: { clues: ['spend'], cards: ['play'] },
+      expected: { clues: ['spend'], cards: ['play'] },
+    },
+  ])('returns $expected for $record', ({ record, expected }) => {
+    expect(withoutEmptyLists(record)).toStrictEqual(expected);
+  });
+});
+
+describe('recordIfAny', () => {
+  it.each([
+    { record: {}, expected: {} },
+    { record: { clues: ['spend'] }, expected: { forbidden: { clues: ['spend'] } } },
+  ])('returns $expected for $record', ({ record, expected }) => {
+    expect(recordIfAny('forbidden', record)).toStrictEqual(expected);
   });
 });
 
