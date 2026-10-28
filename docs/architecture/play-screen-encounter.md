@@ -10,6 +10,7 @@ Big round tokens show:
 ## Agenda and act
 
 A tap on the agenda or act (or its name, a button for the keyboard) opens it as a full card in a dialog ([`CardDetails`](../../apps/web/src/screens/GameHeader.tsx)), the same face with its picture large and its buttons at full size, and under it the card actions it offers the investigator whose turn it is (`CardActions`, as in the details windows); advancing or taking one closes it, since a decision may follow.
+In the phone's [detail view](play-screen.md#detail-view) the agenda and act are shown full instead (`GameHeader` `full`): their card actions sit under them and a tap opens no dialog.
 
 The act's Advance button takes its spend-clues action for the investigator whose turn it is (`GameActions.advanceAct`), so it waits for a turn and enough clues.
 The clue steppers, a correction while adjusting, show only for an act that counts the clues on it.

@@ -767,6 +767,11 @@
     scroll-snap-align: start;
   }
 
+  /* The agenda's or act's action row, under the card shown full (GameHeader `full`). */
+  #board[data-view='detail'] > header > section > footer {
+    flex-basis: 100%;
+  }
+
   /*
    * The map row: the map between its two strips (MapStrip). The map takes every touch, for panning
    * and pinching, so the browser never starts scrolling the board before the map's own handlers

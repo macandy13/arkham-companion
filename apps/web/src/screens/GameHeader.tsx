@@ -19,18 +19,22 @@ import type { HeaderCardKind } from './useDetailView';
  * row below (`GameStatus`). A tap on the agenda or act opens it as a full card (`CardDetails`).
  * `board` is the open game's `OpenGame.board`. On a phone's compact view a tap on any of the four
  * cards calls `onOpenCard` instead (the detail view opens on it), so the card's own buttons and
- * dialogs wait for the detail view.
+ * dialogs wait for the detail view. There the cards show `full`: the agenda and act are already
+ * as large as the screen allows, so their action rows sit under them and a tap opens no second,
+ * full-card dialog.
  */
 export function GameHeader({
   store,
   open,
   board,
   onOpenCard,
+  full = false,
 }: {
   store: StoreApi<AppState>;
   open: OpenGame;
   board: BoardView;
   onOpenCard?: ((card: HeaderCardKind) => void) | undefined;
+  full?: boolean;
 }) {
   const { t } = useTranslation();
   const blocked = open.busy;
@@ -53,6 +57,7 @@ export function GameHeader({
         board={board}
         blocked={blocked}
         adjusting={adjusting}
+        full={full}
         onOpen={onOpenCard}
       />
       <ActStatus
@@ -60,6 +65,7 @@ export function GameHeader({
         board={board}
         blocked={blocked}
         adjusting={adjusting}
+        full={full}
         onOpen={onOpenCard}
       />
       <HeaderSlot label={t('header.scenario')} card="scenario" onOpen={onOpenCard}>
@@ -98,12 +104,14 @@ function AgendaStatus({
   board,
   blocked,
   adjusting,
+  full,
   onOpen,
 }: {
   store: StoreApi<AppState>;
   board: BoardView;
   blocked: boolean;
   adjusting: boolean;
+  full: boolean;
   onOpen: ((card: HeaderCardKind) => void) | undefined;
 }) {
   const { t } = useTranslation();
@@ -113,6 +121,9 @@ function AgendaStatus({
   const { actions } = store.getState();
   const close = () => setZoomed(false);
   const offered = adjusting ? [] : cardActionsOn(board, agenda.id);
+  const actionRow = offered.length > 0 && (
+    <CardActions offered={offered} actions={actions} busy={blocked} onUse={close} />
+  );
   const tokenAndPlate = (
     <>
       <Token
@@ -154,20 +165,17 @@ function AgendaStatus({
         kind="agenda"
         name={agenda.name}
         image={agenda.image}
-        onOpen={() => setZoomed(true)}
+        onOpen={full ? undefined : () => setZoomed(true)}
       >
         {tokenAndPlate}
       </HeaderCard>
-      {zoomed && (
+      {full && actionRow && <footer>{actionRow}</footer>}
+      {zoomed && !full && (
         <CardDetails
           kind="agenda"
           name={agenda.name}
           image={agenda.image}
-          actionRow={
-            offered.length > 0 && (
-              <CardActions offered={offered} actions={actions} busy={blocked} onUse={close} />
-            )
-          }
+          actionRow={actionRow}
           onClose={close}
         >
           {tokenAndPlate}
@@ -191,12 +199,14 @@ function ActStatus({
   board,
   blocked,
   adjusting,
+  full,
   onOpen,
 }: {
   store: StoreApi<AppState>;
   board: BoardView;
   blocked: boolean;
   adjusting: boolean;
+  full: boolean;
   onOpen: ((card: HeaderCardKind) => void) | undefined;
 }) {
   const { t } = useTranslation();
@@ -207,6 +217,9 @@ function ActStatus({
   const close = () => setZoomed(false);
   const { actions } = store.getState();
   const offered = adjusting ? [] : cardActionsOn(board, act.id);
+  const actionRow = offered.length > 0 && (
+    <CardActions offered={offered} actions={actions} busy={blocked} onUse={close} />
+  );
   const { advance } = act;
   const plate = (advance: ActAdvance, onAdvance?: () => void) => {
     const clues = actClues(act, advance);
@@ -260,19 +273,21 @@ function ActStatus({
 
   return (
     <HeaderSlot label={t('header.act')} card="act" onOpen={onOpen}>
-      <HeaderCard kind="act" name={act.name} image={act.image} onOpen={() => setZoomed(true)}>
+      <HeaderCard
+        kind="act"
+        name={act.name}
+        image={act.image}
+        onOpen={full ? undefined : () => setZoomed(true)}
+      >
         {tokenAndPlate()}
       </HeaderCard>
-      {zoomed && (
+      {full && actionRow && <footer>{actionRow}</footer>}
+      {zoomed && !full && (
         <CardDetails
           kind="act"
           name={act.name}
           image={act.image}
-          actionRow={
-            offered.length > 0 && (
-              <CardActions offered={offered} actions={actions} busy={blocked} onUse={close} />
-            )
-          }
+          actionRow={actionRow}
           onClose={close}
         >
           {tokenAndPlate(close)}
@@ -322,7 +337,8 @@ function HeaderSlot({
 /**
  * The landscape card of the agenda or act (`kind`) in the header: its name band and, as
  * `children`, its token and plate. A tap on the card, or on its name, which is a button for the
- * keyboard, calls `onOpen`; a tap on the plate's buttons only does what the button says.
+ * keyboard, calls `onOpen`; a tap on the plate's buttons only does what the button says. Without
+ * `onOpen` (the card shown full) the name is plain text and a tap does nothing.
  */
 function HeaderCard({
   kind,
@@ -334,21 +350,28 @@ function HeaderCard({
   kind: 'agenda' | 'act';
   name: CardName;
   image: CardImagePath | undefined;
-  onOpen: () => void;
+  onOpen: (() => void) | undefined;
   children: ReactNode;
 }) {
   return (
     <CardFace
       kind={kind}
       image={image}
-      onClick={(event) => {
-        if (!(event.target instanceof Element && event.target.closest('button'))) onOpen();
-      }}
+      onClick={
+        onOpen &&
+        ((event) => {
+          if (!(event.target instanceof Element && event.target.closest('button'))) onOpen();
+        })
+      }
     >
       <h2>
-        <button type="button" onClick={onOpen}>
-          {name}
-        </button>
+        {onOpen ? (
+          <button type="button" onClick={onOpen}>
+            {name}
+          </button>
+        ) : (
+          name
+        )}
       </h2>
       {children}
     </CardFace>
