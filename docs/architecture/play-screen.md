@@ -31,7 +31,7 @@ The board stretches to the foot of the screen, so the map always takes the room 
 
 ## Phone
 
-A phone held upright (`(orientation: portrait) and (max-width: 40rem)`) gets the compact mode of the [phone prototype](../../apps/web/public/prototype/phone/index.html) (M3.14).
+A phone held upright (`(orientation: portrait) and (max-width: 40rem)`) gets the compact mode (M3.14, designed in the phone prototype of #432, removed once the app showed the same).
 The same query opens a block in [`tokens.css`](../../apps/web/src/styles/tokens.css) (smaller header cards, tokens, skills and counters), `game.css` and [`investigators.css`](../../apps/web/src/investigators/investigators.css), written out in each, since a custom property cannot stand in a media query. On a phone:
 
 - the header shows only its four cards in one row:
