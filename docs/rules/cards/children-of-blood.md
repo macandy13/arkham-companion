@@ -16,5 +16,5 @@ The blood token comes with Children of Blood, not the Core Set (2026) ([campaign
 
 ## Predator
 
-- Predator ([Children of Blood campaign guide](https://images-cdn.fantasyflightgames.com/filer_public/a8/9c/a89c98b9-9de4-4b6c-8110-80fedbdcdb60/ahc106_campaign_guide-web.pdf), p. 4): in the enemy phase, after hunters move and before enemies attack, each ready, unengaged predator deals 1 damage to a non-Elite enemy at its location with a lower fight value than its own.
-  - Between several, it picks the one with the lowest remaining health; the guide names no tie-break, so the players choose.
+[Campaign guide](https://images-cdn.fantasyflightgames.com/filer_public/a8/9c/a89c98b9-9de4-4b6c-8110-80fedbdcdb60/ahc106_campaign_guide-web.pdf), p. 4: in the enemy phase, after hunters move and before enemies attack, each ready, unengaged predator deals 1 damage to a non-Elite enemy at its location with a lower fight value than its own.
+Between several, it picks the one with the lowest remaining health; the guide names no tie-break, so the players choose.

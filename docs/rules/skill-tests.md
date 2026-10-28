@@ -32,7 +32,7 @@ A test [succeeds by](https://arkhamdb.com/rules#Skill_Test_Timing) the modified 
 ## Results that defeat the tester
 
 When a fail's first part defeats the tester, its later parts that concern them are skipped, since a defeated investigator is out of play, and parts that concern others still happen (resolve as much as possible).
-The same goes for what the card does after the test: it follows whether the test passed or failed, but not for a drawer the fail defeated.
+A card's unconditional text after the test ("Then, …") still resolves whether the test passed or failed, but not for a tester the fail defeated ([Resolution order](cards/resolution-order.md)).
 
 Horror and damage from one effect ("take 1 horror and 1 damage") are placed [simultaneously](https://arkhamdb.com/rules#Dealing_Damage_Horror), so both land even when either defeats.
 Defeated by both at once, the investigator chooses which trauma to suffer ([Trauma](https://arkhamdb.com/rules#Trauma)) (see [Campaign](campaign.md)).
