@@ -31,17 +31,19 @@ describe('GameLogDialog', () => {
 
     render(
       <GameLogDialog
-        history={{ ctx: table.ctx, entries: table.entries }}
+        log={{ ctx: table.ctx, entries: table.entries }}
         state={table.state}
         onClose={() => {}}
       />,
     );
 
-    const steps = within(screen.getByRole('dialog', { name: 'Game log' }))
-      .getAllByRole('listitem')
-      .filter((item) => item.parentElement?.tagName === 'OL')
-      .map((step) => step.textContent);
-    expect(steps.slice(-2)).toEqual(['Roland Banks takes 2 damage', "Roland Banks's turn ends"]);
+    const [steps] = within(screen.getByRole('dialog', { name: 'Game log' })).getAllByRole('list');
+    expect(steps?.children).toHaveLength(3);
+    expect([...(steps?.children ?? [])].map((step) => step.textContent)).toEqual([
+      'The scenario begins',
+      'Roland Banks takes 2 damage',
+      "Roland Banks's turn ends",
+    ]);
   });
 
   it('closes from its × button', () => {
@@ -49,7 +51,7 @@ describe('GameLogDialog', () => {
     const onClose = vi.fn();
     render(
       <GameLogDialog
-        history={{ ctx: table.ctx, entries: table.entries }}
+        log={{ ctx: table.ctx, entries: table.entries }}
         state={table.state}
         onClose={onClose}
       />,

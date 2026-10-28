@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { GameState } from '@arkham/engine';
-import type { GameHistory } from '../state/appStore';
+import type { GameLogSource } from '../state/appStore';
 import { useBackCloses } from '../screens/useBackCloses';
 import { gameLog } from './gameLog';
 import './game_log.css';
@@ -9,15 +9,15 @@ import './game_log.css';
 /**
  * The game log over the board (M3.8): every step of the open game (`gameLog`) in the order it was
  * played, one list item per step with a line per thing it did, scrolled to the newest step, which
- * is the one players ask about. `state` is the game after `history`. A native modal `<dialog>`
+ * is the one players ask about. `state` is the game after `log`. A native modal `<dialog>`
  * brings focus trapping and Escape; on a phone the back gesture closes it too (`useBackCloses`).
  */
 export function GameLogDialog({
-  history,
+  log,
   state,
   onClose,
 }: {
-  history: GameHistory;
+  log: GameLogSource;
   state: GameState;
   onClose: () => void;
 }) {
@@ -31,7 +31,7 @@ export function GameLogDialog({
     newest.current?.scrollIntoView?.({ block: 'end' });
   }, []);
   const close = useBackCloses(onClose);
-  const steps = gameLog(t, history.ctx, state, history.entries);
+  const steps = gameLog(t, log.ctx, state, log.entries);
 
   return (
     <dialog

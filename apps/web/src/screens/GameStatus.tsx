@@ -28,7 +28,7 @@ export function GameStatus({
   const { t } = useTranslation();
   const { actions } = store.getState();
   const blocked = open.busy;
-  const { adjusting, history } = open;
+  const { adjusting, log } = open;
   const [logOpen, setLogOpen] = useState(false);
   return (
     <section id="status" aria-labelledby="status-round">
@@ -73,7 +73,7 @@ export function GameStatus({
         disabled={blocked || !open.canUndo}
         onClick={() => void actions.undo()}
       />
-      {history && (
+      {log && (
         <button
           type="button"
           data-icon="log"
@@ -82,8 +82,8 @@ export function GameStatus({
           onClick={() => setLogOpen(true)}
         />
       )}
-      {history && logOpen && (
-        <GameLogDialog history={history} state={open.state} onClose={() => setLogOpen(false)} />
+      {log && logOpen && (
+        <GameLogDialog log={log} state={open.state} onClose={() => setLogOpen(false)} />
       )}
       <GameMenu store={store} />
     </section>

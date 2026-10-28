@@ -18,11 +18,6 @@
   font-size: var(--font-size-subtitle);
 }
 
-#board dialog[data-dialog='log'] > button[data-icon='close'] {
-  padding: 0;
-  border-radius: var(--radius-round);
-}
-
 #board dialog[data-dialog='log'] > button[data-icon='close']::before {
   mask-image: url('../investigators/icons/close.svg');
 }

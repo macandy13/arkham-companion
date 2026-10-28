@@ -58,7 +58,7 @@ export interface OpenGame {
    * The game's log so far and the rules that name its cards, which the log dialog tells
    * (`gameLog`). Only a playable game has one, like `board`.
    */
-  history?: GameHistory;
+  log?: GameLogSource;
   /** i18n key of the scenario's name (`ScenarioEntry.nameKey`); a playable game always has one. */
   scenarioNameKey?: string;
   /**
@@ -94,13 +94,13 @@ export interface OpenGame {
 }
 
 /** A game's log (`GameSession.entries`) with the rules it is played with (`GameSession.ctx`). */
-export interface GameHistory {
+export interface GameLogSource {
   readonly ctx: EngineContext;
   readonly entries: readonly LoggedEvent[];
 }
 
-/** The open game's history as `played` holds it now. */
-function historyOf(played: GameSession): GameHistory {
+/** The open game's log as `played` holds it now. */
+function logSourceOf(played: GameSession): GameLogSource {
   return { ctx: played.ctx, entries: played.entries };
 }
 
@@ -190,7 +190,7 @@ export function createAppStore(
           state: session?.state ?? state,
           playable: session !== undefined,
           board: session?.board,
-          history: session && historyOf(session),
+          log: session && logSourceOf(session),
           scenarioNameKey: entry?.nameKey,
           busy: unfinishedSteps > 0,
           canUndo: session?.canUndo ?? false,
@@ -208,7 +208,7 @@ export function createAppStore(
           ...current,
           state: played.state,
           board: played.board,
-          history: historyOf(played),
+          log: logSourceOf(played),
           canUndo: played.canUndo,
           adjusting: played.adjusting,
           rejection,
