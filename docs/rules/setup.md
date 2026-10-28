@@ -1,15 +1,15 @@
 # Setup
 
-[Setting up the game](https://arkhamdb.com/rules#Appendix_III_Setting_Up_The_Game):
+[Setting up the game](https://arkhamdb.com/rules#Appendix_III_Setting_Up_The_Game), in order:
 
-1. choose investigators; in a campaign each starts with damage equal to their physical trauma and horror equal to their mental trauma;
-2. choose the lead investigator;
-3. shuffle decks;
-4. build the chaos bag from the campaign (or keep the previous scenario's bag);
-5. each investigator gains 5 resources and draws 5 cards with one optional mulligan (weaknesses drawn now are set aside, replaced, and shuffled back afterwards);
-6. then the scenario setup (locations, starting positions, set-aside cards, encounter deck);
-7. agenda and act decks in order with 1a on top;
-8. scenario reference card.
+- Choose investigators; in a campaign each starts with damage equal to their physical trauma and horror equal to their mental trauma;
+- Choose the lead investigator;
+- Shuffle decks;
+- Build the chaos bag from the campaign (or keep the previous scenario's bag);
+- Each investigator gains 5 resources and draws 5 cards with one optional mulligan (weaknesses drawn now are set aside, replaced, and shuffled back afterwards);
+- Then the scenario setup (locations, starting positions, set-aside cards, encounter deck);
+- Agenda and act decks in order with 1a on top;
+- Scenario reference card.
 
 There are no player windows during setup.
 [Surge](encounter-draws.md) still applies to cards drawn during setup.

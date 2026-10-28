@@ -7,8 +7,7 @@
 - An "Objective –" is active only while its agenda or act is current: the cards below it in the deck are not in play.
   - "If the Ghoul Priest is defeated, advance" fires when the defeat happens while act 3 is current.
   - Advancing by an objective spends no clues: the objective overrides the clue requirement (RR "Act Deck and Agenda Deck").
-- If the act has no "Objective –", the group may spend the required clues from any mix of investigators at any player window during an investigator's turn ([free] ability) to advance it.
-  - An "Objective –" replaces or adds to that requirement.
+- If the act has no "Objective –", the group may spend the required clues from any mix of investigators at any player window during an investigator's turn ([free] ability) to advance it. An "Objective –" replaces or adds to that requirement.
   - The app models this as the act's own free action, offered during any investigator's turn; clues on the act don't count towards it.
 - Disrupting the Ritual (The Devourer Below, act 3) has no clue requirement: its objective advances it once 2 clues per investigator lie on it.
   - Only its own action puts clues there, 1 from the token pool on a passed test (the clue its cost spends is not one of them).

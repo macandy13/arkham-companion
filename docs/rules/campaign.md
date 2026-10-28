@@ -8,6 +8,7 @@
   - A defeat by a card ability gives trauma only if the ability says so.
   - If both happen at once, the player picks which.
   - Each trauma means starting later scenarios with 1 damage or 1 horror.
+  - When a defeat reaches health and sanity at once (`damageAndHorror`), the resolution proposes a choice between 1 physical and 1 mental trauma for the player to make.
 - Physical trauma ≥ printed health means killed, and mental trauma ≥ printed sanity means insane.
   - That investigator can't be used again in the campaign, and the player picks a new one with a new level 0 deck for the next scenario.
   - The 2026 Core Set adds a third way out, devoured.
@@ -19,5 +20,4 @@
 - At the end of a scenario, revealed locations in play with Victory X and no clues go to the victory display.
   - Experience equals the victory points in the display plus or minus the resolution's adjustments, and unspent experience carries over.
   - Defeated and resigned investigators earn it too: the Rules Reference doesn't say so, but "no resolution" (everyone resigned or was defeated) still has each investigator earn experience in the campaign guide.
-  - When a defeat reaches health and sanity at once (`damageAndHorror`), the resolution proposes a choice between 1 physical and 1 mental trauma for the player to make.
 - The next scenario follows in sequence unless the resolution says otherwise. A lost scenario still continues the campaign.

@@ -52,7 +52,7 @@ The same goes for what the card does after the test: On Wings of Darkness's "The
 Horror and damage from one effect ("take 1 horror and 1 damage") are placed [simultaneously](https://arkhamdb.com/rules#Dealing_Damage_Horror), so both land even when either defeats.
 Defeated by both at once, the investigator chooses which trauma to suffer ([Trauma](https://arkhamdb.com/rules#Trauma)) (see [Campaign](campaign.md)).
 
-## Skipped steps
+## Step notes
 
 If auto-success or auto-failure is known before step 3, skip steps 3 and 4.
 [Variable difficulty](https://arkhamdb.com/rules#Variable_Difficulty_Skill_Tests) is fixed once step 6 checks it.

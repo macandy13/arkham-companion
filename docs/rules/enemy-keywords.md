@@ -1,8 +1,8 @@
 # Enemy keywords
 
 - [Massive](https://arkhamdb.com/rules#Massive): when ready it counts as engaged with every investigator at its location, but it never sits in a threat area and doesn't follow investigators who move away.
-  - When exhausted it is engaged with nobody.
   - In the enemy phase it attacks each of them in an order the lead investigator picks, and exhausts after the last attack.
+  - When exhausted it is engaged with nobody.
   - Its attack of opportunity only hits the investigator who provoked it.
   - A failed attack against it hits no other investigator.
   - Investigators who become engaged mid-attack are added to its targets, and if it exhausts early its remaining attacks are skipped.
