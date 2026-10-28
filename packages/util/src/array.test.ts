@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { duplicates, matchingFirst, range, unique, withoutFirst, withRunningTotals } from './index';
+import {
+  duplicates,
+  matchingFirst,
+  range,
+  runsBy,
+  unique,
+  withoutFirst,
+  withRunningTotals,
+} from './index';
 
 describe('duplicates', () => {
   it('lists each repeated item once', () => {
@@ -105,5 +113,21 @@ describe('matchingFirst', () => {
     { items: [], first: 'roland', expected: [] },
   ])('puts $first ahead of $items', ({ items, first, expected }) => {
     expect(matchingFirst(items, (item) => item === first)).toEqual(expected);
+  });
+});
+
+describe('runsBy', () => {
+  it('cuts neighbours with the same key into one run, and a returning key into a new one', () => {
+    const steps = ['move-hall', 'move-attic', 'draw-ghoul', 'move-cellar'];
+
+    expect(runsBy(steps, (step) => step.split('-')[0])).toEqual([
+      { key: 'move', items: ['move-hall', 'move-attic'] },
+      { key: 'draw', items: ['draw-ghoul'] },
+      { key: 'move', items: ['move-cellar'] },
+    ]);
+  });
+
+  it('is empty for an empty list', () => {
+    expect(runsBy([], (item) => item)).toEqual([]);
   });
 });

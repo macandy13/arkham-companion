@@ -54,3 +54,18 @@ export function range(count: number): number[] {
 export function matchingFirst<T>(items: readonly T[], matches: (item: T) => boolean): T[] {
   return [...items.filter(matches), ...items.filter((item) => !matches(item))];
 }
+
+/**
+ * `items` cut into runs of neighbours that share `keyOf`, in order, each with its key: a key that
+ * comes back after another one starts a new run. Total: empty for an empty list.
+ */
+export function runsBy<T, K>(items: readonly T[], keyOf: (item: T) => K): { key: K; items: T[] }[] {
+  const runs: { key: K; items: T[] }[] = [];
+  for (const item of items) {
+    const key = keyOf(item);
+    const last = runs.at(-1);
+    if (last && last.key === key) last.items.push(item);
+    else runs.push({ key, items: [item] });
+  }
+  return runs;
+}
