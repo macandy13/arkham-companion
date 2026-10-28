@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   atLocation,
+  attachedTo,
   byName,
   encounterSetCode,
   engagedWith,
@@ -18,6 +19,7 @@ import { answer, cardIn, rejectionFrom, stateAfter } from '@arkham/engine/test/u
 import {
   GRAVEYARD_DECISION,
   HUNTING_SHADOW_DECISION,
+  LOCKED_DOOR_DECISION,
   theMidnightMasksCardDefs,
   theMidnightMasksCards,
 } from './cards';
@@ -432,6 +434,36 @@ describe('The Midnight Masks card abilities', () => {
 
       expect(requireInvestigator(state, alice)).toMatchObject({ clues, health: { damage } });
     });
+  });
+
+  describe('Locked Door', () => {
+    const door = instanceId('locked_door');
+
+    it.each([
+      { skill: 'combat', outcome: 'pass', zone: { kind: 'encounterDiscard' } },
+      { skill: 'agility', outcome: 'fail', zone: attachedTo(rivertown) },
+    ])(
+      'tests $skill (4) for alice in Rivertown and is $zone.kind after a $outcome',
+      ({ skill, outcome, zone }) => {
+        const { context, state: started } = newGame()
+          .withLocation(rivertown, cardOf('01125'), { revealed: true })
+          .withInvestigator(alice, { locationId: rivertown })
+          .withCard(door, cardOf('01174'), attachedTo(rivertown))
+          .withTurnOf(alice)
+          .start();
+        const chosen = stateAfter(
+          context,
+          started,
+          { type: 'UseCardAction', investigatorId: alice, cardId: door, action: 0 },
+          answer(LOCKED_DOOR_DECISION, skill),
+        );
+
+        const state = stateAfter(context, chosen, answer('test:locked_door', outcome));
+
+        expect(chosen.pending).toMatchObject([{ skillTest: { skill, difficulty: 4 } }]);
+        expect(state.cards[door]?.zone).toEqual(zone);
+      },
+    );
   });
 
   describe('False Lead', () => {

@@ -129,9 +129,9 @@ export interface CardStats {
   /** Keywords parsed from the card text at load time; none when absent. */
   keywords?: readonly Keyword[];
   /**
-   * Set for a treachery whose revelation attaches it to the drawing
-   * investigator's location (Obscuring Fog), entered with the card data;
-   * `DrawEncounter` places it there, and its fields say what it does there.
+   * Set for a treachery whose revelation attaches it to a location (Obscuring
+   * Fog to the drawer's, Locked Door to the one with the most clues), entered
+   * with the card data; its fields say what limits it there.
    */
   locationAttachment?: LocationAttachment;
   /**

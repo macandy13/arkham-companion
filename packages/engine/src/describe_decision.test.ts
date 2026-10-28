@@ -124,7 +124,8 @@ describe('describeDecision', () => {
   it.each([
     { prompt: 'decision.chooseEnemyDestination', question: 'Where does Swarm of Rats move?' },
     { prompt: 'decision.chooseLocationToMove', question: 'Where do you move for Swarm of Rats?' },
-  ])('asks where to move for $prompt', ({ prompt, question }) => {
+    { prompt: 'decision.chooseLocationToAttach', question: 'Where does Swarm of Rats attach?' },
+  ])('asks for a location for $prompt', ({ prompt, question }) => {
     const destination: Decision = {
       ...engage,
       kind: 'chooseLocation',

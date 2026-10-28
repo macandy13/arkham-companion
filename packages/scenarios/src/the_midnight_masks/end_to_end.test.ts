@@ -33,7 +33,6 @@ import {
   PlayTable,
   replay,
   scenario,
-  zoneKey,
   type CampaignCommand,
   type CampaignLog,
   type CardRef,
@@ -410,24 +409,12 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     expect(table.nextPhase()).toEqual({ round: 4, phase: 'upkeep' });
 
     // Round 5 – mythos: another Acolyte, at St. Mary's Hospital with its 1 doom.
-    // Daisy draws Locked Door, which the players attach to the location with
-    // the most clues, Downtown.
+    // Daisy draws Locked Door, which attaches to the location with the most
+    // clues, Downtown.
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos', step: 'drawEncounterCard' });
     table.answer(byName('Acolyte'), "St. Mary's Hospital");
     acolyteDoomAt(byName("St. Mary's Hospital"));
     expect(table.nextPhase()).toEqual({ round: 5, phase: 'mythos' });
-    expect(table.board.namesIn({ kind: 'encounterDiscard' })[0]).toBe('Locked Door');
-    const lockedDoor = table.state.order[zoneKey({ kind: 'encounterDiscard' })]?.[0];
-    if (lockedDoor === undefined) throw new Error('Locked Door is not on the encounter discard');
-    table.play({
-      type: 'ManualAdjust',
-      adjustment: {
-        kind: 'moveCard',
-        cardId: lockedDoor,
-        to: { kind: 'attachedTo', hostId: table.board.location(byName('Downtown')).id },
-      },
-    });
-
     // Downtown can't be investigated while the door is attached.
     expect(table.board.location(byName('Downtown'))).toMatchObject({
       clues: 2,
@@ -496,21 +483,14 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
     expect(table.nextPhase()).toEqual({ round: 6, phase: 'upkeep' });
 
     // Round 7 – mythos: the agenda's doom makes 7 of 8, one short. Roland draws
-    // the second Locked Door; no location without one has a clue, so the
-    // players pick Rivertown. Daisy draws On Wings of Darkness again, fails,
+    // the second Locked Door; no location without one has a clue, so Roland,
+    // the lead investigator, picks Rivertown among them all. Daisy draws On Wings of Darkness again, fails,
     // takes 1 damage and 1 horror and is carried back to Rivertown.
     expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'drawEncounterCard' });
     expect(table.board.doomInPlay).toBe(7);
-    const secondDoor = table.state.order[zoneKey({ kind: 'encounterDiscard' })]?.[0];
-    if (secondDoor === undefined) throw new Error('Locked Door is not on the encounter discard');
-    table.play({
-      type: 'ManualAdjust',
-      adjustment: {
-        kind: 'moveCard',
-        cardId: secondDoor,
-        to: { kind: 'attachedTo', hostId: table.board.location(byName('Rivertown')).id },
-      },
-    });
+    table.answer(byName('Locked Door'), 'Rivertown');
+    expect(table.board.location(byName('Rivertown')).attachments).toEqual(['Locked Door']);
+    expect(table.nextPhase()).toEqual({ round: 7, phase: 'mythos', step: 'drawEncounterCard' });
     table.answer(byName('On Wings of Darkness'), 'fail');
     expect(table.board.investigator(daisy)).toMatchObject({
       at: 'Rivertown',

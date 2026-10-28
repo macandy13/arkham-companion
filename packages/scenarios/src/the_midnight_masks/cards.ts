@@ -17,11 +17,15 @@ import {
   gainClues,
   gainResources,
   gainSurge,
+  attachTo,
+  discardSelf,
   heal,
   healSelf,
   ifEnemiesInPlay,
+  ifNoCandidate,
   ifYouHave,
   locationWith,
+  locationWithMost,
   moveTo,
   nearestEnemy,
   onlyCopy,
@@ -32,6 +36,7 @@ import {
   searchDeck,
   shuffleEncounterDeck,
   skillTest,
+  skillTestOfEither,
   spendClues,
   takeDamage,
   takeDamageAndHorror,
@@ -100,6 +105,9 @@ export const MIDNIGHT_MASKS_RESOLUTIONS = {
 /** Id of Hunting Shadow's question to its drawer: spend 1 clue or take 2 damage. */
 export const HUNTING_SHADOW_DECISION = decisionId('theMidnightMasks.huntingShadow');
 
+/** Id of the question which skill tests Locked Door's action: combat or agility. */
+export const LOCKED_DOOR_DECISION = decisionId('theMidnightMasks.lockedDoor');
+
 /** Id of the Graveyard's question after a failed test: take 2 horror or move to Rivertown. */
 export const GRAVEYARD_DECISION = decisionId('theMidnightMasks.graveyard');
 
@@ -125,7 +133,6 @@ const cultist = ['Humanoid', 'Cultist'];
  *   window opens before the evade exhausts and disengages her
  * - Acolyte's doom as it enters play during the game (setup places it)
  * - Hunting Nightgaunt's constant ability
- * - Locked Door's revelation (attach to the location with the most clues, MC1.3) and its action
  * - the players' pick among several Cultist enemies for Mysterious Chanting's
  *   search: the engine draws the first match (#346)
  *
@@ -502,6 +509,21 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     set: sets.lockedDoors,
     traits: ['Obstacle'],
     quantity: 2,
+    // "without a copy of Locked Door attached" is the limit of one per location.
+    locationAttachment: { onePerLocation: true },
+    abilities: [
+      whenRevealed(attachTo(locationWithMost('clue'))),
+      ifNoCandidate(locationWithMost('clue'), whenRevealed(gainSurge())),
+    ],
+    actions: [
+      {
+        effects: [
+          skillTestOfEither(LOCKED_DOOR_DECISION, ['combat', 'agility'], 4, {
+            onPass: [discardSelf()],
+          }),
+        ],
+      },
+    ],
     restrictions: [{ cannot: 'investigate', of: 'host' }],
   }),
 ];

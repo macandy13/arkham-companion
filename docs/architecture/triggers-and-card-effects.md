@@ -25,7 +25,8 @@ An [`Ability`](../../packages/engine/src/abilities.ts) is:
   - the current act,
   - the tokens on the card itself: `whenTokensOnSelf('clue', perInvestigator(2), advanceAct())` for an objective on the act's own clues, whose count the act's view shows as its threshold,
   - what the window's investigator has: `ifYouHave('clues', { max: 0 }, …)`,
-  - or how many enemies of a trait are in play: `ifEnemiesInPlay(trait('Cultist'), { max: 0 }, …)`;
+  - how many enemies of a trait are in play: `ifEnemiesInPlay(trait('Cultist'), { max: 0 }, …)`,
+  - or that a reference with candidates stands for nothing: `ifNoCandidate(locationWithMost('clue'), whenRevealed(gainSurge()))` for Locked Door's "If there is no such location, Locked Door gains surge";
 - an optional repeat once per matching enemy (`forEachEnemy({ trait, at }, …)`, counted with the condition as the window opens);
 - and a list of effects.
 
@@ -49,13 +50,15 @@ Effects are **templated commands**: a command card data may use (`AbilityCommand
 - `eachEnemy({ trait, withoutTrait, unengaged, engagedWith })`,
 - `nearestEnemy(trait)`,
 - `locationWith(trait)`,
+- `locationWithMost(token)`,
 - `eachSetAside(trait)`,
 - …
 
 An `each…` reference repeats the command once per investigator or card.
 When its turn comes, `resolveEffect` fills in the IDs from the current state, so handlers and the log only see plain commands.
 
-- A reference with candidates (`nearestEnemy`, `locationWith`) stands for the only one, or becomes a decision with one option per candidate and the effect filled in for it: equally near enemies are the lead investigator's `chooseCard`, a location to move to is the moving investigator's `chooseLocation`.
+- A reference with candidates (`nearestEnemy`, `locationWith`, `locationWithMost`) stands for the only one, or becomes a decision with one option per candidate and the effect filled in for it: equally near enemies are the lead investigator's `chooseCard`, a location to move to is the moving investigator's `chooseLocation`, and so are locations with equally many tokens to attach to (`chooseLocation`, the lead's).
+  - `locationWithMost(token)` leaves out a location where the card's `LocationAttachment.onePerLocation` limit is reached, so Locked Door is `attachTo(locationWithMost('clue'))` ("the location with the most clues and without a copy of Locked Door attached").
 - A test's outcomes stay templated until the answer: each runs as a `ResolveEffect` command, which `handle` turns into an `ability` step, so it resolves in its own turn like any effect (a choice's options, by contrast, resolve when it is raised, so they can be dry-run).
 - A reference that names nobody drops the command; a missing `onlyCopy` card records `AbilityEffectSkipped` and the players do it by hand.
 
@@ -88,6 +91,7 @@ Action abilities ("[action]: …") are data too: `CardStats.actions` lists [`Car
 - a location's at it,
 - an enemy's at its location,
 - a threat area's at its owner's location,
+- a card's attached to a location at that location (Locked Door's "Test [combat] (4) or [agility] (4)"),
 - the current agenda's and act's for anyone.
 
 It continues with its effects as ability steps in an `action` window naming the investigator.
