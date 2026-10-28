@@ -90,6 +90,7 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
         open={open}
         board={board}
         onOpenCard={opensDetail ? (card) => detail.open({ row: 'cards', card }) : undefined}
+        full={detailTarget !== undefined}
       />
       <GameStatus store={store} open={open} board={board} />
       <section id="map" aria-labelledby="map-title">

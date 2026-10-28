@@ -50,6 +50,8 @@ It rearranges the same parts and adds no second copy of them:
 - the stylesheets turn the header, the map and the investigator bar into three rows a screen tall, snapped vertically,
 - and the header's five places (its four cards and the victory display) and every investigator panel snap sideways at full size, with their labels, piles and plates back.
 
+The agenda and act there are their full version (`GameHeader` `full`): their action rows sit under them, and a tap on one opens no second, full-card dialog as it does on the tablet.
+
 [`DetailControls`](../../apps/web/src/screens/DetailControls.tsx) scrolls to the card or panel tapped, draws the × and the row and card dots from the scroll positions, and moves the cards row back to the agenda once the players leave it.
 
 - Opening pushes a history entry, so the back gesture, Escape and the × all close it through `history.back()`.

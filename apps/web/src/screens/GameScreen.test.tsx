@@ -451,6 +451,50 @@ describe('GameScreen on a phone held upright', () => {
     expect(screen.queryByRole('dialog', { name: 'Trapped' })).toBeNull();
   });
 
+  it('shows the act in full in the detail view, where a tap on it opens no second card', async () => {
+    await renderTheGathering('phone-act-full-test');
+    fireEvent.click(screen.getByRole('button', { name: 'Trapped' }));
+    const face = screen.getByRole('region', { name: 'Act' }).querySelector('[data-card]');
+    if (!face) throw new Error('the act has no card');
+
+    fireEvent.click(face);
+
+    expect(board()?.getAttribute('data-view')).toBe('detail');
+    expect(screen.queryByRole('button', { name: 'Trapped' })).toBeNull();
+    expect(screen.queryByRole('dialog', { name: 'Trapped' })).toBeNull();
+  });
+
+  it.each([
+    { card: "What's Going On?!", code: '01105', place: 'Agenda' },
+    { card: 'Trapped', code: '01108', place: 'Act' },
+  ])(
+    "takes an action $card prints from under it in the detail view on alder's turn",
+    async ({ card, code, place }) => {
+      const printed = theGatheringCards.get(cardCode(code));
+      if (!printed) throw new Error(`The Gathering has ${card}`);
+      const store = await renderTheGathering(`phone-card-action-test-${code}`, [
+        { ...printed, actions: [{ effects: [] }] },
+      ]);
+      fireEvent.click(button('Next'));
+      fireEvent.click(await screen.findByRole('button', { name: 'Start turn' }));
+      await screen.findByRole('button', { name: 'End turn' });
+      fireEvent.click(button(card));
+
+      fireEvent.click(
+        within(screen.getByRole('region', { name: place })).getByRole('button', {
+          name: `Action · ${card}`,
+        }),
+      );
+
+      await waitFor(() =>
+        expect(
+          store.getState().current?.board?.investigator(investigatorId('alder')),
+        ).toMatchObject({ actions: 2 }),
+      );
+      expect(screen.queryByRole('dialog')).toBeNull();
+    },
+  );
+
   it("opens the detail view on Alder's panel from the name on it", async () => {
     await renderTheGathering('phone-investigator-test');
 
