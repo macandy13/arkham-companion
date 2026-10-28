@@ -7,7 +7,7 @@
  * who got away and the Ghoul Priest, the four random Arkham Woods connecting
  * on their revealed sides, Unhallowed Ground's willpower test, Offer of Power,
  * act 1 opening the Ritual Site and spawning the Cultists who got away on the
- * Main Path, Mysterious Chanting, act 3's action (spend 1 clue, test agility,
+ * Main Path, act 2 advancing as Daisy enters the Ritual Site, Mysterious Chanting, act 3's action (spend 1 clue, test agility,
  * place a clue on the act) with its attacks of opportunity, hunters closing
  * in, Roland defeated) and
  * ends in a resolution applied to the campaign log: the ritual broken, the
@@ -16,7 +16,7 @@
  *
  * What the engine leaves to the players is done by hand, as at the table:
  * agenda 1's reverse side (the Monster spawning at the Main Path with 1 doom),
- * act 2's objective and reverse side (the enemy spawning at the Ritual Site),
+ * act 2's reverse side (the enemy spawning at the Ritual Site),
  * the Ritual Site's clues at the end of the round,
  * Frozen in Fear's extra action, agenda 2's +1 fight and evade, Ancient
  * Evils' doom, Umôrdhoth's Wrath, Twisting Paths' test to leave it (Daisy
@@ -325,7 +325,7 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
     // Round 4 – Roland evades the Priest and steps onto the Main Path, where all
     // four enemies engage him, and wounds the Yithian Observer. Daisy slips
     // away from The Masked Hunter, crosses the Main Path behind him and enters
-    // the Ritual Site: act 2's objective, advanced by hand. Its reverse side,
+    // the Ritual Site: act 2's objective advances it. Its reverse side,
     // by hand: the discard is shuffled back and the first enemy from the top,
     // a Ghoul Minion, spawns at the Ritual Site, engaged with Daisy, who has no
     // action left.
@@ -347,7 +347,7 @@ describe('The Devourer Below end to end: Roland and Daisy, seed 9', () => {
     table.evade(daisy, byName(hunter));
     table.moveTo(daisy, mainPath);
     table.moveTo(daisy, ritualSite);
-    table.play({ type: 'AdvanceAct' });
+    expect(table.board.act).toMatchObject({ name: 'Disrupting the Ritual' });
     table.step(() => {
       table.play({ type: 'ShuffleEncounterDiscard' });
       table.play({

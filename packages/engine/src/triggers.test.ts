@@ -82,6 +82,7 @@ import {
   whenAdvanced,
   whenDefeated,
   whenEnemyDefeated,
+  whenAnInvestigatorEnters,
   whenTokensOnSelf,
   whenRevealed,
   whenTurnBegins,
@@ -89,6 +90,7 @@ import {
   zoneKey,
   type AbilityEffect,
   type AddMapStep,
+  type CardStats,
   type Command,
   type Zone,
 } from './index';
@@ -1387,6 +1389,81 @@ describe('objectives on the current agenda and act', () => {
     const { state } = execute(context, started, { type: 'DefeatEnemy', enemyId: priest });
 
     expect(state.act.current).toBe(act1);
+  });
+});
+
+describe('objectives on entering a location', () => {
+  const attic = instanceId('attic');
+  const cellarCode = cardCode('cellar');
+  /** "If an investigator enters the cellar, advance." */
+  const cellarObjectiveAct = blankAct('cellar_objective_act', {
+    abilities: [whenAnInvestigatorEnters(cellarCode, advanceAct())],
+  });
+  /** "If an investigator enters the cellar, place 1 doom on the agenda." */
+  const cellarObjectiveAgenda = blankAgenda('cellar_objective_agenda', fixed(3), {
+    abilities: [whenAnInvestigatorEnters(cellarCode, placeDoomOnAgenda(1))],
+  });
+  /**
+   * Alice in the hall, connected to the cellar (revealed if `cellarRevealed`) and the revealed
+   * attic; `agenda` and `act` are current, the second act comes next.
+   */
+  const enteringTable = ({
+    agenda,
+    act,
+    cellarRevealed,
+  }: {
+    agenda: CardStats;
+    act: CardStats;
+    cellarRevealed: boolean;
+  }) =>
+    newGame()
+      .withAgenda(agenda1, agenda)
+      .withAct(act1, act)
+      .withAct(act2, secondActCard)
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withLocation(cellar, blankLocation('cellar'), { revealed: cellarRevealed })
+      .withLocation(attic, blankLocation('attic'), { revealed: true })
+      .withConnection(hall, cellar)
+      .withConnection(hall, attic)
+      .withInvestigator(alice, { locationId: hall });
+
+  it.each([
+    { to: cellar, cellarRevealed: true, act: act2, outcome: 'advances' },
+    { to: cellar, cellarRevealed: false, act: act2, outcome: 'advances' },
+    { to: attic, cellarRevealed: true, act: act1, outcome: 'stays' },
+  ])(
+    '$outcome when alice moves to the $to (cellar revealed: $cellarRevealed)',
+    ({ to, cellarRevealed, act }) => {
+      const { context, state: started } = enteringTable({
+        agenda: firstAgendaCard,
+        act: cellarObjectiveAct,
+        cellarRevealed,
+      }).start();
+
+      const { state } = execute(context, started, {
+        type: 'MoveInvestigator',
+        investigatorId: alice,
+        to,
+      });
+
+      expect(state.act.current).toBe(act);
+    },
+  );
+
+  it('fires for the current agenda too', () => {
+    const { context, state: started } = enteringTable({
+      agenda: cellarObjectiveAgenda,
+      act: firstActCard,
+      cellarRevealed: true,
+    }).start();
+
+    const { state } = execute(context, started, {
+      type: 'MoveInvestigator',
+      investigatorId: alice,
+      to: cellar,
+    });
+
+    expect(state.cards[agenda1]?.tokens.doom).toBe(1);
   });
 });
 
