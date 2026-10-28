@@ -113,3 +113,28 @@ test('pan the map and swipe on from its strips on a phone', async ({ page }) => 
     await expect(rowDots.nth(0)).toHaveAttribute('data-current');
   });
 });
+
+// Journey: on a phone, a tap on the Hallway in the compact map shows it in the map row in place of
+// the map, with who is there and what Roland Banks can do; the Map button brings the map back.
+test('open a location in the map row on a phone', { tag: '@flow' }, async ({ page }) => {
+  const board = page.locator('#board');
+  const hallway = page.getByRole('region', { name: 'Hallway' });
+
+  await test.step('Tap the Hallway on the map', async () => {
+    await resumeImportedGame(
+      page,
+      'Roland Banks threatened',
+      rolandThreatenedExport('Roland Banks threatened'),
+    );
+    await page.getByRole('button', { name: 'Details of Hallway' }).click();
+    await expect(board).toHaveAttribute('data-view', 'detail');
+    await expect(hallway.getByRole('heading', { name: 'Hallway' })).toBeInViewport();
+    await expect(hallway.getByRole('button', { name: /^Investigate/ })).toBeVisible();
+  });
+
+  await test.step('Go back to the whole map', async () => {
+    await hallway.getByRole('button', { name: 'Map' }).click();
+    await expect(page.getByRole('figure', { name: 'House' })).toBeInViewport();
+    await expect(hallway).toHaveCount(0);
+  });
+});

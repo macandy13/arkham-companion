@@ -469,11 +469,12 @@
 }
 
 /*
- * The location details (LocationDetails): the × in the corner, the name with its shroud and
- * clues, who is there, then the corrections while adjusting (one row per token stepper) or the
- * action row (action_row.css). It lies in the top layer, so it resets what the map sets.
+ * The location details (LocationDetails) and the phone's location mode (LocationFocus), the same
+ * content (LocationContent): the name with its shroud and clues, who is there, then the
+ * corrections while adjusting (one row per token stepper) or the action row (action_row.css); the
+ * dialog adds the × in the corner. The dialog lies in the top layer, so it resets what the map sets.
  */
-#map dialog[data-dialog='location'] {
+#map :is(dialog[data-dialog='location'], [data-mode='location']) {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -498,20 +499,24 @@
   mask-image: url('../investigators/icons/close.svg');
 }
 
-#map dialog[data-dialog='location'] h2 {
+#map :is(dialog[data-dialog='location'], [data-mode='location']) h2 {
   margin: 0;
-  padding-right: var(--touch-target);
   font-size: var(--font-size-subtitle);
 }
 
-#map dialog[data-dialog='location'] > p,
-#map dialog[data-dialog='location'] > section > p {
+/* Clear of the dialog's ×. */
+#map dialog[data-dialog='location'] h2 {
+  padding-right: var(--touch-target);
+}
+
+#map :is(dialog[data-dialog='location'], [data-mode='location']) > p,
+#map :is(dialog[data-dialog='location'], [data-mode='location']) > section > p {
   margin: 0;
   color: var(--color-text-muted);
 }
 
 /* The location's card, as big as a zoomed card. */
-#map dialog[data-dialog='location'] > svg {
+#map :is(dialog[data-dialog='location'], [data-mode='location']) > svg {
   align-self: center;
   width: var(--layout-zoom-card-width);
   max-height: none;
@@ -519,13 +524,13 @@
 }
 
 /* Who is there, the attached cards and the corrections: each a column under its small title. */
-#map dialog[data-dialog='location'] > section {
+#map :is(dialog[data-dialog='location'], [data-mode='location']) > section {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
 }
 
-#map dialog[data-dialog='location'] > section > h3 {
+#map :is(dialog[data-dialog='location'], [data-mode='location']) > section > h3 {
   margin: 0;
   font-size: var(--font-size-caption);
   font-weight: normal;
@@ -533,24 +538,24 @@
   text-transform: uppercase;
 }
 
-#map dialog[data-dialog='location'] > section > ul {
+#map :is(dialog[data-dialog='location'], [data-mode='location']) > section > ul {
   margin: 0;
   padding-left: var(--space-3);
 }
 
 /* A token stepper of the corrections: its count, then − and +. */
-#map dialog[data-dialog='location'] section section {
+#map :is(dialog[data-dialog='location'], [data-mode='location']) section section {
   display: flex;
   align-items: center;
   gap: var(--space-2);
 }
 
-#map dialog[data-dialog='location'] section section p {
+#map :is(dialog[data-dialog='location'], [data-mode='location']) section section p {
   flex: 1;
   margin: 0;
 }
 
-#map dialog[data-dialog='location'] section section button {
+#map :is(dialog[data-dialog='location'], [data-mode='location']) section section button {
   min-width: var(--touch-target);
 }
 

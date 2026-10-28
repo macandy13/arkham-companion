@@ -9,6 +9,7 @@ export const resources = {
       detail: {
         close: 'Back to the overview',
         openMap: 'Show the map on the whole screen',
+        showMap: 'Map',
       },
       header: {
         round: 'Round {{round}}',
@@ -613,6 +614,7 @@ export const resources = {
       detail: {
         close: 'Zurück zur Übersicht',
         openMap: 'Karte auf dem ganzen Bildschirm zeigen',
+        showMap: 'Karte',
       },
       header: {
         round: 'Runde {{round}}',
