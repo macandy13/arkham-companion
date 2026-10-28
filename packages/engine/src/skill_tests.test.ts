@@ -504,6 +504,7 @@ describe('Evade', () => {
       'DecisionResolved',
       'SkillTestResolved',
       'EnemyDisengaged',
+      'EnemyEvaded',
     ]);
   });
 

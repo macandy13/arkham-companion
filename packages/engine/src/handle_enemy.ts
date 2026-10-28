@@ -6,14 +6,15 @@ import type {
   DefeatEnemy,
   DisengageEnemy,
   EngageEnemy,
+  EvadeEnemy,
   ExhaustEnemy,
   MoveEnemy,
   MoveEnemyTowards,
   ReadyEnemy,
 } from './commands';
 import { chooseLocation, engageEvents } from './engagement';
-import type { EnemyDefeated, EnemyEngaged, Event, ExhaustChanged } from './events';
-import { enemyHealth, enemyOf, isEnemyOnTable, locationOf } from './enemies';
+import type { EnemyDefeated, EnemyDisengaged, EnemyEngaged, Event, ExhaustChanged } from './events';
+import { enemyHealth, enemyOf, isEngagedWith, isEnemyOnTable, locationOf } from './enemies';
 import { activeInvestigator } from './investigators';
 import type { InstanceId } from './ids';
 import { hasKeyword } from './keywords';
@@ -37,7 +38,7 @@ export function handleEngageEnemy(
   if (hasKeyword(stats, 'massive'))
     throw new CommandRejected({ code: 'massiveNotEngageable', cardId: enemy.id });
   const investigator = activeInvestigator(state, cmd.investigatorId);
-  if (enemy.zone.kind === 'engaged' && enemy.zone.investigatorId === investigator.id)
+  if (isEngagedWith(enemy, investigator))
     throw new CommandRejected({
       code: 'alreadyEngaged',
       cardId: enemy.id,
@@ -62,13 +63,7 @@ export function handleDisengageEnemy(
   const { enemy } = onTableEnemyOf(ctx, state, cmd.enemyId);
   if (enemy.zone.kind !== 'engaged')
     throw new CommandRejected({ code: 'notEngaged', cardId: enemy.id });
-  return [
-    {
-      type: 'EnemyDisengaged',
-      enemyId: enemy.id,
-      locationId: locationOf(state, enemy),
-    },
-  ];
+  return [disengaged(state, enemy)];
 }
 
 /**
@@ -163,6 +158,20 @@ export function handleDefeatEnemy(
   return [defeated(state, enemy, stats)];
 }
 
+/**
+ * `EvadeEnemy`: an exhausted enemy stays exhausted and one engaged with
+ * someone else stays engaged, but either is still evaded, so the window opens.
+ */
+export function handleEvadeEnemy(ctx: EngineContext, state: GameState, cmd: EvadeEnemy): Event[] {
+  const { enemy } = onTableEnemyOf(ctx, state, cmd.enemyId);
+  const investigator = activeInvestigator(state, cmd.investigatorId);
+  return [
+    ...(enemy.exhausted ? [] : [exhaustChange(enemy, true)]),
+    ...(isEngagedWith(enemy, investigator) ? [disengaged(state, enemy)] : []),
+    { type: 'EnemyEvaded', enemyId: enemy.id, investigatorId: investigator.id },
+  ];
+}
+
 /** `ExhaustEnemy`. */
 export function handleExhaustEnemy(
   ctx: EngineContext,
@@ -199,6 +208,10 @@ function defeated(state: GameState, enemy: CardInstance, stats: CardStats): Enem
     to: hasVictory ? victoryDisplay : encounterDiscard,
     locationId: locationOf(state, enemy),
   };
+}
+
+function disengaged(state: GameState, enemy: CardInstance): EnemyDisengaged {
+  return { type: 'EnemyDisengaged', enemyId: enemy.id, locationId: locationOf(state, enemy) };
 }
 
 function exhaustChange(enemy: CardInstance, exhausted: boolean): ExhaustChanged {

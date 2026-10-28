@@ -110,6 +110,7 @@ export {
   advanceAct,
   afterDiscoveringClues,
   afterAttacking,
+  afterEvaded,
   afterEngaging,
   afterEntering,
   afterTest,

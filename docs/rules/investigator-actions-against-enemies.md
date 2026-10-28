@@ -13,6 +13,7 @@
 - [Evade](https://arkhamdb.com/rules#Evade_Action): only against an enemy engaged with you; agility test against its evade value.
   - Success (or any "evade" effect) exhausts the enemy if it is ready and moves it unengaged to your location.
   - "Automatically evade" makes no test and isn't a successful evasion.
+  - Either way the enemy is evaded, so "after [this enemy] is evaded" (Ruth Turner) follows once it is exhausted and disengaged; a failed evasion opens nothing. The evasion happens in ST.7 (apply results), so this comes after the ST.6 "after you succeed" triggers.
 - [Engage](https://arkhamdb.com/rules#Engage_Action): take an enemy at your location into your threat area, even if it's exhausted, aloof or engaged with someone else (it disengages from them). Engaging and being engaged are the same event.
 - [Move](https://arkhamdb.com/rules#Move): to a connecting location unless the effect says otherwise.
   - Leaving and entering happen together, and "moved to X" goes straight there.

@@ -485,6 +485,31 @@ describe('engagement commands', () => {
     expect(zoneOf(after, ghoul)).toEqual(atLocation(hall));
   });
 
+  it.each([
+    {
+      name: 'exhausts and disengages an enemy engaged with alice',
+      zone: engagedWith(alice),
+      after: atLocation(hall),
+    },
+    {
+      name: 'only exhausts an enemy engaged with bob',
+      zone: engagedWith(bob),
+      after: engagedWith(bob),
+    },
+  ])('evading by a card effect $name', ({ zone, after: zoneAfter }) => {
+    const { context, state } = aliceAndBobAt(hall, { alice: 0, bob: 0 })
+      .withCard(ghoul, ghoulCard, zone)
+      .start();
+
+    const after = stateAfter(context, state, {
+      type: 'EvadeEnemy',
+      enemyId: ghoul,
+      investigatorId: alice,
+    });
+
+    expect(after.cards[ghoul]).toMatchObject({ exhausted: true, zone: zoneAfter });
+  });
+
   it('rejects disengaging an unengaged enemy', () => {
     const { context, state } = aliceInHall
       .withCard(ghoul, aloofGhoulCard, atLocation(hall))

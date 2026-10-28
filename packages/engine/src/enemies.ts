@@ -119,6 +119,11 @@ export function enemyHealth(stats: CardStats, state: GameState): number | undefi
   return stats.health && resolveValue(stats.health, state.meta.playerCount);
 }
 
+/** Whether the enemy is in the investigator's engaged zone (a massive enemy never is). */
+export function isEngagedWith(enemy: CardInstance, investigator: Investigator): boolean {
+  return enemy.zone.kind === 'engaged' && enemy.zone.investigatorId === investigator.id;
+}
+
 /**
  * Whether the enemy is on the table: unengaged at a location or engaged with
  * an investigator. Narrower than `isInPlay` (`doom.ts`), which also counts

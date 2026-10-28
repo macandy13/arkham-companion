@@ -12,11 +12,13 @@ import {
   shuffleEncounterDeck,
   readySelf,
   atEndOfTurn,
+  addToVictoryDisplay,
   advanceAct,
   afterAttacking,
   afterDiscoveringClues,
   afterEngaging,
   afterEntering,
+  afterEvaded,
   afterTest,
   atLocation,
   attachedTo,
@@ -749,6 +751,81 @@ describe('trigger bus', () => {
 
       expect(requireInvestigator(after, alice).status).not.toBe('active');
       expect(requireInvestigator(after, alice).sanity.horror).toBe(0);
+    });
+  });
+
+  describe('abilities after an enemy is evaded', () => {
+    const shade = instanceId('shade');
+    /** "After this enemy is evaded: you take 1 horror." */
+    const shadeCard = blankEnemy('shade', { abilities: [afterEvaded(takeHorror(1))] });
+    /** Alice in the hall, engaged with the shade, on her turn. */
+    const engagedTable = newGame()
+      .withLocation(hall, blankLocation('hall'), { revealed: true })
+      .withInvestigator(alice, { locationId: hall })
+      .withCard(shade, shadeCard, engagedWith(alice))
+      .withTurnOf(alice);
+
+    it.each([
+      { result: 'pass', horror: 1 },
+      { result: 'fail', horror: 0 },
+    ])('deals alice $horror horror for a $result of her evasion', ({ result, horror }) => {
+      const { context, state } = engagedTable.start();
+
+      const after = stateAfter(
+        context,
+        state,
+        { type: 'Evade', investigatorId: alice, enemyId: shade },
+        answer('evade:alice:shade', result),
+      );
+
+      expect(requireInvestigator(after, alice).sanity.horror).toBe(horror);
+    });
+
+    it('fires for an exhausted enemy evaded by a card effect', () => {
+      const { context, state } = engagedTable.start();
+
+      const after = stateAfter(
+        context,
+        state,
+        { type: 'ExhaustEnemy', enemyId: shade },
+        { type: 'EvadeEnemy', enemyId: shade, investigatorId: alice },
+      );
+
+      expect(requireInvestigator(after, alice).sanity.horror).toBe(1);
+    });
+
+    it('adds an enemy to the victory display once it is exhausted and disengaged', () => {
+      const mortician = instanceId('mortician');
+      /** "After this enemy is evaded: add it to the victory display" (Ruth Turner). */
+      const morticianCard = blankEnemy('mortician', {
+        abilities: [afterEvaded(addToVictoryDisplay({ ref: 'self' }))],
+      });
+      const { context, state } = newGame()
+        .withLocation(hall, blankLocation('hall'), { revealed: true })
+        .withInvestigator(alice, { locationId: hall })
+        .withCard(mortician, morticianCard, engagedWith(alice))
+        .withTurnOf(alice)
+        .start();
+      const asked = stateAfter(context, state, {
+        type: 'Evade',
+        investigatorId: alice,
+        enemyId: mortician,
+      });
+
+      const { state: after, events } = execute(
+        context,
+        asked,
+        answer('evade:alice:mortician', 'pass'),
+      );
+
+      expect(after.cards[mortician]?.zone).toEqual(victoryDisplay);
+      const types = events.map((e) => e.type);
+      expect(types.slice(types.indexOf('ExhaustChanged'))).toEqual([
+        'ExhaustChanged',
+        'EnemyDisengaged',
+        'EnemyEvaded',
+        'CardMoved',
+      ]);
     });
   });
 

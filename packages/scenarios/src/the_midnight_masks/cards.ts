@@ -2,6 +2,7 @@ import {
   advanceAct,
   afterAttacking,
   afterEntering,
+  afterEvaded,
   atEndOfPhase,
   cardCode,
   cardDbFrom,
@@ -130,10 +131,6 @@ const cultist = ['Humanoid', 'Cultist'];
  *
  * - agenda 1 turning into The Masked Hunter
  * - Your House's hold on the Ghoul Priest and Easttown's cost reduction
- * - Ruth Turner going to the victory display once evaded: the `afterTest`
- *   window opens before the evade exhausts and disengages her; put there by
- *   hand, she doesn't trigger act 1's objective, so if she is the sixth unique
- *   Cultist the players advance the act themselves
  * - Acolyte's doom as it enters play during the game (setup places it)
  * - Hunting Nightgaunt's constant ability
  * - the players' pick among several Cultist enemies for Mysterious Chanting's
@@ -444,6 +441,7 @@ export const theMidnightMasksCardDefs: readonly CardStats[] = [
     victory: 1,
     unique: true,
     keywords: [spawn("St. Mary's Hospital")],
+    abilities: [afterEvaded(addToVictoryDisplay({ ref: 'self' }))],
   }),
   enemy({
     code: '01169',

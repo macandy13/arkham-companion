@@ -393,6 +393,27 @@ describe('The Midnight Masks card abilities', () => {
         expect(after.meta.resolution).toBe(resolution);
       },
     );
+
+    it('ends in R1 once alice evades Ruth Turner as the sixth unique Cultist', () => {
+      const herman = { id: instanceId('herman_collins'), code: '01138' };
+      const withDisplay = [maskedHunter, drew, peter, victoria, herman].reduce(
+        (game, { id, code }) => game.withCard(id, cardOf(code), victoryDisplay),
+        atRivertown(),
+      );
+      const { context, state } = withDisplay
+        .withCard(ruth.id, cardOf(ruth.code), engagedWith(alice))
+        .start();
+
+      const after = stateAfter(
+        context,
+        state,
+        { type: 'Evade', investigatorId: alice, enemyId: ruth.id },
+        answer('evade:alice:ruth_turner', 'pass'),
+      );
+
+      expect(after.cards[ruth.id]?.zone).toEqual(victoryDisplay);
+      expect(after.meta.resolution).toBe('R1');
+    });
   });
 
   describe.each([
