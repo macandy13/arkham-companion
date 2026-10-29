@@ -20,7 +20,7 @@ import { requireCard } from './lookup';
 import { advanceActionOf } from './card_actions';
 import { replay } from './reducer';
 import { CommandRejected, type Rejection } from './rejection';
-import { compileSetup, type InvestigatorSeat } from './setup';
+import { compileSetup, type CampaignSetupOptions, type StandaloneSetupOptions } from './setup';
 import { execute, type ExecuteResult } from './execute';
 import {
   emptyState,
@@ -146,20 +146,22 @@ export class PlayTable {
 
   /**
    * A table with `ctx.scenario` set up from scratch: its compiled setup is the
-   * first command. The seed fixes the shuffled decks; `difficulty` defaults to
-   * standard. `investigators` are in seat order, the first being the lead.
+   * first command. The seed fixes the shuffled decks; `investigators` are in
+   * seat order, the first being the lead. A scenario of a campaign takes its
+   * difficulty from the log; a standalone one defaults to standard.
    */
   static setUp(
     ctx: ScenarioContext,
-    options: {
-      investigators: readonly InvestigatorSeat[];
-      seed: number;
-      difficulty?: Difficulty;
-    },
+    options:
+      | CampaignSetupOptions
+      | (Omit<StandaloneSetupOptions, 'difficulty'> & { difficulty?: Difficulty }),
   ): PlayTable {
     return PlayTable.from(
       ctx,
-      compileSetup(ctx, { ...options, difficulty: options.difficulty ?? 'standard' }),
+      compileSetup(
+        ctx,
+        options.campaign ? options : { ...options, difficulty: options.difficulty ?? 'standard' },
+      ),
     );
   }
 

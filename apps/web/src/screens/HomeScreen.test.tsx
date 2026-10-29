@@ -41,50 +41,57 @@ describe('HomeScreen', () => {
     );
   });
 
-  it('lists a campaign with its progress and resumes its latest game', async () => {
-    const gameStore = new IndexedDbStore(`home-test-${n++}`);
-    const campaignId = await gameStore.createCampaign({ title: 'Zealot – Roland' });
-    await gameStore.appendCampaignEvents(campaignId, [
-      {
-        type: 'CampaignStarted',
-        campaignId,
-        definitionId: campaignDefinitionId('night-of-the-zealot'),
-        difficulty: 'hard',
-        investigators: [
-          {
-            code: investigatorCode('01001'),
-            name: 'Roland Banks',
-            health: 9,
-            sanity: 5,
-            physicalTrauma: 0,
-            mentalTrauma: 0,
-            xpEarned: 0,
-            xpSpent: 0,
-            fate: 'alive',
-            earnedCards: [],
-          },
-        ],
-        chaosBag: ['0'],
-        scenarioIds: [scenarioId('the-gathering'), scenarioId('the-midnight-masks')],
-      },
-    ]);
-    const gatheringGame = await gameStore.createGame({ title: 'The Gathering', campaignId });
-    await gameStore.createGame({ title: 'A quick game' });
-    render(
-      <MemoryRouter>
-        <HomeScreen store={createAppStore(gameStore)} />
-      </MemoryRouter>,
-    );
+  it.each([
+    ['still going', [], 'Scenario 1 of 2'],
+    ['won', [{ type: 'CampaignEnded', result: 'won' } as const], 'The investigators won'],
+  ])(
+    'lists a campaign %s with its progress and resumes its latest game',
+    async (_, ending, progress) => {
+      const gameStore = new IndexedDbStore(`home-test-${n++}`);
+      const campaignId = await gameStore.createCampaign({ title: 'Zealot – Roland' });
+      await gameStore.appendCampaignEvents(campaignId, [
+        {
+          type: 'CampaignStarted',
+          campaignId,
+          definitionId: campaignDefinitionId('night-of-the-zealot'),
+          difficulty: 'hard',
+          investigators: [
+            {
+              code: investigatorCode('01001'),
+              name: 'Roland Banks',
+              health: 9,
+              sanity: 5,
+              physicalTrauma: 0,
+              mentalTrauma: 0,
+              xpEarned: 0,
+              xpSpent: 0,
+              fate: 'alive',
+              earnedCards: [],
+            },
+          ],
+          chaosBag: ['0'],
+          scenarioIds: [scenarioId('the-gathering'), scenarioId('the-midnight-masks')],
+        },
+        ...ending,
+      ]);
+      const gatheringGame = await gameStore.createGame({ title: 'The Gathering', campaignId });
+      await gameStore.createGame({ title: 'A quick game' });
+      render(
+        <MemoryRouter>
+          <HomeScreen store={createAppStore(gameStore)} />
+        </MemoryRouter>,
+      );
 
-    const campaigns = await screen.findByRole('list', { name: 'Campaigns' });
+      const campaigns = await screen.findByRole('list', { name: 'Campaigns' });
 
-    expect(within(campaigns).getByText('Hard')).toBeTruthy();
-    expect(within(campaigns).getByText('Roland Banks')).toBeTruthy();
-    expect(within(campaigns).getByText('Scenario 1 of 2')).toBeTruthy();
-    expect(within(campaigns).getByRole('link', { name: 'Resume' }).getAttribute('href')).toBe(
-      `/game/${gatheringGame}`,
-    );
-  });
+      expect(within(campaigns).getByText('Hard')).toBeTruthy();
+      expect(within(campaigns).getByText('Roland Banks')).toBeTruthy();
+      expect(within(campaigns).getByText(progress)).toBeTruthy();
+      expect(within(campaigns).getByRole('link', { name: 'Resume' }).getAttribute('href')).toBe(
+        `/game/${gatheringGame}`,
+      );
+    },
+  );
 
   it('lists games with progress and a resume link', async () => {
     await renderHome(['Night']);

@@ -26,7 +26,8 @@ export function CampaignListItem({ campaign, latestGameId }: CampaignListItemPro
           {campaign.result
             ? t(`campaignList.result.${campaign.result}`)
             : t('campaignList.scenarioOf', {
-                n: campaign.position + 1,
+                // Past the last scenario the log waits for its end to be recorded.
+                n: Math.min(campaign.position + 1, campaign.scenarioCount),
                 total: campaign.scenarioCount,
               })}
         </dd>

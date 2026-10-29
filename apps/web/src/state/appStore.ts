@@ -2,6 +2,7 @@ import { createStore, type StoreApi } from 'zustand/vanilla';
 import type {
   BoardView,
   CampaignDefinition,
+  CampaignExecuteResult,
   CampaignId,
   CampaignSummary,
   Difficulty,
@@ -17,7 +18,7 @@ import type {
   ScenarioContext,
   ScenarioId,
 } from '@arkham/engine';
-import { campaign, campaignId as toCampaignId, emptyState } from '@arkham/engine';
+import { PlayTable, campaign, campaignId as toCampaignId, emptyState } from '@arkham/engine';
 import { gameActions, type GameActions } from './gameActions';
 import { GameSession, startGame, type PlayStep, type SkippedEffect } from './gameSession';
 import type { DrawnCard } from '../encounter/drawnCards';
@@ -144,8 +145,8 @@ export interface AppState {
   /**
    * Starts a campaign (`StartCampaign` on a new campaign log) and sets its first scenario up from
    * that log as a new saved game of the campaign, then opens the game. Rejects with
-   * `CampaignCommandRejected` for an invalid team before anything is stored, and with
-   * `CommandRejected` for invalid scenario data after the campaign is stored but before its game.
+   * `CampaignCommandRejected` for an invalid team or `CommandRejected` for invalid scenario data
+   * before anything is stored.
    */
   startCampaign(start: CampaignStart): Promise<GameId>;
   openGame(gameId: GameId): Promise<void>;
@@ -185,6 +186,23 @@ export interface AppState {
 function contextFor(entry: ScenarioEntry): ScenarioContext {
   // Investigator cards are not needed: after setup the engine reads investigators from the state.
   return { cards: entry.cards, scenario: entry.definition };
+}
+
+/**
+ * The new campaign log of `start` under `campaignId` (`StartCampaign`), with the first game's setup
+ * checked against it. Pure, so it can run before anything is stored; throws
+ * `CampaignCommandRejected` for an invalid team and `CommandRejected` for invalid scenario data.
+ */
+function startCampaignLog(start: CampaignStart, campaignId: CampaignId): CampaignExecuteResult {
+  const { definition, ctx, difficulty, seed, investigators } = start;
+  const command = campaign.compileStart(definition, {
+    campaignId,
+    difficulty,
+    investigators: investigators.map((seat) => seat.code),
+  });
+  const result = campaign.executeCommand({ cards: ctx.cards }, campaign.createEmptyLog(), command);
+  PlayTable.setUp(ctx, { campaign: result.log, seed, investigators });
+  return result;
 }
 
 /**
@@ -331,38 +349,16 @@ export function createAppStore(
         await get().openGame(gameId);
         return gameId;
       },
-      async startCampaign({
-        definition,
-        campaignTitle,
-        title,
-        ctx,
-        difficulty,
-        seed,
-        investigators,
-      }) {
-        const startIn = (campaignId: CampaignId) =>
-          campaign.executeCommand(
-            { cards: ctx.cards },
-            campaign.createEmptyLog(),
-            campaign.compileStart(definition, {
-              campaignId,
-              difficulty,
-              investigators: investigators.map((seat) => seat.code),
-            }),
-          );
-        // The store hands out the id, so a dry run under a stand-in id refuses a bad team before
-        // an empty campaign is stored.
-        startIn(toCampaignId('pending'));
-        const campaignId = await gameStore.createCampaign({ title: campaignTitle });
-        const { log, events } = startIn(campaignId);
+      async startCampaign(start) {
+        // The store hands out the id, so a dry run under a stand-in id refuses a bad team or
+        // scenario before an empty campaign is stored.
+        startCampaignLog(start, toCampaignId('pending'));
+        const campaignId = await gameStore.createCampaign({ title: start.campaignTitle });
+        const { log, events } = startCampaignLog(start, campaignId);
         await gameStore.appendCampaignEvents(campaignId, events);
-        const gameId = await startGame(
-          gameStore,
-          title,
-          ctx,
-          { campaign: log, seed, investigators },
-          campaignId,
-        );
+        const { title, ctx, seed, investigators } = start;
+        const options = { campaign: log, seed, investigators };
+        const gameId = await startGame(gameStore, title, ctx, options, campaignId);
         await get().refresh();
         await get().openGame(gameId);
         return gameId;
