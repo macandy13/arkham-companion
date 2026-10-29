@@ -103,7 +103,7 @@ test('the game log after two rounds, scrolled to the newest step under its round
   await expect(newestRound.getByRole('listitem').last()).toBeInViewport();
 });
 
-test('Roland Banks’ combat boosted by 2, as an ally in play gives it', async ({ page }) => {
+test('Roland Banks’ combat boosted by 2, as an ally in play gives it @shot', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
   const roland = page.getByRole('region', { name: 'Roland Banks' });
 
