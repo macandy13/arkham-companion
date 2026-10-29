@@ -86,17 +86,48 @@
   padding-block: var(--space-2);
 }
 
-/* Each place of the header: its label over the cards that lie there, side by side. */
-#board > header > section {
-  display: flex;
-  flex-wrap: wrap;
+/*
+ * Each place of the header: its label over the cards that lie there, side by side. A grid, since a
+ * wrapping flex row counts its label's width beside the cards' when the header measures it, which
+ * made each place far wider than its cards and pushed the victory display onto a row of its own on
+ * a 1024 px tablet. A place with a pile beside its card has two columns for the label to span.
+ * The attribute selector outweighs the home screen's `#app > main section` row, which home.css,
+ * loaded later, would otherwise impose.
+ */
+#board > header > section[aria-labelledby] {
+  display: grid;
+  grid-auto-flow: column;
   justify-content: center;
+  justify-items: center;
   gap: var(--space-1) var(--space-2);
   align-items: end;
 }
 
+#board > header > section[aria-labelledby]:has(> :nth-child(3)) {
+  grid-template-columns: auto auto;
+}
+
+#board > header > section[aria-labelledby] > :not(p) {
+  grid-row: 2;
+}
+
+/*
+ * Over a card with a pile beside it, the cards alone set the place's width, so a label wider than
+ * them (the encounter deck's) neither widens the columns nor pushes the pile off the card's corner;
+ * it runs over the place's sides instead, centred over the cards.
+ */
+#board > header > section[aria-labelledby]:has(> :nth-child(3)) > p {
+  contain: inline-size;
+  display: flex;
+  justify-content: center;
+  white-space: nowrap;
+}
+
 /* The playmat prints a label over each place, in small spaced capitals. */
 #board > header > section > p {
+  grid-row: 1;
+  grid-column: 1 / -1;
+  /* For the phone's detail view, whose places wrap as a flex row. */
   flex-basis: 100%;
   text-align: center;
   color: var(--color-text-muted);
@@ -658,6 +689,11 @@
     gap: var(--space-1);
   }
 
+  /* Without their labels, the places are plain rows of cards again. */
+  #board:not([data-view]) > header > section {
+    display: flex;
+  }
+
   #board:not([data-view]) > header {
     padding-block: var(--space-1);
   }
@@ -801,6 +837,8 @@
   }
 
   #board[data-view='detail'] > header > section {
+    display: flex;
+    flex-wrap: wrap;
     flex: none;
     width: 100%;
     align-content: center;
