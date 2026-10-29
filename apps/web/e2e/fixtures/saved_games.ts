@@ -55,6 +55,50 @@ function houseOpened(scenario: ScenarioDefinition): PlayTable {
   return table;
 }
 
+/** Daisy Walker with her printed stats, entered by hand like Roland Banks; no picture. */
+const daisy: InvestigatorCard = {
+  code: investigatorCode('01002'),
+  name: 'Daisy Walker',
+  health: 5,
+  sanity: 9,
+  skills: { willpower: 3, intellect: 5, combat: 2, agility: 2 },
+};
+const daisyId = investigatorId('daisy');
+
+/**
+ * An export file of a two-player game of The Gathering titled `title`, on Roland Banks' first
+ * turn, where Roland Banks and Daisy Walker hold 3 clues each, given by hand to keep the script
+ * short. Trapped needs 4 for two, so the players choose who pays them.
+ */
+export function cluesToShareExport(title: string): Buffer {
+  const table = PlayTable.setUp(
+    {
+      cards: cardDbWith(theGatheringCards, [
+        investigatorCardStats(roland),
+        investigatorCardStats(daisy),
+      ]),
+      scenario: theGathering,
+    },
+    {
+      investigators: [
+        { id: rolandId, code: roland.code },
+        { id: daisyId, code: daisy.code },
+      ],
+      seed: 3,
+    },
+  );
+  table.nextPhase();
+  table.startTurn(rolandId);
+  for (const investigator of [rolandId, daisyId])
+    table.play({
+      type: 'AdjustInvestigator',
+      investigatorId: investigator,
+      stat: 'clues',
+      delta: 3,
+    });
+  return exportOf(title, table, 'clues_to_share');
+}
+
 /** When the first step of an export with its own steps was stored, and the time between steps. */
 const STEPS_START = Date.UTC(2026, 9, 28, 19, 0);
 const MINUTE = 60_000;

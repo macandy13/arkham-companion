@@ -53,6 +53,7 @@ export {
   type ActView,
   type AgendaView,
   type CardActionView,
+  type CluePayerView,
   type PrintedActionView,
   type CardFaceView,
   type CardPlaceView,

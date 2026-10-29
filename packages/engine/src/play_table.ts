@@ -269,9 +269,15 @@ export class PlayTable {
   /**
    * The investigator takes the action ability number `action` (default the first) printed on the
    * one card in the game `card` picks (a location, the agenda, an enemy, …), as an action unless
-   * it is free (`CardAction.free`).
+   * it is free (`CardAction.free`). For a group clue cost, `spend` lists who pays how many
+   * (omitted, the engine's split: `defaultCluePayments`).
    */
-  useCardAction(investigator: InvestigatorRef, card: CardRef, action = 0): void {
+  useCardAction(
+    investigator: InvestigatorRef,
+    card: CardRef,
+    action = 0,
+    spend?: ReadonlyArray<readonly [InvestigatorRef, number]>,
+  ): void {
     const matcher = cardMatcher(card);
     const { id } = this.onlyOne(
       matchingCards(this.ctx, Object.values(this.current.cards), matcher),
@@ -282,6 +288,14 @@ export class PlayTable {
       investigatorId: this.seat(investigator),
       cardId: id,
       action,
+      ...(spend === undefined
+        ? {}
+        : {
+            spend: spend.map(([payer, amount]) => ({
+              investigatorId: this.seat(payer),
+              amount,
+            })),
+          }),
     });
   }
 

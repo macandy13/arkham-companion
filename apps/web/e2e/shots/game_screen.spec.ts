@@ -1,5 +1,6 @@
 import { expect, test } from '../fixtures/test';
 import {
+  cluesToShareExport,
   rolandThreatenedExport,
   houseOpenedExport,
   inTheParlorExport,
@@ -31,29 +32,27 @@ test('map tabs for the Study and the house, the house chosen', async ({ page }) 
   await expect(page.getByRole('tabpanel', { name: 'House' })).toBeVisible();
 });
 
-test(
-  'Roland Banks with four treacheries and the Ghoul Priest, scrolled on to the Ghoul Priest',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(
-      page,
-      'Roland Banks threatened',
-      rolandThreatenedExport('Roland Banks threatened'),
-    );
+test('Roland Banks with four treacheries and the Ghoul Priest, scrolled on to the Ghoul Priest', async ({
+  page,
+}) => {
+  await resumeImportedGame(
+    page,
+    'Roland Banks threatened',
+    rolandThreatenedExport('Roland Banks threatened'),
+  );
 
-    const roland = page.getByRole('region', { name: 'Roland Banks' });
-    const threatArea = roland.getByRole('list', { name: 'Threat area' });
-    const ghoulPriest = threatArea.getByRole('listitem', {
-      name: 'Ghoul Priest, 3 of 5 health left, 2 damage',
-    });
-    await expect(threatArea.getByRole('listitem')).toHaveCount(5);
-    await expect(ghoulPriest).not.toBeInViewport({ ratio: 1 });
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
+  const threatArea = roland.getByRole('list', { name: 'Threat area' });
+  const ghoulPriest = threatArea.getByRole('listitem', {
+    name: 'Ghoul Priest, 3 of 5 health left, 2 damage',
+  });
+  await expect(threatArea.getByRole('listitem')).toHaveCount(5);
+  await expect(ghoulPriest).not.toBeInViewport({ ratio: 1 });
 
-    await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
+  await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
 
-    await expect(ghoulPriest).toBeInViewport({ ratio: 1 });
-  },
-);
+  await expect(ghoulPriest).toBeInViewport({ ratio: 1 });
+});
 
 test('the Hallway’s details, its card with Roland Banks on it, on Roland Banks’ turn', async ({
   page,
@@ -324,3 +323,29 @@ test('Lita Chantler under Roland Banks’ card, in their control', async ({ page
     .getByRole('list', { name: 'Cards in play' });
   await expect(cardsInPlay.getByRole('listitem')).toHaveText('Lita Chantler');
 });
+
+test(
+  'who pays the 4 clues to advance Trapped, Daisy Walker 3 and Roland Banks 1',
+  { tag: '@shot' },
+  async ({ page, isMobile }) => {
+    await resumeImportedGame(page, 'Clues to share', cluesToShareExport('Clues to share'));
+    // A phone's compact header hides the act's plate; its detail view shows the act in full.
+    if (isMobile) await page.getByRole('region', { name: 'Act' }).click();
+
+    await page
+      .getByRole('region', { name: 'Act' })
+      .getByRole('button', { name: 'Advance' })
+      .click();
+    const dialog = page.getByRole('dialog', { name: 'Who pays the clues to advance Trapped?' });
+    for (const token of [
+      'clue 3 of Roland Banks',
+      'clue 2 of Roland Banks',
+      'clue 2 of Daisy Walker',
+      'clue 3 of Daisy Walker',
+    ])
+      await dialog.getByRole('button', { name: token }).click();
+
+    await expect(dialog.getByText(/^4 of 4 clues chosen/)).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'Pay', exact: true })).toBeEnabled();
+  },
+);

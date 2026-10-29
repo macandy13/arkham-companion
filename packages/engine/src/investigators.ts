@@ -229,7 +229,7 @@ export function cluesHeldByGroup(ctx: EngineContext, state: GameState): number {
 }
 
 /** The active investigators no card forbids to spend clues, in seat order. */
-function clueSpenders(ctx: EngineContext, state: GameState): Investigator[] {
+export function clueSpenders(ctx: EngineContext, state: GameState): Investigator[] {
   return activeInvestigators(state).filter(
     (inv) => !isRestrictedFor(ctx, state, inv.id, 'spend', 'clues'),
   );
