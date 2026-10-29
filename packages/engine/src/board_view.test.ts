@@ -305,58 +305,58 @@ describe('a skill test outside any decision', () => {
 
     expect(boardView(bagContext, bagState).chaosBag).toEqual(['+1', '-1', 'skull', 'autoFail']);
   });
+});
 
-  describe('the scenario reference card', () => {
-    // Each side lists its tokens out of printed order, so the rows show the card's order.
-    const reference = {
-      easyStandard: {
-        cultist: { modifier: -1, effectKey: 'test.cultist.easyStandard' },
-        skull: { effectKey: 'test.skull.easyStandard' },
-      },
-      hardExpert: {
-        tablet: { modifier: -4, effectKey: 'test.tablet.hardExpert' },
-        skull: { modifier: -2, effectKey: 'test.skull.hardExpert' },
-      },
-    };
+describe('the scenario reference card', () => {
+  // Each side lists its tokens out of printed order, so the rows show the card's order.
+  const reference = {
+    easyStandard: {
+      cultist: { modifier: -1, effectKey: 'test.cultist.easyStandard' },
+      skull: { effectKey: 'test.skull.easyStandard' },
+    },
+    hardExpert: {
+      tablet: { modifier: -4, effectKey: 'test.tablet.hardExpert' },
+      skull: { modifier: -2, effectKey: 'test.skull.hardExpert' },
+    },
+  };
 
-    it.each([
-      {
-        difficulty: 'standard',
-        side: 'easyStandard',
-        rows: [
-          { token: 'skull', effectKey: 'test.skull.easyStandard' },
-          { token: 'cultist', modifier: -1, effectKey: 'test.cultist.easyStandard' },
-        ],
-      },
-      {
-        difficulty: 'expert',
-        side: 'hardExpert',
-        rows: [
-          { token: 'skull', modifier: -2, effectKey: 'test.skull.hardExpert' },
-          { token: 'tablet', modifier: -4, effectKey: 'test.tablet.hardExpert' },
-        ],
-      },
-    ] as const)(
-      'shows the $side side on $difficulty, its rows in printed order',
-      ({ difficulty, side, rows }) => {
-        const { context: referenceContext, state: referenceState } = newGame()
-          .withReferenceCard(reference)
-          .withDifficulty(difficulty)
-          .start();
+  it.each([
+    {
+      difficulty: 'standard',
+      side: 'easyStandard',
+      rows: [
+        { token: 'skull', effectKey: 'test.skull.easyStandard' },
+        { token: 'cultist', modifier: -1, effectKey: 'test.cultist.easyStandard' },
+      ],
+    },
+    {
+      difficulty: 'expert',
+      side: 'hardExpert',
+      rows: [
+        { token: 'skull', modifier: -2, effectKey: 'test.skull.hardExpert' },
+        { token: 'tablet', modifier: -4, effectKey: 'test.tablet.hardExpert' },
+      ],
+    },
+  ] as const)(
+    'shows the $side side on $difficulty, its rows in printed order',
+    ({ difficulty, side, rows }) => {
+      const { context: referenceContext, state: referenceState } = newGame()
+        .withReferenceCard(reference)
+        .withDifficulty(difficulty)
+        .start();
 
-        expect(boardView(referenceContext, referenceState).reference).toEqual({
-          difficulty,
-          side,
-          rows,
-        });
-      },
-    );
+      expect(boardView(referenceContext, referenceState).reference).toEqual({
+        difficulty,
+        side,
+        rows,
+      });
+    },
+  );
 
-    it('has none on a board without a scenario', () => {
-      const { context: bareContext, state: bareState } = newGame().start();
+  it('has none on a board without a scenario', () => {
+    const { context: bareContext, state: bareState } = newGame().start();
 
-      expect(boardView(bareContext, bareState).reference).toBeUndefined();
-    });
+    expect(boardView(bareContext, bareState).reference).toBeUndefined();
   });
 });
 
