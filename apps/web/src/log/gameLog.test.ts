@@ -242,6 +242,7 @@ describe('newestFirst', () => {
     round,
     phase,
     lines: [{ event: 'TokensChanged', text }],
+    later: 0,
   });
 
   it('puts the newest round and phase first, its newest step leading', () => {
