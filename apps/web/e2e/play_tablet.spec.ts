@@ -1,8 +1,8 @@
 import { expect, test } from './fixtures/test';
 import { pilesFilledExport, resumeImportedGame } from './fixtures/saved_games';
 
-// The landscape tablets the play screen is laid out for (product.md "UI concept"): the larger one
-// the other specs run on and the smaller one, where the room runs out first.
+// The landscape tablets the play screen is laid out for (M3.9): the larger one the other specs run
+// on (playwright.config.ts) and the smaller one, where the room runs out first.
 const tablets = [
   { width: 1180, height: 820 },
   { width: 1024, height: 768 },
