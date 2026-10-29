@@ -6,6 +6,7 @@ import { useCardPicture } from '../catalog/cardImages';
 import { EncounterPiles, HeaderPile, type PileProps } from '../encounter/EncounterPiles';
 import type { AppState, OpenGame } from '../state/appStore';
 import { CardActions, cardActionsOn } from './ActionRow';
+import { useCluePayment } from './CluePaymentDialog';
 import { Token } from './Token';
 import type { HeaderCardKind } from './useDetailView';
 
@@ -122,7 +123,7 @@ function AgendaStatus({
   const close = () => setZoomed(false);
   const offered = adjusting ? [] : cardActionsOn(board, agenda.id);
   const actionRow = offered.length > 0 && (
-    <CardActions offered={offered} actions={actions} busy={blocked} onUse={close} />
+    <CardActions board={board} offered={offered} actions={actions} busy={blocked} onUse={close} />
   );
   const tokenAndPlate = (
     <>
@@ -190,7 +191,8 @@ function AgendaStatus({
  * advancing it against the clues it needs (`ActAdvance`), and a plate at its foot. For an act the
  * investigators advance by spending clues, the token counts the clues they hold and the plate has
  * its advance, the act's own action, which the investigator whose turn it is takes once they hold
- * enough; advancing is play, not a correction, so it waits while the players adjust. For an act
+ * enough, after the players choose who pays when they can (`useCluePayment`); advancing is play,
+ * not a correction, so it waits while the players adjust. For an act
  * that advances itself once clues lie on it, the token counts those and the plate has steppers for
  * them while adjusting, a correction by hand.
  */
@@ -211,6 +213,7 @@ function ActStatus({
 }) {
   const { t } = useTranslation();
   const [zoomed, setZoomed] = useState(false);
+  const { dialog, pay } = useCluePayment(board);
   const { act } = board;
   if (!act) return null;
   // Advancing can raise a decision (act 3's question), and that dialog must be the only one open.
@@ -218,7 +221,7 @@ function ActStatus({
   const { actions } = store.getState();
   const offered = adjusting ? [] : cardActionsOn(board, act.id);
   const actionRow = offered.length > 0 && (
-    <CardActions offered={offered} actions={actions} busy={blocked} onUse={close} />
+    <CardActions board={board} offered={offered} actions={actions} busy={blocked} onUse={close} />
   );
   const { advance } = act;
   const plate = (advance: ActAdvance, onAdvance?: () => void) => {
@@ -257,10 +260,12 @@ function ActStatus({
             <button
               type="button"
               disabled={blocked || adjusting || board.turn === undefined || clues < threshold}
-              onClick={() => {
-                onAdvance?.();
-                void actions.advanceAct();
-              }}
+              onClick={() =>
+                pay(threshold, t('cluePayment.advanceTitle', { act: act.name }), (spend) => {
+                  onAdvance?.();
+                  void actions.advanceAct(spend);
+                })
+              }
             >
               {t('header.advanceAct')}
             </button>
@@ -293,6 +298,7 @@ function ActStatus({
           {tokenAndPlate(close)}
         </CardDetails>
       )}
+      {dialog}
     </HeaderSlot>
   );
 }

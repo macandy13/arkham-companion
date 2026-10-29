@@ -2,21 +2,41 @@
  * The parts of a skill test calculation (TestCalculation) that the skill test dialog and the
  * decision dialog of a skill test share: the skill toggles, the stepper rows, the calculation and the outcome,
  * coloured like a pass or a fail, and the tokens drawn, and both dialogs' plain list items. The
+ * clue payment dialog (CluePaymentDialog) shares the stepper rows. The
  * `#board` id lets these beat the home screen's `#app > main` rows and padded list cards.
  */
-#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) section {
+#board
+  :is(
+    dialog[data-dialog='skill-test'],
+    dialog[data-dialog='decision'],
+    dialog[data-dialog='clue-payment']
+  )
+  section {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
   align-items: center;
 }
 
-#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) section > p {
+#board
+  :is(
+    dialog[data-dialog='skill-test'],
+    dialog[data-dialog='decision'],
+    dialog[data-dialog='clue-payment']
+  )
+  section
+  > p {
   flex: 1;
   margin: 0;
 }
 
-#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) data {
+#board
+  :is(
+    dialog[data-dialog='skill-test'],
+    dialog[data-dialog='decision'],
+    dialog[data-dialog='clue-payment']
+  )
+  data {
   min-width: var(--button-compact);
   font-size: var(--font-size-subtitle);
   font-variant-numeric: lining-nums tabular-nums;
@@ -220,4 +240,9 @@
   border-color: var(--color-accent);
   background: var(--color-accent);
   color: var(--color-accent-text);
+}
+
+/* The payers' row labels read "clues Roland Banks pays", lower case for the steppers' names. */
+#board dialog[data-dialog='clue-payment'] section > p::first-letter {
+  text-transform: uppercase;
 }

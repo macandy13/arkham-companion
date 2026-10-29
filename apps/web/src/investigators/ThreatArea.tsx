@@ -121,7 +121,13 @@ export function SmallCard({
         <CardZoom card={card} onClose={close}>
           {(closeZoom) =>
             offered.length > 0 && (
-              <CardActions offered={offered} actions={actions} busy={busy} onUse={closeZoom} />
+              <CardActions
+                board={board}
+                offered={offered}
+                actions={actions}
+                busy={busy}
+                onUse={closeZoom}
+              />
             )
           }
         </CardZoom>

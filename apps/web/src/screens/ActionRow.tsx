@@ -3,6 +3,7 @@ import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import type { BoardView, CardActionView, InstanceId, PrintedActionView } from '@arkham/engine';
 import type { GameActions } from '../state/gameActions';
+import { useCluePayment } from './CluePaymentDialog';
 import './action_row.css';
 
 /** The icons an `ActionButton` shows, each a mask in `action_row.css`. */
@@ -108,24 +109,28 @@ export function cardActionCaption(t: TFunction, { designator, number }: PrintedA
  * The card actions of one card (`cardActionsOn`) as a group of the action row, each named like
  * the turn row's button ("Resign · Parlor") and marked with the action arrow unless it is free.
  * Taking one calls `onUse` first, so a window around it closes, since its effects may ask something
- * next or take the investigator out of the game (Resign).
+ * next or take the investigator out of the game (Resign); one with a group clue cost asks who pays
+ * first (`useCluePayment`).
  */
 export function CardActions({
+  board,
   offered,
   actions,
   busy,
   onUse,
 }: {
+  board: BoardView;
   offered: readonly CardActionView[];
   actions: GameActions;
   busy: boolean;
   onUse?: () => void;
 }) {
   const { t } = useTranslation();
+  const { dialog, pay } = useCluePayment(board);
   return (
     <ActionGroup title={t('cardActions.title')}>
       {offered.map((offer) => {
-        const { cardId, action, designator, free } = offer;
+        const { cardId, action, designator, free, groupClues } = offer;
         const { caption, name } = cardActionLabel(t, offer);
         return (
           <ActionButton
@@ -135,13 +140,16 @@ export function CardActions({
             caption={caption}
             name={name}
             disabled={busy}
-            onClick={() => {
-              onUse?.();
-              void actions.useCardAction(cardId, action);
-            }}
+            onClick={() =>
+              pay(groupClues, name, (spend) => {
+                onUse?.();
+                void actions.useCardAction(cardId, action, spend);
+              })
+            }
           />
         );
       })}
+      {dialog}
     </ActionGroup>
   );
 }

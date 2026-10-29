@@ -391,6 +391,12 @@ export const resources = {
         ofMax: 'of {{max}}',
         victory: 'Victory {{points}}.',
       },
+      cluePayment: {
+        advanceTitle: 'Who pays the clues to advance {{act}}?',
+        total: '{{total}} of {{required}} clues',
+        payer: 'clues {{name}} pays (holds {{count}})',
+        pay: 'Pay',
+      },
       cardActions: {
         title: 'Card actions',
       },
@@ -1095,6 +1101,12 @@ export const resources = {
         type: 'Gegner',
         ofMax: 'von {{max}}',
         victory: 'Sieg {{points}}.',
+      },
+      cluePayment: {
+        advanceTitle: 'Wer zahlt die Hinweise, um {{act}} vorzurücken?',
+        total: '{{total}} von {{required}} Hinweisen',
+        payer: 'Hinweise, die {{name}} zahlt (hat {{count}})',
+        pay: 'Zahlen',
       },
       cardActions: {
         title: 'Kartenaktionen',

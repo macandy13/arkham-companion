@@ -1413,6 +1413,24 @@ describe('card actions', () => {
     ]);
   });
 
+  it('names the clues a group cost asks of the investigators, 2 per investigator for two', () => {
+    const { context, state } = newGame()
+      .withLocation(
+        study,
+        blankLocation('study', {
+          actions: [{ effects: [], cost: { spend: 'groupClues', amount: perInvestigator(2) } }],
+        }),
+        { revealed: true },
+      )
+      .withInvestigator(alice, { locationId: study, clues: 3 })
+      .withInvestigator(bob, { locationId: study, clues: 1 })
+      .start();
+
+    expect(boardView(context, state).cardActions(alice)).toEqual([
+      { cardId: study, card: 'study', action: 0, groupClues: 4 },
+    ]);
+  });
+
   it('keeps the number of the second plain action once the first is used up', () => {
     const { context, state } = newGame()
       .withLocation(
@@ -1547,6 +1565,52 @@ describe('cardsIn', () => {
         backImage: '/cards/curse_back.png',
       },
       { id: instanceId('plain_terror'), name: 'plain_terror', type: 'treachery', traits: [] },
+    ]);
+  });
+});
+
+describe('clue payers', () => {
+  /** An enemy that forbids the investigator engaged with it to spend clues, like The Masked Hunter. */
+  const hunterCard = blankEnemy('hunter', {
+    restrictions: [{ cannot: ['spend'], what: 'clues', who: 'threatArea' }],
+  });
+
+  it.each([
+    {
+      first: alice,
+      required: 3,
+      pays: { alice: 2, bob: 1 },
+      when: 'alice pays all her 2 first, bob the 1 left',
+    },
+    {
+      first: bob,
+      required: 3,
+      pays: { alice: 0, bob: 3 },
+      when: 'bob, taking the action, pays all 3 of his own',
+    },
+  ])('lists both with their clues and the split: $when', ({ first, required, pays }) => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'), { revealed: true })
+      .withInvestigator(alice, { locationId: study, clues: 2 })
+      .withInvestigator(bob, { locationId: study, clues: 4 })
+      .start();
+
+    expect(boardView(context, state).cluePayers(first, required)).toEqual([
+      { id: alice, name: 'alice', clues: 2, pays: pays.alice },
+      { id: bob, name: 'bob', clues: 4, pays: pays.bob },
+    ]);
+  });
+
+  it('leaves out alice while the hunter engaged with her forbids her to spend clues', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'), { revealed: true })
+      .withInvestigator(alice, { locationId: study, clues: 2 })
+      .withInvestigator(bob, { locationId: study, clues: 4 })
+      .withCard(instanceId('hunter'), hunterCard, engagedWith(alice))
+      .start();
+
+    expect(boardView(context, state).cluePayers(alice, 2)).toEqual([
+      { id: bob, name: 'bob', clues: 4, pays: 2 },
     ]);
   });
 });

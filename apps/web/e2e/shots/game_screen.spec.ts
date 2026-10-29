@@ -1,5 +1,6 @@
 import { expect, test } from '../fixtures/test';
 import {
+  cluesToShareExport,
   rolandThreatenedExport,
   houseOpenedExport,
   inTheParlorExport,
@@ -77,18 +78,16 @@ test('the house map by day', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
 
-test(
-  'the game log after two rounds, newest first under round and phase headings',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'Two rounds', mythosDrawnStepsExport('Two rounds'));
+test('the game log after two rounds, newest first under round and phase headings', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'Two rounds', mythosDrawnStepsExport('Two rounds'));
 
-    await page.getByRole('button', { name: 'Game log' }).click();
+  await page.getByRole('button', { name: 'Game log' }).click();
 
-    const log = page.getByRole('dialog', { name: 'Game log' });
-    await expect(log.getByRole('heading', { name: 'Round 3 · Investigation' })).toBeInViewport();
-  },
-);
+  const log = page.getByRole('dialog', { name: 'Game log' });
+  await expect(log.getByRole('heading', { name: 'Round 3 · Investigation' })).toBeInViewport();
+});
 
 test('Roland Banks’ combat boosted by 2, as an ally in play gives it', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
@@ -322,3 +321,34 @@ test('Lita Chantler under Roland Banks’ card, in their control', async ({ page
     .getByRole('list', { name: 'Cards in play' });
   await expect(cardsInPlay.getByRole('listitem')).toHaveText('Lita Chantler');
 });
+
+test(
+  'who pays the 4 clues to advance Trapped, Daisy Walker 3 and Roland Banks 1',
+  { tag: '@shot' },
+  async ({ page, isMobile }) => {
+    await resumeImportedGame(page, 'Clues to share', cluesToShareExport('Clues to share'));
+    // A phone's compact header hides the act's plate; its detail view shows the act in full.
+    if (isMobile) await page.getByRole('region', { name: 'Act' }).click();
+
+    await page
+      .getByRole('region', { name: 'Act' })
+      .getByRole('button', { name: 'Advance' })
+      .click();
+    const dialog = page.getByRole('dialog', { name: 'Who pays the clues to advance Trapped?' });
+    await dialog
+      .getByRole('button', { name: 'Lower the clues Roland Banks pays (holds 3)' })
+      .click();
+    await dialog
+      .getByRole('button', { name: 'Lower the clues Roland Banks pays (holds 3)' })
+      .click();
+    await dialog
+      .getByRole('button', { name: 'Raise the clues Daisy Walker pays (holds 3)' })
+      .click();
+    await dialog
+      .getByRole('button', { name: 'Raise the clues Daisy Walker pays (holds 3)' })
+      .click();
+
+    await expect(dialog.getByText('4 of 4 clues')).toBeVisible();
+    await expect(dialog.getByRole('button', { name: 'Pay', exact: true })).toBeEnabled();
+  },
+);
