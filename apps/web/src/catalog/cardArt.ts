@@ -35,6 +35,13 @@ export const LOCATION_ART: ScanArea = { x: 0, y: 0.057, width: 1, height: 0.506 
 export const ENEMY_ART: ScanArea = { x: 0, y: 130 / 419, width: 1, height: 273 / 419 };
 
 /**
+ * Where a treachery card's art is: the whole width from the top edge down to the beaded band over
+ * its page (about 58 % of the height), the area the treachery face's keyhole frame lies over
+ * (`TREACHERY_FACE.art`), so the printed frame and medallion fall under the face's own.
+ */
+export const TREACHERY_ART: ScanArea = { x: 0, y: 0, width: 1, height: 244 / 419 };
+
+/**
  * The SVG `viewBox` that shows `area` of a portrait scan drawn at `PORTRAIT_SCAN` size; with
  * `preserveAspectRatio="xMidYMid slice"` the art fills its window and keeps its proportions.
  * Whole units are close enough for a crop and keep the attribute short.

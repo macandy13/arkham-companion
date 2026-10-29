@@ -3,13 +3,15 @@ import { useTranslation } from 'react-i18next';
 import type { CardFaceView } from '@arkham/engine';
 import { sentences } from '@arkham/util';
 import { useCardPicture } from '../catalog/cardImages';
+import { TreacheryCard } from '../treacheries/TreacheryCard';
 import { useBackCloses } from './useBackCloses';
 import './card_zoom.css';
 
 /**
- * One card picked up to read (`CardFaceView`), as big as a zoomed card: its picture once it has
- * loaded, and under the picture, for a card without one or until it loads, what the card data
- * says of it in our own frame: its name, type and traits. A card with a back turns over with a
+ * One card picked up to read (`CardFaceView`), as big as a zoomed card: a treachery's front drawn
+ * as its card (`TreacheryCard`); any other card or side as its picture once it has loaded, and
+ * under the picture, for a card without one or until it loads, what the card data says of it in
+ * our own frame: its name, type and traits. A card with a back turns over with a
  * button. Under it, as `children`, the action row of what the card offers the investigator whose
  * turn it is (`CardActions`), when it offers anything, given the zoom's own `close` for the
  * actions that close it; reading it alone changes nothing in the game. A native modal `<dialog>`
@@ -48,19 +50,23 @@ export function CardZoom({
       data-dialog="card-zoom"
     >
       <button type="button" data-icon="close" aria-label={t('cardZoom.close')} onClick={close} />
-      <article data-card={card.type} data-picture={picture?.shown ? 'shown' : undefined}>
-        {picture && (
-          <img
-            src={picture.url}
-            alt={t(`cardZoom.picture.${side}`, { name: card.name })}
-            onLoad={picture.onLoad}
-            onError={picture.onError}
-          />
-        )}
-        <h2 id={titleId}>{card.name}</h2>
-        <p>{t(`cardZoom.type.${card.type}`)}</p>
-        {card.traits.length > 0 && <p>{sentences(card.traits)}</p>}
-      </article>
+      {card.type === 'treachery' && side === 'front' ? (
+        <TreacheryCard card={card} titleId={titleId} />
+      ) : (
+        <article data-card={card.type} data-picture={picture?.shown ? 'shown' : undefined}>
+          {picture && (
+            <img
+              src={picture.url}
+              alt={t(`cardZoom.picture.${side}`, { name: card.name })}
+              onLoad={picture.onLoad}
+              onError={picture.onError}
+            />
+          )}
+          <h2 id={titleId}>{card.name}</h2>
+          <p>{t(`cardZoom.type.${card.type}`)}</p>
+          {card.traits.length > 0 && <p>{sentences(card.traits)}</p>}
+        </article>
+      )}
       {card.backImage !== undefined && (
         <button type="button" onClick={() => setSide(side === 'front' ? 'back' : 'front')}>
           {t(side === 'front' ? 'cardZoom.showBack' : 'cardZoom.showFront')}

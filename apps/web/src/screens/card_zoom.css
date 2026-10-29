@@ -34,7 +34,8 @@
 
 /*
  * Upright like a printed card; the text fallback sits in the middle of the hatched art area. The
- * frame is the treachery colour, since treacheries are the only cards opened here so far.
+ * frame is the treachery colour, since treacheries are the only cards opened here so far (their
+ * fronts drawn as cards, TreacheryCard, so this shows their backs).
  */
 #board dialog[data-dialog='card-zoom'] > article {
   position: relative;
