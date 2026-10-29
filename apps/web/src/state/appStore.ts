@@ -4,6 +4,7 @@ import type {
   CampaignDefinition,
   CampaignExecuteResult,
   CampaignId,
+  CampaignLog,
   CampaignSummary,
   Difficulty,
   EncounterCardView,
@@ -52,6 +53,16 @@ export interface CampaignStart extends ScenarioStart {
   definition: CampaignDefinition;
   /** Name shown in the campaign list. */
   campaignTitle: string;
+}
+
+/** The campaign on the campaign screen, as `AppState.openCampaign` loaded it. */
+export interface OpenCampaign {
+  campaignId: CampaignId;
+  title: string;
+  /** Always the result of replaying the campaign's stored event log. */
+  log: CampaignLog;
+  /** The campaign's games, most recently played first. */
+  games: GameSummary[];
 }
 
 /** The game on the play screen, as `AppState.openGame` loaded it and `AppState.actions` keep it. */
@@ -133,6 +144,8 @@ export interface AppState {
   campaigns: CampaignSummary[];
   /** Open game, if any. */
   current?: OpenGame;
+  /** Open campaign, if any; `null` once `openCampaign` found no such campaign. */
+  campaign?: OpenCampaign | null;
   /** Reloads the game and campaign lists from the `GameStore`. */
   refresh(): Promise<void>;
   /** Creates an empty game, reloads the list and opens it. */
@@ -150,6 +163,8 @@ export interface AppState {
    */
   startCampaign(start: CampaignStart): Promise<GameId>;
   openGame(gameId: GameId): Promise<void>;
+  /** Loads a campaign's log and its games for the campaign screen (`campaign`). */
+  openCampaign(campaignId: CampaignId): Promise<void>;
   /**
    * What the play screen can do to the open game (`GameActions`). Each action is stored before
    * the new state shows; a refused one stores nothing and sets `current.rejection`. Actions run
@@ -365,6 +380,15 @@ export function createAppStore(
       },
       openGame(gameId) {
         return enqueue(() => open(gameId));
+      },
+      async openCampaign(campaignId) {
+        const loaded = await gameStore.loadCampaign(campaignId);
+        if (!loaded) {
+          set({ campaign: null });
+          return;
+        }
+        const games = (await gameStore.listGames()).filter((g) => g.campaignId === campaignId);
+        set({ campaign: { campaignId, title: loaded.summary.title, log: loaded.log, games } });
       },
       actions: gameActions(
         (step) => queueStep(() => playStep(step)),

@@ -3,8 +3,9 @@
 The React PWA is a thin layer over the engine.
 [`App.tsx`](../../apps/web/src/App.tsx) defines the hash routes; screens are in [`screens/`](../../apps/web/src/screens/):
 
-- home, with the campaigns (each resumes its latest game) above the saved games,
+- home, with the campaigns (each opens its campaign log) above the saved games,
 - new game wizard, whose campaign path starts a campaign log and its first scenario as one of its games (`AppState.startCampaign`),
+- campaign log (`/campaign/:id`, [`campaign/`](../../apps/web/src/campaign/)),
 - game screen,
 - settings with the owned packs of the campaigns the app plays (`CampaignEntry.packCodes`) and the unofficial fan project notice.
 
@@ -19,6 +20,13 @@ The new game wizard's [investigator picker](../../apps/web/src/picker/Investigat
 
 Its filters sit behind one round button that opens a menu, drawn like the play screen's ☰ menu (`button[data-icon][aria-expanded] + *` in base.css), and the button counts the filters set.
 A tap on a portrait opens the detail sheet as a dialog.
+
+## Campaign log
+
+The [campaign screen](../../apps/web/src/campaign/CampaignScreen.tsx) draws the open campaign (`AppState.openCampaign`, `OpenCampaign`: the replayed `CampaignLog` and the campaign's games) like the Core Set's campaign log sheet (docs/product.md "Campaign screen"):
+
+- an index card with the printed fields in a column per investigator (unspent XP, trauma as tally marks ([`Tally.tsx`](../../apps/web/src/campaign/Tally.tsx)), earned story cards by name from the catalog), and a napkin with the campaign's scenarios, the played ones ticked with their resolution and the next one marked `aria-current`;
+- a link that continues the game of the scenario in play.
 
 ## Open game
 

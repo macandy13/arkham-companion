@@ -74,8 +74,6 @@ describe('HomeScreen', () => {
         },
         ...ending,
       ]);
-      const gatheringGame = await gameStore.createGame({ title: 'The Gathering', campaignId });
-      await gameStore.createGame({ title: 'A quick game' });
       render(
         <MemoryRouter>
           <HomeScreen store={createAppStore(gameStore)} />
@@ -88,7 +86,7 @@ describe('HomeScreen', () => {
       expect(within(campaigns).getByText('Roland Banks')).toBeTruthy();
       expect(within(campaigns).getByText(progress)).toBeTruthy();
       expect(within(campaigns).getByRole('link', { name: 'Resume' }).getAttribute('href')).toBe(
-        `/game/${gatheringGame}`,
+        `/campaign/${campaignId}`,
       );
     },
   );

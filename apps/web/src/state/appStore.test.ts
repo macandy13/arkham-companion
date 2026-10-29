@@ -1,6 +1,7 @@
 import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
 import {
+  campaignId,
   cardCode,
   cardStats,
   scenarioId,
@@ -206,6 +207,39 @@ describe('appStore', () => {
         await expect(store.getState().startCampaign(invalid)).rejects.toThrow();
         expect(await db.listCampaigns()).toEqual([]);
         expect(await db.listGames()).toEqual([]);
+      });
+    });
+
+    describe('openCampaign', () => {
+      const campaignStart = {
+        ...start,
+        definition: nightOfTheZealot,
+        campaignTitle: 'Night of the Zealot',
+      };
+
+      it('loads the campaign log with the games of that campaign only', async () => {
+        const db = new IndexedDbStore('appstore-open-campaign-test');
+        const store = createAppStore(db);
+        await store.getState().startScenario({ ...start, title: 'A quick game' });
+        const gameId = await store.getState().startCampaign(campaignStart);
+        const campaignId = store.getState().campaigns[0]!.campaignId;
+
+        await store.getState().openCampaign(campaignId);
+
+        expect(store.getState().campaign).toMatchObject({
+          campaignId,
+          title: 'Night of the Zealot',
+          log: { difficulty: 'easy', investigators: [{ code: 'alder', name: 'Alder' }] },
+          games: [{ gameId, title: 'The Gathering' }],
+        });
+      });
+
+      it('marks a campaign that is not stored as missing', async () => {
+        const store = createAppStore(new IndexedDbStore('appstore-open-missing-campaign-test'));
+
+        await store.getState().openCampaign(campaignId('gone'));
+
+        expect(store.getState().campaign).toBeNull();
       });
     });
 

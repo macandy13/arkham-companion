@@ -1,5 +1,13 @@
-import { nightOfTheZealot, theGathering, theGatheringCards } from '@arkham/scenarios';
-import type { CampaignDefinition, CardDb, ScenarioDefinition } from '@arkham/engine';
+import {
+  nightOfTheZealot,
+  theDevourerBelow,
+  theDevourerBelowCards,
+  theGathering,
+  theGatheringCards,
+  theMidnightMasks,
+  theMidnightMasksCards,
+} from '@arkham/scenarios';
+import type { CampaignDefinition, CardCode, CardDb, ScenarioDefinition } from '@arkham/engine';
 
 /** A scenario the wizard can start: its definition plus the card data the engine needs to run it. */
 export interface ScenarioEntry {
@@ -34,6 +42,18 @@ export const scenarioCatalog: readonly ScenarioEntry[] = [
     definition: theGathering,
     cards: theGatheringCards,
   },
+  {
+    id: theMidnightMasks.id,
+    nameKey: 'scenarios.theMidnightMasks',
+    definition: theMidnightMasks,
+    cards: theMidnightMasksCards,
+  },
+  {
+    id: theDevourerBelow.id,
+    nameKey: 'scenarios.theDevourerBelow',
+    definition: theDevourerBelow,
+    cards: theDevourerBelowCards,
+  },
 ];
 
 /** Every playable campaign. */
@@ -50,4 +70,21 @@ export const campaignCatalog: readonly CampaignEntry[] = [
 /** The scenario with `id`, if the catalog has it. */
 export function findScenario(id: string): ScenarioEntry | undefined {
   return scenarioCatalog.find((entry) => entry.id === id);
+}
+
+/** The campaign with definition id `id`, if the catalog has it. */
+export function findCampaign(id: string): CampaignEntry | undefined {
+  return campaignCatalog.find((entry) => entry.id === id);
+}
+
+/**
+ * The printed name of the scenario card `code`, such as a story card a campaign's investigator
+ * earned, from whichever scenario of the catalog has it; the code itself if none does.
+ */
+export function scenarioCardName(code: CardCode): string {
+  for (const entry of scenarioCatalog) {
+    const card = entry.cards.get(code);
+    if (card) return card.name;
+  }
+  return code;
 }

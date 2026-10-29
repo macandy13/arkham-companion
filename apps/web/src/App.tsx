@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { HashRouter, NavLink, Outlet, Route, Routes, useMatch } from 'react-router';
 import type { StoreApi } from 'zustand/vanilla';
+import { CampaignScreen } from './campaign/CampaignScreen';
 import { useCatalog, type CatalogSource } from './catalog/useCatalog';
 import { GameScreen } from './screens/GameScreen';
 import { HomeScreen } from './screens/HomeScreen';
@@ -34,6 +35,7 @@ export function AppRoutes({ store, catalog }: AppProps) {
         <Route index element={<HomeScreen store={store} />} />
         <Route path="new" element={<NewGameScreen store={store} catalog={catalog} />} />
         <Route path="game/:id" element={<GameScreen store={store} />} />
+        <Route path="campaign/:id" element={<CampaignScreen store={store} />} />
         <Route path="settings" element={<SettingsRoute catalog={catalog} />} />
       </Route>
     </Routes>
