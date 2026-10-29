@@ -4,17 +4,19 @@ import type { GameState } from '@arkham/engine';
 import type { GameLogSource } from '../state/appStore';
 import { ConfirmDialog } from '../screens/ConfirmDialog';
 import { useBackCloses } from '../screens/useBackCloses';
-import { gameLog, newestFirst, type LogSection, type LogStep } from './gameLog';
+import { gameLog, logSections, type LogSection, type LogStep } from './gameLog';
 import './game_log.css';
 
 /**
- * The game log over the board (M3.8): every step of the open game (`gameLog`), newest first, under
- * a heading per round and phase that stays at the top while its steps scroll by. Each step is one
+ * The game log over the board (M3.8): every step of the open game (`gameLog`) in the order played,
+ * under a heading per round and phase that stays at the top while its steps scroll by. It opens
+ * scrolled to the end, so the newest step shows first under its own heading. Each step is one
  * list item with whose turn it was, when it was stored and a line per thing it did. `state` is the
  * game after `log`. Every step but the newest undo group offers to go back to it (`onGoBack`,
  * after a confirm, then the log closes), unless the screen can't take steps back now (busy or
  * adjusting), which leaves `onGoBack` out. A native modal `<dialog>` brings focus trapping and
- * Escape; on a phone the back gesture closes it too (`useBackCloses`).
+ * Escape; on a phone held upright it fills the screen, and the back gesture closes it
+ * (`useBackCloses`).
  */
 export function GameLogDialog({
   log,
@@ -30,11 +32,13 @@ export function GameLogDialog({
   const { t } = useTranslation();
   const titleId = useId();
   const dialog = useRef<HTMLDialogElement>(null);
+  const steps = useRef<HTMLOListElement>(null);
   useEffect(() => {
     dialog.current?.showModal();
+    if (steps.current) steps.current.scrollTop = steps.current.scrollHeight;
   }, []);
   const close = useBackCloses(onClose);
-  const sections = newestFirst(gameLog(t, log.ctx, state, log));
+  const sections = logSections(gameLog(t, log.ctx, state, log));
   const [goingBack, setGoingBack] = useState<LogStep>();
   const goBack = onGoBack && setGoingBack;
 
@@ -51,7 +55,7 @@ export function GameLogDialog({
     >
       <h2 id={titleId}>{t('log.title')}</h2>
       <button type="button" data-icon="close" aria-label={t('log.close')} onClick={close} />
-      <ol>
+      <ol ref={steps}>
         {sections.map((section) => (
           <Section key={section.steps[0]?.id} section={section} onGoBack={goBack} />
         ))}
@@ -73,7 +77,7 @@ export function GameLogDialog({
   );
 }
 
-/** One round and phase of the log: its heading, then its steps, newest first. */
+/** One round and phase of the log: its heading, then its steps in the order played. */
 function Section({
   section,
   onGoBack,
