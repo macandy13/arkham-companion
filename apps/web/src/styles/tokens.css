@@ -142,6 +142,31 @@
   --color-count-damage: #b3302b;
   --color-count-horror: #3a64a8;
   --color-count-rim: #f3ecd8;
+  /* The tiles under the skill icons on an investigator card, in each skill's printed colour. */
+  --color-skill-willpower: #2f5f94;
+  --color-skill-intellect: #6a3f86;
+  --color-skill-combat: #9e3328;
+  --color-skill-agility: #3c7340;
+  /*
+   * The investigator's clue token and resource coin: a teal token lit from its upper left in a
+   * dark rim, and a gold coin with a milled ring inside its rim.
+   */
+  --color-clue-token-rim: #1d5566;
+  --clue-token-face: radial-gradient(circle at 35% 30%, #7cc6d6, #2f8aa6 55%, #1f6478);
+  --color-resource-coin-rim: #7a561c;
+  --resource-coin-face: radial-gradient(circle at 35% 30%, #f6dc8e, #d6a743 55%, #9c7226);
+  --resource-coin-milling: inset 0 0 0 2px #f1d27c, inset 0 0 0 3px #8a6420;
+  /*
+   * The notebook page an investigator's counters sit on: pale paper with faint ruled lines, like
+   * the printed card's text page.
+   */
+  --notebook-page:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 calc(1.25rem - 1px),
+      rgb(30 23 18 / 10%) calc(1.25rem - 1px) 1.25rem
+    ),
+    linear-gradient(#f4ecd6, #e8dcbc);
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -381,8 +406,16 @@
   --action-spent-opacity: 0.3;
   /* The icon before the name of an investigator's counter. */
   --stat-icon-size: 0.875rem;
-  /* The skill icon on an investigator card's skill plate, above its value. */
-  --skill-plate-icon-size: 1.25rem;
+  /*
+   * An investigator card's skills on their chain: the value's circle, the icon's tile beside it,
+   * the icon on the tile, and the chain's link through them.
+   */
+  --skill-circle-size: 1.875rem;
+  --skill-tile-size: 1.5rem;
+  --skill-icon-size: 1rem;
+  --skill-chain-width: 0.375rem;
+  /* How far the points of the investigator's name banner reach in from its ends. */
+  --banner-point: 0.625rem;
   /* An icon on an icon button (`button[data-icon]` in base.css). */
   --icon-size: 1.25rem;
   /* What is left of a name kept only for screen readers: a dot, clipped away. */
@@ -464,7 +497,9 @@
     --header-token-border-width: 2px;
     --header-count-size: 0.875rem;
     --font-size-token-count: 1rem;
-    --skill-plate-icon-size: 0.875rem;
+    --skill-circle-size: 1.5rem;
+    --skill-tile-size: 1.25rem;
+    --skill-icon-size: 0.875rem;
     --stat-token-size: 1.75rem;
     --stat-count-size: 0.875rem;
   }

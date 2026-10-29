@@ -2,13 +2,13 @@
 
 ## Investigator bar
 
-The [investigator bar](../../apps/web/src/investigators/InvestigatorBar.tsx) shows each investigator's card, drawn like the location tiles in parchment with a dark edge:
+The [investigator bar](../../apps/web/src/investigators/InvestigatorBar.tsx) shows each investigator's card, laid out like the printed one in parchment with a dark edge:
 
-- their name on a plate in a dark band with where they are (beside the name, a pentagon like the game's lead investigator token marks `BoardView.lead` and the action arrow `BoardView.turn`; on the map their pawns carry the pentagon and a glowing gilt ring),
+- their name on the printed banner (parchment between gilt rules, pointed ends) in a dark band with where they are (beside the name, a pentagon like the game's lead investigator token marks `BoardView.lead` and the action arrow `BoardView.turn`; on the map their pawns carry the pentagon and a glowing gilt ring),
 - the art window (the art area of the picture of its front, `--investigator-art-*` in tokens.css; setup copies the picture onto the investigator as `Investigator.imageSrc` since a resumed game has no investigator cards),
-- their four skills as plates with the Arkham icons, each showing the printed value with its lasting boost and the boost beside it (`InvestigatorView.boosts`, changed with steppers under the plates while adjusting, `GameActions.boostSkill`),
+- their four skills on the printed chain, each its value in a parchment circle beside the Arkham icon on a tile in the skill's colour (`--color-skill-*`), showing the printed value with its lasting boost and the boost beside it (`InvestigatorView.boosts`, changed with steppers under the skills while adjusting, `GameActions.boostSkill`),
   - each opening a [skill test](../../apps/web/src/investigators/SkillTestDialog.tsx): the skill tested or two added together (`SkillTestInput.addedSkill`), difficulty, modifier and the chaos tokens drawn from the bag (a row of round tokens, a symbol token showing its game symbol over its name kept for screen readers), calculated by `BoardView.skillTest` over the engine's `skillTestSuggestion` without changing the game,
-- their counters as round tokens along its foot; health and sanity drawn as the card prints them, the shared heart and brain from [`cardFace.tsx`](../../apps/web/src/catalog/cardFace.tsx) with the printed maximum on the symbol and the damage or horror taken in a small count circle beside it (one image each, named by what is left, "4 of 7"),
+- their counters on a ruled notebook page beside the art (`--notebook-page`), clues as a teal clue token and resources as a milled gold coin; health and sanity drawn as the card prints them, the shared heart and brain from [`cardFace.tsx`](../../apps/web/src/catalog/cardFace.tsx) with the printed maximum on the symbol and the damage or horror taken in a small count circle beside it (one image each, named by what is left, "4 of 7"),
 - and the turn controls under the card:
   - start turn,
   - actions left,

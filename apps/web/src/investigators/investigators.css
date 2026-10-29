@@ -45,17 +45,17 @@
 }
 
 /*
- * The investigator card, drawn like the map's location cards after the printed ones: parchment
- * with a dark edge, the name on a parchment plate in a dark band with a gilt rule, the art window
- * (hatched until the picture shows) beside the skills, and the counters as round tokens along its
- * foot. Parchment and ink in both themes, like printed cards.
+ * The investigator card, laid out like the printed one: the name on its banner in a dark band, the
+ * four skills on a linked chain under it, then the art window (hatched until the picture shows)
+ * beside the notebook page that holds the counters, the heart and brain first. Parchment and ink
+ * in both themes, like printed cards.
  */
 #investigators [data-card='investigator'] {
   display: grid;
   grid-template:
     'name name' auto
-    'art skills' auto
-    'stats stats' auto /
+    'skills skills' auto
+    'art stats' auto /
     var(--layout-investigator-art-width) 1fr;
   gap: var(--space-2);
   padding-bottom: var(--space-2);
@@ -78,14 +78,39 @@
   color: var(--color-card-gilt);
 }
 
+/*
+ * The name on the printed banner: parchment between two gilt rules, its ends cut into points, so
+ * it reads as the card's title rather than a button.
+ */
 #investigators [data-card='investigator'] > header > h3 {
   margin: 0;
-  padding: 0 var(--space-2);
-  border-radius: var(--radius);
-  background: var(--color-parchment);
+  padding: 0 var(--banner-point);
+  background:
+    linear-gradient(var(--color-card-gilt), var(--color-card-gilt)) top / 100% var(--border-width)
+      no-repeat,
+    linear-gradient(var(--color-card-gilt), var(--color-card-gilt)) bottom / 100%
+      var(--border-width) no-repeat,
+    linear-gradient(var(--color-parchment), var(--color-parchment-shade));
+  clip-path: polygon(
+    0 50%,
+    var(--banner-point) 0,
+    calc(100% - var(--banner-point)) 0,
+    100% 50%,
+    calc(100% - var(--banner-point)) 100%,
+    var(--banner-point) 100%
+  );
   color: var(--color-ink);
   font-family: var(--font-family-display);
   font-size: var(--font-size-subtitle);
+}
+
+/* The banner is the name's plate already, so the phone's name button keeps only its text. */
+#investigators [data-card='investigator'] > header > h3 > button {
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
 }
 
 /* The lead and turn markers beside the name, gilt on the dark band like its rule. */
@@ -118,6 +143,7 @@
  */
 #investigators [data-card='investigator'] > picture {
   grid-area: art;
+  align-self: start;
   position: relative;
   display: block;
   margin-inline-start: var(--space-2);
@@ -146,85 +172,114 @@
 }
 
 /*
- * The skills in one row beside the art, each a parchment plate as tall as the art, its value
- * under its icon, opening a skill test. Two ids' worth, so they beat the home screen's padded
- * `#app > main ul > li` cards.
+ * The skills in one row on the printed chain: a dark link runs through all four along the circles'
+ * middle (steppers or not), and on it each skill's value in a parchment circle beside its icon on
+ * a tile in the skill's colour. Each opens a skill test. Two ids' worth, so they beat the home screen's padded `#app > main ul > li` cards.
  */
 #investigators [data-card='investigator'] > ul {
   grid-area: skills;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-1);
-  align-content: stretch;
-  margin: 0;
-  margin-inline-end: var(--space-2);
+  margin: 0 var(--space-2);
   padding: 0;
+  background: linear-gradient(var(--color-card-band), var(--color-card-band)) 0
+    calc((var(--skill-circle-size) - var(--skill-chain-width)) / 2) / 100% var(--skill-chain-width)
+    no-repeat;
   list-style: none;
 }
 
-/*
- * Each plate fills its cell, as tall as the art; while adjusting, the boost's − and + sit side by
- * side under it.
- */
+/* While adjusting, the boost's − and + sit side by side under the skill. */
 #investigators [data-card='investigator'] > ul > li {
   display: grid;
-  grid-template: 1fr auto / repeat(2, minmax(0, 1fr));
+  grid-template: auto auto / repeat(2, minmax(0, 1fr));
   gap: var(--space-1);
   padding: 0;
   border: none;
   background: none;
 }
 
-/* The plate is the first button; the boost steppers after it keep the panel's small buttons. */
+/* The skill on the chain; the boost steppers after it keep the panel's small buttons. */
 #investigators [data-card='investigator'] > ul > li > button:first-child {
   grid-column: 1 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0 var(--space-1);
-  align-content: center;
-  align-items: baseline;
+  display: grid;
+  grid-template: 'value icon' auto / auto auto;
   justify-content: center;
+  align-items: center;
   width: 100%;
   min-width: 0;
-  padding: var(--space-1) 0;
-  border: var(--border-width) solid var(--color-ink-muted);
-  background: var(--color-parchment-light);
+  padding: 0;
+  border: none;
+  background: none;
   color: var(--color-ink);
   font-family: var(--font-family);
-  font-size: var(--font-size-title);
+  font-size: var(--font-size-body);
   font-weight: bold;
   font-variant-numeric: lining-nums;
 }
 
-/* A lasting boost beside the boosted value, smaller, so the printed value can be told from the two. */
-#investigators [data-card='investigator'] > ul > li > button:first-child > data + data {
-  font-size: var(--font-size-body);
-  font-weight: normal;
+#investigators [data-card='investigator'] > ul > li > button:first-child > data:first-child {
+  grid-area: value;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: var(--skill-circle-size);
+  height: var(--skill-circle-size);
+  border: var(--border-width) solid var(--color-card-band);
+  border-radius: var(--radius-round);
+  background: var(--color-parchment);
 }
 
-/* The icon on a line of its own above the value, so the value can take the plate's width. */
-#investigators [data-card='investigator'] > ul > li > button:first-child::before {
+/* A lasting boost on the circle's upper right, smaller, so the printed value can be told from the two. */
+#investigators [data-card='investigator'] > ul > li > button:first-child > data + data {
+  grid-area: value;
+  align-self: start;
+  justify-self: end;
+  translate: 50% -25%;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-round);
+  background: var(--color-card-band);
+  color: var(--color-card-gilt);
+  font-size: var(--font-size-note);
+}
+
+/* The icon's tile in the skill's colour, then the icon on it in parchment. */
+#investigators [data-card='investigator'] > ul > li > button:first-child::before,
+#investigators [data-card='investigator'] > ul > li > button:first-child::after {
   content: '';
-  flex-basis: 100%;
-  height: var(--skill-plate-icon-size);
-  background: var(--color-ink);
-  mask: var(--skill-icon) center / contain no-repeat;
+  grid-area: icon;
+  width: var(--skill-tile-size);
+  height: var(--skill-tile-size);
+}
+
+#investigators [data-card='investigator'] > ul > li > button:first-child::before {
+  border: var(--border-width) solid var(--color-card-band);
+  border-radius: var(--radius);
+  background: var(--skill-colour);
+}
+
+#investigators [data-card='investigator'] > ul > li > button:first-child::after {
+  background: var(--color-parchment);
+  mask: var(--skill-icon) center / var(--skill-icon-size) no-repeat;
 }
 
 #board [data-skill='willpower'] {
   --skill-icon: url('../symbols/willpower.svg');
+  --skill-colour: var(--color-skill-willpower);
 }
 
 #board [data-skill='intellect'] {
   --skill-icon: url('../symbols/intellect.svg');
+  --skill-colour: var(--color-skill-intellect);
 }
 
 #board [data-skill='combat'] {
   --skill-icon: url('../symbols/combat.svg');
+  --skill-colour: var(--color-skill-combat);
 }
 
 #board [data-skill='agility'] {
   --skill-icon: url('../symbols/agility.svg');
+  --skill-colour: var(--color-skill-agility);
 }
 
 /* Small buttons, so the panel stays compact. */
@@ -245,16 +300,21 @@
 }
 
 /*
- * The counters along the card's foot, side by side: each a round token in its colour with the
- * value on it, like the tokens on the table, and its name under it after its icon.
+ * The counters on the notebook page beside the art, like the printed card's text page with the
+ * heart and brain at its foot: faintly ruled paper with a dark edge, two counters a row, each a
+ * token with its name under it after its icon.
  */
 #investigators [data-card='investigator'] > dl {
   grid-area: stats;
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-1);
-  margin: 0 var(--space-2);
+  margin: 0;
+  margin-inline-end: var(--space-2);
+  padding: var(--space-1);
+  border: var(--border-width) solid var(--color-card-edge);
+  border-radius: var(--radius);
+  background: var(--notebook-page);
 }
 
 /* The tokens line up along the top, the names along the foot, steppers or not. */
@@ -352,6 +412,18 @@
 
 #investigators dd > button {
   padding: 0;
+}
+
+/* Clues and resources as the game's tokens: a teal clue token and a milled gold resource coin. */
+#investigators [data-stat='clues'] dd > data {
+  border-color: var(--color-clue-token-rim);
+  background: var(--clue-token-face);
+}
+
+#investigators [data-stat='resources'] dd > data {
+  border-color: var(--color-resource-coin-rim);
+  background: var(--resource-coin-face);
+  box-shadow: var(--resource-coin-milling), var(--header-token-shadow);
 }
 
 /*
@@ -697,25 +769,11 @@
     display: none;
   }
 
-  #board:not([data-view]) #investigators [data-card='investigator'] > ul {
-    margin-inline: var(--space-2);
-  }
-
-  #board:not([data-view]) #investigators [data-card='investigator'] > ul > li > button:first-child {
-    flex-wrap: nowrap;
-    gap: var(--space-1);
-    padding: 0;
-    font-size: var(--font-size-body);
-  }
-
-  #board:not([data-view])
-    #investigators
-    [data-card='investigator']
-    > ul
-    > li
-    > button:first-child::before {
-    flex-basis: var(--skill-plate-icon-size);
-    width: var(--skill-plate-icon-size);
+  #board:not([data-view]) #investigators [data-card='investigator'] > dl {
+    grid-auto-flow: column;
+    grid-template-columns: none;
+    grid-auto-columns: minmax(0, 1fr);
+    margin-inline-start: var(--space-2);
   }
 }
 

@@ -130,10 +130,10 @@ function OtherInvestigators({
 }
 
 /**
- * One investigator: their threat area along the top edge of their card, the card drawn like the
- * printed investigator cards and the map's location cards (a name band with where they are and how
- * their round goes, the art window, the four skills and the counters as round tokens along its
- * foot), the cards they control under it (`PlayArea`), then their turn controls. Beside the name,
+ * One investigator: their threat area along the top edge of their card, the card laid out like the
+ * printed investigator cards (the name banner in a dark band with where they are and how their
+ * round goes, the four skills on their chain, the art window beside the notebook page with the
+ * counters), the cards they control under it (`PlayArea`), then their turn controls. Beside the name,
  * a pentagon marks the lead investigator, like the game's lead investigator token, and an action
  * arrow the investigator whose turn it is.
  * Health and sanity show what is left of the printed value, like the dials, while their steppers
@@ -307,7 +307,7 @@ function Skills({
 }
 
 /**
- * The counters along the foot of the card, each a round token, with their steppers while the
+ * The counters on the card's notebook page, each a token like the ones on the table, with their steppers while the
  * players adjust the board (`adjusting`); a step plays `actions` unless one is queued (`busy`).
  */
 function Counters({
