@@ -77,7 +77,7 @@ export function GameLogDialog({
   );
 }
 
-/** One round and phase of the log: its heading, then its steps, newest first. */
+/** One round and phase of the log: its heading, then its steps in the order played. */
 function Section({
   section,
   onGoBack,
