@@ -12,3 +12,11 @@ export function isNonNegativeInteger(value: number): boolean {
 export function isNonZeroInteger(value: number): boolean {
   return Number.isInteger(value) && value !== 0;
 }
+
+/**
+ * The index `step` places on from `index` in a list of `length` items, wrapping round at either
+ * end, as arrow keys move through a row of tabs.
+ */
+export function cycledIndex(index: number, step: number, length: number): number {
+  return (((index + step) % length) + length) % length;
+}

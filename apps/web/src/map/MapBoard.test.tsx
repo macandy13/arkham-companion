@@ -297,6 +297,36 @@ describe('MapBoard', () => {
     expect(screen.queryByRole('figure', { name: 'House' })).toBeNull();
   });
 
+  it.each([
+    { key: 'ArrowRight', from: 'House', to: 'Cellar' },
+    { key: 'ArrowRight', from: 'Garden', to: 'House' },
+    { key: 'ArrowLeft', from: 'House', to: 'Garden' },
+    { key: 'Home', from: 'Garden', to: 'House' },
+    { key: 'End', from: 'House', to: 'Garden' },
+  ])(
+    'chooses the $to tab with $key from the $from tab and moves the focus there',
+    ({ key, from, to }) => {
+      const table = PlayTable.start(
+        house
+          .withMap(mapId('cellar'), { name: 'Cellar' })
+          .withLocation(instanceId('cellar'), blankLocation('cellar'), { map: mapId('cellar') })
+          .withMap(mapId('garden'), { name: 'Garden' })
+          .withLocation(instanceId('garden'), blankLocation('garden'), { map: mapId('garden') }),
+      );
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+      const tab = (name: string) => screen.getByRole('tab', { name });
+      fireEvent.click(tab(from));
+
+      fireEvent.keyDown(tab(from), { key });
+
+      expect(tab(to).getAttribute('aria-selected')).toBe('true');
+      expect(document.activeElement).toBe(tab(to));
+      expect(tab(from).tabIndex).toBe(-1);
+    },
+  );
+
   it('shows the first map again once the chosen one has no locations left', () => {
     const cellar = mapId('cellar');
     const withCellar = PlayTable.start(
@@ -352,6 +382,31 @@ describe('MapBoard', () => {
       }),
     ).toBeTruthy();
     expect(within(tile('hallway')).getByRole('img', { name: 'rats' })).toBeTruthy();
+  });
+
+  it('shows an enemy token’s engagement and damage as badges and its exhaustion on its initial', () => {
+    const ghoul = instanceId('ghoul');
+    const table = PlayTable.start(
+      house
+        .withInvestigator(alder, { locationId: study })
+        .withCard(ghoul, blankEnemy('ghoul', { health: fixed(3) }), engagedWith(alder), {
+          tokens: { damage: 2 },
+        })
+        .withCard(instanceId('rats'), blankEnemy('rats'), atLocation(hallway)),
+    );
+    table.play({ type: 'ExhaustEnemy', enemyId: ghoul });
+
+    render(
+      <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+    );
+
+    const ghoulToken = within(tile('study')).getByRole('img', { name: /^ghoul,/ });
+    expect(ghoulToken.dataset.exhausted).toBe('true');
+    expect(ghoulToken.querySelector('[data-marker="engaged"]')?.textContent).toBe('a');
+    expect(ghoulToken.querySelector('[data-marker="damage"]')?.textContent).toBe('2');
+    const ratsToken = within(tile('hallway')).getByRole('img', { name: 'rats' });
+    expect(ratsToken.dataset.exhausted).toBeUndefined();
+    expect(ratsToken.querySelector('[data-marker]')).toBeNull();
   });
 
   it('marks the lead investigator’s pawn and the pawn of the investigator whose turn it is', () => {

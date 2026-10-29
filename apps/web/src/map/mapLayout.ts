@@ -57,6 +57,24 @@ export function leadMarkerPoints(pawn: Point): Point[] {
 const LEAD_MARKER_RADIUS = CONTENT.pawnRadius / 2;
 
 /**
+ * Where a piece's badges sit: on its rim, the engaged investigator's at the top and the damage at
+ * the lower right, so they keep clear of the initial and of the pieces beside it in the row,
+ * a pawn's lead marker (upper right) among them.
+ */
+export type BadgeCorner = 'top' | 'lowerRight';
+
+/** A badge's radius: half a pawn, like the lead marker. */
+export const BADGE_RADIUS = CONTENT.pawnRadius / 2;
+
+/** The centre of the badge at `corner` of a piece centred on `piece`, on the piece's rim. */
+export function badgeCentre(piece: Point, corner: BadgeCorner): Point {
+  const reach = CONTENT.pawnRadius * Math.SQRT1_2;
+  return corner === 'top'
+    ? { x: piece.x, y: piece.y - CONTENT.pawnRadius }
+    : { x: piece.x + reach, y: piece.y + reach };
+}
+
+/**
  * The height of the line the shroud and clues sit on, where the art ends: 8/15 of the tile's
  * height, as on the printed card.
  */

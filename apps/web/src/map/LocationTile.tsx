@@ -1,4 +1,10 @@
-import { useRef, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react';
+import {
+  useRef,
+  type KeyboardEvent,
+  type MouseEvent,
+  type PointerEvent,
+  type ReactNode,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import type {
   BoardView,
@@ -18,6 +24,8 @@ import {
   ART_WINDOW,
   ATTACHMENT,
   attachmentOrigin,
+  BADGE_RADIUS,
+  badgeCentre,
   CLUES_CENTRE,
   CONTENT,
   DOOM_CENTRE,
@@ -473,14 +481,16 @@ export function Pawn({
 
 /**
  * An enemy as a round token with its initial, centred on `centre`, like an investigator's pawn but
- * ringed in the doom colour (`data-enemy`). Its accessible name also says whom of
- * `investigators` it is engaged with, its damage and whether it is exhausted; the token does not
- * show those yet. With `drag` it can be dragged; a `ghost` is the copy that follows the pointer.
+ * ringed in the doom colour (`data-enemy`). Badges on its rim show whom of `investigators` it is
+ * engaged with (their initial, in the pawns' colour) and its damage (a red disc with the count); an
+ * exhausted enemy's initial lies on its side, like the exhausted card turned sideways
+ * (`data-exhausted`). Its accessible name says the same. With `drag` it can be dragged; a `ghost`
+ * is the copy that follows the pointer.
  */
 export function EnemyToken({
   enemy,
   investigators,
-  centre: { x, y },
+  centre,
   drag,
   ghost = false,
 }: {
@@ -499,11 +509,45 @@ export function EnemyToken({
   return (
     <g
       data-enemy
+      data-exhausted={enemy.exhausted || undefined}
       {...dragAttributes({ name: [enemy.name, ...states].join(', '), kind: 'enemy', drag, ghost })}
     >
-      <circle cx={x} cy={y} r={CONTENT.pawnRadius} />
-      <text x={x} y={y}>
+      <circle cx={centre.x} cy={centre.y} r={CONTENT.pawnRadius} />
+      <text x={centre.x} y={centre.y}>
         {enemy.name.charAt(0)}
+      </text>
+      {engagedWith && (
+        <PieceBadge kind="engaged" at={badgeCentre(centre, 'top')}>
+          {engagedWith.charAt(0)}
+        </PieceBadge>
+      )}
+      {enemy.damage ? (
+        <PieceBadge kind="damage" at={badgeCentre(centre, 'lowerRight')}>
+          {enemy.damage}
+        </PieceBadge>
+      ) : null}
+    </g>
+  );
+}
+
+/**
+ * A small disc with a letter or count on a piece's rim (`data-marker` names what it shows). It is
+ * only a picture: the piece's accessible name says the same.
+ */
+function PieceBadge({
+  kind,
+  at,
+  children,
+}: {
+  kind: 'engaged' | 'damage';
+  at: Point;
+  children: ReactNode;
+}) {
+  return (
+    <g data-marker={kind}>
+      <circle cx={at.x} cy={at.y} r={BADGE_RADIUS} />
+      <text x={at.x} y={at.y}>
+        {children}
       </text>
     </g>
   );

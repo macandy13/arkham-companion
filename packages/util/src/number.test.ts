@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isNonNegativeInteger, isNonZeroInteger, isPositiveInteger } from './index';
+import { cycledIndex, isNonNegativeInteger, isNonZeroInteger, isPositiveInteger } from './index';
 
 describe('isPositiveInteger', () => {
   it.each([
@@ -37,5 +37,16 @@ describe('isNonZeroInteger', () => {
     { value: Number.NaN, expected: false },
   ])('is $expected for $value', ({ value, expected }) => {
     expect(isNonZeroInteger(value)).toBe(expected);
+  });
+});
+
+describe('cycledIndex', () => {
+  it.each([
+    { index: 0, step: 1, length: 3, expected: 1 },
+    { index: 2, step: 1, length: 3, expected: 0 },
+    { index: 0, step: -1, length: 3, expected: 2 },
+    { index: 1, step: -1, length: 3, expected: 0 },
+  ])('moves $step from $index of $length to $expected', ({ index, step, length, expected }) => {
+    expect(cycledIndex(index, step, length)).toBe(expected);
   });
 });

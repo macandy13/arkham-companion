@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from 'react';
+import { useId, useRef, useState, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TransformComponent, TransformWrapper, useControls } from 'react-zoom-pan-pinch';
 import type {
@@ -10,6 +10,7 @@ import type {
   MapId,
   MapView,
 } from '@arkham/engine';
+import { cycledIndex } from '@arkham/util';
 import { EnemyDetails } from '../enemies/EnemyDetails';
 import type { GameActions } from '../state/gameActions';
 import { LocationDetails } from './LocationDetails';
@@ -79,9 +80,29 @@ export function MapBoard({
 
   const tabId = (map: MapView) => `${idPrefix}-tab-${map.id}`;
   const panelId = `${idPrefix}-panel`;
+  // The tabs pattern (WAI-ARIA): the row is one stop for Tab, the arrow keys choose the map and
+  // move the focus with it, Home and End go to the first and last.
+  const onTabKey = (event: KeyboardEvent<HTMLDivElement>) => {
+    const at = shown.indexOf(current);
+    const next =
+      event.key === 'ArrowRight'
+        ? cycledIndex(at, 1, shown.length)
+        : event.key === 'ArrowLeft'
+          ? cycledIndex(at, -1, shown.length)
+          : event.key === 'Home'
+            ? 0
+            : event.key === 'End'
+              ? shown.length - 1
+              : undefined;
+    const map = next === undefined ? undefined : shown[next];
+    if (!map) return;
+    event.preventDefault();
+    setChosen(map.id);
+    document.getElementById(tabId(map))?.focus();
+  };
   return (
     <>
-      <div role="tablist" aria-label={t('map.tabs')}>
+      <div role="tablist" aria-label={t('map.tabs')} onKeyDown={onTabKey}>
         {shown.map((map) => (
           <button
             key={map.id}
@@ -90,6 +111,7 @@ export function MapBoard({
             role="tab"
             aria-selected={map === current}
             aria-controls={panelId}
+            tabIndex={map === current ? 0 : -1}
             onClick={() => setChosen(map.id)}
           >
             {map.name}

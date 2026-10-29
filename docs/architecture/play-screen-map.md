@@ -1,6 +1,7 @@
 # Play screen: map and locations
 
 The [map](../../apps/web/src/map/MapBoard.tsx) is an SVG of location tiles at their layout cells with pan, zoom and drag-to-play pieces (its tabs and small zoom icons float over its top corners, and its name is for screen readers only).
+The map tabs follow the WAI-ARIA tabs pattern: one Tab stop, the arrow keys, Home and End choose the map.
 
 A tap on a tile (or its "i" button, for the keyboard) opens the location's [details](../../apps/web/src/map/LocationDetails.tsx) (on a phone in the map row instead, the [location mode](play-screen.md#location-mode)):
 
@@ -16,6 +17,7 @@ A tap on a tile (or its "i" button, for the keyboard) opens the location's [deta
 
   While adjusting, the corrections (reveal, clue and doom steppers) take its place.
 
+An enemy token ([`EnemyToken`](../../apps/web/src/map/LocationTile.tsx)) shows its state as on the table: the engaged investigator's initial on a badge at its top, its damage on a red badge at its lower right (`badgeCentre`), and when exhausted its initial on its side.
 A tap on an enemy token (a press let go where it went down, `isTap`, which a drag is not) opens the enemy's details as from the threat area.
 
 ## Location tiles

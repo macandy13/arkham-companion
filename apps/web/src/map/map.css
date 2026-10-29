@@ -350,14 +350,43 @@
   fill: var(--color-accent-text);
 }
 
-#map svg [data-enemy] circle {
+#map svg [data-enemy] > circle {
   fill: var(--color-card-face);
   stroke: var(--color-doom);
   stroke-width: var(--piece-ring-width);
 }
 
-#map svg [data-enemy] circle + text {
+#map svg [data-enemy] > circle + text {
   fill: var(--color-card-text);
+}
+
+/* An exhausted enemy's initial lies on its side, like the exhausted card turned sideways. */
+#map svg [data-enemy][data-exhausted] > text {
+  transform: rotate(90deg);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/*
+ * The badges on an enemy's rim: the engaged investigator's initial in the pawns' colour, the
+ * damage in red like the printed damage tokens, both ringed in parchment like a pawn.
+ */
+#map svg [data-marker] circle {
+  stroke: var(--color-parchment);
+  stroke-width: var(--border-width);
+}
+
+#map svg [data-marker] text {
+  font-size: var(--card-badge-size);
+  font-weight: bold;
+}
+
+#map svg [data-marker='damage'] circle {
+  fill: var(--color-health);
+}
+
+#map svg [data-marker='damage'] text {
+  fill: var(--header-token-text);
 }
 
 /* An attached card peeks out at the tile's edge in the treachery frame colour. */

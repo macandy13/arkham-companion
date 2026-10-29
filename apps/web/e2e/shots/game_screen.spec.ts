@@ -31,27 +31,29 @@ test('map tabs for the Study and the house, the house chosen', async ({ page }) 
   await expect(page.getByRole('tabpanel', { name: 'House' })).toBeVisible();
 });
 
-test('Roland Banks with four treacheries and the Ghoul Priest, scrolled on to the Ghoul Priest', async ({
-  page,
-}) => {
-  await resumeImportedGame(
-    page,
-    'Roland Banks threatened',
-    rolandThreatenedExport('Roland Banks threatened'),
-  );
+test(
+  'Roland Banks with four treacheries and the Ghoul Priest, scrolled on to the Ghoul Priest',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(
+      page,
+      'Roland Banks threatened',
+      rolandThreatenedExport('Roland Banks threatened'),
+    );
 
-  const roland = page.getByRole('region', { name: 'Roland Banks' });
-  const threatArea = roland.getByRole('list', { name: 'Threat area' });
-  const ghoulPriest = threatArea.getByRole('listitem', {
-    name: 'Ghoul Priest, 3 of 5 health left, 2 damage',
-  });
-  await expect(threatArea.getByRole('listitem')).toHaveCount(5);
-  await expect(ghoulPriest).not.toBeInViewport({ ratio: 1 });
+    const roland = page.getByRole('region', { name: 'Roland Banks' });
+    const threatArea = roland.getByRole('list', { name: 'Threat area' });
+    const ghoulPriest = threatArea.getByRole('listitem', {
+      name: 'Ghoul Priest, 3 of 5 health left, 2 damage',
+    });
+    await expect(threatArea.getByRole('listitem')).toHaveCount(5);
+    await expect(ghoulPriest).not.toBeInViewport({ ratio: 1 });
 
-  await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
+    await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
 
-  await expect(ghoulPriest).toBeInViewport({ ratio: 1 });
-});
+    await expect(ghoulPriest).toBeInViewport({ ratio: 1 });
+  },
+);
 
 test('the Hallway’s details, its card with Roland Banks on it, on Roland Banks’ turn', async ({
   page,
@@ -77,18 +79,16 @@ test('the house map by day', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
 
-test(
-  'the game log after two rounds, newest first under round and phase headings',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'Two rounds', mythosDrawnStepsExport('Two rounds'));
+test('the game log after two rounds, newest first under round and phase headings', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'Two rounds', mythosDrawnStepsExport('Two rounds'));
 
-    await page.getByRole('button', { name: 'Game log' }).click();
+  await page.getByRole('button', { name: 'Game log' }).click();
 
-    const log = page.getByRole('dialog', { name: 'Game log' });
-    await expect(log.getByRole('heading', { name: 'Round 3 · Investigation' })).toBeInViewport();
-  },
-);
+  const log = page.getByRole('dialog', { name: 'Game log' });
+  await expect(log.getByRole('heading', { name: 'Round 3 · Investigation' })).toBeInViewport();
+});
 
 test('Roland Banks’ combat boosted by 2, as an ally in play gives it', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
