@@ -15,7 +15,7 @@ export function isNonZeroInteger(value: number): boolean {
 
 /**
  * The index `step` places on from `index` in a list of `length` items, wrapping round at either
- * end, as arrow keys move through a row of tabs.
+ * end, as arrow keys move through a row of tabs. `length` must be at least 1.
  */
 export function cycledIndex(index: number, step: number, length: number): number {
   return (((index + step) % length) + length) % length;

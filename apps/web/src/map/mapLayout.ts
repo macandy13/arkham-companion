@@ -1,4 +1,5 @@
 import { GRID_CELLS_PER_CARD, type GridCell, type InstanceId, type MapView } from '@arkham/engine';
+import { assertNever } from '@arkham/util';
 
 /** A point in the map drawing's coordinates (SVG user units, y downwards). */
 export interface Point {
@@ -69,9 +70,14 @@ export const BADGE_RADIUS = CONTENT.pawnRadius / 2;
 /** The centre of the badge at `corner` of a piece centred on `piece`, on the piece's rim. */
 export function badgeCentre(piece: Point, corner: BadgeCorner): Point {
   const reach = CONTENT.pawnRadius * Math.SQRT1_2;
-  return corner === 'top'
-    ? { x: piece.x, y: piece.y - CONTENT.pawnRadius }
-    : { x: piece.x + reach, y: piece.y + reach };
+  switch (corner) {
+    case 'top':
+      return { x: piece.x, y: piece.y - CONTENT.pawnRadius };
+    case 'lowerRight':
+      return { x: piece.x + reach, y: piece.y + reach };
+    default:
+      return assertNever(corner);
+  }
 }
 
 /**

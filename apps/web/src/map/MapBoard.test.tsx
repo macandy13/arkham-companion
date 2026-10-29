@@ -402,6 +402,7 @@ describe('MapBoard', () => {
 
     const ghoulToken = within(tile('study')).getByRole('img', { name: /^ghoul,/ });
     expect(ghoulToken.dataset.exhausted).toBe('true');
+    // The test builder names an investigator after its id, so alder's initial is 'a'.
     expect(ghoulToken.querySelector('[data-marker="engaged"]')?.textContent).toBe('a');
     expect(ghoulToken.querySelector('[data-marker="damage"]')?.textContent).toBe('2');
     const ratsToken = within(tile('hallway')).getByRole('img', { name: 'rats' });

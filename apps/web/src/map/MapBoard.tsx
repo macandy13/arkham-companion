@@ -84,17 +84,14 @@ export function MapBoard({
   // move the focus with it, Home and End go to the first and last.
   const onTabKey = (event: KeyboardEvent<HTMLDivElement>) => {
     const at = shown.indexOf(current);
-    const next =
-      event.key === 'ArrowRight'
-        ? cycledIndex(at, 1, shown.length)
-        : event.key === 'ArrowLeft'
-          ? cycledIndex(at, -1, shown.length)
-          : event.key === 'Home'
-            ? 0
-            : event.key === 'End'
-              ? shown.length - 1
-              : undefined;
-    const map = next === undefined ? undefined : shown[next];
+    const next: Record<string, number> = {
+      ArrowRight: cycledIndex(at, 1, shown.length),
+      ArrowLeft: cycledIndex(at, -1, shown.length),
+      Home: 0,
+      End: shown.length - 1,
+    };
+    const index = next[event.key];
+    const map = index === undefined ? undefined : shown[index];
     if (!map) return;
     event.preventDefault();
     setChosen(map.id);
