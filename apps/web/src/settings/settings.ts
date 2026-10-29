@@ -22,12 +22,19 @@ export const THEMES = ['dark', 'light'] as const;
 export type Theme = (typeof THEMES)[number];
 
 /**
- * How card faces show their ArkhamDB picture: `frames` cuts the card's art out into our own frame
- * and name band (`cardArt.ts`), `faces` shows the whole scanned card. Without a picture both show
- * our pattern face.
+ * How card faces look (product.md, "Card themes"): `exact` draws the printed card's frame
+ * ourselves and cuts the card's ArkhamDB picture out into its art area (`cardArt.ts`), `pictures`
+ * shows the whole scanned card. Without a picture both show our frame with a pattern for the art.
+ * The drawn themes Night and brass and Eldritch join this list once they are built.
  */
-export const CARD_LOOKS = ['frames', 'faces'] as const;
-export type CardLook = (typeof CARD_LOOKS)[number];
+export const CARD_THEMES = ['exact', 'pictures'] as const;
+export type CardTheme = (typeof CARD_THEMES)[number];
+
+/** What the card theme replaced: the old "Card pictures" setting, read once into the new one. */
+const CARD_LOOK_THEMES: Readonly<Record<string, CardTheme>> = {
+  frames: 'exact',
+  faces: 'pictures',
+};
 
 /** Per-device preferences; they live in localStorage, not with the games (architecture "Persistence"). */
 export interface Settings {
@@ -37,7 +44,7 @@ export interface Settings {
   /** Unset means "follow the browser language" until the player picks one. */
   readonly uiLanguage?: UiLanguage;
   readonly theme: Theme;
-  readonly cardLook: CardLook;
+  readonly cardTheme: CardTheme;
 }
 
 /** Defaults for a fresh device; dark because the app is used at a dim table. */
@@ -45,7 +52,7 @@ export const DEFAULT_SETTINGS: Settings = {
   ownedPacks: [],
   cardLanguage: 'en',
   theme: 'dark',
-  cardLook: 'frames',
+  cardTheme: 'exact',
 };
 
 const STORAGE_KEY = 'arkham-companion.settings';
@@ -66,7 +73,10 @@ function parseSettings(value: unknown): Settings {
     cardLanguage: oneOf(CARD_LANGUAGES, raw.cardLanguage) ?? DEFAULT_SETTINGS.cardLanguage,
     ...(uiLanguage && { uiLanguage }),
     theme: oneOf(THEMES, raw.theme) ?? DEFAULT_SETTINGS.theme,
-    cardLook: oneOf(CARD_LOOKS, raw.cardLook) ?? DEFAULT_SETTINGS.cardLook,
+    cardTheme:
+      oneOf(CARD_THEMES, raw.cardTheme) ??
+      (typeof raw.cardLook === 'string' ? CARD_LOOK_THEMES[raw.cardLook] : undefined) ??
+      DEFAULT_SETTINGS.cardTheme,
   };
 }
 
