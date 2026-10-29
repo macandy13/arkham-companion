@@ -28,6 +28,9 @@ The [campaign screen](../../apps/web/src/campaign/CampaignScreen.tsx) draws the 
 - an index card with the printed fields in a column per investigator (unspent XP, trauma as tally marks ([`Tally.tsx`](../../apps/web/src/campaign/Tally.tsx)), earned story cards by name from the catalog), and a napkin with the campaign's scenarios, the played ones ticked with their resolution and the next one marked `aria-current`;
 - a link that continues the game of the scenario in play.
 
+The paper look is tokens, so dialogs can share it: fonts `--font-family-print`, `-log-label`, `-script`, `-hand`; inks `--color-print`, `-pen`, `-script-ink`, `-stamp`; papers `--index-card-paper`, `--napkin-paper`; the torn outline `--paper-edge` (a `clip-path` polygon on a layer behind the sheet, so the writing stays crisp).
+[`campaign_log.css`](../../apps/web/src/campaign/campaign_log.css) selects by the sheets' ids, and drops the panel frame the other screens have.
+
 ## Open game
 
 The open game (`OpenGame`) is the play screen's single source of truth:

@@ -447,6 +447,118 @@
   /* The pawn of the investigator whose turn it is: a bolder gilt ring that glows, like their card. */
   --turn-ring-width: 4px;
   --turn-piece-glow: drop-shadow(0 0 var(--space-2) var(--color-accent));
+
+  /*
+   * The campaign log (campaign_log.css) and, later, the dialogs that share its look: sheets of
+   * printed paper on a starfield, written on by hand. Like the cards, the paper keeps its colours in
+   * both app themes. Fonts (OFL, `@fontsource`): Federant for printed headings, Libre Caslon Text
+   * for the printed labels, Felipa for the script titles and Caveat for what the players wrote.
+   */
+  --font-family-print: 'Federant', 'IM Fell English SC', Georgia, serif;
+  --font-family-log-label: 'Libre Caslon Text', Georgia, serif;
+  --font-family-script: 'Felipa', 'Apple Chancery', cursive;
+  --font-family-hand: 'Caveat', 'Segoe Print', 'Bradley Hand', cursive;
+  --font-size-log-label: 0.7rem;
+  --font-size-hand: 1.5rem;
+  --font-size-hand-large: 1.9rem;
+  --font-size-script-title: clamp(2rem, 5.4vw, 3.2rem);
+  --font-size-print-title: clamp(1.3rem, 2.8vw, 1.8rem);
+  --color-print: #2b2016;
+  --color-pen: #1f3d78;
+  --color-script-ink: #2a5d93;
+  --color-stamp: #a3261f;
+  --color-highlight: rgb(201 150 40 / 28%);
+  --color-space: #070b1f;
+  --space-glow:
+    radial-gradient(ellipse at 20% 30%, rgb(70 90 170 / 45%), transparent 55%),
+    radial-gradient(ellipse at 85% 75%, rgb(40 60 140 / 50%), transparent 50%);
+  /* The index card: cream, browner towards its edges; and the napkin: off-white with a weave. */
+  --index-card-paper:
+    radial-gradient(ellipse at 50% 45%, transparent 55%, rgb(120 90 40 / 35%) 120%),
+    linear-gradient(175deg, #efe3c3, #e4d4ae);
+  --napkin-paper:
+    linear-gradient(90deg, rgb(0 0 0 / 5%) 0 1px, transparent 1px) 0 0 / 5px 5px,
+    linear-gradient(#f6f5f0, #ecebe4);
+  --sheet-shadow: drop-shadow(0 5px 6px rgb(0 0 0 / 45%));
+  --sheet-rule-width: 1.5px;
+  --sheet-frame-width: 3px;
+  --sheet-tilt: -1.2deg;
+  --tally-height: 1.6rem;
+  /* A torn sheet's ragged outline: a few points per side, a percent or so off the straight edge. */
+  --paper-edge: polygon(
+    0% 0.7%,
+    5.6% 0.8%,
+    11.1% 0.9%,
+    16.7% 1%,
+    22.2% 0.8%,
+    27.8% 1%,
+    33.3% 0%,
+    38.9% 0.5%,
+    44.4% 1%,
+    50% 0.7%,
+    55.6% 1%,
+    61.1% 0.1%,
+    66.7% 0.5%,
+    72.2% 0.3%,
+    77.8% 0.6%,
+    83.3% 0.6%,
+    88.9% 0%,
+    94.4% 0.2%,
+    99.7% 0%,
+    99% 5.6%,
+    99.2% 11.1%,
+    99.8% 16.7%,
+    99.1% 22.2%,
+    99.8% 27.8%,
+    99.3% 33.3%,
+    99.9% 38.9%,
+    100% 44.4%,
+    99% 50%,
+    99.8% 55.6%,
+    99.8% 61.1%,
+    98.9% 66.7%,
+    99% 72.2%,
+    99.7% 77.8%,
+    98.9% 83.3%,
+    99.4% 88.9%,
+    99.3% 94.4%,
+    100% 99.8%,
+    94.4% 99%,
+    88.9% 99.2%,
+    83.3% 98.9%,
+    77.8% 99%,
+    72.2% 99.7%,
+    66.7% 99.6%,
+    61.1% 99.8%,
+    55.6% 99.8%,
+    50% 99.9%,
+    44.4% 99.7%,
+    38.9% 99.3%,
+    33.3% 100%,
+    27.8% 99.3%,
+    22.2% 99.6%,
+    16.7% 99.7%,
+    11.1% 99.1%,
+    5.6% 99.5%,
+    0.3% 100%,
+    0.5% 94.4%,
+    0.8% 88.9%,
+    0.1% 83.3%,
+    1.1% 77.8%,
+    0% 72.2%,
+    0.8% 66.7%,
+    0.9% 61.1%,
+    0% 55.6%,
+    0.9% 50%,
+    0.4% 44.4%,
+    0.6% 38.9%,
+    0% 33.3%,
+    0.1% 27.8%,
+    0.2% 22.2%,
+    1.1% 16.7%,
+    0.2% 11.1%,
+    0.8% 5.6%
+  );
 }
 
 :root[data-theme='light'] {
