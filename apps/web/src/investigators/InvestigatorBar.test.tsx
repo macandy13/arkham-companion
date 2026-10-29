@@ -40,11 +40,21 @@ const actionsOn = (table: PlayTable) =>
 
 const panel = (name: string) => screen.getByRole('region', { name });
 
-/** The counters of `name`'s panel as [label, value] pairs, in the order the panel shows them. */
+/**
+ * The counters of `name`'s panel as [label, value] pairs, in the order the panel shows them: the
+ * value as read out, the name of health's and sanity's printed symbol or else the token's number.
+ */
 const countersOf = (name: string) =>
   within(panel(name))
     .getAllByRole('term')
-    .map((term) => [term.textContent, term.nextElementSibling?.querySelector('data')?.textContent]);
+    .map((term) => {
+      const value = term.nextElementSibling;
+      const printed = value?.querySelector('[role="img"]');
+      return [
+        term.textContent,
+        printed ? printed.getAttribute('aria-label') : value?.querySelector('data')?.textContent,
+      ];
+    });
 
 describe('InvestigatorBar', () => {
   beforeAll(async () => {
@@ -88,6 +98,39 @@ describe('InvestigatorBar', () => {
     expect(countersOf('brook').map(([label]) => label)).not.toContain('Doom');
     expect(within(panel('alder')).getByTitle('Resources').textContent).toBe('Res.');
   });
+
+  it.each([
+    { stat: 'Health', left: '4/7', printed: '7', taken: '3' },
+    { stat: 'Sanity', left: '5/6', printed: '6', taken: '1' },
+  ])(
+    'draws $stat as the card prints it: $printed on its symbol, $taken taken on its count',
+    ({ stat, left, printed, taken }) => {
+      const table = PlayTable.start(
+        newGame()
+          .withLocation(study, blankLocation('study'))
+          .withInvestigator(alder, {
+            locationId: study,
+            health: { max: 7, damage: 3 },
+            sanity: { max: 6, horror: 1 },
+          }),
+      );
+      render(
+        <InvestigatorBar
+          board={table.board}
+          actions={actionsOn(table)}
+          busy={false}
+          adjusting={false}
+        />,
+      );
+
+      const symbol = within(panel('alder')).getByRole('img', { name: left });
+      // The two numbers are presentational inside the named image, so they are read by position.
+      const [onSymbol, count] = symbol.querySelectorAll('data');
+      expect(symbol.closest('[data-stat]')?.querySelector('dt')?.textContent).toBe(stat);
+      expect(onSymbol?.textContent).toBe(printed);
+      expect(count?.textContent).toBe(taken);
+    },
+  );
 
   it('shows the four skills in the printed order, each named for screen readers', () => {
     const table = PlayTable.start(
@@ -273,10 +316,12 @@ describe('InvestigatorBar', () => {
       );
 
     /** The markers beside `name`'s name, by what they say. */
+    // The markers sit beside the name in the card's header, which has no role to find it by.
     const markersOf = (name: string) =>
-      within(within(panel(name)).getByRole('article'))
-        .queryAllByRole('img')
-        .map((marker) => marker.getAttribute('aria-label'));
+      Array.from(
+        within(panel(name)).getByRole('article').querySelectorAll('header [role="img"]'),
+        (marker) => marker.getAttribute('aria-label'),
+      );
 
     it.each([
       {

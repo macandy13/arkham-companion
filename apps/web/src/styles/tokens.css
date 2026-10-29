@@ -140,6 +140,7 @@
   /* The count circle on a printed value: the count's token colour inside a pale rim. */
   --color-count-clue: #2f8aa6;
   --color-count-damage: #b3302b;
+  --color-count-horror: #3a64a8;
   --color-count-rim: #f3ecd8;
 
   --space-1: 0.25rem;
@@ -343,6 +344,13 @@
   --picker-count-size: 1.125rem;
   /* The round counters along the foot of an investigator card. */
   --stat-token-size: 2.25rem;
+  /*
+   * Health's and sanity's printed symbol: the count circle on its lower right, how far it reaches
+   * past the symbol's edge, and the dark edge that keeps the white maximum readable on the heart.
+   */
+  --stat-count-size: 1.125rem;
+  --stat-count-offset: -0.25rem;
+  --stat-number-shadow: 0 0 2px var(--color-face-setting), 0 0 1px var(--color-face-setting);
   /* An empty header pile's symbol: a small card outline this tall. */
   --layout-pile-symbol-height: 2rem;
   /* Once it holds cards, a header pile fans its top cards this tall, with its count on a disc. */
@@ -458,6 +466,7 @@
     --font-size-token-count: 1rem;
     --skill-plate-icon-size: 0.875rem;
     --stat-token-size: 1.75rem;
+    --stat-count-size: 0.875rem;
   }
 }
 
