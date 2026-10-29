@@ -1,5 +1,5 @@
 import 'fake-indexeddb/auto';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   STATE_VERSION,
   campaign,
@@ -348,6 +348,10 @@ describe('IndexedDbStore campaigns', () => {
     expect((await store.loadCampaign(id))?.summary.result).toBe('won');
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('lists campaigns, most recently played first', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(1000);
@@ -356,7 +360,6 @@ describe('IndexedDbStore campaigns', () => {
     await store.createCampaign({ title: 'Untouched' });
     vi.setSystemTime(3000);
     await store.appendCampaignEvents(played, [campaignStarted(played)]);
-    vi.useRealTimers();
 
     const list = await store.listCampaigns();
 
@@ -405,7 +408,7 @@ describe('IndexedDbStore campaigns', () => {
     expect((await store.loadCampaign(id))?.summary.lastSeq).toBe(1);
   });
 
-  it('keeps a campaign log apart from game logs and from other campaigns', async () => {
+  it('deleting a game leaves its campaign and other campaigns untouched', async () => {
     const zealot = await store.createCampaign();
     const other = await store.createCampaign();
     const game = await store.createGame({ campaignId: zealot });

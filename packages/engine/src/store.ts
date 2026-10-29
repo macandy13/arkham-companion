@@ -1,4 +1,4 @@
-import type { CampaignDefinitionId, CampaignId, GameId, ScenarioId } from './ids';
+import type { CampaignDefinitionId, CampaignId, GameId, InvestigatorCode, ScenarioId } from './ids';
 import type { Event } from './events';
 import type { Difficulty, GameState, Phase } from './state';
 import type { CampaignEvent } from './campaign/campaign_events';
@@ -116,7 +116,7 @@ export interface CampaignSummary {
   position: number;
   scenarioCount: number;
   /** The current team in seat order. */
-  investigators: { code: string; name: string }[];
+  investigators: { code: InvestigatorCode; name: string }[];
   /** How the campaign ended; absent while it goes on. */
   result?: CampaignResult;
 }
