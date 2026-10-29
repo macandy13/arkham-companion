@@ -152,6 +152,8 @@
   --layout-board-panel-width: 23rem;
   --layout-portrait-width: 9rem;
   --layout-sheet-width: 22rem;
+  /* The game log, wide enough that a step's lines rarely wrap. */
+  --layout-log-width: 36rem;
   /* A card drawn in full in a dialog (the enemy details), like the prototype's zoomed card. */
   --layout-zoom-card-width: 15rem;
   /* A neighbour's tile beside the location's card in the phone's location mode, as in the prototype. */
