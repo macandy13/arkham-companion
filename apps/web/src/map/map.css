@@ -135,51 +135,26 @@
 }
 
 /*
- * A location tile is a card face drawn after the printed location cards (LocationTile): parchment
- * with a dark edge, tan on the revealed side and sage on the unrevealed one, the art filling the
- * width (its hatch until a picture shows), and the frame (`LocationOrnament`) over it: the plates
- * and the pendant in the side's parchment, the bands in its dark colour with gilt rules, and
- * the side's own marks (the clue circle's handle on the revealed side, the
- * keyhole and the arcs over the art on the unrevealed one). The name is in the display type, the
- * type plate's word in small spaced capitals.
+ * A location tile is a card face drawn after the printed location cards (LocationTile), in the
+ * card theme's colours: the art filling the width (its hatch until a picture shows) and over it
+ * the face (`LocationOrnament`): the frame in dark wood (deep green on the unrevealed side) with
+ * its darker settings and pale ornament rules, the name plate's paper shaded towards its foot,
+ * the page's lighter paper shaded towards its edges, both with the paper's grain, the connection
+ * sockets along the foot and the dark footer strip. The name is in the display type, the word on
+ * the type plate in small spaced capitals.
  */
 #map svg [data-card='location'] {
-  --card-band: var(--color-card-band);
-  --card-plate: var(--color-parchment);
+  --card-band: var(--color-face-frame);
 }
 
 #map svg [data-card='location'][data-side='unrevealed'] {
-  --card-band: var(--color-card-band-back);
-  --card-plate: var(--color-parchment-back);
+  --card-band: var(--color-face-frame-back);
 }
 
 #map svg [data-card='location'] > rect:first-of-type {
-  stroke: var(--color-card-edge);
+  fill: var(--card-band);
+  stroke: var(--color-face-setting);
   stroke-width: var(--card-border-width);
-}
-
-#map svg [data-side='revealed'] > rect:first-of-type {
-  fill: url(#card-face-revealed);
-}
-
-#map svg [data-side='unrevealed'] > rect:first-of-type {
-  fill: url(#card-face-unrevealed);
-}
-
-#card-face-revealed stop:first-child {
-  stop-color: var(--color-parchment);
-}
-
-#card-face-revealed stop:last-child {
-  stop-color: var(--color-parchment-shade);
-}
-
-#card-face-unrevealed stop:first-child {
-  stop-color: var(--color-parchment-back);
-}
-
-#card-face-unrevealed stop:last-child {
-  stop-color: var(--color-parchment-back-shade);
 }
 
 #map svg [data-card] > rect + rect {
@@ -204,98 +179,204 @@
   filter: url(#card-paper-grain);
 }
 
-#map svg [data-ornament] [data-part='paper'] {
-  fill: url(#card-paper);
-}
-
 #map svg pattern path {
   stroke: var(--color-card-line);
   stroke-width: var(--card-pattern-line-width);
 }
 
-#map svg [data-ornament] path {
+#card-plate stop:first-child {
+  stop-color: var(--color-face-plate);
+}
+
+#card-plate stop:last-child {
+  stop-color: var(--color-face-plate-shade);
+}
+
+#card-page stop:first-child {
+  stop-color: var(--color-face-page);
+}
+
+#card-page stop:last-child {
+  stop-color: var(--color-face-page-shade);
+}
+
+#map svg [data-ornament] :is(path, circle) {
   fill: none;
   stroke: none;
   stroke-linejoin: round;
 }
 
-#map svg [data-ornament] [data-part='band'] {
+#map svg [data-ornament] :is([data-part='frame'], [data-part='pendant']) {
   fill: var(--card-band);
 }
 
-#map svg [data-ornament] :is([data-part='plate'], [data-part='pendant'], [data-part='medallion']) {
-  fill: var(--card-plate);
+#map svg [data-ornament] [data-part='plate'] {
+  fill: url(#card-plate);
 }
 
-#map svg [data-ornament] :is([data-part='pendant'], [data-part='medallion']) {
-  stroke: var(--color-card-gilt);
-  stroke-width: var(--card-ornament-line-width);
+#map svg [data-ornament] [data-part='page'] {
+  fill: url(#card-page);
 }
 
-#map svg [data-ornament] :is([data-part='gilt'], [data-part='veil']) {
-  stroke: var(--color-card-gilt);
-  stroke-width: var(--card-gilt-line-width);
+#map svg [data-ornament] :is([data-part='rule'], [data-part='pendant']) {
+  stroke: var(--color-face-ornament);
+  stroke-width: var(--face-rule-width);
 }
 
-#map svg [data-ornament] :is([data-part='rule'], [data-part='watermark']) {
-  stroke: var(--color-ink-muted);
-  stroke-width: var(--card-gilt-line-width);
+#map svg [data-ornament] [data-part='dark-rule'] {
+  stroke: var(--color-face-setting);
+  stroke-width: var(--face-setting-width);
 }
 
-#map svg [data-ornament] [data-part='watermark'] {
-  opacity: var(--token-empty-opacity);
+#map svg [data-ornament] [data-part='page-setting'] {
+  stroke: var(--color-face-setting);
+  stroke-width: var(--face-page-setting-width);
 }
 
-#map svg [data-ornament] [data-part='box'] {
-  fill: var(--color-parchment-light);
+#map svg [data-ornament] [data-part='page-band'] {
+  stroke: var(--card-band);
+  stroke-width: var(--face-page-band-width);
 }
 
-#map svg [data-ornament] :is([data-part='inlay'], [data-part='jewel']) {
-  fill: var(--card-band);
+#map svg [data-ornament] :is([data-part='disc-setting'], [data-part='socket'] circle:first-child) {
+  fill: var(--color-face-setting);
 }
 
-#map svg [data-ornament] [data-part='keyhole'] {
-  fill: var(--color-card-gilt);
+#map svg [data-ornament] [data-part='socket'] circle + circle {
+  fill: var(--color-face-socket);
+  stroke: var(--color-face-ornament);
+  stroke-width: var(--face-rule-width);
 }
 
-#map svg [data-ornament] [data-part='edge'] {
-  stroke: var(--color-card-edge);
-  stroke-width: var(--card-border-width);
-}
-
-#map svg [data-ornament] [data-part='handle'] {
-  stroke: var(--color-card-edge);
-  stroke-width: var(--card-handle-width);
-  stroke-linecap: round;
-}
-
-/* Each side's own marks, and the arcs only while no picture brings the art's own. */
-#map svg [data-side='revealed'] [data-part='keyhole'],
-#map svg [data-side='revealed'] [data-part='veil'],
-#map svg [data-picture] [data-part='veil'],
-#map svg [data-side='unrevealed'] [data-part='handle'] {
+#map svg [data-side='unrevealed'] [data-part='disc-setting'] {
   display: none;
 }
 
-#map svg [data-card] > text {
-  fill: var(--color-ink);
-  font-family: var(--font-family-display);
-  font-size: var(--card-name-size);
+#map svg [data-ornament] [data-part='footer'] {
+  fill: var(--color-face-footer);
 }
 
-#map svg [data-card] > text + text {
-  font-size: var(--card-type-size);
-  letter-spacing: var(--card-type-spacing);
+#map svg [data-ornament] [data-part='edge'] {
+  fill: none;
+  stroke: var(--color-face-setting);
+  stroke-width: var(--card-border-width);
+}
+
+#map svg [data-face] text {
+  fill: var(--color-face-ink);
+}
+
+#map svg [data-face] > text {
+  font-family: var(--font-family-display);
+  font-size: var(--face-name-size);
+}
+
+/* The set medallion and the type plate under it, on every encounter card's type line. */
+#map svg [data-medallion] :is(circle, path) {
+  stroke: none;
+}
+
+#map svg [data-medallion] [data-part='setting'] {
+  fill: var(--color-face-setting);
+}
+
+#map svg [data-medallion] [data-part='medallion'] {
+  fill: var(--color-face-medallion);
+  stroke: var(--color-face-medallion-ring);
+  stroke-width: var(--face-setting-width);
+}
+
+#map svg [data-medallion] [data-part='inner'] {
+  fill: none;
+  stroke: var(--color-face-setting);
+  stroke-width: var(--card-gilt-line-width);
+}
+
+#map svg [data-medallion] [data-part='plate'] {
+  fill: var(--color-face-type-plate);
+  stroke: var(--color-face-setting);
+  stroke-width: var(--face-disc-line-width);
+}
+
+#map svg [data-medallion] [data-part='lines'] {
+  fill: none;
+  stroke: var(--color-face-type-plate-line);
+  stroke-width: var(--card-gilt-line-width);
+}
+
+#map svg [data-medallion] text {
+  font-size: var(--face-type-size);
+  font-weight: bold;
+  letter-spacing: var(--face-type-spacing);
   text-transform: uppercase;
+}
+
+/*
+ * The printed discs on a face: the shroud a dark disc with a white number, the clue value a pale
+ * one with a dark number and the per investigator symbol, both ringed in the ornament line, and
+ * doom on a location in its token's colour.
+ */
+#map svg [data-face] [data-token] circle {
+  fill: var(--color-face-shroud);
+  stroke: var(--color-face-ornament);
+  stroke-width: var(--face-disc-line-width);
+}
+
+#map svg [data-face] [data-token] text {
+  fill: var(--color-token-text);
+  font-size: var(--face-number-size);
+  font-weight: bold;
+}
+
+#map svg [data-face] [data-token='clue-value'] circle {
+  fill: var(--color-face-clue);
+}
+
+#map svg [data-face] [data-token='clue-value'] text {
+  fill: var(--color-face-setting);
+}
+
+#map svg [data-face] [data-token='doom'] circle {
+  fill: var(--color-doom);
+  stroke: var(--color-count-rim);
+}
+
+#map svg [data-face] [data-token] foreignObject span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--color-face-setting);
+  mask: url('../symbols/per_investigator.svg') center / contain no-repeat;
+}
+
+/* The count on a printed value: a small circle in its token's colour, with a pale rim. */
+#map svg [data-count] circle {
+  stroke: var(--color-count-rim);
+  stroke-width: var(--face-count-rim-width);
+  filter: var(--piece-shadow);
+}
+
+#map svg [data-count='clue'] circle {
+  fill: var(--color-count-clue);
+}
+
+#map svg [data-count] text {
+  fill: var(--color-token-text);
+  font-size: var(--face-count-size);
+  font-weight: bold;
+}
+
+#map svg [data-count][data-empty] {
+  opacity: var(--token-empty-opacity);
 }
 
 /*
  * A tile's card picture shows once it has loaded (`data-picture`), in the card theme the players
  * chose (`data-card-theme` on the document): "exact" (the default) shows the card's art in the
- * art window (the nested svg) under our own name band and tokens; "pictures" lays the whole card
- * (the image) over the face, and the name band, shroud token and printed actions give way to the
- * ones the picture prints. They stay transparent rather than removed, so they keep naming the
- * tile's shroud to assistive technology.
+ * art window (the nested svg) under our own face; "pictures" lays the whole card (the image) over
+ * the tile, and the face's frame, name, shroud, clue value and the printed actions give way to
+ * the ones the picture prints, while the count of clues left stays on its clue value. They stay
+ * transparent rather than removed, so they keep naming the tile's shroud to assistive technology.
  */
 #map svg [data-card]:not([data-picture]) > :is(image, svg),
 #map svg [data-card] > image,
@@ -307,12 +388,13 @@
   visibility: visible;
 }
 
+:root[data-card-theme='pictures'] #map svg [data-picture] > foreignObject,
 :root[data-card-theme='pictures']
   #map
   svg
   [data-picture]
-  > :is(text, [data-ornament], foreignObject),
-:root[data-card-theme='pictures'] #map svg [data-picture] > [data-token='shroud'] {
+  > [data-face]
+  > :is(text, [data-ornament], [data-medallion], [data-token='shroud'], [data-token='clue-value']) {
   opacity: 0;
 }
 
@@ -400,41 +482,6 @@
 #map svg [data-attachment] rect {
   stroke: var(--color-card-treachery);
   stroke-width: var(--card-border-width);
-}
-
-/*
- * Tokens on a tile, drawn like the printed card's circles: the shroud a dark disc with a
- * parchment rim, the clues a parchment disc ringed in the frame's dark edge, both numbered in bold;
- * doom in its colour. A token with none on it fades.
- */
-#map svg [data-token] circle {
-  fill: var(--color-token-shroud);
-  stroke: var(--color-parchment);
-  stroke-width: var(--piece-ring-width);
-}
-
-#map svg [data-token] text {
-  fill: var(--color-token-text);
-  font-size: var(--card-token-size);
-  font-weight: bold;
-}
-
-#map svg [data-token][data-empty] {
-  opacity: var(--token-empty-opacity);
-}
-
-#map svg [data-token='clue'] circle {
-  fill: var(--color-parchment);
-  stroke: var(--color-card-edge);
-}
-
-#map svg [data-token='clue'] text {
-  fill: var(--color-ink);
-}
-
-#map svg [data-token='doom'] circle {
-  fill: var(--color-doom);
-  stroke: none;
 }
 
 /*

@@ -14,6 +14,7 @@ import {
   investigatorId,
   mapId,
   newGame,
+  perInvestigator,
   PlayTable,
   resignAction,
 } from '@arkham/engine';
@@ -100,16 +101,48 @@ describe('MapBoard', () => {
         .queryAllByRole('img')
         .map((token) => [token.getAttribute('aria-label'), token.textContent]);
     expect(tokensOf('study')).toEqual([
-      ['Attached: obscuring_fog', ''],
       ['Shroud 4', '4'],
+      ['Clue value 0', '0'],
       ['Clues 2', '2'],
       ['Doom 1', '1'],
+      ['Attached: obscuring_fog', ''],
     ]);
     expect(within(tile('study')).getByText('Location')).toBeTruthy();
     expect(tokensOf('hallway')).toEqual([]);
     expect(within(tile('hallway')).getByText('Unrevealed')).toBeTruthy();
     expect(within(tile('attic')).getByText('Unrevealed')).toBeTruthy();
   });
+
+  it.each([
+    { clues: fixed(3), label: 'Clue value 3', perInvestigatorSymbol: false },
+    {
+      clues: perInvestigator(2),
+      label: 'Clue value 2 per investigator',
+      perInvestigatorSymbol: true,
+    },
+    {
+      clues: { fixed: 1, perInvestigator: 2 },
+      label: 'Clue value 1+2 per investigator',
+      perInvestigatorSymbol: true,
+    },
+  ])(
+    'prints the clue value of the parlor as "$label" under the clues left on it',
+    ({ clues, label, perInvestigatorSymbol }) => {
+      const parlor = instanceId('parlor');
+      const table = PlayTable.start(
+        newGame().withLocation(parlor, blankLocation('parlor', { clues }), { revealed: true }),
+      );
+
+      render(
+        <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
+      );
+
+      const value = within(tile('parlor')).getByRole('img', { name: label });
+      expect(value.querySelector('[data-symbol="per_investigator"]') !== null).toBe(
+        perInvestigatorSymbol,
+      );
+    },
+  );
 
   it.each([
     { side: 'revealed', revealed: true },

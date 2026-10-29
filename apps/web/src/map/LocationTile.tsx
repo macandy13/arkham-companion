@@ -8,26 +8,30 @@ import type {
   LocationView,
   MapEnemyView,
   PrintedActionView,
+  ScaledValue,
 } from '@arkham/engine';
 import { LOCATION_ART, PORTRAIT_SCAN, portraitArtViewBox } from '../catalog/cardArt';
+import {
+  CardFaceCorners,
+  CountCircle,
+  SCAN_TO_TILE,
+  SetMedallion,
+  TILE_PER_SCAN,
+} from '../catalog/cardFace';
 import { useCardPicture } from '../catalog/cardImages';
 import { cardActionCaption } from '../screens/ActionRow';
-import { LocationOrnament, TYPE_PLATE_CENTRE } from './cardOrnament';
+import { LOCATION_FACE, LocationOrnament } from './cardOrnament';
 import { connectionGlyph } from './connectionSymbol';
 import {
   ART_WINDOW,
   ATTACHMENT,
   attachmentOrigin,
   BADGE_RADIUS,
-  CLUES_CENTRE,
   CONTENT,
   damageBadgeCentre,
-  DOOM_CENTRE,
   isTap,
   leadMarkerPoints,
-  NAME_WIDTH,
   piecesOnTile,
-  SHROUD_CENTRE,
   TEXT_BOX,
   TILE,
   type Point,
@@ -41,16 +45,18 @@ export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyVi
 /**
  * One location as a tile at (`x`, `y`), drawn as a card face in layers, laid out like the printed
  * location card: a face for the side the location shows (revealed or not), the art area across its
- * width with that side's pattern, the frame of the printed cards (`LocationOrnament`) over it, the
- * name on the name plate and the type on the type plate. When the side has a picture
+ * width with that side's pattern, and over it the card face in scan units (`data-face`,
+ * `LOCATION_FACE`): the frame of the printed cards (`LocationOrnament`), the name on the name
+ * plate and the type under the set medallion. When the side has a picture
  * (`LocationView.image`), it shows once it has loaded (`data-picture`), in the theme the players
  * chose (`Settings.cardTheme`): the card's art cut out into the art window (`ART_WINDOW`, the
  * nested `svg`), or the whole card over the face (the `image`), with the frame, the texts and the
  * shroud the picture prints hidden. Both load the same address, so the browser fetches it once;
- * the stylesheet shows the one for the look. Over them lies what the game tracks: its attachments
- * peeking out at the right edge as small cards, and once revealed the shroud (with what
- * attachments add) on the left edge where the art ends and the clues on the right, doom under the
- * clues when it has any, and the actions it prints in the text box (`PrintedActions`); then a
+ * the stylesheet shows the one for the look. On the face lies what the game tracks: once revealed
+ * the shroud (with what attachments add) on the left end of the page's edge and the printed clue
+ * value on the right with the clues left on it (`CountCircle`), doom under the clues when it has
+ * any; over the face its attachments peeking out at the right edge as small cards and the actions
+ * it prints in the text box (`PrintedActions`); then a
  * pawn per investigator there and a round token per enemy at it, in rows along the bottom edge,
  * each enemy engaged with an investigator right after their pawn (`piecesOnTile`).
  * `enemies` and `investigators` are the open game's pieces at this location, and `turnOrder`
@@ -130,38 +136,43 @@ export function LocationTile({
           />
         </>
       )}
-      <LocationOrnament />
-      <NameBand location={location} />
+      <g data-face="" transform={SCAN_TO_TILE} clipPath="url(#card-face-corners)">
+        <LocationOrnament />
+        <NameBand location={location} />
+        {location.revealed && (
+          <>
+            <Token
+              kind="shroud"
+              value={location.shroud}
+              label={t('map.shroud', { shroud: location.shroud })}
+              centre={LOCATION_FACE.shroud}
+            />
+            <ClueValue printed={location.printedClues} />
+            <CountCircle
+              kind="clue"
+              value={location.clues}
+              label={t('map.clues', { count: location.clues })}
+              centre={LOCATION_FACE.count}
+            />
+          </>
+        )}
+        {location.doom ? (
+          <Token
+            kind="doom"
+            value={location.doom}
+            label={t('map.doom', { count: location.doom })}
+            centre={LOCATION_FACE.doom}
+          />
+        ) : null}
+      </g>
       {location.symbol && <ConnectionSymbol symbol={location.symbol} />}
       {onOpen && <DetailsButton location={location} onOpen={onOpen} />}
       {location.attachments?.map((name, i) => (
         <Attachment key={`${name}-${i}`} name={name} origin={attachmentOrigin(i)} />
       ))}
-      {location.revealed && (
-        <>
-          <Token
-            kind="shroud"
-            value={location.shroud}
-            label={t('map.shroud', { shroud: location.shroud })}
-            centre={SHROUD_CENTRE}
-          />
-          <Token
-            kind="clue"
-            value={location.clues}
-            label={t('map.clues', { count: location.clues })}
-            centre={CLUES_CENTRE}
-          />
-          {location.printedActions && <PrintedActions actions={location.printedActions} />}
-        </>
+      {location.revealed && location.printedActions && (
+        <PrintedActions actions={location.printedActions} />
       )}
-      {location.doom ? (
-        <Token
-          kind="doom"
-          value={location.doom}
-          label={t('map.doom', { count: location.doom })}
-          centre={DOOM_CENTRE}
-        />
-      ) : null}
       {pieces.map((piece) =>
         'investigator' in piece ? (
           <Pawn
@@ -197,14 +208,14 @@ export function LocationTile({
 }
 
 /**
- * The fills of a tile drawn in the printed cards' style, one set per side of a location card, so
- * a revealed tile reads apart from an unrevealed one at a glance: a parchment gradient for the
- * face (tan on the revealed side, sage on the unrevealed one, like the printed cards) and a hatch
- * for the art area while it has no card image, and the paper's grain (`card-paper`, a pattern
- * the size of a tile filled by the `card-paper-grain` noise filter: large faint foxing and a fine
- * grain), which the frame lays over its plates and text box. They are drawn once per map drawing, in its
- * `defs`; the stylesheet fills each tile with the ones for its side by these ids and colours the
- * gradients' stops. The ids are fixed rather than `useId`, since the
+ * The fills of a tile drawn in the printed cards' style: a hatch for the art area while it has no
+ * card image, one per side of a location card, so a revealed tile reads apart from an unrevealed
+ * one at a glance; the shading of the name plate (`card-plate`, darker towards its foot) and of
+ * the page (`card-page`, lightest in the middle, like the printed paper); and the paper's grain
+ * (`card-paper`, a pattern the size of a scan filled by the `card-paper-grain` noise filter:
+ * large faint foxing and a fine grain), which the frame lays over its plate and page. They are
+ * drawn once per map drawing, in its `defs`; the stylesheet fills each tile's parts by these ids
+ * and colours the gradients' stops. The ids are fixed rather than `useId`, since the
  * stylesheet must name them; two drawings mounted at once would repeat them, which is harmless
  * because the patterns are the same.
  */
@@ -240,39 +251,48 @@ export function CardPatterns() {
       </filter>
       <pattern
         id="card-paper"
-        width={TILE.width}
-        height={TILE.height}
+        width={PORTRAIT_SCAN.width}
+        height={PORTRAIT_SCAN.height}
         patternUnits="userSpaceOnUse"
       >
-        <rect width={TILE.width} height={TILE.height} />
+        <rect width={PORTRAIT_SCAN.width} height={PORTRAIT_SCAN.height} />
       </pattern>
-      {(['revealed', 'unrevealed'] as const).map((side) => (
-        <linearGradient key={side} id={`card-face-${side}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" />
-          <stop offset="1" />
-        </linearGradient>
-      ))}
+      <linearGradient id="card-plate" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" />
+        <stop offset="1" />
+      </linearGradient>
+      <radialGradient id="card-page" cx="0.5" cy="0.45" r="0.7">
+        <stop offset="0" />
+        <stop offset="1" />
+      </radialGradient>
+      <CardFaceCorners />
     </>
   );
 }
 
 /**
- * The tile's name and type: the location's name on the name plate, centred like the printed name
- * and shrunk to fit `NAME_WIDTH` when it is long, so it never reaches the details button, and on the
- * type plate "Location", or on an unrevealed tile "Unrevealed", since that side shows
- * no shroud or clues.
+ * The face's name and type, in scan units: the location's name on the name plate, centred like
+ * the printed name and shrunk to fit its width when it is long, so it never reaches the
+ * connection symbol or the details button, and on the plate under the set medallion "Location",
+ * or on an unrevealed tile "Unrevealed", since that side shows no shroud or clues.
  */
 function NameBand({ location }: { location: LocationView }) {
   const { t } = useTranslation();
   const name = useRef<SVGTextElement>(null);
-  const scale = useShrinkToFit(name, NAME_WIDTH, location.name);
-  const centre = { x: TILE.width / 2, y: CONTENT.band / 2 };
+  const { x, y, width } = LOCATION_FACE.name;
+  const scale = useShrinkToFit(name, width, location.name);
+  const { medallion } = LOCATION_FACE;
   return (
     <>
-      <text ref={name} {...centre} transform={shrinkAround(centre, scale)}>
+      <text ref={name} x={x} y={y} transform={shrinkAround({ x, y }, scale)}>
         {location.name}
       </text>
-      <text {...TYPE_PLATE_CENTRE}>{t(location.revealed ? 'map.location' : 'map.unrevealed')}</text>
+      <SetMedallion
+        centre={medallion}
+        radius={medallion.radius}
+        plateWidth={medallion.plateWidth}
+        type={t(location.revealed ? 'map.location' : 'map.unrevealed')}
+      />
     </>
   );
 }
@@ -285,20 +305,63 @@ interface TokenCount {
 }
 
 /**
- * A round token with its count, centred on `centre`: the shroud, clues or doom. `kind`
- * (`data-token`) lets the stylesheet colour each like its token on the table, and a count of
- * none is marked (`data-empty`), so a location without clues reads as empty at a glance.
+ * A printed disc with its number on the face, in scan units, centred on `centre`: the shroud, or
+ * the doom on the location. `kind` (`data-token`) lets the stylesheet colour each like the card
+ * prints it or its token on the table.
  */
 function Token({ kind, value, label, centre: { x, y } }: TokenCount & { centre: Point }) {
   return (
-    <g role="img" aria-label={label} data-token={kind} data-empty={value === 0 || undefined}>
-      <circle cx={x} cy={y} r={CONTENT.pawnRadius} />
+    <g role="img" aria-label={label} data-token={kind}>
+      <circle cx={x} cy={y} r={LOCATION_FACE.disc.radius} />
       <text x={x} y={y}>
         {value}
       </text>
     </g>
   );
 }
+
+/**
+ * The clue value the location prints (`LocationView.printedClues`) on its clue disc, in scan
+ * units: the number, followed by the per investigator symbol when it scales with the players
+ * ("2 per investigator"), and a value that does both as "1+2". The clues left are the count
+ * circle on it, so this is only what the card prints.
+ */
+function ClueValue({ printed: { fixed, perInvestigator } }: { printed: ScaledValue }) {
+  const { t } = useTranslation();
+  const { x, y } = LOCATION_FACE.clues;
+  const value =
+    perInvestigator === 0
+      ? `${fixed}`
+      : fixed === 0
+        ? `${perInvestigator}`
+        : `${fixed}+${perInvestigator}`;
+  const label = t(perInvestigator === 0 ? 'map.clueValue' : 'map.clueValuePerInvestigator', {
+    value,
+  });
+  // The symbol takes the disc's right half, so the number moves left to make room for it.
+  const shift = perInvestigator === 0 ? 0 : PER_INVESTIGATOR_SIZE / 2;
+  return (
+    <g role="img" aria-label={label} data-token="clue-value">
+      <circle cx={x} cy={y} r={LOCATION_FACE.disc.radius} />
+      <text x={x - shift} y={y}>
+        {value}
+      </text>
+      {perInvestigator !== 0 && (
+        <foreignObject
+          x={x + shift}
+          y={y - PER_INVESTIGATOR_SIZE / 2}
+          width={PER_INVESTIGATOR_SIZE}
+          height={PER_INVESTIGATOR_SIZE}
+        >
+          <span data-symbol="per_investigator" />
+        </foreignObject>
+      )}
+    </g>
+  );
+}
+
+/** The per investigator symbol on a clue disc, in scan units, as printed beside the number. */
+const PER_INVESTIGATOR_SIZE = 12;
 
 /**
  * The action abilities the location prints (`LocationView.printedActions`), a line each in the
@@ -346,13 +409,13 @@ function Attachment({ name, origin: { x, y } }: { name: string; origin: Point })
 
 /**
  * The location's connection symbol (`LocationView.symbol`) in the tile's top left corner, as on the
- * printed card: a small disc in the symbol's colour with a light glyph, centred on the name's line
- * unless a drawing of its own gives it a `centre` (the location mode's neighbours). Named for
- * screen readers, since its shape alone says nothing.
+ * printed card: a small disc in the symbol's colour with a light glyph, where the card prints it
+ * (`CORNER_DISC`) unless a drawing of its own gives it a `centre` (the location mode's
+ * neighbours). Named for screen readers, since its shape alone says nothing.
  */
 export function ConnectionSymbol({
   symbol,
-  centre = { x: CONTENT.pawnRadius, y: CONTENT.band / 2 },
+  centre = CORNER_DISC,
 }: {
   symbol: LocationSymbol;
   centre?: Point;
@@ -371,11 +434,17 @@ export function ConnectionSymbol({
   );
 }
 
-/** The symbol's disc is a little smaller than the pieces, like the printed one beside the name. */
-export const CONNECTION_RADIUS = CONTENT.pawnRadius * 0.75;
+/**
+ * Where a tile's top left corner disc sits, the connection symbol, and its details button mirrored
+ * in the top right one: at (25, 18) of a scan with a radius of 13.5, as the card prints the symbol.
+ */
+const CORNER_DISC: Point = { x: 25 * TILE_PER_SCAN, y: 18 * TILE_PER_SCAN };
 
-/** The glyph's reach from the disc's centre: small inside the disc, like the printed one. */
-const CONNECTION_GLYPH_SIZE = CONTENT.pawnRadius * 0.25;
+/** The symbol's disc, as large as the printed one beside the name. */
+export const CONNECTION_RADIUS = 13.5 * TILE_PER_SCAN;
+
+/** The glyph's reach from the disc's centre: a third of the disc, like the printed one. */
+const CONNECTION_GLYPH_SIZE = CONNECTION_RADIUS / 3;
 
 /**
  * The tile's details button, a round button with an "i" in its top right corner, across the name
@@ -386,9 +455,9 @@ const CONNECTION_GLYPH_SIZE = CONTENT.pawnRadius * 0.25;
  */
 function DetailsButton({ location, onOpen }: { location: LocationView; onOpen: () => void }) {
   const { t } = useTranslation();
-  const radius = CONTENT.pawnRadius;
-  const x = TILE.width - radius;
-  const y = radius;
+  const radius = CONNECTION_RADIUS;
+  const x = TILE.width - CORNER_DISC.x;
+  const y = CORNER_DISC.y;
   const onKeyDown = (event: KeyboardEvent<SVGGElement>) => {
     if (event.key !== 'Enter' && event.key !== ' ') return;
     event.preventDefault();

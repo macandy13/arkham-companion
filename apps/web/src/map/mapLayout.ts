@@ -30,14 +30,12 @@ export const CARD = { short: 150, long: 210 } as const;
 export const TILE = { width: CARD.short, height: CARD.long, gap: 30 } as const;
 
 /**
- * Where a tile's contents sit, in SVG user units from its top left corner, laid out like the
- * printed card (a tile is half an ArkhamDB scan, so the card's parts keep their places): the name
- * plate runs along the top, `band` deep, with the edit button at its left end where the card
- * prints its connection icon; the shroud and the clues sit on the left and right edges where the
- * art ends (`SHROUD_CENTRE`, `CLUES_CENTRE`), doom under the clues; attachments peek out at the
- * right edge as small cards (`attachmentOrigin`), and pawns and enemies stand in rows along the
- * bottom edge where the card prints its connection circles (`pawnOffset`). Tokens and pieces
- * share one radius, so every round thing on a tile is one size.
+ * Where the pieces on a tile sit, in SVG user units from its top left corner (the printed card's
+ * own parts are on its face, `LOCATION_FACE`, in scan units, a tile being half a scan):
+ * attachments peek out at the right edge as small cards under the frame's band along the top,
+ * `band` deep (`attachmentOrigin`), and pawns and
+ * enemies stand in rows along the bottom edge where the card prints its connection sockets
+ * (`piecesOnTile`), all clear of the frame's `inset`. Pawns and enemies share one radius.
  */
 export const CONTENT = { inset: 10, band: 19, pawnRadius: 14, pawnGap: 6 } as const;
 
@@ -82,21 +80,6 @@ export function damageBadgeCentre(piece: Point): Point {
  */
 const TOKEN_LINE = (TILE.height * 8) / 15;
 
-/**
- * The centre of a tile's shroud token, on its left edge where the art ends, as on the printed card.
- * Its ring reaches a little past the edge, as the printed circle does.
- */
-export const SHROUD_CENTRE: Point = { x: CONTENT.pawnRadius, y: TOKEN_LINE };
-
-/** The centre of a tile's clue token, on its right edge where the art ends, as on the printed card. */
-export const CLUES_CENTRE: Point = { x: TILE.width - CONTENT.pawnRadius, y: TOKEN_LINE };
-
-/** The centre of a tile's doom token, right under its clues. */
-export const DOOM_CENTRE: Point = {
-  x: CLUES_CENTRE.x,
-  y: CLUES_CENTRE.y + 2 * CONTENT.pawnRadius + CONTENT.pawnGap,
-};
-
 /** The top of the art window: just under the top edge, about 6 % of the card, as on the printed card. */
 const ART_TOP = 12;
 
@@ -113,22 +96,18 @@ export const ART_WINDOW = {
 } as const;
 
 /**
- * How wide a location's name may run on its name plate: centred, clear of the edit button in the
- * top left corner by a gap on each side, and as far from the right edge.
- */
-export const NAME_WIDTH = TILE.width - 2 * (2 * CONTENT.pawnRadius + CONTENT.pawnGap);
-
-/**
- * Where a tile prints its card text (its actions): the text box under the art, as wide as the name
- * so it clears the shroud and clue tokens, and above the row of pieces along the bottom edge.
+ * Where a tile prints its card text (its actions): the printed text box on the page, a fifth of
+ * the width in from either edge (30 of a scan's 300, as printed), from under the set medallion's
+ * type plate (at about 55 % of the height) to above the row of pieces along the bottom edge.
  */
 export const TEXT_BOX = (() => {
   const top = ART_WINDOW.y + ART_WINDOW.height + CONTENT.pawnGap;
   const piecesTop = TILE.height - CONTENT.inset - 2 * CONTENT.pawnRadius;
+  const inset = TILE.width / 10;
   return {
-    x: (TILE.width - NAME_WIDTH) / 2,
+    x: inset,
     y: top,
-    width: NAME_WIDTH,
+    width: TILE.width - 2 * inset,
     height: piecesTop - CONTENT.pawnGap - top,
   } as const;
 })();

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { ART_WINDOW } from '../map/mapLayout';
-import { LOCATION_ART, portraitArtViewBox } from './cardArt';
+import { ART_WINDOW, TILE } from '../map/mapLayout';
+import { LOCATION_ART, PORTRAIT_SCAN, portraitArtViewBox } from './cardArt';
+import { TILE_PER_SCAN } from './cardFace';
 
 describe('portraitArtViewBox', () => {
   it.each([
@@ -18,5 +19,12 @@ describe('LOCATION_ART', () => {
     const scaledToScan = [x, y, width, height].map((value) => 2 * value).join(' ');
 
     expect(portraitArtViewBox(LOCATION_ART)).toBe(scaledToScan);
+  });
+});
+
+describe('TILE_PER_SCAN', () => {
+  it('draws a card face measured on a scan at the size of a map tile', () => {
+    expect(PORTRAIT_SCAN.width * TILE_PER_SCAN).toBe(TILE.width);
+    expect(Math.round(PORTRAIT_SCAN.height * TILE_PER_SCAN)).toBe(TILE.height);
   });
 });
