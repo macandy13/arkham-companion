@@ -191,6 +191,38 @@ The engine then builds edges from the revealed state. The setup DSL gains `rando
 
 The book layout is stored as slots (a grid or free positions); the map is SVG with pan and zoom, several maps as tabs or side by side; elkjs auto-layout for maps without a book layout; dnd-kit for dragging locations on a tablet.
 
+### Card themes ([M3.10](https://github.com/macandy13/arkham-companion/issues/289))
+
+*Why:* the card faces should look like the cards on the table, and players differ in how close to the print they want them. Every face is drawn from one geometry per card type, measured from the printed cards, so a theme only changes the skin.
+
+**Geometry (shared by all themes).** Each card type is drawn as SVG on the printed card's grid, in scan units (portrait 300 × 419, landscape 419 × 300), measured from the ArkhamDB scans and checked by laying the face over the scan at half opacity:
+
+- **Enemy:** a paper lens over the art (arc of radius 200 centred at 150, 48), fight, health and evade on three chevrons, the traits, text and victory under them, the damage and horror it deals as hearts and brains beside the set medallion.
+- **Treachery:** the art in a keyhole window with bead chains and scrolls, the set medallion on its plate, the name strip and text below.
+- **Location:** the art under the name plate, shroud and clue value as discs on the arched edge, six connection sockets at the foot.
+- **Agenda and act:** an open book beside the art (the act mirrored), a stack of pages, the threshold on a disc at the page's corner (the act's with a magnifier handle).
+- **Investigator:** full-card art, the name banner, the four skills on a linked chain, the text on a notebook page, health as an anatomical heart and sanity as a brain.
+- **Scenario reference:** the title under the serpent arch, one row per chaos token beside its text.
+
+Text sits on the printed baselines at the printed size, wrapped by measuring the words in the real font; `**bold**` runs (Revelation, Prey) stay bold.
+
+**Live values on the printed ones.** Each printed value carries its live count, so one element shows both: the big number is the threshold or maximum, a small circle on its lower right holds the current count. Doom on the agenda's threshold, clues on the act's clue threshold and on the location's clue value, damage on the enemy's health, damage on the investigator's heart and horror on the brain. The investigator also shows clues and resources as the game's tokens (a teal clue token, a gold resource coin) with one number each. Buttons (the act's Advance) sit on the card.
+
+**Symbols.** Chaos tokens, skills, the class and the per-investigator mark use the bundled game symbols (`apps/web/src/symbols/`). The other icons are revisited once all themes are built.
+
+**The four themes** (a setting, default *Exact*):
+
+1. **Exact:** the printed frames redrawn: three-layer sage scrolls (dark outline, pale body, highlight), wood-grain stone around the treachery window, paper grain and the faint star watermark.
+2. **Night and brass:** the same frames for the night playmat: sea-green card stock, brass ornaments and plates, bone text, the card type's colour as the outer edge with a brass hairline inside.
+3. **Eldritch:** the layout as a skeleton: scrolls become tapered tentacles with a glowing outline, medallions become eyes, the paper is the void with stars and a vignette, titles in a blackletter.
+4. **Card pictures:** the card's ArkhamDB picture (M3.10c2), with the live counts on top; without a picture the face falls back to Exact.
+
+The theme setting replaces today's "Card pictures" setting: *frames with card art* becomes Exact with the art crop, *full card faces* becomes Card pictures.
+
+In every theme the art area shows the card's picture crop when it loads and a pattern per card type otherwise. A theme is a set of values (colours, ornament style, paper, edge, effects) over the same templates, so a new theme adds values, not layouts. The Exact frames copy the game's trade dress and go on the [M9.1](https://github.com/macandy13/arkham-companion/issues/373) copyright check.
+
+The mockup of all card types in the three drawn themes, with the measuring overlays, is in the project library (`design/card_templates/exact_templates.html`, sources in `exact_src/`).
+
 ### Cloud sync ([M8](https://github.com/macandy13/arkham-companion/issues/271))
 
 A second `GameStore` (`CloudStore`) next to `IndexedDbStore`; sync through the append-only event log with optimistic concurrency (`expectedSeq`); login; backend to be decided (Supabase, Firebase or Cloudflare). Already prepared: UUID game IDs, timestamped events, no device-bound IDs.
