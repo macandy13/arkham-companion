@@ -8,6 +8,7 @@ import {
   type MapEnemyView,
   type SkillName,
 } from '@arkham/engine';
+import { Brain, Heart } from '../catalog/cardFace';
 import type { GameActions, SteppedStat } from '../state/gameActions';
 import { InvestigatorArt } from './InvestigatorArt';
 import { SkillTestDialog } from './SkillTestDialog';
@@ -332,6 +333,7 @@ function Counters({
         label={t('investigators.health')}
         value={health - damage}
         shown={t('investigators.left', { left: health - damage, max: health })}
+        printed={{ max: health, taken: damage }}
       >
         {adjusting && (
           <Steppers
@@ -346,6 +348,7 @@ function Counters({
         label={t('investigators.sanity')}
         value={sanity - horror}
         shown={t('investigators.left', { left: sanity - horror, max: sanity })}
+        printed={{ max: sanity, taken: horror }}
       >
         {adjusting && (
           <Steppers
@@ -402,7 +405,11 @@ type StatKind = 'health' | 'sanity' | 'clues' | 'resources' | 'doom';
 /**
  * One counter of the panel (`kind`): its name (`short` where the full one does not fit its column,
  * with the full one as its title), its `value` (written as `shown` where the panel says more, such
- * as health against its maximum) and its steppers (`children`).
+ * as health against its maximum) and its steppers (`children`). Health and sanity show as the card
+ * prints them (`printed`): the printed maximum on an anatomical heart or a brain, with the damage
+ * or horror taken as a count circle on its lower right, like the location's clues on its clue
+ * value; the pair is one image named by `shown`, since the two numbers alone do not say what is
+ * left.
  */
 function Stat({
   kind,
@@ -410,6 +417,7 @@ function Stat({
   short,
   value,
   shown = String(value),
+  printed,
   children,
 }: {
   kind: StatKind;
@@ -417,18 +425,39 @@ function Stat({
   short?: string;
   value: number;
   shown?: string;
+  printed?: { max: number; taken: number };
   children?: ReactNode;
 }) {
+  const origin = { x: 0, y: 0 };
   return (
     <div data-stat={kind}>
       <dt>{short ? <abbr title={label}>{short}</abbr> : label}</dt>
       <dd>
-        <data value={value}>{shown}</data>
+        {printed ? (
+          <span role="img" aria-label={shown} data-printed="">
+            <svg viewBox={PRINTED_SYMBOL_VIEW_BOX} aria-hidden="true">
+              {kind === 'health' ? (
+                <Heart centre={origin} scale={1} />
+              ) : (
+                <Brain centre={origin} scale={1} />
+              )}
+            </svg>
+            <data value={printed.max}>{printed.max}</data>
+            <data value={printed.taken} data-count="" data-empty={printed.taken === 0 || undefined}>
+              {printed.taken}
+            </data>
+          </span>
+        ) : (
+          <data value={value}>{shown}</data>
+        )}
         {children}
       </dd>
     </div>
   );
 }
+
+/** The square around the heart's and brain's drawings (`Heart`, `Brain`), centred on the origin. */
+const PRINTED_SYMBOL_VIEW_BOX = '-15 -15 30 30';
 
 /** What one stepper of a counter says it does (`label`), since its sign alone does not say. */
 interface StepperSide {
