@@ -6,7 +6,7 @@ import { campaignCatalog } from '../scenarios/scenarioCatalog';
 import { applySettings } from '../settings/applySettings';
 import {
   CARD_LANGUAGES,
-  CARD_LOOKS,
+  CARD_THEMES,
   loadSettings,
   saveSettings,
   THEMES,
@@ -115,14 +115,14 @@ export function SettingsScreen({ packs = [] }: SettingsScreenProps) {
             </select>
           </label>
           <label>
-            {t('settings.cardLook')}
+            {t('settings.cardTheme')}
             <select
-              value={settings.cardLook}
-              onChange={(e) => update({ cardLook: e.target.value as Settings['cardLook'] })}
+              value={settings.cardTheme}
+              onChange={(e) => update({ cardTheme: e.target.value as Settings['cardTheme'] })}
             >
-              {CARD_LOOKS.map((look) => (
-                <option key={look} value={look}>
-                  {t(`settings.cardLooks.${look}`)}
+              {CARD_THEMES.map((theme) => (
+                <option key={theme} value={theme}>
+                  {t(`settings.cardThemes.${theme}`)}
                 </option>
               ))}
             </select>

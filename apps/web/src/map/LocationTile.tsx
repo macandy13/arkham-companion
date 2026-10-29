@@ -41,8 +41,8 @@ export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyVi
  * location card: a face for the side the location shows (revealed or not), the art area across its
  * width with that side's pattern, the frame of the printed cards (`LocationOrnament`) over it, the
  * name on the name plate and the type on the type plate. When the side has a picture
- * (`LocationView.image`), it shows once it has loaded (`data-picture`), in the look the players
- * chose (`Settings.cardLook`): the card's art cut out into the art window (`ART_WINDOW`, the
+ * (`LocationView.image`), it shows once it has loaded (`data-picture`), in the theme the players
+ * chose (`Settings.cardTheme`): the card's art cut out into the art window (`ART_WINDOW`, the
  * nested `svg`), or the whole card over the face (the `image`), with the frame, the texts and the
  * shroud the picture prints hidden. Both load the same address, so the browser fetches it once;
  * the stylesheet shows the one for the look. Over them lies what the game tracks: its attachments

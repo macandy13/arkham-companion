@@ -87,15 +87,15 @@ describe('SettingsScreen', () => {
     expect(loadSettings().theme).toBe('light');
   });
 
-  it('applies and saves the card look', () => {
+  it('applies and saves the card theme', () => {
     render(<SettingsScreen packs={packs} />);
 
-    fireEvent.change(screen.getByRole('combobox', { name: 'Card pictures' }), {
-      target: { value: 'faces' },
+    fireEvent.change(screen.getByRole('combobox', { name: 'Card style' }), {
+      target: { value: 'pictures' },
     });
 
-    expect(document.documentElement.dataset.cardLook).toBe('faces');
-    expect(loadSettings().cardLook).toBe('faces');
+    expect(document.documentElement.dataset.cardTheme).toBe('pictures');
+    expect(loadSettings().cardTheme).toBe('pictures');
   });
 
   it('explains that the pack list is missing without catalog packs', () => {

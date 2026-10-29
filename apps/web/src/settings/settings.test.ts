@@ -20,7 +20,7 @@ describe('settings storage', () => {
       cardLanguage: 'de',
       uiLanguage: 'de',
       theme: 'light',
-      cardLook: 'faces',
+      cardTheme: 'pictures',
     } as const;
 
     saveSettings(settings);
@@ -53,12 +53,24 @@ describe('settings storage', () => {
         cardLanguage: 'xx',
         uiLanguage: 'fr',
         theme: 'light',
-        cardLook: 'scans',
+        cardTheme: 'scans',
       }),
     );
 
     expect(loadSettings()).toEqual({ ...DEFAULT_SETTINGS, theme: 'light' });
   });
+
+  it.each([
+    { cardLook: 'frames', cardTheme: 'exact' },
+    { cardLook: 'faces', cardTheme: 'pictures' },
+  ] as const)(
+    'reads the old card look $cardLook as the $cardTheme theme',
+    ({ cardLook, cardTheme }) => {
+      localStorage.setItem(KEY, JSON.stringify({ cardLook }));
+
+      expect(loadSettings().cardTheme).toBe(cardTheme);
+    },
+  );
 
   it('returns the defaults and warns when reading throws', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});

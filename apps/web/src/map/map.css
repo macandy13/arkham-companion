@@ -290,25 +290,29 @@
 }
 
 /*
- * A tile's card picture shows once it has loaded (`data-picture`), in the card look the players
- * chose (`data-card-look` on the document): "frames" (the default) shows the card's art in the
- * art window (the nested svg) under our own name band and tokens; "faces" lays the whole card
+ * A tile's card picture shows once it has loaded (`data-picture`), in the card theme the players
+ * chose (`data-card-theme` on the document): "exact" (the default) shows the card's art in the
+ * art window (the nested svg) under our own name band and tokens; "pictures" lays the whole card
  * (the image) over the face, and the name band, shroud token and printed actions give way to the
  * ones the picture prints. They stay transparent rather than removed, so they keep naming the
  * tile's shroud to assistive technology.
  */
 #map svg [data-card]:not([data-picture]) > :is(image, svg),
 #map svg [data-card] > image,
-:root[data-card-look='faces'] #map svg [data-card] > svg {
+:root[data-card-theme='pictures'] #map svg [data-card] > svg {
   visibility: hidden;
 }
 
-:root[data-card-look='faces'] #map svg [data-picture] > image {
+:root[data-card-theme='pictures'] #map svg [data-picture] > image {
   visibility: visible;
 }
 
-:root[data-card-look='faces'] #map svg [data-picture] > :is(text, [data-ornament], foreignObject),
-:root[data-card-look='faces'] #map svg [data-picture] > [data-token='shroud'] {
+:root[data-card-theme='pictures']
+  #map
+  svg
+  [data-picture]
+  > :is(text, [data-ornament], foreignObject),
+:root[data-card-theme='pictures'] #map svg [data-picture] > [data-token='shroud'] {
   opacity: 0;
 }
 
