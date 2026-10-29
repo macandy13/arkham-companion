@@ -2,7 +2,7 @@ import { useId, useRef, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { EnemyStatsView, Keyword, MapEnemyView } from '@arkham/engine';
 import { sentences } from '@arkham/util';
-import { ENEMY_ART, PORTRAIT_SCAN, portraitArtViewBox } from '../catalog/cardArt';
+import { ENEMY_ART, PORTRAIT_SCAN, artViewBox } from '../catalog/cardArt';
 import {
   Brain,
   CARD_OUTLINE,
@@ -111,11 +111,7 @@ export function EnemyCard({
       <g clipPath={`url(#${clipId})`} aria-hidden="true">
         <path data-part="art" d={ENEMY_FRAME.art} fill={`url(#${hatchId})`} />
         {picture && (
-          <svg
-            {...art}
-            viewBox={portraitArtViewBox(ENEMY_ART)}
-            preserveAspectRatio="xMidYMid slice"
-          >
+          <svg {...art} viewBox={artViewBox(ENEMY_ART)} preserveAspectRatio="xMidYMid slice">
             <image
               href={picture.url}
               {...PORTRAIT_SCAN}

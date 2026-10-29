@@ -2,7 +2,7 @@ import { useId, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CardFaceView } from '@arkham/engine';
 import { sentences } from '@arkham/util';
-import { PORTRAIT_SCAN, TREACHERY_ART, portraitArtViewBox } from '../catalog/cardArt';
+import { PORTRAIT_SCAN, TREACHERY_ART, artViewBox } from '../catalog/cardArt';
 import { CARD_OUTLINE, OrnamentLine, SetMedallion } from '../catalog/cardFace';
 import { useCardPicture } from '../catalog/cardImages';
 import { shrinkAround, useShrinkToFit } from '../map/useShrinkToFit';
@@ -60,7 +60,7 @@ export function TreacheryCard({ card, titleId }: { card: CardFaceView; titleId: 
             x={0}
             {...TREACHERY_FACE.art}
             width={width}
-            viewBox={portraitArtViewBox(TREACHERY_ART)}
+            viewBox={artViewBox(TREACHERY_ART)}
             preserveAspectRatio="xMidYMid slice"
           >
             <image

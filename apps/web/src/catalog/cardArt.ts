@@ -16,6 +16,9 @@ export interface ScanArea {
  */
 export const PORTRAIT_SCAN = { width: 300, height: 419 } as const;
 
+/** The size a landscape card scan (an agenda or act) is drawn at, `PORTRAIT_SCAN` turned. */
+export const LANDSCAPE_SCAN = { width: 419, height: 300 } as const;
+
 /**
  * Where a location card's art is, on either side: the whole width from just under the top edge
  * to a little below the shroud and clue circles (about 6 % to 56 % of the height), the same area
@@ -42,12 +45,26 @@ export const ENEMY_ART: ScanArea = { x: 0, y: 130 / 419, width: 1, height: 273 /
 export const TREACHERY_ART: ScanArea = { x: 0, y: 0, width: 1, height: 244 / 419 };
 
 /**
- * The SVG `viewBox` that shows `area` of a portrait scan drawn at `PORTRAIT_SCAN` size; with
- * `preserveAspectRatio="xMidYMid slice"` the art fills its window and keeps its proportions.
- * Whole units are close enough for a crop and keep the attribute short.
+ * Where an agenda's art is on its landscape scan: the left of the card, from the top edge to the
+ * foot, beside the open book the agenda face draws over the rest (`BOOK_FACE.art`). An act prints
+ * the same layout mirrored (`ACT_ART`).
  */
-export function portraitArtViewBox(area: ScanArea): string {
-  const { width, height } = PORTRAIT_SCAN;
+export const AGENDA_ART: ScanArea = { x: 0, y: 0, width: 174 / 419, height: 1 };
+
+/** Where an act's art is on its landscape scan: the agenda's (`AGENDA_ART`) mirrored, on the right. */
+export const ACT_ART: ScanArea = { x: 245 / 419, y: 0, width: 174 / 419, height: 1 };
+
+/**
+ * The SVG `viewBox` that shows `area` of a portrait scan drawn at `PORTRAIT_SCAN` size (or of a
+ * landscape one at `LANDSCAPE_SCAN`, given as `scan`); with `preserveAspectRatio="xMidYMid slice"`
+ * the art fills its window and keeps its proportions. Whole units are close enough for a crop and
+ * keep the attribute short.
+ */
+export function artViewBox(
+  area: ScanArea,
+  scan: { width: number; height: number } = PORTRAIT_SCAN,
+): string {
+  const { width, height } = scan;
   return [area.x * width, area.y * height, area.width * width, area.height * height]
     .map(Math.round)
     .join(' ');

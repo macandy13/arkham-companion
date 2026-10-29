@@ -370,16 +370,21 @@
   object-fit: cover;
 }
 
-#board > header [data-card]:not([data-picture]) > img {
+#board > header [data-card]:not([data-picture]) > img,
+:root:not([data-card-theme='pictures'])
+  #board
+  > header
+  :is([data-card='agenda'], [data-card='act'])
+  > img {
   visibility: hidden;
 }
 
-#board > header [data-picture] > h2 {
+:root[data-card-theme='pictures'] #board > header [data-picture] > h2 {
   opacity: 0;
 }
 
 /* The name is the keyboard's way into the full card, so its focus ring shows over the picture. */
-#board > header [data-picture] > h2:has(:focus-visible) {
+:root[data-card-theme='pictures'] #board > header [data-picture] > h2:has(:focus-visible) {
   opacity: 1;
 }
 
@@ -444,6 +449,67 @@
   background: var(--color-card-encounter);
 }
 
+/*
+ * On the agenda's and act's face (BookFace) the name sits on the open book's page under its
+ * scrolls, the count on the threshold disc's lower right as a small circle like the map's count
+ * circles (the threshold is printed on the disc, so the token's own "of 3" gives way), and the
+ * plate with its buttons at the page's foot, away from the disc. Placed in fractions of the
+ * printed card (`BOOK_FACE`), so they hold at every card size; an act mirrors the agenda.
+ */
+#board > header :is([data-card='agenda'], [data-card='act']) > h2 {
+  position: absolute;
+  inset-block-start: var(--book-name-top);
+  inset-inline: var(--book-page-inset) var(--book-edge-inset);
+  padding: 0 var(--space-1);
+  background: none;
+  color: var(--color-face-ink);
+  font-family: var(--font-family-display);
+  font-size: var(--font-size-body);
+  text-align: center;
+  line-height: 1.1;
+}
+
+#board > header [data-card='act'] > h2 {
+  inset-inline: var(--book-edge-inset) var(--book-page-inset);
+}
+
+#board > header :is([data-card='agenda'], [data-card='act']) > [data-token] {
+  inset-inline: auto;
+  inset-block: auto;
+  left: var(--book-count-x);
+  top: var(--book-count-y);
+  width: var(--header-count-size);
+  height: var(--header-count-size);
+  border-width: var(--face-count-rim-width);
+  border-color: var(--color-count-rim);
+  transform: translate(-50%, -50%);
+}
+
+#board > header [data-card='act'] > [data-token] {
+  left: var(--book-act-count-x);
+}
+
+#board > header :is([data-card='agenda'], [data-card='act']) > [data-token] > data {
+  font-size: var(--font-size-note);
+}
+
+#board > header :is([data-card='agenda'], [data-card='act']) > [data-token] > span {
+  display: none;
+}
+
+#board > header :is([data-card='agenda'], [data-card='act']) > footer {
+  position: absolute;
+  inset-block-end: var(--book-plate-bottom);
+  inset-inline-end: var(--book-plate-inset);
+  max-width: var(--book-plate-width);
+  margin: 0;
+  background: none;
+}
+
+#board > header [data-card='act'] > footer {
+  inset-inline: var(--book-plate-inset) auto;
+}
+
 /* Small buttons on the card's plate, so the card stays compact. */
 #board > header [data-card] button {
   min-width: var(--button-compact);
@@ -466,6 +532,14 @@
   background: none;
   font: inherit;
   text-align: start;
+}
+
+/* On the agenda's and act's page the name is centred under the title's scrolls. */
+#board > header :is([data-card='agenda'], [data-card='act']) > h2 > button {
+  display: block;
+  width: 100%;
+  color: inherit;
+  text-align: center;
 }
 
 /*
@@ -726,11 +800,6 @@
   #board:not([data-view]) > header > section:has([data-pile='victoryDisplay']),
   #board:not([data-view]) > header > section > [data-card] > footer {
     display: none;
-  }
-
-  #board:not([data-view]) > header > section > [data-card] [data-token]:not([data-token='cards']) {
-    inset-inline-end: var(--space-1);
-    inset-block-end: var(--space-1);
   }
 
   #board:not([data-view]) > #status {
