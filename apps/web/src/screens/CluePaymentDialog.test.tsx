@@ -88,32 +88,40 @@ describe('CardActions with a group clue cost', () => {
       />,
     );
 
+  it('starts at the engine’s split, alder’s 3 first, and keeps Pay off while 2 short', () => {
+    const table = studyWithGroupCost(3, 3);
+    renderStudyActions(table);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Action · Study' }));
+    const dialog = screen.getByRole('dialog', { name: 'Action · Study' });
+    expect(within(dialog).getByText('4 of 4 clues')).toBeTruthy();
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: 'Lower the clues alder pays (holds 3)' }),
+    );
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: 'Lower the clues alder pays (holds 3)' }),
+    );
+
+    expect(within(dialog).getByText('2 of 4 clues')).toBeTruthy();
+    expect(within(dialog).getByRole<HTMLButtonElement>('button', { name: 'Pay' }).disabled).toBe(
+      true,
+    );
+  });
+
   it('lets the players have bea pay 3 of the 4 clues instead of alder’s 3 first', async () => {
     const table = studyWithGroupCost(3, 3);
     renderStudyActions(table);
 
     fireEvent.click(screen.getByRole('button', { name: 'Action · Study' }));
     const dialog = screen.getByRole('dialog', { name: 'Action · Study' });
-    const startedAt = within(dialog).getByText('4 of 4 clues').textContent;
-    fireEvent.click(
-      within(dialog).getByRole('button', { name: 'Lower the clues alder pays (holds 3)' }),
-    );
-    fireEvent.click(
-      within(dialog).getByRole('button', { name: 'Lower the clues alder pays (holds 3)' }),
-    );
-    const payWhenShort = within(dialog).getByRole<HTMLButtonElement>('button', { name: 'Pay' });
-    const shortBy2 = payWhenShort.disabled;
-    fireEvent.click(
-      within(dialog).getByRole('button', { name: 'Raise the clues bea pays (holds 3)' }),
-    );
-    fireEvent.click(
-      within(dialog).getByRole('button', { name: 'Raise the clues bea pays (holds 3)' }),
-    );
+    const click = (name: string) => fireEvent.click(within(dialog).getByRole('button', { name }));
+    click('Lower the clues alder pays (holds 3)');
+    click('Lower the clues alder pays (holds 3)');
+    click('Raise the clues bea pays (holds 3)');
+    click('Raise the clues bea pays (holds 3)');
     fireEvent.click(within(dialog).getByRole('button', { name: 'Pay' }));
     await Promise.resolve();
 
-    expect(startedAt).toBe('4 of 4 clues');
-    expect(shortBy2).toBe(true);
     expect(table.board.investigator(alder).clues).toBe(2);
     expect(table.board.investigator(bea).clues).toBe(0);
   });
