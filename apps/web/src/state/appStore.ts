@@ -382,6 +382,8 @@ export function createAppStore(
         return enqueue(() => open(gameId));
       },
       async openCampaign(campaignId) {
+        // Forget the last campaign, so a missing one never shows while another loads.
+        set({ campaign: undefined });
         const loaded = await gameStore.loadCampaign(campaignId);
         if (!loaded) {
           set({ campaign: null });

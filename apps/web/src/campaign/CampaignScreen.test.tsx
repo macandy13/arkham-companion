@@ -19,6 +19,7 @@ import { CampaignScreen } from './CampaignScreen';
 
 let n = 0;
 const roland = investigatorCode('01001');
+const litaChantler = cardCode('01117');
 const gathering = scenarioId('the-gathering');
 const midnightMasks = scenarioId('the-midnight-masks');
 
@@ -85,7 +86,7 @@ describe('CampaignScreen', () => {
         { type: 'XpChanged', code: roland, account: 'earned', delta: 5 },
         { type: 'XpChanged', code: roland, account: 'spent', delta: 2 },
         { type: 'TraumaChanged', code: roland, kind: 'mental', delta: 1 },
-        { type: 'CardEarned', code: roland, card: cardCode('01117') },
+        { type: 'CardEarned', code: roland, card: litaChantler },
       ]);
       renderLog(gameStore, `/campaign/${campaignId}`);
       return screen.findByRole('region', { name: 'Investigators' });

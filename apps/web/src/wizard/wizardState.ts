@@ -1,4 +1,4 @@
-import type { Difficulty } from '@arkham/engine';
+import { scenarioId, type Difficulty } from '@arkham/engine';
 import {
   campaignCatalog,
   findScenario,
@@ -53,7 +53,7 @@ export function chosenCampaign(choices: WizardChoices): CampaignEntry | undefine
 
 /** The scenario the choices will start: a campaign's first scenario, or the chosen one. */
 export function chosenScenario(choices: WizardChoices): ScenarioEntry | undefined {
-  if (choices.mode === 'quick') return findScenario(choices.targetId);
+  if (choices.mode === 'quick') return findScenario(scenarioId(choices.targetId));
   const first = chosenCampaign(choices)?.definition.scenarios[0];
   return first && findScenario(first);
 }

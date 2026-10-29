@@ -7,7 +7,14 @@ import {
   theMidnightMasks,
   theMidnightMasksCards,
 } from '@arkham/scenarios';
-import type { CampaignDefinition, CardCode, CardDb, ScenarioDefinition } from '@arkham/engine';
+import type {
+  CampaignDefinition,
+  CampaignDefinitionId,
+  CardCode,
+  CardDb,
+  ScenarioDefinition,
+  ScenarioId,
+} from '@arkham/engine';
 
 /** A scenario the wizard can start: its definition plus the card data the engine needs to run it. */
 export interface ScenarioEntry {
@@ -68,12 +75,12 @@ export const campaignCatalog: readonly CampaignEntry[] = [
 ];
 
 /** The scenario with `id`, if the catalog has it. */
-export function findScenario(id: string): ScenarioEntry | undefined {
+export function findScenario(id: ScenarioId): ScenarioEntry | undefined {
   return scenarioCatalog.find((entry) => entry.id === id);
 }
 
 /** The campaign with definition id `id`, if the catalog has it. */
-export function findCampaign(id: string): CampaignEntry | undefined {
+export function findCampaign(id: CampaignDefinitionId): CampaignEntry | undefined {
   return campaignCatalog.find((entry) => entry.id === id);
 }
 
