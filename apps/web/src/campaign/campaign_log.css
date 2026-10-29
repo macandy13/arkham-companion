@@ -127,7 +127,7 @@
   font-family: var(--font-family-log-label);
   font-size: var(--font-size-log-label);
   font-weight: bold;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--log-label-tracking);
   text-transform: uppercase;
   color: var(--color-print);
   overflow-wrap: normal;
@@ -193,7 +193,7 @@
   height: var(--tally-height);
   fill: none;
   stroke: currentcolor;
-  stroke-width: 2;
+  stroke-width: var(--sheet-ink-width);
   stroke-linecap: round;
 }
 
@@ -201,7 +201,7 @@
 #campaign-scenarios h2 {
   display: inline-block;
   padding-right: var(--space-3);
-  border-bottom: 2px solid var(--color-script-ink);
+  border-bottom: var(--sheet-ink-width) solid var(--color-script-ink);
 }
 
 #campaign-scenarios ol {
@@ -246,7 +246,7 @@
   width: var(--space-4);
   height: var(--space-4);
   margin: 0;
-  border: 2px solid var(--color-script-ink);
+  border: var(--sheet-ink-width) solid var(--color-script-ink);
   appearance: none;
 }
 
@@ -267,7 +267,7 @@
   color: var(--color-stamp);
 }
 
-@media (max-width: 40rem) {
+@media (orientation: portrait) and (max-width: 40rem) {
   #campaign-log {
     --campaign-log-columns: 2;
   }

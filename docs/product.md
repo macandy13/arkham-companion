@@ -121,6 +121,7 @@ Designs for parts that have a milestone but no code yet. The PR that builds one 
   - *Notepad:* campaign notes (crossed out when a later scenario undoes them; tap shows the scenario that wrote it and the setups that read it) and the campaign's lists. *Clipping:* killed and insane investigators. The chaos bag sits in the app bar.
   - *Resolution:* when a scenario ends, the players confirm the resolution the game proposes (or pick another), check the list of log changes and the steps left to do at the table, then the entries ink into the log with Undo. Story text is not shown; the screen says which part of the campaign guide to read aloud.
   - The log needs a player name per investigator, which `CampaignInvestigator` doesn't have yet.
+  - Built so far ([Web app](architecture/web-app.md#campaign-log)): the index card's columns and the napkin, read only, with a link back to the scenario in play. The rest above is still to do.
 
 ### Continuous play tester ([M1V.4](https://github.com/macandy13/arkham-companion/issues/281))
 

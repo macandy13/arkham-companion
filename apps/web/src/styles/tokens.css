@@ -481,6 +481,9 @@
     linear-gradient(#f6f5f0, #ecebe4);
   --sheet-shadow: drop-shadow(0 5px 6px rgb(0 0 0 / 45%));
   --sheet-rule-width: 1.5px;
+  /* A line drawn by hand: a box, an underline, a tally stroke. */
+  --sheet-ink-width: 2px;
+  --log-label-tracking: 0.06em;
   --sheet-frame-width: 3px;
   --sheet-tilt: -1.2deg;
   --tally-height: 1.6rem;

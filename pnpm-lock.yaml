@@ -59,9 +59,6 @@ importers:
       '@fontsource/caveat':
         specifier: ^5.3.0
         version: 5.3.0
-      '@fontsource/crimson-pro':
-        specifier: ^5.3.0
-        version: 5.3.0
       '@fontsource/federant':
         specifier: ^5.3.0
         version: 5.3.0
@@ -964,9 +961,6 @@ packages:
 
   '@fontsource/caveat@5.3.0':
     resolution: {integrity: sha512-eHTfzQxFSW9ABERRLNruHoNJmKed2J7pqTUc5lp4a4POMgXGKpxmWj3d9Hz10kmAg6iuTTLe6UagbA4bnsmfQw==}
-
-  '@fontsource/crimson-pro@5.3.0':
-    resolution: {integrity: sha512-PXQH0NGma2wwskZAySBH+s/ezAYBwyDH0I4oRURBu9u81nNUCm5DcNCJaUS9H0UR1y8qlslLfVRU6mnDBpffrA==}
 
   '@fontsource/federant@5.3.0':
     resolution: {integrity: sha512-QCqoWrrXTsRsBO7V3y7Z/t+kdUO4ZBDSf3WrHwzHvRDm/9zw3bhZ4cwb62aldPR3pV23+OkU84lTzYUIHD558g==}
@@ -4050,8 +4044,6 @@ snapshots:
   '@fontsource/alegreya-sans@5.3.0': {}
 
   '@fontsource/caveat@5.3.0': {}
-
-  '@fontsource/crimson-pro@5.3.0': {}
 
   '@fontsource/federant@5.3.0': {}
 
