@@ -35,13 +35,15 @@ The cards an investigator controls (their `playArea` zone, Lita Chantler after a
 
 ## Enemy details
 
-A tap on an enemy card opens its [details](../../apps/web/src/enemies/EnemyDetails.tsx): the enemy drawn as its [card](../../apps/web/src/enemies/EnemyCard.tsx) (`BoardView.enemyStats`), our own SVG frame in the location tiles' style but laid out like the printed enemy card ([`enemyCardFrame.ts`](../../apps/web/src/enemies/enemyCardFrame.ts)):
+A tap on an enemy card opens its [details](../../apps/web/src/enemies/EnemyDetails.tsx): the enemy drawn as its [card](../../apps/web/src/enemies/EnemyCard.tsx) (`BoardView.enemyStats`), in the Exact card theme our own SVG drawing of the printed enemy card, in scan units like the location's face (`ENEMY_FACE` and the frame's paths `ENEMY_FRAME` in [`enemyCardFrame.ts`](../../apps/web/src/enemies/enemyCardFrame.ts)):
 
-- the name plate,
-- fight, health left and evade on shields,
-- traits, keywords and victory points in our own words as HTML in `foreignObject`s so they wrap,
-- the attack as damage and horror icons on the type line,
-- and the art cut from the picture, `ENEMY_ART`.
+- the name plate, with the frame's scrolls hanging from it (`OrnamentLine`, `scrollPath` in [`cardFace.tsx`](../../apps/web/src/catalog/cardFace.tsx)),
+- fight, health and evade on chevrons, each one image named by its value ("Health 3 of 5"), the skill fight and evade test beside them, and the damage on the health as the shared `CountCircle`,
+- traits, keywords and victory points on the lens of paper, in our own words as HTML in `foreignObject`s so they wrap,
+- the attack as hearts and brains (`Heart`, `Brain` in `cardFace.tsx`) beside the set medallion,
+- and the art cut from the picture below the lens, `ENEMY_ART`.
+
+The face's shared rules (medallion, count circle, ornament lines, heart and brain) live in [`card_face.css`](../../apps/web/src/catalog/card_face.css), next to the parts they style.
 
 Under it is one row of buttons ([`ActionRow`](../../apps/web/src/screens/ActionRow.tsx), for the details windows to share):
 

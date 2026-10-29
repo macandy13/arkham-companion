@@ -73,20 +73,17 @@ describe('EnemyDetails', () => {
   it("shows the ghoul's card named after it, with its fight, health left, evade and attack", () => {
     renderGhoulDetails(PlayTable.start(ghoulOnAlder));
 
-    const numbers = screen
-      .getAllByRole('term')
-      .map((term) => [term.textContent, term.nextElementSibling?.textContent]);
     expect(screen.getByRole('dialog', { hidden: true, name: 'ghoul' })).toBeDefined();
     expect(screen.getByText('Engaged with alder')).toBeDefined();
-    expect(numbers).toEqual([
-      ['Fight', '3'],
-      ['Health', '2 of 3'],
-      ['Evade', '2'],
-    ]);
-    expect(screen.getByLabelText('Attack: 1 damage, 2 horror')).toBeDefined();
+    expect(screen.getByRole('img', { hidden: true, name: 'Fight 3' })).toBeDefined();
+    expect(screen.getByRole('img', { hidden: true, name: 'Health 2 of 3' })).toBeDefined();
+    expect(screen.getByRole('img', { hidden: true, name: 'Evade 2' })).toBeDefined();
+    expect(
+      screen.getByRole('img', { hidden: true, name: 'Attack: 1 damage, 2 horror' }),
+    ).toBeDefined();
   });
 
-  it("writes the ghoul's traits, keywords and victory points in the text box", () => {
+  it("writes the ghoul's traits, keywords and victory points on its card", () => {
     const table = PlayTable.start(
       newGame()
         .withLocation(study, blankLocation('study'))
@@ -107,11 +104,11 @@ describe('EnemyDetails', () => {
     );
     renderGhoulDetails(table);
 
-    // The text box's lines are paragraphs, which have no role to find them by; the combat icon
-    // in the prey line has no text, so it is checked by its name below.
+    // The card's lines are paragraphs, which have no role to find them by; the combat icon in
+    // the prey line has no text, so it is checked by its name below.
     const text = screen
       .getByRole('dialog', { hidden: true })
-      .querySelectorAll('[data-part="text"] > p');
+      .querySelectorAll('[data-card="enemy"] foreignObject p');
     expect(Array.from(text, (line) => line.textContent)).toEqual([
       'Monster. Ghoul.',
       'Hunter. Retaliate.',

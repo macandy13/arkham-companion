@@ -1,5 +1,6 @@
 import type { Point } from '../map/mapLayout';
 import { PORTRAIT_SCAN } from './cardArt';
+import './card_face.css';
 
 /**
  * How many SVG user units of a drawing a unit of a card scan is: card faces are drawn in scan
@@ -38,11 +39,11 @@ export function CardFaceCorners() {
 }
 
 /**
- * What a count circle counts: the stylesheet colours each like its token in the game. Only clues
- * so far; the agenda's doom and the enemy's and investigator's damage and horror join with their
- * card faces.
+ * What a count circle counts: the stylesheet colours each like its token in the game. Clues on a
+ * location and damage on an enemy so far; the agenda's doom and the investigator's horror join
+ * with their card faces.
  */
-export type CountKind = 'clue';
+export type CountKind = 'clue' | 'damage';
 
 /**
  * The current count on a printed value, in scan units: a small circle on the value's lower right
@@ -124,3 +125,145 @@ export function SetMedallion({
 
 /** The type plate's height under a set medallion, in scan units, as printed. */
 const PLATE_HEIGHT = 13;
+
+/**
+ * An eight-pointed star (or one of `points` points) centred on (`x`, `y`), `radius` to its tips
+ * and `inner` of that to the notches between them, as the printed frames scatter them.
+ */
+export function starPath(x: number, y: number, radius: number, inner = 0.4, points = 8): string {
+  const corners = Array.from({ length: 2 * points }, (_, index) => {
+    const angle = (index / (2 * points)) * 2 * Math.PI - Math.PI / 2;
+    const reach = index % 2 === 0 ? radius : radius * inner;
+    return `${round(x + Math.cos(angle) * reach)} ${round(y + Math.sin(angle) * reach)}`;
+  });
+  return `M ${corners.join(' L ')} Z`;
+}
+
+/** How a whiplash scroll ends: its spiral's first radius, which way it turns and how often. */
+export interface ScrollEnd {
+  radius: number;
+  side: 1 | -1;
+  turns: number;
+}
+
+/**
+ * A whiplash scroll, the printed frames' Art Nouveau ornament, as a path: an S-curve from `from`
+ * through the control points `bend1` and `bend2` to `to`, which then winds into a spiral of
+ * `end.turns` turns that tightens towards its centre, on the curve's left (`side` 1) or right.
+ */
+export function scrollPath(
+  from: Point,
+  bend1: Point,
+  bend2: Point,
+  to: Point,
+  end: ScrollEnd,
+): string {
+  const curve = Array.from({ length: CURVE_STEPS + 1 }, (_, step) => {
+    const t = step / CURVE_STEPS;
+    const u = 1 - t;
+    const along = (key: 'x' | 'y') =>
+      u * u * u * from[key] +
+      3 * u * u * t * bend1[key] +
+      3 * u * t * t * bend2[key] +
+      t * t * t * to[key];
+    return { x: along('x'), y: along('y') };
+  });
+  const length = Math.hypot(to.x - bend2.x, to.y - bend2.y) || 1;
+  const tangent = { x: (to.x - bend2.x) / length, y: (to.y - bend2.y) / length };
+  const centre = {
+    x: to.x - tangent.y * end.side * end.radius,
+    y: to.y + tangent.x * end.side * end.radius,
+  };
+  const start = Math.atan2(to.y - centre.y, to.x - centre.x);
+  // The spiral turns the way the curve was heading, so the line runs on without a kink.
+  const direction = -Math.sin(start) * tangent.x + Math.cos(start) * tangent.y >= 0 ? 1 : -1;
+  const spiral = Array.from({ length: SPIRAL_STEPS }, (_, step) => {
+    const angle = ((step + 1) / SPIRAL_STEPS) * end.turns * 2 * Math.PI;
+    const reach = end.radius * Math.exp(-SPIRAL_TIGHTENING * angle);
+    return {
+      x: centre.x + reach * Math.cos(start + direction * angle),
+      y: centre.y + reach * Math.sin(start + direction * angle),
+    };
+  });
+  return `M ${[...curve, ...spiral].map(({ x, y }) => `${round(x)} ${round(y)}`).join(' L ')}`;
+}
+
+/** A scroll mirrored across the middle of a card `width` wide, for the frame's other side. */
+export function mirrored(point: Point, width: number = PORTRAIT_SCAN.width): Point {
+  return { x: width - point.x, y: point.y };
+}
+
+/** How finely a scroll's curve and spiral are drawn: enough steps that no corner shows. */
+const CURVE_STEPS = 24;
+const SPIRAL_STEPS = 60;
+
+/** How fast a scroll's spiral closes in, per radian, as the printed ones do. */
+const SPIRAL_TIGHTENING = 0.2;
+
+/** A coordinate to two decimals, which keeps a path short without a visible step. */
+function round(value: number): string {
+  return value.toFixed(2);
+}
+
+/**
+ * An ornament line of a printed frame, its path `d` in scan units: in the Exact card theme a pale
+ * body with a dark outline and a fine highlight, like the printed scrollwork. Three strokes of the
+ * same path (`data-part` outline, body, highlight) that the stylesheet widens and colours, so a
+ * card theme can restyle every scroll at once. Decoration only.
+ */
+export function OrnamentLine({ d }: { d: string }) {
+  return (
+    <g data-ornament-line="" aria-hidden="true">
+      <path data-part="outline" d={d} />
+      <path data-part="body" d={d} />
+      <path data-part="highlight" d={d} />
+    </g>
+  );
+}
+
+/**
+ * Health as the game prints it, an anatomical heart, centred on (`x`, `y`) and `scale` times its
+ * drawing (about 24 scan units tall): the outlined vessels on top, the body, the coronary lines
+ * across it.
+ * The stylesheet colours it (`data-symbol="heart"`). Decoration only; the card names what it counts.
+ */
+export function Heart({ centre: { x, y }, scale }: { centre: Point; scale: number }) {
+  return (
+    <g data-symbol="heart" aria-hidden="true" transform={`translate(${x} ${y}) scale(${scale})`}>
+      <path data-part="vessel-outline" d={HEART.vessels} />
+      <path data-part="vessels" d={HEART.vessels} />
+      <path data-part="body" d={HEART.body} />
+      <path data-part="detail" d={HEART.detail} />
+    </g>
+  );
+}
+
+/** Sanity as the game prints it, a brain in side view, drawn like the `Heart`. */
+export function Brain({ centre: { x, y }, scale }: { centre: Point; scale: number }) {
+  return (
+    <g data-symbol="brain" aria-hidden="true" transform={`translate(${x} ${y}) scale(${scale})`}>
+      <path data-part="vessel-outline" d={BRAIN.stem} />
+      <path data-part="vessels" d={BRAIN.stem} />
+      <path data-part="body" d={`${BRAIN.body} ${BRAIN.lobe}`} />
+      <path data-part="detail" d={BRAIN.detail} />
+    </g>
+  );
+}
+
+/** The heart's parts, centred on the origin, our own drawing after the printed health icon. */
+const HEART = {
+  body: 'M-3 -3 C-9 -4.5 -11.5 2 -9.2 7 C-7 11.5 -2 14.2 2.2 13.2 C7.2 12 10.2 7 9.2 1 C8.6 -3 5.2 -5.2 2 -4.2 C0.6 -4.6 -1.4 -4 -3 -3 Z',
+  vessels:
+    'M-0.8 -3.6 C-2 -9 1 -12.2 5 -11.2 C8 -10.4 8.8 -7.4 7.2 -5.2 M-5.4 -3 L-6.4 -10 M2.4 -4 C3.4 -6.2 6.4 -6.4 9.4 -5.2 M1.2 -10.6 L0.4 -13.8 M4 -11.4 L4.2 -14.6 M6.8 -9.8 L8.4 -12.6',
+  detail:
+    'M-6.8 0.6 C-3.6 3.6 0.6 3.8 4 8.2 M-0.4 -1.6 C0.8 2.6 3 6 2 11.4 M4.4 -2.6 C6 -0.4 7.4 1 8.6 1.4',
+} as const;
+
+/** The brain's parts, centred on the origin, our own drawing after the printed sanity icon. */
+const BRAIN = {
+  body: 'M-10 2 C-11.6 -3 -8 -8 -3 -8.6 C0 -10.6 5 -10.2 8 -7.2 C11 -5 12.2 -1 10.6 2.6 C9.6 5 7 6 4 6 C2 7.6 -1 7.6 -3 6.6 C-6 7.6 -9.6 5.6 -10 2 Z',
+  lobe: 'M2.6 6 C3.8 9.6 8.8 9.8 10 5 C8.6 6.4 6 6.6 4 6 Z',
+  stem: 'M2.4 6.4 L1.2 10.6',
+  detail:
+    'M-7 -4 C-5 -6.4 -3 -3 -1 -5.2 C1 -7.4 3 -4 5 -6.2 C6.4 -7.6 8 -5 8.6 -4 M-8.4 1 C-6.2 -1.2 -4 2.2 -2 0 C0 -2.2 2 1 4 -1 C6 -3 8 0.2 9.6 -1.6 M-6.6 4.4 C-4.4 2.4 -2.2 5.2 0 3.2 C1.6 1.8 3 3.8 5 3 M-2.6 -8.2 C-3.6 -6.4 -1.4 -5.4 -2 -3.2 M3.8 -9.2 C2.8 -6.8 5 -5.6 4.2 -3.4',
+} as const;

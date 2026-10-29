@@ -85,10 +85,6 @@
   /* The dark bands of a printed card's frame (the enemy card's) and the thin gilt rules on them. */
   --color-card-band: #4a3222;
   --color-card-gilt: #d8c48e;
-  /* The shields on an enemy card: fight in dark red, health in blood red, evade in dark green. */
-  --color-card-fight: #5a2e24;
-  --color-card-health: #8c2f2b;
-  --color-card-evade: #2f4a33;
   /* The shroud token, a dark disc like the printed shroud icon's. */
   --color-token-shroud: #2c2c33;
   /*
@@ -116,8 +112,26 @@
   --color-face-shroud: #16181a;
   --color-face-clue: #e9e2cc;
   --color-face-footer: #1a1410;
+  /*
+   * The ornament lines (the scrolls on enemy and treachery frames: a dark outline, the pale body,
+   * a fine highlight), the printed heart and brain with their pale coronary lines, and an enemy's
+   * fight, health and evade chevrons with their rims, the skill icons on them and their numbers.
+   */
+  --color-face-ornament-line: #2a2218;
+  --color-face-ornament-highlight: #f5f1df;
+  --color-face-heart: #b3302b;
+  --color-face-brain: #3a64a8;
+  --color-face-symbol-detail: #f3e3c8;
+  --color-face-fight: #7a3a24;
+  --color-face-health: #4a443c;
+  --color-face-evade: #2e4a2a;
+  --color-face-chevron-rim: #eee8d4;
+  --color-face-fight-icon: #8a4a32;
+  --color-face-evade-icon: #3f6b3c;
+  --color-face-stat: #ffffff;
   /* The count circle on a printed value: the count's token colour inside a pale rim. */
   --color-count-clue: #2f8aa6;
+  --color-count-damage: #b3302b;
   --color-count-rim: #f3ecd8;
 
   --space-1: 0.25rem;
@@ -192,12 +206,7 @@
    */
   --card-border-width: 3px;
   --card-pattern-line-width: 1px;
-  /* The rules of the ornament drawn on card faces in the printed cards' style (cardOrnament.tsx). */
-  --card-ornament-line-width: 1px;
   --card-gilt-line-width: 0.75px;
-  /* An enemy card's name on its name plate and its type on the type plate, in SVG user units. */
-  --card-name-size: 13px;
-  --card-type-size: 6.5px;
   /*
    * A card face's lines and type in scan units (catalog/cardFace.tsx; a map tile is half a scan),
    * as printed: the frame's rules and settings, the name, the type under the set medallion, the
@@ -214,21 +223,37 @@
   --face-number-size: 28px;
   --face-count-size: 14px;
   --face-count-rim-width: 1.8px;
+  /*
+   * The ornament lines' body and outline, and their highlight's opacity and offset; the heart's and
+   * brain's lines in their own drawing's units (cardFace.tsx `Heart`, `Brain`), scaled with them.
+   */
+  --face-scroll-width: 5.5px;
+  --face-scroll-outline: 2px;
+  --face-highlight-opacity: 0.7;
+  --face-highlight-shift: -0.5px;
+  --face-vessel-outline-width: 5.8px;
+  --face-vessel-width: 3.2px;
+  --face-symbol-line-width: 1.4px;
+  --face-detail-width: 0.8px;
+  /*
+   * An enemy card's face in scan units (EnemyCard): the star watermark's opacity, the lens's
+   * setting and rule, the side wings' opacity, the chevrons' setting, the numbers on fight and
+   * evade and on health, and its text and traits.
+   */
+  --face-watermark-opacity: 0.06;
+  --face-lens-setting-width: 5px;
+  --face-lens-rule-width: 2px;
+  --face-wing-opacity: 0.9;
+  --face-chevron-setting-width: 4px;
+  --face-stat-size: 22px;
+  --face-health-size: 25px;
+  --face-text-size: 13px;
+  --face-text-line-height: 1.3;
+  --face-traits-size: 11.5px;
   /* The count on the damage badge on an enemy's rim. */
   --card-badge-size: 8px;
-  /*
-   * An enemy card's text in SVG user units (EnemyCard): the numbers on its shields, the "of 5"
-   * under its health, the icon under fight and evade, its traits, keywords and victory points,
-   * and its attack's damage and horror icons.
-   */
-  --card-stat-size: 13px;
-  --card-stat-note-size: 5px;
-  --card-stat-icon-size: 6px;
-  --card-text-size: 8px;
-  --card-attack-icon-size: 7px;
-  /* Between the lines of an enemy card's text and its attack icons, and the icons' inset from its edges. */
-  --card-text-gap: 1px;
-  --card-attack-inset: 8px;
+  /* The action icons in a location's text. */
+  --card-text-icon-size: 7px;
   --card-type-spacing: 0.08em;
   /*
    * The art area of a card drawn in HTML (the agenda and act) without its image: the map's SVG

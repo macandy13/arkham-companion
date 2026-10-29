@@ -1,0 +1,140 @@
+/*
+ * The parts every card face shares (cardFace.tsx), in scan units, wherever a card is drawn on the
+ * play screen: the set medallion with its type plate, the count circle on a printed value, the
+ * ornament lines of the frames and the printed heart and brain. The colours are the card theme's
+ * (`--color-face-*`, `--color-count-*`).
+ */
+
+/* The set medallion and the type plate under it, on every encounter card's type line. */
+#board svg [data-medallion] :is(circle, path) {
+  stroke: none;
+}
+
+#board svg [data-medallion] [data-part='setting'] {
+  fill: var(--color-face-setting);
+}
+
+#board svg [data-medallion] [data-part='medallion'] {
+  fill: var(--color-face-medallion);
+  stroke: var(--color-face-medallion-ring);
+  stroke-width: var(--face-setting-width);
+}
+
+#board svg [data-medallion] [data-part='inner'] {
+  fill: none;
+  stroke: var(--color-face-setting);
+  stroke-width: var(--card-gilt-line-width);
+}
+
+#board svg [data-medallion] [data-part='plate'] {
+  fill: var(--color-face-type-plate);
+  stroke: var(--color-face-setting);
+  stroke-width: var(--face-disc-line-width);
+}
+
+#board svg [data-medallion] [data-part='lines'] {
+  fill: none;
+  stroke: var(--color-face-type-plate-line);
+  stroke-width: var(--card-gilt-line-width);
+}
+
+#board svg [data-medallion] text {
+  fill: var(--color-face-ink);
+  text-anchor: middle;
+  dominant-baseline: middle;
+  font-size: var(--face-type-size);
+  font-weight: bold;
+  letter-spacing: var(--face-type-spacing);
+  text-transform: uppercase;
+}
+
+/* The count on a printed value: a small circle in its token's colour, with a pale rim. */
+#board svg [data-count] circle {
+  stroke: var(--color-count-rim);
+  stroke-width: var(--face-count-rim-width);
+  filter: var(--piece-shadow);
+}
+
+#board svg [data-count='clue'] circle {
+  fill: var(--color-count-clue);
+}
+
+#board svg g[data-count] text {
+  text-anchor: middle;
+  dominant-baseline: middle;
+  fill: var(--color-token-text);
+  font-size: var(--face-count-size);
+  font-weight: bold;
+}
+
+#board svg [data-count][data-empty] {
+  opacity: var(--token-empty-opacity);
+}
+
+#board svg [data-count='damage'] circle {
+  fill: var(--color-count-damage);
+}
+
+/* An ornament line: a dark outline, the pale body and a fine highlight, like printed scrollwork. */
+#board svg [data-ornament-line] path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+#board svg [data-ornament-line] [data-part='outline'] {
+  stroke: var(--color-face-ornament-line);
+  stroke-width: calc(var(--face-scroll-width) + var(--face-scroll-outline));
+}
+
+#board svg [data-ornament-line] [data-part='body'] {
+  stroke: var(--color-face-ornament);
+  stroke-width: var(--face-scroll-width);
+}
+
+#board svg [data-ornament-line] [data-part='highlight'] {
+  stroke: var(--color-face-ornament-highlight);
+  stroke-width: calc(var(--face-scroll-width) / 4);
+  opacity: var(--face-highlight-opacity);
+  translate: var(--face-highlight-shift) var(--face-highlight-shift);
+}
+
+/* The printed heart and brain: the body in health's or sanity's colour, outlined in the frame's. */
+#board svg :is([data-symbol='heart'], [data-symbol='brain']) path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+#board svg :is([data-symbol='heart'], [data-symbol='brain']) [data-part='vessel-outline'] {
+  stroke: var(--color-face-setting);
+  stroke-width: var(--face-vessel-outline-width);
+}
+
+#board svg :is([data-symbol='heart'], [data-symbol='brain']) [data-part='body'] {
+  stroke: var(--color-face-setting);
+  stroke-width: var(--face-symbol-line-width);
+}
+
+#board svg [data-symbol='heart'] :is([data-part='vessels'], [data-part='body']) {
+  fill: var(--color-face-heart);
+}
+
+#board svg [data-symbol='heart'] [data-part='vessels'] {
+  stroke: var(--color-face-heart);
+  stroke-width: var(--face-vessel-width);
+}
+
+#board svg [data-symbol='brain'] :is([data-part='vessels'], [data-part='body']) {
+  fill: var(--color-face-brain);
+}
+
+#board svg [data-symbol='brain'] [data-part='vessels'] {
+  stroke: var(--color-face-brain);
+  stroke-width: var(--face-vessel-width);
+}
+
+#board svg :is([data-symbol='heart'], [data-symbol='brain']) [data-part='detail'] {
+  stroke: var(--color-face-symbol-detail);
+  stroke-width: var(--face-detail-width);
+}

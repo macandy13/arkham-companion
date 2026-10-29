@@ -271,46 +271,6 @@
   font-size: var(--face-name-size);
 }
 
-/* The set medallion and the type plate under it, on every encounter card's type line. */
-#map svg [data-medallion] :is(circle, path) {
-  stroke: none;
-}
-
-#map svg [data-medallion] [data-part='setting'] {
-  fill: var(--color-face-setting);
-}
-
-#map svg [data-medallion] [data-part='medallion'] {
-  fill: var(--color-face-medallion);
-  stroke: var(--color-face-medallion-ring);
-  stroke-width: var(--face-setting-width);
-}
-
-#map svg [data-medallion] [data-part='inner'] {
-  fill: none;
-  stroke: var(--color-face-setting);
-  stroke-width: var(--card-gilt-line-width);
-}
-
-#map svg [data-medallion] [data-part='plate'] {
-  fill: var(--color-face-type-plate);
-  stroke: var(--color-face-setting);
-  stroke-width: var(--face-disc-line-width);
-}
-
-#map svg [data-medallion] [data-part='lines'] {
-  fill: none;
-  stroke: var(--color-face-type-plate-line);
-  stroke-width: var(--card-gilt-line-width);
-}
-
-#map svg [data-medallion] text {
-  font-size: var(--face-type-size);
-  font-weight: bold;
-  letter-spacing: var(--face-type-spacing);
-  text-transform: uppercase;
-}
-
 /*
  * The printed discs on a face: the shroud a dark disc with a white number, the clue value a pale
  * one with a dark number and the per investigator symbol, both ringed in the ornament line, and
@@ -347,27 +307,6 @@
   height: 100%;
   background: var(--color-face-setting);
   mask: url('../symbols/per_investigator.svg') center / contain no-repeat;
-}
-
-/* The count on a printed value: a small circle in its token's colour, with a pale rim. */
-#map svg [data-count] circle {
-  stroke: var(--color-count-rim);
-  stroke-width: var(--face-count-rim-width);
-  filter: var(--piece-shadow);
-}
-
-#map svg [data-count='clue'] circle {
-  fill: var(--color-count-clue);
-}
-
-#map svg [data-count] text {
-  fill: var(--color-token-text);
-  font-size: var(--face-count-size);
-  font-weight: bold;
-}
-
-#map svg [data-count][data-empty] {
-  opacity: var(--token-empty-opacity);
 }
 
 /*
