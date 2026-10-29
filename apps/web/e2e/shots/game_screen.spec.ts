@@ -78,7 +78,7 @@ test('the house map by day', async ({ page }) => {
 });
 
 test(
-  'the game log after two rounds, newest first under round and phase headings',
+  'the game log after two rounds, scrolled to the newest step under its round and phase',
   { tag: '@shot' },
   async ({ page }) => {
     await resumeImportedGame(page, 'Two rounds', mythosDrawnStepsExport('Two rounds'));
@@ -86,7 +86,9 @@ test(
     await page.getByRole('button', { name: 'Game log' }).click();
 
     const log = page.getByRole('dialog', { name: 'Game log' });
-    await expect(log.getByRole('heading', { name: 'Round 3 · Investigation' })).toBeInViewport();
+    const newestRound = log.getByRole('listitem', { name: 'Round 3 · Investigation' });
+    await expect(newestRound.getByRole('heading')).toBeInViewport();
+    await expect(newestRound.getByRole('listitem').last()).toBeInViewport();
   },
 );
 

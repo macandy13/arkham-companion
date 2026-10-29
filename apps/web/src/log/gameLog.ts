@@ -102,11 +102,11 @@ export interface LogSection {
 }
 
 /**
- * `steps` (oldest first, as `gameLog` lists them) newest first, cut into the runs of one round and
- * phase, so the newest phase and step lead.
+ * `steps` (oldest first, as `gameLog` lists them) cut into the runs of one round and phase, in the
+ * same order, so the log reads down like the game was played.
  */
-export function newestFirst(steps: readonly LogStep[]): LogSection[] {
-  return runsBy([...steps].reverse(), (step) => `${step.round}:${step.phase}`).map(({ items }) => ({
+export function logSections(steps: readonly LogStep[]): LogSection[] {
+  return runsBy(steps, (step) => `${step.round}:${step.phase}`).map(({ items }) => ({
     round: items[0]?.round ?? 0,
     phase: items[0]?.phase ?? 'setup',
     steps: items,
