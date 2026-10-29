@@ -331,6 +331,23 @@ describe('GameScreen header', () => {
     expect(within(scenario).getByRole('heading', { level: 1 }).textContent).toBe('The Gathering');
   });
 
+  it("opens the scenario card from its name, a row per chaos token with the easy side's text", async () => {
+    await renderTheGathering('game-screen-scenario-details-test');
+
+    fireEvent.click(button('The Gathering'));
+    const card = await screen.findByRole('dialog', { name: 'The Gathering' });
+    const rows = within(within(card).getByRole('list', { name: 'Chaos tokens' }))
+      .getAllByRole('listitem')
+      .map((row) => [within(row).getByRole('img').getAttribute('aria-label'), row.textContent]);
+
+    expect(within(card).getByText('Easy / Standard')).toBeTruthy();
+    expect(rows).toEqual([
+      ['Skull', '−X. X is the number of Ghoul enemies at your location.'],
+      ['Cultist', '−1. If you fail, take 1 horror.'],
+      ['Tablet', '−2. If there is a Ghoul enemy at your location, take 1 damage.'],
+    ]);
+  });
+
   it('shows the round and the phases of a round in a status row, setup marking none', async () => {
     await renderTheGathering('game-screen-round-test');
 

@@ -1,12 +1,20 @@
 import { useEffect, useId, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StoreApi } from 'zustand/vanilla';
-import type { ActAdvance, ActView, BoardView, CardImagePath, CardName } from '@arkham/engine';
+import type {
+  ActAdvance,
+  ActView,
+  BoardView,
+  CardImagePath,
+  CardName,
+  ReferenceView,
+} from '@arkham/engine';
 import { useCardPicture } from '../catalog/cardImages';
 import { EncounterPiles, HeaderPile, type PileProps } from '../encounter/EncounterPiles';
 import type { AppState, OpenGame } from '../state/appStore';
 import { CardActions, cardActionsOn } from './ActionRow';
 import { BookFace } from './BookFace';
+import { ScenarioFace } from './ScenarioFace';
 import { useCluePayment } from './CluePaymentDialog';
 import { Token } from './Token';
 import type { HeaderCardKind } from './useDetailView';
@@ -71,7 +79,7 @@ export function GameHeader({
         onOpen={onOpenCard}
       />
       <HeaderSlot label={t('header.scenario')} card="scenario" onOpen={onOpenCard}>
-        <ScenarioCard open={open} />
+        <ScenarioStatus open={open} board={board} opens={!onOpenCard && !full} />
         <HeaderPile pile="setAside" {...piles} />
       </HeaderSlot>
       <HeaderSlot label={t('header.victory')}>
@@ -82,15 +90,114 @@ export function GameHeader({
 }
 
 /**
- * The scenario as an upright card, like the reference card on the table. Its name
+ * The scenario as an upright card, like the reference card on the table (`ScenarioCard`). Its name
  * (`OpenGame.scenarioNameKey`) is the screen's heading, since the play screen shows no app title:
- * the scenario is what the players are playing.
+ * the scenario is what the players are playing. Where the card `opens`, a tap on it, or on its
+ * name, which is a button for the keyboard, opens it as a full card to read its rows.
  */
-function ScenarioCard({ open }: { open: OpenGame }) {
+function ScenarioStatus({
+  open,
+  board,
+  opens,
+}: {
+  open: OpenGame;
+  board: BoardView;
+  opens: boolean;
+}) {
+  const { t } = useTranslation();
+  const [zoomed, setZoomed] = useState(false);
+  const name = open.scenarioNameKey ? t(open.scenarioNameKey) : t('header.scenario');
+  const zoom = () => setZoomed(true);
+  return (
+    <>
+      <ScenarioCard reference={board.reference} onClick={opens ? zoom : undefined}>
+        <h1>
+          {opens ? (
+            <button type="button" onClick={zoom}>
+              {name}
+            </button>
+          ) : (
+            name
+          )}
+        </h1>
+      </ScenarioCard>
+      {zoomed && (
+        <ScenarioDetails name={name} reference={board.reference} onClose={() => setZoomed(false)} />
+      )}
+    </>
+  );
+}
+
+/**
+ * The scenario's full card (`ScenarioStatus`), as big as a zoomed card: the same face as in the
+ * header, where the rows' texts are too small to read.
+ */
+function ScenarioDetails({
+  name,
+  reference,
+  onClose,
+}: {
+  name: string;
+  reference: ReferenceView | undefined;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation();
+  const titleId = useId();
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    dialog.current?.showModal();
+  }, []);
+  return (
+    <dialog ref={dialog} aria-labelledby={titleId} onCancel={onClose} data-dialog="card">
+      <button type="button" data-icon="close" aria-label={t('header.close')} onClick={onClose} />
+      <ScenarioCard reference={reference}>
+        <h2 id={titleId}>{name}</h2>
+      </ScenarioCard>
+    </dialog>
+  );
+}
+
+/**
+ * The face of the scenario reference card: in the Exact card theme our drawing of its frame
+ * (`ScenarioFace`) under its title (`children`), the side the game's difficulty plays with and one
+ * row per symbol token, the token's game symbol (named for screen readers) beside its printed
+ * text (`BoardView.reference`). A game without a reference card shows only the title.
+ */
+function ScenarioCard({
+  reference,
+  onClick,
+  children,
+}: {
+  reference: ReferenceView | undefined;
+  onClick?: () => void;
+  children: ReactNode;
+}) {
   const { t } = useTranslation();
   return (
-    <div data-card="scenario">
-      <h1>{open.scenarioNameKey ? t(open.scenarioNameKey) : t('header.scenario')}</h1>
+    <div
+      data-card="scenario"
+      onClick={
+        onClick &&
+        ((event) => {
+          if (!(event.target instanceof Element && event.target.closest('button'))) onClick();
+        })
+      }
+    >
+      <ScenarioFace />
+      {children}
+      {reference && (
+        <>
+          <p>{t(`header.referenceSide.${reference.side}`)}</p>
+          <ul aria-label={t('header.reference')}>
+            {reference.rows.map(({ token, effectKey }) => (
+              <li key={token} data-chaos-token={token}>
+                <span role="img" aria-label={t(`chaosToken.${token}`)} />
+                <p>{t(effectKey)}</p>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </div>
   );
 }
