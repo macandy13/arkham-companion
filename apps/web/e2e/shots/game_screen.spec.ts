@@ -6,6 +6,7 @@ import {
   investigationOpenExport,
   litaControlledExport,
   mythosDrawnExport,
+  mythosDrawnStepsExport,
   pilesFilledExport,
   resumeImportedGame,
   twoMapsExport,
@@ -13,7 +14,7 @@ import {
 
 // Situations on the game screen, each photographed as it ends (`@shot`, coding guidelines §3).
 
-test('the house map with Roland Banks in the Hallway', async ({ page }) => {
+test('the house map with Roland Banks in the Hallway', { tag: '@shot' }, async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   const hallway = page
@@ -76,6 +77,19 @@ test('the house map by day', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
 
+test(
+  'the game log after two rounds, newest first under round and phase headings',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'Two rounds', mythosDrawnStepsExport('Two rounds'));
+
+    await page.getByRole('button', { name: 'Game log' }).click();
+
+    const log = page.getByRole('dialog', { name: 'Game log' });
+    await expect(log.getByRole('heading', { name: 'Round 3 · Investigation' })).toBeInViewport();
+  },
+);
+
 test('Roland Banks’ combat boosted by 2, as an ally in play gives it', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
   const roland = page.getByRole('region', { name: 'Roland Banks' });
@@ -130,23 +144,19 @@ test("Roland Banks' fight against the Ghoul Priest, the damage raised to 2", asy
   await expect(decision.getByRole('region', { name: 'Damage dealt' })).toContainText('2');
 });
 
-test(
-  "the Ghoul Priest's details opened from its card on Roland Banks' turn",
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(
-      page,
-      'Roland Banks threatened',
-      rolandThreatenedExport('Roland Banks threatened'),
-    );
-    const roland = page.getByRole('region', { name: 'Roland Banks' });
-    await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
+test("the Ghoul Priest's details opened from its card on Roland Banks' turn", async ({ page }) => {
+  await resumeImportedGame(
+    page,
+    'Roland Banks threatened',
+    rolandThreatenedExport('Roland Banks threatened'),
+  );
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
+  await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
 
-    await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
+  await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
 
-    await expect(page.getByRole('dialog', { name: 'Ghoul Priest' })).toBeVisible();
-  },
-);
+  await expect(page.getByRole('dialog', { name: 'Ghoul Priest' })).toBeVisible();
+});
 
 test('the encounter deck after two mythos phases, Dissonant Voices on the discard pile', async ({
   page,
@@ -230,25 +240,21 @@ test('The Barrier opened as a full card', async ({ page, isMobile }) => {
   await expect(card.getByRole('img', { name: 'Clues 0 / 3' })).toBeInViewport();
 });
 
-test(
-  'Frozen in Fear from Roland Banks’ threat area, zoomed to read',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(
-      page,
-      'Roland Banks threatened',
-      rolandThreatenedExport('Roland Banks threatened'),
-    );
+test('Frozen in Fear from Roland Banks’ threat area, zoomed to read', async ({ page }) => {
+  await resumeImportedGame(
+    page,
+    'Roland Banks threatened',
+    rolandThreatenedExport('Roland Banks threatened'),
+  );
 
-    await page
-      .getByRole('region', { name: 'Roland Banks' })
-      .getByRole('button', { name: 'Read Frozen in Fear' })
-      .first()
-      .click();
+  await page
+    .getByRole('region', { name: 'Roland Banks' })
+    .getByRole('button', { name: 'Read Frozen in Fear' })
+    .first()
+    .click();
 
-    await expect(page.getByRole('dialog', { name: 'Frozen in Fear' })).toBeVisible();
-  },
-);
+  await expect(page.getByRole('dialog', { name: 'Frozen in Fear' })).toBeVisible();
+});
 
 test('the attack of opportunity Roland Banks provokes by taking a resource', async ({ page }) => {
   await resumeImportedGame(

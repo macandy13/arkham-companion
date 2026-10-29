@@ -4,15 +4,17 @@ import { NavLink } from 'react-router';
 import type { StoreApi } from 'zustand/vanilla';
 import { ROUND_PHASES, type BoardView } from '@arkham/engine';
 import type { AppState, OpenGame } from '../state/appStore';
+import { GameLogDialog } from '../log/GameLogDialog';
 import { GameExportButton } from './GameExportButton';
 
 /**
  * The play screen's status row under the header, as in the prototype: the round as its heading,
  * the phase track with the current phase marked, then "Next", which runs the phase assistant, and
- * round icon buttons for "Adjust board", undo and the menu. While the players adjust the board
- * (`OpenGame.adjusting`), "Done" and "Cancel" take the place of "Next". Its buttons wait while a
- * step is queued (`OpenGame.busy`), since a second tap would act on whatever the first one leaves
- * open. `board` is the open game's `OpenGame.board`.
+ * round icon buttons for "Adjust board", undo, the game log (`GameLogDialog`) and the menu. While
+ * the players adjust the board (`OpenGame.adjusting`), "Done" and "Cancel" take the place of
+ * "Next". Its buttons wait while a step is queued (`OpenGame.busy`), since a second tap would act
+ * on whatever the first one leaves open; the log only reads, so it never waits. `board` is the
+ * open game's `OpenGame.board`.
  */
 export function GameStatus({
   store,
@@ -26,7 +28,8 @@ export function GameStatus({
   const { t } = useTranslation();
   const { actions } = store.getState();
   const blocked = open.busy;
-  const { adjusting } = open;
+  const { adjusting, log } = open;
+  const [logOpen, setLogOpen] = useState(false);
   return (
     <section id="status" aria-labelledby="status-round">
       <h2 id="status-round">
@@ -70,6 +73,18 @@ export function GameStatus({
         disabled={blocked || !open.canUndo}
         onClick={() => void actions.undo()}
       />
+      {log && (
+        <button
+          type="button"
+          data-icon="log"
+          aria-label={t('log.open')}
+          aria-haspopup="dialog"
+          onClick={() => setLogOpen(true)}
+        />
+      )}
+      {log && logOpen && (
+        <GameLogDialog log={log} state={open.state} onClose={() => setLogOpen(false)} />
+      )}
       <GameMenu store={store} />
     </section>
   );

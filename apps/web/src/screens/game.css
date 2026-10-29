@@ -509,14 +509,14 @@
   overflow: visible;
 }
 
-#status h2 {
+#status > h2 {
   margin: 0;
   font-size: var(--font-size-subtitle);
   white-space: nowrap;
 }
 
 /* The phase track: every phase of the round on one rule, the current one named in the accent. */
-#status ol {
+#status > ol {
   display: flex;
   flex: 1;
   justify-content: center;
@@ -528,12 +528,12 @@
   font-size: var(--font-size-note);
 }
 
-#status ol > li {
+#status > ol > li {
   padding-block-end: var(--space-1);
   border-block-end: var(--border-width) solid var(--color-border);
 }
 
-#status ol > li[aria-current] {
+#status > ol > li[aria-current] {
   color: var(--color-text);
   border-block-end: var(--focus-ring-width) solid var(--color-accent);
 }
@@ -564,6 +564,10 @@
 
 #status button[data-icon='undo']::before {
   mask-image: url('./icons/undo.svg');
+}
+
+#status button[data-icon='log']::before {
+  mask-image: url('./icons/log.svg');
 }
 
 #status button[data-icon='menu']::before {
@@ -712,7 +716,7 @@
   }
 
   /* The track names only the current phase, so the row keeps its buttons on one line. */
-  #board:not([data-view]) > #status ol > li:not([aria-current]) {
+  #board:not([data-view]) > #status > ol > li:not([aria-current]) {
     position: absolute;
     width: var(--hidden-size);
     height: var(--hidden-size);

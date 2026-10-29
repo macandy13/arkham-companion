@@ -3,11 +3,13 @@ import type {
   BoardView,
   Difficulty,
   EncounterCardView,
+  EngineContext,
   GameId,
   GameState,
   GameStore,
   GameSummary,
   InvestigatorSeat,
+  LoggedEvent,
   Rejection,
   ScenarioContext,
   ScenarioId,
@@ -52,6 +54,11 @@ export interface OpenGame {
    * reading names and thresholds needs its scenario's cards.
    */
   board?: BoardView;
+  /**
+   * The game's log so far and the rules that name its cards, which the log dialog tells
+   * (`gameLog`). Only a playable game has one, like `board`.
+   */
+  log?: GameLogSource;
   /** i18n key of the scenario's name (`ScenarioEntry.nameKey`); a playable game always has one. */
   scenarioNameKey?: string;
   /**
@@ -84,6 +91,21 @@ export interface OpenGame {
    * until they tap one or cancel.
    */
   spawning?: EncounterCardView;
+}
+
+/**
+ * A game's log (`GameSession.entries`) with when its steps were stored (`GameSession.stepTimes`)
+ * and the rules it is played with (`GameSession.ctx`).
+ */
+export interface GameLogSource {
+  readonly ctx: EngineContext;
+  readonly entries: readonly LoggedEvent[];
+  readonly stepTimes: ReadonlyMap<string, number>;
+}
+
+/** The open game's log as `played` holds it now. */
+function logSourceOf(played: GameSession): GameLogSource {
+  return { ctx: played.ctx, entries: played.entries, stepTimes: played.stepTimes };
 }
 
 /** Looks a scenario up by id; `findScenario` in the app, a stub in tests. */
@@ -172,6 +194,7 @@ export function createAppStore(
           state: session?.state ?? state,
           playable: session !== undefined,
           board: session?.board,
+          log: session && logSourceOf(session),
           scenarioNameKey: entry?.nameKey,
           busy: unfinishedSteps > 0,
           canUndo: session?.canUndo ?? false,
@@ -189,6 +212,7 @@ export function createAppStore(
           ...current,
           state: played.state,
           board: played.board,
+          log: logSourceOf(played),
           canUndo: played.canUndo,
           adjusting: played.adjusting,
           rejection,
