@@ -54,7 +54,7 @@ describe('gameLog', () => {
     expect(textOf(logOf(t, table)[0])).toEqual(['The scenario begins']);
   });
 
-  it('gives each step its own lines, named by its undo group', () => {
+  it('gives each step its own lines, named by its undo group, with the groups after it', () => {
     const table = PlayTable.start(rolandsTurn);
     const stepsBefore = logOf(t, table).length;
 
@@ -67,6 +67,7 @@ describe('gameLog', () => {
       ['Roland Banks takes 1 horror'],
     ]);
     expect(steps[0]?.id).not.toEqual(steps[1]?.id);
+    expect(steps.map((step) => step.later)).toEqual([1, 0]);
   });
 
   it('says where an investigator moved and what the move revealed', () => {
@@ -241,6 +242,7 @@ describe('newestFirst', () => {
     round,
     phase,
     lines: [{ event: 'TokensChanged', text }],
+    later: 0,
   });
 
   it('puts the newest round and phase first, its newest step leading', () => {

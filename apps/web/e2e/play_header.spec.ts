@@ -3,8 +3,9 @@ import { startQuickGame } from './fixtures/wizard';
 
 // Journey: run the game clock from the header and the status row – read the agenda's doom and the
 // act's clues, correct the doom while adjusting the board and keep the correction with "Done", move
-// on a phase, see why a step is refused, and take a step back, then back the game up from the menu.
-test('play the phases from the header', async ({ page }) => {
+// on a phase, see why a step is refused, go back to a step from the game log and take a step back,
+// then back the game up from the menu.
+test('play the phases from the header', { tag: '@flow' }, async ({ page }) => {
   await test.step('Start a quick game', async () => {
     await page.goto('/#/new');
     await startQuickGame(page);
@@ -56,9 +57,26 @@ test('play the phases from the header', async ({ page }) => {
     await expect(page.getByRole('alert')).toBeHidden();
   });
 
-  await test.step('Undo the phase change, then the whole correction in one step', async () => {
-    await page.getByRole('button', { name: 'Undo' }).click();
+  await test.step('Read the game log and go back to right after the doom correction', async () => {
+    await page.getByRole('button', { name: 'Game log' }).click();
+    const log = page.getByRole('dialog', { name: 'Game log' });
+    await expect(log.getByRole('heading', { name: 'Round 1 · Investigation' })).toBeVisible();
+    await log
+      .getByRole('listitem')
+      // The step, not the Setup section around it.
+      .filter({ hasText: "1 doom on What's Going On?!", hasNot: page.getByRole('heading') })
+      .getByRole('button', { name: 'Go back here' })
+      .click();
+    await page
+      .getByRole('alertdialog', { name: 'Go back to this step?' })
+      .getByRole('button', { name: 'Go back here' })
+      .click();
+    await expect(log).toBeHidden();
     await expect(page.getByRole('heading', { name: 'Setup' })).toBeVisible();
+    await expect(page.getByRole('img', { name: 'Doom 1 / 3' })).toBeVisible();
+  });
+
+  await test.step('Undo the whole correction in one step', async () => {
     await page.getByRole('button', { name: 'Undo' }).click();
     await expect(page.getByRole('img', { name: 'Doom 0 / 3' })).toBeVisible();
   });

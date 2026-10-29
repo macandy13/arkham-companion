@@ -234,11 +234,12 @@ export function createAppStore(
       }
     }
 
-    async function undoStep(): Promise<void> {
+    /** Takes back the last step, or with `toStep` every step after it (`GameSession.undoTo`). */
+    async function undoStep(toStep?: string): Promise<void> {
       const played = session;
       if (!played) return;
       try {
-        await played.undo();
+        await (toStep === undefined ? played.undo() : played.undoTo(toStep));
       } finally {
         publish(played);
       }
@@ -307,7 +308,7 @@ export function createAppStore(
       },
       actions: gameActions(
         (step) => queueStep(() => playStep(step)),
-        () => queueStep(undoStep),
+        (toStep) => queueStep(() => undoStep(toStep)),
         {
           start: () =>
             queueStep(() =>

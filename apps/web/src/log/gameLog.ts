@@ -44,6 +44,11 @@ export interface LogStep {
   /** When the step was stored (epoch ms, `StoredEvent.timestamp`); absent until it is. */
   readonly timestamp?: number;
   readonly lines: readonly LogLine[];
+  /**
+   * How many undo groups came after it, the ones without a line included: what going back to it
+   * takes back (`GameSession.undoTo`).
+   */
+  readonly later: number;
 }
 
 /**
@@ -62,7 +67,8 @@ export function gameLog(
   let phase: Phase = 'setup';
   let turn: InvestigatorId | undefined;
   const names = namesIn(ctx, state);
-  return runsBy(entries, (entry) => entry.commandId).flatMap(({ key, items }) => {
+  const runs = runsBy(entries, (entry) => entry.commandId);
+  return runs.flatMap(({ key, items }, index) => {
     const events = items.map((entry) => entry.event);
     const turnAtStart = turn;
     for (const event of events) {
@@ -82,6 +88,7 @@ export function gameLog(
         ...(actor === undefined ? {} : { actor: names.investigator(actor) }),
         ...(timestamp === undefined ? {} : { timestamp }),
         lines,
+        later: runs.length - 1 - index,
       },
     ];
   });

@@ -81,3 +81,10 @@
 #board dialog[data-dialog='log'] h3 + ol > li > p > time {
   margin-inline-start: auto;
 }
+
+/* Going back is a small button at the step's end, so the lines stay what the eye reads. */
+#board dialog[data-dialog='log'] h3 + ol > li > button {
+  justify-self: end;
+  min-height: var(--button-compact);
+  font-size: var(--font-size-note);
+}

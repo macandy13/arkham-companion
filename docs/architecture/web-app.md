@@ -30,6 +30,7 @@ The open game (`OpenGame`) is the play screen's single source of truth:
 - **`GameSession`** ([`gameSession.ts`](../../apps/web/src/state/gameSession.ts)) holds a `PlayTable` resumed from the stored log, plays each action as one undo group, writes it, then publishes the state.
   - A refused step stores nothing and shows its `Rejection` as a toast; a failed write reloads the stored game.
   - Steps run strictly in order.
+  - `undoTo(step)` goes back to right after a step of the game log by taking back each later undo group in turn, so storage and memory step back exactly as with Undo.
   - While the players adjust the board (`startAdjusting`, `OpenGame.adjusting`), steps change the table in memory only; "Done" (`finishAdjusting`) plays them again from where the adjustment started as one stored step, so one undo takes the whole correction back, and "Cancel" resumes the table from that point.
   - The screen shows the steppers and the location details' corrections only while adjusting (`data-adjusting` on the board) and holds back the steps of play (turn controls, the act's advance, piece drags) meanwhile.
 - **`BoardView`** (`OpenGame.board`) is what the screen reads: names, thresholds and derived values, never raw state.

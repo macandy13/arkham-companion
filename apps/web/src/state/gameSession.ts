@@ -15,6 +15,7 @@ import {
   type SetupOptions,
   takenAsAction,
 } from '@arkham/engine';
+import { runsBy } from '@arkham/util';
 import { drawnCards, type DrawnCard } from '../encounter/drawnCards';
 
 /**
@@ -284,6 +285,20 @@ export class GameSession {
       const loaded = await this.store.undoLast(this.gameId, this.lastSeq);
       this.lastSeq = loaded?.summary.lastSeq ?? 0;
     });
+  }
+
+  /**
+   * Takes back every step after the step `stepId` (a `LoggedEvent.commandId`), one undo group at a
+   * time like `undo`, so the game is as it was right after that step, in memory and in storage.
+   * Does nothing for a step the log doesn't hold, and while adjusting, whose taps aren't steps of
+   * the log yet. Not all or nothing: a failed write stops it part-way, at what is stored (`undo`).
+   */
+  async undoTo(stepId: string): Promise<void> {
+    if (this.adjustment) return;
+    const steps = runsBy(this.table.entries, (entry) => entry.commandId);
+    const index = steps.findIndex((step) => step.key === stepId);
+    if (index === -1) return;
+    for (let later = steps.length - 1 - index; later > 0; later -= 1) await this.undo();
   }
 
   /**
