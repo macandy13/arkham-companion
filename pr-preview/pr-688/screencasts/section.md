@@ -1,6 +1,6 @@
 <!-- screencasts:start -->
 
-_Recorded from 29c62bb by the PR preview workflow; updated on every push that changes `apps/web`._
+_Recorded from b422190 by the PR preview workflow; updated on every push that changes `apps/web`._
 
 ## Screenshots
 
@@ -8,14 +8,14 @@ _Recorded from 29c62bb by the PR preview workflow; updated on every push that ch
 
 <table>
 <tr><th>Desktop</th><th>Phone</th></tr>
-<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-688/screencasts/the-house-map-with-roland-banks-in-the-hallway-desktop.png?v=29c62bb" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-688/screencasts/the-house-map-with-roland-banks-in-the-hallway-phone.png?v=29c62bb" alt="Phone" width="180"></td></tr>
+<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-688/screencasts/the-house-map-with-roland-banks-in-the-hallway-desktop.png?v=b422190" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-688/screencasts/the-house-map-with-roland-banks-in-the-hallway-phone.png?v=b422190" alt="Phone" width="180"></td></tr>
 </table>
 
-### the game log after two rounds, scrolled to the newest step
+### the game log after two rounds, newest first under round and phase headings
 
 <table>
 <tr><th>Desktop</th><th>Phone</th></tr>
-<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-688/screencasts/the-game-log-after-two-rounds-scrolled-to-the-newest-step-desktop.png?v=29c62bb" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-688/screencasts/the-game-log-after-two-rounds-scrolled-to-the-newest-step-phone.png?v=29c62bb" alt="Phone" width="180"></td></tr>
+<tr><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-688/screencasts/the-game-log-after-two-rounds-newest-first-under-round-and-phase-headings-desktop.png?v=b422190" alt="Desktop" width="560"></td><td><img src="https://raw.githubusercontent.com/macandy13/arkham-companion/gh-pages/pr-preview/pr-688/screencasts/the-game-log-after-two-rounds-newest-first-under-round-and-phase-headings-phone.png?v=b422190" alt="Phone" width="180"></td></tr>
 </table>
 
 <!-- screencasts:end -->
