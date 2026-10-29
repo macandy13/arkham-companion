@@ -1,10 +1,18 @@
 import Dexie, { type EntityTable } from 'dexie';
 import {
   STATE_VERSION,
+  campaign,
+  campaignId as toCampaignId,
   gameId as toGameId,
   undoLastGroup,
   replay,
+  type CampaignEvent,
   type CampaignId,
+  type CampaignLog,
+  type CampaignSummary,
+  type LoadedCampaign,
+  type NewCampaign,
+  type StoredCampaignEvent,
   type Event,
   type GameId,
   type GameState,
@@ -23,6 +31,11 @@ function newGameId(): GameId {
   return toGameId(crypto.randomUUID());
 }
 
+/** A fresh UUID for a created campaign. */
+function newCampaignId(): CampaignId {
+  return toCampaignId(crypto.randomUUID());
+}
+
 /** Row of the `games` table: a `GameSummary` is derived from it plus the replayed state. */
 interface GameRow {
   gameId: GameId;
@@ -33,11 +46,13 @@ interface GameRow {
   lastSeq: number;
 }
 
-/** Row of the `campaigns` table; campaign mode is not implemented yet (product.md "Campaign mode"). */
+/** Row of the `campaigns` table: a `CampaignSummary` is derived from it plus the replayed log. */
 interface CampaignRow {
   campaignId: CampaignId;
   title: string;
   createdAt: number;
+  updatedAt: number;
+  lastSeq: number;
 }
 
 /** Row of the `cards` table: one normalised card of one language, keyed by `key`. */
@@ -55,14 +70,14 @@ interface CatalogRow {
   catalog: CardCatalog;
 }
 
-/** Thrown by `appendEvents` when `expectedSeq` doesn't match the stored log. */
+/** Thrown by `appendEvents`/`appendCampaignEvents` when `expectedSeq` doesn't match the stored log. */
 export class SeqConflictError extends Error {
   constructor(
-    readonly gameId: GameId,
+    readonly logId: GameId | CampaignId,
     readonly expectedSeq: number,
     readonly actualSeq: number,
   ) {
-    super(`Game ${gameId}: expected last seq ${expectedSeq}, found ${actualSeq}`);
+    super(`Log ${logId}: expected last seq ${expectedSeq}, found ${actualSeq}`);
     this.name = 'SeqConflictError';
   }
 }
@@ -71,6 +86,8 @@ export class SeqConflictError extends Error {
 class ArkhamDb extends Dexie {
   campaigns!: EntityTable<CampaignRow, 'campaignId'>;
   games!: EntityTable<GameRow, 'gameId'>;
+  /** Append-only campaign event log, primary key `[campaignId+seq]`. */
+  campaignEvents!: EntityTable<StoredCampaignEvent, 'seq'>;
   /** Append-only event log, primary key `[gameId+seq]`. */
   events!: EntityTable<StoredEvent, 'seq'>;
   /** At most one snapshot per game. */
@@ -89,6 +106,11 @@ class ArkhamDb extends Dexie {
       cards: 'key, [lang+packCode]',
     });
     this.version(2).stores({ catalog: 'lang' });
+    // No campaign rows existed before version 3, so nothing needs an upgrade.
+    this.version(3).stores({
+      campaigns: 'campaignId, updatedAt',
+      campaignEvents: '[campaignId+seq]',
+    });
   }
 }
 
@@ -260,6 +282,93 @@ export class IndexedDbStore implements GameStore {
       .toArray();
   }
 
+  async createCampaign(init: NewCampaign = {}): Promise<CampaignId> {
+    const campaignId = newCampaignId();
+    const now = Date.now();
+    await this.db.campaigns.add({
+      campaignId,
+      title: init.title ?? 'New campaign',
+      createdAt: now,
+      updatedAt: now,
+      lastSeq: 0,
+    });
+    return campaignId;
+  }
+
+  async appendCampaignEvents(
+    campaignId: CampaignId,
+    events: readonly CampaignEvent[],
+    expectedSeq?: number,
+    commandId: string = crypto.randomUUID(),
+  ): Promise<StoredCampaignEvent[]> {
+    return this.db.transaction('rw', this.db.campaigns, this.db.campaignEvents, async () => {
+      const row = await this.db.campaigns.get(campaignId);
+      if (!row) throw new Error(`Unknown campaign ${campaignId}`);
+      if (expectedSeq !== undefined && expectedSeq !== row.lastSeq) {
+        throw new SeqConflictError(campaignId, expectedSeq, row.lastSeq);
+      }
+      if (events.length === 0) return [];
+      const timestamp = Date.now();
+      const stored = events.map((event, i): StoredCampaignEvent => ({
+        campaignId,
+        seq: row.lastSeq + i + 1,
+        timestamp,
+        commandId,
+        event,
+      }));
+      await this.db.campaignEvents.bulkAdd(stored);
+      await this.db.campaigns.update(campaignId, {
+        lastSeq: row.lastSeq + stored.length,
+        updatedAt: timestamp,
+      });
+      return stored;
+    });
+  }
+
+  async loadCampaign(campaignId: CampaignId): Promise<LoadedCampaign | undefined> {
+    const row = await this.db.campaigns.get(campaignId);
+    if (!row) return undefined;
+    const events = await this.loadCampaignEvents(campaignId);
+    const log = campaign.replayEvents(events.map((e) => e.event));
+    return { summary: toCampaignSummary(row, log), log };
+  }
+
+  async undoLastCampaign(
+    campaignId: CampaignId,
+    expectedSeq?: number,
+  ): Promise<LoadedCampaign | undefined> {
+    await this.db.transaction('rw', this.db.campaigns, this.db.campaignEvents, async () => {
+      const row = await this.db.campaigns.get(campaignId);
+      if (!row) return;
+      if (expectedSeq !== undefined && expectedSeq !== row.lastSeq) {
+        throw new SeqConflictError(campaignId, expectedSeq, row.lastSeq);
+      }
+      const { kept, removed } = undoLastGroup(await this.loadCampaignEvents(campaignId));
+      if (removed.length === 0) return;
+      await this.db.campaignEvents.bulkDelete(
+        removed.map((e) => [campaignId, e.seq] as unknown as number),
+      );
+      await this.db.campaigns.update(campaignId, {
+        lastSeq: kept.at(-1)?.seq ?? 0,
+        updatedAt: Date.now(),
+      });
+    });
+    return this.loadCampaign(campaignId);
+  }
+
+  async listCampaigns(): Promise<CampaignSummary[]> {
+    const rows = await this.db.campaigns.orderBy('updatedAt').reverse().toArray();
+    const loaded = await Promise.all(rows.map((row) => this.loadCampaign(row.campaignId)));
+    return loaded.flatMap((loadedCampaign) => (loadedCampaign ? [loadedCampaign.summary] : []));
+  }
+
+  private async loadCampaignEvents(campaignId: CampaignId): Promise<StoredCampaignEvent[]> {
+    return this.db.campaignEvents
+      .where('[campaignId+seq]')
+      .between([campaignId, Dexie.minKey], [campaignId, Dexie.maxKey])
+      .toArray();
+  }
+
   /** Replaces the cached cards of one language/pack (output of `pnpm carddata:fetch`). */
   async putCards(lang: string, packCode: string, cards: readonly CardDef[]): Promise<void> {
     await this.db.transaction('rw', this.db.cards, async () => {
@@ -301,5 +410,17 @@ function toSummary(row: GameRow, state: GameState): GameSummary {
     investigators: [...state.investigators]
       .sort((a, b) => a.seat - b.seat)
       .map(({ code, name }) => ({ code, name })),
+  };
+}
+
+function toCampaignSummary(row: CampaignRow, log: CampaignLog): CampaignSummary {
+  return {
+    ...row,
+    definitionId: log.definitionId,
+    difficulty: log.difficulty,
+    position: log.position,
+    scenarioCount: log.scenarioIds.length,
+    investigators: log.investigators.map(({ code, name }) => ({ code, name })),
+    ...(log.result ? { result: log.result } : {}),
   };
 }
