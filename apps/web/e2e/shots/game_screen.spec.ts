@@ -14,7 +14,7 @@ import {
 
 // Situations on the game screen, each photographed as it ends (`@shot`, coding guidelines §3).
 
-test('the house map with Roland Banks in the Hallway', async ({ page }) => {
+test('the house map with Roland Banks in the Hallway', { tag: '@shot' }, async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
   const hallway = page
@@ -77,18 +77,16 @@ test('the house map by day', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
 
-test(
-  'the game log after two rounds, newest first under round and phase headings',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(page, 'Two rounds', mythosDrawnStepsExport('Two rounds'));
+test('the game log after two rounds, newest first under round and phase headings', async ({
+  page,
+}) => {
+  await resumeImportedGame(page, 'Two rounds', mythosDrawnStepsExport('Two rounds'));
 
-    await page.getByRole('button', { name: 'Game log' }).click();
+  await page.getByRole('button', { name: 'Game log' }).click();
 
-    const log = page.getByRole('dialog', { name: 'Game log' });
-    await expect(log.getByRole('heading', { name: 'Round 3 · Investigation' })).toBeInViewport();
-  },
-);
+  const log = page.getByRole('dialog', { name: 'Game log' });
+  await expect(log.getByRole('heading', { name: 'Round 3 · Investigation' })).toBeInViewport();
+});
 
 test('Roland Banks’ combat boosted by 2, as an ally in play gives it', async ({ page }) => {
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
@@ -175,26 +173,27 @@ test('the encounter deck after two mythos phases, Dissonant Voices on the discar
   ).toBeVisible();
 });
 
-test('the header with its piles fanned: seven cards discarded, the set-aside cards on the scenario card, the Ghoul Priest in the victory display', async ({
-  page,
-  isMobile,
-}) => {
-  await resumeImportedGame(page, 'Piles filled', pilesFilledExport('Piles filled'));
-  // A phone's compact header shows the deck alone, and a tap opens the detail view on its piles.
-  if (isMobile) await page.getByRole('region', { name: 'Encounter deck' }).click();
+test(
+  'the header with its piles fanned: seven cards discarded, the set-aside cards on the scenario card, the Ghoul Priest in the victory display',
+  { tag: '@shot' },
+  async ({ page, isMobile }) => {
+    await resumeImportedGame(page, 'Piles filled', pilesFilledExport('Piles filled'));
+    // A phone's compact header shows the deck alone, and a tap opens the detail view on its piles.
+    if (isMobile) await page.getByRole('region', { name: 'Encounter deck' }).click();
 
-  await expect(
-    page.getByRole('button', { name: /^Encounter discard pile, 7 cards, .* on top$/ }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole('region', { name: 'Scenario' }).getByRole('button', { name: /^Set aside, / }),
-  ).toBeVisible();
-  await expect(
-    page
-      .getByRole('region', { name: 'Victory' })
-      .getByRole('button', { name: 'Victory display, 2 victory points' }),
-  ).toBeVisible();
-});
+    await expect(
+      page.getByRole('button', { name: /^Encounter discard pile, 7 cards, .* on top$/ }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('region', { name: 'Scenario' }).getByRole('button', { name: /^Set aside, / }),
+    ).toBeVisible();
+    await expect(
+      page
+        .getByRole('region', { name: 'Victory' })
+        .getByRole('button', { name: 'Victory display, 2 victory points' }),
+    ).toBeVisible();
+  },
+);
 
 test('the discard pile of seven cards in its dialog, the top card chosen, scroll arrows beside the row', async ({
   page,
