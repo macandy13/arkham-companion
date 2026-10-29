@@ -9,8 +9,22 @@
   grid-template-rows: auto minmax(0, 1fr);
   gap: var(--space-2);
   box-sizing: border-box;
-  width: var(--layout-sheet-width);
+  width: var(--layout-log-width);
   max-width: 100%;
+}
+
+/* On a phone held upright the log is a screen of its own, without the frame and dimmed board. */
+@media (orientation: portrait) and (max-width: 40rem) {
+  #board dialog[data-dialog='log'][open] {
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    padding: calc(var(--space-2) + var(--safe-top)) calc(var(--space-3) + var(--safe-right))
+      calc(var(--space-3) + var(--safe-bottom)) calc(var(--space-3) + var(--safe-left));
+    border: none;
+  }
 }
 
 #board dialog[data-dialog='log'] h2 {
