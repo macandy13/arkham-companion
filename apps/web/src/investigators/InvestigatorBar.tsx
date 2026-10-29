@@ -3,14 +3,13 @@ import { useTranslation } from 'react-i18next';
 import {
   SKILL_NAMES,
   type BoardView,
-  type CardImagePath,
   type InvestigatorId,
   type InvestigatorView,
   type MapEnemyView,
   type SkillName,
 } from '@arkham/engine';
-import { useCardPicture } from '../catalog/cardImages';
 import type { GameActions, SteppedStat } from '../state/gameActions';
+import { InvestigatorArt } from './InvestigatorArt';
 import { SkillTestDialog } from './SkillTestDialog';
 import { signed } from './TestCalculation';
 import { PlayArea } from './PlayArea';
@@ -121,7 +120,7 @@ function OtherInvestigators({
             onClick={() => onFocus(investigator.id)}
           >
             <span>{investigator.name.charAt(0)}</span>
-            <CardArt image={investigator.image} />
+            <InvestigatorArt image={investigator.image} />
           </button>
         </li>
       ))}
@@ -204,7 +203,7 @@ function InvestigatorPanel({
           {onTurn && <span role="img" aria-label={t('investigators.onTurn')} data-marker="turn" />}
           <p>{statusLine(investigator, onTurn, t)}</p>
         </header>
-        <CardArt image={investigator.image} />
+        <InvestigatorArt image={investigator.image} />
         <Skills
           board={board}
           investigator={investigator}
@@ -229,22 +228,6 @@ function InvestigatorPanel({
         busy={busy || adjusting}
       />
     </section>
-  );
-}
-
-/**
- * The art of the investigator card in the card's art window: the part of the picture of its
- * front where the printed card has its art, cut out by the stylesheet once the picture has loaded
- * (`data-picture`); until then, and for good when it fails, the window shows the hatched art area.
- */
-function CardArt({ image }: { image: CardImagePath | undefined }) {
-  const picture = useCardPicture(image);
-  return (
-    <picture data-picture={picture?.shown ? 'shown' : undefined}>
-      {picture && (
-        <img src={picture.url} alt="" onLoad={picture.onLoad} onError={picture.onError} />
-      )}
-    </picture>
   );
 }
 

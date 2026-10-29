@@ -613,8 +613,7 @@
 /*
  * The decision dialog (DecisionDialog): the question as its title, who decides and the test under
  * it, then the options as a column of full-width buttons and Undo at its foot. The clue payment
- * dialog (CluePaymentDialog) is laid out alike: its title, the total, a stepper row per payer, and
- * Cancel and Pay at its foot.
+ * dialog (CluePaymentDialog, clue_payment.css) shares its column, title, text and foot.
  */
 #board :is(dialog[data-dialog='decision'], dialog[data-dialog='clue-payment']) {
   display: flex;

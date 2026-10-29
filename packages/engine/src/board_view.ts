@@ -298,6 +298,8 @@ export interface CardActionView extends OfferedCardAction {
 export interface CluePayerView {
   readonly id: InvestigatorId;
   readonly name: CardName;
+  /** The picture of their investigator card (`InvestigatorView.image`), when the card data has one. */
+  readonly image?: CardImagePath;
   readonly clues: number;
   readonly pays: number;
 }
@@ -553,12 +555,13 @@ export class BoardView {
    */
   cluePayers(first: InvestigatorId, required: number): readonly CluePayerView[] {
     const split = defaultCluePayments(this.ctx, this.state, first, required);
-    return clueSpenders(this.ctx, this.state).map((inv) => ({
-      id: inv.id,
-      name: investigatorView(this.ctx, this.state, inv).name,
-      clues: inv.clues,
-      pays: split.find(({ investigatorId }) => investigatorId === inv.id)?.amount ?? 0,
-    }));
+    return clueSpenders(this.ctx, this.state).map((inv) => {
+      const { name, image } = investigatorView(this.ctx, this.state, inv);
+      const pays = split.find(({ investigatorId }) => investigatorId === inv.id)?.amount ?? 0;
+      return image
+        ? { id: inv.id, name, image, clues: inv.clues, pays }
+        : { id: inv.id, name, clues: inv.clues, pays };
+    });
   }
 
   /**

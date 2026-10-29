@@ -1601,6 +1601,26 @@ describe('clue payers', () => {
     ]);
   });
 
+  it('gives a payer the picture of their investigator card, so the dialog can show their art', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'), { revealed: true })
+      .withInvestigator(alice, {
+        locationId: study,
+        clues: 2,
+        imageSrc: cardImagePath('/bundles/cards/alice.png'),
+      })
+      .withInvestigator(bob, { locationId: study, clues: 4 })
+      .start();
+
+    expect(boardView(context, state).cluePayers(alice, 3)[0]).toEqual({
+      id: alice,
+      name: 'alice',
+      image: '/bundles/cards/alice.png',
+      clues: 2,
+      pays: 2,
+    });
+  });
+
   it('leaves out alice while the hunter engaged with her forbids her to spend clues', () => {
     const { context, state } = newGame()
       .withLocation(study, blankLocation('study'), { revealed: true })

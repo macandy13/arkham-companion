@@ -393,9 +393,12 @@ export const resources = {
       },
       cluePayment: {
         advanceTitle: 'Who pays the clues to advance {{act}}?',
-        total: '{{total}} of {{required}} clues',
-        payer: 'clues {{name}} pays (holds {{count}})',
+        total: '{{total}} of {{required}} clues chosen: tap a token to pay it or keep it',
+        tokens: 'clues {{name}} holds',
+        token: 'clue {{number}} of {{name}}',
+        splitEvenly: 'Split evenly',
         pay: 'Pay',
+        close: 'Close without paying',
       },
       cardActions: {
         title: 'Card actions',
@@ -1104,9 +1107,13 @@ export const resources = {
       },
       cluePayment: {
         advanceTitle: 'Wer zahlt die Hinweise, um {{act}} vorzurücken?',
-        total: '{{total}} von {{required}} Hinweisen',
-        payer: 'Hinweise, die {{name}} zahlt (hat {{count}})',
+        total:
+          '{{total}} von {{required}} Hinweisen gewählt: tippe einen Marker an, um ihn zu zahlen oder zu behalten',
+        tokens: 'Hinweise von {{name}}',
+        token: 'Hinweis {{number}} von {{name}}',
+        splitEvenly: 'Gleichmäßig aufteilen',
         pay: 'Zahlen',
+        close: 'Schließen, ohne zu zahlen',
       },
       cardActions: {
         title: 'Kartenaktionen',

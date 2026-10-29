@@ -13,7 +13,7 @@ import {
 import { initI18n } from '../i18n';
 import { gameActions } from '../state/gameActions';
 import { CardActions, cardActionsOn } from './ActionRow';
-import { offersClueSplit } from './CluePaymentDialog';
+import { evenClueSplit, offersClueSplit } from './CluePaymentDialog';
 
 const study = instanceId('study');
 const alder = investigatorId('alder');
@@ -31,14 +31,15 @@ const actionsOn = (table: PlayTable) =>
     },
   );
 
-describe('offersClueSplit', () => {
-  const payer = (name: string, clues: number): CluePayerView => ({
-    id: investigatorId(name),
-    name: name as CluePayerView['name'],
-    clues,
-    pays: 0,
-  });
+/** A payer named `name` holding `clues`, paying none yet. */
+const payer = (name: string, clues: number): CluePayerView => ({
+  id: investigatorId(name),
+  name: name as CluePayerView['name'],
+  clues,
+  pays: 0,
+});
 
+describe('offersClueSplit', () => {
   it.each([
     { payers: [payer('alder', 3), payer('bea', 3)], required: 4, expected: true },
     { payers: [payer('alder', 3), payer('bea', 1)], required: 4, expected: false },
@@ -48,6 +49,22 @@ describe('offersClueSplit', () => {
     'is $expected for $required clues from $payers.0.clues and $payers.1.clues',
     ({ payers, required, expected }) => {
       expect(offersClueSplit(payers, required)).toBe(expected);
+    },
+  );
+});
+
+describe('evenClueSplit', () => {
+  it.each([
+    { alderClues: 3, beaClues: 3, required: 4, alderPays: 2, beaPays: 2 },
+    { alderClues: 3, beaClues: 3, required: 3, alderPays: 2, beaPays: 1 },
+    { alderClues: 3, beaClues: 1, required: 4, alderPays: 3, beaPays: 1 },
+    { alderClues: 0, beaClues: 3, required: 2, alderPays: 0, beaPays: 2 },
+  ])(
+    'has alder pay $alderPays and bea $beaPays of $required from $alderClues and $beaClues',
+    ({ alderClues, beaClues, required, alderPays, beaPays }) => {
+      const split = evenClueSplit([payer('alder', alderClues), payer('bea', beaClues)], required);
+
+      expect([split.get(alder), split.get(bea)]).toEqual([alderPays, beaPays]);
     },
   );
 });
@@ -78,7 +95,8 @@ describe('CardActions with a group clue cost', () => {
         .withTurnOf(alder),
     );
 
-  const renderStudyActions = (table: PlayTable) =>
+  /** Renders the study's card actions and opens the clue payment dialog of its action. */
+  const openStudyPayment = (table: PlayTable) => {
     render(
       <CardActions
         board={table.board}
@@ -87,51 +105,64 @@ describe('CardActions with a group clue cost', () => {
         busy={false}
       />,
     );
-
-  it('starts at the engine’s split, alder’s 3 first, and keeps Pay off while 2 short', () => {
-    const table = studyWithGroupCost(3, 3);
-    renderStudyActions(table);
-
     fireEvent.click(screen.getByRole('button', { name: 'Action · Study' }));
-    const dialog = screen.getByRole('dialog', { name: 'Action · Study' });
-    expect(within(dialog).getByText('4 of 4 clues')).toBeTruthy();
-    fireEvent.click(
-      within(dialog).getByRole('button', { name: 'Lower the clues alder pays (holds 3)' }),
-    );
-    fireEvent.click(
-      within(dialog).getByRole('button', { name: 'Lower the clues alder pays (holds 3)' }),
-    );
+    return screen.getByRole('dialog', { name: 'Action · Study' });
+  };
 
-    expect(within(dialog).getByText('2 of 4 clues')).toBeTruthy();
+  /** Whether each of the clue tokens named `names` in `dialog` is pressed, in that order. */
+  const pressed = (dialog: HTMLElement, names: string[]) =>
+    names.map((name) => within(dialog).getByRole('button', { name }).ariaPressed);
+
+  it('starts at the engine’s split, alder’s 3 first, and keeps Pay off once a token is kept', () => {
+    const dialog = openStudyPayment(studyWithGroupCost(3, 3));
+
+    expect(
+      pressed(dialog, [
+        'clue 1 of alder',
+        'clue 2 of alder',
+        'clue 3 of alder',
+        'clue 1 of bea',
+        'clue 2 of bea',
+      ]),
+    ).toEqual(['true', 'true', 'true', 'true', 'false']);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'clue 3 of alder' }));
+
+    expect(within(dialog).getByText(/^3 of 4 clues chosen/)).toBeTruthy();
     expect(within(dialog).getByRole<HTMLButtonElement>('button', { name: 'Pay' }).disabled).toBe(
       true,
     );
   });
 
-  it('lets the players have bea pay 3 of the 4 clues instead of alder’s 3 first', async () => {
+  it('lets the players have bea pay 3 of the 4 clues by tapping tokens', async () => {
     const table = studyWithGroupCost(3, 3);
-    renderStudyActions(table);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Action · Study' }));
-    const dialog = screen.getByRole('dialog', { name: 'Action · Study' });
-    const click = (name: string) => fireEvent.click(within(dialog).getByRole('button', { name }));
-    click('Lower the clues alder pays (holds 3)');
-    click('Lower the clues alder pays (holds 3)');
-    click('Raise the clues bea pays (holds 3)');
-    click('Raise the clues bea pays (holds 3)');
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Pay' }));
+    const dialog = openStudyPayment(table);
+    const tap = (name: string) => fireEvent.click(within(dialog).getByRole('button', { name }));
+    tap('clue 3 of alder');
+    tap('clue 2 of alder');
+    tap('clue 2 of bea');
+    tap('clue 3 of bea');
+    tap('Pay');
     await Promise.resolve();
 
     expect(table.board.investigator(alder).clues).toBe(2);
     expect(table.board.investigator(bea).clues).toBe(0);
   });
 
-  it('takes nothing when the players cancel the split', () => {
+  it('splits the 4 clues evenly, 2 each, when the players ask', async () => {
     const table = studyWithGroupCost(3, 3);
-    renderStudyActions(table);
+    const dialog = openStudyPayment(table);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Split evenly' }));
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Pay' }));
+    await Promise.resolve();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Action · Study' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(table.board.investigator(alder).clues).toBe(1);
+    expect(table.board.investigator(bea).clues).toBe(1);
+  });
+
+  it('takes nothing when the players close the dialog', () => {
+    const table = studyWithGroupCost(3, 3);
+    const dialog = openStudyPayment(table);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close without paying' }));
 
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(table.board.investigator(alder).clues).toBe(3);
@@ -140,7 +171,14 @@ describe('CardActions with a group clue cost', () => {
 
   it('pays at once, with no dialog, when the 4 clues are all alder and bea hold', async () => {
     const table = studyWithGroupCost(3, 1);
-    renderStudyActions(table);
+    render(
+      <CardActions
+        board={table.board}
+        offered={cardActionsOn(table.board, study)}
+        actions={actionsOn(table)}
+        busy={false}
+      />,
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Action · Study' }));
     await Promise.resolve();

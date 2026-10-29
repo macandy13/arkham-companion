@@ -1,7 +1,8 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BoardView, CluePayerView, InvestigatorId } from '@arkham/engine';
-import { Stepper } from '../investigators/TestCalculation';
+import { InvestigatorArt } from '../investigators/InvestigatorArt';
+import './clue_payment.css';
 import type { ClueSpend } from '../state/gameActions';
 
 /**
@@ -16,10 +17,34 @@ export function offersClueSplit(payers: readonly CluePayerView[], required: numb
 }
 
 /**
+ * The clues each of `payers` pays when `required` clues are split as evenly as their clues allow:
+ * one each in turn, in `payers` order, skipping whoever has none left, until `required` are taken
+ * or nobody has any left.
+ */
+export function evenClueSplit(
+  payers: readonly CluePayerView[],
+  required: number,
+): ReadonlyMap<InvestigatorId, number> {
+  const pays = new Map(payers.map(({ id }) => [id, 0]));
+  let left = required;
+  while (left > 0) {
+    const takers = payers.filter(({ id, clues }) => (pays.get(id) ?? 0) < clues);
+    if (takers.length === 0) break;
+    for (const { id } of takers.slice(0, left)) pays.set(id, (pays.get(id) ?? 0) + 1);
+    left -= Math.min(left, takers.length);
+  }
+  return pays;
+}
+
+/**
  * The players choose who pays a group clue cost ("as a group", RR "Act Deck": "Any or all
- * investigators may contribute any number of clues"): a stepper per payer (`BoardView.cluePayers`)
- * from 0 to the clues they hold, starting at the engine's split, and Pay once the total is
- * `required`. A native modal `<dialog>` brings focus trapping and Escape, which cancels.
+ * investigators may contribute any number of clues"): each payer (`BoardView.cluePayers`) as their
+ * card's art over their name, or their initial until it loads, with the clues they hold as tokens
+ * under it, the ones they pay pressed, starting at the engine's split. Tapping a pressed token
+ * keeps one more of theirs, tapping another pays one more, so a payer's pressed tokens always come
+ * first. A row of pips counts the clues chosen against `required`; Split evenly chooses
+ * `evenClueSplit`, and Pay takes them once they are `required`. A native modal `<dialog>` brings
+ * focus trapping and Escape, which closes it like its close button, paying nothing.
  */
 export function CluePaymentDialog({
   title,
@@ -49,21 +74,46 @@ export function CluePaymentDialog({
   return (
     <dialog ref={dialog} aria-labelledby={titleId} onCancel={onCancel} data-dialog="clue-payment">
       <h2 id={titleId}>{title}</h2>
+      <button
+        type="button"
+        data-icon="close"
+        aria-label={t('cluePayment.close')}
+        onClick={onCancel}
+      />
       <p>{t('cluePayment.total', { total, required })}</p>
-      {payers.map(({ id, name, clues }) => (
-        <Stepper
-          key={id}
-          label={t('cluePayment.payer', { name, count: clues })}
-          value={paysOf(id)}
-          shown={String(paysOf(id))}
-          min={0}
-          max={clues}
-          onChange={(value) => setPays(new Map(pays).set(id, value))}
-        />
-      ))}
+      <ol aria-hidden="true">
+        {Array.from({ length: required }, (_, i) => (
+          <li key={i} data-paid={i < total || undefined} />
+        ))}
+      </ol>
+      <ul>
+        {payers.map(({ id, name, image, clues }) => (
+          <li key={id}>
+            <figure>
+              <span>{name.charAt(0)}</span>
+              <InvestigatorArt image={image} />
+              <figcaption>{name}</figcaption>
+            </figure>
+            <ul aria-label={t('cluePayment.tokens', { name })}>
+              {Array.from({ length: clues }, (_, i) => (
+                <li key={i}>
+                  <button
+                    type="button"
+                    aria-label={t('cluePayment.token', { name, number: i + 1 })}
+                    aria-pressed={i < paysOf(id)}
+                    onClick={() =>
+                      setPays(new Map(pays).set(id, paysOf(id) + (i < paysOf(id) ? -1 : 1)))
+                    }
+                  />
+                </li>
+              ))}
+            </ul>
+          </li>
+        ))}
+      </ul>
       <footer>
-        <button type="button" onClick={onCancel}>
-          {t('games.cancel')}
+        <button type="button" onClick={() => setPays(evenClueSplit(payers, required))}>
+          {t('cluePayment.splitEvenly')}
         </button>
         <button
           type="button"

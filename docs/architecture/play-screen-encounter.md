@@ -13,7 +13,7 @@ A tap on the agenda or act (or its name, a button for the keyboard) opens it as 
 In the phone's [detail view](play-screen.md#detail-view) the agenda and act are shown full instead (`GameHeader` `full`): their card actions sit under them and a tap opens no dialog.
 
 The act's Advance button takes its spend-clues action for the investigator whose turn it is (`GameActions.advanceAct`), so it waits for a turn and enough clues.
-When the players have a split to choose, it first asks who pays how many in the [clue payment dialog](../../apps/web/src/screens/CluePaymentDialog.tsx) (`useCluePayment` over `BoardView.cluePayers`, a stepper per payer starting at the engine's split); card actions with a group clue cost (`CardActionView.groupClues`) ask the same.
+When the players have a split to choose, it first asks who pays how many in the [clue payment dialog](../../apps/web/src/screens/CluePaymentDialog.tsx) (`useCluePayment` over `BoardView.cluePayers`: each payer's art with their clues as tokens to tap, starting at the engine's split, and a Split evenly shortcut, `evenClueSplit`); card actions with a group clue cost (`CardActionView.groupClues`) ask the same.
 The clue steppers, a correction while adjusting, show only for an act that counts the clues on it.
 
 ## Piles

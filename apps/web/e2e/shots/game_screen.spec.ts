@@ -32,29 +32,27 @@ test('map tabs for the Study and the house, the house chosen', async ({ page }) 
   await expect(page.getByRole('tabpanel', { name: 'House' })).toBeVisible();
 });
 
-test(
-  'Roland Banks with four treacheries and the Ghoul Priest, scrolled on to the Ghoul Priest',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(
-      page,
-      'Roland Banks threatened',
-      rolandThreatenedExport('Roland Banks threatened'),
-    );
+test('Roland Banks with four treacheries and the Ghoul Priest, scrolled on to the Ghoul Priest', async ({
+  page,
+}) => {
+  await resumeImportedGame(
+    page,
+    'Roland Banks threatened',
+    rolandThreatenedExport('Roland Banks threatened'),
+  );
 
-    const roland = page.getByRole('region', { name: 'Roland Banks' });
-    const threatArea = roland.getByRole('list', { name: 'Threat area' });
-    const ghoulPriest = threatArea.getByRole('listitem', {
-      name: 'Ghoul Priest, 3 of 5 health left, 2 damage',
-    });
-    await expect(threatArea.getByRole('listitem')).toHaveCount(5);
-    await expect(ghoulPriest).not.toBeInViewport({ ratio: 1 });
+  const roland = page.getByRole('region', { name: 'Roland Banks' });
+  const threatArea = roland.getByRole('list', { name: 'Threat area' });
+  const ghoulPriest = threatArea.getByRole('listitem', {
+    name: 'Ghoul Priest, 3 of 5 health left, 2 damage',
+  });
+  await expect(threatArea.getByRole('listitem')).toHaveCount(5);
+  await expect(ghoulPriest).not.toBeInViewport({ ratio: 1 });
 
-    await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
+  await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
 
-    await expect(ghoulPriest).toBeInViewport({ ratio: 1 });
-  },
-);
+  await expect(ghoulPriest).toBeInViewport({ ratio: 1 });
+});
 
 test('the Hallway’s details, its card with Roland Banks on it, on Roland Banks’ turn', async ({
   page,
@@ -339,20 +337,15 @@ test(
       .getByRole('button', { name: 'Advance' })
       .click();
     const dialog = page.getByRole('dialog', { name: 'Who pays the clues to advance Trapped?' });
-    await dialog
-      .getByRole('button', { name: 'Lower the clues Roland Banks pays (holds 3)' })
-      .click();
-    await dialog
-      .getByRole('button', { name: 'Lower the clues Roland Banks pays (holds 3)' })
-      .click();
-    await dialog
-      .getByRole('button', { name: 'Raise the clues Daisy Walker pays (holds 3)' })
-      .click();
-    await dialog
-      .getByRole('button', { name: 'Raise the clues Daisy Walker pays (holds 3)' })
-      .click();
+    for (const token of [
+      'clue 3 of Roland Banks',
+      'clue 2 of Roland Banks',
+      'clue 2 of Daisy Walker',
+      'clue 3 of Daisy Walker',
+    ])
+      await dialog.getByRole('button', { name: token }).click();
 
-    await expect(dialog.getByText('4 of 4 clues')).toBeVisible();
+    await expect(dialog.getByText(/^4 of 4 clues chosen/)).toBeVisible();
     await expect(dialog.getByRole('button', { name: 'Pay', exact: true })).toBeEnabled();
   },
 );
