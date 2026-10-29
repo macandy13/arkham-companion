@@ -11,6 +11,7 @@ import { chosenInvestigators, seatsFor } from '../wizard/seating';
 import { SetupStep } from '../wizard/SetupStep';
 import { SummaryStep } from '../wizard/SummaryStep';
 import {
+  chosenCampaign,
   chosenScenario,
   clearChoices,
   loadChoices,
@@ -93,18 +94,28 @@ function Wizard({ store, catalogSource, mode, step }: WizardProps) {
   async function start() {
     if (!scenario) return;
     setStartFailed(false);
+    const campaign = chosenCampaign(choices);
+    const titled = (nameKey: string) =>
+      [t(nameKey), ...investigators.map((i) => i.name)].join(' – ');
+    const start = {
+      title: titled(scenario.nameKey),
+      ctx: {
+        cards: cardDbWith(scenario.cards, investigators.map(investigatorCardStats)),
+        scenario: scenario.definition,
+      },
+      difficulty: choices.difficulty,
+      // The engine never reads randomness itself, so the seed is drawn at the edge.
+      seed: Math.floor(Math.random() * 2 ** 31),
+      investigators: seatsFor(investigators),
+    };
     try {
-      const gameId = await store.getState().startScenario({
-        title: [t(scenario.nameKey), ...investigators.map((i) => i.name)].join(' – '),
-        ctx: {
-          cards: cardDbWith(scenario.cards, investigators.map(investigatorCardStats)),
-          scenario: scenario.definition,
-        },
-        difficulty: choices.difficulty,
-        // The engine never reads randomness itself, so the seed is drawn at the edge.
-        seed: Math.floor(Math.random() * 2 ** 31),
-        investigators: seatsFor(investigators),
-      });
+      const gameId = await (campaign
+        ? store.getState().startCampaign({
+            ...start,
+            definition: campaign.definition,
+            campaignTitle: titled(campaign.nameKey),
+          })
+        : store.getState().startScenario(start));
       clearChoices();
       await navigate(`/game/${gameId}`);
     } catch (error) {

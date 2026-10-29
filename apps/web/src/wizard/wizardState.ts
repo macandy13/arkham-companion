@@ -3,6 +3,7 @@ import {
   campaignCatalog,
   findScenario,
   scenarioCatalog,
+  type CampaignEntry,
   type ScenarioEntry,
 } from '../scenarios/scenarioCatalog';
 
@@ -44,11 +45,17 @@ export function defaultChoices(mode: WizardMode): WizardChoices {
   return { mode, targetId: first ?? '', difficulty: 'standard', seats: [] };
 }
 
+/** The campaign the choices will start; `undefined` in a quick game. */
+export function chosenCampaign(choices: WizardChoices): CampaignEntry | undefined {
+  if (choices.mode === 'quick') return undefined;
+  return campaignCatalog.find((entry) => entry.id === choices.targetId);
+}
+
 /** The scenario the choices will start: a campaign's first scenario, or the chosen one. */
 export function chosenScenario(choices: WizardChoices): ScenarioEntry | undefined {
   if (choices.mode === 'quick') return findScenario(choices.targetId);
-  const campaign = campaignCatalog.find((entry) => entry.id === choices.targetId);
-  return campaign && findScenario(campaign.firstScenarioId);
+  const first = chosenCampaign(choices)?.definition.scenarios[0];
+  return first && findScenario(first);
 }
 
 function isChoices(value: unknown): value is WizardChoices {

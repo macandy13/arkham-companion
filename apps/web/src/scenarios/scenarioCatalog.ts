@@ -1,5 +1,5 @@
-import { theGathering, theGatheringCards } from '@arkham/scenarios';
-import type { CardDb, ScenarioDefinition } from '@arkham/engine';
+import { nightOfTheZealot, theGathering, theGatheringCards } from '@arkham/scenarios';
+import type { CampaignDefinition, CardDb, ScenarioDefinition } from '@arkham/engine';
 
 /** A scenario the wizard can start: its definition plus the card data the engine needs to run it. */
 export interface ScenarioEntry {
@@ -10,11 +10,12 @@ export interface ScenarioEntry {
   cards: CardDb;
 }
 
-/** A campaign the wizard can start; it begins with the scenario `firstScenarioId`. */
+/** A campaign the wizard can start; it begins with the first scenario of `definition`. */
 export interface CampaignEntry {
   id: string;
   nameKey: string;
-  firstScenarioId: string;
+  /** Scenario order and chaos bags; `StartCampaign` is compiled from it. */
+  definition: CampaignDefinition;
   /**
    * ArkhamDB codes of the packs that contain the campaign (`PackDef.code`); the settings offer
    * only these packs for the collection, since the app plays no other campaign yet.
@@ -35,12 +36,12 @@ export const scenarioCatalog: readonly ScenarioEntry[] = [
   },
 ];
 
-/** Every playable campaign; there is no campaign log yet, so a campaign just starts its first scenario. */
+/** Every playable campaign. */
 export const campaignCatalog: readonly CampaignEntry[] = [
   {
-    id: 'night-of-the-zealot',
+    id: nightOfTheZealot.id,
     nameKey: 'campaigns.nightOfTheZealot',
-    firstScenarioId: theGathering.id,
+    definition: nightOfTheZealot,
     // The Revised Core Set reprints the Core Set with the same campaign.
     packCodes: ['core', 'rcore'],
   },

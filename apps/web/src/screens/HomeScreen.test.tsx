@@ -3,7 +3,7 @@ import 'fake-indexeddb/auto';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { STATE_VERSION } from '@arkham/engine';
+import { STATE_VERSION, campaignDefinitionId, investigatorCode, scenarioId } from '@arkham/engine';
 import { initI18n } from '../i18n';
 import { createAppStore } from '../state/appStore';
 import { IndexedDbStore } from '../storage/IndexedDbStore';
@@ -38,6 +38,51 @@ describe('HomeScreen', () => {
     expect(campaign.getAttribute('href')).toBe('/new?mode=campaign');
     expect(screen.getByRole('link', { name: 'Quick game' }).getAttribute('href')).toBe(
       '/new?mode=quick',
+    );
+  });
+
+  it('lists a campaign with its progress and resumes its latest game', async () => {
+    const gameStore = new IndexedDbStore(`home-test-${n++}`);
+    const campaignId = await gameStore.createCampaign({ title: 'Zealot – Roland' });
+    await gameStore.appendCampaignEvents(campaignId, [
+      {
+        type: 'CampaignStarted',
+        campaignId,
+        definitionId: campaignDefinitionId('night-of-the-zealot'),
+        difficulty: 'hard',
+        investigators: [
+          {
+            code: investigatorCode('01001'),
+            name: 'Roland Banks',
+            health: 9,
+            sanity: 5,
+            physicalTrauma: 0,
+            mentalTrauma: 0,
+            xpEarned: 0,
+            xpSpent: 0,
+            fate: 'alive',
+            earnedCards: [],
+          },
+        ],
+        chaosBag: ['0'],
+        scenarioIds: [scenarioId('the-gathering'), scenarioId('the-midnight-masks')],
+      },
+    ]);
+    const gatheringGame = await gameStore.createGame({ title: 'The Gathering', campaignId });
+    await gameStore.createGame({ title: 'A quick game' });
+    render(
+      <MemoryRouter>
+        <HomeScreen store={createAppStore(gameStore)} />
+      </MemoryRouter>,
+    );
+
+    const campaigns = await screen.findByRole('list', { name: 'Campaigns' });
+
+    expect(within(campaigns).getByText('Hard')).toBeTruthy();
+    expect(within(campaigns).getByText('Roland Banks')).toBeTruthy();
+    expect(within(campaigns).getByText('Scenario 1 of 2')).toBeTruthy();
+    expect(within(campaigns).getByRole('link', { name: 'Resume' }).getAttribute('href')).toBe(
+      `/game/${gatheringGame}`,
     );
   });
 

@@ -5,14 +5,19 @@ import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
 import type { AppState } from '../state/appStore';
 import { GameImportError } from '../storage/gameExport';
+import { CampaignListItem } from './CampaignListItem';
 import { downloadGameExport } from './downloadFile';
 import { GameListItem, untitledLabel } from './GameListItem';
 import './home.css';
 
-/** Route `/`: saved games with resume, rename, duplicate, export and delete, plus import of an export file; an empty state points to the wizard. */
+/**
+ * Route `/`: campaigns with resume, saved games with resume, rename, duplicate, export and delete,
+ * plus import of an export file; an empty state points to the wizard.
+ */
 export function HomeScreen({ store }: { store: StoreApi<AppState> }) {
   const { t } = useTranslation();
   const games = useStore(store, (s) => s.games);
+  const campaigns = useStore(store, (s) => s.campaigns);
   const [importError, setImportError] = useState<string>();
 
   async function importFile(file: File) {
@@ -52,6 +57,18 @@ export function HomeScreen({ store }: { store: StoreApi<AppState> }) {
         />
       </label>
       {importError && <p role="alert">{importError}</p>}
+      {campaigns.length > 0 && (
+        <ul aria-label={t('campaignList.title')}>
+          {campaigns.map((campaign) => (
+            <CampaignListItem
+              key={campaign.campaignId}
+              campaign={campaign}
+              // The game list is newest first, so the first match was played last.
+              latestGameId={games.find((game) => game.campaignId === campaign.campaignId)?.gameId}
+            />
+          ))}
+        </ul>
+      )}
       {games.length === 0 ? (
         <section aria-labelledby="games-empty">
           <h2 id="games-empty">{t('games.empty')}</h2>
