@@ -1,10 +1,4 @@
-import {
-  useRef,
-  type KeyboardEvent,
-  type MouseEvent,
-  type PointerEvent,
-  type ReactNode,
-} from 'react';
+import { useRef, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import type {
   BoardView,
@@ -25,14 +19,14 @@ import {
   ATTACHMENT,
   attachmentOrigin,
   BADGE_RADIUS,
-  badgeCentre,
   CLUES_CENTRE,
   CONTENT,
+  damageBadgeCentre,
   DOOM_CENTRE,
   isTap,
   leadMarkerPoints,
   NAME_WIDTH,
-  pawnOffset,
+  piecesOnTile,
   SHROUD_CENTRE,
   TEXT_BOX,
   TILE,
@@ -57,7 +51,8 @@ export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyVi
  * peeking out at the right edge as small cards, and once revealed the shroud (with what
  * attachments add) on the left edge where the art ends and the clues on the right, doom under the
  * clues when it has any, and the actions it prints in the text box (`PrintedActions`); then a
- * pawn per investigator there and a round token per enemy at it, in rows along the bottom edge.
+ * pawn per investigator there and a round token per enemy at it, in rows along the bottom edge,
+ * each enemy engaged with an investigator right after their pawn (`piecesOnTile`).
  * `enemies` and `investigators` are the open game's pieces at this location, and `turnOrder`
  * says whose pawns carry the lead and turn markers; `dragOf` gives the drag handlers of each
  * piece that can be dragged now. A tap on the tile, or its details button in
@@ -85,6 +80,7 @@ export function LocationTile({
 }) {
   const { t } = useTranslation();
   const picture = useCardPicture(location.image);
+  const { pieces, separator } = piecesOnTile(investigators, enemies);
   const pressedAt = useRef<Point>(undefined);
   const onPointerDown = (event: PointerEvent<SVGGElement>) => {
     pressedAt.current = { x: event.clientX, y: event.clientY };
@@ -166,25 +162,36 @@ export function LocationTile({
           centre={DOOM_CENTRE}
         />
       ) : null}
-      {investigators.map((investigator, i) => (
-        <Pawn
-          key={investigator.id}
-          investigator={investigator}
-          centre={pawnOffset(i)}
-          lead={turnOrder.lead === investigator.id}
-          onTurn={turnOrder.turn === investigator.id}
-          drag={dragOf({ investigator })}
+      {pieces.map((piece) =>
+        'investigator' in piece ? (
+          <Pawn
+            key={piece.investigator.id}
+            investigator={piece.investigator}
+            centre={piece.centre}
+            lead={turnOrder.lead === piece.investigator.id}
+            onTurn={turnOrder.turn === piece.investigator.id}
+            drag={dragOf({ investigator: piece.investigator })}
+          />
+        ) : (
+          <EnemyToken
+            key={piece.enemy.id}
+            enemy={piece.enemy}
+            investigators={investigators}
+            centre={piece.centre}
+            engaged={piece.engaged}
+            drag={dragOf({ enemy: piece.enemy })}
+          />
+        ),
+      )}
+      {separator && (
+        <line
+          data-separator
+          x1={separator.from.x}
+          y1={separator.from.y}
+          x2={separator.to.x}
+          y2={separator.to.y}
         />
-      ))}
-      {enemies.map((enemy, i) => (
-        <EnemyToken
-          key={enemy.id}
-          enemy={enemy}
-          investigators={investigators}
-          centre={pawnOffset(investigators.length + i)}
-          drag={dragOf({ enemy })}
-        />
-      ))}
+      )}
     </g>
   );
 }
@@ -481,22 +488,25 @@ export function Pawn({
 
 /**
  * An enemy as a round token with its initial, centred on `centre`, like an investigator's pawn but
- * ringed in the doom colour (`data-enemy`). Badges on its rim show whom of `investigators` it is
- * engaged with (their initial, in the pawns' colour) and its damage (a red disc with the count); an
- * exhausted enemy's initial lies on its side, like the exhausted card turned sideways
- * (`data-exhausted`). Its accessible name says the same. With `drag` it can be dragged; a `ghost`
- * is the copy that follows the pointer.
+ * ringed in the doom colour (`data-enemy`). An `engaged` enemy stands faded right after the pawn
+ * of the investigator it is engaged with (`data-engaged`), since the threat area shows it in full.
+ * A red badge on its rim shows its damage, and an exhausted enemy's initial lies on its side, like
+ * the exhausted card turned sideways (`data-exhausted`). Its accessible name says the same, with
+ * whom of `investigators` it is engaged with. With `drag` it can be dragged; a `ghost` is the copy
+ * that follows the pointer.
  */
 export function EnemyToken({
   enemy,
   investigators,
   centre,
+  engaged = false,
   drag,
   ghost = false,
 }: {
   enemy: MapEnemyView;
   investigators: readonly InvestigatorView[];
   centre: Point;
+  engaged?: boolean;
   drag?: DragHandlers;
   ghost?: boolean;
 }) {
@@ -506,9 +516,11 @@ export function EnemyToken({
     ...(engagedWith ? [t('map.engagedWith', { investigator: engagedWith })] : []),
     ...enemyConditions(enemy, t),
   ];
+  const badge = damageBadgeCentre(centre);
   return (
     <g
       data-enemy
+      data-engaged={engaged || undefined}
       data-exhausted={enemy.exhausted || undefined}
       {...dragAttributes({ name: [enemy.name, ...states].join(', '), kind: 'enemy', drag, ghost })}
     >
@@ -516,39 +528,14 @@ export function EnemyToken({
       <text x={centre.x} y={centre.y}>
         {enemy.name.charAt(0)}
       </text>
-      {engagedWith && (
-        <PieceBadge kind="engaged" at={badgeCentre(centre, 'top')}>
-          {engagedWith.charAt(0)}
-        </PieceBadge>
-      )}
       {enemy.damage ? (
-        <PieceBadge kind="damage" at={badgeCentre(centre, 'lowerRight')}>
-          {enemy.damage}
-        </PieceBadge>
+        <g data-marker="damage">
+          <circle cx={badge.x} cy={badge.y} r={BADGE_RADIUS} />
+          <text x={badge.x} y={badge.y}>
+            {enemy.damage}
+          </text>
+        </g>
       ) : null}
-    </g>
-  );
-}
-
-/**
- * A small disc with a letter or count on a piece's rim (`data-marker` names what it shows). It is
- * only a picture: the piece's accessible name says the same.
- */
-function PieceBadge({
-  kind,
-  at,
-  children,
-}: {
-  kind: 'engaged' | 'damage';
-  at: Point;
-  children: ReactNode;
-}) {
-  return (
-    <g data-marker={kind}>
-      <circle cx={at.x} cy={at.y} r={BADGE_RADIUS} />
-      <text x={at.x} y={at.y}>
-        {children}
-      </text>
     </g>
   );
 }

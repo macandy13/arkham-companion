@@ -19,7 +19,7 @@ import {
   connectionEnds,
   drawingSize,
   onPawn,
-  pawnOffset,
+  piecesOnTile,
   tileAt,
   tileCells,
   tileOrigin,
@@ -312,8 +312,8 @@ function Ghost({ piece, at, board }: { piece: TilePiece; at: Point; board: Board
 }
 
 /**
- * Where the pawn of `investigator` stands on `map`, in the drawing's coordinates: in the row of
- * pawns on their location's tile (`BoardView.investigatorsAt`).
+ * Where the pawn of `investigator` stands on `map`, in the drawing's coordinates: among the
+ * pieces on their location's tile (`piecesOnTile`).
  */
 function pawnCentre(
   map: MapView,
@@ -324,9 +324,14 @@ function pawnCentre(
   const location = map.locations.find(({ investigators }) => investigators?.includes(investigator));
   const cell = location && cells[location.id];
   if (!cell) return undefined;
-  const index = board.investigatorsAt(location.id).findIndex(({ id }) => id === investigator);
+  const offset = piecesOnTile(
+    board.investigatorsAt(location.id),
+    map.enemies[location.id] ?? [],
+  ).pieces.find(
+    (piece) => 'investigator' in piece && piece.investigator.id === investigator,
+  )?.centre;
+  if (!offset) return undefined;
   const tile = tileOrigin(cell);
-  const offset = pawnOffset(index);
   return { x: tile.x + offset.x, y: tile.y + offset.y };
 }
 

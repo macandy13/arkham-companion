@@ -17,7 +17,7 @@ A tap on a tile (or its "i" button, for the keyboard) opens the location's [deta
 
   While adjusting, the corrections (reveal, clue and doom steppers) take its place.
 
-An enemy token ([`EnemyToken`](../../apps/web/src/map/LocationTile.tsx)) shows its state as on the table: the engaged investigator's initial on a badge at its top, its damage on a red badge at its lower right (`badgeCentre`), and when exhausted its initial on its side.
+The pieces on a tile stand in rows along its bottom edge ([`piecesOnTile`](../../apps/web/src/map/mapLayout.ts)): each investigator's pawn followed by the enemies engaged with them, faded since the threat area shows them in full, then after a thin line the enemies engaged with no one. Order alone shows an engagement on the map. An enemy token ([`EnemyToken`](../../apps/web/src/map/LocationTile.tsx)) shows its damage on a red badge at its lower right (`damageBadgeCentre`) and, when exhausted, its initial on its side.
 A tap on an enemy token (a press let go where it went down, `isTap`, which a drag is not) opens the enemy's details as from the threat area.
 
 ## Location tiles

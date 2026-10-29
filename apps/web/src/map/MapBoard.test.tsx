@@ -384,7 +384,7 @@ describe('MapBoard', () => {
     expect(within(tile('hallway')).getByRole('img', { name: 'rats' })).toBeTruthy();
   });
 
-  it('shows an enemy token’s engagement and damage as badges and its exhaustion on its initial', () => {
+  it('fades an engaged enemy token, and shows its damage as a badge and its exhaustion on its initial', () => {
     const ghoul = instanceId('ghoul');
     const table = PlayTable.start(
       house
@@ -401,11 +401,11 @@ describe('MapBoard', () => {
     );
 
     const ghoulToken = within(tile('study')).getByRole('img', { name: /^ghoul,/ });
+    expect(ghoulToken.dataset.engaged).toBe('true');
     expect(ghoulToken.dataset.exhausted).toBe('true');
-    // The test builder names an investigator after its id, so alder's initial is 'a'.
-    expect(ghoulToken.querySelector('[data-marker="engaged"]')?.textContent).toBe('a');
     expect(ghoulToken.querySelector('[data-marker="damage"]')?.textContent).toBe('2');
     const ratsToken = within(tile('hallway')).getByRole('img', { name: 'rats' });
+    expect(ratsToken.dataset.engaged).toBeUndefined();
     expect(ratsToken.dataset.exhausted).toBeUndefined();
     expect(ratsToken.querySelector('[data-marker]')).toBeNull();
   });
@@ -429,12 +429,14 @@ describe('MapBoard', () => {
   });
 
   // The Study's tile spans 0–150 across and 0–210 down. Pieces stand in a row along its bottom
-  // edge, investigators first: the first centred on (24, 186), the next on (58, 186). The
-  // Hallway's tile starts at x 180.
+  // edge, investigators first: the first centred on (24, 186), an enemy engaged with them next on
+  // (58, 186), and an enemy engaged with no one after a line, on (70, 186). The Hallway's tile
+  // starts at x 180.
   describe('dragging pieces', () => {
     const firstPawn = { x: 24, y: 186 };
     const enemyAlone = { x: 24, y: 186 };
-    const enemyBesideAlder = { x: 58, y: 186 };
+    const enemyEngagedWithAlder = { x: 58, y: 186 };
+    const enemyPastAlder = { x: 70, y: 186 };
     const bea = investigatorId('bea');
     const rats = instanceId('rats');
 
@@ -540,7 +542,7 @@ describe('MapBoard', () => {
         <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
       );
 
-      await drag('study', 'rats, engaged with alder', enemyBesideAlder, 255, 105);
+      await drag('study', 'rats, engaged with alder', enemyEngagedWithAlder, 255, 105);
 
       expect(table.board.enemy(rats)).toEqual({ name: 'rats', at: 'hallway', health: 1 });
     });
@@ -560,7 +562,7 @@ describe('MapBoard', () => {
         <MapBoard board={table.board} actions={actionsOn(table)} busy={false} adjusting={false} />,
       );
 
-      await drag('study', 'aloof_rats', enemyBesideAlder, 24, 186);
+      await drag('study', 'aloof_rats', enemyPastAlder, 24, 186);
 
       expect(table.board.enemy(rats)).toEqual({
         name: 'aloof_rats',

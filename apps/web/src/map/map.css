@@ -367,26 +367,29 @@
   transform-origin: center;
 }
 
-/*
- * The badges on an enemy's rim: the engaged investigator's initial in the pawns' colour, the
- * damage in red like the printed damage tokens, both ringed in parchment like a pawn.
- */
-#map svg [data-marker] circle {
+/* An enemy engaged with an investigator stands faded after their pawn: the threat area shows it. */
+#map svg [data-enemy][data-engaged] {
+  opacity: var(--engaged-enemy-opacity);
+}
+
+/* The line that sets the enemies engaged with no one apart from the pawns before them. */
+#map svg [data-separator] {
+  stroke: var(--color-card-text);
+  stroke-width: var(--border-width);
+  opacity: var(--engaged-enemy-opacity);
+}
+
+/* The damage badge on an enemy's rim, red like the printed damage tokens and ringed like a pawn. */
+#map svg [data-marker='damage'] circle {
+  fill: var(--color-health);
   stroke: var(--color-parchment);
   stroke-width: var(--border-width);
 }
 
-#map svg [data-marker] text {
-  font-size: var(--card-badge-size);
-  font-weight: bold;
-}
-
-#map svg [data-marker='damage'] circle {
-  fill: var(--color-health);
-}
-
 #map svg [data-marker='damage'] text {
   fill: var(--header-token-text);
+  font-size: var(--card-badge-size);
+  font-weight: bold;
 }
 
 /* An attached card peeks out at the tile's edge in the treachery frame colour. */
