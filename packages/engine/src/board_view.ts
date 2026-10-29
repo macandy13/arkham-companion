@@ -19,6 +19,7 @@ import {
   type CardType,
   type EngineContext,
   type LocationSymbol,
+  type ScaledValue,
   type Trait,
 } from './cards';
 import { optionName } from './describe_decision';
@@ -185,6 +186,11 @@ export type LocationView = LocationViewBase &
         revealed: true;
         /** Its shroud now, constant abilities included (`effectiveValue`). */
         shroud: number;
+        /**
+         * The clue value its revealed side prints (`CardStats.clues`), "2 per investigator", which
+         * the card draws with the clues left (`clues`) on it.
+         */
+        printedClues: ScaledValue;
         /**
          * The action abilities its revealed side prints ("[action] Resign."), whoever may take
          * them, in printed order, for drawing on the card; what the turn investigator may take
@@ -976,9 +982,12 @@ function enemyView(ctx: EngineContext, state: GameState, enemy: CardInstance): E
   };
 }
 
+/** The clue value of a location whose card data prints none, so every revealed side has one. */
+const NO_CLUES: ScaledValue = { fixed: 0, perInvestigator: 0 };
+
 function locationView(ctx: EngineContext, state: GameState, location: CardInstance): LocationView {
   const present = state.investigators.filter((inv) => inv.locationId === location.id);
-  const { imageSrc, backImageSrc, actions, symbol } = cardStats(ctx.cards, location.code);
+  const { imageSrc, backImageSrc, actions, symbol, clues } = cardStats(ctx.cards, location.code);
   const image = location.faceUp ? imageSrc : backImageSrc;
   return {
     id: location.id,
@@ -990,6 +999,7 @@ function locationView(ctx: EngineContext, state: GameState, location: CardInstan
       ? {
           revealed: true as const,
           shroud: effectiveValue(ctx, state, location, 'shroud'),
+          printedClues: clues ?? NO_CLUES,
           ...listIfAny('printedActions', printedActions(actions ?? [])),
         }
       : { revealed: false as const }),

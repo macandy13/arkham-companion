@@ -331,6 +331,7 @@ describe('locations', () => {
         map: mapId('main'),
         revealed: true,
         shroud: 3,
+        printedClues: { fixed: 2, perInvestigator: 0 },
         clues: 2,
         investigators: [alice, bob],
         cards: ['ghoul', 'old_key'],
@@ -373,6 +374,26 @@ describe('locations', () => {
 
       expect(boardView(context, state).location(parlor)).not.toHaveProperty('printedActions');
     });
+  });
+
+  it.each([
+    {
+      printed: 'a fixed clue value',
+      clues: fixed(3),
+      printedClues: { fixed: 3, perInvestigator: 0 },
+    },
+    {
+      printed: 'a clue value per investigator',
+      clues: perInvestigator(2),
+      printedClues: { fixed: 0, perInvestigator: 2 },
+    },
+    { printed: 'no clue value', clues: undefined, printedClues: { fixed: 0, perInvestigator: 0 } },
+  ])('reads $printed on the revealed side of a location', ({ clues, printedClues }) => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study', clues && { clues }), { revealed: true })
+      .start();
+
+    expect(boardView(context, state).location(study)).toMatchObject({ printedClues });
   });
 
   it('reads the doom on a location and a shroud that its attachments raise', () => {
