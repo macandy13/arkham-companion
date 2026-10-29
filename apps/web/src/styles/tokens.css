@@ -93,7 +93,8 @@
    * unrevealed side) with its darker settings and its pale ornament line, the name plate's paper
    * and the page's lighter one, each with the shade it takes towards its edge, the ink, the set
    * medallion and its type plate, the connection sockets, the shroud and clue discs and the dark
-   * footer strip. The same in both playmat themes, like printed cards.
+   * footer strip, and the beads on a treachery frame. The same in both playmat themes, like
+   * printed cards.
    */
   --color-face-frame: #4b3f2f;
   --color-face-frame-back: #3c5638;
@@ -112,6 +113,7 @@
   --color-face-shroud: #16181a;
   --color-face-clue: #e9e2cc;
   --color-face-footer: #1a1410;
+  --color-face-bead: #d9d2bb;
   /*
    * The ornament lines (the scrolls on enemy and treachery frames: a dark outline, the pale body,
    * a fine highlight), the printed heart and brain with their pale coronary lines, and an enemy's

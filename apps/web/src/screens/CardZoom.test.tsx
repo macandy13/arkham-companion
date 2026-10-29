@@ -13,7 +13,7 @@ describe('CardZoom', () => {
   });
   afterEach(cleanup);
 
-  it('reads a card without a picture from its name, type and traits', () => {
+  it('reads a treachery without a picture from its name, type and traits', () => {
     const plainCurse: CardFaceView = {
       id: instanceId('plain_curse'),
       name: cardName('plain_curse'),
@@ -30,7 +30,30 @@ describe('CardZoom', () => {
     expect(screen.queryByRole('button', { name: 'Turn it over' })).toBeNull();
   });
 
-  it('shows the picture of the front once it has loaded, and turns over to the back', () => {
+  it("draws a treachery's front as its card, its art shown once the picture has loaded", () => {
+    const picturedCurse: CardFaceView = {
+      id: instanceId('pictured_curse'),
+      name: cardName('pictured_curse'),
+      type: 'treachery',
+      traits: [trait('Curse')],
+      image: cardImagePath('/bundles/cards/curse_front.png'),
+    };
+    render(<CardZoom card={picturedCurse} onClose={() => {}} />);
+    // The card and its art are drawings without roles to find them by.
+    const card = screen.getByRole('dialog').querySelector('svg[data-card="treachery"]');
+    const art = card?.querySelector('image');
+    if (!card || !art) throw new Error('the curse is drawn without its art');
+    const shownBeforeLoad = card.hasAttribute('data-picture');
+
+    fireEvent.load(art);
+
+    expect(shownBeforeLoad).toBe(false);
+    expect(card.getAttribute('data-picture')).toBe('shown');
+    expect(art.getAttribute('href')).toBe('https://arkhamdb.com/bundles/cards/curse_front.png');
+    expect(screen.getByText('Curse.')).toBeTruthy();
+  });
+
+  it('turns over to the picture of the back, which shows once it has loaded', () => {
     const twoSidedCurse: CardFaceView = {
       id: instanceId('two_sided_curse'),
       name: cardName('two_sided_curse'),
@@ -40,16 +63,15 @@ describe('CardZoom', () => {
       backImage: cardImagePath('/bundles/cards/curse_back.png'),
     };
     render(<CardZoom card={twoSidedCurse} onClose={() => {}} />);
-    const front = screen.getByRole('img', { name: 'The front of two_sided_curse' });
-    fireEvent.load(front);
-    const shownAfterLoad = front.closest('article')?.getAttribute('data-picture');
 
     fireEvent.click(screen.getByRole('button', { name: 'Turn it over' }));
 
     const back = screen.getByRole('img', { name: 'The back of two_sided_curse' });
-    expect(shownAfterLoad).toBe('shown');
+    const shownBeforeLoad = back.closest('article')?.hasAttribute('data-picture');
+    fireEvent.load(back);
     expect(back.getAttribute('src')).toBe('https://arkhamdb.com/bundles/cards/curse_back.png');
-    expect(back.closest('article')?.hasAttribute('data-picture')).toBe(false);
+    expect(shownBeforeLoad).toBe(false);
+    expect(back.closest('article')?.getAttribute('data-picture')).toBe('shown');
     expect(screen.getByRole('button', { name: 'Turn it back' })).toBeTruthy();
   });
 

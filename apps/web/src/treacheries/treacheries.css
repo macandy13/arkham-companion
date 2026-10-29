@@ -1,0 +1,113 @@
+/*
+ * The treachery card (TreacheryCard) in the card theme's colours, in scan units: the art's hatch
+ * until the picture has loaded, the stone frame around the keyhole window with its pale rule and
+ * dark setting, the bead chains on their thread, the volutes (card_face.css), the plates and rules
+ * on the frame's foot, the dark band with its beads, the page shaded towards its edges, its dark
+ * star corners, the name in the display font, the traits in bold italics and the footer strip.
+ */
+#board svg[data-card='treachery'] {
+  width: var(--layout-zoom-card-width);
+  max-width: 100%;
+  filter: var(--piece-shadow);
+}
+
+#board svg[data-card='treachery'] radialGradient stop:first-child {
+  stop-color: var(--color-face-page);
+}
+
+#board svg[data-card='treachery'] radialGradient stop:last-child {
+  stop-color: var(--color-face-page-shade);
+}
+
+#board svg[data-card='treachery'] pattern rect {
+  fill: var(--color-card-face);
+}
+
+#board svg[data-card='treachery'] pattern path {
+  stroke: var(--color-card-line);
+  stroke-width: var(--face-rule-width);
+}
+
+#board svg[data-card='treachery'] [data-part='stone'] {
+  fill: var(--color-face-frame);
+  fill-rule: evenodd;
+}
+
+#board
+  svg[data-card='treachery']
+  :is(
+    [data-part='window-rule'],
+    [data-part='window-setting'],
+    [data-part='thread'],
+    [data-part='ornament-rule'],
+    [data-part='edge']
+  ) {
+  fill: none;
+}
+
+#board svg[data-card='treachery'] [data-part='window-rule'] {
+  stroke: var(--color-face-ornament);
+  stroke-width: var(--face-setting-width);
+}
+
+#board svg[data-card='treachery'] :is([data-part='window-setting'], [data-part='thread']) {
+  stroke: var(--color-face-setting);
+  stroke-width: var(--card-gilt-line-width);
+}
+
+#board svg[data-card='treachery'] [data-part='beads'] {
+  fill: var(--color-face-bead);
+}
+
+#board svg[data-card='treachery'] [data-part='ornament-rule'] {
+  stroke: var(--color-face-ornament);
+  stroke-width: var(--face-symbol-line-width);
+}
+
+#board svg[data-card='treachery'] :is([data-part='band'], [data-part='corner']) {
+  fill: var(--color-face-setting);
+}
+
+#board svg[data-card='treachery'] [data-part='corner-star'] {
+  fill: var(--color-face-ornament);
+}
+
+#board svg[data-card='treachery'] [data-part='footer'] {
+  fill: var(--color-face-footer);
+}
+
+#board svg[data-card='treachery'] [data-part='edge'] {
+  stroke: var(--color-face-setting);
+  stroke-width: var(--card-border-width);
+}
+
+#board svg[data-card='treachery'] > text {
+  fill: var(--color-face-ink);
+  font-family: var(--font-family-display);
+  font-size: var(--face-name-size);
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+#board svg[data-card='treachery'] [data-part='traits'] {
+  margin: 0;
+  color: var(--color-face-ink);
+  font-size: var(--face-traits-size);
+  font-style: italic;
+  font-weight: bold;
+  line-height: var(--face-text-line-height);
+  text-align: center;
+}
+
+/*
+ * The picture shows once it has loaded: its art in the window under the face in the Exact theme,
+ * the whole card over the face in the card pictures theme (`data-card-theme` on the document).
+ */
+#board svg[data-card='treachery']:not([data-picture]) image,
+#board svg[data-card='treachery'] > image {
+  visibility: hidden;
+}
+
+:root[data-card-theme='pictures'] #board svg[data-card='treachery'][data-picture] > image {
+  visibility: visible;
+}
