@@ -17,7 +17,7 @@ import {
 } from '@arkham/engine';
 import type { TFunction } from 'i18next';
 import { initI18n } from '../i18n';
-import { gameLog, newestFirst, type LogStep } from './gameLog';
+import { gameLog, logSections, type LogStep } from './gameLog';
 
 const study = instanceId('study');
 const hallway = instanceId('hallway');
@@ -235,7 +235,7 @@ describe('gameLog', () => {
   });
 });
 
-describe('newestFirst', () => {
+describe('logSections', () => {
   /** A step of `round` and `phase` with one line, `text`. */
   const step = (id: string, round: number, phase: Phase, text: string): LogStep => ({
     id,
@@ -245,14 +245,14 @@ describe('newestFirst', () => {
     later: 0,
   });
 
-  it('puts the newest round and phase first, its newest step leading', () => {
+  it('cuts the steps into rounds and phases, in the order played', () => {
     const doom = step('doom', 2, 'mythos', '1 doom on the agenda');
     const draw = step('draw', 2, 'mythos', 'Roland Banks draws Ghoul');
     const turn = step('turn', 2, 'investigation', "Roland Banks's turn begins");
 
-    expect(newestFirst([doom, draw, turn])).toEqual([
+    expect(logSections([doom, draw, turn])).toEqual([
+      { round: 2, phase: 'mythos', steps: [doom, draw] },
       { round: 2, phase: 'investigation', steps: [turn] },
-      { round: 2, phase: 'mythos', steps: [draw, doom] },
     ]);
   });
 });

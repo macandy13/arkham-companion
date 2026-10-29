@@ -24,7 +24,7 @@ describe('GameLogDialog', () => {
     .withInvestigator(roland, { name: 'Roland Banks', locationId: study })
     .withTurnOf(roland);
 
-  it('heads the steps by round and phase, the newest first, each with whose turn it was', () => {
+  it('heads the steps by round and phase in the order played, each with whose turn it was', () => {
     const table = PlayTable.start(rolandsTurn);
     table.takeDamage(byName('Roland Banks'), 2);
     table.endTurn(byName('Roland Banks'));
@@ -42,20 +42,20 @@ describe('GameLogDialog', () => {
       within(log)
         .getAllByRole('heading', { level: 3 })
         .map((h) => h.textContent),
-    ).toEqual(['Round 1 · Investigation', 'Setup']);
+    ).toEqual(['Setup', 'Round 1 · Investigation']);
     const investigation = within(log).getByRole('listitem', { name: 'Round 1 · Investigation' });
     const steps = [...investigation.querySelectorAll('ol > li')];
     expect(steps.map((step) => step.querySelector('p')?.textContent)).toEqual([
-      'Roland Banks',
-      'Roland Banks',
-      'Roland Banks',
       undefined,
+      'Roland Banks',
+      'Roland Banks',
+      'Roland Banks',
     ]);
     expect(steps.map((step) => step.querySelector('ul')?.textContent)).toEqual([
-      "Roland Banks's turn ends",
-      'Roland Banks takes 2 damage',
-      "Roland Banks's turn begins",
       'Investigation phase begins',
+      "Roland Banks's turn begins",
+      'Roland Banks takes 2 damage',
+      "Roland Banks's turn ends",
     ]);
   });
 
