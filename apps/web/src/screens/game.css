@@ -730,13 +730,13 @@
 }
 
 /*
- * On a phone held upright an enemy's details or a zoomed card fill the screen (M3.14g, like the
- * location mode), without the frame and the dimmed board around them, the × at the top left where
- * the detail view keeps its own. `[open]` outweighs the dialogs' own rules (enemies.css,
- * card_zoom.css).
+ * On a phone held upright an enemy's details, a zoomed card or the game log fill the screen
+ * (M3.14g, like the location mode), without the frame and the dimmed board around them, the × at
+ * the top left where the detail view keeps its own. `[open]` outweighs the dialogs' own rules
+ * (enemies.css, card_zoom.css, game_log.css).
  */
 @media (orientation: portrait) and (max-width: 40rem) {
-  #board dialog:is([data-dialog='enemy'], [data-dialog='card-zoom'])[open] {
+  #board dialog:is([data-dialog='enemy'], [data-dialog='card-zoom'], [data-dialog='log'])[open] {
     box-sizing: border-box;
     justify-content: center;
     width: 100%;
@@ -757,6 +757,11 @@
     top: calc(var(--space-2) + var(--safe-top));
     right: auto;
     left: calc(var(--space-2) + var(--safe-left));
+  }
+
+  /* The log's × sits in its title row, so its top keeps no room for it. */
+  #board dialog[data-dialog='log'][open] {
+    padding-block-start: calc(var(--space-2) + var(--safe-top));
   }
 }
 
