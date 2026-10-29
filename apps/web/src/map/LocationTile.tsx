@@ -10,7 +10,7 @@ import type {
   PrintedActionView,
   ScaledValue,
 } from '@arkham/engine';
-import { LOCATION_ART, PORTRAIT_SCAN, portraitArtViewBox } from '../catalog/cardArt';
+import { LOCATION_ART, PORTRAIT_SCAN, artViewBox } from '../catalog/cardArt';
 import {
   CardFaceCorners,
   CountCircle,
@@ -115,7 +115,7 @@ export function LocationTile({
         <>
           <svg
             {...ART_WINDOW}
-            viewBox={portraitArtViewBox(LOCATION_ART)}
+            viewBox={artViewBox(LOCATION_ART)}
             preserveAspectRatio="xMidYMid slice"
           >
             <image

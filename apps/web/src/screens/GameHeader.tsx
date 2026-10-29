@@ -6,6 +6,7 @@ import { useCardPicture } from '../catalog/cardImages';
 import { EncounterPiles, HeaderPile, type PileProps } from '../encounter/EncounterPiles';
 import type { AppState, OpenGame } from '../state/appStore';
 import { CardActions, cardActionsOn } from './ActionRow';
+import { BookFace } from './BookFace';
 import { useCluePayment } from './CluePaymentDialog';
 import { Token } from './Token';
 import type { HeaderCardKind } from './useDetailView';
@@ -166,6 +167,7 @@ function AgendaStatus({
         kind="agenda"
         name={agenda.name}
         image={agenda.image}
+        threshold={agenda.threshold}
         onOpen={full ? undefined : () => setZoomed(true)}
       >
         {tokenAndPlate}
@@ -176,6 +178,7 @@ function AgendaStatus({
           kind="agenda"
           name={agenda.name}
           image={agenda.image}
+          threshold={agenda.threshold}
           actionRow={actionRow}
           onClose={close}
         >
@@ -282,6 +285,7 @@ function ActStatus({
         kind="act"
         name={act.name}
         image={act.image}
+        threshold={advance?.threshold}
         onOpen={full ? undefined : () => setZoomed(true)}
       >
         {tokenAndPlate()}
@@ -292,6 +296,7 @@ function ActStatus({
           kind="act"
           name={act.name}
           image={act.image}
+          threshold={advance?.threshold}
           actionRow={actionRow}
           onClose={close}
         >
@@ -341,8 +346,8 @@ function HeaderSlot({
 }
 
 /**
- * The landscape card of the agenda or act (`kind`) in the header: its name band and, as
- * `children`, its token and plate. A tap on the card, or on its name, which is a button for the
+ * The landscape card of the agenda or act (`kind`) in the header: its face printing `threshold`,
+ * its name and, as `children`, its token and plate. A tap on the card, or on its name, which is a button for the
  * keyboard, calls `onOpen`; a tap on the plate's buttons only does what the button says. Without
  * `onOpen` (the card shown full) the name is plain text and a tap does nothing.
  */
@@ -350,12 +355,14 @@ function HeaderCard({
   kind,
   name,
   image,
+  threshold,
   onOpen,
   children,
 }: {
   kind: 'agenda' | 'act';
   name: CardName;
   image: CardImagePath | undefined;
+  threshold: number | undefined;
   onOpen: (() => void) | undefined;
   children: ReactNode;
 }) {
@@ -363,6 +370,7 @@ function HeaderCard({
     <CardFace
       kind={kind}
       image={image}
+      threshold={threshold}
       onClick={
         onOpen &&
         ((event) => {
@@ -396,6 +404,7 @@ function CardDetails({
   kind,
   name,
   image,
+  threshold,
   actionRow,
   onClose,
   children,
@@ -403,6 +412,7 @@ function CardDetails({
   kind: 'agenda' | 'act';
   name: CardName;
   image: CardImagePath | undefined;
+  threshold: number | undefined;
   actionRow: ReactNode;
   onClose: () => void;
   children: ReactNode;
@@ -416,7 +426,7 @@ function CardDetails({
   return (
     <dialog ref={dialog} aria-labelledby={titleId} onCancel={onClose} data-dialog="card">
       <button type="button" data-icon="close" aria-label={t('header.close')} onClick={onClose} />
-      <CardFace kind={kind} image={image}>
+      <CardFace kind={kind} image={image} threshold={threshold}>
         <h2 id={titleId}>{name}</h2>
         {children}
       </CardFace>
@@ -426,25 +436,30 @@ function CardDetails({
 }
 
 /**
- * The face of the agenda or act (`kind`), holding its name band, token and plate (`children`).
- * When its side has a picture (`image`), the picture fills the card once it has loaded
- * (`data-picture`), and the stylesheet hides the name band the picture prints; the token and
- * plate stay, since their count and buttons are live.
+ * The face of the agenda or act (`kind`), holding its name, token and plate (`children`): in the
+ * Exact card theme our drawing of the printed card (`BookFace`) with its `threshold` on the disc,
+ * the art cut from its picture (`image`) once it has loaded (`data-picture`), the name on the
+ * page and the token as the count on the disc. In the card pictures theme the whole picture lies
+ * over the drawing once loaded, and the stylesheet hides the name the picture prints; the token
+ * and plate stay, since their count and buttons are live.
  */
 function CardFace({
   kind,
   image,
+  threshold,
   onClick,
   children,
 }: {
   kind: 'agenda' | 'act';
   image: CardImagePath | undefined;
+  threshold: number | undefined;
   onClick?: (event: MouseEvent<HTMLDivElement>) => void;
   children: ReactNode;
 }) {
   const picture = useCardPicture(image);
   return (
     <div data-card={kind} data-picture={picture?.shown ? 'shown' : undefined} onClick={onClick}>
+      <BookFace kind={kind} picture={picture} threshold={threshold} />
       {picture && (
         <img src={picture.url} alt="" onLoad={picture.onLoad} onError={picture.onError} />
       )}

@@ -1,0 +1,120 @@
+/*
+ * An agenda's or act's face (BookFace) in the card theme's colours, in scan units: the hatched art
+ * area until the picture has loaded, the dark cover, the page edges in two shades, the top page
+ * shaded towards its edges with a faint diamond, the title's scrolls (card_face.css), brackets and
+ * set mark in ink, the act's magnifier handle, the threshold disc in the card type's dark colour
+ * with its white number, and the footer strip.
+ */
+#board [data-card] > svg[data-face] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#board svg[data-face] radialGradient stop:first-child {
+  stop-color: var(--color-face-page);
+}
+
+#board svg[data-face] radialGradient stop:last-child {
+  stop-color: var(--color-face-page-shade);
+}
+
+#board svg[data-face] [data-part='art'] {
+  fill: var(--color-card-face);
+}
+
+#board [data-card]:not([data-picture]) > svg[data-face] image {
+  visibility: hidden;
+}
+
+#board svg[data-face] [data-part='cover'] {
+  fill: var(--color-face-cover);
+}
+
+#board
+  svg[data-face]
+  :is([data-part='page-edge'], [data-part='page-edge-shade'], [data-part='page']) {
+  stroke: var(--color-face-setting);
+  stroke-width: var(--card-gilt-line-width);
+}
+
+#board svg[data-face] [data-part='page-edge'] {
+  fill: var(--color-face-page-edge-shade);
+}
+
+#board svg[data-face] [data-part='page-edge-shade'] {
+  fill: var(--color-face-page-edge);
+}
+
+#board svg[data-face] [data-part='watermark'] {
+  fill: none;
+  stroke: var(--color-face-ink);
+  stroke-width: var(--face-lens-setting-width);
+  opacity: var(--face-watermark-opacity);
+}
+
+#board svg[data-face] :is([data-part='ink-line'], [data-part='fine-line']) {
+  fill: none;
+  stroke: var(--color-face-ink);
+}
+
+#board svg[data-face] [data-part='ink-line'] {
+  stroke-width: var(--face-disc-line-width);
+}
+
+#board svg[data-face] [data-part='fine-line'] {
+  stroke-width: var(--card-gilt-line-width);
+}
+
+#board svg[data-face] [data-part='set-mark'] {
+  fill: none;
+  stroke: var(--color-face-ink);
+  stroke-width: var(--face-symbol-line-width);
+}
+
+#board svg[data-face] [data-part='handle'] path {
+  stroke-linecap: round;
+}
+
+#board svg[data-face] [data-part='handle'] path:first-child {
+  stroke: var(--color-face-setting);
+  stroke-width: var(--face-handle-width);
+}
+
+#board svg[data-face] [data-part='handle'] path:last-child {
+  stroke: var(--color-face-ornament);
+  stroke-width: var(--face-handle-core-width);
+}
+
+#board svg[data-face] [data-part='disc-setting'] {
+  fill: var(--color-face-setting);
+}
+
+#board svg[data-face] [data-part='disc'] {
+  stroke: var(--color-face-ornament);
+  stroke-width: var(--face-disc-line-width);
+}
+
+#board svg[data-face] [data-part='disc'][data-kind='agenda'] {
+  fill: var(--color-face-agenda-disc);
+}
+
+#board svg[data-face] [data-part='disc'][data-kind='act'] {
+  fill: var(--color-face-act-disc);
+}
+
+/* The display face's figures read as letters this small, so the threshold takes the UI face's lining ones. */
+#board svg[data-face] text {
+  fill: var(--color-face-stat);
+  font-family: var(--font-family);
+  font-size: var(--face-threshold-size);
+  font-weight: bold;
+  font-variant-numeric: lining-nums;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+#board svg[data-face] [data-part='footer'] {
+  fill: var(--color-face-footer);
+}

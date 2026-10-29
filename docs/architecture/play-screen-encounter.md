@@ -1,13 +1,16 @@
 # Play screen: encounter piles
 
 The [game screen](../../apps/web/src/screens/GameScreen.tsx) has a header with the encounter deck, agenda, act, scenario and victory display laid out as cards, centred, each under the playmat's label.
-Big round tokens show:
+Tokens show:
 
-- the agenda's doom,
-- the act's clues (the ones the investigators hold against its cost, or for an act that advances itself the ones on it, `ActAdvance`)
-- and the cards left in the encounter deck ("2 of 7").
+- the agenda's doom and the act's clues (the ones the investigators hold against its cost, or for an act that advances itself the ones on it, `ActAdvance`), each as a small count on the card's threshold disc,
+- and the cards left in the encounter deck, a big round token.
 
 ## Agenda and act
+
+The agenda and act are drawn as the printed cards in the Exact card theme ([`BookFace`](../../apps/web/src/screens/BookFace.tsx), in landscape scan units, `BOOK_FACE`): the art cut from the picture (`AGENDA_ART`, `ACT_ART`) beside an open book with its page edges and title scrolls, and the threshold on a disc at the page's corner (the act's mirrored, with a magnifier handle).
+The header card lays its HTML over that drawing in fractions of the card (`--book-*` tokens): the name on the page, the token as the small count circle on the disc's lower right, and the plate with its buttons at the page's foot.
+In the card pictures theme the whole picture lies over the drawing, and the count stays on the printed threshold.
 
 A tap on the agenda or act (or its name, a button for the keyboard) opens it as a full card in a dialog ([`CardDetails`](../../apps/web/src/screens/GameHeader.tsx)), the same face with its picture large and its buttons at full size, and under it the card actions it offers the investigator whose turn it is (`CardActions`, as in the details windows); advancing or taking one closes it, since a decision may follow.
 In the phone's [detail view](play-screen.md#detail-view) the agenda and act are shown full instead (`GameHeader` `full`): their card actions sit under them and a tap opens no dialog.

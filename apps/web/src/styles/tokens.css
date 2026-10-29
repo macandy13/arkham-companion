@@ -114,6 +114,12 @@
   --color-face-clue: #e9e2cc;
   --color-face-footer: #1a1410;
   --color-face-bead: #d9d2bb;
+  /* An agenda's and act's open book: its dark cover, its page edges, the threshold discs. */
+  --color-face-cover: #2a1f16;
+  --color-face-page-edge: #d9cdb0;
+  --color-face-page-edge-shade: #b9ab8e;
+  --color-face-agenda-disc: #5c4630;
+  --color-face-act-disc: #4a5236;
   /*
    * The ornament lines (the scrolls on enemy and treachery frames: a dark outline, the pale body,
    * a fine highlight), the printed heart and brain with their pale coronary lines, and an enemy's
@@ -252,6 +258,10 @@
   --face-text-size: 13px;
   --face-text-line-height: 1.3;
   --face-traits-size: 11.5px;
+  /* An agenda's and act's book in scan units (BookFace): the handle on the act's disc, its pale core, and the threshold's number. */
+  --face-handle-width: 8px;
+  --face-handle-core-width: 4px;
+  --face-threshold-size: 32px;
   /* The count on the damage badge on an enemy's rim. */
   --card-badge-size: 8px;
   /* The action icons in a location's text. */
@@ -275,6 +285,23 @@
   --header-token-rim: var(--color-card-text);
   --header-token-text: #fff;
   --header-token-shadow: 0 2px 6px rgb(0 0 0 / 0.45);
+  /* The count on an agenda's or act's threshold disc, a small circle like the map's count circles. */
+  --header-count-size: 1rem;
+  /*
+   * Where the HTML on an agenda's face sits, in fractions of the card (BookFace `BOOK_FACE`): the
+   * name's top and its insets from the page's art side and outer edge, the count's centre on the
+   * disc's lower right (further right on the act, whose disc is the agenda's mirrored), the plate's
+   * distance from the foot and the edge, and its width.
+   */
+  --book-name-top: 13%;
+  --book-page-inset: 43%;
+  --book-edge-inset: 2%;
+  --book-count-x: 56%;
+  --book-count-y: 92%;
+  --book-act-count-x: 58%;
+  --book-plate-bottom: 8%;
+  --book-plate-inset: 3%;
+  --book-plate-width: 40%;
   /* The art window on the investigator card in each panel of the investigator bar. */
   --layout-investigator-art-width: 7.5rem;
   --investigator-art-ratio: 4 / 3;
@@ -427,6 +454,7 @@
     --layout-header-card-height: 4.75rem;
     --header-token-size: 2.25rem;
     --header-token-border-width: 2px;
+    --header-count-size: 0.875rem;
     --font-size-token-count: 1rem;
     --skill-plate-icon-size: 0.875rem;
     --stat-token-size: 1.75rem;
