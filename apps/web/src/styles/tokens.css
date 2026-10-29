@@ -176,6 +176,8 @@
   --card-type-size: 6.5px;
   /* The numbers on a tile's shroud, clue and doom tokens. */
   --card-token-size: 13px;
+  /* The count on the damage badge on an enemy's rim. */
+  --card-badge-size: 8px;
   /*
    * An enemy card's text in SVG user units (EnemyCard): the numbers on its shields, the "of 5"
    * under its health, the icon under fight and evade, its traits, keywords and victory points,
@@ -267,6 +269,8 @@
   --resolving-card-height: 14rem;
   /* A dragged map piece's copy, see-through so the tile under it stays readable. */
   --map-ghost-opacity: 0.6;
+  /* An enemy on the map engaged with an investigator, shown in full in their threat area. */
+  --engaged-enemy-opacity: 0.5;
   /* A token with nothing on it (a location's clues once found) fades, so it reads as empty. */
   --token-empty-opacity: 0.45;
   /* The game's action arrow: one per action left on the turn row. */

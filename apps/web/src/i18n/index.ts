@@ -502,8 +502,8 @@ export const resources = {
         uiLanguage: 'App language',
         theme: 'Theme',
         themes: { dark: 'Dark', light: 'Light' },
-        cardLook: 'Card pictures',
-        cardLooks: { frames: 'Frames with card art', faces: 'Full card faces' },
+        cardTheme: 'Card style',
+        cardThemes: { exact: 'Exact', pictures: 'Card pictures' },
         about: 'About',
         unofficial:
           'Arkham Companion is an unofficial fan project. It is not produced, endorsed or supported by Fantasy Flight Games.',
@@ -1213,8 +1213,8 @@ export const resources = {
         uiLanguage: 'App-Sprache',
         theme: 'Design',
         themes: { dark: 'Dunkel', light: 'Hell' },
-        cardLook: 'Kartenbilder',
-        cardLooks: { frames: 'Rahmen mit Kartenillustration', faces: 'Ganze Kartenseiten' },
+        cardTheme: 'Kartenstil',
+        cardThemes: { exact: 'Exakt', pictures: 'Kartenbilder' },
         about: 'Über die App',
         unofficial:
           'Arkham Companion ist ein inoffizielles Fanprojekt. Es wird nicht von Fantasy Flight Games hergestellt, unterstützt oder befürwortet.',

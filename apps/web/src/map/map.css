@@ -290,25 +290,29 @@
 }
 
 /*
- * A tile's card picture shows once it has loaded (`data-picture`), in the card look the players
- * chose (`data-card-look` on the document): "frames" (the default) shows the card's art in the
- * art window (the nested svg) under our own name band and tokens; "faces" lays the whole card
+ * A tile's card picture shows once it has loaded (`data-picture`), in the card theme the players
+ * chose (`data-card-theme` on the document): "exact" (the default) shows the card's art in the
+ * art window (the nested svg) under our own name band and tokens; "pictures" lays the whole card
  * (the image) over the face, and the name band, shroud token and printed actions give way to the
  * ones the picture prints. They stay transparent rather than removed, so they keep naming the
  * tile's shroud to assistive technology.
  */
 #map svg [data-card]:not([data-picture]) > :is(image, svg),
 #map svg [data-card] > image,
-:root[data-card-look='faces'] #map svg [data-card] > svg {
+:root[data-card-theme='pictures'] #map svg [data-card] > svg {
   visibility: hidden;
 }
 
-:root[data-card-look='faces'] #map svg [data-picture] > image {
+:root[data-card-theme='pictures'] #map svg [data-picture] > image {
   visibility: visible;
 }
 
-:root[data-card-look='faces'] #map svg [data-picture] > :is(text, [data-ornament], foreignObject),
-:root[data-card-look='faces'] #map svg [data-picture] > [data-token='shroud'] {
+:root[data-card-theme='pictures']
+  #map
+  svg
+  [data-picture]
+  > :is(text, [data-ornament], foreignObject),
+:root[data-card-theme='pictures'] #map svg [data-picture] > [data-token='shroud'] {
   opacity: 0;
 }
 
@@ -350,14 +354,46 @@
   fill: var(--color-accent-text);
 }
 
-#map svg [data-enemy] circle {
+#map svg [data-enemy] > circle {
   fill: var(--color-card-face);
   stroke: var(--color-doom);
   stroke-width: var(--piece-ring-width);
 }
 
-#map svg [data-enemy] circle + text {
+#map svg [data-enemy] > circle + text {
   fill: var(--color-card-text);
+}
+
+/* An exhausted enemy's initial lies on its side, like the exhausted card turned sideways. */
+#map svg [data-enemy][data-exhausted] > text {
+  transform: rotate(90deg);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* An enemy engaged with an investigator stands faded after their pawn: the threat area shows it. */
+#map svg [data-enemy][data-engaged] {
+  opacity: var(--engaged-enemy-opacity);
+}
+
+/* The line that sets the enemies engaged with no one apart from the pawns before them. */
+#map svg [data-separator] {
+  stroke: var(--color-card-text);
+  stroke-width: var(--border-width);
+  opacity: var(--engaged-enemy-opacity);
+}
+
+/* The damage badge on an enemy's rim, red like the printed damage tokens and ringed like a pawn. */
+#map svg [data-marker='damage'] circle {
+  fill: var(--color-health);
+  stroke: var(--color-parchment);
+  stroke-width: var(--border-width);
+}
+
+#map svg [data-marker='damage'] text {
+  fill: var(--header-token-text);
+  font-size: var(--card-badge-size);
+  font-weight: bold;
 }
 
 /* An attached card peeks out at the tile's edge in the treachery frame colour. */
