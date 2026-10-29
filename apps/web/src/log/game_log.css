@@ -1,7 +1,7 @@
 /*
- * The game log (GameLogDialog): the title with the × beside it, then the steps as a list that
- * scrolls on its own, a rule between steps, so the dialog stays within the height a modal dialog
- * gets by default.
+ * The game log (GameLogDialog): the title with the × beside it, then the rounds and phases as a
+ * list that scrolls on its own, so the dialog stays within the height a modal dialog gets by
+ * default.
  */
 #board dialog[data-dialog='log'][open] {
   display: grid;
@@ -22,31 +22,69 @@
   mask-image: url('../investigators/icons/close.svg');
 }
 
-#board dialog[data-dialog='log'] ol {
+/* The sections scroll on their own, under the title. */
+#board dialog[data-dialog='log'] > ol {
   grid-column: 1 / -1;
-  margin: 0;
-  padding: 0;
   overflow-y: auto;
-  list-style: none;
 }
 
-#board dialog[data-dialog='log'] ol > li:not(:last-child) {
-  padding-block: var(--space-2);
-  border-block-end: var(--border-width) solid var(--color-border);
-}
-
-#board dialog[data-dialog='log'] ol > li > ul {
+#board dialog[data-dialog='log'] :is(ol, ul) {
   display: grid;
-  gap: var(--space-1);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-/* A line is plain text, not one of the framed list items `#app > main ul > li` gives the home screen. */
-#board dialog[data-dialog='log'] ol > li > ul > li {
-  display: list-item;
+/* Plain list items, not the framed ones `#app > main ul > li` gives the home screen. */
+#board dialog[data-dialog='log'] li {
+  display: block;
   padding: 0;
   border: none;
   background: none;
+}
+
+/* A round and phase heads its steps and stays on top while they scroll under it. */
+#board dialog[data-dialog='log'] h3 {
+  position: sticky;
+  top: 0;
+  margin: 0;
+  padding-block: var(--space-1);
+  border-block-end: var(--border-width) solid var(--color-accent);
+  background: var(--color-background);
+  font-size: var(--font-size-body);
+}
+
+/* A step: whose turn and when on one line, then its lines, a rule before the next step. */
+#board dialog[data-dialog='log'] h3 + ol > li {
+  display: grid;
+  gap: var(--space-1);
+  padding-block: var(--space-2);
+}
+
+#board dialog[data-dialog='log'] h3 + ol > li:not(:last-child) {
+  border-block-end: var(--border-width) solid var(--color-border);
+}
+
+#board dialog[data-dialog='log'] h3 + ol > li > p {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-note);
+}
+
+#board dialog[data-dialog='log'] h3 + ol > li > ul {
+  gap: var(--space-1);
+}
+
+#board dialog[data-dialog='log'] h3 + ol > li > p > time {
+  margin-inline-start: auto;
+}
+
+/* Going back is a small button at the step's end, so the lines stay what the eye reads. */
+#board dialog[data-dialog='log'] h3 + ol > li > button {
+  justify-self: end;
+  min-height: var(--button-compact);
+  font-size: var(--font-size-note);
 }

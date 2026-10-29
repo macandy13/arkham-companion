@@ -98,11 +98,12 @@ A card that goes while it is open (an enemy leaving play) drops its entry a tick
 
 [`gameLog`](../../apps/web/src/log/gameLog.ts) reads the game's stored log as the players would tell it (M3.8):
 
-- one step per undo group (`commandId`), the unit undo takes back, so the log and undo agree on what a step is;
-- each event the players care about becomes one translated line (`log.*` strings), named with the cards and investigators of the state; bookkeeping (phase steps, queues, decisions asked, map layout) has none, and a step without lines is left out;
+- one step (`LogStep`) per undo group (`commandId`), the unit undo takes back, so the log and undo agree on what a step is;
+- each step carries the round and phase it ended in, whose turn it was (the actor) and when it was stored (`GameSession.stepTimes`, from `StoredEvent.timestamp`);
+- each event the players care about becomes one `LogLine`: its event type, its actor (the investigator it names, or the enemy that engaged or attacked) and a translated text (`log.*` strings), named with the cards and investigators of the state; bookkeeping (phase steps, queues, decisions asked, map layout) has none, and a step without lines is left out;
 - a clue discovery is one line, without the location and investigator counters it moved.
 
-The log button opens [`GameLogDialog`](../../apps/web/src/log/GameLogDialog.tsx) over the board: the steps oldest first, a rule between them, scrolled to the newest. It reads `OpenGame.log` (the session's `entries` and the rules that name their cards), so it waits for no step.
+The log button opens [`GameLogDialog`](../../apps/web/src/log/GameLogDialog.tsx) over the board. `newestFirst` orders the steps newest first and cuts them into sections of one round and phase. Each section's heading sticks to the top while its steps scroll under it, so the round, phase and actor are never repeated on every line. A step shows its actor and time above its lines, with a rule between steps. It reads `OpenGame.log` (the session's `entries`, `stepTimes` and the rules that name their cards), so it waits for no step.
 
 Every step but the newest has "Go back here": after a confirm that counts the steps taken back, `GameActions.undoTo` takes back each later step, one undo group at a time (`GameSession.undoTo`, the same `GameStore.undoLast` as Undo), so the game is as it was right after that step. It waits like every other step, and the log offers it neither while a step is queued nor while the players adjust the board.
 

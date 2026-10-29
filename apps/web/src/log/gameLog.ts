@@ -7,21 +7,43 @@ import type {
   InstanceId,
   InvestigatorId,
   InvestigatorStat,
-  LoggedEvent,
+  EventType,
+  Phase,
   PlayerCardCommand,
   SkillTestResolved,
   TokenKind,
 } from '@arkham/engine';
 import { assertNever, runsBy } from '@arkham/util';
+import type { GameLogSource } from '../state/appStore';
+
+/**
+ * One line of the log: what one event did, in words, with the event it tells and who did it (the
+ * investigator it names, or the enemy that engaged or attacked), for a reader that sorts or marks
+ * lines by kind or actor.
+ */
+export interface LogLine {
+  readonly event: EventType;
+  /** The printed name of who did it; absent for what the game does by itself (doom, shuffles). */
+  readonly actor?: string;
+  readonly text: string;
+}
 
 /**
  * One step of the game as the log shows it: the events of one undo group (`LoggedEvent.commandId`,
- * the unit `GameSession.undo` takes back) as readable lines, in the order they happened.
+ * the unit `GameSession.undo` takes back) as readable lines, in the order they happened, with the
+ * round and phase it ended in, whose turn it was and when it was stored.
  */
 export interface LogStep {
   /** The `LoggedEvent.commandId` of the step's undo group, which a jump back names. */
   readonly id: string;
-  readonly lines: readonly string[];
+  /** The round and phase the game is in after the step; a step that starts a phase belongs to it. */
+  readonly round: number;
+  readonly phase: Phase;
+  /** The investigator whose turn the step was taken in (or began); absent outside turns. */
+  readonly actor?: string;
+  /** When the step was stored (epoch ms, `StoredEvent.timestamp`); absent until it is. */
+  readonly timestamp?: number;
+  readonly lines: readonly LogLine[];
   /**
    * How many undo groups came after it, the ones without a line included: what going back to it
    * takes back (`GameSession.undoTo`).
@@ -30,26 +52,65 @@ export interface LogStep {
 }
 
 /**
- * The game log `entries` as steps of readable lines (`eventLines`), oldest first. A step whose
- * events are all bookkeeping has no line and is left out. `state` is the game after `entries`; it
- * names the cards and investigators, which stay in the state once set up.
+ * The game log `entries` as steps (`LogStep`), oldest first. A step whose events are all
+ * bookkeeping has no line and is left out. `state` is the game after `entries`; it names the cards
+ * and investigators, which stay in the state once set up. `stepTimes` holds when each stored step
+ * was stored, by its `commandId`.
  */
 export function gameLog(
   t: TFunction,
   ctx: EngineContext,
   state: GameState,
-  entries: readonly LoggedEvent[],
+  { entries, stepTimes }: Pick<GameLogSource, 'entries' | 'stepTimes'>,
 ): LogStep[] {
+  let round = 0;
+  let phase: Phase = 'setup';
+  let turn: InvestigatorId | undefined;
+  const names = namesIn(ctx, state);
   const runs = runsBy(entries, (entry) => entry.commandId);
   return runs.flatMap(({ key, items }, index) => {
-    const lines = eventLines(
-      t,
-      ctx,
-      state,
-      items.map((entry) => entry.event),
-    );
-    return lines.length > 0 ? [{ id: key, lines, later: runs.length - 1 - index }] : [];
+    const events = items.map((entry) => entry.event);
+    const turnAtStart = turn;
+    for (const event of events) {
+      if (event.type === 'PhaseChanged') ({ round, phase } = event);
+      if (event.type === 'TurnStarted') turn = event.investigatorId;
+      if (event.type === 'TurnEnded') turn = undefined;
+    }
+    const lines = eventLines(t, ctx, state, events);
+    if (lines.length === 0) return [];
+    const actor = turnAtStart ?? turn;
+    const timestamp = stepTimes.get(key);
+    return [
+      {
+        id: key,
+        round,
+        phase,
+        ...(actor === undefined ? {} : { actor: names.investigator(actor) }),
+        ...(timestamp === undefined ? {} : { timestamp }),
+        lines,
+        later: runs.length - 1 - index,
+      },
+    ];
   });
+}
+
+/** Steps of one round and phase, for a heading over them. */
+export interface LogSection {
+  readonly round: number;
+  readonly phase: Phase;
+  readonly steps: readonly LogStep[];
+}
+
+/**
+ * `steps` (oldest first, as `gameLog` lists them) newest first, cut into the runs of one round and
+ * phase, so the newest phase and step lead.
+ */
+export function newestFirst(steps: readonly LogStep[]): LogSection[] {
+  return runsBy([...steps].reverse(), (step) => `${step.round}:${step.phase}`).map(({ items }) => ({
+    round: items[0]?.round ?? 0,
+    phase: items[0]?.phase ?? 'setup',
+    steps: items,
+  }));
 }
 
 /**
@@ -62,16 +123,9 @@ export function eventLines(
   ctx: EngineContext,
   state: GameState,
   events: readonly Event[],
-): string[] {
+): LogLine[] {
   const discoveries = events.flatMap((event) => (event.type === 'CluesDiscovered' ? [event] : []));
-  const names: Names = {
-    card: (id) => {
-      const code = state.cards[id]?.code;
-      // A card the state doesn't know (a log from other data) has no name; its id is all there is.
-      return (code && ctx.cards.get(code)?.name) ?? id;
-    },
-    investigator: (id) => state.investigators.find((inv) => inv.id === id)?.name ?? id,
-  };
+  const names = namesIn(ctx, state);
   return events.flatMap((event) => {
     // A discovery is the only clue change of its step: no rule moves clues while a test resolves.
     const isDiscovery =
@@ -82,9 +136,33 @@ export function eventLines(
         event.stat === 'clues' &&
         discoveries.some((found) => found.investigatorId === event.investigatorId));
     if (isDiscovery) return [];
-    const line = eventLine(t, names, state, event);
-    return line === undefined ? [] : [line];
+    const text = eventLine(t, names, state, event);
+    if (text === undefined) return [];
+    const actor = actorOf(names, event);
+    return [{ event: event.type, ...(actor === undefined ? {} : { actor }), text }];
   });
+}
+
+/** Who did what `event` tells: the enemy that engaged or attacked, else the investigator it names. */
+function actorOf(names: Names, event: Event): string | undefined {
+  if (event.type === 'EnemyEngaged' || event.type === 'EnemyAttacked') {
+    return names.card(event.enemyId);
+  }
+  return 'investigatorId' in event && event.investigatorId !== undefined
+    ? names.investigator(event.investigatorId)
+    : undefined;
+}
+
+/** The printed names of the cards and investigators of `state`. */
+function namesIn(ctx: EngineContext, state: GameState): Names {
+  return {
+    card: (id) => {
+      const code = state.cards[id]?.code;
+      // A card the state doesn't know (a log from other data) has no name; its id is all there is.
+      return (code && ctx.cards.get(code)?.name) ?? id;
+    },
+    investigator: (id) => state.investigators.find((inv) => inv.id === id)?.name ?? id,
+  };
 }
 
 /** Printed names of the cards and investigators an event refers to. */
@@ -176,7 +254,8 @@ function eventLine(t: TFunction, names: Names, state: GameState, event: Event): 
     case 'EnemyDefeated':
       return t('log.enemyDefeated', { enemy: names.card(event.enemyId) });
     case 'PhaseChanged':
-      return t('log.phase', { round: event.round, phase: t(`games.phases.${event.phase}`) });
+      // The round and phase head the steps in it (`LogStep`); the line says only that one began.
+      return t('log.phaseBegins', { phase: t(`games.phases.${event.phase}`) });
     case 'RoundEnded':
       return t('log.roundEnded', { round: event.round });
     case 'TurnStarted':

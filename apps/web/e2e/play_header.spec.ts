@@ -60,10 +60,11 @@ test('play the phases from the header', { tag: '@flow' }, async ({ page }) => {
   await test.step('Read the game log and go back to right after the doom correction', async () => {
     await page.getByRole('button', { name: 'Game log' }).click();
     const log = page.getByRole('dialog', { name: 'Game log' });
-    await expect(log.getByText('Round 1: Investigation phase')).toBeVisible();
+    await expect(log.getByRole('heading', { name: 'Round 1 · Investigation' })).toBeVisible();
     await log
       .getByRole('listitem')
-      .filter({ hasText: "1 doom on What's Going On?!" })
+      // The step, not the Setup section around it.
+      .filter({ hasText: "1 doom on What's Going On?!", hasNot: page.getByRole('heading') })
       .getByRole('button', { name: 'Go back here' })
       .click();
     await page

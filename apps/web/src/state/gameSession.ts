@@ -122,6 +122,7 @@ export class GameSession {
     readonly ctx: ScenarioContext,
     private table: PlayTable,
     private lastSeq: number,
+    private times: Map<string, number>,
   ) {}
 
   private skipped: readonly SkippedEffect[] = [];
@@ -135,8 +136,8 @@ export class GameSession {
 
   /** The game `gameId` from its stored log, played with the rules of `ctx`. */
   static async open(store: GameStore, gameId: GameId, ctx: ScenarioContext): Promise<GameSession> {
-    const { table, lastSeq } = await loadTable(store, gameId, ctx);
-    return new GameSession(store, gameId, ctx, table, lastSeq);
+    const { table, lastSeq, times } = await loadTable(store, gameId, ctx);
+    return new GameSession(store, gameId, ctx, table, lastSeq, times);
   }
 
   /** The state after the last stored step, and while adjusting, after the adjustment's taps. */
@@ -155,6 +156,14 @@ export class GameSession {
    */
   get entries(): readonly LoggedEvent[] {
     return this.table.entries;
+  }
+
+  /**
+   * When each stored step was stored (its first event's `StoredEvent.timestamp`), by `commandId`,
+   * for the game log. A tap while adjusting has none until "Done" stores it.
+   */
+  get stepTimes(): ReadonlyMap<string, number> {
+    return this.times;
   }
 
   /** What the last step played skipped for the players to do by hand; none after an undo. */
@@ -246,6 +255,8 @@ export class GameSession {
         first.commandId,
       );
       this.lastSeq = stored.at(-1)?.seq ?? this.lastSeq;
+      const [firstStored] = stored;
+      if (firstStored) this.times.set(first.commandId, firstStored.timestamp);
     });
     // Only a step that counts replaces them: a refused tap leaves an unread notice in place.
     const events = added.map((entry) => entry.event);
@@ -301,11 +312,11 @@ export class GameSession {
     } catch (error) {
       this.table = PlayTable.resume(this.ctx, before);
       try {
-        ({ table: this.table, lastSeq: this.lastSeq } = await loadTable(
-          this.store,
-          this.gameId,
-          this.ctx,
-        ));
+        ({
+          table: this.table,
+          lastSeq: this.lastSeq,
+          times: this.times,
+        } = await loadTable(this.store, this.gameId, this.ctx));
       } catch (reloadError) {
         console.warn(`Could not reload game ${this.gameId}; showing it as it was.`, reloadError);
       }
@@ -314,15 +325,22 @@ export class GameSession {
   }
 }
 
-/** The table for a stored game and the `seq` its next write expects. */
+/**
+ * The table for a stored game, the `seq` its next write expects and when each of its steps was
+ * stored (`GameSession.stepTimes`).
+ */
 async function loadTable(
   store: GameStore,
   gameId: GameId,
   ctx: ScenarioContext,
-): Promise<{ table: PlayTable; lastSeq: number }> {
+): Promise<{ table: PlayTable; lastSeq: number; times: Map<string, number> }> {
   const stored = await store.loadEvents(gameId);
+  const times = new Map<string, number>();
+  for (const { commandId, timestamp } of stored)
+    if (!times.has(commandId)) times.set(commandId, timestamp);
   return {
     table: PlayTable.resume(ctx, stored),
     lastSeq: stored.at(-1)?.seq ?? 0,
+    times,
   };
 }

@@ -93,15 +93,19 @@ export interface OpenGame {
   spawning?: EncounterCardView;
 }
 
-/** A game's log (`GameSession.entries`) with the rules it is played with (`GameSession.ctx`). */
+/**
+ * A game's log (`GameSession.entries`) with when its steps were stored (`GameSession.stepTimes`)
+ * and the rules it is played with (`GameSession.ctx`).
+ */
 export interface GameLogSource {
   readonly ctx: EngineContext;
   readonly entries: readonly LoggedEvent[];
+  readonly stepTimes: ReadonlyMap<string, number>;
 }
 
 /** The open game's log as `played` holds it now. */
 function logSourceOf(played: GameSession): GameLogSource {
-  return { ctx: played.ctx, entries: played.entries };
+  return { ctx: played.ctx, entries: played.entries, stepTimes: played.stepTimes };
 }
 
 /** Looks a scenario up by id; `findScenario` in the app, a stub in tests. */

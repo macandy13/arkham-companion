@@ -143,6 +143,19 @@ describe('GameSession on The Gathering', () => {
     expect(session.state).toEqual(adjusted);
   });
 
+  it('knows when each step was stored, also after reopening the game', async () => {
+    const { store, gameId } = await storedGame('session-step-times-test');
+    const session = await GameSession.open(store, gameId, ctx);
+    await session.play((table) => table.nextPhase());
+    const step = session.entries.at(-1)?.commandId ?? '';
+    const [stored] = (await store.loadEvents(gameId)).filter((event) => event.commandId === step);
+
+    const reopened = await GameSession.open(store, gameId, ctx);
+
+    expect(session.stepTimes.get(step)).toBe(stored?.timestamp);
+    expect(reopened.stepTimes.get(step)).toBe(stored?.timestamp);
+  });
+
   describe('adjusting the board', () => {
     const alderId = investigatorId('alder');
     // Alder starts with 5 resources and no damage.
