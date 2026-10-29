@@ -55,19 +55,28 @@ function houseOpened(scenario: ScenarioDefinition): PlayTable {
   return table;
 }
 
+/** When the first step of an export with its own steps was stored, and the time between steps. */
+const STEPS_START = Date.UTC(2026, 9, 28, 19, 0);
+const MINUTE = 60_000;
+
 /**
  * The export file of `table`'s game, titled `title`, as the home screen's import reads it. With a
  * `commandId` the whole game is one undo group, so the screen opens with nothing to undo;
  * without, it keeps the table's own steps, as the game log shows them.
  */
 function exportOf(title: string, table: PlayTable, commandId?: string): Buffer {
-  const events = table.entries.map((entry, seq) => ({
-    gameId: gameId('export'),
-    seq: seq + 1,
-    timestamp: seq,
-    commandId: commandId ?? entry.commandId,
-    event: entry.event,
-  }));
+  const steps: string[] = [];
+  const events = table.entries.map((entry, seq) => {
+    if (steps.at(-1) !== entry.commandId) steps.push(entry.commandId);
+    return {
+      gameId: gameId('export'),
+      seq: seq + 1,
+      // A step a minute from 19:00 UTC on a fixed day, so the game log shows plausible times.
+      timestamp: commandId ? seq : STEPS_START + (steps.length - 1) * MINUTE,
+      commandId: commandId ?? entry.commandId,
+      event: entry.event,
+    };
+  });
   return Buffer.from(serialiseGameExport(title, 0, events));
 }
 
