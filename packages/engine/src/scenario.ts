@@ -39,6 +39,14 @@ export interface ScenarioDefinition {
 /** The chaos tokens whose effect each scenario defines on its reference card. */
 export type SymbolToken = Extract<ChaosToken, 'skull' | 'cultist' | 'tablet' | 'elderThing'>;
 
+/** The symbol tokens in the order a reference card prints their rows. */
+export const SYMBOL_TOKENS = [
+  'skull',
+  'cultist',
+  'tablet',
+  'elderThing',
+] as const satisfies readonly SymbolToken[];
+
 /**
  * Side of the scenario reference card: one side covers Easy and Standard, the
  * other Hard and Expert. `pickReferenceSide` picks it for a difficulty.

@@ -48,8 +48,9 @@ Once the scenario has ended, only `ManualAdjust` is accepted ([Command handling]
 
 Hand-entered card data is built with the shared [`card_builders.ts`](../../packages/scenarios/src/card_builders.ts) (`agenda`, `act`, `location`, `enemy`, `treachery`), one builder per card type that takes the printed values and the card's encounter set. A location's connection symbol (`CardStats.symbol`, a `LocationSymbol`) is entered there too, since ArkhamDB's card data has no field for it.
 The app lists playable scenarios in its [scenario catalog](../../apps/web/src/scenarios/scenarioCatalog.ts).
+The reference card holds only numbers and translation keys (`SymbolTokenEffect.effectKey`); the web app's i18n holds each key's text, the printed line, and a test checks that every catalog scenario's keys have one. `BoardView.reference` gives the side the game's difficulty plays with, its rows in printed order (`SYMBOL_TOKENS`), for the screen's scenario card.
 
 ## Extension points
 
-- **A new scenario:** a folder in `packages/scenarios/src/` with definition, cards (rules as abilities) and an end-to-end test, exported and added to the catalog.
+- **A new scenario:** a folder in `packages/scenarios/src/` with definition, cards (rules as abilities) and an end-to-end test, exported and added to the catalog, with its reference card's texts in the web app's i18n.
 - **A new setup step:** a `SetupStep` kind in `setup.ts`, only when two scenarios need it.
