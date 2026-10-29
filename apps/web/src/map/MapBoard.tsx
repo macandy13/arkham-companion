@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from 'react';
+import { useId, useRef, useState, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TransformComponent, TransformWrapper, useControls } from 'react-zoom-pan-pinch';
 import type {
@@ -10,6 +10,7 @@ import type {
   MapId,
   MapView,
 } from '@arkham/engine';
+import { cycledIndex } from '@arkham/util';
 import { EnemyDetails } from '../enemies/EnemyDetails';
 import type { GameActions } from '../state/gameActions';
 import { LocationDetails } from './LocationDetails';
@@ -18,7 +19,7 @@ import {
   connectionEnds,
   drawingSize,
   onPawn,
-  pawnOffset,
+  piecesOnTile,
   tileAt,
   tileCells,
   tileOrigin,
@@ -79,9 +80,26 @@ export function MapBoard({
 
   const tabId = (map: MapView) => `${idPrefix}-tab-${map.id}`;
   const panelId = `${idPrefix}-panel`;
+  // The tabs pattern (WAI-ARIA): the row is one stop for Tab, the arrow keys choose the map and
+  // move the focus with it, Home and End go to the first and last.
+  const onTabKey = (event: KeyboardEvent<HTMLDivElement>) => {
+    const at = shown.indexOf(current);
+    const next: Record<string, number> = {
+      ArrowRight: cycledIndex(at, 1, shown.length),
+      ArrowLeft: cycledIndex(at, -1, shown.length),
+      Home: 0,
+      End: shown.length - 1,
+    };
+    const index = next[event.key];
+    const map = index === undefined ? undefined : shown[index];
+    if (!map) return;
+    event.preventDefault();
+    setChosen(map.id);
+    document.getElementById(tabId(map))?.focus();
+  };
   return (
     <>
-      <div role="tablist" aria-label={t('map.tabs')}>
+      <div role="tablist" aria-label={t('map.tabs')} onKeyDown={onTabKey}>
         {shown.map((map) => (
           <button
             key={map.id}
@@ -90,6 +108,7 @@ export function MapBoard({
             role="tab"
             aria-selected={map === current}
             aria-controls={panelId}
+            tabIndex={map === current ? 0 : -1}
             onClick={() => setChosen(map.id)}
           >
             {map.name}
@@ -293,8 +312,8 @@ function Ghost({ piece, at, board }: { piece: TilePiece; at: Point; board: Board
 }
 
 /**
- * Where the pawn of `investigator` stands on `map`, in the drawing's coordinates: in the row of
- * pawns on their location's tile (`BoardView.investigatorsAt`).
+ * Where the pawn of `investigator` stands on `map`, in the drawing's coordinates: among the
+ * pieces on their location's tile (`piecesOnTile`).
  */
 function pawnCentre(
   map: MapView,
@@ -305,9 +324,14 @@ function pawnCentre(
   const location = map.locations.find(({ investigators }) => investigators?.includes(investigator));
   const cell = location && cells[location.id];
   if (!cell) return undefined;
-  const index = board.investigatorsAt(location.id).findIndex(({ id }) => id === investigator);
+  const offset = piecesOnTile(
+    board.investigatorsAt(location.id),
+    map.enemies[location.id] ?? [],
+  ).pieces.find(
+    (piece) => 'investigator' in piece && piece.investigator.id === investigator,
+  )?.centre;
+  if (!offset) return undefined;
   const tile = tileOrigin(cell);
-  const offset = pawnOffset(index);
   return { x: tile.x + offset.x, y: tile.y + offset.y };
 }
 

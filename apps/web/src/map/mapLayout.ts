@@ -1,4 +1,11 @@
-import { GRID_CELLS_PER_CARD, type GridCell, type InstanceId, type MapView } from '@arkham/engine';
+import {
+  GRID_CELLS_PER_CARD,
+  type GridCell,
+  type InstanceId,
+  type InvestigatorView,
+  type MapEnemyView,
+  type MapView,
+} from '@arkham/engine';
 
 /** A point in the map drawing's coordinates (SVG user units, y downwards). */
 export interface Point {
@@ -28,7 +35,7 @@ export const TILE = { width: CARD.short, height: CARD.long, gap: 30 } as const;
  * attachments peek out at the right edge as small cards under the frame's band along the top,
  * `band` deep (`attachmentOrigin`), and pawns and
  * enemies stand in rows along the bottom edge where the card prints its connection sockets
- * (`pawnOffset`), all clear of the frame's `inset`. Pawns and enemies share one radius.
+ * (`piecesOnTile`), all clear of the frame's `inset`. Pawns and enemies share one radius.
  */
 export const CONTENT = { inset: 10, band: 19, pawnRadius: 14, pawnGap: 6 } as const;
 
@@ -53,6 +60,19 @@ export function leadMarkerPoints(pawn: Point): Point[] {
 
 /** How far the lead marker's corners reach from its centre: half a pawn, so it reads as a badge. */
 const LEAD_MARKER_RADIUS = CONTENT.pawnRadius / 2;
+
+/** A badge's radius: half a pawn, like the lead marker. */
+export const BADGE_RADIUS = CONTENT.pawnRadius / 2;
+
+/**
+ * The centre of the damage badge on a piece centred on `piece`: on its rim at the lower right, so
+ * it keeps clear of the initial, of the pieces beside it in the row and of a pawn's lead marker
+ * (upper right).
+ */
+export function damageBadgeCentre(piece: Point): Point {
+  const reach = CONTENT.pawnRadius * Math.SQRT1_2;
+  return { x: piece.x + reach, y: piece.y + reach };
+}
 
 /**
  * The height of the line the shroud and clues sit on, where the art ends: 8/15 of the tile's
@@ -202,22 +222,78 @@ export function tileAt(cells: Record<InstanceId, GridCell>, point: Point): Insta
   })?.[0];
 }
 
-/** How many pieces stand side by side in a row along a tile's bottom edge. */
-const PIECES_PER_ROW = 4;
+/**
+ * A piece standing on a tile and the centre it stands on, from the tile's top left corner
+ * (`piecesOnTile`). An `engaged` enemy stands right after the investigator it is engaged with.
+ */
+export type PlacedPiece = UnplacedPiece & { centre: Point };
+
+/** A piece on a tile before it is placed: an investigator's pawn, or an enemy and whether it is engaged. */
+type UnplacedPiece = { investigator: InvestigatorView } | { enemy: MapEnemyView; engaged: boolean };
 
 /**
- * The centre of the `index`th piece standing on a tile, from its top left corner: investigators
- * first, then enemies, in rows of `PIECES_PER_ROW` along the bottom edge, each further row above
- * the one before.
+ * The pieces on a tile (`piecesOnTile`), and where a line sets the enemies engaged with no one
+ * apart from the investigators and their engaged enemies before them, if they share a row.
  */
-export function pawnOffset(index: number): Point {
-  const column = index % PIECES_PER_ROW;
-  const row = Math.floor(index / PIECES_PER_ROW);
-  const step = 2 * CONTENT.pawnRadius + CONTENT.pawnGap;
-  return {
-    x: CONTENT.inset + CONTENT.pawnRadius + column * step,
-    y: TILE.height - CONTENT.inset - CONTENT.pawnRadius - row * step,
-  };
+export interface TilePieces {
+  pieces: PlacedPiece[];
+  separator?: { from: Point; to: Point };
+}
+
+/**
+ * Where `investigators` and `enemies` at a location stand on its tile, in rows along the bottom
+ * edge, each further row above the one before: each investigator followed by the enemies engaged
+ * with them, then, after a gap with a line in it, the enemies engaged with no one. The map shows
+ * an engagement by order alone, as the threat area shows it in full. An enemy whose investigator
+ * is not among `investigators` counts as engaged with no one.
+ */
+export function piecesOnTile(
+  investigators: readonly InvestigatorView[],
+  enemies: readonly MapEnemyView[],
+): TilePieces {
+  const loose = enemies.filter(
+    ({ engagedWith }) => !investigators.some(({ id }) => id === engagedWith),
+  );
+  const line: ('separator' | UnplacedPiece)[] = [
+    ...investigators.flatMap((investigator) => [
+      { investigator },
+      ...enemies
+        .filter(({ engagedWith }) => engagedWith === investigator.id)
+        .map((enemy) => ({ enemy, engaged: true })),
+    ]),
+    ...(investigators.length > 0 && loose.length > 0 ? ['separator' as const] : []),
+    ...loose.map((enemy) => ({ enemy, engaged: false })),
+  ];
+  const diameter = 2 * CONTENT.pawnRadius;
+  const rowY = (row: number) =>
+    TILE.height - CONTENT.inset - CONTENT.pawnRadius - row * (diameter + CONTENT.pawnGap);
+  const pieces: PlacedPiece[] = [];
+  let separator: TilePieces['separator'];
+  let separatorX: number | undefined;
+  let left = CONTENT.inset;
+  let row = 0;
+  for (const slot of line) {
+    if (slot === 'separator') {
+      separatorX = left + CONTENT.pawnGap / 2;
+      left += 2 * CONTENT.pawnGap;
+      continue;
+    }
+    // A piece that starts a new row is set apart by the row already, so it needs no line.
+    if (left + diameter > TILE.width - CONTENT.inset) {
+      left = CONTENT.inset;
+      row++;
+    } else if (separatorX !== undefined) {
+      const y = rowY(row);
+      separator = {
+        from: { x: separatorX, y: y - CONTENT.pawnRadius },
+        to: { x: separatorX, y: y + CONTENT.pawnRadius },
+      };
+    }
+    separatorX = undefined;
+    pieces.push({ ...slot, centre: { x: left + CONTENT.pawnRadius, y: rowY(row) } });
+    left += diameter + CONTENT.pawnGap;
+  }
+  return separator ? { pieces, separator } : { pieces };
 }
 
 /** Whether `point` lies on the pawn centred on `centre`: where a dragged enemy is let go to engage. */

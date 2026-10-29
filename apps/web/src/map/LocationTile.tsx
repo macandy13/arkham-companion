@@ -26,10 +26,12 @@ import {
   ART_WINDOW,
   ATTACHMENT,
   attachmentOrigin,
+  BADGE_RADIUS,
   CONTENT,
+  damageBadgeCentre,
   isTap,
   leadMarkerPoints,
-  pawnOffset,
+  piecesOnTile,
   TEXT_BOX,
   TILE,
   type Point,
@@ -55,7 +57,8 @@ export type TilePiece = { investigator: InvestigatorView } | { enemy: MapEnemyVi
  * value on the right with the clues left on it (`CountCircle`), doom under the clues when it has
  * any; over the face its attachments peeking out at the right edge as small cards and the actions
  * it prints in the text box (`PrintedActions`); then a
- * pawn per investigator there and a round token per enemy at it, in rows along the bottom edge.
+ * pawn per investigator there and a round token per enemy at it, in rows along the bottom edge,
+ * each enemy engaged with an investigator right after their pawn (`piecesOnTile`).
  * `enemies` and `investigators` are the open game's pieces at this location, and `turnOrder`
  * says whose pawns carry the lead and turn markers; `dragOf` gives the drag handlers of each
  * piece that can be dragged now. A tap on the tile, or its details button in
@@ -83,6 +86,7 @@ export function LocationTile({
 }) {
   const { t } = useTranslation();
   const picture = useCardPicture(location.image);
+  const { pieces, separator } = piecesOnTile(investigators, enemies);
   const pressedAt = useRef<Point>(undefined);
   const onPointerDown = (event: PointerEvent<SVGGElement>) => {
     pressedAt.current = { x: event.clientX, y: event.clientY };
@@ -169,25 +173,36 @@ export function LocationTile({
       {location.revealed && location.printedActions && (
         <PrintedActions actions={location.printedActions} />
       )}
-      {investigators.map((investigator, i) => (
-        <Pawn
-          key={investigator.id}
-          investigator={investigator}
-          centre={pawnOffset(i)}
-          lead={turnOrder.lead === investigator.id}
-          onTurn={turnOrder.turn === investigator.id}
-          drag={dragOf({ investigator })}
+      {pieces.map((piece) =>
+        'investigator' in piece ? (
+          <Pawn
+            key={piece.investigator.id}
+            investigator={piece.investigator}
+            centre={piece.centre}
+            lead={turnOrder.lead === piece.investigator.id}
+            onTurn={turnOrder.turn === piece.investigator.id}
+            drag={dragOf({ investigator: piece.investigator })}
+          />
+        ) : (
+          <EnemyToken
+            key={piece.enemy.id}
+            enemy={piece.enemy}
+            investigators={investigators}
+            centre={piece.centre}
+            engaged={piece.engaged}
+            drag={dragOf({ enemy: piece.enemy })}
+          />
+        ),
+      )}
+      {separator && (
+        <line
+          data-separator
+          x1={separator.from.x}
+          y1={separator.from.y}
+          x2={separator.to.x}
+          y2={separator.to.y}
         />
-      ))}
-      {enemies.map((enemy, i) => (
-        <EnemyToken
-          key={enemy.id}
-          enemy={enemy}
-          investigators={investigators}
-          centre={pawnOffset(investigators.length + i)}
-          drag={dragOf({ enemy })}
-        />
-      ))}
+      )}
     </g>
   );
 }
@@ -542,20 +557,25 @@ export function Pawn({
 
 /**
  * An enemy as a round token with its initial, centred on `centre`, like an investigator's pawn but
- * ringed in the doom colour (`data-enemy`). Its accessible name also says whom of
- * `investigators` it is engaged with, its damage and whether it is exhausted; the token does not
- * show those yet. With `drag` it can be dragged; a `ghost` is the copy that follows the pointer.
+ * ringed in the doom colour (`data-enemy`). An `engaged` enemy stands faded right after the pawn
+ * of the investigator it is engaged with (`data-engaged`), since the threat area shows it in full.
+ * A red badge on its rim shows its damage, and an exhausted enemy's initial lies on its side, like
+ * the exhausted card turned sideways (`data-exhausted`). Its accessible name says the same, with
+ * whom of `investigators` it is engaged with. With `drag` it can be dragged; a `ghost` is the copy
+ * that follows the pointer.
  */
 export function EnemyToken({
   enemy,
   investigators,
-  centre: { x, y },
+  centre,
+  engaged = false,
   drag,
   ghost = false,
 }: {
   enemy: MapEnemyView;
   investigators: readonly InvestigatorView[];
   centre: Point;
+  engaged?: boolean;
   drag?: DragHandlers;
   ghost?: boolean;
 }) {
@@ -565,15 +585,26 @@ export function EnemyToken({
     ...(engagedWith ? [t('map.engagedWith', { investigator: engagedWith })] : []),
     ...enemyConditions(enemy, t),
   ];
+  const badge = damageBadgeCentre(centre);
   return (
     <g
       data-enemy
+      data-engaged={engaged || undefined}
+      data-exhausted={enemy.exhausted || undefined}
       {...dragAttributes({ name: [enemy.name, ...states].join(', '), kind: 'enemy', drag, ghost })}
     >
-      <circle cx={x} cy={y} r={CONTENT.pawnRadius} />
-      <text x={x} y={y}>
+      <circle cx={centre.x} cy={centre.y} r={CONTENT.pawnRadius} />
+      <text x={centre.x} y={centre.y}>
         {enemy.name.charAt(0)}
       </text>
+      {enemy.damage ? (
+        <g data-marker="damage">
+          <circle cx={badge.x} cy={badge.y} r={BADGE_RADIUS} />
+          <text x={badge.x} y={badge.y}>
+            {enemy.damage}
+          </text>
+        </g>
+      ) : null}
     </g>
   );
 }

@@ -1,5 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { cardName, instanceId, mapId, type InstanceId, type MapView } from '@arkham/engine';
+import {
+  atLocation,
+  blankEnemy,
+  blankLocation,
+  cardName,
+  engagedWith,
+  instanceId,
+  investigatorId,
+  mapId,
+  newGame,
+  PlayTable,
+  type InstanceId,
+  type MapView,
+} from '@arkham/engine';
 import {
   TILE,
   connectionEnds,
@@ -8,7 +21,7 @@ import {
   neighboursOf,
   attachmentOrigin,
   onPawn,
-  pawnOffset,
+  piecesOnTile,
   shrinkToFit,
   tileAt,
   tileCells,
@@ -160,16 +173,81 @@ describe('tileAt', () => {
   });
 });
 
-// Pieces have a radius of 14 and stand 6 apart, four to a row; the first row is centred 24 above
-// the tile's bottom edge, the next one 34 higher.
-describe('pawnOffset', () => {
-  it.each([
-    { index: 0, centre: { x: 24, y: 186 } },
-    { index: 1, centre: { x: 58, y: 186 } },
-    { index: 3, centre: { x: 126, y: 186 } },
-    { index: 4, centre: { x: 24, y: 152 } },
-  ])('centres piece $index on ($centre.x, $centre.y) of its tile', ({ index, centre }) => {
-    expect(pawnOffset(index)).toEqual(centre);
+// Pieces have a radius of 14 and stand 6 apart, from 10 inside the tile's left edge; the first row
+// is centred 24 above the 210-high tile's bottom edge, the next one 34 higher. The line before the
+// enemies engaged with no one takes another 12, so they start 18 after the piece before it.
+describe('piecesOnTile', () => {
+  const alder = investigatorId('alder');
+  const bea = investigatorId('bea');
+  const ghoul = instanceId('ghoul');
+  const rats = instanceId('rats');
+  /** Aloof, so it stays engaged with no one beside an investigator. */
+  const aloofRats = blankEnemy('aloof_rats', { keywords: [{ name: 'aloof' }] });
+  const inStudy = newGame()
+    .withMap(mapId('main'), { name: 'House' })
+    .withLocation(study, blankLocation('study'), { revealed: true });
+
+  /** Each piece on the study's tile as `name (x, y)`, engaged enemies marked, and the line. */
+  const studyPieces = (table: PlayTable) => {
+    const { pieces, separator } = piecesOnTile(
+      table.board.investigatorsAt(study),
+      table.board.maps[0]?.enemies[study] ?? [],
+    );
+    return {
+      pieces: pieces.map((piece) => {
+        const { x, y } = piece.centre;
+        if ('investigator' in piece) return `${piece.investigator.name} (${x}, ${y})`;
+        return `${piece.enemy.name}${piece.engaged ? ' engaged' : ''} (${x}, ${y})`;
+      }),
+      separator,
+    };
+  };
+
+  it('stands an engaged enemy right after its investigator and a line before the loose ones', () => {
+    const table = PlayTable.start(
+      inStudy
+        .withInvestigator(alder, { locationId: study })
+        .withCard(rats, aloofRats, atLocation(study))
+        .withCard(ghoul, blankEnemy('ghoul'), engagedWith(alder)),
+    );
+
+    expect(studyPieces(table)).toEqual({
+      pieces: ['alder (24, 186)', 'ghoul engaged (58, 186)', 'aloof_rats (104, 186)'],
+      separator: { from: { x: 81, y: 172 }, to: { x: 81, y: 200 } },
+    });
+  });
+
+  it('draws no line where no investigator stands before the enemies', () => {
+    const table = PlayTable.start(
+      inStudy
+        .withCard(ghoul, blankEnemy('ghoul'), atLocation(study))
+        .withCard(rats, blankEnemy('rats'), atLocation(study)),
+    );
+
+    expect(studyPieces(table)).toEqual({
+      pieces: ['ghoul (24, 186)', 'rats (58, 186)'],
+      separator: undefined,
+    });
+  });
+
+  it('starts a row above for a loose enemy that does not fit, with no line', () => {
+    const table = PlayTable.start(
+      inStudy
+        .withInvestigator(alder, { locationId: study })
+        .withInvestigator(bea, { locationId: study })
+        .withCard(ghoul, blankEnemy('ghoul'), engagedWith(bea))
+        .withCard(rats, aloofRats, atLocation(study)),
+    );
+
+    expect(studyPieces(table)).toEqual({
+      pieces: [
+        'alder (24, 186)',
+        'bea (58, 186)',
+        'ghoul engaged (92, 186)',
+        'aloof_rats (24, 152)',
+      ],
+      separator: undefined,
+    });
   });
 });
 
