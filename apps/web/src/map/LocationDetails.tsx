@@ -137,7 +137,13 @@ export function LocationContent({
             <ActionGroup title={t('location.free')}>{free.map(button)}</ActionGroup>
           )}
           {printed.length > 0 && (
-            <CardActions offered={printed} actions={actions} busy={busy} onUse={onLeave} />
+            <CardActions
+              board={board}
+              offered={printed}
+              actions={actions}
+              busy={busy}
+              onUse={onLeave}
+            />
           )}
         </footer>
       )}

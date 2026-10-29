@@ -316,6 +316,12 @@ export interface OfferedCardAction {
   /** The action costs no action (`CardAction.free`). */
   readonly free?: true;
   /**
+   * The clues its cost asks of the investigators as a group (`spend: 'groupClues'`, resolved for
+   * the player count), which they split as they like (`UseCardAction.spend`); absent for any other
+   * cost.
+   */
+  readonly groupClues?: number;
+  /**
    * Which of the card's printed actions of the same kind (the same designator, or plain) this is,
    * counting from 1, when the card prints more than one, so each has a name of its own ("Action 2
    * · Parlor"). Counted over the printed actions, not the offered ones, so a name stays put when
@@ -349,6 +355,9 @@ export function cardActionsOfferedTo(
               action,
               ...(designator === undefined ? {} : { designator }),
               ...(free === undefined ? {} : { free }),
+              ...(cost?.spend === 'groupClues'
+                ? { groupClues: groupClueAmount(state, cost.amount) }
+                : {}),
               ...numberOfKind(actions, action),
             },
           ]

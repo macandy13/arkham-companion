@@ -61,9 +61,10 @@ export interface GameActions {
   /**
    * The turn investigator takes action number `action` of the card `card` offers them
    * (`BoardView.cardActions`), such as the Parlor's Resign, counting off the action it costs
-   * unless it is free.
+   * unless it is free. For a group clue cost (`CardActionView.groupClues`), `spend` lists who pays
+   * how many (omitted, the taker pays what they can and the others the rest).
    */
-  useCardAction(card: InstanceId, action: number): Promise<void>;
+  useCardAction(card: InstanceId, action: number, spend?: readonly ClueSpend[]): Promise<void>;
   /** Changes the actions left this turn. */
   adjustActions(delta: number): Promise<void>;
   /**
@@ -207,13 +208,18 @@ export function gameActions(
     nextPhase: () => play((table) => void table.nextPhase()),
     startTurn: (investigator) => play((table) => table.startTurn(investigator)),
     endTurn: () => onTurn((table, investigator) => table.endTurn(investigator)),
-    useCardAction: (card, action) =>
+    useCardAction: (card, action, spend) =>
       onTurn((table, investigator) => {
         const offered = table.board
           .cardActions(investigator)
           .find((option) => option.cardId === card && option.action === action);
         if (!offered?.free) table.spendAction(investigator);
-        table.useCardAction(investigator, card, action);
+        table.useCardAction(
+          investigator,
+          card,
+          action,
+          spend?.map(({ investigator: payer, clues }) => [payer, clues]),
+        );
       }),
     adjustActions: (delta) =>
       onTurn((table, investigator) => table.adjustActions(investigator, delta)),
@@ -370,7 +376,7 @@ function firstDecision(state: GameState): Decision {
   return decision;
 }
 
-/** Clues one investigator pays towards the act (`GameActions.advanceAct`). */
+/** Clues one investigator pays towards a group clue cost (`GameActions.advanceAct`, `useCardAction`). */
 export interface ClueSpend {
   investigator: InvestigatorId;
   clues: number;

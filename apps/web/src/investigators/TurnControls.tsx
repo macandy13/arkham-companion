@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { BASE_ACTIONS_PER_TURN, type BoardView, type InvestigatorView } from '@arkham/engine';
 import { range } from '@arkham/util';
 import { cardActionLabel } from '../screens/ActionRow';
+import { useCluePayment } from '../screens/CluePaymentDialog';
 import type { GameActions } from '../state/gameActions';
 
 /** The basic actions the turn row offers, in its order, each a `GameActions` verb without arguments. */
@@ -14,7 +15,7 @@ const BASIC_ACTIONS = ['investigate', 'takeResource', 'drawCard', 'playCard'] as
  * the players handle at the table (`BASIC_ACTIONS`), investigate off where a card forbids it
  * (`LocationView.forbidden`, Locked Door) and play while a card forbids them to
  * play (`InvestigatorView.forbidden`, Dissonant Voices); then a button per card action the cards offer them (`BoardView.cardActions`, named by its
- * designator and card: "Resign · Parlor") and End, as in the prototype's turn row. Before it,
+ * designator and card: "Resign · Parlor"; one with a group clue cost asks who pays, `useCluePayment`) and End, as in the prototype's turn row. Before it,
  * when the players may pick them next (`canStart`: the investigation phase, no turn in progress,
  * not taken this round), "Start turn", since the players choose the order.
  * Nothing otherwise. The buttons wait while a step is queued (`busy`).
@@ -35,6 +36,7 @@ export function TurnControls({
   busy: boolean;
 }) {
   const { t } = useTranslation();
+  const { dialog, pay } = useCluePayment(board);
   if (canStart)
     return (
       <button type="button" disabled={busy} onClick={() => void actions.startTurn(investigator.id)}>
@@ -70,7 +72,7 @@ export function TurnControls({
         />
       ))}
       {board.cardActions(investigator.id).map((offer) => {
-        const { cardId, action } = offer;
+        const { cardId, action, groupClues } = offer;
         const { caption, name } = cardActionLabel(t, offer);
         return (
           <button
@@ -78,7 +80,9 @@ export function TurnControls({
             type="button"
             aria-label={name}
             disabled={busy}
-            onClick={() => void actions.useCardAction(cardId, action)}
+            onClick={() =>
+              pay(groupClues, name, (spend) => void actions.useCardAction(cardId, action, spend))
+            }
           >
             {caption}
           </button>
@@ -92,6 +96,7 @@ export function TurnControls({
       >
         {t('investigators.end')}
       </button>
+      {dialog}
     </div>
   );
 }

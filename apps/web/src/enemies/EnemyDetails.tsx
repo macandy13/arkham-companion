@@ -113,7 +113,13 @@ export function EnemyDetails({
           </ActionGroup>
         )}
         {offered.length > 0 && (
-          <CardActions offered={offered} actions={actions} busy={busy} onUse={close} />
+          <CardActions
+            board={board}
+            offered={offered}
+            actions={actions}
+            busy={busy}
+            onUse={close}
+          />
         )}
         <ActionGroup title={t('enemy.cardEffects')}>
           <ActionButton

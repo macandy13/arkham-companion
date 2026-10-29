@@ -55,7 +55,13 @@ import { cardsInZone, cardsOfType, currentCard } from './lookup';
 import { mapLocations, type Edge, type GameMap, type GridCell } from './map';
 import { attacksStillDue } from './phases';
 import { NAMED_AMOUNTS } from './state';
-import { boostedSkills, cluesHeldByGroup, requireInvestigator } from './investigators';
+import {
+  boostedSkills,
+  cluesHeldByGroup,
+  clueSpenders,
+  defaultCluePayments,
+  requireInvestigator,
+} from './investigators';
 import { CommandRejected } from './rejection';
 import {
   forbiddenFor,
@@ -288,6 +294,20 @@ const ENEMY_ACTIONS: readonly EnemyAction[] = ['fight', 'evade', 'engage'];
  */
 export interface CardActionView extends OfferedCardAction {
   readonly card: CardName;
+}
+
+/**
+ * One investigator who may pay towards a group clue cost (`BoardView.cluePayers`): the clues they
+ * hold and the ones the engine's split has them pay (`defaultCluePayments`), where the players'
+ * own split starts.
+ */
+export interface CluePayerView {
+  readonly id: InvestigatorId;
+  readonly name: CardName;
+  /** The picture of their investigator card (`InvestigatorView.image`), when the card data has one. */
+  readonly image?: CardImagePath;
+  readonly clues: number;
+  readonly pays: number;
 }
 
 /**
@@ -529,6 +549,24 @@ export class BoardView {
         if (!(error instanceof CommandRejected)) throw error;
         return false;
       }
+    });
+  }
+
+  /**
+   * Who may pay a group clue cost of `required` that `first` takes the action for (the act's
+   * advance, a `CardActionView.groupClues` cost): the active investigators no card forbids to spend
+   * clues, in seat order, each with the clues they hold and what the engine's split has them pay
+   * when the players name no payers (`first` all they can, then the others). The players change
+   * the split and send it as `UseCardAction.spend`.
+   */
+  cluePayers(first: InvestigatorId, required: number): readonly CluePayerView[] {
+    const split = defaultCluePayments(this.ctx, this.state, first, required);
+    return clueSpenders(this.ctx, this.state).map((inv) => {
+      const { name, image } = investigatorView(this.ctx, this.state, inv);
+      const pays = split.find(({ investigatorId }) => investigatorId === inv.id)?.amount ?? 0;
+      return image
+        ? { id: inv.id, name, image, clues: inv.clues, pays }
+        : { id: inv.id, name, clues: inv.clues, pays };
     });
   }
 

@@ -612,24 +612,25 @@
 
 /*
  * The decision dialog (DecisionDialog): the question as its title, who decides and the test under
- * it, then the options as a column of full-width buttons and Undo at its foot.
+ * it, then the options as a column of full-width buttons and Undo at its foot. The clue payment
+ * dialog (CluePaymentDialog, clue_payment.css) shares its column, title, text and foot.
  */
-#board dialog[data-dialog='decision'] {
+#board :is(dialog[data-dialog='decision'], dialog[data-dialog='clue-payment']) {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
 }
 
-#board dialog[data-dialog='decision']:not([open]) {
+#board :is(dialog[data-dialog='decision'], dialog[data-dialog='clue-payment']):not([open]) {
   display: none;
 }
 
-#board dialog[data-dialog='decision'] h2 {
+#board :is(dialog[data-dialog='decision'], dialog[data-dialog='clue-payment']) h2 {
   margin: 0;
   font-size: var(--font-size-subtitle);
 }
 
-#board dialog[data-dialog='decision'] p {
+#board :is(dialog[data-dialog='decision'], dialog[data-dialog='clue-payment']) p {
   margin: 0;
 }
 
@@ -664,9 +665,10 @@
   flex: none;
 }
 
-#board dialog[data-dialog='decision'] footer {
+#board :is(dialog[data-dialog='decision'], dialog[data-dialog='clue-payment']) footer {
   display: flex;
   justify-content: flex-end;
+  gap: var(--space-2);
 }
 
 /* The answer the chaos draw works out, ready to confirm; the other one still overrides it. */
