@@ -297,6 +297,8 @@
    */
   --face-scroll-width: 5.5px;
   --face-scroll-outline: 2px;
+  /* The glowing outline round an ornament's tentacle in the Eldritch card theme. */
+  --face-tentacle-glow-width: 1.4px;
   --face-highlight-opacity: 0.7;
   --face-highlight-shift: -0.5px;
   --face-vessel-outline-width: 5.8px;
@@ -779,4 +781,66 @@
   --color-card-band: #0e1514;
   --color-card-gilt: #c29a5b;
   --color-card-edge: #070b0a;
+}
+
+/*
+ * The Eldritch card theme (M3.10k): the Exact theme's frames cut from the void, deep violet-black
+ * stock and frames, the ornament a dark green tentacle with a pale green glowing outline
+ * (`OrnamentLine`), the rules and plates' rims in that glow, the text pale green. The live tokens
+ * keep their colours, as in every theme.
+ */
+:root[data-card-theme='eldritch'] {
+  --color-face-frame: #0a0812;
+  --color-face-frame-back: #0c1512;
+  --color-face-setting: #030207;
+  --color-face-ornament: #24423b;
+  --color-face-plate: #1a1428;
+  --color-face-plate-shade: #07060d;
+  --color-face-page: #1d1630;
+  --color-face-page-shade: #07060d;
+  --color-face-ink: #d9eee2;
+  --color-face-medallion: #0d0a16;
+  --color-face-medallion-ring: #9ef0c4;
+  --color-face-type-plate: #0d0a16;
+  --color-face-type-plate-line: #9ef0c4;
+  --color-face-socket: #1d1630;
+  --color-face-shroud: #05040a;
+  --color-face-clue: #1d1630;
+  --color-face-footer: #030207;
+  --color-face-bead: #9ef0c4;
+  --color-face-cover: #05040a;
+  --color-face-back-paper: #1d1630;
+  --color-face-back-paper-edge: #07060d;
+  --color-face-back-light: #9ef0c4;
+  --color-face-back-ink: #030207;
+  --color-face-back-ground: #24423b;
+  --color-face-page-edge: #2a2240;
+  --color-face-page-edge-shade: #1a1428;
+  --color-face-agenda-disc: #4a1530;
+  --color-face-act-disc: #12352c;
+  --color-face-ornament-line: #9ef0c4;
+  --color-face-ornament-highlight: #9ef0c4;
+  --color-face-fight: #4a1530;
+  --color-face-health: #1a1626;
+  --color-face-evade: #12352c;
+  --color-face-chevron-rim: #9ef0c4;
+  --notebook-page:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 calc(1.25rem - 1px),
+      rgb(158 240 196 / 14%) calc(1.25rem - 1px) 1.25rem
+    ),
+    linear-gradient(#1a1428, #0d0a16);
+}
+
+/* The investigator card's paper and ink in the Eldritch theme, on the card alone (see above). */
+:root[data-card-theme='eldritch'] #investigators [data-card='investigator'] {
+  --color-parchment: #1d1630;
+  --color-parchment-shade: #07060d;
+  --color-parchment-light: #2a2240;
+  --color-ink: #d9eee2;
+  --color-ink-muted: #8fb3a3;
+  --color-card-band: #0a0812;
+  --color-card-gilt: #9ef0c4;
+  --color-card-edge: #030207;
 }
