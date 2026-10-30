@@ -2,6 +2,100 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.13](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.12...arkham-companion-v0.1.13) (2026-10-29)
+
+
+### Features
+
+* **engine:** add the after-evaded window for Ruth Turner (MC1.4d) ([dd87129](https://github.com/macandy13/arkham-companion/commit/dd871295d25f322259708cbba60876d9fe1b62a0))
+* **engine:** add the after-evaded window for Ruth Turner (MC1.4d) ([811d191](https://github.com/macandy13/arkham-companion/commit/811d1917bcf140c8bc408c757687cddf7e4c96d3))
+* **engine:** let one card be the current act and agenda (MC1.5a) ([77f2c42](https://github.com/macandy13/arkham-companion/commit/77f2c428e0411eeb8fc9e6e69b6ed8233a814435))
+* **engine:** let one card be the current act and agenda (MC1.5a) ([2783bfc](https://github.com/macandy13/arkham-companion/commit/2783bfc1d20ca587ac5a2d2a87178d7f4e841841))
+* **engine:** objective on unique Cultists in the victory display (MC1.4b) ([be5cc9d](https://github.com/macandy13/arkham-companion/commit/be5cc9db4a8ccd582649ea7428a91aa25e91d658))
+* **engine:** objective when an investigator enters a location (MC1.4a) ([1a4b74b](https://github.com/macandy13/arkham-companion/commit/1a4b74b560260bbdcab4b006a92622d6029a1876))
+* **engine:** Ritual Site tops its clues up at the end of the round (MC1.4c) ([e9d2572](https://github.com/macandy13/arkham-companion/commit/e9d257249602f883163c2676c0aaa34074d99665))
+* **scenarios:** bring Umôrdhoth and The Devourer Below with agenda 3 (MC1.5b) ([66df6c8](https://github.com/macandy13/arkham-companion/commit/66df6c86da9db6ceae870346dcc137982fbf6a98))
+* **scenarios:** bring Umôrdhoth and The Devourer Below with agenda 3 (MC1.5b) ([cfadc3f](https://github.com/macandy13/arkham-companion/commit/cfadc3f4aa654ea50c591b5e86320d2589a79dc2))
+* **util:** add runsBy to cut a list into runs of equal keys ([62558bb](https://github.com/macandy13/arkham-companion/commit/62558bb16484bda9331911871784125bf08ce5c1))
+* **web:** agenda and act cards in the Exact card layout (M3.10g) ([1b0709b](https://github.com/macandy13/arkham-companion/commit/1b0709b9ce32bdd13779a09ec88949b50ad274d0))
+* **web:** agenda and act cards in the Exact card layout (M3.10g) ([12f1025](https://github.com/macandy13/arkham-companion/commit/12f102586b5481e1df464b2a51a10e3476910acf)), closes [#699](https://github.com/macandy13/arkham-companion/issues/699)
+* **web:** agenda and act in full in the phone's detail view (M3.14h) ([d361496](https://github.com/macandy13/arkham-companion/commit/d361496832b119df6f2fe743304568f131a6be62))
+* **web:** agenda and act in full in the phone's detail view (M3.14h) ([f8afa8f](https://github.com/macandy13/arkham-companion/commit/f8afa8ffbac0932d4b4497ebfa18fc1fe4be74eb))
+* **web:** card theme setting in place of the card look (M3.10e1) ([d41b050](https://github.com/macandy13/arkham-companion/commit/d41b0507f88fe97cfaf3265b089a07e451442e70))
+* **web:** card theme setting in place of the card look (M3.10e1) ([d5e9d08](https://github.com/macandy13/arkham-companion/commit/d5e9d088710381f25087a4197f5574ff9616fcb1))
+* **web:** enemies and zoomed cards fill a phone's screen (M3.14g) ([a4239a0](https://github.com/macandy13/arkham-companion/commit/a4239a08302292c16db383f19fc3eb986eba60ae))
+* **web:** enemies and zoomed cards fill a phone's screen (M3.14g) ([11efec6](https://github.com/macandy13/arkham-companion/commit/11efec64b1bf631d72ba98a998184da3bd343d29))
+* **web:** enemy card in the Exact card layout (M3.10f1) ([b941a6b](https://github.com/macandy13/arkham-companion/commit/b941a6b6ea0702057f4d4aeb0823f097661fe8db))
+* **web:** enemy card in the Exact card layout (M3.10f1) ([f30e3d0](https://github.com/macandy13/arkham-companion/commit/f30e3d0326cdaa61283e0d8b295466655eead037)), closes [#718](https://github.com/macandy13/arkham-companion/issues/718)
+* **web:** game log in the order played, wider, full screen on a phone (M3.8d) ([d7600ca](https://github.com/macandy13/arkham-companion/commit/d7600ca98d27935e4407187430673536c7ab21c8))
+* **web:** go back to an earlier step from the game log (M3.8c) ([26b3bb4](https://github.com/macandy13/arkham-companion/commit/26b3bb48aef43f786224d2925f4bc37b4d738f68))
+* **web:** go back to an earlier step from the game log (M3.8c) ([ca4f925](https://github.com/macandy13/arkham-companion/commit/ca4f9255bd697545664f4e0e1822e5cdefee4f6f))
+* **web:** health and sanity as the printed heart and brain (M3.10h1) ([67fe9e1](https://github.com/macandy13/arkham-companion/commit/67fe9e18016802ac6991b544c634bbafbefd73e4))
+* **web:** health and sanity as the printed heart and brain (M3.10h1) ([6b9e0e8](https://github.com/macandy13/arkham-companion/commit/6b9e0e8b760fa31235a24ed95eb3b2146eeef136))
+* **web:** investigator name banner, skill chain, notebook page and tokens (M3.10h2) ([3d1483b](https://github.com/macandy13/arkham-companion/commit/3d1483b6a58b4bb1392ed956d460eb85de400ee0))
+* **web:** investigator name banner, skill chain, notebook page and tokens (M3.10h2) ([a4ef1bc](https://github.com/macandy13/arkham-companion/commit/a4ef1bc8f13a62399f845e00c66db0e431b9b673))
+* **web:** let the players choose who pays a group clue cost (M3.9c) ([5ff08cd](https://github.com/macandy13/arkham-companion/commit/5ff08cd3fe86a238498c5f469a50671b5285b326))
+* **web:** let the players choose who pays a group clue cost (M3.9c) ([b003e6f](https://github.com/macandy13/arkham-companion/commit/b003e6f841382bb851cce250f63b31fc739098f9))
+* **web:** list the game log in the order played, wider, full screen on a phone (M3.8d) ([fbf8069](https://github.com/macandy13/arkham-companion/commit/fbf8069d7f4ad2df3731be8dd721d84c0ecf1ac9))
+* **web:** location mode on the phone, one location in the map row (M3.14e1) ([66e485f](https://github.com/macandy13/arkham-companion/commit/66e485f8814d8868c2b87ba548d1bdee259b74d6))
+* **web:** location tile in the Exact card layout (M3.10e2) ([4c30009](https://github.com/macandy13/arkham-companion/commit/4c30009562eb4dd930ddcffadb05460994157cde))
+* **web:** location tile in the Exact card layout (M3.10e2) ([e0d2299](https://github.com/macandy13/arkham-companion/commit/e0d2299a25f77d61f47e1cdad67747e9a6f67cad))
+* **web:** neighbours around the location in the phone's location mode (M3.14e2) ([d865e6b](https://github.com/macandy13/arkham-companion/commit/d865e6bf3d1ff5b119177af344423277e3fae13f))
+* **web:** neighbours around the location in the phone's location mode (M3.14e2) ([3601d63](https://github.com/macandy13/arkham-companion/commit/3601d63c2bb7573496a3254f8aa83931dc8accb5))
+* **web:** open the game log from the status row (M3.8b) ([66a0ce0](https://github.com/macandy13/arkham-companion/commit/66a0ce0d425b20c2d2ce55d69dee5e4e51d99107))
+* **web:** open the game log from the status row (M3.8b) ([208a2e7](https://github.com/macandy13/arkham-companion/commit/208a2e7522b8f2e1f1ee866fb0b5dca43646eee4))
+* **web:** pay group clue costs by tapping clue tokens under each payer's art, with Split evenly (M3.9c) ([dd1d927](https://github.com/macandy13/arkham-companion/commit/dd1d927036fa01c77627ef303a7ec36da2d9ff6e))
+* **web:** phone pass for safe areas, sideways phones and phone shots (M3.14f) ([0b787d1](https://github.com/macandy13/arkham-companion/commit/0b787d198948d4ea622e6156786c019928e464a8))
+* **web:** phone pass for safe areas, sideways phones and phone shots (M3.14f) ([fa82821](https://github.com/macandy13/arkham-companion/commit/fa828210fb4b49ccfb85b9b5a40ebef94d81385b))
+* **web:** read each step of the game log as readable lines (M3.8a) ([317940d](https://github.com/macandy13/arkham-companion/commit/317940dff7eadaf42fef5d545b9e54f43c8c33c7))
+* **web:** read each step of the game log as readable lines (M3.8a) ([2d56db3](https://github.com/macandy13/arkham-companion/commit/2d56db3ea60f11b690645c03dea849b32e988fe8))
+* **web:** show enemy engagement, damage and exhaustion on map tokens; arrow keys on map tabs (M3.9d) ([de42e0c](https://github.com/macandy13/arkham-companion/commit/de42e0cb2bbde9d02bff8cc368b297241e2b4857))
+* **web:** show engagement, damage and exhaustion of enemies on the map; arrow keys on map tabs (M3.9d) ([f1de679](https://github.com/macandy13/arkham-companion/commit/f1de679ec4fe332669a7b2babb23fc58294923fd))
+* **web:** structure the game log by round, phase, actor and time, newest first ([b422190](https://github.com/macandy13/arkham-companion/commit/b422190abb3c36020d0feb826ac571f89117adc6))
+* **web:** treachery card in the Exact card layout (M3.10f2) ([6c60290](https://github.com/macandy13/arkham-companion/commit/6c60290d6ae97b1562ef03e8fe94dcd8b7063069))
+* **web:** treachery card in the Exact card layout (M3.10f2) ([6d1003a](https://github.com/macandy13/arkham-companion/commit/6d1003a94d4c21a503f4f7f849ca6c39a84aa1e5)), closes [#719](https://github.com/macandy13/arkham-companion/issues/719)
+
+
+### Bug fixes
+
+* **web:** card entries drop when the card goes, once per close; review fixes ([beb98fe](https://github.com/macandy13/arkham-companion/commit/beb98fe1eabfb04ba0279067475463ca0c479ff1))
+* **web:** count every later undo group when going back, test undoTo's edge cases ([5c69cfc](https://github.com/macandy13/arkham-companion/commit/5c69cfc40c2e1682a6f6f88c66646220921f03f3))
+* **web:** keep the header in one row on a 1024 px tablet (M3.9a) ([bde4b43](https://github.com/macandy13/arkham-companion/commit/bde4b430721ab67d53f79eb1aae51a52c05aaefe))
+* **web:** keep the header in one row on a 1024 px tablet (M3.9a) ([d75ba49](https://github.com/macandy13/arkham-companion/commit/d75ba4933a1f7fcd8230a6583b4b4f7ef42a8cdf))
+* **web:** log enemy spawns and moves, word the German phase line ([686a329](https://github.com/macandy13/arkham-companion/commit/686a3290d23c446ccc458063e8e5825411f5eb93))
+* **web:** safe-area padding inside the screen height; review nits ([aa66387](https://github.com/macandy13/arkham-companion/commit/aa6638712ccdc81dd62868beed9eb03aa4c249aa))
+
+
+### Refactoring
+
+* BoardView.enemiesAt for one location's enemies; review nits ([aba0691](https://github.com/macandy13/arkham-companion/commit/aba069149f1971db50400aa12d48433c329a2765))
+* **engine:** PlaceTokens takes a number or scaled amount for both forms ([79fba3f](https://github.com/macandy13/arkham-companion/commit/79fba3fc8060ddd3283cd0431599dccad1a6876b))
+* **engine:** share isEngagedWith and the disengage event ([0024e57](https://github.com/macandy13/arkham-companion/commit/0024e574c566d80d5cae12fc77749d6efa003ab0))
+* **engine:** share the agenda's doom threshold as agendaThreshold ([b83f190](https://github.com/macandy13/arkham-companion/commit/b83f19004016cae508b4cfa70cb8e70fab8520d7))
+* **web:** address review nits on the map token badges and tab keys ([2a29385](https://github.com/macandy13/arkham-companion/commit/2a29385c7a0d550a0e5b8714f5567caac7ee53a3))
+* **web:** name the open game's log OpenGame.log, show the phone status row ([0e5e068](https://github.com/macandy13/arkham-companion/commit/0e5e068e8c442ae37671ce23342760cc1c88e2e4))
+* **web:** stand engaged enemies faded after their investigator instead of an engaged badge (M3.9d) ([4bb6c8f](https://github.com/macandy13/arkham-companion/commit/4bb6c8faae51e77e656b72e3f9699fe5b39cc1da))
+
+
+### Documentation
+
+* address review findings on moved rulings ([2e73926](https://github.com/macandy13/arkham-companion/commit/2e739260dcf64e1d27edbbb2a177be9956791f47))
+* address review nits on card rulings ([fbbc410](https://github.com/macandy13/arkham-companion/commit/fbbc410639b1bf56e2f9876463f94d4f8d276f56))
+* **architecture:** add a card patterns page mapping card text to card data ([39dc174](https://github.com/macandy13/arkham-companion/commit/39dc17414c0fc889a4f885d9f376970a9e7a2d47))
+* **architecture:** add a card patterns page mapping card text to card data ([0e04f52](https://github.com/macandy13/arkham-companion/commit/0e04f52e958c06f9c2b0a124c15aedc1443fe1e5))
+* **architecture:** address review nits on card patterns ([61578ac](https://github.com/macandy13/arkham-companion/commit/61578ac6efd04450c7b598751ca6e951eeec2c8a))
+* campaign log prototype and campaign screen design (M1C) ([4d9b452](https://github.com/macandy13/arkham-companion/commit/4d9b4526ef8343fd11500b9c97d655dfb7b34c9e))
+* campaign log prototype and campaign screen design (M1C) ([c8fb28e](https://github.com/macandy13/arkham-companion/commit/c8fb28eb5731be7e153552c279ae364ed7c7cbdf))
+* group card rulings by mechanic in docs/rules/cards ([3ef930b](https://github.com/macandy13/arkham-companion/commit/3ef930b8222a474a588177318cd246a93affebf2))
+* group card rulings by mechanic in docs/rules/cards ([6b17bfe](https://github.com/macandy13/arkham-companion/commit/6b17bfe91412cac8b20dcf49f929bff33855f6b4))
+* move encounter searches, resolution order and Children of Blood rulings ([1f4010e](https://github.com/macandy13/arkham-companion/commit/1f4010ebdd5b449f9cb928864c98094ed53a085d))
+* move encounter searches, resolution order and Children of Blood rulings to docs/rules/cards ([d470a4e](https://github.com/macandy13/arkham-companion/commit/d470a4e496f617fb44c5d707e50620e9999181dc))
+* place the act-and-agenda effect with the card effects ([bd01911](https://github.com/macandy13/arkham-companion/commit/bd019119abcf7425e924903c7e76233e573afc0b))
+* plan the M3.10 card themes ([1562321](https://github.com/macandy13/arkham-companion/commit/1562321746ea4c4374b118b99ce48d731d8bd2e4))
+* plan the M3.10 card themes ([1599442](https://github.com/macandy13/arkham-companion/commit/15994422c60a3f644ddd7c5b2a98aebbc3082aa4))
+* say what blank columns and leaving players look like in the log ([8c109c3](https://github.com/macandy13/arkham-companion/commit/8c109c3bc4423c94b2bd7b864582300cf0d06d61))
+* the agenda and act in full on the phone's header page ([2323e14](https://github.com/macandy13/arkham-companion/commit/2323e145a18bf1f3dd1eb42694e7e747816c6a50))
+
 ## [0.1.12](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.11...arkham-companion-v0.1.12) (2026-10-28)
 
 
