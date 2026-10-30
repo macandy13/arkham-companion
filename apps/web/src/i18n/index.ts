@@ -635,8 +635,27 @@ export const resources = {
         resolution: 'R{{n}}',
         next: 'next',
         continue: 'Continue {{scenario}}',
+        notes: 'Campaign Notes',
       },
       campaigns: { nightOfTheZealot: 'Night of the Zealot' },
+      // The campaign notes in our own words, not the campaign guide's.
+      story: {
+        nightOfTheZealot: {
+          houseStillStanding: {
+            yes: 'Your house is still standing.',
+            no: 'Your house burned to the ground.',
+          },
+          ghoulPriestStillAlive: { yes: 'The Ghoul Priest is still out there.' },
+          litaForcedToFindOthers: { yes: 'Lita had to look for help elsewhere.' },
+          itIsPastMidnight: { yes: 'It was past midnight.' },
+          arkhamSuccumbed: { yes: "Arkham fell to Umôrdhoth's vengeance." },
+          ritualBroken: { yes: 'You broke the ritual to summon Umôrdhoth.' },
+          umordhothRepelled: { yes: 'You drove Umôrdhoth back.' },
+          litaSacrificed: { yes: 'You gave Lita Chantler to Umôrdhoth.' },
+          cultistsWeInterrogated: 'Cultists We Interrogated',
+          cultistsWhoGotAway: 'Cultists Who Got Away',
+        },
+      },
       wizard: {
         campaign: 'Campaign',
         scenario: 'Scenario',
@@ -1385,8 +1404,26 @@ export const resources = {
         resolution: 'A{{n}}',
         next: 'als Nächstes',
         continue: '{{scenario}} fortsetzen',
+        notes: 'Kampagnennotizen',
       },
       campaigns: { nightOfTheZealot: 'Die Nacht des Zeloten' },
+      story: {
+        nightOfTheZealot: {
+          houseStillStanding: {
+            yes: 'Euer Haus steht noch.',
+            no: 'Euer Haus ist niedergebrannt.',
+          },
+          ghoulPriestStillAlive: { yes: 'Der Ghulpriester ist noch dort draußen.' },
+          litaForcedToFindOthers: { yes: 'Lita musste sich anderswo Hilfe suchen.' },
+          itIsPastMidnight: { yes: 'Es war nach Mitternacht.' },
+          arkhamSuccumbed: { yes: 'Arkham fiel Umôrdhoths Rache zum Opfer.' },
+          ritualBroken: { yes: 'Ihr habt das Ritual zur Beschwörung Umôrdhoths gebrochen.' },
+          umordhothRepelled: { yes: 'Ihr habt Umôrdhoth zurückgeschlagen.' },
+          litaSacrificed: { yes: 'Ihr habt Lita Chantler Umôrdhoth geopfert.' },
+          cultistsWeInterrogated: 'Verhörte Kultisten',
+          cultistsWhoGotAway: 'Entkommene Kultisten',
+        },
+      },
       wizard: {
         campaign: 'Kampagne',
         scenario: 'Szenario',

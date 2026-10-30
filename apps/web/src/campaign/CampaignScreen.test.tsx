@@ -116,6 +116,58 @@ describe('CampaignScreen', () => {
     });
   });
 
+  describe('after The Midnight Masks', () => {
+    async function renderNotepad() {
+      const { gameStore, campaignId } = await storeCampaign(() => [
+        { type: 'StoryRecorded', key: 'houseStillStanding', value: { kind: 'flag', value: false } },
+        {
+          type: 'StoryRecorded',
+          key: 'ghoulPriestStillAlive',
+          value: { kind: 'flag', value: false },
+        },
+        { type: 'StoryRecorded', key: 'itIsPastMidnight', value: { kind: 'flag', value: true } },
+        {
+          type: 'StoryRecorded',
+          key: 'cultistsWeInterrogated',
+          value: { kind: 'list', entries: ['Herman Collins'] },
+        },
+        {
+          type: 'StoryRecorded',
+          key: 'cultistsWhoGotAway',
+          value: {
+            kind: 'crossableList',
+            entries: [
+              { name: 'Ruth Turner', crossedOut: false },
+              { name: 'Peter Warren', crossedOut: true },
+            ],
+          },
+        },
+      ]);
+      renderLog(gameStore, `/campaign/${campaignId}`);
+      return screen.findByRole('region', { name: 'Campaign Notes' });
+    }
+
+    it('writes the notes the log holds, in the order the guide records them', async () => {
+      const notes = await renderNotepad();
+
+      expect(
+        within(notes)
+          .getAllByRole('listitem')
+          .map((note) => note.textContent),
+      ).toEqual(['Your house burned to the ground.', 'It was past midnight.']);
+    });
+
+    it('lists the cultists interrogated and those who got away, a caught one crossed out', async () => {
+      await renderNotepad();
+
+      const interrogated = screen.getByRole('region', { name: 'Cultists We Interrogated' });
+      expect(within(interrogated).getByText('Herman Collins')).toBeTruthy();
+      const gotAway = screen.getByRole('region', { name: 'Cultists Who Got Away' });
+      expect(within(gotAway).getByText('Ruth Turner').tagName).toBe('LI');
+      expect(within(gotAway).getByText('Peter Warren').tagName).toBe('DEL');
+    });
+  });
+
   it('marks a killed investigator', async () => {
     const { gameStore, campaignId } = await storeCampaign(() => [
       { type: 'InvestigatorFateChanged', code: roland, fate: 'killed' },

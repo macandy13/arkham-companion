@@ -13,6 +13,7 @@ describe('compileStart', () => {
       hard: ['-1', '-2'],
       expert: ['-2', '-3'],
     },
+    log: { notes: [], sheets: [] },
   };
 
   it('builds a StartCampaign with the bag of the chosen difficulty and the scenario order', () => {

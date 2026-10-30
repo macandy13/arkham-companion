@@ -12,6 +12,7 @@ import {
 } from '@arkham/engine';
 import type { AppState } from '../state/appStore';
 import { findCampaign, findScenario, scenarioCardName } from '../scenarios/scenarioCatalog';
+import { CampaignSheets } from './CampaignSheets';
 import { Tally } from './Tally';
 import '@fontsource/federant/latin-400.css';
 import '@fontsource/felipa/latin-400.css';
@@ -22,9 +23,9 @@ import './campaign_log.css';
 
 /**
  * Route `/campaign/:id`: the campaign log, drawn after the campaign log sheet of the Core Set
- * (docs/product.md "Campaign screen"): an index card with a column per investigator and a napkin
- * with the scenarios, each played one ticked with its resolution. Below them, a link continues
- * the scenario in play.
+ * (docs/product.md "Campaign screen"): an index card with a column per investigator, a napkin
+ * with the scenarios, each played one ticked with its resolution, then the campaign notes and the
+ * campaign's own sheets (`CampaignSheets`). Below them, a link continues the scenario in play.
  */
 export function CampaignScreen({ store }: { store: StoreApi<AppState> }) {
   const { t } = useTranslation();
@@ -56,6 +57,7 @@ export function CampaignScreen({ store }: { store: StoreApi<AppState> }) {
         </ol>
       </section>
       <ScenarioList log={log} />
+      {entry && <CampaignSheets log={log} entry={entry} />}
       <ContinueLink log={log} games={games} />
     </article>
   );

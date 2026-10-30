@@ -26,9 +26,10 @@ A tap on a portrait opens the detail sheet as a dialog.
 The [campaign screen](../../apps/web/src/campaign/CampaignScreen.tsx) draws the open campaign (`AppState.openCampaign`, `OpenCampaign`: the replayed `CampaignLog` and the campaign's games) like the Core Set's campaign log sheet (docs/product.md "Campaign screen"):
 
 - an index card with the printed fields in a column per investigator (unspent XP, trauma as tally marks ([`Tally.tsx`](../../apps/web/src/campaign/Tally.tsx)), earned story cards by name from the catalog), and a napkin with the campaign's scenarios, the played ones ticked with their resolution and the next one marked `aria-current`;
+- notepad pages ([`CampaignSheets.tsx`](../../apps/web/src/campaign/CampaignSheets.tsx)) with the campaign notes and the campaign's own sheets from its `CampaignLogLayout`, each record in words from `CampaignEntry.storyKey` (a flag's note at `<storyKey>.<record>.yes` or `.no`, a list's heading at `<storyKey>.<record>`), crossed-out names in `<del>`;
 - a link that continues the game of the scenario in play.
 
-The paper look is tokens, so dialogs can share it: fonts `--font-family-print`, `-log-label`, `-script`, `-hand`; inks `--color-print`, `-pen`, `-script-ink`, `-stamp`; papers `--index-card-paper`, `--napkin-paper`; the torn outline `--paper-edge` (a `clip-path` polygon on a layer behind the sheet, so the writing stays crisp).
+The paper look is tokens, so dialogs can share it: fonts `--font-family-print`, `-log-label`, `-script`, `-hand`; inks `--color-print`, `-pen`, `-script-ink`, `-stamp`; papers `--index-card-paper`, `--napkin-paper`, `--notepad-paper` (ruled `--notepad-line` apart); the torn outline `--paper-edge` (a `clip-path` polygon on a layer behind the sheet, so the writing stays crisp).
 [`campaign_log.css`](../../apps/web/src/campaign/campaign_log.css) selects by the sheets' ids, and drops the panel frame the other screens have.
 
 ## Open game

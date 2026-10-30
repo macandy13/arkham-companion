@@ -1,6 +1,7 @@
 /*
  * The campaign log (CampaignScreen.tsx), after the Core Set's campaign log sheet: torn sheets of
- * paper on a starfield. The index card holds the investigators, the napkin the scenarios. The
+ * paper on a starfield. The index card holds the investigators, the napkin the scenarios, and
+ * notepad pages the campaign notes and the campaign's own sheets (CampaignSheets.tsx). The
  * paper, inks and fonts are tokens (tokens.css) so dialogs can take the same look.
  */
 
@@ -14,6 +15,8 @@
   --campaign-log-columns: 4;
 
   display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--campaign-sheet-width), 100%), 1fr));
+  align-items: start;
   gap: var(--space-4);
   padding: var(--space-4) var(--space-3);
   border-radius: var(--radius);
@@ -26,7 +29,7 @@
  * outline and its shadow leave the writing on it untouched. Two ids, so the sheets stack their
  * content instead of taking the home screen's `#app > main section` row.
  */
-#campaign-log > :is(#campaign-investigators, #campaign-scenarios) {
+#campaign-log > :is(#campaign-investigators, #campaign-scenarios, #campaign-notes, [data-sheet]) {
   display: block;
   position: relative;
   isolation: isolate;
@@ -34,12 +37,20 @@
 }
 
 #campaign-investigators::before,
-#campaign-scenarios::before {
+#campaign-scenarios::before,
+#campaign-notes::before,
+#campaign-log > [data-sheet]::before {
   content: '';
   position: absolute;
   inset: 0;
   z-index: -1;
   clip-path: var(--paper-edge);
+}
+
+/* The index card and the link under the sheets span the board; the other sheets share its rows. */
+#campaign-investigators,
+#campaign-log > footer {
+  grid-column: 1 / -1;
 }
 
 #campaign-investigators {
@@ -284,4 +295,39 @@
 #campaign-log > footer {
   display: flex;
   justify-content: center;
+}
+
+/* Notepad pages: a printed heading, then handwritten lines that sit on the ruled lines. */
+#campaign-log > :is(#campaign-notes, [data-sheet]) {
+  padding: var(--notepad-line) var(--space-3) var(--notepad-line)
+    calc(var(--notepad-margin) + var(--space-2));
+  filter: var(--sheet-shadow);
+}
+
+#campaign-notes::before,
+#campaign-log > [data-sheet]::before {
+  background: var(--notepad-paper);
+}
+
+#campaign-log > :is(#campaign-notes, [data-sheet]) > h2 {
+  margin: 0;
+  font-family: var(--font-family-print);
+  font-size: var(--font-size-subtitle);
+  font-weight: normal;
+  line-height: var(--notepad-line);
+}
+
+#campaign-log > :is(#campaign-notes, [data-sheet]) > ul {
+  min-height: calc(3 * var(--notepad-line));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: var(--font-family-hand);
+  font-size: var(--font-size-hand);
+  line-height: var(--notepad-line);
+  color: var(--color-pen);
+}
+
+#campaign-log del {
+  text-decoration-thickness: var(--sheet-ink-width);
 }
