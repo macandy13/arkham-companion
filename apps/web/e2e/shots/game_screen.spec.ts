@@ -265,7 +265,7 @@ test(
     else await scenario.getByRole('button', { name: 'The Gathering' }).click();
 
     const card = isMobile ? scenario : page.getByRole('dialog', { name: 'The Gathering' });
-    await expect(card.getByText('−1. If you fail, take 1 horror.')).toBeInViewport();
+    await expect(card.getByText('-1. On a failure, take 1 horror.')).toBeInViewport();
   },
 );
 

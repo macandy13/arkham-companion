@@ -125,6 +125,11 @@
 }
 
 /* The token: a disc in its colour inside a dark ring, its symbol in paper colour on it. */
+/* The traits a row names in bold italics, as the printed card sets them. */
+#board > header > section [data-card='scenario'] > ul > li > p > em {
+  font-weight: bold;
+}
+
 #board > header > section [data-card='scenario'] > ul > li > span {
   display: grid;
   aspect-ratio: 1;

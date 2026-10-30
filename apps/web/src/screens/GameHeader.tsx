@@ -9,7 +9,9 @@ import type {
   CardName,
   ReferenceView,
 } from '@arkham/engine';
+import type { ReferenceSideTexts } from '@arkham/carddata';
 import { useCardPicture } from '../catalog/cardImages';
+import { cardText } from '../catalog/cardText';
 import { EncounterPiles, HeaderPile, type PileProps } from '../encounter/EncounterPiles';
 import type { AppState, OpenGame } from '../state/appStore';
 import { CardActions, cardActionsOn } from './ActionRow';
@@ -31,18 +33,21 @@ import type { HeaderCardKind } from './useDetailView';
  * cards calls `onOpenCard` instead (the detail view opens on it), so the card's own buttons and
  * dialogs wait for the detail view. There the cards show `full`: the agenda and act are already
  * as large as the screen allows, so their action rows sit under them and a tap opens no second,
- * full-card dialog.
+ * full-card dialog. `referenceTexts` are the printed texts of the scenario card's side in play,
+ * from the card catalog; until it has loaded the card shows its rows without them.
  */
 export function GameHeader({
   store,
   open,
   board,
+  referenceTexts,
   onOpenCard,
   full = false,
 }: {
   store: StoreApi<AppState>;
   open: OpenGame;
   board: BoardView;
+  referenceTexts: ReferenceSideTexts | undefined;
   onOpenCard?: ((card: HeaderCardKind) => void) | undefined;
   full?: boolean;
 }) {
@@ -79,7 +84,12 @@ export function GameHeader({
         onOpen={onOpenCard}
       />
       <HeaderSlot label={t('header.scenario')} card="scenario" onOpen={onOpenCard}>
-        <ScenarioStatus open={open} board={board} opens={!onOpenCard && !full} />
+        <ScenarioStatus
+          open={open}
+          board={board}
+          texts={referenceTexts}
+          opens={!onOpenCard && !full}
+        />
         <HeaderPile pile="setAside" {...piles} />
       </HeaderSlot>
       <HeaderSlot label={t('header.victory')}>
@@ -98,10 +108,12 @@ export function GameHeader({
 function ScenarioStatus({
   open,
   board,
+  texts,
   opens,
 }: {
   open: OpenGame;
   board: BoardView;
+  texts: ReferenceSideTexts | undefined;
   opens: boolean;
 }) {
   const { t } = useTranslation();
@@ -110,7 +122,7 @@ function ScenarioStatus({
   const zoom = () => setZoomed(true);
   return (
     <>
-      <ScenarioCard reference={board.reference} onClick={opens ? zoom : undefined}>
+      <ScenarioCard reference={board.reference} texts={texts} onClick={opens ? zoom : undefined}>
         <h1>
           {opens ? (
             <button type="button" onClick={zoom}>
@@ -122,7 +134,12 @@ function ScenarioStatus({
         </h1>
       </ScenarioCard>
       {zoomed && (
-        <ScenarioDetails name={name} reference={board.reference} onClose={() => setZoomed(false)} />
+        <ScenarioDetails
+          name={name}
+          reference={board.reference}
+          texts={texts}
+          onClose={() => setZoomed(false)}
+        />
       )}
     </>
   );
@@ -135,10 +152,12 @@ function ScenarioStatus({
 function ScenarioDetails({
   name,
   reference,
+  texts,
   onClose,
 }: {
   name: string;
   reference: ReferenceView | undefined;
+  texts: ReferenceSideTexts | undefined;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -150,7 +169,7 @@ function ScenarioDetails({
   return (
     <dialog ref={dialog} aria-labelledby={titleId} onCancel={onClose} data-dialog="card">
       <button type="button" data-icon="close" aria-label={t('header.close')} onClick={onClose} />
-      <ScenarioCard reference={reference}>
+      <ScenarioCard reference={reference} texts={texts}>
         <h2 id={titleId}>{name}</h2>
       </ScenarioCard>
     </dialog>
@@ -161,14 +180,17 @@ function ScenarioDetails({
  * The face of the scenario reference card: in the Exact card theme our drawing of its frame
  * (`ScenarioFace`) under its title (`children`), the side the game's difficulty plays with and one
  * row per symbol token, the token's game symbol (named for screen readers) beside its printed
- * text (`BoardView.reference`). A game without a reference card shows only the title.
+ * text (`texts`, from the card catalog, for the side `BoardView.reference` names). A game without
+ * a reference card shows only the title.
  */
 function ScenarioCard({
   reference,
+  texts,
   onClick,
   children,
 }: {
   reference: ReferenceView | undefined;
+  texts: ReferenceSideTexts | undefined;
   onClick?: () => void;
   children: ReactNode;
 }) {
@@ -189,12 +211,15 @@ function ScenarioCard({
         <>
           <p>{t(`header.referenceSide.${reference.side}`)}</p>
           <ul aria-label={t('header.reference')}>
-            {reference.rows.map(({ token, effectKey }) => (
-              <li key={token} data-chaos-token={token}>
-                <span role="img" aria-label={t(`chaosToken.${token}`)} />
-                <p>{t(effectKey)}</p>
-              </li>
-            ))}
+            {reference.rows.map(({ token }) => {
+              const text = texts?.[token];
+              return (
+                <li key={token} data-chaos-token={token}>
+                  <span role="img" aria-label={t(`chaosToken.${token}`)} />
+                  {text !== undefined && <p>{cardText(text)}</p>}
+                </li>
+              );
+            })}
           </ul>
         </>
       )}

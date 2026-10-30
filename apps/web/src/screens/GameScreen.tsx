@@ -5,6 +5,7 @@ import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
 import { gameId as toGameId, type InstanceId } from '@arkham/engine';
 import type { AppState } from '../state/appStore';
+import { useCatalog, type CatalogSource } from '../catalog/useCatalog';
 import { InvestigatorBar } from '../investigators/InvestigatorBar';
 import { LocationFocus } from '../map/LocationFocus';
 import { MapBoard } from '../map/MapBoard';
@@ -33,10 +34,17 @@ import './game.css';
  * (`DetailControls`); the map row gets a strip above and below the map (`MapStrip`). A tap on a
  * location there or in the compact view shows that location in the map row (`LocationFocus`), the
  * location mode, until the players go back to the map; while they choose where an enemy spawns,
- * the map shows.
+ * the map shows. The scenario card's texts come from the card `catalog`.
  */
-export function GameScreen({ store }: { store: StoreApi<AppState> }) {
+export function GameScreen({
+  store,
+  catalog,
+}: {
+  store: StoreApi<AppState>;
+  catalog: CatalogSource;
+}) {
   const { t } = useTranslation();
+  const cards = useCatalog(catalog);
   // The route only matches with an `:id` segment; the fallback only satisfies the type.
   const gameId = toGameId(useParams().id ?? '');
   const current = useStore(store, (s) => s.current);
@@ -89,6 +97,11 @@ export function GameScreen({ store }: { store: StoreApi<AppState> }) {
         store={store}
         open={open}
         board={board}
+        referenceTexts={
+          board.reference && cards.status === 'ready'
+            ? cards.catalog.references?.[board.reference.code]?.[board.reference.side]
+            : undefined
+        }
         onOpenCard={opensDetail ? (card) => detail.open({ row: 'cards', card }) : undefined}
         full={detailTarget !== undefined}
       />
