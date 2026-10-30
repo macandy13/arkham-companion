@@ -232,7 +232,7 @@
   --dialog-width-narrow: 27.5rem;
   --dialog-width: 37.5rem;
   --dialog-width-wide: 55rem;
-  --dialog-padding: 2.125rem 2.5rem;
+  --dialog-padding: 2.125rem var(--space-5);
   /* The room the × keeps free in a dialog's top corner, and how far it sits from the edge. */
   --dialog-close-inset: var(--space-3);
   /* The clue payment dialog, wide enough for three payers' art side by side, each this wide. */
@@ -659,6 +659,10 @@
  * less paper around its content.
  */
 @media (orientation: portrait) and (max-width: 40rem) {
+  :root {
+    --dialog-padding: var(--space-4) var(--space-3);
+  }
+
   #board[data-view='detail'] {
     --layout-header-card-height: var(--layout-detail-card-height);
   }
@@ -667,10 +671,6 @@
    * The encounter dialog's row fits two cards, and a card opened over the whole screen (game.css)
    * grows to nearly its width.
    */
-  :root {
-    --dialog-padding: var(--space-4) var(--space-3);
-  }
-
   #board {
     --encounter-strip-cards-shown: 2;
     --layout-zoom-card-width: 20rem;
