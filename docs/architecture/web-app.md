@@ -30,7 +30,7 @@ The [campaign screen](../../apps/web/src/campaign/CampaignScreen.tsx) draws the 
 - the sheets every campaign shares after them: a newspaper clipping with the killed and insane investigators (replaced ones first) and an index card with the chaos bag, each kind of token once with its count, in `CHAOS_TOKENS` order;
 - a link that continues the game of the scenario in play.
 
-The paper look is tokens, so dialogs can share it: fonts `--font-family-print`, `-log-label`, `-script`, `-hand`; inks `--color-print`, `-pen`, `-script-ink`, `-stamp`; papers `--index-card-paper`, `--napkin-paper`, `--clipping-paper`, `--notepad-paper` (ruled `--notepad-line` apart); the torn outline `--paper-edge` (a `clip-path` polygon on a layer behind the sheet, so the writing stays crisp).
+The paper look is tokens, so dialogs can share it: fonts `--font-family-print`, `-log-label`, `-script`, `-hand`; inks `--color-print`, `-pen`, `-script-ink`, `-stamp`, `--color-newsprint-ink`; papers `--index-card-paper`, `--napkin-paper`, `--clipping-paper`, `--notepad-paper` (ruled `--notepad-line` apart), tilts `--sheet-tilt`, `--clipping-tilt`; the torn outline `--paper-edge` (a `clip-path` polygon on a layer behind the sheet, so the writing stays crisp).
 [`campaign_log.css`](../../apps/web/src/campaign/campaign_log.css) selects by the sheets' ids, and `base.css` leaves it off the paper the other screens are printed on.
 
 ## Open game

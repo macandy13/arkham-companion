@@ -23,7 +23,7 @@ const litaChantler = cardCode('01117');
 const gathering = scenarioId('the-gathering');
 const midnightMasks = scenarioId('the-midnight-masks');
 
-/** A Night of the Zealot campaign of Roland Banks alone, then `events` on its log. */
+/** A Night of the Zealot campaign of Roland Banks alone, its chaos bag a single 0, then `events` on its log. */
 async function storeCampaign(events: (id: CampaignId) => CampaignEvent[]) {
   const gameStore = new IndexedDbStore(`campaign-screen-test-${n++}`);
   const campaignId = await gameStore.createCampaign({ title: 'Zealot – Roland' });
@@ -208,7 +208,7 @@ describe('CampaignScreen', () => {
       ).toEqual(['Roland Banks – killed', 'Daisy Walker – insane']);
     });
 
-    it('notes each kind of token in the chaos bag once, with its count', async () => {
+    it('notes the starting 0, the 0 and the skull added as one entry per kind with its count', async () => {
       await renderFallen();
       const bag = screen.getByRole('region', { name: 'Chaos Bag' });
 
