@@ -1,0 +1,287 @@
+/*
+ * The campaign log (CampaignScreen.tsx), after the Core Set's campaign log sheet: torn sheets of
+ * paper on a starfield. The index card holds the investigators, the napkin the scenarios. The
+ * paper, inks and fonts are tokens (tokens.css) so dialogs can take the same look.
+ */
+
+/* The log brings its own paper, so the screen drops the panel frame every other screen has. */
+#app > main:not(:has(#board)):has(#campaign-log) {
+  border: 0;
+  background: none;
+}
+
+#campaign-log {
+  --campaign-log-columns: 4;
+
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-3);
+  border-radius: var(--radius);
+  background: var(--space-glow), var(--color-space);
+  color: var(--color-print);
+}
+
+/*
+ * A sheet of paper with a ragged edge. The paper is a layer behind the sheet, so the clipped
+ * outline and its shadow leave the writing on it untouched. Two ids, so the sheets stack their
+ * content instead of taking the home screen's `#app > main section` row.
+ */
+#campaign-log > :is(#campaign-investigators, #campaign-scenarios) {
+  display: block;
+  position: relative;
+  isolation: isolate;
+  padding: var(--space-4) var(--space-3);
+}
+
+#campaign-investigators::before,
+#campaign-scenarios::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  clip-path: var(--paper-edge);
+}
+
+#campaign-investigators {
+  filter: var(--sheet-shadow);
+}
+
+#campaign-investigators::before {
+  background: var(--index-card-paper);
+}
+
+#campaign-scenarios {
+  justify-self: start;
+  filter: var(--sheet-shadow);
+  transform: rotate(var(--sheet-tilt));
+}
+
+#campaign-scenarios::before {
+  background: var(--napkin-paper);
+}
+
+/* The card's head: "Campaign Log:" in print, then the campaign's name written in script. */
+#campaign-investigators > header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-3);
+  padding-inline: var(--space-2);
+}
+
+#campaign-investigators > header > p {
+  margin: 0;
+  font-family: var(--font-family-print);
+  font-size: var(--font-size-print-title);
+}
+
+#campaign-investigators h1,
+#campaign-scenarios h2 {
+  margin: 0;
+  font-family: var(--font-family-script);
+  font-size: var(--font-size-script-title);
+  font-weight: normal;
+  line-height: 1;
+  color: var(--color-script-ink);
+}
+
+/* The investigators' frame: a heavy rule with a fine one inside it, and a column each. */
+#campaign-investigators > h2 {
+  margin: var(--space-2) 0 0;
+  padding: var(--space-1);
+  border: var(--sheet-frame-width) solid;
+  border-bottom: var(--sheet-rule-width) solid;
+  font-family: var(--font-family-print);
+  font-size: var(--font-size-print-title);
+  font-weight: normal;
+  text-align: center;
+}
+
+/* Like the printed sheet, the card has room for four investigators, two to a row on a phone. */
+#campaign-investigators > ol {
+  display: grid;
+  grid-template-columns: repeat(var(--campaign-log-columns), minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  border: var(--sheet-frame-width) solid;
+  border-top: 0;
+  list-style: none;
+}
+
+#campaign-investigators > ol > li {
+  border-left: var(--sheet-frame-width) double;
+}
+
+#campaign-investigators > ol > li:nth-child(4n + 1) {
+  border-left: 0;
+}
+
+#campaign-investigators dl {
+  display: grid;
+  margin: 0;
+}
+
+/* Printed labels in small bold capitals, and under each the players' handwriting. */
+#campaign-investigators dt {
+  padding: var(--space-1) var(--space-2) 0;
+  font-family: var(--font-family-log-label);
+  font-size: var(--font-size-log-label);
+  font-weight: bold;
+  letter-spacing: var(--log-label-tracking);
+  text-transform: uppercase;
+  color: var(--color-print);
+  overflow-wrap: normal;
+}
+
+#campaign-investigators dd {
+  min-width: 0;
+  min-height: var(--font-size-hand-large);
+  margin: 0;
+  padding: 0 var(--space-2) var(--space-1);
+  border-bottom: var(--sheet-rule-width) solid var(--color-print);
+  font-family: var(--font-family-hand);
+  font-size: var(--font-size-hand);
+  line-height: 1.1;
+  color: var(--color-pen);
+  overflow-wrap: anywhere;
+}
+
+#campaign-investigators li > dl > dd:last-child {
+  border-bottom: 0;
+}
+
+/* A fallen investigator's name is struck through, their fate noted beside it in red. */
+#campaign-investigators dd:has(> em) {
+  text-decoration: line-through;
+}
+
+#campaign-investigators dd > em {
+  display: block;
+  color: var(--color-stamp);
+  font-style: normal;
+  text-decoration: none;
+}
+
+#campaign-investigators data {
+  font-size: var(--font-size-hand-large);
+  font-weight: bold;
+}
+
+#campaign-investigators dd > small {
+  margin-left: var(--space-2);
+  font-size: var(--font-size-body);
+}
+
+/* Trauma: physical and mental side by side, each a row of tally marks. */
+#campaign-investigators dd > dl {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  grid-auto-flow: column;
+  margin-inline: calc(-1 * var(--space-2));
+}
+
+#campaign-investigators dd > dl > :is(dt, dd) {
+  border-bottom: 0;
+}
+
+#campaign-investigators dd > dl > :nth-child(n + 3) {
+  border-left: var(--sheet-rule-width) solid var(--color-print);
+}
+
+#campaign-investigators svg {
+  display: block;
+  height: var(--tally-height);
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: var(--sheet-ink-width);
+  stroke-linecap: round;
+}
+
+/* The napkin: a script title and the scenarios drawn as boxed names one under the other. */
+#campaign-scenarios h2 {
+  display: inline-block;
+  padding-right: var(--space-3);
+  border-bottom: var(--sheet-ink-width) solid var(--color-script-ink);
+}
+
+#campaign-scenarios ol {
+  display: grid;
+  justify-items: start;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+#campaign-scenarios li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-family-hand);
+  font-size: var(--font-size-hand);
+  color: var(--color-pen);
+}
+
+/* Each scenario after the first is joined to the one before by a drawn arrow. */
+#campaign-scenarios li + li::before {
+  content: '↓';
+  flex-basis: 100%;
+  padding-left: var(--space-5);
+  color: var(--color-script-ink);
+}
+
+#campaign-scenarios label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-3) 0 0;
+  font-family: var(--font-family-script);
+  color: var(--color-script-ink);
+}
+
+/* A box drawn in ink, ticked by hand once the scenario is played. */
+#campaign-scenarios input {
+  display: grid;
+  place-content: center;
+  width: var(--space-4);
+  height: var(--space-4);
+  margin: 0;
+  border: var(--sheet-ink-width) solid var(--color-script-ink);
+  appearance: none;
+}
+
+#campaign-scenarios input:checked::after {
+  content: '✓';
+  font-family: var(--font-family-hand);
+  font-size: var(--font-size-hand-large);
+  font-weight: bold;
+  line-height: 0;
+  color: var(--color-pen);
+}
+
+#campaign-scenarios li[aria-current] label {
+  background: var(--color-highlight);
+}
+
+#campaign-scenarios li[aria-current] > span {
+  color: var(--color-stamp);
+}
+
+@media (orientation: portrait) and (max-width: 40rem) {
+  #campaign-log {
+    --campaign-log-columns: 2;
+  }
+
+  #campaign-investigators > ol > li:nth-child(odd) {
+    border-left: 0;
+  }
+
+  #campaign-investigators > ol > li:nth-child(n + 3) {
+    border-top: var(--sheet-frame-width) double;
+  }
+}
+
+#campaign-log > footer {
+  display: flex;
+  justify-content: center;
+}
