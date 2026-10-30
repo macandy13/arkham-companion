@@ -279,6 +279,30 @@ export type ChaosToken =
   /** Core Set (2026): -1, reveal another token, seal the first box on the investigator card. */
   | 'blood';
 
+/** Every chaos token, in the order the rules list them: numbers from best to worst, then the symbols. */
+export const CHAOS_TOKENS = [
+  '+1',
+  '0',
+  '-1',
+  '-2',
+  '-3',
+  '-4',
+  '-5',
+  '-6',
+  '-7',
+  '-8',
+  'skull',
+  'cultist',
+  'tablet',
+  'elderThing',
+  'autoFail',
+  'elderSign',
+  'bless',
+  'curse',
+  'frost',
+  'blood',
+] as const satisfies readonly ChaosToken[];
+
 /** The kinds of decision; the UI has one dialog per kind (M3.7). */
 export type DecisionKind =
   | 'confirm'

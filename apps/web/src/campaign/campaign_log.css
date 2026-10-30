@@ -1,7 +1,8 @@
 /*
  * The campaign log (CampaignScreen.tsx), after the Core Set's campaign log sheet: torn sheets of
- * paper on a starfield. The index card holds the investigators, the napkin the scenarios, and
- * notepad pages the campaign notes and the campaign's own sheets (CampaignSheets.tsx). The
+ * paper on a starfield. The index card holds the investigators, the napkin the scenarios,
+ * notepad pages the campaign notes and the campaign's own sheets (CampaignSheets.tsx), a
+ * newspaper clipping the killed and insane, and a second index card the chaos bag. The
  * paper, inks and fonts are tokens (tokens.css) so dialogs can take the same look.
  */
 
@@ -23,7 +24,15 @@
  * outline and its shadow leave the writing on it untouched. Two ids, so the sheets stack their
  * content instead of taking the home screen's `#app > main section` row.
  */
-#campaign-log > :is(#campaign-investigators, #campaign-scenarios, #campaign-notes, [data-sheet]) {
+#campaign-log
+  > :is(
+    #campaign-investigators,
+    #campaign-scenarios,
+    #campaign-notes,
+    #campaign-fallen,
+    #campaign-chaos-bag,
+    [data-sheet]
+  ) {
   display: block;
   position: relative;
   isolation: isolate;
@@ -33,6 +42,8 @@
 #campaign-investigators::before,
 #campaign-scenarios::before,
 #campaign-notes::before,
+#campaign-fallen::before,
+#campaign-chaos-bag::before,
 #campaign-log > [data-sheet]::before {
   content: '';
   position: absolute;
@@ -312,6 +323,7 @@
 }
 
 #campaign-log > :is(#campaign-notes, [data-sheet]) > ul {
+  gap: 0;
   min-height: calc(3 * var(--notepad-line));
   margin: 0;
   padding: 0;
@@ -324,4 +336,78 @@
 
 #campaign-log del {
   text-decoration-thickness: var(--sheet-ink-width);
+}
+
+/* The clipping: a headline between rules, then the fallen written in by hand. */
+#campaign-fallen {
+  filter: var(--sheet-shadow);
+  transform: rotate(var(--clipping-tilt));
+  color: var(--color-newsprint-ink);
+}
+
+#campaign-fallen::before {
+  background: var(--clipping-paper);
+}
+
+#campaign-fallen > h2 {
+  margin: 0;
+  padding-top: var(--space-1);
+  border-top: var(--sheet-rule-width) solid;
+  font-family: var(--font-family-print);
+  font-size: var(--font-size-subtitle);
+  font-style: italic;
+}
+
+#campaign-log > #campaign-fallen > ul {
+  gap: 0;
+  min-height: calc(3 * var(--notepad-line));
+  margin: var(--space-1) 0 0;
+  padding: 0;
+  border-bottom: var(--sheet-rule-width) solid var(--color-newsprint-ink);
+  list-style: none;
+}
+
+/* The chaos bag: each kind of token once, with its count, written in a row like a shopping list. */
+#campaign-chaos-bag {
+  filter: var(--sheet-shadow);
+}
+
+#campaign-chaos-bag::before {
+  background: var(--index-card-paper);
+}
+
+#campaign-chaos-bag > h2 {
+  margin: 0;
+  font-family: var(--font-family-print);
+  font-size: var(--font-size-subtitle);
+  font-weight: normal;
+}
+
+#campaign-log > #campaign-chaos-bag > ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-3);
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Handwritten lines, not the home screen's `#app > main ul > li` cards: two ids beat its one. */
+#campaign-log
+  > :is(#campaign-notes, #campaign-fallen, #campaign-chaos-bag, [data-sheet])
+  > ul
+  > li {
+  display: block;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+
+#campaign-fallen > ul,
+#campaign-chaos-bag > ul {
+  font-family: var(--font-family-hand);
+  font-size: var(--font-size-hand);
+  line-height: var(--notepad-line);
+  color: var(--color-pen);
 }

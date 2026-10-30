@@ -592,6 +592,11 @@ export const appTexts = {
     next: 'als Nächstes',
     continue: '{{scenario}} fortsetzen',
     notes: 'Kampagnennotizen',
+    fallen: 'Getötete und wahnsinnige Ermittler',
+    fallenAs: '{{name}} – {{fate}}',
+    chaosBag: 'Chaosbeutel',
+    tokenCount_one: '{{token}}',
+    tokenCount_other: '{{token}} ×{{count}}',
   },
   wizard: {
     campaign: 'Kampagne',

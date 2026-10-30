@@ -27,9 +27,10 @@ The [campaign screen](../../apps/web/src/campaign/CampaignScreen.tsx) draws the 
 
 - an index card with the printed fields in a column per investigator (unspent XP, trauma as tally marks ([`Tally.tsx`](../../apps/web/src/campaign/Tally.tsx)), earned story cards by name from the catalog), and a napkin with the campaign's scenarios, the played ones ticked with their resolution and the next one marked `aria-current`;
 - notepad pages ([`CampaignSheets.tsx`](../../apps/web/src/campaign/CampaignSheets.tsx)) with the campaign notes and the campaign's own sheets from its `CampaignLogLayout`, each record in words from `CampaignEntry.storyKey` (a flag's note at `<storyKey>.<record>.yes` or `.no`, a list's heading at `<storyKey>.<record>`), crossed-out names in `<del>`;
+- the sheets every campaign shares after them: a newspaper clipping with the killed and insane investigators (replaced ones first) and an index card with the chaos bag, each kind of token once with its count, in `CHAOS_TOKENS` order;
 - a link that continues the game of the scenario in play.
 
-The paper look is tokens, so dialogs can share it: fonts `--font-family-print`, `-log-label`, `-script`, `-hand`; inks `--color-print`, `-pen`, `-script-ink`, `-stamp`; papers `--index-card-paper`, `--napkin-paper`, `--notepad-paper` (ruled `--notepad-line` apart); the torn outline `--paper-edge` (a `clip-path` polygon on a layer behind the sheet, so the writing stays crisp).
+The paper look is tokens, so dialogs can share it: fonts `--font-family-print`, `-log-label`, `-script`, `-hand`; inks `--color-print`, `-pen`, `-script-ink`, `-stamp`, `--color-newsprint-ink`; papers `--index-card-paper`, `--napkin-paper`, `--clipping-paper`, `--notepad-paper` (ruled `--notepad-line` apart), tilts `--sheet-tilt`, `--clipping-tilt`; the torn outline `--paper-edge` (a `clip-path` polygon on a layer behind the sheet, so the writing stays crisp).
 [`campaign_log.css`](../../apps/web/src/campaign/campaign_log.css) selects by the sheets' ids, and `base.css` leaves it off the paper the other screens are printed on.
 
 ## Open game

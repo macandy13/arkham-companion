@@ -23,7 +23,7 @@ const litaChantler = cardCode('01117');
 const gathering = scenarioId('the-gathering');
 const midnightMasks = scenarioId('the-midnight-masks');
 
-/** A Night of the Zealot campaign of Roland Banks alone, then `events` on its log. */
+/** A Night of the Zealot campaign of Roland Banks alone, its chaos bag a single 0, then `events` on its log. */
 async function storeCampaign(events: (id: CampaignId) => CampaignEvent[]) {
   const gameStore = new IndexedDbStore(`campaign-screen-test-${n++}`);
   const campaignId = await gameStore.createCampaign({ title: 'Zealot – Roland' });
@@ -165,6 +165,58 @@ describe('CampaignScreen', () => {
       const gotAway = screen.getByRole('region', { name: 'Cultists Who Got Away' });
       expect(within(gotAway).getByText('Ruth Turner').tagName).toBe('LI');
       expect(within(gotAway).getByText('Peter Warren').tagName).toBe('DEL');
+    });
+  });
+
+  describe('after Roland was killed, his replacement Daisy went insane', () => {
+    const daisy = investigatorCode('01002');
+
+    async function renderFallen() {
+      const { gameStore, campaignId } = await storeCampaign(() => [
+        { type: 'InvestigatorFateChanged', code: roland, fate: 'killed' },
+        {
+          type: 'InvestigatorReplaced',
+          code: roland,
+          by: {
+            code: daisy,
+            name: 'Daisy Walker',
+            health: 5,
+            sanity: 9,
+            physicalTrauma: 0,
+            mentalTrauma: 0,
+            xpEarned: 0,
+            xpSpent: 0,
+            fate: 'alive',
+            earnedCards: [],
+          },
+        },
+        { type: 'InvestigatorFateChanged', code: daisy, fate: 'insane' },
+        { type: 'ChaosTokenAdded', token: 'skull' },
+        { type: 'ChaosTokenAdded', token: '0' },
+      ]);
+      renderLog(gameStore, `/campaign/${campaignId}`);
+      return screen.findByRole('region', { name: 'Killed and Insane Investigators' });
+    }
+
+    it('lists both on the clipping, Roland first', async () => {
+      const clipping = await renderFallen();
+
+      expect(
+        within(clipping)
+          .getAllByRole('listitem')
+          .map((item) => item.textContent),
+      ).toEqual(['Roland Banks – killed', 'Daisy Walker – insane']);
+    });
+
+    it('notes the starting 0, the 0 and the skull added as one entry per kind with its count', async () => {
+      await renderFallen();
+      const bag = screen.getByRole('region', { name: 'Chaos Bag' });
+
+      expect(
+        within(bag)
+          .getAllByRole('listitem')
+          .map((item) => item.textContent),
+      ).toEqual(['0 ×2', 'Skull']);
     });
   });
 

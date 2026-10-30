@@ -1,11 +1,18 @@
 import { useTranslation } from 'react-i18next';
-import type { CampaignLog, CrossableEntry, LogSheet, StoryValue } from '@arkham/engine';
+import {
+  CHAOS_TOKENS,
+  type CampaignLog,
+  type CrossableEntry,
+  type LogSheet,
+  type StoryValue,
+} from '@arkham/engine';
 import { assertNever } from '@arkham/util';
 import type { CampaignEntry } from '../scenarios/scenarioCatalog';
 
 /**
- * The campaign notes and the campaign's own sheets, in the order its `CampaignLogLayout` lists
- * them. Every campaign gets the same sheets for the same kinds; only the records and their words
+ * The campaign notes, the campaign's own sheets in the order its `CampaignLogLayout` lists them,
+ * then the killed and insane investigators and the chaos bag, which every campaign's log has. Every
+ * campaign gets the same sheets for the same kinds; only the records and their words
  * (`CampaignEntry.storyKey`) differ.
  */
 export function CampaignSheets({
@@ -22,6 +29,8 @@ export function CampaignSheets({
       {sheets.map((sheet) => (
         <Sheet key={sheet.record} sheet={sheet} log={log} storyKey={entry.storyKey} />
       ))}
+      <FallenInvestigators log={log} />
+      <ChaosBag log={log} />
     </>
   );
 }
@@ -50,6 +59,50 @@ function CampaignNotes({
       <ul>
         {lines.map(({ record, text }) => (
           <li key={record}>{text}</li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** The newspaper clipping: every investigator killed or driven insane, those replaced first. */
+function FallenInvestigators({ log }: { readonly log: CampaignLog }) {
+  const { t } = useTranslation();
+  const fallen = [...log.formerInvestigators, ...log.investigators].filter(
+    (member) => member.fate !== 'alive',
+  );
+  return (
+    <section id="campaign-fallen" aria-labelledby="campaign-fallen-title">
+      <h2 id="campaign-fallen-title">{t('campaignLog.fallen')}</h2>
+      <ul>
+        {fallen.map((member) => (
+          <li key={member.code}>
+            {t('campaignLog.fallenAs', {
+              name: member.name,
+              fate: t(`campaignLog.fate.${member.fate}`),
+            })}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** The chaos bag's tokens as the players note them: each kind once, with how many it holds. */
+function ChaosBag({ log }: { readonly log: CampaignLog }) {
+  const { t } = useTranslation();
+  const kinds = CHAOS_TOKENS.flatMap((token) => {
+    const count = log.chaosBag.filter((inBag) => inBag === token).length;
+    return count > 0 ? [{ token, count }] : [];
+  });
+  return (
+    <section id="campaign-chaos-bag" aria-labelledby="campaign-chaos-bag-title">
+      <h2 id="campaign-chaos-bag-title">{t('campaignLog.chaosBag')}</h2>
+      <ul>
+        {kinds.map(({ token, count }) => (
+          <li key={token}>
+            {t('campaignLog.tokenCount', { token: t(`chaosToken.${token}`), count })}
+          </li>
         ))}
       </ul>
     </section>

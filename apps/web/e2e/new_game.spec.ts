@@ -106,7 +106,9 @@ test('start a campaign and resume it from its log', async ({ page }) => {
 
   await test.step('The log shows the team and continues the first scenario', async () => {
     await expect(page.getByRole('heading', { name: 'Night of the Zealot' })).toBeVisible();
-    await expect(page.getByRole('region', { name: 'Investigators' })).toContainText('Fake Seeker');
+    await expect(page.getByRole('region', { name: 'Investigators', exact: true })).toContainText(
+      'Fake Seeker',
+    );
     await page.getByRole('link', { name: 'Continue The Gathering' }).click();
     await expect(page).toHaveURL(gameUrl);
   });

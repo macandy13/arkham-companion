@@ -558,6 +558,13 @@
   --napkin-paper:
     linear-gradient(90deg, rgb(0 0 0 / 5%) 0 1px, transparent 1px) 0 0 / 5px 5px,
     linear-gradient(#f6f5f0, #ecebe4);
+  /* The newspaper clipping: grey newsprint with a crease and a fold's shadow across it. */
+  --clipping-paper:
+    linear-gradient(115deg, transparent 30%, rgb(255 255 255 / 35%) 31%, transparent 33%),
+    linear-gradient(200deg, transparent 55%, rgb(0 0 0 / 7%) 56%, transparent 60%),
+    linear-gradient(#dcdad3, #cfccc4);
+  --color-newsprint-ink: #2b2b2b;
+  --clipping-tilt: 0.6deg;
   /* The notepad: ruled lines a handwritten line apart, a red margin rule on the left. */
   --notepad-line: 1.75rem;
   /* The narrowest a sheet gets before the board puts it on a row of its own. */
