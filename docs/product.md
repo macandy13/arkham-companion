@@ -71,6 +71,7 @@ flowchart LR
   MC1 --> M7[M7 Card effect automation]
   MC1 --> M8[M8 Cloud and sync]
   MC1 --> M9[M9 Publication]
+  M3 --> MD[MD Design language]
 ```
 
 | Milestone | Content | Why at this point | What players get at the end |
@@ -85,6 +86,7 @@ flowchart LR
 | [ME Engine consistency](https://github.com/macandy13/arkham-companion/issues/545) | Easy wins from the [encounter rule census](encounter-card-analysis.md#encounter-rule-census): existing commands usable by cards, symmetric conditions and references, keyword details, variants of supported rules; keeping the census current | Makes the rules the engine already has work everywhere before new ones are added; ME.1–ME.3 first, the rest interleaved with MC1 | More encounter cards automated in every campaign, no new screens |
 | [MC1 Night of the Zealot](https://github.com/macandy13/arkham-companion/issues/552) | *The Gathering*, *The Midnight Masks* and *The Devourer Below* (done), the remaining Night of the Zealot rules (scenario actions, constant modifiers, attachments, objectives), campaign screen, export, and the *Return to* box | Reuses the M4 recipe; the first campaign is the reference for every later one | The first complete campaign, with or without Return to, no paper log needed |
 | [M6 Comfort](https://github.com/macandy13/arkham-companion/issues/268) | Chaos bag module, card and UI languages, auto-layout, offline preload, polish | Nice to have, nothing blocks play | Cards in the group's language, reliable offline play, tidier maps, smoother app |
+| [MD Design language](https://github.com/macandy13/arkham-companion/issues/740) | One look for the whole app: playmat skins, campaign-guide paper for every dialog and screen, menus and toasts, welcome and loading screens, token sets | The campaign log brought the paper look; the other screens follow before more dialogs are built in the old style | A consistent, themed app with tokens like the ones on the table |
 | [M7 Card effect automation](https://github.com/macandy13/arkham-companion/issues/270) | More automated encounter card effects in campaigns that are already playable | Playtests show what to automate | Less manual work per round |
 | MC2–MC13, one per campaign | [MC2 Core Set (2026)](https://github.com/macandy13/arkham-companion/issues/554), [MC3 Children of Blood](https://github.com/macandy13/arkham-companion/issues/555), [MC4 Dunwich](https://github.com/macandy13/arkham-companion/issues/556), [MC5 Carcosa](https://github.com/macandy13/arkham-companion/issues/557), [MC6 Forgotten Age](https://github.com/macandy13/arkham-companion/issues/558), [MC7 Innsmouth](https://github.com/macandy13/arkham-companion/issues/559), then in release order [MC8 Circle Undone](https://github.com/macandy13/arkham-companion/issues/560), [MC9 Dream-Eaters](https://github.com/macandy13/arkham-companion/issues/561), [MC10 Edge of the Earth](https://github.com/macandy13/arkham-companion/issues/562), [MC11 Scarlet Keys](https://github.com/macandy13/arkham-companion/issues/563), [MC12 Hemlock Vale](https://github.com/macandy13/arkham-companion/issues/564), [MC13 Drowned City](https://github.com/macandy13/arkham-companion/issues/565); new products get the next MC number | Each starts by re-running the census, files its gaps as tasks, then runs the recipe per scenario | One more full campaign at a time |
 | [M8 Cloud and sync](https://github.com/macandy13/arkham-companion/issues/271) | Login, games in the cloud, sync across devices at the table | Adds cost and operations; one tablet covers the core use case | Games backed up online, several devices showing the same live game |
@@ -229,6 +231,24 @@ The theme setting replaces today's "Card pictures" setting: *frames with card ar
 In every theme the art area shows the card's picture crop when it loads and a pattern per card type otherwise. A theme is a set of values (colours, ornament style, paper, edge, effects) over the same templates, so a new theme adds values, not layouts. The Exact frames copy the game's trade dress and go on the [M9.1](https://github.com/macandy13/arkham-companion/issues/373) copyright check.
 
 The mockup of all card types in the three drawn themes, with the measuring overlays, is in the project library (`design/card_templates/exact_templates.html`, sources in `exact_src/`).
+
+### Design language ([MD](https://github.com/macandy13/arkham-companion/issues/740))
+
+*Why:* dialogs, menus and screens each grew their own style; the campaign log prototype set the look the rest should follow. A clickable mockup of every screen is at [`/prototype/design_language/`](https://macandy13.github.io/arkham-companion/prototype/design_language/) ([source](../apps/web/public/prototype/design_language/index.html)): `?s=` picks the screen (`welcome`, `loading`, `home`, `confirm`, `settings`, `collection`, `newgame`, `skilltest`, `aoo`, `clues`, `discard`, `enemy`, `location`, `log`, `menu`), `&d=phone` the phone layout, `&skin=stars` or `&skin=rlyeh` a table skin, `&t=day` the day table. The review page with before/after screenshots and the generators for playmats and tokens are in the project library (`design/design_language/`).
+
+**Three materials.**
+
+- **Table:** the playmat, by night or by day. It carries the game screen, the app bar, menus, toasts and the loading screen. A *skin* is a playmat plus the table tokens (background tones, an accent with light and deep shades, text, lines, header shade): Night and brass (today's), The Stars Are Right (a dark star chart with a nebula), Sunken R'lyeh (a drowned city with tentacles). The resource colour gets its own token instead of the accent.
+- **Paper:** a campaign-guide page (`#dccaa2`, edge `#bba06e`, ink `#2c2216`), the same in both themes. Every dialog and every screen's content is printed on it.
+- **Cards:** the [card themes](#card-themes-m310), unchanged. Paper, ink, cards and game colours never change with the skin.
+
+**Type.** Federant for titles, primary buttons, the app bar and big numbers; Libre Caslon Text for kickers (italic) and labels (spaced capitals); Alegreya Sans for body and controls; Caveat only for what players wrote. IM Fell English SC leaves the app's UI.
+
+**Dialogs.** A kicker over a Federant title, step dots in flows. Answers are choice rows (a key column for a symbol, R1–R3, ✓/✗ or a chaos token, then what and why); the engine's suggestion is tagged "from the game"; plain rows answer on tap, rows with steppers wait for the primary. A by-hand strip says what the players do themselves. Content actions (Fight, Investigate) stay in the content; the footer is one row: one brass primary, outline secondary, red danger for destructive confirms. × only outside flows. Widths 440/600/880 px, generous spacing (34–40 px padding, 12 px between choices); on phones dialogs are bottom sheets. Stats show as printed icons (combat and agility symbols, heart, brain, shroud and clue discs); investigators show their faces in setup and clue payment.
+
+**Screens.** App bar on the table, one paper page, the next step pinned at the bottom. Home is "Your games" with row actions in a ⋮ menu; Settings has the table skin, token set and card style; the collection (owned campaigns) is its own settings page. A welcome title page shows only while there are no games; the loading screen fills the app mark's ring of 36 ticks as start-up steps finish. The app mark (brass ring with zodiac ticks and an eight-point star) becomes the PWA icon.
+
+**Tokens and icons.** Clue, doom, damage, horror and resource tokens and the chaos tokens are our own drawings after the game's tokens (magnifier, tentacle, cracked heart, brain, crate), in two token sets chosen in Settings: *resin dome* (default: bronze bezel, watercolour field, gloss) and *cardboard* (matte, die-cut, hexagon resources). One token shows a count in a small disc instead of stacks; below 32 px texture and gloss drop out. Clues stay teal. Stat and count icons become the token glyphs in one colour; the game symbols and our line icons for actions and tools stay.
 
 ### Cloud sync ([M8](https://github.com/macandy13/arkham-companion/issues/271))
 
