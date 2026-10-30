@@ -63,9 +63,12 @@ The last scenario's `endCampaign` step proposes `EndCampaign`, which sets `Campa
 
 Story keys of a campaign live next to its definition ([`story.ts`](../../packages/scenarios/src/night_of_the_zealot/story.ts)), so the scenario that writes a record and the one that reads it share the key.
 
+`CampaignDefinition.log` (`CampaignLogLayout`) says how the log page shows those records: which flags are campaign notes, in the guide's order, and the campaign's own sheets (`LogSheet`, only `nameList` so far). Every campaign's log is the same five shared sheets plus sheets of a few kinds, so a campaign adds data, not a page; a record that no note or sheet names stays hidden.
+
 ## Extension points
 
-- **A new campaign:** a `CampaignDefinition` next to its scenarios.
+- **A new campaign:** a `CampaignDefinition` next to its scenarios, with its `log` layout.
+- **A new kind of log sheet** (tally, checklist, roster, track; see docs/product.md "Campaign screen"): a `LogSheet` case and its drawing in the web app's `CampaignSheets.tsx`.
 - **A new command or record:** add it in `campaign/` with its events, reducer case and invariant.
 - **A new correction:** a `CampaignAdjustment` case in `handle_campaign_adjustment.ts` that produces the regular event.
 - **A new kind of resolution step:** a `ResolutionStep` case and its command in `proposeStep`; a new target is a `ResolutionTarget` case.

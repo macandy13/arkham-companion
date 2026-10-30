@@ -2,6 +2,37 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.15](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.14...arkham-companion-v0.1.15) (2026-10-30)
+
+
+### Features
+
+* **carddata:** reference card texts from ArkhamDB instead of hand-written ones ([e4e5837](https://github.com/macandy13/arkham-companion/commit/e4e58373788fa4abce087fe006be09f56ffaa7c1))
+* **carddata:** scenario reference card in the board view, its texts from ArkhamDB (M3.10i1) ([9151a0b](https://github.com/macandy13/arkham-companion/commit/9151a0b3efd1c04557bfd6bd375e00634efe6b30))
+* **web:** brass primary, red danger and pill buttons on the paper (MD.1b) ([f05e6e1](https://github.com/macandy13/arkham-companion/commit/f05e6e1a12b5ff29a826e3894b2ac7804eb01103))
+* **web:** brass primary, red danger and pill buttons on the paper (MD.1b) ([ab6e3e8](https://github.com/macandy13/arkham-companion/commit/ab6e3e800e8ee123b43344b1e4cae782dbae9fce))
+* **web:** campaign notes and name lists on a generic log layout (MC1.6) ([1c316e0](https://github.com/macandy13/arkham-companion/commit/1c316e031829f1b0f31aae226e45ca15e514c586))
+* **web:** campaign notes and name lists on a generic log layout (MC1.6b3a) ([714bb78](https://github.com/macandy13/arkham-companion/commit/714bb786da09dc31b29854c50f5bd710dd180386))
+* **web:** print screens and dialogs on campaign-guide paper (MD.1a) ([5d7d373](https://github.com/macandy13/arkham-companion/commit/5d7d373bebf7387d6e765dc87566d65c976590bc))
+* **web:** print screens and dialogs on campaign-guide paper (MD.1a) ([cf6a430](https://github.com/macandy13/arkham-companion/commit/cf6a430aa39f3792717d673a66422cc453ceeb2d))
+* **web:** scenario card texts from the card catalog, traits in bold italics (M3.10i2) ([f11a970](https://github.com/macandy13/arkham-companion/commit/f11a9700e30a7c5a5efdc861a6d87180ce246b14))
+* **web:** scenario reference card in the Exact card layout (M3.10i2) ([632adf7](https://github.com/macandy13/arkham-companion/commit/632adf7ff7a0b6445489fece25b85129db85aafa))
+* **web:** scenario reference card in the Exact card layout (M3.10i2) ([d6b4d97](https://github.com/macandy13/arkham-companion/commit/d6b4d97f7e1261ac046eb0051bde25e9f7e543ce))
+
+
+### Bug fixes
+
+* only render the prototype's own screens and skins from the URL ([574fa52](https://github.com/macandy13/arkham-companion/commit/574fa52fd78128edaae1fe55ec05f439945e5321))
+* **web:** keep the campaign log off the paper and give the paper deeper game colours ([7a01cc2](https://github.com/macandy13/arkham-companion/commit/7a01cc2ec91a0b87df1739ef9048c1ee022520be))
+* **web:** pick the prototype screen only from known names ([82fb1de](https://github.com/macandy13/arkham-companion/commit/82fb1de2cf3af6d415004d1ac41b07e8ca55733f))
+
+
+### Documentation
+
+* add the design language prototype and design (MD.0) ([24b8eca](https://github.com/macandy13/arkham-companion/commit/24b8ecaedee52ba92142a2ad420c212ab5fc0d6b))
+* add the design language prototype and design (MD.0) ([b14789a](https://github.com/macandy13/arkham-companion/commit/b14789a0687a45910610e1b384c2bcc9f6d23030))
+* drop the unused colour skin from the prototype ([3259def](https://github.com/macandy13/arkham-companion/commit/3259def473dbf1508c0ad40119a394e45199b3d0))
+
 ## [0.1.14](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.13...arkham-companion-v0.1.14) (2026-10-30)
 
 
