@@ -13,7 +13,7 @@ test('the investigator picker with its filter menu open', { tag: '@shot' }, asyn
   await expect(page.getByRole('list', { name: 'Investigators' })).toContainText('Fake Seeker');
 });
 
-test('the detail sheet of an investigator', { tag: '@shot' }, async ({ page }) => {
+test('the detail sheet of an investigator', async ({ page }) => {
   await page.goto('/#/new');
   await page.getByRole('link', { name: 'Quick game' }).first().click();
   await page.getByRole('button', { name: 'Next' }).click();

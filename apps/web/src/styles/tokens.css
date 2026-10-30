@@ -489,6 +489,17 @@
     radial-gradient(ellipse at 50% 40%, transparent 55%, rgb(120 90 40 / 22%) 130%),
     var(--color-paper);
   --guide-paper-shadow: 0 var(--space-1) var(--space-4) rgb(0 0 0 / 45%);
+  /*
+   * Buttons on the paper (MD.1b): the one primary of a view is a brass pill, a destructive confirm
+   * a red one in the stamp's colour, a disabled primary fades.
+   */
+  --color-brass-light: #d9b86e;
+  --color-brass-deep: #a9843f;
+  --brass-button: linear-gradient(var(--color-brass-light), var(--color-brass-deep));
+  --button-lift: 0 1px var(--space-1) rgb(44 34 22 / 35%);
+  --color-danger: var(--color-stamp);
+  --radius-pill: 999px;
+  --disabled-opacity: 0.5;
   --space-glow:
     radial-gradient(ellipse at 20% 30%, rgb(70 90 170 / 45%), transparent 55%),
     radial-gradient(ellipse at 85% 75%, rgb(40 60 140 / 50%), transparent 50%);
