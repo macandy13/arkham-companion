@@ -14,6 +14,7 @@ import '@fontsource/im-fell-english-sc/latin-400.css';
 import '@fontsource/alegreya-sans/latin-400.css';
 import '@fontsource/alegreya-sans/latin-700.css';
 import '@fontsource/federant/latin-400.css';
+import '@fontsource/grenze-gotisch/latin-400.css';
 import '@fontsource/libre-caslon-text/latin-400.css';
 import '@fontsource/libre-caslon-text/latin-400-italic.css';
 import './styles/tokens.css';

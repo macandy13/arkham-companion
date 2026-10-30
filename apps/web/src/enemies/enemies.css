@@ -137,7 +137,7 @@
 
 #board svg[data-card='enemy'] > text {
   fill: var(--color-face-ink);
-  font-family: var(--font-family-display);
+  font-family: var(--font-family-card-title);
   font-size: var(--face-name-size);
   text-anchor: middle;
   dominant-baseline: middle;

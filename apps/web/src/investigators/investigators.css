@@ -100,7 +100,7 @@
     var(--banner-point) 100%
   );
   color: var(--color-ink);
-  font-family: var(--font-family-display);
+  font-family: var(--font-family-card-title);
   font-size: var(--font-size-subtitle);
 }
 

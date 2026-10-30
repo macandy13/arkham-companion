@@ -100,7 +100,7 @@ test('the house map in the Eldritch card style', { tag: '@shot' }, async ({ page
 });
 
 test(
-  "the Ghoul Priest's details in the Eldritch card style: tentacle scrolls, an eye on the medallion, stars on the page",
+  "the Ghoul Priest's details in the Eldritch card style: a blackletter name, tentacle scrolls, an eye on the medallion",
   { tag: '@shot' },
   async ({ page }) => {
     await page.goto('/#/settings');
