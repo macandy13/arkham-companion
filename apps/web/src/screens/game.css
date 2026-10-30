@@ -48,7 +48,7 @@
 }
 
 /*
- * The play screen's notices wear the same frame, drawn smaller so the board keeps its room. The
+ * The play screen's notices wear the playmat's frame, drawn small so the board keeps its room. The
  * investigator panels have their card instead (investigators.css).
  */
 #notices > aside {
@@ -57,7 +57,7 @@
     stretch;
 }
 
-/* By day the notices are parchment too, like the screens outside play (base.css). */
+/* By day the notices are parchment. */
 :root[data-theme='light'] #notices > aside {
   background: var(--panel-paper);
 }

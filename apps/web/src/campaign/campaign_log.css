@@ -4,10 +4,11 @@
  * paper, inks and fonts are tokens (tokens.css) so dialogs can take the same look.
  */
 
-/* The log brings its own paper, so the screen drops the panel frame every other screen has. */
+/* The log brings its own papers, so the screen drops the page every other screen is printed on. */
 #app > main:not(:has(#board)):has(#campaign-log) {
   border: 0;
   background: none;
+  box-shadow: none;
 }
 
 #campaign-log {

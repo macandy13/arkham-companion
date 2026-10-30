@@ -55,14 +55,12 @@
   --color-card-text-muted: #b5ab95;
   --color-card-line: rgb(201 164 92 / 40%);
   /*
-   * The frame of a screen's panel and of every dialog (M3.12f), in the playmat's line style: brass
-   * rules with a quarter of the zodiac ring in each corner (panel_frame.svg, a `border-image`
-   * sliced where the corners end in its 96-unit drawing).
+   * The frame of the play screen's notices (M3.12f), in the playmat's line style: brass rules with
+   * a quarter of the zodiac ring in each corner (panel_frame.svg, a `border-image` sliced where the
+   * corners end in its 96-unit drawing). Screens and dialogs are printed on paper instead (MD.1).
    */
   --panel-frame: url('./panel_frame.svg');
   --panel-frame-slice: 24;
-  --panel-frame-width: 2rem;
-  /* The same frame round the play screen's smaller panels (encounter, notices). */
   --panel-frame-width-compact: 1rem;
   /* The investigator whose turn it is: their card glows in the accent colour around its edge. */
   --turn-glow: 0 0 var(--space-3) var(--color-accent);
@@ -184,8 +182,9 @@
   --safe-left: env(safe-area-inset-left, 0px);
 
   /*
-   * Display type for names and labels, and the UI type for everything else: the playmat's fonts,
-   * IM Fell English SC and Alegreya Sans (OFL), self-hosted through `@fontsource` (App.tsx).
+   * Display type for names and labels on the cards, and the UI type for everything else: the
+   * playmat's fonts, IM Fell English SC and Alegreya Sans (OFL), self-hosted through `@fontsource`
+   * (App.tsx). Titles take the campaign guide's Federant (`--font-family-print`) instead.
    */
   --font-family: 'Alegreya Sans', 'Segoe UI', system-ui, sans-serif;
   --font-family-display: 'IM Fell English SC', 'IM Fell English', Georgia, serif;
@@ -469,6 +468,22 @@
   --color-stamp: #a3261f;
   --color-highlight: rgb(201 150 40 / 28%);
   --color-space: #070b1f;
+  /*
+   * The paper every screen outside play and every dialog is printed on (MD.1): a campaign guide's
+   * page, the same in both themes, with ink for text and rules and a deep brass for accents. Its
+   * edge is a shade darker, like a page's worn rim.
+   */
+  --color-paper: #dccaa2;
+  --color-paper-edge: #bba06e;
+  --color-paper-surface: rgb(255 248 230 / 30%);
+  --color-paper-rule: rgb(44 34 22 / 30%);
+  --color-ink: #2c2216;
+  --color-ink-muted: #5c4b33;
+  --color-ink-accent: #7d5b22;
+  --paper:
+    radial-gradient(ellipse at 50% 40%, transparent 55%, rgb(120 90 40 / 22%) 130%),
+    var(--color-paper);
+  --paper-shadow: 0 var(--space-1) var(--space-4) rgb(0 0 0 / 45%);
   --space-glow:
     radial-gradient(ellipse at 20% 30%, rgb(70 90 170 / 45%), transparent 55%),
     radial-gradient(ellipse at 85% 75%, rgb(40 60 140 / 50%), transparent 50%);
@@ -551,8 +566,8 @@
   --playmat: url('./playmat_light.svg');
   --panel-frame: url('./panel_frame_light.svg');
   /*
-   * By day the panels and dialogs are parchment, a shade darker towards their edges like an old
-   * page; by night they stay the see-through night.
+   * By day the notices are parchment, a shade darker towards their edges like an old page; by
+   * night they stay the see-through night.
    */
   --panel-paper: radial-gradient(
     ellipse at center,

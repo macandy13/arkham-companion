@@ -20,11 +20,11 @@ body::before {
   background: var(--playmat) center / cover no-repeat;
 }
 
-/* Headings and names in the playmat's display type, like the printed cards. */
+/* Headings in the campaign guide's display type. */
 h1,
 h2 {
   margin: 0;
-  font-family: var(--font-family-display);
+  font-family: var(--font-family-print);
   font-weight: normal;
 }
 
@@ -113,23 +113,25 @@ button:not(:disabled):hover {
 }
 
 /*
- * Every screen outside play and every dialog is a panel framed like the playmat (M3.12f): brass
- * rules with a quarter of its zodiac ring in each corner, over the see-through night (or, in the
- * light theme, the playmat by day).
+ * Every screen outside play and every dialog is printed on campaign-guide paper (MD.1), the same in
+ * both themes. The table's colour tokens are redefined on the paper, so what lies on it (text,
+ * buttons, fields, lines) turns to ink without rules of its own.
  */
 #app > main:not(:has(#board)),
 dialog {
-  border: var(--panel-frame-width) solid;
-  border-image: var(--panel-frame) var(--panel-frame-slice) / var(--panel-frame-width) stretch;
-}
+  --color-background: var(--color-paper);
+  --color-text: var(--color-ink);
+  --color-text-muted: var(--color-ink-muted);
+  --color-border: var(--color-paper-rule);
+  --color-surface: var(--color-paper-surface);
+  --color-accent: var(--color-ink-accent);
+  --color-accent-text: var(--color-paper);
 
-#app > main:not(:has(#board)) {
-  background: var(--color-surface);
-}
-
-/* In the light theme the panels are parchment (`--panel-paper`), the playmat by day's paper. */
-:root[data-theme='light'] :is(#app > main:not(:has(#board)), dialog) {
-  background: var(--panel-paper);
+  border: var(--border-width) solid var(--color-paper-edge);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--color-text);
+  box-shadow: var(--paper-shadow);
 }
 
 /* A screen's title stands centred over a small zodiac ring between two rules. */
@@ -147,12 +149,10 @@ dialog {
   mask: var(--title-ornament) center / contain no-repeat;
 }
 
-/* Dialogs share the panel's frame, laid over a dimmed table. */
+/* Dialogs are laid over a dimmed table. */
 dialog {
   max-width: var(--layout-sheet-width);
   padding: var(--space-3);
-  background: var(--color-background);
-  color: var(--color-text);
 }
 
 dialog::backdrop {

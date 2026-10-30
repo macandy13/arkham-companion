@@ -13,6 +13,7 @@ import type { AppState } from './state/appStore';
 import '@fontsource/im-fell-english-sc/latin-400.css';
 import '@fontsource/alegreya-sans/latin-400.css';
 import '@fontsource/alegreya-sans/latin-700.css';
+import '@fontsource/federant/latin-400.css';
 import './styles/tokens.css';
 import './styles/base.css';
 import './screens/layout.css';
