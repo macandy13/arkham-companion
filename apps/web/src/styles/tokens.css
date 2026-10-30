@@ -786,8 +786,9 @@
 /*
  * The Eldritch card theme (M3.10k): the Exact theme's frames cut from the void, deep violet-black
  * stock and frames, the ornament a dark green tentacle with a pale green glowing outline
- * (`OrnamentLine`), the rules and plates' rims in that glow, the text pale green. The live tokens
- * keep their colours, as in every theme.
+ * (`OrnamentLine`), the rules and plates' rims in that glow, the text pale green, an eye on the
+ * set medallion and faint stars on the pages (`NightSky`). The live tokens keep their colours, as
+ * in every theme.
  */
 :root[data-card-theme='eldritch'] {
   --color-face-frame: #0a0812;
@@ -824,6 +825,11 @@
   --color-face-health: #1a1626;
   --color-face-evade: #12352c;
   --color-face-chevron-rim: #9ef0c4;
+  --color-face-eye: #9ef0c4;
+  --color-face-eye-iris: #24423b;
+  --color-face-eye-pupil: #030207;
+  --color-face-star: #d9eee2;
+  --face-star-opacity: 0.5;
   --notebook-page:
     repeating-linear-gradient(
       to bottom,

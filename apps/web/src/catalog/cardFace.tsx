@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import type { Point } from '../map/mapLayout';
 import { PORTRAIT_SCAN } from './cardArt';
 import './card_face.css';
@@ -85,7 +86,9 @@ const COUNT_RADIUS = 11;
  * The round set medallion on its plate, in scan units, as every encounter card prints it on its
  * type line: a dark ring, the pale medallion with an inner ring (where the encounter set's icon
  * goes once the app has them, M3.10m), and under it the notched plate naming the card's `type`,
- * `plateWidth` wide. Decoration and the type word only, so it is no image of its own.
+ * `plateWidth` wide. The Eldritch card theme shows an open eye on the medallion instead of the
+ * inner ring (`data-part` eye, hidden otherwise). Decoration and the type word only, so it is no
+ * image of its own.
  */
 export function SetMedallion({
   centre: { x, y },
@@ -108,6 +111,11 @@ export function SetMedallion({
       <circle data-part="setting" cx={x} cy={y} r={radius + 2.5} />
       <circle data-part="medallion" cx={x} cy={y} r={radius} />
       <circle data-part="inner" cx={x} cy={y} r={radius - 3.5} />
+      <g data-part="eye">
+        <path data-part="eye-white" d={lens(x, y, radius * EYE.width, radius * EYE.height)} />
+        <circle data-part="iris" cx={x} cy={y} r={radius * EYE.iris} />
+        <path data-part="pupil" d={lens(x, y, radius * EYE.iris, radius * EYE.pupil, 'upright')} />
+      </g>
       <path
         data-part="plate"
         d={`M ${left} ${top} H ${right} L ${right + 5} ${middle} L ${right} ${bottom} H ${left} L ${left - 5} ${middle} Z`}
@@ -125,6 +133,76 @@ export function SetMedallion({
 
 /** The type plate's height under a set medallion, in scan units, as printed. */
 const PLATE_HEIGHT = 13;
+
+/**
+ * The Eldritch medallion's eye, in parts of the medallion's radius: half the almond's width and
+ * height, the iris's radius and half the slit pupil's width (the pupil is as tall as the iris).
+ */
+const EYE = { width: 0.8, height: 0.42, iris: 0.34, pupil: 0.09 } as const;
+
+/**
+ * A lens of two arcs (quadratic curves) centred on (`x`, `y`), `half` from its middle to each tip
+ * and `bulge` to each side: an almond lying on its side, or `upright`, as a cat's pupil.
+ */
+function lens(
+  x: number,
+  y: number,
+  half: number,
+  bulge: number,
+  orientation: 'lying' | 'upright' = 'lying',
+): string {
+  const at = (along: number, across: number) =>
+    orientation === 'lying'
+      ? `${round(x + along)} ${round(y + across)}`
+      : `${round(x + across)} ${round(y + along)}`;
+  // A quadratic curve reaches half way to its control point, so the control lies twice as far out.
+  return `M ${at(-half, 0)} Q ${at(0, -2 * bulge)} ${at(half, 0)} Q ${at(0, 2 * bulge)} ${at(-half, 0)} Z`;
+}
+
+/**
+ * The stars of the Eldritch card theme's night sky on a card's page, in scan units: `count`
+ * four-pointed stars spread evenly over a `scan` sized card by the R2 sequence (a fixed, even
+ * scatter that needs no randomness, so every card shows the same sky), alternating in size.
+ */
+export function skyStars(scan: { width: number; height: number }, count = SKY_STARS): string {
+  return Array.from({ length: count }, (_, index) => {
+    const x = ((0.5 + (index + 1) * R2.x) % 1) * scan.width;
+    const y = ((0.5 + (index + 1) * R2.y) % 1) * scan.height;
+    const radius = STAR_SIZES[index % STAR_SIZES.length] ?? 1;
+    return starPath(x, y, radius, 0.3, 4);
+  }).join(' ');
+}
+
+/** How many stars a card's night sky holds, and their sizes in turn, in scan units. */
+const SKY_STARS = 36;
+const STAR_SIZES = [2, 3.5, 1.5, 2.5] as const;
+
+/** The R2 sequence's steps (the inverses of the plastic number and its square). */
+const R2 = { x: 0.7548776662466927, y: 0.5698402909980532 } as const;
+
+/**
+ * The night sky over a card's page in the Eldritch card theme: the stars of `skyStars`, clipped
+ * to the page's outline `page` (a path in scan units of a `scan` sized card), drawn over the page
+ * and under its text. Hidden in the other themes (`data-night-sky`); the page's own gradient,
+ * darkest at its edges, is the sky's vignette. Decoration only.
+ */
+export function NightSky({
+  page,
+  scan = PORTRAIT_SCAN,
+}: {
+  page: string;
+  scan?: { width: number; height: number };
+}) {
+  const clipId = useId();
+  return (
+    <g data-night-sky="" aria-hidden="true">
+      <clipPath id={clipId}>
+        <path d={page} />
+      </clipPath>
+      <path clipPath={`url(#${clipId})`} d={skyStars(scan)} />
+    </g>
+  );
+}
 
 /**
  * An eight-pointed star (or one of `points` points) centred on (`x`, `y`), `radius` to its tips

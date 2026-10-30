@@ -1,6 +1,6 @@
 import { useId } from 'react';
 import { PORTRAIT_SCAN } from '../catalog/cardArt';
-import { CARD_OUTLINE, OrnamentLine, mirrored, scrollPath } from '../catalog/cardFace';
+import { CARD_OUTLINE, NightSky, OrnamentLine, mirrored, scrollPath } from '../catalog/cardFace';
 import type { Point } from '../map/mapLayout';
 import './scenario_face.css';
 
@@ -109,6 +109,7 @@ export function ScenarioFace() {
       </defs>
       <g clipPath={`url(#${clipId})`}>
         <path data-part="paper" d={CARD_OUTLINE} fill={`url(#${paperId})`} />
+        <NightSky page={CARD_OUTLINE} />
         <path data-part="band" d={paths.band} />
         <path data-part="wheel" d={paths.wheel} />
         {paths.serpents.map((d) => (

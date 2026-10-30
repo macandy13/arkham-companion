@@ -8,6 +8,7 @@ import {
   CARD_OUTLINE,
   CountCircle,
   Heart,
+  NightSky,
   OrnamentLine,
   SetMedallion,
 } from '../catalog/cardFace';
@@ -106,6 +107,7 @@ export function EnemyCard({
           </svg>
         )}
         <path data-part="lens" d={ENEMY_FRAME.lens} fill={`url(#${lensId})`} />
+        <NightSky page={ENEMY_FRAME.lens} />
         <path data-part="watermark" d={ENEMY_FRAME.watermark} />
         <path data-part="setting" d={ENEMY_FRAME.lensSetting} />
         <path data-part="rule" d={ENEMY_FRAME.lensRule} />

@@ -1,5 +1,5 @@
 import { PORTRAIT_SCAN } from '../catalog/cardArt';
-import { CARD_OUTLINE } from '../catalog/cardFace';
+import { CARD_OUTLINE, NightSky } from '../catalog/cardFace';
 
 /**
  * Where a location card prints its parts, in scan units (`PORTRAIT_SCAN`), measured on the
@@ -73,6 +73,7 @@ export function LocationOrnament() {
       <path data-part="pendant" d={`${chevron(pendant.half, pendant.depth)} Z`} />
       <path data-part="rule" d={chevron(pendant.inlayHalf, pendant.inlayDepth)} />
       <path data-part="page" d={`${PAGE_EDGE} ${BELOW}`} />
+      <NightSky page={`${PAGE_EDGE} ${BELOW}`} />
       <path data-part="page-setting" d={PAGE_EDGE} />
       <path data-part="page-band" d={PAGE_EDGE} />
       <path data-part="rule" d={arch(LOCATION_FACE.pageEdge.y - 5, LOCATION_FACE.pageEdge.lift)} />
