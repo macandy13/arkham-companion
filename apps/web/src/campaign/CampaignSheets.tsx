@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import type { CampaignLog, LogSheet, StoryValue } from '@arkham/engine';
+import type { CampaignLog, CrossableEntry, LogSheet, StoryValue } from '@arkham/engine';
 import { assertNever } from '@arkham/util';
 import type { CampaignEntry } from '../scenarios/scenarioCatalog';
 
@@ -86,8 +86,8 @@ function Sheet({
 }
 
 /** The names a list record holds, none for a record not written yet. */
-function listedNames(value: StoryValue | undefined): { name: string; crossedOut: boolean }[] {
+function listedNames(value: StoryValue | undefined): readonly CrossableEntry[] {
   if (value?.kind === 'list') return value.entries.map((name) => ({ name, crossedOut: false }));
-  if (value?.kind === 'crossableList') return [...value.entries];
+  if (value?.kind === 'crossableList') return value.entries;
   return [];
 }

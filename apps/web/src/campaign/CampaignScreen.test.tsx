@@ -119,13 +119,13 @@ describe('CampaignScreen', () => {
   describe('after The Midnight Masks', () => {
     async function renderNotepad() {
       const { gameStore, campaignId } = await storeCampaign(() => [
+        { type: 'StoryRecorded', key: 'itIsPastMidnight', value: { kind: 'flag', value: true } },
         { type: 'StoryRecorded', key: 'houseStillStanding', value: { kind: 'flag', value: false } },
         {
           type: 'StoryRecorded',
           key: 'ghoulPriestStillAlive',
           value: { kind: 'flag', value: false },
         },
-        { type: 'StoryRecorded', key: 'itIsPastMidnight', value: { kind: 'flag', value: true } },
         {
           type: 'StoryRecorded',
           key: 'cultistsWeInterrogated',
