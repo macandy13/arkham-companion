@@ -62,7 +62,10 @@ describe('SkillTestDialog', () => {
   it('tests the tapped skill and shows no result before a token is drawn', () => {
     renderWillpowerTest(['-1']);
 
-    expect(screen.getByRole('heading').textContent).toBe('Skill test · Alder');
+    const title = screen.getByRole('heading');
+    expect(title.textContent).toBe('Skill test');
+    const kicker = title.closest('hgroup')?.querySelector('p');
+    expect(kicker?.textContent).toBe('Alder');
     expect(pressedSkills()).toEqual(['Willpower 3']);
     expect(result()).toBeNull();
   });

@@ -190,10 +190,52 @@ dialog[role='alertdialog'] button[type='submit'] {
   mask: var(--title-ornament) center / contain no-repeat;
 }
 
-/* Dialogs are laid over a dimmed table. */
+/*
+ * The dialog shell (MD.1c): a page of the guide laid over the dimmed table, as wide as its content
+ * up to one of three widths, with an × in its top corner and a centred title, optionally under a
+ * kicker (`<hgroup>`) that says what the dialog belongs to.
+ */
 dialog {
-  max-width: var(--layout-sheet-width);
-  padding: var(--space-3);
+  box-sizing: border-box;
+  max-width: min(var(--dialog-width), 100%);
+  padding: var(--dialog-padding);
+}
+
+dialog[role='alertdialog'] {
+  max-width: min(var(--dialog-width-narrow), 100%);
+}
+
+dialog > button[data-icon='close'] {
+  position: absolute;
+  top: var(--dialog-close-inset);
+  right: var(--dialog-close-inset);
+  padding: 0;
+  border-radius: var(--radius-round);
+}
+
+dialog > button[data-icon='close']::before {
+  mask-image: url('../investigators/icons/close.svg');
+}
+
+dialog :is(h2, hgroup) {
+  margin: 0;
+  text-align: center;
+}
+
+dialog h2 {
+  font-size: var(--font-size-title);
+}
+
+/* Titles keep clear of the × on both sides, so they stay centred. */
+dialog:has(> button[data-icon='close']) > :is(h2, hgroup) {
+  padding-inline: var(--touch-target);
+}
+
+dialog hgroup > p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-family: var(--font-family-label);
+  font-style: italic;
 }
 
 dialog::backdrop {

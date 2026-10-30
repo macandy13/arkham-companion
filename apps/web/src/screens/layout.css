@@ -19,7 +19,7 @@
 
 #app > header > a:first-child {
   margin-right: auto;
-  font-family: var(--font-family-display);
+  font-family: var(--font-family-print);
   font-size: var(--font-size-subtitle);
 }
 

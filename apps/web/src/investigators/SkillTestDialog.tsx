@@ -54,16 +54,17 @@ export function SkillTestDialog({
 
   return (
     <dialog ref={dialog} aria-labelledby={titleId} onCancel={onClose} data-dialog="skill-test">
-      <header>
-        <h2 id={titleId}>{t('skillTest.title', { name: investigator.name })}</h2>
-        <button
-          type="button"
-          data-icon="close"
-          aria-label={t('skillTest.close')}
-          title={t('skillTest.close')}
-          onClick={onClose}
-        />
-      </header>
+      <button
+        type="button"
+        data-icon="close"
+        aria-label={t('skillTest.close')}
+        title={t('skillTest.close')}
+        onClick={onClose}
+      />
+      <hgroup>
+        <p>{investigator.name}</p>
+        <h2 id={titleId}>{t('skillTest.title')}</h2>
+      </hgroup>
       <SkillToggles
         investigator={investigator}
         chosen={added === undefined ? [tested] : [tested, added]}

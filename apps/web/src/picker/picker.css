@@ -307,7 +307,7 @@
 
 #investigator-picker > div > ul > li > button > span {
   overflow: hidden;
-  font-family: var(--font-family-display);
+  font-family: var(--font-family-print);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
