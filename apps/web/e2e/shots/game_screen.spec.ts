@@ -177,22 +177,23 @@ test("the Ghoul Priest's details opened from its card on Roland Banks' turn", as
   await expect(page.getByRole('dialog', { name: 'Ghoul Priest' })).toBeVisible();
 });
 
-test('the encounter deck after two mythos phases, Dissonant Voices on the discard pile', async ({
-  page,
-  isMobile,
-}) => {
-  await resumeImportedGame(page, 'Two mythos draws', mythosDrawnExport('Two mythos draws'));
+test(
+  'the encounter deck after two mythos phases, Dissonant Voices on the discard pile',
+  { tag: '@shot' },
+  async ({ page, isMobile }) => {
+    await resumeImportedGame(page, 'Two mythos draws', mythosDrawnExport('Two mythos draws'));
 
-  const deck = page.getByRole('region', { name: 'Encounter deck' });
-  // A phone's compact header shows the deck alone, and a tap opens the detail view on its piles.
-  if (isMobile) await deck.click();
-  await expect(
-    deck.getByRole('button', { name: '24 cards left in the encounter deck' }),
-  ).toBeVisible();
-  await expect(
-    deck.getByRole('button', { name: 'Encounter discard pile, 1 card, Dissonant Voices on top' }),
-  ).toBeVisible();
-});
+    const deck = page.getByRole('region', { name: 'Encounter deck' });
+    // A phone's compact header shows the deck alone, and a tap opens the detail view on its piles.
+    if (isMobile) await deck.click();
+    await expect(
+      deck.getByRole('button', { name: '24 cards left in the encounter deck' }),
+    ).toBeVisible();
+    await expect(
+      deck.getByRole('button', { name: 'Encounter discard pile, 1 card, Dissonant Voices on top' }),
+    ).toBeVisible();
+  },
+);
 
 test('the header with its piles fanned: seven cards discarded, the set-aside cards on the scenario card, the Ghoul Priest in the victory display', async ({
   page,
@@ -261,21 +262,17 @@ test('The Barrier opened as a full card', async ({ page, isMobile }) => {
   await expect(card.getByRole('img', { name: 'Clues 0 / 3' })).toBeInViewport();
 });
 
-test(
-  'The Gathering’s reference card opened to read',
-  { tag: '@shot' },
-  async ({ page, isMobile }) => {
-    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
-    const scenario = page.getByRole('region', { name: 'Scenario' });
+test('The Gathering’s reference card opened to read', async ({ page, isMobile }) => {
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+  const scenario = page.getByRole('region', { name: 'Scenario' });
 
-    // A dialog from the name on a tablet; on a phone a tap opens the detail view on the card.
-    if (isMobile) await scenario.locator('[data-card]').click();
-    else await scenario.getByRole('button', { name: 'The Gathering' }).click();
+  // A dialog from the name on a tablet; on a phone a tap opens the detail view on the card.
+  if (isMobile) await scenario.locator('[data-card]').click();
+  else await scenario.getByRole('button', { name: 'The Gathering' }).click();
 
-    const card = isMobile ? scenario : page.getByRole('dialog', { name: 'The Gathering' });
-    await expect(card.getByText('-1. On a failure, take 1 horror.')).toBeInViewport();
-  },
-);
+  const card = isMobile ? scenario : page.getByRole('dialog', { name: 'The Gathering' });
+  await expect(card.getByText('-1. On a failure, take 1 horror.')).toBeInViewport();
+});
 
 test('Frozen in Fear from Roland Banks’ threat area, zoomed to read', async ({ page }) => {
   await resumeImportedGame(

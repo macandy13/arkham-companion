@@ -114,6 +114,15 @@
   --color-face-bead: #d9d2bb;
   /* An agenda's and act's open book: its dark cover, its page edges, the threshold discs. */
   --color-face-cover: #2a1f16;
+  /*
+   * The encounter card back: its aged paper and the paper's darker edge, the pale light and stars,
+   * the near-black ink of the sky, body and tentacles, and the rust-brown ground.
+   */
+  --color-face-back-paper: #e6d6b4;
+  --color-face-back-paper-edge: #a88a5c;
+  --color-face-back-light: #f1e7cd;
+  --color-face-back-ink: #17120e;
+  --color-face-back-ground: #6a3624;
   --color-face-page-edge: #d9cdb0;
   --color-face-page-edge-shade: #b9ab8e;
   --color-face-agenda-disc: #5c4630;
@@ -257,6 +266,11 @@
   --face-disc-line-width: 1.6px;
   /* A scenario reference card's dark frame (half of it shows inside the card) and its wheel's lines. */
   --face-reference-frame-width: 16px;
+  /* The encounter card back's falling beams and the rays round its eye, in scan units. */
+  --face-back-beam-width: 1px;
+  --face-back-ray-width: 4px;
+  /* How much of the paper shows through the light under the eye. */
+  --face-back-light-opacity: 0.55;
   --face-wheel-line-width: 1.2px;
   --face-name-size: 19px;
   --face-type-size: 10px;

@@ -441,10 +441,11 @@
   background: var(--color-clue);
 }
 
-/* The upright deck is narrow, so its token sits in the middle of the card back. */
+/* The upright deck is narrow, so its token sits centred at the card back's foot, on the ground,
+ * leaving the eye and its beams in sight. */
 #board > header [data-token='cards'] {
   inset-inline: 0;
-  inset-block: 0;
+  inset-block: auto var(--space-2);
   margin: auto;
   background: var(--color-card-encounter);
 }
