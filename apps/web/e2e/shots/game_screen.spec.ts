@@ -253,6 +253,22 @@ test('The Barrier opened as a full card', async ({ page, isMobile }) => {
   await expect(card.getByRole('img', { name: 'Clues 0 / 3' })).toBeInViewport();
 });
 
+test(
+  'The Gathering’s reference card opened to read',
+  { tag: '@shot' },
+  async ({ page, isMobile }) => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+    const scenario = page.getByRole('region', { name: 'Scenario' });
+
+    // A dialog from the name on a tablet; on a phone a tap opens the detail view on the card.
+    if (isMobile) await scenario.locator('[data-card]').click();
+    else await scenario.getByRole('button', { name: 'The Gathering' }).click();
+
+    const card = isMobile ? scenario : page.getByRole('dialog', { name: 'The Gathering' });
+    await expect(card.getByText('-1. On a failure, take 1 horror.')).toBeInViewport();
+  },
+);
+
 test('Frozen in Fear from Roland Banks’ threat area, zoomed to read', async ({ page }) => {
   await resumeImportedGame(
     page,

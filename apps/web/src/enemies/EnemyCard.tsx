@@ -1,4 +1,4 @@
-import { useId, useRef, type ReactNode } from 'react';
+import { useId, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { EnemyStatsView, Keyword, MapEnemyView } from '@arkham/engine';
 import { sentences } from '@arkham/util';
@@ -12,29 +12,13 @@ import {
   SetMedallion,
 } from '../catalog/cardFace';
 import { useCardPicture } from '../catalog/cardImages';
+import { cardText } from '../catalog/cardText';
 import type { Point } from '../map/mapLayout';
 import { shrinkAround, useShrinkToFit } from '../map/useShrinkToFit';
 import { ENEMY_FACE, ENEMY_FRAME } from './enemyCardFrame';
 
 /** The hatch's cell in scan units, as on the location tiles' art while they have no picture. */
 const HATCH = 40;
-
-/** The symbols card text names in brackets (`[combat]`) that the card draws as icons. */
-const SYMBOLS = [
-  'willpower',
-  'intellect',
-  'combat',
-  'agility',
-  'wild',
-  'per_investigator',
-] as const;
-
-/** A symbol card text can name that the card draws as an icon. */
-type CardSymbol = (typeof SYMBOLS)[number];
-
-function isCardSymbol(name: string): name is CardSymbol {
-  return (SYMBOLS as readonly string[]).includes(name);
-}
 
 /** A stat an enemy card prints on a chevron. */
 type Stat = 'fight' | 'health' | 'evade';
@@ -251,30 +235,9 @@ function KeywordLines({ keywords }: { keywords: readonly Keyword[] }) {
       )}
       {detailed.map(({ name, detail }, index) => (
         <p key={`${name}-${index}`} data-part="keywords">
-          {t(`keyword.${name}`)} – {withSymbols(detail ?? '')}.
+          {t(`keyword.${name}`)} – {cardText(detail ?? '')}.
         </p>
       ))}
     </>
   );
-}
-
-/**
- * Card text with the symbols it names in brackets drawn as icons (`data-symbol`), each named by
- * its skill for assistive technology; brackets it has no icon for stay as text.
- */
-function withSymbols(text: string): ReactNode[] {
-  return text.split(/(\[[a-z_]+\])/).map((part, index) => {
-    const symbol = /^\[([a-z_]+)\]$/.exec(part)?.[1];
-    return symbol !== undefined && isCardSymbol(symbol) ? (
-      <SymbolIcon key={index} symbol={symbol} />
-    ) : (
-      part
-    );
-  });
-}
-
-/** A game symbol in running text, named by its skill. */
-function SymbolIcon({ symbol }: { symbol: CardSymbol }) {
-  const { t } = useTranslation();
-  return <span role="img" aria-label={t(`symbol.${symbol}`)} data-symbol={symbol} />;
 }
