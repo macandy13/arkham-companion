@@ -1,7 +1,10 @@
 import 'fake-indexeddb/auto';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   STATE_VERSION,
+  campaign,
+  campaignDefinitionId,
+  campaignId,
   cardCode,
   gameId,
   scenarioId,
@@ -11,6 +14,8 @@ import {
   investigatorId,
   mapId,
   replay,
+  type CampaignEvent,
+  type CampaignStarted,
   type CardInstance,
   type Event,
   type ScenarioStarted,
@@ -272,5 +277,148 @@ describe('IndexedDbStore.importGame', () => {
     expect(loaded?.state).toEqual(replay([started, tokens(1)]));
     expect(loaded?.summary).toMatchObject({ title: 'Imported', lastSeq: 2, updatedAt: 2000 });
     expect((await store.appendEvents(id, [tokens(1)]))[0]?.seq).toBe(3);
+  });
+});
+
+describe('IndexedDbStore campaigns', () => {
+  const roland = investigatorCode('01001');
+  const campaignStarted = (id: string): CampaignStarted => ({
+    type: 'CampaignStarted',
+    campaignId: campaignId(id),
+    definitionId: campaignDefinitionId('night-of-the-zealot'),
+    difficulty: 'hard',
+    investigators: [
+      {
+        code: roland,
+        name: 'Roland Banks',
+        health: 9,
+        sanity: 5,
+        physicalTrauma: 0,
+        mentalTrauma: 0,
+        xpEarned: 0,
+        xpSpent: 0,
+        fate: 'alive',
+        earnedCards: [],
+      },
+    ],
+    chaosBag: ['0', 'skull'],
+    scenarioIds: [scenarioId('the_gathering'), scenarioId('the_midnight_masks')],
+  });
+  const xp = (delta: number): CampaignEvent => ({
+    type: 'XpChanged',
+    code: roland,
+    account: 'earned',
+    delta,
+  });
+  const gatheringPlayed: CampaignEvent = {
+    type: 'ScenarioPlayed',
+    scenarioId: scenarioId('the_gathering'),
+    outcome: { kind: 'noResolution' },
+  };
+
+  it('creates a campaign with a UUID and loads it by replaying its log', async () => {
+    const id = await store.createCampaign({ title: 'Zealot' });
+    const events = [campaignStarted(id), xp(3)];
+    await store.appendCampaignEvents(id, events);
+
+    const loaded = await store.loadCampaign(id);
+
+    expect(id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(loaded?.log).toEqual(campaign.replayEvents(events));
+    expect(loaded?.summary).toMatchObject({
+      campaignId: id,
+      title: 'Zealot',
+      lastSeq: 2,
+      definitionId: 'night-of-the-zealot',
+      difficulty: 'hard',
+      position: 0,
+      scenarioCount: 2,
+      investigators: [{ code: '01001', name: 'Roland Banks' }],
+    });
+    expect(loaded?.summary.result).toBeUndefined();
+  });
+
+  it('summarises a campaign that ended with its result', async () => {
+    const id = await store.createCampaign();
+    await store.appendCampaignEvents(id, [
+      campaignStarted(id),
+      { type: 'CampaignEnded', result: 'won' },
+    ]);
+
+    expect((await store.loadCampaign(id))?.summary.result).toBe('won');
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('lists campaigns, most recently played first', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(1000);
+    const played = await store.createCampaign({ title: 'Played' });
+    vi.setSystemTime(2000);
+    await store.createCampaign({ title: 'Untouched' });
+    vi.setSystemTime(3000);
+    await store.appendCampaignEvents(played, [campaignStarted(played)]);
+
+    const list = await store.listCampaigns();
+
+    expect(list.map((c) => [c.title, c.updatedAt])).toEqual([
+      ['Played', 3000],
+      ['Untouched', 2000],
+    ]);
+  });
+
+  it('rejects campaign appends with a stale expectedSeq and writes nothing', async () => {
+    const id = await store.createCampaign();
+    await store.appendCampaignEvents(id, [campaignStarted(id)], 0);
+
+    await expect(store.appendCampaignEvents(id, [xp(1)], 0)).rejects.toBeInstanceOf(
+      SeqConflictError,
+    );
+    expect((await store.loadCampaign(id))?.summary.lastSeq).toBe(1);
+  });
+
+  it('returns undefined for unknown campaigns and rejects appends to them', async () => {
+    expect(await store.loadCampaign(campaignId('nope'))).toBeUndefined();
+    expect(await store.undoLastCampaign(campaignId('nope'))).toBeUndefined();
+    await expect(store.appendCampaignEvents(campaignId('nope'), [xp(1)])).rejects.toThrow(
+      /Unknown campaign/,
+    );
+  });
+
+  it('undoes the last campaign command group, such as a whole resolution', async () => {
+    const id = await store.createCampaign();
+    await store.appendCampaignEvents(id, [campaignStarted(id)]);
+    await store.appendCampaignEvents(id, [xp(2), gatheringPlayed]);
+
+    const undone = await store.undoLastCampaign(id);
+
+    expect(undone?.log).toEqual(campaign.replayEvents([campaignStarted(id)]));
+    expect(undone?.summary.lastSeq).toBe(1);
+    const next = await store.appendCampaignEvents(id, [xp(1)]);
+    expect(next[0]?.seq).toBe(2);
+  });
+
+  it('rejects a campaign undo with a stale expectedSeq and removes nothing', async () => {
+    const id = await store.createCampaign();
+    await store.appendCampaignEvents(id, [campaignStarted(id)]);
+
+    await expect(store.undoLastCampaign(id, 0)).rejects.toBeInstanceOf(SeqConflictError);
+    expect((await store.loadCampaign(id))?.summary.lastSeq).toBe(1);
+  });
+
+  it('deleting a game leaves its campaign and other campaigns untouched', async () => {
+    const zealot = await store.createCampaign();
+    const other = await store.createCampaign();
+    const game = await store.createGame({ campaignId: zealot });
+    await store.appendCampaignEvents(zealot, [campaignStarted(zealot), xp(1)]);
+    await store.appendCampaignEvents(other, [campaignStarted(other)]);
+    await store.appendEvents(game, [started]);
+
+    await store.deleteGame(game);
+
+    expect((await store.loadCampaign(zealot))?.summary.lastSeq).toBe(2);
+    expect((await store.loadCampaign(other))?.summary.lastSeq).toBe(1);
   });
 });
