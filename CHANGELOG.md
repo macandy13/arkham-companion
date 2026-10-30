@@ -2,6 +2,16 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.14](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.13...arkham-companion-v0.1.14) (2026-10-30)
+
+
+### Features
+
+* **web:** campaign log page (MC1.6b1) ([ecce6ea](https://github.com/macandy13/arkham-companion/commit/ecce6eaf2d5992af84b8e333bb5960abedbcf9d6))
+* **web:** draw the campaign log on paper (MC1.6b2) ([f32ce06](https://github.com/macandy13/arkham-companion/commit/f32ce062c2976f7f6f1afffe89f8ab49b77f8be9))
+* **web:** start a campaign from the wizard and list it at home (MC1.6a) ([ec938f3](https://github.com/macandy13/arkham-companion/commit/ec938f34f7852c321f7f7f45a8f285ad285361f6))
+* **web:** store campaign logs in GameStore (M1C.6) ([4f19dfb](https://github.com/macandy13/arkham-companion/commit/4f19dfb63a65ba95b64ffe5cb1fcfb7af9bb018e))
+
 ## [0.1.13](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.12...arkham-companion-v0.1.13) (2026-10-29)
 
 
