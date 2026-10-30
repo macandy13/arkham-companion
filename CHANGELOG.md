@@ -2,6 +2,35 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.16](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.15...arkham-companion-v0.1.16) (2026-10-30)
+
+
+### Features
+
+* **web:** Eldritch card theme colours and tentacle ornaments (M3.10k1) ([75abdee](https://github.com/macandy13/arkham-companion/commit/75abdeee20639080b4918903129c262e2000089e))
+* **web:** Eldritch card theme colours and tentacle ornaments (M3.10k1) ([722745c](https://github.com/macandy13/arkham-companion/commit/722745c9a0cce013f3ed2656897aeb478d83de8e))
+* **web:** Eldritch eye medallions and starry pages (M3.10k2) ([bb0ee3b](https://github.com/macandy13/arkham-companion/commit/bb0ee3bb3b341325ff9ffcff8c8513eb8f20b6ee))
+* **web:** Eldritch eye medallions and starry pages (M3.10k2) ([cc0df34](https://github.com/macandy13/arkham-companion/commit/cc0df34fef16252f19cec8a90d109a9312fa5ce0))
+* **web:** encounter card back drawn after the printed one (M3.10n) ([3778b89](https://github.com/macandy13/arkham-companion/commit/3778b89ebbcbf728f15c20e347d0b823e81c3940))
+* **web:** encounter deck as the encounter card back (M3.10n) ([35884b9](https://github.com/macandy13/arkham-companion/commit/35884b9f2aaa7f81e8ff8b88b037e1adf7616c97))
+* **web:** killed and insane clipping and chaos bag on the campaign log (MC1.6) ([9675153](https://github.com/macandy13/arkham-companion/commit/9675153cc7ea01b90ac90203b34ba0ae32e78775))
+* **web:** killed and insane clipping and chaos bag on the campaign log (MC1.6b3b) ([5f40d19](https://github.com/macandy13/arkham-companion/commit/5f40d195dc492d920fdda10fffadb27f229b5f8a))
+* **web:** Night and brass card theme (M3.10j) ([61a7086](https://github.com/macandy13/arkham-companion/commit/61a70867d5763a1194c73ab0ea3f04d5719b9687))
+* **web:** Night and brass card theme (M3.10j) ([7b3d2e1](https://github.com/macandy13/arkham-companion/commit/7b3d2e12f1f08de71c059bc4bf2e445754d413c7))
+* **web:** one dialog shell with kicker, widths and the guide's fonts (MD.1c) ([40f5219](https://github.com/macandy13/arkham-companion/commit/40f521953c1e98685a0867663258d9bb3a40be06))
+
+
+### Bug fixes
+
+* **web:** address review nits on the dialog shell (MD.1c) ([ecf24c4](https://github.com/macandy13/arkham-companion/commit/ecf24c48513d9952d4250c7b988b21d2d770d457))
+
+
+### Refactoring
+
+* **web:** campaign string files satisfy CampaignTexts; test section keys ([269214d](https://github.com/macandy13/arkham-companion/commit/269214dee782a43659850c382476ab65afcdc9ea))
+* **web:** split translations into app and per-campaign files ([8dc6fa0](https://github.com/macandy13/arkham-companion/commit/8dc6fa007155e1737788c237f8df9b5473269ffb))
+* **web:** split translations into app and per-campaign files ([c147b8b](https://github.com/macandy13/arkham-companion/commit/c147b8baa0dbde8dbaed063360096d28480aa6f8))
+
 ## [0.1.15](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.14...arkham-companion-v0.1.15) (2026-10-30)
 
 
