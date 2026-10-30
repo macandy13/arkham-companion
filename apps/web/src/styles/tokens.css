@@ -471,19 +471,24 @@
   /*
    * The paper every screen outside play and every dialog is printed on (MD.1): a campaign guide's
    * page, the same in both themes, with ink for text and rules and a deep brass for accents. Its
-   * edge is a shade darker, like a page's worn rim.
+   * rim is a shade darker, like a worn page. The game's colours take their deeper shades by day,
+   * which read on the paper.
    */
   --color-paper: #dccaa2;
-  --color-paper-edge: #bba06e;
+  --color-paper-rim: #bba06e;
   --color-paper-surface: rgb(255 248 230 / 30%);
   --color-paper-rule: rgb(44 34 22 / 30%);
   --color-ink: #2c2216;
   --color-ink-muted: #5c4b33;
   --color-ink-accent: #7d5b22;
-  --paper:
+  --color-ink-clue: #2f7896;
+  --color-ink-doom: #a33a37;
+  --color-ink-health: #a8413b;
+  --color-ink-sanity: #3d63a0;
+  --guide-paper:
     radial-gradient(ellipse at 50% 40%, transparent 55%, rgb(120 90 40 / 22%) 130%),
     var(--color-paper);
-  --paper-shadow: 0 var(--space-1) var(--space-4) rgb(0 0 0 / 45%);
+  --guide-paper-shadow: 0 var(--space-1) var(--space-4) rgb(0 0 0 / 45%);
   --space-glow:
     radial-gradient(ellipse at 20% 30%, rgb(70 90 170 / 45%), transparent 55%),
     radial-gradient(ellipse at 85% 75%, rgb(40 60 140 / 50%), transparent 50%);

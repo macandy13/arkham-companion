@@ -29,7 +29,7 @@ The [campaign screen](../../apps/web/src/campaign/CampaignScreen.tsx) draws the 
 - a link that continues the game of the scenario in play.
 
 The paper look is tokens, so dialogs can share it: fonts `--font-family-print`, `-log-label`, `-script`, `-hand`; inks `--color-print`, `-pen`, `-script-ink`, `-stamp`; papers `--index-card-paper`, `--napkin-paper`; the torn outline `--paper-edge` (a `clip-path` polygon on a layer behind the sheet, so the writing stays crisp).
-[`campaign_log.css`](../../apps/web/src/campaign/campaign_log.css) selects by the sheets' ids, and drops the paper page the other screens are printed on.
+[`campaign_log.css`](../../apps/web/src/campaign/campaign_log.css) selects by the sheets' ids, and `base.css` leaves it off the paper the other screens are printed on.
 
 ## Open game
 
