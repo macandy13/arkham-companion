@@ -1,3 +1,5 @@
+import type { CampaignTexts } from '../index';
+
 /** Night of the Zealot's English strings: its name, scenarios, scenario choices and story records. */
 export const nightOfTheZealotTexts = {
   scenario: {
@@ -62,4 +64,4 @@ export const nightOfTheZealotTexts = {
       cultistsWhoGotAway: 'Cultists Who Got Away',
     },
   },
-} as const;
+} as const satisfies CampaignTexts;

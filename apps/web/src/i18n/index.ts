@@ -11,23 +11,33 @@ import { nightOfTheZealotTexts as nightOfTheZealotEn } from './en/night_of_the_z
  */
 export const CAMPAIGN_SECTIONS = ['campaigns', 'scenarios', 'scenario', 'story'] as const;
 
-/** One campaign's strings in one language, e.g. `en/night_of_the_zealot.ts`. */
-export type CampaignTexts = { readonly [S in (typeof CAMPAIGN_SECTIONS)[number]]: object };
+/** A section a campaign's strings add to. */
+export type CampaignSection = (typeof CAMPAIGN_SECTIONS)[number];
+
+/**
+ * One campaign's strings in one language, e.g. `en/night_of_the_zealot.ts`. Its files end in
+ * `satisfies CampaignTexts`, so a key outside the sections, which `translation` would drop, fails
+ * typecheck.
+ */
+export type CampaignTexts = { readonly [S in CampaignSection]: object };
 
 /** One language's strings: the app's own plus every campaign's, section by section. */
 function translation<A extends object>(app: A, campaigns: readonly CampaignTexts[]) {
-  const sections = CAMPAIGN_SECTIONS.map((section) => [
-    section,
-    Object.assign({}, ...campaigns.map((campaign) => campaign[section])),
-  ]);
-  return { ...app, ...Object.fromEntries(sections) };
+  // Nothing reads the strings' types (no typed `t` keys), so the joined sections stay plain objects.
+  const sections = Object.fromEntries(
+    CAMPAIGN_SECTIONS.map((section) => [
+      section,
+      Object.assign({}, ...campaigns.map((campaign) => campaign[section])) as object,
+    ]),
+  ) as Record<CampaignSection, object>;
+  return { ...app, ...sections };
 }
 
 /** Each language's campaign strings, in the order of the campaign catalog. */
-export const campaignTexts = {
+export const campaignTexts: Record<'en' | 'de', readonly CampaignTexts[]> = {
   en: [nightOfTheZealotEn],
   de: [nightOfTheZealotDe],
-} as const;
+};
 
 /** UI strings (not card text) per language; `en` is the fallback. */
 export const resources = {

@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { duplicates } from '@arkham/util';
+import { appTexts as appDe } from './de/app';
+import { appTexts as appEn } from './en/app';
 import { CAMPAIGN_SECTIONS, campaignTexts, resources } from './index';
 
 /** Every key path of a strings object, e.g. `campaignLog.notes`. */
-function keys(o: object, p = ''): string[] {
-  return Object.entries(o).flatMap(([k, v]) =>
-    typeof v === 'object' ? keys(v as object, `${p}${k}.`) : [`${p}${k}`],
+function keys(strings: object, prefix = ''): string[] {
+  return Object.entries(strings).flatMap(([key, value]) =>
+    typeof value === 'object' ? keys(value as object, `${prefix}${key}.`) : [`${prefix}${key}`],
   );
 }
 
@@ -14,10 +16,20 @@ describe('i18n resources', () => {
     expect(keys(resources.de).sort()).toEqual(keys(resources.en).sort());
   });
 
-  it.each(['en', 'de'] as const)('no two %s campaigns write the same key', (language) => {
-    const campaignKeys = campaignTexts[language].flatMap((campaign) =>
-      CAMPAIGN_SECTIONS.flatMap((section) => keys(campaign[section], `${section}.`)),
+  // Campaign sections are joined one level deep, so a key two campaigns share there would lose one.
+  it.each(['en', 'de'] as const)('no two %s campaigns share a key in a section', (language) => {
+    const sectionKeys = campaignTexts[language].flatMap((campaign) =>
+      CAMPAIGN_SECTIONS.flatMap((section) =>
+        Object.keys(campaign[section]).map((key) => `${section}.${key}`),
+      ),
     );
-    expect(duplicates(campaignKeys)).toEqual([]);
+    expect(duplicates(sectionKeys)).toEqual([]);
+  });
+
+  it.each([
+    ['en', appEn],
+    ['de', appDe],
+  ])('the %s app strings leave the campaign sections to the campaigns', (_language, app) => {
+    expect(CAMPAIGN_SECTIONS.filter((section) => section in app)).toEqual([]);
   });
 });
