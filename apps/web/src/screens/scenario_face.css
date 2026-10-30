@@ -71,7 +71,7 @@
   margin-block-start: calc(var(--scenario-title-top) * var(--scan-unit));
   padding: 0 calc(var(--scenario-inset) * var(--scan-unit));
   background: none;
-  font-family: var(--font-family-display);
+  font-family: var(--font-family-card-title);
   font-size: max(var(--font-size-note), calc(var(--scenario-title-size) * var(--scan-unit)));
   line-height: 1.1;
   /* A long word in a scenario name (more so in German) would otherwise be cut off by the frame. */

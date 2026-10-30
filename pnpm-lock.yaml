@@ -65,6 +65,9 @@ importers:
       '@fontsource/felipa':
         specifier: ^5.3.0
         version: 5.3.0
+      '@fontsource/grenze-gotisch':
+        specifier: ^5.3.0
+        version: 5.3.0
       '@fontsource/im-fell-english-sc':
         specifier: ^5.3.0
         version: 5.3.0
@@ -967,6 +970,9 @@ packages:
 
   '@fontsource/felipa@5.3.0':
     resolution: {integrity: sha512-tBgrnftxF1vht6bFO9K3q9q1Pjj4akH6fQw13jAIYLi/kB2RHcgePmYH8hBc5h4yJmbMX8sQ89sn/b2mq0SVKw==}
+
+  '@fontsource/grenze-gotisch@5.3.0':
+    resolution: {integrity: sha512-hIgb3TJWnwjiaf8FWMYfPe5PvHHnSv+VYUJI40Fj0KhjWhBhBl4LTsGrkr4MSjo6mG+znR2tBz5L++4wkEgI1A==}
 
   '@fontsource/im-fell-english-sc@5.3.0':
     resolution: {integrity: sha512-jKnCJ22tgVwxWVs1YQ/GCWmP60ulVq49IJZ7c0wgv0MXHe8T8LPbl0sOteYLOkCURW5+ZKwFiLNU2h/l9fHgrg==}
@@ -4048,6 +4054,8 @@ snapshots:
   '@fontsource/federant@5.3.0': {}
 
   '@fontsource/felipa@5.3.0': {}
+
+  '@fontsource/grenze-gotisch@5.3.0': {}
 
   '@fontsource/im-fell-english-sc@5.3.0': {}
 
