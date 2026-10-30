@@ -86,49 +86,50 @@ export function CluePaymentDialog({
           <li key={i} data-paid={i < total || undefined} />
         ))}
       </ol>
-      <ul>
-        {payers.map(({ id, name, image, clues }) => (
-          <li key={id}>
-            <figure>
-              <span>{name.charAt(0)}</span>
-              <InvestigatorArt image={image} />
-              <figcaption>{name}</figcaption>
-            </figure>
-            <ul aria-label={t('cluePayment.tokens', { name })}>
-              {Array.from({ length: clues }, (_, i) => (
-                <li key={i}>
-                  <button
-                    type="button"
-                    aria-label={t('cluePayment.token', { name, number: i + 1 })}
-                    aria-pressed={i < paysOf(id)}
-                    onClick={() =>
-                      setPays(new Map(pays).set(id, paysOf(id) + (i < paysOf(id) ? -1 : 1)))
-                    }
-                  />
-                </li>
-              ))}
-            </ul>
-          </li>
-        ))}
-      </ul>
-      <footer>
-        <button type="button" onClick={() => setPays(evenClueSplit(payers, required))}>
-          {t('cluePayment.splitEvenly')}
-        </button>
-        <button
-          type="button"
-          disabled={total !== required}
-          onClick={() =>
-            onPay(
-              payers
-                .map(({ id }) => ({ investigator: id, clues: paysOf(id) }))
-                .filter(({ clues }) => clues > 0),
-            )
-          }
-        >
-          {t('cluePayment.pay')}
-        </button>
-      </footer>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          onPay(
+            payers
+              .map(({ id }) => ({ investigator: id, clues: paysOf(id) }))
+              .filter(({ clues }) => clues > 0),
+          );
+        }}
+      >
+        <ul>
+          {payers.map(({ id, name, image, clues }) => (
+            <li key={id}>
+              <figure>
+                <span>{name.charAt(0)}</span>
+                <InvestigatorArt image={image} />
+                <figcaption>{name}</figcaption>
+              </figure>
+              <ul aria-label={t('cluePayment.tokens', { name })}>
+                {Array.from({ length: clues }, (_, i) => (
+                  <li key={i}>
+                    <button
+                      type="button"
+                      aria-label={t('cluePayment.token', { name, number: i + 1 })}
+                      aria-pressed={i < paysOf(id)}
+                      onClick={() =>
+                        setPays(new Map(pays).set(id, paysOf(id) + (i < paysOf(id) ? -1 : 1)))
+                      }
+                    />
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+        <footer>
+          <button type="button" onClick={() => setPays(evenClueSplit(payers, required))}>
+            {t('cluePayment.splitEvenly')}
+          </button>
+          <button type="submit" disabled={total !== required}>
+            {t('cluePayment.pay')}
+          </button>
+        </footer>
+      </form>
     </dialog>
   );
 }
