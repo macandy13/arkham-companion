@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { CardFaceView } from '@arkham/engine';
 import { sentences } from '@arkham/util';
 import { PORTRAIT_SCAN, TREACHERY_ART, artViewBox } from '../catalog/cardArt';
-import { CARD_OUTLINE, OrnamentLine, SetMedallion } from '../catalog/cardFace';
+import { CARD_OUTLINE, NightSky, OrnamentLine, SetMedallion } from '../catalog/cardFace';
 import { useCardPicture } from '../catalog/cardImages';
 import { shrinkAround, useShrinkToFit } from '../map/useShrinkToFit';
 import { TREACHERY_FACE, TREACHERY_FRAME } from './treacheryCardFrame';
@@ -85,6 +85,7 @@ export function TreacheryCard({ card, titleId }: { card: CardFaceView; titleId: 
         <path data-part="band" d={TREACHERY_FRAME.band} />
         <path data-part="beads" d={TREACHERY_FRAME.bandBeads} />
         <path data-part="page" d={TREACHERY_FRAME.page} fill={`url(#${pageId})`} />
+        <NightSky page={TREACHERY_FRAME.page} />
         <path data-part="corner" d={TREACHERY_FRAME.corners} />
         <path data-part="corner-star" d={TREACHERY_FRAME.cornerStars} />
         <path data-part="footer" d={TREACHERY_FRAME.footer} />

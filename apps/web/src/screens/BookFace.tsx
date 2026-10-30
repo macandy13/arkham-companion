@@ -1,6 +1,6 @@
 import { useId } from 'react';
 import { ACT_ART, AGENDA_ART, LANDSCAPE_SCAN, artViewBox } from '../catalog/cardArt';
-import { OrnamentLine, mirrored, scrollPath } from '../catalog/cardFace';
+import { NightSky, OrnamentLine, mirrored, scrollPath } from '../catalog/cardFace';
 import type { CardPicture } from '../catalog/cardImages';
 import type { Point } from '../map/mapLayout';
 import './book_face.css';
@@ -190,6 +190,7 @@ export function BookFace({
         <path key={d} data-part={index % 2 === 0 ? 'page-edge' : 'page-edge-shade'} d={d} />
       ))}
       <path data-part="page" d={paths.page} fill={`url(#${pageId})`} />
+      <NightSky page={paths.page} scan={LANDSCAPE_SCAN} />
       <path data-part="watermark" d={paths.watermark} />
       {paths.eyebrows.map((d) => (
         <OrnamentLine key={d} d={d} />
