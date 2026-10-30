@@ -26,6 +26,31 @@
   stroke-width: var(--card-gilt-line-width);
 }
 
+/* The eye on the medallion shows in the Eldritch card theme alone, in place of the inner ring. */
+#board svg [data-medallion] [data-part='eye'] {
+  display: none;
+}
+
+:root[data-card-theme='eldritch'] #board svg [data-medallion] [data-part='inner'] {
+  display: none;
+}
+
+:root[data-card-theme='eldritch'] #board svg [data-medallion] [data-part='eye'] {
+  display: inline;
+}
+
+#board svg [data-medallion] [data-part='eye-white'] {
+  fill: var(--color-face-eye);
+}
+
+#board svg [data-medallion] [data-part='iris'] {
+  fill: var(--color-face-eye-iris);
+}
+
+#board svg [data-medallion] [data-part='pupil'] {
+  fill: var(--color-face-eye-pupil);
+}
+
 #board svg [data-medallion] [data-part='plate'] {
   fill: var(--color-face-type-plate);
   stroke: var(--color-face-setting);
@@ -46,6 +71,17 @@
   font-weight: bold;
   letter-spacing: var(--face-type-spacing);
   text-transform: uppercase;
+}
+
+/* The night sky over a card's page shows in the Eldritch card theme alone: faint, under the text. */
+#board svg [data-night-sky] {
+  display: none;
+}
+
+:root[data-card-theme='eldritch'] #board svg [data-night-sky] {
+  display: inline;
+  fill: var(--color-face-star);
+  opacity: var(--face-star-opacity);
 }
 
 /* The count on a printed value: a small circle in its token's colour, with a pale rim. */
