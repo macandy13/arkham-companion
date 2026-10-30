@@ -4,6 +4,7 @@ import type { TFunction } from 'i18next';
 import type { BoardView, EncounterCardView } from '@arkham/engine';
 import { Token } from '../screens/Token';
 import type { GameActions } from '../state/gameActions';
+import { EncounterBack } from './EncounterBack';
 import { EncounterDialog, type HeaderPileKind } from './EncounterDialog';
 import { PileFan } from './PileFan';
 import './encounter.css';
@@ -22,9 +23,9 @@ export interface PileProps {
 }
 
 /**
- * The encounter deck in the header (`BoardView.encounter`): an upright card back with the cards
- * left on a round token, like the agenda's doom, and its discard pile fanned at its lower right
- * corner (`HeaderPile`). The deck opens the encounter dialog (`EncounterDialog`) on its draw
+ * The encounter deck in the header (`BoardView.encounter`): an upright card back (`EncounterBack`)
+ * with the cards left on a round token on its medallion, like the agenda's doom, and its discard
+ * pile fanned at its lower right corner (`HeaderPile`). The deck opens the encounter dialog (`EncounterDialog`) on its draw
  * buttons, which draw with `actions` unless a step is queued or the players adjust the board.
  */
 export function EncounterPiles(props: PileProps) {
@@ -34,6 +35,7 @@ export function EncounterPiles(props: PileProps) {
   return (
     <>
       <button type="button" data-card="encounter" onClick={() => setOpen(true)}>
+        <EncounterBack />
         <Token
           kind="cards"
           count={deckCount}

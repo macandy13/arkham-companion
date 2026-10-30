@@ -1,6 +1,12 @@
 import { useId } from 'react';
 import { PORTRAIT_SCAN } from '../catalog/cardArt';
-import { CARD_OUTLINE, OrnamentLine, mirrored, scrollPath } from '../catalog/cardFace';
+import {
+  CARD_OUTLINE,
+  OrnamentLine,
+  insetOutline,
+  mirrored,
+  scrollPath,
+} from '../catalog/cardFace';
 import type { Point } from '../map/mapLayout';
 import './scenario_face.css';
 
@@ -27,18 +33,6 @@ const SERPENT: [Point, Point, Point, Point] = [
   { x: 70, y: 12 },
   { x: 98, y: 26 },
 ];
-
-/** A rectangle inset `inset` from the card's edges, its corners rounded by `corner`. */
-function insetOutline(inset: number, corner: number): string {
-  const { width, height } = PORTRAIT_SCAN;
-  const [left, top, right, bottom] = [inset, inset, width - inset, height - inset];
-  const arc = `A ${corner} ${corner} 0 0 1`;
-  return [
-    `M ${left + corner} ${top} H ${right - corner} ${arc} ${right} ${top + corner}`,
-    `V ${bottom - corner} ${arc} ${right - corner} ${bottom} H ${left + corner}`,
-    `${arc} ${left} ${bottom - corner} V ${top + corner} ${arc} ${left + corner} ${top} Z`,
-  ].join(' ');
-}
 
 /** The frame's parts as SVG paths in scan units, each named for the stylesheet. */
 function framePaths() {

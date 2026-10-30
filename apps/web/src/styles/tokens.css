@@ -116,6 +116,10 @@
   --color-face-bead: #d9d2bb;
   /* An agenda's and act's open book: its dark cover, its page edges, the threshold discs. */
   --color-face-cover: #2a1f16;
+  /* The encounter card back: its dark field, the glow behind its medallion, the medallion's star. */
+  --color-face-back: #17302a;
+  --color-face-back-glow: #2c5446;
+  --color-face-back-star: #22423a;
   --color-face-page-edge: #d9cdb0;
   --color-face-page-edge-shade: #b9ab8e;
   --color-face-agenda-disc: #5c4630;

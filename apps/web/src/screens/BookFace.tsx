@@ -157,7 +157,7 @@ export function BookFace({
       viewBox={`0 0 ${width} ${height}`}
       preserveAspectRatio="xMidYMid slice"
       aria-hidden="true"
-      data-face=""
+      data-face="book"
     >
       <defs>
         {/* The stylesheet colours the stops, like the other faces' paper. */}
