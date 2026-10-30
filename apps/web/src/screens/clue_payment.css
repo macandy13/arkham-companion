@@ -8,23 +8,6 @@
   max-width: var(--layout-clue-payment-width);
 }
 
-#board dialog[data-dialog='clue-payment'] > h2 {
-  padding-right: var(--touch-target);
-}
-
-#board dialog[data-dialog='clue-payment'] > button[data-icon='close'] {
-  position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
-  width: var(--touch-target);
-  padding: 0;
-  border-radius: var(--radius-round);
-}
-
-#board dialog[data-dialog='clue-payment'] > button[data-icon='close']::before {
-  mask-image: url('../investigators/icons/close.svg');
-}
-
 #board dialog[data-dialog='clue-payment'] :is(ol, ul) {
   display: flex;
   flex-wrap: wrap;
@@ -93,7 +76,7 @@
 #board dialog[data-dialog='clue-payment'] figure > span {
   place-self: center;
   color: var(--color-card-text);
-  font-family: var(--font-family-display);
+  font-family: var(--font-family-print);
   font-size: var(--font-size-token-count);
 }
 

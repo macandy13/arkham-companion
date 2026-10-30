@@ -48,7 +48,7 @@
 
 #board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) output {
   flex-basis: 100%;
-  font-family: var(--font-family-display);
+  font-family: var(--font-family-print);
   font-size: var(--font-size-subtitle);
 }
 

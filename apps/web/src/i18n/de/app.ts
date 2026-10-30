@@ -313,7 +313,7 @@ export const appTexts = {
     agility: 'Geschick',
   },
   skillTest: {
-    title: 'Fertigkeitsprobe · {{name}}',
+    title: 'Fertigkeitsprobe',
     difficulty: 'Schwierigkeit',
     modifier: 'Modifikator',
     lower: '{{what}} senken',

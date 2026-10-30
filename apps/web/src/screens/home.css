@@ -23,8 +23,9 @@
   margin: 0;
 }
 
-#app > main ul > li form,
-#app > main ul > li nav,
+/* The row's own forms only, not the delete question's form in its dialog. */
+#app > main ul > li > form,
+#app > main ul > li > nav,
 #app > main section {
   display: flex;
   flex-wrap: wrap;
