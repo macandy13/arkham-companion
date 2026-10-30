@@ -586,7 +586,7 @@ export const appTexts = {
     physical: 'Physical',
     mental: 'Mental',
     traumaCount: '{{count}} trauma',
-    earnedCards: 'Earned story assets/weaknesses',
+    earnedCards: 'Earned story assets / weaknesses',
     fate: { killed: 'killed', insane: 'insane' },
     scenarios: 'Scenarios',
     noResolution: 'no resolution',

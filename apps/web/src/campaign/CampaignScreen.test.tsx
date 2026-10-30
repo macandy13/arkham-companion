@@ -103,6 +103,18 @@ describe('CampaignScreen', () => {
       expect(within(investigators).getByText('Lita Chantler')).toBeTruthy();
     });
 
+    it('leaves three blank columns beside his, as the printed card has room for four', async () => {
+      const investigators = await renderPlayedLog();
+
+      const [rolandColumn, ...blankColumns] = within(investigators).getAllByRole('listitem');
+      expect(rolandColumn?.textContent).toContain('Roland Banks');
+      expect(blankColumns.map((column) => column.textContent)).toEqual(
+        Array(3).fill(
+          'InvestigatorUnspent experienceTraumaPhysicalMentalEarned story assets / weaknesses',
+        ),
+      );
+    });
+
     it('ticks The Gathering with R1 and marks The Midnight Masks as next', async () => {
       await renderPlayedLog();
       const scenarios = screen.getByRole('region', { name: 'Scenarios' });

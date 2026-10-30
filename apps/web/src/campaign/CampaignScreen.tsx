@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router';
 import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
 import {
+  campaign,
   campaignId as toCampaignId,
   type CampaignInvestigator,
   type CampaignLog,
@@ -12,6 +13,7 @@ import {
 } from '@arkham/engine';
 import type { AppState } from '../state/appStore';
 import { findCampaign, findScenario, scenarioCardName } from '../scenarios/scenarioCatalog';
+import { range } from '@arkham/util';
 import { CampaignSheets } from './CampaignSheets';
 import { Tally } from './Tally';
 import '@fontsource/felipa/latin-400.css';
@@ -53,6 +55,9 @@ export function CampaignScreen({ store }: { store: StoreApi<AppState> }) {
           {log.investigators.map((member) => (
             <InvestigatorColumn key={member.code} member={member} />
           ))}
+          {range(campaign.MAX_TEAM_SIZE - log.investigators.length).map((blank) => (
+            <InvestigatorColumn key={blank} />
+          ))}
         </ol>
       </section>
       <ScenarioList log={log} />
@@ -62,45 +67,57 @@ export function CampaignScreen({ store }: { store: StoreApi<AppState> }) {
   );
 }
 
-/** One investigator's column of the index card, with the fields of the printed log. */
-function InvestigatorColumn({ member }: { readonly member: CampaignInvestigator }) {
+/**
+ * One investigator's column of the index card, with the fields of the printed log. Without a
+ * `member` only the printed labels show, like a seat on the sheet no one has taken yet.
+ */
+function InvestigatorColumn({ member }: { readonly member?: CampaignInvestigator }) {
   const { t } = useTranslation();
+  const unspentXp = member && member.xpEarned - member.xpSpent;
   return (
     <li>
       <dl>
         <dt>{t('campaignLog.investigator')}</dt>
         <dd>
-          {member.name}
-          {member.fate !== 'alive' && <em>{t(`campaignLog.fate.${member.fate}`)}</em>}
+          {member?.name}
+          {member && member.fate !== 'alive' && <em>{t(`campaignLog.fate.${member.fate}`)}</em>}
         </dd>
         <dt>{t('campaignLog.unspentXp')}</dt>
         <dd>
-          <data value={member.xpEarned - member.xpSpent}>{member.xpEarned - member.xpSpent}</data>
-          <small>
-            {t('campaignLog.xpTotals', { earned: member.xpEarned, spent: member.xpSpent })}
-          </small>
+          {member && (
+            <>
+              <data value={unspentXp}>{unspentXp}</data>
+              <small>
+                {t('campaignLog.xpTotals', { earned: member.xpEarned, spent: member.xpSpent })}
+              </small>
+            </>
+          )}
         </dd>
         <dt>{t('campaignLog.trauma')}</dt>
         <dd>
           <dl>
             <dt>{t('campaignLog.physical')}</dt>
             <dd>
-              <Tally
-                count={member.physicalTrauma}
-                label={t('campaignLog.traumaCount', { count: member.physicalTrauma })}
-              />
+              {member && (
+                <Tally
+                  count={member.physicalTrauma}
+                  label={t('campaignLog.traumaCount', { count: member.physicalTrauma })}
+                />
+              )}
             </dd>
             <dt>{t('campaignLog.mental')}</dt>
             <dd>
-              <Tally
-                count={member.mentalTrauma}
-                label={t('campaignLog.traumaCount', { count: member.mentalTrauma })}
-              />
+              {member && (
+                <Tally
+                  count={member.mentalTrauma}
+                  label={t('campaignLog.traumaCount', { count: member.mentalTrauma })}
+                />
+              )}
             </dd>
           </dl>
         </dd>
         <dt>{t('campaignLog.earnedCards')}</dt>
-        <dd>{member.earnedCards.map(scenarioCardName).join(', ')}</dd>
+        <dd>{member?.earnedCards.map(scenarioCardName).join(', ')}</dd>
       </dl>
     </li>
   );
