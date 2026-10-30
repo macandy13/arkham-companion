@@ -3,6 +3,7 @@ import type { CampaignLog } from './campaign/campaign_log';
 import type { Command, StartScenario, StartingCard, StartingInvestigator } from './commands';
 import { execute } from './execute';
 import {
+  cardCode,
   mapId,
   scenarioId,
   type CardCode,
@@ -114,7 +115,7 @@ interface GameSpec {
  * parts of a `ScenarioDefinition` the engine reads while it plays. The setup
  * parts don't apply, since the builder places the table itself.
  */
-type ScenarioRules = Partial<Pick<ScenarioDefinition, 'reference' | 'modifiers'>>;
+type ScenarioRules = Partial<Pick<ScenarioDefinition, 'reference' | 'referenceCode' | 'modifiers'>>;
 
 const EMPTY_SPEC: GameSpec = {
   locations: [],
@@ -249,10 +250,11 @@ export class GameBuilder {
 
   /**
    * The table playing a scenario with this reference card in place of any
-   * given before; without one, no symbol token has a printed modifier.
+   * given before; without one, no symbol token has a printed modifier. `code`
+   * names the card, for a test that reads it back (`BoardView.reference`).
    */
-  withReferenceCard(reference: ScenarioReference): GameBuilder {
-    return this.withRules({ reference });
+  withReferenceCard(reference: ScenarioReference, code?: CardCode): GameBuilder {
+    return this.withRules({ reference, ...(code ? { referenceCode: code } : {}) });
   }
 
   /** The table playing a scenario with these skill test modifiers in place of any given before. */
@@ -385,11 +387,12 @@ function beginTurn(investigator: InvestigatorId): Command[] {
 }
 
 /** A scenario with `rules` and nothing to set up: the builder places the table itself. */
-function scenarioOf({ reference, modifiers }: ScenarioRules): ScenarioDefinition {
+function scenarioOf({ reference, referenceCode, modifiers }: ScenarioRules): ScenarioDefinition {
   return {
     id: CUSTOM_SCENARIO,
     chaosBag: { easy: [], standard: [], hard: [], expert: [] },
     reference: reference ?? { easyStandard: {}, hardExpert: {} },
+    referenceCode: referenceCode ?? cardCode('reference_card'),
     agendaDeck: [],
     actDeck: [],
     setup: [],

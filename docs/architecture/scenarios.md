@@ -51,5 +51,5 @@ The app lists playable scenarios in its [scenario catalog](../../apps/web/src/sc
 
 ## Extension points
 
-- **A new scenario:** a folder in `packages/scenarios/src/` with definition, cards (rules as abilities) and an end-to-end test, exported and added to the catalog.
+- **A new scenario:** a folder in `packages/scenarios/src/` with definition (its `referenceCode` names the reference card whose texts the screen shows, see [Card data](card-data.md)), cards (rules as abilities) and an end-to-end test, exported and added to the catalog.
 - **A new setup step:** a `SetupStep` kind in `setup.ts`, only when two scenarios need it.
