@@ -531,6 +531,23 @@
   --napkin-paper:
     linear-gradient(90deg, rgb(0 0 0 / 5%) 0 1px, transparent 1px) 0 0 / 5px 5px,
     linear-gradient(#f6f5f0, #ecebe4);
+  /* The notepad: ruled lines a handwritten line apart, a red margin rule on the left. */
+  --notepad-line: 1.75rem;
+  /* The narrowest a sheet gets before the board puts it on a row of its own. */
+  --campaign-sheet-width: 20rem;
+  --notepad-margin: 2.5rem;
+  --notepad-paper:
+    linear-gradient(
+      90deg,
+      transparent var(--notepad-margin),
+      rgb(190 60 50 / 45%) var(--notepad-margin) calc(var(--notepad-margin) + 1px),
+      transparent calc(var(--notepad-margin) + 1px)
+    ),
+    repeating-linear-gradient(
+      transparent 0 calc(var(--notepad-line) - 1px),
+      rgb(60 100 160 / 30%) calc(var(--notepad-line) - 1px) var(--notepad-line)
+    ),
+    linear-gradient(#fbf8ec, #f1ead2);
   --sheet-shadow: drop-shadow(0 5px 6px rgb(0 0 0 / 45%));
   --sheet-rule-width: 1.5px;
   /* A line drawn by hand: a box, an underline, a tally stroke. */

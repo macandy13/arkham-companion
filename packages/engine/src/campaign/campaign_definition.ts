@@ -25,7 +25,31 @@ export interface CampaignDefinition {
   readonly chaosBag: Record<Difficulty, readonly ChaosToken[]>;
   /** Interludes between scenarios; placeholder until a campaign needs them. */
   readonly interludes?: readonly InterludeDefinition[];
+  /** What its campaign log shows besides the sheets every campaign has. */
+  readonly log: CampaignLogLayout;
 }
+
+/**
+ * The campaign's part of its log page. Every log has a team card, a scenario path, campaign
+ * notes, the killed and insane, and the chaos bag; a campaign says which of its story records
+ * the notes show and adds its own sheets. A record that no note or sheet names stays hidden,
+ * for the rules only. Research for all campaigns: docs/product.md "Campaign screen".
+ */
+export interface CampaignLogLayout {
+  /** Story record keys written as campaign notes, in the order the campaign guide records them. */
+  readonly notes: readonly string[];
+  /** The campaign's own sheets, in reading order. */
+  readonly sheets: readonly LogSheet[];
+}
+
+/**
+ * One of a campaign's own log sheets, showing the story record `record`. Kinds join as the
+ * campaigns that need them are entered (tallies for The Path to Carcosa, rosters for Edge of the
+ * Earth); the page lays every kind out the same way.
+ */
+export type LogSheet =
+  /** Names written under a heading, e.g. "Cultists Who Got Away"; crossed-out ones stay struck. */
+  { readonly kind: 'nameList'; readonly record: string };
 
 /**
  * An interlude: story read between two scenarios, which may write to the

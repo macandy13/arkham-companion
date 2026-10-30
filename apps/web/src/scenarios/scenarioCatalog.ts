@@ -32,6 +32,11 @@ export interface CampaignEntry {
   /** Scenario order and chaos bags; `StartCampaign` is compiled from it. */
   definition: CampaignDefinition;
   /**
+   * Prefix of the i18n keys that put its story records into words on the log page: a list's
+   * heading at `<storyKey>.<record>`, a flag's note at `<storyKey>.<record>.yes` or `.no`.
+   */
+  storyKey: string;
+  /**
    * ArkhamDB codes of the packs that contain the campaign (`PackDef.code`); the settings offer
    * only these packs for the collection, since the app plays no other campaign yet.
    */
@@ -69,6 +74,7 @@ export const campaignCatalog: readonly CampaignEntry[] = [
     id: nightOfTheZealot.id,
     nameKey: 'campaigns.nightOfTheZealot',
     definition: nightOfTheZealot,
+    storyKey: 'story.nightOfTheZealot',
     // The Revised Core Set reprints the Core Set with the same campaign.
     packCodes: ['core', 'rcore'],
   },

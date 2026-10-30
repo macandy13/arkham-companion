@@ -241,8 +241,10 @@ export type {
 } from './campaign/campaign_log';
 export type {
   CampaignDefinition,
+  CampaignLogLayout,
   CampaignOptions,
   InterludeDefinition,
+  LogSheet,
 } from './campaign/campaign_definition';
 export type { CampaignContext, CampaignExecuteResult } from './campaign/handle_campaign';
 export type {
