@@ -504,7 +504,7 @@ export const appTexts = {
     theme: 'Theme',
     themes: { dark: 'Dark', light: 'Light' },
     cardTheme: 'Card style',
-    cardThemes: { exact: 'Exact', pictures: 'Card pictures' },
+    cardThemes: { exact: 'Exact', nightAndBrass: 'Night and brass', pictures: 'Card pictures' },
     about: 'About',
     unofficial:
       'Arkham Companion is an unofficial fan project. It is not produced, endorsed or supported by Fantasy Flight Games.',

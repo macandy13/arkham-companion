@@ -159,6 +159,8 @@
   --color-skill-intellect: #6a3f86;
   --color-skill-combat: #9e3328;
   --color-skill-agility: #3c7340;
+  /* The skill symbols on those tiles, pale paper in every card theme. */
+  --color-skill-symbol: #ebdfc2;
   /*
    * The investigator's clue token and resource coin: a teal token lit from its upper left in a
    * dark rim, and a gold coin with a milled ring inside its rim.
@@ -713,4 +715,68 @@
     --encounter-strip-cards-shown: 2;
     --layout-zoom-card-width: 20rem;
   }
+}
+
+/*
+ * The Night and brass card theme (M3.10j): the Exact theme's frames on sea-green card stock, the
+ * ornament, rules and plates' rims in brass, the text in bone, the frames nearly black. The same
+ * in both playmat themes, like the Exact one. The live tokens (counts, damage, horror, skills,
+ * chaos tokens) keep their colours, so they read the same in every theme.
+ */
+:root[data-card-theme='nightAndBrass'] {
+  --color-face-frame: #0e1514;
+  --color-face-frame-back: #0b1a16;
+  --color-face-setting: #070b0a;
+  --color-face-ornament: #c29a5b;
+  --color-face-plate: #24312e;
+  --color-face-plate-shade: #121b19;
+  --color-face-page: #2a3a36;
+  --color-face-page-shade: #15201e;
+  --color-face-ink: #ece2c8;
+  --color-face-medallion: #1b2624;
+  --color-face-medallion-ring: #c29a5b;
+  --color-face-type-plate: #1b2624;
+  --color-face-type-plate-line: #c29a5b;
+  --color-face-socket: #2e3d39;
+  --color-face-shroud: #0a0f0e;
+  --color-face-clue: #2e3d39;
+  --color-face-footer: #070b0a;
+  --color-face-bead: #c29a5b;
+  --color-face-cover: #0b100f;
+  --color-face-back-paper: #2a3a36;
+  --color-face-back-paper-edge: #101917;
+  --color-face-back-light: #c29a5b;
+  --color-face-back-ink: #070b0a;
+  --color-face-back-ground: #3e2a1a;
+  --color-face-page-edge: #3a4a45;
+  --color-face-page-edge-shade: #26332f;
+  --color-face-act-disc: #3e5a3a;
+  --color-face-ornament-line: #2a1d0e;
+  --color-face-ornament-highlight: #f0d9a6;
+  --color-face-fight: #6a2a1c;
+  --color-face-health: #2a2a26;
+  --color-face-evade: #1e3a24;
+  --color-face-chevron-rim: #c29a5b;
+  --notebook-page:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0 calc(1.25rem - 1px),
+      rgb(194 154 91 / 18%) calc(1.25rem - 1px) 1.25rem
+    ),
+    linear-gradient(#23302d, #18221f);
+}
+
+/*
+ * The investigator card is drawn in HTML on the shared paper tokens, which dialogs use too, so
+ * the Night and brass theme sets them on the card alone.
+ */
+:root[data-card-theme='nightAndBrass'] #investigators [data-card='investigator'] {
+  --color-parchment: #2a3a36;
+  --color-parchment-shade: #15201e;
+  --color-parchment-light: #3a4a45;
+  --color-ink: #ece2c8;
+  --color-ink-muted: #b8aa88;
+  --color-card-band: #0e1514;
+  --color-card-gilt: #c29a5b;
+  --color-card-edge: #070b0a;
 }
