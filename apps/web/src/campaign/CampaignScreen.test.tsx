@@ -106,13 +106,13 @@ describe('CampaignScreen', () => {
     it('leaves three blank columns beside his, as the printed card has room for four', async () => {
       const investigators = await renderPlayedLog();
 
-      const columns = within(investigators).getAllByRole('listitem');
-      expect(columns.map((column) => column.textContent?.includes('Roland Banks'))).toEqual([
-        true,
-        false,
-        false,
-        false,
-      ]);
+      const [rolandColumn, ...blankColumns] = within(investigators).getAllByRole('listitem');
+      expect(rolandColumn?.textContent).toContain('Roland Banks');
+      expect(blankColumns.map((column) => column.textContent)).toEqual(
+        Array(3).fill(
+          'InvestigatorUnspent experienceTraumaPhysicalMentalEarned story assets / weaknesses',
+        ),
+      );
     });
 
     it('ticks The Gathering with R1 and marks The Midnight Masks as next', async () => {

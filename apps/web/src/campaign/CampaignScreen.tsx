@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router';
 import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
 import {
+  campaign,
   campaignId as toCampaignId,
   type CampaignInvestigator,
   type CampaignLog,
@@ -20,9 +21,6 @@ import '@fontsource/caveat/latin-500.css';
 import '@fontsource/caveat/latin-700.css';
 import '@fontsource/libre-caslon-text/latin-700.css';
 import './campaign_log.css';
-
-/** The investigator columns the printed log has room for; those beyond the team stay blank. */
-const TEAM_COLUMNS = 4;
 
 /**
  * Route `/campaign/:id`: the campaign log, drawn after the campaign log sheet of the Core Set
@@ -57,7 +55,7 @@ export function CampaignScreen({ store }: { store: StoreApi<AppState> }) {
           {log.investigators.map((member) => (
             <InvestigatorColumn key={member.code} member={member} />
           ))}
-          {range(Math.max(0, TEAM_COLUMNS - log.investigators.length)).map((blank) => (
+          {range(campaign.MAX_TEAM_SIZE - log.investigators.length).map((blank) => (
             <InvestigatorColumn key={blank} />
           ))}
         </ol>
