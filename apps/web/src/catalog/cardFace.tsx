@@ -188,21 +188,6 @@ export function scrollPath(
   return `M ${[...curve, ...spiral].map(({ x, y }) => `${round(x)} ${round(y)}`).join(' L ')}`;
 }
 
-/**
- * A rectangle inset `inset` from a portrait card's edges, its corners rounded by `corner`: the
- * inner rule the printed scenario card and encounter back run round their frame.
- */
-export function insetOutline(inset: number, corner: number): string {
-  const { width, height } = PORTRAIT_SCAN;
-  const [left, top, right, bottom] = [inset, inset, width - inset, height - inset];
-  const arc = `A ${corner} ${corner} 0 0 1`;
-  return [
-    `M ${left + corner} ${top} H ${right - corner} ${arc} ${right} ${top + corner}`,
-    `V ${bottom - corner} ${arc} ${right - corner} ${bottom} H ${left + corner}`,
-    `${arc} ${left} ${bottom - corner} V ${top + corner} ${arc} ${left + corner} ${top} Z`,
-  ].join(' ');
-}
-
 /** A scroll mirrored across the middle of a card `width` wide, for the frame's other side. */
 export function mirrored(point: Point, width: number = PORTRAIT_SCAN.width): Point {
   return { x: width - point.x, y: point.y };

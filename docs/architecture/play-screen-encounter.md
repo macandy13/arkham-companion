@@ -4,9 +4,9 @@ The [game screen](../../apps/web/src/screens/GameScreen.tsx) has a header with t
 Tokens show:
 
 - the agenda's doom and the act's clues (the ones the investigators hold against its cost, or for an act that advances itself the ones on it, `ActAdvance`), each as a small count on the card's threshold disc,
-- and the cards left in the encounter deck, a big round token on the medallion of its card back.
+- and the cards left in the encounter deck, a big round token at the foot of its card back.
 
-The deck is drawn as the printed encounter card back ([`EncounterBack`](../../apps/web/src/encounter/EncounterBack.tsx), in portrait scan units, `ENCOUNTER_BACK`): the dark field lighter towards the middle, an inner rule, a whiplash scroll in each corner and the medallion, a ticked ring round an eight-pointed star, with a seat in its middle for the token.
+The deck is drawn after the printed encounter card back ([`EncounterBack`](../../apps/web/src/encounter/EncounterBack.tsx), in portrait scan units, `ENCOUNTER_BACK`, our own drawing): the night sky hanging from the top edge with its stars, the eye in a triangle with pale rays writhing round it, beams falling from it onto a dark body with tapered tentacles curling up on both sides, and the rust-brown ground at the foot, where the count token sits.
 Each face names itself for its stylesheet (`data-face="book"`, `"scenario"`, `"encounter-back"`), so one face's paper colours never reach another.
 
 ## Agenda and act

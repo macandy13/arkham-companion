@@ -1,7 +1,8 @@
 /*
- * The encounter card back (EncounterBack) in the card theme's colours, in scan units: the dark
- * field lighter towards the middle, the corner scrolls as ornament lines (card_face.css), the inner
- * rule, and the medallion's star and ticked ring round the seat the deck's count sits on.
+ * The encounter card back (EncounterBack) in the card theme's colours, in scan units: the aged
+ * paper darker towards its edges, the pale light and the fine beams falling from the eye, the
+ * rust-brown ground, the dark body and tentacles, and the night sky with its pale stars, rays,
+ * triangle and the eye's dark pupil.
  */
 #board [data-card='encounter'] > svg[data-face] {
   position: absolute;
@@ -11,33 +12,48 @@
 }
 
 #board svg[data-face='encounter-back'] radialGradient stop:first-child {
-  stop-color: var(--color-face-back-glow);
+  stop-color: var(--color-face-back-paper);
 }
 
 #board svg[data-face='encounter-back'] radialGradient stop:last-child {
-  stop-color: var(--color-face-back);
+  stop-color: var(--color-face-back-paper-edge);
 }
 
-#board svg[data-face='encounter-back'] [data-part='rule'] {
+#board svg[data-face='encounter-back'] [data-part='light'] {
+  fill: var(--color-face-back-light);
+  fill-opacity: var(--face-back-light-opacity);
+}
+
+#board svg[data-face='encounter-back'] :is([data-part='beams'], [data-part='ground-line']) {
   fill: none;
-  stroke: var(--color-face-ornament);
-  stroke-width: var(--card-gilt-line-width);
+  stroke: var(--color-face-back-ink);
+  stroke-width: var(--face-back-beam-width);
 }
 
-#board svg[data-face='encounter-back'] [data-part='star'] {
-  fill: var(--color-face-back-star);
-  stroke: var(--color-face-ornament);
-  stroke-width: var(--face-wheel-line-width);
+#board svg[data-face='encounter-back'] [data-part='ground'] {
+  fill: var(--color-face-back-ground);
 }
 
-#board svg[data-face='encounter-back'] [data-part='ring'] {
+#board
+  svg[data-face='encounter-back']
+  :is([data-part='body'], [data-part='tentacle'], [data-part='sky'], [data-part='pupil']) {
+  fill: var(--color-face-back-ink);
+}
+
+#board
+  svg[data-face='encounter-back']
+  :is([data-part='star'], [data-part='glow'], [data-part='triangle']) {
+  fill: var(--color-face-back-light);
+}
+
+#board svg[data-face='encounter-back'] [data-part='triangle'] {
+  stroke: var(--color-face-back-ink);
+  stroke-width: var(--face-back-beam-width);
+}
+
+#board svg[data-face='encounter-back'] [data-part='ray'] {
   fill: none;
-  stroke: var(--color-face-ornament);
-  stroke-width: var(--face-wheel-line-width);
-}
-
-#board svg[data-face='encounter-back'] [data-part='seat'] {
-  fill: var(--color-face-back);
-  stroke: var(--color-face-ornament);
-  stroke-width: var(--card-gilt-line-width);
+  stroke: var(--color-face-back-light);
+  stroke-width: var(--face-back-ray-width);
+  stroke-linecap: round;
 }
