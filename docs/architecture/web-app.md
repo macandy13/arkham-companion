@@ -50,9 +50,14 @@ The open game (`OpenGame`) is the play screen's single source of truth:
 
 The play screen is described in [Play screen](play-screen.md) and its pages.
 
+## Strings
+
+UI strings live in [`i18n/`](../../apps/web/src/i18n/), one folder per language: `app.ts` holds the app's own strings, and each campaign has a file of its own (`night_of_the_zealot.ts`) with its name, scenario names, scenario choices and story records. [`index.ts`](../../apps/web/src/i18n/index.ts) joins them by section (`CAMPAIGN_SECTIONS`: `campaigns`, `scenarios`, `scenario`, `story`), so the app's file doesn't grow with every campaign. The tests check that German has every English key and that no two campaigns write the same key.
+
 ## Extension points
 
 - **A new game action:** add it to `GameActions` as one `PlayTable` verb (add the verb to `PlayTable` first). Only actions outside the open game get their own `AppState` method.
 - **A new screen:** a route in `App.tsx`, a component in `screens/`, an E2E flow tagged `@flow` or a screenshot tagged `@shot`, strings in English and German.
 - **A new refusal or skippable effect:** its `rejections.<code>` or `skipped.effects.<type>` string in English and German.
 - **A new decision prompt or option label:** its string under the engine's key (`decision.<key>`, or the scenario's `scenario.<scenario>.<card>.<key>`) in English and German.
+- **A new campaign's strings:** a `<campaign>.ts` file in both `i18n/en/` and `i18n/de/`, holding only the `CAMPAIGN_SECTIONS`, and listed in `campaignTexts`.
