@@ -20,11 +20,11 @@ body::before {
   background: var(--playmat) center / cover no-repeat;
 }
 
-/* Headings and names in the playmat's display type, like the printed cards. */
+/* Headings in the campaign guide's display type. */
 h1,
 h2 {
   margin: 0;
-  font-family: var(--font-family-display);
+  font-family: var(--font-family-print);
   font-weight: normal;
 }
 
@@ -113,23 +113,66 @@ button:not(:disabled):hover {
 }
 
 /*
- * Every screen outside play and every dialog is a panel framed like the playmat (M3.12f): brass
- * rules with a quarter of its zodiac ring in each corner, over the see-through night (or, in the
- * light theme, the playmat by day).
+ * Every screen outside play and every dialog is printed on campaign-guide paper (MD.1), the same in
+ * both themes. The table's colour tokens are redefined on the paper, so what lies on it (text,
+ * buttons, fields, lines, the game's clue and doom colours) turns to ink without rules of its own.
+ * The campaign log brings its own papers on a starfield, so it keeps the table's tokens.
  */
-#app > main:not(:has(#board)),
+#app > main:not(:has(#board, #campaign-log)),
 dialog {
-  border: var(--panel-frame-width) solid;
-  border-image: var(--panel-frame) var(--panel-frame-slice) / var(--panel-frame-width) stretch;
+  --color-background: var(--color-paper);
+  --color-text: var(--color-ink);
+  --color-text-muted: var(--color-ink-muted);
+  --color-border: var(--color-paper-rule);
+  --color-surface: var(--color-paper-surface);
+  --color-accent: var(--color-ink-accent);
+  --color-accent-text: var(--color-paper);
+  --color-clue: var(--color-ink-clue);
+  --color-doom: var(--color-ink-doom);
+  --color-health: var(--color-ink-health);
+  --color-sanity: var(--color-ink-sanity);
+
+  border: var(--border-width) solid var(--color-paper-rim);
+  border-radius: var(--radius);
+  background: var(--guide-paper);
+  color: var(--color-text);
+  box-shadow: var(--guide-paper-shadow);
 }
 
-#app > main:not(:has(#board)) {
-  background: var(--color-surface);
+/*
+ * Buttons on the paper (MD.1b). A footer's buttons stand in one row at its end as outlined pills;
+ * the button that submits the form is the view's one primary, a brass pill, and in a question
+ * before something is removed (`alertdialog`) a red one.
+ */
+:where(#app > main:not(:has(#board)), dialog) footer:has(> button[type='submit']) {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
 }
 
-/* In the light theme the panels are parchment (`--panel-paper`), the playmat by day's paper. */
-:root[data-theme='light'] :is(#app > main:not(:has(#board)), dialog) {
-  background: var(--panel-paper);
+:where(#app > main:not(:has(#board)), dialog) :is(footer > button, button[type='submit']) {
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-pill);
+  background: none;
+}
+
+:where(#app > main:not(:has(#board)), dialog) button[type='submit'] {
+  border-color: var(--color-brass-deep);
+  background: var(--brass-button);
+  color: var(--color-ink);
+  font-family: var(--font-family-print);
+  box-shadow: var(--button-lift);
+}
+
+dialog[role='alertdialog'] button[type='submit'] {
+  border-color: var(--color-danger);
+  background: var(--color-danger);
+  color: var(--color-paper);
+}
+
+:where(#app > main:not(:has(#board)), dialog) button[type='submit']:disabled {
+  opacity: var(--disabled-opacity);
 }
 
 /* A screen's title stands centred over a small zodiac ring between two rules. */
@@ -147,12 +190,10 @@ dialog {
   mask: var(--title-ornament) center / contain no-repeat;
 }
 
-/* Dialogs share the panel's frame, laid over a dimmed table. */
+/* Dialogs are laid over a dimmed table. */
 dialog {
   max-width: var(--layout-sheet-width);
   padding: var(--space-3);
-  background: var(--color-background);
-  color: var(--color-text);
 }
 
 dialog::backdrop {

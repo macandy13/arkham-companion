@@ -9,7 +9,7 @@ test('the game list with one saved game', async ({ page }) => {
   await expect(page.getByRole('list', { name: 'Games' })).toContainText('The house is open');
 });
 
-test('the question before a saved game is deleted', async ({ page }) => {
+test('the question before a saved game is deleted', { tag: '@shot' }, async ({ page }) => {
   await importGame(page, houseOpenedExport('The house is open'));
 
   await page.getByRole('button', { name: 'Delete' }).click();

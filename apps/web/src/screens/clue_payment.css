@@ -60,11 +60,11 @@
   background: var(--color-clue);
 }
 
-#board dialog[data-dialog='clue-payment'] > ul {
+#board dialog[data-dialog='clue-payment'] > form > ul {
   gap: var(--space-3);
 }
 
-#board dialog[data-dialog='clue-payment'] > ul > li {
+#board dialog[data-dialog='clue-payment'] > form > ul > li {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -113,7 +113,7 @@
 }
 
 /* A clue token: a ring in the clue colour, filled with a tick while its investigator pays it. */
-#board dialog[data-dialog='clue-payment'] > ul > li > ul button {
+#board dialog[data-dialog='clue-payment'] > form > ul > li > ul button {
   width: var(--clue-token-size);
   height: var(--clue-token-size);
   min-width: 0;
@@ -125,11 +125,17 @@
   color: var(--color-token-text);
 }
 
-#board dialog[data-dialog='clue-payment'] > ul > li > ul button[aria-pressed='true'] {
+#board dialog[data-dialog='clue-payment'] > form > ul > li > ul button[aria-pressed='true'] {
   background: var(--color-clue);
 }
 
-#board dialog[data-dialog='clue-payment'] > ul > li > ul button[aria-pressed='true']::before {
+#board
+  dialog[data-dialog='clue-payment']
+  > form
+  > ul
+  > li
+  > ul
+  button[aria-pressed='true']::before {
   content: '✓';
 }
 
@@ -137,23 +143,17 @@
   margin-inline-end: auto;
 }
 
-#board dialog[data-dialog='clue-payment'] footer > :last-child:enabled {
-  border-color: var(--color-accent);
-  background: var(--color-accent);
-  color: var(--color-accent-text);
-}
-
 /*
  * An upright phone: a payer per row, a round avatar of their art beside their name with their
  * tokens under it, like the investigator avatars over the phone's panel.
  */
 @media (orientation: portrait) and (max-width: 40rem) {
-  #board dialog[data-dialog='clue-payment'] > ul {
+  #board dialog[data-dialog='clue-payment'] > form > ul {
     flex-direction: column;
     flex-wrap: nowrap;
   }
 
-  #board dialog[data-dialog='clue-payment'] > ul > li {
+  #board dialog[data-dialog='clue-payment'] > form > ul > li {
     display: grid;
     grid-template: 'art name' auto 'art tokens' auto / var(--investigator-avatar-size) 1fr;
     column-gap: var(--space-2);
@@ -189,12 +189,12 @@
     text-align: start;
   }
 
-  #board dialog[data-dialog='clue-payment'] > ul > li > ul {
+  #board dialog[data-dialog='clue-payment'] > form > ul > li > ul {
     grid-area: tokens;
     justify-content: flex-start;
   }
 
-  #board dialog[data-dialog='clue-payment'] > ul > li > ul button {
+  #board dialog[data-dialog='clue-payment'] > form > ul > li > ul button {
     width: var(--button-compact);
     height: var(--button-compact);
   }
