@@ -25,5 +25,13 @@
     "skill_intellect": 2,
     "skill_combat": 4,
     "skill_agility": 3
+  },
+  {
+    "code": "01104",
+    "name": "Fake Reference",
+    "type_code": "scenario",
+    "pack_code": "core",
+    "text": "Easy / Standard\n[skull] -X. X is how many [[Ghoul]] enemies share your location.\n[cultist] -1. On a failure, take 1 horror.\n[tablet] -2. With a [[Ghoul]] enemy at your location, take 1 damage.",
+    "back_text": "Hard / Expert\n[skull] -2. On a failure, look for a [[Ghoul]] enemy.\n[cultist] -3. On a failure, take 2 horror.\n[tablet] -4. With a [[Ghoul]] enemy at your location, take 1 damage and 1 horror."
   }
 ]

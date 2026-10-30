@@ -14,7 +14,6 @@ import type { AppState } from '../state/appStore';
 import { findCampaign, findScenario, scenarioCardName } from '../scenarios/scenarioCatalog';
 import { CampaignSheets } from './CampaignSheets';
 import { Tally } from './Tally';
-import '@fontsource/federant/latin-400.css';
 import '@fontsource/felipa/latin-400.css';
 import '@fontsource/caveat/latin-500.css';
 import '@fontsource/caveat/latin-700.css';

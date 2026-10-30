@@ -13,6 +13,7 @@ import type { AppState } from './state/appStore';
 import '@fontsource/im-fell-english-sc/latin-400.css';
 import '@fontsource/alegreya-sans/latin-400.css';
 import '@fontsource/alegreya-sans/latin-700.css';
+import '@fontsource/federant/latin-400.css';
 import './styles/tokens.css';
 import './styles/base.css';
 import './screens/layout.css';
@@ -20,7 +21,7 @@ import './screens/layout.css';
 /** Props shared by `App` and `AppRoutes`. */
 interface AppProps {
   store: StoreApi<AppState>;
-  /** Loads the investigator catalog for the wizard and the settings pack list. */
+  /** Loads the card catalog: investigators for the wizard, packs for settings, scenario card texts for the game. */
   catalog: CatalogSource;
 }
 
@@ -34,7 +35,7 @@ export function AppRoutes({ store, catalog }: AppProps) {
       <Route element={<Layout />}>
         <Route index element={<HomeScreen store={store} />} />
         <Route path="new" element={<NewGameScreen store={store} catalog={catalog} />} />
-        <Route path="game/:id" element={<GameScreen store={store} />} />
+        <Route path="game/:id" element={<GameScreen store={store} catalog={catalog} />} />
         <Route path="campaign/:id" element={<CampaignScreen store={store} />} />
         <Route path="settings" element={<SettingsRoute catalog={catalog} />} />
       </Route>

@@ -19,6 +19,13 @@ The act's Advance button takes its spend-clues action for the investigator whose
 When the players have a split to choose, it first asks who pays how many in the [clue payment dialog](../../apps/web/src/screens/CluePaymentDialog.tsx) (`useCluePayment` over `BoardView.cluePayers`: each payer's art with their clues as tokens to tap, starting at the engine's split, and a Split evenly shortcut, `evenClueSplit`); card actions with a group clue cost (`CardActionView.groupClues`) ask the same.
 The clue steppers, a correction while adjusting, show only for an act that counts the clues on it.
 
+## Scenario card
+
+The scenario card is drawn as the printed reference card ([`ScenarioFace`](../../apps/web/src/screens/ScenarioFace.tsx), in portrait scan units, `SCENARIO_FACE`): the dark frame, the band across the top with its half wheel and a serpent coiling in from each corner, and the set medallion.
+Over it lies its HTML, placed in the face's scan units (`--scenario-*` tokens, `cqw` of the card, so every size prints the same layout): the scenario's name (the screen's heading), the side the difficulty plays with, and one row per symbol token from `BoardView.reference`, the token's game symbol on a disc in its colour beside its printed text.
+The texts come from the card catalog ([Card data](card-data.md), `CardCatalog.references` by `BoardView.reference.code` and side), rendered by [`cardText`](../../apps/web/src/catalog/cardText.tsx), which also sets the enemy cards' keyword lines: traits (`[[Ghoul]]`) in bold italics, symbols as icons. Until the catalog has loaded (a first start offline) a row shows only its token.
+The header's small card shows only the name (a container query hides the rest from sight, not from screen readers); a tap on it or its name opens it full in a dialog (`ScenarioDetails`), and the phone's detail view shows it a zoomed card wide.
+
 ## Piles
 
 The piles lie as small fans of their top three cards, slightly turned against each other, with a count on a disc ([`PileFan`](../../apps/web/src/encounter/PileFan.tsx), [`EncounterPiles`](../../apps/web/src/encounter/EncounterPiles.tsx)):

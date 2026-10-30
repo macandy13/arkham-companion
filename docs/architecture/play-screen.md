@@ -109,10 +109,12 @@ Every step but the newest has "Go back here": after a confirm that counts the st
 
 [`eventLines`](../../apps/web/src/log/gameLog.ts) is the same for one step's events, for notices of what a step just did (M3.13).
 
-## Frames
+## Paper and frames
 
-Screens outside play, dialogs and the play screen's notices (at half the frame width) share one frame in the playmat's line style (brass rules, a quarter of its zodiac ring and a star in each corner, [`panel_frame.svg`](../../apps/web/src/styles/panel_frame.svg) as a `border-image`, with a light-theme copy) and a small ring under each title ([`ornament_rule.svg`](../../apps/web/src/styles/ornament_rule.svg)).
-Their panels are the see-through night by night and parchment by day (`--panel-paper`).
+Screens outside play and every dialog are printed on campaign-guide paper ([`base.css`](../../apps/web/src/styles/base.css), MD.1 of the [design language](../product.md#design-language-md)): `--paper` with a darker edge and a shadow, the same in both themes, titles in Federant (`--font-family-print`) with a small ring under a screen's title ([`ornament_rule.svg`](../../apps/web/src/styles/ornament_rule.svg)).
+The paper redefines the table's colour tokens (`--color-text`, `--color-border`, `--color-surface`, `--color-accent`, `--color-background`, and the game's clue, doom, health and sanity colours as their deeper day shades) as ink and paper, so text, buttons, fields and menus on it turn to ink without rules of their own; a new dialog needs nothing to look printed.
+Buttons on the paper follow the form, not class names (MD.1b): a footer's buttons stand in one row as outlined pills, the button that submits the dialog's `<form>` is the view's one primary (a brass pill) and, in an `alertdialog` asking before something is removed, a red one. So a dialog marks its primary by making its main action the form's submit (`ConfirmDialog`, `CluePaymentDialog`).
+The play screen's notices keep the playmat's frame (brass rules, a quarter of its zodiac ring and a star in each corner, [`panel_frame.svg`](../../apps/web/src/styles/panel_frame.svg) as a `border-image`, with a light-theme copy), the see-through night by night and parchment by day (`--panel-paper`).
 The investigator cards are parchment in both themes, like printed cards and the location tiles.
 
 ## Extension points
