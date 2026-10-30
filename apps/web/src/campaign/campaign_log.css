@@ -124,8 +124,17 @@
   list-style: none;
 }
 
+/* The columns share their eight rows (four labels, four fields), so each label sits level across the card. */
 #campaign-investigators > ol > li {
+  display: grid;
+  grid-row: span 8;
+  grid-template-rows: subgrid;
   border-left: var(--sheet-frame-width) double;
+}
+
+#campaign-investigators > ol > li > dl {
+  grid-row: 1 / -1;
+  grid-template-rows: subgrid;
 }
 
 #campaign-investigators > ol > li:nth-child(4n + 1) {
@@ -190,7 +199,7 @@
 
 /* Trauma: physical and mental side by side, each a row of tally marks. */
 #campaign-investigators dd > dl {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   grid-template-rows: auto auto;
   grid-auto-flow: column;
   margin-inline: calc(-1 * var(--space-2));
@@ -294,6 +303,13 @@
 
   #campaign-investigators > ol > li:nth-child(n + 3) {
     border-top: var(--sheet-frame-width) double;
+  }
+
+  /* Half a phone column is too narrow for "Physical" in tracked capitals, so they shrink and close up. */
+  #campaign-investigators dd > dl > dt {
+    padding-inline: var(--space-1);
+    font-size: var(--font-size-caption);
+    letter-spacing: normal;
   }
 }
 
