@@ -1,21 +1,17 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router';
-import type { CampaignSummary, GameId } from '@arkham/engine';
+import type { CampaignSummary } from '@arkham/engine';
 
-interface CampaignListItemProps {
-  readonly campaign: CampaignSummary;
-  /** The campaign's most recently played game, which "Resume" opens; absent before its first game. */
-  readonly latestGameId?: GameId;
-}
-
-/** One campaign on the home screen: difficulty, team and how far it got, plus resume. */
-export function CampaignListItem({ campaign, latestGameId }: CampaignListItemProps) {
+/** One campaign on the home screen: difficulty, team and how far it got; it resumes at its log. */
+export function CampaignListItem({ campaign }: { readonly campaign: CampaignSummary }) {
   const { t, i18n } = useTranslation();
-  const resume = latestGameId && `/game/${latestGameId}`;
+  const resume = `/campaign/${campaign.campaignId}`;
 
   return (
     <li>
-      <h2>{resume ? <Link to={resume}>{campaign.title}</Link> : campaign.title}</h2>
+      <h2>
+        <Link to={resume}>{campaign.title}</Link>
+      </h2>
       <dl>
         <dt>{t('wizard.difficulty')}</dt>
         <dd>{t(`wizard.difficulties.${campaign.difficulty}`)}</dd>
@@ -38,11 +34,9 @@ export function CampaignListItem({ campaign, latestGameId }: CampaignListItemPro
           </time>
         </dd>
       </dl>
-      {resume && (
-        <nav aria-label={t('games.actions', { title: campaign.title })}>
-          <Link to={resume}>{t('games.resume')}</Link>
-        </nav>
-      )}
+      <nav aria-label={t('games.actions', { title: campaign.title })}>
+        <Link to={resume}>{t('games.resume')}</Link>
+      </nav>
     </li>
   );
 }

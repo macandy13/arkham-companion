@@ -60,12 +60,7 @@ export function HomeScreen({ store }: { store: StoreApi<AppState> }) {
       {campaigns.length > 0 && (
         <ul aria-label={t('campaignList.title')}>
           {campaigns.map((campaign) => (
-            <CampaignListItem
-              key={campaign.campaignId}
-              campaign={campaign}
-              // The game list is newest first, so the first match was played last.
-              latestGameId={games.find((game) => game.campaignId === campaign.campaignId)?.gameId}
-            />
+            <CampaignListItem key={campaign.campaignId} campaign={campaign} />
           ))}
         </ul>
       )}

@@ -68,8 +68,9 @@ test('start a new game', async ({ page }) => {
   });
 });
 
-// Journey: a campaign from the wizard to its first game, then back to it from the home screen.
-test('start a campaign and resume it from the home screen', { tag: '@flow' }, async ({ page }) => {
+// Journey: a campaign from the wizard to its first game, then back to it from the home screen
+// through its campaign log.
+test('start a campaign and resume it from its log', { tag: '@flow' }, async ({ page }) => {
   await test.step('Choose a new campaign', async () => {
     await page.goto('/#/new');
     await page.getByRole('link', { name: 'New campaign' }).click();
@@ -92,13 +93,21 @@ test('start a campaign and resume it from the home screen', { tag: '@flow' }, as
     await expect(page).toHaveURL(/#\/game\/.+/);
   });
 
+  let gameUrl = '';
   await test.step('The home screen lists the campaign', async () => {
-    const gameUrl = page.url();
+    gameUrl = page.url();
     await page.goto('/#/');
     const campaigns = page.getByRole('list', { name: 'Campaigns' });
     await expect(campaigns).toContainText('Night of the Zealot – Fake Seeker');
     await expect(campaigns).toContainText('Scenario 1 of 3');
     await campaigns.getByRole('link', { name: 'Resume' }).click();
+    await expect(page).toHaveURL(/#\/campaign\/.+/);
+  });
+
+  await test.step('The log shows the team and continues the first scenario', async () => {
+    await expect(page.getByRole('heading', { name: 'Night of the Zealot' })).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Investigators' })).toContainText('Fake Seeker');
+    await page.getByRole('link', { name: 'Continue The Gathering' }).click();
     await expect(page).toHaveURL(gameUrl);
   });
 });
