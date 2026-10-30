@@ -1583,7 +1583,7 @@
       const root = document.getElementById('root');
       if (phone) root.classList.add('phone');
       if (q.get('t') === 'day') root.classList.add('day');
-      const SKIN = q.get('skin');
+      const SKIN = ['stars', 'rlyeh'].find((k) => k === q.get('skin'));
       if (SKIN) root.dataset.skin = SKIN;
 
       const MARK = `<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" aria-hidden="true">
@@ -1911,7 +1911,7 @@
   </div>
   <div class="toast" style="left:50%;transform:translateX(-50%);bottom:${phone ? 150 : 40}px"><span>Clue discovered at the Hallway</span><button class="link">Undo</button></div>`;
 
-      root.innerHTML = S[screen]();
+      root.innerHTML = (Object.hasOwn(S, screen) ? S[screen] : S.welcome)();
     </script>
   </body>
 </html>
