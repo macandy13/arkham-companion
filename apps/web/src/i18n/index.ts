@@ -575,19 +575,6 @@ export const resources = {
       },
       scenario: {
         theGathering: {
-          reference: {
-            easyStandard: {
-              skull: '−X. X is the number of Ghoul enemies at your location.',
-              cultist: '−1. If you fail, take 1 horror.',
-              tablet: '−2. If there is a Ghoul enemy at your location, take 1 damage.',
-            },
-            hardExpert: {
-              skull:
-                '−2. If you fail, after this skill test, search the encounter deck and discard pile for a Ghoul enemy, and draw it. Shuffle the encounter deck.',
-              cultist: 'Reveal another token. If you fail, take 2 horror.',
-              tablet: '−4. If there is a Ghoul enemy at your location, take 1 damage and 1 horror.',
-            },
-          },
           whatsGoingOn: {
             prompt: 'The lead investigator must decide',
             discard: 'Each investigator discards 1 random card from their hand',
@@ -1305,21 +1292,6 @@ export const resources = {
       },
       scenario: {
         theGathering: {
-          reference: {
-            easyStandard: {
-              skull: '−X. X ist die Anzahl der Ghul-Gegner an deinem Ort.',
-              cultist: '−1. Falls die Probe misslingt, erleidest du 1 Horror.',
-              tablet: '−2. Falls an deinem Ort ein Ghul-Gegner ist, erleidest du 1 Schaden.',
-            },
-            hardExpert: {
-              skull:
-                '−2. Falls die Probe misslingt, durchsuche nach dieser Probe das Begegnungsdeck und den Begegnungsablagestapel nach einem Ghul-Gegner und ziehe ihn. Mische das Begegnungsdeck.',
-              cultist:
-                'Enthülle einen weiteren Marker. Falls die Probe misslingt, erleidest du 2 Horror.',
-              tablet:
-                '−4. Falls an deinem Ort ein Ghul-Gegner ist, erleidest du 1 Schaden und 1 Horror.',
-            },
-          },
           whatsGoingOn: {
             prompt: 'Der Ermittlungsleiter muss entscheiden',
             discard: 'Jeder Ermittler wirft 1 zufällige Karte aus seiner Hand ab',

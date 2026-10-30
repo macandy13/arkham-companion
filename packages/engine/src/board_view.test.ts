@@ -341,11 +341,12 @@ describe('the scenario reference card', () => {
     'shows the $side side on $difficulty, its rows in printed order',
     ({ difficulty, side, rows }) => {
       const { context: referenceContext, state: referenceState } = newGame()
-        .withReferenceCard(reference)
+        .withReferenceCard(reference, cardCode('test_reference'))
         .withDifficulty(difficulty)
         .start();
 
       expect(boardView(referenceContext, referenceState).reference).toEqual({
+        code: cardCode('test_reference'),
         difficulty,
         side,
         rows,

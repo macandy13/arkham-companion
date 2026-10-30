@@ -17,6 +17,11 @@ export interface ScenarioDefinition {
   chaosBag: Record<Difficulty, readonly ChaosToken[]>;
   /** What the symbol chaos tokens do, as printed on the scenario reference card. */
   reference: ScenarioReference;
+  /**
+   * The code of the scenario reference card, by which the screen finds its printed texts in the
+   * card data (`CardCatalog.references`); the definition holds only numbers and keys.
+   */
+  referenceCode: CardCode;
   /** Agenda codes, first agenda first. */
   agendaDeck: readonly CardCode[];
   /** Act codes, first act first. */

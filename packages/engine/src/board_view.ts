@@ -434,11 +434,14 @@ export interface EncounterPilesView {
 }
 
 /**
- * The side of the scenario reference card a game plays with (`BoardView.reference`): the side its
- * `difficulty` picks (`pickReferenceSide`) and one row per symbol token that side defines, in the
- * order the card prints them (`SYMBOL_TOKENS`). The screen draws it as the scenario card.
+ * The side of the scenario reference card a game plays with (`BoardView.reference`): the card's
+ * `code` (`ScenarioDefinition.referenceCode`, by which the screen finds its printed texts), the
+ * side its `difficulty` picks (`pickReferenceSide`) and one row per symbol token that side
+ * defines, in the order the card prints them (`SYMBOL_TOKENS`). The screen draws it as the
+ * scenario card.
  */
 export interface ReferenceView {
+  code: CardCode;
   difficulty: Difficulty;
   side: ReferenceSide;
   rows: readonly ReferenceRowView[];
@@ -736,6 +739,7 @@ export class BoardView {
     const side = pickReferenceSide(difficulty);
     const effects = scenario.reference[side];
     return {
+      code: scenario.referenceCode,
       difficulty,
       side,
       rows: SYMBOL_TOKENS.flatMap((token) => {
