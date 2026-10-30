@@ -205,11 +205,47 @@ function round(value: number): string {
   return value.toFixed(2);
 }
 
+/** The points of a path drawn of straight segments, as `scrollPath` returns it. */
+function pathPoints(d: string): Point[] {
+  const numbers = d.replace(/[ML]/g, ' ').trim().split(/\s+/).map(Number);
+  return Array.from({ length: numbers.length / 2 }, (_, index) => ({
+    x: numbers[2 * index] ?? 0,
+    y: numbers[2 * index + 1] ?? 0,
+  }));
+}
+
+/**
+ * A tentacle as a filled outline round its centre line `d` (a path of straight segments, as
+ * `scrollPath` draws it), `width` wide at its root and tapering to a point at its tip: the
+ * encounter back's tentacles and the Eldritch card theme's ornament. A stroke keeps one width.
+ */
+export function tapered(d: string, width: number): string {
+  const points = pathPoints(d);
+  const last = points.length - 1;
+  const edge = (side: 1 | -1) =>
+    points.map((point, index) => {
+      const before = points[Math.max(index - 1, 0)] ?? point;
+      const after = points[Math.min(index + 1, last)] ?? point;
+      const length = Math.hypot(after.x - before.x, after.y - before.y) || 1;
+      const half = ((width / 2) * (last - index)) / last;
+      return {
+        x: point.x - ((after.y - before.y) / length) * half * side,
+        y: point.y + ((after.x - before.x) / length) * half * side,
+      };
+    });
+  const outline = [...edge(1), ...edge(-1).reverse()];
+  return `M ${outline.map(({ x, y }) => `${x.toFixed(2)} ${y.toFixed(2)}`).join(' L ')} Z`;
+}
+
+/** How wide an ornament line's tentacle is at its root, in scan units (the Eldritch card theme). */
+const TENTACLE_WIDTH = 9;
+
 /**
  * An ornament line of a printed frame, its path `d` in scan units: in the Exact card theme a pale
  * body with a dark outline and a fine highlight, like the printed scrollwork. Three strokes of the
  * same path (`data-part` outline, body, highlight) that the stylesheet widens and colours, so a
- * card theme can restyle every scroll at once. Decoration only.
+ * card theme can restyle every scroll at once; the Eldritch theme shows the tapered tentacle
+ * along the same line instead (`data-part` tentacle). Decoration only.
  */
 export function OrnamentLine({ d }: { d: string }) {
   return (
@@ -217,6 +253,7 @@ export function OrnamentLine({ d }: { d: string }) {
       <path data-part="outline" d={d} />
       <path data-part="body" d={d} />
       <path data-part="highlight" d={d} />
+      <path data-part="tentacle" d={tapered(d, TENTACLE_WIDTH)} />
     </g>
   );
 }

@@ -92,6 +92,22 @@
   stroke-width: var(--face-scroll-width);
 }
 
+/* The tentacle along the line shows in the Eldritch card theme alone, in place of the strokes. */
+#board svg [data-ornament-line] [data-part='tentacle'] {
+  display: none;
+}
+
+:root[data-card-theme='eldritch'] #board svg [data-ornament-line] path {
+  display: none;
+}
+
+:root[data-card-theme='eldritch'] #board svg [data-ornament-line] [data-part='tentacle'] {
+  display: inline;
+  fill: var(--color-face-ornament);
+  stroke: var(--color-face-ornament-line);
+  stroke-width: var(--face-tentacle-glow-width);
+}
+
 #board svg [data-ornament-line] [data-part='highlight'] {
   stroke: var(--color-face-ornament-highlight);
   stroke-width: calc(var(--face-scroll-width) / 4);

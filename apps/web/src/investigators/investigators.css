@@ -258,7 +258,7 @@
 }
 
 #investigators [data-card='investigator'] > ul > li > button:first-child::after {
-  background: var(--color-parchment);
+  background: var(--color-skill-symbol);
   mask: var(--skill-icon) center / var(--skill-icon-size) no-repeat;
 }
 
