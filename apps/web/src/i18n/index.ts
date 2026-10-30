@@ -716,6 +716,15 @@ export const resources = {
         deleteWarning:
           'The game and its history are removed from this device. This cannot be undone.',
       },
+      campaignList: {
+        title: 'Campaigns',
+        scenarioOf: 'Scenario {{n}} of {{total}}',
+        result: {
+          won: 'The investigators won',
+          lost: 'The investigators lost',
+          survived: 'The investigators survived',
+        },
+      },
     },
   },
   de: {
@@ -1433,6 +1442,15 @@ export const resources = {
         deleteTitle: '„{{title}}“ löschen?',
         deleteWarning:
           'Das Spiel und sein Verlauf werden von diesem Gerät entfernt. Das kann nicht rückgängig gemacht werden.',
+      },
+      campaignList: {
+        title: 'Kampagnen',
+        scenarioOf: 'Szenario {{n}} von {{total}}',
+        result: {
+          won: 'Die Ermittler haben gewonnen',
+          lost: 'Die Ermittler haben verloren',
+          survived: 'Die Ermittler haben überlebt',
+        },
       },
     },
   },

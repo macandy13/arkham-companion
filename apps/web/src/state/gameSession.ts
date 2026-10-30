@@ -1,6 +1,7 @@
 import {
   CommandRejected,
   type AbilityEffectSkipped,
+  type CampaignId,
   type CardCode,
   type BoardView,
   type PlayerCardCommand,
@@ -20,16 +21,18 @@ import { drawnCards, type DrawnCard } from '../encounter/drawnCards';
 
 /**
  * Sets `ctx.scenario` up as a new saved game called `title` (`PlayTable.setUp`) and stores the
- * setup as its first step, which undo never takes back. A refused setup stores nothing.
+ * setup as its first step, which undo never takes back. A refused setup stores nothing. A game
+ * of a campaign passes the log in `options` and links to it by `campaignId`.
  */
 export async function startGame(
   store: GameStore,
   title: string,
   ctx: ScenarioContext,
   options: SetupOptions,
+  campaignId?: CampaignId,
 ): Promise<GameId> {
   const { entries } = PlayTable.setUp(ctx, options);
-  const gameId = await store.createGame({ title });
+  const gameId = await store.createGame({ title, campaignId });
   const events = entries.map((entry) => entry.event);
   await store.appendEvents(gameId, events, undefined, entries[0]?.commandId);
   return gameId;

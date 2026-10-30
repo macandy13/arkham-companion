@@ -16,7 +16,12 @@ import {
   type Event,
   type InvestigatorCard,
 } from '@arkham/engine';
-import { GATHERING_CODES, theGathering, theGatheringCards } from '@arkham/scenarios';
+import {
+  GATHERING_CODES,
+  nightOfTheZealot,
+  theGathering,
+  theGatheringCards,
+} from '@arkham/scenarios';
 import { GameImportError } from '../storage/gameExport';
 import { IndexedDbStore } from '../storage/IndexedDbStore';
 import { createAppStore } from './appStore';
@@ -158,6 +163,49 @@ describe('appStore', () => {
 
         await expect(store.getState().startScenario(broken)).rejects.toThrow();
         expect(store.getState().games).toEqual([]);
+      });
+    });
+
+    describe('startCampaign', () => {
+      const campaignStart = {
+        ...start,
+        definition: nightOfTheZealot,
+        campaignTitle: 'Night of the Zealot',
+      };
+
+      it("stores the campaign log and its first scenario as the campaign's game", async () => {
+        const db = new IndexedDbStore('appstore-campaign-test');
+        const store = createAppStore(db);
+
+        const gameId = await store.getState().startCampaign(campaignStart);
+
+        const [stored] = store.getState().campaigns;
+        expect(stored).toMatchObject({ title: 'Night of the Zealot', difficulty: 'easy' });
+        expect(store.getState().games).toMatchObject([
+          { gameId, title: 'The Gathering', campaignId: stored?.campaignId },
+        ]);
+        expect(store.getState().current?.state.campaign?.campaignId).toBe(stored?.campaignId);
+      });
+
+      it.each([
+        [
+          'a team with Alder twice',
+          { ...campaignStart, investigators: [...start.investigators, ...start.investigators] },
+        ],
+        [
+          'a scenario with a missing act card',
+          {
+            ...campaignStart,
+            ctx: { ...start.ctx, scenario: { ...theGathering, actDeck: [cardCode('missing')] } },
+          },
+        ],
+      ])('stores no campaign and no game for %s', async (_, invalid) => {
+        const db = new IndexedDbStore(`appstore-campaign-invalid-${invalid.investigators.length}`);
+        const store = createAppStore(db);
+
+        await expect(store.getState().startCampaign(invalid)).rejects.toThrow();
+        expect(await db.listCampaigns()).toEqual([]);
+        expect(await db.listGames()).toEqual([]);
       });
     });
 

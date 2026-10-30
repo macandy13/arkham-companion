@@ -110,10 +110,11 @@ describe('NewGameScreen', () => {
     expect((await gameStore.loadGame(game!.gameId))?.state.meta.difficulty).toBe('hard');
   });
 
-  it("starts a campaign's first scenario", async () => {
+  it("starts a campaign with its team and difficulty, and its first scenario as the campaign's game", async () => {
     const { gameStore } = renderWizard('/new?mode=campaign');
 
     expect(screen.getByRole('radio', { name: 'Night of the Zealot' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('radio', { name: 'Hard' }));
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
     await screen.findByRole('list', { name: 'Investigators' });
     selectInvestigator('Alder');
@@ -121,7 +122,24 @@ describe('NewGameScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start game' }));
 
     await screen.findByText('Game page');
-    expect((await gameStore.listGames())[0]?.scenarioId).toBe('the-gathering');
+    const [campaign] = await gameStore.listCampaigns();
+    expect(campaign).toMatchObject({
+      title: 'Night of the Zealot – Alder',
+      definitionId: 'night-of-the-zealot',
+      difficulty: 'hard',
+      position: 0,
+      scenarioCount: 3,
+      investigators: [{ code: 'a1', name: 'Alder' }],
+    });
+    const [game] = await gameStore.listGames();
+    expect(game).toMatchObject({
+      title: 'The Gathering – Alder',
+      scenarioId: 'the-gathering',
+      campaignId: campaign?.campaignId,
+    });
+    const state = (await gameStore.loadGame(game!.gameId))?.state;
+    expect(state?.meta.difficulty).toBe('hard');
+    expect(state?.campaign?.campaignId).toBe(campaign?.campaignId);
   });
 
   it('needs at least one investigator to continue', async () => {

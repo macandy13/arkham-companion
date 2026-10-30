@@ -27,7 +27,12 @@ import {
   whenAdvanced,
   type AbilityEffect,
 } from './index';
-import { makeDefinition, standardInvestigatorCards } from '../test/utils';
+import {
+  campaignMember,
+  makeCampaignLog,
+  makeDefinition,
+  standardInvestigatorCards,
+} from '../test/utils';
 
 const alice = investigatorId('alice');
 const bob = investigatorId('bob');
@@ -72,6 +77,24 @@ describe('setting up a scenario', () => {
     expect(table.board.lead).toBe('alice');
     expect([...table.state.chaosBag].sort()).toEqual([...bag].sort());
     expect(replay(table.events)).toEqual(table.state);
+  });
+
+  it("takes a campaign scenario's difficulty and bag from the log", () => {
+    const log = makeCampaignLog({
+      difficulty: 'hard',
+      investigators: [
+        campaignMember('tank', 'Tank', 9, 5),
+        campaignMember('seeker', 'Seeker', 5, 9),
+      ],
+      chaosBag: ['-1', 'skull'],
+      scenarioIds: [ctx.scenario.id],
+    });
+
+    const table = PlayTable.setUp(ctx, { investigators: seats, seed: 7, campaign: log });
+
+    expect(table.state.meta.difficulty).toBe('hard');
+    expect([...table.state.chaosBag].sort()).toEqual(['-1', 'skull']);
+    expect(table.state.campaign).toEqual(log);
   });
 });
 

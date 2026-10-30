@@ -1,6 +1,10 @@
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import type {
   BoardView,
+  CampaignDefinition,
+  CampaignExecuteResult,
+  CampaignId,
+  CampaignSummary,
   Difficulty,
   EncounterCardView,
   EngineContext,
@@ -14,7 +18,7 @@ import type {
   ScenarioContext,
   ScenarioId,
 } from '@arkham/engine';
-import { emptyState } from '@arkham/engine';
+import { PlayTable, campaign, campaignId as toCampaignId, emptyState } from '@arkham/engine';
 import { gameActions, type GameActions } from './gameActions';
 import { GameSession, startGame, type PlayStep, type SkippedEffect } from './gameSession';
 import type { DrawnCard } from '../encounter/drawnCards';
@@ -36,6 +40,18 @@ export interface ScenarioStart {
   seed: number;
   /** In seat order; the first one is the lead investigator. */
   investigators: readonly InvestigatorSeat[];
+}
+
+/**
+ * Everything the wizard's campaign path has decided; input to `AppState.startCampaign`. The
+ * `ScenarioStart` part is the first game: `ctx` is the first scenario's, and its `CardDb` also
+ * gives `StartCampaign` the team's printed stats.
+ */
+export interface CampaignStart extends ScenarioStart {
+  /** The campaign to start; its first scenario must be `ctx.scenario`. */
+  definition: CampaignDefinition;
+  /** Name shown in the campaign list. */
+  campaignTitle: string;
 }
 
 /** The game on the play screen, as `AppState.openGame` loaded it and `AppState.actions` keep it. */
@@ -111,12 +127,13 @@ function logSourceOf(played: GameSession): GameLogSource {
 /** Looks a scenario up by id; `findScenario` in the app, a stub in tests. */
 export type ScenarioLookup = (id: ScenarioId) => ScenarioEntry | undefined;
 
-/** UI-facing state: the persisted game list plus the currently open game. */
+/** UI-facing state: the persisted game and campaign lists plus the currently open game. */
 export interface AppState {
   games: GameSummary[];
+  campaigns: CampaignSummary[];
   /** Open game, if any. */
   current?: OpenGame;
-  /** Reloads the game list from the `GameStore`. */
+  /** Reloads the game and campaign lists from the `GameStore`. */
   refresh(): Promise<void>;
   /** Creates an empty game, reloads the list and opens it. */
   newGame(): Promise<GameId>;
@@ -125,6 +142,13 @@ export interface AppState {
    * `CommandRejected` for invalid scenario data before anything is stored.
    */
   startScenario(start: ScenarioStart): Promise<GameId>;
+  /**
+   * Starts a campaign (`StartCampaign` on a new campaign log) and sets its first scenario up from
+   * that log as a new saved game of the campaign, then opens the game. Rejects with
+   * `CampaignCommandRejected` for an invalid team or `CommandRejected` for invalid scenario data
+   * before anything is stored.
+   */
+  startCampaign(start: CampaignStart): Promise<GameId>;
   openGame(gameId: GameId): Promise<void>;
   /**
    * What the play screen can do to the open game (`GameActions`). Each action is stored before
@@ -162,6 +186,23 @@ export interface AppState {
 function contextFor(entry: ScenarioEntry): ScenarioContext {
   // Investigator cards are not needed: after setup the engine reads investigators from the state.
   return { cards: entry.cards, scenario: entry.definition };
+}
+
+/**
+ * The new campaign log of `start` under `campaignId` (`StartCampaign`), with the first game's setup
+ * checked against it. Pure, so it can run before anything is stored; throws
+ * `CampaignCommandRejected` for an invalid team and `CommandRejected` for invalid scenario data.
+ */
+function startCampaignLog(start: CampaignStart, campaignId: CampaignId): CampaignExecuteResult {
+  const { definition, ctx, difficulty, seed, investigators } = start;
+  const command = campaign.compileStart(definition, {
+    campaignId,
+    difficulty,
+    investigators: investigators.map((seat) => seat.code),
+  });
+  const result = campaign.executeCommand({ cards: ctx.cards }, campaign.createEmptyLog(), command);
+  PlayTable.setUp(ctx, { campaign: result.log, seed, investigators });
+  return result;
 }
 
 /**
@@ -288,8 +329,13 @@ export function createAppStore(
 
     return {
       games: [],
+      campaigns: [],
       async refresh() {
-        set({ games: await gameStore.listGames() });
+        const [games, campaigns] = await Promise.all([
+          gameStore.listGames(),
+          gameStore.listCampaigns(),
+        ]);
+        set({ games, campaigns });
       },
       async newGame() {
         const gameId = await gameStore.createGame({});
@@ -299,6 +345,20 @@ export function createAppStore(
       },
       async startScenario({ title, ctx, difficulty, seed, investigators }) {
         const gameId = await startGame(gameStore, title, ctx, { difficulty, seed, investigators });
+        await get().refresh();
+        await get().openGame(gameId);
+        return gameId;
+      },
+      async startCampaign(start) {
+        // The store hands out the id, so a dry run under a stand-in id refuses a bad team or
+        // scenario before an empty campaign is stored.
+        startCampaignLog(start, toCampaignId('pending'));
+        const campaignId = await gameStore.createCampaign({ title: start.campaignTitle });
+        const { log, events } = startCampaignLog(start, campaignId);
+        await gameStore.appendCampaignEvents(campaignId, events);
+        const { title, ctx, seed, investigators } = start;
+        const options = { campaign: log, seed, investigators };
+        const gameId = await startGame(gameStore, title, ctx, options, campaignId);
         await get().refresh();
         await get().openGame(gameId);
         return gameId;
