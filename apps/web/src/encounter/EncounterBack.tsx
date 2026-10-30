@@ -1,6 +1,6 @@
 import { useId } from 'react';
 import { PORTRAIT_SCAN } from '../catalog/cardArt';
-import { CARD_OUTLINE, mirrored, scrollPath, starPath } from '../catalog/cardFace';
+import { CARD_OUTLINE, mirrored, scrollPath, starPath, tapered } from '../catalog/cardFace';
 import type { Point } from '../map/mapLayout';
 import './encounter_back.css';
 
@@ -76,37 +76,6 @@ const TENTACLES: readonly { curve: [Point, Point, Point, Point]; curl: number; s
     side: -1,
   },
 ];
-
-/** The points of a path drawn of straight segments, as `scrollPath` returns it. */
-function pathPoints(d: string): Point[] {
-  const numbers = d.replace(/[ML]/g, ' ').trim().split(/\s+/).map(Number);
-  return Array.from({ length: numbers.length / 2 }, (_, index) => ({
-    x: numbers[2 * index] ?? 0,
-    y: numbers[2 * index + 1] ?? 0,
-  }));
-}
-
-/**
- * A tentacle as a filled outline round its centre line `d`, `width` wide at its root and tapering
- * to a point at its tip, as the printed ones do; a stroke can only keep one width.
- */
-function tapered(d: string, width: number): string {
-  const points = pathPoints(d);
-  const last = points.length - 1;
-  const edge = (side: 1 | -1) =>
-    points.map((point, index) => {
-      const before = points[Math.max(index - 1, 0)] ?? point;
-      const after = points[Math.min(index + 1, last)] ?? point;
-      const length = Math.hypot(after.x - before.x, after.y - before.y) || 1;
-      const half = ((width / 2) * (last - index)) / last;
-      return {
-        x: point.x - ((after.y - before.y) / length) * half * side,
-        y: point.y + ((after.x - before.x) / length) * half * side,
-      };
-    });
-  const outline = [...edge(1), ...edge(-1).reverse()];
-  return `M ${outline.map(({ x, y }) => `${x.toFixed(2)} ${y.toFixed(2)}`).join(' L ')} Z`;
-}
 
 /** The back's parts as SVG paths in scan units, each named for the stylesheet. */
 function backPaths() {

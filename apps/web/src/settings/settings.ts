@@ -26,9 +26,10 @@ export type Theme = (typeof THEMES)[number];
  * ourselves and cuts the card's ArkhamDB picture out into its art area (`cardArt.ts`), `pictures`
  * shows the whole scanned card. Without a picture both show our frame with a pattern for the art.
  * `nightAndBrass` draws the same frames as `exact` in other colours (`tokens.css`): sea-green card
- * stock, brass ornament, bone text. The drawn theme Eldritch joins this list once it is built.
+ * stock, brass ornament, bone text. `eldritch` draws them cut from the void, its scrolls
+ * turned into tentacles with a glowing outline (`OrnamentLine`).
  */
-export const CARD_THEMES = ['exact', 'nightAndBrass', 'pictures'] as const;
+export const CARD_THEMES = ['exact', 'nightAndBrass', 'eldritch', 'pictures'] as const;
 export type CardTheme = (typeof CARD_THEMES)[number];
 
 /** What the card theme replaced: the old "Card pictures" setting, read once into the new one. */

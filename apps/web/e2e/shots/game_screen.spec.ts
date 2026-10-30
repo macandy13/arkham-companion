@@ -90,7 +90,36 @@ test('the house map in the card pictures style, the clues left on each card', as
   await expect(page.locator('html')).toHaveAttribute('data-card-theme', 'pictures');
 });
 
-test('the house map in the Night and brass card style', { tag: '@shot' }, async ({ page }) => {
+test('the house map in the Eldritch card style', { tag: '@shot' }, async ({ page }) => {
+  await page.goto('/#/settings');
+  await page.getByLabel('Card style').selectOption('Eldritch');
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+
+  await expect(page.getByRole('region', { name: 'Roland Banks' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('data-card-theme', 'eldritch');
+});
+
+test(
+  "the Ghoul Priest's details in the Eldritch card style, its scrolls drawn as tentacles",
+  { tag: '@shot' },
+  async ({ page }) => {
+    await page.goto('/#/settings');
+    await page.getByLabel('Card style').selectOption('Eldritch');
+    await resumeImportedGame(
+      page,
+      'Roland Banks threatened',
+      rolandThreatenedExport('Roland Banks threatened'),
+    );
+    const roland = page.getByRole('region', { name: 'Roland Banks' });
+    await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
+
+    await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
+
+    await expect(page.getByRole('dialog', { name: 'Ghoul Priest' })).toBeVisible();
+  },
+);
+
+test('the house map in the Night and brass card style', async ({ page }) => {
   await page.goto('/#/settings');
   await page.getByLabel('Card style').selectOption('Night and brass');
   await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
