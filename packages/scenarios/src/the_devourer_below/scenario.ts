@@ -1,6 +1,7 @@
 import {
   cardStats,
   enemiesOnTable,
+  cardCode,
   scenarioId,
   trait,
   type AddMapStep,
@@ -125,6 +126,7 @@ const setAsideCultistsWhoGotAway: readonly SetupStep[] = [
 export const theDevourerBelow: ScenarioDefinition = {
   id: scenarioId('the-devourer-below'),
   chaosBag: theGathering.chaosBag,
+  referenceCode: cardCode('01142'),
   reference: {
     easyStandard: {
       skull: { effectKey: `${reference}.easyStandard.skull` },

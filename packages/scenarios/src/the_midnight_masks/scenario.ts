@@ -5,6 +5,7 @@ import {
   mapId,
   scenario,
   scenarioDeck,
+  cardCode,
   scenarioId,
   trait,
   type AddMapStep,
@@ -117,6 +118,7 @@ function arkham(withYourHouse: boolean): AddMapStep {
 export const theMidnightMasks: ScenarioDefinition = {
   id: scenarioId('the-midnight-masks'),
   chaosBag: theGathering.chaosBag,
+  referenceCode: cardCode('01120'),
   reference: {
     easyStandard: {
       skull: { effectKey: `${reference}.easyStandard.skull` },

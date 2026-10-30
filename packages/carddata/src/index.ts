@@ -4,4 +4,5 @@ export * from './helpers';
 export * from './packs';
 export * from './investigators';
 export * from './catalog';
+export * from './references';
 export * from './keywords';

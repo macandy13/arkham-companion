@@ -2,6 +2,7 @@ import {
   cardStats,
   enemiesAt,
   mapId,
+  cardCode,
   scenarioId,
   trait,
   type ScenarioDefinition,
@@ -68,6 +69,7 @@ export const theGathering: ScenarioDefinition = {
       'skull', 'skull', 'cultist', 'tablet', 'autoFail', 'elderSign',
     ],
   },
+  referenceCode: cardCode('01104'),
   reference: {
     easyStandard: {
       skull: { effectKey: `${reference}.easyStandard.skull` },

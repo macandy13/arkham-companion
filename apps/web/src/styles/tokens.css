@@ -117,6 +117,11 @@
   --color-face-page-edge: #d9cdb0;
   --color-face-page-edge-shade: #b9ab8e;
   --color-face-agenda-disc: #5c4630;
+  /* The chaos tokens on a scenario reference card's rows, each in its printed colour. */
+  --color-face-skull: #6b2a26;
+  --color-face-cultist: #2f5a3f;
+  --color-face-tablet: #34506e;
+  --color-face-elder-thing: #4d3b63;
   --color-face-act-disc: #4a5236;
   /*
    * The ornament lines (the scrolls on enemy and treachery frames: a dark outline, the pale body,
@@ -261,6 +266,9 @@
   --face-page-setting-width: 10px;
   --face-page-band-width: 6px;
   --face-disc-line-width: 1.6px;
+  /* A scenario reference card's dark frame (half of it shows inside the card) and its wheel's lines. */
+  --face-reference-frame-width: 16px;
+  --face-wheel-line-width: 1.2px;
   --face-name-size: 19px;
   --face-type-size: 10px;
   --face-type-spacing: 1.4px;
@@ -338,6 +346,19 @@
   --book-plate-bottom: 8%;
   --book-plate-inset: 3%;
   --book-plate-width: 40%;
+  /*
+   * Where the HTML on a scenario reference card sits, in scan units of its face (`SCENARIO_FACE`,
+   * a card 300 wide): the title's top and size, the difficulty line's size, where the rows start,
+   * how far they keep from the frame and from each other, a row's token and its text's size.
+   */
+  --scenario-title-top: 72;
+  --scenario-title-size: 22;
+  --scenario-side-size: 9;
+  --scenario-rows-top: 128;
+  --scenario-inset: 24;
+  --scenario-row-gap: 22;
+  --scenario-token-size: 34;
+  --scenario-text-size: 13;
   /* The art window on the investigator card in each panel of the investigator bar. */
   --layout-investigator-art-width: 7.5rem;
   --investigator-art-ratio: 4 / 3;

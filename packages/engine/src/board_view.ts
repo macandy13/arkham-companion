@@ -54,6 +54,13 @@ import {
 import { cardsInZone, cardsOfType, currentCard } from './lookup';
 import { mapLocations, type Edge, type GameMap, type GridCell } from './map';
 import { attacksStillDue } from './phases';
+import {
+  SYMBOL_TOKENS,
+  pickReferenceSide,
+  type ReferenceSide,
+  type SymbolToken,
+  type SymbolTokenEffect,
+} from './scenario';
 import { NAMED_AMOUNTS } from './state';
 import {
   boostedSkills,
@@ -77,6 +84,7 @@ import type {
   CardInstance,
   ChaosToken,
   Decision,
+  Difficulty,
   GameState,
   HeldAction,
   Investigator,
@@ -426,6 +434,25 @@ export interface EncounterPilesView {
 }
 
 /**
+ * The side of the scenario reference card a game plays with (`BoardView.reference`): the card's
+ * `code` (`ScenarioDefinition.referenceCode`, by which the screen finds its printed texts), the
+ * side its `difficulty` picks (`pickReferenceSide`) and one row per symbol token that side
+ * defines, in the order the card prints them (`SYMBOL_TOKENS`). The screen draws it as the
+ * scenario card.
+ */
+export interface ReferenceView {
+  code: CardCode;
+  difficulty: Difficulty;
+  side: ReferenceSide;
+  rows: readonly ReferenceRowView[];
+}
+
+/** One symbol token's row on the reference card: its printed modifier, if any, and its effect text's key. */
+export interface ReferenceRowView extends SymbolTokenEffect {
+  token: SymbolToken;
+}
+
+/**
  * The encounter card being resolved (`BoardView.resolving`): a drawn card waits in the `resolving`
  * zone while its revelation asks the players something. `drawnBy` is the investigator it was drawn
  * for (from its queued placement), and `keywords` its printed keywords plus surge when it gained
@@ -699,6 +726,27 @@ export class BoardView {
       default:
         return assertNever(zone);
     }
+  }
+
+  /**
+   * The scenario reference card side this game's difficulty plays with; absent on a board without
+   * a scenario (`EngineContext.scenario`), which has no reference card.
+   */
+  get reference(): ReferenceView | undefined {
+    const { scenario } = this.ctx;
+    if (!scenario) return undefined;
+    const { difficulty } = this.state.meta;
+    const side = pickReferenceSide(difficulty);
+    const effects = scenario.reference[side];
+    return {
+      code: scenario.referenceCode,
+      difficulty,
+      side,
+      rows: SYMBOL_TOKENS.flatMap((token) => {
+        const effect = effects[token];
+        return effect ? [{ token, ...effect }] : [];
+      }),
+    };
   }
 
   /** The chaos tokens in the bag for this scenario and difficulty, the players' to draw from. */

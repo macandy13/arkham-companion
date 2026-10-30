@@ -1,4 +1,5 @@
 import {
+  cardCode,
   scenarioId,
   CommandRejected,
   apply,
@@ -29,6 +30,7 @@ export function makeDefinition(overrides: Partial<ScenarioDefinition> = {}): Sce
     id: scenarioId('test'),
     chaosBag: { easy: [], standard: [], hard: [], expert: [] },
     reference: { easyStandard: {}, hardExpert: {} },
+    referenceCode: cardCode('reference_card'),
     agendaDeck: [],
     actDeck: [],
     setup: [],

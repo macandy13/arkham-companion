@@ -70,6 +70,8 @@ export {
   type MapEnemyView,
   type MapView,
   type ProvokingActionView,
+  type ReferenceRowView,
+  type ReferenceView,
   type ResolvingCardView,
 } from './board_view';
 export {

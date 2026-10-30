@@ -1,0 +1,195 @@
+/*
+ * A scenario reference card's face (ScenarioFace) in the card theme's colours, in scan units: the
+ * paper shaded towards its edges, the dark band with its wheel, the serpents as ornament lines
+ * (card_face.css), the dark frame with its inner rule, and the set medallion between its rules.
+ */
+#board [data-card='scenario'] > svg[data-face] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#board svg[data-face='scenario'] radialGradient stop:first-child {
+  stop-color: var(--color-face-page);
+}
+
+#board svg[data-face='scenario'] radialGradient stop:last-child {
+  stop-color: var(--color-face-page-shade);
+}
+
+#board svg[data-face='scenario'] [data-part='band'] {
+  fill: var(--color-face-cover);
+}
+
+#board svg[data-face='scenario'] [data-part='wheel'] {
+  fill: none;
+  stroke: var(--color-face-ornament);
+  stroke-width: var(--face-wheel-line-width);
+}
+
+#board svg[data-face='scenario'] [data-part='frame'] {
+  fill: none;
+  stroke: var(--color-face-frame);
+  stroke-width: var(--face-reference-frame-width);
+}
+
+#board svg[data-face='scenario'] [data-part='rule'] {
+  fill: none;
+  stroke: var(--color-face-ink);
+  stroke-width: var(--card-gilt-line-width);
+}
+
+#board svg[data-face='scenario'] [data-part='medallion'] {
+  fill: var(--color-face-medallion);
+  stroke: var(--color-face-medallion-ring);
+  stroke-width: var(--face-symbol-line-width);
+}
+
+/*
+ * The HTML over the face, placed and sized in its scan units (`--scenario-*`, one unit a 300th of
+ * the card's width), so the header's small card and the full one print the same layout: the title
+ * and the difficulty centred under the medallion, then the rows, each the token's game symbol on a
+ * disc in its colour beside its text. The title keeps the app's smallest type on the small card.
+ */
+#board > header > section [data-card='scenario'] {
+  /* The card's width is 300 scan units (`PORTRAIT_SCAN`); `cqw` measures it from inside. */
+  --scan-unit: calc(100cqw / 300);
+  container-type: inline-size;
+  justify-content: flex-start;
+  padding: 0;
+  color: var(--color-face-ink);
+  text-align: center;
+}
+
+#board > header > section [data-card='scenario'] > :is(h1, h2, p, ul) {
+  position: relative;
+  margin: 0;
+}
+
+#board > header > section [data-card='scenario'] > :is(h1, h2) {
+  margin-block-start: calc(var(--scenario-title-top) * var(--scan-unit));
+  padding: 0 calc(var(--scenario-inset) * var(--scan-unit));
+  background: none;
+  font-family: var(--font-family-display);
+  font-size: max(var(--font-size-note), calc(var(--scenario-title-size) * var(--scan-unit)));
+  line-height: 1.1;
+  /* A long word in a scenario name (more so in German) would otherwise be cut off by the frame. */
+  overflow-wrap: anywhere;
+  hyphens: auto;
+}
+
+#board > header > section [data-card='scenario'] > :is(h1, h2) > button {
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+
+#board > header > section [data-card='scenario'] > p {
+  font-size: calc(var(--scenario-side-size) * var(--scan-unit));
+  font-weight: bold;
+  letter-spacing: var(--card-type-spacing);
+  text-transform: uppercase;
+}
+
+#board > header > section [data-card='scenario'] > ul {
+  position: absolute;
+  inset: calc(var(--scenario-rows-top) * var(--scan-unit))
+    calc(var(--scenario-inset) * var(--scan-unit)) auto;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--scenario-row-gap) * var(--scan-unit));
+  padding: 0;
+  list-style: none;
+}
+
+#board > header > section [data-card='scenario'] > ul > li {
+  display: grid;
+  grid-template-columns: calc(var(--scenario-token-size) * var(--scan-unit)) 1fr;
+  gap: calc(var(--scenario-inset) / 2 * var(--scan-unit));
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: calc(var(--scenario-text-size) * var(--scan-unit));
+  line-height: 1.25;
+  text-align: start;
+}
+
+#board > header > section [data-card='scenario'] > ul > li > p {
+  margin: 0;
+}
+
+/* The token: a disc in its colour inside a dark ring, its symbol in paper colour on it. */
+/* The traits a row names in bold italics, as the printed card sets them. */
+#board > header > section [data-card='scenario'] > ul > li > p > em {
+  font-weight: bold;
+}
+
+#board > header > section [data-card='scenario'] > ul > li > span {
+  display: grid;
+  aspect-ratio: 1;
+  box-sizing: border-box;
+  border: calc(var(--scenario-token-size) / 10 * var(--scan-unit)) solid var(--color-face-setting);
+  border-radius: var(--radius-round);
+  background: var(--token-colour);
+}
+
+#board > header > section [data-card='scenario'] > ul > li > span::before {
+  content: '';
+  margin: 18%;
+  background: var(--color-face-medallion);
+  mask: var(--token-symbol) center / contain no-repeat;
+}
+
+#board > header > section [data-card='scenario'] [data-chaos-token='skull'] {
+  --token-symbol: url('../symbols/skull.svg');
+  --token-colour: var(--color-face-skull);
+}
+
+#board > header > section [data-card='scenario'] [data-chaos-token='cultist'] {
+  --token-symbol: url('../symbols/cultist.svg');
+  --token-colour: var(--color-face-cultist);
+}
+
+#board > header > section [data-card='scenario'] [data-chaos-token='tablet'] {
+  --token-symbol: url('../symbols/tablet.svg');
+  --token-colour: var(--color-face-tablet);
+}
+
+#board > header > section [data-card='scenario'] [data-chaos-token='elderThing'] {
+  --token-symbol: url('../symbols/elder_thing.svg');
+  --token-colour: var(--color-face-elder-thing);
+}
+
+/*
+ * On the header's small card the difficulty and the rows are too small to read, so only the title
+ * shows, like the printed card seen from across the table; a tap opens the full card. The rows
+ * stay for screen readers. A custom property cannot stand in a container query, hence the width
+ * written out.
+ */
+@container (width < 10rem) {
+  #board > header > section [data-card='scenario'] > :is(p, ul) {
+    position: absolute;
+    width: var(--hidden-size);
+    height: var(--hidden-size);
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+/*
+ * The phone's detail view shows the header cards at its card height, which leaves an upright card
+ * too narrow to read its rows, so the scenario card takes a zoomed card's width there instead.
+ */
+@media (orientation: portrait) and (max-width: 40rem) {
+  #board[data-view='detail'] > header > section [data-card='scenario'] {
+    width: min(100%, var(--layout-zoom-card-width));
+    height: auto;
+  }
+}

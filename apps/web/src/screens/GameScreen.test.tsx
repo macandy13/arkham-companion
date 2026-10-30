@@ -19,6 +19,7 @@ import { initI18n } from '../i18n';
 import { findScenario } from '../scenarios/scenarioCatalog';
 import { createAppStore } from '../state/appStore';
 import { IndexedDbStore } from '../storage/IndexedDbStore';
+import type { CatalogSource } from '../catalog/useCatalog';
 import { GameScreen } from './GameScreen';
 
 const alder: InvestigatorCard = {
@@ -29,11 +30,19 @@ const alder: InvestigatorCard = {
   skills: { willpower: 3, intellect: 3, combat: 3, agility: 3 },
 };
 
+/** A card catalog that is still loading, as on a first start: the scenario card has no texts. */
+const loadingCatalog: CatalogSource = () => new Promise(() => undefined);
+
 /**
  * Renders the play screen on a new game of The Gathering with Alder as the only investigator;
- * `replacedCards` stand in for the scenario's cards of the same code.
+ * `replacedCards` stand in for the scenario's cards of the same code, and the scenario card's
+ * texts come from `catalog`.
  */
-async function renderTheGathering(db: string, replacedCards: readonly CardStats[] = []) {
+async function renderTheGathering(
+  db: string,
+  replacedCards: readonly CardStats[] = [],
+  catalog: CatalogSource = loadingCatalog,
+) {
   const cards = cardDbWith(theGatheringCards, replacedCards);
   const store = createAppStore(new IndexedDbStore(db), (id) => {
     const entry = findScenario(id);
@@ -52,7 +61,7 @@ async function renderTheGathering(db: string, replacedCards: readonly CardStats[
   render(
     <MemoryRouter initialEntries={[`/game/${id}`]}>
       <Routes>
-        <Route path="game/:id" element={<GameScreen store={store} />} />
+        <Route path="game/:id" element={<GameScreen store={store} catalog={catalog} />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -331,6 +340,35 @@ describe('GameScreen header', () => {
     expect(within(scenario).getByRole('heading', { level: 1 }).textContent).toBe('The Gathering');
   });
 
+  it("opens the scenario card from its name, a row per chaos token with the easy side's text", async () => {
+    // Invented texts under The Gathering's reference card code: the catalog's, not the card's.
+    const catalog: CatalogSource = async () => ({
+      investigators: [],
+      packs: [],
+      references: {
+        '01104': {
+          easyStandard: { skull: '-X. Count the [[Ghoul]] enemies.', cultist: '-1. Easy cultist.' },
+          hardExpert: { skull: '-9. Hard skull.' },
+        },
+      },
+    });
+    await renderTheGathering('game-screen-scenario-details-test', [], catalog);
+
+    fireEvent.click(button('The Gathering'));
+    const card = await screen.findByRole('dialog', { name: 'The Gathering' });
+    const rows = within(within(card).getByRole('list', { name: 'Chaos tokens' }))
+      .getAllByRole('listitem')
+      .map((row) => [within(row).getByRole('img').getAttribute('aria-label'), row.textContent]);
+
+    expect(within(card).getByText('Easy / Standard')).toBeTruthy();
+    expect(rows).toEqual([
+      ['Skull', '-X. Count the Ghoul enemies.'],
+      ['Cultist', '-1. Easy cultist.'],
+      ['Tablet', ''],
+    ]);
+    expect(within(card).getByText('Ghoul').tagName).toBe('EM');
+  });
+
   it('shows the round and the phases of a round in a status row, setup marking none', async () => {
     await renderTheGathering('game-screen-round-test');
 
@@ -380,7 +418,7 @@ describe('GameScreen header', () => {
     render(
       <MemoryRouter initialEntries={[`/game/${gameWithoutScenario}`]}>
         <Routes>
-          <Route path="game/:id" element={<GameScreen store={store} />} />
+          <Route path="game/:id" element={<GameScreen store={store} catalog={loadingCatalog} />} />
         </Routes>
       </MemoryRouter>,
     );
