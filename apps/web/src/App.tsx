@@ -8,12 +8,14 @@ import { HomeScreen } from './screens/HomeScreen';
 import { NewGameScreen } from './screens/NewGameScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import type { AppState } from './state/appStore';
-// The playmat's fonts, self-hosted so the PWA has them offline: only the Latin subsets and the
+// The app's fonts, self-hosted so the PWA has them offline: only the Latin subsets and the
 // weights the stylesheets use.
 import '@fontsource/im-fell-english-sc/latin-400.css';
 import '@fontsource/alegreya-sans/latin-400.css';
 import '@fontsource/alegreya-sans/latin-700.css';
 import '@fontsource/federant/latin-400.css';
+import '@fontsource/libre-caslon-text/latin-400.css';
+import '@fontsource/libre-caslon-text/latin-400-italic.css';
 import './styles/tokens.css';
 import './styles/base.css';
 import './screens/layout.css';

@@ -502,7 +502,6 @@
   flex-direction: column;
   gap: var(--space-2);
   min-inline-size: min(var(--layout-zoom-card-width), 100%);
-  padding-inline: var(--space-2);
   font-size: var(--font-size-body);
 }
 
@@ -510,25 +509,9 @@
   display: none;
 }
 
-#map dialog[data-dialog='location'] > button[data-icon='close'] {
-  position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
-  border-radius: var(--radius-round);
-}
-
-#map dialog[data-dialog='location'] > button[data-icon='close']::before {
-  mask-image: url('../investigators/icons/close.svg');
-}
-
 #map :is(dialog[data-dialog='location'], [data-mode='location']) h2 {
   margin: 0;
   font-size: var(--font-size-subtitle);
-}
-
-/* Clear of the dialog's ×. */
-#map dialog[data-dialog='location'] h2 {
-  padding-right: var(--touch-target);
 }
 
 #map :is(dialog[data-dialog='location'], [data-mode='location']) > p,

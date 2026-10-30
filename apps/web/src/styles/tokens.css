@@ -182,9 +182,10 @@
   --safe-left: env(safe-area-inset-left, 0px);
 
   /*
-   * Display type for names and labels on the cards, and the UI type for everything else: the
-   * playmat's fonts, IM Fell English SC and Alegreya Sans (OFL), self-hosted through `@fontsource`
-   * (App.tsx). Titles take the campaign guide's Federant (`--font-family-print`) instead.
+   * The cards' type for names and labels on their faces (IM Fell English SC), and the UI type for
+   * everything else (Alegreya Sans), OFL fonts self-hosted through `@fontsource` (App.tsx). The
+   * app's own titles, labels and kickers take the campaign guide's fonts (`--font-family-print`,
+   * `--font-family-label`) instead.
    */
   --font-family: 'Alegreya Sans', 'Segoe UI', system-ui, sans-serif;
   --font-family-display: 'IM Fell English SC', 'IM Fell English', Georgia, serif;
@@ -219,6 +220,16 @@
   --layout-board-panel-width: 23rem;
   --layout-portrait-width: 9rem;
   --layout-sheet-width: 22rem;
+  /*
+   * A dialog's width (MD.1c): a question, most dialogs, and a dialog with a row of cards. Each is
+   * the most it takes; a dialog with less content stays narrower.
+   */
+  --dialog-width-narrow: 27.5rem;
+  --dialog-width: 37.5rem;
+  --dialog-width-wide: 55rem;
+  --dialog-padding: 2.125rem 2.5rem;
+  /* The room the × keeps free in a dialog's top corner, and how far it sits from the edge. */
+  --dialog-close-inset: var(--space-3);
   /* The clue payment dialog, wide enough for three payers' art side by side, each this wide. */
   --layout-clue-payment-width: 46rem;
   --clue-payer-width: 13rem;
@@ -454,7 +465,9 @@
    * for the printed labels, Felipa for the script titles and Caveat for what the players wrote.
    */
   --font-family-print: 'Federant', 'IM Fell English SC', Georgia, serif;
-  --font-family-log-label: 'Libre Caslon Text', Georgia, serif;
+  /* The guide's labels (spaced capitals) and a dialog's kicker over its title (italic). */
+  --font-family-label: 'Libre Caslon Text', Georgia, serif;
+  --font-family-log-label: var(--font-family-label);
   --font-family-script: 'Felipa', 'Apple Chancery', cursive;
   --font-family-hand: 'Caveat', 'Segoe Print', 'Bradley Hand', cursive;
   --font-size-log-label: 0.7rem;
@@ -621,7 +634,8 @@
 
 /*
  * The upright phone's detail view (`data-view`) shows the cards in full again, its header cards
- * taller still, and its dialogs keep to the phone's width.
+ * taller still, and its dialogs keep to the phone's width. Every dialog on an upright phone keeps
+ * less paper around its content.
  */
 @media (orientation: portrait) and (max-width: 40rem) {
   #board[data-view='detail'] {
@@ -632,6 +646,10 @@
    * The encounter dialog's row fits two cards, and a card opened over the whole screen (game.css)
    * grows to nearly its width.
    */
+  :root {
+    --dialog-padding: var(--space-4) var(--space-3);
+  }
+
   #board {
     --encounter-strip-cards-shown: 2;
     --layout-zoom-card-width: 20rem;

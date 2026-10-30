@@ -131,7 +131,7 @@
   flex-basis: 100%;
   text-align: center;
   color: var(--color-text-muted);
-  font-family: var(--font-family-display);
+  font-family: var(--font-family-label);
   font-size: var(--font-size-note);
   letter-spacing: var(--card-type-spacing);
   text-transform: uppercase;
@@ -420,7 +420,7 @@
   border-radius: var(--radius-round);
   box-shadow: var(--header-token-shadow);
   color: var(--header-token-text);
-  font-family: var(--font-family-display);
+  font-family: var(--font-family-print);
   font-size: var(--font-size-note);
   line-height: 1;
 }
@@ -552,24 +552,12 @@
   flex-direction: column;
   gap: var(--space-2);
   align-items: center;
-  padding-block-start: calc(var(--space-2) + var(--touch-target));
+  padding-block-start: calc(var(--dialog-close-inset) + var(--touch-target));
   font-size: var(--font-size-body);
 }
 
 #board > header dialog[data-dialog='card']:not([open]) {
   display: none;
-}
-
-#board > header dialog[data-dialog='card'] > button[data-icon='close'] {
-  position: absolute;
-  padding: 0;
-  top: var(--space-2);
-  right: var(--space-2);
-  border-radius: var(--radius-round);
-}
-
-#board > header dialog[data-dialog='card'] > button[data-icon='close']::before {
-  mask-image: url('../investigators/icons/close.svg');
 }
 
 #board > header dialog[data-dialog='card'] > [data-card] {
@@ -856,16 +844,11 @@
   }
 
   #board
-    dialog:is([data-dialog='enemy'], [data-dialog='card-zoom'])[open]
+    dialog:is([data-dialog='enemy'], [data-dialog='card-zoom'], [data-dialog='log'])[open]
     > button[data-icon='close'] {
     top: calc(var(--space-2) + var(--safe-top));
     right: auto;
     left: calc(var(--space-2) + var(--safe-left));
-  }
-
-  /* The log's × sits in its title row, so its top keeps no room for it. */
-  #board dialog[data-dialog='log'][open] {
-    padding-block-start: calc(var(--space-2) + var(--safe-top));
   }
 }
 

@@ -315,7 +315,7 @@ export const resources = {
         agility: 'Agility',
       },
       skillTest: {
-        title: 'Skill test · {{name}}',
+        title: 'Skill test',
         difficulty: 'Difficulty',
         modifier: 'Modifier',
         lower: 'Lower the {{what}}',
@@ -1064,7 +1064,7 @@ export const resources = {
         agility: 'Geschick',
       },
       skillTest: {
-        title: 'Fertigkeitsprobe · {{name}}',
+        title: 'Fertigkeitsprobe',
         difficulty: 'Schwierigkeit',
         modifier: 'Modifikator',
         lower: '{{what}} senken',
