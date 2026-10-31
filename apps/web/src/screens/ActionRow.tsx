@@ -39,8 +39,8 @@ export function ActionGroup({ title, children }: { title: string; children: Reac
 /**
  * A button of the action row: its icon over a short `caption`, named in full by `name` (which
  * contains the caption, so speech input finds it by the word it shows); `cost` marks the ones
- * that count off an action with the game's action arrow, and those that take none, where the row
- * offers both, with its free-ability symbol (action_row.css).
+ * that count off an action with the game's action arrow, and those that take none with its
+ * free-ability symbol (action_row.css).
  */
 export function ActionButton({
   icon,
@@ -108,7 +108,7 @@ export function cardActionCaption(t: TFunction, { designator, number }: PrintedA
 
 /**
  * The card actions of one card (`cardActionsOn`) as a group of the action row, each named like
- * the turn row's button ("Resign · Parlor") and marked with the action arrow unless it is free.
+ * the turn row's button ("Resign · Parlor") and marked with the action arrow, or the free-ability symbol when it is free.
  * Taking one calls `onUse` first, so a window around it closes, since its effects may ask something
  * next or take the investigator out of the game (Resign); one with a group clue cost asks who pays
  * first (`useCluePayment`).
@@ -137,7 +137,7 @@ export function CardActions({
           <ActionButton
             key={action}
             icon={designator ?? 'cardAction'}
-            cost={free ? undefined : 'action'}
+            cost={free ? 'free' : 'action'}
             caption={caption}
             name={name}
             disabled={busy}

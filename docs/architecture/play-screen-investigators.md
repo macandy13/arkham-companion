@@ -59,7 +59,7 @@ Under it is one row of buttons ([`ActionRow`](../../apps/web/src/screens/ActionR
 ## Card actions
 
 Every card screen shows the actions its card offers the same way ([`CardActions`](../../apps/web/src/screens/ActionRow.tsx) over `cardActionsOn`, the turn investigator's `BoardView.cardActions` on that card, found by the `id` each card view carries):
-a "Card actions" group named like the turn row's buttons ("Resign · Parlor"), with the action arrow unless the action is free.
+a "Card actions" group named like the turn row's buttons ("Resign · Parlor"), with the action arrow, or the free-ability symbol when the action is free.
 Taking one closes the window first.
 
 The turn row keeps a button for every card action besides.

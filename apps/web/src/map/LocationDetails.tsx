@@ -175,11 +175,6 @@ function LocationPage({
       }}
     />
   );
-  // The ones that count off an action come first, as the enemy details list them.
-  const ordered = [
-    ...offered.filter(({ cost }) => cost === 'action'),
-    ...offered.filter(({ cost }) => cost === 'free'),
-  ];
 
   return (
     <>
@@ -190,8 +185,8 @@ function LocationPage({
       {adjusting && <Corrections location={location} actions={actions} busy={busy} />}
       {offered.length + printed.length > 0 && (
         <footer>
-          {ordered.length > 0 && (
-            <ActionGroup title={t('location.actions')}>{ordered.map(button)}</ActionGroup>
+          {offered.length > 0 && (
+            <ActionGroup title={t('location.actions')}>{offered.map(button)}</ActionGroup>
           )}
           {printed.length > 0 && (
             <CardActions
@@ -229,7 +224,7 @@ interface LocationAction {
  * opportunity, or free, as a card allows. What a card forbids there (`LocationView.forbidden`) is
  * off (investigate) or left out (move), and so is taking a clue while a card forbids the
  * investigator to discover clues (`InvestigatorView.forbidden`, The Masked Hunter). A list rather than fixed buttons, since the cards
- * attached to a location will add their own abilities to it. Nothing between turns.
+ * attached to a location will add their own abilities to it; the ones that count off an action come first, as the enemy details list them. Nothing between turns.
  */
 function locationActions(
   board: BoardView,
