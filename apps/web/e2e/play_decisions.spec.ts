@@ -16,8 +16,9 @@ test('answer a decision in its dialog', { tag: '@flow' }, async ({ page }) => {
     await expect(decision.getByRole('status')).toBeVisible();
   });
 
-  await test.step('Report the test as passed', async () => {
+  await test.step('Report the test as passed, with its clue', async () => {
     await decision.getByRole('button', { name: 'Passed' }).click();
+    await decision.getByRole('button', { name: 'Done' }).click();
     await expect(decision).toBeHidden();
   });
 });

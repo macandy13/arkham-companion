@@ -529,6 +529,9 @@ export const appTexts = {
   },
   decision: {
     decides: '{{name}} entscheidet',
+    options: 'Antworten',
+    fromTheGame: 'aus dem Spiel',
+    done: 'Fertig',
     test: 'Probe auf {{skill}} ({{difficulty}})',
     advanceAgenda: 'Schreitet die Agenda {{card}} voran?',
     chooseEngagement: 'Wen verwickelt {{card}} in einen Kampf?',

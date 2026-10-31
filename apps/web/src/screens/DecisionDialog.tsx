@@ -42,6 +42,8 @@ export function DecisionDialog({
   const run = useSkillTest(board, tested, test);
   const suggested = run?.result && run.finished ? run.result : undefined;
   const [counts, setCounts] = useState(() => defaultCounts(decision.counts));
+  const [chosen, setPicked] = useState<string>();
+  const picked = chosen ?? pickedFirst(decision, suggested?.outcome);
   const answer = (option: string) =>
     void actions.answer(option, {
       ...countsOf(counts[option]),
@@ -75,37 +77,76 @@ export function DecisionDialog({
       {run && tested !== undefined && (
         <SkillTestBlock board={board} investigator={board.investigator(tested)} run={run} />
       )}
-      <ul>
-        {/* Two options can share a name (two enemies of one card), so the position is the key. */}
-        {decision.options.map((option, index) => (
-          <li key={index}>
-            <button
-              type="button"
-              disabled={busy}
-              data-suggested={option === suggested?.outcome || undefined}
-              onClick={() => answer(option)}
-            >
-              {t(decision.labels?.[option] ?? option, { defaultValue: option })}
-            </button>
-            <CountSteppers
-              decision={decision}
-              option={option}
-              counts={counts}
-              onChange={setCounts}
-            />
-          </li>
-        ))}
-      </ul>
-      <footer>
-        <button type="button" disabled={busy} onClick={() => void actions.startAdjusting()}>
-          {t('header.adjust')}
-        </button>
-        <button type="button" disabled={busy} onClick={() => void actions.undo()}>
-          {t('header.undo')}
-        </button>
-      </footer>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          if (picked !== undefined) answer(picked);
+        }}
+      >
+        <ul aria-label={t('decision.options')}>
+          {/* Two options can share a name (two enemies of one card), so the position is the key. */}
+          {decision.options.map((option, index) => {
+            const withCounts = decision.counts?.[option] !== undefined;
+            return (
+              <li key={index}>
+                <button
+                  type="button"
+                  disabled={busy}
+                  data-suggested={option === suggested?.outcome || undefined}
+                  aria-pressed={withCounts ? option === picked : undefined}
+                  onClick={() => (withCounts ? setPicked(option) : answer(option))}
+                >
+                  <span aria-hidden="true">{optionKey(option, index)}</span>
+                  <span>{t(decision.labels?.[option] ?? option, { defaultValue: option })}</span>
+                </button>
+                {withCounts && <p>{t('decision.fromTheGame')}</p>}
+                <CountSteppers
+                  decision={decision}
+                  option={option}
+                  counts={counts}
+                  onChange={(changed) => {
+                    setCounts(changed);
+                    setPicked(option);
+                  }}
+                />
+              </li>
+            );
+          })}
+        </ul>
+        <footer>
+          <button type="button" disabled={busy} onClick={() => void actions.startAdjusting()}>
+            {t('header.adjust')}
+          </button>
+          <button type="button" disabled={busy} onClick={() => void actions.undo()}>
+            {t('header.undo')}
+          </button>
+          <button type="submit" disabled={busy || picked === undefined}>
+            {t('decision.done')}
+          </button>
+        </footer>
+      </form>
     </CardDialog>
   );
+}
+
+/**
+ * The option Done answers before the players pick one: the outcome the draw works out when it
+ * has counts to confirm (the clues a passed investigation discovers), else the first option with
+ * counts when no test decides between them (an attack of opportunity: take the attack). An
+ * option without counts is never picked for them, since a tap on it answers at once.
+ */
+function pickedFirst(decision: DecisionView, suggested: string | undefined): string | undefined {
+  const withCounts = (option: string) => decision.counts?.[option] !== undefined;
+  if (decision.test)
+    return suggested !== undefined && withCounts(suggested) ? suggested : undefined;
+  return decision.options.find(withCounts);
+}
+
+/** The key of an option's row, like the guide's: ✓ for a pass, ✗ for a fail, else its number. */
+function optionKey(option: string, index: number): string {
+  if (option === 'pass') return '✓';
+  if (option === 'fail') return '✗';
+  return String(index + 1);
 }
 
 /** The counts an option can carry, in the order the dialog shows their steppers. */

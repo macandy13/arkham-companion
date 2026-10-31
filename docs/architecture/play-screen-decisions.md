@@ -6,7 +6,7 @@ The first open decision shows as a [dialog](../../apps/web/src/screens/DecisionD
 - who decides, in the kicker with their portrait, over the translated question with the card it is about,
 - when a revelation asks the players something, whom the card being resolved was drawn for and its keywords as badges ([`ResolvingCard`](../../apps/web/src/encounter/ResolvingCard.tsx), `BoardView.resolving`: the card in the `resolving` zone with the investigator its queued placement names and its keywords, a gained surge included),
 - the test of a skill test,
-- and a button per option, answered by its readable name (`GameActions.answer` maps it to the option).
+- and a choice row per option (MD.2c), its key (✓ for a pass, ✗ for a fail, else its number) before its readable name (`GameActions.answer` maps it to the option). A row without counts answers on tap; a row with counts is picked (`aria-pressed`) and waits for Done, the form's primary, so the players can change its numbers first. Done starts on the draw's outcome when that has counts, else on the first row with counts when no test decides (an attack of opportunity takes the attack).
 
 A skill test one investigator takes also brings the test block the skill test dialog shares ([`TestCalculation.tsx`](../../apps/web/src/investigators/TestCalculation.tsx), MD.2b): `useSkillTest` keeps the run (skills, modifier, tokens drawn, `BoardView.skillTest`'s result) and `SkillTestBlock` shows it:
 
@@ -15,7 +15,7 @@ A skill test one investigator takes also brings the test block the skill test di
 - the result strip (`ResultStrip`): the skill value's terms and their sum left, the tokens drawn in the middle with their sum when there are several ("?" for one the app cannot tell), PASS or FAIL over the total against the difficulty and the margin right.
 The calculation marks the answer it works out and sends that one with its `margin`, while the other still overrides it (the screen keys the dialog by the decision's id, so a draw never carries over).
 
-- An option's counts (`DecisionView.counts`: the clues a passed investigation discovers, the damage a passed fight deals, an attack's damage and horror) show as steppers within their limits on the row of their answer, which carries them as `amount` and `amounts`.
+- An option's counts (`DecisionView.counts`: the clues a passed investigation discovers, the damage a passed fight deals, an attack's damage and horror) show as steppers within their limits on the row of their answer, marked "from the game" (on a phone each label stands over its stepper), which carries them as `amount` and `amounts`.
 - `DecisionView.labels` gives the i18n key of each option whose name is not its own label (`does not provoke` is `decision.doesNotProvoke`).
 - An attack of opportunity also names the action that provoked it and waits for it (`DecisionView.provokedBy`, read from the held action in the queue: "Roland Banks takes a resource: Ghoul Priest attacks first"), so the players see why the enemy attacks.
 
