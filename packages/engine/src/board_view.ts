@@ -1271,7 +1271,6 @@ function waitingCards(ctx: EngineContext, state: GameState, decision: Decision):
     .map((subject) => cardFaceOf(ctx, requireCard(state, subject)));
 }
 
-
 /** The action held in the queue until the attacks of opportunity it provoked are answered. */
 function provokingAction(ctx: EngineContext, state: GameState): ProvokingActionView | undefined {
   const held = state.meta.queue?.find(
