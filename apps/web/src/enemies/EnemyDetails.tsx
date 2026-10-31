@@ -1,4 +1,3 @@
-import { useId } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BoardView, MapEnemyView } from '@arkham/engine';
 import { ActionButton, ActionGroup, CardActions, cardActionsOn } from '../screens/ActionRow';
@@ -6,13 +5,14 @@ import { CardDialog } from '../screens/CardDialog';
 import type { GameActions } from '../state/gameActions';
 import { useBackCloses } from '../screens/useBackCloses';
 import { EnemyCard } from './EnemyCard';
+import { healthLeft } from './enemyHealth';
 import './enemies.css';
 
 /**
  * One enemy in full, opened by a tap on its card or its map token, on the card shell
  * (`CardDialog`): the enemy drawn as its card beside the page (`EnemyCard`, from
  * `BoardView.enemyStats`), whom it is engaged with in the kicker, its fight, health left of its
- * printed health and evade on the page (`EnemyStats`), and under them one row of what the players
+ * health for the player count and evade on the page, and under them one row of what the players
  * can do to it. On an investigator's turn, the basic actions the rules allow them against it
  * (`BoardView.enemyActions`): fight, evade and engage as actions, which count off one, and fight
  * and evade without an action, as some cards allow; at any time, what card effects do to an
@@ -37,8 +37,6 @@ export function EnemyDetails({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  // The drawn card names itself for a dialog of its own; the shell's title names this one.
-  const drawnTitleId = useId();
   const close = useBackCloses(onClose);
   const step = (play: () => Promise<void>, closes: boolean) => () => {
     if (closes) close();
@@ -51,12 +49,13 @@ export function EnemyDetails({
   const engaged =
     enemy.engagedWith === undefined ? undefined : board.investigator(enemy.engagedWith);
   const stats = board.enemyStats(enemy.id);
+  const left = healthLeft(enemy);
 
   return (
     <CardDialog
       name="enemy"
       card={board.cardFace(enemy.id)}
-      drawn={<EnemyCard enemy={enemy} stats={stats} titleId={drawnTitleId} />}
+      drawn={<EnemyCard enemy={enemy} stats={stats} />}
       {...(engaged
         ? { actor: engaged, kicker: t('enemy.engagedWith', { name: engaged.name }) }
         : {})}
@@ -71,14 +70,7 @@ export function EnemyDetails({
         </div>
         <div>
           <dt>{t('enemy.health')}</dt>
-          <dd>
-            {enemy.health === undefined
-              ? '–'
-              : t('enemy.healthLeft', {
-                  left: enemy.health - (enemy.damage ?? 0),
-                  max: enemy.health,
-                })}
-          </dd>
+          <dd>{left === undefined ? '–' : t('enemy.healthLeft', { left, max: enemy.health })}</dd>
         </div>
         <div>
           <dt>{t('enemy.evade')}</dt>
