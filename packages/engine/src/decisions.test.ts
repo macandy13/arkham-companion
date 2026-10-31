@@ -23,7 +23,7 @@ import {
   type InvestigatorId,
   type Zone,
 } from './index';
-import { cardOptionLabels } from './decisions';
+import { cardOptionLabels, sameDecider } from './decisions';
 import { requireInvestigator } from './investigators';
 import { answer, rejectionFrom, stateAfter, withPendingDecisions } from '../test/utils';
 
@@ -779,4 +779,26 @@ describe('cardOptionLabels', () => {
       'Cellar 2',
     ]);
   });
+});
+
+describe('sameDecider', () => {
+  const alice = { kind: 'investigator', investigatorId: investigatorId('alice') } as const;
+  const bob = { kind: 'investigator', investigatorId: investigatorId('bob') } as const;
+  const lead = { kind: 'lead' } as const;
+  const group = { kind: 'group' } as const;
+
+  it.each([
+    { one: alice, other: alice, same: true },
+    { one: alice, other: bob, same: false },
+    { one: alice, other: lead, same: false },
+    { one: lead, other: alice, same: false },
+    { one: lead, other: lead, same: true },
+    { one: lead, other: group, same: false },
+    { one: group, other: group, same: true },
+  ])(
+    '$one.kind $one.investigatorId and $other.kind $other.investigatorId: $same',
+    ({ one, other, same }) => {
+      expect(sameDecider(one, other)).toBe(same);
+    },
+  );
 });

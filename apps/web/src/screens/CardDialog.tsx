@@ -82,8 +82,8 @@ export function CardDialog({
         <figure data-part="cards">
           {waiting.length > 0 && (
             <ul aria-label={t('cardDialog.waiting')}>
-              {waiting.map((each, index) => (
-                <WaitingCard key={index} card={each} />
+              {waiting.map((each) => (
+                <WaitingCard key={each.id} card={each} />
               ))}
             </ul>
           )}
