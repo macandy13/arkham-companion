@@ -25,7 +25,7 @@ A tap on a portrait opens the detail sheet as a dialog.
 
 The [campaign screen](../../apps/web/src/campaign/CampaignScreen.tsx) draws the open campaign (`AppState.openCampaign`, `OpenCampaign`: the replayed `CampaignLog` and the campaign's games) like the Core Set's campaign log sheet (docs/product.md "Campaign screen"):
 
-- an index card with the printed fields in a column per investigator (unspent XP, trauma as tally marks ([`Tally.tsx`](../../apps/web/src/campaign/Tally.tsx)), earned story cards by name from the catalog), and a napkin with the campaign's scenarios, the played ones ticked with their resolution and the next one marked `aria-current`;
+- an index card with the printed fields in a column per investigator and blank columns up to the printed four, all on shared subgrid rows so labels sit level (unspent XP, trauma as tally marks ([`Tally.tsx`](../../apps/web/src/campaign/Tally.tsx)), earned story cards by name from the catalog), and a napkin with the campaign's scenarios, the played ones ticked with their resolution and the next one marked `aria-current`;
 - notepad pages ([`CampaignSheets.tsx`](../../apps/web/src/campaign/CampaignSheets.tsx)) with the campaign notes and the campaign's own sheets from its `CampaignLogLayout`, each record in words from `CampaignEntry.storyKey` (a flag's note at `<storyKey>.<record>.yes` or `.no`, a list's heading at `<storyKey>.<record>`), crossed-out names in `<del>`;
 - the sheets every campaign shares after them: a newspaper clipping with the killed and insane investigators (replaced ones first) and an index card with the chaos bag, each kind of token once with its count, in `CHAOS_TOKENS` order;
 - a link that continues the game of the scenario in play.

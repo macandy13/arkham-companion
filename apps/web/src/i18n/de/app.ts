@@ -589,7 +589,7 @@ export const appTexts = {
     physical: 'Körperlich',
     mental: 'Seelisch',
     traumaCount: '{{count}} Trauma',
-    earnedCards: 'Verd. Storyvorteile/Schwächen',
+    earnedCards: 'Verd. Storyvorteile / Schwächen',
     fate: { killed: 'getötet', insane: 'wahnsinnig' },
     scenarios: 'Szenarien',
     noResolution: 'keine Auflösung',
