@@ -165,7 +165,7 @@ function LocationPage({
     <ActionButton
       key={key}
       icon={icon}
-      cost={cost === 'action' ? 'action' : undefined}
+      cost={cost}
       caption={t(`location.caption.${icon}`)}
       name={t(`location.${key}`)}
       disabled={busy || play === undefined}
@@ -175,8 +175,11 @@ function LocationPage({
       }}
     />
   );
-  const asAction = offered.filter(({ cost }) => cost === 'action');
-  const free = offered.filter(({ cost }) => cost === 'free');
+  // The ones that count off an action come first, as the enemy details list them.
+  const ordered = [
+    ...offered.filter(({ cost }) => cost === 'action'),
+    ...offered.filter(({ cost }) => cost === 'free'),
+  ];
 
   return (
     <>
@@ -187,11 +190,8 @@ function LocationPage({
       {adjusting && <Corrections location={location} actions={actions} busy={busy} />}
       {offered.length + printed.length > 0 && (
         <footer>
-          {asAction.length > 0 && (
-            <ActionGroup title={t('location.asAction')}>{asAction.map(button)}</ActionGroup>
-          )}
-          {free.length > 0 && (
-            <ActionGroup title={t('location.free')}>{free.map(button)}</ActionGroup>
+          {ordered.length > 0 && (
+            <ActionGroup title={t('location.actions')}>{ordered.map(button)}</ActionGroup>
           )}
           {printed.length > 0 && (
             <CardActions

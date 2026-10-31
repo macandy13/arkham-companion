@@ -9,7 +9,7 @@ A tap on a tile (or its "i" button, for the keyboard) opens the location's [deta
 - its shroud and its clues left of its clue value for the player count (`LocationView.clueValue`, "1 / 2") as the page's values, or "Unrevealed",
 - who is there,
 - the cards attached to it (each opening the card zoom),
-- and an action row (the enemy details' [`ActionRow`](../../apps/web/src/screens/ActionRow.tsx)) built from a list of what the investigator whose turn it is can do there:
+- and an action row (the enemy details' [`ActionRow`](../../apps/web/src/screens/ActionRow.tsx)) with one Actions group, those that count off an action first, built from a list of what the investigator whose turn it is can do there:
   - investigate as an action or take a clue without a test at their own location,
   - move as an action or free to a connected one (`BoardView.connectedTo`),
   - where a card forbids it (`LocationView.forbidden`) investigate off and no move (Locked Door, the unrevealed Parlor's barrier), and taking a clue off while a card forbids the investigator to discover clues (`InvestigatorView.forbidden`, The Masked Hunter),

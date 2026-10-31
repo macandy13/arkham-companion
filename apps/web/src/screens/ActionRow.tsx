@@ -39,7 +39,8 @@ export function ActionGroup({ title, children }: { title: string; children: Reac
 /**
  * A button of the action row: its icon over a short `caption`, named in full by `name` (which
  * contains the caption, so speech input finds it by the word it shows); `cost` marks the ones
- * that count off an action, which the stylesheet marks with the game's action arrow.
+ * that count off an action with the game's action arrow, and those that take none, where the row
+ * offers both, with its free-ability symbol (action_row.css).
  */
 export function ActionButton({
   icon,
@@ -50,7 +51,7 @@ export function ActionButton({
   onClick,
 }: {
   icon: ActionIcon;
-  cost?: 'action';
+  cost?: 'action' | 'free';
   caption: string;
   name: string;
   disabled: boolean;
