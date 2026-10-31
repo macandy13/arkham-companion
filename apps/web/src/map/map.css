@@ -267,7 +267,7 @@
 }
 
 #map svg [data-face] > text {
-  font-family: var(--font-family-display);
+  font-family: var(--font-family-card-title);
   font-size: var(--face-name-size);
 }
 
