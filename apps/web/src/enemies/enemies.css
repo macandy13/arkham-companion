@@ -1,42 +1,4 @@
 /*
- * The enemy details (EnemyDetails): the × in the corner, whom the enemy is engaged with, the enemy
- * drawn as its card, and one row of buttons under it in titled groups, the action ones marked with
- * the game's action arrow. It lies in the top layer but inherits from the small card it opens
- * from, so it resets the text.
- */
-#board dialog[data-dialog='enemy'] {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  align-items: center;
-  font-size: var(--font-size-body);
-  line-height: normal;
-  text-align: center;
-  hyphens: manual;
-}
-
-#board dialog[data-dialog='enemy']:not([open]) {
-  display: none;
-}
-
-/*
- * Opened from the map, an enemy nobody is engaged with has no line above its card, so the card
- * would rise under the ×; the room the line takes keeps the × clear of it.
- */
-#board dialog[data-dialog='enemy']:not(:has(> p)) {
-  padding-block-start: calc(var(--dialog-close-inset) + var(--touch-target));
-}
-
-/* Who the enemy is engaged with, set like a dialog's kicker over the card that names it. */
-#board dialog[data-dialog='enemy'] > p {
-  margin: 0;
-  font-family: var(--font-family-label);
-  font-style: italic;
-  color: var(--color-text-muted);
-}
-
-/*
  * The enemy card (EnemyCard) in the card theme's colours, in scan units: the art's hatch until the
  * picture has loaded, the lens of paper shaded towards its edges with a faint star, its arc in the
  * frame's settings and ornament rules, the frame's bands and wings with their stars, the name

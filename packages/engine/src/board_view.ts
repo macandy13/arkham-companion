@@ -978,6 +978,11 @@ export class BoardView {
     );
   }
 
+  /** The card `id` to read as its face (`CardFaceView`), such as an enemy its details show beside their page. */
+  cardFace(id: InstanceId): CardFaceView {
+    return cardFaceOf(this.ctx, requireCard(this.state, id));
+  }
+
   private error(message: string): TableError {
     return new TableError(message, formatBoard(this.ctx, this.state));
   }

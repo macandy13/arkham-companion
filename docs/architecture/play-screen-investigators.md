@@ -36,7 +36,7 @@ The cards an investigator controls (their `playArea` zone, Lita Chantler after a
 
 ## Enemy details
 
-A tap on an enemy card opens its [details](../../apps/web/src/enemies/EnemyDetails.tsx): the enemy drawn as its [card](../../apps/web/src/enemies/EnemyCard.tsx) (`BoardView.enemyStats`), in the Exact card theme our own SVG drawing of the printed enemy card, in scan units like the location's face (`ENEMY_FACE` and the frame's paths `ENEMY_FRAME` in [`enemyCardFrame.ts`](../../apps/web/src/enemies/enemyCardFrame.ts)):
+A tap on an enemy card opens its [details](../../apps/web/src/enemies/EnemyDetails.tsx) on the card shell (`CardDialog`, with the drawing as its `drawn` card in place of a picture): the engaged investigator in the kicker, the fight, the health left of the printed health ("3 / 5") and the evade as a `dl` on the page, and the action rows under them. Beside the page is the enemy drawn as its [card](../../apps/web/src/enemies/EnemyCard.tsx) (`BoardView.enemyStats`), in the Exact card theme our own SVG drawing of the printed enemy card, in scan units like the location's face (`ENEMY_FACE` and the frame's paths `ENEMY_FRAME` in [`enemyCardFrame.ts`](../../apps/web/src/enemies/enemyCardFrame.ts)):
 
 - the name plate, with the frame's scrolls hanging from it (`OrnamentLine`, `scrollPath` in [`cardFace.tsx`](../../apps/web/src/catalog/cardFace.tsx)),
 - fight, health and evade on chevrons, each one image named by its value ("Health 3 of 5"), the skill fight and evade test beside them, and the damage on the health as the shared `CountCircle`,

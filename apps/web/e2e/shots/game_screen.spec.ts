@@ -101,42 +101,48 @@ test('the house map in the Eldritch card style', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-card-theme', 'eldritch');
 });
 
-test("the Ghoul Priest's details in the Eldritch card style: a blackletter name, tentacle scrolls, an eye on the medallion", async ({
-  page,
-}) => {
-  await page.goto('/#/settings');
-  await page.getByLabel('Card style').selectOption('Eldritch');
-  await resumeImportedGame(
-    page,
-    'Roland Banks threatened',
-    rolandThreatenedExport('Roland Banks threatened'),
-  );
-  const roland = page.getByRole('region', { name: 'Roland Banks' });
-  await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
+test(
+  "the Ghoul Priest's details in the Eldritch card style: a blackletter name, tentacle scrolls, an eye on the medallion",
+  { tag: '@shot' },
+  async ({ page }) => {
+    await page.goto('/#/settings');
+    await page.getByLabel('Card style').selectOption('Eldritch');
+    await resumeImportedGame(
+      page,
+      'Roland Banks threatened',
+      rolandThreatenedExport('Roland Banks threatened'),
+    );
+    const roland = page.getByRole('region', { name: 'Roland Banks' });
+    await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
 
-  await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
+    await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
 
-  await expect(page.getByRole('dialog', { name: 'Ghoul Priest' })).toBeVisible();
-});
+    await expect(page.getByRole('dialog', { name: 'Ghoul Priest' })).toBeVisible();
+  },
+);
 
-test("the Ghoul Priest's details in the card pictures style, its damage on the printed health", async ({
-  page,
-}) => {
-  await page.goto('/#/settings');
-  await page.getByLabel('Card style').selectOption('Card pictures');
-  await resumeImportedGame(
-    page,
-    'Roland Banks threatened',
-    rolandThreatenedExport('Roland Banks threatened'),
-  );
-  const roland = page.getByRole('region', { name: 'Roland Banks' });
-  await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
+test(
+  "the Ghoul Priest's details in the card pictures style, its damage on the printed health",
+  { tag: '@shot' },
+  async ({ page }) => {
+    await page.goto('/#/settings');
+    await page.getByLabel('Card style').selectOption('Card pictures');
+    await resumeImportedGame(
+      page,
+      'Roland Banks threatened',
+      rolandThreatenedExport('Roland Banks threatened'),
+    );
+    const roland = page.getByRole('region', { name: 'Roland Banks' });
+    await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
 
-  await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
+    await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
 
-  const card = page.getByRole('dialog', { name: 'Ghoul Priest' }).locator('svg[data-card="enemy"]');
-  await expect(card).toHaveAttribute('data-picture', 'shown');
-});
+    const card = page
+      .getByRole('dialog', { name: 'Ghoul Priest' })
+      .locator('svg[data-card="enemy"]');
+    await expect(card).toHaveAttribute('data-picture', 'shown');
+  },
+);
 
 test('the house map in the Night and brass card style', async ({ page }) => {
   await page.goto('/#/settings');
@@ -223,19 +229,23 @@ test("Roland Banks' fight against the Ghoul Priest, the damage raised to 2", asy
   await expect(decision.getByRole('region', { name: 'Damage dealt' })).toContainText('2');
 });
 
-test("the Ghoul Priest's details opened from its card on Roland Banks' turn", async ({ page }) => {
-  await resumeImportedGame(
-    page,
-    'Roland Banks threatened',
-    rolandThreatenedExport('Roland Banks threatened'),
-  );
-  const roland = page.getByRole('region', { name: 'Roland Banks' });
-  await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
+test(
+  "the Ghoul Priest's details opened from its card on Roland Banks' turn",
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(
+      page,
+      'Roland Banks threatened',
+      rolandThreatenedExport('Roland Banks threatened'),
+    );
+    const roland = page.getByRole('region', { name: 'Roland Banks' });
+    await roland.getByRole('button', { name: 'Later cards in the threat area' }).click();
 
-  await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
+    await roland.getByRole('button', { name: 'Details of Ghoul Priest' }).click();
 
-  await expect(page.getByRole('dialog', { name: 'Ghoul Priest' })).toBeVisible();
-});
+    await expect(page.getByRole('dialog', { name: 'Ghoul Priest' })).toBeVisible();
+  },
+);
 
 test('the encounter deck after two mythos phases, Dissonant Voices on the discard pile', async ({
   page,

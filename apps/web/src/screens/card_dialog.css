@@ -89,6 +89,13 @@
   z-index: 2;
 }
 
+/* A card the dialog draws itself (an enemy's `EnemyCard`) fills the card's place. */
+#board dialog[data-shell] > figure > button[data-part='subject'] > svg {
+  width: 100%;
+  height: 100%;
+  filter: none;
+}
+
 /* The next card nearest, over the one after it, each turned and shifted further out. */
 #board dialog[data-shell] > figure li:first-child {
   z-index: 1;
@@ -180,6 +187,35 @@
 #board dialog[data-shell][data-lowered] > article > hgroup {
   min-height: 0;
   margin-inline-start: 0;
+}
+
+/*
+ * A card's values on the page (an enemy's fight, health left of its printed health and evade),
+ * each its number in the guide's big print over its name, side by side.
+ */
+#board dialog[data-shell] > article > dl {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-5);
+  margin: 0;
+}
+
+#board dialog[data-shell] > article > dl > div {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+}
+
+#board dialog[data-shell] > article > dl dt {
+  font-family: var(--font-family-label);
+  font-size: var(--font-size-note);
+  color: var(--color-text-muted);
+}
+
+#board dialog[data-shell] > article > dl dd {
+  margin: 0;
+  font-family: var(--font-family-print);
+  font-size: var(--font-size-title);
 }
 
 /* The investigator who acts, round over the page or small before the kicker's words. */
