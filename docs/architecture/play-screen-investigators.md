@@ -44,6 +44,8 @@ A tap on an enemy card opens its [details](../../apps/web/src/enemies/EnemyDetai
 - the attack as hearts and brains (`Heart`, `Brain` in `cardFace.tsx`) beside the set medallion,
 - and the art cut from the picture below the lens, `ENEMY_ART`.
 
+In the card pictures theme the whole picture lies over that drawing once it has loaded, with only the damage count on top; the drawing stays under it, so it still names the card and its values to assistive technology.
+
 The face's shared rules (medallion, count circle, ornament lines, heart and brain) live in [`card_face.css`](../../apps/web/src/catalog/card_face.css), next to the parts they style.
 
 Under it is one row of buttons ([`ActionRow`](../../apps/web/src/screens/ActionRow.tsx), for the details windows to share):
