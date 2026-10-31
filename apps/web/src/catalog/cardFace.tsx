@@ -111,11 +111,13 @@ export function SetMedallion({
   const middle = (top + bottom) / 2;
   const left = x - plateWidth / 2;
   const right = x + plateWidth / 2;
+  const innerRadius = radius - 3.5;
+  const iconRadius = innerRadius * SET_ICON;
   return (
     <g data-medallion="">
       <circle data-part="setting" cx={x} cy={y} r={radius + 2.5} />
       <circle data-part="medallion" cx={x} cy={y} r={radius} />
-      <circle data-part="inner" cx={x} cy={y} r={radius - 3.5} />
+      <circle data-part="inner" cx={x} cy={y} r={innerRadius} />
       <g data-part="eye">
         <path data-part="eye-white" d={lens(x, y, radius * EYE.width, radius * EYE.height)} />
         <circle data-part="iris" cx={x} cy={y} r={radius * EYE.iris} />
@@ -123,10 +125,10 @@ export function SetMedallion({
       </g>
       {set && (
         <foreignObject
-          x={x - (radius - 3.5) * SET_ICON}
-          y={y - (radius - 3.5) * SET_ICON}
-          width={2 * (radius - 3.5) * SET_ICON}
-          height={2 * (radius - 3.5) * SET_ICON}
+          x={x - iconRadius}
+          y={y - iconRadius}
+          width={2 * iconRadius}
+          height={2 * iconRadius}
         >
           <span data-encounter-set={set} />
         </foreignObject>
