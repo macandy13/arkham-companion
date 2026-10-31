@@ -232,6 +232,8 @@
   --adjust-outline-width: 2px;
   /* The play screen's menu, above the map and its floating controls. */
   --layer-menu: 2;
+  /* A card dialog lowered out of the board's way (card_dialog.css), over the board's own layers. */
+  --layer-lowered-dialog: 4;
 
   --layout-content-width: 60rem;
   /* The investigators' column beside the map in landscape, as wide as the prototype's. */
@@ -274,6 +276,13 @@
   --card-dialog-peek-portrait: 2.875rem;
   --card-dialog-peek-portrait-title-height: 3.5rem;
   --card-dialog-peek-turn: -2deg;
+  /*
+   * A card dialog lowered out of the board's way (CardDialog `lowerable`): only this much of its
+   * page shows along the bottom, its title and kicker. The grab handle that lowers and raises it
+   * is a bar in a target this tall.
+   */
+  --card-dialog-lowered-height: 7.5rem;
+  --card-dialog-grab-target: 1.5rem;
   /*
    * The skill test block (MD.2b, test_calculation.css): the glyph of a skill toggle, a chaos token
    * drawn and its symbol, the narrow column of the skill value's terms (so three or more tokens

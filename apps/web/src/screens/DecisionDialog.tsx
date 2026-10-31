@@ -21,8 +21,8 @@ import { CardDialog } from './CardDialog';
  * other option overrides it without one. The screen mounts one dialog per decision, so a draw
  * never carries over to the next; adjusting the board, which unmounts it, starts the draw over.
  * The game cannot go on before it is answered, so Escape does not close it; Undo takes back
- * the step that raised it instead, and "Adjust board" lets the players correct the board first
- * (the dialog steps aside while they adjust, since the modal makes the board inert). The engine's labels are i18n keys or names already readable
+ * the step that raised it instead, and its grab handle lowers it out of the way, so the players
+ * can adjust the board on the game screen first (the screen hides it while they adjust). The engine's labels are i18n keys or names already readable
  * (investigators, locations); a key the strings lack shows as the option's readable name.
  */
 export function DecisionDialog({
@@ -58,6 +58,7 @@ export function DecisionDialog({
       {...(actor ? { actor, kicker: t('decision.decides', { name: actor.name }) } : {})}
       title={t(decision.prompt, { card: decision.about, defaultValue: decision.prompt })}
       onCancel={(event) => event.preventDefault()}
+      lowerable
     >
       {board.resolving && <ResolvingCard board={board} card={board.resolving} />}
       {decision.provokedBy && actor && (
@@ -114,9 +115,6 @@ export function DecisionDialog({
           })}
         </ul>
         <footer>
-          <button type="button" disabled={busy} onClick={() => void actions.startAdjusting()}>
-            {t('header.adjust')}
-          </button>
           <button type="button" disabled={busy} onClick={() => void actions.undo()}>
             {t('header.undo')}
           </button>

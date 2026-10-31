@@ -19,7 +19,8 @@ const LANDSCAPE: ReadonlySet<CardType> = new Set<CardType>(['agenda', 'act']);
  * The card is a button that opens it whole (`CardZoom`), since on a phone only its top shows.
  * Opening and closing stay the caller's: the shell opens as a modal when it mounts and passes on
  * `cancel` (Escape), so a dialog that must be answered can refuse it; one the players may leave
- * gets an × (`onClose`).
+ * gets an × (`onClose`), and one that must be answered can be lowered out of the board's way
+ * (`lowerable`), so the players can adjust the board on the game screen first.
  */
 export function CardDialog({
   name,
@@ -29,6 +30,7 @@ export function CardDialog({
   title,
   onCancel,
   onClose,
+  lowerable = false,
   children,
 }: {
   /** The dialog's `data-dialog`, which its own stylesheet styles its content by. */
@@ -40,14 +42,25 @@ export function CardDialog({
   onCancel: (event: SyntheticEvent<HTMLDialogElement>) => void;
   /** For a dialog the players may leave: the × in the page's corner. */
   onClose?: () => void;
+  /**
+   * For a dialog that must be answered but leaves the board in reach (a decision): its grab handle
+   * lowers it to a strip along the bottom, and the board takes taps again until it is raised.
+   */
+  lowerable?: boolean;
   children: ReactNode;
 }) {
   const { t } = useTranslation();
   const titleId = useId();
   const dialog = useRef<HTMLDialogElement>(null);
+  const [lowered, setLowered] = useState(false);
   useEffect(() => {
-    dialog.current?.showModal();
-  }, []);
+    const element = dialog.current;
+    if (!element) return;
+    // A modal makes the board inert, so a lowered dialog is shown as a plain one instead.
+    if (element.open) element.close();
+    if (lowered) element.show();
+    else element.showModal();
+  }, [lowered]);
   const [zoomed, setZoomed] = useState(false);
   const layout = card === undefined ? (actor ? 'portrait' : 'page') : orientationOf(card);
 
@@ -58,10 +71,20 @@ export function CardDialog({
       onCancel={onCancel}
       data-dialog={name}
       data-shell={layout}
+      data-lowered={lowered || undefined}
     >
       {card && <SubjectCard card={card} onOpen={() => setZoomed(true)} />}
       {card === undefined && actor && <InvestigatorArt image={actor.image} />}
       <article>
+        {lowerable && (
+          <button
+            type="button"
+            data-part="grab"
+            aria-label={t(lowered ? 'cardDialog.raise' : 'cardDialog.lower')}
+            aria-expanded={!lowered}
+            onClick={() => setLowered(!lowered)}
+          />
+        )}
         {onClose && (
           <button
             type="button"

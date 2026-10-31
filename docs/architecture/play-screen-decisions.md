@@ -23,4 +23,4 @@ The game cannot go on without an answer, so:
 
 - Escape does not close it,
 - Undo in it takes back the step that raised it,
-- and its "Adjust board" lets the players correct the board first (the dialog steps aside meanwhile, since the modal makes the board inert).
+- and its grab handle lowers it to a strip along the bottom (`CardDialog`'s `lowerable`: the modal makes the board inert, so the lowered dialog is shown as a plain one), so the players can reach the board and its header, for example to adjust the board first; while they adjust, the dialog steps aside, and it comes back raised.

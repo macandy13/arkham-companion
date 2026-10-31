@@ -353,26 +353,15 @@ describe('DecisionDialog', () => {
     });
   });
 
-  it.each([
-    { button: 'Undo', calls: 'undo' },
-    { button: 'Adjust board', calls: 'start adjusting' },
-  ])('calls $calls from its $button button', ({ button, calls }) => {
+  it('takes back the step that raised it with Undo, and offers no Adjust board of its own', () => {
     const table = aldersTurnInTheStudy();
     table.investigate(alder, { result: 'open' });
-    const called: string[] = [];
-    const actions = gameActions(
-      async (step) => step(table),
-      async () => void called.push('undo'),
-      {
-        start: async () => void called.push('start adjusting'),
-        finish: async () => {},
-        cancel: async () => {},
-      },
-    );
-    renderFirstDecision(table, actions);
+    const undone = vi.fn(async () => {});
+    renderFirstDecision(table, { ...actionsOn(table), undo: undone });
 
-    fireEvent.click(screen.getByRole('button', { name: button }));
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
 
-    expect(called).toEqual([calls]);
+    expect(undone).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('button', { name: 'Adjust board' })).toBeNull();
   });
 });

@@ -396,6 +396,10 @@ export const appTexts = {
   cardActions: {
     title: 'Card actions',
   },
+  cardDialog: {
+    lower: 'Lower to reach the board',
+    raise: 'Raise the dialog',
+  },
   cardZoom: {
     open: 'Read {{name}}',
     close: 'Close',
