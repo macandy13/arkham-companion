@@ -3,7 +3,7 @@ import { investigationOpenExport, resumeImportedGame } from './fixtures/saved_ga
 
 // Journey: the game asks the players something (here the result of Roland Banks' investigation), they
 // draw a chaos token for the test in the decision dialog and answer it, which gives the board back.
-test('answer a decision in its dialog', async ({ page }) => {
+test('answer a decision in its dialog', { tag: '@flow' }, async ({ page }) => {
   const decision = page.getByRole('dialog', { name: 'Investigate Hallway' });
 
   await test.step('Resume a game whose investigation waits for its result', async () => {

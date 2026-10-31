@@ -154,8 +154,16 @@
   overflow: hidden;
 }
 
-/* The clue payment dialog cuts a payer's art out of their card's picture the same way. */
-:is(#investigators [data-card='investigator'], #board dialog[data-dialog='clue-payment'] figure)
+/*
+ * The clue payment dialog cuts a payer's art out of their card's picture the same way, and a card
+ * dialog (CardDialog) the portrait of the investigator who acts.
+ */
+:is(
+    #investigators [data-card='investigator'],
+    #board dialog[data-dialog='clue-payment'] figure,
+    #board dialog[data-shell],
+    #board dialog[data-shell] hgroup > p
+  )
   > picture
   > img {
   position: absolute;
@@ -165,7 +173,12 @@
   top: calc(var(--investigator-art-y) / var(--investigator-art-height) * -100%);
 }
 
-:is(#investigators [data-card='investigator'], #board dialog[data-dialog='clue-payment'] figure)
+:is(
+    #investigators [data-card='investigator'],
+    #board dialog[data-dialog='clue-payment'] figure,
+    #board dialog[data-shell],
+    #board dialog[data-shell] hgroup > p
+  )
   > picture:not([data-picture])
   > img {
   visibility: hidden;

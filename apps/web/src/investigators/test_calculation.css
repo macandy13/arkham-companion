@@ -68,11 +68,11 @@
  * The tokens drawn, in a row as round chaos tokens like the cardboard ones: a number token shows
  * its number, a symbol token the game's symbol, with its name kept for screen readers only.
  */
-#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) > ol {
+#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'] > article) > ol {
   flex-direction: row;
 }
 
-#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) > ol > li {
+#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'] > article) > ol > li {
   display: grid;
   place-items: center;
   box-sizing: border-box;

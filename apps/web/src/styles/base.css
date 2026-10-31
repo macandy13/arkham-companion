@@ -131,7 +131,12 @@ dialog {
   --color-doom: var(--color-ink-doom);
   --color-health: var(--color-ink-health);
   --color-sanity: var(--color-ink-sanity);
+}
 
+/* A card dialog (CardDialog) is only the frame around its card and page, so the page is the paper. */
+#app > main:not(:has(#board, #campaign-log)),
+dialog:where(:not([data-shell])),
+dialog[data-shell] > article {
   border: var(--border-width) solid var(--color-paper-rim);
   border-radius: var(--radius);
   background: var(--guide-paper);
@@ -195,7 +200,8 @@ dialog[role='alertdialog'] button[type='submit'] {
  * up to one of three widths, with an × in its top corner and a centred title, optionally under a
  * kicker (`<hgroup>`) that says what the dialog belongs to.
  */
-dialog {
+dialog:where(:not([data-shell])),
+dialog[data-shell] > article {
   box-sizing: border-box;
   max-width: min(var(--dialog-width), 100%);
   padding: var(--dialog-padding);

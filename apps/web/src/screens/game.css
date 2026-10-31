@@ -671,11 +671,12 @@
 }
 
 /*
- * The decision dialog (DecisionDialog): the question as its title, who decides and the test under
- * it, then the options as a column of full-width buttons and Undo at its foot. The clue payment
- * dialog (CluePaymentDialog, clue_payment.css) shares its column, title, text and foot.
+ * The decision dialog's page (DecisionDialog, on the CardDialog shell): the question as its title
+ * under who decides, the test under it, then the options as a column of full-width buttons and
+ * Undo at its foot. The clue payment dialog (CluePaymentDialog, clue_payment.css) shares its
+ * column, title, text and foot.
  */
-#board :is(dialog[data-dialog='decision'], dialog[data-dialog='clue-payment']) {
+#board :is(dialog[data-dialog='decision'] > article, dialog[data-dialog='clue-payment']) {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -706,22 +707,22 @@
  * An answer with its counts on one row: the button takes the room the steppers leave, and an
  * answer with two counts (an attack's damage and horror) wraps them under it on a phone.
  */
-#board dialog[data-dialog='decision'] > ul > li {
+#board dialog[data-dialog='decision'] > article > ul > li {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
   align-items: center;
 }
 
-#board dialog[data-dialog='decision'] > ul > li > button {
+#board dialog[data-dialog='decision'] > article > ul > li > button {
   flex: 1;
 }
 
-#board dialog[data-dialog='decision'] > ul > li > section {
+#board dialog[data-dialog='decision'] > article > ul > li > section {
   flex-wrap: nowrap;
 }
 
-#board dialog[data-dialog='decision'] > ul > li > section > p {
+#board dialog[data-dialog='decision'] > article > ul > li > section > p {
   flex: none;
 }
 

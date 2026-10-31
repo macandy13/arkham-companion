@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type {
   BoardView,
@@ -21,12 +21,14 @@ import {
   TestResult,
 } from '../investigators/TestCalculation';
 import type { DecisionAmounts, GameActions } from '../state/gameActions';
+import { CardDialog } from './CardDialog';
 
 /**
- * The first open decision (`BoardView.decisions[0]`) as a modal over the board: the encounter
- * card being resolved, if its revelation asked (`ResolvingCard`), the question in the players'
- * words with the card it is about, for an attack of opportunity the action that provoked it
- * (`DecisionView.provokedBy`), the investigator who answers it, the test of a skill test, and
+ * The first open decision (`BoardView.decisions[0]`) as a card dialog over the board
+ * (`CardDialog`): the card it is about beside the page (`DecisionView.card`), the investigator who
+ * answers it in the kicker over the question in the players' words, whom the encounter card being
+ * resolved was drawn for and its keywords, if its revelation asked (`ResolvingCard`), for an
+ * attack of opportunity the action that provoked it (`DecisionView.provokedBy`), the test of a skill test, and
  * one button per option, answered through `GameActions.answer` with the default
  * counts. A skill test one investigator takes also brings the chaos bag draw of the skill test
  * dialog: the players keep the test's skill or switch to another (a card can test a different
@@ -51,11 +53,6 @@ export function DecisionDialog({
   busy: boolean;
 }) {
   const { t } = useTranslation();
-  const titleId = useId();
-  const dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    dialog.current?.showModal();
-  }, []);
   const { test } = decision;
   const tested = decision.kind === 'skillTestResult' ? decision.for : undefined;
   const draw = useChaosDraw(board, tested, test);
@@ -67,28 +64,24 @@ export function DecisionDialog({
       ...(option === suggested?.outcome ? { margin: suggested.margin } : {}),
     });
 
+  const actor = decision.for === undefined ? undefined : board.investigator(decision.for);
   return (
-    <dialog
-      ref={dialog}
-      aria-labelledby={titleId}
+    <CardDialog
+      name="decision"
+      {...(decision.card ? { card: decision.card } : {})}
+      {...(actor ? { actor, kicker: t('decision.decides', { name: actor.name }) } : {})}
+      title={t(decision.prompt, { card: decision.about, defaultValue: decision.prompt })}
       onCancel={(event) => event.preventDefault()}
-      data-dialog="decision"
     >
       {board.resolving && <ResolvingCard board={board} card={board.resolving} />}
-      <h2 id={titleId}>
-        {t(decision.prompt, { card: decision.about, defaultValue: decision.prompt })}
-      </h2>
-      {decision.provokedBy && decision.for !== undefined && (
+      {decision.provokedBy && actor && (
         <p>
           {t(`decision.provokedBy.${decision.provokedBy.action}`, {
-            name: board.investigator(decision.for).name,
+            name: actor.name,
             card: decision.provokedBy.card,
             enemy: decision.about,
           })}
         </p>
-      )}
-      {decision.for !== undefined && (
-        <p>{t('decision.decides', { name: board.investigator(decision.for).name })}</p>
       )}
       {test && (
         <p>
@@ -127,7 +120,7 @@ export function DecisionDialog({
           {t('header.undo')}
         </button>
       </footer>
-    </dialog>
+    </CardDialog>
   );
 }
 

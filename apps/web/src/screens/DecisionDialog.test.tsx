@@ -65,12 +65,13 @@ describe('DecisionDialog', () => {
         .withTurnOf(alder),
     );
 
-  it('asks for the result of an investigation with the test and who is tested', () => {
+  it('asks for the result of an investigation with the test and who is tested, the Study beside it', () => {
     const table = aldersTurnInTheStudy();
     table.investigate(alder, { result: 'open' });
 
     renderFirstDecision(table);
 
+    expect(screen.getByRole('button', { name: 'Read Study' })).toBeDefined();
     expect(screen.getByRole('heading').textContent).toBe('Investigate Study');
     expect(screen.getByText('Alder decides')).toBeDefined();
     expect(screen.getByText('Intellect test (2)')).toBeDefined();
