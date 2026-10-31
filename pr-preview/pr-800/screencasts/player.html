@@ -67,7 +67,7 @@
       const SPEEDS = [0.125, 0.25, 0.5, 1];
       // Filled in by `playerPage` (screencasts.ts) with this push's flows. The page plays only
       // a flow named there, so a crafted link can never make it load or link another URL.
-      const RECORDED = {"version":"2b26b15","flows":{"take-a-resource-while-the-ghoul-priest-is-engaged":"take a resource while the Ghoul Priest is engaged"}};
+      const RECORDED = {"version":"c75c6f2","flows":{"take-a-resource-while-the-ghoul-priest-is-engaged":"take a resource while the Ghoul Priest is engaged"}};
       const params = new URLSearchParams(location.search);
       const flow = Object.keys(RECORDED.flows).find((slug) => slug === params.get('flow'));
       const requested = Number(params.get('speed'));
