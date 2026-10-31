@@ -1,25 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type {
-  BoardView,
-  ChaosToken,
-  DecisionCounts,
-  DecisionView,
-  InvestigatorId,
-  SkillName,
-  SkillTest,
-  SkillTestSuggestion,
-} from '@arkham/engine';
+import type { BoardView, DecisionCounts, DecisionView } from '@arkham/engine';
 import { assertNever } from '@arkham/util';
 import { ResolvingCard } from '../encounter/ResolvingCard';
-import { drawTokens, testFinished } from '../investigators/drawTokens';
-import {
-  DrawnTokens,
-  signed,
-  SkillToggles,
-  Stepper,
-  TestResult,
-} from '../investigators/TestCalculation';
+import { SkillTestBlock, Stepper, useSkillTest } from '../investigators/TestCalculation';
 import type { DecisionAmounts, GameActions } from '../state/gameActions';
 import { CardDialog } from './CardDialog';
 
@@ -30,9 +14,9 @@ import { CardDialog } from './CardDialog';
  * resolved was drawn for and its keywords, if its revelation asked (`ResolvingCard`), for an
  * attack of opportunity the action that provoked it (`DecisionView.provokedBy`), the test of a skill test, and
  * one button per option, answered through `GameActions.answer` with the default
- * counts. A skill test one investigator takes also brings the chaos bag draw of the skill test
- * dialog: the players keep the test's skill or switch to another (a card can test a different
- * one), set their modifier and let the app draw, and the calculation
+ * counts. A skill test one investigator takes also brings the test block of the skill test
+ * dialog (`SkillTestBlock`): the players keep the test's skill, switch to another or add one (a
+ * card can test a different one), set their modifier and let the app draw, and the calculation
  * (`BoardView.skillTest`) marks the option it suggests, which then answers with its margin; the
  * other option overrides it without one. The screen mounts one dialog per decision, so a draw
  * never carries over to the next; adjusting the board, which unmounts it, starts the draw over.
@@ -55,8 +39,8 @@ export function DecisionDialog({
   const { t } = useTranslation();
   const { test } = decision;
   const tested = decision.kind === 'skillTestResult' ? decision.for : undefined;
-  const draw = useChaosDraw(board, tested, test);
-  const suggested = draw.result && testFinished(draw.revealed) ? draw.result : undefined;
+  const run = useSkillTest(board, tested, test);
+  const suggested = run?.result && run.finished ? run.result : undefined;
   const [counts, setCounts] = useState(() => defaultCounts(decision.counts));
   const answer = (option: string) =>
     void actions.answer(option, {
@@ -88,8 +72,8 @@ export function DecisionDialog({
           {t('decision.test', { skill: t(`skill.${test.skill}`), difficulty: test.difficulty })}
         </p>
       )}
-      {draw.skill && tested !== undefined && (
-        <TestDraw board={board} tested={tested} skill={draw.skill} draw={draw} />
+      {run && tested !== undefined && (
+        <SkillTestBlock board={board} investigator={board.investigator(tested)} run={run} />
       )}
       <ul>
         {/* Two options can share a name (two enemies of one card), so the position is the key. */}
@@ -121,87 +105,6 @@ export function DecisionDialog({
         </button>
       </footer>
     </CardDialog>
-  );
-}
-
-/**
- * The skill tested (the decision's own until the players switch), their modifier and the tokens
- * drawn for a decision's skill test, and what they make.
- */
-interface ChaosDraw {
-  /** None only for a decision that is not a skill test. */
-  skill?: SkillName;
-  setSkill: (skill: SkillName) => void;
-  modifier: number;
-  setModifier: (modifier: number) => void;
-  revealed: readonly ChaosToken[];
-  setRevealed: (revealed: readonly ChaosToken[]) => void;
-  /** The calculation once a token is drawn (`BoardView.skillTest`); none for other decisions. */
-  result?: SkillTestSuggestion;
-}
-
-/** The draw for the test `tested` takes, kept in the dialog so its answer can use the result. */
-function useChaosDraw(
-  board: BoardView,
-  tested: InvestigatorId | undefined,
-  test: SkillTest | undefined,
-): ChaosDraw {
-  const [switched, setSkill] = useState<SkillName>();
-  const skill = switched ?? test?.skill;
-  const [modifier, setModifier] = useState(0);
-  const [revealed, setRevealed] = useState<readonly ChaosToken[]>([]);
-  const result =
-    test && skill && tested !== undefined && revealed.length > 0
-      ? board.skillTest(tested, { ...test, skill }, { modifier, tokens: revealed })
-      : undefined;
-  return {
-    ...(skill ? { skill } : {}),
-    setSkill,
-    modifier,
-    setModifier,
-    revealed,
-    setRevealed,
-    ...(result ? { result } : {}),
-  };
-}
-
-/**
- * The skill toggles (`skill` pressed), the modifier, the draw button, the tokens drawn and the
- * calculation of the test `tested` takes for a decision.
- */
-function TestDraw({
-  board,
-  tested,
-  skill,
-  draw,
-}: {
-  board: BoardView;
-  tested: InvestigatorId;
-  skill: SkillName;
-  draw: ChaosDraw;
-}) {
-  const { t } = useTranslation();
-  const { setSkill, modifier, setModifier, revealed, setRevealed, result } = draw;
-  return (
-    <>
-      <SkillToggles investigator={board.investigator(tested)} chosen={[skill]} onPick={setSkill} />
-      <Stepper
-        label={t('skillTest.modifier')}
-        value={modifier}
-        shown={signed(modifier)}
-        onChange={setModifier}
-      />
-      <button
-        type="button"
-        disabled={board.chaosBag.length === 0}
-        // The engine draws nothing itself, so the draw happens here, at the edge.
-        onClick={() => setRevealed(drawTokens(board.chaosBag, revealed, Math.random))}
-      >
-        {t('skillTest.draw')}
-      </button>
-      {revealed.length > 0 && <DrawnTokens tokens={revealed} />}
-      {result && <TestResult result={result} skill={skill} finished={testFinished(revealed)} />}
-    </>
   );
 }
 

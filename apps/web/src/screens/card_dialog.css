@@ -26,6 +26,7 @@
 }
 
 #board dialog[data-shell] > article {
+  position: relative;
   width: var(--dialog-width);
   max-height: calc(100dvh - var(--space-4));
   overflow-y: auto;

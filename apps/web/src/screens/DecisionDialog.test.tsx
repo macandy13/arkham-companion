@@ -193,7 +193,7 @@ describe('DecisionDialog', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Draw a token' }));
 
       const result = screen.getByRole('region', { name: 'Result' });
-      expect(within(result).getByRole('status').textContent).toBe('Fail: 1 against 2, by 1');
+      expect(within(result).getByRole('status').textContent).toBe('Fail 1 < 2 by 1');
       expect(suggestedOptions()).toEqual(['Failed']);
     });
 
@@ -206,7 +206,7 @@ describe('DecisionDialog', () => {
       expect(suggestedOptions()).toEqual(['Passed']);
     });
 
-    it("tests the decision's skill until the players switch to another", () => {
+    it("tests the decision's skill until the players switch to another, adding it, then dropping the first", () => {
       const table = aldersInvestigationWithAMinusTwo();
       const answered = vi.fn(async () => {});
       renderFirstDecision(table, { ...actionsOn(table), answer: answered });
@@ -217,6 +217,8 @@ describe('DecisionDialog', () => {
       expect(pressed()).toEqual(['Intellect 3']);
 
       fireEvent.click(screen.getByRole('button', { name: 'Willpower 1' }));
+      expect(pressed()).toEqual(['Willpower 1', 'Intellect 3']);
+      fireEvent.click(screen.getByRole('button', { name: 'Intellect 3' }));
       fireEvent.click(screen.getByRole('button', { name: 'Draw a token' }));
 
       expect(pressed()).toEqual(['Willpower 1']);

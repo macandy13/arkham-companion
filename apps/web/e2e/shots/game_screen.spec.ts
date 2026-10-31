@@ -78,22 +78,18 @@ test('the house map by day', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
 
-test(
-  'the house map in the card pictures style, the clues left on each card',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await page.goto('/#/settings');
-    await page.getByLabel('Card style').selectOption('Card pictures');
-    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+test('the house map in the card pictures style, the clues left on each card', async ({ page }) => {
+  await page.goto('/#/settings');
+  await page.getByLabel('Card style').selectOption('Card pictures');
+  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-    const hallway = page
-      .getByRole('figure', { name: 'House' })
-      .getByRole('group', { name: 'Hallway' });
-    await expect(hallway.getByRole('img', { name: 'Clues 0' })).toBeVisible();
-    await expect(page.locator('html')).toHaveAttribute('data-card-theme', 'pictures');
-    await expect(page.locator('[data-card="scenario"]')).toHaveAttribute('data-picture', 'shown');
-  },
-);
+  const hallway = page
+    .getByRole('figure', { name: 'House' })
+    .getByRole('group', { name: 'Hallway' });
+  await expect(hallway.getByRole('img', { name: 'Clues 0' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('data-card-theme', 'pictures');
+  await expect(page.locator('[data-card="scenario"]')).toHaveAttribute('data-picture', 'shown');
+});
 
 test('the house map in the Eldritch card style', async ({ page }) => {
   await page.goto('/#/settings');
@@ -175,19 +171,23 @@ test('Roland Banks’ combat boosted by 2, as an ally in play gives it', async (
   await expect(roland.getByRole('button', { name: 'Combat 6, boosted +2' })).toBeVisible();
 });
 
-test('Roland Banks’ willpower and agility test, a token drawn', async ({ page }) => {
-  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+test(
+  'Roland Banks’ willpower and agility test, a token drawn',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-  await page
-    .getByRole('region', { name: 'Roland Banks' })
-    .getByRole('button', { name: /^Willpower/ })
-    .click();
-  const test = page.getByRole('dialog', { name: /^Skill test/ });
-  await test.getByRole('button', { name: /^Agility/ }).click();
-  await test.getByRole('button', { name: 'Draw a token' }).click();
+    await page
+      .getByRole('region', { name: 'Roland Banks' })
+      .getByRole('button', { name: /^Willpower/ })
+      .click();
+    const test = page.getByRole('dialog', { name: /^Skill test/ });
+    await test.getByRole('button', { name: /^Agility/ }).click();
+    await test.getByRole('button', { name: 'Draw a token' }).click();
 
-  await expect(test.getByRole('status')).toBeVisible();
-});
+    await expect(test.getByRole('status')).toBeVisible();
+  },
+);
 
 test(
   'the decision dialog asking for the result of an investigation, a token drawn',
@@ -348,27 +348,23 @@ test('Frozen in Fear from Roland Banks’ threat area, zoomed to read', async ({
   await expect(page.getByRole('dialog', { name: 'Frozen in Fear' })).toBeVisible();
 });
 
-test(
-  'the attack of opportunity Roland Banks provokes by taking a resource',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(
-      page,
-      'Roland Banks threatened',
-      rolandThreatenedExport('Roland Banks threatened'),
-    );
+test('the attack of opportunity Roland Banks provokes by taking a resource', async ({ page }) => {
+  await resumeImportedGame(
+    page,
+    'Roland Banks threatened',
+    rolandThreatenedExport('Roland Banks threatened'),
+  );
 
-    await page
-      .getByRole('region', { name: 'Roland Banks' })
-      .getByRole('button', { name: 'Take a resource' })
-      .click();
+  await page
+    .getByRole('region', { name: 'Roland Banks' })
+    .getByRole('button', { name: 'Take a resource' })
+    .click();
 
-    const attack = page.getByRole('dialog', { name: 'Attack of opportunity by Ghoul Priest' });
-    await expect(
-      attack.getByText('Roland Banks takes a resource: Ghoul Priest attacks first'),
-    ).toBeVisible();
-  },
-);
+  const attack = page.getByRole('dialog', { name: 'Attack of opportunity by Ghoul Priest' });
+  await expect(
+    attack.getByText('Roland Banks takes a resource: Ghoul Priest attacks first'),
+  ).toBeVisible();
+});
 
 test('the Parlor’s details with its Resign among Roland Banks’ card actions', async ({ page }) => {
   await resumeImportedGame(page, 'In the Parlor', inTheParlorExport('In the Parlor'));

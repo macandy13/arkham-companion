@@ -1,96 +1,169 @@
 /*
- * The parts of a skill test calculation (TestCalculation) that the skill test dialog and the
- * decision dialog of a skill test share: the skill toggles, the stepper rows, the calculation and the outcome,
- * coloured like a pass or a fail, and the tokens drawn, and both dialogs' plain list items. The
+ * The skill test block (TestCalculation, MD.2b) every skill test dialog shares: the skill
+ * toggles, the steppers, the draw button and the result strip, on the card dialog's page. The
  * `#board` id lets these beat the home screen's `#app > main` rows and padded list cards.
  */
-#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) section {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  align-items: center;
-}
 
-#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) section > p {
-  flex: 1;
-  margin: 0;
-}
-
-#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) data {
-  min-width: var(--button-compact);
-  font-size: var(--font-size-subtitle);
-  font-variant-numeric: lining-nums tabular-nums;
-  text-align: center;
-}
-
-#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) ol {
-  display: flex;
-  flex-basis: 100%;
-  flex-wrap: wrap;
-  gap: var(--space-1);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) li {
-  display: block;
+/* The block's lists are plain rows, not the home screen's padded list cards. */
+#board
+  dialog[data-shell]
+  :is(section[data-part='skills'], section[data-part='strip'])
+  li:not([data-token]) {
   padding: 0;
   border: none;
   background: none;
 }
 
-#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) ol {
-  flex-direction: column;
+/* The four skills in one row, each its glyph from the investigator card and its value. */
+#board dialog[data-shell] section[data-part='skills'] {
+  display: block;
+}
+
+#board dialog[data-shell] section[data-part='skills'] > ul {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#board dialog[data-shell] button[data-skill] {
+  width: 100%;
+  gap: var(--space-2);
+  border-color: var(--color-paper-rim);
+}
+
+#board dialog[data-shell] button[data-skill]::before {
+  content: '';
+  flex: none;
+  width: var(--test-skill-icon-size);
+  height: var(--test-skill-icon-size);
+  background: currentcolor;
+  mask: var(--skill-icon) center / contain no-repeat;
+}
+
+#board dialog[data-shell] button[data-skill] > data {
+  font-family: var(--font-family-print);
+  font-size: var(--font-size-title);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+#board dialog[data-shell] button[data-skill][aria-pressed='true'] {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+}
+
+/* A stepper: its label (with what it stands for under it), then − its number +. */
+#board dialog[data-shell] section[data-part='stepper'] {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+#board dialog[data-shell] section[data-part='stepper'] > p {
+  display: grid;
+  flex: 1;
+  margin: 0;
+}
+
+#board dialog[data-shell] section[data-part='stepper'] > p > span {
   color: var(--color-text-muted);
   font-size: var(--font-size-note);
 }
 
-#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) output {
-  flex-basis: 100%;
+#board dialog[data-shell] section[data-part='stepper'] > button {
+  border-radius: var(--radius-round);
+}
+
+#board dialog[data-shell] section[data-part='stepper'] > data {
+  min-width: var(--button-compact);
+  font-family: var(--font-family-print);
+  font-size: var(--font-size-title);
+  font-variant-numeric: lining-nums tabular-nums;
+  text-align: center;
+}
+
+/*
+ * The result strip between two rules: the skill value's terms and their sum in a narrow column,
+ * the tokens drawn in the middle, the outcome on the right.
+ */
+#board dialog[data-shell] section[data-part='strip'] {
+  display: grid;
+  grid-template-columns: var(--test-calculation-width) minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: center;
+  padding-block: var(--space-2);
+  border-block: var(--border-width) solid var(--color-paper-rim);
+}
+
+#board dialog[data-shell] section[data-part='strip'] ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+#board dialog[data-shell] section[data-part='strip'] > ol {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-note);
+}
+
+#board dialog[data-shell] section[data-part='strip'] > ol > li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+#board dialog[data-shell] section[data-part='strip'] > ol > li:last-child {
+  justify-content: flex-end;
+  border-block-start: var(--border-width) solid var(--color-paper-rim);
+  color: var(--color-text);
   font-family: var(--font-family-print);
   font-size: var(--font-size-subtitle);
 }
 
-#board
-  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
-  output[data-outcome='pass'] {
-  color: var(--color-clue);
+#board dialog[data-shell] section[data-part='strip'] > figure {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  margin: 0;
 }
 
-#board
-  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
-  output[data-outcome='fail'] {
-  color: var(--color-doom);
+#board dialog[data-shell] section[data-part='strip'] > figure > ol {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+#board dialog[data-shell] section[data-part='strip'] > figure > figcaption {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-note);
 }
 
 /*
- * The tokens drawn, in a row as round chaos tokens like the cardboard ones: a number token shows
- * its number, a symbol token the game's symbol, with its name kept for screen readers only.
+ * A token drawn, round like the cardboard one: a number token shows its number, a symbol token
+ * the game's symbol, with its name kept for screen readers only.
  */
-#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'] > article) > ol {
-  flex-direction: row;
-}
-
-#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'] > article) > ol > li {
+#board dialog[data-shell] li[data-token] {
   display: grid;
   place-items: center;
   box-sizing: border-box;
-  width: var(--stat-token-size);
-  height: var(--stat-token-size);
-  border: var(--piece-ring-width) solid var(--color-parchment-light);
+  width: var(--test-token-size);
+  height: var(--test-token-size);
+  border: var(--piece-ring-width) solid var(--color-brass-deep);
   border-radius: var(--radius-round);
   background: var(--color-token-shroud);
   box-shadow: var(--header-token-shadow);
   color: var(--header-token-text);
-  font-size: var(--font-size-note);
-  font-weight: bold;
+  font-family: var(--font-family-print);
+  font-size: var(--font-size-subtitle);
   font-variant-numeric: lining-nums tabular-nums;
 }
 
-/* A symbol token shows its symbol (`--token-symbol`, set per token below) in place of its name. */
 #board
-  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
+  dialog[data-shell]
   li:is(
     [data-token='skull'],
     [data-token='cultist'],
@@ -106,7 +179,7 @@
 }
 
 #board
-  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
+  dialog[data-shell]
   li:is(
     [data-token='skull'],
     [data-token='cultist'],
@@ -119,105 +192,93 @@
     [data-token='frost']
   )::before {
   content: '';
-  width: var(--icon-size);
-  height: var(--icon-size);
+  width: var(--test-token-symbol-size);
+  height: var(--test-token-symbol-size);
   background: currentcolor;
   mask: var(--token-symbol) center / contain no-repeat;
 }
 
-#board
-  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
-  li[data-token='skull'] {
+#board dialog[data-shell] li[data-token='skull'] {
   --token-symbol: url('../symbols/skull.svg');
 }
 
-#board
-  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
-  li[data-token='cultist'] {
+#board dialog[data-shell] li[data-token='cultist'] {
   --token-symbol: url('../symbols/cultist.svg');
 }
 
-#board
-  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
-  li[data-token='tablet'] {
+#board dialog[data-shell] li[data-token='tablet'] {
   --token-symbol: url('../symbols/tablet.svg');
 }
 
-#board
-  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
-  li[data-token='elderThing'] {
+#board dialog[data-shell] li[data-token='elderThing'] {
   --token-symbol: url('../symbols/elder_thing.svg');
 }
 
-#board
-  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
-  li[data-token='autoFail'] {
+#board dialog[data-shell] li[data-token='autoFail'] {
   --token-symbol: url('../symbols/auto_fail.svg');
 }
 
-#board
-  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
-  li[data-token='elderSign'] {
+#board dialog[data-shell] li[data-token='elderSign'] {
   --token-symbol: url('../symbols/elder_sign.svg');
 }
 
-#board
-  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
-  li[data-token='bless'] {
+#board dialog[data-shell] li[data-token='bless'] {
   --token-symbol: url('../symbols/bless.svg');
 }
 
-#board
-  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
-  li[data-token='curse'] {
+#board dialog[data-shell] li[data-token='curse'] {
   --token-symbol: url('../symbols/curse.svg');
 }
 
-#board
-  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
-  li[data-token='frost'] {
+#board dialog[data-shell] li[data-token='frost'] {
   --token-symbol: url('../symbols/frost.svg');
 }
 
-/* A skill toggle: its icon, then its value, like on the card. */
-#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) button[data-skill] {
-  display: flex;
-  gap: var(--space-1);
-  align-items: center;
+/* The outcome: PASS or FAIL, the total against the difficulty, and by how much. */
+#board dialog[data-shell] section[data-part='strip'] > output {
+  display: grid;
+  justify-items: center;
+  font-family: var(--font-family-print);
+  font-size: var(--font-size-subtitle);
+  line-height: var(--test-outcome-line-height);
+  text-align: center;
 }
 
-#board
-  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
-  button[data-skill]::before {
-  content: '';
-  width: var(--stat-icon-size);
-  height: var(--stat-icon-size);
-  background: currentcolor;
-  mask: var(--skill-icon) center / contain no-repeat;
+#board dialog[data-shell] section[data-part='strip'] > output > span:first-child {
+  font-size: var(--font-size-title);
+  letter-spacing: var(--test-outcome-letter-spacing);
+  text-transform: uppercase;
 }
 
-#board
-  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
-  button[data-skill]
-  > data {
-  min-width: 0;
-  font-size: var(--font-size-body);
+#board dialog[data-shell] section[data-part='strip'] > output > span:last-child {
+  color: var(--color-text-muted);
+  font-family: var(--font-family);
+  font-size: var(--font-size-note);
 }
 
-#board :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision']) section > ul {
-  display: flex;
-  flex-basis: 100%;
-  flex-wrap: wrap;
-  gap: var(--space-1);
+#board dialog[data-shell] section[data-part='strip'] > output[data-outcome='pass'] {
+  color: var(--color-clue);
+}
+
+#board dialog[data-shell] section[data-part='strip'] > output[data-outcome='fail'] {
+  color: var(--color-doom);
+}
+
+#board dialog[data-shell] section[data-part='strip'] > p {
+  grid-column: 1 / -1;
   margin: 0;
-  padding: 0;
-  list-style: none;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-note);
 }
 
+/*
+ * The block's buttons keep their full size in the panel's own test too, which opens inside the
+ * investigator panel, whose buttons are compact.
+ */
 #board
-  :is(dialog[data-dialog='skill-test'], dialog[data-dialog='decision'])
-  button[data-skill][aria-pressed='true'] {
-  border-color: var(--color-accent);
-  background: var(--color-accent);
-  color: var(--color-accent-text);
+  dialog[data-shell]
+  :is(section[data-part='stepper'] > button, article > button:not([data-icon])) {
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  font-size: var(--font-size-body);
 }

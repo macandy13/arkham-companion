@@ -211,7 +211,8 @@ dialog[role='alertdialog'] {
   max-width: min(var(--dialog-width-narrow), 100%);
 }
 
-dialog > button[data-icon='close'] {
+dialog > button[data-icon='close'],
+dialog[data-shell] > article > button[data-icon='close'] {
   position: absolute;
   top: var(--dialog-close-inset);
   right: var(--dialog-close-inset);
@@ -219,7 +220,8 @@ dialog > button[data-icon='close'] {
   border-radius: var(--radius-round);
 }
 
-dialog > button[data-icon='close']::before {
+dialog > button[data-icon='close']::before,
+dialog[data-shell] > article > button[data-icon='close']::before {
   mask-image: url('../investigators/icons/close.svg');
 }
 
@@ -233,7 +235,8 @@ dialog h2 {
 }
 
 /* Titles keep clear of the × on both sides, so they stay centred. */
-dialog:has(> button[data-icon='close']) > :is(h2, hgroup) {
+dialog:has(> button[data-icon='close']) > :is(h2, hgroup),
+dialog[data-shell] > article:has(> button[data-icon='close']) > hgroup {
   padding-inline: var(--touch-target);
 }
 

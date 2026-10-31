@@ -8,7 +8,11 @@ The first open decision shows as a [dialog](../../apps/web/src/screens/DecisionD
 - the test of a skill test,
 - and a button per option, answered by its readable name (`GameActions.answer` maps it to the option).
 
-A skill test one investigator takes also brings the skill test dialog's skill toggles (starting on the test's skill, since a card can test another), modifier, draw and calculation (the shared [`TestCalculation.tsx`](../../apps/web/src/investigators/TestCalculation.tsx)).
+A skill test one investigator takes also brings the test block the skill test dialog shares ([`TestCalculation.tsx`](../../apps/web/src/investigators/TestCalculation.tsx), MD.2b): `useSkillTest` keeps the run (skills, modifier, tokens drawn, `BoardView.skillTest`'s result) and `SkillTestBlock` shows it:
+
+- the four skills as toggles with the investigator card's glyphs, starting on the test's skill; tapping another adds it (`SkillTestInput.addedSkill`), tapping the first then drops it, so the players can switch (a card can test another skill);
+- the modifier, for committed cards and card effects (a difficulty stepper only in the panel's own test);
+- the result strip (`ResultStrip`): the skill value's terms and their sum left, the tokens drawn in the middle with their sum when there are several ("?" for one the app cannot tell), PASS or FAIL over the total against the difficulty and the margin right.
 The calculation marks the answer it works out and sends that one with its `margin`, while the other still overrides it (the screen keys the dialog by the decision's id, so a draw never carries over).
 
 - An option's counts (`DecisionView.counts`: the clues a passed investigation discovers, the damage a passed fight deals, an attack's damage and horror) show as steppers within their limits on the row of their answer, which carries them as `amount` and `amounts`.

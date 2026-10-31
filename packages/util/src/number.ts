@@ -20,3 +20,8 @@ export function isNonZeroInteger(value: number): boolean {
 export function cycledIndex(index: number, step: number, length: number): number {
   return (((index + step) % length) + length) % length;
 }
+
+/** The sum of `values`, 0 for none. */
+export function sum(values: readonly number[]): number {
+  return values.reduce((total, value) => total + value, 0);
+}
