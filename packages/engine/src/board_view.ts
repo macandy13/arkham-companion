@@ -46,6 +46,7 @@ import {
   type CardCode,
   type CardImagePath,
   type CardName,
+  type EncounterSetCode,
   type InstanceId,
   type InvestigatorId,
   type MapId,
@@ -224,6 +225,8 @@ interface LocationViewBase {
   image?: CardImagePath;
   /** Its connection symbol (`CardStats.symbol`), when the card data has one. */
   symbol?: LocationSymbol;
+  /** The encounter set it belongs to (`CardStats.encounterCode`), whose icon its set medallion prints. */
+  encounterSet?: EncounterSetCode;
   clues: number;
   doom?: number;
   investigators?: InvestigatorId[];
@@ -265,6 +268,8 @@ export interface MapView {
 export interface EnemyStatsView {
   /** The picture of its card (`CardStats.imageSrc`), when the card data has one. */
   image?: CardImagePath;
+  /** The encounter set it belongs to (`CardStats.encounterCode`), whose icon its set medallion prints. */
+  encounterSet?: EncounterSetCode;
   fight: number;
   evade: number;
   attack: { damage: number; horror: number };
@@ -288,6 +293,8 @@ export interface CardFaceView {
   image?: CardImagePath;
   /** The picture of its back (`CardStats.backImageSrc`), for a card with two sides. */
   backImage?: CardImagePath;
+  /** The encounter set it belongs to (`CardStats.encounterCode`), whose icon its set medallion prints. */
+  encounterSet?: EncounterSetCode;
 }
 
 /** A basic action against an enemy (`BoardView.enemyActions`). */
@@ -793,9 +800,10 @@ export class BoardView {
   enemyStats(enemy: InstanceId): EnemyStatsView {
     const card = requireCard(this.state, enemy);
     const stats = cardStats(this.ctx.cards, card.code);
-    const { damage = 0, horror = 0, imageSrc, victory } = stats;
+    const { damage = 0, horror = 0, imageSrc, encounterCode, victory } = stats;
     return {
       ...(imageSrc === undefined ? {} : { image: imageSrc }),
+      ...(encounterCode === undefined ? {} : { encounterSet: encounterCode }),
       fight: effectiveValue(this.ctx, this.state, card, 'fight'),
       evade: effectiveValue(this.ctx, this.state, card, 'evade'),
       attack: { damage, horror },
@@ -986,7 +994,10 @@ function nameOf(ctx: EngineContext, card: CardInstance): CardName {
 }
 
 function cardFaceOf(ctx: EngineContext, card: CardInstance): CardFaceView {
-  const { typeCode, traits, imageSrc, backImageSrc } = cardStats(ctx.cards, card.code);
+  const { typeCode, traits, imageSrc, backImageSrc, encounterCode } = cardStats(
+    ctx.cards,
+    card.code,
+  );
   return {
     id: card.id,
     name: nameOf(ctx, card),
@@ -994,6 +1005,7 @@ function cardFaceOf(ctx: EngineContext, card: CardInstance): CardFaceView {
     traits,
     ...(imageSrc === undefined ? {} : { image: imageSrc }),
     ...(backImageSrc === undefined ? {} : { backImage: backImageSrc }),
+    ...(encounterCode === undefined ? {} : { encounterSet: encounterCode }),
   };
 }
 
@@ -1079,7 +1091,10 @@ const NO_CLUES: ScaledValue = { fixed: 0, perInvestigator: 0 };
 
 function locationView(ctx: EngineContext, state: GameState, location: CardInstance): LocationView {
   const present = state.investigators.filter((inv) => inv.locationId === location.id);
-  const { imageSrc, backImageSrc, actions, symbol, clues } = cardStats(ctx.cards, location.code);
+  const { imageSrc, backImageSrc, actions, symbol, clues, encounterCode } = cardStats(
+    ctx.cards,
+    location.code,
+  );
   const image = location.faceUp ? imageSrc : backImageSrc;
   return {
     id: location.id,
@@ -1087,6 +1102,7 @@ function locationView(ctx: EngineContext, state: GameState, location: CardInstan
     map: mapOf(location),
     ...(image === undefined ? {} : { image }),
     ...(symbol === undefined ? {} : { symbol }),
+    ...(encounterCode === undefined ? {} : { encounterSet: encounterCode }),
     ...(location.faceUp
       ? {
           revealed: true as const,
