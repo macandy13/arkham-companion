@@ -18,7 +18,8 @@ const LANDSCAPE: ReadonlySet<CardType> = new Set<CardType>(['agenda', 'act']);
  * page is a sheet along the bottom with the card peeking out beside its title (card_dialog.css).
  * The card is a button that opens it whole (`CardZoom`), since on a phone only its top shows.
  * Opening and closing stay the caller's: the shell opens as a modal when it mounts and passes on
- * `cancel` (Escape), so a dialog that must be answered can refuse it.
+ * `cancel` (Escape), so a dialog that must be answered can refuse it; one the players may leave
+ * gets an × (`onClose`).
  */
 export function CardDialog({
   name,
@@ -27,6 +28,7 @@ export function CardDialog({
   kicker,
   title,
   onCancel,
+  onClose,
   children,
 }: {
   /** The dialog's `data-dialog`, which its own stylesheet styles its content by. */
@@ -36,8 +38,11 @@ export function CardDialog({
   kicker?: ReactNode;
   title: ReactNode;
   onCancel: (event: SyntheticEvent<HTMLDialogElement>) => void;
+  /** For a dialog the players may leave: the × in the page's corner. */
+  onClose?: () => void;
   children: ReactNode;
 }) {
+  const { t } = useTranslation();
   const titleId = useId();
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -57,6 +62,15 @@ export function CardDialog({
       {card && <SubjectCard card={card} onOpen={() => setZoomed(true)} />}
       {card === undefined && actor && <InvestigatorArt image={actor.image} />}
       <article>
+        {onClose && (
+          <button
+            type="button"
+            data-icon="close"
+            aria-label={t('cardZoom.close')}
+            title={t('cardZoom.close')}
+            onClick={onClose}
+          />
+        )}
         <hgroup>
           {kicker !== undefined && (
             <p>

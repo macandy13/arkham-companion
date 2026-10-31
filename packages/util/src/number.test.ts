@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { cycledIndex, isNonNegativeInteger, isNonZeroInteger, isPositiveInteger } from './index';
+import {
+  cycledIndex,
+  isNonNegativeInteger,
+  isNonZeroInteger,
+  isPositiveInteger,
+  sum,
+} from './index';
 
 describe('isPositiveInteger', () => {
   it.each([
@@ -48,5 +54,15 @@ describe('cycledIndex', () => {
     { index: 1, step: -1, length: 3, expected: 0 },
   ])('moves $step from $index of $length to $expected', ({ index, step, length, expected }) => {
     expect(cycledIndex(index, step, length)).toBe(expected);
+  });
+});
+
+describe('sum', () => {
+  it.each([
+    { values: [], expected: 0 },
+    { values: [3], expected: 3 },
+    { values: [2, -2, -1], expected: -1 },
+  ])('adds $values to $expected', ({ values, expected }) => {
+    expect(sum(values)).toBe(expected);
   });
 });

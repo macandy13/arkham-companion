@@ -18,6 +18,11 @@ const alder = investigatorId('alder');
 const button = (name: string) => screen.getByRole<HTMLButtonElement>('button', { name });
 const result = () => screen.queryByRole('region', { name: 'Result' });
 const outcome = () => within(result()!).getByRole('status').textContent;
+/** The terms of the skill value before any token, and their sum, as the strip's left column lists them. */
+const calculation = () =>
+  within(screen.getByRole('list', { name: 'Skill value' }))
+    .getAllByRole('listitem')
+    .map((term) => term.textContent);
 const pressedSkills = () =>
   within(screen.getByRole('region', { name: 'Skills' }))
     .getAllByRole('button', { pressed: true })
@@ -71,10 +76,10 @@ describe('SkillTestDialog', () => {
   });
 
   it.each<{ bag: ChaosToken[]; raises: number; shown: string }>([
-    { bag: ['+1'], raises: 0, shown: 'Pass: 4 against 3, by 1' },
-    { bag: ['+1'], raises: 1, shown: 'Pass: 4 against 4, by 0' },
-    { bag: ['-2'], raises: 0, shown: 'Fail: 1 against 3, by 2' },
-    { bag: ['autoFail'], raises: 0, shown: 'Fail: 0 against 3, by 3' },
+    { bag: ['+1'], raises: 0, shown: 'Pass 4 ≥ 3 by 1' },
+    { bag: ['+1'], raises: 1, shown: 'Pass 4 ≥ 4 by 0' },
+    { bag: ['-2'], raises: 0, shown: 'Fail 1 < 3 by 2' },
+    { bag: ['autoFail'], raises: 0, shown: 'Fail 0 < 3 by 3' },
   ])(
     'drawing from $bag with the difficulty raised $raises times from 3 shows "$shown"',
     ({ bag, raises, shown }) => {
@@ -93,12 +98,9 @@ describe('SkillTestDialog', () => {
     fireEvent.click(button('Agility 4'));
     fireEvent.click(button('Draw a token'));
 
-    const steps = within(result()!)
-      .getAllByRole('listitem')
-      .map((step) => step.textContent);
     expect(pressedSkills()).toEqual(['Willpower 3', 'Agility 4']);
-    // The skill's steps come first, then the difficulty's.
-    expect(steps).toEqual(['Willpower 3', '+ Agility +4: 7', 'Token −2 (−2): 5', 'Difficulty 3']);
+    expect(calculation()).toEqual(['Willpower 3', 'Agility +4', '7']);
+    expect(outcome()).toBe('Pass 5 ≥ 3 by 2');
   });
 
   it('tests another skill once the tapped one is dropped', () => {
@@ -109,7 +111,7 @@ describe('SkillTestDialog', () => {
     fireEvent.click(button('Draw a token'));
 
     expect(pressedSkills()).toEqual(['Agility 4']);
-    expect(outcome()).toBe('Pass: 4 against 3, by 1');
+    expect(outcome()).toBe('Pass 4 ≥ 3 by 1');
   });
 
   it("adds the players' modifier", () => {
@@ -119,7 +121,7 @@ describe('SkillTestDialog', () => {
     fireEvent.click(button('Raise the Modifier'));
     fireEvent.click(button('Draw a token'));
 
-    expect(within(result()!).getByText('Modifier +2: 5')).toBeTruthy();
+    expect(calculation()).toEqual(['Willpower 3', 'Modifier +2', '5']);
   });
 
   it('lists the tokens drawn by name, in the order they came out', () => {
@@ -133,6 +135,18 @@ describe('SkillTestDialog', () => {
       .getAllByRole('listitem')
       .map((token) => token.textContent);
     expect(drawn).toEqual(['Bless', 'Skull']);
+  });
+
+  it('sums several tokens under them, a token the app cannot tell as "?"', () => {
+    // Always the first token left: the bless, which reveals the elder sign, the investigator's own
+    // ability.
+    vi.spyOn(Math, 'random').mockReturnValue(0);
+    renderWillpowerTest(['bless', 'elderSign']);
+
+    fireEvent.click(button('Draw a token'));
+
+    expect(within(result()!).getByText('Tokens +2 ? = +2')).toBeTruthy();
+    expect(within(result()!).getByText('Add the effect of Elder Sign yourself.')).toBeTruthy();
   });
 
   it('asks for another token when the bag runs out after a bless', () => {
