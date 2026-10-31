@@ -744,9 +744,11 @@ describe('MapBoard', () => {
   describe('the location details', () => {
     const details = (name: string) => screen.getByRole('dialog', { name });
     const tap = (name: string) => fireEvent.click(screen.getByRole('button', { name }));
+    /** The details' buttons, leaving out the card beside the page, which every location has. */
     const offered = (name: string) =>
       within(details(name))
         .queryAllByRole('button')
+        .filter((button) => button.dataset['part'] !== 'subject')
         .map((button) => button.getAttribute('aria-label') ?? button.textContent);
     /**
      * Alder's turn in the study, with a ghoul engaged with Alder there. The house connects the
@@ -847,7 +849,13 @@ describe('MapBoard', () => {
 
       fireEvent.click(tile('study'));
 
-      expect(within(details('study')).getByText('Shroud 2 · Clues 2')).toBeTruthy();
+      const texts = (role: 'term' | 'definition') =>
+        within(details('study'))
+          .getAllByRole(role)
+          .map((value) => value.textContent);
+      expect(texts('term')).toEqual(['Shroud', 'Clues']);
+      // The blank study prints no clue value; its 2 clues were put on it by hand.
+      expect(texts('definition')).toEqual(['2', '2 / 0']);
       expect(
         within(details('study'))
           .getAllByRole('listitem')
@@ -1062,7 +1070,7 @@ describe('MapBoard', () => {
         within(menu('study'))
           .getAllByRole('button')
           .map((button) => button.getAttribute('aria-label')),
-      ).toEqual(['Close', 'Remove a clue', 'Add a clue', 'Remove doom', 'Add doom']);
+      ).toEqual(['Read study', 'Close', 'Remove a clue', 'Add a clue', 'Remove doom', 'Add doom']);
     });
 
     it('reveals an unrevealed location', async () => {
@@ -1117,7 +1125,7 @@ describe('MapBoard', () => {
         .getAllByRole('button')
         .filter((button) => !button.hasAttribute('disabled'))
         .map((button) => button.getAttribute('aria-label') ?? button.textContent);
-      expect(enabled).toEqual(['Close']);
+      expect(enabled).toEqual(['Read hallway', 'Close']);
     });
   });
 });

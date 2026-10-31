@@ -261,6 +261,9 @@ export const appTexts = {
   location: {
     close: 'Close',
     facts: 'Shroud {{shroud}} · Clues {{clues}}',
+    shroud: 'Shroud',
+    cluesLeft: 'Clues',
+    cluesOf: '{{left}} / {{value}}',
     unrevealed: 'Unrevealed',
     card: 'The card of {{name}}',
     here: 'Here',

@@ -263,6 +263,9 @@ export const appTexts = {
   location: {
     close: 'Schließen',
     facts: 'Schleier {{shroud}} · Hinweise {{clues}}',
+    shroud: 'Schleier',
+    cluesLeft: 'Hinweise',
+    cluesOf: '{{left}} / {{value}}',
     unrevealed: 'Unaufgedeckt',
     card: 'Die Karte von {{name}}',
     here: 'Hier',

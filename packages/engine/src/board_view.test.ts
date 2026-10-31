@@ -388,6 +388,7 @@ describe('locations', () => {
         revealed: true,
         shroud: 3,
         printedClues: { fixed: 2, perInvestigator: 0 },
+        clueValue: 2,
         clues: 2,
         investigators: [alice, bob],
         cards: ['ghoul', 'old_key'],
@@ -450,6 +451,18 @@ describe('locations', () => {
       .start();
 
     expect(boardView(context, state).location(study)).toMatchObject({ printedClues });
+  });
+
+  it('reads a clue value of 2 per investigator as 4 for alice and bob', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study', { clues: perInvestigator(2) }), {
+        revealed: true,
+      })
+      .withInvestigator(alice, { locationId: study })
+      .withInvestigator(bob, { locationId: study })
+      .start();
+
+    expect(boardView(context, state).location(study)).toMatchObject({ clueValue: 4 });
   });
 
   it('reads the doom on a location and a shroud that its attachments raise', () => {

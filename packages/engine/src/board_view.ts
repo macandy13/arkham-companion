@@ -207,6 +207,8 @@ export type LocationView = LocationViewBase &
          * the card draws with the clues left (`clues`) on it.
          */
         printedClues: ScaledValue;
+        /** What `printedClues` comes to for this game's player count, which the clues left read against. */
+        clueValue: number;
         /**
          * The action abilities its revealed side prints ("[action] Resign."), whoever may take
          * them, in printed order, for drawing on the card; what the turn investigator may take
@@ -1124,6 +1126,7 @@ function locationView(ctx: EngineContext, state: GameState, location: CardInstan
           revealed: true as const,
           shroud: effectiveValue(ctx, state, location, 'shroud'),
           printedClues: clues ?? NO_CLUES,
+          clueValue: resolveValue(clues ?? NO_CLUES, state.meta.playerCount),
           ...listIfAny('printedActions', printedActions(actions ?? [])),
         }
       : { revealed: false as const }),

@@ -3,10 +3,10 @@
 The [map](../../apps/web/src/map/MapBoard.tsx) is an SVG of location tiles at their layout cells with pan, zoom and drag-to-play pieces (its tabs and small zoom icons float over its top corners, and its name is for screen readers only).
 The map tabs follow the WAI-ARIA tabs pattern: one Tab stop, the arrow keys, Home and End choose the map.
 
-A tap on a tile (or its "i" button, for the keyboard) opens the location's [details](../../apps/web/src/map/LocationDetails.tsx) (on a phone in the map row instead, the [location mode](play-screen.md#location-mode)):
+A tap on a tile (or its "i" button, for the keyboard) opens the location's [details](../../apps/web/src/map/LocationDetails.tsx) on the card shell (`CardDialog`; on a phone in the map row instead, the [location mode](play-screen.md#location-mode)):
 
-- its card (the tile's drawing with its pieces, at zoomed-card size),
-- its shroud and clues,
+- its card beside the page (the tile's drawing with its pieces, as the shell's `drawn` card),
+- its shroud and its clues left of its clue value for the player count (`LocationView.clueValue`, "1 / 2") as the page's values, or "Unrevealed",
 - who is there,
 - the cards attached to it (each opening the card zoom),
 - and an action row (the enemy details' [`ActionRow`](../../apps/web/src/screens/ActionRow.tsx)) built from a list of what the investigator whose turn it is can do there:
