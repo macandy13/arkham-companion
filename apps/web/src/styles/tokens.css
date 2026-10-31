@@ -278,11 +278,9 @@
   --card-dialog-peek-turn: -2deg;
   /*
    * A card dialog lowered out of the board's way (CardDialog `lowerable`): only this much of its
-   * page shows along the bottom, its title and kicker. The grab handle that lowers and raises it
-   * is a bar in a target this tall.
+   * page shows along the bottom, its handle, kicker and title.
    */
   --card-dialog-lowered-height: 7.5rem;
-  --card-dialog-grab-target: 1.5rem;
   /*
    * The skill test block (MD.2b, test_calculation.css): the glyph of a skill toggle, a chaos token
    * drawn and its symbol, the narrow column of the skill value's terms (so three or more tokens

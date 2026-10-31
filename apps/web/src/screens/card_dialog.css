@@ -96,7 +96,7 @@
   align-self: center;
   flex: none;
   width: var(--touch-target);
-  min-height: var(--card-dialog-grab-target);
+  min-height: var(--touch-target);
   margin-block-start: calc(-1 * var(--space-3));
   padding: 0;
   border: none;

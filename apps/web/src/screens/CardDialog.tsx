@@ -81,7 +81,6 @@ export function CardDialog({
             type="button"
             data-part="grab"
             aria-label={t(lowered ? 'cardDialog.raise' : 'cardDialog.lower')}
-            aria-expanded={!lowered}
             onClick={() => setLowered(!lowered)}
           />
         )}
