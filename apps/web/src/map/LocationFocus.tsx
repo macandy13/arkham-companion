@@ -8,7 +8,7 @@ import { neighboursOf, type Neighbour, type Side } from './mapLayout';
 
 /**
  * The phone's location mode (M3.14e): one location in the detail view's map row, in place of the
- * whole map, with the same content as the location details dialog (`LocationContent`) and a Map
+ * whole map, with the same parts as the location details' page (`LocationPage`, through `LocationContent`) and a Map
  * button that brings the whole map back (`onMap`). Its connected locations sit around its card,
  * each on the side where it lies on the map (`neighboursOf`), and a tap on one shows that one
  * instead (`onGo`), sliding in from that side. It stays on the location after a move or an

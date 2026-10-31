@@ -261,7 +261,6 @@ export const appTexts = {
     details: 'Details zu {{location}}',
   },
   location: {
-    close: 'Schließen',
     facts: 'Schleier {{shroud}} · Hinweise {{clues}}',
     shroud: 'Schleier',
     cluesLeft: 'Hinweise',

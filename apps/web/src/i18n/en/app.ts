@@ -259,7 +259,6 @@ export const appTexts = {
     details: 'Details of {{location}}',
   },
   location: {
-    close: 'Close',
     facts: 'Shroud {{shroud}} · Clues {{clues}}',
     shroud: 'Shroud',
     cluesLeft: 'Clues',
