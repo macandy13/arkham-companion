@@ -17,13 +17,19 @@ const CARD_PICTURE_DIR = join(import.meta.dirname, '..', '.card_pictures');
 /** Roland Banks' picture, so the investigator card's art window shows a real crop in the shots. */
 export const ROLAND_PICTURE = cardImagePath('/bundles/cards/01001.png');
 
-/** Every picture the E2E games name: The Gathering's cards, both sides, and Roland Banks'. */
+/** The Gathering's reference card front, as `cards.json` names it for the card pictures theme. */
+const GATHERING_REFERENCE_PICTURE = cardImagePath('/bundles/cards/01104.png');
+
+/**
+ * Every picture the E2E games name: The Gathering's cards, both sides, its reference card's front
+ * and Roland Banks'.
+ */
 function e2ePictures(): CardImagePath[] {
   const sides = theGatheringCardDefs.flatMap(({ imageSrc, backImageSrc }) => [
     ...(imageSrc ? [imageSrc] : []),
     ...(backImageSrc ? [backImageSrc] : []),
   ]);
-  return [...new Set([...sides, ROLAND_PICTURE])];
+  return [...new Set([...sides, GATHERING_REFERENCE_PICTURE, ROLAND_PICTURE])];
 }
 
 /** The local copy of the picture at `path` (an ArkhamDB path), if it has been downloaded. */

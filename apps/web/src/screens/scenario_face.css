@@ -193,3 +193,19 @@
     height: auto;
   }
 }
+
+/*
+ * In the card pictures theme the side's picture covers the face once loaded (game.css), and the
+ * title, side and rows give way to the ones it prints; they stay for assistive technology.
+ */
+:root[data-card-theme='pictures'] #board [data-card='scenario'][data-picture] > :is(h1, h2, p, ul) {
+  opacity: 0;
+}
+
+/* The title is the keyboard's way into the full card, so its focus ring shows over the picture. */
+:root[data-card-theme='pictures']
+  #board
+  [data-card='scenario'][data-picture]
+  > h1:has(:focus-visible) {
+  opacity: 1;
+}

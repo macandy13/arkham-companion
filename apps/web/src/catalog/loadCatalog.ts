@@ -24,8 +24,9 @@ export async function loadCatalog(
 ): Promise<CardCatalog> {
   const cached = await cache.getCatalog(lang);
   try {
-    // A catalog cached before the app kept the reference cards' texts is fetched in full once.
-    const since = cached?.references ? cached.lastModified : undefined;
+    // A catalog cached before the app kept the reference cards' texts and pictures is fetched in
+    // full once.
+    const since = cached?.references && cached.referencePictures ? cached.lastModified : undefined;
     const result = await fetchCatalog(HOSTS[lang] ?? HOSTS.en!, fetchFn, since);
     if (result.status === 'ok') {
       await cache.putCatalog(lang, result.catalog);

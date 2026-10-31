@@ -78,17 +78,22 @@ test('the house map by day', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
 });
 
-test('the house map in the card pictures style, the clues left on each card', async ({ page }) => {
-  await page.goto('/#/settings');
-  await page.getByLabel('Card style').selectOption('Card pictures');
-  await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
+test(
+  'the house map in the card pictures style, the clues left on each card',
+  { tag: '@shot' },
+  async ({ page }) => {
+    await page.goto('/#/settings');
+    await page.getByLabel('Card style').selectOption('Card pictures');
+    await resumeImportedGame(page, 'The house is open', houseOpenedExport('The house is open'));
 
-  const hallway = page
-    .getByRole('figure', { name: 'House' })
-    .getByRole('group', { name: 'Hallway' });
-  await expect(hallway.getByRole('img', { name: 'Clues 0' })).toBeVisible();
-  await expect(page.locator('html')).toHaveAttribute('data-card-theme', 'pictures');
-});
+    const hallway = page
+      .getByRole('figure', { name: 'House' })
+      .getByRole('group', { name: 'Hallway' });
+    await expect(hallway.getByRole('img', { name: 'Clues 0' })).toBeVisible();
+    await expect(page.locator('html')).toHaveAttribute('data-card-theme', 'pictures');
+    await expect(page.locator('[data-card="scenario"]')).toHaveAttribute('data-picture', 'shown');
+  },
+);
 
 test('the house map in the Eldritch card style', async ({ page }) => {
   await page.goto('/#/settings');

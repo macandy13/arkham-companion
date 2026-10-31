@@ -1,15 +1,16 @@
 import { useEffect, useId, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { StoreApi } from 'zustand/vanilla';
-import type {
-  ActAdvance,
-  ActView,
-  BoardView,
-  CardImagePath,
-  CardName,
-  ReferenceView,
+import {
+  cardImagePath,
+  type ActAdvance,
+  type ActView,
+  type BoardView,
+  type CardImagePath,
+  type CardName,
+  type ReferenceView,
 } from '@arkham/engine';
-import type { ReferenceSideTexts } from '@arkham/carddata';
+import type { CardCatalog, ReferenceSideTexts } from '@arkham/carddata';
 import { useCardPicture } from '../catalog/cardImages';
 import { cardText } from '../catalog/cardText';
 import { EncounterPiles, HeaderPile, type PileProps } from '../encounter/EncounterPiles';
@@ -33,21 +34,21 @@ import type { HeaderCardKind } from './useDetailView';
  * cards calls `onOpenCard` instead (the detail view opens on it), so the card's own buttons and
  * dialogs wait for the detail view. There the cards show `full`: the agenda and act are already
  * as large as the screen allows, so their action rows sit under them and a tap opens no second,
- * full-card dialog. `referenceTexts` are the printed texts of the scenario card's side in play,
- * from the card catalog; until it has loaded the card shows its rows without them.
+ * full-card dialog. `printedReference` is what the card catalog prints on the scenario card's
+ * side in play; until it has loaded the card shows its rows without texts.
  */
 export function GameHeader({
   store,
   open,
   board,
-  referenceTexts,
+  printedReference,
   onOpenCard,
   full = false,
 }: {
   store: StoreApi<AppState>;
   open: OpenGame;
   board: BoardView;
-  referenceTexts: ReferenceSideTexts | undefined;
+  printedReference: PrintedReference | undefined;
   onOpenCard?: ((card: HeaderCardKind) => void) | undefined;
   full?: boolean;
 }) {
@@ -87,7 +88,7 @@ export function GameHeader({
         <ScenarioStatus
           open={open}
           board={board}
-          texts={referenceTexts}
+          printed={printedReference}
           opens={!onOpenCard && !full}
         />
         <HeaderPile pile="setAside" {...piles} />
@@ -100,6 +101,29 @@ export function GameHeader({
 }
 
 /**
+ * What the card catalog has for the side of the scenario reference card a game plays with
+ * (`BoardView.reference`): its printed texts and its picture (`ReferencePictures`), each absent
+ * until the catalog has loaded or when the card data has none.
+ */
+export interface PrintedReference {
+  texts?: ReferenceSideTexts;
+  picture?: CardImagePath;
+}
+
+/** What `catalog` has for the side of the reference card that `reference` names (`PrintedReference`). */
+export function printedReferenceOf(
+  catalog: CardCatalog,
+  reference: ReferenceView,
+): PrintedReference {
+  const { code, side } = reference;
+  const picture = catalog.referencePictures?.[code]?.[side];
+  return {
+    texts: catalog.references?.[code]?.[side],
+    picture: picture === undefined ? undefined : cardImagePath(picture),
+  };
+}
+
+/**
  * The scenario as an upright card, like the reference card on the table (`ScenarioCard`). Its name
  * (`OpenGame.scenarioNameKey`) is the screen's heading, since the play screen shows no app title:
  * the scenario is what the players are playing. Where the card `opens`, a tap on it, or on its
@@ -108,12 +132,12 @@ export function GameHeader({
 function ScenarioStatus({
   open,
   board,
-  texts,
+  printed,
   opens,
 }: {
   open: OpenGame;
   board: BoardView;
-  texts: ReferenceSideTexts | undefined;
+  printed: PrintedReference | undefined;
   opens: boolean;
 }) {
   const { t } = useTranslation();
@@ -122,7 +146,11 @@ function ScenarioStatus({
   const zoom = () => setZoomed(true);
   return (
     <>
-      <ScenarioCard reference={board.reference} texts={texts} onClick={opens ? zoom : undefined}>
+      <ScenarioCard
+        reference={board.reference}
+        printed={printed}
+        onClick={opens ? zoom : undefined}
+      >
         <h1>
           {opens ? (
             <button type="button" onClick={zoom}>
@@ -137,7 +165,7 @@ function ScenarioStatus({
         <ScenarioDetails
           name={name}
           reference={board.reference}
-          texts={texts}
+          printed={printed}
           onClose={() => setZoomed(false)}
         />
       )}
@@ -152,12 +180,12 @@ function ScenarioStatus({
 function ScenarioDetails({
   name,
   reference,
-  texts,
+  printed,
   onClose,
 }: {
   name: string;
   reference: ReferenceView | undefined;
-  texts: ReferenceSideTexts | undefined;
+  printed: PrintedReference | undefined;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -169,7 +197,7 @@ function ScenarioDetails({
   return (
     <dialog ref={dialog} aria-labelledby={titleId} onCancel={onClose} data-dialog="card">
       <button type="button" data-icon="close" aria-label={t('header.close')} onClick={onClose} />
-      <ScenarioCard reference={reference} texts={texts}>
+      <ScenarioCard reference={reference} printed={printed}>
         <h2 id={titleId}>{name}</h2>
       </ScenarioCard>
     </dialog>
@@ -180,24 +208,28 @@ function ScenarioDetails({
  * The face of the scenario reference card: in the Exact card theme our drawing of its frame
  * (`ScenarioFace`) under its title (`children`), the side the game's difficulty plays with and one
  * row per symbol token, the token's game symbol (named for screen readers) beside its printed
- * text (`texts`, from the card catalog, for the side `BoardView.reference` names). A game without
- * a reference card shows only the title.
+ * text (`printed`, from the card catalog, for the side `BoardView.reference` names). A game without
+ * a reference card shows only the title. In the card pictures theme the side's picture lies over
+ * it all once loaded (`data-picture`), and the stylesheet hides what the picture prints; the
+ * rows stay beneath it for assistive technology.
  */
 function ScenarioCard({
   reference,
-  texts,
+  printed,
   onClick,
   children,
 }: {
   reference: ReferenceView | undefined;
-  texts: ReferenceSideTexts | undefined;
+  printed: PrintedReference | undefined;
   onClick?: () => void;
   children: ReactNode;
 }) {
   const { t } = useTranslation();
+  const picture = useCardPicture(printed?.picture);
   return (
     <div
       data-card="scenario"
+      data-picture={picture?.shown ? 'shown' : undefined}
       onClick={
         onClick &&
         ((event) => {
@@ -212,7 +244,7 @@ function ScenarioCard({
           <p>{t(`header.referenceSide.${reference.side}`)}</p>
           <ul aria-label={t('header.reference')}>
             {reference.rows.map(({ token }) => {
-              const text = texts?.[token];
+              const text = printed?.texts?.[token];
               return (
                 <li key={token} data-chaos-token={token}>
                   <span role="img" aria-label={t(`chaosToken.${token}`)} />
@@ -222,6 +254,9 @@ function ScenarioCard({
             })}
           </ul>
         </>
+      )}
+      {picture && (
+        <img src={picture.url} alt="" onLoad={picture.onLoad} onError={picture.onError} />
       )}
     </div>
   );
