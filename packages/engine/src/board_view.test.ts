@@ -46,6 +46,7 @@ import {
   type CardAction,
   type CardPlaceView,
   type CardStats,
+  type Decider,
   type Zone,
 } from './index';
 import { answer, stateAfter } from '../test/utils';
@@ -1441,12 +1442,8 @@ describe('decisions and attacks', () => {
 });
 
 describe("a fail's choice", () => {
-  it('offers the choice a failed test asks of the same investigator under its fail', () => {
-    const { context, state } = newGame()
-      .withLocation(study, blankLocation('study'), { revealed: true })
-      .withInvestigator(alice, { locationId: study })
-      .start();
-    const graveyardTest = skillTestDecision(
+  const graveyardTest = (choice: { decider: Decider; kind: 'chooseOption' | 'confirm' }) =>
+    skillTestDecision(
       {
         id: decisionId('graveyard'),
         prompt: 'card.graveyard',
@@ -1460,9 +1457,9 @@ describe("a fail's choice", () => {
             type: 'RequestDecision',
             decision: {
               id: decisionId('graveyard_either'),
-              kind: 'chooseOption',
+              kind: choice.kind,
               prompt: 'card.graveyard.either',
-              decider: { kind: 'investigator', investigatorId: alice },
+              decider: choice.decider,
               options: [
                 { id: 'horror', label: 'card.graveyard.horror', commands: [] },
                 { id: 'rivertown', label: 'card.graveyard.rivertown', commands: [] },
@@ -1473,18 +1470,43 @@ describe("a fail's choice", () => {
       },
     );
 
-    const { decisions } = boardView(
-      context,
-      stateAfter(context, state, { type: 'RequestDecision', decision: graveyardTest }),
-    );
-
-    expect(decisions[0]?.followUps).toEqual({
-      fail: {
-        prompt: 'card.graveyard.either',
-        options: ['card.graveyard.horror', 'card.graveyard.rivertown'],
+  it.each([
+    {
+      asked: 'the tested investigator to choose',
+      choice: { decider: { kind: 'investigator', investigatorId: alice }, kind: 'chooseOption' },
+      followUps: {
+        fail: {
+          prompt: 'card.graveyard.either',
+          options: ['card.graveyard.horror', 'card.graveyard.rivertown'],
+        },
       },
-    });
-  });
+    },
+    {
+      asked: 'the lead investigator to choose',
+      choice: { decider: { kind: 'lead' }, kind: 'chooseOption' },
+      followUps: undefined,
+    },
+    {
+      asked: 'the tested investigator to confirm',
+      choice: { decider: { kind: 'investigator', investigatorId: alice }, kind: 'confirm' },
+      followUps: undefined,
+    },
+  ] as const)(
+    'a fail that asks $asked offers it under the fail: $followUps',
+    ({ choice, followUps }) => {
+      const { context, state } = newGame()
+        .withLocation(study, blankLocation('study'), { revealed: true })
+        .withInvestigator(alice, { locationId: study })
+        .start();
+
+      const { decisions } = boardView(
+        context,
+        stateAfter(context, state, { type: 'RequestDecision', decision: graveyardTest(choice) }),
+      );
+
+      expect(decisions[0]?.followUps).toEqual(followUps);
+    },
+  );
 });
 
 describe('a decision with one adjustable amount', () => {
