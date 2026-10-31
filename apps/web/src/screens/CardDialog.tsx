@@ -102,7 +102,11 @@ export function CardDialog({
             type="button"
             data-part="grab"
             aria-label={t(lowered ? 'cardDialog.raise' : 'cardDialog.lower')}
-            onClick={() => onLower(!lowered)}
+            onClick={(event) => {
+              // Lowered, the strip around it raises the dialog too; one request is enough.
+              event.stopPropagation();
+              onLower(!lowered);
+            }}
           />
         )}
         {onClose && (

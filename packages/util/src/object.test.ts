@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { listIfAny, recordIfAny, shallowEqual, withoutEmptyLists, withoutKey } from './index';
+import {
+  keyOf,
+  listIfAny,
+  recordIfAny,
+  shallowEqual,
+  withoutEmptyLists,
+  withoutKey,
+} from './index';
 
 describe('withoutKey', () => {
   it('removes the key from the copy', () => {
@@ -95,5 +102,17 @@ describe('shallowEqual', () => {
     },
   ])('compares two objects with $name', ({ a, b, equal }) => {
     expect(shallowEqual<object>(a, b)).toBe(equal);
+  });
+});
+
+describe('keyOf', () => {
+  const rooms = { Attic: 'attic_card', Cellar: 'cellar_card', Basement: 'cellar_card' };
+
+  it.each([
+    { value: 'attic_card', key: 'Attic' },
+    { value: 'cellar_card', key: 'Cellar' },
+    { value: 'hallway_card', key: undefined },
+  ])('finds $key for $value', ({ value, key }) => {
+    expect(keyOf(rooms, value)).toBe(key);
   });
 });

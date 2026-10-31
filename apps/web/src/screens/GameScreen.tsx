@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router';
 import { useStore } from 'zustand';
 import type { StoreApi } from 'zustand/vanilla';
+import { keyOf } from '@arkham/util';
 import { gameId as toGameId, type DecisionId, type InstanceId } from '@arkham/engine';
 import type { AppState } from '../state/appStore';
 import { useCatalog, type CatalogSource } from '../catalog/useCatalog';
@@ -87,8 +88,9 @@ export function GameScreen({
   const pickable = picking ? Object.values(decision?.locations ?? {}) : undefined;
   const pickAnswer = (location: InstanceId) => {
     setPickingFor(undefined);
-    const option = Object.entries(decision?.locations ?? {}).find(([, at]) => at === location);
-    if (option) void store.getState().actions.answer(option[0]);
+    // A location option carries no counts or follow-up choice (`chooseLocation`), so its name alone answers it.
+    const option = keyOf(decision?.locations ?? {}, location);
+    if (option !== undefined) void store.getState().actions.answer(option);
   };
   const focusId = detailTarget?.row === 'map' ? detailTarget.location : undefined;
   // A location that left play, or a location to pick on the map, brings the whole map back.
