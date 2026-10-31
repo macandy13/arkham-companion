@@ -2,6 +2,18 @@
 
 The sections dated up to 2026-10-22 were released as 1.0.0 to 1.8.0 by mistake: Release Please starts at 1.0.0 by default. Versioning restarted at 0.1.0 (see "Versions" in docs/product.md).
 
+## [0.1.17](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.16...arkham-companion-v0.1.17) (2026-10-31)
+
+
+### Features
+
+* **web:** Eldritch blackletter card names (M3.10k3) ([07c996a](https://github.com/macandy13/arkham-companion/commit/07c996a3cbdff9450fbddbc87d6e5e32374b0d63))
+
+
+### Documentation
+
+* in-game dialog design and prototype (MD.9) ([40589c7](https://github.com/macandy13/arkham-companion/commit/40589c7cdf43f59eaff53ecc7e846d691402e1c2))
+
 ## [0.1.16](https://github.com/macandy13/arkham-companion/compare/arkham-companion-v0.1.15...arkham-companion-v0.1.16) (2026-10-30)
 
 
