@@ -58,6 +58,7 @@ export {
   type CardFaceView,
   type CardPlaceView,
   type DecisionCounts,
+  type ChoiceView,
   type DecisionView,
   type DueAttackView,
   type EncounterCardView,

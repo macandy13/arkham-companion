@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BoardView, DecisionCounts, DecisionView } from '@arkham/engine';
+import type { BoardView, ChoiceView, DecisionCounts, DecisionView } from '@arkham/engine';
 import { assertNever } from '@arkham/util';
 import { ResolvingCard } from '../encounter/ResolvingCard';
 import { SkillTestBlock, Stepper, useSkillTest } from '../investigators/TestCalculation';
@@ -44,11 +44,29 @@ export function DecisionDialog({
   const [counts, setCounts] = useState(() => defaultCounts(decision.counts));
   const [chosen, setPicked] = useState<string>();
   const picked = chosen ?? pickedFirst(decision, suggested?.outcome);
-  const answer = (option: string) =>
-    void actions.answer(option, {
-      ...countsOf(counts[option]),
-      ...(option === suggested?.outcome ? { margin: suggested.margin } : {}),
-    });
+  const [nextPicks, setNextPicks] = useState<Record<string, string>>({});
+  const [nextCounts, setNextCounts] = useState(() =>
+    defaultCounts(
+      Object.fromEntries(
+        Object.values(decision.followUps ?? {}).flatMap((choice) =>
+          Object.entries(choice.counts ?? {}),
+        ),
+      ),
+    ),
+  );
+  const nextPicked = (option: string) =>
+    nextPicks[option] ?? decision.followUps?.[option]?.options[0];
+  const answer = (option: string) => {
+    const next = nextPicked(option);
+    void actions.answer(
+      option,
+      {
+        ...countsOf(counts[option]),
+        ...(option === suggested?.outcome ? { margin: suggested.margin } : {}),
+      },
+      ...(next === undefined ? [] : [{ option: next, counts: countsOf(nextCounts[next]) }]),
+    );
+  };
 
   const actor = decision.for === undefined ? undefined : board.investigator(decision.for);
   return (
@@ -88,7 +106,8 @@ export function DecisionDialog({
         <ul aria-label={t('decision.options')}>
           {/* Two options can share a name (two enemies of one card), so the position is the key. */}
           {decision.options.map((option, index) => {
-            const withCounts = decision.counts?.[option] !== undefined;
+            const followUp = decision.followUps?.[option];
+            const withCounts = decision.counts?.[option] !== undefined || followUp !== undefined;
             return (
               <li key={index}>
                 <button
@@ -103,7 +122,8 @@ export function DecisionDialog({
                 </button>
                 {withCounts && <p>{t('decision.fromTheGame')}</p>}
                 <CountSteppers
-                  decision={decision}
+                  choice={decision}
+                  action={decision.action}
                   option={option}
                   counts={counts}
                   onChange={(changed) => {
@@ -111,6 +131,37 @@ export function DecisionDialog({
                     setPicked(option);
                   }}
                 />
+                {followUp && option === picked && (
+                  <ul
+                    aria-label={t(followUp.prompt, {
+                      card: decision.about,
+                      defaultValue: followUp.prompt,
+                    })}
+                  >
+                    {followUp.options.map((next, nextIndex) => (
+                      <li key={nextIndex}>
+                        <button
+                          type="button"
+                          disabled={busy}
+                          aria-pressed={next === nextPicked(option)}
+                          onClick={() => setNextPicks({ ...nextPicks, [option]: next })}
+                        >
+                          {t(followUp.labels?.[next] ?? next, { defaultValue: next })}
+                        </button>
+                        <CountSteppers
+                          choice={followUp}
+                          action={undefined}
+                          option={next}
+                          counts={nextCounts}
+                          onChange={(changed) => {
+                            setNextCounts(changed);
+                            setNextPicks({ ...nextPicks, [option]: next });
+                          }}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </li>
             );
           })}
@@ -135,7 +186,8 @@ export function DecisionDialog({
  * option without counts is never picked for them, since a tap on it answers at once.
  */
 function pickedFirst(decision: DecisionView, suggested: string | undefined): string | undefined {
-  const withCounts = (option: string) => decision.counts?.[option] !== undefined;
+  const withCounts = (option: string) =>
+    decision.counts?.[option] !== undefined || decision.followUps?.[option] !== undefined;
   if (decision.test)
     return suggested !== undefined && withCounts(suggested) ? suggested : undefined;
   return decision.options.find(withCounts);
@@ -184,20 +236,25 @@ function countsOf(counts: Counts[string] = {}): DecisionAmounts {
   };
 }
 
-/** A stepper per count of `option`, within the count's limits, next to the option's button. */
+/**
+ * A stepper per count of `option` of `choice` (the decision, or the choice one of its options
+ * asks next), within the count's limits, next to the option's button.
+ */
 function CountSteppers({
-  decision,
+  choice,
+  action,
   option,
   counts,
   onChange,
 }: {
-  decision: DecisionView;
+  choice: ChoiceView;
+  action: DecisionView['action'];
   option: string;
   counts: Counts;
   onChange: (counts: Counts) => void;
 }) {
   const { t } = useTranslation();
-  const ranges = decision.counts?.[option] ?? {};
+  const ranges = choice.counts?.[option] ?? {};
   return COUNT_NAMES.flatMap((name) => {
     const range = ranges[name];
     const value = counts[option]?.[name];
@@ -205,7 +262,7 @@ function CountSteppers({
     return [
       <Stepper
         key={name}
-        label={t(countLabel(name, decision.action))}
+        label={t(countLabel(name, action))}
         value={value}
         shown={String(value)}
         min={range.min}

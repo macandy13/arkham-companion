@@ -365,27 +365,25 @@ test('the attack of opportunity Roland Banks provokes by taking a resource', asy
   ).toBeVisible();
 });
 
-test(
-  'three attacks of opportunity on Roland Banks, the Ghoul Minions fanned behind the Ghoul Priest',
-  { tag: '@shot' },
-  async ({ page }) => {
-    await resumeImportedGame(
-      page,
-      'Roland Banks surrounded',
-      rolandSurroundedExport('Roland Banks surrounded'),
-    );
+test('three attacks of opportunity on Roland Banks, the Ghoul Minions fanned behind the Ghoul Priest', async ({
+  page,
+}) => {
+  await resumeImportedGame(
+    page,
+    'Roland Banks surrounded',
+    rolandSurroundedExport('Roland Banks surrounded'),
+  );
 
-    await page
-      .getByRole('region', { name: 'Roland Banks' })
-      .getByRole('button', { name: 'Take a resource' })
-      .click();
+  await page
+    .getByRole('region', { name: 'Roland Banks' })
+    .getByRole('button', { name: 'Take a resource' })
+    .click();
 
-    const attack = page.getByRole('dialog', { name: 'Attack of opportunity by Ghoul Priest' });
-    await expect(
-      attack.getByRole('list', { name: 'Waiting next' }).getByRole('listitem'),
-    ).toHaveCount(2);
-  },
-);
+  const attack = page.getByRole('dialog', { name: 'Attack of opportunity by Ghoul Priest' });
+  await expect(
+    attack.getByRole('list', { name: 'Waiting next' }).getByRole('listitem'),
+  ).toHaveCount(2);
+});
 
 test('the Parlor’s details with its Resign among Roland Banks’ card actions', async ({ page }) => {
   await resumeImportedGame(page, 'In the Parlor', inTheParlorExport('In the Parlor'));

@@ -35,6 +35,7 @@ import {
   gainSurge,
   PlayTable,
   skillTest,
+  skillTestDecision,
   whenRevealed,
   resignAction,
   takeHorror,
@@ -1436,6 +1437,53 @@ describe('decisions and attacks', () => {
     expect(enemyPhase).toMatchObject({ phase: 'enemy', step: 'enemiesAttack' });
     expect(enemyPhase.attacksDue).toEqual([{ enemy: 'ghoul', investigator: alice }]);
     expect(boardView(context, afterTurn).attacksDue).toEqual([]);
+  });
+});
+
+describe("a fail's choice", () => {
+  it('offers the choice a failed test asks of the same investigator under its fail', () => {
+    const { context, state } = newGame()
+      .withLocation(study, blankLocation('study'), { revealed: true })
+      .withInvestigator(alice, { locationId: study })
+      .start();
+    const graveyardTest = skillTestDecision(
+      {
+        id: decisionId('graveyard'),
+        prompt: 'card.graveyard',
+        decider: { kind: 'investigator', investigatorId: alice },
+        test: { skill: 'willpower', difficulty: 3 },
+      },
+      {
+        onPass: [],
+        onFail: [
+          {
+            type: 'RequestDecision',
+            decision: {
+              id: decisionId('graveyard_either'),
+              kind: 'chooseOption',
+              prompt: 'card.graveyard.either',
+              decider: { kind: 'investigator', investigatorId: alice },
+              options: [
+                { id: 'horror', label: 'card.graveyard.horror', commands: [] },
+                { id: 'rivertown', label: 'card.graveyard.rivertown', commands: [] },
+              ],
+            },
+          },
+        ],
+      },
+    );
+
+    const { decisions } = boardView(
+      context,
+      stateAfter(context, state, { type: 'RequestDecision', decision: graveyardTest }),
+    );
+
+    expect(decisions[0]?.followUps).toEqual({
+      fail: {
+        prompt: 'card.graveyard.either',
+        options: ['card.graveyard.horror', 'card.graveyard.rivertown'],
+      },
+    });
   });
 });
 

@@ -766,6 +766,38 @@
   color: var(--color-text-muted);
 }
 
+/*
+ * The choice a picked row asks next (a fail's "you must either …"), under it: its answers as
+ * pills in one line after the key column, the chosen one filled, each with its counts' steppers.
+ */
+#board dialog[data-dialog='decision'] form > ul > li > ul {
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 1 / -1;
+  gap: var(--space-2);
+  margin-inline-start: calc(var(--decision-key-width) + var(--space-3));
+}
+
+#board dialog[data-dialog='decision'] form > ul > li > ul > li {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+#board dialog[data-dialog='decision'] form > ul > li > ul > li > button {
+  border-color: var(--color-paper-rim);
+  border-radius: var(--radius-pill);
+}
+
+#board dialog[data-dialog='decision'] form > ul > li > ul > li > button[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+}
+
 #board dialog[data-dialog='decision'] form {
   display: grid;
   gap: var(--space-2);

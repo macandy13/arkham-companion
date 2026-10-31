@@ -4,6 +4,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   atLocation,
   blankEnemy,
+  decisionId,
   fixed,
   blankLocation,
   engagedWith,
@@ -351,6 +352,51 @@ describe('DecisionDialog', () => {
 
       expect(table.board.investigator(alder)).toMatchObject({ damage: 0, horror: 1 });
     });
+  });
+
+  it("answers a failed test's choice, picked under its row, with the fail in one Done", () => {
+    const table = PlayTable.start(
+      newGame()
+        .withLocation(study, blankLocation('study', { name: 'Graveyard' }), { revealed: true })
+        .withInvestigator(alder, { name: 'Alder', locationId: study }),
+    );
+    table.play({
+      type: 'TestSkill',
+      investigatorId: alder,
+      cardId: study,
+      test: { skill: 'willpower', difficulty: 3 },
+      onPass: [],
+      onFail: [
+        {
+          type: 'RequestDecision',
+          decision: {
+            id: decisionId('graveyard_either'),
+            kind: 'chooseOption',
+            prompt: 'You must either',
+            decider: { kind: 'investigator', investigatorId: alder },
+            options: [
+              {
+                id: 'horror',
+                label: 'Take 2 horror',
+                commands: [
+                  { type: 'AdjustInvestigator', investigatorId: alder, stat: 'horror', delta: 2 },
+                ],
+              },
+              { id: 'rivertown', label: 'Move to Rivertown', commands: [] },
+            ],
+          },
+        },
+      ],
+    });
+    renderFirstDecision(table);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Failed' }));
+    const choice = screen.getByRole('list', { name: 'You must either' });
+    fireEvent.click(within(choice).getByRole('button', { name: 'Take 2 horror' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }));
+
+    expect(table.board.decisions).toEqual([]);
+    expect(table.board.investigator(alder).horror).toBe(2);
   });
 
   it('takes back the step that raised it with Undo, and offers no Adjust board of its own', () => {

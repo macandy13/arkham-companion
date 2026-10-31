@@ -5,6 +5,7 @@ import {
   byName,
   encounterSetCode,
   engagedWith,
+  boardView,
   execute,
   instanceId,
   investigatorId,
@@ -143,6 +144,22 @@ describe('The Midnight Masks card abilities', () => {
       expect(requireInvestigator(state, alice)).toMatchObject({
         locationId: at,
         sanity: { horror },
+      });
+    });
+
+    it("offers its choice under the test's fail, so the players answer both at once", () => {
+      const { context, state: started } = graveyardTable.start();
+
+      const { decisions } = boardView(context, stateAfter(context, started, aliceEnters));
+
+      expect(decisions[0]?.followUps).toEqual({
+        fail: {
+          prompt: 'scenario.theMidnightMasks.graveyard.prompt',
+          options: [
+            'scenario.theMidnightMasks.graveyard.horror',
+            'scenario.theMidnightMasks.graveyard.rivertown',
+          ],
+        },
       });
     });
   });
