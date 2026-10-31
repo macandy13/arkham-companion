@@ -246,6 +246,34 @@
   --dialog-width: 37.5rem;
   --dialog-width-wide: 55rem;
   --dialog-padding: 2.125rem var(--space-5);
+  /*
+   * A card dialog (MD.2a, card_dialog.css): its card beside the page, turned a little and laid
+   * over the page's edge by the overlap; a sideways card (agenda, act) over the page; the
+   * investigator who acts, large over a page without a card or small in the kicker.
+   */
+  --card-dialog-card-width: 20.625rem;
+  --card-dialog-landscape-width: 26.25rem;
+  --card-dialog-overlap: 2.5rem;
+  --card-dialog-card-turn: -1.5deg;
+  --card-dialog-portrait-size: 6rem;
+  --card-dialog-kicker-portrait-size: 1.875rem;
+  /*
+   * On a phone held upright a card dialog is a sheet along the bottom, rounded at its top, with a
+   * grab handle; its card peeks out over the sheet's top edge by this much, beside the title,
+   * which stands at least as tall as the part of the card over the sheet.
+   */
+  --card-dialog-sheet-radius: 1.125rem;
+  --card-dialog-grab-width: 2.5rem;
+  --card-dialog-grab-height: 0.25rem;
+  --card-dialog-peek-width: 10.5rem;
+  --card-dialog-peek: 7.375rem;
+  --card-dialog-peek-title-height: 6rem;
+  --card-dialog-peek-landscape-width: 12.5rem;
+  --card-dialog-peek-landscape: 5.25rem;
+  --card-dialog-peek-landscape-title-height: 4rem;
+  --card-dialog-peek-portrait: 2.875rem;
+  --card-dialog-peek-portrait-title-height: 3.5rem;
+  --card-dialog-peek-turn: -2deg;
   /* The room the × keeps free in a dialog's top corner, and how far it sits from the edge. */
   --dialog-close-inset: var(--space-3);
   /* The clue payment dialog, wide enough for three payers' art side by side, each this wide. */
@@ -441,8 +469,6 @@
   /* The encounter dialog's row of a pile's cards: this many side by side, each this wide. */
   --encounter-strip-cards-shown: 5;
   --encounter-strip-card-width: 7.5rem;
-  /* The encounter card being resolved, large at the top of the decision dialog. */
-  --resolving-card-height: 14rem;
   /* A dragged map piece's copy, see-through so the tile under it stays readable. */
   --map-ghost-opacity: 0.6;
   /* An enemy on the map engaged with an investigator, shown in full in their threat area. */

@@ -377,6 +377,12 @@ export interface DecisionView {
   kind: Decision['kind'];
   /** The printed name of the card the decision is about (`Decision.subject`). */
   about?: CardName;
+  /**
+   * The card the dialog shows beside its question: the card the decision is about, else the
+   * encounter card whose revelation asks it (`BoardView.resolving`), so a test an encounter card
+   * starts shows that card too.
+   */
+  card?: CardFaceView;
   for?: InvestigatorId;
   test?: SkillTest;
   /** The basic action a skill test belongs to (`Decision.testKind`), which says what its pass `amount` counts. */
@@ -1212,6 +1218,9 @@ function decisionView(ctx: EngineContext, state: GameState, decision: Decision):
     }),
   );
   const about = nameOfId(ctx, state, decision.subject);
+  const [resolving] = cardsInZone(state, resolvingZone);
+  const cardId = decision.subject ?? resolving;
+  const card = cardId === undefined ? undefined : cardFaceOf(ctx, requireCard(state, cardId));
   const provokedBy =
     decision.prompt === forcedAttackPrompt('attackOfOpportunity')
       ? provokingAction(ctx, state)
@@ -1220,6 +1229,7 @@ function decisionView(ctx: EngineContext, state: GameState, decision: Decision):
     prompt: decision.prompt,
     kind: decision.kind,
     ...(about === undefined ? {} : { about }),
+    ...(card === undefined ? {} : { card }),
     ...(decision.decider.kind === 'investigator' ? { for: decision.decider.investigatorId } : {}),
     ...(decision.skillTest ? { test: decision.skillTest } : {}),
     ...(decision.testKind ? { action: decision.testKind.kind } : {}),

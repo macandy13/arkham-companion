@@ -1,0 +1,215 @@
+/*
+ * The card dialog (CardDialog, MD.2a) over the board: the `<dialog>` is only a frame, laid out
+ * by `data-shell`: the card beside the page (`beside`), a sideways card over it (`above`), the
+ * investigator who acts large over a page without a card (`portrait`), or the page alone
+ * (`page`). base.css prints the page (`<article>`) on the paper.
+ */
+#board dialog[data-shell] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  max-height: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  box-shadow: none;
+  overflow: visible;
+}
+
+#board dialog[data-shell]:not([open]) {
+  display: none;
+}
+
+#board dialog[data-shell]:is([data-shell='above'], [data-shell='portrait']) {
+  flex-direction: column;
+}
+
+#board dialog[data-shell] > article {
+  width: var(--dialog-width);
+  max-height: calc(100dvh - var(--space-4));
+  overflow-y: auto;
+}
+
+/*
+ * The card the dialog is about, laid over the page's edge and turned a little, like a card put
+ * down on the guide. Until its picture loads, its name on the card's pattern says what it is.
+ */
+#board dialog[data-shell] > button[data-part='subject'] {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  display: grid;
+  aspect-ratio: 5 / 7;
+  padding: 0;
+  overflow: hidden;
+  border: none;
+  background: var(--card-art-pattern), var(--color-card-face);
+  box-shadow: var(--header-token-shadow);
+  font-family: var(--font-family-label);
+}
+
+#board dialog[data-shell] > button[data-part='subject'] > * {
+  grid-area: 1 / 1;
+}
+
+#board dialog[data-shell] > button[data-part='subject'] > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+#board dialog[data-shell] > button[data-part='subject']:not([data-picture]) > img,
+#board dialog[data-shell] > button[data-part='subject'][data-picture] > span {
+  visibility: hidden;
+}
+
+#board dialog[data-shell='beside'] > button[data-part='subject'] {
+  width: min(var(--card-dialog-card-width), (100dvh - var(--space-5)) * 5 / 7);
+  margin-inline-end: calc(-1 * var(--card-dialog-overlap));
+  rotate: var(--card-dialog-card-turn);
+}
+
+#board dialog[data-shell='beside'] > article {
+  padding-inline-start: calc(var(--card-dialog-overlap) + var(--space-5));
+}
+
+#board dialog[data-shell='above'] > button[data-part='subject'] {
+  width: var(--card-dialog-landscape-width);
+  max-width: 100%;
+  aspect-ratio: 7 / 5;
+  margin-block-end: calc(-1 * var(--card-dialog-overlap));
+}
+
+#board dialog[data-shell='above'] > article {
+  padding-block-start: calc(var(--card-dialog-overlap) + var(--space-4));
+}
+
+/* The investigator who acts, round over the page or small before the kicker's words. */
+#board dialog[data-shell] picture {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  display: block;
+  overflow: hidden;
+  border: var(--border-width) solid var(--color-accent);
+  border-radius: var(--radius-round);
+  background: var(--card-art-pattern), var(--color-card-face);
+}
+
+#board dialog[data-shell='portrait'] > picture {
+  width: var(--card-dialog-portrait-size);
+  height: var(--card-dialog-portrait-size);
+  margin-block-end: calc(-1 * var(--card-dialog-portrait-size) / 2);
+  box-shadow: var(--header-token-shadow);
+}
+
+#board dialog[data-shell='portrait'] > article {
+  padding-block-start: calc(var(--card-dialog-portrait-size) / 2 + var(--space-3));
+}
+
+#board dialog[data-shell] hgroup > p {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+#board dialog[data-shell] hgroup > p > picture {
+  width: var(--card-dialog-kicker-portrait-size);
+  height: var(--card-dialog-kicker-portrait-size);
+}
+
+/*
+ * A phone held upright: the page is a sheet along the bottom, rounded at its top with a grab
+ * handle, its footer's buttons sharing its width. The card peeks out over the sheet's top edge on
+ * the left, the title beside it; a tap on it shows it whole.
+ */
+@media (orientation: portrait) and (max-width: 40rem) {
+  #board dialog[data-shell][open] {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    max-height: calc(100% - var(--card-dialog-peek));
+    margin: auto 0 0;
+  }
+
+  #board dialog[data-shell] > article {
+    width: 100%;
+    max-width: none;
+    max-height: calc(100dvh - var(--card-dialog-peek));
+    padding-block-end: calc(var(--space-3) + var(--safe-bottom));
+    border-block-end: none;
+    border-radius: var(--card-dialog-sheet-radius) var(--card-dialog-sheet-radius) 0 0;
+  }
+
+  #board dialog[data-shell] > article::before {
+    content: '';
+    align-self: center;
+    flex: none;
+    width: var(--card-dialog-grab-width);
+    height: var(--card-dialog-grab-height);
+    border-radius: var(--radius-pill);
+    background: var(--color-paper-rim);
+  }
+
+  #board dialog[data-shell] > :is(button[data-part='subject'], picture) {
+    position: absolute;
+    left: var(--space-3);
+    margin: 0;
+  }
+
+  #board dialog[data-shell='beside'] > button[data-part='subject'] {
+    top: calc(-1 * var(--card-dialog-peek));
+    width: var(--card-dialog-peek-width);
+    rotate: var(--card-dialog-peek-turn);
+  }
+
+  #board dialog[data-shell='above'] > button[data-part='subject'] {
+    top: calc(-1 * var(--card-dialog-peek-landscape));
+    width: var(--card-dialog-peek-landscape-width);
+  }
+
+  #board dialog[data-shell='portrait'] > picture {
+    top: calc(-1 * var(--card-dialog-peek-portrait));
+  }
+
+  #board dialog[data-shell] > article {
+    padding-block-start: var(--space-3);
+    padding-inline: var(--space-3);
+  }
+
+  #board dialog[data-shell] > article > hgroup {
+    display: grid;
+    align-content: end;
+    justify-items: start;
+  }
+
+  #board dialog[data-shell] > article > hgroup,
+  #board dialog[data-shell] > article > hgroup > h2 {
+    text-align: start;
+  }
+
+  #board dialog[data-shell] > article > hgroup > p {
+    justify-content: flex-start;
+  }
+
+  #board dialog[data-shell='beside'] > article > hgroup {
+    min-height: var(--card-dialog-peek-title-height);
+    margin-inline-start: calc(var(--card-dialog-peek-width) + var(--space-2));
+  }
+
+  #board dialog[data-shell='above'] > article > hgroup {
+    min-height: var(--card-dialog-peek-landscape-title-height);
+    margin-inline-start: calc(var(--card-dialog-peek-landscape-width) + var(--space-2));
+  }
+
+  #board dialog[data-shell='portrait'] > article > hgroup {
+    min-height: var(--card-dialog-peek-portrait-title-height);
+    margin-inline-start: calc(var(--card-dialog-portrait-size) + var(--space-2));
+  }
+
+  #board dialog[data-shell] footer > button {
+    flex: 1;
+  }
+}

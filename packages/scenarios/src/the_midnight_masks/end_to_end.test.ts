@@ -196,6 +196,7 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
         prompt: 'decision.chooseSpawnLocation',
         kind: 'chooseLocation',
         about: wizard,
+        card: expect.objectContaining({ name: wizard }),
         options: [
           'Northside',
           'Downtown',
@@ -215,6 +216,7 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
       {
         prompt: 'scenario.theMidnightMasks.huntingShadow.prompt',
         kind: 'chooseOption',
+        card: expect.objectContaining({ name: 'Hunting Shadow' }),
         for: daisy,
         options: [
           'scenario.theMidnightMasks.huntingShadow.clue',
@@ -335,6 +337,7 @@ describe('The Midnight Masks end to end: Roland and Daisy, seed 40', () => {
         prompt: 'decision.chooseEngagement',
         kind: 'chooseInvestigator',
         about: hunter,
+        card: expect.objectContaining({ name: hunter }),
         options: ['Roland Banks', 'Daisy Walker'],
       },
     ]);

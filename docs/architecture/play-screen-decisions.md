@@ -1,10 +1,10 @@
 # Play screen: decisions
 
-The first open decision shows as a [dialog](../../apps/web/src/screens/DecisionDialog.tsx) over the board:
+The first open decision shows as a [dialog](../../apps/web/src/screens/DecisionDialog.tsx) over the board, on the card dialog shell ([play screen](play-screen.md), `CardDialog`):
 
-- the encounter card being resolved, when a revelation asks the players something ([`ResolvingCard`](../../apps/web/src/encounter/ResolvingCard.tsx), `BoardView.resolving`: the card in the `resolving` zone with the investigator its queued placement names and its keywords, a gained surge included), large with whom it was drawn for and its keywords as badges,
-- then the translated question with the card it is about,
-- who decides,
+- beside the page, the card the decision is about, else the encounter card whose revelation asks it (`DecisionView.card`, a `CardFaceView`),
+- who decides, in the kicker with their portrait, over the translated question with the card it is about,
+- when a revelation asks the players something, whom the card being resolved was drawn for and its keywords as badges ([`ResolvingCard`](../../apps/web/src/encounter/ResolvingCard.tsx), `BoardView.resolving`: the card in the `resolving` zone with the investigator its queued placement names and its keywords, a gained surge included),
 - the test of a skill test,
 - and a button per option, answered by its readable name (`GameActions.answer` maps it to the option).
 

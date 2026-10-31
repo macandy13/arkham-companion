@@ -1154,6 +1154,18 @@ describe('the encounter card being resolved', () => {
     });
   });
 
+  it('shows the drawn card beside the test its revelation asks', () => {
+    const table = aliceDraws();
+
+    table.play({ type: 'DrawEncounter', investigatorId: alice });
+
+    expect(table.board.decisions).toEqual([
+      expect.objectContaining({
+        card: { id: 'crypt_chill', name: 'crypt_chill', type: 'treachery', traits: [] },
+      }),
+    ]);
+  });
+
   it('adds surge when the card gained it while resolving', () => {
     const table = PlayTable.start(
       newGame()
@@ -1272,6 +1284,7 @@ describe('decisions and attacks', () => {
         prompt: 'decision.attackOfOpportunity',
         kind: 'confirm',
         about: 'ghoul',
+        card: { id: 'ghoul', name: 'ghoul', type: 'enemy', traits: [] },
         for: alice,
         options: ['attack', 'does not provoke'],
         labels: { attack: 'decision.attack', 'does not provoke': 'decision.doesNotProvoke' },
